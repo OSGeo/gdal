@@ -2467,7 +2467,7 @@ static int TestSpatialFilter(OGRLayer *poLayer, int iGeomField)
     if (poUniquePtrFeature != nullptr)
     {
         bRet = FALSE;
-        printf("ERROR: Spatial filter (%d) failed to eliminate"
+        printf("ERROR: Spatial filter (%d) failed to eliminate "
                "a feature unexpectedly!\n",
                iGeomField);
     }

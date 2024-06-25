@@ -63,6 +63,14 @@ def get_python_lib(plat_specific=0, standard_lib=0, prefix=None):
             and "real_prefix" not in sys.__dict__
             and sys.prefix == sys.base_prefix
         ):
+            if (
+                prefix
+                and os.path.normpath(prefix) == "/usr/local"
+                and os.path.join(libpython, "dist-packages") in sys.path
+            ):
+                # GDAL specific to address https://github.com/OSGeo/gdal/issues/10242
+                # Not sure why Debian's patched distutils didn't do this
+                return os.path.join(libpython, "dist-packages")
             return os.path.join(prefix, "lib", "python3", "dist-packages")
         else:
             return os.path.join(libpython, "site-packages")

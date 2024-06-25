@@ -481,3 +481,69 @@ def test_ogr_join_23():
     ds.ReleaseResultSet(sql_lyr)
 
     ds = None
+
+
+###############################################################################
+# Test join on special fields (FID)
+
+
+def test_ogr_join_on_special_field():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr1 = ds.CreateLayer("lyr1", options=["FID=fid1"])
+    lyr1.CreateField(ogr.FieldDefn("a"))
+    lyr2 = ds.CreateLayer("lyr2", options=["FID=fid2"])
+    lyr2.CreateField(ogr.FieldDefn("b"))
+    f = ogr.Feature(lyr1.GetLayerDefn())
+    f.SetFID(1)
+    f["a"] = "a1"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,0 0))"))
+    f.SetStyleString("dummy")
+    lyr1.CreateFeature(f)
+    f = ogr.Feature(lyr1.GetLayerDefn())
+    f.SetFID(2)
+    f["a"] = "a2"
+    lyr1.CreateFeature(f)
+    f = ogr.Feature(lyr2.GetLayerDefn())
+    f.SetFID(1)
+    f["b"] = "b1"
+    lyr2.CreateFeature(f)
+    f = ogr.Feature(lyr2.GetLayerDefn())
+    f.SetFID(2)
+    f["b"] = "b2"
+    lyr2.CreateFeature(f)
+
+    with ds.ExecuteSQL(
+        "SELECT a, b FROM lyr1 LEFT JOIN lyr2 ON lyr1.fid1 = lyr2.fid2"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["a"] == "a1"
+        assert f["b"] == "b1"
+        f = sql_lyr.GetNextFeature()
+        assert f["a"] == "a2"
+        assert f["b"] == "b2"
+        assert sql_lyr.GetNextFeature() is None
+
+    # Kind of dummy, but testing Real special field ...
+    with ds.ExecuteSQL(
+        "SELECT a, b FROM lyr1 LEFT JOIN lyr2 ON lyr1.OGR_GEOM_AREA = 0.5"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["a"] == "a1"
+        assert f["b"] == "b1"
+        f = sql_lyr.GetNextFeature()
+        assert f["a"] == "a2"
+        assert f["b"] is None
+        assert sql_lyr.GetNextFeature() is None
+
+    # Kind of dummy, but testing String special field ...
+    with ds.ExecuteSQL(
+        "SELECT a, b FROM lyr1 LEFT JOIN lyr2 ON lyr1.OGR_STYLE = 'dummy'"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["a"] == "a1"
+        assert f["b"] == "b1"
+        f = sql_lyr.GetNextFeature()
+        assert f["a"] == "a2"
+        assert f["b"] is None
+        assert sql_lyr.GetNextFeature() is None

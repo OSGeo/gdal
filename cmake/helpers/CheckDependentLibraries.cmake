@@ -804,6 +804,8 @@ if (Arrow_FOUND)
     mark_as_advanced(ARROW_USE_STATIC_LIBRARIES)
 endif()
 
+gdal_check_package(OpenDrive "Enable libOpenDRIVE" CAN_DISABLE)
+
 # bindings
 
 # finding python in top of project because of common for autotest and bindings

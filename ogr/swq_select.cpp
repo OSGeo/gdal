@@ -322,7 +322,7 @@ char *swq_select::Unparse()
 /************************************************************************/
 
 int swq_select::PushField(swq_expr_node *poExpr, const char *pszAlias,
-                          int distinct_flag)
+                          bool distinct_flag, bool bHidden)
 
 {
     if (query_mode == SWQM_DISTINCT_LIST && distinct_flag)
@@ -401,6 +401,26 @@ int swq_select::PushField(swq_expr_node *poExpr, const char *pszAlias,
             "%s_%s", op->pszName, poExpr->papoSubExpr[0]->string_value));
     }
 
+    if (bHidden)
+    {
+        const char *pszDstFieldName =
+            col_def->field_alias ? col_def->field_alias : col_def->field_name;
+        if (!EQUAL(pszDstFieldName, "OGR_STYLE"))
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "HIDDEN keyword only supported on a column named OGR_STYLE");
+            CPLFree(col_def->table_name);
+            col_def->table_name = nullptr;
+            CPLFree(col_def->field_name);
+            col_def->field_name = nullptr;
+            CPLFree(col_def->field_alias);
+            col_def->field_alias = nullptr;
+            column_defs.pop_back();
+            return FALSE;
+        }
+    }
+
     col_def->table_index = -1;
     col_def->field_index = -1;
     col_def->field_type = SWQ_OTHER;
@@ -409,6 +429,7 @@ int swq_select::PushField(swq_expr_node *poExpr, const char *pszAlias,
     col_def->target_subtype = OFSTNone;
     col_def->col_func = SWQCF_NONE;
     col_def->distinct_flag = distinct_flag;
+    col_def->bHidden = bHidden;
 
     /* -------------------------------------------------------------------- */
     /*      Do we have a CAST operator in play?                             */

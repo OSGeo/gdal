@@ -192,11 +192,7 @@ class GeoParquetValidator(object):
         if self.local_schema:
             schema_j = json.loads(open(self.local_schema, "rb").read())
         else:
-            # FIXME: Remove that temporary hack once GeoParquet 1.1 schema is released
-            if version == "1.1.0":
-                schema_url = "https://github.com/opengeospatial/geoparquet/releases/download/v1.0.0/schema.json"
-            else:
-                schema_url = f"https://github.com/opengeospatial/geoparquet/releases/download/v{version}/schema.json"
+            schema_url = f"https://github.com/opengeospatial/geoparquet/releases/download/v{version}/schema.json"
 
             if schema_url not in geoparquet_schemas:
                 import urllib
@@ -216,16 +212,6 @@ class GeoParquetValidator(object):
                     )
 
             schema_j = geoparquet_schemas[schema_url]
-
-        # FIXME: Remove that temporary hack once GeoParquet 1.1 schema is released
-        if version == "1.1.0":
-            schema_j["properties"]["version"] = {"const": "1.1.0", "type": "string"}
-            schema_j["properties"]["columns"]["patternProperties"][".+"]["properties"][
-                "encoding"
-            ] = {
-                "type": "string",
-                "pattern": "^(WKB|point|linestring|polygon|multipoint|multilinestring|multipolygon)$",
-            }
 
         try:
             self._validate(schema_j, geo_j)

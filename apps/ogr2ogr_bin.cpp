@@ -104,7 +104,8 @@ MAIN_START(nArgc, papszArgv)
 
     if (psOptions == nullptr)
     {
-        Usage();
+        if (sOptionsForBinary.bShowUsageIfError)
+            Usage();
         goto exit;
     }
 

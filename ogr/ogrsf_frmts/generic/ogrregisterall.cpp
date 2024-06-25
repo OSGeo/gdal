@@ -266,6 +266,9 @@ void OGRRegisterAllInternal()
 #ifdef MIRAMON_ENABLED
     RegisterOGRMiraMon();
 #endif
+#ifdef XODR_ENABLED
+    RegisterOGRXODR();
+#endif
 
     // NOTE: you need to generally insert your own driver before that line.
 

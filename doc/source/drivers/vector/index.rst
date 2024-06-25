@@ -110,3 +110,4 @@ Vector drivers
    wfs
    xls
    xlsx
+   xodr

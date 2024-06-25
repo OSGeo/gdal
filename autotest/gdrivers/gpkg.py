@@ -4336,7 +4336,7 @@ def test_gpkg_rename_raster_table(data_type, tmp_vsimem):
     ds.ExecuteSQL("VACUUM")
     ds = None
 
-    ds = gdal.Open(test_layer_path, gdal.OF_RASTER)
+    ds = gdal.Open(test_layer_path)
     layer_name = ds.GetMetadataItem("IDENTIFIER")
     assert layer_name == "bar"
     assert ds.GetRasterBand(1).Checksum() == checksum

@@ -70,6 +70,7 @@ ogr_dependent_driver(sosi "SOSI:Systematic Organization of Spatial Information" 
 ogr_dependent_driver(wfs "OGC WFS service" "GDAL_USE_CURL;OGR_ENABLE_DRIVER_GML")
 ogr_dependent_driver(ngw "NextGIS Web" "GDAL_USE_CURL")
 ogr_dependent_driver(elastic "ElasticSearch" "GDAL_USE_CURL")
+ogr_dependent_driver(xodr OpenDRIVE "GDAL_USE_OPENDRIVE;GDAL_USE_GEOS")
 
 ogr_dependent_driver(idrisi IDRISI "GDAL_ENABLE_DRIVER_IDRISI")
 

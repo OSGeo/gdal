@@ -1157,6 +1157,20 @@ It is used by the internal libtiff library or the :ref:`raster.zarr` driver.
     Control whether to use LibLZMA. Defaults to ON when LibLZMA is found.
 
 
+libOpenDRIVE
+************
+
+`libOpenDRIVE <https://github.com/pageldev/libOpenDRIVE>`_ is required for the :ref:`vector.xodr` driver.
+
+.. option:: OpenDrive_DIR
+
+    Path to libOpenDRIVE CMake configuration directory ``<installDir>/cmake/``. The :file:`cmake/` path is usually automatically created when installing libOpenDRIVE and contains the necessary configuration files for inclusion into other project builds.
+
+.. option:: GDAL_USE_OPENDRIVE=ON/OFF
+
+    Control whether to use libOpenDRIVE. Defaults to ON when libOpenDRIVE is found.
+
+
 LibQB3
 ******
 
@@ -1166,7 +1180,6 @@ by the :ref:`raster.marfa` driver.
 .. option:: GDAL_USE_LIBQB3=ON/OFF
 
     Control whether to use LibQB3. Defaults to ON when LibQB3 is found.
-
 
 
 LibXml2
@@ -1187,7 +1200,6 @@ capabilities in GMLJP2v2 generation.
 .. option:: GDAL_USE_LIBXML2=ON/OFF
 
     Control whether to use LibXml2. Defaults to ON when LibXml2 is found.
-
 
 
 LURATECH
@@ -1569,7 +1581,7 @@ The Oracle Instant Client SDK (closed source/proprietary) is required for the
 
 .. option:: Oracle_ROOT
 
-    Path to the root directory of the Oracle Instant Client SDK
+    Path to the root directory of the Oracle Instant Client SDK.
 
 .. option:: GDAL_USE_ORACLE=ON/OFF
 
@@ -1604,7 +1616,7 @@ Regular Expressions support. It is used for the REGEXP operator in drivers using
 
 .. option:: PCRE2_LIBRARY
 
-    Path to a shared or static library file with "pcre2-8" in its name
+    Path to a shared or static library file with "pcre2-8" in its name.
 
 .. option:: GDAL_USE_PCRE2=ON/OFF
 
