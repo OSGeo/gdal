@@ -54,7 +54,7 @@ char **TAB_CSLLoad(const char *pszFname);
 char *TABEscapeString(char *pszString);
 char *TABUnEscapeString(char *pszString, GBool bSrcIsConst);
 
-char *TABCleanFieldName(const char *pszSrcName);
+char *TABCleanFieldName(const char *pszSrcName, const char *pszCharset);
 
 const char *TABUnitIdToString(int nId);
 int TABUnitIdFromString(const char *pszName);

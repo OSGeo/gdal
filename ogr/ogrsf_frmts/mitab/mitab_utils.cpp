@@ -455,7 +455,7 @@ char *TABEscapeString(char *pszString)
  *
  * The returned string should be freed by the caller.
  **********************************************************************/
-char *TABCleanFieldName(const char *pszSrcName)
+char *TABCleanFieldName(const char *pszSrcName, const char *pszEncoding)
 {
     char *pszNewName = CPLStrdup(pszSrcName);
     if (strlen(pszNewName) > 31)
@@ -481,6 +481,7 @@ char *TABCleanFieldName(const char *pszSrcName)
     // It was also verified that extended chars with accents are also
     // accepted.
     int numInvalidChars = 0;
+    bool bNeutralCharset = (pszEncoding == nullptr || strlen(pszEncoding) == 0);
     for (int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++)
     {
         if (pszSrcName[i] == '#')
@@ -493,9 +494,10 @@ char *TABCleanFieldName(const char *pszSrcName)
         }
         else if (!(pszSrcName[i] == '_' ||
                    (i != 0 && pszSrcName[i] >= '0' && pszSrcName[i] <= '9') ||
-                   (pszSrcName[i] >= 'a' && pszSrcName[i] <= 'z') ||
-                   (pszSrcName[i] >= 'A' && pszSrcName[i] <= 'Z') ||
-                   static_cast<GByte>(pszSrcName[i]) >= 192))
+                   (!bNeutralCharset ||
+                    ((pszSrcName[i] >= 'a' && pszSrcName[i] <= 'z') ||
+                     (pszSrcName[i] >= 'A' && pszSrcName[i] <= 'Z') ||
+                     static_cast<GByte>(pszSrcName[i]) >= 192))))
         {
             pszNewName[i] = '_';
             numInvalidChars++;

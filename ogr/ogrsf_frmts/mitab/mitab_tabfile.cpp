@@ -1189,7 +1189,8 @@ int TABFile::WriteTABFile()
                 if (strlen(GetEncoding()) > 0)
                     osFieldName.Recode(CPL_ENC_UTF8, GetEncoding());
 
-                char *pszCleanName = TABCleanFieldName(osFieldName);
+                char *pszCleanName =
+                    TABCleanFieldName(osFieldName, GetEncoding());
                 osFieldName = pszCleanName;
                 CPLFree(pszCleanName);
 
