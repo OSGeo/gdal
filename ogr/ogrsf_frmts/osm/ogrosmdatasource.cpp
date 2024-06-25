@@ -3400,6 +3400,8 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
         return false;
     }
 
+    m_osConfigFile = pszFilename;
+
     VSILFILE *fpConf = VSIFOpenL(pszFilename, "rb");
     if (fpConf == nullptr)
         return false;
@@ -3422,6 +3424,12 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
             pszLine++;
             const_cast<char *>(pszLine)[strlen(pszLine) - 1] =
                 '\0'; /* Evil but OK */
+
+            if (strcmp(pszLine, "general") == 0)
+            {
+                continue;
+            }
+
             int i = 0;
             for (auto &&poLayer : m_apoLayers)
             {
@@ -4383,6 +4391,15 @@ OGRLayer *OGROSMDataSource::ExecuteSQL(const char *pszSQLCommand,
         snprintf(szVal, sizeof(szVal), CPL_FRMT_GUIB,
                  OSM_GetBytesRead(m_psParser));
         return new OGROSMSingleFeatureLayer("GetBytesRead", szVal);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Special SHOW config_file_path command                           */
+    /* -------------------------------------------------------------------- */
+    if (strcmp(pszSQLCommand, "SHOW config_file_path") == 0)
+    {
+        return new OGROSMSingleFeatureLayer("config_file_path",
+                                            m_osConfigFile.c_str());
     }
 
     if (m_poResultSetLayer != nullptr)
