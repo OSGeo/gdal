@@ -25,6 +25,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <functional>
@@ -77,7 +78,7 @@ class Viewshed
     };
 
     /**
-     * A window in a raster including pixels in [xStart, xEnd) and [yStart, yEnd).
+     * A window in a raster including pixels in [xStart, xStop) and [yStart, yStop).
      */
     struct Window
     {
@@ -87,18 +88,52 @@ class Viewshed
         int yStop{};   //!< Y end position
 
         /// \brief  Window size in the X direction.
-        int xSize()
+        int xSize() const
         {
             return xStop - xStart;
         }
 
         /// \brief  Window size in the Y direction.
-        int ySize()
+        int ySize() const
         {
             return yStop - yStart;
         }
 
-        /// \brief  Shift the X dimension by nShift
+        /// \brief  Determine if the X window contains the index.
+        /// \param  nX  Index to check
+        /// \return  True if the index is contained, false otherwise.
+        bool containsX(int nX) const
+        {
+            return nX >= xStart && nX < xStop;
+        }
+
+        /// \brief  Determine if the Y window contains the index.
+        /// \param  nY  Index to check
+        /// \return  True if the index is contained, false otherwise.
+        bool containsY(int nY) const
+        {
+            return nY >= xStart && nY < yStop;
+        }
+
+        /// \brief  Determine if the window contains the index.
+        /// \param  nX  X coordinate of the index to check
+        /// \param  nY  Y coordinate of the index to check
+        /// \return  True if the index is contained, false otherwise.
+        bool contains(int nX, int nY) const
+        {
+            return containsX(nX) && containsY(nY);
+        }
+
+        /// \brief  Clamp the argument to be in the window in the X dimension.
+        /// \param  nX  Value to clamp.
+        /// \return  Clamped value.
+        int clampX(int nX) const
+        {
+            return xSize() ? std::clamp(nX, xStart, xStop - 1) : xStart;
+        }
+
+        /// \brief  Shift the X dimension by nShift.
+        /// \param  nShift  Amount to shift
         void shiftX(int nShift)
         {
             xStart += nShift;
@@ -192,6 +227,12 @@ class Viewshed
                      std::vector<double> &vLastLineVal);
     bool processFirstLine(int nX, int nY, int nLine,
                           std::vector<double> &vLastLineVal);
+    void processFirstLineLeft(int nX, int iStart, int iEnd,
+                              std::vector<double> &vResult,
+                              std::vector<double> &vThisLineVal);
+    void processFirstLineRight(int nX, int iStart, int iEnd,
+                               std::vector<double> &vResult,
+                               std::vector<double> &vThisLineVal);
     void processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
                          std::vector<double> &vResult,
                          std::vector<double> &vThisLineVal,
@@ -200,7 +241,8 @@ class Viewshed
                           std::vector<double> &vResult,
                           std::vector<double> &vThisLineVal,
                           std::vector<double> &vLastLineVal);
-    std::pair<int, int> adjustHeight(int iLine, int nX, double *const pdfNx);
+    std::pair<int, int> adjustHeight(int iLine, int nX,
+                                     std::vector<double> &thisLineVal);
     bool calcOutputExtent(int nX, int nY);
     bool createOutputDataset();
     bool lineProgress();
