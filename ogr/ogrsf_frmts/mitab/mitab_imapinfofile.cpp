@@ -629,6 +629,7 @@ static const char *const apszCharsets[][2] = {
     {"CodePage869", "CP869"},  // DOS Code Page 869 = Modern Greek
     {"LICS", ""},              // Lotus worksheet release 1,2 character set
     {"LMBCS", ""},             // Lotus worksheet release 3,4 character set
+    {"UTF-8", "UTF-8"},
     {nullptr, nullptr}};
 
 const char *IMapInfoFile::CharsetToEncoding(const char *pszCharset)
