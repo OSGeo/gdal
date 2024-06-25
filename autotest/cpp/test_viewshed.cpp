@@ -63,7 +63,7 @@ Viewshed::Options stdOptions(const Coord &observer)
 }
 
 DatasetPtr runViewshed(const int8_t *in, int xlen, int ylen,
-                       Viewshed::Options opts)
+                       const Viewshed::Options &opts)
 {
     Viewshed v(opts);
 
