@@ -391,6 +391,8 @@ class OGROSMDataSource final : public OGRDataSource
     OGROSMLayer **m_papoLayers = nullptr;
     char *m_pszName = nullptr;
 
+    std::string m_osConfigFile{};
+
     OGREnvelope m_sExtent{};
     bool m_bExtentValid = false;
 
