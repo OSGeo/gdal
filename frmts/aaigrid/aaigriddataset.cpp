@@ -863,18 +863,37 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
                  "ISG: coord type = %s not supported", osCoordType.c_str());
         return FALSE;
     }
-    if (!osCoordUnits.empty() && osCoordUnits != "deg")
+
+    auto parseDMS = [](auto str)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "ISG: coord units = %s not supported", osCoordUnits.c_str());
-        return FALSE;
+        std::string degreeSymbol{"\xc2\xb0"};
+        str.replaceAll(degreeSymbol, "D");
+        return CPLDMSToDec(str);
+    };
+
+    bool useDMS = false;
+    if (!osCoordUnits.empty())
+    {
+        if (osCoordUnits == "dms")
+        {
+            // CPLDMSToDec does not support the non ascii char for degree used in ISG.
+            // just replace it with "D" to make it compatible.
+            useDMS = true;
+        }
+        else if (osCoordUnits != "deg")
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "ISG: coord units = %s not supported",
+                     osCoordUnits.c_str());
+            return FALSE;
+        }
     }
-    double dfLatMin = CPLAtof(osLatMin);
-    double dfLatMax = CPLAtof(osLatMax);
-    double dfLonMin = CPLAtof(osLonMin);
-    double dfLonMax = CPLAtof(osLonMax);
-    double dfDeltaLon = CPLAtof(osDeltaLon);
-    double dfDeltaLat = CPLAtof(osDeltaLat);
+    double dfLatMin = useDMS ? parseDMS(osLatMin) : CPLAtof(osLatMin);
+    double dfLatMax = useDMS ? parseDMS(osLatMax) : CPLAtof(osLatMax);
+    double dfLonMin = useDMS ? parseDMS(osLonMin) : CPLAtof(osLonMin);
+    double dfLonMax = useDMS ? parseDMS(osLonMax) : CPLAtof(osLonMax);
+    double dfDeltaLon = useDMS ? parseDMS(osDeltaLon) : CPLAtof(osDeltaLon);
+    double dfDeltaLat = useDMS ? parseDMS(osDeltaLat) : CPLAtof(osDeltaLat);
     if (dfVersion >= 2.0)
     {
         dfLatMin -= dfDeltaLat / 2.0;
