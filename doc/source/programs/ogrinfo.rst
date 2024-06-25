@@ -529,4 +529,10 @@ Adding a column to an input file:
 
    ogrinfo input.shp -sql "ALTER TABLE input ADD fieldX float"
 
+Sometimes there is no input file involved in a calculation. In such cases one may
+use the ``:memory:`` input file which is a in-memory empty SQLite file (and the SQLite SQL dialect will be implicitly used).
+
+.. code-block:: bash
+
+    ogrinfo :memory: -sql "SELECT ST_Buffer(ST_GeomFromText('POINT(0 0)'), 1)"
 

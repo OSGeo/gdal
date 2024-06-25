@@ -123,3 +123,17 @@ def test_isg_header_larger_than_1024bytes():
         ds = gdal.Open("data/isg/header_larger_than_1024bytes.isg")
     expected_gt = [12.99375, 0.0125, 0.0, 47.00416666666666, 0.0, -0.008333333333333333]
     assert ds.GetGeoTransform() == pytest.approx(expected_gt, rel=1e-8)
+
+
+###############################################################################
+# Test if we can read dms angles
+
+
+def test_isg_dms():
+
+    gdal.ErrorReset()
+    # Header of https://www.gsi.go.jp/butsuri/data/GSIGEO2024beta.zip
+    ds = gdal.Open("data/isg/header_dms.isg")
+    assert gdal.GetLastErrorMsg() == ""
+    expected_gt = [119.9875, 0.025, 0.0, 50.0083333333, 0.0, -0.01666666666]
+    assert ds.GetGeoTransform() == pytest.approx(expected_gt, rel=1e-8)
