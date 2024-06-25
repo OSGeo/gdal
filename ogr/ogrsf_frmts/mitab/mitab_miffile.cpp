@@ -1946,6 +1946,10 @@ int MIFFile::SetCharset(const char *pszCharset)
     {
         m_poMIFFile->SetEncoding(CharsetToEncoding(pszCharset));
     }
+    if (EQUAL(pszCharset, "UTF-8"))
+    {
+        m_nVersion = std::max(m_nVersion, 1520);
+    }
     return 0;
 }
 
