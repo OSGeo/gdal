@@ -591,6 +591,7 @@ const char *IMapInfoFile::GetCharset() const
 
 // Table is adopted from
 // http://www.i-signum.com/Formation/download/MB_ReferenceGuide.pdf pp. 127-128
+// NOTE: if modifying this table, please keep doc/source/drivers/vector/mapinfo_encodings.csv in sync
 static const char *const apszCharsets[][2] = {
     {"Neutral", ""},                 // No character conversions performed.
     {"ISO8859_1", "ISO-8859-1"},     // ISO 8859-1 (UNIX)
