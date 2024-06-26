@@ -31,7 +31,7 @@ C/C++ standards
 ---------------
 
 The current C and C++ standards adopted by GDAL/OGR are C99 and C++17
-(last updated per :ref:`rfc-98`)`
+(last updated per :ref:`rfc-98`).
 
 Variable naming
 ---------------
@@ -47,8 +47,7 @@ and potentially semantics of a variable. The following are some prefixes
 used in GDAL/OGR.
 
 -  *a*: array
--  *b*: C/C++ bool. In C code that pre-dates C99 adoption, it is also used for
-        ints with only TRUE/FALSE values.
+-  *b*: C/C++ bool. In C code that pre-dates C99 adoption, it is also used for ints with only TRUE/FALSE values.
 -  *by*: byte (GByte / unsigned char).
 -  *df*: floating point value (double precision)
 -  *e*: enumeration
@@ -78,25 +77,45 @@ variables.
 It may also be noted that the standard convention for variable names is
 to capitalize each word in a variable name.
 
-Memory allocation
------------------
+Function and class naming
+-------------------------
 
-As per :ref:`rfc-19`, you can use VSIMalloc2(x, y) instead of
-doing CPLMalloc(x \* y) or VSIMalloc(x \* y). VSIMalloc2 will detect
-potential overflows in the multiplication and return a NULL pointer if
-it happens. This can be useful in GDAL raster drivers where x and y are
-related to the raster dimensions or raster block sizes. Similarly,
-VSIMalloc3(x, y, z) can be used as a replacement for CPLMalloc(x \* y \*
-z).
+- Functions and classes should have a selective enough namespace ("GDAL" or "OGR" prefix, or use of C++ namespace) to avoid symbol collision.
 
 File naming and code formatting
 -------------------------------
 
+- All source files (.h, .c, .cpp, .py, etc.) should have a header with copyright attribution and the text of the GDAL X/MIT license.
 - Use lower case filenames.
 - Use .cpp extension for C++ files (not .cc).
-- Code formatting rules are defined in :source_file:`.clang-format`. The
-  pre-commit utility can be used to enforce them automatically.
+- C/C++ code formatting rules are defined in :source_file:`.clang-format`. Python code formatting
+  is enforced by Black. The pre-commit utility should be used to enforce them automatically. See :ref:`commit_hooks`.
 
+Memory allocation
+-----------------
+
+Large memory allocations should be performed using the :cpp:func:`VSIMalloc` family of functions, which will return ``nullptr`` on allocation failure.
+As per :ref:`rfc-19`, you can use ``VSIMalloc2(x, y)`` instead of
+doing ``CPLMalloc(x * y)`` or ``VSIMalloc(x * y)``. :cpp:func:`VSIMalloc2` will detect
+potential overflows in the multiplication and return a NULL pointer if
+it happens. This can be useful in GDAL raster drivers where x and y are
+related to the raster dimensions or raster block sizes. Similarly,
+``VSIMalloc3(x, y, z)`` can be used as a replacement for ``CPLMalloc(x * y * z)``.
+
+When working with standard library data structures such as ``std::vector`` that may throw ``std::bad_alloc``, a try/catch block should be used around blocks that may allocate a large amount of memory.
+
+Adding a new driver
+-------------------
+
+- If the driver depends on a third-party library, compilation of the driver must be made conditional on the presence of the library. Drivers should try to re-use existing library dependencies as much as possible, e.g. Expat for SAX XML parsing.
+- For a vector driver, check that the Open() method of the driver (often delegated to a Open() method of the datasource) is selective enough (i.e. it will not accept data files that are not meant for the driver), and robust enough (it will not crash for small variations w.r.t content that it would recognize). Check that it can deal with unusual filenames. For a GDAL driver, similar checks, as well for the optional Identify() method.
+- A set of tests covering the driver should be added to the Python test suite. If appropriate, small sample data files may be added to autotest/gdrivers/data or autotest/ogr/data. The ``test_ogrsf`` utility and ``GDALTest`` class may simplify testing of basic driver functionality.
+- A documentation page should be created for the driver. Documentation should, at a minimum, briefly describe the format handled by the driver and, when relevant, describe the particular syntax for the connection string, creation options, configuration options, etc. The documentation should provide a link to a more detailed format description and mention needed third-party libraries.
+
+Writing tests
+-------------
+
+See :ref:`writing_tests`.
 
 Git usage
 ---------
@@ -183,10 +202,12 @@ actually fixes it)
 
     Details here...
 
+.. _commit_hooks:
+
 Commit hooks
 ^^^^^^^^^^^^
 
-GDAL provides pre-commit hooks to run code linters before a commit is made. The
+GDAL provides pre-commit hooks to run code formatters and linters before a commit is made. The
 hooks are cloned with the repository and can be installed using
 `pre-commit <https://pre-commit.com>`_:
 
