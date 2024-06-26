@@ -174,7 +174,7 @@ raster data is only supported since GDAL 2.1.0.
 
     Force the output bands to be of the indicated data type. Defaults to ``Float64``,
     unless the attribute field to burn is of type ``Int64``, in which case ``Int64``
-    is used for the output raster data type.
+    is used for the output raster data type if the output driver supports it.
 
 .. option:: -optim {AUTO|VECTOR|RASTER}
 
