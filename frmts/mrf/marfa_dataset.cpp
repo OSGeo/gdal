@@ -604,7 +604,7 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
     int version = 0;  // Current
     int zslice = 0;
     string fn;        // Used to parse and adjust the file name
-    string insidefn;  // vsi inside file name
+    string insidefn;  // inside tar file name
 
     // Different ways to open an MRF
     if (poOpenInfo->nHeaderBytes >= 10)
@@ -654,7 +654,12 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
 
     MRFDataset *ds = new MRFDataset();
-    ds->fname = (insidefn.size() == 0) ? pszFileName : insidefn;
+    ds->fname = pszFileName;
+    if (!insidefn.empty())
+    {
+        ds->publicname = pszFileName;
+        ds->fname = insidefn;
+    }
     ds->eAccess = poOpenInfo->eAccess;
     ds->level = level;
     ds->zslice = zslice;
@@ -1023,10 +1028,13 @@ char **MRFDataset::GetFileList()
 {
     char **papszFileList = nullptr;
 
+    string usename = fname;
+    if (!publicname.empty())
+        usename = publicname;
     // Add the header file name if it is real
     VSIStatBufL sStat;
-    if (VSIStatExL(fname, &sStat, VSI_STAT_EXISTS_FLAG) == 0)
-        papszFileList = CSLAddString(papszFileList, fname);
+    if (VSIStatExL(usename.c_str(), &sStat, VSI_STAT_EXISTS_FLAG) == 0)
+        papszFileList = CSLAddString(papszFileList, usename.c_str());
 
     // These two should be real
     // We don't really want to add these files, since they will be erased when

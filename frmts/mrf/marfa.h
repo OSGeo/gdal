@@ -554,6 +554,7 @@ class MRFDataset final : public GDALPamDataset
 
     // MRF file name
     CPLString fname;
+    CPLString publicname;
 
     // The source to be cached in this MRF
     CPLString source;
