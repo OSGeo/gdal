@@ -1189,8 +1189,8 @@ int TABFile::WriteTABFile()
                 if (strlen(GetEncoding()) > 0)
                     osFieldName.Recode(CPL_ENC_UTF8, GetEncoding());
 
-                char *pszCleanName =
-                    TABCleanFieldName(osFieldName, GetEncoding());
+                char *pszCleanName = TABCleanFieldName(
+                    osFieldName, GetEncoding(), m_bStrictLaundering);
                 osFieldName = pszCleanName;
                 CPLFree(pszCleanName);
 
@@ -1775,6 +1775,15 @@ int TABFile::SetCharset(const char *pszCharset)
         m_nVersion = std::max(m_nVersion, 1520);
     }
     return 0;
+}
+
+void TABFile::SetStrictLaundering(bool bStrictLaundering)
+{
+    IMapInfoFile::SetStrictLaundering(bStrictLaundering);
+    if (!bStrictLaundering)
+    {
+        m_nVersion = std::max(m_nVersion, 1520);
+    }
 }
 
 /**********************************************************************

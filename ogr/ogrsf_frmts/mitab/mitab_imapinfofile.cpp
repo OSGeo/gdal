@@ -684,6 +684,11 @@ void IMapInfoFile::SetEncoding(const char *pszEncoding)
     SetCharset(EncodingToCharset(pszEncoding));
 }
 
+void IMapInfoFile::SetStrictLaundering(bool bStrictLaundering)
+{
+    m_bStrictLaundering = bStrictLaundering;
+}
+
 int IMapInfoFile::TestUtf8Capability() const
 {
     const char *pszEncoding(GetEncoding());
