@@ -482,7 +482,7 @@ static GDALDatasetH CreateOutputDataset(
     OGREnvelope sEnvelop, GDALDriverH hDriver, const char *pszDest, int nXSize,
     int nYSize, double dfXRes, double dfYRes, bool bTargetAlignedPixels,
     int nBandCount, GDALDataType eOutputType, char **papszCreationOptions,
-    const std::vector<double> &adfInitVals, int bNoDataSet, double dfNoData)
+    const std::vector<double> &adfInitVals, const char *pszNoData)
 {
     bool bFirstLayer = true;
     char *pszWKT = nullptr;
@@ -598,12 +598,16 @@ static GDALDatasetH CreateOutputDataset(
         }
     }*/
 
-    if (bNoDataSet)
+    if (pszNoData)
     {
         for (int iBand = 0; iBand < nBandCount; iBand++)
         {
             GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, iBand + 1);
-            GDALSetRasterNoDataValue(hBand, dfNoData);
+            if (GDALGetRasterDataType(hBand) == GDT_Int64)
+                GDALSetRasterNoDataValueAsInt64(hBand,
+                                                CPLAtoGIntBig(pszNoData));
+            else
+                GDALSetRasterNoDataValue(hBand, CPLAtof(pszNoData));
         }
     }
 
@@ -649,8 +653,7 @@ struct GDALRasterizeOptions
     char **papszCreationOptions;
     GDALDataType eOutputType;
     std::vector<double> adfInitVals;
-    int bNoDataSet;
-    double dfNoData;
+    char *pszNoData;
     OGREnvelope sEnvelop;
     int nXSize, nYSize;
     OGRSpatialReferenceH hSRS;
@@ -832,7 +835,7 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
                     psOptions->bTargetAlignedPixels,
                     static_cast<int>(psOptions->anBandList.size()), eOutputType,
                     psOptions->papszCreationOptions, psOptions->adfInitVals,
-                    psOptions->bNoDataSet, psOptions->dfNoData);
+                    psOptions->pszNoData);
                 if (hDstDS == nullptr)
                 {
                     GDALDatasetReleaseResultSet(hSrcDataset, hLayer);
@@ -910,7 +913,7 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
             psOptions->dfYRes, psOptions->bTargetAlignedPixels,
             static_cast<int>(psOptions->anBandList.size()), eOutputType,
             psOptions->papszCreationOptions, psOptions->adfInitVals,
-            psOptions->bNoDataSet, psOptions->dfNoData);
+            psOptions->pszNoData);
         if (hDstDS == nullptr)
         {
             GDALRasterizeOptionsFree(psOptionsToFree);
@@ -1020,8 +1023,7 @@ GDALRasterizeOptionsNew(char **papszArgv,
     psOptions->dfXRes = 0;
     psOptions->dfYRes = 0;
     psOptions->eOutputType = GDT_Unknown;
-    psOptions->bNoDataSet = FALSE;
-    psOptions->dfNoData = 0;
+    psOptions->pszNoData = nullptr;
     psOptions->nXSize = 0;
     psOptions->nYSize = 0;
     psOptions->hSRS = nullptr;
@@ -1195,8 +1197,8 @@ GDALRasterizeOptionsNew(char **papszArgv,
         }
         else if (i < argc - 1 && EQUAL(papszArgv[i], "-a_nodata"))
         {
-            psOptions->dfNoData = CPLAtof(papszArgv[i + 1]);
-            psOptions->bNoDataSet = TRUE;
+            CPLFree(psOptions->pszNoData);
+            psOptions->pszNoData = CPLStrdup(papszArgv[i + 1]);
             i += 1;
             psOptions->bCreateOutput = true;
         }
@@ -1472,6 +1474,7 @@ void GDALRasterizeOptionsFree(GDALRasterizeOptions *psOptions)
     CPLFree(psOptions->pszDialect);
     CPLFree(psOptions->pszBurnAttribute);
     CPLFree(psOptions->pszWHERE);
+    CPLFree(psOptions->pszNoData);
     OSRDestroySpatialReference(psOptions->hSRS);
 
     delete psOptions;
