@@ -793,6 +793,36 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
         }
     }
 
+    const auto GetOutputDataType = [&](OGRLayerH hLayer)
+    {
+        CPLAssert(bCreateOutput);
+        CPLAssert(hDriver);
+        GDALDataType eOutputType = psOptions->eOutputType;
+        if (eOutputType == GDT_Unknown &&
+            psOptions->pszBurnAttribute != nullptr)
+        {
+            OGRFeatureDefnH hLayerDefn = OGR_L_GetLayerDefn(hLayer);
+            const int iBurnField =
+                OGR_FD_GetFieldIndex(hLayerDefn, psOptions->pszBurnAttribute);
+            if (iBurnField >= 0 && OGR_Fld_GetType(OGR_FD_GetFieldDefn(
+                                       hLayerDefn, iBurnField)) == OFTInteger64)
+            {
+                const char *pszMD = GDALGetMetadataItem(
+                    hDriver, GDAL_DMD_CREATIONDATATYPES, nullptr);
+                if (pszMD && CPLStringList(CSLTokenizeString2(pszMD, " ", 0))
+                                     .FindString("Int64") >= 0)
+                {
+                    eOutputType = GDT_Int64;
+                }
+            }
+        }
+        if (eOutputType == GDT_Unknown)
+        {
+            eOutputType = GDT_Float64;
+        }
+        return eOutputType;
+    };
+
     /* -------------------------------------------------------------------- */
     /*      Process SQL request.                                            */
     /* -------------------------------------------------------------------- */
@@ -809,25 +839,7 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
                 std::vector<OGRLayerH> ahLayers;
                 ahLayers.push_back(hLayer);
 
-                GDALDataType eOutputType = psOptions->eOutputType;
-                if (eOutputType == GDT_Unknown &&
-                    psOptions->pszBurnAttribute != nullptr)
-                {
-                    OGRFeatureDefnH hLayerDefn = OGR_L_GetLayerDefn(hLayer);
-                    int iBurnField = OGR_FD_GetFieldIndex(
-                        hLayerDefn, psOptions->pszBurnAttribute);
-                    if (iBurnField >= 0 &&
-                        OGR_Fld_GetType(OGR_FD_GetFieldDefn(
-                            hLayerDefn, iBurnField)) == OFTInteger64)
-                    {
-                        eOutputType = GDT_Int64;
-                    }
-                }
-                if (eOutputType == GDT_Unknown)
-                {
-                    eOutputType = GDT_Float64;
-                }
-
+                const GDALDataType eOutputType = GetOutputDataType(hLayer);
                 hDstDS = CreateOutputDataset(
                     ahLayers, psOptions->hSRS, psOptions->sEnvelop, hDriver,
                     pszDest, psOptions->nXSize, psOptions->nYSize,
@@ -885,18 +897,10 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
                 GDALRasterizeOptionsFree(psOptionsToFree);
                 return nullptr;
             }
-            if (eOutputType == GDT_Unknown &&
-                psOptions->pszBurnAttribute != nullptr)
+            if (eOutputType == GDT_Unknown)
             {
-                OGRFeatureDefnH hLayerDefn = OGR_L_GetLayerDefn(hLayer);
-                int iBurnField = OGR_FD_GetFieldIndex(
-                    hLayerDefn, psOptions->pszBurnAttribute);
-                if (iBurnField >= 0 &&
-                    OGR_Fld_GetType(OGR_FD_GetFieldDefn(
-                        hLayerDefn, iBurnField)) == OFTInteger64)
-                {
+                if (GetOutputDataType(hLayer) == GDT_Int64)
                     eOutputType = GDT_Int64;
-                }
             }
 
             ahLayers.push_back(hLayer);
