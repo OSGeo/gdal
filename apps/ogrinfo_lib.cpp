@@ -2106,7 +2106,7 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
 
                 CPLJSONObject oLayer;
                 oLayerArray.Add(oLayer);
-                if (!psOptions->bAllLayers)
+                if (nLayerCount > 1 && !psOptions->bAllLayers)
                 {
                     if (!bJson)
                         Concat(osRet, psOptions->bStdoutOutput,
