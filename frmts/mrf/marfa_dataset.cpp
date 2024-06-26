@@ -603,7 +603,7 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
     int level = -1;   // All levels
     int version = 0;  // Current
     int zslice = 0;
-    string fn;  // Used to parse and adjust the file name
+    string fn;        // Used to parse and adjust the file name
     string insidefn;  // vsi inside file name
 
     // Different ways to open an MRF
