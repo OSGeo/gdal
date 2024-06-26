@@ -147,7 +147,6 @@ Example:
     [.sentinel_s2_l1c]
     path=/vsis3/sentinel-s2-l1c
     AWS_REQUEST_PAYER=requester
-    \endverbatim
 
 
 
