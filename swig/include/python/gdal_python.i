@@ -4200,15 +4200,15 @@ def Footprint(destNameOrDestDS, srcDS, **kwargs):
 
     1. Special mode to get deserialized GeoJSON (in EPSG:4326 if dstSRS not specified):
 
-    >>> deserialized_geojson = gdal.FootPrint(None, src_ds, format="GeoJSON")
+    >>> deserialized_geojson = gdal.Footprint(None, src_ds, format="GeoJSON")
 
     2. Special mode to get WKT:
 
-    >>> wkt = gdal.FootPrint(None, src_ds, format="WKT")
+    >>> wkt = gdal.Footprint(None, src_ds, format="WKT")
 
     3. Get result in a GeoPackage
 
-    >>> gdal.FootPrintf("out.gpkg", src_ds, format="GPKG")
+    >>> gdal.Footprint("out.gpkg", src_ds, format="GPKG")
 
     """
 
