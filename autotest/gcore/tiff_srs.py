@@ -621,7 +621,7 @@ def test_tiff_srs_proj4(proj4):
 
 def _create_geotiff1_1_from_copy_and_compare(srcfilename, options=[]):
     if int(gdal.GetDriverByName("GTiff").GetMetadataItem("LIBGEOTIFF")) < 1600:
-        pytest.skip()
+        pytest.skip("libgeotiff >= 1.6.0 required")
 
     src_ds = gdal.Open(srcfilename)
     tmpfile = "/vsimem/tmp.tif"
@@ -1250,8 +1250,10 @@ def test_tiff_srs_projected_GTCitationGeoKey_with_underscore_and_GeogTOWGS84GeoK
 
 
 def test_tiff_srs_write_compound_with_non_epsg_vert_crs():
-
     """Test bugfix for https://github.com/OSGeo/gdal/issues/7833"""
+
+    if int(gdal.GetDriverByName("GTiff").GetMetadataItem("LIBGEOTIFF")) < 1600:
+        pytest.skip("libgeotiff >= 1.6.0 required")
 
     filename = "/vsimem/test_tiff_srs_write_compound_with_non_epsg_vert_crs.tif"
     srs = osr.SpatialReference()
@@ -1348,6 +1350,9 @@ def test_tiff_srs_read_compound_without_EPSG_code():
 
     """Test case where identification of code for CompoundCRS (added for
     bugfix of https://github.com/OSGeo/gdal/issues/7982) doesn't trigger"""
+
+    if int(gdal.GetDriverByName("GTiff").GetMetadataItem("LIBGEOTIFF")) < 1600:
+        pytest.skip("libgeotiff >= 1.6.0 required")
 
     filename = "/vsimem/test_tiff_srs_read_compound_without_EPSG_code.tif"
     srs = osr.SpatialReference()
