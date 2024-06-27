@@ -785,3 +785,15 @@ Advanced examples
 
         ogr2ogr -sql "SELECT geometry FROM PLSSPoint" -dialect SQLite \
           -lco GEOMETRY=AS_XY -f CSV /vsistdout/ CadNSDI.shp
+
+No input file
+-------------
+
+Sometimes when creating output, no input files are involved. In such
+cases one may use the ``:memory:`` input file which is a in-memory empty
+SQLite file.
+
+.. code-block:: bash
+
+    ogr2ogr f.csv :memory: -lco GEOMETRY=AS_WKT -sql \
+    "SELECT ST_Buffer(ST_GeomFromText('POINT(0 0)'), 1, 1) AS WKT"
