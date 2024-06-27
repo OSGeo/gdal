@@ -30,3 +30,15 @@ cmake -S ${GDAL_SOURCE_DIR:=..}/frmts/mrsid -DMRSID_ROOT=/usr/local -DCMAKE_PREF
 cmake --build . "-j$(nproc)"
 test -f gdal_MrSID.so
 cd ..
+
+# Test building OCI driver in standalone mode
+mkdir build_oci
+cd build_oci
+wget https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip
+wget https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip
+unzip -o instantclient-basic-linux.x64-19.23.0.0.0dbru.zip
+unzip -o instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip
+cmake -S "${GDAL_SOURCE_DIR:=..}/ogr/ogrsf_frmts/oci" "-DOracle_ROOT=$PWD/instantclient_19_23" -DCMAKE_PREFIX_PATH=/tmp/install-gdal
+cmake --build . "-j$(nproc)"
+test -f ogr_OCI.so
+cd ..
