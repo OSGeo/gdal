@@ -245,12 +245,13 @@ def test_mrf_in_tar():
     with tarfile.TarFile("plain.mrf.tar", "w", format=tarfile.GNU_FORMAT) as tar:
         for ext in ("mrf", "idx", "pzp"):
             tar.add("plain." + ext)
+    for ext in ("mrf", "idx", "pzp", "mrf.aux.xml"):
+        gdal.Unlink("plain." + ext)
     ds = gdal.Open("plain.mrf.tar")
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
     assert cs == 4672
-    for ext in ("mrf.tar", "mrf", "idx", "pzp", "mrf.aux.xml"):
-        gdal.Unlink("plain." + ext)
+    gdal.Unlink("plain.mrf.tar")
 
 
 def test_mrf_overview_nnb_fact_2():
