@@ -235,10 +235,10 @@ def test_mrf_zen_test():
 
 def test_mrf_in_tar():
     import tarfile
-    out_ds = gdal.Translate(
+
+    gdal.Translate(
         "plain.mrf", "data/byte.tif", format="MRF", creationOptions=["COMPRESS=DEFLATE"]
     )
-    out_ds = None
     with tarfile.TarFile("plain.mrf.tar", "w", format=tarfile.GNU_FORMAT) as tar:
         for ext in ("mrf", "idx", "pzp"):
             tar.add("plain." + ext)
