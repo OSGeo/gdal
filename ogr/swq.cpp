@@ -497,15 +497,44 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
                         brokendowntime.tm_sec =
                             static_cast<int>(sField.Date.Second);
                         summary.count++;
-                        summary.sum += CPLYMDHMSToUnixTime(&brokendowntime);
-                        summary.sum +=
+                        summary.sum_acc += CPLYMDHMSToUnixTime(&brokendowntime);
+                        summary.sum_acc +=
                             fmod(static_cast<double>(sField.Date.Second), 1.0);
                     }
                 }
                 else
                 {
                     summary.count++;
-                    summary.sum += CPLAtof(value);
+
+                    // Cf KahanBabushkaNeumaierSum of
+                    // https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements
+                    // We set a number of temporary variables as volatile, to
+                    // prevent potential undesired compiler optimizations.
+
+                    const double dfNewVal = CPLAtof(value);
+                    const volatile double new_sum_acc =
+                        summary.sum_acc + dfNewVal;
+                    if (summary.sum_only_finite_terms &&
+                        std::isfinite(dfNewVal))
+                    {
+                        if (std::fabs(summary.sum_acc) >= std::fabs(dfNewVal))
+                        {
+                            const volatile double diff =
+                                (summary.sum_acc - new_sum_acc);
+                            summary.sum_correction += (diff + dfNewVal);
+                        }
+                        else
+                        {
+                            const volatile double diff =
+                                (dfNewVal - new_sum_acc);
+                            summary.sum_correction += (diff + summary.sum_acc);
+                        }
+                    }
+                    else
+                    {
+                        summary.sum_only_finite_terms = false;
+                    }
+                    summary.sum_acc = new_sum_acc;
                 }
             }
             break;
