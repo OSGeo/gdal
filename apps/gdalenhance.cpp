@@ -598,6 +598,8 @@ static int ComputeEqualizationLUTs(GDALDatasetH hDataset, int nLUTBins,
             panLUT[iLUT] = std::max(0, std::min(nLUTBins - 1, nValue));
         }
 
+        CPLFree(panCumHist);
+
         (*ppapanLUTs)[iBand] = panLUT;
     }
 
