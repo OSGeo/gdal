@@ -4569,11 +4569,10 @@ void GTiffDataset::ApplyPamInfo()
 
         if (i == 1)
         {
-            auto poCT = poBand->GDALPamRasterBand::GetColorTable();
+            const auto poCT = poBand->GDALPamRasterBand::GetColorTable();
             if (poCT)
             {
-                delete m_poColorTable;
-                m_poColorTable = poCT->Clone();
+                m_poColorTable.reset(poCT->Clone());
             }
         }
     }
@@ -5215,7 +5214,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         // data types (per #1882)
         if (m_nBitsPerSample <= 16 && m_nPhotometric == PHOTOMETRIC_MINISWHITE)
         {
-            m_poColorTable = new GDALColorTable();
+            m_poColorTable = std::make_unique<GDALColorTable>();
             const int nColorCount = 1 << m_nBitsPerSample;
 
             for (int iColor = 0; iColor < nColorCount; ++iColor)
@@ -5231,12 +5230,12 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         }
         else
         {
-            m_poColorTable = nullptr;
+            m_poColorTable.reset();
         }
     }
     else
     {
-        m_poColorTable = new GDALColorTable();
+        m_poColorTable = std::make_unique<GDALColorTable>();
 
         const int nColorCount = 1 << m_nBitsPerSample;
 

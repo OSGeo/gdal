@@ -308,9 +308,7 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
         bDroppedRef = true;
     }
 
-    if (m_poColorTable != nullptr)
-        delete m_poColorTable;
-    m_poColorTable = nullptr;
+    m_poColorTable.reset();
 
     if (m_hTIFF)
     {

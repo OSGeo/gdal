@@ -2833,7 +2833,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset *poSrcDS,
         if (m_nColorTableMultiplier == 0)
             m_nColorTableMultiplier = DEFAULT_COLOR_TABLE_MULTIPLIER_257;
 
-        CreateTIFFColorTable(m_poColorTable, nOvBitsPerSample,
+        CreateTIFFColorTable(m_poColorTable.get(), nOvBitsPerSample,
                              m_nColorTableMultiplier, anTRed, anTGreen, anTBlue,
                              panRed, panGreen, panBlue);
     }
@@ -3124,7 +3124,7 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
         if (m_nColorTableMultiplier == 0)
             m_nColorTableMultiplier = DEFAULT_COLOR_TABLE_MULTIPLIER_257;
 
-        CreateTIFFColorTable(m_poColorTable, nOvBitsPerSample,
+        CreateTIFFColorTable(m_poColorTable.get(), nOvBitsPerSample,
                              m_nColorTableMultiplier, anTRed, anTGreen, anTBlue,
                              panRed, panGreen, panBlue);
     }
@@ -6361,7 +6361,7 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
         TIFFGetField(l_hTIFF, TIFFTAG_COLORMAP, &panRed, &panGreen, &panBlue))
     {
 
-        poDS->m_poColorTable = new GDALColorTable();
+        poDS->m_poColorTable = std::make_unique<GDALColorTable>();
 
         const int nColorCount = 1 << poDS->m_nBitsPerSample;
 

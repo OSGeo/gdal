@@ -624,11 +624,7 @@ CPLErr GTiffRasterBand::SetColorTable(GDALColorTable *poCT)
             TIFFUnsetField(m_poGDS->m_hTIFF, TIFFTAG_COLORMAP);
         }
 
-        if (m_poGDS->m_poColorTable)
-        {
-            delete m_poGDS->m_poColorTable;
-            m_poGDS->m_poColorTable = nullptr;
-        }
+        m_poGDS->m_poColorTable.reset();
 
         return CE_None;
     }
@@ -696,10 +692,7 @@ CPLErr GTiffRasterBand::SetColorTable(GDALColorTable *poCT)
         eErr = GDALPamRasterBand::SetColorTable(poCT);
     }
 
-    if (m_poGDS->m_poColorTable)
-        delete m_poGDS->m_poColorTable;
-
-    m_poGDS->m_poColorTable = poCT->Clone();
+    m_poGDS->m_poColorTable.reset(poCT->Clone());
     m_eBandInterp = GCI_PaletteIndex;
 
     return eErr;
