@@ -412,7 +412,16 @@ static KmlPtr OGRLIBKMLCreateOGCKml22(KmlFactory *poFactory,
 
 bool OGRLIBKMLDataSource::WriteKmz()
 {
-    void *hZIP = CPLCreateZip(m_pszName, nullptr);
+    std::string osTmpFilename;
+    if (!VSISupportsRandomWrite(m_pszName, false) ||
+        EQUAL(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", ""),
+              "FORCED"))
+    {
+        osTmpFilename = CPLGenerateTempFilename(CPLGetBasename(m_pszName));
+    }
+
+    void *hZIP = CPLCreateZip(
+        osTmpFilename.empty() ? m_pszName : osTmpFilename.c_str(), nullptr);
 
     if (!hZIP)
     {
@@ -536,6 +545,19 @@ bool OGRLIBKMLDataSource::WriteKmz()
     }
 
     CPLCloseZip(hZIP);
+
+    if (!osTmpFilename.empty())
+    {
+        if (bRet)
+        {
+            bRet = CPLCopyFile(m_pszName, osTmpFilename.c_str()) == 0;
+            if (!bRet)
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Cannot copy temporary file to %s", m_pszName);
+        }
+        VSIUnlink(osTmpFilename.c_str());
+    }
+
     return bRet;
 }
 
