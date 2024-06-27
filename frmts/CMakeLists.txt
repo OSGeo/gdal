@@ -158,7 +158,7 @@ gdal_dependent_format(basisu_ktx2 "Basis Universal and KTX2 texture formats" "GD
 
 # ######################################################################################################################
 # driver with proprietary libraries Kakadu software SDK
-gdal_dependent_format(jp2kak "JPEG-2000 (based on Kakadu)" "GDAL_USE_KDU")
+include(jp2kak/driver_declaration.cmake)
 gdal_dependent_format(jpipkak "JPIP Streaming" "GDAL_USE_KDU")
 # Luratech SDK
 gdal_dependent_format(jp2lura "JPEG-2000 (based on Luratech)" "GDAL_USE_LURATECH")

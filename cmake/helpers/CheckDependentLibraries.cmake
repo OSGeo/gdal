@@ -519,7 +519,7 @@ option(GDAL_USE_PUBLICDECOMPWT
        "Set ON to build MSG driver and download external https://gitlab.eumetsat.int/open-source/PublicDecompWT" OFF)
 
 # proprietary libraries KAKADU
-gdal_check_package(KDU "Enable KAKADU" CAN_DISABLE)
+include(CheckDependentLibrariesKakadu)
 gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 
 gdal_check_package(Arrow "Apache Arrow C++ library" CONFIG CAN_DISABLE)
