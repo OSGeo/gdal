@@ -187,7 +187,7 @@ class GPKGChecker(object):
                     % (name, table_name, expected_notnull, notnull),
                 )
                 # GeoPackage ETS suite accepts CURRENT_TIMESTAMP instead of 'now'
-                # Spatialite at time of writting uses CURRENT_TIMESTAMP.
+                # Spatialite at time of writing uses CURRENT_TIMESTAMP.
                 # https://github.com/opengeospatial/ets-gpkg12/blob/04b4a0b8c7d90755b016182e2992684f198da1ba/src/main/java/org/opengis/cite/gpkg12/TableVerifier.java#L173
                 if (
                     default != expected_default
