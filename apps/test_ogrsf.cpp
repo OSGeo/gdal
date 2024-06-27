@@ -1499,20 +1499,30 @@ bye:
 static const char *GetLayerNameForSQL(GDALDataset *poDS,
                                       const char *pszLayerName)
 {
-    char ch;
-    for (int i = 0; (ch = pszLayerName[i]) != 0; i++)
+    /* Only quote if needed. Quoting conventions depend on the driver... */
+    if (!EQUAL(pszLayerName, "SELECT") && !EQUAL(pszLayerName, "AS") &&
+        !EQUAL(pszLayerName, "CAST") && !EQUAL(pszLayerName, "FROM") &&
+        !EQUAL(pszLayerName, "JOIN") && !EQUAL(pszLayerName, "WHERE") &&
+        !EQUAL(pszLayerName, "ON") && !EQUAL(pszLayerName, "USING") &&
+        !EQUAL(pszLayerName, "ORDER") && !EQUAL(pszLayerName, "BY") &&
+        !EQUAL(pszLayerName, "ASC") && !EQUAL(pszLayerName, "DESC") &&
+        !EQUAL(pszLayerName, "GROUP") && !EQUAL(pszLayerName, "LIMIT") &&
+        !EQUAL(pszLayerName, "OFFSET"))
     {
-        if (ch >= '0' && ch <= '9')
+        char ch;
+        for (int i = 0; (ch = pszLayerName[i]) != 0; i++)
         {
-            if (i == 0)
+            if (ch >= '0' && ch <= '9')
+            {
+                if (i == 0)
+                    break;
+            }
+            else if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')))
                 break;
         }
-        else if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')))
-            break;
+        if (ch == 0)
+            return pszLayerName;
     }
-    /* Only quote if needed. Quoting conventions depend on the driver... */
-    if (ch == 0)
-        return pszLayerName;
 
     if (EQUAL(poDS->GetDriverName(), "MYSQL"))
         return CPLSPrintf("`%s`", pszLayerName);
