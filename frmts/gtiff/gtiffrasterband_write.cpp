@@ -651,6 +651,10 @@ CPLErr GTiffRasterBand::SetColorTable(GDALColorTable *poCT)
         unsigned short *panTBlue = static_cast<unsigned short *>(
             CPLMalloc(sizeof(unsigned short) * nColors));
 
+        if (m_poGDS->m_nColorTableMultiplier == 0)
+            m_poGDS->m_nColorTableMultiplier =
+                GTiffDataset::DEFAULT_COLOR_TABLE_MULTIPLIER_257;
+
         for (int iColor = 0; iColor < nColors; ++iColor)
         {
             if (iColor < poCT->GetColorEntryCount())
@@ -658,9 +662,12 @@ CPLErr GTiffRasterBand::SetColorTable(GDALColorTable *poCT)
                 GDALColorEntry sRGB;
                 poCT->GetColorEntryAsRGB(iColor, &sRGB);
 
-                panTRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
-                panTGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
-                panTBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
+                panTRed[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 1, sRGB.c1, m_poGDS->m_nColorTableMultiplier);
+                panTGreen[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 2, sRGB.c2, m_poGDS->m_nColorTableMultiplier);
+                panTBlue[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 3, sRGB.c3, m_poGDS->m_nColorTableMultiplier);
             }
             else
             {
