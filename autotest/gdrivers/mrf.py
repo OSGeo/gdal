@@ -233,6 +233,26 @@ def test_mrf_zen_test():
             gdal.Unlink(f)
 
 
+def test_mrf_in_tar():
+    import tarfile
+    out_ds = gdal.Translate(
+        "plain.mrf",
+        "data/byte.tif",
+        format="MRF",
+        creationOptions=["COMPRESS=DEFLATE"]
+    )
+    out_ds = None
+    with tarfile.TarFile("plain.mrf.tar", "w", format=tarfile.GNU_FORMAT) as tar:
+        for ext in ("mrf", "idx", "pzp"):
+            tar.add("plain." + ext)
+    ds = gdal.Open("plain.mrf.tar")
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    assert cs == 4672
+    for ext in ("mrf.tar", "mrf", "idx", "pzp", "mrf.aux.xml"):
+        gdal.Unlink("plain." + ext)
+
+
 def test_mrf_overview_nnb_fact_2():
 
     expected_cs = 1087
