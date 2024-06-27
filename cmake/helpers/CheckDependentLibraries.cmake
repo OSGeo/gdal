@@ -163,11 +163,7 @@ gdal_check_package(ZSTD "ZSTD compression library" CAN_DISABLE ${ZSTD_NAMES_AND_
 gdal_check_package(SFCGAL "gdal core supports ISO 19107:2013 and OGC Simple Features Access 1.2 for 3D operations"
                    CAN_DISABLE)
 
-gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE RECOMMENDED
-  NAMES GeoTIFF
-  TARGETS geotiff_library GEOTIFF::GEOTIFF
-)
-gdal_internal_library(GEOTIFF REQUIRED)
+include(CheckDependentLibrariesGeoTIFF)
 
 gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE RECOMMENDED VERSION "1.6")
 gdal_internal_library(PNG)
@@ -348,7 +344,7 @@ gdal_check_package(FreeXL "Enable XLS driver" CAN_DISABLE)
 define_find_package2(GTA gta/gta.h gta PKGCONFIG_NAME gta)
 gdal_check_package(GTA "Enable GTA driver" CAN_DISABLE)
 
-gdal_check_package(MRSID "MrSID raster SDK" CAN_DISABLE)
+include(CheckDependentLibrariesMrSID)
 
 set(GDAL_USE_ARMADILLO_OLD ${GDAL_USE_ARMADILLO})
 gdal_check_package(Armadillo "C++ library for linear algebra (used for TPS transformation)" CAN_DISABLE)
