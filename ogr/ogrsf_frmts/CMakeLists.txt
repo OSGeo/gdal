@@ -107,7 +107,7 @@ ogr_dependent_driver(gtfs "GTFS" "OGR_ENABLE_DRIVER_CSV")
 
 # ######################################################################################################################
 # proprietary libraries
-ogr_dependent_driver(oci "Oracle OCI" "GDAL_USE_ORACLE")
+include(oci/driver_declaration.cmake)
 ogr_dependent_driver(idb "IDB" "GDAL_USE_IDB")
 ogr_dependent_driver(ods ODS "GDAL_USE_EXPAT")
 ogr_dependent_driver(ogdi "OGDI" "GDAL_USE_OGDI")
