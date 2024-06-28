@@ -2295,6 +2295,37 @@ def test_ogr_mitab_write_utf8_field_name(tmp_vsimem, ext):
 
 
 ###############################################################################
+
+
+@pytest.mark.parametrize("ext", ["mif", "tab"])
+@pytest.mark.parametrize("dsStrictOpt", [False, True])
+def test_ogr_mitab_non_strict_fields_laundering(tmp_vsimem, ext, dsStrictOpt):
+
+    tmpfile = tmp_vsimem / f"ogr_mitab_non_strict_fields_laundering.{ext}"
+    dsOpt = [f"FORMAT={ext}"]
+    lyrOpt = []
+    if dsStrictOpt:
+        dsOpt.append("STRICT_FIELDS_NAME_LAUNDERING=NO")
+    else:
+        lyrOpt.append("STRICT_FIELDS_NAME_LAUNDERING=NO")
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(tmpfile, options=dsOpt)
+    lyr = ds.CreateLayer("test", options=lyrOpt)
+    lyr.CreateField(ogr.FieldDefn("dot.and space", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["dot.and space"] = 1
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    lyr.CreateFeature(f)
+    with gdal.quiet_errors():
+        ds = None
+
+    ds = ogr.Open(tmpfile)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["dot.and_space"] == 1
+    ds = None
+
+
+###############################################################################
 # Test read text labels with local encoding from mif/mid file
 
 
