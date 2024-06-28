@@ -988,3 +988,21 @@ void OGRCompoundCurve::removeEmptyParts()
 {
     oCC.removeEmptyParts();
 }
+
+/************************************************************************/
+/*                           reversePoints()                            */
+/************************************************************************/
+
+/**
+ * \brief Reverse point order.
+ *
+ * This method updates the points in this curve in place
+ * reversing the point ordering (first for last, etc) and component ordering.
+ *
+ * @since 3.10
+ */
+void OGRCompoundCurve::reversePoints()
+
+{
+    oCC.reversePoints();
+}

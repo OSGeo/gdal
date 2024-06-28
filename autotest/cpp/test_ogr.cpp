@@ -4175,4 +4175,29 @@ TEST_F(test_ogr, OGRGeometry_removeEmptyParts)
     }
 }
 
+// Test OGRCurve::reversePoints()
+TEST_F(test_ogr, OGRCurve_reversePoints)
+{
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt(
+            "COMPOUNDCURVE ZM (CIRCULARSTRING ZM (0 0 10 20,1 1 11 21,2 0 12 "
+            "22),(2 0 12 22,3 0 13 2))",
+            nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        poGeom->toCurve()->reversePoints();
+        char *pszWKT = nullptr;
+        poGeom->exportToWkt(&pszWKT, wkbVariantIso);
+        EXPECT_TRUE(pszWKT != nullptr);
+        if (pszWKT)
+        {
+            EXPECT_STREQ(
+                pszWKT, "COMPOUNDCURVE ZM ((3 0 13 2,2 0 12 22),CIRCULARSTRING "
+                        "ZM (2 0 12 22,1 1 11 21,0 0 10 20))");
+        }
+        CPLFree(pszWKT);
+        delete poGeom;
+    }
+}
+
 }  // namespace

@@ -2898,19 +2898,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         // correct orientation of the line string
         if (bEdgeOrientation != bOrientation)
         {
-            int iStartCoord = 0;
-            int iEndCoord = poLineString->getNumPoints() - 1;
-            OGRPoint oTempStartPoint;
-            OGRPoint oTempEndPoint;
-            while (iStartCoord < iEndCoord)
-            {
-                poLineString->getPoint(iStartCoord, &oTempStartPoint);
-                poLineString->getPoint(iEndCoord, &oTempEndPoint);
-                poLineString->setPoint(iStartCoord, &oTempEndPoint);
-                poLineString->setPoint(iEndCoord, &oTempStartPoint);
-                iStartCoord++;
-                iEndCoord--;
-            }
+            poLineString->reversePoints();
         }
         return poLineString;
     }
@@ -3639,6 +3627,38 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             return nullptr;
         }
 
+        return poGeom;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      OrientableCurve                                                 */
+    /* -------------------------------------------------------------------- */
+    if (EQUAL(pszBaseGeometry, "OrientableCurve"))
+    {
+        // Find baseCurve.
+        const CPLXMLNode *psChild = FindBareXMLChild(psNode, "baseCurve");
+
+        psChild = GetChildElement(psChild);
+        if (psChild == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Missing <baseCurve> for OrientableCurve.");
+            return nullptr;
+        }
+
+        auto poGeom = GML2OGRGeometry_XMLNode_Internal(
+            psChild, nPseudoBoolGetSecondaryGeometryOption, nRecLevel + 1,
+            nSRSDimension, pszSRSName);
+        if (!poGeom || !OGR_GT_IsCurve(poGeom->getGeometryType()))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "baseCurve of OrientableCurve is not a curve.");
+            return nullptr;
+        }
+        if (!GetElementOrientation(psNode))
+        {
+            poGeom->toCurve()->reversePoints();
+        }
         return poGeom;
     }
 
