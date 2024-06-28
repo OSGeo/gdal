@@ -71,6 +71,8 @@ static const swq_operation swq_apsOperations[] = {
     {"MAX", SWQ_MAX, SWQGeneralEvaluator, SWQColumnFuncChecker},
     {"COUNT", SWQ_COUNT, SWQGeneralEvaluator, SWQColumnFuncChecker},
     {"SUM", SWQ_SUM, SWQGeneralEvaluator, SWQColumnFuncChecker},
+    {"STDDEV_POP", SWQ_STDDEV_POP, SWQGeneralEvaluator, SWQColumnFuncChecker},
+    {"STDDEV_SAMP", SWQ_STDDEV_SAMP, SWQGeneralEvaluator, SWQColumnFuncChecker},
 
     {"CAST", SWQ_CAST, SWQCastEvaluator, SWQCastChecker}};
 
