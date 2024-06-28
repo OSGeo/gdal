@@ -3065,6 +3065,20 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
 %#endif
 }
 
+%typemap(in) GDALAccess
+{
+    // %typemap(in) GDALAccess
+    int val = 0;
+    int ecode = SWIG_AsVal_int($input, &val);
+    if (!SWIG_IsOK(ecode)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode), "invalid value for GDALAccess");
+    }
+    if( val != GA_ReadOnly && val != GA_Update )
+    {
+        SWIG_exception_fail(SWIG_ValueError, "invalid value for GDALAccess");
+    }
+    $1 = static_cast<GDALAccess>(val);
+}
 
 %typemap(in) GDALRIOResampleAlg
 {
