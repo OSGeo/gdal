@@ -51,7 +51,8 @@ static int OGROSMDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes == 0)
         return GDAL_IDENTIFY_FALSE;
 
-    if (strstr((const char *)poOpenInfo->pabyHeader, "<osm") != nullptr)
+    if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+               "<osm") != nullptr)
     {
         return GDAL_IDENTIFY_TRUE;
     }

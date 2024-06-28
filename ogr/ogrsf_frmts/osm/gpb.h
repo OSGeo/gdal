@@ -91,7 +91,7 @@ inline int ReadVarUInt32(const GByte **ppabyData)
         if (!(nByte & 0x80))
         {
             *ppabyData = pabyData + 1;
-            return nVal | ((unsigned)nByte << nShift);
+            return nVal | (static_cast<unsigned>(nByte) << nShift);
         }
         nVal |= (nByte & 0x7f) << nShift;
         pabyData++;
@@ -102,7 +102,7 @@ inline int ReadVarUInt32(const GByte **ppabyData)
             if (!(nByte & 0x80))
             {
                 *ppabyData = pabyData + 1;
-                return nVal | (((unsigned)nByte & 0xf) << nShift);
+                return nVal | ((static_cast<unsigned>(nByte) & 0xf) << nShift);
             }
             *ppabyData = pabyData;
             return nVal;
@@ -120,7 +120,8 @@ inline int ReadVarUInt32(const GByte **ppabyData)
 #define READ_SIZE(pabyData, pabyDataLimit, nSize)                              \
     {                                                                          \
         READ_VARUINT32(pabyData, pabyDataLimit, nSize);                        \
-        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData))     \
+        if (CHECK_OOB &&                                                       \
+            nSize > static_cast<unsigned int>(pabyDataLimit - pabyData))       \
             THROW_GPB_EXCEPTION;                                               \
     }
 
@@ -140,9 +141,9 @@ inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
         if (!(nByte & 0x80))
         {
             *ppabyData = pabyData + 1;
-            return nVal | ((GUIntBig)nByte << nShift);
+            return nVal | (static_cast<GUIntBig>(nByte) << nShift);
         }
-        nVal |= ((GUIntBig)(nByte & 0x7f)) << nShift;
+        nVal |= (static_cast<GUIntBig>(nByte & 0x7f)) << nShift;
         pabyData++;
         nShift += 7;
         if (nShift == 63)
@@ -151,7 +152,7 @@ inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
             if (!(nByte & 0x80))
             {
                 *ppabyData = pabyData + 1;
-                return nVal | (((GUIntBig)nByte & 1) << nShift);
+                return nVal | ((static_cast<GUIntBig>(nByte) & 1) << nShift);
             }
             *ppabyData = pabyData;
             return nVal;
@@ -169,7 +170,8 @@ inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
 #define READ_SIZE64(pabyData, pabyDataLimit, nSize)                            \
     {                                                                          \
         READ_VARUINT64(pabyData, pabyDataLimit, nSize);                        \
-        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData))     \
+        if (CHECK_OOB &&                                                       \
+            nSize > static_cast<unsigned int>(pabyDataLimit - pabyData))       \
             THROW_GPB_EXCEPTION;                                               \
     }
 
@@ -314,7 +316,7 @@ inline void SkipVarInt(const GByte **ppabyData)
     do                                                                         \
     {                                                                          \
         READ_SIZE(pabyData, pabyDataLimit, l_nDataLength);                     \
-        pszTxt = (char *)VSI_MALLOC_VERBOSE(l_nDataLength + 1);                \
+        pszTxt = static_cast<char *>(VSI_MALLOC_VERBOSE(l_nDataLength + 1));   \
         if (pszTxt == nullptr)                                                 \
             THROW_GPB_EXCEPTION;                                               \
         memcpy(pszTxt, pabyData, l_nDataLength);                               \
