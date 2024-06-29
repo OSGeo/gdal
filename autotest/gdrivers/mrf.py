@@ -233,22 +233,28 @@ def test_mrf_zen_test():
             gdal.Unlink(f)
 
 
-def test_mrf_in_tar():
+def test_mrf_in_tar(tmp_path):
     import tarfile
 
+    files = tuple("plain." + ext for ext in ("mrf", "idx", "pzp", "mrf.aux.xml"))
     gdal.Translate(
-        "plain.mrf", "data/byte.tif", format="MRF", creationOptions=["COMPRESS=DEFLATE"]
+        tmp_path / "plain.mrf",
+        "data/byte.tif",
+        format="MRF",
+        creationOptions=["COMPRESS=DEFLATE"],
     )
-    with tarfile.TarFile("plain.mrf.tar", "w", format=tarfile.GNU_FORMAT) as tar:
-        for ext in ("mrf", "idx", "pzp"):
-            tar.add("plain." + ext)
-    for ext in ("mrf", "idx", "pzp", "mrf.aux.xml"):
-        gdal.Unlink("plain." + ext)
-    ds = gdal.Open("plain.mrf.tar")
+    tarname = tmp_path / "plain.mrf.tar"
+    # the .mrf has to be the first file in the tar, with no path
+    with tarfile.TarFile(tarname, "w", format=tarfile.GNU_FORMAT) as tar:
+        for fn in files:
+            tar.add(tmp_path / fn, arcname=fn)
+    for fn in files:
+        gdal.Unlink(tmp_path / fn)
+    ds = gdal.Open(tarname)
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
     assert cs == 4672
-    gdal.Unlink("plain.mrf.tar")
+    gdal.Unlink(tarname)
 
 
 def test_mrf_overview_nnb_fact_2():
