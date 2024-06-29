@@ -814,6 +814,31 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
     nXIndex = -1;
     nYIndex = -1;
     nZIndex = -1;
+    const char *pszColumnOrder = CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "COLUMN_ORDER", "AUTO");
+    if (EQUAL(pszColumnOrder, "XYZ"))
+    {
+        nXIndex = 0;
+        nYIndex = 1;
+        nZIndex = 2;
+        return TRUE;
+    }
+    else if (EQUAL(pszColumnOrder, "YXZ"))
+    {
+        nXIndex = 1;
+        nYIndex = 0;
+        nZIndex = 2;
+        return TRUE;
+    }
+    else if (!EQUAL(pszColumnOrder, "AUTO"))
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Option COLUMN_ORDER can only be XYZ, YXZ and AUTO."
+                 "%s is not valid",
+                 pszColumnOrder);
+        return FALSE;
+    }
+
     if (bHasHeaderLine)
     {
         CPLString osHeaderLine;
@@ -957,15 +982,14 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
             nYIndex = 1;
             nZIndex = 2;
         }
-        nMinTokens = 1 + std::max(std::max(nXIndex, nYIndex), nZIndex);
     }
-    else
+    else if (nXIndex < 0 || nYIndex < 0 || nZIndex < 0)
     {
         nXIndex = 0;
         nYIndex = 1;
         nZIndex = 2;
-        nMinTokens = 3;
     }
+    nMinTokens = 1 + std::max(std::max(nXIndex, nYIndex), nZIndex);
 
     /* -------------------------------------------------------------------- */
     /*      Parse data lines                                                */
@@ -1818,6 +1842,17 @@ void GDALRegister_XYZ()
         "   <Option name='DECIMAL_PRECISION' type='int' description='Number of "
         "decimal places when writing floating-point numbers (%f format).'/>\n"
         "</CreationOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "   <Option name='COLUMN_ORDER' type='string-select' default='AUTO' "
+        "description='Specifies the order of the columns. It overrides the "
+        "header.'>"
+        "       <Value>AUTO</Value>"
+        "       <Value>XYZ</Value>"
+        "       <Value>YXZ</Value>"
+        "   </Option>"
+        "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
