@@ -270,6 +270,9 @@ struct GDALVectorTranslateOptions
     /*! Whether to run MakeValid */
     bool bMakeValid = false;
 
+    /*! Whether to run OGRGeometry::IsValid */
+    bool bSkipInvalidGeom = false;
+
     /*! list of field types to convert to a field of type string in the
        destination layer. Valid types are: Integer, Integer64, Real, String,
        Date, Time, DateTime, Binary, IntegerList, Integer64List, RealList,
@@ -575,6 +578,7 @@ class LayerTranslator
     int m_eGType = -1;
     GeomTypeConversion m_eGeomTypeConversion = GTC_DEFAULT;
     bool m_bMakeValid = false;
+    bool m_bSkipInvalidGeom = false;
     int m_nCoordDim = 0;
     GeomOperation m_eGeomOp = GEOMOP_NONE;
     double m_dfGeomOpParam = 0;
@@ -2887,6 +2891,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     oTranslator.m_eGType = psOptions->eGType;
     oTranslator.m_eGeomTypeConversion = psOptions->eGeomTypeConversion;
     oTranslator.m_bMakeValid = psOptions->bMakeValid;
+    oTranslator.m_bSkipInvalidGeom = psOptions->bSkipInvalidGeom;
     oTranslator.m_nCoordDim = psOptions->nCoordDim;
     oTranslator.m_eGeomOp = psOptions->eGeomOp;
     oTranslator.m_dfGeomOpParam = psOptions->dfGeomOpParam;
@@ -3923,7 +3928,7 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
         m_bExactFieldNameMatch && !m_bForceNullable && !m_bResolveDomains &&
         !m_bUnsetDefault && psOptions->nFIDToFetch == OGRNullFID &&
         psOptions->dfXYRes == OGRGeomCoordinatePrecision::UNKNOWN &&
-        !psOptions->bMakeValid)
+        !psOptions->bMakeValid && !psOptions->bSkipInvalidGeom)
     {
         struct ArrowArrayStream streamSrc;
         const char *const apszOptions[] = {"SILENCE_GET_SCHEMA_ERROR=YES",
@@ -6501,6 +6506,9 @@ bool LayerTranslator::Translate(
                         }
                     }
 
+                    if (m_bSkipInvalidGeom && !poDstGeometry->IsValid())
+                        goto end_loop;
+
                     if (m_eGeomTypeConversion != GTC_DEFAULT)
                     {
                         OGRwkbGeometryType eTargetType =
@@ -7292,6 +7300,21 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
             })
         .help(_("Fix geometries to be valid regarding the rules of the Simple "
                 "Features specification."));
+
+    argParser->add_argument("-skipinvalid")
+        .flag()
+        .action(
+            [psOptions](const std::string &)
+            {
+                if (!OGRGeometryFactory::haveGEOS())
+                {
+                    throw std::invalid_argument(
+                        "-skipinvalid only supported for builds against GEOS");
+                }
+                psOptions->bSkipInvalidGeom = true;
+            })
+        .help(_("Whether to skip features with invalid geometries regarding the"
+                "rules of the Simple Features specification."));
 
     argParser->add_argument("-wrapdateline")
         .store_into(psOptions->bWrapDateline)
