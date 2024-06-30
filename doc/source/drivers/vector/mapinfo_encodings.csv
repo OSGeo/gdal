@@ -1,5 +1,6 @@
 "ENCODING value","MapInfo charset",description
 """"" (empty string)",Neutral,"No character conversions performed."
+"UTF-8","UTF-8","UTF-8 (Works with recent MapInfo versions, since v15.2)"
 "ISO-8859-1","ISO8859_1","ISO 8859-1 (UNIX)"
 "ISO-8859-2","ISO8859_2","ISO 8859-2 (UNIX)"
 "ISO-8859-3","ISO8859_3","ISO 8859-3 (UNIX)"

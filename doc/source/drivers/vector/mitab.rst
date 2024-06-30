@@ -131,6 +131,14 @@ The following dataset creation options are supported:
       bytes. Any MapInfo version should be able to handle block sizes from
       512 to 32256.
 
+-  .. dsco:: STRICT_FIELDS_NAME_LAUNDERING
+      :choices: YES, NO
+      :default: YES
+      :since: 3.10
+
+      Replaces all non alphanumeric characters in dataset's field names by
+      `_` (underscope). For recent MapInfo can be set to `NO`.
+
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -165,6 +173,14 @@ The following layer creation options are supported:
       Friendly layer name (only for
       TAB format). Friendly names can be up to 256 characters long and can include
       most ASCII characters. Supported by MapInfo Pro v15.0 or higher.
+
+-  .. lco:: STRICT_FIELDS_NAME_LAUNDERING
+      :choices: YES, NO
+      :default: YES
+      :since: 3.10
+
+      Replaces all non alphanumeric characters in layer's field names by
+      `_` (underscope). For recent MapInfo can be set to `NO`.
 
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~

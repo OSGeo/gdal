@@ -455,53 +455,75 @@ char *TABEscapeString(char *pszString)
  *
  * The returned string should be freed by the caller.
  **********************************************************************/
-char *TABCleanFieldName(const char *pszSrcName)
+char *TABCleanFieldName(const char *pszSrcName, const char *pszEncoding,
+                        bool bStrictLaundering)
 {
     char *pszNewName = CPLStrdup(pszSrcName);
-    if (strlen(pszNewName) > 31)
-    {
-        pszNewName[31] = '\0';
-        CPLError(CE_Warning,
-                 static_cast<CPLErrorNum>(TAB_WarningInvalidFieldName),
-                 "Field name '%s' is longer than the max of 31 characters. "
-                 "'%s' will be used instead.",
-                 pszSrcName, pszNewName);
-    }
-
-    // According to the MapInfo User's Guide (p. 240, v5.5).
-    // New Table Command:
-    //  Name:
-    // Displays the field name in the name box. You can also enter new field
-    // names here. Defaults are Field1, Field2, etc. A field name can contain
-    // up to 31 alphanumeric characters. Use letters, numbers, and the
-    // underscore. Do not use spaces; instead, use the underscore character
-    // (_) to separate words in a field name. Use upper and lower case for
-    // legibility, but MapInfo is not case-sensitive.
-    //
-    // It was also verified that extended chars with accents are also
-    // accepted.
     int numInvalidChars = 0;
-    for (int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++)
+
+    if (bStrictLaundering)
     {
-        if (pszSrcName[i] == '#')
+        if (strlen(pszNewName) > 31)
         {
-            if (i == 0)
+            pszNewName[31] = '\0';
+            CPLError(CE_Warning,
+                     static_cast<CPLErrorNum>(TAB_WarningInvalidFieldName),
+                     "Field name '%s' is longer than the max of 31 characters. "
+                     "'%s' will be used instead.",
+                     pszSrcName, pszNewName);
+        }
+
+        // According to the MapInfo User's Guide (p. 240, v5.5).
+        // New Table Command:
+        //  Name:
+        // Displays the field name in the name box. You can also enter new field
+        // names here. Defaults are Field1, Field2, etc. A field name can contain
+        // up to 31 alphanumeric characters. Use letters, numbers, and the
+        // underscore. Do not use spaces; instead, use the underscore character
+        // (_) to separate words in a field name. Use upper and lower case for
+        // legibility, but MapInfo is not case-sensitive.
+        //
+        // It was also verified that extended chars with accents are also
+        // accepted.
+        bool bNeutralCharset =
+            (pszEncoding == nullptr || strlen(pszEncoding) == 0);
+        for (int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++)
+        {
+            if (pszSrcName[i] == '#')
+            {
+                if (i == 0)
+                {
+                    pszNewName[i] = '_';
+                    numInvalidChars++;
+                }
+            }
+            else if (!(pszSrcName[i] == '_' ||
+                       (i != 0 && pszSrcName[i] >= '0' &&
+                        pszSrcName[i] <= '9') ||
+                       (!bNeutralCharset ||
+                        ((pszSrcName[i] >= 'a' && pszSrcName[i] <= 'z') ||
+                         (pszSrcName[i] >= 'A' && pszSrcName[i] <= 'Z') ||
+                         static_cast<GByte>(pszSrcName[i]) >= 192))))
             {
                 pszNewName[i] = '_';
                 numInvalidChars++;
             }
         }
-        else if (!(pszSrcName[i] == '_' ||
-                   (i != 0 && pszSrcName[i] >= '0' && pszSrcName[i] <= '9') ||
-                   (pszSrcName[i] >= 'a' && pszSrcName[i] <= 'z') ||
-                   (pszSrcName[i] >= 'A' && pszSrcName[i] <= 'Z') ||
-                   static_cast<GByte>(pszSrcName[i]) >= 192))
+    }
+    else
+    {
+        // There is a note at mapinfo-pro-v2021-user-guide.pdf
+        // (p. 1425, Columns section: "Field names cannot have spaces".
+        // There seem to be no other constraints.
+        for (int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++)
         {
-            pszNewName[i] = '_';
-            numInvalidChars++;
+            if (pszSrcName[i] == ' ')
+            {
+                pszNewName[i] = '_';
+                numInvalidChars++;
+            }
         }
     }
-
     if (numInvalidChars > 0)
     {
         CPLError(CE_Warning,
