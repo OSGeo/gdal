@@ -864,9 +864,9 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
         return FALSE;
     }
 
-    auto parseDMS = [](auto str)
+    const auto parseDMS = [](CPLString &str)
     {
-        std::string degreeSymbol{"\xc2\xb0"};
+        const std::string degreeSymbol{"\xc2\xb0"};
         str.replaceAll(degreeSymbol, "D");
         return CPLDMSToDec(str);
     };
