@@ -455,6 +455,17 @@ def test_ogr_libkml_write_kmz_use_doc_off(tmp_vsimem):
     ogr_libkml_check_write(tmp_vsimem / "libkml_use_doc_off.kmz")
 
 
+def test_ogr_libkml_write_kmz_simulate_cloud(tmp_vsimem):
+    with gdal.config_option("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "FORCED"):
+        ogr_libkml_write(tmp_vsimem / "test_ogr_libkml_write_kmz_simulate_cloud.kmz")
+
+    ogr_libkml_check_write(tmp_vsimem / "test_ogr_libkml_write_kmz_simulate_cloud.kmz")
+
+    with gdal.config_option("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "FORCED"):
+        with pytest.raises(Exception):
+            ogr_libkml_write("/i_do/not/exist.kmz")
+
+
 ###############################################################################
 # Test reading attributes with XML content in them
 #
