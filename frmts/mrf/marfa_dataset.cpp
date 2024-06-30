@@ -87,7 +87,7 @@ MRFDataset::MRFDataset()
       pzscctx(nullptr), pzsdctx(nullptr), read_timer(), write_timer(0)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    //                X0   Xx   Xy  Y0    Yx   Yy
+    //               X0   Xx   Xy  Y0    Yx   Yy
     double gt[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
 
     memcpy(GeoTransform, gt, sizeof(gt));
@@ -603,15 +603,26 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
     int level = -1;   // All levels
     int version = 0;  // Current
     int zslice = 0;
-    string fn;  // Used to parse and adjust the file name
+    string fn;        // Used to parse and adjust the file name
+    string insidefn;  // inside tar file name
 
     // Different ways to open an MRF
     if (poOpenInfo->nHeaderBytes >= 10)
     {
         const char *pszHeader =
             reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+        fn.assign(pszHeader, poOpenInfo->nHeaderBytes);
         if (STARTS_WITH(pszHeader, "<MRF_META>"))  // Regular file name
             config = CPLParseXMLFile(pszFileName);
+        else if (poOpenInfo->eAccess == GA_ReadOnly && fn.size() > 600 &&
+                 (fn[262] == 0 || fn[262] == 32) &&
+                 STARTS_WITH(fn.c_str() + 257, "ustar") &&
+                 strlen(CPLGetPath(fn.c_str())) == 0 &&
+                 STARTS_WITH(fn.c_str() + 512, "<MRF_META>"))
+        {  // An MRF inside a tar
+            insidefn = string("/vsitar/") + pszFileName + "/" + pszHeader;
+            config = CPLParseXMLFile(insidefn.c_str());
+        }
 #if defined(LERC)
         else
             config = LERC_Band::GetMRFConfig(poOpenInfo);
@@ -644,6 +655,11 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     MRFDataset *ds = new MRFDataset();
     ds->fname = pszFileName;
+    if (!insidefn.empty())
+    {
+        ds->publicname = pszFileName;
+        ds->fname = insidefn;
+    }
     ds->eAccess = poOpenInfo->eAccess;
     ds->level = level;
     ds->zslice = zslice;
@@ -657,7 +673,7 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         // Open the whole dataset, then pick one level
         ds->cds = new MRFDataset();
-        ds->cds->fname = pszFileName;
+        ds->cds->fname = ds->fname;
         ds->cds->eAccess = ds->eAccess;
         ds->zslice = zslice;
         ret = ds->cds->Initialize(config);
@@ -683,7 +699,7 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Tell PAM what our real file name is, to help it find the aux.xml
-    ds->SetPhysicalFilename(pszFileName);
+    ds->SetPhysicalFilename(ds->fname);
     // Don't mess with metadata after this, otherwise PAM will re-write the
     // aux.xml
     ds->TryLoadXML();
@@ -691,7 +707,7 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Open external overviews.                                        */
     /* -------------------------------------------------------------------- */
-    ds->oOvManager.Initialize(ds, pszFileName);
+    ds->oOvManager.Initialize(ds, ds->fname);
 
     return ds;
 }
@@ -1012,10 +1028,13 @@ char **MRFDataset::GetFileList()
 {
     char **papszFileList = nullptr;
 
+    string usename = fname;
+    if (!publicname.empty())
+        usename = publicname;
     // Add the header file name if it is real
     VSIStatBufL sStat;
-    if (VSIStatExL(fname, &sStat, VSI_STAT_EXISTS_FLAG) == 0)
-        papszFileList = CSLAddString(papszFileList, fname);
+    if (VSIStatExL(usename.c_str(), &sStat, VSI_STAT_EXISTS_FLAG) == 0)
+        papszFileList = CSLAddString(papszFileList, usename.c_str());
 
     // These two should be real
     // We don't really want to add these files, since they will be erased when
@@ -1676,15 +1695,14 @@ GIntBig MRFDataset::AddOverviews(int scaleIn)
 
         // And adjust the offset again, within next level
         img.idxoffset += sizeof(ILIdx) * img.pagecount.l / img.size.z * zslice;
-
+        int l = static_cast<int>(img.size.l);
         // Create and register the overviews for each band
         for (int i = 1; i <= nBands; i++)
         {
             MRFRasterBand *b =
                 reinterpret_cast<MRFRasterBand *>(GetRasterBand(i));
-            if (!(b->GetOverview(static_cast<int>(img.size.l) - 1)))
-                b->AddOverview(newMRFRasterBand(this, img, i,
-                                                static_cast<int>(img.size.l)));
+            if (!(b->GetOverview(l - 1)))
+                b->AddOverview(newMRFRasterBand(this, img, i, l));
         }
     }
 

@@ -97,6 +97,14 @@ int MRFDriverIdentify(GDALOpenInfo *poOpenInfo)
         return TRUE;
 #endif
 
+    // accept a tar file if the first file has no folder look like an MRF
+    if (poOpenInfo->eAccess == GA_ReadOnly && fn.size() > 600 &&
+        (fn[262] == 0 || fn[262] == 32) && STARTS_WITH(fn + 257, "ustar") &&
+        strlen(CPLGetPath(fn)) == 0 && STARTS_WITH(fn + 512, "<MRF_META>"))
+    {
+        return TRUE;
+    }
+
     return FALSE;
 }
 
