@@ -177,7 +177,8 @@ void ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
 
     if (m_pabyNoData == nullptr)
     {
-        if (m_oType.GetNumericDataType() == GDT_Float32 ||
+        if (m_oType.GetNumericDataType() == GDT_Float16 ||
+            m_oType.GetNumericDataType() == GDT_Float32 ||
             m_oType.GetNumericDataType() == GDT_Float64)
         {
             oRoot.Add("fill_value", "NaN");
@@ -189,7 +190,8 @@ void ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
     }
     else
     {
-        if (m_oType.GetNumericDataType() == GDT_CFloat32 ||
+        if (m_oType.GetNumericDataType() == GDT_CFloat16 ||
+            m_oType.GetNumericDataType() == GDT_CFloat32 ||
             m_oType.GetNumericDataType() == GDT_CFloat64)
         {
             double adfNoDataValue[2];
@@ -948,10 +950,13 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
             }
             else if (str == "float16")
             {
+                // elt.nativeType = DtypeElt::NativeType::IEEEFP;
+                // elt.nativeSize = 2;
+                // elt.gdalTypeIsApproxOfNative = true;
+                // eDT = GDT_Float32;
                 elt.nativeType = DtypeElt::NativeType::IEEEFP;
                 elt.nativeSize = 2;
-                elt.gdalTypeIsApproxOfNative = true;
-                eDT = GDT_Float32;
+                eDT = GDT_Float16;
             }
             else if (str == "float32")
             {
@@ -1444,6 +1449,13 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
                 return nullptr;
+            }
+            else if (oType.GetNumericDataType() == GDT_Float16)
+            {
+                const _Float16 hfNoDataValue =
+                    static_cast<_Float16>(dfNoDataValue);
+                abyNoData.resize(sizeof(hfNoDataValue));
+                memcpy(&abyNoData[0], &hfNoDataValue, sizeof(hfNoDataValue));
             }
             else if (oType.GetNumericDataType() == GDT_Float32)
             {

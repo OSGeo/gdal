@@ -433,6 +433,12 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
             dtype.Set(dummy, "int64");
             break;
         }
+        case GDT_Float16:
+        {
+            elt.nativeType = DtypeElt::NativeType::IEEEFP;
+            dtype.Set(dummy, "float16");
+            break;
+        }
         case GDT_Float32:
         {
             elt.nativeType = DtypeElt::NativeType::IEEEFP;
@@ -452,6 +458,12 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
             bUnsupported = true;
             break;
         }
+        case GDT_CFloat16:
+        {
+            elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
+            dtype.Set(dummy, "complex32");
+            break;
+        }
         case GDT_CFloat32:
         {
             elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
@@ -466,8 +478,8 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
         }
         case GDT_TypeCount:
         {
-            static_assert(GDT_TypeCount == GDT_Int8 + 1,
-                          "GDT_TypeCount == GDT_Int8 + 1");
+            static_assert(GDT_TypeCount == GDT_CFloat16 + 1,
+                          "GDT_TypeCount == GDT_CFloat16 + 1");
             break;
         }
     }

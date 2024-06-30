@@ -2211,6 +2211,13 @@ GetHDF5DataTypeFromGDALDataType(const GDALExtendedDataType &dt, hid_t hNativeDT,
         case GDT_Int64:
             hBufferType = H5Tcopy(H5T_NATIVE_INT64);
             break;
+        case GDT_Float16:
+#ifdef HDF5_HAVE_FLOAT16
+            hBufferType = H5Tcopy(H5T_NATIVE_FLOAT16);
+            break;
+#else
+            return H5I_INVALID_HID;
+#endif
         case GDT_Float32:
             hBufferType = H5Tcopy(H5T_NATIVE_FLOAT);
             break;
@@ -2219,6 +2226,7 @@ GetHDF5DataTypeFromGDALDataType(const GDALExtendedDataType &dt, hid_t hNativeDT,
             break;
         case GDT_CInt16:
         case GDT_CInt32:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
             if (bufferDataType != dt)

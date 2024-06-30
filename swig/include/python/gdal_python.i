@@ -35,6 +35,7 @@ static int getAlignment(GDALDataType ntype)
             return 1;
         case GDT_Int16:
         case GDT_UInt16:
+        case GDT_Float16:
             return 2;
         case GDT_Int32:
         case GDT_UInt32:
@@ -45,6 +46,7 @@ static int getAlignment(GDALDataType ntype)
         case GDT_UInt64:
             return 8;
         case GDT_CInt16:
+        case GDT_CFloat16:
             return 2;
         case GDT_CInt32:
         case GDT_CFloat32:
@@ -185,8 +187,12 @@ static void readraster_releasebuffer(CPLErr eErr,
                   gdalconst.GDT_UInt16:   ("%su2" % byteorders[sys.byteorder]),
                   gdalconst.GDT_Int32:    ("%si4" % byteorders[sys.byteorder]),
                   gdalconst.GDT_UInt32:   ("%su4" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_Int64:    ("%si8" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_UInt64:   ("%su8" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_Float16:  ("%sf2" % byteorders[sys.byteorder]),
                   gdalconst.GDT_Float32:  ("%sf4" % byteorders[sys.byteorder]),
                   gdalconst.GDT_Float64:  ("%sf8" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_CFloat16: ("%sf2" % byteorders[sys.byteorder]),
                   gdalconst.GDT_CFloat32: ("%sf4" % byteorders[sys.byteorder]),
                   gdalconst.GDT_CFloat64: ("%sf8" % byteorders[sys.byteorder]),
                   gdalconst.GDT_Byte:     ("%st8" % byteorders[sys.byteorder]),
@@ -1894,8 +1900,12 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
              ('l', 4): GDT_Int32,
              ('q', 8): GDT_Int64,
              ('Q', 8): GDT_UInt64,
+             ('e', 2): GDT_Float16,
              ('f', 4): GDT_Float32,
-             ('d', 8): GDT_Float64
+             ('d', 8): GDT_Float64,
+             # ('E', 2): GDT_CFloat16,
+             ('F', 4): GDT_CFloat32,
+             ('D', 8): GDT_CFloat64
           }
           key = (buffer.typecode, buffer.itemsize)
           if key not in map_typecode_itemsize_to_gdal:

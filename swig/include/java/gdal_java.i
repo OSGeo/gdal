@@ -308,12 +308,12 @@ import java.lang.Integer;
   }
 %enddef
 
-  DEFINE_READ_MDA_DATA(char,    GDT_Byte)
-  DEFINE_READ_MDA_DATA(short,   GDT_Int16)
-  DEFINE_READ_MDA_DATA(int,     GDT_Int32)
-  DEFINE_READ_MDA_DATA(int64_t, GDT_Int64)
-  DEFINE_READ_MDA_DATA(float,   GDT_Float32)
-  DEFINE_READ_MDA_DATA(double,  GDT_Float64)
+  DEFINE_READ_MDA_DATA(char,     GDT_Byte)
+  DEFINE_READ_MDA_DATA(short,    GDT_Int16)
+  DEFINE_READ_MDA_DATA(int,      GDT_Int32)
+  DEFINE_READ_MDA_DATA(int64_t,  GDT_Int64)
+  DEFINE_READ_MDA_DATA(float,    GDT_Float32)
+  DEFINE_READ_MDA_DATA(double,   GDT_Float64)
 
 %define DEFINE_WRITE_MDA_DATA(ctype, buffer_type_code)
   %apply(int nList, GInt64 *pList) { (int starts,  GInt64 *startsValues) };
@@ -359,12 +359,12 @@ import java.lang.Integer;
   }
 %enddef
 
-  DEFINE_WRITE_MDA_DATA(char   , GDT_Byte)
-  DEFINE_WRITE_MDA_DATA(short  , GDT_Int16)
-  DEFINE_WRITE_MDA_DATA(int    , GDT_Int32)
-  DEFINE_WRITE_MDA_DATA(int64_t, GDT_Int64)
-  DEFINE_WRITE_MDA_DATA(float  , GDT_Float32)
-  DEFINE_WRITE_MDA_DATA(double , GDT_Float64)
+  DEFINE_WRITE_MDA_DATA(char    , GDT_Byte)
+  DEFINE_WRITE_MDA_DATA(short   , GDT_Int16)
+  DEFINE_WRITE_MDA_DATA(int     , GDT_Int32)
+  DEFINE_WRITE_MDA_DATA(int64_t , GDT_Int64)
+  DEFINE_WRITE_MDA_DATA(float   , GDT_Float32)
+  DEFINE_WRITE_MDA_DATA(double  , GDT_Float64)
 
 } /* extend */
 

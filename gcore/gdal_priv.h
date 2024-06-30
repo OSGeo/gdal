@@ -4321,12 +4321,40 @@ GDALDataset *GDALCreateOverviewDataset(GDALDataset *poDS, int nOvrLevel,
 // Should cover particular cases of #3573, #4183, #4506, #6578
 // Behavior is undefined if fVal1 or fVal2 are NaN (should be tested before
 // calling this function)
-template <class T> inline bool ARE_REAL_EQUAL(T fVal1, T fVal2, int ulp = 2)
+
+// The expression `abs(fVal1 + fVal2)` looks strange; is this a bug?
+// Should this be `abs(fVal1) + abs(fVal2)` instead?
+inline bool ARE_REAL_EQUAL(float fVal1, float fVal2, int ulp = 2)
 {
+    using std::abs;
     return fVal1 == fVal2 || /* Should cover infinity */
-           std::abs(fVal1 - fVal2) < std::numeric_limits<float>::epsilon() *
-                                         std::abs(fVal1 + fVal2) * ulp;
+           abs(fVal1 - fVal2) <
+               std::numeric_limits<float>::epsilon() * abs(fVal1 + fVal2) * ulp;
 }
+
+// We are using `std::numeric_limits<float>::epsilon()` for backward
+// compatibility
+inline bool ARE_REAL_EQUAL(double dfVal1, double dfVal2, int ulp = 2)
+{
+    using std::abs;
+    return dfVal1 == dfVal2 || /* Should cover infinity */
+           abs(dfVal1 - dfVal2) < std::numeric_limits<float>::epsilon() *
+                                      abs(dfVal1 + dfVal2) * ulp;
+}
+
+// The generic function above does not work for _Float16 because
+// std::numeric_limits<float>::epsilon() is the wrong choice
+#ifndef SWIGPYTHON
+inline bool ARE_REAL_EQUAL(_Float16 hfVal1, _Float16 hfVal2, int ulp = 2)
+{
+    // We need to roll our own `abs` because the C++17 standard
+    // library does not provide one
+    auto abs = [](_Float16 x) { return x < 0 ? -x : x; };
+    return hfVal1 == hfVal2 || /* Should cover infinity */
+           abs(hfVal1 - hfVal2) < std::numeric_limits<_Float16>::epsilon() *
+                                      abs(hfVal1 + hfVal2) * ulp;
+}
+#endif
 
 double GDALAdjustNoDataCloseToFloatMax(double dfVal);
 

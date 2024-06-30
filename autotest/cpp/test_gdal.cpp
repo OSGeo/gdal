@@ -175,13 +175,17 @@ TEST_F(test_gdal, GDALDataTypeUnion_special_cases)
     EXPECT_EQ(GDALDataTypeUnion(GDT_Int16, GDT_UInt32), GDT_Int64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_UInt32, GDT_Int16), GDT_Int64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_Int64, GDT_UInt64), GDT_Float64);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_Int64, GDT_Float16), GDT_Float64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_Int64, GDT_Float32), GDT_Float64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_Int64, GDT_Float64), GDT_Float64);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_UInt64, GDT_Float16), GDT_Float64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_UInt64, GDT_Float32), GDT_Float64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_UInt64, GDT_Float64), GDT_Float64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_UInt32, GDT_CInt16), GDT_CFloat64);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_Float16, GDT_CInt32), GDT_CFloat64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_Float32, GDT_CInt32), GDT_CFloat64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CInt16, GDT_UInt32), GDT_CFloat64);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_CInt16, GDT_CFloat16), GDT_CFloat32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CInt16, GDT_CFloat32), GDT_CFloat32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_Byte), GDT_CInt32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_UInt16), GDT_CInt32);
@@ -191,6 +195,14 @@ TEST_F(test_gdal, GDALDataTypeUnion_special_cases)
     EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_Float32), GDT_CFloat64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_CInt16), GDT_CInt32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_CFloat32), GDT_CFloat64);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_Byte), GDT_CFloat16);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_UInt16), GDT_CFloat32);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_Int16), GDT_CFloat32);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_UInt32), GDT_CFloat64);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_Int32), GDT_CFloat64);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_Float32), GDT_CFloat32);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_CInt16), GDT_CFloat32);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_CInt32), GDT_CFloat64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_Byte), GDT_CFloat32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_UInt16), GDT_CFloat32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_Int16), GDT_CFloat32);
@@ -200,69 +212,49 @@ TEST_F(test_gdal, GDALDataTypeUnion_special_cases)
     EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_CInt16), GDT_CFloat32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat32, GDT_CInt32), GDT_CFloat64);
 
-    EXPECT_EQ(GDALFindDataType(0, false /* signed */, false /* floating */,
-                               false /* complex */),
-              GDT_Byte);
-    EXPECT_EQ(GDALFindDataType(0, true /* signed */, false /* floating */,
-                               false /* complex */),
-              GDT_Int8);
-    EXPECT_EQ(GDALFindDataType(0, false /* signed */, false /* floating */,
-                               true /* complex */),
-              GDT_CInt32);
-    EXPECT_EQ(GDALFindDataType(0, true /* signed */, false /* floating */,
-                               true /* complex */),
-              GDT_CInt16);
-    EXPECT_EQ(GDALFindDataType(0, false /* signed */, true /* floating */,
-                               false /* complex */),
-              GDT_Float32);
-    EXPECT_EQ(GDALFindDataType(0, true /* signed */, true /* floating */,
-                               false /* complex */),
-              GDT_Float32);
-    EXPECT_EQ(GDALFindDataType(0, false /* signed */, true /* floating */,
-                               true /* complex */),
-              GDT_CFloat32);
-    EXPECT_EQ(GDALFindDataType(0, true /* signed */, true /* floating */,
-                               true /* complex */),
-              GDT_CFloat32);
+    // Define brief abbreviations to make calls to `GDALFindDataType`
+    // more legible
+    const bool u = false, s = true;  // signed
+    const bool i = false, f = true;  // floating
+    const bool r = false, c = true;  // complex
 
-    EXPECT_EQ(GDALFindDataType(8, false /* signed */, false /* floating */,
-                               false /* complex */),
-              GDT_Byte);
-    EXPECT_EQ(GDALFindDataType(8, true /* signed */, false /* floating */,
-                               false /* complex */),
-              GDT_Int8);
+    EXPECT_EQ(GDALFindDataType(0, u, i, r), GDT_Byte);
+    EXPECT_EQ(GDALFindDataType(0, s, i, r), GDT_Int8);
+    EXPECT_EQ(GDALFindDataType(0, u, i, c), GDT_CInt32);
+    EXPECT_EQ(GDALFindDataType(0, s, i, c), GDT_CInt16);
+    EXPECT_EQ(GDALFindDataType(0, u, f, r), GDT_Float16);
+    EXPECT_EQ(GDALFindDataType(0, s, f, r), GDT_Float16);
+    EXPECT_EQ(GDALFindDataType(0, u, f, c), GDT_CFloat16);
+    EXPECT_EQ(GDALFindDataType(0, s, f, c), GDT_CFloat16);
 
-    EXPECT_EQ(GDALFindDataType(16, false /* signed */, false /* floating */,
-                               false /* complex */),
-              GDT_UInt16);
-    EXPECT_EQ(GDALFindDataType(16, true /* signed */, false /* floating */,
-                               false /* complex */),
-              GDT_Int16);
+    EXPECT_EQ(GDALFindDataType(8, u, i, r), GDT_Byte);
+    EXPECT_EQ(GDALFindDataType(8, s, i, r), GDT_Int8);
 
-    EXPECT_EQ(GDALFindDataType(32, false /* signed */, false /* floating */,
-                               false /* complex */),
-              GDT_UInt32);
-    EXPECT_EQ(GDALFindDataType(32, true /* signed */, false /* floating */,
-                               false /* complex */),
-              GDT_Int32);
+    EXPECT_EQ(GDALFindDataType(16, u, f, r), GDT_Float16);
+    EXPECT_EQ(GDALFindDataType(16, u, f, c), GDT_CFloat16);
 
-    EXPECT_EQ(GDALFindDataType(64, false /* signed */, true /* floating */,
-                               false /* complex */),
-              GDT_Float64);
-    EXPECT_EQ(GDALFindDataType(64, false /* signed */, true /* floating */,
-                               true /* complex */),
-              GDT_CFloat64);
+    EXPECT_EQ(GDALFindDataType(16, u, i, r), GDT_UInt16);
+    EXPECT_EQ(GDALFindDataType(16, s, i, r), GDT_Int16);
 
-    EXPECT_EQ(GDALFindDataType(64, false /* signed */, false /* floating */,
-                               false /* complex */),
-              GDT_UInt64);
-    EXPECT_EQ(GDALFindDataType(64, true /* signed */, false /* floating */,
-                               false /* complex */),
-              GDT_Int64);
+    EXPECT_EQ(GDALFindDataType(32, u, f, r), GDT_Float32);
+    EXPECT_EQ(GDALFindDataType(32, u, f, c), GDT_CFloat32);
+
+    EXPECT_EQ(GDALFindDataType(32, u, i, r), GDT_UInt32);
+    EXPECT_EQ(GDALFindDataType(32, s, i, r), GDT_Int32);
+
+    EXPECT_EQ(GDALFindDataType(64, u, f, r), GDT_Float64);
+    EXPECT_EQ(GDALFindDataType(64, u, f, c), GDT_CFloat64);
+
+    EXPECT_EQ(GDALFindDataType(64, u, i, r), GDT_UInt64);
+    EXPECT_EQ(GDALFindDataType(64, s, i, r), GDT_Int64);
 
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -128, 0), GDT_Int16);
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -32768, 0), GDT_Int16);
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -32769, 0), GDT_Int32);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float16, -999, 0), GDT_Float16);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float16, -99999, 0), GDT_Float32);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float16, -99999.9876, 0),
+              GDT_Float64);
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float32, -99999, 0), GDT_Float32);
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float32, -99999.9876, 0),
               GDT_Float64);

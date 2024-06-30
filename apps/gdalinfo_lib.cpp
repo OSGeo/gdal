@@ -1067,6 +1067,9 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                 case GDT_Int64:
                     stacDataType = "int64";
                     break;
+                case GDT_Float16:
+                    stacDataType = "float16";
+                    break;
                 case GDT_Float32:
                     stacDataType = "float32";
                     break;
@@ -1078,6 +1081,9 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                     break;
                 case GDT_CInt32:
                     stacDataType = "cint32";
+                    break;
+                case GDT_CFloat16:
+                    stacDataType = "cfloat16";
                     break;
                 case GDT_CFloat32:
                     stacDataType = "cfloat32";

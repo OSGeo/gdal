@@ -996,7 +996,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
             bool bHasOffset = false;
             bool bHasScale = false;
             if (bAutoScale && srcArrayType.GetClass() == GEDTC_NUMERIC &&
-                (srcArrayType.GetNumericDataType() == GDT_Float32 ||
+                (srcArrayType.GetNumericDataType() == GDT_Float16 ||
+                 srcArrayType.GetNumericDataType() == GDT_Float32 ||
                  srcArrayType.GetNumericDataType() == GDT_Float64) &&
                 srcArray->GetOffset(&bHasOffset) == 0.0 && !bHasOffset &&
                 srcArray->GetScale(&bHasScale) == 1.0 && !bHasScale &&
@@ -1050,11 +1051,13 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                     case GDT_Int64:
                         setDTMinMax(std::int64_t);
                         break;
+                    case GDT_Float16:
                     case GDT_Float32:
                     case GDT_Float64:
                     case GDT_Unknown:
                     case GDT_CInt16:
                     case GDT_CInt32:
+                    case GDT_CFloat16:
                     case GDT_CFloat32:
                     case GDT_CFloat64:
                     case GDT_TypeCount:
@@ -1692,6 +1695,9 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                                  static_cast<GIntBig>(
                                      *static_cast<const std::int64_t *>(pSrc)));
                 break;
+            case GDT_Float16:
+                str = CPLSPrintf("%.9g", *static_cast<const _Float16 *>(pSrc));
+                break;
             case GDT_Float32:
                 str = CPLSPrintf("%.9g", *static_cast<const float *>(pSrc));
                 break;
@@ -1708,6 +1714,12 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
             {
                 const GInt32 *src = static_cast<const GInt32 *>(pSrc);
                 str = CPLSPrintf("%d+%dj", src[0], src[1]);
+                break;
+            }
+            case GDT_CFloat16:
+            {
+                const _Float16 *src = static_cast<const _Float16 *>(pSrc);
+                str = CPLSPrintf("%.9g+%.9gj", src[0], src[1]);
                 break;
             }
             case GDT_CFloat32:
@@ -6621,9 +6633,13 @@ GDALMDArray::GetUnscaled(double dfOverriddenScale, double dfOverriddenOffset,
     GDALDataType eDT = GDALDataTypeIsComplex(GetDataType().GetNumericDataType())
                            ? GDT_CFloat64
                            : GDT_Float64;
-    if (dfOverriddenScale == -1 && dfOverriddenOffset == 0 &&
-        GetDataType().GetNumericDataType() == GDT_Float32)
-        eDT = GDT_Float32;
+    if (dfOverriddenScale == -1 && dfOverriddenOffset == 0)
+    {
+        if (GetDataType().GetNumericDataType() == GDT_Float16)
+            eDT = GDT_Float16;
+        if (GetDataType().GetNumericDataType() == GDT_Float32)
+            eDT = GDT_Float32;
+    }
 
     return GDALMDArrayUnscaled::Create(self, dfScale, dfOffset,
                                        dfOverriddenDstNodata, eDT);
@@ -7122,6 +7138,12 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                                        tmpBufferStrideVector);
             break;
 
+        case GDT_Float16:
+            ReadInternal<_Float16>(count, bufferStride, bufferDataType,
+                                   pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                   tmpBufferStrideVector);
+            break;
+
         case GDT_Float32:
             ReadInternal<float>(count, bufferStride, bufferDataType, pDstBuffer,
                                 pTempBuffer, oTmpBufferDT,
@@ -7136,6 +7158,7 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         case GDT_Unknown:
         case GDT_CInt16:
         case GDT_CInt32:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
         case GDT_TypeCount:

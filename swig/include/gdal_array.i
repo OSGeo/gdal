@@ -360,11 +360,17 @@ static GDALDataType NumpyTypeToGDALType(PyArrayObject *psArray)
       case NPY_CFLOAT:
         return GDT_CFloat32;
 
+      // case NPY_CHALF
+      //   return GDT_CFloat16;
+
       case NPY_DOUBLE:
         return GDT_Float64;
 
       case NPY_FLOAT:
         return GDT_Float32;
+
+      case NPY_HALF:
+        return GDT_Float16;
 
       case NPY_INT32:
         return GDT_Int32;
@@ -2036,10 +2042,12 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
         case GDT_UInt32: numpytype = NPY_UINT32; break;
         case GDT_Int64: numpytype = NPY_INT64; break;
         case GDT_UInt64: numpytype = NPY_UINT64; break;
+        case GDT_Float16: numpytype = NPY_FLOAT16; break;
         case GDT_Float32: numpytype = NPY_FLOAT32; break;
         case GDT_Float64: numpytype = NPY_FLOAT64; break;
         //case GDT_CInt16: numpytype = NPY_INT16; break;
         //case GDT_CInt32: numpytype = NPY_INT32; break;
+        //case GDT_CFloat16: numpytype = NPY_CHALF; break;
         case GDT_CFloat32: numpytype = NPY_CFLOAT; break;
         case GDT_CFloat64: numpytype = NPY_CDOUBLE; break;
         default: numpytype = NPY_UBYTE; break;
@@ -2376,11 +2384,13 @@ codes = {gdalconst.GDT_Byte: numpy.uint8,
          gdalconst.GDT_Int32: numpy.int32,
          gdalconst.GDT_UInt64: numpy.uint64,
          gdalconst.GDT_Int64: numpy.int64,
+         gdalconst.GDT_Float16: numpy.float16,
          gdalconst.GDT_Float32: numpy.float32,
          gdalconst.GDT_Float64: numpy.float64,
          gdalconst.GDT_CInt16: numpy.complex64,
          gdalconst.GDT_CInt32: numpy.complex64,
-         gdalconst.GDT_CFloat32:  numpy.complex64,
+         # gdalconst.GDT_CFloat16: numpy.complex32,
+         gdalconst.GDT_CFloat32: numpy.complex64,
          gdalconst.GDT_CFloat64: numpy.complex128}
 
 
