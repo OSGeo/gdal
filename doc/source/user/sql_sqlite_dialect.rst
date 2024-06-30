@@ -201,6 +201,15 @@ For example we can select the annotation features as:
 
     SELECT * FROM nation WHERE OGR_STYLE LIKE 'LABEL%'
 
+Statistics functions
+++++++++++++++++++++
+
+In addition to standard COUNT(), SUM(), AVG(), MIN(), MAX(), the following
+aggregate functions are available:
+
+- STDDEV_POP: (GDAL >= 3.10) numerical population standard deviation.
+- STDDEV_SAMP: (GDAL >= 3.10) numerical `sample standard deviation <https://en.wikipedia.org/wiki/Standard_deviation#Sample_standard_deviation>`__
+
 Spatialite SQL functions
 ++++++++++++++++++++++++
 

@@ -4095,3 +4095,15 @@ def test_ogr_sql_ST_Area_on_ellipsoid(tmp_vsimem, require_spatialite):
     with ds.ExecuteSQL("SELECT ST_Area(null, 1) FROM my_layer") as sql_lyr:
         f = sql_lyr.GetNextFeature()
         assert f[0] is None
+
+
+def test_ogr_sqlite_stddev():
+    """Test STDDEV_POP() and STDDEV_SAMP"""
+
+    ds = ogr.Open(":memory:", update=1)
+    ds.ExecuteSQL("CREATE TABLE test(v REAL)")
+    ds.ExecuteSQL("INSERT INTO test VALUES (4),(NULL),('invalid'),(5)")
+    with ds.ExecuteSQL("SELECT STDDEV_POP(v), STDDEV_SAMP(v) FROM test") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == pytest.approx(0.5, rel=1e-15)
+        assert f.GetField(1) == pytest.approx(0.5**0.5, rel=1e-15)
