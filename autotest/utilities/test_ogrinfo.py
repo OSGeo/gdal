@@ -57,7 +57,7 @@ def ogrinfo_path():
 def test_ogrinfo_1(ogrinfo_path):
 
     (ret, err) = gdaltest.runexternal_out_and_err(
-        ogrinfo_path + " ../ogr/data/poly.shp"
+        ogrinfo_path + " ../ogr/data/poly.shp", encoding="utf8"
     )
     assert err is None or err == "", "got error/warning"
     assert ret.find("ESRI Shapefile") != -1
@@ -249,6 +249,7 @@ def test_ogrinfo_15(ogrinfo_path):
 
     (ret, _) = gdaltest.runexternal_out_and_err(
         ogrinfo_path + " --debug on --mempreload ../ogr/data /vsimem/poly.shp",
+        encoding="utf8",
         check_memleak=False,
     )
     assert "ESRI Shapefile" in ret
@@ -360,12 +361,6 @@ def test_ogrinfo_22(ogrinfo_path, tmp_path):
     f.write("_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n")
     f.write('"POINT(1 2)","POINT(3 4)"\n')
     f.close()
-
-    ret = gdaltest.runexternal(
-        ogrinfo_path + f" {csv_fname}",
-        check_memleak=False,
-    )
-    assert "1: test_ogrinfo_22 (Unknown (any), Unknown (any))" in ret
 
     ret = gdaltest.runexternal(
         ogrinfo_path + f" -al -wkt_format wkt1 {csv_fname}",
@@ -606,20 +601,11 @@ def test_ogrinfo_sql_filename(ogrinfo_path, tmp_path):
 def test_ogrinfo_nogeomtype(ogrinfo_path):
 
     (ret, err) = gdaltest.runexternal_out_and_err(
-        ogrinfo_path + " -nogeomtype ../ogr/data/poly.shp"
+        ogrinfo_path + " -nogeomtype -so ../ogr/data/poly.shp", encoding="utf8"
     )
+
     assert err is None or err == "", "got error/warning"
-    expected_ret = """INFO: Open of `../ogr/data/poly.shp'
-      using driver `ESRI Shapefile' successful.
-1: poly
-"""
-    expected_lines = expected_ret.splitlines()
-    lines = ret.splitlines()
-    for i, exp_line in enumerate(expected_lines):
-        if exp_line != lines[i]:
-            if gdaltest.is_travis_branch("mingw"):
-                return "expected_fail"
-            pytest.fail(ret)
+    assert "Geometry" not in ret
 
 
 ###############################################################################
@@ -820,3 +806,14 @@ def test_ogrinfo_open_raster(ogrinfo_path):
     )
 
     assert "Did you intend to call gdalinfo" in err
+
+
+###############################################################################
+
+
+def test_ogrinfo_auto_select_layer(ogrinfo_path):
+
+    (ret, err) = gdaltest.runexternal_out_and_err(
+        f"{ogrinfo_path} ../ogr/data/poly.shp -so", encoding="utf8"
+    )
+    assert "EAS_ID" in ret
