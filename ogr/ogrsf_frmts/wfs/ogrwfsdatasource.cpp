@@ -1376,6 +1376,7 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
                 OGRLayer::GetSupportedSRSListRetType apoSupportedCRSList;
                 if (psOtherSRS)
                 {
+                    if (pszDefaultSRS)
                     {
                         auto poSRS =
                             std::unique_ptr<OGRSpatialReference,

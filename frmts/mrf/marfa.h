@@ -965,11 +965,11 @@ class LERC_Band final : public MRFRasterBand
   protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
-    double precision;
+    double precision = 0;
     // L1 or L2
-    int version;
+    int version = 0;
     // L2 version
-    int l2ver;
+    int l2ver = 0;
     // Build a MRF header for a single LERC tile
     static CPLXMLNode *GetMRFConfig(GDALOpenInfo *poOpenInfo);
 

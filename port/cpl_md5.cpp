@@ -84,6 +84,7 @@ void CPLMD5Update(struct CPLMD5Context *context, const void *buf, size_t len)
 
     // Update bitcount
     GUInt32 t = context->bits[0];
+    // coverity[overflow_const]
     if ((context->bits[0] =
              (t + (static_cast<GUInt32>(len) << 3)) & 0xffffffff) < t)
         context->bits[1]++; /* Carry from low to high */

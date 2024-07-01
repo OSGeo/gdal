@@ -3116,6 +3116,7 @@ lbl_next_depth:
             goto end;
     }
 
+    assert(dimIdx > 0);
     dimIdx--;
     // cppcheck-suppress negativeContainerIndex
     switch (stack[dimIdx].return_point)

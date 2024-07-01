@@ -3814,6 +3814,7 @@ int IVSIS3LikeFSHandlerWithMultipartUpload::CopyFileRestartable(
             while (!bStop)
             {
                 oCV.wait(oLock);
+                // coverity[ uninit_use_in_call]
                 oLock.unlock();
                 const bool bInterrupt =
                     !pProgressFunc(double(iCurChunk) / nChunkCount,

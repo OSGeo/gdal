@@ -1128,7 +1128,7 @@ void OGRGMLASLayer::InsertNewField(int nInsertPos,
         if (strcmp(poFeature->GetFieldAsString(szLAYER_NAME), GetName()) == 0)
         {
             int nFieldIndex = poFeature->GetFieldAsInteger(szFIELD_INDEX);
-            if (nFieldIndex >= nInsertPos)
+            if (nFieldIndex >= nInsertPos && nFieldIndex < INT_MAX)
             {
                 poFeature->SetField(szFIELD_INDEX, nFieldIndex + 1);
                 CPL_IGNORE_RET_VAL(

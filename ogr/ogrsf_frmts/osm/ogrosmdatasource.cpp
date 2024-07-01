@@ -925,6 +925,7 @@ void OGROSMDataSource::LookupNodesSQLite()
         if (nToQuery > static_cast<unsigned int>(LIMIT_IDS_PER_REQUEST))
             nToQuery = static_cast<unsigned int>(LIMIT_IDS_PER_REQUEST);
 
+        assert(nToQuery > 0);
         sqlite3_stmt *hStmt = m_pahSelectNodeStmt[nToQuery - 1];
         for (unsigned int i = iCur; i < iCur + nToQuery; i++)
         {

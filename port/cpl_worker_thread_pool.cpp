@@ -87,6 +87,16 @@ CPLWorkerThreadPool::~CPLWorkerThreadPool()
 }
 
 /************************************************************************/
+/*                        GetThreadCount()                              */
+/************************************************************************/
+
+int CPLWorkerThreadPool::GetThreadCount() const
+{
+    std::unique_lock<std::mutex> oGuard(m_mutex);
+    return m_nMaxThreads;
+}
+
+/************************************************************************/
 /*                       WorkerThreadFunction()                         */
 /************************************************************************/
 
@@ -130,7 +140,12 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void *user_data)
  */
 bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
 {
-    CPLAssert(m_nMaxThreads > 0);
+#ifdef DEBUG
+    {
+        std::unique_lock<std::mutex> oGuard(m_mutex);
+        CPLAssert(m_nMaxThreads > 0);
+    }
+#endif
 
     bool bMustIncrementWaitingWorkerThreadsAfterSubmission = false;
     if (threadLocalCurrentThreadPool == this)
@@ -234,6 +249,7 @@ bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
 
         {
             std::lock_guard<std::mutex> oGuardWT(psWorkerThread->m_mutex);
+            // coverity[ uninit_use_in_call]
             oGuard.unlock();
             psWorkerThread->m_cv.notify_one();
         }
@@ -257,7 +273,12 @@ bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
 bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
                                      const std::vector<void *> &apData)
 {
-    CPLAssert(m_nMaxThreads > 0);
+#ifdef DEBUG
+    {
+        std::unique_lock<std::mutex> oGuard(m_mutex);
+        CPLAssert(m_nMaxThreads > 0);
+    }
+#endif
 
     if (threadLocalCurrentThreadPool == this)
     {
@@ -361,6 +382,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
 #endif
             {
                 std::lock_guard<std::mutex> oGuardWT(psWorkerThread->m_mutex);
+                // coverity[ uninit_use_in_call]
                 oGuard.unlock();
                 psWorkerThread->m_cv.notify_one();
             }
@@ -467,11 +489,14 @@ bool CPLWorkerThreadPool::Setup(int nThreads, CPLThreadFunc pfnInitFunc,
     bool bRet = true;
     for (int i = static_cast<int>(aWT.size()); i < nThreads; i++)
     {
-        std::unique_ptr<CPLWorkerThread> wt(new CPLWorkerThread);
+        auto wt = std::make_unique<CPLWorkerThread>();
         wt->pfnInitFunc = pfnInitFunc;
         wt->pInitData = pasInitData ? pasInitData[i] : nullptr;
         wt->poTP = this;
-        wt->bMarkedAsWaiting = false;
+        {
+            std::lock_guard<std::mutex> oGuard(wt->m_mutex);
+            wt->bMarkedAsWaiting = false;
+        }
         wt->hThread = CPLCreateJoinableThread(WorkerThreadFunction, wt.get());
         if (wt->hThread == nullptr)
         {
@@ -575,8 +600,12 @@ CPLWorkerThreadPool::GetNextJob(CPLWorkerThread *psWorkerThread)
 #endif
 
         std::unique_lock<std::mutex> oGuardThisThread(psWorkerThread->m_mutex);
+        // coverity[uninit_use_in_call]
         oGuard.unlock();
-        psWorkerThread->m_cv.wait(oGuardThisThread);
+        while (psWorkerThread->bMarkedAsWaiting && eState != CPLWTS_STOP)
+        {
+            psWorkerThread->m_cv.wait(oGuardThisThread);
+        }
     }
 }
 

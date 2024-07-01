@@ -1403,6 +1403,7 @@ void OGRShapeDataSource::RefreshLockFile(void *_self)
     OGRShapeDataSource *self = static_cast<OGRShapeDataSource *>(_self);
     CPLAssert(self->m_psLockFile);
     CPLAcquireMutex(self->m_poRefreshLockFileMutex, 1000);
+    self->m_bRefreshLockFileThreadStarted = true;
     CPLCondSignal(self->m_poRefreshLockFileCond);
     unsigned int nInc = 0;
     while (!(self->m_bExitRefreshLockFileThread))
@@ -1500,6 +1501,7 @@ bool OGRShapeDataSource::UncompressIfNeeded()
         }
         m_psLockFile = f;
         m_bExitRefreshLockFileThread = false;
+        m_bRefreshLockFileThreadStarted = false;
         // Config option mostly for testing purposes
         // coverity[tainted_data]
         m_dfRefreshLockDelay = CPLAtof(CPLGetConfigOption(
@@ -1516,7 +1518,10 @@ bool OGRShapeDataSource::UncompressIfNeeded()
         else
         {
             CPLAcquireMutex(m_poRefreshLockFileMutex, 1000);
-            CPLCondWait(m_poRefreshLockFileCond, m_poRefreshLockFileMutex);
+            while (!m_bRefreshLockFileThreadStarted)
+            {
+                CPLCondWait(m_poRefreshLockFileCond, m_poRefreshLockFileMutex);
+            }
             CPLReleaseMutex(m_poRefreshLockFileMutex);
         }
     }

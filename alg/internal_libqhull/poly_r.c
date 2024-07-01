@@ -1137,10 +1137,13 @@ ridgeT *qh_newridge(qhT *qh) {
   qh_memalloc_(qh, (int)sizeof(ridgeT), freelistp, ridge, ridgeT);
   memset((char *)ridge, (size_t)0, sizeof(ridgeT));
   zinc_(Ztotridges);
+  ridge->id= qh->ridge_id;
   if (qh->ridge_id == UINT_MAX) {
     qh_fprintf(qh, qh->ferr, 7074, "qhull warning: more than 2^32 ridges.  Qhull results are OK.  Since the ridge ID wraps around to 0, two ridges may have the same identifier.\n");
+    qh->ridge_id = 0;
+  } else {
+    qh->ridge_id++;
   }
-  ridge->id= qh->ridge_id++;
   trace4((qh, qh->ferr, 4056, "qh_newridge: created ridge r%d\n", ridge->id));
   return(ridge);
 } /* newridge */
@@ -1176,10 +1179,14 @@ int qh_pointid(qhT *qh, pointT *point) {
     offset= (ptr_intT)(point - qh->first_point);
     /* coverity[divide_arg] */
     id= offset / qh->hull_dim;
-  }else if ((id= qh_setindex(qh->other_points, point)) != -1)
-    id += qh->num_points;
-  else
-    return qh_IDunknown;
+  } else {
+    id = qh_setindex(qh->other_points, point);
+    if (id >= 0) {
+      id += qh->num_points;
+    } else {
+      return qh_IDunknown;
+    }
+  }
   return (int)id;
 } /* pointid */
 

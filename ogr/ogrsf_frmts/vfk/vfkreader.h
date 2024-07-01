@@ -470,7 +470,7 @@ class IVFKReader
     virtual bool IsValid() const = 0;
     virtual bool HasFileField() const = 0;
     virtual int ReadDataBlocks(bool = false) = 0;
-    virtual int ReadDataRecords(IVFKDataBlock * = nullptr) = 0;
+    virtual int64_t ReadDataRecords(IVFKDataBlock * = nullptr) = 0;
     virtual int LoadGeometry() = 0;
 
     virtual int GetDataBlockCount() const = 0;

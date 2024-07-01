@@ -56,6 +56,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <limits>
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -1401,8 +1402,11 @@ GIntBig CPLGetPhysicalRAM(void)
 {
     const long nPhysPages = sysconf(_SC_PHYS_PAGES);
     const long nPageSize = sysconf(_SC_PAGESIZE);
-    if (nPhysPages < 0 || nPageSize < 0)
+    if (nPhysPages <= 0 || nPageSize <= 0 ||
+        nPhysPages > std::numeric_limits<GIntBig>::max() / nPageSize)
+    {
         return 0;
+    }
     GIntBig nVal = static_cast<GIntBig>(nPhysPages) * nPageSize;
 
 #ifdef __linux

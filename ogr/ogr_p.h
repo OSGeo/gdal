@@ -276,7 +276,8 @@ inline uint64_t OGRRoundValueIEEE754(uint64_t nVal, int nBitsPrecision)
         return nVal;
     if (nNullifiedBits >= MANTISSA_SIZE)
         nNullifiedBits = MANTISSA_SIZE;
-    nVal &= std::numeric_limits<uint64_t>::max() << nNullifiedBits;
+    nVal >>= nNullifiedBits;
+    nVal <<= nNullifiedBits;
     return nVal;
 }
 

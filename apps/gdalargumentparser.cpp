@@ -50,10 +50,10 @@ GDALArgumentParser::GDALArgumentParser(const std::string &program_name,
         add_argument("-h", "--help")
             .flag()
             .action(
-                [this, program_name](const auto &)
+                [this](const auto &)
                 {
                     std::cout << usage() << std::endl << std::endl;
-                    std::cout << _("Note: ") << program_name
+                    std::cout << _("Note: ") << m_program_name
                               << _(" --long-usage for full help.") << std::endl;
                     std::exit(0);
                 })
@@ -77,11 +77,11 @@ GDALArgumentParser::GDALArgumentParser(const std::string &program_name,
             .flag()
             .hidden()
             .action(
-                [program_name](const auto &)
+                [this](const auto &)
                 {
                     printf("%s was compiled against GDAL %s and "
                            "is running against GDAL %s\n",
-                           program_name.c_str(), GDAL_RELEASE_NAME,
+                           m_program_name.c_str(), GDAL_RELEASE_NAME,
                            GDALVersionInfo("RELEASE_NAME"));
                     std::exit(0);
                 })

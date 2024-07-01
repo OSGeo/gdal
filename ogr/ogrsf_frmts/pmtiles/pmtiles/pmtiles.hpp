@@ -576,6 +576,9 @@ inline std::tuple<std::string, std::string, int> make_root_leaves(const std::fun
 		if (root_bytes.length() < 16384 - 127) {
 			return std::make_tuple(root_bytes, leaves_bytes, num_leaves);
 		}
+		if (leaf_size > std::numeric_limits<int>::max() / 2) {
+			return std::make_tuple(compressed, "", 0);
+		}
 		leaf_size *= 2;
 	}
 }

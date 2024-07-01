@@ -8231,7 +8231,10 @@ begin:
     }
 
     if (iField == psHelper->m_nFieldCount)
+    {
+        std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
         psFillArrowArray->nCountRows++;
+    }
     return;
 
 error:
@@ -8655,7 +8658,13 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                    sizeof(struct ArrowArray));
             memset(task->m_psArrowArray.get(), 0, sizeof(struct ArrowArray));
 
-            if (task->m_bMemoryLimitReached)
+            const bool bMemoryLimitReached = [&task]()
+            {
+                std::unique_lock oLock(task->m_oMutex);
+                return task->m_bMemoryLimitReached;
+            }();
+
+            if (bMemoryLimitReached)
             {
                 m_nIsCompatOfOptimizedGetNextArrowArray = false;
                 stopThread();

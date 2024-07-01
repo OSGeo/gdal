@@ -188,8 +188,11 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize,
     }
 
     TIFFWriteDirectory(hTIFF);
-    TIFFSetDirectory(hTIFF,
-                     static_cast<tdir_t>(TIFFNumberOfDirectories(hTIFF) - 1));
+    const tdir_t nNumberOfDirs = TIFFNumberOfDirectories(hTIFF);
+    if (nNumberOfDirs > 0)  // always true, but to please Coverity
+    {
+        TIFFSetDirectory(hTIFF, static_cast<tdir_t>(nNumberOfDirs - 1));
+    }
 
     const toff_t nOffset = TIFFCurrentDirOffset(hTIFF);
 

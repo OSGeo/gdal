@@ -80,12 +80,9 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
     const auto IntFromDouble = [](double dfVal)
     {
         int nVal;
-        if (CPLIsNan(dfVal) || CPLIsInf(dfVal))
+        if (!std::isfinite(dfVal))
         {
-            // Most compilers seem to cast NaN or Inf to 0x80000000.
-            // but VC7 is an exception. So we force the result
-            // of such a cast.
-            nVal = 0x80000000;
+            nVal = INT_MIN;
         }
         else
         {

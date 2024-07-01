@@ -106,7 +106,8 @@ int GTiffDataset::GetJPEGOverviewCount()
     GByte abyFFD8[] = {0xFF, 0xD8};
     if (TIFFGetField(m_hTIFF, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable))
     {
-        if (pJPEGTable == nullptr || nJPEGTableSize > INT_MAX ||
+        if (pJPEGTable == nullptr || nJPEGTableSize < 2 ||
+            nJPEGTableSize > INT_MAX ||
             static_cast<GByte *>(pJPEGTable)[nJPEGTableSize - 1] != 0xD9)
         {
             m_nJPEGOverviewCount = 0;

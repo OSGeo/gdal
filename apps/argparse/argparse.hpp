@@ -2041,8 +2041,10 @@ public:
         }
 
         stream << std::setw(2) << " ";
-        stream << std::setw(static_cast<int>(longest_arg_length - 2))
-               << command;
+        if (longest_arg_length >= 2) {
+          stream << std::setw(static_cast<int>(longest_arg_length - 2))
+                 << command;
+        }
         stream << " " << subparser->get().m_description << "\n";
       }
     }

@@ -1559,11 +1559,8 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
     if (!(pszYChunkSize && ((nYChunkSize = atoi(pszYChunkSize))) != 0))
     {
         const GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
-        const int knIntMax = std::numeric_limits<int>::max();
-        if (nYChunkSize64 > knIntMax)
-            nYChunkSize = knIntMax;
-        else
-            nYChunkSize = static_cast<int>(nYChunkSize64);
+        nYChunkSize = static_cast<int>(
+            std::min<GIntBig>(nYChunkSize64, std::numeric_limits<int>::max()));
     }
 
     if (nYChunkSize < 1)
