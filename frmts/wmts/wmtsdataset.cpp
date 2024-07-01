@@ -2192,10 +2192,10 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                     int(0.5 + (poDS->adfGT[3] - sAOI.MinY) / oTM.dfPixelSize);
             }
 
-            int nRasterXSize = int(0.5 + poDS->nRasterXSize / oTM.dfPixelSize *
-                                             poDS->adfGT[1]);
-            int nRasterYSize = int(0.5 + poDS->nRasterYSize / oTM.dfPixelSize *
-                                             poDS->adfGT[1]);
+            const int nRasterXSize = int(
+                0.5 + poDS->nRasterXSize / oTM.dfPixelSize * poDS->adfGT[1]);
+            const int nRasterYSize = int(
+                0.5 + poDS->nRasterYSize / oTM.dfPixelSize * poDS->adfGT[1]);
             if (!poDS->apoDatasets.empty() &&
                 (nRasterXSize < 128 || nRasterYSize < 128))
             {
@@ -2204,14 +2204,28 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLString osURL(
                 Replace(osURLTileTemplate, "{TileMatrix}", oTM.osIdentifier));
 
-            double dfTileWidthUnits = oTM.dfPixelSize * oTM.nTileWidth;
-            double dfTileHeightUnits = oTM.dfPixelSize * oTM.nTileHeight;
+            const double dfTileWidthUnits = oTM.dfPixelSize * oTM.nTileWidth;
+            const double dfTileHeightUnits = oTM.dfPixelSize * oTM.nTileHeight;
+
+            // Get bounds of this tile matrix / tile matrix limits
+            auto sTMExtent = oTM.GetExtent();
+            if (aoMapTileMatrixLimits.find(oTM.osIdentifier) !=
+                aoMapTileMatrixLimits.end())
+            {
+                const WMTSTileMatrixLimits &oTMLimits =
+                    aoMapTileMatrixLimits[oTM.osIdentifier];
+                sTMExtent.Intersect(oTMLimits.GetExtent(oTM));
+            }
 
             // Compute the shift in terms of tiles between AOI and TM origin
-            int nTileX = (int)(floor(poDS->adfGT[0] - oTM.dfTLX + 1e-10) /
-                               dfTileWidthUnits);
-            int nTileY = (int)(floor(oTM.dfTLY - poDS->adfGT[3] + 1e-10) /
-                               dfTileHeightUnits);
+            const int nTileX = static_cast<int>(
+                floor(std::max(sTMExtent.MinX, poDS->adfGT[0]) - oTM.dfTLX +
+                      1e-10) /
+                dfTileWidthUnits);
+            const int nTileY = static_cast<int>(
+                floor(oTM.dfTLY - std::min(poDS->adfGT[3], sTMExtent.MaxY) +
+                      1e-10) /
+                dfTileHeightUnits);
 
             // Compute extent of this zoom level slightly larger than the AOI
             // and aligned on tile boundaries at this TM
@@ -2224,8 +2238,13 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             dfLRY = dfULY + floor((dfLRY - dfULY) / dfTileHeightUnits + 1e-10) *
                                 dfTileHeightUnits;
 
-            double dfSizeX = 0.5 + (dfLRX - dfULX) / oTM.dfPixelSize;
-            double dfSizeY = 0.5 + (dfULY - dfLRY) / oTM.dfPixelSize;
+            // Clip TMS extent to the one of this TM
+            if (!bExtendBeyondDateLine)
+                dfLRX = std::min(dfLRX, sTMExtent.MaxX);
+            dfLRY = std::max(dfLRY, sTMExtent.MinY);
+
+            const double dfSizeX = 0.5 + (dfLRX - dfULX) / oTM.dfPixelSize;
+            const double dfSizeY = 0.5 + (dfULY - dfLRY) / oTM.dfPixelSize;
             if (dfSizeX > INT_MAX || dfSizeY > INT_MAX)
             {
                 continue;
@@ -2238,13 +2257,15 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                 poDS->oTMS = oTMS;
             }
 
-            int nSizeX = static_cast<int>(dfSizeX);
-            int nSizeY = static_cast<int>(dfSizeY);
+            const int nSizeX = static_cast<int>(dfSizeX);
+            const int nSizeY = static_cast<int>(dfSizeY);
 
-            double dfDateLineX =
+            const double dfDateLineX =
                 oTM.dfTLX + oTM.nMatrixWidth * dfTileWidthUnits;
-            int nSizeX1 = int(0.5 + (dfDateLineX - dfULX) / oTM.dfPixelSize);
-            int nSizeX2 = int(0.5 + (dfLRX - dfDateLineX) / oTM.dfPixelSize);
+            const int nSizeX1 =
+                int(0.5 + (dfDateLineX - dfULX) / oTM.dfPixelSize);
+            const int nSizeX2 =
+                int(0.5 + (dfLRX - dfDateLineX) / oTM.dfPixelSize);
             if (bExtendBeyondDateLine && dfDateLineX > dfLRX)
             {
                 CPLDebug("WMTS", "ExtendBeyondDateLine ignored in that case");
