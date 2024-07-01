@@ -1068,6 +1068,7 @@ def test_tiff_write_26():
     ct.SetColorEntry(1, (255, 255, 0, 255))
     ct.SetColorEntry(2, (255, 0, 255, 255))
     ct.SetColorEntry(3, (0, 255, 255, 255))
+    ct.SetColorEntry(3, (0, 255, 255, 255))
 
     ds.GetRasterBand(1).SetRasterColorTable(ct)
 
@@ -1087,8 +1088,6 @@ def test_tiff_write_26():
 
     ct = None
     ds = None
-
-    gdaltest.tiff_drv.Delete("tmp/ct8.tif")
 
 
 ###############################################################################
@@ -11559,3 +11558,41 @@ def test_tiff_write_too_many_gcps(tmp_vsimem, with_initial_gcps):
     ds = gdal.Open(filename)
     assert ds.GetGCPCount() == 0
     ds = None
+
+
+###############################################################################
+# Test writing/reading a TIFF color map using 256 as the multiplication factor
+# https://github.com/OSGeo/gdal/issues/10310
+
+
+def test_tiff_write_colormap_256_mult_factor(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename, 1, 1, 1, gdal.GDT_Byte, ["COLOR_TABLE_MULTIPLIER=256"]
+    )
+    ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry(0, (0, 0, 0, 255))
+    ct.SetColorEntry(1, (1, 2, 3, 255))
+    ct.SetColorEntry(2, (255, 255, 255, 255))
+    ds.GetRasterBand(1).SetRasterColorTable(ct)
+    ds = None
+
+    # Check we auto-guess correctly the 256 multiplication factor
+    ds = gdal.Open(filename)
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
+    assert (
+        ct.GetColorEntry(0) == (0, 0, 0, 255)
+        and ct.GetColorEntry(1) == (1, 2, 3, 255)
+        and ct.GetColorEntry(2) == (255, 255, 255, 255)
+    ), "Wrong color table entry."
+
+    # Check we get wrong values when not specifying the appropriate multiplier
+    ds = gdal.OpenEx(filename, open_options=["COLOR_TABLE_MULTIPLIER=257"])
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
+    assert (
+        ct.GetColorEntry(0) == (0, 0, 0, 255)
+        and ct.GetColorEntry(1) == (0, 1, 2, 255)
+        and ct.GetColorEntry(2) == (254, 254, 254, 255)
+    ), "Wrong color table entry."

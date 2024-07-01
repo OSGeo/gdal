@@ -308,9 +308,7 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
         bDroppedRef = true;
     }
 
-    if (m_poColorTable != nullptr)
-        delete m_poColorTable;
-    m_poColorTable = nullptr;
+    m_poColorTable.reset();
 
     if (m_hTIFF)
     {
@@ -1117,6 +1115,7 @@ void GTiffDataset::ScanDirectories()
                 poODS->ShareLockWithParentDataset(this);
                 poODS->SetStructuralMDFromParent(this);
                 poODS->m_pszFilename = CPLStrdup(m_pszFilename);
+                poODS->m_nColorTableMultiplier = m_nColorTableMultiplier;
                 if (poODS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nThisDir,
                                       eAccess) != CE_None ||
                     poODS->GetRasterCount() != GetRasterCount())
