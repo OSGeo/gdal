@@ -1,0 +1,32 @@
+---
+name: Test Nix package
+
+on:
+  schedule:
+    - cron:  '0 1 * * 1'
+  workflow_dispatch:
+  pull_request:  # FIXME: remove on PR trigger
+
+
+jobs:
+  test-package:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Install nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Build gdal package
+        run: |
+          nix build -L --accept-flake-config .#gdal
+          nix build -L --accept-flake-config .#python-gdal
+
+      - name: Test development environment
+        run: |
+          nix develop .#dev --command cmake --version
+
+      - name: Test user environment
+        run: |
+          nix develop .#user --command python -c 'from osgeo import gdal; print(gdal.__version__)'
