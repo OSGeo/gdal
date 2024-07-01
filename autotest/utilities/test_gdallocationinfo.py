@@ -254,3 +254,48 @@ def test_gdallocationinfo_echo(gdallocationinfo_path):
         strin="1 2",
     )
     assert "1,2,132" in ret
+
+
+###############################################################################
+# Test out of raster coordinates
+
+
+def test_gdallocationinfo_out_of_raster_coordinates_valonly(gdallocationinfo_path):
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + " -valonly ../gcore/data/byte.tif",
+        strin="1 2\n-1 -1\n1 2",
+    )
+
+    ret = ret.replace("\r\n", "\n")
+    assert "132\n\n132\n" in ret
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + ' -E -valonly -field_sep "," ../gcore/data/byte.tif',
+        strin="1 2\n-1 -1\n1 2",
+    )
+
+    ret = ret.replace("\r\n", "\n")
+    assert "1,2,132\n-1,-1,\n1,2,132\n" in ret
+
+
+def test_gdallocationinfo_out_of_raster_coordinates_valonly_multiband(
+    gdallocationinfo_path,
+):
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + " -valonly ../gcore/data/rgbsmall.tif",
+        strin="1 2\n-1 -1\n1 2",
+    )
+
+    ret = ret.replace("\r\n", "\n")
+    assert "0\n0\n0\n\n\n\n0\n0\n0\n" in ret
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path
+        + ' -E -valonly -field_sep "," ../gcore/data/rgbsmall.tif',
+        strin="1 2\n-1 -1\n1 2",
+    )
+
+    ret = ret.replace("\r\n", "\n")
+    assert "1,2,0,0,0\n-1,-1,,,\n1,2,0,0,0\n" in ret

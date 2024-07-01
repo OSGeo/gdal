@@ -432,7 +432,12 @@ MAIN_START(argc, argv)
                 osXML += "<Alert>Location is off this file! No further details "
                          "to report.</Alert>";
             else if (bValOnly)
-                printf("\n");
+            {
+                for (int i = 1; i < static_cast<int>(anBandList.size()); i++)
+                {
+                    printf("%s", osFieldSep.c_str());
+                }
+            }
             else if (!bQuiet)
                 printf("\nLocation is off this file! No further details to "
                        "report.\n");
