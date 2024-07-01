@@ -776,17 +776,13 @@ def test_ogr_openfilegdb_4():
 ###############################################################################
 # Test use of attribute indexes on truncated strings
 
+IDX_NOT_USED = 0
+IDX_USED = 1
 
-def test_ogr_openfilegdb_str_indexed_truncated():
 
-    ds = ogr.Open("data/filegdb/test_str_indexed_truncated.gdb")
-
-    lyr = ds.GetLayerByName("test")
-
-    IDX_NOT_USED = 0
-    IDX_USED = 1
-
-    tests = [
+@pytest.mark.parametrize(
+    "where_clause, fids, expected_attr_index_use",
+    [
         ("str = 'a'", [1], IDX_USED),
         ("str = 'aa'", [2], IDX_USED),
         ("str != 'aa'", [1, 3], IDX_NOT_USED),
@@ -809,19 +805,47 @@ def test_ogr_openfilegdb_str_indexed_truncated():
         ("str IN ('aaa ')", [], IDX_USED),
         ("str IN ('aaaX')", [], IDX_USED),
         ("str IN ('aaaXX')", [], IDX_USED),
-    ]
-    for where_clause, fids, expected_attr_index_use in tests:
+        ("str ILIKE 'a'", [1], IDX_NOT_USED),
+        ("str ILIKE 'a%'", [1, 2, 3], IDX_NOT_USED),
+        ("str ILIKE 'aaa  '", [], IDX_NOT_USED),
+    ],
+)
+def test_ogr_openfilegdb_str_indexed_truncated(
+    where_clause, fids, expected_attr_index_use
+):
 
-        lyr.SetAttributeFilter(where_clause)
-        sql_lyr = ds.ExecuteSQL("GetLayerAttrIndexUse %s" % lyr.GetName())
-        attr_index_use = int(sql_lyr.GetNextFeature().GetField(0))
-        ds.ReleaseResultSet(sql_lyr)
-        assert attr_index_use == expected_attr_index_use, (
-            where_clause,
-            fids,
-            expected_attr_index_use,
-        )
-        assert [f.GetFID() for f in lyr] == fids, (where_clause, fids)
+    ds = ogr.Open("data/filegdb/test_str_indexed_truncated.gdb")
+
+    lyr = ds.GetLayerByName("test")
+
+    lyr.SetAttributeFilter(where_clause)
+    sql_lyr = ds.ExecuteSQL("GetLayerAttrIndexUse %s" % lyr.GetName())
+    attr_index_use = int(sql_lyr.GetNextFeature().GetField(0))
+    ds.ReleaseResultSet(sql_lyr)
+    assert attr_index_use == expected_attr_index_use, (
+        where_clause,
+        fids,
+        expected_attr_index_use,
+    )
+    assert [f.GetFID() for f in lyr] == fids, (where_clause, fids)
+
+
+def test_ogr_openfilegdb_ilike():
+
+    ds = ogr.Open("data/filegdb/Domains.gdb/a00000001.gdbtable")
+    lyr = ds.GetLayer(0)
+
+    lyr.SetAttributeFilter("Name = 'Roads'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("Name ILIKE 'Roads'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("Name = 'Roadsx'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("Name ILIKE 'Roadsx'")
+    assert lyr.GetFeatureCount() == 0
 
 
 ###############################################################################
