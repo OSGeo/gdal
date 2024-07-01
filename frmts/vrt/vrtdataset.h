@@ -1601,17 +1601,14 @@ class VRTKernelFilteredSource CPL_NON_FINAL : public VRTFilteredSource
     CPL_DISALLOW_COPY_ASSIGN(VRTKernelFilteredSource)
 
   protected:
-    int m_nKernelSize;
-
-    bool m_bSeparable;
-
-    double *m_padfKernelCoefs;
-
-    int m_bNormalized;
+    int m_nKernelSize = 0;
+    bool m_bSeparable = false;
+    // m_nKernelSize elements if m_bSeparable, m_nKernelSize * m_nKernelSize otherwise
+    std::vector<double> m_adfKernelCoefs{};
+    bool m_bNormalized = false;
 
   public:
     VRTKernelFilteredSource();
-    virtual ~VRTKernelFilteredSource();
 
     virtual CPLErr XMLInit(const CPLXMLNode *psTree, const char *,
                            std::map<CPLString, GDALDataset *> &) override;
@@ -1620,8 +1617,9 @@ class VRTKernelFilteredSource CPL_NON_FINAL : public VRTFilteredSource
     virtual CPLErr FilterData(int nXSize, int nYSize, GDALDataType eType,
                               GByte *pabySrcData, GByte *pabyDstData) override;
 
-    CPLErr SetKernel(int nKernelSize, bool bSeparable, double *padfCoefs);
-    void SetNormalized(int);
+    CPLErr SetKernel(int nKernelSize, bool bSeparable,
+                     const std::vector<double> &adfNewCoefs);
+    void SetNormalized(bool);
 };
 
 /************************************************************************/
