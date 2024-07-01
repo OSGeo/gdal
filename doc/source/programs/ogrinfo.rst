@@ -76,6 +76,8 @@ edit data.
 
     Summary Only: suppress listing of individual features and show only
     summary information like projection, schema, feature count and extents.
+    In JSON output, -so is implicit and listing of features can be enabled
+    with :option:`-features`.
 
 .. option:: -features
 
