@@ -78,6 +78,16 @@ class WMTSTileMatrix
     int nTileHeight;
     int nMatrixWidth;
     int nMatrixHeight;
+
+    OGREnvelope GetExtent() const
+    {
+        OGREnvelope sExtent;
+        sExtent.MinX = dfTLX;
+        sExtent.MaxX = dfTLX + nMatrixWidth * dfPixelSize * nTileWidth;
+        sExtent.MaxY = dfTLY;
+        sExtent.MinY = dfTLY - nMatrixHeight * dfPixelSize * nTileHeight;
+        return sExtent;
+    }
 };
 
 /************************************************************************/
@@ -94,6 +104,18 @@ class WMTSTileMatrixLimits
     int nMaxTileRow;
     int nMinTileCol;
     int nMaxTileCol;
+
+    OGREnvelope GetExtent(const WMTSTileMatrix &oTM) const
+    {
+        OGREnvelope sExtent;
+        const double dfTileWidthUnits = oTM.dfPixelSize * oTM.nTileWidth;
+        const double dfTileHeightUnits = oTM.dfPixelSize * oTM.nTileHeight;
+        sExtent.MinX = oTM.dfTLX + nMinTileCol * dfTileWidthUnits;
+        sExtent.MaxY = oTM.dfTLY - nMinTileRow * dfTileHeightUnits;
+        sExtent.MaxX = oTM.dfTLX + (nMaxTileCol + 1) * dfTileWidthUnits;
+        sExtent.MinY = oTM.dfTLY - (nMaxTileRow + 1) * dfTileHeightUnits;
+        return sExtent;
+    }
 };
 
 /************************************************************************/
@@ -1762,15 +1784,11 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                         }
                         if (poRevCT != nullptr)
                         {
-                            const double dfX0 = oTM.dfTLX;
-                            const double dfY1 = oTM.dfTLY;
-                            const double dfX1 =
-                                oTM.dfTLX + oTM.nMatrixWidth * oTM.dfPixelSize *
-                                                oTM.nTileWidth;
-                            const double dfY0 =
-                                oTM.dfTLY - oTM.nMatrixHeight *
-                                                oTM.dfPixelSize *
-                                                oTM.nTileHeight;
+                            const auto sTMExtent = oTM.GetExtent();
+                            const double dfX0 = sTMExtent.MinX;
+                            const double dfY1 = sTMExtent.MaxY;
+                            const double dfX1 = sTMExtent.MaxX;
+                            const double dfY0 = sTMExtent.MinY;
                             double dfXMin =
                                 std::numeric_limits<double>::infinity();
                             double dfYMin =
@@ -1926,12 +1944,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLDebug("WMTS", "Using TM level %s bounding box as layer extent",
                      oTM.osIdentifier.c_str());
 
-            sAOI.MinX = oTM.dfTLX;
-            sAOI.MaxY = oTM.dfTLY;
-            sAOI.MaxX =
-                oTM.dfTLX + oTM.nMatrixWidth * oTM.dfPixelSize * oTM.nTileWidth;
-            sAOI.MinY = oTM.dfTLY -
-                        oTM.nMatrixHeight * oTM.dfPixelSize * oTM.nTileHeight;
+            sAOI = oTM.GetExtent();
             bHasAOI = TRUE;
         }
 
@@ -1952,6 +1965,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             // Clip with implied BoundingBox of the most precise TM
             // Useful for http://tileserver.maptiler.com/wmts
             const WMTSTileMatrix &oTM = oTMS.aoTM.back();
+            const OGREnvelope sTMExtent = oTM.GetExtent();
             OGREnvelope sAOINew(sAOI);
 
             // For
@@ -1961,15 +1975,11 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             // initial coding. So do X clipping in default mode.
             if (!bExtendBeyondDateLine)
             {
-                sAOINew.MinX = std::max(sAOI.MinX, oTM.dfTLX);
-                sAOINew.MaxX = std::min(
-                    sAOI.MaxX, oTM.dfTLX + oTM.nMatrixWidth * oTM.dfPixelSize *
-                                               oTM.nTileWidth);
+                sAOINew.MinX = std::max(sAOI.MinX, sTMExtent.MinX);
+                sAOINew.MaxX = std::min(sAOI.MaxX, sTMExtent.MaxX);
             }
-            sAOINew.MaxY = std::min(sAOI.MaxY, oTM.dfTLY);
-            sAOINew.MinY = std::max(sAOI.MinY, oTM.dfTLY - oTM.nMatrixHeight *
-                                                               oTM.dfPixelSize *
-                                                               oTM.nTileHeight);
+            sAOINew.MaxY = std::min(sAOI.MaxY, sTMExtent.MaxY);
+            sAOINew.MinY = std::max(sAOI.MinY, sTMExtent.MinY);
             if (sAOI != sAOINew)
             {
                 CPLDebug(
@@ -2000,20 +2010,8 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
 
                 const WMTSTileMatrixLimits &oTMLimits =
                     aoMapTileMatrixLimits[oTM.osIdentifier];
-                double dfTileWidthUnits = oTM.dfPixelSize * oTM.nTileWidth;
-                double dfTileHeightUnits = oTM.dfPixelSize * oTM.nTileHeight;
-                sAOINew.MinX =
-                    std::max(sAOI.MinX, oTM.dfTLX + oTMLimits.nMinTileCol *
-                                                        dfTileWidthUnits);
-                sAOINew.MaxY =
-                    std::min(sAOI.MaxY, oTM.dfTLY - oTMLimits.nMinTileRow *
-                                                        dfTileHeightUnits);
-                sAOINew.MaxX = std::min(
-                    sAOI.MaxX,
-                    oTM.dfTLX + (oTMLimits.nMaxTileCol + 1) * dfTileWidthUnits);
-                sAOINew.MinY = std::max(
-                    sAOI.MinY, oTM.dfTLY - (oTMLimits.nMaxTileRow + 1) *
-                                               dfTileHeightUnits);
+                const OGREnvelope sTMLimitsExtent = oTMLimits.GetExtent(oTM);
+                sAOINew.Intersect(sTMLimitsExtent);
 
                 if (sAOI != sAOINew)
                 {
