@@ -1927,6 +1927,21 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
+        // Clip the computed AOI with the union of the extent of the tile
+        // matrices
+        if (bHasAOI && !bExtendBeyondDateLine)
+        {
+            OGREnvelope sUnionTM;
+            for (const WMTSTileMatrix &oTM : oTMS.aoTM)
+            {
+                if (!sUnionTM.IsInit())
+                    sUnionTM = oTM.GetExtent();
+                else
+                    sUnionTM.Merge(oTM.GetExtent());
+            }
+            sAOI.Intersect(sUnionTM);
+        }
+
         // Otherwise default to BoundingBox of the TMS
         if (!bHasAOI && oTMS.bBoundingBoxValid &&
             (eExtentMethod == AUTO || eExtentMethod == TILE_MATRIX_SET))
