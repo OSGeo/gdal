@@ -86,9 +86,8 @@ OGRGMLDataSource::OGRGMLDataSource()
       nBoundedByLocation(-1), nSchemaInsertLocation(-1), bIsOutputGML3(false),
       bIsOutputGML3Deegree(false), bIsOutputGML32(false),
       eSRSNameFormat(SRSNAME_SHORT), bWriteSpaceIndentation(true),
-      poWriteGlobalSRS(nullptr), bWriteGlobalSRS(false), poReader(nullptr),
-      bOutIsTempFile(false), bExposeGMLId(false), bExposeFid(false),
-      bIsWFS(false), bUseGlobalSRSName(false),
+      poReader(nullptr), bOutIsTempFile(false), bExposeGMLId(false),
+      bExposeFid(false), bIsWFS(false), bUseGlobalSRSName(false),
       m_bInvertAxisOrderIfLatLong(false), m_bConsiderEPSGAsURN(false),
       m_eSwapCoordinates(GML_SWAP_AUTO), m_bGetSecondaryGeometryOption(false),
       eReadMode(STANDARD), poStoredGMLFeature(nullptr),
@@ -126,13 +125,13 @@ OGRGMLDataSource::~OGRGMLDataSource()
         if (!bFpOutputIsNonSeekable && nBoundedByLocation != -1 &&
             VSIFSeekL(fpOutput, nBoundedByLocation, SEEK_SET) == 0)
         {
-            if (bWriteGlobalSRS && sBoundingRect.IsInit() && IsGML3Output())
+            if (m_bWriteGlobalSRS && sBoundingRect.IsInit() && IsGML3Output())
             {
                 bool bCoordSwap = false;
                 char *pszSRSName =
-                    poWriteGlobalSRS
-                        ? GML_GetSRSName(poWriteGlobalSRS, eSRSNameFormat,
-                                         &bCoordSwap)
+                    m_poWriteGlobalSRS
+                        ? GML_GetSRSName(m_poWriteGlobalSRS.get(),
+                                         eSRSNameFormat, &bCoordSwap)
                         : CPLStrdup("");
                 char szLowerCorner[75] = {};
                 char szUpperCorner[75] = {};
@@ -201,7 +200,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
                     szLowerCorner, szUpperCorner);
                 CPLFree(pszSRSName);
             }
-            else if (bWriteGlobalSRS && sBoundingRect.IsInit())
+            else if (m_bWriteGlobalSRS && sBoundingRect.IsInit())
             {
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL(fpOutput, "  ");
@@ -267,8 +266,6 @@ OGRGMLDataSource::~OGRGMLDataSource()
             VSIUnlink(poReader->GetSourceFileName());
         delete poReader;
     }
-
-    delete poWriteGlobalSRS;
 
     delete poStoredGMLFeature;
 
@@ -2002,6 +1999,48 @@ void OGRGMLDataSource::WriteTopElements()
 }
 
 /************************************************************************/
+/*                         DeclareNewWriteSRS()                         */
+/************************************************************************/
+
+// Check that all SRS passed to ICreateLayer() and CreateGeomField()
+// are the same (or all null)
+
+void OGRGMLDataSource::DeclareNewWriteSRS(const OGRSpatialReference *poSRS)
+{
+    if (m_bWriteGlobalSRS)
+    {
+        if (!m_bWriteGlobalSRSInit)
+        {
+            m_bWriteGlobalSRSInit = true;
+            if (poSRS)
+            {
+                m_poWriteGlobalSRS.reset(poSRS->Clone());
+                m_poWriteGlobalSRS->SetAxisMappingStrategy(
+                    OAMS_TRADITIONAL_GIS_ORDER);
+            }
+        }
+        else
+        {
+            if (m_poWriteGlobalSRS)
+            {
+                const char *const apszOptions[] = {
+                    "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr};
+                if (!poSRS ||
+                    !poSRS->IsSame(m_poWriteGlobalSRS.get(), apszOptions))
+                {
+                    m_bWriteGlobalSRS = false;
+                }
+            }
+            else
+            {
+                if (poSRS)
+                    m_bWriteGlobalSRS = false;
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
@@ -2037,37 +2076,9 @@ OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
                  pszLayerName, pszCleanLayerName);
     }
 
-    // Set or check validity of global SRS.
     if (nLayers == 0)
     {
         WriteTopElements();
-        if (poSRS)
-        {
-            poWriteGlobalSRS = poSRS->Clone();
-            poWriteGlobalSRS->SetAxisMappingStrategy(
-                OAMS_TRADITIONAL_GIS_ORDER);
-        }
-        bWriteGlobalSRS = true;
-    }
-    else if (bWriteGlobalSRS)
-    {
-        if (poWriteGlobalSRS != nullptr)
-        {
-            const char *const apszOptions[] = {
-                "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr};
-            if (poSRS == nullptr ||
-                !poSRS->IsSame(poWriteGlobalSRS, apszOptions))
-            {
-                delete poWriteGlobalSRS;
-                poWriteGlobalSRS = nullptr;
-                bWriteGlobalSRS = false;
-            }
-        }
-        else
-        {
-            if (poSRS != nullptr)
-                bWriteGlobalSRS = false;
-        }
     }
 
     // Create the layer object.
@@ -2081,6 +2092,7 @@ OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
             pszGeomFieldName = "geometryProperty";
         poGeomFieldDefn->SetName(pszGeomFieldName);
         poGeomFieldDefn->SetNullable(poSrcGeomFieldDefn->IsNullable());
+        DeclareNewWriteSRS(poSRS);
         if (poSRS != nullptr)
         {
             auto poSRSClone = poSRS->Clone();
