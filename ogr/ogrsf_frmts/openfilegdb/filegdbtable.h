@@ -794,7 +794,8 @@ typedef enum
     FGSO_LE,
     FGSO_EQ,
     FGSO_GE,
-    FGSO_GT
+    FGSO_GT,
+    FGSO_ILIKE
 } FileGDBSQLOp;
 
 /************************************************************************/

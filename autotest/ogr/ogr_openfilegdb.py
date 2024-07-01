@@ -810,6 +810,9 @@ IDX_USED = 1
         ("str IN ('aaa ')", [], IDX_USED),
         ("str IN ('aaaX')", [], IDX_USED),
         ("str IN ('aaaXX')", [], IDX_USED),
+        ("str ILIKE 'a'", [1], IDX_NOT_USED),
+        ("str ILIKE 'a%'", [1, 2, 3], IDX_NOT_USED),
+        ("str ILIKE 'aaa  '", [], IDX_NOT_USED),
     ],
 )
 def test_ogr_openfilegdb_str_indexed_truncated(
@@ -830,6 +833,24 @@ def test_ogr_openfilegdb_str_indexed_truncated(
         expected_attr_index_use,
     )
     assert [f.GetFID() for f in lyr] == fids, (where_clause, fids)
+
+
+def test_ogr_openfilegdb_ilike():
+
+    ds = ogr.Open("data/filegdb/Domains.gdb/a00000001.gdbtable")
+    lyr = ds.GetLayer(0)
+
+    lyr.SetAttributeFilter("Name = 'Roads'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("Name ILIKE 'Roads'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("Name = 'Roadsx'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("Name ILIKE 'Roadsx'")
+    assert lyr.GetFeatureCount() == 0
 
 
 ###############################################################################
