@@ -147,6 +147,8 @@ gdal_dependent_format(mbtiles "MBTile" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_GPKG;
 gdal_dependent_format(postgisraster "PostGIS Raster driver" "GDAL_USE_POSTGRESQL")
 gdal_dependent_format(dds "DirectDraw Surface" "GDAL_USE_CRNLIB")
 gdal_dependent_format(kea "Kea" "GDAL_USE_KEA;GDAL_USE_HDF5")
+gdal_dependent_format(grok "JPEG2000 driver based on Grok library" "GDAL_USE_GROK" DRIVER_NAME_OPTION
+                      "JP2Grok")
 gdal_dependent_format(openjpeg "JPEG2000 driver based on OpenJPEG library" "GDAL_USE_OPENJPEG" DRIVER_NAME_OPTION
                       "JP2OpenJPEG")
 gdal_dependent_format(tiledb "TileDB tiledb.io" "GDAL_USE_TILEDB")
