@@ -722,8 +722,8 @@ CPLErr KEARasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
     if (bForce)
     {
         return GDALRasterBand::GetDefaultHistogram(pdfMin, pdfMax, pnBuckets,
-                                                      ppanHistogram, bForce, fn,
-                                                      pProgressData);
+                                                   ppanHistogram, bForce, fn,
+                                                   pProgressData);
     }
     else
     {
