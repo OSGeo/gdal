@@ -1332,7 +1332,8 @@ OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node *poNode)
     }
 
     else if (poNode->eNodeType == SNT_OPERATION &&
-             OGROpenFileGDBIsComparisonOp(poNode->nOperation) &&
+             (OGROpenFileGDBIsComparisonOp(poNode->nOperation) ||
+              poNode->nOperation == SWQ_ILIKE) &&
              poNode->nSubExprCount == 2)
     {
         swq_expr_node *poColumn = GetColumnSubNode(poNode);
@@ -1376,6 +1377,9 @@ OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node *poNode)
                             case SWQ_GT:
                                 eOp = FGSO_GT;
                                 break;
+                            case SWQ_ILIKE:
+                                eOp = FGSO_ILIKE;
+                                break;
                             default:
                                 CPLAssert(false);
                                 break;
@@ -1405,6 +1409,9 @@ OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node *poNode)
                             case SWQ_GT:
                                 eOp = FGSO_LT;
                                 break;
+                            case SWQ_ILIKE:
+                                eOp = FGSO_ILIKE;
+                                break;
                             default:
                                 CPLAssert(false);
                                 break;
@@ -1417,10 +1424,31 @@ OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node *poNode)
                     if (poField->GetType() == FGFT_STRING &&
                         poFieldDefn->GetType() == OFTString)
                     {
+                        // If we have an equality comparison, but the index
+                        // uses LOWER(), transform it to a ILIKE comparison
+                        if (eOp == FGSO_EQ && poField->HasIndex() &&
+                            STARTS_WITH_CI(
+                                poField->GetIndex()->GetExpression().c_str(),
+                                "LOWER("))
+                        {
+                            // Note: FileGDBIndexIterator::SetConstraint()
+                            // checks that the string to compare with has no
+                            // wildcard
+                            eOp = FGSO_ILIKE;
+
+                            // In theory, a ILIKE is not sufficient as it is
+                            // case insensitive, whereas one could expect
+                            // equality testing to be case sensitive... but
+                            // it is not in OGR SQL...
+                            // So we can comment the below line
+                            // bIteratorSufficient = false;
+                        }
+
                         // As the index use ' ' as padding value, we cannot
                         // fully trust the index.
-                        if ((eOp == FGSO_EQ && poNode->nOperation != SWQ_NE) ||
-                            eOp == FGSO_GE)
+                        else if ((eOp == FGSO_EQ &&
+                                  poNode->nOperation != SWQ_NE) ||
+                                 eOp == FGSO_GE)
                             bIteratorSufficient = false;
                         else
                             return nullptr;
@@ -1453,6 +1481,8 @@ OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node *poNode)
                             }
                         }
                     }
+                    else if (eOp == FGSO_ILIKE)
+                        return nullptr;
 
                     FileGDBIterator *poIter = FileGDBIterator::Build(
                         m_poLyrTable, nTableColIdx, TRUE, eOp,
