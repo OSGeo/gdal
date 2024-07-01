@@ -564,8 +564,19 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
               papoBandList[0]->GetRasterDataType() == GDT_UInt16) &&
              !STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2"))
     {
+        // Would also apply to other lossy compression scheme, but for JPEG,
+        // this at least avoids a later cryptic error message from libtiff:
+        // "JPEGSetupEncode:PhotometricInterpretation 3 not allowed for JPEG"
+        if (nCompression == COMPRESSION_JPEG)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create JPEG compressed overviews on a raster "
+                     "with a color table");
+            return CE_Failure;
+        }
+
         nPhotometric = PHOTOMETRIC_PALETTE;
-        // Should set the colormap up at this point too!
+        // Color map is set up after
     }
     else if (nBands >= 3 &&
              papoBandList[0]->GetColorInterpretation() == GCI_RedBand &&

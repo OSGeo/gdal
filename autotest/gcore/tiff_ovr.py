@@ -1603,6 +1603,34 @@ def test_tiff_ovr_42(tmp_path, both_endian):
 
 
 ###############################################################################
+# Test (failed) attempt at creating JPEG external overviews on dataset with color table
+
+
+@pytest.mark.require_creation_option("GTiff", "JPEG")
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_jpeg_on_color_table(tmp_path):
+
+    tif_fname = str(tmp_path / "test_tiff_ovr_jpeg_on_color_table.tif")
+
+    ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
+
+    ct = gdal.ColorTable()
+    for i, data in enumerate(ct_data):
+        ct.SetColorEntry(i, data)
+
+    ds = gdal.GetDriverByName("GTiff").Create(tif_fname, 1, 1)
+    ds.GetRasterBand(1).SetRasterColorTable(ct)
+    ds = None
+
+    with gdal.Open(tif_fname) as ds:
+        with pytest.raises(
+            Exception,
+            match="Cannot create JPEG compressed overviews on a raster with a color table",
+        ):
+            ds.BuildOverviews("NEAREST", overviewlist=[2], options=["COMPRESS=JPEG"])
+
+
+###############################################################################
 # Make sure that 16bit overviews with JPEG compression are handled using 12-bit
 # jpeg-in-tiff (#3539)
 
