@@ -1872,6 +1872,18 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0">
 
 
 ###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/10348
+
+
+def test_wmts_clip_extent_with_union_of_tile_matrix_extent():
+
+    ds = gdal.Open("data/wmts/clip_WGS84BoundingBox_with_tilematrix.xml")
+    assert ds.GetGeoTransform() == pytest.approx(
+        (-46133.17, 0.5971642834779389, 0.0, 6301219.54, 0.0, -0.5971642834779389)
+    )
+
+
+###############################################################################
 # Test when local wmts tiles are missing
 
 
