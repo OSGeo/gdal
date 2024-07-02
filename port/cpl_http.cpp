@@ -59,7 +59,6 @@
 #ifdef HAVE_OPENSSL_CRYPTO
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include <openssl/engine.h>
 #include <openssl/x509v3.h>
 
 #if defined(_WIN32)
