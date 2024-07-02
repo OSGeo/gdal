@@ -132,6 +132,14 @@ class Viewshed
             return xSize() ? std::clamp(nX, xStart, xStop - 1) : xStart;
         }
 
+        /// \brief  Clamp the argument to be in the window in the Y dimension.
+        /// \param  nY  Value to clamp.
+        /// \return  Clamped value.
+        int clampY(int nY) const
+        {
+            return ySize() ? std::clamp(nY, yStart, yStop - 1) : yStart;
+        }
+
         /// \brief  Shift the X dimension by nShift.
         /// \param  nShift  Amount to shift
         void shiftX(int nShift)
@@ -225,14 +233,16 @@ class Viewshed
     bool writeLine(int nLine, std::vector<double> &vResult);
     bool processLine(int nX, int nY, int nLine,
                      std::vector<double> &vLastLineVal);
-    bool processFirstLine(int nX, int nY, int nLine,
-                          std::vector<double> &vLastLineVal);
+    bool processFirstLine(int nX, int nY, std::vector<double> &vLastLineVal);
     void processFirstLineLeft(int nX, int iStart, int iEnd,
                               std::vector<double> &vResult,
                               std::vector<double> &vThisLineVal);
     void processFirstLineRight(int nX, int iStart, int iEnd,
                                std::vector<double> &vResult,
                                std::vector<double> &vThisLineVal);
+    void processFirstLineTopOrBottom(int iLeft, int iRight,
+                                     std::vector<double> &vResult,
+                                     std::vector<double> &vThisLineVal);
     void processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
                          std::vector<double> &vResult,
                          std::vector<double> &vThisLineVal,

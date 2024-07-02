@@ -60,11 +60,15 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
 .. option:: -ox <value>
 
-   The X position of the observer (in SRS units).
+   The X position of the observer (in SRS units).  If the coordinate is outside of the
+   raster, all space between the observer and the raster is assumed not to occlude
+   visibility of the raster.
 
 .. option:: -oy <value>
 
-   The Y position of the observer (in SRS units).
+   The Y position of the observer (in SRS units).  If the coordinate is outside of the
+   raster, all space between the observer and the raster is assumed not to occlude
+   visibility of the raster.
 
 .. option:: -oz <value>
 

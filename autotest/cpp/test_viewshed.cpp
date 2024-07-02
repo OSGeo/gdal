@@ -308,7 +308,7 @@ TEST(Viewshed, oor_right)
     }
 }
 
-// Test an observer to the right of the raster.
+// Test an observer to the left of the raster.
 TEST(Viewshed, oor_left)
 {
     // clang-format off
@@ -361,6 +361,130 @@ TEST(Viewshed, oor_left)
             1, .5,  5 / 3.0, 2.25, 4.2,
             0, .5,  1,       2.5,  3.1,
             1, 1.5, 2,       2.5,  3.6
+        };
+        // clang-format on
+
+        for (size_t i = 0; i < out.size(); ++i)
+            EXPECT_DOUBLE_EQ(out[i], expected[i]);
+    }
+}
+
+// Test an observer above the raster
+TEST(Viewshed, oor_above)
+{
+    // clang-format off
+    const int xlen = 5;
+    const int ylen = 3;
+    std::array<int8_t, xlen * ylen> in
+    {
+        1, 2, 0, 4, 1,
+        0, 0, 2, 1, 0,
+        1, 0, 0, 3, 3
+    };
+    // clang-format on
+
+    {
+        Viewshed::Options opts = stdOptions(2, -2);
+        opts.outputMode = Viewshed::OutputMode::DEM;
+        DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
+        GDALRasterBand *band = ds->GetRasterBand(1);
+        std::array<double, xlen * ylen> out;
+        CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(), xlen,
+                                    ylen, GDT_Float64, 0, 0, nullptr);
+
+        EXPECT_EQ(err, CE_None);
+
+        // clang-format off
+        std::array<double, xlen * ylen> expected
+        {
+            1,   2,       0,       4,        1,
+            2.5, 2,       0,       4,        4.5,
+            3,   8 / 3.0, 8 / 3.0, 14 / 3.0, 17 / 3.0
+        };
+        // clang-format on
+
+        for (size_t i = 0; i < out.size(); ++i)
+            EXPECT_DOUBLE_EQ(out[i], expected[i]);
+    }
+
+    {
+        Viewshed::Options opts = stdOptions(-2, -2);
+        opts.outputMode = Viewshed::OutputMode::DEM;
+        DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
+        GDALRasterBand *band = ds->GetRasterBand(1);
+        std::array<double, xlen * ylen> out;
+        CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(), xlen,
+                                    ylen, GDT_Float64, 0, 0, nullptr);
+        EXPECT_EQ(err, CE_None);
+
+        // clang-format off
+        std::array<double, xlen * ylen> expected
+        {
+            1, 2,   0,   4,    1,
+            0, 1.5, 2.5, 1.25, 3.15,
+            1, 0.5, 2,   3,    2.2
+        };
+        // clang-format on
+
+        for (size_t i = 0; i < out.size(); ++i)
+            EXPECT_DOUBLE_EQ(out[i], expected[i]);
+    }
+}
+
+// Test an observer below the raster
+TEST(Viewshed, oor_below)
+{
+    // clang-format off
+    const int xlen = 5;
+    const int ylen = 3;
+    std::array<int8_t, xlen * ylen> in
+    {
+        1, 2, 0, 4, 1,
+        0, 0, 2, 1, 0,
+        1, 0, 0, 3, 3
+    };
+    // clang-format on
+
+    {
+        Viewshed::Options opts = stdOptions(2, 4);
+        opts.outputMode = Viewshed::OutputMode::DEM;
+        DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
+        GDALRasterBand *band = ds->GetRasterBand(1);
+        std::array<double, xlen * ylen> out;
+        CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(), xlen,
+                                    ylen, GDT_Float64, 0, 0, nullptr);
+
+        EXPECT_EQ(err, CE_None);
+
+        // clang-format off
+        std::array<double, xlen * ylen> expected
+        {
+            1 / 3.0, 2 / 3.0, 8 / 3.0, 11 / 3.0, 5,
+            0.5,     0,       0,       3,        4.5,
+            1,       0,       0,       3,        3
+        };
+        // clang-format on
+
+        for (size_t i = 0; i < out.size(); ++i)
+            EXPECT_DOUBLE_EQ(out[i], expected[i]);
+    }
+
+    {
+        Viewshed::Options opts = stdOptions(6, 4);
+        opts.outputMode = Viewshed::OutputMode::DEM;
+        DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
+        GDALRasterBand *band = ds->GetRasterBand(1);
+        std::array<double, xlen * ylen> out;
+        CPLErr err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(), xlen,
+                                    ylen, GDT_Float64, 0, 0, nullptr);
+        EXPECT_EQ(err, CE_None);
+
+        // clang-format off
+        std::array<double, xlen * ylen> expected
+        {
+            4.2,  6,    6,   1.5, 1,
+            1.35, 2.25, 4.5, 4.5, 0,
+            1,    0,    0,   3,   3
         };
         // clang-format on
 

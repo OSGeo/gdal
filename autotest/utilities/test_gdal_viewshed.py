@@ -369,17 +369,6 @@ def test_gdal_viewshed_invalid_band(gdal_viewshed_path, tmp_path):
 ###############################################################################
 
 
-def test_gdal_viewshed_invalid_observer_point(gdal_viewshed_path, tmp_path):
-
-    _, err = gdaltest.runexternal_out_and_err(
-        f"{gdal_viewshed_path} -ox 0 -oy 0 ../gdrivers/data/n43.tif {tmp_path}/tmp.tif"
-    )
-    assert "Observer position above or below" in err
-
-
-###############################################################################
-
-
 def test_gdal_viewshed_invalid_output_driver(gdal_viewshed_path, tmp_path):
 
     _, err = gdaltest.runexternal_out_and_err(
