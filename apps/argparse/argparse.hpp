@@ -1411,6 +1411,10 @@ private:
    *    '+' '-'
    */
   static bool is_decimal_literal(std::string_view s) {
+    if (s == "inf") {
+      return true;
+    }
+
     auto is_digit = [](auto c) constexpr {
       switch (c) {
       case '0':
