@@ -282,19 +282,9 @@ bool Viewshed::calcOutputExtent(int nX, int nY)
     oOutExtent.xStop = GDALGetRasterBandXSize(pSrcBand);
     oOutExtent.yStop = GDALGetRasterBandYSize(pSrcBand);
 
-    if (!oOutExtent.containsY(nY))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Observer position above or below the raster "
-                 "not currently supported");
-        return false;
-    }
     if (!oOutExtent.contains(nX, nY))
-    {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "NOTE: The observer location falls outside of the DEM area");
-        //ABELL - Make sure observer Z is specified.
-    }
 
     constexpr double EPSILON = 1e-8;
     if (oOpts.maxDistance > 0)
@@ -419,7 +409,8 @@ bool Viewshed::emitProgress(double fraction)
 /// @param  nX  X location of the observer.
 /// @param  vThisLineVal  Line height data.
 /// @return [left, right)  Leftmost and one past the rightmost cell in the line within
-///    the max distance
+///    the max distance. Indices are limited to the raster extent (right may be just
+///    outside the raster).
 std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
                                            std::vector<double> &vThisLineVal)
 {
@@ -799,15 +790,15 @@ void Viewshed::setOutput(double &dfResult, double &dfCellVal, double dfZ)
 ///
 /// @param nX  X location of the observer
 /// @param nY  Y location of the observer
-/// @param nLine  Line number being processed (should always be the same as nY)
 /// @param vLastLineVal  Vector in which to store the read line. Becomes the last line
 ///    in further processing.
 /// @return True on success, false otherwise.
-bool Viewshed::processFirstLine(int nX, int nY, int nLine,
+bool Viewshed::processFirstLine(int nX, int nY,
                                 std::vector<double> &vLastLineVal)
 {
+    int nLine = oOutExtent.clampY(nY);
     int nYOffset = nLine - nY;
-    assert(nYOffset == 0);
+
     std::vector<double> vResult(oOutExtent.xSize());
     std::vector<double> vThisLineVal(oOutExtent.xSize());
 
@@ -832,26 +823,59 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     // iLeft and iRight are the processing limits for the line.
     const auto [iLeft, iRight] = adjustHeight(nYOffset, nX, vThisLineVal);
 
-    auto t1 = std::async(
-        std::launch::async, [&, left = iLeft]()
-        { processFirstLineLeft(nX, nX - 1, left - 1, vResult, vThisLineVal); });
+    if (!oCurExtent.containsY(nY))
+        processFirstLineTopOrBottom(iLeft, iRight, vResult, vThisLineVal);
+    else
+    {
+        auto t1 = std::async(std::launch::async,
+                             [&, left = iLeft]() {
+                                 processFirstLineLeft(nX, nX - 1, left - 1,
+                                                      vResult, vThisLineVal);
+                             });
 
-    auto t2 = std::async(
-        std::launch::async, [&, right = iRight]()
-        { processFirstLineRight(nX, nX + 1, right, vResult, vThisLineVal); });
-    t1.wait();
-    t2.wait();
+        auto t2 = std::async(std::launch::async,
+                             [&, right = iRight]() {
+                                 processFirstLineRight(nX, nX + 1, right,
+                                                       vResult, vThisLineVal);
+                             });
+        t1.wait();
+        t2.wait();
+    }
 
     // Make the current line the last line.
     vLastLineVal = std::move(vThisLineVal);
 
     // Create the output writer.
-    if (!writeLine(nY, vResult))
+    if (!writeLine(nLine, vResult))
         return false;
 
     if (!lineProgress())
         return false;
     return true;
+}
+
+// If the observer is above or below the raster, set all cells in the first line near the
+// observer as observable provided they're in range. Mark cells out of range as such.
+/// @param  iLeft  Leftmost observable raster position in range of the target line.
+/// @param  iRight One past the rightmost observable raster position of the target line.
+/// @param  vResult  Result line.
+/// @param  vThisLineVal  Heights of the cells in the target line
+void Viewshed::processFirstLineTopOrBottom(int iLeft, int iRight,
+                                           std::vector<double> &vResult,
+                                           std::vector<double> &vThisLineVal)
+{
+    double *pResult = vResult.data() + iLeft;
+    double *pThis = vThisLineVal.data() + iLeft;
+    for (int iPixel = iLeft; iPixel < iRight; ++iPixel, ++pResult, pThis++)
+    {
+        if (oOpts.outputMode == OutputMode::Normal)
+            *pResult = oOpts.visibleVal;
+        else
+            setOutput(*pResult, *pThis, *pThis);
+    }
+    std::fill(vResult.begin(), vResult.begin() + iLeft, oOpts.outOfRangeVal);
+    std::fill(vResult.begin() + iRight, vResult.begin() + oCurExtent.xStop,
+              oOpts.outOfRangeVal);
 }
 
 /// Process a line above or below the observer.
@@ -989,7 +1013,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 
     std::vector<double> vFirstLineVal(oCurExtent.xSize());
 
-    if (!processFirstLine(nX, nY, nY, vFirstLineVal))
+    if (!processFirstLine(nX, nY, vFirstLineVal))
         return false;
 
     if (oOpts.cellMode == CellMode::Edge)
@@ -1002,29 +1026,31 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         oZcalc = doMax;
 
     // scan upwards
+    int yStart = oCurExtent.clampY(nY);
     std::atomic<bool> err(false);
     auto tUp = std::async(std::launch::async,
                           [&]()
                           {
                               std::vector<double> vLastLineVal = vFirstLineVal;
 
-                              for (int nLine = nY - 1;
+                              for (int nLine = yStart - 1;
                                    nLine >= oCurExtent.yStart && !err; nLine--)
                                   if (!processLine(nX, nY, nLine, vLastLineVal))
                                       err = true;
                           });
 
     // scan downwards
-    auto tDown = std::async(
-        std::launch::async,
-        [&]()
-        {
-            std::vector<double> vLastLineVal = vFirstLineVal;
+    auto tDown =
+        std::async(std::launch::async,
+                   [&]()
+                   {
+                       std::vector<double> vLastLineVal = vFirstLineVal;
 
-            for (int nLine = nY + 1; nLine < oCurExtent.yStop && !err; nLine++)
-                if (!processLine(nX, nY, nLine, vLastLineVal))
-                    err = true;
-        });
+                       for (int nLine = yStart + 1;
+                            nLine < oCurExtent.yStop && !err; nLine++)
+                           if (!processLine(nX, nY, nLine, vLastLineVal))
+                               err = true;
+                   });
 
     tUp.wait();
     tDown.wait();
