@@ -1,3 +1,13 @@
+cmake_minimum_required(VERSION 3.16...3.28)
+
+if(NOT DEFINED PROJECT_SOURCE_DIR)
+    # Standalone plugin building
+    project(ogr_OCI)
+    include("${PROJECT_SOURCE_DIR}/../../../cmake/helpers/SetupStandalonePlugin.cmake" )
+    include(CheckDependentLibrariesOCI)
+    standalone_driver_finalize(OGR_ENABLE_DRIVER_OCI)
+endif()
+
 set(SOURCE
     oci_utils.cpp
     ocitest.cpp

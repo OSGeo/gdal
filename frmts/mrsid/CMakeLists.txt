@@ -1,3 +1,17 @@
+cmake_minimum_required(VERSION 3.16...3.28)
+
+if(NOT DEFINED PROJECT_SOURCE_DIR)
+    # Standalone plugin building
+    project(gdal_MrSID)
+    include("${PROJECT_SOURCE_DIR}/../../cmake/helpers/SetupStandalonePlugin.cmake" )
+    include(CheckDependentLibrariesGeoTIFF)
+    include(CheckDependentLibrariesMrSID)
+    if (GDAL_USE_GEOTIFF_INTERNAL)
+        message(FATAL_ERROR "Internal libgeotiff not supported for MrSID standalone plugin build")
+    endif()
+    standalone_driver_finalize(GDAL_ENABLE_DRIVER_MRSID)
+endif()
+
 option(GDAL_ENABLE_DRIVER_JP2MRSID "Whether to enable JPEG2000 support with MrSID SDK" OFF)
 
 add_gdal_driver(TARGET gdal_MrSID

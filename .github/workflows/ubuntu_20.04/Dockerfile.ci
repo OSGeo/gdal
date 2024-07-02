@@ -37,6 +37,7 @@ RUN apt-get update -y \
     libfreexl-dev \
     libfyba-dev \
     libgeos-dev \
+    libgeotiff-dev \
     libgif-dev \
     libhdf4-alt-dev \
     libhdf5-serial-dev \

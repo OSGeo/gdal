@@ -1,3 +1,13 @@
+cmake_minimum_required(VERSION 3.16...3.28)
+
+if(NOT DEFINED PROJECT_SOURCE_DIR)
+    # Standalone plugin building
+    project(gdal_JP2KAK)
+    include("${PROJECT_SOURCE_DIR}/../../cmake/helpers/SetupStandalonePlugin.cmake" )
+    include(CheckDependentLibrariesKakadu)
+    standalone_driver_finalize(GDAL_ENABLE_DRIVER_JP2KAK)
+endif()
+
 add_gdal_driver(TARGET gdal_JP2KAK
                 SOURCES jp2kakdataset.cpp
                         jp2kak_headers.h

@@ -353,8 +353,34 @@ coordinate reference system, and converting timestamps to UTC.
 
    ogr2ogr -f GPKG output.gpkg -nln new_layer_name -nlt POLYGON -s_srs EPSG:25832 -t_srs EPSG:25832 -dsco DATETIME_FORMAT=UTC OCI:username/password@host_name:port_number/service_name:MY_SCHEMA.MY_VIEW -sql "SELECT COLUMN_A, COLUMN_B, GEOMETRY FROM MY_SCHEMA.MY_VIEW"
 
+Standalone plugin compilation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 3.10
+
+While this driver may be built as part of a whole GDAL build, either in libgdal
+itself, or as a plugin, it is also possible to only build this driver as a plugin,
+against an already built libgdal.
+
+The version of the GDAL sources used to build the driver must match the version
+of the libgdal it is built against.
+
+For example, from a "build_oci" directory under the root of the GDAL source tree:
+
+::
+
+    cmake -S ../ogr/ogrsf_frmts/oci -DCMAKE_PREFIX_PATH=/path/to/GDAL_installation_prefix -DOracle_ROOT=/path/to/instantclient_sdk_root
+    cmake --build .
+
+
+Note that such a plugin, when used against a libgdal not aware of it, will be
+systematically loaded at GDAL driver initialization time, and will not benefit from
+`deferred plugin loading capabilities <rfc-96>`. For that, libgdal itself must be built with the
+CMake variable OGR_REGISTER_DRIVER_OCI_FOR_LATER_PLUGIN=ON set.
+
 Credits
 ~~~~~~~
 
-I would like to thank `SRC, LLC <http://www.extendthereach.com/>`__ for
-its financial support of the development of this driver.
+`SRC, LLC <http://www.extendthereach.com/>`__ for its financial support of
+the initial development of this driver.
+
