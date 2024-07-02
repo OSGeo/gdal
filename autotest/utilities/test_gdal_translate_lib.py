@@ -1155,6 +1155,20 @@ def test_gdal_translate_lib_scale_and_unscale_incompatible():
 
 
 ###############################################################################
+# Test -a_offset -inf (dummy example, but to proove -inf works as a value
+# numeric value)
+
+
+@gdaltest.enable_exceptions()
+def test_gdal_translate_lib_assign_offset():
+
+    out_ds = gdal.Translate(
+        "", gdal.Open("../gcore/data/byte.tif"), options="-f MEM -a_offset -inf"
+    )
+    assert out_ds.GetRasterBand(1).GetOffset() == float("-inf")
+
+
+###############################################################################
 # Test option argument handling
 
 
