@@ -31,14 +31,14 @@
 #ifndef KEABAND_H
 #define KEABAND_H
 
-#include "gdal_pam.h"
+#include "gdal_priv.h"
 #include "keadataset.h"
 
 class KEAOverview;
 class KEAMaskBand;
 
 // Provides the implementation of a GDAL raster band
-class KEARasterBand CPL_NON_FINAL : public GDALPamRasterBand
+class KEARasterBand CPL_NON_FINAL : public GDALRasterBand
 {
   private:
     LockedRefCount *m_pRefCount = nullptr;  // reference count of m_pImageIO
