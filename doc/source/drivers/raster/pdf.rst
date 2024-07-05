@@ -558,7 +558,7 @@ datatype = GDT_Unknown and :co:`COMPOSITION_FILE` must be the single creation
 option.
 
 The XML schema against which the composition file must validate is
-`pdfcomposition.xsd <https://raw.githubusercontent.com/OSGeo/gdal/master/data/pdfcomposition.xsd>`__
+`pdfcomposition.xsd <https://raw.githubusercontent.com/OSGeo/gdal/master/frmts/pdf/data/pdfcomposition.xsd>`__
 
 Example on how to use the API:
 
