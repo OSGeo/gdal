@@ -712,11 +712,13 @@ def test_gdal_rasterize_lib_int64_attribute():
     feature["val"] = val
     layer.CreateFeature(feature)
 
+    noData = -(1 << 63)
     target_ds = gdal.Rasterize(
-        "", vector_ds, format="MEM", attribute="val", width=2, height=2
+        "", vector_ds, format="MEM", attribute="val", width=2, height=2, noData=noData
     )
     assert target_ds is not None
     assert target_ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    assert target_ds.GetRasterBand(1).GetNoDataValue() == noData
     assert struct.unpack("Q" * 4, target_ds.ReadRaster())[0] == val
 
 
