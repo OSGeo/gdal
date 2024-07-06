@@ -6121,3 +6121,38 @@ def test_ogr_pg_skip_conflicts(pg_ds):
         feat["beginnt"] = "2020-07-10T04:48:14Z"
         assert lyr.CreateFeature(feat) == ogr.OGRERR_NONE
         assert lyr.GetFeatureCount() == 2
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/10311
+
+
+@only_without_postgis
+@gdaltest.enable_exceptions()
+def test_ogr_pg_ogr2ogr_with_multiple_dotted_table_name(pg_ds):
+
+    tmp_schema = "tmp_schema_issue_10311"
+    pg_ds.ExecuteSQL(f'CREATE SCHEMA "{tmp_schema}"')
+    try:
+        src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+        lyr = src_ds.CreateLayer(tmp_schema + ".table1", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        lyr.CreateFeature(f)
+        lyr = src_ds.CreateLayer(tmp_schema + ".table2", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        lyr.CreateFeature(f)
+
+        gdal.VectorTranslate(pg_ds.GetDescription(), src_ds)
+
+        pg_ds = reconnect(pg_ds)
+        lyr = pg_ds.GetLayerByName(tmp_schema + ".table1")
+        assert lyr.GetFeatureCount() == 1
+        lyr = pg_ds.GetLayerByName(tmp_schema + ".table2")
+        assert lyr.GetFeatureCount() == 1
+
+    finally:
+        pg_ds.ExecuteSQL(f'DROP SCHEMA "{tmp_schema}" CASCADE')
