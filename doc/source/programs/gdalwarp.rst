@@ -33,8 +33,8 @@ Synopsis
             [-order <1|2|3>] [-refine_gcps <tolerance> [<minimum_gcps>]]
             [-to <NAME>=<VALUE>]...
             [-et <err_threshold>] [-wm <memory_in_mb>]
-            [-srcnodata <value>[ <value>...]]
-            [-dstnodata <value>[ <value>...]] [-tap]
+            [-srcnodata "<value>[ <value>]..."]
+            [-dstnodata "<value>[ <value>]..."] [-tap]
             [-wt Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}]
             [-cutline <datasource>|<WKT>] [-cutline_srs <srs_def>]
             [-cwhere <expression>]

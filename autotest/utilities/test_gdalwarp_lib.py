@@ -1473,6 +1473,34 @@ def test_gdalwarp_lib_127():
     assert ds.GetRasterBand(1).Checksum() == 4672, "bad checksum"
 
 
+@pytest.mark.parametrize("srcNodata", [float("-inf"), -1])
+def test_gdalwarp_lib_srcnodata(srcNodata):
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/byte.tif",
+        format="MEM",
+        srcNodata=srcNodata,
+        outputType=gdal.GDT_Float32,
+    )
+    assert ds.GetRasterBand(1).GetNoDataValue() == srcNodata, "bad nodata value"
+    assert ds.GetRasterBand(1).Checksum() == 4672, "bad checksum"
+
+
+@pytest.mark.parametrize("dstNodata", [float("-inf"), -1])
+def test_gdalwarp_lib_dstnodata(dstNodata):
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/byte.tif",
+        format="MEM",
+        dstNodata=dstNodata,
+        outputType=gdal.GDT_Float32,
+    )
+    assert ds.GetRasterBand(1).GetNoDataValue() == dstNodata, "bad nodata value"
+    assert ds.GetRasterBand(1).Checksum() == 4672, "bad checksum"
+
+
 ###############################################################################
 # Test automatic densification of cutline (#6375)
 
