@@ -80,6 +80,13 @@ Install miniconda
 
 Install `miniconda <https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe>`_
 
+Install Visual Studio
++++++++++++++++++++++
+
+Install `Visual Studio <https://visualstudio.microsoft.com/vs/community/>`_ 
+In Visual Studio Installer Workloads tab check Desktop development with C++.
+Only the latest Community Edition (2022) is available.
+
 Install GDAL dependencies
 +++++++++++++++++++++++++
 
@@ -90,8 +97,8 @@ Start a Conda enabled console and assuming there is a c:\\dev directory
     cd c:\dev
     conda create --name gdal
     conda activate gdal
-    conda install --yes --quiet curl libiconv icu git python=3.7 swig numpy pytest zlib clcache
-    conda install --yes --quiet -c conda-forge compilers
+    conda install --yes --quiet curl libiconv icu git python swig numpy pytest zlib
+    conda install --yes --quiet -c conda-forge compilers clcache
     conda install --yes --quiet -c conda-forge \
         cmake proj geos hdf4 hdf5 \
         libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
@@ -100,9 +107,9 @@ Start a Conda enabled console and assuming there is a c:\\dev directory
 
 .. note::
 
-    The ``compilers`` package will install ``vs2017_win-64`` (at time of writing)
-    to set the appropriate environment for cmake to pick up. It is also possible
-    to use the ``vs2019_win-64`` package if Visual Studio 2019 is to be used.
+    The ``compilers`` package will install ``vs2019_win-64`` (at time of writing)
+    to set the appropriate environment for cmake to pick up. It also finds and works  
+    with Visual Studio 2022 if that is installed.
 
 Checkout GDAL sources
 +++++++++++++++++++++
@@ -155,6 +162,11 @@ This can be done by sourcing the following from the build directory:
 (with adjustments to the above path if the build directory is not a subdirectory of the GDAL source root).
 
 For Windows, a similar ``scripts/setdevenv.bat`` script exists (it currently assumes a Release build).
+
+.. code-block:: console
+
+    cd c:\dev\gdal\build
+    ..\scripts\setdevenv.bat
 
 To verify that environment variables have been set correctly, you can check the version of a GDAL binary:
 
