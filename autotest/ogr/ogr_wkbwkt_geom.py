@@ -166,6 +166,7 @@ def test_ogr_wkbwkt_test_broken_geom():
         "POINT Z(EMPTY)",
         "POINT Z(A)",
         "POINT Z(0 1",
+        "POINTZ M EMPTY",
         "LINESTRING",
         "LINESTRING UNKNOWN",
         "LINESTRING(",
@@ -566,6 +567,38 @@ def test_ogr_wkbwkt_test_import_wkt_sf12():
             out_wkt,
             wkt_tuple[1],
         )
+
+
+###############################################################################
+# Test importing non-conformant WKT with Z/M modifier directly appended to
+# geometry type name
+
+
+@pytest.mark.parametrize(
+    "input_wkt,expected_output_wkt",
+    [
+        ("POINTZ EMPTY", "POINT Z EMPTY"),
+        ("POINTM EMPTY", "POINT M EMPTY"),
+        ("POINTZM EMPTY", "POINT ZM EMPTY"),
+        ("POINTZ (0 1 2)", "POINT Z (0 1 2)"),
+        ("POINTM (0 1 2)", "POINT M (0 1 2)"),
+        ("POINTZM (0 1 2 3)", "POINT ZM (0 1 2 3)"),
+    ],
+)
+def test_ogr_wkbwkt_test_import_wkt_z_m_modifier_without_space(
+    input_wkt, expected_output_wkt
+):
+
+    geom = ogr.CreateGeometryFromWkt(input_wkt)
+    assert geom is not None
+    out_wkt = geom.ExportToIsoWkt()
+    assert out_wkt == expected_output_wkt
+
+    # Test with input in lower case
+    geom = ogr.CreateGeometryFromWkt(input_wkt.lower())
+    assert geom is not None
+    out_wkt = geom.ExportToIsoWkt()
+    assert out_wkt == expected_output_wkt
 
 
 ###############################################################################
