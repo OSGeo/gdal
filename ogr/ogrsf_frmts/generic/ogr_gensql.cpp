@@ -827,44 +827,70 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
     /*      the where clause and no column references OGR_GEOMETRY,         */
     /*      OGR_GEOM_WKT or OGR_GEOM_AREA special fields.                   */
     /* -------------------------------------------------------------------- */
-    int bSaveIsGeomIgnored = m_poSrcLayer->GetLayerDefn()->IsGeometryIgnored();
+
+    struct TempGeomIgnoredSetter
+    {
+        OGRFeatureDefn &m_oDefn;
+        const int m_bSaveIsGeomIgnored;
+
+        explicit TempGeomIgnoredSetter(OGRFeatureDefn *poDefn)
+            : m_oDefn(*poDefn),
+              m_bSaveIsGeomIgnored(poDefn->IsGeometryIgnored())
+        {
+            m_oDefn.SetGeometryIgnored(true);
+        }
+
+        ~TempGeomIgnoredSetter()
+        {
+            m_oDefn.SetGeometryIgnored(m_bSaveIsGeomIgnored);
+        }
+    };
+
+    auto poSrcLayerDefn = m_poSrcLayer->GetLayerDefn();
+    std::unique_ptr<TempGeomIgnoredSetter> oTempGeomIgnoredSetter;
+
     if (m_poFilterGeom == nullptr &&
         (psSelectInfo->where_expr == nullptr ||
          !ContainGeomSpecialField(psSelectInfo->where_expr)))
     {
-        int bFoundGeomExpr = FALSE;
+        bool bFoundGeomExpr = false;
         for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+            const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (psColDef->table_index == 0 && psColDef->field_index != -1)
             {
                 OGRLayer *poLayer = m_apoTableLayers[psColDef->table_index];
-                int nSpecialFieldIdx = psColDef->field_index -
-                                       poLayer->GetLayerDefn()->GetFieldCount();
+                const int nSpecialFieldIdx =
+                    psColDef->field_index -
+                    poLayer->GetLayerDefn()->GetFieldCount();
                 if (nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
                     nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
                     nSpecialFieldIdx == SPF_OGR_GEOM_AREA)
                 {
-                    bFoundGeomExpr = TRUE;
+                    bFoundGeomExpr = true;
                     break;
                 }
                 if (psColDef->field_index ==
                     GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poLayer->GetLayerDefn(),
                                                         0))
                 {
-                    bFoundGeomExpr = TRUE;
+                    bFoundGeomExpr = true;
                     break;
                 }
             }
             if (psColDef->expr != nullptr &&
                 ContainGeomSpecialField(psColDef->expr))
             {
-                bFoundGeomExpr = TRUE;
+                bFoundGeomExpr = true;
                 break;
             }
         }
         if (!bFoundGeomExpr)
-            m_poSrcLayer->GetLayerDefn()->SetGeometryIgnored(TRUE);
+        {
+            // cppcheck-suppress unreadVariable
+            oTempGeomIgnoredSetter =
+                std::make_unique<TempGeomIgnoredSetter>(poSrcLayerDefn);
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -888,7 +914,6 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
             m_poSummaryFeature->SetField(0, static_cast<int>(nRes));
         }
 
-        m_poSrcLayer->GetLayerDefn()->SetGeometryIgnored(bSaveIsGeomIgnored);
         return TRUE;
     }
 
@@ -896,63 +921,88 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
     /*      Otherwise, process all source feature through the summary       */
     /*      building facilities of SWQ.                                     */
     /* -------------------------------------------------------------------- */
-    const char *pszError = nullptr;
 
     for (auto &&poSrcFeature : *m_poSrcLayer)
     {
         for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+            const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+            const char *pszError = nullptr;
 
             if (psColDef->col_func == SWQCF_COUNT)
             {
                 /* psColDef->field_index can be -1 in the case of a COUNT(*) */
                 if (psColDef->field_index < 0)
-                    pszError = swq_select_summarize(psSelectInfo, iField, "");
-                else if (IS_GEOM_FIELD_INDEX(m_poSrcLayer->GetLayerDefn(),
+                    pszError =
+                        swq_select_summarize(psSelectInfo, iField, "", nullptr);
+                else if (IS_GEOM_FIELD_INDEX(poSrcLayerDefn,
                                              psColDef->field_index))
                 {
-                    int iSrcGeomField = ALL_FIELD_INDEX_TO_GEOM_FIELD_INDEX(
-                        m_poSrcLayer->GetLayerDefn(), psColDef->field_index);
-                    OGRGeometry *poGeom =
+                    const int iSrcGeomField =
+                        ALL_FIELD_INDEX_TO_GEOM_FIELD_INDEX(
+                            poSrcLayerDefn, psColDef->field_index);
+                    const OGRGeometry *poGeom =
                         poSrcFeature->GetGeomFieldRef(iSrcGeomField);
                     if (poGeom != nullptr)
-                        pszError =
-                            swq_select_summarize(psSelectInfo, iField, "");
-                    else
-                        pszError = nullptr;
+                        pszError = swq_select_summarize(psSelectInfo, iField,
+                                                        "", nullptr);
                 }
                 else if (poSrcFeature->IsFieldSetAndNotNull(
                              psColDef->field_index))
-                    pszError = swq_select_summarize(
-                        psSelectInfo, iField,
-                        poSrcFeature->GetFieldAsString(psColDef->field_index));
-                else
-                    pszError = nullptr;
+                {
+                    if (!psColDef->distinct_flag)
+                    {
+                        pszError = swq_select_summarize(psSelectInfo, iField,
+                                                        "", nullptr);
+                    }
+                    else
+                    {
+                        const char *pszVal = poSrcFeature->GetFieldAsString(
+                            psColDef->field_index);
+                        pszError = swq_select_summarize(psSelectInfo, iField,
+                                                        pszVal, nullptr);
+                    }
+                }
             }
             else
             {
-                const char *pszVal = nullptr;
                 if (poSrcFeature->IsFieldSetAndNotNull(psColDef->field_index))
-                    pszVal =
-                        poSrcFeature->GetFieldAsString(psColDef->field_index);
-                pszError = swq_select_summarize(psSelectInfo, iField, pszVal);
+                {
+                    if (!psColDef->distinct_flag &&
+                        (psColDef->field_type == SWQ_BOOLEAN ||
+                         psColDef->field_type == SWQ_INTEGER ||
+                         psColDef->field_type == SWQ_INTEGER64 ||
+                         psColDef->field_type == SWQ_FLOAT))
+                    {
+                        const double dfValue = poSrcFeature->GetFieldAsDouble(
+                            psColDef->field_index);
+                        pszError = swq_select_summarize(psSelectInfo, iField,
+                                                        nullptr, &dfValue);
+                    }
+                    else
+                    {
+                        const char *pszVal = poSrcFeature->GetFieldAsString(
+                            psColDef->field_index);
+                        pszError = swq_select_summarize(psSelectInfo, iField,
+                                                        pszVal, nullptr);
+                    }
+                }
+                else
+                {
+                    pszError = swq_select_summarize(psSelectInfo, iField,
+                                                    nullptr, nullptr);
+                }
             }
 
-            if (pszError != nullptr)
+            if (pszError)
             {
                 m_poSummaryFeature.reset();
-
-                m_poSrcLayer->GetLayerDefn()->SetGeometryIgnored(
-                    bSaveIsGeomIgnored);
 
                 CPLError(CE_Failure, CPLE_AppDefined, "%s", pszError);
                 return false;
             }
         }
     }
-
-    m_poSrcLayer->GetLayerDefn()->SetGeometryIgnored(bSaveIsGeomIgnored);
 
     /* -------------------------------------------------------------------- */
     /*      Clear away the filters we have installed till a next run through*/
@@ -968,7 +1018,7 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
     {
         for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+            const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (!psSelectInfo->column_summary.empty())
             {
                 const swq_summary &oSummary =
