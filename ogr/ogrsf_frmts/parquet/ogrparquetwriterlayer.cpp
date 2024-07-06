@@ -1148,7 +1148,7 @@ void OGRParquetWriterLayer::FixupGeometryBeforeWriting(OGRGeometry *poGeom)
             if ((bFirstRing && poRing->isClockwise()) ||
                 (!bFirstRing && !poRing->isClockwise()))
             {
-                poRing->reverseWindingOrder();
+                poRing->reversePoints();
             }
             bFirstRing = false;
         }

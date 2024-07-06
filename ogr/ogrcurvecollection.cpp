@@ -791,4 +791,29 @@ void OGRCurveCollection::removeEmptyParts()
     }
 }
 
+/************************************************************************/
+/*                           reversePoints()                            */
+/************************************************************************/
+
+/**
+ * \brief Reverse point order.
+ *
+ * This method updates the points in this curve in place
+ * reversing the point ordering (first for last, etc) and component ordering.
+ *
+ * @since 3.10
+ */
+void OGRCurveCollection::reversePoints()
+
+{
+    for (int i = 0; i < nCurveCount / 2; ++i)
+    {
+        std::swap(papoCurves[i], papoCurves[nCurveCount - 1 - i]);
+    }
+    for (int i = 0; i < nCurveCount; ++i)
+    {
+        papoCurves[i]->reversePoints();
+    }
+}
+
 //! @endcond

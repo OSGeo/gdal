@@ -1408,6 +1408,7 @@ class CPL_DLL OGRCurve : public OGRGeometry
     virtual double get_GeodesicArea(
         const OGRSpatialReference *poSRSOverride = nullptr) const = 0;
     virtual int isClockwise() const;
+    virtual void reversePoints() = 0;
 
     /** Down-cast to OGRSimpleCurve*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
@@ -1716,7 +1717,7 @@ class CPL_DLL OGRSimpleCurve : public OGRCurve
 
     void addSubLineString(const OGRLineString *, int nStartVertex = 0,
                           int nEndVertex = -1);
-    void reversePoints(void);
+    void reversePoints() override;
     virtual OGRPointIterator *getPointIterator() const override;
 
     // non-standard from OGRGeometry
@@ -1901,7 +1902,12 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     // Non standard.
     virtual const char *getGeometryName() const override;
     virtual OGRLinearRing *clone() const override;
-    virtual void reverseWindingOrder();
+
+    //! @cond Doxygen_Suppress
+    void reverseWindingOrder()
+        CPL_WARN_DEPRECATED("Use reversePoints() instead");
+    //! @endcond
+
     virtual void closeRings() override;
     OGRBoolean isPointInRing(const OGRPoint *pt,
                              int bTestEnvelope = TRUE) const;
@@ -2153,6 +2159,8 @@ class CPL_DLL OGRCurveCollection
     bool hasEmptyParts() const;
     void removeEmptyParts();
 
+    void reversePoints();
+
     OGRErr transform(OGRGeometry *poGeom, OGRCoordinateTransformation *poCT);
     void flattenTo2D(OGRGeometry *poGeom);
     void segmentize(double dfMaxLength);
@@ -2317,6 +2325,7 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
                     double dfToleranceEps = DEFAULT_TOLERANCE_EPSILON);
     OGRCurve *stealCurve(int);
     virtual OGRPointIterator *getPointIterator() const override;
+    void reversePoints() override;
 
     // Non-standard from OGRGeometry.
     virtual OGRwkbGeometryType getGeometryType() const override;
