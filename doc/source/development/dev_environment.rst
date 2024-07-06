@@ -164,6 +164,7 @@ This can be done by sourcing the following from the build directory:
 For Windows, a similar ``scripts/setdevenv.bat`` script exists (it currently assumes a Release build).
 
 .. code-block:: console
+
     cd c:\dev\gdal\build
     ..\scripts\setdevenv.bat
 
