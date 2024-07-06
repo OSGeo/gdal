@@ -1049,7 +1049,10 @@ char **OGRCSVLayer::AutodetectFieldTypes(CSLConstList papszOpenOptions,
                 else
                     eOGRFieldType = OFTInteger;
             }
-            else if (eType == CPL_VALUE_REAL)
+            else if (eType == CPL_VALUE_REAL ||
+                     EQUAL(papszTokens[iField], "inf") ||
+                     EQUAL(papszTokens[iField], "-inf") ||
+                     EQUAL(papszTokens[iField], "nan"))
             {
                 eOGRFieldType = OFTReal;
             }
@@ -1466,14 +1469,16 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                     if (chComma)
                         *chComma = '.';
                 }
-                CPLValueType eType = CPLGetValueType(papszTokens[iAttr]);
-                if (eType == CPL_VALUE_INTEGER || eType == CPL_VALUE_REAL)
+                char *endptr = nullptr;
+                const double dfVal =
+                    CPLStrtodDelim(papszTokens[iAttr], &endptr, '.');
+                if (endptr == papszTokens[iAttr] + strlen(papszTokens[iAttr]))
                 {
-                    poFeature->SetField(iOGRField, papszTokens[iAttr]);
+                    poFeature->SetField(iOGRField, dfVal);
                     if (!bWarningBadTypeOrWidth &&
                         (eFieldType == OFTInteger ||
                          eFieldType == OFTInteger64) &&
-                        eType == CPL_VALUE_REAL)
+                        CPLGetValueType(papszTokens[iAttr]) == CPL_VALUE_REAL)
                     {
                         bWarningBadTypeOrWidth = true;
                         CPLError(CE_Warning, CPLE_AppDefined,
@@ -1495,8 +1500,9 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                                  nNextFID, poFieldDefn->GetNameRef());
                     }
                     else if (!bWarningBadTypeOrWidth &&
-                             eType == CPL_VALUE_REAL &&
-                             poFieldDefn->GetWidth() > 0)
+                             poFieldDefn->GetWidth() > 0 &&
+                             CPLGetValueType(papszTokens[iAttr]) ==
+                                 CPL_VALUE_REAL)
                     {
                         const char *pszDot = strchr(papszTokens[iAttr], '.');
                         const int nPrecision =
