@@ -46,6 +46,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gtiff.h"
+#include "gtiffdataset.h"
 #include "tiff.h"
 #include "tiffvers.h"
 #include "tifvsi.h"
@@ -763,17 +764,28 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         panBlue = static_cast<unsigned short *>(
             CPLCalloc(nColorCount, sizeof(unsigned short)));
 
+        const int nColorTableMultiplier = std::max(
+            1,
+            std::min(
+                257,
+                atoi(CSLFetchNameValueDef(
+                    papszOptions, "COLOR_TABLE_MULTIPLIER",
+                    CPLSPrintf(
+                        "%d",
+                        GTiffDataset::DEFAULT_COLOR_TABLE_MULTIPLIER_257)))));
+
         for (int iColor = 0; iColor < nColorCount; iColor++)
         {
             GDALColorEntry sRGB = {0, 0, 0, 0};
 
             if (poCT->GetColorEntryAsRGB(iColor, &sRGB))
             {
-                // TODO(schwehr): Check for underflow.
-                // Going from signed short to unsigned short.
-                panRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
-                panGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
-                panBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
+                panRed[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 1, sRGB.c1, nColorTableMultiplier);
+                panGreen[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 2, sRGB.c2, nColorTableMultiplier);
+                panBlue[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 3, sRGB.c3, nColorTableMultiplier);
             }
         }
     }

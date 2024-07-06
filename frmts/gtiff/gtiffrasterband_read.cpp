@@ -1637,7 +1637,7 @@ GDALColorTable *GTiffRasterBand::GetColorTable()
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
 
     if (nBand == 1)
-        return m_poGDS->m_poColorTable;
+        return m_poGDS->m_poColorTable.get();
 
     return nullptr;
 }
