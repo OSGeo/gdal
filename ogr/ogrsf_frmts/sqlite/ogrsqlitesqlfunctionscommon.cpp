@@ -337,6 +337,69 @@ static void OGRSQLITE_LIKE(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
+/*                       OGRSQLITE_STDDEV_Step()                        */
+/************************************************************************/
+
+// Welford's online algorithm for variance:
+// https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+struct OGRSQLITE_STDDEV_Context
+{
+    int64_t nValues;
+    double dfMean;
+    double dfM2;  // Accumulator for squared distance from the mean
+};
+
+static void OGRSQLITE_STDDEV_Step(sqlite3_context *pContext, int /* argc*/,
+                                  sqlite3_value **argv)
+{
+    auto pAggCtxt =
+        static_cast<OGRSQLITE_STDDEV_Context *>(sqlite3_aggregate_context(
+            pContext, static_cast<int>(sizeof(OGRSQLITE_STDDEV_Context))));
+    const auto eType = sqlite3_value_type(argv[0]);
+    if (eType != SQLITE_INTEGER && eType != SQLITE_FLOAT)
+        return;
+
+    const double dfValue = sqlite3_value_double(argv[0]);
+    pAggCtxt->nValues++;
+    const double dfDelta = dfValue - pAggCtxt->dfMean;
+    pAggCtxt->dfMean += dfDelta / pAggCtxt->nValues;
+    const double dfDelta2 = dfValue - pAggCtxt->dfMean;
+    pAggCtxt->dfM2 += dfDelta * dfDelta2;
+}
+
+/************************************************************************/
+/*                    OGRSQLITE_STDDEV_POP_Finalize()                   */
+/************************************************************************/
+
+static void OGRSQLITE_STDDEV_POP_Finalize(sqlite3_context *pContext)
+{
+    auto pAggCtxt =
+        static_cast<OGRSQLITE_STDDEV_Context *>(sqlite3_aggregate_context(
+            pContext, static_cast<int>(sizeof(OGRSQLITE_STDDEV_Context))));
+    if (pAggCtxt->nValues > 0)
+    {
+        sqlite3_result_double(pContext,
+                              sqrt(pAggCtxt->dfM2 / pAggCtxt->nValues));
+    }
+}
+
+/************************************************************************/
+/*                    OGRSQLITE_STDDEV_SAMP_Finalize()                  */
+/************************************************************************/
+
+static void OGRSQLITE_STDDEV_SAMP_Finalize(sqlite3_context *pContext)
+{
+    auto pAggCtxt =
+        static_cast<OGRSQLITE_STDDEV_Context *>(sqlite3_aggregate_context(
+            pContext, static_cast<int>(sizeof(OGRSQLITE_STDDEV_Context))));
+    if (pAggCtxt->nValues > 1)
+    {
+        sqlite3_result_double(pContext,
+                              sqrt(pAggCtxt->dfM2 / (pAggCtxt->nValues - 1)));
+    }
+}
+
+/************************************************************************/
 /*                 OGRSQLiteRegisterSQLFunctionsCommon()                */
 /************************************************************************/
 
@@ -364,6 +427,14 @@ static OGRSQLiteExtensionData *OGRSQLiteRegisterSQLFunctionsCommon(sqlite3 *hDB)
         sqlite3_create_function(hDB, "LIKE", 3, UTF8_INNOCUOUS, pData,
                                 OGRSQLITE_LIKE, nullptr, nullptr);
     }
+
+    sqlite3_create_function(hDB, "STDDEV_POP", 1, UTF8_INNOCUOUS, nullptr,
+                            nullptr, OGRSQLITE_STDDEV_Step,
+                            OGRSQLITE_STDDEV_POP_Finalize);
+
+    sqlite3_create_function(hDB, "STDDEV_SAMP", 1, UTF8_INNOCUOUS, nullptr,
+                            nullptr, OGRSQLITE_STDDEV_Step,
+                            OGRSQLITE_STDDEV_SAMP_Finalize);
 
     pData->SetRegExpCache(OGRSQLiteRegisterRegExpFunction(hDB));
 
