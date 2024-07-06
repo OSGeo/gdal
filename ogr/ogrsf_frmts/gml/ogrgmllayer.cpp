@@ -44,7 +44,7 @@ OGRGMLLayer::OGRGMLLayer(const char *pszName, bool bWriterIn,
     : poFeatureDefn(new OGRFeatureDefn(
           pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0))),
       iNextGMLId(0), bInvalidFIDFound(false), pszFIDPrefix(nullptr),
-      bWriter(bWriterIn), bSameSRS(false), poDS(poDSIn),
+      bWriter(bWriterIn), poDS(poDSIn),
       poFClass(!bWriter ? poDS->GetReader()->GetClass(pszName) : nullptr),
       // Reader's should get the corresponding GMLFeatureClass and cache it.
       hCacheSRS(GML_BuildOGRGeometryFromList_CreateCache()),
@@ -708,33 +708,6 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
         poDS->PrintLine(fp, "<gml:featureMember>");
     }
 
-    if (iNextGMLId == 0)
-    {
-        bSameSRS = true;
-        for (int iGeomField = 1;
-             iGeomField < poFeatureDefn->GetGeomFieldCount(); iGeomField++)
-        {
-            OGRGeomFieldDefn *poFieldDefn0 = poFeatureDefn->GetGeomFieldDefn(0);
-            OGRGeomFieldDefn *poFieldDefn =
-                poFeatureDefn->GetGeomFieldDefn(iGeomField);
-            const OGRSpatialReference *poSRS0 = poFieldDefn0->GetSpatialRef();
-            const OGRSpatialReference *poSRS = poFieldDefn->GetSpatialRef();
-            if (poSRS0 != nullptr && poSRS == nullptr)
-            {
-                bSameSRS = false;
-            }
-            else if (poSRS0 == nullptr && poSRS != nullptr)
-            {
-                bSameSRS = false;
-            }
-            else if (poSRS0 != nullptr && poSRS != nullptr && poSRS0 != poSRS &&
-                     !poSRS0->IsSame(poSRS))
-            {
-                bSameSRS = false;
-            }
-        }
-    }
-
     if (poFeature->GetFID() == OGRNullFID)
         poFeature->SetFID(iNextGMLId++);
 
@@ -794,7 +767,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
             const int nCoordDimension = poGeom->getCoordinateDimension();
 
             poGeom->getEnvelope(&sGeomBounds);
-            if (bSameSRS)
+            if (poDS->HasWriteGlobalSRS())
                 poDS->GrowExtents(&sGeomBounds, nCoordDimension);
 
             if (poGeom->getSpatialReference() == nullptr &&
@@ -1246,7 +1219,8 @@ OGRErr OGRGMLLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
     /*      Enforce XML naming semantics on element name.                   */
     /* -------------------------------------------------------------------- */
     OGRGeomFieldDefn oCleanCopy(poField);
-    auto poSRSOri = poField->GetSpatialRef();
+    const auto poSRSOri = poField->GetSpatialRef();
+    poDS->DeclareNewWriteSRS(poSRSOri);
     if (poSRSOri)
     {
         auto poSRS = poSRSOri->Clone();
