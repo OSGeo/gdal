@@ -643,7 +643,7 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
     input_tif = str(tmp_path / "test_gdal2tiles_nodata_values_pct_threshold.tif")
     output_folder = str(tmp_path / "test_gdal2tiles_nodata_values_pct_threshold")
 
-    src_ds = gdal.GetDriverByName("GTiff").Create(input_tif, 256, 256, 1, gdal.GDT_Byte)
+    src_ds = gdal.GetDriverByName("GTiff").Create(input_tif, 256, 256, 3, gdal.GDT_Byte)
     src_ds.GetRasterBand(1).SetNoDataValue(20)
     src_ds.GetRasterBand(1).WriteRaster(
         0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
@@ -665,7 +665,7 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
     )
 
     ds = gdal.Open(f"{output_folder}/0/0/0.png")
-    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1)) == (
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (
         round((10 + 30 + 40) / 3),
         255,
     )
@@ -677,7 +677,7 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
     )
 
     ds = gdal.Open(f"{output_folder}/0/0/0.png")
-    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1)) == (
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (
         round((10 + 30 + 40) / 3),
         255,
     )
@@ -689,7 +689,7 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
     )
 
     ds = gdal.Open(f"{output_folder}/0/0/0.png")
-    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1)) == (0, 0)
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (0, 0)
 
 
 @pytest.mark.require_driver("JPEG")
