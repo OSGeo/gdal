@@ -1478,7 +1478,7 @@ bool FileGDBIndexIterator::FindPages(int iLevel, uint64_t nPage)
                 for (int j = 0; j < nStrLen; j++)
                     CPL_LSBPTR16(&asMax[j]);
                     // Note: we have an inconsistency. OGR SQL equality operator
-                    // is advertized top be case insensitive, but we have always
+                    // is advertized to be case insensitive, but we have always
                     // implemented FGSO_EQ as case sensitive.
 #ifdef DEBUG_INDEX_CONSISTENCY
                 returnErrorIf(i > 0 &&
@@ -1851,7 +1851,7 @@ int64_t FileGDBIndexIterator::GetNextRow()
                     for (int j = 0; j < nStrLen; j++)
                         CPL_LSBPTR16(&asVal[j]);
                     // Note: we have an inconsistency. OGR SQL equality operator
-                    // is advertized top be case insensitive, but we have always
+                    // is advertized to be case insensitive, but we have always
                     // implemented FGSO_EQ as case sensitive.
                     nComp = FileGDBUTF16StrCompare(asUTF16Str, asVal, nStrLen,
                                                    eOp == FGSO_ILIKE);
