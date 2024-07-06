@@ -43,7 +43,8 @@ Synopsis
            [-t_coord_epoch <epoch>] [-ct <pipeline_def>]
            [-spat_srs <srs_def>] [-geomfield <name>]
            [-segmentize <max_dist>] [-simplify <tolerance>]
-           [-makevalid] [-wrapdateline] [-datelineoffset <val_in_degree>]
+           [-makevalid] [-skipinvalid]
+           [-wrapdateline] [-datelineoffset <val_in_degree>]
            [-clipsrc [<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent]
            [-clipsrcsql <sql_statement>] [-clipsrclayer <layername>]
            [-clipsrcwhere <expression>]
@@ -474,7 +475,16 @@ output coordinate system or even reprojecting the features during translation.
     :cpp:func:`OGRGeometryFactory::removeLowerDimensionSubGeoms`, on geometries
     to ensure they are valid regarding the rules of the Simple Features specification.
 
-    .. versionadded: 3.1 (requires GEOS 3.8 or later)
+    .. versionadded: 3.1 (requires GEOS)
+
+.. option:: -skipinvalid
+
+    Run the :cpp:func:`OGRGeometry::IsValid` operation on geometries to check if
+    they are valid regarding the rules of the Simple Features specification.
+    If they are not, the feature is skipped. This check is done after all other
+    geometry operations.
+
+    .. versionadded: 3.10 (requires GEOS)
 
 .. option:: -fieldTypeToString All|<type1>[,<type2>]...
 

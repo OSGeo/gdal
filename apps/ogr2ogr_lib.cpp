@@ -270,6 +270,9 @@ struct GDALVectorTranslateOptions
     /*! Whether to run MakeValid */
     bool bMakeValid = false;
 
+    /*! Whether to run OGRGeometry::IsValid */
+    bool bSkipInvalidGeom = false;
+
     /*! list of field types to convert to a field of type string in the
        destination layer. Valid types are: Integer, Integer64, Real, String,
        Date, Time, DateTime, Binary, IntegerList, Integer64List, RealList,
@@ -575,17 +578,23 @@ class LayerTranslator
     int m_eGType = -1;
     GeomTypeConversion m_eGeomTypeConversion = GTC_DEFAULT;
     bool m_bMakeValid = false;
+    bool m_bSkipInvalidGeom = false;
     int m_nCoordDim = 0;
     GeomOperation m_eGeomOp = GEOMOP_NONE;
     double m_dfGeomOpParam = 0;
+
     OGRGeometry *m_poClipSrcOri = nullptr;
     bool m_bWarnedClipSrcSRS = false;
     std::unique_ptr<OGRGeometry> m_poClipSrcReprojectedToSrcSRS;
     const OGRSpatialReference *m_poClipSrcReprojectedToSrcSRS_SRS = nullptr;
+    OGREnvelope m_oClipSrcEnv{};
+
     OGRGeometry *m_poClipDstOri = nullptr;
     bool m_bWarnedClipDstSRS = false;
     std::unique_ptr<OGRGeometry> m_poClipDstReprojectedToDstSRS;
     const OGRSpatialReference *m_poClipDstReprojectedToDstSRS_SRS = nullptr;
+    OGREnvelope m_oClipDstEnv{};
+
     bool m_bExplodeCollections = false;
     bool m_bNativeData = false;
     GIntBig m_nLimit = -1;
@@ -598,8 +607,10 @@ class LayerTranslator
                    const GDALVectorTranslateOptions *psOptions);
 
   private:
-    const OGRGeometry *GetDstClipGeom(const OGRSpatialReference *poGeomSRS);
-    const OGRGeometry *GetSrcClipGeom(const OGRSpatialReference *poGeomSRS);
+    std::pair<const OGRGeometry *, const OGREnvelope *>
+    GetDstClipGeom(const OGRSpatialReference *poGeomSRS);
+    std::pair<const OGRGeometry *, const OGREnvelope *>
+    GetSrcClipGeom(const OGRSpatialReference *poGeomSRS);
 };
 
 static OGRLayer *GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
@@ -2880,6 +2891,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     oTranslator.m_eGType = psOptions->eGType;
     oTranslator.m_eGeomTypeConversion = psOptions->eGeomTypeConversion;
     oTranslator.m_bMakeValid = psOptions->bMakeValid;
+    oTranslator.m_bSkipInvalidGeom = psOptions->bSkipInvalidGeom;
     oTranslator.m_nCoordDim = psOptions->nCoordDim;
     oTranslator.m_eGeomOp = psOptions->eGeomOp;
     oTranslator.m_dfGeomOpParam = psOptions->dfGeomOpParam;
@@ -3916,7 +3928,7 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
         m_bExactFieldNameMatch && !m_bForceNullable && !m_bResolveDomains &&
         !m_bUnsetDefault && psOptions->nFIDToFetch == OGRNullFID &&
         psOptions->dfXYRes == OGRGeomCoordinatePrecision::UNKNOWN &&
-        !psOptions->bMakeValid)
+        !psOptions->bMakeValid && !psOptions->bSkipInvalidGeom)
     {
         struct ArrowArrayStream streamSrc;
         const char *const apszOptions[] = {"SILENCE_GET_SCHEMA_ERROR=YES",
@@ -6002,13 +6014,22 @@ bool LayerTranslator::Translate(
                 if (nDstGeomFieldCount == 0 && poStolenGeometry &&
                     m_poClipSrcOri)
                 {
-                    const OGRGeometry *poClipGeom =
+                    if (poStolenGeometry->IsEmpty())
+                        goto end_loop;
+
+                    const auto [poClipGeom, poClipGeomEnvelope] =
                         GetSrcClipGeom(poStolenGeometry->getSpatialReference());
 
-                    if (poClipGeom != nullptr &&
-                        !poClipGeom->Intersects(poStolenGeometry.get()))
+                    if (poClipGeom && poClipGeomEnvelope)
                     {
-                        goto end_loop;
+                        OGREnvelope oEnv;
+                        poStolenGeometry->getEnvelope(&oEnv);
+                        if (!poClipGeomEnvelope->Contains(oEnv) &&
+                            !(poClipGeomEnvelope->Intersects(oEnv) &&
+                              poClipGeom->Intersects(poStolenGeometry.get())))
+                        {
+                            goto end_loop;
+                        }
                     }
                 }
 
@@ -6207,49 +6228,51 @@ bool LayerTranslator::Translate(
 
                 if (m_poClipSrcOri)
                 {
+                    if (poDstGeometry->IsEmpty())
+                        goto end_loop;
 
-                    const OGRGeometry *poClipGeom =
+                    const auto [poClipGeom, poClipGeomEnvelope] =
                         GetSrcClipGeom(poDstGeometry->getSpatialReference());
 
-                    std::unique_ptr<OGRGeometry> poClipped;
-                    if (poClipGeom != nullptr)
+                    if (!(poClipGeom && poClipGeomEnvelope))
+                        goto end_loop;
+
+                    OGREnvelope oDstEnv;
+                    poDstGeometry->getEnvelope(&oDstEnv);
+
+                    if (!poClipGeomEnvelope->Contains(oDstEnv))
                     {
-                        OGREnvelope oClipEnv;
-                        OGREnvelope oDstEnv;
-
-                        poClipGeom->getEnvelope(&oClipEnv);
-                        poDstGeometry->getEnvelope(&oDstEnv);
-
-                        if (oClipEnv.Intersects(oDstEnv))
+                        std::unique_ptr<OGRGeometry> poClipped;
+                        if (poClipGeomEnvelope->Intersects(oDstEnv))
                         {
                             poClipped.reset(
                                 poClipGeom->Intersection(poDstGeometry.get()));
                         }
-                    }
+                        if (poClipped == nullptr || poClipped->IsEmpty())
+                        {
+                            goto end_loop;
+                        }
 
-                    if (poClipped == nullptr || poClipped->IsEmpty())
-                    {
-                        goto end_loop;
-                    }
+                        const int nDim = poDstGeometry->getDimension();
+                        if (poClipped->getDimension() < nDim &&
+                            wkbFlatten(poDstFDefn->GetGeomFieldDefn(iGeom)
+                                           ->GetType()) != wkbUnknown)
+                        {
+                            CPLDebug(
+                                "OGR2OGR",
+                                "Discarding feature " CPL_FRMT_GIB
+                                " of layer %s, "
+                                "as its intersection with -clipsrc is a %s "
+                                "whereas the input is a %s",
+                                nSrcFID, poSrcLayer->GetName(),
+                                OGRToOGCGeomType(poClipped->getGeometryType()),
+                                OGRToOGCGeomType(
+                                    poDstGeometry->getGeometryType()));
+                            goto end_loop;
+                        }
 
-                    const int nDim = poDstGeometry->getDimension();
-                    if (poClipped->getDimension() < nDim &&
-                        wkbFlatten(
-                            poDstFDefn->GetGeomFieldDefn(iGeom)->GetType()) !=
-                            wkbUnknown)
-                    {
-                        CPLDebug(
-                            "OGR2OGR",
-                            "Discarding feature " CPL_FRMT_GIB " of layer %s, "
-                            "as its intersection with -clipsrc is a %s "
-                            "whereas the input is a %s",
-                            nSrcFID, poSrcLayer->GetName(),
-                            OGRToOGCGeomType(poClipped->getGeometryType()),
-                            OGRToOGCGeomType(poDstGeometry->getGeometryType()));
-                        goto end_loop;
+                        poDstGeometry = std::move(poClipped);
                     }
-
-                    poDstGeometry = std::move(poClipped);
                 }
 
                 OGRCoordinateTransformation *const poCT =
@@ -6387,51 +6410,54 @@ bool LayerTranslator::Translate(
                 {
                     if (m_poClipDstOri)
                     {
-                        const OGRGeometry *poClipGeom = GetDstClipGeom(
+                        if (poDstGeometry->IsEmpty())
+                            goto end_loop;
+
+                        auto [poClipGeom, poClipGeomEnvelope] = GetDstClipGeom(
                             poDstGeometry->getSpatialReference());
-                        if (poClipGeom == nullptr)
+                        if (!poClipGeom || !poClipGeomEnvelope)
                         {
                             goto end_loop;
                         }
 
-                        std::unique_ptr<OGRGeometry> poClipped;
-
-                        OGREnvelope oClipEnv;
                         OGREnvelope oDstEnv;
-
-                        poClipGeom->getEnvelope(&oClipEnv);
                         poDstGeometry->getEnvelope(&oDstEnv);
 
-                        if (oClipEnv.Intersects(oDstEnv))
+                        if (!poClipGeomEnvelope->Contains(oDstEnv))
                         {
-                            poClipped.reset(
-                                poClipGeom->Intersection(poDstGeometry.get()));
-                        }
+                            std::unique_ptr<OGRGeometry> poClipped;
+                            if (poClipGeomEnvelope->Intersects(oDstEnv))
+                            {
+                                poClipped.reset(poClipGeom->Intersection(
+                                    poDstGeometry.get()));
+                            }
 
-                        if (poClipped == nullptr || poClipped->IsEmpty())
-                        {
-                            goto end_loop;
-                        }
+                            if (poClipped == nullptr || poClipped->IsEmpty())
+                            {
+                                goto end_loop;
+                            }
 
-                        const int nDim = poDstGeometry->getDimension();
-                        if (poClipped->getDimension() < nDim &&
-                            wkbFlatten(poDstFDefn->GetGeomFieldDefn(iGeom)
-                                           ->GetType()) != wkbUnknown)
-                        {
-                            CPLDebug(
-                                "OGR2OGR",
-                                "Discarding feature " CPL_FRMT_GIB
-                                " of layer %s, "
-                                "as its intersection with -clipdst is a %s "
-                                "whereas the input is a %s",
-                                nSrcFID, poSrcLayer->GetName(),
-                                OGRToOGCGeomType(poClipped->getGeometryType()),
-                                OGRToOGCGeomType(
-                                    poDstGeometry->getGeometryType()));
-                            goto end_loop;
-                        }
+                            const int nDim = poDstGeometry->getDimension();
+                            if (poClipped->getDimension() < nDim &&
+                                wkbFlatten(poDstFDefn->GetGeomFieldDefn(iGeom)
+                                               ->GetType()) != wkbUnknown)
+                            {
+                                CPLDebug(
+                                    "OGR2OGR",
+                                    "Discarding feature " CPL_FRMT_GIB
+                                    " of layer %s, "
+                                    "as its intersection with -clipdst is a %s "
+                                    "whereas the input is a %s",
+                                    nSrcFID, poSrcLayer->GetName(),
+                                    OGRToOGCGeomType(
+                                        poClipped->getGeometryType()),
+                                    OGRToOGCGeomType(
+                                        poDstGeometry->getGeometryType()));
+                                goto end_loop;
+                            }
 
-                        poDstGeometry = std::move(poClipped);
+                            poDstGeometry = std::move(poClipped);
+                        }
                     }
 
                     if (psOptions->dfXYRes !=
@@ -6479,6 +6505,9 @@ bool LayerTranslator::Translate(
                                         poDstGeometry.get()));
                         }
                     }
+
+                    if (m_bSkipInvalidGeom && !poDstGeometry->IsValid())
+                        goto end_loop;
 
                     if (m_eGeomTypeConversion != GTC_DEFAULT)
                     {
@@ -6603,7 +6632,13 @@ bool LayerTranslator::Translate(
 /*                LayerTranslator::GetDstClipGeom()                     */
 /************************************************************************/
 
-const OGRGeometry *
+/** Returns the destination clip geometry and its envelope
+ *
+ * @param poGeomSRS The SRS into which the destination clip geometry should be
+ *                  expressed.
+ * @return the destination clip geometry and its envelope, or (nullptr, nullptr)
+ */
+std::pair<const OGRGeometry *, const OGREnvelope *>
 LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
 {
     if (m_poClipDstReprojectedToDstSRS_SRS != poGeomSRS)
@@ -6616,7 +6651,7 @@ LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
             if (m_poClipDstReprojectedToDstSRS->transformTo(poGeomSRS) !=
                 OGRERR_NONE)
             {
-                return nullptr;
+                return std::make_pair(nullptr, nullptr);
             }
             m_poClipDstReprojectedToDstSRS_SRS = poGeomSRS;
         }
@@ -6633,17 +6668,30 @@ LayerTranslator::GetDstClipGeom(const OGRSpatialReference *poGeomSRS)
                          "same as the feature's geometry");
             }
         }
+        m_oClipDstEnv = OGREnvelope();
     }
 
-    return m_poClipDstReprojectedToDstSRS ? m_poClipDstReprojectedToDstSRS.get()
-                                          : m_poClipDstOri;
+    const auto poGeom = m_poClipDstReprojectedToDstSRS
+                            ? m_poClipDstReprojectedToDstSRS.get()
+                            : m_poClipDstOri;
+    if (poGeom && !m_oClipDstEnv.IsInit())
+    {
+        poGeom->getEnvelope(&m_oClipDstEnv);
+    }
+    return std::make_pair(poGeom, poGeom ? &m_oClipDstEnv : nullptr);
 }
 
 /************************************************************************/
 /*                LayerTranslator::GetSrcClipGeom()                     */
 /************************************************************************/
 
-const OGRGeometry *
+/** Returns the source clip geometry and its envelope
+ *
+ * @param poGeomSRS The SRS into which the source clip geometry should be
+ *                  expressed.
+ * @return the source clip geometry and its envelope, or (nullptr, nullptr)
+ */
+std::pair<const OGRGeometry *, const OGREnvelope *>
 LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
 {
     if (m_poClipSrcReprojectedToSrcSRS_SRS != poGeomSRS)
@@ -6656,7 +6704,7 @@ LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
             if (m_poClipSrcReprojectedToSrcSRS->transformTo(poGeomSRS) !=
                 OGRERR_NONE)
             {
-                return nullptr;
+                return std::make_pair(nullptr, nullptr);
             }
             m_poClipSrcReprojectedToSrcSRS_SRS = poGeomSRS;
         }
@@ -6672,10 +6720,17 @@ LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
                          "same as the feature's geometry");
             }
         }
+        m_oClipSrcEnv = OGREnvelope();
     }
 
-    return m_poClipSrcReprojectedToSrcSRS ? m_poClipSrcReprojectedToSrcSRS.get()
-                                          : m_poClipSrcOri;
+    const auto poGeom = m_poClipSrcReprojectedToSrcSRS
+                            ? m_poClipSrcReprojectedToSrcSRS.get()
+                            : m_poClipSrcOri;
+    if (poGeom && !m_oClipSrcEnv.IsInit())
+    {
+        poGeom->getEnvelope(&m_oClipSrcEnv);
+    }
+    return std::make_pair(poGeom, poGeom ? &m_oClipSrcEnv : nullptr);
 }
 
 /************************************************************************/
@@ -7245,6 +7300,21 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
             })
         .help(_("Fix geometries to be valid regarding the rules of the Simple "
                 "Features specification."));
+
+    argParser->add_argument("-skipinvalid")
+        .flag()
+        .action(
+            [psOptions](const std::string &)
+            {
+                if (!OGRGeometryFactory::haveGEOS())
+                {
+                    throw std::invalid_argument(
+                        "-skipinvalid only supported for builds against GEOS");
+                }
+                psOptions->bSkipInvalidGeom = true;
+            })
+        .help(_("Whether to skip features with invalid geometries regarding the"
+                "rules of the Simple Features specification."));
 
     argParser->add_argument("-wrapdateline")
         .store_into(psOptions->bWrapDateline)

@@ -2806,3 +2806,27 @@ def test_ogr2ogr_lib_two_gcps():
     f = out_lyr.GetNextFeature()
     assert f.GetGeometryRef().GetX(0) == pytest.approx(250)
     assert f.GetGeometryRef().GetY(0) == pytest.approx(350)
+
+
+###############################################################################
+# Test -skipInvalid
+
+
+@pytest.mark.require_geos
+@gdaltest.enable_exceptions()
+def test_ogr2ogr_lib_skip_invalid(tmp_vsimem):
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcLayer = srcDS.CreateLayer("test")
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    srcLayer.CreateFeature(f)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,1 1,0 1,1 0,0 0))"))
+    srcLayer.CreateFeature(f)
+
+    with gdal.quiet_errors():
+        ds = gdal.VectorTranslate("", srcDS, format="Memory", skipInvalid=True)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    ds = None
