@@ -992,7 +992,7 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
 
         for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+            const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (!psSelectInfo->column_summary.empty())
             {
                 const swq_summary &oSummary =
@@ -1000,12 +1000,12 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
 
                 if (psColDef->col_func == SWQCF_AVG && oSummary.count > 0)
                 {
+                    const double dfAvg = oSummary.sum() / oSummary.count;
                     if (psColDef->field_type == SWQ_DATE ||
                         psColDef->field_type == SWQ_TIME ||
                         psColDef->field_type == SWQ_TIMESTAMP)
                     {
                         struct tm brokendowntime;
-                        double dfAvg = oSummary.sum / oSummary.count;
                         CPLUnixTimeToYMDHMS(static_cast<GIntBig>(dfAvg),
                                             &brokendowntime);
                         m_poSummaryFeature->SetField(
@@ -1017,8 +1017,9 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
                             0);
                     }
                     else
-                        m_poSummaryFeature->SetField(
-                            iField, oSummary.sum / oSummary.count);
+                    {
+                        m_poSummaryFeature->SetField(iField, dfAvg);
+                    }
                 }
                 else if (psColDef->col_func == SWQCF_MIN && oSummary.count > 0)
                 {
@@ -1045,7 +1046,7 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
                 else if (psColDef->col_func == SWQCF_COUNT)
                     m_poSummaryFeature->SetField(iField, oSummary.count);
                 else if (psColDef->col_func == SWQCF_SUM && oSummary.count > 0)
-                    m_poSummaryFeature->SetField(iField, oSummary.sum);
+                    m_poSummaryFeature->SetField(iField, oSummary.sum());
             }
             else if (psColDef->col_func == SWQCF_COUNT)
                 m_poSummaryFeature->SetField(iField, 0);

@@ -356,11 +356,22 @@ class CPL_UNSTABLE_API swq_summary
         bool operator()(const CPLString &, const CPLString &) const;
     };
 
+    //! Return the sum, using Kahan-Babuska-Neumaier algorithm.
+    // Cf cf KahanBabushkaNeumaierSum of https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements
+    double sum() const
+    {
+        return sum_only_finite_terms ? sum_acc + sum_correction : sum_acc;
+    }
+
     GIntBig count = 0;
 
     std::vector<CPLString> oVectorDistinctValues{};
     std::set<CPLString, Comparator> oSetDistinctValues{};
-    double sum = 0.0;
+    bool sum_only_finite_terms = true;
+    // Sum accumulator. To get the accurate sum, use the sum() method
+    double sum_acc = 0.0;
+    // Sum correction term.
+    double sum_correction = 0.0;
     double min = 0.0;
     double max = 0.0;
     CPLString osMin{};
