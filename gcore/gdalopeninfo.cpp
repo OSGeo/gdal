@@ -404,7 +404,12 @@ GDALOpenInfo::~GDALOpenInfo()
 /************************************************************************/
 
 /** Return sibling files.
- * @return sibling files. Ownership below to the object.
+ *
+ * If the list of sibling files has not already been established, it will be,
+ * unless the GDAL_DISABLE_READDIR_ON_OPEN configuration option has been set to
+ * YES or EMPTY_DIR when this instance was constructed.
+ *
+ * @return sibling files. Ownership belongs to "this".
  */
 char **GDALOpenInfo::GetSiblingFiles()
 {
