@@ -34,6 +34,7 @@
 #include <limits>
 
 #include "cpl_vsi_virtual.h"
+#include "gdal_priv_templates.hpp"
 #include "gtiff.h"
 #include "tifvsi.h"
 
@@ -705,6 +706,33 @@ CPLErr GTiffRasterBand::SetColorTable(GDALColorTable *poCT)
 CPLErr GTiffRasterBand::SetNoDataValue(double dfNoData)
 
 {
+    const auto SetNoDataMembers = [this, dfNoData]()
+    {
+        m_bNoDataSet = true;
+        m_dfNoDataValue = dfNoData;
+
+        m_poGDS->m_bNoDataSet = true;
+        m_poGDS->m_dfNoDataValue = dfNoData;
+
+        if (eDataType == GDT_Int64 && GDALIsValueExactAs<int64_t>(dfNoData))
+        {
+            m_bNoDataSetAsInt64 = true;
+            m_nNoDataValueInt64 = static_cast<int64_t>(dfNoData);
+
+            m_poGDS->m_bNoDataSetAsInt64 = true;
+            m_poGDS->m_nNoDataValueInt64 = static_cast<int64_t>(dfNoData);
+        }
+        else if (eDataType == GDT_UInt64 &&
+                 GDALIsValueExactAs<uint64_t>(dfNoData))
+        {
+            m_bNoDataSetAsUInt64 = true;
+            m_nNoDataValueUInt64 = static_cast<uint64_t>(dfNoData);
+
+            m_poGDS->m_bNoDataSetAsUInt64 = true;
+            m_poGDS->m_nNoDataValueUInt64 = static_cast<uint64_t>(dfNoData);
+        }
+    };
+
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
 
     if (m_poGDS->m_bNoDataSet &&
@@ -713,8 +741,7 @@ CPLErr GTiffRasterBand::SetNoDataValue(double dfNoData)
     {
         ResetNoDataValues(false);
 
-        m_bNoDataSet = true;
-        m_dfNoDataValue = dfNoData;
+        SetNoDataMembers();
 
         return CE_None;
     }
@@ -767,11 +794,7 @@ CPLErr GTiffRasterBand::SetNoDataValue(double dfNoData)
     {
         ResetNoDataValues(true);
 
-        m_poGDS->m_bNoDataSet = true;
-        m_poGDS->m_dfNoDataValue = dfNoData;
-
-        m_bNoDataSet = true;
-        m_dfNoDataValue = dfNoData;
+        SetNoDataMembers();
     }
 
     return eErr;
