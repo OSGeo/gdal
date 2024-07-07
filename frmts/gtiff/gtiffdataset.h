@@ -433,7 +433,7 @@ class GTiffDataset final : public GDALPamDataset
 
     void LoadGeoreferencingAndPamIfNeeded();
 
-    char **GetSiblingFiles();
+    CSLConstList GetSiblingFiles();
 
     void IdentifyAuthorizedGeoreferencingSources();
 
