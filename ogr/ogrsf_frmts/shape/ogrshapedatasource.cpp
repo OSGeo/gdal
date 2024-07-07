@@ -1500,8 +1500,10 @@ bool OGRShapeDataSource::UncompressIfNeeded()
             return false;
         }
         m_psLockFile = f;
+        CPLAcquireMutex(m_poRefreshLockFileMutex, 1000);
         m_bExitRefreshLockFileThread = false;
         m_bRefreshLockFileThreadStarted = false;
+        CPLReleaseMutex(m_poRefreshLockFileMutex);
         // Config option mostly for testing purposes
         // coverity[tainted_data]
         m_dfRefreshLockDelay = CPLAtof(CPLGetConfigOption(
