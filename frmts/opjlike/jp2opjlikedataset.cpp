@@ -1870,12 +1870,12 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
     /*      Initialize any PAM information.                                 */
     /* -------------------------------------------------------------------- */
     poDS->SetDescription(poOpenInfo->pszFilename);
-    poDS->TryLoadXML();
+    poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
 
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS, poOpenInfo);
 
     return poDS;
 }
