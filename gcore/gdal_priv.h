@@ -4332,12 +4332,12 @@ int CPL_DLL GDALCheckBandCount(int nBands, int bIsZeroAllowed);
 int CPL_DLL GDALReadWorldFile2(const char *pszBaseFilename,
                                const char *pszExtension,
                                double *padfGeoTransform,
-                               char **papszSiblingFiles,
+                               CSLConstList papszSiblingFiles,
                                char **ppszWorldFileNameOut);
 int CPL_DLL GDALReadTabFile2(const char *pszBaseFilename,
                              double *padfGeoTransform, char **ppszWKT,
                              int *pnGCPCount, GDAL_GCP **ppasGCPs,
-                             char **papszSiblingFiles,
+                             CSLConstList papszSiblingFiles,
                              char **ppszTabFileNameOut);
 
 void CPL_DLL GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg *psDestArg,
