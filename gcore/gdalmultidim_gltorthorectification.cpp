@@ -129,14 +129,14 @@ class GLTOrthoRectifiedArray final : public GDALPamMDArray
             {/*latIdx = */ 1, /* lonIdx = */ 2});
         if (CPLTestBool(CSLFetchNameValueDef(papszOptions,
                                              "USE_GOOD_WAVELENGTHS", "YES")) &&
-            poParent->GetDimensionCount() == 3)
+            newAr->m_poParent->GetDimensionCount() == 3)
         {
             const auto poGoodWaveLengths = poRootGroup->OpenMDArrayFromFullname(
                 "/sensor_band_parameters/good_wavelengths");
             if (poGoodWaveLengths &&
                 poGoodWaveLengths->GetDimensionCount() == 1 &&
                 poGoodWaveLengths->GetDimensions()[0]->GetSize() ==
-                    poParent->GetDimensions()[2]->GetSize() &&
+                    newAr->m_poParent->GetDimensions()[2]->GetSize() &&
                 poGoodWaveLengths->GetDimensions()[0]->GetSize() <
                     1000 * 1000 &&
                 poGoodWaveLengths->GetDataType().GetClass() == GEDTC_NUMERIC)
