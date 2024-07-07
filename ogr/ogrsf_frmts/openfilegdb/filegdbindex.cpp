@@ -916,6 +916,8 @@ static const char *FileGDBSQLOpToStr(FileGDBSQLOp op)
             return ">=";
         case FGSO_GT:
             return ">";
+        case FGSO_ILIKE:
+            return "ILIKE";
     }
     return "unknown_op";
 }
@@ -1015,10 +1017,36 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx, FileGDBSQLOp op,
                   eFieldType != FGFT_TIME &&
                   eFieldType != FGFT_DATETIME_WITH_OFFSET);
 
-    const char *pszAtxName = CPLFormFilename(
-        CPLGetPath(poParent->GetFilename().c_str()),
-        CPLGetBasename(poParent->GetFilename().c_str()),
-        CPLSPrintf("%s.atx", poField->GetIndex()->GetIndexName().c_str()));
+    const auto poIndex = poField->GetIndex();
+
+    // Only supports ILIKE on a field string if the index expression starts
+    // with LOWER() and the string to compare with is only ASCII without
+    // wildcards
+    if (eOGRFieldType == OFTString &&
+        STARTS_WITH_CI(poIndex->GetExpression().c_str(), "LOWER("))
+    {
+        if (eOp == FGSO_ILIKE)
+        {
+            if (!CPLIsASCII(psValue->String, strlen(psValue->String)) ||
+                strchr(psValue->String, '%') || strchr(psValue->String, '_'))
+            {
+                return FALSE;
+            }
+        }
+        else if (eOp != FGSO_ISNOTNULL)
+        {
+            return FALSE;
+        }
+    }
+    else if (eOp == FGSO_ILIKE)
+    {
+        return FALSE;
+    }
+
+    const char *pszAtxName =
+        CPLFormFilename(CPLGetPath(poParent->GetFilename().c_str()),
+                        CPLGetBasename(poParent->GetFilename().c_str()),
+                        CPLSPrintf("%s.atx", poIndex->GetIndexName().c_str()));
 
     if (!ReadTrailer(pszAtxName))
         return FALSE;
@@ -1186,13 +1214,23 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx, FileGDBSQLOp op,
 /************************************************************************/
 
 static int FileGDBUTF16StrCompare(const GUInt16 *pasFirst,
-                                  const GUInt16 *pasSecond, int nStrLen)
+                                  const GUInt16 *pasSecond, int nStrLen,
+                                  bool bCaseInsensitive)
 {
     for (int i = 0; i < nStrLen; i++)
     {
-        if (pasFirst[i] < pasSecond[i])
+        GUInt16 chA = pasFirst[i];
+        GUInt16 chB = pasSecond[i];
+        if (bCaseInsensitive)
+        {
+            if (chA >= 'a' && chA <= 'z')
+                chA -= 'a' - 'A';
+            if (chB >= 'a' && chB <= 'z')
+                chB -= 'a' - 'A';
+        }
+        if (chA < chB)
             return -1;
-        if (pasFirst[i] > pasSecond[i])
+        if (chA > chB)
             return 1;
     }
     return 0;
@@ -1337,12 +1375,17 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
                        nStrLen * sizeof(GUInt16));
                 for (int j = 0; j < nStrLen; j++)
                     CPL_LSBPTR16(&asMax[j]);
+                    // Note: we have an inconsistency. OGR SQL equality operator
+                    // is advertized top be case insensitive, but we have always
+                    // implemented FGSO_EQ as case sensitive.
 #ifdef DEBUG_INDEX_CONSISTENCY
-                returnErrorIf(i > 0 && FileGDBUTF16StrCompare(pasMax, asLastMax,
-                                                              nStrLen) < 0);
+                returnErrorIf(i > 0 &&
+                              FileGDBUTF16StrCompare(pasMax, asLastMax, nStrLen,
+                                                     eOp == FGSO_ILIKE) < 0);
                 memcpy(asLastMax, pasMax, nStrLen * 2);
 #endif
-                nComp = FileGDBUTF16StrCompare(asUTF16Str, pasMax, nStrLen);
+                nComp = FileGDBUTF16StrCompare(asUTF16Str, pasMax, nStrLen,
+                                               eOp == FGSO_ILIKE);
                 break;
             }
 
@@ -1392,6 +1435,7 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
                 break;
 
             case FGSO_EQ:
+            case FGSO_ILIKE:
                 if (iFirstPageIdx[iLevel] < 0)
                 {
                     if (nComp <= 0)
@@ -1431,7 +1475,7 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
                 }
                 break;
 
-            default:
+            case FGSO_ISNOTNULL:
                 CPLAssert(false);
                 break;
         }
@@ -1691,7 +1735,11 @@ int FileGDBIndexIterator::GetNextRow()
                            nStrLen * 2);
                     for (int j = 0; j < nStrLen; j++)
                         CPL_LSBPTR16(&asVal[j]);
-                    nComp = FileGDBUTF16StrCompare(asUTF16Str, asVal, nStrLen);
+                    // Note: we have an inconsistency. OGR SQL equality operator
+                    // is advertized top be case insensitive, but we have always
+                    // implemented FGSO_EQ as case sensitive.
+                    nComp = FileGDBUTF16StrCompare(asUTF16Str, asVal, nStrLen,
+                                                   eOp == FGSO_ILIKE);
                     break;
                 }
 
@@ -1743,6 +1791,7 @@ int FileGDBIndexIterator::GetNextRow()
                     break;
 
                 case FGSO_EQ:
+                case FGSO_ILIKE:
                     if (nComp < 0 && bAscending)
                     {
                         bEOF = true;
@@ -1759,7 +1808,7 @@ int FileGDBIndexIterator::GetNextRow()
                     bMatch = nComp < 0;
                     break;
 
-                default:
+                case FGSO_ISNOTNULL:
                     CPLAssert(false);
                     break;
             }
