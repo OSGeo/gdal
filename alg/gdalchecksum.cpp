@@ -368,5 +368,6 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
         CPLFree(panLineData);
     }
 
+    // coverity[return_overflow]
     return nChecksum;
 }
