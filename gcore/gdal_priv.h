@@ -207,6 +207,8 @@ class CPL_DLL GDALMajorObject
 /* ******************************************************************** */
 
 //! @cond Doxygen_Suppress
+class GDALOpenInfo;
+
 class CPL_DLL GDALDefaultOverviews
 {
     friend class GDALDataset;
@@ -238,7 +240,12 @@ class CPL_DLL GDALDefaultOverviews
     ~GDALDefaultOverviews();
 
     void Initialize(GDALDataset *poDSIn, const char *pszName = nullptr,
-                    char **papszSiblingFiles = nullptr, int bNameIsOVR = FALSE);
+                    CSLConstList papszSiblingFiles = nullptr,
+                    bool bNameIsOVR = false);
+
+    void Initialize(GDALDataset *poDSIn, GDALOpenInfo *poOpenInfo,
+                    const char *pszName = nullptr,
+                    bool bTransferSiblingFilesIfLoaded = true);
 
     void TransferSiblingFiles(char **papszSiblingFiles);
 
