@@ -1525,11 +1525,10 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
     // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own
     // hGRIBMutex.
     CPLReleaseMutex(hGRIBMutex);
-    poDS->TryLoadXML();
+    poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
 
     // Check for external overviews.
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename,
-                                poOpenInfo->GetSiblingFiles());
+    poDS->oOvManager.Initialize(poDS, poOpenInfo);
     CPLAcquireMutex(hGRIBMutex, 1000.0);
 
     return poDS;
