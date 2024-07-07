@@ -1150,12 +1150,13 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
          */
         poDS->SetDescription(poOpenInfo->pszFilename);
         if (!bIsSubfile)
-            poDS->TryLoadXML();
+            poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
         else
             poDS->nPamFlags |= GPF_NOSAVE;
 
         // Check for external overviews.
-        poDS->oOvManager.Initialize(poDS, osPhysicalFilename);
+        poDS->oOvManager.Initialize(poDS, poOpenInfo,
+                                    osPhysicalFilename.c_str());
 
         // Confirm the requested access is supported.
         if (poOpenInfo->eAccess == GA_Update)
