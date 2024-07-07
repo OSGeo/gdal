@@ -717,6 +717,8 @@ def ds_for_invalid_statements():
         "SELECT 1 - FROM my_layer",
         "SELECT 1 * FROM my_layer",
         "SELECT 1 % FROM my_layer",
+        "SELECT x.",
+        "SELECT x AS",
         "SELECT *",
         "SELECT * FROM",
         "SELECT * FROM foo",

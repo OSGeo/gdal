@@ -116,9 +116,9 @@
 %token SWQT_RESERVED_KEYWORD    "reserved keyword"
 
 /* Any grammar rule that does $$ = must be listed afterwards */
-/* as well as SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER SWQT_HIDDEN that are allocated by swqlex() */
-%destructor { delete $$; } SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER SWQT_HIDDEN
-%destructor { delete $$; } value_expr_list field_value value_expr value_expr_non_logical type_def table_def
+/* as well as SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER SWQT_HIDDEN that are allocated by swqlex(), and identifier */
+%destructor { delete $$; } SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER SWQT_HIDDEN identifier
+%destructor { delete $$; } value_expr_list field_value value_expr value_expr_non_logical type_def table_def as_clause as_clause_with_hidden
 
 %%
 

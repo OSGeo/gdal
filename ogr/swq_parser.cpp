@@ -1421,6 +1421,10 @@ yydestruct (const char *yymsg,
             { delete (*yyvaluep); }
         break;
 
+    case YYSYMBOL_identifier: /* identifier  */
+            { delete (*yyvaluep); }
+        break;
+
     case YYSYMBOL_field_value: /* field_value  */
             { delete (*yyvaluep); }
         break;
@@ -1430,6 +1434,14 @@ yydestruct (const char *yymsg,
         break;
 
     case YYSYMBOL_type_def: /* type_def  */
+            { delete (*yyvaluep); }
+        break;
+
+    case YYSYMBOL_as_clause: /* as_clause  */
+            { delete (*yyvaluep); }
+        break;
+
+    case YYSYMBOL_as_clause_with_hidden: /* as_clause_with_hidden  */
             { delete (*yyvaluep); }
         break;
 
