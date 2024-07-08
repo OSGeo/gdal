@@ -1415,16 +1415,13 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     oCompressor.pProgressData = pProgressData;
     oCompressor.m_poSrcDS = poSrcDS;
 
-    if (!pfnProgress(0.0, nullptr, pProgressData))
-        return nullptr;
-
-    char **papszBandDescriptions = (char **)CPLMalloc(nBands * sizeof(char *));
+    CPLStringList aosBandDescriptions;
     for (int i = 0; i < nBands; i++)
     {
         /* Make a copy since ECWGetColorInterpretationName() can return a string
          * generated */
         /* by CPLSPrintf(), which has just a few rotating entries. */
-        papszBandDescriptions[i] = CPLStrdup(ECWGetColorInterpretationName(
+        aosBandDescriptions.AddString(ECWGetColorInterpretationName(
             poSrcDS->GetRasterBand(i + 1)->GetColorInterpretation(), i));
     }
 
@@ -1433,29 +1430,27 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         pszAreaOrPoint != nullptr && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
 
     if (oCompressor.Initialize(pszFilename, papszOptions, nXSize, nYSize,
-                               nBands, papszBandDescriptions, bRGBColorSpace,
-                               eType, poSRS, adfGeoTransform,
+                               nBands, aosBandDescriptions.List(),
+                               bRGBColorSpace, eType, poSRS, adfGeoTransform,
                                poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(),
                                bIsJPEG2000, bPixelIsPoint,
                                poSrcDS->GetMetadata("RPC"), poSrcDS) != CE_None)
     {
-        for (int i = 0; i < nBands; i++)
-            CPLFree(papszBandDescriptions[i]);
-        CPLFree(papszBandDescriptions);
         return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Start the compression.                                          */
     /* -------------------------------------------------------------------- */
+
+    if (!pfnProgress(0.0, nullptr, pProgressData))
+        return nullptr;
+
     CNCSError oErr = oCompressor.Write();
 
     if (oErr.GetErrorNumber() != NCS_SUCCESS)
     {
         ECWReportError(oErr);
-        for (int i = 0; i < nBands; i++)
-            CPLFree(papszBandDescriptions[i]);
-        CPLFree(papszBandDescriptions);
         return nullptr;
     }
 
@@ -1463,9 +1458,6 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /*      Cleanup, and return read-only handle.                           */
     /* -------------------------------------------------------------------- */
     oCompressor.CloseDown();
-    for (int i = 0; i < nBands; i++)
-        CPLFree(papszBandDescriptions[i]);
-    CPLFree(papszBandDescriptions);
     pfnProgress(1.001, nullptr, pProgressData);
 
     /* -------------------------------------------------------------------- */
