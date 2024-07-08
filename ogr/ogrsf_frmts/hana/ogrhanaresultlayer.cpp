@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "ogr_core.h"
 #include "ogr_hana.h"
 
 #include <memory>
@@ -69,9 +70,13 @@ OGRErr OGRHanaResultLayer::Initialize()
 
 int OGRHanaResultLayer::TestCapability(const char *capabilities)
 {
+    if (EQUAL(capabilities, OLCFastGetExtent))
+    {
+        EnsureInitialized();
+        return IsFastExtentAvailable();
+    }
     if (EQUAL(capabilities, OLCFastFeatureCount) ||
-        EQUAL(capabilities, OLCFastSpatialFilter) ||
-        EQUAL(capabilities, OLCFastGetExtent))
+        EQUAL(capabilities, OLCFastSpatialFilter))
     {
         EnsureInitialized();
         return (geomColumns_.size() > 0);

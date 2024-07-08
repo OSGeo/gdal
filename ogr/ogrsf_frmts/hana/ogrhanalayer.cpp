@@ -354,7 +354,7 @@ void OGRHanaLayer::BuildWhereClause()
             const GeometryColumnDescription &geomClmDesc =
                 geomColumns_[static_cast<std::size_t>(m_iGeomFieldFilter)];
             spatialFilter = BuildSpatialFilter(
-                dataSource_->GetMajorVersion(), *m_poFilterGeom,
+                dataSource_->GetHANAVersion().major(), *m_poFilterGeom,
                 geomClmDesc.name, geomClmDesc.srid);
         }
     }
@@ -776,41 +776,65 @@ OGRErr OGRHanaLayer::InitFeatureDefinition(const CPLString &schemaName,
 /*                         ReadGeometryExtent()                         */
 /************************************************************************/
 
-void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope *extent)
+void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope *extent, int force, bool fastExtentMethod)
 {
     EnsureInitialized();
 
     OGRGeomFieldDefn *geomFieldDef = featureDefn_->GetGeomFieldDefn(geomField);
+    if (geomFieldDef == nullptr)
+        return;
+
     const char *clmName = geomFieldDef->GetNameRef();
     int srid = GetGeometryColumnSrid(geomField);
     CPLString sql;
-    if (dataSource_->IsSrsRoundEarth(srid))
+    if (!force && fastExtentMethod)
     {
-        CPLString quotedClmName = QuotedIdentifier(clmName);
-        bool hasSrsPlanarEquivalent = dataSource_->HasSrsPlanarEquivalent(srid);
-        CPLString geomColumn =
-            !hasSrsPlanarEquivalent
-                ? quotedClmName
-                : CPLString().Printf("%s.ST_SRID(%d)", quotedClmName.c_str(),
-                                     ToPlanarSRID(srid));
-        CPLString columns = CPLString().Printf(
-            "MIN(%s.ST_XMin()), MIN(%s.ST_YMin()), MAX(%s.ST_XMax()), "
-            "MAX(%s.ST_YMax())",
-            geomColumn.c_str(), geomColumn.c_str(), geomColumn.c_str(),
-            geomColumn.c_str());
-        sql = BuildQuery(rawQuery_.c_str(), columns.c_str());
+        auto names = dataSource_->FindSchemaAndTableNames(rawQuery_.c_str());
+        CPLString columnLiteral = Literal(clmName);
+        CPLString schemaNameLiteral = Literal(
+            names.first == "" ? dataSource_->schemaName_ : names.first);
+        CPLString tableNameLiteral = Literal(names.second);
+        CPLString whereClause = CPLString().Printf(
+                "SCHEMA_NAME=%s AND TABLE_NAME=%s AND COLUMN_NAME=%s",
+                schemaNameLiteral.c_str(),
+                tableNameLiteral.c_str(),
+                columnLiteral.c_str());
+
+        sql = CPLString().Printf(
+            "SELECT MIN_X, MIN_Y, MAX_X, MAX_Y FROM SYS.M_ST_GEOMETRY_COLUMNS WHERE %s LIMIT 1",
+            whereClause.c_str());
     }
     else
     {
-        CPLString columns = CPLString().Printf(
-            "ST_EnvelopeAggr(%s) AS ext", QuotedIdentifier(clmName).c_str());
-        CPLString subQuery = BuildQuery(rawQuery_.c_str(), columns);
-        sql = CPLString().Printf(
-            "SELECT ext.ST_XMin(),ext.ST_YMin(),ext.ST_XMax(),ext.ST_YMax() "
-            "FROM (%s)",
-            subQuery.c_str());
+        if (dataSource_->IsSrsRoundEarth(srid))
+        {
+            CPLString quotedClmName = QuotedIdentifier(clmName);
+            bool hasSrsPlanarEquivalent = dataSource_->HasSrsPlanarEquivalent(srid);
+            CPLString geomColumn =
+                !hasSrsPlanarEquivalent
+                    ? quotedClmName
+                    : CPLString().Printf("%s.ST_SRID(%d)", quotedClmName.c_str(),
+                                        ToPlanarSRID(srid));
+            CPLString columns = CPLString().Printf(
+                "MIN(%s.ST_XMin()), MIN(%s.ST_YMin()), MAX(%s.ST_XMax()), "
+                "MAX(%s.ST_YMax())",
+                geomColumn.c_str(), geomColumn.c_str(), geomColumn.c_str(),
+                geomColumn.c_str());
+            sql = BuildQuery(rawQuery_.c_str(), columns.c_str());
+        }
+        else
+        {
+            CPLString columns = CPLString().Printf(
+                "ST_EnvelopeAggr(%s) AS ext", QuotedIdentifier(clmName).c_str());
+            CPLString subQuery = BuildQuery(rawQuery_.c_str(), columns);
+            sql = CPLString().Printf(
+                "SELECT ext.ST_XMin(),ext.ST_YMin(),ext.ST_XMax(),ext.ST_YMax() "
+                "FROM (%s)",
+                subQuery.c_str());
+        }
     }
 
+    bool set = false;
     extent->MinX = 0.0;
     extent->MaxX = 0.0;
     extent->MinY = 0.0;
@@ -827,9 +851,27 @@ void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope *extent)
             extent->MinY = *rsExtent->getDouble(2);
             extent->MaxX = *rsExtent->getDouble(3);
             extent->MaxY = *rsExtent->getDouble(4);
+            set = true;
         }
     }
+
     rsExtent->close();
+
+    if (!set && fastExtentMethod && force)
+        ReadGeometryExtent(geomField, extent, force, false);
+}
+
+bool OGRHanaLayer::IsFastExtentAvailable()
+{
+    if (geomColumns_.empty())
+        return false;
+
+    switch (dataSource_->GetHANAVersion().major()) {
+        case 2: return dataSource_->GetHANAVersion() >= HANAVersion(2, 0, 80);
+        case 4: return dataSource_->GetHANACloudVersion() >= HANAVersion(2024, 2, 0);
+    }
+
+    return false;
 }
 
 /************************************************************************/
@@ -866,7 +908,7 @@ OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope *extent, int force)
 
     try
     {
-        ReadGeometryExtent(iGeomField, extent);
+        ReadGeometryExtent(iGeomField, extent, force, TestCapability(OLCFastGetExtent));
         return OGRERR_NONE;
     }
     catch (const std::exception &ex)

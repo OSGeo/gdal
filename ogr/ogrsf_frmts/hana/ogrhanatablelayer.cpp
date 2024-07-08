@@ -1149,7 +1149,7 @@ int OGRHanaTableLayer::TestCapability(const char *capabilities)
     if (EQUAL(capabilities, OLCFastGetExtent))
     {
         EnsureInitialized();
-        return !geomColumns_.empty();
+        return IsFastExtentAvailable();
     }
     if (EQUAL(capabilities, OLCCreateField))
         return updateMode_;
