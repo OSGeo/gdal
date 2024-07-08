@@ -2385,8 +2385,9 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 arrow::LargeBinaryArray::offset_type out_length = 0;
                 const uint8_t *data =
                     castArray->GetValue(nIdxInBatch, &out_length);
-                if (out_length <= INT_MAX - 1)
+                if (out_length >= 0 && out_length <= INT_MAX - 1)
                 {
+                    // coverity[overflow_sink]
                     poFeature->SetField(i, static_cast<int>(out_length), data);
                 }
                 else
