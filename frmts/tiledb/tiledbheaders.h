@@ -277,9 +277,9 @@ class TileDBRasterDataset final : public TileDBDataset
 
   public:
     ~TileDBRasterDataset();
-    CPLErr TryLoadCachedXML(char **papszSiblingFiles = nullptr,
+    CPLErr TryLoadCachedXML(CSLConstList papszSiblingFiles = nullptr,
                             bool bReload = true);
-    CPLErr TryLoadXML(char **papszSiblingFiles = nullptr) override;
+    CPLErr TryLoadXML(CSLConstList papszSiblingFiles = nullptr) override;
     CPLErr TrySaveXML() override;
     char **GetMetadata(const char *pszDomain) override;
     CPLErr Close() override;

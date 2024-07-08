@@ -865,7 +865,7 @@ int GDALPamDataset::IsPamFilenameAPotentialSiblingFile()
 /*                             TryLoadXML()                             */
 /************************************************************************/
 
-CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
+CPLErr GDALPamDataset::TryLoadXML(CSLConstList papszSiblingFiles)
 
 {
     PamInitialize();
@@ -1628,7 +1628,7 @@ char **GDALPamDataset::GetMetadata(const char *pszDomain)
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
+CPLErr GDALPamDataset::TryLoadAux(CSLConstList papszSiblingFiles)
 
 {
     /* -------------------------------------------------------------------- */

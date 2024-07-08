@@ -139,7 +139,7 @@ const char *GDALGeorefPamDataset::GetMetadataItem(const char *pszName,
 /*                           TryLoadXML()                              */
 /************************************************************************/
 
-CPLErr GDALGeorefPamDataset::TryLoadXML(char **papszSiblingFiles)
+CPLErr GDALGeorefPamDataset::TryLoadXML(CSLConstList papszSiblingFiles)
 {
     m_bPAMLoaded = true;
     CPLErr eErr = GDALPamDataset::TryLoadXML(papszSiblingFiles);

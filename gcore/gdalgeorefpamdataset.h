@@ -65,7 +65,7 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
     GDALGeorefPamDataset();
     ~GDALGeorefPamDataset() override;
 
-    CPLErr TryLoadXML(char **papszSiblingFiles = nullptr) override;
+    CPLErr TryLoadXML(CSLConstList papszSiblingFiles = nullptr) override;
 
     CPLErr GetGeoTransform(double *) override;
 

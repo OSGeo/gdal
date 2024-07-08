@@ -4009,9 +4009,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Initialize info for external overviews.                         */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, pszFilename);
-    if (poOpenInfo->AreSiblingFilesLoaded())
-        poDS->oOvManager.TransferSiblingFiles(poOpenInfo->StealSiblingFiles());
+    poDS->oOvManager.Initialize(poDS, poOpenInfo, pszFilename);
 
     // For backward compatibility, in case GTIFF_POINT_GEO_IGNORE is defined
     // load georeferencing right now so as to not require it to be defined
@@ -4233,7 +4231,7 @@ void GTiffDataset::LookForProjectionFromGeoTIFF()
 
 void GTiffDataset::LookForProjectionFromXML()
 {
-    char **papszSiblingFiles = GetSiblingFiles();
+    CSLConstList papszSiblingFiles = GetSiblingFiles();
 
     if (!GDALCanFileAcceptSidecarFile(m_pszFilename))
         return;
@@ -5820,7 +5818,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
 /*                         GetSiblingFiles()                            */
 /************************************************************************/
 
-char **GTiffDataset::GetSiblingFiles()
+CSLConstList GTiffDataset::GetSiblingFiles()
 {
     if (m_bHasGotSiblingFiles)
     {
@@ -5830,18 +5828,17 @@ char **GTiffDataset::GetSiblingFiles()
     m_bHasGotSiblingFiles = true;
     const int nMaxFiles =
         atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
-    char **papszSiblingFiles =
-        VSIReadDirEx(CPLGetDirname(m_pszFilename), nMaxFiles);
-    if (nMaxFiles > 0 && CSLCount(papszSiblingFiles) > nMaxFiles)
+    CPLStringList aosSiblingFiles(
+        VSIReadDirEx(CPLGetDirname(m_pszFilename), nMaxFiles));
+    if (nMaxFiles > 0 && aosSiblingFiles.size() > nMaxFiles)
     {
         CPLDebug("GTiff", "GDAL_READDIR_LIMIT_ON_OPEN reached on %s",
                  CPLGetDirname(m_pszFilename));
-        CSLDestroy(papszSiblingFiles);
-        papszSiblingFiles = nullptr;
+        aosSiblingFiles.clear();
     }
-    oOvManager.TransferSiblingFiles(papszSiblingFiles);
+    oOvManager.TransferSiblingFiles(aosSiblingFiles.StealList());
 
-    return papszSiblingFiles;
+    return oOvManager.GetSiblingFiles();
 }
 
 /************************************************************************/
@@ -6063,7 +6060,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
             {
                 char *pszGeorefFilename = nullptr;
 
-                char **papszSiblingFiles = GetSiblingFiles();
+                CSLConstList papszSiblingFiles = GetSiblingFiles();
 
                 // Begin with .tab since it can also have projection info.
                 int nGCPCount = 0;
@@ -6106,7 +6103,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
             {
                 char *pszGeorefFilename = nullptr;
 
-                char **papszSiblingFiles = GetSiblingFiles();
+                CSLConstList papszSiblingFiles = GetSiblingFiles();
 
                 m_bGeoTransformValid = CPL_TO_BOOL(GDALReadWorldFile2(
                     m_pszFilename, nullptr, m_adfGeoTransform,

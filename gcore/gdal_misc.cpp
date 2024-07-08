@@ -2057,7 +2057,7 @@ int CPL_STDCALL GDALReadTabFile(const char *pszBaseFilename,
 
 int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
                      char **ppszWKT, int *pnGCPCount, GDAL_GCP **ppasGCPs,
-                     char **papszSiblingFiles, char **ppszTabFileNameOut)
+                     CSLConstList papszSiblingFiles, char **ppszTabFileNameOut)
 {
     if (ppszTabFileNameOut)
         *ppszTabFileNameOut = nullptr;
@@ -2255,7 +2255,7 @@ int CPL_STDCALL GDALReadWorldFile(const char *pszBaseFilename,
 }
 
 int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
-                       double *padfGeoTransform, char **papszSiblingFiles,
+                       double *padfGeoTransform, CSLConstList papszSiblingFiles,
                        char **ppszWorldFileNameOut)
 {
     VALIDATE_POINTER1(pszBaseFilename, "GDALReadWorldFile", FALSE);
