@@ -6067,3 +6067,38 @@ def test_ogr_pg_no_postgis_GEOMETRY_NAME(pg_ds):
             gdal.GetLastErrorMsg()
             == "GEOMETRY_NAME=foo ignored, and set instead to 'wkb_geometry' as it is the only geometry column name recognized for non-PostGIS enabled databases."
         )
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/10311
+
+
+@only_without_postgis
+@gdaltest.enable_exceptions()
+def test_ogr_pg_ogr2ogr_with_multiple_dotted_table_name(pg_ds):
+
+    tmp_schema = "tmp_schema_issue_10311"
+    pg_ds.ExecuteSQL(f'CREATE SCHEMA "{tmp_schema}"')
+    try:
+        src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+        lyr = src_ds.CreateLayer(tmp_schema + ".table1", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        lyr.CreateFeature(f)
+        lyr = src_ds.CreateLayer(tmp_schema + ".table2", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        lyr.CreateFeature(f)
+
+        gdal.VectorTranslate(pg_ds.GetDescription(), src_ds)
+
+        pg_ds = reconnect(pg_ds)
+        lyr = pg_ds.GetLayerByName(tmp_schema + ".table1")
+        assert lyr.GetFeatureCount() == 1
+        lyr = pg_ds.GetLayerByName(tmp_schema + ".table2")
+        assert lyr.GetFeatureCount() == 1
+
+    finally:
+        pg_ds.ExecuteSQL(f'DROP SCHEMA "{tmp_schema}" CASCADE')
