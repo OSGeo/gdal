@@ -1618,6 +1618,35 @@ def test_jpeg_read_DNG_tags_same_value_ax_EXIF():
 
 
 ###############################################################################
+
+
+def test_jpeg_read_pix4d_xmp_crs_vertcs_orthometric():
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif pix4d_xmp_crs_vertcs_orthometric.jpg
+    # exiftool "-xmp<=pix4d_xmp_crs_vertcs_orthometric.xml"  pix4d_xmp_crs_vertcs_orthometric.jpg
+    # where pix4d_xmp_crs_vertcs_orthometric.xml is the XMP content
+    ds = gdal.Open("data/jpeg/pix4d_xmp_crs_vertcs_orthometric.jpg")
+    srs = ds.GetSpatialRef()
+    assert srs.GetAuthorityCode("GEOGCS") == "6318"
+    assert srs.GetAuthorityCode("VERT_CS") == "6360"
+
+
+###############################################################################
+
+
+def test_jpeg_read_pix4d_xmp_crs_vertcs_ellipsoidal():
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif pix4d_xmp_crs_vertcs_ellipsoidal.jpg
+    # exiftool "-xmp<=pix4d_xmp_crs_vertcs_ellipsoidal.xml"  pix4d_xmp_crs_vertcs_ellipsoidal.jpg
+    # where pix4d_xmp_crs_vertcs_ellipsoidal.xml is the XMP content
+    ds = gdal.Open("data/jpeg/pix4d_xmp_crs_vertcs_ellipsoidal.jpg")
+    srs = ds.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == "6319"
+
+
+###############################################################################
 # Cleanup
 
 

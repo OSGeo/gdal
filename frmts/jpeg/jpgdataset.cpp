@@ -54,6 +54,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_md5.h"
+#include "cpl_minixml.h"
 #include "quant_table_md5sum.h"
 #include "quant_table_md5sum_jpeg9e.h"
 #include "cpl_progress.h"
@@ -2578,6 +2579,94 @@ const GDAL_GCP *JPGDatasetCommon::GetGCPs()
     LoadWorldFileOrTab();
 
     return gdal::GCP::c_ptr(m_aoGCPs);
+}
+
+/************************************************************************/
+/*                           GetSpatialRef()                            */
+/************************************************************************/
+
+const OGRSpatialReference *JPGDatasetCommon::GetSpatialRef() const
+
+{
+    const auto poSRS = GDALPamDataset::GetSpatialRef();
+    if (poSRS)
+        return poSRS;
+
+    auto poThis = const_cast<JPGDatasetCommon *>(this);
+    if (poThis->GetGCPCount() == 0)
+    {
+        if (!m_oSRS.IsEmpty())
+            return &m_oSRS;
+
+        if (!bHasReadXMPMetadata)
+            poThis->ReadXMPMetadata();
+        CSLConstList papszXMP = poThis->GetMetadata("xml:XMP");
+        if (papszXMP && papszXMP[0])
+        {
+            CPLXMLTreeCloser poXML(CPLParseXMLString(papszXMP[0]));
+            if (poXML)
+            {
+                const auto psRDF =
+                    CPLGetXMLNode(poXML.get(), "=x:xmpmeta.rdf:RDF");
+                if (psRDF)
+                {
+                    for (const CPLXMLNode *psIter = psRDF->psChild; psIter;
+                         psIter = psIter->psNext)
+                    {
+                        if (psIter->eType == CXT_Element &&
+                            EQUAL(psIter->pszValue, "rdf:Description") &&
+                            EQUAL(CPLGetXMLValue(psIter, "xmlns:Camera", ""),
+                                  "http://pix4d.com/camera/1.0/"))
+                        {
+                            if (const char *pszHorizCS = CPLGetXMLValue(
+                                    psIter, "Camera:HorizCS", nullptr))
+                            {
+                                if (m_oSRS.SetFromUserInput(
+                                        pszHorizCS,
+                                        OGRSpatialReference::
+                                            SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
+                                    OGRERR_NONE)
+                                {
+                                    if (const char *pszVertCS = CPLGetXMLValue(
+                                            psIter, "Camera:VertCS", nullptr))
+                                    {
+                                        if (EQUAL(pszVertCS, "ellipsoidal"))
+                                            m_oSRS.PromoteTo3D(nullptr);
+                                        else
+                                        {
+                                            OGRSpatialReference oVertCRS;
+                                            if (oVertCRS.SetFromUserInput(
+                                                    pszVertCS,
+                                                    OGRSpatialReference::
+                                                        SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
+                                                OGRERR_NONE)
+                                            {
+                                                OGRSpatialReference oTmpCRS;
+                                                oTmpCRS.SetCompoundCS(
+                                                    std::string(
+                                                        m_oSRS.GetName())
+                                                        .append(" + ")
+                                                        .append(
+                                                            oVertCRS.GetName())
+                                                        .c_str(),
+                                                    &m_oSRS, &oVertCRS);
+                                                m_oSRS = std::move(oTmpCRS);
+                                            }
+                                        }
+                                    }
+                                    m_oSRS.SetAxisMappingStrategy(
+                                        OAMS_TRADITIONAL_GIS_ORDER);
+                                    return &m_oSRS;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 /************************************************************************/
