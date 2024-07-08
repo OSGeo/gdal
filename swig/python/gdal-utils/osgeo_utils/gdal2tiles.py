@@ -895,13 +895,22 @@ def scale_query_to_tile(dsquery, dstile, options, tilefilename=""):
         options.excluded_values or options.nodata_values_pct_threshold < 100
     ):
 
+        warp_options = "-r average"
+
+        assert options.nodata_values_pct_threshold is not None
+        warp_options += (
+            f" -wo NODATA_VALUES_PCT_THRESHOLD={options.nodata_values_pct_threshold}"
+        )
+
+        if options.excluded_values:
+            assert options.excluded_values_pct_threshold is not None
+            warp_options += f" -wo EXCLUDED_VALUES={options.excluded_values}"
+            warp_options += f" -wo EXCLUDED_VALUES_PCT_THRESHOLD={options.excluded_values_pct_threshold}"
+
         gdal.Warp(
             dstile,
             dsquery,
-            options="-r average "
-            + f"-wo EXCLUDED_VALUES={options.excluded_values} "
-            + f"-wo EXCLUDED_VALUES_PCT_THRESHOLD={options.excluded_values_pct_threshold} "
-            + f"-wo NODATA_VALUES_PCT_THRESHOLD={options.nodata_values_pct_threshold}",
+            options=warp_options,
         )
 
     elif options.resampling == "average":
