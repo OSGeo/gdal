@@ -311,6 +311,10 @@ static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
 
         case TIFF_ASCII:
             memcpy(pszData, data, count);
+            // Strip trailing spaces or nul characters
+            while (count > 0 &&
+                   (pszData[count - 1] == ' ' || pszData[count - 1] == 0))
+                --count;
             pszData[count] = '\0';
             break;
 
