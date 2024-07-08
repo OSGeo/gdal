@@ -56,7 +56,7 @@ Generate a color relief map:
                  [-alpha] [-exact_color_entry | -nearest_color_entry]
                  [-b <band>] [-of format] [-co <NAME>=<VALUE>]... [-q]
 
-    where color_text_file contains lines of the format "elevation_value red green blue"
+    where color_text_file contains lines of the format "elevation_value red green blue [alpha]". If alpha column is present it can be enabled for use with '-alpha'. 
 
 Generate a Terrain Ruggedness Index (TRI) map:
 
