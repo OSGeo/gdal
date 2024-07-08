@@ -261,6 +261,39 @@ void JPGDatasetCommon::ReadEXIFMetadata()
                                 nGPSOffset);
         }
 
+        // Pix4D Mapper files have both DNG_CameraSerialNumber and EXIF_BodySerialNumber
+        // set at the same value. Only expose the later in that situation.
+        if (const char *pszDNG_CameraSerialNumber =
+                CSLFetchNameValue(papszMetadata, "DNG_CameraSerialNumber"))
+        {
+            const char *pszEXIF_BodySerialNumber =
+                CSLFetchNameValue(papszMetadata, "EXIF_BodySerialNumber");
+            if (pszEXIF_BodySerialNumber &&
+                EQUAL(pszDNG_CameraSerialNumber, pszEXIF_BodySerialNumber))
+            {
+                CPLDebug("JPEG", "Unsetting DNG_CameraSerialNumber as it has "
+                                 "the same value as EXIF_BodySerialNumber");
+                papszMetadata = CSLSetNameValue(
+                    papszMetadata, "DNG_CameraSerialNumber", nullptr);
+            }
+        }
+
+        // Pix4D Mapper files have both DNG_UniqueCameraModel and EXIF_Model
+        // set at the same value. Only expose the later in that situation.
+        if (const char *pszDNG_UniqueCameraModel =
+                CSLFetchNameValue(papszMetadata, "DNG_UniqueCameraModel"))
+        {
+            const char *pszEXIF_Model =
+                CSLFetchNameValue(papszMetadata, "EXIF_Model");
+            if (pszEXIF_Model && EQUAL(pszDNG_UniqueCameraModel, pszEXIF_Model))
+            {
+                CPLDebug("JPEG", "Unsetting DNG_UniqueCameraModel as it has "
+                                 "the same value as EXIF_Model");
+                papszMetadata = CSLSetNameValue(
+                    papszMetadata, "DNG_UniqueCameraModel", nullptr);
+            }
+        }
+
         // Avoid setting the PAM dirty bit just for that.
         const int nOldPamFlags = nPamFlags;
 

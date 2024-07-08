@@ -1588,6 +1588,36 @@ def test_jpeg_copy_mdd():
 
 
 ###############################################################################
+
+
+def test_jpeg_read_DNG_tags():
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif DNG_CameraSerialNumber_and_DNG_UniqueCameraModel.jpg
+    # exiftool "-CameraSerialNumber=SerialNumber" "-UniqueCameraModel=CameraModel" DNG_CameraSerialNumber_and_DNG_UniqueCameraModel.jpg
+    ds = gdal.Open("data/jpeg/DNG_CameraSerialNumber_and_DNG_UniqueCameraModel.jpg")
+    assert ds.GetMetadataItem("DNG_CameraSerialNumber") == "SerialNumber"
+    assert ds.GetMetadataItem("DNG_UniqueCameraModel") == "CameraModel"
+
+
+###############################################################################
+
+
+def test_jpeg_read_DNG_tags_same_value_ax_EXIF():
+    """Check that DNG tags are not emitted when they have a corresponding EXIF
+    tag at the same value."""
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif DNG_and_EXIF_same_values.jpg
+    # exiftool"-exif:SerialNumber=SerialNumber" "-CameraSerialNumber=SerialNumber" "-UniqueCameraModel=CameraModel" "-Model=CameraModel" DNG_and_EXIF_same_values.jpg
+    ds = gdal.Open("data/jpeg/DNG_and_EXIF_same_values.jpg")
+    assert ds.GetMetadataItem("DNG_CameraSerialNumber") is None
+    assert ds.GetMetadataItem("DNG_UniqueCameraModel") is None
+    assert ds.GetMetadataItem("EXIF_BodySerialNumber") == "SerialNumber"
+    assert ds.GetMetadataItem("EXIF_Model") == "CameraModel"
+
+
+###############################################################################
 # Cleanup
 
 
