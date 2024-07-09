@@ -1695,11 +1695,14 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                                  static_cast<GIntBig>(
                                      *static_cast<const std::int64_t *>(pSrc)));
                 break;
-#ifdef HAVE_SIZEOF__FLOAT16
             case GDT_Float16:
-                str = CPLSPrintf("%.5g", double(*static_cast<const _Float16 *>(pSrc)));
-                break;
+#ifdef HAVE_SIZEOF__FLOAT16
+                str = CPLSPrintf("%.5g",
+                                 double(*static_cast<const _Float16 *>(pSrc)));
+#else
+                CPLAssert(false);
 #endif
+                break;
             case GDT_Float32:
                 str = CPLSPrintf("%.9g", *static_cast<const float *>(pSrc));
                 break;
@@ -1718,14 +1721,16 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                 str = CPLSPrintf("%d+%dj", src[0], src[1]);
                 break;
             }
-#ifdef HAVE_SIZEOF__FLOAT16
             case GDT_CFloat16:
             {
+#ifdef HAVE_SIZEOF__FLOAT16
                 const _Float16 *src = static_cast<const _Float16 *>(pSrc);
                 str = CPLSPrintf("%.5g+%.5gj", double(src[0]), double(src[1]));
+#else
+                CPLAssert(false);
+#endif
                 break;
             }
-#endif
             case GDT_CFloat32:
             {
                 const float *src = static_cast<const float *>(pSrc);
@@ -7143,13 +7148,15 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                                        tmpBufferStrideVector);
             break;
 
-#ifdef HAVE_SIZEOF__FLOAT16
         case GDT_Float16:
+#ifdef HAVE_SIZEOF__FLOAT16
             ReadInternal<_Float16>(count, bufferStride, bufferDataType,
                                    pDstBuffer, pTempBuffer, oTmpBufferDT,
                                    tmpBufferStrideVector);
-            break;
+#else
+            CPLAssert(false);
 #endif
+            break;
 
         case GDT_Float32:
             ReadInternal<float>(count, bufferStride, bufferDataType, pDstBuffer,
@@ -13674,8 +13681,8 @@ GDALMDArrayRegularlySpaced::GDALMDArrayRegularlySpaced(
     double dfIncrement, double dfOffsetInIncrement)
     : GDALAbstractMDArray(osParentName, osName),
       GDALMDArray(osParentName, osName), m_dfStart(dfStart),
-      m_dfIncrement(dfIncrement),
-      m_dfOffsetInIncrement(dfOffsetInIncrement), m_dims{poDim}
+      m_dfIncrement(dfIncrement), m_dfOffsetInIncrement(dfOffsetInIncrement),
+      m_dims{poDim}
 {
 }
 
