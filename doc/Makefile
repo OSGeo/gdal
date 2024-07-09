@@ -26,7 +26,7 @@ doxygen:
 
 .doxygen_up_to_date:
 	mkdir -p build/xml && cd .. && ((cat Doxyfile | sed "s/PREDEFINED             = /PREDEFINED             = DOXYGEN_XML /"; printf "GENERATE_HTML=NO\nGENERATE_XML=YES\nXML_OUTPUT=doc/build/xml\nXML_PROGRAMLISTING=NO") | doxygen -)
-	mkdir -p build/doxygen_html && cd .. && ((cat Doxyfile; printf "HTML_OUTPUT=doc/build/doxygen_html\nINLINE_INHERITED_MEMB=YES") | doxygen -)
+	mkdir -p build/html_extra/doxygen && cd .. && ((cat Doxyfile; printf "HTML_OUTPUT=doc/build/html_extra/doxygen\nINLINE_INHERITED_MEMB=YES") | doxygen -)
 	# Doxygen replaces -- with <ndash/>. This is not desirable, so revert that
 	for i in build/xml/*.xml; do sed "s/<ndash\/>/--/g" < $$i > $$i.tmp; mv $$i.tmp $$i; done
 	touch .doxygen_up_to_date
@@ -47,10 +47,7 @@ html: generated_rst_files
 	mv "$(BUILDDIR)/html/api/index.html.mod" "$(BUILDDIR)/html/api/index.html"
 	sed 's/<div class="toctree-wrapper compound">/<div class="toctree-wrapper compound" style="display: none;">/' < "$(BUILDDIR)/html/sponsors/index.html" > "$(BUILDDIR)/html/sponsors/index.html.mod"
 	mv "$(BUILDDIR)/html/sponsors/index.html.mod" "$(BUILDDIR)/html/sponsors/index.html"
-	rm -rf build/html/doxygen
-	cp -r build/doxygen_html build/html/doxygen
 	ln -sf ../latex/gdal.pdf build/html
-	cp -f "source/sponsors/Sustainable GDAL Sponsorship Prospectus.pdf" build/html/sponsors
 
 man: generated_rst_files
 	$(SPHINXBUILD) -M man "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
@@ -60,6 +57,6 @@ latexpdf: generated_rst_files
 
 clean:
 	rm -rf build/xml
-	rm -rf build/doxygen_html
+	rm -rf build/html_extra/doxygen
 	rm -rf .doxygen_up_to_date
 	@$(SPHINXBUILD) -M clean "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
