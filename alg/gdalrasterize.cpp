@@ -260,10 +260,12 @@ static void gvBurnScanline(void *pCBData, int nY, int nXStart, int nXEnd,
             gvBurnScanlineBasic<std::uint64_t>(psInfo, nY, nXStart, nXEnd,
                                                dfVariant);
             break;
+#ifdef SIZEOF__FLOAT16
         case GDT_Float16:
             gvBurnScanlineBasic<_Float16>(psInfo, nY, nXStart, nXEnd,
                                           dfVariant);
             break;
+#endif
         case GDT_Float32:
             gvBurnScanlineBasic<float>(psInfo, nY, nXStart, nXEnd, dfVariant);
             break;
@@ -392,9 +394,11 @@ static void gvBurnPoint(void *pCBData, int nY, int nX, double dfVariant)
         case GDT_UInt64:
             gvBurnPointBasic<std::uint64_t>(psInfo, nY, nX, dfVariant);
             break;
+#ifdef SIZEOF__FLOAT16
         case GDT_Float16:
             gvBurnPointBasic<_Float16>(psInfo, nY, nX, dfVariant);
             break;
+#endif
         case GDT_Float32:
             gvBurnPointBasic<float>(psInfo, nY, nX, dfVariant);
             break;

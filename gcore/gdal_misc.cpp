@@ -180,9 +180,11 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
 GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
                                                     double dValue, int bComplex)
 {
+#ifdef SIZEOF__FLOAT16
     if (eDT == GDT_Float16 && !bComplex &&
         static_cast<_Float16>(dValue) == dValue)
         return GDT_Float16;
+#endif
     if ((eDT == GDT_Float16 || eDT == GDT_Float32) && !bComplex &&
         static_cast<float>(dValue) == dValue)
         return GDT_Float32;
@@ -880,8 +882,12 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
             }
             else
             {
+#ifdef SIZEOF__FLOAT16
                 // Intentionally lose precision.
                 dfValue = static_cast<_Float16>(dfValue);
+#else
+                // Do nothing, we cannot compute with _Float16
+#endif
             }
             break;
         }
@@ -1344,10 +1350,12 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                             reinterpret_cast<const std::int64_t *>(
                                 pDataRef)[iOffset]);
                         break;
+#ifdef SIZEOF__FLOAT16
                     case GDT_Float16:
                         dfValue = reinterpret_cast<const _Float16 *>(
                             pDataRef)[iOffset];
                         break;
+#endif
                     case GDT_Float32:
                         dfValue =
                             reinterpret_cast<const float *>(pDataRef)[iOffset];
@@ -1375,6 +1383,7 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
                         break;
                     }
+#ifdef SIZEOF__FLOAT16
                     case GDT_CFloat16:
                     {
                         const double dfReal =
@@ -1386,6 +1395,7 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
                         break;
                     }
+#endif
                     case GDT_CFloat32:
                     {
                         const double dfReal = reinterpret_cast<const float *>(
@@ -5172,10 +5182,7 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
     }
     else if (dt == GDT_Float16)
     {
-
-        if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<_Float16>::lowest(),
-                                 std::numeric_limits<_Float16>::max()))
+        if (GDALClampDoubleValue(dfNoDataValue, -65504, 65504))
         {
             return 0;
         }
@@ -5192,8 +5199,12 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
         }
         else
         {
+#ifdef SIZEOF__FLOAT16
             // Intentionally lose precision
             dfReplacementVal = static_cast<_Float16>(dfNoDataValue);
+#else
+            // Do nothing, we cannot compute with _Float16
+#endif
         }
     }
     else if (dt == GDT_Float32)

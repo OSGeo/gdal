@@ -408,16 +408,19 @@
     <xs:simpleType name="DataTypeType">
         <xs:restriction base="xs:string">
             <xs:enumeration value="Byte"/>
+            <xs:enumeration value="Int8"/>
             <xs:enumeration value="UInt16"/>
             <xs:enumeration value="Int16"/>
             <xs:enumeration value="UInt32"/>
             <xs:enumeration value="Int32"/>
             <xs:enumeration value="UInt64"/>
             <xs:enumeration value="Int64"/>
+            <xs:enumeration value="Float16"/>
             <xs:enumeration value="Float32"/>
             <xs:enumeration value="Float64"/>
             <xs:enumeration value="CInt16"/>
             <xs:enumeration value="CInt32"/>
+            <xs:enumeration value="CFloat16"/>
             <xs:enumeration value="CFloat32"/>
             <xs:enumeration value="CFloat64"/>
         </xs:restriction>

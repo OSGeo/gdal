@@ -1024,11 +1024,13 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
                            nBandValues, nMaxValue);
             break;
 
+#ifdef SIZEOF__FLOAT16
         case GDT_Float16:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
                            static_cast<_Float16 *>(pDataBuf), nValues,
                            nBandValues, nMaxValue);
             break;
+#endif
 
         case GDT_Float32:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
@@ -1111,11 +1113,13 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
                 static_cast<std::int64_t *>(pDataBuf), nValues, nBandValues, 0);
             break;
 
+#ifdef SIZEOF__FLOAT16
         case GDT_Float16:
             WeightedBrovey3<WorkDataType, _Float16, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer,
                 static_cast<_Float16 *>(pDataBuf), nValues, nBandValues, 0);
             break;
+#endif
 
         case GDT_Float32:
             WeightedBrovey3<WorkDataType, float, FALSE>(
@@ -1792,12 +1796,14 @@ CPLErr GDALPansharpenOperation::PansharpenChunk(
                 pDataBuf, eBufDataType, nValues, nBandValues);
             break;
 
+#ifdef SIZEOF__FLOAT16
         case alignas(expression):
             eErr = WeightedBrovey(
                 static_cast<const _Float16 *>(pPanBuffer),
                 static_cast<const _Float16 *>(pUpsampledSpectralBuffer),
                 pDataBuf, eBufDataType, nValues, nBandValues);
             break;
+#endif
 
         case GDT_Float32:
             eErr = WeightedBrovey(
