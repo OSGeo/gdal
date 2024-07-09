@@ -169,7 +169,7 @@ void GDALDefaultOverviews::Initialize(GDALDataset *poDSIn,
  * @param pszName Base dataset name. If set to NULL, poOpenInfo->pszFilename is
  *                used.
  * @param bTransferSiblingFilesIfLoaded Whether sibling files of poOpenInfo
- *                                      should be transfered to this
+ *                                      should be transferred to this
  *                                      GDALDefaultOverviews instance, if they
  *                                      have bean already loaded.
  * @since 3.10
