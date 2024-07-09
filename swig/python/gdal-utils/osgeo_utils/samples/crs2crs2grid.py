@@ -56,13 +56,16 @@ def points_in_file(fd):
 
         tokens = line.split()
         if len(tokens) != 4:
-            print("Found unexpected grid line format with %d tokens (expected 4)".format(len(tokens)))
+            print(
+                "Found unexpected grid line format with %d tokens (expected 4)"
+                % len(tokens)
+            )
             print("Expected Format: dec_lat    dec_lon    elip_hgt    pt_id")
             print("Actual Line: " + line)
             break
 
         lat, lon, _, pt_id = tokens
-        name_tokens = pt_id.replace('"', '').split("_")
+        name_tokens = pt_id.replace('"', "").split("_")
 
         yield int(name_tokens[1]), int(name_tokens[2]), float(lat), float(lon)
 
