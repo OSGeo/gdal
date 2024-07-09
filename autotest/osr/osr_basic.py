@@ -31,6 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
 import os
 import subprocess
 import sys
@@ -2472,3 +2473,18 @@ def test_osr_basic_has_point_motion_operation():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(8255)  # NAD83(CSRS)v7
     assert srs.HasPointMotionOperation()
+
+
+###############################################################################
+
+
+# Test workaround for https://github.com/OSGeo/PROJ/pull/4166
+def test_osr_basic_export_wkt_utm_south():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=utm +zone=1 +south +datum=WGS84")
+
+    assert 'ID["EPSG",16101]' in srs.ExportToWkt(["FORMAT=WKT2_2019"])
+
+    j = json.loads(srs.ExportToPROJJSON())
+    assert j["conversion"]["id"]["code"] == 16101

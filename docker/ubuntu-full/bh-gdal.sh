@@ -72,7 +72,9 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
         -DGDAL_ENABLE_PLUGINS=ON \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DBUILD_PYTHON_BINDINGS=ON \
-        -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS}
+        -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS} \
+        -DOpenDrive_DIR=/usr/lib/ \
+        -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE \
 
     make "-j$(nproc)"
     make install DESTDIR="/build"

@@ -557,3 +557,119 @@ def test_xyz_looks_like_missing_lines():
             9,
             10,
         )
+
+
+###############################################################################
+
+
+def yxzContent():
+    content = """0 0 65
+0 1 66
+1 0 67
+1 1 68
+2 0 69
+2 1 70
+"""
+    return content
+
+
+###############################################################################
+# Test with open option COLUMN_ORDER. Basic case with YXZ
+
+
+def test_xyz_column_order_basic_yxz():
+
+    content = yxzContent()
+
+    gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
+    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=YXZ"])
+    assert ds.RasterXSize == 2 and ds.RasterYSize == 3
+    buf = ds.ReadRaster(0, 2, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (69, 70)
+    buf = ds.ReadRaster(0, 1, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (67, 68)
+    buf = ds.ReadRaster(0, 0, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (65, 66)
+    buf = ds.ReadRaster(0, 2, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (69, 70)
+    ds = None
+    gdal.Unlink("/vsimem/grid.xyz")
+
+
+###############################################################################
+# Test with open option COLUMN_ORDER. Overrides header
+
+
+def test_xyz_column_order_overrides_header():
+
+    content = (
+        """x y z
+"""
+        + yxzContent()
+    )
+
+    gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
+    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=YXZ"])
+    assert ds.RasterXSize == 2 and ds.RasterYSize == 3
+    buf = ds.ReadRaster(0, 2, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (69, 70)
+    ds = None
+    gdal.Unlink("/vsimem/grid.xyz")
+
+
+###############################################################################
+# Test with open option COLUMN_ORDER. Auto
+
+
+def test_xyz_column_order_auto():
+
+    content = (
+        """y x z
+"""
+        + yxzContent()
+    )
+
+    gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
+    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=AUTO"])
+    assert ds.RasterXSize == 2 and ds.RasterYSize == 3
+    buf = ds.ReadRaster(0, 2, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (69, 70)
+    ds = None
+    gdal.Unlink("/vsimem/grid.xyz")
+
+
+###############################################################################
+# Test with open option COLUMN_ORDER. wrong option
+
+
+def test_xyz_column_order_wrong_option():
+
+    content = (
+        """y x z
+"""
+        + yxzContent()
+    )
+
+    gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
+    with pytest.raises(Exception):
+        gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=WRONG"])
+    gdal.Unlink("/vsimem/grid.xyz")
+
+
+###############################################################################
+# Test with open option COLUMN_ORDER. XYZ
+
+
+def test_xyz_column_order_xyz():
+
+    content = (
+        """y x z
+"""
+        + yxzContent()
+    )
+
+    gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
+    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=XYZ"])
+    assert ds.RasterXSize == 3 and ds.RasterYSize == 2
+    ds = None
+    gdal.Unlink("/vsimem/grid.xyz")

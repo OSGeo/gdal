@@ -32,6 +32,7 @@
 #include "gtiffjpegoverviewds.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <map>
 #include <set>
@@ -509,6 +510,9 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
             CPLAssert(panByteCounts[0] == static_cast<toff_t>(nBlockSize));
 
             // Now simulate the writing of other blocks.
+            assert(nBlocks > 0);
+            assert(static_cast<vsi_l_offset>(nBlockSize) <
+                   std::numeric_limits<vsi_l_offset>::max() / nBlocks);
             const vsi_l_offset nDataSize =
                 static_cast<vsi_l_offset>(nBlockSize) * nBlocks;
             if (VSIFTruncateL(fp, nBaseOffset + nDataSize) != 0)
@@ -1633,7 +1637,7 @@ GDALColorTable *GTiffRasterBand::GetColorTable()
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
 
     if (nBand == 1)
-        return m_poGDS->m_poColorTable;
+        return m_poGDS->m_poColorTable.get();
 
     return nullptr;
 }

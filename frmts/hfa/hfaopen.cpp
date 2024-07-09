@@ -3926,13 +3926,22 @@ static int ESRIToUSGSZone(int nESRIZone)
 
 static const char *const apszDatumMap[] = {
     // Imagine name, WKT name.
-    "NAD27",        "North_American_Datum_1927",
-    "NAD83",        "North_American_Datum_1983",
-    "WGS 84",       "WGS_1984",
-    "WGS 1972",     "WGS_1972",
-    "GDA94",        "Geocentric_Datum_of_Australia_1994",
-    "Pulkovo 1942", "Pulkovo_1942",
-    nullptr,        nullptr};
+    "NAD27",
+    "North_American_Datum_1927",
+    "NAD83",
+    "North_American_Datum_1983",
+    "WGS 84",
+    "WGS_1984",
+    "WGS 1972",
+    "WGS_1972",
+    "GDA94",
+    "Geocentric_Datum_of_Australia_1994",
+    "Pulkovo 1942",
+    "Pulkovo_1942",
+    "Geodetic Datum 1949",
+    "New_Zealand_Geodetic_Datum_1949",
+    nullptr,
+    nullptr};
 
 const char *const *HFAGetDatumMap()
 {
@@ -4730,12 +4739,19 @@ HFAPCSStructToOSR(const Eprj_Datum *psDatum, const Eprj_ProParameters *psPro,
                                   -psDatum->params[4] * RAD2ARCSEC,
                                   -psDatum->params[5] * RAD2ARCSEC,
                                   psDatum->params[6] * 1e+6);
+                poSRS->StripTOWGS84IfKnownDatumAndAllowed();
             }
         }
     }
 
     // Try to insert authority information if possible.
     poSRS->AutoIdentifyEPSG();
+
+    auto poSRSBestMatch = poSRS->FindBestMatch(90, nullptr, nullptr);
+    if (poSRSBestMatch)
+    {
+        poSRS.reset(poSRSBestMatch);
+    }
 
     return poSRS;
 }

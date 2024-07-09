@@ -8,7 +8,7 @@ AutoCAD DWG
 .. build_dependencies:: Open Design Alliance Teigha library
 
 OGR supports reading most versions of AutoCAD DWG when built with the
-Open Design Alliance Teigha library. DWG is an binary working format used
+Open Design Alliance Teigha library. DWG is a binary working format used
 for AutoCAD drawings. A reasonable effort has been made to make the OGR
 DWG driver work similarly to the OGR DXF driver which shares a common
 data model. The entire contents of the .dwg file is represented as a
@@ -84,6 +84,14 @@ The following configuration options are available:
      attribute is false. To see all attributes set
      :config:`DWG_ALL_ATTRIBUTES` to TRUE value (this is the
      default value).
+
+- .. config:: DWG_CLOSED_LINE_AS_POLYGON
+     :choices: TRUE, FALSE
+     :default: FALSE
+     :since: 3.10
+
+     This option can be set to TRUE specified to ask for closed POLYLINE and
+     LWPOLYLINE to be exposed as OGR polygons.
 
 Building
 --------

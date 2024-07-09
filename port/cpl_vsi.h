@@ -465,6 +465,29 @@ int CPL_DLL VSISync(const char *pszSource, const char *pszTarget,
                     const char *const *papszOptions,
                     GDALProgressFunc pProgressFunc, void *pProgressData,
                     char ***ppapszOutputs);
+
+int CPL_DLL VSIMultipartUploadGetCapabilities(
+    const char *pszFilename, int *pbNonSequentialUploadSupported,
+    int *pbParallelUploadSupported, int *pbAbortSupported,
+    size_t *pnMinPartSize, size_t *pnMaxPartSize, int *pnMaxPartCount);
+
+char CPL_DLL *VSIMultipartUploadStart(const char *pszFilename,
+                                      CSLConstList papszOptions);
+char CPL_DLL *VSIMultipartUploadAddPart(const char *pszFilename,
+                                        const char *pszUploadId,
+                                        int nPartNumber,
+                                        vsi_l_offset nFileOffset,
+                                        const void *pData, size_t nDataLength,
+                                        CSLConstList papszOptions);
+int CPL_DLL VSIMultipartUploadEnd(const char *pszFilename,
+                                  const char *pszUploadId, size_t nPartIdsCount,
+                                  const char *const *apszPartIds,
+                                  vsi_l_offset nTotalSize,
+                                  CSLConstList papszOptions);
+int CPL_DLL VSIMultipartUploadAbort(const char *pszFilename,
+                                    const char *pszUploadId,
+                                    CSLConstList papszOptions);
+
 int CPL_DLL VSIAbortPendingUploads(const char *pszFilename);
 
 char CPL_DLL *VSIStrerror(int);

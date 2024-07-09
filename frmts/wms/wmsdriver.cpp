@@ -66,7 +66,7 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 {
     const char *pszBaseURL = poOpenInfo->pszFilename;
     if (STARTS_WITH_CI(pszBaseURL, "WMS:"))
-        pszBaseURL += 4;
+        pszBaseURL += strlen("WMS:");
 
     const CPLString osLayer = CPLURLGetValue(pszBaseURL, "LAYERS");
     CPLString osVersion = CPLURLGetValue(pszBaseURL, "VERSION");
@@ -771,7 +771,11 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     else if (poOpenInfo->nHeaderBytes == 0 &&
              (STARTS_WITH_CI(pszFilename, "WMS:") ||
-              CPLString(pszFilename).ifind("SERVICE=WMS") != std::string::npos))
+              CPLString(pszFilename).ifind("SERVICE=WMS") !=
+                  std::string::npos ||
+              (poOpenInfo->IsSingleAllowedDriver("WMS") &&
+               (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+                STARTS_WITH(poOpenInfo->pszFilename, "https://")))))
     {
         CPLString osLayers = CPLURLGetValue(pszFilename, "LAYERS");
         CPLString osRequest = CPLURLGetValue(pszFilename, "REQUEST");

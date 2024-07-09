@@ -469,7 +469,7 @@ void OGRParquetDatasetLayer::BuildScanner()
         {
             pszUseThreads = "YES";
         }
-        if (CPLTestBool(pszUseThreads))
+        if (pszUseThreads && CPLTestBool(pszUseThreads))
         {
             PARQUET_THROW_NOT_OK(scannerBuilder->UseThreads(true));
         }
@@ -566,7 +566,7 @@ void OGRParquetDatasetLayer::BuildScanner()
                     {
                         auto fieldRefX(fieldRefs);
                         fieldRefX.emplace_back("x");
-                        auto fieldRefY(fieldRefs);
+                        auto fieldRefY(std::move(fieldRefs));
                         fieldRefY.emplace_back("y");
                         expression = cp::and_(
                             {cp::less_equal(
@@ -605,9 +605,11 @@ void OGRParquetDatasetLayer::BuildScanner()
                     abyFilterGeomWkb.resize(m_poFilterGeom->WkbSize());
                     m_poFilterGeom->exportToWkb(wkbNDR, abyFilterGeomWkb.data(),
                                                 wkbVariantIso);
-                    expression =
-                        cp::call("OGRWKBIntersects", {cp::field_ref(oFieldRef)},
-                                 WKBGeometryOptions(abyFilterGeomWkb));
+                    // Silence 'Using uninitialized value oFieldRef. Field oFieldRef.impl_._M_u is uninitialized when calling FieldRef.'
+                    // coverity[uninit_use_in_call]
+                    expression = cp::call("OGRWKBIntersects",
+                                          {cp::field_ref(std::move(oFieldRef))},
+                                          WKBGeometryOptions(abyFilterGeomWkb));
 
                     if (expression.is_valid())
                     {
@@ -656,7 +658,8 @@ void OGRParquetDatasetLayer::BuildScanner()
                 }
 
                 if (expression.is_valid())
-                    expression = cp::and_(expression, expressionFilter);
+                    expression =
+                        cp::and_(expression, std::move(expressionFilter));
                 else
                     expression = std::move(expressionFilter);
             }
@@ -702,8 +705,9 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
     if (poNode->eNodeType == SNT_OPERATION && poNode->nOperation == SWQ_AND &&
         poNode->nSubExprCount == 2)
     {
-        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
-        auto sRight =
+        const auto sLeft =
+            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        const auto sRight =
             BuildArrowFilter(poNode->papoSubExpr[1], bFullyTranslated);
         if (sLeft.is_valid() && sRight.is_valid())
             return cp::and_(sLeft, sRight);
@@ -716,8 +720,9 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
     else if (poNode->eNodeType == SNT_OPERATION &&
              poNode->nOperation == SWQ_OR && poNode->nSubExprCount == 2)
     {
-        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
-        auto sRight =
+        const auto sLeft =
+            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        const auto sRight =
             BuildArrowFilter(poNode->papoSubExpr[1], bFullyTranslated);
         if (sLeft.is_valid() && sRight.is_valid())
             return cp::or_(sLeft, sRight);
@@ -726,7 +731,8 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
     else if (poNode->eNodeType == SNT_OPERATION &&
              poNode->nOperation == SWQ_NOT && poNode->nSubExprCount == 1)
     {
-        auto expr = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        const auto expr =
+            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
         if (expr.is_valid())
             return cp::not_(expr);
     }
@@ -839,8 +845,9 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
     else if (poNode->eNodeType == SNT_OPERATION && poNode->nSubExprCount == 2 &&
              IsComparisonOp(poNode->nOperation))
     {
-        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
-        auto sRight =
+        const auto sLeft =
+            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        const auto sRight =
             BuildArrowFilter(poNode->papoSubExpr[1], bFullyTranslated);
         if (sLeft.is_valid() && sRight.is_valid())
         {
@@ -865,7 +872,8 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
              poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
              poNode->papoSubExpr[1]->field_type == SWQ_STRING)
     {
-        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        const auto sLeft =
+            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
         if (sLeft.is_valid())
         {
             if (cp::GetFunctionRegistry()
@@ -885,7 +893,8 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
     else if (poNode->eNodeType == SNT_OPERATION &&
              poNode->nOperation == SWQ_ISNULL && poNode->nSubExprCount == 1)
     {
-        auto expr = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        const auto expr =
+            BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
         if (expr.is_valid())
             return cp::is_null(expr);
     }

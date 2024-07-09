@@ -328,3 +328,31 @@ cellsize     60.000000000000
     if cs != cs_expected:
         print("Got: ", cs)
         pytest.fail("got wrong checksum")
+
+
+###############################################################################
+# Test source bands with all masked pixels
+
+
+def test_sieve_all_masked():
+
+    drv = gdal.GetDriverByName("MEM")
+    src_ds = drv.Create("", 10, 10, gdal.GDT_Byte)
+    src_band = src_ds.GetRasterBand(1)
+    src_band.Fill(1)
+
+    mask_ds = drv.Create("", 10, 10, gdal.GDT_Byte)
+    mask_band = mask_ds.GetRasterBand(1)
+
+    dst_ds = drv.Create("", 10, 10, gdal.GDT_Byte)
+    dst_band = dst_ds.GetRasterBand(1)
+
+    expected_cs = src_band.Checksum()
+
+    gdal.SieveFilter(src_band, mask_band, dst_band, 4, 4)
+
+    assert dst_band.Checksum() == expected_cs
+
+    gdal.SieveFilter(src_band, mask_band, src_band, 4, 4)
+
+    assert src_band.Checksum() == expected_cs

@@ -2850,7 +2850,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
 
     const char *pszFilename = psArgs->pszFilename;
     VSILFILE *fpLin = psArgs->fpLin;
-    char **papszSiblingFiles = psArgs->papszSiblingFiles;
+    CSLConstList papszSiblingFiles = psArgs->papszSiblingFiles;
     const int nScaleFactor = psArgs->nScaleFactor;
     const bool bDoPAMInitialize = psArgs->bDoPAMInitialize;
     const bool bUseInternalOverviews = psArgs->bUseInternalOverviews;

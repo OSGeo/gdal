@@ -43,6 +43,12 @@ CPLErr QB3_Band::Compress(buf_mgr &dst, buf_mgr &src)
         case (GDT_UInt32):
             pQB3 = CREATE_QB3(QB3_U32);
             break;
+        case (GDT_Int64):
+            pQB3 = CREATE_QB3(QB3_I64);
+            break;
+        case (GDT_UInt64):
+            pQB3 = CREATE_QB3(QB3_U64);
+            break;
         default:
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "MRF:QB3 Data type not supported");
@@ -174,7 +180,8 @@ QB3_Band::QB3_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
 
     if (image.dt != GDT_Byte && image.dt != GDT_Int16 &&
         image.dt != GDT_UInt16 && image.dt != GDT_Int32 &&
-        image.dt != GDT_UInt32)
+        image.dt != GDT_UInt32 && image.dt != GDT_Int64 &&
+        image.dt != GDT_UInt64)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Data type not supported by QB3 compression");

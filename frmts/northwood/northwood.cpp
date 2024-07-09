@@ -32,6 +32,7 @@
 #include "northwood.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <string>
 
@@ -79,6 +80,7 @@ int nwt_ParseHeader(NWT_GRID *pGrd, const unsigned char *nwtHeader)
     memcpy(&pGrd->dfMaxY, &nwtHeader[37], sizeof(pGrd->dfMaxY));
     CPL_LSBPTR64(&pGrd->dfMaxY);
 
+    assert(pGrd->nXSide > 1);
     pGrd->dfStepSize = (pGrd->dfMaxX - pGrd->dfMinX) / (pGrd->nXSide - 1);
     /* dfTmp = (pGrd->dfMaxY - pGrd->dfMinY) / (pGrd->nYSide - 1); */
 

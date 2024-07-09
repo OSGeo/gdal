@@ -7,6 +7,9 @@ set -e
 LD_LIBRARY_PATH="/opt/instantclient_19_9:/opt/instantclient_19_9/lib:${LD_LIBRARY_PATH}"
 export LD_LIBRARY_PATH
 
+# Test development launcher script
+gdal_edit --version
+
 export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
 # Run C++ tests

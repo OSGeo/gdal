@@ -238,3 +238,27 @@ def test_vrtfilt_invalid_kernel_size():
 
     with pytest.raises(Exception):
         vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources")
+
+
+###############################################################################
+
+
+def test_vrtfilt_serialize_separatable_kernel():
+
+    vrt_ds = gdal.GetDriverByName("VRT").Create("", 1, 1, 1)
+
+    filterSourceXML = """<KernelFilteredSource>
+      <SourceFilename relativeToVRT="0">data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <Kernel normalized="0">
+        <Size>3</Size>
+        <Coefs>1 1 1</Coefs>
+      </Kernel>
+    </KernelFilteredSource>"""
+
+    md = {}
+    md["source_0"] = filterSourceXML
+
+    vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources")
+
+    assert filterSourceXML in vrt_ds.GetMetadata("xml:VRT")[0]

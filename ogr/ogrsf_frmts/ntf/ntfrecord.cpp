@@ -74,6 +74,7 @@ NTFRecord::NTFRecord(VSILFILE *fp) : nType(99), nLength(0), pszData(nullptr)
         if (pszData == nullptr)
         {
             nLength = nNewLength - 2;
+            // coverity[overflow_sink]
             pszData = static_cast<char *>(VSI_MALLOC_VERBOSE(nLength + 1));
             if (pszData == nullptr)
             {

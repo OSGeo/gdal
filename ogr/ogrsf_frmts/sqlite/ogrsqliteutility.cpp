@@ -424,14 +424,14 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(
                 }
             }
         }
-        else if (osStr[pos] == ',')
+        else if (osStr[pos] == ',' || osStr[pos] == '(' || osStr[pos] == ')')
         {
-            osToken = ',';
+            osToken = osStr[pos];
             pos++;
         }
         else
         {
-            size_t pos2 = osStr.find_first_of(" \t\n\r,", pos);
+            size_t pos2 = osStr.find_first_of(") \t\n\r,", pos);
             if (pos2 == std::string::npos)
                 osToken = osStr.substr(pos);
             else
@@ -453,8 +453,18 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(
             tableDefinition =
                 tableDefinition.substr(nPosStart + 1, nPosEnd - nPosStart - 1);
             size_t pos = 0;
+            bool bHasConstraint = false;
             while (true)
             {
+                size_t posBackup = pos;
+                if (EQUAL(
+                        GetNextToken(tableDefinition, posBackup, true).c_str(),
+                        "CONSTRAINT"))
+                {
+                    bHasConstraint = true;
+                    break;
+                }
+
                 const std::string osColName =
                     GetNextToken(tableDefinition, pos, false);
                 if (osColName.empty())
@@ -470,6 +480,95 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(
                     if (EQUAL(osToken.c_str(), "UNIQUE"))
                     {
                         uniqueFieldsUC.insert(CPLString(osColName).toupper());
+                    }
+                }
+            }
+
+            // Process https://www.sqlite.org/syntax/table-constraint.html
+            if (bHasConstraint)
+            {
+                while (true)
+                {
+                    if (!EQUAL(GetNextToken(tableDefinition, pos, true).c_str(),
+                               "CONSTRAINT"))
+                    {
+                        break;
+                    }
+
+                    const std::string osConstraintName =
+                        GetNextToken(tableDefinition, pos, false);
+                    if (osConstraintName.empty())
+                    {
+                        break;
+                    }
+
+                    const std::string osConstraintType =
+                        GetNextToken(tableDefinition, pos, true);
+                    if (osConstraintType.empty())
+                    {
+                        break;
+                    }
+
+                    if (EQUAL(osConstraintType.c_str(), "UNIQUE"))
+                    {
+                        std::string osToken =
+                            GetNextToken(tableDefinition, pos, true);
+                        if (osToken != "(")
+                            break;
+
+                        const std::string osColName =
+                            GetNextToken(tableDefinition, pos, false);
+                        osToken = GetNextToken(tableDefinition, pos, true);
+                        if (osToken == ")")
+                        {
+                            // Only takes into account single column unique constraint
+                            uniqueFieldsUC.insert(
+                                CPLString(osColName).toupper());
+                        }
+                        else
+                        {
+                            // Skip tokens until ')'
+                            if (!osToken.empty())
+                            {
+                                do
+                                {
+                                    osToken = GetNextToken(tableDefinition, pos,
+                                                           true);
+                                } while (!osToken.empty() && osToken != ")");
+                            }
+                            if (osToken.empty())
+                                break;
+                        }
+                        osToken = GetNextToken(tableDefinition, pos, true);
+                        if (osToken != ",")
+                            break;
+                    }
+                    else
+                    {
+                        // Skip ignored constraint types by looking for the
+                        // next "," token, that is not inside parenthesis.
+                        int nCountParenthesis = 0;
+                        std::string osToken;
+                        while (true)
+                        {
+                            osToken = GetNextToken(tableDefinition, pos, true);
+                            if (osToken.empty())
+                                break;
+                            if (nCountParenthesis == 0 && osToken == ",")
+                                break;
+                            else if (osToken == "(")
+                                nCountParenthesis++;
+                            else if (osToken == ")")
+                            {
+                                nCountParenthesis--;
+                                if (nCountParenthesis < 0)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        if (!(nCountParenthesis == 0 && osToken == ","))
+                            break;
                     }
                 }
             }

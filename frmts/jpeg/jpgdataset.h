@@ -89,7 +89,7 @@ struct JPGDatasetOpenArgs
 {
     const char *pszFilename = nullptr;
     VSILFILE *fpLin = nullptr;
-    char **papszSiblingFiles = nullptr;
+    CSLConstList papszSiblingFiles = nullptr;
     int nScaleFactor = 1;
     bool bDoPAMInitialize = false;
     bool bUseInternalOverviews = false;

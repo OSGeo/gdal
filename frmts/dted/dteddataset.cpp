@@ -464,6 +464,14 @@ GDALDataset *DTEDDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetMetadataItem("DTED_PartialCellIndicator", pszValue);
     CPLFree(pszValue);
 
+    pszValue = DTEDGetMetadata(psDTED, DTEDMD_SECURITYCONTROL);
+    poDS->SetMetadataItem("DTED_SecurityControl", pszValue);
+    CPLFree(pszValue);
+
+    pszValue = DTEDGetMetadata(psDTED, DTEDMD_SECURITYHANDLING);
+    poDS->SetMetadataItem("DTED_SecurityHandling", pszValue);
+    CPLFree(pszValue);
+
     poDS->SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
 
     /* -------------------------------------------------------------------- */

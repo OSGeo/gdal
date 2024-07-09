@@ -2481,13 +2481,14 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Does this look like a VICAR dataset?                            */
     /* -------------------------------------------------------------------- */
-    const int nLabelOffset = VICARGetLabelOffset(poOpenInfo);
-    if (nLabelOffset < 0)
+    const vsi_l_offset nLabelOffset = VICARGetLabelOffset(poOpenInfo);
+    if (nLabelOffset == static_cast<vsi_l_offset>(-1))
         return nullptr;
     if (nLabelOffset > 0)
     {
         CPLString osSubFilename;
-        osSubFilename.Printf("/vsisubfile/%d,%s", nLabelOffset,
+        osSubFilename.Printf("/vsisubfile/" CPL_FRMT_GUIB ",%s",
+                             static_cast<GUIntBig>(nLabelOffset),
                              poOpenInfo->pszFilename);
         GDALOpenInfo oOpenInfo(osSubFilename.c_str(), poOpenInfo->eAccess);
         return Open(&oOpenInfo);

@@ -137,7 +137,8 @@ int OGRTABDataSource::Create(const char *pszName, char **papszOptions)
         IMapInfoFile *poFile = nullptr;
         const char *pszEncoding(CSLFetchNameValue(papszOptions, "ENCODING"));
         const char *pszCharset(IMapInfoFile::EncodingToCharset(pszEncoding));
-
+        bool bStrictLaundering = CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "STRICT_FIELDS_NAME_LAUNDERING", "YES"));
         if (m_bCreateMIF)
         {
             poFile = new MIFFile(this);
@@ -158,7 +159,7 @@ int OGRTABDataSource::Create(const char *pszName, char **papszOptions)
             }
             poFile = poTabFile;
         }
-
+        poFile->SetStrictLaundering(bStrictLaundering);
         m_nLayerCount = 1;
         m_papoLayers = static_cast<IMapInfoFile **>(CPLMalloc(sizeof(void *)));
         m_papoLayers[0] = poFile;
@@ -312,6 +313,14 @@ OGRTABDataSource::ICreateLayer(const char *pszLayerName,
     const char *pszEncoding = CSLFetchNameValue(papszOptions, "ENCODING");
     const char *pszCharset(IMapInfoFile::EncodingToCharset(pszEncoding));
     const char *pszDescription(CSLFetchNameValue(papszOptions, "DESCRIPTION"));
+    const char *pszStrictLaundering =
+        CSLFetchNameValue(papszOptions, "STRICT_FIELDS_NAME_LAUNDERING");
+    if (pszStrictLaundering == nullptr)
+    {
+        pszStrictLaundering = CSLFetchNameValueDef(
+            m_papszOptions, "STRICT_FIELDS_NAME_LAUNDERING", "YES");
+    }
+    bool bStrictLaundering = CPLTestBool(pszStrictLaundering);
 
     if (m_bSingleFile)
     {
@@ -376,6 +385,7 @@ OGRTABDataSource::ICreateLayer(const char *pszLayerName,
     }
 
     poFile->SetDescription(poFile->GetName());
+    poFile->SetStrictLaundering(bStrictLaundering);
 
     // Assign the coordinate system (if provided) and set
     // reasonable bounds.

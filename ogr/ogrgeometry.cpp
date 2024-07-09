@@ -1793,19 +1793,33 @@ OGRErr OGRGeometry::importPreambleFromWkt(const char **ppszInput, int *pbHasZ,
     /* -------------------------------------------------------------------- */
     bool bHasM = false;
     bool bHasZ = false;
-    bool bIsoWKT = true;
+    bool bAlreadyGotDimension = false;
 
     char szToken[OGR_WKT_TOKEN_MAX] = {};
     pszInput = OGRWktReadToken(pszInput, szToken);
     if (szToken[0] != '\0')
     {
         // Postgis EWKT: POINTM instead of POINT M.
+        // Current QGIS versions (at least <= 3.38) also export POINTZ.
         const size_t nTokenLen = strlen(szToken);
-        if (szToken[nTokenLen - 1] == 'M')
+        if (szToken[nTokenLen - 1] == 'M' || szToken[nTokenLen - 1] == 'm')
         {
             szToken[nTokenLen - 1] = '\0';
             bHasM = true;
-            bIsoWKT = false;
+            bAlreadyGotDimension = true;
+
+            if (nTokenLen > 2 && (szToken[nTokenLen - 2] == 'Z' ||
+                                  szToken[nTokenLen - 2] == 'z'))
+            {
+                bHasZ = true;
+                szToken[nTokenLen - 2] = '\0';
+            }
+        }
+        else if (szToken[nTokenLen - 1] == 'Z' || szToken[nTokenLen - 1] == 'z')
+        {
+            szToken[nTokenLen - 1] = '\0';
+            bHasZ = true;
+            bAlreadyGotDimension = true;
         }
     }
 
@@ -1813,55 +1827,44 @@ OGRErr OGRGeometry::importPreambleFromWkt(const char **ppszInput, int *pbHasZ,
         return OGRERR_CORRUPT_DATA;
 
     /* -------------------------------------------------------------------- */
-    /*      Check for EMPTY ...                                             */
+    /*      Check for Z, M or ZM                                            */
     /* -------------------------------------------------------------------- */
-    const char *pszPreScan = OGRWktReadToken(pszInput, szToken);
-    if (!bIsoWKT)
+    if (!bAlreadyGotDimension)
     {
-        // Go on.
-    }
-    else if (EQUAL(szToken, "EMPTY"))
-    {
-        *ppszInput = const_cast<char *>(pszPreScan);
-        *pbIsEmpty = true;
-        *pbHasM = bHasM;
-        empty();
-        return OGRERR_NONE;
-    }
-    /* -------------------------------------------------------------------- */
-    /*      Check for Z, M or ZM. Will ignore the Measure                   */
-    /* -------------------------------------------------------------------- */
-    else if (EQUAL(szToken, "Z"))
-    {
-        bHasZ = true;
-    }
-    else if (EQUAL(szToken, "M"))
-    {
-        bHasM = true;
-    }
-    else if (EQUAL(szToken, "ZM"))
-    {
-        bHasZ = true;
-        bHasM = true;
+        const char *pszNewInput = OGRWktReadToken(pszInput, szToken);
+        if (EQUAL(szToken, "Z"))
+        {
+            pszInput = pszNewInput;
+            bHasZ = true;
+        }
+        else if (EQUAL(szToken, "M"))
+        {
+            pszInput = pszNewInput;
+            bHasM = true;
+        }
+        else if (EQUAL(szToken, "ZM"))
+        {
+            pszInput = pszNewInput;
+            bHasZ = true;
+            bHasM = true;
+        }
     }
     *pbHasZ = bHasZ;
     *pbHasM = bHasM;
 
-    if (bIsoWKT && (bHasZ || bHasM))
+    /* -------------------------------------------------------------------- */
+    /*      Check for EMPTY ...                                             */
+    /* -------------------------------------------------------------------- */
+    const char *pszNewInput = OGRWktReadToken(pszInput, szToken);
+    if (EQUAL(szToken, "EMPTY"))
     {
-        pszInput = pszPreScan;
-        pszPreScan = OGRWktReadToken(pszInput, szToken);
-        if (EQUAL(szToken, "EMPTY"))
-        {
-            *ppszInput = pszPreScan;
-            empty();
-            if (bHasZ)
-                set3D(TRUE);
-            if (bHasM)
-                setMeasured(TRUE);
-            *pbIsEmpty = true;
-            return OGRERR_NONE;
-        }
+        *ppszInput = pszNewInput;
+        *pbIsEmpty = true;
+        if (bHasZ)
+            set3D(TRUE);
+        if (bHasM)
+            setMeasured(TRUE);
+        return OGRERR_NONE;
     }
 
     if (!EQUAL(szToken, "("))
@@ -1870,10 +1873,10 @@ OGRErr OGRGeometry::importPreambleFromWkt(const char **ppszInput, int *pbHasZ,
     if (!bHasZ && !bHasM)
     {
         // Test for old-style XXXXXXXXX(EMPTY).
-        pszPreScan = OGRWktReadToken(pszPreScan, szToken);
+        pszNewInput = OGRWktReadToken(pszNewInput, szToken);
         if (EQUAL(szToken, "EMPTY"))
         {
-            pszPreScan = OGRWktReadToken(pszPreScan, szToken);
+            pszNewInput = OGRWktReadToken(pszNewInput, szToken);
 
             if (EQUAL(szToken, ","))
             {
@@ -1885,7 +1888,7 @@ OGRErr OGRGeometry::importPreambleFromWkt(const char **ppszInput, int *pbHasZ,
             }
             else
             {
-                *ppszInput = pszPreScan;
+                *ppszInput = pszNewInput;
                 empty();
                 *pbIsEmpty = true;
                 return OGRERR_NONE;
@@ -3269,10 +3272,13 @@ static GEOSGeom convertToGEOSGeom(GEOSContextHandle_t hGEOSCtxt,
 /** Returns a GEOSGeom object corresponding to the geometry.
  *
  * @param hGEOSCtxt GEOS context
+ * @param bRemoveEmptyParts Whether empty parts of the geometry should be
+ * removed before exporting to GEOS (GDAL >= 3.10)
  * @return a GEOSGeom object corresponding to the geometry.
  */
 GEOSGeom
-OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
+OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt,
+                          UNUSED_IF_NO_GEOS bool bRemoveEmptyParts) const
 
 {
 #ifndef HAVE_GEOS
@@ -3301,6 +3307,8 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
     if (hasCurveGeometry())
     {
         poLinearGeom = getLinearGeometry();
+        if (bRemoveEmptyParts)
+            poLinearGeom->removeEmptyParts();
 #if (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 12)
         // GEOS < 3.12 doesn't support M dimension
         if (poLinearGeom->IsMeasured())
@@ -3315,9 +3323,17 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
         if (IsMeasured())
         {
             poLinearGeom = clone();
+            if (bRemoveEmptyParts)
+                poLinearGeom->removeEmptyParts();
             poLinearGeom->setMeasured(FALSE);
         }
+        else
 #endif
+            if (bRemoveEmptyParts && hasEmptyParts())
+        {
+            poLinearGeom = clone();
+            poLinearGeom->removeEmptyParts();
+        }
     }
     if (eType == wkbTriangle)
     {
@@ -6046,7 +6062,8 @@ OGRErr OGRGeometry::Centroid(OGRPoint *poPoint) const
 #else
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom =
+        exportToGEOS(hGEOSCtxt, /* bRemoveEmptyParts = */ true);
 
     if (hThisGeosGeom != nullptr)
     {
@@ -8541,4 +8558,35 @@ bool OGRGeometry::IsRectangle() const
         return true;
 
     return false;
+}
+
+/************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a geometry has empty parts/rings.
+ *
+ * Returns true if removeEmptyParts() will modify the geometry.
+ *
+ * This is different from IsEmpty().
+ *
+ * @since GDAL 3.10
+ */
+bool OGRGeometry::hasEmptyParts() const
+{
+    return false;
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+/**
+ * \brief Remove empty parts/rings from this geometry.
+ *
+ * @since GDAL 3.10
+ */
+void OGRGeometry::removeEmptyParts()
+{
 }

@@ -1751,6 +1751,71 @@ OGRErr OGRSpatialReference::exportToWkt(char **ppszResult,
     }
 
     *ppszResult = CPLStrdup(pszWKT);
+
+#if !(PROJ_AT_LEAST_VERSION(9, 5, 0))
+    if (wktFormat == PJ_WKT2_2018)
+    {
+        // Works around bug fixed per https://github.com/OSGeo/PROJ/pull/4166
+        // related to a wrong EPSG code assigned to UTM South conversions
+        char *pszPtr = strstr(*ppszResult, "CONVERSION[\"UTM zone ");
+        if (pszPtr)
+        {
+            pszPtr += strlen("CONVERSION[\"UTM zone ");
+            const int nZone = atoi(pszPtr);
+            while (*pszPtr >= '0' && *pszPtr <= '9')
+                ++pszPtr;
+            if (nZone >= 1 && nZone <= 60 && *pszPtr == 'S' &&
+                pszPtr[1] == '"' && pszPtr[2] == ',')
+            {
+                pszPtr += 3;
+                int nLevel = 0;
+                bool bInString = false;
+                // Find the ID node corresponding to this CONVERSION node
+                while (*pszPtr)
+                {
+                    if (bInString)
+                    {
+                        if (*pszPtr == '"' && pszPtr[1] == '"')
+                        {
+                            ++pszPtr;
+                        }
+                        else if (*pszPtr == '"')
+                        {
+                            bInString = false;
+                        }
+                    }
+                    else if (nLevel == 0 && STARTS_WITH_CI(pszPtr, "ID["))
+                    {
+                        if (STARTS_WITH_CI(pszPtr, CPLSPrintf("ID[\"EPSG\",%d]",
+                                                              17000 + nZone)))
+                        {
+                            CPLAssert(pszPtr[11] == '7');
+                            CPLAssert(pszPtr[12] == '0');
+                            pszPtr[11] = '6';
+                            pszPtr[12] = '1';
+                        }
+                        break;
+                    }
+                    else if (*pszPtr == '"')
+                    {
+                        bInString = true;
+                    }
+                    else if (*pszPtr == '[')
+                    {
+                        ++nLevel;
+                    }
+                    else if (*pszPtr == ']')
+                    {
+                        --nLevel;
+                    }
+
+                    ++pszPtr;
+                }
+            }
+        }
+    }
+#endif
+
     proj_destroy(boundCRS);
     return OGRERR_NONE;
 }
@@ -1901,6 +1966,75 @@ OGRErr OGRSpatialReference::exportToPROJJSON(
     }
 
     *ppszResult = CPLStrdup(pszPROJJSON);
+
+#if !(PROJ_AT_LEAST_VERSION(9, 5, 0))
+    {
+        // Works around bug fixed per https://github.com/OSGeo/PROJ/pull/4166
+        // related to a wrong EPSG code assigned to UTM South conversions
+        char *pszPtr = strstr(*ppszResult, "\"name\": \"UTM zone ");
+        if (pszPtr)
+        {
+            pszPtr += strlen("\"name\": \"UTM zone ");
+            const int nZone = atoi(pszPtr);
+            while (*pszPtr >= '0' && *pszPtr <= '9')
+                ++pszPtr;
+            if (nZone >= 1 && nZone <= 60 && *pszPtr == 'S' && pszPtr[1] == '"')
+            {
+                pszPtr += 2;
+                int nLevel = 0;
+                bool bInString = false;
+                // Find the id node corresponding to this conversion node
+                while (*pszPtr)
+                {
+                    if (bInString)
+                    {
+                        if (*pszPtr == '\\')
+                        {
+                            ++pszPtr;
+                        }
+                        else if (*pszPtr == '"')
+                        {
+                            bInString = false;
+                        }
+                    }
+                    else if (nLevel == 0 && STARTS_WITH(pszPtr, "\"id\": {"))
+                    {
+                        const char *pszNextEndCurl = strchr(pszPtr, '}');
+                        const char *pszAuthEPSG =
+                            strstr(pszPtr, "\"authority\": \"EPSG\"");
+                        char *pszCode = strstr(
+                            pszPtr, CPLSPrintf("\"code\": %d", 17000 + nZone));
+                        if (pszAuthEPSG && pszCode && pszNextEndCurl &&
+                            pszNextEndCurl - pszAuthEPSG > 0 &&
+                            pszNextEndCurl - pszCode > 0)
+                        {
+                            CPLAssert(pszCode[9] == '7');
+                            CPLAssert(pszCode[10] == '0');
+                            pszCode[9] = '6';
+                            pszCode[10] = '1';
+                        }
+                        break;
+                    }
+                    else if (*pszPtr == '"')
+                    {
+                        bInString = true;
+                    }
+                    else if (*pszPtr == '{' || *pszPtr == '[')
+                    {
+                        ++nLevel;
+                    }
+                    else if (*pszPtr == '}' || *pszPtr == ']')
+                    {
+                        --nLevel;
+                    }
+
+                    ++pszPtr;
+                }
+            }
+        }
+    }
+#endif
+
     return OGRERR_NONE;
 }
 
@@ -11367,8 +11501,9 @@ OGRSpatialReference::FindMatches(char **papszOptions, int *pnEntries,
         return nullptr;
 
     int *panConfidence = nullptr;
-    auto list = proj_identify(d->getPROJContext(), d->m_pj_crs, nullptr,
-                              nullptr, &panConfidence);
+    auto ctxt = d->getPROJContext();
+    auto list =
+        proj_identify(ctxt, d->m_pj_crs, nullptr, nullptr, &panConfidence);
     if (!list)
         return nullptr;
 
@@ -11383,16 +11518,76 @@ OGRSpatialReference::FindMatches(char **papszOptions, int *pnEntries,
         *ppanMatchConfidence =
             static_cast<int *>(CPLMalloc(sizeof(int) * (nMatches + 1)));
     }
+
+    bool bSortAgain = false;
+
     for (int i = 0; i < nMatches; i++)
     {
-        PJ *obj = proj_list_get(d->getPROJContext(), list, i);
+        PJ *obj = proj_list_get(ctxt, list, i);
         CPLAssert(obj);
         OGRSpatialReference *poSRS = new OGRSpatialReference();
         poSRS->d->setPjCRS(obj);
         pahRet[i] = ToHandle(poSRS);
+
+        // Identify matches that only differ by axis order
+        if (panConfidence[i] == 50 && GetAxesCount() == 2 &&
+            poSRS->GetAxesCount() == 2 &&
+            GetDataAxisToSRSAxisMapping() == std::vector<int>{1, 2})
+        {
+            OGRAxisOrientation eThisAxis0 = OAO_Other;
+            OGRAxisOrientation eThisAxis1 = OAO_Other;
+            OGRAxisOrientation eSRSAxis0 = OAO_Other;
+            OGRAxisOrientation eSRSAxis1 = OAO_Other;
+            GetAxis(nullptr, 0, &eThisAxis0);
+            GetAxis(nullptr, 1, &eThisAxis1);
+            poSRS->GetAxis(nullptr, 0, &eSRSAxis0);
+            poSRS->GetAxis(nullptr, 1, &eSRSAxis1);
+            if (eThisAxis0 == OAO_East && eThisAxis1 == OAO_North &&
+                eSRSAxis0 == OAO_North && eSRSAxis1 == OAO_East)
+            {
+                auto pj_crs_normalized =
+                    proj_normalize_for_visualization(ctxt, poSRS->d->m_pj_crs);
+                if (pj_crs_normalized)
+                {
+                    if (proj_is_equivalent_to(d->m_pj_crs, pj_crs_normalized,
+                                              PJ_COMP_EQUIVALENT))
+                    {
+                        bSortAgain = true;
+                        panConfidence[i] = 90;
+                        poSRS->SetDataAxisToSRSAxisMapping({2, 1});
+                    }
+                    proj_destroy(pj_crs_normalized);
+                }
+            }
+        }
+
         if (ppanMatchConfidence)
             (*ppanMatchConfidence)[i] = panConfidence[i];
     }
+
+    if (bSortAgain)
+    {
+        std::vector<int> anIndices;
+        for (int i = 0; i < nMatches; ++i)
+            anIndices.push_back(i);
+
+        std::stable_sort(anIndices.begin(), anIndices.end(),
+                         [&panConfidence](int i, int j)
+                         { return panConfidence[i] > panConfidence[j]; });
+
+        OGRSpatialReferenceH *pahRetSorted =
+            static_cast<OGRSpatialReferenceH *>(
+                CPLCalloc(sizeof(OGRSpatialReferenceH), nMatches + 1));
+        for (int i = 0; i < nMatches; ++i)
+        {
+            pahRetSorted[i] = pahRet[anIndices[i]];
+            if (ppanMatchConfidence)
+                (*ppanMatchConfidence)[i] = panConfidence[anIndices[i]];
+        }
+        CPLFree(pahRet);
+        pahRet = pahRetSorted;
+    }
+
     pahRet[nMatches] = nullptr;
     proj_list_destroy(list);
     proj_int_list_destroy(panConfidence);

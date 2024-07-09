@@ -216,7 +216,8 @@ TEST_F(test_ogr_swq, select_unparse)
         swq_select select;
         const char *pszSQL =
             "SELECT DISTINCT a, \"a b\" AS renamed, AVG(x.a) AS avg, MIN(a), "
-            "MAX(\"a b\"), SUM(a), AVG(a), COUNT(a), COUNT(DISTINCT a) "
+            "MAX(\"a b\"), SUM(a), AVG(a), COUNT(a), COUNT(DISTINCT a), "
+            "STDDEV_POP(a), STDDEV_SAMP(a) "
             "FROM 'foo'.\"FOO BAR\" AS x "
             "JOIN 'bar'.BAR AS y ON FOO.x = BAR.y "
             "WHERE 1 ORDER BY a, \"a b\" DESC "

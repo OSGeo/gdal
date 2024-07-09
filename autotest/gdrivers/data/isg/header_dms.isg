@@ -1,0 +1,28 @@
+begin_of_head ================================================
+model name     : GSIGEO2024bata
+model year     : 2024
+model type     : gravimetric
+data type      : geoid
+data units     : meters
+data format    : grid
+data ordering  : N-to-S, W-to-E
+ref ellipsoid  : GRS80
+ref frame      : ---
+height datum   : ---
+tide system    : ---
+coord type     : geodetic
+coord units    : dms
+map projection : ---
+EPSG code      : 6668
+lat min        =  15°00'00"
+lat max        =  50°00'00"
+lon min        = 120°00'00"
+lon max        = 160°00'00"
+delta lat      =   0°01'00"
+delta lon      =   0°01'30"
+nrows          =        2101
+ncols          =        1601
+nodata         =  -9999.0000
+creation date  =  27/03/2024
+ISG format     =         2.0
+end_of_head ==================================================

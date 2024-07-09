@@ -513,6 +513,7 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
         job.pfnFunc = pfnFunc;
     }
 
+    bool bStopFlag;
     {
         std::unique_lock<std::mutex> lock(psThreadData->mutex);
 
@@ -550,6 +551,8 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
                 }
             }
         }
+
+        bStopFlag = psThreadData->stopFlag;
     }
 
     /* -------------------------------------------------------------------- */
@@ -557,7 +560,7 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
     /* -------------------------------------------------------------------- */
     psThreadData->poJobQueue->WaitCompletion();
 
-    return psThreadData->stopFlag ? CE_Failure : CE_None;
+    return bStopFlag ? CE_Failure : CE_None;
 }
 
 /************************************************************************/

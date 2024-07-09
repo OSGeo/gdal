@@ -166,6 +166,7 @@ def test_ogr_wkbwkt_test_broken_geom():
         "POINT Z(EMPTY)",
         "POINT Z(A)",
         "POINT Z(0 1",
+        "POINTZ M EMPTY",
         "LINESTRING",
         "LINESTRING UNKNOWN",
         "LINESTRING(",
@@ -372,76 +373,79 @@ def test_ogr_wkbwkt_test_broken_geom():
 # Test importing WKT SF1.2
 
 
-def test_ogr_wkbwkt_test_import_wkt_sf12():
-
-    list_wkt_tuples = [
+@pytest.mark.parametrize(
+    "input_wkt,expected_output_wkt",
+    [
         ("POINT EMPTY", "POINT EMPTY"),
-        ("POINT Z EMPTY", "POINT EMPTY"),
-        ("POINT M EMPTY", "POINT EMPTY"),
-        ("POINT ZM EMPTY", "POINT EMPTY"),
+        ("POINT Z EMPTY", "POINT Z EMPTY"),
+        ("POINT M EMPTY", "POINT M EMPTY"),
+        ("POINT ZM EMPTY", "POINT ZM EMPTY"),
         ("POINT (0 1)", "POINT (0 1)"),
-        ("POINT Z (0 1 2)", "POINT (0 1 2)"),
-        ("POINT M (0 1 2)", "POINT (0 1)"),
-        ("POINT ZM (0 1 2 3)", "POINT (0 1 2)"),
+        ("POINT Z (0 1 2)", "POINT Z (0 1 2)"),
+        ("POINT M (0 1 2)", "POINT M (0 1 2)"),
+        ("POINT ZM (0 1 2 3)", "POINT ZM (0 1 2 3)"),
         ("LINESTRING EMPTY", "LINESTRING EMPTY"),
-        ("LINESTRING Z EMPTY", "LINESTRING EMPTY"),
-        ("LINESTRING M EMPTY", "LINESTRING EMPTY"),
-        ("LINESTRING ZM EMPTY", "LINESTRING EMPTY"),
+        ("LINESTRING Z EMPTY", "LINESTRING Z EMPTY"),
+        ("LINESTRING M EMPTY", "LINESTRING M EMPTY"),
+        ("LINESTRING ZM EMPTY", "LINESTRING ZM EMPTY"),
         ("LINESTRING (0 1,2 3)", "LINESTRING (0 1,2 3)"),
-        ("LINESTRING Z (0 1 2,3 4 5)", "LINESTRING (0 1 2,3 4 5)"),
-        ("LINESTRING M (0 1 2,3 4 5)", "LINESTRING (0 1,3 4)"),
-        ("LINESTRING ZM (0 1 2 3,4 5 6 7)", "LINESTRING (0 1 2,4 5 6)"),
+        ("LINESTRING Z (0 1 2,3 4 5)", "LINESTRING Z (0 1 2,3 4 5)"),
+        ("LINESTRING M (0 1 2,3 4 5)", "LINESTRING M (0 1 2,3 4 5)"),
+        ("LINESTRING ZM (0 1 2 3,4 5 6 7)", "LINESTRING ZM (0 1 2 3,4 5 6 7)"),
         ("POLYGON EMPTY", "POLYGON EMPTY"),
         ("POLYGON (EMPTY)", "POLYGON EMPTY"),
-        ("POLYGON Z EMPTY", "POLYGON EMPTY"),
-        ("POLYGON Z (EMPTY)", "POLYGON EMPTY"),
-        ("POLYGON M EMPTY", "POLYGON EMPTY"),
-        ("POLYGON ZM EMPTY", "POLYGON EMPTY"),
+        ("POLYGON Z EMPTY", "POLYGON Z EMPTY"),
+        ("POLYGON Z (EMPTY)", "POLYGON Z EMPTY"),
+        ("POLYGON M EMPTY", "POLYGON M EMPTY"),
+        ("POLYGON ZM EMPTY", "POLYGON ZM EMPTY"),
         ("POLYGON ((0 1,2 3,4 5,0 1))", "POLYGON ((0 1,2 3,4 5,0 1))"),
         ("POLYGON ((0 1,2 3,4 5,0 1),EMPTY)", "POLYGON ((0 1,2 3,4 5,0 1))"),
         ("POLYGON (EMPTY,(0 1,2 3,4 5,0 1))", "POLYGON EMPTY"),
         ("POLYGON (EMPTY,(0 1,2 3,4 5,0 1),EMPTY)", "POLYGON EMPTY"),
         (
             "POLYGON Z ((0 1 10,2 3 20,4 5 30,0 1 10),(0 1 10,2 3 20,4 5 30,0 1 10))",
-            "POLYGON ((0 1 10,2 3 20,4 5 30,0 1 10),(0 1 10,2 3 20,4 5 30,0 1 10))",
+            "POLYGON Z ((0 1 10,2 3 20,4 5 30,0 1 10),(0 1 10,2 3 20,4 5 30,0 1 10))",
         ),
-        ("POLYGON M ((0 1 10,2 3 20,4 5 30,0 1 10))", "POLYGON ((0 1,2 3,4 5,0 1))"),
+        (
+            "POLYGON M ((0 1 10,2 3 20,4 5 30,0 1 10))",
+            "POLYGON M ((0 1 10,2 3 20,4 5 30,0 1 10))",
+        ),
         (
             "POLYGON ZM ((0 1 10 100,2 3 20 200,4 5 30 300,0 1 10 10))",
-            "POLYGON ((0 1 10,2 3 20,4 5 30,0 1 10))",
+            "POLYGON ZM ((0 1 10 100,2 3 20 200,4 5 30 300,0 1 10 10))",
         ),
         ("MULTIPOINT EMPTY", "MULTIPOINT EMPTY"),
         ("MULTIPOINT (EMPTY)", "MULTIPOINT EMPTY"),
-        ("MULTIPOINT Z EMPTY", "MULTIPOINT EMPTY"),
-        ("MULTIPOINT Z (EMPTY)", "MULTIPOINT EMPTY"),
-        ("MULTIPOINT M EMPTY", "MULTIPOINT EMPTY"),
-        ("MULTIPOINT ZM EMPTY", "MULTIPOINT EMPTY"),
+        ("MULTIPOINT Z EMPTY", "MULTIPOINT Z EMPTY"),
+        ("MULTIPOINT Z (EMPTY)", "MULTIPOINT Z EMPTY"),
+        ("MULTIPOINT M EMPTY", "MULTIPOINT M EMPTY"),
+        ("MULTIPOINT ZM EMPTY", "MULTIPOINT ZM EMPTY"),
         (
             "MULTIPOINT (0 1,2 3)",
-            "MULTIPOINT (0 1,2 3)",
+            "MULTIPOINT ((0 1),(2 3))",
         ),  # Not SF1.2 compliant but recognized
-        ("MULTIPOINT ((0 1),(2 3))", "MULTIPOINT (0 1,2 3)"),
+        ("MULTIPOINT ((0 1),(2 3))", "MULTIPOINT ((0 1),(2 3))"),
         (
             "MULTIPOINT ((0 1),EMPTY)",
-            "MULTIPOINT (0 1)",
+            "MULTIPOINT ((0 1))",
         ),  # We don't output empty points in multipoint
         (
             "MULTIPOINT (EMPTY,(0 1))",
-            "MULTIPOINT (0 1)",
+            "MULTIPOINT ((0 1))",
         ),  # We don't output empty points in multipoint
         (
             "MULTIPOINT (EMPTY,(0 1),EMPTY)",
-            "MULTIPOINT (0 1)",
+            "MULTIPOINT ((0 1))",
         ),  # We don't output empty points in multipoint
-        ("MULTIPOINT Z ((0 1 2),(3 4 5))", "MULTIPOINT (0 1 2,3 4 5)"),
-        ("MULTIPOINT M ((0 1 2),(3 4 5))", "MULTIPOINT (0 1,3 4)"),
-        ("MULTIPOINT ZM ((0 1 2 3),(4 5 6 7))", "MULTIPOINT (0 1 2,4 5 6)"),
+        ("MULTIPOINT Z ((0 1 2),(3 4 5))", "MULTIPOINT Z ((0 1 2),(3 4 5))"),
+        ("MULTIPOINT M ((0 1 2),(3 4 5))", "MULTIPOINT M ((0 1 2),(3 4 5))"),
+        ("MULTIPOINT ZM ((0 1 2 3),(4 5 6 7))", "MULTIPOINT ZM ((0 1 2 3),(4 5 6 7))"),
         ("MULTILINESTRING EMPTY", "MULTILINESTRING EMPTY"),
         ("MULTILINESTRING (EMPTY)", "MULTILINESTRING EMPTY"),
-        ("MULTILINESTRING Z EMPTY", "MULTILINESTRING EMPTY"),
-        ("MULTILINESTRING Z (EMPTY)", "MULTILINESTRING EMPTY"),
-        ("MULTILINESTRING M EMPTY", "MULTILINESTRING EMPTY"),
-        ("MULTILINESTRING ZM EMPTY", "MULTILINESTRING EMPTY"),
+        ("MULTILINESTRING Z EMPTY", "MULTILINESTRING Z EMPTY"),
+        ("MULTILINESTRING Z (EMPTY)", "MULTILINESTRING Z EMPTY"),
+        ("MULTILINESTRING M EMPTY", "MULTILINESTRING M EMPTY"),
+        ("MULTILINESTRING ZM EMPTY", "MULTILINESTRING ZM EMPTY"),
         ("MULTILINESTRING ((0 1,2 3,4 5,0 1))", "MULTILINESTRING ((0 1,2 3,4 5,0 1))"),
         (
             "MULTILINESTRING ((0 1,2 3,4 5,0 1),EMPTY)",
@@ -457,22 +461,22 @@ def test_ogr_wkbwkt_test_import_wkt_sf12():
         ),
         (
             "MULTILINESTRING Z ((0 1 10,2 3 20,4 5 30,0 1 10),(0 1 10,2 3 20,4 5 30,0 1 10))",
-            "MULTILINESTRING ((0 1 10,2 3 20,4 5 30,0 1 10),(0 1 10,2 3 20,4 5 30,0 1 10))",
+            "MULTILINESTRING Z ((0 1 10,2 3 20,4 5 30,0 1 10),(0 1 10,2 3 20,4 5 30,0 1 10))",
         ),
         (
             "MULTILINESTRING M ((0 1 10,2 3 20,4 5 30,0 1 10))",
-            "MULTILINESTRING ((0 1,2 3,4 5,0 1))",
+            "MULTILINESTRING M ((0 1 10,2 3 20,4 5 30,0 1 10))",
         ),
         (
             "MULTILINESTRING ZM ((0 1 10 100,2 3 20 200,4 5 30 300,0 1 10 10))",
-            "MULTILINESTRING ((0 1 10,2 3 20,4 5 30,0 1 10))",
+            "MULTILINESTRING ZM ((0 1 10 100,2 3 20 200,4 5 30 300,0 1 10 10))",
         ),
         ("MULTIPOLYGON EMPTY", "MULTIPOLYGON EMPTY"),
         ("MULTIPOLYGON (EMPTY)", "MULTIPOLYGON EMPTY"),
-        ("MULTIPOLYGON Z EMPTY", "MULTIPOLYGON EMPTY"),
-        ("MULTIPOLYGON Z (EMPTY)", "MULTIPOLYGON EMPTY"),
-        ("MULTIPOLYGON M EMPTY", "MULTIPOLYGON EMPTY"),
-        ("MULTIPOLYGON ZM EMPTY", "MULTIPOLYGON EMPTY"),
+        ("MULTIPOLYGON Z EMPTY", "MULTIPOLYGON Z EMPTY"),
+        ("MULTIPOLYGON Z (EMPTY)", "MULTIPOLYGON Z EMPTY"),
+        ("MULTIPOLYGON M EMPTY", "MULTIPOLYGON M EMPTY"),
+        ("MULTIPOLYGON ZM EMPTY", "MULTIPOLYGON ZM EMPTY"),
         ("MULTIPOLYGON ((EMPTY))", "MULTIPOLYGON EMPTY"),
         ("MULTIPOLYGON (((0 1,2 3,4 5,0 1)))", "MULTIPOLYGON (((0 1,2 3,4 5,0 1)))"),
         (
@@ -510,31 +514,31 @@ def test_ogr_wkbwkt_test_import_wkt_sf12():
         ),
         (
             "MULTIPOLYGON Z (((0 1 10,2 3 20,4 5 30,0 1 10)),((0 1 10,2 3 20,4 5 30,0 1 10)))",
-            "MULTIPOLYGON (((0 1 10,2 3 20,4 5 30,0 1 10)),((0 1 10,2 3 20,4 5 30,0 1 10)))",
+            "MULTIPOLYGON Z (((0 1 10,2 3 20,4 5 30,0 1 10)),((0 1 10,2 3 20,4 5 30,0 1 10)))",
         ),
         (
             "MULTIPOLYGON M (((0 1 10,2 3 20,4 5 30,0 1 10)))",
-            "MULTIPOLYGON (((0 1,2 3,4 5,0 1)))",
+            "MULTIPOLYGON M (((0 1 10,2 3 20,4 5 30,0 1 10)))",
         ),
         (
             "MULTIPOLYGON ZM (((0 1 10 100,2 3 20 200,4 5 30 300,0 1 10 10)))",
-            "MULTIPOLYGON (((0 1 10,2 3 20,4 5 30,0 1 10)))",
+            "MULTIPOLYGON ZM (((0 1 10 100,2 3 20 200,4 5 30 300,0 1 10 10)))",
         ),
         ("GEOMETRYCOLLECTION EMPTY", "GEOMETRYCOLLECTION EMPTY"),
-        ("GEOMETRYCOLLECTION Z EMPTY", "GEOMETRYCOLLECTION EMPTY"),
-        ("GEOMETRYCOLLECTION M EMPTY", "GEOMETRYCOLLECTION EMPTY"),
-        ("GEOMETRYCOLLECTION ZM EMPTY", "GEOMETRYCOLLECTION EMPTY"),
+        ("GEOMETRYCOLLECTION Z EMPTY", "GEOMETRYCOLLECTION Z EMPTY"),
+        ("GEOMETRYCOLLECTION M EMPTY", "GEOMETRYCOLLECTION M EMPTY"),
+        ("GEOMETRYCOLLECTION ZM EMPTY", "GEOMETRYCOLLECTION ZM EMPTY"),
         (
             "GEOMETRYCOLLECTION Z (POINT Z (0 1 2),LINESTRING Z (0 1 2,3 4 5))",
-            "GEOMETRYCOLLECTION (POINT (0 1 2),LINESTRING (0 1 2,3 4 5))",
+            "GEOMETRYCOLLECTION Z (POINT Z (0 1 2),LINESTRING Z (0 1 2,3 4 5))",
         ),
         (
             "GEOMETRYCOLLECTION M (POINT M (0 1 2),LINESTRING M (0 1 2,3 4 5))",
-            "GEOMETRYCOLLECTION (POINT (0 1),LINESTRING (0 1,3 4))",
+            "GEOMETRYCOLLECTION M (POINT M (0 1 2),LINESTRING M (0 1 2,3 4 5))",
         ),
         (
             "GEOMETRYCOLLECTION ZM (POINT ZM (0 1 2 10),LINESTRING ZM (0 1 2 10,3 4 5 20))",
-            "GEOMETRYCOLLECTION (POINT (0 1 2),LINESTRING (0 1 2,3 4 5))",
+            "GEOMETRYCOLLECTION ZM (POINT ZM (0 1 2 10),LINESTRING ZM (0 1 2 10,3 4 5 20))",
         ),
         (
             "GEOMETRYCOLLECTION (POINT EMPTY,LINESTRING EMPTY,POLYGON EMPTY,MULTIPOINT EMPTY,MULTILINESTRING EMPTY,MULTIPOLYGON EMPTY,GEOMETRYCOLLECTION EMPTY)",
@@ -542,7 +546,7 @@ def test_ogr_wkbwkt_test_import_wkt_sf12():
         ),
         (
             "GEOMETRYCOLLECTION (POINT Z EMPTY,LINESTRING Z EMPTY,POLYGON Z EMPTY,MULTIPOINT Z EMPTY,MULTILINESTRING Z EMPTY,MULTIPOLYGON Z EMPTY,GEOMETRYCOLLECTION Z EMPTY)",
-            "GEOMETRYCOLLECTION (POINT EMPTY,LINESTRING EMPTY,POLYGON EMPTY,MULTIPOINT EMPTY,MULTILINESTRING EMPTY,MULTIPOLYGON EMPTY,GEOMETRYCOLLECTION EMPTY)",
+            "GEOMETRYCOLLECTION Z (POINT Z EMPTY,LINESTRING Z EMPTY,POLYGON Z EMPTY,MULTIPOINT Z EMPTY,MULTILINESTRING Z EMPTY,MULTIPOLYGON Z EMPTY,GEOMETRYCOLLECTION Z EMPTY)",
         ),
         # Not SF1.2 compliant but recognized
         (
@@ -555,17 +559,52 @@ def test_ogr_wkbwkt_test_import_wkt_sf12():
         ("MULTICURVE (EMPTY)", "MULTICURVE EMPTY"),
         ("MULTISURFACE EMPTY", "MULTISURFACE EMPTY"),
         ("MULTISURFACE (EMPTY)", "MULTISURFACE EMPTY"),
-    ]
+    ],
+)
+def test_ogr_wkbwkt_test_import_wkt_sf12(input_wkt, expected_output_wkt):
 
-    for wkt_tuple in list_wkt_tuples:
-        geom = ogr.CreateGeometryFromWkt(wkt_tuple[0])
-        assert geom is not None, "could not instantiate geometry %s" % wkt_tuple[0]
-        out_wkt = geom.ExportToWkt()
-        assert out_wkt == wkt_tuple[1], "in=%s, out=%s, expected=%s." % (
-            wkt_tuple[0],
-            out_wkt,
-            wkt_tuple[1],
-        )
+    geom = ogr.CreateGeometryFromWkt(input_wkt)
+    assert geom is not None
+    out_wkt = geom.ExportToIsoWkt()
+    assert out_wkt == expected_output_wkt
+
+    # Test with input in lower case
+    geom = ogr.CreateGeometryFromWkt(input_wkt.lower())
+    assert geom is not None
+    out_wkt = geom.ExportToIsoWkt()
+    assert out_wkt == expected_output_wkt
+
+
+###############################################################################
+# Test importing non-conformant WKT with Z/M modifier directly appended to
+# geometry type name
+
+
+@pytest.mark.parametrize(
+    "input_wkt,expected_output_wkt",
+    [
+        ("POINTZ EMPTY", "POINT Z EMPTY"),
+        ("POINTM EMPTY", "POINT M EMPTY"),
+        ("POINTZM EMPTY", "POINT ZM EMPTY"),
+        ("POINTZ (0 1 2)", "POINT Z (0 1 2)"),
+        ("POINTM (0 1 2)", "POINT M (0 1 2)"),
+        ("POINTZM (0 1 2 3)", "POINT ZM (0 1 2 3)"),
+    ],
+)
+def test_ogr_wkbwkt_test_import_wkt_z_m_modifier_without_space(
+    input_wkt, expected_output_wkt
+):
+
+    geom = ogr.CreateGeometryFromWkt(input_wkt)
+    assert geom is not None
+    out_wkt = geom.ExportToIsoWkt()
+    assert out_wkt == expected_output_wkt
+
+    # Test with input in lower case
+    geom = ogr.CreateGeometryFromWkt(input_wkt.lower())
+    assert geom is not None
+    out_wkt = geom.ExportToIsoWkt()
+    assert out_wkt == expected_output_wkt
 
 
 ###############################################################################

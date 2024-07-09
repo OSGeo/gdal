@@ -37,8 +37,8 @@ import test_py_scripts
 
 from osgeo import gdal, ogr
 
-CURRENT_VERSION = "1.0.0"
-PARQUET_JSON_SCHEMA = "../ogr/data/parquet/schema.json"
+CURRENT_VERSION = "1.1.0"
+GEOPARQUET_1_1_0_JSON_SCHEMA = "../ogr/data/parquet/schema_1_1_0.json"
 
 
 pytestmark = [
@@ -62,7 +62,7 @@ def script_path():
 # Validate a GeoParquet file
 
 
-def _validate(filename, check_data=False, local_schema=PARQUET_JSON_SCHEMA):
+def _validate(filename, check_data=False, local_schema=GEOPARQUET_1_1_0_JSON_SCHEMA):
     import sys
 
     from test_py_scripts import samples_path

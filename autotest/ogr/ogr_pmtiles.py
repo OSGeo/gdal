@@ -29,6 +29,7 @@
 ###############################################################################
 
 import json
+import os
 
 import gdaltest
 import ogrtest
@@ -603,7 +604,12 @@ def test_ogr_pmtiles_read_corrupted_min_zoom_larger_than_max_zoom():
 
 ###############################################################################
 
-
+# Test started to fail on Travis s390x starting with https://github.com/OSGeo/gdal/pull/10274
+# which is totally unrelated...
+@pytest.mark.skipif(
+    os.environ.get("BUILD_NAME", "") == "s390x",
+    reason="Fails randomly on that platform",
+)
 def test_ogr_pmtiles_read_corrupted_min_zoom_larger_than_30():
 
     tmpfilename = "/vsimem/tmp.pmtiles"

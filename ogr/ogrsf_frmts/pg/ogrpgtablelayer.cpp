@@ -172,7 +172,9 @@ OGRPGTableLayer::OGRPGTableLayer(OGRPGDataSource *poDSIn,
       // Just in provision for people yelling about broken backward
       // compatibility.
       bRetrieveFID(
-          CPLTestBool(CPLGetConfigOption("OGR_PG_RETRIEVE_FID", "TRUE")))
+          CPLTestBool(CPLGetConfigOption("OGR_PG_RETRIEVE_FID", "TRUE"))),
+      bSkipConflicts(
+          CPLTestBool(CPLGetConfigOption("OGR_PG_SKIP_CONFLICTS", "FALSE")))
 {
     poDS = poDSIn;
     pszQueryStatement = nullptr;
@@ -2069,10 +2071,19 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
     if (bRetrieveFID && pszFIDColumn != nullptr &&
         poFeature->GetFID() == OGRNullFID)
     {
+        if (bSkipConflicts)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "fid retrieval and skipping conflicts are not supported "
+                     "at the same time.");
+            return OGRERR_FAILURE;
+        }
         bReturnRequested = TRUE;
         osCommand += " RETURNING ";
         osCommand += OGRPGEscapeColumnName(pszFIDColumn);
     }
+    else if (bSkipConflicts)
+        osCommand += " ON CONFLICT DO NOTHING";
 
     /* -------------------------------------------------------------------- */
     /*      Execute the insert.                                             */

@@ -2,7 +2,8 @@
 add_gdal_driver(
   TARGET ogr_OSM
   SOURCES ogrosmdatasource.cpp ogrosmdriver.cpp ogrosmlayer.cpp osm_parser.cpp
-  BUILTIN)
+  BUILTIN
+  STRONG_CXX_WFLAGS)
 gdal_standard_includes(ogr_OSM)
 
 set(GDAL_DATA_FILES

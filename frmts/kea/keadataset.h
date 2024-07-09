@@ -31,14 +31,14 @@
 #ifndef KEADATASET_H
 #define KEADATASET_H
 
-#include "gdal_pam.h"
+#include "gdal_priv.h"
 #include "cpl_multiproc.h"
 #include "libkea_headers.h"
 
 class LockedRefCount;
 
 // class that implements a GDAL dataset
-class KEADataset final : public GDALPamDataset
+class KEADataset final : public GDALDataset
 {
     static H5::H5File *CreateLL(const char *pszFilename, int nXSize, int nYSize,
                                 int nBands, GDALDataType eType,

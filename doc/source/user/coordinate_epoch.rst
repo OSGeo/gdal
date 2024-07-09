@@ -169,9 +169,10 @@ from the source SRS when no SRS related options are specified.
 
 :program:`gdalwarp` and :program:`ogr2ogr` have a ``-s_coord_epoch`` option to be used together with ``-s_srs``
 (resp. ``-t_coord_epoch`` option to be used together with ``-t_srs``) to override/set the
-coordinate epoch of the source (resp. target) CRS. ``-s_coord_epoch`` and
-``-t_coord_epoch`` are currently mutually exclusive, due to lack of support for
-transformations between two dynamic CRS.
+coordinate epoch of the source (resp. target) CRS.
+
+Before PROJ 9.4, ``-s_coord_epoch`` and ``-t_coord_epoch`` were mutually exclusive, due to lack
+of support for transformations between two dynamic CRS.
 
 :program:`gdalwarp` preserves the coordinate epoch in the output SRS when appropriate.
 

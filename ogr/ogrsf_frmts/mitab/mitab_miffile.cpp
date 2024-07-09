@@ -998,7 +998,8 @@ int MIFFile::WriteMIFHeader()
         if (strlen(GetEncoding()) > 0)
             osFieldName.Recode(CPL_ENC_UTF8, GetEncoding());
 
-        char *pszCleanName = TABCleanFieldName(osFieldName);
+        char *pszCleanName =
+            TABCleanFieldName(osFieldName, GetEncoding(), m_bStrictLaundering);
         osFieldName = pszCleanName;
         CPLFree(pszCleanName);
 
@@ -1946,7 +1947,20 @@ int MIFFile::SetCharset(const char *pszCharset)
     {
         m_poMIFFile->SetEncoding(CharsetToEncoding(pszCharset));
     }
+    if (EQUAL(pszCharset, "UTF-8"))
+    {
+        m_nVersion = std::max(m_nVersion, 1520);
+    }
     return 0;
+}
+
+void MIFFile::SetStrictLaundering(bool bStrictLaundering)
+{
+    IMapInfoFile::SetStrictLaundering(bStrictLaundering);
+    if (!bStrictLaundering)
+    {
+        m_nVersion = std::max(m_nVersion, 1520);
+    }
 }
 
 /************************************************************************/

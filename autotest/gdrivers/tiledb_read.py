@@ -32,8 +32,20 @@
 import gdaltest
 import pytest
 
+from osgeo import gdal
 
-@pytest.mark.require_driver("TileDB")
+pytestmark = pytest.mark.require_driver("TileDB")
+
+
 def test_tiledb_open():
     ut = gdaltest.GDALTest("TileDB", "tiledb_array", 1, 4857)
     ut.testOpen()
+
+
+###############################################################################
+
+
+def test_tiledb_force_identify():
+
+    drv = gdal.IdentifyDriverEx("data/tiledb_array", allowed_drivers=["TileDB"])
+    assert drv is not None

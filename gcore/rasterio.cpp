@@ -1077,8 +1077,9 @@ CPLErr GDALRasterBand::RasterIOResampled(
     poMEMDS->SetBand(1, GDALRasterBand::FromHandle(hMEMBand));
 
     const char *pszNBITS = GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+    const int nNBITS = pszNBITS ? atoi(pszNBITS) : 0;
     if (pszNBITS)
-        reinterpret_cast<GDALRasterBand *>(hMEMBand)->SetMetadataItem(
+        GDALRasterBand::FromHandle(hMEMBand)->SetMetadataItem(
             "NBITS", pszNBITS, "IMAGE_STRUCTURE");
 
     CPLErr eErr = CE_None;
@@ -1417,22 +1418,38 @@ CPLErr GDALRasterBand::RasterIOResampled(
                     GDALDataType eDstBufferDataType = GDT_Unknown;
                     GDALRasterBand *poMEMBand =
                         GDALRasterBand::FromHandle(hMEMBand);
-                    eErr = pfnResampleFunc(
-                        dfXRatioDstToSrc, dfYRatioDstToSrc,
-                        dfXOff - nXOff, /* == 0 if bHasXOffVirtual */
-                        dfYOff - nYOff, /* == 0 if bHasYOffVirtual */
-                        eWrkDataType, pChunk,
-                        bNoDataMaskFullyOpaque ? nullptr : pabyChunkNoDataMask,
-                        nChunkXOffQueried - (bHasXOffVirtual ? 0 : nXOff),
-                        nChunkXSizeQueried,
-                        nChunkYOffQueried - (bHasYOffVirtual ? 0 : nYOff),
-                        nChunkYSizeQueried, nDstXOff + nDestXOffVirtual,
-                        nDstXOff + nDestXOffVirtual + nDstXCount,
-                        nDstYOff + nDestYOffVirtual,
-                        nDstYOff + nDestYOffVirtual + nDstYCount, poMEMBand,
-                        &pDstBuffer, &eDstBufferDataType, pszResampling,
-                        bHasNoData, dfNoDataValue, GetColorTable(), eDataType,
-                        bPropagateNoData);
+                    GDALOverviewResampleArgs args;
+                    args.eSrcDataType = eDataType;
+                    args.eOvrDataType = poMEMBand->GetRasterDataType();
+                    args.nOvrXSize = poMEMBand->GetXSize();
+                    args.nOvrYSize = poMEMBand->GetYSize();
+                    args.nOvrNBITS = nNBITS;
+                    args.dfXRatioDstToSrc = dfXRatioDstToSrc;
+                    args.dfYRatioDstToSrc = dfYRatioDstToSrc;
+                    args.dfSrcXDelta =
+                        dfXOff - nXOff; /* == 0 if bHasXOffVirtual */
+                    args.dfSrcYDelta =
+                        dfYOff - nYOff; /* == 0 if bHasYOffVirtual */
+                    args.eWrkDataType = eWrkDataType;
+                    args.pabyChunkNodataMask =
+                        bNoDataMaskFullyOpaque ? nullptr : pabyChunkNoDataMask;
+                    args.nChunkXOff =
+                        nChunkXOffQueried - (bHasXOffVirtual ? 0 : nXOff);
+                    args.nChunkXSize = nChunkXSizeQueried;
+                    args.nChunkYOff =
+                        nChunkYOffQueried - (bHasYOffVirtual ? 0 : nYOff);
+                    args.nChunkYSize = nChunkYSizeQueried;
+                    args.nDstXOff = nDstXOff + nDestXOffVirtual;
+                    args.nDstXOff2 = nDstXOff + nDestXOffVirtual + nDstXCount;
+                    args.nDstYOff = nDstYOff + nDestYOffVirtual;
+                    args.nDstYOff2 = nDstYOff + nDestYOffVirtual + nDstYCount;
+                    args.pszResampling = pszResampling;
+                    args.bHasNoData = bHasNoData;
+                    args.dfNoDataValue = dfNoDataValue;
+                    args.poColorTable = GetColorTable();
+                    args.bPropagateNoData = bPropagateNoData;
+                    eErr = pfnResampleFunc(args, pChunk, &pDstBuffer,
+                                           &eDstBufferDataType);
                     if (eErr == CE_None)
                     {
                         eErr = poMEMBand->RasterIO(
@@ -1534,6 +1551,7 @@ CPLErr GDALDataset::RasterIOResampled(
                            nDestYOffVirtual + nBufYSize, 0, eBufType, nullptr);
     GDALRasterBand **papoDstBands = static_cast<GDALRasterBand **>(
         CPLMalloc(nBandCount * sizeof(GDALRasterBand *)));
+    int nNBITS = 0;
     for (int i = 0; i < nBandCount; i++)
     {
         char szBuffer[32] = {'\0'};
@@ -1564,8 +1582,11 @@ CPLErr GDALDataset::RasterIOResampled(
         const char *pszNBITS =
             poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
         if (pszNBITS)
+        {
+            nNBITS = atoi(pszNBITS);
             poMEMDS->GetRasterBand(i + 1)->SetMetadataItem("NBITS", pszNBITS,
                                                            "IMAGE_STRUCTURE");
+        }
     }
 
     CPLErr eErr = CE_None;
@@ -1903,26 +1924,45 @@ CPLErr GDALDataset::RasterIOResampled(
                         GDALDataType eDstBufferDataType = GDT_Unknown;
                         GDALRasterBand *poMEMBand =
                             poMEMDS->GetRasterBand(i + 1);
-                        eErr = pfnResampleFunc(
-                            dfXRatioDstToSrc, dfYRatioDstToSrc,
-                            dfXOff - nXOff, /* == 0 if bHasXOffVirtual */
-                            dfYOff - nYOff, /* == 0 if bHasYOffVirtual */
-                            eWrkDataType,
-                            reinterpret_cast<GByte *>(pChunk) +
-                                i * nChunkBandOffset,
-                            bNoDataMaskFullyOpaque ? nullptr
-                                                   : pabyChunkNoDataMask,
-                            nChunkXOffQueried - (bHasXOffVirtual ? 0 : nXOff),
-                            nChunkXSizeQueried,
-                            nChunkYOffQueried - (bHasYOffVirtual ? 0 : nYOff),
-                            nChunkYSizeQueried, nDstXOff + nDestXOffVirtual,
-                            nDstXOff + nDestXOffVirtual + nDstXCount,
-                            nDstYOff + nDestYOffVirtual,
-                            nDstYOff + nDestYOffVirtual + nDstYCount, poMEMBand,
-                            &pDstBuffer, &eDstBufferDataType, pszResampling,
-                            false /*bHasNoData*/, 0.0 /* dfNoDataValue */,
-                            nullptr /* color table*/, eDataType,
-                            bPropagateNoData);
+                        GDALOverviewResampleArgs args;
+                        args.eSrcDataType = eDataType;
+                        args.eOvrDataType = poMEMBand->GetRasterDataType();
+                        args.nOvrXSize = poMEMBand->GetXSize();
+                        args.nOvrYSize = poMEMBand->GetYSize();
+                        args.nOvrNBITS = nNBITS;
+                        args.dfXRatioDstToSrc = dfXRatioDstToSrc;
+                        args.dfYRatioDstToSrc = dfYRatioDstToSrc;
+                        args.dfSrcXDelta =
+                            dfXOff - nXOff; /* == 0 if bHasXOffVirtual */
+                        args.dfSrcYDelta =
+                            dfYOff - nYOff; /* == 0 if bHasYOffVirtual */
+                        args.eWrkDataType = eWrkDataType;
+                        args.pabyChunkNodataMask = bNoDataMaskFullyOpaque
+                                                       ? nullptr
+                                                       : pabyChunkNoDataMask;
+                        args.nChunkXOff =
+                            nChunkXOffQueried - (bHasXOffVirtual ? 0 : nXOff);
+                        args.nChunkXSize = nChunkXSizeQueried;
+                        args.nChunkYOff =
+                            nChunkYOffQueried - (bHasYOffVirtual ? 0 : nYOff);
+                        args.nChunkYSize = nChunkYSizeQueried;
+                        args.nDstXOff = nDstXOff + nDestXOffVirtual;
+                        args.nDstXOff2 =
+                            nDstXOff + nDestXOffVirtual + nDstXCount;
+                        args.nDstYOff = nDstYOff + nDestYOffVirtual;
+                        args.nDstYOff2 =
+                            nDstYOff + nDestYOffVirtual + nDstYCount;
+                        args.pszResampling = pszResampling;
+                        args.bHasNoData = false;
+                        args.dfNoDataValue = 0.0;
+                        args.poColorTable = nullptr;
+                        args.bPropagateNoData = bPropagateNoData;
+
+                        eErr =
+                            pfnResampleFunc(args,
+                                            reinterpret_cast<GByte *>(pChunk) +
+                                                i * nChunkBandOffset,
+                                            &pDstBuffer, &eDstBufferDataType);
                         if (eErr == CE_None)
                         {
                             eErr = poMEMBand->RasterIO(

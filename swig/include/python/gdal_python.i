@@ -3061,6 +3061,7 @@ def VectorTranslateOptions(options=None, format=None,
          simplifyTolerance=None,
          segmentizeMaxDist=None,
          makeValid=False,
+         skipInvalid=False,
          mapFieldType=None,
          explodeCollections=False,
          zField=None,
@@ -3161,6 +3162,9 @@ def VectorTranslateOptions(options=None, format=None,
         maximum distance between consecutive nodes of a line geometry
     makeValid:
         run MakeValid() on geometries
+    skipInvalid:
+        whether to skip features with invalid geometries regarding the rules of
+        the Simple Features specification.
     mapFieldType:
         converts any field of the specified type to another type. Valid types are:
         Integer, Integer64, Real, String, Date, Time, DateTime, Binary, IntegerList,
@@ -3344,6 +3348,8 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-segmentize', str(segmentizeMaxDist)]
         if makeValid:
             new_options += ['-makevalid']
+        if skipInvalid:
+            new_options += ['-skipinvalid']
         if mapFieldType is not None:
             new_options += ['-mapFieldType']
             if isinstance(mapFieldType, str):
@@ -4210,15 +4216,15 @@ def Footprint(destNameOrDestDS, srcDS, **kwargs):
 
     1. Special mode to get deserialized GeoJSON (in EPSG:4326 if dstSRS not specified):
 
-    >>> deserialized_geojson = gdal.FootPrint(None, src_ds, format="GeoJSON")
+    >>> deserialized_geojson = gdal.Footprint(None, src_ds, format="GeoJSON")
 
     2. Special mode to get WKT:
 
-    >>> wkt = gdal.FootPrint(None, src_ds, format="WKT")
+    >>> wkt = gdal.Footprint(None, src_ds, format="WKT")
 
     3. Get result in a GeoPackage
 
-    >>> gdal.FootPrintf("out.gpkg", src_ds, format="GPKG")
+    >>> gdal.Footprint("out.gpkg", src_ds, format="GPKG")
 
     """
 
@@ -4920,4 +4926,26 @@ def quiet_errors():
     tuple.col_intersection = col_intersection
     tuple.row_intersection = row_intersection
     val = tuple
+%}
+
+
+%feature("pythonappend") MultipartUploadGetCapabilities %{
+    if val:
+        non_sequential_upload_supported, parallel_upload_supported, abort_supported, min_part_size, max_part_size, max_part_count = val
+        import collections
+        tuple = collections.namedtuple('MultipartUploadGetCapabilitiesResult',
+            ['non_sequential_upload_supported',
+             'parallel_upload_supported',
+             'abort_supported',
+             'min_part_size',
+             'max_part_size',
+             'max_part_count',
+             ])
+        tuple.non_sequential_upload_supported = non_sequential_upload_supported
+        tuple.parallel_upload_supported = parallel_upload_supported
+        tuple.abort_supported = abort_supported
+        tuple.min_part_size = min_part_size
+        tuple.max_part_size = max_part_size
+        tuple.max_part_count = max_part_count
+        val = tuple
 %}

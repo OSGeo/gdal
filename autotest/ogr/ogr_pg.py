@@ -6067,3 +6067,92 @@ def test_ogr_pg_no_postgis_GEOMETRY_NAME(pg_ds):
             gdal.GetLastErrorMsg()
             == "GEOMETRY_NAME=foo ignored, and set instead to 'wkb_geometry' as it is the only geometry column name recognized for non-PostGIS enabled databases."
         )
+
+
+###############################################################################
+# Test ignored conflicts
+
+
+@only_without_postgis
+def test_ogr_pg_skip_conflicts(pg_ds):
+    pg_ds.ExecuteSQL(
+        "CREATE TABLE test_ogr_skip_conflicts(id SERIAL PRIMARY KEY, gml_id character(16), beginnt character(20), UNIQUE(gml_id, beginnt))"
+    )
+
+    with gdal.config_option("OGR_PG_SKIP_CONFLICTS", "YES"):
+        # OGR_PG_SKIP_CONFLICTS and OGR_PG_RETRIEVE_FID cannot be used at the same time
+        with gdal.config_option("OGR_PG_RETRIEVE_FID", "YES"):
+            pg_ds = reconnect(pg_ds, update=1)
+            lyr = pg_ds.GetLayerByName("test_ogr_skip_conflicts")
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat["gml_id"] = "DERPLP0300000cG3"
+            feat["beginnt"] = "2020-07-10T04:48:14Z"
+            with gdal.quiet_errors():
+                assert lyr.CreateFeature(feat) != ogr.OGRERR_NONE
+
+    with gdal.config_option("OGR_PG_RETRIEVE_FID", "NO"):
+        pg_ds = reconnect(pg_ds, update=1)
+        lyr = pg_ds.GetLayerByName("test_ogr_skip_conflicts")
+
+        assert lyr.GetFeatureCount() == 0
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat["gml_id"] = "DERPLP0300000cG3"
+        feat["beginnt"] = "2020-07-10T04:48:14Z"
+        assert lyr.CreateFeature(feat) == ogr.OGRERR_NONE
+        assert lyr.GetFeatureCount() == 1
+
+        # Insert w/o OGR_PG_SKIP_CONFLICTS=YES succeeds, but doesn't add a feature
+        with gdal.config_option("OGR_PG_SKIP_CONFLICTS", "YES"):
+            pg_ds = reconnect(pg_ds, update=1)
+            lyr = pg_ds.GetLayerByName("test_ogr_skip_conflicts")
+
+            assert lyr.GetFeatureCount() == 1
+
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat["gml_id"] = "DERPLP0300000cG3"
+            feat["beginnt"] = "2020-07-10T04:48:14Z"
+            assert lyr.CreateFeature(feat) == ogr.OGRERR_NONE
+            assert lyr.GetFeatureCount() == 1
+
+        # Other feature succeeds and increments the feature count
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat["gml_id"] = "DERPLP0300000cG4"
+        feat["beginnt"] = "2020-07-10T04:48:14Z"
+        assert lyr.CreateFeature(feat) == ogr.OGRERR_NONE
+        assert lyr.GetFeatureCount() == 2
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/10311
+
+
+@only_without_postgis
+@gdaltest.enable_exceptions()
+def test_ogr_pg_ogr2ogr_with_multiple_dotted_table_name(pg_ds):
+
+    tmp_schema = "tmp_schema_issue_10311"
+    pg_ds.ExecuteSQL(f'CREATE SCHEMA "{tmp_schema}"')
+    try:
+        src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+        lyr = src_ds.CreateLayer(tmp_schema + ".table1", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        lyr.CreateFeature(f)
+        lyr = src_ds.CreateLayer(tmp_schema + ".table2", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        lyr.CreateFeature(f)
+
+        gdal.VectorTranslate(pg_ds.GetDescription(), src_ds)
+
+        pg_ds = reconnect(pg_ds)
+        lyr = pg_ds.GetLayerByName(tmp_schema + ".table1")
+        assert lyr.GetFeatureCount() == 1
+        lyr = pg_ds.GetLayerByName(tmp_schema + ".table2")
+        assert lyr.GetFeatureCount() == 1
+
+    finally:
+        pg_ds.ExecuteSQL(f'DROP SCHEMA "{tmp_schema}" CASCADE')

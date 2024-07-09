@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "gdaljp2metadata.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #if HAVE_FCNTL_H
@@ -2177,7 +2178,8 @@ static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
                     CPLXMLNode *psBinaryContent =
                         CPLCreateXMLNode(nullptr, CXT_Element, "BinaryContent");
                     GByte *pabyBoxData = oBox.ReadBoxData();
-                    int nBoxLength = static_cast<int>(nBoxDataLength);
+                    const int nBoxLength = static_cast<int>(
+                        std::min<GIntBig>(nBoxDataLength, INT_MAX / 2 - 1));
                     char *pszBinaryContent =
                         static_cast<char *>(VSIMalloc(2 * nBoxLength + 1));
                     if (pabyBoxData && pszBinaryContent)

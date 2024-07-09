@@ -30,6 +30,7 @@
 #include "filegdbtable.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cinttypes>
 #include <errno.h>
 #include <limits.h>
@@ -746,6 +747,10 @@ bool FileGDBTable::ReadTableXHeaderV4()
 
     m_nTablxOffsetSize = GetUInt32(abyHeader + 12, 0);
     returnErrorIf(m_nTablxOffsetSize < 4 || m_nTablxOffsetSize > 6);
+
+    returnErrorIf(m_n1024BlocksPresent >
+                  (std::numeric_limits<vsi_l_offset>::max() - 16) /
+                      (m_nTablxOffsetSize * 1024));
 
     m_nOffsetTableXTrailer =
         16 + m_nTablxOffsetSize * 1024 *
@@ -3660,6 +3665,7 @@ OGRGeometry *FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
         returnError();
     }
     const int nMaxSize = static_cast<int>(nMaxSize64);
+    // coverity[overflow_sink]
     GByte *pabyExtShapeBuffer =
         static_cast<GByte *>(VSI_MALLOC_VERBOSE(nMaxSize));
     if (pabyExtShapeBuffer == nullptr)
@@ -3856,11 +3862,19 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
                     ReadVarUInt64NoCheck(pabyCur, m);
                     const double dfMScale =
                         SanitizeScale(poGeomField->GetMScale());
-                    const double dfM =
-                        m == 0
-                            ? std::numeric_limits<double>::quiet_NaN()
-                            : (m - 1U) / dfMScale + poGeomField->GetMOrigin();
-                    return new OGRPoint(dfX, dfY, dfZ, dfM);
+                    if (m == 0)
+                    {
+                        return new OGRPoint(
+                            dfX, dfY, dfZ,
+                            std::numeric_limits<double>::quiet_NaN());
+                    }
+                    else
+                    {
+                        assert(m >= 1U);
+                        const double dfM =
+                            (m - 1U) / dfMScale + poGeomField->GetMOrigin();
+                        return new OGRPoint(dfX, dfY, dfZ, dfM);
+                    }
                 }
                 return new OGRPoint(dfX, dfY, dfZ);
             }

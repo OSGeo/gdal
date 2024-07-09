@@ -242,6 +242,8 @@ TIF_Band::TIF_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
     // ZLEVEL 8, which is fine.
     if (q > 2)
         q -= 2;
+    if (q == 0)  // TIF does not accept ZLEVEL of zero
+        q = 6;
     papszOptions = CSLAddNameValue(papszOptions, "ZLEVEL", CPLOPrintf("%d", q));
 }
 

@@ -293,6 +293,18 @@ def test_gdal_translate_lib_nodata_int64():
 
 
 ###############################################################################
+# Test nodata=-inf
+
+
+def test_gdal_translate_lib_nodata_minus_inf():
+
+    ds = gdal.Translate(
+        "", "../gcore/data/float32.tif", format="MEM", noData=float("-inf")
+    )
+    assert ds.GetRasterBand(1).GetNoDataValue() == float("-inf"), "Bad nodata value"
+
+
+###############################################################################
 # Test srcWin option
 
 
@@ -1140,6 +1152,20 @@ def test_gdal_translate_lib_scale_and_unscale_incompatible():
             unscale=True,
             outputType=gdal.GDT_UInt16,
         )
+
+
+###############################################################################
+# Test -a_offset -inf (dummy example, but to prove -inf works as a value
+# numeric value)
+
+
+@gdaltest.enable_exceptions()
+def test_gdal_translate_lib_assign_offset():
+
+    out_ds = gdal.Translate(
+        "", gdal.Open("../gcore/data/byte.tif"), options="-f MEM -a_offset -inf"
+    )
+    assert out_ds.GetRasterBand(1).GetOffset() == float("-inf")
 
 
 ###############################################################################
