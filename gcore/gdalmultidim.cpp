@@ -1697,7 +1697,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                 break;
 #ifdef SIZEOF__FLOAT16
             case GDT_Float16:
-                str = CPLSPrintf("%.5g", *static_cast<const _Float16 *>(pSrc));
+                str = CPLSPrintf("%.5g", double(*static_cast<const _Float16 *>(pSrc)));
                 break;
 #endif
             case GDT_Float32:
@@ -1722,7 +1722,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
             case GDT_CFloat16:
             {
                 const _Float16 *src = static_cast<const _Float16 *>(pSrc);
-                str = CPLSPrintf("%.5g+%.5gj", src[0], src[1]);
+                str = CPLSPrintf("%.5g+%.5gj", double(src[0]), double(src[1]));
                 break;
             }
 #endif

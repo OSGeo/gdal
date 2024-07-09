@@ -3525,7 +3525,7 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                             fNoDataValue, bGotFloatNoDataValue);
 #ifdef SIZEOF__FLOAT16
     bool bGotFloat16NoDataValue = false;
-    _Float16 hfNoDataValue = 0.0f;
+    _Float16 hfNoDataValue = _Float16(0.0f);
     ComputeFloat16NoDataValue(eDataType, dfNoDataValue, bGotNoDataValue,
                               hfNoDataValue, bGotFloat16NoDataValue);
 #endif
@@ -5898,7 +5898,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                             fNoDataValue, bGotFloatNoDataValue);
 #ifdef SIZEOF__FLOAT16
     bool bGotFloat16NoDataValue = false;
-    _Float16 hfNoDataValue = 0.0f;
+    _Float16 hfNoDataValue = _Float16(0.0f);
     ComputeFloat16NoDataValue(eDataType, dfNoDataValue, bGotNoDataValue,
                               hfNoDataValue, bGotFloat16NoDataValue);
 #endif
@@ -5999,8 +5999,11 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 double dfValue = GetPixelValue(
                     eDataType, bSignedByte, pData, iOffset,
                     CPL_TO_BOOL(bGotNoDataValue), dfNoDataValue,
-                    bGotFloatNoDataValue, fNoDataValue, bGotFloat16NoDataValue,
-                    hfNoDataValue, bValid);
+                    bGotFloatNoDataValue, fNoDataValue,
+#ifdef SIZEOF__FLOAT16
+                    bGotFloat16NoDataValue, hfNoDataValue,
+#endif
+                    bValid);
                 if (!bValid)
                     continue;
 
@@ -6255,7 +6258,10 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                         eDataType, bSignedByte, pData, iOffset,
                         CPL_TO_BOOL(bGotNoDataValue), dfNoDataValue,
                         bGotFloatNoDataValue, fNoDataValue,
-                        bGotFloat16NoDataValue, hfNoDataValue, bValid);
+#ifdef SIZEOF__FLOAT16
+                        bGotFloat16NoDataValue, hfNoDataValue,
+#endif
+                        bValid);
 
                     if (!bValid)
                         continue;
@@ -6691,7 +6697,9 @@ static bool ComputeMinMaxGenericIterBlocks(
         ComputeMinMaxGeneric(pData, eDataType, bSignedByte, nXCheck, nYCheck,
                              nBlockXSize, CPL_TO_BOOL(bGotNoDataValue),
                              dfNoDataValue, bGotFloatNoDataValue, fNoDataValue,
+#ifdef SIZEOF__FLOAT16
                              bGotFloat16NoDataValue, hfNoDataValue,
+#endif
                              pabyMaskData, dfMin, dfMax);
 
         poBlock->DropLock();
@@ -6768,7 +6776,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
                             fNoDataValue, bGotFloatNoDataValue);
 #ifdef SIZEOF__FLOAT16
     bool bGotFloat16NoDataValue = false;
-    _Float16 hfNoDataValue = 0.0f;
+    _Float16 hfNoDataValue = _Float16(0.0f);
     ComputeFloat16NoDataValue(eDataType, dfNoDataValue, bGotNoDataValue,
                               hfNoDataValue, bGotFloat16NoDataValue);
 #endif
