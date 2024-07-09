@@ -1695,7 +1695,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                                  static_cast<GIntBig>(
                                      *static_cast<const std::int64_t *>(pSrc)));
                 break;
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE_SIZEOF__FLOAT16
             case GDT_Float16:
                 str = CPLSPrintf("%.5g", double(*static_cast<const _Float16 *>(pSrc)));
                 break;
@@ -1718,7 +1718,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                 str = CPLSPrintf("%d+%dj", src[0], src[1]);
                 break;
             }
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE_SIZEOF__FLOAT16
             case GDT_CFloat16:
             {
                 const _Float16 *src = static_cast<const _Float16 *>(pSrc);
@@ -7143,7 +7143,7 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                                        tmpBufferStrideVector);
             break;
 
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE_SIZEOF__FLOAT16
         case GDT_Float16:
             ReadInternal<_Float16>(count, bufferStride, bufferDataType,
                                    pDstBuffer, pTempBuffer, oTmpBufferDT,

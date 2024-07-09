@@ -180,7 +180,7 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
 GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
                                                     double dValue, int bComplex)
 {
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE_SIZEOF__FLOAT16
     if (eDT == GDT_Float16 && !bComplex &&
         static_cast<_Float16>(dValue) == dValue)
         return GDT_Float16;
@@ -882,7 +882,7 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
             }
             else
             {
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE_SIZEOF__FLOAT16
                 // Intentionally lose precision.
                 dfValue = static_cast<_Float16>(dfValue);
 #else
@@ -1352,7 +1352,7 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                             reinterpret_cast<const std::int64_t *>(
                                 pDataRef)[iOffset]);
                         break;
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE_SIZEOF__FLOAT16
                     case GDT_Float16:
                         dfValue = reinterpret_cast<const _Float16 *>(
                             pDataRef)[iOffset];
@@ -1385,7 +1385,7 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
                         break;
                     }
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE_SIZEOF__FLOAT16
                     case GDT_CFloat16:
                     {
                         const double dfReal =
@@ -5201,7 +5201,7 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
         }
         else
         {
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE_SIZEOF__FLOAT16
             // Intentionally lose precision
             dfReplacementVal = static_cast<_Float16>(dfNoDataValue);
 #else
