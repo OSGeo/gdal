@@ -58,7 +58,7 @@ RUN apt-get update && \
     locales \
     mysql-client-core-8.0 \
     netcdf-bin \
-    openjdk-8-jdk \
+    openjdk-8-jdk-headless \
     poppler-utils \
     postgis \
     postgresql-client \
@@ -104,7 +104,7 @@ RUN mkdir mongocxx \
     && make install \
     && cd ../.. \
     && rm -rf mongocxx
-    
+
 # Build libOpenDRIVE
 ARG OPENDRIVE_VERSION=0.5.0-gdal
 RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \

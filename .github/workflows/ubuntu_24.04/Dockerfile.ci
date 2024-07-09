@@ -59,7 +59,7 @@ RUN apt-get update && \
     locales \
     mysql-client-core-8.0 \
     netcdf-bin \
-    openjdk-8-jdk \
+    openjdk-8-jdk-headless \
     poppler-utils \
     postgis \
     postgresql-client \

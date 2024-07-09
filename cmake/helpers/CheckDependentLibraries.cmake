@@ -539,6 +539,8 @@ gdal_check_package(OpenDrive "Enable libOpenDRIVE" CAN_DISABLE)
 
 # finding python in top of project because of common for autotest and bindings
 
+set(JAVA_AWT_LIBRARY NotNeeded)
+set(JAVA_AWT_INCLUDE_PATH NotNeeded)
 find_package(JNI)
 find_package(Java COMPONENTS Runtime Development)
 find_program(
