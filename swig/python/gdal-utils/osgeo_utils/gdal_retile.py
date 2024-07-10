@@ -735,7 +735,7 @@ def createTileIndex(Verbose, dsName, fieldName, srs, driverName):
 
         OGRDataSource = OGRDriver.Open(dsName)
         if OGRDataSource is not None:
-            OGRDataSource.Destroy()
+            OGRDataSource.Close()
             OGRDriver.DeleteDataSource(dsName)
             if Verbose:
                 print("truncating index " + dsName)
@@ -791,11 +791,10 @@ def addFeature(TileIndexFieldName, OGRDataSource, location, xlist, ylist):
     OGRFeature.SetGeometryDirectly(OGRGeometry)
 
     OGRLayer.CreateFeature(OGRFeature)
-    OGRFeature.Destroy()
 
 
 def closeTileIndex(OGRDataSource):
-    OGRDataSource.Destroy()
+    OGRDataSource.Close()
 
 
 def buildPyramid(g, minfo, createdTileIndexDS, tileWidth, tileHeight, overlap):
@@ -1130,7 +1129,7 @@ def main(args=None, g=None):
 
     if not g.PyramidOnly:
         dsCreatedTileIndex = tileImage(g, minfo, ti)
-        tileIndexDS.Destroy()
+        tileIndexDS.Close()
     else:
         dsCreatedTileIndex = tileIndexDS
 
