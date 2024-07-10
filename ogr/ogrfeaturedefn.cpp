@@ -170,6 +170,7 @@ void OGR_FD_Release(OGRFeatureDefnH hDefn)
  * \brief Create a copy of this feature definition.
  *
  * Creates a deep copy of the feature definition.
+ * The reference counter of the copy is initialized at 0.
  *
  * @return the copy.
  */
