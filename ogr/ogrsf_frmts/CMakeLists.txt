@@ -101,7 +101,7 @@ ogr_dependent_driver(xls "Microsoft Office Excel(xls)" "GDAL_USE_FREEXL")
 ogr_dependent_driver(mongodbv3 "MongoDB V3" "GDAL_USE_MONGOCXX")
 ogr_dependent_driver(cad "OpenCAD" "GDAL_USE_OPENCAD OR GDAL_USE_OPENCAD_INTERNAL")
 include(parquet/driver_declaration.cmake)
-ogr_dependent_driver(arrow "Arrow" "GDAL_USE_ARROW")
+include(arrow/driver_declaration.cmake)
 
 ogr_dependent_driver(gtfs "GTFS" "OGR_ENABLE_DRIVER_CSV")
 

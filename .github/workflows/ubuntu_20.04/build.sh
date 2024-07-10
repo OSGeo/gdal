@@ -50,3 +50,11 @@ cmake -S "${GDAL_SOURCE_DIR:=..}/ogr/ogrsf_frmts/parquet" -DCMAKE_PREFIX_PATH=/t
 cmake --build . "-j$(nproc)"
 test -f ogr_Parquet.so
 cd ..
+
+# Test building Arrow driver in standalone mode
+mkdir build_arrow
+cd build_arrow
+cmake -S "${GDAL_SOURCE_DIR:=..}/ogr/ogrsf_frmts/arrow" -DCMAKE_PREFIX_PATH=/tmp/install-gdal
+cmake --build . "-j$(nproc)"
+test -f ogr_Arrow.so
+cd ..
