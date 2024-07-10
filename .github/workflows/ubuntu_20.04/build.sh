@@ -42,3 +42,11 @@ cmake -S "${GDAL_SOURCE_DIR:=..}/ogr/ogrsf_frmts/oci" "-DOracle_ROOT=$PWD/instan
 cmake --build . "-j$(nproc)"
 test -f ogr_OCI.so
 cd ..
+
+# Test building Parquet driver in standalone mode
+mkdir build_parquet
+cd build_parquet
+cmake -S "${GDAL_SOURCE_DIR:=..}/ogr/ogrsf_frmts/parquet" -DCMAKE_PREFIX_PATH=/tmp/install-gdal
+cmake --build . "-j$(nproc)"
+test -f ogr_Parquet.so
+cd ..
