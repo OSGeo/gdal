@@ -350,8 +350,6 @@ def test_ogr_mysql_6(mysql_ds):
             max_error=1e-3,
         )
 
-        feat_read.Destroy()
-
         sql_lyr.ResetReading()
 
         with ogrtest.spatial_filter(sql_lyr, "LINESTRING(-10 -10,0 0)"):
@@ -556,7 +554,6 @@ def test_ogr_mysql_20(mysql_ds):
     # We are obliged to create a fake geometry
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 1)"))
     layer.CreateFeature(dst_feat)
-    dst_feat.Destroy()
 
     layer = mysql_ds.GetLayerByName("select")
     layer.ResetReading()
@@ -601,8 +598,6 @@ def test_ogr_mysql_22(mysql_ds):
     dst_feat.SetField("name", "name")
 
     layer.CreateFeature(dst_feat)
-
-    dst_feat.Destroy()
 
     layer.ResetReading()
     feat = layer.GetNextFeature()
