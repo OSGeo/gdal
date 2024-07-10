@@ -149,8 +149,8 @@ The following creation options are available:
       2.0.1 <http://docs.opengeospatial.org/is/08-085r5/08-085r5.html>`__
       specification should be included in the file. *filename* must point
       to a file with a JSON content that defines how the GMLJP2 v2 box
-      should be built. See below section for the syntax of the JSON 
-      configuration file. It is also possible to directly pass the JSON 
+      should be built. See below section for the syntax of the JSON
+      configuration file. It is also possible to directly pass the JSON
       content inlined as a string. If filename is just set to YES, a
       minimal instance will be built. Note: GDAL 2.0 and 2.1 use the older
       `OGC GML in JPEG2000, version
@@ -662,6 +662,31 @@ a vector file with the OGR API. For example:
 Feature collections can be linked from the GMLJP2 v2 box to a remote
 location. By default, the link is not followed. It will be followed if
 the open option OPEN_REMOTE_GML is set to YES.
+
+Standalone plugin compilation
+-----------------------------
+
+.. versionadded:: 3.10
+
+While this driver may be built as part of a whole GDAL build, either in libgdal
+itself, or as a plugin, it is also possible to only build this driver as a plugin,
+against an already built libgdal.
+
+The version of the GDAL sources used to build the driver must match the version
+of the libgdal it is built against.
+
+For example, from a "build_openjpeg" directory under the root of the GDAL source tree:
+
+::
+
+    cmake -S ../frmts/openjpeg -DCMAKE_PREFIX_PATH=/path/to/GDAL_installation_prefix -DOPENJPEG_ROOT=/path/to/openjpeg_install_prefix
+    cmake --build .
+
+
+Note that such a plugin, when used against a libgdal not aware of it, will be
+systematically loaded at GDAL driver initialization time, and will not benefit from
+`deferred plugin loading capabilities <rfc-96>`. For that, libgdal itself must be built with the
+CMake variable GDAL_REGISTER_DRIVER_JP2OPENJPEG_FOR_LATER_PLUGIN=ON set.
 
 See Also
 ---------

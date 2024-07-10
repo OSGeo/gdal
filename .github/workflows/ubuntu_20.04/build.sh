@@ -58,3 +58,11 @@ cmake -S "${GDAL_SOURCE_DIR:=..}/ogr/ogrsf_frmts/arrow" -DCMAKE_PREFIX_PATH=/tmp
 cmake --build . "-j$(nproc)"
 test -f ogr_Arrow.so
 cd ..
+
+# Test building OpenJPEG driver in standalone mode
+mkdir build_openjpeg
+cd build_openjpeg
+cmake -S "${GDAL_SOURCE_DIR:=..}/frmts/openjpeg" -DCMAKE_PREFIX_PATH=/tmp/install-gdal
+cmake --build . "-j$(nproc)"
+test -f gdal_JP2OpenJPEG.so
+cd ..
