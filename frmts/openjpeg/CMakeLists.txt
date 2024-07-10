@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.16...3.28)
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/helpers/GdalCMakeMinimumRequired.cmake")
+cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_MAX})
 
 if(NOT DEFINED PROJECT_SOURCE_DIR)
     # Standalone plugin building
