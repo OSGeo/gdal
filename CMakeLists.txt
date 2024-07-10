@@ -1,4 +1,8 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
+
+# NOTE: if changing the below line, please run scripts/update_CMakeLists.py
+# afterwards to update CMakeLists.txt files of drivers that can be built in
+# standalone mode
 cmake_minimum_required(VERSION 3.16...3.28)
 
 project(gdal LANGUAGES C CXX)
