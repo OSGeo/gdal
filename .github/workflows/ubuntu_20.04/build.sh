@@ -66,3 +66,11 @@ cmake -S "${GDAL_SOURCE_DIR:=..}/frmts/openjpeg" -DCMAKE_PREFIX_PATH=/tmp/instal
 cmake --build . "-j$(nproc)"
 test -f gdal_JP2OpenJPEG.so
 cd ..
+
+# Test building TileDB driver in standalone mode
+mkdir build_tiledb
+cd build_tiledb
+cmake -S "${GDAL_SOURCE_DIR:=..}/frmts/tiledb" -DCMAKE_PREFIX_PATH=/tmp/install-gdal
+cmake --build . "-j$(nproc)"
+test -f gdal_TileDB.so
+cd ..
