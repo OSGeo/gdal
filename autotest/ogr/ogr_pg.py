@@ -681,9 +681,6 @@ def test_ogr_pg_4(pg_ds):
 
         ogrtest.check_feature_geometry(feat_read, geom)
 
-        feat_read.Destroy()
-
-    dst_feat.Destroy()
     pg_lyr.ResetReading()  # to close implicit transaction
 
 
@@ -915,7 +912,6 @@ def test_ogr_pg_10(pg_ds):
     pg_lyr.SetAttributeFilter(None)
 
     fid = feat.GetFID()
-    feat.Destroy()
 
     assert pg_lyr.DeleteFeature(fid) == 0, "DeleteFeature() method failed."
 
@@ -1173,7 +1169,6 @@ def test_ogr_pg_20(pg_ds):
         geom = feat.GetGeometryRef()
         assert geom is not None, "did not get geometry, expected %s" % geoms[1]
         wkt = geom.ExportToIsoWkt()
-        feat.Destroy()
         feat = None
 
         assert wkt == geoms[1], "WKT do not match: expected %s, got %s" % (
@@ -1195,23 +1190,17 @@ def test_ogr_pg_21(pg_ds):
     layer = pg_ds.ExecuteSQL("SELECT wkb_geometry FROM testgeom")
     assert layer is not None, "did not get testgeom layer"
 
-    feat = layer.GetNextFeature()
-    while feat is not None:
+    for feat in layer:
         geom = feat.GetGeometryRef()
         if (
             ogr.GT_HasZ(geom.GetGeometryType()) == 0
             or ogr.GT_HasM(geom.GetGeometryType()) == 0
         ):
-            feat.Destroy()
             feat = None
             pg_ds.ReleaseResultSet(layer)
             layer = None
             pytest.fail("expected feature with type >3000")
 
-        feat.Destroy()
-        feat = layer.GetNextFeature()
-
-    feat = None
     pg_ds.ReleaseResultSet(layer)
     layer = None
 
@@ -1259,7 +1248,6 @@ def test_ogr_pg_21_subgeoms(pg_ds):
                 ), "did not get the expected subgeometry, expected %s" % (
                     subgeom_TIN[j]
                 )
-        feat.Destroy()
         feat = None
 
 
@@ -1772,7 +1760,6 @@ def test_ogr_pg_33(pg_ds):
     # eacute in UTF8 : 0xc3 0xa9
     dst_feat.SetField("SHORTNAME", "\xc3\xa9")
     pg_lyr.CreateFeature(dst_feat)
-    dst_feat.Destroy()
 
 
 ###############################################################################
@@ -2412,7 +2399,6 @@ def test_ogr_pg_47(pg_ds, pg_postgis_version, pg_postgis_schema):
     )
     field_defn = ogr.FieldDefn("test_string", ogr.OFTString)
     lyr.CreateField(field_defn)
-    field_defn.Destroy()
 
     feature_defn = lyr.GetLayerDefn()
 

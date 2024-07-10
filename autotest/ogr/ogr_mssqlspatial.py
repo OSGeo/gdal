@@ -260,9 +260,6 @@ def test_ogr_mssqlspatial_4(mssql_ds, mssql_has_z_m):
 
         ogrtest.check_feature_geometry(feat_read, geom)
 
-        feat_read.Destroy()
-
-    dst_feat.Destroy()
     mssqlspatial_lyr.ResetReading()  # to close implicit transaction
 
 

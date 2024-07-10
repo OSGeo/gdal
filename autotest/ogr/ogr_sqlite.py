@@ -1457,7 +1457,7 @@ def test_ogr_spatialite_2(sqlite_test_db):
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometry(geom)
     lyr.CreateFeature(dst_feat)
-    dst_feat.Destroy()
+    dst_feat = None
 
     lyr.CommitTransaction()
 
@@ -1577,7 +1577,6 @@ def test_ogr_spatialite_2(sqlite_test_db):
 
     geom = ogr.CreateGeometryFromWkt("POLYGON((2 2,2 8,8 8,8 2,2 2))")
     lyr.SetSpatialFilter(geom)
-    geom.Destroy()
 
     assert lyr.TestCapability(ogr.OLCFastFeatureCount) is not True
     assert lyr.TestCapability(ogr.OLCFastSpatialFilter) is not True
@@ -1638,7 +1637,6 @@ def test_ogr_spatialite_4(sqlite_test_db):
         feat = lyr.GetNextFeature()
         geom = feat.GetGeometryRef()
         assert geom is not None and geom.ExportToWkt() == "POINT (0 1)"
-        feat.Destroy()
 
     # Check that triggers and index are restored (#3474)
     with sqlite_test_db.ExecuteSQL("SELECT * FROM sqlite_master") as lyr:
@@ -1656,7 +1654,6 @@ def test_ogr_spatialite_4(sqlite_test_db):
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(100 -100)"))
     lyr.CreateFeature(feat)
-    feat.Destroy()
 
     # Check that the trigger is functional (#3474).
     with sqlite_test_db.ExecuteSQL("SELECT * FROM idx_geomspatialite_GEOMETRY") as lyr:
