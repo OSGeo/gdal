@@ -10,8 +10,10 @@ outfile = sys.argv[3]
 
 res = []
 
+excluded_filenames = ["driver_summary", "wms_wmts_cache"]
+
 for filename in glob.glob(os.path.join(dirname, "*.rst")):
-    if "driver_summary" in filename:
+    if os.path.basename(filename)[0:-4] in excluded_filenames:
         continue
     with open(filename, "rt", encoding="utf-8") as f:
         shortnames = []
@@ -27,7 +29,7 @@ for filename in glob.glob(os.path.join(dirname, "*.rst")):
         for l in f.readlines():
             l = l.rstrip("\n")
             if not link:
-                assert l.startswith(".. _") and l.endswith(":")
+                assert l.startswith(".. _") and l.endswith(":"), (filename, l)
                 link = l[len(".. _") : -1]
             elif l.startswith(".. shortname:: "):
                 shortname = l[len(".. shortname:: ") :]
