@@ -2204,7 +2204,7 @@ def test_vrt_read_compute_statistics_mosaic_optimization(
     src_ds2 = gdal.Translate("", src_ds, options="-of MEM -srcwin 8 0 12 20")
     vrt_ds = gdal.BuildVRT("", [src_ds1, src_ds2])
 
-    with gdaltest.config_options({"GDAL_NUM_THREADS": "2"} if use_threads else {}):
+    with gdaltest.config_options({"VRT_NUM_THREADS": "2" if use_threads else "0"}):
         assert vrt_ds.GetRasterBand(1).ComputeRasterMinMax(
             approx_ok
         ) == src_ds.GetRasterBand(1).ComputeRasterMinMax(approx_ok)

@@ -1709,62 +1709,59 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         };
 
         CPLWorkerThreadPool *poThreadPool = nullptr;
-        const char *pszValue = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-        if (pszValue)
+        int nThreads =
+            nSources > 1
+                ? VRTDataset::GetNumThreads(dynamic_cast<VRTDataset *>(poDS))
+                : 0;
+        if (nThreads > 1024)
+            nThreads = 1024;  // to please Coverity
+        if (nThreads > 1)
         {
-            int nThreads =
-                EQUAL(pszValue, "ALL_CPUS") ? CPLGetNumCPUs() : atoi(pszValue);
-            if (nThreads > 1024)
-                nThreads = 1024;  // to please Coverity
-            if (nThreads > 1)
+            // Check that all sources refer to different datasets
+            // before allowing multithreaded access
+            // If the datasets belong to the MEM driver, check GDALDataset*
+            // pointer values. Otherwise use dataset name.
+            std::set<std::string> oSetDatasetNames;
+            std::set<GDALDataset *> oSetDatasetPointers;
+            for (int i = 0; i < nSources; ++i)
             {
-                // Check that all sources refer to different datasets
-                // before allowing multithreaded access
-                // If the datasets belong to the MEM driver, check GDALDataset*
-                // pointer values. Otherwise use dataset name.
-                std::set<std::string> oSetDatasetNames;
-                std::set<GDALDataset *> oSetDatasetPointers;
-                for (int i = 0; i < nSources; ++i)
+                auto poSimpleSource =
+                    cpl::down_cast<VRTSimpleSource *>(papoSources[i]);
+                assert(poSimpleSource);
+                auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
+                assert(poSimpleSourceBand);
+                auto poSourceDataset = poSimpleSourceBand->GetDataset();
+                if (poSourceDataset == nullptr)
                 {
-                    auto poSimpleSource =
-                        cpl::down_cast<VRTSimpleSource *>(papoSources[i]);
-                    assert(poSimpleSource);
-                    auto poSimpleSourceBand = poSimpleSource->GetRasterBand();
-                    assert(poSimpleSourceBand);
-                    auto poSourceDataset = poSimpleSourceBand->GetDataset();
-                    if (poSourceDataset == nullptr)
+                    nThreads = 0;
+                    break;
+                }
+                auto poDriver = poSourceDataset->GetDriver();
+                if (poDriver && EQUAL(poDriver->GetDescription(), "MEM"))
+                {
+                    if (oSetDatasetPointers.find(poSourceDataset) !=
+                        oSetDatasetPointers.end())
                     {
                         nThreads = 0;
                         break;
                     }
-                    auto poDriver = poSourceDataset->GetDriver();
-                    if (poDriver && EQUAL(poDriver->GetDescription(), "MEM"))
-                    {
-                        if (oSetDatasetPointers.find(poSourceDataset) !=
-                            oSetDatasetPointers.end())
-                        {
-                            nThreads = 0;
-                            break;
-                        }
-                        oSetDatasetPointers.insert(poSourceDataset);
-                    }
-                    else
-                    {
-                        if (oSetDatasetNames.find(
-                                poSourceDataset->GetDescription()) !=
-                            oSetDatasetNames.end())
-                        {
-                            nThreads = 0;
-                            break;
-                        }
-                        oSetDatasetNames.insert(
-                            poSourceDataset->GetDescription());
-                    }
+                    oSetDatasetPointers.insert(poSourceDataset);
                 }
-                if (nThreads > 1)
+                else
                 {
-                    poThreadPool = GDALGetGlobalThreadPool(nThreads);
+                    if (oSetDatasetNames.find(
+                            poSourceDataset->GetDescription()) !=
+                        oSetDatasetNames.end())
+                    {
+                        nThreads = 0;
+                        break;
+                    }
+                    oSetDatasetNames.insert(poSourceDataset->GetDescription());
                 }
+            }
+            if (nThreads > 1)
+            {
+                poThreadPool = GDALGetGlobalThreadPool(nThreads);
             }
         }
 
