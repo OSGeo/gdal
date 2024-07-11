@@ -2209,6 +2209,18 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 {
+    if (nBands == 1 && nBandCount == 1)
+    {
+        VRTSourcedRasterBand *poBand =
+            dynamic_cast<VRTSourcedRasterBand *>(papoBands[0]);
+        if (poBand)
+        {
+            return poBand->IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize, eBufType,
+                                     nPixelSpace, nLineSpace, psExtraArg);
+        }
+    }
+
     bool bLocalCompatibleForDatasetIO =
         CPL_TO_BOOL(CheckCompatibleForDatasetIO());
     if (bLocalCompatibleForDatasetIO && eRWFlag == GF_Read &&
