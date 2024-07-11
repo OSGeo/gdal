@@ -150,6 +150,25 @@ VRTSimpleSource::~VRTSimpleSource()
 }
 
 /************************************************************************/
+/*                           GetTypeStatic()                            */
+/************************************************************************/
+
+const char *VRTSimpleSource::GetTypeStatic()
+{
+    static const char *TYPE = "SimpleSource";
+    return TYPE;
+}
+
+/************************************************************************/
+/*                            GetType()                                 */
+/************************************************************************/
+
+const char *VRTSimpleSource::GetType() const
+{
+    return GetTypeStatic();
+}
+
+/************************************************************************/
 /*                           FlushCache()                               */
 /************************************************************************/
 
@@ -297,7 +316,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML(const char *pszVRTPath)
 
 {
     CPLXMLNode *const psSrc =
-        CPLCreateXMLNode(nullptr, CXT_Element, "SimpleSource");
+        CPLCreateXMLNode(nullptr, CXT_Element, GetTypeStatic());
 
     if (!m_osResampling.empty())
     {
@@ -1478,7 +1497,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     GSpacing nLineSpace, GSpacing nBandSpace,
     GDALRasterIOExtraArg *psExtraArgIn)
 {
-    if (!EQUAL(GetType(), "SimpleSource"))
+    if (GetType() != VRTSimpleSource::GetTypeStatic())
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "DatasetRasterIO() not implemented for %s", GetType());
@@ -1649,6 +1668,25 @@ VRTAveragedSource::VRTAveragedSource()
 }
 
 /************************************************************************/
+/*                           GetTypeStatic()                            */
+/************************************************************************/
+
+const char *VRTAveragedSource::GetTypeStatic()
+{
+    static const char *TYPE = "AveragedSource";
+    return TYPE;
+}
+
+/************************************************************************/
+/*                            GetType()                                 */
+/************************************************************************/
+
+const char *VRTAveragedSource::GetType() const
+{
+    return GetTypeStatic();
+}
+
+/************************************************************************/
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
@@ -1661,7 +1699,7 @@ CPLXMLNode *VRTAveragedSource::SerializeToXML(const char *pszVRTPath)
         return nullptr;
 
     CPLFree(psSrc->pszValue);
-    psSrc->pszValue = CPLStrdup("AveragedSource");
+    psSrc->pszValue = CPLStrdup(GetTypeStatic());
 
     return psSrc;
 }
@@ -1976,6 +2014,25 @@ CPLErr VRTNoDataFromMaskSource::XMLInit(
 }
 
 /************************************************************************/
+/*                           GetTypeStatic()                            */
+/************************************************************************/
+
+const char *VRTNoDataFromMaskSource::GetTypeStatic()
+{
+    static const char *TYPE = "NoDataFromMaskSource";
+    return TYPE;
+}
+
+/************************************************************************/
+/*                            GetType()                                 */
+/************************************************************************/
+
+const char *VRTNoDataFromMaskSource::GetType() const
+{
+    return GetTypeStatic();
+}
+
+/************************************************************************/
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
@@ -1988,7 +2045,7 @@ CPLXMLNode *VRTNoDataFromMaskSource::SerializeToXML(const char *pszVRTPath)
         return nullptr;
 
     CPLFree(psSrc->pszValue);
-    psSrc->pszValue = CPLStrdup("NoDataFromMaskSource");
+    psSrc->pszValue = CPLStrdup(GetTypeStatic());
 
     if (m_bNoDataSet)
     {
@@ -2401,6 +2458,25 @@ VRTComplexSource::VRTComplexSource(const VRTComplexSource *poSrcSource,
 }
 
 /************************************************************************/
+/*                           GetTypeStatic()                            */
+/************************************************************************/
+
+const char *VRTComplexSource::GetTypeStatic()
+{
+    static const char *TYPE = "ComplexSource";
+    return TYPE;
+}
+
+/************************************************************************/
+/*                            GetType()                                 */
+/************************************************************************/
+
+const char *VRTComplexSource::GetType() const
+{
+    return GetTypeStatic();
+}
+
+/************************************************************************/
 /*                           SetNoDataValue()                           */
 /************************************************************************/
 
@@ -2448,7 +2524,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML(const char *pszVRTPath)
         return nullptr;
 
     CPLFree(psSrc->pszValue);
-    psSrc->pszValue = CPLStrdup("ComplexSource");
+    psSrc->pszValue = CPLStrdup(GetTypeStatic());
 
     if ((m_nProcessingFlags & PROCESSING_FLAG_USE_MASK_BAND) != 0)
     {
@@ -3517,6 +3593,16 @@ VRTFuncSource::~VRTFuncSource()
 }
 
 /************************************************************************/
+/*                            GetType()                                 */
+/************************************************************************/
+
+const char *VRTFuncSource::GetType() const
+{
+    static const char *TYPE = "FuncSource";
+    return TYPE;
+}
+
+/************************************************************************/
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
@@ -3604,22 +3690,22 @@ VRTParseCoreSources(const CPLXMLNode *psChild, const char *pszVRTPath,
 {
     VRTSource *poSource = nullptr;
 
-    if (EQUAL(psChild->pszValue, "AveragedSource") ||
-        (EQUAL(psChild->pszValue, "SimpleSource") &&
+    if (EQUAL(psChild->pszValue, VRTAveragedSource::GetTypeStatic()) ||
+        (EQUAL(psChild->pszValue, VRTSimpleSource::GetTypeStatic()) &&
          STARTS_WITH_CI(CPLGetXMLValue(psChild, "Resampling", "Nearest"),
                         "Aver")))
     {
         poSource = new VRTAveragedSource();
     }
-    else if (EQUAL(psChild->pszValue, "SimpleSource"))
+    else if (EQUAL(psChild->pszValue, VRTSimpleSource::GetTypeStatic()))
     {
         poSource = new VRTSimpleSource();
     }
-    else if (EQUAL(psChild->pszValue, "ComplexSource"))
+    else if (EQUAL(psChild->pszValue, VRTComplexSource::GetTypeStatic()))
     {
         poSource = new VRTComplexSource();
     }
-    else if (EQUAL(psChild->pszValue, "NoDataFromMaskSource"))
+    else if (EQUAL(psChild->pszValue, VRTNoDataFromMaskSource::GetTypeStatic()))
     {
         poSource = new VRTNoDataFromMaskSource();
     }

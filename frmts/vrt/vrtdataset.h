@@ -165,10 +165,18 @@ class CPL_DLL VRTSource
     virtual void GetFileList(char ***ppapszFileList, int *pnSize,
                              int *pnMaxSize, CPLHashSet *hSetFiles);
 
-    virtual int IsSimpleSource()
+    /** Returns whether this instance can be cast to a VRTSimpleSource
+     * (and its subclasses).
+     */
+    virtual bool IsSimpleSource() const
     {
-        return FALSE;
+        return false;
     }
+
+    /** Returns a string with the VRTSource class type.
+     * This method must be implemented in all subclasses
+     */
+    virtual const char *GetType() const = 0;
 
     virtual CPLErr FlushCache(bool /*bAtClosing*/)
     {
@@ -1353,15 +1361,17 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     virtual void GetFileList(char ***ppapszFileList, int *pnSize,
                              int *pnMaxSize, CPLHashSet *hSetFiles) override;
 
-    virtual int IsSimpleSource() override
+    bool IsSimpleSource() const override
     {
-        return TRUE;
+        return true;
     }
 
-    virtual const char *GetType()
-    {
-        return "SimpleSource";
-    }
+    /** Returns the same value as GetType() called on objects that are exactly
+     * instances of VRTSimpleSource.
+     */
+    static const char *GetTypeStatic();
+
+    const char *GetType() const override;
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
@@ -1415,10 +1425,12 @@ class VRTAveragedSource final : public VRTSimpleSource
 
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 
-    virtual const char *GetType() override
-    {
-        return "AveragedSource";
-    }
+    /** Returns the same value as GetType() called on objects that are exactly
+     * instances of VRTAveragedSource.
+     */
+    static const char *GetTypeStatic();
+
+    const char *GetType() const override;
 };
 
 /************************************************************************/
@@ -1460,10 +1472,12 @@ class VRTNoDataFromMaskSource final : public VRTSimpleSource
                            std::map<CPLString, GDALDataset *> &) override;
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 
-    virtual const char *GetType() override
-    {
-        return "VRTNoDataFromMaskSource";
-    }
+    /** Returns the same value as GetType() called on objects that are exactly
+     * instances of VRTNoDataFromMaskSource.
+     */
+    static const char *GetTypeStatic();
+
+    const char *GetType() const override;
 };
 
 /************************************************************************/
@@ -1552,10 +1566,12 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
     virtual CPLErr XMLInit(const CPLXMLNode *, const char *,
                            std::map<CPLString, GDALDataset *> &) override;
 
-    virtual const char *GetType() override
-    {
-        return "ComplexSource";
-    }
+    /** Returns the same value as GetType() called on objects that are exactly
+     * instances of VRTComplexSource.
+     */
+    static const char *GetTypeStatic();
+
+    const char *GetType() const override;
 
     bool AreValuesUnchanged() const;
 
@@ -1598,6 +1614,8 @@ class VRTFilteredSource CPL_NON_FINAL : public VRTComplexSource
     VRTFilteredSource();
     virtual ~VRTFilteredSource();
 
+    const char *GetType() const override = 0;
+
     void SetExtraEdgePixels(int);
     void SetFilteringDataTypesSupported(int, GDALDataType *);
 
@@ -1630,6 +1648,8 @@ class VRTKernelFilteredSource CPL_NON_FINAL : public VRTFilteredSource
   public:
     VRTKernelFilteredSource();
 
+    const char *GetType() const override;
+
     virtual CPLErr XMLInit(const CPLXMLNode *psTree, const char *,
                            std::map<CPLString, GDALDataset *> &) override;
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
@@ -1653,6 +1673,8 @@ class VRTAverageFilteredSource final : public VRTKernelFilteredSource
   public:
     explicit VRTAverageFilteredSource(int nKernelSize);
     virtual ~VRTAverageFilteredSource();
+
+    const char *GetType() const override;
 
     virtual CPLErr XMLInit(const CPLXMLNode *psTree, const char *,
                            std::map<CPLString, GDALDataset *> &) override;
@@ -1692,6 +1714,8 @@ class VRTFuncSource final : public VRTSource
                                 GUIntBig *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc pfnProgress,
                                 void *pProgressData) override;
+
+    const char *GetType() const override;
 
     VRTImageReadFunc pfnReadFunc;
     void *pCBData;

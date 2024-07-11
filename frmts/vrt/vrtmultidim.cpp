@@ -2626,6 +2626,11 @@ class VRTArraySource : public VRTSource
             bIncludeOutOfRange, bApproxOK, pfnProgress, pProgressData);
     }
 
+    const char *GetType() const override
+    {
+        return "ArraySource";
+    }
+
     CPLErr
     XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
             std::map<CPLString, GDALDataset *> &oMapSharedSources) override;

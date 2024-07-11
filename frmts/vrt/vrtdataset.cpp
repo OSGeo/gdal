@@ -2030,7 +2030,7 @@ int VRTDataset::CheckCompatibleForDatasetIO()
 
                 VRTSimpleSource *poSource =
                     static_cast<VRTSimpleSource *>(papoSources[iSource]);
-                if (!EQUAL(poSource->GetType(), "SimpleSource"))
+                if (poSource->GetType() != VRTSimpleSource::GetTypeStatic())
                     return FALSE;
 
                 if (poSource->m_nBand != iBand + 1 ||
@@ -2054,7 +2054,7 @@ int VRTDataset::CheckCompatibleForDatasetIO()
 
                 VRTSimpleSource *poSource = static_cast<VRTSimpleSource *>(
                     poBand->papoSources[iSource]);
-                if (!EQUAL(poSource->GetType(), "SimpleSource"))
+                if (poSource->GetType() != VRTSimpleSource::GetTypeStatic())
                     return FALSE;
                 if (poSource->m_nBand != iBand + 1 ||
                     poSource->m_bGetMaskBand || poSource->m_osSrcDSName.empty())
@@ -2386,9 +2386,12 @@ static bool CheckBandForOverview(GDALRasterBand *poBand,
 
     VRTSimpleSource *poSource =
         cpl::down_cast<VRTSimpleSource *>(poVRTBand->papoSources[0]);
-    if (!EQUAL(poSource->GetType(), "SimpleSource") &&
-        !EQUAL(poSource->GetType(), "ComplexSource"))
+    const char *pszType = poSource->GetType();
+    if (pszType != VRTSimpleSource::GetTypeStatic() &&
+        pszType != VRTComplexSource::GetTypeStatic())
+    {
         return false;
+    }
     GDALRasterBand *poSrcBand = poBand->GetBand() == 0
                                     ? poSource->GetMaskBandMainBand()
                                     : poSource->GetRasterBand();
@@ -2515,12 +2518,13 @@ void VRTDataset::BuildVirtualOverviews()
             VRTSimpleSource *poSrcSource =
                 cpl::down_cast<VRTSimpleSource *>(poVRTBand->papoSources[0]);
             VRTSimpleSource *poNewSource = nullptr;
-            if (EQUAL(poSrcSource->GetType(), "SimpleSource"))
+            const char *pszType = poSrcSource->GetType();
+            if (pszType == VRTSimpleSource::GetTypeStatic())
             {
                 poNewSource =
                     new VRTSimpleSource(poSrcSource, dfXRatio, dfYRatio);
             }
-            else if (EQUAL(poSrcSource->GetType(), "ComplexSource"))
+            else if (pszType == VRTComplexSource::GetTypeStatic())
             {
                 poNewSource = new VRTComplexSource(
                     cpl::down_cast<VRTComplexSource *>(poSrcSource), dfXRatio,

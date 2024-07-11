@@ -426,6 +426,16 @@ VRTKernelFilteredSource::VRTKernelFilteredSource()
 }
 
 /************************************************************************/
+/*                            GetType()                                 */
+/************************************************************************/
+
+const char *VRTKernelFilteredSource::GetType() const
+{
+    static const char *TYPE = "KernelFilteredSource";
+    return TYPE;
+}
+
+/************************************************************************/
 /*                           SetNormalized()                            */
 /************************************************************************/
 

@@ -816,11 +816,16 @@ bool VRTSourcedRasterBand::
         }
 
         auto poSimpleSource = cpl::down_cast<VRTSimpleSource *>(papoSources[i]);
-        auto poComplexSource = dynamic_cast<VRTComplexSource *>(papoSources[i]);
-        if (poComplexSource)
+        const char *pszType = poSimpleSource->GetType();
+        if (pszType == VRTSimpleSource::GetTypeStatic())
         {
-            if (!EQUAL(poComplexSource->GetType(), "ComplexSource") ||
-                !poComplexSource->AreValuesUnchanged())
+            // ok
+        }
+        else if (pszType == VRTComplexSource::GetTypeStatic())
+        {
+            auto poComplexSource =
+                cpl::down_cast<VRTComplexSource *>(papoSources[i]);
+            if (!poComplexSource->AreValuesUnchanged())
             {
                 bRet = false;
                 break;
@@ -828,11 +833,8 @@ bool VRTSourcedRasterBand::
         }
         else
         {
-            if (!EQUAL(poSimpleSource->GetType(), "SimpleSource"))
-            {
-                bRet = false;
-                break;
-            }
+            bRet = false;
+            break;
         }
 
         if (!bAllowMaxValAdjustment && poSimpleSource->NeedMaxValAdjustment())
@@ -1936,7 +1938,7 @@ bool VRTSourcedRasterBand::SkipBufferInitialization()
         return false;
     }
     VRTSimpleSource *poSS = static_cast<VRTSimpleSource *>(papoSources[0]);
-    if (strcmp(poSS->GetType(), "SimpleSource") == 0)
+    if (poSS->GetType() == VRTSimpleSource::GetTypeStatic())
     {
         auto l_poBand = poSS->GetRasterBand();
         if (l_poBand != nullptr && poSS->m_dfSrcXOff >= 0.0 &&
