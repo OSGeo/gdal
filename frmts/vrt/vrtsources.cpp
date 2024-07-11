@@ -1304,6 +1304,11 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     psExtraArg->dfYOff = dfReqYOff;
     psExtraArg->dfXSize = dfReqXSize;
     psExtraArg->dfYSize = dfReqYSize;
+    if (psExtraArgIn)
+    {
+        psExtraArg->pfnProgress = psExtraArgIn->pfnProgress;
+        psExtraArg->pProgressData = psExtraArgIn->pProgressData;
+    }
 
     GByte *pabyOut = static_cast<unsigned char *>(pData) +
                      nOutXOff * nPixelSpace +
@@ -1364,6 +1369,9 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
             }
         }
     }
+
+    if (psExtraArg->pfnProgress)
+        psExtraArg->pfnProgress(1.0, "", psExtraArg->pProgressData);
 
     return eErr;
 }
@@ -1577,6 +1585,11 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     psExtraArg->dfYOff = dfReqYOff;
     psExtraArg->dfXSize = dfReqXSize;
     psExtraArg->dfYSize = dfReqYSize;
+    if (psExtraArgIn)
+    {
+        psExtraArg->pfnProgress = psExtraArgIn->pfnProgress;
+        psExtraArg->pProgressData = psExtraArgIn->pProgressData;
+    }
 
     GByte *pabyOut = static_cast<unsigned char *>(pData) +
                      nOutXOff * nPixelSpace +
@@ -1651,6 +1664,9 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
             }
         }
     }
+
+    if (psExtraArg->pfnProgress)
+        psExtraArg->pfnProgress(1.0, "", psExtraArg->pProgressData);
 
     return eErr;
 }
@@ -1819,6 +1835,11 @@ CPLErr VRTAveragedSource::RasterIO(GDALDataType /*eVRTBandDataType*/, int nXOff,
     psExtraArg->dfYOff = dfReqYOff;
     psExtraArg->dfXSize = dfReqXSize;
     psExtraArg->dfYSize = dfReqYSize;
+    if (psExtraArgIn)
+    {
+        psExtraArg->pfnProgress = psExtraArgIn->pfnProgress;
+        psExtraArg->pProgressData = psExtraArgIn->pProgressData;
+    }
 
     const CPLErr eErr = l_band->RasterIO(
         GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize, pafSrc, nReqXSize,
@@ -1933,6 +1954,9 @@ CPLErr VRTAveragedSource::RasterIO(GDALDataType /*eVRTBandDataType*/, int nXOff,
     }
 
     VSIFree(pafSrc);
+
+    if (psExtraArg->pfnProgress)
+        psExtraArg->pfnProgress(1.0, "", psExtraArg->pProgressData);
 
     return CE_None;
 }
@@ -2287,6 +2311,11 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
     psExtraArg->dfYOff = dfReqYOff;
     psExtraArg->dfXSize = dfReqXSize;
     psExtraArg->dfYSize = dfReqYSize;
+    if (psExtraArgIn)
+    {
+        psExtraArg->pfnProgress = psExtraArgIn->pfnProgress;
+        psExtraArg->pProgressData = psExtraArgIn->pProgressData;
+    }
 
     if (l_band->RasterIO(GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                          pabyWrkBuffer, nOutXSize, nOutYSize, eSrcBandDT, 0, 0,
@@ -2402,6 +2431,9 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
             }
         }
     }
+
+    if (psExtraArg->pfnProgress)
+        psExtraArg->pfnProgress(1.0, "", psExtraArg->pProgressData);
 
     return CE_None;
 }
@@ -2926,6 +2958,11 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     psExtraArg->dfYOff = dfReqYOff;
     psExtraArg->dfXSize = dfReqXSize;
     psExtraArg->dfYSize = dfReqYSize;
+    if (psExtraArgIn)
+    {
+        psExtraArg->pfnProgress = psExtraArgIn->pfnProgress;
+        psExtraArg->pProgressData = psExtraArgIn->pProgressData;
+    }
 
     GByte *const pabyOut = static_cast<GByte *>(pData) +
                            nPixelSpace * nOutXOff +
@@ -3003,6 +3040,9 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
             nLineSpace, psExtraArg, bIsComplex ? GDT_CFloat32 : GDT_Float32,
             oWorkingState);
     }
+
+    if (psExtraArg->pfnProgress)
+        psExtraArg->pfnProgress(1.0, "", psExtraArg->pProgressData);
 
     return eErr;
 }

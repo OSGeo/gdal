@@ -2288,12 +2288,17 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             const int nSavedSources = poBand->nSources;
             poBand->nSources = 0;
 
+            GDALProgressFunc pfnProgressGlobal = psExtraArg->pfnProgress;
+            psExtraArg->pfnProgress = nullptr;
+
             GByte *pabyBandData =
                 static_cast<GByte *>(pData) + iBandIndex * nBandSpace;
 
             poBand->IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
                               pabyBandData, nBufXSize, nBufYSize, eBufType,
                               nPixelSpace, nLineSpace, psExtraArg);
+
+            psExtraArg->pfnProgress = pfnProgressGlobal;
 
             poBand->nSources = nSavedSources;
         }
