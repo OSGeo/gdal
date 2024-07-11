@@ -887,10 +887,7 @@ bool VRTSourcedRasterBand::
         sBounds.maxy = nOutYOff + nOutYSize - EPSILON;
 
         // Check that the new source doesn't overlap an existing one.
-        int nFeatureCount = 0;
-        void **pahRet = CPLQuadTreeSearch(hQuadTree, &sBounds, &nFeatureCount);
-        CPLFree(pahRet);
-        if (nFeatureCount != 0)
+        if (CPLQuadTreeHasMatch(hQuadTree, &sBounds))
         {
             bRet = false;
             break;
