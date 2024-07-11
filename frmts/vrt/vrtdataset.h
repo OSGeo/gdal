@@ -1353,7 +1353,9 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     void SetSrcMaskBand(GDALRasterBand *);
     void SetSrcWindow(double, double, double, double);
     void SetDstWindow(double, double, double, double);
-    void GetDstWindow(double &, double &, double &, double &);
+    void GetDstWindow(double &, double &, double &, double &) const;
+    bool DstWindowIntersects(double dfXOff, double dfYOff, double dfXSize,
+                             double dfYSize) const;
 
     const std::string &GetSourceDatasetName() const
     {

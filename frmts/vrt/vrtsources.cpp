@@ -292,12 +292,24 @@ void VRTSimpleSource::SetDstWindow(double dfNewXOff, double dfNewYOff,
 /************************************************************************/
 
 void VRTSimpleSource::GetDstWindow(double &dfDstXOff, double &dfDstYOff,
-                                   double &dfDstXSize, double &dfDstYSize)
+                                   double &dfDstXSize, double &dfDstYSize) const
 {
     dfDstXOff = m_dfDstXOff;
     dfDstYOff = m_dfDstYOff;
     dfDstXSize = m_dfDstXSize;
     dfDstYSize = m_dfDstYSize;
+}
+
+/************************************************************************/
+/*                        DstWindowIntersects()                         */
+/************************************************************************/
+
+bool VRTSimpleSource::DstWindowIntersects(double dfXOff, double dfYOff,
+                                          double dfXSize, double dfYSize) const
+{
+    return IsDstWinSet() && m_dfDstXOff + m_dfDstXSize > dfXOff &&
+           m_dfDstYOff + m_dfDstYSize > dfYOff &&
+           m_dfDstXOff < dfXOff + dfXSize && m_dfDstYOff < dfYOff + dfYSize;
 }
 
 /************************************************************************/
