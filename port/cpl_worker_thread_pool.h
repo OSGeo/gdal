@@ -144,6 +144,7 @@ class CPL_DLL CPLJobQueue
 
     bool SubmitJob(CPLThreadFunc pfnFunc, void *pData);
     void WaitCompletion(int nMaxRemainingJobs = 0);
+    bool WaitEvent();
 };
 
 #endif  // CPL_WORKER_THREAD_POOL_H_INCLUDED_
