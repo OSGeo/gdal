@@ -33,6 +33,7 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "gdal_thread_pool.h"
 #include "gdal_utils.h"
 
 #include <algorithm>
@@ -215,6 +216,22 @@ char **VRTDataset::GetMetadata(const char *pszDomain)
     }
 
     return GDALDataset::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *VRTDataset::GetMetadataItem(const char *pszName,
+                                        const char *pszDomain)
+
+{
+    if (pszName && pszDomain && EQUAL(pszDomain, "__DEBUG__"))
+    {
+        if (EQUAL(pszName, "MULTI_THREADED_RASTERIO_LAST_USED"))
+            return m_bMultiThreadedRasterIOLastUsed ? "1" : "0";
+    }
+    return GDALDataset::GetMetadataItem(pszName, pszDomain);
 }
 
 /*! @endcond */
@@ -2198,6 +2215,29 @@ CPLErr VRTDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 }
 
 /************************************************************************/
+/*                           GetNumThreads()                            */
+/************************************************************************/
+
+/* static */ int VRTDataset::GetNumThreads(GDALDataset *poDS)
+{
+    const char *pszNumThreads = nullptr;
+    if (poDS)
+        pszNumThreads = CSLFetchNameValueDef(poDS->GetOpenOptions(),
+                                             "NUM_THREADS", nullptr);
+    if (!pszNumThreads)
+        pszNumThreads = CPLGetConfigOption("VRT_NUM_THREADS", nullptr);
+    if (!pszNumThreads)
+        pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
+    if (EQUAL(pszNumThreads, "0") || EQUAL(pszNumThreads, "1"))
+        return atoi(pszNumThreads);
+    const int nMaxPoolSize = GDALGetMaxDatasetPoolSize();
+    const int nLimit = std::min(CPLGetNumCPUs(), nMaxPoolSize);
+    if (EQUAL(pszNumThreads, "ALL_CPUS"))
+        return nLimit;
+    return std::min(atoi(pszNumThreads), nLimit);
+}
+
+/************************************************************************/
 /*                              IRasterIO()                             */
 /************************************************************************/
 
@@ -2209,6 +2249,8 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 {
+    m_bMultiThreadedRasterIOLastUsed = false;
+
     if (nBands == 1 && nBandCount == 1)
     {
         VRTSourcedRasterBand *poBand =
@@ -2304,35 +2346,139 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
 
         CPLErr eErr = CE_None;
-        GDALProgressFunc pfnProgressGlobal = psExtraArg->pfnProgress;
-        void *pProgressDataGlobal = psExtraArg->pProgressData;
 
         // Use the last band, because when sources reference a GDALProxyDataset,
         // they don't necessary instantiate all underlying rasterbands.
         VRTSourcedRasterBand *poBand =
             static_cast<VRTSourcedRasterBand *>(papoBands[nBands - 1]);
-        for (int iSource = 0; eErr == CE_None && iSource < poBand->nSources;
-             iSource++)
+
+        double dfXOff = nXOff;
+        double dfYOff = nYOff;
+        double dfXSize = nXSize;
+        double dfYSize = nYSize;
+        if (psExtraArg->bFloatingPointWindowValidity)
         {
-            psExtraArg->pfnProgress = GDALScaledProgress;
-            psExtraArg->pProgressData = GDALCreateScaledProgress(
-                1.0 * iSource / poBand->nSources,
-                1.0 * (iSource + 1) / poBand->nSources, pfnProgressGlobal,
-                pProgressDataGlobal);
-
-            VRTSimpleSource *poSource =
-                static_cast<VRTSimpleSource *>(poBand->papoSources[iSource]);
-
-            eErr = poSource->DatasetRasterIO(
-                poBand->GetRasterDataType(), nXOff, nYOff, nXSize, nYSize,
-                pData, nBufXSize, nBufYSize, eBufType, nBandCount, panBandMap,
-                nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
-
-            GDALDestroyScaledProgress(psExtraArg->pProgressData);
+            dfXOff = psExtraArg->dfXOff;
+            dfYOff = psExtraArg->dfYOff;
+            dfXSize = psExtraArg->dfXSize;
+            dfYSize = psExtraArg->dfYSize;
         }
 
-        psExtraArg->pfnProgress = pfnProgressGlobal;
-        psExtraArg->pProgressData = pProgressDataGlobal;
+        int nContributingSources = 0;
+        int nMaxThreads = 0;
+        constexpr int MINIMUM_PIXEL_COUNT_FOR_THREADED_IO = 1000 * 1000;
+        if ((static_cast<int64_t>(nBufXSize) * nBufYSize >=
+                 MINIMUM_PIXEL_COUNT_FOR_THREADED_IO ||
+             static_cast<int64_t>(nXSize) * nYSize >=
+                 MINIMUM_PIXEL_COUNT_FOR_THREADED_IO) &&
+            poBand->CanMultiThreadRasterIO(dfXOff, dfYOff, dfXSize, dfYSize,
+                                           nContributingSources) &&
+            nContributingSources > 1 &&
+            (nMaxThreads = VRTDataset::GetNumThreads(this)) > 1)
+        {
+            m_bMultiThreadedRasterIOLastUsed = true;
+            m_oMapSharedSources.InitMutex();
+
+            std::atomic<bool> bSuccess = true;
+            CPLWorkerThreadPool *psThreadPool = GDALGetGlobalThreadPool(
+                std::min(nContributingSources, nMaxThreads));
+
+            CPLDebugOnly(
+                "VRT",
+                "IRasterIO(): use optimized "
+                "multi-threaded code path for mosaic. "
+                "Using %d threads",
+                std::min(nContributingSources, psThreadPool->GetThreadCount()));
+
+            auto oQueue = psThreadPool->CreateJobQueue();
+            std::atomic<int> nCompletedJobs = 0;
+            for (int iSource = 0; iSource < poBand->nSources; iSource++)
+            {
+                auto poSource = poBand->papoSources[iSource];
+                if (!poSource->IsSimpleSource())
+                    continue;
+                auto poSimpleSource =
+                    cpl::down_cast<VRTSimpleSource *>(poSource);
+                if (poSimpleSource->DstWindowIntersects(dfXOff, dfYOff, dfXSize,
+                                                        dfYSize))
+                {
+                    auto psJob = new RasterIOJob();
+                    psJob->pbSuccess = &bSuccess;
+                    psJob->pnCompletedJobs = &nCompletedJobs;
+                    psJob->eVRTBandDataType = poBand->GetRasterDataType();
+                    psJob->nXOff = nXOff;
+                    psJob->nYOff = nYOff;
+                    psJob->nXSize = nXSize;
+                    psJob->nYSize = nYSize;
+                    psJob->pData = pData;
+                    psJob->nBufXSize = nBufXSize;
+                    psJob->nBufYSize = nBufYSize;
+                    psJob->eBufType = eBufType;
+                    psJob->nBandCount = nBandCount;
+                    psJob->panBandMap = panBandMap;
+                    psJob->nPixelSpace = nPixelSpace;
+                    psJob->nLineSpace = nLineSpace;
+                    psJob->nBandSpace = nBandSpace;
+                    psJob->psExtraArg = psExtraArg;
+                    psJob->poSource = poSimpleSource;
+
+                    if (!oQueue->SubmitJob(RasterIOJob::Func, psJob))
+                    {
+                        delete psJob;
+                        bSuccess = false;
+                        break;
+                    }
+                }
+            }
+
+            while (oQueue->WaitEvent())
+            {
+                // Quite rough progress callback. We could do better by counting
+                // the number of contributing pixels.
+                if (psExtraArg->pfnProgress)
+                {
+                    psExtraArg->pfnProgress(double(nCompletedJobs.load()) /
+                                                nContributingSources,
+                                            "", psExtraArg->pProgressData);
+                }
+            }
+
+            eErr = bSuccess ? CE_None : CE_Failure;
+        }
+        else
+        {
+            GDALProgressFunc pfnProgressGlobal = psExtraArg->pfnProgress;
+            void *pProgressDataGlobal = psExtraArg->pProgressData;
+
+            for (int iSource = 0; eErr == CE_None && iSource < poBand->nSources;
+                 iSource++)
+            {
+                psExtraArg->pfnProgress = GDALScaledProgress;
+                psExtraArg->pProgressData = GDALCreateScaledProgress(
+                    1.0 * iSource / poBand->nSources,
+                    1.0 * (iSource + 1) / poBand->nSources, pfnProgressGlobal,
+                    pProgressDataGlobal);
+
+                VRTSimpleSource *poSource = static_cast<VRTSimpleSource *>(
+                    poBand->papoSources[iSource]);
+
+                eErr = poSource->DatasetRasterIO(
+                    poBand->GetRasterDataType(), nXOff, nYOff, nXSize, nYSize,
+                    pData, nBufXSize, nBufYSize, eBufType, nBandCount,
+                    panBandMap, nPixelSpace, nLineSpace, nBandSpace,
+                    psExtraArg);
+
+                GDALDestroyScaledProgress(psExtraArg->pProgressData);
+            }
+
+            psExtraArg->pfnProgress = pfnProgressGlobal;
+            psExtraArg->pProgressData = pProgressDataGlobal;
+        }
+
+        if (eErr == CE_None && psExtraArg->pfnProgress)
+        {
+            psExtraArg->pfnProgress(1.0, "", psExtraArg->pProgressData);
+        }
 
         return eErr;
     }
@@ -2358,6 +2504,34 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                       nLineSpace, nBandSpace, psExtraArg);
     }
     return eErr;
+}
+
+/************************************************************************/
+/*                    VRTDataset::RasterIOJob::Func()                   */
+/************************************************************************/
+
+void VRTDataset::RasterIOJob::Func(void *pData)
+{
+    auto psJob =
+        std::unique_ptr<RasterIOJob>(static_cast<RasterIOJob *>(pData));
+    if (*psJob->pbSuccess)
+    {
+        GDALRasterIOExtraArg sArg = *(psJob->psExtraArg);
+        sArg.pfnProgress = nullptr;
+        sArg.pProgressData = nullptr;
+
+        if (psJob->poSource->DatasetRasterIO(
+                psJob->eVRTBandDataType, psJob->nXOff, psJob->nYOff,
+                psJob->nXSize, psJob->nYSize, psJob->pData, psJob->nBufXSize,
+                psJob->nBufYSize, psJob->eBufType, psJob->nBandCount,
+                psJob->panBandMap, psJob->nPixelSpace, psJob->nLineSpace,
+                psJob->nBandSpace, &sArg) != CE_None)
+        {
+            *psJob->pbSuccess = false;
+        }
+    }
+
+    ++(*psJob->pnCompletedJobs);
 }
 
 /************************************************************************/

@@ -41,6 +41,8 @@
 #include "gdal_vrt.h"
 #include "gdal_rat.h"
 
+#include <atomic>
+#include <deque>
 #include <functional>
 #include <map>
 #include <memory>
@@ -241,6 +243,7 @@ class VRTWarpedDataset;
 class VRTPansharpenedDataset;
 class VRTProcessedDataset;
 class VRTGroup;
+class VRTSimpleSource;
 
 class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 {
@@ -281,7 +284,19 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     VRTMapSharedResources m_oMapSharedSources{};
     std::shared_ptr<VRTGroup> m_poRootGroup{};
 
+    // Used by VRTSourcedRasterBand::IRasterIO() in single-threaded situations
     VRTSource::WorkingState m_oWorkingState{};
+
+    // Used by VRTSourcedRasterBand::IRasterIO() when using multi-threading
+    struct QueueWorkingStates
+    {
+        std::mutex oMutex{};
+        std::vector<std::unique_ptr<VRTSource::WorkingState>> oStates{};
+    };
+
+    QueueWorkingStates m_oQueueWorkingStates{};
+
+    bool m_bMultiThreadedRasterIOLastUsed = false;
 
     static constexpr const char *const apszSpecialSyntax[] = {
         "NITF_IM:{ANY}:{FILENAME}", "PDF:{ANY}:{FILENAME}",
@@ -296,6 +311,34 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     bool GetShiftedDataset(int nXOff, int nYOff, int nXSize, int nYSize,
                            GDALDataset *&poSrcDataset, int &nSrcXOff,
                            int &nSrcYOff);
+
+    /** Structure used to declare a threaded job to satisfy IRasterIO()
+     * on a given source.
+     */
+    struct RasterIOJob
+    {
+        std::atomic<int> *pnCompletedJobs = nullptr;
+        std::atomic<bool> *pbSuccess = nullptr;
+
+        GDALDataType eVRTBandDataType = GDT_Unknown;
+        int nXOff = 0;
+        int nYOff = 0;
+        int nXSize = 0;
+        int nYSize = 0;
+        void *pData = nullptr;
+        int nBufXSize = 0;
+        int nBufYSize = 0;
+        int nBandCount = 0;
+        BANDMAP_TYPE panBandMap = nullptr;
+        GDALDataType eBufType = GDT_Unknown;
+        GSpacing nPixelSpace = 0;
+        GSpacing nLineSpace = 0;
+        GSpacing nBandSpace = 0;
+        GDALRasterIOExtraArg *psExtraArg = nullptr;
+        VRTSimpleSource *poSource = nullptr;
+
+        static void Func(void *pData);
+    };
 
     CPL_DISALLOW_COPY_ASSIGN(VRTDataset)
 
@@ -347,6 +390,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
                                    const char *pszDomain = "") override;
 
     virtual char **GetMetadata(const char *pszDomain = "") override;
+    virtual const char *GetMetadataItem(const char *pszName,
+                                        const char *pszDomain = "") override;
 
     virtual int GetGCPCount() override;
 
@@ -441,6 +486,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     static std::string BuildSourceFilename(const char *pszFilename,
                                            const char *pszVRTPath,
                                            bool bRelativeToVRT);
+
+    static int GetNumThreads(GDALDataset *poDS);
 };
 
 /************************************************************************/
@@ -873,6 +920,32 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
     bool IsMosaicOfNonOverlappingSimpleSourcesOfFullRasterNoResAndTypeChange(
         bool bAllowMaxValAdjustment) const;
 
+    /** Structure used to declare a threaded job to satisfy IRasterIO()
+     * on a given source.
+     */
+    struct RasterIOJob
+    {
+        std::atomic<int> *pnCompletedJobs = nullptr;
+        std::atomic<bool> *pbSuccess = nullptr;
+        VRTDataset::QueueWorkingStates *poQueueWorkingStates = nullptr;
+
+        GDALDataType eVRTBandDataType = GDT_Unknown;
+        int nXOff = 0;
+        int nYOff = 0;
+        int nXSize = 0;
+        int nYSize = 0;
+        void *pData = nullptr;
+        int nBufXSize = 0;
+        int nBufYSize = 0;
+        GDALDataType eBufType = GDT_Unknown;
+        GSpacing nPixelSpace = 0;
+        GSpacing nLineSpace = 0;
+        GDALRasterIOExtraArg *psExtraArg = nullptr;
+        VRTSimpleSource *poSource = nullptr;
+
+        static void Func(void *pData);
+    };
+
     CPL_DISALLOW_COPY_ASSIGN(VRTSourcedRasterBand)
 
   protected:
@@ -985,6 +1058,10 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
     bool CanIRasterIOBeForwardedToEachSource(
         GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
         int nBufXSize, int nBufYSize, GDALRasterIOExtraArg *psExtraArg) const;
+
+    bool CanMultiThreadRasterIO(double dfXOff, double dfYOff, double dfXSize,
+                                double dfYSize,
+                                int &nContributingSources) const;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 
