@@ -1149,7 +1149,8 @@ static bool DBFIsValueNULL(char chType, const char *pszValue)
             /* (trimmed by DBFReadStringAttribute) to indicate null */
             /* values for dates (#4265). */
             /* And others have '       0': https://lists.osgeo.org/pipermail/gdal-dev/2023-November/058010.html */
-            return strncmp(pszValue, "00000000", 8) == 0 ||
+            /* And others just empty string: https://github.com/OSGeo/gdal/issues/10405 */
+            return pszValue[0] == 0 || strncmp(pszValue, "00000000", 8) == 0 ||
                    strcmp(pszValue, " ") == 0 || strcmp(pszValue, "0") == 0;
 
         case 'L':
