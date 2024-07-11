@@ -265,8 +265,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     VRTRasterBand *m_poMaskBand = nullptr;
 
-    int m_bCompatibleForDatasetIO = -1;
-    int CheckCompatibleForDatasetIO();
+    mutable int m_nCompatibleForDatasetIO = -1;
+    bool CheckCompatibleForDatasetIO() const;
 
     // Virtual (ie not materialized) overviews, created either implicitly
     // when it is cheap to do it, or explicitly.
@@ -397,6 +397,12 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
     void ClearStatistics() override;
+
+    /** To be called when a new source is added, to invalidate cached states. */
+    void SourceAdded()
+    {
+        m_nCompatibleForDatasetIO = -1;
+    }
 
     /* Used by PDF driver for example */
     GDALDataset *GetSingleSimpleSource();
@@ -1404,7 +1410,7 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
 
     GDALRasterBand *GetRasterBand() const;
     GDALRasterBand *GetMaskBandMainBand();
-    int IsSameExceptBandNumber(VRTSimpleSource *poOtherSource);
+    bool IsSameExceptBandNumber(const VRTSimpleSource *poOtherSource) const;
     CPLErr DatasetRasterIO(GDALDataType eVRTBandDataType, int nXOff, int nYOff,
                            int nXSize, int nYSize, void *pData, int nBufXSize,
                            int nBufYSize, GDALDataType eBufType, int nBandCount,

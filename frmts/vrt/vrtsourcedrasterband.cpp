@@ -1766,7 +1766,9 @@ CPLErr VRTSourcedRasterBand::AddSource(VRTSource *poNewSource)
         CPLRealloc(papoSources, sizeof(void *) * nSources));
     papoSources[nSources - 1] = poNewSource;
 
-    static_cast<VRTDataset *>(poDS)->SetNeedsFlush();
+    auto l_poDS = static_cast<VRTDataset *>(poDS);
+    l_poDS->SetNeedsFlush();
+    l_poDS->SourceAdded();
 
     if (poNewSource->IsSimpleSource())
     {

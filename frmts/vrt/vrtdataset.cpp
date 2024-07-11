@@ -36,6 +36,7 @@
 #include "gdal_utils.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <set>
 #include <typeinfo>
@@ -1995,29 +1996,32 @@ int VRTDataset::CloseDependentDatasets()
 /* the band number of each source is the band number of the */
 /* VRTSourcedRasterBand. */
 
-int VRTDataset::CheckCompatibleForDatasetIO()
+bool VRTDataset::CheckCompatibleForDatasetIO() const
 {
     int nSources = 0;
     VRTSource **papoSources = nullptr;
     CPLString osResampling;
 
-    if (m_bCompatibleForDatasetIO >= 0)
+    if (m_nCompatibleForDatasetIO >= 0)
     {
-        return m_bCompatibleForDatasetIO;
+        return CPL_TO_BOOL(m_nCompatibleForDatasetIO);
     }
+
+    m_nCompatibleForDatasetIO = false;
 
     for (int iBand = 0; iBand < nBands; iBand++)
     {
-        if (!static_cast<VRTRasterBand *>(papoBands[iBand])
-                 ->IsSourcedRasterBand())
-            return FALSE;
+        auto poVRTBand = static_cast<VRTRasterBand *>(papoBands[iBand]);
+        assert(poVRTBand);
+        if (!poVRTBand->IsSourcedRasterBand())
+            return false;
 
-        VRTSourcedRasterBand *poBand =
-            static_cast<VRTSourcedRasterBand *>(papoBands[iBand]);
+        const VRTSourcedRasterBand *poBand =
+            static_cast<const VRTSourcedRasterBand *>(poVRTBand);
 
         // Do not allow VRTDerivedRasterBand for example
         if (typeid(*poBand) != typeid(VRTSourcedRasterBand))
-            return FALSE;
+            return false;
 
         if (iBand == 0)
         {
@@ -2026,48 +2030,50 @@ int VRTDataset::CheckCompatibleForDatasetIO()
             for (int iSource = 0; iSource < nSources; iSource++)
             {
                 if (!papoSources[iSource]->IsSimpleSource())
-                    return FALSE;
+                    return false;
 
-                VRTSimpleSource *poSource =
-                    static_cast<VRTSimpleSource *>(papoSources[iSource]);
+                const VRTSimpleSource *poSource =
+                    static_cast<const VRTSimpleSource *>(papoSources[iSource]);
                 if (poSource->GetType() != VRTSimpleSource::GetTypeStatic())
-                    return FALSE;
+                    return false;
 
                 if (poSource->m_nBand != iBand + 1 ||
                     poSource->m_bGetMaskBand || poSource->m_osSrcDSName.empty())
-                    return FALSE;
+                    return false;
                 osResampling = poSource->GetResampling();
             }
         }
         else if (nSources != poBand->nSources)
         {
-            return FALSE;
+            return false;
         }
         else
         {
             for (int iSource = 0; iSource < nSources; iSource++)
             {
                 if (!poBand->papoSources[iSource]->IsSimpleSource())
-                    return FALSE;
-                VRTSimpleSource *poRefSource =
-                    static_cast<VRTSimpleSource *>(papoSources[iSource]);
+                    return false;
+                const VRTSimpleSource *poRefSource =
+                    static_cast<const VRTSimpleSource *>(papoSources[iSource]);
 
-                VRTSimpleSource *poSource = static_cast<VRTSimpleSource *>(
-                    poBand->papoSources[iSource]);
+                const VRTSimpleSource *poSource =
+                    static_cast<const VRTSimpleSource *>(
+                        poBand->papoSources[iSource]);
                 if (poSource->GetType() != VRTSimpleSource::GetTypeStatic())
-                    return FALSE;
+                    return false;
                 if (poSource->m_nBand != iBand + 1 ||
                     poSource->m_bGetMaskBand || poSource->m_osSrcDSName.empty())
-                    return FALSE;
+                    return false;
                 if (!poSource->IsSameExceptBandNumber(poRefSource))
-                    return FALSE;
+                    return false;
                 if (osResampling.compare(poSource->GetResampling()) != 0)
-                    return FALSE;
+                    return false;
             }
         }
     }
 
-    return nSources != 0;
+    m_nCompatibleForDatasetIO = nSources != 0;
+    return CPL_TO_BOOL(m_nCompatibleForDatasetIO);
 }
 
 /************************************************************************/

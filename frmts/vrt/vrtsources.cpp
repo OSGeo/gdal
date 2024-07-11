@@ -816,7 +816,8 @@ GDALRasterBand *VRTSimpleSource::GetMaskBandMainBand()
 /*                       IsSameExceptBandNumber()                       */
 /************************************************************************/
 
-int VRTSimpleSource::IsSameExceptBandNumber(VRTSimpleSource *poOtherSource)
+bool VRTSimpleSource::IsSameExceptBandNumber(
+    const VRTSimpleSource *poOtherSource) const
 {
     return m_dfSrcXOff == poOtherSource->m_dfSrcXOff &&
            m_dfSrcYOff == poOtherSource->m_dfSrcYOff &&
