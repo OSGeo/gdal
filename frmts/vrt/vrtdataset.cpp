@@ -2899,4 +2899,43 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
     return osSrcDSName;
 }
 
+/************************************************************************/
+/*                   VRTMapSharedResources::Get()                       */
+/************************************************************************/
+
+GDALDataset *VRTMapSharedResources::Get(const std::string &osKey) const
+{
+    if (poMutex)
+        poMutex->lock();
+    auto oIter = oMap.find(osKey);
+    GDALDataset *poRet = nullptr;
+    if (oIter != oMap.end())
+        poRet = oIter->second;
+    if (poMutex)
+        poMutex->unlock();
+    return poRet;
+}
+
+/************************************************************************/
+/*                   VRTMapSharedResources::Get()                       */
+/************************************************************************/
+
+void VRTMapSharedResources::Insert(const std::string &osKey, GDALDataset *poDS)
+{
+    if (poMutex)
+        poMutex->lock();
+    oMap[osKey] = poDS;
+    if (poMutex)
+        poMutex->unlock();
+}
+
+/************************************************************************/
+/*                   VRTMapSharedResources::InitMutex()                 */
+/************************************************************************/
+
+void VRTMapSharedResources::InitMutex()
+{
+    poMutex = &oMutex;
+}
+
 /*! @endcond */

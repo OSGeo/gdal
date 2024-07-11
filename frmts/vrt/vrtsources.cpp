@@ -520,9 +520,8 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML(const char *pszVRTPath)
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr
-VRTSimpleSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
-                         std::map<CPLString, GDALDataset *> &oMapSharedSources)
+CPLErr VRTSimpleSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
+                                VRTMapSharedResources &oMapSharedSources)
 
 {
     m_poMapSharedSources = &oMapSharedSources;
@@ -733,9 +732,8 @@ void VRTSimpleSource::OpenSource() const
             osKeyMapSharedSources += m_aosOpenOptions[i];
         }
 
-        auto oIter = m_poMapSharedSources->find(osKeyMapSharedSources);
-        if (oIter != m_poMapSharedSources->end())
-            proxyDS = cpl::down_cast<GDALProxyPoolDataset *>(oIter->second);
+        proxyDS = cpl::down_cast<GDALProxyPoolDataset *>(
+            m_poMapSharedSources->Get(osKeyMapSharedSources));
     }
 
     if (proxyDS == nullptr)
@@ -788,7 +786,7 @@ void VRTSimpleSource::OpenSource() const
 
     if (m_poMapSharedSources)
     {
-        (*m_poMapSharedSources)[osKeyMapSharedSources] = proxyDS;
+        m_poMapSharedSources->Insert(osKeyMapSharedSources, proxyDS);
     }
 }
 
@@ -1979,9 +1977,10 @@ VRTNoDataFromMaskSource::VRTNoDataFromMaskSource()
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTNoDataFromMaskSource::XMLInit(
-    const CPLXMLNode *psSrc, const char *pszVRTPath,
-    std::map<CPLString, GDALDataset *> &oMapSharedSources)
+CPLErr
+VRTNoDataFromMaskSource::XMLInit(const CPLXMLNode *psSrc,
+                                 const char *pszVRTPath,
+                                 VRTMapSharedResources &oMapSharedSources)
 
 {
     /* -------------------------------------------------------------------- */
@@ -2628,9 +2627,9 @@ CPLXMLNode *VRTComplexSource::SerializeToXML(const char *pszVRTPath)
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr
-VRTComplexSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
-                          std::map<CPLString, GDALDataset *> &oMapSharedSources)
+CPLErr VRTComplexSource::XMLInit(const CPLXMLNode *psSrc,
+                                 const char *pszVRTPath,
+                                 VRTMapSharedResources &oMapSharedSources)
 
 {
     /* -------------------------------------------------------------------- */
@@ -3683,9 +3682,9 @@ CPLErr VRTFuncSource::GetHistogram(
 /*                        VRTParseCoreSources()                         */
 /************************************************************************/
 
-VRTSource *
-VRTParseCoreSources(const CPLXMLNode *psChild, const char *pszVRTPath,
-                    std::map<CPLString, GDALDataset *> &oMapSharedSources)
+VRTSource *VRTParseCoreSources(const CPLXMLNode *psChild,
+                               const char *pszVRTPath,
+                               VRTMapSharedResources &oMapSharedSources)
 
 {
     VRTSource *poSource = nullptr;

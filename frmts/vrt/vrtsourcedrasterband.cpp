@@ -1812,9 +1812,9 @@ CPLErr CPL_STDCALL VRTAddSource(VRTSourcedRasterBandH hVRTBand,
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTSourcedRasterBand::XMLInit(
-    const CPLXMLNode *psTree, const char *pszVRTPath,
-    std::map<CPLString, GDALDataset *> &oMapSharedSources)
+CPLErr VRTSourcedRasterBand::XMLInit(const CPLXMLNode *psTree,
+                                     const char *pszVRTPath,
+                                     VRTMapSharedResources &oMapSharedSources)
 
 {
     {

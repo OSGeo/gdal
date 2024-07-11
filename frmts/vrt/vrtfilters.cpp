@@ -591,9 +591,10 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTKernelFilteredSource::XMLInit(
-    const CPLXMLNode *psTree, const char *pszVRTPath,
-    std::map<CPLString, GDALDataset *> &oMapSharedSources)
+CPLErr
+VRTKernelFilteredSource::XMLInit(const CPLXMLNode *psTree,
+                                 const char *pszVRTPath,
+                                 VRTMapSharedResources &oMapSharedSources)
 
 {
     {
@@ -691,9 +692,9 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML(const char *pszVRTPath)
 /*                       VRTParseFilterSources()                        */
 /************************************************************************/
 
-VRTSource *
-VRTParseFilterSources(const CPLXMLNode *psChild, const char *pszVRTPath,
-                      std::map<CPLString, GDALDataset *> &oMapSharedSources)
+VRTSource *VRTParseFilterSources(const CPLXMLNode *psChild,
+                                 const char *pszVRTPath,
+                                 VRTMapSharedResources &oMapSharedSources)
 
 {
     if (EQUAL(psChild->pszValue, "KernelFilteredSource"))
