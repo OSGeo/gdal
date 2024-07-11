@@ -1236,15 +1236,21 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     int m_nBand = 0;
     bool m_bGetMaskBand = false;
 
-    double m_dfSrcXOff = 0;
-    double m_dfSrcYOff = 0;
-    double m_dfSrcXSize = 0;
-    double m_dfSrcYSize = 0;
+    /* Value for uninitialized source or destination window. It is chosen such
+     * that SrcToDst() and DstToSrc() are no-ops if both source and destination
+     * windows are unset.
+     */
+    static constexpr double UNINIT_WINDOW = -1.0;
 
-    double m_dfDstXOff = 0;
-    double m_dfDstYOff = 0;
-    double m_dfDstXSize = 0;
-    double m_dfDstYSize = 0;
+    double m_dfSrcXOff = UNINIT_WINDOW;
+    double m_dfSrcYOff = UNINIT_WINDOW;
+    double m_dfSrcXSize = UNINIT_WINDOW;
+    double m_dfSrcYSize = UNINIT_WINDOW;
+
+    double m_dfDstXOff = UNINIT_WINDOW;
+    double m_dfDstYOff = UNINIT_WINDOW;
+    double m_dfDstXSize = UNINIT_WINDOW;
+    double m_dfDstYSize = UNINIT_WINDOW;
 
     CPLString m_osResampling{};
 
@@ -1273,6 +1279,20 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     virtual bool ValidateOpenedBand(GDALRasterBand * /*poBand*/) const
     {
         return true;
+    }
+
+    /** Returns whether the source window is set */
+    bool IsSrcWinSet() const
+    {
+        return m_dfSrcXOff != UNINIT_WINDOW || m_dfSrcYOff != UNINIT_WINDOW ||
+               m_dfSrcXSize != UNINIT_WINDOW || m_dfSrcYSize != UNINIT_WINDOW;
+    }
+
+    /** Returns whether the destination window is set */
+    bool IsDstWinSet() const
+    {
+        return m_dfDstXOff != UNINIT_WINDOW || m_dfDstYOff != UNINIT_WINDOW ||
+               m_dfDstXSize != UNINIT_WINDOW || m_dfDstYSize != UNINIT_WINDOW;
     }
 
   public:

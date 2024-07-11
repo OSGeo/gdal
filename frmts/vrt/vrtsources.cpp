@@ -470,8 +470,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML(const char *pszVRTPath)
                        CPLSPrintf("%d", nBlockYSize));
     }
 
-    if (m_dfSrcXOff != -1 || m_dfSrcYOff != -1 || m_dfSrcXSize != -1 ||
-        m_dfSrcYSize != -1)
+    if (IsSrcWinSet())
     {
         CPLSetXMLValue(psSrc, "SrcRect.#xOff",
                        CPLSPrintf("%.15g", m_dfSrcXOff));
@@ -483,8 +482,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML(const char *pszVRTPath)
                        CPLSPrintf("%.15g", m_dfSrcYSize));
     }
 
-    if (m_dfDstXOff != -1 || m_dfDstYOff != -1 || m_dfDstXSize != -1 ||
-        m_dfDstYSize != -1)
+    if (IsDstWinSet())
     {
         CPLSetXMLValue(psSrc, "DstRect.#xOff",
                        CPLSPrintf("%.15g", m_dfDstXOff));
@@ -581,21 +579,30 @@ VRTSimpleSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
 
 CPLErr VRTSimpleSource::ParseSrcRectAndDstRect(const CPLXMLNode *psSrc)
 {
+    const auto GetAttrValue = [](const CPLXMLNode *psNode,
+                                 const char *pszAttrName, double dfDefaultVal)
+    {
+        if (const char *pszVal = CPLGetXMLValue(psNode, pszAttrName, nullptr))
+            return CPLAtof(pszVal);
+        else
+            return dfDefaultVal;
+    };
+
     /* -------------------------------------------------------------------- */
     /*      Set characteristics.                                            */
     /* -------------------------------------------------------------------- */
     const CPLXMLNode *const psSrcRect = CPLGetXMLNode(psSrc, "SrcRect");
     if (psSrcRect)
     {
-        double xOff = CPLAtof(CPLGetXMLValue(psSrcRect, "xOff", "-1"));
-        double yOff = CPLAtof(CPLGetXMLValue(psSrcRect, "yOff", "-1"));
-        double xSize = CPLAtof(CPLGetXMLValue(psSrcRect, "xSize", "-1"));
-        double ySize = CPLAtof(CPLGetXMLValue(psSrcRect, "ySize", "-1"));
+        double xOff = GetAttrValue(psSrcRect, "xOff", UNINIT_WINDOW);
+        double yOff = GetAttrValue(psSrcRect, "yOff", UNINIT_WINDOW);
+        double xSize = GetAttrValue(psSrcRect, "xSize", UNINIT_WINDOW);
+        double ySize = GetAttrValue(psSrcRect, "ySize", UNINIT_WINDOW);
         // Test written that way to catch NaN values
         if (!(xOff >= INT_MIN && xOff <= INT_MAX) ||
             !(yOff >= INT_MIN && yOff <= INT_MAX) ||
-            !(xSize > 0 || xSize == -1) || xSize > INT_MAX ||
-            !(ySize > 0 || ySize == -1) || ySize > INT_MAX)
+            !(xSize > 0 || xSize == UNINIT_WINDOW) || xSize > INT_MAX ||
+            !(ySize > 0 || ySize == UNINIT_WINDOW) || ySize > INT_MAX)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Wrong values in SrcRect");
             return CE_Failure;
@@ -604,24 +611,26 @@ CPLErr VRTSimpleSource::ParseSrcRectAndDstRect(const CPLXMLNode *psSrc)
     }
     else
     {
-        m_dfSrcXOff = -1;
-        m_dfSrcYOff = -1;
-        m_dfSrcXSize = -1;
-        m_dfSrcYSize = -1;
+        m_dfSrcXOff = UNINIT_WINDOW;
+        m_dfSrcYOff = UNINIT_WINDOW;
+        m_dfSrcXSize = UNINIT_WINDOW;
+        m_dfSrcYSize = UNINIT_WINDOW;
     }
 
     const CPLXMLNode *const psDstRect = CPLGetXMLNode(psSrc, "DstRect");
     if (psDstRect)
     {
-        double xOff = CPLAtof(CPLGetXMLValue(psDstRect, "xOff", "-1"));
-        double yOff = CPLAtof(CPLGetXMLValue(psDstRect, "yOff", "-1"));
-        double xSize = CPLAtof(CPLGetXMLValue(psDstRect, "xSize", "-1"));
-        double ySize = CPLAtof(CPLGetXMLValue(psDstRect, "ySize", "-1"));
+        double xOff = GetAttrValue(psDstRect, "xOff", UNINIT_WINDOW);
+        ;
+        double yOff = GetAttrValue(psDstRect, "yOff", UNINIT_WINDOW);
+        double xSize = GetAttrValue(psDstRect, "xSize", UNINIT_WINDOW);
+        ;
+        double ySize = GetAttrValue(psDstRect, "ySize", UNINIT_WINDOW);
         // Test written that way to catch NaN values
         if (!(xOff >= INT_MIN && xOff <= INT_MAX) ||
             !(yOff >= INT_MIN && yOff <= INT_MAX) ||
-            !(xSize > 0 || xSize == -1) || xSize > INT_MAX ||
-            !(ySize > 0 || ySize == -1) || ySize > INT_MAX)
+            !(xSize > 0 || xSize == UNINIT_WINDOW) || xSize > INT_MAX ||
+            !(ySize > 0 || ySize == UNINIT_WINDOW) || ySize > INT_MAX)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Wrong values in DstRect");
             return CE_Failure;
@@ -630,10 +639,10 @@ CPLErr VRTSimpleSource::ParseSrcRectAndDstRect(const CPLXMLNode *psSrc)
     }
     else
     {
-        m_dfDstXOff = -1;
-        m_dfDstYOff = -1;
-        m_dfDstXSize = -1;
-        m_dfDstYSize = -1;
+        m_dfDstXOff = UNINIT_WINDOW;
+        m_dfDstYOff = UNINIT_WINDOW;
+        m_dfDstXSize = UNINIT_WINDOW;
+        m_dfDstYSize = UNINIT_WINDOW;
     }
 
     return CE_None;
@@ -807,7 +816,7 @@ int VRTSimpleSource::IsSameExceptBandNumber(VRTSimpleSource *poOtherSource)
 /************************************************************************/
 /*                              SrcToDst()                              */
 /*                                                                      */
-/*      Note: this is a no-op if the dst window is -1,-1,-1,-1.         */
+/*      Note: this is a no-op if the both src and dst windows are unset */
 /************************************************************************/
 
 void VRTSimpleSource::SrcToDst(double dfX, double dfY, double &dfXOut,
@@ -821,7 +830,7 @@ void VRTSimpleSource::SrcToDst(double dfX, double dfY, double &dfXOut,
 /************************************************************************/
 /*                              DstToSrc()                              */
 /*                                                                      */
-/*      Note: this is a no-op if the dst window is -1,-1,-1,-1.         */
+/*      Note: this is a no-op if the both src and dst windows are unset */
 /************************************************************************/
 
 void VRTSimpleSource::DstToSrc(double dfX, double dfY, double &dfXOut,
@@ -852,12 +861,10 @@ int VRTSimpleSource::GetSrcDstWindow(
         return FALSE;
     }
 
-    const bool bDstWinSet = m_dfDstXOff != -1 || m_dfDstXSize != -1 ||
-                            m_dfDstYOff != -1 || m_dfDstYSize != -1;
+    const bool bDstWinSet = IsDstWinSet();
 
 #ifdef DEBUG
-    const bool bSrcWinSet = m_dfSrcXOff != -1 || m_dfSrcXSize != -1 ||
-                            m_dfSrcYOff != -1 || m_dfSrcYSize != -1;
+    const bool bSrcWinSet = IsSrcWinSet();
 
     if (bSrcWinSet != bDstWinSet)
     {
