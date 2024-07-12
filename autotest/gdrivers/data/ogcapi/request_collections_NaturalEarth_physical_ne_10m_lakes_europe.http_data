@@ -1,15 +1,14 @@
 HTTP/1.1 200 OK
-Date: Tue, 20 Jun 2023 10:38:08 GMT
+Date: Fri, 12 Jul 2024 14:17:02 GMT
 Server: Apache/2.4.52 (Ubuntu)
-Expires: Wed, 12 Jun 2024 14:15:05 GMT
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Expires: Sat, 12 Jul 2025 14:17:02 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
-Content-Length: 11484
-Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Age: 591783
+Content-Type: application/json
+Content-Length: 11200
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
-Content-Type: application/json
 
 {
    "links" : [
@@ -43,52 +42,40 @@ Content-Type: application/json
          "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/dggs"
       },
       {
-         "rel" : "queryables",
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/schema",
+         "type" : "application/json",
+         "title" : "Schema (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/schema",
+         "type" : "text/plain",
+         "title" : "Schema (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/schema",
+         "type" : "text/html",
+         "title" : "Schema (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/queryables",
          "type" : "application/json",
          "title" : "Queryables (as JSON)",
          "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=json"
       },
       {
-         "rel" : "queryables",
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/queryables",
          "type" : "text/plain",
          "title" : "Queryables (as ECON)",
          "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=econ"
       },
       {
-         "rel" : "queryables",
-         "type" : "text/xml",
-         "title" : "Queryables (as XSD/WFS schema)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=xsd"
-      },
-      {
-         "rel" : "queryables",
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/queryables",
          "type" : "text/html",
          "title" : "Queryables (as HTML)",
          "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=html"
-      },
-      {
-         "rel" : "http://www.opengis.net/def/rel/ogc/0.0/schema-item",
-         "type" : "application/json",
-         "title" : "Data attributes (as JSON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schemas/feature?f=json"
-      },
-      {
-         "rel" : "describedby",
-         "type" : "text/plain",
-         "title" : "Data attributes (as ECON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=econ"
-      },
-      {
-         "rel" : "describedby",
-         "type" : "text/xml",
-         "title" : "Data attributes (as XSD/WFS schema)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=xsd"
-      },
-      {
-         "rel" : "describedby",
-         "type" : "text/html",
-         "title" : "Data attributes (as HTML)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=html"
       },
       {
          "rel" : "items",
@@ -256,6 +243,7 @@ Content-Type: application/json
    "storageCrs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
    "id" : "NaturalEarth:physical:ne_10m_lakes_europe",
    "dataType" : "vector",
+   "attribution" : "<a href='https://www.naturalearthdata.com/'>Natural Earth</a>",
    "minScaleDenominator" : 4367830.1877243574709,
    "minCellSize" : 0.010986328125,
    "geometryDimension" : 2

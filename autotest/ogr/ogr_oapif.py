@@ -201,10 +201,10 @@ def test_ogr_oapif_empty_layer_and_user_query_parameters():
 ###############################################################################
 
 
-def _add_dummy_root_and_api_pages(handler):
-    handler.add("GET", "/oapif", 404, {}, "{}")
-    handler.add("GET", "/oapif/api", 404, {}, "{}")
-    handler.add("GET", "/oapif/api/", 404, {}, "{}")
+def _add_dummy_root_and_api_pages(handler, prefix=""):
+    handler.add("GET", prefix + "/oapif", 404, {}, "{}")
+    handler.add("GET", prefix + "/oapif/api", 404, {}, "{}")
+    handler.add("GET", prefix + "/oapif/api/", 404, {}, "{}")
 
 
 ###############################################################################
@@ -250,20 +250,22 @@ def test_ogr_oapif_fc_links_next_geojson():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections",
+        "/subdir/oapif/collections",
         200,
         {"Content-Type": "application/json"},
         '{ "collections" : [ { "name": "foo" }] }',
     )
     with webserver.install_http_handler(handler):
-        ds = ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
+        ds = ogr.Open(
+            "OAPIF:http://localhost:%d/subdir/oapif" % gdaltest.webserver_port
+        )
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
-    _add_dummy_root_and_api_pages(handler)
+    _add_dummy_root_and_api_pages(handler, "/subdir")
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=20",
+        "/subdir/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection", "features": [
@@ -278,15 +280,16 @@ def test_ogr_oapif_fc_links_next_geojson():
     with webserver.install_http_handler(handler):
         assert lyr.GetLayerDefn().GetFieldCount() == 1
 
+    # Test relative links
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/subdir/oapif/collections/foo/items?limit=1000",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection",
                     "links" : [
-                        { "rel": "next", "type": "application/geo+json", "href": "http://localhost:%d/oapif/foo_next" }
+                        { "rel": "next", "type": "application/geo+json", "href": "/subdir/oapif/foo_next" }
                     ],
                     "features": [
                     {
@@ -295,22 +298,22 @@ def test_ogr_oapif_fc_links_next_geojson():
                             "foo": "bar"
                         }
                     }
-                ] }"""
-        % gdaltest.webserver_port,
+                ] }""",
     )
     with webserver.install_http_handler(handler):
         f = lyr.GetNextFeature()
-    if f["foo"] != "bar":
-        f.DumpReadable()
-        pytest.fail()
+    assert f["foo"] == "bar"
 
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/foo_next",
+        "/subdir/oapif/foo_next",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection",
+                    "links" : [
+                        { "rel": "next", "type": "application/geo+json", "href": "./foo_next2" }
+                    ],
                     "features": [
                     {
                         "type": "Feature",
@@ -322,9 +325,73 @@ def test_ogr_oapif_fc_links_next_geojson():
     )
     with webserver.install_http_handler(handler):
         f = lyr.GetNextFeature()
-    if f["foo"] != "baz":
-        f.DumpReadable()
-        pytest.fail()
+    assert f["foo"] == "baz"
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/subdir/oapif/foo_next2",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection",
+                    "links" : [
+                        { "rel": "next", "type": "application/geo+json", "href": "../oapif/foo_next3" }
+                    ],
+                    "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "baz2"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f["foo"] == "baz2"
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/subdir/oapif/foo_next3",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection",
+                    "links" : [
+                        { "rel": "next", "type": "application/geo+json", "href": "foo_next4" }
+                    ],
+                    "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "baz3"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f["foo"] == "baz3"
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/subdir/oapif/foo_next4",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection",
+                    "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "baz4"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+    assert f["foo"] == "baz4"
 
 
 ###############################################################################
