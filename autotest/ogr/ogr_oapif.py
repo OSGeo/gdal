@@ -184,6 +184,9 @@ def test_ogr_oapif_empty_layer_and_user_query_parameters():
     assert lyr.GetName() == "foo"
 
     handler = webserver.SequentialHandler()
+    handler.add("GET", "/oapif?FOO=BAR", 200, {}, "{}")
+    handler.add("GET", "/oapif/api?FOO=BAR", 200, {}, "{}")
+    handler.add("GET", "/oapif/api/?FOO=BAR", 200, {}, "{}")
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20&FOO=BAR",
@@ -193,6 +196,15 @@ def test_ogr_oapif_empty_layer_and_user_query_parameters():
     )
     with webserver.install_http_handler(handler):
         assert lyr.GetLayerDefn().GetFieldCount() == 0
+
+
+###############################################################################
+
+
+def _add_dummy_root_and_api_pages(handler):
+    handler.add("GET", "/oapif", 404, {}, "{}")
+    handler.add("GET", "/oapif/api", 404, {}, "{}")
+    handler.add("GET", "/oapif/api/", 404, {}, "{}")
 
 
 ###############################################################################
@@ -218,6 +230,7 @@ def test_ogr_oapif_open_by_collection_and_legacy_wfs3_prefix():
     assert lyr.GetName() == "foo"
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -247,6 +260,7 @@ def test_ogr_oapif_fc_links_next_geojson():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -331,6 +345,7 @@ def test_ogr_oapif_id_is_integer():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -521,6 +536,7 @@ def test_ogr_oapif_spatial_filter():
     assert lyr.GetExtent() == (-10.0, 15.0, 40.0, 50.0)
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -770,6 +786,7 @@ def test_ogr_oapif_limit_from_numberMatched():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -1112,6 +1129,7 @@ def test_ogr_oapif_schema_from_xml_schema():
 </xs:complexType>
 </xs:schema>""",
     )
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -1161,6 +1179,7 @@ def test_ogr_oapif_schema_from_json_schema():
         {"Content-Type": "application/schema+json"},
         open("data/oapif/oapif_json_schema_eo.jsonschema", "rt").read(),
     )
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -1219,6 +1238,7 @@ def test_ogr_oapif_stac_catalog():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -1294,6 +1314,7 @@ def test_ogr_oapif_storage_crs_easting_northing():
     )
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -1392,6 +1413,7 @@ def test_ogr_oapif_storage_crs_latitude_longitude():
     assert (minx, miny, maxx, maxy) == pytest.approx((-10, 40, 15, 50), abs=1e-3)
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -1500,6 +1522,7 @@ def test_ogr_oapif_storage_crs_latitude_longitude_non_compliant_server():
     assert supported_srs_list is None
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -1599,6 +1622,7 @@ def test_ogr_oapif_crs_and_preferred_crs_open_options():
 
     def get_items_handler():
         handler = webserver.SequentialHandler()
+        _add_dummy_root_and_api_pages(handler)
         handler.add(
             "GET",
             "/oapif/collections/foo/items?limit=20",
@@ -1975,6 +1999,7 @@ def test_ogr_oapif_initial_request_page_size():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -2011,6 +2036,7 @@ def test_ogr_oapif_initial_request_page_size():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=20",
@@ -2046,6 +2072,7 @@ def test_ogr_oapif_initial_request_page_size():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=1000",
@@ -2080,6 +2107,7 @@ def test_ogr_oapif_initial_request_page_size():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
     handler.add(
         "GET",
         "/oapif/collections/foo/items?limit=30",
