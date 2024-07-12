@@ -80,7 +80,14 @@ class OGROAPIFDataset final : public GDALDataset
     friend class OGROAPIFLayer;
 
     bool m_bMustCleanPersistent = false;
+
+    // Server base URL. Like "https://example.com"
+    // Relative links are relative to it
+    CPLString m_osServerBaseURL{};
+
+    // Service base URL. Like "https://example.com/ogcapi"
     CPLString m_osRootURL;
+
     CPLString m_osUserQueryParams;
     CPLString m_osUserPwd;
     int m_nPageSize = 1000;
@@ -111,7 +118,8 @@ class OGROAPIFDataset final : public GDALDataset
 
     bool LoadJSONCollection(const CPLJSONObject &oCollection,
                             const CPLJSONArray &oGlobalCRSList);
-    bool LoadJSONCollections(const CPLString &osResultIn);
+    bool LoadJSONCollections(const CPLString &osResultIn,
+                             const std::string &osCollectionsURL);
 
     /**
      * Determines the page size by making a call to the API endpoint to get the server's
@@ -131,10 +139,11 @@ class OGROAPIFDataset final : public GDALDataset
     OGRLayer *GetLayer(int idx) override;
 
     bool Open(GDALOpenInfo *);
-    const CPLJSONDocument &GetAPIDoc();
-    const CPLJSONDocument &GetLandingPageDoc();
+    const CPLJSONDocument &GetAPIDoc(std::string &osURLOut);
+    const CPLJSONDocument &GetLandingPageDoc(std::string &osURLOut);
 
-    CPLString ReinjectAuthInURL(const CPLString &osURL) const;
+    CPLString ResolveURL(const CPLString &osURL,
+                         const std::string &osRequestURL) const;
 };
 
 /************************************************************************/
@@ -282,36 +291,74 @@ OGROAPIFDataset::~OGROAPIFDataset()
 }
 
 /************************************************************************/
-/*                         ReinjectAuthInURL()                          */
+/*                               ResolveURL()                           */
 /************************************************************************/
 
+// Resolve relative links and re-inject authentication elements.
 // If source URL is https://user:pwd@server.com/bla
 // and link only contains https://server.com/bla, then insert
 // into it user:pwd
-CPLString OGROAPIFDataset::ReinjectAuthInURL(const CPLString &osURL) const
+CPLString OGROAPIFDataset::ResolveURL(const CPLString &osURL,
+                                      const std::string &osRequestURL) const
 {
+    const auto CleanURL = [](const std::string &osStr)
+    {
+        std::string osRet(osStr);
+        const auto nPos = osRet.rfind('?');
+        if (nPos != std::string::npos)
+            osRet.resize(nPos);
+        if (!osRet.empty() && osRet.back() == '/')
+            osRet.pop_back();
+        return osRet;
+    };
+
     CPLString osRet(osURL);
+    // Cf https://datatracker.ietf.org/doc/html/rfc3986#section-5.4
+    // Partial implementation for usual cases...
+    const std::string osRequestURLBase =
+        CPLGetPath(CleanURL(osRequestURL).c_str());
+    if (!osURL.empty() && osURL[0] == '/')
+        osRet = m_osServerBaseURL + osURL;
+    else if (osURL.size() > 2 && osURL[0] == '.' && osURL[1] == '/')
+        osRet = osRequestURLBase + osURL.substr(1);
+    else if (osURL.size() > 3 && osURL[0] == '.' && osURL[1] == '.' &&
+             osURL[2] == '/')
+    {
+        std::string osModifiedRequestURL(osRequestURLBase);
+        while (osRet.size() > 3 && osRet[0] == '.' && osRet[1] == '.' &&
+               osRet[2] == '/')
+        {
+            osModifiedRequestURL = CPLGetPath(osModifiedRequestURL.c_str());
+            osRet = osRet.substr(3);
+        }
+        osRet = osModifiedRequestURL + "/" + osRet;
+    }
+    else if (!STARTS_WITH(osURL.c_str(), "http://") &&
+             !STARTS_WITH(osURL.c_str(), "https://") &&
+             !STARTS_WITH(osURL.c_str(), "file://"))
+    {
+        osRet = osRequestURLBase + "/" + osURL;
+    }
 
-    if (!osRet.empty() && osRet[0] == '/')
-        osRet = m_osRootURL + osRet;
-
-    const auto nArobaseInURLPos = m_osRootURL.find('@');
-    if (!osRet.empty() && STARTS_WITH(m_osRootURL, "https://") &&
+    const auto nArobaseInURLPos = m_osServerBaseURL.find('@');
+    if (!osRet.empty() && STARTS_WITH(m_osServerBaseURL, "https://") &&
         STARTS_WITH(osRet, "https://") &&
         nArobaseInURLPos != std::string::npos &&
         osRet.find('@') == std::string::npos)
     {
-        const auto nFirstSlashPos = m_osRootURL.find('/', strlen("https://"));
+        const auto nFirstSlashPos =
+            m_osServerBaseURL.find('/', strlen("https://"));
         if (nFirstSlashPos == std::string::npos ||
             nFirstSlashPos > nArobaseInURLPos)
         {
-            auto osUserPwd = m_osRootURL.substr(
+            auto osUserPwd = m_osServerBaseURL.substr(
                 strlen("https://"), nArobaseInURLPos - strlen("https://"));
             std::string osServer(
                 nFirstSlashPos == std::string::npos
-                    ? m_osRootURL.substr(nArobaseInURLPos + 1)
-                    : m_osRootURL.substr(nArobaseInURLPos + 1,
-                                         nFirstSlashPos - nArobaseInURLPos));
+                    ? m_osServerBaseURL.substr(nArobaseInURLPos + 1)
+                    : m_osServerBaseURL.substr(nArobaseInURLPos + 1,
+                                               nFirstSlashPos -
+                                                   nArobaseInURLPos));
             if (STARTS_WITH(osRet, ("https://" + osServer).c_str()))
             {
                 osRet = "https://" + osUserPwd + "@" +
@@ -505,13 +552,14 @@ bool OGROAPIFDataset::DownloadJSon(const CPLString &osURL,
 /*                        GetLandingPageDoc()                           */
 /************************************************************************/
 
-const CPLJSONDocument &OGROAPIFDataset::GetLandingPageDoc()
+const CPLJSONDocument &OGROAPIFDataset::GetLandingPageDoc(std::string &osURLOut)
 {
     if (m_bLandingPageDocLoaded)
         return m_oLandingPageDoc;
     m_bLandingPageDocLoaded = true;
+    osURLOut = m_osRootURL;
     CPL_IGNORE_RET_VAL(
-        DownloadJSon(m_osRootURL, m_oLandingPageDoc, MEDIA_TYPE_JSON));
+        DownloadJSon(osURLOut, m_oLandingPageDoc, MEDIA_TYPE_JSON));
     return m_oLandingPageDoc;
 }
 
@@ -519,7 +567,7 @@ const CPLJSONDocument &OGROAPIFDataset::GetLandingPageDoc()
 /*                            GetAPIDoc()                               */
 /************************************************************************/
 
-const CPLJSONDocument &OGROAPIFDataset::GetAPIDoc()
+const CPLJSONDocument &OGROAPIFDataset::GetAPIDoc(std::string &osURLOut)
 {
     if (m_bAPIDocLoaded)
         return m_oAPIDoc;
@@ -527,7 +575,8 @@ const CPLJSONDocument &OGROAPIFDataset::GetAPIDoc()
 
     // Fetch the /api URL from the links of the landing page
     CPLString osAPIURL;
-    const auto &oLandingPage = GetLandingPageDoc();
+    std::string osLandingPageURL;
+    const auto &oLandingPage = GetLandingPageDoc(osLandingPageURL);
     if (oLandingPage.GetRoot().IsValid())
     {
         const auto oLinks = oLandingPage.GetRoot().GetArray("links");
@@ -552,7 +601,8 @@ const CPLJSONDocument &OGROAPIFDataset::GetAPIDoc()
                 )
                 {
                     nCountRelAPI++;
-                    osAPIURL = ReinjectAuthInURL(oLink.GetString("href"));
+                    osAPIURL =
+                        ResolveURL(oLink.GetString("href"), osLandingPageURL);
                     if (osType == MEDIA_TYPE_OAPI_3_0
 #ifndef REMOVE_SUPPORT_FOR_OLD_VERSIONS
                         // Needed for http://beta.fmi.fi/data/3/wfs/sofp
@@ -580,6 +630,7 @@ const CPLJSONDocument &OGROAPIFDataset::GetAPIDoc()
 
     if (!osAPIURL.empty())
     {
+        osURLOut = osAPIURL;
         CPL_IGNORE_RET_VAL(DownloadJSon(osAPIURL, m_oAPIDoc, pszAccept));
         return m_oAPIDoc;
     }
@@ -596,7 +647,8 @@ const CPLJSONDocument &OGROAPIFDataset::GetAPIDoc()
         return m_oAPIDoc;
     }
 
-    if (DownloadJSon(m_osRootURL + "/api/", m_oAPIDoc, pszAccept))
+    osURLOut = m_osRootURL + "/api/";
+    if (DownloadJSon(osURLOut, m_oAPIDoc, pszAccept))
     {
         return m_oAPIDoc;
     }
@@ -815,8 +867,10 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject &oCollection,
 /*                         LoadJSONCollections()                        */
 /************************************************************************/
 
-bool OGROAPIFDataset::LoadJSONCollections(const CPLString &osResultIn)
+bool OGROAPIFDataset::LoadJSONCollections(const CPLString &osResultIn,
+                                          const std::string &osCollectionsURL)
 {
+    std::string osParentURL(osCollectionsURL);
     CPLString osResult(osResultIn);
     while (!osResult.empty())
     {
@@ -872,7 +926,8 @@ bool OGROAPIFDataset::LoadJSONCollections(const CPLString &osResultIn)
             if (nCountRelNext == 1 && !osNextURL.empty())
             {
                 CPLString osContentType;
-                osNextURL = ReinjectAuthInURL(osNextURL);
+                osNextURL = ResolveURL(osNextURL, osParentURL);
+                osParentURL = osNextURL;
                 if (!Download(osNextURL, MEDIA_TYPE_JSON, osResult,
                               osContentType))
                 {
@@ -891,7 +946,8 @@ void OGROAPIFDataset::DeterminePageSizeFromAPI(const std::string &itemsUrl)
     int nDefault{-1};
     // Not sure if min should be considered
     //int nMinimum { -1 };
-    const CPLJSONDocument &oDoc{GetAPIDoc()};
+    std::string osAPIURL;
+    const CPLJSONDocument &oDoc{GetAPIDoc(osAPIURL)};
     const auto &oRoot = oDoc.GetRoot();
 
     bool bFound{false};
@@ -928,7 +984,7 @@ void OGROAPIFDataset::DeterminePageSizeFromAPI(const std::string &itemsUrl)
                         {
                             // Only reinject auth if the URL matches
                             auto limitUrl{ref.find(m_osRootURL) == 0
-                                              ? ReinjectAuthInURL(ref)
+                                              ? ResolveURL(ref, osAPIURL)
                                               : ref};
                             std::string fragment;
                             const auto hashPos{limitUrl.find('#')};
@@ -1052,9 +1108,31 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
         m_osRootURL = m_osRootURL.substr(strlen("OAPIF:"));
     else if (STARTS_WITH_CI(m_osRootURL, "OAPIF_COLLECTION:"))
     {
+        // Used by the OGCAPI driver
         osCollectionDescURL = m_osRootURL.substr(strlen("OAPIF_COLLECTION:"));
         m_osRootURL = osCollectionDescURL;
-        const char *pszStr = m_osRootURL.c_str();
+    }
+
+    const auto nPosQuestionMark = m_osRootURL.find('?');
+    if (nPosQuestionMark != std::string::npos)
+    {
+        m_osUserQueryParams = m_osRootURL.substr(nPosQuestionMark + 1);
+        m_osRootURL.resize(nPosQuestionMark);
+    }
+
+    const auto nCollectionsPos = m_osRootURL.find("/collections/");
+    if (nCollectionsPos != std::string::npos)
+    {
+        if (osCollectionDescURL.empty())
+            osCollectionDescURL = m_osRootURL;
+        m_osRootURL.resize(nCollectionsPos);
+    }
+
+    // m_osServerBaseURL is just the "https://example.com" part from
+    // "https://example.com/foo/bar"
+    m_osServerBaseURL = m_osRootURL;
+    {
+        const char *pszStr = m_osServerBaseURL.c_str();
         const char *pszPtr = pszStr;
         if (STARTS_WITH(pszPtr, "http://"))
             pszPtr += strlen("http://");
@@ -1062,24 +1140,7 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
             pszPtr += strlen("https://");
         pszPtr = strchr(pszPtr, '/');
         if (pszPtr)
-            m_osRootURL.assign(pszStr, pszPtr - pszStr);
-    }
-
-    if (osCollectionDescURL.empty())
-    {
-        auto nPosQuotationMark = m_osRootURL.find('?');
-        if (nPosQuotationMark != std::string::npos)
-        {
-            m_osUserQueryParams = m_osRootURL.substr(nPosQuotationMark + 1);
-            m_osRootURL.resize(nPosQuotationMark);
-        }
-
-        auto nCollectionsPos = m_osRootURL.find("/collections/");
-        if (nCollectionsPos != std::string::npos)
-        {
-            osCollectionDescURL = m_osRootURL;
-            m_osRootURL.resize(nCollectionsPos);
-        }
+            m_osServerBaseURL.assign(pszStr, pszPtr - pszStr);
     }
 
     m_bIgnoreSchema = CPLTestBool(CSLFetchNameValueDef(
@@ -1167,15 +1228,16 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
         return LoadJSONCollection(oRoot, CPLJSONArray());
     }
 
-    if (!Download(ConcatenateURLParts(m_osRootURL, "/collections"),
-                  MEDIA_TYPE_JSON, osResult, osContentType))
+    const std::string osCollectionsURL(
+        ConcatenateURLParts(m_osRootURL, "/collections"));
+    if (!Download(osCollectionsURL, MEDIA_TYPE_JSON, osResult, osContentType))
     {
         return false;
     }
 
     if (osContentType.find("json") != std::string::npos)
     {
-        return LoadJSONCollections(osResult);
+        return LoadJSONCollections(osResult, osCollectionsURL);
     }
 
     return true;
@@ -1312,6 +1374,7 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset *poDS, const CPLString &osName,
     // later
     m_osURL = ConcatenateURLParts(m_poDS->m_osRootURL,
                                   "/collections/" + osName + "/items");
+    const std::string osParentURL(m_osURL);
     m_osPath = "/collections/" + osName + "/items";
 
     if (oLinks.IsValid())
@@ -1348,20 +1411,21 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset *poDS, const CPLString &osName,
             {
                 if (type == MEDIA_TYPE_JSON || m_osQueryablesURL.empty())
                 {
-                    m_osQueryablesURL = m_poDS->ReinjectAuthInURL(osURL);
+                    m_osQueryablesURL = m_poDS->ResolveURL(osURL, osParentURL);
                 }
             }
             else if (EQUAL(osRel.c_str(), "items"))
             {
                 if (type == MEDIA_TYPE_GEOJSON)
                 {
-                    m_osURL = m_poDS->ReinjectAuthInURL(osURL);
+                    m_osURL = m_poDS->ResolveURL(osURL, osParentURL);
                 }
             }
         }
         if (!m_osDescribedByURL.empty())
         {
-            m_osDescribedByURL = m_poDS->ReinjectAuthInURL(m_osDescribedByURL);
+            m_osDescribedByURL =
+                m_poDS->ResolveURL(m_osDescribedByURL, osParentURL);
         }
     }
 
@@ -1998,7 +2062,7 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
 
             m_oCurDoc = CPLJSONDocument();
 
-            CPLString osURL(m_osGetURL);
+            const CPLString osURL(m_osGetURL);
             m_osGetURL.clear();
             CPLStringList aosHeaders;
             if (!m_poDS->DownloadJSon(osURL, m_oCurDoc,
@@ -2154,7 +2218,7 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
 
                 if (!m_osGetURL.empty())
                 {
-                    m_osGetURL = m_poDS->ReinjectAuthInURL(m_osGetURL);
+                    m_osGetURL = m_poDS->ResolveURL(m_osGetURL, osURL);
                 }
             }
         }
@@ -2265,7 +2329,8 @@ OGRFeature *OGROAPIFLayer::GetNextFeature()
 
 bool OGROAPIFLayer::SupportsResultTypeHits()
 {
-    CPLJSONDocument oDoc = m_poDS->GetAPIDoc();
+    std::string osAPIURL;
+    CPLJSONDocument oDoc = m_poDS->GetAPIDoc(osAPIURL);
     if (oDoc.GetRoot().GetString("openapi").empty())
         return false;
 
@@ -2960,7 +3025,8 @@ void OGROAPIFLayer::GetQueryableAttributes()
     if (m_bGotQueryableAttributes)
         return;
     m_bGotQueryableAttributes = true;
-    CPLJSONDocument oAPIDoc = m_poDS->GetAPIDoc();
+    std::string osAPIURL;
+    CPLJSONDocument oAPIDoc = m_poDS->GetAPIDoc(osAPIURL);
     if (oAPIDoc.GetRoot().GetString("openapi").empty())
         return;
 

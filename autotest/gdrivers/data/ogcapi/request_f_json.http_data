@@ -1,0 +1,107 @@
+HTTP/1.1 200 OK
+Date: Fri, 12 Jul 2024 14:16:47 GMT
+Server: Apache/2.4.52 (Ubuntu)
+Expires: Sat, 12 Jul 2025 14:15:59 GMT
+Access-Control-Allow-Origin: *
+Vary: Accept,Accept-Encoding,Prefer
+Content-Length: 4397
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Age: 48
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: application/json
+
+{
+   "links" : [
+      {
+         "rel" : "self",
+         "type" : "application/json",
+         "title" : "The JSON representation of the landing page for this OGC (geospatial) API Service providing links to the API definition, the conformance declaration and information about the data collections offered at this endpoint.",
+         "href" : "http://127.0.0.1:8080/fakeogcapi?f=json"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "text/plain",
+         "title" : "The ECON representation of the landing page for this OGC (geospatial) API Service providing links to the API definition, the conformance declaration and information about the data collections offered at this endpoint.",
+         "href" : "http://127.0.0.1:8080/fakeogcapi?f=econ"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "text/html",
+         "title" : "The HTML representation of the landing page for this OGC (geospatial) API Service providing links to the API definition, the conformance declaration and information about the data collections offered at this endpoint.",
+         "href" : "http://127.0.0.1:8080/fakeogcapi?f=html"
+      },
+      {
+         "rel" : "service-desc",
+         "type" : "application/vnd.oai.openapi+json;version=3.0",
+         "title" : "The JSON OpenAPI 3.0 document that describes the API offered at this endpoint",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/api?f=json"
+      },
+      {
+         "rel" : "service-doc",
+         "type" : "text/html",
+         "title" : "The HTML documentation of the API offered at this endpoint",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/api?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/conformance",
+         "type" : "application/json",
+         "title" : "The JSON representation of the conformance declaration for this server listing the requirement classes implemented by this server",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/conformance"
+      },
+      {
+         "rel" : "conformance",
+         "type" : "application/json",
+         "title" : "The JSON representation of the conformance declaration for this server listing the requirement classes implemented by this server",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/conformance"
+      },
+      {
+         "rel" : "data",
+         "type" : "application/json",
+         "title" : "The JSON representation of the list of all data collections served from this endpoint",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections?f=json"
+      },
+      {
+         "rel" : "data",
+         "type" : "text/plain",
+         "title" : "The ECON representation of the list of all data collections served from this endpoint",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections?f=econ"
+      },
+      {
+         "rel" : "data",
+         "type" : "text/html",
+         "title" : "The HTML representation of the list of all data collections served from this endpoint",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/processes",
+         "type" : "application/json",
+         "title" : "The JSON representation of the list of all processes available from this endpoint",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/processes"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/routes",
+         "type" : "application/json",
+         "title" : "Routing end-point",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/routes"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-schemes",
+         "type" : "application/json",
+         "title" : "The list of supported tiling schemes (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-schemes",
+         "type" : "text/plain",
+         "title" : "The list of supported tiling schemes (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-schemes",
+         "type" : "text/html",
+         "title" : "The list of supported tiling schemes (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets?f=html"
+      }
+   ]
+}
