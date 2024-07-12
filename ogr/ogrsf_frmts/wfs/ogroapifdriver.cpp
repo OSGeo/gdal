@@ -293,8 +293,13 @@ CPLString OGROAPIFDataset::ReinjectAuthInURL(const CPLString &osURL) const
     CPLString osRet(osURL);
 
     if (!osRet.empty() && osRet[0] == '/')
-        osRet = m_osRootURL + osRet;
+    {
 
+        std::string tmp = m_osRootURL;
+        int thirdSlash = tmp.find('/', 8);
+        tmp.resize(thirdSlash);
+        osRet = tmp + osRet;
+    }
     const auto nArobaseInURLPos = m_osRootURL.find('@');
     if (!osRet.empty() && STARTS_WITH(m_osRootURL, "https://") &&
         STARTS_WITH(osRet, "https://") &&
