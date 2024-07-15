@@ -681,9 +681,6 @@ def test_ogr_pg_4(pg_ds):
 
         ogrtest.check_feature_geometry(feat_read, geom)
 
-        feat_read.Destroy()
-
-    dst_feat.Destroy()
     pg_lyr.ResetReading()  # to close implicit transaction
 
 
@@ -915,7 +912,6 @@ def test_ogr_pg_10(pg_ds):
     pg_lyr.SetAttributeFilter(None)
 
     fid = feat.GetFID()
-    feat.Destroy()
 
     assert pg_lyr.DeleteFeature(fid) == 0, "DeleteFeature() method failed."
 
@@ -1173,7 +1169,6 @@ def test_ogr_pg_20(pg_ds):
         geom = feat.GetGeometryRef()
         assert geom is not None, "did not get geometry, expected %s" % geoms[1]
         wkt = geom.ExportToIsoWkt()
-        feat.Destroy()
         feat = None
 
         assert wkt == geoms[1], "WKT do not match: expected %s, got %s" % (
@@ -1195,23 +1190,17 @@ def test_ogr_pg_21(pg_ds):
     layer = pg_ds.ExecuteSQL("SELECT wkb_geometry FROM testgeom")
     assert layer is not None, "did not get testgeom layer"
 
-    feat = layer.GetNextFeature()
-    while feat is not None:
+    for feat in layer:
         geom = feat.GetGeometryRef()
         if (
             ogr.GT_HasZ(geom.GetGeometryType()) == 0
             or ogr.GT_HasM(geom.GetGeometryType()) == 0
         ):
-            feat.Destroy()
             feat = None
             pg_ds.ReleaseResultSet(layer)
             layer = None
             pytest.fail("expected feature with type >3000")
 
-        feat.Destroy()
-        feat = layer.GetNextFeature()
-
-    feat = None
     pg_ds.ReleaseResultSet(layer)
     layer = None
 
@@ -1259,7 +1248,6 @@ def test_ogr_pg_21_subgeoms(pg_ds):
                 ), "did not get the expected subgeometry, expected %s" % (
                     subgeom_TIN[j]
                 )
-        feat.Destroy()
         feat = None
 
 
@@ -1772,7 +1760,6 @@ def test_ogr_pg_33(pg_ds):
     # eacute in UTF8 : 0xc3 0xa9
     dst_feat.SetField("SHORTNAME", "\xc3\xa9")
     pg_lyr.CreateFeature(dst_feat)
-    dst_feat.Destroy()
 
 
 ###############################################################################
@@ -2412,7 +2399,6 @@ def test_ogr_pg_47(pg_ds, pg_postgis_version, pg_postgis_schema):
     )
     field_defn = ogr.FieldDefn("test_string", ogr.OFTString)
     lyr.CreateField(field_defn)
-    field_defn.Destroy()
 
     feature_defn = lyr.GetLayerDefn()
 
@@ -6121,3 +6107,38 @@ def test_ogr_pg_skip_conflicts(pg_ds):
         feat["beginnt"] = "2020-07-10T04:48:14Z"
         assert lyr.CreateFeature(feat) == ogr.OGRERR_NONE
         assert lyr.GetFeatureCount() == 2
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/10311
+
+
+@only_without_postgis
+@gdaltest.enable_exceptions()
+def test_ogr_pg_ogr2ogr_with_multiple_dotted_table_name(pg_ds):
+
+    tmp_schema = "tmp_schema_issue_10311"
+    pg_ds.ExecuteSQL(f'CREATE SCHEMA "{tmp_schema}"')
+    try:
+        src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+        lyr = src_ds.CreateLayer(tmp_schema + ".table1", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        lyr.CreateFeature(f)
+        lyr = src_ds.CreateLayer(tmp_schema + ".table2", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        lyr.CreateFeature(f)
+
+        gdal.VectorTranslate(pg_ds.GetDescription(), src_ds)
+
+        pg_ds = reconnect(pg_ds)
+        lyr = pg_ds.GetLayerByName(tmp_schema + ".table1")
+        assert lyr.GetFeatureCount() == 1
+        lyr = pg_ds.GetLayerByName(tmp_schema + ".table2")
+        assert lyr.GetFeatureCount() == 1
+
+    finally:
+        pg_ds.ExecuteSQL(f'DROP SCHEMA "{tmp_schema}" CASCADE')

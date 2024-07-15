@@ -421,25 +421,36 @@ size_t VSIMemHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         return 0;
     }
 
+    bool bEOFTmp = bEOF;
+    // Do not access/modify bEOF under the lock to avoid confusing Coverity
+    // Scan since we access it in other methods outside of the lock.
+    const auto DoUnderLock =
+        [this, nOffset, pBuffer, nSize, &nBytesToRead, &nCount, &bEOFTmp]
     {
         CPL_SHARED_LOCK oLock(poFile->m_oMutex);
 
         if (poFile->nLength <= nOffset || nBytesToRead + nOffset < nBytesToRead)
         {
-            bEOF = true;
-            return 0;
+            bEOFTmp = true;
+            return false;
         }
         if (nBytesToRead + nOffset > poFile->nLength)
         {
             nBytesToRead = static_cast<size_t>(poFile->nLength - nOffset);
             nCount = nBytesToRead / nSize;
-            bEOF = true;
+            bEOFTmp = true;
         }
 
         if (nBytesToRead)
             memcpy(pBuffer, poFile->pabyData + nOffset,
                    static_cast<size_t>(nBytesToRead));
-    }
+        return true;
+    };
+
+    bool bRet = DoUnderLock();
+    bEOF = bEOFTmp;
+    if (!bRet)
+        return 0;
 
     m_nOffset += nBytesToRead;
 

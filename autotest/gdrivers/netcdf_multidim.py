@@ -3762,6 +3762,88 @@ def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A():
     )
 
 
+def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A_with_good_wavelengths():
+
+    ds = gdal.OpenEx(
+        "data/netcdf/fake_EMIT_L2A_with_good_wavelengths.nc", gdal.OF_MULTIDIM_RASTER
+    )
+    rg = ds.GetRootGroup()
+
+    ar = rg.OpenMDArray("reflectance")
+
+    # Use glt_x and glt_y arrays, and good_wavelengths variable
+    resampled_ar = ar.GetResampled(
+        [None, None, None], gdal.GRIORA_NearestNeighbour, None
+    )
+    assert resampled_ar is not None
+
+    # Read one band that is valid according to good_wavelengths variable
+    assert struct.unpack(
+        "f" * (3 * 3), resampled_ar.Read(array_start_idx=[0, 0, 1], count=[3, 3, 1])
+    ) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+    )
+
+    # Read one band that is invalid according to good_wavelengths variable
+    assert struct.unpack(
+        "f" * (3 * 3), resampled_ar.Read(array_start_idx=[0, 0, 0], count=[3, 3, 1])
+    ) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        30.0,
+        40.0,
+        -9999.0,
+        10.0,
+        20.0,
+    )
+
+    # Read all bands
+    assert struct.unpack("f" * (3 * 3 * 2), resampled_ar.Read()) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        30.0,
+        -9999.0,
+        40.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        10.0,
+        -9999.0,
+        20.0,
+        -9999.0,
+    )
+
+    # Test *not* using good_wavelengths variable
+    resampled_ar = ar.GetResampled(
+        [None, None, None],
+        gdal.GRIORA_NearestNeighbour,
+        None,
+        ["USE_GOOD_WAVELENGTHS=NO"],
+    )
+    assert resampled_ar is not None
+
+    # Read one band that is valid according to good_wavelengths variable
+    assert struct.unpack(
+        "f" * (3 * 3), resampled_ar.Read(array_start_idx=[0, 0, 1], count=[3, 3, 1])
+    ) == (-9999.0, -9999.0, -9999.0, -9999.0, -30.0, -40.0, -9999.0, -10.0, -20.0)
+
+
 def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2B_MIN():
 
     ds = gdal.OpenEx("data/netcdf/fake_EMIT_L2B_MIN.nc", gdal.OF_MULTIDIM_RASTER)

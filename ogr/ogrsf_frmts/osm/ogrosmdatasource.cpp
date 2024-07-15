@@ -69,7 +69,7 @@
 #include "sqlite3.h"
 
 #undef SQLITE_STATIC
-#define SQLITE_STATIC ((sqlite3_destructor_type) nullptr)
+#define SQLITE_STATIC (static_cast<sqlite3_destructor_type>(nullptr))
 
 constexpr int LIMIT_IDS_PER_REQUEST = 200;
 
@@ -159,7 +159,7 @@ constexpr int HASHED_INDEXES_ARRAY_SIZE = 3145739;
 constexpr int COLLISION_BUCKET_ARRAY_SIZE = (MAX_ACCUMULATED_NODES / 100) * 40;
 
 // hash function = identity
-#define HASH_ID_FUNC(x) ((GUIntBig)(x))
+#define HASH_ID_FUNC(x) (static_cast<std::uintptr_t>(x))
 #endif  // ENABLE_NODE_LOOKUP_BY_HASHING
 
 // #define FAKE_LOOKUP_NODES
@@ -174,9 +174,9 @@ static void WriteVarSInt64(GIntBig nSVal, GByte **ppabyData);
 class DSToBeOpened
 {
   public:
-    GIntBig nPID;
-    CPLString osDSName;
-    CPLString osInterestLayers;
+    GIntBig nPID{};
+    CPLString osDSName{};
+    CPLString osInterestLayers{};
 };
 
 static CPLMutex *hMutex = nullptr;
@@ -205,13 +205,14 @@ static CPLString GetInterestLayersForDSName(const CPLString &osDSName)
 {
     CPLMutexHolder oMutexHolder(&hMutex);
     GIntBig nPID = CPLGetPID();
-    for (int i = 0; i < (int)oListDSToBeOpened.size(); i++)
+    for (auto oIter = oListDSToBeOpened.begin();
+         oIter < oListDSToBeOpened.end(); ++oIter)
     {
-        if (oListDSToBeOpened[i].nPID == nPID &&
-            oListDSToBeOpened[i].osDSName == osDSName)
+        const auto &ds = *oIter;
+        if (ds.nPID == nPID && ds.osDSName == osDSName)
         {
-            CPLString osInterestLayers = oListDSToBeOpened[i].osInterestLayers;
-            oListDSToBeOpened.erase(oListDSToBeOpened.begin() + i);
+            CPLString osInterestLayers = ds.osInterestLayers;
+            oListDSToBeOpened.erase(oIter);
             return osInterestLayers;
         }
     }
@@ -224,7 +225,7 @@ static CPLString GetInterestLayersForDSName(const CPLString &osDSName)
 
 OGROSMDataSource::OGROSMDataSource()
 {
-    m_asKeys.push_back(nullptr);  // guard to avoid index 0 to be used
+    m_apsKeys.push_back(nullptr);  // guard to avoid index 0 to be used
 
     MAX_INDEXED_KEYS = static_cast<unsigned>(
         atoi(CPLGetConfigOption("OSM_MAX_INDEXED_KEYS", "32768")));
@@ -239,9 +240,7 @@ OGROSMDataSource::OGROSMDataSource()
 OGROSMDataSource::~OGROSMDataSource()
 
 {
-    for (int i = 0; i < m_nLayers; i++)
-        delete m_papoLayers[i];
-    CPLFree(m_papoLayers);
+    m_apoLayers.clear();
 
     CPLFree(m_pszName);
 
@@ -278,11 +277,6 @@ OGROSMDataSource::~OGROSMDataSource()
     CPLFree(m_pasLonLatArray);
     CPLFree(m_panUnsortedReqIds);
 
-    for (int i = 0; i < m_nWayFeaturePairs; i++)
-    {
-        delete m_pasWayFeaturePairs[i].poFeature;
-    }
-    CPLFree(m_pasWayFeaturePairs);
     CPLFree(m_pasAccumulatedTags);
     CPLFree(pabyNonRedundantKeys);
     CPLFree(pabyNonRedundantValues);
@@ -301,14 +295,14 @@ OGROSMDataSource::~OGROSMDataSource()
     fclose(f);
 #endif
 
-    for (int i = 1; i < static_cast<int>(m_asKeys.size()); i++)
+    for (int i = 1; i < static_cast<int>(m_apsKeys.size()); i++)
     {
-        KeyDesc *psKD = m_asKeys[i];
+        KeyDesc *psKD = m_apsKeys[i];
         if (psKD)
         {
             CPLFree(psKD->pszK);
-            for (int j = 0; j < static_cast<int>(psKD->asValues.size()); j++)
-                CPLFree(psKD->asValues[j]);
+            for (int j = 0; j < static_cast<int>(psKD->apszValues.size()); j++)
+                CPLFree(psKD->apszValues[j]);
             delete psKD;
         }
     }
@@ -545,7 +539,7 @@ bool OGROSMDataSource::FlushCurrentSectorCompressedCase()
 {
     GByte abyOutBuffer[2 * SECTOR_SIZE];
     GByte *pabyOut = abyOutBuffer;
-    LonLat *pasLonLatIn = (LonLat *)m_pabySector;
+    LonLat *pasLonLatIn = reinterpret_cast<LonLat *>(m_pabySector);
     int nLastLon = 0;
     int nLastLat = 0;
     bool bLastValid = false;
@@ -729,7 +723,7 @@ bool OGROSMDataSource::IndexPointCustom(OSMNode *psNode)
 void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode *pasNodes)
 {
     const OGREnvelope *psEnvelope =
-        m_papoLayers[IDX_LYR_POINTS]->GetSpatialFilterEnvelope();
+        m_apoLayers[IDX_LYR_POINTS]->GetSpatialFilterEnvelope();
 
     for (unsigned int i = 0; i < nNodes; i++)
     {
@@ -744,7 +738,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode *pasNodes)
         if (!IndexPoint(&pasNodes[i]))
             break;
 
-        if (!m_papoLayers[IDX_LYR_POINTS]->IsUserInterested())
+        if (!m_apoLayers[IDX_LYR_POINTS]->IsUserInterested())
             continue;
 
         bool bInterestingTag = m_bReportAllNodes;
@@ -755,7 +749,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode *pasNodes)
             for (unsigned int j = 0; j < pasNodes[i].nTags; j++)
             {
                 const char *pszK = pasTags[j].pszK;
-                if (m_papoLayers[IDX_LYR_POINTS]->IsSignificantKey(pszK))
+                if (m_apoLayers[IDX_LYR_POINTS]->IsSignificantKey(pszK))
                 {
                     bInterestingTag = true;
                     break;
@@ -765,19 +759,20 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode *pasNodes)
 
         if (bInterestingTag)
         {
-            OGRFeature *poFeature =
-                new OGRFeature(m_papoLayers[IDX_LYR_POINTS]->GetLayerDefn());
+            auto poFeature = std::make_unique<OGRFeature>(
+                m_apoLayers[IDX_LYR_POINTS]->GetLayerDefn());
 
             poFeature->SetGeometryDirectly(
                 new OGRPoint(pasNodes[i].dfLon, pasNodes[i].dfLat));
 
-            m_papoLayers[IDX_LYR_POINTS]->SetFieldsFromTags(
-                poFeature, pasNodes[i].nID, false, pasNodes[i].nTags, pasTags,
-                &pasNodes[i].sInfo);
+            m_apoLayers[IDX_LYR_POINTS]->SetFieldsFromTags(
+                poFeature.get(), pasNodes[i].nID, false, pasNodes[i].nTags,
+                pasTags, &pasNodes[i].sInfo);
 
-            int bFilteredOut = FALSE;
-            if (!m_papoLayers[IDX_LYR_POINTS]->AddFeature(
-                    poFeature, FALSE, &bFilteredOut, !m_bFeatureAdded))
+            bool bFilteredOut = false;
+            if (!m_apoLayers[IDX_LYR_POINTS]->AddFeature(std::move(poFeature),
+                                                         false, &bFilteredOut,
+                                                         !m_bFeatureAdded))
             {
                 m_bStopParsing = true;
                 break;
@@ -936,7 +931,8 @@ void OGROSMDataSource::LookupNodesSQLite()
         while (sqlite3_step(hStmt) == SQLITE_ROW)
         {
             const GIntBig id = sqlite3_column_int64(hStmt, 0);
-            LonLat *psLonLat = (LonLat *)sqlite3_column_blob(hStmt, 1);
+            const LonLat *psLonLat =
+                reinterpret_cast<const LonLat *>(sqlite3_column_blob(hStmt, 1));
 
             m_panReqIds[j] = id;
             m_pasLonLatArray[j].nLon = psLonLat->nLon;
@@ -957,7 +953,7 @@ static bool DecompressSector(const GByte *pabyIn, int nSectorSize,
                              GByte *pabyOut)
 {
     const GByte *pabyPtr = pabyIn;
-    LonLat *pasLonLatOut = (LonLat *)pabyOut;
+    LonLat *pasLonLatOut = reinterpret_cast<LonLat *>(pabyOut);
     int nLastLon = 0;
     int nLastLat = 0;
     bool bLastValid = false;
@@ -970,9 +966,9 @@ static bool DecompressSector(const GByte *pabyIn, int nSectorSize,
             if (bLastValid)
             {
                 pasLonLatOut[i].nLon =
-                    (int)(nLastLon + ReadVarSInt64(&pabyPtr));
+                    static_cast<int>(nLastLon + ReadVarSInt64(&pabyPtr));
                 pasLonLatOut[i].nLat =
-                    (int)(nLastLat + ReadVarSInt64(&pabyPtr));
+                    static_cast<int>(nLastLat + ReadVarSInt64(&pabyPtr));
             }
             else
             {
@@ -991,7 +987,7 @@ static bool DecompressSector(const GByte *pabyIn, int nSectorSize,
         }
     }
 
-    int nRead = (int)(pabyPtr - pabyIn);
+    int nRead = static_cast<int>(pabyPtr - pabyIn);
     nRead = ROUND_COMPRESS_SIZE(nRead);
     return nRead == nSectorSize;
 }
@@ -1309,11 +1305,11 @@ static void WriteVarInt(unsigned int nVal, std::vector<GByte> &abyData)
     {
         if ((nVal & (~0x7fU)) == 0)
         {
-            abyData.push_back((GByte)nVal);
+            abyData.push_back(static_cast<GByte>(nVal));
             return;
         }
 
-        abyData.push_back(0x80 | (GByte)(nVal & 0x7f));
+        abyData.push_back(0x80 | static_cast<GByte>(nVal & 0x7f));
         nVal >>= 7;
     }
 }
@@ -1326,13 +1322,13 @@ static void WriteVarInt64(GUIntBig nVal, std::vector<GByte> &abyData)
 {
     while (true)
     {
-        if ((((GUInt32)nVal) & (~0x7fU)) == 0)
+        if ((static_cast<uint32_t>(nVal) & (~0x7fU)) == 0)
         {
-            abyData.push_back((GByte)nVal);
+            abyData.push_back(static_cast<GByte>(nVal));
             return;
         }
 
-        abyData.push_back(0x80 | (GByte)(nVal & 0x7f));
+        abyData.push_back(0x80 | static_cast<GByte>(nVal & 0x7f));
         nVal >>= 7;
     }
 }
@@ -1349,11 +1345,11 @@ static void WriteVarSInt64(GIntBig nSVal, std::vector<GByte> &abyData)
     {
         if ((nVal & (~0x7f)) == 0)
         {
-            abyData.push_back((GByte)nVal);
+            abyData.push_back(static_cast<GByte>(nVal));
             return;
         }
 
-        abyData.push_back(0x80 | (GByte)(nVal & 0x7f));
+        abyData.push_back(0x80 | static_cast<GByte>(nVal & 0x7f));
         nVal >>= 7;
     }
 }
@@ -1371,12 +1367,12 @@ static void WriteVarSInt64(GIntBig nSVal, GByte **ppabyData)
     {
         if ((nVal & (~0x7f)) == 0)
         {
-            *pabyData = (GByte)nVal;
+            *pabyData = static_cast<GByte>(nVal);
             *ppabyData = pabyData + 1;
             return;
         }
 
-        *pabyData = 0x80 | (GByte)(nVal & 0x7f);
+        *pabyData = 0x80 | static_cast<GByte>(nVal & 0x7f);
         nVal >>= 7;
         pabyData++;
     }
@@ -1404,8 +1400,9 @@ void OGROSMDataSource::CompressWay(bool bIsArea, unsigned int nTags,
         }
         else
         {
-            const char *pszK = (const char *)pabyNonRedundantKeys +
-                               pasTags[iTag].uKey.nOffsetInpabyNonRedundantKeys;
+            const char *pszK =
+                reinterpret_cast<const char *>(pabyNonRedundantKeys) +
+                pasTags[iTag].uKey.nOffsetInpabyNonRedundantKeys;
 
             abyCompressedWay.push_back(0);
 
@@ -1421,7 +1418,7 @@ void OGROSMDataSource::CompressWay(bool bIsArea, unsigned int nTags,
         else
         {
             const char *pszV =
-                (const char *)pabyNonRedundantValues +
+                reinterpret_cast<const char *>(pabyNonRedundantValues) +
                 pasTags[iTag].uVal.nOffsetInpabyNonRedundantValues;
 
             if (pasTags[iTag].bKIsIndex)
@@ -1456,8 +1453,8 @@ void OGROSMDataSource::CompressWay(bool bIsArea, unsigned int nTags,
         reinterpret_cast<const GByte *>(&(pasLonLatPairs[0])) + sizeof(LonLat));
     for (int i = 1; i < nPoints; i++)
     {
-        GIntBig nDiff64 = (GIntBig)pasLonLatPairs[i].nLon -
-                          (GIntBig)pasLonLatPairs[i - 1].nLon;
+        GIntBig nDiff64 = static_cast<GIntBig>(pasLonLatPairs[i].nLon) -
+                          static_cast<GIntBig>(pasLonLatPairs[i - 1].nLon);
         WriteVarSInt64(nDiff64, abyCompressedWay);
 
         nDiff64 = pasLonLatPairs[i].nLat - pasLonLatPairs[i - 1].nLat;
@@ -1511,14 +1508,15 @@ void OGROSMDataSource::UncompressWay(int nBytes, const GByte *pabyCompressedWay,
 
         if (pasTags)
         {
-            CPLAssert(nK >= 0 && nK < (int)m_asKeys.size());
+            CPLAssert(nK >= 0 && static_cast<unsigned>(nK) < m_apsKeys.size());
             pasTags[iTag].pszK =
-                nK ? m_asKeys[nK]->pszK : reinterpret_cast<const char *>(pszK);
+                nK ? m_apsKeys[nK]->pszK : reinterpret_cast<const char *>(pszK);
 
             CPLAssert(nK == 0 ||
-                      (nV >= 0 && nV < (int)m_asKeys[nK]->asValues.size()));
-            pasTags[iTag].pszV =
-                nV ? m_asKeys[nK]->asValues[nV] : (const char *)pszV;
+                      (nV >= 0 && static_cast<unsigned>(nV) <
+                                      m_apsKeys[nK]->apszValues.size()));
+            pasTags[iTag].pszV = nV ? m_apsKeys[nK]->apszValues[nV]
+                                    : reinterpret_cast<const char *>(pszV);
         }
     }
 
@@ -1551,8 +1549,8 @@ void OGROSMDataSource::UncompressWay(int nBytes, const GByte *pabyCompressedWay,
     pabyPtr += 2 * sizeof(int);
     do
     {
-        lonLat.nLon = (int)(lonLat.nLon + ReadVarSInt64(&pabyPtr));
-        lonLat.nLat = (int)(lonLat.nLat + ReadVarSInt64(&pabyPtr));
+        lonLat.nLon = static_cast<int>(lonLat.nLon + ReadVarSInt64(&pabyPtr));
+        lonLat.nLat = static_cast<int>(lonLat.nLat + ReadVarSInt64(&pabyPtr));
         asCoords.emplace_back(lonLat);
     } while (pabyPtr < pabyCompressedWay + nBytes);
 }
@@ -1623,26 +1621,24 @@ int OGROSMDataSource::FindNode(GIntBig nID)
 
 void OGROSMDataSource::ProcessWaysBatch()
 {
-    if (m_nWayFeaturePairs == 0)
+    if (m_asWayFeaturePairs.empty())
         return;
 
-    // printf("nodes = %d, features = %d\n", nUnsortedReqIds, nWayFeaturePairs);
+    // printf("nodes = %d, features = %d\n", nUnsortedReqIds, int(m_asWayFeaturePairs.size()));
     LookupNodes();
 
-    for (int iPair = 0; iPair < m_nWayFeaturePairs; iPair++)
+    for (WayFeaturePair &sWayFeaturePairs : m_asWayFeaturePairs)
     {
-        WayFeaturePair *psWayFeaturePairs = &m_pasWayFeaturePairs[iPair];
-
-        const bool bIsArea = psWayFeaturePairs->bIsArea;
+        const bool bIsArea = sWayFeaturePairs.bIsArea;
         m_asLonLatCache.clear();
 
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING
         if (m_bHashedIndexValid)
         {
-            for (unsigned int i = 0; i < psWayFeaturePairs->nRefs; i++)
+            for (unsigned int i = 0; i < sWayFeaturePairs.nRefs; i++)
             {
                 int nIndInHashArray = static_cast<int>(
-                    HASH_ID_FUNC(psWayFeaturePairs->panNodeRefs[i]) %
+                    HASH_ID_FUNC(sWayFeaturePairs.panNodeRefs[i]) %
                     HASHED_INDEXES_ARRAY_SIZE);
                 int nIdx = m_panHashedIndexes[nIndInHashArray];
                 if (nIdx < -1)
@@ -1652,7 +1648,7 @@ void OGROSMDataSource::ProcessWaysBatch()
                     {
                         nIdx = m_psCollisionBuckets[iBucket].nInd;
                         if (m_panReqIds[nIdx] ==
-                            psWayFeaturePairs->panNodeRefs[i])
+                            sWayFeaturePairs.panNodeRefs[i])
                             break;
                         iBucket = m_psCollisionBuckets[iBucket].nNext;
                         if (iBucket < 0)
@@ -1663,7 +1659,7 @@ void OGROSMDataSource::ProcessWaysBatch()
                     }
                 }
                 else if (nIdx >= 0 &&
-                         m_panReqIds[nIdx] != psWayFeaturePairs->panNodeRefs[i])
+                         m_panReqIds[nIdx] != sWayFeaturePairs.panNodeRefs[i])
                     nIdx = -1;
 
                 if (nIdx >= 0)
@@ -1676,20 +1672,20 @@ void OGROSMDataSource::ProcessWaysBatch()
 #endif  // ENABLE_NODE_LOOKUP_BY_HASHING
         {
             int nIdx = -1;
-            for (unsigned int i = 0; i < psWayFeaturePairs->nRefs; i++)
+            for (unsigned int i = 0; i < sWayFeaturePairs.nRefs; i++)
             {
-                if (nIdx >= 0 && psWayFeaturePairs->panNodeRefs[i] ==
-                                     psWayFeaturePairs->panNodeRefs[i - 1] + 1)
+                if (nIdx >= 0 && sWayFeaturePairs.panNodeRefs[i] ==
+                                     sWayFeaturePairs.panNodeRefs[i - 1] + 1)
                 {
-                    if (nIdx + 1 < (int)m_nReqIds &&
+                    if (static_cast<unsigned>(nIdx + 1) < m_nReqIds &&
                         m_panReqIds[nIdx + 1] ==
-                            psWayFeaturePairs->panNodeRefs[i])
+                            sWayFeaturePairs.panNodeRefs[i])
                         nIdx++;
                     else
                         nIdx = -1;
                 }
                 else
-                    nIdx = FindNode(psWayFeaturePairs->panNodeRefs[i]);
+                    nIdx = FindNode(sWayFeaturePairs.panNodeRefs[i]);
                 if (nIdx >= 0)
                 {
                     m_asLonLatCache.push_back(m_pasLonLatArray[nIdx]);
@@ -1707,28 +1703,27 @@ void OGROSMDataSource::ProcessWaysBatch()
             CPLDebug("OSM",
                      "Way " CPL_FRMT_GIB
                      " with %d nodes that could be found. Discarding it",
-                     psWayFeaturePairs->nWayID,
+                     sWayFeaturePairs.nWayID,
                      static_cast<int>(m_asLonLatCache.size()));
-            delete psWayFeaturePairs->poFeature;
-            psWayFeaturePairs->poFeature = nullptr;
-            psWayFeaturePairs->bIsArea = false;
+            sWayFeaturePairs.poFeature.reset();
+            sWayFeaturePairs.bIsArea = false;
             continue;
         }
 
-        if (bIsArea && m_papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested())
+        if (bIsArea && m_apoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested())
         {
-            IndexWay(psWayFeaturePairs->nWayID, /*bIsArea = */ true,
-                     psWayFeaturePairs->nTags, psWayFeaturePairs->pasTags,
+            IndexWay(sWayFeaturePairs.nWayID, /*bIsArea = */ true,
+                     sWayFeaturePairs.nTags, sWayFeaturePairs.pasTags,
                      m_asLonLatCache.data(),
                      static_cast<int>(m_asLonLatCache.size()),
-                     &psWayFeaturePairs->sInfo);
+                     &sWayFeaturePairs.sInfo);
         }
         else
-            IndexWay(psWayFeaturePairs->nWayID, bIsArea, 0, nullptr,
+            IndexWay(sWayFeaturePairs.nWayID, bIsArea, 0, nullptr,
                      m_asLonLatCache.data(),
                      static_cast<int>(m_asLonLatCache.size()), nullptr);
 
-        if (psWayFeaturePairs->poFeature == nullptr)
+        if (sWayFeaturePairs.poFeature == nullptr)
         {
             continue;
         }
@@ -1744,35 +1739,33 @@ void OGROSMDataSource::ProcessWaysBatch()
                            INT_TO_DBL(m_asLonLatCache[i].nLat));
         }
 
-        psWayFeaturePairs->poFeature->SetGeometryDirectly(poGeom);
+        sWayFeaturePairs.poFeature->SetGeometryDirectly(poGeom);
 
-        if (m_asLonLatCache.size() != psWayFeaturePairs->nRefs)
-            CPLDebug(
-                "OSM",
-                "For way " CPL_FRMT_GIB ", got only %d nodes instead of %d",
-                psWayFeaturePairs->nWayID, nPoints, psWayFeaturePairs->nRefs);
+        if (m_asLonLatCache.size() != sWayFeaturePairs.nRefs)
+            CPLDebug("OSM",
+                     "For way " CPL_FRMT_GIB
+                     ", got only %d nodes instead of %d",
+                     sWayFeaturePairs.nWayID, nPoints, sWayFeaturePairs.nRefs);
 
-        int bFilteredOut = FALSE;
-        if (!m_papoLayers[IDX_LYR_LINES]->AddFeature(
-                psWayFeaturePairs->poFeature,
-                psWayFeaturePairs->bAttrFilterAlreadyEvaluated, &bFilteredOut,
+        bool bFilteredOut = false;
+        if (!m_apoLayers[IDX_LYR_LINES]->AddFeature(
+                std::move(sWayFeaturePairs.poFeature),
+                sWayFeaturePairs.bAttrFilterAlreadyEvaluated, &bFilteredOut,
                 !m_bFeatureAdded))
             m_bStopParsing = true;
         else if (!bFilteredOut)
             m_bFeatureAdded = true;
     }
 
-    if (m_papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested())
+    if (m_apoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested())
     {
-        for (int iPair = 0; iPair < m_nWayFeaturePairs; iPair++)
+        for (WayFeaturePair &sWayFeaturePairs : m_asWayFeaturePairs)
         {
-            WayFeaturePair *psWayFeaturePairs = &m_pasWayFeaturePairs[iPair];
-
-            if (psWayFeaturePairs->bIsArea &&
-                (psWayFeaturePairs->nTags || m_bReportAllWays))
+            if (sWayFeaturePairs.bIsArea &&
+                (sWayFeaturePairs.nTags || m_bReportAllWays))
             {
                 sqlite3_bind_int64(m_hInsertPolygonsStandaloneStmt, 1,
-                                   psWayFeaturePairs->nWayID);
+                                   sWayFeaturePairs.nWayID);
 
                 int rc = sqlite3_step(m_hInsertPolygonsStandaloneStmt);
                 sqlite3_reset(m_hInsertPolygonsStandaloneStmt);
@@ -1781,13 +1774,13 @@ void OGROSMDataSource::ProcessWaysBatch()
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Failed inserting into "
                              "polygons_standalone " CPL_FRMT_GIB ": %s",
-                             psWayFeaturePairs->nWayID, sqlite3_errmsg(m_hDB));
+                             sWayFeaturePairs.nWayID, sqlite3_errmsg(m_hDB));
                 }
             }
         }
     }
 
-    m_nWayFeaturePairs = 0;
+    m_asWayFeaturePairs.clear();
     m_nUnsortedReqIds = 0;
 
     m_nAccumulatedTags = 0;
@@ -1904,7 +1897,7 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
         for (unsigned int i = 0; i < psWay->nTags; i++)
         {
             const char *pszK = psWay->pasTags[i].pszK;
-            if (m_papoLayers[IDX_LYR_LINES]->IsSignificantKey(pszK))
+            if (m_apoLayers[IDX_LYR_LINES]->IsSignificantKey(pszK))
             {
                 bInterestingTag = true;
                 break;
@@ -1912,29 +1905,29 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
         }
     }
 
-    OGRFeature *poFeature = nullptr;
+    std::unique_ptr<OGRFeature> poFeature;
     bool bAttrFilterAlreadyEvaluated = false;
-    if (!bIsArea && m_papoLayers[IDX_LYR_LINES]->IsUserInterested() &&
+    if (!bIsArea && m_apoLayers[IDX_LYR_LINES]->IsUserInterested() &&
         bInterestingTag)
     {
-        poFeature = new OGRFeature(m_papoLayers[IDX_LYR_LINES]->GetLayerDefn());
+        poFeature = std::make_unique<OGRFeature>(
+            m_apoLayers[IDX_LYR_LINES]->GetLayerDefn());
 
-        m_papoLayers[IDX_LYR_LINES]->SetFieldsFromTags(
-            poFeature, psWay->nID, false, psWay->nTags, psWay->pasTags,
+        m_apoLayers[IDX_LYR_LINES]->SetFieldsFromTags(
+            poFeature.get(), psWay->nID, false, psWay->nTags, psWay->pasTags,
             &psWay->sInfo);
 
         // Optimization: if we have an attribute filter, that does not require
         // geometry, and if we don't need to index ways, then we can just
         // evaluate the attribute filter without the geometry.
-        if (m_papoLayers[IDX_LYR_LINES]->HasAttributeFilter() &&
-            !m_papoLayers[IDX_LYR_LINES]
+        if (m_apoLayers[IDX_LYR_LINES]->HasAttributeFilter() &&
+            !m_apoLayers[IDX_LYR_LINES]
                  ->AttributeFilterEvaluationNeedsGeometry() &&
             !m_bIndexWays)
         {
-            if (!m_papoLayers[IDX_LYR_LINES]->EvaluateAttributeFilter(
-                    poFeature))
+            if (!m_apoLayers[IDX_LYR_LINES]->EvaluateAttributeFilter(
+                    poFeature.get()))
             {
-                delete poFeature;
                 return;
             }
             bAttrFilterAlreadyEvaluated = true;
@@ -1947,7 +1940,8 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
 
     if (m_nUnsortedReqIds + psWay->nRefs >
             static_cast<unsigned int>(MAX_ACCUMULATED_NODES) ||
-        m_nWayFeaturePairs == MAX_DELAYED_FEATURES ||
+        m_asWayFeaturePairs.size() ==
+            static_cast<size_t>(MAX_DELAYED_FEATURES) ||
         m_nAccumulatedTags + psWay->nTags >
             static_cast<unsigned int>(MAX_ACCUMULATED_TAGS) ||
         nNonRedundantKeysLen + 1024 > MAX_NON_REDUNDANT_KEYS ||
@@ -1956,25 +1950,24 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
         ProcessWaysBatch();
     }
 
-    WayFeaturePair *psWayFeaturePairs =
-        &m_pasWayFeaturePairs[m_nWayFeaturePairs];
+    m_asWayFeaturePairs.push_back(WayFeaturePair());
+    WayFeaturePair &sWayFeaturePairs = m_asWayFeaturePairs.back();
 
-    psWayFeaturePairs->nWayID = psWay->nID;
-    psWayFeaturePairs->nRefs = psWay->nRefs - (bIsArea ? 1 : 0);
-    psWayFeaturePairs->panNodeRefs = m_panUnsortedReqIds + m_nUnsortedReqIds;
-    psWayFeaturePairs->poFeature = poFeature;
-    psWayFeaturePairs->bIsArea = bIsArea;
-    psWayFeaturePairs->bAttrFilterAlreadyEvaluated =
-        bAttrFilterAlreadyEvaluated;
+    sWayFeaturePairs.nWayID = psWay->nID;
+    sWayFeaturePairs.nRefs = psWay->nRefs - (bIsArea ? 1 : 0);
+    sWayFeaturePairs.panNodeRefs = m_panUnsortedReqIds + m_nUnsortedReqIds;
+    sWayFeaturePairs.poFeature = std::move(poFeature);
+    sWayFeaturePairs.bIsArea = bIsArea;
+    sWayFeaturePairs.bAttrFilterAlreadyEvaluated = bAttrFilterAlreadyEvaluated;
 
-    if (bIsArea && m_papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested())
+    if (bIsArea && m_apoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested())
     {
         unsigned int nTagCount = 0;
 
         if (m_bNeedsToSaveWayInfo)
         {
             if (!psWay->sInfo.bTimeStampIsStr)
-                psWayFeaturePairs->sInfo.ts.nTimeStamp =
+                sWayFeaturePairs.sInfo.ts.nTimeStamp =
                     psWay->sInfo.ts.nTimeStamp;
             else
             {
@@ -1988,30 +1981,31 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
                     brokendown.tm_mday = sField.Date.Day;
                     brokendown.tm_hour = sField.Date.Hour;
                     brokendown.tm_min = sField.Date.Minute;
-                    brokendown.tm_sec = (int)(sField.Date.Second + .5);
-                    psWayFeaturePairs->sInfo.ts.nTimeStamp =
+                    brokendown.tm_sec =
+                        static_cast<int>(sField.Date.Second + .5);
+                    sWayFeaturePairs.sInfo.ts.nTimeStamp =
                         CPLYMDHMSToUnixTime(&brokendown);
                 }
                 else
-                    psWayFeaturePairs->sInfo.ts.nTimeStamp = 0;
+                    sWayFeaturePairs.sInfo.ts.nTimeStamp = 0;
             }
-            psWayFeaturePairs->sInfo.nChangeset = psWay->sInfo.nChangeset;
-            psWayFeaturePairs->sInfo.nVersion = psWay->sInfo.nVersion;
-            psWayFeaturePairs->sInfo.nUID = psWay->sInfo.nUID;
-            psWayFeaturePairs->sInfo.bTimeStampIsStr = false;
-            psWayFeaturePairs->sInfo.pszUserSID = "";  // FIXME
+            sWayFeaturePairs.sInfo.nChangeset = psWay->sInfo.nChangeset;
+            sWayFeaturePairs.sInfo.nVersion = psWay->sInfo.nVersion;
+            sWayFeaturePairs.sInfo.nUID = psWay->sInfo.nUID;
+            sWayFeaturePairs.sInfo.bTimeStampIsStr = false;
+            sWayFeaturePairs.sInfo.pszUserSID = "";  // FIXME
         }
         else
         {
-            psWayFeaturePairs->sInfo.ts.nTimeStamp = 0;
-            psWayFeaturePairs->sInfo.nChangeset = 0;
-            psWayFeaturePairs->sInfo.nVersion = 0;
-            psWayFeaturePairs->sInfo.nUID = 0;
-            psWayFeaturePairs->sInfo.bTimeStampIsStr = false;
-            psWayFeaturePairs->sInfo.pszUserSID = "";
+            sWayFeaturePairs.sInfo.ts.nTimeStamp = 0;
+            sWayFeaturePairs.sInfo.nChangeset = 0;
+            sWayFeaturePairs.sInfo.nVersion = 0;
+            sWayFeaturePairs.sInfo.nUID = 0;
+            sWayFeaturePairs.sInfo.bTimeStampIsStr = false;
+            sWayFeaturePairs.sInfo.pszUserSID = "";
         }
 
-        psWayFeaturePairs->pasTags = m_pasAccumulatedTags + m_nAccumulatedTags;
+        sWayFeaturePairs.pasTags = m_pasAccumulatedTags + m_nAccumulatedTags;
 
         for (unsigned int iTag = 0; iTag < psWay->nTags; iTag++)
         {
@@ -2029,14 +2023,14 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
             KeyDesc *psKD = nullptr;
             if (oIterK == m_aoMapIndexedKeys.end())
             {
-                if (m_asKeys.size() >= 1 + MAX_INDEXED_KEYS)
+                if (m_apsKeys.size() >= 1 + MAX_INDEXED_KEYS)
                 {
-                    if (m_asKeys.size() == 1 + MAX_INDEXED_KEYS)
+                    if (m_apsKeys.size() == 1 + MAX_INDEXED_KEYS)
                     {
                         CPLDebug("OSM", "More than %d different keys found",
                                  MAX_INDEXED_KEYS);
                         // To avoid next warnings.
-                        m_asKeys.push_back(nullptr);
+                        m_apsKeys.push_back(nullptr);
                     }
 
                     const int nLenK = static_cast<int>(strlen(pszK)) + 1;
@@ -2058,12 +2052,12 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
                 {
                     psKD = new KeyDesc();
                     psKD->pszK = CPLStrdup(pszK);
-                    psKD->nKeyIndex = static_cast<int>(m_asKeys.size());
+                    psKD->nKeyIndex = static_cast<int>(m_apsKeys.size());
                     psKD->nOccurrences = 0;
-                    psKD->asValues.push_back(CPLStrdup(
+                    psKD->apszValues.push_back(CPLStrdup(
                         ""));  // guard value to avoid index 0 to be used
                     m_aoMapIndexedKeys[psKD->pszK] = psKD;
-                    m_asKeys.push_back(psKD);
+                    m_apsKeys.push_back(psKD);
                 }
             }
             else
@@ -2080,16 +2074,16 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
             }
 
             if (psKD != nullptr &&
-                psKD->asValues.size() < 1 + MAX_INDEXED_VALUES_PER_KEY)
+                psKD->apszValues.size() < 1 + MAX_INDEXED_VALUES_PER_KEY)
             {
                 int nValueIndex = 0;
                 auto oIterV = psKD->anMapV.find(pszV);
                 if (oIterV == psKD->anMapV.end())
                 {
                     char *pszVDup = CPLStrdup(pszV);
-                    nValueIndex = static_cast<int>(psKD->asValues.size());
+                    nValueIndex = static_cast<int>(psKD->apszValues.size());
                     psKD->anMapV[pszVDup] = nValueIndex;
-                    psKD->asValues.push_back(pszVDup);
+                    psKD->apszValues.push_back(pszVDup);
                 }
                 else
                     nValueIndex = oIterV->second;
@@ -2103,12 +2097,12 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
                 const int nLenV = static_cast<int>(strlen(pszV)) + 1;
 
                 if (psKD != nullptr &&
-                    psKD->asValues.size() == 1 + MAX_INDEXED_VALUES_PER_KEY)
+                    psKD->apszValues.size() == 1 + MAX_INDEXED_VALUES_PER_KEY)
                 {
                     CPLDebug("OSM", "More than %d different values for tag %s",
                              MAX_INDEXED_VALUES_PER_KEY, pszK);
                     // To avoid next warnings.
-                    psKD->asValues.push_back(CPLStrdup(""));
+                    psKD->apszValues.push_back(CPLStrdup(""));
                 }
 
                 if (nNonRedundantValuesLen + nLenV > MAX_NON_REDUNDANT_VALUES)
@@ -2132,22 +2126,20 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
                 break;
         }
 
-        psWayFeaturePairs->nTags = nTagCount;
+        sWayFeaturePairs.nTags = nTagCount;
     }
     else
     {
-        psWayFeaturePairs->sInfo.ts.nTimeStamp = 0;
-        psWayFeaturePairs->sInfo.nChangeset = 0;
-        psWayFeaturePairs->sInfo.nVersion = 0;
-        psWayFeaturePairs->sInfo.nUID = 0;
-        psWayFeaturePairs->sInfo.bTimeStampIsStr = false;
-        psWayFeaturePairs->sInfo.pszUserSID = "";
+        sWayFeaturePairs.sInfo.ts.nTimeStamp = 0;
+        sWayFeaturePairs.sInfo.nChangeset = 0;
+        sWayFeaturePairs.sInfo.nVersion = 0;
+        sWayFeaturePairs.sInfo.nUID = 0;
+        sWayFeaturePairs.sInfo.bTimeStampIsStr = false;
+        sWayFeaturePairs.sInfo.pszUserSID = "";
 
-        psWayFeaturePairs->nTags = 0;
-        psWayFeaturePairs->pasTags = nullptr;
+        sWayFeaturePairs.nTags = 0;
+        sWayFeaturePairs.pasTags = nullptr;
     }
-
-    m_nWayFeaturePairs++;
 
     memcpy(m_panUnsortedReqIds + m_nUnsortedReqIds, psWay->panNodeRefs,
            sizeof(GIntBig) * (psWay->nRefs - (bIsArea ? 1 : 0)));
@@ -2343,14 +2335,15 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
 
     if (poMLS->getNumGeometries() > 0)
     {
-        OGRGeometryH hPoly = OGRBuildPolygonFromEdges((OGRGeometryH)poMLS, TRUE,
-                                                      FALSE, 0, nullptr);
+        OGRGeometryH hPoly = OGRBuildPolygonFromEdges(
+            OGRGeometry::ToHandle(poMLS), TRUE, FALSE, 0, nullptr);
         if (hPoly != nullptr && OGR_G_GetGeometryType(hPoly) == wkbPolygon)
         {
             OGRPolygon *poSuperPoly =
                 OGRGeometry::FromHandle(hPoly)->toPolygon();
-            for (unsigned int i = 0;
-                 i < 1 + (unsigned int)poSuperPoly->getNumInteriorRings(); i++)
+            const unsigned nRings = 1 + static_cast<unsigned int>(
+                                            poSuperPoly->getNumInteriorRings());
+            for (unsigned int i = 0; i < nRings; i++)
             {
                 OGRLinearRing *poRing =
                     (i == 0) ? poSuperPoly->getExteriorRing()
@@ -2495,7 +2488,7 @@ OGRGeometry *OGROSMDataSource::BuildGeometryCollection(OSMRelation *psRelation,
 
 void OGROSMDataSource::NotifyRelation(OSMRelation *psRelation)
 {
-    if (m_nWayFeaturePairs != 0)
+    if (!m_asWayFeaturePairs.empty())
         ProcessWaysBatch();
 
     m_nRelationsProcessed++;
@@ -2543,26 +2536,26 @@ void OGROSMDataSource::NotifyRelation(OSMRelation *psRelation)
     const int iCurLayer = bMultiPolygon      ? IDX_LYR_MULTIPOLYGONS
                           : bMultiLineString ? IDX_LYR_MULTILINESTRINGS
                                              : IDX_LYR_OTHER_RELATIONS;
-    if (!m_papoLayers[iCurLayer]->IsUserInterested())
+    if (!m_apoLayers[iCurLayer]->IsUserInterested())
         return;
 
-    OGRFeature *poFeature = nullptr;
+    std::unique_ptr<OGRFeature> poFeature;
 
     if (!(bMultiPolygon && !bInterestingTagFound) &&
         // We cannot do early filtering for multipolygon that has no
         // interesting tag, since we may fetch attributes from ways.
-        m_papoLayers[iCurLayer]->HasAttributeFilter() &&
-        !m_papoLayers[iCurLayer]->AttributeFilterEvaluationNeedsGeometry())
+        m_apoLayers[iCurLayer]->HasAttributeFilter() &&
+        !m_apoLayers[iCurLayer]->AttributeFilterEvaluationNeedsGeometry())
     {
-        poFeature = new OGRFeature(m_papoLayers[iCurLayer]->GetLayerDefn());
+        poFeature = std::make_unique<OGRFeature>(
+            m_apoLayers[iCurLayer]->GetLayerDefn());
 
-        m_papoLayers[iCurLayer]->SetFieldsFromTags(
-            poFeature, psRelation->nID, false, psRelation->nTags,
+        m_apoLayers[iCurLayer]->SetFieldsFromTags(
+            poFeature.get(), psRelation->nID, false, psRelation->nTags,
             psRelation->pasTags, &psRelation->sInfo);
 
-        if (!m_papoLayers[iCurLayer]->EvaluateAttributeFilter(poFeature))
+        if (!m_apoLayers[iCurLayer]->EvaluateAttributeFilter(poFeature.get()))
         {
-            delete poFeature;
             return;
         }
     }
@@ -2593,10 +2586,11 @@ void OGROSMDataSource::NotifyRelation(OSMRelation *psRelation)
         bool bAttrFilterAlreadyEvaluated = true;
         if (poFeature == nullptr)
         {
-            poFeature = new OGRFeature(m_papoLayers[iCurLayer]->GetLayerDefn());
+            poFeature = std::make_unique<OGRFeature>(
+                m_apoLayers[iCurLayer]->GetLayerDefn());
 
-            m_papoLayers[iCurLayer]->SetFieldsFromTags(
-                poFeature, psRelation->nID, false,
+            m_apoLayers[iCurLayer]->SetFieldsFromTags(
+                poFeature.get(), psRelation->nID, false,
                 nExtraTags ? nExtraTags : psRelation->nTags,
                 nExtraTags ? pasExtraTags : psRelation->pasTags,
                 &psRelation->sInfo);
@@ -2606,17 +2600,13 @@ void OGROSMDataSource::NotifyRelation(OSMRelation *psRelation)
 
         poFeature->SetGeometryDirectly(poGeom);
 
-        int bFilteredOut = FALSE;
-        if (!m_papoLayers[iCurLayer]->AddFeature(
-                poFeature, bAttrFilterAlreadyEvaluated, &bFilteredOut,
-                !m_bFeatureAdded))
+        bool bFilteredOut = FALSE;
+        if (!m_apoLayers[iCurLayer]->AddFeature(
+                std::move(poFeature), bAttrFilterAlreadyEvaluated,
+                &bFilteredOut, !m_bFeatureAdded))
             m_bStopParsing = true;
         else if (!bFilteredOut)
             m_bFeatureAdded = true;
-    }
-    else
-    {
-        delete poFeature;
     }
 }
 
@@ -2651,7 +2641,7 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
     bool bFirst = true;
 
     while (m_bHasRowInPolygonsStandalone &&
-           m_papoLayers[IDX_LYR_MULTIPOLYGONS]->m_nFeatureArraySize < 10000)
+           m_apoLayers[IDX_LYR_MULTIPOLYGONS]->m_apoFeatures.size() < 10000)
     {
         if (bFirst)
         {
@@ -2686,17 +2676,18 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
                                INT_TO_DBL(m_asLonLatCache[j].nLat));
             }
 
-            OGRFeature *poFeature = new OGRFeature(
-                m_papoLayers[IDX_LYR_MULTIPOLYGONS]->GetLayerDefn());
+            auto poFeature = std::make_unique<OGRFeature>(
+                m_apoLayers[IDX_LYR_MULTIPOLYGONS]->GetLayerDefn());
 
-            m_papoLayers[IDX_LYR_MULTIPOLYGONS]->SetFieldsFromTags(
-                poFeature, id, true, nTags, pasTags, &sInfo);
+            m_apoLayers[IDX_LYR_MULTIPOLYGONS]->SetFieldsFromTags(
+                poFeature.get(), id, true, nTags, pasTags, &sInfo);
 
             poFeature->SetGeometryDirectly(poMulti);
 
-            int bFilteredOut = FALSE;
-            if (!m_papoLayers[IDX_LYR_MULTIPOLYGONS]->AddFeature(
-                    poFeature, FALSE, &bFilteredOut, !m_bFeatureAdded))
+            bool bFilteredOut = false;
+            if (!m_apoLayers[IDX_LYR_MULTIPOLYGONS]->AddFeature(
+                    std::move(poFeature), FALSE, &bFilteredOut,
+                    !m_bFeatureAdded))
             {
                 m_bStopParsing = true;
                 break;
@@ -2779,31 +2770,26 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
     if (m_bCompressNodes)
         CPLDebug("OSM", "Using compression for nodes DB");
 
-    m_nLayers = 5;
-    m_papoLayers = static_cast<OGROSMLayer **>(
-        CPLMalloc(m_nLayers * sizeof(OGROSMLayer *)));
+    // Do not change the below order without updating the IDX_LYR_ constants!
+    m_apoLayers.emplace_back(
+        std::make_unique<OGROSMLayer>(this, IDX_LYR_POINTS, "points"));
+    m_apoLayers.back()->GetLayerDefn()->SetGeomType(wkbPoint);
 
-    m_papoLayers[IDX_LYR_POINTS] =
-        new OGROSMLayer(this, IDX_LYR_POINTS, "points");
-    m_papoLayers[IDX_LYR_POINTS]->GetLayerDefn()->SetGeomType(wkbPoint);
+    m_apoLayers.emplace_back(
+        std::make_unique<OGROSMLayer>(this, IDX_LYR_LINES, "lines"));
+    m_apoLayers.back()->GetLayerDefn()->SetGeomType(wkbLineString);
 
-    m_papoLayers[IDX_LYR_LINES] = new OGROSMLayer(this, IDX_LYR_LINES, "lines");
-    m_papoLayers[IDX_LYR_LINES]->GetLayerDefn()->SetGeomType(wkbLineString);
+    m_apoLayers.emplace_back(std::make_unique<OGROSMLayer>(
+        this, IDX_LYR_MULTILINESTRINGS, "multilinestrings"));
+    m_apoLayers.back()->GetLayerDefn()->SetGeomType(wkbMultiLineString);
 
-    m_papoLayers[IDX_LYR_MULTILINESTRINGS] =
-        new OGROSMLayer(this, IDX_LYR_MULTILINESTRINGS, "multilinestrings");
-    m_papoLayers[IDX_LYR_MULTILINESTRINGS]->GetLayerDefn()->SetGeomType(
-        wkbMultiLineString);
+    m_apoLayers.emplace_back(std::make_unique<OGROSMLayer>(
+        this, IDX_LYR_MULTIPOLYGONS, "multipolygons"));
+    m_apoLayers.back()->GetLayerDefn()->SetGeomType(wkbMultiPolygon);
 
-    m_papoLayers[IDX_LYR_MULTIPOLYGONS] =
-        new OGROSMLayer(this, IDX_LYR_MULTIPOLYGONS, "multipolygons");
-    m_papoLayers[IDX_LYR_MULTIPOLYGONS]->GetLayerDefn()->SetGeomType(
-        wkbMultiPolygon);
-
-    m_papoLayers[IDX_LYR_OTHER_RELATIONS] =
-        new OGROSMLayer(this, IDX_LYR_OTHER_RELATIONS, "other_relations");
-    m_papoLayers[IDX_LYR_OTHER_RELATIONS]->GetLayerDefn()->SetGeomType(
-        wkbGeometryCollection);
+    m_apoLayers.emplace_back(std::make_unique<OGROSMLayer>(
+        this, IDX_LYR_OTHER_RELATIONS, "other_relations"));
+    m_apoLayers.back()->GetLayerDefn()->SetGeomType(wkbGeometryCollection);
 
     if (!ParseConf(papszOpenOptionsIn))
     {
@@ -2829,26 +2815,26 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
     }
 
     const auto eTagsSubType = m_bTagsAsHSTORE ? OFSTNone : OFSTJSON;
-    for (int i = 0; i < m_nLayers; i++)
+    for (auto &&poLayer : m_apoLayers)
     {
-        if (m_papoLayers[i]->HasAllTags())
+        if (poLayer->HasAllTags())
         {
-            m_papoLayers[i]->AddField("all_tags", OFTString, eTagsSubType);
-            if (m_papoLayers[i]->HasOtherTags())
+            poLayer->AddField("all_tags", OFTString, eTagsSubType);
+            if (poLayer->HasOtherTags())
             {
-                m_papoLayers[i]->SetHasOtherTags(false);
+                poLayer->SetHasOtherTags(false);
             }
         }
-        else if (m_papoLayers[i]->HasOtherTags())
-            m_papoLayers[i]->AddField("other_tags", OFTString, eTagsSubType);
+        else if (poLayer->HasOtherTags())
+            poLayer->AddField("other_tags", OFTString, eTagsSubType);
     }
 
     m_bNeedsToSaveWayInfo =
-        (m_papoLayers[IDX_LYR_MULTIPOLYGONS]->HasTimestamp() ||
-         m_papoLayers[IDX_LYR_MULTIPOLYGONS]->HasChangeset() ||
-         m_papoLayers[IDX_LYR_MULTIPOLYGONS]->HasVersion() ||
-         m_papoLayers[IDX_LYR_MULTIPOLYGONS]->HasUID() ||
-         m_papoLayers[IDX_LYR_MULTIPOLYGONS]->HasUser());
+        (m_apoLayers[IDX_LYR_MULTIPOLYGONS]->HasTimestamp() ||
+         m_apoLayers[IDX_LYR_MULTIPOLYGONS]->HasChangeset() ||
+         m_apoLayers[IDX_LYR_MULTIPOLYGONS]->HasVersion() ||
+         m_apoLayers[IDX_LYR_MULTIPOLYGONS]->HasUID() ||
+         m_apoLayers[IDX_LYR_MULTIPOLYGONS]->HasUser());
 
     m_panReqIds = static_cast<GIntBig *>(
         VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(GIntBig)));
@@ -2862,8 +2848,16 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
         VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(LonLat)));
     m_panUnsortedReqIds = static_cast<GIntBig *>(
         VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(GIntBig)));
-    m_pasWayFeaturePairs = static_cast<WayFeaturePair *>(
-        VSI_MALLOC_VERBOSE(MAX_DELAYED_FEATURES * sizeof(WayFeaturePair)));
+    try
+    {
+        m_asWayFeaturePairs.resize(MAX_DELAYED_FEATURES);
+    }
+    catch (const std::exception &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "OGROSMDataSource::Open(): out of memory");
+        return FALSE;
+    }
     m_pasAccumulatedTags = static_cast<IndexedKVP *>(
         VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_TAGS * sizeof(IndexedKVP)));
     pabyNonRedundantValues =
@@ -2871,9 +2865,8 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
     pabyNonRedundantKeys =
         static_cast<GByte *>(VSI_MALLOC_VERBOSE(MAX_NON_REDUNDANT_KEYS));
     if (m_panReqIds == nullptr || m_pasLonLatArray == nullptr ||
-        m_panUnsortedReqIds == nullptr || m_pasWayFeaturePairs == nullptr ||
-        m_pasAccumulatedTags == nullptr || pabyNonRedundantValues == nullptr ||
-        pabyNonRedundantKeys == nullptr)
+        m_panUnsortedReqIds == nullptr || m_pasAccumulatedTags == nullptr ||
+        pabyNonRedundantValues == nullptr || pabyNonRedundantKeys == nullptr)
     {
         return FALSE;
     }
@@ -2912,7 +2905,8 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
         bool bSuccess =
-            VSIFSeekL(m_fpNodes, (vsi_l_offset)(nSize * 3 / 4), SEEK_SET) == 0;
+            VSIFSeekL(m_fpNodes, static_cast<vsi_l_offset>(nSize * 3 / 4),
+                      SEEK_SET) == 0;
         CPLPopErrorHandler();
 
         if (bSuccess)
@@ -3381,9 +3375,9 @@ void OGROSMDataSource::AddComputedAttributes(
     {
         if (!oAttributes[i].osSQL.empty())
         {
-            m_papoLayers[iCurLayer]->AddComputedAttribute(oAttributes[i].osName,
-                                                          oAttributes[i].eType,
-                                                          oAttributes[i].osSQL);
+            m_apoLayers[iCurLayer]->AddComputedAttribute(oAttributes[i].osName,
+                                                         oAttributes[i].eType,
+                                                         oAttributes[i].osSQL);
         }
     }
 }
@@ -3406,6 +3400,8 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
         return false;
     }
 
+    m_osConfigFile = pszFilename;
+
     VSILFILE *fpConf = VSIFOpenL(pszFilename, "rb");
     if (fpConf == nullptr)
         return false;
@@ -3426,14 +3422,23 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
 
             iCurLayer = -1;
             pszLine++;
-            ((char *)pszLine)[strlen(pszLine) - 1] = '\0'; /* Evil but OK */
-            for (int i = 0; i < m_nLayers; i++)
+            const_cast<char *>(pszLine)[strlen(pszLine) - 1] =
+                '\0'; /* Evil but OK */
+
+            if (strcmp(pszLine, "general") == 0)
             {
-                if (strcmp(pszLine, m_papoLayers[i]->GetName()) == 0)
+                continue;
+            }
+
+            int i = 0;
+            for (auto &&poLayer : m_apoLayers)
+            {
+                if (strcmp(pszLine, poLayer->GetName()) == 0)
                 {
                     iCurLayer = i;
                     break;
                 }
+                ++i;
             }
             if (iCurLayer < 0)
             {
@@ -3534,89 +3539,88 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
                 strcmp(papszTokens[0], "other_tags") == 0)
             {
                 if (strcmp(papszTokens[1], "no") == 0)
-                    m_papoLayers[iCurLayer]->SetHasOtherTags(false);
+                    m_apoLayers[iCurLayer]->SetHasOtherTags(false);
                 else if (strcmp(papszTokens[1], "yes") == 0)
-                    m_papoLayers[iCurLayer]->SetHasOtherTags(true);
+                    m_apoLayers[iCurLayer]->SetHasOtherTags(true);
             }
             else if (CSLCount(papszTokens) == 2 &&
                      strcmp(papszTokens[0], "all_tags") == 0)
             {
                 if (strcmp(papszTokens[1], "no") == 0)
-                    m_papoLayers[iCurLayer]->SetHasAllTags(false);
+                    m_apoLayers[iCurLayer]->SetHasAllTags(false);
                 else if (strcmp(papszTokens[1], "yes") == 0)
-                    m_papoLayers[iCurLayer]->SetHasAllTags(true);
+                    m_apoLayers[iCurLayer]->SetHasAllTags(true);
             }
             else if (CSLCount(papszTokens) == 2 &&
                      strcmp(papszTokens[0], "osm_id") == 0)
             {
                 if (strcmp(papszTokens[1], "no") == 0)
-                    m_papoLayers[iCurLayer]->SetHasOSMId(false);
+                    m_apoLayers[iCurLayer]->SetHasOSMId(false);
                 else if (strcmp(papszTokens[1], "yes") == 0)
                 {
-                    m_papoLayers[iCurLayer]->SetHasOSMId(true);
-                    m_papoLayers[iCurLayer]->AddField("osm_id", OFTString);
+                    m_apoLayers[iCurLayer]->SetHasOSMId(true);
+                    m_apoLayers[iCurLayer]->AddField("osm_id", OFTString);
 
                     if (iCurLayer == IDX_LYR_MULTIPOLYGONS)
-                        m_papoLayers[iCurLayer]->AddField("osm_way_id",
-                                                          OFTString);
+                        m_apoLayers[iCurLayer]->AddField("osm_way_id",
+                                                         OFTString);
                 }
             }
             else if (CSLCount(papszTokens) == 2 &&
                      strcmp(papszTokens[0], "osm_version") == 0)
             {
                 if (strcmp(papszTokens[1], "no") == 0)
-                    m_papoLayers[iCurLayer]->SetHasVersion(false);
+                    m_apoLayers[iCurLayer]->SetHasVersion(false);
                 else if (strcmp(papszTokens[1], "yes") == 0)
                 {
-                    m_papoLayers[iCurLayer]->SetHasVersion(true);
-                    m_papoLayers[iCurLayer]->AddField("osm_version",
-                                                      OFTInteger);
+                    m_apoLayers[iCurLayer]->SetHasVersion(true);
+                    m_apoLayers[iCurLayer]->AddField("osm_version", OFTInteger);
                 }
             }
             else if (CSLCount(papszTokens) == 2 &&
                      strcmp(papszTokens[0], "osm_timestamp") == 0)
             {
                 if (strcmp(papszTokens[1], "no") == 0)
-                    m_papoLayers[iCurLayer]->SetHasTimestamp(false);
+                    m_apoLayers[iCurLayer]->SetHasTimestamp(false);
                 else if (strcmp(papszTokens[1], "yes") == 0)
                 {
-                    m_papoLayers[iCurLayer]->SetHasTimestamp(true);
-                    m_papoLayers[iCurLayer]->AddField("osm_timestamp",
-                                                      OFTDateTime);
+                    m_apoLayers[iCurLayer]->SetHasTimestamp(true);
+                    m_apoLayers[iCurLayer]->AddField("osm_timestamp",
+                                                     OFTDateTime);
                 }
             }
             else if (CSLCount(papszTokens) == 2 &&
                      strcmp(papszTokens[0], "osm_uid") == 0)
             {
                 if (strcmp(papszTokens[1], "no") == 0)
-                    m_papoLayers[iCurLayer]->SetHasUID(false);
+                    m_apoLayers[iCurLayer]->SetHasUID(false);
                 else if (strcmp(papszTokens[1], "yes") == 0)
                 {
-                    m_papoLayers[iCurLayer]->SetHasUID(true);
-                    m_papoLayers[iCurLayer]->AddField("osm_uid", OFTInteger);
+                    m_apoLayers[iCurLayer]->SetHasUID(true);
+                    m_apoLayers[iCurLayer]->AddField("osm_uid", OFTInteger);
                 }
             }
             else if (CSLCount(papszTokens) == 2 &&
                      strcmp(papszTokens[0], "osm_user") == 0)
             {
                 if (strcmp(papszTokens[1], "no") == 0)
-                    m_papoLayers[iCurLayer]->SetHasUser(false);
+                    m_apoLayers[iCurLayer]->SetHasUser(false);
                 else if (strcmp(papszTokens[1], "yes") == 0)
                 {
-                    m_papoLayers[iCurLayer]->SetHasUser(true);
-                    m_papoLayers[iCurLayer]->AddField("osm_user", OFTString);
+                    m_apoLayers[iCurLayer]->SetHasUser(true);
+                    m_apoLayers[iCurLayer]->AddField("osm_user", OFTString);
                 }
             }
             else if (CSLCount(papszTokens) == 2 &&
                      strcmp(papszTokens[0], "osm_changeset") == 0)
             {
                 if (strcmp(papszTokens[1], "no") == 0)
-                    m_papoLayers[iCurLayer]->SetHasChangeset(false);
+                    m_apoLayers[iCurLayer]->SetHasChangeset(false);
                 else if (strcmp(papszTokens[1], "yes") == 0)
                 {
-                    m_papoLayers[iCurLayer]->SetHasChangeset(true);
-                    m_papoLayers[iCurLayer]->AddField("osm_changeset",
-                                                      OFTInteger);
+                    m_apoLayers[iCurLayer]->SetHasChangeset(true);
+                    m_apoLayers[iCurLayer]->AddField("osm_changeset",
+                                                     OFTInteger);
                 }
             }
             else if (CSLCount(papszTokens) == 2 &&
@@ -3626,8 +3630,8 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
                     CSLTokenizeString2(papszTokens[1], ",", 0);
                 for (int i = 0; papszTokens2[i] != nullptr; i++)
                 {
-                    m_papoLayers[iCurLayer]->AddField(papszTokens2[i],
-                                                      OFTString);
+                    m_apoLayers[iCurLayer]->AddField(papszTokens2[i],
+                                                     OFTString);
                     for (const char *&pszIgnoredKey : m_ignoredKeys)
                     {
                         if (strcmp(papszTokens2[i], pszIgnoredKey) == 0)
@@ -3644,7 +3648,7 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
                     CSLTokenizeString2(papszTokens[1], ",", 0);
                 for (int i = 0; papszTokens2[i] != nullptr; i++)
                 {
-                    m_papoLayers[iCurLayer]->AddInsignificantKey(
+                    m_apoLayers[iCurLayer]->AddInsignificantKey(
                         papszTokens2[i]);
                 }
                 CSLDestroy(papszTokens2);
@@ -3656,8 +3660,8 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
                     CSLTokenizeString2(papszTokens[1], ",", 0);
                 for (int i = 0; papszTokens2[i] != nullptr; i++)
                 {
-                    m_papoLayers[iCurLayer]->AddIgnoreKey(papszTokens2[i]);
-                    m_papoLayers[iCurLayer]->AddWarnKey(papszTokens2[i]);
+                    m_apoLayers[iCurLayer]->AddIgnoreKey(papszTokens2[i]);
+                    m_apoLayers[iCurLayer]->AddWarnKey(papszTokens2[i]);
                 }
                 CSLDestroy(papszTokens2);
             }
@@ -3710,11 +3714,11 @@ bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
                 if (!bFound)
                 {
                     const int idx =
-                        m_papoLayers[iCurLayer]->GetLayerDefn()->GetFieldIndex(
+                        m_apoLayers[iCurLayer]->GetLayerDefn()->GetFieldIndex(
                             osName);
                     if (idx >= 0)
                     {
-                        m_papoLayers[iCurLayer]
+                        m_apoLayers[iCurLayer]
                             ->GetLayerDefn()
                             ->GetFieldDefn(idx)
                             ->SetType(eType);
@@ -3822,29 +3826,24 @@ int OGROSMDataSource::MyResetReading()
         sqlite3_reset(m_hSelectPolygonsStandaloneStmt);
 
     {
-        for (int i = 0; i < m_nWayFeaturePairs; i++)
-        {
-            delete m_pasWayFeaturePairs[i].poFeature;
-        }
-        m_nWayFeaturePairs = 0;
+        m_asWayFeaturePairs.clear();
         m_nUnsortedReqIds = 0;
         m_nReqIds = 0;
         m_nAccumulatedTags = 0;
         nNonRedundantKeysLen = 0;
         nNonRedundantValuesLen = 0;
 
-        for (int i = 1; i < static_cast<int>(m_asKeys.size()); i++)
+        for (KeyDesc *psKD : m_apsKeys)
         {
-            KeyDesc *psKD = m_asKeys[i];
             if (psKD)
             {
                 CPLFree(psKD->pszK);
-                for (int j = 0; j < (int)psKD->asValues.size(); j++)
-                    CPLFree(psKD->asValues[j]);
+                for (auto *pszValue : psKD->apszValues)
+                    CPLFree(pszValue);
                 delete psKD;
             }
         }
-        m_asKeys.resize(1);  // keep guard to avoid index 0 to be used
+        m_apsKeys.resize(1);  // keep guard to avoid index 0 to be used
         m_aoMapIndexedKeys.clear();
     }
 
@@ -3879,9 +3878,9 @@ int OGROSMDataSource::MyResetReading()
         }
     }
 
-    for (int i = 0; i < m_nLayers; i++)
+    for (auto &&poLayer : m_apoLayers)
     {
-        m_papoLayers[i]->ForceResetReading();
+        poLayer->ForceResetReading();
     }
 
     m_bStopParsing = false;
@@ -3912,7 +3911,7 @@ OGRFeature *OGROSMDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
 
     if (m_poCurrentLayer == nullptr)
     {
-        m_poCurrentLayer = m_papoLayers[0];
+        m_poCurrentLayer = m_apoLayers[0].get();
     }
     if (pdfProgressPct != nullptr || pfnProgress != nullptr)
     {
@@ -4000,9 +3999,9 @@ bool OGROSMDataSource::ParseNextChunk(int nIdxLayer,
             if (!pfnProgress(dfPct, "", pProgressData))
             {
                 m_bStopParsing = true;
-                for (int i = 0; i < m_nLayers; i++)
+                for (auto &&poLayer : m_apoLayers)
                 {
-                    m_papoLayers[i]->ForceResetReading();
+                    poLayer->ForceResetReading();
                 }
                 return false;
             }
@@ -4012,7 +4011,7 @@ bool OGROSMDataSource::ParseNextChunk(int nIdxLayer,
         {
             if (eRet == OSM_EOF)
             {
-                if (m_nWayFeaturePairs != 0)
+                if (!m_asWayFeaturePairs.empty())
                     ProcessWaysBatch();
 
                 ProcessPolygonsStandalone();
@@ -4099,12 +4098,12 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
                 {
                     VSIFSeekL(fp, 0, SEEK_END);
                     vsi_l_offset nCurSize = VSIFTellL(fp);
-                    GIntBig nNewSize =
-                        static_cast<GIntBig>(m_nMaxSizeForInMemoryDBInMB) *
+                    vsi_l_offset nNewSize =
+                        static_cast<vsi_l_offset>(m_nMaxSizeForInMemoryDBInMB) *
                         1024 * 1024;
                     CPLPushErrorHandler(CPLQuietErrorHandler);
                     const bool bSuccess =
-                        VSIFSeekL(fp, (vsi_l_offset)nNewSize, SEEK_SET) == 0;
+                        VSIFSeekL(fp, nNewSize, SEEK_SET) == 0;
                     CPLPopErrorHandler();
 
                     if (bSuccess)
@@ -4225,10 +4224,10 @@ int OGROSMDataSource::TestCapability(const char *pszCap)
 OGRLayer *OGROSMDataSource::GetLayer(int iLayer)
 
 {
-    if (iLayer < 0 || iLayer >= m_nLayers)
+    if (iLayer < 0 || static_cast<size_t>(iLayer) >= m_apoLayers.size())
         return nullptr;
 
-    return m_papoLayers[iLayer];
+    return m_apoLayers[iLayer].get();
 }
 
 /************************************************************************/
@@ -4263,6 +4262,10 @@ class OGROSMSingleFeatureLayer final : public OGRLayer
     char *pszVal;
     OGRFeatureDefn *poFeatureDefn;
     int iNextShapeId;
+
+    OGROSMSingleFeatureLayer(const OGROSMSingleFeatureLayer &) = delete;
+    OGROSMSingleFeatureLayer &
+    operator=(const OGROSMSingleFeatureLayer &) = delete;
 
   public:
     OGROSMSingleFeatureLayer(const char *pszLayerName, int nVal);
@@ -4390,6 +4393,15 @@ OGRLayer *OGROSMDataSource::ExecuteSQL(const char *pszSQLCommand,
         return new OGROSMSingleFeatureLayer("GetBytesRead", szVal);
     }
 
+    /* -------------------------------------------------------------------- */
+    /*      Special SHOW config_file_path command                           */
+    /* -------------------------------------------------------------------- */
+    if (strcmp(pszSQLCommand, "SHOW config_file_path") == 0)
+    {
+        return new OGROSMSingleFeatureLayer("config_file_path",
+                                            m_osConfigFile.c_str());
+    }
+
     if (m_poResultSetLayer != nullptr)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -4405,26 +4417,26 @@ OGRLayer *OGROSMDataSource::ExecuteSQL(const char *pszSQLCommand,
         char **papszTokens =
             CSLTokenizeString2(pszSQLCommand + 21, ",",
                                CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
-        for (int i = 0; i < m_nLayers; i++)
+        for (auto &&poLayer : m_apoLayers)
         {
-            m_papoLayers[i]->SetDeclareInterest(FALSE);
+            poLayer->SetDeclareInterest(FALSE);
         }
 
         for (int i = 0; papszTokens[i] != nullptr; i++)
         {
             OGROSMLayer *poLayer =
-                reinterpret_cast<OGROSMLayer *>(GetLayerByName(papszTokens[i]));
+                dynamic_cast<OGROSMLayer *>(GetLayerByName(papszTokens[i]));
             if (poLayer != nullptr)
             {
                 poLayer->SetDeclareInterest(TRUE);
             }
         }
 
-        if (m_papoLayers[IDX_LYR_POINTS]->IsUserInterested() &&
-            !m_papoLayers[IDX_LYR_LINES]->IsUserInterested() &&
-            !m_papoLayers[IDX_LYR_MULTILINESTRINGS]->IsUserInterested() &&
-            !m_papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() &&
-            !m_papoLayers[IDX_LYR_OTHER_RELATIONS]->IsUserInterested())
+        if (m_apoLayers[IDX_LYR_POINTS]->IsUserInterested() &&
+            !m_apoLayers[IDX_LYR_LINES]->IsUserInterested() &&
+            !m_apoLayers[IDX_LYR_MULTILINESTRINGS]->IsUserInterested() &&
+            !m_apoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() &&
+            !m_apoLayers[IDX_LYR_OTHER_RELATIONS]->IsUserInterested())
         {
             if (CPLGetConfigOption("OSM_INDEX_POINTS", nullptr) == nullptr)
             {
@@ -4445,10 +4457,10 @@ OGRLayer *OGROSMDataSource::ExecuteSQL(const char *pszSQLCommand,
                 m_bUseWaysIndex = false;
             }
         }
-        else if (m_papoLayers[IDX_LYR_LINES]->IsUserInterested() &&
-                 !m_papoLayers[IDX_LYR_MULTILINESTRINGS]->IsUserInterested() &&
-                 !m_papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() &&
-                 !m_papoLayers[IDX_LYR_OTHER_RELATIONS]->IsUserInterested())
+        else if (m_apoLayers[IDX_LYR_LINES]->IsUserInterested() &&
+                 !m_apoLayers[IDX_LYR_MULTILINESTRINGS]->IsUserInterested() &&
+                 !m_apoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() &&
+                 !m_apoLayers[IDX_LYR_OTHER_RELATIONS]->IsUserInterested())
         {
             if (CPLGetConfigOption("OSM_INDEX_WAYS", nullptr) == nullptr)
             {
@@ -4527,10 +4539,10 @@ OGRLayer *OGROSMDataSource::ExecuteSQL(const char *pszSQLCommand,
         {
             /* Backup current optimization parameters */
             m_abSavedDeclaredInterest.resize(0);
-            for (int i = 0; i < m_nLayers; i++)
+            for (auto &&poLayer : m_apoLayers)
             {
                 m_abSavedDeclaredInterest.push_back(
-                    m_papoLayers[i]->IsUserInterested());
+                    poLayer->IsUserInterested());
             }
             m_bIndexPointsBackup = m_bIndexPoints;
             m_bUsePointsIndexBackup = m_bUsePointsIndex;
@@ -4579,9 +4591,11 @@ void OGROSMDataSource::ReleaseResultSet(OGRLayer *poLayer)
         m_bIsFeatureCountEnabled = false;
 
         /* Restore backup'ed optimization parameters */
-        for (int i = 0; i < m_nLayers; i++)
+        int i = 0;
+        for (auto &&poIterLayer : m_apoLayers)
         {
-            m_papoLayers[i]->SetDeclareInterest(m_abSavedDeclaredInterest[i]);
+            poIterLayer->SetDeclareInterest(m_abSavedDeclaredInterest[i]);
+            ++i;
         }
         if (m_bIndexPointsBackup && !m_bIndexPoints)
             CPLDebug("OSM", "Re-enabling indexing of nodes");
@@ -4591,7 +4605,7 @@ void OGROSMDataSource::ReleaseResultSet(OGRLayer *poLayer)
             CPLDebug("OSM", "Re-enabling indexing of ways");
         m_bIndexWays = m_bIndexWaysBackup;
         m_bUseWaysIndex = m_bUseWaysIndexBackup;
-        m_abSavedDeclaredInterest.resize(0);
+        m_abSavedDeclaredInterest.clear();
     }
 
     delete poLayer;

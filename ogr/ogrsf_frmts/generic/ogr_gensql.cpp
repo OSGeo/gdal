@@ -247,10 +247,15 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(
             oFDefn.SetType(OFTInteger64);
         else if (poSrcFDefn != nullptr)
         {
-            if (psColDef->col_func != SWQCF_AVG ||
-                psColDef->field_type == SWQ_DATE ||
-                psColDef->field_type == SWQ_TIME ||
-                psColDef->field_type == SWQ_TIMESTAMP)
+            if (psColDef->col_func == SWQCF_STDDEV_POP ||
+                psColDef->col_func == SWQCF_STDDEV_SAMP)
+            {
+                oFDefn.SetType(OFTReal);
+            }
+            else if (psColDef->col_func != SWQCF_AVG ||
+                     psColDef->field_type == SWQ_DATE ||
+                     psColDef->field_type == SWQ_TIME ||
+                     psColDef->field_type == SWQ_TIMESTAMP)
             {
                 oFDefn.SetType(poSrcFDefn->GetType());
                 if (psColDef->col_func == SWQCF_NONE ||
@@ -261,8 +266,13 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(
                 }
             }
             else
+            {
                 oFDefn.SetType(OFTReal);
+            }
+
             if (psColDef->col_func != SWQCF_AVG &&
+                psColDef->col_func != SWQCF_STDDEV_POP &&
+                psColDef->col_func != SWQCF_STDDEV_SAMP &&
                 psColDef->col_func != SWQCF_SUM)
             {
                 oFDefn.SetWidth(poSrcFDefn->GetWidth());
@@ -827,44 +837,70 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
     /*      the where clause and no column references OGR_GEOMETRY,         */
     /*      OGR_GEOM_WKT or OGR_GEOM_AREA special fields.                   */
     /* -------------------------------------------------------------------- */
-    int bSaveIsGeomIgnored = m_poSrcLayer->GetLayerDefn()->IsGeometryIgnored();
+
+    struct TempGeomIgnoredSetter
+    {
+        OGRFeatureDefn &m_oDefn;
+        const int m_bSaveIsGeomIgnored;
+
+        explicit TempGeomIgnoredSetter(OGRFeatureDefn *poDefn)
+            : m_oDefn(*poDefn),
+              m_bSaveIsGeomIgnored(poDefn->IsGeometryIgnored())
+        {
+            m_oDefn.SetGeometryIgnored(true);
+        }
+
+        ~TempGeomIgnoredSetter()
+        {
+            m_oDefn.SetGeometryIgnored(m_bSaveIsGeomIgnored);
+        }
+    };
+
+    auto poSrcLayerDefn = m_poSrcLayer->GetLayerDefn();
+    std::unique_ptr<TempGeomIgnoredSetter> oTempGeomIgnoredSetter;
+
     if (m_poFilterGeom == nullptr &&
         (psSelectInfo->where_expr == nullptr ||
          !ContainGeomSpecialField(psSelectInfo->where_expr)))
     {
-        int bFoundGeomExpr = FALSE;
+        bool bFoundGeomExpr = false;
         for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+            const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (psColDef->table_index == 0 && psColDef->field_index != -1)
             {
                 OGRLayer *poLayer = m_apoTableLayers[psColDef->table_index];
-                int nSpecialFieldIdx = psColDef->field_index -
-                                       poLayer->GetLayerDefn()->GetFieldCount();
+                const int nSpecialFieldIdx =
+                    psColDef->field_index -
+                    poLayer->GetLayerDefn()->GetFieldCount();
                 if (nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
                     nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
                     nSpecialFieldIdx == SPF_OGR_GEOM_AREA)
                 {
-                    bFoundGeomExpr = TRUE;
+                    bFoundGeomExpr = true;
                     break;
                 }
                 if (psColDef->field_index ==
                     GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poLayer->GetLayerDefn(),
                                                         0))
                 {
-                    bFoundGeomExpr = TRUE;
+                    bFoundGeomExpr = true;
                     break;
                 }
             }
             if (psColDef->expr != nullptr &&
                 ContainGeomSpecialField(psColDef->expr))
             {
-                bFoundGeomExpr = TRUE;
+                bFoundGeomExpr = true;
                 break;
             }
         }
         if (!bFoundGeomExpr)
-            m_poSrcLayer->GetLayerDefn()->SetGeometryIgnored(TRUE);
+        {
+            // cppcheck-suppress unreadVariable
+            oTempGeomIgnoredSetter =
+                std::make_unique<TempGeomIgnoredSetter>(poSrcLayerDefn);
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -888,7 +924,6 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
             m_poSummaryFeature->SetField(0, static_cast<int>(nRes));
         }
 
-        m_poSrcLayer->GetLayerDefn()->SetGeometryIgnored(bSaveIsGeomIgnored);
         return TRUE;
     }
 
@@ -896,63 +931,88 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
     /*      Otherwise, process all source feature through the summary       */
     /*      building facilities of SWQ.                                     */
     /* -------------------------------------------------------------------- */
-    const char *pszError = nullptr;
 
     for (auto &&poSrcFeature : *m_poSrcLayer)
     {
         for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+            const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+            const char *pszError = nullptr;
 
             if (psColDef->col_func == SWQCF_COUNT)
             {
                 /* psColDef->field_index can be -1 in the case of a COUNT(*) */
                 if (psColDef->field_index < 0)
-                    pszError = swq_select_summarize(psSelectInfo, iField, "");
-                else if (IS_GEOM_FIELD_INDEX(m_poSrcLayer->GetLayerDefn(),
+                    pszError =
+                        swq_select_summarize(psSelectInfo, iField, "", nullptr);
+                else if (IS_GEOM_FIELD_INDEX(poSrcLayerDefn,
                                              psColDef->field_index))
                 {
-                    int iSrcGeomField = ALL_FIELD_INDEX_TO_GEOM_FIELD_INDEX(
-                        m_poSrcLayer->GetLayerDefn(), psColDef->field_index);
-                    OGRGeometry *poGeom =
+                    const int iSrcGeomField =
+                        ALL_FIELD_INDEX_TO_GEOM_FIELD_INDEX(
+                            poSrcLayerDefn, psColDef->field_index);
+                    const OGRGeometry *poGeom =
                         poSrcFeature->GetGeomFieldRef(iSrcGeomField);
                     if (poGeom != nullptr)
-                        pszError =
-                            swq_select_summarize(psSelectInfo, iField, "");
-                    else
-                        pszError = nullptr;
+                        pszError = swq_select_summarize(psSelectInfo, iField,
+                                                        "", nullptr);
                 }
                 else if (poSrcFeature->IsFieldSetAndNotNull(
                              psColDef->field_index))
-                    pszError = swq_select_summarize(
-                        psSelectInfo, iField,
-                        poSrcFeature->GetFieldAsString(psColDef->field_index));
-                else
-                    pszError = nullptr;
+                {
+                    if (!psColDef->distinct_flag)
+                    {
+                        pszError = swq_select_summarize(psSelectInfo, iField,
+                                                        "", nullptr);
+                    }
+                    else
+                    {
+                        const char *pszVal = poSrcFeature->GetFieldAsString(
+                            psColDef->field_index);
+                        pszError = swq_select_summarize(psSelectInfo, iField,
+                                                        pszVal, nullptr);
+                    }
+                }
             }
             else
             {
-                const char *pszVal = nullptr;
                 if (poSrcFeature->IsFieldSetAndNotNull(psColDef->field_index))
-                    pszVal =
-                        poSrcFeature->GetFieldAsString(psColDef->field_index);
-                pszError = swq_select_summarize(psSelectInfo, iField, pszVal);
+                {
+                    if (!psColDef->distinct_flag &&
+                        (psColDef->field_type == SWQ_BOOLEAN ||
+                         psColDef->field_type == SWQ_INTEGER ||
+                         psColDef->field_type == SWQ_INTEGER64 ||
+                         psColDef->field_type == SWQ_FLOAT))
+                    {
+                        const double dfValue = poSrcFeature->GetFieldAsDouble(
+                            psColDef->field_index);
+                        pszError = swq_select_summarize(psSelectInfo, iField,
+                                                        nullptr, &dfValue);
+                    }
+                    else
+                    {
+                        const char *pszVal = poSrcFeature->GetFieldAsString(
+                            psColDef->field_index);
+                        pszError = swq_select_summarize(psSelectInfo, iField,
+                                                        pszVal, nullptr);
+                    }
+                }
+                else
+                {
+                    pszError = swq_select_summarize(psSelectInfo, iField,
+                                                    nullptr, nullptr);
+                }
             }
 
-            if (pszError != nullptr)
+            if (pszError)
             {
                 m_poSummaryFeature.reset();
-
-                m_poSrcLayer->GetLayerDefn()->SetGeometryIgnored(
-                    bSaveIsGeomIgnored);
 
                 CPLError(CE_Failure, CPLE_AppDefined, "%s", pszError);
                 return false;
             }
         }
     }
-
-    m_poSrcLayer->GetLayerDefn()->SetGeometryIgnored(bSaveIsGeomIgnored);
 
     /* -------------------------------------------------------------------- */
     /*      Clear away the filters we have installed till a next run through*/
@@ -968,7 +1028,7 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
     {
         for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+            const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (!psSelectInfo->column_summary.empty())
             {
                 const swq_summary &oSummary =
@@ -992,60 +1052,122 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
 
         for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+            const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (!psSelectInfo->column_summary.empty())
             {
                 const swq_summary &oSummary =
                     psSelectInfo->column_summary[iField];
 
-                if (psColDef->col_func == SWQCF_AVG && oSummary.count > 0)
+                switch (psColDef->col_func)
                 {
-                    if (psColDef->field_type == SWQ_DATE ||
-                        psColDef->field_type == SWQ_TIME ||
-                        psColDef->field_type == SWQ_TIMESTAMP)
+                    case SWQCF_NONE:
+                    case SWQCF_CUSTOM:
+                        break;
+
+                    case SWQCF_AVG:
                     {
-                        struct tm brokendowntime;
-                        double dfAvg = oSummary.sum / oSummary.count;
-                        CPLUnixTimeToYMDHMS(static_cast<GIntBig>(dfAvg),
-                                            &brokendowntime);
-                        m_poSummaryFeature->SetField(
-                            iField, brokendowntime.tm_year + 1900,
-                            brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
-                            brokendowntime.tm_hour, brokendowntime.tm_min,
-                            static_cast<float>(brokendowntime.tm_sec +
-                                               fmod(dfAvg, 1)),
-                            0);
+                        if (oSummary.count > 0)
+                        {
+                            const double dfAvg =
+                                oSummary.sum() / oSummary.count;
+                            if (psColDef->field_type == SWQ_DATE ||
+                                psColDef->field_type == SWQ_TIME ||
+                                psColDef->field_type == SWQ_TIMESTAMP)
+                            {
+                                struct tm brokendowntime;
+                                CPLUnixTimeToYMDHMS(static_cast<GIntBig>(dfAvg),
+                                                    &brokendowntime);
+                                m_poSummaryFeature->SetField(
+                                    iField, brokendowntime.tm_year + 1900,
+                                    brokendowntime.tm_mon + 1,
+                                    brokendowntime.tm_mday,
+                                    brokendowntime.tm_hour,
+                                    brokendowntime.tm_min,
+                                    static_cast<float>(brokendowntime.tm_sec +
+                                                       fmod(dfAvg, 1)),
+                                    0);
+                            }
+                            else
+                            {
+                                m_poSummaryFeature->SetField(iField, dfAvg);
+                            }
+                        }
+                        break;
                     }
-                    else
-                        m_poSummaryFeature->SetField(
-                            iField, oSummary.sum / oSummary.count);
+
+                    case SWQCF_MIN:
+                    {
+                        if (oSummary.count > 0)
+                        {
+                            if (psColDef->field_type == SWQ_DATE ||
+                                psColDef->field_type == SWQ_TIME ||
+                                psColDef->field_type == SWQ_TIMESTAMP ||
+                                psColDef->field_type == SWQ_STRING)
+                                m_poSummaryFeature->SetField(
+                                    iField, oSummary.osMin.c_str());
+                            else
+                                m_poSummaryFeature->SetField(iField,
+                                                             oSummary.min);
+                        }
+                        break;
+                    }
+
+                    case SWQCF_MAX:
+                    {
+                        if (oSummary.count > 0)
+                        {
+                            if (psColDef->field_type == SWQ_DATE ||
+                                psColDef->field_type == SWQ_TIME ||
+                                psColDef->field_type == SWQ_TIMESTAMP ||
+                                psColDef->field_type == SWQ_STRING)
+                                m_poSummaryFeature->SetField(
+                                    iField, oSummary.osMax.c_str());
+                            else
+                                m_poSummaryFeature->SetField(iField,
+                                                             oSummary.max);
+                        }
+                        break;
+                    }
+
+                    case SWQCF_COUNT:
+                    {
+                        m_poSummaryFeature->SetField(iField, oSummary.count);
+                        break;
+                    }
+
+                    case SWQCF_SUM:
+                    {
+                        if (oSummary.count > 0)
+                            m_poSummaryFeature->SetField(iField,
+                                                         oSummary.sum());
+                        break;
+                    }
+
+                    case SWQCF_STDDEV_POP:
+                    {
+                        if (oSummary.count > 0)
+                        {
+                            const double dfVariance =
+                                oSummary.sq_dist_from_mean_acc / oSummary.count;
+                            m_poSummaryFeature->SetField(iField,
+                                                         sqrt(dfVariance));
+                        }
+                        break;
+                    }
+
+                    case SWQCF_STDDEV_SAMP:
+                    {
+                        if (oSummary.count > 1)
+                        {
+                            const double dfSampleVariance =
+                                oSummary.sq_dist_from_mean_acc /
+                                (oSummary.count - 1);
+                            m_poSummaryFeature->SetField(
+                                iField, sqrt(dfSampleVariance));
+                        }
+                        break;
+                    }
                 }
-                else if (psColDef->col_func == SWQCF_MIN && oSummary.count > 0)
-                {
-                    if (psColDef->field_type == SWQ_DATE ||
-                        psColDef->field_type == SWQ_TIME ||
-                        psColDef->field_type == SWQ_TIMESTAMP ||
-                        psColDef->field_type == SWQ_STRING)
-                        m_poSummaryFeature->SetField(iField,
-                                                     oSummary.osMin.c_str());
-                    else
-                        m_poSummaryFeature->SetField(iField, oSummary.min);
-                }
-                else if (psColDef->col_func == SWQCF_MAX && oSummary.count > 0)
-                {
-                    if (psColDef->field_type == SWQ_DATE ||
-                        psColDef->field_type == SWQ_TIME ||
-                        psColDef->field_type == SWQ_TIMESTAMP ||
-                        psColDef->field_type == SWQ_STRING)
-                        m_poSummaryFeature->SetField(iField,
-                                                     oSummary.osMax.c_str());
-                    else
-                        m_poSummaryFeature->SetField(iField, oSummary.max);
-                }
-                else if (psColDef->col_func == SWQCF_COUNT)
-                    m_poSummaryFeature->SetField(iField, oSummary.count);
-                else if (psColDef->col_func == SWQCF_SUM && oSummary.count > 0)
-                    m_poSummaryFeature->SetField(iField, oSummary.sum);
             }
             else if (psColDef->col_func == SWQCF_COUNT)
                 m_poSummaryFeature->SetField(iField, 0);

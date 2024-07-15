@@ -815,14 +815,15 @@ Networking options
 
 -  .. config:: GDAL_HTTP_VERSION
       :since: 2.3
-      :choices: 1.0, 1.1, 2, 2TLS
+      :choices: 1.0, 1.1, 2, 2TLS, 2PRIOR_KNOWLEDGE
 
       Specifies which HTTP version to use. Will default to 1.1 generally (except on
       some controlled environments, like Google Compute Engine VMs, where 2TLS will
       be the default). Support for HTTP/2 requires curl 7.33 or later, built
       against nghttp2. "2TLS" means that HTTP/2 will be attempted for HTTPS
       connections only. Whereas "2" means that HTTP/2 will be attempted for HTTP or
-      HTTPS. The interest of enabling HTTP/2 is the use of HTTP/2 multiplexing when
+      HTTPS. "2PRIOR_KNOWLEDGE" means that the server will be assumed to support
+      HTTP/2. The interest of enabling HTTP/2 is the use of HTTP/2 multiplexing when
       reading GeoTIFFs stored on /vsicurl/ and related virtual file systems.
 
 -  .. config:: GDAL_HTTP_MULTIPLEX

@@ -337,13 +337,52 @@ def getTileIndexFromFiles(g):
     ogrTileIndexDS = createTileIndex(
         g.Verbose, "TileIndex", g.TileIndexFieldName, None, g.TileIndexDriverTyp
     )
+    firstTile = True
+    globalSRS = None
     for inputTile in g.Names:
 
         fhInputTile = gdal.Open(inputTile)
         if fhInputTile is None:
             return None
 
-        dec = AffineTransformDecorator(fhInputTile.GetGeoTransform())
+        # Check the geotransform has no rotational terms.
+        gt = fhInputTile.GetGeoTransform()
+        if gt[2] != 0 or gt[4] != 0:
+            print(
+                "File %s has a geotransform matrix with rotational terms, which is not supported. You may need to use gdalwarp before."
+                % inputTile,
+                file=sys.stderr,
+            )
+            return None
+
+        # Check SRS consistency among tiles
+        srs = fhInputTile.GetSpatialRef()
+        if firstTile:
+            globalSRS = srs
+        else:
+            if globalSRS is not None and srs is None:
+                print(
+                    "File %s has no SRS whether other tiles have one." % inputTile,
+                    file=sys.stderr,
+                )
+                return None
+            elif globalSRS is None and srs is not None:
+                print(
+                    "File %s has a SRS whether other tiles do not." % inputTile,
+                    file=sys.stderr,
+                )
+                return None
+            elif (
+                globalSRS is not None and srs is not None and not globalSRS.IsSame(srs)
+            ):
+                print(
+                    "File %s has a SRS different from other tiles." % inputTile,
+                    file=sys.stderr,
+                )
+                return None
+
+        firstTile = False
+        dec = AffineTransformDecorator(gt)
         points = dec.pointsFor(fhInputTile.RasterXSize, fhInputTile.RasterYSize)
 
         addFeature(
@@ -735,7 +774,7 @@ def createTileIndex(Verbose, dsName, fieldName, srs, driverName):
 
         OGRDataSource = OGRDriver.Open(dsName)
         if OGRDataSource is not None:
-            OGRDataSource.Destroy()
+            OGRDataSource.Close()
             OGRDriver.DeleteDataSource(dsName)
             if Verbose:
                 print("truncating index " + dsName)
@@ -791,11 +830,10 @@ def addFeature(TileIndexFieldName, OGRDataSource, location, xlist, ylist):
     OGRFeature.SetGeometryDirectly(OGRGeometry)
 
     OGRLayer.CreateFeature(OGRFeature)
-    OGRFeature.Destroy()
 
 
 def closeTileIndex(OGRDataSource):
-    OGRDataSource.Destroy()
+    OGRDataSource.Close()
 
 
 def buildPyramid(g, minfo, createdTileIndexDS, tileWidth, tileHeight, overlap):
@@ -1130,7 +1168,7 @@ def main(args=None, g=None):
 
     if not g.PyramidOnly:
         dsCreatedTileIndex = tileImage(g, minfo, ti)
-        tileIndexDS.Destroy()
+        tileIndexDS.Close()
     else:
         dsCreatedTileIndex = tileIndexDS
 

@@ -3185,7 +3185,7 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
     /*      Initialize any PAM information.                                 */
     /* -------------------------------------------------------------------- */
     poDS->SetDescription(osFilename);
-    poDS->TryLoadXML();
+    poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
 
     /* -------------------------------------------------------------------- */
     /*      Vector layers                                                   */

@@ -2268,6 +2268,21 @@ GDALBuildVRTOptionsNew(char **papszArgv,
             psOptionsForBinary->osDstFilename = papszArgv[i + 1];
             ++i;
         }
+        // argparser will be confused if the value of a string argument
+        // starts with a negative sign.
+        else if (EQUAL(papszArgv[i], "-srcnodata") && i + 1 < nArgc)
+        {
+            ++i;
+            psOptions->osSrcNoData = papszArgv[i];
+        }
+        // argparser will be confused if the value of a string argument
+        // starts with a negative sign.
+        else if (EQUAL(papszArgv[i], "-vrtnodata") && i + 1 < nArgc)
+        {
+            ++i;
+            psOptions->osVRTNoData = papszArgv[i];
+        }
+
         else
         {
             aosArgv.AddString(papszArgv[i]);

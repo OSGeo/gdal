@@ -107,16 +107,23 @@ memory may be used for datasets with a large number of distinct values.
 
 There are also several summarization operators that may be applied to columns.
 When a summarization operator is applied to any field, then all fields must
-have summarization operators applied.   The summarization operators are
-COUNT (a count of instances), AVG (numerical average), SUM (numerical sum),
-MIN (lexical or numerical minimum), and MAX (lexical or numerical maximum).
+have summarization operators applied.   The summarization operators are:
+
+- COUNT: count of instances
+- AVG: numerical average:
+- SUM: numerical sum
+- MIN: lexical or numerical minimum
+- MAX: lexical or numerical maximum
+- STDDEV_POP: (GDAL >= 3.10) numerical population standard deviation. Applied on Date/DateTime/Time fields, this returns a value in seconds.
+- STDDEV_SAMP: (GDAL >= 3.10) numerical `sample standard deviation <https://en.wikipedia.org/wiki/Standard_deviation#Sample_standard_deviation>`__.  Applied on Date/DateTime/Time fields, this returns a value in seconds.
+
 This example produces a variety of summarization information on parcel
 property values:
 
 .. code-block::
 
     SELECT MIN(prop_value), MAX(prop_value), AVG(prop_value), SUM(prop_value),
-        COUNT(prop_value) FROM polylayer WHERE prov_name = 'Ontario'
+        COUNT(prop_value), STDDEV_POP(prop_value) FROM polylayer WHERE prov_name = 'Ontario'
 
 It is also possible to apply the COUNT() operator to a DISTINCT SELECT to get
 a count of distinct values, for instance:

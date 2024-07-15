@@ -63,11 +63,17 @@ typedef enum
     SWQ_CONCAT,
     SWQ_SUBSTR,
     SWQ_HSTORE_GET_VALUE,
+
     SWQ_AVG,
+    SWQ_AGGREGATE_BEGIN = SWQ_AVG,
     SWQ_MIN,
     SWQ_MAX,
     SWQ_COUNT,
     SWQ_SUM,
+    SWQ_STDDEV_POP,
+    SWQ_STDDEV_SAMP,
+    SWQ_AGGREGATE_END = SWQ_STDDEV_SAMP,
+
     SWQ_CAST,
     SWQ_CUSTOM_FUNC,  /* only if parsing done in bAcceptCustomFuncs mode */
     SWQ_ARGUMENT_LIST /* temporary value only set during parsing and replaced by
@@ -318,6 +324,8 @@ typedef enum
     SWQCF_MAX = SWQ_MAX,
     SWQCF_COUNT = SWQ_COUNT,
     SWQCF_SUM = SWQ_SUM,
+    SWQCF_STDDEV_POP = SWQ_STDDEV_POP,
+    SWQCF_STDDEV_SAMP = SWQ_STDDEV_SAMP,
     SWQCF_CUSTOM
 } swq_col_func;
 
@@ -356,13 +364,30 @@ class CPL_UNSTABLE_API swq_summary
         bool operator()(const CPLString &, const CPLString &) const;
     };
 
+    //! Return the sum, using Kahan-Babuska-Neumaier algorithm.
+    // Cf cf KahanBabushkaNeumaierSum of https://en.wikipedia.org/wiki/Kahan_summation_algorithm#Further_enhancements
+    double sum() const
+    {
+        return sum_only_finite_terms ? sum_acc + sum_correction : sum_acc;
+    }
+
     GIntBig count = 0;
 
     std::vector<CPLString> oVectorDistinctValues{};
     std::set<CPLString, Comparator> oSetDistinctValues{};
-    double sum = 0.0;
+    bool sum_only_finite_terms = true;
+    // Sum accumulator. To get the accurate sum, use the sum() method
+    double sum_acc = 0.0;
+    // Sum correction term.
+    double sum_correction = 0.0;
     double min = 0.0;
     double max = 0.0;
+
+    // Welford's online algorithm for variance:
+    // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+    double mean_for_variance = 0.0;
+    double sq_dist_from_mean_acc = 0.0;  // "M2"
+
     CPLString osMin{};
     CPLString osMax{};
 };
@@ -476,9 +501,15 @@ class CPL_UNSTABLE_API swq_select
     std::map<int, std::list<swq_col_def>> m_exclude_fields{};
 };
 
+/* This method should generally be invoked with pszValue set, except when
+ * called on a non-DISTINCT column definition of numeric type (SWQ_BOOLEAN,
+ * SWQ_INTEGER, SWQ_INTEGER64, SWQ_FLOAT), in which case pdfValue should
+ * rather be set.
+ */
 const char CPL_UNSTABLE_API *swq_select_summarize(swq_select *select_info,
                                                   int dest_column,
-                                                  const char *value);
+                                                  const char *pszValue,
+                                                  const double *pdfValue);
 
 int CPL_UNSTABLE_API swq_is_reserved_keyword(const char *pszStr);
 

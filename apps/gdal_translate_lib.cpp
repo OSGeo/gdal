@@ -3032,19 +3032,6 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
 
     argParser->add_argument("-a_nodata")
         .metavar("<value>|none")
-        .action(
-            [psOptions](const std::string &s)
-            {
-                if (EQUAL(s.c_str(), "none"))
-                {
-                    psOptions->bUnsetNoData = true;
-                }
-                else
-                {
-                    psOptions->bSetNoData = true;
-                    psOptions->osNoData = s;
-                }
-            })
         .help(_("Assign a specified nodata value to output bands."));
 
     argParser->add_argument("-a_gt")
@@ -3381,6 +3368,23 @@ GDALTranslateOptionsNew(char **papszArgv,
             }
             ++i;
             psOptions->anColorInterp[nIndex] = GetColorInterp(papszArgv[i]);
+        }
+
+        // argparser will be confused if the value of a string argument
+        // starts with a negative sign.
+        else if (EQUAL(papszArgv[i], "-a_nodata") && papszArgv[i + 1])
+        {
+            ++i;
+            const std::string s = papszArgv[i];
+            if (EQUAL(s.c_str(), "none"))
+            {
+                psOptions->bUnsetNoData = true;
+            }
+            else
+            {
+                psOptions->bSetNoData = true;
+                psOptions->osNoData = s;
+            }
         }
 
         else

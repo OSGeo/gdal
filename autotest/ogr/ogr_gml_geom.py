@@ -1579,6 +1579,17 @@ def test_gml_invalid_geoms():
             '<gml:Solid><gml:exterior><Polygon><exterior><LinearRing><posList srsDimension="2">0 0 4 0 4 4 0 4 0 0</posList></LinearRing></exterior></Polygon></gml:exterior><gml:interior/></gml:Solid>',
             "POLYGON ((0 0,4 0,4 4,0 4,0 0))",
         ),
+        ("<gml:OrientableCurve/>", None),
+        ("<gml:OrientableCurve><foo/></gml:OrientableCurve>", None),
+        ("<gml:OrientableCurve><gml:baseCurve/></gml:OrientableCurve>", None),
+        (
+            "<gml:OrientableCurve><gml:baseCurve><foo/></gml:baseCurve></gml:OrientableCurve>",
+            None,
+        ),
+        (
+            "<gml:OrientableCurve><gml:baseCurve><gml:Point><gml:pos>0 0</gml:pos></gml:Point></gml:baseCurve></gml:OrientableCurve>",
+            None,
+        ),
         ("<gml:OrientableSurface/>", None),
         ("<gml:OrientableSurface><foo/></gml:OrientableSurface>", None),
         ("<gml:OrientableSurface><gml:baseSurface/></gml:OrientableSurface>", None),
@@ -3003,3 +3014,22 @@ def test_gml_read_gml_ArcByCenterPoint_projected_crs_northing_easting():
     </gml:Surface>"""
     )
     assert g is not None
+
+
+###############################################################################
+# Test reading an OrientableCurve
+
+
+def test_gml_OrientableCurve():
+
+    g = ogr.CreateGeometryFromGML(
+        """<gml:OrientableCurve srsName="foo" gml:id="test" orientation="+"> <gml:baseCurve> <gml:Curve> <gml:segments> <gml:LineStringSegment> <gml:posList>0 1 2 3</gml:posList> </gml:LineStringSegment> </gml:segments> </gml:Curve> </gml:baseCurve> </gml:OrientableCurve>"""
+    )
+    assert g is not None
+    assert g.ExportToWkt() == "LINESTRING (0 1,2 3)"
+
+    g = ogr.CreateGeometryFromGML(
+        """<gml:OrientableCurve srsName="foo" gml:id="test" orientation="-"> <gml:baseCurve> <gml:Curve> <gml:segments> <gml:LineStringSegment> <gml:posList>0 1 2 3</gml:posList> </gml:LineStringSegment> </gml:segments> </gml:Curve> </gml:baseCurve> </gml:OrientableCurve>"""
+    )
+    assert g is not None
+    assert g.ExportToWkt() == "LINESTRING (2 3,0 1)"

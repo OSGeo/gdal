@@ -3051,6 +3051,7 @@ def VectorTranslateOptions(options=None, format=None,
          simplifyTolerance=None,
          segmentizeMaxDist=None,
          makeValid=False,
+         skipInvalid=False,
          mapFieldType=None,
          explodeCollections=False,
          zField=None,
@@ -3151,6 +3152,9 @@ def VectorTranslateOptions(options=None, format=None,
         maximum distance between consecutive nodes of a line geometry
     makeValid:
         run MakeValid() on geometries
+    skipInvalid:
+        whether to skip features with invalid geometries regarding the rules of
+        the Simple Features specification.
     mapFieldType:
         converts any field of the specified type to another type. Valid types are:
         Integer, Integer64, Real, String, Date, Time, DateTime, Binary, IntegerList,
@@ -3334,6 +3338,8 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-segmentize', str(segmentizeMaxDist)]
         if makeValid:
             new_options += ['-makevalid']
+        if skipInvalid:
+            new_options += ['-skipinvalid']
         if mapFieldType is not None:
             new_options += ['-mapFieldType']
             if isinstance(mapFieldType, str):

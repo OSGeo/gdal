@@ -3962,6 +3962,12 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->m_bHasGotSiblingFiles = true;
     }
 
+    // Should be capped by 257, to avoid 65535 / m_nColorTableMultiplier to overflow 255
+    poDS->m_nColorTableMultiplier = std::max(
+        0, std::min(257,
+                    atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                              "COLOR_TABLE_MULTIPLIER", "0"))));
+
     if (poDS->OpenOffset(l_hTIFF, TIFFCurrentDirOffset(l_hTIFF),
                          poOpenInfo->eAccess, bAllowRGBAInterface,
                          true) != CE_None)
@@ -4003,9 +4009,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Initialize info for external overviews.                         */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, pszFilename);
-    if (poOpenInfo->AreSiblingFilesLoaded())
-        poDS->oOvManager.TransferSiblingFiles(poOpenInfo->StealSiblingFiles());
+    poDS->oOvManager.Initialize(poDS, poOpenInfo, pszFilename);
 
     // For backward compatibility, in case GTIFF_POINT_GEO_IGNORE is defined
     // load georeferencing right now so as to not require it to be defined
@@ -4227,7 +4231,7 @@ void GTiffDataset::LookForProjectionFromGeoTIFF()
 
 void GTiffDataset::LookForProjectionFromXML()
 {
-    char **papszSiblingFiles = GetSiblingFiles();
+    CSLConstList papszSiblingFiles = GetSiblingFiles();
 
     if (!GDALCanFileAcceptSidecarFile(m_pszFilename))
         return;
@@ -4564,11 +4568,10 @@ void GTiffDataset::ApplyPamInfo()
 
         if (i == 1)
         {
-            auto poCT = poBand->GDALPamRasterBand::GetColorTable();
+            const auto poCT = poBand->GDALPamRasterBand::GetColorTable();
             if (poCT)
             {
-                delete m_poColorTable;
-                m_poColorTable = poCT->Clone();
+                m_poColorTable.reset(poCT->Clone());
             }
         }
     }
@@ -5210,7 +5213,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         // data types (per #1882)
         if (m_nBitsPerSample <= 16 && m_nPhotometric == PHOTOMETRIC_MINISWHITE)
         {
-            m_poColorTable = new GDALColorTable();
+            m_poColorTable = std::make_unique<GDALColorTable>();
             const int nColorCount = 1 << m_nBitsPerSample;
 
             for (int iColor = 0; iColor < nColorCount; ++iColor)
@@ -5226,59 +5229,92 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         }
         else
         {
-            m_poColorTable = nullptr;
+            m_poColorTable.reset();
         }
     }
     else
     {
-        unsigned short nMaxColor = 0;
-
-        m_poColorTable = new GDALColorTable();
+        m_poColorTable = std::make_unique<GDALColorTable>();
 
         const int nColorCount = 1 << m_nBitsPerSample;
 
+        if (m_nColorTableMultiplier == 0)
+        {
+            // TIFF color maps are in the [0, 65535] range, so some remapping must
+            // be done to get values in the [0, 255] range, but it is not clear
+            // how to do that exactly. Since GDAL 2.3.0 we have standardized on
+            // using a 257 multiplication factor (https://github.com/OSGeo/gdal/commit/eeec5b62e385d53e7f2edaba7b73c7c74bc2af39)
+            // but other software uses 256 (cf https://github.com/OSGeo/gdal/issues/10310)
+            // Do a first pass to check if all values are multiples of 256 or 257.
+            bool bFoundNonZeroEntry = false;
+            bool bAllValuesMultipleOf256 = true;
+            bool bAllValuesMultipleOf257 = true;
+            unsigned short nMaxColor = 0;
+            for (int iColor = 0; iColor < nColorCount; ++iColor)
+            {
+                if (panRed[iColor] > 0 || panGreen[iColor] > 0 ||
+                    panBlue[iColor] > 0)
+                {
+                    bFoundNonZeroEntry = true;
+                }
+                if ((panRed[iColor] % 256) != 0 ||
+                    (panGreen[iColor] % 256) != 0 ||
+                    (panBlue[iColor] % 256) != 0)
+                {
+                    bAllValuesMultipleOf256 = false;
+                }
+                if ((panRed[iColor] % 257) != 0 ||
+                    (panGreen[iColor] % 257) != 0 ||
+                    (panBlue[iColor] % 257) != 0)
+                {
+                    bAllValuesMultipleOf257 = false;
+                }
+
+                nMaxColor = std::max(nMaxColor, panRed[iColor]);
+                nMaxColor = std::max(nMaxColor, panGreen[iColor]);
+                nMaxColor = std::max(nMaxColor, panBlue[iColor]);
+            }
+
+            if (nMaxColor > 0 && nMaxColor < 256)
+            {
+                // Bug 1384 - Some TIFF files are generated with color map entry
+                // values in range 0-255 instead of 0-65535 - try to handle these
+                // gracefully.
+                m_nColorTableMultiplier = 1;
+                CPLDebug("GTiff",
+                         "TIFF ColorTable seems to be improperly scaled with "
+                         "values all in [0,255] range, fixing up.");
+            }
+            else
+            {
+                if (!bAllValuesMultipleOf256 && !bAllValuesMultipleOf257)
+                {
+                    CPLDebug("GTiff",
+                             "The color map contains entries which are not "
+                             "multiple of 256 or 257, so we don't know for "
+                             "sure how to remap them to [0, 255]. Default to "
+                             "using a 257 multiplication factor");
+                }
+                m_nColorTableMultiplier =
+                    (bFoundNonZeroEntry && bAllValuesMultipleOf256)
+                        ? 256
+                        : DEFAULT_COLOR_TABLE_MULTIPLIER_257;
+            }
+        }
+        CPLAssert(m_nColorTableMultiplier > 0);
+        CPLAssert(m_nColorTableMultiplier <= 257);
         for (int iColor = nColorCount - 1; iColor >= 0; iColor--)
         {
-            // TODO(schwehr): Ensure the color entries are never negative?
-            const unsigned short divisor = 257;
             const GDALColorEntry oEntry = {
-                static_cast<short>(panRed[iColor] / divisor),
-                static_cast<short>(panGreen[iColor] / divisor),
-                static_cast<short>(panBlue[iColor] / divisor),
+                static_cast<short>(panRed[iColor] / m_nColorTableMultiplier),
+                static_cast<short>(panGreen[iColor] / m_nColorTableMultiplier),
+                static_cast<short>(panBlue[iColor] / m_nColorTableMultiplier),
                 static_cast<short>(
                     m_bNoDataSet && static_cast<int>(m_dfNoDataValue) == iColor
                         ? 0
                         : 255)};
 
             m_poColorTable->SetColorEntry(iColor, &oEntry);
-
-            nMaxColor = std::max(nMaxColor, panRed[iColor]);
-            nMaxColor = std::max(nMaxColor, panGreen[iColor]);
-            nMaxColor = std::max(nMaxColor, panBlue[iColor]);
-        }
-
-        // Bug 1384 - Some TIFF files are generated with color map entry
-        // values in range 0-255 instead of 0-65535 - try to handle these
-        // gracefully.
-        if (nMaxColor > 0 && nMaxColor < 256)
-        {
-            CPLDebug(
-                "GTiff",
-                "TIFF ColorTable seems to be improperly scaled, fixing up.");
-
-            for (int iColor = nColorCount - 1; iColor >= 0; iColor--)
-            {
-                // TODO(schwehr): Ensure the color entries are never negative?
-                const GDALColorEntry oEntry = {
-                    static_cast<short>(panRed[iColor]),
-                    static_cast<short>(panGreen[iColor]),
-                    static_cast<short>(panBlue[iColor]),
-                    m_bNoDataSet && static_cast<int>(m_dfNoDataValue) == iColor
-                        ? static_cast<short>(0)
-                        : static_cast<short>(255)};
-
-                m_poColorTable->SetColorEntry(iColor, &oEntry);
-            }
         }
     }
 
@@ -5782,7 +5818,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
 /*                         GetSiblingFiles()                            */
 /************************************************************************/
 
-char **GTiffDataset::GetSiblingFiles()
+CSLConstList GTiffDataset::GetSiblingFiles()
 {
     if (m_bHasGotSiblingFiles)
     {
@@ -5792,18 +5828,17 @@ char **GTiffDataset::GetSiblingFiles()
     m_bHasGotSiblingFiles = true;
     const int nMaxFiles =
         atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
-    char **papszSiblingFiles =
-        VSIReadDirEx(CPLGetDirname(m_pszFilename), nMaxFiles);
-    if (nMaxFiles > 0 && CSLCount(papszSiblingFiles) > nMaxFiles)
+    CPLStringList aosSiblingFiles(
+        VSIReadDirEx(CPLGetDirname(m_pszFilename), nMaxFiles));
+    if (nMaxFiles > 0 && aosSiblingFiles.size() > nMaxFiles)
     {
         CPLDebug("GTiff", "GDAL_READDIR_LIMIT_ON_OPEN reached on %s",
                  CPLGetDirname(m_pszFilename));
-        CSLDestroy(papszSiblingFiles);
-        papszSiblingFiles = nullptr;
+        aosSiblingFiles.clear();
     }
-    oOvManager.TransferSiblingFiles(papszSiblingFiles);
+    oOvManager.TransferSiblingFiles(aosSiblingFiles.StealList());
 
-    return papszSiblingFiles;
+    return oOvManager.GetSiblingFiles();
 }
 
 /************************************************************************/
@@ -6025,7 +6060,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
             {
                 char *pszGeorefFilename = nullptr;
 
-                char **papszSiblingFiles = GetSiblingFiles();
+                CSLConstList papszSiblingFiles = GetSiblingFiles();
 
                 // Begin with .tab since it can also have projection info.
                 int nGCPCount = 0;
@@ -6068,7 +6103,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
             {
                 char *pszGeorefFilename = nullptr;
 
-                char **papszSiblingFiles = GetSiblingFiles();
+                CSLConstList papszSiblingFiles = GetSiblingFiles();
 
                 m_bGeoTransformValid = CPL_TO_BOOL(GDALReadWorldFile2(
                     m_pszFilename, nullptr, m_adfGeoTransform,

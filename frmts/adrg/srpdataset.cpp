@@ -824,7 +824,7 @@ bool SRPDataset::GetFromRecord(const char *pszFileName, DDFRecord *record)
     }
     else
     {
-        if (std::abs(ZNA) >= 1 && std::abs(ZNA) <= 60)
+        if (ZNA >= -60 && ZNA <= 60 && ZNA != 0)
         {
             m_oSRS.SetUTM(std::abs(ZNA), ZNA > 0);
             m_oSRS.SetWellKnownGeogCS("WGS84");
