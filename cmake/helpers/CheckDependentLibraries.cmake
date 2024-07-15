@@ -443,7 +443,8 @@ gdal_check_package(GEOS "Geometry Engine - Open Source (GDAL core dependency)" R
 )
 gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
 
-gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
+include(CheckDependentLibrariesECW)
+
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
   NAMES netCDF
   TARGETS netCDF::netcdf NETCDF::netCDF

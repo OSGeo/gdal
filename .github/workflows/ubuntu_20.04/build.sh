@@ -74,3 +74,11 @@ cmake -S "${GDAL_SOURCE_DIR:=..}/frmts/tiledb" -DCMAKE_PREFIX_PATH=/tmp/install-
 cmake --build . "-j$(nproc)"
 test -f gdal_TileDB.so
 cd ..
+
+# Test building ECW driver in standalone mode
+mkdir build_ecw
+cd build_ecw
+cmake -S "${GDAL_SOURCE_DIR:=..}/frmts/ecw" -DCMAKE_PREFIX_PATH=/tmp/install-gdal -DECW_ROOT=/opt/libecwj2-3.3
+cmake --build . "-j$(nproc)"
+test -f gdal_ECW_JP2ECW.so
+cd ..
