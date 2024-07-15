@@ -36,14 +36,14 @@ namespace marching_squares
 
 // This is used to determine the maximum level value for polygons,
 // the one that spans all the remaining plane
-const double Inf = std::numeric_limits<double>::max();
+constexpr double Inf = std::numeric_limits<double>::infinity();
 
-const double NaN = std::numeric_limits<double>::quiet_NaN();
+constexpr double NaN = std::numeric_limits<double>::quiet_NaN();
 
 #define debug(format, ...) CPLDebug("MarchingSquare", format, ##__VA_ARGS__)
 
 // Perturb a value if it is too close to a level value
-inline double fudge(double level, double value)
+inline double fudge(double value, double minLevel, double level)
 {
     // FIXME
     // This is too "hard coded". The perturbation to apply really depend on
@@ -55,6 +55,11 @@ inline double fudge(double level, double value)
     // are within a user-provided minimum distance.
 
     const double absTol = 1e-6;
+    // Do not fudge the level that would correspond to the absolute minimum
+    // level of the raster, so it gets included.
+    // Cf scenario of https://github.com/OSGeo/gdal/issues/10167
+    if (level == minLevel)
+        return value;
     return std::abs(level - value) < absTol ? value + absTol : value;
 }
 

@@ -1608,3 +1608,28 @@ def test_hdf5_read_netcdf_nodata_scale_offset():
     assert band.GetNoDataValue() == pytest.approx(9.96921e36, rel=1e-7)
     assert band.GetOffset() == 1.5
     assert band.GetScale() == 0.01
+
+
+###############################################################################
+# Test force opening a netCDF file with HDF5 driver
+
+
+def test_hdf5_force_opening_netcdf_file():
+
+    ds = gdal.OpenEx("data/netcdf/trmm-nc4.nc", allowed_drivers=["HDF5"])
+    assert ds.GetDriver().GetDescription() == "HDF5Image"
+
+    ds = gdal.OpenEx(
+        "data/netcdf/byte_hdf5_starting_at_offset_1024.nc", allowed_drivers=["HDF5"]
+    )
+    assert ds.GetDriver().GetDescription() == "HDF5Image"
+
+
+###############################################################################
+# Test force opening, but provided file is still not recognized (for good reasons)
+
+
+def test_hdf5_force_opening_no_match():
+
+    drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["HDF5"])
+    assert drv is None

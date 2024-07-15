@@ -401,8 +401,15 @@ if __name__ == '__main__':
 
   # Install extension
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/trimmedsysconfig.py ${CMAKE_CURRENT_BINARY_DIR}/trimmedsysconfig.py @ONLY)
+  if (DEFINED GDAL_PYTHON_INSTALL_PREFIX)
+      set(PREFIX_FOR_TRIMMEDSYSCONFIG "${GDAL_PYTHON_INSTALL_PREFIX}")
+  elseif (DEFINED CMAKE_INSTALL_PREFIX)
+      set(PREFIX_FOR_TRIMMEDSYSCONFIG "${CMAKE_INSTALL_PREFIX}")
+  else()
+      set(PREFIX_FOR_TRIMMEDSYSCONFIG "")
+  endif()
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_python_lib.py
-       "from trimmedsysconfig import get_python_lib;print(get_python_lib(prefix=\"${GDAL_PYTHON_INSTALL_PREFIX}\"))\n")
+       "from trimmedsysconfig import get_python_lib;print(get_python_lib(prefix=\"${PREFIX_FOR_TRIMMEDSYSCONFIG}\"))\n")
   execute_process(
     COMMAND ${Python_EXECUTABLE_CMAKE} ${CMAKE_CURRENT_BINARY_DIR}/get_python_lib.py
     OUTPUT_VARIABLE SITE_PACKAGE_DIR
@@ -448,6 +455,13 @@ if __name__ == '__main__':
     set(SETUPTOOLS_USE_DISTUTILS stdlib)
   elseif ("${SITE_PACKAGE_DIR}" MATCHES "dist-packages")
     set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=deb")
+    if (NOT DEFINED GDAL_PYTHON_INSTALL_LIB AND "${PREFIX_FOR_TRIMMEDSYSCONFIG}" STREQUAL "/usr/local")
+        # Scenario of https://github.com/OSGeo/gdal/issues/10242
+        # For some reason patched setuptools of Debian fails to install by default
+        # in /usr/local/lib/python{version}/dist-packages even when passing
+        # --prefix=/usr/local and --install-layout=deb
+        set(INSTALL_ARGS "${INSTALL_ARGS} \"--install-lib=${SITE_PACKAGE_DIR}\"")
+    endif()
     if(Python_VERSION VERSION_LESS 3.12)
         # It no longer seems needed to mess with SETUPTOOLS_USE_DISTUTILS
         # with Debian Python 3.12 (or maybe its setuptools 68.1.2 version...),

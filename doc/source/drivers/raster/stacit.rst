@@ -33,6 +33,11 @@ STACIT datasets/subdatasets can be accessed with one of the following syntaxes:
 
 * ``STACIT:"filename.json":collection=my_collect,asset=my_asset,crs=my_crs``: specify a collection, asset, and limit to items in a given CRS
 
+Starting with GDAL 3.10, specifying the ``-if STACIT`` option to command line utilities
+accepting it, or ``STACIT`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+filename or URL.
+
 Open options
 ------------
 

@@ -39,12 +39,26 @@ The driver tries to autodetect an header line and will look for 'x',
 'north' for the Y column and 'z', 'alt' or 'height' for the Z column. If
 no header is present or one of the column could not be identified in the
 header, the X, Y and Z columns (in that order) are assumed to be the
-first 3 columns of each line.
+first 3 columns of each line. The open option :oo:`COLUMN_ORDER` overrides
+these assumptions (except on 'AUTO').
 
 The opening of a big dataset can be slow as the driver must scan the
 whole file to determine the dataset size and spatial resolution. The
 driver will autodetect the data type among Byte, Int16, Int32 or
 Float32.
+
+Open options
+------------
+
+|about-open-options|
+This driver supports the following open options:
+
+.. oo:: COLUMN_ORDER
+   :choices: AUTO, XYZ, YXZ
+   :since: 3.10
+   :default: AUTO
+
+   Specifies the order of the columns. It overrides the header.
 
 Creation options
 ----------------

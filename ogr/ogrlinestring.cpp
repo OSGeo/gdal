@@ -2528,6 +2528,8 @@ void OGRSimpleCurve::segmentize(double dfMaxLength)
     const double dfSquareMaxLength = dfMaxLength * dfMaxLength;
 
     // First pass to compute new number of points
+    constexpr double REL_EPSILON_LENGTH_SQUARE = 1e-5;
+    constexpr double REL_EPSILON_ROUND = 1e-2;
     for (int i = 0; i < nPointCount; i++)
     {
         nNewPointCount++;
@@ -2539,10 +2541,11 @@ void OGRSimpleCurve::segmentize(double dfMaxLength)
         const double dfX = paoPoints[i + 1].x - paoPoints[i].x;
         const double dfY = paoPoints[i + 1].y - paoPoints[i].y;
         const double dfSquareDist = dfX * dfX + dfY * dfY;
-        if (dfSquareDist - dfSquareMaxLength > 1e-5 * dfSquareMaxLength)
+        if (dfSquareDist - dfSquareMaxLength >
+            REL_EPSILON_LENGTH_SQUARE * dfSquareMaxLength)
         {
-            const double dfIntermediatePoints =
-                floor(sqrt(dfSquareDist / dfSquareMaxLength) - 1e-2);
+            const double dfIntermediatePoints = floor(
+                sqrt(dfSquareDist / dfSquareMaxLength) - REL_EPSILON_ROUND);
             const int nIntermediatePoints =
                 DoubleToIntClamp(dfIntermediatePoints);
 
@@ -2620,28 +2623,33 @@ void OGRSimpleCurve::segmentize(double dfMaxLength)
         const double dfX = paoPoints[i + 1].x - paoPoints[i].x;
         const double dfY = paoPoints[i + 1].y - paoPoints[i].y;
         const double dfSquareDist = dfX * dfX + dfY * dfY;
-        if (dfSquareDist - dfSquareMaxLength > 1e-5 * dfSquareMaxLength)
+
+        // Must be kept in sync with the initial pass loop
+        if (dfSquareDist - dfSquareMaxLength >
+            REL_EPSILON_LENGTH_SQUARE * dfSquareMaxLength)
         {
-            const double dfIntermediatePoints =
-                floor(sqrt(dfSquareDist / dfSquareMaxLength) - 1e-2);
+            const double dfIntermediatePoints = floor(
+                sqrt(dfSquareDist / dfSquareMaxLength) - REL_EPSILON_ROUND);
             const int nIntermediatePoints =
                 DoubleToIntClamp(dfIntermediatePoints);
 
             for (int j = 1; j <= nIntermediatePoints; j++)
             {
-                paoNewPoints[nNewPointCount + j - 1].x =
+                // coverity[overflow_const]
+                const int newI = nNewPointCount + j - 1;
+                paoNewPoints[newI].x =
                     paoPoints[i].x + j * dfX / (nIntermediatePoints + 1);
-                paoNewPoints[nNewPointCount + j - 1].y =
+                paoNewPoints[newI].y =
                     paoPoints[i].y + j * dfY / (nIntermediatePoints + 1);
                 if (padfZ != nullptr)
                 {
                     // No interpolation.
-                    padfNewZ[nNewPointCount + j - 1] = padfZ[i];
+                    padfNewZ[newI] = padfZ[i];
                 }
                 if (padfM != nullptr)
                 {
                     // No interpolation.
-                    padfNewM[nNewPointCount + j - 1] = padfM[i];
+                    padfNewM[newI] = padfM[i];
                 }
             }
 

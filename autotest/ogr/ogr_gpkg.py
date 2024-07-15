@@ -10510,3 +10510,42 @@ def test_ogr_gpkg_launder(tmp_vsimem):
     assert lyr.GetGeometryColumn() == "my_geom"
     lyr.CreateField(ogr.FieldDefn("_"))
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef() == "x_"
+
+
+###############################################################################
+# Test rename a "hidden" table with SQL
+
+
+def test_gpkg_rename_hidden_table(tmp_vsimem):
+
+    test_layer_path = str(tmp_vsimem / "test_gpkg_rename_hidden_table.gpkg")
+
+    src_ds = gdal.OpenEx("../ogr/data/poly.shp")
+    gdal.VectorTranslate(test_layer_path, src_ds)
+    src_ds = None
+
+    dst_ds = gdal.OpenEx(
+        test_layer_path, gdal.OF_UPDATE, open_options=["LIST_ALL_TABLES=NO"]
+    )
+    dst_ds.ExecuteSQL("CREATE TABLE hidden_foo_table(id integer primary key);")
+    dst_ds = None
+
+    dst_ds = gdal.OpenEx(
+        test_layer_path, gdal.OF_UPDATE, open_options=["LIST_ALL_TABLES=NO"]
+    )
+    dst_ds.ExecuteSQL("ALTER TABLE hidden_foo_table RENAME TO hidden_bar_table")
+    dst_ds.ExecuteSQL("VACUUM")
+    dst_ds = None
+
+    dst_ds = gdal.OpenEx(test_layer_path)
+    # Verify that layer exists
+    lyr = dst_ds.GetLayerByName("hidden_bar_table")
+    assert lyr is not None
+    dst_ds = None
+
+    # Check that there is no more any reference to the layer
+    f = gdal.VSIFOpenL(test_layer_path, "rb")
+    content = gdal.VSIFReadL(1, 1000000, f).decode("latin1")
+    gdal.VSIFCloseL(f)
+
+    assert "hidden_foo_table" not in content

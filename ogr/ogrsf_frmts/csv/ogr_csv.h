@@ -136,7 +136,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 
     GIntBig nTotalFeatures;
 
-    char **AutodetectFieldTypes(char **papszOpenOptions, int nFieldCount);
+    char **AutodetectFieldTypes(CSLConstList papszOpenOptions, int nFieldCount);
 
     bool bWarningBadTypeOrWidth;
     bool bKeepSourceColumns;
@@ -222,7 +222,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 
     void BuildFeatureDefn(const char *pszNfdcGeomField = nullptr,
                           const char *pszGeonamesGeomFieldPrefix = nullptr,
-                          char **papszOpenOptions = nullptr);
+                          CSLConstList papszOpenOptions = nullptr);
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -295,9 +295,9 @@ class OGRCSVDataSource final : public OGRDataSource
     OGRCSVDataSource();
     virtual ~OGRCSVDataSource() override;
 
-    int Open(const char *pszFilename, int bUpdate, int bForceAccept,
-             char **papszOpenOptions = nullptr);
-    bool OpenTable(const char *pszFilename, char **papszOpenOptions,
+    bool Open(const char *pszFilename, bool bUpdate, bool bForceOpen,
+              CSLConstList papszOpenOptions, bool bSingleDriver);
+    bool OpenTable(const char *pszFilename, CSLConstList papszOpenOptions,
                    const char *pszNfdcRunwaysGeomField = nullptr,
                    const char *pszGeonamesGeomFieldPrefix = nullptr);
 

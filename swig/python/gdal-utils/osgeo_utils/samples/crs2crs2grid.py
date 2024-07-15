@@ -38,71 +38,56 @@ import numpy
 from osgeo import gdal, gdal_array
 
 # Input looks like this:
-"""
-  PNT_0_0
-  LATITUDE     40 00  0.00000 N     40 00  0.02344 N        2.06 mm/yr  north
-  LONGITUDE   117 00  0.00000 W    117 00  0.03765 W       -1.22 mm/yr  east
-  ELLIP. HT.               0.000              -0.607 m     -1.34 mm/yr  up
-  X                 -2221242.768        -2221243.142 m     -0.02 mm/yr
-  Y                 -4359434.393        -4359433.159 m      2.64 mm/yr
-  Z                  4077985.572         4077985.735 m      0.72 mm/yr
-"""
 
 
-def next_point(fd):
+def points_in_file(fd):
+    """Iterate through file grid.
 
-    line = fd.readline().strip()
-    while line != "" and line.find("PNT_") == -1:
-        line = fd.readline()
+    After the header, lines look like (using HTDP v. 3.5.0):
+    50.0000015988  127.0000219914    -0.160    "PNT_0_0"
+    """
+    for line in fd:
+        if line.strip() == "":
+            continue
+        elif line.find("PNT_") == -1:
+            # Report the file header defining the transformation
+            print(line)
+            continue
 
-    if line == "":
-        return None
+        tokens = line.split()
+        if len(tokens) != 4:
+            print(
+                "Found unexpected grid line format with %d tokens (expected 4)"
+                % len(tokens)
+            )
+            print("Expected Format: dec_lat    dec_lon    elip_hgt    pt_id")
+            print("Actual Line: " + line)
+            break
 
-    name_tokens = line.split("_")
+        lat, lon, _, pt_id = tokens
+        name_tokens = pt_id.replace('"', "").split("_")
 
-    # Read LATITUDE line
-    line = fd.readline().strip()
-    tokens = line.split()
-
-    lat_src = float(tokens[1]) + float(tokens[2]) / 60.0 + float(tokens[3]) / 3600.0
-    lat_dst = float(tokens[5]) + float(tokens[6]) / 60.0 + float(tokens[7]) / 3600.0
-
-    line = fd.readline().strip()
-    tokens = line.split()
-
-    lon_src = float(tokens[1]) + float(tokens[2]) / 60.0 + float(tokens[3]) / 3600.0
-    lon_dst = float(tokens[5]) + float(tokens[6]) / 60.0 + float(tokens[7]) / 3600.0
-
-    return (
-        int(name_tokens[1]),
-        int(name_tokens[2]),
-        lat_src,
-        lon_src,
-        lat_dst,
-        lon_dst,
-    )
+        yield int(name_tokens[1]), int(name_tokens[2]), float(lat), float(lon)
 
 
-def read_grid_crs_to_crs(filename, shape):
-    fd = open(filename)
-    grid = numpy.zeros(shape)
-
-    # report the file header defining the transformation
-    for _ in range(5):
-        print(fd.readline().rstrip())
-
+def read_grid_crs_to_crs(input_grid, output_filename):
+    grid = numpy.zeros(input_grid.shape)
     points_found = 0
 
-    ptuple = next_point(fd)
-    while ptuple is not None:
-        grid[0, ptuple[1], ptuple[0]] = ptuple[4] - ptuple[2]
-        grid[1, ptuple[1], ptuple[0]] = ptuple[5] - ptuple[3]
-        points_found = points_found + 1
-        ptuple = next_point(fd)
+    with open(output_filename, "r") as fd:
+        for output in points_in_file(fd):
+            i, j, lat_out, lon_out = output
+            lon_in = input_grid[0, j, i]
+            lat_in = input_grid[1, j, i]
+            points_found += 1
 
-    if points_found < shape[0] * shape[1]:
+            grid[0, j, i] = lon_out - lon_in
+            grid[1, j, i] = lat_out - lat_in
+
+    if points_found < grid.shape[0] * grid.shape[1]:
+        print("Error - did not find results for every point in the input grid.")
         print("points found:   ", points_found)
-        print("points expected:", shape[1] * shape[2])
+        print("points expected:", grid.shape[1] * grid.shape[2])
         return None
 
     return grid
@@ -336,7 +321,7 @@ def main(argv=sys.argv):
             return Usage(brief=0)
 
         elif argv[i][0] == "-":
-            print("Urecognised argument: " + argv[i])
+            print("Unrecognized argument: " + argv[i])
             return Usage()
 
         elif src_crs_id is None:
@@ -352,7 +337,7 @@ def main(argv=sys.argv):
             dst_crs_date = argv[i]
 
         else:
-            print("Urecognised argument: " + argv[i])
+            print("Unrecognized argument: " + argv[i])
             return Usage()
 
         i = i + 1
@@ -421,7 +406,7 @@ def main(argv=sys.argv):
 
     print("htdp run complete.")
 
-    adjustment = read_grid_crs_to_crs(out_grid_fn, grid.shape)
+    adjustment = read_grid_crs_to_crs(grid, out_grid_fn)
     if adjustment is None:
         return 1
 

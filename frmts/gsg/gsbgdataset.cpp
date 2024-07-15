@@ -53,7 +53,7 @@ class GSBGDataset final : public GDALPamDataset
     static const float fNODATA_VALUE;
     static const size_t nHEADER_SIZE;
 
-    static CPLErr WriteHeader(VSILFILE *fp, GInt16 nXSize, GInt16 nYSize,
+    static CPLErr WriteHeader(VSILFILE *fp, int nXSize, int nYSize,
                               double dfMinX, double dfMaxX, double dfMinY,
                               double dfMaxY, double dfMinZ, double dfMaxZ);
 
@@ -417,9 +417,9 @@ CPLErr GSBGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     if (bHeaderNeedsUpdate && dfMaxZ > dfMinZ)
     {
-        CPLErr eErr = poGDS->WriteHeader(poGDS->fp, (GInt16)nRasterXSize,
-                                         (GInt16)nRasterYSize, dfMinX, dfMaxX,
-                                         dfMinY, dfMaxY, dfMinZ, dfMaxZ);
+        CPLErr eErr =
+            poGDS->WriteHeader(poGDS->fp, nRasterXSize, nRasterYSize, dfMinX,
+                               dfMaxX, dfMinY, dfMaxY, dfMinZ, dfMaxZ);
         return eErr;
     }
 
@@ -686,9 +686,9 @@ CPLErr GSBGDataset::SetGeoTransform(double *padfGeoTransform)
         padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
     double dfMaxY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
 
-    CPLErr eErr = WriteHeader(fp, (GInt16)poGRB->nRasterXSize,
-                              (GInt16)poGRB->nRasterYSize, dfMinX, dfMaxX,
-                              dfMinY, dfMaxY, poGRB->dfMinZ, poGRB->dfMaxZ);
+    CPLErr eErr =
+        WriteHeader(fp, poGRB->nRasterXSize, poGRB->nRasterYSize, dfMinX,
+                    dfMaxX, dfMinY, dfMaxY, poGRB->dfMinZ, poGRB->dfMaxZ);
 
     if (eErr == CE_None)
     {
@@ -705,7 +705,7 @@ CPLErr GSBGDataset::SetGeoTransform(double *padfGeoTransform)
 /*                             WriteHeader()                            */
 /************************************************************************/
 
-CPLErr GSBGDataset::WriteHeader(VSILFILE *fp, GInt16 nXSize, GInt16 nYSize,
+CPLErr GSBGDataset::WriteHeader(VSILFILE *fp, int nXSize, int nYSize,
                                 double dfMinX, double dfMaxX, double dfMinY,
                                 double dfMaxY, double dfMinZ, double dfMaxZ)
 
@@ -724,7 +724,8 @@ CPLErr GSBGDataset::WriteHeader(VSILFILE *fp, GInt16 nXSize, GInt16 nYSize,
         return CE_Failure;
     }
 
-    GInt16 nTemp = CPL_LSBWORD16(nXSize);
+    assert(nXSize >= 0 && nXSize <= std::numeric_limits<int16_t>::max());
+    GInt16 nTemp = CPL_LSBWORD16(static_cast<int16_t>(nXSize));
     if (VSIFWriteL((void *)&nTemp, 2, 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -732,7 +733,8 @@ CPLErr GSBGDataset::WriteHeader(VSILFILE *fp, GInt16 nXSize, GInt16 nYSize,
         return CE_Failure;
     }
 
-    nTemp = CPL_LSBWORD16(nYSize);
+    assert(nYSize >= 0 && nYSize <= std::numeric_limits<int16_t>::max());
+    nTemp = CPL_LSBWORD16(static_cast<int16_t>(nYSize));
     if (VSIFWriteL((void *)&nTemp, 2, 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -847,8 +849,8 @@ GDALDataset *GSBGDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    CPLErr eErr = WriteHeader(fp, (GInt16)nXSize, (GInt16)nYSize, 0.0, nXSize,
-                              0.0, nYSize, 0.0, 0.0);
+    CPLErr eErr =
+        WriteHeader(fp, nXSize, nYSize, 0.0, nXSize, 0.0, nYSize, 0.0, 0.0);
     if (eErr != CE_None)
     {
         VSIFCloseL(fp);
@@ -941,8 +943,8 @@ GDALDataset *GSBGDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    GInt16 nXSize = (GInt16)poSrcBand->GetXSize();
-    GInt16 nYSize = (GInt16)poSrcBand->GetYSize();
+    const int nXSize = poSrcBand->GetXSize();
+    const int nYSize = poSrcBand->GetYSize();
     double adfGeoTransform[6];
 
     poSrcDS->GetGeoTransform(adfGeoTransform);
@@ -974,7 +976,7 @@ GDALDataset *GSBGDataset::CreateCopy(const char *pszFilename,
     float fSrcNoDataValue = (float)poSrcBand->GetNoDataValue(&bSrcHasNDValue);
     double dfMinZ = std::numeric_limits<double>::max();
     double dfMaxZ = std::numeric_limits<double>::lowest();
-    for (GInt16 iRow = nYSize - 1; iRow >= 0; iRow--)
+    for (int iRow = nYSize - 1; iRow >= 0; iRow--)
     {
         eErr = poSrcBand->RasterIO(GF_Read, 0, iRow, nXSize, 1, pfData, nXSize,
                                    1, GDT_Float32, 0, 0, nullptr);

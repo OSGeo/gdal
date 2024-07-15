@@ -77,6 +77,10 @@ mrf_tests = (
     ("../../gcore/data/uint32.tif", 4672, [4672], ["COMPRESS=LERC"]),
     ("../../gcore/data/uint32.tif", 4672, [4672], ["COMPRESS=QB3"]),
     ("../../gcore/data/uint32.tif", 4672, [4672], ["COMPRESS=LERC", "OPTIONS=V1:YES"]),
+    ("../../gcore/data/int64.tif", 4672, [4672], ["COMPRESS=DEFLATE"]),
+    ("../../gcore/data/int64.tif", 4672, [4672], ["COMPRESS=ZSTD"]),
+    ("../../gcore/data/int64.tif", 4672, [4672], ["COMPRESS=TIF"]),
+    ("../../gcore/data/int64.tif", 4672, [4672], ["COMPRESS=QB3"]),
     ("float32.tif", 4672, [4672], ["COMPRESS=DEFLATE"]),
     ("float32.tif", 4672, [4672], ["COMPRESS=ZSTD"]),
     ("float32.tif", 4672, [4672], ["COMPRESS=TIF"]),
@@ -227,6 +231,30 @@ def test_mrf_zen_test():
         assert cs == expectedCS, (interleave, expectedCS, cs)
         for f in glob.glob("tmp/masked.*"):
             gdal.Unlink(f)
+
+
+def test_mrf_in_tar(tmp_path):
+    import tarfile
+
+    files = tuple("plain." + ext for ext in ("mrf", "idx", "pzp", "mrf.aux.xml"))
+    gdal.Translate(
+        tmp_path / "plain.mrf",
+        "data/byte.tif",
+        format="MRF",
+        creationOptions=["COMPRESS=DEFLATE"],
+    )
+    tarname = tmp_path / "plain.mrf.tar"
+    # the .mrf has to be the first file in the tar, with no path
+    with tarfile.TarFile(tarname, "w", format=tarfile.GNU_FORMAT) as tar:
+        for fn in files:
+            tar.add(tmp_path / fn, arcname=fn)
+    for fn in files:
+        gdal.Unlink(tmp_path / fn)
+    ds = gdal.Open(tarname)
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    assert cs == 4672
+    gdal.Unlink(tarname)
 
 
 def test_mrf_overview_nnb_fact_2():

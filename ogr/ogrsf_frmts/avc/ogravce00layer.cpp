@@ -314,8 +314,11 @@ bool OGRAVCE00Layer::FormPolygonGeometry(OGRFeature *poFeature, AVCPal *psPAL)
 
     for (int iArc = 0; iArc < psPAL->numArcs; iArc++)
     {
-        if (psPAL->pasArcs[iArc].nArcId == 0)
+        if (psPAL->pasArcs[iArc].nArcId == 0 ||
+            psPAL->pasArcs[iArc].nArcId == INT_MIN)
+        {
             continue;
+        }
 
         // If the other side of the line is the same polygon then this
         // arc is a "bridge" arc and can be discarded.  If we don't discard
@@ -325,8 +328,8 @@ bool OGRAVCE00Layer::FormPolygonGeometry(OGRFeature *poFeature, AVCPal *psPAL)
         if (psPAL->pasArcs[iArc].nAdjPoly == psPAL->nPolyId)
             continue;
 
-        OGRFeature *poArc =
-            poArcLayer->GetFeature(std::abs(psPAL->pasArcs[iArc].nArcId));
+        auto poArc = std::unique_ptr<OGRFeature>(
+            poArcLayer->GetFeature(std::abs(psPAL->pasArcs[iArc].nArcId)));
 
         if (poArc == nullptr)
             return false;
@@ -334,8 +337,7 @@ bool OGRAVCE00Layer::FormPolygonGeometry(OGRFeature *poFeature, AVCPal *psPAL)
         if (poArc->GetGeometryRef() == nullptr)
             return false;
 
-        oArcs.addGeometry(poArc->GetGeometryRef());
-        OGRFeature::DestroyFeature(poArc);
+        oArcs.addGeometryDirectly(poArc->StealGeometry());
     }
 
     OGRErr eErr;

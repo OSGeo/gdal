@@ -729,6 +729,7 @@ sChar Clock_GetTimeZone ()
 #else
       const struct tm *gmTimePtr = gmtime (&ansTime);
 #endif
+      timeZone = 0;
       if (gmTimePtr)
       {
           timeZone = gmTimePtr->tm_hour;

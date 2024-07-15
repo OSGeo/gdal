@@ -61,7 +61,6 @@ class OGRGMLLayer final : public OGRLayer
     char *pszFIDPrefix;
 
     bool bWriter;
-    bool bSameSRS;
 
     OGRGMLDataSource *poDS;
 
@@ -137,8 +136,14 @@ class OGRGMLDataSource final : public OGRDataSource
     OGRGMLSRSNameFormat eSRSNameFormat;
     bool bWriteSpaceIndentation;
 
-    OGRSpatialReference *poWriteGlobalSRS;
-    bool bWriteGlobalSRS;
+    //! Whether all geometry fields of all layers have the same SRS (or no SRS at all)
+    bool m_bWriteGlobalSRS = true;
+
+    //! The global SRS (may be null), that is valid only if m_bWriteGlobalSRS == true
+    std::unique_ptr<OGRSpatialReference> m_poWriteGlobalSRS{};
+
+    //! Whether at least one geometry field has been created
+    bool m_bWriteGlobalSRSInit = false;
 
     // input related parameters.
     CPLString osFilename;
@@ -299,6 +304,13 @@ class OGRGMLDataSource final : public OGRDataSource
     bool WriteFeatureBoundedBy() const;
     const char *GetSRSDimensionLoc() const;
     bool GMLFeatureCollection() const;
+
+    void DeclareNewWriteSRS(const OGRSpatialReference *poSRS);
+
+    bool HasWriteGlobalSRS() const
+    {
+        return m_bWriteGlobalSRS;
+    }
 
     virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                                  OGRGeometry *poSpatialFilter,

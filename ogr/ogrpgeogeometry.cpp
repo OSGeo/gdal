@@ -1004,7 +1004,7 @@ id,WKT
                 assert(poRing);
                 // Outer ring must be clockwise.
                 if (!poRing->isClockwise())
-                    poRing->reverseWindingOrder();
+                    poRing->reversePoints();
             }
             else
             {
@@ -1012,7 +1012,7 @@ id,WKT
                 assert(poRing);
                 // Inner rings should be anti-clockwise.
                 if (poRing->isClockwise())
-                    poRing->reverseWindingOrder();
+                    poRing->reversePoints();
             }
 
             int nRingNumPoints = poRing->getNumPoints();
@@ -1260,7 +1260,7 @@ id,WKT
                     assert(poRing != nullptr);
                     // Outer ring must be clockwise.
                     if (!poRing->isClockwise())
-                        poRing->reverseWindingOrder();
+                        poRing->reversePoints();
                 }
                 else
                 {
@@ -1268,7 +1268,7 @@ id,WKT
                     assert(poRing != nullptr);
                     // Inner rings should be anti-clockwise.
                     if (poRing->isClockwise())
-                        poRing->reverseWindingOrder();
+                        poRing->reversePoints();
                 }
 
                 int nRingNumPoints = poRing->getNumPoints();

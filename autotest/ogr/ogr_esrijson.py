@@ -704,3 +704,34 @@ def test_ogr_esrijson_read_CadastralSpecialServices():
     f = lyr.GetNextFeature()
     assert f["landdescription"] == "WA330160N0260E0SN070"
     assert f.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon
+
+
+###############################################################################
+# Test force opening a ESRIJSON file
+
+
+def test_ogr_esrijson_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.json")
+
+    with open("data/esrijson/esripoint.json", "rb") as fsrc:
+        with gdaltest.vsi_open(filename, "wb") as fdest:
+            fdest.write(fsrc.read(1))
+            fdest.write(b" " * (1000 * 1000))
+            fdest.write(fsrc.read())
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["ESRIJSON"])
+    assert ds.GetDriver().GetDescription() == "ESRIJSON"
+
+
+###############################################################################
+# Test force opening a URL as ESRIJSON
+
+
+def test_ogr_esrijson_force_opening_url():
+
+    drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["ESRIJSON"])
+    assert drv.GetDescription() == "ESRIJSON"

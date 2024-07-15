@@ -416,3 +416,45 @@ def test_contour_invalid_LEVEL_INTERVAL():
         gdal.ContourGenerateEx(
             ds.GetRasterBand(1), ogr_lyr, options=["LEVEL_INTERVAL=-1"]
         )
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/10167
+
+
+@pytest.mark.require_driver("AAIGRID")
+def test_contour_min_value_is_multiple_of_interval(tmp_vsimem):
+
+    ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbLineString)
+    lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("ELEV", ogr.OFTReal))
+
+    content = """ncols        2
+nrows        2
+xllcorner    0
+yllcorner    0
+cellsize     1
+1 3
+1 3"""
+
+    srcfilename = str(tmp_vsimem / "test.asc")
+    with gdaltest.tempfile(srcfilename, content):
+        ds = gdal.Open(srcfilename)
+        gdal.ContourGenerateEx(
+            ds.GetRasterBand(1),
+            lyr,
+            options=["LEVEL_INTERVAL=1", "ID_FIELD=0", "ELEV_FIELD=1"],
+        )
+
+    f = lyr.GetNextFeature()
+    assert f["ELEV"] == 1
+    ogrtest.check_feature_geometry(f, "LINESTRING (0.5 0.0,0.5 0.5,0.5 1.5,0.5 2.0)")
+
+    f = lyr.GetNextFeature()
+    assert f["ELEV"] == 2
+    ogrtest.check_feature_geometry(f, "LINESTRING (1.0 0.0,1.0 0.5,1.0 1.5,1.0 2.0)")
+
+    f = lyr.GetNextFeature()
+    assert f["ELEV"] == 3
+    ogrtest.check_feature_geometry(f, "LINESTRING (1.5 0.0,1.5 0.5,1.5 1.5,1.5 2.0)")

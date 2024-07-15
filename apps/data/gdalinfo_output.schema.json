@@ -277,7 +277,7 @@
     },
 
     "stac": {
-      "$comment": "Derived from https://raw.githubusercontent.com/stac-extensions/projection/main/json-schema/schema.json#/definitions/fields, https://raw.githubusercontent.com/stac-extensions/eo/main/json-schema/schema.json#/definitions/bands and https://raw.githubusercontent.com/stac-extensions/eo/main/json-schema/schema.json#/definitions/bands",
+      "$comment": "Derived from https://raw.githubusercontent.com/stac-extensions/projection/main/json-schema/schema.json#/definitions/fields, https://raw.githubusercontent.com/stac-extensions/eo/v1.1.0/json-schema/schema.json#/definitions/bands and https://raw.githubusercontent.com/stac-extensions/eo/v1.1.0/json-schema/schema.json#/definitions/bands",
       "type": "object",
       "properties": {
         "proj:epsg": {
@@ -334,10 +334,10 @@
           }
         },
         "eo:bands": {
-          "$ref": "https://raw.githubusercontent.com/stac-extensions/eo/main/json-schema/schema.json#/definitions/bands"
+          "$ref": "https://raw.githubusercontent.com/stac-extensions/eo/v1.1.0/json-schema/schema.json#/definitions/bands"
         },
         "raster:bands": {
-          "$ref": "https://raw.githubusercontent.com/stac-extensions/eo/main/json-schema/schema.json#/definitions/bands"
+          "$ref": "https://raw.githubusercontent.com/stac-extensions/eo/v1.1.0/json-schema/schema.json#/definitions/bands"
         }
       },
       "additionalProperties": false

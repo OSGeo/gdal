@@ -591,6 +591,7 @@ const char *IMapInfoFile::GetCharset() const
 
 // Table is adopted from
 // http://www.i-signum.com/Formation/download/MB_ReferenceGuide.pdf pp. 127-128
+// NOTE: if modifying this table, please keep doc/source/drivers/vector/mapinfo_encodings.csv in sync
 static const char *const apszCharsets[][2] = {
     {"Neutral", ""},                 // No character conversions performed.
     {"ISO8859_1", "ISO-8859-1"},     // ISO 8859-1 (UNIX)
@@ -628,6 +629,7 @@ static const char *const apszCharsets[][2] = {
     {"CodePage869", "CP869"},  // DOS Code Page 869 = Modern Greek
     {"LICS", ""},              // Lotus worksheet release 1,2 character set
     {"LMBCS", ""},             // Lotus worksheet release 3,4 character set
+    {"UTF-8", "UTF-8"},
     {nullptr, nullptr}};
 
 const char *IMapInfoFile::CharsetToEncoding(const char *pszCharset)
@@ -680,6 +682,11 @@ const char *IMapInfoFile::GetEncoding() const
 void IMapInfoFile::SetEncoding(const char *pszEncoding)
 {
     SetCharset(EncodingToCharset(pszEncoding));
+}
+
+void IMapInfoFile::SetStrictLaundering(bool bStrictLaundering)
+{
+    m_bStrictLaundering = bStrictLaundering;
 }
 
 int IMapInfoFile::TestUtf8Capability() const

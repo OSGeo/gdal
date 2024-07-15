@@ -2114,6 +2114,8 @@ OGRPGDataSource::FindSchema(const char *pszSchemaNameIn)
         return pszSchemaNameIn;
     }
 
+    EndCopy();
+
     std::string osSchemaName;
     std::string osCommand(
         "SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname ILIKE ");

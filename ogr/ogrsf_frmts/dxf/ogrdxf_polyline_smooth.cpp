@@ -63,7 +63,7 @@ static double GetOGRangle(double angle)
 /*                DXFSmoothPolyline::Tessellate()                        */
 /************************************************************************/
 
-OGRGeometry *DXFSmoothPolyline::Tessellate() const
+OGRGeometry *DXFSmoothPolyline::Tessellate(bool bAsPolygon) const
 {
     assert(!m_vertices.empty());
 
@@ -84,7 +84,8 @@ OGRGeometry *DXFSmoothPolyline::Tessellate() const
     /*      Otherwise, presume a line string                                */
     /* -------------------------------------------------------------------- */
 
-    OGRLineString *poLS = new OGRLineString;
+    OGRLinearRing *poLR = m_bClosed && bAsPolygon ? new OGRLinearRing : nullptr;
+    OGRLineString *poLS = poLR ? poLR : new OGRLineString;
 
     m_blinestringstarted = false;
 
@@ -126,28 +127,14 @@ OGRGeometry *DXFSmoothPolyline::Tessellate() const
     if (m_dim == 2)
         poLS->flattenTo2D();
 
-/* -------------------------------------------------------------------- */
-/*      If polyline is closed, convert linestring to a linear ring      */
-/*                                                                      */
-/*      Actually, on review I'm not convinced this is a good idea.      */
-/*      Note that most (all) "filled polygons" are expressed with       */
-/*      hatches which are now handled fairly well and they tend to      */
-/*      echo linear polylines.                                          */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    if (m_bClosed)
+    if (poLR)
     {
-        OGRLinearRing *poLR = new OGRLinearRing();
-        poLR->addSubLineString(poLS, 0);
-        delete poLS;
-
         // Wrap as polygon.
         OGRPolygon *poPoly = new OGRPolygon();
         poPoly->addRingDirectly(poLR);
 
         return poPoly;
     }
-#endif
 
     return poLS;
 }

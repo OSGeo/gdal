@@ -33,6 +33,7 @@ Description
 
 This utility will retile a set of input tile(s). All the input tile(s) must
 be georeferenced in the same coordinate system and have a matching number of bands.
+The geotransform matrix of input tiles must not contain rotation terms.
 
 Optionally pyramid levels are generated. All pyramid levels are generated from the
 input tiles (not from previous levels).

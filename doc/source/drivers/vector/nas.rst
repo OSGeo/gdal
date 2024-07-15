@@ -27,6 +27,9 @@ Starting with GDAL 3.7, defining the NAS_GFS_TEMPLATE configuration option is
 required for the NAS driver to open a file. It may be set to the empty string
 to mean that the driver should try to establish the schema of the file from its
 content, but using one of templates mentioned below is recommended.
+Alternatively, starting with GDAL 3.10, specifying the ``-if NAS`` option to command line utilities
+accepting it, or ``NAS`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed filename.
 
 The GFS templates and PostgreSQL schemas are part of `norGIS
 ALKIS-Import <http://www.norbit.de/68/>`__ (also featuring a shell script and

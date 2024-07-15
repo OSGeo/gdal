@@ -34,6 +34,8 @@
 #include <vector>
 #include <algorithm>
 #include "cpl_json.h"
+#include "gdal_proxy.h"
+#include "gdal_utils.h"
 
 using namespace std;
 
@@ -200,6 +202,8 @@ class ECDataset final : public GDALDataset
     }
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
+    static GDALDataset *Open(GDALOpenInfo *poOpenInfo,
+                             const char *pszDescription);
 
   protected:
     double GeoTransform[6];
@@ -216,9 +220,13 @@ class ECDataset final : public GDALDataset
     CPLErr InitializeFromJSON(const CPLJSONObject &oRoot);
     CPLString compression;
     std::vector<double> resolutions;
+    int m_nMinLOD = 0;
     OGRSpatialReference oSRS;
     std::vector<GByte> tilebuffer;  // Last read tile, decompressed
     std::vector<GByte> filebuffer;  // raw tile buffer
+
+    OGREnvelope m_sInitialExtent{};
+    OGREnvelope m_sFullExtent{};
 };
 
 class ECBand final : public GDALRasterBand
@@ -280,6 +288,8 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
         TSZ = static_cast<int>(CPLAtof(CPLGetXMLValue(TCI, "TileCols", "256")));
         if (TSZ != CPLAtof(CPLGetXMLValue(TCI, "TileRows", "256")))
             throw CPLString("Non-square tiles are not supported");
+        if (TSZ < 0 || TSZ > 8192)
+            throw CPLString("Unsupported TileCols value");
 
         CPLXMLNode *LODInfo = CPLGetXMLNode(TCI, "LODInfos.LODInfo");
         double res = 0;
@@ -352,6 +362,58 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
     return error;
 }
 
+static std::unique_ptr<OGRSpatialReference>
+CreateSRS(const CPLJSONObject &oSRSRoot)
+{
+    auto poSRS = std::make_unique<OGRSpatialReference>();
+
+    bool bSuccess = false;
+    const int nCode = oSRSRoot.GetInteger("wkid");
+    // The concept of LatestWKID is explained in
+    // https://support.esri.com/en/technical-article/000013950
+    const int nLatestCode = oSRSRoot.GetInteger("latestWkid");
+
+    // Try first with nLatestWKID as there is a higher chance it is a
+    // EPSG code and not an ESRI one.
+    if (nLatestCode > 0)
+    {
+        if (nLatestCode > 32767)
+        {
+            if (poSRS->SetFromUserInput(CPLSPrintf("ESRI:%d", nLatestCode)) ==
+                OGRERR_NONE)
+            {
+                bSuccess = true;
+            }
+        }
+        else if (poSRS->importFromEPSG(nLatestCode) == OGRERR_NONE)
+        {
+            bSuccess = true;
+        }
+    }
+    if (!bSuccess && nCode > 0)
+    {
+        if (nCode > 32767)
+        {
+            if (poSRS->SetFromUserInput(CPLSPrintf("ESRI:%d", nCode)) ==
+                OGRERR_NONE)
+            {
+                bSuccess = true;
+            }
+        }
+        else if (poSRS->importFromEPSG(nCode) == OGRERR_NONE)
+        {
+            bSuccess = true;
+        }
+    }
+    if (!bSuccess)
+    {
+        return nullptr;
+    }
+
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    return poSRS;
+}
+
 CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
 {
     CPLErr error = CE_None;
@@ -367,20 +429,23 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         TSZ = oRoot.GetInteger("tileInfo/rows");
         if (TSZ != oRoot.GetInteger("tileInfo/cols"))
             throw CPLString("Non-square tiles are not supported");
+        if (TSZ < 0 || TSZ > 8192)
+            throw CPLString("Unsupported tileInfo/rows value");
 
-        auto oLODs = oRoot.GetArray("tileInfo/lods");
+        const auto oLODs = oRoot.GetArray("tileInfo/lods");
         double res = 0;
         // we need to skip levels that don't have bundle files
-        int minLOD = oRoot.GetInteger("minLOD");
-        int maxLOD = oRoot.GetInteger("maxLOD");
-        int level = 0;
+        m_nMinLOD = oRoot.GetInteger("minLOD");
+        if (m_nMinLOD < 0 || m_nMinLOD >= 31)
+            throw CPLString("Invalid minLOD");
+        const int maxLOD = std::min(oRoot.GetInteger("maxLOD"), 31);
         for (const auto &oLOD : oLODs)
         {
             res = oLOD.GetDouble("resolution");
             if (!(res > 0))
                 throw CPLString("Can't parse resolution for LOD");
-            level = oLOD.GetInteger("level");
-            if (level >= minLOD && level <= maxLOD)
+            const int level = oLOD.GetInteger("level");
+            if (level >= m_nMinLOD && level <= maxLOD)
             {
                 resolutions.push_back(res);
             }
@@ -389,50 +454,14 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         if (resolutions.empty())
             throw CPLString("Can't parse lods");
 
-        bool bSuccess = false;
-        const int nCode = oRoot.GetInteger("spatialReference/wkid");
-        // The concept of LatestWKID is explained in
-        // https://support.esri.com/en/technical-article/000013950
-        const int nLatestCode = oRoot.GetInteger("spatialReference/latestWkid");
-
-        // Try first with nLatestWKID as there is a higher chance it is a
-        // EPSG code and not an ESRI one.
-        if (nLatestCode > 0)
         {
-            if (nLatestCode > 32767)
+            auto poSRS = CreateSRS(oRoot.GetObj("spatialReference"));
+            if (!poSRS)
             {
-                if (oSRS.SetFromUserInput(CPLSPrintf("ESRI:%d", nLatestCode)) ==
-                    OGRERR_NONE)
-                {
-                    bSuccess = true;
-                }
+                throw CPLString("Invalid Spatial Reference");
             }
-            else if (oSRS.importFromEPSG(nLatestCode) == OGRERR_NONE)
-            {
-                bSuccess = true;
-            }
+            oSRS = std::move(*poSRS);
         }
-        if (!bSuccess && nCode > 0)
-        {
-            if (nCode > 32767)
-            {
-                if (oSRS.SetFromUserInput(CPLSPrintf("ESRI:%d", nCode)) ==
-                    OGRERR_NONE)
-                {
-                    bSuccess = true;
-                }
-            }
-            else if (oSRS.importFromEPSG(nCode) == OGRERR_NONE)
-            {
-                bSuccess = true;
-            }
-        }
-        if (!bSuccess)
-        {
-            throw CPLString("Invalid Spatial Reference");
-        }
-
-        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         // resolution is the smallest figure
         res = resolutions[0];
@@ -460,6 +489,59 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         compression = oRoot.GetString("tileImageInfo/format");
         SetMetadataItem("COMPRESS", compression.c_str(), "IMAGE_STRUCTURE");
 
+        auto oInitialExtent = oRoot.GetObj("initialExtent");
+        if (oInitialExtent.IsValid() &&
+            oInitialExtent.GetType() == CPLJSONObject::Type::Object)
+        {
+            m_sInitialExtent.MinX = oInitialExtent.GetDouble("xmin");
+            m_sInitialExtent.MinY = oInitialExtent.GetDouble("ymin");
+            m_sInitialExtent.MaxX = oInitialExtent.GetDouble("xmax");
+            m_sInitialExtent.MaxY = oInitialExtent.GetDouble("ymax");
+            auto oSRSRoot = oInitialExtent.GetObj("spatialReference");
+            if (oSRSRoot.IsValid())
+            {
+                auto poSRS = CreateSRS(oSRSRoot);
+                if (!poSRS)
+                {
+                    throw CPLString(
+                        "Invalid Spatial Reference in initialExtent");
+                }
+                if (!poSRS->IsSame(&oSRS))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Ignoring initialExtent, because its SRS is "
+                             "different from the main one");
+                    m_sInitialExtent = OGREnvelope();
+                }
+            }
+        }
+
+        auto oFullExtent = oRoot.GetObj("fullExtent");
+        if (oFullExtent.IsValid() &&
+            oFullExtent.GetType() == CPLJSONObject::Type::Object)
+        {
+            m_sFullExtent.MinX = oFullExtent.GetDouble("xmin");
+            m_sFullExtent.MinY = oFullExtent.GetDouble("ymin");
+            m_sFullExtent.MaxX = oFullExtent.GetDouble("xmax");
+            m_sFullExtent.MaxY = oFullExtent.GetDouble("ymax");
+            auto oSRSRoot = oFullExtent.GetObj("spatialReference");
+            if (oSRSRoot.IsValid())
+            {
+                auto poSRS = CreateSRS(oSRSRoot);
+                if (!poSRS)
+                {
+                    throw CPLString("Invalid Spatial Reference in fullExtent");
+                }
+                if (!poSRS->IsSame(&oSRS))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Ignoring fullExtent, because its SRS is "
+                             "different from the main one");
+                    m_sFullExtent = OGREnvelope();
+                }
+            }
+        }
+
         nBands = EQUAL(compression, "JPEG") ? 3 : 4;
         for (int i = 1; i <= nBands; i++)
         {
@@ -482,7 +564,71 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
     return error;
 }
 
+class ESRICProxyRasterBand final : public GDALProxyRasterBand
+{
+  private:
+    GDALRasterBand *m_poUnderlyingBand = nullptr;
+
+  protected:
+    GDALRasterBand *RefUnderlyingRasterBand(bool /*bForceOpen*/) const override
+    {
+        return m_poUnderlyingBand;
+    }
+
+  public:
+    explicit ESRICProxyRasterBand(GDALRasterBand *poUnderlyingBand)
+        : m_poUnderlyingBand(poUnderlyingBand)
+    {
+        nBand = poUnderlyingBand->GetBand();
+        eDataType = poUnderlyingBand->GetRasterDataType();
+        nRasterXSize = poUnderlyingBand->GetXSize();
+        nRasterYSize = poUnderlyingBand->GetYSize();
+        poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    }
+};
+
+class ESRICProxyDataset final : public GDALProxyDataset
+{
+  private:
+    std::unique_ptr<GDALDataset> m_poUnderlyingDS{};
+    CPLStringList m_aosFileList{};
+
+  protected:
+    GDALDataset *RefUnderlyingDataset() const override
+    {
+        return m_poUnderlyingDS.get();
+    }
+
+  public:
+    ESRICProxyDataset(GDALDataset *poUnderlyingDS, const char *pszDescription)
+        : m_poUnderlyingDS(poUnderlyingDS)
+    {
+        nRasterXSize = poUnderlyingDS->GetRasterXSize();
+        nRasterYSize = poUnderlyingDS->GetRasterYSize();
+        for (int i = 0; i < poUnderlyingDS->GetRasterCount(); ++i)
+            SetBand(i + 1, new ESRICProxyRasterBand(
+                               poUnderlyingDS->GetRasterBand(i + 1)));
+        m_aosFileList.AddString(pszDescription);
+    }
+
+    GDALDriver *GetDriver() override
+    {
+        return GDALDriver::FromHandle(GDALGetDriverByName("ESRIC"));
+    }
+
+    char **GetFileList() override
+    {
+        return CSLDuplicate(m_aosFileList.List());
+    }
+};
+
 GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
+{
+    return Open(poOpenInfo, poOpenInfo->pszFilename);
+}
+
+GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
+                             const char *pszDescription)
 {
     if (IdentifyXML(poOpenInfo))
     {
@@ -523,10 +669,8 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
                                     poOpenInfo->pszFilename + "}/root.json")
                                        .c_str(),
                                    GA_ReadOnly);
-            auto poDS = Open(&oOpenInfo);
-            if (poDS)
-                poDS->SetDescription(poOpenInfo->pszFilename);
-            return poDS;
+            oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
+            return Open(&oOpenInfo, pszDescription);
         }
 
         CPLJSONDocument oJSONDocument;
@@ -544,7 +688,7 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
 
-        auto ds = new ECDataset();
+        auto ds = std::make_unique<ECDataset>();
         auto tileBundlesPath = oRoot.GetString("tileBundlesPath");
         // Strip leading relative path indicator (if present)
         if (tileBundlesPath.substr(0, 2) == "./")
@@ -557,10 +701,76 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLErr error = ds->InitializeFromJSON(oRoot);
         if (CE_None != error)
         {
-            delete ds;
-            ds = nullptr;
+            return nullptr;
         }
-        return ds;
+
+        const bool bIsFullExtentValid =
+            (ds->m_sFullExtent.IsInit() &&
+             ds->m_sFullExtent.MinX < ds->m_sFullExtent.MaxX &&
+             ds->m_sFullExtent.MinY < ds->m_sFullExtent.MaxY);
+        const char *pszExtentSource =
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "EXTENT_SOURCE");
+
+        CPLStringList aosOptions;
+        if ((!pszExtentSource && bIsFullExtentValid) ||
+            (pszExtentSource && EQUAL(pszExtentSource, "FULL_EXTENT")))
+        {
+            if (!bIsFullExtentValid)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "fullExtent is not valid");
+                return nullptr;
+            }
+            aosOptions.AddString("-projwin");
+            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MinX));
+            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MaxY));
+            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MaxX));
+            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MinY));
+        }
+        else if (pszExtentSource && EQUAL(pszExtentSource, "INITIAL_EXTENT"))
+        {
+            const bool bIsInitialExtentValid =
+                (ds->m_sInitialExtent.IsInit() &&
+                 ds->m_sInitialExtent.MinX < ds->m_sInitialExtent.MaxX &&
+                 ds->m_sInitialExtent.MinY < ds->m_sInitialExtent.MaxY);
+            if (!bIsInitialExtentValid)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "initialExtent is not valid");
+                return nullptr;
+            }
+            aosOptions.AddString("-projwin");
+            aosOptions.AddString(
+                CPLSPrintf("%.18g", ds->m_sInitialExtent.MinX));
+            aosOptions.AddString(
+                CPLSPrintf("%.18g", ds->m_sInitialExtent.MaxY));
+            aosOptions.AddString(
+                CPLSPrintf("%.18g", ds->m_sInitialExtent.MaxX));
+            aosOptions.AddString(
+                CPLSPrintf("%.18g", ds->m_sInitialExtent.MinY));
+        }
+
+        if (!aosOptions.empty())
+        {
+            aosOptions.AddString("-of");
+            aosOptions.AddString("VRT");
+            aosOptions.AddString("-co");
+            aosOptions.AddString(CPLSPrintf("BLOCKXSIZE=%d", ds->TSZ));
+            aosOptions.AddString("-co");
+            aosOptions.AddString(CPLSPrintf("BLOCKYSIZE=%d", ds->TSZ));
+            auto psOptions =
+                GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+            auto hDS = GDALTranslate("", GDALDataset::ToHandle(ds.release()),
+                                     psOptions, nullptr);
+            GDALTranslateOptionsFree(psOptions);
+            if (!hDS)
+            {
+                return nullptr;
+            }
+            return new ESRICProxyDataset(GDALDataset::FromHandle(hDS),
+                                         pszDescription);
+        }
+        return ds.release();
     }
     return nullptr;
 }
@@ -612,7 +822,7 @@ ECBand::ECBand(ECDataset *parent, int b, int level)
     double factor = parent->resolutions[0] / parent->resolutions[lvl];
     nRasterXSize = static_cast<int>(parent->nRasterXSize * factor + 0.5);
     nRasterYSize = static_cast<int>(parent->nRasterYSize * factor + 0.5);
-    nBlockXSize = nBlockYSize = 256;
+    nBlockXSize = nBlockYSize = parent->TSZ;
 
     // Default color interpretation
     assert(b - 1 >= 0);
@@ -652,7 +862,8 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
 
     buffer.resize(nBytes * parent->nBands);
 
-    int lxx = static_cast<int>(parent->resolutions.size() - lvl - 1);
+    const int lxx = parent->m_nMinLOD +
+                    static_cast<int>(parent->resolutions.size() - lvl - 1);
     int bx, by;
     bx = (nBlockXOff / BSZ) * BSZ;
     by = (nBlockYOff / BSZ) * BSZ;
@@ -843,6 +1054,17 @@ void CPL_DLL GDALRegister_ESRIC()
 
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "json tpkx");
 
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='EXTENT_SOURCE' type='string-select' "
+        "description='Which source is used to determine the extent' "
+        "default='FULL_EXTENT'>"
+        "    <Value>FULL_EXTENT</Value>"
+        "    <Value>INITIAL_EXTENT</Value>"
+        "    <Value>TILING_SCHEME</Value>"
+        "  </Option>"
+        "</OpenOptionList>");
     poDriver->pfnIdentify = ESRIC::Identify;
     poDriver->pfnOpen = ESRIC::ECDataset::Open;
     poDriver->pfnDelete = ESRIC::Delete;

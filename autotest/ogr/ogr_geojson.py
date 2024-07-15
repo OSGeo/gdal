@@ -5251,3 +5251,52 @@ def test_ogr_geojson_identify_jsonfg_with_geojson():
             "data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON", "JSONFG"]
         )
         assert drv.GetDescription() == "JSONFG"
+
+
+###############################################################################
+# Test opening a file that has a "type: "Topology" feature property
+
+
+def test_ogr_geojson_feature_with_type_Topology_property():
+
+    ds = gdal.OpenEx("data/geojson/feature_with_type_Topology_property.json")
+    assert ds.GetDriver().GetDescription() == "GeoJSON"
+
+
+###############################################################################
+# Test force opening a GeoJSON file
+
+
+def test_ogr_geojson_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.json")
+
+    with gdaltest.vsi_open(filename, "wb") as f:
+        f.write(
+            b"{"
+            + b" " * (1000 * 1000)
+            + b' "type": "FeatureCollection", "features":[]}'
+        )
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["GeoJSON"])
+    assert ds.GetDriver().GetDescription() == "GeoJSON"
+
+    drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["GeoJSON"])
+    assert drv.GetDescription() == "GeoJSON"
+
+
+###############################################################################
+# Test force opening a STACTA file with GeoJSON
+
+
+def test_ogr_geojson_force_opening_stacta():
+
+    if gdal.GetDriverByName("STACTA"):
+        ds = gdal.OpenEx("../gdrivers/data/stacta/test.json")
+        assert ds.GetDriver().GetDescription() == "STACTA"
+
+    ds = gdal.OpenEx("../gdrivers/data/stacta/test.json", allowed_drivers=["GeoJSON"])
+    assert ds.GetDriver().GetDescription() == "GeoJSON"

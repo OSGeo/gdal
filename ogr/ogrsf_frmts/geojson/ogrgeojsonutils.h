@@ -59,11 +59,11 @@ GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo);
 /*                           GeoJSONIsObject                            */
 /************************************************************************/
 
-bool GeoJSONIsObject(const char *pszText, CSLConstList papszAllowedDrivers);
-bool GeoJSONSeqIsObject(const char *pszText);
-bool ESRIJSONIsObject(const char *pszText);
-bool TopoJSONIsObject(const char *pszText);
-bool JSONFGIsObject(const char *pszText);
+bool GeoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
+bool GeoJSONSeqIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
+bool ESRIJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
+bool TopoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
+bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
 
 /************************************************************************/
 /*                           GeoJSONPropertyToFieldType                 */

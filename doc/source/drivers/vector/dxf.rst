@@ -34,9 +34,7 @@ fields:
    NULL otherwise.
 -  SubClasses: Where available, a list of classes to which an entity
    belongs.
--  ExtendedEntity (GDAL <= 2.2.x): The values of extended entity
-   attributes all appended to form a single text field, where available.
--  RawCodeValues (GDAL >= 2.3.0): A string list
+-  RawCodeValues: A string list
    containing all group codes and values that are not handled by the DXF
    reader. Only available when the configuration
    option :config:`DXF_INCLUDE_RAW_CODE_VALUES=TRUE`.
@@ -73,18 +71,27 @@ The following entity types are supported:
    polylines (those with their vertices' bulge attributes set) will be
    tessellated. Single-vertex polylines are translated to POINT.
    Polyface meshes are translated as POLYHEDRALSURFACE geometries.
--  MLINE:
 
-   -  (GDAL >= 2.3.0) Translated as a MULTILINESTRING. Only the geometry
-      is reconstructed; styling applied to individual line elements
-      within the MLINE is ignored. Fill colors and start/end caps are
-      also omitted.
-   -  (GDAL <= 2.2.x) No support.
+   Starting with GDAL 3.10, the :config:`DXF_CLOSED_LINE_AS_POLYGON`
+   configuration option can be set to TRUE to ask for closed POLYLINE and
+   LWPOLYLINE to be exposed as OGR polygons.
 
--  CIRCLE, ELLIPSE, ARC, SPLINE, (GDAL >= 2.3.0) HELIX: Translated as a
+   .. config:: DXF_CLOSED_LINE_AS_POLYGON
+      :choices: TRUE, FALSE
+      :default: FALSE
+
+
+-  MLINE: Translated as a MULTILINESTRING. Only the geometry
+   is reconstructed; styling applied to individual line elements
+   within the MLINE is ignored. Fill colors and start/end caps are
+   also omitted.
+
+-  CIRCLE, ELLIPSE, ARC, SPLINE,HELIX: Translated as a
    LINESTRING, tessellating the curve into line segments.
-   (GDAL >= 2.3.0) CIRCLEs with nonzero "thickness" (cylinders) are
+
+   CIRCLEs with nonzero "thickness" (cylinders) are
    approximated as a POLYHEDRALSURFACE.
+
 -  INSERT: By default, the block definition referenced by the INSERT
    will be inserted as a compound geometry (for example, a
    MULTILINESTRING for a block containing many lines, or a
@@ -97,6 +104,7 @@ The following entity types are supported:
 
    -  .. config:: DXF_MERGE_BLOCK_GEOMETRIES
          :choices: TRUE, FALSE
+         :default: FALSE
 
          To avoid merging blocks into a
          compound geometry the :config:`DXF_MERGE_BLOCK_GEOMETRIES` config option may
@@ -115,13 +123,9 @@ The following entity types are supported:
          Maximum number of
          features inserted from a single block. Set to -1 for no limit.
 
--  ATTDEF, ATTRIB:
-
-   -  (GDAL >= 2.3.0) Attributes (ATTRIB) are treated as TEXT entities,
-      and attribute definitions (ATTDEF) inside blocks are ignored. The
-      behavior is different when :config:`DXF_INLINE_BLOCKS` is false (see below).
-   -  (GDAL <= 2.2.x) ATTDEF entities are treated as TEXT. ATTRIB
-      entities are not supported.
+-  ATTDEF, ATTRIB: Attributes (ATTRIB) are treated as TEXT entities,
+   and attribute definitions (ATTDEF) inside blocks are ignored. The
+   behavior is different when :config:`DXF_INLINE_BLOCKS` is false (see below).
 
 -  HATCH: Line and arc boundaries are collected as a polygon geometry,
    but no effort is currently made to represent the fill style of HATCH
@@ -134,36 +138,27 @@ The following entity types are supported:
          tolerance used when looking for the next component to add to the
          hatch boundary.
 
-   (GDAL <= 2.2.x) Only line and polyline boundary paths are translated
-   correctly.
-
 -  3DFACE, SOLID, (GDAL >= 2.3.0) TRACE: Translated as POLYGON, except
    for SOLID and TRACE entities with only one distinct vertex
    (translated as POINT) or two distinct vertices (translated as
    LINESTRING).
--  DIMENSION:
 
-   -  (GDAL >= 2.3.0) The DXF format allows each DIMENSION entity to
-      reference an "anonymous" block (a block whose name starts with
-      \*D) that contains the geometry of the DIMENSION. If present, this
-      anonymous block will be inlined at the required position.
-      Otherwise, fallback will occur to a simple DIMENSION renderer that
-      explodes a linear dimension as a MULTILINESTRING feature.
-      Arrowheads, if present, are translated as one or more additional
-      features. The fallback renderer will render nonlinear dimensions
-      as if they were linear.
-   -  (GDAL <= 2.2.x) Dimensions are translated as a MULTILINESTRING and
-      a POINT for the text.
+-  DIMENSION: The DXF format allows each DIMENSION entity to
+   reference an "anonymous" block (a block whose name starts with
+   \*D) that contains the geometry of the DIMENSION. If present, this
+   anonymous block will be inlined at the required position.
+   Otherwise, fallback will occur to a simple DIMENSION renderer that
+   explodes a linear dimension as a MULTILINESTRING feature.
+   Arrowheads, if present, are translated as one or more additional
+   features. The fallback renderer will render nonlinear dimensions
+   as if they were linear.
 
--  LEADER, MULTILEADER:
-
-   -  (GDAL >= 2.3.0) The leader line is translated as a LINESTRING
-      (LEADER) or MULTILINESTRING (MULTILEADER). Arrowheads, if present,
-      are translated as one or more additional features. Text for
-      MULTILEADER entities is translated into a POINT feature with a
-      label. Block content for MULTILEADERS is treated as for INSERT.
-      Spline leaders are tessellated into line segments.
-   -  (GDAL <= 2.2.x) No support.
+-  LEADER, MULTILEADER: The leader line is translated as a LINESTRING
+   (LEADER) or MULTILINESTRING (MULTILEADER). Arrowheads, if present,
+   are translated as one or more additional features. Text for
+   MULTILEADER entities is translated into a POINT feature with a
+   label. Block content for MULTILEADERS is treated as for INSERT.
+   Spline leaders are tessellated into line segments.
 
 -  3DSOLID, REGION, BODY, SURFACE: See below.
 
@@ -185,6 +180,9 @@ supported for all entities to which they apply as per the DXF
 specification, except DIMENSION, LEADER and MULTILEADER. These three
 entity types also currently lack support for elevations; the geometries
 will always be 2D.
+
+
+.. _dxf_inline_blocks:
 
 DXF_INLINE_BLOCKS
 ~~~~~~~~~~~~~~~~~
@@ -272,7 +270,68 @@ override what id will be used by OGR in transcoding:
       name. Using a value "UTF-8" will avoid any attempt to
       recode the text as it is read.
 
---------------
+Open options
+------------
+
+.. versionadded:: 3.10
+
+|about-open-options|
+The following open options are supported:
+
+- .. oo:: CLOSED_LINE_AS_POLYGON
+     :since: 3.10
+     :default: NO
+     :choices: YES, NO
+
+     See :config:`DXF_CLOSED_LINE_AS_POLYGON`
+
+- .. oo:: INLINE_BLOCKS
+     :since: 3.10
+     :default: YES
+     :choices: YES, NO
+
+     See :ref:`dxf_inline_blocks`
+
+- .. oo:: MERGE_BLOCK_GEOMETRIES
+     :since: 3.10
+     :default: YES
+     :choices: YES, NO
+
+     See :config:`DXF_MERGE_BLOCK_GEOMETRIES`
+
+- .. oo:: TRANSLATE_ESCAPE_SEQUENCES
+     :since: 3.10
+     :default: YES
+     :choices: YES, NO
+
+     See :config:`DXF_TRANSLATE_ESCAPE_SEQUENCES`
+
+- .. oo:: INCLUDE_RAW_CODE_VALUES
+     :since: 3.10
+     :default: NO
+     :choices: YES, NO
+
+     See :config:`DXF_INCLUDE_RAW_CODE_VALUES`
+
+- .. oo:: 3D_EXTENSIBLE_MODE
+     :since: 3.10
+     :default: NO
+     :choices: YES, NO
+
+     See :config:`DXF_3D_EXTENSIBLE_MODE`
+
+- .. oo:: HATCH_TOLERANCE
+     :since: 3.10
+     :choices: <tolerance>
+
+     See :config:`DXF_HATCH_TOLERANCE`
+
+- .. oo:: ENCODING
+     :since: 3.10
+     :choices: <encoding>
+
+     See :config:`DXF_ENCODING`
+
 
 DXF Writer
 ----------

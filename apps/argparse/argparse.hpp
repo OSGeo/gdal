@@ -1411,6 +1411,10 @@ private:
    *    '+' '-'
    */
   static bool is_decimal_literal(std::string_view s) {
+    if (s == "inf") {
+      return true;
+    }
+
     auto is_digit = [](auto c) constexpr {
       switch (c) {
       case '0':
@@ -2041,8 +2045,10 @@ public:
         }
 
         stream << std::setw(2) << " ";
-        stream << std::setw(static_cast<int>(longest_arg_length - 2))
-               << command;
+        if (longest_arg_length >= 2) {
+          stream << std::setw(static_cast<int>(longest_arg_length - 2))
+                 << command;
+        }
         stream << " " << subparser->get().m_description << "\n";
       }
     }

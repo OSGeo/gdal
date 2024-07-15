@@ -404,7 +404,12 @@ GDALOpenInfo::~GDALOpenInfo()
 /************************************************************************/
 
 /** Return sibling files.
- * @return sibling files. Ownership below to the object.
+ *
+ * If the list of sibling files has not already been established, it will be,
+ * unless the GDAL_DISABLE_READDIR_ON_OPEN configuration option has been set to
+ * YES or EMPTY_DIR when this instance was constructed.
+ *
+ * @return sibling files. Ownership belongs to "this".
  */
 char **GDALOpenInfo::GetSiblingFiles()
 {
@@ -486,4 +491,23 @@ int GDALOpenInfo::TryToIngest(int nBytes)
     VSIRewindL(fpL);
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                       IsSingleAllowedDriver()                        */
+/************************************************************************/
+
+/** Returns true if the driver name is the single in the list of allowed
+ * drivers.
+ *
+ * @param pszDriverName Driver name to test.
+ * @return true if the driver name is the single in the list of allowed
+ * drivers.
+ * @since GDAL 3.10
+ */
+bool GDALOpenInfo::IsSingleAllowedDriver(const char *pszDriverName) const
+{
+    return papszAllowedDrivers && papszAllowedDrivers[0] &&
+           !papszAllowedDrivers[1] &&
+           EQUAL(papszAllowedDrivers[0], pszDriverName);
 }

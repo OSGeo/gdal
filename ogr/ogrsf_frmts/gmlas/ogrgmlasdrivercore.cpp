@@ -40,7 +40,30 @@
 int OGRGMLASDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    return STARTS_WITH_CI(poOpenInfo->pszFilename, "GMLAS:");
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "GMLAS:"))
+        return true;
+
+    if (poOpenInfo->IsSingleAllowedDriver("GMLAS"))
+    {
+        const char *pszPtr =
+            reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+
+        // Skip UTF-8 BOM
+        if (poOpenInfo->nHeaderBytes > 3 &&
+            memcmp(poOpenInfo->pabyHeader, "\xEF\xBB\xBF", 3) == 0)
+        {
+            pszPtr += 3;
+        }
+
+        // Skip spaces
+        while (*pszPtr && std::isspace(static_cast<unsigned char>(*pszPtr)))
+            ++pszPtr;
+
+        // Here, we expect the opening chevrons of GML tree root element */
+        return pszPtr[0] == '<';
+    }
+
+    return false;
 }
 
 /************************************************************************/

@@ -6121,3 +6121,16 @@ def test_ogr_shape_logical_field(tmp_vsimem):
     assert f["int_field"] == -1234
     f = lyr.GetNextFeature()
     assert f["bool_field"] is None
+
+
+###############################################################################
+# Test reading a null Date filled with nul characters
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_read_date_empty_string():
+
+    ds = ogr.Open("data/shp/date_empty_string.dbf")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["date"] is None

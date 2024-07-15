@@ -56,6 +56,9 @@ static int OGRCSVDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->fpL != nullptr)
     {
+        if (poOpenInfo->IsSingleAllowedDriver("CSV"))
+            return TRUE;
+
         const CPLString osBaseFilename =
             CPLGetFilename(poOpenInfo->pszFilename);
         const CPLString osExt =
@@ -114,6 +117,9 @@ static int OGRCSVDriverIdentify(GDALOpenInfo *poOpenInfo)
     }
     else if (poOpenInfo->bIsDirectory)
     {
+        if (poOpenInfo->IsSingleAllowedDriver("CSV"))
+            return TRUE;
+
         return -1;  // Unsure.
     }
 
@@ -160,14 +166,17 @@ static GDALDataset *OGRCSVDriverOpen(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    OGRCSVDataSource *poDS = new OGRCSVDataSource();
+    auto poDSUniquePtr = std::make_unique<OGRCSVDataSource>();
 
-    if (!poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update,
-                    FALSE, poOpenInfo->papszOpenOptions))
+    if (!poDSUniquePtr->Open(poOpenInfo->pszFilename,
+                             poOpenInfo->eAccess == GA_Update, false,
+                             poOpenInfo->papszOpenOptions,
+                             poOpenInfo->IsSingleAllowedDriver("CSV")))
     {
-        delete poDS;
-        poDS = nullptr;
+        poDSUniquePtr.reset();
     }
+
+    auto poDS = poDSUniquePtr.release();
 
     if (poOpenInfo->eAccess == GA_Update && poDS != nullptr)
     {
@@ -238,15 +247,16 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     }
 
     // Force it to open as a datasource.
-    OGRCSVDataSource *poDS = new OGRCSVDataSource();
+    auto poDS = std::make_unique<OGRCSVDataSource>();
 
     if (EQUAL(CPLGetExtension(pszName), "csv"))
     {
         poDS->CreateForSingleFile(osDirName, pszName);
     }
-    else if (!poDS->Open(osDirName, TRUE, TRUE))
+    else if (!poDS->Open(osDirName, /* bUpdate = */ true,
+                         /* bForceAccept = */ true, nullptr,
+                         /* bSingleDriver = */ true))
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -254,7 +264,7 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     if (pszGeometry != nullptr && EQUAL(pszGeometry, "AS_WKT"))
         poDS->EnableGeometryFields();
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

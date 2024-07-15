@@ -461,22 +461,23 @@ constexpr int READSTRINGTABLE_IDX_STRING = 1;
 static bool ReadStringTable(const GByte *pabyData, const GByte *pabyDataLimit,
                             OSMContext *psCtxt)
 {
-    char *pszStrBuf = (char *)pabyData;
+    const GByte *const pabyDataStart = pabyData;
 
     unsigned int nStrCount = 0;
     int *panStrOff = psCtxt->panStrOff;
 
-    psCtxt->pszStrBuf = pszStrBuf;
+    psCtxt->pszStrBuf = reinterpret_cast<char *>(const_cast<GByte *>(pabyData));
 
     try
     {
-        if ((unsigned int)(pabyDataLimit - pabyData) > psCtxt->nStrAllocated)
+        if (static_cast<unsigned>(pabyDataLimit - pabyData) >
+            psCtxt->nStrAllocated)
         {
             psCtxt->nStrAllocated =
                 std::max(psCtxt->nStrAllocated * 2,
-                         (unsigned int)(pabyDataLimit - pabyData));
-            int *panStrOffNew = (int *)VSI_REALLOC_VERBOSE(
-                panStrOff, psCtxt->nStrAllocated * sizeof(int));
+                         static_cast<unsigned>(pabyDataLimit - pabyData));
+            int *panStrOffNew = static_cast<int *>(VSI_REALLOC_VERBOSE(
+                panStrOff, psCtxt->nStrAllocated * sizeof(int)));
             if (panStrOffNew == nullptr)
                 THROW_OSM_PARSING_EXCEPTION;
             panStrOff = panStrOffNew;
@@ -493,7 +494,7 @@ static bool ReadStringTable(const GByte *pabyData, const GByte *pabyDataLimit,
                 READ_SIZE(pabyData, pabyDataLimit, nDataLength);
 
                 panStrOff[nStrCount++] =
-                    static_cast<int>(pabyData - (GByte *)pszStrBuf);
+                    static_cast<int>(pabyData - pabyDataStart);
                 GByte *pbSaved = const_cast<GByte *>(&pabyData[nDataLength]);
 
                 pabyData += nDataLength;
@@ -614,9 +615,10 @@ static bool ReadDenseNodes(const GByte *pabyData, const GByte *pabyDataLimit,
                 {
                     psCtxt->nNodesAllocated =
                         std::max(psCtxt->nNodesAllocated * 2, nSize);
-                    OSMNode *pasNodesNew = (OSMNode *)VSI_REALLOC_VERBOSE(
-                        psCtxt->pasNodes,
-                        psCtxt->nNodesAllocated * sizeof(OSMNode));
+                    OSMNode *pasNodesNew =
+                        static_cast<OSMNode *>(VSI_REALLOC_VERBOSE(
+                            psCtxt->pasNodes,
+                            psCtxt->nNodesAllocated * sizeof(OSMNode)));
                     if (pasNodesNew == nullptr)
                         THROW_OSM_PARSING_EXCEPTION;
                     psCtxt->pasNodes = pasNodesNew;
@@ -693,9 +695,10 @@ static bool ReadDenseNodes(const GByte *pabyData, const GByte *pabyDataLimit,
 
                     psCtxt->nTagsAllocated =
                         std::max(psCtxt->nTagsAllocated * 2, nMaxTags);
-                    OSMTag *pasTagsNew = (OSMTag *)VSI_REALLOC_VERBOSE(
-                        psCtxt->pasTags,
-                        psCtxt->nTagsAllocated * sizeof(OSMTag));
+                    OSMTag *pasTagsNew =
+                        static_cast<OSMTag *>(VSI_REALLOC_VERBOSE(
+                            psCtxt->pasTags,
+                            psCtxt->nTagsAllocated * sizeof(OSMTag)));
                     if (pasTagsNew == nullptr)
                         THROW_OSM_PARSING_EXCEPTION;
                     psCtxt->pasTags = pasTagsNew;
@@ -820,11 +823,13 @@ static bool ReadDenseNodes(const GByte *pabyData, const GByte *pabyDataLimit,
 
                 pasNodes[nNodes].nID = nID;
                 pasNodes[nNodes].dfLat =
-                    .000000001 * (psCtxt->nLatOffset +
-                                  ((double)psCtxt->nGranularity * nLat));
+                    .000000001 *
+                    (psCtxt->nLatOffset +
+                     (static_cast<double>(psCtxt->nGranularity) * nLat));
                 pasNodes[nNodes].dfLon =
-                    .000000001 * (psCtxt->nLonOffset +
-                                  ((double)psCtxt->nGranularity * nLon));
+                    .000000001 *
+                    (psCtxt->nLonOffset +
+                     (static_cast<double>(psCtxt->nGranularity) * nLon));
                 if (pasNodes[nNodes].dfLon < -180 ||
                     pasNodes[nNodes].dfLon > 180 ||
                     pasNodes[nNodes].dfLat < -90 || pasNodes[nNodes].dfLat > 90)
@@ -974,16 +979,18 @@ static bool ReadNode(const GByte *pabyData, const GByte *pabyDataLimit,
                 GIntBig nLat = 0;
                 READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nLat);
                 sNode.dfLat =
-                    0.000000001 * (psCtxt->nLatOffset +
-                                   ((double)psCtxt->nGranularity * nLat));
+                    0.000000001 *
+                    (psCtxt->nLatOffset +
+                     (static_cast<double>(psCtxt->nGranularity) * nLat));
             }
             else if (nKey == MAKE_KEY(NODE_IDX_LON, WT_VARINT))
             {
                 GIntBig nLon = 0;
                 READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nLon);
                 sNode.dfLon =
-                    0.000000001 * (psCtxt->nLonOffset +
-                                   ((double)psCtxt->nGranularity * nLon));
+                    0.000000001 *
+                    (psCtxt->nLonOffset +
+                     (static_cast<double>(psCtxt->nGranularity) * nLon));
             }
             else if (nKey == MAKE_KEY(NODE_IDX_KEYS, WT_DATA))
             {
@@ -997,9 +1004,10 @@ static bool ReadNode(const GByte *pabyData, const GByte *pabyDataLimit,
                 {
                     psCtxt->nTagsAllocated =
                         std::max(psCtxt->nTagsAllocated * 2, nSize);
-                    OSMTag *pasTagsNew = (OSMTag *)VSI_REALLOC_VERBOSE(
-                        psCtxt->pasTags,
-                        psCtxt->nTagsAllocated * sizeof(OSMTag));
+                    OSMTag *pasTagsNew =
+                        static_cast<OSMTag *>(VSI_REALLOC_VERBOSE(
+                            psCtxt->pasTags,
+                            psCtxt->nTagsAllocated * sizeof(OSMTag)));
                     if (pasTagsNew == nullptr)
                         THROW_OSM_PARSING_EXCEPTION;
                     psCtxt->pasTags = pasTagsNew;
@@ -1124,9 +1132,10 @@ static bool ReadWay(const GByte *pabyData, const GByte *pabyDataLimit,
                 {
                     psCtxt->nTagsAllocated =
                         std::max(psCtxt->nTagsAllocated * 2, nSize);
-                    OSMTag *pasTagsNew = (OSMTag *)VSI_REALLOC_VERBOSE(
-                        psCtxt->pasTags,
-                        psCtxt->nTagsAllocated * sizeof(OSMTag));
+                    OSMTag *pasTagsNew =
+                        static_cast<OSMTag *>(VSI_REALLOC_VERBOSE(
+                            psCtxt->pasTags,
+                            psCtxt->nTagsAllocated * sizeof(OSMTag)));
                     if (pasTagsNew == nullptr)
                         THROW_OSM_PARSING_EXCEPTION;
                     psCtxt->pasTags = pasTagsNew;
@@ -1194,9 +1203,10 @@ static bool ReadWay(const GByte *pabyData, const GByte *pabyDataLimit,
                 {
                     psCtxt->nNodeRefsAllocated =
                         std::max(psCtxt->nNodeRefsAllocated * 2, nSize);
-                    GIntBig *panNodeRefsNew = (GIntBig *)VSI_REALLOC_VERBOSE(
-                        psCtxt->panNodeRefs,
-                        psCtxt->nNodeRefsAllocated * sizeof(GIntBig));
+                    GIntBig *panNodeRefsNew =
+                        static_cast<GIntBig *>(VSI_REALLOC_VERBOSE(
+                            psCtxt->panNodeRefs,
+                            psCtxt->nNodeRefsAllocated * sizeof(GIntBig)));
                     if (panNodeRefsNew == nullptr)
                         THROW_OSM_PARSING_EXCEPTION;
                     psCtxt->panNodeRefs = panNodeRefsNew;
@@ -1286,9 +1296,10 @@ static bool ReadRelation(const GByte *pabyData, const GByte *pabyDataLimit,
                 {
                     psCtxt->nTagsAllocated =
                         std::max(psCtxt->nTagsAllocated * 2, nSize);
-                    OSMTag *pasTagsNew = (OSMTag *)VSI_REALLOC_VERBOSE(
-                        psCtxt->pasTags,
-                        psCtxt->nTagsAllocated * sizeof(OSMTag));
+                    OSMTag *pasTagsNew =
+                        static_cast<OSMTag *>(VSI_REALLOC_VERBOSE(
+                            psCtxt->pasTags,
+                            psCtxt->nTagsAllocated * sizeof(OSMTag)));
                     if (pasTagsNew == nullptr)
                         THROW_OSM_PARSING_EXCEPTION;
                     psCtxt->pasTags = pasTagsNew;
@@ -1355,9 +1366,10 @@ static bool ReadRelation(const GByte *pabyData, const GByte *pabyDataLimit,
                 {
                     psCtxt->nMembersAllocated =
                         std::max(psCtxt->nMembersAllocated * 2, nSize);
-                    OSMMember *pasMembersNew = (OSMMember *)VSI_REALLOC_VERBOSE(
-                        psCtxt->pasMembers,
-                        psCtxt->nMembersAllocated * sizeof(OSMMember));
+                    OSMMember *pasMembersNew =
+                        static_cast<OSMMember *>(VSI_REALLOC_VERBOSE(
+                            psCtxt->pasMembers,
+                            psCtxt->nMembersAllocated * sizeof(OSMMember)));
                     if (pasMembersNew == nullptr)
                         THROW_OSM_PARSING_EXCEPTION;
                     psCtxt->pasMembers = pasMembersNew;
@@ -1416,7 +1428,8 @@ static bool ReadRelation(const GByte *pabyData, const GByte *pabyDataLimit,
                     if (nType > MEMBER_RELATION)
                         THROW_OSM_PARSING_EXCEPTION;
 
-                    psCtxt->pasMembers[nIter].eType = (OSMMemberType)nType;
+                    psCtxt->pasMembers[nIter].eType =
+                        static_cast<OSMMemberType>(nType);
                 }
                 pabyData += nSize;
             }
@@ -1832,9 +1845,10 @@ static bool ReadBlob(OSMContext *psCtxt, BlobType eType)
                         if (psCtxt->nUncompressedAllocated >
                             UINT_MAX - EXTRA_BYTES)
                             THROW_OSM_PARSING_EXCEPTION;
-                        pabyUncompressedNew = (GByte *)VSI_REALLOC_VERBOSE(
-                            psCtxt->pabyUncompressed,
-                            psCtxt->nUncompressedAllocated + EXTRA_BYTES);
+                        pabyUncompressedNew =
+                            static_cast<GByte *>(VSI_REALLOC_VERBOSE(
+                                psCtxt->pabyUncompressed,
+                                psCtxt->nUncompressedAllocated + EXTRA_BYTES));
                         if (pabyUncompressedNew == nullptr)
                             THROW_OSM_PARSING_EXCEPTION;
                         psCtxt->pabyUncompressed = pabyUncompressedNew;
@@ -2101,7 +2115,7 @@ static void EmptyNotifyBoundsFunc(double /* dfXMin */, double /* dfYMin */,
 
 static const char *OSM_AddString(OSMContext *psCtxt, const char *pszStr)
 {
-    int nLen = (int)strlen(pszStr);
+    const auto nLen = strlen(pszStr);
     if (psCtxt->nStrLength + nLen + 1 > psCtxt->nStrAllocated)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "String buffer too small");
@@ -2110,7 +2124,7 @@ static const char *OSM_AddString(OSMContext *psCtxt, const char *pszStr)
     char *pszRet = psCtxt->pszStrBuf + psCtxt->nStrLength;
     memcpy(pszRet, pszStr, nLen);
     pszRet[nLen] = '\0';
-    psCtxt->nStrLength += nLen + 1;
+    psCtxt->nStrLength += static_cast<unsigned>(nLen) + 1;
     return pszRet;
 }
 
@@ -2131,7 +2145,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData,
                                             const char *pszName,
                                             const char **ppszAttr)
 {
-    OSMContext *psCtxt = (OSMContext *)pUserData;
+    OSMContext *psCtxt = static_cast<OSMContext *>(pUserData);
     const char **ppszIter = ppszAttr;
 
     if (psCtxt->bStopParsing)
@@ -2384,8 +2398,9 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData,
         {
             int nMembersAllocated = std::max(psCtxt->nMembersAllocated * 2,
                                              psCtxt->sRelation.nMembers + 1);
-            OSMMember *pasMembersNew = (OSMMember *)VSI_REALLOC_VERBOSE(
-                psCtxt->pasMembers, nMembersAllocated * sizeof(OSMMember));
+            OSMMember *pasMembersNew =
+                static_cast<OSMMember *>(VSI_REALLOC_VERBOSE(
+                    psCtxt->pasMembers, nMembersAllocated * sizeof(OSMMember)));
             if (pasMembersNew == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -2436,8 +2451,8 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData,
         if (psCtxt->nTags == psCtxt->nTagsAllocated)
         {
             psCtxt->nTagsAllocated = psCtxt->nTagsAllocated * 2;
-            OSMTag *pasTagsNew = (OSMTag *)VSI_REALLOC_VERBOSE(
-                psCtxt->pasTags, psCtxt->nTagsAllocated * sizeof(OSMTag));
+            OSMTag *pasTagsNew = static_cast<OSMTag *>(VSI_REALLOC_VERBOSE(
+                psCtxt->pasTags, psCtxt->nTagsAllocated * sizeof(OSMTag)));
             if (pasTagsNew == nullptr)
             {
                 if (psCtxt->bInNode)
@@ -2487,7 +2502,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData,
 
 static void XMLCALL OSM_XML_endElementCbk(void *pUserData, const char *pszName)
 {
-    OSMContext *psCtxt = (OSMContext *)pUserData;
+    OSMContext *psCtxt = static_cast<OSMContext *>(pUserData);
 
     if (psCtxt->bStopParsing)
         return;
@@ -2568,7 +2583,7 @@ static void XMLCALL OSM_XML_dataHandlerCbk(void *pUserData,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
-        XML_StopParser(psCtxt->hXMLParser, XML_FALSE);
+        XML_StopParser(psCtxt->hXMLParser, false);
         psCtxt->bStopParsing = true;
         return;
     }
@@ -2592,24 +2607,27 @@ static OSMRetCode XML_ProcessBlock(OSMContext *psCtxt)
     {
         psCtxt->nDataHandlerCounter = 0;
 
-        const unsigned int nLen = (unsigned int)VSIFReadL(
-            psCtxt->pabyBlob, 1, XML_BUFSIZE, psCtxt->fp);
+        const unsigned int nLen = static_cast<unsigned int>(
+            VSIFReadL(psCtxt->pabyBlob, 1, XML_BUFSIZE, psCtxt->fp));
 
         psCtxt->nBytesRead += nLen;
 
         psCtxt->bEOF = nLen < XML_BUFSIZE;
         const int eErr =
-            XML_Parse(psCtxt->hXMLParser, (const char *)psCtxt->pabyBlob, nLen,
+            XML_Parse(psCtxt->hXMLParser,
+                      reinterpret_cast<const char *>(psCtxt->pabyBlob), nLen,
                       psCtxt->bEOF);
 
         if (eErr == XML_STATUS_ERROR)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of OSM file failed : %s "
-                     "at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(psCtxt->hXMLParser)),
-                     (int)XML_GetCurrentLineNumber(psCtxt->hXMLParser),
-                     (int)XML_GetCurrentColumnNumber(psCtxt->hXMLParser));
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "XML parsing of OSM file failed : %s "
+                "at line %d, column %d",
+                XML_ErrorString(XML_GetErrorCode(psCtxt->hXMLParser)),
+                static_cast<int>(XML_GetCurrentLineNumber(psCtxt->hXMLParser)),
+                static_cast<int>(
+                    XML_GetCurrentColumnNumber(psCtxt->hXMLParser)));
             psCtxt->bStopParsing = true;
         }
         psCtxt->nWithoutEventCounter++;
@@ -2649,7 +2667,7 @@ OSMContext *OSM_Open(const char *pszFilename, NotifyNodesFunc pfnNotifyNodes,
 
     bool bPBF = false;
 
-    if (strstr((const char *)abyHeader, "<osm") != nullptr)
+    if (strstr(reinterpret_cast<const char *>(abyHeader), "<osm") != nullptr)
     {
         /* OSM XML */
 #ifndef HAVE_EXPAT
@@ -2713,7 +2731,8 @@ OSMContext *OSM_Open(const char *pszFilename, NotifyNodesFunc pfnNotifyNodes,
         psCtxt->nBlobSizeAllocated = XML_BUFSIZE;
 
         psCtxt->nStrAllocated = 1024 * 1024;
-        psCtxt->pszStrBuf = (char *)VSI_MALLOC_VERBOSE(psCtxt->nStrAllocated);
+        psCtxt->pszStrBuf =
+            static_cast<char *>(VSI_MALLOC_VERBOSE(psCtxt->nStrAllocated));
         if (psCtxt->pszStrBuf)
             psCtxt->pszStrBuf[0] = '\0';
 
@@ -2726,23 +2745,23 @@ OSMContext *OSM_Open(const char *pszFilename, NotifyNodesFunc pfnNotifyNodes,
         psCtxt->bTryToFetchBounds = true;
 
         psCtxt->nNodesAllocated = 1;
-        psCtxt->pasNodes = (OSMNode *)VSI_MALLOC_VERBOSE(
-            sizeof(OSMNode) * psCtxt->nNodesAllocated);
+        psCtxt->pasNodes = static_cast<OSMNode *>(
+            VSI_MALLOC_VERBOSE(sizeof(OSMNode) * psCtxt->nNodesAllocated));
 
         psCtxt->nTagsAllocated = 256;
-        psCtxt->pasTags = (OSMTag *)VSI_MALLOC_VERBOSE(sizeof(OSMTag) *
-                                                       psCtxt->nTagsAllocated);
+        psCtxt->pasTags = static_cast<OSMTag *>(
+            VSI_MALLOC_VERBOSE(sizeof(OSMTag) * psCtxt->nTagsAllocated));
 
         /* 300 is the recommended value, but there are files with more than 2000
          * so we should be able */
         /* to realloc over that value */
         psCtxt->nMembersAllocated = 2000;
-        psCtxt->pasMembers = (OSMMember *)VSI_MALLOC_VERBOSE(
-            sizeof(OSMMember) * psCtxt->nMembersAllocated);
+        psCtxt->pasMembers = static_cast<OSMMember *>(
+            VSI_MALLOC_VERBOSE(sizeof(OSMMember) * psCtxt->nMembersAllocated));
 
         psCtxt->nNodeRefsAllocated = 10000;
-        psCtxt->panNodeRefs = (GIntBig *)VSI_MALLOC_VERBOSE(
-            sizeof(GIntBig) * psCtxt->nNodeRefsAllocated);
+        psCtxt->panNodeRefs = static_cast<GIntBig *>(
+            VSI_MALLOC_VERBOSE(sizeof(GIntBig) * psCtxt->nNodeRefsAllocated));
 
         if (psCtxt->pszStrBuf == nullptr || psCtxt->pasNodes == nullptr ||
             psCtxt->pasTags == nullptr || psCtxt->pasMembers == nullptr ||
@@ -2754,14 +2773,15 @@ OSMContext *OSM_Open(const char *pszFilename, NotifyNodesFunc pfnNotifyNodes,
     }
 #endif
 
-    psCtxt->pabyBlob = (GByte *)VSI_MALLOC_VERBOSE(psCtxt->nBlobSizeAllocated);
+    psCtxt->pabyBlob =
+        static_cast<GByte *>(VSI_MALLOC_VERBOSE(psCtxt->nBlobSizeAllocated));
     if (psCtxt->pabyBlob == nullptr)
     {
         OSM_Close(psCtxt);
         return nullptr;
     }
-    psCtxt->pabyBlobHeader =
-        (GByte *)VSI_MALLOC_VERBOSE(MAX_BLOB_HEADER_SIZE + EXTRA_BYTES);
+    psCtxt->pabyBlobHeader = static_cast<GByte *>(
+        VSI_MALLOC_VERBOSE(MAX_BLOB_HEADER_SIZE + EXTRA_BYTES));
     if (psCtxt->pabyBlobHeader == nullptr)
     {
         OSM_Close(psCtxt);

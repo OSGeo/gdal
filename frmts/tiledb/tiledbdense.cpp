@@ -1109,7 +1109,7 @@ CPLErr TileDBRasterDataset::TrySaveXML()
 /*                           TryLoadXML()                               */
 /************************************************************************/
 
-CPLErr TileDBRasterDataset::TryLoadXML(char **papszSiblingFiles)
+CPLErr TileDBRasterDataset::TryLoadXML(CSLConstList papszSiblingFiles)
 
 {
     return TryLoadCachedXML(papszSiblingFiles, true);
@@ -1119,7 +1119,7 @@ CPLErr TileDBRasterDataset::TryLoadXML(char **papszSiblingFiles)
 /*                           TryLoadCachedXML()                               */
 /************************************************************************/
 
-CPLErr TileDBRasterDataset::TryLoadCachedXML(char ** /*papszSiblingFiles*/,
+CPLErr TileDBRasterDataset::TryLoadCachedXML(CSLConstList /*papszSiblingFiles*/,
                                              bool bReload)
 
 {

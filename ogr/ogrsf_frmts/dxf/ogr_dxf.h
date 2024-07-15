@@ -675,6 +675,8 @@ class OGRDXFDataSource final : public OGRDataSource
     bool bMergeBlockGeometries;
     bool bTranslateEscapeSequences;
     bool bIncludeRawCodeValues;
+    bool m_bClosedLineAsPolygon = false;
+    double m_dfHatchTolerance = -1.0;
 
     bool b3DExtensibleMode;
     bool bHaveReadSolidData;
@@ -688,7 +690,8 @@ class OGRDXFDataSource final : public OGRDataSource
     OGRDXFDataSource();
     ~OGRDXFDataSource();
 
-    int Open(const char *pszFilename, int bHeaderOnly = FALSE);
+    int Open(const char *pszFilename, bool bHeaderOnly,
+             CSLConstList papszOptionsIn);
 
     const char *GetName() override
     {
@@ -729,6 +732,16 @@ class OGRDXFDataSource final : public OGRDataSource
     bool In3DExtensibleMode() const
     {
         return b3DExtensibleMode;
+    }
+
+    bool ClosedLineAsPolygon() const
+    {
+        return m_bClosedLineAsPolygon;
+    }
+
+    double HatchTolerance() const
+    {
+        return m_dfHatchTolerance;
     }
 
     static void AddStandardFields(OGRFeatureDefn *poDef, const int nFieldModes);

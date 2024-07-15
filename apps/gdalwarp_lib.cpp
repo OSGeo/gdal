@@ -5747,12 +5747,12 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
         .help(_("Set max warp memory."));
 
     argParser->add_argument("-srcnodata")
-        .metavar("<value>[ <value>...]")
+        .metavar("\"<value>[ <value>]...\"")
         .store_into(psOptions->osSrcNodata)
         .help(_("Nodata masking values for input bands."));
 
     argParser->add_argument("-dstnodata")
-        .metavar("<value>[ <value>...]")
+        .metavar("\"<value>[ <value>]...\"")
         .store_into(psOptions->osDstNodata)
         .help(_("Nodata masking values for output bands."));
 
@@ -6125,6 +6125,20 @@ GDALWarpAppOptionsNew(char **papszArgv,
                 return nullptr;
             }
             psOptions->bCreateOutput = true;
+        }
+        // argparser will be confused if the value of a string argument
+        // starts with a negative sign.
+        else if (EQUAL(papszArgv[i], "-srcnodata") && i + 1 < nArgc)
+        {
+            ++i;
+            psOptions->osSrcNodata = papszArgv[i];
+        }
+        // argparser will be confused if the value of a string argument
+        // starts with a negative sign.
+        else if (EQUAL(papszArgv[i], "-dstnodata") && i + 1 < nArgc)
+        {
+            ++i;
+            psOptions->osDstNodata = papszArgv[i];
         }
         else
         {

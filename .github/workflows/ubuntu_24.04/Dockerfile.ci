@@ -59,7 +59,7 @@ RUN apt-get update && \
     locales \
     mysql-client-core-8.0 \
     netcdf-bin \
-    openjdk-8-jdk \
+    openjdk-8-jdk-headless \
     poppler-utils \
     postgis \
     postgresql-client \
@@ -106,6 +106,21 @@ RUN mkdir mongocxx \
     && cd ../.. \
     && rm -rf mongocxx
 
+# Build libOpenDRIVE
+ARG OPENDRIVE_VERSION=0.5.0-gdal
+RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
+    wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
+    && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
+    && rm -f ${OPENDRIVE_VERSION}.tar.gz \
+    && cd libOpenDRIVE-${OPENDRIVE_VERSION} \
+    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr/ \
+    && make -j$(nproc) \
+    && make install \
+    && cd .. \
+    && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
+    ); fi
+
 # ESRI File Geodatabase API
 RUN curl -L -O https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5/FileGDB_API_1_5_64gcc51.tar.gz \
 	&& tar xzf FileGDB_API_1_5_64gcc51.tar.gz \
@@ -129,3 +144,6 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/ogdi/4.1/libvrf.so /usr/lib/x86_64-linux-gnu
 COPY requirements.txt /tmp/
 RUN python3 -m pip install -U --break-system-packages -r /tmp/requirements.txt
 
+# cfchecker requires udunits2
+RUN apt-get install -y --allow-unauthenticated libudunits2-0 libudunits2-data
+RUN python3 -m pip install --break-system-packages cfchecker

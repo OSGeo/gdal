@@ -490,3 +490,28 @@ def test_ogr_geojsonseq_geom_coord_precision_not_4326(tmp_vsimem):
     gdal.VSIFCloseL(f)
 
     assert b'"coordinates": [ 2.363925, 45.151706, 9.877 ]' in data
+
+
+###############################################################################
+# Test force opening a GeoJSONSeq file
+
+
+def test_ogr_geojsonseq_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.json")
+
+    with gdaltest.vsi_open(filename, "wb") as f:
+        f.write(
+            b"{"
+            + b" " * (1000 * 1000)
+            + b' "type": "Feature", "properties":{},"geometry":null}\n'
+        )
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["GeoJSONSeq"])
+    assert ds.GetDriver().GetDescription() == "GeoJSONSeq"
+
+    drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["GeoJSONSeq"])
+    assert drv.GetDescription() == "GeoJSONSeq"

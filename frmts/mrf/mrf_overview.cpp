@@ -479,6 +479,8 @@ CPLErr MRFDataset::PatchOverview(int BlockX, int BlockY, int Width, int Height,
                     {
                         case GDT_Byte:
                             resample(GByte);
+                        case GDT_Int8:
+                            resample(GInt8);
                         case GDT_UInt16:
                             resample(GUInt16);
                         case GDT_Int16:
@@ -487,6 +489,10 @@ CPLErr MRFDataset::PatchOverview(int BlockX, int BlockY, int Width, int Height,
                             resample(GUInt32);
                         case GDT_Int32:
                             resample(GInt32);
+                        case GDT_UInt64:
+                            resample(GUInt64);
+                        case GDT_Int64:
+                            resample(GInt64);
                         case GDT_Float32:
                             resample(float);
                         case GDT_Float64:
@@ -516,6 +522,8 @@ CPLErr MRFDataset::PatchOverview(int BlockX, int BlockY, int Width, int Height,
                     {
                         case GDT_Byte:
                             resample(GByte);
+                        case GDT_Int8:
+                            resample(GInt8);
                         case GDT_UInt16:
                             resample(GUInt16);
                         case GDT_Int16:
@@ -524,6 +532,10 @@ CPLErr MRFDataset::PatchOverview(int BlockX, int BlockY, int Width, int Height,
                             resample(GUInt32);
                         case GDT_Int32:
                             resample(GInt32);
+                        case GDT_UInt64:
+                            resample(GUInt64);
+                        case GDT_Int64:
+                            resample(GInt64);
                         case GDT_Float32:
                             resample(float);
                         case GDT_Float64:

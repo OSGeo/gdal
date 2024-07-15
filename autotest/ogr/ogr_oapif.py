@@ -1968,7 +1968,9 @@ def test_ogr_oapif_initial_request_page_size():
     )
     with webserver.install_http_handler(handler):
         ds = gdal.OpenEx(
-            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port, gdal.OF_VECTOR
+            "http://localhost:%d/oapif" % gdaltest.webserver_port,
+            gdal.OF_VECTOR,
+            allowed_drivers=["OAPIF"],
         )
     lyr = ds.GetLayer(0)
 

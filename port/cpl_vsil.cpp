@@ -3503,7 +3503,7 @@ void VSISetCredential(const char *pszPathPrefix, const char *pszKey,
  *
  * @param pszPathPrefix a path prefix of a virtual file system handler.
  *                      Typically of the form "/vsiXXX/bucket". Must NOT be
- * NULL.
+ * NULL. Should not include trailing slashes.
  * @param pszKey        Option name. Must NOT be NULL.
  * @param pszValue      Option value. May be NULL to erase it.
  *

@@ -85,6 +85,7 @@ struct GDALVectorTranslateOptionsForBinary
     CPLStringList aosOpenOptions{};
     std::string osFormat;
     GDALVectorTranslateAccessMode eAccessMode = ACCESS_CREATION;
+    bool bShowUsageIfError = false;
 
     /* Allowed input drivers. */
     CPLStringList aosAllowInputDrivers{};
