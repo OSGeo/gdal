@@ -157,7 +157,7 @@ output coordinate system or even reprojecting the features during translation.
 
     SQL statement to execute. The resulting table/layer will be saved to the
     output. Starting with GDAL 2.1, the ``@filename`` syntax can be used to
-    indicate that the content is in the pointed filename.
+    indicate that the content is in the pointed filename. (Cannot be used with :option:`-spat_srs`.)
 
 .. option:: -dialect <dialect>
 
@@ -184,7 +184,7 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -spat_srs <srs_def>
 
-    Override spatial filter SRS.
+    Override spatial filter SRS. (Cannot be used with :option:`-sql`.)
 
 .. option:: -geomfield <field>
 
