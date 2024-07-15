@@ -465,6 +465,23 @@ generates the following file:
 The generated file will come with default values that you may need to
 edit.
 
+Caching
+-------
+
+.. include:: wms_wmts_cache.rst
+
+Configuration options
+---------------------
+
+|about-config-options|
+The following configuration options are available:
+
+- :copy-config:`GDAL_MAX_CONNECTIONS`
+
+- :copy-config:`GDAL_ENABLE_WMS_CACHE`
+
+- :copy-config:`GDAL_DEFAULT_WMS_CACHE_PATH`
+
 See Also
 --------
 
