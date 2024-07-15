@@ -1,5 +1,6 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
-cmake_minimum_required(VERSION 3.16...3.28)
+include(cmake/helpers/GdalCMakeMinimumRequired.cmake)
+cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_MAX})
 
 project(gdal LANGUAGES C CXX)
 include(CTest)

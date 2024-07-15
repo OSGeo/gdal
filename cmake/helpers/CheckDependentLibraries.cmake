@@ -480,7 +480,7 @@ gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
 gdal_check_package(basisu "Enable BASISU driver" CONFIG CAN_DISABLE)
 gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)
 gdal_check_package(rdb "enable RIEGL RDB library" CONFIG CAN_DISABLE)
-gdal_check_package(TileDB "enable TileDB driver" CONFIG CAN_DISABLE VERSION "2.15")
+include(CheckDependentLibrariesTileDB)
 
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
 gdal_check_package(MONGOCXX "Enable MongoDBV3 driver" CAN_DISABLE)
@@ -488,16 +488,7 @@ gdal_check_package(MONGOCXX "Enable MongoDBV3 driver" CAN_DISABLE)
 define_find_package2(HEIF libheif/heif.h heif PKGCONFIG_NAME libheif)
 gdal_check_package(HEIF "HEIF >= 1.1" CAN_DISABLE)
 
-# OpenJPEG's cmake-CONFIG is broken with older OpenJPEG releases, so call module explicitly
-set(GDAL_FIND_PACKAGE_OpenJPEG_MODE "MODULE" CACHE STRING "Mode to use for find_package(OpenJPEG): CONFIG, MODULE or empty string")
-set_property(CACHE GDAL_FIND_PACKAGE_OpenJPEG_MODE PROPERTY STRINGS "CONFIG" "MODULE" "")
-# "openjp2" target name is for the one coming from the OpenJPEG CMake configuration
-# "OPENJPEG::OpenJPEG" is the one used by cmake/modules/packages/FindOpenJPEG.cmake
-gdal_check_package(OpenJPEG "Enable JPEG2000 support with OpenJPEG library"
-                   ${GDAL_FIND_PACKAGE_OpenJPEG_MODE}
-                   CAN_DISABLE
-                   TARGETS "openjp2;OPENJPEG::OpenJPEG"
-                   VERSION "2.3.1")
+include(CheckDependentLibrariesOpenJPEG)
 
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
 
@@ -522,16 +513,7 @@ option(GDAL_USE_PUBLICDECOMPWT
 include(CheckDependentLibrariesKakadu)
 gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 
-gdal_check_package(Arrow "Apache Arrow C++ library" CONFIG CAN_DISABLE)
-if (Arrow_FOUND)
-    gdal_check_package(Parquet "Apache Parquet C++ library" CONFIG PATHS ${Arrow_DIR} CAN_DISABLE)
-    gdal_check_package(ArrowDataset "Apache ArrowDataset C++ library" CONFIG PATHS ${Arrow_DIR} CAN_DISABLE)
-    if (Parquet_FOUND AND NOT ArrowDataset_FOUND)
-        message(WARNING "Parquet library found, but not ArrowDataset: partitioned datasets will not be supported")
-    endif()
-    option(ARROW_USE_STATIC_LIBRARIES "Use statically built Arrow libraries" OFF)
-    mark_as_advanced(ARROW_USE_STATIC_LIBRARIES)
-endif()
+include(CheckDependentLibrariesArrowParquet)
 
 gdal_check_package(OpenDrive "Enable libOpenDRIVE" CONFIG CAN_DISABLE)
 

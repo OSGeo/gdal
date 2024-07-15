@@ -26,8 +26,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifdef STANDALONE
+#include "gdal_version.h"
+#else
 #undef DO_NOT_DEFINE_GDAL_DATE_NAME
 #include "gdal_version_full/gdal_version.h"
+#endif
 
 #include "ogr_parquet.h"
 
