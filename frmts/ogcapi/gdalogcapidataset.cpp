@@ -1163,9 +1163,12 @@ SelectImageURL(const char *const *papszOptionOptions,
         }
     }
 
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "Server does not support specified IMAGE_FORMAT: %s",
-             osFormat.c_str());
+    if (osFormat != "AUTO")
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Server does not support specified IMAGE_FORMAT: %s",
+                 osFormat.c_str());
+    }
     return std::pair<std::string, CPLString>();
 }
 
