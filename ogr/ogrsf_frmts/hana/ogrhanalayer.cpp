@@ -857,7 +857,7 @@ void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope *extent, int fo
 
     rsExtent->close();
 
-    if (!set && fastExtentMethod && force)
+    if (!set && fastExtentMethod)
         ReadGeometryExtent(geomField, extent, force, false);
 }
 
