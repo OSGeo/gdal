@@ -42,42 +42,62 @@ namespace OGRHANA
 
 constexpr const char *ARRAY_VALUES_DELIMITER = "^%^";
 
-class HANAVersion {
+class HANAVersion
+{
 
-public:
-    explicit HANAVersion(unsigned int major, unsigned int minor, unsigned int patch) {
+  public:
+    explicit HANAVersion(unsigned int major, unsigned int minor,
+                         unsigned int patch)
+    {
         components[0] = major;
         components[1] = minor;
         components[2] = patch;
     }
-    HANAVersion() {}
 
-    unsigned int major() const { return components[0]; }
-    unsigned int minor() const { return components[1]; }
-    unsigned int patch() const { return components[2]; }
+    HANAVersion()
+    {
+    }
 
-    bool operator<=(const HANAVersion& other) {
+    unsigned int major() const
+    {
+        return components[0];
+    }
+
+    unsigned int minor() const
+    {
+        return components[1];
+    }
+
+    unsigned int patch() const
+    {
+        return components[2];
+    }
+
+    bool operator<=(const HANAVersion &other)
+    {
         for (size_t i = 0; i < 3; ++i)
             if (components[i] > other.components[i])
                 return false;
         return true;
     }
 
-    bool operator>=(const HANAVersion& other) {
+    bool operator>=(const HANAVersion &other)
+    {
         return !(*this <= other) || (*this == other);
     }
 
-    bool operator==(const HANAVersion& other) {
+    bool operator==(const HANAVersion &other)
+    {
         for (size_t i = 0; i < 3; ++i)
             if (components[i] != other.components[i])
                 return false;
         return true;
     }
 
-public:
-    static HANAVersion fromVersionString(const char* str);
+  public:
+    static HANAVersion fromVersionString(const char *str);
 
-private:
+  private:
     unsigned int components[3];
 };
 

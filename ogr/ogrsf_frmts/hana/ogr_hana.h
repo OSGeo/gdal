@@ -231,7 +231,8 @@ class OGRHanaLayer : public OGRLayer
                                  const CPLString &tableName,
                                  const CPLString &query,
                                  const CPLString &featureDefName);
-    void ReadGeometryExtent(int geomField, OGREnvelope *extent, int force, bool fastExtentMethod);
+    void ReadGeometryExtent(int geomField, OGREnvelope *extent, int force,
+                            bool fastExtentMethod);
     bool IsFastExtentAvailable();
 
   public:

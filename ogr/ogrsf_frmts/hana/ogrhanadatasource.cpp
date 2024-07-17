@@ -701,7 +701,8 @@ void OGRHanaDataSource::CreateTable(
 
 void OGRHanaDataSource::UpdateCloudVersion()
 {
-    if (hanaVersion_.major() < 4) {
+    if (hanaVersion_.major() < 4)
+    {
         cloudVersion_ = HANAVersion(0, 0, 0);
         return;
     }
@@ -711,7 +712,8 @@ void OGRHanaDataSource::UpdateCloudVersion()
 
     odbc::ResultSetRef rsVersion = stmt->executeQuery(sql);
     if (rsVersion->next())
-        cloudVersion_ = HANAVersion::fromVersionString(rsVersion->getString(1)->c_str());
+        cloudVersion_ =
+            HANAVersion::fromVersionString(rsVersion->getString(1)->c_str());
 
     rsVersion->close();
 }
@@ -1733,7 +1735,7 @@ int OGRHanaDataSource::TestCapability(const char *capabilities)
         return updateMode_;
     else if (EQUAL(capabilities, ODsCTransactions))
         return TRUE;
-    
+
     else
         return FALSE;
 }

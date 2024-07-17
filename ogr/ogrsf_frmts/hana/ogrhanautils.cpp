@@ -34,7 +34,7 @@
 namespace OGRHANA
 {
 
-HANAVersion HANAVersion::fromVersionString(const char* version)
+HANAVersion HANAVersion::fromVersionString(const char *version)
 {
     CPLString splVersion(version);
     splVersion.replaceAll('-', '.').replaceAll(' ', '.');
@@ -43,9 +43,7 @@ HANAVersion HANAVersion::fromVersionString(const char* version)
     if (parts.size() < 3)
         return HANAVersion(0, 0, 0);
 
-    return HANAVersion(
-        atoi(parts[0]), atoi(parts[1]), atoi(parts[2])
-    );
+    return HANAVersion(atoi(parts[0]), atoi(parts[1]), atoi(parts[2]));
 }
 
 const char *SkipLeadingSpaces(const char *value)
