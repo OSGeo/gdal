@@ -64,6 +64,7 @@ Creation options
 ----------------
 
 |about-creation-options|
+This driver supports the following creation options:
 
 -  .. co:: COLUMN_SEPARATOR
       :choices: <string>
