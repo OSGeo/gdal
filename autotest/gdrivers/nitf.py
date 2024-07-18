@@ -1745,6 +1745,32 @@ def test_nitf_42(not_jpeg_9b):
 
 
 ###############################################################################
+# Check creating a 12-bit JPEG compressed NITF
+
+
+def test_nitf_write_jpeg12(not_jpeg_9b, tmp_path):
+    # Check if JPEG driver supports 12bit JPEG reading/writing
+    jpg_drv = gdal.GetDriverByName("JPEG")
+    md = jpg_drv.GetMetadata()
+    if md[gdal.DMD_CREATIONDATATYPES].find("UInt16") == -1:
+        pytest.skip("12bit jpeg not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 10000, 1, 3, gdal.GDT_UInt16)
+    ds.GetRasterBand(1).Fill(4096)
+    ds.GetRasterBand(2).Fill(0)
+    ds.GetRasterBand(3).Fill(4096)
+    out_filename = str(tmp_path / "out.ntf")
+    with gdal.quiet_errors():
+        gdal.GetDriverByName("NITF").CreateCopy(out_filename, ds, options=["IC=C3"])
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+    assert [
+        ds.GetRasterBand(i + 1).GetStatistics(0, 1)[2] for i in range(3)
+    ] == pytest.approx([4095, 0, 4095], abs=1)
+
+
+###############################################################################
 # Test CreateCopy() in IC=C8 with various JPEG2000 drivers
 
 
