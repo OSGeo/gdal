@@ -1980,7 +1980,7 @@ def test_ogr_mitab_45(tmp_vsimem, frmt, lyrCount):
 # Test read MapInfo layers with encoding specified
 
 
-@pytest.mark.parametrize("fname", ("tab-win1251.TAB", "win1251.mif"))
+@pytest.mark.parametrize("fname", ("tab-win1251.TAB", "win1251.mif", "utf8.mif"))
 def test_ogr_mitab_46(fname):
 
     fldNames = ["Поле_А", "Поле_Б", "Поле_В", "Поле_Г", "Поле_Д"]
@@ -2265,6 +2265,63 @@ def test_ogr_mitab_tab_write_field_name_with_dot(tmp_vsimem):
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f["with_dot"] == 1
+    ds = None
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("ext", ["mif", "tab"])
+def test_ogr_mitab_write_utf8_field_name(tmp_vsimem, ext):
+
+    tmpfile = tmp_vsimem / f"ogr_mitab_tab_write_utf8_field_name.{ext}"
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(
+        tmpfile, options=["ENCODING=UTF-8", f"FORMAT={ext}"]
+    )
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("地市", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["地市"] = 1
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    lyr.CreateFeature(f)
+    with gdal.quiet_errors():
+        ds = None
+
+    ds = ogr.Open(tmpfile)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["地市"] == 1
+    ds = None
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("ext", ["mif", "tab"])
+@pytest.mark.parametrize("dsStrictOpt", [False, True])
+def test_ogr_mitab_non_strict_fields_laundering(tmp_vsimem, ext, dsStrictOpt):
+
+    tmpfile = tmp_vsimem / f"ogr_mitab_non_strict_fields_laundering.{ext}"
+    dsOpt = [f"FORMAT={ext}"]
+    lyrOpt = []
+    if dsStrictOpt:
+        dsOpt.append("STRICT_FIELDS_NAME_LAUNDERING=NO")
+    else:
+        lyrOpt.append("STRICT_FIELDS_NAME_LAUNDERING=NO")
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(tmpfile, options=dsOpt)
+    lyr = ds.CreateLayer("test", options=lyrOpt)
+    lyr.CreateField(ogr.FieldDefn("dot.and space", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["dot.and space"] = 1
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    lyr.CreateFeature(f)
+    with gdal.quiet_errors():
+        ds = None
+
+    ds = ogr.Open(tmpfile)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["dot.and_space"] == 1
     ds = None
 
 

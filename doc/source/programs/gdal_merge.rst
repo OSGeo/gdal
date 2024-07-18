@@ -20,7 +20,7 @@ Synopsis
                   [-ps <pixelsize_x> <pixelsize_y>] [-tap] [-separate] [-q] [-v] [-pct]
                   [-ul_lr <ulx> <uly> <lrx> <lry>] [-init "<value>[ <value>]..."]
                   [-n <nodata_value>] [-a_nodata <output_nodata_value>]
-                  [-ot <datatype>] [-createonly] <intput_file> [<intput_file>]...
+                  [-ot <datatype>] [-createonly] <input_file> [<input_file>]...
 
 Description
 -----------
@@ -70,6 +70,10 @@ target pixel in the resulting raster nor will it overwrite a valid pixel value.
     The extents of the output file.
     If not specified the aggregate extents of all input files will be
     used.
+
+.. option:: -q, -quiet
+
+    Suppress progress messages.
 
 .. option:: -v
 

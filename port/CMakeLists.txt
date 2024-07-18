@@ -52,6 +52,7 @@ set(CPL_SOURCES
     cplstring.cpp
     cpl_vsisimple.cpp
     cpl_vsil.cpp
+    cpl_vsi_mem.cpp
     cpl_http.cpp
     cpl_hash_set.cpp
     cplkeywordparser.cpp
@@ -94,6 +95,7 @@ set(CPL_SOURCES
     cpl_swift.cpp
     cpl_vsil_adls.cpp
     cpl_vsil_az.cpp
+    cpl_vsil_chunked_write_handle.cpp
     cpl_vsil_uploadonclose.cpp
     cpl_vsil_gs.cpp
     cpl_vsil_webhdfs.cpp
@@ -127,19 +129,6 @@ target_compile_definitions(cpl PRIVATE INST_DATA="${INST_DATA_PATH}")
 
 if(CMAKE_INSTALL_FULL_SYSCONFDIR)
     target_compile_definitions(cpl PRIVATE SYSCONFDIR="${CMAKE_INSTALL_FULL_SYSCONFDIR}")
-endif()
-
-# To enable conditional use of std::shared_mutex in cpl_vsi_mem.cpp
-add_library(cpl_vsi_mem OBJECT cpl_vsi_mem.cpp)
-target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:cpl_vsi_mem>)
-target_compile_options(cpl_vsi_mem PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
-set_property(TARGET cpl_vsi_mem PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
-target_include_directories(cpl_vsi_mem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-std=c++17" COMPILER_SUPPORTS_CXX17)
-if(COMPILER_SUPPORTS_CXX17)
-    target_compile_features(cpl_vsi_mem PRIVATE cxx_std_17)
 endif()
 
 if (WIN32)

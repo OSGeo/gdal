@@ -41,7 +41,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("Parquet")
 
-PARQUET_JSON_SCHEMA = "data/parquet/schema.json"
+GEOPARQUET_1_1_0_JSON_SCHEMA = "data/parquet/schema_1_1_0.json"
 
 
 ###############################################################################
@@ -81,7 +81,7 @@ def _validate(filename, check_data=False):
     import validate_geoparquet
 
     ret = validate_geoparquet.check(
-        filename, check_data=check_data, local_schema=PARQUET_JSON_SCHEMA
+        filename, check_data=check_data, local_schema=GEOPARQUET_1_1_0_JSON_SCHEMA
     )
     assert not ret
 
@@ -682,7 +682,7 @@ def test_ogr_parquet_write_from_another_dataset(use_vsi, row_group_size, fid):
         j = json.loads(geo)
         assert j is not None
         assert "version" in j
-        assert j["version"] == "1.0.0"
+        assert j["version"] == "1.1.0"
         assert "primary_column" in j
         assert j["primary_column"] == "geometry"
         assert "columns" in j

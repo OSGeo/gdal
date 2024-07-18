@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "OCI";
 
-int CPL_DLL OGROCIDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGROCIDriverIdentify PLUGIN_SYMBOL_NAME(OGROCIDriverIdentify)
+#define OGROCIDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(OGROCIDriverSetCommonMetadata)
 
-void CPL_DLL OGROCIDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGROCIDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGROCIDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

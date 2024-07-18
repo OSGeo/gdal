@@ -1473,6 +1473,34 @@ def test_gdalwarp_lib_127():
     assert ds.GetRasterBand(1).Checksum() == 4672, "bad checksum"
 
 
+@pytest.mark.parametrize("srcNodata", [float("-inf"), -1])
+def test_gdalwarp_lib_srcnodata(srcNodata):
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/byte.tif",
+        format="MEM",
+        srcNodata=srcNodata,
+        outputType=gdal.GDT_Float32,
+    )
+    assert ds.GetRasterBand(1).GetNoDataValue() == srcNodata, "bad nodata value"
+    assert ds.GetRasterBand(1).Checksum() == 4672, "bad checksum"
+
+
+@pytest.mark.parametrize("dstNodata", [float("-inf"), -1])
+def test_gdalwarp_lib_dstnodata(dstNodata):
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/byte.tif",
+        format="MEM",
+        dstNodata=dstNodata,
+        outputType=gdal.GDT_Float32,
+    )
+    assert ds.GetRasterBand(1).GetNoDataValue() == dstNodata, "bad nodata value"
+    assert ds.GetRasterBand(1).Checksum() == 4672, "bad checksum"
+
+
 ###############################################################################
 # Test automatic densification of cutline (#6375)
 
@@ -4186,3 +4214,47 @@ def test_target_extent_consistent_size():
 
     assert ds.RasterXSize == 4793
     assert ds.RasterYSize == 4143
+
+
+###############################################################################
+# Test warping an image with [-180,180] longitude to [180 - X, 180 + X]
+
+
+@pytest.mark.parametrize("extra_column", [False, True])
+def test_gdalwarp_lib_minus_180_plus_180_to_span_over_180(tmp_vsimem, extra_column):
+
+    dst_filename = str(tmp_vsimem / "out.tif")
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    if extra_column:
+        tmp_ds = gdal.GetDriverByName("MEM").Create(
+            "", src_ds.RasterXSize + 1, src_ds.RasterYSize
+        )
+        tmp_ds.SetGeoTransform(src_ds.GetGeoTransform())
+        tmp_ds.SetSpatialRef(src_ds.GetSpatialRef())
+        tmp_ds.WriteRaster(
+            0,
+            0,
+            src_ds.RasterXSize,
+            src_ds.RasterYSize,
+            src_ds.GetRasterBand(1).ReadRaster(),
+        )
+        tmp_ds.WriteRaster(
+            src_ds.RasterXSize,
+            0,
+            1,
+            src_ds.RasterYSize,
+            src_ds.GetRasterBand(1).ReadRaster(0, 0, 1, src_ds.RasterYSize),
+        )
+        src_ds = tmp_ds
+    out_ds = gdal.Warp(dst_filename, src_ds, outputBounds=[0, -90, 360, 90])
+    # Check that east/west hemispheres have been switched
+    assert out_ds.GetRasterBand(1).ReadRaster(
+        0, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
+    ) == src_ds.GetRasterBand(1).ReadRaster(
+        src_ds.RasterXSize // 2, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
+    )
+    assert out_ds.GetRasterBand(1).ReadRaster(
+        src_ds.RasterXSize // 2, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
+    ) == src_ds.GetRasterBand(1).ReadRaster(
+        0, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
+    )

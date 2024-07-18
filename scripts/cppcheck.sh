@@ -168,6 +168,16 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "duplInheritedMember" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
+# Ignore stlIfStrFind warning "Inefficient usage of string::find() in condition; string::starts_with() could be faster" (requires C++20)
+grep -v -e "stlIfStrFind" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
+# False positive in swq_parser.cpp
+grep -v -e "The expression '0 <= yystate' is always true" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+grep -v -e "The comparison '0 <= yystate' is always true" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
 if grep "null pointer" ${LOG_FILE} ; then
     echo "Null pointer check failed"
     ret_code=1

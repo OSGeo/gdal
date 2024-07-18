@@ -115,13 +115,17 @@ def check_basic(
 
 def test_gti_no_metadata(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_filename = str(tmp_vsimem / "index.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
     del index_ds
 
-    vrt_ds = gdal.Open(index_filename)
+    with pytest.raises(Exception):
+        gdal.Open(index_filename)
+
+    vrt_ds = gdal.OpenEx(index_filename, allowed_drivers=["GTI"])
+    assert vrt_ds.GetDriver().GetDescription() == "GTI"
     check_basic(vrt_ds, src_ds)
     assert (
         vrt_ds.GetMetadataItem("SCANNED_ONE_FEATURE_AT_OPENING", "__DEBUG__") == "YES"

@@ -127,7 +127,7 @@ The following creation options are supported:
 -  .. co:: BLOCKING
 
       Decline the use of blocking (NO) or request an
-      automatic blocking size (OPTIMUM).
+      automatic blocking size (OPTIMALPADDING).
 
 -  .. co:: SRID
 

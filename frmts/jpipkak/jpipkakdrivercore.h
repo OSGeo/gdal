@@ -33,6 +33,9 @@
 
 constexpr const char *DRIVER_NAME = "JPIPKAK";
 
-void CPL_DLL JPIPKAKDriverSetCommonMetadata(GDALDriver *poDriver);
+#define JPIPKAKDriverSetCommonMetadata                                         \
+    PLUGIN_SYMBOL_NAME(JPIPKAKDriverSetCommonMetadata)
+
+void JPIPKAKDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

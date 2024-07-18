@@ -121,9 +121,15 @@ typedef struct {
     int		nParms;
 
     /** Projection parameter value.  The identify of this parameter
-        is established from the corresponding entry in ProjParmId.  The
-        value will be measured in meters, or decimal degrees if it is a
-        linear or angular measure. */
+        is established from the corresponding entry in ProjParmId.
+        In GeoTIFF keys, the values of the projection parameters are expressed
+        in the units of ProjLinearUnitsGeoKey (for linear measures) or
+        GeogAngularUnitsGeoKey (for angular measures).
+        However, the value returned in ProjParam[] will be normalized to meters
+        or decimal degrees.
+        Note: until libgeotiff 1.7.3, the conversion to degrees for angular
+        measures was *not* done when ProjCoordTransGeoKey is present.
+     */
     double	ProjParm[MAX_GTIF_PROJPARMS];
 
     /** Projection parameter identifier.  For example ProjFalseEastingGeoKey.

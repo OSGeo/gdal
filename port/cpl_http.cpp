@@ -59,7 +59,6 @@
 #ifdef HAVE_OPENSSL_CRYPTO
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include <openssl/engine.h>
 #include <openssl/x509v3.h>
 
 #if defined(_WIN32)
@@ -1151,12 +1150,15 @@ int CPLHTTPPopFetchCallback(void)
  *     and use the first one found as the CAINFO value (GDAL >= 2.1.3). The
  *     GDAL_CURL_CA_BUNDLE environment variable may also be used to set the
  *     CAINFO value in GDAL >= 3.2.</li>
- * <li>HTTP_VERSION=1.0/1.1/2/2TLS (GDAL >= 2.3). Specify HTTP version to use.
+ * <li>HTTP_VERSION=1.0/1.1/2/2TLS (GDAL >= 2.3)/2PRIOR_KNOWLEDGE (GDAL >= 3.10).
+ *     Specify HTTP version to use.
  *     Will default to 1.1 generally (except on some controlled environments,
  *     like Google Compute Engine VMs, where 2TLS will be the default).
  *     Support for HTTP/2 requires curl 7.33 or later, built against nghttp2.
  *     "2TLS" means that HTTP/2 will be attempted for HTTPS connections only.
  *     Whereas "2" means that HTTP/2 will be attempted for HTTP or HTTPS.
+ *     "2PRIOR_KNOWLEDGE" means that the server will be assumed to support
+ *     HTTP/2.
  *     Corresponding configuration option: GDAL_HTTP_VERSION.
  * </li>
  * <li>SSL_VERIFYSTATUS=YES/NO (GDAL >= 2.3, and curl >= 7.41): determines
@@ -2135,6 +2137,17 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
             // Try HTTP/2 both for HTTP and HTTPS. With fallback to HTTP/1.1
             unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
                                        CURL_HTTP_VERSION_2_0);
+        }
+    }
+    else if (pszHttpVersion && strcmp(pszHttpVersion, "2PRIOR_KNOWLEDGE") == 0)
+    {
+        if (bSupportHTTP2)
+        {
+            // Assume HTTP/2 is supported by the server. The cURL docs indicate
+            // that it makes no difference for HTTPS, but it does seem to work
+            // in practice.
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                                       CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE);
         }
     }
     else if (pszHttpVersion == nullptr || strcmp(pszHttpVersion, "2TLS") == 0)

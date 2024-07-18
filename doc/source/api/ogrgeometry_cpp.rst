@@ -32,6 +32,13 @@ OGRPoint class
    :project: api
    :members:
 
+OGRSimpleCurve class
+--------------------
+
+.. doxygenclass:: OGRSimpleCurve
+   :project: api
+   :members:
+
 OGRLineString class
 -------------------
 

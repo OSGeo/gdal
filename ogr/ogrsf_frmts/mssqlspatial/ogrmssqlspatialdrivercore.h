@@ -33,8 +33,13 @@
 
 constexpr const char *DRIVER_NAME = "MSSQLSpatial";
 
-int CPL_DLL OGRMSSQLSPATIALDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRMSSQLSPATIALDriverIdentify                                          \
+    PLUGIN_SYMBOL_NAME(OGRMSSQLSPATIALDriverIdentify)
+#define OGRMSSQLSPATIALDriverSetCommonMetadata                                 \
+    PLUGIN_SYMBOL_NAME(OGRMSSQLSPATIALDriverSetCommonMetadata)
 
-void CPL_DLL OGRMSSQLSPATIALDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRMSSQLSPATIALDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRMSSQLSPATIALDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

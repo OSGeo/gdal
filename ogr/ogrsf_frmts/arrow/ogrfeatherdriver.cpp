@@ -68,6 +68,9 @@ static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
             CPL_LSBUINT32PTR(poOpenInfo->pabyHeader + CONTINUATION_SIZE);
         if (strcmp(poOpenInfo->pszFilename, "/vsistdin/") == 0)
         {
+            if (poOpenInfo->IsSingleAllowedDriver("ARROW"))
+                return true;
+
             // Padding after metadata and before body is not necessarily present
             // but the body must be at least 4 bytes
             constexpr int PADDING_MAX_SIZE = 4;

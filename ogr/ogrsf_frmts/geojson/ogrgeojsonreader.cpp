@@ -1954,7 +1954,7 @@ bool OGRGeoJSONUpdateLayerGeomType(bool &bFirstGeom,
     {
         // ok
     }
-    else if (eGeomType != eLayerGeomType)
+    else if (eGeomType != eLayerGeomType && eLayerGeomType != wkbUnknown)
     {
         CPLDebug("GeoJSON", "Detected layer of mixed-geometry type features.");
         eLayerGeomType = wkbUnknown;

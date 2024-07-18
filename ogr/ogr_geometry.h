@@ -523,8 +523,9 @@ class CPL_DLL OGRGeometry
 
     static GEOSContextHandle_t createGEOSContext();
     static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);
-    virtual GEOSGeom
-    exportToGEOS(GEOSContextHandle_t hGEOSCtxt) const CPL_WARN_UNUSED_RESULT;
+    GEOSGeom
+    exportToGEOS(GEOSContextHandle_t hGEOSCtxt,
+                 bool bRemoveEmptyParts = false) const CPL_WARN_UNUSED_RESULT;
     virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
     virtual OGRGeometry *getCurveGeometry(
         const char *const *papszOptions = nullptr) const CPL_WARN_UNUSED_RESULT;
@@ -607,6 +608,9 @@ class CPL_DLL OGRGeometry
     virtual double Distance3D(const OGRGeometry *poOtherGeom) const;
 
     OGRGeometry *SetPrecision(double dfGridSize, int nFlags) const;
+
+    virtual bool hasEmptyParts() const;
+    virtual void removeEmptyParts();
 
     //! @cond Doxygen_Suppress
     // backward compatibility to non-standard method names.
@@ -1404,6 +1408,7 @@ class CPL_DLL OGRCurve : public OGRGeometry
     virtual double get_GeodesicArea(
         const OGRSpatialReference *poSRSOverride = nullptr) const = 0;
     virtual int isClockwise() const;
+    virtual void reversePoints() = 0;
 
     /** Down-cast to OGRSimpleCurve*.
      * Implies prior checking that wkbFlatten(getGeometryType()) ==
@@ -1712,7 +1717,7 @@ class CPL_DLL OGRSimpleCurve : public OGRCurve
 
     void addSubLineString(const OGRLineString *, int nStartVertex = 0,
                           int nEndVertex = -1);
-    void reversePoints(void);
+    void reversePoints() override;
     virtual OGRPointIterator *getPointIterator() const override;
 
     // non-standard from OGRGeometry
@@ -1897,7 +1902,12 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     // Non standard.
     virtual const char *getGeometryName() const override;
     virtual OGRLinearRing *clone() const override;
-    virtual void reverseWindingOrder();
+
+    //! @cond Doxygen_Suppress
+    void reverseWindingOrder()
+        CPL_WARN_DEPRECATED("Use reversePoints() instead");
+    //! @endcond
+
     virtual void closeRings() override;
     OGRBoolean isPointInRing(const OGRPoint *pt,
                              int bTestEnvelope = TRUE) const;
@@ -2146,6 +2156,11 @@ class CPL_DLL OGRCurveCollection
 
     OGRErr removeCurve(int iIndex, bool bDelete = true);
 
+    bool hasEmptyParts() const;
+    void removeEmptyParts();
+
+    void reversePoints();
+
     OGRErr transform(OGRGeometry *poGeom, OGRCoordinateTransformation *poCT);
     void flattenTo2D(OGRGeometry *poGeom);
     void segmentize(double dfMaxLength);
@@ -2310,6 +2325,7 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
                     double dfToleranceEps = DEFAULT_TOLERANCE_EPSILON);
     OGRCurve *stealCurve(int);
     virtual OGRPointIterator *getPointIterator() const override;
+    void reversePoints() override;
 
     // Non-standard from OGRGeometry.
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -2334,6 +2350,9 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     }
 
     virtual void swapXY() override;
+
+    bool hasEmptyParts() const override;
+    void removeEmptyParts() override;
 
     OGR_ALLOW_UPCAST_TO(Curve)
     OGR_ALLOW_CAST_TO_THIS(CompoundCurve)
@@ -2583,6 +2602,9 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     }
 
     virtual void swapXY() override;
+
+    bool hasEmptyParts() const override;
+    void removeEmptyParts() override;
 
     OGR_ALLOW_UPCAST_TO(Surface)
     OGR_ALLOW_CAST_TO_THIS(CurvePolygon)
@@ -3008,6 +3030,9 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRErr addGeometryDirectly(OGRGeometry *);
     OGRErr addGeometry(std::unique_ptr<OGRGeometry> geom);
     virtual OGRErr removeGeometry(int iIndex, int bDelete = TRUE);
+
+    bool hasEmptyParts() const override;
+    void removeEmptyParts() override;
 
     virtual void
     assignSpatialReference(const OGRSpatialReference *poSR) override;
@@ -3505,6 +3530,9 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual void setMeasured(OGRBoolean bIsMeasured) override;
     virtual void swapXY() override;
     OGRErr removeGeometry(int iIndex, int bDelete = TRUE);
+
+    bool hasEmptyParts() const override;
+    void removeEmptyParts() override;
 
     virtual void accept(IOGRGeometryVisitor *visitor) override
     {

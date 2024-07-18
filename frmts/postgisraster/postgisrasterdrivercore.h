@@ -36,10 +36,17 @@
 
 constexpr const char *DRIVER_NAME = "PostGISRaster";
 
-char CPL_DLL **PostGISRasterParseConnectionString(const char *);
+#define PostGISRasterParseConnectionString                                     \
+    PLUGIN_SYMBOL_NAME(PostGISRasterParseConnectionString)
+#define PostGISRasterDriverIdentify                                            \
+    PLUGIN_SYMBOL_NAME(PostGISRasterDriverIdentify)
+#define PostGISRasterDriverSetCommonMetadata                                   \
+    PLUGIN_SYMBOL_NAME(PostGISRasterDriverSetCommonMetadata)
 
-int CPL_DLL PostGISRasterDriverIdentify(GDALOpenInfo *poOpenInfo);
+char **PostGISRasterParseConnectionString(const char *);
 
-void CPL_DLL PostGISRasterDriverSetCommonMetadata(GDALDriver *poDriver);
+int PostGISRasterDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void PostGISRasterDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

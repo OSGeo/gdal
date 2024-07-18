@@ -39,7 +39,17 @@
 // Use our locale-unaware strtod()
 #define ARGPARSE_CUSTOM_STRTOD CPLStrtodM
 
+#ifdef _MSC_VER
+#pragma warning(push)
+// unreachable code
+#pragma warning(disable : 4702)
+#endif
+
 #include "argparse/argparse.hpp"
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 using namespace argparse;
 
@@ -60,6 +70,12 @@ class GDALArgumentParser : public ArgumentParser
     //! Constructor
     explicit GDALArgumentParser(const std::string &program_name,
                                 bool bForBinary);
+
+    //! Return usage message
+    std::string usage() const;
+
+    //! Adds an extra usage hint.
+    void add_extra_usage_hint(const std::string &osExtraUsageHint);
 
     //! Format an exception as an error message and display the program usage
     void display_error_and_usage(const std::exception &err);
@@ -141,6 +157,7 @@ class GDALArgumentParser : public ArgumentParser
     std::map<std::string, ArgumentParser::argument_it>::iterator
     find_argument(const std::string &name);
     std::vector<std::unique_ptr<GDALArgumentParser>> aoSubparsers;
+    std::string m_osExtraUsageHint{};
 };
 
 #endif /* GDALARGUMENTPARSER_H */

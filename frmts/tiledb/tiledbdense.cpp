@@ -1109,7 +1109,7 @@ CPLErr TileDBRasterDataset::TrySaveXML()
 /*                           TryLoadXML()                               */
 /************************************************************************/
 
-CPLErr TileDBRasterDataset::TryLoadXML(char **papszSiblingFiles)
+CPLErr TileDBRasterDataset::TryLoadXML(CSLConstList papszSiblingFiles)
 
 {
     return TryLoadCachedXML(papszSiblingFiles, true);
@@ -1119,7 +1119,7 @@ CPLErr TileDBRasterDataset::TryLoadXML(char **papszSiblingFiles)
 /*                           TryLoadCachedXML()                               */
 /************************************************************************/
 
-CPLErr TileDBRasterDataset::TryLoadCachedXML(char ** /*papszSiblingFiles*/,
+CPLErr TileDBRasterDataset::TryLoadCachedXML(CSLConstList /*papszSiblingFiles*/,
                                              bool bReload)
 
 {
@@ -2946,7 +2946,7 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
         {
             try
             {
-                poODS->Close();
+                CPL_IGNORE_RET_VAL(poODS->Close());
                 tiledb::Array::delete_array(*m_ctx, poODS->GetDescription());
                 vfs.remove_dir(poODS->GetDescription());
             }

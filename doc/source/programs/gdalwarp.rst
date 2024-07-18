@@ -33,8 +33,8 @@ Synopsis
             [-order <1|2|3>] [-refine_gcps <tolerance> [<minimum_gcps>]]
             [-to <NAME>=<VALUE>]...
             [-et <err_threshold>] [-wm <memory_in_mb>]
-            [-srcnodata <value>[ <value>...]]
-            [-dstnodata <value>[ <value>...]] [-tap]
+            [-srcnodata "<value>[ <value>]..."]
+            [-dstnodata "<value>[ <value>]..."] [-tap]
             [-wt Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}]
             [-cutline <datasource>|<WKT>] [-cutline_srs <srs_def>]
             [-cwhere <expression>]
@@ -130,7 +130,7 @@ with control information.
     source SRS is a dynamic CRS. Only taken into account if :option:`-s_srs`
     is used.
 
-    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` were
     mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -t_srs <srs_def>
@@ -151,7 +151,7 @@ with control information.
     target SRS is a dynamic CRS. Only taken into account if :option:`-t_srs`
     is used.
 
-    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` were
     mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -ct <string>
@@ -159,8 +159,13 @@ with control information.
     A PROJ string (single step operation or multiple step string
     starting with +proj=pipeline), a WKT2 string describing a CoordinateOperation,
     or a urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default
-    transformation from the source to the target CRS. It must take into account the
-    axis order of the source and target CRS.
+    transformation from the source to the target CRS.
+
+    It must take into account the axis order of the source and target CRS, that
+    is typically include a ``step proj=axisswap order=2,1`` at the beginning of
+    the pipeline if the source CRS has northing/easting axis order, and/or at
+    the end of the pipeline if the target CRS has northing/easting axis order.
+
     When creating a new output file, using :option:`-t_srs` is still necessary
     to have the target CRS written in the metadata of the output file,
     but the parameters of the CoordinateOperation will override those of the

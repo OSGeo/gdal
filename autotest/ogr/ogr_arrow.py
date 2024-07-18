@@ -738,38 +738,44 @@ def test_ogr_arrow_write_arrow_fid_in_input_but_not_in_output(tmp_vsimem):
 
 
 @gdaltest.enable_exceptions()
-def test_ogr_arrow_write_arrow_fid_in_output_but_not_in_input(tmp_vsimem):
+def test_ogr_arrow_ipc_read_stdin(tmp_path):
 
-    src_ds = ogr.Open("data/poly.shp")
-    src_lyr = src_ds.GetLayer(0)
-
-    outfilename = str(tmp_vsimem / "poly.feather")
-    with ogr.GetDriverByName("Arrow").CreateDataSource(outfilename) as dst_ds:
-        dst_lyr = dst_ds.CreateLayer(
+    outfilename = str(tmp_path / "poly.bin")
+    with ogr.GetDriverByName("Arrow").CreateDataSource(outfilename) as ds:
+        lyr = ds.CreateLayer(
             "test",
-            srs=src_lyr.GetSpatialRef(),
-            geom_type=ogr.wkbPoint,
-            options=["GEOMETRY_ENCODING=WKB", "FID=my_fid"],
+            geom_type=ogr.wkbNone,
+            options=["FORMAT=STREAM"],
         )
+        fld_defn = ogr.FieldDefn("foo")
+        fld_defn.SetComment("x" * (1024 * 1024))
+        lyr.CreateField(fld_defn)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "bar"
+        lyr.CreateFeature(f)
 
-        stream = src_lyr.GetArrowStream(["INCLUDE_FID=NO"])
-        schema = stream.GetSchema()
+    assert gdal.VSIStatL(outfilename).size > 1024 * 1024
 
-        success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
-        assert success
+    # By default, as the header section is larger than 1 MB, we can't
+    # identify /vsistdin/
+    with gdaltest.config_options(
+        {
+            "CPL_VSISTDIN_FILE": outfilename,
+            "CPL_VSISTDIN_RESET_POSITION": "YES",
+            "CPL_VSISTDIN_FILE_CLOSE": "YES",
+        }
+    ):
+        with pytest.raises(Exception):
+            gdal.Open("/vsistdin/")
 
-        for i in range(schema.GetChildrenCount()):
-            if schema.GetChild(i).GetName() not in ("wkb_geometry", "OGC_FID"):
-                dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
-
-        while True:
-            array = stream.GetNextRecordBatch()
-            if array is None:
-                break
-            assert dst_lyr.WriteArrowBatch(schema, array) == ogr.OGRERR_NONE
-
-    ds = ogr.Open(outfilename)
-    lyr = ds.GetLayer(0)
-    src_lyr.ResetReading()
-    for i in range(src_lyr.GetFeatureCount()):
-        assert str(src_lyr.GetNextFeature()) == str(lyr.GetNextFeature())
+    with gdaltest.config_options(
+        {
+            "CPL_VSISTDIN_FILE": outfilename,
+            "CPL_VSISTDIN_RESET_POSITION": "YES",
+            "CPL_VSISTDIN_FILE_CLOSE": "YES",
+        }
+    ):
+        ds = gdal.OpenEx("/vsistdin/", allowed_drivers=["ARROW"])
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["foo"] == "bar"

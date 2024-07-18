@@ -87,6 +87,7 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
     GBool m_bBoundsSet;
 
     char *m_pszCharset;
+    bool m_bStrictLaundering = true;
     std::set<CPLString> m_oSetFields{};
     TABFeature *CreateTABFeature(OGRFeature *poFeature);
 
@@ -200,6 +201,7 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
 
     void SetEncoding(const char *);
     const char *GetEncoding() const;
+    virtual void SetStrictLaundering(bool);
     int TestUtf8Capability() const;
     CPLString NormalizeFieldName(const char *pszName) const;
     ///////////////
@@ -403,6 +405,7 @@ class TABFile final : public IMapInfoFile
 
     int WriteFeature(TABFeature *poFeature);
     virtual int SetCharset(const char *pszCharset) override;
+    virtual void SetStrictLaundering(bool bStrictLaundering) override;
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = nullptr) override;
 #endif
@@ -906,7 +909,7 @@ class MIFFile final : public IMapInfoFile
     /*  { return m_poMAPFile->GetHeaderBlock()->SetProjInfo( poPI ); }*/
     virtual int SetMIFCoordSys(const char *pszMIFCoordSys) override;
     virtual int SetCharset(const char *pszCharset) override;
-
+    virtual void SetStrictLaundering(bool bStrictLaundering) override;
 #ifdef DEBUG
     virtual void Dump(FILE * /*fpOut*/ = nullptr) override
     {

@@ -1965,20 +1965,39 @@ static int GDALTileIndexDatasetIdentify(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->nHeaderBytes >= 100 &&
         STARTS_WITH(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-                    "SQLite format 3") &&
-        ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg") &&
-        !STARTS_WITH(poOpenInfo->pszFilename, "GPKG:"))
+                    "SQLite format 3"))
     {
-        // Most likely handled by GTI driver, but we can't be sure
-        return GDAL_IDENTIFY_UNKNOWN;
+        if (ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg"))
+        {
+            // Most likely handled by GTI driver, but we can't be sure
+            return GDAL_IDENTIFY_UNKNOWN;
+        }
+        else if (poOpenInfo->IsSingleAllowedDriver("GTI") &&
+                 EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gpkg"))
+        {
+            return true;
+        }
     }
 
-    return poOpenInfo->nHeaderBytes > 0 &&
-           (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
-           (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+    if (poOpenInfo->nHeaderBytes > 0 &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0)
+    {
+        if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
                    "<GDALTileIndexDataset") ||
             ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.fgb") ||
-            ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.parquet"));
+            ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.parquet"))
+        {
+            return true;
+        }
+        else if (poOpenInfo->IsSingleAllowedDriver("GTI") &&
+                 (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "fgb") ||
+                  EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "parquet")))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /************************************************************************/

@@ -4298,3 +4298,53 @@ def test_gpkg_gti_gpkg_ext(tmp_vsimem):
     ds = gdal.Open(filename)
     assert ds.GetDriver().ShortName == "GPKG"
     assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+# Test rename a raster table with SQL
+
+
+@pytest.mark.parametrize("data_type", [gdal.GDT_Byte, gdal.GDT_UInt16])
+def test_gpkg_rename_raster_table(data_type, tmp_vsimem):
+
+    test_layer_path = str(tmp_vsimem / "test_gpkg_rename_raster_table.gpkg")
+
+    if data_type == gdal.GDT_UInt16:
+        src_ds = gdal.Open("data/int16.tif")
+    else:
+        src_ds = gdal.Open("data/small_world.tif")
+
+    ds = gdaltest.gpkg_dr.CreateCopy(
+        test_layer_path,
+        src_ds,
+        options=[
+            "TILE_FORMAT=PNG",
+            "RASTER_TABLE=weird'layer\"name",
+        ],
+    )
+    ds = None
+    src_ds = None
+
+    ds = gdal.OpenEx(test_layer_path, gdal.OF_RASTER | gdal.OF_UPDATE)
+    # Get layer name
+    layer_name = ds.GetMetadataItem("IDENTIFIER")
+    assert layer_name == "weird'layer\"name"
+
+    checksum = ds.GetRasterBand(1).Checksum()
+
+    ds.ExecuteSQL('ALTER TABLE "weird\'layer""name" RENAME TO bar')
+    ds.ExecuteSQL("VACUUM")
+    ds = None
+
+    ds = gdal.Open(test_layer_path)
+    layer_name = ds.GetMetadataItem("IDENTIFIER")
+    assert layer_name == "bar"
+    assert ds.GetRasterBand(1).Checksum() == checksum
+    ds = None
+
+    # Check that there is no more any reference to the layer
+    f = gdal.VSIFOpenL(test_layer_path, "rb")
+    content = gdal.VSIFReadL(1, 1000000, f).decode("latin1")
+    gdal.VSIFCloseL(f)
+
+    assert "weird" not in content

@@ -34,8 +34,12 @@
 
 constexpr const char *DRIVER_NAME = "SOSI";
 
-int CPL_DLL OGRSOSIDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRSOSIDriverIdentify PLUGIN_SYMBOL_NAME(OGRSOSIDriverIdentify)
+#define OGRSOSIDriverSetCommonMetadata                                         \
+    PLUGIN_SYMBOL_NAME(OGRSOSIDriverSetCommonMetadata)
 
-void CPL_DLL OGRSOSIDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRSOSIDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRSOSIDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

@@ -113,16 +113,16 @@ proper mask bands.
     consecutive points of the output geometry.
     The unit of the distance is in pixels if :option:`-t_cs` equals ``pixel``,
     or otherwise in georeferenced units of the source raster.
-    This option is applied before the reprojection implied by :option:`-t_srs`
+    This option is applied before the reprojection implied by :option:`-t_srs`.
 
 .. option:: -simplify <value>
 
     The specified value of this option is the tolerance used to merge
     consecutive points of the output geometry using the
-    :cpp:func:`OGRGeometry::Simplify` method
+    :cpp:func:`OGRGeometry::Simplify` method.
     The unit of the distance is in pixels if :option:`-t_cs` equals ``pixel``,
     or otherwise in georeferenced units of the target vector dataset.
-    This option is applied after the reprojection implied by :option:`-t_srs`
+    This option is applied after the reprojection implied by :option:`-t_srs`.
 
 .. option:: -min_ring_area <value>
 

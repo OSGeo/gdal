@@ -681,7 +681,13 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
 
     CPLString osFilename(CPLFormFilename(
         m_osDirName, CPLSPrintf("a%08x.gdbtable", iGDBItems + 1), nullptr));
-    if (!oTable.Open(osFilename, false))
+
+    // Normally we don't need to update in update mode the GDB_Items table,
+    // but this may help repairing it, if we have corrupted it with past
+    // GDAL versions.
+    const bool bOpenInUpdateMode =
+        (poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) != 0;
+    if (!oTable.Open(osFilename, bOpenInUpdateMode))
         return false;
 
     const int iUUID = oTable.GetFieldIdx("UUID");
@@ -1504,7 +1510,7 @@ OGRFeature *OGROpenFileGDBSimpleSQLLayer::GetNextFeature()
         if (m_nLimit >= 0 && m_nIterated == m_nLimit)
             return nullptr;
 
-        int nRow = poIter->GetNextRowSortedByValue();
+        const int64_t nRow = poIter->GetNextRowSortedByValue();
         if (nRow < 0)
             return nullptr;
         OGRFeature *poFeature = GetFeature(nRow + 1);
@@ -2151,7 +2157,8 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
             [](OGRSpatialReference &oSRS, int nLatestCode, int nCode)
         {
             bool bSuccess = false;
-            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oQuietError(CPLQuietErrorHandler);
+
             // Try first with nLatestWKID as there is a higher chance it is a
             // EPSG code and not an ESRI one.
             if (nLatestCode > 0)
@@ -2193,8 +2200,7 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
                     CPLDebug("OpenFileGDB", "Cannot import SRID %d", nCode);
                 }
             }
-            CPLPopErrorHandler();
-            CPLErrorReset();
+
             return bSuccess;
         };
 

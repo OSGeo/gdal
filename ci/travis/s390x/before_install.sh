@@ -3,8 +3,9 @@
 set -e
 
 sudo pip uninstall -y setuptools
-sudo rm -rf /usr/local/lib/python*
-sudo apt-get remove -f python
+sudo rm -rf /usr/local/bin/*
+sudo rm -rf /usr/local/lib/*
+sudo apt-get remove -f python python3-pip
 
 sudo apt-get update
 sudo apt-get install -y software-properties-common

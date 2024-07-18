@@ -399,7 +399,8 @@ class OGRWFSDataSource final : public OGRDataSource
     OGRWFSDataSource();
     virtual ~OGRWFSDataSource();
 
-    int Open(const char *pszFilename, int bUpdate, char **papszOpenOptions);
+    int Open(const char *pszFilename, int bUpdate,
+             CSLConstList papszOpenOptions);
 
     virtual const char *GetName() override
     {

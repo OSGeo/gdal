@@ -49,6 +49,7 @@ class GLTOrthoRectifiedArray final : public GDALPamMDArray
     std::shared_ptr<GDALMDArray> m_poGLTX{};
     std::shared_ptr<GDALMDArray> m_poGLTY{};
     int m_nGLTIndexOffset = 0;
+    std::vector<GByte> m_abyBandValidity{};
 
   protected:
     GLTOrthoRectifiedArray(
@@ -76,9 +77,11 @@ class GLTOrthoRectifiedArray final : public GDALPamMDArray
   public:
     static std::shared_ptr<GDALMDArray>
     Create(const std::shared_ptr<GDALMDArray> &poParent,
+           const std::shared_ptr<GDALGroup> &poRootGroup,
            const std::shared_ptr<GDALMDArray> &poGLTX,
            const std::shared_ptr<GDALMDArray> &poGLTY, int nGLTIndexOffset,
-           const std::vector<double> &adfGeoTransform)
+           const std::vector<double> &adfGeoTransform,
+           CSLConstList papszOptions)
     {
         std::vector<std::shared_ptr<GDALDimension>> apoNewDims;
 
@@ -124,6 +127,32 @@ class GLTOrthoRectifiedArray final : public GDALPamMDArray
         newAr->m_poSRS.reset(oSRS.Clone());
         newAr->m_poSRS->SetDataAxisToSRSAxisMapping(
             {/*latIdx = */ 1, /* lonIdx = */ 2});
+        if (CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                                             "USE_GOOD_WAVELENGTHS", "YES")) &&
+            newAr->m_poParent->GetDimensionCount() == 3)
+        {
+            const auto poGoodWaveLengths = poRootGroup->OpenMDArrayFromFullname(
+                "/sensor_band_parameters/good_wavelengths");
+            if (poGoodWaveLengths &&
+                poGoodWaveLengths->GetDimensionCount() == 1 &&
+                poGoodWaveLengths->GetDimensions()[0]->GetSize() ==
+                    newAr->m_poParent->GetDimensions()[2]->GetSize() &&
+                poGoodWaveLengths->GetDimensions()[0]->GetSize() <
+                    1000 * 1000 &&
+                poGoodWaveLengths->GetDataType().GetClass() == GEDTC_NUMERIC)
+            {
+                const GUInt64 arrayStartIdx[] = {0};
+                const size_t count[] = {static_cast<size_t>(
+                    poGoodWaveLengths->GetDimensions()[0]->GetSize())};
+                const GInt64 arrayStep[] = {1};
+                const GPtrDiff_t bufferStride[] = {1};
+                newAr->m_abyBandValidity.resize(count[0], 1);
+                CPL_IGNORE_RET_VAL(poGoodWaveLengths->Read(
+                    arrayStartIdx, count, arrayStep, bufferStride,
+                    GDALExtendedDataType::Create(GDT_Byte),
+                    newAr->m_abyBandValidity.data()));
+            }
+        }
         return newAr;
     }
 
@@ -206,6 +235,59 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
     if (bufferDataType.GetClass() != GEDTC_NUMERIC)
         return false;
 
+    const auto eBufferDT = bufferDataType.GetNumericDataType();
+    auto pRawNoDataValue = GetRawNoDataValue();
+    std::vector<GByte> abyNoData(16);
+    if (pRawNoDataValue)
+        GDALCopyWords(pRawNoDataValue, GetDataType().GetNumericDataType(), 0,
+                      abyNoData.data(), eBufferDT, 0, 1);
+
+    const auto nBufferDTSize = bufferDataType.GetSize();
+    const int nCopyWordsDstStride =
+        m_apoDims.size() == 3
+            ? static_cast<int>(bufferStride[2] * nBufferDTSize)
+            : 0;
+    const int nCopyWordsCount =
+        m_apoDims.size() == 3 ? static_cast<int>(count[2]) : 1;
+
+    const auto FillBufferWithNodata =
+        [count, bufferStride, pDstBuffer, nBufferDTSize, &eBufferDT,
+         nCopyWordsDstStride, nCopyWordsCount, &abyNoData]()
+    {
+        for (size_t iY = 0; iY < count[0]; ++iY)
+        {
+            for (size_t iX = 0; iX < count[1]; ++iX)
+            {
+                GByte *pabyDstBuffer =
+                    static_cast<GByte *>(pDstBuffer) +
+                    (iY * bufferStride[0] + iX * bufferStride[1]) *
+                        static_cast<int>(nBufferDTSize);
+                GDALCopyWords(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
+                              eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
+            }
+        }
+    };
+
+    bool bSomeBandInvalids = false;
+    if (!m_abyBandValidity.empty())
+    {
+        size_t nCountInvalid = 0;
+        for (size_t i = 0; i < count[2]; ++i)
+        {
+            const size_t iBand =
+                static_cast<size_t>(arrayStartIdx[2] + i * arrayStep[2]);
+            CPLAssert(iBand < m_abyBandValidity.size());
+            if (!m_abyBandValidity[iBand])
+                nCountInvalid++;
+        }
+        if (nCountInvalid == count[2])
+        {
+            FillBufferWithNodata();
+            return true;
+        }
+        bSomeBandInvalids = true;
+    }
+
     const size_t nXYValsCount = count[0] * count[1];
     const auto eInt32DT = GDALExtendedDataType::Create(GDT_Int32);
     std::vector<int32_t> anGLTX;
@@ -263,34 +345,9 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
         }
     }
 
-    const auto eBufferDT = bufferDataType.GetNumericDataType();
-    auto pRawNoDataValue = GetRawNoDataValue();
-    std::vector<GByte> abyNoData(16);
-    if (pRawNoDataValue)
-        GDALCopyWords(pRawNoDataValue, GetDataType().GetNumericDataType(), 0,
-                      abyNoData.data(), eBufferDT, 0, 1);
-
-    const auto nBufferDTSize = bufferDataType.GetSize();
-    const int nCopyWordsDstStride =
-        m_apoDims.size() == 3
-            ? static_cast<int>(bufferStride[2] * nBufferDTSize)
-            : 0;
-    const int nCopyWordsCount =
-        m_apoDims.size() == 3 ? static_cast<int>(count[2]) : 1;
     if (nMinX > nMaxX || nMinY > nMaxY)
     {
-        for (size_t iY = 0; iY < count[0]; ++iY)
-        {
-            for (size_t iX = 0; iX < count[1]; ++iX)
-            {
-                GByte *pabyDstBuffer =
-                    static_cast<GByte *>(pDstBuffer) +
-                    (iY * bufferStride[0] + iX * bufferStride[1]) *
-                        static_cast<int>(nBufferDTSize);
-                GDALCopyWords(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
-                              eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
-            }
-        }
+        FillBufferWithNodata();
         return true;
     }
 
@@ -363,6 +420,21 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
                 GDALCopyWords(pabySrcBuffer, eBufferDT,
                               static_cast<int>(nBufferDTSize), pabyDstBuffer,
                               eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
+                if (bSomeBandInvalids)
+                {
+                    for (size_t i = 0; i < count[2]; ++i)
+                    {
+                        const size_t iBand = static_cast<size_t>(
+                            arrayStartIdx[2] + i * arrayStep[2]);
+                        if (!m_abyBandValidity[iBand])
+                        {
+                            GDALCopyWords(abyNoData.data(), eBufferDT, 0,
+                                          pabyDstBuffer +
+                                              i * nCopyWordsDstStride,
+                                          eBufferDT, 0, 1);
+                        }
+                    }
+                }
             }
             else
             {
@@ -383,12 +455,14 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
 
 /* static */ std::shared_ptr<GDALMDArray> GDALMDArray::CreateGLTOrthorectified(
     const std::shared_ptr<GDALMDArray> &poParent,
+    const std::shared_ptr<GDALGroup> &poRootGroup,
     const std::shared_ptr<GDALMDArray> &poGLTX,
     const std::shared_ptr<GDALMDArray> &poGLTY, int nGLTIndexOffset,
-    const std::vector<double> &adfGeoTransform)
+    const std::vector<double> &adfGeoTransform, CSLConstList papszOptions)
 {
-    return GLTOrthoRectifiedArray::Create(poParent, poGLTX, poGLTY,
-                                          nGLTIndexOffset, adfGeoTransform);
+    return GLTOrthoRectifiedArray::Create(poParent, poRootGroup, poGLTX, poGLTY,
+                                          nGLTIndexOffset, adfGeoTransform,
+                                          papszOptions);
 }
 
 //! @endcond

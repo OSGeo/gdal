@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_float.h"
 #include "gh5_convenience.h"
 
 /************************************************************************/
@@ -209,6 +210,16 @@ bool GH5_FetchAttribute(hid_t loc_id, const char *pszAttrName, double &dfResult,
                      pszAttrName, static_cast<GUIntBig>(nVal), dfResult);
         }
     }
+#ifdef HDF5_HAVE_FLOAT16
+    else if (H5Tequal(H5T_NATIVE_FLOAT16, hAttrNativeType))
+    {
+        const uint16_t nVal16 = *((uint16_t *)buf);
+        const uint32_t nVal32 = CPLHalfToFloat(nVal16);
+        float fVal;
+        memcpy(&fVal, &nVal32, sizeof(fVal));
+        dfResult = fVal;
+    }
+#endif
     else if (H5Tequal(H5T_NATIVE_FLOAT, hAttrNativeType))
         dfResult = *((float *)buf);
     else if (H5Tequal(H5T_NATIVE_DOUBLE, hAttrNativeType))

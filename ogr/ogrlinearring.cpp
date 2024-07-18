@@ -448,23 +448,16 @@ OGRLinearRing *OGRLinearRing::clone() const
 /*                             reverseWindingOrder()                    */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 /** Reverse order of points.
  */
 void OGRLinearRing::reverseWindingOrder()
 
 {
-    OGRPoint pointA;
-    OGRPoint pointB;
-
-    for (int i = 0; i < nPointCount / 2; i++)
-    {
-        getPoint(i, &pointA);
-        const int pos = nPointCount - i - 1;
-        getPoint(pos, &pointB);
-        setPoint(i, &pointB);
-        setPoint(pos, &pointA);
-    }
+    reversePoints();
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                             closeRing()                              */

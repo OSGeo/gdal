@@ -25,8 +25,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <algorithm>
+#include <array>
 #include <cstdint>
+#include <functional>
+#include <limits>
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include "cpl_progress.h"
@@ -73,15 +78,87 @@ class Viewshed
     };
 
     /**
+     * A window in a raster including pixels in [xStart, xStop) and [yStart, yStop).
+     */
+    struct Window
+    {
+        int xStart{};  //!< X start position
+        int xStop{};   //!< X end position
+        int yStart{};  //!< Y start position
+        int yStop{};   //!< Y end position
+
+        /// \brief  Window size in the X direction.
+        int xSize() const
+        {
+            return xStop - xStart;
+        }
+
+        /// \brief  Window size in the Y direction.
+        int ySize() const
+        {
+            return yStop - yStart;
+        }
+
+        /// \brief  Determine if the X window contains the index.
+        /// \param  nX  Index to check
+        /// \return  True if the index is contained, false otherwise.
+        bool containsX(int nX) const
+        {
+            return nX >= xStart && nX < xStop;
+        }
+
+        /// \brief  Determine if the Y window contains the index.
+        /// \param  nY  Index to check
+        /// \return  True if the index is contained, false otherwise.
+        bool containsY(int nY) const
+        {
+            return nY >= xStart && nY < yStop;
+        }
+
+        /// \brief  Determine if the window contains the index.
+        /// \param  nX  X coordinate of the index to check
+        /// \param  nY  Y coordinate of the index to check
+        /// \return  True if the index is contained, false otherwise.
+        bool contains(int nX, int nY) const
+        {
+            return containsX(nX) && containsY(nY);
+        }
+
+        /// \brief  Clamp the argument to be in the window in the X dimension.
+        /// \param  nX  Value to clamp.
+        /// \return  Clamped value.
+        int clampX(int nX) const
+        {
+            return xSize() ? std::clamp(nX, xStart, xStop - 1) : xStart;
+        }
+
+        /// \brief  Clamp the argument to be in the window in the Y dimension.
+        /// \param  nY  Value to clamp.
+        /// \return  Clamped value.
+        int clampY(int nY) const
+        {
+            return ySize() ? std::clamp(nY, yStart, yStop - 1) : yStart;
+        }
+
+        /// \brief  Shift the X dimension by nShift.
+        /// \param  nShift  Amount to shift
+        void shiftX(int nShift)
+        {
+            xStart += nShift;
+            xStop += nShift;
+        }
+    };
+
+    /**
      * Options for viewshed generation.
      */
     struct Options
     {
         Point observer{0, 0, 0};  //!< x, y, and z of the observer
-        uint8_t visibleVal{255};  //!< raster output value for visible pixels.
-        uint8_t invisibleVal{
+        double visibleVal{255};   //!< raster output value for visible pixels.
+        double invisibleVal{
             0};  //!< raster output value for non-visible pixels.
-        uint8_t outOfRangeVal{
+        double outOfRangeVal{
             0};  //!< raster output value for pixels outside of max distance.
         double nodataVal{-1};  //!< raster output value for pixels with no data
         double targetHeight{0.0};  //!< target height above the DEM surface
@@ -102,18 +179,22 @@ class Viewshed
      *
      * @param opts Options to use when calculating viewshed.
     */
-    CPL_DLL explicit Viewshed(const Options &opts) : oOpts{opts}, poDstDS{}
+    CPL_DLL explicit Viewshed(const Options &opts)
+        : oOpts{opts}, oOutExtent{}, oCurExtent{},
+          dfMaxDistance2{opts.maxDistance * opts.maxDistance},
+          dfZObserver{0}, poDstDS{}, pSrcBand{}, pDstBand{},
+          dfHeightAdjFactor{0}, nLineCount{0}, adfTransform{0, 1, 0, 0, 0, 1},
+          adfInvTransform{}, oProgress{}, oZcalc{}, oMutex{}, iMutex{}
     {
+        if (dfMaxDistance2 == 0)
+            dfMaxDistance2 = std::numeric_limits<double>::max();
     }
 
-    /**
-     * Create the viewshed for the provided raster band.
-     *
-     * @param hBand  Handle to the raster band.
-     * @param pfnProgress  Progress reporting callback function.
-     * @param pProgressArg  Argument to pass to the progress callback.
-    */
-    CPL_DLL bool run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
+    Viewshed(const Viewshed &) = delete;
+    Viewshed &operator=(const Viewshed &) = delete;
+
+    CPL_DLL bool run(GDALRasterBandH hBand,
+                     GDALProgressFunc pfnProgress = GDALDummyProgress,
                      void *pProgressArg = nullptr);
 
     /**
@@ -128,11 +209,54 @@ class Viewshed
 
   private:
     Options oOpts;
+    Window oOutExtent;
+    Window oCurExtent;
+    double dfMaxDistance2;
+    double dfZObserver;
     std::unique_ptr<GDALDataset> poDstDS;
+    GDALRasterBand *pSrcBand;
+    GDALRasterBand *pDstBand;
+    double dfHeightAdjFactor;
+    int nLineCount;
+    std::array<double, 6> adfTransform;
+    std::array<double, 6> adfInvTransform;
+    using ProgressFunc = std::function<bool(double frac, const char *msg)>;
+    ProgressFunc oProgress;
+    using ZCalc = std::function<double(int, int, double, double, double)>;
+    ZCalc oZcalc;
+    std::mutex oMutex;
+    std::mutex iMutex;
 
-    void setVisibility(int iPixel, double dfZ, double *padfZVal,
-                       std::vector<GByte> &vResult);
+    void setOutput(double &dfResult, double &dfCellVal, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
+    bool readLine(int nLine, double *data);
+    bool writeLine(int nLine, std::vector<double> &vResult);
+    bool processLine(int nX, int nY, int nLine,
+                     std::vector<double> &vLastLineVal);
+    bool processFirstLine(int nX, int nY, std::vector<double> &vLastLineVal);
+    void processFirstLineLeft(int nX, int iStart, int iEnd,
+                              std::vector<double> &vResult,
+                              std::vector<double> &vThisLineVal);
+    void processFirstLineRight(int nX, int iStart, int iEnd,
+                               std::vector<double> &vResult,
+                               std::vector<double> &vThisLineVal);
+    void processFirstLineTopOrBottom(int iLeft, int iRight,
+                                     std::vector<double> &vResult,
+                                     std::vector<double> &vThisLineVal);
+    void processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
+                         std::vector<double> &vResult,
+                         std::vector<double> &vThisLineVal,
+                         std::vector<double> &vLastLineVal);
+    void processLineRight(int nX, int nYOffset, int iStart, int iEnd,
+                          std::vector<double> &vResult,
+                          std::vector<double> &vThisLineVal,
+                          std::vector<double> &vLastLineVal);
+    std::pair<int, int> adjustHeight(int iLine, int nX,
+                                     std::vector<double> &thisLineVal);
+    bool calcOutputExtent(int nX, int nY);
+    bool createOutputDataset();
+    bool lineProgress();
+    bool emitProgress(double fraction);
 };
 
 }  // namespace gdal

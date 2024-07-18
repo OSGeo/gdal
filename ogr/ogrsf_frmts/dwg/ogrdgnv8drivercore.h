@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "DGNV8";
 
-int CPL_DLL OGRDGNV8DriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRDGNV8DriverIdentify PLUGIN_SYMBOL_NAME(OGRDGNV8DriverIdentify)
+#define OGRDGNV8DriverSetCommonMetadata                                        \
+    PLUGIN_SYMBOL_NAME(OGRDGNV8DriverSetCommonMetadata)
 
-void CPL_DLL OGRDGNV8DriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRDGNV8DriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRDGNV8DriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

@@ -46,10 +46,15 @@
 
 constexpr const char *DRIVER_NAME = "PDF";
 
-const char CPL_DLL *PDFGetOpenOptionList();
+#define PDFGetOpenOptionList PLUGIN_SYMBOL_NAME(PDFGetOpenOptionList)
+#define PDFDatasetIdentify PLUGIN_SYMBOL_NAME(PDFDatasetIdentify)
+#define PDFDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(PDFDriverSetCommonMetadata)
 
-int CPL_DLL PDFDatasetIdentify(GDALOpenInfo *poOpenInfo);
+const char *PDFGetOpenOptionList();
 
-void CPL_DLL PDFDriverSetCommonMetadata(GDALDriver *poDriver);
+int PDFDatasetIdentify(GDALOpenInfo *poOpenInfo);
+
+void PDFDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

@@ -6,7 +6,8 @@ add_gdal_driver(TARGET ogr_OGDI
                     ogrogdilayer.cpp
                 CORE_SOURCES
                     ogrogdidrivercore.cpp
-                PLUGIN_CAPABLE)
+                PLUGIN_CAPABLE
+                NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET ogr_OGDI)
     return()

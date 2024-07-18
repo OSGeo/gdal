@@ -929,3 +929,21 @@ def test_ogr_osm_tags_json_special_characters():
     assert lyr_defn.GetFieldDefn(other_tags_idx).GetSubType() == ogr.OFSTJSON
     f = lyr.GetNextFeature()
     assert f["other_tags"] == """{"foo":"x'\\\\\\"\\t\\n\\ry"}"""
+
+
+###############################################################################
+# Test that osmconf.ini can be parsed with Python's configparser
+
+
+def test_ogr_osmconf_ini():
+
+    import configparser
+
+    with ogr.Open("data/osm/test_json.pbf") as ds:
+        with ds.ExecuteSQL("SHOW config_file_path") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            osmconf_ini_filename = f.GetField(0)
+            config = configparser.ConfigParser()
+            config.read_file(open(osmconf_ini_filename))
+            assert "general" in config
+            assert "closed_ways_are_polygons" in config["general"]

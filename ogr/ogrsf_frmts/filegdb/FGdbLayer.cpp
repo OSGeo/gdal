@@ -2399,6 +2399,8 @@ bool FGdbLayer::Create(FGdbDataSource *pParentDataSource,
 
     const auto eType =
         poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetType() : wkbNone;
+    if (eType == wkbNone)
+        poSrcGeomFieldDefn = nullptr;
 
 #ifdef EXTENT_WORKAROUND
     m_bLayerJustCreated = true;

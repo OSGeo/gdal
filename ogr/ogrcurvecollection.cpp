@@ -749,4 +749,71 @@ OGRErr OGRCurveCollection::removeCurve(int iIndex, bool bDelete)
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a geometry has empty parts/rings.
+ *
+ * Returns true if removeEmptyParts() will modify the geometry.
+ *
+ * This is different from IsEmpty().
+ *
+ * @since GDAL 3.10
+ */
+bool OGRCurveCollection::hasEmptyParts() const
+{
+    for (int i = 0; i < nCurveCount; ++i)
+    {
+        if (papoCurves[i]->IsEmpty() || papoCurves[i]->hasEmptyParts())
+            return true;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+/**
+ * \brief Remove empty parts/rings from this geometry.
+ *
+ * @since GDAL 3.10
+ */
+void OGRCurveCollection::removeEmptyParts()
+{
+    for (int i = nCurveCount - 1; i >= 0; --i)
+    {
+        papoCurves[i]->removeEmptyParts();
+        if (papoCurves[i]->IsEmpty())
+            removeCurve(i, true);
+    }
+}
+
+/************************************************************************/
+/*                           reversePoints()                            */
+/************************************************************************/
+
+/**
+ * \brief Reverse point order.
+ *
+ * This method updates the points in this curve in place
+ * reversing the point ordering (first for last, etc) and component ordering.
+ *
+ * @since 3.10
+ */
+void OGRCurveCollection::reversePoints()
+
+{
+    for (int i = 0; i < nCurveCount / 2; ++i)
+    {
+        std::swap(papoCurves[i], papoCurves[nCurveCount - 1 - i]);
+    }
+    for (int i = 0; i < nCurveCount; ++i)
+    {
+        papoCurves[i]->reversePoints();
+    }
+}
+
 //! @endcond

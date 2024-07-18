@@ -76,6 +76,8 @@ edit data.
 
     Summary Only: suppress listing of individual features and show only
     summary information like projection, schema, feature count and extents.
+    In JSON output, -so is implicit and listing of features can be enabled
+    with :option:`-features`.
 
 .. option:: -features
 
@@ -108,9 +110,10 @@ edit data.
 
     Example of ``-where`` and quoting:
 
-.. code-block: bash
+    .. code-block:: bash
 
-    -where "\"Corner Point Identifier\" LIKE '%__00_00'"
+        -where "\"Corner Point Identifier\" LIKE '%__00_00'"
+
 
 .. option:: -sql <statement>|@<filename>
 
@@ -528,4 +531,10 @@ Adding a column to an input file:
 
    ogrinfo input.shp -sql "ALTER TABLE input ADD fieldX float"
 
+Sometimes there is no input file involved in a calculation. In such cases one may
+use the ``:memory:`` input file which is a in-memory empty SQLite file (and the SQLite SQL dialect will be implicitly used).
+
+.. code-block:: bash
+
+    ogrinfo :memory: -sql "SELECT ST_Buffer(ST_GeomFromText('POINT(0 0)'), 1)"
 

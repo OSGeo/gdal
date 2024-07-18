@@ -104,6 +104,14 @@ def get_gdalmdiminfo_path():
 #
 
 
+def get_gdalmanage_path():
+    return get_cli_utility_path("gdalmanage")
+
+
+###############################################################################
+#
+
+
 def get_gdal_translate_path():
     return get_cli_utility_path("gdal_translate")
 

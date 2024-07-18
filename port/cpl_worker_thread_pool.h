@@ -80,7 +80,7 @@ class CPL_DLL CPLWorkerThreadPool
     CPL_DISALLOW_COPY_ASSIGN(CPLWorkerThreadPool)
 
     std::vector<std::unique_ptr<CPLWorkerThread>> aWT{};
-    std::mutex m_mutex{};
+    mutable std::mutex m_mutex{};
     std::condition_variable m_cv{};
     volatile CPLWorkerThreadState eState = CPLWTS_OK;
     CPLList *psJobQueue = nullptr;
@@ -112,10 +112,7 @@ class CPL_DLL CPLWorkerThreadPool
     void WaitEvent();
 
     /** Return the number of threads setup */
-    int GetThreadCount() const
-    {
-        return m_nMaxThreads;
-    }
+    int GetThreadCount() const;
 };
 
 /** Job queue */

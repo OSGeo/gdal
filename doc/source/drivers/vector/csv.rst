@@ -25,6 +25,11 @@ For files structured as CSV, but not ending
 with the ".csv" extension, the 'CSV:' prefix can be added before the filename
 to force loading by the CSV driver.
 
+Starting with GDAL 3.10, specifying the ``-if CSV`` option to command line utilities
+accepting it, or ``CSV`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+filename, without the ``CSV:`` prefix.
+
 The OGR CSV driver supports reading and writing. Because the CSV format
 has variable length text lines, reading is done sequentially. Reading
 features in random order will generally be very slow. OGR CSV layer
@@ -163,7 +168,7 @@ Y_POSSIBLE_NAMES=Lat\* -oo KEEP_GEOM_COLUMNS=NO* will return :
      Name (String) = Third point
      POINT (0.75 47.5)
 
-If CSV file does not have a header line, the dummy "field_n" names can be
+If the CSV file does not have a header line, the dummy "field_n" names can be
 used as possible names for coordinate fields. For example plain XYZ point
 data can be opened as
 
@@ -524,7 +529,8 @@ Examples
 
    ::
 
-      ogr2ogr -f CSV -dialect sqlite -sql "select AsGeoJSON(geometry) AS geom, * from input" output.csv input.shp
+      ogr2ogr -f CSV output.csv input.shp -dialect sqlite -sql \
+          "select AsGeoJSON(geometry) AS geom, * from input"
 
 - Convert a CSV into a GeoPackage. Specify the names of the coordinate columns and assign a coordinate reference system.
 
@@ -536,6 +542,21 @@ Examples
        -oo X_POSSIBLE_NAMES=longitude \
        -oo Y_POSSIBLE_NAMES=latitude \
        -a_srs 'EPSG:4326'
+
+-  Use `ogr2ogr -segmentize` to densify a input geometry being specified in the ``WKT`` special field. Note that one needs to specify the GEOMETRY=AS_WKT layer creation option, otherwise the input geometry would be returned unmodified:
+
+   ::
+
+    $ cat input.csv
+    WKT,ID,Name
+    "LINESTRING (-900 -1450,-900 100)",0,900W
+    
+    $ ogr2ogr -segmentize 400 -lco GEOMETRY=AS_WKT \
+      -sql "SELECT ID, Name FROM input" output.csv input.csv
+
+    $ cat output.csv
+    WKT,ID,Name
+    "LINESTRING (-900 -1450,-900 -1062.5,-900 -675,-900 -287.5,-900 100)","0",900W
 
 
 Particular datasources

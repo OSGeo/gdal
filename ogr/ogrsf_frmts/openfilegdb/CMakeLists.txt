@@ -19,7 +19,8 @@ add_gdal_driver(
   CORE_SOURCES
           ogropenfilegdbdrivercore.cpp
   PLUGIN_CAPABLE NO_DEPS
-  STRONG_CXX_WFLAGS)
+  STRONG_CXX_WFLAGS
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET ogr_OpenFileGDB)
     return()

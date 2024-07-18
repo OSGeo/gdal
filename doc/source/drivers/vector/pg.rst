@@ -455,6 +455,26 @@ The following configuration options are available:
       be destroyed. Typical use case: ``ogr2ogr -append PG:dbname=foo
       abc.shp --config OGR_TRUNCATE YES``.
 
+-  .. config:: OGR_PG_ENABLE_METADATA
+      :choices: YES, NO
+      :default: YES
+      :since: 3.9
+
+      If set to "YES" (the default), the driver will try to use (and potentially
+      create) the ``ogr_system_tables.metadata`` table to retrieve and store
+      layer metadata.
+
+-  .. config:: OGR_PG_SKIP_CONFLICTS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.10
+
+      If set to "YES" (not the default),
+      conflicts when inserting features will be skipped
+      (requires OGR_PG_RETRIEVE_FID to be off and only applies when PG_USE_COPY
+      is off).
+
+
 Examples
 ~~~~~~~~
 

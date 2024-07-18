@@ -47,6 +47,11 @@ STACTA datasets/subdatasets can be accessed with one of the following syntaxes:
 
 The root of the JSON file must be of type ``Feature``.
 
+Starting with GDAL 3.10, specifying the ``-if STACTA`` option to command line utilities
+accepting it, or ``STACTA`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+filename or URL.
+
 Open options
 ------------
 

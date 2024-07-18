@@ -126,7 +126,7 @@ def test_gdal_footprint_lib_destSRS():
 def test_gdal_footprint_lib_inline_geojson():
 
     ret = gdal.Footprint("", "../gcore/data/byte.tif", format="GeoJSON")
-    assert type(ret) == dict
+    assert isinstance(ret, dict)
     assert ret["crs"]["properties"]["name"] == "urn:ogc:def:crs:OGC:1.3:CRS84"
 
 

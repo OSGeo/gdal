@@ -687,3 +687,51 @@ def test_ogr_esrijson_identify_srs():
     sr = lyr.GetSpatialRef()
     assert sr
     assert sr.GetAuthorityCode(None) == "2223"
+
+
+###############################################################################
+# Test for https://github.com/OSGeo/gdal/issues/9996
+
+
+def test_ogr_esrijson_read_CadastralSpecialServices():
+
+    ds = ogr.Open("data/esrijson/GetLatLon.json")
+    lyr = ds.GetLayer(0)
+    sr = lyr.GetSpatialRef()
+    assert sr
+    assert sr.GetAuthorityCode(None) == "4326"
+    assert lyr.GetGeomType() != ogr.wkbNone
+    f = lyr.GetNextFeature()
+    assert f["landdescription"] == "WA330160N0260E0SN070"
+    assert f.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon
+
+
+###############################################################################
+# Test force opening a ESRIJSON file
+
+
+def test_ogr_esrijson_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.json")
+
+    with open("data/esrijson/esripoint.json", "rb") as fsrc:
+        with gdaltest.vsi_open(filename, "wb") as fdest:
+            fdest.write(fsrc.read(1))
+            fdest.write(b" " * (1000 * 1000))
+            fdest.write(fsrc.read())
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["ESRIJSON"])
+    assert ds.GetDriver().GetDescription() == "ESRIJSON"
+
+
+###############################################################################
+# Test force opening a URL as ESRIJSON
+
+
+def test_ogr_esrijson_force_opening_url():
+
+    drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["ESRIJSON"])
+    assert drv.GetDescription() == "ESRIJSON"

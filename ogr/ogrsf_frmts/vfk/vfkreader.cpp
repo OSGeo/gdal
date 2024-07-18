@@ -314,7 +314,7 @@ int VFKReader::ReadDataBlocks(bool bSuppressGeometry)
 
   \return number of data records or -1 on error
 */
-int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
+int64_t VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 {
     const char *pszName = nullptr;
     IVFKDataBlock *poDataBlockCurrent = nullptr;
@@ -342,7 +342,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     int iLine = 0;
     int nSkipped = 0;
     int nDupl = 0;
-    int nRecords = 0;
+    int64_t nRecords = 0;
     bool bInHeader = true;
     CPLString osBlockNameLast;
     char *pszLine = nullptr;

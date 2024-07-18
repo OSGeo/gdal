@@ -1977,8 +1977,7 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
     poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
 
     // Open overviews.
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename,
-                                poOpenInfo->GetSiblingFiles());
+    poDS->oOvManager.Initialize(poDS, poOpenInfo);
 
     return poDS;
 }

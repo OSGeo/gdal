@@ -2385,12 +2385,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 {
                     const double dfNoData =
                         CPLAtof(psOptions->osNoData.c_str());
-                    if (dfNoData >= static_cast<double>(
-                                        std::numeric_limits<int64_t>::min()) &&
-                        dfNoData <= static_cast<double>(
-                                        std::numeric_limits<int64_t>::max()) &&
-                        dfNoData ==
-                            static_cast<double>(static_cast<int64_t>(dfNoData)))
+                    if (GDALIsValueExactAs<int64_t>(dfNoData))
                     {
                         poVRTBand->SetNoDataValueAsInt64(
                             static_cast<int64_t>(dfNoData));
@@ -2428,12 +2423,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 {
                     const double dfNoData =
                         CPLAtof(psOptions->osNoData.c_str());
-                    if (dfNoData >= static_cast<double>(
-                                        std::numeric_limits<uint64_t>::min()) &&
-                        dfNoData <= static_cast<double>(
-                                        std::numeric_limits<uint64_t>::max()) &&
-                        dfNoData == static_cast<double>(
-                                        static_cast<uint64_t>(dfNoData)))
+                    if (GDALIsValueExactAs<uint64_t>(dfNoData))
                     {
                         poVRTBand->SetNoDataValueAsUInt64(
                             static_cast<uint64_t>(dfNoData));
@@ -2554,7 +2544,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /*      Write to the output file using CopyCreate().                    */
     /* -------------------------------------------------------------------- */
     if (EQUAL(psOptions->osFormat.c_str(), "VRT") &&
-        psOptions->aosCreateOptions.empty())
+        (psOptions->aosCreateOptions.empty() ||
+         (psOptions->aosCreateOptions.size() == 2 &&
+          psOptions->aosCreateOptions.FetchNameValue("BLOCKXSIZE") &&
+          psOptions->aosCreateOptions.FetchNameValue("BLOCKYSIZE"))))
     {
         poVDS->SetDescription(pszDest);
         hOutDS = GDALDataset::ToHandle(poVDS);
@@ -3039,19 +3032,6 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
 
     argParser->add_argument("-a_nodata")
         .metavar("<value>|none")
-        .action(
-            [psOptions](const std::string &s)
-            {
-                if (EQUAL(s.c_str(), "none"))
-                {
-                    psOptions->bUnsetNoData = true;
-                }
-                else
-                {
-                    psOptions->bSetNoData = true;
-                    psOptions->osNoData = s;
-                }
-            })
         .help(_("Assign a specified nodata value to output bands."));
 
     argParser->add_argument("-a_gt")
@@ -3388,6 +3368,23 @@ GDALTranslateOptionsNew(char **papszArgv,
             }
             ++i;
             psOptions->anColorInterp[nIndex] = GetColorInterp(papszArgv[i]);
+        }
+
+        // argparser will be confused if the value of a string argument
+        // starts with a negative sign.
+        else if (EQUAL(papszArgv[i], "-a_nodata") && papszArgv[i + 1])
+        {
+            ++i;
+            const std::string s = papszArgv[i];
+            if (EQUAL(s.c_str(), "none"))
+            {
+                psOptions->bUnsetNoData = true;
+            }
+            else
+            {
+                psOptions->bSetNoData = true;
+                psOptions->osNoData = s;
+            }
         }
 
         else

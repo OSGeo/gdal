@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "cpl_json.h"
+#include "cpl_http.h"
 #include "vrtdataset.h"
 #include "ogr_spatialref.h"
 
@@ -97,6 +98,7 @@ class STACITDataset final : public VRTDataset
 
 STACITDataset::STACITDataset() : VRTDataset(0, 0)
 {
+    poDriver = nullptr;  // cancel what the VRTDataset did
     SetWritable(false);
 }
 
@@ -107,6 +109,13 @@ STACITDataset::STACITDataset() : VRTDataset(0, 0)
 int STACITDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     if (STARTS_WITH(poOpenInfo->pszFilename, "STACIT:"))
+    {
+        return true;
+    }
+
+    const bool bIsSingleDriver = poOpenInfo->IsSingleAllowedDriver("STACIT");
+    if (bIsSingleDriver && (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+                            STARTS_WITH(poOpenInfo->pszFilename, "https://")))
     {
         return true;
     }
@@ -122,6 +131,14 @@ int STACITDataset::Identify(GDALOpenInfo *poOpenInfo)
         // before the loop.
         const char *pszHeader =
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+        while (*pszHeader != 0 &&
+               std::isspace(static_cast<unsigned char>(*pszHeader)))
+            ++pszHeader;
+        if (bIsSingleDriver)
+        {
+            return pszHeader[0] == '{';
+        }
+
         if (strstr(pszHeader, "\"stac_version\"") != nullptr &&
             strstr(pszHeader, "\"proj:transform\"") != nullptr)
         {
@@ -747,7 +764,9 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
     GIntBig nMaxItems = CPLAtoGIntBig(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "MAX_ITEMS", "1000"));
 
-    if (CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAX_ITEMS") == nullptr)
+    const bool bMaxItemsSpecified =
+        CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAX_ITEMS") != nullptr;
+    if (!bMaxItemsSpecified)
     {
         // If the URL includes a limit parameter, and it's larger than our
         // default MAX_ITEMS value, then increase the later to the former.
@@ -761,13 +780,70 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     auto osCurFilename = osFilename;
+    std::string osMethod = "GET";
+    CPLJSONObject oHeaders;
+    CPLJSONObject oBody;
+    bool bMerge = false;
+    int nLoops = 0;
     do
     {
+        ++nLoops;
+        if (nMaxItems > 0 && nLoops > nMaxItems)
+        {
+            break;
+        }
+
         CPLJSONDocument oDoc;
+
         if (STARTS_WITH(osCurFilename, "http://") ||
             STARTS_WITH(osCurFilename, "https://"))
         {
-            if (!oDoc.LoadUrl(osCurFilename, nullptr))
+            // Cf // Cf https://github.com/radiantearth/stac-api-spec/tree/release/v1.0.0/item-search#pagination
+            CPLStringList aosOptions;
+            if (oBody.IsValid() &&
+                oBody.GetType() == CPLJSONObject::Type::Object)
+            {
+                if (bMerge)
+                    CPLDebug("STACIT",
+                             "Ignoring 'merge' attribute from next link");
+                const std::string osPostContent =
+                    oBody.Format(CPLJSONObject::PrettyFormat::Pretty);
+                aosOptions.SetNameValue("POSTFIELDS", osPostContent.c_str());
+            }
+            aosOptions.SetNameValue("CUSTOMREQUEST", osMethod.c_str());
+            CPLString osHeaders;
+            if (!oHeaders.IsValid() ||
+                oHeaders.GetType() != CPLJSONObject::Type::Object ||
+                oHeaders["Content-Type"].ToString().empty())
+            {
+                osHeaders = "Content-Type: application/json";
+            }
+            if (oHeaders.IsValid() &&
+                oHeaders.GetType() == CPLJSONObject::Type::Object)
+            {
+                for (const auto &obj : oHeaders.GetChildren())
+                {
+                    osHeaders += "\r\n";
+                    osHeaders += obj.GetName();
+                    osHeaders += ": ";
+                    osHeaders += obj.ToString();
+                }
+            }
+            aosOptions.SetNameValue("HEADERS", osHeaders.c_str());
+            CPLHTTPResult *psResult =
+                CPLHTTPFetch(osCurFilename.c_str(), aosOptions.List());
+            if (!psResult)
+                return false;
+            if (!psResult->pabyData)
+            {
+                CPLHTTPDestroyResult(psResult);
+                return false;
+            }
+            const bool bOK = oDoc.LoadMemory(
+                reinterpret_cast<const char *>(psResult->pabyData));
+            // CPLDebug("STACIT", "Response: %s", reinterpret_cast<const char*>(psResult->pabyData));
+            CPLHTTPDestroyResult(psResult);
+            if (!bOK)
                 return false;
         }
         else
@@ -785,7 +861,7 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
         for (const auto &oFeature : oFeatures)
         {
             nItemIter++;
-            if (nItemIter > nMaxItems)
+            if (nMaxItems > 0 && nItemIter > nMaxItems)
             {
                 break;
             }
@@ -849,10 +925,9 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
                            oMapCollection);
             }
         }
-        if (nItemIter >= nMaxItems)
+        if (nMaxItems > 0 && nItemIter >= nMaxItems)
         {
-            if (CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAX_ITEMS") ==
-                nullptr)
+            if (!bMaxItemsSpecified)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Maximum number of items (" CPL_FRMT_GIB
@@ -870,20 +945,35 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
         // Follow next link
+        // Cf https://github.com/radiantearth/stac-api-spec/tree/release/v1.0.0/item-search#pagination
         const auto oLinks = oRoot.GetArray("links");
         if (!oLinks.IsValid())
             break;
         std::string osNewFilename;
         for (const auto &oLink : oLinks)
         {
-            if (oLink["rel"].ToString() == "next")
+            const auto osType = oLink["type"].ToString();
+            if (oLink["rel"].ToString() == "next" &&
+                (osType.empty() || osType == "application/geo+json"))
             {
+                osMethod = oLink.GetString("method", "GET");
                 osNewFilename = oLink["href"].ToString();
-                break;
+                oHeaders = oLink["headers"];
+                oBody = oLink["body"];
+                bMerge = oLink.GetBool("merge", false);
+                if (osType == "application/geo+json")
+                {
+                    break;
+                }
             }
         }
-        if (!osNewFilename.empty() && osNewFilename != osCurFilename)
+        if (!osNewFilename.empty() &&
+            (osNewFilename != osCurFilename ||
+             (oBody.IsValid() &&
+              oBody.GetType() == CPLJSONObject::Type::Object)))
+        {
             osCurFilename = osNewFilename;
+        }
         else
             osCurFilename.clear();
     } while (!osCurFilename.empty());

@@ -338,13 +338,13 @@ int VFKReaderSQLite::ReadDataBlocks(bool bSuppressGeometry)
 
   \return number of data records or -1 on error
 */
-int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
+int64_t VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 {
     CPLString osSQL;
     IVFKDataBlock *poDataBlockCurrent = nullptr;
     sqlite3_stmt *hStmt = nullptr;
     const char *pszName = nullptr;
-    int nDataRecords = 0;
+    int64_t nDataRecords = 0;
     bool bReadVfk = !m_bDbSource;
     bool bReadDb = false;
 
@@ -360,7 +360,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         hStmt = PrepareStatement(osSQL.c_str());
         if (ExecuteSQL(hStmt) == OGRERR_NONE)
         {
-            nDataRecords = sqlite3_column_int(hStmt, 0);
+            nDataRecords = sqlite3_column_int64(hStmt, 0);
             if (nDataRecords > 0)
                 bReadDb = true; /* -> read from DB */
             else

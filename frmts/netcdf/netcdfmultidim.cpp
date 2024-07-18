@@ -4671,17 +4671,18 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 
     m_poShared->SetDefineMode(true);
 
+    const auto &dt(GetDataType());
     if (m_nAttType == NC_STRING)
     {
-        CPLAssert(GetDataType().GetClass() == GEDTC_STRING);
+        CPLAssert(dt.GetClass() == GEDTC_STRING);
         if (m_dims.empty())
         {
             char *pszStr = nullptr;
             const char *pszStrConst;
-            if (bufferDataType != GetDataType())
+            if (bufferDataType != dt)
             {
                 GDALExtendedDataType::CopyValue(pSrcBuffer, bufferDataType,
-                                                &pszStr, GetDataType());
+                                                &pszStr, dt);
                 pszStrConst = pszStr;
             }
             else
@@ -4698,15 +4699,16 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
         }
 
         int ret;
-        if (bufferDataType != GetDataType())
+        if (bufferDataType != dt)
         {
             std::vector<char *> apszStrings(count[0]);
-            const char **ppszStr;
-            memcpy(&ppszStr, &pSrcBuffer, sizeof(const char **));
+            const auto nInputDTSize = bufferDataType.GetSize();
+            const GByte *pabySrcBuffer = static_cast<const GByte *>(pSrcBuffer);
             for (size_t i = 0; i < count[0]; i++)
             {
-                GDALExtendedDataType::CopyValue(&ppszStr[i], bufferDataType,
-                                                &apszStrings[i], GetDataType());
+                GDALExtendedDataType::CopyValue(pabySrcBuffer, bufferDataType,
+                                                &apszStrings[i], dt);
+                pabySrcBuffer += nInputDTSize * bufferStride[0];
             }
             ret = nc_put_att_string(m_gid, m_varid, GetName().c_str(), count[0],
                                     const_cast<const char **>(&apszStrings[0]));
@@ -4730,14 +4732,14 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 
     if (m_nAttType == NC_CHAR)
     {
-        CPLAssert(GetDataType().GetClass() == GEDTC_STRING);
+        CPLAssert(dt.GetClass() == GEDTC_STRING);
         CPLAssert(m_dims.empty());
         char *pszStr = nullptr;
         const char *pszStrConst;
-        if (bufferDataType != GetDataType())
+        if (bufferDataType != dt)
         {
             GDALExtendedDataType::CopyValue(pSrcBuffer, bufferDataType, &pszStr,
-                                            GetDataType());
+                                            dt);
             pszStrConst = pszStr;
         }
         else
@@ -4754,7 +4756,6 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
         return true;
     }
 
-    const auto &dt(GetDataType());
     if (dt.GetClass() == GEDTC_NUMERIC &&
         dt.GetNumericDataType() == GDT_Unknown)
     {

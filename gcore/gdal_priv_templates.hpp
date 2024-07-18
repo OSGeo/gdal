@@ -32,6 +32,7 @@
 
 #include "cpl_port.h"
 
+#include <cmath>
 #include <cstdint>
 #include <limits>
 
@@ -156,6 +157,57 @@ template <> inline bool GDALIsValueInRange<float>(double dfValue)
     return CPLIsInf(dfValue) ||
            (dfValue >= -std::numeric_limits<float>::max() &&
             dfValue <= std::numeric_limits<float>::max());
+}
+
+template <> inline bool GDALIsValueInRange<int64_t>(double dfValue)
+{
+    // Values in the range [INT64_MAX - 1023, INT64_MAX - 1]
+    // get converted to a double that once cast to int64_t is
+    // INT64_MAX + 1, hence the < strict comparison.
+    return dfValue >=
+               static_cast<double>(std::numeric_limits<int64_t>::min()) &&
+           dfValue < static_cast<double>(std::numeric_limits<int64_t>::max());
+}
+
+template <> inline bool GDALIsValueInRange<uint64_t>(double dfValue)
+{
+    // Values in the range [UINT64_MAX - 2047, UINT64_MAX - 1]
+    // get converted to a double that once cast to uint64_t is
+    // UINT64_MAX + 1, hence the < strict comparison.
+    return dfValue >= 0 &&
+           dfValue < static_cast<double>(std::numeric_limits<uint64_t>::max());
+}
+
+/************************************************************************/
+/*                         GDALIsValueExactAs()                         */
+/************************************************************************/
+/**
+ * Returns whether a value can be exactly represented on type T.
+ *
+ * That is static_cast\<double\>(static_cast\<T\>(dfValue)) is legal and is
+ * equal to dfValue.
+ *
+ * Note: for T=float or double, a NaN input leads to true
+ *
+ * @param dfValue the value
+ * @return whether the value can be exactly represented on type T.
+ */
+template <class T> inline bool GDALIsValueExactAs(double dfValue)
+{
+    return GDALIsValueInRange<T>(dfValue) &&
+           static_cast<double>(static_cast<T>(dfValue)) == dfValue;
+}
+
+template <> inline bool GDALIsValueExactAs<float>(double dfValue)
+{
+    return std::isnan(dfValue) ||
+           (GDALIsValueInRange<float>(dfValue) &&
+            static_cast<double>(static_cast<float>(dfValue)) == dfValue);
+}
+
+template <> inline bool GDALIsValueExactAs<double>(double)
+{
+    return true;
 }
 
 /************************************************************************/

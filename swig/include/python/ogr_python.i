@@ -990,8 +990,13 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
   def __iter__(self):
       for i in range(self.GetGeometryCount()):
           yield self.GetGeometryRef(i)
-
 %}
+
+%feature("pythonappend") GetGeometryRef %{
+    if val is not None:
+        val._parent_geom = self
+%}
+
 }
 
 

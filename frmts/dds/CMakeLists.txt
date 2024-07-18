@@ -1,7 +1,8 @@
 add_gdal_driver(TARGET gdal_DDS
                 SOURCES ddsdataset.cpp
                 CORE_SOURCES ddsdrivercore.cpp
-                PLUGIN_CAPABLE)
+                PLUGIN_CAPABLE
+                NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET gdal_DDS)
     return()

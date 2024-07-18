@@ -301,4 +301,5 @@ See Also
 -  Support for non-GDAL specific issues should be directed to the
    `Hexagon Geospatial public
    forum <https://supportsi.hexagon.com/help/s/erdas-apollo>`__
+-  Community contributed `patches <https://github.com/rouault/libecwj2-3.3-builds/blob/main/libecwj2-3.3.patch>`__ to apply to ECW SDK 3.3 sources
 -  `GDAL ECW Build Hints <http://trac.osgeo.org/gdal/wiki/ECW>`__

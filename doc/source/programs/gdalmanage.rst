@@ -16,7 +16,7 @@ Synopsis
 .. code-block::
 
     Usage: gdalmanage [--help] [--help-general]
-                      <mode> [-r] [-u] [-f <format>]
+                      <mode> [-r] [-fr] [-u] [-f <format>]
                       <datasetname> [<newdatasetname>]
 
 Description
@@ -31,17 +31,21 @@ data types and deleting, renaming or copying the files.
     Mode of operation
 
     **identify** *<datasetname>*:
-        List data format of file.
+        List data format of file(s).
     **copy** *<datasetname>* *<newdatasetname>*:
         Create a copy of the raster file with a new name.
     **rename** *<datasetname>* *<newdatasetname>*:
         Change the name of the raster file.
     **delete** *<datasetname>*:
-        Delete raster file.
+        Delete raster file(s).
 
 .. option:: -r
 
     Recursively scan files/folders for raster files.
+
+.. option:: -fr
+
+    Recursively scan folders for raster files, forcing recursion in folders recognized as valid formats.
 
 .. option:: -u
 
@@ -54,7 +58,7 @@ data types and deleting, renaming or copying the files.
 
 .. option:: <datasetname>
 
-    Raster file to operate on.
+    Raster file to operate on. With **identify** may be repeated for multiple files.
 
 .. option:: <newdatasetname>
 

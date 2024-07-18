@@ -393,6 +393,45 @@ def test_osr_epsg_13():
 
 
 ###############################################################################
+# Test FindMatches() when input SRS doesn't have expected axis order
+
+# Not sure about the minimum PROJ version, but 6.3 doesn't work
+@pytest.mark.require_proj(8, 0)
+def test_osr_epsg_find_matches_wrong_axis_order():
+
+    sr = osr.SpatialReference()
+    # NZTM2000 with implicit axis (thus east, north)
+    sr.SetFromUserInput(
+        """PROJCS["NZGD2000 / New Zealand Transverse Mercator 2000",
+    GEOGCS["NZGD2000",
+        DATUM["New_Zealand_Geodetic_Datum_2000",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            AUTHORITY["EPSG","6167"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4167"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",173],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",1600000],
+    PARAMETER["false_northing",10000000],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["X",EAST],
+    AXIS["Y",NORTH]]
+"""
+    )
+    matches = sr.FindMatches()
+    assert len(matches) == 1 and matches[0][1] == 90
+    assert matches[0][0].GetAuthorityCode(None) == "2193"
+    assert matches[0][0].GetDataAxisToSRSAxisMapping() == [2, 1]
+
+
+###############################################################################
 
 
 def test_osr_epsg_gcs_deprecated():

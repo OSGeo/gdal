@@ -6,7 +6,8 @@ add_gdal_driver(TARGET gdal_Rasterlite
                     rasterliteoverviews.cpp
                 CORE_SOURCES
                     rasterlitedrivercore.cpp
-                PLUGIN_CAPABLE NO_DEPS)
+                PLUGIN_CAPABLE NO_DEPS
+                NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET gdal_Rasterlite)
     return()

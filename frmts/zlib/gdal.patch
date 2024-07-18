@@ -1,0 +1,30 @@
+diff --git a/frmts/zlib/zconf.h b/frmts/zlib/zconf.h
+index ede3c82e3e..d53268ade1 100644
+--- a/frmts/zlib/zconf.h
++++ b/frmts/zlib/zconf.h
+@@ -433,11 +433,13 @@ typedef uLong FAR uLongf;
+    typedef unsigned long z_crc_t;
+ #endif
+ 
+-#if 1    /* was set to #if 1 by ./configure */
++/* Patched by GDAL */
++#ifdef HAVE_UNISTD_H    /* may be set to #if 1 by ./configure */
+ #  define Z_HAVE_UNISTD_H
+ #endif
+ 
+-#if 1    /* was set to #if 1 by ./configure */
++/* Patched by GDAL */
++#ifdef HAVE_STDARG_H
+ #  define Z_HAVE_STDARG_H
+ #endif
+ 
+@@ -540,4 +542,9 @@ typedef uLong FAR uLongf;
+   #pragma map(inflate_copyright,"INCOPY")
+ #endif
+ 
++/* Patched by GDAL */
++#ifdef RENAME_INTERNAL_ZLIB_SYMBOLS
++#include "gdal_zlib_symbol_rename.h"
++#endif
++
+ #endif /* ZCONF_H */

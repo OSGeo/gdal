@@ -32,6 +32,7 @@
 #include "filegdbtable_priv.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <set>
 
@@ -140,6 +141,7 @@ void FileGDBTable::AddEntryToFreelist(uint64_t nOffset, uint32_t nSize)
         VSIFCloseL(fp);
         return;
     }
+    assert(iSlot < 100);
 
     // Read the last page index of the identified slot
     uint32_t nPageIdx =
@@ -284,6 +286,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
         VSIFCloseL(fp);
         return OFFSET_MINUS_ONE;
     }
+    assert(iSlot < 100);
 
     // Read the last page index of the identified slot
     uint32_t nPageIdx =

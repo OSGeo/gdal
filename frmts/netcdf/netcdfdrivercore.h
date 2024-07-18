@@ -35,9 +35,12 @@
 
 constexpr const char *DRIVER_NAME = "netCDF";
 
-NetCDFFormatEnum CPL_DLL netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo,
-                                              bool bCheckExt);
+#define netCDFIdentifyFormat PLUGIN_SYMBOL_NAME(netCDFIdentifyFormat)
+#define netCDFDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(netCDFDriverSetCommonMetadata)
 
-void CPL_DLL netCDFDriverSetCommonMetadata(GDALDriver *poDriver);
+NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt);
+
+void netCDFDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

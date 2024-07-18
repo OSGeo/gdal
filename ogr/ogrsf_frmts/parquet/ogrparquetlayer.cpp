@@ -536,7 +536,7 @@ OGRParquetLayer::OGRParquetLayer(
     {
         pszUseThreads = "YES";
     }
-    if (CPLTestBool(pszUseThreads))
+    if (pszUseThreads && CPLTestBool(pszUseThreads))
     {
         m_poArrowReader->set_use_threads(true);
     }

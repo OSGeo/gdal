@@ -95,7 +95,8 @@ add_executable(
   test_marching_squares_contour.cpp
   test_marching_squares_polygon.cpp
   test_marching_squares_square.cpp
-  test_marching_squares_tile.cpp)
+  test_marching_squares_tile.cpp
+  test_viewshed.cpp)
 
 target_link_libraries(gdal_unit_test PRIVATE gtest_for_gdal)
 target_link_libraries(gdal_unit_test PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)

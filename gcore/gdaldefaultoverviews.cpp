@@ -121,7 +121,8 @@ int GDALDefaultOverviews::IsInitialized()
 
 void GDALDefaultOverviews::Initialize(GDALDataset *poDSIn,
                                       const char *pszBasename,
-                                      char **papszSiblingFiles, int bNameIsOVR)
+                                      CSLConstList papszSiblingFiles,
+                                      bool bNameIsOVR)
 
 {
     poDS = poDSIn;
@@ -149,12 +150,39 @@ void GDALDefaultOverviews::Initialize(GDALDataset *poDSIn,
     pszInitName = nullptr;
     if (pszBasename != nullptr)
         pszInitName = CPLStrdup(pszBasename);
-    bInitNameIsOVR = CPL_TO_BOOL(bNameIsOVR);
+    bInitNameIsOVR = bNameIsOVR;
 
     CSLDestroy(papszInitSiblingFiles);
     papszInitSiblingFiles = nullptr;
     if (papszSiblingFiles != nullptr)
         papszInitSiblingFiles = CSLDuplicate(papszSiblingFiles);
+}
+
+/************************************************************************/
+/*                             Initialize()                             */
+/************************************************************************/
+
+/** Initialize the GDALDefaultOverviews instance.
+ *
+ * @param poDSIn Base dataset.
+ * @param poOpenInfo Open info instance. Must not be NULL.
+ * @param pszName Base dataset name. If set to NULL, poOpenInfo->pszFilename is
+ *                used.
+ * @param bTransferSiblingFilesIfLoaded Whether sibling files of poOpenInfo
+ *                                      should be transferred to this
+ *                                      GDALDefaultOverviews instance, if they
+ *                                      have bean already loaded.
+ * @since 3.10
+ */
+void GDALDefaultOverviews::Initialize(GDALDataset *poDSIn,
+                                      GDALOpenInfo *poOpenInfo,
+                                      const char *pszName,
+                                      bool bTransferSiblingFilesIfLoaded)
+{
+    Initialize(poDSIn, pszName ? pszName : poOpenInfo->pszFilename);
+
+    if (bTransferSiblingFilesIfLoaded && poOpenInfo->AreSiblingFilesLoaded())
+        TransferSiblingFiles(poOpenInfo->StealSiblingFiles());
 }
 
 /************************************************************************/

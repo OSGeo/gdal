@@ -2252,6 +2252,48 @@ def test_grib_grib2_sidecar():
             ) == ds_idx.GetRasterBand(i).GetMetadataItem(key)
 
 
+def test_grib_grib2_sidecar_vsisubfile():
+
+    ds = gdal.Open("/vsisubfile/0_5359,data/grib/gfs.t06z.pgrb2.10p0.f010.grib2")
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).GetDescription() == "REFD:1 hybrid level:10 hour fcst"
+
+    ds_ref = gdal.OpenEx(
+        "/vsisubfile/0_5359,data/grib/gfs.t06z.pgrb2.10p0.f010.grib2",
+        open_options=["USE_IDX=NO"],
+    )
+    assert ds_ref.RasterCount == 1
+    assert ds_ref.GetRasterBand(1).GetDescription() == '1[-] HYBL="Hybrid level"'
+    assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum()
+
+    size = 16077 - 5359
+    ds = gdal.Open(f"/vsisubfile/5359_{size},data/grib/gfs.t06z.pgrb2.10p0.f010.grib2")
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).GetDescription() == "REFD:2 hybrid level:10 hour fcst"
+    assert ds.GetRasterBand(2).GetDescription() == "REFC:entire atmosphere:10 hour fcst"
+
+    ds_ref = gdal.OpenEx(
+        f"/vsisubfile/5359_{size},data/grib/gfs.t06z.pgrb2.10p0.f010.grib2",
+        open_options=["USE_IDX=NO"],
+    )
+    assert ds_ref.RasterCount == 2
+    assert ds_ref.GetRasterBand(1).GetDescription() == '2[-] HYBL="Hybrid level"'
+    assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(2).Checksum() == ds_ref.GetRasterBand(2).Checksum()
+
+    ds = gdal.Open("/vsisubfile/16077_-1,data/grib/gfs.t06z.pgrb2.10p0.f010.grib2")
+    assert ds.RasterCount == 3
+    assert ds.GetRasterBand(1).GetDescription() == "VIS:surface:10 hour fcst"
+    assert (
+        ds.GetRasterBand(2).GetDescription()
+        == "UGRD:planetary boundary layer:10 hour fcst"
+    )
+    assert (
+        ds.GetRasterBand(3).GetDescription()
+        == "VGRD:planetary boundary layer:10 hour fcst"
+    )
+
+
 # Test reading a (broken) mix of GRIBv2/GRIBv1 bands
 
 

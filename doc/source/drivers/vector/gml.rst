@@ -626,6 +626,14 @@ The following open options are supported:
       Whether to use gml:boundedBy at feature level as feature geometry,
       if there are no other geometry.
 
+
+.. note::
+
+  When changing the value of most of the above options, it is recommended to
+  delete the ``.gfs`` file if it pre-exists, otherwise mis-behavior might be
+  observed.
+
+
 Creation Issues
 ---------------
 
