@@ -248,5 +248,6 @@ Related resources
 
 .. toctree::
    :maxdepth: 0
+   :hidden:
 
    faq
