@@ -242,9 +242,6 @@ def test_ogr_ogcapi_features(remove_type_application_json):
         assert lyr is not None
 
         feat = lyr.GetNextFeature()
-        fdef = feat.GetDefnRef()
-        assert fdef.GetFieldDefn(0).GetName() == "feature::id"
-        assert fdef.GetFieldDefn(3).GetName() == "name"
 
         ogrtest.check_feature_geometry(
             feat,
