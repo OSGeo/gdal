@@ -11845,11 +11845,13 @@ OGRErr CPL_STDCALL OSRImportFromEPSG(OGRSpatialReferenceH hSRS, int nCode)
 /************************************************************************/
 
 /**
- * \brief This method returns TRUE if EPSG feels this geographic coordinate
+ * \brief This method returns TRUE if this geographic coordinate
  * system should be treated as having lat/long coordinate ordering.
  *
  * Currently this returns TRUE for all geographic coordinate systems
- * with an EPSG code set, and axes set defining it as lat, long.
+ * with axes set defining it as lat, long (prior to GDAL 3.10, it
+ * also checked that the CRS had belonged to EPSG authority, but this check
+ * has now been removed).
  *
  * \note Important change of behavior since GDAL 3.0. In previous versions,
  * geographic CRS imported with importFromEPSG() would cause this method to
@@ -11857,7 +11859,7 @@ OGRErr CPL_STDCALL OSRImportFromEPSG(OGRSpatialReferenceH hSRS, int nCode)
  * is now equivalent to importFromEPSGA().
  *
  * FALSE will be returned for all coordinate systems that are not geographic,
- * or that do not have an EPSG code set.
+ * or whose axes ordering is not latitude, longitude.
  *
  * This method is the same as the C function OSREPSGTreatsAsLatLong().
  *
@@ -11871,12 +11873,6 @@ int OGRSpatialReference::EPSGTreatsAsLatLong() const
         return FALSE;
 
     d->demoteFromBoundCRS();
-    const char *pszAuth = proj_get_id_auth_name(d->m_pj_crs, 0);
-    if (pszAuth == nullptr || !EQUAL(pszAuth, "EPSG"))
-    {
-        d->undoDemoteFromBoundCRS();
-        return FALSE;
-    }
 
     bool ret = false;
     if (d->m_pjType == PJ_TYPE_COMPOUND_CRS)
@@ -11936,7 +11932,7 @@ int OGRSpatialReference::EPSGTreatsAsLatLong() const
 /************************************************************************/
 
 /**
- * \brief This function returns TRUE if EPSG feels this geographic coordinate
+ * \brief This function returns TRUE if this geographic coordinate
  * system should be treated as having lat/long coordinate ordering.
  *
  * This function is the same as OGRSpatialReference::OSREPSGTreatsAsLatLong().
@@ -11955,11 +11951,13 @@ int OSREPSGTreatsAsLatLong(OGRSpatialReferenceH hSRS)
 /************************************************************************/
 
 /**
- * \brief This method returns TRUE if EPSG feels this projected coordinate
+ * \brief This method returns TRUE if this projected coordinate
  * system should be treated as having northing/easting coordinate ordering.
  *
  * Currently this returns TRUE for all projected coordinate systems
- * with an EPSG code set, and axes set defining it as northing, easting.
+ * with axes set defining it as northing, easting (prior to GDAL 3.10, it
+ * also checked that the CRS had belonged to EPSG authority, but this check
+ * has now been removed).
  *
  * \note Important change of behavior since GDAL 3.0. In previous versions,
  * projected CRS with northing, easting axis order imported with
@@ -11968,7 +11966,7 @@ int OSREPSGTreatsAsLatLong(OGRSpatialReferenceH hSRS)
  * is now equivalent to importFromEPSGA().
  *
  * FALSE will be returned for all coordinate systems that are not projected,
- * or that do not have an EPSG code set.
+ * or whose axes ordering is not northing, easting.
  *
  * This method is the same as the C function EPSGTreatsAsNorthingEasting().
  *
@@ -12000,13 +11998,6 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting() const
     {
         projCRS = proj_clone(ctxt, d->m_pj_crs);
     }
-    const char *pszAuth = proj_get_id_auth_name(projCRS, 0);
-    if (pszAuth == nullptr || !EQUAL(pszAuth, "EPSG"))
-    {
-        d->undoDemoteFromBoundCRS();
-        proj_destroy(projCRS);
-        return FALSE;
-    }
 
     bool ret = false;
     auto cs = proj_crs_get_coordinate_system(ctxt, projCRS);
@@ -12027,7 +12018,7 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting() const
 /************************************************************************/
 
 /**
- * \brief This function returns TRUE if EPSG feels this projected coordinate
+ * \brief This function returns TRUE if this projected coordinate
  * system should be treated as having northing/easting coordinate ordering.
  *
  * This function is the same as
