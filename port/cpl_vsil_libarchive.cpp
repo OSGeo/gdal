@@ -188,7 +188,9 @@ static struct archive *VSICreateArchiveHandle(const std::string &osFSPrefix)
     else
     {
         archive_read_support_format_rar(pArchive);
+#ifdef ARCHIVE_FORMAT_RAR_V5
         archive_read_support_format_rar5(pArchive);
+#endif
     }
 
     return pArchive;
