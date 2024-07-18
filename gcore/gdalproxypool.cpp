@@ -502,6 +502,23 @@ void GDALDatasetPool::_CloseDatasetIfZeroRefCount(const char *pszFileName,
 }
 
 /************************************************************************/
+/*                       GDALGetMaxDatasetPoolSize()                    */
+/************************************************************************/
+
+/** Return the maximum number of datasets simultaneously opened in the
+ * dataset pool.
+ */
+int GDALGetMaxDatasetPoolSize()
+{
+    int nSize = atoi(CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "100"));
+    if (nSize < 2)
+        nSize = 2;
+    else if (nSize > 1000)
+        nSize = 1000;
+    return nSize;
+}
+
+/************************************************************************/
 /*                                 Ref()                                */
 /************************************************************************/
 
@@ -510,12 +527,6 @@ void GDALDatasetPool::Ref()
     CPLMutexHolderD(GDALGetphDLMutex());
     if (singleton == nullptr)
     {
-        int l_maxSize =
-            atoi(CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "100"));
-        if (l_maxSize < 2)
-            l_maxSize = 2;
-        else if (l_maxSize > 1000)
-            l_maxSize = 1000;
 
         // Try to not consume more than 25% of the usable RAM
         GIntBig l_nMaxRAMUsage =
@@ -531,7 +542,8 @@ void GDALDatasetPool::Ref()
                 l_nMaxRAMUsage *= 1024 * 1024 * 1024;
         }
 
-        singleton = new GDALDatasetPool(l_maxSize, l_nMaxRAMUsage);
+        singleton =
+            new GDALDatasetPool(GDALGetMaxDatasetPoolSize(), l_nMaxRAMUsage);
     }
     if (singleton->refCountOfDisableRefCount == 0)
         singleton->refCount++;
@@ -1171,7 +1183,7 @@ GDALProxyPoolDatasetH GDALProxyPoolDatasetCreate(
 /*                       GDALProxyPoolDatasetDelete()                   */
 /************************************************************************/
 
-void CPL_DLL GDALProxyPoolDatasetDelete(GDALProxyPoolDatasetH hProxyPoolDataset)
+void GDALProxyPoolDatasetDelete(GDALProxyPoolDatasetH hProxyPoolDataset)
 {
     delete reinterpret_cast<GDALProxyPoolDataset *>(hProxyPoolDataset);
 }

@@ -2204,7 +2204,7 @@ def test_vrt_read_compute_statistics_mosaic_optimization(
     src_ds2 = gdal.Translate("", src_ds, options="-of MEM -srcwin 8 0 12 20")
     vrt_ds = gdal.BuildVRT("", [src_ds1, src_ds2])
 
-    with gdaltest.config_options({"GDAL_NUM_THREADS": "2"} if use_threads else {}):
+    with gdaltest.config_options({"VRT_NUM_THREADS": "2" if use_threads else "0"}):
         assert vrt_ds.GetRasterBand(1).ComputeRasterMinMax(
             approx_ok
         ) == src_ds.GetRasterBand(1).ComputeRasterMinMax(approx_ok)
@@ -2639,3 +2639,76 @@ def test_vrt_read_virtual_overviews_match_src_overviews(tmp_vsimem):
     assert vrt_band.GetOverview(1).YSize == 1024
     assert vrt_band.GetOverview(2).XSize == 1024
     assert vrt_band.GetOverview(2).YSize == 512
+
+
+###############################################################################
+# Test multi-threaded reading
+
+
+@pytest.mark.parametrize("dataset_level", [True, False])
+@pytest.mark.parametrize("use_threads", [True, False])
+@pytest.mark.parametrize("num_tiles", [2, 128])
+def test_vrt_read_multi_threaded(tmp_vsimem, dataset_level, use_threads, num_tiles):
+
+    width = 2048
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=width, format="MEM"
+    )
+    assert width % num_tiles == 0
+    tile_width = width // num_tiles
+    tile_filenames = []
+    for i in range(num_tiles):
+        tile_filename = str(tmp_vsimem / ("%d.tif" % i))
+        gdal.Translate(
+            tile_filename, src_ds, srcWin=[i * tile_width, 0, tile_width, 1024]
+        )
+        tile_filenames.append(tile_filename)
+    vrt_filename = str(tmp_vsimem / "test.vrt")
+    gdal.BuildVRT(vrt_filename, tile_filenames)
+    vrt_ds = gdal.Open(vrt_filename)
+
+    obj = vrt_ds if dataset_level else vrt_ds.GetRasterBand(1)
+    obj_ref = src_ds if dataset_level else src_ds.GetRasterBand(1)
+
+    pcts = []
+
+    def cbk(pct, msg, user_data):
+        if pcts:
+            assert pct >= pcts[-1]
+        pcts.append(pct)
+        return 1
+
+    with gdal.config_options({} if use_threads else {"VRT_NUM_THREADS": "0"}):
+        assert obj.ReadRaster(1, 2, 1030, 1020, callback=cbk) == obj_ref.ReadRaster(
+            1, 2, 1030, 1020
+        )
+    assert pcts[-1] == 1.0
+
+    assert vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == (
+        "1" if gdal.GetNumCPUs() >= 2 and use_threads else "0"
+    )
+
+
+###############################################################################
+# Test multi-threaded reading
+
+
+def test_vrt_read_multi_threaded_disabled_since_overlapping_sources():
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=2048, format="MEM"
+    )
+    OVERLAP = 1
+    left_ds = gdal.Translate(
+        "left", src_ds, format="MEM", srcWin=[0, 0, 1024 + OVERLAP, 1024]
+    )
+    right_ds = gdal.Translate(
+        "right", src_ds, format="MEM", srcWin=[1024, 0, 1024, 1024]
+    )
+    vrt_ds = gdal.BuildVRT("", [left_ds, right_ds])
+
+    assert vrt_ds.ReadRaster(1, 2, 1030, 1020) == src_ds.ReadRaster(1, 2, 1030, 1020)
+
+    assert (
+        vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == "0"
+    )
