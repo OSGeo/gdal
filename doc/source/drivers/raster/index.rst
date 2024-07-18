@@ -17,13 +17,9 @@ Raster drivers
     The following drivers have been retired and moved to the
     https://github.com/OSGeo/gdal-extra-drivers repository: BPG, E00GRID, EPSILON, IGNFHeightASCIIGrid, NTv1
 
-..
-    Developer comment: make html includes a hack to hide the table from
-    the index.html file. We need to keep it visible so that the top-level
-    index.html lists those pages.
-
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
    aaigrid
    ace2
