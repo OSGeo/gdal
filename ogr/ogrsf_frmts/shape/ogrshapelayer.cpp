@@ -2803,51 +2803,31 @@ OGRErr OGRShapeLayer::Repack()
     /* -------------------------------------------------------------------- */
     /*      Build a list of records to be dropped.                          */
     /* -------------------------------------------------------------------- */
-    int *panRecordsToDelete = static_cast<int *>(CPLMalloc(sizeof(int) * 128));
-    int nDeleteCount = 0;
-    int nDeleteCountAlloc = 128;
+    std::vector<int> anRecordsToDelete;
     OGRErr eErr = OGRERR_NONE;
 
     CPLDebug("Shape", "REPACK: Checking if features have been deleted");
 
     if (hDBF != nullptr)
     {
-        for (int iShape = 0; iShape < nTotalShapeCount; iShape++)
+        try
         {
-            if (DBFIsRecordDeleted(hDBF, iShape))
+            for (int iShape = 0; iShape < nTotalShapeCount; iShape++)
             {
-                if (nDeleteCount == nDeleteCountAlloc)
+                if (DBFIsRecordDeleted(hDBF, iShape))
                 {
-                    const int nDeleteCountAllocNew =
-                        nDeleteCountAlloc + nDeleteCountAlloc / 3 + 32;
-                    if (nDeleteCountAlloc >= (INT_MAX - 32) / 4 * 3 ||
-                        nDeleteCountAllocNew >
-                            INT_MAX / static_cast<int>(sizeof(int)))
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Too many features to delete : %d",
-                                 nDeleteCount);
-                        CPLFree(panRecordsToDelete);
-                        return OGRERR_FAILURE;
-                    }
-                    nDeleteCountAlloc = nDeleteCountAllocNew;
-                    int *panRecordsToDeleteNew = static_cast<int *>(
-                        VSI_REALLOC_VERBOSE(panRecordsToDelete,
-                                            nDeleteCountAlloc * sizeof(int)));
-                    if (panRecordsToDeleteNew == nullptr)
-                    {
-                        CPLFree(panRecordsToDelete);
-                        return OGRERR_FAILURE;
-                    }
-                    panRecordsToDelete = panRecordsToDeleteNew;
+                    anRecordsToDelete.push_back(iShape);
                 }
-                panRecordsToDelete[nDeleteCount++] = iShape;
+                if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)))
+                {
+                    return OGRERR_FAILURE;  // I/O error.
+                }
             }
-            if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)))
-            {
-                CPLFree(panRecordsToDelete);
-                return OGRERR_FAILURE;  // I/O error.
-            }
+        }
+        catch (const std::bad_alloc &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory in Repack()");
+            return OGRERR_FAILURE;
         }
     }
 
@@ -2855,13 +2835,11 @@ OGRErr OGRShapeLayer::Repack()
     /*      If there are no records marked for deletion, we take no         */
     /*      action.                                                         */
     /* -------------------------------------------------------------------- */
-    if (nDeleteCount == 0 && !bSHPNeedsRepack)
+    if (anRecordsToDelete.empty() && !bSHPNeedsRepack)
     {
         CPLDebug("Shape", "REPACK: nothing to do");
-        CPLFree(panRecordsToDelete);
         return OGRERR_NONE;
     }
-    panRecordsToDelete[nDeleteCount] = -1;
 
     /* -------------------------------------------------------------------- */
     /*      Find existing filenames with exact case (see #3293).            */
@@ -2914,7 +2892,6 @@ OGRErr OGRShapeLayer::Repack()
                  "Cannot find the filename of the DBF file, but we managed to "
                  "open it before !");
         // Should not happen, really.
-        CPLFree(panRecordsToDelete);
         return OGRERR_FAILURE;
     }
 
@@ -2924,7 +2901,6 @@ OGRErr OGRShapeLayer::Repack()
                  "Cannot find the filename of the SHP file, but we managed to "
                  "open it before !");
         // Should not happen, really.
-        CPLFree(panRecordsToDelete);
         return OGRERR_FAILURE;
     }
 
@@ -2934,7 +2910,6 @@ OGRErr OGRShapeLayer::Repack()
                  "Cannot find the filename of the SHX file, but we managed to "
                  "open it before !");
         // Should not happen, really.
-        CPLFree(panRecordsToDelete);
         return OGRERR_FAILURE;
     }
 
@@ -2950,9 +2925,10 @@ OGRErr OGRShapeLayer::Repack()
     /* -------------------------------------------------------------------- */
     bool bMustReopenDBF = false;
     CPLString oTempFileDBF;
-    const int nNewRecords = nTotalShapeCount - nDeleteCount;
+    const int nNewRecords =
+        nTotalShapeCount - static_cast<int>(anRecordsToDelete.size());
 
-    if (hDBF != nullptr && nDeleteCount > 0)
+    if (hDBF != nullptr && !anRecordsToDelete.empty())
     {
         CPLDebug("Shape", "REPACK: repacking .dbf");
         bMustReopenDBF = true;
@@ -2963,8 +2939,6 @@ OGRErr OGRShapeLayer::Repack()
         DBFHandle hNewDBF = DBFCloneEmpty(hDBF, oTempFileDBF);
         if (hNewDBF == nullptr)
         {
-            CPLFree(panRecordsToDelete);
-
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Failed to create temp file %s.", oTempFileDBF.c_str());
             return OGRERR_FAILURE;
@@ -2985,12 +2959,13 @@ OGRErr OGRShapeLayer::Repack()
         /* --------------------------------------------------------------------
          */
         int iDestShape = 0;
-        int iNextDeletedShape = 0;
+        size_t iNextDeletedShape = 0;
 
         for (int iShape = 0; iShape < nTotalShapeCount && eErr == OGRERR_NONE;
              iShape++)
         {
-            if (panRecordsToDelete[iNextDeletedShape] == iShape)
+            if (iNextDeletedShape < anRecordsToDelete.size() &&
+                anRecordsToDelete[iNextDeletedShape] == iShape)
             {
                 iNextDeletedShape++;
             }
@@ -3011,7 +2986,6 @@ OGRErr OGRShapeLayer::Repack()
 
         if (eErr != OGRERR_NONE)
         {
-            CPLFree(panRecordsToDelete);
             VSIUnlink(oTempFileDBF);
             return eErr;
         }
@@ -3053,7 +3027,6 @@ OGRErr OGRShapeLayer::Repack()
         SHPHandle hNewSHP = SHPCreate(oTempFileSHP, hSHP->nShapeType);
         if (hNewSHP == nullptr)
         {
-            CPLFree(panRecordsToDelete);
             if (!oTempFileDBF.empty())
                 VSIUnlink(oTempFileDBF);
             return OGRERR_FAILURE;
@@ -3064,12 +3037,13 @@ OGRErr OGRShapeLayer::Repack()
         /*      Copy over all records that are not deleted. */
         /* --------------------------------------------------------------------
          */
-        int iNextDeletedShape = 0;
+        size_t iNextDeletedShape = 0;
 
         for (int iShape = 0; iShape < nTotalShapeCount && eErr == OGRERR_NONE;
              iShape++)
         {
-            if (panRecordsToDelete[iNextDeletedShape] == iShape)
+            if (iNextDeletedShape < anRecordsToDelete.size() &&
+                anRecordsToDelete[iNextDeletedShape] == iShape)
             {
                 iNextDeletedShape++;
             }
@@ -3119,7 +3093,6 @@ OGRErr OGRShapeLayer::Repack()
 
         if (eErr != OGRERR_NONE)
         {
-            CPLFree(panRecordsToDelete);
             VSIUnlink(oTempFileSHP);
             VSIUnlink(oTempFileSHX);
             if (!oTempFileDBF.empty())
@@ -3129,9 +3102,6 @@ OGRErr OGRShapeLayer::Repack()
             return eErr;
         }
     }
-
-    CPLFree(panRecordsToDelete);
-    panRecordsToDelete = nullptr;
 
     // We could also use pack in place for Unix but this involves extra I/O
     // w.r.t to the delete and rename approach
