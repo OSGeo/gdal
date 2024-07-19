@@ -4374,7 +4374,7 @@ void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
 /************************************************************************/
 
 void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
-                                   char **papszOpenOptions)
+                                   CSLConstList papszOpenOptions)
 {
     if (papszOpenOptions != nullptr)
     {
@@ -4382,7 +4382,7 @@ void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
             CPLCreateXMLNode(psParentNode, CXT_Element, "OpenOptions");
         CPLXMLNode *psLastChild = nullptr;
 
-        for (char **papszIter = papszOpenOptions; *papszIter != nullptr;
+        for (CSLConstList papszIter = papszOpenOptions; *papszIter != nullptr;
              papszIter++)
         {
             const char *pszRawValue;
