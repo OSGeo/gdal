@@ -5740,6 +5740,22 @@ def test_nitf_metadata_validation_des():
 
 
 ###############################################################################
+# Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
+
+
+def test_nitf_report_ABPP_as_NBITS(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "tmp.ntf")
+    gdal.GetDriverByName("NITF").Create(
+        out_filename, 1, 1, 1, gdal.GDT_UInt16, options=["NBITS=9"]
+    )
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem("NITF_ABPP") == "09"
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "9"
+
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 
