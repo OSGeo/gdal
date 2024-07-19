@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+    <!-- matches string recognized in GMLASBaseEntityResolver::resolveEntity() -->
+    <xs:import namespace="http://foo" schemaLocation="foo/gml/3.2.1/gml.xsd"/>
+    <!-- matches string recognized in GMLASErrorHandler::handle() -->
+    <xs:import namespace="http://bar" schemaLocation="foo.http://www.opengis.net/gml/3.2:AbstractCRS' not found"/>
+    <xs:element name="foo">
+      <xs:complexType>
+        <xs:sequence>
+           <xs:element name="x"/>
+         </xs:sequence>
+        <xs:attribute name="y" type="invalid"/>
+      </xs:complexType>
+    </xs:element>
+</xs:schema>
