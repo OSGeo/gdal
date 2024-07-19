@@ -431,3 +431,33 @@ also defined as layer metadata items or in the .gti XML file
       :choices: <float>
 
       Maximum Y value for the virtual mosaic extent
+
+Multi-threading optimizations
+-----------------------------
+
+Starting with GDAL 3.10, the :oo:`NUM_THREADS` open option can
+be set to control specifically the multi-threading of GTI datasets.
+It defaults to ``ALL_CPUS``, and when set, overrides :config:`GDAL_NUM_THREADS`
+or :config:`GTI_NUM_THREADS`. It applies to band-level and dataset-level
+RasterIO(), if more than 1 million pixels are requested and if the mosaic is
+made of only non-overlapping tiles.
+
+-  .. oo:: NUM_THREADS
+      :choices: integer, ALL_CPUS
+      :default: ALL_CPUS
+
+      Determines the number of threads used when an operation reads from
+      multiple sources.
+
+This can also be specified globally with the :config:`GTI_NUM_THREADS`
+configuration option.
+
+-  .. config:: GTI_NUM_THREADS
+      :choices: integer, ALL_CPUS
+      :default: ALL_CPUS
+
+      Determines the number of threads used when an operation reads from
+      multiple sources.
+
+Note that the number of threads actually used is also limited by the
+:config:`GDAL_MAX_DATASET_POOL_SIZE` configuration option.

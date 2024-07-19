@@ -2607,3 +2607,161 @@ def test_gti_xml_vrtti_embedded(tmp_vsimem):
     assert band.GetCategoryNames() == ["cat"]
     assert band.GetDefaultRAT() is not None
     del vrt_ds
+
+
+###############################################################################
+# Test multi-threaded reading
+
+
+@pytest.mark.parametrize("use_threads", [True, False])
+@pytest.mark.parametrize("num_tiles", [2, 128])
+def test_gti_read_multi_threaded(tmp_vsimem, use_threads, num_tiles):
+
+    width = 2048
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=width, format="MEM"
+    )
+    assert width % num_tiles == 0
+    tile_width = width // num_tiles
+    tiles_ds = []
+    for i in range(num_tiles):
+        tile_filename = str(tmp_vsimem / ("%d.tif" % i))
+        gdal.Translate(
+            tile_filename, src_ds, srcWin=[i * tile_width, 0, tile_width, 1024]
+        )
+        tiles_ds.append(gdal.Open(tile_filename))
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(index_filename, tiles_ds)
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+
+    pcts = []
+
+    def cbk(pct, msg, user_data):
+        if pcts:
+            assert pct >= pcts[-1]
+        pcts.append(pct)
+        return 1
+
+    with gdal.config_options({} if use_threads else {"GTI_NUM_THREADS": "0"}):
+        assert vrt_ds.ReadRaster(1, 2, 1030, 1020, callback=cbk) == src_ds.ReadRaster(
+            1, 2, 1030, 1020
+        )
+    assert pcts[-1] == 1.0
+
+    assert vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == (
+        "1" if gdal.GetNumCPUs() >= 2 and use_threads else "0"
+    )
+
+    # Again
+    pcts = []
+    with gdal.config_options({} if use_threads else {"GTI_NUM_THREADS": "0"}):
+        assert vrt_ds.ReadRaster(1, 2, 1030, 1020, callback=cbk) == src_ds.ReadRaster(
+            1, 2, 1030, 1020
+        )
+    assert pcts[-1] == 1.0
+
+    assert vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == (
+        "1" if gdal.GetNumCPUs() >= 2 and use_threads else "0"
+    )
+
+
+###############################################################################
+# Test multi-threaded reading
+
+
+def test_gti_read_multi_threaded_disabled_since_overlapping_sources(tmp_vsimem):
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=2048, format="MEM"
+    )
+    OVERLAP = 1
+    left_filename = str(tmp_vsimem / "left.tif")
+    gdal.Translate(left_filename, src_ds, srcWin=[0, 0, 1024 + OVERLAP, 1024])
+    right_filename = str(tmp_vsimem / "right.tif")
+    gdal.Translate(right_filename, src_ds, srcWin=[1024, 0, 1024, 1024])
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(
+        index_filename, [gdal.Open(left_filename), gdal.Open(right_filename)]
+    )
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+
+    assert vrt_ds.ReadRaster(1, 2, 1030, 1020) == src_ds.ReadRaster(1, 2, 1030, 1020)
+
+    assert (
+        vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == "0"
+    )
+
+
+###############################################################################
+# Test multi-threaded reading
+
+
+def test_gti_read_multi_threaded_disabled_because_invalid_filename(tmp_vsimem):
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=2048, format="MEM"
+    )
+    left_filename = str(tmp_vsimem / "left.tif")
+    gdal.Translate(left_filename, src_ds, srcWin=[0, 0, 1024, 1024])
+    right_filename = str(tmp_vsimem / "right.tif")
+    gdal.Translate(right_filename, src_ds, srcWin=[1024, 0, 1024, 1024])
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(
+        index_filename, [gdal.Open(left_filename), gdal.Open(right_filename)]
+    )
+    lyr = index_ds.GetLayer(0)
+    f = lyr.GetFeature(2)
+    f["location"] = "/i/do/not/exist"
+    lyr.SetFeature(f)
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+
+    with pytest.raises(Exception, match="/i/do/not/exist"):
+        vrt_ds.ReadRaster()
+
+    assert vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == (
+        "1" if gdal.GetNumCPUs() >= 2 else "0"
+    )
+
+
+###############################################################################
+# Test multi-threaded reading
+
+
+def test_gti_read_multi_threaded_disabled_because_truncated_source(tmp_vsimem):
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=2048, format="MEM"
+    )
+    left_filename = str(tmp_vsimem / "left.tif")
+    gdal.Translate(left_filename, src_ds, srcWin=[0, 0, 1024, 1024])
+    right_filename = str(tmp_vsimem / "right.tif")
+    gdal.Translate(right_filename, src_ds, srcWin=[1024, 0, 1024, 1024])
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(
+        index_filename, [gdal.Open(left_filename), gdal.Open(right_filename)]
+    )
+    del index_ds
+
+    f = gdal.VSIFOpenL(right_filename, "rb+")
+    assert f
+    gdal.VSIFTruncateL(f, gdal.VSIStatL(right_filename).size - 10)
+    gdal.VSIFCloseL(f)
+
+    vrt_ds = gdal.Open(index_filename)
+
+    with pytest.raises(Exception, match="right.tif"):
+        vrt_ds.ReadRaster()
+
+    assert vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == (
+        "1" if gdal.GetNumCPUs() >= 2 else "0"
+    )
