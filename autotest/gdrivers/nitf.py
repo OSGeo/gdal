@@ -966,16 +966,17 @@ def test_nitf_28_jp2openjpeg_bis():
 # Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
 
 
-def test_nitf_jp2openjpeg_npje_numerically_lossless():
+def test_nitf_jp2openjpeg_npje_numerically_lossless(tmp_vsimem):
     jp2openjpeg_drv = gdal.GetDriverByName("JP2OpenJPEG")
     if jp2openjpeg_drv is None:
         pytest.skip()
 
     src_ds = gdal.Open("../gcore/data/uint16.tif")
     # May throw a warning with openjpeg < 2.5
+    out1_filename = str(tmp_vsimem / "tmp.ntf")
     with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").CreateCopy(
-            "/vsimem/tmp.ntf",
+            out1_filename,
             src_ds,
             strict=False,
             options=[
@@ -986,19 +987,17 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
             ],
         )
 
-    ds = gdal.Open("/vsimem/tmp.ntf")
+    ds = gdal.Open(out1_filename)
+    assert ds.GetMetadataItem("NITF_ABPP") == "12"
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "12"
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert (
         ds.GetMetadataItem("J2KLRA", "TRE")
         == "0050000102000000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001703.50000001803.90000001912.000000"
     )
     assert ds.GetMetadataItem("COMRAT", "DEBUG") in (
-        "N141",
-        "N142",
-        "N143",
-        "N147",
-        "N169",
-        "N174",
+        "N145",  # OpenJPEG 2.3.1 and 2.4
+        "N172",  # OpenJPEG 2.5
     )
     assert (
         ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
@@ -1018,7 +1017,7 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
         in structure
     )
     assert (
-        '<Field name="Ssiz0" type="uint8" description="Unsigned 16 bits">15</Field>'
+        '<Field name="Ssiz0" type="uint8" description="Unsigned 12 bits">11</Field>'
         in structure
     )
     assert '<Field name="XTsiz" type="uint32">1024</Field>' in structure
@@ -1051,7 +1050,24 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
         assert '<Marker name="TLM"' in structure
         assert '<Marker name="PLT"' in structure
 
-    gdal.Unlink("/vsimem/tmp.ntf")
+    # Check that NBITS is propagated as ABPP
+    out2_filename = str(tmp_vsimem / "tmp.ntf")
+    with gdal.quiet_errors():
+        gdal.GetDriverByName("NITF").CreateCopy(
+            out2_filename,
+            gdal.Open(out1_filename),
+            strict=False,
+            options=[
+                "IC=C8",
+                "JPEG2000_DRIVER=JP2OpenJPEG",
+                "PROFILE=NPJE_NUMERICALLY_LOSSLESS",
+            ],
+        )
+
+    ds = gdal.Open(out2_filename)
+    assert ds.GetMetadataItem("NITF_ABPP") == "12"
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "12"
+    assert ds.GetRasterBand(1).Checksum() == 4672
 
 
 ###############################################################################

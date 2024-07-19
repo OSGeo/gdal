@@ -10,6 +10,8 @@ a number of advanced, and somewhat esoteric options not suitable for the
 information is collected here, and is primarily aimed at developers and
 advanced users.
 
+.. _raster.nitf_advanced_cgm:
+
 CGM Segments
 ------------
 
@@ -80,6 +82,8 @@ In this case opening "multi_image_jpeg_2.0.ntf" directly will give
 access to "NITF_IM:0:multi_image_jpeg_2.0.ntf". To open the others use
 the corresponding subdataset names. The Subdataset mechanism is generic
 GDAL concept discussed in the :ref:`raster_data_model` document.
+
+.. _raster.nitf_advanced_text:
 
 Text Segments
 -------------
@@ -302,6 +306,8 @@ metadata in base64 encoded format. Something like:
 
 Note that the ascii encoded numeric values prefixing the base64 encoded
 header is the length (decoded) in bytes, followed by one space.
+
+.. _raster.nitf_advanced_write_multiple_image_segments:
 
 Writing multiple Image Segments
 -------------------------------
