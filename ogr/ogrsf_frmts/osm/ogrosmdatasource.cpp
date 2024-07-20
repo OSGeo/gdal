@@ -2862,6 +2862,8 @@ int OGROSMDataSource::Open(const char *pszFilename,
     m_nMaxSizeForInMemoryDBInMB = atoi(CSLFetchNameValueDef(
         papszOpenOptionsIn, "MAX_TMPFILE_SIZE",
         CPLGetConfigOption("OSM_MAX_TMPFILE_SIZE", "100")));
+    if (m_nMaxSizeForInMemoryDBInMB == 0)
+        m_nMaxSizeForInMemoryDBInMB = 1;
     GIntBig nSize =
         static_cast<GIntBig>(m_nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
     if (nSize < 0 ||
@@ -2892,14 +2894,13 @@ int OGROSMDataSource::Open(const char *pszFilename,
         }
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        bool bSuccess =
-            VSIFSeekL(m_fpNodes, static_cast<vsi_l_offset>(nSize * 3 / 4),
-                      SEEK_SET) == 0;
+        const bool bSuccess =
+            VSIFTruncateL(m_fpNodes,
+                          static_cast<vsi_l_offset>(nSize * 3 / 4)) == 0;
         CPLPopErrorHandler();
 
         if (bSuccess)
         {
-            VSIFSeekL(m_fpNodes, 0, SEEK_SET);
             VSIFTruncateL(m_fpNodes, 0);
         }
         else
@@ -2978,14 +2979,14 @@ bool OGROSMDataSource::CreateTempDB()
         VSILFILE *fp = VSIFOpenL(m_osTmpDBName, "wb");
         if (fp)
         {
-            GIntBig nSize =
-                static_cast<GIntBig>(m_nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
+            vsi_l_offset nSize =
+                static_cast<vsi_l_offset>(m_nMaxSizeForInMemoryDBInMB) * 1024 *
+                1024;
             if (m_bCustomIndexing && m_bInMemoryNodesFile)
                 nSize = nSize / 4;
 
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            bSuccess =
-                VSIFSeekL(fp, static_cast<vsi_l_offset>(nSize), SEEK_SET) == 0;
+            bSuccess = VSIFTruncateL(fp, nSize) == 0;
             CPLPopErrorHandler();
 
             if (bSuccess)
