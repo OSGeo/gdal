@@ -2577,7 +2577,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     virtual void
     assignSpatialReference(const OGRSpatialReference *poSR) override;
 
-    virtual OGRErr addRing(OGRCurve *);
+    virtual OGRErr addRing(const OGRCurve *);
     virtual OGRErr addRingDirectly(OGRCurve *);
     OGRErr addRing(std::unique_ptr<OGRCurve>);
 

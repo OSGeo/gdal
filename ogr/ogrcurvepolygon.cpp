@@ -342,7 +342,7 @@ OGRErr OGRCurvePolygon::removeRing(int iIndex, bool bDelete)
  * @return OGRERR_NONE in case of success
  */
 
-OGRErr OGRCurvePolygon::addRing(OGRCurve *poNewRing)
+OGRErr OGRCurvePolygon::addRing(const OGRCurve *poNewRing)
 
 {
     OGRCurve *poNewRingCloned = poNewRing->clone();
