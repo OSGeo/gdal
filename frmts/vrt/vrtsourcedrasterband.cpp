@@ -646,17 +646,6 @@ void VRTSourcedRasterBand::RasterIOJob::Func(void *pData)
 /*                         IGetDataCoverageStatus()                     */
 /************************************************************************/
 
-#ifndef HAVE_GEOS
-int VRTSourcedRasterBand::IGetDataCoverageStatus(
-    int /* nXOff */, int /* nYOff */, int /* nXSize */, int /* nYSize */,
-    int /* nMaskFlagStop */, double *pdfDataPct)
-{
-    if (pdfDataPct)
-        *pdfDataPct = -1.0;
-    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
-           GDAL_DATA_COVERAGE_STATUS_DATA;
-}
-#else
 int VRTSourcedRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
                                                  int nXSize, int nYSize,
                                                  int nMaskFlagStop,
@@ -664,6 +653,56 @@ int VRTSourcedRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
 {
     if (pdfDataPct)
         *pdfDataPct = -1.0;
+
+    // Particular case for a single simple source covering the whole dataset
+    if (nSources == 1 && papoSources[0]->IsSimpleSource() &&
+        papoSources[0]->GetType() == VRTSimpleSource::GetTypeStatic())
+    {
+        VRTSimpleSource *poSource =
+            static_cast<VRTSimpleSource *>(papoSources[0]);
+
+        GDALRasterBand *poBand = poSource->GetRasterBand();
+        if (!poBand)
+            poBand = poSource->GetMaskBandMainBand();
+        if (!poBand)
+        {
+            return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+                   GDAL_DATA_COVERAGE_STATUS_DATA;
+        }
+
+        /* Check that it uses the full source dataset */
+        double dfReqXOff = 0.0;
+        double dfReqYOff = 0.0;
+        double dfReqXSize = 0.0;
+        double dfReqYSize = 0.0;
+        int nReqXOff = 0;
+        int nReqYOff = 0;
+        int nReqXSize = 0;
+        int nReqYSize = 0;
+        int nOutXOff = 0;
+        int nOutYOff = 0;
+        int nOutXSize = 0;
+        int nOutYSize = 0;
+        bool bError = false;
+        if (poSource->GetSrcDstWindow(
+                0, 0, GetXSize(), GetYSize(), GetXSize(), GetYSize(),
+                &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
+                &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                &nOutXSize, &nOutYSize, bError) &&
+            nReqXOff == 0 && nReqYOff == 0 && nReqXSize == GetXSize() &&
+            nReqXSize == poBand->GetXSize() && nReqYSize == GetYSize() &&
+            nReqYSize == poBand->GetYSize() && nOutXOff == 0 && nOutYOff == 0 &&
+            nOutXSize == GetXSize() && nOutYSize == GetYSize())
+        {
+            return poBand->GetDataCoverageStatus(nXOff, nYOff, nXSize, nYSize,
+                                                 nMaskFlagStop, pdfDataPct);
+        }
+    }
+
+#ifndef HAVE_GEOS
+    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+           GDAL_DATA_COVERAGE_STATUS_DATA;
+#else
     int nStatus = 0;
 
     auto poPolyNonCoveredBySources = std::make_unique<OGRPolygon>();
@@ -755,8 +794,8 @@ int VRTSourcedRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
                                              nXSize / nYSize);
     }
     return nStatus;
-}
 #endif  // HAVE_GEOS
+}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
