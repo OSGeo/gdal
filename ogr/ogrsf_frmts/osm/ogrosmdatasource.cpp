@@ -2838,7 +2838,7 @@ int OGROSMDataSource::Open(const char *pszFilename,
         VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(GIntBig)));
     try
     {
-        m_asWayFeaturePairs.resize(MAX_DELAYED_FEATURES);
+        m_asWayFeaturePairs.reserve(MAX_DELAYED_FEATURES);
     }
     catch (const std::exception &)
     {
