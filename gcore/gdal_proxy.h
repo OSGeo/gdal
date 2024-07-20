@@ -129,6 +129,9 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
                      GDALDataType, GSpacing, GSpacing,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
+    int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nMaskFlagStop, double *pdfDataPct) override;
+
   public:
     char **GetMetadataDomainList() override;
     char **GetMetadata(const char *pszDomain) override;
