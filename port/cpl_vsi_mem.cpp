@@ -139,7 +139,6 @@ class VSIMemHandle final : public VSIVirtualHandle
     bool bUpdate = false;
     bool bEOF = false;
     bool m_bError = false;
-    bool bExtendFileAtNextWrite = false;
 
     VSIMemHandle() = default;
     ~VSIMemHandle() override;
@@ -350,7 +349,6 @@ int VSIMemHandle::Seek(vsi_l_offset nOffset, int nWhence)
         nLength = poFile->nLength;
     }
 
-    bExtendFileAtNextWrite = false;
     if (nWhence == SEEK_CUR)
     {
         if (nOffset > INT_MAX)
@@ -374,14 +372,6 @@ int VSIMemHandle::Seek(vsi_l_offset nOffset, int nWhence)
     }
 
     bEOF = false;
-
-    if (m_nOffset > nLength)
-    {
-        if (bUpdate)  // Writable files are zero-extended by seek past end.
-        {
-            bExtendFileAtNextWrite = true;
-        }
-    }
 
     return 0;
 }
@@ -494,14 +484,6 @@ size_t VSIMemHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
     }
 
     const size_t nBytesToWrite = nSize * nCount;
-
-    if (bExtendFileAtNextWrite)
-    {
-        bExtendFileAtNextWrite = false;
-        CPL_EXCLUSIVE_LOCK oLock(poFile->m_oMutex);
-        if (!poFile->SetLength(nOffset))
-            return 0;
-    }
 
     {
         CPL_EXCLUSIVE_LOCK oLock(poFile->m_oMutex);
