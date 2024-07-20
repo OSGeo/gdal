@@ -4864,6 +4864,7 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(GDALDatasetH hSrcDS,
                 int nStatus = GDAL_DATA_COVERAGE_STATUS_DATA;
                 if (bCheckHoles)
                 {
+                    nStatus = 0;
                     for (int iBand = 0; iBand < nBandCount; iBand++)
                     {
                         nStatus |= poSrcDS->GetRasterBand(iBand + 1)
