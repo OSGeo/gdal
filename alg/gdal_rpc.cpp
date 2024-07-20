@@ -1091,7 +1091,7 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
 /*                 GDALDestroyReprojectionTransformer()                 */
 /************************************************************************/
 
-/** Destroy RPC tranformer */
+/** Destroy RPC transformer */
 void GDALDestroyRPCTransformer(void *pTransformAlg)
 
 {

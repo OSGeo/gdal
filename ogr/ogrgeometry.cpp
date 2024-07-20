@@ -6941,7 +6941,7 @@ OGRCreatePreparedGeometry(UNUSED_IF_NO_GEOS OGRGeometryH hGeom)
 /************************************************************************/
 
 /** Destroys a prepared geometry.
- * @param hPreparedGeom preprated geometry.
+ * @param hPreparedGeom prepared geometry.
  * @since GDAL 3.3
  */
 void OGRDestroyPreparedGeometry(
