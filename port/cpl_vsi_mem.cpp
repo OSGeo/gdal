@@ -265,13 +265,21 @@ bool VSIMemFile::SetLength(vsi_l_offset nNewLength)
             return false;
         }
 
-        const vsi_l_offset nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
+        // If the first allocation is 1 MB or above, just take that value
+        // as the one to allocate
+        // Otherwise slightly reserve more to avoid too frequent reallocations.
+        const vsi_l_offset nNewAlloc =
+            (nAllocLength == 0 && nNewLength >= 1024 * 1024)
+                ? nNewLength
+                : nNewLength + nNewLength / 10 + 5000;
         GByte *pabyNewData = nullptr;
         if (static_cast<vsi_l_offset>(static_cast<size_t>(nNewAlloc)) ==
             nNewAlloc)
         {
             pabyNewData = static_cast<GByte *>(
-                VSIRealloc(pabyData, static_cast<size_t>(nNewAlloc)));
+                nAllocLength == 0
+                    ? VSICalloc(1, static_cast<size_t>(nNewAlloc))
+                    : VSIRealloc(pabyData, static_cast<size_t>(nNewAlloc)));
         }
         if (pabyNewData == nullptr)
         {
@@ -282,9 +290,14 @@ bool VSIMemFile::SetLength(vsi_l_offset nNewLength)
             return false;
         }
 
-        // Clear the new allocated part of the buffer.
-        memset(pabyNewData + nAllocLength, 0,
-               static_cast<size_t>(nNewAlloc - nAllocLength));
+        if (nAllocLength > 0)
+        {
+            // Clear the new allocated part of the buffer (only needed if
+            // there was already reserved memory, otherwise VSICalloc() has
+            // zeroized it already)
+            memset(pabyNewData + nAllocLength, 0,
+                   static_cast<size_t>(nNewAlloc - nAllocLength));
+        }
 
         pabyData = pabyNewData;
         nAllocLength = nNewAlloc;
@@ -559,8 +572,6 @@ int VSIMemHandle::Truncate(vsi_l_offset nNewSize)
         errno = EACCES;
         return -1;
     }
-
-    bExtendFileAtNextWrite = false;
 
     CPL_EXCLUSIVE_LOCK oLock(poFile->m_oMutex);
     if (poFile->SetLength(nNewSize))
