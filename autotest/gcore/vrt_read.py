@@ -1072,6 +1072,48 @@ def test_vrt_read_25():
 
 
 ###############################################################################
+# Test GetDataCoverageStatus() on a single source covering the whole dataset
+
+
+def test_vrt_read_get_data_coverage_status_single_source(tmp_vsimem):
+
+    tmp_gtiff = str(tmp_vsimem / "tmp.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_gtiff,
+        512,
+        512,
+        1,
+        options=["TILED=YES", "BLOCKXSIZE=256", "BLOCKYSIZE=256", "SPARSE_OK=YES"],
+    )
+    ds.WriteRaster(256, 256, 256, 256, b"\x01" * (256 * 256))
+    ds = None
+
+    tmp_vrt = str(tmp_vsimem / "tmp.vrt")
+    gdal.Translate(tmp_vrt, tmp_gtiff, format="VRT")
+    ds = gdal.Open(tmp_vrt)
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 512, 512)
+    assert (
+        flags
+        == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
+        and pct == 25.0
+    )
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 256, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(256, 256, 256, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 256, 512, 256)
+    assert (
+        flags
+        == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
+        and pct == 50.0
+    )
+
+
+###############################################################################
 # Test consistency of RasterIO() with resampling, that is extracting different
 # sub-windows give consistent results
 
