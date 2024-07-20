@@ -1643,6 +1643,29 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         else
             bAllOpaque = false;
     }
+    else if (bAllDirty && m_eDT == GDT_Byte && m_poCT == nullptr &&
+             (!bHasNoData || dfNoDataValue == 0.0))
+    {
+        bool bAllEmpty = true;
+        const auto nPixels =
+            static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize * nBands;
+        for (GPtrDiff_t i = 0; i < nPixels; i++)
+        {
+            if (m_pabyCachedTiles[i] != 0)
+            {
+                bAllEmpty = false;
+                break;
+            }
+        }
+        if (bAllEmpty)
+        {
+            // If tile is fully transparent, don't serialize it and remove it if
+            // it exists
+            DeleteTile(nRow, nCol);
+
+            return CE_None;
+        }
+    }
     else if (bAllDirty && m_eDT == GDT_Float32)
     {
         const float *pSrc = reinterpret_cast<float *>(m_pabyCachedTiles);
