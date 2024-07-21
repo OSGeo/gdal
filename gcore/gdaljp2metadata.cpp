@@ -185,10 +185,8 @@ int GDALJP2Metadata::ReadAndParse(VSILFILE *fpLL, int nGEOJP2Index,
         aoSetPriorities.insert(nGMLJP2Index);
     if (nMSIGIndex >= 0)
         aoSetPriorities.insert(nMSIGIndex);
-    std::set<int>::iterator oIter = aoSetPriorities.begin();
-    for (; oIter != aoSetPriorities.end(); ++oIter)
+    for (const int nIndex : aoSetPriorities)
     {
-        int nIndex = *oIter;
         if ((nIndex == nGEOJP2Index && ParseJP2GeoTIFF()) ||
             (nIndex == nGMLJP2Index && ParseGMLCoverageDesc()) ||
             (nIndex == nMSIGIndex && ParseMSIG()))
