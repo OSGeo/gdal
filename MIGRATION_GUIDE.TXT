@@ -15,6 +15,9 @@ MIGRATION GUIDE FROM GDAL 3.9 to GDAL 3.10
   corresponding optional (but recommended to be implemented to reliably detect
   reading errors) callbacks "error" and "clear_err".
 
+- Python bindings: Band.GetStatistics() and Band.ComputeStatistics() now
+  return a None value in case of error (when exceptions are not enabled)
+
 MIGRATION GUIDE FROM GDAL 3.8 to GDAL 3.9
 -----------------------------------------
 
