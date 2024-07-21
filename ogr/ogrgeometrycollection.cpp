@@ -361,6 +361,21 @@ OGRErr OGRGeometryCollection::addGeometryDirectly(OGRGeometry *poNewGeom)
     if (!isCompatibleSubType(poNewGeom->getGeometryType()))
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
+#if SIZEOF_VOIDP < 8
+    if (nGeomCount == std::numeric_limits<int>::max() /
+                          static_cast<int>(sizeof(OGRGeometry *)))
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Too many subgeometries");
+        return OGRERR_FAILURE;
+    }
+#else
+    if (nGeomCount == std::numeric_limits<int>::max())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too many subgeometries");
+        return OGRERR_FAILURE;
+    }
+#endif
+
     HomogenizeDimensionalityWith(poNewGeom);
 
     OGRGeometry **papoNewGeoms = static_cast<OGRGeometry **>(
