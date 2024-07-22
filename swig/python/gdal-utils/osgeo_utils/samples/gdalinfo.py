@@ -402,7 +402,7 @@ def main(argv=None):
             print(line)
 
         stats = hBand.GetStatistics(bApproxStats, bStats)
-        # Before GDAL 3.10, a negatie value for stddev indicated an error
+        # Before GDAL 3.10, a negative value for stddev indicated an error
         if stats is not None and stats[3] >= 0.0:
             print(
                 "  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f"
