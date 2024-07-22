@@ -2142,6 +2142,57 @@ def test_gti_ovr_lyr_name(tmp_vsimem):
         vrt_ds.GetRasterBand(1).GetOverviewCount()
 
 
+def test_gti_ovr_of_ovr(tmp_vsimem):
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    ovr_filename = str(tmp_vsimem / "byte_ovr.tif")
+    ovr_ds = gdal.Translate(ovr_filename, "data/byte.tif", width=10)
+    ovr_ds.BuildOverviews("NEAR", [2])
+    ovr_ds = None
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
+    lyr.SetMetadataItem("OVERVIEW_0_DATASET", ovr_filename)
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+    ovr_ds = gdal.Open(ovr_filename)
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 2
+    assert (
+        vrt_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+        == ovr_ds.GetRasterBand(1).ReadRaster()
+    )
+    assert (
+        vrt_ds.GetRasterBand(1).GetOverview(1).ReadRaster()
+        == ovr_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    )
+
+
+def test_gti_ovr_of_ovr_OVERVIEW_LEVEL_NONE(tmp_vsimem):
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    ovr_filename = str(tmp_vsimem / "byte_ovr.tif")
+    ovr_ds = gdal.Translate(ovr_filename, "data/byte.tif", width=10)
+    ovr_ds.BuildOverviews("NEAR", [2])
+    ovr_ds = None
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
+    lyr.SetMetadataItem("OVERVIEW_0_DATASET", ovr_filename)
+    lyr.SetMetadataItem("OVERVIEW_0_OPEN_OPTIONS", "OVERVIEW_LEVEL=NONE")
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+    ovr_ds = gdal.Open(ovr_filename)
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert (
+        vrt_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+        == ovr_ds.GetRasterBand(1).ReadRaster()
+    )
+
+
 def test_gti_external_ovr(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
