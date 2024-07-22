@@ -2063,7 +2063,7 @@ def test_gti_ovr_factor(tmp_vsimem):
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
     lyr.SetMetadataItem("MASK_BAND", "YES")
-    lyr.SetMetadataItem("OVERVIEW_1_FACTOR", "2")
+    lyr.SetMetadataItem("OVERVIEW_0_FACTOR", "2")
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)
@@ -2100,6 +2100,7 @@ def test_gti_ovr_factor_invalid(tmp_vsimem):
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
+    # Also test GDAL 3.9.0 and 3.9.1 where the idx started at 1
     lyr.SetMetadataItem("OVERVIEW_1_FACTOR", "0.5")
     del index_ds
 
@@ -2114,7 +2115,7 @@ def test_gti_ovr_ds_name(tmp_vsimem):
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
-    lyr.SetMetadataItem("OVERVIEW_1_DATASET", "/i/do/not/exist")
+    lyr.SetMetadataItem("OVERVIEW_0_DATASET", "/i/do/not/exist")
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)
@@ -2128,7 +2129,7 @@ def test_gti_ovr_lyr_name(tmp_vsimem):
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
-    lyr.SetMetadataItem("OVERVIEW_1_LAYER", "non_existing")
+    lyr.SetMetadataItem("OVERVIEW_0_LAYER", "non_existing")
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)
