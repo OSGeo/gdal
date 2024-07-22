@@ -3472,3 +3472,16 @@ def test_ogr_gmlas_force_opening(tmp_vsimem):
 
     ds = gdal.OpenEx("data/gmlas/gmlas_test1.xml", allowed_drivers=["GMLAS"])
     assert ds.GetDriver().GetDescription() == "GMLAS"
+
+
+###############################################################################
+# Test we don't crash on a OSSFuzz generated xsd
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gmlas_ossfuzz_70511():
+
+    with gdal.quiet_errors(), pytest.raises(
+        Exception, match="Cannot get type definition for attribute y"
+    ):
+        gdal.OpenEx("GMLAS:", open_options=["XSD=data/gmlas/test_ossfuzz_70511.xsd"])

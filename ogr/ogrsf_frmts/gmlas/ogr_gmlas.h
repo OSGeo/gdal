@@ -1161,7 +1161,7 @@ class GMLASSchemaAnalyzer
                        const XSModelGroup *poModelGroup2);
     XSModelGroupDefinition *
     GetGroupDefinition(const XSModelGroup *poModelGroup);
-    void SetFieldFromAttribute(GMLASField &oField, XSAttributeUse *poAttr,
+    bool SetFieldFromAttribute(GMLASField &oField, XSAttributeUse *poAttr,
                                const CPLString &osXPathPrefix,
                                const CPLString &osNamePrefix = CPLString());
     void GetConcreteImplementationTypes(

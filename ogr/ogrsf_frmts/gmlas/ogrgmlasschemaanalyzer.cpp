@@ -1572,23 +1572,30 @@ static bool IsAnyType(XSComplexTypeDefinition *poType)
 /*                       SetFieldFromAttribute()                        */
 /************************************************************************/
 
-void GMLASSchemaAnalyzer::SetFieldFromAttribute(GMLASField &oField,
+bool GMLASSchemaAnalyzer::SetFieldFromAttribute(GMLASField &oField,
                                                 XSAttributeUse *poAttr,
                                                 const CPLString &osXPathPrefix,
                                                 const CPLString &osNamePrefix)
 {
-    XSAttributeDeclaration *poAttrDecl = poAttr->getAttrDeclaration();
-    XSSimpleTypeDefinition *poAttrType = poAttrDecl->getTypeDefinition();
-
-    SetFieldTypeAndWidthFromDefinition(poAttrType, oField);
-
-    CPLString osNS(transcode(poAttrDecl->getNamespace()));
-    CPLString osName(transcode(poAttrDecl->getName()));
+    const XSAttributeDeclaration *poAttrDecl = poAttr->getAttrDeclaration();
+    const CPLString osNS(transcode(poAttrDecl->getNamespace()));
+    const CPLString osName(transcode(poAttrDecl->getName()));
 
     if (osNamePrefix.empty())
         oField.SetName(osName);
     else
         oField.SetName(osNamePrefix + "_" + osName);
+
+    XSSimpleTypeDefinition *poAttrType = poAttrDecl->getTypeDefinition();
+    if (!poAttrType)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot get type definition for attribute %s",
+                 oField.GetName().c_str());
+        return false;
+    }
+
+    SetFieldTypeAndWidthFromDefinition(poAttrType, oField);
 
     oField.SetXPath(osXPathPrefix + "/@" + MakeXPath(osNS, osName));
     if (poAttr->getRequired())
@@ -1626,6 +1633,8 @@ void GMLASSchemaAnalyzer::SetFieldFromAttribute(GMLASField &oField,
     }
 
     oField.SetDocumentation(GetAnnotationDoc(poAttrDecl->getAnnotation()));
+
+    return true;
 }
 
 /************************************************************************/
@@ -2276,8 +2285,11 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                 XSAttributeUse *poAttr =
                                     poAttrList->elementAt(j);
                                 GMLASField oField;
-                                SetFieldFromAttribute(oField, poAttr,
-                                                      osFullXPath);
+                                if (!SetFieldFromAttribute(oField, poAttr,
+                                                           osFullXPath))
+                                {
+                                    return false;
+                                }
                                 if (!IsIgnoredXPath(oField.GetXPath()) &&
                                     oField.GetFixedValue().empty())
                                 {
@@ -2343,7 +2355,11 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                         {
                             XSAttributeUse *poAttr = poAttrList->elementAt(j);
                             GMLASField oField;
-                            SetFieldFromAttribute(oField, poAttr, osFullXPath);
+                            if (!SetFieldFromAttribute(oField, poAttr,
+                                                       osFullXPath))
+                            {
+                                return false;
+                            }
                             if (!IsIgnoredXPath(oField.GetXPath()) &&
                                 oField.GetFixedValue().empty())
                             {
@@ -2606,7 +2622,10 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
         {
             GMLASField oField;
             XSAttributeUse *poAttr = poMainAttrList->elementAt(j);
-            SetFieldFromAttribute(oField, poAttr, oClass.GetXPath());
+            if (!SetFieldFromAttribute(oField, poAttr, oClass.GetXPath()))
+            {
+                return false;
+            }
 
             if (IsIgnoredXPath(oField.GetXPath()))
             {
@@ -2989,8 +3008,11 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     CPLString osNamePrefix(bMoveNestedClassToTop
                                                ? osPrefixedEltName
                                                : CPLString());
-                    SetFieldFromAttribute(oField, poAttr, osElementXPath,
-                                          osNamePrefix);
+                    if (!SetFieldFromAttribute(oField, poAttr, osElementXPath,
+                                               osNamePrefix))
+                    {
+                        return false;
+                    }
                     if (nMinOccurs == 0 || bIsChoice)
                     {
                         oField.SetMinOccurs(0);
