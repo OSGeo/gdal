@@ -201,6 +201,10 @@ PostGIS, ...), the following layer metadata items may be set:
   This may also be a vector dataset with a GTI compatible layer, potentially
   specified with ``OVERVIEW_<idx>_LAYER``.
 
+  Starting with GDAL 3.9.2, overviews of ``OVERVIEW_<idx>_DATASET=<string>``
+  are also automatically added, unless ``OVERVIEW_<idx>_OPEN_OPTIONS=OVERVIEW_LEVEL=NONE``
+  is specified.
+
 * ``OVERVIEW_<idx>_OPEN_OPTIONS=<key1=value1>[,key2=value2]...`` where idx is an integer index (starting at 0
   since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
 
@@ -208,6 +212,9 @@ PostGIS, ...), the following layer metadata items may be set:
 
 * ``OVERVIEW_<idx>_LAYER=<string>`` where idx is an integer index (starting at 0
   since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
+
+  Only taken into account if ``OVERVIEW_<idx>_DATASET=<string>`` is not specified,
+  or points to a GTI dataset.
 
   Name of the vector layer to use as the first overview level, assuming
   ``OVERVIEW_<idx>_DATASET`` points to a vector dataset. ``OVERVIEW_<idx>_DATASET``
@@ -217,8 +224,12 @@ PostGIS, ...), the following layer metadata items may be set:
 * ``OVERVIEW_<idx>_FACTOR=<int>`` where idx is an integer index (starting at 0
   since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
 
-  Sub-sampling factor, strictly greater than 1. If ``OVERVIEW_<idx>_DATASET``
-  and ``OVERVIEW_<idx>_LAYER`` are not specified, then all tiles of the full
+  Sub-sampling factor, strictly greater than 1.
+
+  Only taken into account if ``OVERVIEW_<idx>_DATASET=<string>`` is not specified,
+  or points to a GTI dataset.
+
+  If ``OVERVIEW_<idx>_DATASET`` and ``OVERVIEW_<idx>_LAYER`` are not specified, then all tiles of the full
   resolution virtual mosaic are used, with the specified sub-sampling factor
   (it is recommended, but not required, that those tiles do have a corresponding overview).
   ``OVERVIEW_<idx>_DATASET`` and/or ``OVERVIEW_<idx>_LAYER`` may also be
@@ -227,6 +238,8 @@ PostGIS, ...), the following layer metadata items may be set:
 All overviews *must* have exactly the same extent as the full resolution
 virtual mosaic. The GTI driver does not check that, and if that condition is
 not met, subsampled pixel request will lead to incorrect result.
+
+They also must be listed by decreasing size with increasing overview index.
 
 In addition to those layer metadata items, the dataset-level metadata item
 ``TILE_INDEX_LAYER`` may be set to indicate, for dataset with multiple layers,
@@ -316,7 +329,8 @@ mentioned in the previous section.
         </Overview>
         <Overview>                                     <!-- optional -->
             <!-- 3rd overview level (and potentially 4th, 5th... depending on
-                 the number of overview levels in the pointed GeoTIFF file)
+                 the number of overview levels in the pointed GeoTIFF file.
+                 Only since GDAL 3.9.2)
             -->
             <Dataset>some.tif</Dataset>
         </Overview>
