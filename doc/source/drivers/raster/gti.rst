@@ -193,25 +193,29 @@ PostGIS, ...), the following layer metadata items may be set:
 
   Unit of the band.
 
-* ``OVERVIEW_<idx>_DATASET=<string>`` where idx is an integer index starting at 0.
+* ``OVERVIEW_<idx>_DATASET=<string>`` where idx is an integer index (starting at 0
+  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
 
   Name of the dataset to use as the first overview level. This may be a
   raster dataset (for example a GeoTIFF file, or another GTI dataset).
   This may also be a vector dataset with a GTI compatible layer, potentially
   specified with ``OVERVIEW_<idx>_LAYER``.
 
-* ``OVERVIEW_<idx>_OPEN_OPTIONS=<key1=value1>[,key2=value2]...`` where idx is an integer index starting at 0.
+* ``OVERVIEW_<idx>_OPEN_OPTIONS=<key1=value1>[,key2=value2]...`` where idx is an integer index (starting at 0
+  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
 
   Open options(s) to use to open ``OVERVIEW_<idx>_DATASET``.
 
-* ``OVERVIEW_<idx>_LAYER=<string>`` where idx is an integer index starting at 0.
+* ``OVERVIEW_<idx>_LAYER=<string>`` where idx is an integer index (starting at 0
+  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
 
   Name of the vector layer to use as the first overview level, assuming
   ``OVERVIEW_<idx>_DATASET`` points to a vector dataset. ``OVERVIEW_<idx>_DATASET``
   may also not be specified, in which case the vector dataset of the full
   resolution virtual mosaic is used.
 
-* ``OVERVIEW_<idx>_FACTOR=<int>`` where idx is an integer index starting at 0.
+* ``OVERVIEW_<idx>_FACTOR=<int>`` where idx is an integer index (starting at 0
+  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
 
   Sub-sampling factor, strictly greater than 1. If ``OVERVIEW_<idx>_DATASET``
   and ``OVERVIEW_<idx>_LAYER`` are not specified, then all tiles of the full
