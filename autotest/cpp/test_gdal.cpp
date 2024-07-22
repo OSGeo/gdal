@@ -4021,4 +4021,327 @@ TEST_F(test_gdal, gdal_gcp_class)
     }
 }
 
+// Test GDALRasterBand::ReadRaster
+TEST_F(test_gdal, ReadRaster)
+{
+    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
+                                  ->Create("", 2, 3, 1, GDT_Float64, nullptr));
+    std::array<double, 6> buffer = {
+        -1e300, -1,     //////////////////////////////////////////////
+        1,      128,    //////////////////////////////////////////////
+        32768,  1e300,  //////////////////////////////////////////////
+    };
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    EXPECT_EQ(poDS->GetRasterBand(1)->RasterIO(
+                  GF_Write, 0, 0, 2, 3, buffer.data(), 2, 3, GDT_Float64,
+                  sizeof(double), 2 * sizeof(double), &sExtraArg),
+              CE_None);
+
+    {
+        std::vector<uint8_t> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res = std::vector<uint8_t>{0, 0, 1, 128, 255, 255};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res, 0, 0, 2, 3, 2, 3),
+                  CE_None);
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res, 0, 0, 2, 3), CE_None);
+        EXPECT_EQ(res, expected_res);
+
+#if __cplusplus >= 202002L
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(std::span<uint8_t>(res)),
+                  CE_None);
+        EXPECT_EQ(res, expected_res);
+#endif
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data(), res.size()),
+                  CE_None);
+        EXPECT_EQ(res, expected_res);
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        // Too small buffer size
+        EXPECT_EQ(
+            poDS->GetRasterBand(1)->ReadRaster(res.data(), res.size() - 1),
+            CE_Failure);
+        CPLPopErrorHandler();
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(
+            poDS->GetRasterBand(1)->ReadRaster(res.data(), 0, 0, 0, 2, 3, 2, 3),
+            CE_None);
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data(), 0, 0, 0, 2, 3),
+                  CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+    {
+        std::vector<double> res;
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        // Too large nBufXSize
+        EXPECT_EQ(
+            poDS->GetRasterBand(1)->ReadRaster(res, 0, 0, 1, 1, UINT32_MAX, 1),
+            CE_Failure);
+
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data(), UINT32_MAX, 0,
+                                                     0, 1, 1, UINT32_MAX, 1),
+                  CE_Failure);
+
+        // Too large nBufYSize
+        EXPECT_EQ(
+            poDS->GetRasterBand(1)->ReadRaster(res, 0, 0, 1, 1, 1, UINT32_MAX),
+            CE_Failure);
+
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data(), UINT32_MAX, 0,
+                                                     0, 1, 1, 1, UINT32_MAX),
+                  CE_Failure);
+
+        CPLPopErrorHandler();
+    }
+
+    {
+        std::vector<double> res;
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        // Huge nBufXSize x nBufYSize
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res, 0, 0, 1, 1, INT32_MAX,
+                                                     INT32_MAX),
+                  CE_Failure);
+        CPLPopErrorHandler();
+    }
+
+    {
+        std::vector<double> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res, 1, 2, 1, 1), CE_None);
+        const auto expected_res = std::vector<double>{1e300};
+        EXPECT_EQ(res, expected_res);
+    }
+
+    {
+        std::vector<double> res;
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res, 1.1, 2.1, 0.9, 0.9),
+                  CE_Failure);
+        CPLPopErrorHandler();
+
+        EXPECT_EQ(
+            poDS->GetRasterBand(1)->ReadRaster(res, 1.1, 2.1, 0.9, 0.9, 1, 1),
+            CE_None);
+        const auto expected_res = std::vector<double>{1e300};
+        EXPECT_EQ(res, expected_res);
+    }
+
+    {
+        std::vector<double> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res, 0.4, 0.5, 1.4, 1.5, 1,
+                                                     1, GRIORA_Bilinear),
+                  CE_None);
+        ASSERT_EQ(res.size(), 1U);
+        const double expected_res = -8.64198e+298;
+        EXPECT_NEAR(res[0], expected_res, std::fabs(expected_res) * 1e-6);
+    }
+
+    // Test int8_t
+    {
+        std::vector<int8_t> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<int8_t>{-128, -1, 1, 127, 127, 127};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+    // Test uint16_t
+    {
+        std::vector<uint16_t> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<uint16_t>{0, 0, 1, 128, 32768, 65535};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data(), res.size()),
+                  CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+    // Test int16_t
+    {
+        std::vector<int16_t> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<int16_t>{-32768, -1, 1, 128, 32767, 32767};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+#if 0
+    // Not allowed by C++ standard
+    // Test complex<int16_t>
+    {
+        std::vector<std::complex<int16_t>> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res = std::vector<std::complex<int16_t>>{
+            -32768, -1, 1, 128, 32767, 32767};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+#endif
+
+    // Test uint32_t
+    {
+        std::vector<uint32_t> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<uint32_t>{0, 0, 1, 128, 32768, UINT32_MAX};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+    // Test int32_t
+    {
+        std::vector<int32_t> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<int32_t>{INT32_MIN, -1, 1, 128, 32768, INT32_MAX};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+#if 0
+    // Not allowed by C++ standard
+    // Test complex<int32_t>
+    {
+        std::vector<std::complex<int32_t>> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res = std::vector<std::complex<int32_t>>{
+            INT32_MIN, -1, 1, 128, 32768, INT32_MAX};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+#endif
+
+    // Test uint64_t
+    {
+        std::vector<uint64_t> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<uint64_t>{0, 0, 1, 128, 32768, UINT64_MAX};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+    // Test int64_t
+    {
+        std::vector<int64_t> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<int64_t>{INT64_MIN, -1, 1, 128, 32768, INT64_MAX};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+    // Test float
+    {
+        std::vector<float> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<float>{-std::numeric_limits<float>::infinity(),
+                               -1.0f,
+                               1.0f,
+                               128.0f,
+                               32768.0f,
+                               std::numeric_limits<float>::infinity()};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0.0f);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+    // Test complex<float>
+    {
+        std::vector<std::complex<float>> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res = std::vector<std::complex<float>>{
+            -std::numeric_limits<float>::infinity(),
+            -1.0f,
+            1.0f,
+            128.0f,
+            32768.0f,
+            std::numeric_limits<float>::infinity()};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0.0f);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+    // Test double
+    {
+        std::vector<double> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<double>{-1e300, -1, 1, 128, 32768, 1e300};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+
+    // Test complex<double>
+    {
+        std::vector<std::complex<double>> res;
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res), CE_None);
+        const auto expected_res =
+            std::vector<std::complex<double>>{-1e300, -1, 1, 128, 32768, 1e300};
+        EXPECT_EQ(res, expected_res);
+
+        std::fill(res.begin(), res.end(), 0);
+        EXPECT_EQ(poDS->GetRasterBand(1)->ReadRaster(res.data()), CE_None);
+        EXPECT_EQ(res, expected_res);
+    }
+}
+
 }  // namespace
