@@ -218,7 +218,7 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
 
-    const double nTotalPixels = static_cast<double>(nXSize * nYSize);
+    const double nTotalPixels = static_cast<double>(nXSize) * nYSize;
 
     int nBlockXSizeToRead = nBlockXSize;
     if (nBlockXSize * nBlockXOff + nBlockXSize > nXSize)
@@ -248,22 +248,38 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
                 static_cast<GSpacing>(nBands) * nWorkDTSize * nBlockXSize,
                 nWorkDTSize, nullptr);
 
-#if !defined(JPEG_LIB_MK1_OR_12BIT)
             /* Repeat the last pixel till the end of the line */
             /* to minimize discontinuity */
             if (nBlockXSizeToRead < nBlockXSize)
             {
                 for (int iBand = 0; iBand < nBands; iBand++)
                 {
-                    GByte bVal =
-                        pabyScanline[nBands * (nBlockXSizeToRead - 1) + iBand];
-                    for (int iX = nBlockXSizeToRead; iX < nBlockXSize; iX++)
+#if defined(JPEG_LIB_MK1_OR_12BIT)
+                    if (eWorkDT == GDT_UInt16)
                     {
-                        pabyScanline[nBands * iX + iBand] = bVal;
+                        GUInt16 *panScanline =
+                            reinterpret_cast<GUInt16 *>(pabyScanline);
+                        const GUInt16 nVal =
+                            panScanline[nBands * (nBlockXSizeToRead - 1) +
+                                        iBand];
+                        for (int iX = nBlockXSizeToRead; iX < nBlockXSize; iX++)
+                        {
+                            panScanline[nBands * iX + iBand] = nVal;
+                        }
+                    }
+                    else
+#endif
+                    {
+                        GByte bVal =
+                            pabyScanline[nBands * (nBlockXSizeToRead - 1) +
+                                         iBand];
+                        for (int iX = nBlockXSizeToRead; iX < nBlockXSize; iX++)
+                        {
+                            pabyScanline[nBands * iX + iBand] = bVal;
+                        }
                     }
                 }
             }
-#endif
         }
 
 #if defined(JPEG_LIB_MK1_OR_12BIT)
@@ -272,7 +288,7 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
         {
             GUInt16 *panScanline = reinterpret_cast<GUInt16 *>(pabyScanline);
 
-            for (int iPixel = 0; iPixel < nXSize * nBands; iPixel++)
+            for (int iPixel = 0; iPixel < nBlockXSize * nBands; iPixel++)
             {
                 if (panScanline[iPixel] > 4095)
                 {
