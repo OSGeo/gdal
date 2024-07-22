@@ -2341,7 +2341,7 @@ def test_vrt_read_compute_statistics_mosaic_optimization_src_with_nodata_all():
 
     with gdal.quiet_errors():
         vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
-        assert vrt_stats == [0, 0, 0, 0]
+        assert vrt_stats is None
         assert vrt_ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is None
 
 

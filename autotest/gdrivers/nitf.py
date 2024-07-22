@@ -1488,8 +1488,7 @@ def test_nitf_36():
         ds.GetRasterBand(1).GetMinimum() is None
     ), "Did not expect to have minimum value at that point."
 
-    (_, _, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
-    assert stddev < 0, "Did not expect to have statistics at that point."
+    assert ds.GetRasterBand(1).GetStatistics(False, False) is None
 
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (_, _, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, True)

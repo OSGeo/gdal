@@ -3979,12 +3979,7 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
 
         view = ar.GetView("[0:10,...]")
         classic_ds = view.AsClassicDataset(1, 0)
-        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) == [
-            0.0,
-            0.0,
-            0.0,
-            -1.0,
-        ]
+        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) is None
         classic_ds.GetRasterBand(1).ComputeStatistics(False)
 
         view = ar.GetView("[10:20,...]")
@@ -4035,12 +4030,7 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
         )
 
         classic_ds = ar.AsClassicDataset(1, 0)
-        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) == [
-            0.0,
-            0.0,
-            0.0,
-            -1.0,
-        ]
+        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) is None
 
         rg_subset = rg.SubsetDimensionFromSelection("/x=440750")
 

@@ -379,20 +379,20 @@ def test_ehdr_approx_stats_flag():
     approx_ok = 1
     force = 1
     stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    assert stats == [0.0, 0.0, 0.0, 0.0], "did not get expected stats"
+    assert stats == [0.0, 0.0, 0.0, 0.0]
     md = ds.GetRasterBand(1).GetMetadata()
     assert "STATISTICS_APPROXIMATE" in md, "did not get expected metadata"
 
     approx_ok = 0
     force = 0
     stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    assert stats == [0.0, 0.0, 0.0, -1.0], "did not get expected stats"
+    assert stats is None
 
     ds = gdal.Open(tmpfile, gdal.GA_Update)
     approx_ok = 0
     force = 0
     stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    assert stats == [0.0, 0.0, 0.0, -1.0], "did not get expected stats"
+    assert stats is None
 
     approx_ok = 0
     force = 1
