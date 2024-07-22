@@ -3982,7 +3982,7 @@ static char **NITFJP2ECWOptions(char **papszOptions)
 /*      NITF creation options.                                          */
 /************************************************************************/
 
-static char **NITFJP2KAKOptions(char **papszOptions)
+static char **NITFJP2KAKOptions(char **papszOptions, int nABPP)
 
 {
     char **papszJP2Options = CSLAddString(nullptr, "CODEC=J2K");
@@ -3999,6 +3999,9 @@ static char **NITFJP2KAKOptions(char **papszOptions)
         }
     }
 
+    papszJP2Options =
+        CSLSetNameValue(papszJP2Options, "NBITS", CPLSPrintf("%d", nABPP));
+
     return papszJP2Options;
 }
 
@@ -4010,7 +4013,7 @@ static char **NITFJP2KAKOptions(char **papszOptions)
 /************************************************************************/
 
 static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
-                                     CSLConstList papszOptions)
+                                     CSLConstList papszOptions, int nABPP)
 
 {
     char **papszJP2Options = CSLAddString(nullptr, "CODEC=J2K");
@@ -4116,6 +4119,9 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
     {
         papszJP2Options = CSLAddString(papszJP2Options, "PROFILE=UNRESTRICTED");
     }
+
+    papszJP2Options =
+        CSLSetNameValue(papszJP2Options, "NBITS", CPLSPrintf("%d", nABPP));
 
     return papszJP2Options;
 }
@@ -4288,6 +4294,11 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
     {
         papszFullOptions =
             CSLSetNameValue(papszFullOptions, "BLOCKYSIZE", pszBlockSize);
+    }
+
+    if (const char *pszNBITS = CSLFetchNameValue(papszFullOptions, "NBITS"))
+    {
+        papszFullOptions = CSLSetNameValue(papszFullOptions, "ABPP", pszNBITS);
     }
 
     /* -------------------------------------------------------------------- */
@@ -5018,6 +5029,19 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         return nullptr;
     }
 
+    int nABPP = GDALGetDataTypeSize(eType);
+    if (const char *pszABPP = CSLFetchNameValue(papszFullOptions, "ABPP"))
+    {
+        nABPP = atoi(pszABPP);
+    }
+    else if (const char *pszNBITS = CSLFetchNameValueDef(
+                 papszFullOptions, "NBITS",
+                 poBand1->GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))
+    {
+        papszFullOptions = CSLSetNameValue(papszFullOptions, "ABPP", pszNBITS);
+        nABPP = atoi(pszNBITS);
+    }
+
     if (poJ2KDriver != nullptr &&
         EQUAL(poJ2KDriver->GetDescription(), "JP2ECW"))
     {
@@ -5102,10 +5126,6 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                 0.03125, 0.0625, 0.125, 0.25, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
                 1.1,     1.2,    1.3,   1.5,  1.7, 2.0, 2.3, 3.5, 3.9};
 
-            const int nABPP = atoi(CSLFetchNameValueDef(
-                papszFullOptions, "ABPP",
-                CPLSPrintf("%d", GDALGetDataTypeSize(eType))));
-
             if (EQUAL(pszProfile, "NPJE") ||
                 EQUAL(pszProfile, "NPJE_NUMERICALLY_LOSSLESS"))
             {
@@ -5188,7 +5208,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         }
         else if (EQUAL(poJ2KDriver->GetDescription(), "JP2KAK"))
         {
-            char **papszJP2Options = NITFJP2KAKOptions(papszFullOptions);
+            char **papszJP2Options = NITFJP2KAKOptions(papszFullOptions, nABPP);
             poJ2KDataset = poJ2KDriver->CreateCopy(osDSName, poSrcDS, FALSE,
                                                    papszJP2Options, pfnProgress,
                                                    pProgressData);
@@ -5197,7 +5217,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         else if (EQUAL(poJ2KDriver->GetDescription(), "JP2OPENJPEG"))
         {
             char **papszJP2Options =
-                NITFJP2OPENJPEGOptions(poJ2KDriver, papszFullOptions);
+                NITFJP2OPENJPEGOptions(poJ2KDriver, papszFullOptions, nABPP);
             poJ2KDataset = poJ2KDriver->CreateCopy(osDSName, poSrcDS, FALSE,
                                                    papszJP2Options, pfnProgress,
                                                    pProgressData);
@@ -7114,11 +7134,25 @@ void NITFDriver::InitCreationOptionList()
     for (unsigned int i = 0;
          i < sizeof(asFieldDescription) / sizeof(asFieldDescription[0]); i++)
     {
-        osCreationOptions += CPLString().Printf(
-            "   <Option name='%s' type='string' description='%s' "
-            "maxsize='%d'/>",
-            asFieldDescription[i].pszName, asFieldDescription[i].pszDescription,
-            asFieldDescription[i].nMaxLen);
+        if (EQUAL(asFieldDescription[i].pszName, "ABPP"))
+        {
+            osCreationOptions +=
+                CPLString().Printf("   <Option name='%s' alias='NBITS' "
+                                   "type='string' description='%s' "
+                                   "maxsize='%d'/>",
+                                   asFieldDescription[i].pszName,
+                                   asFieldDescription[i].pszDescription,
+                                   asFieldDescription[i].nMaxLen);
+        }
+        else
+        {
+            osCreationOptions += CPLString().Printf(
+                "   <Option name='%s' type='string' description='%s' "
+                "maxsize='%d'/>",
+                asFieldDescription[i].pszName,
+                asFieldDescription[i].pszDescription,
+                asFieldDescription[i].nMaxLen);
+        }
     }
 
     osCreationOptions +=

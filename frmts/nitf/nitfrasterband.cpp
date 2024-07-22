@@ -459,12 +459,12 @@ NITFRasterBand::NITFRasterBand(NITFDataset *poDSIn, int nBandIn)
     /* -------------------------------------------------------------------- */
     poColorTable = NITFMakeColorTable(psImage, psBandInfo);
 
-    if (psImage->nBitsPerSample == 1 || psImage->nBitsPerSample == 3 ||
-        psImage->nBitsPerSample == 5 || psImage->nBitsPerSample == 6 ||
-        psImage->nBitsPerSample == 7 || psImage->nBitsPerSample == 12)
-        SetMetadataItem("NBITS",
-                        CPLString().Printf("%d", psImage->nBitsPerSample),
+    if (psImage->nABPP != 8 && psImage->nABPP != 16 && psImage->nABPP != 32 &&
+        psImage->nABPP != 64)
+    {
+        SetMetadataItem("NBITS", CPLString().Printf("%d", psImage->nABPP),
                         "IMAGE_STRUCTURE");
+    }
 
     if (psImage->nBitsPerSample == 3 || psImage->nBitsPerSample == 5 ||
         psImage->nBitsPerSample == 6 || psImage->nBitsPerSample == 7)

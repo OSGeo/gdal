@@ -1056,7 +1056,12 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         PLACE(nCur + 349, PVTYPE, pszPVType);
         PLACE(nCur + 352, IREP, pszIREP);
         OVR(8, nCur + 360, ICAT, "VIS");
-        OVR(2, nCur + 368, ABPP, CPLSPrintf("%02d", nBitsPerSample));
+        {
+            const char *pszParamValue = CSLFetchNameValue(papszOptions, "ABPP");
+            PLACE(nCur + 368, ABPP,
+                  CPLSPrintf("%02d", pszParamValue ? atoi(pszParamValue)
+                                                   : nBitsPerSample));
+        }
         OVR(1, nCur + 370, PJUST, "R");
         OVR(1, nCur + 371, ICORDS, " ");
 
