@@ -982,50 +982,38 @@ def test_ogr_geom_flattenTo2D_triangle():
 ###############################################################################
 
 
+@gdaltest.enable_exceptions()
 def test_ogr_geom_linestring_limits():
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING EMPTY")
     assert geom.Length() == 0
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
+    with pytest.raises(Exception):
         geom.GetPoint(-1)
-    assert gdal.GetLastErrorType() != 0
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
+    with pytest.raises(Exception):
         geom.GetPoint(0)
-    assert gdal.GetLastErrorType() != 0
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
+    with pytest.raises(Exception):
         geom.GetPoint_2D(-1)
-    assert gdal.GetLastErrorType() != 0
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
+    with pytest.raises(Exception):
         geom.GetPoint_2D(0)
-    assert gdal.GetLastErrorType() != 0
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
+    with pytest.raises(Exception):
         geom.SetPoint(-1, 5, 6, 7)
-    assert gdal.GetLastErrorType() != 0
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
+    with pytest.raises(Exception):
         geom.SetPoint_2D(-1, 5, 6)
-    assert gdal.GetLastErrorType() != 0
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        geom.SetPoint(2147000000, 5, 6, 7)
-    assert gdal.GetLastErrorType() != 0
+    with pytest.raises(Exception):
+        geom.SetPoint((1 << 31) - 2, 5, 6, 7)
 
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        geom.SetPoint_2D(2147000000, 5, 6)
-    assert gdal.GetLastErrorType() != 0
+    with pytest.raises(Exception):
+        geom.SetPoint_2D((1 << 31) - 2, 5, 6)
+
+    with pytest.raises(Exception):
+        geom.SetPoint_2D((1 << 31) - 1, 5, 6)
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0)")
     assert geom.Length() == 0
