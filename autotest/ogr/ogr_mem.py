@@ -1464,6 +1464,18 @@ def test_ogr_mem_write_arrow():
     field_def = ogr.FieldDefn("field_stringlist", ogr.OFTStringList)
     src_lyr.CreateField(field_def)
 
+    field_def = ogr.FieldDefn("field_json", ogr.OFTString)
+    field_def.SetSubType(ogr.OFSTJSON)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_uuid", ogr.OFTString)
+    field_def.SetSubType(ogr.OFSTUUID)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_with_width", ogr.OFTString)
+    field_def.SetWidth(10)
+    src_lyr.CreateField(field_def)
+
     feat_def = src_lyr.GetLayerDefn()
     src_feature = ogr.Feature(feat_def)
     src_feature.SetField("field_bool", True)
@@ -1485,6 +1497,9 @@ def test_ogr_mem_write_arrow():
     src_feature.field_float32list = [1.5, -1.5]
     src_feature.field_reallist = [123.5, 567.0]
     src_feature.field_stringlist = ["abc", "def"]
+    src_feature["field_json"] = '{"foo":"bar"}'
+    src_feature["field_uuid"] = "INVALID_UUID"
+    src_feature["field_with_width"] = "foo"
     src_feature.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
 
     src_lyr.CreateFeature(src_feature)
@@ -1505,6 +1520,15 @@ def test_ogr_mem_write_arrow():
     for i in range(schema.GetChildrenCount()):
         if schema.GetChild(i).GetName() != "wkb_geometry":
             dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    idx = dst_lyr.GetLayerDefn().GetFieldIndex("field_json")
+    assert dst_lyr.GetLayerDefn().GetFieldDefn(idx).GetSubType() == ogr.OFSTJSON
+
+    idx = dst_lyr.GetLayerDefn().GetFieldIndex("field_uuid")
+    assert dst_lyr.GetLayerDefn().GetFieldDefn(idx).GetSubType() == ogr.OFSTUUID
+
+    idx = dst_lyr.GetLayerDefn().GetFieldIndex("field_with_width")
+    assert dst_lyr.GetLayerDefn().GetFieldDefn(idx).GetWidth() == 10
 
     while True:
         array = stream.GetNextRecordBatch()
@@ -2849,6 +2873,24 @@ def test_ogr_mem_write_pyarrow_invalid_dict_index(dict_values):
         match="Feature 4, field dict_invalid_index: invalid dictionary index: 3",
     ):
         lyr.WritePyArrow(table)
+
+
+###############################################################################
+
+
+def test_ogr_mem_arrow_json():
+    pytest.importorskip("pyarrow")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+    field_def = ogr.FieldDefn("field_json", ogr.OFTString)
+    field_def.SetSubType(ogr.OFSTJSON)
+    lyr.CreateField(field_def)
+
+    stream = lyr.GetArrowStreamAsPyArrow()
+    md = stream.schema["field_json"].metadata
+    assert b"ARROW:extension:name" in md
+    assert md[b"ARROW:extension:name"] == b"arrow.json"
 
 
 ###############################################################################
