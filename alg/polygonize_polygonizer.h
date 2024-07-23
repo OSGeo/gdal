@@ -187,7 +187,7 @@ template <typename PolyIdType, typename DataType> class Polygonizer
         return poTheOuterPolygon_;
     }
 
-    void processLine(const PolyIdType *panThisLineId,
+    bool processLine(const PolyIdType *panThisLineId,
                      const DataType *panLastLineVal, TwoArm *poThisLineArm,
                      TwoArm *poLastLineArm, IndexType nCurrentRow,
                      IndexType nCols);

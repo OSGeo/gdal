@@ -380,70 +380,80 @@ void Polygonizer<PolyIdType, DataType>::destroyPolygon(PolyIdType nPolygonId)
 }
 
 template <typename PolyIdType, typename DataType>
-void Polygonizer<PolyIdType, DataType>::processLine(
+bool Polygonizer<PolyIdType, DataType>::processLine(
     const PolyIdType *panThisLineId, const DataType *panLastLineVal,
     TwoArm *poThisLineArm, TwoArm *poLastLineArm, const IndexType nCurrentRow,
     const IndexType nCols)
 {
     TwoArm *poCurrent, *poAbove, *poLeft;
 
-    poCurrent = poThisLineArm + 1;
-    poCurrent->iRow = nCurrentRow;
-    poCurrent->iCol = 0;
-    poCurrent->poPolyInside = getPolygon(panThisLineId[0]);
-    poAbove = poLastLineArm + 1;
-    poLeft = poThisLineArm;
-    poLeft->poPolyInside = poTheOuterPolygon_;
-    ProcessArmConnections(poCurrent, poAbove, poLeft);
-    for (IndexType col = 1; col < nCols; ++col)
+    try
     {
-        IndexType iArmIndex = col + 1;
-        poCurrent = poThisLineArm + iArmIndex;
+        poCurrent = poThisLineArm + 1;
         poCurrent->iRow = nCurrentRow;
-        poCurrent->iCol = col;
-        poCurrent->poPolyInside = getPolygon(panThisLineId[col]);
-        poAbove = poLastLineArm + iArmIndex;
-        poLeft = poThisLineArm + iArmIndex - 1;
+        poCurrent->iCol = 0;
+        poCurrent->poPolyInside = getPolygon(panThisLineId[0]);
+        poAbove = poLastLineArm + 1;
+        poLeft = poThisLineArm;
+        poLeft->poPolyInside = poTheOuterPolygon_;
         ProcessArmConnections(poCurrent, poAbove, poLeft);
-    }
-    poCurrent = poThisLineArm + nCols + 1;
-    poCurrent->iRow = nCurrentRow;
-    poCurrent->iCol = nCols;
-    poCurrent->poPolyInside = poTheOuterPolygon_;
-    poAbove = poLastLineArm + nCols + 1;
-    poAbove->poPolyInside = poTheOuterPolygon_;
-    poLeft = poThisLineArm + nCols;
-    ProcessArmConnections(poCurrent, poAbove, poLeft);
-
-    /**
-     *
-     * Find those polygons haven't been processed on this line as we can be sure they are completed
-     *
-     */
-    std::vector<PolygonMapEntry> oCompletedPolygons;
-    for (auto &entry : oPolygonMap_)
-    {
-        RPolygon *poPolygon = entry.second;
-
-        if (poPolygon->iBottomRightRow + 1 == nCurrentRow)
+        for (IndexType col = 1; col < nCols; ++col)
         {
-            oCompletedPolygons.push_back(entry);
+            IndexType iArmIndex = col + 1;
+            poCurrent = poThisLineArm + iArmIndex;
+            poCurrent->iRow = nCurrentRow;
+            poCurrent->iCol = col;
+            poCurrent->poPolyInside = getPolygon(panThisLineId[col]);
+            poAbove = poLastLineArm + iArmIndex;
+            poLeft = poThisLineArm + iArmIndex - 1;
+            ProcessArmConnections(poCurrent, poAbove, poLeft);
         }
-    }
-    // cppcheck-suppress constVariableReference
-    for (auto &entry : oCompletedPolygons)
-    {
-        PolyIdType nPolyId = entry.first;
-        RPolygon *poPolygon = entry.second;
+        poCurrent = poThisLineArm + nCols + 1;
+        poCurrent->iRow = nCurrentRow;
+        poCurrent->iCol = nCols;
+        poCurrent->poPolyInside = poTheOuterPolygon_;
+        poAbove = poLastLineArm + nCols + 1;
+        poAbove->poPolyInside = poTheOuterPolygon_;
+        poLeft = poThisLineArm + nCols;
+        ProcessArmConnections(poCurrent, poAbove, poLeft);
 
-        // emit valid polygon only
-        if (nPolyId != nInvalidPolyId_)
+        /**
+         *
+         * Find those polygons haven't been processed on this line as we can be sure they are completed
+         *
+         */
+        std::vector<PolygonMapEntry> oCompletedPolygons;
+        for (auto &entry : oPolygonMap_)
         {
-            poPolygonReceiver_->receive(
-                poPolygon, panLastLineVal[poPolygon->iBottomRightCol]);
-        }
+            RPolygon *poPolygon = entry.second;
 
-        destroyPolygon(nPolyId);
+            if (poPolygon->iBottomRightRow + 1 == nCurrentRow)
+            {
+                oCompletedPolygons.push_back(entry);
+            }
+        }
+        // cppcheck-suppress constVariableReference
+        for (auto &entry : oCompletedPolygons)
+        {
+            PolyIdType nPolyId = entry.first;
+            RPolygon *poPolygon = entry.second;
+
+            // emit valid polygon only
+            if (nPolyId != nInvalidPolyId_)
+            {
+                poPolygonReceiver_->receive(
+                    poPolygon, panLastLineVal[poPolygon->iBottomRightCol]);
+            }
+
+            destroyPolygon(nPolyId);
+        }
+        return true;
+    }
+    catch (const std::bad_alloc &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Out of memory in Polygonizer::processLine");
+        return false;
     }
 }
 
@@ -481,9 +491,12 @@ void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
         [this, &poPolygon, &oAccessedArc,
          padfGeoTransform](std::size_t iFirstArcIndex, OGRLinearRing *poRing)
     {
-        const bool bAddRing = poRing == nullptr;
+        std::unique_ptr<OGRLinearRing> poNewRing;
         if (!poRing)
-            poRing = new OGRLinearRing();
+        {
+            poNewRing = std::make_unique<OGRLinearRing>();
+            poRing = poNewRing.get();
+        }
 
         auto AddArcToRing =
             [&poPolygon, poRing, padfGeoTransform](std::size_t iArcIndex)
@@ -494,6 +507,10 @@ void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
             int nDstPointIdx = poRing->getNumPoints();
             poRing->setNumPoints(nDstPointIdx + nArcPointCount,
                                  /* bZeroizeNewContent = */ false);
+            if (poRing->getNumPoints() < nDstPointIdx + nArcPointCount)
+            {
+                return false;
+            }
             for (int i = 0; i < nArcPointCount; ++i)
             {
                 const Point &oPixel =
@@ -511,16 +528,23 @@ void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
                 poRing->setPoint(nDstPointIdx, dfX, dfY);
                 ++nDstPointIdx;
             }
+            return true;
         };
 
-        AddArcToRing(iFirstArcIndex);
+        if (!AddArcToRing(iFirstArcIndex))
+        {
+            return false;
+        }
 
         std::size_t iArcIndex = iFirstArcIndex;
         std::size_t iNextArcIndex = poPolygon->oArcs[iArcIndex].nConnection;
         oAccessedArc[iArcIndex] = true;
         while (iNextArcIndex != iFirstArcIndex)
         {
-            AddArcToRing(iNextArcIndex);
+            if (!AddArcToRing(iNextArcIndex))
+            {
+                return false;
+            }
             iArcIndex = iNextArcIndex;
             iNextArcIndex = poPolygon->oArcs[iArcIndex].nConnection;
             oAccessedArc[iArcIndex] = true;
@@ -529,15 +553,20 @@ void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
         // close ring manually
         poRing->closeRings();
 
-        if (bAddRing)
-            poPolygon_->addRingDirectly(poRing);
+        if (poNewRing)
+            poPolygon_->addRingDirectly(poNewRing.release());
+        return true;
     };
 
     for (size_t i = 0; i < oAccessedArc.size(); ++i)
     {
         if (!oAccessedArc[i])
         {
-            AddRingToPolygon(i, poFirstRing);
+            if (!AddRingToPolygon(i, poFirstRing))
+            {
+                eErr_ = CE_Failure;
+                return;
+            }
             poFirstRing = nullptr;
         }
     }
