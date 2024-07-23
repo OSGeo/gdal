@@ -576,7 +576,8 @@ static const char *GetValueOfTag(const char *pszKeyToSearch, unsigned int nTags,
 
 void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
                                     bool bIsWayID, unsigned int nTags,
-                                    OSMTag *pasTags, OSMInfo *psInfo)
+                                    const OSMTag *pasTags,
+                                    const OSMInfo *psInfo)
 {
     if (!bIsWayID)
     {

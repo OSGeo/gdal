@@ -94,7 +94,7 @@ jobs:
         # Workaround bug in ogdi packaging
         sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
         #
-        python3 -m pip install -U pip wheel setuptools numpy
+        python3 -m pip install -U pip wheel setuptools numpy importlib_metadata
         python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
 
     - name: Build libjxl

@@ -1853,7 +1853,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Not all elements pointed by buffer will fit in "
                  "[buffer_alloc_start, "
-                 "buffer_alloc_start + buffer_alloc_size[");
+                 "buffer_alloc_start + buffer_alloc_size]");
     };
 
     const auto &dims = GetDimensions();

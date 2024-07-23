@@ -2,7 +2,7 @@
  * Project:  OpenGIS Simple Features for OpenDRIVE
  * Purpose:  Definition of OGR driver components for OpenDRIVE.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
- *           Gülsen Bardak, German Aerospace Center (DLR)        
+ *           Gülsen Bardak, German Aerospace Center (DLR)
  *
  ******************************************************************************
  * Copyright 2024 German Aerospace Center (DLR), Institute of Transportation Systems
@@ -114,7 +114,7 @@ class OGRXODRLayer : public OGRLayer
     OGRXODRLayer(const RoadElements &xodrRoadElements,
                  const std::string &proj4Defn);
     /**
-     * \param dissolveTriangulatedSurface True if original triangulated surface meshes from 
+     * \param dissolveTriangulatedSurface True if original triangulated surface meshes from
      * libOpenDRIVE are to be dissolved into simpler geometries.
      * Only applicable for layer types derived from meshes.
     */
@@ -240,7 +240,7 @@ class OGRXODRDataSource : public GDALDataset
 
     /**
      * Retrieves all necessary road elements from the underlying OpenDRIVE structure.
-     * 
+     *
      * \param roads Roads of the dataset.
     */
     RoadElements createRoadElements(const std::vector<odr::Road> &roads);
@@ -250,7 +250,7 @@ class OGRXODRDataSource : public GDALDataset
 
     int GetLayerCount() override
     {
-        return m_apoLayers.size();
+        return static_cast<int>(m_apoLayers.size());
     }
 
     OGRLayer *GetLayer(int) override;

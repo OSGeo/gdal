@@ -1181,7 +1181,7 @@ def test_vrtprocesseddataset_serialize(tmp_vsimem):
     with gdaltest.tempfile(vrt_filename, content):
         ds = gdal.Open(vrt_filename)
         np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[11, 12]]))
-        assert ds.GetRasterBand(1).GetStatistics(False, False) == [0.0, 0.0, 0.0, -1.0]
+        assert ds.GetRasterBand(1).GetStatistics(False, False) is None
         ds.GetRasterBand(1).ComputeStatistics(False)
         ds.Close()
 

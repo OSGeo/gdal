@@ -11852,20 +11852,34 @@ public class SpatialReference:public String toString()
 public class SpatialReference:public int Validate()
 
 /**
- * This method returns TRUE if EPSG feels this geographic coordinate
+ * This method returns 1 if this geographic coordinate
  * system should be treated as having lat/long coordinate ordering.
  * <p>
  * Currently this returns TRUE for all geographic coordinate systems
- * with an EPSG code set, and AXIS values set defining it as lat, long.
- * Note that coordinate systems with an EPSG code and no axis settings
- * will be assumed to not be lat/long.
+ * with axes set defining it as lat, long (prior to GDAL 3.10, it
+ * also checked that the CRS had belonged to EPSG authority, but this check
+ * has now been removed).
  * <p>
  * FALSE will be returned for all coordinate systems that are not geographic,
- * or that do not have an EPSG code set.
+ * or whose axes ordering is not latitude, longitude.
  *
- * @return TRUE or FALSE.
+ * @return 1 or 0.
  */
 public class SpatialReference:public int EPSGTreatsAsLatLong()
+
+/**
+ * This method returns 1 if this projected coordinate
+ * system should be treated as having northing/easting coordinate ordering.
+ * <p>
+ * Currently this returns TRUE for all projected coordinate systems
+ * with an EPSG code set, and axes set defining it as northing, easting.
+ * <p>
+ * FALSE will be returned for all coordinate systems that are not projected,
+ * or whose axes ordering is not northing, easting.
+ *
+ * @return 1 or 0.
+ */
+public class SpatialReference:public int EPSGTreatsAsNorthingEasting()
 
 
 /* Class CoordinateTransformation */
