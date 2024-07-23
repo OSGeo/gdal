@@ -1063,8 +1063,7 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                 {
                     CPLString osFilename(pszFileInList);
                     osFilename.replaceAll('\\', '/');
-                    if (oSetExistingDestFiles.find(osFilename) !=
-                        oSetExistingDestFiles.end())
+                    if (cpl::contains(oSetExistingDestFiles, osFilename))
                     {
                         oSetExistingDestFilesFoundInSource.insert(osFilename);
                     }
@@ -1078,8 +1077,8 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
         {
             for (const std::string &osFilename : oSetExistingDestFiles)
             {
-                if (oSetExistingDestFilesFoundInSource.find(osFilename) ==
-                    oSetExistingDestFilesFoundInSource.end())
+                if (!cpl::contains(oSetExistingDestFilesFoundInSource,
+                                   osFilename))
                 {
                     VSIUnlink(osFilename.c_str());
                 }
