@@ -399,4 +399,94 @@ def test_gdal_contour_missing_fl_i_or_e(gdal_contour_path, testdata_tif, tmp_pat
     _, err = gdaltest.runexternal_out_and_err(
         gdal_contour_path + f" {testdata_tif} {contour_shp}"
     )
-    assert "One and only one of -i, -fl or -e must be specified." in err
+    assert "One one of -i, -fl or -e must be specified." in err
+
+
+###############################################################################
+# Test -fl can be used with -i
+
+
+def test_gdal_contour_fl_i_and_fl(gdal_contour_path, testdata_tif, tmp_path):
+
+    contour_shp = str(tmp_path / "contour.shp")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_contour_path + f" -a elev -fl 6 16 -i 10 {testdata_tif} {contour_shp}"
+    )
+
+    assert err is None or err == "", "got error/warning"
+
+    ds = ogr.Open(contour_shp)
+
+    lyr = ds.ExecuteSQL("select elev from contour order by elev asc")
+
+    expected_heights = [0, 6, 10, 16, 20]
+
+    assert lyr.GetFeatureCount() == len(expected_heights)
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        assert feat.GetField("elev") == expected_heights[i]
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
+
+###############################################################################
+# Test -fl can be used with -e real DEM
+
+
+def test_gdal_contour_fl_e(gdal_contour_path, tmp_path):
+
+    contour_shp = str(tmp_path / "contour.shp")
+
+    gdaltest.runexternal(
+        gdal_contour_path
+        + f" -a elev -fl 76 112 441 -e 3 ../gdrivers/data/n43.tif {contour_shp}"
+    )
+
+    ds = ogr.Open(contour_shp)
+
+    lyr = ds.ExecuteSQL("select distinct elev from contour order by elev asc")
+
+    expected_heights = [76, 81, 112, 243, 441]
+
+    assert lyr.GetFeatureCount() == len(expected_heights)
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        assert feat.GetField("elev") == expected_heights[i]
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
+
+###############################################################################
+# Test -off does not apply to -fl
+
+
+def test_gdal_contour_fl_ignore_off(gdal_contour_path, testdata_tif, tmp_path):
+
+    contour_shp = str(tmp_path / "contour.shp")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_contour_path
+        + f" -a elev -fl 6 16 -off 2 -i 10 {testdata_tif} {contour_shp}"
+    )
+
+    assert err is None or err == "", "got error/warning"
+
+    ds = ogr.Open(contour_shp)
+
+    lyr = ds.ExecuteSQL("select elev from contour order by elev asc")
+
+    expected_heights = [2, 6, 12, 16, 22]
+
+    assert lyr.GetFeatureCount() == len(expected_heights)
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        assert feat.GetField("elev") == expected_heights[i]
+        i = i + 1
+        feat = lyr.GetNextFeature()

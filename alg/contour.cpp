@@ -686,7 +686,11 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
         }
     }
 
+    // Global ok
     bool ok = false;
+    // Fixed levels ok
+    bool flOk = true;
+
     try
     {
         if (polygonize)
@@ -726,40 +730,46 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
                                            FixedLevelRangeIterator>
                     cg(hBand, useNoData, noDataValue, writer, levels);
                 ok = cg.process(pfnProgress, pProgressArg);
+                flOk = ok;
             }
-            else if (expBase > 0.0)
+
+            if (flOk)
             {
-                // Do not provide the actual minimum value to level iterator
-                // in polygonal case, otherwise it can result in a polygon
-                // with a degenerate min=max range.
-                ExponentialLevelRangeIterator levels(
-                    expBase, -std::numeric_limits<double>::infinity());
-                SegmentMerger<RingAppender, ExponentialLevelRangeIterator>
-                    writer(appender, levels, /* polygonize */ true);
-                ContourGeneratorFromRaster<decltype(writer),
-                                           ExponentialLevelRangeIterator>
-                    cg(hBand, useNoData, noDataValue, writer, levels);
-                ok = cg.process(pfnProgress, pProgressArg);
-            }
-            else
-            {
-                // Do not provide the actual minimum value to level iterator
-                // in polygonal case, otherwise it can result in a polygon
-                // with a degenerate min=max range.
-                IntervalLevelRangeIterator levels(
-                    contourBase, contourInterval,
-                    -std::numeric_limits<double>::infinity());
-                SegmentMerger<RingAppender, IntervalLevelRangeIterator> writer(
-                    appender, levels, /* polygonize */ true);
-                ContourGeneratorFromRaster<decltype(writer),
-                                           IntervalLevelRangeIterator>
-                    cg(hBand, useNoData, noDataValue, writer, levels);
-                ok = cg.process(pfnProgress, pProgressArg);
+                if (expBase > 0.0)
+                {
+                    // Do not provide the actual minimum value to level iterator
+                    // in polygonal case, otherwise it can result in a polygon
+                    // with a degenerate min=max range.
+                    ExponentialLevelRangeIterator levels(
+                        expBase, -std::numeric_limits<double>::infinity());
+                    SegmentMerger<RingAppender, ExponentialLevelRangeIterator>
+                        writer(appender, levels, /* polygonize */ true);
+                    ContourGeneratorFromRaster<decltype(writer),
+                                               ExponentialLevelRangeIterator>
+                        cg(hBand, useNoData, noDataValue, writer, levels);
+                    ok = cg.process(pfnProgress, pProgressArg);
+                }
+                else if (contourInterval != 0)
+                {
+                    // Do not provide the actual minimum value to level iterator
+                    // in polygonal case, otherwise it can result in a polygon
+                    // with a degenerate min=max range.
+                    IntervalLevelRangeIterator levels(
+                        contourBase, contourInterval,
+                        -std::numeric_limits<double>::infinity());
+                    SegmentMerger<RingAppender, IntervalLevelRangeIterator>
+                        writer(appender, levels, /* polygonize */ true);
+                    ContourGeneratorFromRaster<decltype(writer),
+                                               IntervalLevelRangeIterator>
+                        cg(hBand, useNoData, noDataValue, writer, levels);
+                    ok = cg.process(pfnProgress, pProgressArg);
+                }
             }
         }
         else
         {
             GDALRingAppender appender(OGRContourWriter, &oCWI);
+
             if (!fixedLevels.empty())
             {
                 FixedLevelRangeIterator levels(
@@ -770,27 +780,33 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
                                            FixedLevelRangeIterator>
                     cg(hBand, useNoData, noDataValue, writer, levels);
                 ok = cg.process(pfnProgress, pProgressArg);
+                flOk = ok;
             }
-            else if (expBase > 0.0)
+
+            if (flOk)
             {
-                ExponentialLevelRangeIterator levels(expBase, dfMinimum);
-                SegmentMerger<GDALRingAppender, ExponentialLevelRangeIterator>
-                    writer(appender, levels, /* polygonize */ false);
-                ContourGeneratorFromRaster<decltype(writer),
-                                           ExponentialLevelRangeIterator>
-                    cg(hBand, useNoData, noDataValue, writer, levels);
-                ok = cg.process(pfnProgress, pProgressArg);
-            }
-            else
-            {
-                IntervalLevelRangeIterator levels(contourBase, contourInterval,
-                                                  dfMinimum);
-                SegmentMerger<GDALRingAppender, IntervalLevelRangeIterator>
-                    writer(appender, levels, /* polygonize */ false);
-                ContourGeneratorFromRaster<decltype(writer),
-                                           IntervalLevelRangeIterator>
-                    cg(hBand, useNoData, noDataValue, writer, levels);
-                ok = cg.process(pfnProgress, pProgressArg);
+                if (expBase > 0.0)
+                {
+                    ExponentialLevelRangeIterator levels(expBase, dfMinimum);
+                    SegmentMerger<GDALRingAppender,
+                                  ExponentialLevelRangeIterator>
+                        writer(appender, levels, /* polygonize */ false);
+                    ContourGeneratorFromRaster<decltype(writer),
+                                               ExponentialLevelRangeIterator>
+                        cg(hBand, useNoData, noDataValue, writer, levels);
+                    ok = cg.process(pfnProgress, pProgressArg);
+                }
+                else if (contourInterval != 0)
+                {
+                    IntervalLevelRangeIterator levels(
+                        contourBase, contourInterval, dfMinimum);
+                    SegmentMerger<GDALRingAppender, IntervalLevelRangeIterator>
+                        writer(appender, levels, /* polygonize */ false);
+                    ContourGeneratorFromRaster<decltype(writer),
+                                               IntervalLevelRangeIterator>
+                        cg(hBand, useNoData, noDataValue, writer, levels);
+                    ok = cg.process(pfnProgress, pProgressArg);
+                }
             }
         }
     }
