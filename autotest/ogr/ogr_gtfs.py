@@ -103,6 +103,11 @@ def test_ogr_gtfs_content():
     f = lyr.GetNextFeature()
     assert f is None
 
+    lyr = ds.GetLayerByName("routes")
+    assert lyr
+    lyr.SetAttributeFilter("route_type = 3")
+    assert lyr.GetFeatureCount() == 30
+
     lyr = ds.GetLayerByName("stops")
     assert lyr
     assert lyr.GetGeomType() == ogr.wkbPoint

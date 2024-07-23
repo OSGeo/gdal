@@ -98,7 +98,6 @@ class OGRGTFSLayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
     int TestCapability(const char *) override;
     GIntBig GetFeatureCount(int bForce) override;
-    OGRErr SetAttributeFilter(const char *) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
@@ -353,21 +352,12 @@ OGRFeature *OGRGTFSLayer::GetNextFeature()
                 }
             }
         }
-        if (m_poFilterGeom == nullptr ||
-            FilterGeometry(poFeature->GetGeometryRef()))
+        if ((!m_poFilterGeom || FilterGeometry(poFeature->GetGeometryRef())) &&
+            (!m_poAttrQuery || m_poAttrQuery->Evaluate(poFeature.get())))
         {
             return poFeature.release();
         }
     }
-}
-
-/***********************************************************************/
-/*                       SetAttributeFilter()                          */
-/***********************************************************************/
-
-OGRErr OGRGTFSLayer::SetAttributeFilter(const char *pszFilter)
-{
-    return m_poUnderlyingLayer->SetAttributeFilter(pszFilter);
 }
 
 /***********************************************************************/
@@ -376,7 +366,7 @@ OGRErr OGRGTFSLayer::SetAttributeFilter(const char *pszFilter)
 
 GIntBig OGRGTFSLayer::GetFeatureCount(int bForce)
 {
-    if (m_poFilterGeom != nullptr)
+    if (m_poFilterGeom || m_poAttrQuery)
         return OGRLayer::GetFeatureCount(bForce);
     return m_poUnderlyingLayer->GetFeatureCount(bForce);
 }
