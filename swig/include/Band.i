@@ -665,6 +665,22 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
 %clear (GDALDataType *buf_type);
 %clear (int band_list, int *pband_list );
 
+%apply (double *OUTPUT){double *pdfRealValue, double *pdfImagValue};
+#if !defined(SWIGPYTHON)
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
+#endif
+  CPLErr InterpolateAtPoint( double pixel, double line,
+                             GDALRIOResampleAlg interpolation,
+                             double *pdfRealValue,
+                             double *pdfImagValue ) {
+    if (pdfRealValue) *pdfRealValue = 0;
+    if (pdfImagValue) *pdfImagValue = 0;
+    return GDALRasterInterpolateAtPoint( self, pixel, line, interpolation, pdfRealValue, pdfImagValue );
+  }
+#if !defined(SWIGPYTHON)
+%clear (CPLErr);
+#endif
+
 %newobject AsMDArray;
   GDALMDArrayHS *AsMDArray()
   {
