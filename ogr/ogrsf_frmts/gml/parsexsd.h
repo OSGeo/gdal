@@ -38,6 +38,6 @@
 
 bool CPL_DLL GMLParseXSD(const char *pszFile,
                          std::vector<GMLFeatureClass *> &aosClasses,
-                         bool &bFullyUnderstood);
+                         bool &bFullyUnderstood, bool &useSchemaImports);
 
 #endif  // PARSEXSD_H_INCLUDED

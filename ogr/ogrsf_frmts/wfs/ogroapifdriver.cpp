@@ -1709,8 +1709,9 @@ void OGROAPIFLayer::GetSchema()
     {
         std::vector<GMLFeatureClass *> apoClasses;
         bool bFullyUnderstood = false;
-        bool bHaveSchema =
-            GMLParseXSD(m_osDescribedByURL, apoClasses, bFullyUnderstood);
+        bool useSchemaImports = false;
+        bool bHaveSchema = GMLParseXSD(m_osDescribedByURL, apoClasses,
+                                       bFullyUnderstood, useSchemaImports);
         if (bHaveSchema && apoClasses.size() == 1)
         {
             CPLDebug("OAPIF", "Using XML schema");

@@ -1918,7 +1918,8 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char *pszLayerName,
 
     std::vector<GMLFeatureClass *> aosClasses;
     bool bFullyUnderstood = false;
-    GMLParseXSD(osTmpFileName, aosClasses, bFullyUnderstood);
+    bool useSchemaImports = false;
+    GMLParseXSD(osTmpFileName, aosClasses, bFullyUnderstood, useSchemaImports);
 
     int nLayersFound = 0;
     if (!(int)aosClasses.empty())
