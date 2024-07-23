@@ -862,11 +862,13 @@ OGRwkbGeometryType OGRGeometry::getIsoGeometryType() const
  * This function is the same as the C function OGR_G_Segmentize()
  *
  * @param dfMaxLength the maximum distance between 2 points after segmentization
+ * @return (since 3.10) true in case of success, false in case of error.
  */
 
-void OGRGeometry::segmentize(CPL_UNUSED double dfMaxLength)
+bool OGRGeometry::segmentize(CPL_UNUSED double dfMaxLength)
 {
     // Do nothing.
+    return true;
 }
 
 /************************************************************************/
@@ -1080,16 +1082,17 @@ int OGR_G_IsMeasured(OGRGeometryH hGeom)
  * @deprecated use set3D() or setMeasured().
  *
  * @param nNewDimension New coordinate dimension value, either 2 or 3.
+ * @return (since 3.10) true in case of success, false in case of memory allocation error
  */
 
-void OGRGeometry::setCoordinateDimension(int nNewDimension)
+bool OGRGeometry::setCoordinateDimension(int nNewDimension)
 
 {
     if (nNewDimension == 2)
         flags &= ~OGR_G_3D;
     else
         flags |= OGR_G_3D;
-    setMeasured(FALSE);
+    return setMeasured(FALSE);
 }
 
 /**
@@ -1102,16 +1105,18 @@ void OGRGeometry::setCoordinateDimension(int nNewDimension)
  * children geometries.
  *
  * @param bIs3D Should the geometry have a Z dimension, either TRUE or FALSE.
+ * @return (since 3.10) true in case of success, false in case of memory allocation error
  * @since GDAL 2.1
  */
 
-void OGRGeometry::set3D(OGRBoolean bIs3D)
+bool OGRGeometry::set3D(OGRBoolean bIs3D)
 
 {
     if (bIs3D)
         flags |= OGR_G_3D;
     else
         flags &= ~OGR_G_3D;
+    return true;
 }
 
 /**
@@ -1125,16 +1130,18 @@ void OGRGeometry::set3D(OGRBoolean bIs3D)
  *
  * @param bIsMeasured Should the geometry have a M dimension, either
  * TRUE or FALSE.
+ * @return (since 3.10) true in case of success, false in case of memory allocation error
  * @since GDAL 2.1
  */
 
-void OGRGeometry::setMeasured(OGRBoolean bIsMeasured)
+bool OGRGeometry::setMeasured(OGRBoolean bIsMeasured)
 
 {
     if (bIsMeasured)
         flags |= OGR_G_MEASURED;
     else
         flags &= ~OGR_G_MEASURED;
+    return true;
 }
 
 /************************************************************************/

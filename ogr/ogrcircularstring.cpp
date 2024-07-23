@@ -359,10 +359,12 @@ void OGRCircularString::getEnvelope(OGREnvelope3D *psEnvelope) const
 /*                     OGRCircularString::segmentize()                  */
 /************************************************************************/
 
-void OGRCircularString::segmentize(double dfMaxLength)
+bool OGRCircularString::segmentize(double dfMaxLength)
 {
-    if (!IsValidFast() || nPointCount == 0)
-        return;
+    if (!IsValidFast())
+        return false;
+    if (nPointCount == 0)
+        return true;
 
     // So as to make sure that the same line followed in both directions
     // result in the same segmentized line.
@@ -371,12 +373,14 @@ void OGRCircularString::segmentize(double dfMaxLength)
          paoPoints[0].y < paoPoints[nPointCount - 1].y))
     {
         reversePoints();
-        segmentize(dfMaxLength);
+        const bool bRet = segmentize(dfMaxLength);
         reversePoints();
+        return bRet;
     }
 
     std::vector<OGRRawPoint> aoRawPoint;
     std::vector<double> adfZ;
+    bool bRet = true;
     for (int i = 0; i < nPointCount - 2; i += 2)
     {
         const double x0 = paoPoints[i].x;
@@ -416,6 +420,7 @@ void OGRCircularString::segmentize(double dfMaxLength)
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid: %lf",
                              dfVal);
+                    bRet = false;
                     break;
                 }
                 const int nIntermediatePoints = static_cast<int>(dfVal);
@@ -451,6 +456,7 @@ void OGRCircularString::segmentize(double dfMaxLength)
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid 2: %lf",
                              dfVal);
+                    bRet = false;
                     break;
                 }
                 int nIntermediatePoints = static_cast<int>(dfVal);
@@ -489,6 +495,7 @@ void OGRCircularString::segmentize(double dfMaxLength)
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid 2: %lf",
                              dfVal);
+                    bRet = false;
                     break;
                 }
                 int nIntermediatePoints = static_cast<int>(dfVal);
@@ -519,6 +526,7 @@ void OGRCircularString::segmentize(double dfMaxLength)
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid 3: %lf",
                              dfVal);
+                    bRet = false;
                     break;
                 }
                 const int nIntermediatePoints = static_cast<int>(dfVal);
@@ -561,6 +569,7 @@ void OGRCircularString::segmentize(double dfMaxLength)
             memcpy(padfZ, &adfZ[0], sizeof(double) * nPointCount);
         }
     }
+    return bRet;
 }
 
 /************************************************************************/
