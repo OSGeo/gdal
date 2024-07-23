@@ -597,8 +597,8 @@ MAIN_START(nArgc, papszArgv)
     std::string osResampling;
     argParser.add_argument("-r")
         .store_into(osResampling)
-        .metavar("nearest|average|rms|gauss|cubic|cubicspline|lanczos|average_"
-                 "magphase|mode")
+        .metavar("nearest|average|rms|gauss|bilinear|cubic|cubicspline|lanczos|"
+                 "average_magphase|mode")
         .help(_("Select a resampling algorithm."));
 
     bool bReadOnly = false;
