@@ -25,7 +25,7 @@ cmake --build . -j$(nproc)
 cmake --install .
 
 # set rpath for python libraries
-for so in $(find ${READTHEDOCS_VIRTUALENV_PATH} -wholename "*/osgeo/*.so") ; do patchelf --set-rpath ${READTHEDOCS_VIRTUALENV_PATH}/lib $so ; done
+find ${READTHEDOCS_VIRTUALENV_PATH} -wholename "*/osgeo/*.so" -exec patchelf --set-rpath ${READTHEDOCS_VIRTUALENV_PATH}/lib {} \;
 
 # unpack javadoc created during cmake --build into correct location
 mkdir -p ../doc/build/html_extra
