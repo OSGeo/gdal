@@ -140,7 +140,7 @@ MAIN_START(argc, argv)
     std::string osResampling;
     argParser.add_argument("-r")
         .store_into(osResampling)
-        .metavar("nearest|bilinear|cubicspline")
+        .metavar("nearest|bilinear|cubic|cubicspline")
         .help(_("Select an interpolation algorithm."));
 
     {
@@ -264,10 +264,14 @@ MAIN_START(argc, argv)
     {
         eInterpolation = GRIORA_CubicSpline;
     }
+    else if (EQUAL(osResampling.c_str(), "CUBIC"))
+    {
+        eInterpolation = GRIORA_Cubic;
+    }
     else
     {
-        fprintf(stderr, "-r can only be used with values nearest, bilinear and "
-                        "cubicspline\n");
+        fprintf(stderr, "-r can only be used with values nearest, bilinear, "
+                        "cubic and cubicspline\n");
         exit(1);
     }
 
