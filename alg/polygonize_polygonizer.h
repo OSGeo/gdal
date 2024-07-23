@@ -41,6 +41,8 @@
 
 #include "cpl_error.h"
 #include "ogr_api.h"
+#include "ogr_geometry.h"
+#include "ogrsf_frmts.h"
 
 namespace gdal
 {
@@ -67,20 +69,30 @@ struct RPolygon
 {
     IndexType iBottomRightRow{0};
     IndexType iBottomRightCol{0};
+
+    struct ArcStruct
+    {
+        std::unique_ptr<Arc> poArc{};
+        // each element is the next arc index of the current arc
+        unsigned nConnection = 0;
+        // does arc follows the right-hand rule with
+        bool bFollowRighthand = false;
+
+        ArcStruct(unsigned nConnectionIn, bool bFollowRighthandIn)
+            : poArc(std::make_unique<Arc>()), nConnection(nConnectionIn),
+              bFollowRighthand(bFollowRighthandIn)
+        {
+        }
+    };
+
     // arc object list
-    std::vector<Arc *> oArcs{};
-    // does arc follows the right-hand rule with
-    std::vector<bool> oArcRighthandFollow{};
-    // each element is the next arc index of the current arc
-    std::vector<std::size_t> oArcConnections{};
+    std::vector<ArcStruct> oArcs{};
 
     RPolygon() = default;
 
     RPolygon(const RPolygon &) = delete;
 
     RPolygon &operator=(const RPolygon &) = delete;
-
-    ~RPolygon();
 
     /**
      * create a new arc object
@@ -187,9 +199,12 @@ template <typename PolyIdType, typename DataType> class Polygonizer
 template <typename DataType>
 class OGRPolygonWriter : public PolygonReceiver<DataType>
 {
-    OGRLayerH hOutLayer_;
+    OGRLayer *poOutLayer_ = nullptr;
     int iPixValField_;
     double *padfGeoTransform_;
+    std::unique_ptr<OGRFeature> poFeature_{};
+    OGRPolygon *poPolygon_ =
+        nullptr;  // = poFeature_->GetGeometryRef(), owned by poFeature
 
     CPLErr eErr_{CE_None};
 
