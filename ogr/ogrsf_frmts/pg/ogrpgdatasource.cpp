@@ -869,12 +869,12 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
             if (EQUAL(pszTypname, "geometry"))
             {
                 bHavePostGIS = TRUE;
-                nGeometryOID = atoi(pszOid);
+                nGeometryOID = static_cast<Oid>(strtoul(pszOid, nullptr, 10));
             }
             else if (CPLTestBool(CPLGetConfigOption("PG_USE_GEOGRAPHY", "YES")))
             {
                 bHaveGeography = TRUE;
-                nGeographyOID = atoi(pszOid);
+                nGeographyOID = static_cast<Oid>(strtoul(pszOid, nullptr, 10));
             }
         }
     }
