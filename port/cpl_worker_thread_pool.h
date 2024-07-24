@@ -37,6 +37,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <vector>
 
 /**
@@ -84,7 +85,7 @@ class CPL_DLL CPLWorkerThreadPool
     mutable std::mutex m_mutex{};
     std::condition_variable m_cv{};
     volatile CPLWorkerThreadState eState = CPLWTS_OK;
-    CPLList *psJobQueue = nullptr;
+    std::queue<std::function<void()>> jobQueue;
     int nPendingJobs = 0;
 
     CPLList *psWaitingWorkerThreadsList = nullptr;
@@ -95,7 +96,7 @@ class CPL_DLL CPLWorkerThreadPool
     static void WorkerThreadFunction(void *user_data);
 
     void DeclareJobFinished();
-    CPLWorkerThreadJob *GetNextJob(CPLWorkerThread *psWorkerThread);
+    std::function<void()> GetNextJob(CPLWorkerThread *psWorkerThread);
 
   public:
     CPLWorkerThreadPool();
