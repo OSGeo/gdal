@@ -38,8 +38,7 @@
 
 struct CPLWorkerThreadJob
 {
-    CPLThreadFunc pfnFunc;
-    void *pData;
+    std::function<void()> task;
 };
 
 static thread_local CPLWorkerThreadPool *threadLocalCurrentThreadPool = nullptr;
@@ -55,6 +54,15 @@ static thread_local CPLWorkerThreadPool *threadLocalCurrentThreadPool = nullptr;
  */
 CPLWorkerThreadPool::CPLWorkerThreadPool()
 {
+}
+
+/** Instantiate a new pool of worker threads.
+ *
+ * \param nThreads  Number of threads in the pool.
+ */
+CPLWorkerThreadPool::CPLWorkerThreadPool(int nThreads)
+{
+    Setup(nThreads, nullptr, nullptr);
 }
 
 /************************************************************************/
@@ -116,10 +124,13 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void *user_data)
         if (psJob == nullptr)
             break;
 
+        psJob->task();
+        /**
         if (psJob->pfnFunc)
         {
             psJob->pfnFunc(psJob->pData);
         }
+        **/
         CPLFree(psJob);
 #if DEBUG_VERBOSE
         CPLDebug("JOB", "%p finished a job", psWT);
@@ -139,6 +150,16 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void *user_data)
  * @return true in case of success.
  */
 bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
+{
+    return SubmitJob([=] { pfnFunc(pData); });
+}
+
+/** Queue a new job.
+ *
+ * @param task  Void function to execute.
+ * @return true in case of success.
+ */
+bool CPLWorkerThreadPool::SubmitJob(std::function<void()> task)
 {
 #ifdef DEBUG
     {
@@ -164,7 +185,7 @@ bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
         if (!bMustIncrementWaitingWorkerThreadsAfterSubmission)
         {
             // otherwise there is a risk of deadlock, so execute synchronously.
-            pfnFunc(pData);
+            task();
             return true;
         }
     }
@@ -180,8 +201,7 @@ bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
         }
         return false;
     }
-    psJob->pfnFunc = pfnFunc;
-    psJob->pData = pData;
+    psJob->task = std::move(task);
 
     CPLList *psItem =
         static_cast<CPLList *>(VSI_MALLOC_VERBOSE(sizeof(CPLList)));
@@ -325,8 +345,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
             bRet = false;
             break;
         }
-        psJob->pfnFunc = pfnFunc;
-        psJob->pData = apData[i];
+        psJob->task = [=] { pfnFunc(apData[i]); };
 
         CPLList *psItem =
             static_cast<CPLList *>(VSI_MALLOC_VERBOSE(sizeof(CPLList)));

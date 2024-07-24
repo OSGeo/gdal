@@ -34,6 +34,7 @@
 #include "cpl_list.h"
 
 #include <condition_variable>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -98,6 +99,7 @@ class CPL_DLL CPLWorkerThreadPool
 
   public:
     CPLWorkerThreadPool();
+    CPLWorkerThreadPool(int nThreads);
     ~CPLWorkerThreadPool();
 
     bool Setup(int nThreads, CPLThreadFunc pfnInitFunc, void **pasInitData);
@@ -106,6 +108,7 @@ class CPL_DLL CPLWorkerThreadPool
 
     std::unique_ptr<CPLJobQueue> CreateJobQueue();
 
+    bool SubmitJob(std::function<void()> task);
     bool SubmitJob(CPLThreadFunc pfnFunc, void *pData);
     bool SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void *> &apData);
     void WaitCompletion(int nMaxRemainingJobs = 0);
