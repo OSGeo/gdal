@@ -1476,6 +1476,7 @@ GDALHashSetBandBlockCacheCreate(GDALRasterBand *poBand);
 /* ******************************************************************** */
 
 class GDALMDArray;
+class GDALDoublePointsCache;
 
 /** Range of values found in a mask band */
 typedef enum
@@ -1609,6 +1610,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void LeaveReadWrite();
     void InitRWLock();
     void SetValidPercent(GUIntBig nSampleCount, GUIntBig nValidCount);
+
+    mutable std::unique_ptr<GDALDoublePointsCache> m_oPointsCache{};
 
     //! @endcond
 
@@ -1803,6 +1806,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                               double *pdfDataPct = nullptr);
 
     std::shared_ptr<GDALMDArray> AsMDArray() const;
+
+    CPLErr InterpolateAtPoint(double dfPixel, double dfLine,
+                              GDALRIOResampleAlg eInterpolation,
+                              double *pdfRealValue,
+                              double *pdfImagValue = nullptr) const;
 
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)

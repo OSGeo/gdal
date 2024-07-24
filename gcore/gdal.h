@@ -1638,6 +1638,12 @@ CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFuncWithArgs(
     const char *pszName, GDALDerivedPixelFuncWithArgs pfnPixelFunc,
     const char *pszMetadata);
 
+CPLErr CPL_DLL GDALRasterInterpolateAtPoint(GDALRasterBandH hBand,
+                                            double dfPixel, double dfLine,
+                                            GDALRIOResampleAlg eInterpolation,
+                                            double *pdfRealValue,
+                                            double *pdfImagValue);
+
 /** Generic pointer for the working structure of VRTProcessedDataset
  * function. */
 typedef void *VRTPDWorkingDataPtr;

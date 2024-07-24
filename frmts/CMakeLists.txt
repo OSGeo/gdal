@@ -165,8 +165,8 @@ gdal_dependent_format(jp2lura "JPEG-2000 (based on Luratech)" "GDAL_USE_LURATECH
 gdal_dependent_format(sde "ESRI ArcSDE Raster" "HAVE_SDE")
 # LizardTech's decoding software development kit (DSDK)
 include(mrsid/driver_declaration.cmake)
-gdal_dependent_format(georaster "Oracle Spatial GeoRaster" "GDAL_USE_ORACLE" DRIVER_NAME_OPTION GEOR)
-gdal_dependent_format(ecw "ERDAS JPEG2000 (.jp2)" "GDAL_USE_ECW")
+include(georaster/driver_declaration.cmake)
+include(ecw/driver_declaration.cmake)
 
 # Register all frmt drivers according to FRMT_<driver> flags
 gdal_standard_includes(gdal_frmts)

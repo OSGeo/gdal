@@ -99,7 +99,7 @@ def test_stats_dont_force():
         gdal.Unlink("data/byte.tif.aux.xml")
     ds = gdal.Open("data/byte.tif")
     stats = ds.GetRasterBand(1).GetStatistics(0, 0)
-    assert stats == [0, 0, 0, -1], "did not get expected stats"
+    assert stats is None
 
 
 ###############################################################################
@@ -762,7 +762,7 @@ def test_stats_approx_stats_flag(dt=gdal.GDT_Byte, struct_frmt="B"):
     approx_ok = 0
     force = 0
     stats = ds.GetRasterBand(1).GetStatistics(approx_ok, force)
-    assert stats == [0.0, 0.0, 0.0, -1.0], "did not get expected stats"
+    assert stats is None
 
     approx_ok = 0
     force = 1
@@ -824,15 +824,15 @@ def test_stats_clear():
     filename = "/vsimem/out.tif"
     gdal.Translate(filename, "data/byte.tif")
     ds = gdal.Open(filename)
-    assert ds.GetRasterBand(1).GetStatistics(False, False) == [0, 0, 0, -1]
-    assert ds.GetRasterBand(1).ComputeStatistics(False) != [0, 0, 0, -1]
+    assert ds.GetRasterBand(1).GetStatistics(False, False) is None
+    assert ds.GetRasterBand(1).ComputeStatistics(False) is not None
 
     ds = gdal.Open(filename)
-    assert ds.GetRasterBand(1).GetStatistics(False, False) != [0, 0, 0, -1]
+    assert ds.GetRasterBand(1).GetStatistics(False, False) is not None
     ds.ClearStatistics()
 
     ds = gdal.Open(filename)
-    assert ds.GetRasterBand(1).GetStatistics(False, False) == [0, 0, 0, -1]
+    assert ds.GetRasterBand(1).GetStatistics(False, False) is None
 
     gdal.GetDriverByName("GTiff").Delete(filename)
 

@@ -25,6 +25,7 @@ Contributors:  Thomas Maurer
 #include <cstdint>
 #include <cmath>
 #include <cfloat>
+#include <climits>
 #include <string>
 #include <algorithm>
 
@@ -605,9 +606,11 @@ static Byte *writeFlt(Byte *ptr, float z, int n)
 // Only small, exact integer values return 1 or 2, otherwise 4
 static int numBytesFlt(float z)
 {
-    float s = static_cast<float>(static_cast<signed short>(z));
-    float c = static_cast<float>(static_cast<signed char>(z));
-    return (c == z) ? 1 : (s == z) ? 2 : 4;
+    if (!std::isfinite(z) || z > SHRT_MAX || z < SHRT_MIN || z != int16_t(z))
+        return 4;
+    if (z > SCHAR_MAX || z < SCHAR_MIN)
+        return 2;
+    return 1;
 }
 
 static int numBytesZTile(int nValues, float zMin, float zMax, double maxZError)

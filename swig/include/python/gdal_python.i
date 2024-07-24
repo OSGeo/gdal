@@ -4939,3 +4939,31 @@ def quiet_errors():
         tuple.max_part_count = max_part_count
         val = tuple
 %}
+
+%feature("shadow") InterpolateAtPoint %{
+def InterpolateAtPoint(self, *args, **kwargs):
+    """Return the interpolated value at pixel and line raster coordinates.
+       See :cpp:func:`GDALRasterBand::InterpolateAtPoint`.
+
+       Parameters
+       ----------
+       pixel : float
+       line : float
+       interpolation : GRIOResampleAlg (nearest, bilinear, cubicspline)
+
+       Returns
+       -------
+       float:
+           Interpolated value, or ``None`` if it has any error.
+    """
+
+    ret = $action(self, *args, **kwargs)
+    if ret[0] != CE_None:
+        return None
+
+    from . import gdal
+    if gdal.DataTypeIsComplex(self.DataType):
+        return complex(ret[1], ret[2])
+    else:
+        return ret[1]
+%}

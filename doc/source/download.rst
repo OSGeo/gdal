@@ -113,10 +113,38 @@ available through `conda-forge <https://anaconda.org/conda-forge/gdal>`__.
 
     conda install [-c channel] [package...]
 
+GDAL is available as several subpackages:
+
+- ``gdal``: Python bindings and Python utilities (depends on libgdal-core)
+- ``libgdal``: meta-package gathering all below libgdal-* packages (except libgdal-arrow-parquet)
+- ``libgdal-arrow-parquet``: :ref:`vector.arrow` and :ref:`vector.parquet` drivers as a plugin (depends on libgdal-core)
+- ``libgdal-core``: core library and C++ utilities, with a number of builtin drivers (available since GDAL 3.9.1)
+- ``libgdal-fits``: :ref:`raster.fits` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-grib``: :ref:`raster.grib` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-hdf4``: :ref:`raster.hdf4` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-hdf5``: :ref:`raster.hdf5` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-jp2openjpeg``: :ref:`raster.jp2openjpeg` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-kea``: :ref:`raster.kea` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-netcdf``: :ref:`raster.netcdf` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-pdf``: :ref:`raster.pdf` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-postgisraster``: :ref:`raster.postgisraster` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-pg``: :ref:`vector.pg` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-tiledb``: :ref:`raster.tiledb` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+- ``libgdal-xls``: :ref:`vector.xls` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
+
+
+To install the ``gdal`` package (Python bindings and utilities), and ``libgdal-core``:
 
 ::
 
     conda install -c conda-forge gdal
+
+
+To install the ``libgdal`` meta-package with all available drivers, but libgdal-arrow-parquet:
+
+::
+
+    conda install -c conda-forge libgdal
 
 
 To install the Arrow and Parquet drivers as plugins:

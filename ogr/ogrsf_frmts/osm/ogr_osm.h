@@ -269,8 +269,8 @@ class OGROSMLayer final : public OGRLayer
     }
 
     void SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID, bool bIsWayID,
-                           unsigned int nTags, OSMTag *pasTags,
-                           OSMInfo *psInfo);
+                           unsigned int nTags, const OSMTag *pasTags,
+                           const OSMInfo *psInfo);
 
     void SetDeclareInterest(bool bIn)
     {
@@ -522,30 +522,31 @@ class OGROSMDataSource final : public OGRDataSource
     static const GIntBig FILESIZE_INVALID = -1;
     GIntBig m_nFileSize = FILESIZE_NOT_INIT;
 
-    void CompressWay(bool bIsArea, unsigned int nTags, IndexedKVP *pasTags,
-                     int nPoints, LonLat *pasLonLatPairs, OSMInfo *psInfo,
+    void CompressWay(bool bIsArea, unsigned int nTags,
+                     const IndexedKVP *pasTags, int nPoints,
+                     const LonLat *pasLonLatPairs, const OSMInfo *psInfo,
                      std::vector<GByte> &abyCompressedWay);
     void UncompressWay(int nBytes, const GByte *pabyCompressedWay,
                        bool *pbIsArea, std::vector<LonLat> &asCoords,
                        unsigned int *pnTags, OSMTag *pasTags, OSMInfo *psInfo);
 
-    bool ParseConf(char **papszOpenOptions);
+    bool ParseConf(CSLConstList papszOpenOptions);
     bool CreateTempDB();
     bool SetDBOptions();
     void SetCacheSize();
     bool CreatePreparedStatements();
     void CloseDB();
 
-    bool IndexPoint(OSMNode *psNode);
-    bool IndexPointSQLite(OSMNode *psNode);
+    bool IndexPoint(const OSMNode *psNode);
+    bool IndexPointSQLite(const OSMNode *psNode);
     bool FlushCurrentSector();
     bool FlushCurrentSectorCompressedCase();
     bool FlushCurrentSectorNonCompressedCase();
-    bool IndexPointCustom(OSMNode *psNode);
+    bool IndexPointCustom(const OSMNode *psNode);
 
     void IndexWay(GIntBig nWayID, bool bIsArea, unsigned int nTags,
-                  IndexedKVP *pasTags, LonLat *pasLonLatPairs, int nPairs,
-                  OSMInfo *psInfo);
+                  const IndexedKVP *pasTags, const LonLat *pasLonLatPairs,
+                  int nPairs, const OSMInfo *psInfo);
 
     bool StartTransactionCacheDB();
     bool CommitTransactionCacheDB();
@@ -563,12 +564,12 @@ class OGROSMDataSource final : public OGRDataSource
 
     unsigned int
     LookupWays(std::map<GIntBig, std::pair<int, void *>> &aoMapWays,
-               OSMRelation *psRelation);
+               const OSMRelation *psRelation);
 
-    OGRGeometry *BuildMultiPolygon(OSMRelation *psRelation,
+    OGRGeometry *BuildMultiPolygon(const OSMRelation *psRelation,
                                    unsigned int *pnTags, OSMTag *pasTags);
-    OGRGeometry *BuildGeometryCollection(OSMRelation *psRelation,
-                                         int bMultiLineString);
+    OGRGeometry *BuildGeometryCollection(const OSMRelation *psRelation,
+                                         bool bMultiLineString);
 
     bool TransferToDiskIfNecesserary();
 
@@ -610,7 +611,7 @@ class OGROSMDataSource final : public OGRDataSource
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData) override;
 
-    int Open(const char *pszFilename, char **papszOpenOptions);
+    int Open(const char *pszFilename, CSLConstList papszOpenOptions);
 
     int MyResetReading();
     bool ParseNextChunk(int nIdxLayer, GDALProgressFunc pfnProgress,
@@ -618,9 +619,9 @@ class OGROSMDataSource final : public OGRDataSource
     OGRErr GetExtent(OGREnvelope *psExtent);
     int IsInterleavedReading();
 
-    void NotifyNodes(unsigned int nNodes, OSMNode *pasNodes);
-    void NotifyWay(OSMWay *psWay);
-    void NotifyRelation(OSMRelation *psRelation);
+    void NotifyNodes(unsigned int nNodes, const OSMNode *pasNodes);
+    void NotifyWay(const OSMWay *psWay);
+    void NotifyRelation(const OSMRelation *psRelation);
     void NotifyBounds(double dfXMin, double dfYMin, double dfXMax,
                       double dfYMax);
 

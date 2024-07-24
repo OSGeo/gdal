@@ -1800,3 +1800,24 @@ def test_pds4_oblique_cylindrical_write():
     check_pds4_oblique_cylindrical(filename)
 
     gdal.GetDriverByName("PDS4").Delete(filename)
+
+
+###############################################################################
+
+
+def test_pds4_read_right_to_left(tmp_path):
+
+    numpy = pytest.importorskip("numpy")
+    pytest.importorskip("osgeo.gdal_array")
+
+    tmp_filename = str(tmp_path / "tmp.xml")
+    ref_ds = gdal.Open("data/byte.tif")
+    gdal.Translate(tmp_filename, ref_ds, format="PDS4")
+    xml_content = open(tmp_filename, "rt").read()
+    # Generate a fake Right to Left oriented image
+    open(tmp_filename, "wt").write(
+        xml_content.replace("Left to Right", "Right to Left")
+    )
+    ds = gdal.Open(tmp_filename)
+    # Test that we flip the image along the horizontal axis
+    assert numpy.all(ds.ReadAsArray()[::, ::-1] == ref_ds.ReadAsArray())

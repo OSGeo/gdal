@@ -343,9 +343,9 @@ CPLVirtualMem *VRTRawRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr
-VRTRawRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
-                          std::map<CPLString, GDALDataset *> &oMapSharedSources)
+CPLErr VRTRawRasterBand::XMLInit(const CPLXMLNode *psTree,
+                                 const char *pszVRTPath,
+                                 VRTMapSharedResources &oMapSharedSources)
 
 {
     const CPLErr eErr =

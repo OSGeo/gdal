@@ -136,7 +136,7 @@ The value of the _NAME is the string that can be passed to :cpp:func:`GDALOpen` 
 
 Drivers which support subdatasets advertise the ``DMD_SUBDATASETS`` capability. This information is reported when the --format and --formats options are passed to the command line utilities.
 
-Currently, drivers which support subdatasets are: ADRG, ECRGTOC, GEORASTER, GTiff, HDF4, HDF5, netCDF, NITF, NTv2, OGDI, PDF, PostGISRaster, Rasterlite, RPFTOC, RS2, TileDB, WCS, and WMS.
+Currently, drivers which support subdatasets are: ADRG, ECRGTOC, GEORASTER, GTiff, HDF4, HDF5, netCDF, NITF, NTv2, OGDI, PDF, PostGISRaster, Rasterlite, RPFTOC, RS2, TileDB, WCS, WMS, and Zarr.
 
 IMAGE_STRUCTURE Domain
 ++++++++++++++++++++++
