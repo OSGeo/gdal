@@ -93,6 +93,24 @@ smartquotes = False
 # This avoids the need to add an explicit ..include directive to every file.
 rst_prolog = open(os.path.join(os.path.dirname(__file__), "substitutions.rst")).read()
 
+# Add a substitution with links to download the docs in PDF or ZIP format.
+# If building with ReadTheDocs, the link will be to the version that is being built.
+# Otherwise it will be to the latest version.
+doc_version_known = "READTHEDOCS_VERSION" in os.environ
+offline_doc_version = os.environ.get("READTHEDOCS_VERSION", "latest")
+pdf_url = f"/_/downloads/en/{offline_doc_version}/pdf/"
+zip_url = f"/_/downloads/en/{offline_doc_version}/htmlzip/"
+if doc_version_known:
+    offline_download_text = "This documentation is also "
+    url_root = ""
+else:
+    offline_download_text = "Documentation for the latest version of GDAL is "
+    url_root = "https://gdal.org"
+offline_download_text += f"available as a `PDF <{url_root}{pdf_url}>`__ or a `ZIP of individual HTML pages <{url_root}{zip_url}>`__ for offline browsing."
+rst_prolog += f"""
+.. |offline-download| replace:: {offline_download_text}
+"""
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
