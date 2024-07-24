@@ -399,7 +399,7 @@ def test_gdal_contour_missing_fl_i_or_e(gdal_contour_path, testdata_tif, tmp_pat
     _, err = gdaltest.runexternal_out_and_err(
         gdal_contour_path + f" {testdata_tif} {contour_shp}"
     )
-    assert "One one of -i, -fl or -e must be specified." in err
+    assert "One of -i, -fl or -e must be specified." in err
 
 
 ###############################################################################

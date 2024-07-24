@@ -82,7 +82,7 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
         "utility: http://gdal.org/gdal_contour.html"));
 
     argParser->add_extra_usage_hint(
-        _("One one of -i, -fl or -e must be specified."));
+        _("One of -i, -fl or -e must be specified."));
 
     argParser->add_argument("-b")
         .metavar("<name>")
