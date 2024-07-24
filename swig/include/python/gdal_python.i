@@ -2190,6 +2190,7 @@ def InfoOptions(options=None, format='text', deserialize=True,
          computeMinMax=False, reportHistograms=False, reportProj4=False,
          stats=False, approxStats=False, computeChecksum=False,
          showGCPs=True, showMetadata=True, showRAT=True, showColorTable=True,
+         showNodata=True, showMask=True,
          listMDD=False, showFileList=True, allMetadata=False,
          extraMDDomains=None, wktFormat=None):
     """ Create a InfoOptions() object that can be passed to gdal.Info()
@@ -2231,6 +2232,10 @@ def InfoOptions(options=None, format='text', deserialize=True,
             new_options += ['-norat']
         if not showColorTable:
             new_options += ['-noct']
+        if not showNodata:
+            new_options += ['-nonodata']
+        if not showMask:
+            new_options += ['-nomask']
         if listMDD:
             new_options += ['-listmdd']
         if not showFileList:
