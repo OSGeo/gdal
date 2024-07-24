@@ -2095,3 +2095,72 @@ def test_ogr_libkml_read_external_style():
         lyr = ds.GetLayer(0)
         feat = lyr.GetNextFeature()
         assert feat.GetStyleString() == "LABEL(c:#FFFFFFFF,w:110.000000)"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "input_wkt,expected_wkt",
+    [
+        ("POINT (2 90)", "POINT Z (2 90 0)"),
+        ("POINT (2 90.000000001)", "POINT Z (2 90 0)"),
+        ("POINT (2 -90.000000001)", "POINT Z (2 -90 0)"),
+        ("POINT (181 -90)", "POINT Z (-179 -90 0)"),
+        ("POINT (-181 49)", "POINT Z (179 49 0)"),
+        ("POINT (540 49)", "POINT Z (180 49 0)"),
+        ("POINT (-540 49)", "POINT Z (-180 49 0)"),
+        ("POINT (541 49)", None),
+        ("POINT (-541 49)", None),
+        ("POINT (2 91)", None),
+        ("POINT (2 -91)", None),
+        ("POINT Z (2 49 10)", "POINT Z (2 49 10)"),
+        ("POINT Z (2 91 10)", None),
+        ("LINESTRING (2 -90, 3 90)", "LINESTRING Z (2 -90 0,3 90 0)"),
+        ("LINESTRING (2 -90, 3 91)", None),
+        ("LINESTRING Z (2 -90 10, 3 90 10)", "LINESTRING Z (2 -90 10,3 90 10)"),
+        ("LINESTRING Z (2 -90 10, 3 91 10)", None),
+        (
+            "POLYGON ((-180 -90,180 -90,180 90,-180 90,-180 -90),(0 0,0 1,1 1,0 0))",
+            "POLYGON Z ((-180 -90 0,180 -90 0,180 90 0,-180 90 0,-180 -90 0),(0 0 0,0 1 0,1 1 0,0 0 0))",
+        ),
+        ("POLYGON ((-180 -90,180 -90,180 90,-180 91,-180 -90))", None),
+        (
+            "POLYGON ((-180 -90,180 -90,180 90,-180 90,-180 -90),(0 91,1 90,0 90,0 91))",
+            None,
+        ),
+        (
+            "POLYGON Z ((-180 -90 0,180 -90 0,180 90 0,-180 90 0,-180 -90 0),(0 0 0,0 1 0,1 1 0,0 0 0))",
+            "POLYGON Z ((-180 -90 0,180 -90 0,180 90 0,-180 90 0,-180 -90 0),(0 0 0,0 1 0,1 1 0,0 0 0))",
+        ),
+        ("POLYGON Z ((-180 -90 0,180 -90 0,180 90 0,-180 91 0,-180 -90 0))", None),
+        (
+            "POLYGON Z ((-180 -90 0,180 -90 0,180 90 0,-180 90 0,-180 -90 0),(0 91 0,1 90 0,0 90 0,0 91 0))",
+            None,
+        ),
+        ("MULTIPOINT ((2 90))", "POINT Z (2 90 0)"),
+        ("MULTIPOINT ((2 91))", None),
+        ("MULTIPOINT ((2 90),(2 -90))", "MULTIPOINT Z ((2 90 0),(2 -90 0))"),
+        ("MULTIPOINT ((2 90),(2 91))", None),
+    ],
+)
+def test_ogr_libkml_write_geometries(input_wkt, expected_wkt, tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.kml")
+    with ogr.GetDriverByName("LIBKML").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt(input_wkt))
+        if expected_wkt:
+            lyr.CreateFeature(f)
+        else:
+            with pytest.raises(Exception):
+                lyr.CreateFeature(f)
+
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if expected_wkt:
+            assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
+        else:
+            assert f is None
