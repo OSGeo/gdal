@@ -502,7 +502,7 @@ The following configuration options are available:
       Number of decimals for coordinate
       values. A heuristic is used to remove insignificant
       trailing 00000x or 99999x that can appear when formatting decimal
-      numbers.
+      numbers. Examples: 6 gives 120.864, 24.1818; 2 gives 1.2E+02, 24.0.
 
 -  .. config:: OGR_WKT_ROUND
       :choices: YES, NO
