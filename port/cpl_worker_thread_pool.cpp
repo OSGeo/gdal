@@ -639,7 +639,7 @@ bool CPLJobQueue::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
         std::lock_guard<std::mutex> oGuard(m_mutex);
         m_nPendingJobs++;
     }
-    // cppcheck-suppress knwonConditionTrueFalse
+    // cppcheck-suppress knownConditionTrueFalse
     return m_poPool->SubmitJob(JobQueueFunction, poJob);
 }
 
