@@ -197,7 +197,7 @@ bool CPLWorkerThreadPool::SubmitJob(std::function<void()> task)
         wt->poTP = this;
         wt->bMarkedAsWaiting = false;
         //ABELL - Why should this fail? And this is a *pool* thread, not necessarily
-        //  tied to the sumitted job. The submitted job still needs to run, even if
+        //  tied to the submitted job. The submitted job still needs to run, even if
         //  this fails. If we can't create a thread, should the entire pool become invalid?
         wt->hThread = CPLCreateJoinableThread(WorkerThreadFunction, wt.get());
         /**
@@ -639,12 +639,7 @@ bool CPLJobQueue::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
         std::lock_guard<std::mutex> oGuard(m_mutex);
         m_nPendingJobs++;
     }
-    bool bRet = m_poPool->SubmitJob(JobQueueFunction, poJob);
-    if (!bRet)
-    {
-        delete poJob;
-    }
-    return bRet;
+    return m_poPool->SubmitJob(JobQueueFunction, poJob);
 }
 
 /************************************************************************/
