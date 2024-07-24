@@ -93,20 +93,19 @@ be on the right, i.e. a line string goes clockwise around a top.
 
 .. option:: -i <interval>
 
-    Elevation interval between contours. Ignored if -fl is used.
+    Elevation interval between contours.
     Must specify either -i or -fl or -e.
 
 .. option:: -off <offset>
 
-    Offset from zero relative to which to interpret intervals. Ignored if -fl is used.
+    Offset from zero relative to which to interpret intervals.
 
-    For example, `-i 100` requests contours at ...-100, 0, 100... 
+    For example, `-i 100` requests contours at ...-100, 0, 100...
     Further adding `-off 25` makes that request instead ...-75, 25, 125...
 
 .. option:: -fl <level>
 
     Name one or more "fixed levels" to extract.
-    Must specify either -i or -fl or -e.
 
 .. option:: -e <base>
 
