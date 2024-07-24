@@ -419,6 +419,18 @@ int OGRXLSXDataSource::Create(const char *pszFilename,
 }
 
 /************************************************************************/
+/*                           GetUnprefixed()                            */
+/************************************************************************/
+
+static const char *GetUnprefixed(const char *pszStr)
+{
+    const char *pszColumn = strchr(pszStr, ':');
+    if (pszColumn)
+        return pszColumn + 1;
+    return pszStr;
+}
+
+/************************************************************************/
 /*                           startElementCbk()                          */
 /************************************************************************/
 
@@ -433,6 +445,8 @@ void OGRXLSXDataSource::startElementCbk(const char *pszNameIn,
 {
     if (bStopParsing)
         return;
+
+    pszNameIn = GetUnprefixed(pszNameIn);
 
     nWithoutEventCounter = 0;
     switch (stateStack[nStackDepth].eVal)
@@ -473,6 +487,8 @@ void OGRXLSXDataSource::endElementCbk(const char *pszNameIn)
 {
     if (bStopParsing)
         return;
+
+    pszNameIn = GetUnprefixed(pszNameIn);
 
     nWithoutEventCounter = 0;
 
@@ -1346,6 +1362,8 @@ void OGRXLSXDataSource::startElementSSCbk(const char *pszNameIn,
     if (bStopParsing)
         return;
 
+    pszNameIn = GetUnprefixed(pszNameIn);
+
     nWithoutEventCounter = 0;
     switch (stateStack[nStackDepth].eVal)
     {
@@ -1381,10 +1399,13 @@ static void XMLCALL endElementSSCbk(void *pUserData, const char *pszNameIn)
     ((OGRXLSXDataSource *)pUserData)->endElementSSCbk(pszNameIn);
 }
 
-void OGRXLSXDataSource::endElementSSCbk(CPL_UNUSED const char *pszNameIn)
+void OGRXLSXDataSource::endElementSSCbk(const char * /*pszNameIn*/)
 {
     if (bStopParsing)
         return;
+
+    // If we were to use pszNameIn, then we need:
+    // pszNameIn = GetUnprefixed(pszNameIn);
 
     nWithoutEventCounter = 0;
 
@@ -1529,6 +1550,8 @@ void OGRXLSXDataSource::startElementWBRelsCbk(const char *pszNameIn,
     if (bStopParsing)
         return;
 
+    pszNameIn = GetUnprefixed(pszNameIn);
+
     nWithoutEventCounter = 0;
     if (strcmp(pszNameIn, "Relationship") == 0)
     {
@@ -1594,18 +1617,6 @@ void OGRXLSXDataSource::AnalyseWorkbookRels(VSILFILE *fpWorkbookRels)
 }
 
 /************************************************************************/
-/*                           GetUnprefixed()                            */
-/************************************************************************/
-
-static const char *GetUnprefixed(const char *pszStr)
-{
-    const char *pszColumn = strchr(pszStr, ':');
-    if (pszColumn)
-        return pszColumn + 1;
-    return pszStr;
-}
-
-/************************************************************************/
 /*                          startElementWBCbk()                         */
 /************************************************************************/
 
@@ -1621,8 +1632,10 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
     if (bStopParsing)
         return;
 
+    pszNameIn = GetUnprefixed(pszNameIn);
+
     nWithoutEventCounter = 0;
-    if (strcmp(GetUnprefixed(pszNameIn), "sheet") == 0)
+    if (strcmp(pszNameIn, "sheet") == 0)
     {
         const char *pszSheetName = GetAttributeValue(ppszAttr, "name", nullptr);
         const char *pszId = GetAttributeValue(ppszAttr, "r:id", nullptr);
@@ -1725,6 +1738,8 @@ void OGRXLSXDataSource::startElementStylesCbk(const char *pszNameIn,
     if (bStopParsing)
         return;
 
+    pszNameIn = GetUnprefixed(pszNameIn);
+
     nWithoutEventCounter = 0;
     if (strcmp(pszNameIn, "numFmt") == 0)
     {
@@ -1809,6 +1824,8 @@ void OGRXLSXDataSource::endElementStylesCbk(const char *pszNameIn)
 {
     if (bStopParsing)
         return;
+
+    pszNameIn = GetUnprefixed(pszNameIn);
 
     nWithoutEventCounter = 0;
     if (strcmp(pszNameIn, "cellXfs") == 0)
