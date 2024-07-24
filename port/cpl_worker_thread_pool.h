@@ -100,7 +100,7 @@ class CPL_DLL CPLWorkerThreadPool
 
   public:
     CPLWorkerThreadPool();
-    CPLWorkerThreadPool(int nThreads);
+    explicit CPLWorkerThreadPool(int nThreads);
     ~CPLWorkerThreadPool();
 
     bool Setup(int nThreads, CPLThreadFunc pfnInitFunc, void **pasInitData);

@@ -52,7 +52,7 @@ static thread_local CPLWorkerThreadPool *threadLocalCurrentThreadPool = nullptr;
  * The pool is in an uninitialized state after this call. The Setup() method
  * must be called.
  */
-CPLWorkerThreadPool::CPLWorkerThreadPool()
+CPLWorkerThreadPool::CPLWorkerThreadPool() : jobQueue{}
 {
 }
 
@@ -60,7 +60,7 @@ CPLWorkerThreadPool::CPLWorkerThreadPool()
  *
  * \param nThreads  Number of threads in the pool.
  */
-CPLWorkerThreadPool::CPLWorkerThreadPool(int nThreads)
+CPLWorkerThreadPool::CPLWorkerThreadPool(int nThreads) : jobQueue{}
 {
     Setup(nThreads, nullptr, nullptr);
 }
