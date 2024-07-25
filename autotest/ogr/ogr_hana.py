@@ -1194,12 +1194,10 @@ def test_ogr_hana_38():
         assert layer.GetLayerDefn().GetFieldCount() == 2
         field_emb1 = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("EMB1"))
         assert field_emb1.GetType() == ogr.OFTBinary
-        if field_emb1.GetWidth() != 5000:
-            assert field_emb1.GetWidth() == 16
+        assert field_emb1.GetWidth() == 16
         field_emb2 = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("EMB2"))
         assert field_emb2.GetType() == ogr.OFTBinary
-        if field_emb2.GetWidth() != 5000:
-            assert field_emb2.GetWidth() == 65000
+        assert field_emb2.GetWidth() == 65000
         check_feature_count(layer, 1)
         feat = layer.GetNextFeature()
         assert feat.GetFieldAsBinary("EMB1") == expected
