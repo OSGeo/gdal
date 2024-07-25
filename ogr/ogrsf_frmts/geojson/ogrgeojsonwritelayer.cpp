@@ -256,19 +256,45 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
     {
         const double dfXYResolution =
             std::pow(10.0, double(-oWriteOptions_.nXYCoordPrecision));
-        auto poNewGeom = poFeature == poFeatureToWrite
-                             ? poOrigGeom->clone()
-                             : poFeatureToWrite->GetGeometryRef();
-        bool bDeleteNewGeom = (poFeature == poFeatureToWrite);
+        auto poNewGeom = std::unique_ptr<OGRGeometry>(
+            poFeatureToWrite->GetGeometryRef()->clone());
         OGRGeomCoordinatePrecision sPrecision;
         sPrecision.dfXYResolution = dfXYResolution;
         poNewGeom->roundCoordinates(sPrecision);
-        if (!IsValid(poNewGeom))
+        if (!IsValid(poNewGeom.get()))
         {
-            CPLDebug("GeoJSON", "Running SetPrecision() to correct an invalid "
-                                "geometry due to reduced precision output");
-            auto poValidGeom =
-                poOrigGeom->SetPrecision(dfXYResolution, /* nFlags = */ 0);
+            std::unique_ptr<OGRGeometry> poValidGeom;
+            if (poFeature == poFeatureToWrite)
+            {
+                CPLDebug("GeoJSON",
+                         "Running SetPrecision() to correct an invalid "
+                         "geometry due to reduced precision output");
+                poValidGeom.reset(
+                    poOrigGeom->SetPrecision(dfXYResolution, /* nFlags = */ 0));
+            }
+            else
+            {
+                CPLDebug("GeoJSON", "Running MakeValid() to correct an invalid "
+                                    "geometry due to reduced precision output");
+                poValidGeom.reset(poNewGeom->MakeValid());
+                if (poValidGeom)
+                {
+                    auto poValidGeomRoundCoordinates =
+                        std::unique_ptr<OGRGeometry>(poValidGeom->clone());
+                    poValidGeomRoundCoordinates->roundCoordinates(sPrecision);
+                    if (!IsValid(poValidGeomRoundCoordinates.get()))
+                    {
+                        CPLDebug("GeoJSON",
+                                 "Running SetPrecision() to correct an invalid "
+                                 "geometry due to reduced precision output");
+                        auto poValidGeom2 = std::unique_ptr<OGRGeometry>(
+                            poValidGeom->SetPrecision(dfXYResolution,
+                                                      /* nFlags = */ 0));
+                        if (poValidGeom2)
+                            poValidGeom = std::move(poValidGeom2);
+                    }
+                }
+            }
             if (poValidGeom)
             {
                 if (poFeature == poFeatureToWrite)
@@ -277,12 +303,9 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
                     poFeatureToWrite->SetFrom(poFeature);
                     poFeatureToWrite->SetFID(poFeature->GetFID());
                 }
-
-                poFeatureToWrite->SetGeometryDirectly(poValidGeom);
+                poFeatureToWrite->SetGeometryDirectly(poValidGeom.release());
             }
         }
-        if (bDeleteNewGeom)
-            delete poNewGeom;
     }
 
     if (oWriteOptions_.bGenerateID && poFeatureToWrite->GetFID() == OGRNullFID)
