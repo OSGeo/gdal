@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import time
 
 import requests
 
@@ -22,12 +23,20 @@ def get_redirects():
 
 def delete_redirect(redirect_id):
     url = f"https://readthedocs.org/api/v3/projects/gdal/redirects/{redirect_id}"
-    requests.delete(url, headers=HEADERS)
+    res = requests.delete(url, headers=HEADERS)
+    print(res.status_code)
+    if res.status_code == 429:
+        time.sleep(3)
+        delete_redirect(redirect_id)
 
 
 def create_redirect(data):
     url = "https://readthedocs.org/api/v3/projects/gdal/redirects/"
-    requests.post(url, json=data, headers=HEADERS)
+    res = requests.post(url, json=data, headers=HEADERS)
+    print(res.status_code)
+    if res.status_code == 429:
+        time.sleep(3)
+        create_redirect(data)
 
 
 existing_redirects = get_redirects()
@@ -117,6 +126,9 @@ for program in programs:
         {"from_url": f"/{program}.html", "to_url": f"/programs/{program}.html"}
     )
 
+# prepend /en/latest/ to pre-RTD URLs
+redirects.append({"from_url": "/*", "to_url": "/en/latest/:splat", "type:": "exact"})
+
 for redirect in existing_redirects:
     print(f'Deleting redirect from {redirect["from_url"]} to {redirect["to_url"]}')
     delete_redirect(redirect["pk"])
@@ -127,5 +139,5 @@ for i, redirect in enumerate(redirects):
     data["type"] = data.get("type", "page")
     data["position"] = i
 
-    print(f'Creatng redirect from {redirect["from_url"]} to {redirect["to_url"]}')
+    print(f'Creating redirect from {redirect["from_url"]} to {redirect["to_url"]}')
     create_redirect(data)
