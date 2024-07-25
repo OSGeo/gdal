@@ -5,7 +5,10 @@ add_gdal_driver(
           pdfio.h
           pdfobject.h
           pdfcreatecopy.h
-          pdfsdk_headers.h
+          pdfsdk_headers_all.h
+          pdfsdk_headers_poppler.h
+          pdfsdk_headers_podofo.h
+          pdfsdk_headers_pdfium.h
           ogrpdflayer.cpp
           pdfcreatecopy.cpp
           pdfdataset.cpp
@@ -16,7 +19,8 @@ add_gdal_driver(
           pdfwritabledataset.cpp
           pdfcreatefromcomposition.cpp
   CORE_SOURCES pdfdrivercore.cpp
-  PLUGIN_CAPABLE)
+  PLUGIN_CAPABLE
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(TARGET gdal_PDF_core)
     if (GDAL_USE_POPPLER)

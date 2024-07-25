@@ -20,9 +20,11 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_Vers "Vers"
 #define KEY_SubVers "SubVers"
 #define MM_VERS 4
+#define MM_SUBVERS_ACCEPTED 0
 #define MM_SUBVERS 3
 #define KEY_VersMetaDades "VersMetaDades"
 #define KEY_SubVersMetaDades "SubVersMetaDades"
+#define MM_VERS_METADADES_ACCEPTED 4
 #define MM_VERS_METADADES 5
 #define MM_SUBVERS_METADADES 0
 #define SECTION_METADADES "METADADES"
@@ -73,6 +75,9 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define MAX_RELIABLE_SF_DOUBLE                                                 \
     15  // Maximum nr. of reliable significant figures in any double.
 
+// Maximum nr. of reliable significant figures
+#define MM_MAX_XS_DOUBLE 17
+
 // Initial width of MiraMon fields
 #define MM_MIN_WIDTH_ID_GRAFIC 3
 #define MM_MIN_WIDTH_N_VERTEXS 5
@@ -96,14 +101,16 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define MM_LayerType_Node 7     // Layer of Nodes (internal)
 #define MM_LayerType_Raster 8   // Layer of Raster Type
 
-#define MM_FIRST_NUMBER_OF_POINTS 10000
-#define MM_INCR_NUMBER_OF_POINTS 1000
-#define MM_FIRST_NUMBER_OF_ARCS 10000
-#define MM_INCR_NUMBER_OF_ARCS 1000
-#define MM_FIRST_NUMBER_OF_NODES 20000  // 2*MM_FIRST_NUMBER_OF_ARCS
-#define MM_INCR_NUMBER_OF_NODES 2000
-#define MM_FIRST_NUMBER_OF_POLYGONS 10000
-#define MM_INCR_NUMBER_OF_POLYGONS 1000
+// FIRST are used for a first allocation and
+// INCR for needed memory increase
+#define MM_FIRST_NUMBER_OF_POINTS 100000    // 3.5 Mb
+#define MM_INCR_NUMBER_OF_POINTS 100000     // 3.5 Mb
+#define MM_FIRST_NUMBER_OF_ARCS 100000      // 5.3 Mb
+#define MM_INCR_NUMBER_OF_ARCS 100000       // 5.3 Mb
+#define MM_FIRST_NUMBER_OF_NODES 200000     // 2*MM_FIRST_NUMBER_OF_ARCS 1.5 Mb
+#define MM_INCR_NUMBER_OF_NODES 200000      // 1.5 Mb
+#define MM_FIRST_NUMBER_OF_POLYGONS 100000  // 6 Mb
+#define MM_INCR_NUMBER_OF_POLYGONS 100000   // 6 Mb
 #define MM_FIRST_NUMBER_OF_VERTICES 10000
 #define MM_INCR_NUMBER_OF_VERTICES 1000
 
@@ -277,7 +284,7 @@ struct MiraMonVectorMetaData
 {
     char *szLayerTitle;
     char *aLayerName;
-    char *aArcFile;  // Polygon's arc name
+    char *aArcFile;  // Polygon's arc name or arc's polygon name.
     int ePlainLT;    // Plain layer type (no 3D specified): MM_LayerType_Point,
                      // MM_LayerType_Arc, MM_LayerType_Node, MM_LayerType_Pol
     char *pSRS;      // EPSG code of the spatial reference system.
@@ -318,12 +325,9 @@ struct MiraMonVectorMetaData
 struct MiraMonFieldValue
 {
     MM_BOOLEAN bIsValid;  // If 1 the value is filled. If 0, there is no value.
-#define MM_INIT_STRING_FIELD_VALUE 50000  // Never less than 10
-    MM_EXT_DBF_N_FIELDS nNumDinValue;     // Size of the reserved string value
-    char *pDinValue;  // Used if MM_MAX_STRING_FIELD_VALUE is not enough
-    double dValue;    // For double and 32 bit integer numeric values
-    GInt64 iValue;    // For 64 bit integer values.
-    //MM_BOOLEAN kbValue;    // For binary values.
+    MM_EXT_DBF_N_FIELDS nNumDinValue;  // Size of the reserved string value
+    char *pDinValue;                   // Used to store the value as string
+    GInt64 iValue;                     // For 64 bit integer values.
 };
 
 struct MiraMonRecord
@@ -354,8 +358,6 @@ struct MMAdmDatabase
     // MiraMon table (extended DBF)
     // Name of the extended DBF file
     char pszExtDBFLayerName[MM_CPL_PATH_BUF_SIZE];
-    // Pointer to the extended DBF file
-    FILE_TYPE *pFExtDBF;
     // Pointer to a MiraMon table (auxiliary)
     struct MM_DATA_BASE_XP *pMMBDXP;
     // How to write all it to disk
@@ -655,6 +657,7 @@ struct MiraMonFeature
     // Number of used elements in *pZCoord
     MM_N_VERTICES_TYPE nNumpZCoord;
     MM_COORD_TYPE *pZCoord;
+    MM_BOOLEAN bAllZHaveSameValue;
 
     // Records of the feature
     MM_EXT_DBF_N_MULTIPLE_RECORDS nNumMRecords;
@@ -736,6 +739,12 @@ struct MiraMonVectLayerInfo
     // EPSG code of the spatial reference system.
     char *pSRS;
     int nSRS_EPSG;  // Ref. system if has EPSG code.
+
+// Used to write the precision of the reserved fields in the DBF
+#define MM_SRS_LAYER_IS_UNKNOWN_TYPE 0
+#define MM_SRS_LAYER_IS_PROJECTED_TYPE 1
+#define MM_SRS_LAYER_IS_GEOGRAPHIC_TYPE 2
+    int nSRSType;
 
     // In GDAL->MiraMon sense:
     // Transformed table from input layer to a MiraMon table.

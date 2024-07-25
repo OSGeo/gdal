@@ -30,12 +30,21 @@
 
 #include <mutex>
 
-static std::mutex gMutexThreadPool;
+// For unclear reasons, attempts at making this a std::unique_ptr<>, even
+// through a GetCompressThreadPool() method like GetMutexThreadPool(), lead
+// to "ctest -R autotest_alg" (and other autotest components as well)
+// to hang forever once the tests have terminated.
 static CPLWorkerThreadPool *gpoCompressThreadPool = nullptr;
+
+static std::mutex &GetMutexThreadPool()
+{
+    static std::mutex gMutexThreadPool;
+    return gMutexThreadPool;
+}
 
 CPLWorkerThreadPool *GDALGetGlobalThreadPool(int nThreads)
 {
-    std::lock_guard<std::mutex> oGuard(gMutexThreadPool);
+    std::lock_guard oGuard(GetMutexThreadPool());
     if (gpoCompressThreadPool == nullptr)
     {
         gpoCompressThreadPool = new CPLWorkerThreadPool();
@@ -55,6 +64,7 @@ CPLWorkerThreadPool *GDALGetGlobalThreadPool(int nThreads)
 
 void GDALDestroyGlobalThreadPool()
 {
+    std::lock_guard oGuard(GetMutexThreadPool());
     delete gpoCompressThreadPool;
     gpoCompressThreadPool = nullptr;
 }

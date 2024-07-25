@@ -33,6 +33,7 @@
 #include "cpl_json.h"
 #include "cpl_json_streaming_writer.h"
 #include "gdal_priv.h"
+#include "gdalargumentparser.h"
 #include <limits>
 #include <set>
 
@@ -1060,6 +1061,98 @@ static void WriteToStdout(const char *pszText, void *)
     printf("%s", pszText);
 }
 
+static std::unique_ptr<GDALArgumentParser> GDALMultiDimInfoAppOptionsGetParser(
+    GDALMultiDimInfoOptions *psOptions,
+    GDALMultiDimInfoOptionsForBinary *psOptionsForBinary)
+{
+    auto argParser = std::make_unique<GDALArgumentParser>(
+        "gdalmdiminfo", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    argParser->add_description(
+        _("Lists various information about a GDAL multidimensional dataset."));
+
+    argParser->add_epilog(_("For more details, consult "
+                            "https://gdal.org/programs/gdalmdiminfo.html"));
+
+    argParser->add_argument("-detailed")
+        .flag()
+        .store_into(psOptions->bDetailed)
+        .help(_("Most verbose output. Report attribute data types and array "
+                "values."));
+
+    argParser->add_inverted_logic_flag(
+        "-nopretty", &psOptions->bPretty,
+        _("Outputs on a single line without any indentation."));
+
+    argParser->add_argument("-array")
+        .metavar("<array_name>")
+        .store_into(psOptions->osArrayName)
+        .help(_("Name of the array, used to restrict the output to the "
+                "specified array."));
+
+    argParser->add_argument("-limit")
+        .metavar("<number>")
+        .scan<'i', int>()
+        .store_into(psOptions->nLimitValuesByDim)
+        .help(_("Number of values in each dimension that is used to limit the "
+                "display of array values."));
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_open_options_argument(
+            psOptionsForBinary->aosOpenOptions);
+
+        argParser->add_input_format_argument(
+            &psOptionsForBinary->aosAllowInputDrivers);
+
+        argParser->add_argument("dataset_name")
+            .metavar("<dataset_name>")
+            .store_into(psOptionsForBinary->osFilename)
+            .help("Input dataset.");
+    }
+
+    argParser->add_argument("-arrayoption")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosArrayOptions.AddString(s.c_str()); })
+        .help(_("Option passed to GDALGroup::GetMDArrayNames() to filter "
+                "reported arrays."));
+
+    argParser->add_argument("-stats")
+        .flag()
+        .store_into(psOptions->bStats)
+        .help(_("Read and display image statistics."));
+
+    // Only used by gdalmdiminfo binary to write output to stdout instead of in a string, in JSON mode
+    argParser->add_argument("-stdout").flag().hidden().store_into(
+        psOptions->bStdoutOutput);
+
+    return argParser;
+}
+
+/************************************************************************/
+/*                  GDALMultiDimInfoAppGetParserUsage()                 */
+/************************************************************************/
+
+std::string GDALMultiDimInfoAppGetParserUsage()
+{
+    try
+    {
+        GDALMultiDimInfoOptions sOptions;
+        GDALMultiDimInfoOptionsForBinary sOptionsForBinary;
+        auto argParser =
+            GDALMultiDimInfoAppOptionsGetParser(&sOptions, &sOptionsForBinary);
+        return argParser->usage();
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
+        return std::string();
+    }
+}
+
 /************************************************************************/
 /*                         GDALMultiDimInfo()                           */
 /************************************************************************/
@@ -1180,88 +1273,35 @@ GDALMultiDimInfoOptions *
 GDALMultiDimInfoOptionsNew(char **papszArgv,
                            GDALMultiDimInfoOptionsForBinary *psOptionsForBinary)
 {
-    bool bGotFilename = false;
-    GDALMultiDimInfoOptions *psOptions = new GDALMultiDimInfoOptions;
+    auto psOptions = std::make_unique<GDALMultiDimInfoOptions>();
 
     /* -------------------------------------------------------------------- */
     /*      Parse arguments.                                                */
     /* -------------------------------------------------------------------- */
-    for (int i = 0; papszArgv != nullptr && papszArgv[i] != nullptr; i++)
+
+    CPLStringList aosArgv;
+
+    if (papszArgv)
     {
-        if (EQUAL(papszArgv[i], "-oo") && papszArgv[i + 1] != nullptr)
-        {
-            i++;
-            if (psOptionsForBinary)
-            {
-                psOptionsForBinary->aosOpenOptions.AddString(papszArgv[i]);
-            }
-        }
-        /* Not documented: used by gdalinfo_bin.cpp only */
-        else if (EQUAL(papszArgv[i], "-stdout"))
-            psOptions->bStdoutOutput = true;
-        else if (EQUAL(papszArgv[i], "-detailed"))
-            psOptions->bDetailed = true;
-        else if (EQUAL(papszArgv[i], "-nopretty"))
-            psOptions->bPretty = false;
-        else if (EQUAL(papszArgv[i], "-array") && papszArgv[i + 1] != nullptr)
-        {
-            ++i;
-            psOptions->osArrayName = papszArgv[i];
-        }
-        else if (EQUAL(papszArgv[i], "-arrayoption") &&
-                 papszArgv[i + 1] != nullptr)
-        {
-            ++i;
-            psOptions->aosArrayOptions.AddString(papszArgv[i]);
-        }
-        else if (EQUAL(papszArgv[i], "-limit") && papszArgv[i + 1] != nullptr)
-        {
-            ++i;
-            psOptions->nLimitValuesByDim = atoi(papszArgv[i]);
-        }
-        else if (EQUAL(papszArgv[i], "-stats"))
-        {
-            psOptions->bStats = true;
-        }
-
-        else if (EQUAL(papszArgv[i], "-if") && papszArgv[i + 1] != nullptr)
-        {
-            i++;
-            if (psOptionsForBinary)
-            {
-                if (GDALGetDriverByName(papszArgv[i]) == nullptr)
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "%s is not a recognized driver", papszArgv[i]);
-                }
-                psOptionsForBinary->aosAllowInputDrivers.AddString(
-                    papszArgv[i]);
-            }
-        }
-
-        else if (papszArgv[i][0] == '-')
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
-                     papszArgv[i]);
-            GDALMultiDimInfoOptionsFree(psOptions);
-            return nullptr;
-        }
-        else if (!bGotFilename)
-        {
-            bGotFilename = true;
-            if (psOptionsForBinary)
-                psOptionsForBinary->osFilename = papszArgv[i];
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Too many command options '%s'", papszArgv[i]);
-            GDALMultiDimInfoOptionsFree(psOptions);
-            return nullptr;
-        }
+        const int nArgc = CSLCount(papszArgv);
+        for (int i = 0; i < nArgc; i++)
+            aosArgv.AddString(papszArgv[i]);
     }
 
-    return psOptions;
+    try
+    {
+        auto argParser = GDALMultiDimInfoAppOptionsGetParser(
+            psOptions.get(), psOptionsForBinary);
+        argParser->parse_args_without_binary_name(aosArgv);
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
+        return nullptr;
+    }
+
+    return psOptions.release();
 }
 
 /************************************************************************/

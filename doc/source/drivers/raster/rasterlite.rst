@@ -84,6 +84,9 @@ table name will be base on the DB name itself.
 Creation options
 ~~~~~~~~~~~~~~~~
 
+|about-creation-options|
+The following creation options are supported:
+
 -  .. co:: WIPE
 
       Set to YES to erase all preexisting data
@@ -132,6 +135,9 @@ Creation options
 
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
+
+|about-config-options|
+The following configuration option is supported:
 
 -  .. config:: RASTERLITE_OVR_OPTIONS
 

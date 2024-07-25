@@ -264,8 +264,7 @@ const char *CPL_STDCALL VSIGetLastErrorMsg()
  * @return TRUE if a CPLError was issued, or FALSE if not.
  */
 
-int CPL_DLL CPL_STDCALL VSIToCPLError(CPLErr eErrClass,
-                                      CPLErrorNum eDefaultErrorNo)
+int CPL_STDCALL VSIToCPLError(CPLErr eErrClass, CPLErrorNum eDefaultErrorNo)
 {
     const int err = VSIGetLastErrorNo();
     switch (err)
@@ -308,4 +307,65 @@ int CPL_DLL CPL_STDCALL VSIToCPLError(CPLErr eErrClass,
     }
 
     return TRUE;
+}
+
+/**********************************************************************
+ *                        VSIToCPLErrorWithMsg()
+ **********************************************************************/
+
+/**
+ * Translate the VSI error into a CPLError call
+ *
+ * If there is a VSIError that is set, translate it to a CPLError call
+ * with the given CPLErr error class, and either an appropriate CPLErrorNum
+ * given the VSIErrorNum, or the given default CPLErrorNum.
+ */
+
+void VSIToCPLErrorWithMsg(CPLErr eErrClass, CPLErrorNum eDefaultErrorNo,
+                          const char *pszMsg)
+{
+    const int err = VSIGetLastErrorNo();
+    switch (err)
+    {
+        case VSIE_None:
+            CPLError(eErrClass, eDefaultErrorNo, "%s", pszMsg);
+            break;
+        case VSIE_FileError:
+            CPLError(eErrClass, eDefaultErrorNo, "%s: %s", pszMsg,
+                     VSIGetLastErrorMsg());
+            break;
+        case VSIE_HttpError:
+            CPLError(eErrClass, CPLE_HttpResponse, "%s: %s", pszMsg,
+                     VSIGetLastErrorMsg());
+            break;
+        case VSIE_AWSError:
+            CPLError(eErrClass, CPLE_AWSError, "%s: %s", pszMsg,
+                     VSIGetLastErrorMsg());
+            break;
+        case VSIE_AWSAccessDenied:
+            CPLError(eErrClass, CPLE_AWSAccessDenied, "%s: %s", pszMsg,
+                     VSIGetLastErrorMsg());
+            break;
+        case VSIE_AWSBucketNotFound:
+            CPLError(eErrClass, CPLE_AWSBucketNotFound, "%s: %s", pszMsg,
+                     VSIGetLastErrorMsg());
+            break;
+        case VSIE_AWSObjectNotFound:
+            CPLError(eErrClass, CPLE_AWSObjectNotFound, "%s: %s", pszMsg,
+                     VSIGetLastErrorMsg());
+            break;
+        case VSIE_AWSInvalidCredentials:
+            CPLError(eErrClass, CPLE_AWSInvalidCredentials, "%s: %s", pszMsg,
+                     VSIGetLastErrorMsg());
+            break;
+        case VSIE_AWSSignatureDoesNotMatch:
+            CPLError(eErrClass, CPLE_AWSSignatureDoesNotMatch, "%s: %s", pszMsg,
+                     VSIGetLastErrorMsg());
+            break;
+        default:
+            CPLError(eErrClass, CPLE_HttpResponse,
+                     "%s: A filesystem error with code %d occurred", pszMsg,
+                     err);
+            break;
+    }
 }

@@ -113,11 +113,13 @@ def test_gdal_merge_1(script_path, tmp_path):
 
     output_tif = str(tmp_path / "test_gdal_merge_1.tif")
 
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "gdal_merge",
         f"-o {output_tif} " + test_py_scripts.get_data_path("gcore") + "byte.tif",
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     ds = gdal.Open(output_tif)
     assert ds.GetRasterBand(1).Checksum() == 4672

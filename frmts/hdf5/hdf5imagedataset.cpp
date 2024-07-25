@@ -29,6 +29,7 @@
 
 #include "hdf5_api.h"
 
+#include "cpl_float.h"
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
@@ -72,9 +73,10 @@ class HDF5ImageDataset final : public HDF5Dataset
     int dimensions;
     hid_t dataset_id;
     hid_t dataspace_id;
-    hsize_t size;
-    hid_t datatype;
     hid_t native;
+#ifdef HDF5_HAVE_FLOAT16
+    bool m_bConvertFromFloat16 = false;
+#endif
     Hdf5ProductType iSubdatasetType;
     HDF5CSKProductEnum iCSKProductType;
     double adfGeoTransform[6];
@@ -132,9 +134,9 @@ class HDF5ImageDataset final : public HDF5Dataset
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, int nBandCount, int *panBandMap,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
     const char *GetMetadataItem(const char *pszName,
@@ -209,9 +211,9 @@ class HDF5ImageDataset final : public HDF5Dataset
 /************************************************************************/
 HDF5ImageDataset::HDF5ImageDataset()
     : dims(nullptr), maxdims(nullptr), poH5Objects(nullptr), ndims(0),
-      dimensions(0), dataset_id(-1), dataspace_id(-1), size(0), datatype(-1),
-      native(-1), iSubdatasetType(UNKNOWN_PRODUCT),
-      iCSKProductType(PROD_UNKNOWN), bHasGeoTransform(false)
+      dimensions(0), dataset_id(-1), dataspace_id(-1), native(-1),
+      iSubdatasetType(UNKNOWN_PRODUCT), iCSKProductType(PROD_UNKNOWN),
+      bHasGeoTransform(false)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -236,8 +238,6 @@ HDF5ImageDataset::~HDF5ImageDataset()
         H5Dclose(dataset_id);
     if (dataspace_id > 0)
         H5Sclose(dataspace_id);
-    if (datatype > 0)
-        H5Tclose(datatype);
     if (native > 0)
         H5Tclose(native);
 
@@ -256,6 +256,10 @@ class HDF5ImageRasterBand final : public GDALPamRasterBand
 
     bool bNoDataSet = false;
     double dfNoDataValue = -9999.0;
+    bool m_bHasOffset = false;
+    double m_dfOffset = 0.0;
+    bool m_bHasScale = false;
+    double m_dfScale = 1.0;
     int m_nIRasterIORecCounter = 0;
 
   public:
@@ -264,6 +268,8 @@ class HDF5ImageRasterBand final : public GDALPamRasterBand
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual double GetNoDataValue(int *) override;
+    virtual double GetOffset(int *) override;
+    virtual double GetScale(int *) override;
     // virtual CPLErr IWriteBlock( int, int, void * );
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
@@ -298,6 +304,16 @@ HDF5ImageRasterBand::HDF5ImageRasterBand(HDF5ImageDataset *poDSIn, int nBandIn,
         GH5_FetchAttribute(poDSIn->dataset_id, "_FillValue", dfNoDataValue);
     if (!bNoDataSet)
         dfNoDataValue = -9999.0;
+
+    // netCDF conventions for scale and offset
+    m_bHasOffset =
+        GH5_FetchAttribute(poDSIn->dataset_id, "add_offset", m_dfOffset);
+    if (!m_bHasOffset)
+        m_dfOffset = 0.0;
+    m_bHasScale =
+        GH5_FetchAttribute(poDSIn->dataset_id, "scale_factor", m_dfScale);
+    if (!m_bHasScale)
+        m_dfScale = 1.0;
 }
 
 /************************************************************************/
@@ -315,6 +331,42 @@ double HDF5ImageRasterBand::GetNoDataValue(int *pbSuccess)
     }
 
     return GDALPamRasterBand::GetNoDataValue(pbSuccess);
+}
+
+/************************************************************************/
+/*                             GetOffset()                              */
+/************************************************************************/
+
+double HDF5ImageRasterBand::GetOffset(int *pbSuccess)
+
+{
+    if (m_bHasOffset)
+    {
+        if (pbSuccess)
+            *pbSuccess = m_bHasOffset;
+
+        return m_dfOffset;
+    }
+
+    return GDALPamRasterBand::GetOffset(pbSuccess);
+}
+
+/************************************************************************/
+/*                             GetScale()                               */
+/************************************************************************/
+
+double HDF5ImageRasterBand::GetScale(int *pbSuccess)
+
+{
+    if (m_bHasScale)
+    {
+        if (pbSuccess)
+            *pbSuccess = m_bHasScale;
+
+        return m_dfScale;
+    }
+
+    return GDALPamRasterBand::GetScale(pbSuccess);
 }
 
 /************************************************************************/
@@ -413,6 +465,42 @@ CPLErr HDF5ImageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
+#ifdef HDF5_HAVE_FLOAT16
+    if (eDataType == GDT_Float32 && poGDS->m_bConvertFromFloat16)
+    {
+        for (size_t i = static_cast<size_t>(nBlockXSize) * nBlockYSize; i > 0;
+             /* do nothing */)
+        {
+            --i;
+            uint16_t nVal16;
+            memcpy(&nVal16, static_cast<uint16_t *>(pImage) + i,
+                   sizeof(nVal16));
+            const uint32_t nVal32 = CPLHalfToFloat(nVal16);
+            float fVal;
+            memcpy(&fVal, &nVal32, sizeof(fVal));
+            *(static_cast<float *>(pImage) + i) = fVal;
+        }
+    }
+    else if (eDataType == GDT_CFloat32 && poGDS->m_bConvertFromFloat16)
+    {
+        for (size_t i = static_cast<size_t>(nBlockXSize) * nBlockYSize; i > 0;
+             /* do nothing */)
+        {
+            --i;
+            for (int j = 1; j >= 0; --j)
+            {
+                uint16_t nVal16;
+                memcpy(&nVal16, static_cast<uint16_t *>(pImage) + 2 * i + j,
+                       sizeof(nVal16));
+                const uint32_t nVal32 = CPLHalfToFloat(nVal16);
+                float fVal;
+                memcpy(&fVal, &nVal32, sizeof(fVal));
+                *(static_cast<float *>(pImage) + 2 * i + j) = fVal;
+            }
+        }
+    }
+#endif
+
     return CE_None;
 }
 
@@ -429,6 +517,15 @@ CPLErr HDF5ImageRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
 {
     HDF5ImageDataset *poGDS = static_cast<HDF5ImageDataset *>(poDS);
+
+#ifdef HDF5_HAVE_FLOAT16
+    if (poGDS->m_bConvertFromFloat16)
+    {
+        return GDALPamRasterBand::IRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nPixelSpace, nLineSpace, psExtraArg);
+    }
+#endif
 
     const bool bIsBandInterleavedData =
         poGDS->ndims == 3 && poGDS->m_nOtherDimIndex == 0 &&
@@ -702,15 +799,23 @@ CPLErr HDF5ImageRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr HDF5ImageDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                                   int nXSize, int nYSize, void *pData,
-                                   int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, int nBandCount,
-                                   int *panBandMap, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace, GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg *psExtraArg)
+CPLErr HDF5ImageDataset::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    int nBandCount, BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+    GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 
 {
+#ifdef HDF5_HAVE_FLOAT16
+    if (m_bConvertFromFloat16)
+    {
+        return HDF5Dataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                      pData, nBufXSize, nBufYSize, eBufType,
+                                      nBandCount, panBandMap, nPixelSpace,
+                                      nLineSpace, nBandSpace, psExtraArg);
+    }
+#endif
+
     const auto IsConsecutiveBands = [](const int *panVals, int nCount)
     {
         for (int i = 1; i < nCount; ++i)
@@ -971,9 +1076,25 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
         static_cast<hsize_t *>(CPLCalloc(poDS->ndims, sizeof(hsize_t)));
     poDS->dimensions = H5Sget_simple_extent_dims(poDS->dataspace_id, poDS->dims,
                                                  poDS->maxdims);
-    poDS->datatype = H5Dget_type(poDS->dataset_id);
-    poDS->size = H5Tget_size(poDS->datatype);
-    poDS->native = H5Tget_native_type(poDS->datatype, H5T_DIR_ASCEND);
+    auto datatype = H5Dget_type(poDS->dataset_id);
+    poDS->native = H5Tget_native_type(datatype, H5T_DIR_ASCEND);
+    H5Tclose(datatype);
+
+    const auto eGDALDataType = poDS->GetDataType(poDS->native);
+    if (eGDALDataType == GDT_Unknown)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unhandled HDF5 data type");
+        delete poDS;
+        return nullptr;
+    }
+
+#ifdef HDF5_HAVE_FLOAT16
+    if (H5Tequal(H5T_NATIVE_FLOAT16, poDS->native) ||
+        IsNativeCFloat16(poDS->native))
+    {
+        poDS->m_bConvertFromFloat16 = true;
+    }
+#endif
 
     // CSK code in IdentifyProductType() and CreateProjections()
     // uses dataset metadata.
@@ -1103,34 +1224,53 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         HDF5Dataset::CreateMetadata(poDS->m_hHDF5, poDS->poH5Objects,
                                     H5G_DATASET, false, aosMetadata);
-        if (nBands > 1)
+        if (nBands > 1 && poDS->nRasterXSize != nBands &&
+            poDS->nRasterYSize != nBands)
         {
-            // Logic specific of Planet data cubes with per-band metadata items
-            static const struct
+            // Heuristics to detect non-scalar attributes, that are intended
+            // to be attached to a specific band.
+            const CPLStringList aosMetadataDup(aosMetadata);
+            for (const auto &[pszKey, pszValue] :
+                 cpl::IterateNameValue(aosMetadataDup))
             {
-                const char *pszSrcName;
-                const char *pszDstName;
-            } asItems[] = {
-                {"calibration_coefficients", "calibration_coefficient"},
-                {"center_wavelengths", "center_wavelength"},
-                {"fwhm", "fwhm"},
-                {"bad_band_list", "bad_band"},
-            };
-
-            for (const auto &sItem : asItems)
-            {
-                const char *pszVal =
-                    aosMetadata.FetchNameValue(sItem.pszSrcName);
-                if (pszVal)
+                const hid_t hAttrID = H5Aopen_name(poDS->dataset_id, pszKey);
+                const hid_t hAttrSpace = H5Aget_space(hAttrID);
+                if (H5Sget_simple_extent_ndims(hAttrSpace) == 1 &&
+                    H5Sget_simple_extent_npoints(hAttrSpace) == nBands)
                 {
-                    CPLStringList aosTokens(CSLTokenizeString2(pszVal, " ", 0));
+                    CPLStringList aosTokens(
+                        CSLTokenizeString2(pszValue, " ", 0));
                     if (aosTokens.size() == nBands)
                     {
-                        oMapBandSpecificMetadata[sItem.pszDstName] =
+                        std::string osAttrName(pszKey);
+                        if (osAttrName.size() > strlen("_coefficients") &&
+                            osAttrName.substr(osAttrName.size() -
+                                              strlen("_coefficients")) ==
+                                "_coefficients")
+                        {
+                            osAttrName.pop_back();
+                        }
+                        else if (osAttrName.size() > strlen("_wavelengths") &&
+                                 osAttrName.substr(osAttrName.size() -
+                                                   strlen("_wavelengths")) ==
+                                     "_wavelengths")
+                        {
+                            osAttrName.pop_back();
+                        }
+                        else if (osAttrName.size() > strlen("_list") &&
+                                 osAttrName.substr(osAttrName.size() -
+                                                   strlen("_list")) == "_list")
+                        {
+                            osAttrName.resize(osAttrName.size() -
+                                              strlen("_list"));
+                        }
+                        oMapBandSpecificMetadata[osAttrName] =
                             std::move(aosTokens);
-                        aosMetadata.SetNameValue(sItem.pszSrcName, nullptr);
+                        aosMetadata.SetNameValue(pszKey, nullptr);
                     }
                 }
+                H5Sclose(hAttrSpace);
+                H5Aclose(hAttrID);
             }
         }
     }
@@ -1189,8 +1329,8 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 
     for (int i = 0; i < nBands; i++)
     {
-        HDF5ImageRasterBand *const poBand = new HDF5ImageRasterBand(
-            poDS, i + 1, poDS->GetDataType(poDS->native));
+        HDF5ImageRasterBand *const poBand =
+            new HDF5ImageRasterBand(poDS, i + 1, eGDALDataType);
 
         poDS->SetBand(i + 1, poBand);
 

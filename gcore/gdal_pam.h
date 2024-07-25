@@ -131,10 +131,10 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     virtual CPLXMLNode *SerializeToXML(const char *);
     virtual CPLErr XMLInit(const CPLXMLNode *, const char *);
 
-    virtual CPLErr TryLoadXML(char **papszSiblingFiles = nullptr);
+    virtual CPLErr TryLoadXML(CSLConstList papszSiblingFiles = nullptr);
     virtual CPLErr TrySaveXML();
 
-    CPLErr TryLoadAux(char **papszSiblingFiles = nullptr);
+    CPLErr TryLoadAux(CSLConstList papszSiblingFiles = nullptr);
     CPLErr TrySaveAux();
 
     virtual const char *BuildPamFilename();

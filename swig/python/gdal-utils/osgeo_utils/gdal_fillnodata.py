@@ -37,6 +37,7 @@ from typing import Optional
 
 from osgeo import gdal
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
+from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 
 def CopyBand(srcband, dstband):
@@ -47,6 +48,7 @@ def CopyBand(srcband, dstband):
         )
 
 
+@enable_gdal_exceptions
 def gdal_fillnodata(
     src_filename: Optional[str] = None,
     band_number: int = 1,

@@ -160,6 +160,7 @@ For example, for the Finnish ETRS-TM35FIN (EPSG:3067) tiling scheme:
 Opening options
 ---------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: X
@@ -224,6 +225,9 @@ with the :config:`GDAL_NUM_THREADS` configuration option.
 Dataset creation options
 ------------------------
 
+|about-dataset-creation-options|
+The following dataset creation options are supported:
+
 -  .. co:: NAME
 
       Tileset name. Defaults to the basename of the
@@ -268,8 +272,8 @@ Dataset creation options
 -  .. co:: CONF
       :choices: <json>, <filename>
 
-      Layer configuration as a JSon serialized string.
-      Or, starting with GDAL 3.0.1, filename containing the configuration as JSon.
+      Layer configuration as a JSON serialized string.
+      Or, starting with GDAL 3.0.1, filename containing the configuration as JSON .
 
 -  .. co:: SIMPLIFICATION
       :choices: float
@@ -366,7 +370,7 @@ Layer configuration
 -------------------
 
 The above mentioned CONF dataset creation option can be set to a string
-whose value is a JSon serialized document such as the below one:
+whose value is a JSON serialized document such as the below one:
 
 .. code-block:: json
 
@@ -394,6 +398,9 @@ case.
 
 Layer creation options
 ----------------------
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: MINZOOM
       :choices: <integer>

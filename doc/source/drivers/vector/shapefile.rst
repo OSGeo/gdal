@@ -276,7 +276,8 @@ layers). Creation and editing involves the creation of temporary files.
 Open options
 ------------
 
-The following open options are available.
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: ENCODING
       :choices: <encoding_name>, ""
@@ -344,6 +345,9 @@ None
 Layer creation options
 ----------------------
 
+|about-layer-creation-options|
+The following layer creation options are supported:
+
 -  .. lco:: SHPT
       :choices: <type>
 
@@ -407,8 +411,8 @@ Layer creation options
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 - .. config:: SHAPE_REWIND_ON_WRITE
      :choices: YES, NO

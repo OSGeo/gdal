@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <climits>
 #include <cstdlib>
 
 /************************************************************************/
@@ -277,8 +278,11 @@ bool OGRAVCBinLayer::FormPolygonGeometry(OGRFeature *poFeature, AVCPal *psPAL)
 
     for (int iArc = 0; iArc < psPAL->numArcs; iArc++)
     {
-        if (psPAL->pasArcs[iArc].nArcId == 0)
+        if (psPAL->pasArcs[iArc].nArcId == 0 ||
+            psPAL->pasArcs[iArc].nArcId == INT_MIN)
+        {
             continue;
+        }
 
         // If the other side of the line is the same polygon then this
         // arc is a "bridge" arc and can be discarded.  If we don't discard

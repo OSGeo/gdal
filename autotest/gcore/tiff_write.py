@@ -1068,6 +1068,7 @@ def test_tiff_write_26():
     ct.SetColorEntry(1, (255, 255, 0, 255))
     ct.SetColorEntry(2, (255, 0, 255, 255))
     ct.SetColorEntry(3, (0, 255, 255, 255))
+    ct.SetColorEntry(3, (0, 255, 255, 255))
 
     ds.GetRasterBand(1).SetRasterColorTable(ct)
 
@@ -1087,8 +1088,6 @@ def test_tiff_write_26():
 
     ct = None
     ds = None
-
-    gdaltest.tiff_drv.Delete("tmp/ct8.tif")
 
 
 ###############################################################################
@@ -11523,3 +11522,77 @@ def test_tiff_write_copy_mdd():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test writing more GCPs than supported
+
+
+@pytest.mark.parametrize("with_initial_gcps", [False, True])
+def test_tiff_write_too_many_gcps(tmp_vsimem, with_initial_gcps):
+
+    filename = str(tmp_vsimem / "test.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    if with_initial_gcps:
+        assert ds.SetGCPs([gdal.GCP(0, 1, 2, 3, 4)] * 10, None) == gdal.CE_None
+        ds.Close()
+        ds = gdal.Open(filename, gdal.GA_Update)
+    gcp_count = int(math.ceil(65535 / 6))
+    gcps = [gdal.GCP(0, 1, 2, 3, 4)] * gcp_count
+    with gdal.quiet_errors():
+        assert ds.SetGCPs(gcps, None) == gdal.CE_None
+    assert (
+        f"Trying to write {gcp_count} GCPs, whereas the maximum supported in GeoTIFF tag is 10922. Falling back to writing them to PAM"
+        in gdal.GetLastErrorMsg()
+    )
+    ds = None
+
+    assert gdal.VSIStatL(filename + ".aux.xml")
+
+    ds = gdal.Open(filename)
+    assert ds.GetGCPCount() == gcp_count
+    ds = None
+
+    gdal.Unlink(filename + ".aux.xml")
+
+    ds = gdal.Open(filename)
+    assert ds.GetGCPCount() == 0
+    ds = None
+
+
+###############################################################################
+# Test writing/reading a TIFF color map using 256 as the multiplication factor
+# https://github.com/OSGeo/gdal/issues/10310
+
+
+def test_tiff_write_colormap_256_mult_factor(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename, 1, 1, 1, gdal.GDT_Byte, ["COLOR_TABLE_MULTIPLIER=256"]
+    )
+    ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry(0, (0, 0, 0, 255))
+    ct.SetColorEntry(1, (1, 2, 3, 255))
+    ct.SetColorEntry(2, (255, 255, 255, 255))
+    ds.GetRasterBand(1).SetRasterColorTable(ct)
+    ds = None
+
+    # Check we auto-guess correctly the 256 multiplication factor
+    ds = gdal.Open(filename)
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
+    assert (
+        ct.GetColorEntry(0) == (0, 0, 0, 255)
+        and ct.GetColorEntry(1) == (1, 2, 3, 255)
+        and ct.GetColorEntry(2) == (255, 255, 255, 255)
+    ), "Wrong color table entry."
+
+    # Check we get wrong values when not specifying the appropriate multiplier
+    ds = gdal.OpenEx(filename, open_options=["COLOR_TABLE_MULTIPLIER=257"])
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
+    assert (
+        ct.GetColorEntry(0) == (0, 0, 0, 255)
+        and ct.GetColorEntry(1) == (0, 1, 2, 255)
+        and ct.GetColorEntry(2) == (254, 254, 254, 255)
+    ), "Wrong color table entry."

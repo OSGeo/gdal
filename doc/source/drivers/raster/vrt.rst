@@ -61,7 +61,8 @@ for developers.
 Creation options
 ----------------
 
-The following creations options are supported:
+|about-creation-options|
+The following creation options are supported:
 
 -  .. oo:: BLOCKXSIZE
       :since: 3.7
@@ -313,7 +314,7 @@ The allowed subelements for VRTRasterBand are :
 
 - **AveragedSource**: The AveragedSource is derived from the SimpleSource and shares the same properties except that it uses an averaging resampling instead of a nearest neighbour algorithm as in SimpleSource, when the size of the destination rectangle is not the same as the size of the source rectangle. Note: a more general mechanism to specify resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
 
-- **NoDataFromMaskSource**: (GDAL >= 3.9) The NoDataFromMaskSource is derived from the SimpleSource and shares the same properties except that it replaces the value of the source with the value of the NODATA child element when the value of the mask band of the source is less or equal to the MaskValueThreshold child element.
+- **NoDataFromMaskSource**: (GDAL >= 3.9) The NoDataFromMaskSource is derived from the SimpleSource and shares the same properties except that it replaces the value of the source with the value of the NODATA child element when the value of the mask band of the source is less or equal to the MaskValueThreshold child element. This is typically used to transform a R,G,B,A image into a R,G,B one with a NoData value.
 
 - **ComplexSource**: The ComplexSource_ is derived from the SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and DstRect elements), but it provides support to rescale and offset the range of the source values. Certain regions of the source can be masked by specifying the NODATA value, or starting with GDAL 3.3, with the <UseMaskBand>true</UseMaskBand> element.
 
@@ -423,8 +424,9 @@ the following form:
 
 The intermediary values are calculated using a linear interpolation
 between the bounding destination values of the corresponding range.
-Source values should be monotonically non-decreasing. Clamping is performed for
-input pixel values outside of the range specified by the LUT. That is, if an
+Source values should be listed in a monotonically non-decreasing order.
+If there is a Not-A-Number (NaN) source value, it should be the first one.
+Clamping is performed for input pixel values outside of the range specified by the LUT. That is, if an
 input pixel value is lower than the minimum source value, then the destination
 value corresponding to that minimum source value is used as the output pixel value.
 And similarly for an input pixel value that is greater than the maximum source value.
@@ -520,6 +522,7 @@ NoDataFromMaskSource
 .. versionadded:: 3.9
 
 The NoDataFromMaskSource is derived from the SimpleSource and shares the same properties except that it replaces the value of the source with the value of the NODATA child element when the value of the mask band of the source is less or equal to the MaskValueThreshold child element.
+This is typically used to transform a R,G,B,A image into a R,G,B one with a NoData value.
 An optional RemappedValue element can be set to specify the value onto which valid pixels whose value is the one of NODATA should be remapped to. When RemappedValue is not explicitly specified, for Byte bands, if NODATA=255, it is implicitly set to 254, otherwise it is set to NODATA+1.
 
 .. code-block:: xml
@@ -2093,6 +2096,38 @@ Starting with GDAL 3.6, the ComputeStatistics() implementation can benefit from
 multi-threading if the sources are not overlapping and belong to different
 datasets. This can be enabled by setting the :config:`GDAL_NUM_THREADS`
 configuration option to an integer or ``ALL_CPUS``.
+
+Starting with GDAL 3.10, the :oo:`NUM_THREADS` open option can
+be set to control specifically the multi-threading of VRT datasets.
+It defaults to ``ALL_CPUS``, and when set, overrides :config:`GDAL_NUM_THREADS`
+or :config:`VRT_NUM_THREADS`. It applies to
+ComputeStatistics() and band-level and dataset-level RasterIO().
+For band-level RasterIO(), multi-threading is only available if more than 1
+million pixels are requested and if the VRT is made of only non-overlapping
+SimpleSource or ComplexSource belonging to different datasets.
+For dataset-level RasterIO(), multi-threading is only available if more than 1
+million pixels are requested and if the VRT is made of only non-overlapping
+SimpleSource belonging to different datasets.
+
+-  .. oo:: NUM_THREADS
+      :choices: integer, ALL_CPUS
+      :default: ALL_CPUS
+
+      Determines the number of threads used when an operation reads from
+      multiple sources.
+
+This can also be specified globally with the :config:`VRT_NUM_THREADS`
+configuration option.
+
+-  .. config:: VRT_NUM_THREADS
+      :choices: integer, ALL_CPUS
+      :default: ALL_CPUS
+
+      Determines the number of threads used when an operation reads from
+      multiple sources.
+
+Note that the number of threads actually used is also limited by the
+:config:`GDAL_MAX_DATASET_POOL_SIZE` configuration option.
 
 Multi-threading issues
 ----------------------

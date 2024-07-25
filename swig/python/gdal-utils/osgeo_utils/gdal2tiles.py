@@ -56,6 +56,7 @@ from uuid import uuid4
 from xml.etree import ElementTree
 
 from osgeo import gdal, osr
+from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 Options = Any
 
@@ -271,31 +272,36 @@ class TileMatrixSet(object):
 
 tmsMap = {}
 
-profile_list = ["mercator", "geodetic", "raster"]
 
-# Read additional tile matrix sets from GDAL data directory
-filename = gdal.FindFile("gdal", "tms_MapML_APSTILE.json")
-if filename:
-    dirname = os.path.dirname(filename)
-    for tmsfilename in glob.glob(os.path.join(dirname, "tms_*.json")):
-        data = open(tmsfilename, "rb").read()
-        try:
-            j = json.loads(data.decode("utf-8"))
-        except Exception:
-            j = None
-        if j is None:
-            logger.error("Cannot parse " + tmsfilename)
-            continue
-        try:
-            tms = TileMatrixSet.parse(j)
-        except UnsupportedTileMatrixSet as e:
-            gdal.Debug("gdal2tiles", "Cannot parse " + tmsfilename + ": " + str(e))
-            continue
-        except Exception:
-            logger.error("Cannot parse " + tmsfilename)
-            continue
-        tmsMap[tms.identifier] = tms
-        profile_list.append(tms.identifier)
+def get_profile_list():
+    profile_list = ["mercator", "geodetic", "raster"]
+
+    # Read additional tile matrix sets from GDAL data directory
+    filename = gdal.FindFile("gdal", "tms_MapML_APSTILE.json")
+    if filename:
+        dirname = os.path.dirname(filename)
+        for tmsfilename in glob.glob(os.path.join(dirname, "tms_*.json")):
+            data = open(tmsfilename, "rb").read()
+            try:
+                j = json.loads(data.decode("utf-8"))
+            except Exception:
+                j = None
+            if j is None:
+                logger.error("Cannot parse " + tmsfilename)
+                continue
+            try:
+                tms = TileMatrixSet.parse(j)
+            except UnsupportedTileMatrixSet as e:
+                gdal.Debug("gdal2tiles", "Cannot parse " + tmsfilename + ": " + str(e))
+                continue
+            except Exception:
+                logger.error("Cannot parse " + tmsfilename)
+                continue
+            tmsMap[tms.identifier] = tms
+            profile_list.append(tms.identifier)
+
+    return profile_list
+
 
 threadLocal = threading.local()
 
@@ -885,12 +891,26 @@ def scale_query_to_tile(dsquery, dstile, options, tilefilename=""):
     )
     dstile.SetGeoTransform((0.0, 1.0, 0.0, 0.0, 0.0, 1.0))
 
-    if options.resampling == "average" and options.excluded_values:
+    if options.resampling == "average" and (
+        options.excluded_values or options.nodata_values_pct_threshold < 100
+    ):
+
+        warp_options = "-r average"
+
+        assert options.nodata_values_pct_threshold is not None
+        warp_options += (
+            f" -wo NODATA_VALUES_PCT_THRESHOLD={options.nodata_values_pct_threshold}"
+        )
+
+        if options.excluded_values:
+            assert options.excluded_values_pct_threshold is not None
+            warp_options += f" -wo EXCLUDED_VALUES={options.excluded_values}"
+            warp_options += f" -wo EXCLUDED_VALUES_PCT_THRESHOLD={options.excluded_values_pct_threshold}"
 
         gdal.Warp(
             dstile,
             dsquery,
-            options=f"-r average -wo EXCLUDED_VALUES={options.excluded_values} -wo EXCLUDED_VALUES_PCT_THRESHOLD={options.excluded_values_pct_threshold}",
+            options=warp_options,
         )
 
     elif options.resampling == "average":
@@ -1747,6 +1767,9 @@ def optparse_init() -> optparse.OptionParser:
 
     usage = "Usage: %prog [options] input_file [output]"
     p = optparse.OptionParser(usage, version="%prog " + __version__)
+
+    profile_list = get_profile_list()
+
     p.add_option(
         "-p",
         "--profile",
@@ -1871,6 +1894,13 @@ def optparse_init() -> optparse.OptionParser:
         type=float,
         default=50,
         help="Minimum percentage of source pixels that must be set at one of the --excluded-values to cause the excluded value, that is in majority among source pixels, to be used as the target pixel value. Default value is 50 (%)",
+    )
+    p.add_option(
+        "--nodata-values-pct-threshold",
+        dest="nodata_values_pct_threshold",
+        type=float,
+        default=100,
+        help="Minimum percentage of source pixels that must be at nodata (or alpha=0 or any other way to express transparent pixel) to cause the target pixel value to be transparent. Default value is 100 (%). Only taken into account for average resampling",
     )
 
     # KML options
@@ -2010,9 +2040,14 @@ def process_args(argv: List[str], called_from_main=False) -> Tuple[str, str, Opt
         )
 
     input_file = args[0]
-    if not isfile(input_file):
+    try:
+        input_file_exists = gdal.Open(input_file) is not None
+    except Exception:
+        input_file_exists = False
+    if not input_file_exists:
         exit_with_error(
-            "The provided input file %s does not exist or is not a file" % input_file
+            "The provided input file %s does not exist or is not a recognized GDAL dataset"
+            % input_file
         )
 
     if len(args) == 2:
@@ -3953,13 +3988,10 @@ function ExtDraggableObject(src, opt_drag) {
 
         // Base layers
         //  .. OpenStreetMap
-        var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors', minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
+        var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
 
         //  .. CartoDB Positron
-        var cartodb = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>', minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
-
-        //  .. OSM Toner
-        var toner = L.tileLayer('http://{s}.tile.stamen.com/toner/{z}/{x}/{y}.png', {attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.', minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
+        var cartodb = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attribution">CartoDB</a>', minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
 
         //  .. White background
         var white = L.tileLayer("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEX///+nxBvIAAAAH0lEQVQYGe3BAQ0AAADCIPunfg43YAAAAAAAAAAA5wIhAAAB9aK9BAAAAABJRU5ErkJggg==", {minZoom: %(minzoom)s, maxZoom: %(maxzoom)s});
@@ -3976,7 +4008,7 @@ function ExtDraggableObject(src, opt_drag) {
             layers: [osm]
         });
 
-        var basemaps = {"OpenStreetMap": osm, "CartoDB Positron": cartodb, "Stamen Toner": toner, "Without background": white}
+        var basemaps = {"OpenStreetMap": osm, "CartoDB Positron": cartodb, "Without background": white}
         var overlaymaps = {"Layer": lyr}
 
         // Title
@@ -3992,7 +4024,7 @@ function ExtDraggableObject(src, opt_drag) {
         title.addTo(map);
 
         // Note
-        var src = 'Generated by <a href="https://gdal.org/programs/gdal2tiles.html">GDAL2Tiles</a>, Copyright &copy; 2008 <a href="http://www.klokan.cz/">Klokan Petr Pridal</a>,  <a href="https://gdal.org">GDAL</a> &amp; <a href="http://www.osgeo.org/">OSGeo</a> <a href="http://code.google.com/soc/">GSoC</a>';
+        var src = 'Generated by <a href="https://gdal.org/programs/gdal2tiles.html">GDAL2Tiles</a>, Copyright &copy; 2008 <a href="http://www.klokan.cz/">Klokan Petr Pridal</a>,  <a href="https://gdal.org">GDAL</a> &amp; <a href="https://www.osgeo.org/">OSGeo</a> <a href="https://summerofcode.withgoogle.com/">GSoC</a>';
         var title = L.control({position: 'bottomleft'});
         title.onAdd = function(map) {
             this._div = L.DomUtil.create('div', 'ctl src');
@@ -4560,6 +4592,7 @@ def single_threaded_tiling(
     shutil.rmtree(os.path.dirname(conf.src_file))
 
 
+@enable_gdal_exceptions
 def multi_threaded_tiling(
     input_file: str, output_folder: str, options: Options, pool
 ) -> None:
@@ -4615,17 +4648,6 @@ def multi_threaded_tiling(
     shutil.rmtree(os.path.dirname(conf.src_file))
 
 
-class UseExceptions(object):
-    def __enter__(self):
-        self.old_used_exceptions = gdal.GetUseExceptions()
-        if not self.old_used_exceptions:
-            gdal.UseExceptions()
-
-    def __exit__(self, type, value, tb):
-        if not self.old_used_exceptions:
-            gdal.DontUseExceptions()
-
-
 class DividedCache(object):
     def __init__(self, nb_processes):
         self.nb_processes = nb_processes
@@ -4658,7 +4680,7 @@ def main(argv: List[str] = sys.argv, called_from_main=False) -> int:
         from mpi4py import MPI
         from mpi4py.futures import MPICommExecutor
 
-        with UseExceptions(), MPICommExecutor(MPI.COMM_WORLD, root=0) as pool:
+        with MPICommExecutor(MPI.COMM_WORLD, root=0) as pool:
             if pool is None:
                 return 0
             # add interface of multiprocessing.Pool to MPICommExecutor
@@ -4670,6 +4692,7 @@ def main(argv: List[str] = sys.argv, called_from_main=False) -> int:
         return submain(argv, called_from_main=called_from_main)
 
 
+@enable_gdal_exceptions
 def submain(argv: List[str], pool=None, pool_size=0, called_from_main=False) -> int:
 
     argv = gdal.GeneralCmdLineProcessor(argv)
@@ -4682,22 +4705,21 @@ def submain(argv: List[str], pool=None, pool_size=0, called_from_main=False) -> 
         options.nb_processes = pool_size
     nb_processes = options.nb_processes or 1
 
-    with UseExceptions():
-        if pool is not None:  # MPI
+    if pool is not None:  # MPI
+        multi_threaded_tiling(input_file, output_folder, options, pool)
+    elif nb_processes == 1:
+        single_threaded_tiling(input_file, output_folder, options)
+    else:
+        # Trick inspired from https://stackoverflow.com/questions/45720153/python-multiprocessing-error-attributeerror-module-main-has-no-attribute
+        # and https://bugs.python.org/issue42949
+        import __main__
+
+        if not hasattr(__main__, "__spec__"):
+            __main__.__spec__ = None
+        from multiprocessing import Pool
+
+        with DividedCache(nb_processes), Pool(processes=nb_processes) as pool:
             multi_threaded_tiling(input_file, output_folder, options, pool)
-        elif nb_processes == 1:
-            single_threaded_tiling(input_file, output_folder, options)
-        else:
-            # Trick inspired from https://stackoverflow.com/questions/45720153/python-multiprocessing-error-attributeerror-module-main-has-no-attribute
-            # and https://bugs.python.org/issue42949
-            import __main__
-
-            if not hasattr(__main__, "__spec__"):
-                __main__.__spec__ = None
-            from multiprocessing import Pool
-
-            with DividedCache(nb_processes), Pool(processes=nb_processes) as pool:
-                multi_threaded_tiling(input_file, output_folder, options, pool)
 
     return 0
 

@@ -20,11 +20,6 @@ CPL_C_START                          // Necessary for compiling in GDAL project
     // Log. It should be temporal
     extern const char *MM_pszLogFilename;
 
-#define LOG_STR(str) (MMLog((str), __LINE__))
-#define LOG_ACTION(action) ((void)MMLog(#action, __LINE__), (action))
-
-const char *MMLog(const char *pszMsg, int nLineNumber);
-
 void fclose_and_nullify(FILE_TYPE **pFunc);
 
 // MiraMon feature table descriptors
@@ -98,34 +93,39 @@ extern char szNumberOfElementaryPolygonsEng[];
 extern char szNumberOfElementaryPolygonsCat[];
 extern char szNumberOfElementaryPolygonsSpa[];
 
-#ifndef GDAL_COMPILATION
-char *CPLStrlcpy(char *dest, const char *src, size_t maxlen);
-#endif
 char *MM_oemansi(char *szcadena);
 char *MM_oemansi_n(char *szcadena, size_t n_bytes);
+char *MM_stristr(const char *haystack, const char *needle);
 void MM_InitializeField(struct MM_FIELD *camp);
 struct MM_FIELD *MM_CreateAllFields(MM_EXT_DBF_N_FIELDS ncamps);
 MM_FIRST_RECORD_OFFSET_TYPE
 MM_GiveOffsetExtendedFieldName(const struct MM_FIELD *camp);
 struct MM_DATA_BASE_XP *MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps,
                                            MM_BYTE nCharSet);
-MM_BYTE MM_DBFFieldTypeToVariableProcessing(MM_BYTE tipus_camp_DBF);
 void MM_ReleaseMainFields(struct MM_DATA_BASE_XP *data_base_XP);
-void MM_ReleaseDBFHeader(struct MM_DATA_BASE_XP *data_base_XP);
-MM_BOOLEAN MM_CreateDBFFile(struct MM_DATA_BASE_XP *bd_xp,
-                            const char *NomFitxer);
+void MM_ReleaseDBFHeader(struct MM_DATA_BASE_XP **data_base_XP);
+MM_BOOLEAN MM_CreateAndOpenDBFFile(struct MM_DATA_BASE_XP *bd_xp,
+                                   const char *NomFitxer);
 int MM_DuplicateFieldDBXP(struct MM_FIELD *camp_final,
                           const struct MM_FIELD *camp_inicial);
 int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB);
 
-size_t MM_DefineFirstPolygonFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp);
-size_t MM_DefineFirstArcFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp);
+size_t MM_DefineFirstPolygonFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp,
+                                        MM_BYTE n_perimeter_decimals,
+                                        MM_BYTE n_area_decimals_decimals);
+size_t MM_DefineFirstArcFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp,
+                                    MM_BYTE n_decimals);
 size_t MM_DefineFirstNodeFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp);
 size_t MM_DefineFirstPointFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp);
+int MM_SprintfDoubleSignifFigures(char *szChain, size_t size_szChain,
+                                  int nSignifFigures, double nRealValue);
 int MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(
     struct MM_FIELD *camp, struct MM_DATA_BASE_XP *bd_xp,
     MM_BOOLEAN no_modifica_descriptor, size_t mida_nom);
 
+int MMWritePreformatedNumberValueToRecordDBXP(
+    struct MiraMonVectLayerInfo *hMiraMonLayer, char *registre,
+    const struct MM_FIELD *camp, const char *valor);
 int MMWriteValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
                              char *registre, const struct MM_FIELD *camp,
                              const void *valor, MM_BOOLEAN is_64);
@@ -134,8 +134,7 @@ int MM_SecureCopyStringFieldValue(char **pszStringDst, const char *pszStringSrc,
 int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
                            MM_EXT_DBF_N_FIELDS quincamp,
                            MM_BYTES_PER_FIELD_TYPE_DBF novaamplada,
-                           MM_BYTE nou_decimals,
-                           MM_BYTE que_fer_amb_reformatat_decimals);
+                           MM_BYTE nou_decimals);
 
 int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt,
                      struct MM_ZD *pZDescription, uint32_t flag);

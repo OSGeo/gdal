@@ -177,13 +177,12 @@ void OGRCoordinateTransformationOptions::Private::RefreshCheckWithInvertProj()
 }
 
 /************************************************************************/
-/*                          GetWktOrProjString()                        */
+/*                       GetAsAProjRecognizableString()                 */
 /************************************************************************/
 
-static char *GetWktOrProjString(const OGRSpatialReference *poSRS)
+static char *GetAsAProjRecognizableString(const OGRSpatialReference *poSRS)
 {
     CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
-    const char *const apszOptionsWKT2_2018[] = {"FORMAT=WKT2_2018", nullptr};
     // If there's a PROJ4 EXTENSION node in WKT1, then use
     // it. For example when dealing with "+proj=longlat +lon_wrap=180"
     char *pszText = nullptr;
@@ -197,8 +196,20 @@ static char *GetWktOrProjString(const OGRSpatialReference *poSRS)
             pszText = CPLStrdup(tmpText.c_str());
         }
     }
+    else if (poSRS->IsEmpty())
+    {
+        pszText = CPLStrdup("");
+    }
     else
-        poSRS->exportToWkt(&pszText, apszOptionsWKT2_2018);
+    {
+        // We export to PROJJSON rather than WKT2:2019 because PROJJSON
+        // is a bit more verbose, which helps in situations like
+        // https://github.com/OSGeo/gdal/issues/9732 /
+        // https://github.com/OSGeo/PROJ/pull/4124 where we want to export
+        // a DerivedProjectedCRS whose base ProjectedCRS has non-metre axis.
+        poSRS->exportToPROJJSON(&pszText, nullptr);
+    }
+
     return pszText;
 }
 
@@ -269,7 +280,7 @@ static char *GetTextRepresentation(const OGRSpatialReference *poSRS)
     }
     if (pszText == nullptr)
     {
-        pszText = GetWktOrProjString(poSRS);
+        pszText = GetAsAProjRecognizableString(poSRS);
     }
     return pszText;
 }

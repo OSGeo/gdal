@@ -32,6 +32,7 @@ projects/earthengine-public/assets/COPERNICUS/S2.
 Open options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: COLLECTION
@@ -61,8 +62,8 @@ The following authentication methods can be used:
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  :copy-config:`EEDA_BEARER`
 
@@ -141,7 +142,7 @@ The following attributes will always be present:
     +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
     | band_crs            | String    | CRS as EPSG:XXXX or WKT (only set if equal among all bands)  | No                            |
     +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
-    | other_properties    | String    | Serialized JSon dictionary with key/value pairs where key is | No                            |
+    | other_properties    | String    | Serialized JSON dictionary with key/value pairs where key is | No                            |
     |                     |           | not a standalone field                                       |                               |
     +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
 

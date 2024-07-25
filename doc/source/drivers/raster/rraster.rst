@@ -26,6 +26,7 @@ items will be written as the 'creator' and 'created' attributes of the
 '[general]' section. Band description will be written as the 'layername'
 attribute of the '[description]' section.
 
+|about-creation-options|
 The following creation options are supported:
 
 -  .. co:: INTERLEAVE

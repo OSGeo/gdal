@@ -58,8 +58,8 @@ and metadata of a Personal GeoDatabase table as XML content.
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: PGEO_DRIVER_TEMPLATE
 
@@ -68,6 +68,9 @@ available:
 
 Dataset open options
 --------------------
+
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: LIST_ALL_TABLES
       :choices: YES, NO

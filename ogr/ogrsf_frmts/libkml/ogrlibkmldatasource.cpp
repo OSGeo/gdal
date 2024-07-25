@@ -91,8 +91,7 @@ OGRLIBKMLDataSource::OGRLIBKMLDataSource(KmlFactory *poKmlFactory)
       bUpdate(false), bUpdated(false), m_papszOptions(nullptr), m_isKml(false),
       m_poKmlDSKml(nullptr), m_poKmlDSContainer(nullptr),
       m_poKmlUpdate(nullptr), m_isKmz(false), m_poKmlDocKml(nullptr),
-      m_poKmlDocKmlRoot(nullptr), m_poKmlStyleKml(nullptr),
-      pszStylePath(const_cast<char *>("")), m_isDir(false),
+      m_poKmlDocKmlRoot(nullptr), m_poKmlStyleKml(nullptr), m_isDir(false),
       m_poKmlFactory(poKmlFactory)
 {
 }
@@ -207,37 +206,57 @@ static void OGRLIBKMLPreProcessInput(std::string &oKml)
 /*                       OGRLIBKMLRemoveSpaces()                        */
 /************************************************************************/
 
-static void OGRLIBKMLRemoveSpaces(std::string &oKml,
+static void OGRLIBKMLRemoveSpaces(std::string &osKml,
                                   const std::string &osNeedle)
 {
     size_t nPos = 0;
+    const std::string osLtNeedle(std::string("<").append(osNeedle));
+    std::string osTmp;
+    std::string osRet;
     while (true)
     {
-        nPos = oKml.find("<" + osNeedle, nPos);
-        if (nPos == std::string::npos)
+        auto nPosNew = osKml.find(osLtNeedle, nPos);
+        if (nPosNew == std::string::npos)
         {
+            osRet.append(osKml, nPos);
             break;
         }
-        const size_t nPosOri = nPos;
-        nPos = oKml.find(">", nPos);
-        if (nPos == std::string::npos || oKml[nPos + 1] != '\n')
+        const size_t nPosOri = nPosNew;
+        nPosNew = osKml.find(">\n", nPosNew);
+        if (nPosNew == std::string::npos || nPosNew + 2 == osKml.size())
         {
+            osRet.append(osKml, nPos);
             break;
         }
-        oKml = oKml.substr(0, nPos) + ">" + oKml.substr(nPos + strlen(">\n"));
-        CPLString osSpaces;
-        for (size_t nPosTmp = nPosOri - 1; oKml[nPosTmp] == ' '; nPosTmp--)
+        // Skip \n character
+        osRet.append(osKml, nPos, nPosNew - nPos + 1);
+        nPos = nPosNew + 2;
+
+        // Remove leading spaces of "    </{osNeedle}>"
+        osTmp.clear();
+        for (size_t nPosTmp = nPosOri - 1; osKml[nPosTmp] == ' '; nPosTmp--)
         {
-            osSpaces += ' ';
+            osTmp += ' ';
         }
-        nPos = oKml.find(osSpaces + "</" + osNeedle + ">", nPos);
-        if (nPos != std::string::npos)
-            oKml = oKml.substr(0, nPos) + "</" + osNeedle + ">" +
-                   oKml.substr(nPos + osSpaces.size() + strlen("</>") +
-                               osNeedle.size());
+        osTmp += "</";
+        osTmp += osNeedle;
+        osTmp += '>';
+        nPosNew = osKml.find(osTmp, nPos);
+        if (nPosNew != std::string::npos)
+        {
+            osRet.append(osKml, nPos, nPosNew - nPos);
+            osRet += "</";
+            osRet += osNeedle;
+            osRet += '>';
+            nPos = nPosNew + osTmp.size();
+        }
         else
+        {
+            osRet.append(osKml, nPos);
             break;
+        }
     }
+    osKml = std::move(osRet);
 }
 
 /************************************************************************/
@@ -393,7 +412,16 @@ static KmlPtr OGRLIBKMLCreateOGCKml22(KmlFactory *poFactory,
 
 bool OGRLIBKMLDataSource::WriteKmz()
 {
-    void *hZIP = CPLCreateZip(m_pszName, nullptr);
+    std::string osTmpFilename;
+    if (!VSISupportsRandomWrite(m_pszName, false) ||
+        EQUAL(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", ""),
+              "FORCED"))
+    {
+        osTmpFilename = CPLGenerateTempFilename(CPLGetBasename(m_pszName));
+    }
+
+    void *hZIP = CPLCreateZip(
+        osTmpFilename.empty() ? m_pszName : osTmpFilename.c_str(), nullptr);
 
     if (!hZIP)
     {
@@ -517,6 +545,19 @@ bool OGRLIBKMLDataSource::WriteKmz()
     }
 
     CPLCloseZip(hZIP);
+
+    if (!osTmpFilename.empty())
+    {
+        if (bRet)
+        {
+            bRet = CPLCopyFile(m_pszName, osTmpFilename.c_str()) == 0;
+            if (!bRet)
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Cannot copy temporary file to %s", m_pszName);
+        }
+        VSIUnlink(osTmpFilename.c_str());
+    }
+
     return bRet;
 }
 
@@ -700,9 +741,6 @@ OGRLIBKMLDataSource::~OGRLIBKMLDataSource()
     OGRLIBKMLDataSource::FlushCache(true);
 
     CPLFree(m_pszName);
-
-    if (!EQUAL(pszStylePath, ""))
-        CPLFree(pszStylePath);
 
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
@@ -1003,7 +1041,7 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable(std::string *poKmlStyleKml,
     if (!poKmlRoot)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "ERROR parsing style kml %s :%s",
-                 pszStylePath, oKmlErrors.c_str());
+                 pszMyStylePath, oKmlErrors.c_str());
         return false;
     }
 
@@ -1016,7 +1054,7 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable(std::string *poKmlStyleKml,
     }
 
     ParseStyles(AsDocument(std::move(poKmlContainer)), &m_poStyleTable);
-    pszStylePath = CPLStrdup(pszMyStylePath);
+    m_osStylePath = pszMyStylePath;
 
     return true;
 }
@@ -1411,7 +1449,7 @@ int OGRLIBKMLDataSource::OpenDir(const char *pszFilename, int bUpdateIn)
         if (EQUAL(papszDirList[iFile], "style.kml"))
         {
             ParseStyles(AsDocument(poKmlContainer), &m_poStyleTable);
-            pszStylePath = CPLStrdup(const_cast<char *>("style.kml"));
+            m_osStylePath = "style.kml";
             continue;
         }
 
@@ -1826,7 +1864,7 @@ int OGRLIBKMLDataSource::CreateKmz(const char * /* pszFilename */,
         }
     }
 
-    pszStylePath = CPLStrdup(const_cast<char *>("style/style.kml"));
+    m_osStylePath = "style/style.kml";
 
     m_isKmz = true;
     bUpdated = true;
@@ -1868,7 +1906,7 @@ int OGRLIBKMLDataSource::CreateDir(const char *pszFilename,
         }
     }
 
-    pszStylePath = CPLStrdup(const_cast<char *>("style.kml"));
+    m_osStylePath = "style.kml";
 
     return TRUE;
 }

@@ -569,18 +569,16 @@ def test_gdalinfo_34(gdalinfo_path):
 # Test -hist option
 
 
-def test_gdalinfo_35(gdalinfo_path):
+def test_gdalinfo_35(gdalinfo_path, tmp_path):
 
-    try:
-        os.remove("../gcore/data/byte.tif.aux.xml")
-    except OSError:
-        pass
+    tmp_tif = str(tmp_path / "byte.tif")
+    shutil.copy("../gcore/data/byte.tif", tmp_tif)
 
-    ret = gdaltest.runexternal(gdalinfo_path + " -json ../gcore/data/byte.tif")
+    ret = gdaltest.runexternal(gdalinfo_path + f" -json {tmp_tif}")
     ret = json.loads(ret)
     assert "histogram" not in ret["bands"][0], "did not expect histogram."
 
-    ret = gdaltest.runexternal(gdalinfo_path + " -json -hist ../gcore/data/byte.tif")
+    ret = gdaltest.runexternal(gdalinfo_path + f" -json -hist {tmp_tif}")
     ret = json.loads(ret)
     assert ret["bands"][0]["histogram"]["buckets"] == [
         0,
@@ -841,8 +839,7 @@ def test_gdalinfo_35(gdalinfo_path):
         1,
     ], "did not get expected histogram."
 
-    # We will blow an exception if the file does not exist now!
-    os.remove("../gcore/data/byte.tif.aux.xml")
+    assert os.path.exists(tmp_tif + ".aux.xml")
 
 
 ###############################################################################

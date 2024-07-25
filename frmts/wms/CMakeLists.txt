@@ -35,7 +35,8 @@ add_gdal_driver(
           wmsmetadataset.h
   CORE_SOURCES
           wmsdrivercore.cpp
-  PLUGIN_CAPABLE)
+  PLUGIN_CAPABLE
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET gdal_WMS)
     return()

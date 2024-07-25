@@ -10,8 +10,10 @@ outfile = sys.argv[3]
 
 res = []
 
+excluded_filenames = ["driver_summary", "wms_wmts_cache"]
+
 for filename in glob.glob(os.path.join(dirname, "*.rst")):
-    if "driver_summary" in filename:
+    if os.path.basename(filename)[0:-4] in excluded_filenames:
         continue
     with open(filename, "rt", encoding="utf-8") as f:
         shortnames = []
@@ -27,7 +29,7 @@ for filename in glob.glob(os.path.join(dirname, "*.rst")):
         for l in f.readlines():
             l = l.rstrip("\n")
             if not link:
-                assert l.startswith(".. _") and l.endswith(":")
+                assert l.startswith(".. _") and l.endswith(":"), (filename, l)
                 link = l[len(".. _") : -1]
             elif l.startswith(".. shortname:: "):
                 shortname = l[len(".. shortname:: ") :]
@@ -91,9 +93,11 @@ with open(outfile, "wt", encoding="utf-8") as f:
     f.write("\n")
     f.write("   * - Short name\n")
     f.write("     - Long name\n")
-    f.write("     - Creation\n")
     if anchor == "raster_driver_summary":
-        f.write("     - Copy\n")
+        f.write("     - Creation (1)\n")
+        f.write("     - Copy (2)\n")
+    else:
+        f.write("     - Creation\n")
     f.write("     - Geo-referencing\n")
     # f.write("     - Virtual I/O\n")
     f.write("     - Build requirements\n")
@@ -121,3 +125,7 @@ with open(outfile, "wt", encoding="utf-8") as f:
             f.write("     - %s\n" % build_dependencies)
         else:
             f.write("     - %s\n" % "???")
+    f.write("\n")
+    if anchor == "raster_driver_summary":
+        f.write("- (1): Creation refers to implementing :cpp:func:`GDALCreate`.\n")
+        f.write("- (2): Copy refers to implementing :cpp:func:`GDALCreateCopy`.\n")

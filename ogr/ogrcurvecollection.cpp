@@ -31,6 +31,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <limits>
 #include <new>
 
 #include "ogr_core.h"
@@ -155,6 +156,21 @@ OGRErr OGRCurveCollection::addCurveDirectly(OGRGeometry *poGeom,
 
     if (bNeedRealloc)
     {
+#if SIZEOF_VOIDP < 8
+        if (nCurveCount == std::numeric_limits<int>::max() /
+                               static_cast<int>(sizeof(OGRCurve *)))
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Too many subgeometries");
+            return OGRERR_FAILURE;
+        }
+#else
+        if (nCurveCount == std::numeric_limits<int>::max())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too many subgeometries");
+            return OGRERR_FAILURE;
+        }
+#endif
+
         OGRCurve **papoNewCurves = static_cast<OGRCurve **>(VSI_REALLOC_VERBOSE(
             papoCurves, sizeof(OGRCurve *) * (nCurveCount + 1)));
         if (papoNewCurves == nullptr)
@@ -747,6 +763,73 @@ OGRErr OGRCurveCollection::removeCurve(int iIndex, bool bDelete)
     nCurveCount--;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a geometry has empty parts/rings.
+ *
+ * Returns true if removeEmptyParts() will modify the geometry.
+ *
+ * This is different from IsEmpty().
+ *
+ * @since GDAL 3.10
+ */
+bool OGRCurveCollection::hasEmptyParts() const
+{
+    for (int i = 0; i < nCurveCount; ++i)
+    {
+        if (papoCurves[i]->IsEmpty() || papoCurves[i]->hasEmptyParts())
+            return true;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+/**
+ * \brief Remove empty parts/rings from this geometry.
+ *
+ * @since GDAL 3.10
+ */
+void OGRCurveCollection::removeEmptyParts()
+{
+    for (int i = nCurveCount - 1; i >= 0; --i)
+    {
+        papoCurves[i]->removeEmptyParts();
+        if (papoCurves[i]->IsEmpty())
+            removeCurve(i, true);
+    }
+}
+
+/************************************************************************/
+/*                           reversePoints()                            */
+/************************************************************************/
+
+/**
+ * \brief Reverse point order.
+ *
+ * This method updates the points in this curve in place
+ * reversing the point ordering (first for last, etc) and component ordering.
+ *
+ * @since 3.10
+ */
+void OGRCurveCollection::reversePoints()
+
+{
+    for (int i = 0; i < nCurveCount / 2; ++i)
+    {
+        std::swap(papoCurves[i], papoCurves[nCurveCount - 1 - i]);
+    }
+    for (int i = 0; i < nCurveCount; ++i)
+    {
+        papoCurves[i]->reversePoints();
+    }
 }
 
 //! @endcond

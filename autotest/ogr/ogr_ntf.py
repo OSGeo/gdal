@@ -129,8 +129,6 @@ def test_ogr_ntf_1():
     feat = lyr.GetNextFeature()
     assert feat.GetGeometryRef().ExportToWkt() == "POINT (222904 127850)"
 
-    ds.Destroy()
-
 
 ###############################################################################
 def test_ogr_ntf_2():
@@ -180,5 +178,3 @@ def test_ogr_ntf_2():
         feat.GetGeometryRef().ExportToWkt()
         == "LINESTRING (275324 189274,275233 189114,275153 189048)"
     )
-
-    ds.Destroy()

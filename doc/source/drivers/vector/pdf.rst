@@ -90,8 +90,8 @@ Courier. All other font names will be treated as Helvetica.
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OGR_PDF_READ_NON_STRUCTURED
       :choices: YES, NO

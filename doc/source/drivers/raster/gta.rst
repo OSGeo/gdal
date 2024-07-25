@@ -25,6 +25,9 @@ Driver capabilities
 Creation options
 ----------------
 
+|about-creation-options|
+The following creation options are supported:
+
 -  .. co:: COMPRESS
       :choices: NONE, BZIP2, XZ, ZLIB, ZLIB1, ZLIB2, ZLIB3, ZLIB4, ZLIB5, ZLIB6, ZLIB7, ZLIB8, ZLIB9
       :default: NONE

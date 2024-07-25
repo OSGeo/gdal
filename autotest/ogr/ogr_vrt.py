@@ -253,9 +253,6 @@ def test_ogr_vrt_9(vrt_ds):
 
     lyr.SetAttributeFilter(None)
 
-    sub_ds.Release()
-    sub_ds = None
-
 
 ###############################################################################
 # Test capabilities

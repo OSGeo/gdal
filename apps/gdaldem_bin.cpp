@@ -37,111 +37,25 @@
 #include "gdal_priv.h"
 #include "commonutils.h"
 
+/**
+ * @brief Makes sure the GDAL library is properly cleaned up before exiting.
+ * @param nCode exit code
+ * @todo Move to API
+ */
+static void GDALExit(const int nCode)
+{
+    GDALDestroy();
+    exit(nCode);
+}
+
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
-
+static void Usage(const std::string &osProcessingMode = "")
 {
-    fprintf(
-        bIsError ? stderr : stdout,
-        " Usage: [--help] [--help-general]\n"
-        " - To generate a shaded relief map from any GDAL-supported elevation "
-        "raster : \n\n"
-        "     gdaldem hillshade <input_dem> <output_hillshade> \n"
-        "                 [-z <zfactor>] [-s <scale>] \n"
-        "                 [-az <azimuth>] [-alt <altitude>]\n"
-        "                 [-alg ZevenbergenThorne] [-combined | "
-        "-multidirectional | -igor]\n"
-        "                 [-compute_edges] [-b <Band>] [-of <format>] "
-        "[-co <NAME>=<VALUE>]... [-q]\n"
-        "\n"
-        " - To generates a slope map from any GDAL-supported elevation raster "
-        ":\n\n"
-        "     gdaldem slope <input_dem> <output_slope_map> \n"
-        "                 [-p] [-s <scale>]\n"
-        "                 [-alg ZevenbergenThorne]\n"
-        "                 [-compute_edges] [-b <band>] [-of <format>] "
-        "[-co <NAME>=<VALUE>]... [-q]\n"
-        "\n"
-        " - To generate an aspect map from any GDAL-supported elevation "
-        "raster\n"
-        "   Outputs a 32-bit float tiff with pixel values from 0-360 "
-        "indicating azimuth :\n\n"
-        "     gdaldem aspect <input_dem> <output_aspect_map> \n"
-        "                 [-trigonometric] [-zero_for_flat]\n"
-        "                 [-alg ZevenbergenThorne]\n"
-        "                 [-compute_edges] [-b <band>] [-of format] "
-        "[-co <NAME>=<VALUE>]... [-q]\n"
-        "\n"
-        " - To generate a color relief map from any GDAL-supported elevation "
-        "raster\n"
-        "     gdaldem color-relief <input_dem> <color_text_file> "
-        "<output_color_relief_map>\n"
-        "                 [-alpha] [-exact_color_entry | "
-        "-nearest_color_entry]\n"
-        "                 [-b <band>] [-of format] "
-        "[-co <NAME>=<VALUE>]... [-q]\n"
-        "     where color_text_file contains lines of the format "
-        "\"elevation_value red green blue\"\n"
-        "\n"
-        " - To generate a Terrain Ruggedness Index (TRI) map from any "
-        "GDAL-supported elevation raster\n"
-        "     gdaldem TRI <input_dem> <output_TRI_map>\n"
-        "                 [-alg Wilson|Riley]\n"
-        "                 [-compute_edges] [-b <band>] [-of <format>] "
-        "[-co <NAME>=<VALUE>]... [-q]\n"
-        "\n"
-        " - To generate a Topographic Position Index (TPI) map from any "
-        "GDAL-supported elevation raster\n"
-        "     gdaldem TPI <input_dem> <output_TPI_map>\n"
-        "                 [-compute_edges] [-b <band>] [-of <format>] "
-        "[-co <NAME>=<VALUE>]... [-q]\n"
-        "\n"
-        " - To generate a roughness map from any GDAL-supported elevation "
-        "raster\n"
-        "     gdaldem roughness <input_dem> <output_roughness_map>\n"
-        "                 [-compute_edges] [-b <band>] [-of <format>] "
-        "[-co <NAME>=<VALUE>]... [-q]\n"
-        "\n"
-        " Notes : \n"
-        "   Scale is the ratio of vertical units to horizontal\n"
-        "    for Feet:Latlong use scale=370400, for Meters:LatLong use "
-        "scale=111120 \n\n");
-
-    if (pszErrorMsg != nullptr)
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-
-    exit(bIsError ? 1 : 0);
-}
-
-/************************************************************************/
-/*                       GDALDEMProcessingOptionsForBinaryNew()             */
-/************************************************************************/
-
-static GDALDEMProcessingOptionsForBinary *
-GDALDEMProcessingOptionsForBinaryNew(void)
-{
-    return static_cast<GDALDEMProcessingOptionsForBinary *>(
-        CPLCalloc(1, sizeof(GDALDEMProcessingOptionsForBinary)));
-}
-
-/************************************************************************/
-/*                       GDALDEMProcessingOptionsForBinaryFree()            */
-/************************************************************************/
-
-static void GDALDEMProcessingOptionsForBinaryFree(
-    GDALDEMProcessingOptionsForBinary *psOptionsForBinary)
-{
-    if (psOptionsForBinary)
-    {
-        CPLFree(psOptionsForBinary->pszProcessing);
-        CPLFree(psOptionsForBinary->pszSrcFilename);
-        CPLFree(psOptionsForBinary->pszColorFilename);
-        CPLFree(psOptionsForBinary->pszDstFilename);
-        CPLFree(psOptionsForBinary);
-    }
+    fprintf(stderr, "%s\n", GDALDEMAppGetParserUsage(osProcessingMode).c_str());
+    GDALExit(1);
 }
 
 /************************************************************************/
@@ -153,92 +67,70 @@ MAIN_START(argc, argv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
     if (!GDAL_CHECK_VERSION(argv[0]))
-        exit(1);
+        GDALExit(1);
 
     EarlySetConfigOptions(argc, argv);
+
+    GDALAllRegister();
 
     /* -------------------------------------------------------------------- */
     /*      Register standard GDAL drivers, and process generic GDAL        */
     /*      command options.                                                */
     /* -------------------------------------------------------------------- */
-    GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
     if (argc < 2)
     {
-        Usage(true, "Not enough arguments.");
+        Usage();
     }
 
-    if (EQUAL(argv[1], "--utility_version") ||
-        EQUAL(argv[1], "--utility-version"))
-    {
-        printf(
-            "%s was compiled against GDAL %s and is running against GDAL %s\n",
-            argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-        CSLDestroy(argv);
-        return 0;
-    }
-    else if (EQUAL(argv[1], "--help"))
-        Usage(false);
+    GDALDEMProcessingOptionsForBinary sOptionsForBinary;
 
-    GDALDEMProcessingOptionsForBinary *psOptionsForBinary =
-        GDALDEMProcessingOptionsForBinaryNew();
-    // coverity[tainted_data]
-    GDALDEMProcessingOptions *psOptions =
-        GDALDEMProcessingOptionsNew(argv + 1, psOptionsForBinary);
+    const std::string osProcessingMode = argv[1];
+
+    std::unique_ptr<GDALDEMProcessingOptions,
+                    decltype(&GDALDEMProcessingOptionsFree)>
+        psOptions{GDALDEMProcessingOptionsNew(argv + 1, &sOptionsForBinary),
+                  GDALDEMProcessingOptionsFree};
+
     CSLDestroy(argv);
 
-    if (psOptions == nullptr)
-    {
-        Usage(true);
-    }
+    if (!psOptions)
+        Usage(osProcessingMode);
 
-    if (!(psOptionsForBinary->bQuiet))
+    if (!(sOptionsForBinary.bQuiet))
     {
-        GDALDEMProcessingOptionsSetProgress(psOptions, GDALTermProgress,
+        GDALDEMProcessingOptionsSetProgress(psOptions.get(), GDALTermProgress,
                                             nullptr);
-    }
-
-    if (psOptionsForBinary->pszSrcFilename == nullptr)
-    {
-        Usage(true, "Missing source.");
-    }
-    if (EQUAL(psOptionsForBinary->pszProcessing, "color-relief") &&
-        psOptionsForBinary->pszColorFilename == nullptr)
-    {
-        Usage(true, "Missing color file.");
-    }
-    if (psOptionsForBinary->pszDstFilename == nullptr)
-    {
-        Usage(true, "Missing destination.");
     }
 
     // Open Dataset and get raster band.
     GDALDatasetH hSrcDataset =
-        GDALOpen(psOptionsForBinary->pszSrcFilename, GA_ReadOnly);
+        GDALOpen(sOptionsForBinary.osSrcFilename.c_str(), GA_ReadOnly);
 
     if (hSrcDataset == nullptr)
     {
         fprintf(stderr, "GDALOpen failed - %d\n%s\n", CPLGetLastErrorNo(),
                 CPLGetLastErrorMsg());
         GDALDestroyDriverManager();
-        exit(1);
+        GDALExit(1);
     }
 
     int bUsageError = FALSE;
-    GDALDatasetH hOutDS = GDALDEMProcessing(
-        psOptionsForBinary->pszDstFilename, hSrcDataset,
-        psOptionsForBinary->pszProcessing, psOptionsForBinary->pszColorFilename,
-        psOptions, &bUsageError);
+    GDALDatasetH hOutDS =
+        GDALDEMProcessing(sOptionsForBinary.osDstFilename.c_str(), hSrcDataset,
+                          sOptionsForBinary.osProcessing.c_str(),
+                          sOptionsForBinary.osColorFilename.c_str(),
+                          psOptions.get(), &bUsageError);
+
     if (bUsageError)
-        Usage(true);
+        Usage(osProcessingMode);
+
     const int nRetCode = hOutDS ? 0 : 1;
 
     GDALClose(hSrcDataset);
     GDALClose(hOutDS);
-    GDALDEMProcessingOptionsFree(psOptions);
-    GDALDEMProcessingOptionsForBinaryFree(psOptionsForBinary);
 
-    GDALDestroyDriverManager();
+    GDALDestroy();
 
     return nRetCode;
 }

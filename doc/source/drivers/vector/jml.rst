@@ -67,6 +67,7 @@ creation option to NO.
 Creation Issues
 ---------------
 
+|about-layer-creation-options|
 The JML writer supports the following *layer* creation options:
 
 -  .. lco:: CREATE_R_G_B_FIELD

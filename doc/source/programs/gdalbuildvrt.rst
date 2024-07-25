@@ -154,6 +154,7 @@ changed in later versions.
     Insert a <NoDataFromMaskSource> source, which replaces the value of the source
     with the value of :option:`-vrtnodata` (or 0 if not specified) when the value
     of the mask band of the source is less or equal to the threshold.
+    This is typically used to transform a R,G,B,A image into a R,G,B one with a NoData value.
 
 .. option:: -b <band>
 

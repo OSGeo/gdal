@@ -41,8 +41,12 @@
 
 constexpr const char *DRIVER_NAME = "Rasterlite";
 
-int CPL_DLL RasterliteDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define RasterliteDriverIdentify PLUGIN_SYMBOL_NAME(RasterliteDriverIdentify)
+#define RasterliteDriverSetCommonMetadata                                      \
+    PLUGIN_SYMBOL_NAME(RasterliteDriverSetCommonMetadata)
 
-void CPL_DLL RasterliteDriverSetCommonMetadata(GDALDriver *poDriver);
+int RasterliteDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void RasterliteDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

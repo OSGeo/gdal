@@ -1980,7 +1980,7 @@ def test_ogr_mitab_45(tmp_vsimem, frmt, lyrCount):
 # Test read MapInfo layers with encoding specified
 
 
-@pytest.mark.parametrize("fname", ("tab-win1251.TAB", "win1251.mif"))
+@pytest.mark.parametrize("fname", ("tab-win1251.TAB", "win1251.mif", "utf8.mif"))
 def test_ogr_mitab_46(fname):
 
     fldNames = ["Поле_А", "Поле_Б", "Поле_В", "Поле_Г", "Поле_Д"]
@@ -2269,6 +2269,63 @@ def test_ogr_mitab_tab_write_field_name_with_dot(tmp_vsimem):
 
 
 ###############################################################################
+
+
+@pytest.mark.parametrize("ext", ["mif", "tab"])
+def test_ogr_mitab_write_utf8_field_name(tmp_vsimem, ext):
+
+    tmpfile = tmp_vsimem / f"ogr_mitab_tab_write_utf8_field_name.{ext}"
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(
+        tmpfile, options=["ENCODING=UTF-8", f"FORMAT={ext}"]
+    )
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("地市", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["地市"] = 1
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    lyr.CreateFeature(f)
+    with gdal.quiet_errors():
+        ds = None
+
+    ds = ogr.Open(tmpfile)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["地市"] == 1
+    ds = None
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("ext", ["mif", "tab"])
+@pytest.mark.parametrize("dsStrictOpt", [False, True])
+def test_ogr_mitab_non_strict_fields_laundering(tmp_vsimem, ext, dsStrictOpt):
+
+    tmpfile = tmp_vsimem / f"ogr_mitab_non_strict_fields_laundering.{ext}"
+    dsOpt = [f"FORMAT={ext}"]
+    lyrOpt = []
+    if dsStrictOpt:
+        dsOpt.append("STRICT_FIELDS_NAME_LAUNDERING=NO")
+    else:
+        lyrOpt.append("STRICT_FIELDS_NAME_LAUNDERING=NO")
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(tmpfile, options=dsOpt)
+    lyr = ds.CreateLayer("test", options=lyrOpt)
+    lyr.CreateField(ogr.FieldDefn("dot.and space", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["dot.and space"] = 1
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    lyr.CreateFeature(f)
+    with gdal.quiet_errors():
+        ds = None
+
+    ds = ogr.Open(tmpfile)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["dot.and_space"] == 1
+    ds = None
+
+
+###############################################################################
 # Test read text labels with local encoding from mif/mid file
 
 
@@ -2507,11 +2564,11 @@ def test_ogr_mitab_read_multi_line_mid():
     f = lyr.GetNextFeature()
     assert f["Name"] == "NAME1"
     assert f["Notes"] == "MULTI\n\nLINE"
-    assert f["Awesome"] == "F"
+    assert f["Awesome"] is False
     f = lyr.GetNextFeature()
     assert f["Name"] == "NAME2"
     assert f["Notes"] == "MULTI\nLINE2"
-    assert f["Awesome"] == "F"
+    assert f["Awesome"] is False
 
 
 ###############################################################################
@@ -2536,37 +2593,47 @@ def test_ogr_mitab_read_single_field_mid():
 
 @pytest.mark.parametrize("ext", ["mif", "tab"])
 def test_ogr_mitab_read_write_all_data_types(tmp_vsimem, ext):
+    def check_features(lyr):
+        f = lyr.GetNextFeature()
+        assert f["field1"] == "test"
+        assert f["Field2"] == 120
+        assert f["Field3"] == 12345
+        assert (
+            lyr.GetLayerDefn()
+            .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("Field4"))
+            .GetType()
+            == ogr.OFTInteger64
+        )
+        assert f["Field4"] == 123456789012345
+        assert f["Field5"] == 12.34
+        assert f["Field6"] == 12.34
+        assert f["Field7"] == "2022/12/31"
+        assert f["Field8"] == "23:59:00"
+        assert f["Field9"] == "2022/03/23 14:56:00"
+        assert f["Field10"] is True
+
+        f = lyr.GetNextFeature()
+        assert f["Field10"] is False
 
     ds = ogr.Open("data/mitab/all_possible_fields." + ext)
     lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
-    assert f["field1"] == "test"
-    assert f["Field2"] == 120
-    assert f["Field3"] == 12345
-    assert (
-        lyr.GetLayerDefn()
-        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("Field4"))
-        .GetType()
-        == ogr.OFTInteger64
-    )
-    assert f["Field4"] == 123456789012345
-    assert f["Field5"] == 12.34
-    assert f["Field6"] == 12.34
-    assert f["Field7"] == "2022/12/31"
-    assert f["Field8"] == "23:59:00"
-    assert f["Field9"] == "2022/03/23 14:56:00"
-    assert f["Field10"] == "T"
+    check_features(lyr)
 
     filename = tmp_vsimem / f"test_ogr_mitab_read_write_all_data_types.{ext}"
     out_ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
     out_lyr = out_ds.CreateLayer("test", geom_type=ogr.wkbNone)
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         out_lyr.CreateField(lyr.GetLayerDefn().GetFieldDefn(i))
-    out_f = ogr.Feature(out_lyr.GetLayerDefn())
-    out_f.SetFrom(f)
-    assert out_lyr.CreateFeature(out_f) == ogr.OGRERR_NONE
-    out_f = None
+    for f in lyr:
+        out_f = ogr.Feature(out_lyr.GetLayerDefn())
+        out_f.SetFrom(f)
+        assert out_lyr.CreateFeature(out_f) == ogr.OGRERR_NONE
+        out_f = None
     out_ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    check_features(lyr)
 
 
 ###############################################################################
@@ -2812,3 +2879,109 @@ def test_ogr_mitab_label_without_text(tmp_vsimem):
 def test_ogr_mitab_write_LCC_2SP_non_metre_unit(tmp_vsimem, ext):
 
     _test_srs(tmp_vsimem, "EPSG:2277", ext=ext)  # "NAD83 / Texas Central (ftUS)"
+
+
+###############################################################################
+
+
+def test_ogr_mitab_alter_field_defn_integer_width_4(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "foo.tab")
+
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
+    fld_defn = ogr.FieldDefn("int_field", ogr.OFTInteger)
+    fld_defn.SetWidth(5)
+    lyr.CreateField(fld_defn)
+
+    # Changing field defn while no feature has been written is OK
+    idx = lyr.GetLayerDefn().GetFieldIndex("int_field")
+
+    new_fld_defn = ogr.FieldDefn("real_field", ogr.OFTReal)
+    new_fld_defn.SetWidth(15)
+    new_fld_defn.SetPrecision(6)
+    assert lyr.AlterFieldDefn(idx, new_fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTReal
+    assert fld_defn.GetWidth() == 15
+    assert fld_defn.GetPrecision() == 6
+
+    new_fld_defn = ogr.FieldDefn("real_field", ogr.OFTReal)
+    new_fld_defn.SetWidth(30)
+    new_fld_defn.SetPrecision(6)
+    assert lyr.AlterFieldDefn(idx, new_fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTReal
+    assert fld_defn.GetWidth() == 20
+    assert fld_defn.GetPrecision() == 6
+
+    new_fld_defn = ogr.FieldDefn("int_field", ogr.OFTInteger)
+    # Use 4 as this is also sizeof(int32) and there was a confusion before
+    # the fix linked with that test between decimal width and binary width.
+    new_fld_defn.SetWidth(4)
+    assert lyr.AlterFieldDefn(idx, new_fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTInteger
+    assert fld_defn.GetWidth() == 4
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["int_field"] = 1234
+    lyr.CreateFeature(f)
+    f = None
+
+    new_fld_defn = ogr.FieldDefn("int_field", ogr.OFTInteger64)
+    with gdal.quiet_errors():
+        assert (
+            lyr.AlterFieldDefn(idx, new_fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
+        )
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTInteger
+    assert fld_defn.GetWidth() == 4
+
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    idx = lyr.GetLayerDefn().GetFieldIndex("int_field")
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetWidth() == 4
+    # We don't change anything actually
+    assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTInteger
+    assert fld_defn.GetWidth() == 4
+    f = lyr.GetNextFeature()
+    assert f["int_field"] == 1234
+
+
+###############################################################################
+
+
+def test_ogr_mitab_alter_field_defn_to_string(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "foo.tab")
+
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
+    fld_defn = ogr.FieldDefn("int_field", ogr.OFTInteger)
+    fld_defn.SetWidth(5)
+    lyr.CreateField(fld_defn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["int_field"] = 1234
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    idx = lyr.GetLayerDefn().GetFieldIndex("int_field")
+    new_fld_defn = ogr.FieldDefn("str_field", ogr.OFTString)
+    assert (
+        lyr.AlterFieldDefn(idx, new_fld_defn, ogr.ALTER_NAME_FLAG | ogr.ALTER_TYPE_FLAG)
+        == ogr.OGRERR_NONE
+    )
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTString
+    assert fld_defn.GetWidth() == 254
+    f = lyr.GetNextFeature()
+    assert f["str_field"] == "1234"

@@ -115,6 +115,7 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
     {
         m_nChildren++;
     }
+    // cppcheck-suppress knownConditionTrueFalse
     for (int i = 0; i < m_nFieldCount; i++)
     {
         const auto poFieldDefn = poFeatureDefn->GetFieldDefn(i);
@@ -127,6 +128,7 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
             m_nChildren++;
         }
     }
+    // cppcheck-suppress knownConditionTrueFalse
     for (int i = 0; i < m_nGeomFieldCount; i++)
     {
         if (!poFeatureDefn->GetGeomFieldDefn(i)->IsIgnored())
@@ -170,6 +172,7 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
         psChild->buffers[1] = m_panFIDValues;
     }
 
+    // cppcheck-suppress knownConditionTrueFalse
     for (int i = 0; i < m_nFieldCount; i++)
     {
         const int iArrowField = m_mapOGRFieldToArrowField[i];
@@ -294,6 +297,7 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
         }
     }
 
+    // cppcheck-suppress knownConditionTrueFalse
     for (int i = 0; i < m_nGeomFieldCount; i++)
     {
         const int iArrowField = m_mapOGRGeomFieldToArrowField[i];

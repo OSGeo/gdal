@@ -1751,6 +1751,71 @@ OGRErr OGRSpatialReference::exportToWkt(char **ppszResult,
     }
 
     *ppszResult = CPLStrdup(pszWKT);
+
+#if !(PROJ_AT_LEAST_VERSION(9, 5, 0))
+    if (wktFormat == PJ_WKT2_2018)
+    {
+        // Works around bug fixed per https://github.com/OSGeo/PROJ/pull/4166
+        // related to a wrong EPSG code assigned to UTM South conversions
+        char *pszPtr = strstr(*ppszResult, "CONVERSION[\"UTM zone ");
+        if (pszPtr)
+        {
+            pszPtr += strlen("CONVERSION[\"UTM zone ");
+            const int nZone = atoi(pszPtr);
+            while (*pszPtr >= '0' && *pszPtr <= '9')
+                ++pszPtr;
+            if (nZone >= 1 && nZone <= 60 && *pszPtr == 'S' &&
+                pszPtr[1] == '"' && pszPtr[2] == ',')
+            {
+                pszPtr += 3;
+                int nLevel = 0;
+                bool bInString = false;
+                // Find the ID node corresponding to this CONVERSION node
+                while (*pszPtr)
+                {
+                    if (bInString)
+                    {
+                        if (*pszPtr == '"' && pszPtr[1] == '"')
+                        {
+                            ++pszPtr;
+                        }
+                        else if (*pszPtr == '"')
+                        {
+                            bInString = false;
+                        }
+                    }
+                    else if (nLevel == 0 && STARTS_WITH_CI(pszPtr, "ID["))
+                    {
+                        if (STARTS_WITH_CI(pszPtr, CPLSPrintf("ID[\"EPSG\",%d]",
+                                                              17000 + nZone)))
+                        {
+                            CPLAssert(pszPtr[11] == '7');
+                            CPLAssert(pszPtr[12] == '0');
+                            pszPtr[11] = '6';
+                            pszPtr[12] = '1';
+                        }
+                        break;
+                    }
+                    else if (*pszPtr == '"')
+                    {
+                        bInString = true;
+                    }
+                    else if (*pszPtr == '[')
+                    {
+                        ++nLevel;
+                    }
+                    else if (*pszPtr == ']')
+                    {
+                        --nLevel;
+                    }
+
+                    ++pszPtr;
+                }
+            }
+        }
+    }
+#endif
+
     proj_destroy(boundCRS);
     return OGRERR_NONE;
 }
@@ -1901,6 +1966,75 @@ OGRErr OGRSpatialReference::exportToPROJJSON(
     }
 
     *ppszResult = CPLStrdup(pszPROJJSON);
+
+#if !(PROJ_AT_LEAST_VERSION(9, 5, 0))
+    {
+        // Works around bug fixed per https://github.com/OSGeo/PROJ/pull/4166
+        // related to a wrong EPSG code assigned to UTM South conversions
+        char *pszPtr = strstr(*ppszResult, "\"name\": \"UTM zone ");
+        if (pszPtr)
+        {
+            pszPtr += strlen("\"name\": \"UTM zone ");
+            const int nZone = atoi(pszPtr);
+            while (*pszPtr >= '0' && *pszPtr <= '9')
+                ++pszPtr;
+            if (nZone >= 1 && nZone <= 60 && *pszPtr == 'S' && pszPtr[1] == '"')
+            {
+                pszPtr += 2;
+                int nLevel = 0;
+                bool bInString = false;
+                // Find the id node corresponding to this conversion node
+                while (*pszPtr)
+                {
+                    if (bInString)
+                    {
+                        if (*pszPtr == '\\')
+                        {
+                            ++pszPtr;
+                        }
+                        else if (*pszPtr == '"')
+                        {
+                            bInString = false;
+                        }
+                    }
+                    else if (nLevel == 0 && STARTS_WITH(pszPtr, "\"id\": {"))
+                    {
+                        const char *pszNextEndCurl = strchr(pszPtr, '}');
+                        const char *pszAuthEPSG =
+                            strstr(pszPtr, "\"authority\": \"EPSG\"");
+                        char *pszCode = strstr(
+                            pszPtr, CPLSPrintf("\"code\": %d", 17000 + nZone));
+                        if (pszAuthEPSG && pszCode && pszNextEndCurl &&
+                            pszNextEndCurl - pszAuthEPSG > 0 &&
+                            pszNextEndCurl - pszCode > 0)
+                        {
+                            CPLAssert(pszCode[9] == '7');
+                            CPLAssert(pszCode[10] == '0');
+                            pszCode[9] = '6';
+                            pszCode[10] = '1';
+                        }
+                        break;
+                    }
+                    else if (*pszPtr == '"')
+                    {
+                        bInString = true;
+                    }
+                    else if (*pszPtr == '{' || *pszPtr == '[')
+                    {
+                        ++nLevel;
+                    }
+                    else if (*pszPtr == '}' || *pszPtr == ']')
+                    {
+                        --nLevel;
+                    }
+
+                    ++pszPtr;
+                }
+            }
+        }
+    }
+#endif
+
     return OGRERR_NONE;
 }
 
@@ -4256,6 +4390,7 @@ OGRErr OGRSpatialReference::importFromURNPart(const char *pszAuthority,
                                               const char *pszURN)
 {
 #if PROJ_AT_LEAST_VERSION(8, 1, 0)
+    (void)this;
     (void)pszAuthority;
     (void)pszCode;
     (void)pszURN;
@@ -8858,7 +8993,7 @@ int OGRSpatialReference::IsDerivedGeographic() const
 /*                      OSRIsDerivedGeographic()                        */
 /************************************************************************/
 /**
- * \brief Check if derived geographic coordinate system.
+ * \brief Check if the CRS is a derived geographic coordinate system.
  * (for example a rotated long/lat grid)
  *
  * This function is the same as OGRSpatialReference::IsDerivedGeographic().
@@ -8869,6 +9004,51 @@ int OSRIsDerivedGeographic(OGRSpatialReferenceH hSRS)
     VALIDATE_POINTER1(hSRS, "OSRIsDerivedGeographic", 0);
 
     return ToPointer(hSRS)->IsDerivedGeographic();
+}
+
+/************************************************************************/
+/*                      IsDerivedProjected()                            */
+/************************************************************************/
+
+/**
+ * \brief Check if the CRS is a derived projected coordinate system.
+ *
+ * This method is the same as the C function OSRIsDerivedGeographic().
+ *
+ * @since GDAL 3.9.0 (and may only return non-zero starting with PROJ 9.2.0)
+ */
+
+int OGRSpatialReference::IsDerivedProjected() const
+
+{
+#if PROJ_AT_LEAST_VERSION(9, 2, 0)
+    d->refreshProjObj();
+    d->demoteFromBoundCRS();
+    const bool isDerivedProjected =
+        d->m_pjType == PJ_TYPE_DERIVED_PROJECTED_CRS;
+    d->undoDemoteFromBoundCRS();
+    return isDerivedProjected ? TRUE : FALSE;
+#else
+    return FALSE;
+#endif
+}
+
+/************************************************************************/
+/*                      OSRIsDerivedProjected()                         */
+/************************************************************************/
+/**
+ * \brief Check if the CRS is a derived projected coordinate system.
+ *
+ * This function is the same as OGRSpatialReference::IsDerivedProjected().
+ *
+ * @since GDAL 3.9.0 (and may only return non-zero starting with PROJ 9.2.0)
+ */
+int OSRIsDerivedProjected(OGRSpatialReferenceH hSRS)
+
+{
+    VALIDATE_POINTER1(hSRS, "OSRIsDerivedProjected", 0);
+
+    return ToPointer(hSRS)->IsDerivedProjected();
 }
 
 /************************************************************************/
@@ -11321,8 +11501,9 @@ OGRSpatialReference::FindMatches(char **papszOptions, int *pnEntries,
         return nullptr;
 
     int *panConfidence = nullptr;
-    auto list = proj_identify(d->getPROJContext(), d->m_pj_crs, nullptr,
-                              nullptr, &panConfidence);
+    auto ctxt = d->getPROJContext();
+    auto list =
+        proj_identify(ctxt, d->m_pj_crs, nullptr, nullptr, &panConfidence);
     if (!list)
         return nullptr;
 
@@ -11337,16 +11518,76 @@ OGRSpatialReference::FindMatches(char **papszOptions, int *pnEntries,
         *ppanMatchConfidence =
             static_cast<int *>(CPLMalloc(sizeof(int) * (nMatches + 1)));
     }
+
+    bool bSortAgain = false;
+
     for (int i = 0; i < nMatches; i++)
     {
-        PJ *obj = proj_list_get(d->getPROJContext(), list, i);
+        PJ *obj = proj_list_get(ctxt, list, i);
         CPLAssert(obj);
         OGRSpatialReference *poSRS = new OGRSpatialReference();
         poSRS->d->setPjCRS(obj);
         pahRet[i] = ToHandle(poSRS);
+
+        // Identify matches that only differ by axis order
+        if (panConfidence[i] == 50 && GetAxesCount() == 2 &&
+            poSRS->GetAxesCount() == 2 &&
+            GetDataAxisToSRSAxisMapping() == std::vector<int>{1, 2})
+        {
+            OGRAxisOrientation eThisAxis0 = OAO_Other;
+            OGRAxisOrientation eThisAxis1 = OAO_Other;
+            OGRAxisOrientation eSRSAxis0 = OAO_Other;
+            OGRAxisOrientation eSRSAxis1 = OAO_Other;
+            GetAxis(nullptr, 0, &eThisAxis0);
+            GetAxis(nullptr, 1, &eThisAxis1);
+            poSRS->GetAxis(nullptr, 0, &eSRSAxis0);
+            poSRS->GetAxis(nullptr, 1, &eSRSAxis1);
+            if (eThisAxis0 == OAO_East && eThisAxis1 == OAO_North &&
+                eSRSAxis0 == OAO_North && eSRSAxis1 == OAO_East)
+            {
+                auto pj_crs_normalized =
+                    proj_normalize_for_visualization(ctxt, poSRS->d->m_pj_crs);
+                if (pj_crs_normalized)
+                {
+                    if (proj_is_equivalent_to(d->m_pj_crs, pj_crs_normalized,
+                                              PJ_COMP_EQUIVALENT))
+                    {
+                        bSortAgain = true;
+                        panConfidence[i] = 90;
+                        poSRS->SetDataAxisToSRSAxisMapping({2, 1});
+                    }
+                    proj_destroy(pj_crs_normalized);
+                }
+            }
+        }
+
         if (ppanMatchConfidence)
             (*ppanMatchConfidence)[i] = panConfidence[i];
     }
+
+    if (bSortAgain)
+    {
+        std::vector<int> anIndices;
+        for (int i = 0; i < nMatches; ++i)
+            anIndices.push_back(i);
+
+        std::stable_sort(anIndices.begin(), anIndices.end(),
+                         [&panConfidence](int i, int j)
+                         { return panConfidence[i] > panConfidence[j]; });
+
+        OGRSpatialReferenceH *pahRetSorted =
+            static_cast<OGRSpatialReferenceH *>(
+                CPLCalloc(sizeof(OGRSpatialReferenceH), nMatches + 1));
+        for (int i = 0; i < nMatches; ++i)
+        {
+            pahRetSorted[i] = pahRet[anIndices[i]];
+            if (ppanMatchConfidence)
+                (*ppanMatchConfidence)[i] = panConfidence[anIndices[i]];
+        }
+        CPLFree(pahRet);
+        pahRet = pahRetSorted;
+    }
+
     pahRet[nMatches] = nullptr;
     proj_list_destroy(list);
     proj_int_list_destroy(panConfidence);
@@ -11604,11 +11845,13 @@ OGRErr CPL_STDCALL OSRImportFromEPSG(OGRSpatialReferenceH hSRS, int nCode)
 /************************************************************************/
 
 /**
- * \brief This method returns TRUE if EPSG feels this geographic coordinate
+ * \brief This method returns TRUE if this geographic coordinate
  * system should be treated as having lat/long coordinate ordering.
  *
  * Currently this returns TRUE for all geographic coordinate systems
- * with an EPSG code set, and axes set defining it as lat, long.
+ * with axes set defining it as lat, long (prior to GDAL 3.10, it
+ * also checked that the CRS had belonged to EPSG authority, but this check
+ * has now been removed).
  *
  * \note Important change of behavior since GDAL 3.0. In previous versions,
  * geographic CRS imported with importFromEPSG() would cause this method to
@@ -11616,7 +11859,7 @@ OGRErr CPL_STDCALL OSRImportFromEPSG(OGRSpatialReferenceH hSRS, int nCode)
  * is now equivalent to importFromEPSGA().
  *
  * FALSE will be returned for all coordinate systems that are not geographic,
- * or that do not have an EPSG code set.
+ * or whose axes ordering is not latitude, longitude.
  *
  * This method is the same as the C function OSREPSGTreatsAsLatLong().
  *
@@ -11630,12 +11873,6 @@ int OGRSpatialReference::EPSGTreatsAsLatLong() const
         return FALSE;
 
     d->demoteFromBoundCRS();
-    const char *pszAuth = proj_get_id_auth_name(d->m_pj_crs, 0);
-    if (pszAuth == nullptr || !EQUAL(pszAuth, "EPSG"))
-    {
-        d->undoDemoteFromBoundCRS();
-        return FALSE;
-    }
 
     bool ret = false;
     if (d->m_pjType == PJ_TYPE_COMPOUND_CRS)
@@ -11695,7 +11932,7 @@ int OGRSpatialReference::EPSGTreatsAsLatLong() const
 /************************************************************************/
 
 /**
- * \brief This function returns TRUE if EPSG feels this geographic coordinate
+ * \brief This function returns TRUE if this geographic coordinate
  * system should be treated as having lat/long coordinate ordering.
  *
  * This function is the same as OGRSpatialReference::OSREPSGTreatsAsLatLong().
@@ -11714,11 +11951,13 @@ int OSREPSGTreatsAsLatLong(OGRSpatialReferenceH hSRS)
 /************************************************************************/
 
 /**
- * \brief This method returns TRUE if EPSG feels this projected coordinate
+ * \brief This method returns TRUE if this projected coordinate
  * system should be treated as having northing/easting coordinate ordering.
  *
  * Currently this returns TRUE for all projected coordinate systems
- * with an EPSG code set, and axes set defining it as northing, easting.
+ * with axes set defining it as northing, easting (prior to GDAL 3.10, it
+ * also checked that the CRS had belonged to EPSG authority, but this check
+ * has now been removed).
  *
  * \note Important change of behavior since GDAL 3.0. In previous versions,
  * projected CRS with northing, easting axis order imported with
@@ -11727,7 +11966,7 @@ int OSREPSGTreatsAsLatLong(OGRSpatialReferenceH hSRS)
  * is now equivalent to importFromEPSGA().
  *
  * FALSE will be returned for all coordinate systems that are not projected,
- * or that do not have an EPSG code set.
+ * or whose axes ordering is not northing, easting.
  *
  * This method is the same as the C function EPSGTreatsAsNorthingEasting().
  *
@@ -11759,13 +11998,6 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting() const
     {
         projCRS = proj_clone(ctxt, d->m_pj_crs);
     }
-    const char *pszAuth = proj_get_id_auth_name(projCRS, 0);
-    if (pszAuth == nullptr || !EQUAL(pszAuth, "EPSG"))
-    {
-        d->undoDemoteFromBoundCRS();
-        proj_destroy(projCRS);
-        return FALSE;
-    }
 
     bool ret = false;
     auto cs = proj_crs_get_coordinate_system(ctxt, projCRS);
@@ -11786,7 +12018,7 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting() const
 /************************************************************************/
 
 /**
- * \brief This function returns TRUE if EPSG feels this projected coordinate
+ * \brief This function returns TRUE if this projected coordinate
  * system should be treated as having northing/easting coordinate ordering.
  *
  * This function is the same as

@@ -85,7 +85,7 @@ static char **OSRProj4Tokenize( const char *pszFull )
     if( pszFull == NULL )
         return NULL;
 
-    char **papszTokens = (char **) calloc(sizeof(char*),nMaxTokens);
+    char **papszTokens = (char **) calloc(nMaxTokens, sizeof(char*));
 
     char *pszFullWrk = CPLStrdup(pszFull);
 

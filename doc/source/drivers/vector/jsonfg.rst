@@ -50,7 +50,11 @@ The JSON-FG driver accepts three types of sources of data:
 -  Text passed directly and encoded in JSON-FG
 
 The URL/filename/text might be prefixed with
-``JSONFG:`` to avoid any ambiguity with other drivers.
+``JSONFG:`` to avoid any ambiguity with other drivers. Alternatively, starting
+with GDAL 3.10, specifying the ``-if JSONFG`` option to command line utilities
+accepting it, or ``JSONFG`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+URL/filename/text.
 
 Time support
 ------------
@@ -79,8 +83,8 @@ Feature.properties
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OGR_JSONFG_MAX_OBJ_SIZE
       :choices: <MBytes>
@@ -91,6 +95,9 @@ available:
 
 Open options
 ------------
+
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: GEOMETRY_ELEMENT
       :choices: AUTO, PLACE, GEOMETRY
@@ -108,6 +115,9 @@ Open options
 Dataset creation options
 ------------------------
 
+|about-dataset-creation-options|
+The following dataset creation options are supported:
+
 -  .. dsco:: SINGLE_LAYER
       :choices: YES, NO
       :default: NO
@@ -118,6 +128,9 @@ Dataset creation options
 
 Layer creation options
 ----------------------
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: COORDINATE_PRECISION_GEOMETRY
       :choices: <integer>

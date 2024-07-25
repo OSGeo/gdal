@@ -1,7 +1,7 @@
 .. _gdal2xyz:
 
 ================================================================================
-gdal2xyz.py
+gdal2xyz
 ================================================================================
 
 .. only:: html
@@ -33,6 +33,10 @@ The :program:`gdal2xyz` utility can be used to translate a raster file into xyz 
     * Select more then one band
     * Skip or replace nodata value
     * Return the output as numpy arrays.
+
+.. note::
+
+    gdal2xyz is a Python utility, and is only available if GDAL Python bindings are available.
 
 .. program:: gdal2xyz
 

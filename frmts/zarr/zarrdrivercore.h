@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "Zarr";
 
-int CPL_DLL ZARRDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define ZARRDriverIdentify PLUGIN_SYMBOL_NAME(ZARRDriverIdentify)
+#define ZARRDriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(ZARRDriverSetCommonMetadata)
 
-void CPL_DLL ZARRDriverSetCommonMetadata(GDALDriver *poDriver);
+int ZARRDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void ZARRDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

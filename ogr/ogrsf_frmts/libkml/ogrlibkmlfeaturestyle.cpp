@@ -93,7 +93,7 @@ void featurestyle2kml(OGRLIBKMLDataSource *poOgrDS, OGRLayer *poOgrLayer,
             {
                 string oTmp;
 
-                if (poOgrDS->GetStylePath())
+                if (!poOgrDS->GetStylePath().empty())
                     oTmp.append(poOgrDS->GetStylePath());
                 oTmp.append("#");
                 oTmp.append(pszStyleName);
@@ -137,7 +137,7 @@ void featurestyle2kml(OGRLIBKMLDataSource *poOgrDS, OGRLayer *poOgrLayer,
                 /***** mayby the user will add it later. *****/
 
                 string oTmp;
-                if (poOgrDS->GetStylePath())
+                if (!poOgrDS->GetStylePath().empty())
                     oTmp.append(poOgrDS->GetStylePath());
                 oTmp.append("#");
                 oTmp.append(pszStyleName);
@@ -167,21 +167,23 @@ void kml2featurestyle(FeaturePtr poKmlFeature, OGRLIBKMLDataSource *poOgrDS,
                       OGRLayer *poOgrLayer, OGRFeature *poOgrFeat)
 {
     /***** does the placemark have a style url? *****/
-    if (poKmlFeature->has_styleurl())
+    const int nStyleURLIterations = poKmlFeature->has_styleurl() ? 2 : 0;
+    for (int i = 0; i < nStyleURLIterations; ++i)
     {
-        const string poKmlStyleUrl = poKmlFeature->get_styleurl();
-
         /***** is the name in the layer style table *****/
-        char *pszUrl = CPLStrdup(poKmlStyleUrl.c_str());
+        const std::string osUrl(poKmlFeature->get_styleurl());
 
         OGRStyleTable *poOgrSTBLLayer = nullptr;
         const char *pszTest = nullptr;
+        bool bRetry = false;
+
+        std::string osStyleString;
 
         /***** is it a layer style ? *****/
-        if (*pszUrl == '#' &&
+        if (!osUrl.empty() && osUrl.front() == '#' &&
             (poOgrSTBLLayer = poOgrLayer->GetStyleTable()) != nullptr)
         {
-            pszTest = poOgrSTBLLayer->Find(pszUrl + 1);
+            pszTest = poOgrSTBLLayer->Find(osUrl.c_str() + 1);
         }
 
         if (pszTest)
@@ -192,22 +194,27 @@ void kml2featurestyle(FeaturePtr poKmlFeature, OGRLIBKMLDataSource *poOgrDS,
 
             if (CPLTestBool(pszResolve))
             {
-                poOgrFeat->SetStyleString(pszTest);
+                osStyleString = pszTest;
             }
             else
             {
-                *pszUrl = '@';
-                poOgrFeat->SetStyleString(pszUrl);
+                osStyleString = std::string("@").append(osUrl.c_str() + 1);
             }
         }
         /***** is it a dataset style? *****/
         else
         {
-            const int nPathLen =
-                static_cast<int>(strlen(poOgrDS->GetStylePath()));
+            const size_t nPathLen = poOgrDS->GetStylePath().size();
 
-            if (nPathLen == 0 ||
-                EQUALN(pszUrl, poOgrDS->GetStylePath(), nPathLen))
+            if (nPathLen == 0)
+            {
+                if (!osUrl.empty() && osUrl[0] == '#')
+                    osStyleString = std::string("@").append(osUrl.c_str() + 1);
+            }
+            else if (osUrl.size() > nPathLen &&
+                     strncmp(osUrl.c_str(), poOgrDS->GetStylePath().c_str(),
+                             nPathLen) == 0 &&
+                     osUrl[nPathLen] == '#')
             {
                 /***** should we resolve the style *****/
                 const char *pszResolve =
@@ -215,19 +222,20 @@ void kml2featurestyle(FeaturePtr poKmlFeature, OGRLIBKMLDataSource *poOgrDS,
 
                 if (CPLTestBool(pszResolve) &&
                     (poOgrSTBLLayer = poOgrDS->GetStyleTable()) != nullptr &&
-                    (pszTest = poOgrSTBLLayer->Find(pszUrl + nPathLen + 1)) !=
-                        nullptr)
+                    (pszTest = poOgrSTBLLayer->Find(osUrl.c_str() + nPathLen +
+                                                    1)) != nullptr)
                 {
-                    poOgrFeat->SetStyleString(pszTest);
+                    osStyleString = pszTest;
                 }
                 else
                 {
-                    pszUrl[nPathLen] = '@';
-                    poOgrFeat->SetStyleString(pszUrl + nPathLen);
+                    osStyleString =
+                        std::string("@").append(osUrl.c_str() + nPathLen + 1);
                 }
             }
+
             /**** its someplace else *****/
-            else
+            if (i == 0 && osStyleString.empty())
             {
                 const char *pszFetch =
                     CPLGetConfigOption("LIBKML_EXTERNAL_STYLE", "no");
@@ -235,19 +243,31 @@ void kml2featurestyle(FeaturePtr poKmlFeature, OGRLIBKMLDataSource *poOgrDS,
                 if (CPLTestBool(pszFetch))
                 {
                     /***** load up the style table *****/
-                    char *pszUrlTmp = CPLStrdup(pszUrl);
-                    char *pszPound = strchr(pszUrlTmp, '#');
-                    if (pszPound != nullptr)
+                    std::string osUrlTmp(osUrl);
+                    const auto nPoundPos = osUrlTmp.find('#');
+                    if (nPoundPos != std::string::npos)
                     {
-                        *pszPound = '\0';
+                        osUrlTmp.resize(nPoundPos);
                     }
+                    const std::string osStyleFilename(osUrlTmp);
 
-                    /***** try it as a url then a file *****/
-                    VSILFILE *fp = nullptr;
-                    if ((fp = VSIFOpenL(
-                             CPLFormFilename("/vsicurl/", pszUrlTmp, nullptr),
-                             "r")) != nullptr ||
-                        (fp = VSIFOpenL(pszUrlTmp, "r")) != nullptr)
+                    if (STARTS_WITH(osUrlTmp.c_str(), "http://") ||
+                        STARTS_WITH(osUrlTmp.c_str(), "https://"))
+                    {
+                        osUrlTmp =
+                            std::string("/vsicurl_streaming/").append(osUrlTmp);
+                    }
+                    else if (CPLIsFilenameRelative(osUrlTmp.c_str()))
+                    {
+                        osUrlTmp = CPLFormFilename(
+                            CPLGetDirname(poOgrDS->GetDescription()),
+                            osUrlTmp.c_str(), nullptr);
+                    }
+                    CPLDebug("LIBKML", "Trying to resolve style %s",
+                             osUrlTmp.c_str());
+
+                    VSILFILE *fp = VSIFOpenL(osUrlTmp.c_str(), "r");
+                    if (fp)
                     {
                         char szbuf[1025] = {'\0'};
                         std::string oStyle = "";
@@ -265,32 +285,37 @@ void kml2featurestyle(FeaturePtr poKmlFeature, OGRLIBKMLDataSource *poOgrDS,
 
                             szbuf[nRead] = '\0';
                             oStyle.append(szbuf);
-                        } while (!VSIFEofL(fp));
+                        } while (!VSIFEofL(fp) && !VSIFErrorL(fp));
 
                         VSIFCloseL(fp);
 
                         /***** parse the kml into the ds style table *****/
 
-                        if (poOgrDS->ParseIntoStyleTable(&oStyle, pszUrlTmp))
+                        if (poOgrDS->ParseIntoStyleTable(
+                                &oStyle, osStyleFilename.c_str()))
                         {
-                            kml2featurestyle(poKmlFeature, poOgrDS, poOgrLayer,
-                                             poOgrFeat);
-                        }
-                        else
-                        {
-                            /***** if failed just store the url *****/
-                            poOgrFeat->SetStyleString(pszUrl);
+                            bRetry = true;
                         }
                     }
-                    CPLFree(pszUrlTmp);
-                }
-                else
-                {
-                    poOgrFeat->SetStyleString(pszUrl);
                 }
             }
         }
-        CPLFree(pszUrl);
+
+        if (!bRetry)
+        {
+            if (osStyleString.empty())
+            {
+                // Note: storing the style URL doesn't really follow
+                // the OGR Feature Style string spec (https://gdal.org/user/ogr_feature_style.html#style-string-syntax),
+                // but is better than nothing
+                poOgrFeat->SetStyleString(osUrl.c_str());
+            }
+            else
+            {
+                poOgrFeat->SetStyleString(osStyleString.c_str());
+            }
+            break;
+        }
     }
 
     /***** does the placemark have a style selector *****/

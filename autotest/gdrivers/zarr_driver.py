@@ -723,9 +723,9 @@ def test_zarr_read_array_attributes():
         "double": 1.5,
         "doublearray": [1.5, 2.5],
         "int": 1,
+        "intarray": [1, 2],
         "int64": 1234567890123,
         "int64array": [1234567890123, -1234567890123],
-        "intarray": [1, 2],
         "intdoublearray": [1, 2.5],
         "mixedstrintarray": ["foo", 1],
         "null": "",
@@ -1438,10 +1438,44 @@ def test_zarr_create_group(format, create_z_metadata):
             assert attr.Write(4000000000) == gdal.CE_None
 
             attr = rg.CreateAttribute(
+                "int64_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Int64)
+            )
+            assert attr
+            assert attr.Write(12345678901234) == gdal.CE_None
+
+            attr = rg.CreateAttribute(
+                "uint64_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt64)
+            )
+            assert attr
+            # We cannot write UINT64_MAX
+            # assert attr.Write(18000000000000000000) == gdal.CE_None
+            assert attr.Write(9000000000000000000) == gdal.CE_None
+
+            attr = rg.CreateAttribute(
                 "int_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_Int32)
             )
             assert attr
             assert attr.Write([12345678, -12345678]) == gdal.CE_None
+
+            attr = rg.CreateAttribute(
+                "uint_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_UInt32)
+            )
+            assert attr
+            assert attr.Write([12345678, 4000000000]) == gdal.CE_None
+
+            attr = rg.CreateAttribute(
+                "int64_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_Int64)
+            )
+            assert attr
+            assert attr.Write([12345678091234, -12345678091234]) == gdal.CE_None
+
+            attr = rg.CreateAttribute(
+                "uint64_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_UInt64)
+            )
+            assert attr
+            # We cannot write UINT64_MAX
+            # assert attr.Write([12345678091234, 18000000000000000000]) == gdal.CE_None
+            assert attr.Write([12345678091234, 9000000000000000000]) == gdal.CE_None
 
             attr = rg.CreateAttribute(
                 "double_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
@@ -1519,17 +1553,52 @@ def test_zarr_create_group(format, create_z_metadata):
         attr = rg.GetAttribute("int_attr")
         assert attr
         assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
+        assert attr.ReadAsInt() == 12345678
+        assert attr.ReadAsInt64() == 12345678
         assert attr.ReadAsDouble() == 12345678
 
         attr = rg.GetAttribute("uint_attr")
         assert attr
-        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64() == 4000000000
         assert attr.ReadAsDouble() == 4000000000
+
+        attr = rg.GetAttribute("int64_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64() == 12345678901234
+        assert attr.ReadAsDouble() == 12345678901234
+
+        attr = rg.GetAttribute("uint64_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64() == 9000000000000000000
+        assert attr.ReadAsDouble() == 9000000000000000000
 
         attr = rg.GetAttribute("int_array_attr")
         assert attr
         assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
         assert attr.ReadAsIntArray() == (12345678, -12345678)
+        assert attr.ReadAsInt64Array() == (12345678, -12345678)
+        assert attr.ReadAsDoubleArray() == (12345678, -12345678)
+
+        attr = rg.GetAttribute("uint_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64Array() == (12345678, 4000000000)
+        assert attr.ReadAsDoubleArray() == (12345678, 4000000000)
+
+        attr = rg.GetAttribute("int64_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64Array() == (12345678091234, -12345678091234)
+        assert attr.ReadAsDoubleArray() == (12345678091234, -12345678091234)
+
+        attr = rg.GetAttribute("uint64_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64Array() == (12345678091234, 9000000000000000000)
+        assert attr.ReadAsDoubleArray() == (12345678091234, 9000000000000000000)
 
         attr = rg.GetAttribute("double_attr")
         assert attr

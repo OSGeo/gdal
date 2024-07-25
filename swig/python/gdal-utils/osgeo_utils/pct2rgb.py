@@ -42,11 +42,16 @@ from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.color_palette import get_color_palette
 from osgeo_utils.auxiliary.color_table import get_color_table
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
-from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
+from osgeo_utils.auxiliary.util import (
+    GetOutputDriverFor,
+    enable_gdal_exceptions,
+    open_ds,
+)
 
 progress = gdal.TermProgress_nocb
 
 
+@enable_gdal_exceptions
 def pct2rgb(
     src_filename: PathLikeOrStr,
     pct_filename: Optional[PathLikeOrStr],

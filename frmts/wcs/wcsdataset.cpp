@@ -177,7 +177,7 @@ int WCSDataset::TestUseBlockIO(CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
 CPLErr WCSDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, int *panBandMap,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
@@ -212,7 +212,7 @@ CPLErr WCSDataset::DirectRasterIO(CPL_UNUSED GDALRWFlag eRWFlag, int nXOff,
                                   int nYOff, int nXSize, int nYSize,
                                   void *pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType, int nBandCount,
-                                  int *panBandMap, GSpacing nPixelSpace,
+                                  const int *panBandMap, GSpacing nPixelSpace,
                                   GSpacing nLineSpace, GSpacing nBandSpace,
                                   GDALRasterIOExtraArg *psExtraArg)
 {
@@ -317,7 +317,7 @@ static bool ProcessError(CPLHTTPResult *psResult);
 
 CPLErr WCSDataset::GetCoverage(int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize, int nBandCount,
-                               int *panBandList,
+                               const int *panBandList,
                                GDALRasterIOExtraArg *psExtraArg,
                                CPLHTTPResult **ppsResult)
 

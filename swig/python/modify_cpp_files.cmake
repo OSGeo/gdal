@@ -33,12 +33,6 @@ string(REPLACE "obj = PyUnicode_AsUTF8String(obj);"
                "obj = PyUnicode_AsUTF8String(obj); if (!obj) return SWIG_TypeError;"
        _CONTENTS "${_CONTENTS}")
 
-if("${FILE}" MATCHES "gdal_wrap.cpp")
-    string(REGEX REPLACE "result = \\(CPLErr\\)([^;]+)(\\;)"
-                         [[CPL_IGNORE_RET_VAL(result = (CPLErr)\1)\2]]
-           _CONTENTS "${_CONTENTS}")
-endif()
-
 string(REPLACE "PyObject *resultobj = 0;"
                "PyObject *resultobj = 0; int bLocalUseExceptionsCode = GetUseExceptions();"
        _CONTENTS "${_CONTENTS}")

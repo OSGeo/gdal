@@ -37,6 +37,9 @@ a dataset:
 Layer open options
 ------------------
 
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: HOST
      :choices: <hostname>
      :default: localhost
@@ -191,16 +194,16 @@ syntax <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-ds
 They will be combined with the potentially defined spatial filter.
 
 It is also possible to directly use a Elasticsearch filter by setting
-the string passed to SetAttributeFilter() as a JSon serialized object,
+the string passed to SetAttributeFilter() as a JSON serialized object,
 e.g.
 
 .. code-block:: json
 
    { "post_filter": { "term": { "properties.EAS_ID": 169 } } }
 
-Note: if defining directly an Elastic Search JSon filter, the spatial
+Note: if defining directly an Elastic Search JSON filter, the spatial
 filter specified through SetSpatialFilter() will be ignored, and must
-thus be included in the JSon filter if needed.
+thus be included in the JSON filter if needed.
 
 Paging
 ------
@@ -221,7 +224,7 @@ and build the schema that best fit to the found fields and values.
 
 It is also possible to set the :oo:`JSON_FIELD=YES` open option so that a
 \_json special field is added to the OGR schema. When reading Elastic
-Search documents as OGR features, the full JSon version of the document
+Search documents as OGR features, the full JSON version of the document
 will be stored in the \_json field. This might be useful in case of
 complex documents or with data types that do not translate well in OGR
 data types. On creation/update of documents, if the \_json field is
@@ -247,7 +250,7 @@ Starting with GDAL 2.2, SQL requests, involving a single layer, with
 WHERE and ORDER BY statements will be translated as Elasticsearch
 queries.
 
-Otherwise, if specifying "ES" as the dialect of ExecuteSQL(), a JSon
+Otherwise, if specifying "ES" as the dialect of ExecuteSQL(), a JSON 
 string with a serialized `Elastic Search
 filter <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html>`__
 can be passed. The search will be done on all indices and types, unless
@@ -325,7 +328,7 @@ members are:
   geo_shape geometries is only supported since Elasticsearch 7 and may require
   a non-free license.
 
-- ``geohash_grid`` (optional): a JSon object, describing a few characteristics of
+- ``geohash_grid`` (optional): a JSON object, describing a few characteristics of
   the geohash_grid, that can have the following members:
 
     * ``size`` (optional): maximum number of geohash buckets to return per query. The
@@ -340,7 +343,7 @@ members are:
       taking into account the ``size`` parameter and the spatial filter, so that
       the theoretical number of buckets returned does not exceed ``size``.
 
-- ``fields`` (optional): a JSon object, describing which additional statistical
+- ``fields`` (optional): a JSON object, describing which additional statistical
   fields should be added, that can have the following members:
 
       * ``min`` (optional): array with the paths to index properties on which
@@ -443,6 +446,7 @@ EPSG:4326.
 Layer creation options
 ----------------------
 
+|about-layer-creation-options|
 Starting with GDAL 2.1, the driver supports the following layer creation
 options:
 
@@ -455,7 +459,7 @@ options:
       :since: 2.4
 
       Filename from which to read a user-defined index definition, or inlined index
-      definition as serialized JSon.
+      definition as serialized JSON .
 
 -  .. lco:: MAPPING_NAME
 
@@ -469,7 +473,7 @@ options:
 -  .. lco:: MAPPING
       :choices: <filename>, <json>
 
-      Filename from which to read a user-defined mapping, or mapping as serialized JSon.
+      Filename from which to read a user-defined mapping, or mapping as serialized JSON .
 
 -  .. lco:: WRITE_MAPPING
       :choices: <filename>
@@ -617,7 +621,8 @@ options:
 Configuration options
 ---------------------
 
-The following (deprecated) :ref:`configuration options <configoptions>` are
+|about-config-options|
+The following (deprecated) configuration options are
 available. Starting with GDAL 2.1, layer creation options are also available
 and should be preferred (see above):
 

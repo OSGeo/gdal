@@ -71,6 +71,10 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.8/MIGRATI
 * /vsiaz/: fix RmdirRecursive() on an empty directory with just the
   .gdal_marker_for_dir special marker file
 * /vsis3/: include region to build s3.{region}.amazonaws.com host name (#9449)
+* /vsigs/: fix RmdirRecursive() on an empty directory
+* /vsigs/ UnlinkBatch(): make sure that path config options are checked for the
+  deleted files and not '/vsigs/batch/
+* /vsiaz/ UnlinkBatch(): make sure that path config options are checked for the deleted files
 * Add VSIVirtualHandle::Printf()
 * Add VSIRemovePluginHandler() to enable removal of virtual filesystems (#8772)
 * No longer alias CPLMutex, CPLCond and CPLJoinableThread to void in non-DEBUG
@@ -126,7 +130,9 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.8/MIGRATI
 * GDALSuggestWarpOutput(): make it return original potential non-square pixel
   shape for a south-up oriented dataset (#9336)
 * Warper: add a EXCLUDED_VALUES warping option to specify pixel values to be
-  ignored as contributing source pixels during average resampling
+  ignored as contributing source pixels during average resampling. And
+  similarly, add a NODATA_VALUES_PCT_THRESHOLD warping option for nodata/
+  transparent pixels.
 * GDALFillNodata(): add a INTERPOLATION=NEAREST option
 * GDALChecksumImage(): read by multiple of blocks for floating-point bands to
   improve performance
@@ -176,11 +182,14 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.8/MIGRATI
 * gdal2tiles: added support for JPEG output
 * gdal2tiles: Fix case where --exclude still writes fully transparent tiles
   (#9532)
-* gdal2tiles: add --excluded-values and --excluded-values-pct-threshold switches
+* gdal2tiles: add --excluded-values, --excluded-values-pct-threshold and
+  --nodata-values-pct-threshold options
+* gdal2tiles: support an input dataset name not being a file (#9808)
 * gdal2xyz: Change -srcwin parameter type to integer.
 * Python sample scripts: add gdalbuildvrtofvrt.py (#9451)
 * Python utilities: do not display full traceback on OpenDS failures (#9534)
 * gdalinfo: suggest trying ogrinfo if appropriate, and vice-versa
+* gdalinfo and ogrinfo -json: add newline character at end of JSON output
 
 ### Raster drivers
 
@@ -225,6 +234,10 @@ HDF5 driver:
  * multidim: fix crash on reading compound data type with fixed-length strings
  * multidim: implement GDALMDArray::GetBlockSize() and GetStructuralInfo()
  * improve performance of band IRasterIO() on hyperspectral products
+ * support HDF5EOS metadata where the GROUP=GridStructure has an empty sub
+   GROUP=Dimension (like for AMSR-E/AMSR2 Unified L3 Daily 12.5 km)
+ * implement GetOffset() and GetScale() for netCDF metadata items add_offset
+   and scale_factor
 
 JP2KAK driver:
  * make result of RasterIO() consistent depending if it is called directly or
@@ -278,10 +291,15 @@ Sentinel2 driver:
  * include 10m AOT and WVP bands in 10m subdataset (#9066)
 
 TileDB driver:
+ * Remove use of deprecated API, and bump minimum version to 2.15
  * Added tiledb metadata fields to easily tag array type
  * be able to read datasets converted with 'tiledb-cf netcdf-convert'
  * make its identify() method more restrictive by not identifying /vsi file
    systems it doesn't handle
+ * multidim: prevent infinite recursion when opening an array in a group where
+   there are 2 or more 2D+ arrays
+ * multidim: OpenMDArray(): fix opening an array, member of a group, which has
+   no explicit name
 
 VRT driver:
  * add a VRTProcessedDataset new mode to apply chained processing steps that
@@ -336,6 +354,7 @@ ZMap driver:
   GEOSGeom_setPrecision_r()
 * Add a OGRGeometry::roundCoordinates() method
 * OGRFeature: add SerializeToBinary() / DeserializeFromBinary()
+* OGRFeature::SetField(): add warnings when detecting some lossy conversions (#9792)
 * Add OGR_G_GeodesicArea() / OGRSurface::get_GeodesicArea()
 * SQLite SQL dialect: implement ST_Area(geom, use_ellipsoid)
 * Add OGR_L_GetDataset() and implement GetDataset() in all drivers with creation
@@ -343,12 +362,15 @@ ZMap driver:
 * Arrow array: fix decoding of ``date32[days]`` values before Epoch
  (Arrow->OGRFeature), and fix rounding when encoding such values
  (OGRFeature->Arrow) (#9636)
+* OGRLayer::WriteArrowBatch(): add tolerance for field type mismatches if int32/int64/real;
+  Also add an option IF_FIELD_NOT_PRESERVED=ERROR to error out when lossy conversion occurs. (#9792)
 * OGRLayer::SetIgnoredFields(): make it take a CSLConstList argument instead of
   const char*
 
 ### OGRSpatialReference
 
 * Add OGRSpatialReference::exportToCF1() and importFromCF1()
+* Add OSRIsDerivedProjected() / OGRSpatialReference::IsDerivedProjected()
 * OGRCoordinateTransformation::Transform(): change nCount parameter to size_t
   (C++ API only for now) (#9074)
 * OGRProjCT::TransformWithErrorCodes(): Improve performance of axis swapping
@@ -358,6 +380,7 @@ ZMap driver:
 * Add OSRSetFromUserInputEx() and map it to SWIG (#9358)
 * Add std::string OGRSpatialReference::exportToWkt(
   const char* const* papszOptions = nullptr) const
+* OGR_CT: use PROJJSON internally rather than in WKT:2019 (#9732)
 
 ### Utilities
 
@@ -397,6 +420,7 @@ Arrow/Parquet drivers:
    pyarrow-registered extension type
  * handle fields with a pyarrow-registered extension type
  * preliminary/in-advance read support for future JSON Canonical Extension
+ * OGRCloneArrowArray(): add missing support for 'tss:' Arrow type
 
 CSV driver:
  * parse header with line breaks (#9172)
@@ -473,6 +497,10 @@ Parquet driver:
    with a Parquet dataset source (#9497)
  * make it recognize bbox field from Overture Maps 2024-01-17-alpha.0 and
    2024-04-16-beta.0 releases
+ * fix ResetReading() implementation, when using the ParquetDataset API and
+   when there's a single batch
+ * fix opening single file Parquet datasets with the ParquetDataset API when
+   using PARQUET:filename.parquet
 
 PGDUMP driver:
  * add a LAUNDER_ASCII=YES/NO (default NO) layer creation option
@@ -515,6 +543,7 @@ Java bindings:
 Python bindings:
  * lots of improvements to documentation
  * add a pyproject.toml with numpy as a build requirement (#8926, #8069)
+ * pyproject.toml: use numpy>=2.0.0rc1 for python >=3.9 (#9751)
  * bump setuptools requirement to >= 67.0
  * define entry_points.console_scripts (#8811)
  * add RasterAttributeTable::ReadValuesIOAsString, ReadValuesIOAsInteger,

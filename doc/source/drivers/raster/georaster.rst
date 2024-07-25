@@ -109,6 +109,9 @@ sub-datasets, e.g.:
 Creation Options
 ----------------
 
+|about-creation-options|
+The following creation options are supported:
+
 -  .. co:: BLOCKXSIZE
 
       The number of pixel columns per raster block.
@@ -124,7 +127,7 @@ Creation Options
 -  .. co:: BLOCKING
 
       Decline the use of blocking (NO) or request an
-      automatic blocking size (OPTIMUM).
+      automatic blocking size (OPTIMALPADDING).
 
 -  .. co:: SRID
 
@@ -199,17 +202,17 @@ Creation Options
       :choices: <integer>
       :default: 1
 
-      Defines the number of cells skipped in both row and column dimensions when 
+      Defines the number of cells skipped in both row and column dimensions when
       the statistics are computed.
       For example, when setting this value to 4, one-sixteenth of the cells are sampled.
-      The higher the value, the less accurate the statistics are likely to be, 
+      The higher the value, the less accurate the statistics are likely to be,
       but the more quickly they will be computed.
       Defaults to 1, which means that all cells are sampled.
 
 -  .. co:: GENSTATS_SAMPLINGWINDOW
       :choices: <integer\,integer\,integer\,integer>
 
-      This parameter identifies the upper-left (row, column) and lower-right 
+      This parameter identifies the upper-left (row, column) and lower-right
       (row, column) coordinates of a rectangular window, and raster space is assumed.
       The intersection of the MBR (minimum bounding rectangle) of the
       GeoRaster object in raster space is used for computing statistics.
@@ -226,7 +229,7 @@ Creation Options
       :choices: <integer\,integer\,...>, <integer>-<integer>
 
       Defines the numbers of the layers for which to compute the statistics.
-      This can include numbers, ranges (indicated by hyphens), and commas 
+      This can include numbers, ranges (indicated by hyphens), and commas
       to separate any combination of those.
       For example, '1,3-5,7', '1,3,6', '1-6'.
       If this value is not specified, statistics will be computed for all
@@ -237,20 +240,20 @@ Creation Options
       :default: TRUE
 
       Defaults to TRUE.
-      Specifies whether or not to use a provided bin function 
+      Specifies whether or not to use a provided bin function
       (specified in :co:`GENSTATS_BINFUNCTION`).
       When this value is set to TRUE, the bin function to be
-      used follows the following sequence: (1) the bin function 
+      used follows the following sequence: (1) the bin function
       specified in :co:`GENSTATS_BINFUNCTION`. (2) the bin
       function specified by the <binFunction> element in the
       GeoRaster XML metadata. (3) a dynamically generated bin
-      function generated as follows: 
+      function generated as follows:
       Min and max are the actual min and max values of the raster
       Numbins is defined as:
       * celldepth = 1, numbins = 2.
       * cellDepth = 2, numbins = 4.
       * cellDepth = 4, numbins = 8.
-      * cellDepth >= 8, numbins = 256. 
+      * cellDepth >= 8, numbins = 256.
 
       When this value is set to FALSE, then the bin function
       to use is the one generated dynamically as previously
@@ -258,12 +261,12 @@ Creation Options
 
 -  .. co:: GENSTATS_BINFUNCTION
       :choices: <integer\,integer\,integer\,integer\,integer>
-      
+
       An array whose element specify the bin type, total
       number of bins, first bin number, minimum cell value,
       and maximum cell value. Bin type must be linear (0).
       When this value is not specified, and :co:`GENSTATS_USEBIN`
-      is TRUE, then the bin function to use is as follows: 
+      is TRUE, then the bin function to use is as follows:
 
       1. A valid function defined in the GeoRaster metadata.
       2. The same bin function generated when :co:`GENSTATS_USEBIN` is FALSE.
@@ -487,3 +490,28 @@ system so one alternative is to create VRT to represent the GeoRaster descriptio
 
     % gdal_translate -of VRT geor:scott/tiger@dbdemo,landsat,scene,id=54 view_54.vrt
     % openenv view_54.vrt
+
+Standalone plugin compilation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 3.10
+
+While this driver may be built as part of a whole GDAL build, either in libgdal
+itself, or as a plugin, it is also possible to only build this driver as a plugin,
+against an already built libgdal.
+
+The version of the GDAL sources used to build the driver must match the version
+of the libgdal it is built against.
+
+For example, from a "build_georaster" directory under the root of the GDAL source tree:
+
+::
+
+    cmake -S ../frmts/georaster -DCMAKE_PREFIX_PATH=/path/to/GDAL_installation_prefix -DOracle_ROOT=/path/to/instantclient_sdk_root
+    cmake --build .
+
+
+Note that such a plugin, when used against a libgdal not aware of it, will be
+systematically loaded at GDAL driver initialization time, and will not benefit from
+`deferred plugin loading capabilities <rfc-96>`. For that, libgdal itself must be built with the
+CMake variable GDAL_REGISTER_DRIVER_GEOR_FOR_LATER_PLUGIN=ON set.

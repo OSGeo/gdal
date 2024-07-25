@@ -70,6 +70,9 @@ is already considered to be optimized for "arbitrary overviews".
 Creation Options:
 -----------------
 
+|about-creation-options|
+The following creation options are supported:
+
 -  .. co:: LARGE_OK
       :choices: YES, NO
 
@@ -127,10 +130,8 @@ Creation Options:
 Configuration Options
 ---------------------
 
-The ERDAS ECW SDK supports a variety of `runtime configuration
-options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ to control
-various features. Most of these are exposed as GDAL configuration
-options. See the ECW SDK documentation for full details on the meaning
+|about-config-options|
+The ERDAS ECW SDK supports a variety of configuration options to control various features. See the ECW SDK documentation for full details on the meaning
 of these options.
 
 -  .. config:: ECW_CACHE_MAXMEM
@@ -289,6 +290,31 @@ File Metadata Keys:
    uncompressed file size by 5), etc...
 -  VERSION
 
+Standalone plugin compilation
+-----------------------------
+
+.. versionadded:: 3.10
+
+While this driver may be built as part of a whole GDAL build, either in libgdal
+itself, or as a plugin, it is also possible to only build this driver as a plugin,
+against an already built libgdal.
+
+The version of the GDAL sources used to build the driver must match the version
+of the libgdal it is built against.
+
+For example, from a "build_georaster" directory under the root of the GDAL source tree:
+
+::
+
+    cmake -S ../frmts/ecw -DCMAKE_PREFIX_PATH=/path/to/GDAL_installation_prefix -DECW_ROOT=/path/to/ecw_sdk_root
+    cmake --build .
+
+
+Note that such a plugin, when used against a libgdal not aware of it, will be
+systematically loaded at GDAL driver initialization time, and will not benefit from
+`deferred plugin loading capabilities <rfc-96>`. For that, libgdal itself must be built with the
+CMake variable GDAL_REGISTER_DRIVER_ECW_FOR_LATER_PLUGIN=ON set.
+
 See Also
 --------
 
@@ -300,4 +326,5 @@ See Also
 -  Support for non-GDAL specific issues should be directed to the
    `Hexagon Geospatial public
    forum <https://supportsi.hexagon.com/help/s/erdas-apollo>`__
+-  Community contributed `patches <https://github.com/rouault/libecwj2-3.3-builds/blob/main/libecwj2-3.3.patch>`__ to apply to ECW SDK 3.3 sources
 -  `GDAL ECW Build Hints <http://trac.osgeo.org/gdal/wiki/ECW>`__

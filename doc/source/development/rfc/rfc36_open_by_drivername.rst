@@ -1,14 +1,16 @@
 .. _rfc-36:
 
 ================================================================================
-RFC 36: Allow specification of intended driver on GDALOpen
+RFC 36: Allow specification of intended driver on GDALOpen (withdrawn)
 ================================================================================
 
 Authors: Ivan Lucena
 
 Contact: ivan.lucena@pmldnet.com
 
-Status: Proposed
+Status: Withdrawn.
+
+Covered by `RFC 46: GDAL/OGR unification <./rfc46_gdal_ogr_unification>`__
 
 Summary
 -------

@@ -1,0 +1,93 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20230628 16204988+0200
+characterSet=006
+nOrganismes=1
+FileIdentifier=00691677-6d15-40f8-9d62-e8df34876e80_SimplePolFileP
+
+[METADADES:ORGANISME_1]
+role=009
+IndividualName=Abel Pau
+PositionName=Tècnic SIG
+OrganisationName=Students and educational institutions
+
+[IDENTIFICATION]
+code=
+codeSpace=
+DatasetTitle=Simple Pol File
+
+[OVERVIEW:ASPECTES_TECNICS]
+ArcSource=NoExistPolFile.arc
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=C:\MiraMon\MM64.exe
+date=20230628 16204988+0200
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+IndividualName=Abel Pau
+PositionName=Tècnic SIG
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE]
+processes=1
+
+[EXTENT]
+toler_env=0
+MinX=335.318744053333
+MaxX=1224.16365366323
+MinY=390.371075166458
+MaxY=856.814462416696
+
+[OVERVIEW]
+CreationDate=20230628 16204986+0200
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+descriptor=Identificador Gràfic intern
+visible=0
+TractamentVariable=Ordinal
+
+[TAULA_PRINCIPAL:N_VERTEXS]
+descriptor=Nombre de vèrtexs
+visible=0
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:PERIMETRE]
+descriptor=Perímetre del polígon
+
+[TAULA_PRINCIPAL:AREA]
+descriptor=Àrea del polígon
+
+[TAULA_PRINCIPAL:N_ARCS]
+descriptor=Nombre d'arcs
+visible=0
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:N_POLIG]
+descriptor=Nombre de polígons elementals
+visible=0
+MostrarUnitats=0
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampNVertexs=N_VERTEXS
+NomCampPerimetre=PERIMETRE
+NomCampArea=AREA
+NomCampNArcs=N_ARCS
+NomCampNPoligons=N_POLIG
+
+[TAULA_PRINCIPAL:ATT1]
+descriptor=atribute1
+
+[TAULA_PRINCIPAL:ATT2]
+descriptor=atribute2

@@ -175,6 +175,7 @@ value is the total number of virtual CPUs).
 Open options
 ------------
 
+|about-open-options|
 The driver can be passed the following open options:
 
 -  .. oo:: ALPHA

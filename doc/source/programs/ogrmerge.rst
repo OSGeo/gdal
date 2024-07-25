@@ -1,7 +1,7 @@
 .. _ogrmerge:
 
 ================================================================================
-ogrmerge.py
+ogrmerge
 ================================================================================
 
 .. only:: html
@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    ogrmerge.py [--help] [--help-general]
+    ogrmerge [--help] [--help-general]
                 -o <out_dsname> <src_dsname> [<src_dsname>]...
                 [-f format] [-single] [-nln <layer_name_template>]
                 [-update | -overwrite_ds] [-append | -overwrite_layer]
@@ -37,8 +37,8 @@ Description
 
 .. versionadded:: 2.2
 
-:program:`ogrmerge.py` script takes as input several vector datasets,
-each of them having one or several vector layers, and copy them in
+:program:`ogrmerge` takes as input several vector datasets,
+each of them having one or several vector layers, and copies them into
 a target dataset.
 
 There are essentially two modes:
@@ -56,7 +56,11 @@ output format is not VRT, final translation is done with :program:`ogr2ogr`
 or :py:func:`gdal.VectorTranslate`. So, for advanced uses, output to VRT,
 potential manual editing of it and :program:`ogr2ogr` can be done.
 
-.. program:: ogrmerge.py
+.. note::
+
+    ogrmerge is a Python utility, and is only available if GDAL Python bindings are available.
+
+.. program:: ogrmerge
 
 .. include:: options/help_and_help_general.rst
 
@@ -183,13 +187,13 @@ Create a VRT with a layer for each input shapefiles
 
 .. code-block::
 
-    ogrmerge.py -f VRT -o merged.vrt *.shp
+    ogrmerge -f VRT -o merged.vrt *.shp
 
 Same, but creates a GeoPackage file
 
 .. code-block::
 
-    ogrmerge.py -f GPKG -o merged.gpkg *.shp
+    ogrmerge -f GPKG -o merged.gpkg *.shp
 
 Concatenate the content of france.shp and germany.shp in merged.shp,
 and adds a 'country' field to each feature whose value is 'france' or
@@ -197,4 +201,4 @@ and adds a 'country' field to each feature whose value is 'france' or
 
 .. code-block::
 
-    ogrmerge.py -single -o merged.shp france.shp germany.shp -src_layer_field_name country
+    ogrmerge -single -o merged.shp france.shp germany.shp -src_layer_field_name country

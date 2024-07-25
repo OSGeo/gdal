@@ -310,8 +310,9 @@ void GenBinDataset::ParseCoordinateSystem(char **papszHdr)
     /*      Translate zone and parameters into numeric form.                */
     /* -------------------------------------------------------------------- */
     int nZone = 0;
-    if (CSLFetchNameValue(papszHdr, "PROJECTION_ZONE"))
-        nZone = atoi(CSLFetchNameValue(papszHdr, "PROJECTION_ZONE"));
+    if (const char *pszProjectionZone =
+            CSLFetchNameValue(papszHdr, "PROJECTION_ZONE"))
+        nZone = atoi(pszProjectionZone);
 
 #if 0
     // TODO(schwehr): Why was this being done but not used?
@@ -333,13 +334,13 @@ void GenBinDataset::ParseCoordinateSystem(char **papszHdr)
     /* -------------------------------------------------------------------- */
     const char *pszDatumName = CSLFetchNameValue(papszHdr, "DATUM_NAME");
 
-    if (EQUAL(pszProjName, "UTM") && nZone != 0)
+    if (EQUAL(pszProjName, "UTM") && nZone != 0 && nZone > INT_MIN)
     {
         // Just getting that the negative zone for southern hemisphere is used.
         m_oSRS.SetUTM(std::abs(nZone), nZone > 0);
     }
 
-    else if (EQUAL(pszProjName, "State Plane") && nZone != 0)
+    else if (EQUAL(pszProjName, "State Plane") && nZone != 0 && nZone > INT_MIN)
     {
         const int nPairs = sizeof(anUsgsEsriZones) / (2 * sizeof(int));
 

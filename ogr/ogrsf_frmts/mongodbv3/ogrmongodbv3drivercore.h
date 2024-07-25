@@ -34,8 +34,13 @@
 
 constexpr const char *DRIVER_NAME = "MongoDBv3";
 
-int CPL_DLL OGRMongoDBv3DriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRMongoDBv3DriverIdentify                                             \
+    PLUGIN_SYMBOL_NAME(OGRMongoDBv3DriverIdentify)
+#define OGRMongoDBv3DriverSetCommonMetadata                                    \
+    PLUGIN_SYMBOL_NAME(OGRMongoDBv3DriverSetCommonMetadata)
 
-void CPL_DLL OGRMongoDBv3DriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRMongoDBv3DriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRMongoDBv3DriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

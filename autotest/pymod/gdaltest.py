@@ -49,7 +49,7 @@ from threading import Thread
 
 import pytest
 
-from osgeo import gdal, ogr, osr
+from osgeo import gdal, osr
 
 jp2kak_drv = None
 jpeg2000_drv = None
@@ -1109,6 +1109,7 @@ def download_file(
     force_download=False,
     max_download_duration=None,
     base_dir="tmp/cache",
+    chunk_size=1024,
 ):
 
     if filename is None:
@@ -1143,18 +1144,18 @@ def download_file(
     if download_size >= 0:
         sys.stdout.write("Progress: ")
     nLastTick = -1
-    val = "".encode("ascii")
+    val = b""
     while len(val) < download_size or download_size < 0:
-        chunk_size = 1024
-        if download_size >= 0 and len(val) + chunk_size > download_size:
-            chunk_size = download_size - len(val)
+        to_read = chunk_size
+        if download_size >= 0 and len(val) + to_read > download_size:
+            to_read = download_size - len(val)
         try:
-            chunk = handle.read(chunk_size)
+            chunk = handle.read(to_read)
         except Exception:
             print("Did not get expected data length.")
             return False
-        val = val + chunk
-        if len(chunk) < chunk_size:
+        val += chunk
+        if len(chunk) < to_read:
             if download_size < 0:
                 break
             print("Did not get expected data length.")
@@ -1167,6 +1168,7 @@ def download_file(
                     sys.stdout.write("%d" % int((nLastTick / 4) * 10))
                 else:
                     sys.stdout.write(".")
+            sys.stdout.flush()
             nLastTick = nThisTick
             if nThisTick == 40:
                 sys.stdout.write(" - done.\n")
@@ -1912,6 +1914,8 @@ def gdalurlopen(url, timeout=10):
 
         urllib.request.install_opener(opener)
 
+    import http.client
+
     try:
         handle = urllib.request.urlopen(url)
         socket.setdefaulttimeout(old_timeout)
@@ -1930,6 +1934,10 @@ def gdalurlopen(url, timeout=10):
         return None
     except socket.timeout:
         print(f"HTTP service for {url} timed out")
+        socket.setdefaulttimeout(old_timeout)
+        return None
+    except http.client.RemoteDisconnected as e:
+        print(f"HTTP service for {url} is not available: RemoteDisconnected : {e}")
         socket.setdefaulttimeout(old_timeout)
         return None
 
@@ -2095,9 +2103,6 @@ def reopen(ds, update=False, open_options=None):
 
     ds.Close()
 
-    if isinstance(ds, ogr.DataSource) and open_options is None:
-        return ogr.Open(ds_loc, update)
-
     flags = 0
     if update:
         flags = gdal.OF_UPDATE
@@ -2111,3 +2116,86 @@ def reopen(ds, update=False, open_options=None):
         allowed_drivers=[ds_drv.GetDescription()],
         open_options=open_options,
     )
+
+
+# VSIFile helper class
+
+
+class VSIFile:
+    def __init__(self, path, mode, encoding="utf-8"):
+        self._path = path
+        self._mode = mode
+
+        self._binary = "b" in mode
+        self._encoding = encoding
+
+        self._fp = gdal.VSIFOpenExL(self._path, self._mode, True)
+        if self._fp is None:
+            raise OSError(gdal.VSIGetLastErrorMsg())
+
+        self._closed = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        line = gdal.CPLReadLineL(self._fp)
+        if line is None:
+            raise StopIteration
+        if self._binary:
+            return line.encode()
+        return line
+
+    def close(self):
+        if self._closed:
+            return
+
+        self._closed = True
+        gdal.VSIFCloseL(self._fp)
+
+    def read(self, size=-1):
+        if size == -1:
+            pos = self.tell()
+            self.seek(0, 2)
+            size = self.tell()
+            self.seek(pos)
+
+        raw = gdal.VSIFReadL(1, size, self._fp)
+
+        if self._binary:
+            return bytes(raw)
+        else:
+            return raw.decode(self._encoding)
+
+    def write(self, x):
+
+        if self._binary:
+            assert type(x) in (bytes, bytearray, memoryview)
+        else:
+            assert type(x) is str
+            x = x.encode(self._encoding)
+
+        planned_write = len(x)
+        actual_write = gdal.VSIFWriteL(x, 1, planned_write, self._fp)
+
+        if planned_write != actual_write:
+            raise OSError(
+                f"Expected to write {planned_write} bytes but {actual_write} were written"
+            )
+
+    def seek(self, offset, whence=0):
+        if gdal.VSIFSeekL(self._fp, offset, whence) != 0:
+            raise OSError(gdal.VSIGetLastErrorMsg())
+
+    def tell(self):
+        return gdal.VSIFTellL(self._fp)
+
+
+def vsi_open(path, mode="r"):
+    return VSIFile(path, mode)

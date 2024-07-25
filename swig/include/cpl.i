@@ -739,6 +739,23 @@ int wrapper_VSICopyFile(const char* pszSource,
         nSourceSize < 0 ? static_cast<vsi_l_offset>(-1) : static_cast<vsi_l_offset>(nSourceSize),
         options, callback, callback_data );
 }
+
+#if defined(SWIGPYTHON)
+void CopyFileRestartable(const char* pszSource,
+                         const char* pszTarget,
+                         const char* pszInputPayload,
+                         int* pnRetCode,
+                         char** ppszOutputPayload,
+                         char** options = NULL,
+                         GDALProgressFunc callback=NULL,
+                         void* callback_data=NULL)
+{
+    *pnRetCode = VSICopyFileRestartable(pszSource, pszTarget, pszInputPayload,
+                                        ppszOutputPayload, options, callback,
+                                        callback_data);
+}
+#endif
+
 }
 
 %clear (const char* pszSource);
@@ -885,12 +902,39 @@ VSILFILE   *wrapper_VSIFOpenExL( const char *utf8_path, const char *pszMode, int
 %clear char **;
 
 int VSIFEofL( VSILFILE* fp );
+int VSIFErrorL( VSILFILE* fp );
+void VSIFClearErrL( VSILFILE* fp );
 int VSIFFlushL( VSILFILE* fp );
 
 VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 
+// Wrap VSIFSeekL to allow negative offsets
+%rename (VSIFSeekL) wrapper_VSIFSeekL;
+%inline {
 #if defined(SWIGPYTHON)
-int     VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence);
+int wrapper_VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence) {
+#else
+VSI_RETVAL wrapper_VSIFSeekL( VSILFILE* fp, long offset, int whence) {
+#endif
+if (offset < 0) {
+    switch (whence) {
+        case SEEK_END: VSIFSeekL(fp, 0, SEEK_END);
+        case SEEK_CUR:
+            offset = VSIFTellL(fp) + offset;
+            whence = SEEK_SET;
+            break;
+        default:
+            VSIError(VSIE_FileError, "Cannot use negative offset with SEEK_SET");
+            return -1;
+    }
+}
+
+return VSIFSeekL(fp, offset, whence);
+}
+}
+
+
+#if defined(SWIGPYTHON)
 GIntBig    VSIFTellL( VSILFILE* fp );
 int     VSIFTruncateL( VSILFILE* fp, GIntBig length );
 
@@ -902,7 +946,6 @@ int     VSISupportsSparseFiles( const char* utf8_path );
 
 int     VSIFGetRangeStatusL( VSILFILE* fp, GIntBig offset, GIntBig length );
 #else
-VSI_RETVAL VSIFSeekL( VSILFILE* fp, long offset, int whence);
 long    VSIFTellL( VSILFILE* fp );
 VSI_RETVAL VSIFTruncateL( VSILFILE* fp, long length );
 #endif
@@ -926,6 +969,8 @@ int     VSIFWriteL( const char *, int, int, VSILFILE *fp );
 
 /* VSIFReadL() handled specially in python/gdal_python.i */
 
+const char* CPLReadLineL(VSILFILE* fp);
+
 void VSICurlClearCache();
 void VSICurlPartialClearCache( const char* utf8_path );
 
@@ -944,3 +989,83 @@ int CPLGetNumCPUs();
 
 %rename (GetUsablePhysicalRAM) CPLGetUsablePhysicalRAM;
 GIntBig CPLGetUsablePhysicalRAM();
+
+#if defined(SWIGPYTHON)
+
+%apply Pointer NONNULL {const char *pszFilename};
+%apply Pointer NONNULL {const char *pszUploadId};
+
+%inline {
+void MultipartUploadGetCapabilities(
+    const char *pszFilename, int* pnRetCode, int *pbNonSequentialUploadSupported,
+    int *pbParallelUploadSupported, int *pbSupportsAbort, size_t *pnMinPartSize,
+    size_t *pnMaxPartSize, int *pnMaxPartCount)
+{
+    *pnRetCode = VSIMultipartUploadGetCapabilities(pszFilename,
+                        pbNonSequentialUploadSupported,
+                        pbParallelUploadSupported,
+                        pbSupportsAbort,
+                        pnMinPartSize,
+                        pnMaxPartSize,
+                        pnMaxPartCount);
+}
+}
+
+%inline {
+char* MultipartUploadStart(const char *pszFilename, char** options = NULL)
+{
+    return VSIMultipartUploadStart(pszFilename, options);
+}
+}
+
+%apply (size_t nLen, char *pBuf ) { (size_t nDataLength, const char *pData)};
+
+%inline {
+char* MultipartUploadAddPart(const char *pszFilename,
+                             const char *pszUploadId,
+                             int nPartNumber,
+                             GUIntBig nFileOffset,
+                             size_t nDataLength, const char *pData,
+                             char** options = NULL)
+{
+    return VSIMultipartUploadAddPart(pszFilename, pszUploadId,
+                                     nPartNumber, nFileOffset,
+                                     pData, nDataLength,
+                                     options);
+}
+}
+
+%apply (char **dict) { char ** partIds };
+
+%inline {
+bool MultipartUploadEnd(const char *pszFilename,
+                        const char *pszUploadId,
+                        char** partIds,
+                        GUIntBig nTotalSize,
+                        char** options = NULL)
+
+{
+    return VSIMultipartUploadEnd(pszFilename, pszUploadId,
+                                 CSLCount(partIds), partIds,
+                                 nTotalSize,
+                                 options);
+}
+}
+
+%clear (char ** partIds);
+
+%inline {
+bool MultipartUploadAbort(const char *pszFilename,
+                          const char *pszUploadId,
+                          char** options = NULL)
+{
+    return VSIMultipartUploadAbort(pszFilename, pszUploadId, options);
+}
+}
+
+%clear const char *pszFilename;
+%clear const char *pszUploadId;
+%clear (size_t nDataLength, const void *pData);
+
+#endif
+

@@ -612,8 +612,8 @@ void OGRAPISpyPostClose()
     }
 }
 
-void OGRAPISpyCreateDataSource(OGRSFDriverH hDriver, const char *pszName,
-                               char **papszOptions, OGRDataSourceH hDS)
+void OGRAPISpyCreateDataSource(GDALDriverH hDriver, const char *pszName,
+                               char **papszOptions, GDALDatasetH hDS)
 {
     if (!OGRAPISpyEnabled())
         return;
@@ -623,7 +623,7 @@ void OGRAPISpyCreateDataSource(OGRSFDriverH hDriver, const char *pszName,
         fprintf(fpSpyFile, "%s = ", OGRAPISpyGetDSVar(hDS).c_str());
     fprintf(fpSpyFile,
             "ogr.GetDriverByName('%s').CreateDataSource(%s, options=%s)\n",
-            GDALGetDriverShortName(reinterpret_cast<GDALDriverH>(hDriver)),
+            GDALGetDriverShortName(hDriver),
             OGRAPISpyGetString(pszName).c_str(),
             OGRAPISpyGetOptions(papszOptions).c_str());
     if (hDS != nullptr)
@@ -633,14 +633,14 @@ void OGRAPISpyCreateDataSource(OGRSFDriverH hDriver, const char *pszName,
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpyDeleteDataSource(OGRSFDriverH hDriver, const char *pszName)
+void OGRAPISpyDeleteDataSource(GDALDriverH hDriver, const char *pszName)
 {
     if (!OGRAPISpyEnabled())
         return;
     CPLMutexHolderD(&hOGRAPISpyMutex);
     OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "ogr.GetDriverByName('%s').DeleteDataSource(%s)\n",
-            GDALGetDriverShortName(reinterpret_cast<GDALDriverH>(hDriver)),
+            GDALGetDriverShortName(hDriver),
             OGRAPISpyGetString(pszName).c_str());
     aoSetCreatedDS.erase(pszName);
     OGRAPISpyFileClose();

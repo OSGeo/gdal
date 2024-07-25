@@ -106,25 +106,35 @@ CheckEqualGeometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance)
     {
         std::unique_ptr<OGRGeometry> lhs_normalized_cpp;
         std::unique_ptr<OGRGeometry> rhs_normalized_cpp;
-        if (EQUAL(OGR_G_GetGeometryName(lhs), "LINEARRING"))
+        OGRGeometryH lhs_normalized;
+        OGRGeometryH rhs_normalized;
+        if (OGRGeometryFactory::haveGEOS())
         {
-            // Normalize() doesn't work with LinearRing
-            OGRLineString lhs_as_ls(
-                *OGRGeometry::FromHandle(lhs)->toLineString());
-            lhs_normalized_cpp.reset(lhs_as_ls.Normalize());
-            OGRLineString rhs_as_ls(
-                *OGRGeometry::FromHandle(rhs)->toLineString());
-            rhs_normalized_cpp.reset(rhs_as_ls.Normalize());
+            if (EQUAL(OGR_G_GetGeometryName(lhs), "LINEARRING"))
+            {
+                // Normalize() doesn't work with LinearRing
+                OGRLineString lhs_as_ls(
+                    *OGRGeometry::FromHandle(lhs)->toLineString());
+                lhs_normalized_cpp.reset(lhs_as_ls.Normalize());
+                OGRLineString rhs_as_ls(
+                    *OGRGeometry::FromHandle(rhs)->toLineString());
+                rhs_normalized_cpp.reset(rhs_as_ls.Normalize());
+            }
+            else
+            {
+                lhs_normalized_cpp.reset(
+                    OGRGeometry::FromHandle(OGR_G_Normalize(lhs)));
+                rhs_normalized_cpp.reset(
+                    OGRGeometry::FromHandle(OGR_G_Normalize(rhs)));
+            }
+            lhs_normalized = OGRGeometry::ToHandle(lhs_normalized_cpp.get());
+            rhs_normalized = OGRGeometry::ToHandle(rhs_normalized_cpp.get());
         }
         else
         {
-            lhs_normalized_cpp.reset(
-                OGRGeometry::FromHandle(OGR_G_Normalize(lhs)));
-            rhs_normalized_cpp.reset(
-                OGRGeometry::FromHandle(OGR_G_Normalize(rhs)));
+            lhs_normalized = lhs;
+            rhs_normalized = rhs;
         }
-        auto lhs_normalized = OGRGeometry::ToHandle(lhs_normalized_cpp.get());
-        auto rhs_normalized = OGRGeometry::ToHandle(rhs_normalized_cpp.get());
 
         // Test geometry points
         const std::size_t csize = 3;

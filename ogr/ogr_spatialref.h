@@ -387,6 +387,7 @@ class CPL_DLL OGRSpatialReference
     int IsGeographic() const;
     int IsDerivedGeographic() const;
     int IsProjected() const;
+    int IsDerivedProjected() const;
     int IsGeocentric() const;
     bool IsDynamic() const;
 
@@ -544,7 +545,7 @@ class CPL_DLL OGRSpatialReference
     /** Interrupted Goode Homolosine */
     OGRErr SetIGH();
 
-    /** Gall Stereograpic */
+    /** Gall Stereographic */
     OGRErr SetGS(double dfCentralMeridian, double dfFalseEasting,
                  double dfFalseNorthing);
 

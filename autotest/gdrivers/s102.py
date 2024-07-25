@@ -310,3 +310,23 @@ def test_s102_QualityOfSurvey_multidim():
     x_data = struct.unpack("d" * x.GetDimensions()[0].GetSize(), x.Read())
     assert x_data[0] == 2.0
     assert x_data[-1] == 2.8
+
+
+###############################################################################
+# Test force opening
+
+
+def test_s102_force_opening():
+
+    drv = gdal.IdentifyDriverEx("data/hdf5/groups.h5", allowed_drivers=["S102"])
+    assert drv.GetDescription() == "S102"
+
+
+###############################################################################
+# Test force opening, but provided file is still not recognized (for good reasons)
+
+
+def test_s102_force_opening_no_match():
+
+    drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["S102"])
+    assert drv is None

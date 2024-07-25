@@ -27,8 +27,8 @@ Driver capabilities
 Open options
 ------------
 
-Starting with GDAL 2.3, the following open options can be specified
-(typically with the ``-oo name=value`` parameters of ogrinfo or ogr2ogr):
+|about-open-options|
+Starting with GDAL 2.3, the following open options can be specified:
 
 -  .. oo:: SUPPRESS_GEOMETRY
       :choices: YES, NO
@@ -51,8 +51,8 @@ Starting with GDAL 2.3, the following open options can be specified
 Configuration options
 ---------------------
 
-Several :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OGR_VFK_DB_NAME
 

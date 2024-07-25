@@ -727,7 +727,7 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
         GTiffDataset::CreateLL(osTmpFilenameIn, nInMemImageWidth,
                                nInMemImageHeight, (nBands <= 4) ? nBands : 1,
                                (l_nBitsPerSample <= 8) ? GDT_Byte : GDT_UInt16,
-                               0.0, papszLocalParameters, &fpTmp, osTmp);
+                               0.0, 0, papszLocalParameters, &fpTmp, osTmp);
     CSLDestroy(papszLocalParameters);
     if (hTIFFTmp)
     {
@@ -1541,6 +1541,14 @@ void GDALRegister_GTiff()
         "       <Value>1.1</Value>"
         "   </Option>"
 #endif
+        "   <Option name='COLOR_TABLE_MULTIPLIER' type='string-select' "
+        "description='Multiplication factor to apply to go from GDAL color "
+        "table to TIFF color table' "
+        "default='257'>"
+        "       <Value>1</Value>"
+        "       <Value>256</Value>"
+        "       <Value>257</Value>"
+        "   </Option>"
         "</CreationOptionList>";
 
     /* -------------------------------------------------------------------- */
@@ -1578,6 +1586,15 @@ void GDALRegister_GTiff()
         "   <Option name='IGNORE_COG_LAYOUT_BREAK' type='boolean' "
         "description='Allow update mode on files with COG structure' "
         "default='FALSE'/>"
+        "   <Option name='COLOR_TABLE_MULTIPLIER' type='string-select' "
+        "description='Multiplication factor to apply to go from GDAL color "
+        "table to TIFF color table' "
+        "default='AUTO'>"
+        "       <Value>AUTO</Value>"
+        "       <Value>1</Value>"
+        "       <Value>256</Value>"
+        "       <Value>257</Value>"
+        "   </Option>"
         "</OpenOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

@@ -1,21 +1,21 @@
 .. _gdalcompare:
 
 ================================================================================
-gdalcompare.py
+gdalcompare
 ================================================================================
 
 .. only:: html
 
     Compare two images.
 
-.. Index:: gdalcompare.py
+.. Index:: gdalcompare
 
 Synopsis
 --------
 
 .. code-block::
 
-    gdalcompare.py [--help] [--help-general]
+    gdalcompare [--help] [--help-general]
                    [-dumpdiffs] [-skip_binary] [-skip_overviews]
                    [-skip_geolocation] [-skip_geotransform]
                    [-skip_metadata] [-skip_rpc] [-skip_srs]
@@ -25,7 +25,7 @@ Synopsis
 Description
 -----------
 
-The :program:`gdalcompare.py` script compares two GDAL supported datasets and
+:program:`gdalcompare` compares two GDAL supported datasets and
 reports the differences. In addition to reporting differences to the
 standard output the script will also return the difference count in its
 exit value.
@@ -34,6 +34,10 @@ Image pixels, and various metadata are checked. There is also a byte by
 byte comparison done which will count as one difference. So if it is
 only important that the GDAL visible data is identical a difference
 count of 1 (the binary difference) should be considered acceptable.
+
+.. note::
+
+    gdalcompare is a Python utility, and is only available if GDAL Python bindings are available.
 
 .. program:: gdalcompare
 
@@ -102,7 +106,7 @@ count of 1 (the binary difference) should be considered acceptable.
     The file being compared to the golden file, referred to as the new
     file.
 
-Note that the :program:`gdalcompare.py` script (like all the other scripts)
+Note that the :program:`gdalcompare` script (like all the other scripts)
 can also be called as a library from python code: `from osgeo_utils import gdalcompare`.
 The primary entry point is `gdalcompare.compare_db()` which takes a golden
 `gdal.Dataset` and a new `gdal.Dataset` as arguments and returns a
@@ -115,7 +119,7 @@ Examples
 
 .. code-block:: bash
 
-    gdalcompare.py -dumpdiffs N.tiff S.tiff; echo $?
+    gdalcompare -dumpdiffs N.tiff S.tiff; echo $?
     Files differ at the binary level.
     Band 1 checksum difference:
       Golden: 36694
@@ -126,7 +130,6 @@ Examples
     Differences Found: 2
     2
 
-    gdalcompare.py N.tiff N.tiff; echo $?
+    gdalcompare N.tiff N.tiff; echo $?
     Differences Found: 0
     0
-

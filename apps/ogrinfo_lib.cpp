@@ -52,7 +52,6 @@ typedef enum
 struct GDALVectorInfoOptions
 {
     GDALVectorInfoFormat eFormat = FORMAT_TEXT;
-    std::string osFilename{};
     std::string osWHERE{};
     CPLStringList aosLayers{};
     std::unique_ptr<OGRGeometry> poSpatialFilter;
@@ -1192,10 +1191,12 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
             {
                 std::string osCoordinateEpoch =
                     CPLSPrintf("%f", dfCoordinateEpoch);
-                if (osCoordinateEpoch.find('.') != std::string::npos)
+                const size_t nDotPos = osCoordinateEpoch.find('.');
+                if (nDotPos != std::string::npos)
                 {
-                    while (osCoordinateEpoch.back() == '0')
-                        osCoordinateEpoch.resize(osCoordinateEpoch.size() - 1);
+                    while (osCoordinateEpoch.size() > nDotPos + 2 &&
+                           osCoordinateEpoch.back() == '0')
+                        osCoordinateEpoch.pop_back();
                 }
                 Concat(osRet, psOptions->bStdoutOutput,
                        "Coordinate epoch: %s\n", osCoordinateEpoch.c_str());
@@ -1843,9 +1844,7 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
 
     CPLString osRet;
     CPLJSONObject oRoot;
-    const std::string osFilename(!psOptions->osFilename.empty()
-                                     ? psOptions->osFilename
-                                     : std::string(poDS->GetDescription()));
+    const std::string osFilename(poDS->GetDescription());
 
     const bool bJson = psOptions->eFormat == FORMAT_JSON;
     CPLJSONArray oLayerArray;
@@ -2178,6 +2177,7 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
                     | JSON_C_TO_STRING_NOSLASHESCAPE
 #endif
                 ));
+        ConcatStr(osRet, psOptions->bStdoutOutput, "\n");
     }
 
     return VSI_STRDUP_VERBOSE(osRet);
@@ -2261,8 +2261,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
 
     argParser->add_argument("-fid")
         .metavar("<FID>")
-        .action([psOptions](const std::string &s)
-                { psOptions->nFetchFID = CPLAtoGIntBig(s.c_str()); })
+        .store_into(psOptions->nFetchFID)
         .help(_("Only the feature with this feature id will be reported."));
 
     argParser->add_argument("-spat")
@@ -2328,8 +2327,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
 
     argParser->add_argument("-limit")
         .metavar("<nb_features>")
-        .action([psOptions](const std::string &s)
-                { psOptions->nLimit = CPLAtoGIntBig(s.c_str()); })
+        .store_into(psOptions->nLimit)
         .help(_("Limit the number of features per layer."));
 
     argParser->add_argument("-fields")
@@ -2431,10 +2429,16 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
             })
         .help(_("Format/driver name(s) to try when opening the input file."));
 
-    argParser->add_argument("filename")
-        .nargs(psOptionsForBinary ? 1 : 0)
-        .store_into(psOptions->osFilename)
-        .help(_("The data source to open."));
+    auto &argFilename = argParser->add_argument("filename")
+                            .action(
+                                [psOptionsForBinary](const std::string &s)
+                                {
+                                    if (psOptionsForBinary)
+                                        psOptionsForBinary->osFilename = s;
+                                })
+                            .help(_("The data source to open."));
+    if (!psOptionsForBinary)
+        argFilename.nargs(argparse::nargs_pattern::optional);
 
     argParser->add_argument("layer")
         .remaining()
@@ -2473,12 +2477,21 @@ std::string GDALVectorInfoGetParserUsage()
 /**
  * Allocates a GDALVectorInfoOptions struct.
  *
+ * Note that  when this function is used a library function, and not from the
+ * ogrinfo utility, a dataset name must be specified if any layer names(s) are
+ * specified (if no layer name is specific, passing a dataset name is not
+ * needed). That dataset name may be a dummy one, as the dataset taken into
+ * account is the hDS parameter passed to GDALVectorInfo().
+ * Similarly the -oo switch in a non-ogrinfo context will be ignored, and it
+ * is the responsibility of the user to apply them when opening the hDS parameter
+ * passed to GDALVectorInfo().
+ *
  * @param papszArgv NULL terminated list of options (potentially including
  * filename and open options too), or NULL. The accepted options are the ones of
  * the <a href="/programs/ogrinfo.html">ogrinfo</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be
  * NULL), otherwise (ogrinfo_bin.cpp use case) must be allocated with
- *                           GDALVectorInfoOptionsForBinaryNew() prior to this
+ * GDALVectorInfoOptionsForBinaryNew() prior to this
  * function. Will be filled with potentially present filename, open options,
  * subdataset number...
  * @return pointer to the allocated GDALVectorInfoOptions struct. Must be freed
@@ -2596,7 +2609,6 @@ GDALVectorInfoOptionsNew(char **papszArgv,
         if (psOptionsForBinary)
         {
             psOptions->bStdoutOutput = true;
-            psOptionsForBinary->osFilename = psOptions->osFilename;
             psOptionsForBinary->osSQLStatement = psOptions->osSQLStatement;
         }
 

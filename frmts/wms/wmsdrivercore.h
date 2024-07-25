@@ -35,8 +35,12 @@
 
 constexpr const char *DRIVER_NAME = "WMS";
 
-int CPL_DLL WMSDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define WMSDriverIdentify PLUGIN_SYMBOL_NAME(WMSDriverIdentify)
+#define WMSDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(WMSDriverSetCommonMetadata)
 
-void CPL_DLL WMSDriverSetCommonMetadata(GDALDriver *poDriver);
+int WMSDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void WMSDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

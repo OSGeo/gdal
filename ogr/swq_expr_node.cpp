@@ -147,7 +147,8 @@ bool swq_expr_node::operator==(const swq_expr_node &other) const
         nOperation != other.nOperation || field_index != other.field_index ||
         table_index != other.table_index ||
         nSubExprCount != other.nSubExprCount || is_null != other.is_null ||
-        int_value != other.int_value || float_value != other.float_value)
+        int_value != other.int_value || float_value != other.float_value ||
+        bHidden != other.bHidden)
     {
         return false;
     }
@@ -234,6 +235,7 @@ swq_expr_node &swq_expr_node::operator=(const swq_expr_node &other)
             geometry_value = other.geometry_value->clone();
         if (other.string_value)
             string_value = CPLStrdup(other.string_value);
+        bHidden = other.bHidden;
     }
     return *this;
 }
@@ -269,6 +271,7 @@ swq_expr_node &swq_expr_node::operator=(swq_expr_node &&other)
         float_value = other.float_value;
         std::swap(geometry_value, other.geometry_value);
         std::swap(string_value, other.string_value);
+        bHidden = other.bHidden;
     }
     return *this;
 }

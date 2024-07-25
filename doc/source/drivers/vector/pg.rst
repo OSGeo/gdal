@@ -153,6 +153,9 @@ COPY-based approach can be chosen by setting the config option
 Dataset open options
 ~~~~~~~~~~~~~~~~~~~~
 
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: DBNAME
       :choices: <string>
 
@@ -238,6 +241,9 @@ None
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: GEOM_TYPE
       :choices: geometry, geography, BYTEA, OID
@@ -389,8 +395,8 @@ Layer Creation Options
 Configuration Options
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: PG_USE_COPY
 
@@ -448,6 +454,26 @@ available:
       -overwrite flag of ogr2ogr, that avoids views based on the table to
       be destroyed. Typical use case: ``ogr2ogr -append PG:dbname=foo
       abc.shp --config OGR_TRUNCATE YES``.
+
+-  .. config:: OGR_PG_ENABLE_METADATA
+      :choices: YES, NO
+      :default: YES
+      :since: 3.9
+
+      If set to "YES" (the default), the driver will try to use (and potentially
+      create) the ``ogr_system_tables.metadata`` table to retrieve and store
+      layer metadata.
+
+-  .. config:: OGR_PG_SKIP_CONFLICTS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.10
+
+      If set to "YES" (not the default),
+      conflicts when inserting features will be skipped
+      (requires OGR_PG_RETRIEVE_FID to be off and only applies when PG_USE_COPY
+      is off).
+
 
 Examples
 ~~~~~~~~

@@ -30,7 +30,6 @@
 ###############################################################################
 
 
-import gdaltest
 import pytest
 import test_py_scripts
 
@@ -76,9 +75,6 @@ def small_world_pan_tif(tmp_path_factory):
 
 def test_gdal_pansharpen_help(script_path):
 
-    if gdaltest.is_travis_branch("sanitize"):
-        pytest.skip("fails on sanitize for unknown reason")
-
     assert "ERROR" not in test_py_scripts.run_py_script(
         script_path, "gdal_pansharpen", "--help"
     )
@@ -103,14 +99,16 @@ def test_gdal_pansharpen_1(script_path, tmp_path, small_world_pan_tif):
 
     out_tif = str(tmp_path / "out.tif")
 
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "gdal_pansharpen",
         f" {small_world_pan_tif} "
         + test_py_scripts.get_data_path("gdrivers")
         + "small_world.tif "
         + out_tif,
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     with gdal.Open(out_tif) as ds:
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]

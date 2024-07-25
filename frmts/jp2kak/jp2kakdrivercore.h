@@ -38,8 +38,12 @@ constexpr unsigned char jp2_header[] = {0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50,
 
 constexpr unsigned char jpc_header[] = {0xff, 0x4f};
 
-int CPL_DLL JP2KAKDatasetIdentify(GDALOpenInfo *poOpenInfo);
+#define JP2KAKDatasetIdentify PLUGIN_SYMBOL_NAME(JP2KAKDatasetIdentify)
+#define JP2KAKDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(JP2KAKDriverSetCommonMetadata)
 
-void CPL_DLL JP2KAKDriverSetCommonMetadata(GDALDriver *poDriver);
+int JP2KAKDatasetIdentify(GDALOpenInfo *poOpenInfo);
+
+void JP2KAKDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

@@ -6,6 +6,7 @@ on:
             - 'doc/**'
         branches-ignore:
             - 'backport**'
+            - 'dependabot**'
 
 permissions:
   contents: read

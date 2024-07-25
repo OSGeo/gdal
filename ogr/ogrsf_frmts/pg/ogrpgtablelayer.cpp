@@ -172,7 +172,9 @@ OGRPGTableLayer::OGRPGTableLayer(OGRPGDataSource *poDSIn,
       // Just in provision for people yelling about broken backward
       // compatibility.
       bRetrieveFID(
-          CPLTestBool(CPLGetConfigOption("OGR_PG_RETRIEVE_FID", "TRUE")))
+          CPLTestBool(CPLGetConfigOption("OGR_PG_RETRIEVE_FID", "TRUE"))),
+      bSkipConflicts(
+          CPLTestBool(CPLGetConfigOption("OGR_PG_SKIP_CONFLICTS", "FALSE")))
 {
     poDS = poDSIn;
     pszQueryStatement = nullptr;
@@ -248,13 +250,16 @@ void OGRPGTableLayer::LoadMetadata()
         return;
     m_bMetadataLoaded = true;
 
+    if (!poDS->HasOgrSystemTablesMetadataTable())
+        return;
+
     PGconn *hPGConn = poDS->GetPGConn();
+
     const std::string osSQL(
         CPLSPrintf("SELECT metadata FROM ogr_system_tables.metadata WHERE "
                    "schema_name = %s AND table_name = %s",
                    OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
                    OGRPGEscapeString(hPGConn, pszTableName).c_str()));
-    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
     auto poSqlLyr = poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr);
     if (poSqlLyr)
     {
@@ -286,8 +291,11 @@ void OGRPGTableLayer::LoadMetadata()
 
 void OGRPGTableLayer::SerializeMetadata()
 {
-    if (!m_bMetadataModified)
+    if (!m_bMetadataModified ||
+        !CPLTestBool(CPLGetConfigOption("OGR_PG_ENABLE_METADATA", "YES")))
+    {
         return;
+    }
 
     PGconn *hPGConn = poDS->GetPGConn();
     CPLXMLNode *psMD = oMDMD.Serialize();
@@ -338,86 +346,49 @@ void OGRPGTableLayer::SerializeMetadata()
         }
     }
 
-    if (psMD)
+    const bool bIsUserTransactionActive = poDS->IsUserTransactionActive();
     {
         PGresult *hResult = OGRPG_PQexec(
-            hPGConn, "CREATE SCHEMA IF NOT EXISTS ogr_system_tables");
+            hPGConn, bIsUserTransactionActive
+                         ? "SAVEPOINT ogr_system_tables_metadata_savepoint"
+                         : "BEGIN");
         OGRPGClearResult(hResult);
-
-        hResult = OGRPG_PQexec(
-            hPGConn, "CREATE TABLE IF NOT EXISTS ogr_system_tables.metadata("
-                     "id SERIAL, "
-                     "schema_name TEXT NOT NULL, "
-                     "table_name TEXT NOT NULL, "
-                     "metadata TEXT,"
-                     "UNIQUE(schema_name, table_name))");
-        OGRPGClearResult(hResult);
-
-        hResult = OGRPG_PQexec(
-            hPGConn,
-            "DROP FUNCTION IF EXISTS "
-            "ogr_system_tables.event_trigger_function_for_metadata() CASCADE");
-        OGRPGClearResult(hResult);
-
-        hResult = OGRPG_PQexec(
-            hPGConn,
-            "CREATE FUNCTION "
-            "ogr_system_tables.event_trigger_function_for_metadata()\n"
-            "RETURNS event_trigger LANGUAGE plpgsql AS $$\n"
-            "DECLARE\n"
-            "    obj record;\n"
-            "BEGIN\n"
-            "    FOR obj IN SELECT * FROM pg_event_trigger_dropped_objects()\n"
-            "    LOOP\n"
-            "        IF obj.object_type = 'table' THEN\n"
-            "            DELETE FROM ogr_system_tables.metadata m WHERE "
-            "m.schema_name = obj.schema_name AND m.table_name = "
-            "obj.object_name;\n"
-            "        END IF;\n"
-            "    END LOOP;\n"
-            "END;\n"
-            "$$;");
-        OGRPGClearResult(hResult);
-
-        hResult = OGRPG_PQexec(hPGConn,
-                               "DROP EVENT TRIGGER IF EXISTS "
-                               "ogr_system_tables_event_trigger_for_metadata");
-        OGRPGClearResult(hResult);
-
-        hResult = OGRPG_PQexec(
-            hPGConn,
-            "CREATE EVENT TRIGGER ogr_system_tables_event_trigger_for_metadata "
-            "ON sql_drop "
-            "EXECUTE FUNCTION "
-            "ogr_system_tables.event_trigger_function_for_metadata()");
-        OGRPGClearResult(hResult);
-
-        CPLString osCommand;
-        osCommand.Printf("DELETE FROM ogr_system_tables.metadata WHERE "
-                         "schema_name = %s AND table_name = %s",
-                         OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
-                         OGRPGEscapeString(hPGConn, pszTableName).c_str());
-        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-        OGRPGClearResult(hResult);
-
-        CPLXMLNode *psRoot =
-            CPLCreateXMLNode(nullptr, CXT_Element, "GDALMetadata");
-        CPLAddXMLChild(psRoot, psMD);
-        char *pszXML = CPLSerializeXMLTree(psRoot);
-        // CPLDebug("PG", "Serializing %s", pszXML);
-
-        osCommand.Printf("INSERT INTO ogr_system_tables.metadata (schema_name, "
-                         "table_name, metadata) VALUES (%s, %s, %s)",
-                         OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
-                         OGRPGEscapeString(hPGConn, pszTableName).c_str(),
-                         OGRPGEscapeString(hPGConn, pszXML).c_str());
-        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-        OGRPGClearResult(hResult);
-
-        CPLDestroyXMLNode(psRoot);
-        CPLFree(pszXML);
     }
-    else
+
+    if (psMD)
+    {
+        if (poDS->CreateMetadataTableIfNeeded() &&
+            poDS->HasWritePermissionsOnMetadataTable())
+        {
+            CPLString osCommand;
+            osCommand.Printf("DELETE FROM ogr_system_tables.metadata WHERE "
+                             "schema_name = %s AND table_name = %s",
+                             OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
+                             OGRPGEscapeString(hPGConn, pszTableName).c_str());
+            PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+            OGRPGClearResult(hResult);
+
+            CPLXMLNode *psRoot =
+                CPLCreateXMLNode(nullptr, CXT_Element, "GDALMetadata");
+            CPLAddXMLChild(psRoot, psMD);
+            char *pszXML = CPLSerializeXMLTree(psRoot);
+            // CPLDebug("PG", "Serializing %s", pszXML);
+
+            osCommand.Printf(
+                "INSERT INTO ogr_system_tables.metadata (schema_name, "
+                "table_name, metadata) VALUES (%s, %s, %s)",
+                OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
+                OGRPGEscapeString(hPGConn, pszTableName).c_str(),
+                OGRPGEscapeString(hPGConn, pszXML).c_str());
+            hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+            OGRPGClearResult(hResult);
+
+            CPLDestroyXMLNode(psRoot);
+            CPLFree(pszXML);
+        }
+    }
+    else if (poDS->HasOgrSystemTablesMetadataTable() &&
+             poDS->HasWritePermissionsOnMetadataTable())
     {
         CPLString osCommand;
         osCommand.Printf("DELETE FROM ogr_system_tables.metadata WHERE "
@@ -426,6 +397,15 @@ void OGRPGTableLayer::SerializeMetadata()
                          OGRPGEscapeString(hPGConn, pszTableName).c_str());
         PGresult *hResult =
             OGRPG_PQexec(hPGConn, osCommand.c_str(), false, true);
+        OGRPGClearResult(hResult);
+    }
+
+    {
+        PGresult *hResult = OGRPG_PQexec(
+            hPGConn,
+            bIsUserTransactionActive
+                ? "RELEASE SAVEPOINT ogr_system_tables_metadata_savepoint"
+                : "COMMIT");
         OGRPGClearResult(hResult);
     }
 }
@@ -2091,10 +2071,19 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
     if (bRetrieveFID && pszFIDColumn != nullptr &&
         poFeature->GetFID() == OGRNullFID)
     {
+        if (bSkipConflicts)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "fid retrieval and skipping conflicts are not supported "
+                     "at the same time.");
+            return OGRERR_FAILURE;
+        }
         bReturnRequested = TRUE;
         osCommand += " RETURNING ";
         osCommand += OGRPGEscapeColumnName(pszFIDColumn);
     }
+    else if (bSkipConflicts)
+        osCommand += " ON CONFLICT DO NOTHING";
 
     /* -------------------------------------------------------------------- */
     /*      Execute the insert.                                             */

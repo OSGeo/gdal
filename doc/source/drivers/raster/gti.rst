@@ -55,6 +55,11 @@ The GTI driver accepts different types of connection strings:
 
   For example: ``tileindex.gti.gpkg``
 
+  Starting with GDAL 3.10, specifying the ``-if GTI`` option to command line utilities
+  accepting it, or ``GTI`` as the only value of the ``papszAllowedDrivers`` of
+  :cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed filename
+  if its extension is just ``.gpkg`` or ``.fgb``.
+
 * any vector file in a GDAL supported format, with its filename (or connection
   string prefixed with ``GTI:``
 
@@ -357,6 +362,7 @@ the above format specifications are met.
 Open options
 ------------
 
+|about-open-options|
 The following open options are available. Most of them can be
 also defined as layer metadata items or in the .gti XML file
 

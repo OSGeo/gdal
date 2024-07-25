@@ -34,6 +34,7 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 #include "sqlite_rtree_bulk_load/wrapper.h"
+#include "gdal_priv_templates.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -1554,7 +1555,7 @@ void OGRGeoPackageTableLayer::CancelAsyncNextArrowArray()
 {
     if (m_poFillArrowArray)
     {
-        std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
+        std::lock_guard oLock(m_poFillArrowArray->oMutex);
         m_poFillArrowArray->nCountRows = -1;
         m_poFillArrowArray->oCV.notify_one();
     }
@@ -1572,7 +1573,7 @@ void OGRGeoPackageTableLayer::CancelAsyncNextArrowArray()
         m_oQueueArrowArrayPrefetchTasks.pop();
 
         {
-            std::lock_guard<std::mutex> oLock(task->m_oMutex);
+            std::lock_guard oLock(task->m_oMutex);
             task->m_bStop = true;
             task->m_oCV.notify_one();
         }
@@ -2215,8 +2216,7 @@ static bool CheckFIDAndFIDColumnConsistency(const OGRFeature *poFeature,
     {
         const double dfFID =
             poFeature->GetFieldAsDouble(iFIDAsRegularColumnIndex);
-        if (dfFID >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
-            dfFID <= static_cast<double>(std::numeric_limits<int64_t>::max()))
+        if (GDALIsValueInRange<int64_t>(dfFID))
         {
             const auto nFID = static_cast<GIntBig>(dfFID);
             if (nFID == poFeature->GetFID())
@@ -7771,33 +7771,36 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
     auto psFillArrowArray = static_cast<OGRGPKGTableLayerFillArrowArray *>(
         sqlite3_user_data(pContext));
 
-    if (psFillArrowArray->nCountRows >=
-        psFillArrowArray->psHelper->m_nMaxBatchSize)
     {
-        if (psFillArrowArray->bAsynchronousMode)
+        std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
+        if (psFillArrowArray->nCountRows >=
+            psFillArrowArray->psHelper->m_nMaxBatchSize)
         {
-            std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
-            psFillArrowArray->psHelper->Shrink(psFillArrowArray->nCountRows);
-            psFillArrowArray->oCV.notify_one();
-            while (psFillArrowArray->nCountRows > 0)
+            if (psFillArrowArray->bAsynchronousMode)
             {
-                psFillArrowArray->oCV.wait(oLock);
+                psFillArrowArray->psHelper->Shrink(
+                    psFillArrowArray->nCountRows);
+                psFillArrowArray->oCV.notify_one();
+                while (psFillArrowArray->nCountRows > 0)
+                {
+                    psFillArrowArray->oCV.wait(oLock);
+                }
+                // Note that psFillArrowArray->psHelper.get() will generally now be
+                // different from before the wait()
             }
-            // Note that psFillArrowArray->psHelper.get() will generally now be
-            // different from before the wait()
+            else
+            {
+                // should not happen !
+                psFillArrowArray->osErrorMsg = "OGR_GPKG_FillArrowArray_Step() "
+                                               "got more rows than expected!";
+                sqlite3_interrupt(psFillArrowArray->hDB);
+                psFillArrowArray->bErrorOccurred = true;
+                return;
+            }
         }
-        else
-        {
-            // should not happen !
-            psFillArrowArray->osErrorMsg =
-                "OGR_GPKG_FillArrowArray_Step() got more rows than expected!";
-            sqlite3_interrupt(psFillArrowArray->hDB);
-            psFillArrowArray->bErrorOccurred = true;
+        if (psFillArrowArray->nCountRows < 0)
             return;
-        }
     }
-    if (psFillArrowArray->nCountRows < 0)
-        return;
 
     if (psFillArrowArray->nMemLimit == 0)
         psFillArrowArray->nMemLimit = OGRArrowArrayHelper::GetMemLimit();
@@ -7943,7 +7946,7 @@ begin:
                     }
                 }
 
-                if (psFillArrowArray->nCountRows > 0)
+                if (iFeat > 0)
                 {
                     auto panOffsets = static_cast<int32_t *>(
                         const_cast<void *>(psArray->buffers[1]));
@@ -7956,7 +7959,7 @@ begin:
                                  "OGR_GPKG_FillArrowArray_Step(): premature "
                                  "notification of %d features to consumer due "
                                  "to too big array",
-                                 psFillArrowArray->nCountRows);
+                                 iFeat);
                         psFillArrowArray->bMemoryLimitReached = true;
                         if (psFillArrowArray->bAsynchronousMode)
                         {
@@ -8081,7 +8084,7 @@ begin:
                 const void *pabyData = sqlite3_value_blob(argv[iCol]);
                 if (pabyData != nullptr || nBytes == 0)
                 {
-                    if (psFillArrowArray->nCountRows > 0)
+                    if (iFeat > 0)
                     {
                         auto panOffsets = static_cast<int32_t *>(
                             const_cast<void *>(psArray->buffers[1]));
@@ -8094,7 +8097,7 @@ begin:
                                      "OGR_GPKG_FillArrowArray_Step(): "
                                      "premature notification of %d features to "
                                      "consumer due to too big array",
-                                     psFillArrowArray->nCountRows);
+                                     iFeat);
                             psFillArrowArray->bMemoryLimitReached = true;
                             if (psFillArrowArray->bAsynchronousMode)
                             {
@@ -8171,7 +8174,7 @@ begin:
                 if (pszTxt != nullptr)
                 {
                     const size_t nBytes = strlen(pszTxt);
-                    if (psFillArrowArray->nCountRows > 0)
+                    if (iFeat > 0)
                     {
                         auto panOffsets = static_cast<int32_t *>(
                             const_cast<void *>(psArray->buffers[1]));
@@ -8184,7 +8187,7 @@ begin:
                                      "OGR_GPKG_FillArrowArray_Step(): "
                                      "premature notification of %d features to "
                                      "consumer due to too big array",
-                                     psFillArrowArray->nCountRows);
+                                     iFeat);
                             psFillArrowArray->bMemoryLimitReached = true;
                             if (psFillArrowArray->bAsynchronousMode)
                             {
@@ -8231,7 +8234,10 @@ begin:
     }
 
     if (iField == psHelper->m_nFieldCount)
+    {
+        std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
         psFillArrowArray->nCountRows++;
+    }
     return;
 
 error:
@@ -8260,7 +8266,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
 
     if (m_poFillArrowArray)
     {
-        std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
+        std::lock_guard oLock(m_poFillArrowArray->oMutex);
         if (m_poFillArrowArray->bIsFinished)
         {
             return 0;
@@ -8341,7 +8347,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
     }
     else
     {
-        std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
+        std::lock_guard oLock(m_poFillArrowArray->oMutex);
         if (m_poFillArrowArray->bErrorOccurred)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s",
@@ -8514,7 +8520,7 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
                             -1, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
                             nullptr, nullptr, nullptr);
 
-    std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
+    std::lock_guard oLock(m_poFillArrowArray->oMutex);
     m_poFillArrowArray->bIsFinished = true;
     if (m_poFillArrowArray->nCountRows >= 0)
     {
@@ -8625,7 +8631,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         const auto stopThread = [&task]()
         {
             {
-                std::lock_guard<std::mutex> oLock(task->m_oMutex);
+                std::lock_guard oLock(task->m_oMutex);
                 task->m_bStop = true;
                 task->m_oCV.notify_one();
             }
@@ -8655,7 +8661,13 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                    sizeof(struct ArrowArray));
             memset(task->m_psArrowArray.get(), 0, sizeof(struct ArrowArray));
 
-            if (task->m_bMemoryLimitReached)
+            const bool bMemoryLimitReached = [&task]()
+            {
+                std::unique_lock oLock(task->m_oMutex);
+                return task->m_bMemoryLimitReached;
+            }();
+
+            if (bMemoryLimitReached)
             {
                 m_nIsCompatOfOptimizedGetNextArrowArray = false;
                 stopThread();
@@ -8675,7 +8687,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 {
                     // Wake-up thread with new task
                     {
-                        std::lock_guard<std::mutex> oLock(task->m_oMutex);
+                        std::lock_guard oLock(task->m_oMutex);
                         task->m_bFetchRows = true;
                         task->m_oCV.notify_one();
                     }
@@ -8777,7 +8789,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             auto taskPtr = task.get();
             auto taskRunner = [taskPtr]()
             {
-                std::unique_lock<std::mutex> oLock(taskPtr->m_oMutex);
+                std::unique_lock oLock(taskPtr->m_oMutex);
                 do
                 {
                     taskPtr->m_bFetchRows = false;
@@ -8789,6 +8801,11 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                     if (taskPtr->m_bMemoryLimitReached)
                         break;
                     // cppcheck-suppress knownConditionTrueFalse
+                    // Coverity apparently is confused by the fact that we
+                    // use unique_lock here to guard access for m_bStop whereas
+                    // in other places we use a lock_guard, but there's nothing
+                    // wrong.
+                    // coverity[missing_lock:FALSE]
                     while (!taskPtr->m_bStop && !taskPtr->m_bFetchRows)
                     {
                         taskPtr->m_oCV.wait(oLock);

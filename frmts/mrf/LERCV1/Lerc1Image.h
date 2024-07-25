@@ -1,5 +1,5 @@
 /*
-Copyright 2015 - 2021 Esri
+Copyright 2015 - 2024 Esri
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -185,8 +185,6 @@ class Lerc1Image : public TImage<float>
     bool readTiles(double maxZErrorInFile, int numTilesVert, int numTilesHori,
                    float maxValInImg, Byte *bArr, size_t nRemainingBytes);
 
-    void computeCntStats(float &cntMin, float &cntMax)
-        const;  // Across the whole image, always works
     bool computeZStats(int r0, int r1, int c0, int c1, float &zMin, float &zMax,
                        int &numValidPixel, int &numFinite) const;
 
@@ -205,8 +203,7 @@ class Lerc1Image : public TImage<float>
     computeNumBytesNeededToWrite(double maxZError, bool onlyZPart,
                                  InfoFromComputeNumBytes *info) const;
 
-    std::vector<unsigned int>
-        idataVec;  // temporary buffer, reused in readZTile
+    std::vector<unsigned int> idataVec;  // temporary buffer
     BitMaskV1 mask;
 
   public:

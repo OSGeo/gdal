@@ -46,6 +46,8 @@ def test_ogr_basic_1():
 
     assert ds is not None
 
+    assert isinstance(ds, ogr.DataSource)
+
 
 ###############################################################################
 # Test Feature counting.
@@ -713,6 +715,36 @@ def test_ogr_basic_dataset_slice():
     assert lyrs == ["lyr1", "lyr3"]
 
 
+def test_ogr_basic_dataset_iter():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds.CreateLayer("lyr1")
+    ds.CreateLayer("lyr2")
+    ds.CreateLayer("lyr3")
+
+    layers = []
+
+    assert len(ds) == 3
+
+    for lyr in ds:
+        layers.append(lyr)
+
+    assert len(layers) == 3
+
+
+def test_ogr_basic_dataset_getitem():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds.CreateLayer("lyr1")
+    ds.CreateLayer("lyr2")
+    ds.CreateLayer("lyr3")
+
+    assert ds[2].this == ds.GetLayer(2).this
+
+    with pytest.raises(IndexError):
+        ds[3]
+
+
 def test_ogr_basic_feature_iterator():
 
     ds = ogr.Open("data/poly.shp")
@@ -995,6 +1027,7 @@ def test_datasource_use_after_close_2():
         ds2.GetLayer(0)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_datasource_use_after_destroy():
     ds = ogr.Open("data/poly.shp")
 
@@ -1009,6 +1042,7 @@ def test_datasource_use_after_destroy():
         ds2.GetLayer(0)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_datasource_use_after_release():
     ds = ogr.Open("data/poly.shp")
 
@@ -1060,6 +1094,7 @@ def test_layer_use_after_datasource_close_3(tmp_path):
         lyr2.GetFeatureCount()
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_layer_use_after_datasource_destroy():
     ds = ogr.Open("data/poly.shp")
     lyr = ds.GetLayerByName("poly")
@@ -1071,6 +1106,7 @@ def test_layer_use_after_datasource_destroy():
         lyr.GetFeatureCount()
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_layer_use_after_datasource_release():
     ds = ogr.Open("data/poly.shp")
     lyr = ds.GetLayerByName("poly")
@@ -1175,3 +1211,25 @@ def test_general_cmd_line_processor(tmp_path):
         ["program", 2, tmp_path / "a_path", "a_string"]
     )
     assert processed == ["program", "2", str(tmp_path / "a_path"), "a_string"]
+
+
+def test_driver_open_throw_1():
+
+    with gdaltest.enable_exceptions():
+        drv = ogr.GetDriverByName("ESRI Shapefile")
+
+        assert isinstance(drv, ogr.Driver)
+
+        with pytest.raises(RuntimeError, match="No such file or directory"):
+            drv.Open("does_not_exist.shp")
+
+
+def test_driver_open_throw_2():
+
+    with gdaltest.enable_exceptions():
+        drv = ogr.GetDriverByName("MapInfo File")
+
+        assert isinstance(drv, ogr.Driver)
+
+        with pytest.raises(RuntimeError, match="not recognized"):
+            drv.Open("data/poly.shp")

@@ -52,6 +52,7 @@ metadata in the COLOR_PROFILE domain:
 Open Options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: APPLY_ORIENTATION
@@ -75,6 +76,7 @@ When copying from a (regular) JPEG file, and not specifying lossy compression
 options, its content is re-encoded in a lossless way, and with reconstruction
 data that enables to recreate a JPEG file from the JPEGXL codestream.
 
+|about-creation-options|
 The following creation options are available:
 
 -  .. co:: LOSSLESS

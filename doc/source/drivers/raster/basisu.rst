@@ -50,6 +50,7 @@ bands is supported.
 Refer to https://github.com/BinomialLLC/basis_universal for more details on those
 modes and their options.
 
+|about-creation-options|
 The following creation options are available:
 
 - .. co:: COMPRESSION

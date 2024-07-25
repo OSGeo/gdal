@@ -1023,7 +1023,7 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
             return nullptr;
         }
 
-        if (VSIFEofL(m_poFp))
+        if (VSIFEofL(m_poFp) || VSIFErrorL(m_poFp))
         {
             CPLDebug("FlatGeobuf", "GetNextFeature: iteration end due to EOF");
             return nullptr;
@@ -1977,7 +1977,7 @@ begin:
 
     end_of_loop:
 
-        if (VSIFEofL(m_poFp))
+        if (VSIFEofL(m_poFp) || VSIFErrorL(m_poFp))
         {
             CPLDebug("FlatGeobuf", "GetNextFeature: iteration end due to EOF");
             break;
@@ -2285,7 +2285,11 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         ogrGeometry->getGeometryType() != m_eGType)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "ICreateFeature: Mismatched geometry type");
+                 "ICreateFeature: Mismatched geometry type. "
+                 "Feature geometry type is %s, "
+                 "expected layer geometry type is %s",
+                 OGRGeometryTypeToName(ogrGeometry->getGeometryType()),
+                 OGRGeometryTypeToName(m_eGType));
         return OGRERR_FAILURE;
     }
 

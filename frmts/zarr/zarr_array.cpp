@@ -557,20 +557,7 @@ void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
     else if (m_oType.GetNumericDataType() == GDT_UInt64)
     {
         const auto nVal = GetNoDataValueAsUInt64();
-        if (nVal <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))
-        {
-            oRoot.Add("fill_value", static_cast<GInt64>(nVal));
-        }
-        else if (nVal == static_cast<uint64_t>(static_cast<double>(nVal)))
-        {
-            oRoot.Add("fill_value", static_cast<double>(nVal));
-        }
-        else
-        {
-            // not really compliant...
-            oRoot.Add("fill_value",
-                      CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));
-        }
+        oRoot.Add("fill_value", static_cast<uint64_t>(nVal));
     }
     else
     {
@@ -1063,9 +1050,16 @@ bool ZarrArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     // Make sure that arrayStep[i] are positive for sake of simplicity
     if (negativeStep)
     {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         arrayStartIdxMod.resize(nDims);
         arrayStepMod.resize(nDims);
         bufferStrideMod.resize(nDims);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         for (size_t i = 0; i < nDims; ++i)
         {
             if (arrayStep[i] < 0)
@@ -1558,9 +1552,16 @@ bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
     // Make sure that arrayStep[i] are positive for sake of simplicity
     if (negativeStep)
     {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         arrayStartIdxMod.resize(nDims);
         arrayStepMod.resize(nDims);
         bufferStrideMod.resize(nDims);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         for (size_t i = 0; i < nDims; ++i)
         {
             if (arrayStep[i] < 0)

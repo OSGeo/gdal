@@ -858,7 +858,8 @@ void netCDFLayer::ResetReading()
 /************************************************************************/
 
 double netCDFLayer::Get1DVarAsDouble(int nVarId, nc_type nVarType,
-                                     size_t nIndex, NCDFNoDataUnion noDataVal,
+                                     size_t nIndex,
+                                     const NCDFNoDataUnion &noDataVal,
                                      bool *pbIsNoData)
 {
     double dfVal = 0;

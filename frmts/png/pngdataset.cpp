@@ -1010,7 +1010,7 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
 /*                            IsFullBandMap()                           */
 /************************************************************************/
 
-static int IsFullBandMap(int *panBandMap, int nBands)
+static int IsFullBandMap(const int *panBandMap, int nBands)
 {
     for (int i = 0; i < nBands; i++)
     {
@@ -1027,7 +1027,7 @@ static int IsFullBandMap(int *panBandMap, int nBands)
 CPLErr PNGDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, int *panBandMap,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
@@ -1977,8 +1977,7 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
     poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
 
     // Open overviews.
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename,
-                                poOpenInfo->GetSiblingFiles());
+    poDS->oOvManager.Initialize(poDS, poOpenInfo);
 
     return poDS;
 }

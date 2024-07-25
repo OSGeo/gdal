@@ -1,7 +1,7 @@
 .. _gdal_edit:
 
 ================================================================================
-gdal_edit.py
+gdal_edit
 ================================================================================
 
 .. only:: html
@@ -30,7 +30,7 @@ Synopsis
 Description
 -----------
 
-The :program:`gdal_edit.py` script can be used to edit in place various
+:program:`gdal_edit` can be used to edit in place various
 information of an existing GDAL dataset (projection, geotransform,
 nodata, metadata).
 
@@ -42,6 +42,10 @@ It works only with raster formats that support update access to existing dataset
     still be found in the file in a "ghost" state, even if no longer accessible
     through the GDAL API. This is for example the case of the :ref:`raster.gtiff`
     format (this is not a exhaustive list).
+
+.. note::
+
+    gdal_edit is a Python utility, and is only available if GDAL Python bindings are available.
 
 .. include:: options/help_and_help_general.rst
 

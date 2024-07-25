@@ -66,11 +66,12 @@
  * implement the reprojection, and will default a variety of other
  * warp options.
  *
- * No metadata, projection info, or color tables are transferred
- * to the output file.
+ * Nodata values set on destination dataset are taken into account.
  *
- * Starting with GDAL 2.0, nodata values set on destination dataset are taken
- * into account.
+ * No metadata, projection info, or color tables are transferred
+ * to the output file. Source overviews are not considered.
+ *
+ * For more advanced warping capabilities, consider using GDALWarp().
  *
  * @param hSrcDS the source image file.
  * @param pszSrcWKT the source projection.  If NULL the source projection
@@ -91,6 +92,7 @@
  * @param psOptions warp options, normally NULL.
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
+ * @see GDALWarp()
  */
 
 CPLErr CPL_STDCALL GDALReprojectImage(
@@ -1265,7 +1267,17 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * <li>EXCLUDED_VALUES_PCT_THRESHOLD=[0-100]: (GDAL >= 3.9) Minimum percentage
  * of source pixels that must be set at one of the EXCLUDED_VALUES to cause
  * the excluded value, that is in majority among source pixels, to be used as the
- * target pixel value. Default value is 50 (%)</li>
+ * target pixel value. Default value is 50 (%).
+ * Only taken into account by Average currently.</li>
+ *
+ * <li>NODATA_VALUES_PCT_THRESHOLD=[0-100]: (GDAL >= 3.9) Minimum percentage
+ * of source pixels that must be at nodata (or alpha=0 or any other way to express
+ * transparent pixel) to cause the target pixel value to not be set. Default
+ * value is 100 (%), which means that a target pixel is not set only if all
+ * contributing source pixels are not set.
+ * Note that NODATA_VALUES_PCT_THRESHOLD is taken into account before
+ * EXCLUDED_VALUES_PCT_THRESHOLD.
+ * Only taken into account by Average currently.</li>
  *
  * </ul>
  */

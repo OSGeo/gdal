@@ -312,6 +312,7 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
 #define szMMNomCampNPoligonsDefecte "N_POLIG"
 #define MM_MIN_WIDTH_LONG 14  // For LONG_ARC and PERIMETRE
 #define MM_MIN_WIDTH_AREA 19  // For LONG_ARC and PERIMETRE
+    // of decimals to be used in the reserved fields as LONG_ARC, PERIMETRE,
     CPLStrlcpy(szPerimeterOfThePolygonCat, "Perimetre del poligon",
     CPLStrlcpy(szPerimeterOfThePolygonCat, "Perimetre del poligon",
     CPLStrlcpy(szAreaOfThePolygonCat, "Area del poligon",
@@ -328,3 +329,18 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
     assert f.GetField("PERIMETRE") == pytest.approx(1289.866489495, abs=1e-5)
     assert f.GetField("PERIMETRE") == pytest.approx(1123.514024, abs=1e-5)
     assert f.GetField("PERIMETRE") == pytest.approx(680.544697, abs=1e-5)
+    assert f["PERIMETRE"] == [3.414, 3.414]
+    assert f["PERIMETRE"] == [32, 32]
+# Package substitutefont no longer exists since TeXLive 2023 later than August 2023
+        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("LOGICALY"))
+    assert f.GetField("LOGICALY") == 1
+ * <li>JOIN_STYLE=ROUND/MITRE/BEVEL</li>
+ * <li>MITRE_LIMIT=double</li>
+            else if (EQUAL(pszValue, "MITRE"))
+                nStyle = GEOSBUF_JOIN_MITRE;
+        else if (EQUAL(pszParam, "MITRE_LIMIT"))
+                         "Invalid value for MITRE_LIMIT: %s", pszValue);
+* <li>JOIN_STYLE=ROUND/MITRE/BEVEL</li>
+* <li>MITRE_LIMIT=double</li>
+        DESCRIPTION=Staatliche Verwaltungs- und Sozialdienste wie öffentliche Verwaltung, Katastrophenschutz, Schulen und Krankenhäuser, die von öffentlichen oder privaten Einrichtungen erbracht werden, soweit sie in den Anwendungsbereich der Richtlinie 2007/2/EG fallen. Dieser Datensatz enthält Informationen zu Feuerwehrleitstellen.
+    # Disable cfchecker validation as it fails with a '(5): co-ordinate variable not monotonic'

@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import math
 import pathlib
 import sys
 
@@ -186,7 +187,7 @@ def csvwrk_ds(tmp_path):
 def csvwrk(csvwrk_ds):
 
     dirname = csvwrk_ds.GetDescription()
-    csvwrk_ds.Destroy()
+    csvwrk_ds.Close()
 
     return pathlib.Path(dirname)
 
@@ -3087,6 +3088,70 @@ def test_ogr_csv_geom_coord_precision_OGR_APPLY_GEOM_SET_PRECISION(tmp_vsimem):
     # multipolygon made of 2 parts. To avoid being dependent on GEOS version,
     # we just check for the MULTIPOLYGON keyword.
     assert b"MULTIPOLYGON" in data
+
+
+###############################################################################
+# Test invalid GEOMETRY option
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_csv_invalid_geometry_option(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.csv")
+    ds = gdal.GetDriverByName("CSV").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    with pytest.raises(
+        Exception,
+        match="Geometry type 3D Line String is not compatible with GEOMETRY=AS_XYZ",
+    ):
+        ds.CreateLayer(
+            "test", geom_type=ogr.wkbLineString25D, options=["GEOMETRY=AS_XYZ"]
+        )
+
+    filename = str(tmp_vsimem / "test2.csv")
+    ds = gdal.GetDriverByName("CSV").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    with gdal.quiet_errors(), pytest.raises(
+        Exception, match="Unsupported value foo for creation option GEOMETRY"
+    ):
+        ds.CreateLayer("test", geom_type=ogr.wkbLineString25D, options=["GEOMETRY=foo"])
+
+
+###############################################################################
+# Test force opening a CSV file
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_csv_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.bin")
+
+    with gdaltest.vsi_open(filename, "wb") as fdest:
+        fdest.write(b"foo\nbar\n")
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["CSV"])
+    assert ds.GetDriver().GetDescription() == "CSV"
+
+
+###############################################################################
+# Test opening a CSV file with inf/nan numeric values
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_csv_inf_nan():
+
+    ds = gdal.OpenEx("data/csv/inf_nan.csv", open_options=["AUTODETECT_TYPE=YES"])
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTReal
+    f = lyr.GetNextFeature()
+    assert f["v"] == 10.0
+    f = lyr.GetNextFeature()
+    assert f["v"] == float("inf")
+    f = lyr.GetNextFeature()
+    assert f["v"] == float("-inf")
+    f = lyr.GetNextFeature()
+    assert math.isnan(f["v"])
 
 
 ###############################################################################

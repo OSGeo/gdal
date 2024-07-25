@@ -179,8 +179,44 @@ CPL_C_END
 void CPL_DLL *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                                 const char *const *papszOptions);
 char **CPLHTTPGetOptionsFromEnv(const char *pszFilename);
-double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
-                               const char *pszErrBuf, const char *pszCurlError);
+
+/** Stores HTTP retry parameters */
+struct CPLHTTPRetryParameters
+{
+    int nMaxRetry = CPL_HTTP_MAX_RETRY;
+    double dfInitialDelay = CPL_HTTP_RETRY_DELAY;
+    std::string osRetryCodes{};
+
+    CPLHTTPRetryParameters() = default;
+    explicit CPLHTTPRetryParameters(const CPLStringList &aosHTTPOptions);
+};
+
+/** HTTP retry context */
+class CPLHTTPRetryContext
+{
+  public:
+    explicit CPLHTTPRetryContext(const CPLHTTPRetryParameters &oParams);
+
+    bool CanRetry(int response_code, const char *pszErrBuf,
+                  const char *pszCurlError);
+    bool CanRetry();
+
+    /** Returns the delay to apply. Only valid after a successful call to CanRetry() */
+    double GetCurrentDelay() const;
+
+    /** Reset retry counter. */
+    void ResetCounter()
+    {
+        m_nRetryCount = 0;
+    }
+
+  private:
+    CPLHTTPRetryParameters m_oParameters{};
+    int m_nRetryCount = 0;
+    double m_dfCurDelay = 0.0;
+    double m_dfNextDelay = 0.0;
+};
+
 void CPL_DLL *CPLHTTPIgnoreSigPipe();
 void CPL_DLL CPLHTTPRestoreSigPipeHandler(void *old_handler);
 bool CPLMultiPerformWait(void *hCurlMultiHandle, int &repeats);

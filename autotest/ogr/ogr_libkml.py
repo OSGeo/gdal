@@ -455,6 +455,17 @@ def test_ogr_libkml_write_kmz_use_doc_off(tmp_vsimem):
     ogr_libkml_check_write(tmp_vsimem / "libkml_use_doc_off.kmz")
 
 
+def test_ogr_libkml_write_kmz_simulate_cloud(tmp_vsimem):
+    with gdal.config_option("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "FORCED"):
+        ogr_libkml_write(tmp_vsimem / "test_ogr_libkml_write_kmz_simulate_cloud.kmz")
+
+    ogr_libkml_check_write(tmp_vsimem / "test_ogr_libkml_write_kmz_simulate_cloud.kmz")
+
+    with gdal.config_option("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "FORCED"):
+        with pytest.raises(Exception):
+            ogr_libkml_write("/i_do/not/exist.kmz")
+
+
 ###############################################################################
 # Test reading attributes with XML content in them
 #
@@ -707,10 +718,8 @@ def test_ogr_libkml_camera(tmp_vsimem):
 
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_camera.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(tmp_vsimem / "ogr_libkml_camera.kml", "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<Camera>") == -1
@@ -771,10 +780,8 @@ def test_ogr_libkml_write_layer_lookat(tmp_vsimem):
     ds.CreateLayer("test2", options=options)
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_write_layer_lookat.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(tmp_vsimem / "ogr_libkml_write_layer_lookat.kml", "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<LookAt>") == -1
@@ -816,10 +823,8 @@ def test_ogr_libkml_write_layer_camera(tmp_vsimem):
     ds.CreateLayer("test", options=options)
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_write_layer_camera.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(tmp_vsimem / "ogr_libkml_write_layer_camera.kml", "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<Camera>") == -1
@@ -884,10 +889,8 @@ def test_ogr_libkml_write_snippet(tmp_vsimem):
     lyr.CreateFeature(feat)
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_write_snippet.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(tmp_vsimem / "ogr_libkml_write_snippet.kml", "rb") as f:
+        data = f.read().decode("ascii")
 
     assert data.find("<snippet>test_snippet</snippet>") != -1
 
@@ -920,10 +923,8 @@ def test_ogr_libkml_write_atom_author(tmp_vsimem):
     assert ds is not None, "Unable to create %s." % filepath
     ds = None
 
-    f = gdal.VSIFOpenL(filepath, "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(filepath, "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find(
@@ -949,10 +950,8 @@ def test_ogr_libkml_write_atom_link(tmp_vsimem):
     assert ds is not None, "Unable to create %s." % filepath
     ds = None
 
-    f = gdal.VSIFOpenL(filepath, "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(filepath, "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find(
@@ -976,10 +975,8 @@ def test_ogr_libkml_write_phonenumber(tmp_vsimem):
     assert ds is not None, "Unable to create %s." % filepath
     ds = None
 
-    f = gdal.VSIFOpenL(filepath, "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(filepath, "rb") as f:
+        data = f.read().decode("ascii")
 
     assert data.find("<phoneNumber>tel:911</phoneNumber>") != -1
 
@@ -1013,10 +1010,8 @@ def test_ogr_libkml_write_region(tmp_vsimem):
     )
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_write_region.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(tmp_vsimem / "ogr_libkml_write_region.kml", "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<north>49</north>") == -1
@@ -1071,10 +1066,10 @@ def test_ogr_libkml_write_screenoverlay(tmp_vsimem):
     )
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_write_screenoverlay.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(
+        tmp_vsimem / "ogr_libkml_write_screenoverlay.kml", "rb"
+    ) as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<href>http://foo</href>") == -1
@@ -1135,10 +1130,8 @@ def test_ogr_libkml_write_model(tmp_vsimem):
 
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_write_model.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(tmp_vsimem / "ogr_libkml_write_model.kml", "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<longitude>2</longitude>") == -1
@@ -1274,10 +1267,10 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
     ds = None
     src_ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_read_write_style_write.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(
+        tmp_vsimem / "ogr_libkml_read_write_style_write.kml", "rb"
+    ) as f:
+        data = f.read().decode("ascii")
     lines = [l.strip() for l in data.split("\n")]
 
     lines_got = lines[
@@ -1308,10 +1301,10 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
     ds = None
     src_ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_read_write_style_write.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(
+        tmp_vsimem / "ogr_libkml_read_write_style_write.kml", "rb"
+    ) as f:
+        data = f.read().decode("ascii")
     lines = [l.strip() for l in data.split("\n")]
 
     lines_got = lines[
@@ -1346,10 +1339,12 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
     assert feat.GetStyleString() == style_string
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_read_write_style_write.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(
+        tmp_vsimem / "ogr_libkml_read_write_style_write.kml", "rb"
+    ) as f:
+        data = f.read().decode("ascii")
+
+    assert "<styleUrl>#unknown_style</styleUrl>" in data
 
     expected_style = """<Style>
           <IconStyle>
@@ -1394,11 +1389,10 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
     ds.SetStyleTable(style_table)
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_read_write_style_write.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
-    lines = [l.strip() for l in data.split("\n")]
+    with gdaltest.vsi_open(
+        tmp_vsimem / "ogr_libkml_read_write_style_write.kml", "r"
+    ) as f:
+        lines = [l.strip() for l in f]
 
     expected_styles = """<Style id="style1_normal">
       <IconStyle>
@@ -1470,11 +1464,8 @@ def test_ogr_libkml_write_update(tmp_vsimem, fmt):
     else:
         open_name = name
 
-    f = gdal.VSIFOpenL(open_name, "rb")
-    assert f is not None, "Unable to open the write_update file."
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(open_name, "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<NetworkLinkControl>") == -1
@@ -1525,11 +1516,8 @@ def test_ogr_libkml_write_networklinkcontrol(tmp_vsimem, fmt):
     else:
         open_name = name
 
-    f = gdal.VSIFOpenL(open_name, "rb")
-    assert f is not None
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(open_name, "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<minRefreshPeriod>3600</minRefreshPeriod>") == -1
@@ -1564,10 +1552,8 @@ def test_ogr_libkml_write_liststyle(tmp_vsimem):
         ds.CreateLayer("test_error", options=["LISTSTYLE_TYPE=error"])
         ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_write_liststyle.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(tmp_vsimem / "ogr_libkml_write_liststyle.kml", "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<styleUrl>#root_doc_liststyle</styleUrl>") == -1
@@ -1637,10 +1623,8 @@ def test_ogr_libkml_write_networklink(tmp_vsimem):
 
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_write_networklink.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(tmp_vsimem / "ogr_libkml_write_networklink.kml", "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<name>a network link</name>") == -1
@@ -1723,10 +1707,8 @@ def test_ogr_libkml_write_photooverlay(tmp_vsimem):
 
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_write_photooverlay.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(tmp_vsimem / "ogr_libkml_write_photooverlay.kml", "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<Camera>") == -1
@@ -1774,10 +1756,8 @@ def test_ogr_libkml_read_write_data(tmp_vsimem):
     lyr.CreateFeature(feat)
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_read_write_data.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(tmp_vsimem / "ogr_libkml_read_write_data.kml", "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find('<Data name="foo">') == -1 or data.find("<value>bar</value>") == -1
@@ -1802,10 +1782,8 @@ def test_ogr_libkml_write_folder(tmp_vsimem):
     ds.CreateLayer("test2", options=["FOLDER=YES"])
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_write_folder.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(tmp_vsimem / "ogr_libkml_write_folder.kml", "rb") as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find('<Style id="test_liststyle">') == -1
@@ -1844,10 +1822,10 @@ def test_ogr_libkml_write_container_properties(tmp_vsimem):
     )
     ds = None
 
-    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_libkml_write_container_properties.kml", "rb")
-    data = gdal.VSIFReadL(1, 2048, f)
-    data = data.decode("ascii")
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(
+        tmp_vsimem / "ogr_libkml_write_container_properties.kml", "rb"
+    ) as f:
+        data = f.read().decode("ascii")
 
     assert not (
         data.find("<name>ds_name</name>") == -1
@@ -2082,14 +2060,38 @@ def test_ogr_libkml_write_layer_name_underscore(tmp_vsimem):
     ds.CreateLayer("_45+6")
     ds = None
 
-    f = gdal.VSIFOpenL(dirname + "/123.kml", "rb")
-    assert f
-    content = gdal.VSIFReadL(1, 10000, f)
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(dirname + "/123.kml", "rb") as f:
+        content = f.read()
     assert b'<Document id="_123">' in content
 
-    f = gdal.VSIFOpenL(dirname + "/_45+6.kml", "rb")
-    assert f
-    content = gdal.VSIFReadL(1, 10000, f)
-    gdal.VSIFCloseL(f)
+    with gdaltest.vsi_open(dirname + "/_45+6.kml", "rb") as f:
+        content = f.read()
     assert b'<Document id="_45_6">' in content
+
+
+###############################################################################
+# Test reading an external style
+
+
+def test_ogr_libkml_read_external_style():
+
+    ds = ogr.Open("data/kml/point_with_external_style.kml")
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    assert (
+        feat.GetStyleString() == "style_of_point_with_external_style/style.kml#myStyle"
+    )
+
+    with gdal.config_option("LIBKML_EXTERNAL_STYLE", "YES"):
+        ds = ogr.Open("data/kml/point_with_external_style.kml")
+        lyr = ds.GetLayer(0)
+        feat = lyr.GetNextFeature()
+        assert feat.GetStyleString() == "@myStyle"
+
+    with gdal.config_options(
+        {"LIBKML_EXTERNAL_STYLE": "YES", "LIBKML_RESOLVE_STYLE": "YES"}
+    ):
+        ds = ogr.Open("data/kml/point_with_external_style.kml")
+        lyr = ds.GetLayer(0)
+        feat = lyr.GetNextFeature()
+        assert feat.GetStyleString() == "LABEL(c:#FFFFFFFF,w:110.000000)"

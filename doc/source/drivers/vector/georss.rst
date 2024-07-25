@@ -146,6 +146,9 @@ Other type of geometries are not supported and will be silently ignored.
 Dataset creation options
 ------------------------
 
+|about-dataset-creation-options|
+The following dataset creation options are supported:
+
 -  .. dsco:: FORMAT
       :choices: RSS, ATOM
       :default: RSS

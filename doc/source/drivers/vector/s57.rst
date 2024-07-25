@@ -139,6 +139,8 @@ behavior of the S-57 reader. Users can set these by appending them in
 the OGR_S57_OPTIONS environment variable.
 
 They can also be specified independently as open options to the driver.
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: UPDATES
       :choices: APPLY, IGNORE
@@ -239,6 +241,7 @@ required to support S-57 to S-57 conversion via OGR.
 
    set OGR_S57_OPTIONS = "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
 
+|about-dataset-creation-options|
 The following dataset creation options are supported to supply basic
 information for the S-57 data set descriptive records (DSID and DSPM,
 see the S-57 standard for a more detailed description):

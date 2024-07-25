@@ -64,7 +64,8 @@ raster data is only supported since GDAL 2.1.0.
 
     Enables the ALL_TOUCHED rasterization option so that all pixels touched
     by lines or polygons will be updated, not just those on the line render path,
-    or whose center point is within the polygon.  Defaults to disabled for normal
+    or whose center point is within the polygon (behavior is unspecified when the
+    polygon is just touching the pixel center). Defaults to disabled for normal
     rendering rules.
 
 .. option:: -burn <value>
@@ -172,7 +173,9 @@ raster data is only supported since GDAL 2.1.0.
 
 .. option:: -ot <type>
 
-    Force the output bands to be of the indicated data type. Defaults to ``Float64``
+    Force the output bands to be of the indicated data type. Defaults to ``Float64``,
+    unless the attribute field to burn is of type ``Int64``, in which case ``Int64``
+    is used for the output raster data type if the output driver supports it.
 
 .. option:: -optim {AUTO|VECTOR|RASTER}
 

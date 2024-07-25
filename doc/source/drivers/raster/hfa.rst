@@ -21,8 +21,8 @@ writing.
 
 Metadata reading and writing is supported at the dataset and band level.
 But this is GDAL specific metadata, not metadata in an Imagine recognized form.
-The metadata is stored in a table called GDAL_MetaData which as many 
-columns as metadata items. 
+The metadata is stored in a table called GDAL_MetaData which as many
+columns as metadata items.
 The title of the column is the ``key`` of the ``key``=``value`` metadata item pair
 and the value of row 1 is ``value``.
 
@@ -47,7 +47,8 @@ GDALDriver::CreateCopy() methodology. Most projections should be
 supported, though translation of unusual datums (other than WGS84, WGS72,
 NAD83, and NAD27) may be problematic.
 
-Creation Options:
+|about-creation-options|
+The following creation options are supported:
 
 -  .. co:: BLOCKSIZE
       :choices: 32-2048
@@ -140,9 +141,8 @@ Some HFA band metadata exported to GDAL metadata:
 Configuration Options
 ---------------------
 
-Currently three `runtime configuration
-options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ are supported
-by the HFA driver:
+|about-config-options|
+Currently the following configuration options are supported by the HFA driver:
 
 -  .. config:: HFA_USE_RRD
       :choices: YES, NO

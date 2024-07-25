@@ -222,6 +222,12 @@ should be reported as multiple bands of a same dataset.
         scale_factor=0.1
 
 
+Starting with GDAL 3.10, specifying the ``-if netCDF`` option to command line utilities
+accepting it, or ``netCDF`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+filename, when it is not using subdataset syntax (it can typically be used to
+force open a HDF5 file that would be nominally recognized by the HDF5 driver).
+
 Dimension
 ---------
 
@@ -268,6 +274,7 @@ behavior.
 Open options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: HONOUR_VALID_RANGE
@@ -419,6 +426,9 @@ Can be discovered for example with:
 
 Creation Options
 ----------------
+
+|about-creation-options|
+The following creation options are available:
 
 -  .. co:: FORMAT
       :choices: NC, NC2, NC4, NC4C

@@ -127,7 +127,7 @@ SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
     /*      Initialize the handle structure.                                */
     /* -------------------------------------------------------------------- */
     SBNSearchHandle hSBN =
-        STATIC_CAST(SBNSearchHandle, calloc(sizeof(struct SBNSearchInfo), 1));
+        STATIC_CAST(SBNSearchHandle, calloc(1, sizeof(struct SBNSearchInfo)));
 
     if (psHooks == SHPLIB_NULLPTR)
         SASetupDefaultHooks(&(hSBN->sHooks));
@@ -670,7 +670,7 @@ static bool SBNSearchDiskInternal(SearchStruct *psSearch, int nDepth,
             {
                 free(psNode->pabyShapeDesc);
                 psNode->pabyShapeDesc = SHPLIB_NULLPTR;
-                char szMessage[128];
+                char szMessage[192];
                 snprintf(
                     szMessage, sizeof(szMessage),
                     "Inconsistent shape count for bin idx=%d of node %d. "

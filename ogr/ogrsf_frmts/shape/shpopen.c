@@ -46,6 +46,12 @@
 #endif
 #endif
 
+/* Allows customization of the message in vendored builds (such as GDAL) */
+#ifndef SHP_RESTORE_SHX_HINT_MESSAGE
+#define SHP_RESTORE_SHX_HINT_MESSAGE                                           \
+    " Use SHPRestoreSHX() to restore or create it."
+#endif
+
 /************************************************************************/
 /*                          SHPWriteHeader()                            */
 /*                                                                      */
@@ -273,7 +279,7 @@ SHPHandle SHPAPI_CALL SHPOpenLL(const char *pszLayer, const char *pszAccess,
     /* -------------------------------------------------------------------- */
     /*  Initialize the info structure.                  */
     /* -------------------------------------------------------------------- */
-    SHPHandle psSHP = STATIC_CAST(SHPHandle, calloc(sizeof(SHPInfo), 1));
+    SHPHandle psSHP = STATIC_CAST(SHPHandle, calloc(1, sizeof(SHPInfo)));
 
     psSHP->bUpdated = FALSE;
     memcpy(&(psSHP->sHooks), psHooks, sizeof(SAHooks));
@@ -324,14 +330,14 @@ SHPHandle SHPAPI_CALL SHPOpenLL(const char *pszLayer, const char *pszAccess,
 
     if (psSHP->fpSHX == SHPLIB_NULLPTR)
     {
-        const size_t nMessageLen = strlen(pszFullname) * 2 + 256;
+        const size_t nMessageLen =
+            64 + strlen(pszFullname) * 2 + strlen(SHP_RESTORE_SHX_HINT_MESSAGE);
         char *pszMessage = STATIC_CAST(char *, malloc(nMessageLen));
         pszFullname[nLenWithoutExtension] = 0;
-        snprintf(pszMessage, nMessageLen,
-                 "Unable to open %s.shx or %s.SHX. "
-                 "Set SHAPE_RESTORE_SHX config option to YES to restore or "
-                 "create it.",
-                 pszFullname, pszFullname);
+        snprintf(
+            pszMessage, nMessageLen,
+            "Unable to open %s.shx or %s.SHX." SHP_RESTORE_SHX_HINT_MESSAGE,
+            pszFullname, pszFullname);
         psHooks->Error(pszMessage);
         free(pszMessage);
 
@@ -1083,7 +1089,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
         return SHPLIB_NULLPTR;
     }
 
-    SHPHandle psSHP = STATIC_CAST(SHPHandle, calloc(sizeof(SHPInfo), 1));
+    SHPHandle psSHP = STATIC_CAST(SHPHandle, calloc(1, sizeof(SHPInfo)));
 
     psSHP->bUpdated = FALSE;
     memcpy(&(psSHP->sHooks), psHooks, sizeof(SAHooks));
@@ -1226,7 +1232,7 @@ SHPObject SHPAPI_CALL1(*)
         psObject->nParts = MAX(1, nParts);
 
         psObject->panPartStart =
-            STATIC_CAST(int *, calloc(sizeof(int), psObject->nParts));
+            STATIC_CAST(int *, calloc(psObject->nParts, sizeof(int)));
         psObject->panPartType =
             STATIC_CAST(int *, malloc(sizeof(int) * psObject->nParts));
 
@@ -1255,16 +1261,16 @@ SHPObject SHPAPI_CALL1(*)
         const size_t nSize = sizeof(double) * nVertices;
         psObject->padfX =
             STATIC_CAST(double *, padfX ? malloc(nSize)
-                                        : calloc(sizeof(double), nVertices));
+                                        : calloc(nVertices, sizeof(double)));
         psObject->padfY =
             STATIC_CAST(double *, padfY ? malloc(nSize)
-                                        : calloc(sizeof(double), nVertices));
+                                        : calloc(nVertices, sizeof(double)));
         psObject->padfZ = STATIC_CAST(
             double *,
-            padfZ &&bHasZ ? malloc(nSize) : calloc(sizeof(double), nVertices));
+            padfZ &&bHasZ ? malloc(nSize) : calloc(nVertices, sizeof(double)));
         psObject->padfM = STATIC_CAST(
             double *,
-            padfM &&bHasM ? malloc(nSize) : calloc(sizeof(double), nVertices));
+            padfM &&bHasM ? malloc(nSize) : calloc(nVertices, sizeof(double)));
         if (padfX != SHPLIB_NULLPTR)
             memcpy(psObject->padfX, padfX, nSize);
         if (padfY != SHPLIB_NULLPTR)

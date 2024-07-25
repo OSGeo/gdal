@@ -64,10 +64,7 @@ def test_empty_wkt(test_input, expected):
     except AttributeError:
         pytest.skip()
 
-    try:
-        assert geom.IsEmpty(), "IsEmpty returning false for an empty geometry"
-    finally:
-        geom.Destroy()
+    assert geom.IsEmpty(), "IsEmpty returning false for an empty geometry"
 
 
 def test_ogr_wktempty_test_partial_empty_geoms():

@@ -46,6 +46,10 @@
 
 #include "hdf5.h"
 
+#if defined(H5T_NATIVE_FLOAT16) && defined(H5_HAVE__FLOAT16)
+#define HDF5_HAVE_FLOAT16
+#endif
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif

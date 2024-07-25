@@ -56,7 +56,19 @@ def open_for_read(uri):
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
 
-    with gdaltest.config_option("CPL_AZURE_VM_API_ROOT_URL", "disabled"):
+    with gdaltest.config_options(
+        {
+            "AZURE_STORAGE_CONNECTION_STRING": None,
+            "AZURE_STORAGE_ACCOUNT": None,
+            "AZURE_STORAGE_ACCESS_KEY": None,
+            "AZURE_STORAGE_SAS_TOKEN": None,
+            "AZURE_NO_SIGN_REQUEST": None,
+            "AZURE_CONFIG_DIR": "",
+            "AZURE_STORAGE_ACCESS_TOKEN": "",
+            "AZURE_FEDERATED_TOKEN_FILE": "",
+            "CPL_AZURE_VM_API_ROOT_URL": "disabled",
+        }
+    ):
         assert gdal.GetSignedURL("/vsiadls/foo/bar") is None
 
     gdaltest.webserver_process = None
@@ -1149,3 +1161,56 @@ def test_vsiadls_fake_metadata():
         assert not gdal.SetFileMetadata(
             "/vsiadls/test/foo.bin", {"x-ms-properties": "foo=bar"}, "PROPERTIES"
         )
+
+
+###############################################################################
+# Test VSIMultipartUploadXXXX()
+
+
+def test_vsiadls_MultipartUpload():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    # Test MultipartUploadGetCapabilities()
+    info = gdal.MultipartUploadGetCapabilities("/vsiadls/")
+    assert info.non_sequential_upload_supported
+    assert info.parallel_upload_supported
+    assert not info.abort_supported
+    assert info.min_part_size == 0
+    assert info.max_part_size >= 1024
+    assert info.max_part_count > 0
+
+    # Test MultipartUploadAddPart()
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PATCH",
+        "/azure/blob/myaccount/test_multipartupload/test.bin?action=append&position=123456",
+        202,
+        expected_body=b"foo",
+    )
+    with webserver.install_http_handler(handler):
+        part_id = gdal.MultipartUploadAddPart(
+            "/vsiadls/test_multipartupload/test.bin", "my_upload_id", 1, 123456, b"foo"
+        )
+    assert part_id == "dummy"
+
+    # Test MultipartUploadEnd()
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PATCH",
+        "/azure/blob/myaccount/test_multipartupload/test.bin?action=flush&close=true&position=3",
+        200,
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.MultipartUploadEnd(
+            "/vsiadls/test_multipartupload/test.bin", "my_upload_id", ["dummy"], 3
+        )
+
+    # Test unsupported MultipartUploadAbort()
+    with gdal.ExceptionMgr(useExceptions=True):
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadAbort\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadAbort("/vsiadls/foo/bar", "upload_id")

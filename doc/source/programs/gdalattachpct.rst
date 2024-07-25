@@ -1,7 +1,7 @@
 .. _gdalattachpct:
 
 ================================================================================
-gdalattachpct.py
+gdalattachpct
 ================================================================================
 
 .. only:: html
@@ -15,13 +15,17 @@ Synopsis
 
 .. code-block::
 
-    gdalattachpct.py [--help] [--help-general]
+    gdalattachpct [--help] [--help-general]
                      [-of format] <palette_file> <source_file> <dest_file>
 
 Description
 -----------
 
 This utility will attach a color table file from an input raster file or a color table file to another raster.
+
+.. note::
+
+    gdalattachpct is a Python utility, and is only available if GDAL Python bindings are available.
 
 .. program:: gdalattachpct
 
@@ -46,5 +50,3 @@ This utility will attach a color table file from an input raster file or a color
 .. option:: <dest_file>
 
     The output RGB file that will be created.
-
-NOTE: gdalattachpct.py is a Python script, and will only work if GDAL was built with Python support.

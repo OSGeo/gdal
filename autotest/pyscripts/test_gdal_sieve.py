@@ -30,7 +30,6 @@
 ###############################################################################
 
 
-import gdaltest
 import pytest
 import test_py_scripts
 
@@ -52,9 +51,6 @@ def script_path():
 
 
 def test_gdal_sieve_help(script_path):
-
-    if gdaltest.is_travis_branch("sanitize"):
-        pytest.skip("fails on sanitize for unknown reason")
 
     assert "ERROR" not in test_py_scripts.run_py_script(
         script_path, "gdal_sieve", "--help"
@@ -85,13 +81,15 @@ def test_gdal_sieve_1(script_path, tmp_path):
     dst_ds = drv.Create(test_tif, 5, 7, 1, gdal.GDT_Byte)
     dst_ds = None
 
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "gdal_sieve",
         "-nomask -st 2 -4 "
         + test_py_scripts.get_data_path("alg")
         + f"sieve_src.grd {test_tif}",
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     dst_ds = gdal.Open(test_tif)
     dst_band = dst_ds.GetRasterBand(1)

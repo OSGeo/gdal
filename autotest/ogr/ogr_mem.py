@@ -1464,6 +1464,18 @@ def test_ogr_mem_write_arrow():
     field_def = ogr.FieldDefn("field_stringlist", ogr.OFTStringList)
     src_lyr.CreateField(field_def)
 
+    field_def = ogr.FieldDefn("field_json", ogr.OFTString)
+    field_def.SetSubType(ogr.OFSTJSON)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_uuid", ogr.OFTString)
+    field_def.SetSubType(ogr.OFSTUUID)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_with_width", ogr.OFTString)
+    field_def.SetWidth(10)
+    src_lyr.CreateField(field_def)
+
     feat_def = src_lyr.GetLayerDefn()
     src_feature = ogr.Feature(feat_def)
     src_feature.SetField("field_bool", True)
@@ -1485,6 +1497,9 @@ def test_ogr_mem_write_arrow():
     src_feature.field_float32list = [1.5, -1.5]
     src_feature.field_reallist = [123.5, 567.0]
     src_feature.field_stringlist = ["abc", "def"]
+    src_feature["field_json"] = '{"foo":"bar"}'
+    src_feature["field_uuid"] = "INVALID_UUID"
+    src_feature["field_with_width"] = "foo"
     src_feature.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
 
     src_lyr.CreateFeature(src_feature)
@@ -1505,6 +1520,15 @@ def test_ogr_mem_write_arrow():
     for i in range(schema.GetChildrenCount()):
         if schema.GetChild(i).GetName() != "wkb_geometry":
             dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    idx = dst_lyr.GetLayerDefn().GetFieldIndex("field_json")
+    assert dst_lyr.GetLayerDefn().GetFieldDefn(idx).GetSubType() == ogr.OFSTJSON
+
+    idx = dst_lyr.GetLayerDefn().GetFieldIndex("field_uuid")
+    assert dst_lyr.GetLayerDefn().GetFieldDefn(idx).GetSubType() == ogr.OFSTUUID
+
+    idx = dst_lyr.GetLayerDefn().GetFieldIndex("field_with_width")
+    assert dst_lyr.GetLayerDefn().GetFieldDefn(idx).GetWidth() == 10
 
     while True:
         array = stream.GetNextRecordBatch()
@@ -1597,6 +1621,106 @@ def test_ogr_mem_write_arrow_error_negative_fid():
             break
         with pytest.raises(Exception, match="negative FID are not supported"):
             dst_lyr.WriteArrowBatch(schema, array, ["FID=id"])
+
+
+###############################################################################
+# Test writing a ArrowArray into a OGR field whose types don't fully match
+
+
+@pytest.mark.parametrize("IF_FIELD_NOT_PRESERVED", [None, "ERROR"])
+@pytest.mark.parametrize(
+    "input_type,output_type,input_vals,output_vals",
+    [
+        [ogr.OFTInteger64, ogr.OFTInteger, [123456, None], [123456, None]],
+        [ogr.OFTInteger64, ogr.OFTInteger, [1234567890123], [(1 << 31) - 1]],
+        [ogr.OFTReal, ogr.OFTInteger, [1], [1]],
+        [ogr.OFTReal, ogr.OFTInteger, [1.23], [1]],
+        [ogr.OFTReal, ogr.OFTInteger, [float("nan")], [-(1 << 31)]],
+        [ogr.OFTReal, ogr.OFTInteger64, [1], [1]],
+        [ogr.OFTReal, ogr.OFTInteger64, [1.23], [1]],
+        [ogr.OFTReal, ogr.OFTInteger64, [float("nan")], [-(1 << 63)]],
+        [ogr.OFTInteger64, ogr.OFTReal, [1234567890123, None], [1234567890123, None]],
+        [
+            ogr.OFTInteger64,
+            ogr.OFTReal,
+            [((1 << 63) - 1), None],
+            [float((1 << 63) - 1), None],
+        ],
+        # below is never lossy
+        [ogr.OFTInteger, ogr.OFTInteger64, [123456, None], [123456, None]],
+        [ogr.OFTInteger, ogr.OFTReal, [123456, None], [123456, None]],
+    ],
+)
+@gdaltest.enable_exceptions()
+def test_ogr_mem_write_arrow_accepted_field_type_mismatch(
+    input_type, output_type, input_vals, output_vals, IF_FIELD_NOT_PRESERVED
+):
+
+    if input_vals[0] == ((1 << 63) - 1) and output_type == ogr.OFTReal:
+        # This conversion from INT64_MAX to double doesn't seem to be lossy
+        # on arm64 or s390x (weird...)
+        import platform
+
+        if platform.machine() not in ("x86_64", "AMD64"):
+            pytest.skip("Skipping test on platform.machine() = " + platform.machine())
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("src_lyr")
+
+    src_lyr.CreateField(ogr.FieldDefn("my_field", input_type))
+
+    for v in input_vals:
+        src_feature = ogr.Feature(src_lyr.GetLayerDefn())
+        if v:
+            src_feature["my_field"] = v
+        src_lyr.CreateFeature(src_feature)
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    dst_lyr = ds.CreateLayer("dst_lyr")
+    dst_lyr.CreateField(ogr.FieldDefn("my_field", output_type))
+
+    stream = src_lyr.GetArrowStream(["INCLUDE_FID=NO"])
+    schema = stream.GetSchema()
+
+    lossy_conversion = (input_vals != output_vals) or (
+        input_vals[0] == ((1 << 63) - 1) and output_type == ogr.OFTReal
+    )
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        if IF_FIELD_NOT_PRESERVED:
+            if lossy_conversion:
+                with gdal.quiet_errors(), pytest.raises(
+                    Exception, match="value of field my_field cannot not preserved"
+                ):
+                    dst_lyr.WriteArrowBatch(
+                        schema,
+                        array,
+                        {"IF_FIELD_NOT_PRESERVED": IF_FIELD_NOT_PRESERVED},
+                    )
+                return
+            else:
+                dst_lyr.WriteArrowBatch(
+                    schema, array, {"IF_FIELD_NOT_PRESERVED": IF_FIELD_NOT_PRESERVED}
+                )
+        else:
+            if lossy_conversion:
+                with gdal.quiet_errors():
+                    gdal.ErrorReset()
+                    dst_lyr.WriteArrowBatch(schema, array)
+                    assert gdal.GetLastErrorType() == gdal.CE_Warning
+            else:
+                gdal.ErrorReset()
+                dst_lyr.WriteArrowBatch(schema, array)
+                assert gdal.GetLastErrorType() == gdal.CE_None
+
+    dst_lyr.ResetReading()
+
+    for v in output_vals:
+        f = dst_lyr.GetNextFeature()
+        assert f["my_field"] == v
 
 
 ###############################################################################
@@ -2749,6 +2873,24 @@ def test_ogr_mem_write_pyarrow_invalid_dict_index(dict_values):
         match="Feature 4, field dict_invalid_index: invalid dictionary index: 3",
     ):
         lyr.WritePyArrow(table)
+
+
+###############################################################################
+
+
+def test_ogr_mem_arrow_json():
+    pytest.importorskip("pyarrow")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+    field_def = ogr.FieldDefn("field_json", ogr.OFTString)
+    field_def.SetSubType(ogr.OFSTJSON)
+    lyr.CreateField(field_def)
+
+    stream = lyr.GetArrowStreamAsPyArrow()
+    md = stream.schema["field_json"].metadata
+    assert b"ARROW:extension:name" in md
+    assert md[b"ARROW:extension:name"] == b"arrow.json"
 
 
 ###############################################################################

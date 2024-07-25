@@ -123,6 +123,9 @@ class GDALDataset::Private
 
     bool m_bOverviewsEnabled = true;
 
+    std::vector<int>
+        m_anBandMap{};  // used by RasterIO(). Values are 1, 2, etc.
+
     Private() = default;
 };
 
@@ -2255,7 +2258,7 @@ CPLErr GDALDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                               int nXSize, int nYSize, void *pData,
                               int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, int nBandCount,
-                              int *panBandMap, GSpacing nPixelSpace,
+                              BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
                               GSpacing nLineSpace, GSpacing nBandSpace,
                               GDALRasterIOExtraArg *psExtraArg)
 
@@ -2438,13 +2441,11 @@ CPLErr GDALDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-CPLErr GDALDataset::BandBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                                      int nXSize, int nYSize, void *pData,
-                                      int nBufXSize, int nBufYSize,
-                                      GDALDataType eBufType, int nBandCount,
-                                      int *panBandMap, GSpacing nPixelSpace,
-                                      GSpacing nLineSpace, GSpacing nBandSpace,
-                                      GDALRasterIOExtraArg *psExtraArg)
+CPLErr GDALDataset::BandBasedRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    int nBandCount, const int *panBandMap, GSpacing nPixelSpace,
+    GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 
 {
     int iBandIndex;
@@ -2502,7 +2503,7 @@ CPLErr GDALDataset::BandBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
     const char *pszCallingFunc, int *pbStopProcessingOnCENone, int nXOff,
     int nYOff, int nXSize, int nYSize, int nBufXSize, int nBufYSize,
-    int nBandCount, int *panBandMap)
+    int nBandCount, const int *panBandMap)
 {
 
     /* -------------------------------------------------------------------- */
@@ -2656,13 +2657,15 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  *
  * @param eBufType the type of the pixel values in the pData data buffer. The
  * pixel values will automatically be translated to/from the GDALRasterBand
- * data type as needed.
+ * data type as needed. Most driver implementations will use GDALCopyWords64()
+ * to perform data type translation.
  *
  * @param nBandCount the number of bands being read or written.
  *
  * @param panBandMap the list of nBandCount band numbers being read/written.
  * Note band numbers are 1 based. This may be NULL to select the first
- * nBandCount bands.
+ * nBandCount bands. (Note: before GDAL 3.10, argument type was "int*", and
+ * not "const int*")
  *
  * @param nPixelSpace The byte offset from the start of one pixel value in
  * pData to the start of the next pixel value within a scanline. If defaulted
@@ -2689,7 +2692,7 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
 CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, int *panBandMap,
+                             int nBandCount, const int *panBandMap,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
@@ -2774,30 +2777,18 @@ CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         nBandSpace = nLineSpace * nBufYSize;
     }
 
-    bool bNeedToFreeBandMap = false;
-    int anBandMap[] = {1, 2, 3, 4};
     if (panBandMap == nullptr)
     {
-        if (nBandCount > 4)
+        if (!m_poPrivate)
+            return CE_Failure;
+        const int nOldBandMapSize =
+            static_cast<int>(m_poPrivate->m_anBandMap.size());
+        if (nOldBandMapSize < nBandCount)
         {
-            panBandMap =
-                static_cast<int *>(VSIMalloc2(sizeof(int), nBandCount));
-            if (panBandMap == nullptr)
-            {
-                ReportError(CE_Failure, CPLE_OutOfMemory,
-                            "Out of memory while allocating band map array");
-                return CE_Failure;
-            }
-
-            for (int i = 0; i < nBandCount; ++i)
-                panBandMap[i] = i + 1;
-
-            bNeedToFreeBandMap = true;
+            for (int i = nOldBandMapSize; i < nBandCount; ++i)
+                m_poPrivate->m_anBandMap.push_back(i + 1);
         }
-        else
-        {
-            panBandMap = anBandMap;
-        }
+        panBandMap = m_poPrivate->m_anBandMap.data();
     }
 
     int bCallLeaveReadWrite = EnterReadWrite(eRWFlag);
@@ -2820,18 +2811,15 @@ CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     else
     {
         eErr = IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
-                         nBufXSize, nBufYSize, eBufType, nBandCount, panBandMap,
-                         nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
+                         nBufXSize, nBufYSize, eBufType, nBandCount,
+                         // TODO: remove this const_cast once IRasterIO()
+                         // takes a const int*
+                         const_cast<int *>(panBandMap), nPixelSpace, nLineSpace,
+                         nBandSpace, psExtraArg);
     }
 
     if (bCallLeaveReadWrite)
         LeaveReadWrite();
-
-    /* -------------------------------------------------------------------- */
-    /*      Cleanup                                                         */
-    /* -------------------------------------------------------------------- */
-    if (bNeedToFreeBandMap)
-        CPLFree(panBandMap);
 
     return eErr;
 }
@@ -2846,6 +2834,8 @@ CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
  * Use GDALDatasetRasterIOEx() if 64 bit spacings or extra arguments (resampling
  * resolution, progress callback, etc. are needed)
  *
+ * Note: before GDAL 3.10, panBandMap type was "int*", and not "const int*"
+ *
  * @see GDALDataset::RasterIO()
  */
 
@@ -2853,7 +2843,7 @@ CPLErr CPL_STDCALL GDALDatasetRasterIO(GDALDatasetH hDS, GDALRWFlag eRWFlag,
                                        int nXOff, int nYOff, int nXSize,
                                        int nYSize, void *pData, int nBufXSize,
                                        int nBufYSize, GDALDataType eBufType,
-                                       int nBandCount, int *panBandMap,
+                                       int nBandCount, const int *panBandMap,
                                        int nPixelSpace, int nLineSpace,
                                        int nBandSpace)
 
@@ -2875,6 +2865,8 @@ CPLErr CPL_STDCALL GDALDatasetRasterIO(GDALDatasetH hDS, GDALRWFlag eRWFlag,
 /**
  * \brief Read/write a region of image data from multiple bands.
  *
+ * Note: before GDAL 3.10, panBandMap type was "int*", and not "const int*"
+ *
  * @see GDALDataset::RasterIO()
  * @since GDAL 2.0
  */
@@ -2882,7 +2874,7 @@ CPLErr CPL_STDCALL GDALDatasetRasterIO(GDALDatasetH hDS, GDALRWFlag eRWFlag,
 CPLErr CPL_STDCALL GDALDatasetRasterIOEx(
     GDALDatasetH hDS, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     int nYSize, void *pData, int nBufXSize, int nBufYSize,
-    GDALDataType eBufType, int nBandCount, int *panBandMap,
+    GDALDataType eBufType, int nBandCount, const int *panBandMap,
     GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
     GDALRasterIOExtraArg *psExtraArg)
 
@@ -3240,7 +3232,7 @@ char **GDALDataset::GetFileList()
     const GDALAntiRecursionStruct::DatasetContext datasetCtxt(osMainFilename, 0,
                                                               std::string());
     auto &aosDatasetList = sAntiRecursion.aosDatasetNamesWithFlags;
-    if (aosDatasetList.find(datasetCtxt) != aosDatasetList.end())
+    if (cpl::contains(aosDatasetList, datasetCtxt))
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -3634,8 +3626,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
         osAllowedDrivers += pszDriverName;
     auto dsCtxt = GDALAntiRecursionStruct::DatasetContext(
         std::string(pszFilename), nOpenFlags, osAllowedDrivers);
-    if (sAntiRecursion.aosDatasetNamesWithFlags.find(dsCtxt) !=
-        sAntiRecursion.aosDatasetNamesWithFlags.end())
+    if (cpl::contains(sAntiRecursion.aosDatasetNamesWithFlags, dsCtxt))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GDALOpen() called on %s recursively", pszFilename);
@@ -4008,7 +3999,9 @@ retry:
                     {
                         if (VSIStat(pszGDALDriverPath, &sStat) != 0)
                         {
-                            osMsg += ". Directory '";
+                            if (osMsg.back() != '.')
+                                osMsg += ".";
+                            osMsg += " Directory '";
                             osMsg += pszGDALDriverPath;
                             osMsg +=
                                 "' pointed by GDAL_DRIVER_PATH does not exist.";
@@ -4016,10 +4009,12 @@ retry:
                     }
                     else
                     {
+                        if (osMsg.back() != '.')
+                            osMsg += ".";
 #ifdef INSTALL_PLUGIN_FULL_DIR
                         if (VSIStat(INSTALL_PLUGIN_FULL_DIR, &sStat) != 0)
                         {
-                            osMsg += ". Directory '";
+                            osMsg += " Directory '";
                             osMsg += INSTALL_PLUGIN_FULL_DIR;
                             osMsg += "' hardcoded in the GDAL library does not "
                                      "exist and the GDAL_DRIVER_PATH "
@@ -4028,7 +4023,7 @@ retry:
                         else
 #endif
                         {
-                            osMsg += ". The GDAL_DRIVER_PATH configuration "
+                            osMsg += " The GDAL_DRIVER_PATH configuration "
                                      "option is not set.";
                         }
                     }
@@ -4652,6 +4647,8 @@ char **GDALDataset::GetMetadata(const char *pszDomain)
     return GDALMajorObject::GetMetadata(pszDomain);
 }
 
+// clang-format off
+
 /**
  * \fn GDALDataset::SetMetadata( char ** papszMetadata, const char * pszDomain)
  * \brief Set metadata.
@@ -4673,8 +4670,7 @@ char **GDALDataset::GetMetadata(const char *pszDomain)
  */
 
 /**
- * \fn GDALDataset::SetMetadataItem( const char * pszName, const char *
- * pszValue, const char * pszDomain)
+ * \fn GDALDataset::SetMetadataItem( const char * pszName, const char * pszValue, const char * pszDomain)
  * \brief Set single metadata item.
  *
  * CAUTION: depending on the format, older values of the updated information
@@ -4690,6 +4686,8 @@ char **GDALDataset::GetMetadata(const char *pszDomain)
  *
  * @return CE_None on success, or an error code on failure.
  */
+
+// clang-format on
 
 /************************************************************************/
 /*                            GetMetadataDomainList()                   */
@@ -4909,6 +4907,11 @@ OGRErr GDALDatasetDeleteLayer(GDALDatasetH hDS, int iLayer)
 
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetH", OGRERR_INVALID_HANDLE);
+
+#ifdef OGRAPISPY_ENABLED
+    if (bOGRAPISpyEnabled)
+        OGRAPISpy_DS_DeleteLayer(hDS, iLayer);
+#endif
 
     return GDALDataset::FromHandle(hDS)->DeleteLayer(iLayer);
 }
@@ -7009,24 +7012,23 @@ OGRLayer *GDALDataset::BuildLayerFromSelectInfo(
     swq_select *psSelectInfo, OGRGeometry *poSpatialFilter,
     const char *pszDialect, swq_select_parse_options *poSelectParseOptions)
 {
+    std::unique_ptr<swq_select> psSelectInfoUnique(psSelectInfo);
+
     std::unique_ptr<OGRGenSQLResultsLayer> poResults;
     GDALSQLParseInfo *psParseInfo =
-        BuildParseInfo(psSelectInfo, poSelectParseOptions);
+        BuildParseInfo(psSelectInfoUnique.get(), poSelectParseOptions);
 
     if (psParseInfo)
     {
         const auto nErrorCounter = CPLGetErrorCounter();
         poResults = std::make_unique<OGRGenSQLResultsLayer>(
-            this, psSelectInfo, poSpatialFilter, psParseInfo->pszWHERE,
-            pszDialect);
+            this, std::move(psSelectInfoUnique), poSpatialFilter,
+            psParseInfo->pszWHERE, pszDialect);
         if (CPLGetErrorCounter() > nErrorCounter &&
             CPLGetLastErrorType() != CE_None)
             poResults.reset();
     }
-    else
-    {
-        delete psSelectInfo;
-    }
+
     DestroyParseInfo(psParseInfo);
 
     return poResults.release();

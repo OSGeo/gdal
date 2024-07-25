@@ -35,6 +35,7 @@ by subdatasets on the main image)
 Open options
 ------------
 
+|about-open-options|
 The following open options are available :
 
 -  .. oo:: ASSET
@@ -80,6 +81,7 @@ The following authentication methods can be used:
 Configuration options
 ---------------------
 
+|about-config-options|
 The following configuration options are available :
 
 -  .. config:: EEDA_BEARER

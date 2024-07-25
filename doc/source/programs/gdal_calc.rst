@@ -1,7 +1,7 @@
 .. _gdal_calc:
 
 ================================================================================
-gdal_calc.py
+gdal_calc
 ================================================================================
 
 .. only:: html
@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdal_calc.py [--help] [--help-general]
+    gdal_calc [--help] [--help-general]
                  --calc=expression --outfile=<out_filename> [-A <filename>]
                  [--A_band=<n>] [-B...-Z <filename>] [<other_options>]
 
@@ -27,6 +27,10 @@ arithmetic supported by numpy arrays such as ``+``, ``-``, ``*``, and
 ``/`` along with logical operators such as ``>``.
 Note that all files must have the same dimensions (unless extent option is used),
 but no projection checking is performed (unless projectionCheck option is used).
+
+.. note::
+
+    gdal_calc is a Python utility, and is only available if GDAL Python bindings are available.
 
 .. include:: options/help_and_help_general.rst
 
@@ -184,13 +188,13 @@ Add two files together:
 
 .. code-block:: bash
 
-    gdal_calc.py -A input1.tif -B input2.tif --outfile=result.tif --calc="A+B"
+    gdal_calc -A input1.tif -B input2.tif --outfile=result.tif --calc="A+B"
 
 Average of two layers:
 
 .. code-block:: bash
 
-    gdal_calc.py -A input1.tif -B input2.tif --outfile=result.tif --calc="(A+B)/2"
+    gdal_calc -A input1.tif -B input2.tif --outfile=result.tif --calc="(A+B)/2"
 
 .. note::
 
@@ -199,52 +203,53 @@ Average of two layers:
 
    .. code-block:: bash
 
-      gdal_calc.py -A input.tif -B input2.tif --outfile=result.tif --calc="(A.astype(numpy.float64) + B) / 2"
+      gdal_calc -A input.tif -B input2.tif --outfile=result.tif --calc="(A.astype(numpy.float64) + B) / 2"
 
 Add three files together (two options with the same result):
 
 .. code-block:: bash
 
-    gdal_calc.py -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="A+B+C"
+    gdal_calc -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="A+B+C"
 
 .. code-block:: bash
 
-    gdal_calc.py -A input1.tif -A input2.tif -A input3.tif --outfile=result.tif --calc="numpy.sum(A,axis=0)".
+    gdal_calc -A input1.tif -A input2.tif -A input3.tif --outfile=result.tif --calc="numpy.sum(A,axis=0)".
 
 Average of three layers (two options with the same result):
 
 .. code-block:: bash
 
-    gdal_calc.py -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="(A+B+C)/3"
+    gdal_calc -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="(A+B+C)/3"
 
 .. code-block:: bash
 
-    gdal_calc.py -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.average(a,axis=0)".
+    gdal_calc -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.average(a,axis=0)".
 
 Maximum of three layers  (two options with the same result):
 
 .. code-block:: bash
 
-    gdal_calc.py -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="numpy.max((A,B,C),axis=0)"
+    gdal_calc -A input1.tif -B input2.tif -C input3.tif --outfile=result.tif --calc="numpy.max((A,B,C),axis=0)"
 
 .. code-block:: bash
 
-    gdal_calc.py -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.max(A,axis=0)"
+    gdal_calc -A input1.tif input2.tif input3.tif --outfile=result.tif --calc="numpy.max(A,axis=0)"
 
 Set values of zero and below to null:
 
 .. code-block:: bash
 
-    gdal_calc.py -A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0
+    gdal_calc -A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0
 
 Using logical operator to keep a range of values from input:
 
 .. code-block:: bash
 
-    gdal_calc.py -A input.tif --outfile=result.tif --calc="A*logical_and(A>100,A<150)"
+    gdal_calc -A input.tif --outfile=result.tif --calc="A*logical_and(A>100,A<150)"
 
 Work with multiple bands:
 
 .. code-block:: bash
 
-    gdal_calc.py -A input.tif --A_band=1 -B input.tif --B_band=2 --outfile=result.tif --calc="(A+B)/2" --calc="B*logical_and(A>100,A<150)"
+    gdal_calc -A input.tif --A_band=1 -B input.tif --B_band=2 \
+      --outfile=result.tif --calc="(A+B)/2" --calc="B*logical_and(A>100,A<150)"

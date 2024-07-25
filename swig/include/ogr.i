@@ -756,6 +756,11 @@ public:
 
 #ifndef FROM_GDAL_I
 
+#ifdef SWIGPYTHON
+/* In Python, gdal.Driver and ogr.Driver are equivalent */
+typedef GDALDriverShadow OGRDriverShadow;
+#else
+
 %rename (Driver) OGRDriverShadow;
 
 #ifdef SWIGCSHARP
@@ -867,10 +872,17 @@ public:
 } /* %extend */
 }; /* class OGRDriverShadow */
 
+#endif
+
 /************************************************************************/
 /*                            OGRDataSource                             */
 /************************************************************************/
 
+#ifdef SWIGPYTHON
+/* In Python, ogr.DataSource and gdal.Dataset are equivalent */
+typedef GDALDatasetShadow OGRDataSourceShadow;
+
+#else
 
 %rename (DataSource) OGRDataSourceShadow;
 
@@ -1032,6 +1044,8 @@ public:
 
 
 }; /* class OGRDataSourceShadow */
+
+#endif /* not SWIGPYTHON */
 
 #endif /* FROM_GDAL_I */
 
@@ -3691,11 +3705,15 @@ public:
   }
 
   %newobject Buffer;
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA) && !defined(SWIGPYTHON)
   %feature("kwargs") Buffer;
 #endif
   OGRGeometryShadow* Buffer( double distance, int quadsecs=30 ) {
     return (OGRGeometryShadow*) OGR_G_Buffer( self, distance, quadsecs );
+  }
+
+  OGRGeometryShadow* Buffer( double distance, char** options ) {
+    return (OGRGeometryShadow*) OGR_G_BufferEx( self, distance, options );
   }
 
 %apply Pointer NONNULL {OGRGeometryShadow* other};

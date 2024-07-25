@@ -32,8 +32,13 @@
 
 constexpr const char *DRIVER_NAME = "HEIF";
 
-int CPL_DLL HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo);
+#define HEIFDriverIdentifySimplified                                           \
+    PLUGIN_SYMBOL_NAME(HEIFDriverIdentifySimplified)
+#define HEIFDriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(HEIFDriverSetCommonMetadata)
 
-void CPL_DLL HEIFDriverSetCommonMetadata(GDALDriver *poDriver);
+int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo);
+
+void HEIFDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

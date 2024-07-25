@@ -109,7 +109,11 @@ struct CPL_DLL VSIVirtualHandle
     int Printf(CPL_FORMAT_STRING(const char *pszFormat), ...)
         CPL_PRINT_FUNC_FORMAT(2, 3);
 
+    virtual void ClearErr() = 0;
+
     virtual int Eof() = 0;
+
+    virtual int Error() = 0;
 
     virtual int Flush()
     {
@@ -283,6 +287,12 @@ class CPL_DLL VSIFilesystemHandler
                          const char *const *papszOptions,
                          GDALProgressFunc pProgressFunc, void *pProgressData);
 
+    virtual int
+    CopyFileRestartable(const char *pszSource, const char *pszTarget,
+                        const char *pszInputPayload, char **ppszOutputPayload,
+                        CSLConstList papszOptions,
+                        GDALProgressFunc pProgressFunc, void *pProgressData);
+
     virtual VSIDIR *OpenDir(const char *pszPath, int nRecurseDepth,
                             const char *const *papszOptions);
 
@@ -294,6 +304,31 @@ class CPL_DLL VSIFilesystemHandler
                                  CSLConstList papszMetadata,
                                  const char *pszDomain,
                                  CSLConstList papszOptions);
+
+    virtual bool
+    MultipartUploadGetCapabilities(int *pbNonSequentialUploadSupported,
+                                   int *pbParallelUploadSupported,
+                                   int *pbAbortSupported, size_t *pnMinPartSize,
+                                   size_t *pnMaxPartSize, int *pnMaxPartCount);
+
+    virtual char *MultipartUploadStart(const char *pszFilename,
+                                       CSLConstList papszOptions);
+
+    virtual char *MultipartUploadAddPart(const char *pszFilename,
+                                         const char *pszUploadId,
+                                         int nPartNumber,
+                                         vsi_l_offset nFileOffset,
+                                         const void *pData, size_t nDataLength,
+                                         CSLConstList papszOptions);
+
+    virtual bool
+    MultipartUploadEnd(const char *pszFilename, const char *pszUploadId,
+                       size_t nPartIdsCount, const char *const *apszPartIds,
+                       vsi_l_offset nTotalSize, CSLConstList papszOptions);
+
+    virtual bool MultipartUploadAbort(const char *pszFilename,
+                                      const char *pszUploadId,
+                                      CSLConstList papszOptions);
 
     virtual bool AbortPendingUploads(const char * /*pszFilename*/)
     {

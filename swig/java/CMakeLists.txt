@@ -186,7 +186,7 @@ install(
   DESTINATION ${GDAL_JAVA_INSTALL_DIR})
 
 # Tests
-if (Java_Runtime_FOUND)
+if (Java_Runtime_FOUND AND BUILD_TESTING)
 
   file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/tmp_test)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tmp_test)

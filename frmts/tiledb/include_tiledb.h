@@ -52,35 +52,6 @@
 #endif
 
 #if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 9)
-#define HAS_TILEDB_GROUP
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 10)
-#define HAS_TILEDB_BOOL
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 11)
-#define HAS_TILEDB_WORKING_OR_FILTER
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 14)
-#define HAS_TILEDB_WORKING_UTF8_STRING_FILTER
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 15)
-#define HAS_TILEDB_DIMENSION_LABEL
-#endif
-
-#ifdef HAS_TILEDB_DIMENSION_LABEL
-#define HAS_TILEDB_MULTIDIM
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
     (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 21)
 #define HAS_TILEDB_GEOM_WKB_WKT
 #endif

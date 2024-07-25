@@ -803,7 +803,8 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
 /************************************************************************/
 
 VSIAzureBlobHandleHelper *VSIAzureBlobHandleHelper::BuildFromURI(
-    const char *pszURI, const char *pszFSPrefix, CSLConstList papszOptions)
+    const char *pszURI, const char *pszFSPrefix,
+    const char *pszURIForPathSpecificOption, CSLConstList papszOptions)
 {
     if (strcmp(pszFSPrefix, "/vsiaz/") != 0 &&
         strcmp(pszFSPrefix, "/vsiaz_streaming/") != 0 &&
@@ -820,7 +821,8 @@ VSIAzureBlobHandleHelper *VSIAzureBlobHandleHelper::BuildFromURI(
 
     std::string osPathForOption(
         eService == Service::SERVICE_BLOB ? "/vsiaz/" : "/vsiadls/");
-    osPathForOption += pszURI;
+    osPathForOption +=
+        pszURIForPathSpecificOption ? pszURIForPathSpecificOption : pszURI;
 
     bool bUseHTTPS = true;
     std::string osStorageAccount;

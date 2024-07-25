@@ -2480,7 +2480,7 @@ GDALPDFObject *PDFDataset::GetCatalog()
         return m_poCatalogObject;
 
 #ifdef HAVE_POPPLER
-    if (m_bUseLib.test(PDFLIB_POPPLER))
+    if (m_bUseLib.test(PDFLIB_POPPLER) && m_poDocPoppler)
     {
         m_poCatalogObjectPoppler =
             std::make_unique<Object>(m_poDocPoppler->getXRef()->getCatalog());
@@ -2491,7 +2491,7 @@ GDALPDFObject *PDFDataset::GetCatalog()
 #endif
 
 #ifdef HAVE_PODOFO
-    if (m_bUseLib.test(PDFLIB_PODOFO))
+    if (m_bUseLib.test(PDFLIB_PODOFO) && m_poDocPodofo)
     {
         int nCatalogNum = 0;
         int nCatalogGen = 0;
@@ -2517,7 +2517,7 @@ GDALPDFObject *PDFDataset::GetCatalog()
 #endif
 
 #ifdef HAVE_PDFIUM
-    if (m_bUseLib.test(PDFLIB_PDFIUM))
+    if (m_bUseLib.test(PDFLIB_PDFIUM) && m_poDocPdfium)
     {
         const CPDF_Dictionary *catalog = m_poDocPdfium->doc->GetRoot();
         if (catalog)
@@ -2656,9 +2656,7 @@ PDFDataset::~PDFDataset()
 
     CleanupIntermediateResources();
 
-    for (int i = 0; i < m_nLayers; i++)
-        delete m_papoLayers[i];
-    CPLFree(m_papoLayers);
+    m_apoLayers.clear();
 
     // Do that only after having destroyed Poppler objects
     m_fp.reset();
@@ -2671,7 +2669,7 @@ PDFDataset::~PDFDataset()
 CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, int *panBandMap,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
@@ -4959,11 +4957,11 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
         poPageObj = GDALPDFObjectPdfium::Build(pageObj);
-        if (poPageObj == nullptr)
-            return nullptr;
     }
 #endif  // ~ HAVE_PDFIUM
 
+    if (poPageObj == nullptr)
+        return nullptr;
     GDALPDFDictionary *poPageDict = poPageObj->GetDictionary();
     if (poPageDict == nullptr)
     {
@@ -5034,7 +5032,9 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (pszDumpCatalog != nullptr)
     {
         GDALPDFDumper oDumper(pszFilename, pszDumpCatalog);
-        oDumper.Dump(poDS->GetCatalog());
+        auto poCatalog = poDS->GetCatalog();
+        if (poCatalog)
+            oDumper.Dump(poCatalog);
     }
 
     int nBandsGuessed = 0;
@@ -5092,6 +5092,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef HAVE_PDFIUM
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
+        CPLAssert(poPagePdfium);
         CFX_FloatRect rect = poPagePdfium->page->GetBBox();
         dfX1 = rect.left;
         dfX2 = rect.right;
@@ -5136,6 +5137,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef HAVE_PDFIUM
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
+        CPLAssert(poPagePdfium);
         dfRotation = poPagePdfium->page->GetPageRotation() * 90;
     }
 #endif

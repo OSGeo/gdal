@@ -205,9 +205,15 @@ OGRElasticLayer::OGRElasticLayer(const char *pszLayerName,
     {
         OGRFieldDefn oFieldDefn("_index", OFTString);
         poFeatureDefn->AddFieldDefn(&oFieldDefn);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         m_aaosFieldPaths.insert(m_aaosFieldPaths.begin(),
                                 std::vector<CPLString>());
-
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         for (auto &kv : m_aosMapToFieldIndex)
         {
             kv.second++;
@@ -3265,7 +3271,8 @@ json_object *OGRElasticLayer::TranslateSQLToFilter(swq_expr_node *poNode)
 {
     if (poNode->eNodeType == SNT_OPERATION)
     {
-        int nFieldIdx;
+        int nFieldIdx = 0;
+        CPL_IGNORE_RET_VAL(nFieldIdx);  // to make cppcheck happy
         if (poNode->nOperation == SWQ_AND && poNode->nSubExprCount == 2)
         {
             // For AND, we can deal with a failure in one of the branch

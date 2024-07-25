@@ -30,6 +30,7 @@
 ###############################################################################
 
 import collections
+import os
 import pathlib
 import struct
 
@@ -115,6 +116,8 @@ def test_gdalmdimtranslate_classic_to_multidim(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"
     tmpgtifffile = tmp_vsimem / "tmp.tif"
+    if os.path.exists("../gcore/data/byte.tif.aux.xml"):
+        os.unlink("../gcore/data/byte.tif.aux.xml")
     ds = gdal.Translate(tmpgtifffile, "../gcore/data/byte.tif")
     ds.SetSpatialRef(None)
     ds = None

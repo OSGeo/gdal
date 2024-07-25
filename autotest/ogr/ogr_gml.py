@@ -1363,6 +1363,35 @@ def test_ogr_gml_38(tmp_path, resolver):
 
 
 ###############################################################################
+# Test GML_SKIP_RESOLVE_ELEMS=HUGE with a file with 2 nested identical property
+# names
+
+
+@pytest.mark.require_driver("SQLite")
+@pytest.mark.require_geos
+def test_ogr_gml_huge_resolver_same_nested_property_name(tmp_path):
+
+    shutil.copy(
+        "data/gml/same_nested_property_name.gml",
+        tmp_path,
+    )
+
+    def check_ds(ds):
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["gml_id"] == "test.0"
+        assert f["test"] == "foo"
+        assert f["bar|test"] == "bar"
+
+    ds = ogr.Open(tmp_path / "same_nested_property_name.gml")
+    check_ds(ds)
+
+    with gdal.config_option("GML_SKIP_RESOLVE_ELEMS", "HUGE"):
+        ds = ogr.Open(tmp_path / "same_nested_property_name.gml")
+        check_ds(ds)
+
+
+###############################################################################
 # Test parsing XSD where simpleTypes not inlined, but defined elsewhere in the .xsd (#4328)
 
 
@@ -4315,3 +4344,107 @@ def test_ogr_gml_geom_coord_precision(tmp_vsimem):
     prec = geom_fld.GetCoordinatePrecision()
     assert prec.GetXYResolution() == 1e-5
     assert prec.GetZResolution() == 1e-3
+
+
+###############################################################################
+# Test weird scenario of https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=68850
+
+
+def test_ogr_gml_geom_link_to_immediate_child():
+
+    ds = gdal.OpenEx(
+        "data/gml/link_to_immediate_child.gml", open_options=["WRITE_GFS=NO"]
+    )
+    assert ds
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/10332
+
+
+@pytest.mark.parametrize("use_create_geom_field", [False, True])
+@pytest.mark.parametrize("has_srs", [False, True])
+def test_ogr_gml_ogr2ogr_from_layer_with_name_geom_field(
+    tmp_vsimem, use_create_geom_field, has_srs
+):
+
+    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    if has_srs:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    else:
+        srs = None
+    if use_create_geom_field:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        my_geom_field = ogr.GeomFieldDefn("my_geom", ogr.wkbUnknown)
+        my_geom_field.SetSpatialRef(srs)
+        lyr.CreateGeomField(my_geom_field)
+    else:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbUnknown, srs=srs)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(2 49)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(3 50)"))
+    lyr.CreateFeature(f)
+
+    out_filename = str(tmp_vsimem / "out.gml")
+    gdal.VectorTranslate(out_filename, ds, format="GML")
+
+    f = gdal.VSIFOpenL(out_filename, "rb")
+    assert f
+    try:
+        data = gdal.VSIFReadL(1, 10000, f)
+    finally:
+        gdal.VSIFCloseL(f)
+
+    if has_srs:
+        assert (
+            b'<gml:boundedBy><gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326"><gml:lowerCorner>49 2</gml:lowerCorner><gml:upperCorner>50 3</gml:upperCorner></gml:Envelope></gml:boundedBy>'
+            in data
+        )
+    else:
+        assert (
+            b"<gml:boundedBy><gml:Envelope><gml:lowerCorner>2 49</gml:lowerCorner><gml:upperCorner>3 50</gml:upperCorner></gml:Envelope></gml:boundedBy>"
+            in data
+        )
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("first_layer_has_srs", [False, True])
+def test_ogr_gml_ogr2ogr_from_layers_with_inconsistent_srs(
+    tmp_vsimem, first_layer_has_srs
+):
+
+    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    lyr = ds.CreateLayer(
+        "test", geom_type=ogr.wkbUnknown, srs=(srs if first_layer_has_srs else None)
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(2 49)"))
+    lyr.CreateFeature(f)
+
+    lyr = ds.CreateLayer(
+        "test2", geom_type=ogr.wkbUnknown, srs=(None if first_layer_has_srs else srs)
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(3 50)"))
+    lyr.CreateFeature(f)
+
+    out_filename = str(tmp_vsimem / "out.gml")
+    gdal.VectorTranslate(out_filename, ds, format="GML")
+
+    f = gdal.VSIFOpenL(out_filename, "rb")
+    assert f
+    try:
+        data = gdal.VSIFReadL(1, 10000, f)
+    finally:
+        gdal.VSIFCloseL(f)
+
+    assert b"<gml:boundedBy><gml:Null /></gml:boundedBy>" in data

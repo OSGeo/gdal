@@ -331,16 +331,4 @@ OGRErr OGRMutexedLayer::Rename(const char *pszNewName)
     return OGRLayerDecorator::Rename(pszNewName);
 }
 
-#if defined(_WIN32) && defined(_MSC_VER)
-// Horrible hack: for some reason MSVC doesn't export the class
-// if it is not referenced from the DLL itself
-void OGRRegisterMutexedLayer();
-
-void OGRRegisterMutexedLayer()
-{
-    CPLAssert(false);  // Never call this function: it will segfault
-    delete new OGRMutexedLayer(NULL, FALSE, NULL);
-}
-#endif
-
 #endif /* #ifndef DOXYGEN_SKIP */

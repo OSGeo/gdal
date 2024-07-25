@@ -691,7 +691,7 @@ class netCDFLayer final : public OGRLayer
 
     OGRFeature *GetNextRawFeature();
     double Get1DVarAsDouble(int nVarId, nc_type nVarType, size_t nIndex,
-                            NCDFNoDataUnion noDataVal, bool *pbIsNoData);
+                            const NCDFNoDataUnion &noDataVal, bool *pbIsNoData);
     CPLErr GetFillValue(int nVarID, char **ppszValue);
     CPLErr GetFillValue(int nVarID, double *pdfValue);
     void GetNoDataValueForFloat(int nVarId, NCDFNoDataUnion *puNoData);

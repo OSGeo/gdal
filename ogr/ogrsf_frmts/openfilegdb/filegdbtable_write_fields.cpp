@@ -383,8 +383,17 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
     WriteUTF16String(abyBuffer, psField->GetAlias().c_str(),
                      NUMBER_OF_CHARS_ON_UINT8);
     WriteUInt8(abyBuffer, static_cast<uint8_t>(psField->GetType()));
-    constexpr int UNKNOWN_FIELD_FLAG = 4;
+
     const auto &sDefault = *(psField->GetDefault());
+
+    uint8_t nFlag = 0;
+    if (psField->IsNullable())
+        nFlag = static_cast<uint8_t>(nFlag | FileGDBField::MASK_NULLABLE);
+    if (psField->IsRequired())
+        nFlag = static_cast<uint8_t>(nFlag | FileGDBField::MASK_REQUIRED);
+    if (psField->IsEditable())
+        nFlag = static_cast<uint8_t>(nFlag | FileGDBField::MASK_EDITABLE);
+
     switch (psField->GetType())
     {
         case FGFT_UNDEFINED:
@@ -396,9 +405,7 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
         case FGFT_INT16:
         {
             WriteUInt8(abyBuffer, 2);  // sizeof(int16)
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             if (!OGR_RawField_IsNull(&sDefault) &&
                 !OGR_RawField_IsUnset(&sDefault))
             {
@@ -415,9 +422,7 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
         case FGFT_INT32:
         {
             WriteUInt8(abyBuffer, 4);  // sizeof(int32)
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             if (!OGR_RawField_IsNull(&sDefault) &&
                 !OGR_RawField_IsUnset(&sDefault))
             {
@@ -434,9 +439,7 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
         case FGFT_FLOAT32:
         {
             WriteUInt8(abyBuffer, 4);  // sizeof(float32)
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             if (!OGR_RawField_IsNull(&sDefault) &&
                 !OGR_RawField_IsUnset(&sDefault))
             {
@@ -453,9 +456,7 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
         case FGFT_FLOAT64:
         {
             WriteUInt8(abyBuffer, 8);  // sizeof(float64)
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             if (!OGR_RawField_IsNull(&sDefault) &&
                 !OGR_RawField_IsUnset(&sDefault))
             {
@@ -472,9 +473,7 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
         case FGFT_STRING:
         {
             WriteUInt32(abyBuffer, psField->GetMaxWidth());
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             if (!OGR_RawField_IsNull(&sDefault) &&
                 !OGR_RawField_IsUnset(&sDefault))
             {
@@ -505,9 +504,7 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
         case FGFT_DATE:
         {
             WriteUInt8(abyBuffer, 8);  // sizeof(float64)
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             if (!OGR_RawField_IsNull(&sDefault) &&
                 !OGR_RawField_IsUnset(&sDefault))
             {
@@ -536,9 +533,7 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
             const auto *geomField =
                 cpl::down_cast<const FileGDBGeomField *>(psField);
             WriteUInt8(abyBuffer, 0);  // unknown role
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      2 | UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             WriteUTF16String(abyBuffer, geomField->GetWKT().c_str(),
                              NUMBER_OF_BYTES_ON_UINT16);
             WriteUInt8(
@@ -600,9 +595,7 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
         case FGFT_BINARY:
         {
             WriteUInt8(abyBuffer, 0);  // unknown role
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             break;
         }
 
@@ -617,27 +610,21 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
         case FGFT_GLOBALID:
         {
             WriteUInt8(abyBuffer, 38);  // size
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             break;
         }
 
         case FGFT_XML:
         {
             WriteUInt8(abyBuffer, 0);  // unknown role
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             break;
         }
 
         case FGFT_INT64:
         {
             WriteUInt8(abyBuffer, 8);  // sizeof(int64)
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             if (!OGR_RawField_IsNull(&sDefault) &&
                 !OGR_RawField_IsUnset(&sDefault))
             {
@@ -654,9 +641,7 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
         case FGFT_TIME:
         {
             WriteUInt8(abyBuffer, 8);  // sizeof(float64)
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             if (!OGR_RawField_IsNull(&sDefault) &&
                 !OGR_RawField_IsUnset(&sDefault))
             {
@@ -673,9 +658,7 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
         case FGFT_DATETIME_WITH_OFFSET:
         {
             WriteUInt8(abyBuffer, 8 + 2);  // sizeof(float64) + sizeof(int16)
-            WriteUInt8(abyBuffer, static_cast<uint8_t>(
-                                      UNKNOWN_FIELD_FLAG |
-                                      static_cast<int>(psField->IsNullable())));
+            WriteUInt8(abyBuffer, nFlag);
             if (!OGR_RawField_IsNull(&sDefault) &&
                 !OGR_RawField_IsUnset(&sDefault))
             {
@@ -837,7 +820,7 @@ bool FileGDBTable::DeleteField(int iField)
             m_apoFields[m_iGeomField]->m_eType = FGFT_BINARY;
         m_iGeomField = -1;
 
-        for (int iCurFeat = 0; iCurFeat < m_nTotalRecordCount; ++iCurFeat)
+        for (int64_t iCurFeat = 0; iCurFeat < m_nTotalRecordCount; ++iCurFeat)
         {
             iCurFeat = GetAndSelectNextNonEmptyRow(iCurFeat);
             if (iCurFeat < 0)
@@ -978,7 +961,8 @@ bool FileGDBTable::AlterField(int iField, const std::string &osName,
     auto poIndex = m_apoFields[iField]->m_poIndex;
 
     m_apoFields[iField] = std::make_unique<FileGDBField>(
-        osName, osAlias, eType, bNullable, nMaxWidth, sDefault);
+        osName, osAlias, eType, bNullable, m_apoFields[iField]->IsRequired(),
+        m_apoFields[iField]->IsEditable(), nMaxWidth, sDefault);
     m_apoFields[iField]->SetParent(this);
     m_apoFields[iField]->m_poIndex = poIndex;
     if (poIndex && bRenameField)

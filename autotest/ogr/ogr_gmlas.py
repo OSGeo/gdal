@@ -57,24 +57,17 @@ def module_disable_exceptions():
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
 
-    gdal.SetConfigOption("GMLAS_WARN_UNEXPECTED", "YES")
-
     # FileGDB embedded libxml2 cause random crashes with CPLValidateXML() use of external libxml2
-    old_val_GDAL_XML_VALIDATION = gdal.GetConfigOption("GDAL_XML_VALIDATION")
-    if (
-        ogr.GetDriverByName("FileGDB") is not None
-        and old_val_GDAL_XML_VALIDATION is None
-    ):
-        gdal.SetConfigOption("GDAL_XML_VALIDATION", "NO")
+    # hence GDAL_XML_VALIDATION=NO
 
-    yield
+    with gdaltest.config_options(
+        {"GMLAS_WARN_UNEXPECTED": "YES", "GDAL_XML_VALIDATION": "NO"}
+    ):
+        yield
 
     files = gdal.ReadDir("/vsimem/")
     if files is not None:
         print("Remaining files: " + str(files))
-
-    gdal.SetConfigOption("GMLAS_WARN_UNEXPECTED", None)
-    gdal.SetConfigOption("GDAL_XML_VALIDATION", old_val_GDAL_XML_VALIDATION)
 
 
 ###############################################################################
@@ -620,12 +613,10 @@ def test_ogr_gmlas_validate():
     ds = gdal.OpenEx("GMLAS:data/gmlas/gmlas_validate.xml")
     assert ds is not None
     myhandler = MyHandler()
-    gdal.PushErrorHandler(myhandler.error_handler)
-    gdal.SetConfigOption("GMLAS_WARN_UNEXPECTED", None)
-    lyr = ds.GetLayer(0)
-    lyr.GetFeatureCount()
-    gdal.SetConfigOption("GMLAS_WARN_UNEXPECTED", "YES")
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler(myhandler.error_handler):
+        with gdal.config_option("GMLAS_WARN_UNEXPECTED", "NO"):
+            lyr = ds.GetLayer(0)
+            lyr.GetFeatureCount()
     assert not myhandler.error_list
 
     ds = gdal.OpenEx("GMLAS:data/gmlas/gmlas_validate.xml")
@@ -3434,17 +3425,19 @@ def test_ogr_gmlas_read_srsDimension_3_on_top_gml_Envelope():
 @pytest.mark.require_curl()
 def test_ogr_gmlas_get_gml_and_iso_schemas(tmp_path):
 
-    url = "https://schemas.opengis.net/iso/19139/iso19139-20070417.zip"
-    conn = gdaltest.gdalurlopen(url, timeout=4)
-    if conn is None:
-        pytest.skip(f"cannot open {url}")
+    iso19139_url = "https://schemas.opengis.net/iso/19139/iso19139-20070417.zip"
+    inspire_url = "https://inspire.ec.europa.eu/schemas/base/3.3/BaseTypes.xsd"
+    for url in [iso19139_url, inspire_url]:
+        conn = gdaltest.gdalurlopen(url, timeout=4)
+        if conn is None:
+            pytest.skip(f"cannot open {url}")
 
     cache_path = str(tmp_path / "cache")
 
     ds = gdal.OpenEx(
         "GMLAS:",
         open_options=[
-            "XSD=https://inspire.ec.europa.eu/schemas/base/3.3/BaseTypes.xsd",
+            "XSD=" + inspire_url,
             f"CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>true</AllowRemoteSchemaDownload><SchemaCache><Directory>{cache_path}</Directory></SchemaCache><LayerBuildingRules><IdentifierMaxLength>10</IdentifierMaxLength><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>",
         ],
     )
@@ -3468,3 +3461,14 @@ def test_ogr_gmlas_bugfix_sf_2371():
     ds = gdal.OpenEx("GMLAS:data/gmlas/citygml_empty_lod1.gml")
     lyr = ds.GetLayerByName("address1")
     assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Test force opening a GMLAS file
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gmlas_force_opening(tmp_vsimem):
+
+    ds = gdal.OpenEx("data/gmlas/gmlas_test1.xml", allowed_drivers=["GMLAS"])
+    assert ds.GetDriver().GetDescription() == "GMLAS"

@@ -35,9 +35,8 @@ set(GDAL_PYTHON_CSOURCES
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_band_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_dataset_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_driver_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_operations_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_docs.i
-       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_datasource_docs.i
-       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_driver_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_featuredef_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_feature_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_fielddef_docs.i
@@ -340,6 +339,37 @@ if (Python_Interpreter_FOUND)
     endif()
   endif()
 
+  # Install launcher scripts in bin/ (for development)
+  file(GLOB SCRIPTS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils/scripts" "${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils/scripts/*.py")
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tmp_bin")
+  foreach(filename IN LISTS SCRIPTS)
+      get_filename_component(filename_without_ext "${filename}" NAME_WLE)
+      if (UNIX)
+          set(lancher_filename "${filename_without_ext}")
+      else()
+          set(lancher_filename "${filename_without_ext}.bat")
+      endif()
+      set(tmp_launcher_filename "${CMAKE_CURRENT_BINARY_DIR}/tmp_bin/${lancher_filename}")
+      if (UNIX)
+          file(WRITE "${tmp_launcher_filename}"
+                     "#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import re
+import sys
+from osgeo_utils.${filename_without_ext} import main
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\\.pyw|\\.exe)?\$', '', sys.argv[0])
+    sys.exit(main())
+")
+      else()
+          file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils/scripts/${filename}" NATIVE_FILENAME)
+          file(WRITE "${tmp_launcher_filename}" "@python \"${NATIVE_FILENAME}\" %*")
+      endif()
+      file(COPY "${tmp_launcher_filename}"
+           DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/bin"
+           FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+  endforeach()
+
   add_custom_target(python_binding ALL DEPENDS ${PY_SO_LIST} ${PY_SO_LIST_WITH_RPATH} ${GDAL_PYTHON_PYSOURCES} ${GDAL_LIB_TARGET_NAME})
 
   # Generate wheel
@@ -371,8 +401,15 @@ if (Python_Interpreter_FOUND)
 
   # Install extension
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/trimmedsysconfig.py ${CMAKE_CURRENT_BINARY_DIR}/trimmedsysconfig.py @ONLY)
+  if (DEFINED GDAL_PYTHON_INSTALL_PREFIX)
+      set(PREFIX_FOR_TRIMMEDSYSCONFIG "${GDAL_PYTHON_INSTALL_PREFIX}")
+  elseif (DEFINED CMAKE_INSTALL_PREFIX)
+      set(PREFIX_FOR_TRIMMEDSYSCONFIG "${CMAKE_INSTALL_PREFIX}")
+  else()
+      set(PREFIX_FOR_TRIMMEDSYSCONFIG "")
+  endif()
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_python_lib.py
-       "from trimmedsysconfig import get_python_lib;print(get_python_lib(prefix=\"${GDAL_PYTHON_INSTALL_PREFIX}\"))\n")
+       "from trimmedsysconfig import get_python_lib;print(get_python_lib(prefix=\"${PREFIX_FOR_TRIMMEDSYSCONFIG}\"))\n")
   execute_process(
     COMMAND ${Python_EXECUTABLE_CMAKE} ${CMAKE_CURRENT_BINARY_DIR}/get_python_lib.py
     OUTPUT_VARIABLE SITE_PACKAGE_DIR
@@ -418,6 +455,13 @@ if (Python_Interpreter_FOUND)
     set(SETUPTOOLS_USE_DISTUTILS stdlib)
   elseif ("${SITE_PACKAGE_DIR}" MATCHES "dist-packages")
     set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=deb")
+    if (NOT DEFINED GDAL_PYTHON_INSTALL_LIB AND "${PREFIX_FOR_TRIMMEDSYSCONFIG}" STREQUAL "/usr/local")
+        # Scenario of https://github.com/OSGeo/gdal/issues/10242
+        # For some reason patched setuptools of Debian fails to install by default
+        # in /usr/local/lib/python{version}/dist-packages even when passing
+        # --prefix=/usr/local and --install-layout=deb
+        set(INSTALL_ARGS "${INSTALL_ARGS} \"--install-lib=${SITE_PACKAGE_DIR}\"")
+    endif()
     if(Python_VERSION VERSION_LESS 3.12)
         # It no longer seems needed to mess with SETUPTOOLS_USE_DISTUTILS
         # with Debian Python 3.12 (or maybe its setuptools 68.1.2 version...),
@@ -427,26 +471,20 @@ if (Python_Interpreter_FOUND)
   endif ()
 
   if (ONLY_GENERATE_FOR_NON_DEBUG)
-    if (POLICY CMP0087)
-      # install(SCRIPT) can use generator expressions, since CMake 3.14
-      cmake_policy(SET CMP0087 NEW)
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake.tmp
-                     @ONLY)
-      file(
-        GENERATE
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake
-        INPUT ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake.tmp
-      )
-      file(
-        GENERATE
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake
-        CONTENT
-          "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P \"${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake\",${CMAKE_COMMAND} -E echo \"setup.py install only run in configuration != Debug\">
-                                          WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")")
-      install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake)
-    else ()
-      message(WARNING "Installing Python bindings with a multi generator requires CMake >= 3.14")
-    endif ()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake.tmp
+                   @ONLY)
+    file(
+      GENERATE
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake
+      INPUT ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake.tmp
+    )
+    file(
+      GENERATE
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake
+      CONTENT
+        "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P \"${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake\",${CMAKE_COMMAND} -E echo \"setup.py install only run in configuration != Debug\">
+                                        WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")")
+    install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake)
   else ()
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake"
                    @ONLY)

@@ -424,7 +424,7 @@ def test_ogr_hana_18():
     feat_new = ogr.Feature(feature_def=layer.GetLayerDefn())
     feat_new.SetField("PRFEDEA", "9999")
     layer.CreateFeature(feat_new)
-    feat_new.Destroy()
+    feat_new = None
 
     layer.SetAttributeFilter("PRFEDEA = '9999'")
     feat = layer.GetNextFeature()
@@ -438,7 +438,7 @@ def test_ogr_hana_18():
     assert layer.SetFeature(feat) == 0, "SetFeature() method failed."
 
     fid = feat.GetFID()
-    feat.Destroy()
+    feat = None
 
     feat = layer.GetFeature(fid)
     assert feat is not None, "GetFeature(%d) failed." % fid

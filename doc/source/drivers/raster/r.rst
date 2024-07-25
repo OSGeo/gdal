@@ -28,14 +28,17 @@ Driver capabilities
 Creation Options
 ----------------
 
--  .. oo:: ASCII
+|about-creation-options|
+The following creation options are available:
+
+-  .. co:: ASCII
       :choices: YES, NO
       :default: NO
 
       Produce an ASCII formatted file, instead of binary,
       if set to YES.
 
--  .. oo:: COMPRESS
+-  .. co:: COMPRESS
       :choices: YES, NO
       :default: YES
 

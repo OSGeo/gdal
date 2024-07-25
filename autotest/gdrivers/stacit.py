@@ -28,7 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
+
+import gdaltest
 import pytest
+import webserver
 
 from osgeo import gdal
 
@@ -39,6 +43,7 @@ def test_stacit_basic():
 
     ds = gdal.Open("data/stacit/test.json")
     assert ds is not None
+    assert ds.GetDriver().GetDescription() == "STACIT"
     assert ds.RasterCount == 1
     assert ds.RasterXSize == 40
     assert ds.RasterYSize == 20
@@ -156,7 +161,7 @@ def test_stacit_overlapping_sources():
 
     # Check that the source covered by another one is not listed
     vrt = ds.GetMetadata("xml:VRT")[0]
-    placement_vrt = """
+    only_one_simple_source = """
     <ColorInterp>Gray</ColorInterp>
     <SimpleSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
@@ -166,4 +171,193 @@ def test_stacit_overlapping_sources():
     </SimpleSource>
   </VRTRasterBand>"""
     # print(vrt)
-    assert placement_vrt in vrt
+    assert only_one_simple_source in vrt
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources.json",
+        open_options=["OVERLAP_STRATEGY=REMOVE_IF_NO_NODATA"],
+    )
+    assert ds is not None
+    vrt = ds.GetMetadata("xml:VRT")[0]
+    assert only_one_simple_source in vrt
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources.json",
+        open_options=["OVERLAP_STRATEGY=USE_MOST_RECENT"],
+    )
+    assert ds is not None
+    vrt = ds.GetMetadata("xml:VRT")[0]
+    assert only_one_simple_source in vrt
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources.json",
+        open_options=["OVERLAP_STRATEGY=USE_ALL"],
+    )
+    assert ds is not None
+    assert len(ds.GetFileList()) == 4
+    vrt = ds.GetMetadata("xml:VRT")[0]
+
+
+@pytest.mark.require_geos
+def test_stacit_overlapping_sources_with_nodata():
+
+    ds = gdal.Open("data/stacit/overlapping_sources_with_nodata.json")
+    assert ds is not None
+    assert len(ds.GetFileList()) == 3
+    vrt = ds.GetMetadata("xml:VRT")[0]
+    # print(vrt)
+    two_sources = """<ComplexSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <NODATA>0</NODATA>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">data/byte_nodata_0.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <NODATA>0</NODATA>
+    </ComplexSource>"""
+    assert two_sources in vrt
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources_with_nodata.json",
+        open_options=["OVERLAP_STRATEGY=REMOVE_IF_NO_NODATA"],
+    )
+    assert ds is not None
+    vrt = ds.GetMetadata("xml:VRT")[0]
+    assert len(ds.GetFileList()) == 3
+    assert two_sources in vrt
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources_with_nodata.json",
+        open_options=["OVERLAP_STRATEGY=USE_MOST_RECENT"],
+    )
+    assert ds is not None
+    assert len(ds.GetFileList()) == 2
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources_with_nodata.json",
+        open_options=["OVERLAP_STRATEGY=USE_ALL"],
+    )
+    assert ds is not None
+    vrt = ds.GetMetadata("xml:VRT")[0]
+    assert len(ds.GetFileList()) == 3
+    assert two_sources in vrt
+
+
+# Launch a single webserver in a module-scoped fixture.
+@pytest.fixture(scope="module")
+def webserver_launch():
+
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
+
+    yield process, port
+
+    webserver.server_stop(process, port)
+
+
+@pytest.fixture(scope="function")
+def webserver_port(webserver_launch):
+
+    webserver_process, webserver_port = webserver_launch
+
+    if webserver_port == 0:
+        pytest.skip()
+    yield webserver_port
+
+
+@pytest.mark.require_curl
+def test_stacit_post_paging(tmp_vsimem, webserver_port):
+
+    initial_doc = {
+        "type": "FeatureCollection",
+        "stac_version": "1.0.0-beta.2",
+        "stac_extensions": [],
+        "features": json.loads(open("data/stacit/test.json", "rb").read())["features"],
+        "links": [
+            {
+                "rel": "next",
+                "href": f"http://localhost:{webserver_port}/request",
+                "method": "POST",
+                "body": {"token": "page_2"},
+                "headers": {"foo": "bar"},
+            }
+        ],
+    }
+
+    filename = str(tmp_vsimem / "tmp.json")
+    gdal.FileFromMemBuffer(filename, json.dumps(initial_doc))
+
+    next_page_doc = {
+        "type": "FeatureCollection",
+        "stac_version": "1.0.0-beta.2",
+        "stac_extensions": [],
+        "features": json.loads(open("data/stacit/test_page2.json", "rb").read())[
+            "features"
+        ],
+    }
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/request",
+        200,
+        {"Content-type": "application/json"},
+        json.dumps(next_page_doc),
+        expected_headers={"Content-Type": "application/json", "foo": "bar"},
+        expected_body=b'{\n  "token":"page_2"\n}',
+    )
+    with webserver.install_http_handler(handler):
+        ds = gdal.Open(filename)
+    assert ds is not None
+    assert ds.RasterCount == 1
+    assert ds.RasterXSize == 40
+    assert ds.RasterYSize == 20
+    assert ds.GetSpatialRef().GetName() == "NAD27 / UTM zone 11N"
+    assert ds.GetGeoTransform() == pytest.approx(
+        [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8
+    )
+
+
+###############################################################################
+# Test force opening a STACIT file
+
+
+def test_stacit_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.foo")
+
+    with open("data/stacit/test.json", "rb") as fsrc:
+        with gdaltest.vsi_open(filename, "wb") as fdest:
+            fdest.write(fsrc.read(1))
+            fdest.write(b" " * (1000 * 1000))
+            fdest.write(fsrc.read())
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["STACIT"])
+    assert ds.GetDriver().GetDescription() == "STACIT"
+
+
+###############################################################################
+# Test force opening a URL as STACIT
+
+
+def test_stacit_force_opening_url():
+
+    drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["STACIT"])
+    assert drv.GetDescription() == "STACIT"
+
+
+###############################################################################
+# Test force opening, but provided file is still not recognized (for good reasons)
+
+
+def test_stacit_force_opening_no_match():
+
+    drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["STACIT"])
+    assert drv is None

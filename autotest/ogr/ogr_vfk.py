@@ -174,7 +174,7 @@ def test_ogr_vfk_5(vfk_ds):
 def test_ogr_vfk_6(vfk_ds):
 
     dsn = vfk_ds.GetDescription()
-    vfk_ds.Destroy()
+    vfk_ds.Close()
 
     vfk_ds = ogr.Open(dsn)
 
@@ -226,7 +226,7 @@ def test_ogr_vfk_7(vfk_ds):
 def test_ogr_vfk_8(vfk_ds):
 
     dsn = pathlib.Path(vfk_ds.GetDescription())
-    vfk_ds.Destroy()
+    vfk_ds.Close()
 
     # open by SQLite driver first
     vfk_ds_db = ogr.Open(dsn.with_suffix(".db"))
@@ -254,7 +254,7 @@ def test_ogr_vfk_9(vfk_ds):
 
     # open with suppressing geometry
     dsn = vfk_ds.GetDescription()
-    vfk_ds.Destroy()
+    vfk_ds.Close()
 
     vfk_ds = gdal.OpenEx(dsn, open_options=["SUPPRESS_GEOMETRY=YES"])
 
@@ -279,7 +279,7 @@ def test_ogr_vfk_10(vfk_ds):
 
     # open with suppressing geometry
     dsn = vfk_ds.GetDescription()
-    vfk_ds.Destroy()
+    vfk_ds.Close()
 
     vfk_ds = gdal.OpenEx(dsn, open_options=["FILE_FIELD=YES"])
 

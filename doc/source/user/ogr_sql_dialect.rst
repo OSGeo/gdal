@@ -107,16 +107,23 @@ memory may be used for datasets with a large number of distinct values.
 
 There are also several summarization operators that may be applied to columns.
 When a summarization operator is applied to any field, then all fields must
-have summarization operators applied.   The summarization operators are
-COUNT (a count of instances), AVG (numerical average), SUM (numerical sum),
-MIN (lexical or numerical minimum), and MAX (lexical or numerical maximum).
+have summarization operators applied.   The summarization operators are:
+
+- COUNT: count of instances
+- AVG: numerical average:
+- SUM: numerical sum
+- MIN: lexical or numerical minimum
+- MAX: lexical or numerical maximum
+- STDDEV_POP: (GDAL >= 3.10) numerical population standard deviation. Applied on Date/DateTime/Time fields, this returns a value in seconds.
+- STDDEV_SAMP: (GDAL >= 3.10) numerical `sample standard deviation <https://en.wikipedia.org/wiki/Standard_deviation#Sample_standard_deviation>`__.  Applied on Date/DateTime/Time fields, this returns a value in seconds.
+
 This example produces a variety of summarization information on parcel
 property values:
 
 .. code-block::
 
     SELECT MIN(prop_value), MAX(prop_value), AVG(prop_value), SUM(prop_value),
-        COUNT(prop_value) FROM polylayer WHERE prov_name = 'Ontario'
+        COUNT(prop_value), STDDEV_POP(prop_value) FROM polylayer WHERE prov_name = 'Ontario'
 
 It is also possible to apply the COUNT() operator to a DISTINCT SELECT to get
 a count of distinct values, for instance:
@@ -565,7 +572,8 @@ The OGR SQL dialect adds the geometry field of the datasource to the result set
 by default. Users do not need to select the geometry explicitly but it is still
 possible to do so. Common use case is when geometry is the only field that is needed.
 In this case the name of the geometry field to be used in the SQL statement is the
-name returned by :cpp:func:`OGRLayer::GetGeometryColumn`. If the method returns
+name returned by :cpp:func:`OGRLayer::GetGeometryColumn`, and also
+"Geometry Column = ..." in :program:`ogrinfo` output. If the method returns
 an empty string then a special name "_ogr_geometry_" must be used. The name begins
 with an underscore and SQL syntax requires that it must appear between double quotes.
 In addition the command line interpreter may require that double quotes are escaped
@@ -632,6 +640,25 @@ For example we can select the annotation features as:
 .. code-block::
 
     SELECT * FROM nation WHERE OGR_STYLE LIKE 'LABEL%'
+
+
+It is possible to use the ``OGR_STYLE`` field name as a special field name in
+the field selection as an alternate way of setting the :cpp:func:`OGRFeature::SetStyleString`
+value, typically by aliasing another field or a string literal.
+
+.. code-block::
+
+    SELECT *, 'BRUSH(fc:#01234567)' AS OGR_STYLE FROM source_layer
+
+
+By default, the OGR_STYLE field will still be visible as a regular field. If this
+is undesirable, starting with GDAL 3.10, it can be hidden by adding the HIDDEN
+keyword at the end of the field specification.
+
+.. code-block::
+
+    SELECT * EXCLUDE(my_style_field), my_style_field AS OGR_STYLE HIDDEN FROM source_layer
+
 
 CREATE INDEX
 ------------

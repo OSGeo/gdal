@@ -173,9 +173,9 @@ class GDALTileIndexDataset final : public GDALPamDataset
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, int nBandCount, int *panBandMap,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
     const char *GetMetadataItem(const char *pszName,
@@ -369,6 +369,9 @@ class GDALTileIndexBand final : public GDALPamRasterBand
                      GDALDataType eBufType, GSpacing nPixelSpace,
                      GSpacing nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
+
+    int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nMaskFlagStop, double *pdfDataPct) override;
 
     int GetMaskFlags() override
     {
@@ -1965,20 +1968,39 @@ static int GDALTileIndexDatasetIdentify(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->nHeaderBytes >= 100 &&
         STARTS_WITH(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-                    "SQLite format 3") &&
-        ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg") &&
-        !STARTS_WITH(poOpenInfo->pszFilename, "GPKG:"))
+                    "SQLite format 3"))
     {
-        // Most likely handled by GTI driver, but we can't be sure
-        return GDAL_IDENTIFY_UNKNOWN;
+        if (ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg"))
+        {
+            // Most likely handled by GTI driver, but we can't be sure
+            return GDAL_IDENTIFY_UNKNOWN;
+        }
+        else if (poOpenInfo->IsSingleAllowedDriver("GTI") &&
+                 EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "gpkg"))
+        {
+            return true;
+        }
     }
 
-    return poOpenInfo->nHeaderBytes > 0 &&
-           (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
-           (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+    if (poOpenInfo->nHeaderBytes > 0 &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0)
+    {
+        if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
                    "<GDALTileIndexDataset") ||
             ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.fgb") ||
-            ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.parquet"));
+            ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.parquet"))
+        {
+            return true;
+        }
+        else if (poOpenInfo->IsSingleAllowedDriver("GTI") &&
+                 (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "fgb") ||
+                  EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "parquet")))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /************************************************************************/
@@ -2308,6 +2330,151 @@ CPLErr GDALTileIndexBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              nBufXSize, nBufYSize, eBufType, 1, anBand,
                              nPixelSpace, nLineSpace, 0, psExtraArg);
 }
+
+/************************************************************************/
+/*                         IGetDataCoverageStatus()                     */
+/************************************************************************/
+
+#ifndef HAVE_GEOS
+int GDALTileIndexBand::IGetDataCoverageStatus(int /* nXOff */, int /* nYOff */,
+                                              int /* nXSize */,
+                                              int /* nYSize */,
+                                              int /* nMaskFlagStop */,
+                                              double *pdfDataPct)
+{
+    if (pdfDataPct != nullptr)
+        *pdfDataPct = -1.0;
+    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+           GDAL_DATA_COVERAGE_STATUS_DATA;
+}
+#else
+int GDALTileIndexBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
+                                              int nYSize, int nMaskFlagStop,
+                                              double *pdfDataPct)
+{
+    if (pdfDataPct != nullptr)
+        *pdfDataPct = -1.0;
+
+    const double dfMinX = m_poDS->m_adfGeoTransform[GT_TOPLEFT_X] +
+                          nXOff * m_poDS->m_adfGeoTransform[GT_WE_RES];
+    const double dfMaxX =
+        dfMinX + nXSize * m_poDS->m_adfGeoTransform[GT_WE_RES];
+    const double dfMaxY = m_poDS->m_adfGeoTransform[GT_TOPLEFT_Y] +
+                          nYOff * m_poDS->m_adfGeoTransform[GT_NS_RES];
+    const double dfMinY =
+        dfMaxY + nYSize * m_poDS->m_adfGeoTransform[GT_NS_RES];
+    m_poDS->m_poLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
+    m_poDS->m_poLayer->ResetReading();
+
+    int nStatus = 0;
+
+    auto poPolyNonCoveredBySources = std::make_unique<OGRPolygon>();
+    {
+        auto poLR = std::make_unique<OGRLinearRing>();
+        poLR->addPoint(nXOff, nYOff);
+        poLR->addPoint(nXOff, nYOff + nYSize);
+        poLR->addPoint(nXOff + nXSize, nYOff + nYSize);
+        poLR->addPoint(nXOff + nXSize, nYOff);
+        poLR->addPoint(nXOff, nYOff);
+        poPolyNonCoveredBySources->addRingDirectly(poLR.release());
+    }
+    while (true)
+    {
+        auto poFeature =
+            std::unique_ptr<OGRFeature>(m_poDS->m_poLayer->GetNextFeature());
+        if (!poFeature)
+            break;
+        if (!poFeature->IsFieldSetAndNotNull(m_poDS->m_nLocationFieldIndex))
+        {
+            continue;
+        }
+
+        const auto poGeom = poFeature->GetGeometryRef();
+        if (!poGeom || poGeom->IsEmpty())
+            continue;
+
+        OGREnvelope sSourceEnvelope;
+        poGeom->getEnvelope(&sSourceEnvelope);
+
+        const double dfDstXOff =
+            std::max<double>(nXOff, (sSourceEnvelope.MinX -
+                                     m_poDS->m_adfGeoTransform[GT_TOPLEFT_X]) /
+                                        m_poDS->m_adfGeoTransform[GT_WE_RES]);
+        const double dfDstXOff2 = std::min<double>(
+            nXOff + nXSize,
+            (sSourceEnvelope.MaxX - m_poDS->m_adfGeoTransform[GT_TOPLEFT_X]) /
+                m_poDS->m_adfGeoTransform[GT_WE_RES]);
+        const double dfDstYOff =
+            std::max<double>(nYOff, (sSourceEnvelope.MaxY -
+                                     m_poDS->m_adfGeoTransform[GT_TOPLEFT_Y]) /
+                                        m_poDS->m_adfGeoTransform[GT_NS_RES]);
+        const double dfDstYOff2 = std::min<double>(
+            nYOff + nYSize,
+            (sSourceEnvelope.MinY - m_poDS->m_adfGeoTransform[GT_TOPLEFT_Y]) /
+                m_poDS->m_adfGeoTransform[GT_NS_RES]);
+
+        // CPLDebug("GTI", "dfDstXOff=%f, dfDstXOff2=%f, dfDstYOff=%f, dfDstYOff2=%f",
+        //         dfDstXOff, dfDstXOff2, dfDstYOff, dfDstXOff2);
+
+        // Check if the AOI is fully inside the source
+        if (nXOff >= dfDstXOff && nYOff >= dfDstYOff &&
+            nXOff + nXSize <= dfDstXOff2 && nYOff + nYSize <= dfDstYOff2)
+        {
+            if (pdfDataPct)
+                *pdfDataPct = 100.0;
+            return GDAL_DATA_COVERAGE_STATUS_DATA;
+        }
+
+        // Check intersection of bounding boxes.
+        if (dfDstXOff2 > nXOff && dfDstYOff2 > nYOff &&
+            dfDstXOff < nXOff + nXSize && dfDstYOff < nYOff + nYSize)
+        {
+            nStatus |= GDAL_DATA_COVERAGE_STATUS_DATA;
+            if (poPolyNonCoveredBySources)
+            {
+                OGRPolygon oPolySource;
+                auto poLR = std::make_unique<OGRLinearRing>();
+                poLR->addPoint(dfDstXOff, dfDstYOff);
+                poLR->addPoint(dfDstXOff, dfDstYOff2);
+                poLR->addPoint(dfDstXOff2, dfDstYOff2);
+                poLR->addPoint(dfDstXOff2, dfDstYOff);
+                poLR->addPoint(dfDstXOff, dfDstYOff);
+                oPolySource.addRingDirectly(poLR.release());
+                auto poRes = std::unique_ptr<OGRGeometry>(
+                    poPolyNonCoveredBySources->Difference(&oPolySource));
+                if (poRes && poRes->IsEmpty())
+                {
+                    if (pdfDataPct)
+                        *pdfDataPct = 100.0;
+                    return GDAL_DATA_COVERAGE_STATUS_DATA;
+                }
+                else if (poRes && poRes->getGeometryType() == wkbPolygon)
+                {
+                    poPolyNonCoveredBySources.reset(
+                        poRes.release()->toPolygon());
+                }
+                else
+                {
+                    poPolyNonCoveredBySources.reset();
+                }
+            }
+        }
+        if (nMaskFlagStop != 0 && (nStatus & nMaskFlagStop) != 0)
+        {
+            return nStatus;
+        }
+    }
+    if (poPolyNonCoveredBySources)
+    {
+        if (!poPolyNonCoveredBySources->IsEmpty())
+            nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
+        if (pdfDataPct)
+            *pdfDataPct = 100.0 * (1.0 - poPolyNonCoveredBySources->get_Area() /
+                                             nXSize / nYSize);
+    }
+    return nStatus;
+}
+#endif  // HAVE_GEOS
 
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */
@@ -3317,13 +3484,11 @@ void GDALTileIndexDataset::InitBuffer(void *pData, int nBufXSize, int nBufYSize,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr GDALTileIndexDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                                       int nXSize, int nYSize, void *pData,
-                                       int nBufXSize, int nBufYSize,
-                                       GDALDataType eBufType, int nBandCount,
-                                       int *panBandMap, GSpacing nPixelSpace,
-                                       GSpacing nLineSpace, GSpacing nBandSpace,
-                                       GDALRasterIOExtraArg *psExtraArg)
+CPLErr GDALTileIndexDataset::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    int nBandCount, BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+    GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag != GF_Read)
         return CE_Failure;
@@ -3367,7 +3532,11 @@ CPLErr GDALTileIndexDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     const bool bNeedInitBuffer = NeedInitBuffer(nBandCount, panBandMap);
 
-    const auto RenderSource = [=](SourceDesc &oSourceDesc)
+    const auto RenderSource = [this, bNeedInitBuffer, nBandNrMax, nXOff, nYOff,
+                               nXSize, nYSize, dfXOff, dfYOff, dfXSize, dfYSize,
+                               nBufXSize, nBufYSize, pData, eBufType,
+                               nBandCount, panBandMap, nPixelSpace, nLineSpace,
+                               nBandSpace, psExtraArg](SourceDesc &oSourceDesc)
     {
         auto &poTileDS = oSourceDesc.poDS;
         auto &poSource = oSourceDesc.poSource;

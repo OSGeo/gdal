@@ -3680,6 +3680,18 @@ static GDALDatasetH GDALWarpCreateOutput(
             return nullptr;
         }
 
+        // Examine desired overview level and retrieve the corresponding dataset
+        // if it exists.
+        std::unique_ptr<GDALDataset> oDstDSOverview;
+        if (psOptions->nOvLevel >= 0)
+        {
+            oDstDSOverview.reset(GDALCreateOverviewDataset(
+                GDALDataset::FromHandle(hSrcDS), psOptions->nOvLevel,
+                /* bThisLevelOnly = */ true));
+            if (oDstDSOverview)
+                hSrcDS = oDstDSOverview.get();
+        }
+
         /* --------------------------------------------------------------------
          */
         /*      Check if the source dataset shares some files with the dest
@@ -4110,6 +4122,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             {
                 nOptions |= GDAL_SWO_FORCE_SQUARE_PIXEL;
             }
+
             if (GDALSuggestedWarpOutput2(hSrcDS, psInfo->pfnTransform,
                                          hTransformArg, adfThisGeoTransform,
                                          &nThisPixels, &nThisLines, adfExtent,
@@ -5731,15 +5744,15 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
                 else
                     psOptions->dfWarpMemoryLimit = CPLAtofM(s.c_str());
             })
-        .help(_("Error threshold."));
+        .help(_("Set max warp memory."));
 
     argParser->add_argument("-srcnodata")
-        .metavar("<value>[ <value>...]")
+        .metavar("\"<value>[ <value>]...\"")
         .store_into(psOptions->osSrcNodata)
         .help(_("Nodata masking values for input bands."));
 
     argParser->add_argument("-dstnodata")
-        .metavar("<value>[ <value>...]")
+        .metavar("\"<value>[ <value>]...\"")
         .store_into(psOptions->osDstNodata)
         .help(_("Nodata masking values for output bands."));
 
@@ -6112,6 +6125,20 @@ GDALWarpAppOptionsNew(char **papszArgv,
                 return nullptr;
             }
             psOptions->bCreateOutput = true;
+        }
+        // argparser will be confused if the value of a string argument
+        // starts with a negative sign.
+        else if (EQUAL(papszArgv[i], "-srcnodata") && i + 1 < nArgc)
+        {
+            ++i;
+            psOptions->osSrcNodata = papszArgv[i];
+        }
+        // argparser will be confused if the value of a string argument
+        // starts with a negative sign.
+        else if (EQUAL(papszArgv[i], "-dstnodata") && i + 1 < nArgc)
+        {
+            ++i;
+            psOptions->osDstNodata = papszArgv[i];
         }
         else
         {

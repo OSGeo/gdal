@@ -32,6 +32,7 @@
 #include "northwood.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <string>
 
@@ -79,6 +80,7 @@ int nwt_ParseHeader(NWT_GRID *pGrd, const unsigned char *nwtHeader)
     memcpy(&pGrd->dfMaxY, &nwtHeader[37], sizeof(pGrd->dfMaxY));
     CPL_LSBPTR64(&pGrd->dfMaxY);
 
+    assert(pGrd->nXSide > 1);
     pGrd->dfStepSize = (pGrd->dfMaxX - pGrd->dfMinX) / (pGrd->nXSide - 1);
     /* dfTmp = (pGrd->dfMaxY - pGrd->dfMinY) / (pGrd->nYSide - 1); */
 
@@ -184,14 +186,14 @@ int nwt_ParseHeader(NWT_GRID *pGrd, const unsigned char *nwtHeader)
         }
         CPL_LSBPTR16(&usTmp);
         pGrd->stClassDict = reinterpret_cast<NWT_CLASSIFIED_DICT *>(
-            calloc(sizeof(NWT_CLASSIFIED_DICT), 1));
+            calloc(1, sizeof(NWT_CLASSIFIED_DICT)));
 
         pGrd->stClassDict->nNumClassifiedItems = usTmp;
 
         pGrd->stClassDict->stClassifiedItem =
             reinterpret_cast<NWT_CLASSIFIED_ITEM **>(
-                calloc(sizeof(NWT_CLASSIFIED_ITEM *),
-                       pGrd->stClassDict->nNumClassifiedItems + 1));
+                calloc(pGrd->stClassDict->nNumClassifiedItems + 1,
+                       sizeof(NWT_CLASSIFIED_ITEM *)));
 
         // load the dictionary
         for (unsigned int iItem = 0;
@@ -200,7 +202,7 @@ int nwt_ParseHeader(NWT_GRID *pGrd, const unsigned char *nwtHeader)
             NWT_CLASSIFIED_ITEM *psItem =
                 pGrd->stClassDict->stClassifiedItem[iItem] =
                     reinterpret_cast<NWT_CLASSIFIED_ITEM *>(
-                        calloc(sizeof(NWT_CLASSIFIED_ITEM), 1));
+                        calloc(1, sizeof(NWT_CLASSIFIED_ITEM)));
 
             unsigned char cTmp[256];
             if (!VSIFReadL(&cTmp, 9, 1, pGrd->fp))
@@ -424,7 +426,7 @@ NWT_GRID *nwtOpenGrid(char *filename)
         nwtHeader[3] != 'C')
         return nullptr;
 
-    NWT_GRID *pGrd = reinterpret_cast<NWT_GRID *>(calloc(sizeof(NWT_GRID), 1));
+    NWT_GRID *pGrd = reinterpret_cast<NWT_GRID *>(calloc(1, sizeof(NWT_GRID)));
 
     if (nwtHeader[4] == '1')
         pGrd->cFormat = 0x00;  // grd - surface type

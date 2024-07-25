@@ -46,6 +46,9 @@ other metadata is captured.
 Creation Options
 ~~~~~~~~~~~~~~~~
 
+|about-creation-options|
+The following creation options are supported:
+
 -  .. co:: LABELING_METHOD
       :choices: ATTACHED, DETACHED
       :default: ATTACHED

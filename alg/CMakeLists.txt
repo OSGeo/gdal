@@ -38,6 +38,7 @@ add_library(
   gdal_simplesurf.cpp
   viewshed.cpp
   gdalgenericinverse.cpp
+  gdal_interpolateatpoint.cpp
 )
 
 add_dependencies(alg generate_gdal_version_h)

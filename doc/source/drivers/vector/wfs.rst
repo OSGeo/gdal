@@ -30,6 +30,11 @@ The minimal syntax to open a WFS datasource is :
 *WFS:http://path/to/WFS/service* or
 *http://path/to/WFS/service?SERVICE=WFS*
 
+Starting with GDAL 3.10, specifying the ``-if WFS`` option to command line utilities
+accepting it, or ``WFS`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+URL without the ``WFS:`` prefix.
+
 Additional optional parameters can be specified such as *TYPENAME*,
 *VERSION*, *MAXFEATURES* (WFS < 2) or *COUNT* (WFS > 2) as specified in WFS specification.
 
@@ -306,7 +311,8 @@ That layer is returned through GetLayerByName("WFSGetCapabilities").
 Open options
 ------------
 
-The following options are available:
+|about-open-options|
+The following open options are available:
 
 -  .. oo:: URL
 
@@ -357,8 +363,8 @@ The following options are available:
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OGR_WFS_USE_STREAMING
       :choices: YES, NO

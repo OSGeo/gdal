@@ -70,6 +70,7 @@ ogr_dependent_driver(sosi "SOSI:Systematic Organization of Spatial Information" 
 ogr_dependent_driver(wfs "OGC WFS service" "GDAL_USE_CURL;OGR_ENABLE_DRIVER_GML")
 ogr_dependent_driver(ngw "NextGIS Web" "GDAL_USE_CURL")
 ogr_dependent_driver(elastic "ElasticSearch" "GDAL_USE_CURL")
+ogr_dependent_driver(xodr OpenDRIVE "GDAL_USE_OPENDRIVE;GDAL_USE_GEOS")
 
 ogr_dependent_driver(idrisi IDRISI "GDAL_ENABLE_DRIVER_IDRISI")
 
@@ -99,14 +100,14 @@ ogr_dependent_driver(xlsx "Microsoft Office Excel(xlsx)" "GDAL_USE_EXPAT")
 ogr_dependent_driver(xls "Microsoft Office Excel(xls)" "GDAL_USE_FREEXL")
 ogr_dependent_driver(mongodbv3 "MongoDB V3" "GDAL_USE_MONGOCXX")
 ogr_dependent_driver(cad "OpenCAD" "GDAL_USE_OPENCAD OR GDAL_USE_OPENCAD_INTERNAL")
-ogr_dependent_driver(parquet "Parquet" "GDAL_USE_PARQUET")
-ogr_dependent_driver(arrow "Arrow" "GDAL_USE_ARROW")
+include(parquet/driver_declaration.cmake)
+include(arrow/driver_declaration.cmake)
 
 ogr_dependent_driver(gtfs "GTFS" "OGR_ENABLE_DRIVER_CSV")
 
 # ######################################################################################################################
 # proprietary libraries
-ogr_dependent_driver(oci "Oracle OCI" "GDAL_USE_ORACLE")
+include(oci/driver_declaration.cmake)
 ogr_dependent_driver(idb "IDB" "GDAL_USE_IDB")
 ogr_dependent_driver(ods ODS "GDAL_USE_EXPAT")
 ogr_dependent_driver(ogdi "OGDI" "GDAL_USE_OGDI")

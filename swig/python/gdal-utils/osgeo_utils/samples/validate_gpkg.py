@@ -186,12 +186,26 @@ class GPKGChecker(object):
                     ("Wrong notnull for %s of %s. " + "Expected %s, got %s")
                     % (name, table_name, expected_notnull, notnull),
                 )
-                self._assert(
-                    default == expected_default,
-                    req,
-                    ("Wrong default for %s of %s. " + "Expected %s, got %s")
-                    % (name, table_name, expected_default, default),
-                )
+                # GeoPackage ETS suite accepts CURRENT_TIMESTAMP instead of 'now'
+                # Spatialite at time of writing uses CURRENT_TIMESTAMP.
+                # https://github.com/opengeospatial/ets-gpkg12/blob/04b4a0b8c7d90755b016182e2992684f198da1ba/src/main/java/org/opengis/cite/gpkg12/TableVerifier.java#L173
+                if (
+                    default != expected_default
+                    and expected_default == "strftime('%Y-%m-%dT%H:%M:%fZ','now')"
+                    and default.lower().replace(" ", "")
+                    in (
+                        "strftime('%Y-%m-%dT%H:%M:%fZ','now')".lower(),
+                        "strftime('%Y-%m-%dT%H:%M:%fZ',CURRENT_TIMESTAMP)".lower(),
+                    )
+                ):
+                    pass
+                else:
+                    self._assert(
+                        default == expected_default,
+                        req,
+                        ("Wrong default for %s of %s. " + "Expected %s, got %s")
+                        % (name, table_name, expected_default, default),
+                    )
                 self._assert(
                     pk == expected_pk,
                     req,

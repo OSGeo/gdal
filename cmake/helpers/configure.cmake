@@ -226,13 +226,13 @@ else ()
         #endif
         #include <sys/types.h>
         #include <sys/stat.h>
-        int main() { struct _stat64 buf; _wstat64( \"\", &buf ); return 0; }
+        int main() { struct _stat64 buf; wchar_t path = 0; _wstat64( &path, &buf ); return 0; }
     "
-    NO_UNIX_STDIO_64)
+    WINDOWS_STAT64)
 
-  if (NO_UNIX_STDIO_64)
+  if (WINDOWS_STAT64)
     set(VSI_STAT64 _stat64)
-    set(VSI_STAT64_T __stat64)
+    set(VSI_STAT64_T _stat64)
   endif ()
 
   check_function_exists(fopen64 HAVE_FOPEN64)

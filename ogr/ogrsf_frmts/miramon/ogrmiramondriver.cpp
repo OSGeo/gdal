@@ -145,7 +145,7 @@ void RegisterOGRMiraMon()
         "   description='Sets which of the possible heights is chosen: "
         "the first, the highest or the lowest one.'>"
         "    <Value>First</Value>"
-        "    <Value>Lower</Value>"
+        "    <Value>Lowest</Value>"
         "    <Value>Highest</Value>"
         "  </Option>"
         "  <Option name='MultiRecordIndex' scope='vector' type='string' "

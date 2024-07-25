@@ -12,7 +12,7 @@ GeoJSONSeq: sequence of GeoJSON features
 This driver implements read/creation support for features encoded
 individually as `GeoJSON <http://geojson.org/>`__ Feature objects,
 separated by newline (LF) (`Newline Delimited
-JSON <http://ndjson.org/>`__) or record-separator (RS) characters (`RFC
+JSON <https://github.com/ndjson/ndjson-spec>`__) or record-separator (RS) characters (`RFC
 8142 <https://tools.ietf.org/html/rfc8142>`__ standard: GeoJSON Text
 Sequences)
 
@@ -46,18 +46,25 @@ The driver accepts three types of sources of data:
 -  Text passed directly as filename, and encoded as GeoJSON sequences
 
 The URL/filename/text might be prefixed with GeoJSONSeq: to avoid any
-ambiguity with other drivers.
+ambiguity with other drivers. Alternatively, starting
+with GDAL 3.10, specifying the ``-if GeoJSONSeq`` option to command line utilities
+accepting it, or ``GeoJSONSeq`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+URL/filename/text.
 
 Configuration options
 ---------------------
 
-The following :ref:`configuration option <configoptions>` is
-available:
+|about-config-options|
+The following configuration option is available:
 
 -  :copy-config:`OGR_GEOJSON_MAX_OBJ_SIZE`
 
 Layer creation options
 ----------------------
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: RS
       :choices: YES, NO
@@ -100,8 +107,8 @@ Layer creation options
       :since: 3.8
 
       Whether to write
-      NaN / Infinity values. Such values are not allowed in strict JSon
-      mode, but some JSon parsers (libjson-c >= 0.12 for example) can
+      NaN / Infinity values. Such values are not allowed in strict JSON
+      mode, but some JSON parsers (libjson-c >= 0.12 for example) can
       understand them as they are allowed by ECMAScript.
 
 -  .. lco:: AUTODETECT_JSON_STRINGS

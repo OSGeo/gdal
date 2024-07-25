@@ -36,6 +36,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "gdal_version.h"
+#include "gdalargumentparser.h"
 #include "ogr_api.h"
 #include "ogrsf_frmts.h"
 #include "commonutils.h"
@@ -48,69 +49,15 @@ typedef enum
     FORMAT_PROJ
 } SrcSRSFormat;
 
-/************************************************************************/
-/*                               Usage()                                */
-/************************************************************************/
-
-static void Usage(bool bIsError)
-
+/**
+ * @brief Makes sure the GDAL library is properly cleaned up before exiting.
+ * @param nCode exit code
+ * @todo Move to API
+ */
+static void GDALExit(int nCode)
 {
-    fprintf(
-        bIsError ? stderr : stdout,
-        "Usage: ogrtindex [--help] [--help-general]\n"
-        "                 [-lnum <n>]... [-lname <name>]... [-f "
-        "<output_format>]\n"
-        "                 [-write_absolute_path] [-skip_different_projection]\n"
-        "                 [-t_srs <target_srs>]\n"
-        "                 [-src_srs_name <field_name>] [-src_srs_format "
-        "{AUTO|WKT|EPSG|PROJ}]\n"
-        "                 [-accept_different_schemas]\n"
-        "                 <output_dataset> <src_dataset> <src_dataset>...\n");
-    fprintf(bIsError ? stderr : stdout, "\n");
-    fprintf(bIsError ? stderr : stdout,
-            "  -lnum n: Add layer number 'n' from each source file\n"
-            "           in the tile index.\n");
-    fprintf(bIsError ? stderr : stdout,
-            "  -lname name: Add the layer named 'name' from each source file\n"
-            "               in the tile index.\n");
-    fprintf(bIsError ? stderr : stdout,
-            "  -f output_format: Select an output format name.\n");
-    fprintf(bIsError ? stderr : stdout,
-            "  -tileindex field_name: The name to use for the dataset name.\n"
-            "                         Defaults to LOCATION.\n");
-    fprintf(
-        bIsError ? stderr : stdout,
-        "  -write_absolute_path: Filenames are written with absolute paths.\n");
-    fprintf(
-        bIsError ? stderr : stdout,
-        "  -skip_different_projection: Only layers with same projection ref \n"
-        "        as layers already inserted in the tileindex will be "
-        "inserted.\n");
-    fprintf(bIsError ? stderr : stdout,
-            "  -accept_different_schemas: by default ogrtindex checks that all "
-            "layers inserted\n"
-            "                             into the index have the same "
-            "attribute schemas. If you\n"
-            "                             specify this option, this test will "
-            "be disabled. Be aware that\n"
-            "                             resulting index may be incompatible "
-            "with MapServer!\n");
-    fprintf(bIsError ? stderr : stdout,
-            "  - If -t_srs is specified, geometries of input files will be "
-            "transformed to the desired\n"
-            "    target coordinate reference system.\n"
-            "    Note that using this option generates files that are NOT "
-            "compatible with MapServer < 7.2.\n"
-            "  - Simple rectangular polygons are generated in the same "
-            "coordinate reference system\n"
-            "    as the vectors, or in target reference system if the -t_srs "
-            "option is used.\n");
-    fprintf(bIsError ? stderr : stdout, "\n");
-    fprintf(bIsError ? stderr : stdout,
-            "If no -lnum or -lname arguments are given it is assumed that\n"
-            "all layers in source datasets should be added to the tile index\n"
-            "as independent records.\n");
-    exit(bIsError ? 1 : 0);
+    GDALDestroy();
+    exit(nCode);
 }
 
 /************************************************************************/
@@ -120,132 +67,172 @@ static void Usage(bool bIsError)
 MAIN_START(nArgc, papszArgv)
 
 {
+
     // Check strict compilation and runtime library version as we use C++ API.
     if (!GDAL_CHECK_VERSION(papszArgv[0]))
-        exit(1);
+        GDALExit(1);
+
+    EarlySetConfigOptions(nArgc, papszArgv);
+
+    /* -------------------------------------------------------------------- */
+    /*      Processing command line arguments.                              */
+    /* -------------------------------------------------------------------- */
+    bool bLayersWildcarded = true;
+    std::string osOutputFormat;
+    std::string osTileIndexField;
+    std::string osOutputName;
+    bool bWriteAbsolutePath{false};
+    bool bSkipDifferentProjection{false};
+    char *pszCurrentPath = nullptr;
+    bool bAcceptDifferentSchemas{false};
+    bool bFirstWarningForNonMatchingAttributes = true;
+    std::string osTargetSRS;
+    bool bSetTargetSRS = false;
+    std::string osSrcSRSName;
+    int i_SrcSRSName = -1;
+    SrcSRSFormat eSrcSRSFormat = FORMAT_AUTO;
+    size_t nMaxFieldSize = 254;
+    std::vector<std::string> aosSrcDatasets;
+    std::vector<std::string> aosLayerNames;
+    std::vector<int> anLayerNumbers;
+
+    GDALArgumentParser argParser{"ogrtindex", true};
+
+    argParser.add_description(
+        _("Program to generate a UMN MapServer compatible "
+          "tile index for a set of OGR data sources."));
+
+    argParser.add_epilog(
+        _("For more details, see the full documentation for ogrtindex "
+          "at\nhttps://gdal.org/programs/ogrtindex.html"));
+
+    argParser.add_argument("-lnum")
+        .metavar("<n>")
+        .append()
+        .scan<'i', int>()
+        .store_into(anLayerNumbers)
+        .help(
+            _("Add layer number <n> from each source file in the tile index."));
+
+    argParser.add_argument("-lname")
+        .metavar("<name>")
+        .append()
+        .store_into(aosLayerNames)
+        .help(_(
+            "Add layer named <name> from each source file in the tile index."));
+
+    argParser.add_output_format_argument(osOutputFormat);
+
+    argParser.add_argument("-tileindex")
+        .metavar("<tileindex>")
+        .default_value("LOCATION")
+        .nargs(1)
+        .store_into(osTileIndexField)
+        .help(_("Name to use for the dataset name."));
+
+    argParser.add_argument("-write_absolute_path")
+        .flag()
+        .store_into(bWriteAbsolutePath)
+        .help(_("Write absolute path of the source file in the tile index."));
+
+    argParser.add_argument("-skip_different_projection")
+        .flag()
+        .store_into(bSkipDifferentProjection)
+        .help(_("Skip layers that are not in the same projection as the first "
+                "layer."));
+
+    argParser.add_argument("-t_srs")
+        .metavar("<srs_def>")
+        .store_into(osTargetSRS)
+        .help(
+            _("Extent of input files will be transformed to the desired target "
+              "coordinate reference system."));
+
+    argParser.add_argument("-src_srs_name")
+        .metavar("<field_name>")
+        .store_into(osSrcSRSName)
+        .help(_("Name of the field to store the SRS of each tile."));
+
+    argParser.add_argument("-src_srs_format")
+        .metavar("{AUTO|WKT|EPSG|PROJ}")
+        .choices("AUTO", "WKT", "EPSG", "PROJ")
+        .action(
+            [&eSrcSRSFormat](const auto &f)
+            {
+                if (f == "WKT")
+                    eSrcSRSFormat = FORMAT_WKT;
+                else if (f == "EPSG")
+                    eSrcSRSFormat = FORMAT_EPSG;
+                else if (f == "PROJ")
+                    eSrcSRSFormat = FORMAT_PROJ;
+                else
+                    eSrcSRSFormat = FORMAT_AUTO;
+            })
+        .help(_("Format of the source SRS to store in the tile index file."));
+
+    argParser.add_argument("-accept_different_schemas")
+        .flag()
+        .store_into(bAcceptDifferentSchemas)
+        .help(_(
+            "Disable check for identical schemas for layers in input files."));
+
+    argParser.add_argument("output_dataset")
+        .metavar("<output_dataset>")
+        .store_into(osOutputName)
+        .help(_("Name of the output dataset."));
+
+    argParser.add_argument("src_dataset")
+        .metavar("<src_dataset>")
+        .nargs(nargs_pattern::at_least_one)
+        .store_into(aosSrcDatasets)
+        .help(_("Name of the source dataset(s)."));
+
+    CPLStringList aosArgv;
+
+    for (int i = 0; i < nArgc; i++)
+    {
+        aosArgv.AddString(papszArgv[i]);
+    }
+
+    try
+    {
+        argParser.parse_args(aosArgv);
+    }
+    catch (const std::exception &e)
+    {
+        argParser.display_error_and_usage(e);
+        GDALExit(1);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Validate input                                                  */
+    /* -------------------------------------------------------------------- */
+
+    //srs_name must be specified when srs_format is specified.
+    if (argParser.is_used("-src_srs_format") &&
+        !argParser.is_used("-src_srs_name"))
+    {
+        fprintf(stderr, "-src_srs_name must be specified when -src_srs_format "
+                        "is specified.\n");
+        GDALExit(1);
+    }
+
+    bLayersWildcarded = aosLayerNames.empty() && anLayerNumbers.empty();
+
     /* -------------------------------------------------------------------- */
     /*      Register format(s).                                             */
     /* -------------------------------------------------------------------- */
     OGRRegisterAll();
 
     /* -------------------------------------------------------------------- */
-    /*      Processing command line arguments.                              */
-    /* -------------------------------------------------------------------- */
-    int nFirstSourceDataset = -1;
-    bool bLayersWildcarded = true;
-    const char *pszFormat = nullptr;
-    const char *pszTileIndexField = "LOCATION";
-    const char *pszOutputName = nullptr;
-    bool write_absolute_path = false;
-    bool skip_different_projection = false;
-    char *current_path = nullptr;
-    bool accept_different_schemas = false;
-    bool bFirstWarningForNonMatchingAttributes = true;
-    const char *pszTargetSRS = "";
-    bool bSetTargetSRS = false;
-    const char *pszSrcSRSName = nullptr;
-    int i_SrcSRSName = -1;
-    bool bSrcSRSFormatSpecified = false;
-    SrcSRSFormat eSrcSRSFormat = FORMAT_AUTO;
-    size_t nMaxFieldSize = 254;
-
-    for (int iArg = 1; iArg < nArgc; iArg++)
-    {
-        if (EQUAL(papszArgv[iArg], "--utility_version"))
-        {
-            printf("%s was compiled against GDAL %s and "
-                   "is running against GDAL %s\n",
-                   papszArgv[0], GDAL_RELEASE_NAME,
-                   GDALVersionInfo("RELEASE_NAME"));
-            return 0;
-        }
-        else if (EQUAL(papszArgv[iArg], "--help"))
-        {
-            Usage(false);
-        }
-        else if (iArg < nArgc - 1 && (EQUAL(papszArgv[iArg], "-f") ||
-                                      EQUAL(papszArgv[iArg], "-of")))
-        {
-            pszFormat = papszArgv[++iArg];
-        }
-        else if (EQUAL(papszArgv[iArg], "-write_absolute_path"))
-        {
-            write_absolute_path = true;
-        }
-        else if (EQUAL(papszArgv[iArg], "-skip_different_projection"))
-        {
-            skip_different_projection = true;
-        }
-        else if (EQUAL(papszArgv[iArg], "-accept_different_schemas"))
-        {
-            accept_different_schemas = true;
-        }
-        else if (iArg < nArgc - 1 && EQUAL(papszArgv[iArg], "-tileindex"))
-        {
-            pszTileIndexField = papszArgv[++iArg];
-        }
-        else if (EQUAL(papszArgv[iArg], "-lnum") ||
-                 EQUAL(papszArgv[iArg], "-lname"))
-        {
-            iArg++;
-            bLayersWildcarded = false;
-        }
-        else if (iArg < nArgc - 1 && strcmp(papszArgv[iArg], "-t_srs") == 0)
-        {
-            pszTargetSRS = papszArgv[++iArg];
-            bSetTargetSRS = true;
-        }
-        else if (iArg < nArgc - 1 &&
-                 strcmp(papszArgv[iArg], "-src_srs_name") == 0)
-        {
-            pszSrcSRSName = papszArgv[++iArg];
-        }
-        else if (iArg < nArgc - 1 &&
-                 strcmp(papszArgv[iArg], "-src_srs_format") == 0)
-        {
-            bSrcSRSFormatSpecified = true;
-            const char *pszSRSFormat = papszArgv[++iArg];
-            if (EQUAL(pszSRSFormat, "AUTO"))
-                eSrcSRSFormat = FORMAT_AUTO;
-            else if (EQUAL(pszSRSFormat, "WKT"))
-                eSrcSRSFormat = FORMAT_WKT;
-            else if (EQUAL(pszSRSFormat, "EPSG"))
-                eSrcSRSFormat = FORMAT_EPSG;
-            else if (EQUAL(pszSRSFormat, "PROJ"))
-                eSrcSRSFormat = FORMAT_PROJ;
-        }
-        else if (papszArgv[iArg][0] == '-')
-        {
-            Usage(true);
-        }
-        else if (pszOutputName == nullptr)
-        {
-            pszOutputName = papszArgv[iArg];
-        }
-        else if (nFirstSourceDataset == -1)
-        {
-            nFirstSourceDataset = iArg;
-        }
-    }
-
-    if (pszOutputName == nullptr || nFirstSourceDataset == -1)
-        Usage(true);
-
-    if (bSrcSRSFormatSpecified && pszSrcSRSName == nullptr)
-    {
-        fprintf(stderr,
-                "-src_srs_name must be specified when -src_srs_format is "
-                "specified.\n");
-        Usage(true);
-    }
-
-    /* -------------------------------------------------------------------- */
     /*      Create and validate target SRS if given.                        */
     /* -------------------------------------------------------------------- */
+
     OGRSpatialReference *poTargetSRS = nullptr;
-    if (bSetTargetSRS)
+
+    if (!osTargetSRS.empty())
     {
-        if (skip_different_projection)
+        if (bSkipDifferentProjection)
         {
             fprintf(stderr,
                     "Warning : -skip_different_projection does not apply "
@@ -254,19 +241,20 @@ MAIN_START(nArgc, papszArgv)
         poTargetSRS = new OGRSpatialReference();
         poTargetSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         // coverity[tainted_data]
-        if (poTargetSRS->SetFromUserInput(pszTargetSRS) != CE_None)
+        if (poTargetSRS->SetFromUserInput(osTargetSRS.c_str()) != CE_None)
         {
             delete poTargetSRS;
-            fprintf(stderr, "Invalid target SRS `%s'.\n", pszTargetSRS);
-            exit(1);
+            fprintf(stderr, "Invalid target SRS `%s'.\n", osTargetSRS.c_str());
+            GDALExit(1);
         }
+        bSetTargetSRS = true;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Try to open as an existing dataset for update access.           */
     /* -------------------------------------------------------------------- */
     GDALDataset *poDstDS =
-        GDALDataset::FromHandle(OGROpen(pszOutputName, TRUE, nullptr));
+        GDALDataset::FromHandle(OGROpen(osOutputName.c_str(), TRUE, nullptr));
 
     /* -------------------------------------------------------------------- */
     /*      If that failed, find the driver so we can create the tile index.*/
@@ -276,15 +264,15 @@ MAIN_START(nArgc, papszArgv)
     if (poDstDS == nullptr)
     {
         CPLString osFormat;
-        if (pszFormat == nullptr)
+        if (osOutputFormat.empty())
         {
             const auto aoDrivers =
-                GetOutputDriversFor(pszOutputName, GDAL_OF_VECTOR);
+                GetOutputDriversFor(osOutputName.c_str(), GDAL_OF_VECTOR);
             if (aoDrivers.empty())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot guess driver for %s", pszOutputName);
-                exit(10);
+                         "Cannot guess driver for %s", osOutputName.c_str());
+                GDALExit(10);
             }
             else
             {
@@ -292,7 +280,7 @@ MAIN_START(nArgc, papszArgv)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Several drivers matching %s extension. Using %s",
-                             CPLGetExtension(pszOutputName),
+                             CPLGetExtension(osOutputName.c_str()),
                              aoDrivers[0].c_str());
                 }
                 osFormat = aoDrivers[0];
@@ -300,8 +288,9 @@ MAIN_START(nArgc, papszArgv)
         }
         else
         {
-            osFormat = pszFormat;
+            osFormat = osOutputFormat;
         }
+
         if (!EQUAL(osFormat, "ESRI Shapefile"))
             nMaxFieldSize = 0;
 
@@ -325,7 +314,7 @@ MAIN_START(nArgc, papszArgv)
                     fprintf(stderr, "  -> `%s'\n", poIter->GetDescription());
                 }
             }
-            exit(1);
+            GDALExit(1);
         }
 
         if (!CPLTestBool(CSLFetchNameValueDef(GDALGetMetadata(hDriver, nullptr),
@@ -334,7 +323,7 @@ MAIN_START(nArgc, papszArgv)
             fprintf(stderr,
                     "%s driver does not support data source creation.\n",
                     osFormat.c_str());
-            exit(1);
+            GDALExit(1);
         }
 
         /* --------------------------------------------------------------------
@@ -343,22 +332,17 @@ MAIN_START(nArgc, papszArgv)
         /* --------------------------------------------------------------------
          */
 
-        poDstDS = GDALDataset::FromHandle(
-            GDALCreate(hDriver, pszOutputName, 0, 0, 0, GDT_Unknown, nullptr));
+        poDstDS = GDALDataset::FromHandle(GDALCreate(
+            hDriver, osOutputName.c_str(), 0, 0, 0, GDT_Unknown, nullptr));
         if (poDstDS == nullptr)
         {
             fprintf(stderr, "%s driver failed to create %s\n", osFormat.c_str(),
-                    pszOutputName);
-            exit(1);
+                    osOutputName.c_str());
+            GDALExit(1);
         }
 
         if (poDstDS->GetLayerCount() == 0)
         {
-            if (nFirstSourceDataset < nArgc &&
-                papszArgv[nFirstSourceDataset][0] == '-')
-            {
-                nFirstSourceDataset++;
-            }
 
             OGRSpatialReference *poSrcSpatialRef = nullptr;
             if (bSetTargetSRS)
@@ -368,10 +352,10 @@ MAIN_START(nArgc, papszArgv)
                 // tileindex layer.
                 poSrcSpatialRef = poTargetSRS->Clone();
             }
-            else if (nFirstSourceDataset < nArgc)
+            else if (!aosSrcDatasets.empty())
             {
                 GDALDataset *poDS = GDALDataset::FromHandle(
-                    OGROpen(papszArgv[nFirstSourceDataset], FALSE, nullptr));
+                    OGROpen(aosSrcDatasets.front().c_str(), FALSE, nullptr));
                 if (poDS != nullptr)
                 {
                     for (int iLayer = 0; iLayer < poDS->GetLayerCount();
@@ -380,14 +364,17 @@ MAIN_START(nArgc, papszArgv)
                         bool bRequested = bLayersWildcarded;
                         OGRLayer *poLayer = poDS->GetLayer(iLayer);
 
-                        for (int iArg = 1; iArg < nArgc && !bRequested; iArg++)
+                        if (!bRequested)
                         {
-                            if (EQUAL(papszArgv[iArg], "-lnum") &&
-                                atoi(papszArgv[iArg + 1]) == iLayer)
+                            if (std::find(anLayerNumbers.cbegin(),
+                                          anLayerNumbers.cend(),
+                                          iLayer) != anLayerNumbers.cend())
                                 bRequested = true;
-                            else if (EQUAL(papszArgv[iArg], "-lname") &&
-                                     EQUAL(papszArgv[iArg + 1],
-                                           poLayer->GetLayerDefn()->GetName()))
+                            else if (std::find(
+                                         aosLayerNames.cbegin(),
+                                         aosLayerNames.cend(),
+                                         poLayer->GetLayerDefn()->GetName()) !=
+                                     aosLayerNames.cend())
                                 bRequested = true;
                         }
 
@@ -405,13 +392,13 @@ MAIN_START(nArgc, papszArgv)
 
             poDstLayer = poDstDS->CreateLayer("tileindex", poSrcSpatialRef);
 
-            OGRFieldDefn oLocation(pszTileIndexField, OFTString);
+            OGRFieldDefn oLocation(osTileIndexField.c_str(), OFTString);
             oLocation.SetWidth(200);
             poDstLayer->CreateField(&oLocation);
 
-            if (pszSrcSRSName != nullptr)
+            if (!osSrcSRSName.empty())
             {
-                OGRFieldDefn oSrcSRSNameField(pszSrcSRSName, OFTString);
+                OGRFieldDefn oSrcSRSNameField(osSrcSRSName.c_str(), OFTString);
                 poDstLayer->CreateField(&oSrcSRSNameField);
             }
 
@@ -428,20 +415,21 @@ MAIN_START(nArgc, papszArgv)
     if (poDstLayer == nullptr)
     {
         fprintf(stderr, "Can't find any layer in output tileindex!\n");
-        exit(1);
+        GDALExit(1);
     }
 
     const int iTileIndexField =
-        poDstLayer->GetLayerDefn()->GetFieldIndex(pszTileIndexField);
+        poDstLayer->GetLayerDefn()->GetFieldIndex(osTileIndexField.c_str());
     if (iTileIndexField == -1)
     {
         fprintf(stderr, "Can't find %s field in tile index dataset.\n",
-                pszTileIndexField);
-        exit(1);
+                osTileIndexField.c_str());
+        GDALExit(1);
     }
 
-    if (pszSrcSRSName != nullptr)
-        i_SrcSRSName = poDstLayer->GetLayerDefn()->GetFieldIndex(pszSrcSRSName);
+    if (!osSrcSRSName.empty())
+        i_SrcSRSName =
+            poDstLayer->GetLayerDefn()->GetFieldIndex(osSrcSRSName.c_str());
 
     OGRFeatureDefn *poFeatureDefn = nullptr;
 
@@ -498,72 +486,65 @@ MAIN_START(nArgc, papszArgv)
         }
     }
 
-    if (write_absolute_path)
+    if (bWriteAbsolutePath)
     {
-        current_path = CPLGetCurrentDir();
-        if (current_path == nullptr)
+        pszCurrentPath = CPLGetCurrentDir();
+        if (pszCurrentPath == nullptr)
         {
             fprintf(stderr,
                     "This system does not support the CPLGetCurrentDir call. "
                     "The option -write_absolute_path will have no effect\n");
-            write_absolute_path = false;
+            bWriteAbsolutePath = false;
         }
     }
     /* ==================================================================== */
     /*      Process each input datasource in turn.                          */
     /* ==================================================================== */
-    for (; nFirstSourceDataset < nArgc; nFirstSourceDataset++)
+    for (const auto &srcDataSet : aosSrcDatasets)
     {
-        if (papszArgv[nFirstSourceDataset][0] == '-')
-        {
-            nFirstSourceDataset++;
-            continue;
-        }
 
         char *fileNameToWrite = nullptr;
         VSIStatBuf sStatBuf;
 
-        if (write_absolute_path &&
-            CPLIsFilenameRelative(papszArgv[nFirstSourceDataset]) &&
-            VSIStat(papszArgv[nFirstSourceDataset], &sStatBuf) == 0)
+        if (bWriteAbsolutePath && CPLIsFilenameRelative(srcDataSet.c_str()) &&
+            VSIStat(srcDataSet.c_str(), &sStatBuf) == 0)
         {
-            fileNameToWrite = CPLStrdup(CPLProjectRelativeFilename(
-                current_path, papszArgv[nFirstSourceDataset]));
+            fileNameToWrite = CPLStrdup(
+                CPLProjectRelativeFilename(pszCurrentPath, srcDataSet.c_str()));
         }
         else
         {
-            fileNameToWrite = CPLStrdup(papszArgv[nFirstSourceDataset]);
+            fileNameToWrite = CPLStrdup(srcDataSet.c_str());
         }
 
         GDALDataset *poDS = GDALDataset::FromHandle(
-            OGROpen(papszArgv[nFirstSourceDataset], FALSE, nullptr));
+            OGROpen(srcDataSet.c_str(), FALSE, nullptr));
 
         if (poDS == nullptr)
         {
             fprintf(stderr, "Failed to open dataset %s, skipping.\n",
-                    papszArgv[nFirstSourceDataset]);
+                    srcDataSet.c_str());
             CPLFree(fileNameToWrite);
             continue;
         }
 
-        /* --------------------------------------------------------------------
-         */
-        /*      Check all layers, and see if they match requests. */
-        /* --------------------------------------------------------------------
-         */
+        /* ----------------------------------------------------------------- */
+        /*      Check all layers, and see if they match requests.            */
+        /* ----------------------------------------------------------------- */
+
         for (int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++)
         {
             bool bRequested = bLayersWildcarded;
             OGRLayer *poLayer = poDS->GetLayer(iLayer);
 
-            for (int iArg = 1; iArg < nArgc && !bRequested; iArg++)
+            if (!bRequested)
             {
-                if (EQUAL(papszArgv[iArg], "-lnum") &&
-                    atoi(papszArgv[iArg + 1]) == iLayer)
+                if (std::find(anLayerNumbers.cbegin(), anLayerNumbers.cend(),
+                              iLayer) != anLayerNumbers.cend())
                     bRequested = true;
-                else if (EQUAL(papszArgv[iArg], "-lname") &&
-                         EQUAL(papszArgv[iArg + 1],
-                               poLayer->GetLayerDefn()->GetName()))
+                else if (std::find(aosLayerNames.cbegin(), aosLayerNames.cend(),
+                                   poLayer->GetLayerDefn()->GetName()) !=
+                         aosLayerNames.cend())
                     bRequested = true;
             }
 
@@ -583,7 +564,7 @@ MAIN_START(nArgc, papszArgv)
                     fprintf(stderr,
                             "Layer %d of %s is already in tileindex. "
                             "Skipping it.\n",
-                            iLayer, papszArgv[nFirstSourceDataset]);
+                            iLayer, srcDataSet.c_str());
                     break;
                 }
             }
@@ -612,9 +593,9 @@ MAIN_START(nArgc, papszArgv)
                             "projection system as other files in the "
                             "tileindex. This may cause problems when using it "
                             "in MapServer for example.%s\n",
-                            iLayer, papszArgv[nFirstSourceDataset],
-                            skip_different_projection ? " Skipping it" : "");
-                        if (skip_different_projection)
+                            iLayer, srcDataSet.c_str(),
+                            bSkipDifferentProjection ? " Skipping it" : "");
+                        if (bSkipDifferentProjection)
                         {
                             continue;
                         }
@@ -628,17 +609,15 @@ MAIN_START(nArgc, papszArgv)
                 }
             }
 
-            /* --------------------------------------------------------------------
-             */
-            /*      Check if all layers in dataset have the same attributes
-             * schema. */
-            /* --------------------------------------------------------------------
-             */
+            /* ------------------------------------------------------------------ */
+            /* Check if all layers in dataset have the same attributes schema.    */
+            /* ------------------------------------------------------------------ */
+
             if (poFeatureDefn == nullptr)
             {
                 poFeatureDefn = poLayer->GetLayerDefn()->Clone();
             }
-            else if (!accept_different_schemas)
+            else if (!bAcceptDifferentSchemas)
             {
                 OGRFeatureDefn *poFeatureDefnCur = poLayer->GetLayerDefn();
                 assert(nullptr != poFeatureDefnCur);
@@ -651,7 +630,7 @@ MAIN_START(nArgc, papszArgv)
                             "Number of attributes of layer %s of %s "
                             "does not match ... skipping it.\n",
                             poLayer->GetLayerDefn()->GetName(),
-                            papszArgv[nFirstSourceDataset]);
+                            srcDataSet.c_str());
                     if (bFirstWarningForNonMatchingAttributes)
                     {
                         fprintf(
@@ -685,7 +664,7 @@ MAIN_START(nArgc, papszArgv)
                                 "Schema of attributes of layer %s of %s "
                                 "does not match. Skipping it.\n",
                                 poLayer->GetLayerDefn()->GetName(),
-                                papszArgv[nFirstSourceDataset]);
+                                srcDataSet.c_str());
                         if (bFirstWarningForNonMatchingAttributes)
                         {
                             fprintf(
@@ -705,20 +684,17 @@ MAIN_START(nArgc, papszArgv)
                     continue;
             }
 
-            /* --------------------------------------------------------------------
-             */
-            /*      Get layer extents, and create a corresponding polygon */
-            /*      geometry. */
-            /* --------------------------------------------------------------------
-             */
+            /* ----------------------------------------------------------------- */
+            /*      Get layer extents, and create a corresponding polygon        */
+            /*      geometry.                                                    */
+            /* ----------------------------------------------------------------- */
             OGREnvelope sExtents;
 
             if (poLayer->GetExtent(&sExtents, TRUE) != OGRERR_NONE)
             {
                 fprintf(stderr,
                         "GetExtent() failed on layer %s of %s, skipping.\n",
-                        poLayer->GetLayerDefn()->GetName(),
-                        papszArgv[nFirstSourceDataset]);
+                        poLayer->GetLayerDefn()->GetName(), srcDataSet.c_str());
                 continue;
             }
 
@@ -750,19 +726,17 @@ MAIN_START(nArgc, papszArgv)
                             "Warning : unable to transform points from source "
                             "SRS `%s' to target SRS `%s'\n"
                             "for file `%s' - file skipped\n",
-                            pszSourceWKT, pszTargetSRS,
-                            papszArgv[nFirstSourceDataset]);
+                            pszSourceWKT, osTargetSRS.c_str(),
+                            srcDataSet.c_str());
                         CPLFree(pszSourceWKT);
                         continue;
                     }
                 }
             }
 
-            /* --------------------------------------------------------------------
-             */
-            /*      Add layer to tileindex. */
-            /* --------------------------------------------------------------------
-             */
+            /* ---------------------------------------------------------------- */
+            /*      Add layer to tileindex.                                     */
+            /* ---------------------------------------------------------------- */
             OGRFeature oTileFeat(poDstLayer->GetLayerDefn());
 
             // TODO(schwehr): Move this off of the stack.
@@ -850,11 +824,9 @@ MAIN_START(nArgc, papszArgv)
             }
         }
 
-        /* --------------------------------------------------------------------
-         */
-        /*      Cleanup this data source. */
-        /* --------------------------------------------------------------------
-         */
+        /* ---------------------------------------------------------------- */
+        /*      Cleanup this data source.                                   */
+        /* ---------------------------------------------------------------- */
         CPLFree(fileNameToWrite);
         GDALClose(poDS);
     }
@@ -871,7 +843,7 @@ MAIN_START(nArgc, papszArgv)
         alreadyExistingSpatialRef->Release();
     delete poTargetSRS;
 
-    CPLFree(current_path);
+    CPLFree(pszCurrentPath);
 
     if (nExistingLayers)
     {
@@ -882,7 +854,7 @@ MAIN_START(nArgc, papszArgv)
         CPLFree(existingLayersTab);
     }
 
-    OGRCleanupAll();
+    GDALDestroy();
 
     return nRetCode;
 }

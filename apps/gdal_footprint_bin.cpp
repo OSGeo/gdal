@@ -33,31 +33,25 @@
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 
+/**
+ * @brief Makes sure the GDAL library is properly cleaned up before exiting.
+ * @param nCode exit code
+ * @todo Move to API
+ */
+static void GDALExit(int nCode)
+{
+    GDALDestroy();
+    exit(nCode);
+}
+
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
-
+static void Usage()
 {
-    fprintf(bIsError ? stderr : stdout,
-            "Usage: gdal_footprint [--help] [--help-general]\n"
-            "       [-b <band>]... [-combine_bands union|intersection]\n"
-            "       [-oo <NAME>=<VALUE>]... [-ovr <index>]\n"
-            "       [-srcnodata \"<value>[ <value>]...\"]\n"
-            "       [-t_cs pixel|georef] [-t_srs <srs_def>] [-split_polys]\n"
-            "       [-convex_hull] [-densify <value>] [-simplify <value>]\n"
-            "       [-min_ring_area <value>] [-max_points <value>|unlimited]\n"
-            "       [-of <ogr_format>] [-lyr_name <dst_layername>]\n"
-            "       [-location_field_name <field_name>] [-no_location]\n"
-            "       [-write_absolute_path]\n"
-            "       [-dsco <name>=<value>]... [-lco <name>=<value>]... "
-            "[-overwrite] [-q]\n"
-            "       <src_filename> <dst_filename>\n");
-
-    if (pszErrorMsg != nullptr)
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-    exit(bIsError ? 1 : 0);
+    fprintf(stderr, "%s\n", GDALFootprintAppGetParserUsage().c_str());
+    GDALExit(1);
 }
 
 /************************************************************************/
@@ -68,7 +62,7 @@ MAIN_START(argc, argv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
     if (!GDAL_CHECK_VERSION(argv[0]))
-        exit(1);
+        GDALExit(1);
 
     EarlySetConfigOptions(argc, argv);
 
@@ -78,45 +72,30 @@ MAIN_START(argc, argv)
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
     if (argc < 1)
-        exit(-argc);
+        GDALExit(-argc);
 
-    for (int i = 0; i < argc; i++)
-    {
-        if (EQUAL(argv[i], "--utility_version"))
-        {
-            printf("%s was compiled against GDAL %s and "
-                   "is running against GDAL %s\n",
-                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy(argv);
-            return 0;
-        }
-        else if (EQUAL(argv[i], "--help"))
-        {
-            Usage(false);
-        }
-    }
+    /* -------------------------------------------------------------------- */
+    /*      Parse command line                                              */
+    /* -------------------------------------------------------------------- */
 
     GDALFootprintOptionsForBinary sOptionsForBinary;
     // coverity[tainted_data]
-    GDALFootprintOptions *psOptions =
-        GDALFootprintOptionsNew(argv + 1, &sOptionsForBinary);
+    std::unique_ptr<GDALFootprintOptions, decltype(&GDALFootprintOptionsFree)>
+        psOptions{GDALFootprintOptionsNew(argv + 1, &sOptionsForBinary),
+                  GDALFootprintOptionsFree};
+
     CSLDestroy(argv);
 
     if (psOptions == nullptr)
     {
-        Usage(true);
+        Usage();
     }
 
     if (!(sOptionsForBinary.bQuiet))
     {
-        GDALFootprintOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
+        GDALFootprintOptionsSetProgress(psOptions.get(), GDALTermProgress,
+                                        nullptr);
     }
-
-    if (sOptionsForBinary.osSource.empty())
-        Usage(true, "No input file specified.");
-
-    if (!sOptionsForBinary.bDestSpecified)
-        Usage(true, "No output file specified.");
 
     /* -------------------------------------------------------------------- */
     /*      Open input file.                                                */
@@ -128,7 +107,7 @@ MAIN_START(argc, argv)
                                     /*papszSiblingFiles=*/nullptr);
 
     if (hInDS == nullptr)
-        exit(1);
+        GDALExit(1);
 
     /* -------------------------------------------------------------------- */
     /*      Open output file if it exists.                                  */
@@ -176,7 +155,7 @@ MAIN_START(argc, argv)
                     fprintf(stderr, "  -> `%s'\n", poIter->GetDescription());
                 }
             }
-            exit(1);
+            GDALExit(1);
         }
     }
 
@@ -219,16 +198,17 @@ MAIN_START(argc, argv)
     }
 
     int bUsageError = FALSE;
-    GDALDatasetH hRetDS = GDALFootprint(sOptionsForBinary.osDest.c_str(),
-                                        hDstDS, hInDS, psOptions, &bUsageError);
+    GDALDatasetH hRetDS =
+        GDALFootprint(sOptionsForBinary.osDest.c_str(), hDstDS, hInDS,
+                      psOptions.get(), &bUsageError);
     if (bUsageError == TRUE)
-        Usage(true);
+        Usage();
+
     int nRetCode = hRetDS ? 0 : 1;
 
     GDALClose(hInDS);
     if (GDALClose(hRetDS) != CE_None)
         nRetCode = 1;
-    GDALFootprintOptionsFree(psOptions);
 
     GDALDestroyDriverManager();
 

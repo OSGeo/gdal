@@ -67,8 +67,8 @@ errors can be recovered, and some errors might be recovered silently.
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OGR_OGDI_LAUNDER_LAYER_NAMES
       :choices: YES, NO

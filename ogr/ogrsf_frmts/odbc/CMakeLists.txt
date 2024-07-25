@@ -7,7 +7,8 @@ add_gdal_driver(TARGET ogr_ODBC
                     ogrodbctablelayer.cpp
                 CORE_SOURCES
                     ogrodbcdrivercore.cpp
-                PLUGIN_CAPABLE)
+                PLUGIN_CAPABLE
+                NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET ogr_ODBC)
     return()

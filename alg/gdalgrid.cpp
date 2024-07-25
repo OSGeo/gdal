@@ -2601,6 +2601,7 @@ static int GDALGridProgressMultiThread(GDALGridJob *psJob)
 // Return TRUE if the computation must be interrupted.
 static int GDALGridProgressMonoThread(GDALGridJob *psJob)
 {
+    // coverity[missing_lock]
     const int nCounter = ++(*psJob->pnCounter);
     if (!psJob->pfnRealProgress(nCounter / static_cast<double>(psJob->nYSize),
                                 "", psJob->pRealProgressArg))

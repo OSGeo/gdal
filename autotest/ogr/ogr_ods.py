@@ -259,6 +259,28 @@ def test_ogr_ods_4():
 
 
 ###############################################################################
+# Run test_ogrsf
+
+
+def test_ogr_ods_test_ogrsf_update(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    filename = str(tmp_path / "out.ods")
+    gdal.VectorTranslate(filename, "data/poly.shp", format="ODS")
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" {filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+
+
+###############################################################################
 # Test write support
 
 

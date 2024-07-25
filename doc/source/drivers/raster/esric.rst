@@ -139,6 +139,25 @@ ________________________
    file until the raster size drops below INT32_MAX is a possible
    workaround, but the highest resolution levels will not be read.
 
+Open options
+------------
+
+|about-open-options|
+The following open options are available:
+
+-  .. oo:: EXTENT_SOURCE
+      :choices: FULL_EXTENT, INITIAL_EXTENT, TILING_SCHEME
+      :default: FULL_EXTENT
+      :since: 3.9.1
+
+      Which source should be used for the extent of Esri Tile Package (.tpkx) datasets.
+      By default, or if specifying ``FULL_EXTENT``, the "fullExtent" element of
+      the root.json file will be selected, which normally covers all tiles with data.
+      ``INITIAL_EXTENT`` can be specified to use the default initial extent described
+      in the "initialExtent" element of the root.json file.
+      ``TILING_SCHEME`` will return the extent of the whole tiling scheme, which
+      is typically world coverage.
+
 See Also
 --------
 -  Implemented as :source_file:`frmts/esric/esric_dataset.cpp`.

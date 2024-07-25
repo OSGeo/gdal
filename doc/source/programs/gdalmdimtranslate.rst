@@ -26,6 +26,7 @@ Synopsis
                       [-subset <subset_spec>]...
                       [-scaleaxes <scaleaxes_spec>]
                       [-oo <NAME>=<VALUE>]...
+                      [-strict]
                        <src_filename> <dst_filename>
 
 
@@ -142,6 +143,12 @@ The following command line parameters can appear in any order.
     That is <dim1_name>(<scale_factor>)[,<dim2_name>(<scale_factor>)]...
 
     Using -scaleaxes is incompatible of specifying a *view* option in -array.
+
+.. option:: -strict
+
+    By default, some failures during the translation are tolerated, such as not
+    being able to write group attributes. When setting this option, such
+    failures will cause the process to fail.
 
 .. option:: -oo <NAME>=<VALUE>
 

@@ -493,11 +493,20 @@ void ISIS3DriverSetCommonMetadata(GDALDriver *poDriver)
 /*                     VICARGetLabelOffset()                            */
 /************************************************************************/
 
-int VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
+vsi_l_offset VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
 
 {
     if (poOpenInfo->pabyHeader == nullptr || poOpenInfo->fpL == nullptr)
-        return -1;
+        return static_cast<vsi_l_offset>(-1);
+
+    const auto HasFoundVICARKeywords = [](const char *pszHeader)
+    {
+        return strstr(pszHeader, "LBLSIZE") != nullptr &&
+               strstr(pszHeader, "FORMAT") != nullptr &&
+               strstr(pszHeader, "NL") != nullptr &&
+               strstr(pszHeader, "NS") != nullptr &&
+               strstr(pszHeader, "NB") != nullptr;
+    };
 
     std::string osHeader;
     const char *pszHeader =
@@ -506,10 +515,11 @@ int VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
     // If the user sets GDAL_TRY_PDS3_WITH_VICAR=YES, then we will gracefully
     // hand over the file to the VICAR dataset.
     vsi_l_offset nOffset = 0;
-    if (CPLTestBool(CPLGetConfigOption("GDAL_TRY_PDS3_WITH_VICAR", "NO")) &&
-        !STARTS_WITH(poOpenInfo->pszFilename, "/vsisubfile/") &&
-        (nOffset = GetVICARLabelOffsetFromPDS3(pszHeader, poOpenInfo->fpL,
-                                               osHeader)) > 0)
+    const bool bTryPDS3WithVicar =
+        CPLTestBool(CPLGetConfigOption("GDAL_TRY_PDS3_WITH_VICAR", "NO")) &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "/vsisubfile/");
+    if (bTryPDS3WithVicar && (nOffset = GetVICARLabelOffsetFromPDS3(
+                                  pszHeader, poOpenInfo->fpL, osHeader)) > 0)
     {
         pszHeader = osHeader.c_str();
     }
@@ -520,22 +530,36 @@ int VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
         // If opening in vector-only mode, then check when have NBB != 0
         const char *pszNBB = strstr(pszHeader, "NBB");
         if (pszNBB == nullptr)
-            return -1;
+            return static_cast<vsi_l_offset>(-1);
         const char *pszEqualSign = strchr(pszNBB, '=');
         if (pszEqualSign == nullptr)
-            return -1;
+            return static_cast<vsi_l_offset>(-1);
         if (atoi(pszEqualSign + 1) == 0)
-            return -1;
+            return static_cast<vsi_l_offset>(-1);
     }
-    if (strstr(pszHeader, "LBLSIZE") != nullptr &&
-        strstr(pszHeader, "FORMAT") != nullptr &&
-        strstr(pszHeader, "NL") != nullptr &&
-        strstr(pszHeader, "NS") != nullptr &&
-        strstr(pszHeader, "NB") != nullptr)
+
+    if (HasFoundVICARKeywords(pszHeader))
     {
-        return static_cast<int>(nOffset);
+        // If we find VICAR keywords, but the file starts with PDS_VERSION_ID,
+        // it might be a PDS3 image that includes a VICAR header. Check if
+        // this is the case.
+        if (nOffset == 0 && STARTS_WITH(pszHeader, "PDS_VERSION_ID"))
+        {
+            if (!bTryPDS3WithVicar &&
+                (!GDALGetDriverByName("PDS") ||
+                 poOpenInfo->IsSingleAllowedDriver("VICAR")))
+            {
+                const auto nOffset2 = GetVICARLabelOffsetFromPDS3(
+                    pszHeader, poOpenInfo->fpL, osHeader);
+                if (nOffset2 > 0 && HasFoundVICARKeywords(osHeader.c_str()))
+                {
+                    return nOffset2;
+                }
+            }
+        }
+        return nOffset;
     }
-    return -1;
+    return static_cast<vsi_l_offset>(-1);
 }
 
 /************************************************************************/
@@ -544,7 +568,7 @@ int VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
 
 static int VICARDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    return VICARGetLabelOffset(poOpenInfo) >= 0;
+    return VICARGetLabelOffset(poOpenInfo) != static_cast<vsi_l_offset>(-1);
 }
 
 /************************************************************************/

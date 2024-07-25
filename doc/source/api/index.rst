@@ -123,6 +123,7 @@ API
        Perl <https://metacpan.org/release/Geo-GDAL-FFI>
        PHP <http://dl.maptools.org/dl/php_ogr/php_ogr_documentation.html>
        R <https://cran.r-project.org/web/packages/gdalraster/index.html>
+       Ruby <https://github.com/telus-agcg/ffi-gdal>
        Rust <https://github.com/georust/gdal>
 
     .. warning::

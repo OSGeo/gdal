@@ -36,6 +36,7 @@ SOFTWARE.
 #include <algorithm>
 #include <any>
 #include <array>
+#include <set>
 #include <charconv>
 #include <cstdlib>
 #include <functional>
@@ -237,7 +238,7 @@ constexpr auto consume_hex_prefix(std::string_view s)
 
 template <class T, auto Param>
 inline auto do_from_chars(std::string_view s) -> T {
-  T x;
+  T x{0};
   auto [first, last] = pointer_range(s);
   auto [ptr, ec] = std::from_chars(first, last, x, Param);
   if (ec == std::errc()) {
@@ -677,9 +678,9 @@ public:
         std::is_void_v<std::invoke_result_t<F, Args..., std::string const>>,
         void_action, valued_action>;
     if constexpr (sizeof...(Args) == 0) {
-      m_action.emplace<action_type>(std::forward<F>(callable));
+      m_actions.emplace_back<action_type>(std::forward<F>(callable));
     } else {
-      m_action.emplace<action_type>(
+      m_actions.emplace_back<action_type>(
           [f = std::forward<F>(callable),
            tup = std::make_tuple(std::forward<Args>(bound_args)...)](
               std::string const &opt) mutable {
@@ -698,19 +699,34 @@ public:
     return *this;
   }
 
-  auto &store_into(int &var) {
+  template <typename T, typename std::enable_if<std::is_integral<T>::value>::type * = nullptr>
+  auto &store_into(T &var) {
     if (m_default_value.has_value()) {
-      var = std::any_cast<int>(m_default_value);
+      try
+      {
+        var = std::any_cast<T>(m_default_value);
+      }
+      catch (...)
+      {
+        var = static_cast<T>(std::any_cast<int>(m_default_value));
+      }
     }
     action([&var](const auto &s) {
-      var = details::parse_number<int, details::radix_10>()(s);
+      var = details::parse_number<T, details::radix_10>()(s);
     });
     return *this;
   }
 
   auto &store_into(double &var) {
     if (m_default_value.has_value()) {
-      var = std::any_cast<double>(m_default_value);
+      try
+      {
+        var = std::any_cast<double>(m_default_value);
+      }
+      catch (...)
+      {
+        var = std::any_cast<int>(m_default_value);
+      }
     }
     action([&var](const auto &s) {
       var = details::parse_number<double, details::chars_format::general>()(s);
@@ -750,6 +766,34 @@ public:
       }
       m_is_used = true;
       var.push_back(details::parse_number<int, details::radix_10>()(s));
+    });
+    return *this;
+  }
+
+  auto &store_into(std::set<std::string> &var) {
+    if (m_default_value.has_value()) {
+      var = std::any_cast<std::set<std::string>>(m_default_value);
+    }
+    action([this, &var](const std::string &s) {
+      if (!m_is_used) {
+        var.clear();
+      }
+      m_is_used = true;
+      var.insert(s);
+    });
+    return *this;
+  }
+
+  auto &store_into(std::set<int> &var) {
+    if (m_default_value.has_value()) {
+      var = std::any_cast<std::set<int>>(m_default_value);
+    }
+    action([this, &var](const std::string &s) {
+      if (!m_is_used) {
+        var.clear();
+      }
+      m_is_used = true;
+      var.insert(details::parse_number<int, details::radix_10>()(s));
     });
     return *this;
   }
@@ -950,7 +994,12 @@ public:
     if (num_args_max == 0) {
       if (!dry_run) {
         m_values.emplace_back(m_implicit_value);
-        std::visit([](const auto &f) { f({}); }, m_action);
+        for(auto &action: m_actions) {
+          std::visit([&](const auto &f) { f({}); }, action);
+        }
+        if(m_actions.empty()){
+          std::visit([&](const auto &f) { f({}); }, m_default_action);
+        }
         m_is_used = true;
       }
       return start;
@@ -967,7 +1016,8 @@ public:
             std::bind(is_optional, std::placeholders::_1, m_prefix_chars));
         dist = static_cast<std::size_t>(std::distance(start, end));
         if (dist < num_args_min) {
-          throw std::runtime_error("Too few arguments");
+          throw std::runtime_error("Too few arguments for '" +
+                                   std::string(m_used_name) + "'.");
         }
       }
 
@@ -990,7 +1040,12 @@ public:
         Argument &self;
       };
       if (!dry_run) {
-        std::visit(ActionApply{start, end, *this}, m_action);
+        for(auto &action: m_actions) {
+          std::visit(ActionApply{start, end, *this}, action);
+        }
+        if(m_actions.empty()){
+          std::visit(ActionApply{start, end, *this}, m_default_action);
+        }
         m_is_used = true;
       }
       return end;
@@ -1356,6 +1411,10 @@ private:
    *    '+' '-'
    */
   static bool is_decimal_literal(std::string_view s) {
+    if (s == "inf") {
+      return true;
+    }
+
     auto is_digit = [](auto c) constexpr {
       switch (c) {
       case '0':
@@ -1540,9 +1599,10 @@ private:
   std::optional<std::vector<std::string>> m_choices{std::nullopt};
   using valued_action = std::function<std::any(const std::string &)>;
   using void_action = std::function<void(const std::string &)>;
-  std::variant<valued_action, void_action> m_action{
-      std::in_place_type<valued_action>,
-      [](const std::string &value) { return value; }};
+  std::vector<std::variant<valued_action, void_action>> m_actions;
+  std::variant<valued_action, void_action> m_default_action{
+    std::in_place_type<valued_action>,
+    [](const std::string &value) { return value; }};
   std::vector<std::any> m_values;
   NArgsRange m_num_args_range{1, 1};
   // Bit field of bool values. Set default value in ctor.
@@ -1771,8 +1831,8 @@ public:
   void parse_args(const std::vector<std::string> &arguments) {
     parse_args_internal(arguments);
     // Check if all arguments are parsed
-    for (const auto &iter : m_argument_map) {
-      iter.second->validate();
+    for ([[maybe_unused]] const auto &[unused, argument] : m_argument_map) {
+      argument->validate();
     }
 
     // Check each mutually exclusive group and make sure
@@ -1985,8 +2045,10 @@ public:
         }
 
         stream << std::setw(2) << " ";
-        stream << std::setw(static_cast<int>(longest_arg_length - 2))
-               << command;
+        if (longest_arg_length >= 2) {
+          stream << std::setw(static_cast<int>(longest_arg_length - 2))
+                 << command;
+        }
         stream << " " << subparser->get().m_description << "\n";
       }
     }

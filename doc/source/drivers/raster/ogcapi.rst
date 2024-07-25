@@ -51,6 +51,11 @@ The driver supports opening by:
 - passing a string "OGCAPI:{url}" where {url} is the URL to a OGC API landing page
   In that case the driver will return subdatasets with the different collections.
 
+  Starting with GDAL 3.10, specifying the ``-if OGCAPI`` option to command line utilities
+  accepting it, or ``OGCAPI`` as the only value of the ``papszAllowedDrivers`` of
+  :cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+  URL,  without the ``OGCAPI:`` prefix.
+
 - passing a string "OGCAPI:{url}" where {url} is the URL to a OGC API collection description
 
 
@@ -68,6 +73,7 @@ matrix set when available
 Open options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 - .. oo:: API

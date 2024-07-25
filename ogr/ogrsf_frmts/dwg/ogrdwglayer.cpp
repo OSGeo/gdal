@@ -692,7 +692,9 @@ OGRFeature *OGRDWGLayer::TranslateLWPOLYLINE(OdDbEntityPtr poEntity)
     if (poPL->isClosed())
         oSmoothPolyline.Close();
 
-    poFeature->SetGeometryDirectly(oSmoothPolyline.Tessellate());
+    const bool bAsPolygon = poPL->isClosed() && poDS->ClosedLineAsPolygon();
+
+    poFeature->SetGeometryDirectly(oSmoothPolyline.Tessellate(bAsPolygon));
 
     PrepareLineStyle(poFeature);
 

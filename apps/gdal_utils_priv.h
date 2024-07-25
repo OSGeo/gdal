@@ -58,11 +58,11 @@ struct GDALInfoOptionsForBinary
 
 struct GDALDEMProcessingOptionsForBinary
 {
-    char *pszProcessing;
-    char *pszSrcFilename;
-    char *pszColorFilename;
-    char *pszDstFilename;
-    int bQuiet;
+    std::string osProcessing;
+    std::string osSrcFilename;
+    std::string osColorFilename;
+    std::string osDstFilename;
+    bool bQuiet = false;
 };
 
 CPL_C_END
@@ -85,6 +85,7 @@ struct GDALVectorTranslateOptionsForBinary
     CPLStringList aosOpenOptions{};
     std::string osFormat;
     GDALVectorTranslateAccessMode eAccessMode = ACCESS_CREATION;
+    bool bShowUsageIfError = false;
 
     /* Allowed input drivers. */
     CPLStringList aosAllowInputDrivers{};
@@ -233,15 +234,31 @@ std::string CPL_DLL GDALVectorInfoGetParserUsage();
 
 std::string CPL_DLL GDALTranslateGetParserUsage();
 
+std::string CPL_DLL GDALMultiDimTranslateAppGetParserUsage();
+
 std::string CPL_DLL GDALVectorTranslateGetParserUsage();
 
 std::string CPL_DLL GDALWarpAppGetParserUsage();
 
 std::string CPL_DLL GDALInfoAppGetParserUsage();
 
+std::string CPL_DLL GDALMultiDimInfoAppGetParserUsage();
+
 std::string CPL_DLL GDALGridGetParserUsage();
 
 std::string CPL_DLL GDALBuildVRTGetParserUsage();
+
+std::string CPL_DLL GDALTileIndexAppGetParserUsage();
+
+std::string CPL_DLL GDALFootprintAppGetParserUsage();
+
+/**
+ * Returns the gdaldem usage help string
+ * @param osProcessingMode          Processing mode (subparser name)
+ * @return                          gdaldem usage help string
+ */
+std::string CPL_DLL
+GDALDEMAppGetParserUsage(const std::string &osProcessingMode);
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

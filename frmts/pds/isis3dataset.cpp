@@ -3998,7 +3998,10 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    VSILFILE *fp = VSIFOpenExL(pszFilename, "wb", true);
+    const char *pszPermission =
+        VSISupportsRandomWrite(pszFilename, true) ? "wb+" : "wb";
+
+    VSILFILE *fp = VSIFOpenExL(pszFilename, pszPermission, true);
     if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s: %s", pszFilename,
@@ -4014,7 +4017,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
         osExternalFilename =
             CSLFetchNameValueDef(papszOptions, "EXTERNAL_FILENAME",
                                  CPLResetExtension(pszFilename, "cub"));
-        fpImage = VSIFOpenExL(osExternalFilename.c_str(), "wb", true);
+        fpImage = VSIFOpenExL(osExternalFilename.c_str(), pszPermission, true);
         if (fpImage == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s: %s",

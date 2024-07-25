@@ -37,7 +37,8 @@ mechanism. If written from a file that is not colormapped, a default
 greyscale colormap is generated. Transparent GIFs are not currently
 supported on creation.
 
-Creation Options:
+|about-creation-options|
+The following creation options are supported:
 
 - .. co:: WORLDFILE
      :choices: ON, OFF

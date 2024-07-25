@@ -52,7 +52,7 @@
 #include <bitset>  // For detecting usage of PDF library
 #include <algorithm>
 
-#include "pdfsdk_headers.h"
+#include "pdfsdk_headers_all.h"
 
 #include "pdfdrivercore.h"
 
@@ -360,8 +360,7 @@ class PDFDataset final : public GDALPamDataset
                                  const char *pszDefaultVal);
 
     bool m_bHasLoadedLayers = false;
-    int m_nLayers = 0;
-    OGRLayer **m_papoLayers = nullptr;
+    std::vector<std::unique_ptr<OGRPDFLayer>> m_apoLayers{};
 
     double m_dfPageWidth = 0;
     double m_dfPageHeight = 0;
@@ -391,15 +390,26 @@ class PDFDataset final : public GDALPamDataset
     int UnstackTokens(const char *pszToken, int nRequiredArgs,
                       char aszTokenStack[TOKEN_STACK_SIZE][MAX_TOKEN_SIZE],
                       int &nTokenStackSize, double *adfCoords);
+
+    struct GraphicState
+    {
+        std::array<double, 6> adfCM = {1, 0, 0, 1, 0, 0};
+        std::array<double, 3> adfStrokeColor = {0.0, 0.0, 0.0};
+        std::array<double, 3> adfFillColor = {1.0, 1.0, 1.0};
+
+        void PreMultiplyBy(double adfMatrix[6]);
+        void ApplyMatrix(double adfCoords[2]) const;
+    };
+
     OGRGeometry *
     ParseContent(const char *pszContent, GDALPDFObject *poResources,
                  int bInitBDCStack, int bMatchQ,
                  std::map<CPLString, OGRPDFLayer *> &oMapPropertyToLayer,
-                 OGRPDFLayer *poCurLayer);
+                 const GraphicState &graphicStateIn, OGRPDFLayer *poCurLayer);
     OGRGeometry *BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
                                int bHasMultiPart);
 
-    int OpenVectorLayers(GDALPDFDictionary *poPageDict);
+    bool OpenVectorLayers(GDALPDFDictionary *poPageDict);
 
     void InitOverviews();
 
@@ -425,8 +435,9 @@ class PDFDataset final : public GDALPamDataset
                                    const char *pszDomain = "") override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, BANDMAP_TYPE,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual int GetGCPCount() override;

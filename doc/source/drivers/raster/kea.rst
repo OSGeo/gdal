@@ -48,6 +48,7 @@ Driver capabilities
 Creation options
 ----------------
 
+|about-creation-options|
 The following creation options are available. Some are rather esoteric
 and should rarely be specified, unless the user has good knowledge of
 the working of the underlying HDF5 format.

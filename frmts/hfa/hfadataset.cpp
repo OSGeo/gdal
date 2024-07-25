@@ -3184,16 +3184,18 @@ CPLErr HFADataset::WriteProjection()
 
         if (nGCS == 4326)
             sDatum.datumname = const_cast<char *>("WGS 84");
-        if (nGCS == 4322)
+        else if (nGCS == 4322)
             sDatum.datumname = const_cast<char *>("WGS 1972");
-        if (nGCS == 4267)
+        else if (nGCS == 4267)
             sDatum.datumname = const_cast<char *>("NAD27");
-        if (nGCS == 4269)
+        else if (nGCS == 4269)
             sDatum.datumname = const_cast<char *>("NAD83");
-        if (nGCS == 4283)
+        else if (nGCS == 4283)
             sDatum.datumname = const_cast<char *>("GDA94");
-        if (nGCS == 6284)
+        else if (nGCS == 4284)
             sDatum.datumname = const_cast<char *>("Pulkovo 1942");
+        else if (nGCS == 4272)
+            sDatum.datumname = const_cast<char *>("Geodetic Datum 1949");
 
         if (poGeogSRS->GetTOWGS84(sDatum.params) == OGRERR_NONE)
         {
@@ -4588,7 +4590,7 @@ CPLErr HFADataset::SetGeoTransform(double *padfTransform)
 CPLErr HFADataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, int *panBandMap,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)

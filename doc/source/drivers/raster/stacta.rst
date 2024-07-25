@@ -24,7 +24,8 @@ attached to an asset template.
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
+|about-config-options|
+The following configuration options are
 available:
 
 -  .. config:: GDAL_STACTA_SKIP_MISSING_METATILE
@@ -46,9 +47,15 @@ STACTA datasets/subdatasets can be accessed with one of the following syntaxes:
 
 The root of the JSON file must be of type ``Feature``.
 
+Starting with GDAL 3.10, specifying the ``-if STACTA`` option to command line utilities
+accepting it, or ``STACTA`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+filename or URL.
+
 Open options
 ------------
 
+|about-open-options|
 The following open options are supported:
 
 -  .. oo:: WHOLE_METATILE

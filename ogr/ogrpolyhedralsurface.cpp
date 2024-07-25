@@ -1010,6 +1010,24 @@ OGRErr OGRPolyhedralSurface::removeGeometry(int iGeom, int bDelete)
 }
 
 /************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+bool OGRPolyhedralSurface::hasEmptyParts() const
+{
+    return oMP.hasEmptyParts();
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+void OGRPolyhedralSurface::removeEmptyParts()
+{
+    oMP.removeEmptyParts();
+}
+
+/************************************************************************/
 /*                       assignSpatialReference()                       */
 /************************************************************************/
 

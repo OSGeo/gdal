@@ -38,18 +38,7 @@ import pytest
 
 from osgeo import gdal, osr
 
-
-def has_tiledb_multidim():
-    drv = gdal.GetDriverByName("TileDB")
-    if drv is None:
-        return False
-    return drv.GetMetadataItem(gdal.DCAP_CREATE_MULTIDIMENSIONAL) == "YES"
-
-
-pytestmark = [
-    pytest.mark.require_driver("TileDB"),
-    pytest.mark.skipif(not has_tiledb_multidim(), reason="TileDB >= 2.15 required"),
-]
+pytestmark = pytest.mark.require_driver("TileDB")
 
 
 def test_tiledb_multidim_basic():
@@ -696,8 +685,8 @@ def test_tiledb_multidim_array_read_gdal_raster_classic_interleave_attributes():
             filename,
             "data/small_world.tif",
             format="TileDB",
-            creationOptions=["INTERLEAVE=ATTRIBUTES"],
-        )
+            creationOptions=["INTERLEAVE=ATTRIBUTES", "CREATE_GROUP=NO"],
+        ),
         ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         assert rg.GetMDArrayNames() == [
@@ -767,3 +756,37 @@ def test_tiledb_multidim_open_converted_by_tiledb_cf_netcdf_convert():
     assert ds.GetGeoTransform() == pytest.approx(
         (440720.0, 60.0, 0.0, 3750120.0, 0.0, 60.0)
     )
+
+
+###############################################################################
+
+
+def test_tiledb_multidim_two_2D_arrays(tmp_path):
+    """Test that we don't recurse indefinitely when opening arrays in the same group"""
+
+    filename = str(tmp_path / "test_tiledb_multidim_two_2D_arrays.tiledb")
+
+    def test():
+
+        drv = gdal.GetDriverByName("TileDB")
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        dim0 = rg.CreateDimension("dim0", None, None, 3)
+        dim1 = rg.CreateDimension("dim1", None, None, 5)
+        rg.CreateMDArray(
+            "ar", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+        rg.CreateMDArray(
+            "ar2", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+
+    def reopen_readonly():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("ar")
+        assert ar.GetDimensionCount() == 2
+        ar2 = rg.OpenMDArray("ar2")
+        assert ar2.GetDimensionCount() == 2
+
+    test()
+    reopen_readonly()

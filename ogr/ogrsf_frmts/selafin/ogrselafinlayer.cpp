@@ -33,6 +33,7 @@
 #include "ogr_selafin.h"
 #include "cpl_error.h"
 #include "cpl_quad_tree.h"
+#include "cpl_vsi_virtual.h"
 
 /************************************************************************/
 /*                           Utilities functions                        */
@@ -43,9 +44,9 @@ static void MoveOverwrite(VSILFILE *fpDest, VSILFILE *fpSource)
     VSIRewindL(fpDest);
     VSIFTruncateL(fpDest, 0);
     char anBuf[0x10000];
-    while (!VSIFEofL(fpSource))
+    while (!fpSource->Eof() && !fpSource->Error())
     {
-        size_t nSize = VSIFReadL(anBuf, 1, 0x10000, fpSource);
+        size_t nSize = VSIFReadL(anBuf, 1, sizeof(anBuf), fpSource);
         size_t nLeft = nSize;
         while (nLeft > 0)
             nLeft -= VSIFWriteL(anBuf + nSize - nLeft, 1, nLeft, fpDest);

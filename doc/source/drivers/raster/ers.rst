@@ -29,10 +29,11 @@ Driver capabilities
 
 .. supports_virtualio::
 
-Creation Issues
----------------
+Creation Options
+----------------
 
-Creation Options:
+|about-creation-options|
+The following creation options are supported:
 
 -  .. co:: PIXELTYPE
 

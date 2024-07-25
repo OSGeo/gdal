@@ -800,6 +800,56 @@ def test_vsiswift_fake_write(server):
 
 
 ###############################################################################
+# Test write
+
+
+def test_vsiswift_fake_write_zero_file(server):
+
+    gdal.VSICurlClearCache()
+
+    with gdal.config_options(
+        {
+            "SWIFT_AUTH_TOKEN": "my_auth_token",
+            "SWIFT_AUTH_V1_URL": "",
+            "SWIFT_KEY": "",
+            "SWIFT_STORAGE_URL": f"http://127.0.0.1:{server.port}/v1/AUTH_something",
+            "SWIFT_USER": "",
+        }
+    ):
+
+        # Test creation of BlockBob
+        f = gdal.VSIFOpenL("/vsiswift/test_copy/file.bin", "wb")
+        assert f is not None
+
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+            h = request.headers
+            if (
+                "x-auth-token" not in h
+                or h["x-auth-token"] != "my_auth_token"
+                or "Content-Length" not in h
+                or h["Content-Length"] != "0"
+            ):
+                sys.stderr.write("Bad headers: %s\n" % str(h))
+                request.send_response(403)
+                return
+
+            request.protocol_version = "HTTP/1.1"
+            request.wfile.write("HTTP/1.1 100 Continue\r\n\r\n".encode("ascii"))
+
+            request.send_response(200)
+            request.send_header("Content-Length", 0)
+            request.end_headers()
+
+        handler.add(
+            "PUT", "/v1/AUTH_something/test_copy/file.bin", custom_method=method
+        )
+        with webserver.install_http_handler(handler):
+            assert gdal.VSIFCloseL(f) == 0
+
+
+###############################################################################
 # Test Unlink()
 
 

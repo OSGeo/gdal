@@ -34,8 +34,12 @@
 
 constexpr const char *DRIVER_NAME = "WMTS";
 
-int CPL_DLL WMTSDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define WMTSDriverIdentify PLUGIN_SYMBOL_NAME(WMTSDriverIdentify)
+#define WMTSDriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(WMTSDriverSetCommonMetadata)
 
-void CPL_DLL WMTSDriverSetCommonMetadata(GDALDriver *poDriver);
+int WMTSDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void WMTSDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

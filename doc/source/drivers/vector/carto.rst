@@ -118,6 +118,7 @@ Open options
 ------------
 
 The following open options are available:
+|about-open-options|
 
 -  .. oo:: BATCH_INSERT
       :choices: YES, NO
@@ -136,7 +137,8 @@ The following open options are available:
 Layer creation options
 ----------------------
 
-The following layer creation options are available:
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: OVERWRITE
       :choices: YES, NO
@@ -177,8 +179,8 @@ The following layer creation options are available:
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: CARTO_API_URL
       :default: https://[account_name].carto.com/api/v2/sql

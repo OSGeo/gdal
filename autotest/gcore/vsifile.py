@@ -37,7 +37,7 @@ import gdaltest
 import pytest
 from lxml import etree
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 
 ###############################################################################
@@ -85,18 +85,32 @@ def vsifile_generic(filename, options=[]):
     assert start_time == pytest.approx(statBuf.mtime, abs=2)
 
     fp = gdal.VSIFOpenExL(filename, "rb", False, options)
-    assert gdal.VSIFReadL(1, 0, fp) is None
-    assert gdal.VSIFReadL(0, 1, fp) is None
-    buf = gdal.VSIFReadL(1, 7, fp)
-    assert gdal.VSIFWriteL("a", 1, 1, fp) == 0
-    assert gdal.VSIFTruncateL(fp, 0) != 0
-    gdal.VSIFCloseL(fp)
+    try:
+        assert fp
+        assert gdal.VSIFReadL(1, 0, fp) is None
+        assert gdal.VSIFReadL(0, 1, fp) is None
+        buf = gdal.VSIFReadL(1, 7, fp)
+        assert gdal.VSIFEofL(fp) == 0
+        assert gdal.VSIFErrorL(fp) == 0
+        assert buf == b"01234XX"
 
-    assert buf.decode("ascii") == "01234XX"
+        buf = gdal.VSIFReadL(1, 1, fp)
+        assert gdal.VSIFEofL(fp) == 1
+        assert gdal.VSIFErrorL(fp) == 0
+        assert buf == b""
+        gdal.VSIFClearErrL(fp)
+        assert gdal.VSIFEofL(fp) == 0
+        assert gdal.VSIFErrorL(fp) == 0
+
+        assert gdal.VSIFWriteL("a", 1, 1, fp) == 0
+        assert gdal.VSIFTruncateL(fp, 0) != 0
+    finally:
+        if fp:
+            gdal.VSIFCloseL(fp)
 
     # Test append mode on existing file
     fp = gdal.VSIFOpenExL(filename, "ab", False, options)
-    gdal.VSIFWriteL("XX", 1, 2, fp)
+    assert gdal.VSIFWriteL("XX", 1, 2, fp) == 2
     gdal.VSIFCloseL(fp)
 
     statBuf = gdal.VSIStatL(
@@ -112,7 +126,7 @@ def vsifile_generic(filename, options=[]):
 
     # Test append mode on non existing file
     fp = gdal.VSIFOpenExL(filename, "ab", False, options)
-    gdal.VSIFWriteL("XX", 1, 2, fp)
+    assert gdal.VSIFWriteL("XX", 1, 2, fp) == 2
     gdal.VSIFCloseL(fp)
 
     statBuf = gdal.VSIStatL(
@@ -122,6 +136,17 @@ def vsifile_generic(filename, options=[]):
     assert statBuf.size == 2
 
     assert gdal.Unlink(filename) == 0
+
+    # Test read on a file opened in write-only mode
+    fp = gdal.VSIFOpenExL(filename, "wb", False, options)
+    try:
+        assert fp
+        assert len(gdal.VSIFReadL(1, 1, fp)) == 0
+        assert gdal.VSIFErrorL(fp) == 1
+        assert gdal.VSIFEofL(fp) == 0
+    finally:
+        if fp:
+            gdal.VSIFCloseL(fp)
 
 
 ###############################################################################
@@ -271,6 +296,8 @@ def test_vsifile_vsicache_read_error():
             gdal.VSIFTruncateL(f, 0)
 
             assert len(gdal.VSIFReadL(1, 5000 * 1000, f2)) == 0
+            assert gdal.VSIFEofL(f2)
+            assert gdal.VSIFErrorL(f2) == 0
 
             # Extend the file again
             gdal.VSIFTruncateL(f, 1000 * 1000)
@@ -291,6 +318,8 @@ def test_vsifile_vsicache_read_error():
 
             gdal.VSIFSeekL(f2, 0, 0)
             assert len(gdal.VSIFReadL(1, CHUNK_SIZE, f2)) == 10
+            assert gdal.VSIFEofL(f2)
+            assert gdal.VSIFErrorL(f2) == 0
 
             gdal.VSIFSeekL(f2, 100, 0)
             assert len(gdal.VSIFReadL(1, CHUNK_SIZE, f2)) == 0
@@ -365,6 +394,7 @@ def test_vsifile_7():
     assert gdal.VSIFTellL(fp) == 0x7FFFFFFFFFFFFFFF
     assert not gdal.VSIFReadL(1, 1, fp)
     assert gdal.VSIFEofL(fp) == 1
+    assert gdal.VSIFErrorL(fp) == 0
     gdal.VSIFCloseL(fp)
 
     gdal.Unlink("/vsimem/vsifile_7.bin")
@@ -650,32 +680,44 @@ def test_vsifile_14():
 
 
 ###############################################################################
-# Test issue with Eof() not detecting end of corrupted gzip stream (#6944)
+# Test issue with Error() not detecting end of corrupted gzip stream (#6944)
 
 
 def test_vsifile_15():
 
     fp = gdal.VSIFOpenL("/vsigzip/data/corrupted_z_buf_error.gz", "rb")
     assert fp is not None
-    file_len = 0
-    while not gdal.VSIFEofL(fp):
+    try:
+        file_len = 0
+        while not gdal.VSIFErrorL(fp):
+            with gdal.quiet_errors():
+                file_len += len(gdal.VSIFReadL(1, 4, fp))
+        assert file_len == 6469
+        assert gdal.VSIFEofL(fp) == 0
+
         with gdal.quiet_errors():
             file_len += len(gdal.VSIFReadL(1, 4, fp))
-    assert file_len == 6469
+        assert file_len == 6469
+        assert gdal.VSIFErrorL(fp) == 1
+        assert gdal.VSIFEofL(fp) == 0
 
-    with gdal.quiet_errors():
-        file_len += len(gdal.VSIFReadL(1, 4, fp))
-    assert file_len == 6469
+        with gdal.quiet_errors():
+            assert gdal.VSIFSeekL(fp, 0, 2) != 0
 
-    with gdal.quiet_errors():
-        assert gdal.VSIFSeekL(fp, 0, 2) != 0
+        assert gdal.VSIFSeekL(fp, 0, 0) == 0
+        assert gdal.VSIFErrorL(fp) == 1
+        assert gdal.VSIFEofL(fp) == 0
 
-    assert gdal.VSIFSeekL(fp, 0, 0) == 0
+        gdal.VSIFClearErrL(fp)
+        assert gdal.VSIFErrorL(fp) == 0
+        assert gdal.VSIFEofL(fp) == 0
 
-    len_read = len(gdal.VSIFReadL(1, file_len, fp))
-    assert len_read == file_len
-
-    gdal.VSIFCloseL(fp)
+        len_read = len(gdal.VSIFReadL(1, file_len, fp))
+        assert len_read == file_len
+        assert gdal.VSIFErrorL(fp) == 0
+        assert gdal.VSIFEofL(fp) == 0
+    finally:
+        gdal.VSIFCloseL(fp)
 
 
 ###############################################################################
@@ -1141,6 +1183,11 @@ def test_vsifile_vsitar_gz_with_tar_multiple_of_65536_bytes():
     f = gdal.VSIFOpenL("/vsitar/data/tar_of_65536_bytes.tar.gz/zero.bin", "rb")
     assert f is not None
     read_bytes = gdal.VSIFReadL(1, 65024, f)
+    assert gdal.VSIFEofL(f) == 0
+    assert gdal.VSIFErrorL(f) == 0
+    assert gdal.VSIFReadL(1, 1, f) == b""
+    assert gdal.VSIFEofL(f) == 1
+    assert gdal.VSIFErrorL(f) == 0
     gdal.VSIFCloseL(f)
     assert read_bytes == b"\x00" * 65024
     gdal.Unlink("data/tar_of_65536_bytes.tar.gz.properties")
@@ -1155,7 +1202,18 @@ def test_vsifile_vsizip_stored():
     f = gdal.VSIFOpenL("/vsizip/data/stored.zip/foo.txt", "rb")
     assert f
     assert gdal.VSIFReadL(1, 5, f) == b"foo\n"
-    assert gdal.VSIFEofL(f)
+    assert gdal.VSIFEofL(f) == 1
+    assert gdal.VSIFErrorL(f) == 0
+    gdal.VSIFCloseL(f)
+
+    f = gdal.VSIFOpenL("/vsizip/data/stored.zip/foo.txt", "rb")
+    assert f
+    assert gdal.VSIFReadL(1, 4, f) == b"foo\n"
+    assert gdal.VSIFEofL(f) == 0
+    assert gdal.VSIFErrorL(f) == 0
+    assert gdal.VSIFReadL(1, 1, f) == b""
+    assert gdal.VSIFEofL(f) == 1
+    assert gdal.VSIFErrorL(f) == 0
     gdal.VSIFCloseL(f)
 
 
@@ -1181,24 +1239,40 @@ def test_vsifile_vsimem_truncate_zeroize():
 # Test VSICopyFile()
 
 
-def test_vsifile_copyfile():
+def test_vsifile_copyfile_regular(tmp_vsimem):
 
     # Most simple invocation
-    dstfilename = "/vsimem/test_vsifile_copyfile.tif"
+    dstfilename = str(tmp_vsimem / "out.bin")
     assert gdal.CopyFile("data/byte.tif", dstfilename) == 0
     assert gdal.VSIStatL(dstfilename).size == gdal.VSIStatL("data/byte.tif").size
 
+
+def test_vsifile_copyfile_srcfilename_none(tmp_vsimem):
+
     # Test srcfilename passed to None
-    srcfilename = "/vsimem/test.bin"
+    srcfilename = str(tmp_vsimem / "src.bin")
+    dstfilename = str(tmp_vsimem / "out.bin")
     f = gdal.VSIFOpenL(srcfilename, "wb+")
     gdal.VSIFTruncateL(f, 1000 * 1000)
     assert gdal.CopyFile(None, dstfilename, f) == 0
     gdal.VSIFCloseL(f)
-    gdal.Unlink(srcfilename)
     assert gdal.VSIStatL(dstfilename).size == 1000 * 1000
 
+
+def test_vsifile_copyfile_srcfilename_and_srcfilehandle_none(tmp_vsimem):
+
+    # Test srcfilename passed to None
+    dstfilename = str(tmp_vsimem / "out.bin")
+    with gdal.quiet_errors():
+        assert gdal.CopyFile(None, dstfilename) != 0
+    assert gdal.VSIStatL(dstfilename) is None
+
+
+def test_vsifile_copyfile_progress(tmp_vsimem):
+
     # Test progress callback
-    srcfilename = "/vsimem/test.bin"
+    srcfilename = str(tmp_vsimem / "src.bin")
+    dstfilename = str(tmp_vsimem / "out.bin")
     f = gdal.VSIFOpenL(srcfilename, "wb+")
     gdal.VSIFTruncateL(f, 1000 * 1000)
     gdal.VSIFCloseL(f)
@@ -1213,11 +1287,14 @@ def test_vsifile_copyfile():
         == 0
     )
     assert tab[-1] == 1.0
-    gdal.Unlink(srcfilename)
     assert gdal.VSIStatL(dstfilename).size == 1000 * 1000
 
+
+def test_vsifile_copyfile_progress_cancel(tmp_vsimem):
+
     # Test progress callback in error situation
-    srcfilename = "/vsimem/test.bin"
+    srcfilename = str(tmp_vsimem / "src.bin")
+    dstfilename = str(tmp_vsimem / "out.bin")
     f = gdal.VSIFOpenL(srcfilename, "wb+")
     gdal.VSIFTruncateL(f, 1000 * 1000)
     gdal.VSIFCloseL(f)
@@ -1229,15 +1306,33 @@ def test_vsifile_copyfile():
         return 1
 
     tab = []
-    assert (
-        gdal.CopyFile(srcfilename, dstfilename, callback=progress, callback_data=tab)
-        != 0
-    )
+    with gdal.quiet_errors():
+        assert (
+            gdal.CopyFile(
+                srcfilename, dstfilename, callback=progress, callback_data=tab
+            )
+            != 0
+        )
     assert tab[-1] != 1.0
-    gdal.Unlink(srcfilename)
-    assert gdal.VSIStatL(dstfilename).size != 1000 * 1000
+    assert gdal.VSIStatL(dstfilename) is None
 
-    gdal.Unlink(dstfilename)
+
+def test_vsifile_copyfile_error_on_input(tmp_vsimem):
+
+    srcfilename = "/vsigzip/data/corrupted_z_buf_error.gz"
+    dstfilename = str(tmp_vsimem / "out.bin")
+    fp = gdal.VSIFOpenL(srcfilename, "rb")
+    assert fp
+    try:
+        with gdal.quiet_errors():
+            assert gdal.CopyFile(None, dstfilename, fpSource=fp) != 0
+        assert "error while reading source file" in gdal.GetLastErrorMsg()
+        assert gdal.VSIStatL(dstfilename) is None
+    finally:
+        gdal.VSIFCloseL(fp)
+
+
+###############################################################################
 
 
 def test_vsimem_illegal_filename():
@@ -1341,3 +1436,325 @@ def test_vsifile_use_closed_file(tmp_path):
 
     with pytest.raises(ValueError, match="closed file"):
         gdal.VSIFWriteL("0123456789", 1, 10, f)
+
+
+###############################################################################
+# Test gdal.CopyFileRestartable()
+
+
+def test_vsifile_CopyFileRestartable(tmp_vsimem):
+
+    dstfilename = str(tmp_vsimem / "out.txt")
+
+    with gdal.quiet_errors():
+        retcode, output_payload = gdal.CopyFileRestartable(
+            str(tmp_vsimem / "i_do_not_exist.txt"), dstfilename, None
+        )
+    assert retcode == -1
+    assert output_payload is None
+    assert gdal.VSIStatL(dstfilename) is None
+
+    srcfilename = str(tmp_vsimem / "in.txt")
+    gdal.FileFromMemBuffer(srcfilename, "foo")
+    retcode, output_payload = gdal.CopyFileRestartable(srcfilename, dstfilename, None)
+    assert retcode == 0
+    assert output_payload is None
+    assert gdal.VSIStatL(dstfilename).size == 3
+
+
+###############################################################################
+# Test VSIFile helper class
+
+
+def test_vsifile_class_write_ascii(tmp_path):
+
+    fname = tmp_path / "test.txt"
+
+    lines = ["permission is hereby granted", "free of charge", "to any person"]
+
+    with gdaltest.vsi_open(fname, "w") as f:
+        assert f.tell() == 0
+
+        for line in lines:
+            f.write(line)
+            f.write("\n")
+
+    with open(fname, "r") as f:
+        assert [line.strip() for line in f.readlines()] == lines
+
+
+def test_vsifile_class_read_ascii(tmp_path):
+
+    fname = str(tmp_path / "test.txt")
+
+    lines = ["permission is hereby granted", "free of charge", "to any person"]
+
+    with open(fname, "w", newline="\n") as f:
+        for line in lines:
+            f.write(line)
+            f.write("\n")
+
+        with pytest.raises(Exception):
+            f.write(b"some bytes")
+
+    # read entire file
+    with gdaltest.vsi_open(fname, "r") as f:
+        contents = f.read()
+
+        assert type(contents) is str
+
+        lines_in = [line.strip() for line in contents.strip().split("\n")]
+        assert lines_in == lines
+
+    # read some characters
+    f = gdaltest.vsi_open(fname)
+    assert f.read(10) == "permission"
+
+    # skip a character
+    f.seek(1, os.SEEK_CUR)
+    assert f.read(9) == "is hereby"
+
+    # seek backwards
+    f.seek(-2, os.SEEK_CUR)
+    assert f.read(2) == "by"
+
+    # jump to beginning
+    f.seek(0, os.SEEK_SET)
+    assert f.read(10) == "permission"
+
+    # can't jump before the beginning
+    pos = f.tell()
+    with pytest.raises(OSError, match="negative offset"):
+        f.seek(-2, os.SEEK_SET) == -1
+    assert pos == f.tell()
+
+    # jump to end
+    f.seek(0, os.SEEK_END)
+    assert f.read(10) == ""
+
+    f.seek(-7, os.SEEK_END)
+    assert f.read() == "person\n"
+
+    f.close()
+    f.close()  # no harm in closing an already-closed file
+
+
+def test_vsifile_class_read_binary(tmp_path):
+
+    fname = tmp_path / "test.wkb"
+
+    g = ogr.CreateGeometryFromWkt("POINT (15 17)")
+    wkb = g.ExportToWkb()
+
+    with open(fname, "wb") as f:
+        f.write(wkb)
+
+    # read entire file
+    with gdaltest.vsi_open(fname, "rb") as f:
+        contents = f.read()
+
+        assert type(contents) is bytes
+
+        assert contents == wkb
+
+    # read some bytes
+    f = gdaltest.vsi_open(fname, "rb")
+    assert f.read(5) == wkb[:5]
+
+    f.seek(10, os.SEEK_SET)
+    assert f.read(5) == wkb[10:15]
+
+
+def test_vsifile_class_write_binary(tmp_path):
+
+    fname = tmp_path / "test.wkb"
+
+    g = ogr.CreateGeometryFromWkt("POINT (15 17)")
+    wkb = g.ExportToWkb()
+
+    with gdaltest.vsi_open(fname, "wb") as f:
+        f.write(wkb[:8])
+        f.write(wkb[8:])
+
+    with open(fname, "rb") as f:
+        assert f.read() == wkb
+
+    with gdaltest.vsi_open(fname, "rb") as f:
+        with pytest.raises(OSError, match="Expected to write"):
+            f.write(wkb)
+
+
+def random_lines():
+    import random
+    import string
+
+    lines = []
+    for i in range(50):
+        lines.append(
+            "".join([random.choice(string.ascii_letters) for j in range(20 + 3 * i)])
+        )
+    lines.append(" ")
+    lines.append("")
+    lines.append("theend")
+    lines.append("")
+
+    return lines
+
+
+@pytest.mark.parametrize("terminating_newline", (True, False))
+def test_vsifile_class_line_iteration(tmp_path, terminating_newline):
+
+    fname = str(tmp_path / "test.txt")
+
+    lines_out = random_lines()
+
+    with open(fname, "w") as f:
+        for line in lines_out:
+            f.write(line)
+            f.write("\n")
+
+        if not terminating_newline:
+            f.write("lastline")
+            lines_out.append("lastline")
+
+    with gdaltest.vsi_open(fname) as f:
+        lines_in = [line for line in f]
+
+    assert lines_in == lines_out
+
+
+def test_vsifile_class_binary_line_iteration(tmp_path):
+
+    fname = str(tmp_path / "test.txt")
+
+    lines_out = [x.encode() for x in random_lines()]
+
+    with open(fname, "wb") as f:
+        for line in lines_out:
+            f.write(line)
+            f.write(b"\n")
+
+    with gdaltest.vsi_open(fname, "rb") as f:
+        lines_in = [line for line in f]
+
+    assert lines_in == lines_out
+
+
+def test_vsifile_class_zipped_csv_reader(tmp_path):
+
+    test_csv = str(tmp_path / "input.csv")
+    test_zip = str(tmp_path / "input.zip")
+
+    import csv
+    import shutil
+    import zipfile
+
+    shutil.copy("../ogr/data/prime_meridian.csv", test_csv)
+
+    with zipfile.ZipFile(test_zip, "w") as zf:
+        zf.write(test_csv, arcname="input.csv")
+
+    with gdaltest.vsi_open(f"/vsizip/{test_zip}/input.csv") as f:
+        records = [x for x in csv.DictReader(f)]
+
+    assert len(records) == 4
+    assert (
+        records[2]["INFORMATION_SOURCE"]
+        == "Institut Geographique National (IGN), Paris"
+    )
+
+
+def test_vsifile_class_file_does_not_exist(tmp_path):
+
+    with pytest.raises(OSError, match="No such file or directory"):
+        gdaltest.vsi_open(tmp_path / "does_not_exist.txt")
+
+
+def test_vsifile_class_read_from_closed_file(tmp_path):
+
+    with gdaltest.vsi_open(tmp_path / "out.txt", "w") as f:
+        f.write("abc")
+
+    with pytest.raises(ValueError, match="closed file"):
+        f.seek(0)
+
+
+def test_vsifile_class_append(tmp_vsimem):
+
+    fname = tmp_vsimem / "out.txt"
+
+    with gdaltest.vsi_open(fname, "w") as f:
+        f.write("abc")
+    with gdaltest.vsi_open(fname, "a") as f:
+        f.write("def")
+    with gdaltest.vsi_open(fname) as f:
+        assert f.read() == "abcdef"
+
+
+def test_vsifile_stat_directory_trailing_slash():
+
+    res = gdal.VSIStatL("data/")
+    assert res
+    assert res.IsDirectory()
+
+
+###############################################################################
+# Test VSIMultipartUploadXXXX(), unsupported on regular file systems
+
+
+def test_vsifile_MultipartUpload():
+
+    with gdal.ExceptionMgr(useExceptions=False):
+        with gdal.quiet_errors():
+            assert gdal.MultipartUploadGetCapabilities("foo") is None
+    with gdal.ExceptionMgr(useExceptions=True):
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadGetCapabilities(None)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadGetCapabilities\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadGetCapabilities("foo")
+
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadStart(None)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadStart\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadStart("foo")
+
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadAddPart(None, "", 1, 0, b"")
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadAddPart("", None, 1, 0, b"")
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadAddPart\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadAddPart("", "", 1, 0, b"")
+
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadEnd(None, "", [], 0)
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadEnd("", None, [], 0)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadEnd\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadEnd("", "", [], 0)
+
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadAbort(None, "")
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadAbort("", None)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadAbort\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadAbort("", "")

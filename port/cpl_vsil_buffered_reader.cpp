@@ -63,6 +63,7 @@ class VSIBufferedReaderHandle final : public VSIVirtualHandle
     GUIntBig nCurOffset = 0;
     bool bNeedBaseHandleSeek = false;
     bool bEOF = false;
+    bool bError = false;
     vsi_l_offset nCheatFileSize = 0;
 
     int SeekBaseTo(vsi_l_offset nTargetOffset);
@@ -80,6 +81,8 @@ class VSIBufferedReaderHandle final : public VSIVirtualHandle
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
+    int Error() override;
+    void ClearErr() override;
     int Flush() override;
     int Close() override;
 };
@@ -216,7 +219,8 @@ int VSIBufferedReaderHandle::SeekBaseTo(vsi_l_offset nTargetOffset)
 
         if (nRead < nToRead)
         {
-            bEOF = true;
+            bEOF = CPL_TO_BOOL(m_poBaseHandle->Eof());
+            bError = CPL_TO_BOOL(m_poBaseHandle->Error());
             return FALSE;
         }
         if (nToRead < nMaxOffset)
@@ -268,6 +272,16 @@ size_t VSIBufferedReaderHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
             const size_t nReadInFile = m_poBaseHandle->Read(
                 static_cast<GByte *>(pBuffer) + nReadInBuffer, 1,
                 nToReadInFile);
+            if (nReadInFile < nToReadInFile)
+            {
+                if (m_poBaseHandle->Eof())
+                    bEOF = true;
+                else
+                {
+                    CPLAssert(m_poBaseHandle->Error());
+                    bError = true;
+                }
+            }
             const size_t nRead = nReadInBuffer + nReadInFile;
 
             nBufferSize = static_cast<int>(
@@ -282,8 +296,6 @@ size_t VSIBufferedReaderHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
             CPLAssert(m_poBaseHandle->Tell() == nBufferOffset + nBufferSize);
             CPLAssert(m_poBaseHandle->Tell() == nCurOffset);
 #endif
-
-            bEOF = CPL_TO_BOOL(m_poBaseHandle->Eof());
 
             return nRead / nSize;
         }
@@ -303,6 +315,16 @@ size_t VSIBufferedReaderHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
         bNeedBaseHandleSeek = false;
         const size_t nReadInFile =
             m_poBaseHandle->Read(pBuffer, 1, nTotalToRead);
+        if (nReadInFile < nTotalToRead)
+        {
+            if (m_poBaseHandle->Eof())
+                bEOF = true;
+            else
+            {
+                CPLAssert(m_poBaseHandle->Error());
+                bError = true;
+            }
+        }
         nBufferSize = static_cast<int>(
             std::min(nReadInFile, static_cast<size_t>(MAX_BUFFER_SIZE)));
         nBufferOffset = nCurOffset + nReadInFile - nBufferSize;
@@ -315,8 +337,6 @@ size_t VSIBufferedReaderHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
         CPLAssert(m_poBaseHandle->Tell() == nBufferOffset + nBufferSize);
         CPLAssert(m_poBaseHandle->Tell() == nCurOffset);
 #endif
-
-        bEOF = CPL_TO_BOOL(m_poBaseHandle->Eof());
 
         return nReadInFile / nSize;
     }
@@ -335,12 +355,33 @@ size_t VSIBufferedReaderHandle::Write(const void * /* pBuffer */,
 }
 
 /************************************************************************/
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSIBufferedReaderHandle::ClearErr()
+
+{
+    m_poBaseHandle->ClearErr();
+    bEOF = false;
+    bError = false;
+}
+
+/************************************************************************/
 /*                               Eof()                                  */
 /************************************************************************/
 
 int VSIBufferedReaderHandle::Eof()
 {
     return bEOF;
+}
+
+/************************************************************************/
+/*                              Error()                                 */
+/************************************************************************/
+
+int VSIBufferedReaderHandle::Error()
+{
+    return bError;
 }
 
 /************************************************************************/

@@ -38,6 +38,8 @@
 #include <cstring>
 #include <limits>
 #include <memory>
+#include <stdexcept>
+#include <string>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -1791,19 +1793,33 @@ OGRErr OGRGeometry::importPreambleFromWkt(const char **ppszInput, int *pbHasZ,
     /* -------------------------------------------------------------------- */
     bool bHasM = false;
     bool bHasZ = false;
-    bool bIsoWKT = true;
+    bool bAlreadyGotDimension = false;
 
     char szToken[OGR_WKT_TOKEN_MAX] = {};
     pszInput = OGRWktReadToken(pszInput, szToken);
     if (szToken[0] != '\0')
     {
         // Postgis EWKT: POINTM instead of POINT M.
+        // Current QGIS versions (at least <= 3.38) also export POINTZ.
         const size_t nTokenLen = strlen(szToken);
-        if (szToken[nTokenLen - 1] == 'M')
+        if (szToken[nTokenLen - 1] == 'M' || szToken[nTokenLen - 1] == 'm')
         {
             szToken[nTokenLen - 1] = '\0';
             bHasM = true;
-            bIsoWKT = false;
+            bAlreadyGotDimension = true;
+
+            if (nTokenLen > 2 && (szToken[nTokenLen - 2] == 'Z' ||
+                                  szToken[nTokenLen - 2] == 'z'))
+            {
+                bHasZ = true;
+                szToken[nTokenLen - 2] = '\0';
+            }
+        }
+        else if (szToken[nTokenLen - 1] == 'Z' || szToken[nTokenLen - 1] == 'z')
+        {
+            szToken[nTokenLen - 1] = '\0';
+            bHasZ = true;
+            bAlreadyGotDimension = true;
         }
     }
 
@@ -1811,55 +1827,44 @@ OGRErr OGRGeometry::importPreambleFromWkt(const char **ppszInput, int *pbHasZ,
         return OGRERR_CORRUPT_DATA;
 
     /* -------------------------------------------------------------------- */
-    /*      Check for EMPTY ...                                             */
+    /*      Check for Z, M or ZM                                            */
     /* -------------------------------------------------------------------- */
-    const char *pszPreScan = OGRWktReadToken(pszInput, szToken);
-    if (!bIsoWKT)
+    if (!bAlreadyGotDimension)
     {
-        // Go on.
-    }
-    else if (EQUAL(szToken, "EMPTY"))
-    {
-        *ppszInput = const_cast<char *>(pszPreScan);
-        *pbIsEmpty = true;
-        *pbHasM = bHasM;
-        empty();
-        return OGRERR_NONE;
-    }
-    /* -------------------------------------------------------------------- */
-    /*      Check for Z, M or ZM. Will ignore the Measure                   */
-    /* -------------------------------------------------------------------- */
-    else if (EQUAL(szToken, "Z"))
-    {
-        bHasZ = true;
-    }
-    else if (EQUAL(szToken, "M"))
-    {
-        bHasM = true;
-    }
-    else if (EQUAL(szToken, "ZM"))
-    {
-        bHasZ = true;
-        bHasM = true;
+        const char *pszNewInput = OGRWktReadToken(pszInput, szToken);
+        if (EQUAL(szToken, "Z"))
+        {
+            pszInput = pszNewInput;
+            bHasZ = true;
+        }
+        else if (EQUAL(szToken, "M"))
+        {
+            pszInput = pszNewInput;
+            bHasM = true;
+        }
+        else if (EQUAL(szToken, "ZM"))
+        {
+            pszInput = pszNewInput;
+            bHasZ = true;
+            bHasM = true;
+        }
     }
     *pbHasZ = bHasZ;
     *pbHasM = bHasM;
 
-    if (bIsoWKT && (bHasZ || bHasM))
+    /* -------------------------------------------------------------------- */
+    /*      Check for EMPTY ...                                             */
+    /* -------------------------------------------------------------------- */
+    const char *pszNewInput = OGRWktReadToken(pszInput, szToken);
+    if (EQUAL(szToken, "EMPTY"))
     {
-        pszInput = pszPreScan;
-        pszPreScan = OGRWktReadToken(pszInput, szToken);
-        if (EQUAL(szToken, "EMPTY"))
-        {
-            *ppszInput = pszPreScan;
-            empty();
-            if (bHasZ)
-                set3D(TRUE);
-            if (bHasM)
-                setMeasured(TRUE);
-            *pbIsEmpty = true;
-            return OGRERR_NONE;
-        }
+        *ppszInput = pszNewInput;
+        *pbIsEmpty = true;
+        if (bHasZ)
+            set3D(TRUE);
+        if (bHasM)
+            setMeasured(TRUE);
+        return OGRERR_NONE;
     }
 
     if (!EQUAL(szToken, "("))
@@ -1868,10 +1873,10 @@ OGRErr OGRGeometry::importPreambleFromWkt(const char **ppszInput, int *pbHasZ,
     if (!bHasZ && !bHasM)
     {
         // Test for old-style XXXXXXXXX(EMPTY).
-        pszPreScan = OGRWktReadToken(pszPreScan, szToken);
+        pszNewInput = OGRWktReadToken(pszNewInput, szToken);
         if (EQUAL(szToken, "EMPTY"))
         {
-            pszPreScan = OGRWktReadToken(pszPreScan, szToken);
+            pszNewInput = OGRWktReadToken(pszNewInput, szToken);
 
             if (EQUAL(szToken, ","))
             {
@@ -1883,7 +1888,7 @@ OGRErr OGRGeometry::importPreambleFromWkt(const char **ppszInput, int *pbHasZ,
             }
             else
             {
-                *ppszInput = pszPreScan;
+                *ppszInput = pszNewInput;
                 empty();
                 *pbIsEmpty = true;
                 return OGRERR_NONE;
@@ -3267,10 +3272,13 @@ static GEOSGeom convertToGEOSGeom(GEOSContextHandle_t hGEOSCtxt,
 /** Returns a GEOSGeom object corresponding to the geometry.
  *
  * @param hGEOSCtxt GEOS context
+ * @param bRemoveEmptyParts Whether empty parts of the geometry should be
+ * removed before exporting to GEOS (GDAL >= 3.10)
  * @return a GEOSGeom object corresponding to the geometry.
  */
 GEOSGeom
-OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
+OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt,
+                          UNUSED_IF_NO_GEOS bool bRemoveEmptyParts) const
 
 {
 #ifndef HAVE_GEOS
@@ -3299,6 +3307,8 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
     if (hasCurveGeometry())
     {
         poLinearGeom = getLinearGeometry();
+        if (bRemoveEmptyParts)
+            poLinearGeom->removeEmptyParts();
 #if (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 12)
         // GEOS < 3.12 doesn't support M dimension
         if (poLinearGeom->IsMeasured())
@@ -3313,9 +3323,17 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
         if (IsMeasured())
         {
             poLinearGeom = clone();
+            if (bRemoveEmptyParts)
+                poLinearGeom->removeEmptyParts();
             poLinearGeom->setMeasured(FALSE);
         }
+        else
 #endif
+            if (bRemoveEmptyParts && hasEmptyParts())
+        {
+            poLinearGeom = clone();
+            poLinearGeom->removeEmptyParts();
+        }
     }
     if (eType == wkbTriangle)
     {
@@ -4532,6 +4550,264 @@ OGRGeometryH OGR_G_Buffer(OGRGeometryH hTarget, double dfDist, int nQuadSegs)
 
     return OGRGeometry::ToHandle(
         OGRGeometry::FromHandle(hTarget)->Buffer(dfDist, nQuadSegs));
+}
+
+/**
+ * \brief Compute buffer of geometry.
+ *
+ * Builds a new geometry containing the buffer region around the geometry
+ * on which it is invoked.  The buffer is a polygon containing the region within
+ * the buffer distance of the original geometry.
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * The following options are supported. See the GEOS library for more detailed
+ * descriptions.
+ *
+ * <ul>
+ * <li>ENDCAP_STYLE=ROUND/FLAT/SQUARE</li>
+ * <li>JOIN_STYLE=ROUND/MITRE/BEVEL</li>
+ * <li>MITRE_LIMIT=double</li>
+ * <li>QUADRANT_SEGMENTS=double</li>
+ * <li>SINGLE_SIDED=YES/NO</li>
+ * </ul>
+ *
+ * This function is the same as the C function OGR_G_BufferEx().
+ *
+ * @param dfDist the buffer distance to be applied. Should be expressed into
+ *               the same unit as the coordinates of the geometry.
+ * @param papszOptions NULL terminated list of options (may be NULL)
+ *
+ * @return the newly created geometry, or NULL if an error occurs.
+ * @since GDAL 3.10
+ */
+
+OGRGeometry *
+OGRGeometry::BufferEx(UNUSED_IF_NO_GEOS double dfDist,
+                      UNUSED_IF_NO_GEOS CSLConstList papszOptions) const
+{
+#ifndef HAVE_GEOS
+
+    CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
+    return nullptr;
+
+#else
+    OGRGeometry *poOGRProduct = nullptr;
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+
+    auto hParams = GEOSBufferParams_create_r(hGEOSCtxt);
+    bool bParamsAreValid = true;
+
+    for (const auto &[pszParam, pszValue] : cpl::IterateNameValue(papszOptions))
+    {
+        if (EQUAL(pszParam, "ENDCAP_STYLE"))
+        {
+            int nStyle;
+            if (EQUAL(pszValue, "ROUND"))
+            {
+                nStyle = GEOSBUF_CAP_ROUND;
+            }
+            else if (EQUAL(pszValue, "FLAT"))
+            {
+                nStyle = GEOSBUF_CAP_FLAT;
+            }
+            else if (EQUAL(pszValue, "SQUARE"))
+            {
+                nStyle = GEOSBUF_CAP_SQUARE;
+            }
+            else
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Invalid value for ENDCAP_STYLE: %s", pszValue);
+                break;
+            }
+
+            if (!GEOSBufferParams_setEndCapStyle_r(hGEOSCtxt, hParams, nStyle))
+            {
+                bParamsAreValid = false;
+            }
+        }
+        else if (EQUAL(pszParam, "JOIN_STYLE"))
+        {
+            int nStyle;
+            if (EQUAL(pszValue, "ROUND"))
+            {
+                nStyle = GEOSBUF_JOIN_ROUND;
+            }
+            else if (EQUAL(pszValue, "MITRE"))
+            {
+                nStyle = GEOSBUF_JOIN_MITRE;
+            }
+            else if (EQUAL(pszValue, "BEVEL"))
+            {
+                nStyle = GEOSBUF_JOIN_BEVEL;
+            }
+            else
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Invalid value for JOIN_STYLE: %s", pszValue);
+                break;
+            }
+
+            if (!GEOSBufferParams_setJoinStyle_r(hGEOSCtxt, hParams, nStyle))
+            {
+                bParamsAreValid = false;
+                break;
+            }
+        }
+        else if (EQUAL(pszParam, "MITRE_LIMIT"))
+        {
+            try
+            {
+                std::size_t end;
+                double dfLimit = std::stod(pszValue, &end);
+
+                if (end != strlen(pszValue))
+                {
+                    throw std::invalid_argument("");
+                }
+
+                if (!GEOSBufferParams_setMitreLimit_r(hGEOSCtxt, hParams,
+                                                      dfLimit))
+                {
+                    bParamsAreValid = false;
+                    break;
+                }
+            }
+            catch (const std::invalid_argument &)
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for MITRE_LIMIT: %s", pszValue);
+            }
+            catch (const std::out_of_range &)
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for MITRE_LIMIT: %s", pszValue);
+            }
+        }
+        else if (EQUAL(pszParam, "QUADRANT_SEGMENTS"))
+        {
+            try
+            {
+                std::size_t end;
+                int nQuadSegs = std::stoi(pszValue, &end, 10);
+
+                if (end != strlen(pszValue))
+                {
+                    throw std::invalid_argument("");
+                }
+
+                if (!GEOSBufferParams_setQuadrantSegments_r(hGEOSCtxt, hParams,
+                                                            nQuadSegs))
+                {
+                    bParamsAreValid = false;
+                    break;
+                }
+            }
+            catch (const std::invalid_argument &)
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for QUADRANT_SEGMENTS: %s", pszValue);
+            }
+            catch (const std::out_of_range &)
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for QUADRANT_SEGMENTS: %s", pszValue);
+            }
+        }
+        else if (EQUAL(pszParam, "SINGLE_SIDED"))
+        {
+            bool bSingleSided = CPLTestBool(pszValue);
+
+            if (!GEOSBufferParams_setSingleSided_r(hGEOSCtxt, hParams,
+                                                   bSingleSided))
+            {
+                bParamsAreValid = false;
+                break;
+            }
+        }
+        else
+        {
+            bParamsAreValid = false;
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unsupported buffer option: %s", pszValue);
+        }
+    }
+
+    if (bParamsAreValid)
+    {
+        GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+        if (hGeosGeom != nullptr)
+        {
+            GEOSGeom hGeosProduct =
+                GEOSBufferWithParams_r(hGEOSCtxt, hGeosGeom, hParams, dfDist);
+            GEOSGeom_destroy_r(hGEOSCtxt, hGeosGeom);
+
+            if (hGeosProduct != nullptr)
+            {
+                poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct,
+                                                     this, nullptr);
+            }
+        }
+    }
+
+    GEOSBufferParams_destroy_r(hGEOSCtxt, hParams);
+    freeGEOSContext(hGEOSCtxt);
+    return poOGRProduct;
+#endif
+}
+
+/**
+ * \brief Compute buffer of geometry.
+ *
+ * Builds a new geometry containing the buffer region around the geometry
+ * on which it is invoked.  The buffer is a polygon containing the region within
+ * the buffer distance of the original geometry.
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * The following options are supported. See the GEOS library for more detailed
+ * descriptions.
+ *
+ * <ul>
+ * <li>ENDCAP_STYLE=ROUND/FLAT/SQUARE</li>
+ * <li>JOIN_STYLE=ROUND/MITRE/BEVEL</li>
+ * <li>MITRE_LIMIT=double</li>
+ * <li>QUADRANT_SEGMENTS=double</li>
+ * <li>SINGLE_SIDED=YES/NO</li>
+ * </ul>
+ *
+ * This function is the same as the C++ method OGRGeometry::BufferEx().
+ *
+ * @param hTarget the geometry.
+ * @param dfDist the buffer distance to be applied. Should be expressed into
+ *               the same unit as the coordinates of the geometry.
+ * @param papszOptions NULL terminated list of options (may be NULL)
+ *
+ * @return the newly created geometry, or NULL if an error occurs.
+ * @since GDAL 3.10
+ */
+
+OGRGeometryH OGR_G_BufferEx(OGRGeometryH hTarget, double dfDist,
+                            CSLConstList papszOptions)
+
+{
+    VALIDATE_POINTER1(hTarget, "OGR_G_BufferEx", nullptr);
+
+    return OGRGeometry::ToHandle(
+        OGRGeometry::FromHandle(hTarget)->BufferEx(dfDist, papszOptions));
 }
 
 /************************************************************************/
@@ -5786,7 +6062,8 @@ OGRErr OGRGeometry::Centroid(OGRPoint *poPoint) const
 #else
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom =
+        exportToGEOS(hGEOSCtxt, /* bRemoveEmptyParts = */ true);
 
     if (hThisGeosGeom != nullptr)
     {
@@ -6664,7 +6941,7 @@ OGRCreatePreparedGeometry(UNUSED_IF_NO_GEOS OGRGeometryH hGeom)
 /************************************************************************/
 
 /** Destroys a prepared geometry.
- * @param hPreparedGeom preprated geometry.
+ * @param hPreparedGeom prepared geometry.
  * @since GDAL 3.3
  */
 void OGRDestroyPreparedGeometry(
@@ -8232,4 +8509,84 @@ void OGRwkbExportOptionsSetPrecision(
     psOptions->sPrecision = OGRGeomCoordinateBinaryPrecision();
     if (hPrecisionOptions)
         psOptions->sPrecision.SetFrom(*hPrecisionOptions);
+}
+
+/************************************************************************/
+/*                             IsRectangle()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns whether the geometry is a polygon with 4 corners forming
+ * a rectangle.
+ *
+ * @since GDAL 3.10
+ */
+bool OGRGeometry::IsRectangle() const
+{
+    if (wkbFlatten(getGeometryType()) != wkbPolygon)
+        return false;
+
+    const OGRPolygon *poPoly = toPolygon();
+
+    if (poPoly->getNumInteriorRings() != 0)
+        return false;
+
+    const OGRLinearRing *poRing = poPoly->getExteriorRing();
+    if (!poRing)
+        return false;
+
+    if (poRing->getNumPoints() > 5 || poRing->getNumPoints() < 4)
+        return false;
+
+    // If the ring has 5 points, the last should be the first.
+    if (poRing->getNumPoints() == 5 && (poRing->getX(0) != poRing->getX(4) ||
+                                        poRing->getY(0) != poRing->getY(4)))
+        return false;
+
+    // Polygon with first segment in "y" direction.
+    if (poRing->getX(0) == poRing->getX(1) &&
+        poRing->getY(1) == poRing->getY(2) &&
+        poRing->getX(2) == poRing->getX(3) &&
+        poRing->getY(3) == poRing->getY(0))
+        return true;
+
+    // Polygon with first segment in "x" direction.
+    if (poRing->getY(0) == poRing->getY(1) &&
+        poRing->getX(1) == poRing->getX(2) &&
+        poRing->getY(2) == poRing->getY(3) &&
+        poRing->getX(3) == poRing->getX(0))
+        return true;
+
+    return false;
+}
+
+/************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a geometry has empty parts/rings.
+ *
+ * Returns true if removeEmptyParts() will modify the geometry.
+ *
+ * This is different from IsEmpty().
+ *
+ * @since GDAL 3.10
+ */
+bool OGRGeometry::hasEmptyParts() const
+{
+    return false;
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+/**
+ * \brief Remove empty parts/rings from this geometry.
+ *
+ * @since GDAL 3.10
+ */
+void OGRGeometry::removeEmptyParts()
+{
 }

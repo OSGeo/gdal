@@ -228,6 +228,9 @@ void RegisterOGRTAB()
         "description='Friendly name of table. Only for tab "
         "format.'/>"  // See
         // https://support.pitneybowes.com/SearchArticles/VFP05_KnowledgeWithSidebarHowTo?id=kA180000000CtuHCAS&popup=false&lang=en_US
+        "  <Option name='STRICT_FIELDS_NAME_LAUNDERING' type='boolean' "
+        "default='YES' description='Field name consisting of alphanumeric "
+        "only, maximum length 31'/>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(
@@ -248,11 +251,15 @@ void RegisterOGRTAB()
         "  <Option name='ENCODING' type='string' description='to override the "
         "encoding interpretation of the DAT/MID with any encoding supported by "
         "CPLRecode or to \"\" to avoid any recoding (Neutral charset)'/>"
+        "  <Option name='STRICT_FIELDS_NAME_LAUNDERING' type='boolean' "
+        "default='YES' description='Field name consisting of alphanumeric "
+        "only, maximum length 31'/>"
         "</CreationOptionList>");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,
         "Integer Integer64 Real String Date DateTime Time");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean");
     poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
                               "WidthPrecision");
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,

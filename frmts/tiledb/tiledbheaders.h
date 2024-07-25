@@ -154,6 +154,11 @@ constexpr const char *TILEDB_VALUES = "TDB_VALUES";
 
 constexpr const char *GDAL_ATTRIBUTE_NAME = "_gdal";
 
+constexpr const char *DATASET_TYPE_ATTRIBUTE_NAME = "dataset_type";
+// Potential values for dataset_type metadata:
+constexpr const char *RASTER_DATASET_TYPE = "raster";
+constexpr const char *GEOMETRY_DATASET_TYPE = "geometry";
+
 /************************************************************************/
 /* ==================================================================== */
 /*                               TileRasterBand                         */
@@ -190,13 +195,12 @@ class TileDBDataset : public GDALPamDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
-#ifdef HAS_TILEDB_MULTIDIM
+
     static GDALDataset *OpenMultiDimensional(GDALOpenInfo *);
     static GDALDataset *
     CreateMultiDimensional(const char *pszFilename,
                            CSLConstList papszRootGroupOptions,
                            CSLConstList papszOptions);
-#endif
 };
 
 /************************************************************************/
@@ -210,11 +214,14 @@ class TileDBRasterDataset final : public TileDBDataset
     friend class TileDBRasterBand;
 
   protected:
+    std::string m_osConfigFilename{};
     std::unique_ptr<tiledb::Context> m_roCtx;
     std::unique_ptr<tiledb::Array> m_array;
     std::unique_ptr<tiledb::Array> m_roArray;
     std::unique_ptr<tiledb::ArraySchema> m_schema;
     std::unique_ptr<tiledb::FilterList> m_filterList;
+    bool m_bDatasetInGroup = false;
+    std::string m_osArrayURI{};
     CPLString osMetaDoc;
     TILEDB_INTERLEAVE_MODE eIndexMode = BAND;
     int nBitsPerSample = 8;
@@ -224,34 +231,67 @@ class TileDBRasterDataset final : public TileDBDataset
     int nBlocksX = 0;
     int nBlocksY = 0;
     uint64_t nBandStart = 1;
-    bool bHasSubDatasets = false;
-    int nSubDataCount = 0;
-    char **papszSubDatasets = nullptr;
-    CPLStringList m_osSubdatasetMD{};
-    CPLXMLNode *psSubDatasetsTree = nullptr;
-    char **papszAttributes = nullptr;
-    std::list<std::unique_ptr<GDALDataset>> lpoAttributeDS = {};
+    bool m_bHasSubDatasets = false;
+    CPLStringList m_aosSubdatasetMD{};
+    CPLXMLTreeCloser m_poSubDatasetsTree{nullptr};
+    std::list<std::unique_ptr<GDALDataset>> m_lpoAttributeDS = {};
     uint64_t nTimestamp = 0;
-
     bool bStats = FALSE;
+    bool m_bDeferredCreateHasRun = false;
+    bool m_bDeferredCreateHasBeenSuccessful = false;
+
+    //! Number of overviews declared in _gdal metadata. In theory, it should
+    // match m_apoOverviewDS.size(), but do not strongly rely on that.
+    int m_nOverviewCountFromMetadata = 0;
+
+    //! Overview datasets
+    std::vector<std::unique_ptr<GDALDataset>> m_apoOverviewDS{};
+
+    //! Overview datasets that have been removed per IBuildOverviews(nOverview==0)
+    std::vector<std::unique_ptr<GDALDataset>> m_apoOverviewDSRemoved{};
+
+    //! Whether LoadOverviews() has already been called.
+    bool m_bLoadOverviewsDone = false;
+
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
-                     GDALRasterIOExtraArg *psExtraArg) override;
+                     GDALDataType, int, BANDMAP_TYPE, GSpacing, GSpacing,
+                     GSpacing, GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr CreateAttribute(GDALDataType eType, const CPLString &osAttrName,
-                           const int nSubRasterCount = 1);
+                           const int nSubRasterCount, bool bHasFillValue,
+                           double dfFillValue);
 
     CPLErr AddDimensions(tiledb::Domain &domain, const char *pszAttrName,
                          tiledb::Dimension &y, tiledb::Dimension &x,
                          tiledb::Dimension *poBands = nullptr);
 
+    void CreateArray();
+    bool DeferredCreate(bool bCreateArray);
+
+    tiledb::Array &GetArray(bool bForWrite, tiledb::Context *&ctx);
+
+    static GDALDataset *OpenInternal(GDALOpenInfo *,
+                                     tiledb::Object::Type objectType);
+
+    //! Load TileDB overviews from TileDB arrays
+    void LoadOverviews();
+
   public:
     ~TileDBRasterDataset();
-    CPLErr TryLoadCachedXML(char **papszSiblingFiles = nullptr,
+    CPLErr TryLoadCachedXML(CSLConstList papszSiblingFiles = nullptr,
                             bool bReload = true);
-    CPLErr TryLoadXML(char **papszSiblingFiles = nullptr) override;
+    CPLErr TryLoadXML(CSLConstList papszSiblingFiles = nullptr) override;
     CPLErr TrySaveXML() override;
     char **GetMetadata(const char *pszDomain) override;
+    CPLErr Close() override;
+    int CloseDependentDatasets() override;
     virtual CPLErr FlushCache(bool bAtClosing) override;
+
+    CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
+                           const int *panOverviewList, int nListBands,
+                           const int *panBandList, GDALProgressFunc pfnProgress,
+                           void *pProgressData,
+                           CSLConstList papszOptions) override;
+
     static CPLErr CopySubDatasets(GDALDataset *poSrcDS,
                                   TileDBRasterDataset *poDstDS,
                                   GDALProgressFunc pfnProgress,
@@ -259,13 +299,13 @@ class TileDBRasterDataset final : public TileDBDataset
     static TileDBRasterDataset *CreateLL(const char *pszFilename, int nXSize,
                                          int nYSize, int nBands,
                                          GDALDataType eType,
-                                         char **papszOptions);
-    static void SetBlockSize(GDALRasterBand *poBand, char **&papszOptions);
+                                         CSLConstList papszOptions);
+    static void SetBlockSize(GDALRasterBand *poBand, CPLStringList &aosOptions);
 
-    static GDALDataset *Open(GDALOpenInfo *);
-    static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
-                               int nBands, GDALDataType eType,
-                               char **papszOptions);
+    static GDALDataset *Open(GDALOpenInfo *, tiledb::Object::Type objectType);
+    static TileDBRasterDataset *Create(const char *pszFilename, int nXSize,
+                                       int nYSize, int nBands,
+                                       GDALDataType eType, char **papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
                                    char **papszOptions,
@@ -333,11 +373,7 @@ class OGRTileDBLayer final : public OGRLayer,
     uint64_t m_nRowCountInResultSet = 0;
     int m_nUseOptimizedAttributeFilter = -1;  // uninitialized
 
-#ifdef HAS_TILEDB_WORKING_UTF8_STRING_FILTER
     tiledb_datatype_t m_eTileDBStringType = TILEDB_STRING_UTF8;
-#else
-    tiledb_datatype_t m_eTileDBStringType = TILEDB_STRING_ASCII;
-#endif
 
     std::string m_osXDim = "_X";
     std::string m_osYDim = "_Y";

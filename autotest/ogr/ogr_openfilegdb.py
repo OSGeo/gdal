@@ -157,18 +157,23 @@ ogrtest.openfilegdb_datalist_m = [
 ]
 
 
+@pytest.fixture(autouse=True, scope="module")
+def fgdb_drv():
+    drv = ogr.GetDriverByName("FileGDB")
+    yield drv
+
+
 @pytest.fixture(scope="module", autouse=True)
-def setup_driver():
+def setup_driver(fgdb_drv):
     # remove FileGDB driver before running tests
-    filegdb_driver = ogr.GetDriverByName("FileGDB")
-    if filegdb_driver is not None:
-        filegdb_driver.Deregister()
+    if fgdb_drv is not None:
+        fgdb_drv.Deregister()
 
     yield
 
-    if filegdb_driver is not None:
+    if fgdb_drv is not None:
         print("Reregistering FileGDB driver")
-        filegdb_driver.Register()
+        fgdb_drv.Register()
 
 
 @pytest.fixture()
@@ -776,17 +781,13 @@ def test_ogr_openfilegdb_4():
 ###############################################################################
 # Test use of attribute indexes on truncated strings
 
+IDX_NOT_USED = 0
+IDX_USED = 1
 
-def test_ogr_openfilegdb_str_indexed_truncated():
 
-    ds = ogr.Open("data/filegdb/test_str_indexed_truncated.gdb")
-
-    lyr = ds.GetLayerByName("test")
-
-    IDX_NOT_USED = 0
-    IDX_USED = 1
-
-    tests = [
+@pytest.mark.parametrize(
+    "where_clause, fids, expected_attr_index_use",
+    [
         ("str = 'a'", [1], IDX_USED),
         ("str = 'aa'", [2], IDX_USED),
         ("str != 'aa'", [1, 3], IDX_NOT_USED),
@@ -809,19 +810,47 @@ def test_ogr_openfilegdb_str_indexed_truncated():
         ("str IN ('aaa ')", [], IDX_USED),
         ("str IN ('aaaX')", [], IDX_USED),
         ("str IN ('aaaXX')", [], IDX_USED),
-    ]
-    for where_clause, fids, expected_attr_index_use in tests:
+        ("str ILIKE 'a'", [1], IDX_NOT_USED),
+        ("str ILIKE 'a%'", [1, 2, 3], IDX_NOT_USED),
+        ("str ILIKE 'aaa  '", [], IDX_NOT_USED),
+    ],
+)
+def test_ogr_openfilegdb_str_indexed_truncated(
+    where_clause, fids, expected_attr_index_use
+):
 
-        lyr.SetAttributeFilter(where_clause)
-        sql_lyr = ds.ExecuteSQL("GetLayerAttrIndexUse %s" % lyr.GetName())
-        attr_index_use = int(sql_lyr.GetNextFeature().GetField(0))
-        ds.ReleaseResultSet(sql_lyr)
-        assert attr_index_use == expected_attr_index_use, (
-            where_clause,
-            fids,
-            expected_attr_index_use,
-        )
-        assert [f.GetFID() for f in lyr] == fids, (where_clause, fids)
+    ds = ogr.Open("data/filegdb/test_str_indexed_truncated.gdb")
+
+    lyr = ds.GetLayerByName("test")
+
+    lyr.SetAttributeFilter(where_clause)
+    sql_lyr = ds.ExecuteSQL("GetLayerAttrIndexUse %s" % lyr.GetName())
+    attr_index_use = int(sql_lyr.GetNextFeature().GetField(0))
+    ds.ReleaseResultSet(sql_lyr)
+    assert attr_index_use == expected_attr_index_use, (
+        where_clause,
+        fids,
+        expected_attr_index_use,
+    )
+    assert [f.GetFID() for f in lyr] == fids, (where_clause, fids)
+
+
+def test_ogr_openfilegdb_ilike():
+
+    ds = ogr.Open("data/filegdb/Domains.gdb/a00000001.gdbtable")
+    lyr = ds.GetLayer(0)
+
+    lyr.SetAttributeFilter("Name = 'Roads'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("Name ILIKE 'Roads'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("Name = 'Roadsx'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("Name ILIKE 'Roadsx'")
+    assert lyr.GetFeatureCount() == 0
 
 
 ###############################################################################
@@ -2695,3 +2724,149 @@ def test_ogr_openfilegdb_get_extent_getextent3d():
             0.0,
         )
     )
+
+
+###############################################################################
+# Test IdentifyDriver()
+
+
+def test_ogr_openfilegdb_try_identify_vector_as_raster():
+
+    assert gdal.IdentifyDriverEx("data/filegdb/empty_polygon.gdb") is not None
+    assert (
+        gdal.IdentifyDriverEx("data/filegdb/empty_polygon.gdb", gdal.OF_RASTER) is None
+    )
+
+
+###############################################################################
+# Test reading a database with a compressed layer (.cdf)
+
+
+@gdaltest.disable_exceptions()
+def test_ogr_openfilegdb_read_cdf():
+
+    msgs = []
+
+    def error_handler(klass, type, msg):
+        msgs.append(msg)
+
+    with gdaltest.error_handler(error_handler):
+        assert ogr.Open("data/filegdb/with_cdf.gdb") is None
+
+    assert len(msgs) == 1
+    assert (
+        "file using Compressed Data Format (CDF) that is unhandled by the OpenFileGDB driver, but could be handled by the FileGDB driver"
+        in msgs[0]
+    )
+
+
+###############################################################################
+# Test reading a database with a layer with 64-bit OBJETID, non sparse
+
+
+def test_ogr_openfilegdb_read_objectid_64bit_non_sparse():
+
+    ds = ogr.Open("data/filegdb/objectid64/3features.gdb")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 3
+
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1
+    assert f["Shape_Length"] == pytest.approx(3140.05912327677)
+    assert f["Shape_Area"] == pytest.approx(217981.09775568)
+    g1 = f.GetGeometryRef()
+    assert g1 is not None
+    minx, maxx, miny, maxy = g1.GetEnvelope()
+
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 2
+    assert f["Shape_Length"] == pytest.approx(3078.7376875286)
+    assert f["Shape_Area"] == pytest.approx(538056.426171967)
+    assert f.GetGeometryRef() is not None
+
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 3
+    assert f["Shape_Length"] == pytest.approx(3330.7300497069)
+    assert f["Shape_Area"] == pytest.approx(631040.074244291)
+    assert f.GetGeometryRef() is not None
+
+    assert lyr.GetNextFeature() is None
+
+    x = (minx + maxx) / 2
+    y = (miny + maxy) / 2
+    lyr.SetSpatialFilterRect(x, y, x, y)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 1
+
+    ds = ogr.Open("data/filegdb/objectid64/3features.gdb", update=1)
+    lyr = ds.GetLayer(0)
+    with pytest.raises(Exception, match="Cannot open testpolygon in update mode"):
+        lyr.TestCapability(ogr.OLCSequentialWrite)
+
+
+def test_ogr_openfilegdb_read_objectid_64bit_non_sparse_test_ogrsf(ogrsf_path):
+    ret = gdaltest.runexternal(
+        ogrsf_path + " -ro data/filegdb/objectid64/3features.gdb"
+    )
+
+    success = "INFO" in ret and "ERROR" not in ret
+    assert success
+
+
+###############################################################################
+# Test reading a database with layers with 64-bit OBJETID, sparse
+
+
+def test_ogr_openfilegdb_read_objectid_64bit_sparse():
+
+    ds = ogr.Open("data/filegdb/objectid64/with_holes_8.gdb")
+
+    lyr = ds.GetLayerByName("with_holes_8_a")
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 123456
+
+    lyr = ds.GetLayerByName("with_holes_8_b")
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1234567
+
+    lyr = ds.GetLayerByName("with_holes_8_c")
+    with gdal.quiet_errors():
+        assert lyr.GetFeatureCount() == 1
+    assert "Due to partial reverse engineering of the format" in gdal.GetLastErrorMsg()
+    f = lyr.GetNextFeature()
+    # This should be 12345678
+    assert f.GetFID() == 334
+
+    lyr = ds.GetLayerByName("with_holes_8_d")
+    with gdal.quiet_errors():
+        assert lyr.GetFeatureCount() == 1
+    assert "Due to partial reverse engineering of the format" in gdal.GetLastErrorMsg()
+    f = lyr.GetNextFeature()
+    # This should be 123456789
+    assert f.GetFID() == 277
+
+    lyr = ds.GetLayerByName("with_holes_8_e")
+    with gdal.quiet_errors():
+        assert lyr.GetFeatureCount() == 1
+    assert "Due to partial reverse engineering of the format" in gdal.GetLastErrorMsg()
+    f = lyr.GetNextFeature()
+    # This should be 1234567890
+    assert f.GetFID() == 722
+
+    lyr = ds.GetLayerByName("with_holes_8_f")
+    with gdal.quiet_errors():
+        assert lyr.GetFeatureCount() == 5
+    assert "Due to partial reverse engineering of the format" in gdal.GetLastErrorMsg()
+    # Should be 123456, 1234567, 12345678, 123456789, 1234567890
+    assert [f.GetFID() for f in lyr] == [576, 1671, 2382, 3349, 4818]
+
+
+def test_ogr_openfilegdb_read_objectid_64bit_sparse_test_ogrsf(ogrsf_path):
+    ret, _ = gdaltest.runexternal_out_and_err(
+        ogrsf_path + " -ro data/filegdb/objectid64/with_holes_8.gdb"
+    )
+
+    success = "INFO" in ret and "ERROR" not in ret
+    assert success

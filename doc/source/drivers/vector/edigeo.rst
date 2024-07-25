@@ -38,8 +38,8 @@ Driver capabilities
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OGR_EDIGEO_FONT_SIZE_FACTOR
       :default: 2

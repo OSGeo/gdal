@@ -51,8 +51,8 @@ Driver capabilities
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: GPX_USE_EXTENSIONS
 
@@ -90,6 +90,7 @@ Open options
 
 .. versionadded:: 3.9
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: SHORT_NAMES
@@ -227,6 +228,9 @@ first track point to fill the <name> element of the route.
 Layer creation options
 ----------------------
 
+|about-layer-creation-options|
+The following layer creation options are supported:
+
 -  .. lco:: FORCE_GPX_TRACK
       :choices: YES, NO
       :default: NO
@@ -247,6 +251,9 @@ Layer creation options
 
 Dataset creation options
 ------------------------
+
+|about-dataset-creation-options|
+The following dataset creation options are supported:
 
 -  .. dsco:: GPX_USE_EXTENSIONS
       :choices: YES, NO

@@ -1,0 +1,17 @@
+--- cmake/Modules/FindOpenSSL_EP.cmake	2024-05-10 23:53:01.989001899 +0200
++++ cmake/Modules/FindOpenSSL_EP.cmake	2024-05-10 23:53:12.489022706 +0200
+@@ -33,10 +33,10 @@
+ # Include some common helper functions.
+ include(TileDBCommon)
+
+-if (TILEDB_VCPKG)
+-  find_package(OpenSSL REQUIRED)
+-  return()
+-endif()
++#if (TILEDB_VCPKG)
++#  find_package(OpenSSL REQUIRED)
++#  return()
++#endif()
+
+ # Search the path set during the superbuild for the EP.
+ set(OPENSSL_PATHS ${TILEDB_EP_INSTALL_PREFIX})

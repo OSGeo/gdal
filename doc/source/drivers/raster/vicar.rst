@@ -13,6 +13,11 @@ VICAR -- VICAR
     :ref:`PDS <raster.pds>` driver in that situation. Starting with GDAL 3.1, if
     the :config:`GDAL_TRY_PDS3_WITH_VICAR` configuration option is
     set to YES, the dataset will be opened by the VICAR driver.
+    Alternatively, starting with GDAL 3.10, specifying the ``-if VICAR`` option
+    to command line utilities accepting it, or ``VICAR`` as the only value of
+    the ``papszAllowedDrivers`` of :cpp:func:`GDALOpenEx`, also forces the
+    driver to recognize the passed filename.
+
 
 Driver capabilities
 -------------------
@@ -30,7 +35,7 @@ Metadata
 --------
 
 Starting with GDAL 3.1, the VICAR label can be retrieved as
-JSon-serialized content in the json:VICAR metadata domain.
+JSON-serialized content in the json:VICAR metadata domain.
 
 For example:
 
@@ -184,6 +189,7 @@ to preserve as much as possible of the original label when doing VICAR
 to VICAR conversions. This can be disabled with the :co:`USE_SRC_LABEL=NO`
 creation option.
 
+|about-creation-options|
 The available creation options are:
 
 -  .. co:: GEOREF_FORMAT

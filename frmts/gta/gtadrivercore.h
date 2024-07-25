@@ -34,8 +34,13 @@
 
 constexpr const char *DRIVER_NAME = "GTA";
 
-int CPL_DLL GTADriverIdentify(GDALOpenInfo *poOpenInfo);
+#define GTADriverIdentify PLUGIN_SYMBOL_NAME(GTADriverIdentify)
 
-void CPL_DLL GTADriverSetCommonMetadata(GDALDriver *poDriver);
+#define GTADriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(GTADriverSetCommonMetadata)
+
+int GTADriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void GTADriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

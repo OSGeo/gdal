@@ -78,6 +78,16 @@ class WMTSTileMatrix
     int nTileHeight;
     int nMatrixWidth;
     int nMatrixHeight;
+
+    OGREnvelope GetExtent() const
+    {
+        OGREnvelope sExtent;
+        sExtent.MinX = dfTLX;
+        sExtent.MaxX = dfTLX + nMatrixWidth * dfPixelSize * nTileWidth;
+        sExtent.MaxY = dfTLY;
+        sExtent.MinY = dfTLY - nMatrixHeight * dfPixelSize * nTileHeight;
+        return sExtent;
+    }
 };
 
 /************************************************************************/
@@ -94,6 +104,18 @@ class WMTSTileMatrixLimits
     int nMaxTileRow;
     int nMinTileCol;
     int nMaxTileCol;
+
+    OGREnvelope GetExtent(const WMTSTileMatrix &oTM) const
+    {
+        OGREnvelope sExtent;
+        const double dfTileWidthUnits = oTM.dfPixelSize * oTM.nTileWidth;
+        const double dfTileHeightUnits = oTM.dfPixelSize * oTM.nTileHeight;
+        sExtent.MinX = oTM.dfTLX + nMinTileCol * dfTileWidthUnits;
+        sExtent.MaxY = oTM.dfTLY - nMinTileRow * dfTileHeightUnits;
+        sExtent.MaxX = oTM.dfTLX + (nMaxTileCol + 1) * dfTileWidthUnits;
+        sExtent.MinY = oTM.dfTLY - (nMaxTileRow + 1) * dfTileHeightUnits;
+        return sExtent;
+    }
 };
 
 /************************************************************************/
@@ -133,7 +155,7 @@ class WMTSDataset final : public GDALPamDataset
     CPLString osURLFeatureInfoTemplate;
     WMTSTileMatrixSet oTMS;
 
-    char **papszHTTPOptions;
+    CPLStringList m_aosHTTPOptions{};
 
     std::vector<GDALDataset *> apoDatasets;
     OGRSpatialReference m_oSRS{};
@@ -142,9 +164,9 @@ class WMTSDataset final : public GDALPamDataset
     CPLString osLastGetFeatureInfoURL;
     CPLString osMetadataItemGetFeatureInfo;
 
-    static char **BuildHTTPRequestOpts(CPLString osOtherXML);
+    static CPLStringList BuildHTTPRequestOpts(CPLString osOtherXML);
     static CPLXMLNode *GetCapabilitiesResponse(const CPLString &osFilename,
-                                               char **papszHTTPOptions);
+                                               CSLConstList papszHTTPOptions);
     static CPLString FixCRSName(const char *pszCRS);
     static CPLString Replace(const CPLString &osStr, const char *pszOld,
                              const char *pszNew);
@@ -179,7 +201,7 @@ class WMTSDataset final : public GDALPamDataset
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, int *panBandMap,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
@@ -371,7 +393,7 @@ const char *WMTSBand::GetMetadataItem(const char *pszName,
             poGDS->osMetadataItemGetFeatureInfo = "";
             char *pszRes = nullptr;
             CPLHTTPResult *psResult =
-                CPLHTTPFetch(osURL, poGDS->papszHTTPOptions);
+                CPLHTTPFetch(osURL, poGDS->m_aosHTTPOptions.List());
             if (psResult && psResult->nStatus == 0 && psResult->pabyData)
                 pszRes = CPLStrdup((const char *)psResult->pabyData);
             CPLHTTPDestroyResult(psResult);
@@ -422,7 +444,7 @@ const char *WMTSBand::GetMetadataItem(const char *pszName,
 /*                          WMTSDataset()                               */
 /************************************************************************/
 
-WMTSDataset::WMTSDataset() : papszHTTPOptions(nullptr)
+WMTSDataset::WMTSDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGT[0] = 0;
@@ -440,7 +462,6 @@ WMTSDataset::WMTSDataset() : papszHTTPOptions(nullptr)
 WMTSDataset::~WMTSDataset()
 {
     WMTSDataset::CloseDependentDatasets();
-    CSLDestroy(papszHTTPOptions);
 }
 
 /************************************************************************/
@@ -468,7 +489,7 @@ CPLErr WMTSDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                               int nXSize, int nYSize, void *pData,
                               int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, int nBandCount,
-                              int *panBandMap, GSpacing nPixelSpace,
+                              BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
                               GSpacing nLineSpace, GSpacing nBandSpace,
                               GDALRasterIOExtraArg *psExtraArg)
 {
@@ -883,7 +904,7 @@ CPLString WMTSDataset::Replace(const CPLString &osStr, const char *pszOld,
 /************************************************************************/
 
 CPLXMLNode *WMTSDataset::GetCapabilitiesResponse(const CPLString &osFilename,
-                                                 char **papszHTTPOptions)
+                                                 CSLConstList papszHTTPOptions)
 {
     CPLXMLNode *psXML;
     VSIStatBufL sStat;
@@ -965,42 +986,34 @@ CPLString WMTSDataset::GetOperationKVPURL(CPLXMLNode *psXML,
 /*                           BuildHTTPRequestOpts()                     */
 /************************************************************************/
 
-char **WMTSDataset::BuildHTTPRequestOpts(CPLString osOtherXML)
+CPLStringList WMTSDataset::BuildHTTPRequestOpts(CPLString osOtherXML)
 {
     osOtherXML = "<Root>" + osOtherXML + "</Root>";
     CPLXMLNode *psXML = CPLParseXMLString(osOtherXML);
-    char **http_request_opts = nullptr;
+    CPLStringList opts;
     if (CPLGetXMLValue(psXML, "Timeout", nullptr))
     {
-        CPLString optstr;
-        optstr.Printf("TIMEOUT=%s", CPLGetXMLValue(psXML, "Timeout", nullptr));
-        http_request_opts = CSLAddString(http_request_opts, optstr.c_str());
+        opts.SetNameValue("TIMEOUT", CPLGetXMLValue(psXML, "Timeout", nullptr));
     }
     if (CPLGetXMLValue(psXML, "UserAgent", nullptr))
     {
-        CPLString optstr;
-        optstr.Printf("USERAGENT=%s",
-                      CPLGetXMLValue(psXML, "UserAgent", nullptr));
-        http_request_opts = CSLAddString(http_request_opts, optstr.c_str());
+        opts.SetNameValue("USERAGENT",
+                          CPLGetXMLValue(psXML, "UserAgent", nullptr));
     }
     if (CPLGetXMLValue(psXML, "Referer", nullptr))
     {
-        CPLString optstr;
-        optstr.Printf("REFERER=%s", CPLGetXMLValue(psXML, "Referer", nullptr));
-        http_request_opts = CSLAddString(http_request_opts, optstr.c_str());
+        opts.SetNameValue("REFERER", CPLGetXMLValue(psXML, "Referer", nullptr));
     }
     if (CPLTestBool(CPLGetXMLValue(psXML, "UnsafeSSL", "false")))
     {
-        http_request_opts = CSLAddString(http_request_opts, "UNSAFESSL=1");
+        opts.SetNameValue("UNSAFESSL", "1");
     }
     if (CPLGetXMLValue(psXML, "UserPwd", nullptr))
     {
-        CPLString optstr;
-        optstr.Printf("USERPWD=%s", CPLGetXMLValue(psXML, "UserPwd", nullptr));
-        http_request_opts = CSLAddString(http_request_opts, optstr.c_str());
+        opts.SetNameValue("USERPWD", CPLGetXMLValue(psXML, "UserPwd", nullptr));
     }
     CPLDestroyXMLNode(psXML);
-    return http_request_opts;
+    return opts;
 }
 
 /************************************************************************/
@@ -1074,9 +1087,17 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         CSLDestroy(papszTokens);
 
-        char **papszHTTPOptions = BuildHTTPRequestOpts(osOtherXML);
-        psXML = GetCapabilitiesResponse(osGetCapabilitiesURL, papszHTTPOptions);
-        CSLDestroy(papszHTTPOptions);
+        const CPLStringList aosHTTPOptions(BuildHTTPRequestOpts(osOtherXML));
+        psXML = GetCapabilitiesResponse(osGetCapabilitiesURL,
+                                        aosHTTPOptions.List());
+    }
+    else if (poOpenInfo->IsSingleAllowedDriver("WMTS") &&
+             (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+              STARTS_WITH(poOpenInfo->pszFilename, "https://")))
+    {
+        const CPLStringList aosHTTPOptions(BuildHTTPRequestOpts(osOtherXML));
+        psXML = GetCapabilitiesResponse(poOpenInfo->pszFilename,
+                                        aosHTTPOptions.List());
     }
 
     int bHasAOI = FALSE;
@@ -1179,11 +1200,13 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLDestroyXMLNode(psGDALWMTS);
 
         CPLDestroyXMLNode(psXML);
-        char **papszHTTPOptions = BuildHTTPRequestOpts(osOtherXML);
-        psXML = GetCapabilitiesResponse(osGetCapabilitiesURL, papszHTTPOptions);
-        CSLDestroy(papszHTTPOptions);
+        const CPLStringList aosHTTPOptions(BuildHTTPRequestOpts(osOtherXML));
+        psXML = GetCapabilitiesResponse(osGetCapabilitiesURL,
+                                        aosHTTPOptions.List());
     }
-    else if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "WMTS:"))
+    else if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "WMTS:") &&
+             !STARTS_WITH(poOpenInfo->pszFilename, "http://") &&
+             !STARTS_WITH(poOpenInfo->pszFilename, "https://"))
     {
         osGetCapabilitiesURL = poOpenInfo->pszFilename;
         psXML = CPLParseXMLFile(poOpenInfo->pszFilename);
@@ -1554,7 +1577,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
         if (!osSelectLayerAbstract.empty())
             poDS->SetMetadataItem("ABSTRACT", osSelectLayerAbstract);
 
-        poDS->papszHTTPOptions = BuildHTTPRequestOpts(osOtherXML);
+        poDS->m_aosHTTPOptions = BuildHTTPRequestOpts(osOtherXML);
         poDS->osLayer = osSelectLayer;
         poDS->osTMS = osSelectTMS;
 
@@ -1762,15 +1785,11 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                         }
                         if (poRevCT != nullptr)
                         {
-                            const double dfX0 = oTM.dfTLX;
-                            const double dfY1 = oTM.dfTLY;
-                            const double dfX1 =
-                                oTM.dfTLX + oTM.nMatrixWidth * oTM.dfPixelSize *
-                                                oTM.nTileWidth;
-                            const double dfY0 =
-                                oTM.dfTLY - oTM.nMatrixHeight *
-                                                oTM.dfPixelSize *
-                                                oTM.nTileHeight;
+                            const auto sTMExtent = oTM.GetExtent();
+                            const double dfX0 = sTMExtent.MinX;
+                            const double dfY1 = sTMExtent.MaxY;
+                            const double dfX1 = sTMExtent.MaxX;
+                            const double dfY0 = sTMExtent.MinY;
                             double dfXMin =
                                 std::numeric_limits<double>::infinity();
                             double dfYMin =
@@ -1909,6 +1928,21 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
+        // Clip the computed AOI with the union of the extent of the tile
+        // matrices
+        if (bHasAOI && !bExtendBeyondDateLine)
+        {
+            OGREnvelope sUnionTM;
+            for (const WMTSTileMatrix &oTM : oTMS.aoTM)
+            {
+                if (!sUnionTM.IsInit())
+                    sUnionTM = oTM.GetExtent();
+                else
+                    sUnionTM.Merge(oTM.GetExtent());
+            }
+            sAOI.Intersect(sUnionTM);
+        }
+
         // Otherwise default to BoundingBox of the TMS
         if (!bHasAOI && oTMS.bBoundingBoxValid &&
             (eExtentMethod == AUTO || eExtentMethod == TILE_MATRIX_SET))
@@ -1926,12 +1960,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLDebug("WMTS", "Using TM level %s bounding box as layer extent",
                      oTM.osIdentifier.c_str());
 
-            sAOI.MinX = oTM.dfTLX;
-            sAOI.MaxY = oTM.dfTLY;
-            sAOI.MaxX =
-                oTM.dfTLX + oTM.nMatrixWidth * oTM.dfPixelSize * oTM.nTileWidth;
-            sAOI.MinY = oTM.dfTLY -
-                        oTM.nMatrixHeight * oTM.dfPixelSize * oTM.nTileHeight;
+            sAOI = oTM.GetExtent();
             bHasAOI = TRUE;
         }
 
@@ -1952,6 +1981,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             // Clip with implied BoundingBox of the most precise TM
             // Useful for http://tileserver.maptiler.com/wmts
             const WMTSTileMatrix &oTM = oTMS.aoTM.back();
+            const OGREnvelope sTMExtent = oTM.GetExtent();
             OGREnvelope sAOINew(sAOI);
 
             // For
@@ -1961,15 +1991,11 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             // initial coding. So do X clipping in default mode.
             if (!bExtendBeyondDateLine)
             {
-                sAOINew.MinX = std::max(sAOI.MinX, oTM.dfTLX);
-                sAOINew.MaxX = std::min(
-                    sAOI.MaxX, oTM.dfTLX + oTM.nMatrixWidth * oTM.dfPixelSize *
-                                               oTM.nTileWidth);
+                sAOINew.MinX = std::max(sAOI.MinX, sTMExtent.MinX);
+                sAOINew.MaxX = std::min(sAOI.MaxX, sTMExtent.MaxX);
             }
-            sAOINew.MaxY = std::min(sAOI.MaxY, oTM.dfTLY);
-            sAOINew.MinY = std::max(sAOI.MinY, oTM.dfTLY - oTM.nMatrixHeight *
-                                                               oTM.dfPixelSize *
-                                                               oTM.nTileHeight);
+            sAOINew.MaxY = std::min(sAOI.MaxY, sTMExtent.MaxY);
+            sAOINew.MinY = std::max(sAOI.MinY, sTMExtent.MinY);
             if (sAOI != sAOINew)
             {
                 CPLDebug(
@@ -2000,20 +2026,8 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
 
                 const WMTSTileMatrixLimits &oTMLimits =
                     aoMapTileMatrixLimits[oTM.osIdentifier];
-                double dfTileWidthUnits = oTM.dfPixelSize * oTM.nTileWidth;
-                double dfTileHeightUnits = oTM.dfPixelSize * oTM.nTileHeight;
-                sAOINew.MinX =
-                    std::max(sAOI.MinX, oTM.dfTLX + oTMLimits.nMinTileCol *
-                                                        dfTileWidthUnits);
-                sAOINew.MaxY =
-                    std::min(sAOI.MaxY, oTM.dfTLY - oTMLimits.nMinTileRow *
-                                                        dfTileHeightUnits);
-                sAOINew.MaxX = std::min(
-                    sAOI.MaxX,
-                    oTM.dfTLX + (oTMLimits.nMaxTileCol + 1) * dfTileWidthUnits);
-                sAOINew.MinY = std::max(
-                    sAOI.MinY, oTM.dfTLY - (oTMLimits.nMaxTileRow + 1) *
-                                               dfTileHeightUnits);
+                const OGREnvelope sTMLimitsExtent = oTMLimits.GetExtent(oTM);
+                sAOINew.Intersect(sTMLimitsExtent);
 
                 if (sAOI != sAOINew)
                 {
@@ -2194,10 +2208,10 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                     int(0.5 + (poDS->adfGT[3] - sAOI.MinY) / oTM.dfPixelSize);
             }
 
-            int nRasterXSize = int(0.5 + poDS->nRasterXSize / oTM.dfPixelSize *
-                                             poDS->adfGT[1]);
-            int nRasterYSize = int(0.5 + poDS->nRasterYSize / oTM.dfPixelSize *
-                                             poDS->adfGT[1]);
+            const int nRasterXSize = int(
+                0.5 + poDS->nRasterXSize / oTM.dfPixelSize * poDS->adfGT[1]);
+            const int nRasterYSize = int(
+                0.5 + poDS->nRasterYSize / oTM.dfPixelSize * poDS->adfGT[1]);
             if (!poDS->apoDatasets.empty() &&
                 (nRasterXSize < 128 || nRasterYSize < 128))
             {
@@ -2206,14 +2220,28 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLString osURL(
                 Replace(osURLTileTemplate, "{TileMatrix}", oTM.osIdentifier));
 
-            double dfTileWidthUnits = oTM.dfPixelSize * oTM.nTileWidth;
-            double dfTileHeightUnits = oTM.dfPixelSize * oTM.nTileHeight;
+            const double dfTileWidthUnits = oTM.dfPixelSize * oTM.nTileWidth;
+            const double dfTileHeightUnits = oTM.dfPixelSize * oTM.nTileHeight;
+
+            // Get bounds of this tile matrix / tile matrix limits
+            auto sTMExtent = oTM.GetExtent();
+            if (aoMapTileMatrixLimits.find(oTM.osIdentifier) !=
+                aoMapTileMatrixLimits.end())
+            {
+                const WMTSTileMatrixLimits &oTMLimits =
+                    aoMapTileMatrixLimits[oTM.osIdentifier];
+                sTMExtent.Intersect(oTMLimits.GetExtent(oTM));
+            }
 
             // Compute the shift in terms of tiles between AOI and TM origin
-            int nTileX = (int)(floor(poDS->adfGT[0] - oTM.dfTLX + 1e-10) /
-                               dfTileWidthUnits);
-            int nTileY = (int)(floor(oTM.dfTLY - poDS->adfGT[3] + 1e-10) /
-                               dfTileHeightUnits);
+            const int nTileX = static_cast<int>(
+                floor(std::max(sTMExtent.MinX, poDS->adfGT[0]) - oTM.dfTLX +
+                      1e-10) /
+                dfTileWidthUnits);
+            const int nTileY = static_cast<int>(
+                floor(oTM.dfTLY - std::min(poDS->adfGT[3], sTMExtent.MaxY) +
+                      1e-10) /
+                dfTileHeightUnits);
 
             // Compute extent of this zoom level slightly larger than the AOI
             // and aligned on tile boundaries at this TM
@@ -2226,8 +2254,13 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             dfLRY = dfULY + floor((dfLRY - dfULY) / dfTileHeightUnits + 1e-10) *
                                 dfTileHeightUnits;
 
-            double dfSizeX = 0.5 + (dfLRX - dfULX) / oTM.dfPixelSize;
-            double dfSizeY = 0.5 + (dfULY - dfLRY) / oTM.dfPixelSize;
+            // Clip TMS extent to the one of this TM
+            if (!bExtendBeyondDateLine)
+                dfLRX = std::min(dfLRX, sTMExtent.MaxX);
+            dfLRY = std::max(dfLRY, sTMExtent.MinY);
+
+            const double dfSizeX = 0.5 + (dfLRX - dfULX) / oTM.dfPixelSize;
+            const double dfSizeY = 0.5 + (dfULY - dfLRY) / oTM.dfPixelSize;
             if (dfSizeX > INT_MAX || dfSizeY > INT_MAX)
             {
                 continue;
@@ -2240,13 +2273,15 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                 poDS->oTMS = oTMS;
             }
 
-            int nSizeX = static_cast<int>(dfSizeX);
-            int nSizeY = static_cast<int>(dfSizeY);
+            const int nSizeX = static_cast<int>(dfSizeX);
+            const int nSizeY = static_cast<int>(dfSizeY);
 
-            double dfDateLineX =
+            const double dfDateLineX =
                 oTM.dfTLX + oTM.nMatrixWidth * dfTileWidthUnits;
-            int nSizeX1 = int(0.5 + (dfDateLineX - dfULX) / oTM.dfPixelSize);
-            int nSizeX2 = int(0.5 + (dfLRX - dfDateLineX) / oTM.dfPixelSize);
+            const int nSizeX1 =
+                int(0.5 + (dfDateLineX - dfULX) / oTM.dfPixelSize);
+            const int nSizeX2 =
+                int(0.5 + (dfLRX - dfDateLineX) / oTM.dfPixelSize);
             if (bExtendBeyondDateLine && dfDateLineX > dfLRX)
             {
                 CPLDebug("WMTS", "ExtendBeyondDateLine ignored in that case");

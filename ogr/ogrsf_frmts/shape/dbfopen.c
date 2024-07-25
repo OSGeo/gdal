@@ -1149,7 +1149,8 @@ static bool DBFIsValueNULL(char chType, const char *pszValue)
             /* (trimmed by DBFReadStringAttribute) to indicate null */
             /* values for dates (#4265). */
             /* And others have '       0': https://lists.osgeo.org/pipermail/gdal-dev/2023-November/058010.html */
-            return strncmp(pszValue, "00000000", 8) == 0 ||
+            /* And others just empty string: https://github.com/OSGeo/gdal/issues/10405 */
+            return pszValue[0] == 0 || strncmp(pszValue, "00000000", 8) == 0 ||
                    strcmp(pszValue, " ") == 0 || strcmp(pszValue, "0") == 0;
 
         case 'L':
@@ -1944,13 +1945,13 @@ int SHPAPI_CALL DBFReorderFields(DBFHandle psDBF, const int *panMap)
     /* a simple malloc() would be enough, but calloc() helps clang static
      * analyzer */
     int *panFieldOffsetNew =
-        STATIC_CAST(int *, calloc(sizeof(int), psDBF->nFields));
+        STATIC_CAST(int *, calloc(psDBF->nFields, sizeof(int)));
     int *panFieldSizeNew =
-        STATIC_CAST(int *, calloc(sizeof(int), psDBF->nFields));
+        STATIC_CAST(int *, calloc(psDBF->nFields, sizeof(int)));
     int *panFieldDecimalsNew =
-        STATIC_CAST(int *, calloc(sizeof(int), psDBF->nFields));
+        STATIC_CAST(int *, calloc(psDBF->nFields, sizeof(int)));
     char *pachFieldTypeNew =
-        STATIC_CAST(char *, calloc(sizeof(char), psDBF->nFields));
+        STATIC_CAST(char *, calloc(psDBF->nFields, sizeof(char)));
     char *pszHeaderNew = STATIC_CAST(
         char *, malloc(sizeof(char) * XBASE_FLDHDR_SZ * psDBF->nFields));
 

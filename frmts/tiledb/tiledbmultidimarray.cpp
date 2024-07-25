@@ -31,8 +31,6 @@
 #include <algorithm>
 #include <limits>
 
-#ifdef HAS_TILEDB_MULTIDIM
-
 /************************************************************************/
 /*                   TileDBArray::TileDBArray()                         */
 /************************************************************************/
@@ -924,7 +922,10 @@ bool TileDBArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         {
             tiledb::Query query(m_poSharedResource->GetCtx(),
                                 *(m_poTileDBArray.get()));
-            query.set_subarray(anSubArray);
+            tiledb::Subarray subarray(m_poSharedResource->GetCtx(),
+                                      *(m_poTileDBArray.get()));
+            subarray.set_subarray(anSubArray);
+            query.set_subarray(subarray);
             query.set_data_buffer(m_osAttrName, pDstBuffer, nBufferSize);
 
             if (m_bStats)
@@ -995,7 +996,10 @@ bool TileDBArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
         {
             tiledb::Query query(m_poSharedResource->GetCtx(),
                                 *(m_poTileDBArray.get()));
-            query.set_subarray(anSubArray);
+            tiledb::Subarray subarray(m_poSharedResource->GetCtx(),
+                                      *(m_poTileDBArray.get()));
+            subarray.set_subarray(anSubArray);
+            query.set_subarray(subarray);
             query.set_data_buffer(m_osAttrName, const_cast<void *>(pSrcBuffer),
                                   nBufferSize);
 
@@ -1402,9 +1406,10 @@ std::shared_ptr<TileDBArray> TileDBArray::CreateOnDisk(
     {
         const auto osSanitizedName =
             TileDBSharedResource::SanitizeNameForPath(osName);
-        if (osSanitizedName.empty() || osName.find("./") == 0 ||
-            osName.find("../") == 0 || osName.find(".\\") == 0 ||
-            osName.find("..\\") == 0)
+        if (osSanitizedName.empty() || STARTS_WITH(osName.c_str(), "./") ||
+            STARTS_WITH(osName.c_str(), "../") ||
+            STARTS_WITH(osName.c_str(), ".\\") ||
+            STARTS_WITH(osName.c_str(), "..\\"))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid array name");
             return nullptr;
@@ -1569,5 +1574,3 @@ CSLConstList TileDBArray::GetStructuralInfo() const
 {
     return m_aosStructuralInfo.List();
 }
-
-#endif  // HAS_TILEDB_MULTIDIM

@@ -49,10 +49,18 @@ The driver accepts three types of sources of data:
 -  Text passed directly and encoded in ESRI JSON
 
 Starting with GDAL 2.3, the URL/filename/text might be prefixed with
-ESRIJSON: to avoid any ambiguity with other drivers.
+ESRIJSON: to avoid any ambiguity with other drivers. Alternatively, starting
+with GDAL 3.10, specifying the ``-if ESRIJSON`` option to command line utilities
+accepting it, or ``ESRIJSON`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+URL/filename/text.
+
 
 Open options
 ------------
+
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: FEATURE_SERVER_PAGING
       :choices: YES, NO

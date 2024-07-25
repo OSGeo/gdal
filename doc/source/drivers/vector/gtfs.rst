@@ -29,6 +29,11 @@ The connection name can be:
 - a directory name prefixed with ``GTFS:`` (potentially a
   ``/vsizip/path/to/the.zip`` filename prefixed with ``GTFS:``)
 
+Alternatively, starting with GDAL 3.10, specifying the ``-if GTFS`` option to
+command line utilities accepting it, or ``GTFS`` as the only value of the
+``papszAllowedDrivers`` of :cpp:func:`GDALOpenEx`, also forces the driver to
+recognize the passed filename.
+
 Driver capabilities
 -------------------
 

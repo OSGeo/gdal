@@ -34,6 +34,7 @@ import shutil
 import struct
 
 import gdaltest
+import ogrtest
 import pytest
 
 from osgeo import gdal, ogr
@@ -115,13 +116,17 @@ def check_basic(
 
 def test_gti_no_metadata(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_filename = str(tmp_vsimem / "index.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
     del index_ds
 
-    vrt_ds = gdal.Open(index_filename)
+    with pytest.raises(Exception):
+        gdal.Open(index_filename)
+
+    vrt_ds = gdal.OpenEx(index_filename, allowed_drivers=["GTI"])
+    assert vrt_ds.GetDriver().GetDescription() == "GTI"
     check_basic(vrt_ds, src_ds)
     assert (
         vrt_ds.GetMetadataItem("SCANNED_ONE_FEATURE_AT_OPENING", "__DEBUG__") == "YES"
@@ -1053,6 +1058,20 @@ def test_gti_rgb_left_right(tmp_vsimem):
         == "<LocationInfo><File>/vsimem/test_gti_rgb_left_right/left.tif</File></LocationInfo>"
     )
 
+    if ogrtest.have_geos():
+        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
+            0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize
+        )
+        assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+
+        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(1, 2, 3, 4)
+        assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+
+        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
+            vrt_ds.RasterXSize // 2 - 1, 2, 2, 4
+        )
+        assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+
 
 def test_gti_overlapping_sources(tmp_vsimem):
 
@@ -1078,6 +1097,12 @@ def test_gti_overlapping_sources(tmp_vsimem):
     vrt_ds = gdal.Open(index_filename)
     assert vrt_ds.GetRasterBand(1).Checksum() == 2
 
+    if ogrtest.have_geos():
+        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
+            0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize
+        )
+        assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+
     # Test unsupported sort_field_type = OFTBinary
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [None, None]
@@ -1092,6 +1117,7 @@ def test_gti_overlapping_sources(tmp_vsimem):
 
     with pytest.raises(Exception, match="Unsupported type for field z_order"):
         gdal.Open(index_filename)
+    gdal.Unlink(index_filename)
 
     # Test non existent SORT_FIELD
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -1102,6 +1128,7 @@ def test_gti_overlapping_sources(tmp_vsimem):
 
     with pytest.raises(Exception, match="Cannot find field non_existing"):
         gdal.Open(index_filename)
+    gdal.Unlink(index_filename)
 
     # Test sort_field_type = OFTString
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -1313,6 +1340,41 @@ def test_gti_overlapping_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 2, sort_values
 
 
+def test_gti_gap_between_sources(tmp_vsimem):
+
+    filename1 = str(tmp_vsimem / "one.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename1, 1, 1)
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    ds.GetRasterBand(1).Fill(1)
+    del ds
+
+    filename2 = str(tmp_vsimem / "two.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename2, 1, 1)
+    ds.SetGeoTransform([4, 1, 0, 49, 0, -1])
+    ds.GetRasterBand(1).Fill(2)
+    del ds
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(
+        index_filename, [gdal.Open(filename1), gdal.Open(filename2)]
+    )
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+    assert vrt_ds.GetRasterBand(1).Checksum() == 3
+
+    if ogrtest.have_geos():
+        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
+            0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize
+        )
+        assert (
+            flags
+            == gdal.GDAL_DATA_COVERAGE_STATUS_DATA
+            | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY
+            and pct == pytest.approx(100.0 * 2 / 3)
+        )
+
+
 def test_gti_no_source(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -1352,6 +1414,12 @@ def test_gti_no_source(tmp_vsimem):
         vrt_ds.GetRasterBand(1).GetMetadataItem("GeoPixel_10_20.01", "LocationInfo")
         is None
     )
+
+    if ogrtest.have_geos():
+        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
+            0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize
+        )
+        assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
 
 
 def test_gti_invalid_source(tmp_vsimem):

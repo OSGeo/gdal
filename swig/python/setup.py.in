@@ -73,6 +73,7 @@ def get_numpy_include():
     _set_builtin("__NUMPY_SETUP__", False)
 
     import numpy
+    print('Using numpy ' + numpy.__version__)
     return numpy.get_include()
 
 
@@ -261,6 +262,10 @@ class gdal_ext(build_ext):
                             clang_flag = '-Wno-error=unused-command-line-argument'
                             if has_flag(self.compiler, clang_flag):
                                 ext.extra_compile_args += [clang_flag]
+
+        if "GDAL_PYTHON_CXXFLAGS" in os.environ:
+            for ext in self.extensions:
+                ext.extra_compile_args += os.environ["GDAL_PYTHON_CXXFLAGS"].split(" ")
 
         build_ext.build_extensions(self)
 

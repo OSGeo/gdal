@@ -94,10 +94,14 @@ be on the right, i.e. a line string goes clockwise around a top.
 .. option:: -i <interval>
 
     Elevation interval between contours.
+    Must specify either -i or -fl or -e.
 
 .. option:: -off <offset>
 
     Offset from zero relative to which to interpret intervals.
+
+    For example, `-i 100` requests contours at ...-100, 0, 100...
+    Further adding `-off 25` makes that request instead ...-75, 25, 125...
 
 .. option:: -fl <level>
 
@@ -106,6 +110,7 @@ be on the right, i.e. a line string goes clockwise around a top.
 .. option:: -e <base>
 
     Generate levels on an exponential scale: `base ^ k`, for `k` an integer.
+    Must specify either -i or -fl or -e.
 
     .. versionadded:: 2.4.0
 
@@ -121,7 +126,7 @@ be on the right, i.e. a line string goes clockwise around a top.
 
 .. option:: -q
 
-    Be quiet.
+    Be quiet: do not print progress indicators.
 
 C API
 -----

@@ -1,7 +1,7 @@
 .. _gdal_proximity:
 
 ================================================================================
-gdal_proximity.py
+gdal_proximity
 ================================================================================
 
 .. only:: html
@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdal_proximity.py [--help] [--help-general]
+    gdal_proximity [--help] [--help-general]
                       <srcfile> <dstfile> [-srcband <n>] [-dstband <n>]
                       [-of <format>] [-co <name>=<value>]...
                       [-ot Byte/UInt16/UInt32/Float32/etc]
@@ -26,10 +26,14 @@ Synopsis
 Description
 -----------
 
-The :program:`gdal_proximity.py` script generates a raster proximity map indicating
+:program:`gdal_proximity` generates a raster proximity map indicating
 the distance from the center of each pixel to the center of the nearest
 pixel identified as a target pixel.  Target pixels are those in the source
 raster for which the raster pixel value is in the set of target pixel values.
+
+.. note::
+
+    gdal_proximity is a Python utility, and is only available if GDAL Python bindings are available.
 
 .. program:: gdal_proximity
 
@@ -91,4 +95,5 @@ raster for which the raster pixel value is in the set of target pixel values.
 
 .. option:: -fixed-buf-val <n>
 
-    Specify a value to be applied to all pixels that are within the -maxdist of target pixels (including the target pixels) instead of a distance value.
+    Specify a value to be applied to all pixels that are within the
+    -maxdist of target pixels (including the target pixels) instead of a distance value.

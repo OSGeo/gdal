@@ -232,7 +232,14 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nBytesRemaining, vector<un
         return false;
 
       // replace indexes by values
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
       m_tmpLutVec.insert(m_tmpLutVec.begin(), 0);    // put back in the 0
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
       for (unsigned int i = 0; i < numElements; i++)
       {
 #ifdef GDAL_COMPILATION
@@ -249,7 +256,14 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nBytesRemaining, vector<un
         return false;
 
       // replace indexes by values
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
       m_tmpLutVec.insert(m_tmpLutVec.begin(), 0);    // put back in the 0
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
       for (unsigned int i = 0; i < numElements; i++)
       {
         if (dataVec[i] >= m_tmpLutVec.size())

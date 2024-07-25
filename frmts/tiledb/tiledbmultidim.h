@@ -31,7 +31,7 @@
 
 #include "tiledbheaders.h"
 
-#ifdef HAS_TILEDB_MULTIDIM
+#include <set>
 
 constexpr const char *CRS_ATTRIBUTE_NAME = "_CRS";
 constexpr const char *UNIT_ATTRIBUTE_NAME = "_UNIT";
@@ -166,6 +166,9 @@ class TileDBGroup final : public GDALGroup, public TileDBAttributeHolder
     mutable std::map<std::string, std::shared_ptr<TileDBArray>> m_oMapArrays{};
     mutable std::map<std::string, std::shared_ptr<GDALDimension>>
         m_oMapDimensions{};
+
+    //! To prevent OpenMDArray() to indefinitely recursing
+    mutable std::set<std::string> m_oSetArrayInOpening{};
 
     TileDBGroup(const std::shared_ptr<TileDBSharedResource> &poSharedResource,
                 const std::string &osParentName, const std::string &osName,
@@ -596,7 +599,8 @@ class TileDBArrayGroup final : public GDALGroup
     std::vector<std::shared_ptr<GDALMDArray>> m_apoArrays;
 
   public:
-    TileDBArrayGroup(const std::vector<std::shared_ptr<GDALMDArray>> &apoArrays)
+    explicit TileDBArrayGroup(
+        const std::vector<std::shared_ptr<GDALMDArray>> &apoArrays)
         : GDALGroup(std::string(), "/"), m_apoArrays(apoArrays)
     {
     }
@@ -624,7 +628,8 @@ class TileDBMultiDimDataset final : public GDALDataset
     std::shared_ptr<GDALGroup> m_poRG{};
 
   public:
-    TileDBMultiDimDataset(const std::shared_ptr<GDALGroup> &poRG) : m_poRG(poRG)
+    explicit TileDBMultiDimDataset(const std::shared_ptr<GDALGroup> &poRG)
+        : m_poRG(poRG)
     {
     }
 
@@ -633,7 +638,5 @@ class TileDBMultiDimDataset final : public GDALDataset
         return m_poRG;
     }
 };
-
-#endif  // HAS_TILEDB_MULTIDIM
 
 #endif  // TILEDBMULTIDIM_H_INCLUDED

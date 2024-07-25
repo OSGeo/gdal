@@ -33,6 +33,7 @@ import os
 import sys
 
 from osgeo import gdal, ogr, osr
+from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 ###############################################################################
 
@@ -171,7 +172,9 @@ def CreateLayer(
 ###############################################################################
 
 
+@enable_gdal_exceptions
 def main(argv=sys.argv):
+
     driver_name = "ESRI Shapefile"
     quiet = False
     input_ds_name = None
@@ -369,7 +372,7 @@ def main(argv=sys.argv):
         cnt = input_ds.GetLayerCount()
         if cnt != 1:
             print(
-                "Input datasource has not a single layer, so you should specify its name with -input_lyr",
+                "Input datasource has more than just a single layer, so you should specify which layer with -input_lyr",
                 file=sys.stderr,
             )
             return 1

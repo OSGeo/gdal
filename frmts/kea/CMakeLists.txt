@@ -16,7 +16,8 @@ add_gdal_driver(
           libkea_headers.h
   CORE_SOURCES
           keadrivercore.cpp
-  PLUGIN_CAPABLE)
+  PLUGIN_CAPABLE
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(TARGET gdal_KEA_core)
     target_include_directories(gdal_KEA_core PRIVATE ${HDF5_INCLUDE_DIRS})

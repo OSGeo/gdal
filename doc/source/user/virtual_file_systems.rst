@@ -379,6 +379,7 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 - use_head=yes/no: whether the HTTP HEAD request can be emitted. Default to YES. Setting this option overrides the behavior of the :config:`CPL_VSIL_CURL_USE_HEAD` configuration option.
 - max_retry=number: default to 0. Setting this option overrides the behavior of the :config:`GDAL_HTTP_MAX_RETRY` configuration option.
 - retry_delay=number_in_seconds: default to 30. Setting this option overrides the behavior of the :config:`GDAL_HTTP_RETRY_DELAY` configuration option.
+- retry_codes=``ALL`` or comma-separated list of HTTP error codes. Setting this option overrides the behavior of the :config:`GDAL_HTTP_RETRY_CODES` configuration option. (GDAL >= 3.10)
 - list_dir=yes/no: whether an attempt to read the file list of the directory where the file is located should be done. Default to YES.
 - useragent=value: HTTP UserAgent header
 - referer=value: HTTP Referer header
@@ -647,6 +648,19 @@ Another is to set the HttpPutResponseHopLimit metadata on an AutoScalingGroup La
 - https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-launchtemplate-metadataoptions.html
 
 Another possibility is to start the Docker container with host networking (``--network=host``), although this breaks isolation of containers by exposing all ports of the host to the container and has thus `security implications <https://stackoverflow.com/a/57051970/40785>`__.
+
+Configuring /vsis3/ with Minio
+++++++++++++++++++++++++++++++
+
+The following configuration options can be set to access a
+`Minio Docker image <https://min.io/docs/minio/container/index.html>`__
+
+- AWS_VIRTUAL_HOSTING=FALSE
+- AWS_HTTPS=NO
+- AWS_S3_ENDPOINT="localhost:9000"
+- AWS_REGION="us-east-1"
+- AWS_SECRET_ACCESS_KEY="your_secret_access_key"
+- AWS_ACCESS_KEY_ID="your_access_key"
 
 .. _vsis3_streaming:
 
@@ -1140,7 +1154,7 @@ This file system handler also allows sequential writing of files (no seeks or re
 /vsistdin/ is a file handler that allows reading from the standard input stream.
 
 The filename syntax must be only :file:`/vsistdin/`, (not e.g.,
-/vsistdin/path/to/f.csv , but "/vsistdin?buffer_limit=value" is OK.) 
+/vsistdin/path/to/f.csv , but "/vsistdin?buffer_limit=value" is OK.)
 
 The file operations available are of course limited to Read() and forward Seek().
 Full seek in the first MB of a file is possible, and it is cached so that closing,

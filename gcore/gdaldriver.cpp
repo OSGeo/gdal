@@ -44,6 +44,7 @@
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "ograpispy.h"
 #include "ogr_core.h"
 #include "ogrsf_frmts.h"
 
@@ -323,8 +324,18 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALCreate(GDALDriverH hDriver,
 {
     VALIDATE_POINTER1(hDriver, "GDALCreate", nullptr);
 
-    return GDALDriver::FromHandle(hDriver)->Create(
+    GDALDatasetH hDS = GDALDriver::FromHandle(hDriver)->Create(
         pszFilename, nXSize, nYSize, nBands, eBandType, papszOptions);
+
+#ifdef OGRAPISPY_ENABLED
+    if (nBands < 1)
+    {
+        OGRAPISpyCreateDataSource(hDriver, pszFilename,
+                                  const_cast<char **>(papszOptions), hDS);
+    }
+#endif
+
+    return hDS;
 }
 
 /************************************************************************/
@@ -1007,7 +1018,7 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
          */
         std::set<std::string> oSetExistingDestFiles;
         {
-            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             const char *const apszAllowedDrivers[] = {GetDescription(),
                                                       nullptr};
             auto poExistingOutputDS =
@@ -1022,7 +1033,6 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                         CPLString(pszFileInList).replaceAll('\\', '/'));
                 }
             }
-            CPLPopErrorHandler();
         }
 
         /* --------------------------------------------------------------------
@@ -1034,7 +1044,7 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
         std::set<std::string> oSetExistingDestFilesFoundInSource;
         if (!oSetExistingDestFiles.empty())
         {
-            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             // We need to reopen in a temporary dataset for the particular
             // case of overwritten a .tif.ovr file from a .tif
             // If we probe the file list of the .tif, it will then open the
@@ -1053,14 +1063,12 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                 {
                     CPLString osFilename(pszFileInList);
                     osFilename.replaceAll('\\', '/');
-                    if (oSetExistingDestFiles.find(osFilename) !=
-                        oSetExistingDestFiles.end())
+                    if (cpl::contains(oSetExistingDestFiles, osFilename))
                     {
                         oSetExistingDestFilesFoundInSource.insert(osFilename);
                     }
                 }
             }
-            CPLPopErrorHandler();
         }
 
         // If the source file(s) and the dest one share some files in
@@ -1069,8 +1077,8 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
         {
             for (const std::string &osFilename : oSetExistingDestFiles)
             {
-                if (oSetExistingDestFilesFoundInSource.find(osFilename) ==
-                    oSetExistingDestFilesFoundInSource.end())
+                if (!cpl::contains(oSetExistingDestFilesFoundInSource,
+                                   osFilename))
                 {
                     VSIUnlink(osFilename.c_str());
                 }
@@ -1700,6 +1708,13 @@ CPLErr CPL_STDCALL GDALDeleteDataset(GDALDriverH hDriver,
                  pszFilename);
         return CE_Failure;
     }
+
+#ifdef OGRAPISPY_ENABLED
+    if (GDALGetMetadataItem(hDriver, GDAL_DCAP_VECTOR, nullptr))
+    {
+        OGRAPISpyDeleteDataSource(hDriver, pszFilename);
+    }
+#endif
 
     return GDALDriver::FromHandle(hDriver)->Delete(pszFilename);
 }
@@ -2641,7 +2656,13 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriverEx(
 {
     GDALDriverManager *poDM = GetGDALDriverManager();
     CPLAssert(nullptr != poDM);
-    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly, papszFileList);
+
+    // If no driver kind is specified, assume all are to be probed.
+    if ((nIdentifyFlags & GDAL_OF_KIND_MASK) == 0)
+        nIdentifyFlags |= GDAL_OF_KIND_MASK & ~GDAL_OF_MULTIDIM_RASTER;
+
+    GDALOpenInfo oOpenInfo(pszFilename, nIdentifyFlags, papszFileList);
+    oOpenInfo.papszAllowedDrivers = papszAllowedDrivers;
 
     CPLErrorStateBackuper oBackuper;
     CPLErrorSetState(CE_None, CPLE_AppDefined, "");

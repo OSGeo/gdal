@@ -1,5 +1,3 @@
-.. include:: ../substitutions.rst
-
 .. _dev_documentation:
 
 ================================================================================
@@ -10,7 +8,7 @@ Documentation overview
 ###########################
 
 GDAL's documentation includes C and C++ :ref:`API documentation <api>` built
-automatically from source comments using doxygen and reStructuredText (rst)
+automatically from source comments using Doxygen and reStructuredText (rst)
 files containing manually-edited content.
 
 |Sphinx| is used to combine the above components into a complete set of documentation in HTML, PDF, and other formats.
@@ -21,9 +19,37 @@ the ``doc`` subdirectory.
 Building documentation
 ######################
 
-HTML documentation can be built by running ``make html`` in the ``doc`` subdirectory of the GDAL source repository.
-The generated files will be output to ``doc/build`` where they can be viewed using a web browser.
-Doxygen content that is incorporated into the output is not automatically rebuilt but can be regenerated using ``make doxygen``.
+Documentation can be generated with Makefile targets, from the ``doc`` subdirectory
+of the GDAL source repository (only on Unix systems).
+
+The following targets are available:
+
+* ``html``: build HTML documentation into the ``doc/build/html`` directory, where
+  they can be viewed using a web browser.
+
+* ``man``: build MAN pages into the ``doc/build/man`` directory.
+
+* ``latexpdf``: build PDF documentation into the ``doc/build/pdf`` directory
+
+* ``doxygen``: regenerate API Doxygen XML and HTML output, that is used by the
+  ``html`` target. Doxygen content is not automatically rebuilt when source files
+  are modified, hence this target must be explicitly run to refresh it.
+
+* ``doxygen_check_warnings``: same as ``doxygen``, but errors out when Doxygen
+  emits a warning (the ``doxygen`` target is tolerant to Doxygen warnings).
+  This can be useful to reproduce one of the continuous integration checks that
+  verifies that there are no Doxygen warnings.
+  Requires Doxygen >= 1.9.3 to be warning free.
+
+* ``clean``: clean the ``doc/build`` directory.
+
+It is also possible to run those targets as CMake targets. In that case, the
+output directory will be the ``doc/build`` subdirectory of the CMake
+build directory. To only clean the documentation, the ``clean_doc`` target can
+be invoked.
+Note: those CMake targets are only available if the CMake BUILD_DOCS=ON variable
+is set (it is set by default if build preconditions are met, that is if Doxygen,
+Sphinx and make are available)
 
 To visualize documentation changes while editing, it may be useful to install the |sphinx-autobuild| python package.
 Once installed, running ``sphinx-autobuild -b html source build`` from the ``doc`` subdirectory will build documentation

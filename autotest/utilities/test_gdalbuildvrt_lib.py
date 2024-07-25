@@ -280,15 +280,15 @@ def test_gdalbuildvrt_lib_separate_nodata_2(tmp_vsimem):
     src2_ds.GetRasterBand(1).SetNoDataValue(2)
 
     gdal.BuildVRT(
-        tmp_vsimem / "out.vrt", [src1_ds, src2_ds], separate=True, srcNodata="3 4"
+        tmp_vsimem / "out.vrt", [src1_ds, src2_ds], separate=True, srcNodata="-3 4"
     )
 
     f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
 
-    assert b"<NoDataValue>3</NoDataValue>" in data
-    assert b"<NODATA>3</NODATA>" in data
+    assert b"<NoDataValue>-3</NoDataValue>" in data
+    assert b"<NODATA>-3</NODATA>" in data
     assert b"<NoDataValue>4</NoDataValue>" in data
     assert b"<NODATA>4</NODATA>" in data
 
@@ -309,14 +309,14 @@ def test_gdalbuildvrt_lib_separate_nodata_3(tmp_vsimem):
         [src1_ds, src2_ds],
         separate=True,
         srcNodata="3 4",
-        VRTNodata="5 6",
+        VRTNodata="-5 6",
     )
 
     f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
 
-    assert b"<NoDataValue>5</NoDataValue>" in data
+    assert b"<NoDataValue>-5</NoDataValue>" in data
     assert b"<NODATA>3</NODATA>" in data
     assert b"<NoDataValue>6</NoDataValue>" in data
     assert b"<NODATA>4</NODATA>" in data

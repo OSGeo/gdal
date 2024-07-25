@@ -69,10 +69,11 @@ as one or more
 elements. Not all of :ref:`ogr_feature_style` can translate into
 KML.
 
-Datasource creation options
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Dataset creation options
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following datasource creation options can be
+|about-dataset-creation-options|
+The following dataset creation options can be
 used to generate a
 `<atom:Author> <https://developers.google.com/kml/documentation/kmlreference#atomauthor>`__
 element at the top Document level.
@@ -91,7 +92,7 @@ element at the top Document level.
      Specifieds the value of the ``<atom:email>`` element.
      It should include a ``@`` character.
 
-Additional datasource creation options affecting the top Document level:
+Additional dataset creation options affecting the top Document level:
 
 - .. dsco:: LINK
 
@@ -281,6 +282,7 @@ is supported for .kml files, .kmz files, and directories.
 Layer creation options
 ~~~~~~~~~~~~~~~~~~~~~~
 
+|about-layer-creation-options|
 The following layer creation options can be used
 to generate a
 `<LookAt> <https://developers.google.com/kml/documentation/kmlreference#lookat>`__
@@ -440,6 +442,8 @@ options :
       `<description> <https://developers.google.com/kml/documentation/kmlreference#description>`__
       element
 
+Do not confuse them with the same named dataset creation options.
+
 The following layer creation options can be used to control how the
 folder of a layer appear in the Places panel of the Earth browser,
 trough a
@@ -579,7 +583,8 @@ available to define how fields in input and output, map to a KML
 `<Placemark> <https://developers.google.com/kml/documentation/kmlreference#placemark>`__.
 For example, if you want a field called 'Cities' to map to the
 `<name> <https://developers.google.com/kml/documentation/kmlreference#name>`__;
-tag in KML, you can set a configuration option.
+tag in KML, you can set a configuration option. Note these are independent of layer
+creation and dataset creation options' `<name>`.
 
 -  .. config:: LIBKML_NAME_FIELD
       :default: name
@@ -950,8 +955,8 @@ domains.
 
 Writing to /dev/stdout or /vsistdout/ is also supported.
 
-Example
--------
+Examples
+--------
 
 The following bash script will build a
 :ref:`csv <vector.csv>` file and a
@@ -960,8 +965,6 @@ to KML using :ref:`ogr2ogr` into a .kml
 file with timestamps and styling.
 
 ::
-
-
 
    #!/bin/bash
    # Copyright (c) 2010, Brian Case
@@ -1063,4 +1066,19 @@ file with timestamps and styling.
 
    ogr2ogr -f libkml qed.kml qed.vrt
 
+The following example shows how the three levels of `<name>`
+in LIBKML relate to their controlling options:
 
+.. code-block:: console
+
+    ogr2ogr -f LIBKML /dev/stdout 0.contours.csv \
+      -dsco NAME=DSCO -lco NAME=LCO \
+      -sql 'SELECT NAME FROM "0.contours"'
+
+    <Document id="root_doc">
+      <name>DSCO</name>
+      <Document id="_0.contours">
+        <name>LCO</name>
+        <Placemark id="_0.contours.1">
+          <name>-1500</name>
+          <LineString>

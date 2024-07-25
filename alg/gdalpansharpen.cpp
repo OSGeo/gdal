@@ -1642,10 +1642,17 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
     sExtraArg.dfXSize = psJob->dfXSize;
     sExtraArg.dfYSize = psJob->dfYSize;
 
+    std::vector<int> anBands;
+    for (int i = 0; i < psJob->nBandCount; ++i)
+        anBands.push_back(i + 1);
+    // This call to RasterIO() in a thread to poMEMDS shared between several
+    // threads is really risky, but works given the implementation details...
+    // Do not do this at home!
     CPL_IGNORE_RET_VAL(psJob->poMEMDS->RasterIO(
         GF_Read, psJob->nXOff, psJob->nYOff, psJob->nXSize, psJob->nYSize,
         psJob->pBuffer, psJob->nBufXSize, psJob->nBufYSize, psJob->eDT,
-        psJob->nBandCount, nullptr, 0, 0, psJob->nBandSpace, &sExtraArg));
+        psJob->nBandCount, anBands.data(), 0, 0, psJob->nBandSpace,
+        &sExtraArg));
 #endif
 
 #ifdef DEBUG_TIMING

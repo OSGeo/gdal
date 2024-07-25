@@ -1,7 +1,7 @@
 .. _gdal_polygonize:
 
 ================================================================================
-gdal_polygonize.py
+gdal_polygonize
 ================================================================================
 
 .. only:: html
@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdal_polygonize.py [--help] [--help-general]
+    gdal_polygonize [--help] [--help-general]
                        [-8] [-o <name>=<value>]... [-nomask] 
                        [-mask <filename>] <raster_file> [-b <band>]
                        [-q] [-f <ogr_format>] [-lco <name>=<value>]...
@@ -33,6 +33,10 @@ otherwise it will try to append to an existing one.
 
 The utility is based on the ::cpp:func:`GDALPolygonize` function which has additional
 details on the algorithm.
+
+.. note::
+
+    gdal_polygonize is a Python utility, and is only available if GDAL Python bindings are available.
 
 .. program:: gdal_polygonize
 

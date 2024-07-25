@@ -78,11 +78,13 @@ def test_gdalmove_1(script_path, tmp_path):
 
     shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", test_tif)
 
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "gdalmove",
         f'-s_srs "+proj=utm +zone=11 +ellps=clrk66 +towgs84=0,0,0 +no_defs" -t_srs EPSG:32611 {test_tif} -et 1',
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     ds = gdal.Open(test_tif)
     got_gt = ds.GetGeoTransform()

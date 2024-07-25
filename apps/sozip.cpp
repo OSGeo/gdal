@@ -623,7 +623,14 @@ MAIN_START(nArgc, papszArgv)
 
     if (!bVerbose && !bQuiet)
     {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         anFileSizes.resize(aosFiles.size());
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         for (size_t i = 0; i < aosFiles.size(); ++i)
         {
             if (VSIStatL(aosFiles[i].c_str(), &sBuf) == 0)

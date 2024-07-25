@@ -21,7 +21,8 @@ cmake ${GDAL_SOURCE_DIR:=..} \
   -DIconv_INCLUDE_DIR=/usr/include/gnu-libiconv \
   -DIconv_LIBRARY=/usr/lib/libiconv.so \
   -DADD_EXTERNAL_DEFERRED_PLUGIN_FOO=/tmp/foo.cpp \
-  -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS="-std=c++23 -Werror" -DWERROR_DEV_FLAG="-Werror=dev"
+  -DCMAKE_CXX_STANDARD=23 \
+  -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS="-Werror" -DWERROR_DEV_FLAG="-Werror=dev"
 make -j$(nproc)
 make -j$(nproc) install DESTDIR=/tmp/install-gdal
 

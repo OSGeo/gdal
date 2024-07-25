@@ -105,12 +105,15 @@ MapInfo feature attributes suffer a number of limitations:
 Dataset Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
--  .. config:: FORMAT
+|about-dataset-creation-options|
+The following dataset creation options are supported:
+
+-  .. dsco:: FORMAT
       :choices: TAB, MIF
 
       To create MIF/MID instead of TAB files
 
--  .. config:: SPATIAL_INDEX_MODE
+-  .. dsco:: SPATIAL_INDEX_MODE
       :choices: QUICK, OPTIMIZED
       :default: QUICK
 
@@ -118,7 +121,7 @@ Dataset Creation Options
       times faster, but spatial queries can be up to 30 times slower. This
       can be set to OPTIMIZED to generate optimized spatial index.
 
--  .. config:: BLOCKSIZE
+-  .. dsco:: BLOCKSIZE
       :choices: 512, 1024, ... , 32256
       :default: 512
 
@@ -128,8 +131,19 @@ Dataset Creation Options
       bytes. Any MapInfo version should be able to handle block sizes from
       512 to 32256.
 
+-  .. dsco:: STRICT_FIELDS_NAME_LAUNDERING
+      :choices: YES, NO
+      :default: YES
+      :since: 3.10
+
+      Replaces all non alphanumeric characters in dataset's field names by
+      `_` (underscope). For recent MapInfo can be set to `NO`.
+
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: BOUNDS
       :choices: <xmin\,ymin\,xmax\,ymax>
@@ -144,8 +158,14 @@ Layer Creation Options
       Define the encoding for field
       names and field values. The encoding name is specified in the format
       supported by :cpp:func:`CPLRecode` (e.g. ISO-8859-1, CP1251, CP1252 ...) and
-      internally converted to MapInfo charsets names. Default value is ''
+      internally converted to MapInfo charsets names. Default value is '' (empty string)
       that equals to 'Neutral' MapInfo charset.
+
+      Currently supported values for the encoding name are:
+
+      .. csv-table:: MapInfo encodings
+        :file: mapinfo_encodings.csv
+        :header-rows: 1
 
 -  .. lco:: DESCRIPTION
       :since: 3.1.0
@@ -154,11 +174,19 @@ Layer Creation Options
       TAB format). Friendly names can be up to 256 characters long and can include
       most ASCII characters. Supported by MapInfo Pro v15.0 or higher.
 
+-  .. lco:: STRICT_FIELDS_NAME_LAUNDERING
+      :choices: YES, NO
+      :default: YES
+      :since: 3.10
+
+      Replaces all non alphanumeric characters in layer's field names by
+      `_` (underscope). For recent MapInfo can be set to `NO`.
+
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: MITAB_BOUNDS_FILE
 

@@ -98,6 +98,7 @@
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 #include "commonutils.h"
+#include "gdalargumentparser.h"
 
 #include <cfloat>
 #include <cmath>
@@ -154,7 +155,7 @@ using namespace gdal::GDALDEM;
 struct GDALDEMProcessingOptions
 {
     /*! output format. Use the short format name. */
-    char *pszFormat = nullptr;
+    std::string osFormat;
 
     /*! the progress function to use */
     GDALProgressFunc pfnProgress = nullptr;
@@ -166,7 +167,8 @@ struct GDALDEMProcessingOptions
     double scale = 1.0;
     double az = 315.0;
     double alt = 45.0;
-    int slopeFormat = 1;  // 0 = 'percent' or 1 = 'degrees'
+    bool bSlopeFormatUseDegrees =
+        true;  // false = 'percent' or true = 'degrees'
     bool bAddAlpha = false;
     bool bZeroForFlat = false;
     bool bAngleAsAzimuth = true;
@@ -179,7 +181,7 @@ struct GDALDEMProcessingOptions
     bool bCombined = false;
     bool bIgor = false;
     bool bMultiDirectional = false;
-    char **papszCreateOptions = nullptr;
+    CPLStringList aosCreationOptions;
     int nBand = 1;
 };
 
@@ -3171,6 +3173,438 @@ static Algorithm GetAlgorithm(const char *pszProcessing)
 }
 
 /************************************************************************/
+/*                    GDALDEMAppOptionsGetParser()                      */
+/************************************************************************/
+
+static std::unique_ptr<GDALArgumentParser> GDALDEMAppOptionsGetParser(
+    GDALDEMProcessingOptions *psOptions,
+    GDALDEMProcessingOptionsForBinary *psOptionsForBinary)
+{
+    auto argParser = std::make_unique<GDALArgumentParser>(
+        "gdaldem", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    argParser->add_description(_("Tools to analyze and visualize DEMs."));
+
+    argParser->add_epilog(_("For more details, consult "
+                            "https://gdal.org/programs/gdaldem.html"));
+
+    // Common options (for all modes)
+    auto addCommonOptions =
+        [psOptions, psOptionsForBinary](GDALArgumentParser *subParser)
+    {
+        subParser->add_output_format_argument(psOptions->osFormat);
+
+        subParser->add_argument("-compute_edges")
+            .flag()
+            .store_into(psOptions->bComputeAtEdges)
+            .help(_(
+                "Do the computation at raster edges and near nodata values."));
+
+        auto &bandArg = subParser->add_argument("-b")
+                            .metavar("<value>")
+                            .scan<'i', int>()
+                            .store_into(psOptions->nBand)
+                            .help(_("Select an input band."));
+
+        subParser->add_hidden_alias_for(bandArg, "--b");
+
+        subParser->add_creation_options_argument(psOptions->aosCreationOptions);
+
+        if (psOptionsForBinary)
+        {
+            subParser->add_quiet_argument(&psOptionsForBinary->bQuiet);
+        }
+    };
+
+    // Hillshade
+
+    auto subCommandHillshade = argParser->add_subparser(
+        "hillshade", /* bForBinary=*/psOptionsForBinary != nullptr);
+    subCommandHillshade->add_description(_("Compute hillshade."));
+
+    if (psOptionsForBinary)
+    {
+        subCommandHillshade->add_argument("input_dem")
+            .store_into(psOptionsForBinary->osSrcFilename)
+            .help(_("The input DEM raster to be processed."));
+
+        subCommandHillshade->add_argument("output_hillshade")
+            .store_into(psOptionsForBinary->osDstFilename)
+            .help(_("The output raster to be produced."));
+    }
+
+    subCommandHillshade->add_argument("-alg")
+        .metavar("<Horn|ZevenbergenThorne>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (EQUAL(s.c_str(), "ZevenbergenThorne"))
+                {
+                    psOptions->bGradientAlgSpecified = true;
+                    psOptions->eGradientAlg = GradientAlg::ZEVENBERGEN_THORNE;
+                }
+                else if (EQUAL(s.c_str(), "Horn"))
+                {
+                    psOptions->bGradientAlgSpecified = true;
+                    psOptions->eGradientAlg = GradientAlg::HORN;
+                }
+                else
+                {
+                    throw std::invalid_argument(
+                        CPLSPrintf("Invalid value for -alg: %s.", s.c_str()));
+                }
+            })
+        .help(_("Choose between ZevenbergenThorne or Horn algorithms."));
+
+    subCommandHillshade->add_argument("-z")
+        .metavar("<factor>")
+        .scan<'g', double>()
+        .store_into(psOptions->z)
+        .help(_("Vertical exaggeration."));
+
+    auto &scaleHillshadeArg =
+        subCommandHillshade->add_argument("-s")
+            .metavar("<scale>")
+            .scan<'g', double>()
+            .store_into(psOptions->scale)
+            .help(_("Ratio of vertical units to horizontal."));
+
+    subCommandHillshade->add_hidden_alias_for(scaleHillshadeArg, "--s");
+    subCommandHillshade->add_hidden_alias_for(scaleHillshadeArg, "-scale");
+    subCommandHillshade->add_hidden_alias_for(scaleHillshadeArg, "--scale");
+
+    auto &azimuthHillshadeArg =
+        subCommandHillshade->add_argument("-az")
+            .metavar("<azimuth>")
+            .scan<'g', double>()
+            .store_into(psOptions->az)
+            .help(_("Azimuth of the light, in degrees."));
+
+    subCommandHillshade->add_hidden_alias_for(azimuthHillshadeArg, "--az");
+    subCommandHillshade->add_hidden_alias_for(azimuthHillshadeArg, "-azimuth");
+    subCommandHillshade->add_hidden_alias_for(azimuthHillshadeArg, "--azimuth");
+
+    auto &altitudeHillshadeArg =
+        subCommandHillshade->add_argument("-alt")
+            .metavar("<altitude>")
+            .scan<'g', double>()
+            .store_into(psOptions->alt)
+            .help(_("Altitude of the light, in degrees."));
+
+    subCommandHillshade->add_hidden_alias_for(altitudeHillshadeArg, "--alt");
+    subCommandHillshade->add_hidden_alias_for(altitudeHillshadeArg,
+                                              "--altitude");
+    subCommandHillshade->add_hidden_alias_for(altitudeHillshadeArg,
+                                              "-altitude");
+
+    auto &shadingGroup = subCommandHillshade->add_mutually_exclusive_group();
+
+    auto &combinedHillshadeArg = shadingGroup.add_argument("-combined")
+                                     .flag()
+                                     .store_into(psOptions->bCombined)
+                                     .help(_("Use combined shading."));
+
+    subCommandHillshade->add_hidden_alias_for(combinedHillshadeArg,
+                                              "--combined");
+
+    auto &multidirectionalHillshadeArg =
+        shadingGroup.add_argument("-multidirectional")
+            .flag()
+            .store_into(psOptions->bMultiDirectional)
+            .help(_("Use multidirectional shading."));
+
+    subCommandHillshade->add_hidden_alias_for(multidirectionalHillshadeArg,
+                                              "--multidirectional");
+
+    auto &igorHillshadeArg =
+        shadingGroup.add_argument("-igor")
+            .flag()
+            .store_into(psOptions->bIgor)
+            .help(_("Shading which tries to minimize effects on other map "
+                    "features beneath."));
+
+    subCommandHillshade->add_hidden_alias_for(igorHillshadeArg, "--igor");
+
+    addCommonOptions(subCommandHillshade);
+
+    // Slope
+
+    auto subCommandSlope = argParser->add_subparser(
+        "slope", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    subCommandSlope->add_description(_("Compute slope."));
+
+    if (psOptionsForBinary)
+    {
+        subCommandSlope->add_argument("input_dem")
+            .store_into(psOptionsForBinary->osSrcFilename)
+            .help(_("The input DEM raster to be processed."));
+
+        subCommandSlope->add_argument("output_slope_map")
+            .store_into(psOptionsForBinary->osDstFilename)
+            .help(_("The output raster to be produced."));
+    }
+
+    subCommandSlope->add_argument("-alg")
+        .metavar("Horn|ZevenbergenThorne")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (EQUAL(s.c_str(), "ZevenbergenThorne"))
+                {
+                    psOptions->bGradientAlgSpecified = true;
+                    psOptions->eGradientAlg = GradientAlg::ZEVENBERGEN_THORNE;
+                }
+                else if (EQUAL(s.c_str(), "Horn"))
+                {
+                    psOptions->bGradientAlgSpecified = true;
+                    psOptions->eGradientAlg = GradientAlg::HORN;
+                }
+                else
+                {
+                    throw std::invalid_argument(
+                        CPLSPrintf("Invalid value for -alg: %s.", s.c_str()));
+                }
+            })
+        .help(_("Choose between ZevenbergenThorne or Horn algorithms."));
+
+    subCommandSlope->add_inverted_logic_flag(
+        "-p", &psOptions->bSlopeFormatUseDegrees,
+        _("Express slope as a percentage."));
+
+    subCommandSlope->add_argument("-s")
+        .metavar("<scale>")
+        .scan<'g', double>()
+        .store_into(psOptions->scale)
+        .help(_("Ratio of vertical units to horizontal."));
+
+    addCommonOptions(subCommandSlope);
+
+    // Aspect
+
+    auto subCommandAspect = argParser->add_subparser(
+        "aspect", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    subCommandAspect->add_description(_("Compute aspect."));
+
+    if (psOptionsForBinary)
+    {
+        subCommandAspect->add_argument("input_dem")
+            .store_into(psOptionsForBinary->osSrcFilename)
+            .help(_("The input DEM raster to be processed."));
+
+        subCommandAspect->add_argument("output_aspect_map")
+            .store_into(psOptionsForBinary->osDstFilename)
+            .help(_("The output raster to be produced."));
+    }
+
+    subCommandAspect->add_argument("-alg")
+        .metavar("Horn|ZevenbergenThorne")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (EQUAL(s.c_str(), "ZevenbergenThorne"))
+                {
+                    psOptions->bGradientAlgSpecified = true;
+                    psOptions->eGradientAlg = GradientAlg::ZEVENBERGEN_THORNE;
+                }
+                else if (EQUAL(s.c_str(), "Horn"))
+                {
+                    psOptions->bGradientAlgSpecified = true;
+                    psOptions->eGradientAlg = GradientAlg::HORN;
+                }
+                else
+                {
+                    throw std::invalid_argument(
+                        CPLSPrintf("Invalid value for -alg: %s.", s.c_str()));
+                }
+            })
+        .help(_("Choose between ZevenbergenThorne or Horn algorithms."));
+
+    subCommandAspect->add_inverted_logic_flag(
+        "-trigonometric", &psOptions->bAngleAsAzimuth,
+        _("Express aspect in trigonometric format."));
+
+    subCommandAspect->add_argument("-zero_for_flat")
+        .flag()
+        .store_into(psOptions->bZeroForFlat)
+        .help(_("Return 0 for flat areas with slope=0, instead of -9999."));
+
+    addCommonOptions(subCommandAspect);
+
+    // Color-relief
+
+    auto subCommandColorRelief = argParser->add_subparser(
+        "color-relief", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    subCommandColorRelief->add_description(
+        _("Color relief computed from the elevation and a text-based color "
+          "configuration file."));
+
+    if (psOptionsForBinary)
+    {
+        subCommandColorRelief->add_argument("input_dem")
+            .store_into(psOptionsForBinary->osSrcFilename)
+            .help(_("The input DEM raster to be processed."));
+
+        subCommandColorRelief->add_argument("color_text_file")
+            .store_into(psOptionsForBinary->osColorFilename)
+            .help(_("Text-based color configuration file."));
+
+        subCommandColorRelief->add_argument("output_color_relief_map")
+            .store_into(psOptionsForBinary->osDstFilename)
+            .help(_("The output raster to be produced."));
+    }
+
+    subCommandColorRelief->add_argument("-alpha")
+        .flag()
+        .store_into(psOptions->bAddAlpha)
+        .help(_("Add an alpha channel to the output raster."));
+
+    subCommandColorRelief->add_argument("-exact_color_entry")
+        .nargs(0)
+        .action(
+            [psOptions](const auto &)
+            { psOptions->eColorSelectionMode = COLOR_SELECTION_EXACT_ENTRY; })
+        .help(
+            _("Use strict matching when searching in the configuration file."));
+
+    subCommandColorRelief->add_argument("-nearest_color_entry")
+        .nargs(0)
+        .action(
+            [psOptions](const auto &)
+            { psOptions->eColorSelectionMode = COLOR_SELECTION_NEAREST_ENTRY; })
+        .help(_("Use the RGBA corresponding to the closest entry in the "
+                "configuration file."));
+
+    addCommonOptions(subCommandColorRelief);
+
+    // TRI
+
+    auto subCommandTRI = argParser->add_subparser(
+        "TRI", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    subCommandTRI->add_description(_("Compute the Terrain Ruggedness Index."));
+
+    if (psOptionsForBinary)
+    {
+
+        subCommandTRI->add_argument("input_dem")
+            .store_into(psOptionsForBinary->osSrcFilename)
+            .help(_("The input DEM raster to be processed."));
+
+        subCommandTRI->add_argument("output_TRI_map")
+            .store_into(psOptionsForBinary->osDstFilename)
+            .help(_("The output raster to be produced."));
+    }
+
+    subCommandTRI->add_argument("-alg")
+        .metavar("Wilson|Riley")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (EQUAL(s.c_str(), "Wilson"))
+                {
+                    psOptions->bTRIAlgSpecified = true;
+                    psOptions->eTRIAlg = TRIAlg::WILSON;
+                }
+                else if (EQUAL(s.c_str(), "Riley"))
+                {
+                    psOptions->bTRIAlgSpecified = true;
+                    psOptions->eTRIAlg = TRIAlg::RILEY;
+                }
+                else
+                {
+                    throw std::invalid_argument(
+                        CPLSPrintf("Invalid value for -alg: %s.", s.c_str()));
+                }
+            })
+        .help(_("Choose between Wilson or Riley algorithms."));
+
+    addCommonOptions(subCommandTRI);
+
+    // TPI
+
+    auto subCommandTPI = argParser->add_subparser(
+        "TPI", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    subCommandTPI->add_description(
+        _("Compute the Topographic Position Index."));
+
+    if (psOptionsForBinary)
+    {
+        subCommandTPI->add_argument("input_dem")
+            .store_into(psOptionsForBinary->osSrcFilename)
+            .help(_("The input DEM raster to be processed."));
+
+        subCommandTPI->add_argument("output_TPI_map")
+            .store_into(psOptionsForBinary->osDstFilename)
+            .help(_("The output raster to be produced."));
+    }
+
+    addCommonOptions(subCommandTPI);
+
+    // Roughness
+
+    auto subCommandRoughness = argParser->add_subparser(
+        "roughness", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    subCommandRoughness->add_description(
+        _("Compute the roughness of the DEM."));
+
+    if (psOptionsForBinary)
+    {
+        subCommandRoughness->add_argument("input_dem")
+            .store_into(psOptionsForBinary->osSrcFilename)
+            .help(_("The input DEM raster to be processed."));
+
+        subCommandRoughness->add_argument("output_roughness_map")
+            .store_into(psOptionsForBinary->osDstFilename)
+            .help(_("The output raster to be produced."));
+    }
+
+    addCommonOptions(subCommandRoughness);
+
+    return argParser;
+}
+
+/************************************************************************/
+/*                  GDALDEMAppGetParserUsage()                 */
+/************************************************************************/
+
+std::string GDALDEMAppGetParserUsage(const std::string &osProcessingMode)
+{
+    try
+    {
+        GDALDEMProcessingOptions sOptions;
+        GDALDEMProcessingOptionsForBinary sOptionsForBinary;
+        auto argParser =
+            GDALDEMAppOptionsGetParser(&sOptions, &sOptionsForBinary);
+        if (!osProcessingMode.empty())
+        {
+            const auto subParser = argParser->get_subparser(osProcessingMode);
+            if (subParser)
+            {
+                return subParser->usage();
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid processing mode: %s",
+                         osProcessingMode.c_str());
+            }
+        }
+        return argParser->usage();
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
+        return std::string();
+    }
+}
+
+/************************************************************************/
 /*                            GDALDEMProcessing()                       */
 /************************************************************************/
 
@@ -3234,13 +3668,15 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
     Algorithm eUtilityMode = GetAlgorithm(pszProcessing);
     if (eUtilityMode == INVALID)
     {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid processing");
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid processing mode: %s",
+                 pszProcessing);
         if (pbUsageError)
             *pbUsageError = TRUE;
         return nullptr;
     }
 
-    if (eUtilityMode == COLOR_RELIEF && pszColorFilename == nullptr)
+    if (eUtilityMode == COLOR_RELIEF &&
+        (pszColorFilename == nullptr || strlen(pszColorFilename) == 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "pszColorFilename == NULL.");
 
@@ -3248,7 +3684,8 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
             *pbUsageError = TRUE;
         return nullptr;
     }
-    else if (eUtilityMode != COLOR_RELIEF && pszColorFilename != nullptr)
+    else if (eUtilityMode != COLOR_RELIEF && pszColorFilename != nullptr &&
+             strlen(pszColorFilename) > 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "pszColorFilename != NULL.");
 
@@ -3333,7 +3770,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
     GDALGetGeoTransform(hSrcDataset, adfGeoTransform);
 
     CPLString osFormat;
-    if (psOptions->pszFormat == nullptr)
+    if (psOptions->osFormat.empty())
     {
         osFormat = GetOutputDriverForRaster(pszDest);
         if (osFormat.empty())
@@ -3344,8 +3781,9 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
     }
     else
     {
-        osFormat = psOptions->pszFormat;
+        osFormat = psOptions->osFormat;
     }
+
     GDALDriverH hDriver = GDALGetDriverByName(osFormat);
     if (hDriver == nullptr ||
         (GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) == nullptr &&
@@ -3481,7 +3919,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         bDstHasNoData = true;
 
         pData = GDALCreateSlopeData(adfGeoTransform, psOptions->scale,
-                                    psOptions->slopeFormat);
+                                    psOptions->bSlopeFormatUseDegrees);
         if (psOptions->eGradientAlg == GradientAlg::ZEVENBERGEN_THORNE)
         {
             pfnAlgFloat = GDALSlopeZevenbergenThorneAlg<float>;
@@ -3580,11 +4018,11 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 
     if (EQUAL(osFormat, "GTiff"))
     {
-        if (!EQUAL(CSLFetchNameValueDef(psOptions->papszCreateOptions,
-                                        "COMPRESS", "NONE"),
+        if (!EQUAL(psOptions->aosCreationOptions.FetchNameValueDef("COMPRESS",
+                                                                   "NONE"),
                    "NONE") &&
-            CPLTestBool(CSLFetchNameValueDef(psOptions->papszCreateOptions,
-                                             "TILED", "NO")))
+            CPLTestBool(
+                psOptions->aosCreationOptions.FetchNameValueDef("TILED", "NO")))
         {
             bForceUseIntermediateDataset = true;
         }
@@ -3673,7 +4111,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 
         GDALDatasetH hOutDS = GDALCreateCopy(
             hDriver, pszDest, hIntermediateDataset, TRUE,
-            psOptions->papszCreateOptions, pfnProgress, pProgressData);
+            psOptions->aosCreationOptions.List(), pfnProgress, pProgressData);
 
         GDALClose(hIntermediateDataset);
 
@@ -3688,7 +4126,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 
     GDALDatasetH hDstDataset =
         GDALCreate(hDriver, pszDest, nXSize, nYSize, nDstBands, eDstDataType,
-                   psOptions->papszCreateOptions);
+                   psOptions->aosCreationOptions.List());
 
     if (hDstDataset == nullptr)
     {
@@ -3763,246 +4201,137 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
     char **papszArgv, GDALDEMProcessingOptionsForBinary *psOptionsForBinary)
 {
-    GDALDEMProcessingOptions *psOptions = new GDALDEMProcessingOptions;
-    Algorithm eUtilityMode = INVALID;
-    bool bAzimuthSpecified = false;
-    bool bAltSpecified = false;
 
+    auto psOptions = std::make_unique<GDALDEMProcessingOptions>();
     /* -------------------------------------------------------------------- */
     /*      Handle command line arguments.                                  */
     /* -------------------------------------------------------------------- */
-    int argc = CSLCount(papszArgv);
-    for (int i = 0; papszArgv != nullptr && i < argc; i++)
+    CPLStringList aosArgv;
+
+    if (papszArgv)
     {
-        if (i == 0 && psOptionsForBinary)
+        const int nArgc = CSLCount(papszArgv);
+        for (int i = 0; i < nArgc; i++)
+            aosArgv.AddString(papszArgv[i]);
+    }
+
+    // Ugly hack: papszArgv may not contain the processing mode if coming from SWIG
+    const bool bNoProcessingMode(aosArgv.size() > 0 && aosArgv[0][0] == '-');
+
+    auto argParser =
+        GDALDEMAppOptionsGetParser(psOptions.get(), psOptionsForBinary);
+
+    auto tryHandleArgv = [&]()
+    {
+        argParser->parse_args_without_binary_name(aosArgv);
+        // Validate the parsed options
+
+        if (psOptions->nBand <= 0)
         {
-            eUtilityMode = GetAlgorithm(papszArgv[0]);
-            if (eUtilityMode == INVALID)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg, "Invalid utility mode");
-                GDALDEMProcessingOptionsFree(psOptions);
-                return nullptr;
-            }
-            psOptionsForBinary->pszProcessing = CPLStrdup(papszArgv[0]);
-            continue;
+            throw std::invalid_argument("Invalid value for -b");
         }
 
-        if (i < argc - 1 &&
-            (EQUAL(papszArgv[i], "-of") || EQUAL(papszArgv[i], "-f")))
+        if (psOptions->z <= 0)
         {
-            ++i;
-            CPLFree(psOptions->pszFormat);
-            psOptions->pszFormat = CPLStrdup(papszArgv[i]);
+            throw std::invalid_argument("Invalid value for -z");
         }
 
-        else if (EQUAL(papszArgv[i], "-q") || EQUAL(papszArgv[i], "-quiet"))
+        if (psOptions->scale <= 0)
         {
-            if (psOptionsForBinary)
-                psOptionsForBinary->bQuiet = TRUE;
+            throw std::invalid_argument("Invalid value for -s");
         }
 
-        else if ((EQUAL(papszArgv[i], "--z") || EQUAL(papszArgv[i], "-z")) &&
-                 i + 1 < argc)
+        if (psOptions->alt <= 0)
         {
-            ++i;
-            if (!ArgIsNumeric(papszArgv[i]))
+            throw std::invalid_argument("Invalid value for -alt");
+        }
+
+        if (psOptions->az <= 0)
+        {
+            throw std::invalid_argument("Invalid value for -az");
+        }
+
+        if (psOptions->bMultiDirectional && argParser->is_used_globally("-az"))
+        {
+            throw std::invalid_argument(
+                "-multidirectional and -az cannot be used together");
+        }
+
+        if (psOptions->bIgor && argParser->is_used_globally("-alt"))
+        {
+            throw std::invalid_argument(
+                "-igor and -alt cannot be used together");
+        }
+
+        if (psOptionsForBinary && aosArgv.size() > 1)
+        {
+            psOptionsForBinary->osProcessing = aosArgv[0];
+        }
+    };
+
+    try
+    {
+
+        // Ugly hack: papszArgv may not contain the processing mode if coming from
+        // SWIG we have not other option than to check them all
+        const static std::list<std::string> processingModes{
+            {"hillshade", "slope", "aspect", "color-relief", "TRI", "TPI",
+             "roughness"}};
+
+        if (bNoProcessingMode)
+        {
+            try
             {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Numeric value expected for -z");
-                GDALDEMProcessingOptionsFree(psOptions);
-                return nullptr;
+                tryHandleArgv();
             }
-            psOptions->z = CPLAtof(papszArgv[i]);
-        }
-        else if (EQUAL(papszArgv[i], "-p"))
-        {
-            psOptions->slopeFormat = 0;
-        }
-        else if (EQUAL(papszArgv[i], "-alg") && i + 1 < argc)
-        {
-            i++;
-            if (EQUAL(papszArgv[i], "ZevenbergenThorne"))
+            catch (std::exception &)
             {
-                psOptions->bGradientAlgSpecified = true;
-                psOptions->eGradientAlg = GradientAlg::ZEVENBERGEN_THORNE;
+                CPLStringList aosArgvCopy{aosArgv};
+                bool bSuccess = false;
+                for (const auto &processingMode : processingModes)
+                {
+                    aosArgv = aosArgvCopy;
+                    aosArgv.InsertString(0, processingMode.c_str());
+                    try
+                    {
+                        tryHandleArgv();
+                        bSuccess = true;
+                        break;
+                    }
+                    catch (std::runtime_error &)
+                    {
+                        continue;
+                    }
+                    catch (std::invalid_argument &)
+                    {
+                        continue;
+                    }
+                    catch (std::logic_error &)
+                    {
+                        continue;
+                    }
+                }
+
+                if (!bSuccess)
+                {
+                    throw std::invalid_argument(
+                        "Argument(s) are not valid with any processing mode.");
+                }
             }
-            else if (EQUAL(papszArgv[i], "Horn"))
-            {
-                psOptions->bGradientAlgSpecified = true;
-                psOptions->eGradientAlg = GradientAlg::HORN;
-            }
-            else if (EQUAL(papszArgv[i], "Riley"))
-            {
-                psOptions->bTRIAlgSpecified = true;
-                psOptions->eTRIAlg = TRIAlg::RILEY;
-            }
-            else if (EQUAL(papszArgv[i], "Wilson"))
-            {
-                psOptions->bTRIAlgSpecified = true;
-                psOptions->eTRIAlg = TRIAlg::WILSON;
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Invalid value for -alg: %s", papszArgv[i - 1]);
-                GDALDEMProcessingOptionsFree(psOptions);
-                return nullptr;
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-trigonometric"))
-        {
-            psOptions->bAngleAsAzimuth = false;
-        }
-        else if (EQUAL(papszArgv[i], "-zero_for_flat"))
-        {
-            psOptions->bZeroForFlat = true;
-        }
-        else if (EQUAL(papszArgv[i], "-exact_color_entry"))
-        {
-            psOptions->eColorSelectionMode = COLOR_SELECTION_EXACT_ENTRY;
-        }
-        else if (EQUAL(papszArgv[i], "-nearest_color_entry"))
-        {
-            psOptions->eColorSelectionMode = COLOR_SELECTION_NEAREST_ENTRY;
-        }
-        else if ((EQUAL(papszArgv[i], "--s") || EQUAL(papszArgv[i], "-s") ||
-                  EQUAL(papszArgv[i], "--scale") ||
-                  EQUAL(papszArgv[i], "-scale")) &&
-                 i + 1 < argc)
-        {
-            ++i;
-            if (!ArgIsNumeric(papszArgv[i]))
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Numeric value expected for %s", papszArgv[i - 1]);
-                GDALDEMProcessingOptionsFree(psOptions);
-                return nullptr;
-            }
-            psOptions->scale = CPLAtof(papszArgv[i]);
-        }
-        else if ((EQUAL(papszArgv[i], "--az") || EQUAL(papszArgv[i], "-az") ||
-                  EQUAL(papszArgv[i], "--azimuth") ||
-                  EQUAL(papszArgv[i], "-azimuth")) &&
-                 i + 1 < argc)
-        {
-            ++i;
-            if (!ArgIsNumeric(papszArgv[i]))
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Numeric value expected for %s", papszArgv[i - 1]);
-                GDALDEMProcessingOptionsFree(psOptions);
-                return nullptr;
-            }
-            bAzimuthSpecified = true;
-            psOptions->az = CPLAtof(papszArgv[i]);
-        }
-        else if ((EQUAL(papszArgv[i], "--alt") || EQUAL(papszArgv[i], "-alt") ||
-                  EQUAL(papszArgv[i], "--altitude") ||
-                  EQUAL(papszArgv[i], "-altitude")) &&
-                 i + 1 < argc)
-        {
-            ++i;
-            if (!ArgIsNumeric(papszArgv[i]))
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Numeric value expected for %s", papszArgv[i - 1]);
-                GDALDEMProcessingOptionsFree(psOptions);
-                return nullptr;
-            }
-            bAltSpecified = true;
-            psOptions->alt = CPLAtof(papszArgv[i]);
-        }
-        else if ((EQUAL(papszArgv[i], "-combined") ||
-                  EQUAL(papszArgv[i], "--combined")))
-        {
-            psOptions->bCombined = true;
-        }
-        else if ((EQUAL(papszArgv[i], "-igor") ||
-                  EQUAL(papszArgv[i], "--igor")))
-        {
-            psOptions->bIgor = true;
-        }
-        else if (EQUAL(papszArgv[i], "-multidirectional") ||
-                 EQUAL(papszArgv[i], "--multidirectional"))
-        {
-            psOptions->bMultiDirectional = true;
-        }
-        else if (EQUAL(papszArgv[i], "-alpha"))
-        {
-            psOptions->bAddAlpha = true;
-        }
-        else if (EQUAL(papszArgv[i], "-compute_edges"))
-        {
-            psOptions->bComputeAtEdges = true;
-        }
-        else if (i + 1 < argc &&
-                 (EQUAL(papszArgv[i], "--b") || EQUAL(papszArgv[i], "-b")))
-        {
-            psOptions->nBand = atoi(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-co") && i + 1 < argc)
-        {
-            psOptions->papszCreateOptions =
-                CSLAddString(psOptions->papszCreateOptions, papszArgv[++i]);
-        }
-        else if (papszArgv[i][0] == '-')
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
-                     papszArgv[i]);
-            GDALDEMProcessingOptionsFree(psOptions);
-            return nullptr;
-        }
-        else if (psOptionsForBinary &&
-                 psOptionsForBinary->pszSrcFilename == nullptr)
-        {
-            psOptionsForBinary->pszSrcFilename = CPLStrdup(papszArgv[i]);
-        }
-        else if (psOptionsForBinary && eUtilityMode == COLOR_RELIEF &&
-                 psOptionsForBinary->pszColorFilename == nullptr)
-        {
-            psOptionsForBinary->pszColorFilename = CPLStrdup(papszArgv[i]);
-        }
-        else if (psOptionsForBinary &&
-                 psOptionsForBinary->pszDstFilename == nullptr)
-        {
-            psOptionsForBinary->pszDstFilename = CPLStrdup(papszArgv[i]);
         }
         else
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Too many command options '%s'", papszArgv[i]);
-            GDALDEMProcessingOptionsFree(psOptions);
-            return nullptr;
+            tryHandleArgv();
         }
     }
-
-    if (psOptions->bMultiDirectional + psOptions->bCombined + psOptions->bIgor >
-        1)
+    catch (const std::exception &err)
     {
-        CPLError(
-            CE_Failure, CPLE_NotSupported,
-            "only one of -multidirectional, -combined or -igor can be used");
-        GDALDEMProcessingOptionsFree(psOptions);
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
         return nullptr;
     }
 
-    if (psOptions->bMultiDirectional && bAzimuthSpecified)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "-multidirectional and -az cannot be used together");
-        GDALDEMProcessingOptionsFree(psOptions);
-        return nullptr;
-    }
-
-    if (psOptions->bIgor && bAltSpecified)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "-igor and -alt cannot be used together");
-        GDALDEMProcessingOptionsFree(psOptions);
-        return nullptr;
-    }
-
-    return psOptions;
+    return psOptions.release();
 }
 
 /************************************************************************/
@@ -4019,13 +4348,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
 
 void GDALDEMProcessingOptionsFree(GDALDEMProcessingOptions *psOptions)
 {
-    if (psOptions)
-    {
-        CPLFree(psOptions->pszFormat);
-        CSLDestroy(psOptions->papszCreateOptions);
-
-        delete psOptions;
-    }
+    delete psOptions;
 }
 
 /************************************************************************/

@@ -2336,20 +2336,23 @@ def test_vsis3_5(aws_test_config, webserver_port):
 
 
 def test_vsis3_unlink_batch(aws_test_config, webserver_port):
-    def method(request):
-        if request.headers["Content-MD5"] != "Ze0X4LdlTwCsT+WpNxD9FA==":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(403)
-            return
 
-        content = request.rfile.read(int(request.headers["Content-Length"])).decode(
-            "ascii"
-        )
-        if (
-            content
-            != """<?xml version="1.0" encoding="UTF-8"?>
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/unlink_batch/?delete",
+        200,
+        {"Content-type": "application/xml"},
+        """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+        <Deleted>
+        <Key>foo</Key>
+        </Deleted>
+        <Deleted>
+        <Key>bar/baz</Key>
+        </Deleted>
+        </DeleteResult>""",
+        expected_headers={"Content-MD5": "Ze0X4LdlTwCsT+WpNxD9FA=="},
+        expected_body=b"""<?xml version="1.0" encoding="UTF-8"?>
 <Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <Object>
     <Key>foo</Key>
@@ -2358,30 +2361,9 @@ def test_vsis3_unlink_batch(aws_test_config, webserver_port):
     <Key>bar/baz</Key>
   </Object>
 </Delete>
-"""
-        ):
-            sys.stderr.write("Did not get expected content: %s\n" % content)
-            request.send_response(403)
-            return
+""",
+    )
 
-        request.protocol_version = "HTTP/1.1"
-        request.send_response(200)
-        response = """
-        <DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-        <Deleted>
-        <Key>foo</Key>
-        </Deleted>
-        <Deleted>
-        <Key>bar/baz</Key>
-        </Deleted>
-        </DeleteResult>"""
-        request.send_header("Content-Length", len(response))
-        request.send_header("Connection", "close")
-        request.end_headers()
-        request.wfile.write(response.encode("ascii"))
-
-    handler = webserver.SequentialHandler()
-    handler.add("POST", "/unlink_batch/?delete", custom_method=method)
     handler.add(
         "POST",
         "/unlink_batch/?delete",
@@ -2459,13 +2441,21 @@ def test_vsis3_rmdir_recursive(aws_test_config, webserver_port):
         """,
     )
 
-    def method(request):
-        content = request.rfile.read(int(request.headers["Content-Length"])).decode(
-            "ascii"
-        )
-        if (
-            content
-            != """<?xml version="1.0" encoding="UTF-8"?>
+    handler.add(
+        "POST",
+        "/test_rmdir_recursive/?delete",
+        200,
+        {"Content-type": "application/xml"},
+        """
+        <DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+        <Deleted>
+        <Key>somedir/test.txt</Key>
+        </Deleted>
+        <Deleted>
+        <Key>somedir/subdir/</Key>
+        </Deleted>
+        </DeleteResult>""",
+        expected_body=b"""<?xml version="1.0" encoding="UTF-8"?>
 <Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <Object>
     <Key>somedir/test.txt</Key>
@@ -2474,37 +2464,24 @@ def test_vsis3_rmdir_recursive(aws_test_config, webserver_port):
     <Key>somedir/subdir/</Key>
   </Object>
 </Delete>
-"""
-        ):
-            sys.stderr.write("Did not get expected content: %s\n" % content)
-            request.send_response(403)
-            return
+""",
+    )
 
-        request.protocol_version = "HTTP/1.1"
-        request.send_response(200)
-        response = """
+    handler.add(
+        "POST",
+        "/test_rmdir_recursive/?delete",
+        200,
+        {"Content-type": "application/xml"},
+        """
         <DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
         <Deleted>
-        <Key>somedir/test.txt</Key>
+        <Key>somedir/subdir/test.txt</Key>
         </Deleted>
         <Deleted>
-        <Key>somedir/subdir/</Key>
+        <Key>somedir/</Key>
         </Deleted>
-        </DeleteResult>"""
-        request.send_header("Content-Length", len(response))
-        request.send_header("Connection", "close")
-        request.end_headers()
-        request.wfile.write(response.encode("ascii"))
-
-    handler.add("POST", "/test_rmdir_recursive/?delete", custom_method=method)
-
-    def method(request):
-        content = request.rfile.read(int(request.headers["Content-Length"])).decode(
-            "ascii"
-        )
-        if (
-            content
-            != """<?xml version="1.0" encoding="UTF-8"?>
+        </DeleteResult>""",
+        expected_body=b"""<?xml version="1.0" encoding="UTF-8"?>
 <Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <Object>
     <Key>somedir/subdir/test.txt</Key>
@@ -2513,29 +2490,8 @@ def test_vsis3_rmdir_recursive(aws_test_config, webserver_port):
     <Key>somedir/</Key>
   </Object>
 </Delete>
-"""
-        ):
-            sys.stderr.write("Did not get expected content: %s\n" % content)
-            request.send_response(403)
-            return
-
-        request.protocol_version = "HTTP/1.1"
-        request.send_response(200)
-        response = """
-        <DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-        <Deleted>
-        <Key>somedir/subdir/test.txt</Key>
-        </Deleted>
-        <Deleted>
-        <Key>somedir/</Key>
-        </Deleted>
-        </DeleteResult>"""
-        request.send_header("Content-Length", len(response))
-        request.send_header("Connection", "close")
-        request.end_headers()
-        request.wfile.write(response.encode("ascii"))
-
-    handler.add("POST", "/test_rmdir_recursive/?delete", custom_method=method)
+""",
+    )
 
     with gdaltest.config_option("CPL_VSIS3_UNLINK_BATCH_SIZE", "2", thread_local=False):
         with webserver.install_http_handler(handler):
@@ -2672,25 +2628,13 @@ def test_vsis3_6(aws_test_config, webserver_port):
 
     handler.add("POST", "/s3_fake_bucket4/large_file.tif?uploads", custom_method=method)
     handler.add("POST", "/s3_fake_bucket4/large_file.tif?uploads", custom_method=method)
-
-    def method(request):
-        if request.headers["Content-Length"] != "1048576":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-        request.send_response(200)
-        request.send_header("ETag", '"first_etag"')
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
     handler.add(
         "PUT",
         "/s3_fake_bucket4/large_file.tif?partNumber=1&uploadId=my_id",
-        custom_method=method,
+        200,
+        {"ETag": '"first_etag"', "Content-Length": "0"},
+        b"",
+        expected_headers={"Content-Length": "1048576"},
     )
 
     with webserver.install_http_handler(handler):
@@ -2698,58 +2642,29 @@ def test_vsis3_6(aws_test_config, webserver_port):
     assert ret == size
     handler = webserver.SequentialHandler()
 
-    def method(request):
-        if request.headers["Content-Length"] != "1":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            return
-        request.send_response(200)
-        request.send_header("ETag", '"second_etag"')
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
     handler.add(
         "PUT",
         "/s3_fake_bucket4/large_file.tif?partNumber=2&uploadId=my_id",
-        custom_method=method,
+        200,
+        {"ETag": '"second_etag"', "Content-Length": "0"},
+        b"",
+        expected_headers={"Content-Length": "1"},
     )
 
-    def method(request):
-
-        if request.headers["Content-Length"] != "186":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-
-        content = request.rfile.read(186).decode("ascii")
-        if (
-            content
-            != """<CompleteMultipartUpload>
+    handler.add(
+        "POST",
+        "/s3_fake_bucket4/large_file.tif?uploadId=my_id",
+        200,
+        {},
+        b"",
+        expected_headers={"Content-Length": "186"},
+        expected_body=b"""<CompleteMultipartUpload>
 <Part>
 <PartNumber>1</PartNumber><ETag>"first_etag"</ETag></Part>
 <Part>
 <PartNumber>2</PartNumber><ETag>"second_etag"</ETag></Part>
 </CompleteMultipartUpload>
-"""
-        ):
-            sys.stderr.write("Did not get expected content: %s\n" % content)
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-
-        request.send_response(200)
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
-    handler.add(
-        "POST", "/s3_fake_bucket4/large_file.tif?uploadId=my_id", custom_method=method
+""",
     )
 
     gdal.ErrorReset()
@@ -2786,10 +2701,8 @@ def test_vsis3_6(aws_test_config, webserver_port):
     ]
     with webserver.install_http_handler(handler):
         for filename in filenames:
-            with gdaltest.config_option(
-                "VSIS3_CHUNK_SIZE", "1", thread_local=False
-            ):  # 1 MB
-                f = gdal.VSIFOpenL(filename, "wb")
+            # CHUNK_SIZE = 1 MB
+            f = gdal.VSIFOpenExL(filename, "wb", False, ["CHUNK_SIZE=1"])
             assert f is not None
             with gdal.quiet_errors():
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
@@ -3558,13 +3471,9 @@ def test_vsis3_sync_timestamp(tmp_vsimem, aws_test_config, webserver_port):
 
 
 @gdaltest.enable_exceptions()
-@pytest.mark.skipif(
-    gdaltest.is_ci(),
-    reason="test skipped on CI due to it not being reliable (also fails randomly when run locally)",
-)
 def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
 
-    gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "foo")
+    gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "x" * 30000)
 
     # S3 to local: S3 file is older -> download
     gdal.VSICurlClearCache()
@@ -3574,18 +3483,11 @@ def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
         "/out/testsync.txt",
         206,
         {
-            "Content-Length": "3",
-            "Content-Range": "bytes 0-2/3",
+            "Content-Length": "16384",
+            "Content-Range": "bytes 0-16383/30000",
             "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT",
         },
-        "xyz",
-    )
-    handler.add(
-        "GET",
-        "/out/testsync.txt",
-        200,
-        {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT"},
-        "xy",  # only returns 2 bytes instead of 30, {}
+        "x" * 16384,
     )
     handler.add(
         "GET",
@@ -3598,15 +3500,21 @@ def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
             <Contents>
                 <Key>testsync.txt</Key>
                 <LastModified>1970-01-01T00:00:01.000Z</LastModified>
-                <Size>3</Size>
+                <Size>30000</Size>
             </Contents>
         </ListBucketResult>
         """,
     )
-    with webserver.install_http_handler(handler):
+    handler.add("GET", "/out/testsync.txt", 400)
+    # Do not use /vsicurl_streaming/ as source, otherwise errors may be
+    # emitted in worker thread, which isn't properly handled (should ideally
+    # be fixed)
+    with gdal.config_option(
+        "VSIS3_COPYFILE_USE_STREAMING_SOURCE", "NO"
+    ), webserver.install_http_handler(handler):
         with pytest.raises(
             Exception,
-            match=f"Copying of /vsis3/out/testsync.txt to {tmp_vsimem}/testsync.txt failed: 2 bytes were copied whereas 3 were expected",
+            match=f"Copying of /vsis3/out/testsync.txt to {tmp_vsimem}/testsync.txt failed: 0 bytes were copied whereas 30000 were expected",
         ):
             gdal.Sync("/vsis3/out/testsync.txt", tmp_vsimem)
 
@@ -3920,26 +3828,17 @@ def test_vsis3_fake_rename(aws_test_config, webserver_port):
     )
     handler.add("GET", "/test/target.txt", 404)
     handler.add("GET", "/test/?delimiter=%2F&max-keys=100&prefix=target.txt%2F", 200)
-
-    def method(request):
-        if request.headers["Content-Length"] != "0":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            return
-        if request.headers["x-amz-copy-source"] != "/test/source.txt":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            return
-
-        request.send_response(200)
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
-    handler.add("PUT", "/test/target.txt", custom_method=method)
+    handler.add(
+        "PUT",
+        "/test/target.txt",
+        200,
+        {"Content-Length": "0"},
+        b"",
+        expected_headers={
+            "Content-Length": "0",
+            "x-amz-copy-source": "/test/source.txt",
+        },
+    )
     handler.add("DELETE", "/test/source.txt", 204)
 
     with webserver.install_http_handler(handler):
@@ -3991,25 +3890,17 @@ def test_vsis3_fake_rename_dir(aws_test_config, webserver_port):
 
     handler.add("PUT", "/test/target_dir/", custom_method=method)
 
-    def method(request):
-        if request.headers["Content-Length"] != "0":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            return
-        if request.headers["x-amz-copy-source"] != "/test/source_dir/test.txt":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            return
-
-        request.send_response(200)
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
-    handler.add("PUT", "/test/target_dir/test.txt", custom_method=method)
+    handler.add(
+        "PUT",
+        "/test/target_dir/test.txt",
+        200,
+        {"Content-Length": "0"},
+        b"",
+        expected_headers={
+            "Content-Length": "0",
+            "x-amz-copy-source": "/test/source_dir/test.txt",
+        },
+    )
 
     handler.add("DELETE", "/test/source_dir/test.txt", 204)
 
@@ -4080,74 +3971,39 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
         headers={"Content-type": "application/xml"},
     )
 
-    def method(request):
-        if request.headers["Content-Length"] != "3":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-        request.send_response(200)
-        request.send_header("ETag", '"first_etag"')
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
     handler.add(
-        "PUT", "/test_bucket/test/foo?partNumber=1&uploadId=my_id", custom_method=method
+        "PUT",
+        "/test_bucket/test/foo?partNumber=1&uploadId=my_id",
+        200,
+        {"ETag": '"first_etag"'},
+        b"",
+        expected_headers={"Content-Length": "3"},
     )
 
-    def method(request):
-        if request.headers["Content-Length"] != "1":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-        request.send_response(200)
-        request.send_header("ETag", '"second_etag"')
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
     handler.add(
-        "PUT", "/test_bucket/test/foo?partNumber=2&uploadId=my_id", custom_method=method
+        "PUT",
+        "/test_bucket/test/foo?partNumber=2&uploadId=my_id",
+        200,
+        {"ETag": '"second_etag"'},
+        b"",
+        expected_headers={"Content-Length": "1"},
     )
 
-    def method(request):
-        if request.headers["Content-Length"] != "186":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-
-        content = request.rfile.read(186).decode("ascii")
-        if (
-            content
-            != """<CompleteMultipartUpload>
+    handler.add(
+        "POST",
+        "/test_bucket/test/foo?uploadId=my_id",
+        200,
+        {},
+        b"",
+        expected_headers={"Content-Length": "186"},
+        expected_body=b"""<CompleteMultipartUpload>
 <Part>
 <PartNumber>1</PartNumber><ETag>"first_etag"</ETag></Part>
 <Part>
 <PartNumber>2</PartNumber><ETag>"second_etag"</ETag></Part>
 </CompleteMultipartUpload>
-"""
-        ):
-            sys.stderr.write("Did not get expected content: %s\n" % content)
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-
-        request.send_response(200)
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
-    handler.add("POST", "/test_bucket/test/foo?uploadId=my_id", custom_method=method)
+""",
+    )
 
     with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES", thread_local=False):
         with webserver.install_http_handler(handler):
@@ -4211,6 +4067,387 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure(
                     "/vsis3/test_bucket",
                     options=["NUM_THREADS=1", "CHUNK_SIZE=3"],
                 )
+
+
+###############################################################################
+# Test gdal.CopyFileRestartable() where upload is completed in a single attempt
+
+
+def test_vsis3_CopyFileRestartable_no_error(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    srcfilename = str(tmp_vsimem / "foo")
+    gdal.FileFromMemBuffer(srcfilename, "foo\n")
+
+    dstfilename = "/vsis3/test_bucket/foo"
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/test_bucket/foo?uploads",
+        200,
+        {"Content-type": "application:/xml"},
+        b"""<?xml version="1.0" encoding="UTF-8"?>
+        <InitiateMultipartUploadResult>
+        <UploadId>my_id</UploadId>
+        </InitiateMultipartUploadResult>""",
+    )
+    handler.add(
+        "PUT",
+        "/test_bucket/foo?partNumber=1&uploadId=my_id",
+        200,
+        {"ETag": '"first_etag"'},
+        expected_headers={"Content-Length": "4"},
+        expected_body=b"foo\n",
+    )
+    handler.add("POST", "/test_bucket/foo?uploadId=my_id", 200)
+
+    with webserver.install_http_handler(handler):
+        ret_code, restart_payload = gdal.CopyFileRestartable(
+            srcfilename, dstfilename, None, ["NUM_THREADS=1"]
+        )
+    assert ret_code == 0
+    assert restart_payload is None
+
+
+###############################################################################
+# Test multithreaded gdal.CopyFileRestartable() where upload is completed in a single attempt
+
+
+def test_vsis3_CopyFileRestartable_multithreaded(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    srcfilename = str(tmp_vsimem / "foo")
+    gdal.FileFromMemBuffer(srcfilename, "foo\n")
+
+    dstfilename = "/vsis3/test_bucket/foo"
+
+    # Use a non sequential HTTP handler as the PUT could be emitted in
+    # any order
+    handler = webserver.NonSequentialMockedHttpHandler()
+    handler.add(
+        "POST",
+        "/test_bucket/foo?uploads",
+        200,
+        {"Content-type": "application:/xml"},
+        b"""<?xml version="1.0" encoding="UTF-8"?>
+        <InitiateMultipartUploadResult>
+        <UploadId>my_id</UploadId>
+        </InitiateMultipartUploadResult>""",
+    )
+    handler.add(
+        "PUT",
+        "/test_bucket/foo?partNumber=1&uploadId=my_id",
+        200,
+        {"ETag": '"first_etag"'},
+        expected_headers={"Content-Length": "3"},
+        expected_body=b"foo",
+    )
+    handler.add(
+        "PUT",
+        "/test_bucket/foo?partNumber=2&uploadId=my_id",
+        200,
+        {"ETag": '"second_etag"'},
+        expected_headers={"Content-Length": "1"},
+        expected_body=b"\n",
+    )
+    handler.add("POST", "/test_bucket/foo?uploadId=my_id", 200)
+
+    with webserver.install_http_handler(handler):
+        ret_code, restart_payload = gdal.CopyFileRestartable(
+            srcfilename,
+            dstfilename,
+            None,
+            ["CHUNK_SIZE=3"],
+        )
+    assert ret_code == 0
+    assert restart_payload is None
+
+
+###############################################################################
+# Test gdal.CopyFileRestartable() with one restart to complete the upload
+
+
+@pytest.mark.parametrize("failure_reason", ["progress_cbk", "failed_part_put"])
+def test_vsis3_CopyFileRestartable_with_restart(
+    tmp_vsimem, aws_test_config, webserver_port, failure_reason
+):
+
+    gdal.VSICurlClearCache()
+
+    srcfilename = str(tmp_vsimem / "foo")
+    gdal.FileFromMemBuffer(srcfilename, "foo\n")
+
+    dstfilename = "/vsis3/test_bucket/foo"
+
+    def progress_cbk(pct, msg, user_data):
+        if failure_reason == "progress_cbk":
+            return pct < 0.5
+        else:
+            return True
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/test_bucket/foo?uploads",
+        200,
+        {"Content-type": "application:/xml"},
+        b"""<?xml version="1.0" encoding="UTF-8"?>
+        <InitiateMultipartUploadResult>
+        <UploadId>my_id</UploadId>
+        </InitiateMultipartUploadResult>""",
+    )
+    handler.add(
+        "PUT",
+        "/test_bucket/foo?partNumber=1&uploadId=my_id",
+        200,
+        {"ETag": '"first_etag"'},
+        expected_headers={"Content-Length": "3"},
+        expected_body=b"foo",
+    )
+    if failure_reason == "failed_part_put":
+        handler.add(
+            "PUT",
+            "/test_bucket/foo?partNumber=2&uploadId=my_id",
+            400,
+            expected_headers={"Content-Length": "1"},
+            expected_body=b"\n",
+        )
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        ret_code, restart_payload = gdal.CopyFileRestartable(
+            srcfilename,
+            dstfilename,
+            None,  # input payload
+            ["CHUNK_SIZE=3", "NUM_THREADS=1"],
+            progress_cbk,
+        )
+    assert ret_code == 1
+    j = json.loads(restart_payload)
+    assert "source_mtime" in j
+    del j["source_mtime"]
+    assert j == {
+        "type": "CopyFileRestartablePayload",
+        "source": srcfilename,
+        "target": dstfilename,
+        "source_size": 4,
+        "chunk_size": 3,
+        "upload_id": "my_id",
+        "chunk_etags": ['"first_etag"', None],
+    }
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PUT",
+        "/test_bucket/foo?partNumber=2&uploadId=my_id",
+        200,
+        {"ETag": '"second_etag"'},
+        expected_headers={"Content-Length": "1"},
+        expected_body=b"\n",
+    )
+    handler.add(
+        "POST",
+        "/test_bucket/foo?uploadId=my_id",
+        200,
+        expected_body=b"""<CompleteMultipartUpload>
+<Part>
+<PartNumber>1</PartNumber><ETag>"first_etag"</ETag></Part>
+<Part>
+<PartNumber>2</PartNumber><ETag>"second_etag"</ETag></Part>
+</CompleteMultipartUpload>
+""",
+    )
+    with webserver.install_http_handler(handler):
+        ret_code, restart_payload = gdal.CopyFileRestartable(
+            srcfilename, dstfilename, restart_payload, ["NUM_THREADS=1"]
+        )
+    assert ret_code == 0
+    assert restart_payload is None
+
+
+###############################################################################
+# Test gdal.CopyFileRestartable() with error cases
+
+
+def test_vsis3_CopyFileRestartable_src_file_does_not_exist(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    with gdal.quiet_errors():
+        ret_code, restart_payload = gdal.CopyFileRestartable(
+            "/vsimem/i/do/not/exist", "/vsis3/test_bucket/dst", None, ["NUM_THREADS=1"]
+        )
+    assert ret_code == -1
+    assert restart_payload is None
+
+
+###############################################################################
+# Test gdal.CopyFileRestartable() with error cases
+
+
+def test_vsis3_CopyFileRestartable_InitiateMultipartUpload_failed(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    srcfilename = str(tmp_vsimem / "foo")
+    gdal.FileFromMemBuffer(srcfilename, "foo\n")
+
+    dstfilename = "/vsis3/test_bucket/foo"
+
+    handler = webserver.SequentialHandler()
+    handler.add("POST", "/test_bucket/foo?uploads", 400)
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        ret_code, restart_payload = gdal.CopyFileRestartable(
+            srcfilename, dstfilename, None, ["NUM_THREADS=1"]  # input payload
+        )
+    assert ret_code == -1
+
+
+###############################################################################
+# Test gdal.CopyFileRestartable() with error cases
+
+
+def test_vsis3_CopyFileRestartable_CompleteMultipartUpload_failed(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    srcfilename = str(tmp_vsimem / "foo")
+    gdal.FileFromMemBuffer(srcfilename, "foo\n")
+
+    dstfilename = "/vsis3/test_bucket/foo"
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/test_bucket/foo?uploads",
+        200,
+        {"Content-type": "application:/xml"},
+        b"""<?xml version="1.0" encoding="UTF-8"?>
+        <InitiateMultipartUploadResult>
+        <UploadId>my_id</UploadId>
+        </InitiateMultipartUploadResult>""",
+    )
+    handler.add(
+        "PUT",
+        "/test_bucket/foo?partNumber=1&uploadId=my_id",
+        200,
+        {"ETag": '"first_etag"'},
+        expected_headers={"Content-Length": "4"},
+        expected_body=b"foo\n",
+    )
+    handler.add("POST", "/test_bucket/foo?uploadId=my_id", 400)
+    handler.add("DELETE", "/test_bucket/foo?uploadId=my_id", 200)
+
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        ret_code, restart_payload = gdal.CopyFileRestartable(
+            srcfilename, dstfilename, None, ["NUM_THREADS=1"]  # input payload
+        )
+    assert ret_code == -1
+
+
+###############################################################################
+# Test gdal.CopyFileRestartable() with errors in input payload
+
+
+@pytest.mark.parametrize(
+    "key,value,error_msg",
+    [
+        ("source", None, "'source' field in input payload does not match pszSource"),
+        ("target", None, "'target' field in input payload does not match pszTarget"),
+        ("chunk_size", None, "'chunk_size' field in input payload missing or invalid"),
+        (
+            "source_size",
+            None,
+            "'source_size' field in input payload does not match source file size",
+        ),
+        (
+            "source_mtime",
+            None,
+            "'source_mtime' field in input payload does not match source file modification time",
+        ),
+        ("upload_id", None, "'upload_id' field in input payload missing or invalid"),
+        (
+            "chunk_etags",
+            None,
+            "'chunk_etags' field in input payload missing or invalid",
+        ),
+        (
+            "chunk_etags",
+            [],
+            "'chunk_etags' field in input payload has not expected size",
+        ),
+    ],
+)
+def test_vsis3_CopyFileRestartable_errors_input_payload(
+    tmp_vsimem, aws_test_config, key, value, error_msg
+):
+
+    srcfilename = str(tmp_vsimem / "foo")
+    gdal.FileFromMemBuffer(srcfilename, "foo\n")
+
+    dstfilename = "/vsis3/test_bucket/foo"
+
+    j = {
+        "type": "CopyFileRestartablePayload",
+        "source": srcfilename,
+        "target": dstfilename,
+        "source_size": 4,
+        "chunk_size": 3,
+        "upload_id": "my_id",
+        "chunk_etags": ['"first_etag"', None],
+    }
+    j["source_mtime"] = gdal.VSIStatL(srcfilename).mtime
+
+    j[key] = value
+    restart_payload = json.dumps(j)
+
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        ret_code, restart_payload = gdal.CopyFileRestartable(
+            srcfilename, dstfilename, restart_payload, ["NUM_THREADS=1"]
+        )
+    assert ret_code == -1
+    assert restart_payload is None
+    assert gdal.GetLastErrorMsg() == error_msg
+
+
+###############################################################################
+# Test gdal.CopyFileRestartable() with /vsis3/ to /vsis3/
+
+
+def test_vsis3_CopyFileRestartable_server_side(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    srcfilename = "/vsis3/test_bucket/src"
+    dstfilename = "/vsis3/test_bucket/dst"
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PUT",
+        "/test_bucket/dst",
+        200,
+        expected_headers={"x-amz-copy-source": "/test_bucket/src"},
+    )
+    with webserver.install_http_handler(handler):
+        ret_code, restart_payload = gdal.CopyFileRestartable(
+            srcfilename, dstfilename, None, ["NUM_THREADS=1"]
+        )
+    assert ret_code == 0
+    assert restart_payload is None
 
 
 ###############################################################################
@@ -5274,6 +5511,112 @@ def test_vsis3_read_credentials_AWS_CONTAINER_CREDENTIALS_FULL_URI(
 
 
 ###############################################################################
+# Read credentials from simulated instance with AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+
+
+@pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="Incorrect platform")
+def test_vsis3_read_credentials_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+    options = {
+        "CPL_AWS_CREDENTIALS_FILE": "",
+        "AWS_CONFIG_FILE": "",
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+        # Disable hypervisor related check to test if we are really on EC2
+        "CPL_AWS_AUTODETECT_EC2": "NO",
+        "CPL_AWS_WEB_IDENTITY_ENABLE": "NO",
+        "AWS_CONTAINER_CREDENTIALS_FULL_URI": f"http://localhost:{webserver_port}/AWS_CONTAINER_CREDENTIALS_FULL_URI",
+        "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE": f"{tmp_vsimem}/container_authorization_token_file",
+        "AWS_CONTAINER_AUTHORIZATION_TOKEN": "invalid",
+    }
+
+    gdal.VSICurlClearCache()
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "container_authorization_token_file", "valid\n")
+
+    handler = webserver.SequentialHandler()
+
+    handler.add(
+        "GET",
+        "/AWS_CONTAINER_CREDENTIALS_FULL_URI",
+        200,
+        {"Content-Type": "application/json"},
+        b"""{
+            "AccessKeyId": "AWS_ACCESS_KEY_ID",
+            "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+            "Expiration": "3000-01-01T00:00:00Z"
+            }""",
+        expected_headers={"Authorization": "valid"},
+    )
+    handler.add(
+        "GET",
+        "/s3_fake_bucket/resource",
+        custom_method=get_s3_fake_bucket_resource_method,
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "foo"
+
+
+###############################################################################
+# Read credentials from simulated instance with AWS_CONTAINER_AUTHORIZATION_TOKEN
+
+
+@pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="Incorrect platform")
+def test_vsis3_read_credentials_AWS_CONTAINER_AUTHORIZATION_TOKEN(
+    aws_test_config, webserver_port
+):
+    options = {
+        "CPL_AWS_CREDENTIALS_FILE": "",
+        "AWS_CONFIG_FILE": "",
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+        # Disable hypervisor related check to test if we are really on EC2
+        "CPL_AWS_AUTODETECT_EC2": "NO",
+        "CPL_AWS_WEB_IDENTITY_ENABLE": "NO",
+        "AWS_CONTAINER_CREDENTIALS_FULL_URI": f"http://localhost:{webserver_port}/AWS_CONTAINER_CREDENTIALS_FULL_URI",
+        "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE": "",
+        "AWS_CONTAINER_AUTHORIZATION_TOKEN": "valid",
+    }
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+
+    handler.add(
+        "GET",
+        "/AWS_CONTAINER_CREDENTIALS_FULL_URI",
+        200,
+        {"Content-Type": "application/json"},
+        b"""{
+            "AccessKeyId": "AWS_ACCESS_KEY_ID",
+            "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+            "Expiration": "3000-01-01T00:00:00Z"
+            }""",
+        expected_headers={"Authorization": "valid"},
+    )
+    handler.add(
+        "GET",
+        "/s3_fake_bucket/resource",
+        custom_method=get_s3_fake_bucket_resource_method,
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "foo"
+
+
+###############################################################################
 # Read credentials from an assumed role
 
 
@@ -5710,6 +6053,139 @@ def test_vsis3_DISABLE_READDIR_ON_OPEN_option(aws_test_config, webserver_port):
         assert f is not None
         assert gdal.VSIFReadL(3, 1, f) == b"foo"
         gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test VSIMultipartUploadXXXX()
+
+
+def test_vsis3_MultipartUpload(aws_test_config, webserver_port):
+
+    # Test MultipartUploadGetCapabilities()
+    info = gdal.MultipartUploadGetCapabilities("/vsis3/")
+    assert info.non_sequential_upload_supported
+    assert info.parallel_upload_supported
+    assert info.abort_supported
+    assert info.min_part_size == 5
+    assert info.max_part_size >= 1024
+    assert info.max_part_count == 10000
+
+    # Test MultipartUploadStart()
+    handler = webserver.SequentialHandler()
+    handler.add("POST", "/test_multipartupload/test.bin?uploads", 400)
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        upload_id = gdal.MultipartUploadStart("/vsis3/test_multipartupload/test.bin")
+    assert upload_id is None
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/test_multipartupload/test.bin?uploads",
+        200,
+        {},
+        """xml version="1.0" encoding="UTF-8"?>
+        <InitiateMultipartUploadResult>
+        <UploadId>my_upload_id</UploadId>
+        </InitiateMultipartUploadResult>""",
+    )
+    with webserver.install_http_handler(handler):
+        upload_id = gdal.MultipartUploadStart("/vsis3/test_multipartupload/test.bin")
+    assert upload_id == "my_upload_id"
+
+    # Test MultipartUploadAddPart()
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PUT",
+        "/test_multipartupload/test.bin?partNumber=1&uploadId=my_upload_id",
+        400,
+    )
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        part_id = gdal.MultipartUploadAddPart(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id", 1, 0, b"foo"
+        )
+    assert part_id is None
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PUT",
+        "/test_multipartupload/test.bin?partNumber=1&uploadId=my_upload_id",
+        200,
+        {"ETag": '"my_part_id"', "Content-Length": "0"},
+        b"",
+        expected_body=b"foo",
+    )
+    with webserver.install_http_handler(handler):
+        part_id = gdal.MultipartUploadAddPart(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id", 1, 0, b"foo"
+        )
+    assert part_id == '"my_part_id"'
+
+    # Test MultipartUploadEnd()
+
+    handler = webserver.SequentialHandler()
+    handler.add("POST", "/test_multipartupload/test.bin?uploadId=my_upload_id", 400)
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        assert not gdal.MultipartUploadEnd(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id", ['"my_part_id"'], 3
+        )
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/test_multipartupload/test.bin?uploadId=my_upload_id",
+        200,
+        expected_body=b"""<CompleteMultipartUpload>
+<Part>
+<PartNumber>1</PartNumber><ETag>"my_part_id"</ETag></Part>
+</CompleteMultipartUpload>
+""",
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.MultipartUploadEnd(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id", ['"my_part_id"'], 3
+        )
+
+    # Test MultipartUploadAbort()
+
+    handler = webserver.SequentialHandler()
+    handler.add("DELETE", "/test_multipartupload/test.bin?uploadId=my_upload_id", 400)
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        assert not gdal.MultipartUploadAbort(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id"
+        )
+
+    handler = webserver.SequentialHandler()
+    handler.add("DELETE", "/test_multipartupload/test.bin?uploadId=my_upload_id", 204)
+    with webserver.install_http_handler(handler):
+        assert gdal.MultipartUploadAbort(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id"
+        )
+
+
+###############################################################################
+# Test VSIMultipartUploadXXXX() when authentication fails
+
+
+def test_vsis3_MultipartUpload_unauthenticated():
+
+    options = {
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+    }
+    with gdaltest.config_options(options, thread_local=False), gdal.quiet_errors():
+        assert gdal.MultipartUploadStart("/vsis3/test_multipartupload/test.bin") is None
+        assert (
+            gdal.MultipartUploadAddPart(
+                "/vsis3/test_multipartupload/test.bin", "my_upload_id", 1, 0, b"foo"
+            )
+            is None
+        )
+        assert not gdal.MultipartUploadEnd(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id", ['"my_part_id"'], 3
+        )
+        assert not gdal.MultipartUploadAbort(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id"
+        )
 
 
 ###############################################################################

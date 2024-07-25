@@ -28,8 +28,6 @@
 
 #include "tiledbmultidim.h"
 
-#ifdef HAS_TILEDB_MULTIDIM
-
 /************************************************************************/
 /*              TileDBSingleArrayGroup::SanitizeNameForPath()           */
 /************************************************************************/
@@ -213,5 +211,3 @@ TileDBDataset::CreateMultiDimensional(const char *pszFilename,
     poDS->SetDescription(pszFilename);
     return poDS;
 }
-
-#endif  // HAS_TILEDB_MULTIDIM

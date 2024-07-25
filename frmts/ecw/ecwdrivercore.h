@@ -35,12 +35,20 @@ constexpr const char *ECW_DRIVER_NAME = "ECW";
 
 constexpr const char *JP2ECW_DRIVER_NAME = "JP2ECW";
 
-int CPL_DLL ECWDatasetIdentifyECW(GDALOpenInfo *poOpenInfo);
+#define ECWDatasetIdentifyECW PLUGIN_SYMBOL_NAME(ECWDatasetIdentifyECW)
+#define ECWDatasetIdentifyJPEG2000                                             \
+    PLUGIN_SYMBOL_NAME(ECWDatasetIdentifyJPEG2000)
+#define ECWDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(ECWDriverSetCommonMetadata)
+#define JP2ECWDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(JP2ECWDriverSetCommonMetadata)
 
-int CPL_DLL ECWDatasetIdentifyJPEG2000(GDALOpenInfo *poOpenInfo);
+int ECWDatasetIdentifyECW(GDALOpenInfo *poOpenInfo);
 
-void CPL_DLL ECWDriverSetCommonMetadata(GDALDriver *poDriver);
+int ECWDatasetIdentifyJPEG2000(GDALOpenInfo *poOpenInfo);
 
-void CPL_DLL JP2ECWDriverSetCommonMetadata(GDALDriver *poDriver);
+void ECWDriverSetCommonMetadata(GDALDriver *poDriver);
+
+void JP2ECWDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

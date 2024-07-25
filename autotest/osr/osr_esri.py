@@ -1097,3 +1097,95 @@ def test_osr_esri_33():
 
 ###############################################################################
 #
+
+
+def test_osr_esri_lambert_azimutal_no_radius_of_sphere_of_reference():
+
+    prj = [
+        "Projection    LAMBERT_AZIMUTHAL",
+        "Datum         WGS84",
+        "Spheroid      WGS84",
+        "Units         METERS",
+        "Zunits        NO",
+        "Xshift        0.0",
+        "Yshift        0.0",
+        "Parameters",
+        "  20  0  0.0 /* longitude of center of projection",
+        "   5  0  0.0 /* latitude of center of projection",
+        "1.0 /* false easting (meters)",
+        "2.0 /* false northing (meters)",
+    ]
+
+    srs_prj = osr.SpatialReference()
+    srs_prj.ImportFromESRI(prj)
+
+    wkt = """PROJCS["unnamed",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Lambert_Azimuthal_Equal_Area"],
+    PARAMETER["latitude_of_center",5],
+    PARAMETER["longitude_of_center",20],
+    PARAMETER["false_easting",1],
+    PARAMETER["false_northing",2],
+    UNIT["METERS",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
+
+    srs_wkt = osr.SpatialReference(wkt=wkt)
+    assert srs_prj.IsSame(srs_wkt)
+
+
+###############################################################################
+#
+
+
+@pytest.mark.parametrize("has_semi_major_and_minor_axis", [True, False])
+def test_osr_esri_lambert_azimutal_radius_of_sphere_of_reference(
+    has_semi_major_and_minor_axis,
+):
+
+    prj = [
+        "Projection    LAMBERT_AZIMUTHAL",
+        "Units         METERS",
+        "Zunits        NO",
+        "Xshift        0.0",
+        "Yshift        0.0",
+        "Parameters    6378137.0  6378137.0"
+        if has_semi_major_and_minor_axis
+        else "Parameters",
+        "6378137.0 /* radius of the sphere of reference",
+        "  20  0  0.0 /* longitude of center of projection",
+        "   5  0  0.0 /* latitude of center of projection",
+        "1.0 /* false easting (meters)",
+        "2.0 /* false northing (meters)",
+    ]
+
+    srs_prj = osr.SpatialReference()
+    srs_prj.ImportFromESRI(prj)
+
+    wkt = """PROJCS["unnamed",
+    GEOGCS["unknown",
+        DATUM["unknown",
+            SPHEROID["unknown",6378137,0]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]]],
+    PROJECTION["Lambert_Azimuthal_Equal_Area"],
+    PARAMETER["latitude_of_center",5],
+    PARAMETER["longitude_of_center",20],
+    PARAMETER["false_easting",1],
+    PARAMETER["false_northing",2],
+    UNIT["METERS",1],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH]]"""
+
+    srs_wkt = osr.SpatialReference(wkt=wkt)
+    assert srs_prj.IsSame(srs_wkt)

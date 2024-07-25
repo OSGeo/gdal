@@ -854,3 +854,15 @@ int OGRCurve::isClockwise() const
 
     return dfSum < 0;
 }
+
+/**
+ * \fn void OGRCurve::reversePoints();
+ *
+ * \brief Reverse point order.
+ *
+ * This method updates the points in this curve in place
+ * reversing the point ordering (first for last, etc) and component ordering
+ * for a compound curve.
+ *
+ * @since 3.10
+ */

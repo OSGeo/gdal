@@ -48,10 +48,14 @@ static int OGRTopoJSONDriverIdentify(GDALOpenInfo *poOpenInfo)
     GeoJSONSourceType nSrcType = TopoJSONDriverGetSourceType(poOpenInfo);
     if (nSrcType == eGeoJSONSourceUnknown)
         return FALSE;
-    if (nSrcType == eGeoJSONSourceService &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename, "TopoJSON:"))
+    if (nSrcType == eGeoJSONSourceService)
     {
-        return -1;
+        if (poOpenInfo->IsSingleAllowedDriver("TopoJSON"))
+            return TRUE;
+        if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "TopoJSON:"))
+        {
+            return -1;
+        }
     }
     return TRUE;
 }

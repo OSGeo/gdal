@@ -308,7 +308,7 @@ def test_ogr_shape_12():
 def test_ogr_shape_13(shape_ds):
 
     shp_path = os.path.join(shape_ds.GetDescription(), "tpoly.shp")
-    shape_ds.Destroy()
+    shape_ds.Close()
 
     shape_ds = ogr.Open(shp_path, update=1)
     shape_lyr = shape_ds.GetLayer(0)
@@ -340,7 +340,7 @@ def test_ogr_shape_13(shape_ds):
     ###############################################################################
     # Verify last changes.
 
-    shape_ds.Destroy()
+    shape_ds.Close()
 
     shape_ds = ogr.Open(shp_path, update=1)
     shape_lyr = shape_ds.GetLayer(0)
@@ -587,7 +587,7 @@ def test_ogr_shape_21(f):
 def test_ogr_shape_22(shape_ds):
 
     shape_path = shape_ds.GetDescription()
-    shape_ds.Destroy()
+    shape_ds.Close()
 
     #######################################################
     # Create memory Layer
@@ -6121,3 +6121,16 @@ def test_ogr_shape_logical_field(tmp_vsimem):
     assert f["int_field"] == -1234
     f = lyr.GetNextFeature()
     assert f["bool_field"] is None
+
+
+###############################################################################
+# Test reading a null Date filled with nul characters
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_read_date_empty_string():
+
+    ds = ogr.Open("data/shp/date_empty_string.dbf")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["date"] is None

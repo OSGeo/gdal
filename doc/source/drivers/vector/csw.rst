@@ -49,6 +49,9 @@ configuration option in those cases.
 Open options
 ------------
 
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: URL
 
       URL to the CSW server endpoint (if not specified in the
@@ -85,8 +88,8 @@ Open options
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  :copy-config:`GML_INVERT_AXIS_ORDER_IF_LAT_LONG`
 

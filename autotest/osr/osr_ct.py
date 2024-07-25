@@ -898,3 +898,58 @@ def test_osr_ct_source_and_target_mapping_minus_two_one():
     x, y, _ = ct.TransformPoint(10, 20, 0)
     assert x == pytest.approx(10)
     assert y == pytest.approx(20)
+
+
+###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/issues/9732
+
+
+@pytest.mark.require_proj(9, 2)
+def test_osr_ct_fix_9732():
+
+    s = osr.SpatialReference()
+    s.ImportFromEPSG(6453)
+
+    assert not s.IsDerivedProjected()
+
+    t = osr.SpatialReference()
+    t.SetFromUserInput(
+        """DERIVEDPROJCRS["Ground for NAD83(2011) / Idaho West (ftUS)",
+    BASEPROJCRS["NAD83(2011) / Idaho West (ftUS)",
+        BASEGEOGCRS["NAD83(2011)",
+            DATUM["NAD83 (National Spatial Reference System 2011)",ELLIPSOID["GRS 1980",6378137,298.257222101,LENGTHUNIT["metre",1]]],
+            PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],
+            ID["EPSG",6318]],
+        CONVERSION["SPCS83 Idaho West zone (US Survey feet)",
+            METHOD["Transverse Mercator",ID["EPSG",9807]],
+            PARAMETER["Latitude of natural origin",41.6666666666667,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],
+            PARAMETER["Longitude of natural origin",-115.75,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],
+            PARAMETER["Scale factor at natural origin",0.999933333,SCALEUNIT["unity",1],ID["EPSG",8805]],
+            PARAMETER["False easting",2624666.667,LENGTHUNIT["US survey foot",0.304800609601219],ID["EPSG",8806]],
+            PARAMETER["False northing",0,LENGTHUNIT["US survey foot",0.304800609601219],ID["EPSG",8807]]],
+        CS[Cartesian,2],
+        AXIS["easting (X)",east,ORDER[1],LENGTHUNIT["US survey foot",0.304800609601219]],
+        AXIS["northing (Y)",north,ORDER[2],LENGTHUNIT["US survey foot",0.304800609601219]],
+        USAGE[SCOPE["Engineering survey, topographic mapping."],AREA["United States (USA) - Idaho - counties of Ada; Adams; Benewah; Boise; Bonner; Boundary; Canyon; Clearwater; Elmore; Gem; Idaho; Kootenai; Latah; Lewis; Nez Perce; Owyhee; Payette; Shoshone; Valley; Washington."],BBOX[41.99,-117.24,49.01,-114.32]],
+        ID["EPSG",6453]],
+    DERIVINGCONVERSION["Grid to ground",
+        METHOD["Similarity transformation",ID["EPSG",9621]],
+        PARAMETER["Ordinate 1 of evaluation point in target CRS",1000,LENGTHUNIT["US survey foot",0.304800609601219],ID["EPSG",8621]],
+        PARAMETER["Ordinate 2 of evaluation point in target CRS",0,LENGTHUNIT["US survey foot",0.304800609601219],ID["EPSG",8622]],
+        PARAMETER["Scale factor for source CRS axes",1,SCALEUNIT["unity",1],ID["EPSG",1061]],
+        PARAMETER["Rotation angle of source CRS axes", 0,ANGLEUNIT["degree",0.0],ID["EPSG",8614]]],
+    CS[Cartesian,2],
+    AXIS["easting (X)",east,
+        ORDER[1],
+        LENGTHUNIT["US survey foot",0.304800609601219]],
+    AXIS["northing (Y)",north,
+        ORDER[2],
+        LENGTHUNIT["US survey foot",0.304800609601219]]]"""
+    )
+
+    assert t.IsDerivedProjected()
+
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, _ = ct.TransformPoint(2300000, 2000000, 0)
+    assert x == pytest.approx(2301000)
+    assert y == pytest.approx(2000000)

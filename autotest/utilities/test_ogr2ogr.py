@@ -2054,17 +2054,15 @@ def test_ogr2ogr_61(ogr2ogr_path, tmp_path):
         f"{ogr2ogr_path} {dst_shp} {src_csv} -spat 426857 5427937 426858 5427938 -spat_srs EPSG:32631 -s_srs EPSG:4326 -a_srs EPSG:4326"
     )
 
-    ds = ogr.Open(dst_shp)
-    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
-    ds.Destroy()
+    with ogr.Open(dst_shp) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 1
 
     gdaltest.runexternal(
         f"{ogr2ogr_path} {dst2_shp} {dst_shp} -spat 426857 5427937 426858 5427938 -spat_srs EPSG:32631"
     )
 
-    ds = ogr.Open(dst2_shp)
-    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
-    ds.Destroy()
+    with ogr.Open(dst2_shp) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 1
 
 
 ###############################################################################

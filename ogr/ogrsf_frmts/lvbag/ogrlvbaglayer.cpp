@@ -860,7 +860,7 @@ void OGRLVBAGLayer::ParseDocument()
                     VSIFReadL(aBuf.data(), 1, aBuf.size(), fp));
 
                 if (IsParserFinished(XML_Parse(oParser.get(), aBuf.data(), nLen,
-                                               VSIFEofL(fp))))
+                                               nLen < aBuf.size())))
                     return;
 
                 break;

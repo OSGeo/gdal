@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <utility>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -111,13 +112,19 @@ static GDALDataType GetWorkDataType(GDALDataType eDataType)
             eWrkDT = GDT_Byte;
             break;
 
+        case GDT_Int16:
+            eWrkDT = GDT_Int16;
+            break;
+
         case GDT_UInt16:
+            eWrkDT = GDT_UInt16;
+            break;
+
         case GDT_UInt32:
             eWrkDT = GDT_UInt32;
             break;
 
         case GDT_Int8:
-        case GDT_Int16:
         case GDT_Int32:
         case GDT_CInt16:
         case GDT_CInt32:
@@ -162,11 +169,20 @@ bool GDALNoDataMaskBand::IsNoDataInRange(double dfNoDataValue,
             return GDALIsValueInRange<GByte>(dfNoDataValue);
         }
 
+        case GDT_Int16:
+        {
+            return GDALIsValueInRange<GInt16>(dfNoDataValue);
+        }
+
+        case GDT_UInt16:
+        {
+            return GDALIsValueInRange<GUInt16>(dfNoDataValue);
+        }
+
         case GDT_UInt32:
         {
             return GDALIsValueInRange<GUInt32>(dfNoDataValue);
         }
-
         case GDT_Int32:
         {
             return GDALIsValueInRange<GInt32>(dfNoDataValue);
@@ -225,6 +241,70 @@ CPLErr GDALNoDataMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
 }
 
 /************************************************************************/
+/*                            SetZeroOr255()                            */
+/************************************************************************/
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("tree-vectorize")))
+#endif
+static void
+SetZeroOr255(GByte *pabyDestAndSrc, size_t nBufSize, GByte byNoData)
+{
+    for (size_t i = 0; i < nBufSize; ++i)
+    {
+        pabyDestAndSrc[i] = (pabyDestAndSrc[i] == byNoData) ? 0 : 255;
+    }
+}
+
+template <class T>
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("tree-vectorize")))
+#endif
+static void
+SetZeroOr255(GByte *pabyDest, const T *panSrc, size_t nBufSize, T nNoData)
+{
+    for (size_t i = 0; i < nBufSize; ++i)
+    {
+        pabyDest[i] = (panSrc[i] == nNoData) ? 0 : 255;
+    }
+}
+
+template <class T>
+static void SetZeroOr255(GByte *pabyDest, const T *panSrc, int nBufXSize,
+                         int nBufYSize, GSpacing nPixelSpace,
+                         GSpacing nLineSpace, T nNoData)
+{
+    if (nPixelSpace == 1 && nLineSpace == nBufXSize)
+    {
+        const size_t nBufSize = static_cast<size_t>(nBufXSize) * nBufYSize;
+        SetZeroOr255(pabyDest, panSrc, nBufSize, nNoData);
+    }
+    else if (nPixelSpace == 1)
+    {
+        for (int iY = 0; iY < nBufYSize; iY++)
+        {
+            SetZeroOr255(pabyDest, panSrc, nBufXSize, nNoData);
+            pabyDest += nLineSpace;
+            panSrc += nBufXSize;
+        }
+    }
+    else
+    {
+        size_t i = 0;
+        for (int iY = 0; iY < nBufYSize; iY++)
+        {
+            GByte *pabyLineDest = pabyDest + iY * nLineSpace;
+            for (int iX = 0; iX < nBufXSize; iX++)
+            {
+                *pabyLineDest = (panSrc[i] == nNoData) ? 0 : 255;
+                ++i;
+                pabyLineDest += nPixelSpace;
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -259,39 +339,75 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         if (nPixelSpace == 1 && nLineSpace == nBufXSize)
         {
             const size_t nBufSize = static_cast<size_t>(nBufXSize) * nBufYSize;
-            for (size_t i = 0; i < nBufSize; ++i)
-            {
-                pabyData[i] = pabyData[i] == byNoData ? 0 : 255;
-            }
+            SetZeroOr255(pabyData, nBufSize, byNoData);
         }
         else
         {
-            for (int iY = 0; iY < nBufYSize; iY++)
-            {
-                GByte *pabyLine = pabyData + iY * nLineSpace;
-                for (int iX = 0; iX < nBufXSize; iX++)
-                {
-                    *pabyLine = *pabyLine == byNoData ? 0 : 255;
-                    pabyLine += nPixelSpace;
-                }
-            }
+            SetZeroOr255(pabyData, pabyData, nBufXSize, nBufYSize, nPixelSpace,
+                         nLineSpace, byNoData);
         }
         return CE_None;
     }
 
+    const auto AllocTempBufferOrFallback =
+        [this, eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
+         nBufYSize, eBufType, nPixelSpace, nLineSpace,
+         psExtraArg](int nWrkDTSize) -> std::pair<CPLErr, void *>
+    {
+        auto poParentDS = m_poParent->GetDataset();
+        // Check if we must simulate a memory allocation failure
+        // Before checking the env variable, which is slightly expensive,
+        // check first for a special dataset name, which is a cheap test.
+        const char *pszOptVal =
+            poParentDS && strcmp(poParentDS->GetDescription(), "__debug__") == 0
+                ? CPLGetConfigOption(
+                      "GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND", "NO")
+                : "NO";
+        const bool bSimulMemAllocFailure =
+            EQUAL(pszOptVal, "ALWAYS") ||
+            (CPLTestBool(pszOptVal) &&
+             GDALMajorObject::GetMetadataItem(__func__, "__INTERNAL__") ==
+                 nullptr);
+        void *pTemp = nullptr;
+        if (!bSimulMemAllocFailure)
+        {
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+            pTemp = VSI_MALLOC3_VERBOSE(nWrkDTSize, nBufXSize, nBufYSize);
+        }
+        if (!pTemp)
+        {
+            const bool bAllocHasAlreadyFailed =
+                GDALMajorObject::GetMetadataItem(__func__, "__INTERNAL__") !=
+                nullptr;
+            CPLError(bAllocHasAlreadyFailed ? CE_Failure : CE_Warning,
+                     CPLE_OutOfMemory,
+                     "GDALNoDataMaskBand::IRasterIO(): cannot allocate %d x %d "
+                     "x %d bytes%s",
+                     nBufXSize, nBufYSize, nWrkDTSize,
+                     bAllocHasAlreadyFailed
+                         ? ""
+                         : ". Falling back to block-based approach");
+            if (bAllocHasAlreadyFailed)
+                return std::pair(CE_Failure, nullptr);
+            // Sets a metadata item to prevent potential infinite recursion
+            GDALMajorObject::SetMetadataItem(__func__, "IN", "__INTERNAL__");
+            const CPLErr eErr = GDALRasterBand::IRasterIO(
+                eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
+                nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg);
+            GDALMajorObject::SetMetadataItem(__func__, nullptr, "__INTERNAL__");
+            return std::pair(eErr, nullptr);
+        }
+        return std::pair(CE_None, pTemp);
+    };
+
     if (eBufType == GDT_Byte)
     {
         const int nWrkDTSize = GDALGetDataTypeSizeBytes(eWrkDT);
-        void *pTemp = VSI_MALLOC3_VERBOSE(nWrkDTSize, nBufXSize, nBufYSize);
-        if (pTemp == nullptr)
-        {
-            return GDALRasterBand::IRasterIO(
-                eRWFlag, nXOff, nYOff, nXSize, nYSize, pTemp, nBufXSize,
-                nBufYSize, eWrkDT, nWrkDTSize,
-                static_cast<GSpacing>(nBufXSize) * nWrkDTSize, psExtraArg);
-        }
+        auto [eErr, pTemp] = AllocTempBufferOrFallback(nWrkDTSize);
+        if (!pTemp)
+            return eErr;
 
-        const CPLErr eErr = m_poParent->RasterIO(
+        eErr = m_poParent->RasterIO(
             GF_Read, nXOff, nYOff, nXSize, nYSize, pTemp, nBufXSize, nBufYSize,
             eWrkDT, nWrkDTSize, static_cast<GSpacing>(nBufXSize) * nWrkDTSize,
             psExtraArg);
@@ -311,41 +427,39 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
          */
         switch (eWrkDT)
         {
+            case GDT_Int16:
+            {
+                const auto nNoData = static_cast<int16_t>(m_dfNoDataValue);
+                const auto *panSrc = static_cast<const int16_t *>(pTemp);
+                SetZeroOr255(pabyDest, panSrc, nBufXSize, nBufYSize,
+                             nPixelSpace, nLineSpace, nNoData);
+            }
+            break;
+
+            case GDT_UInt16:
+            {
+                const auto nNoData = static_cast<uint16_t>(m_dfNoDataValue);
+                const auto *panSrc = static_cast<const uint16_t *>(pTemp);
+                SetZeroOr255(pabyDest, panSrc, nBufXSize, nBufYSize,
+                             nPixelSpace, nLineSpace, nNoData);
+            }
+            break;
+
             case GDT_UInt32:
             {
-                const GUInt32 nNoData = static_cast<GUInt32>(m_dfNoDataValue);
-                const GUInt32 *panSrc = static_cast<const GUInt32 *>(pTemp);
-
-                size_t i = 0;
-                for (int iY = 0; iY < nBufYSize; iY++)
-                {
-                    GByte *pabyLineDest = pabyDest + iY * nLineSpace;
-                    for (int iX = 0; iX < nBufXSize; iX++)
-                    {
-                        *pabyLineDest = panSrc[i] == nNoData ? 0 : 255;
-                        ++i;
-                        pabyLineDest += nPixelSpace;
-                    }
-                }
+                const auto nNoData = static_cast<GUInt32>(m_dfNoDataValue);
+                const auto *panSrc = static_cast<const GUInt32 *>(pTemp);
+                SetZeroOr255(pabyDest, panSrc, nBufXSize, nBufYSize,
+                             nPixelSpace, nLineSpace, nNoData);
             }
             break;
 
             case GDT_Int32:
             {
-                const GInt32 nNoData = static_cast<GInt32>(m_dfNoDataValue);
-                const GInt32 *panSrc = static_cast<const GInt32 *>(pTemp);
-
-                size_t i = 0;
-                for (int iY = 0; iY < nBufYSize; iY++)
-                {
-                    GByte *pabyLineDest = pabyDest + iY * nLineSpace;
-                    for (int iX = 0; iX < nBufXSize; iX++)
-                    {
-                        *pabyLineDest = panSrc[i] == nNoData ? 0 : 255;
-                        ++i;
-                        pabyLineDest += nPixelSpace;
-                    }
-                }
+                const auto nNoData = static_cast<GInt32>(m_dfNoDataValue);
+                const auto *panSrc = static_cast<const GInt32 *>(pTemp);
+                SetZeroOr255(pabyDest, panSrc, nBufXSize, nBufYSize,
+                             nPixelSpace, nLineSpace, nNoData);
             }
             break;
 
@@ -401,44 +515,16 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             case GDT_Int64:
             {
                 const auto *panSrc = static_cast<const int64_t *>(pTemp);
-
-                size_t i = 0;
-                for (int iY = 0; iY < nBufYSize; iY++)
-                {
-                    GByte *pabyLineDest = pabyDest + iY * nLineSpace;
-                    for (int iX = 0; iX < nBufXSize; iX++)
-                    {
-                        const auto nVal = panSrc[i];
-                        if (nVal == m_nNoDataValueInt64)
-                            *pabyLineDest = 0;
-                        else
-                            *pabyLineDest = 255;
-                        ++i;
-                        pabyLineDest += nPixelSpace;
-                    }
-                }
+                SetZeroOr255(pabyDest, panSrc, nBufXSize, nBufYSize,
+                             nPixelSpace, nLineSpace, m_nNoDataValueInt64);
             }
             break;
 
             case GDT_UInt64:
             {
                 const auto *panSrc = static_cast<const uint64_t *>(pTemp);
-
-                size_t i = 0;
-                for (int iY = 0; iY < nBufYSize; iY++)
-                {
-                    GByte *pabyLineDest = pabyDest + iY * nLineSpace;
-                    for (int iX = 0; iX < nBufXSize; iX++)
-                    {
-                        const auto nVal = panSrc[i];
-                        if (nVal == m_nNoDataValueUInt64)
-                            *pabyLineDest = 0;
-                        else
-                            *pabyLineDest = 255;
-                        ++i;
-                        pabyLineDest += nPixelSpace;
-                    }
-                }
+                SetZeroOr255(pabyDest, panSrc, nBufXSize, nBufYSize,
+                             nPixelSpace, nLineSpace, m_nNoDataValueUInt64);
             }
             break;
 
@@ -453,30 +539,26 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     // Output buffer is non-Byte. Ask for Byte and expand to user requested
     // type
-    GByte *pabyBuf =
-        static_cast<GByte *>(VSI_MALLOC2_VERBOSE(nBufXSize, nBufYSize));
-    if (pabyBuf == nullptr)
-    {
-        return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                         pData, nBufXSize, nBufYSize, eBufType,
-                                         nPixelSpace, nLineSpace, psExtraArg);
-    }
-    const CPLErr eErr =
-        IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pabyBuf, nBufXSize,
-                  nBufYSize, GDT_Byte, 1, nBufXSize, psExtraArg);
+    auto [eErr, pTemp] = AllocTempBufferOrFallback(sizeof(GByte));
+    if (!pTemp)
+        return eErr;
+
+    eErr = IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pTemp, nBufXSize,
+                     nBufYSize, GDT_Byte, 1, nBufXSize, psExtraArg);
     if (eErr != CE_None)
     {
-        VSIFree(pabyBuf);
+        VSIFree(pTemp);
         return eErr;
     }
 
     for (int iY = 0; iY < nBufYSize; iY++)
     {
-        GDALCopyWords(pabyBuf + static_cast<size_t>(iY) * nBufXSize, GDT_Byte,
-                      1, static_cast<GByte *>(pData) + iY * nLineSpace,
-                      eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+        GDALCopyWords(
+            static_cast<GByte *>(pTemp) + static_cast<size_t>(iY) * nBufXSize,
+            GDT_Byte, 1, static_cast<GByte *>(pData) + iY * nLineSpace,
+            eBufType, static_cast<int>(nPixelSpace), nBufXSize);
     }
-    VSIFree(pabyBuf);
+    VSIFree(pTemp);
     return CE_None;
 }
 

@@ -73,6 +73,13 @@ static constexpr const char szPROFILE_BASELINE[] = "BASELINE";
 static constexpr const char szPROFILE_GeoTIFF[] = "GeoTIFF";
 static constexpr const char szPROFILE_GDALGeoTIFF[] = "GDALGeoTIFF";
 
+// Due to libgeotiff/xtiff.c declaring TIFFTAG_GEOTIEPOINTS with field_readcount
+// and field_writecount == -1 == TIFF_VARIABLE, we are limited to writing
+// 65535 values in that tag. That could potentially be overcome by changing the tag
+// declaration to using TIFF_VARIABLE2 where the count is a uint32_t.
+constexpr int knMAX_GCP_COUNT =
+    static_cast<int>(std::numeric_limits<uint16_t>::max() / 6);
+
 enum
 {
     ENDIANNESS_NATIVE,
@@ -943,8 +950,6 @@ void GTiffDataset::InitCompressionThreads(bool bUpdateMode,
                                                  &m_asCompressionJobs[i]));
                         m_asCompressionJobs[i].nStripOrTile = -1;
                     }
-                    m_hCompressThreadPoolMutex = CPLCreateMutex();
-                    CPLReleaseMutex(m_hCompressThreadPoolMutex);
 
                     // This is kind of a hack, but basically using
                     // TIFFWriteRawStrip/Tile and then TIFFReadEncodedStrip/Tile
@@ -1053,13 +1058,11 @@ void GTiffDataset::ThreadCompressionFunc(void *pData)
         psJob->nCompressedBufferSize = 0;
     }
 
-    auto mutex = poDS->m_poBaseDS ? poDS->m_poBaseDS->m_hCompressThreadPoolMutex
-                                  : poDS->m_hCompressThreadPoolMutex;
-    if (mutex)
+    auto poMainDS = poDS->m_poBaseDS ? poDS->m_poBaseDS : poDS;
+    if (poMainDS->m_poCompressQueue)
     {
-        CPLAcquireMutex(mutex, 1000.0);
+        std::lock_guard oLock(poMainDS->m_oCompressThreadPoolMutex);
         psJob->bReady = true;
-        CPLReleaseMutex(mutex);
     }
 }
 
@@ -1223,13 +1226,11 @@ void GTiffDataset::WriteRawStripOrTile(int nStripOrTile,
 
 void GTiffDataset::WaitCompletionForJobIdx(int i)
 {
-    auto poQueue = m_poBaseDS ? m_poBaseDS->m_poCompressQueue.get()
-                              : m_poCompressQueue.get();
-    auto &oQueue = m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
-    auto &asJobs =
-        m_poBaseDS ? m_poBaseDS->m_asCompressionJobs : m_asCompressionJobs;
-    auto mutex = m_poBaseDS ? m_poBaseDS->m_hCompressThreadPoolMutex
-                            : m_hCompressThreadPoolMutex;
+    auto poMainDS = m_poBaseDS ? m_poBaseDS : this;
+    auto poQueue = poMainDS->m_poCompressQueue.get();
+    auto &oQueue = poMainDS->m_asQueueJobIdx;
+    auto &asJobs = poMainDS->m_asCompressionJobs;
+    auto &mutex = poMainDS->m_oCompressThreadPoolMutex;
 
     CPLAssert(i >= 0 && static_cast<size_t>(i) < asJobs.size());
     CPLAssert(asJobs[i].nStripOrTile >= 0);
@@ -1238,9 +1239,11 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
     bool bHasWarned = false;
     while (true)
     {
-        CPLAcquireMutex(mutex, 1000.0);
-        const bool bReady = asJobs[i].bReady;
-        CPLReleaseMutex(mutex);
+        bool bReady;
+        {
+            std::lock_guard oLock(mutex);
+            bReady = asJobs[i].bReady;
+        }
         if (!bReady)
         {
             if (!bHasWarned)
@@ -1266,7 +1269,11 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
     }
     asJobs[i].pabyCompressedBuffer = nullptr;
     asJobs[i].nBufferSize = 0;
-    asJobs[i].bReady = false;
+    {
+        // Likely useless, but makes Coverity happy
+        std::lock_guard oLock(mutex);
+        asJobs[i].bReady = false;
+    }
     asJobs[i].nStripOrTile = -1;
     oQueue.pop();
 }
@@ -1395,9 +1402,9 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
         return false;
     }
 
-    auto &oQueue = m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
-    auto &asJobs =
-        m_poBaseDS ? m_poBaseDS->m_asCompressionJobs : m_asCompressionJobs;
+    auto poMainDS = m_poBaseDS ? m_poBaseDS : this;
+    auto &oQueue = poMainDS->m_asQueueJobIdx;
+    auto &asJobs = poMainDS->m_asCompressionJobs;
 
     int nNextCompressionJobAvail = -1;
 
@@ -1714,10 +1721,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     if (nBitsPerSample == 8 && nSampleFormat == SAMPLEFORMAT_UINT)
     {
         uint8_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >= std::numeric_limits<uint8_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<uint8_t>::max() &&
-            dfNoDataValue == static_cast<uint8_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<uint8_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<uint8_t>(dfNoDataValue);
         }
@@ -1799,9 +1803,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     else if (nBitsPerSample == 8 && nSampleFormat == SAMPLEFORMAT_INT)
     {
         int8_t nNoDataValue = 0;
-        if (bHasNoData && dfNoDataValue >= std::numeric_limits<int8_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<int8_t>::max() &&
-            dfNoDataValue == static_cast<int8_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<int8_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<int8_t>(dfNoDataValue);
         }
@@ -1816,10 +1818,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     else if (nBitsPerSample == 16 && nSampleFormat == SAMPLEFORMAT_INT)
     {
         int16_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >= std::numeric_limits<int16_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<int16_t>::max() &&
-            dfNoDataValue == static_cast<int16_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<int16_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<int16_t>(dfNoDataValue);
         }
@@ -1834,10 +1833,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     else if (nBitsPerSample == 16 && nSampleFormat == SAMPLEFORMAT_UINT)
     {
         uint16_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >= std::numeric_limits<uint16_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<uint16_t>::max() &&
-            dfNoDataValue == static_cast<uint16_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<uint16_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<uint16_t>(dfNoDataValue);
         }
@@ -1852,10 +1848,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     else if (nBitsPerSample == 32 && nSampleFormat == SAMPLEFORMAT_INT)
     {
         int32_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >= std::numeric_limits<int32_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<int32_t>::max() &&
-            dfNoDataValue == static_cast<int32_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<int32_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<int32_t>(dfNoDataValue);
         }
@@ -1870,10 +1863,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     else if (nBitsPerSample == 32 && nSampleFormat == SAMPLEFORMAT_UINT)
     {
         uint32_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >= std::numeric_limits<uint32_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<uint32_t>::max() &&
-            dfNoDataValue == static_cast<uint32_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<uint32_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<uint32_t>(dfNoDataValue);
         }
@@ -1890,13 +1880,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
         // FIXME: we should not rely on dfNoDataValue when we support native
         // data type for nodata
         int64_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >=
-                static_cast<double>(std::numeric_limits<int64_t>::min()) &&
-            dfNoDataValue <=
-                static_cast<double>(std::numeric_limits<int64_t>::max()) &&
-            dfNoDataValue ==
-                static_cast<double>(static_cast<int64_t>(dfNoDataValue)))
+        if (bHasNoData && GDALIsValueExactAs<int64_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<int64_t>(dfNoDataValue);
         }
@@ -1913,13 +1897,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
         // FIXME: we should not rely on dfNoDataValue when we support native
         // data type for nodata
         uint64_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >=
-                static_cast<double>(std::numeric_limits<uint64_t>::min()) &&
-            dfNoDataValue <=
-                static_cast<double>(std::numeric_limits<uint64_t>::max()) &&
-            dfNoDataValue ==
-                static_cast<double>(static_cast<uint64_t>(dfNoDataValue)))
+        if (bHasNoData && GDALIsValueExactAs<uint64_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<uint64_t>(dfNoDataValue);
         }
@@ -2139,8 +2117,11 @@ void GTiffDataset::Crystalize()
     }
     else
     {
-        TIFFSetDirectory(
-            m_hTIFF, static_cast<tdir_t>(TIFFNumberOfDirectories(m_hTIFF) - 1));
+        const tdir_t nNumberOfDirs = TIFFNumberOfDirectories(m_hTIFF);
+        if (nNumberOfDirs > 0)
+        {
+            TIFFSetDirectory(m_hTIFF, static_cast<tdir_t>(nNumberOfDirs - 1));
+        }
     }
 
     RestoreVolatileParameters(m_hTIFF);
@@ -2601,13 +2582,11 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
 /*                     CreateTIFFColorTable()                           */
 /************************************************************************/
 
-static void CreateTIFFColorTable(GDALColorTable *poColorTable, int nBits,
-                                 std::vector<unsigned short> &anTRed,
-                                 std::vector<unsigned short> &anTGreen,
-                                 std::vector<unsigned short> &anTBlue,
-                                 unsigned short *&panRed,
-                                 unsigned short *&panGreen,
-                                 unsigned short *&panBlue)
+static void CreateTIFFColorTable(
+    GDALColorTable *poColorTable, int nBits, int nColorTableMultiplier,
+    std::vector<unsigned short> &anTRed, std::vector<unsigned short> &anTGreen,
+    std::vector<unsigned short> &anTBlue, unsigned short *&panRed,
+    unsigned short *&panGreen, unsigned short *&panBlue)
 {
     int nColors;
 
@@ -2630,9 +2609,12 @@ static void CreateTIFFColorTable(GDALColorTable *poColorTable, int nBits,
 
             poColorTable->GetColorEntryAsRGB(iColor, &sRGB);
 
-            anTRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
-            anTGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
-            anTBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
+            anTRed[iColor] = GTiffDataset::ClampCTEntry(iColor, 1, sRGB.c1,
+                                                        nColorTableMultiplier);
+            anTGreen[iColor] = GTiffDataset::ClampCTEntry(
+                iColor, 2, sRGB.c2, nColorTableMultiplier);
+            anTBlue[iColor] = GTiffDataset::ClampCTEntry(iColor, 3, sRGB.c3,
+                                                         nColorTableMultiplier);
         }
         else
         {
@@ -2851,8 +2833,12 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset *poSrcDS,
 
     if (nPhotometric == PHOTOMETRIC_PALETTE && m_poColorTable != nullptr)
     {
-        CreateTIFFColorTable(m_poColorTable, nOvBitsPerSample, anTRed, anTGreen,
-                             anTBlue, panRed, panGreen, panBlue);
+        if (m_nColorTableMultiplier == 0)
+            m_nColorTableMultiplier = DEFAULT_COLOR_TABLE_MULTIPLIER_257;
+
+        CreateTIFFColorTable(m_poColorTable.get(), nOvBitsPerSample,
+                             m_nColorTableMultiplier, anTRed, anTGreen, anTBlue,
+                             panRed, panGreen, panBlue);
     }
 
     int nOvrBlockXSize = 0;
@@ -3138,8 +3124,12 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
 
     if (nPhotometric == PHOTOMETRIC_PALETTE && m_poColorTable != nullptr)
     {
-        CreateTIFFColorTable(m_poColorTable, nOvBitsPerSample, anTRed, anTGreen,
-                             anTBlue, panRed, panGreen, panBlue);
+        if (m_nColorTableMultiplier == 0)
+            m_nColorTableMultiplier = DEFAULT_COLOR_TABLE_MULTIPLIER_257;
+
+        CreateTIFFColorTable(m_poColorTable.get(), nOvBitsPerSample,
+                             m_nColorTableMultiplier, anTRed, anTGreen, anTBlue,
+                             panRed, panGreen, panBlue);
     }
 
     /* -------------------------------------------------------------------- */
@@ -3695,7 +3685,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
         else if (CPLFetchBool(m_papszCreationOptions, "WORLDFILE", false))
             GDALWriteWorldFile(m_pszFilename, "wld", m_adfGeoTransform);
     }
-    else if (GetGCPCount() > 0)
+    else if (GetGCPCount() > 0 && GetGCPCount() <= knMAX_GCP_COUNT &&
+             m_eProfile != GTiffProfile::BASELINE)
     {
         m_bNeedsRewrite = true;
 
@@ -3719,9 +3710,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
             }
         }
 
-        if (m_eProfile != GTiffProfile::BASELINE)
-            TIFFSetField(m_hTIFF, TIFFTAG_GEOTIEPOINTS, 6 * GetGCPCount(),
-                         padfTiePoints);
+        TIFFSetField(m_hTIFF, TIFFTAG_GEOTIEPOINTS, 6 * GetGCPCount(),
+                     padfTiePoints);
         CPLFree(padfTiePoints);
     }
 
@@ -4952,11 +4942,13 @@ static GTiffDataset::MaskOffset *GetDiscardLsbOption(TIFF *hTIFF,
         for (int i = 0; i < nSamplesPerPixel; ++i)
         {
             const int nBits = atoi(aosTokens[nTokens == 1 ? 0 : i]);
-            const int nMaxBits =
-                (nSampleFormat == SAMPLEFORMAT_IEEEFP && nBits == 32)   ? 23 - 1
-                : (nSampleFormat == SAMPLEFORMAT_IEEEFP && nBits == 64) ? 53 - 1
-                : nSampleFormat == SAMPLEFORMAT_INT ? nBitsPerSample - 2
-                                                    : nBitsPerSample - 1;
+            const int nMaxBits = (nSampleFormat == SAMPLEFORMAT_IEEEFP)
+                                     ? ((nBitsPerSample == 32)   ? 23 - 1
+                                        : (nBitsPerSample == 64) ? 53 - 1
+                                                                 : 0)
+                                 : nSampleFormat == SAMPLEFORMAT_INT
+                                     ? nBitsPerSample - 2
+                                     : nBitsPerSample - 1;
 
             if (nBits < 0 || nBits > nMaxBits)
             {
@@ -5022,8 +5014,8 @@ static GTiffProfile GetProfile(const char *pszProfile)
 TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                              int l_nBands, GDALDataType eType,
                              double dfExtraSpaceForOverviews,
-                             char **papszParamList, VSILFILE **pfpL,
-                             CPLString &l_osTmpFilename)
+                             int nColorTableMultiplier, char **papszParamList,
+                             VSILFILE **pfpL, CPLString &l_osTmpFilename)
 
 {
     GTiffOneTimeInit();
@@ -5494,12 +5486,15 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     else if (eEndianness == ENDIANNESS_LITTLE)
         strcat(szOpeningFlag, "l");
 
-    VSILFILE *l_fpL = VSIFOpenL(pszFilename, bAppend ? "r+b" : "w+b");
+    VSIErrorReset();
+    VSILFILE *l_fpL = VSIFOpenExL(pszFilename, bAppend ? "r+b" : "w+b", true);
     if (l_fpL == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to create new tiff file `%s' failed: %s", pszFilename,
-                 VSIStrerror(errno));
+        VSIToCPLErrorWithMsg(CE_Failure, CPLE_OpenFailed,
+                             std::string("Attempt to create new tiff file `")
+                                 .append(pszFilename)
+                                 .append("' failed")
+                                 .c_str());
         return nullptr;
     }
     TIFF *l_hTIFF = VSI_TIFFOpen(pszFilename, szOpeningFlag, l_fpL);
@@ -5850,9 +5845,12 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         {
             if (eType == GDT_Byte)
             {
-                panTRed[iColor] = static_cast<unsigned short>(257 * iColor);
-                panTGreen[iColor] = static_cast<unsigned short>(257 * iColor);
-                panTBlue[iColor] = static_cast<unsigned short>(257 * iColor);
+                panTRed[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 1, iColor, nColorTableMultiplier);
+                panTGreen[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 2, iColor, nColorTableMultiplier);
+                panTBlue[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 3, iColor, nColorTableMultiplier);
             }
             else
             {
@@ -6088,7 +6086,7 @@ int GTiffDataset::GuessJPEGQuality(bool &bOutHasQuantizationTable,
         CPLString osTmp;
         TIFF *hTIFFTmp =
             CreateLL(osTmpFilenameIn, 16, 16, (nBands <= 4) ? nBands : 1,
-                     GetRasterBand(1)->GetRasterDataType(), 0.0,
+                     GetRasterBand(1)->GetRasterDataType(), 0.0, 0,
                      papszLocalParameters, &fpTmp, osTmp);
         CPLPopErrorHandler();
         if (!hTIFFTmp)
@@ -6238,11 +6236,19 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     VSILFILE *l_fpL = nullptr;
     CPLString l_osTmpFilename;
 
+    const int nColorTableMultiplier = std::max(
+        1,
+        std::min(257,
+                 atoi(CSLFetchNameValueDef(
+                     papszParamList, "COLOR_TABLE_MULTIPLIER",
+                     CPLSPrintf("%d", DEFAULT_COLOR_TABLE_MULTIPLIER_257)))));
+
     /* -------------------------------------------------------------------- */
     /*      Create the underlying TIFF file.                                */
     /* -------------------------------------------------------------------- */
     TIFF *l_hTIFF = CreateLL(pszFilename, nXSize, nYSize, l_nBands, eType, 0,
-                             papszParamList, &l_fpL, l_osTmpFilename);
+                             nColorTableMultiplier, papszParamList, &l_fpL,
+                             l_osTmpFilename);
     const bool bStreaming = !l_osTmpFilename.empty();
 
     if (l_hTIFF == nullptr)
@@ -6269,6 +6275,9 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
+
+    poDS->m_nColorTableMultiplier = nColorTableMultiplier;
+
     poDS->m_bCrystalized = false;
     poDS->m_nSamplesPerPixel = static_cast<uint16_t>(l_nBands);
     poDS->m_pszFilename = CPLStrdup(pszFilename);
@@ -6355,17 +6364,16 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
         TIFFGetField(l_hTIFF, TIFFTAG_COLORMAP, &panRed, &panGreen, &panBlue))
     {
 
-        poDS->m_poColorTable = new GDALColorTable();
+        poDS->m_poColorTable = std::make_unique<GDALColorTable>();
 
         const int nColorCount = 1 << poDS->m_nBitsPerSample;
 
         for (int iColor = nColorCount - 1; iColor >= 0; iColor--)
         {
-            const unsigned short divisor = 257;
             const GDALColorEntry oEntry = {
-                static_cast<short>(panRed[iColor] / divisor),
-                static_cast<short>(panGreen[iColor] / divisor),
-                static_cast<short>(panBlue[iColor] / divisor),
+                static_cast<short>(panRed[iColor] / nColorTableMultiplier),
+                static_cast<short>(panGreen[iColor] / nColorTableMultiplier),
+                static_cast<short>(panBlue[iColor] / nColorTableMultiplier),
                 static_cast<short>(255)};
 
             poDS->m_poColorTable->SetColorEntry(iColor, &oEntry);
@@ -6936,9 +6944,17 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
+
+    const int nColorTableMultiplier = std::max(
+        1,
+        std::min(257,
+                 atoi(CSLFetchNameValueDef(
+                     papszOptions, "COLOR_TABLE_MULTIPLIER",
+                     CPLSPrintf("%d", DEFAULT_COLOR_TABLE_MULTIPLIER_257)))));
+
     TIFF *l_hTIFF = CreateLL(pszFilename, nXSize, nYSize, l_nBands, eType,
-                             dfExtraSpaceForOverviews, papszCreateOptions,
-                             &l_fpL, l_osTmpFilename);
+                             dfExtraSpaceForOverviews, nColorTableMultiplier,
+                             papszCreateOptions, &l_fpL, l_osTmpFilename);
     const bool bStreaming = !l_osTmpFilename.empty();
 
     CSLDestroy(papszCreateOptions);
@@ -7041,9 +7057,12 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 
                 poCT->GetColorEntryAsRGB(iColor, &sRGB);
 
-                anTRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
-                anTGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
-                anTBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
+                anTRed[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 1, sRGB.c1, nColorTableMultiplier);
+                anTGreen[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 2, sRGB.c2, nColorTableMultiplier);
+                anTBlue[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 3, sRGB.c3, nColorTableMultiplier);
             }
             else
             {
@@ -7078,9 +7097,12 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 
                 poCT->GetColorEntryAsRGB(iColor, &sRGB);
 
-                panTRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
-                panTGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
-                panTBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
+                panTRed[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 1, sRGB.c1, nColorTableMultiplier);
+                panTGreen[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 2, sRGB.c2, nColorTableMultiplier);
+                panTBlue[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 3, sRGB.c3, nColorTableMultiplier);
             }
             else
             {
@@ -7502,6 +7524,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     poDS->m_pszFilename = CPLStrdup(pszFilename);
     poDS->m_fpL = l_fpL;
     poDS->m_bIMDRPCMetadataLoaded = true;
+    poDS->m_nColorTableMultiplier = nColorTableMultiplier;
 
     const bool bAppend = CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false);
     if (poDS->OpenOffset(l_hTIFF,
@@ -8463,7 +8486,6 @@ CPLErr GTiffDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
             m_bGeoTransformValid = false;
             m_bForceUnsetGTOrGCPs = true;
         }
-
         if ((m_eProfile == GTiffProfile::BASELINE) &&
             (GetPamFlags() & GPF_DISABLED) == 0)
         {
@@ -8471,7 +8493,21 @@ CPLErr GTiffDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
         }
         else
         {
-            if (GDALPamDataset::GetGCPCount() > 0)
+            if (nGCPCountIn > knMAX_GCP_COUNT)
+            {
+                if (GDALPamDataset::GetGCPCount() == 0 && !m_aoGCPs.empty())
+                {
+                    m_bForceUnsetGTOrGCPs = true;
+                }
+                ReportError(CE_Warning, CPLE_AppDefined,
+                            "Trying to write %d GCPs, whereas the maximum "
+                            "supported in GeoTIFF tag is %d. "
+                            "Falling back to writing them to PAM",
+                            nGCPCountIn, knMAX_GCP_COUNT);
+                eErr = GDALPamDataset::SetGCPs(nGCPCountIn, pasGCPListIn,
+                                               poGCPSRS);
+            }
+            else if (GDALPamDataset::GetGCPCount() > 0)
             {
                 // Cancel any existing GCPs from PAM file.
                 GDALPamDataset::SetGCPs(
@@ -8788,4 +8824,30 @@ CPLErr GTiffRasterBand::CreateMaskBand(int nFlagsIn)
     }
 
     return GDALPamRasterBand::CreateMaskBand(nFlagsIn);
+}
+
+/************************************************************************/
+/*                          ClampCTEntry()                              */
+/************************************************************************/
+
+/* static */ unsigned short GTiffDataset::ClampCTEntry(int iColor, int iComp,
+                                                       int nCTEntryVal,
+                                                       int nMultFactor)
+{
+    const int nVal = nCTEntryVal * nMultFactor;
+    if (nVal < 0)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Color table entry [%d][%d] = %d, clamped to 0", iColor, iComp,
+                 nCTEntryVal);
+        return 0;
+    }
+    if (nVal > 65535)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Color table entry [%d][%d] = %d, clamped to 65535", iColor,
+                 iComp, nCTEntryVal);
+        return 65535;
+    }
+    return static_cast<unsigned short>(nVal);
 }

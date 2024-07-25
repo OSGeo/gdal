@@ -35,8 +35,12 @@
 
 constexpr const char *DRIVER_NAME = "GMLAS";
 
-int CPL_DLL OGRGMLASDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRGMLASDriverIdentify PLUGIN_SYMBOL_NAME(OGRGMLASDriverIdentify)
+#define OGRGMLASDriverSetCommonMetadata                                        \
+    PLUGIN_SYMBOL_NAME(OGRGMLASDriverSetCommonMetadata)
 
-void CPL_DLL OGRGMLASDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRGMLASDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRGMLASDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

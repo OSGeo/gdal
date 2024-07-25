@@ -231,7 +231,8 @@ typedef struct TABDATFieldDef_t
 {
     char szName[11];
     char cType;
-    GByte byLength;
+    GByte
+        byLength; /* caution: for a native .dat file, this is a binary width for most types */
     GByte byDecimals;
 
     TABFieldType eTABType;
@@ -1876,7 +1877,8 @@ class TABDATFile
 
     int DeleteField(int iField);
     int ReorderFields(int *panMap);
-    int AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn, int nFlags);
+    int AlterFieldDefn(int iField, const OGRFieldDefn *poSrcFieldDefn,
+                       OGRFieldDefn *poNewFieldDefn, int nFlags);
 
     int SyncToDisk();
 
@@ -1899,7 +1901,7 @@ class TABDATFile
     GInt64 ReadLargeIntField(int nWidth);
     double ReadFloatField(int nWidth);
     double ReadDecimalField(int nWidth);
-    const char *ReadLogicalField(int nWidth);
+    bool ReadLogicalField(int nWidth);
     const char *ReadDateField(int nWidth);
     int ReadDateField(int nWidth, int *nYear, int *nMonth, int *nDay);
     const char *ReadTimeField(int nWidth);
@@ -1917,8 +1919,7 @@ class TABDATFile
     int WriteFloatField(double dValue, TABINDFile *poINDFile, int nIndexNo);
     int WriteDecimalField(double dValue, int nWidth, int nPrecision,
                           TABINDFile *poINDFile, int nIndexNo);
-    int WriteLogicalField(const char *pszValue, TABINDFile *poINDFile,
-                          int nIndexNo);
+    int WriteLogicalField(bool bValue, TABINDFile *poINDFile, int nIndexNo);
     int WriteDateField(const char *pszValue, TABINDFile *poINDFile,
                        int nIndexNo);
     int WriteDateField(int nYear, int nMonth, int nDay, TABINDFile *poINDFile,

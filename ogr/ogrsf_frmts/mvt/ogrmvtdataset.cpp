@@ -4265,26 +4265,35 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     oBuffer.assign(static_cast<char *>(pCompressed), nCompressedSize);
     CPLFree(pCompressed);
 
-    if (m_bThreadPoolOK)
-        m_oDBMutex.lock();
+    const auto InsertIntoDb = [&]()
+    {
+        m_nTempTiles++;
+        sqlite3_bind_int(m_hInsertStmt, 1, nZ);
+        sqlite3_bind_int(m_hInsertStmt, 2, nTileX);
+        sqlite3_bind_int(m_hInsertStmt, 3, nTileY);
+        sqlite3_bind_text(m_hInsertStmt, 4, osTargetName.c_str(), -1,
+                          SQLITE_STATIC);
+        sqlite3_bind_int64(m_hInsertStmt, 5, nSerial);
+        sqlite3_bind_blob(m_hInsertStmt, 6, oBuffer.data(),
+                          static_cast<int>(oBuffer.size()), SQLITE_STATIC);
+        sqlite3_bind_int(m_hInsertStmt, 7,
+                         static_cast<int>(poGPBFeature->getType()));
+        sqlite3_bind_double(m_hInsertStmt, 8, dfAreaOrLength);
+        int rc = sqlite3_step(m_hInsertStmt);
+        sqlite3_reset(m_hInsertStmt);
+        return rc;
+    };
 
-    m_nTempTiles++;
-    sqlite3_bind_int(m_hInsertStmt, 1, nZ);
-    sqlite3_bind_int(m_hInsertStmt, 2, nTileX);
-    sqlite3_bind_int(m_hInsertStmt, 3, nTileY);
-    sqlite3_bind_text(m_hInsertStmt, 4, osTargetName.c_str(), -1,
-                      SQLITE_STATIC);
-    sqlite3_bind_int64(m_hInsertStmt, 5, nSerial);
-    sqlite3_bind_blob(m_hInsertStmt, 6, oBuffer.data(),
-                      static_cast<int>(oBuffer.size()), SQLITE_STATIC);
-    sqlite3_bind_int(m_hInsertStmt, 7,
-                     static_cast<int>(poGPBFeature->getType()));
-    sqlite3_bind_double(m_hInsertStmt, 8, dfAreaOrLength);
-    int rc = sqlite3_step(m_hInsertStmt);
-    sqlite3_reset(m_hInsertStmt);
-
+    int rc;
     if (m_bThreadPoolOK)
-        m_oDBMutex.unlock();
+    {
+        std::lock_guard<std::mutex> oLock(m_oDBMutex);
+        rc = InsertIntoDb();
+    }
+    else
+    {
+        rc = InsertIntoDb();
+    }
 
     if (!(rc == SQLITE_OK || rc == SQLITE_DONE))
     {
@@ -4326,9 +4335,8 @@ void OGRMVTWriterDataset::WriterTaskFunc(void *pParam)
         poTask->nSerial, poTask->poGeom.get(), poTask->sEnvelope);
     if (eErr != OGRERR_NONE)
     {
-        poTask->poDS->m_oDBMutex.lock();
+        std::lock_guard oLock(poTask->poDS->m_oDBMutex);
         poTask->poDS->m_bWriteFeatureError = true;
-        poTask->poDS->m_oDBMutex.unlock();
     }
     delete poTask;
 }
@@ -4367,6 +4375,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(
         // Do not queue more than 1000 jobs to avoid memory exhaustion
         m_oThreadPool.WaitCompletion(1000);
 
+        std::lock_guard oLock(m_oDBMutex);
         return m_bWriteFeatureError ? OGRERR_FAILURE : OGRERR_NONE;
     }
 }
@@ -6187,6 +6196,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
     }
 
     poDS->SetDescription(pszFilename);
+    poDS->poDriver = GDALDriver::FromHandle(GDALGetDriverByName("MVT"));
+
     return poDS;
 }
 

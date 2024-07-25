@@ -64,7 +64,8 @@ For example :
 
 ::
 
-   ogr2ogr -f PostgreSQL "PG:dbname=osm" test.pbf -lco COLUMN_TYPES=other_tags=hstore
+   ogr2ogr -f PostgreSQL "PG:dbname=osm" test.pbf \
+   -lco COLUMN_TYPES=other_tags=hstore
 
 Starting with GDAL 3.7, it is possible to ask the format of this field to
 be JSON encoded, by using the TAGS_FORMAT=JSON open option, or the
@@ -83,8 +84,8 @@ with "other_tags".
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OSM_CONFIG_FILE
       :choices: <filename>
@@ -203,20 +204,26 @@ You can convert a .osm or .pbf file without downloading it :
 
 ::
 
-   wget -O - http://www.example.com/some.pbf | ogr2ogr -f SQLite my.sqlite /vsistdin/
+   wget -O - http://www.example.com/some.pbf | 
+   ogr2ogr -f SQLite my.sqlite /vsistdin/
 
    or
 
-   ogr2ogr -f SQLite my.sqlite /vsicurl_streaming/http://www.example.com/some.pbf -progress
+   ogr2ogr -f SQLite my.sqlite \
+   /vsicurl_streaming/http://www.example.com/some.pbf -progress
 
 And to combine the above steps :
 
 ::
 
-   wget -O - http://www.example.com/some.osm.bz2 | bzcat | ogr2ogr -f SQLite my.sqlite /vsistdin/
+   wget -O - http://www.example.com/some.osm.bz2 | 
+   bzcat | ogr2ogr -f SQLite my.sqlite /vsistdin/
 
 Open options
 ------------
+
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: CONFIG_FILE
       :choices: <filename>

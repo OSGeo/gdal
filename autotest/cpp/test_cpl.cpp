@@ -4616,6 +4616,7 @@ TEST_F(test_cpl, CPLWorkerThreadPool_recursion)
                 // takes sufficiently long that job 2 has been submitted
                 // before it completes
                 std::unique_lock<std::mutex> guard(psData2->psCtxt->mutex);
+                // coverity[missing_lock:FALSE]
                 while (!psData2->psCtxt->you_can_leave)
                 {
                     psData2->psCtxt->cv.wait(guard);

@@ -33,7 +33,6 @@ import os
 import shutil
 import stat
 import struct
-import sys
 import time
 
 import gdaltest
@@ -1115,23 +1114,20 @@ def test_netcdf_multidim_create_nc4():
         )
         assert att.Read() == "bar"
 
-        # There is an issue on 32-bit platforms, likely in libnetcdf or libhdf5 itself,
-        # with writing more than one string
-        if sys.maxsize > 0x7FFFFFFF:
-            att = rg.CreateAttribute(
-                "att_two_strings", [2], gdal.ExtendedDataType.CreateString()
-            )
-            assert att
-            with gdal.quiet_errors():
-                assert att.Write(["not_enough_elements"]) != gdal.CE_None
-            assert att.Write([1, 2]) == gdal.CE_None
-            assert att.Read() == ["1", "2"]
-            assert att.Write(["foo", "barbaz"]) == gdal.CE_None
-            assert att.Read() == ["foo", "barbaz"]
-            att = next(
-                (x for x in rg.GetAttributes() if x.GetName() == att.GetName()), None
-            )
-            assert att.Read() == ["foo", "barbaz"]
+        att = rg.CreateAttribute(
+            "att_two_strings", [2], gdal.ExtendedDataType.CreateString()
+        )
+        assert att
+        with gdal.quiet_errors():
+            assert att.Write(["not_enough_elements"]) != gdal.CE_None
+        assert att.Write([1, 2]) == gdal.CE_None
+        assert att.Read() == ["1", "2"]
+        assert att.Write(["foo", "barbaz"]) == gdal.CE_None
+        assert att.Read() == ["foo", "barbaz"]
+        att = next(
+            (x for x in rg.GetAttributes() if x.GetName() == att.GetName()), None
+        )
+        assert att.Read() == ["foo", "barbaz"]
 
         att = rg.CreateAttribute(
             "att_double", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
@@ -3766,6 +3762,88 @@ def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A():
     )
 
 
+def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A_with_good_wavelengths():
+
+    ds = gdal.OpenEx(
+        "data/netcdf/fake_EMIT_L2A_with_good_wavelengths.nc", gdal.OF_MULTIDIM_RASTER
+    )
+    rg = ds.GetRootGroup()
+
+    ar = rg.OpenMDArray("reflectance")
+
+    # Use glt_x and glt_y arrays, and good_wavelengths variable
+    resampled_ar = ar.GetResampled(
+        [None, None, None], gdal.GRIORA_NearestNeighbour, None
+    )
+    assert resampled_ar is not None
+
+    # Read one band that is valid according to good_wavelengths variable
+    assert struct.unpack(
+        "f" * (3 * 3), resampled_ar.Read(array_start_idx=[0, 0, 1], count=[3, 3, 1])
+    ) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+    )
+
+    # Read one band that is invalid according to good_wavelengths variable
+    assert struct.unpack(
+        "f" * (3 * 3), resampled_ar.Read(array_start_idx=[0, 0, 0], count=[3, 3, 1])
+    ) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        30.0,
+        40.0,
+        -9999.0,
+        10.0,
+        20.0,
+    )
+
+    # Read all bands
+    assert struct.unpack("f" * (3 * 3 * 2), resampled_ar.Read()) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        30.0,
+        -9999.0,
+        40.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        10.0,
+        -9999.0,
+        20.0,
+        -9999.0,
+    )
+
+    # Test *not* using good_wavelengths variable
+    resampled_ar = ar.GetResampled(
+        [None, None, None],
+        gdal.GRIORA_NearestNeighbour,
+        None,
+        ["USE_GOOD_WAVELENGTHS=NO"],
+    )
+    assert resampled_ar is not None
+
+    # Read one band that is valid according to good_wavelengths variable
+    assert struct.unpack(
+        "f" * (3 * 3), resampled_ar.Read(array_start_idx=[0, 0, 1], count=[3, 3, 1])
+    ) == (-9999.0, -9999.0, -9999.0, -9999.0, -30.0, -40.0, -9999.0, -10.0, -20.0)
+
+
 def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2B_MIN():
 
     ds = gdal.OpenEx("data/netcdf/fake_EMIT_L2B_MIN.nc", gdal.OF_MULTIDIM_RASTER)
@@ -3901,12 +3979,7 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
 
         view = ar.GetView("[0:10,...]")
         classic_ds = view.AsClassicDataset(1, 0)
-        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) == [
-            0.0,
-            0.0,
-            0.0,
-            -1.0,
-        ]
+        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) is None
         classic_ds.GetRasterBand(1).ComputeStatistics(False)
 
         view = ar.GetView("[10:20,...]")
@@ -3957,12 +4030,7 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
         )
 
         classic_ds = ar.AsClassicDataset(1, 0)
-        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) == [
-            0.0,
-            0.0,
-            0.0,
-            -1.0,
-        ]
+        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) is None
 
         rg_subset = rg.SubsetDimensionFromSelection("/x=440750")
 

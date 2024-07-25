@@ -71,6 +71,38 @@ GDALIdentifyEnum OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
                 return GDAL_IDENTIFY_FALSE;
             }
         }
+        else if (poOpenInfo->nOpenFlags == GDAL_OF_RASTER &&
+                 (STARTS_WITH(pszFilename, "/vsimem/") ||
+                  !STARTS_WITH(pszFilename, "/vsi")))
+        {
+            // If asked to identify only a raster dataset, and this is a
+            // local dataset, query the file list to find extensions that
+            // are used by raster layers.
+            constexpr int MAX_FILE_COUNT = 1000;
+            CPLStringList aosFiles(VSIReadDirEx(pszFilename, MAX_FILE_COUNT));
+            if (!aosFiles.empty() && aosFiles.size() < MAX_FILE_COUNT)
+            {
+                bool bBandIndexFound = false;
+                bool bBlkKeyIndexFound = false;
+                bool bColIndexFound = false;
+                bool bRowIndexFound = false;
+                for (int i = 0; i < aosFiles.size(); ++i)
+                {
+                    if (strstr(aosFiles[i], ".band_index.atx"))
+                        bBandIndexFound = true;
+                    else if (strstr(aosFiles[i], ".blk_key_index.atx"))
+                        bBlkKeyIndexFound = true;
+                    else if (strstr(aosFiles[i], ".col_index.atx"))
+                        bColIndexFound = true;
+                    else if (strstr(aosFiles[i], ".row_index.atx"))
+                        bRowIndexFound = true;
+                }
+                return bBandIndexFound && bBlkKeyIndexFound && bColIndexFound &&
+                               bRowIndexFound
+                           ? GDAL_IDENTIFY_TRUE
+                           : GDAL_IDENTIFY_FALSE;
+            }
+        }
         return GDAL_IDENTIFY_TRUE;
     }
     /* We also accept zipped GDB */

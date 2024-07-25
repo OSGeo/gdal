@@ -47,6 +47,7 @@ Driver capabilities
 Opening options
 ---------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: CLIP
@@ -102,6 +103,9 @@ mode that will involve computing them by discretizing geometry coordinates.
 Dataset creation options
 ------------------------
 
+|about-dataset-creation-options|
+The following dataset creation options are supported:
+
 -  .. co:: NAME
 
       Tileset name. Defaults to the basename of the
@@ -132,8 +136,8 @@ Dataset creation options
 -  .. co:: CONF
       :choices: <json>, <filename>
 
-      Layer configuration as a JSon serialized string.
-      Or filename containing the configuration as JSon.
+      Layer configuration as a JSON serialized string.
+      Or filename containing the configuration as JSON.
 
 -  .. co:: SIMPLIFICATION
       :choices: float
@@ -186,7 +190,7 @@ Layer configuration
 -------------------
 
 The above mentioned CONF dataset creation option can be set to a string
-whose value is a JSon serialized document such as the below one:
+whose value is a JSON serialized document such as the below one:
 
 .. code-block:: json
 
@@ -214,6 +218,9 @@ case.
 
 Layer creation options
 ----------------------
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: MINZOOM
       :choices: <integer>
@@ -329,6 +336,18 @@ Extracting all content in a local directory:
 .. code-block:: shell
 
     python swig/python/gdal-utils/osgeo_utils/samples/gdal_cp.py -r "/vsipmtiles//vsicurl/https://protomaps.github.io/PMTiles/protomaps(vector)ODbL_firenze.pmtiles" out_pmtiles
+
+Examples
+--------
+-  Simple translation of a single shapefile into PMTiles. Dataset creation options (dsco) MINZOOM and MAXZOOM specifies tile zoom levels.
+   ::
+
+      ogr2ogr -dsco MINZOOM=10 -dsco MAXZOOM=20 -f "PMTiles" filename.pmtiles my_shapes.shp
+
+-  Merge all PostgreSQL/PostGIS tables in a schema into a single PMTiles file. PostgreSQL table names are used as layer names. Dataset creation options (dsco) MINZOOM and MAXZOOM specifies tile zoom levels.
+   ::
+
+      ogr2ogr -dsco MINZOOM=0 -dsco MAXZOOM=22 -f "PMTiles" filename.pmtiles "PG:host=my_host port=my_port dbname=my_database user=my_user password=my_password schemas=my_schema"
 
 
 See Also

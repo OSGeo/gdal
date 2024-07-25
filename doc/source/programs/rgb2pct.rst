@@ -1,7 +1,7 @@
 .. _rgb2pct:
 
 ================================================================================
-rgb2pct.py
+rgb2pct
 ================================================================================
 
 .. only:: html
@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    rgb2pct.py [--help] [--help-general]
+    rgb2pct [--help] [--help-general]
                [-n colors | -pct palette_file] [-of format] <source_file> <dest_file>
 
 Description
@@ -26,6 +26,10 @@ using a median cut algorithm on a downsampled RGB histogram.   Then it
 converts the image into a pseudo-colored image using the color table.
 This conversion utilizes Floyd-Steinberg dithering (error diffusion) to
 maximize output image visual quality.
+
+.. note::
+
+    rgb2pct is a Python utility, and is only available if GDAL Python bindings are available.
 
 .. program:: rgb2pct
 
@@ -58,8 +62,6 @@ maximize output image visual quality.
 
     The output pseudo-colored file that will be created.
 
-NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built with Python support.
-
 Example
 -------
 
@@ -70,7 +72,7 @@ text editor with a small 4 color palette with the RGBA colors 238/238/238/255,
 
 ::
 
-    rgb2pct.py -pct palette.vrt rgb.tif pseudo-colored.tif
+    rgb2pct -pct palette.vrt rgb.tif pseudo-colored.tif
     more < palette.vrt
     <VRTDataset rasterXSize="226" rasterYSize="271">
         <VRTRasterBand dataType="Byte" band="1">

@@ -145,7 +145,7 @@ tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
 .. option:: <file_or_dir>
 
     The input GDAL raster files, can be multiple files separated by spaces.
-    Wildcards my also be used. Stores the file locations in the same style as
+    Wildcards may also be used. Stores the file locations in the same style as
     specified here, unless :option:`-write_absolute_path` option is also used.
 
     Starting with GDAL 3.9, this can also be a directory name. :option:`-recursive`
@@ -330,7 +330,7 @@ Examples
 
 ::
 
-    gdaltindex tile_index.gti.gpkg -datatype Byte -tr 60 60 -colorinterp Red,Green,Blue --optfile my_list.txt
+    gdaltindex tile_index.gti.gpkg -ot Byte -tr 60 60 -colorinterp Red,Green,Blue --optfile my_list.txt
 
 C API
 -----

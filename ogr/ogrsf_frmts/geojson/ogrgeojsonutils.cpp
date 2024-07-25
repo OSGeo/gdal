@@ -31,14 +31,30 @@
 #include <assert.h>
 #include "cpl_port.h"
 #include "cpl_conv.h"
+#include "cpl_json_streaming_parser.h"
 #include "ogr_geometry.h"
 #include <json.h>  // JSON-C
 
 #include <algorithm>
 #include <memory>
 
-const char szESRIJSonPotentialStart1[] =
+const char szESRIJSonFeaturesGeometryRings[] =
     "{\"features\":[{\"geometry\":{\"rings\":[";
+
+// Cf https://github.com/OSGeo/gdal/issues/9996#issuecomment-2129845692
+const char szESRIJSonFeaturesAttributes[] = "{\"features\":[{\"attributes\":{";
+
+/************************************************************************/
+/*                           SkipUTF8BOM()                              */
+/************************************************************************/
+
+static void SkipUTF8BOM(const char *&pszText)
+{
+    /* Skip UTF-8 BOM (#5630) */
+    const GByte *pabyData = reinterpret_cast<const GByte *>(pszText);
+    if (pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF)
+        pszText += 3;
+}
 
 /************************************************************************/
 /*                           IsJSONObject()                             */
@@ -49,10 +65,7 @@ static bool IsJSONObject(const char *pszText)
     if (nullptr == pszText)
         return false;
 
-    /* Skip UTF-8 BOM (#5630) */
-    const GByte *pabyData = reinterpret_cast<const GByte *>(pszText);
-    if (pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF)
-        pszText += 3;
+    SkipUTF8BOM(pszText);
 
     /* -------------------------------------------------------------------- */
     /*      This is a primitive test, but we need to perform it fast.       */
@@ -77,30 +90,71 @@ static bool IsJSONObject(const char *pszText)
 }
 
 /************************************************************************/
-/*                           IsTypeSomething()                          */
+/*                           GetTopLevelType()                          */
 /************************************************************************/
 
-static bool IsTypeSomething(const char *pszText, const char *pszTypeValue)
+static std::string GetTopLevelType(const char *pszText)
 {
-    const char *pszIter = pszText;
-    while (true)
+    if (!strstr(pszText, "\"type\""))
+        return std::string();
+
+    SkipUTF8BOM(pszText);
+
+    struct MyParser : public CPLJSonStreamingParser
     {
-        pszIter = strstr(pszIter, "\"type\"");
-        if (pszIter == nullptr)
-            return false;
-        pszIter += strlen("\"type\"");
-        while (isspace(static_cast<unsigned char>(*pszIter)))
-            pszIter++;
-        if (*pszIter != ':')
-            return false;
-        pszIter++;
-        while (isspace(static_cast<unsigned char>(*pszIter)))
-            pszIter++;
-        CPLString osValue;
-        osValue.Printf("\"%s\"", pszTypeValue);
-        if (STARTS_WITH(pszIter, osValue.c_str()))
-            return true;
-    }
+        std::string m_osLevel{};
+        bool m_bInTopLevelType = false;
+        std::string m_osTopLevelTypeValue{};
+
+        void StartObjectMember(const char *pszKey, size_t nLength) override
+        {
+            m_bInTopLevelType = false;
+            if (nLength == strlen("type") && strcmp(pszKey, "type") == 0 &&
+                m_osLevel == "{")
+            {
+                m_bInTopLevelType = true;
+            }
+        }
+
+        void String(const char *pszValue, size_t nLength) override
+        {
+            if (m_bInTopLevelType)
+            {
+                m_osTopLevelTypeValue.assign(pszValue, nLength);
+                StopParsing();
+            }
+        }
+
+        void StartObject() override
+        {
+            m_osLevel += '{';
+            m_bInTopLevelType = false;
+        }
+
+        void EndObject() override
+        {
+            if (!m_osLevel.empty())
+                m_osLevel.pop_back();
+            m_bInTopLevelType = false;
+        }
+
+        void StartArray() override
+        {
+            m_osLevel += '[';
+            m_bInTopLevelType = false;
+        }
+
+        void EndArray() override
+        {
+            if (!m_osLevel.empty())
+                m_osLevel.pop_back();
+            m_bInTopLevelType = false;
+        }
+    };
+
+    MyParser oParser;
+    oParser.Parse(pszText, strlen(pszText), true);
+    return oParser.m_osTopLevelTypeValue;
 }
 
 /************************************************************************/
@@ -156,7 +210,8 @@ static CPLString GetCompactJSon(const char *pszText, size_t nMaxSize)
 /************************************************************************/
 
 static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
-                                bool &bReadMoreBytes)
+                                bool &bReadMoreBytes, GDALOpenInfo *poOpenInfo,
+                                const char *pszExpectedDriverName)
 {
     bMightBeSequence = false;
     bReadMoreBytes = false;
@@ -164,20 +219,32 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
     if (!IsJSONObject(pszText))
         return false;
 
-    if (IsTypeSomething(pszText, "Topology"))
+    const std::string osTopLevelType = GetTopLevelType(pszText);
+    if (osTopLevelType == "Topology")
         return false;
 
-    if (JSONFGIsObject(pszText) && GDALGetDriverByName("JSONFG"))
-        return false;
-
-    if (IsTypeSomething(pszText, "FeatureCollection"))
+    if (poOpenInfo->IsSingleAllowedDriver(pszExpectedDriverName) &&
+        GDALGetDriverByName(pszExpectedDriverName))
     {
         return true;
     }
 
-    CPLString osWithoutSpace = GetCompactJSon(pszText, strlen(pszText));
+    if ((!poOpenInfo->papszAllowedDrivers ||
+         CSLFindString(poOpenInfo->papszAllowedDrivers, "JSONFG") >= 0) &&
+        GDALGetDriverByName("JSONFG") && JSONFGIsObject(pszText, poOpenInfo))
+    {
+        return false;
+    }
+
+    if (osTopLevelType == "FeatureCollection")
+    {
+        return true;
+    }
+
+    const std::string osWithoutSpace = GetCompactJSon(pszText, strlen(pszText));
     if (osWithoutSpace.find("{\"features\":[") == 0 &&
-        osWithoutSpace.find(szESRIJSonPotentialStart1) != 0)
+        osWithoutSpace.find(szESRIJSonFeaturesGeometryRings) != 0 &&
+        osWithoutSpace.find(szESRIJSonFeaturesAttributes) != 0)
     {
         return true;
     }
@@ -190,7 +257,7 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
     // "{"bbox":...,"features":[..."
     if (osWithoutSpace.find(",\"features\":[") != std::string::npos)
     {
-        return !ESRIJSONIsObject(pszText);
+        return !ESRIJSONIsObject(pszText, poOpenInfo);
     }
 
     // See https://github.com/OSGeo/gdal/issues/2720
@@ -201,14 +268,11 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
         return true;
     }
 
-    if (IsTypeSomething(pszText, "Feature") ||
-        IsTypeSomething(pszText, "Point") ||
-        IsTypeSomething(pszText, "LineString") ||
-        IsTypeSomething(pszText, "Polygon") ||
-        IsTypeSomething(pszText, "MultiPoint") ||
-        IsTypeSomething(pszText, "MultiLineString") ||
-        IsTypeSomething(pszText, "MultiPolygon") ||
-        IsTypeSomething(pszText, "GeometryCollection"))
+    if (osTopLevelType == "Feature" || osTopLevelType == "Point" ||
+        osTopLevelType == "LineString" || osTopLevelType == "Polygon" ||
+        osTopLevelType == "MultiPoint" || osTopLevelType == "MultiLineString" ||
+        osTopLevelType == "MultiPolygon" ||
+        osTopLevelType == "GeometryCollection")
     {
         bMightBeSequence = true;
         return true;
@@ -225,21 +289,29 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
     return false;
 }
 
-static bool IsGeoJSONLikeObject(const char *pszText)
+static bool IsGeoJSONLikeObject(const char *pszText, GDALOpenInfo *poOpenInfo,
+                                const char *pszExpectedDriverName)
 {
     bool bMightBeSequence;
     bool bReadMoreBytes;
-    return IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes);
+    return IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
+                               poOpenInfo, pszExpectedDriverName);
 }
 
 /************************************************************************/
 /*                       ESRIJSONIsObject()                             */
 /************************************************************************/
 
-bool ESRIJSONIsObject(const char *pszText)
+bool ESRIJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 {
     if (!IsJSONObject(pszText))
         return false;
+
+    if (poOpenInfo->IsSingleAllowedDriver("ESRIJSON") &&
+        GDALGetDriverByName("ESRIJSON"))
+    {
+        return true;
+    }
 
     if (  // ESRI Json geometry
         (strstr(pszText, "\"geometryType\"") != nullptr &&
@@ -255,9 +327,11 @@ bool ESRIJSONIsObject(const char *pszText)
         return true;
     }
 
-    CPLString osWithoutSpace =
-        GetCompactJSon(pszText, strlen(szESRIJSonPotentialStart1));
-    if (osWithoutSpace.find(szESRIJSonPotentialStart1) == 0)
+    const std::string osWithoutSpace = GetCompactJSon(pszText, strlen(pszText));
+    if (osWithoutSpace.find(szESRIJSonFeaturesGeometryRings) == 0 ||
+        osWithoutSpace.find(szESRIJSonFeaturesAttributes) == 0 ||
+        osWithoutSpace.find("\"spatialReference\":{\"wkid\":") !=
+            std::string::npos)
     {
         return true;
     }
@@ -269,21 +343,27 @@ bool ESRIJSONIsObject(const char *pszText)
 /*                       TopoJSONIsObject()                             */
 /************************************************************************/
 
-bool TopoJSONIsObject(const char *pszText)
+bool TopoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 {
     if (!IsJSONObject(pszText))
         return false;
 
-    return IsTypeSomething(pszText, "Topology");
+    if (poOpenInfo->IsSingleAllowedDriver("TopoJSON") &&
+        GDALGetDriverByName("TopoJSON"))
+    {
+        return true;
+    }
+
+    return GetTopLevelType(pszText) == "Topology";
 }
 
 /************************************************************************/
 /*                      IsLikelyNewlineSequenceGeoJSON()                */
 /************************************************************************/
 
-static bool IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL,
-                                           const GByte *pabyHeader,
-                                           const char *pszFileContent)
+static GDALIdentifyEnum
+IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL, const GByte *pabyHeader,
+                               const char *pszFileContent)
 {
     const size_t nBufferSize = 4096 * 10;
     std::vector<GByte> abyBuffer;
@@ -292,7 +372,6 @@ static bool IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL,
     int nCurlLevel = 0;
     bool bInString = false;
     bool bLastIsEscape = false;
-    bool bCompatibleOfSequence = true;
     bool bFirstIter = true;
     bool bEOLFound = false;
     int nCountObject = 0;
@@ -338,8 +417,7 @@ static bool IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL,
                 }
                 else if (!isspace(static_cast<unsigned char>(abyBuffer[i])))
                 {
-                    bCompatibleOfSequence = false;
-                    break;
+                    return GDAL_IDENTIFY_FALSE;
                 }
             }
             else if (bInString)
@@ -370,10 +448,12 @@ static bool IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL,
                 nCurlLevel--;
             }
         }
-        if (!fpL || bEnd || !bCompatibleOfSequence || nCountObject == 2)
+        if (!fpL || bEnd || nCountObject == 2)
             break;
     }
-    return bCompatibleOfSequence && bEOLFound && nCountObject == 2;
+    if (bEOLFound && nCountObject == 2)
+        return GDAL_IDENTIFY_TRUE;
+    return GDAL_IDENTIFY_UNKNOWN;
 }
 
 /************************************************************************/
@@ -395,38 +475,40 @@ static bool GeoJSONFileIsObject(GDALOpenInfo *poOpenInfo)
     bool bReadMoreBytes = false;
     if (!IsGeoJSONLikeObject(
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-            bMightBeSequence, bReadMoreBytes))
+            bMightBeSequence, bReadMoreBytes, poOpenInfo, "GeoJSON"))
     {
         if (!(bReadMoreBytes && poOpenInfo->nHeaderBytes >= 6000 &&
               poOpenInfo->TryToIngest(1000 * 1000) &&
               !IsGeoJSONLikeObject(
                   reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-                  bMightBeSequence, bReadMoreBytes)))
+                  bMightBeSequence, bReadMoreBytes, poOpenInfo, "GeoJSON")))
         {
             return false;
         }
     }
 
-    return !(bMightBeSequence &&
-             IsLikelyNewlineSequenceGeoJSON(poOpenInfo->fpL,
-                                            poOpenInfo->pabyHeader, nullptr));
+    return !(bMightBeSequence && IsLikelyNewlineSequenceGeoJSON(
+                                     poOpenInfo->fpL, poOpenInfo->pabyHeader,
+                                     nullptr) == GDAL_IDENTIFY_TRUE);
 }
 
 /************************************************************************/
 /*                           GeoJSONIsObject()                          */
 /************************************************************************/
 
-bool GeoJSONIsObject(const char *pszText)
+bool GeoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 {
     bool bMightBeSequence = false;
     bool bReadMoreBytes = false;
-    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes))
+    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
+                             poOpenInfo, "GeoJSON"))
     {
         return false;
     }
 
     return !(bMightBeSequence &&
-             IsLikelyNewlineSequenceGeoJSON(nullptr, nullptr, pszText));
+             IsLikelyNewlineSequenceGeoJSON(nullptr, nullptr, pszText) ==
+                 GDAL_IDENTIFY_TRUE);
 }
 
 /************************************************************************/
@@ -447,41 +529,60 @@ static bool GeoJSONSeqFileIsObject(GDALOpenInfo *poOpenInfo)
     const char *pszText =
         reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
     if (pszText[0] == '\x1e')
-        return IsGeoJSONLikeObject(pszText + 1);
+        return IsGeoJSONLikeObject(pszText + 1, poOpenInfo, "GeoJSONSeq");
 
     bool bMightBeSequence = false;
     bool bReadMoreBytes = false;
-    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes))
+    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
+                             poOpenInfo, "GeoJSONSeq"))
     {
         if (!(bReadMoreBytes && poOpenInfo->nHeaderBytes >= 6000 &&
               poOpenInfo->TryToIngest(1000 * 1000) &&
               IsGeoJSONLikeObject(
                   reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-                  bMightBeSequence, bReadMoreBytes)))
+                  bMightBeSequence, bReadMoreBytes, poOpenInfo, "GeoJSONSeq")))
         {
             return false;
         }
     }
 
-    return bMightBeSequence &&
-           IsLikelyNewlineSequenceGeoJSON(poOpenInfo->fpL,
-                                          poOpenInfo->pabyHeader, nullptr);
+    if (poOpenInfo->IsSingleAllowedDriver("GeoJSONSeq") &&
+        IsLikelyNewlineSequenceGeoJSON(poOpenInfo->fpL, poOpenInfo->pabyHeader,
+                                       nullptr) != GDAL_IDENTIFY_FALSE &&
+        GDALGetDriverByName("GeoJSONSeq"))
+    {
+        return true;
+    }
+
+    return bMightBeSequence && IsLikelyNewlineSequenceGeoJSON(
+                                   poOpenInfo->fpL, poOpenInfo->pabyHeader,
+                                   nullptr) == GDAL_IDENTIFY_TRUE;
 }
 
-bool GeoJSONSeqIsObject(const char *pszText)
+bool GeoJSONSeqIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 {
     if (pszText[0] == '\x1e')
-        return IsGeoJSONLikeObject(pszText + 1);
+        return IsGeoJSONLikeObject(pszText + 1, poOpenInfo, "GeoJSONSeq");
 
     bool bMightBeSequence = false;
     bool bReadMoreBytes = false;
-    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes))
+    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
+                             poOpenInfo, "GeoJSONSeq"))
     {
         return false;
     }
 
+    if (poOpenInfo->IsSingleAllowedDriver("GeoJSONSeq") &&
+        IsLikelyNewlineSequenceGeoJSON(nullptr, nullptr, pszText) !=
+            GDAL_IDENTIFY_FALSE &&
+        GDALGetDriverByName("GeoJSONSeq"))
+    {
+        return true;
+    }
+
     return bMightBeSequence &&
-           IsLikelyNewlineSequenceGeoJSON(nullptr, nullptr, pszText);
+           IsLikelyNewlineSequenceGeoJSON(nullptr, nullptr, pszText) ==
+               GDAL_IDENTIFY_TRUE;
 }
 
 /************************************************************************/
@@ -498,34 +599,45 @@ static bool JSONFGFileIsObject(GDALOpenInfo *poOpenInfo)
 
     const char *pszText =
         reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
-    return JSONFGIsObject(pszText);
+    return JSONFGIsObject(pszText, poOpenInfo);
 }
 
-bool JSONFGIsObject(const char *pszText)
+bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 {
     if (!IsJSONObject(pszText))
         return false;
 
+    if (poOpenInfo->IsSingleAllowedDriver("JSONFG") &&
+        GDALGetDriverByName("JSONFG"))
+    {
+        return true;
+    }
+
     const std::string osWithoutSpace = GetCompactJSon(pszText, strlen(pszText));
 
+    // In theory, conformsTo should be required, but let be lax...
     {
         const auto nPos = osWithoutSpace.find("\"conformsTo\":[");
         if (nPos != std::string::npos)
         {
-            if (osWithoutSpace.find("\"[ogc-json-fg-1-0.1:core]\"", nPos) !=
-                    std::string::npos ||
-                osWithoutSpace.find(
-                    "\"http://www.opengis.net/spec/json-fg-1/0.1\"", nPos) !=
-                    std::string::npos)
+            for (const char *pszVersion : {"0.1", "0.2", "0.3"})
             {
-                return true;
+                if (osWithoutSpace.find(
+                        CPLSPrintf("\"[ogc-json-fg-1-%s:core]\"", pszVersion),
+                        nPos) != std::string::npos ||
+                    osWithoutSpace.find(
+                        CPLSPrintf(
+                            "\"http://www.opengis.net/spec/json-fg-1/%s\"",
+                            pszVersion),
+                        nPos) != std::string::npos)
+                {
+                    return true;
+                }
             }
         }
     }
 
-    if (osWithoutSpace.find("\"coordRefSys\":") != std::string::npos ||
-        osWithoutSpace.find("\"featureType\":\"") != std::string::npos ||
-        osWithoutSpace.find("\"place\":{\"type\":") != std::string::npos ||
+    if (osWithoutSpace.find("\"place\":{\"type\":") != std::string::npos ||
         osWithoutSpace.find("\"place\":{\"coordinates\":") !=
             std::string::npos ||
         osWithoutSpace.find("\"time\":{\"date\":") != std::string::npos ||
@@ -533,6 +645,71 @@ bool JSONFGIsObject(const char *pszText)
         osWithoutSpace.find("\"time\":{\"interval\":") != std::string::npos)
     {
         return true;
+    }
+
+    if (osWithoutSpace.find("\"coordRefSys\":") != std::string::npos ||
+        osWithoutSpace.find("\"featureType\":") != std::string::npos)
+    {
+        // Check that coordRefSys and/or featureType are either at the
+        // FeatureCollection or Feature level
+        struct MyParser : public CPLJSonStreamingParser
+        {
+            bool m_bFoundJSONFGFeatureType = false;
+            bool m_bFoundJSONFGCoordrefSys = false;
+            std::string m_osLevel{};
+
+            void StartObjectMember(const char *pszKey, size_t nLength) override
+            {
+                if (nLength == strlen("featureType") &&
+                    strcmp(pszKey, "featureType") == 0)
+                {
+                    m_bFoundJSONFGFeatureType =
+                        (m_osLevel == "{" ||   // At FeatureCollection level
+                         m_osLevel == "{[{");  // At Feature level
+                    if (m_bFoundJSONFGFeatureType)
+                        StopParsing();
+                }
+                else if (nLength == strlen("coordRefSys") &&
+                         strcmp(pszKey, "coordRefSys") == 0)
+                {
+                    m_bFoundJSONFGCoordrefSys =
+                        (m_osLevel == "{" ||   // At FeatureCollection level
+                         m_osLevel == "{[{");  // At Feature level
+                    if (m_bFoundJSONFGCoordrefSys)
+                        StopParsing();
+                }
+            }
+
+            void StartObject() override
+            {
+                m_osLevel += '{';
+            }
+
+            void EndObject() override
+            {
+                if (!m_osLevel.empty())
+                    m_osLevel.pop_back();
+            }
+
+            void StartArray() override
+            {
+                m_osLevel += '[';
+            }
+
+            void EndArray() override
+            {
+                if (!m_osLevel.empty())
+                    m_osLevel.pop_back();
+            }
+        };
+
+        MyParser oParser;
+        oParser.Parse(pszText, strlen(pszText), true);
+        if (oParser.m_bFoundJSONFGFeatureType ||
+            oParser.m_bFoundJSONFGCoordrefSys)
+        {
+            return true;
+        }
     }
 
     return false;
@@ -546,7 +723,9 @@ static bool IsLikelyESRIJSONURL(const char *pszURL)
 {
     // URLs with f=json are strong candidates for ESRI JSON services
     // except if they have "/items?", in which case they are likely OAPIF
-    return strstr(pszURL, "f=json") != nullptr &&
+    return (strstr(pszURL, "f=json") != nullptr ||
+            strstr(pszURL, "f=pjson") != nullptr ||
+            strstr(pszURL, "resultRecordCount=") != nullptr) &&
            strstr(pszURL, "/items?") == nullptr;
 }
 
@@ -571,6 +750,10 @@ GeoJSONSourceType GeoJSONGetSourceType(GDALOpenInfo *poOpenInfo)
              STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") ||
              STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp://"))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("GeoJSON"))
+        {
+            return eGeoJSONSourceService;
+        }
         if ((strstr(poOpenInfo->pszFilename, "SERVICE=WFS") ||
              strstr(poOpenInfo->pszFilename, "service=WFS") ||
              strstr(poOpenInfo->pszFilename, "service=wfs")) &&
@@ -592,11 +775,11 @@ GeoJSONSourceType GeoJSONGetSourceType(GDALOpenInfo *poOpenInfo)
             return eGeoJSONSourceFile;
         }
         const char *pszText = poOpenInfo->pszFilename + strlen("GeoJSON:");
-        if (GeoJSONIsObject(pszText))
+        if (GeoJSONIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
-    else if (GeoJSONIsObject(poOpenInfo->pszFilename))
+    else if (GeoJSONIsObject(poOpenInfo->pszFilename, poOpenInfo))
     {
         srcType = eGeoJSONSourceText;
     }
@@ -624,6 +807,10 @@ GeoJSONSourceType ESRIJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
              STARTS_WITH(poOpenInfo->pszFilename, "https://") ||
              STARTS_WITH(poOpenInfo->pszFilename, "ftp://"))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("ESRIJSON"))
+        {
+            return eGeoJSONSourceService;
+        }
         if (IsLikelyESRIJSONURL(poOpenInfo->pszFilename))
         {
             return eGeoJSONSourceService;
@@ -640,7 +827,7 @@ GeoJSONSourceType ESRIJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
             return eGeoJSONSourceFile;
         }
         const char *pszText = poOpenInfo->pszFilename + strlen("ESRIJSON:");
-        if (ESRIJSONIsObject(pszText))
+        if (ESRIJSONIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
@@ -648,7 +835,7 @@ GeoJSONSourceType ESRIJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->fpL == nullptr)
     {
         const char *pszText = poOpenInfo->pszFilename;
-        if (ESRIJSONIsObject(pszText))
+        if (ESRIJSONIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
@@ -662,8 +849,8 @@ GeoJSONSourceType ESRIJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
     }
 
     if (poOpenInfo->pabyHeader != nullptr &&
-        ESRIJSONIsObject(
-            reinterpret_cast<const char *>(poOpenInfo->pabyHeader)))
+        ESRIJSONIsObject(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         poOpenInfo))
     {
         return eGeoJSONSourceFile;
     }
@@ -686,6 +873,10 @@ GeoJSONSourceType TopoJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
              STARTS_WITH(poOpenInfo->pszFilename, "https://") ||
              STARTS_WITH(poOpenInfo->pszFilename, "ftp://"))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("TOPOJSON"))
+        {
+            return eGeoJSONSourceService;
+        }
         if (IsLikelyESRIJSONURL(poOpenInfo->pszFilename))
         {
             return eGeoJSONSourceUnknown;
@@ -702,7 +893,7 @@ GeoJSONSourceType TopoJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
             return eGeoJSONSourceFile;
         }
         const char *pszText = poOpenInfo->pszFilename + strlen("TopoJSON:");
-        if (TopoJSONIsObject(pszText))
+        if (TopoJSONIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
@@ -710,7 +901,7 @@ GeoJSONSourceType TopoJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->fpL == nullptr)
     {
         const char *pszText = poOpenInfo->pszFilename;
-        if (TopoJSONIsObject(pszText))
+        if (TopoJSONIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
@@ -724,8 +915,8 @@ GeoJSONSourceType TopoJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
     }
 
     if (poOpenInfo->pabyHeader != nullptr &&
-        TopoJSONIsObject(
-            reinterpret_cast<const char *>(poOpenInfo->pabyHeader)))
+        TopoJSONIsObject(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         poOpenInfo))
     {
         return eGeoJSONSourceFile;
     }
@@ -750,6 +941,10 @@ GeoJSONSourceType GeoJSONSeqGetSourceType(GDALOpenInfo *poOpenInfo)
              STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") ||
              STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp://"))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("GeoJSONSeq"))
+        {
+            return eGeoJSONSourceService;
+        }
         if (IsLikelyESRIJSONURL(poOpenInfo->pszFilename))
         {
             return eGeoJSONSourceUnknown;
@@ -765,11 +960,11 @@ GeoJSONSourceType GeoJSONSeqGetSourceType(GDALOpenInfo *poOpenInfo)
             return eGeoJSONSourceFile;
         }
         const char *pszText = poOpenInfo->pszFilename + strlen("GEOJSONSeq:");
-        if (GeoJSONSeqIsObject(pszText))
+        if (GeoJSONSeqIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
-    else if (GeoJSONSeqIsObject(poOpenInfo->pszFilename))
+    else if (GeoJSONSeqIsObject(poOpenInfo->pszFilename, poOpenInfo))
     {
         srcType = eGeoJSONSourceText;
     }
@@ -799,6 +994,10 @@ GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo)
              STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") ||
              STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp://"))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("JSONFG"))
+        {
+            return eGeoJSONSourceService;
+        }
         if (IsLikelyESRIJSONURL(poOpenInfo->pszFilename))
         {
             return eGeoJSONSourceUnknown;
@@ -814,11 +1013,11 @@ GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo)
             return eGeoJSONSourceFile;
         }
         const char *pszText = poOpenInfo->pszFilename + nJSONFGPrefixLen;
-        if (JSONFGIsObject(pszText))
+        if (JSONFGIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
-    else if (JSONFGIsObject(poOpenInfo->pszFilename))
+    else if (JSONFGIsObject(poOpenInfo->pszFilename, poOpenInfo))
     {
         srcType = eGeoJSONSourceText;
     }

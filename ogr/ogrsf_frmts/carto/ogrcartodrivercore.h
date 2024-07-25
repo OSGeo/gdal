@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "Carto";
 
-int CPL_DLL OGRCartoDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRCartoDriverIdentify PLUGIN_SYMBOL_NAME(OGRCartoDriverIdentify)
+#define OGRCartoDriverSetCommonMetadata                                        \
+    PLUGIN_SYMBOL_NAME(OGRCartoDriverSetCommonMetadata)
 
-void CPL_DLL OGRCartoDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRCartoDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRCartoDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

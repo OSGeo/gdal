@@ -31,6 +31,7 @@
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
+#include "gdalargumentparser.h"
 #include "vrtdataset.h"
 #include <algorithm>
 #include <map>
@@ -54,6 +55,130 @@ struct GDALMultiDimTranslateOptions
     void *pProgressData = nullptr;
     bool bUpdate = false;
 };
+
+/*************************************************************************/
+/*             GDALMultiDimTranslateAppOptionsGetParser()                */
+/************************************************************************/
+
+static std::unique_ptr<GDALArgumentParser>
+GDALMultiDimTranslateAppOptionsGetParser(
+    GDALMultiDimTranslateOptions *psOptions,
+    GDALMultiDimTranslateOptionsForBinary *psOptionsForBinary)
+{
+    auto argParser = std::make_unique<GDALArgumentParser>(
+        "gdalmdimtranslate", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    argParser->add_description(
+        _("Converts multidimensional data between different formats, and "
+          "performs subsetting."));
+
+    argParser->add_epilog(
+        _("For more details, consult "
+          "https://gdal.org/programs/gdalmdimtranslate.html"));
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_input_format_argument(
+            &psOptionsForBinary->aosAllowInputDrivers);
+    }
+
+    argParser->add_output_format_argument(psOptions->osFormat);
+
+    argParser->add_creation_options_argument(psOptions->aosCreateOptions);
+
+    auto &group = argParser->add_mutually_exclusive_group();
+    group.add_argument("-array")
+        .metavar("<array_spec>")
+        .append()
+        .store_into(psOptions->aosArraySpec)
+        .help(_(
+            "Select a single array instead of converting the whole dataset."));
+
+    argParser->add_argument("-arrayoption")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosArrayOptions.AddString(s.c_str()); })
+        .help(_("Option passed to GDALGroup::GetMDArrayNames() to filter "
+                "reported arrays."));
+
+    group.add_argument("-group")
+        .metavar("<group_spec>")
+        .append()
+        .store_into(psOptions->aosGroup)
+        .help(_(
+            "Select a single group instead of converting the whole dataset."));
+
+    // Note: this is mutually exclusive with "view" option in -array
+    argParser->add_argument("-subset")
+        .metavar("<subset_spec>")
+        .append()
+        .store_into(psOptions->aosSubset)
+        .help(_("Select a subset of the data."));
+
+    // Note: this is mutually exclusive with "view" option in -array
+    argParser->add_argument("-scaleaxes")
+        .metavar("<scaleaxes_spec>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                CPLStringList aosScaleFactors(
+                    CSLTokenizeString2(s.c_str(), ",", 0));
+                for (int j = 0; j < aosScaleFactors.size(); j++)
+                {
+                    psOptions->aosScaleFactor.push_back(aosScaleFactors[j]);
+                }
+            })
+        .help(
+            _("Applies a integral scale factor to one or several dimensions."));
+
+    argParser->add_argument("-strict")
+        .flag()
+        .store_into(psOptions->bStrict)
+        .help(_("Turn warnings into failures."));
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_open_options_argument(
+            psOptionsForBinary->aosOpenOptions);
+
+        argParser->add_argument("src_dataset")
+            .metavar("<src_dataset>")
+            .store_into(psOptionsForBinary->osSource)
+            .help(_("The source dataset name."));
+
+        argParser->add_argument("dst_dataset")
+            .metavar("<dst_dataset>")
+            .store_into(psOptionsForBinary->osDest)
+            .help(_("The destination file name."));
+
+        argParser->add_quiet_argument(&psOptionsForBinary->bQuiet);
+    }
+
+    return argParser;
+}
+
+/************************************************************************/
+/*            GDALMultiDimTranslateAppGetParserUsage()                  */
+/************************************************************************/
+
+std::string GDALMultiDimTranslateAppGetParserUsage()
+{
+    try
+    {
+        GDALMultiDimTranslateOptions sOptions;
+        GDALMultiDimTranslateOptionsForBinary sOptionsForBinary;
+        auto argParser = GDALMultiDimTranslateAppOptionsGetParser(
+            &sOptions, &sOptionsForBinary);
+        return argParser->usage();
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
+        return std::string();
+    }
+}
 
 /************************************************************************/
 /*                        FindMinMaxIdxNumeric()                        */
@@ -1802,135 +1927,58 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 GDALMultiDimTranslateOptions *GDALMultiDimTranslateOptionsNew(
     char **papszArgv, GDALMultiDimTranslateOptionsForBinary *psOptionsForBinary)
 {
-    GDALMultiDimTranslateOptions *psOptions = new GDALMultiDimTranslateOptions;
+
+    auto psOptions = std::make_unique<GDALMultiDimTranslateOptions>();
 
     /* -------------------------------------------------------------------- */
-    /*      Handle command line arguments.                                  */
+    /*      Parse arguments.                                                */
     /* -------------------------------------------------------------------- */
-    const int argc = CSLCount(papszArgv);
-    for (int i = 0; papszArgv != nullptr && i < argc; i++)
+    try
     {
-        if (i < argc - 1 &&
-            (EQUAL(papszArgv[i], "-of") || EQUAL(papszArgv[i], "-f")))
-        {
-            ++i;
-            psOptions->osFormat = papszArgv[i];
-        }
+        auto argParser = GDALMultiDimTranslateAppOptionsGetParser(
+            psOptions.get(), psOptionsForBinary);
 
-        else if (EQUAL(papszArgv[i], "-q") || EQUAL(papszArgv[i], "-quiet"))
-        {
-            if (psOptionsForBinary)
-                psOptionsForBinary->bQuiet = TRUE;
-        }
+        argParser->parse_args_without_binary_name(papszArgv);
 
-        else if (EQUAL(papszArgv[i], "-strict"))
+        // Check for invalid options:
+        // -scaleaxes is not compatible with -array = "view"
+        // -subset is not compatible with -array = "view"
+        if (std::find(psOptions->aosArraySpec.cbegin(),
+                      psOptions->aosArraySpec.cend(),
+                      "view") != psOptions->aosArraySpec.cend())
         {
-            psOptions->bStrict = true;
-        }
-
-        else if (i < argc - 1 && EQUAL(papszArgv[i], "-array"))
-        {
-            ++i;
-            psOptions->aosArraySpec.push_back(papszArgv[i]);
-        }
-        else if (i < argc - 1 && EQUAL(papszArgv[i], "-arrayoption"))
-        {
-            ++i;
-            psOptions->aosArrayOptions.AddString(papszArgv[i]);
-        }
-        else if (i < argc - 1 && EQUAL(papszArgv[i], "-group"))
-        {
-            ++i;
-            psOptions->aosGroup.push_back(papszArgv[i]);
-        }
-
-        else if (i < argc - 1 && EQUAL(papszArgv[i], "-subset"))
-        {
-            ++i;
-            psOptions->aosSubset.push_back(papszArgv[i]);
-        }
-
-        else if (i < argc - 1 && EQUAL(papszArgv[i], "-scaleaxes"))
-        {
-            ++i;
-            CPLStringList aosScaleFactors(
-                CSLTokenizeString2(papszArgv[i], ",", 0));
-            for (int j = 0; j < aosScaleFactors.size(); j++)
+            if (!psOptions->aosScaleFactor.empty())
             {
-                psOptions->aosScaleFactor.push_back(aosScaleFactors[j]);
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "The -scaleaxes option is not compatible with the "
+                         "-array \"view\" option.");
+                return nullptr;
             }
-        }
 
-        else if (i < argc - 1 && EQUAL(papszArgv[i], "-co"))
-        {
-            ++i;
-            psOptions->aosCreateOptions.AddString(papszArgv[i]);
-        }
-
-        else if (EQUAL(papszArgv[i], "-oo") && i + 1 < argc)
-        {
-            ++i;
-            if (psOptionsForBinary)
+            if (!psOptions->aosSubset.empty())
             {
-                psOptionsForBinary->aosOpenOptions.AddString(papszArgv[i]);
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "The -subset option is not compatible with the -array "
+                         "\"view\" option.");
+                return nullptr;
             }
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-if"))
-        {
-            i++;
-            if (psOptionsForBinary)
-            {
-                if (GDALGetDriverByName(papszArgv[i]) == nullptr)
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "%s is not a recognized driver", papszArgv[i]);
-                }
-                psOptionsForBinary->aosAllowInputDrivers.AddString(
-                    papszArgv[i]);
-            }
-        }
-
-        else if (papszArgv[i][0] == '-')
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
-                     papszArgv[i]);
-            GDALMultiDimTranslateOptionsFree(psOptions);
-            return nullptr;
-        }
-        else if (psOptionsForBinary && psOptionsForBinary->osSource.empty())
-        {
-            psOptionsForBinary->osSource = papszArgv[i];
-        }
-        else if (psOptionsForBinary && psOptionsForBinary->osDest.empty())
-        {
-            psOptionsForBinary->osDest = papszArgv[i];
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Too many command options '%s'", papszArgv[i]);
-            GDALMultiDimTranslateOptionsFree(psOptions);
-            return nullptr;
         }
     }
-
-    if (!psOptions->aosArraySpec.empty() && !psOptions->aosGroup.empty())
+    catch (const std::exception &error)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "-array and -group are mutually exclusive");
-        GDALMultiDimTranslateOptionsFree(psOptions);
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
         return nullptr;
     }
 
     if (psOptionsForBinary)
     {
+        // Note: bUpdate is apparently never changed by the command line options
         psOptionsForBinary->bUpdate = psOptions->bUpdate;
         if (!psOptions->osFormat.empty())
             psOptionsForBinary->osFormat = psOptions->osFormat;
     }
 
-    return psOptions;
+    return psOptions.release();
 }
 
 /************************************************************************/

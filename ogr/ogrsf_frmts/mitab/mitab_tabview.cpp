@@ -190,6 +190,7 @@ int TABView::OpenForRead(const char *pszFname,
         }
 
         CPLFree(m_pszFname);
+        m_pszFname = nullptr;
         return -1;
     }
 
@@ -219,6 +220,7 @@ int TABView::OpenForRead(const char *pszFname,
             CPLErrorReset();
 
         CPLFree(m_pszFname);
+        m_pszFname = nullptr;
 
         return -1;
     }

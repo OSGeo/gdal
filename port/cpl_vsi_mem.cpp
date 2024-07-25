@@ -135,9 +135,10 @@ class VSIMemHandle final : public VSIVirtualHandle
   public:
     std::shared_ptr<VSIMemFile> poFile = nullptr;
     vsi_l_offset m_nOffset = 0;
+    bool m_bReadAllowed = false;
     bool bUpdate = false;
     bool bEOF = false;
-    bool bExtendFileAtNextWrite = false;
+    bool m_bError = false;
 
     VSIMemHandle() = default;
     ~VSIMemHandle() override;
@@ -146,6 +147,8 @@ class VSIMemHandle final : public VSIVirtualHandle
     vsi_l_offset Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    void ClearErr() override;
+    int Error() override;
     int Eof() override;
     int Close() override;
     int Truncate(vsi_l_offset nNewSize) override;
@@ -262,13 +265,21 @@ bool VSIMemFile::SetLength(vsi_l_offset nNewLength)
             return false;
         }
 
-        const vsi_l_offset nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
+        // If the first allocation is 1 MB or above, just take that value
+        // as the one to allocate
+        // Otherwise slightly reserve more to avoid too frequent reallocations.
+        const vsi_l_offset nNewAlloc =
+            (nAllocLength == 0 && nNewLength >= 1024 * 1024)
+                ? nNewLength
+                : nNewLength + nNewLength / 10 + 5000;
         GByte *pabyNewData = nullptr;
         if (static_cast<vsi_l_offset>(static_cast<size_t>(nNewAlloc)) ==
             nNewAlloc)
         {
             pabyNewData = static_cast<GByte *>(
-                VSIRealloc(pabyData, static_cast<size_t>(nNewAlloc)));
+                nAllocLength == 0
+                    ? VSICalloc(1, static_cast<size_t>(nNewAlloc))
+                    : VSIRealloc(pabyData, static_cast<size_t>(nNewAlloc)));
         }
         if (pabyNewData == nullptr)
         {
@@ -279,9 +290,14 @@ bool VSIMemFile::SetLength(vsi_l_offset nNewLength)
             return false;
         }
 
-        // Clear the new allocated part of the buffer.
-        memset(pabyNewData + nAllocLength, 0,
-               static_cast<size_t>(nNewAlloc - nAllocLength));
+        if (nAllocLength > 0)
+        {
+            // Clear the new allocated part of the buffer (only needed if
+            // there was already reserved memory, otherwise VSICalloc() has
+            // zeroized it already)
+            memset(pabyNewData + nAllocLength, 0,
+                   static_cast<size_t>(nNewAlloc - nAllocLength));
+        }
 
         pabyData = pabyNewData;
         nAllocLength = nNewAlloc;
@@ -340,9 +356,12 @@ int VSIMemHandle::Close()
 int VSIMemHandle::Seek(vsi_l_offset nOffset, int nWhence)
 
 {
-    CPL_SHARED_LOCK oLock(poFile->m_oMutex);
+    vsi_l_offset nLength;
+    {
+        CPL_SHARED_LOCK oLock(poFile->m_oMutex);
+        nLength = poFile->nLength;
+    }
 
-    bExtendFileAtNextWrite = false;
     if (nWhence == SEEK_CUR)
     {
         if (nOffset > INT_MAX)
@@ -357,7 +376,7 @@ int VSIMemHandle::Seek(vsi_l_offset nOffset, int nWhence)
     }
     else if (nWhence == SEEK_END)
     {
-        m_nOffset = poFile->nLength + nOffset;
+        m_nOffset = nLength + nOffset;
     }
     else
     {
@@ -366,14 +385,6 @@ int VSIMemHandle::Seek(vsi_l_offset nOffset, int nWhence)
     }
 
     bEOF = false;
-
-    if (m_nOffset > poFile->nLength)
-    {
-        if (bUpdate)  // Writable files are zero-extended by seek past end.
-        {
-            bExtendFileAtNextWrite = true;
-        }
-    }
 
     return 0;
 }
@@ -395,7 +406,7 @@ vsi_l_offset VSIMemHandle::Tell()
 size_t VSIMemHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 
 {
-    CPL_SHARED_LOCK oLock(poFile->m_oMutex);
+    const vsi_l_offset nOffset = m_nOffset;
 
     size_t nBytesToRead = nSize * nCount;
     if (nBytesToRead == 0)
@@ -407,21 +418,43 @@ size_t VSIMemHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         return 0;
     }
 
-    if (poFile->nLength <= m_nOffset || nBytesToRead + m_nOffset < nBytesToRead)
+    if (!m_bReadAllowed)
     {
-        bEOF = true;
+        m_bError = true;
         return 0;
     }
-    if (nBytesToRead + m_nOffset > poFile->nLength)
-    {
-        nBytesToRead = static_cast<size_t>(poFile->nLength - m_nOffset);
-        nCount = nBytesToRead / nSize;
-        bEOF = true;
-    }
 
-    if (nBytesToRead)
-        memcpy(pBuffer, poFile->pabyData + m_nOffset,
-               static_cast<size_t>(nBytesToRead));
+    bool bEOFTmp = bEOF;
+    // Do not access/modify bEOF under the lock to avoid confusing Coverity
+    // Scan since we access it in other methods outside of the lock.
+    const auto DoUnderLock =
+        [this, nOffset, pBuffer, nSize, &nBytesToRead, &nCount, &bEOFTmp]
+    {
+        CPL_SHARED_LOCK oLock(poFile->m_oMutex);
+
+        if (poFile->nLength <= nOffset || nBytesToRead + nOffset < nBytesToRead)
+        {
+            bEOFTmp = true;
+            return false;
+        }
+        if (nBytesToRead + nOffset > poFile->nLength)
+        {
+            nBytesToRead = static_cast<size_t>(poFile->nLength - nOffset);
+            nCount = nBytesToRead / nSize;
+            bEOFTmp = true;
+        }
+
+        if (nBytesToRead)
+            memcpy(pBuffer, poFile->pabyData + nOffset,
+                   static_cast<size_t>(nBytesToRead));
+        return true;
+    };
+
+    bool bRet = DoUnderLock();
+    bEOF = bEOFTmp;
+    if (!bRet)
+        return 0;
+
     m_nOffset += nBytesToRead;
 
     return nCount;
@@ -455,47 +488,66 @@ size_t VSIMemHandle::PRead(void *pBuffer, size_t nSize,
 size_t VSIMemHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 
 {
-    CPL_EXCLUSIVE_LOCK oLock(poFile->m_oMutex);
+    const vsi_l_offset nOffset = m_nOffset;
 
     if (!bUpdate)
     {
         errno = EACCES;
         return 0;
     }
-    if (bExtendFileAtNextWrite)
-    {
-        bExtendFileAtNextWrite = false;
-        if (!poFile->SetLength(m_nOffset))
-            return 0;
-    }
 
     const size_t nBytesToWrite = nSize * nCount;
-    if (nCount > 0 && nBytesToWrite / nCount != nSize)
-    {
-        return 0;
-    }
-    if (nBytesToWrite + m_nOffset < nBytesToWrite)
-    {
-        return 0;
-    }
 
-    if (nBytesToWrite + m_nOffset > poFile->nLength)
     {
-        if (!poFile->SetLength(nBytesToWrite + m_nOffset))
+        CPL_EXCLUSIVE_LOCK oLock(poFile->m_oMutex);
+
+        if (nCount > 0 && nBytesToWrite / nCount != nSize)
+        {
             return 0;
+        }
+        if (nBytesToWrite + nOffset < nBytesToWrite)
+        {
+            return 0;
+        }
+
+        if (nBytesToWrite + nOffset > poFile->nLength)
+        {
+            if (!poFile->SetLength(nBytesToWrite + nOffset))
+                return 0;
+        }
+
+        if (nBytesToWrite)
+            memcpy(poFile->pabyData + nOffset, pBuffer, nBytesToWrite);
+
+        time(&poFile->mTime);
     }
 
-    if (nBytesToWrite)
-        memcpy(poFile->pabyData + m_nOffset, pBuffer, nBytesToWrite);
-    // Coverity seems to be confused by the fact that we access m_nOffset
-    // under a shared lock in most places, except here under an exclusive lock
-    // which is fine
-    // coverity[missing_lock]
     m_nOffset += nBytesToWrite;
 
-    time(&poFile->mTime);
-
     return nCount;
+}
+
+/************************************************************************/
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSIMemHandle::ClearErr()
+
+{
+    CPL_SHARED_LOCK oLock(poFile->m_oMutex);
+    bEOF = false;
+    m_bError = false;
+}
+
+/************************************************************************/
+/*                              Error()                                 */
+/************************************************************************/
+
+int VSIMemHandle::Error()
+
+{
+    CPL_SHARED_LOCK oLock(poFile->m_oMutex);
+    return m_bError ? TRUE : FALSE;
 }
 
 /************************************************************************/
@@ -505,7 +557,8 @@ size_t VSIMemHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 int VSIMemHandle::Eof()
 
 {
-    return bEOF;
+    CPL_SHARED_LOCK oLock(poFile->m_oMutex);
+    return bEOF ? TRUE : FALSE;
 }
 
 /************************************************************************/
@@ -519,8 +572,6 @@ int VSIMemHandle::Truncate(vsi_l_offset nNewSize)
         errno = EACCES;
         return -1;
     }
-
-    bExtendFileAtNextWrite = false;
 
     CPL_EXCLUSIVE_LOCK oLock(poFile->m_oMutex);
     if (poFile->SetLength(nNewSize))
@@ -640,17 +691,22 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
     poHandle->poFile = poFile;
     poHandle->m_nOffset = 0;
     poHandle->bEOF = false;
-    poHandle->bUpdate = strstr(pszAccess, "w") || strstr(pszAccess, "+") ||
-                        strstr(pszAccess, "a");
+    poHandle->bUpdate = strchr(pszAccess, 'w') || strchr(pszAccess, '+') ||
+                        strchr(pszAccess, 'a');
+    poHandle->m_bReadAllowed = strchr(pszAccess, 'r') || strchr(pszAccess, '+');
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("VSIMEM", "Opening handle %p on %s: ref_count=%d", poHandle,
              pszFilename, static_cast<int>(poFile.use_count()));
 #endif
-    if (strstr(pszAccess, "a"))
+    if (strchr(pszAccess, 'a'))
     {
-        CPL_SHARED_LOCK oLock(poFile->m_oMutex);
-        poHandle->m_nOffset = poFile->nLength;
+        vsi_l_offset nOffset;
+        {
+            CPL_SHARED_LOCK oLock(poFile->m_oMutex);
+            nOffset = poFile->nLength;
+        }
+        poHandle->m_nOffset = nOffset;
     }
 
     return poHandle;
@@ -1061,6 +1117,7 @@ VSILFILE *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
 
     poHandle->poFile = std::move(poFile);
     poHandle->bUpdate = true;
+    poHandle->m_bReadAllowed = true;
     return poHandle;
 }
 

@@ -1009,6 +1009,16 @@ static void DTEDGetMetadataLocation(DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
             *pnLength = 2;
             break;
 
+        case DTEDMD_SECURITYCONTROL:
+            *ppszLocation = psDInfo->pachDSIRecord + 4;
+            *pnLength = 2;
+            break;
+
+        case DTEDMD_SECURITYHANDLING:
+            *ppszLocation = psDInfo->pachDSIRecord + 6;
+            *pnLength = 27;
+            break;
+
         default:
             *ppszLocation = NULL;
             *pnLength = 0;

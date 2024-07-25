@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "gdaljp2metadata.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #if HAVE_FCNTL_H
@@ -271,10 +272,7 @@ static void DumpGeoTIFFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
             GDALDataset *poVRTDS = poVRTDriver->CreateCopy(
                 osTmpVRTFilename, poDS, FALSE, nullptr, nullptr, nullptr);
             GDALClose(poVRTDS);
-            GByte *pabyXML =
-                VSIGetMemFileBuffer(osTmpVRTFilename, nullptr, FALSE);
-            CPLXMLNode *psXMLVRT =
-                CPLParseXMLString(reinterpret_cast<const char *>(pabyXML));
+            CPLXMLNode *psXMLVRT = CPLParseXMLFile(osTmpVRTFilename.c_str());
             if (psXMLVRT)
             {
                 ++psDumpContext->nCurLineCount;
@@ -2177,7 +2175,8 @@ static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
                     CPLXMLNode *psBinaryContent =
                         CPLCreateXMLNode(nullptr, CXT_Element, "BinaryContent");
                     GByte *pabyBoxData = oBox.ReadBoxData();
-                    int nBoxLength = static_cast<int>(nBoxDataLength);
+                    const int nBoxLength = static_cast<int>(
+                        std::min<GIntBig>(nBoxDataLength, INT_MAX / 2 - 1));
                     char *pszBinaryContent =
                         static_cast<char *>(VSIMalloc(2 * nBoxLength + 1));
                     if (pabyBoxData && pszBinaryContent)

@@ -31,14 +31,22 @@ on different :cpp:class:`GDALRasterBand` instances owned by the same
 :cpp:class:`GDALDataset` instance (each thread should instead manipulate a
 distinct GDALDataset). Similarly for a GDALDataset owning several :cpp:class:`OGRLayer`.
 
+The reason is that most implementations of GDALDataset or GDALRasterBand
+are stateful. A GDALDataset typically owns a file handle,
+and performs seek/read operations on it, thus not allowing concurrent access.
+Block cache related structures for a given GDALDataset are not thread-safe.
+Drivers also often implement lazy initialization strategies to access various
+metadata which are resolved only the first time the method to access them is
+invoked. Drivers may also rely on third-party libraries that expose objects
+that are not thread-safe.
+
 Those restrictions apply to the C and C++ ABI, and all languages bindings (unless
 they would take special precautions to serialize calls)
 
 GDAL block cache and multi-threading
 ------------------------------------
 
-The current design of the GDAL raster block cache make it appropriate to
-read several datasets from several threads. However performance issues may
+The current design of the GDAL raster block cache allows concurrent reads of several datasets. However performance issues may
 arise when writing several datasets from several threads, due to lock contention
 in the global structures of the block cache mechanism.
 

@@ -112,7 +112,7 @@ CPLErr STACTADataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType, int nBandCount,
-                                int *panBandMap, GSpacing nPixelSpace,
+                                BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
                                 GSpacing nLineSpace, GSpacing nBandSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
@@ -304,13 +304,11 @@ CPLErr STACTARawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                                   int nXSize, int nYSize, void *pData,
-                                   int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, int nBandCount,
-                                   int *panBandMap, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace, GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg *psExtraArg)
+CPLErr STACTARawDataset::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    int nBandCount, BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+    GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     CPLDebugOnly("STACTA", "Dataset RasterIO: %d,%d,%d,%d->%d,%d", nXOff, nYOff,
                  nXSize, nYSize, nBufXSize, nBufYSize);
@@ -652,9 +650,17 @@ int STACTADataset::Identify(GDALOpenInfo *poOpenInfo)
         return true;
     }
 
+    const bool bIsSingleDriver = poOpenInfo->IsSingleAllowedDriver("STACTA");
+    if (bIsSingleDriver && (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+                            STARTS_WITH(poOpenInfo->pszFilename, "https://")))
+    {
+        return true;
+    }
+
     if (
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "json") ||
+        (!bIsSingleDriver &&
+         !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "json")) ||
 #endif
         poOpenInfo->nHeaderBytes == 0)
     {
@@ -667,6 +673,14 @@ int STACTADataset::Identify(GDALOpenInfo *poOpenInfo)
         // before the loop.
         const char *pszHeader =
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+        while (*pszHeader != 0 &&
+               std::isspace(static_cast<unsigned char>(*pszHeader)))
+            ++pszHeader;
+        if (bIsSingleDriver)
+        {
+            return pszHeader[0] == '{';
+        }
+
         if (strstr(pszHeader, "\"stac_extensions\"") != nullptr &&
             (strstr(pszHeader, "\"tiled-assets\"") != nullptr ||
              strstr(pszHeader,

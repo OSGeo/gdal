@@ -180,8 +180,14 @@ void CPL_DLL CPL_STDCALL CPLSetCurrentErrorHandlerCatchDebug(int bCatchDebug);
 void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
 
 #ifdef WITHOUT_CPLDEBUG
-#define CPLDebug(...)         /* Eat all CPLDebug calls. */
-#define CPLDebugProgress(...) /* Eat all CPLDebugProgress calls. */
+#define CPLDebug(...)                                                          \
+    do                                                                         \
+    {                                                                          \
+    } while (0) /* Eat all CPLDebug calls. */
+#define CPLDebugProgress(...)                                                  \
+    do                                                                         \
+    {                                                                          \
+    } while (0) /* Eat all CPLDebugProgress calls. */
 #else
 void CPL_DLL CPLDebug(const char *, CPL_FORMAT_STRING(const char *), ...)
     CPL_PRINT_FUNC_FORMAT(2, 3);
@@ -198,7 +204,10 @@ void CPL_DLL CPLDebugProgress(const char *, CPL_FORMAT_STRING(const char *),
 /** Same as CPLDebug(), but expands to nothing for non-DEBUG builds.
  * @since GDAL 3.1
  */
-#define CPLDebugOnly(...)
+#define CPLDebugOnly(...)                                                      \
+    do                                                                         \
+    {                                                                          \
+    } while (0)
 #endif
 
 void CPL_DLL CPL_STDCALL _CPLAssert(const char *, const char *,
@@ -213,7 +222,10 @@ void CPL_DLL CPL_STDCALL _CPLAssert(const char *, const char *,
 #define CPLAssertAlwaysEval(expr) CPLAssert(expr)
 #else
 /** Assert on an expression. Only enabled in DEBUG mode */
-#define CPLAssert(expr)
+#define CPLAssert(expr)                                                        \
+    do                                                                         \
+    {                                                                          \
+    } while (0)
 #ifdef __cplusplus
 /** Assert on an expression in DEBUG mode. Evaluate it also in non-DEBUG mode
  * (useful to 'consume' a error return variable) */

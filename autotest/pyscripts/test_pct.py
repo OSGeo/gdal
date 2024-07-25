@@ -155,9 +155,10 @@ def test_pct2rgb_1(script_path, tmp_path, rgb2pct1_tif):
 
     output_tif = str(tmp_path / "test_pct2rgb_1.tif")
 
-    test_py_scripts.run_py_script(
-        script_path, "pct2rgb", f"{rgb2pct1_tif} {output_tif}"
+    _, err = test_py_scripts.run_py_script(
+        script_path, "pct2rgb", f"{rgb2pct1_tif} {output_tif}", return_stderr=True
     )
+    assert "UseExceptions" not in err
 
     ds = gdal.Open(output_tif)
     assert ds.GetRasterBand(1).Checksum() == 20963
@@ -220,13 +221,15 @@ def test_rgb2pct_3(script_path, tmp_path, rgb2pct2_tif):
 
     output_tif = str(tmp_path / "test_rgb2pct_3.tif")
 
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "rgb2pct",
         f"-pct {rgb2pct2_tif} "
         + test_py_scripts.get_data_path("gcore")
         + f"rgbsmall.tif {output_tif}",
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     ds = gdal.Open(output_tif)
     assert ds.GetRasterBand(1).Checksum() == 16596

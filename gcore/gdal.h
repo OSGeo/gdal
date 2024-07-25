@@ -1045,9 +1045,7 @@ void CPL_DLL CPL_STDCALL GDALDestroyDriver(GDALDriverH);
 int CPL_DLL CPL_STDCALL GDALRegisterDriver(GDALDriverH);
 void CPL_DLL CPL_STDCALL GDALDeregisterDriver(GDALDriverH);
 void CPL_DLL CPL_STDCALL GDALDestroyDriverManager(void);
-#ifndef DOXYGEN_SKIP
 void CPL_DLL GDALDestroy(void);
-#endif
 CPLErr CPL_DLL CPL_STDCALL GDALDeleteDataset(GDALDriverH, const char *);
 CPLErr CPL_DLL CPL_STDCALL GDALRenameDataset(GDALDriverH,
                                              const char *pszNewName,
@@ -1157,13 +1155,13 @@ void CPL_DLL CPL_STDCALL GDALEndAsyncReader(GDALDatasetH hDS,
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIO(
     GDALDatasetH hDS, GDALRWFlag eRWFlag, int nDSXOff, int nDSYOff,
     int nDSXSize, int nDSYSize, void *pBuffer, int nBXSize, int nBYSize,
-    GDALDataType eBDataType, int nBandCount, int *panBandCount, int nPixelSpace,
-    int nLineSpace, int nBandSpace) CPL_WARN_UNUSED_RESULT;
+    GDALDataType eBDataType, int nBandCount, const int *panBandCount,
+    int nPixelSpace, int nLineSpace, int nBandSpace) CPL_WARN_UNUSED_RESULT;
 
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIOEx(
     GDALDatasetH hDS, GDALRWFlag eRWFlag, int nDSXOff, int nDSYOff,
     int nDSXSize, int nDSYSize, void *pBuffer, int nBXSize, int nBYSize,
-    GDALDataType eBDataType, int nBandCount, int *panBandCount,
+    GDALDataType eBDataType, int nBandCount, const int *panBandCount,
     GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
     GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
@@ -1639,6 +1637,12 @@ CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFunc(
 CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFuncWithArgs(
     const char *pszName, GDALDerivedPixelFuncWithArgs pfnPixelFunc,
     const char *pszMetadata);
+
+CPLErr CPL_DLL GDALRasterInterpolateAtPoint(GDALRasterBandH hBand,
+                                            double dfPixel, double dfLine,
+                                            GDALRIOResampleAlg eInterpolation,
+                                            double *pdfRealValue,
+                                            double *pdfImagValue);
 
 /** Generic pointer for the working structure of VRTProcessedDataset
  * function. */
@@ -2515,11 +2519,15 @@ void CPL_DLL GDALAttributeFreeRawResult(GDALAttributeH hAttr, GByte *raw,
                                         size_t nSize);
 const char CPL_DLL *GDALAttributeReadAsString(GDALAttributeH hAttr);
 int CPL_DLL GDALAttributeReadAsInt(GDALAttributeH hAttr);
+int64_t CPL_DLL GDALAttributeReadAsInt64(GDALAttributeH hAttr);
 double CPL_DLL GDALAttributeReadAsDouble(GDALAttributeH hAttr);
 char CPL_DLL **
 GDALAttributeReadAsStringArray(GDALAttributeH hAttr) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL *GDALAttributeReadAsIntArray(GDALAttributeH hAttr, size_t *pnCount)
     CPL_WARN_UNUSED_RESULT;
+int64_t CPL_DLL *
+GDALAttributeReadAsInt64Array(GDALAttributeH hAttr,
+                              size_t *pnCount) CPL_WARN_UNUSED_RESULT;
 double CPL_DLL *
 GDALAttributeReadAsDoubleArray(GDALAttributeH hAttr,
                                size_t *pnCount) CPL_WARN_UNUSED_RESULT;
@@ -2527,6 +2535,11 @@ int CPL_DLL GDALAttributeWriteRaw(GDALAttributeH hAttr, const void *, size_t);
 int CPL_DLL GDALAttributeWriteString(GDALAttributeH hAttr, const char *);
 int CPL_DLL GDALAttributeWriteStringArray(GDALAttributeH hAttr, CSLConstList);
 int CPL_DLL GDALAttributeWriteInt(GDALAttributeH hAttr, int);
+int CPL_DLL GDALAttributeWriteIntArray(GDALAttributeH hAttr, const int *,
+                                       size_t);
+int CPL_DLL GDALAttributeWriteInt64(GDALAttributeH hAttr, int64_t);
+int CPL_DLL GDALAttributeWriteInt64Array(GDALAttributeH hAttr, const int64_t *,
+                                         size_t);
 int CPL_DLL GDALAttributeWriteDouble(GDALAttributeH hAttr, double);
 int CPL_DLL GDALAttributeWriteDoubleArray(GDALAttributeH hAttr, const double *,
                                           size_t);

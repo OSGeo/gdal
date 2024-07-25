@@ -245,21 +245,50 @@ bool OGRGeoJSONLayer::IngestAll()
 }
 
 /************************************************************************/
+/*                     SetOrUpdateFeaturePreparation()                  */
+/************************************************************************/
+
+bool OGRGeoJSONLayer::SetOrUpdateFeaturePreparation()
+{
+    if (!IsUpdatable())
+        return false;
+    if (poReader_)
+    {
+        auto nNextIndex = nFeatureReadSinceReset_;
+        if (!IngestAll())
+            return false;
+        SetNextByIndex(nNextIndex);
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                           ISetFeature()                              */
 /************************************************************************/
 
 OGRErr OGRGeoJSONLayer::ISetFeature(OGRFeature *poFeature)
 {
-    if (!IsUpdatable())
+    if (!SetOrUpdateFeaturePreparation())
         return OGRERR_FAILURE;
-    if (poReader_)
-    {
-        auto nNextIndex = nFeatureReadSinceReset_;
-        if (!IngestAll())
-            return OGRERR_FAILURE;
-        SetNextByIndex(nNextIndex);
-    }
     return OGRMemLayer::ISetFeature(poFeature);
+}
+
+/************************************************************************/
+/*                         IUpdateFeature()                             */
+/************************************************************************/
+
+OGRErr OGRGeoJSONLayer::IUpdateFeature(OGRFeature *poFeature,
+                                       int nUpdatedFieldsCount,
+                                       const int *panUpdatedFieldsIdx,
+                                       int nUpdatedGeomFieldsCount,
+                                       const int *panUpdatedGeomFieldsIdx,
+                                       bool bUpdateStyleString)
+{
+    if (!SetOrUpdateFeaturePreparation())
+        return OGRERR_FAILURE;
+    return OGRMemLayer::IUpdateFeature(
+        poFeature, nUpdatedFieldsCount, panUpdatedFieldsIdx,
+        nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
 }
 
 /************************************************************************/

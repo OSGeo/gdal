@@ -31,6 +31,7 @@
 
 
 import pathlib
+import shutil
 
 import gdaltest
 import pytest
@@ -110,9 +111,12 @@ def test_gdalinfo_lib_4():
 # Test all options
 
 
-def test_gdalinfo_lib_5():
+def test_gdalinfo_lib_5(tmp_path):
 
-    ds = gdal.Open("../gdrivers/data/byte.tif")
+    tmp_tif = str(tmp_path / "byte.tif")
+    shutil.copy("../gcore/data/byte.tif", tmp_tif)
+
+    ds = gdal.Open(tmp_tif)
 
     ret = gdal.Info(
         ds,
@@ -143,8 +147,6 @@ def test_gdalinfo_lib_5():
 
     ds = None
 
-    gdal.Unlink("../gdrivers/data/byte.tif.aux.xml")
-
 
 ###############################################################################
 # Test command line syntax + dataset as string
@@ -154,7 +156,7 @@ def test_gdalinfo_lib_6():
 
     ret = gdal.Info("../gcore/data/byte.tif", options="-json")
     assert ret["driverShortName"] == "GTiff", "wrong value for driverShortName."
-    assert type(ret) == dict
+    assert isinstance(ret, dict)
 
 
 ###############################################################################
@@ -168,7 +170,7 @@ def test_gdalinfo_lib_7():
         options="-json".encode("ascii").decode("ascii"),
     )
     assert ret["driverShortName"] == "GTiff", "wrong value for driverShortName."
-    assert type(ret) == dict
+    assert isinstance(ret, dict)
 
 
 ###############################################################################
@@ -179,7 +181,7 @@ def test_gdalinfo_lib_8():
 
     ret = gdal.Info("../gcore/data/byte.tif", options=["-json"])
     assert ret["driverShortName"] == "GTiff", "wrong value for driverShortName."
-    assert type(ret) == dict
+    assert isinstance(ret, dict)
 
 
 ###############################################################################
@@ -199,17 +201,18 @@ def test_gdalinfo_lib_nodatavalues():
 ###############################################################################
 
 
-def test_gdalinfo_lib_coordinate_epoch():
+@pytest.mark.parametrize("epoch", ["2021.0", "2021.3"])
+def test_gdalinfo_lib_coordinate_epoch(epoch):
 
     ds = gdal.Translate(
-        "", "../gcore/data/byte.tif", options='-of MEM -a_coord_epoch 2021.3"'
+        "", "../gcore/data/byte.tif", options=f'-of MEM -a_coord_epoch {epoch}"'
     )
     ret = gdal.Info(ds)
-    assert "Coordinate epoch: 2021.3" in ret
+    assert f"Coordinate epoch: {epoch}" in ret
 
     ret = gdal.Info(ds, format="json")
     assert "coordinateEpoch" in ret
-    assert ret["coordinateEpoch"] == 2021.3
+    assert ret["coordinateEpoch"] == float(epoch)
 
 
 ###############################################################################

@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "JPEGXL";
 
-bool CPL_DLL IsJPEGXLContainer(GDALOpenInfo *poOpenInfo);
+#define IsJPEGXLContainer PLUGIN_SYMBOL_NAME(IsJPEGXLContainer)
+#define JPEGXLDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(JPEGXLDriverSetCommonMetadata)
 
-void CPL_DLL JPEGXLDriverSetCommonMetadata(GDALDriver *poDriver);
+bool IsJPEGXLContainer(GDALOpenInfo *poOpenInfo);
+
+void JPEGXLDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

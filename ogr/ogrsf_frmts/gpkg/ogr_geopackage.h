@@ -275,6 +275,10 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     OGRErr DeleteLayerCommon(const char *pszLayerName);
     OGRErr DeleteRasterLayer(const char *pszLayerName);
     bool DeleteVectorOrRasterLayer(const char *pszLayerName);
+    bool RenameVectorOrRasterLayer(const char *pszLayerName,
+                                   const char *pszNewName);
+    bool RenameRasterLayer(const char *pszLayerName,
+                           const char *pszNewLayerName);
 
     bool ConvertGpkgSpatialRefSysToExtensionWkt2(bool bForceEpoch);
     void DetectSpatialRefSysColumns();
@@ -421,8 +425,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
   protected:
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing, GSpacing,
-                             GSpacing,
+                             GDALDataType, int, BANDMAP_TYPE, GSpacing,
+                             GSpacing, GSpacing,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     // Coming from GDALGPKGMBTilesLikePseudoDataset
@@ -477,6 +481,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool OpenOrCreateDB(int flags);
     void InstallSQLFunctions();
     bool HasGDALAspatialExtension();
+    std::string CreateRasterTriggersSQL(const std::string &osTableName);
 };
 
 /************************************************************************/

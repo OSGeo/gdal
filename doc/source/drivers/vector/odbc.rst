@@ -61,6 +61,9 @@ dialect.
 Dataset open options
 --------------------
 
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: LIST_ALL_TABLES
       :choices: YES, NO
 

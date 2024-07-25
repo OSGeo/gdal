@@ -188,7 +188,9 @@ static struct archive *VSICreateArchiveHandle(const std::string &osFSPrefix)
     else
     {
         archive_read_support_format_rar(pArchive);
+#ifdef ARCHIVE_FORMAT_RAR_V5
         archive_read_support_format_rar5(pArchive);
+#endif
     }
 
     return pArchive;
@@ -394,9 +396,20 @@ class VSILibArchiveHandler final : public VSIVirtualHandle
         return 0;
     }
 
+    virtual void ClearErr() override
+    {
+        m_bEOF = false;
+        m_bError = false;
+    }
+
     virtual int Eof() override
     {
         return m_bEOF ? 1 : 0;
+    }
+
+    virtual int Error() override
+    {
+        return m_bError ? 1 : 0;
     }
 
     virtual int Close() override
@@ -422,7 +435,12 @@ size_t VSILibArchiveHandler::Read(void *pBuffer, size_t nSize, size_t nCount)
     auto nRead = static_cast<size_t>(
         archive_read_data(m_poReader->GetArchiveHandler(), pBuffer, nToRead));
     if (nRead < nToRead)
-        m_bEOF = true;
+    {
+        if (m_nOffset + nRead == m_poReader->GetFileSize())
+            m_bEOF = true;
+        else
+            m_bError = true;
+    }
     m_nOffset += nRead;
     return nRead / nSize;
 }

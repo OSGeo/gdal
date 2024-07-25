@@ -1457,7 +1457,7 @@ def test_ogr_spatialite_2(sqlite_test_db):
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometry(geom)
     lyr.CreateFeature(dst_feat)
-    dst_feat.Destroy()
+    dst_feat = None
 
     lyr.CommitTransaction()
 
@@ -1577,7 +1577,6 @@ def test_ogr_spatialite_2(sqlite_test_db):
 
     geom = ogr.CreateGeometryFromWkt("POLYGON((2 2,2 8,8 8,8 2,2 2))")
     lyr.SetSpatialFilter(geom)
-    geom.Destroy()
 
     assert lyr.TestCapability(ogr.OLCFastFeatureCount) is not True
     assert lyr.TestCapability(ogr.OLCFastSpatialFilter) is not True
@@ -1638,7 +1637,6 @@ def test_ogr_spatialite_4(sqlite_test_db):
         feat = lyr.GetNextFeature()
         geom = feat.GetGeometryRef()
         assert geom is not None and geom.ExportToWkt() == "POINT (0 1)"
-        feat.Destroy()
 
     # Check that triggers and index are restored (#3474)
     with sqlite_test_db.ExecuteSQL("SELECT * FROM sqlite_master") as lyr:
@@ -1656,7 +1654,6 @@ def test_ogr_spatialite_4(sqlite_test_db):
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(100 -100)"))
     lyr.CreateFeature(feat)
-    feat.Destroy()
 
     # Check that the trigger is functional (#3474).
     with sqlite_test_db.ExecuteSQL("SELECT * FROM idx_geomspatialite_GEOMETRY") as lyr:
@@ -3314,7 +3311,7 @@ def test_ogr_sqlite_unique(tmp_vsimem):
     # and indexes
     # Note: leave create table in a single line because of regex spaces testing
     sql = (
-        'CREATE TABLE IF NOT EXISTS "test2" ( "fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\n"field_default" TEXT, "field_no_unique" TEXT DEFAULT \'UNIQUE\',"field_unique" TEXT UNIQUE,`field unique2` TEXT UNIQUE,field_unique3 TEXT UNIQUE, FIELD_UNIQUE_INDEX TEXT, `field unique index2`, "field_unique_index3" TEXT, NOT_UNIQUE TEXT);',
+        'CREATE TABLE IF NOT EXISTS "test2" ( "fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\n"field_default" TEXT, "field_no_unique" TEXT DEFAULT \'UNIQUE\',"field_unique" TEXT UNIQUE,`field unique2` TEXT UNIQUE,field_unique3 TEXT UNIQUE, FIELD_UNIQUE_INDEX TEXT, `field unique index2`, "field_unique_index3" TEXT, NOT_UNIQUE TEXT,field4 TEXT,field5 TEXT,field6 TEXT,CONSTRAINT ignored_constraint CHECK (fid >= 0),CONSTRAINT field5_6_uniq UNIQUE (field5, field6), CONSTRAINT field4_uniq UNIQUE (field4));',
         "CREATE UNIQUE INDEX test2_unique_idx ON test2(field_unique_index);",  # field_unique_index in lowercase whereas in uppercase in CREATE TABLE statement
         "CREATE UNIQUE INDEX test2_unique_idx2 ON test2(`field unique index2`);",
         'CREATE UNIQUE INDEX test2_unique_idx3 ON test2("field_unique_index3");',
@@ -3363,6 +3360,14 @@ def test_ogr_sqlite_unique(tmp_vsimem):
     assert fldDef.IsUnique()
 
     fldDef = layerDefinition.GetFieldDefn(8)
+    assert not fldDef.IsUnique()
+
+    # Constraint given by CONSTRAINT field4_uniq UNIQUE (field4)
+    fldDef = layerDefinition.GetFieldDefn(layerDefinition.GetFieldIndex("field4"))
+    assert fldDef.IsUnique()
+
+    # Constraint given by CONSTRAINT field5_6_uniq UNIQUE (field5, field6) ==> ignored
+    fldDef = layerDefinition.GetFieldDefn(layerDefinition.GetFieldIndex("field5"))
     assert not fldDef.IsUnique()
 
     ds = None
@@ -4087,3 +4092,15 @@ def test_ogr_sql_ST_Area_on_ellipsoid(tmp_vsimem, require_spatialite):
     with ds.ExecuteSQL("SELECT ST_Area(null, 1) FROM my_layer") as sql_lyr:
         f = sql_lyr.GetNextFeature()
         assert f[0] is None
+
+
+def test_ogr_sqlite_stddev():
+    """Test STDDEV_POP() and STDDEV_SAMP"""
+
+    ds = ogr.Open(":memory:", update=1)
+    ds.ExecuteSQL("CREATE TABLE test(v REAL)")
+    ds.ExecuteSQL("INSERT INTO test VALUES (4),(NULL),('invalid'),(5)")
+    with ds.ExecuteSQL("SELECT STDDEV_POP(v), STDDEV_SAMP(v) FROM test") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == pytest.approx(0.5, rel=1e-15)
+        assert f.GetField(1) == pytest.approx(0.5**0.5, rel=1e-15)

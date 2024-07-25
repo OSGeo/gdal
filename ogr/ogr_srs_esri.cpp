@@ -262,7 +262,8 @@ static CPLString OSR_GDS(char **papszNV, const char *pszField,
  * importFromESRI() by an automatic call to morphFromESRI().
  *
  * Currently only GEOGRAPHIC, UTM, STATEPLANE, GREATBRITIAN_GRID, ALBERS,
- * EQUIDISTANT_CONIC, TRANSVERSE (mercator), POLAR, MERCATOR and POLYCONIC
+ * EQUIDISTANT_CONIC, TRANSVERSE (mercator), POLAR, LAMBERT (Conic Conformal),
+ * LAMBERT_AZIMUTHAL, MERCATOR and POLYCONIC
  * projections are supported from old style files.
  *
  * At this time there is no equivalent exportToESRI() method.  Writing old
@@ -310,6 +311,8 @@ OGRErr OGRSpatialReference::importFromESRI(char **papszPrj)
     /* -------------------------------------------------------------------- */
     CPLString osProj = OSR_GDS(papszPrj, "Projection", "");
     bool bDatumApplied = false;
+    bool bHasRadiusOfSphereOfReference = false;
+    double dfRadiusOfSphereOfReference = 0.0;
 
     if (EQUAL(osProj, ""))
     {
@@ -420,10 +423,45 @@ OGRErr OGRSpatialReference::importFromESRI(char **papszPrj)
     }
     else if (EQUAL(osProj, "LAMBERT_AZIMUTHAL"))
     {
-        SetLAEA(OSR_GDV(papszPrj, "PARAM_2", 0.0),
-                OSR_GDV(papszPrj, "PARAM_1", 0.0),
-                OSR_GDV(papszPrj, "PARAM_3", 0.0),
-                OSR_GDV(papszPrj, "PARAM_4", 0.0));
+        for (int iLine = 0; papszPrj[iLine] != nullptr; iLine++)
+        {
+            if (strstr(papszPrj[iLine], "radius of the sphere of reference"))
+            {
+                bHasRadiusOfSphereOfReference = true;
+                break;
+            }
+        }
+        if (bHasRadiusOfSphereOfReference)
+        {
+            // Cf "Workstation" variation of
+            // https://webhelp.esri.com/arcgisdesktop/9.3/index.cfm?TopicName=Lambert_Azimuthal_Equal_Area
+            // that is supposed to be applied to spheres only.
+            // It is also documented at page 71 of
+            // https://kartoweb.itc.nl/geometrics/Map%20projections/Understanding%20Map%20Projections.pdf
+            // ("Understanding Map Projections", Melita Kennedy, ArcInfo 8)
+            // We don't particularly enforce the restriction to spheres, so if
+            // the "Parameters" line had non-spherical axis dimensions, they
+            // would be used.
+            // EPSG has a EPSG:1027 projection method "Lambert Azimuthal Equal Area (Spherical)"
+            // that uses the radius of the authalic sphere, for non-spherical
+            // ellipsoids, but it is not obvious that it would be appropriate here.
+            // Examples:
+            // - https://community.esri.com/t5/data-management-questions/problem-when-projecting-a-raster-file/td-p/400814/page/2
+            // - https://lists.osgeo.org/pipermail/gdal-dev/2024-May/058990.html
+            dfRadiusOfSphereOfReference = OSR_GDV(papszPrj, "PARAM_1", 0.0);
+            SetLAEA(OSR_GDV(papszPrj, "PARAM_3", 0.0),
+                    OSR_GDV(papszPrj, "PARAM_2", 0.0),
+                    OSR_GDV(papszPrj, "PARAM_4", 0.0),
+                    OSR_GDV(papszPrj, "PARAM_5", 0.0));
+        }
+        else
+        {
+            // Example: https://trac.osgeo.org/gdal/ticket/4302
+            SetLAEA(OSR_GDV(papszPrj, "PARAM_2", 0.0),
+                    OSR_GDV(papszPrj, "PARAM_1", 0.0),
+                    OSR_GDV(papszPrj, "PARAM_3", 0.0),
+                    OSR_GDV(papszPrj, "PARAM_4", 0.0));
+        }
     }
     else if (EQUAL(osProj, "EQUIDISTANT_CONIC"))
     {
@@ -589,8 +627,18 @@ OGRErr OGRSpatialReference::importFromESRI(char **papszPrj)
                 }
                 if (!bFoundParameters)
                 {
-                    // If unknown, default to WGS84 so there is something there.
-                    SetWellKnownGeogCS("WGS84");
+                    if (bHasRadiusOfSphereOfReference)
+                    {
+                        OGRSpatialReference oGCS;
+                        oGCS.SetGeogCS("unknown", "unknown", "unknown",
+                                       dfRadiusOfSphereOfReference, 0);
+                        CopyGeogCSFrom(&oGCS);
+                    }
+                    else
+                    {
+                        // If unknown, default to WGS84 so there is something there.
+                        SetWellKnownGeogCS("WGS84");
+                    }
                 }
             }
         }

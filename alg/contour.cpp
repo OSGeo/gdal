@@ -34,6 +34,7 @@
 #include "utility.h"
 #include "contour_generator.h"
 #include "segment_merger.h"
+#include <algorithm>
 
 #include "gdal.h"
 #include "gdal_alg.h"
@@ -42,6 +43,8 @@
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 #include "ogr_geometry.h"
+
+#include <limits>
 
 static CPLErr OGRPolygonContourWriter(double dfLevelMin, double dfLevelMax,
                                       const OGRMultiPolygon &multipoly,
@@ -562,6 +565,14 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
     if (opt)
     {
         contourInterval = CPLAtof(opt);
+        // Written this way to catch NaN as well.
+        if (!(contourInterval > 0))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid value for LEVEL_INTERVAL. Should be strictly "
+                     "positive.");
+            return CE_Failure;
+        }
     }
 
     double contourBase = 0.0;
@@ -662,24 +673,27 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
         GDALGetGeoTransform(hSrcDS, oCWI.adfGeoTransform);
     oCWI.nNextID = 0;
 
+    int bSuccessMin = FALSE;
+    double dfMinimum = GDALGetRasterMinimum(hBand, &bSuccessMin);
+    int bSuccessMax = FALSE;
+    double dfMaximum = GDALGetRasterMaximum(hBand, &bSuccessMax);
+    if ((!bSuccessMin || !bSuccessMax))
+    {
+        double adfMinMax[2];
+        if (GDALComputeRasterMinMax(hBand, false, adfMinMax) == CE_None)
+        {
+            dfMinimum = adfMinMax[0];
+            dfMaximum = adfMinMax[1];
+        }
+    }
+
     bool ok = false;
+
     try
     {
         if (polygonize)
         {
-            int bSuccessMin = FALSE;
-            double dfMinimum = GDALGetRasterMinimum(hBand, &bSuccessMin);
-            int bSuccessMax = FALSE;
-            double dfMaximum = GDALGetRasterMaximum(hBand, &bSuccessMax);
-            if ((!bSuccessMin || !bSuccessMax) && !fixedLevels.empty())
-            {
-                double adfMinMax[2];
-                if (GDALComputeRasterMinMax(hBand, false, adfMinMax) == CE_None)
-                {
-                    dfMinimum = adfMinMax[0];
-                    dfMaximum = adfMinMax[1];
-                }
-            }
+
             if (!fixedLevels.empty())
             {
                 // If the minimum raster value is larger than the first requested
@@ -701,10 +715,53 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
             PolygonContourWriter w(&oCWI, dfMinimum);
             typedef PolygonRingAppender<PolygonContourWriter> RingAppender;
             RingAppender appender(w);
+
+            if (expBase > 0.0)
+            {
+                // Do not provide the actual minimum value to level iterator
+                // in polygonal case, otherwise it can result in a polygon
+                // with a degenerate min=max range.
+                ExponentialLevelRangeIterator generator(
+                    expBase, -std::numeric_limits<double>::infinity());
+                auto levelIt{generator.range(dfMinimum, dfMaximum)};
+                for (auto i = levelIt.begin(); i != levelIt.end(); ++i)
+                {
+                    const double level = (*i).second;
+                    fixedLevels.push_back(level);
+                }
+                // Append minimum value to fixed levels
+                fixedLevels.push_back(dfMinimum);
+            }
+            else if (contourInterval != 0)
+            {
+                // Do not provide the actual minimum value to level iterator
+                // in polygonal case, otherwise it can result in a polygon
+                // with a degenerate min=max range.
+                IntervalLevelRangeIterator generator(
+                    contourBase, contourInterval,
+                    -std::numeric_limits<double>::infinity());
+                auto levelIt{generator.range(dfMinimum, dfMaximum)};
+                for (auto i = levelIt.begin(); i != levelIt.end(); ++i)
+                {
+                    const double level = (*i).second;
+                    fixedLevels.push_back(level);
+                }
+                // Append minimum value to fixed levels
+                fixedLevels.push_back(dfMinimum);
+            }
+
             if (!fixedLevels.empty())
             {
-                FixedLevelRangeIterator levels(&fixedLevels[0],
-                                               fixedLevels.size(), dfMaximum);
+                std::sort(fixedLevels.begin(), fixedLevels.end());
+                auto uniqueIt =
+                    std::unique(fixedLevels.begin(), fixedLevels.end());
+                fixedLevels.erase(uniqueIt, fixedLevels.end());
+                // Do not provide the actual minimum value to level iterator
+                // in polygonal case, otherwise it can result in a polygon
+                // with a degenerate min=max range.
+                FixedLevelRangeIterator levels(
+                    &fixedLevels[0], fixedLevels.size(),
+                    -std::numeric_limits<double>::infinity(), dfMaximum);
                 SegmentMerger<RingAppender, FixedLevelRangeIterator> writer(
                     appender, levels, /* polygonize */ true);
                 ContourGeneratorFromRaster<decltype(writer),
@@ -712,58 +769,46 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
                     cg(hBand, useNoData, noDataValue, writer, levels);
                 ok = cg.process(pfnProgress, pProgressArg);
             }
-            else if (expBase > 0.0)
-            {
-                ExponentialLevelRangeIterator levels(expBase);
-                SegmentMerger<RingAppender, ExponentialLevelRangeIterator>
-                    writer(appender, levels, /* polygonize */ true);
-                ContourGeneratorFromRaster<decltype(writer),
-                                           ExponentialLevelRangeIterator>
-                    cg(hBand, useNoData, noDataValue, writer, levels);
-                ok = cg.process(pfnProgress, pProgressArg);
-            }
-            else
-            {
-                IntervalLevelRangeIterator levels(contourBase, contourInterval);
-                SegmentMerger<RingAppender, IntervalLevelRangeIterator> writer(
-                    appender, levels, /* polygonize */ true);
-                ContourGeneratorFromRaster<decltype(writer),
-                                           IntervalLevelRangeIterator>
-                    cg(hBand, useNoData, noDataValue, writer, levels);
-                ok = cg.process(pfnProgress, pProgressArg);
-            }
         }
         else
         {
             GDALRingAppender appender(OGRContourWriter, &oCWI);
+
+            // Append all exp levels to fixed levels
+            if (expBase > 0.0)
+            {
+                ExponentialLevelRangeIterator generator(expBase, dfMinimum);
+                auto levelIt{generator.range(dfMinimum, dfMaximum)};
+                for (auto i = levelIt.begin(); i != levelIt.end(); ++i)
+                {
+                    const double level = (*i).second;
+                    fixedLevels.push_back(level);
+                }
+            }
+            else if (contourInterval != 0)
+            {
+                IntervalLevelRangeIterator levels(contourBase, contourInterval,
+                                                  dfMinimum);
+                auto levelIt{levels.range(dfMinimum, dfMaximum)};
+                for (auto i = levelIt.begin(); i != levelIt.end(); ++i)
+                {
+                    const double level = (*i).second;
+                    fixedLevels.push_back(level);
+                }
+            }
+
             if (!fixedLevels.empty())
             {
-                FixedLevelRangeIterator levels(&fixedLevels[0],
-                                               fixedLevels.size());
+                std::sort(fixedLevels.begin(), fixedLevels.end());
+                auto uniqueIt =
+                    std::unique(fixedLevels.begin(), fixedLevels.end());
+                fixedLevels.erase(uniqueIt, fixedLevels.end());
+                FixedLevelRangeIterator levels(
+                    &fixedLevels[0], fixedLevels.size(), dfMinimum, dfMaximum);
                 SegmentMerger<GDALRingAppender, FixedLevelRangeIterator> writer(
                     appender, levels, /* polygonize */ false);
                 ContourGeneratorFromRaster<decltype(writer),
                                            FixedLevelRangeIterator>
-                    cg(hBand, useNoData, noDataValue, writer, levels);
-                ok = cg.process(pfnProgress, pProgressArg);
-            }
-            else if (expBase > 0.0)
-            {
-                ExponentialLevelRangeIterator levels(expBase);
-                SegmentMerger<GDALRingAppender, ExponentialLevelRangeIterator>
-                    writer(appender, levels, /* polygonize */ false);
-                ContourGeneratorFromRaster<decltype(writer),
-                                           ExponentialLevelRangeIterator>
-                    cg(hBand, useNoData, noDataValue, writer, levels);
-                ok = cg.process(pfnProgress, pProgressArg);
-            }
-            else
-            {
-                IntervalLevelRangeIterator levels(contourBase, contourInterval);
-                SegmentMerger<GDALRingAppender, IntervalLevelRangeIterator>
-                    writer(appender, levels, /* polygonize */ false);
-                ContourGeneratorFromRaster<decltype(writer),
-                                           IntervalLevelRangeIterator>
                     cg(hBand, useNoData, noDataValue, writer, levels);
                 ok = cg.process(pfnProgress, pProgressArg);
             }
@@ -796,7 +841,9 @@ struct ContourGeneratorOpaque
                            double dfNoDataValue, double dfContourInterval,
                            double dfContourBase, GDALContourWriter pfnWriter,
                            void *pCBData)
-        : levels(dfContourBase, dfContourInterval), writer(pfnWriter, pCBData),
+        : levels(dfContourBase, dfContourInterval,
+                 -std::numeric_limits<double>::infinity()),
+          writer(pfnWriter, pCBData),
           merger(writer, levels, /* polygonize */ false),
           contourGenerator(nWidth, nHeight, bNoDataSet != 0, dfNoDataValue,
                            merger, levels)

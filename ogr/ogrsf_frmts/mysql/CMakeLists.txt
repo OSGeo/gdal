@@ -8,7 +8,8 @@ add_gdal_driver(
           ogrmysqltablelayer.cpp
   CORE_SOURCES
           ogrmysqldrivercore.cpp
-  PLUGIN_CAPABLE)
+  PLUGIN_CAPABLE
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET ogr_MySQL)
     return()

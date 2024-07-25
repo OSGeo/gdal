@@ -89,7 +89,7 @@ struct JPGDatasetOpenArgs
 {
     const char *pszFilename = nullptr;
     VSILFILE *fpLin = nullptr;
-    char **papszSiblingFiles = nullptr;
+    CSLConstList papszSiblingFiles = nullptr;
     int nScaleFactor = 1;
     bool bDoPAMInitialize = false;
     bool bUseInternalOverviews = false;
@@ -170,7 +170,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     void InitInternalOverviews();
     GDALDataset *InitEXIFOverview();
 
-    OGRSpatialReference m_oSRS{};
+    mutable OGRSpatialReference m_oSRS{};
     bool bGeoTransformValid;
     double adfGeoTransform[6];
     std::vector<gdal::GCP> m_aoGCPs{};
@@ -254,8 +254,9 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     virtual ~JPGDatasetCommon();
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, BANDMAP_TYPE,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual CPLErr GetGeoTransform(double *) override;
@@ -263,6 +264,8 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
+
+    const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;

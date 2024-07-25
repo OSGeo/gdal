@@ -126,7 +126,7 @@ def test_gdal_footprint_lib_destSRS():
 def test_gdal_footprint_lib_inline_geojson():
 
     ret = gdal.Footprint("", "../gcore/data/byte.tif", format="GeoJSON")
-    assert type(ret) == dict
+    assert isinstance(ret, dict)
     assert ret["crs"]["properties"]["name"] == "urn:ogc:def:crs:OGC:1.3:CRS84"
 
 
@@ -720,7 +720,10 @@ def test_gdal_footprint_lib_destSRS_and_targetCoordinateSystem_pixel_mutually_ex
 
 def test_gdal_footprint_lib_srcNodata_and_ovr_mutually_exclusive():
 
-    with pytest.raises(Exception, match="-srcnodata and -ovr are mutually exclusive"):
+    with pytest.raises(
+        Exception,
+        match=r"-srcnodata \"<value>\[ <value>\]...\"' not allowed with '-ovr <index>",
+    ):
         gdal.Footprint(
             "", "../gcore/data/byte.tif", format="Memory", srcNodata=0, ovr=0
         )

@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "MySQL";
 
-int CPL_DLL OGRMySQLDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRMySQLDriverIdentify PLUGIN_SYMBOL_NAME(OGRMySQLDriverIdentify)
+#define OGRMySQLDriverSetCommonMetadata                                        \
+    PLUGIN_SYMBOL_NAME(OGRMySQLDriverSetCommonMetadata)
 
-void CPL_DLL OGRMySQLDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRMySQLDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRMySQLDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

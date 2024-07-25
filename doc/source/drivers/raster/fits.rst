@@ -250,6 +250,7 @@ field to set a OGR field to NULL.
 Layer creation options
 ----------------------
 
+|about-layer-creation-options|
 The following layer creation options are available:
 
 - .. lco:: REPEAT_{fieldname}

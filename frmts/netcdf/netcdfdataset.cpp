@@ -70,6 +70,7 @@
 #include "cpl_time.h"
 #include "gdal.h"
 #include "gdal_frmts.h"
+#include "gdal_priv_templates.hpp"
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
 
@@ -759,22 +760,12 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
 #ifdef NCDF_DEBUG
             CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) read", dfNoData);
 #endif
-            if (eDataType == GDT_Int64 &&
-                dfNoData >=
-                    static_cast<double>(std::numeric_limits<int64_t>::min()) &&
-                dfNoData <=
-                    static_cast<double>(std::numeric_limits<int64_t>::max()) &&
-                dfNoData == static_cast<double>(static_cast<int64_t>(dfNoData)))
+            if (eDataType == GDT_Int64 && GDALIsValueExactAs<int64_t>(dfNoData))
             {
                 SetNoDataValueNoUpdate(static_cast<int64_t>(dfNoData));
             }
             else if (eDataType == GDT_UInt64 &&
-                     dfNoData >= static_cast<double>(
-                                     std::numeric_limits<uint64_t>::min()) &&
-                     dfNoData <= static_cast<double>(
-                                     std::numeric_limits<uint64_t>::max()) &&
-                     dfNoData ==
-                         static_cast<double>(static_cast<uint64_t>(dfNoData)))
+                     GDALIsValueExactAs<uint64_t>(dfNoData))
             {
                 SetNoDataValueNoUpdate(static_cast<uint64_t>(dfNoData));
             }
@@ -3901,6 +3892,56 @@ void netCDFDataset::SetProjectionFromVar(
             double xMinMax[2] = {0.0, 0.0};
             double yMinMax[2] = {0.0, 0.0};
 
+            const auto RoundMinMaxForFloatVals =
+                [](double &dfMin, double &dfMax, int nIntervals)
+            {
+                // Helps for a case where longitudes range from
+                // -179.99 to 180.0 with a 0.01 degree spacing.
+                // However as this is encoded in a float array,
+                // -179.99 is actually read as -179.99000549316406 as
+                // a double. Try to detect that and correct the rounding
+
+                const auto IsAlmostInteger = [](double dfVal)
+                {
+                    constexpr double THRESHOLD_INTEGER = 1e-3;
+                    return std::fabs(dfVal - std::round(dfVal)) <=
+                           THRESHOLD_INTEGER;
+                };
+
+                const double dfSpacing = (dfMax - dfMin) / nIntervals;
+                if (dfSpacing > 0)
+                {
+                    const double dfInvSpacing = 1.0 / dfSpacing;
+                    if (IsAlmostInteger(dfInvSpacing))
+                    {
+                        const double dfRoundedSpacing =
+                            1.0 / std::round(dfInvSpacing);
+                        const double dfMinDivRoundedSpacing =
+                            dfMin / dfRoundedSpacing;
+                        const double dfMaxDivRoundedSpacing =
+                            dfMax / dfRoundedSpacing;
+                        if (IsAlmostInteger(dfMinDivRoundedSpacing) &&
+                            IsAlmostInteger(dfMaxDivRoundedSpacing))
+                        {
+                            const double dfRoundedMin =
+                                std::round(dfMinDivRoundedSpacing) *
+                                dfRoundedSpacing;
+                            const double dfRoundedMax =
+                                std::round(dfMaxDivRoundedSpacing) *
+                                dfRoundedSpacing;
+                            if (static_cast<float>(dfMin) ==
+                                    static_cast<float>(dfRoundedMin) &&
+                                static_cast<float>(dfMax) ==
+                                    static_cast<float>(dfRoundedMax))
+                            {
+                                dfMin = dfRoundedMin;
+                                dfMax = dfRoundedMax;
+                            }
+                        }
+                    }
+                }
+            };
+
             if (!nc_get_att_double(nGroupDimXID, nVarDimXID, "actual_range",
                                    adfActualRange))
             {
@@ -3920,6 +3961,12 @@ void netCDFDataset::SetProjectionFromVar(
                 xMinMax[0] = pdfXCoord[0];
                 xMinMax[1] = pdfXCoord[xdim - 1];
                 node_offset = 0;
+
+                if (nc_var_dimx_datatype == NC_FLOAT)
+                {
+                    RoundMinMaxForFloatVals(xMinMax[0], xMinMax[1],
+                                            poDS->nRasterXSize - 1);
+                }
             }
 
             if (!nc_get_att_double(nGroupDimYID, nVarDimYID, "actual_range",
@@ -3941,6 +3988,12 @@ void netCDFDataset::SetProjectionFromVar(
                 yMinMax[0] = pdfYCoord[0];
                 yMinMax[1] = pdfYCoord[ydim - 1];
                 node_offset = 0;
+
+                if (nc_var_dimy_datatype == NC_FLOAT)
+                {
+                    RoundMinMaxForFloatVals(yMinMax[0], yMinMax[1],
+                                            poDS->nRasterYSize - 1);
+                }
             }
 
             double dfCoordOffset = 0.0;
@@ -6990,7 +7043,9 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId, bool bIsNC4,
     int nDimCount = -1;
     int status = nc_inq_ndims(nOldGrpId, &nDimCount);
     NCDF_ERR(status);
-    int *panDimIds = static_cast<int *>(CPLMalloc(sizeof(int) * nDimCount));
+    if (nDimCount < 0 || nDimCount > NC_MAX_DIMS)
+        return false;
+    int anDimIds[NC_MAX_DIMS];
     int nUnlimiDimID = -1;
     status = nc_inq_unlimdim(nOldGrpId, &nUnlimiDimID);
     NCDF_ERR(status);
@@ -6999,21 +7054,21 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId, bool bIsNC4,
         // In NC4, the dimension ids of a group are not necessarily in
         // [0,nDimCount-1] range
         int nDimCount2 = -1;
-        status = nc_inq_dimids(nOldGrpId, &nDimCount2, panDimIds, FALSE);
+        status = nc_inq_dimids(nOldGrpId, &nDimCount2, anDimIds, FALSE);
         NCDF_ERR(status);
         CPLAssert(nDimCount == nDimCount2);
     }
     else
     {
         for (int i = 0; i < nDimCount; i++)
-            panDimIds[i] = i;
+            anDimIds[i] = i;
     }
     for (int i = 0; i < nDimCount; i++)
     {
         char szDimName[NC_MAX_NAME + 1];
         szDimName[0] = 0;
         size_t nLen = 0;
-        const int nDimId = panDimIds[i];
+        const int nDimId = anDimIds[i];
         status = nc_inq_dim(nOldGrpId, nDimId, szDimName, &nLen);
         NCDF_ERR(status);
         if (NCDFIsUnlimitedDim(bIsNC4, nOldGrpId, nDimId))
@@ -7026,11 +7081,9 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId, bool bIsNC4,
         CPLAssert(nDimId == nNewDimId);
         if (status != NC_NOERR)
         {
-            CPLFree(panDimIds);
             return false;
         }
     }
-    CPLFree(panDimIds);
 
     // Clone main attributes
     if (!CloneAttributes(nOldGrpId, nNewGrpId, NC_GLOBAL, NC_GLOBAL))
@@ -7055,7 +7108,6 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId, bool bIsNC4,
         int nVarDimCount = -1;
         status = nc_inq_varndims(nOldGrpId, i, &nVarDimCount);
         NCDF_ERR(status);
-        int anDimIds[NC_MAX_DIMS];
         status = nc_inq_vardimid(nOldGrpId, i, anDimIds);
         NCDF_ERR(status);
         int nNewVarId = -1;
@@ -7946,9 +7998,20 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
         // Note: not calling Identify() directly, because we want the file type.
         // Only support NCDF_FORMAT* formats.
-        if (!(NCDF_FORMAT_NC == eTmpFormat || NCDF_FORMAT_NC2 == eTmpFormat ||
-              NCDF_FORMAT_NC4 == eTmpFormat || NCDF_FORMAT_NC4C == eTmpFormat))
+        if (NCDF_FORMAT_NC == eTmpFormat || NCDF_FORMAT_NC2 == eTmpFormat ||
+            NCDF_FORMAT_NC4 == eTmpFormat || NCDF_FORMAT_NC4C == eTmpFormat)
+        {
+            // ok
+        }
+        else if (eTmpFormat == NCDF_FORMAT_HDF4 &&
+                 poOpenInfo->IsSingleAllowedDriver("netCDF"))
+        {
+            // ok
+        }
+        else
+        {
             return nullptr;
+        }
     }
     else
     {
@@ -8310,13 +8373,12 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     bool bHasSimpleGeometries = false;  // but not necessarily valid
     if (poDS->nCFVersion >= 1.8)
     {
-        poDS->bSGSupport = true;
         bHasSimpleGeometries = poDS->DetectAndFillSGLayers(cdfid);
-        poDS->vcdf.enableFullVirtualMode();
-    }
-    else
-    {
-        poDS->bSGSupport = false;
+        if (bHasSimpleGeometries)
+        {
+            poDS->bSGSupport = true;
+            poDS->vcdf.enableFullVirtualMode();
+        }
     }
 
     char szConventions[NC_MAX_NAME + 1];
@@ -9285,9 +9347,12 @@ GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
     // Add Conventions, GDAL info and history.
     if (poDS->cdfid >= 0)
     {
-        const char *CF_Vector_Conv = poDS->bSGSupport
-                                         ? NCDF_CONVENTIONS_CF_V1_8
-                                         : NCDF_CONVENTIONS_CF_V1_6;
+        const char *CF_Vector_Conv =
+            poDS->bSGSupport ||
+                    // Use of variable length strings require CF-1.8
+                    EQUAL(aosOptions.FetchNameValueDef("FORMAT", ""), "NC4")
+                ? NCDF_CONVENTIONS_CF_V1_8
+                : NCDF_CONVENTIONS_CF_V1_6;
         poDS->bWriteGDALVersion = CPLTestBool(
             CSLFetchNameValueDef(papszOptions, "WRITE_GDAL_VERSION", "YES"));
         poDS->bWriteGDALHistory = CPLTestBool(
@@ -10313,7 +10378,7 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
         NCDFSafeStrcat(&pszAttrValue, "{", &nAttrValueSize);
 
     double dfValue = 0.0;
-    size_t m;
+    size_t m = 0;
     char szTemp[256];
     bool bSetDoubleFromStr = false;
 
@@ -10332,10 +10397,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 CPLCalloc(nAttrLen, sizeof(signed char)));
             nc_get_att_schar(nCdfId, nVarId, pszAttrName, pscTemp);
             dfValue = static_cast<double>(pscTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                snprintf(szTemp, sizeof(szTemp), "%d,", pscTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    snprintf(szTemp, sizeof(szTemp), "%d,", pscTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             snprintf(szTemp, sizeof(szTemp), "%d", pscTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10348,10 +10416,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<short *>(CPLCalloc(nAttrLen, sizeof(short)));
             nc_get_att_short(nCdfId, nVarId, pszAttrName, psTemp);
             dfValue = static_cast<double>(psTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                snprintf(szTemp, sizeof(szTemp), "%d,", psTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    snprintf(szTemp, sizeof(szTemp), "%d,", psTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             snprintf(szTemp, sizeof(szTemp), "%d", psTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10363,10 +10434,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
             int *pnTemp = static_cast<int *>(CPLCalloc(nAttrLen, sizeof(int)));
             nc_get_att_int(nCdfId, nVarId, pszAttrName, pnTemp);
             dfValue = static_cast<double>(pnTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                snprintf(szTemp, sizeof(szTemp), "%d,", pnTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    snprintf(szTemp, sizeof(szTemp), "%d,", pnTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             snprintf(szTemp, sizeof(szTemp), "%d", pnTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10379,10 +10453,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<float *>(CPLCalloc(nAttrLen, sizeof(float)));
             nc_get_att_float(nCdfId, nVarId, pszAttrName, pfTemp);
             dfValue = static_cast<double>(pfTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%.8g,", pfTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), "%.8g,", pfTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), "%.8g", pfTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10395,10 +10472,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<double *>(CPLCalloc(nAttrLen, sizeof(double)));
             nc_get_att_double(nCdfId, nVarId, pszAttrName, pdfTemp);
             dfValue = pdfTemp[0];
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%.16g,", pdfTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), "%.16g,", pdfTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), "%.16g", pdfTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10412,12 +10492,15 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
             nc_get_att_string(nCdfId, nVarId, pszAttrName, ppszTemp);
             bSetDoubleFromStr = true;
             dfValue = 0.0;
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                NCDFSafeStrcat(&pszAttrValue,
-                               ppszTemp[m] ? ppszTemp[m] : "{NULL}",
-                               &nAttrValueSize);
-                NCDFSafeStrcat(&pszAttrValue, ",", &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    NCDFSafeStrcat(&pszAttrValue,
+                                   ppszTemp[m] ? ppszTemp[m] : "{NULL}",
+                                   &nAttrValueSize);
+                    NCDFSafeStrcat(&pszAttrValue, ",", &nAttrValueSize);
+                }
             }
             NCDFSafeStrcat(&pszAttrValue, ppszTemp[m] ? ppszTemp[m] : "{NULL}",
                            &nAttrValueSize);
@@ -10431,10 +10514,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 CPLCalloc(nAttrLen, sizeof(unsigned char)));
             nc_get_att_uchar(nCdfId, nVarId, pszAttrName, pucTemp);
             dfValue = static_cast<double>(pucTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%u,", pucTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), "%u,", pucTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), "%u", pucTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10448,10 +10534,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 CPLCalloc(nAttrLen, sizeof(unsigned short)));
             nc_get_att_ushort(nCdfId, nVarId, pszAttrName, pusTemp);
             dfValue = static_cast<double>(pusTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%u,", pusTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), "%u,", pusTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), "%u", pusTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10464,10 +10553,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<unsigned int *>(CPLCalloc(nAttrLen, sizeof(int)));
             nc_get_att_uint(nCdfId, nVarId, pszAttrName, punTemp);
             dfValue = static_cast<double>(punTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%u,", punTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), "%u,", punTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), "%u", punTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10480,11 +10572,14 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<GIntBig *>(CPLCalloc(nAttrLen, sizeof(GIntBig)));
             nc_get_att_longlong(nCdfId, nVarId, pszAttrName, panTemp);
             dfValue = static_cast<double>(panTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB ",",
-                            panTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB ",",
+                                panTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB, panTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10497,11 +10592,14 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<GUIntBig *>(CPLCalloc(nAttrLen, sizeof(GUIntBig)));
             nc_get_att_ulonglong(nCdfId, nVarId, pszAttrName, panTemp);
             dfValue = static_cast<double>(panTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB ",",
-                            panTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB ",",
+                                panTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB, panTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);

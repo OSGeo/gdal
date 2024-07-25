@@ -85,7 +85,8 @@ static GDALDataset *OGRDXFDriverOpen(GDALOpenInfo *poOpenInfo)
 
     OGRDXFDataSource *poDS = new OGRDXFDataSource();
 
-    if (!poDS->Open(poOpenInfo->pszFilename))
+    if (!poDS->Open(poOpenInfo->pszFilename, false,
+                    poOpenInfo->papszOpenOptions))
     {
         delete poDS;
         poDS = nullptr;
@@ -145,6 +146,35 @@ void RegisterOGRDXF()
         "  <Option name='FIRST_ENTITY' type='int' description='Identifier of "
         "first entity'/>"
         "</CreationOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='CLOSED_LINE_AS_POLYGON' type='boolean' description="
+        "'Whether to expose closed POLYLINE/LWPOLYLINE as polygons' "
+        "default='NO'/>"
+        "  <Option name='INLINE_BLOCKS' type='boolean' description="
+        "'Whether INSERT entities are exploded with the geometry of the BLOCK "
+        "they reference' default='YES'/>"
+        "  <Option name='MERGE_BLOCK_GEOMETRIES' type='boolean' description="
+        "'Whether blocks should be merged into a compound geometry' "
+        "default='YES'/>"
+        "  <Option name='TRANSLATE_ESCAPE_SEQUENCES' type='boolean' "
+        "description="
+        "'Whether character escapes are honored where applicable, and MTEXT "
+        "control sequences are stripped' default='YES'/>"
+        "  <Option name='INCLUDE_RAW_CODE_VALUES' type='boolean' description="
+        "'Whether a RawCodeValues field should be added to contain all group "
+        "codes and values' default='NO'/>"
+        "  <Option name='3D_EXTENSIBLE_MODE' type='boolean' description="
+        "'Whether to include ASM entities with the raw ASM data stored in a "
+        "field' default='NO'/>"
+        "  <Option name='HATCH_TOLEARNCE' type='float' description="
+        "'Tolerance used when looking for the next component to add to the "
+        "hatch boundary.'/>"
+        "  <Option name='ENCODING' type='string' description="
+        "'Encoding name, as supported by iconv, to override $DWGCODEPAGE'/>"
+        "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST,
                               "<LayerCreationOptionList/>");

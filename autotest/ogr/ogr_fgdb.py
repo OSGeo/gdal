@@ -1203,6 +1203,7 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv, test_gdb):
     # if ds.StartTransaction(force=True) != 0:
     if (
         gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2404")
         or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
@@ -1683,6 +1684,7 @@ def test_ogr_fgdb_19bis(openfilegdb_drv, fgdb_drv, test_gdb):
 
     if (
         gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2404")
         or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
@@ -1714,6 +1716,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv, tmp_path):
 
     if (
         gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2404")
         or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
@@ -2202,6 +2205,7 @@ def test_ogr_fgdb_21(fgdb_drv, fgdb_sdk_1_4_or_later, tmp_path):
     # Fails on MULTIPOINT ZM
     if (
         gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2404")
         or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
@@ -3139,3 +3143,30 @@ def test_ogr_filegdb_write_geom_coord_precision(tmp_path):
             "HighPrecision": "true",
         }
     }
+
+
+###############################################################################
+# Test dummy use of CreateLayerFromGeomFieldDefn() with a geometry field
+# definition of type wkbNone
+
+
+def test_ogr_filegdb_CreateLayerFromGeomFieldDefn_geom_type_none(tmp_path):
+
+    filename = str(tmp_path / "test.gdb")
+    ds = gdal.GetDriverByName("FileGDB").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    geom_fld = ogr.GeomFieldDefn("geometry", ogr.wkbNone)
+    ds.CreateLayerFromGeomFieldDefn("test", geom_fld)
+    ds.Close()
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbNone
+    ds.Close()
+
+    filename2 = str(tmp_path / "test2.gdb")
+    gdal.VectorTranslate(filename2, filename, format="FileGDB")
+
+    ds = ogr.Open(filename2)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbNone
+    ds.Close()

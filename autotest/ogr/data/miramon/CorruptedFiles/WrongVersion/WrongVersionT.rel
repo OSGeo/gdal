@@ -1,0 +1,23 @@
+[VERSIO]
+Vers=4
+SubVers=3
+VersMetaDades=5
+SubVersMetaDades=0
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+descriptor=Identificador Gràfic intern
+
+
+[SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
+HorizontalSystemIdentifier=UTM-31N-ETRS89
+
+[EXTENT]
+MinX=2.9E+301
+MaxX=2.9E+301
+MinY=2.9E+301
+MaxY=2.9E+301
+

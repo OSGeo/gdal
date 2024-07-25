@@ -1,7 +1,7 @@
 .. _gdal2tiles:
 
 ================================================================================
-gdal2tiles.py
+gdal2tiles
 ================================================================================
 
 .. only:: html
@@ -16,13 +16,15 @@ Synopsis
 .. code-block::
 
 
-    gdal2tiles.py [--help] [--help-general]
+    gdal2tiles [--help] [--help-general]
                   [-p <profile>] [-r resampling] [-s <srs>] [-z <zoom>]
                   [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u <url>]
                   [-w <webviewer>] [-t <title>] [-c <copyright>]
                   [--processes=<NB_PROCESSES>] [--mpi] [--xyz]
                   [--tilesize=<PIXELS>] --tiledriver=<DRIVER> [--tmscompatible]
-                  [--excluded-values=<EXCLUDED_VALUES>] [--excluded-values-pct-threshold=<EXCLUDED_VALUES_PCT_THRESHOLD>]
+                  [--excluded-values=<EXCLUDED_VALUES>]
+                  [--excluded-values-pct-threshold=<EXCLUDED_VALUES_PCT_THRESHOLD>]
+                  [--nodata-values-pct-threshold=<NODATA_VALUES_PCT_THRESHOLD>]
                   [-g <googlekey] [-b <bingkey>] <input_file> [<output_dir>] [<COMMON_OPTIONS>]
 
 Description
@@ -50,6 +52,10 @@ can publish a picture without proper georeferencing too.
 .. note::
 
     Config options of the input drivers may have an effect on the output of gdal2tiles. An example driver config option is GDAL_PDF_DPI, which can be found at :ref:`configoptions`
+
+.. note::
+
+    gdal2tiles is a Python utility, and is only available if GDAL Python bindings are available.
 
 
 .. program:: gdal2tiles
@@ -155,10 +161,22 @@ can publish a picture without proper georeferencing too.
   that pixels matching one of the excluded value tuples are still considered
   as valid, when determining the target pixel validity/density.
 
+  .. versionadded:: 3.9
+
 .. option:: --excluded-values-pct-threshold=EXCLUDED_VALUES_PCT_THRESHOLD
 
   Minimum percentage of source pixels that must be set at one of the --excluded-values to cause the excluded
   value, that is in majority among source pixels, to be used as the target pixel value. Default value is 50(%)
+
+  .. versionadded:: 3.9
+
+.. option:: --nodata-values-pct-threshold=<NODATA_VALUES_PCT_THRESHOLD>
+
+  Minimum percentage of source pixels that must be at nodata (or alpha=0 or any
+  other way to express transparent pixel) to cause the target pixel value to
+  be transparent. Default value is 100 (%), which means that a target pixel is
+  transparent only if all contributing source pixels are transparent.
+  Only taken into account for average resampling.
 
   .. versionadded:: 3.9
 
@@ -215,10 +233,6 @@ Options for generated HTML viewers a la Google Maps
   Bing Maps API key from https://www.bingmapsportal.com/
 
 
-.. note::
-
-    gdal2tiles.py is a Python script that needs to be run against Python GDAL binding.
-
 MapML options
 +++++++++++++
 
@@ -250,7 +264,7 @@ WEBP options
 WEBP tiledriver support is new to GDAL 3.6. It is enabled by using --tiledriver=WEBP.
 
 
-The following configuration options are available to further customize the webp output:
+The following configuration options are available to further customize the WebP output:
 
 .. option:: --webp-quality=<QUALITY>
 
@@ -274,7 +288,7 @@ JPEG tiledriver support is new to GDAL 3.9. It is enabled by using --tiledriver=
 Note that JPEG does not support transparency, hence edge tiles will display black
 pixels in areas not covered by the source raster.
 
-The following configuration options are available to further customize the webp output:
+The following configuration options are available to further customize the JPEG output:
 
 .. option:: ---jpeg-quality=JPEG_QUALITY
 
@@ -288,18 +302,18 @@ Basic example:
 
 .. code-block::
 
-  gdal2tiles.py --zoom=2-5 input.tif output_folder
+  gdal2tiles --zoom=2-5 input.tif output_folder
 
 
 MapML generation:
 
 .. code-block::
 
-  gdal2tiles.py --zoom=16-18 -w mapml -p APSTILE --url "https://example.com" input.tif output_folder
+  gdal2tiles --zoom=16-18 -w mapml -p APSTILE --url "https://example.com" input.tif output_folder
 
 
 MPI example:
 
 .. code-block::
 
-  mpiexec -n $NB_PROCESSES gdal2tiles.py --mpi --config GDAL_CACHEMAX 500 --zoom=2-5 input.tif output_folder
+  mpiexec -n $NB_PROCESSES gdal2tiles --mpi --config GDAL_CACHEMAX 500 --zoom=2-5 input.tif output_folder

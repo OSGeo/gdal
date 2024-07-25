@@ -5,8 +5,8 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG BASE_IMAGE=ubuntu:22.04
-ARG TARGET_BASE_IMAGE=ubuntu:22.04
+ARG BASE_IMAGE=ubuntu:24.04
+ARG TARGET_BASE_IMAGE=ubuntu:24.04
 
 FROM $BASE_IMAGE as builder
 
@@ -19,19 +19,19 @@ COPY ./bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
 
 RUN . /buildscripts/bh-set-envvars.sh \
     && if test "${TARGET_ARCH}" != ""; then \
-    rm -f /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu jammy-security main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ jammy-security main restricted universe multiverse" >> /etc/apt/sources.list \
+    rm -f /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble-updates main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble-backports main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble-updates main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble-security main restricted universe" >> /etc/apt/sources.list \
     && dpkg --add-architecture ${TARGET_ARCH} \
     && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-11-${GCC_ARCH}-linux-gnu \
-    && ln -s ${GCC_ARCH}-linux-gnu-gcc-11 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
-    && ln -s ${GCC_ARCH}-linux-gnu-g++-11 /usr/bin/${GCC_ARCH}-linux-gnu-g++ \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-13-${GCC_ARCH}-linux-gnu \
+    && ln -s ${GCC_ARCH}-linux-gnu-gcc-13 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
+    && ln -s ${GCC_ARCH}-linux-gnu-g++-13 /usr/bin/${GCC_ARCH}-linux-gnu-g++ \
     && rm -rf /var/lib/apt/lists/*; \
     fi
 
@@ -43,7 +43,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
             build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
-            libtiff5-dev${APT_ARCH_SUFFIX} \
+            libtiff-dev${APT_ARCH_SUFFIX} \
     && rm -rf /var/lib/apt/lists/*
 
 ARG JAVA_VERSION=17
@@ -126,21 +126,26 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
-ARG TILEDB_VERSION=2.17.4
+ARG TILEDB_VERSION=2.23.0
+COPY ./tiledb-FindLZ4_EP.cmake.patch /buildscripts/tiledb-FindLZ4_EP.cmake.patch
+COPY ./tiledb-FindOpenSSL_EP.cmake.patch /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch
 RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        libspdlog-dev${APT_ARCH_SUFFIX} \
+        libspdlog-dev${APT_ARCH_SUFFIX} libmagic-dev${APT_ARCH_SUFFIX} \
+    && rm -rf /var/lib/apt/lists/* \
     && mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
     && cd tiledb \
+    && patch -p0 < /buildscripts/tiledb-FindLZ4_EP.cmake.patch \
+    && patch -p0 < /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch \
     && mkdir build_cmake \
     && cd build_cmake \
-    && ../bootstrap --prefix=/usr --disable-werror --disable-tests --disable-avx2 \
+    && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DTILEDB_WERROR=OFF -DTILEDB_SUPERBUILD=OFF  -DTILEDB_TESTS=OFF -DCOMPILER_SUPPORTS_AVX2=FALSE  -DOPENSSL_INCLUDE_DIR=/usr/include -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/${GCC_ARCH}-linux-gnu/libcrypto.so -DOPENSSL_SSL_LIBRARY=/usr/lib/${GCC_ARCH}-linux-gnu/libssl.so \
     && make -j$(nproc) \
-    && make install-tiledb DESTDIR="/build_thirdparty" \
-    && make install-tiledb \
+    && make -j$(nproc) install DESTDIR="/build_thirdparty" \
+    && make -j$(nproc) install \
     && cd ../.. \
     && rm -rf tiledb \
     && for i in /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -167,6 +172,25 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && rm -rf openjpeg-${OPENJPEG_VERSION} \
     ); fi
 
+# Build libOpenDRIVE
+ARG OPENDRIVE_VERSION=0.5.0-gdal
+RUN . /buildscripts/bh-set-envvars.sh \
+    && if test "${OPENDRIVE_VERSION}" != ""; then ( \
+    wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
+    && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
+    && rm -f ${OPENDRIVE_VERSION}.tar.gz \
+    && cd libOpenDRIVE-${OPENDRIVE_VERSION} \
+    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr/ \
+    && make -j$(nproc) \
+    && make install \
+    && mkdir -p /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libOpenDrive*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
+    ); fi
+    
 #Build File Geodatabase
 
 ARG WITH_FILEGDB=
@@ -188,7 +212,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd QB3/QB3lib \
     && mkdir build \
     && cd build \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release .. \
+    && cmake .. ${CMAKE_EXTRA_ARGS} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
     && make -j$(nproc) \
     && make -j$(nproc) install \
     && make install DESTDIR="/build_thirdparty" \
@@ -227,9 +251,9 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Arrow C++
-ARG ARROW_VERSION=15.0.2-1
+ARG ARROW_VERSION=16.1.0-1
 # ARROW_SOVERSION to be updated in the "Build final image" section too
-ARG ARROW_SOVERSION=1500
+ARG ARROW_SOVERSION=1600
 RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release wget \
@@ -273,12 +297,11 @@ ARG PROJ_VERSION=master
 RUN . /buildscripts/bh-set-envvars.sh \
     && /buildscripts/bh-proj.sh
 
+# Build GDAL
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
-
-# Build GDAL
 
 COPY ./bh-gdal.sh /buildscripts/bh-gdal.sh
 RUN . /buildscripts/bh-set-envvars.sh \
@@ -290,7 +313,7 @@ FROM $TARGET_BASE_IMAGE as runner
 USER root
 RUN date
 ARG JAVA_VERSION=17
-ARG ARROW_SOVERSION=1500
+ARG ARROW_SOVERSION=1600
 
 # Update distro
 RUN apt-get update -y && apt-get upgrade -y \
@@ -300,30 +323,32 @@ ARG TARGET_ARCH=
 RUN apt-get update \
 # PROJ dependencies
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        libsqlite3-0 libtiff5 libcurl4 \
+        libsqlite3-0 libtiff6 libcurl4 \
         wget curl unzip ca-certificates \
 # GDAL dependencies
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libopenjp2-7 libcairo2 python3-numpy \
-        libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos3.10.2 libgeos-c1v5 \
+        libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos3.12.1 libgeos-c1v5 \
         libxml2 libexpat1 \
-        libxerces-c3.2 libnetcdf-c++4 netcdf-bin libpoppler118 libspatialite7 librasterlite2-1 gpsbabel \
-        libhdf4-0-alt libhdf5-103 libhdf5-cpp-103 poppler-utils libfreexl1 unixodbc mdbtools libwebp7 \
+        libxerces-c3.2 libnetcdf-c++4-1 netcdf-bin libpoppler134 libspatialite8 librasterlite2-1 gpsbabel \
+        libhdf4-0-alt libhdf5-103-1 libhdf5-cpp-103-1 poppler-utils libfreexl1 unixodbc mdbtools libwebp7 \
         liblcms2-2 libpcre3 libcrypto++8 libfyba0 \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
-        libmysqlclient21 libogdi4.1 libcfitsio9 openjdk-"$JAVA_VERSION"-jre \
-        libzstd1 bash bash-completion libpq5 libssl3 \
-        libarmadillo10 libpython3.10 libopenexr25 libheif1 \
+        libmysqlclient21 libogdi4.1 libcfitsio10 \
+        libzstd1 bash bash-completion libpq5 \
+        libarmadillo12 libpython3.12 libopenexr-3-1-30 libheif1 \
         libdeflate0 libblosc1 liblz4-1 \
         libbrotli1 \
         libarchive13 \
         libaec0 \
-        libspdlog1 \
+        libspdlog1.12 libmagic1t64 \
         python-is-python3 \
         # pil for antialias option of gdal2tiles
         python3-pil \
-    # Workaround bug in ogdi packaging
-    && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \
+    # Install JRE with --no-install-recommends, otherwise it draws default-jre, which draws systemd, which fails to install when running the arm64v8/ubuntu:24.04 image on a 64bit host
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openjdk-"$JAVA_VERSION"-jre \
+    # Worksround OGDI packaging bug for Ubuntu 24.04
+    && ln -s /usr/lib/$(uname -p)-linux-gnu/ogdi/4.1/libvrf.so /usr/lib/$(uname -p)-linux-gnu \
     # Install Arrow C++
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release wget \
     && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \

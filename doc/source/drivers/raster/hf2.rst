@@ -33,6 +33,9 @@ Driver capabilities
 Creation options
 ----------------
 
+|about-creation-options|
+The following creation options are supported:
+
 -  .. co:: COMPRESS
       :choices: YES, NO
       :default: NO

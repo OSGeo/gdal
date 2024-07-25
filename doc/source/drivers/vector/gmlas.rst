@@ -33,11 +33,15 @@ Driver capabilities
 Opening syntax
 --------------
 
-The connection string is GMLAS:/path/to/the.gml. Note the GMLAS: prefix.
+The connection string is GMLAS:/path/to/the.gml. Note the ``GMLAS:`` prefix.
 If this prefix it is omitted, then the GML driver is likely to be used.
 
-It is also possible to only used "GMLAS:" as the connection string, but
-in that case the schemas must be explicitly provided with the XSD open
+Alternatively, starting with GDAL 3.10, specifying the ``-if GMLAS`` option to command line utilities
+accepting it, or ``GMLAS`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed filename.
+
+It is also possible to only used ``GMLAS:`` as the connection string, but
+in that case the schemas must be explicitly provided with the ``XSD`` open
 option.
 
 Mapping of XML structure to OGR layers and fields
@@ -180,6 +184,9 @@ nested elements.
 
 Open options
 ------------
+
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: XSD
 
@@ -341,6 +348,7 @@ affected by those filters.
 Dataset creation options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+|about-dataset-creation-options|
 The supported dataset creation options are:
 
 -  .. dsco:: INPUT_XSD

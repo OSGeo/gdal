@@ -68,6 +68,15 @@ def test_basic_test_1():
     pytest.fail("did not get expected error message, got %s" % gdal.GetLastErrorMsg())
 
 
+def test_basic_test_invalid_open_flag():
+    with pytest.raises(Exception, match="invalid value for GDALAccess"):
+        gdal.Open("data/byte.tif", "invalid")
+
+    assert gdal.OF_RASTER not in (gdal.GA_ReadOnly, gdal.GA_Update)
+    with pytest.raises(Exception, match="invalid value for GDALAccess"):
+        gdal.Open("data/byte.tif", gdal.OF_RASTER)
+
+
 @pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
 def test_basic_test_strace_non_existing_file():
 
@@ -330,6 +339,22 @@ def test_basic_test_11():
         assert gdal.GetUseExceptions()
         with pytest.raises(Exception):
             gdal.OpenEx("non existing")
+
+    try:
+        with gdal.ExceptionMgr(useExceptions=True):
+            try:
+                gdal.OpenEx("non existing")
+            except Exception:
+                pass
+    except Exception:
+        pytest.fails("Exception thrown whereas it should not have")
+
+    with gdal.ExceptionMgr(useExceptions=True):
+        try:
+            gdal.OpenEx("non existing")
+        except Exception:
+            pass
+        gdal.Open("data/byte.tif")
 
 
 ###############################################################################
@@ -938,3 +963,30 @@ def test_tmp_vsimem(tmp_vsimem):
     assert isinstance(tmp_vsimem, os.PathLike)
 
     assert gdal.VSIStatL(tmp_vsimem) is not None
+
+
+def test_band_iter():
+
+    ds = gdal.Open("data/rgba.tif")
+
+    assert len(ds) == 4
+
+    bands = []
+
+    for band in ds:
+        bands.append(band)
+
+    assert len(bands) == 4
+
+
+def test_band_getitem():
+
+    ds = gdal.Open("data/rgba.tif")
+
+    assert ds[2].this == ds.GetRasterBand(2).this
+
+    with pytest.raises(IndexError):
+        ds[0]
+
+    with pytest.raises(IndexError):
+        ds[5]

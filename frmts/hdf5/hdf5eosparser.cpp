@@ -233,6 +233,57 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
                     poGridMetadata->aoDimensions.push_back(oDim);
                 }
             }
+
+            // Happens for example for products following
+            // AMSR-E/AMSR2 Unified L3 Daily 12.5 km Brightness Temperatures,
+            // Sea Ice Concentration, Motion & Snow Depth Polar Grids
+            // (https://nsidc.org/sites/default/files/au_si12-v001-userguide_1.pdf)
+            // such as
+            // https://n5eil01u.ecs.nsidc.org/AMSA/AU_SI12.001/2012.07.02/AMSR_U2_L3_SeaIce12km_B04_20120702.he5
+            const int nXDim = oGrid.GetInteger("XDim", 0);
+            const int nYDim = oGrid.GetInteger("YDim", 0);
+            if (poGridMetadata->aoDimensions.empty() && nXDim > 0 && nYDim > 0)
+            {
+                // Check that all data fields have a DimList=(YDim,XDim)
+                // property. This may be unneeded, but at least if we meet
+                // this condition, that should be a strong hint that the first
+                // dimension is Y, and the second X.
+                bool bDimListIsYDimXDim = true;
+                for (const auto &oDataField : oDataFields.GetChildren())
+                {
+                    if (oDataField.GetType() == CPLJSONObject::Type::Object)
+                    {
+                        const auto oDimList = oDataField.GetArray("DimList");
+                        if (!(oDimList.Size() == 2 &&
+                              oDimList[0].ToString() == "YDim" &&
+                              oDimList[1].ToString() == "XDim"))
+                        {
+                            bDimListIsYDimXDim = false;
+                            break;
+                        }
+                    }
+                }
+                if (bDimListIsYDimXDim)
+                {
+                    {
+                        const std::string osDimensionName("YDim");
+                        oMapDimensionNameToSize[osDimensionName] = nYDim;
+                        Dimension oDim;
+                        oDim.osName = osDimensionName;
+                        oDim.nSize = nYDim;
+                        poGridMetadata->aoDimensions.push_back(oDim);
+                    }
+                    {
+                        const std::string osDimensionName("XDim");
+                        oMapDimensionNameToSize[osDimensionName] = nXDim;
+                        Dimension oDim;
+                        oDim.osName = osDimensionName;
+                        oDim.nSize = nXDim;
+                        poGridMetadata->aoDimensions.push_back(oDim);
+                    }
+                }
+            }
+
             poGridMetadata->osProjection = oGrid.GetString("Projection");
             poGridMetadata->nProjCode =
                 GetGTCPProjectionCode(poGridMetadata->osProjection);

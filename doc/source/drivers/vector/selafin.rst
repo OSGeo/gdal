@@ -325,8 +325,8 @@ Some examples of layer filtering specifications:
 Datasource creation options
 ---------------------------
 
-Datasource creation options can be specified with the "``-dsco``" flag
-in ogr2ogr.
+|about-dataset-creation-options|
+The following dataset creation options are supported:
 
 - .. dsco:: TITLE
 
@@ -348,8 +348,8 @@ An example of datasource creation option is:
 Layer creation options
 ----------------------
 
-Layer creation options can be specified with the "``-lco``" flag in
-ogr2ogr.
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 - .. lco:: DATE
 
@@ -358,7 +358,7 @@ ogr2ogr.
      floating-point value giving the number of seconds since the starting
      date.
 
-An example of datasource creation option is: ``-lco DATE=24000``.
+An example of a layer creation option is: ``-lco DATE=24000``.
 
 Notes about the creation and the update of a Selafin datasource
 ---------------------------------------------------------------

@@ -28,7 +28,7 @@ are also handled.
 Starting with GDAL 2.2, the "JSonStringList", "JSonIntegerList",
 "JSonInteger64List" and "JSonRealList" SQLite declaration types are used
 to map the corresponding OGR StringList, IntegerList, Integer64List and
-RealList types. The field values are then encoded as JSon arrays, with
+RealList types. The field values are then encoded as JSON arrays, with
 proper CSV escaping.
 
 SQLite databases often do not work well over NFS, or some other
@@ -240,6 +240,9 @@ Relationship creation is supported since GDAL 3.7, for one-to-many relationships
 Dataset open options
 ~~~~~~~~~~~~~~~~~~~~
 
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: LIST_ALL_TABLES
       :choices: YES, NO
 
@@ -269,6 +272,9 @@ Dataset open options
 
 Database creation options
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+|about-dataset-creation-options|
+The following dataset creation options are supported:
 
 -  .. dsco:: METADATA
       :choices: YES, NO
@@ -315,6 +321,9 @@ Database creation options
 
 Layer creation options
 ~~~~~~~~~~~~~~~~~~~~~~
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: FORMAT
       :choices: WKB, WKT, SPATIALITE
@@ -415,8 +424,8 @@ Layer creation options
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 - .. config:: SQLITE_LIST_ALL_TABLES
      :choices: YES, NO

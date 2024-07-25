@@ -31,6 +31,11 @@ The syntax to open a OGC API - Features datasource is :
 
 where endpoint is the landing page or a the path to collections/{id}.
 
+Starting with GDAL 3.10, specifying the ``-if OAPIF`` option to command line utilities
+accepting it, or ``OAPIF`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+URL without the ``OAPIF:`` prefix.
+
 Layer schema
 ------------
 
@@ -72,7 +77,8 @@ options documented below.
 Open options
 ------------
 
-The following options are available:
+|about-open-options|
+The following open options are available:
 
 -  .. oo:: URL
 
@@ -142,106 +148,130 @@ Examples
 
    ::
 
-      $ ogrinfo OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster
+      $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr
 
-      INFO: Open of `OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster'
+      INFO: Open of `OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr'
             using driver `OAPIF' successful.
-      1: flurstueck (Multi Polygon)
-      2: gebaeudebauwerk (Multi Polygon)
-      3: verwaltungseinheit (Multi Polygon)
+      1: governmentalservice (title: Feuerwehrleitstellen) (Point)
 
 -  Listing the summary information of a OGC API - Features layer :
 
    ::
 
-      $ ogrinfo -al -so OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck
+      $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr governmentalservice -al -so
 
-      Layer name: flurstueck
+      INFO: Open of `OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr'
+            using driver `OAPIF' successful.
+
+      Layer name: governmentalservice
       Metadata:
-        TITLE=Flurstück
-      Geometry: Multi Polygon
-      Feature Count: 9308456
-      Extent: (5.612726, 50.237351) - (9.589634, 52.528630)
+        DESCRIPTION=Staatliche Verwaltungs- und Sozialdienste wie öffentliche Verwaltung, Katastrophenschutz, Schulen und Krankenhäuser, die von öffentlichen oder privaten Einrichtungen erbracht werden, soweit sie in den Anwendungsbereich der Richtlinie 2007/2/EG fallen. Dieser Datensatz enthält Informationen zu Feuerwehrleitstellen.
+        TITLE=Feuerwehrleitstellen
+      Geometry: Point
+      Feature Count: 52
+      Extent: (6.020720, 50.654901) - (9.199363, 52.300806)
       Layer SRS WKT:
-      GEOGCS["WGS 84",
-          DATUM["WGS_1984",
-              SPHEROID["WGS 84",6378137,298.257223563,
-                  AUTHORITY["EPSG","7030"]],
-              AUTHORITY["EPSG","6326"]],
+      GEOGCRS["WGS 84",
+          DATUM["World Geodetic System 1984",
+              ELLIPSOID["WGS 84",6378137,298.257223563,
+                  LENGTHUNIT["metre",1]]],
           PRIMEM["Greenwich",0,
-              AUTHORITY["EPSG","8901"]],
-          UNIT["degree",0.0174532925199433,
-              AUTHORITY["EPSG","9122"]],
-          AUTHORITY["EPSG","4326"]]
+              ANGLEUNIT["degree",0.0174532925199433]],
+          CS[ellipsoidal,2],
+              AXIS["geodetic latitude (Lat)",north,
+                  ORDER[1],
+                  ANGLEUNIT["degree",0.0174532925199433]],
+              AXIS["geodetic longitude (Lon)",east,
+                  ORDER[2],
+                  ANGLEUNIT["degree",0.0174532925199433]],
+          ID["EPSG",4326]]
+      Data axis to CRS axis mapping: 2,1
       id: String (0.0)
-      aktualit: Date (0.0)
-      flaeche: Real (0.0)
-      flstkennz: String (0.0)
-      land: String (0.0)
-      gemarkung: String (0.0)
-      flur: String (0.0)
-      flurstnr: String (0.0)
-      gmdschl: String (0.0)
-      regbezirk: String (0.0)
-      kreis: String (0.0)
-      gemeinde: String (0.0)
-      lagebeztxt: String (0.0)
-      tntxt: String (0.0)
+      name: String (0.0)
+      inspireId: String (0.0)
+      serviceType.title: String (0.0)
+      serviceType.href: String (0.0)
+      areaOfResponsibility.1.title: String (0.0)
+      areaOfResponsibility.1.href: String (0.0)
+      pointOfContact.address.thoroughfare: String (0.0)
+      pointOfContact.address.locatorDesignator: String (0.0)
+      pointOfContact.address.postCode: String (0.0)
+      pointOfContact.address.adminUnit: String (0.0)
+      pointOfContact.address.text: String (0.0)
+      pointOfContact.telephoneVoice: String (0.0)
+      pointOfContact.telephoneFacsimile: String (0.0)
+      pointOfContact.telephoneFacsimileEmergency: String (0.0)
+      inDistrict.title: String (0.0)
+      inDistrict.href: String (0.0)
+      inDistrictFreeTown.title: String (0.0)
+      inDistrictFreeTown.href: String (0.0)
+      inGovernmentalDistrict.title: String (0.0)
+      inGovernmentalDistrict.href: String (0.0)
 
 -  Filtering on a property (depending on if the server exposes filtering capabilities of the properties, part or totally of the filter might be evaluated on client side)
 
    ::
 
+      $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr governmentalservice -al -q -where "name = 'Schwelm'"
 
-      $ ogrinfo OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -where "flur = '028'"
-      Layer name: flurstueck
+      Layer name: governmentalservice
       Metadata:
-        TITLE=Flurstück
-      OGRFeature(flurstueck):1
-        id (String) = DENW19AL0000geMFFL
-        aktualit (Date) = 2017/04/26
-        flaeche (Real) = 1739
-        flstkennz (String) = 05297001600193______
-        land (String) = Nordrhein-Westfalen
-        gemarkung (String) = Wünnenberg
-        flur (String) = 016
-        flurstnr (String) = 193
-        gmdschl (String) = 05774040
-        regbezirk (String) = Detmold
-        kreis (String) = Paderborn
-        gemeinde (String) = Bad Wünnenberg
-        lagebeztxt (String) = Bleiwäscher Straße
-        tntxt (String) = Platz / Parkplatz;1739
-        MULTIPOLYGON (((8.71191 51.491084,8.7123 51.491067,8.712385 51.491645,8.712014 51.491666,8.711993 51.491603,8.71196 51.491396,8.711953 51.491352,8.71191 51.491084)))
+        DESCRIPTION=Staatliche Verwaltungs- und Sozialdienste wie öffentliche Verwaltung, Katastrophenschutz, Schulen und Krankenhäuser, die von öffentlichen oder privaten Einrichtungen erbracht werden, soweit sie in den Anwendungsbereich der Richtlinie 2007/2/EG fallen. Dieser Datensatz enthält Informationen zu Feuerwehrleitstellen.
+        TITLE=Feuerwehrleitstellen
+      OGRFeature(governmentalservice):1
+        id (String) = LtS01
+        name (String) = Schwelm
+        inspireId (String) = https://geodaten.nrw.de/id/inspire-us-feuerwehr/governmentalservice/LtS01
+        serviceType.title (String) = Brandschutzdienst
+        serviceType.href (String) = http://inspire.ec.europa.eu/codelist/ServiceTypeValue/fireProtectionService
+        areaOfResponsibility.1.title (String) = Breckerfeld
+        areaOfResponsibility.1.href (String) = https://registry.gdi-de.org/id/de.nw.inspire.au.basis-dlm/AdministrativeUnit_05954004
+        pointOfContact.address.thoroughfare (String) = Hauptstr.
+        pointOfContact.address.locatorDesignator (String) = 92
+        pointOfContact.address.postCode (String) = 58332
+        pointOfContact.address.adminUnit (String) = Schwelm
+        pointOfContact.address.text (String) = Hauptstr. 92, 58332 Schwelm
+        pointOfContact.telephoneVoice (String) = +49233644400
+        pointOfContact.telephoneFacsimile (String) = +4923364440400
+        pointOfContact.telephoneFacsimileEmergency (String) = +49233644407100
+        inDistrict.title (String) = Ennepe-Ruhr
+        inDistrict.href (String) = Ennepe-Ruhr
+        inGovernmentalDistrict.title (String) = Arnsberg
+        inGovernmentalDistrict.href (String) = https://registry.gdi-de.org/id/de.nw.inspire.au.basis-dlm/AdministrativeUnit_059
+        POINT (7.29854802787082 51.2855116825595)
 
-      [...]
 
 -  Spatial filtering
 
    ::
 
-      $ ogrinfo OAPIF:https://www.ldproxy.nrw.de/rest/services/kataster flurstueck -al -q -spat 8.7 51.4 8.8 51.5
+      $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr governmentalservice -al -q -spat 7.1 51.2 7.2 51.5
 
-      Layer name: flurstueck
+      Layer name: governmentalservice
       Metadata:
-        TITLE=Flurstück
-      OGRFeature(flurstueck):1
-        id (String) = DENW19AL0000ht7LFL
-        aktualit (Date) = 2013/02/19
-        flaeche (Real) = 18
-        flstkennz (String) = 05292602900206______
-        land (String) = Nordrhein-Westfalen
-        gemarkung (String) = Fürstenberg
-        flur (String) = 029
-        flurstnr (String) = 206
-        gmdschl (String) = 05774040
-        regbezirk (String) = Detmold
-        kreis (String) = Paderborn
-        gemeinde (String) = Bad Wünnenberg
-        lagebeztxt (String) = Karpke
-        tntxt (String) = Fließgewässer / Bach;18
-        MULTIPOLYGON (((8.768521 51.494915,8.768535 51.494882,8.768569 51.494908,8.768563 51.494925,8.768521 51.494915)))
-      [...]
+        DESCRIPTION=Staatliche Verwaltungs- und Sozialdienste wie öffentliche Verwaltung, Katastrophenschutz, Schulen und Krankenhäuser, die von öffentlichen oder privaten Einrichtungen erbracht werden, soweit sie in den Anwendungsbereich der Richtlinie 2007/2/EG fallen. Dieser Datensatz enthält Informationen zu Feuerwehrleitstellen.
+        TITLE=Feuerwehrleitstellen
+      OGRFeature(governmentalservice):1
+        id (String) = LtS33
+        name (String) = Wuppertal-Solingen
+        inspireId (String) = https://geodaten.nrw.de/id/inspire-us-feuerwehr/governmentalservice/LtS33
+        serviceType.title (String) = Brandschutzdienst
+        serviceType.href (String) = http://inspire.ec.europa.eu/codelist/ServiceTypeValue/fireProtectionService
+        areaOfResponsibility.1.title (String) = Wuppertal
+        areaOfResponsibility.1.href (String) = https://registry.gdi-de.org/id/de.nw.inspire.au.basis-dlm/AdministrativeUnit_05124000
+        pointOfContact.address.thoroughfare (String) = August-Bebel-Str.
+        pointOfContact.address.locatorDesignator (String) = 55
+        pointOfContact.address.postCode (String) = 42109
+        pointOfContact.address.adminUnit (String) = Wuppertal
+        pointOfContact.address.text (String) = August-Bebel-Str. 55, 42109 Wuppertal
+        pointOfContact.telephoneVoice (String) = +492025631111
+        pointOfContact.telephoneFacsimile (String) = +49202445331
+        pointOfContact.telephoneFacsimileEmergency (String) = 112
+        inDistrictFreeTown.title (String) = Wuppertal
+        inDistrictFreeTown.href (String) = Wuppertal
+        inGovernmentalDistrict.title (String) = Düsseldorf
+        inGovernmentalDistrict.href (String) = https://registry.gdi-de.org/id/de.nw.inspire.au.basis-dlm/AdministrativeUnit_051
+        POINT (7.13806554104892 51.2674471939457)
 
 See Also
 --------

@@ -36,7 +36,6 @@ import shutil
 from collections import defaultdict
 from copy import copy
 
-import gdaltest
 import pytest
 import test_py_scripts
 
@@ -70,9 +69,6 @@ def script_path():
 
 def test_gdal_calc_help(script_path):
 
-    if gdaltest.is_travis_branch("sanitize"):
-        pytest.skip("fails on sanitize for unknown reason")
-
     assert "ERROR" not in test_py_scripts.run_py_script(
         script_path, "gdal_calc", "--help"
     )
@@ -83,9 +79,6 @@ def test_gdal_calc_help(script_path):
 
 
 def test_gdal_calc_version(script_path):
-
-    if gdaltest.is_travis_branch("sanitize"):
-        pytest.skip("fails on sanitize for unknown reason")
 
     assert "ERROR" not in test_py_scripts.run_py_script(
         script_path, "gdal_calc", "--version"
@@ -163,9 +156,14 @@ def test_gdal_calc_py_1(script_path, tmp_path, stefan_full_rgba):
     test_id, test_count = 1, 3
     out = make_temp_filename_list(tmp_path, test_id, test_count)
 
-    test_py_scripts.run_py_script(
-        script_path, "gdal_calc", f"-A {infile} --calc=A --overwrite --outfile {out[0]}"
+    _, err = test_py_scripts.run_py_script(
+        script_path,
+        "gdal_calc",
+        f"-A {infile} --calc=A --overwrite --outfile {out[0]}",
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
+
     test_py_scripts.run_py_script(
         script_path,
         "gdal_calc",

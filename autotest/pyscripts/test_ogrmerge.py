@@ -30,7 +30,6 @@
 
 import sys
 
-import gdaltest
 import pytest
 import test_py_scripts
 from test_py_scripts import samples_path
@@ -78,7 +77,7 @@ def test_ogrmerge_1(script_path, tmp_path):
 
     out_shp = str(tmp_path / "out.shp")
 
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "ogrmerge",
         f"-single -o {out_shp} "
@@ -86,7 +85,9 @@ def test_ogrmerge_1(script_path, tmp_path):
         + "poly.shp "
         + test_py_scripts.get_data_path("ogr")
         + "poly.shp",
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     ds = ogr.Open(out_shp)
     lyr = ds.GetLayer(0)
@@ -245,9 +246,6 @@ def test_ogrmerge_6(script_path, tmp_path):
 def test_ogrmerge_7(script_path, tmp_path):
 
     out_vrt = str(tmp_path / "out.vrt")
-
-    if gdaltest.is_travis_branch("sanitize"):
-        pytest.skip("fails on sanitize for unknown reason")
 
     # No match in -single mode
     test_py_scripts.run_py_script(

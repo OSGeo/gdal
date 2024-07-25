@@ -45,6 +45,7 @@ New fields can be added or removed to a layer that already has features.
 Layer creation options
 ~~~~~~~~~~~~~~~~~~~~~~
 
+|about-layer-creation-options|
 The following layer creation options are available:
 
 -  .. lco:: ADVERTIZE_UTF8

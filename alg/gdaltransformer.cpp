@@ -397,73 +397,67 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
     if ((!nOptions || (nOptions & GDAL_SWO_FORCE_SQUARE_PIXEL) == 0) &&
         pTransformArg && bIsGDALGenImgProjTransform)
     {
-        double adfGeoTransform[6];
+        const GDALGenImgProjTransformInfo *psInfo =
+            static_cast<const GDALGenImgProjTransformInfo *>(pTransformArg);
 
-        if (GDALGetGeoTransform(hSrcDS, adfGeoTransform) == CE_None &&
-            adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
+        if (!psInfo->pSrcTransformer &&
+            !psInfo->bHasCustomTransformationPipeline &&
+            !psInfo->pDstTransformer && psInfo->adfSrcGeoTransform[2] == 0 &&
+            psInfo->adfSrcGeoTransform[4] == 0 &&
+            psInfo->adfDstGeoTransform[0] == 0 &&
+            psInfo->adfDstGeoTransform[1] == 1 &&
+            psInfo->adfDstGeoTransform[2] == 0 &&
+            psInfo->adfDstGeoTransform[3] == 0 &&
+            psInfo->adfDstGeoTransform[4] == 0 &&
+            psInfo->adfDstGeoTransform[5] == 1)
         {
-            const GDALGenImgProjTransformInfo *psInfo =
-                static_cast<const GDALGenImgProjTransformInfo *>(pTransformArg);
+            const OGRSpatialReference *poSourceCRS = nullptr;
+            const OGRSpatialReference *poTargetCRS = nullptr;
 
-            if (psInfo && !psInfo->pSrcTransformer &&
-                !psInfo->bHasCustomTransformationPipeline &&
-                !psInfo->pDstTransformer &&
-                psInfo->adfDstGeoTransform[0] == 0 &&
-                psInfo->adfDstGeoTransform[1] == 1 &&
-                psInfo->adfDstGeoTransform[2] == 0 &&
-                psInfo->adfDstGeoTransform[3] == 0 &&
-                psInfo->adfDstGeoTransform[4] == 0 &&
-                psInfo->adfDstGeoTransform[5] == 1)
+            if (psInfo->pReprojectArg)
             {
-                const OGRSpatialReference *poSourceCRS = nullptr;
-                const OGRSpatialReference *poTargetCRS = nullptr;
+                const GDALReprojectionTransformInfo *psRTI =
+                    static_cast<const GDALReprojectionTransformInfo *>(
+                        psInfo->pReprojectArg);
+                poSourceCRS = psRTI->poForwardTransform->GetSourceCS();
+                poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
+            }
 
-                if (psInfo->pReprojectArg)
+            if ((!poSourceCRS && !poTargetCRS) ||
+                (poSourceCRS && poTargetCRS &&
+                 poSourceCRS->IsSame(poTargetCRS)))
+            {
+
+                const bool bNorthUp{psInfo->adfSrcGeoTransform[5] < 0.0};
+
+                memcpy(padfGeoTransformOut, psInfo->adfSrcGeoTransform,
+                       sizeof(double) * 6);
+
+                if (!bNorthUp)
                 {
-                    const GDALReprojectionTransformInfo *psRTI =
-                        static_cast<const GDALReprojectionTransformInfo *>(
-                            psInfo->pReprojectArg);
-                    poSourceCRS = psRTI->poForwardTransform->GetSourceCS();
-                    poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
+                    padfGeoTransformOut[3] = padfGeoTransformOut[3] +
+                                             nInYSize * padfGeoTransformOut[5];
+                    padfGeoTransformOut[5] = -padfGeoTransformOut[5];
                 }
 
-                if ((!poSourceCRS && !poTargetCRS) ||
-                    (poSourceCRS && poTargetCRS &&
-                     poSourceCRS->IsSame(poTargetCRS)))
+                *pnPixels = nInXSize;
+                *pnLines = nInYSize;
+
+                // Calculate extent from hSrcDS
+                if (padfExtent)
                 {
-
-                    const bool bNorthUp{adfGeoTransform[5] < 0.0};
-
-                    memcpy(padfGeoTransformOut, adfGeoTransform,
-                           sizeof(double) * 6);
-
+                    padfExtent[0] = psInfo->adfSrcGeoTransform[0];
+                    padfExtent[1] = psInfo->adfSrcGeoTransform[3] +
+                                    nInYSize * psInfo->adfSrcGeoTransform[5];
+                    padfExtent[2] = psInfo->adfSrcGeoTransform[0] +
+                                    nInXSize * psInfo->adfSrcGeoTransform[1];
+                    padfExtent[3] = psInfo->adfSrcGeoTransform[3];
                     if (!bNorthUp)
                     {
-                        padfGeoTransformOut[3] =
-                            padfGeoTransformOut[3] +
-                            nInYSize * padfGeoTransformOut[5];
-                        padfGeoTransformOut[5] = -padfGeoTransformOut[5];
+                        std::swap(padfExtent[1], padfExtent[3]);
                     }
-
-                    *pnPixels = nInXSize;
-                    *pnLines = nInYSize;
-
-                    // Calculate extent from hSrcDS
-                    if (padfExtent)
-                    {
-                        padfExtent[0] = adfGeoTransform[0];
-                        padfExtent[1] =
-                            adfGeoTransform[3] + nInYSize * adfGeoTransform[5];
-                        padfExtent[2] =
-                            adfGeoTransform[0] + nInXSize * adfGeoTransform[1];
-                        padfExtent[3] = adfGeoTransform[3];
-                        if (!bNorthUp)
-                        {
-                            std::swap(padfExtent[1], padfExtent[3]);
-                        }
-                    }
-                    return CE_None;
                 }
+                return CE_None;
             }
         }
     }
@@ -1488,7 +1482,12 @@ static void InsertCenterLong(GDALDatasetH hDS, OGRSpatialReference *poSRS,
                           adfGeoTransform[0] + nXSize * adfGeoTransform[1] +
                               nYSize * adfGeoTransform[2]));
 
-    if (dfMaxLong - dfMinLong > 360.0)
+    const double dfEpsilon =
+        std::max(std::fabs(adfGeoTransform[1]), std::fabs(adfGeoTransform[2]));
+    // If the raster covers more than 360 degree (allow an extra pixel),
+    // give up
+    constexpr double RELATIVE_EPSILON = 0.05;  // for numeric precision issues
+    if (dfMaxLong - dfMinLong > 360.0 + dfEpsilon * (1 + RELATIVE_EPSILON))
         return;
 
     /* -------------------------------------------------------------------- */

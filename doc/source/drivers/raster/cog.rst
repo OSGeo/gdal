@@ -32,6 +32,8 @@ Driver capabilities
 Creation Options
 ----------------
 
+|about-creation-options|
+
 General creation options
 ************************
 

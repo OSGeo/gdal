@@ -339,6 +339,7 @@ class OGRPGTableLayer final : public OGRPGLayer
     void CheckGeomTypeCompatibility(int iGeomField, OGRGeometry *poGeom);
 
     int bRetrieveFID = true;
+    int bSkipConflicts = false;
     int bHasWarnedAlreadySetFID = false;
 
     char **papszOverrideColumnTypes = nullptr;
@@ -604,7 +605,7 @@ class OGRPGDataSource final : public OGRDataSource
     int bHavePostGIS = false;
     int bHaveGeography = false;
 
-    int bUserTransactionActive = false;
+    bool bUserTransactionActive = false;
     int bSavePointActive = false;
     int nSoftTransactionLevel = 0;
 
@@ -637,6 +638,15 @@ class OGRPGDataSource final : public OGRDataSource
     CPLString osActiveSchema{};
     int bListAllTables = false;
     bool m_bSkipViews = false;
+
+    bool m_bOgrSystemTablesMetadataTableExistenceTested = false;
+    bool m_bOgrSystemTablesMetadataTableFound = false;
+
+    bool m_bCreateMetadataTableIfNeededRun = false;
+    bool m_bCreateMetadataTableIfNeededSuccess = false;
+
+    bool m_bHasWritePermissionsOnMetadataTableRun = false;
+    bool m_bHasWritePermissionsOnMetadataTableSuccess = false;
 
     void LoadTables();
 
@@ -740,6 +750,15 @@ class OGRPGDataSource final : public OGRDataSource
     int UseCopy();
     void StartCopy(OGRPGTableLayer *poPGLayer);
     OGRErr EndCopy();
+
+    bool IsUserTransactionActive()
+    {
+        return bUserTransactionActive;
+    }
+
+    bool CreateMetadataTableIfNeeded();
+    bool HasOgrSystemTablesMetadataTable();
+    bool HasWritePermissionsOnMetadataTable();
 };
 
 #endif /* ndef OGR_PG_H_INCLUDED */

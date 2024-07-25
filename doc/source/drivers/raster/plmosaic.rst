@@ -61,13 +61,14 @@ directly opened.
 Open options
 ------------
 
+|about-open-options|
 The following open options are available : API_KEY, MOSAIC, CACHE_PATH,
-TRUST_CACHE and USE_TILES. They have the same semantics as the above
-describe parameters of same name.
+TRUST_CACHE and USE_TILES. They have the same semantics as the above-described parameters of same name.
 
 Configuration options
 ---------------------
 
+|about-config-options|
 The following configuration options are available :
 
 .. config:: PL_API_KEY

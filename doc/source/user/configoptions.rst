@@ -147,7 +147,6 @@ Example:
     [.sentinel_s2_l1c]
     path=/vsis3/sentinel-s2-l1c
     AWS_REQUEST_PAYER=requester
-    \endverbatim
 
 
 
@@ -744,14 +743,27 @@ Networking options
 
 -  .. config:: GDAL_HTTP_MAX_RETRY
       :since: 2.3
+      :default: 0
 
-      Set the number of HTTP attempts in case of HTTP errors 429, 502, 503, or 504.
+      Set the number of HTTP attempts, when a retry is allowed.
+      (cf :config:`GDAL_HTTP_RETRY_CODES` for conditions where a retry is attempted.)
+      The default value is 0, meaning no retry.
 
 -  .. config:: GDAL_HTTP_RETRY_DELAY
       :choices: <seconds>
       :since: 2.3
+      :default: 30
 
       Set the delay between HTTP attempts.
+
+-  .. config:: GDAL_HTTP_RETRY_CODES
+      :choices: ALL or comma-separated list of codes
+      :since: 3.10
+
+      Specify which HTTP error codes should trigger a retry attempt.
+      Valid values are ``ALL`` or a comma-separated list of HTTP codes.
+      By default, 429, 500, 502, 503 or 504 HTTP errors are considered, as
+      well as other situations with a particular HTTP or Curl error message.
 
 -  .. config:: GDAL_HTTP_TCP_KEEPALIVE
       :choices: YES, NO
@@ -803,14 +815,15 @@ Networking options
 
 -  .. config:: GDAL_HTTP_VERSION
       :since: 2.3
-      :choices: 1.0, 1.1, 2, 2TLS
+      :choices: 1.0, 1.1, 2, 2TLS, 2PRIOR_KNOWLEDGE
 
       Specifies which HTTP version to use. Will default to 1.1 generally (except on
       some controlled environments, like Google Compute Engine VMs, where 2TLS will
       be the default). Support for HTTP/2 requires curl 7.33 or later, built
       against nghttp2. "2TLS" means that HTTP/2 will be attempted for HTTPS
       connections only. Whereas "2" means that HTTP/2 will be attempted for HTTP or
-      HTTPS. The interest of enabling HTTP/2 is the use of HTTP/2 multiplexing when
+      HTTPS. "2PRIOR_KNOWLEDGE" means that the server will be assumed to support
+      HTTP/2. The interest of enabling HTTP/2 is the use of HTTP/2 multiplexing when
       reading GeoTIFFs stored on /vsicurl/ and related virtual file systems.
 
 -  .. config:: GDAL_HTTP_MULTIPLEX
@@ -915,8 +928,9 @@ Networking options
 
 -  .. config:: GDAL_HTTP_USERAGENT
 
-      When set this string will be used to set the ``User-Agent`` header in the http
+      This string will be used to set the ``User-Agent`` header in the HTTP
       request sent to the remote server.
+      Defaults to "GDAL/x.y.z" where x.y.z is the GDAL build version.
 
 -  .. config:: GDAL_HTTP_UNSAFESSL
       :choices: YES, NO
@@ -1054,8 +1068,8 @@ PROJ options
 
 .. _list_config_options:
 
-List of configuration options and where they apply
---------------------------------------------------
+List of configuration options and where they are documented
+-----------------------------------------------------------
 
 .. config_index::
    :types: config

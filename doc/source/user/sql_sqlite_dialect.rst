@@ -68,7 +68,8 @@ be used in joins are searched from the master database.
 
 .. code-block:: shell
 
-    ogrinfo jointest.gpkg -dialect INDIRECT_SQLITE -sql "SELECT a.ID,b.ID FROM jointest a JOIN \"jointest2.shp\".\"jointest2\" b ON a.ID=b.ID"
+    ogrinfo jointest.gpkg -dialect INDIRECT_SQLITE -sql \
+    "SELECT a.ID,b.ID FROM jointest a JOIN \"jointest2.shp\".\"jointest2\" b ON a.ID=b.ID"
 
 The column names that can be used in the result column list, in WHERE, JOIN, ... clauses
 are the field names of the layers. Expressions, SQLite functions, spatial functions, etc...
@@ -127,7 +128,8 @@ For OGR layers that have a non-empty geometry column name (generally for RDBMS d
 as returned by OGRLayer::GetGeometryColumn(), the name of the geometry special field
 in the SQL statement will be the name of the geometry column of the underlying OGR layer.
 If the name of the geometry column in the source layer is empty, like with shapefiles etc.,
-the name to use in the SQL statement is always "geometry".
+the name to use in the SQL statement is always "geometry". Here we'll use it case-insensitively
+(as all field names are in a SELECT statement):
 
 .. code-block::
 
@@ -198,6 +200,15 @@ For example we can select the annotation features as:
 .. code-block::
 
     SELECT * FROM nation WHERE OGR_STYLE LIKE 'LABEL%'
+
+Statistics functions
+++++++++++++++++++++
+
+In addition to standard COUNT(), SUM(), AVG(), MIN(), MAX(), the following
+aggregate functions are available:
+
+- STDDEV_POP: (GDAL >= 3.10) numerical population standard deviation.
+- STDDEV_SAMP: (GDAL >= 3.10) numerical `sample standard deviation <https://en.wikipedia.org/wiki/Standard_deviation#Sample_standard_deviation>`__
 
 Spatialite SQL functions
 ++++++++++++++++++++++++
