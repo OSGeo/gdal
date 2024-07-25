@@ -1114,6 +1114,9 @@ void GTiffDataset::ScanDirectories()
                 GTiffDataset *poODS = new GTiffDataset();
                 poODS->ShareLockWithParentDataset(this);
                 poODS->SetStructuralMDFromParent(this);
+                if (m_bHasGotSiblingFiles)
+                    poODS->oOvManager.TransferSiblingFiles(
+                        CSLDuplicate(GetSiblingFiles()));
                 poODS->m_pszFilename = CPLStrdup(m_pszFilename);
                 poODS->m_nColorTableMultiplier = m_nColorTableMultiplier;
                 if (poODS->OpenOffset(VSI_TIFFOpenChild(m_hTIFF), nThisDir,
