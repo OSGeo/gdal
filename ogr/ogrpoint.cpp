@@ -263,7 +263,7 @@ void OGRPoint::flattenTo2D()
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRPoint::setCoordinateDimension(int nNewDimension)
+bool OGRPoint::setCoordinateDimension(int nNewDimension)
 
 {
     if (nNewDimension == 2)
@@ -272,6 +272,7 @@ void OGRPoint::setCoordinateDimension(int nNewDimension)
         flags |= OGR_G_3D;
 
     setMeasured(FALSE);
+    return true;
 }
 
 /************************************************************************/

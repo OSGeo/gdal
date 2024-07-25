@@ -918,11 +918,9 @@ OGRBoolean OGRPolyhedralSurface::IsEmpty() const
  * \brief Set the type as 3D geometry
  */
 
-void OGRPolyhedralSurface::set3D(OGRBoolean bIs3D)
+bool OGRPolyhedralSurface::set3D(OGRBoolean bIs3D)
 {
-    oMP.set3D(bIs3D);
-
-    OGRGeometry::set3D(bIs3D);
+    return oMP.set3D(bIs3D) && OGRGeometry::set3D(bIs3D);
 }
 
 /************************************************************************/
@@ -933,11 +931,10 @@ void OGRPolyhedralSurface::set3D(OGRBoolean bIs3D)
  * \brief Set the type as Measured
  */
 
-void OGRPolyhedralSurface::setMeasured(OGRBoolean bIsMeasured)
+bool OGRPolyhedralSurface::setMeasured(OGRBoolean bIsMeasured)
 {
-    oMP.setMeasured(bIsMeasured);
-
-    OGRGeometry::setMeasured(bIsMeasured);
+    return oMP.setMeasured(bIsMeasured) &&
+           OGRGeometry::setMeasured(bIsMeasured);
 }
 
 /************************************************************************/
@@ -952,13 +949,13 @@ void OGRPolyhedralSurface::setMeasured(OGRBoolean bIsMeasured)
  * This will also remove the M dimension if present before this call.
  *
  * @param nNewDimension New coordinate dimension value, either 2 or 3.
+ * @return (since 3.10) true in case of success, false in case of memory allocation error
  */
 
-void OGRPolyhedralSurface::setCoordinateDimension(int nNewDimension)
+bool OGRPolyhedralSurface::setCoordinateDimension(int nNewDimension)
 {
-    oMP.setCoordinateDimension(nNewDimension);
-
-    OGRGeometry::setCoordinateDimension(nNewDimension);
+    return oMP.setCoordinateDimension(nNewDimension) &&
+           OGRGeometry::setCoordinateDimension(nNewDimension);
 }
 
 /************************************************************************/

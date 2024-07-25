@@ -734,20 +734,20 @@ double OGRCurvePolygon::get_GeodesicArea(
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRCurvePolygon::setCoordinateDimension(int nNewDimension)
+bool OGRCurvePolygon::setCoordinateDimension(int nNewDimension)
 
 {
-    oCC.setCoordinateDimension(this, nNewDimension);
+    return oCC.setCoordinateDimension(this, nNewDimension);
 }
 
-void OGRCurvePolygon::set3D(OGRBoolean bIs3D)
+bool OGRCurvePolygon::set3D(OGRBoolean bIs3D)
 {
-    oCC.set3D(this, bIs3D);
+    return oCC.set3D(this, bIs3D);
 }
 
-void OGRCurvePolygon::setMeasured(OGRBoolean bIsMeasured)
+bool OGRCurvePolygon::setMeasured(OGRBoolean bIsMeasured)
 {
-    oCC.setMeasured(this, bIsMeasured);
+    return oCC.setMeasured(this, bIsMeasured);
 }
 
 /************************************************************************/
@@ -772,15 +772,15 @@ OGRBoolean OGRCurvePolygon::IsEmpty() const
 /*                              segmentize()                            */
 /************************************************************************/
 
-void OGRCurvePolygon::segmentize(double dfMaxLength)
+bool OGRCurvePolygon::segmentize(double dfMaxLength)
 {
     if (EQUAL(getGeometryName(), "TRIANGLE"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "segmentize() is not valid for Triangle");
-        return;
+        return false;
     }
-    oCC.segmentize(dfMaxLength);
+    return oCC.segmentize(dfMaxLength);
 }
 
 /************************************************************************/
