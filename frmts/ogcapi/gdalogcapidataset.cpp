@@ -1655,9 +1655,9 @@ ParseXMLSchema(const std::string &osURL,
 
     std::vector<GMLFeatureClass *> apoClasses;
     bool bFullyUnderstood = false;
-    bool useSchemaImports = false;
-    bool bHaveSchema = GMLParseXSD(osURL.c_str(), apoClasses, bFullyUnderstood,
-                                   useSchemaImports);
+    bool bUseSchemaImports = false;
+    bool bHaveSchema = GMLParseXSD(osURL.c_str(), bUseSchemaImports, apoClasses,
+                                   bFullyUnderstood, );
     if (bHaveSchema && apoClasses.size() == 1)
     {
         auto poGMLFeatureClass = apoClasses[0];

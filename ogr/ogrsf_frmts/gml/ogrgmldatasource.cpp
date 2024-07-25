@@ -1125,12 +1125,12 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         if (bHasFoundXSD)
         {
             std::vector<GMLFeatureClass *> aosClasses;
-            bool useSchemaImports = CPLFetchBool(
+            bool bUseSchemaImports = CPLFetchBool(
                 poOpenInfo->papszOpenOptions, "USE_SCHEMA_IMPORT",
                 CPLTestBool(CPLGetConfigOption("GML_USE_SCHEMA_IMPORT", "NO")));
             bool bFullyUnderstood = false;
-            bHaveSchema = GMLParseXSD(osXSDFilename, aosClasses,
-                                      bFullyUnderstood, useSchemaImports);
+            bHaveSchema = GMLParseXSD(osXSDFilename, bUseSchemaImports,
+                                      aosClasses, bFullyUnderstood);
 
             if (bHaveSchema && !bFullyUnderstood && bIsWFSJointLayer)
             {

@@ -4455,10 +4455,7 @@ def test_ogr_gml_ogr2ogr_from_layers_with_inconsistent_srs(
 # Open option is set to NO to disable the functionality
 
 
-pytest.mark.require_driver("GML")
-
-
-def test_ogr_gml_ogr2ogr_get_layers_without_open_option(tmp_path):
+def test_ogr_gml_USE_SCHEMA_IMPORT_NO(tmp_path):
 
     # copy schema files and gml
     shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)
@@ -4479,13 +4476,8 @@ def test_ogr_gml_ogr2ogr_get_layers_without_open_option(tmp_path):
 # Test if gml can access and use imported schemas along with included schemas
 # Open option is set to YES to enable the functionality
 
-pytest.mark.require_driver("GML")
 
-
-# /** need to check how to pass open option and still work with gml files, because when  os passed we cannot pass tmp_path
-
-
-def test_ogr_gml_ogr2ogr_get_layers_with_open_option(tmp_path):
+def test_ogr_gml_USE_SCHEMA_IMPORT_YES(tmp_path):
 
     # copy schema files and gml
     shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)
@@ -4508,7 +4500,7 @@ def test_ogr_gml_ogr2ogr_get_layers_with_open_option(tmp_path):
 # Config option is set to YES to enable the functionality
 
 
-def test_ogr_gml_ogr2ogr_get_layers_with_config_option_true(tmp_path):
+def test_ogr_gml_GML_USE_SCHEMA_IMPORT_YES(tmp_path):
 
     # copy schema files and gml
     shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)
@@ -4530,7 +4522,7 @@ def test_ogr_gml_ogr2ogr_get_layers_with_config_option_true(tmp_path):
 # Config option is set to NO to disable the functionality
 
 
-def test_ogr_gml_ogr2ogr_get_layers_without_config_option_false(tmp_path):
+def test_ogr_gml_GML_USE_SCHEMA_IMPORT_NO(tmp_path):
 
     # copy schema files and gml
     shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)
@@ -4551,10 +4543,8 @@ def test_ogr_gml_ogr2ogr_get_layers_without_config_option_false(tmp_path):
 # Test if gml can access and use imported schemas along with included schemas with some features testing
 # Open option is set to TRUE to enable the functionality
 
-pytest.mark.require_driver("GML")
 
-
-def test_ogr_gml_ogr2ogr_get_layers_by_name_from_imported_schema(tmp_path):
+def test_ogr_gml_get_layers_by_name_from_imported_schema(tmp_path):
 
     # copy schema files and gml
     shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)
@@ -4593,10 +4583,8 @@ def test_ogr_gml_ogr2ogr_get_layers_by_name_from_imported_schema(tmp_path):
 # Test if gml can access and use imported schemas along with included schemas with some features testing
 # Open option is set to TRUE to enable the functionality
 
-pytest.mark.require_driver("GML")
 
-
-def test_ogr_gml_ogr2ogr_get_layers_by_name_from_imported_schema_more_tests(tmp_path):
+def test_ogr_gml_get_layers_by_name_from_imported_schema_more_tests(tmp_path):
 
     # copy schema files and gml
     shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)

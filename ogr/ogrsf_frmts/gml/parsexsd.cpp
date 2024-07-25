@@ -944,7 +944,7 @@ static CPLXMLNode *CPLGetLastNode(CPLXMLNode *psNode)
 
 static void CPLXMLSchemaResolveInclude(const char *pszMainSchemaLocation,
                                        CPLXMLNode *psSchemaNode,
-                                       bool useSchemaImports)
+                                       bool bUseSchemaImports)
 {
     std::set<CPLString> osAlreadyIncluded;
 
@@ -959,7 +959,7 @@ static void CPLXMLSchemaResolveInclude(const char *pszMainSchemaLocation,
         {
             if (psThis->eType == CXT_Element &&
                 (EQUAL(psThis->pszValue, "include") ||
-                 (useSchemaImports == TRUE &&
+                 (bUseSchemaImports == TRUE &&
                   EQUAL(psThis->pszValue, "import"))))
             {
                 const char *pszSchemaLocation =
@@ -1067,9 +1067,9 @@ GetUniqueConstraints(const CPLXMLNode *psNode)
 /*                          GMLParseXSD()                               */
 /************************************************************************/
 
-bool GMLParseXSD(const char *pszFile,
+bool GMLParseXSD(const char *pszFile, bool bUseSchemaImports,
                  std::vector<GMLFeatureClass *> &aosClasses,
-                 bool &bFullyUnderstood, bool &useSchemaImports)
+                 bool &bFullyUnderstood)
 
 {
     bFullyUnderstood = false;
@@ -1103,7 +1103,7 @@ bool GMLParseXSD(const char *pszFile,
     /* ==================================================================== */
     /*      Process each include directive.                                 */
     /* ==================================================================== */
-    CPLXMLSchemaResolveInclude(pszFile, psSchemaNode, useSchemaImports);
+    CPLXMLSchemaResolveInclude(pszFile, psSchemaNode, bUseSchemaImports);
 
     // CPLSerializeXMLTreeToFile(psSchemaNode, "/vsistdout/");
 

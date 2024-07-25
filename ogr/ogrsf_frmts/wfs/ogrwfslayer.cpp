@@ -317,9 +317,9 @@ OGRFeatureDefn *OGRWFSLayer::ParseSchema(const CPLXMLNode *psSchema)
 
     std::vector<GMLFeatureClass *> aosClasses;
     bool bFullyUnderstood = false;
-    bool useSchemaImports = false;
-    bool bHaveSchema = GMLParseXSD(osTmpFileName, aosClasses, bFullyUnderstood,
-                                   useSchemaImports);
+    bool bUseSchemaImports = false;
+    bool bHaveSchema = GMLParseXSD(osTmpFileName, bUseSchemaImports, aosClasses,
+                                   bFullyUnderstood);
 
     if (bHaveSchema && aosClasses.size() == 1)
     {
