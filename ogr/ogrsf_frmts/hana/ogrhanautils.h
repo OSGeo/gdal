@@ -48,36 +48,34 @@ class HANAVersion
   public:
     explicit HANAVersion(unsigned int major, unsigned int minor,
                          unsigned int patch)
+        : components_{major, minor, patch}
     {
-        components[0] = major;
-        components[1] = minor;
-        components[2] = patch;
     }
 
-    HANAVersion()
+    HANAVersion() : components_{0, 0, 0}
     {
     }
 
     unsigned int major() const
     {
-        return components[0];
+        return components_[0];
     }
 
     unsigned int minor() const
     {
-        return components[1];
+        return components_[1];
     }
 
     unsigned int patch() const
     {
-        return components[2];
+        return components_[2];
     }
 
     bool operator<=(const HANAVersion &other)
     {
         for (size_t i = 0; i < 3; ++i)
-            if (components[i] > other.components[i])
-                return false;
+            if (components_[i] != other.components_[i])
+                return components_[i] < other.components_[i];
         return true;
     }
 
@@ -89,16 +87,16 @@ class HANAVersion
     bool operator==(const HANAVersion &other)
     {
         for (size_t i = 0; i < 3; ++i)
-            if (components[i] != other.components[i])
+            if (components_[i] != other.components_[i])
                 return false;
         return true;
     }
 
   public:
-    static HANAVersion fromVersionString(const char *str);
+    static HANAVersion fromString(const char *str);
 
   private:
-    unsigned int components[3];
+    unsigned int components_[3];
 };
 
 const char *SkipLeadingSpaces(const char *value);
