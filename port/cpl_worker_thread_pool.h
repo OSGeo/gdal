@@ -48,7 +48,6 @@
  */
 
 #ifndef DOXYGEN_SKIP
-struct CPLWorkerThreadJob;
 class CPLWorkerThreadPool;
 
 struct CPLWorkerThread
@@ -85,8 +84,7 @@ class CPL_DLL CPLWorkerThreadPool
     mutable std::mutex m_mutex{};
     std::condition_variable m_cv{};
     volatile CPLWorkerThreadState eState = CPLWTS_OK;
-    std::queue<std::function<void()>> jobQueue;
-    int nPendingJobs = 0;
+    std::queue<std::function<void()>> jobQueue{};
 
     CPLList *psWaitingWorkerThreadsList = nullptr;
     int nWaitingWorkerThreads = 0;

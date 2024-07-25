@@ -36,11 +36,6 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-struct CPLWorkerThreadJob
-{
-    std::function<void()> task;
-};
-
 static thread_local CPLWorkerThreadPool *threadLocalCurrentThreadPool = nullptr;
 
 /************************************************************************/
@@ -52,7 +47,7 @@ static thread_local CPLWorkerThreadPool *threadLocalCurrentThreadPool = nullptr;
  * The pool is in an uninitialized state after this call. The Setup() method
  * must be called.
  */
-CPLWorkerThreadPool::CPLWorkerThreadPool() : jobQueue{}
+CPLWorkerThreadPool::CPLWorkerThreadPool()
 {
 }
 
@@ -60,7 +55,7 @@ CPLWorkerThreadPool::CPLWorkerThreadPool() : jobQueue{}
  *
  * \param nThreads  Number of threads in the pool.
  */
-CPLWorkerThreadPool::CPLWorkerThreadPool(int nThreads) : jobQueue{}
+CPLWorkerThreadPool::CPLWorkerThreadPool(int nThreads)
 {
     Setup(nThreads, nullptr, nullptr);
 }
@@ -213,7 +208,6 @@ bool CPLWorkerThreadPool::SubmitJob(std::function<void()> task)
     }
 
     jobQueue.emplace(task);
-    nPendingJobs++;
 
     if (psWaitingWorkerThreadsList)
     {
@@ -302,7 +296,6 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
         }
 
         jobQueue.emplace([=] { pfnFunc(pData); });
-        nPendingJobs++;
     }
 
     for (size_t i = 0; i < apData.size(); i++)
@@ -359,7 +352,7 @@ void CPLWorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
     if (nMaxRemainingJobs < 0)
         nMaxRemainingJobs = 0;
     std::unique_lock<std::mutex> oGuard(m_mutex);
-    while (nPendingJobs > nMaxRemainingJobs)
+    while (jobQueue.size() > static_cast<size_t>(nMaxRemainingJobs))
     {
         m_cv.wait(oGuard);
     }
@@ -376,14 +369,14 @@ void CPLWorkerThreadPool::WaitEvent()
     std::unique_lock<std::mutex> oGuard(m_mutex);
     while (true)
     {
-        const int nPendingJobsBefore = nPendingJobs;
-        if (nPendingJobsBefore == 0)
+        const size_t nQueueSizeBefore = jobQueue.size();
+        if (nQueueSizeBefore == 0)
         {
             break;
         }
         m_cv.wait(oGuard);
         // cppcheck-suppress knownConditionTrueFalse
-        if (nPendingJobs < nPendingJobsBefore)
+        if (jobQueue.size() < nQueueSizeBefore)
         {
             break;
         }
@@ -481,7 +474,6 @@ bool CPLWorkerThreadPool::Setup(int nThreads, CPLThreadFunc pfnInitFunc,
 void CPLWorkerThreadPool::DeclareJobFinished()
 {
     std::lock_guard<std::mutex> oGuard(m_mutex);
-    nPendingJobs--;
     m_cv.notify_one();
 }
 
