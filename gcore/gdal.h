@@ -502,7 +502,7 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DCAP_CREATE "DCAP_CREATE"
 
-/** Capability set by a driver that implements the CreateMultidimensional() API.
+/** Capability set by a driver that implements the CreateMultiDimensional() API.
  *
  * @since GDAL 3.1
  */
