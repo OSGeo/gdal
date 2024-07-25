@@ -1062,6 +1062,25 @@ TEST_F(test_cpl, CPLFormFilename)
     EXPECT_TRUE(
         EQUAL(CPLFormFilename("\\\\$\\c:", "..", nullptr), "\\\\$\\c:/..") ||
         EQUAL(CPLFormFilename("\\\\$\\c:", "..", nullptr), "\\\\$\\c:\\.."));
+    EXPECT_STREQ(
+        CPLFormFilename("/vsicurl/http://example.com?foo", "bar", nullptr),
+        "/vsicurl/http://example.com/bar?foo");
+}
+
+TEST_F(test_cpl, CPLGetPath)
+{
+    EXPECT_STREQ(CPLGetPath("/foo/bar/"), "/foo/bar");
+    EXPECT_STREQ(CPLGetPath("/foo/bar"), "/foo");
+    EXPECT_STREQ(CPLGetPath("/vsicurl/http://example.com/foo/bar?suffix"),
+                 "/vsicurl/http://example.com/foo?suffix");
+}
+
+TEST_F(test_cpl, CPLGetDirname)
+{
+    EXPECT_STREQ(CPLGetDirname("/foo/bar/"), "/foo/bar");
+    EXPECT_STREQ(CPLGetDirname("/foo/bar"), "/foo");
+    EXPECT_STREQ(CPLGetDirname("/vsicurl/http://example.com/foo/bar?suffix"),
+                 "/vsicurl/http://example.com/foo?suffix");
 }
 
 TEST_F(test_cpl, VSIGetDiskFreeSpace)
