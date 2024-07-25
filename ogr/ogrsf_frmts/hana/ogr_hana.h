@@ -231,8 +231,7 @@ class OGRHanaLayer : public OGRLayer
                                  const CPLString &tableName,
                                  const CPLString &query,
                                  const CPLString &featureDefName);
-    void ReadGeometryExtent(int geomField, OGREnvelope *extent, int force,
-                            bool fastExtentMethod);
+    void ReadGeometryExtent(int geomField, OGREnvelope *extent, int force);
     bool IsFastExtentAvailable();
 
   public:
@@ -427,7 +426,7 @@ class OGRHanaDataSource final : public GDALDataset
                      const CPLString &fidType, const CPLString &geomColumnName,
                      OGRwkbGeometryType geomType, bool geomColumnNullable,
                      const CPLString &geomColumnIndexType, int geomSrid);
-    void UpdateCloudVersion();
+    void DetermineVersions();
 
   protected:
     std::pair<CPLString, CPLString> FindSchemaAndTableNames(const char *query);
