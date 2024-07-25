@@ -1055,10 +1055,6 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
         CPLString columnName = rsmd->getColumnName(clmIndex);
         CPLString defaultValue;
         short dataType = rsmd->getColumnType(clmIndex);
-        // TODO: remove when HANA Client is fixed.
-        if (dataType == QGRHanaDataTypes::VarBinary &&
-            typeName == "REAL_VECTOR")
-            dataType = QGRHanaDataTypes::RealVector;
 
         if (!schemaName.empty() && !tableName.empty())
         {
