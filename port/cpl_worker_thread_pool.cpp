@@ -36,11 +36,6 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-struct CPLWorkerThreadJob
-{
-    std::function<void()> task;
-};
-
 static thread_local CPLWorkerThreadPool *threadLocalCurrentThreadPool = nullptr;
 
 /************************************************************************/

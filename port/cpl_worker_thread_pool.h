@@ -48,7 +48,6 @@
  */
 
 #ifndef DOXYGEN_SKIP
-struct CPLWorkerThreadJob;
 class CPLWorkerThreadPool;
 
 struct CPLWorkerThread
