@@ -180,11 +180,10 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
 GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
                                                     double dValue, int bComplex)
 {
-#ifdef SIZEOF__FLOAT16
-    if (eDT == GDT_Float16 && !bComplex &&
-        static_cast<_Float16>(dValue) == dValue)
-        return GDT_Float16;
-#endif
+    // Do not choose Float16 since it isn't supported everywhere
+    // if (eDT == GDT_Float16 && !bComplex &&
+    //     static_cast<_Float16>(dValue) == dValue)
+    //     return GDT_Float16;
     if ((eDT == GDT_Float16 || eDT == GDT_Float32) && !bComplex &&
         static_cast<float>(dValue) == dValue)
         return GDT_Float32;
@@ -257,61 +256,80 @@ static int GetMinBitsForValue(double dValue)
 GDALDataType CPL_STDCALL GDALFindDataType(int nBits, int bSigned, int bFloating,
                                           int bComplex)
 {
-    if (!bFloating && bComplex)
+    if (!bFloating)
     {
-        // we don't have complex unsigned data types, so for a complex
-        // uint16, promote to complex int32
-        nBits = std::max(nBits, !bSigned ? 32 : 16);
-    }
-    if (bFloating)
-    {
-        nBits = std::max(nBits, 16);
-    }
-
-    if (nBits <= 8)
-    {
-        return bSigned ? GDT_Int8 : GDT_Byte;
-    }
-
-    if (nBits <= 16)
-    {
-        if (bFloating)
+        if (!bComplex)
         {
-            if (bComplex)
-                return GDT_CFloat16;
-            return GDT_Float16;
+            if (!bSigned)
+            {
+                if (nBits <= 8)
+                    return GDT_Byte;
+                if (nBits <= 16)
+                    return GDT_UInt16;
+                if (nBits <= 32)
+                    return GDT_UInt32;
+                if (nBits <= 64)
+                    return GDT_UInt64;
+                return GDT_Float64;
+            }
+            else  // bSigned
+            {
+                if (nBits <= 8)
+                    return GDT_Int8;
+                if (nBits <= 16)
+                    return GDT_Int16;
+                if (nBits <= 32)
+                    return GDT_Int32;
+                if (nBits <= 64)
+                    return GDT_Int64;
+                return GDT_Float64;
+            }
         }
-
-        if (bComplex)
-            return GDT_CInt16;
-        if (bSigned)
-            return GDT_Int16;
-        return GDT_UInt16;
-    }
-
-    if (nBits <= 32)
-    {
-        if (bFloating)
+        else  // bComplex
         {
-            if (bComplex)
+            if (!bSigned)
+            {
+                // We don't have complex unsigned data types, so
+                // return a large-enough complex signed type
+
+                // Do not choose CInt16 for backward compatibility
+                // if (nBits <= 15)
+                //     return GDT_CInt16;
+                if (nBits <= 31)
+                    return GDT_CInt32;
+                return GDT_CFloat64;
+            }
+            else  // bSigned
+            {
+                if (nBits <= 16)
+                    return GDT_CInt16;
+                if (nBits <= 32)
+                    return GDT_CInt32;
+                return GDT_CFloat64;
+            }
+        }
+    }
+    else  // bFloating
+    {
+        if (!bComplex)
+        {
+            // Do not choose Float16 since is not supported everywhere
+            // if (nBits <= 16)
+            //     return GDT_Float16;
+            if (nBits <= 32)
+                return GDT_Float32;
+            return GDT_Float64;
+        }
+        else  // bComplex
+        {
+            // Do not choose Float16 since is not supported everywhere
+            // if (nBits <= 16)
+            //     return GDT_CFloat16;
+            if (nBits <= 32)
                 return GDT_CFloat32;
-            return GDT_Float32;
+            return GDT_CFloat64;
         }
-
-        if (bComplex)
-            return GDT_CInt32;
-        if (bSigned)
-            return GDT_Int32;
-        return GDT_UInt32;
     }
-
-    if (nBits == 64 && !bFloating && !bComplex)
-        return bSigned ? GDT_Int64 : GDT_UInt64;
-
-    if (bComplex)
-        return GDT_CFloat64;
-
-    return GDT_Float64;
 }
 
 /************************************************************************/

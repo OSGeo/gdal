@@ -195,7 +195,7 @@ TEST_F(test_gdal, GDALDataTypeUnion_special_cases)
     EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_Float32), GDT_CFloat64);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_CInt16), GDT_CInt32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CInt32, GDT_CFloat32), GDT_CFloat64);
-    EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_Byte), GDT_CFloat16);
+    EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_Byte), GDT_CFloat32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_UInt16), GDT_CFloat32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_Int16), GDT_CFloat32);
     EXPECT_EQ(GDALDataTypeUnion(GDT_CFloat16, GDT_UInt32), GDT_CFloat64);
@@ -222,16 +222,16 @@ TEST_F(test_gdal, GDALDataTypeUnion_special_cases)
     EXPECT_EQ(GDALFindDataType(0, s, i, r), GDT_Int8);
     EXPECT_EQ(GDALFindDataType(0, u, i, c), GDT_CInt32);
     EXPECT_EQ(GDALFindDataType(0, s, i, c), GDT_CInt16);
-    EXPECT_EQ(GDALFindDataType(0, u, f, r), GDT_Float16);
-    EXPECT_EQ(GDALFindDataType(0, s, f, r), GDT_Float16);
-    EXPECT_EQ(GDALFindDataType(0, u, f, c), GDT_CFloat16);
-    EXPECT_EQ(GDALFindDataType(0, s, f, c), GDT_CFloat16);
+    EXPECT_EQ(GDALFindDataType(0, u, f, r), GDT_Float32);
+    EXPECT_EQ(GDALFindDataType(0, s, f, r), GDT_Float32);
+    EXPECT_EQ(GDALFindDataType(0, u, f, c), GDT_CFloat32);
+    EXPECT_EQ(GDALFindDataType(0, s, f, c), GDT_CFloat32);
 
     EXPECT_EQ(GDALFindDataType(8, u, i, r), GDT_Byte);
     EXPECT_EQ(GDALFindDataType(8, s, i, r), GDT_Int8);
 
-    EXPECT_EQ(GDALFindDataType(16, u, f, r), GDT_Float16);
-    EXPECT_EQ(GDALFindDataType(16, u, f, c), GDT_CFloat16);
+    EXPECT_EQ(GDALFindDataType(16, u, f, r), GDT_Float32);
+    EXPECT_EQ(GDALFindDataType(16, u, f, c), GDT_CFloat32);
 
     EXPECT_EQ(GDALFindDataType(16, u, i, r), GDT_UInt16);
     EXPECT_EQ(GDALFindDataType(16, s, i, r), GDT_Int16);
@@ -251,7 +251,7 @@ TEST_F(test_gdal, GDALDataTypeUnion_special_cases)
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -128, 0), GDT_Int16);
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -32768, 0), GDT_Int16);
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -32769, 0), GDT_Int32);
-    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float16, -999, 0), GDT_Float16);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float16, -999, 0), GDT_Float32);
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float16, -99999, 0), GDT_Float32);
     EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float16, -99999.9876, 0),
               GDT_Float64);
@@ -364,6 +364,42 @@ TEST_F(test_gdal, GDALAdjustValueToDataType)
     EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Int64, 10000000000.0, &bClamped,
                                           &bRounded) == 10000000000.0 &&
                 !bClamped && !bRounded);
+
+#ifdef SIZEOF__FLOAT16
+    EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Float16, 0.0, &bClamped,
+                                          &bRounded) == 0.0 &&
+                !bClamped && !bRounded);
+    EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Float16, 1e-10, &bClamped,
+                                          &bRounded) == 0.0 &&
+                !bClamped && !bRounded);
+    EXPECT_TRUE(
+        GDALAdjustValueToDataType(GDT_Float16, 1.23, &bClamped, &bRounded) ==
+            static_cast<double>(static_cast<_Float16>(1.23f)) &&
+        !bClamped && !bRounded);
+    EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Float16, -1e300, &bClamped,
+                                          &bRounded) == -6.55e4 &&
+                bClamped && !bRounded);
+    EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Float16, 1e30, &bClamped,
+                                          &bRounded) == 6.55e4 &&
+                bClamped && !bRounded);
+    EXPECT_TRUE(GDALAdjustValueToDataType(
+                    GDT_Float16, std::numeric_limits<float>::infinity(),
+                    &bClamped,
+                    &bRounded) == std::numeric_limits<float>::infinity() &&
+                !bClamped && !bRounded);
+    EXPECT_TRUE(GDALAdjustValueToDataType(
+                    GDT_Float16, -std::numeric_limits<float>::infinity(),
+                    &bClamped,
+                    &bRounded) == -std::numeric_limits<float>::infinity() &&
+                !bClamped && !bRounded);
+    {
+        double dfNan = std::numeric_limits<double>::quiet_NaN();
+        double dfGot =
+            GDALAdjustValueToDataType(GDT_Float16, dfNan, &bClamped, &bRounded);
+        EXPECT_TRUE(memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped &&
+                    !bRounded);
+    }
+#endif
 
     EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Float32, 0.0, &bClamped,
                                           &bRounded) == 0.0 &&
