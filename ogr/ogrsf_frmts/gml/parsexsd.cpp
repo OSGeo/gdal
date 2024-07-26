@@ -882,6 +882,30 @@ static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 }
 
 /************************************************************************/
+/*                         ExcludeBaseGMLSchemas()                            */
+/************************************************************************/
+
+static int ExcludeBaseGMLSchemas(const char *pszFilename)
+{
+    // List of substrings to exclude
+    const std::vector<std::string> excludedBaseGMLReferencedSchemasList = {
+        "/gml/3.2.1/", "gml/3.1.1/", "/gml/2.1.2/", "/gmlsfProfile/"};
+    if (pszFilename != nullptr)
+    {
+        std::string pszFilenameStr(
+            pszFilename);  // Convert const char* to std::string
+        for (const auto &pattern : excludedBaseGMLReferencedSchemasList)
+        {
+            if (pszFilenameStr.find(pattern) != std::string::npos)
+            {
+                return FALSE;  // Found one of the excluded base GML referenced schema, return FALSE
+            }
+        }
+    }
+    return TRUE;  // None of the base GML referenced schemas were found or filename was null, return TRUE
+}
+
+/************************************************************************/
 /*                         GMLParseXMLFile()                            */
 /************************************************************************/
 
@@ -957,13 +981,16 @@ static void CPLXMLSchemaResolveInclude(const char *pszMainSchemaLocation,
         CPLXMLNode *psThis = psSchemaNode->psChild;
         for (; psThis != nullptr; psThis = psThis->psNext)
         {
+            const char *pszSchemaLocation =
+                CPLGetXMLValue(psThis, "schemaLocation", nullptr);
+
             if (psThis->eType == CXT_Element &&
                 (EQUAL(psThis->pszValue, "include") ||
                  (bUseSchemaImports == TRUE &&
-                  EQUAL(psThis->pszValue, "import"))))
+                  EQUAL(psThis->pszValue, "import") &&
+                  ExcludeBaseGMLSchemas(pszSchemaLocation))))
             {
-                const char *pszSchemaLocation =
-                    CPLGetXMLValue(psThis, "schemaLocation", nullptr);
+
                 if (pszSchemaLocation != nullptr &&
                     osAlreadyIncluded.count(pszSchemaLocation) == 0)
                 {

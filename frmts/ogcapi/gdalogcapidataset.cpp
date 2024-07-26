@@ -1657,7 +1657,7 @@ ParseXMLSchema(const std::string &osURL,
     bool bFullyUnderstood = false;
     bool bUseSchemaImports = false;
     bool bHaveSchema = GMLParseXSD(osURL.c_str(), bUseSchemaImports, apoClasses,
-                                   bFullyUnderstood, );
+                                   bFullyUnderstood);
     if (bHaveSchema && apoClasses.size() == 1)
     {
         auto poGMLFeatureClass = apoClasses[0];
