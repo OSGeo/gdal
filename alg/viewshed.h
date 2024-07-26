@@ -232,6 +232,9 @@ class Viewshed
     std::mutex oMutex;
     std::mutex iMutex;
 
+    bool setupProgress(GDALProgressFunc pfnProgress, void *pProgressArg);
+    bool setupTransforms();
+    bool execute(int nX, int nY, const std::string &outFilename);
     void setOutput(double &dfResult, double &dfCellVal, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
     bool readLine(int nLine, double *data);
@@ -259,7 +262,7 @@ class Viewshed
     std::pair<int, int> adjustHeight(int iLine, int nX,
                                      std::vector<double> &thisLineVal);
     bool calcExtents(int nX, int nY);
-    bool createOutputDataset();
+    bool createOutputDataset(const std::string &outFilename);
     bool lineProgress();
     bool emitProgress(double fraction);
 };

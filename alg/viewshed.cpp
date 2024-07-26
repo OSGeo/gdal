@@ -25,6 +25,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <iostream>
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -484,7 +486,7 @@ std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
 /// Create the output dataset.
 ///
 /// @return  True on success, false otherwise.
-bool Viewshed::createOutputDataset()
+bool Viewshed::createOutputDataset(const std::string &outFilename)
 {
     GDALDriverManager *hMgr = GetGDALDriverManager();
     GDALDriver *hDriver = hMgr->GetDriverByName(oOpts.outputFormat.c_str());
@@ -496,13 +498,13 @@ bool Viewshed::createOutputDataset()
 
     /* create output raster */
     poDstDS.reset(hDriver->Create(
-        oOpts.outputFilename.c_str(), oOutExtent.xSize(), oOutExtent.ySize(), 1,
+        outFilename.c_str(), oOutExtent.xSize(), oOutExtent.ySize(), 1,
         oOpts.outputMode == OutputMode::Normal ? GDT_Byte : GDT_Float64,
         const_cast<char **>(oOpts.creationOpts.List())));
     if (!poDstDS)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create dataset for %s",
-                 oOpts.outputFilename.c_str());
+                 outFilename.c_str());
         return false;
     }
 
@@ -957,25 +959,17 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
     return true;
 }
 
-/// Compute the viewshed of a raster band.
-///
-/// @param band  Pointer to the raster band to be processed.
-/// @param pfnProgress  Pointer to the progress function. Can be null.
-/// @param pProgressArg  Argument passed to the progress function
-/// @return  True on success, false otherwise.
-bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
-                   void *pProgressArg)
+bool Viewshed::setupProgress(GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     using namespace std::placeholders;
 
     nLineCount = 0;
-    pSrcBand = static_cast<GDALRasterBand *>(band);
-
     oProgress = std::bind(pfnProgress, _1, _2, pProgressArg);
+    return emitProgress(0);
+}
 
-    if (!emitProgress(0))
-        return false;
-
+bool Viewshed::setupTransforms()
+{
     // set up geotransformation
     GDALDatasetH hSrcDS = GDALGetBandDataset(pSrcBand);
     if (hSrcDS != nullptr)
@@ -986,6 +980,24 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
         return false;
     }
+    return true;
+}
+
+/// Compute the viewshed of a raster band.
+///
+/// @param band  Pointer to the raster band to be processed.
+/// @param pfnProgress  Pointer to the progress function. Can be null.
+/// @param pProgressArg  Argument passed to the progress function
+/// @return  True on success, false otherwise.
+bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
+                   void *pProgressArg)
+{
+    if (!setupProgress(pfnProgress, pProgressArg))
+        return false;
+
+    pSrcBand = static_cast<GDALRasterBand *>(band);
+    if (!setupTransforms())
+        return false;
 
     // calculate observer position
     double dfX, dfY;
@@ -1008,10 +1020,15 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     if (!calcExtents(nX, nY))
         return false;
 
+    return execute(nX, nY, oOpts.outputFilename);
+}
+
+bool Viewshed::execute(int nX, int nY, const std::string &outFilename)
+{
     nX -= oOutExtent.xStart;
 
     // create the output dataset
-    if (!createOutputDataset())
+    if (!createOutputDataset(outFilename))
         return false;
 
     std::vector<double> vFirstLineVal(oCurExtent.xSize());
@@ -1075,6 +1092,13 @@ bool Viewshed::runCumulative(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 {
     (void)band;
     std::vector<std::pair<int, int>> observers;
+
+    if (!setupProgress(pfnProgress, pProgressArg))
+        return false;
+
+    pSrcBand = static_cast<GDALRasterBand *>(band);
+    if (!setupTransforms())
+        return false;
 
     calcExtents(0, 0);
     for (int x = 0; x < oCurExtent.xStop; x += oOpts.observerSpacing)
