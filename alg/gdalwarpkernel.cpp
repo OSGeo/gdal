@@ -1690,7 +1690,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
                 dfDstImag = 0.0;
 #else
                 CPLError(CE_Failure, CPLE_NotSupported,
-                         "TODO: Support _Float16");
+                         "TODO: Support Float16 (GWKSetPixelValue)");
 #endif
                 break;
 
@@ -1724,7 +1724,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
                     reinterpret_cast<_Float16 *>(pabyDst)[iDstOffset * 2 + 1];
 #else
                 CPLError(CE_Failure, CPLE_NotSupported,
-                         "TODO: Support _Float16");
+                         "TODO: Support CFloat16 (GWKSetPixelValue)");
 #endif
                 break;
 
@@ -1904,7 +1904,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
             reinterpret_cast<_Float16 *>(pabyDst)[iDstOffset * 2 + 1] =
                 static_cast<_Float16>(dfImag);
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support Float16 (CLAMP)");
 #endif
             break;
 
@@ -2005,7 +2005,7 @@ static bool GWKSetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
                 dfDstReal = reinterpret_cast<_Float16 *>(pabyDst)[iDstOffset];
 #else
                 CPLError(CE_Failure, CPLE_NotSupported,
-                         "TODO: Support _Float16");
+                         "TODO: Support Float16 (GWKSetPixelValueReal.1)");
 #endif
                 break;
 
@@ -2082,7 +2082,7 @@ static bool GWKSetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
             reinterpret_cast<_Float16 *>(pabyDst)[iDstOffset] =
                 static_cast<_Float16>(dfReal);
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support Float16 (GWKSetPixelValueReal.2)");
 #endif
             break;
 
@@ -2185,7 +2185,7 @@ static bool GWKGetPixelValue(const GDALWarpKernel *poWK, int iBand,
             *pdfReal = reinterpret_cast<_Float16 *>(pabySrc)[iSrcOffset];
             *pdfImag = 0.0;
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support Float16 (GWKGetPixelValue)");
 #endif
             break;
 
@@ -2215,7 +2215,7 @@ static bool GWKGetPixelValue(const GDALWarpKernel *poWK, int iBand,
             *pdfImag =
                 reinterpret_cast<_Float16 *>(pabySrc)[iSrcOffset * 2 + 1];
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support CFloat16 (GWKGetPixelValue)");
 #endif
             break;
 
@@ -2303,7 +2303,7 @@ static bool GWKGetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
 #ifdef SIZEOF__FLOAT16
             *pdfReal = reinterpret_cast<_Float16 *>(pabySrc)[iSrcOffset];
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support Float16 (GWKGetPixelValueReal)");
 #endif
             break;
 
@@ -2526,7 +2526,7 @@ static bool GWKGetPixelRow(const GDALWarpKernel *poWK, int iBand,
                 adfReal[i + 1] = pSrc[i + 1];
             }
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support Float16 (GWKGetPixelRow)");
 #endif
             break;
         }
@@ -2604,7 +2604,7 @@ static bool GWKGetPixelRow(const GDALWarpKernel *poWK, int iBand,
                 padfImag[i + 1] = pSrc[2 * i + 3];
             }
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support CFloat16 (GWKGetPixelRow)");
 #endif
             break;
         }

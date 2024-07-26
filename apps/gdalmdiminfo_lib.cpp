@@ -183,7 +183,7 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
 #ifdef SIZEOF__FLOAT16
             DumpValue<_Float16>(serializer, bytes);
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support Float16 (gdalmdiminfo)");
 #endif
             break;
         case GDT_Float32:
@@ -202,7 +202,7 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
 #ifdef SIZEOF__FLOAT16
             DumpComplexValue<_Float16>(serializer, bytes);
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support CFloat16 (gdalmdiminfo)");
 #endif
             break;
         case GDT_CFloat32:

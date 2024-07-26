@@ -63,7 +63,7 @@ inline double GetSrcVal(const void *pSource, GDALDataType eSrcType, T ii)
 #ifdef SIZEOF__FLOAT16
             return static_cast<const _Float16 *>(pSource)[ii];
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support Float16 (vrt)");
             break;
 #endif
         case GDT_Float32:
@@ -78,7 +78,7 @@ inline double GetSrcVal(const void *pSource, GDALDataType eSrcType, T ii)
 #ifdef SIZEOF__FLOAT16
             return static_cast<const _Float16 *>(pSource)[2 * ii];
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support CFloat16 (vrt)");
             break;
 #endif
         case GDT_CFloat32:
