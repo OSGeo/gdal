@@ -2826,7 +2826,7 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
                            nDstPixelStride, nWordCount);
             break;
         case GDT_Float16:
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
             GDALCopyWordsT(pSrcData, nSrcPixelStride,
                            static_cast<_Float16 *>(pDstData), nDstPixelStride,
                            nWordCount);
@@ -2875,7 +2875,7 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
             }
             break;
         case GDT_CFloat16:
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
             if (bInComplex)
             {
                 GDALCopyWordsComplexT(pSrcData, nSrcPixelStride,
@@ -3032,11 +3032,12 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
             CASE_DUPLICATE_SIMPLE(GDT_Int32, GInt32)
             CASE_DUPLICATE_SIMPLE(GDT_UInt64, std::uint64_t)
             CASE_DUPLICATE_SIMPLE(GDT_Int64, std::int64_t)
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
             CASE_DUPLICATE_SIMPLE(GDT_Float16, _Float16)
 #else
         case GDT_Float16:
             CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            break;
 #endif
             CASE_DUPLICATE_SIMPLE(GDT_Float32, float)
             CASE_DUPLICATE_SIMPLE(GDT_Float64, double)
@@ -3058,11 +3059,12 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
 
             CASE_DUPLICATE_COMPLEX(GDT_CInt16, GInt16)
             CASE_DUPLICATE_COMPLEX(GDT_CInt32, GInt32)
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
             CASE_DUPLICATE_COMPLEX(GDT_CFloat16, _Float16)
 #else
         case GDT_CFloat16:
             CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support _Float16");
+            break;
 #endif
             CASE_DUPLICATE_COMPLEX(GDT_CFloat32, float)
             CASE_DUPLICATE_COMPLEX(GDT_CFloat64, double)
@@ -3553,7 +3555,7 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
                 false, pDstData, eDstType, nDstPixelStride, nWordCount);
             break;
         case GDT_Float16:
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
             GDALCopyWordsFromT<_Float16>(
                 static_cast<const _Float16 *>(pSrcData), nSrcPixelStride, false,
                 pDstData, eDstType, nDstPixelStride, nWordCount);
@@ -3582,7 +3584,7 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
                                     nDstPixelStride, nWordCount);
             break;
         case GDT_CFloat16:
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
             GDALCopyWordsFromT<_Float16>(
                 static_cast<const _Float16 *>(pSrcData), nSrcPixelStride, true,
                 pDstData, eDstType, nDstPixelStride, nWordCount);

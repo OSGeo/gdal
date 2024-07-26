@@ -3371,7 +3371,7 @@ GDALDatasetH CPL_STDCALL GDALGetBandDataset(GDALRasterBandH hBand)
 /*                        ComputeFloat16NoDataValue()                     */
 /************************************************************************/
 
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
 static inline void ComputeFloat16NoDataValue(GDALDataType eDataType,
                                              double dfNoDataValue,
                                              int &bGotNoDataValue,
@@ -3433,7 +3433,7 @@ struct GDALNoDataValues
     bool bGotFloatNoDataValue;
     float fNoDataValue;
 
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
     bool bGotFloat16NoDataValue;
     _Float16 hfNoDataValue;
 #endif
@@ -3441,7 +3441,7 @@ struct GDALNoDataValues
     GDALNoDataValues(GDALRasterBand *poRasterBand, GDALDataType eDataType)
         : bGotNoDataValue(FALSE), dfNoDataValue(0.0),
           bGotFloatNoDataValue(false), fNoDataValue(0.0f)
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
           ,
           bGotFloat16NoDataValue(false), hfNoDataValue(_Float16(0.0f))
 #endif
@@ -3452,7 +3452,7 @@ struct GDALNoDataValues
         ComputeFloatNoDataValue(eDataType, dfNoDataValue, bGotNoDataValue,
                                 fNoDataValue, bGotFloatNoDataValue);
 
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
         ComputeFloat16NoDataValue(eDataType, dfNoDataValue, bGotNoDataValue,
                                   hfNoDataValue, bGotFloat16NoDataValue);
 #endif
@@ -3691,9 +3691,9 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                         dfValue = static_cast<double>(
                             static_cast<GInt64 *>(pData)[iOffset]);
                         break;
-#ifdef HAVE_SIZEOF__FLOAT16
                     case GDT_Float16:
                     {
+#ifdef SIZEOF__FLOAT16
                         const _Float16 hfValue =
                             static_cast<_Float16 *>(pData)[iOffset];
                         if (CPLIsNan(hfValue) ||
@@ -3702,9 +3702,11 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                                             sNoDataValues.hfNoDataValue)))
                             continue;
                         dfValue = hfValue;
+#else
+                        CPLAssert(false);
+#endif
                         break;
                     }
-#endif
                     case GDT_Float32:
                     {
                         const float fValue =
@@ -3744,9 +3746,9 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
                     }
                     break;
-#ifdef HAVE_SIZEOF__FLOAT16
                     case GDT_CFloat16:
                     {
+#ifdef SIZEOF__FLOAT16
                         const double dfReal =
                             static_cast<_Float16 *>(pData)[iOffset * 2];
                         const double dfImag =
@@ -3754,9 +3756,11 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                         if (CPLIsNan(dfReal) || CPLIsNan(dfImag))
                             continue;
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
-                    }
-                    break;
+#else
+                        CPLAssert(false);
 #endif
+                        break;
+                    }
                     case GDT_CFloat32:
                     {
                         const double dfReal =
@@ -3766,8 +3770,8 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                         if (CPLIsNan(dfReal) || CPLIsNan(dfImag))
                             continue;
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
+                        break;
                     }
-                    break;
                     case GDT_CFloat64:
                     {
                         const double dfReal =
@@ -3777,8 +3781,8 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                         if (CPLIsNan(dfReal) || CPLIsNan(dfImag))
                             continue;
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
+                        break;
                     }
-                    break;
                     case GDT_Unknown:
                     case GDT_TypeCount:
                         CPLAssert(false);
@@ -3966,9 +3970,9 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                             dfValue = static_cast<double>(
                                 static_cast<GInt64 *>(pData)[iOffset]);
                             break;
-#ifdef HAVE_SIZEOF__FLOAT16
                         case GDT_Float16:
                         {
+#ifdef SIZEOF__FLOAT16
                             const _Float16 hfValue =
                                 static_cast<_Float16 *>(pData)[iOffset];
                             if (CPLIsNan(hfValue) ||
@@ -3977,9 +3981,11 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                                                 sNoDataValues.hfNoDataValue)))
                                 continue;
                             dfValue = hfValue;
+#else
+                            CPLAssert(false);
+#endif
                             break;
                         }
-#endif
                         case GDT_Float32:
                         {
                             const float fValue =
@@ -4004,8 +4010,8 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                             double dfImag =
                                 static_cast<GInt16 *>(pData)[iOffset * 2 + 1];
                             dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
+                            break;
                         }
-                        break;
                         case GDT_CInt32:
                         {
                             double dfReal =
@@ -4013,11 +4019,11 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                             double dfImag =
                                 static_cast<GInt32 *>(pData)[iOffset * 2 + 1];
                             dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
+                            break;
                         }
-                        break;
-#ifdef HAVE_SIZEOF__FLOAT16
                         case GDT_CFloat16:
                         {
+#ifdef SIZEOF__FLOAT16
                             double dfReal =
                                 static_cast<_Float16 *>(pData)[iOffset * 2];
                             double dfImag =
@@ -4025,9 +4031,11 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                             if (CPLIsNan(dfReal) || CPLIsNan(dfImag))
                                 continue;
                             dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
-                        }
-                        break;
+#else
+                            CPLAssert(false);
 #endif
+                            break;
+                        }
                         case GDT_CFloat32:
                         {
                             double dfReal =
@@ -4037,8 +4045,8 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                             if (CPLIsNan(dfReal) || CPLIsNan(dfImag))
                                 continue;
                             dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
+                            break;
                         }
-                        break;
                         case GDT_CFloat64:
                         {
                             double dfReal =
@@ -4048,8 +4056,8 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                             if (CPLIsNan(dfReal) || CPLIsNan(dfImag))
                                 continue;
                             dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
+                            break;
                         }
-                        break;
                         case GDT_Unknown:
                         case GDT_TypeCount:
                             CPLAssert(false);
@@ -5687,9 +5695,9 @@ static inline double GetPixelValue(GDALDataType eDataType, bool bSignedByte,
             dfValue = static_cast<double>(
                 static_cast<const std::int64_t *>(pData)[iOffset]);
             break;
-#ifdef HAVE_SIZEOF__FLOAT16
         case GDT_Float16:
         {
+#ifdef SIZEOF__FLOAT16
             const _Float16 hfValue =
                 static_cast<const _Float16 *>(pData)[iOffset];
             if (CPLIsNan(hfValue) ||
@@ -5701,8 +5709,11 @@ static inline double GetPixelValue(GDALDataType eDataType, bool bSignedByte,
             }
             dfValue = hfValue;
             return dfValue;
-        }
+#else
+            CPLAssert(false);
+            break;
 #endif
+        }
         case GDT_Float32:
         {
             const float fValue = static_cast<const float *>(pData)[iOffset];
@@ -5730,16 +5741,18 @@ static inline double GetPixelValue(GDALDataType eDataType, bool bSignedByte,
         case GDT_CInt32:
             dfValue = static_cast<const GInt32 *>(pData)[iOffset * 2];
             break;
-#ifdef HAVE_SIZEOF__FLOAT16
         case GDT_CFloat16:
+#ifdef SIZEOF__FLOAT16
             dfValue = static_cast<const _Float16 *>(pData)[iOffset * 2];
             if (CPLIsNan(dfValue))
             {
                 bValid = false;
                 return 0.0;
             }
-            break;
+#else
+            CPLAssert(false);
 #endif
+            break;
         case GDT_CFloat32:
             dfValue = static_cast<const float *>(pData)[iOffset * 2];
             if (CPLIsNan(dfValue))

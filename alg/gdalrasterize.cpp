@@ -261,7 +261,7 @@ static void gvBurnScanline(void *pCBData, int nY, int nXStart, int nXEnd,
                                                dfVariant);
             break;
         case GDT_Float16:
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
             gvBurnScanlineBasic<_Float16>(psInfo, nY, nXStart, nXEnd,
                                           dfVariant);
             break;
@@ -397,7 +397,7 @@ static void gvBurnPoint(void *pCBData, int nY, int nX, double dfVariant)
             gvBurnPointBasic<std::uint64_t>(psInfo, nY, nX, dfVariant);
             break;
         case GDT_Float16:
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
             gvBurnPointBasic<_Float16>(psInfo, nY, nX, dfVariant);
             break;
 #else

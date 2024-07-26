@@ -109,7 +109,7 @@ class CPL_DLL CPLJSonStreamingWriter
 
     void Add(std::int64_t nVal);
     void Add(std::uint64_t nVal);
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
     void Add(_Float16 hfVal, int nPrecision = 5);
 #endif
     void Add(float fVal, int nPrecision = 9);

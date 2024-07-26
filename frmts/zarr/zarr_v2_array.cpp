@@ -1713,7 +1713,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
                 return nullptr;
             }
-#ifdef HAVE_SIZEOF__FLOAT16
+#ifdef SIZEOF__FLOAT16
             if (oType.GetNumericDataType() == GDT_Float16)
             {
                 const _Float16 hfNoDataValue =

@@ -24,9 +24,6 @@
 /* The size of `size_t', as computed by sizeof. */
 #cmakedefine SIZEOF_SIZE_T @SIZEOF_SIZE_T@
 
-/* Define to 1 if the type `_Float16` exists. */
-#cmakedefine HAVE_SIZEOF__FLOAT16 @HAVE_SIZEOF__FLOAT16@
-
 /* Define to 1, if you have LARGEFILE64_SOURCE */
 #cmakedefine VSI_NEED_LARGEFILE64_SOURCE 1
 
