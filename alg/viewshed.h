@@ -51,9 +51,10 @@ class Viewshed
      */
     enum class OutputMode
     {
-        Normal,  //!< Normal output mode (visibility only)
-        DEM,     //!< Output height from DEM
-        Ground   //!< Output height from ground
+        Normal,     //!< Normal output mode (visibility only)
+        DEM,        //!< Output height from DEM
+        Ground,     //!< Output height from ground
+        Cumulative  //!< Output observability heat map
     };
 
     /**
