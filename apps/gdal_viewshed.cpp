@@ -41,7 +41,6 @@ namespace
 struct Options
 {
     Viewshed::Options opts;
-    int observerSpacing{10};
     std::string osSrcFilename;
     int nBandIn{1};
     bool bQuiet;
@@ -164,7 +163,7 @@ Options parseArgs(GDALArgumentParser &argParser, const CPLStringList &aosArgv)
 
     argParser.add_argument("-os")
         .default_value(10)
-        .store_into(localOpts.observerSpacing)
+        .store_into(opts.observerSpacing)
         .metavar("<value>")
         .nargs(1)
         .help(_("Spacing between observer cells when using cumulative mode."));
@@ -327,8 +326,13 @@ MAIN_START(argc, argv)
     /* -------------------------------------------------------------------- */
     Viewshed oViewshed(opts);
 
-    bool bSuccess = oViewshed.run(hBand, localOpts.bQuiet ? GDALDummyProgress
-                                                          : GDALTermProgress);
+    bool bSuccess;
+    if (opts.outputMode == Viewshed::OutputMode::Cumulative)
+        bSuccess = oViewshed.runCumulative(
+            hBand, localOpts.bQuiet ? GDALDummyProgress : GDALTermProgress);
+    else
+        bSuccess = oViewshed.run(hBand, localOpts.bQuiet ? GDALDummyProgress
+                                                         : GDALTermProgress);
 
     GDALDatasetH hDstDS = GDALDataset::FromHandle(oViewshed.output().release());
 

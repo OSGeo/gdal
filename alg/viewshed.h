@@ -173,6 +173,7 @@ class Viewshed
         CPLStringList creationOpts{};  //!< options for output raster creation
         CellMode cellMode{
             CellMode::Edge};  //!< Mode of cell height calculation.
+        int observerSpacing{10};
     };
 
     /**
@@ -197,6 +198,9 @@ class Viewshed
     CPL_DLL bool run(GDALRasterBandH hBand,
                      GDALProgressFunc pfnProgress = GDALDummyProgress,
                      void *pProgressArg = nullptr);
+    CPL_DLL bool runCumulative(GDALRasterBandH hBand,
+                               GDALProgressFunc pfnProgress = GDALDummyProgress,
+                               void *pProgressArg = nullptr);
 
     /**
      * Fetch a pointer to the created raster band.
@@ -254,7 +258,7 @@ class Viewshed
                           std::vector<double> &vLastLineVal);
     std::pair<int, int> adjustHeight(int iLine, int nX,
                                      std::vector<double> &thisLineVal);
-    bool calcOutputExtent(int nX, int nY);
+    bool calcExtents(int nX, int nY);
     bool createOutputDataset();
     bool lineProgress();
     bool emitProgress(double fraction);

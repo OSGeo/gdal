@@ -271,12 +271,13 @@ double CalcHeightEdge(int i, int j, double Za, double Zb)
 
 }  // unnamed namespace
 
-/// Calculate the extent of the output raster in terms of the input raster.
+/// Calculate the extent of the output raster in terms of the input raster and
+/// save the input raster extent.
 ///
 /// @param nX  observer X position in the input raster
 /// @param nY  observer Y position in the input raster
 /// @return  false on error, true otherwise
-bool Viewshed::calcOutputExtent(int nX, int nY)
+bool Viewshed::calcExtents(int nX, int nY)
 {
     // We start with the assumption that the output size matches the input.
     oOutExtent.xStop = GDALGetRasterBandXSize(pSrcBand);
@@ -330,6 +331,12 @@ bool Viewshed::calcOutputExtent(int nX, int nY)
                  "and/or distance limitation.");
         return false;
     }
+
+    // normalize horizontal index to [ 0, oOutExtent.xSize() )
+    oCurExtent = oOutExtent;
+    //ABELL - verify this won't underflow.
+    oCurExtent.shiftX(-oOutExtent.xStart);
+
     return true;
 }
 
@@ -998,13 +1005,9 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     int nY = static_cast<int>(dfY);
 
     // calculate the area of interest
-    if (!calcOutputExtent(nX, nY))
+    if (!calcExtents(nX, nY))
         return false;
 
-    // normalize horizontal index to [ 0, oOutExtent.xSize() )
-    //ABELL - verify this won't underflow.
-    oCurExtent = oOutExtent;
-    oCurExtent.shiftX(-oOutExtent.xStart);
     nX -= oOutExtent.xStart;
 
     // create the output dataset
@@ -1058,6 +1061,28 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     if (!emitProgress(1))
         return false;
 
+    return true;
+}
+
+/// Compute the cumulative viewshed of a raster band.
+///
+/// @param band  Pointer to the raster band to be processed.
+/// @param pfnProgress  Pointer to the progress function. Can be null.
+/// @param pProgressArg  Argument passed to the progress function
+/// @return  True on success, false otherwise.
+bool Viewshed::runCumulative(GDALRasterBandH band, GDALProgressFunc pfnProgress,
+                             void *pProgressArg)
+{
+    (void)band;
+    std::vector<std::pair<int, int>> observers;
+
+    calcExtents(0, 0);
+    for (int x = 0; x < oCurExtent.xStop; x += oOpts.observerSpacing)
+        for (int y = 0; y < oCurExtent.yStop; y += oOpts.observerSpacing)
+            observers.emplace_back(x, y);
+
+    (void)pfnProgress;
+    (void)pProgressArg;
     return true;
 }
 
