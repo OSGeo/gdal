@@ -32,6 +32,7 @@
 #include <atomic>
 #include <cassert>
 #include <future>
+#include <queue>
 
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
@@ -220,9 +221,9 @@ namespace
 {
 
 // Calculate the height adjustment factor.
-double CalcHeightAdjFactor(const GDALDataset *poDataset, double dfCurveCoeff)
+double CalcHeightAdjFactor(const GDALDataset &dstDataset, double dfCurveCoeff)
 {
-    const OGRSpatialReference *poDstSRS = poDataset->GetSpatialRef();
+    const OGRSpatialReference *poDstSRS = dstDataset.GetSpatialRef();
 
     if (poDstSRS)
     {
@@ -486,32 +487,33 @@ std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
 /// Create the output dataset.
 ///
 /// @return  True on success, false otherwise.
-bool Viewshed::createOutputDataset(const std::string &outFilename)
+Viewshed::DatasetPtr
+Viewshed::createOutputDataset(const std::string &outFilename)
 {
     GDALDriverManager *hMgr = GetGDALDriverManager();
     GDALDriver *hDriver = hMgr->GetDriverByName(oOpts.outputFormat.c_str());
     if (!hDriver)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot get driver");
-        return false;
+        return nullptr;
     }
 
     /* create output raster */
-    poDstDS.reset(hDriver->Create(
+    DatasetPtr dataset(hDriver->Create(
         outFilename.c_str(), oOutExtent.xSize(), oOutExtent.ySize(), 1,
         oOpts.outputMode == OutputMode::Normal ? GDT_Byte : GDT_Float64,
         const_cast<char **>(oOpts.creationOpts.List())));
-    if (!poDstDS)
+    if (!dataset)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create dataset for %s",
                  outFilename.c_str());
-        return false;
+        return nullptr;
     }
 
     /* copy srs */
     GDALDatasetH hSrcDS = GDALGetBandDataset(pSrcBand);
     if (hSrcDS)
-        poDstDS->SetSpatialRef(
+        dataset->SetSpatialRef(
             GDALDataset::FromHandle(hSrcDS)->GetSpatialRef());
 
     std::array<double, 6> adfDstTransform;
@@ -523,19 +525,19 @@ bool Viewshed::createOutputDataset(const std::string &outFilename)
                          adfTransform[5] * oOutExtent.yStart;
     adfDstTransform[4] = adfTransform[4];
     adfDstTransform[5] = adfTransform[5];
-    poDstDS->SetGeoTransform(adfDstTransform.data());
+    dataset->SetGeoTransform(adfDstTransform.data());
 
-    pDstBand = poDstDS->GetRasterBand(1);
+    pDstBand = dataset->GetRasterBand(1);
     if (!pDstBand)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot get band for %s",
                  oOpts.outputFilename.c_str());
-        return false;
+        return nullptr;
     }
 
     if (oOpts.nodataVal >= 0)
         GDALSetRasterNoDataValue(pDstBand, oOpts.nodataVal);
-    return true;
+    return dataset;
 }
 
 namespace
@@ -801,9 +803,11 @@ void Viewshed::setOutput(double &dfResult, double &dfCellVal, double dfZ)
 /// @param nY  Y location of the observer
 /// @param vLastLineVal  Vector in which to store the read line. Becomes the last line
 ///    in further processing.
+/// @param dstDataset  Reference to the destination dataset.
 /// @return True on success, false otherwise.
 bool Viewshed::processFirstLine(int nX, int nY,
-                                std::vector<double> &vLastLineVal)
+                                std::vector<double> &vLastLineVal,
+                                GDALDataset &dstDataset)
 {
     int nLine = oOutExtent.clampY(nY);
     int nYOffset = nLine - nY;
@@ -823,7 +827,7 @@ bool Viewshed::processFirstLine(int nX, int nY,
         if (oOpts.outputMode == OutputMode::Normal)
             vResult[nX] = oOpts.visibleVal;
     }
-    dfHeightAdjFactor = CalcHeightAdjFactor(poDstDS.get(), oOpts.curveCoeff);
+    dfHeightAdjFactor = CalcHeightAdjFactor(dstDataset, oOpts.curveCoeff);
 
     // In DEM mode the base is the pre-adjustment value.  In ground mode the base is zero.
     if (oOpts.outputMode == OutputMode::DEM)
@@ -1020,21 +1024,24 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     if (!calcExtents(nX, nY))
         return false;
 
-    return execute(nX, nY, oOpts.outputFilename);
+    poDstDS = execute(nX, nY, oOpts.outputFilename);
+    return static_cast<bool>(poDstDS);
 }
 
-bool Viewshed::execute(int nX, int nY, const std::string &outFilename)
+Viewshed::DatasetPtr Viewshed::execute(int nX, int nY,
+                                       const std::string &outFilename)
 {
     nX -= oOutExtent.xStart;
 
     // create the output dataset
-    if (!createOutputDataset(outFilename))
-        return false;
+    DatasetPtr dataset = createOutputDataset(outFilename);
+    if (!dataset)
+        return nullptr;
 
     std::vector<double> vFirstLineVal(oCurExtent.xSize());
 
-    if (!processFirstLine(nX, nY, vFirstLineVal))
-        return false;
+    if (!processFirstLine(nX, nY, vFirstLineVal, *dataset))
+        return nullptr;
 
     if (oOpts.cellMode == CellMode::Edge)
         oZcalc = doEdge;
@@ -1076,9 +1083,9 @@ bool Viewshed::execute(int nX, int nY, const std::string &outFilename)
     tDown.wait();
 
     if (!emitProgress(1))
-        return false;
+        return nullptr;
 
-    return true;
+    return dataset;
 }
 
 /// Compute the cumulative viewshed of a raster band.
@@ -1104,6 +1111,27 @@ bool Viewshed::runCumulative(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     for (int x = 0; x < oCurExtent.xStop; x += oOpts.observerSpacing)
         for (int y = 0; y < oCurExtent.yStop; y += oOpts.observerSpacing)
             observers.emplace_back(x, y);
+
+    std::queue<DatasetPtr> outputQueue;
+
+    /**
+    int numThreads = 5;
+    GDALWorkerThreadPool pool(5);
+
+    while (numThreads && observers.size())
+    {
+        [x, y] = observers.back();
+        observers.resize(observers.size() - 1);
+        pool.SubmitJob([x, y] {
+                execute(x, y);
+            }
+        );
+        numThreads--;
+
+        if (observers.empty()
+    }
+    pothread
+    **/
 
     (void)pfnProgress;
     (void)pProgressArg;

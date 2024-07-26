@@ -46,6 +46,8 @@ namespace gdal
 class Viewshed
 {
   public:
+    using DatasetPtr = std::unique_ptr<GDALDataset>;
+
     /**
      * Raster output mode.
      */
@@ -207,7 +209,7 @@ class Viewshed
      *
      * @return  Unique pointer to the viewshed dataset.
     */
-    CPL_DLL std::unique_ptr<GDALDataset> output()
+    CPL_DLL DatasetPtr output()
     {
         return std::move(poDstDS);
     }
@@ -218,7 +220,7 @@ class Viewshed
     Window oCurExtent;
     double dfMaxDistance2;
     double dfZObserver;
-    std::unique_ptr<GDALDataset> poDstDS;
+    DatasetPtr poDstDS;
     GDALRasterBand *pSrcBand;
     GDALRasterBand *pDstBand;
     double dfHeightAdjFactor;
@@ -234,14 +236,15 @@ class Viewshed
 
     bool setupProgress(GDALProgressFunc pfnProgress, void *pProgressArg);
     bool setupTransforms();
-    bool execute(int nX, int nY, const std::string &outFilename);
+    DatasetPtr execute(int nX, int nY, const std::string &outFilename);
     void setOutput(double &dfResult, double &dfCellVal, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
     bool readLine(int nLine, double *data);
     bool writeLine(int nLine, std::vector<double> &vResult);
     bool processLine(int nX, int nY, int nLine,
                      std::vector<double> &vLastLineVal);
-    bool processFirstLine(int nX, int nY, std::vector<double> &vLastLineVal);
+    bool processFirstLine(int nX, int nY, std::vector<double> &vLastLineVal,
+                          GDALDataset &dstDataset);
     void processFirstLineLeft(int nX, int iStart, int iEnd,
                               std::vector<double> &vResult,
                               std::vector<double> &vThisLineVal);
@@ -262,7 +265,7 @@ class Viewshed
     std::pair<int, int> adjustHeight(int iLine, int nX,
                                      std::vector<double> &thisLineVal);
     bool calcExtents(int nX, int nY);
-    bool createOutputDataset(const std::string &outFilename);
+    DatasetPtr createOutputDataset(const std::string &outFilename);
     bool lineProgress();
     bool emitProgress(double fraction);
 };
