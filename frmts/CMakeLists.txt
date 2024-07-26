@@ -147,9 +147,8 @@ gdal_dependent_format(mbtiles "MBTile" "GDAL_USE_SQLITE3;OGR_ENABLE_DRIVER_GPKG;
 gdal_dependent_format(postgisraster "PostGIS Raster driver" "GDAL_USE_POSTGRESQL")
 gdal_dependent_format(dds "DirectDraw Surface" "GDAL_USE_CRNLIB")
 gdal_dependent_format(kea "Kea" "GDAL_USE_KEA;GDAL_USE_HDF5")
-gdal_dependent_format(openjpeg "JPEG2000 driver based on OpenJPEG library" "GDAL_USE_OPENJPEG" DRIVER_NAME_OPTION
-                      "JP2OpenJPEG")
-gdal_dependent_format(tiledb "TileDB tiledb.io" "GDAL_USE_TILEDB")
+include(openjpeg/driver_declaration.cmake)
+include(tiledb/driver_declaration.cmake)
 gdal_dependent_format(exr "EXR support via OpenEXR library" "GDAL_USE_OPENEXR")
 gdal_dependent_format(pcraster "PCRaster CSF 2.0 raster file driver" "GDAL_USE_LIBCSF OR GDAL_USE_LIBCSF_INTERNAL")
 gdal_dependent_format(rdb "RIEGL RDB Map Pixel (.mpx) driver" "rdb_FOUND")
@@ -166,8 +165,8 @@ gdal_dependent_format(jp2lura "JPEG-2000 (based on Luratech)" "GDAL_USE_LURATECH
 gdal_dependent_format(sde "ESRI ArcSDE Raster" "HAVE_SDE")
 # LizardTech's decoding software development kit (DSDK)
 include(mrsid/driver_declaration.cmake)
-gdal_dependent_format(georaster "Oracle Spatial GeoRaster" "GDAL_USE_ORACLE" DRIVER_NAME_OPTION GEOR)
-gdal_dependent_format(ecw "ERDAS JPEG2000 (.jp2)" "GDAL_USE_ECW")
+include(georaster/driver_declaration.cmake)
+include(ecw/driver_declaration.cmake)
 
 # Register all frmt drivers according to FRMT_<driver> flags
 gdal_standard_includes(gdal_frmts)

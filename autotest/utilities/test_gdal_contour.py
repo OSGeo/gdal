@@ -399,4 +399,232 @@ def test_gdal_contour_missing_fl_i_or_e(gdal_contour_path, testdata_tif, tmp_pat
     _, err = gdaltest.runexternal_out_and_err(
         gdal_contour_path + f" {testdata_tif} {contour_shp}"
     )
-    assert "One and only one of -i, -fl or -e must be specified." in err
+    assert "One of -i, -fl or -e must be specified." in err
+
+
+###############################################################################
+# Test -fl can be used with -i
+
+
+def test_gdal_contour_fl_and_i(gdal_contour_path, testdata_tif, tmp_path):
+
+    contour_shp = str(tmp_path / "contour.shp")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_contour_path + f" -a elev -fl 6 16 -i 10 {testdata_tif} {contour_shp}"
+    )
+
+    assert err is None or err == "", "got error/warning"
+
+    ds = ogr.Open(contour_shp)
+
+    lyr = ds.ExecuteSQL("select elev from contour order by elev asc")
+
+    expected_heights = [0, 6, 10, 16, 20]
+
+    assert lyr.GetFeatureCount() == len(expected_heights)
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        assert feat.GetField("elev") == expected_heights[i]
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
+
+###############################################################################
+# Test -fl can be used with -e real DEM
+
+
+def test_gdal_contour_fl_e(gdal_contour_path, tmp_path):
+
+    contour_shp = str(tmp_path / "contour.shp")
+
+    gdaltest.runexternal(
+        gdal_contour_path
+        + f" -a elev -fl 76 112 441 -e 3 ../gdrivers/data/n43.tif {contour_shp}"
+    )
+
+    ds = ogr.Open(contour_shp)
+
+    lyr = ds.ExecuteSQL("select distinct elev from contour order by elev asc")
+
+    expected_heights = [76, 81, 112, 243, 441]
+
+    assert lyr.GetFeatureCount() == len(expected_heights)
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        assert feat.GetField("elev") == expected_heights[i]
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
+
+###############################################################################
+# Test -off does not apply to -fl
+
+
+def test_gdal_contour_fl_ignore_off(gdal_contour_path, testdata_tif, tmp_path):
+
+    contour_shp = str(tmp_path / "contour.shp")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_contour_path
+        + f" -a elev -fl 6 16 -off 2 -i 10 {testdata_tif} {contour_shp}"
+    )
+
+    assert err is None or err == "", "got error/warning"
+
+    ds = ogr.Open(contour_shp)
+
+    lyr = ds.ExecuteSQL("select elev from contour order by elev asc")
+
+    expected_heights = [2, 6, 12, 16, 22]
+
+    assert lyr.GetFeatureCount() == len(expected_heights)
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        assert feat.GetField("elev") == expected_heights[i]
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
+
+###############################################################################
+# Test there are no duplicated levels when -fl is used together with -i
+
+
+def test_gdal_contour_fl_and_i_no_dups(gdal_contour_path, testdata_tif, tmp_path):
+
+    contour_shp = str(tmp_path / "contour.shp")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_contour_path + f" -a elev -fl 6 16 20 -i 10 {testdata_tif} {contour_shp}"
+    )
+
+    assert err is None or err == "", "got error/warning"
+
+    ds = ogr.Open(contour_shp)
+
+    lyr = ds.ExecuteSQL("select elev from contour order by elev asc")
+
+    expected_heights = [0, 6, 10, 16, 20]
+
+    assert lyr.GetFeatureCount() == len(expected_heights)
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        assert feat.GetField("elev") == expected_heights[i]
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
+
+###############################################################################
+# Test interval with polygonize
+
+
+def test_gdal_contour_i_polygonize(gdal_contour_path, testdata_tif, tmp_path):
+
+    contour_shp = str(tmp_path / "contour.shp")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_contour_path
+        + f" -amin elev -amax elev2 -i 5 -p {testdata_tif} {contour_shp}"
+    )
+
+    assert err is None or err == "", "got error/warning"
+
+    ds = ogr.Open(contour_shp)
+
+    lyr = ds.ExecuteSQL("select elev, elev2 from contour order by elev asc")
+
+    # Raster max is 25 so the last contour is 20 (with amax of 25)
+    expected_heights = [0, 5, 10, 15, 20]
+
+    assert lyr.GetFeatureCount() == len(expected_heights)
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        assert feat.GetField("elev") == expected_heights[i]
+        assert feat.GetField("elev2") == expected_heights[i] + 5
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
+
+###############################################################################
+# Test there are no duplicated levels when -fl is used together with -i
+# and polygonize
+
+
+def test_gdal_contour_fl_and_i_no_dups_polygonize(
+    gdal_contour_path, testdata_tif, tmp_path
+):
+
+    contour_shp = str(tmp_path / "contour.shp")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_contour_path
+        + f" -amin elev -amax elev2 -fl 6 16 20 -i 5 -p {testdata_tif} {contour_shp}"
+    )
+
+    assert err is None or err == "", "got error/warning"
+
+    ds = ogr.Open(contour_shp)
+
+    lyr = ds.ExecuteSQL("select elev, elev2 from contour order by elev asc")
+
+    # Raster max is 25 so the last contour is 20 (with amax of 25)
+    expected_heights = [0, 5, 6, 10, 15, 16, 20]
+
+    assert lyr.GetFeatureCount() == len(expected_heights)
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        assert feat.GetField("elev") == expected_heights[i]
+        assert (
+            feat.GetField("elev2") == expected_heights[i + 1]
+            if i < len(expected_heights) - 2
+            else expected_heights[i] + 5
+        )
+        i = i + 1
+        feat = lyr.GetNextFeature()
+
+
+###############################################################################
+# Test -e with -fl and polygonize
+
+
+def test_gdal_contour_fl_e_polygonize(gdal_contour_path, tmp_path):
+
+    contour_shp = str(tmp_path / "contour.shp")
+
+    gdaltest.runexternal(
+        gdal_contour_path
+        + f" -p -amin elev -amax elev2 -fl 76 112 441 -e 3 ../gdrivers/data/n43.tif {contour_shp}"
+    )
+
+    ds = ogr.Open(contour_shp)
+
+    lyr = ds.ExecuteSQL("select elev, elev2 from contour order by elev asc")
+
+    # Raster min is 75, max is 460
+    expected_heights = [75, 76, 81, 112, 243, 441]
+
+    assert lyr.GetFeatureCount() == len(expected_heights)
+
+    i = 0
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        assert feat.GetField("elev") == expected_heights[i]
+        assert (
+            feat.GetField("elev2") == expected_heights[i + 1]
+            if i < len(expected_heights) - 2
+            else 460
+        )
+        i = i + 1
+        feat = lyr.GetNextFeature()

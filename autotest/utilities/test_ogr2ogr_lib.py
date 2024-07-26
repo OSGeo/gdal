@@ -520,7 +520,6 @@ def test_ogr2ogr_lib_21():
         gdal.VectorTranslate(ds, src_ds, accessMode="append", selectFields=["foo"])
 
     ds = None
-    f.Destroy()
     src_ds = None
 
 

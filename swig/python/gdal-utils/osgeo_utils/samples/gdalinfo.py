@@ -402,9 +402,8 @@ def main(argv=None):
             print(line)
 
         stats = hBand.GetStatistics(bApproxStats, bStats)
-        # Dirty hack to recognize if stats are valid. If invalid, the returned
-        # stddev is negative
-        if stats[3] >= 0.0:
+        # Before GDAL 3.10, a negative value for stddev indicated an error
+        if stats is not None and stats[3] >= 0.0:
             print(
                 "  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f"
                 % (stats[0], stats[1], stats[2], stats[3])

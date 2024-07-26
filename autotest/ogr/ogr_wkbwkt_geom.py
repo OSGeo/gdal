@@ -98,8 +98,6 @@ def test_wkbwkt_geom(filename):
     #           print geom_wkt.ExportToWkt()
     #           return 'fail'
 
-    geom_wkb.Destroy()
-
     ######################################################################
     # Convert geometry to WKB and back to verify that WKB encoding is
     # working smoothly.
@@ -109,16 +107,10 @@ def test_wkbwkt_geom(filename):
 
     assert str(geom_wkb) == str(geom_wkt), "XDR WKB encoding/decoding failure."
 
-    geom_wkb.Destroy()
-
     wkb_ndr = geom_wkt.ExportToWkb(ogr.wkbNDR)
     geom_wkb = ogr.CreateGeometryFromWkb(wkb_ndr)
 
     assert str(geom_wkb) == str(geom_wkt), "NDR WKB encoding/decoding failure."
-
-    geom_wkb.Destroy()
-
-    geom_wkt.Destroy()
 
 
 ###############################################################################

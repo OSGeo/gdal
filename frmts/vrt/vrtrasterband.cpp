@@ -342,9 +342,8 @@ VRTParseColorTable(const CPLXMLNode *psColorTable)
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr
-VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
-                       std::map<CPLString, GDALDataset *> &oMapSharedSources)
+CPLErr VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
+                              VRTMapSharedResources &oMapSharedSources)
 
 {
     /* -------------------------------------------------------------------- */

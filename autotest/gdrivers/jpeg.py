@@ -1105,7 +1105,7 @@ def test_jpeg_28():
         "EXIF_XResolution": "(96)",
         "EXIF_TransferFunction": "0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
         "EXIF_ExifVersion": "0123",
-        "EXIF_DateTime": "dt                 ",
+        "EXIF_DateTime": "dt",
         "EXIF_FlashpixVersion": "ABCD",
         "EXIF_ComponentsConfiguration": "0x1f 0x00 0x00 0x00",
         "EXIF_Make": "make",
@@ -1585,6 +1585,65 @@ def test_jpeg_copy_mdd():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+def test_jpeg_read_DNG_tags():
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif DNG_CameraSerialNumber_and_DNG_UniqueCameraModel.jpg
+    # exiftool "-CameraSerialNumber=SerialNumber" "-UniqueCameraModel=CameraModel" DNG_CameraSerialNumber_and_DNG_UniqueCameraModel.jpg
+    ds = gdal.Open("data/jpeg/DNG_CameraSerialNumber_and_DNG_UniqueCameraModel.jpg")
+    assert ds.GetMetadataItem("DNG_CameraSerialNumber") == "SerialNumber"
+    assert ds.GetMetadataItem("DNG_UniqueCameraModel") == "CameraModel"
+
+
+###############################################################################
+
+
+def test_jpeg_read_DNG_tags_same_value_ax_EXIF():
+    """Check that DNG tags are not emitted when they have a corresponding EXIF
+    tag at the same value."""
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif DNG_and_EXIF_same_values.jpg
+    # exiftool"-exif:SerialNumber=SerialNumber" "-CameraSerialNumber=SerialNumber" "-UniqueCameraModel=CameraModel" "-Model=CameraModel" DNG_and_EXIF_same_values.jpg
+    ds = gdal.Open("data/jpeg/DNG_and_EXIF_same_values.jpg")
+    assert ds.GetMetadataItem("DNG_CameraSerialNumber") is None
+    assert ds.GetMetadataItem("DNG_UniqueCameraModel") is None
+    assert ds.GetMetadataItem("EXIF_BodySerialNumber") == "SerialNumber"
+    assert ds.GetMetadataItem("EXIF_Model") == "CameraModel"
+
+
+###############################################################################
+
+
+def test_jpeg_read_pix4d_xmp_crs_vertcs_orthometric():
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif pix4d_xmp_crs_vertcs_orthometric.jpg
+    # exiftool "-xmp<=pix4d_xmp_crs_vertcs_orthometric.xml"  pix4d_xmp_crs_vertcs_orthometric.jpg
+    # where pix4d_xmp_crs_vertcs_orthometric.xml is the XMP content
+    ds = gdal.Open("data/jpeg/pix4d_xmp_crs_vertcs_orthometric.jpg")
+    srs = ds.GetSpatialRef()
+    assert srs.GetAuthorityCode("GEOGCS") == "6318"
+    assert srs.GetAuthorityCode("VERT_CS") == "6360"
+
+
+###############################################################################
+
+
+def test_jpeg_read_pix4d_xmp_crs_vertcs_ellipsoidal():
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif pix4d_xmp_crs_vertcs_ellipsoidal.jpg
+    # exiftool "-xmp<=pix4d_xmp_crs_vertcs_ellipsoidal.xml"  pix4d_xmp_crs_vertcs_ellipsoidal.jpg
+    # where pix4d_xmp_crs_vertcs_ellipsoidal.xml is the XMP content
+    ds = gdal.Open("data/jpeg/pix4d_xmp_crs_vertcs_ellipsoidal.jpg")
+    srs = ds.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == "6319"
 
 
 ###############################################################################

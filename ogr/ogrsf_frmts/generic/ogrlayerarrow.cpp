@@ -419,9 +419,10 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
         psChild->name = CPLStrdup(poFieldDefn->GetNameRef());
         if (poFieldDefn->IsNullable())
             psChild->flags = ARROW_FLAG_NULLABLE;
+        const auto eType = poFieldDefn->GetType();
         const auto eSubType = poFieldDefn->GetSubType();
         const char *item_format = nullptr;
-        switch (poFieldDefn->GetType())
+        switch (eType)
         {
             case OFTInteger:
             {
@@ -585,15 +586,18 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
         if (!osComment.empty())
             oMetadata.emplace_back(std::pair(MD_GDAL_OGR_COMMENT, osComment));
 
-        if (poFieldDefn->GetSubType() != OFSTNone &&
-            poFieldDefn->GetSubType() != OFSTBoolean &&
-            poFieldDefn->GetSubType() != OFSTFloat32)
+        if (eType == OFTString && eSubType == OFSTJSON)
         {
             oMetadata.emplace_back(
-                std::pair(MD_GDAL_OGR_SUBTYPE,
-                          OGR_GetFieldSubTypeName(poFieldDefn->GetSubType())));
+                std::pair(ARROW_EXTENSION_NAME_KEY, EXTENSION_NAME_ARROW_JSON));
         }
-        if (poFieldDefn->GetType() == OFTString && poFieldDefn->GetWidth() > 0)
+        else if (eSubType != OFSTNone && eSubType != OFSTBoolean &&
+                 eSubType != OFSTFloat32)
+        {
+            oMetadata.emplace_back(std::pair(
+                MD_GDAL_OGR_SUBTYPE, OGR_GetFieldSubTypeName(eSubType)));
+        }
+        if (eType == OFTString && poFieldDefn->GetWidth() > 0)
         {
             oMetadata.emplace_back(std::pair(
                 MD_GDAL_OGR_WIDTH, CPLSPrintf("%d", poFieldDefn->GetWidth())));

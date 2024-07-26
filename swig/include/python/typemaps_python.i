@@ -225,6 +225,15 @@ TYPEMAP_ARGOUT_ARGOUT_ARRAY_IS_VALID(6)
   /* %typemap(out) IF_ERROR_RETURN_NONE */
 }
 
+%typemap(ret) IF_ERROR_RETURN_NONE
+{
+  /* %typemap(ret) IF_ERROR_RETURN_NONE */
+  if ($1 != CE_None ) {
+    Py_XDECREF( $result );
+    $result = Py_None;
+    Py_INCREF($result);
+  }
+}
 
 %import "ogr_error_map.i"
 

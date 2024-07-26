@@ -23,6 +23,12 @@ unset CFLAGS
 make "-j$(nproc)"
 make "-j$(nproc)" install
 
+# Download Oracle SDK
+wget https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip
+wget https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip
+unzip -o instantclient-basic-linux.x64-19.23.0.0.0dbru.zip
+unzip -o instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip
+
 # Test building MrSID driver in standalone mode
 mkdir build_mrsid
 cd build_mrsid
@@ -34,11 +40,55 @@ cd ..
 # Test building OCI driver in standalone mode
 mkdir build_oci
 cd build_oci
-wget https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip
-wget https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip
-unzip -o instantclient-basic-linux.x64-19.23.0.0.0dbru.zip
-unzip -o instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip
-cmake -S "${GDAL_SOURCE_DIR:=..}/ogr/ogrsf_frmts/oci" "-DOracle_ROOT=$PWD/instantclient_19_23" -DCMAKE_PREFIX_PATH=/tmp/install-gdal
+cmake -S "${GDAL_SOURCE_DIR:=..}/ogr/ogrsf_frmts/oci" "-DOracle_ROOT=$PWD/../instantclient_19_23" -DCMAKE_PREFIX_PATH=/tmp/install-gdal
 cmake --build . "-j$(nproc)"
 test -f ogr_OCI.so
+cd ..
+
+# Test building GeoRaster driver in standalone mode
+mkdir build_georaster
+cd build_georaster
+cmake -S "${GDAL_SOURCE_DIR:=..}/frmts/georaster" -DCMAKE_PREFIX_PATH=/tmp/install-gdal "-DOracle_ROOT=$PWD/../instantclient_19_23"
+cmake --build . "-j$(nproc)"
+test -f gdal_GEOR.so
+cd ..
+
+# Test building Parquet driver in standalone mode
+mkdir build_parquet
+cd build_parquet
+cmake -S "${GDAL_SOURCE_DIR:=..}/ogr/ogrsf_frmts/parquet" -DCMAKE_PREFIX_PATH=/tmp/install-gdal
+cmake --build . "-j$(nproc)"
+test -f ogr_Parquet.so
+cd ..
+
+# Test building Arrow driver in standalone mode
+mkdir build_arrow
+cd build_arrow
+cmake -S "${GDAL_SOURCE_DIR:=..}/ogr/ogrsf_frmts/arrow" -DCMAKE_PREFIX_PATH=/tmp/install-gdal
+cmake --build . "-j$(nproc)"
+test -f ogr_Arrow.so
+cd ..
+
+# Test building OpenJPEG driver in standalone mode
+mkdir build_openjpeg
+cd build_openjpeg
+cmake -S "${GDAL_SOURCE_DIR:=..}/frmts/openjpeg" -DCMAKE_PREFIX_PATH=/tmp/install-gdal
+cmake --build . "-j$(nproc)"
+test -f gdal_JP2OpenJPEG.so
+cd ..
+
+# Test building TileDB driver in standalone mode
+mkdir build_tiledb
+cd build_tiledb
+cmake -S "${GDAL_SOURCE_DIR:=..}/frmts/tiledb" -DCMAKE_PREFIX_PATH=/tmp/install-gdal
+cmake --build . "-j$(nproc)"
+test -f gdal_TileDB.so
+cd ..
+
+# Test building ECW driver in standalone mode
+mkdir build_ecw
+cd build_ecw
+cmake -S "${GDAL_SOURCE_DIR:=..}/frmts/ecw" -DCMAKE_PREFIX_PATH=/tmp/install-gdal -DECW_ROOT=/opt/libecwj2-3.3
+cmake --build . "-j$(nproc)"
+test -f gdal_ECW_JP2ECW.so
 cd ..

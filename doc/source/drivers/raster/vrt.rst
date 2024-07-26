@@ -2097,6 +2097,38 @@ multi-threading if the sources are not overlapping and belong to different
 datasets. This can be enabled by setting the :config:`GDAL_NUM_THREADS`
 configuration option to an integer or ``ALL_CPUS``.
 
+Starting with GDAL 3.10, the :oo:`NUM_THREADS` open option can
+be set to control specifically the multi-threading of VRT datasets.
+It defaults to ``ALL_CPUS``, and when set, overrides :config:`GDAL_NUM_THREADS`
+or :config:`VRT_NUM_THREADS`. It applies to
+ComputeStatistics() and band-level and dataset-level RasterIO().
+For band-level RasterIO(), multi-threading is only available if more than 1
+million pixels are requested and if the VRT is made of only non-overlapping
+SimpleSource or ComplexSource belonging to different datasets.
+For dataset-level RasterIO(), multi-threading is only available if more than 1
+million pixels are requested and if the VRT is made of only non-overlapping
+SimpleSource belonging to different datasets.
+
+-  .. oo:: NUM_THREADS
+      :choices: integer, ALL_CPUS
+      :default: ALL_CPUS
+
+      Determines the number of threads used when an operation reads from
+      multiple sources.
+
+This can also be specified globally with the :config:`VRT_NUM_THREADS`
+configuration option.
+
+-  .. config:: VRT_NUM_THREADS
+      :choices: integer, ALL_CPUS
+      :default: ALL_CPUS
+
+      Determines the number of threads used when an operation reads from
+      multiple sources.
+
+Note that the number of threads actually used is also limited by the
+:config:`GDAL_MAX_DATASET_POOL_SIZE` configuration option.
+
 Multi-threading issues
 ----------------------
 

@@ -102,6 +102,9 @@ void CPL_DLL CPLQuadTreeRemove(CPLQuadTree *hQuadtree, void *hFeature,
 void CPL_DLL **CPLQuadTreeSearch(const CPLQuadTree *hQuadtree,
                                  const CPLRectObj *pAoi, int *pnFeatureCount);
 
+bool CPL_DLL CPLQuadTreeHasMatch(const CPLQuadTree *hQuadtree,
+                                 const CPLRectObj *pAoi);
+
 void CPL_DLL CPLQuadTreeForeach(const CPLQuadTree *hQuadtree,
                                 CPLQuadTreeForeachFunc pfnForeach,
                                 void *pUserData);

@@ -170,7 +170,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     void InitInternalOverviews();
     GDALDataset *InitEXIFOverview();
 
-    OGRSpatialReference m_oSRS{};
+    mutable OGRSpatialReference m_oSRS{};
     bool bGeoTransformValid;
     double adfGeoTransform[6];
     std::vector<gdal::GCP> m_aoGCPs{};
@@ -264,6 +264,8 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     virtual int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
+
+    const OGRSpatialReference *GetSpatialRef() const override;
 
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;

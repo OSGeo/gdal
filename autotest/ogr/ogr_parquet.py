@@ -4045,6 +4045,30 @@ def test_ogr_parquet_read_arrow_json_extension():
 
 
 ###############################################################################
+# Test writing a file with the arrow.json extension
+
+
+def test_ogr_parquet_writing_arrow_json_extension(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "out.parquet")
+    with ogr.GetDriverByName("Parquet").CreateDataSource(outfilename) as ds:
+        lyr = ds.CreateLayer("test")
+        fld_defn = ogr.FieldDefn("extension_json")
+        fld_defn.SetSubType(ogr.OFSTJSON)
+        lyr.CreateField(fld_defn)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["extension_json"] = '{"foo":"bar"}'
+        lyr.CreateFeature(f)
+
+    with gdal.config_option("OGR_PARQUET_READ_GDAL_SCHEMA", "NO"):
+        ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
+    f = lyr.GetNextFeature()
+    assert f["extension_json"] == '{"foo":"bar"}'
+
+
+###############################################################################
 # Test ignored fields with arrow::dataset and bounding box column
 
 

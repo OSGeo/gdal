@@ -242,9 +242,6 @@ def test_ogr_ogcapi_features(remove_type_application_json):
         assert lyr is not None
 
         feat = lyr.GetNextFeature()
-        fdef = feat.GetDefnRef()
-        assert fdef.GetFieldDefn(0).GetName() == "feature::id"
-        assert fdef.GetFieldDefn(3).GetName() == "name"
 
         ogrtest.check_feature_geometry(
             feat,
@@ -346,19 +343,19 @@ def test_ogr_ogcapi_raster(api, collection, tmp_path):
     )
 
     assert ds is not None
+    if (api, collection) == ("COVERAGE", "SRTM"):
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
 
     options = gdal.TranslateOptions(
         gdal.ParseCommandLine(
             f"-outsize 100 100 -oo API={api} -projwin -9.5377 53.5421 -9.0557 53.2953"
         )
     )
-    out_path = str(tmp_path / "lough_corrib.png")
+    out_path = str(tmp_path / "out.tif")
 
     gdal.Translate(out_path, ds, options=options)
 
-    control_image_path = os.path.join(
-        BASE_TEST_DATA_PATH, f"expected_map_lough_corrib_{api}.png"
-    )
+    control_image_path = os.path.join(BASE_TEST_DATA_PATH, f"expected_{api}.tif")
 
     # When recording also regenerate control images
     if RECORD:

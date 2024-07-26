@@ -94,7 +94,7 @@ jobs:
         # Workaround bug in ogdi packaging
         sudo ln -s /usr/lib/ogdi/libvrf.so /usr/lib
         #
-        python3 -m pip install -U pip wheel setuptools numpy
+        python3 -m pip install -U pip wheel setuptools numpy importlib_metadata
         python3 -m pip install -r $GITHUB_WORKSPACE/autotest/requirements.txt
 
     - name: Build libjxl
@@ -466,30 +466,25 @@ jobs:
       shell: bash -l {0}
       run: |
         cmake --build $GITHUB_WORKSPACE/build --config Release --target quicktest
-    # FIXME !! Disabled because of actions/runner-images#10004
-    #- name: test (with ctest)
-    #  shell: bash -l {0}
-    #  run: |
-    #    ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
-    #  env:
-    #    SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
-    #    SKIP_OGR_GMLAS_HTTP_RELATED: YES
-    #    SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
-    #    BUILD_NAME: "build-windows-conda"
+    - name: test (with ctest)
+      shell: bash -l {0}
+      run: |
+        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
+      env:
+        SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
+        SKIP_OGR_GMLAS_HTTP_RELATED: YES
+        SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
+        BUILD_NAME: "build-windows-conda"
     - name: Install
       shell: bash -l {0}
       run: |
         cmake --build $GITHUB_WORKSPACE/build --config Release --target install
-    # FIXME !! Disabled because of actions/runner-images#10004
-    #- name: Test install
-    #  shell: bash -l {0}
-    #  run: |
-    #    export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
-    #    gdalinfo --version
-    #    python -VV
-    #    PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
-    #    export PATH=$GITHUB_WORKSPACE/install-gdal/Scripts:$PATH
-    #    PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages gdal_edit --version
+        export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
+        gdalinfo --version
+        python -VV
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        export PATH=$GITHUB_WORKSPACE/install-gdal/Scripts:$PATH
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages gdal_edit --version
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc

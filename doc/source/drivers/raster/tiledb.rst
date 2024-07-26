@@ -185,6 +185,31 @@ The following array creation options are available:
 Cf :source_file:`autotest/gdrivers/tiledb_multidim.py` for examples of how to
 use the Python multidimensional API with the TileDB driver.
 
+Standalone plugin compilation
+-----------------------------
+
+.. versionadded:: 3.10
+
+While this driver may be built as part of a whole GDAL build, either in libgdal
+itself, or as a plugin, it is also possible to only build this driver as a plugin,
+against an already built libgdal.
+
+The version of the GDAL sources used to build the driver must match the version
+of the libgdal it is built against.
+
+For example, from a "build_tiledb" directory under the root of the GDAL source tree:
+
+::
+
+    cmake -S ../frmts/tiledb -DCMAKE_PREFIX_PATH=/path/to/GDAL_installation_prefix -DTileDB_DIR:PATH=/path/to/tiledb_installation_prefix/lib/cmake/TileDB
+    cmake --build .
+
+
+Note that such a plugin, when used against a libgdal not aware of it, will be
+systematically loaded at GDAL driver initialization time, and will not benefit from
+`deferred plugin loading capabilities <rfc-96>`. For that, libgdal itself must be built with the
+CMake variable GDAL_REGISTER_DRIVER_TILEDB_FOR_LATER_PLUGIN=ON set.
+
 See Also
 --------
 

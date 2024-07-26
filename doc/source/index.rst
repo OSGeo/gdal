@@ -30,3 +30,6 @@ Index
 =====
 
 * :ref:`genindex`
+
+.. meta::
+   :google-site-verification: 9rQvEBJEGGlTYi0neT9qNthRNbnxE4LCy_hdZ6WDiK4

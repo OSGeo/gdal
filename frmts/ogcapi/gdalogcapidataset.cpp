@@ -1163,9 +1163,12 @@ SelectImageURL(const char *const *papszOptionOptions,
         }
     }
 
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "Server does not support specified IMAGE_FORMAT: %s",
-             osFormat.c_str());
+    if (osFormat != "AUTO")
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Server does not support specified IMAGE_FORMAT: %s",
+                 osFormat.c_str());
+    }
     return std::pair<std::string, CPLString>();
 }
 
@@ -1349,8 +1352,16 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
         if (oField.IsValid())
         {
             l_nBands = oField.Size();
-            const auto osDefinition = oField[0].GetString("definition");
-            static const std::map<CPLString, GDALDataType> oMapTypes = {
+            // Such as in https://maps.gnosis.earth/ogcapi/collections/NaturalEarth:raster:HYP_HR_SR_OB_DR/coverage/rangetype?f=json
+            // https://github.com/opengeospatial/coverage-implementation-schema/blob/main/standard/schemas/1.1/json/examples/generalGrid/2D_regular.json
+            std::string osDataType =
+                oField[0].GetString("encodingInfo/dataType");
+            if (osDataType.empty())
+            {
+                // Older way?
+                osDataType = oField[0].GetString("definition");
+            }
+            static const std::map<std::string, GDALDataType> oMapTypes = {
                 // https://edc-oapi.dev.hub.eox.at/oapi/collections/S2L2A
                 {"UINT8", GDT_Byte},
                 {"INT16", GDT_Int16},
@@ -1372,8 +1383,8 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
             // 08-094r1_SWE_Common_Data_Model_2.0_Submission_Package.pdf page
             // 112
             auto oIter = oMapTypes.find(
-                CPLString(osDefinition)
-                    .replaceAll("http://www.opengis.net/ def/dataType/OGC/0/",
+                CPLString(osDataType)
+                    .replaceAll("http://www.opengis.net/def/dataType/OGC/0/",
                                 "ogcType:"));
             if (oIter != oMapTypes.end())
             {
@@ -1381,8 +1392,8 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
             }
             else
             {
-                CPLDebug("OGCAPI", "Unhandled field definition: %s",
-                         osDefinition.c_str());
+                CPLDebug("OGCAPI", "Unhandled data type: %s",
+                         osDataType.c_str());
             }
         }
     }

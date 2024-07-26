@@ -1422,9 +1422,9 @@ int VRTDerivedRasterBand::IGetDataCoverageStatus(
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTDerivedRasterBand::XMLInit(
-    const CPLXMLNode *psTree, const char *pszVRTPath,
-    std::map<CPLString, GDALDataset *> &oMapSharedSources)
+CPLErr VRTDerivedRasterBand::XMLInit(const CPLXMLNode *psTree,
+                                     const char *pszVRTPath,
+                                     VRTMapSharedResources &oMapSharedSources)
 
 {
     const CPLErr eErr =

@@ -212,7 +212,7 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
     std::string osExtensionName;
     if (field_kv_metadata)
     {
-        auto extension_name = field_kv_metadata->Get("ARROW:extension:name");
+        auto extension_name = field_kv_metadata->Get(ARROW_EXTENSION_NAME_KEY);
         if (extension_name.ok())
         {
             osExtensionName = *extension_name;

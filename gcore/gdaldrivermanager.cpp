@@ -527,8 +527,7 @@ int GDALDriverManager::RegisterDriver(GDALDriver *poDriver, bool bHidden)
 
     if (m_bInDeferredDriverLoading)
     {
-        if (m_oMapRealDrivers.find(poDriver->GetDescription()) !=
-            m_oMapRealDrivers.end())
+        if (cpl::contains(m_oMapRealDrivers, poDriver->GetDescription()))
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -1032,8 +1031,7 @@ void GDALDriverManager::AutoLoadDrivers()
                 continue;
             }
 
-            if (m_oSetPluginFileNames.find(papszFiles[iFile]) !=
-                m_oSetPluginFileNames.end())
+            if (cpl::contains(m_oSetPluginFileNames, papszFiles[iFile]))
             {
                 continue;
             }
@@ -1157,14 +1155,12 @@ void GDALDriverManager::ReorderDrivers()
         {
             CPLString osUCDriverName(pszLine);
             osUCDriverName.toupper();
-            if (oSetOrderedDrivers.find(osUCDriverName) !=
-                oSetOrderedDrivers.end())
+            if (cpl::contains(oSetOrderedDrivers, osUCDriverName))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Duplicated name %s in [order] section", pszLine);
             }
-            else if (oMapNameToDrivers.find(osUCDriverName) !=
-                     oMapNameToDrivers.end())
+            else if (cpl::contains(oMapNameToDrivers, osUCDriverName))
             {
                 aosOrderedDrivers.emplace_back(pszLine);
                 oSetOrderedDrivers.insert(osUCDriverName);
@@ -1189,8 +1185,7 @@ void GDALDriverManager::ReorderDrivers()
     for (int i = 0; i < nDrivers; ++i)
     {
         const char *pszName = papoDrivers[i]->GetDescription();
-        if (oSetOrderedDrivers.find(CPLString(pszName).toupper()) ==
-            oSetOrderedDrivers.end())
+        if (!cpl::contains(oSetOrderedDrivers, CPLString(pszName).toupper()))
         {
             // Could happen for a private plugin
             CPLDebug("GDAL",
@@ -1342,7 +1337,7 @@ const char *GDALPluginDriverProxy::GetMetadataItem(const char *pszName,
             }
             return pszValue;
         }
-        else if (m_oSetMetadataItems.find(pszName) != m_oSetMetadataItems.end())
+        else if (cpl::contains(m_oSetMetadataItems, pszName))
         {
             return GDALDriver::GetMetadataItem(pszName, pszDomain);
         }

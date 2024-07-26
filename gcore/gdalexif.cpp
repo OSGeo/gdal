@@ -266,6 +266,11 @@ static const struct intr_tag
     {0x1002, "EXIF_Related_Image_Length"},
     {0x0000, ""}};
 
+static const EXIFTagDesc IFD0Tags[] = {
+    {0xC614, TIFF_ASCII, 0, "DNG_UniqueCameraModel", COND_OPTIONAL},
+    {0xC62F, TIFF_ASCII, 0, "DNG_CameraSerialNumber", COND_OPTIONAL},
+    {0x0000, TIFF_NOTYPE, 0, "", COND_NOT_ALLOWED}};
+
 /************************************************************************/
 /*                         EXIFPrintData()                              */
 /************************************************************************/
@@ -311,6 +316,10 @@ static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
 
         case TIFF_ASCII:
             memcpy(pszData, data, count);
+            // Strip trailing spaces or nul characters
+            while (count > 0 &&
+                   (pszData[count - 1] == ' ' || pszData[count - 1] == 0))
+                --count;
             pszData[count] = '\0';
             break;
 
@@ -597,6 +606,20 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
             }
         }
 
+        if (szName[0] == 0)
+        {
+            for (const EXIFTagDesc *poTag = IFD0Tags; poTag->tag; poTag++)
+            {
+                if (poTag->tag == poTIFFDirEntry->tdir_tag)
+                {
+                    CPLAssert(nullptr != poTag->name);
+
+                    CPLStrlcpy(szName, poTag->name, sizeof(szName));
+                    break;
+                }
+            }
+        }
+
         if (nOffset == nGPSOffset)
         {
             for (const EXIFTagDesc *poGPSTags = gpstags;
@@ -638,24 +661,31 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
         if (poTIFFDirEntry->tdir_offset < INT_MAX)
         {
             if (poTIFFDirEntry->tdir_tag == EXIFOFFSETTAG)
+            {
                 nExifOffset = poTIFFDirEntry->tdir_offset;
+                continue;
+            }
             else if (poTIFFDirEntry->tdir_tag == INTEROPERABILITYOFFSET)
+            {
                 nInterOffset = poTIFFDirEntry->tdir_offset;
+                continue;
+            }
             else if (poTIFFDirEntry->tdir_tag == GPSOFFSETTAG)
+            {
                 nGPSOffset = poTIFFDirEntry->tdir_offset;
+                continue;
+            }
         }
 
-        /* --------------------------------------------------------------------
-         */
-        /*      If we didn't recognise the tag just ignore it.  To see all */
-        /*      tags comment out the continue. */
-        /* --------------------------------------------------------------------
-         */
+        /* ----------------------------------------------------------------- */
+        /*      If we didn't recognise the tag, report it as CPLDebug()      */
+        /* ----------------------------------------------------------------- */
+        bool bUnknownTag = false;
         if (szName[0] == '\0')
         {
             snprintf(szName, sizeof(szName), "EXIF_%u",
                      poTIFFDirEntry->tdir_tag);
-            continue;
+            bUnknownTag = true;
         }
 
         vsi_l_offset nTagValueOffset = poTIFFDirEntry->tdir_offset;
@@ -841,7 +871,10 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
                      static_cast<long>(space));
         }
 
-        papszMetadata = CSLSetNameValue(papszMetadata, szName, szTemp);
+        if (bUnknownTag)
+            CPLDebug("EXIF", "Ignoring %s=%s", szName, szTemp);
+        else
+            papszMetadata = CSLSetNameValue(papszMetadata, szName, szTemp);
     }
     CPLFree(poTIFFDir);
 

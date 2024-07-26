@@ -892,8 +892,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                                                          '_' + dim->GetName());
                             newDimName = newDimNamePrefix;
                             int nIterCount = 2;
-                            while (mapExistingDstDims.find(newDimName) !=
-                                   mapExistingDstDims.end())
+                            while (
+                                cpl::contains(mapExistingDstDims, newDimName))
                             {
                                 newDimName = newDimNamePrefix +
                                              CPLSPrintf("_%d", nIterCount);
@@ -1151,9 +1151,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
             auto srcArray = poSrcGroup->OpenMDArray(name);
             EXIT_OR_CONTINUE_IF_NULL(srcArray);
 
-            const auto oIterDimName =
-                mapSrcVariableNameToIndexedDimName.find(srcArray->GetName());
-            if (oIterDimName != mapSrcVariableNameToIndexedDimName.end())
+            if (cpl::contains(mapSrcVariableNameToIndexedDimName,
+                              srcArray->GetName()))
             {
                 if (!CopyArray(srcArray))
                     return false;
@@ -1166,9 +1165,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
             auto srcArray = poSrcGroup->OpenMDArray(name);
             EXIT_OR_CONTINUE_IF_NULL(srcArray);
 
-            const auto oIterDimName =
-                mapSrcVariableNameToIndexedDimName.find(srcArray->GetName());
-            if (oIterDimName == mapSrcVariableNameToIndexedDimName.end())
+            if (!cpl::contains(mapSrcVariableNameToIndexedDimName,
+                               srcArray->GetName()))
             {
                 if (!CopyArray(srcArray))
                     return false;
@@ -1311,8 +1309,8 @@ GDALGroup::ResolveMDArray(const std::string &osName,
                 GetInnerMostGroup(osPath, curGroupHolder, osLastPart);
             if (poGroupPtr)
                 poGroup = poGroupPtr->OpenGroup(osLastPart);
-            if (poGroup && oSetAlreadyVisited.find(poGroup->GetFullName()) ==
-                               oSetAlreadyVisited.end())
+            if (poGroup &&
+                !cpl::contains(oSetAlreadyVisited, poGroup->GetFullName()))
             {
                 oQueue.push(poGroup);
                 goOn = true;
@@ -1343,9 +1341,8 @@ GDALGroup::ResolveMDArray(const std::string &osName,
                 for (const auto &osGroupName : aosGroupNames)
                 {
                     auto poSubGroup = groupPtr->OpenGroup(osGroupName);
-                    if (poSubGroup &&
-                        oSetAlreadyVisited.find(poSubGroup->GetFullName()) ==
-                            oSetAlreadyVisited.end())
+                    if (poSubGroup && !cpl::contains(oSetAlreadyVisited,
+                                                     poSubGroup->GetFullName()))
                     {
                         oQueue.push(poSubGroup);
                         oSetAlreadyVisited.insert(poSubGroup->GetFullName());
@@ -1874,7 +1871,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Not all elements pointed by buffer will fit in "
                  "[buffer_alloc_start, "
-                 "buffer_alloc_start + buffer_alloc_size[");
+                 "buffer_alloc_start + buffer_alloc_size]");
     };
 
     const auto &dims = GetDimensions();

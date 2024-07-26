@@ -1203,6 +1203,14 @@ extern "C++"
     {
         return t;
     }
+
+    /** Emulates the C++20 .contains() method */
+    template <typename C, typename V>
+    inline bool contains(const C &container, const V &value)
+    {
+        return container.count(value) != 0;
+    }
+
     }  // namespace cpl
 }
 #endif

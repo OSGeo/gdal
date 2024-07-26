@@ -46,6 +46,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
+#include "gdal_interpolateatpoint.h"
 #include "gdal_mdreader.h"
 #include "gdal_priv.h"
 #if defined(__x86_64) || defined(_M_X64)
@@ -233,7 +234,7 @@ typedef enum
     /*! Nearest neighbour (select on one input pixel) */ DRA_NearestNeighbour =
         0,
     /*! Bilinear (2x2 kernel) */ DRA_Bilinear = 1,
-    /*! Cubic Convolution Approximation (4x4 kernel) */ DRA_Cubic = 2
+    /*! Cubic Convolution Approximation (4x4 kernel) */ DRA_CubicSpline = 2
 } DEMResampleAlg;
 
 typedef struct
@@ -480,7 +481,7 @@ static const char *GDALSerializeRPCDEMResample(DEMResampleAlg eResampleAlg)
     {
         case DRA_NearestNeighbour:
             return "near";
-        case DRA_Cubic:
+        case DRA_CubicSpline:
             return "cubic";
         default:
         case DRA_Bilinear:
@@ -897,7 +898,7 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
     }
     else if (EQUAL(pszDEMInterpolation, "cubic"))
     {
-        psTransform->eResampleAlg = DRA_Cubic;
+        psTransform->eResampleAlg = DRA_CubicSpline;
     }
     else
     {
@@ -1091,7 +1092,7 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
 /*                 GDALDestroyReprojectionTransformer()                 */
 /************************************************************************/
 
-/** Destroy RPC tranformer */
+/** Destroy RPC transformer */
 void GDALDestroyRPCTransformer(void *pTransformAlg)
 
 {
@@ -1367,130 +1368,6 @@ static bool RPCInverseTransformPoint(GDALRPCTransformInfo *psTransform,
     return true;
 }
 
-static double BiCubicKernel(double dfVal)
-{
-    if (dfVal > 2.0)
-        return 0.0;
-
-    const double xm1 = dfVal - 1.0;
-    const double xp1 = dfVal + 1.0;
-    const double xp2 = dfVal + 2.0;
-
-    const double a = xp2 <= 0.0 ? 0.0 : xp2 * xp2 * xp2;
-    const double b = xp1 <= 0.0 ? 0.0 : xp1 * xp1 * xp1;
-    const double c = dfVal <= 0.0 ? 0.0 : dfVal * dfVal * dfVal;
-    const double d = xm1 <= 0.0 ? 0.0 : xm1 * xm1 * xm1;
-
-    return 0.16666666666666666667 * (a - (4.0 * b) + (6.0 * c) - (4.0 * d));
-}
-
-/************************************************************************/
-/*                        GDALRPCExtractDEMWindow()                     */
-/************************************************************************/
-
-static bool GDALRPCExtractDEMWindow(GDALRPCTransformInfo *psTransform, int nX,
-                                    int nY, int nWidth, int nHeight,
-                                    double *padfOut)
-{
-    constexpr int BLOCK_SIZE = 64;
-
-    // Request the DEM by blocks of BLOCK_SIZE * BLOCK_SIZE and put them
-    // in poCacheDEM
-    if (psTransform->poCacheDEM == nullptr)
-        psTransform->poCacheDEM =
-            new lru11::Cache<uint64_t, std::shared_ptr<std::vector<double>>>();
-
-    const int nXIters = (nX + nWidth - 1) / BLOCK_SIZE - nX / BLOCK_SIZE + 1;
-    const int nYIters = (nY + nHeight - 1) / BLOCK_SIZE - nY / BLOCK_SIZE + 1;
-    const int nRasterXSize = psTransform->poDS->GetRasterXSize();
-    const int nRasterYSize = psTransform->poDS->GetRasterYSize();
-    for (int iY = 0; iY < nYIters; iY++)
-    {
-        const int nBlockY = nY / BLOCK_SIZE + iY;
-        const int nReqYSize =
-            std::min(nRasterYSize - nBlockY * BLOCK_SIZE, BLOCK_SIZE);
-        const int nFirstLineInCachedBlock = (iY == 0) ? nY % BLOCK_SIZE : 0;
-        const int nFirstLineInOutput =
-            (iY == 0) ? 0
-                      : BLOCK_SIZE - (nY % BLOCK_SIZE) + (iY - 1) * BLOCK_SIZE;
-        const int nLinesToCopy = (nYIters == 1) ? nHeight
-                                 : (iY == 0)    ? BLOCK_SIZE - (nY % BLOCK_SIZE)
-                                 : (iY == nYIters - 1)
-                                     ? 1 + (nY + nHeight - 1) % BLOCK_SIZE
-                                     : BLOCK_SIZE;
-        for (int iX = 0; iX < nXIters; iX++)
-        {
-            const int nBlockX = nX / BLOCK_SIZE + iX;
-            const int nReqXSize =
-                std::min(nRasterXSize - nBlockX * BLOCK_SIZE, BLOCK_SIZE);
-            const uint64_t nKey =
-                (static_cast<uint64_t>(nBlockY) << 32) | nBlockX;
-            const int nFirstColInCachedBlock = (iX == 0) ? nX % BLOCK_SIZE : 0;
-            const int nFirstColInOutput =
-                (iX == 0)
-                    ? 0
-                    : BLOCK_SIZE - (nX % BLOCK_SIZE) + (iX - 1) * BLOCK_SIZE;
-            const int nColsToCopy = (nXIters == 1) ? nWidth
-                                    : (iX == 0) ? BLOCK_SIZE - (nX % BLOCK_SIZE)
-                                    : (iX == nXIters - 1)
-                                        ? 1 + (nX + nWidth - 1) % BLOCK_SIZE
-                                        : BLOCK_SIZE;
-
-#if 0
-            CPLDebug("RPC", "nY=%d nX=%d nBlockY=%d nBlockX=%d "
-                     "nFirstLineInCachedBlock=%d nFirstLineInOutput=%d nLinesToCopy=%d "
-                     "nFirstColInCachedBlock=%d nFirstColInOutput=%d nColsToCopy=%d",
-                     nY, nX, nBlockY, nBlockX, nFirstLineInCachedBlock, nFirstLineInOutput, nLinesToCopy,
-                     nFirstColInCachedBlock, nFirstColInOutput, nColsToCopy);
-#endif
-
-            std::shared_ptr<std::vector<double>> poValue;
-            if (!psTransform->poCacheDEM->tryGet(nKey, poValue))
-            {
-                poValue = std::make_shared<std::vector<double>>(nReqXSize *
-                                                                nReqYSize);
-                CPLErr eErr = psTransform->poDS->GetRasterBand(1)->RasterIO(
-                    GF_Read, nBlockX * BLOCK_SIZE, nBlockY * BLOCK_SIZE,
-                    nReqXSize, nReqYSize, poValue->data(), nReqXSize, nReqYSize,
-                    GDT_Float64, 0, 0, nullptr);
-                if (eErr != CE_None)
-                {
-                    return false;
-                }
-                psTransform->poCacheDEM->insert(nKey, poValue);
-            }
-
-            // Compose the cached block to the final buffer
-            for (int j = 0; j < nLinesToCopy; j++)
-            {
-                memcpy(padfOut + (nFirstLineInOutput + j) * nWidth +
-                           nFirstColInOutput,
-                       poValue->data() +
-                           (nFirstLineInCachedBlock + j) * nReqXSize +
-                           nFirstColInCachedBlock,
-                       nColsToCopy * sizeof(double));
-            }
-        }
-    }
-
-#if 0
-    CPLDebug("RPC_DEM", "DEM for %d,%d,%d,%d", nX, nY, nWidth, nHeight);
-    for(int j = 0; j < nHeight; j++)
-    {
-        std::string osLine;
-        for(int i = 0; i < nWidth; ++i )
-        {
-            if( !osLine.empty() )
-                osLine += ", ";
-            osLine += std::to_string(padfOut[j * nWidth + i]);
-        }
-        CPLDebug("RPC_DEM", "%s", osLine.c_str());
-    }
-#endif
-
-    return true;
-}
-
 /************************************************************************/
 /*                        GDALRPCGetDEMHeight()                         */
 /************************************************************************/
@@ -1499,145 +1376,26 @@ static int GDALRPCGetDEMHeight(GDALRPCTransformInfo *psTransform,
                                const double dfXIn, const double dfYIn,
                                double *pdfDEMH)
 {
-    const int nRasterXSize = psTransform->poDS->GetRasterXSize();
-    const int nRasterYSize = psTransform->poDS->GetRasterYSize();
-    int bGotNoDataValue = FALSE;
-    const double dfNoDataValue =
-        psTransform->poDS->GetRasterBand(1)->GetNoDataValue(&bGotNoDataValue);
-
-    if (psTransform->eResampleAlg == DRA_Cubic)
+    GDALRIOResampleAlg eResample = GDALRIOResampleAlg::GRIORA_NearestNeighbour;
+    switch (psTransform->eResampleAlg)
     {
-        // Convert from upper left corner of pixel coordinates to center of
-        // pixel coordinates:
-        const double dfX = dfXIn - 0.5;
-        const double dfY = dfYIn - 0.5;
-        const int dX = int(dfX);
-        const int dY = int(dfY);
-        const double dfDeltaX = dfX - dX;
-        const double dfDeltaY = dfY - dY;
-
-        const int dXNew = dX - 1;
-        const int dYNew = dY - 1;
-        if (!(dXNew >= 0 && dYNew >= 0 && dXNew + 4 <= nRasterXSize &&
-              dYNew + 4 <= nRasterYSize))
-        {
-            goto bilinear_fallback;
-        }
-        // Cubic interpolation.
-        double adfElevData[16] = {0.0};
-        if (!GDALRPCExtractDEMWindow(psTransform, dXNew, dYNew, 4, 4,
-                                     adfElevData))
-        {
-            return FALSE;
-        }
-
-        double dfSumH = 0.0;
-        double dfSumWeight = 0.0;
-        for (int k_i = 0; k_i < 4; k_i++)
-        {
-            // Loop across the X axis.
-            for (int k_j = 0; k_j < 4; k_j++)
-            {
-                // Calculate the weight for the specified pixel according
-                // to the bicubic b-spline kernel we're using for
-                // interpolation.
-                const int dKernIndX = k_j - 1;
-                const int dKernIndY = k_i - 1;
-                const double dfPixelWeight =
-                    BiCubicKernel(dKernIndX - dfDeltaX) *
-                    BiCubicKernel(dKernIndY - dfDeltaY);
-
-                // Create a sum of all values
-                // adjusted for the pixel's calculated weight.
-                const double dfElev = adfElevData[k_j + k_i * 4];
-                if (bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfElev))
-                    continue;
-
-                dfSumH += dfElev * dfPixelWeight;
-                dfSumWeight += dfPixelWeight;
-            }
-        }
-        if (dfSumWeight == 0.0)
-        {
-            return FALSE;
-        }
-
-        *pdfDEMH = dfSumH / dfSumWeight;
-
-        return TRUE;
+        case DEMResampleAlg::DRA_NearestNeighbour:
+            eResample = GDALRIOResampleAlg::GRIORA_NearestNeighbour;
+            break;
+        case DEMResampleAlg::DRA_Bilinear:
+            eResample = GDALRIOResampleAlg::GRIORA_Bilinear;
+            break;
+        case DEMResampleAlg::DRA_CubicSpline:
+            eResample = GDALRIOResampleAlg::GRIORA_CubicSpline;
+            break;
     }
-    else if (psTransform->eResampleAlg == DRA_Bilinear)
-    {
-    bilinear_fallback:
-        // Convert from upper left corner of pixel coordinates to center of
-        // pixel coordinates:
-        const double dfX = dfXIn - 0.5;
-        const double dfY = dfYIn - 0.5;
-        const int dX = static_cast<int>(dfX);
-        const int dY = static_cast<int>(dfY);
-        const double dfDeltaX = dfX - dX;
-        const double dfDeltaY = dfY - dY;
 
-        if (!(dX >= 0 && dY >= 0 && dX + 2 <= nRasterXSize &&
-              dY + 2 <= nRasterYSize))
-        {
-            goto near_fallback;
-        }
-
-        // Bilinear interpolation.
-        double adfElevData[4] = {0.0, 0.0, 0.0, 0.0};
-        if (!GDALRPCExtractDEMWindow(psTransform, dX, dY, 2, 2, adfElevData))
-        {
-            return FALSE;
-        }
-
-        if (bGotNoDataValue)
-        {
-            // TODO: We could perhaps use a valid sample if there's one.
-            bool bFoundNoDataElev = false;
-            for (int k_i = 0; k_i < 4; k_i++)
-            {
-                if (ARE_REAL_EQUAL(dfNoDataValue, adfElevData[k_i]))
-                    bFoundNoDataElev = true;
-            }
-            if (bFoundNoDataElev)
-            {
-                return FALSE;
-            }
-        }
-        const double dfDeltaX1 = 1.0 - dfDeltaX;
-        const double dfDeltaY1 = 1.0 - dfDeltaY;
-
-        const double dfXZ1 =
-            adfElevData[0] * dfDeltaX1 + adfElevData[1] * dfDeltaX;
-        const double dfXZ2 =
-            adfElevData[2] * dfDeltaX1 + adfElevData[3] * dfDeltaX;
-        const double dfYZ = dfXZ1 * dfDeltaY1 + dfXZ2 * dfDeltaY;
-
-        *pdfDEMH = dfYZ;
-
-        return TRUE;
-    }
-    else
-    {
-    near_fallback:
-        const int dX = static_cast<int>(dfXIn);
-        const int dY = static_cast<int>(dfYIn);
-        if (!(dX >= 0 && dY >= 0 && dX < nRasterXSize && dY < nRasterYSize))
-        {
-            return FALSE;
-        }
-        double dfDEMH = 0.0;
-        if (!GDALRPCExtractDEMWindow(psTransform, dX, dY, 1, 1, &dfDEMH) ||
-            (bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfDEMH)))
-        {
-            return FALSE;
-        }
-
-        *pdfDEMH = dfDEMH;
-
-        return TRUE;
-    }
+    std::unique_ptr<DoublePointsCache> cacheDEM{psTransform->poCacheDEM};
+    int res =
+        GDALInterpolateAtPoint(psTransform->poDS->GetRasterBand(1), eResample,
+                               cacheDEM, dfXIn, dfYIn, pdfDEMH);
+    psTransform->poCacheDEM = cacheDEM.release();
+    return res;
 }
 
 /************************************************************************/
@@ -1703,7 +1461,7 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
         double dfDEMH = 0.0;
         const double dfZ_i = padfZ ? padfZ[i] : 0.0;
 
-        if (psTransform->eResampleAlg == DRA_Cubic)
+        if (psTransform->eResampleAlg == DRA_CubicSpline)
         {
             // dfX in pixel center convention.
             const double dfX =
@@ -1727,8 +1485,8 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
                     const int dKernIndX = k_j - 1;
                     const int dKernIndY = k_i - 1;
                     const double dfPixelWeight =
-                        BiCubicKernel(dKernIndX - dfDeltaX) *
-                        BiCubicKernel(dKernIndY - dfDeltaY);
+                        BiCubicSplineKernel(dKernIndX - dfDeltaX) *
+                        BiCubicSplineKernel(dKernIndY - dfDeltaY);
 
                     // Create a sum of all values
                     // adjusted for the pixel's calculated weight.
@@ -2111,7 +1869,7 @@ int GDALRPCTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
                 int nXWidth = nXRight - nXLeft + 1;
                 int nYTop = static_cast<int>(floor(dfY1));
                 int nYHeight;
-                if (psTransform->eResampleAlg == DRA_Cubic)
+                if (psTransform->eResampleAlg == DRA_CubicSpline)
                 {
                     nXLeft--;
                     nXWidth += 3;

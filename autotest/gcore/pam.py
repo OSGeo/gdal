@@ -382,7 +382,7 @@ def test_pam_11():
     # Check that we actually have no saved statistics
     ds = gdal.Open("tmpdirreadonly/byte.tif")
     stats = ds.GetRasterBand(1).GetStatistics(False, False)
-    assert stats[3] == -1, "did not expected to have stats at that point"
+    assert stats is None
     ds = None
 
     # This must be run as an external process so we can override GDAL_PAM_PROXY_DIR

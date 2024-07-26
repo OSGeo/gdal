@@ -7,6 +7,6 @@ conda install -y compilers automake pkgconfig cmake
 
 conda config --set channel_priority strict
 conda install --yes --quiet proj python=3.12 swig lxml jsonschema numpy
-conda install --yes --quiet --only-deps libgdal libgdal-arrow-parquet
-# Remove libgdal as above installation of libgdal-arrow-parquet installed it
-conda remove --yes libgdal
+conda install --yes --quiet libgdal libgdal-arrow-parquet
+# Now remove all libgdal* packages, but not their dependencies
+conda remove --yes --force $(conda list libgdal | grep libgdal | awk '{print $1}')

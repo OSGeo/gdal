@@ -726,3 +726,22 @@ void CPLJobQueue::WaitCompletion(int nMaxRemainingJobs)
         m_cv.wait(oGuard);
     }
 }
+
+/************************************************************************/
+/*                             WaitEvent()                              */
+/************************************************************************/
+
+/** Wait for completion for at least one job.
+ *
+ * @return true if there are remaining jobs.
+ */
+bool CPLJobQueue::WaitEvent()
+{
+    std::unique_lock<std::mutex> oGuard(m_mutex);
+    // coverity[missing_lock:FALSE]
+    if (m_nPendingJobs > 0)
+    {
+        m_cv.wait(oGuard);
+    }
+    return m_nPendingJobs > 0;
+}
