@@ -2831,7 +2831,8 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
                            static_cast<_Float16 *>(pDstData), nDstPixelStride,
                            nWordCount);
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support Float16 (GDALCopyWordsFromT)");
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "TODO: Support Float16 (GDALCopyWordsFromT)");
 #endif
             break;
         case GDT_Float32:
@@ -2890,7 +2891,8 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
                                          nDstPixelStride, nWordCount);
             }
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support CFloat16 (GDALCopyWordsFromT)");
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "TODO: Support CFloat16 (GDALCopyWordsFromT)");
 #endif
             break;
         case GDT_CFloat32:
@@ -3036,7 +3038,8 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
             CASE_DUPLICATE_SIMPLE(GDT_Float16, _Float16)
 #else
         case GDT_Float16:
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support Float16 (GDALReplicateWord)");
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "TODO: Support Float16 (GDALReplicateWord)");
             break;
 #endif
             CASE_DUPLICATE_SIMPLE(GDT_Float32, float)
@@ -3063,7 +3066,8 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
             CASE_DUPLICATE_COMPLEX(GDT_CFloat16, _Float16)
 #else
         case GDT_CFloat16:
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support CFloat16 (GDALReplicateWord)");
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "TODO: Support CFloat16 (GDALReplicateWord)");
             break;
 #endif
             CASE_DUPLICATE_COMPLEX(GDT_CFloat32, float)
@@ -3560,7 +3564,8 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
                 static_cast<const _Float16 *>(pSrcData), nSrcPixelStride, false,
                 pDstData, eDstType, nDstPixelStride, nWordCount);
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support Float16 (GDALCopyWords64)");
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "TODO: Support Float16 (GDALCopyWords64)");
 #endif
             break;
         case GDT_Float32:
@@ -3589,7 +3594,8 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
                 static_cast<const _Float16 *>(pSrcData), nSrcPixelStride, true,
                 pDstData, eDstType, nDstPixelStride, nWordCount);
 #else
-            CPLError(CE_Failure, CPLE_NotSupported, "TODO: Support CFloat16 (GDALCopyWords64)");
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "TODO: Support CFloat16 (GDALCopyWords64)");
 #endif
             break;
         case GDT_CFloat32:
