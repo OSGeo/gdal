@@ -784,6 +784,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
+    virtual OGRErr StartTransaction(int bForce = FALSE) override;
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
 

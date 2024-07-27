@@ -4104,3 +4104,18 @@ def test_ogr_sqlite_stddev():
         f = sql_lyr.GetNextFeature()
         assert f.GetField(0) == pytest.approx(0.5, rel=1e-15)
         assert f.GetField(1) == pytest.approx(0.5**0.5, rel=1e-15)
+
+
+def test_ogr_sqlite_run_deferred_actions_before_start_transaction():
+
+    ds = ogr.Open(":memory:", update=1)
+    lyr = ds.CreateLayer("test")
+    ds.StartTransaction()
+    ds.ExecuteSQL("INSERT INTO test VALUES (1, NULL)")
+    ds.RollbackTransaction()
+    ds.StartTransaction()
+    ds.ExecuteSQL("INSERT INTO test VALUES (1, NULL)")
+    ds.CommitTransaction()
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1
