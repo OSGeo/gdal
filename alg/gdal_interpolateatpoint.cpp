@@ -31,6 +31,8 @@
 
 #include "gdal_interpolateatpoint.h"
 
+#include "gdalresamplingkernels.h"
+
 #include <algorithm>
 
 static bool
@@ -134,28 +136,6 @@ GDALInterpExtractDEMWindow(GDALRasterBand *pBand,
 #endif
 
     return true;
-}
-
-static double CubicKernel(double dfX)
-{
-    // http://en.wikipedia.org/wiki/Bicubic_interpolation#Bicubic_convolution_algorithm
-    // W(x) formula with a = -0.5 (cubic hermite spline )
-    // or
-    // https://www.cs.utexas.edu/~fussell/courses/cs384g-fall2013/lectures/mitchell/Mitchell.pdf
-    // k(x) (formula 8) with (B,C)=(0,0.5) the Catmull-Rom spline
-    double dfAbsX = fabs(dfX);
-    if (dfAbsX <= 1.0)
-    {
-        double dfX2 = dfX * dfX;
-        return dfX2 * (1.5 * dfAbsX - 2.5) + 1;
-    }
-    else if (dfAbsX <= 2.0)
-    {
-        double dfX2 = dfX * dfX;
-        return dfX2 * (-0.5 * dfAbsX + 2.5) - 4 * dfAbsX + 2;
-    }
-    else
-        return 0.0;
 }
 
 /************************************************************************/
@@ -283,8 +263,8 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
                 const int dKernIndY = k_i - 1;
                 const double dfPixelWeight =
                     eResampleAlg == GDALRIOResampleAlg::GRIORA_CubicSpline
-                        ? BiCubicSplineKernel(dKernIndX - dfDeltaX) *
-                              BiCubicSplineKernel(dKernIndY - dfDeltaY)
+                        ? CubicSplineKernel(dKernIndX - dfDeltaX) *
+                              CubicSplineKernel(dKernIndY - dfDeltaY)
                         : CubicKernel(dKernIndX - dfDeltaX) *
                               CubicKernel(dKernIndY - dfDeltaY);
 
