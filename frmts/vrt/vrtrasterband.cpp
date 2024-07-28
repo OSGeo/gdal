@@ -620,6 +620,18 @@ CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
     {
         return "nan";
     }
+#ifdef SIZEOF__FLOAT16
+    else if (eDataType == GDT_Float16 && dfVal == -6.55e4)
+    {
+        // To avoid rounding out of the range of _Float16
+        return "-6.55e4";
+    }
+    else if (eDataType == GDT_Float16 && dfVal == 6.55e4)
+    {
+        // To avoid rounding out of the range of _Float16
+        return "6.55e4";
+    }
+#endif
     else if (eDataType == GDT_Float32 &&
              dfVal == -std::numeric_limits<float>::max())
     {
@@ -899,7 +911,8 @@ bool VRTRasterBand::IsNoDataValueInDataTypeRange() const
     if (!m_bNoDataValueSet)
         return true;
     if (!std::isfinite(m_dfNoDataValue))
-        return eDataType == GDT_Float32 || eDataType == GDT_Float64;
+        return eDataType == GDT_Float16 || eDataType == GDT_Float32 ||
+               eDataType == GDT_Float64;
     GByte abyTempBuffer[2 * sizeof(double)];
     CPLAssert(GDALGetDataTypeSizeBytes(eDataType) <=
               static_cast<int>(sizeof(abyTempBuffer)));

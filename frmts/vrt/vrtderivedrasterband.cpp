@@ -106,7 +106,7 @@ static PyObject *GDALCreateNumpyArray(PyObject *pCreateArray, void *pBuffer,
             pszDataType = "uint64";
             break;
         case GDT_Float16:
-            CPLAssert(FALSE);
+            pszDataType = "float16";
             break;
         case GDT_Float32:
             pszDataType = "float32";

@@ -42,6 +42,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 #include "../frmts/mem/memdataset.h"
@@ -815,7 +816,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
     }
 
     if (nMaxValue == 0)
-        nMaxValue = std::numeric_limits<T>::max();
+        nMaxValue = GDALNumericLimits<T>::max();
     size_t j;
     if (psOptions->nInputSpectralBands == 3 &&
         psOptions->nOutPansharpenedBands == 3 &&

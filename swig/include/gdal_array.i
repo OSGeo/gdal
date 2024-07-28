@@ -1020,6 +1020,9 @@ static bool AddNumpyArrayToDict(PyObject *dict,
         { 'e', NPY_FLOAT16, 2 },
         { 'f', NPY_FLOAT32, 4 },
         { 'g', NPY_FLOAT64, 8 },
+        // { 'E', NPY_COMPLEX32, 4 },
+        // { 'F', NPY_COMPLEX64, 8 },
+        // { 'G', NPY_COMPLEX128, 16 },
     };
     const size_t nEltsInMapArrowTypeToNumpyType =
         sizeof(MapArrowTypeToNumpyType) / sizeof(MapArrowTypeToNumpyType[0]);
@@ -2026,9 +2029,9 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     GIntBig        nLineSpace = virtualmem->nLineSpace; /* if bAuto == TRUE */
     int numpytype;
 
-    if( datatype == GDT_CInt16 || datatype == GDT_CInt32 )
+    if( datatype == GDT_CInt16 || datatype == GDT_CInt32 || datatype == GDT_CFloat16 )
     {
-        PyErr_SetString( PyExc_RuntimeError, "GDT_CInt16 and GDT_CInt32 not supported for now" );
+        PyErr_SetString( PyExc_RuntimeError, "GDT_CInt16, GDT_CInt32, and GDT_CFloat16 not supported for now" );
         SWIG_fail;
     }
 
@@ -2389,7 +2392,7 @@ codes = {gdalconst.GDT_Byte: numpy.uint8,
          gdalconst.GDT_Float64: numpy.float64,
          gdalconst.GDT_CInt16: numpy.complex64,
          gdalconst.GDT_CInt32: numpy.complex64,
-         # gdalconst.GDT_CFloat16: numpy.complex32,
+         gdalconst.GDT_CFloat16: numpy.complex64,
          gdalconst.GDT_CFloat32: numpy.complex64,
          gdalconst.GDT_CFloat64: numpy.complex128}
 

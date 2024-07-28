@@ -26,6 +26,8 @@
 #include <memory>
 #include <limits>
 
+#include "cpl_float.h"
+
 #ifndef FLATBUFFERS_USE_STD_OPTIONAL
   // Detect C++17 compatible compiler.
   // __cplusplus >= 201703L - a compiler has support of 'static inline' variables.
@@ -64,10 +66,10 @@ namespace flatbuffers {
 
 #if defined(FLATBUFFERS_TEMPLATES_ALIASES)
   template <typename T>
-  using numeric_limits = std::numeric_limits<T>;
+  using numeric_limits = GDALNumericLimits<T>;
 #else
   template <typename T> class numeric_limits :
-    public std::numeric_limits<T> {};
+    public GDALNumericLimits<T> {};
 #endif  // defined(FLATBUFFERS_TEMPLATES_ALIASES)
 
 #if defined(FLATBUFFERS_TEMPLATES_ALIASES)

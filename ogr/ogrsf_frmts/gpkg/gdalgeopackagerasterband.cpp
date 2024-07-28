@@ -31,6 +31,7 @@
 #include "gdal_alg_priv.h"
 #include "ogrsqlitevfs.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 
 #include <algorithm>
 #include <limits>
@@ -1391,7 +1392,7 @@ static void ProcessInt16UInt16Tile(
         dfTileOffset = dfGlobalMax - dfRange * dfTileScale;
     }
 
-    if (bHasNoData && std::numeric_limits<T>::min() == 0 && m_dfOffset == 0.0 &&
+    if (bHasNoData && GDALNumericLimits<T>::min() == 0 && m_dfOffset == 0.0 &&
         m_dfScale == 1.0)
     {
         dfTileOffset = 0.0;

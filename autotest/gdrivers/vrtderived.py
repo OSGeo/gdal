@@ -764,14 +764,19 @@ def test_vrtderived_12():
 
     for dt in [
         "Byte",
+        "Int8",
         "UInt16",
         "Int16",
         "UInt32",
         "Int32",
+        "UInt64",
+        "Int64",
+        "Float16",
         "Float32",
         "Float64",
         "CInt16",
         "CInt32",
+        "CFloat16",
         "CFloat32",
         "CFloat64",
     ]:
@@ -790,8 +795,8 @@ def test_vrtderived_12():
             "GDAL_VRT_ENABLE_PYTHON", "YES"
         ), gdaltest.error_handler():
             cs = ds.GetRasterBand(1).Checksum()
-        # CInt16/CInt32 do not map to native numpy types
-        if dt == "CInt16" or dt == "CInt32":
+        # CInt16/CInt32/CFloat16 do not map to native numpy types
+        if dt == "CInt16" or dt == "CInt32" or dt == "CFloat16":
             expected_cs = -1  # error
         else:
             expected_cs = 100
@@ -801,7 +806,7 @@ def test_vrtderived_12():
             pytest.fail("invalid checksum")
 
     # Same for SourceTransferType
-    for dt in ["CInt16", "CInt32"]:
+    for dt in ["CInt16", "CInt32", "CFloat16"]:
         ds = gdal.Open(
             """<VRTDataset rasterXSize="10" rasterYSize="10">
 <VRTRasterBand dataType="%s" band="1" subClass="VRTDerivedRasterBand">
@@ -1063,7 +1068,7 @@ def identity(in_ar, out_ar, *args, **kwargs):
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
         with gdal.Open(vrt_xml) as vrt_ds:
             arr = vrt_ds.ReadAsArray()
-            if dtype not in {gdal.GDT_CInt16, gdal.GDT_CInt32}:
+            if dtype not in {gdal.GDT_CInt16, gdal.GDT_CInt32, gdal.GDT_CFloat16}:
                 assert arr[0, 0] == 1
             assert vrt_ds.GetRasterBand(1).DataType == dtype
 

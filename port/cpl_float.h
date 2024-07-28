@@ -50,13 +50,71 @@
 
 #include "cpl_port.h"
 
+#ifdef __cplusplus
+#include <limits>
+#endif
+
 CPL_C_START
 GUInt32 CPL_DLL CPLHalfToFloat(GUInt16 iHalf);
 GUInt32 CPL_DLL CPLTripleToFloat(GUInt32 iTriple);
 CPL_C_END
 
 #ifdef __cplusplus
+
+// std::numeric_limits does not work for _Float16, thus we define
+// GDALNumericLimits which does.
+
+template <typename T> struct GDALNumericLimits : std::numeric_limits<T>
+{
+};
+
+#ifdef SIZEOF__FLOAT16
+template <> struct GDALNumericLimits<_Float16>
+{
+    static constexpr bool has_denorm = true;
+    static constexpr bool has_infinity = true;
+    static constexpr bool has_quiet_NaN = true;
+    static constexpr bool is_integer = false;
+    static constexpr bool is_signed = true;
+
+    static constexpr int digits = 11;
+
+    static constexpr _Float16 epsilon()
+    {
+        return static_cast<_Float16>(6.103515625e-5);
+    }
+
+    static constexpr _Float16 min()
+    {
+        return static_cast<_Float16>(6.103515625e-5);
+    }
+
+    static constexpr _Float16 lowest()
+    {
+        return -65504;
+    }
+
+    static constexpr _Float16 max()
+    {
+        return 65504;
+    }
+
+    static constexpr _Float16 infinity()
+    {
+        return static_cast<_Float16>(1.0 / 0.0);
+    }
+
+    static constexpr _Float16 quiet_NaN()
+    {
+        return static_cast<_Float16>(0.0 / 0.0);
+    }
+};
+#endif
+
 GUInt16 CPL_DLL CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned);
+
+GUInt16 CPL_DLL CPLConvertFloatToHalf(float fFloat32);
+float CPL_DLL CPLConvertHalfToFloat(GUInt16 nHalf);
 #endif
 
 #endif  // CPL_FLOAT_H_INCLUDED

@@ -71,7 +71,7 @@ DefaultNDVLookup = {
     gdal.GDT_Int32: -2147483647,
     gdal.GDT_UInt64: None,
     gdal.GDT_Int64: None,
-    gdal.GDT_Float16: 6.55e4,
+    gdal.GDT_Float16: 65504,
     gdal.GDT_Float32: 3.402823466e38,
     gdal.GDT_Float64: 1.7976931348623158e308,
     gdal.GDT_CInt16: None,

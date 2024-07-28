@@ -48,6 +48,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_progress.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
@@ -344,7 +345,7 @@ int GDALComputeMedianCutPCTInternal(
     /*      STEP 1: create empty boxes.                                     */
     /* ==================================================================== */
     if (static_cast<GUInt32>(nXSize) >
-        std::numeric_limits<T>::max() / static_cast<GUInt32>(nYSize))
+        GDALNumericLimits<T>::max() / static_cast<GUInt32>(nYSize))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "GDALComputeMedianCutPCTInternal() not called "
@@ -355,7 +356,7 @@ int GDALComputeMedianCutPCTInternal(
     if (nBits == 8 && pabyRedBand != nullptr && pabyGreenBand != nullptr &&
         pabyBlueBand != nullptr &&
         static_cast<GUInt32>(nXSize) <=
-            std::numeric_limits<T>::max() / static_cast<GUInt32>(nYSize))
+            GDALNumericLimits<T>::max() / static_cast<GUInt32>(nYSize))
     {
         nPixels = static_cast<T>(nXSize) * static_cast<T>(nYSize);
     }

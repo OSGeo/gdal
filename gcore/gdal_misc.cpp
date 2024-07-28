@@ -46,6 +46,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
@@ -199,34 +200,34 @@ static int GetMinBitsForValue(double dValue)
 {
     if (round(dValue) == dValue)
     {
-        if (dValue <= std::numeric_limits<GByte>::max() &&
-            dValue >= std::numeric_limits<GByte>::min())
+        if (dValue <= GDALNumericLimits<GByte>::max() &&
+            dValue >= GDALNumericLimits<GByte>::lowest())
             return 8;
 
-        if (dValue <= std::numeric_limits<GInt8>::max() &&
-            dValue >= std::numeric_limits<GInt8>::min())
+        if (dValue <= GDALNumericLimits<GInt8>::max() &&
+            dValue >= GDALNumericLimits<GInt8>::lowest())
             return 8;
 
-        if (dValue <= std::numeric_limits<GInt16>::max() &&
-            dValue >= std::numeric_limits<GInt16>::min())
+        if (dValue <= GDALNumericLimits<GInt16>::max() &&
+            dValue >= GDALNumericLimits<GInt16>::lowest())
             return 16;
 
-        if (dValue <= std::numeric_limits<GUInt16>::max() &&
-            dValue >= std::numeric_limits<GUInt16>::min())
+        if (dValue <= GDALNumericLimits<GUInt16>::max() &&
+            dValue >= GDALNumericLimits<GUInt16>::lowest())
             return 16;
 
-        if (dValue <= std::numeric_limits<GInt32>::max() &&
-            dValue >= std::numeric_limits<GInt32>::min())
+        if (dValue <= GDALNumericLimits<GInt32>::max() &&
+            dValue >= GDALNumericLimits<GInt32>::lowest())
             return 32;
 
-        if (dValue <= std::numeric_limits<GUInt32>::max() &&
-            dValue >= std::numeric_limits<GUInt32>::min())
+        if (dValue <= GDALNumericLimits<GUInt32>::max() &&
+            dValue >= GDALNumericLimits<GUInt32>::lowest())
             return 32;
 
-        if (dValue <= static_cast<double>(
-                          std::numeric_limits<std::uint64_t>::max()) &&
+        if (dValue <=
+                static_cast<double>(GDALNumericLimits<std::uint64_t>::max()) &&
             dValue >=
-                static_cast<double>(std::numeric_limits<std::uint64_t>::min()))
+                static_cast<double>(GDALNumericLimits<std::uint64_t>::lowest()))
             return 64;
     }
     else if (static_cast<float>(dValue) == dValue)
@@ -816,17 +817,15 @@ template <class T>
 static inline void ClampAndRound(double &dfValue, bool &bClamped,
                                  bool &bRounded)
 {
-    // TODO(schwehr): Rework this template.  ::min() versus ::lowest.
-
-    if (dfValue < static_cast<double>(std::numeric_limits<T>::min()))
+    if (dfValue < static_cast<double>(GDALNumericLimits<T>::lowest()))
     {
         bClamped = true;
-        dfValue = static_cast<double>(std::numeric_limits<T>::min());
+        dfValue = static_cast<double>(GDALNumericLimits<T>::lowest());
     }
-    else if (dfValue > static_cast<double>(std::numeric_limits<T>::max()))
+    else if (dfValue > static_cast<double>(GDALNumericLimits<T>::max()))
     {
         bClamped = true;
-        dfValue = static_cast<double>(std::numeric_limits<T>::max());
+        dfValue = static_cast<double>(GDALNumericLimits<T>::max());
     }
     else if (dfValue != static_cast<double>(static_cast<T>(dfValue)))
     {
@@ -904,7 +903,13 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
                 // Intentionally lose precision.
                 dfValue = static_cast<_Float16>(dfValue);
 #else
-                // Do nothing, we cannot compute with _Float16
+                float fValue = static_cast<float>(dfValue);
+                GUInt32 nValue;
+                memcpy(&nValue, &fValue, sizeof nValue);
+                bool bHasWarned = true;
+                nValue = CPLHalfToFloat(CPLFloatToHalf(nValue, bHasWarned));
+                memcpy(&fValue, &nValue, sizeof fValue);
+                dfValue = fValue;
 #endif
             }
             break;
@@ -914,23 +919,21 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
             if (!CPLIsFinite(dfValue))
                 break;
 
-            // TODO(schwehr): ::min() versus ::lowest.
-            // Use ClampAndRound after it has been fixed.
-            if (dfValue < -std::numeric_limits<float>::max())
+            // TODO: Use ClampAndRound
+            if (dfValue < GDALNumericLimits<float>::lowest())
             {
                 bClamped = TRUE;
                 dfValue =
-                    static_cast<double>(-std::numeric_limits<float>::max());
+                    static_cast<double>(GDALNumericLimits<float>::lowest());
             }
-            else if (dfValue > std::numeric_limits<float>::max())
+            else if (dfValue > GDALNumericLimits<float>::max())
             {
                 bClamped = TRUE;
-                dfValue =
-                    static_cast<double>(std::numeric_limits<float>::max());
+                dfValue = static_cast<double>(GDALNumericLimits<float>::max());
             }
             else
             {
-                // Intentionally loose precision.
+                // Intentionally lose precision.
                 // TODO(schwehr): Is the double cast really necessary?
                 // If so, why?  What will fail?
                 dfValue = static_cast<double>(static_cast<float>(dfValue));
@@ -1375,7 +1378,14 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                         dfValue = reinterpret_cast<const _Float16 *>(
                             pDataRef)[iOffset];
 #else
-                        CPLAssert(false);
+                    {
+                        const GUInt32 nValue =
+                            CPLHalfToFloat(reinterpret_cast<const GUInt16 *>(
+                                pDataRef)[iOffset]);
+                        float fValue;
+                        mempcpy(&fValue, &nValue, sizeof fValue);
+                        dfValue = fValue;
+                    }
 #endif
                         break;
                     case GDT_Float32:
@@ -1414,10 +1424,21 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                         const double dfImag =
                             reinterpret_cast<const _Float16 *>(
                                 pDataRef)[iOffset * 2 + 1];
-                        dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
 #else
-                        CPLAssert(false);
+                        const GUInt32 nReal =
+                            CPLHalfToFloat(reinterpret_cast<const GUInt16 *>(
+                                pDataRef)[iOffset * 2]);
+                        float fReal;
+                        mempcpy(&fReal, &nReal, sizeof fReal);
+                        const double dfReal = fReal;
+                        const GUInt32 nImag =
+                            CPLHalfToFloat(reinterpret_cast<const GUInt16 *>(
+                                pDataRef)[iOffset * 2 + 1]);
+                        float fImag;
+                        mempcpy(&fImag, &nImag, sizeof fImag);
+                        const double dfImag = fImag;
 #endif
+                        dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
                         break;
                     }
                     case GDT_CFloat32:
@@ -3879,7 +3900,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         {
             std::cout << "Hit <ENTER> to Continue." << std::endl;
             std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cin.ignore(GDALNumericLimits<std::streamsize>::max(), '\n');
         }
 
         /* --------------------------------------------------------------------
@@ -4712,7 +4733,7 @@ bool GDALCanReliablyUseSiblingFileList(const char *pszFilename)
 
 double GDALAdjustNoDataCloseToFloatMax(double dfVal)
 {
-    const auto kMaxFloat = std::numeric_limits<float>::max();
+    const auto kMaxFloat = GDALNumericLimits<float>::max();
     if (std::fabs(dfVal - -kMaxFloat) < 1e-10 * kMaxFloat)
         return -kMaxFloat;
     if (std::fabs(dfVal - kMaxFloat) < 1e-10 * kMaxFloat)
@@ -4764,7 +4785,7 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
             else if (eDstDataType == GDT_Int64)
             {
                 if (nNoData <
-                    static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))
+                    static_cast<uint64_t>(GDALNumericLimits<int64_t>::max()))
                 {
                     poDstBand->SetNoDataValueAsInt64(
                         static_cast<int64_t>(nNoData));
@@ -4785,9 +4806,9 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
             if (eDstDataType == GDT_Int64)
             {
                 if (dfNoData >= static_cast<double>(
-                                    std::numeric_limits<int64_t>::min()) &&
+                                    GDALNumericLimits<int64_t>::lowest()) &&
                     dfNoData <= static_cast<double>(
-                                    std::numeric_limits<int64_t>::max()) &&
+                                    GDALNumericLimits<int64_t>::max()) &&
                     dfNoData ==
                         static_cast<double>(static_cast<int64_t>(dfNoData)))
                 {
@@ -4798,9 +4819,9 @@ void GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand)
             else if (eDstDataType == GDT_UInt64)
             {
                 if (dfNoData >= static_cast<double>(
-                                    std::numeric_limits<uint64_t>::min()) &&
+                                    GDALNumericLimits<uint64_t>::lowest()) &&
                     dfNoData <= static_cast<double>(
-                                    std::numeric_limits<uint64_t>::max()) &&
+                                    GDALNumericLimits<uint64_t>::max()) &&
                     dfNoData ==
                         static_cast<double>(static_cast<uint64_t>(dfNoData)))
                 {
@@ -5085,78 +5106,78 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
     if (dt == GDT_Byte)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<uint8_t>::lowest(),
-                                 std::numeric_limits<uint8_t>::max()))
+                                 GDALNumericLimits<uint8_t>::lowest(),
+                                 GDALNumericLimits<uint8_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<unsigned char>::max())
-            dfReplacementVal = std::numeric_limits<unsigned char>::max() - 1;
+        if (dfNoDataValue == GDALNumericLimits<unsigned char>::max())
+            dfReplacementVal = GDALNumericLimits<unsigned char>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
     else if (dt == GDT_Int8)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<int8_t>::lowest(),
-                                 std::numeric_limits<int8_t>::max()))
+                                 GDALNumericLimits<int8_t>::lowest(),
+                                 GDALNumericLimits<int8_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<GInt8>::max())
-            dfReplacementVal = std::numeric_limits<GInt8>::max() - 1;
+        if (dfNoDataValue == GDALNumericLimits<GInt8>::max())
+            dfReplacementVal = GDALNumericLimits<GInt8>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
     else if (dt == GDT_UInt16)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<uint16_t>::lowest(),
-                                 std::numeric_limits<uint16_t>::max()))
+                                 GDALNumericLimits<uint16_t>::lowest(),
+                                 GDALNumericLimits<uint16_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<GUInt16>::max())
-            dfReplacementVal = std::numeric_limits<GUInt16>::max() - 1;
+        if (dfNoDataValue == GDALNumericLimits<GUInt16>::max())
+            dfReplacementVal = GDALNumericLimits<GUInt16>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
     else if (dt == GDT_Int16)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<int16_t>::lowest(),
-                                 std::numeric_limits<int16_t>::max()))
+                                 GDALNumericLimits<int16_t>::lowest(),
+                                 GDALNumericLimits<int16_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<GInt16>::max())
-            dfReplacementVal = std::numeric_limits<GInt16>::max() - 1;
+        if (dfNoDataValue == GDALNumericLimits<GInt16>::max())
+            dfReplacementVal = GDALNumericLimits<GInt16>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
     else if (dt == GDT_UInt32)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<uint32_t>::lowest(),
-                                 std::numeric_limits<uint32_t>::max()))
+                                 GDALNumericLimits<uint32_t>::lowest(),
+                                 GDALNumericLimits<uint32_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<GUInt32>::max())
-            dfReplacementVal = std::numeric_limits<GUInt32>::max() - 1;
+        if (dfNoDataValue == GDALNumericLimits<GUInt32>::max())
+            dfReplacementVal = GDALNumericLimits<GUInt32>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
     else if (dt == GDT_Int32)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<int32_t>::lowest(),
-                                 std::numeric_limits<int32_t>::max()))
+                                 GDALNumericLimits<int32_t>::lowest(),
+                                 GDALNumericLimits<int32_t>::max()))
         {
             return 0;
         }
-        if (dfNoDataValue == std::numeric_limits<int32_t>::max())
-            dfReplacementVal = std::numeric_limits<int32_t>::max() - 1;
+        if (dfNoDataValue == GDALNumericLimits<int32_t>::max())
+            dfReplacementVal = GDALNumericLimits<int32_t>::max() - 1;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
@@ -5166,18 +5187,18 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
         // so we take the next lower value representable as a double 18446744073709549567
         static const double dfMaxUInt64Value{
             std::nextafter(
-                static_cast<double>(std::numeric_limits<uint64_t>::max()), 0) -
+                static_cast<double>(GDALNumericLimits<uint64_t>::max()), 0) -
             1};
 
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<uint64_t>::lowest(),
-                                 std::numeric_limits<uint64_t>::max()))
+                                 GDALNumericLimits<uint64_t>::lowest(),
+                                 GDALNumericLimits<uint64_t>::max()))
         {
             return 0;
         }
 
         if (dfNoDataValue >=
-            static_cast<double>(std::numeric_limits<uint64_t>::max()))
+            static_cast<double>(GDALNumericLimits<uint64_t>::max()))
             dfReplacementVal = dfMaxUInt64Value;
         else
             dfReplacementVal = dfNoDataValue + 1;
@@ -5188,18 +5209,18 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
         // so we take the next lower value representable as a double 9223372036854774784
         static const double dfMaxInt64Value{
             std::nextafter(
-                static_cast<double>(std::numeric_limits<int64_t>::max()), 0) -
+                static_cast<double>(GDALNumericLimits<int64_t>::max()), 0) -
             1};
 
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<int64_t>::lowest(),
-                                 std::numeric_limits<int64_t>::max()))
+                                 GDALNumericLimits<int64_t>::lowest(),
+                                 GDALNumericLimits<int64_t>::max()))
         {
             return 0;
         }
 
         if (dfNoDataValue >=
-            static_cast<double>(std::numeric_limits<int64_t>::max()))
+            static_cast<double>(GDALNumericLimits<int64_t>::max()))
             dfReplacementVal = dfMaxInt64Value;
         else
             dfReplacementVal = dfNoDataValue + 1;
@@ -5227,7 +5248,14 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
             // Intentionally lose precision
             dfReplacementVal = static_cast<_Float16>(dfNoDataValue);
 #else
-            // Do nothing, we cannot compute with _Float16
+            float fReplacementVal = static_cast<float>(dfNoDataValue);
+            GUInt32 nReplacementVal;
+            memcpy(&nReplacementVal, &fReplacementVal, sizeof nReplacementVal);
+            bool bHasWarned = true;
+            nReplacementVal =
+                CPLHalfToFloat(CPLFloatToHalf(nReplacementVal, bHasWarned));
+            memcpy(&fReplacementVal, &nReplacementVal, sizeof fReplacementVal);
+            dfReplacementVal = fReplacementVal;
 #endif
         }
     }
@@ -5235,41 +5263,40 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
     {
 
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<float>::lowest(),
-                                 std::numeric_limits<float>::max()))
+                                 GDALNumericLimits<float>::lowest(),
+                                 GDALNumericLimits<float>::max()))
         {
             return 0;
         }
 
-        if (dfNoDataValue == std::numeric_limits<float>::max())
+        if (dfNoDataValue == GDALNumericLimits<float>::max())
         {
             dfReplacementVal =
                 std::nextafter(static_cast<float>(dfNoDataValue), 0.0f);
         }
         else
         {
-            dfReplacementVal =
-                std::nextafter(static_cast<float>(dfNoDataValue),
-                               std::numeric_limits<float>::max());
+            dfReplacementVal = std::nextafter(static_cast<float>(dfNoDataValue),
+                                              GDALNumericLimits<float>::max());
         }
     }
     else if (dt == GDT_Float64)
     {
         if (GDALClampDoubleValue(dfNoDataValue,
-                                 std::numeric_limits<double>::lowest(),
-                                 std::numeric_limits<double>::max()))
+                                 GDALNumericLimits<double>::lowest(),
+                                 GDALNumericLimits<double>::max()))
         {
             return 0;
         }
 
-        if (dfNoDataValue == std::numeric_limits<double>::max())
+        if (dfNoDataValue == GDALNumericLimits<double>::max())
         {
             dfReplacementVal = std::nextafter(dfNoDataValue, 0.0f);
         }
         else
         {
-            dfReplacementVal = std::nextafter(
-                dfNoDataValue, std::numeric_limits<double>::max());
+            dfReplacementVal =
+                std::nextafter(dfNoDataValue, GDALNumericLimits<double>::max());
         }
     }
 

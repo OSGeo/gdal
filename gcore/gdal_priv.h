@@ -63,6 +63,7 @@ class GDALRelationship;
 #include "gdalsubdatasetinfo.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
+#include "cpl_float.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
@@ -3539,10 +3540,10 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     Transpose(const std::vector<int> &anMapNewAxisToOldAxis) const;
 
     std::shared_ptr<GDALMDArray> GetUnscaled(
-        double dfOverriddenScale = std::numeric_limits<double>::quiet_NaN(),
-        double dfOverriddenOffset = std::numeric_limits<double>::quiet_NaN(),
+        double dfOverriddenScale = GDALNumericLimits<double>::quiet_NaN(),
+        double dfOverriddenOffset = GDALNumericLimits<double>::quiet_NaN(),
         double dfOverriddenDstNodata =
-            std::numeric_limits<double>::quiet_NaN()) const;
+            GDALNumericLimits<double>::quiet_NaN()) const;
 
     virtual std::shared_ptr<GDALMDArray>
     GetMask(CSLConstList papszOptions) const;
@@ -4403,21 +4404,21 @@ inline bool ARE_REAL_EQUAL(float fVal1, float fVal2, int ulp = 2)
     using std::abs;
     return fVal1 == fVal2 || /* Should cover infinity */
            abs(fVal1 - fVal2) <
-               std::numeric_limits<float>::epsilon() * abs(fVal1 + fVal2) * ulp;
+               GDALNumericLimits<float>::epsilon() * abs(fVal1 + fVal2) * ulp;
 }
 
-// We are using `std::numeric_limits<float>::epsilon()` for backward
+// We are using `GDALNumericLimits<float>::epsilon()` for backward
 // compatibility
 inline bool ARE_REAL_EQUAL(double dfVal1, double dfVal2, int ulp = 2)
 {
     using std::abs;
     return dfVal1 == dfVal2 || /* Should cover infinity */
-           abs(dfVal1 - dfVal2) < std::numeric_limits<float>::epsilon() *
-                                      abs(dfVal1 + dfVal2) * ulp;
+           abs(dfVal1 - dfVal2) <
+               GDALNumericLimits<float>::epsilon() * abs(dfVal1 + dfVal2) * ulp;
 }
 
 // The generic function above does not work for _Float16 because
-// std::numeric_limits<float>::epsilon() is the wrong choice
+// GDALNumericLimits<float>::epsilon() is the wrong choice
 #ifdef SIZEOF__FLOAT16
 inline bool ARE_REAL_EQUAL(_Float16 hfVal1, _Float16 hfVal2, int ulp = 2)
 {
@@ -4425,7 +4426,7 @@ inline bool ARE_REAL_EQUAL(_Float16 hfVal1, _Float16 hfVal2, int ulp = 2)
     // library does not provide one
     auto abs = [](_Float16 x) { return x < 0 ? -x : x; };
     return hfVal1 == hfVal2 || /* Should cover infinity */
-           abs(hfVal1 - hfVal2) < std::numeric_limits<_Float16>::epsilon() *
+           abs(hfVal1 - hfVal2) < GDALNumericLimits<_Float16>::epsilon() *
                                       abs(hfVal1 + hfVal2) * ulp;
 }
 #endif

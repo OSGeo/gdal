@@ -174,10 +174,12 @@ class TestCopyWords : public ::testing::Test
         else if (outtype == GDT_UInt64)
             Test<InType, std::uint64_t, ConstantType>(
                 intype, inval, invali, outtype, outval, outvali, numLine);
-#ifdef SIZEOF__FLOAT16
         else if (outtype == GDT_Float16)
+#ifdef SIZEOF__FLOAT16
             Test<InType, _Float16, ConstantType>(intype, inval, invali, outtype,
                                                  outval, outvali, numLine);
+#else
+            CPLAssert(false);
 #endif
         else if (outtype == GDT_Float32)
             Test<InType, float, ConstantType>(intype, inval, invali, outtype,
@@ -191,10 +193,12 @@ class TestCopyWords : public ::testing::Test
         else if (outtype == GDT_CInt32)
             Test<InType, GInt32, ConstantType>(intype, inval, invali, outtype,
                                                outval, outvali, numLine);
-#ifdef SIZEOF__FLOAT16
         else if (outtype == GDT_CFloat16)
+#ifdef SIZEOF__FLOAT16
             Test<InType, _Float16, ConstantType>(intype, inval, invali, outtype,
                                                  outval, outvali, numLine);
+#else
+            CPLAssert(false);
 #endif
         else if (outtype == GDT_CFloat32)
             Test<InType, float, ConstantType>(intype, inval, invali, outtype,
@@ -233,10 +237,12 @@ class TestCopyWords : public ::testing::Test
         else if (intype == GDT_UInt64)
             FromR_2<std::uint64_t, ConstantType>(intype, inval, invali, outtype,
                                                  outval, outvali, numLine);
-#ifdef SIZEOF__FLOAT16
         else if (intype == GDT_Float16)
+#ifdef SIZEOF__FLOAT16
             FromR_2<_Float16, ConstantType>(intype, inval, invali, outtype,
                                             outval, outvali, numLine);
+#else
+            CPLAssert(false);
 #endif
         else if (intype == GDT_Float32)
             FromR_2<float, ConstantType>(intype, inval, invali, outtype, outval,
@@ -250,10 +256,12 @@ class TestCopyWords : public ::testing::Test
         else if (intype == GDT_CInt32)
             FromR_2<GInt32, ConstantType>(intype, inval, invali, outtype,
                                           outval, outvali, numLine);
-#ifdef SIZEOF__FLOAT16
         else if (intype == GDT_CFloat16)
+#ifdef SIZEOF__FLOAT16
             FromR_2<_Float16, ConstantType>(intype, inval, invali, outtype,
                                             outval, outvali, numLine);
+#else
+            CPLAssert(false);
 #endif
         else if (intype == GDT_CFloat32)
             FromR_2<float, ConstantType>(intype, inval, invali, outtype, outval,
@@ -843,11 +851,13 @@ template <class Tin> void CheckPacked(GDALDataType eIn, GDALDataType eOut)
         case GDT_Int64:
             CheckPacked<Tin, std::int64_t>(eIn, eOut);
             break;
-#ifdef SIZEOF__FLOAT16
         case GDT_Float16:
-            CheckPacked<Tin, float>(eIn, eOut);
-            break;
+#ifdef SIZEOF__FLOAT16
+            CheckPacked<Tin, _Float16>(eIn, eOut);
+#else
+            CPLAssert(false);
 #endif
+            break;
         case GDT_Float32:
             CheckPacked<Tin, float>(eIn, eOut);
             break;
@@ -887,11 +897,13 @@ static void CheckPacked(GDALDataType eIn, GDALDataType eOut)
         case GDT_Int64:
             CheckPacked<std::int64_t>(eIn, eOut);
             break;
-#ifdef SIZEOF__FLOAT16
         case GDT_Float16:
+#ifdef SIZEOF__FLOAT16
             CheckPacked<_Float16>(eIn, eOut);
-            break;
+#else
+            CPLAssert(false);
 #endif
+            break;
         case GDT_Float32:
             CheckPacked<float>(eIn, eOut);
             break;

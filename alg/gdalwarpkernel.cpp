@@ -48,6 +48,7 @@
 #include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_mask.h"
 #include "cpl_multiproc.h"
 #include "cpl_progress.h"
@@ -1490,7 +1491,7 @@ template <class T> struct sGWKRoundValueT<T, false> /* unsigned */
 
 template <class T> static T GWKRoundValueT(double dfValue)
 {
-    return sGWKRoundValueT<T, std::numeric_limits<T>::is_signed>::eval(dfValue);
+    return sGWKRoundValueT<T, GDALNumericLimits<T>::is_signed>::eval(dfValue);
 }
 
 template <> float GWKRoundValueT<float>(double dfValue)
@@ -1511,10 +1512,10 @@ template <> double GWKRoundValueT<double>(double dfValue)
 
 template <class T> static CPL_INLINE T GWKClampValueT(double dfValue)
 {
-    if (dfValue < std::numeric_limits<T>::min())
-        return std::numeric_limits<T>::min();
-    else if (dfValue > std::numeric_limits<T>::max())
-        return std::numeric_limits<T>::max();
+    if (dfValue < GDALNumericLimits<T>::min())
+        return GDALNumericLimits<T>::min();
+    else if (dfValue > GDALNumericLimits<T>::max())
+        return GDALNumericLimits<T>::max();
     else
         return GWKRoundValueT<T>(dfValue);
 }
@@ -1594,8 +1595,8 @@ static bool GWKSetPixelValueRealT(const GDALWarpKernel *poWK, int iBand,
     if (poWK->padfDstNoDataReal != nullptr &&
         poWK->padfDstNoDataReal[iBand] == static_cast<double>(pDst[iDstOffset]))
     {
-        if (pDst[iDstOffset] == std::numeric_limits<T>::min())
-            pDst[iDstOffset] = std::numeric_limits<T>::min() + 1;
+        if (pDst[iDstOffset] == GDALNumericLimits<T>::min())
+            pDst[iDstOffset] = GDALNumericLimits<T>::min() + 1;
         else
             pDst[iDstOffset]--;
     }
@@ -1769,15 +1770,14 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
     do                                                                         \
     {                                                                          \
         type *_pDst = reinterpret_cast<type *>(pabyDst);                       \
-        if (dfReal < static_cast<double>(std::numeric_limits<type>::min()))    \
+        if (dfReal < static_cast<double>(GDALNumericLimits<type>::min()))      \
             _pDst[iDstOffset] =                                                \
-                static_cast<type>(std::numeric_limits<type>::min());           \
-        else if (dfReal >                                                      \
-                 static_cast<double>(std::numeric_limits<type>::max()))        \
+                static_cast<type>(GDALNumericLimits<type>::min());             \
+        else if (dfReal > static_cast<double>(GDALNumericLimits<type>::max())) \
             _pDst[iDstOffset] =                                                \
-                static_cast<type>(std::numeric_limits<type>::max());           \
+                static_cast<type>(GDALNumericLimits<type>::max());             \
         else                                                                   \
-            _pDst[iDstOffset] = (std::numeric_limits<type>::is_signed)         \
+            _pDst[iDstOffset] = (GDALNumericLimits<type>::is_signed)           \
                                     ? static_cast<type>(floor(dfReal + 0.5))   \
                                     : static_cast<type>(dfReal + 0.5);         \
         if (poWK->padfDstNoDataReal != nullptr &&                              \
@@ -1785,9 +1785,9 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
                 static_cast<double>(_pDst[iDstOffset]))                        \
         {                                                                      \
             if (_pDst[iDstOffset] ==                                           \
-                static_cast<type>(std::numeric_limits<type>::min()))           \
+                static_cast<type>(GDALNumericLimits<type>::min()))             \
                 _pDst[iDstOffset] =                                            \
-                    static_cast<type>(std::numeric_limits<type>::min() + 1);   \
+                    static_cast<type>(GDALNumericLimits<type>::min() + 1);     \
             else                                                               \
                 _pDst[iDstOffset]--;                                           \
         }                                                                      \
@@ -1848,23 +1848,21 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
         case GDT_CInt16:
         {
             typedef GInt16 T;
-            if (dfReal < static_cast<double>(std::numeric_limits<T>::min()))
+            if (dfReal < static_cast<double>(GDALNumericLimits<T>::min()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2] =
-                    std::numeric_limits<T>::min();
-            else if (dfReal >
-                     static_cast<double>(std::numeric_limits<T>::max()))
+                    GDALNumericLimits<T>::min();
+            else if (dfReal > static_cast<double>(GDALNumericLimits<T>::max()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2] =
-                    std::numeric_limits<T>::max();
+                    GDALNumericLimits<T>::max();
             else
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2] =
                     static_cast<T>(floor(dfReal + 0.5));
-            if (dfImag < static_cast<double>(std::numeric_limits<T>::min()))
+            if (dfImag < static_cast<double>(GDALNumericLimits<T>::min()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2 + 1] =
-                    std::numeric_limits<T>::min();
-            else if (dfImag >
-                     static_cast<double>(std::numeric_limits<T>::max()))
+                    GDALNumericLimits<T>::min();
+            else if (dfImag > static_cast<double>(GDALNumericLimits<T>::max()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2 + 1] =
-                    std::numeric_limits<T>::max();
+                    GDALNumericLimits<T>::max();
             else
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2 + 1] =
                     static_cast<T>(floor(dfImag + 0.5));
@@ -1874,23 +1872,21 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
         case GDT_CInt32:
         {
             typedef GInt32 T;
-            if (dfReal < static_cast<double>(std::numeric_limits<T>::min()))
+            if (dfReal < static_cast<double>(GDALNumericLimits<T>::min()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2] =
-                    std::numeric_limits<T>::min();
-            else if (dfReal >
-                     static_cast<double>(std::numeric_limits<T>::max()))
+                    GDALNumericLimits<T>::min();
+            else if (dfReal > static_cast<double>(GDALNumericLimits<T>::max()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2] =
-                    std::numeric_limits<T>::max();
+                    GDALNumericLimits<T>::max();
             else
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2] =
                     static_cast<T>(floor(dfReal + 0.5));
-            if (dfImag < static_cast<double>(std::numeric_limits<T>::min()))
+            if (dfImag < static_cast<double>(GDALNumericLimits<T>::min()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2 + 1] =
-                    std::numeric_limits<T>::min();
-            else if (dfImag >
-                     static_cast<double>(std::numeric_limits<T>::max()))
+                    GDALNumericLimits<T>::min();
+            else if (dfImag > static_cast<double>(GDALNumericLimits<T>::max()))
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2 + 1] =
-                    std::numeric_limits<T>::max();
+                    GDALNumericLimits<T>::max();
             else
                 reinterpret_cast<T *>(pabyDst)[iDstOffset * 2 + 1] =
                     static_cast<T>(floor(dfImag + 0.5));
@@ -7412,7 +7408,7 @@ static void GWKAverageOrModeThread(void *pData)
                 // poWK->eResample == GRA_Max.
                 {
                     bool bFoundValid = false;
-                    double dfTotalReal = std::numeric_limits<double>::lowest();
+                    double dfTotalReal = GDALNumericLimits<double>::lowest();
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for (int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++)
                     {
@@ -7472,7 +7468,7 @@ static void GWKAverageOrModeThread(void *pData)
                 // poWK->eResample == GRA_Min.
                 {
                     bool bFoundValid = false;
-                    double dfTotalReal = std::numeric_limits<double>::max();
+                    double dfTotalReal = GDALNumericLimits<double>::max();
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for (int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++)
                     {
@@ -7827,8 +7823,8 @@ static void getConvexPolyIntersection(const XYPoly &poly1, const XYPoly &poly2,
         return;
 
     // Find lowest-left point in intersection set
-    double lowest_x = std::numeric_limits<double>::max();
-    double lowest_y = std::numeric_limits<double>::max();
+    double lowest_x = GDALNumericLimits<double>::max();
+    double lowest_y = GDALNumericLimits<double>::max();
     for (const auto &pair : intersection)
     {
         const double x = pair.first;
@@ -7867,13 +7863,13 @@ static void getConvexPolyIntersection(const XYPoly &poly1, const XYPoly &poly2,
 
         double tan_p1;
         if (p1x_diff == 0.0)
-            tan_p1 = p1y_diff == 0.0 ? 0.0 : std::numeric_limits<double>::max();
+            tan_p1 = p1y_diff == 0.0 ? 0.0 : GDALNumericLimits<double>::max();
         else
             tan_p1 = p1y_diff / p1x_diff;
 
         double tan_p2;
         if (p2x_diff == 0.0)
-            tan_p2 = p2y_diff == 0.0 ? 0.0 : std::numeric_limits<double>::max();
+            tan_p2 = p2y_diff == 0.0 ? 0.0 : GDALNumericLimits<double>::max();
         else
             tan_p2 = p2y_diff / p2x_diff;
 

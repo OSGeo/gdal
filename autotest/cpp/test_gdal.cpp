@@ -377,10 +377,10 @@ TEST_F(test_gdal, GDALAdjustValueToDataType)
             static_cast<double>(static_cast<_Float16>(1.23f)) &&
         !bClamped && !bRounded);
     EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Float16, -1e300, &bClamped,
-                                          &bRounded) == -6.55e4 &&
+                                          &bRounded) == -65504 &&
                 bClamped && !bRounded);
     EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Float16, 1e30, &bClamped,
-                                          &bRounded) == 6.55e4 &&
+                                          &bRounded) == 65504 &&
                 bClamped && !bRounded);
     EXPECT_TRUE(GDALAdjustValueToDataType(
                     GDT_Float16, std::numeric_limits<float>::infinity(),
