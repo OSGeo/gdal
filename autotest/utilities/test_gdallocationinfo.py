@@ -315,6 +315,17 @@ def test_gdallocationinfo_nad27_interpolate_bilinear(gdallocationinfo_path):
     assert float(ret) == pytest.approx(130.476908, rel=1e-4)
 
 
+def test_gdallocationinfo_nad27_interpolate_cubic(gdallocationinfo_path):
+
+    # run on nad27 explicitly to avoid datum transformations.
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path
+        + " -valonly  -r cubic -l_srs EPSG:4267 ../gcore/data/byte.tif -117.6354747 33.8970515"
+    )
+
+    assert float(ret) == pytest.approx(134.65629, rel=1e-4)
+
+
 def test_gdallocationinfo_nad27_interpolate_cubicspline(gdallocationinfo_path):
 
     ret = gdaltest.runexternal(
@@ -350,6 +361,18 @@ def test_gdallocationinfo_report_interpolate_bilinear(gdallocationinfo_path):
     assert "Value: 137.24" in ret
 
 
+def test_gdallocationinfo_report_interpolate_cubic(gdallocationinfo_path):
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + " -r cubic ../gcore/data/byte.tif 9.98 11.97"
+    )
+    ret = ret.replace("\r\n", "\n")
+    assert "Report:" in ret
+    assert "Location: (9.98" in ret
+    assert "P,11.97" in ret
+    assert "Value: 141.58" in ret
+
+
 def test_gdallocationinfo_value_interpolate_bilinear(gdallocationinfo_path):
 
     # Those coordinates are almost 10,12. It is testing that they are not converted to integer.
@@ -358,6 +381,24 @@ def test_gdallocationinfo_value_interpolate_bilinear(gdallocationinfo_path):
         + " -valonly -r bilinear ../gcore/data/byte.tif 9.9999999 11.9999999"
     )
     assert float(ret) == pytest.approx(139.75, rel=1e-6)
+
+
+def test_gdallocationinfo_value_interpolate_bilinear_near_border(gdallocationinfo_path):
+
+    # Those coordinates are almost 10,12. It is testing that they are not converted to integer.
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path
+        + " -valonly -r bilinear ../gcore/data/byte.tif 19 19.9999999"  # should we allow 20.0?
+    )
+    assert float(ret) == pytest.approx(103, rel=1e-6)
+
+
+def test_gdallocationinfo_value_interpolate_invalid_method(gdallocationinfo_path):
+
+    (_, err) = gdaltest.runexternal_out_and_err(
+        gdallocationinfo_path + " -valonly -r mode ../gcore/data/byte.tif 10 12"
+    )
+    assert "-r can only be used with values" in err
 
 
 def test_gdallocationinfo_interpolate_float_data(gdallocationinfo_path, tmp_path):

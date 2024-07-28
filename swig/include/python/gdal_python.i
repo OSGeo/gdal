@@ -4949,7 +4949,7 @@ def InterpolateAtPoint(self, *args, **kwargs):
        ----------
        pixel : float
        line : float
-       interpolation : GRIOResampleAlg (nearest, bilinear, cubicspline)
+       interpolation : GRIOResampleAlg (nearest, bilinear, cubic, cubicspline)
 
        Returns
        -------

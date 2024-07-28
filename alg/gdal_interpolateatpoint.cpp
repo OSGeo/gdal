@@ -31,6 +31,8 @@
 
 #include "gdal_interpolateatpoint.h"
 
+#include "gdalresamplingkernels.h"
+
 #include <algorithm>
 
 static bool
@@ -151,7 +153,73 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
     int bGotNoDataValue = FALSE;
     const double dfNoDataValue = pBand->GetNoDataValue(&bGotNoDataValue);
 
-    if (eResampleAlg == GDALRIOResampleAlg::GRIORA_CubicSpline)
+    if (dfXIn < 0 || dfXIn > nRasterXSize || dfYIn < 0 || dfYIn > nRasterYSize)
+    {
+        return FALSE;
+    }
+
+    // Downgrade the interpolation algorithm if the image is too small
+    if ((nRasterXSize < 4 || nRasterYSize < 4) &&
+        (eResampleAlg == GRIORA_CubicSpline || eResampleAlg == GRIORA_Cubic))
+    {
+        eResampleAlg = GRIORA_Bilinear;
+    }
+    if ((nRasterXSize < 2 || nRasterYSize < 2) &&
+        eResampleAlg == GRIORA_Bilinear)
+    {
+        eResampleAlg = GRIORA_NearestNeighbour;
+    }
+
+    auto outOfBorderCorrection = [](int dNew, int nRasterSize, int nKernelsize)
+    {
+        int dOutOfBorder = 0;
+        if (dNew < 0)
+        {
+            dOutOfBorder = dNew;
+        }
+        if (dNew + nKernelsize >= nRasterSize)
+        {
+            dOutOfBorder = dNew + nKernelsize - nRasterSize;
+        }
+        return dOutOfBorder;
+    };
+
+    auto dragElevDataInBorder =
+        [](double *adfElevData, int dOutOfBorder, int nKernelSize, bool bIsX)
+    {
+        while (dOutOfBorder < 0)
+        {
+            for (int j = 0; j < nKernelSize; j++)
+                for (int ii = 0; ii < nKernelSize - 1; ii++)
+                {
+                    const int i = nKernelSize - ii - 2;  // iterate in reverse
+                    const int row_src = bIsX ? j : i;
+                    const int row_dst = bIsX ? j : i + 1;
+                    const int col_src = bIsX ? i : j;
+                    const int col_dst = bIsX ? i + 1 : j;
+                    adfElevData[nKernelSize * row_dst + col_dst] =
+                        adfElevData[nKernelSize * row_src + col_src];
+                }
+            dOutOfBorder++;
+        }
+        while (dOutOfBorder > 0)
+        {
+            for (int j = 0; j < nKernelSize; j++)
+                for (int i = 0; i < nKernelSize - 1; i++)
+                {
+                    const int row_src = bIsX ? j : i + 1;
+                    const int row_dst = bIsX ? j : i;
+                    const int col_src = bIsX ? i + 1 : j;
+                    const int col_dst = bIsX ? i : j;
+                    adfElevData[nKernelSize * row_dst + col_dst] =
+                        adfElevData[nKernelSize * row_src + col_src];
+                }
+            dOutOfBorder--;
+        }
+    };
+
+    if (eResampleAlg == GDALRIOResampleAlg::GRIORA_CubicSpline ||
+        eResampleAlg == GDALRIOResampleAlg::GRIORA_Cubic)
     {
         // Convert from upper left corner of pixel coordinates to center of
         // pixel coordinates:
@@ -164,18 +232,22 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
 
         const int dXNew = dX - 1;
         const int dYNew = dY - 1;
-        if (!(dXNew >= 0 && dYNew >= 0 && dXNew + 4 <= nRasterXSize &&
-              dYNew + 4 <= nRasterYSize))
-        {
-            goto bilinear_fallback;
-        }
+        const int nKernelSize = 4;
+        const int dXOutOfBorder =
+            outOfBorderCorrection(dXNew, nRasterXSize, nKernelSize);
+        const int dYOutOfBorder =
+            outOfBorderCorrection(dYNew, nRasterYSize, nKernelSize);
+
         // CubicSpline interpolation.
         double adfElevData[16] = {0.0};
-        if (!GDALInterpExtractDEMWindow(pBand, cache, dXNew, dYNew, 4, 4,
-                                        adfElevData))
+        if (!GDALInterpExtractDEMWindow(pBand, cache, dXNew - dXOutOfBorder,
+                                        dYNew - dYOutOfBorder, nKernelSize,
+                                        nKernelSize, adfElevData))
         {
             return FALSE;
         }
+        dragElevDataInBorder(adfElevData, dXOutOfBorder, nKernelSize, true);
+        dragElevDataInBorder(adfElevData, dYOutOfBorder, nKernelSize, false);
 
         double dfSumH = 0.0;
         double dfSumWeight = 0.0;
@@ -190,8 +262,11 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
                 const int dKernIndX = k_j - 1;
                 const int dKernIndY = k_i - 1;
                 const double dfPixelWeight =
-                    BiCubicSplineKernel(dKernIndX - dfDeltaX) *
-                    BiCubicSplineKernel(dKernIndY - dfDeltaY);
+                    eResampleAlg == GDALRIOResampleAlg::GRIORA_CubicSpline
+                        ? CubicSplineKernel(dKernIndX - dfDeltaX) *
+                              CubicSplineKernel(dKernIndY - dfDeltaY)
+                        : CubicKernel(dKernIndX - dfDeltaX) *
+                              CubicKernel(dKernIndY - dfDeltaY);
 
                 // Create a sum of all values
                 // adjusted for the pixel's calculated weight.
@@ -214,7 +289,6 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
     }
     else if (eResampleAlg == GDALRIOResampleAlg::GRIORA_Bilinear)
     {
-    bilinear_fallback:
         // Convert from upper left corner of pixel coordinates to center of
         // pixel coordinates:
         const double dfX = dfXIn - 0.5;
@@ -224,19 +298,22 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
         const double dfDeltaX = dfX - dX;
         const double dfDeltaY = dfY - dY;
 
-        if (!(dX >= 0 && dY >= 0 && dX + 2 <= nRasterXSize &&
-              dY + 2 <= nRasterYSize))
-        {
-            goto near_fallback;
-        }
+        const int nKernelSize = 2;
+        const int dXOutOfBorder =
+            outOfBorderCorrection(dX, nRasterXSize, nKernelSize);
+        const int dYOutOfBorder =
+            outOfBorderCorrection(dY, nRasterYSize, nKernelSize);
 
         // Bilinear interpolation.
         double adfElevData[4] = {0.0, 0.0, 0.0, 0.0};
-        if (!GDALInterpExtractDEMWindow(pBand, cache, dX, dY, 2, 2,
-                                        adfElevData))
+        if (!GDALInterpExtractDEMWindow(pBand, cache, dX - dXOutOfBorder,
+                                        dY - dYOutOfBorder, nKernelSize,
+                                        nKernelSize, adfElevData))
         {
             return FALSE;
         }
+        dragElevDataInBorder(adfElevData, dXOutOfBorder, nKernelSize, true);
+        dragElevDataInBorder(adfElevData, dYOutOfBorder, nKernelSize, false);
 
         if (bGotNoDataValue)
         {
@@ -267,13 +344,8 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
     }
     else
     {
-    near_fallback:
         const int dX = static_cast<int>(dfXIn);
         const int dY = static_cast<int>(dfYIn);
-        if (!(dX >= 0 && dY >= 0 && dX < nRasterXSize && dY < nRasterYSize))
-        {
-            return FALSE;
-        }
         double dfDEMH = 0.0;
         if (!GDALInterpExtractDEMWindow(pBand, cache, dX, dY, 1, 1, &dfDEMH) ||
             (bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfDEMH)))

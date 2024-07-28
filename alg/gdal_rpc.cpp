@@ -57,6 +57,7 @@
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
+#include "gdalresamplingkernels.h"
 
 // #define DEBUG_VERBOSE_EXTRACT_DEM
 
@@ -1485,8 +1486,8 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
                     const int dKernIndX = k_j - 1;
                     const int dKernIndY = k_i - 1;
                     const double dfPixelWeight =
-                        BiCubicSplineKernel(dKernIndX - dfDeltaX) *
-                        BiCubicSplineKernel(dKernIndY - dfDeltaY);
+                        CubicSplineKernel(dKernIndX - dfDeltaX) *
+                        CubicSplineKernel(dKernIndY - dfDeltaY);
 
                     // Create a sum of all values
                     // adjusted for the pixel's calculated weight.

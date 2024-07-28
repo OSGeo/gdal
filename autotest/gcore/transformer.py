@@ -761,8 +761,8 @@ def test_transformer_13():
     (success, pnt) = tr.TransformPoint(0, 6600, 24)
     assert (
         success
-        and pnt[0] == pytest.approx(-108.00066000065341, abs=1e-7)
-        and pnt[1] == pytest.approx(39.157694013439489, abs=1e-7)
+        and pnt[0] == pytest.approx(-108.00069819119149, abs=1e-7)
+        and pnt[1] == pytest.approx(39.15771125604824, abs=1e-7)
     )
 
 
@@ -800,11 +800,14 @@ def test_transformer_14():
         tr = gdal.Transformer(
             ds, None, ["METHOD=RPC", "RPC_DEM=data/transformer_14_dem.tif"]
         )
-    (success, pnt) = tr.TransformPoint(0, 5, 12)
+    (success, pnt) = tr.TransformPoint(0, 45, 73)
+    # on debug it should say this two messages
+    # Oscillation detected...
+    # Converged!
     assert (
         success
-        and pnt[0] == pytest.approx(-1.935617614186202e-05, abs=1e-7)
-        and pnt[1] == pytest.approx(-0.0034168871827151997, abs=1e-7)
+        and pnt[0] == pytest.approx(0.000801360096912016, abs=1e-7)
+        and pnt[1] == pytest.approx(-4.1346931131054286e-05, abs=1e-7)
     )
 
     f = gdal.VSIFOpenL("/vsimem/transformer_14.csvt", "rb")

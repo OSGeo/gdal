@@ -8881,7 +8881,7 @@ std::shared_ptr<GDALMDArray> GDALRasterBand::AsMDArray() const
  *
  * @param dfPixel pixel coordinate as a double, where interpolation should be done.
  * @param dfLine line coordinate as a double, where interpolation should be done.
- * @param eInterpolation interpolation type. Only near, bilinear and cubicspline are allowed.
+ * @param eInterpolation interpolation type. Only near, bilinear, cubic and cubicspline are allowed.
  * @param pdfRealValue pointer to real part of interpolated value
  * @param pdfImagValue pointer to imaginary part of interpolated value (may be null if not needed)
  *
@@ -8895,11 +8895,12 @@ CPLErr GDALRasterBand::InterpolateAtPoint(double dfPixel, double dfLine,
                                           double *pdfImagValue) const
 {
     if (eInterpolation != GRIORA_NearestNeighbour &&
-        eInterpolation != GRIORA_Bilinear &&
+        eInterpolation != GRIORA_Bilinear && eInterpolation != GRIORA_Cubic &&
         eInterpolation != GRIORA_CubicSpline)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Only nearest, bilinear and cubicspline interpolation methods "
+                 "Only nearest, bilinear, cubic and cubicspline interpolation "
+                 "methods "
                  "allowed");
 
         return CE_Failure;
