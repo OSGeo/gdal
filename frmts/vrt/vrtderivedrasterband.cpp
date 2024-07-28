@@ -1231,18 +1231,21 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     {
         eErr = CE_Failure;
 
-        // numpy doesn't have native cint16/cint32
-        if (eSrcType == GDT_CInt16 || eSrcType == GDT_CInt32)
+        // numpy doesn't have native cint16/cint32/cfloat16
+        if (eSrcType == GDT_CInt16 || eSrcType == GDT_CInt32 ||
+            eSrcType == GDT_CFloat16)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CInt16/CInt32/CFloat16 data type not supported for "
+                     "SourceTransferType");
+            goto end;
+        }
+        if (eDataType == GDT_CInt16 || eDataType == GDT_CInt32 ||
+            eDataType == GDT_CFloat16)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
-                "CInt16/CInt32 data type not supported for SourceTransferType");
-            goto end;
-        }
-        if (eDataType == GDT_CInt16 || eDataType == GDT_CInt32)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "CInt16/CInt32 data type not supported for data type");
+                "CInt16/CInt32/CFloat16 data type not supported for data type");
             goto end;
         }
 
