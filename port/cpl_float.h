@@ -105,12 +105,12 @@ template <> struct GDALNumericLimits<_Float16>
 
     static constexpr _Float16 infinity()
     {
-        return _Float16(1.0 / 0.0);
+        return static_cast<_Float16>(std::numeric_limits<float>::infinity());
     }
 
     static constexpr _Float16 quiet_NaN()
     {
-        return _Float16(0.0 / 0.0);
+        return static_cast<_Float16>(std::numeric_limits<float>::quiet_NaN());
     }
 };
 #endif
