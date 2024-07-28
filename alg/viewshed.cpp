@@ -1028,6 +1028,12 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     return static_cast<bool>(poDstDS);
 }
 
+/// Create a viewshed raster.
+///
+/// \param nX  X coordinate of input raster.
+/// \param nY  Y coordinate of input raster.
+/// \param outFilename  OutputFilename.
+/// \return  Created output dataset.
 Viewshed::DatasetPtr Viewshed::execute(int nX, int nY,
                                        const std::string &outFilename)
 {
