@@ -6,4 +6,3 @@ pytest-benchmark
 lxml
 jsonschema
 filelock
-psutil
