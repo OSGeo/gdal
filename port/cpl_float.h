@@ -63,6 +63,10 @@ CPL_C_END
 
 // std::numeric_limits does not work for _Float16, thus we define
 // GDALNumericLimits which does.
+//
+// std::numeric_limits<_Float16> does not lead a compile-time error.
+// Instead, it silently returns wrong values (all zeros), at least
+// with GCC on Ubuntu 24.04.
 
 template <typename T> struct GDALNumericLimits : std::numeric_limits<T>
 {
@@ -101,12 +105,12 @@ template <> struct GDALNumericLimits<_Float16>
 
     static constexpr _Float16 infinity()
     {
-        return static_cast<_Float16>(1.0 / 0.0);
+        return _Float16(1.0 / 0.0);
     }
 
     static constexpr _Float16 quiet_NaN()
     {
-        return static_cast<_Float16>(0.0 / 0.0);
+        return _Float16(0.0 / 0.0);
     }
 };
 #endif
