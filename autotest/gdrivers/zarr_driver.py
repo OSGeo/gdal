@@ -58,10 +58,10 @@ _gdal_data_type_to_array_type = {
     gdal.GDT_UInt32: "I",
     gdal.GDT_Int64: "q",
     gdal.GDT_UInt64: "Q",
-    gdal.GDT_Float16: "e",
+    # gdal.GDT_Float16: "e",
     gdal.GDT_Float32: "f",
     gdal.GDT_Float64: "d",
-    gdal.GDT_CFloat16: "e",
+    # gdal.GDT_CFloat16: "e",
     gdal.GDT_CFloat32: "f",
     gdal.GDT_CFloat64: "d",
 }
@@ -105,12 +105,12 @@ _gdal_data_type_to_array_type = {
             (1 << 64) - 1,
         ],  # not really legit to have the fill_value as a str, but libjson-c can't support numeric values in int64::max(), uint64::max() range.
         [">u8", gdal.GDT_UInt64, None, None],
-        ["<f2", gdal.GDT_Float16, None, None],
-        [">f2", gdal.GDT_Float16, None, None],
-        ["<f2", gdal.GDT_Float16, 1.5, 1.5],
-        ["<f2", gdal.GDT_Float16, "NaN", float("nan")],
-        ["<f2", gdal.GDT_Float16, "Infinity", float("infinity")],
-        ["<f2", gdal.GDT_Float16, "-Infinity", float("-infinity")],
+        # ["<f2", gdal.GDT_Float16, None, None],
+        # [">f2", gdal.GDT_Float16, None, None],
+        # ["<f2", gdal.GDT_Float16, 1.5, 1.5],
+        # ["<f2", gdal.GDT_Float16, "NaN", float("nan")],
+        # ["<f2", gdal.GDT_Float16, "Infinity", float("infinity")],
+        # ["<f2", gdal.GDT_Float16, "-Infinity", float("-infinity")],
         ["<f4", gdal.GDT_Float32, None, None],
         [">f4", gdal.GDT_Float32, None, None],
         ["<f4", gdal.GDT_Float32, 1.5, 1.5],
@@ -1032,16 +1032,16 @@ def test_zarr_read_v3(use_get_names):
     assert subgroup.OpenMDArray("not_existing") is None
 
 
-@pytest.mark.parametrize("endianness", ["le", "be"])
-def test_zarr_read_half_float(endianness):
-
-    filename = "data/zarr/f2_" + endianness + ".zarr"
-    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
-    assert ds is not None
-    rg = ds.GetRootGroup()
-    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-    # assert ar.Read() == array.array("f", [1.5, float("nan")])
-    assert ar.Read() == array.array("e", [1.5, float("nan")])
+# @pytest.mark.parametrize("endianness", ["le", "be"])
+# def test_zarr_read_half_float(endianness):
+#
+#     filename = "data/zarr/f2_" + endianness + ".zarr"
+#     ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+#     assert ds is not None
+#     rg = ds.GetRootGroup()
+#     ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+#     # assert ar.Read() == array.array("f", [1.5, float("nan")])
+#     assert ar.Read() == array.array("e", [1.5, float("nan")])
 
 
 def test_zarr_read_mdim_zarr_non_existing():
@@ -1709,7 +1709,7 @@ def getCompoundDT():
         [gdal.ExtendedDataType.Create(gdal.GDT_Int16), None],
         [gdal.ExtendedDataType.Create(gdal.GDT_UInt32), None],
         [gdal.ExtendedDataType.Create(gdal.GDT_Int32), None],
-        [gdal.ExtendedDataType.Create(gdal.GDT_Float16), None],
+        # [gdal.ExtendedDataType.Create(gdal.GDT_Float16), None],
         [gdal.ExtendedDataType.Create(gdal.GDT_Float32), None],
         [gdal.ExtendedDataType.Create(gdal.GDT_Float64), None],
         [gdal.ExtendedDataType.Create(gdal.GDT_Float64), 1.5],
@@ -1718,7 +1718,7 @@ def getCompoundDT():
         [gdal.ExtendedDataType.Create(gdal.GDT_Float64), float("-infinity")],
         [gdal.ExtendedDataType.Create(gdal.GDT_CInt16), None],
         [gdal.ExtendedDataType.Create(gdal.GDT_CInt32), None],
-        [gdal.ExtendedDataType.Create(gdal.GDT_CFloat16), None],
+        # [gdal.ExtendedDataType.Create(gdal.GDT_CFloat16), None],
         [gdal.ExtendedDataType.Create(gdal.GDT_CFloat32), None],
         [gdal.ExtendedDataType.Create(gdal.GDT_CFloat64), None],
         [gdal.ExtendedDataType.CreateString(10), None],
@@ -2079,7 +2079,7 @@ def test_zarr_create_array_compressor_v3(compressor, options, expected_json):
         gdal.GDT_UInt32,
         gdal.GDT_Int64,
         gdal.GDT_UInt64,
-        gdal.GDT_Float16,
+        # gdal.GDT_Float16,
         gdal.GDT_Float32,
         gdal.GDT_Float64,
     ],
@@ -2470,8 +2470,8 @@ def test_zarr_read_data_type_fallback_zarr_v3():
 @pytest.mark.parametrize(
     "data_type,fill_value,nodata",
     [
-        ("float16", "0x3e00", 1.5),
-        ("float16", str(bin(0x3E00)), 1.5),
+        # ("float16", "0x3e00", 1.5),
+        # ("float16", str(bin(0x3E00)), 1.5),
         ("float32", "0x3fc00000", 1.5),
         ("float32", str(bin(0x3FC00000)), 1.5),
         ("float64", "0x3ff8000000000000", 1.5),
@@ -2500,7 +2500,8 @@ def test_zarr_read_fill_value_v3(data_type, fill_value, nodata):
 
 
 @gdaltest.enable_exceptions()
-@pytest.mark.parametrize("data_type", ["complex128", "complex64", "complex32"])
+# @pytest.mark.parametrize("data_type", ["complex128", "complex64", "complex32"])
+@pytest.mark.parametrize("data_type", ["complex128", "complex64"])
 @pytest.mark.parametrize(
     "fill_value,nodata",
     [
@@ -2789,12 +2790,12 @@ def test_zarr_create_array_set_dimension_name():
         ["<u4", gdal.GDT_UInt32, 4000000000, 4000000000],
         ["<u8", gdal.GDT_Float64, 4000000000, 4000000000],
         [">u8", gdal.GDT_Float64, None, None],
-        ["<f2", gdal.GDT_Float16, None, None],
-        [">f2", gdal.GDT_Float16, None, None],
-        ["<f2", gdal.GDT_Float16, 1.5, 1.5],
-        ["<f2", gdal.GDT_Float16, "NaN", float("nan")],
-        ["<f2", gdal.GDT_Float16, "Infinity", float("infinity")],
-        ["<f2", gdal.GDT_Float16, "-Infinity", float("-infinity")],
+        # ["<f2", gdal.GDT_Float16, None, None],
+        # [">f2", gdal.GDT_Float16, None, None],
+        # ["<f2", gdal.GDT_Float16, 1.5, 1.5],
+        # ["<f2", gdal.GDT_Float16, "NaN", float("nan")],
+        # ["<f2", gdal.GDT_Float16, "Infinity", float("infinity")],
+        # ["<f2", gdal.GDT_Float16, "-Infinity", float("-infinity")],
         ["<f4", gdal.GDT_Float32, None, None],
         [">f4", gdal.GDT_Float32, None, None],
         ["<f4", gdal.GDT_Float32, 1.5, 1.5],
@@ -3131,7 +3132,8 @@ def test_zarr_update_array_string(srcfilename):
         gdal.GDT_UInt32,
         gdal.GDT_Int64,
         gdal.GDT_UInt64,
-        gdal.GDT_Float16,
+        # SWIG does not support Float16
+        # gdal.GDT_Float16,
         gdal.GDT_Float32,
         gdal.GDT_Float64,
     ],
