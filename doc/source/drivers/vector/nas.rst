@@ -15,7 +15,7 @@ This driver depends on GDAL/OGR being built with the Xerces XML parsing
 library.
 
 The driver looks for "opengis.net/gml" and one of the strings semicolon
-separated strings listed in the configuration option :config:`NAS_INDICATOR` (which defaults
+separated strings listed in the configuration option **NAS_INDICATOR** (which defaults
 to "NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite") to determine if a
 input is a NAS file and ignores all files without any matches.
 
