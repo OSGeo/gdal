@@ -15,15 +15,15 @@ This driver depends on GDAL/OGR being built with the Xerces XML parsing
 library.
 
 The driver looks for "opengis.net/gml" and one of the strings semicolon
-separated strings listed in the configuration option **NAS_INDICATOR** (which defaults
+separated strings listed in the configuration option :config:`NAS_INDICATOR` (which defaults
 to "NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite") to determine if a
 input is a NAS file and ignores all files without any matches.
 
-The configuration option **NAS_GFS_TEMPLATE** makes it possible to cleanly map
+The configuration option :config:`NAS_GFS_TEMPLATE` makes it possible to cleanly map
 element paths to feature attributes using a GFS file like in the GML
 driver. Multiple geometries per layer are also possible (eg.
 ax_flurstueck.objektkoordinaten next to the regular wkb_geometry).
-Starting with GDAL 3.7, defining the NAS_GFS_TEMPLATE configuration option is
+Starting with GDAL 3.7, defining the :config:`NAS_GFS_TEMPLATE` configuration option is
 required for the NAS driver to open a file. It may be set to the empty string
 to mean that the driver should try to establish the schema of the file from its
 content, but using one of templates mentioned below is recommended.
@@ -43,17 +43,17 @@ The files were generated using `xmi2db <https://github.com/norBIT/xmi2db/>`__ (f
 application schema.
 
 In GDAL 3.8 the creation of the relation layer *alkis_beziehungen* was removed. Prior
-the configuration option **NAS_NO_RELATION_LAYER** allowed to disable its
+the configuration option :config:`NAS_NO_RELATION_LAYER` allowed to disable its
 population - which was default in ALKIS-Import. The information found there was
 redundant to the relation fields also contained in original elements/tables.
 Enabling the option also made progress reporting available.
 
 Duplicate data in datasets will usually causes errors.  When importing separate
-datasets into PostgreSQL it is useful to enable "OGR_PG_SKIP_CONFLICTS" to skip
+datasets into PostgreSQL it is useful to enable :config:`OGR_PG_SKIP_CONFLICTS` to skip
 conflicting features.
 
 This driver was implemented within the context of the `PostNAS
-project <http://trac.wheregroup.com/PostNAS>`__, which has more
+project <https://postnas-suite.github.io/postnas-suite/>`__, which has more
 information on its use and other related projects.
 
 Driver capabilities
