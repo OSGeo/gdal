@@ -11986,7 +11986,7 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting() const
     const auto ctxt = d->getPROJContext();
     if (d->m_pjType == PJ_TYPE_COMPOUND_CRS)
     {
-        projCRS = proj_crs_get_sub_crs(ctxt, d->m_pj_crs, 1);
+        projCRS = proj_crs_get_sub_crs(ctxt, d->m_pj_crs, 0);
         if (!projCRS || proj_get_type(projCRS) != PJ_TYPE_PROJECTED_CRS)
         {
             d->undoDemoteFromBoundCRS();
