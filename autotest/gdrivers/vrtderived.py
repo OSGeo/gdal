@@ -803,7 +803,10 @@ def test_vrtderived_12():
         if cs != expected_cs:
             print(dt)
             print(gdal.GetLastErrorMsg())
-            pytest.fail("invalid checksum")
+            pytest.fail(
+                "invalid checksum, datatype %s, have %d, expected %d"
+                % (dt, cs, expected_cs)
+            )
 
     # Same for SourceTransferType
     for dt in ["CInt16", "CInt32", "CFloat16"]:

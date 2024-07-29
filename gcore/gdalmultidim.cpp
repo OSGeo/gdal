@@ -1698,13 +1698,10 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                 str = CPLSPrintf("%.5g",
                                  double(*static_cast<const _Float16 *>(pSrc)));
 #else
-            {
-                const GUInt32 nValue =
-                    CPLHalfToFloat(*static_cast<const GUInt16 *>(pSrc));
-                float fValue;
-                memcpy(&fValue, &nValue, sizeof fValue);
-                str = CPLSPrintf("%.5g", fValue);
-            }
+
+                str = CPLSPrintf(
+                    "%.5g",
+                    CPLConvertHalfToFloat(*static_cast<const GUInt16 *>(pSrc)));
 #endif
                 break;
             case GDT_Float32:
@@ -1732,13 +1729,8 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                 str = CPLSPrintf("%.5g+%.5gj", double(src[0]), double(src[1]));
 #else
                 const GUInt16 *src = static_cast<const GUInt16 *>(pSrc);
-                const GUInt32 nReal = CPLHalfToFloat(src[0]);
-                float fReal;
-                memcpy(&fReal, &nReal, sizeof fReal);
-                const GUInt32 nImag = CPLHalfToFloat(src[1]);
-                float fImag;
-                memcpy(&fImag, &nImag, sizeof fImag);
-                str = CPLSPrintf("%.5g+%.5gj", fReal, fImag);
+                str = CPLSPrintf("%.5g+%.5gj", CPLConvertHalfToFloat(src[0]),
+                                 CPLConvertHalfToFloat(src[1]));
 #endif
                 break;
             }
