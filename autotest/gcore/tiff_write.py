@@ -4319,6 +4319,7 @@ def test_tiff_write_100():
 
 
 @pytest.mark.slow()
+@pytest.mark.require_driver("ENVI")
 def test_tiff_write_101():
 
     md = gdaltest.tiff_drv.GetMetadata()
