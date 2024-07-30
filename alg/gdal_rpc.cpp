@@ -1394,7 +1394,7 @@ static int GDALRPCGetDEMHeight(GDALRPCTransformInfo *psTransform,
     std::unique_ptr<DoublePointsCache> cacheDEM{psTransform->poCacheDEM};
     int res =
         GDALInterpolateAtPoint(psTransform->poDS->GetRasterBand(1), eResample,
-                               cacheDEM, dfXIn, dfYIn, pdfDEMH);
+                               cacheDEM, dfXIn, dfYIn, pdfDEMH, nullptr);
     psTransform->poCacheDEM = cacheDEM.release();
     return res;
 }

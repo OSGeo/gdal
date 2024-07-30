@@ -607,18 +607,10 @@ MAIN_START(argc, argv)
                 GDALDataTypeIsComplex(GDALGetRasterDataType(hBand)));
 
             CPLErr err;
-            if (bIsComplex)
-            {
-                err = GDALRasterIO(hBand, GF_Read, iPixelToQuery, iLineToQuery,
-                                   1, 1, adfPixel, 1, 1, GDT_CFloat64, 0, 0);
-            }
-            else
-            {
-                // GDALRasterInterpolateAtPoint is not implemented yet for complex datatype
-                err = GDALRasterInterpolateAtPoint(
-                    hBand, dfPixelToQuery, dfLineToQuery, eInterpolation,
-                    adfPixel, nullptr);
-            }
+            err = GDALRasterInterpolateAtPoint(hBand, dfPixelToQuery,
+                                               dfLineToQuery, eInterpolation,
+                                               &adfPixel[0], &adfPixel[1]);
+
             if (err == CE_None)
             {
                 CPLString osValue;

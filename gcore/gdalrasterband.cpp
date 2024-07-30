@@ -8912,9 +8912,7 @@ CPLErr GDALRasterBand::InterpolateAtPoint(double dfPixel, double dfLine,
 
     const bool res =
         GDALInterpolateAtPoint(pBand, eInterpolation, m_oPointsCache->cache,
-                               dfPixel, dfLine, pdfRealValue);
-    if (pdfImagValue)
-        *pdfImagValue = 0;
+                               dfPixel, dfLine, pdfRealValue, pdfImagValue);
 
     return res ? CE_None : CE_Failure;
 }
