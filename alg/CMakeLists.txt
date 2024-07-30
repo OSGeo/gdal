@@ -37,6 +37,7 @@ add_library(
   thinplatespline.cpp
   gdal_simplesurf.cpp
   viewshed.cpp
+  viewshed_executor.cpp
   gdalgenericinverse.cpp
 )
 

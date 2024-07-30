@@ -25,6 +25,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#pragma once
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -184,14 +186,9 @@ class Viewshed
      * @param opts Options to use when calculating viewshed.
     */
     CPL_DLL explicit Viewshed(const Options &opts)
-        : oOpts{opts}, oOutExtent{}, oCurExtent{},
-          dfMaxDistance2{opts.maxDistance * opts.maxDistance},
-          dfZObserver{0}, poDstDS{}, pSrcBand{}, pDstBand{},
-          dfHeightAdjFactor{0}, nLineCount{0}, adfTransform{0, 1, 0, 0, 0, 1},
-          adfInvTransform{}, oProgress{}, oZcalc{}, oMutex{}, iMutex{}
+        : oOpts{opts}, oOutExtent{}, oCurExtent{}, poDstDS{}, pSrcBand{},
+          pDstBand{}, nLineCount{0}, oProgress{}
     {
-        if (dfMaxDistance2 == 0)
-            dfMaxDistance2 = std::numeric_limits<double>::max();
     }
 
     Viewshed(const Viewshed &) = delete;
@@ -200,8 +197,7 @@ class Viewshed
     CPL_DLL bool run(GDALRasterBandH hBand,
                      GDALProgressFunc pfnProgress = GDALDummyProgress,
                      void *pProgressArg = nullptr);
-    CPL_DLL bool runCumulative(GDALRasterBandH hBand,
-                               GDALProgressFunc pfnProgress = GDALDummyProgress,
+    CPL_DLL bool runCumulative(GDALProgressFunc pfnProgress = GDALDummyProgress,
                                void *pProgressArg = nullptr);
 
     /**
@@ -218,56 +214,26 @@ class Viewshed
     Options oOpts;
     Window oOutExtent;
     Window oCurExtent;
-    double dfMaxDistance2;
-    double dfZObserver;
     DatasetPtr poDstDS;
     GDALRasterBand *pSrcBand;
     GDALRasterBand *pDstBand;
-    double dfHeightAdjFactor;
     int nLineCount;
-    std::array<double, 6> adfTransform;
-    std::array<double, 6> adfInvTransform;
     using ProgressFunc = std::function<bool(double frac, const char *msg)>;
     ProgressFunc oProgress;
-    using ZCalc = std::function<double(int, int, double, double, double)>;
-    ZCalc oZcalc;
-    std::mutex oMutex;
-    std::mutex iMutex;
 
-    bool setupProgress(GDALProgressFunc pfnProgress, void *pProgressArg);
-    bool setupTransforms();
     DatasetPtr execute(int nX, int nY, const std::string &outFilename);
     void setOutput(double &dfResult, double &dfCellVal, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
     bool readLine(int nLine, double *data);
-    bool writeLine(int nLine, std::vector<double> &vResult);
-    bool processLine(int nX, int nY, int nLine,
-                     std::vector<double> &vLastLineVal);
-    bool processFirstLine(int nX, int nY, std::vector<double> &vLastLineVal,
-                          GDALDataset &dstDataset);
-    void processFirstLineLeft(int nX, int iStart, int iEnd,
-                              std::vector<double> &vResult,
-                              std::vector<double> &vThisLineVal);
-    void processFirstLineRight(int nX, int iStart, int iEnd,
-                               std::vector<double> &vResult,
-                               std::vector<double> &vThisLineVal);
-    void processFirstLineTopOrBottom(int iLeft, int iRight,
-                                     std::vector<double> &vResult,
-                                     std::vector<double> &vThisLineVal);
-    void processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
-                         std::vector<double> &vResult,
-                         std::vector<double> &vThisLineVal,
-                         std::vector<double> &vLastLineVal);
-    void processLineRight(int nX, int nYOffset, int iStart, int iEnd,
-                          std::vector<double> &vResult,
-                          std::vector<double> &vThisLineVal,
-                          std::vector<double> &vLastLineVal);
     std::pair<int, int> adjustHeight(int iLine, int nX,
                                      std::vector<double> &thisLineVal);
-    bool calcExtents(int nX, int nY);
-    DatasetPtr createOutputDataset(const std::string &outFilename);
+    bool calcExtents(int nX, int nY,
+                     const std::array<double, 6> &adfInvTransform);
+    DatasetPtr createOutputDataset(GDALRasterBand &srcBand,
+                                   const std::string &outFilename);
     bool lineProgress();
     bool emitProgress(double fraction);
+    bool setupProgress(GDALProgressFunc pfnProgress, void *pProgressArg);
 };
 
 }  // namespace gdal

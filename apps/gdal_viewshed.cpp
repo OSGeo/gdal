@@ -328,8 +328,9 @@ MAIN_START(argc, argv)
 
     bool bSuccess;
     if (opts.outputMode == Viewshed::OutputMode::Cumulative)
-        bSuccess = oViewshed.runCumulative(
-            hBand, localOpts.bQuiet ? GDALDummyProgress : GDALTermProgress);
+
+        bSuccess = oViewshed.runCumulative(localOpts.bQuiet ? GDALDummyProgress
+                                                            : GDALTermProgress);
     else
         bSuccess = oViewshed.run(hBand, localOpts.bQuiet ? GDALDummyProgress
                                                          : GDALTermProgress);
