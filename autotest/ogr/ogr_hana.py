@@ -1221,7 +1221,7 @@ def test_ogr_hana_38():
 
 
 ###############################################################################
-# Test reading a layer extent and verify a working fast extent implementation
+# Verify a working fast extent implementation
 
 
 def test_ogr_hana_39():
@@ -1272,7 +1272,7 @@ def test_ogr_hana_39():
 
 
 ###############################################################################
-# Test reading a layer extent and verify a working fallback
+# Verify a working fallback in case the fast extent estimation fails
 
 
 def test_ogr_hana_40():
