@@ -2,6 +2,7 @@
 #include <atomic>
 #include <cassert>
 #include <future>
+#include <limits>
 
 #include "viewshed_executor.h"
 

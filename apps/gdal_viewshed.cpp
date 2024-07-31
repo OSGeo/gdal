@@ -226,12 +226,11 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
 
     if (opts.outputMode == Viewshed::OutputMode::Cumulative)
     {
-        for (const std::string &opt :
-             {"-ox", "-oy", "-oz", "-vv", "-iv", "-md"})
+        for (const char *opt : {"-ox", "-oy", "-oz", "-vv", "-iv", "-md"})
             if (argParser.is_used(opt))
             {
-                std::string err =
-                    "Options " + opt + " can't be used in cumulative mode.";
+                std::string err = "Options " + std::string(opt) +
+                                  " can't be used in cumulative mode.";
                 CPLError(CE_Failure, CPLE_AppDefined, "%s", err.c_str());
                 exit(2);
             }
