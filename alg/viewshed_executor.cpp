@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <atomic>
+#include <cassert>
 #include <future>
 
 #include "viewshed_executor.h"

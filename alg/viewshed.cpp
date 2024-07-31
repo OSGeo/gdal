@@ -25,14 +25,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+/**
 #include <iostream>
 
-#include <algorithm>
-#include <array>
-#include <atomic>
-#include <cassert>
-#include <future>
 #include <queue>
+**/
+
+#include <array>
 
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
