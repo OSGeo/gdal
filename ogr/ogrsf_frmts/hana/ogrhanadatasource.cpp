@@ -411,42 +411,43 @@ CPLString FormatDefaultValue(const char *value, short dataType)
 
     switch (dataType)
     {
-        case odbc::SQLDataTypes::Bit:
-        case odbc::SQLDataTypes::Boolean:
+        case QGRHanaDataTypes::Bit:
+        case QGRHanaDataTypes::Boolean:
             return value;
-        case odbc::SQLDataTypes::TinyInt:
-        case odbc::SQLDataTypes::SmallInt:
-        case odbc::SQLDataTypes::Integer:
-        case odbc::SQLDataTypes::BigInt:
-        case odbc::SQLDataTypes::Real:
-        case odbc::SQLDataTypes::Float:
-        case odbc::SQLDataTypes::Double:
-        case odbc::SQLDataTypes::Decimal:
-        case odbc::SQLDataTypes::Numeric:
+        case QGRHanaDataTypes::TinyInt:
+        case QGRHanaDataTypes::SmallInt:
+        case QGRHanaDataTypes::Integer:
+        case QGRHanaDataTypes::BigInt:
+        case QGRHanaDataTypes::Real:
+        case QGRHanaDataTypes::Float:
+        case QGRHanaDataTypes::Double:
+        case QGRHanaDataTypes::Decimal:
+        case QGRHanaDataTypes::Numeric:
             return value;
-        case odbc::SQLDataTypes::Char:
-        case odbc::SQLDataTypes::VarChar:
-        case odbc::SQLDataTypes::LongVarChar:
-        case odbc::SQLDataTypes::WChar:
-        case odbc::SQLDataTypes::WVarChar:
-        case odbc::SQLDataTypes::WLongVarChar:
+        case QGRHanaDataTypes::Char:
+        case QGRHanaDataTypes::VarChar:
+        case QGRHanaDataTypes::LongVarChar:
+        case QGRHanaDataTypes::WChar:
+        case QGRHanaDataTypes::WVarChar:
+        case QGRHanaDataTypes::WLongVarChar:
             return Literal(value);
-        case odbc::SQLDataTypes::Binary:
-        case odbc::SQLDataTypes::VarBinary:
-        case odbc::SQLDataTypes::LongVarBinary:
+        case QGRHanaDataTypes::Binary:
+        case QGRHanaDataTypes::VarBinary:
+        case QGRHanaDataTypes::LongVarBinary:
+        case QGRHanaDataTypes::RealVector:
             return value;
-        case odbc::SQLDataTypes::Date:
-        case odbc::SQLDataTypes::TypeDate:
+        case QGRHanaDataTypes::Date:
+        case QGRHanaDataTypes::TypeDate:
             if (EQUAL(value, "CURRENT_DATE"))
                 return value;
             return Literal(value);
-        case odbc::SQLDataTypes::Time:
-        case odbc::SQLDataTypes::TypeTime:
+        case QGRHanaDataTypes::Time:
+        case QGRHanaDataTypes::TypeTime:
             if (EQUAL(value, "CURRENT_TIME"))
                 return value;
             return Literal(value);
-        case odbc::SQLDataTypes::Timestamp:
-        case odbc::SQLDataTypes::TypeTimestamp:
+        case QGRHanaDataTypes::Timestamp:
+        case QGRHanaDataTypes::TypeTimestamp:
             if (EQUAL(value, "CURRENT_TIMESTAMP"))
                 return value;
             return Literal(value);
@@ -458,37 +459,37 @@ CPLString FormatDefaultValue(const char *value, short dataType)
 short GetArrayDataType(const CPLString &typeName)
 {
     if (typeName == "BOOLEAN ARRAY")
-        return odbc::SQLDataTypes::Boolean;
+        return QGRHanaDataTypes::Boolean;
     else if (typeName == "TINYINT ARRAY")
-        return odbc::SQLDataTypes::TinyInt;
+        return QGRHanaDataTypes::TinyInt;
     else if (typeName == "SMALLINT ARRAY")
-        return odbc::SQLDataTypes::SmallInt;
+        return QGRHanaDataTypes::SmallInt;
     else if (typeName == "INTEGER ARRAY")
-        return odbc::SQLDataTypes::Integer;
+        return QGRHanaDataTypes::Integer;
     else if (typeName == "BIGINT ARRAY")
-        return odbc::SQLDataTypes::BigInt;
+        return QGRHanaDataTypes::BigInt;
     else if (typeName == "DOUBLE ARRAY")
-        return odbc::SQLDataTypes::Double;
+        return QGRHanaDataTypes::Double;
     else if (typeName == "REAL ARRAY")
-        return odbc::SQLDataTypes::Float;
+        return QGRHanaDataTypes::Float;
     else if (typeName == "DECIMAL ARRAY" || typeName == "SMALLDECIMAL ARRAY")
-        return odbc::SQLDataTypes::Decimal;
+        return QGRHanaDataTypes::Decimal;
     else if (typeName == "CHAR ARRAY")
-        return odbc::SQLDataTypes::Char;
+        return QGRHanaDataTypes::Char;
     else if (typeName == "VARCHAR ARRAY")
-        return odbc::SQLDataTypes::VarChar;
+        return QGRHanaDataTypes::VarChar;
     else if (typeName == "NCHAR ARRAY")
-        return odbc::SQLDataTypes::WChar;
+        return QGRHanaDataTypes::WChar;
     else if (typeName == "NVARCHAR ARRAY")
-        return odbc::SQLDataTypes::WVarChar;
+        return QGRHanaDataTypes::WVarChar;
     else if (typeName == "DATE ARRAY")
-        return odbc::SQLDataTypes::Date;
+        return QGRHanaDataTypes::Date;
     else if (typeName == "TIME ARRAY")
-        return odbc::SQLDataTypes::Time;
+        return QGRHanaDataTypes::Time;
     else if (typeName == "TIMESTAMP ARRAY" || typeName == "SECONDDATE ARRAY")
-        return odbc::SQLDataTypes::Timestamp;
+        return QGRHanaDataTypes::Timestamp;
 
-    return odbc::SQLDataTypes::Unknown;
+    return QGRHanaDataTypes::Unknown;
 }
 
 std::vector<CPLString> GetSupportedArrayTypes()
@@ -498,32 +499,34 @@ std::vector<CPLString> GetSupportedArrayTypes()
 
 bool IsKnownDataType(short dataType)
 {
-    return dataType == odbc::SQLDataTypes::Bit ||
-           dataType == odbc::SQLDataTypes::Boolean ||
-           dataType == odbc::SQLDataTypes::TinyInt ||
-           dataType == odbc::SQLDataTypes::SmallInt ||
-           dataType == odbc::SQLDataTypes::Integer ||
-           dataType == odbc::SQLDataTypes::BigInt ||
-           dataType == odbc::SQLDataTypes::Double ||
-           dataType == odbc::SQLDataTypes::Real ||
-           dataType == odbc::SQLDataTypes::Float ||
-           dataType == odbc::SQLDataTypes::Decimal ||
-           dataType == odbc::SQLDataTypes::Numeric ||
-           dataType == odbc::SQLDataTypes::Char ||
-           dataType == odbc::SQLDataTypes::VarChar ||
-           dataType == odbc::SQLDataTypes::LongVarChar ||
-           dataType == odbc::SQLDataTypes::WChar ||
-           dataType == odbc::SQLDataTypes::WVarChar ||
-           dataType == odbc::SQLDataTypes::WLongVarChar ||
-           dataType == odbc::SQLDataTypes::Date ||
-           dataType == odbc::SQLDataTypes::TypeDate ||
-           dataType == odbc::SQLDataTypes::Time ||
-           dataType == odbc::SQLDataTypes::TypeTime ||
-           dataType == odbc::SQLDataTypes::Timestamp ||
-           dataType == odbc::SQLDataTypes::TypeTimestamp ||
-           dataType == odbc::SQLDataTypes::Binary ||
-           dataType == odbc::SQLDataTypes::VarBinary ||
-           dataType == odbc::SQLDataTypes::LongVarBinary;
+    return dataType == QGRHanaDataTypes::Bit ||
+           dataType == QGRHanaDataTypes::Boolean ||
+           dataType == QGRHanaDataTypes::TinyInt ||
+           dataType == QGRHanaDataTypes::SmallInt ||
+           dataType == QGRHanaDataTypes::Integer ||
+           dataType == QGRHanaDataTypes::BigInt ||
+           dataType == QGRHanaDataTypes::Double ||
+           dataType == QGRHanaDataTypes::Real ||
+           dataType == QGRHanaDataTypes::Float ||
+           dataType == QGRHanaDataTypes::Decimal ||
+           dataType == QGRHanaDataTypes::Numeric ||
+           dataType == QGRHanaDataTypes::Char ||
+           dataType == QGRHanaDataTypes::VarChar ||
+           dataType == QGRHanaDataTypes::LongVarChar ||
+           dataType == QGRHanaDataTypes::WChar ||
+           dataType == QGRHanaDataTypes::WVarChar ||
+           dataType == QGRHanaDataTypes::WLongVarChar ||
+           dataType == QGRHanaDataTypes::Date ||
+           dataType == QGRHanaDataTypes::TypeDate ||
+           dataType == QGRHanaDataTypes::Time ||
+           dataType == QGRHanaDataTypes::TypeTime ||
+           dataType == QGRHanaDataTypes::Timestamp ||
+           dataType == QGRHanaDataTypes::TypeTimestamp ||
+           dataType == QGRHanaDataTypes::Binary ||
+           dataType == QGRHanaDataTypes::VarBinary ||
+           dataType == QGRHanaDataTypes::LongVarBinary ||
+           dataType == QGRHanaDataTypes::Geometry ||
+           dataType == QGRHanaDataTypes::RealVector;
 }
 
 }  // anonymous namespace
@@ -1048,7 +1051,6 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
             continue;
 
         bool isArray = false;
-        bool isGeometry = false;
         CPLString tableName = rsmd->getTableName(clmIndex);
         CPLString columnName = rsmd->getColumnName(clmIndex);
         CPLString defaultValue;
@@ -1080,7 +1082,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
                 typeName = *rsArrayTypes->getString(1);
                 dataType = GetArrayDataType(typeName);
 
-                if (dataType == odbc::SQLDataTypes::Unknown)
+                if (dataType == QGRHanaDataTypes::Unknown)
                 {
                     CPLError(
                         CE_Failure, CPLE_AppDefined,
@@ -1105,18 +1107,13 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
                 if (name->compare("SHORTTEXT") == 0 ||
                     name->compare("ALPHANUM") == 0)
                 {
-                    dataType = odbc::SQLDataTypes::WVarChar;
-                }
-                else if (name->compare("ST_GEOMETRY") == 0 ||
-                         name->compare("ST_POINT") == 0)
-                {
-                    isGeometry = true;
+                    dataType = QGRHanaDataTypes::WVarChar;
                 }
             }
             rsTypeInfo->close();
         }
 
-        if (isGeometry)
+        if (dataType == QGRHanaDataTypes::Geometry)
         {
             GeometryColumnDescription geometryColumnDesc;
             if (schemaName.empty() || tableName.empty())
