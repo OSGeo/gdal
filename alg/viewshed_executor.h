@@ -48,10 +48,10 @@ class ViewshedExecutor
   private:
     GDALRasterBand &m_srcBand;
     GDALRasterBand &m_dstBand;
-    const int m_nX;
-    const int m_nY;
     const Viewshed::Window oOutExtent;
     const Viewshed::Window oCurExtent;
+    const int m_nX;
+    const int m_nY;
     const Viewshed::Options oOpts;
     double m_dfHeightAdjFactor{0};
     double m_dfMaxDistance2;

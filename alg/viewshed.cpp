@@ -435,7 +435,8 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     if (!calcExtents(nX, nY, adfInvTransform))
         return false;
 
-    if (!createOutputDataset(*pSrcBand, oOpts.outputFilename))
+    poDstDS = createOutputDataset(*pSrcBand, oOpts.outputFilename);
+    if (!poDstDS)
         return false;
 
     // Execute the viewshed algorithm.

@@ -80,9 +80,9 @@ ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
                                    const Viewshed::Window &outExtent,
                                    const Viewshed::Window &curExtent,
                                    const Viewshed::Options &opts)
-    : m_srcBand(srcBand), m_dstBand(dstBand), m_nX(nX - oOutExtent.xStart),
-      m_nY(nY), oOpts(opts), oOutExtent(outExtent), oCurExtent(curExtent),
-      m_dfMaxDistance2(opts.maxDistance * opts.maxDistance)
+    : m_srcBand(srcBand), m_dstBand(dstBand), oOutExtent(outExtent),
+      oCurExtent(curExtent), m_nX(nX - oOutExtent.xStart), m_nY(nY),
+      oOpts(opts), m_dfMaxDistance2(opts.maxDistance * opts.maxDistance)
 {
     if (m_dfMaxDistance2 == 0)
         m_dfMaxDistance2 = std::numeric_limits<double>::max();
@@ -656,6 +656,7 @@ bool ViewshedExecutor::run()
     if (!emitProgress(1))
         return false;
     **/
+    return true;
 }
 
 }  // namespace gdal
