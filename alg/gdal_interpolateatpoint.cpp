@@ -34,10 +34,26 @@
 #include "gdalresamplingkernels.h"
 
 #include <algorithm>
+#include <complex>
 
-static bool GDALInterpExtractValuesWindow(
-    GDALRasterBand *pBand, std::unique_ptr<DoublePointsCache> &cache, int nX,
-    int nY, int nWidth, int nHeight, double *padfOutReal, double *padfOutImag)
+template <typename T> bool areEqualReal(double dfNoDataValue, T dfOut);
+
+template <> bool areEqualReal(double dfNoDataValue, double dfOut)
+{
+    return ARE_REAL_EQUAL(dfNoDataValue, dfOut);
+}
+
+template <> bool areEqualReal(double dfNoDataValue, std::complex<double> dfOut)
+{
+    return ARE_REAL_EQUAL(dfNoDataValue, dfOut.real());
+}
+
+// Only valid for T = double or std::complex<double>
+template <typename T>
+bool GDALInterpExtractValuesWindow(GDALRasterBand *pBand,
+                                   std::unique_ptr<DoublePointsCache> &cache,
+                                   int nX, int nY, int nWidth, int nHeight,
+                                   T *padfOut)
 {
     constexpr int BLOCK_SIZE = 64;
 
@@ -93,21 +109,14 @@ static bool GDALInterpExtractValuesWindow(
                      nFirstColInCachedBlock, nFirstColInOutput, nColsToCopy);
 #endif
 
+            constexpr int nTypeFactor = sizeof(T) / sizeof(double);
             std::shared_ptr<std::vector<double>> poValue;
             if (!cache->tryGet(nKey, poValue))
             {
-                GDALDataType eDataType = GDT_Float64;
-                size_t nVectorSize{0};
-                if (bIsComplex)
-                {
-                    eDataType = GDT_CFloat64;
-                    nVectorSize = nReqXSize * nReqYSize * 2;
-                }
-                else
-                {
-                    eDataType = GDT_Float64;
-                    nVectorSize = nReqXSize * nReqYSize;
-                }
+                const GDALDataType eDataType =
+                    bIsComplex ? GDT_CFloat64 : GDT_Float64;
+                const size_t nVectorSize =
+                    size_t(nReqXSize) * nReqYSize * nTypeFactor;
                 poValue = std::make_shared<std::vector<double>>(nVectorSize);
                 CPLErr eErr = pBand->RasterIO(
                     GF_Read, nBlockX * BLOCK_SIZE, nBlockY * BLOCK_SIZE,
@@ -120,36 +129,18 @@ static bool GDALInterpExtractValuesWindow(
                 cache->insert(nKey, poValue);
             }
 
-            auto composeToFinalBuffer =
-                [&](double *padfOut, const std::vector<double> &vect)
+            double *padfAsDouble = reinterpret_cast<double *>(padfOut);
+            // Compose the cached block to the final buffer
+            for (int j = 0; j < nLinesToCopy; j++)
             {
-                // Compose the cached block to the final buffer
-                for (int j = 0; j < nLinesToCopy; j++)
-                {
-                    memcpy(padfOut + (nFirstLineInOutput + j) * nWidth +
-                               nFirstColInOutput,
-                           vect.data() +
-                               (nFirstLineInCachedBlock + j) * nReqXSize +
-                               nFirstColInCachedBlock,
-                           nColsToCopy * sizeof(double));
-                }
-            };
-
-            if (bIsComplex)
-            {
-                std::vector<double> vReal(nReqXSize * nReqYSize);
-                std::vector<double> vImag(nReqXSize * nReqYSize);
-                for (size_t i = 0; i < vReal.size(); i++)
-                {
-                    vReal[i] = (*poValue)[2 * i];
-                    vImag[i] = (*poValue)[2 * i + 1];
-                }
-                composeToFinalBuffer(padfOutReal, vReal);
-                composeToFinalBuffer(padfOutImag, vImag);
-            }
-            else
-            {
-                composeToFinalBuffer(padfOutReal, *poValue);
+                memcpy(padfAsDouble + ((nFirstLineInOutput + j) * nWidth +
+                                       nFirstColInOutput) *
+                                          nTypeFactor,
+                       poValue->data() +
+                           ((nFirstLineInCachedBlock + j) * nReqXSize +
+                            nFirstColInCachedBlock) *
+                               nTypeFactor,
+                       nColsToCopy * sizeof(T));
             }
         }
     }
@@ -172,22 +163,16 @@ static bool GDALInterpExtractValuesWindow(
     return true;
 }
 
-/************************************************************************/
-/*                        GDALInterpolateAtPoint()                      */
-/************************************************************************/
-
-bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
-                            GDALRIOResampleAlg eResampleAlg,
-                            std::unique_ptr<DoublePointsCache> &cache,
-                            const double dfXIn, const double dfYIn,
-                            double *pdfOutputReal, double *pdfOutputImag)
+template <typename T>
+bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
+                                GDALRIOResampleAlg eResampleAlg,
+                                std::unique_ptr<DoublePointsCache> &cache,
+                                const double dfXIn, const double dfYIn, T &out)
 {
     const int nRasterXSize = pBand->GetXSize();
     const int nRasterYSize = pBand->GetYSize();
     int bGotNoDataValue = FALSE;
     const double dfNoDataValue = pBand->GetNoDataValue(&bGotNoDataValue);
-    const bool bIsComplex =
-        CPL_TO_BOOL(GDALDataTypeIsComplex(pBand->GetRasterDataType()));
 
     if (dfXIn < 0 || dfXIn > nRasterXSize || dfYIn < 0 || dfYIn > nRasterYSize)
     {
@@ -221,7 +206,7 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
     };
 
     auto dragReadDataInBorder =
-        [](double *adfElevData, int dOutOfBorder, int nKernelSize, bool bIsX)
+        [](T *adfElevData, int dOutOfBorder, int nKernelSize, bool bIsX)
     {
         while (dOutOfBorder < 0)
         {
@@ -255,7 +240,7 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
     };
 
     auto applyBilinearKernel = [&](double dfDeltaX, double dfDeltaY,
-                                   double *adfValues, double *pdfRes) -> bool
+                                   T *adfValues, T &pdfRes) -> bool
     {
         if (bGotNoDataValue)
         {
@@ -263,7 +248,7 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
             bool bFoundNoDataElev = false;
             for (int k_i = 0; k_i < 4; k_i++)
             {
-                if (ARE_REAL_EQUAL(dfNoDataValue, adfValues[k_i]))
+                if (areEqualReal(dfNoDataValue, adfValues[k_i]))
                     bFoundNoDataElev = true;
             }
             if (bFoundNoDataElev)
@@ -274,22 +259,19 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
         const double dfDeltaX1 = 1.0 - dfDeltaX;
         const double dfDeltaY1 = 1.0 - dfDeltaY;
 
-        const double dfXZ1 = adfValues[0] * dfDeltaX1 + adfValues[1] * dfDeltaX;
-        const double dfXZ2 = adfValues[2] * dfDeltaX1 + adfValues[3] * dfDeltaX;
-        const double dfYZ = dfXZ1 * dfDeltaY1 + dfXZ2 * dfDeltaY;
+        const T dfXZ1 = adfValues[0] * dfDeltaX1 + adfValues[1] * dfDeltaX;
+        const T dfXZ2 = adfValues[2] * dfDeltaX1 + adfValues[3] * dfDeltaX;
+        const T dfYZ = dfXZ1 * dfDeltaY1 + dfXZ2 * dfDeltaY;
 
-        *pdfRes = dfYZ;
+        pdfRes = dfYZ;
         return TRUE;
     };
 
-    auto apply4x4Kernel = [&](double dfDeltaX, double dfDeltaY,
-                              double *adfValues, double *pdfRes) -> bool
+    auto apply4x4Kernel = [&](double dfDeltaX, double dfDeltaY, T *adfValues,
+                              T &pdfRes) -> bool
     {
-        if (!pdfRes)
-            return TRUE;
-
-        double dfSumH = 0.0;
-        double dfSumWeight = 0.0;
+        T dfSumH = 0.0;
+        T dfSumWeight = 0.0;
         for (int k_i = 0; k_i < 4; k_i++)
         {
             // Loop across the X axis.
@@ -309,8 +291,8 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
 
                 // Create a sum of all values
                 // adjusted for the pixel's calculated weight.
-                const double dfElev = adfValues[k_j + k_i * 4];
-                if (bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfElev))
+                const T dfElev = adfValues[k_j + k_i * 4];
+                if (bGotNoDataValue && areEqualReal(dfNoDataValue, dfElev))
                     continue;
 
                 dfSumH += dfElev * dfPixelWeight;
@@ -322,7 +304,7 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
             return FALSE;
         }
 
-        *pdfRes = dfSumH / dfSumWeight;
+        pdfRes = dfSumH / dfSumWeight;
 
         return TRUE;
     };
@@ -348,37 +330,17 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
             outOfBorderCorrection(dYNew, nRasterYSize, nKernelSize);
 
         // CubicSpline interpolation.
-        double adfReadDataReal[16] = {0.0};
-        double adfReadDataImag[16] = {0.0};
-        if (!GDALInterpExtractValuesWindow(
-                pBand, cache, dXNew - dXOutOfBorder, dYNew - dYOutOfBorder,
-                nKernelSize, nKernelSize, adfReadDataReal, adfReadDataImag))
+        T adfReadData[16] = {0.0};
+        if (!GDALInterpExtractValuesWindow(pBand, cache, dXNew - dXOutOfBorder,
+                                           dYNew - dYOutOfBorder, nKernelSize,
+                                           nKernelSize, adfReadData))
         {
             return FALSE;
         }
-        dragReadDataInBorder(adfReadDataReal, dXOutOfBorder, nKernelSize, true);
-        dragReadDataInBorder(adfReadDataReal, dYOutOfBorder, nKernelSize,
-                             false);
-        if (!apply4x4Kernel(dfDeltaX, dfDeltaY, adfReadDataReal, pdfOutputReal))
+        dragReadDataInBorder(adfReadData, dXOutOfBorder, nKernelSize, true);
+        dragReadDataInBorder(adfReadData, dYOutOfBorder, nKernelSize, false);
+        if (!apply4x4Kernel(dfDeltaX, dfDeltaY, adfReadData, out))
             return FALSE;
-
-        if (pdfOutputImag)
-        {
-            if (bIsComplex)
-            {
-                dragReadDataInBorder(adfReadDataImag, dXOutOfBorder,
-                                     nKernelSize, true);
-                dragReadDataInBorder(adfReadDataImag, dYOutOfBorder,
-                                     nKernelSize, false);
-                if (!apply4x4Kernel(dfDeltaX, dfDeltaY, adfReadDataImag,
-                                    pdfOutputImag))
-                    return FALSE;
-            }
-            else
-            {
-                *pdfOutputImag = 0.0;
-            }
-        }
 
         return TRUE;
     }
@@ -400,58 +362,68 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
             outOfBorderCorrection(dY, nRasterYSize, nKernelSize);
 
         // Bilinear interpolation.
-        double adfReadDataReal[4] = {0.0, 0.0, 0.0, 0.0};
-        double adfReadDataImag[4] = {0.0, 0.0, 0.0, 0.0};
-        if (!GDALInterpExtractValuesWindow(
-                pBand, cache, dX - dXOutOfBorder, dY - dYOutOfBorder,
-                nKernelSize, nKernelSize, adfReadDataReal, adfReadDataImag))
+        T adfReadData[4] = {0.0};
+        if (!GDALInterpExtractValuesWindow(pBand, cache, dX - dXOutOfBorder,
+                                           dY - dYOutOfBorder, nKernelSize,
+                                           nKernelSize, adfReadData))
         {
             return FALSE;
         }
-        dragReadDataInBorder(adfReadDataReal, dXOutOfBorder, nKernelSize, true);
-        dragReadDataInBorder(adfReadDataReal, dYOutOfBorder, nKernelSize,
-                             false);
-        if (!applyBilinearKernel(dfDeltaX, dfDeltaY, adfReadDataReal,
-                                 pdfOutputReal))
+        dragReadDataInBorder(adfReadData, dXOutOfBorder, nKernelSize, true);
+        dragReadDataInBorder(adfReadData, dYOutOfBorder, nKernelSize, false);
+        if (!applyBilinearKernel(dfDeltaX, dfDeltaY, adfReadData, out))
             return FALSE;
 
-        if (pdfOutputImag)
-        {
-            if (bIsComplex)
-            {
-                dragReadDataInBorder(adfReadDataImag, dXOutOfBorder,
-                                     nKernelSize, true);
-                dragReadDataInBorder(adfReadDataImag, dYOutOfBorder,
-                                     nKernelSize, false);
-
-                if (!applyBilinearKernel(dfDeltaX, dfDeltaY, adfReadDataImag,
-                                         pdfOutputImag))
-                    return FALSE;
-            }
-            else
-            {
-                *pdfOutputImag = 0.0;
-            }
-        }
         return TRUE;
     }
     else
     {
         const int dX = static_cast<int>(dfXIn);
         const int dY = static_cast<int>(dfYIn);
-        double dfReal = 0.0;
-        double dfImag = 0.0;
-        if (!GDALInterpExtractValuesWindow(pBand, cache, dX, dY, 1, 1, &dfReal,
-                                           &dfImag) ||
-            (bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfReal)))
+        T dfOut{};
+        if (!GDALInterpExtractValuesWindow(pBand, cache, dX, dY, 1, 1,
+                                           &dfOut) ||
+            (bGotNoDataValue && areEqualReal(dfNoDataValue, dfOut)))
         {
             return FALSE;
         }
 
-        *pdfOutputReal = dfReal;
-        if (pdfOutputImag)
-            *pdfOutputImag = dfImag;
+        out = dfOut;
 
         return TRUE;
     }
+}
+
+/************************************************************************/
+/*                        GDALInterpolateAtPoint()                      */
+/************************************************************************/
+
+bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
+                            GDALRIOResampleAlg eResampleAlg,
+                            std::unique_ptr<DoublePointsCache> &cache,
+                            const double dfXIn, const double dfYIn,
+                            double *pdfOutputReal, double *pdfOutputImag)
+{
+    const bool bIsComplex =
+        CPL_TO_BOOL(GDALDataTypeIsComplex(pBand->GetRasterDataType()));
+    bool res = TRUE;
+    if (bIsComplex)
+    {
+        std::complex<double> out{};
+        res = GDALInterpolateAtPointImpl(pBand, eResampleAlg, cache, dfXIn,
+                                         dfYIn, out);
+        *pdfOutputReal = out.real();
+        if (pdfOutputImag)
+            *pdfOutputImag = out.imag();
+    }
+    else
+    {
+        double out{};
+        res = GDALInterpolateAtPointImpl(pBand, eResampleAlg, cache, dfXIn,
+                                         dfYIn, out);
+        *pdfOutputReal = out;
+        if (pdfOutputImag)
+            *pdfOutputImag = 0;
+    }
+    return res;
 }
