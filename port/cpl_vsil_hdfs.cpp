@@ -104,7 +104,9 @@ class VSIHdfsHandle final : public VSIVirtualHandle
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     vsi_l_offset Length();
+    void ClearErr() override;
     int Eof() override;
+    int Error() override;
     int Flush() override;
     int Close() override;
 };
@@ -206,6 +208,15 @@ vsi_l_offset VSIHdfsHandle::Length()
 int VSIHdfsHandle::Eof()
 {
     return bEOF;
+}
+
+int VSIHdfsHandle::Error()
+{
+    return 0;
+}
+
+void VSIHdfsHandle::ClearErr()
+{
 }
 
 int VSIHdfsHandle::Flush()
