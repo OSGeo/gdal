@@ -59,7 +59,7 @@ class ViewshedExecutor
     std::mutex iMutex{};
     std::mutex oMutex{};
     std::array<double, 6> m_adfTransform{0, 1, 0, 0, 0, 1};
-    double (*oZcalc)(int, int, double, double, double);
+    double (*oZcalc)(int, int, double, double, double){};
 
     double calcHeightAdjFactor();
     void setOutput(double &dfResult, double &dfCellVal, double dfZ);
