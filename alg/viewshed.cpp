@@ -31,6 +31,7 @@
 #include <queue>
 **/
 
+#include <algorithm>
 #include <array>
 
 #include "gdal_alg.h"
