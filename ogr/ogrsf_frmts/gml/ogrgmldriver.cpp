@@ -216,6 +216,9 @@ void RegisterOGRGML()
         "  <Option name='USE_BBOX' type='boolean' description='Whether "
         "to use gml:boundedBy at feature level as feature geometry, "
         "if there are no other geometry' default='NO'/>"
+        "  <Option name='USE_SCHEMA_IMPORT' type='boolean' "
+        "description='Whether "
+        "to read schema for imports along with includes or not' default='NO'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(
