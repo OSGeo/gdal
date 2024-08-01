@@ -76,7 +76,7 @@ jobs:
 
           - name: Fedora Rawhide, clang++
             id: fedora_rawhide
-            travis_branch: sanitize
+            travis_branch: fedora_rawhide
             container: fedora_rawhide
             build_script: build.sh
             os: ubuntu-22.04
@@ -284,6 +284,7 @@ jobs:
         env:
           TRAVIS: yes
           TRAVIS_BRANCH: ${{ matrix.travis_branch }}
+          BUILD_NAME: ${{ matrix.travis_branch }}
         run: |
           if test -f ".github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"; then
             TEST_CMD="$(pwd)/.github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"
@@ -306,6 +307,7 @@ jobs:
             -e GITHUB_WORKFLOW \
             -e TRAVIS \
             -e TRAVIS_BRANCH \
+            -e BUILD_NAME \
             -e "GDAL_SOURCE_DIR=$(pwd)" \
             -u $(id -u ${USER}):$(id -g ${USER}) \
             --security-opt seccomp=unconfined \

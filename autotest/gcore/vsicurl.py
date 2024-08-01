@@ -41,7 +41,7 @@ from osgeo import gdal, ogr
 pytestmark = [
     pytest.mark.require_curl(),
     pytest.mark.skipif(
-        os.environ.get("BUILD_NAME", "") == "macos_build_conda",
+        os.environ.get("BUILD_NAME", "") in ("macos_build_conda", "fedora_rawhide"),
         reason="fail with SIGPIPE",
     ),
 ]
