@@ -1735,7 +1735,6 @@ int OGRHanaDataSource::TestCapability(const char *capabilities)
         return updateMode_;
     else if (EQUAL(capabilities, ODsCTransactions))
         return TRUE;
-
     else
         return FALSE;
 }
