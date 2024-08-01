@@ -9,5 +9,13 @@
 Warper C++ API
 ================================================================================
 
+Include file
+------------
+
+:file:`gdalwarper.h`
+
+Warper C++ API
+--------------
+
 .. doxygenfile:: gdalwarper.h
    :project: api

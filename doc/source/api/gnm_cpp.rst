@@ -9,5 +9,13 @@
 Geographic Network C++ API
 ================================================================================
 
+Include file
+------------
+
+:file:`gnm.h`
+
+Geographic Network C++ API
+--------------------------
+
 .. doxygenfile:: gnm.h
    :project: api

@@ -9,6 +9,11 @@
 GDALExtendedDataType C++ API
 ================================================================================
 
+Include file
+------------
+
+:file:`gdal_priv.h`
+
 GDALExtendedDataType class
 --------------------------
 

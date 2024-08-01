@@ -9,6 +9,14 @@
 GDALMDArray C++ API
 ================================================================================
 
+Include file
+------------
+
+:file:`gdal_priv.h`
+
+GDALMDArray class
+-----------------
+
 .. doxygenclass:: GDALMDArray
    :project: api
    :members:

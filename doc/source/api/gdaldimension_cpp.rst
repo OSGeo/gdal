@@ -9,6 +9,14 @@
 GDALDimension C++ API
 ================================================================================
 
+Include file
+------------
+
+:file:`gdal_priv.h`
+
+GDALDimension class
+-------------------
+
 .. doxygenclass:: GDALDimension
    :project: api
    :members:
