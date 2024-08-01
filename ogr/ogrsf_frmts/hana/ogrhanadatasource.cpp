@@ -699,11 +699,11 @@ void OGRHanaDataSource::DetermineVersions()
 {
     odbc::DatabaseMetaDataRef dbmd = conn_->getDatabaseMetaData();
     CPLString dbVersion(dbmd->getDBMSVersion());
-    hanaVersion_ = HANAVersion::fromString(dbVersion);
+    hanaVersion_ = HanaVersion::fromString(dbVersion);
 
     if (hanaVersion_.major() < 4)
     {
-        cloudVersion_ = HANAVersion(0, 0, 0);
+        cloudVersion_ = HanaVersion(0, 0, 0);
         return;
     }
 
@@ -713,7 +713,7 @@ void OGRHanaDataSource::DetermineVersions()
     odbc::ResultSetRef rsVersion = stmt->executeQuery(sql);
     if (rsVersion->next())
         cloudVersion_ =
-            HANAVersion::fromString(rsVersion->getString(1)->c_str());
+            HanaVersion::fromString(rsVersion->getString(1)->c_str());
 
     rsVersion->close();
 }

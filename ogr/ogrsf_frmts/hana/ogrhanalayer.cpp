@@ -355,7 +355,7 @@ void OGRHanaLayer::BuildWhereClause()
             const GeometryColumnDescription &geomClmDesc =
                 geomColumns_[static_cast<std::size_t>(m_iGeomFieldFilter)];
             spatialFilter = BuildSpatialFilter(
-                dataSource_->GetHANAVersion().major(), *m_poFilterGeom,
+                dataSource_->GetHanaVersion().major(), *m_poFilterGeom,
                 geomClmDesc.name, geomClmDesc.srid);
         }
     }
@@ -864,13 +864,13 @@ bool OGRHanaLayer::IsFastExtentAvailable()
     if (geomColumns_.empty())
         return false;
 
-    switch (dataSource_->GetHANAVersion().major())
+    switch (dataSource_->GetHanaVersion().major())
     {
         case 2:
-            return dataSource_->GetHANAVersion() >= HANAVersion(2, 0, 80);
+            return dataSource_->GetHanaVersion() >= HanaVersion(2, 0, 80);
         case 4:
-            return dataSource_->GetHANACloudVersion() >=
-                   HANAVersion(2024, 2, 0);
+            return dataSource_->GetHanaCloudVersion() >=
+                   HanaVersion(2024, 2, 0);
     }
 
     return false;

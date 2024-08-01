@@ -418,8 +418,8 @@ class OGRHanaDataSource final : public GDALDataset
     SrsCache srsCache_;
     odbc::EnvironmentRef connEnv_;
     odbc::ConnectionRef conn_;
-    OGRHANA::HANAVersion hanaVersion_;
-    OGRHANA::HANAVersion cloudVersion_;
+    OGRHANA::HanaVersion hanaVersion_;
+    OGRHANA::HanaVersion cloudVersion_;
 
   private:
     void CreateTable(const CPLString &tableName, const CPLString &fidName,
@@ -473,12 +473,12 @@ class OGRHanaDataSource final : public GDALDataset
 
     int Open(const char *newName, char **options, int update);
 
-    OGRHANA::HANAVersion GetHANAVersion() const
+    OGRHANA::HanaVersion GetHanaVersion() const
     {
         return hanaVersion_;
     }
 
-    OGRHANA::HANAVersion GetHANACloudVersion() const
+    OGRHANA::HanaVersion GetHanaCloudVersion() const
     {
         return cloudVersion_;
     }
