@@ -1171,6 +1171,56 @@ def test_ogr_hana_37():
 
 
 ###############################################################################
+# Test REAL_VECTOR type
+
+
+def test_ogr_hana_38():
+    conn = create_connection()
+    layer_name = get_test_name()
+    table_name = f'"{gdaltest.hana_schema_name}"."{layer_name}"'
+    execute_sql(
+        conn,
+        f"CREATE COLUMN TABLE {table_name} (ID INT PRIMARY KEY, EMB1 REAL_VECTOR(3), EMB2 REAL_VECTOR)",
+    )
+    execute_sql(
+        conn,
+        f"INSERT INTO {table_name} VALUES (1, TO_REAL_VECTOR('[0.1,0.2,0.3]'), TO_REAL_VECTOR('[0.1,0.2,0.3]'))",
+    )
+
+    def check_value(expected):
+        ds = open_datasource(0)
+        layer = ds.GetLayerByName(layer_name)
+        layer_defn = layer.GetLayerDefn()
+        assert layer.GetLayerDefn().GetFieldCount() == 2
+        field_emb1 = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("EMB1"))
+        assert field_emb1.GetType() == ogr.OFTBinary
+        assert field_emb1.GetWidth() == 16
+        field_emb2 = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("EMB2"))
+        assert field_emb2.GetType() == ogr.OFTBinary
+        assert field_emb2.GetWidth() == 65000
+        check_feature_count(layer, 1)
+        feat = layer.GetNextFeature()
+        assert feat.GetFieldAsBinary("EMB1") == expected
+        assert feat.GetFieldAsBinary("EMB2") == expected
+
+    # '[0.1,0.2,0.3]'
+    vec0 = b"\x03\x00\x00\x00\xCD\xCC\xCC\x3D\xCD\xCC\x4C\x3E\x9A\x99\x99\x3E"
+    # '[0.1,0.2,0.1]'
+    vec1 = b"\x03\x00\x00\x00\xCD\xCC\xCC\x3D\xCD\xCC\x4C\x3E\xCD\xCC\xCC\x3D"
+
+    check_value(vec0)
+
+    ds = open_datasource(1)
+    layer = ds.GetLayerByName(layer_name)
+    feat = layer.GetNextFeature()
+    feat.SetField("EMB1", vec1)
+    feat.SetField("EMB2", vec1)
+    layer.SetFeature(feat)
+
+    check_value(vec1)
+
+
+###############################################################################
 #  Create a table from data/poly.shp
 
 
@@ -1248,7 +1298,9 @@ def create_tpoly_table(ds, layer_name="TPOLY"):
 def get_connection_str():
     uri = gdal.GetConfigOption("OGR_HANA_CONNECTION_STRING", None)
     if uri is not None:
-        conn_str = uri + ";ENCRYPT=YES;SSL_VALIDATE_CERTIFICATE=false;CHAR_AS_UTF8=1"
+        if "ENCRYPT" not in uri:
+            uri += ";ENCRYPT=YES"
+        conn_str = uri + ";SSL_VALIDATE_CERTIFICATE=false;CHAR_AS_UTF8=1"
     else:
         pytest.skip("OGR_HANA_CONNECTION_STRING not set")
 

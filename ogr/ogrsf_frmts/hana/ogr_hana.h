@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "odbc/Forwards.h"
+#include "odbc/Types.h"
 
 class OGRHanaDataSource;
 
@@ -50,8 +51,75 @@ constexpr static int DEFAULT_STRING_SIZE = 256;
 constexpr static int UNDETERMINED_SRID = -1;
 
 /************************************************************************/
-/*                          Internal struct definitions                 */
+/*                 Internal enum and struct definitions                 */
 /************************************************************************/
+
+class QGRHanaDataTypes
+{
+    QGRHanaDataTypes() = delete;
+
+  public:
+    /// Unknown data type.
+    static constexpr int Unknown = odbc::SQLDataTypes::Unknown;
+    /// 64-bit integer value.
+    static constexpr int BigInt = odbc::SQLDataTypes::BigInt;
+    /// Binary data of fixed length.
+    static constexpr int Binary = odbc::SQLDataTypes::Binary;
+    /// Single bit binary data.
+    static constexpr int Bit = odbc::SQLDataTypes::Bit;
+    /// Boolean value.
+    static constexpr int Boolean = odbc::SQLDataTypes::Boolean;
+    /// Character string of fixed string length.
+    static constexpr int Char = odbc::SQLDataTypes::Char;
+    /// Year, month, and day fields.
+    static constexpr int Date = odbc::SQLDataTypes::Date;
+    /// Year, month, and day fields.
+    static constexpr int DateTime = odbc::SQLDataTypes::DateTime;
+    /// Signed, exact, numeric value.
+    static constexpr int Decimal = odbc::SQLDataTypes::Decimal;
+    /// Double-precision floating point number.
+    static constexpr int Double = odbc::SQLDataTypes::Double;
+    /// Floating point number with driver-specific precision.
+    static constexpr int Float = odbc::SQLDataTypes::Float;
+    /// 32-bit integer value.
+    static constexpr int Integer = odbc::SQLDataTypes::Integer;
+    /// Variable length binary data.
+    static constexpr int LongVarBinary = odbc::SQLDataTypes::LongVarBinary;
+    /// Variable length character data.
+    static constexpr int LongVarChar = odbc::SQLDataTypes::LongVarChar;
+    /// Signed, exact, numeric value.
+    static constexpr int Numeric = odbc::SQLDataTypes::Numeric;
+    /// Single-precision floating point number.
+    static constexpr int Real = odbc::SQLDataTypes::Real;
+    /// 16-bit integer value.
+    static constexpr int SmallInt = odbc::SQLDataTypes::SmallInt;
+    /// Hour, minute, and second fields.
+    static constexpr int Time = odbc::SQLDataTypes::Time;
+    /// Year, month, day, hour, minute, and second fields.
+    static constexpr int Timestamp = odbc::SQLDataTypes::Timestamp;
+    /// 8-bit integer value.
+    static constexpr int TinyInt = odbc::SQLDataTypes::TinyInt;
+    /// Year, month, and day fields.
+    static constexpr int TypeDate = odbc::SQLDataTypes::TypeDate;
+    /// Hour, minute, and second fields.
+    static constexpr int TypeTime = odbc::SQLDataTypes::TypeTime;
+    /// Year, month, day, hour, minute, and second fields.
+    static constexpr int TypeTimestamp = odbc::SQLDataTypes::TypeTimestamp;
+    /// Variable length binary data.
+    static constexpr int VarBinary = odbc::SQLDataTypes::VarBinary;
+    /// Variable-length character string.
+    static constexpr int VarChar = odbc::SQLDataTypes::VarChar;
+    /// Unicode character string of fixed string length.
+    static constexpr int WChar = odbc::SQLDataTypes::WChar;
+    /// Unicode variable-length character data.
+    static constexpr int WLongVarChar = odbc::SQLDataTypes::WLongVarChar;
+    /// Unicode variable-length character string.
+    static constexpr int WVarChar = odbc::SQLDataTypes::WVarChar;
+    /// ST_GEOMETRY/ST_POINT value.
+    static constexpr int Geometry = 29812;
+    /// REAL_VECTOR value.
+    static constexpr int RealVector = 29814;
+};
 
 struct ColumnDefinition
 {

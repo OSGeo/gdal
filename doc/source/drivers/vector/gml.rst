@@ -115,6 +115,11 @@ The following configuration options are available:
 
      Equivalent of :oo:`READ_MODE`. See :ref:`gml_performance`.
 
+- .. config:: GML_USE_SCHEMA_IMPORT
+     :choices: YES, NO
+
+     Equivalent of :oo:`USE_SCHEMA_IMPORT`.
+
 
 Parsers
 -------
@@ -626,6 +631,12 @@ The following open options are supported:
       Whether to use gml:boundedBy at feature level as feature geometry,
       if there are no other geometry.
 
+-  .. oo:: USE_SCHEMA_IMPORT
+      :choices: YES, NO
+      :default: NO
+
+      Whether to use schema imports in XSD files so that
+      the feature types corresponding to imported schema can be detected.
 
 .. note::
 

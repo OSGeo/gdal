@@ -60,6 +60,8 @@ Process :
 
   - commit new version to NEWS.md file.
 
+  - for bugfixes releases, forward port additions of NEWS.md to master
+
 6) If this is a feature release (e.g 3.1), prepare a branch.
 
    git checkout master

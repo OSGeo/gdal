@@ -344,3 +344,4 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
 * <li>MITRE_LIMIT=double</li>
         DESCRIPTION=Staatliche Verwaltungs- und Sozialdienste wie öffentliche Verwaltung, Katastrophenschutz, Schulen und Krankenhäuser, die von öffentlichen oder privaten Einrichtungen erbracht werden, soweit sie in den Anwendungsbereich der Richtlinie 2007/2/EG fallen. Dieser Datensatz enthält Informationen zu Feuerwehrleitstellen.
     # Disable cfchecker validation as it fails with a '(5): co-ordinate variable not monotonic'
+* do not emit warnings about not having used [Dont]UseExceptions() if run under

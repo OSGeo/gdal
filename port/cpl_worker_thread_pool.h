@@ -34,8 +34,10 @@
 #include "cpl_list.h"
 
 #include <condition_variable>
+#include <functional>
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <vector>
 
 /**
@@ -46,7 +48,6 @@
  */
 
 #ifndef DOXYGEN_SKIP
-struct CPLWorkerThreadJob;
 class CPLWorkerThreadPool;
 
 struct CPLWorkerThread
@@ -83,7 +84,7 @@ class CPL_DLL CPLWorkerThreadPool
     mutable std::mutex m_mutex{};
     std::condition_variable m_cv{};
     volatile CPLWorkerThreadState eState = CPLWTS_OK;
-    CPLList *psJobQueue = nullptr;
+    std::queue<std::function<void()>> jobQueue;
     int nPendingJobs = 0;
 
     CPLList *psWaitingWorkerThreadsList = nullptr;
@@ -94,10 +95,11 @@ class CPL_DLL CPLWorkerThreadPool
     static void WorkerThreadFunction(void *user_data);
 
     void DeclareJobFinished();
-    CPLWorkerThreadJob *GetNextJob(CPLWorkerThread *psWorkerThread);
+    std::function<void()> GetNextJob(CPLWorkerThread *psWorkerThread);
 
   public:
     CPLWorkerThreadPool();
+    explicit CPLWorkerThreadPool(int nThreads);
     ~CPLWorkerThreadPool();
 
     bool Setup(int nThreads, CPLThreadFunc pfnInitFunc, void **pasInitData);
@@ -106,6 +108,7 @@ class CPL_DLL CPLWorkerThreadPool
 
     std::unique_ptr<CPLJobQueue> CreateJobQueue();
 
+    bool SubmitJob(std::function<void()> task);
     bool SubmitJob(CPLThreadFunc pfnFunc, void *pData);
     bool SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void *> &apData);
     void WaitCompletion(int nMaxRemainingJobs = 0);

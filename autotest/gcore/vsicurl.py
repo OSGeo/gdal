@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 import time
 
@@ -37,7 +38,13 @@ import webserver
 
 from osgeo import gdal, ogr
 
-pytestmark = pytest.mark.require_curl()
+pytestmark = [
+    pytest.mark.require_curl(),
+    pytest.mark.skipif(
+        os.environ.get("BUILD_NAME", "") in ("macos_build_conda", "fedora_rawhide"),
+        reason="fail with SIGPIPE",
+    ),
+]
 
 ###############################################################################
 #
