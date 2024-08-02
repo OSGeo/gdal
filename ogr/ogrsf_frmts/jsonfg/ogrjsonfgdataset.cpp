@@ -324,13 +324,13 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
             }
             if (!bCanTryWithNonStreamingParserOut)
                 return false;
-
-            // Fallback to in-memory ingestion
-            CPLAssert(poOpenInfo->fpL == nullptr);
-            poOpenInfo->fpL = fp.release();
-            if (!ReadFromFile(poOpenInfo, pszUnprefixed))
-                return false;
         }
+
+        // Fallback to in-memory ingestion
+        CPLAssert(poOpenInfo->fpL == nullptr);
+        poOpenInfo->fpL = fp.release();
+        if (!ReadFromFile(poOpenInfo, pszUnprefixed))
+            return false;
     }
 
     // In-memory ingestion of the file
