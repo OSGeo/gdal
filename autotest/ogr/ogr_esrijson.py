@@ -102,6 +102,10 @@ def test_ogr_esrijson_read_point():
     assert rc
 
     layer_defn = lyr.GetLayerDefn()
+
+    fld_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("objectid"))
+    assert fld_defn.GetAlternativeName() == "Object ID"
+
     fld_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("fooDate"))
     assert fld_defn.GetType() == ogr.OFTDateTime
     assert fld_defn.GetWidth() == 0

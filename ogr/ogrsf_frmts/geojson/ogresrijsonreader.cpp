@@ -381,6 +381,14 @@ bool OGRESRIJSONReader::ParseField(json_object *poObj)
             }
         }
 
+        json_object *poObjAlias = OGRGeoJSONFindMemberByName(poObj, "alias");
+        if (poObjAlias && json_object_get_type(poObjAlias) == json_type_string)
+        {
+            const char *pszAlias = json_object_get_string(poObjAlias);
+            if (strcmp(pszObjName, pszAlias) != 0)
+                fldDefn.SetAlternativeName(pszAlias);
+        }
+
         poDefn->AddFieldDefn(&fldDefn);
 
         bSuccess = true;
