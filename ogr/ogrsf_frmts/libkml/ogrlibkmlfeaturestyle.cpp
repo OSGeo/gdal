@@ -205,16 +205,10 @@ void kml2featurestyle(FeaturePtr poKmlFeature, OGRLIBKMLDataSource *poOgrDS,
         else
         {
             const size_t nPathLen = poOgrDS->GetStylePath().size();
-
-            if (nPathLen == 0)
-            {
-                if (!osUrl.empty() && osUrl[0] == '#')
-                    osStyleString = std::string("@").append(osUrl.c_str() + 1);
-            }
-            else if (osUrl.size() > nPathLen &&
-                     strncmp(osUrl.c_str(), poOgrDS->GetStylePath().c_str(),
-                             nPathLen) == 0 &&
-                     osUrl[nPathLen] == '#')
+            if (osUrl.size() > nPathLen && osUrl[nPathLen] == '#' &&
+                (nPathLen == 0 ||
+                 strncmp(osUrl.c_str(), poOgrDS->GetStylePath().c_str(),
+                         nPathLen) == 0))
             {
                 /***** should we resolve the style *****/
                 const char *pszResolve =
