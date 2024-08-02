@@ -779,3 +779,18 @@ def test_ogr_arrow_ipc_read_stdin(tmp_path):
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f["foo"] == "bar"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_arrow_vsi_arrow_file_system():
+
+    version = int(
+        ogr.GetDriverByName("ARROW").GetMetadataItem("ARROW_VERSION").split(".")[0]
+    )
+    if version < 16:
+        pytest.skip("requires Arrow >= 16.0.0")
+
+    ogr.Open("vsi://data/arrow/test.feather")

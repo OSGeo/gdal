@@ -135,8 +135,18 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    const bool bIsStreamingFormat = IsArrowIPCStream(poOpenInfo);
-    if (!bIsStreamingFormat && !OGRFeatherDriverIsArrowFileFormat(poOpenInfo))
+    GDALOpenInfo *poOpenInfoForIdentify = poOpenInfo;
+    std::unique_ptr<GDALOpenInfo> poOpenInfoTmp;
+    if (STARTS_WITH(poOpenInfo->pszFilename, "vsi://"))
+    {
+        poOpenInfoTmp = std::make_unique<GDALOpenInfo>(
+            poOpenInfo->pszFilename + strlen("vsi://"), poOpenInfo->nOpenFlags);
+        poOpenInfoForIdentify = poOpenInfoTmp.get();
+    }
+
+    const bool bIsStreamingFormat = IsArrowIPCStream(poOpenInfoForIdentify);
+    if (!bIsStreamingFormat &&
+        !OGRFeatherDriverIsArrowFileFormat(poOpenInfoForIdentify))
     {
         return nullptr;
     }
@@ -165,11 +175,33 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        auto result = arrow::io::ReadableFile::Open(poOpenInfo->pszFilename);
+        // FileSystemFromUriOrPath() doesn't like relative paths
+        // so transform them to absolute.
+        std::string osPath(poOpenInfo->pszFilename);
+        if (CPLIsFilenameRelative(osPath.c_str()))
+        {
+            char *pszCurDir = CPLGetCurrentDir();
+            if (pszCurDir == nullptr)
+                return nullptr;
+            osPath = CPLFormFilename(pszCurDir, osPath.c_str(), nullptr);
+            CPLFree(pszCurDir);
+        }
+
+        std::string osFSPath;
+        auto poFS =
+            arrow::fs::FileSystemFromUriOrPath(osPath.c_str(), &osFSPath);
+        if (!poFS.ok())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "arrow::fs::FileSystemFromUriOrPath failed with %s",
+                     poFS.status().message().c_str());
+            return nullptr;
+        }
+        auto result = (*poFS)->OpenInputFile(osFSPath);
         if (!result.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "ReadableFile::Open() failed with %s",
+                     "OpenInputFile() failed with %s",
                      result.status().message().c_str());
             return nullptr;
         }
@@ -431,5 +463,23 @@ void RegisterOGRArrow()
     poDriver->pfnOpen = OGRFeatherDriverOpen;
     poDriver->pfnCreate = OGRFeatherDriverCreate;
 
+    poDriver->SetMetadataItem("ARROW_VERSION", ARROW_VERSION_STRING);
+
     GetGDALDriverManager()->RegisterDriver(poDriver.release());
+
+#if ARROW_VERSION_MAJOR >= 16
+    // Mostly for tests
+    const char *pszPath =
+        CPLGetConfigOption("OGR_ARROW_LOAD_FILE_SYSTEM_FACTORIES", nullptr);
+    if (pszPath)
+    {
+        auto result = arrow::fs::LoadFileSystemFactories(pszPath);
+        if (!result.ok())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "arrow::fs::LoadFileSystemFactories() failed with %s",
+                     result.message().c_str());
+        }
+    }
+#endif
 }
