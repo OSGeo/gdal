@@ -16,7 +16,7 @@ Synopsis
 .. code-block::
 
     gdaladdo [--help] [--help-general]
-             [-r {nearest|average|rms|gauss|cubic|cubicspline|lanczos|average_mp|average_magphase|mode}]
+             [-r {nearest|average|rms|gauss|bilinear|cubic|cubicspline|lanczos|average_mp|average_magphase|mode}]
              [-ro] [-clean] [-q] [-oo <NAME>=<VALUE>]... [-minsize <val>]
              [--partial-refresh-from-source-timestamp]
              [--partial-refresh-from-projwin <ulx> <uly> <lrx> <lry>]
@@ -33,7 +33,7 @@ most supported file formats with one of several downsampling algorithms.
 
 .. include:: options/help_and_help_general.rst
 
-.. option:: -r {nearest|average|rms|gauss|cubic|cubicspline|lanczos|average_magphase|mode}
+.. option:: -r {nearest|average|rms|gauss|bilinear|cubic|cubicspline|lanczos|average_magphase|mode}
 
     Select a resampling algorithm. The default is ``nearest``, which is generally not
     appropriate if sub-pixel accuracy is desired.
@@ -50,12 +50,12 @@ most supported file formats with one of several downsampling algorithms.
 
     ``rms`` computes the root mean squared / quadratic mean of all non-NODATA contributing pixels (GDAL >= 3.3)
 
-    ``bilinear`` applies a bilinear convolution kernel.
-
     ``gauss`` applies a Gaussian kernel before computing the overview,
     which can lead to better results than simple averaging in e.g case of sharp edges
     with high contrast or noisy patterns. The advised level values should be 2, 4, 8, ...
     so that a 3x3 resampling Gaussian kernel is selected.
+
+    ``bilinear`` applies a bilinear convolution kernel.
 
     ``cubic`` applies a cubic convolution kernel.
 
