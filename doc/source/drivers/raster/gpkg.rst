@@ -796,7 +796,7 @@ The ``gdal_get_layer_pixel_value()`` function (added in GDAL 3.7), variant of th
 generic ``gdal_get_pixel_value()``, can be used to extract the value of a pixel
 in a raster layer of the current dataset.
 
-It takes 5 arguments:
+It takes 5 or 6 arguments:
 
 * a string with the layer/table name
 * a band number (numbering starting at 1)
@@ -805,11 +805,13 @@ It takes 5 arguments:
   pixel space
 * georeferenced X value or column number
 * georeferenced Y value or line number
+* resampling method among ``nearest`` (default), ``bilinear``, ``cubic``, ``cubicspline``. Optional, added in GDAL 3.10
 
 .. code-block::
 
     SELECT gdal_get_layer_pixel_value('my_raster_table', 1, 'georef', 440720, 3751320)
     SELECT gdal_get_layer_pixel_value('my_raster_table', 1, 'pixel', 0, 0)
+    SELECT gdal_get_pixel_value('my_raster_table', 1, 'pixel', 0.5, 0.5, 'bilinear')  -- GDAL >= 3.10
 
 See Also
 --------

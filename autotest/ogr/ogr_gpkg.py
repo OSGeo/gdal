@@ -9252,6 +9252,20 @@ def test_ogr_gpkg_sql_gdal_get_pixel_value(tmp_vsimem):
     assert f[0] == 156
 
     with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        with ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'georef', 440780 + 30, 3751080 - 30)"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] == 156
+
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        with ds.ExecuteSQL(
+            "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'georef', 440780 + 30, 3751080 - 30, 'cubicspline')"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] == pytest.approx(150.1388888888889)
+
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
         sql_lyr = ds.ExecuteSQL(
             "select gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', 1, 4)"
         )
@@ -9354,6 +9368,41 @@ def test_ogr_gpkg_sql_gdal_get_pixel_value(tmp_vsimem):
         f = sql_lyr.GetNextFeature()
         ds.ReleaseResultSet(sql_lyr)
         assert f[0] is None
+
+    # Test Int64
+    tmp_filename = str(tmp_vsimem / "tmp_int64.tif")
+    tmp_ds = gdal.GetDriverByName("GTiff").Create(tmp_filename, 1, 1, 1, gdal.GDT_Int64)
+    tmp_ds.WriteRaster(0, 0, 1, 1, struct.pack("q", (1 << 63) - 1))
+    tmp_ds.Close()
+
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        with ds.ExecuteSQL(
+            f"select gdal_get_pixel_value('{tmp_filename}', 1, 'pixel', 0, 0)"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] == (1 << 63) - 1
+
+    # Test UInt64
+    tmp_filename = str(tmp_vsimem / "tmp_uint64.tif")
+    tmp_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_filename, 2, 1, 1, gdal.GDT_UInt64
+    )
+    tmp_ds.WriteRaster(0, 0, 1, 1, struct.pack("Q", (1 << 63) - 1))
+    tmp_ds.WriteRaster(1, 0, 1, 1, struct.pack("Q", (1 << 64) - 1))
+    tmp_ds.Close()
+
+    with gdaltest.config_option("OGR_SQLITE_ALLOW_EXTERNAL_ACCESS", "YES"):
+        with ds.ExecuteSQL(
+            f"select gdal_get_pixel_value('{tmp_filename}', 1, 'pixel', 0, 0)"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] == (1 << 63) - 1
+
+        with ds.ExecuteSQL(
+            f"select gdal_get_pixel_value('{tmp_filename}', 1, 'pixel', 1, 0)"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] == float((1 << 64) - 1)
 
 
 ###############################################################################

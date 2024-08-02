@@ -31,6 +31,7 @@
 #include "cpl_minixml.h"
 #include "gdal_version.h"
 #include "gdal.h"
+#include "gdal_priv.h"
 #include "commonutils.h"
 #include "ogr_spatialref.h"
 #include "gdalargumentparser.h"
@@ -251,24 +252,12 @@ MAIN_START(argc, argv)
         exit(1);
     }
 
-    GDALRIOResampleAlg eInterpolation{GRIORA_NearestNeighbour};
-    if (osResampling.empty() || STARTS_WITH_CI(osResampling.c_str(), "NEAR"))
-    {
-        eInterpolation = GRIORA_NearestNeighbour;
-    }
-    else if (EQUAL(osResampling.c_str(), "BILINEAR"))
-    {
-        eInterpolation = GRIORA_Bilinear;
-    }
-    else if (EQUAL(osResampling.c_str(), "CUBICSPLINE"))
-    {
-        eInterpolation = GRIORA_CubicSpline;
-    }
-    else if (EQUAL(osResampling.c_str(), "CUBIC"))
-    {
-        eInterpolation = GRIORA_Cubic;
-    }
-    else
+    const GDALRIOResampleAlg eInterpolation =
+        osResampling.empty() ? GRIORA_NearestNeighbour
+                             : GDALRasterIOGetResampleAlg(osResampling.c_str());
+    if (eInterpolation != GRIORA_NearestNeighbour &&
+        eInterpolation != GRIORA_Bilinear && eInterpolation != GRIORA_Cubic &&
+        eInterpolation != GRIORA_CubicSpline)
     {
         fprintf(stderr, "-r can only be used with values nearest, bilinear, "
                         "cubic and cubicspline\n");

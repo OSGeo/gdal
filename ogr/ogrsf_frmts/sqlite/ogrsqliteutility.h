@@ -105,4 +105,11 @@ bool OGRSQLiteRTreeRequiresTrustedSchemaOn();
 
 bool OGRSQLiteIsSpatialFunctionReturningGeometry(const char *pszName);
 
+class GDALDataset;
+
+void OGRSQLite_gdal_get_pixel_value_common(const char *pszFunctionName,
+                                           sqlite3_context *pContext, int argc,
+                                           sqlite3_value **argv,
+                                           GDALDataset *poDS);
+
 #endif  // OGR_SQLITEUTILITY_H_INCLUDED
