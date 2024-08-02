@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 import time
 
@@ -38,10 +37,21 @@ import webserver
 
 from osgeo import gdal, ogr
 
+
+def curl_version():
+    actual_version = [0, 0, 0]
+    for build_info_item in gdal.VersionInfo("BUILD_INFO").strip().split("\n"):
+        if build_info_item.startswith("CURL_VERSION="):
+            actual_version = [
+                int(x) for x in build_info_item[len("CURL_VERSION=") :].split(".")
+            ]
+    return actual_version
+
+
 pytestmark = [
     pytest.mark.require_curl(),
     pytest.mark.skipif(
-        os.environ.get("BUILD_NAME", "") in ("macos_build_conda", "fedora_rawhide"),
+        curl_version() >= [8, 9, 1],
         reason="fail with SIGPIPE",
     ),
 ]
