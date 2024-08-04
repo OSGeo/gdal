@@ -851,8 +851,16 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     /*      Copy image data.                                                */
     /* -------------------------------------------------------------------- */
     if (eErr == CE_None && nDstBands > 0)
-        eErr = GDALDatasetCopyWholeRaster(poSrcDS, poDstDS, nullptr,
-                                          pfnProgress, pProgressData);
+    {
+        const char *const apszCopyRasterOptionsSkipHoles[] = {"SKIP_HOLES=YES",
+                                                              nullptr};
+        const bool bSkipHoles = CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "SKIP_HOLES", "FALSE"));
+        eErr = GDALDatasetCopyWholeRaster(
+            poSrcDS, poDstDS,
+            bSkipHoles ? apszCopyRasterOptionsSkipHoles : nullptr, pfnProgress,
+            pProgressData);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Should we copy some masks over?                                 */
@@ -2124,10 +2132,11 @@ int CPL_STDCALL GDALValidateCreationOptions(GDALDriverH hDriver,
     osDriver.Printf("driver %s",
                     GDALDriver::FromHandle(hDriver)->GetDescription());
     bool bFoundOptionToRemove = false;
+    constexpr const char *const apszExcludedOptions[] = {
+        "APPEND_SUBDATASET", "COPY_SRC_MDD", "SRC_MDD", "SKIP_HOLES"};
     for (const char *pszCO : cpl::Iterate(papszCreationOptions))
     {
-        for (const char *pszExcludedOptions :
-             {"APPEND_SUBDATASET", "COPY_SRC_MDD", "SRC_MDD"})
+        for (const char *pszExcludedOptions : apszExcludedOptions)
         {
             if (STARTS_WITH_CI(pszCO, pszExcludedOptions) &&
                 pszCO[strlen(pszExcludedOptions)] == '=')
@@ -2146,8 +2155,7 @@ int CPL_STDCALL GDALValidateCreationOptions(GDALDriverH hDriver,
         for (const char *pszCO : cpl::Iterate(papszCreationOptions))
         {
             bool bMatch = false;
-            for (const char *pszExcludedOptions :
-                 {"APPEND_SUBDATASET", "COPY_SRC_MDD", "SRC_MDD"})
+            for (const char *pszExcludedOptions : apszExcludedOptions)
             {
                 if (STARTS_WITH_CI(pszCO, pszExcludedOptions) &&
                     pszCO[strlen(pszExcludedOptions)] == '=')

@@ -182,6 +182,9 @@ class GDALGPKGMBTilesLikeRasterBand : public GDALPamRasterBand
                                void *pData) override;
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
+    int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nMaskFlagStop, double *pdfDataPct) override;
+
     virtual GDALColorTable *GetColorTable() override;
     virtual CPLErr SetColorTable(GDALColorTable *poCT) override;
 
