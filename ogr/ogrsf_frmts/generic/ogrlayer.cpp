@@ -5662,7 +5662,7 @@ OGRLayer::GetSupportedSRSList(CPL_UNUSED int iGeomField)
  * @param hLayer Layer.
  * @param iGeomField Geometry field index.
  * @param[out] pnCount Number of values in returned array. Must not be null.
- * @return list of supported SRS, to be freeds with OSRFreeSRSArray(), or
+ * @return list of supported SRS, to be freed with OSRFreeSRSArray(), or
  * nullptr
  * @since GDAL 3.7
  */

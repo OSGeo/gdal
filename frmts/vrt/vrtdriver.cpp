@@ -137,9 +137,9 @@ void VRTDriver::AddSourceParser(const char *pszElementName,
 /*                            ParseSource()                             */
 /************************************************************************/
 
-VRTSource *
-VRTDriver::ParseSource(const CPLXMLNode *psSrc, const char *pszVRTPath,
-                       std::map<CPLString, GDALDataset *> &oMapSharedSources)
+VRTSource *VRTDriver::ParseSource(const CPLXMLNode *psSrc,
+                                  const char *pszVRTPath,
+                                  VRTMapSharedResources &oMapSharedSources)
 
 {
 
@@ -557,6 +557,9 @@ void GDALRegister_VRT()
         "relative paths inside the VRT. Mainly useful for inlined VRT, or "
         "in-memory "
         "VRT, where their own directory does not make sense'/>"
+        "<Option name='NUM_THREADS' type='string' description="
+        "'Number of worker threads for reading. Can be set to ALL_CPUS' "
+        "default='ALL_CPUS'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

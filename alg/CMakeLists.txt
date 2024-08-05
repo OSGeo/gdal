@@ -39,6 +39,7 @@ add_library(
   viewshed.cpp
   viewshed_executor.cpp
   gdalgenericinverse.cpp
+  gdal_interpolateatpoint.cpp
 )
 
 add_dependencies(alg generate_gdal_version_h)

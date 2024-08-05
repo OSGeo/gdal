@@ -3913,6 +3913,21 @@ OGRErr OGRSQLiteBaseDataSource::StartTransaction(CPL_UNUSED int bForce)
     return OGRERR_NONE;
 }
 
+OGRErr OGRSQLiteDataSource::StartTransaction(int bForce)
+{
+    for (int iLayer = 0; iLayer < m_nLayers; iLayer++)
+    {
+        if (m_papoLayers[iLayer]->IsTableLayer())
+        {
+            OGRSQLiteTableLayer *poLayer =
+                (OGRSQLiteTableLayer *)m_papoLayers[iLayer];
+            poLayer->RunDeferredCreationIfNecessary();
+        }
+    }
+
+    return OGRSQLiteBaseDataSource::StartTransaction(bForce);
+}
+
 /************************************************************************/
 /*                         CommitTransaction()                          */
 /*                                                                      */

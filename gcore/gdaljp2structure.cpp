@@ -272,10 +272,7 @@ static void DumpGeoTIFFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
             GDALDataset *poVRTDS = poVRTDriver->CreateCopy(
                 osTmpVRTFilename, poDS, FALSE, nullptr, nullptr, nullptr);
             GDALClose(poVRTDS);
-            GByte *pabyXML =
-                VSIGetMemFileBuffer(osTmpVRTFilename, nullptr, FALSE);
-            CPLXMLNode *psXMLVRT =
-                CPLParseXMLString(reinterpret_cast<const char *>(pabyXML));
+            CPLXMLNode *psXMLVRT = CPLParseXMLFile(osTmpVRTFilename.c_str());
             if (psXMLVRT)
             {
                 ++psDumpContext->nCurLineCount;

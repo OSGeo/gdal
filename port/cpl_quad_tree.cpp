@@ -925,6 +925,78 @@ void **CPLQuadTreeSearch(const CPLQuadTree *hQuadTree, const CPLRectObj *pAoi,
 }
 
 /************************************************************************/
+/*                         CPLQuadTreeHasMatch()                        */
+/************************************************************************/
+
+static bool CPLQuadTreeHasMatch(const CPLQuadTree *hQuadTree,
+                                const QuadTreeNode *psNode,
+                                const CPLRectObj *pAoi)
+{
+    /* -------------------------------------------------------------------- */
+    /*      Does this psNode overlap the area of interest at all?           */
+    /* -------------------------------------------------------------------- */
+    if (!CPL_RectOverlap(&psNode->rect, pAoi))
+        return false;
+
+    /* -------------------------------------------------------------------- */
+    /*      Check the local features.                                       */
+    /* -------------------------------------------------------------------- */
+    for (int i = 0; i < psNode->nFeatures; i++)
+    {
+        if (hQuadTree->pfnGetBounds == nullptr &&
+            hQuadTree->pfnGetBoundsEx == nullptr)
+        {
+            if (CPL_RectOverlap(&psNode->pasBounds[i], pAoi))
+                return true;
+        }
+        else
+        {
+            CPLRectObj bounds;
+            if (hQuadTree->pfnGetBoundsEx)
+                hQuadTree->pfnGetBoundsEx(psNode->pahFeatures[i],
+                                          hQuadTree->pUserData, &bounds);
+            else
+                hQuadTree->pfnGetBounds(psNode->pahFeatures[i], &bounds);
+
+            if (CPL_RectOverlap(&bounds, pAoi))
+                return true;
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Recurse to subnodes if they exist.                              */
+    /* -------------------------------------------------------------------- */
+    for (int i = 0; i < psNode->nNumSubNodes; i++)
+    {
+        if (psNode->apSubNode[i])
+        {
+            if (CPLQuadTreeHasMatch(hQuadTree, psNode->apSubNode[i], pAoi))
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Returns whether the quadtree has at least one element whose bounding box
+ * intersects the provided area of interest
+ *
+ * @param hQuadTree the quad tree
+ * @param pAoi the pointer to the area of interest
+ */
+
+bool CPLQuadTreeHasMatch(const CPLQuadTree *hQuadTree, const CPLRectObj *pAoi)
+{
+    CPLAssert(hQuadTree);
+    CPLAssert(pAoi);
+
+    return CPLQuadTreeHasMatch(hQuadTree, hQuadTree->psRoot, pAoi);
+}
+
+/************************************************************************/
 /*                    CPLQuadTreeNodeForeach()                          */
 /************************************************************************/
 

@@ -531,6 +531,20 @@ void OGRSimpleCurve::setPoint(int iPoint, OGRPoint *poPoint)
 }
 
 /************************************************************************/
+/*                           CheckPointCount()                          */
+/************************************************************************/
+
+static inline bool CheckPointCount(int iPoint)
+{
+    if (iPoint == std::numeric_limits<int>::max())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too big point count.");
+        return false;
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                              setPoint()                              */
 /************************************************************************/
 
@@ -557,6 +571,8 @@ void OGRSimpleCurve::setPoint(int iPoint, double xIn, double yIn, double zIn)
 
     if (iPoint >= nPointCount)
     {
+        if (!CheckPointCount(iPoint))
+            return;
         setNumPoints(iPoint + 1);
         if (nPointCount < iPoint + 1)
             return;
@@ -598,6 +614,8 @@ void OGRSimpleCurve::setPointM(int iPoint, double xIn, double yIn, double mIn)
 
     if (iPoint >= nPointCount)
     {
+        if (!CheckPointCount(iPoint))
+            return;
         setNumPoints(iPoint + 1);
         if (nPointCount < iPoint + 1)
             return;
@@ -643,6 +661,8 @@ void OGRSimpleCurve::setPoint(int iPoint, double xIn, double yIn, double zIn,
 
     if (iPoint >= nPointCount)
     {
+        if (!CheckPointCount(iPoint))
+            return;
         setNumPoints(iPoint + 1);
         if (nPointCount < iPoint + 1)
             return;
@@ -684,6 +704,8 @@ void OGRSimpleCurve::setPoint(int iPoint, double xIn, double yIn)
 {
     if (iPoint >= nPointCount)
     {
+        if (!CheckPointCount(iPoint))
+            return;
         setNumPoints(iPoint + 1);
         if (nPointCount < iPoint + 1 || paoPoints == nullptr)
             return;
@@ -717,6 +739,8 @@ void OGRSimpleCurve::setZ(int iPoint, double zIn)
 
     if (iPoint >= nPointCount)
     {
+        if (!CheckPointCount(iPoint))
+            return;
         setNumPoints(iPoint + 1);
         if (nPointCount < iPoint + 1)
             return;
@@ -750,6 +774,8 @@ void OGRSimpleCurve::setM(int iPoint, double mIn)
 
     if (iPoint >= nPointCount)
     {
+        if (!CheckPointCount(iPoint))
+            return;
         setNumPoints(iPoint + 1);
         if (nPointCount < iPoint + 1)
             return;

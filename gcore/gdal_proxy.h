@@ -450,6 +450,8 @@ void CPL_DLL GDALProxyPoolDatasetAddSrcBandDescription(
     GDALProxyPoolDatasetH hProxyPoolDataset, GDALDataType eDataType,
     int nBlockXSize, int nBlockYSize);
 
+int CPL_DLL GDALGetMaxDatasetPoolSize(void);
+
 CPL_C_END
 
 #endif /* #ifndef DOXYGEN_SKIP */

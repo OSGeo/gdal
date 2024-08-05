@@ -317,21 +317,20 @@ OGROSMDataSource::~OGROSMDataSource()
     }
 
     CPLFree(m_pabySector);
-    std::map<int, Bucket>::iterator oIter = m_oMapBuckets.begin();
-    for (; oIter != m_oMapBuckets.end(); ++oIter)
+    for (auto &oIter : m_oMapBuckets)
     {
         if (m_bCompressNodes)
         {
             int nRem =
-                oIter->first % (knPAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
+                oIter.first % (knPAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
             if (nRem == 0)
-                CPLFree(oIter->second.u.panSectorSize);
+                CPLFree(oIter.second.u.panSectorSize);
         }
         else
         {
-            int nRem = oIter->first % (knPAGE_SIZE / BUCKET_BITMAP_SIZE);
+            int nRem = oIter.first % (knPAGE_SIZE / BUCKET_BITMAP_SIZE);
             if (nRem == 0)
-                CPLFree(oIter->second.u.pabyBitmap);
+                CPLFree(oIter.second.u.pabyBitmap);
         }
     }
 }
@@ -408,7 +407,7 @@ constexpr GByte abyBitsCount[] = {
     4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
 
-bool OGROSMDataSource::IndexPoint(OSMNode *psNode)
+bool OGROSMDataSource::IndexPoint(const OSMNode *psNode)
 {
     if (!m_bIndexPoints)
         return true;
@@ -423,7 +422,7 @@ bool OGROSMDataSource::IndexPoint(OSMNode *psNode)
 /*                          IndexPointSQLite()                          */
 /************************************************************************/
 
-bool OGROSMDataSource::IndexPointSQLite(OSMNode *psNode)
+bool OGROSMDataSource::IndexPointSQLite(const OSMNode *psNode)
 {
     sqlite3_bind_int64(m_hInsertNodeStmt, 1, psNode->nID);
 
@@ -517,7 +516,7 @@ Bucket *OGROSMDataSource::AllocBucket(int iBucket)
 
 Bucket *OGROSMDataSource::GetBucket(int nBucketId)
 {
-    std::map<int, Bucket>::iterator oIter = m_oMapBuckets.find(nBucketId);
+    auto oIter = m_oMapBuckets.find(nBucketId);
     if (oIter == m_oMapBuckets.end())
     {
         Bucket *psBucket = &m_oMapBuckets[nBucketId];
@@ -638,7 +637,7 @@ bool OGROSMDataSource::FlushCurrentSectorNonCompressedCase()
 /*                          IndexPointCustom()                          */
 /************************************************************************/
 
-bool OGROSMDataSource::IndexPointCustom(OSMNode *psNode)
+bool OGROSMDataSource::IndexPointCustom(const OSMNode *psNode)
 {
     if (psNode->nID <= m_nPrevNodeId)
     {
@@ -720,7 +719,7 @@ bool OGROSMDataSource::IndexPointCustom(OSMNode *psNode)
 /*                             NotifyNodes()                            */
 /************************************************************************/
 
-void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode *pasNodes)
+void OGROSMDataSource::NotifyNodes(unsigned int nNodes, const OSMNode *pasNodes)
 {
     const OGREnvelope *psEnvelope =
         m_apoLayers[IDX_LYR_POINTS]->GetSpatialFilterEnvelope();
@@ -742,7 +741,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode *pasNodes)
             continue;
 
         bool bInterestingTag = m_bReportAllNodes;
-        OSMTag *pasTags = pasNodes[i].pasTags;
+        const OSMTag *pasTags = pasNodes[i].pasTags;
 
         if (!m_bReportAllNodes)
         {
@@ -1025,8 +1024,7 @@ void OGROSMDataSource::LookupNodesCustom()
         int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
 
-        std::map<int, Bucket>::const_iterator oIter =
-            m_oMapBuckets.find(nBucket);
+        const auto oIter = m_oMapBuckets.find(nBucket);
         if (oIter == m_oMapBuckets.end())
             continue;
         const Bucket *psBucket = &(oIter->second);
@@ -1109,8 +1107,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
 
         if (nOffInBucketReduced != l_nOffInBucketReducedOld)
         {
-            std::map<int, Bucket>::const_iterator oIter =
-                m_oMapBuckets.find(nBucket);
+            const auto oIter = m_oMapBuckets.find(nBucket);
             if (oIter == m_oMapBuckets.end())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1223,8 +1220,7 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
 
         if (psBucket == nullptr || nBucket != l_nBucketOld)
         {
-            std::map<int, Bucket>::const_iterator oIter =
-                m_oMapBuckets.find(nBucket);
+            const auto oIter = m_oMapBuckets.find(nBucket);
             if (oIter == m_oMapBuckets.end())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1383,8 +1379,9 @@ static void WriteVarSInt64(GIntBig nSVal, GByte **ppabyData)
 /************************************************************************/
 
 void OGROSMDataSource::CompressWay(bool bIsArea, unsigned int nTags,
-                                   IndexedKVP *pasTags, int nPoints,
-                                   LonLat *pasLonLatPairs, OSMInfo *psInfo,
+                                   const IndexedKVP *pasTags, int nPoints,
+                                   const LonLat *pasLonLatPairs,
+                                   const OSMInfo *psInfo,
                                    std::vector<GByte> &abyCompressedWay)
 {
     abyCompressedWay.clear();
@@ -1560,9 +1557,9 @@ void OGROSMDataSource::UncompressWay(int nBytes, const GByte *pabyCompressedWay,
 /************************************************************************/
 
 void OGROSMDataSource::IndexWay(GIntBig nWayID, bool bIsArea,
-                                unsigned int nTags, IndexedKVP *pasTags,
-                                LonLat *pasLonLatPairs, int nPairs,
-                                OSMInfo *psInfo)
+                                unsigned int nTags, const IndexedKVP *pasTags,
+                                const LonLat *pasLonLatPairs, int nPairs,
+                                const OSMInfo *psInfo)
 {
     if (!m_bIndexWays)
         return;
@@ -1732,7 +1729,7 @@ void OGROSMDataSource::ProcessWaysBatch()
         OGRGeometry *poGeom = poLS;
 
         const int nPoints = static_cast<int>(m_asLonLatCache.size());
-        poLS->setNumPoints(nPoints);
+        poLS->setNumPoints(nPoints, /*bZeroizeNewContent=*/false);
         for (int i = 0; i < nPoints; i++)
         {
             poLS->setPoint(i, INT_TO_DBL(m_asLonLatCache[i].nLon),
@@ -1860,7 +1857,7 @@ bool OGROSMDataSource::IsClosedWayTaggedAsPolygon(unsigned int nTags,
 /*                              NotifyWay()                             */
 /************************************************************************/
 
-void OGROSMDataSource::NotifyWay(OSMWay *psWay)
+void OGROSMDataSource::NotifyWay(const OSMWay *psWay)
 {
     m_nWaysProcessed++;
     if (m_nWaysProcessed % 10000 == 0)
@@ -2158,7 +2155,7 @@ static void OGROSMNotifyWay(OSMWay *psWay, OSMContext * /* psOSMContext */,
 
 unsigned int OGROSMDataSource::LookupWays(
     std::map<GIntBig, std::pair<int, void *>> &aoMapWays,
-    OSMRelation *psRelation)
+    const OSMRelation *psRelation)
 {
     unsigned int nFound = 0;
     unsigned int iCur = 0;
@@ -2224,7 +2221,7 @@ unsigned int OGROSMDataSource::LookupWays(
 /*                          BuildMultiPolygon()                         */
 /************************************************************************/
 
-OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
+OGRGeometry *OGROSMDataSource::BuildMultiPolygon(const OSMRelation *psRelation,
                                                  unsigned int *pnTags,
                                                  OSMTag *pasTags)
 {
@@ -2260,9 +2257,8 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
         return nullptr;
     }
 
-    OGRMultiLineString *poMLS = new OGRMultiLineString();
-    OGRGeometry **papoPolygons = static_cast<OGRGeometry **>(
-        CPLMalloc(sizeof(OGRGeometry *) * psRelation->nMembers));
+    OGRMultiLineString oMLS;
+    std::vector<OGRGeometry *> apoPolygons(psRelation->nMembers);
     int nPolys = 0;
 
     if (pnTags != nullptr)
@@ -2305,7 +2301,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
                 OGRPolygon *poPoly = new OGRPolygon();
                 OGRLinearRing *poRing = new OGRLinearRing();
                 poPoly->addRingDirectly(poRing);
-                papoPolygons[nPolys++] = poPoly;
+                apoPolygons[nPolys++] = poPoly;
                 poLS = poRing;
 
                 if (strcmp(psRelation->pasMembers[i].pszRole, "outer") == 0)
@@ -2320,11 +2316,11 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
             else
             {
                 poLS = new OGRLineString();
-                poMLS->addGeometryDirectly(poLS);
+                oMLS.addGeometryDirectly(poLS);
             }
 
             const int nPoints = static_cast<int>(m_asLonLatCache.size());
-            poLS->setNumPoints(nPoints);
+            poLS->setNumPoints(nPoints, /*bZeroizeNewContent=*/false);
             for (int j = 0; j < nPoints; j++)
             {
                 poLS->setPoint(j, INT_TO_DBL(m_asLonLatCache[j].nLon),
@@ -2333,21 +2329,16 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
         }
     }
 
-    if (poMLS->getNumGeometries() > 0)
+    if (oMLS.getNumGeometries() > 0)
     {
-        OGRGeometryH hPoly = OGRBuildPolygonFromEdges(
-            OGRGeometry::ToHandle(poMLS), TRUE, FALSE, 0, nullptr);
-        if (hPoly != nullptr && OGR_G_GetGeometryType(hPoly) == wkbPolygon)
+        auto poPolyFromEdges = std::unique_ptr<OGRGeometry>(
+            OGRGeometry::FromHandle(OGRBuildPolygonFromEdges(
+                OGRGeometry::ToHandle(&oMLS), TRUE, FALSE, 0, nullptr)));
+        if (poPolyFromEdges && poPolyFromEdges->getGeometryType() == wkbPolygon)
         {
-            OGRPolygon *poSuperPoly =
-                OGRGeometry::FromHandle(hPoly)->toPolygon();
-            const unsigned nRings = 1 + static_cast<unsigned int>(
-                                            poSuperPoly->getNumInteriorRings());
-            for (unsigned int i = 0; i < nRings; i++)
+            const OGRPolygon *poSuperPoly = poPolyFromEdges->toPolygon();
+            for (const OGRLinearRing *poRing : *poSuperPoly)
             {
-                OGRLinearRing *poRing =
-                    (i == 0) ? poSuperPoly->getExteriorRing()
-                             : poSuperPoly->getInteriorRing(i - 1);
                 if (poRing != nullptr && poRing->getNumPoints() >= 4 &&
                     poRing->getX(0) ==
                         poRing->getX(poRing->getNumPoints() - 1) &&
@@ -2355,34 +2346,32 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
                 {
                     OGRPolygon *poPoly = new OGRPolygon();
                     poPoly->addRing(poRing);
-                    papoPolygons[nPolys++] = poPoly;
+                    apoPolygons[nPolys++] = poPoly;
                 }
             }
         }
-
-        OGR_G_DestroyGeometry(hPoly);
     }
-    delete poMLS;
 
-    OGRGeometry *poRet = nullptr;
+    std::unique_ptr<OGRGeometry> poRet;
 
     if (nPolys > 0)
     {
         int bIsValidGeometry = FALSE;
         const char *apszOptions[2] = {"METHOD=DEFAULT", nullptr};
-        OGRGeometry *poGeom = OGRGeometryFactory::organizePolygons(
-            papoPolygons, nPolys, &bIsValidGeometry, apszOptions);
+        auto poGeom =
+            std::unique_ptr<OGRGeometry>(OGRGeometryFactory::organizePolygons(
+                apoPolygons.data(), nPolys, &bIsValidGeometry, apszOptions));
 
-        if (poGeom != nullptr && poGeom->getGeometryType() == wkbPolygon)
+        if (poGeom && poGeom->getGeometryType() == wkbPolygon)
         {
-            OGRMultiPolygon *poMulti = new OGRMultiPolygon();
-            poMulti->addGeometryDirectly(poGeom);
-            poGeom = poMulti;
+            auto poMulti = std::make_unique<OGRMultiPolygon>();
+            poMulti->addGeometryDirectly(poGeom.release());
+            poGeom = std::move(poMulti);
         }
 
-        if (poGeom != nullptr && poGeom->getGeometryType() == wkbMultiPolygon)
+        if (poGeom && poGeom->getGeometryType() == wkbMultiPolygon)
         {
-            poRet = poGeom;
+            poRet = std::move(poGeom);
         }
         else
         {
@@ -2390,35 +2379,33 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
                      "Relation " CPL_FRMT_GIB
                      ": Geometry has incompatible type : %s",
                      psRelation->nID,
-                     poGeom != nullptr
-                         ? OGR_G_GetGeometryName(OGRGeometry::ToHandle(poGeom))
-                         : "null");
-            delete poGeom;
+                     poGeom ? OGR_G_GetGeometryName(
+                                  OGRGeometry::ToHandle(poGeom.get()))
+                            : "null");
         }
     }
-
-    CPLFree(papoPolygons);
 
     // cppcheck-suppress constVariableReference
     for (auto &oIter : aoMapWays)
         CPLFree(oIter.second.second);
 
-    return poRet;
+    return poRet.release();
 }
 
 /************************************************************************/
 /*                          BuildGeometryCollection()                   */
 /************************************************************************/
 
-OGRGeometry *OGROSMDataSource::BuildGeometryCollection(OSMRelation *psRelation,
-                                                       int bMultiLineString)
+OGRGeometry *
+OGROSMDataSource::BuildGeometryCollection(const OSMRelation *psRelation,
+                                          bool bMultiLineString)
 {
     std::map<GIntBig, std::pair<int, void *>> aoMapWays;
     LookupWays(aoMapWays, psRelation);
 
-    OGRGeometryCollection *poColl = (bMultiLineString)
-                                        ? new OGRMultiLineString()
-                                        : new OGRGeometryCollection();
+    std::unique_ptr<OGRGeometryCollection> poColl =
+        bMultiLineString ? std::make_unique<OGRMultiLineString>()
+                         : std::make_unique<OGRGeometryCollection>();
 
     for (unsigned int i = 0; i < psRelation->nMembers; i++)
     {
@@ -2460,7 +2447,7 @@ OGRGeometry *OGROSMDataSource::BuildGeometryCollection(OSMRelation *psRelation,
             }
 
             const int nPoints = static_cast<int>(m_asLonLatCache.size());
-            poLS->setNumPoints(nPoints);
+            poLS->setNumPoints(nPoints, /*bZeroizeNewContent=*/false);
             for (int j = 0; j < nPoints; j++)
             {
                 poLS->setPoint(j, INT_TO_DBL(m_asLonLatCache[j].nLon),
@@ -2471,22 +2458,21 @@ OGRGeometry *OGROSMDataSource::BuildGeometryCollection(OSMRelation *psRelation,
 
     if (poColl->getNumGeometries() == 0)
     {
-        delete poColl;
-        poColl = nullptr;
+        poColl.reset();
     }
 
     // cppcheck-suppress constVariableReference
     for (auto &oIter : aoMapWays)
         CPLFree(oIter.second.second);
 
-    return poColl;
+    return poColl.release();
 }
 
 /************************************************************************/
 /*                            NotifyRelation()                          */
 /************************************************************************/
 
-void OGROSMDataSource::NotifyRelation(OSMRelation *psRelation)
+void OGROSMDataSource::NotifyRelation(const OSMRelation *psRelation)
 {
     if (!m_asWayFeaturePairs.empty())
         ProcessWaysBatch();
@@ -2669,7 +2655,8 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             poPoly->addRingDirectly(poRing);
             OGRLineString *poLS = poRing;
 
-            poLS->setNumPoints(static_cast<int>(m_asLonLatCache.size()));
+            poLS->setNumPoints(static_cast<int>(m_asLonLatCache.size()),
+                               /*bZeroizeNewContent=*/false);
             for (int j = 0; j < static_cast<int>(m_asLonLatCache.size()); j++)
             {
                 poLS->setPoint(j, INT_TO_DBL(m_asLonLatCache[j].nLon),
@@ -2738,7 +2725,8 @@ static void OGROSMNotifyBounds(double dfXMin, double dfYMin, double dfXMax,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
+int OGROSMDataSource::Open(const char *pszFilename,
+                           CSLConstList papszOpenOptionsIn)
 
 {
     m_pszName = CPLStrdup(pszFilename);
@@ -2850,7 +2838,7 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
         VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(GIntBig)));
     try
     {
-        m_asWayFeaturePairs.resize(MAX_DELAYED_FEATURES);
+        m_asWayFeaturePairs.reserve(MAX_DELAYED_FEATURES);
     }
     catch (const std::exception &)
     {
@@ -2874,6 +2862,8 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
     m_nMaxSizeForInMemoryDBInMB = atoi(CSLFetchNameValueDef(
         papszOpenOptionsIn, "MAX_TMPFILE_SIZE",
         CPLGetConfigOption("OSM_MAX_TMPFILE_SIZE", "100")));
+    if (m_nMaxSizeForInMemoryDBInMB == 0)
+        m_nMaxSizeForInMemoryDBInMB = 1;
     GIntBig nSize =
         static_cast<GIntBig>(m_nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
     if (nSize < 0 ||
@@ -2904,14 +2894,13 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
         }
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        bool bSuccess =
-            VSIFSeekL(m_fpNodes, static_cast<vsi_l_offset>(nSize * 3 / 4),
-                      SEEK_SET) == 0;
+        const bool bSuccess =
+            VSIFTruncateL(m_fpNodes,
+                          static_cast<vsi_l_offset>(nSize * 3 / 4)) == 0;
         CPLPopErrorHandler();
 
         if (bSuccess)
         {
-            VSIFSeekL(m_fpNodes, 0, SEEK_SET);
             VSIFTruncateL(m_fpNodes, 0);
         }
         else
@@ -2953,7 +2942,7 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
         CPLString osInterestLayers = GetInterestLayersForDSName(GetName());
         if (!osInterestLayers.empty())
         {
-            delete ExecuteSQL(osInterestLayers, nullptr, nullptr);
+            ReleaseResultSet(ExecuteSQL(osInterestLayers, nullptr, nullptr));
         }
     }
     return bRet;
@@ -2990,14 +2979,14 @@ bool OGROSMDataSource::CreateTempDB()
         VSILFILE *fp = VSIFOpenL(m_osTmpDBName, "wb");
         if (fp)
         {
-            GIntBig nSize =
-                static_cast<GIntBig>(m_nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
+            vsi_l_offset nSize =
+                static_cast<vsi_l_offset>(m_nMaxSizeForInMemoryDBInMB) * 1024 *
+                1024;
             if (m_bCustomIndexing && m_bInMemoryNodesFile)
                 nSize = nSize / 4;
 
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            bSuccess =
-                VSIFSeekL(fp, static_cast<vsi_l_offset>(nSize), SEEK_SET) == 0;
+            bSuccess = VSIFTruncateL(fp, nSize) == 0;
             CPLPopErrorHandler();
 
             if (bSuccess)
@@ -3371,13 +3360,12 @@ bool OGROSMDataSource::CommitTransactionCacheDB()
 void OGROSMDataSource::AddComputedAttributes(
     int iCurLayer, const std::vector<OGROSMComputedAttribute> &oAttributes)
 {
-    for (size_t i = 0; i < oAttributes.size(); i++)
+    for (const auto &oAttribute : oAttributes)
     {
-        if (!oAttributes[i].osSQL.empty())
+        if (!oAttribute.osSQL.empty())
         {
-            m_apoLayers[iCurLayer]->AddComputedAttribute(oAttributes[i].osName,
-                                                         oAttributes[i].eType,
-                                                         oAttributes[i].osSQL);
+            m_apoLayers[iCurLayer]->AddComputedAttribute(
+                oAttribute.osName, oAttribute.eType, oAttribute.osSQL);
         }
     }
 }
@@ -3386,7 +3374,7 @@ void OGROSMDataSource::AddComputedAttributes(
 /*                           ParseConf()                                */
 /************************************************************************/
 
-bool OGROSMDataSource::ParseConf(char **papszOpenOptionsIn)
+bool OGROSMDataSource::ParseConf(CSLConstList papszOpenOptionsIn)
 {
     const char *pszFilename =
         CSLFetchNameValueDef(papszOpenOptionsIn, "CONFIG_FILE",
@@ -3859,21 +3847,20 @@ int OGROSMDataSource::MyResetReading()
 
         memset(m_pabySector, 0, SECTOR_SIZE);
 
-        std::map<int, Bucket>::iterator oIter = m_oMapBuckets.begin();
-        for (; oIter != m_oMapBuckets.end(); ++oIter)
+        for (auto &oIter : m_oMapBuckets)
         {
-            Bucket *psBucket = &(oIter->second);
-            psBucket->nOff = -1;
+            Bucket &sBucket = oIter.second;
+            sBucket.nOff = -1;
             if (m_bCompressNodes)
             {
-                if (psBucket->u.panSectorSize)
-                    memset(psBucket->u.panSectorSize, 0,
+                if (sBucket.u.panSectorSize)
+                    memset(sBucket.u.panSectorSize, 0,
                            BUCKET_SECTOR_SIZE_ARRAY_SIZE);
             }
             else
             {
-                if (psBucket->u.pabyBitmap)
-                    memset(psBucket->u.pabyBitmap, 0, BUCKET_BITMAP_SIZE);
+                if (sBucket.u.pabyBitmap)
+                    memset(sBucket.u.pabyBitmap, 0, BUCKET_BITMAP_SIZE);
             }
         }
     }
@@ -4489,12 +4476,9 @@ OGRLayer *OGROSMDataSource::ExecuteSQL(const char *pszSQLCommand,
 
         if (pszDialect != nullptr && EQUAL(pszDialect, "SQLITE"))
         {
-            std::set<LayerDesc> oSetLayers =
-                OGRSQLiteGetReferencedLayers(pszSQLCommand);
-            std::set<LayerDesc>::iterator oIter = oSetLayers.begin();
-            for (; oIter != oSetLayers.end(); ++oIter)
+            const auto oSetLayers = OGRSQLiteGetReferencedLayers(pszSQLCommand);
+            for (const LayerDesc &oLayerDesc : oSetLayers)
             {
-                const LayerDesc &oLayerDesc = *oIter;
                 if (oLayerDesc.osDSName.empty())
                 {
                     if (bLayerAlreadyAdded)

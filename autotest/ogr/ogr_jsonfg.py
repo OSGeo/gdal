@@ -474,6 +474,32 @@ def test_jsonfg_read_two_features_types():
 
 
 ###############################################################################
+# Test reading file with a single Feature larger than 6000 bytes
+
+
+def test_jsonfg_read_single_feature_large(tmp_vsimem):
+
+    tmp_file = str(tmp_vsimem / "test.json")
+    content = """{
+      "type": "Feature",
+      "conformsTo" : [ "[ogc-json-fg-1-0.1:core]" ],
+      %s
+      "id": 1,
+      "geometry": { "type": "Point", "coordinates": [2, 49] },
+      "properties": { "foo": 1 },
+      "place": null,
+      "time": null
+    }""" % (
+        " " * 100000
+    )
+
+    gdal.FileFromMemBuffer(tmp_file, content)
+
+    ds = gdal.OpenEx(tmp_file)
+    assert ds.GetDriver().GetDescription() == "JSONFG"
+
+
+###############################################################################
 # Test time handling
 
 

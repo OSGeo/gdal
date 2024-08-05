@@ -81,7 +81,7 @@ jobs:
 
           - name: Fedora Rawhide, clang++
             id: fedora_rawhide
-            travis_branch: sanitize
+            travis_branch: fedora_rawhide
             container: fedora_rawhide
             build_script: build.sh
             os: ubuntu-22.04
@@ -178,7 +178,7 @@ jobs:
 
       - name: Login to Docker Hub
         if: env.CONTAINER_REGISTRY == 'docker.io'
-        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -304,6 +304,7 @@ jobs:
         env:
           TRAVIS: yes
           TRAVIS_BRANCH: ${{ matrix.travis_branch }}
+          BUILD_NAME: ${{ matrix.travis_branch }}
         run: |
           if test -f ".github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"; then
             TEST_CMD="$(pwd)/.github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"
@@ -326,6 +327,7 @@ jobs:
             -e GITHUB_WORKFLOW \
             -e TRAVIS \
             -e TRAVIS_BRANCH \
+            -e BUILD_NAME \
             -e "GDAL_SOURCE_DIR=$(pwd)" \
             -u $(id -u ${USER}):$(id -g ${USER}) \
             --security-opt seccomp=unconfined \

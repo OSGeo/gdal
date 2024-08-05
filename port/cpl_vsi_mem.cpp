@@ -139,7 +139,6 @@ class VSIMemHandle final : public VSIVirtualHandle
     bool bUpdate = false;
     bool bEOF = false;
     bool m_bError = false;
-    bool bExtendFileAtNextWrite = false;
 
     VSIMemHandle() = default;
     ~VSIMemHandle() override;
@@ -266,13 +265,21 @@ bool VSIMemFile::SetLength(vsi_l_offset nNewLength)
             return false;
         }
 
-        const vsi_l_offset nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
+        // If the first allocation is 1 MB or above, just take that value
+        // as the one to allocate
+        // Otherwise slightly reserve more to avoid too frequent reallocations.
+        const vsi_l_offset nNewAlloc =
+            (nAllocLength == 0 && nNewLength >= 1024 * 1024)
+                ? nNewLength
+                : nNewLength + nNewLength / 10 + 5000;
         GByte *pabyNewData = nullptr;
         if (static_cast<vsi_l_offset>(static_cast<size_t>(nNewAlloc)) ==
             nNewAlloc)
         {
             pabyNewData = static_cast<GByte *>(
-                VSIRealloc(pabyData, static_cast<size_t>(nNewAlloc)));
+                nAllocLength == 0
+                    ? VSICalloc(1, static_cast<size_t>(nNewAlloc))
+                    : VSIRealloc(pabyData, static_cast<size_t>(nNewAlloc)));
         }
         if (pabyNewData == nullptr)
         {
@@ -283,9 +290,14 @@ bool VSIMemFile::SetLength(vsi_l_offset nNewLength)
             return false;
         }
 
-        // Clear the new allocated part of the buffer.
-        memset(pabyNewData + nAllocLength, 0,
-               static_cast<size_t>(nNewAlloc - nAllocLength));
+        if (nAllocLength > 0)
+        {
+            // Clear the new allocated part of the buffer (only needed if
+            // there was already reserved memory, otherwise VSICalloc() has
+            // zeroized it already)
+            memset(pabyNewData + nAllocLength, 0,
+                   static_cast<size_t>(nNewAlloc - nAllocLength));
+        }
 
         pabyData = pabyNewData;
         nAllocLength = nNewAlloc;
@@ -350,7 +362,6 @@ int VSIMemHandle::Seek(vsi_l_offset nOffset, int nWhence)
         nLength = poFile->nLength;
     }
 
-    bExtendFileAtNextWrite = false;
     if (nWhence == SEEK_CUR)
     {
         if (nOffset > INT_MAX)
@@ -374,14 +385,6 @@ int VSIMemHandle::Seek(vsi_l_offset nOffset, int nWhence)
     }
 
     bEOF = false;
-
-    if (m_nOffset > nLength)
-    {
-        if (bUpdate)  // Writable files are zero-extended by seek past end.
-        {
-            bExtendFileAtNextWrite = true;
-        }
-    }
 
     return 0;
 }
@@ -495,14 +498,6 @@ size_t VSIMemHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 
     const size_t nBytesToWrite = nSize * nCount;
 
-    if (bExtendFileAtNextWrite)
-    {
-        bExtendFileAtNextWrite = false;
-        CPL_EXCLUSIVE_LOCK oLock(poFile->m_oMutex);
-        if (!poFile->SetLength(nOffset))
-            return 0;
-    }
-
     {
         CPL_EXCLUSIVE_LOCK oLock(poFile->m_oMutex);
 
@@ -577,8 +572,6 @@ int VSIMemHandle::Truncate(vsi_l_offset nNewSize)
         errno = EACCES;
         return -1;
     }
-
-    bExtendFileAtNextWrite = false;
 
     CPL_EXCLUSIVE_LOCK oLock(poFile->m_oMutex);
     if (poFile->SetLength(nNewSize))

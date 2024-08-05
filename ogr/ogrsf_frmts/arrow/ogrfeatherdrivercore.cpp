@@ -147,6 +147,13 @@ bool OGRFeatherDriverIsArrowFileFormat(GDALOpenInfo *poOpenInfo)
 
 int OGRFeatherDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
+    if (STARTS_WITH(poOpenInfo->pszFilename, "vsi://"))
+    {
+        GDALOpenInfo oOpenInfo(poOpenInfo->pszFilename + strlen("vsi://"),
+                               poOpenInfo->nOpenFlags);
+        return OGRFeatherDriverIdentify(&oOpenInfo);
+    }
+
     int ret = OGRFeatherDriverIsArrowIPCStreamBasic(poOpenInfo);
     if (ret == GDAL_IDENTIFY_TRUE || ret == GDAL_IDENTIFY_UNKNOWN)
         return ret;

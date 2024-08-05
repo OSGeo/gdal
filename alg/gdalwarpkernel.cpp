@@ -59,6 +59,7 @@
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include "gdal_thread_pool.h"
+#include "gdalresamplingkernels.h"
 #include "gdalwarpkernel_opencl.h"
 
 // #define CHECK_SUM_WITH_GEOS
@@ -3390,24 +3391,7 @@ static double GWKBilinear4Values(double *padfValues)
 
 static double GWKCubic(double dfX)
 {
-    // http://en.wikipedia.org/wiki/Bicubic_interpolation#Bicubic_convolution_algorithm
-    // W(x) formula with a = -0.5 (cubic hermite spline )
-    // or
-    // https://www.cs.utexas.edu/~fussell/courses/cs384g-fall2013/lectures/mitchell/Mitchell.pdf
-    // k(x) (formula 8) with (B,C)=(0,0.5) the Catmull-Rom spline
-    double dfAbsX = fabs(dfX);
-    if (dfAbsX <= 1.0)
-    {
-        double dfX2 = dfX * dfX;
-        return dfX2 * (1.5 * dfAbsX - 2.5) + 1;
-    }
-    else if (dfAbsX <= 2.0)
-    {
-        double dfX2 = dfX * dfX;
-        return dfX2 * (-0.5 * dfAbsX + 2.5) - 4 * dfAbsX + 2;
-    }
-    else
-        return 0.0;
+    return CubicKernel(dfX);
 }
 
 static double GWKCubic4Values(double *padfValues)

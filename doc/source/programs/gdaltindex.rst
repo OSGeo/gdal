@@ -330,7 +330,7 @@ Examples
 
 ::
 
-    gdaltindex tile_index.gti.gpkg -datatype Byte -tr 60 60 -colorinterp Red,Green,Blue --optfile my_list.txt
+    gdaltindex tile_index.gti.gpkg -ot Byte -tr 60 60 -colorinterp Red,Green,Blue --optfile my_list.txt
 
 C API
 -----

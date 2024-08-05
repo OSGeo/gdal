@@ -365,7 +365,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
 
         // Not a marker
         if (abyChunkHeader[0] != 0xFF)
-            continue;
+            break;
 
         // Stop on Start of Scan
         if (abyChunkHeader[1] == 0xDA)
@@ -440,16 +440,17 @@ void JPGDatasetCommon::ReadFLIRMetadata()
             1)
             break;
 
+        const int nMarkerLength =
+            abyChunkHeader[2] * 256 + abyChunkHeader[3] - 2;
+        nChunkLoc += 4 + nMarkerLength;
+
         // Not a marker
         if (abyChunkHeader[0] != 0xFF)
-            continue;
+            break;
 
         // Stop on Start of Scan
         if (abyChunkHeader[1] == 0xDA)
             break;
-
-        int nMarkerLength = abyChunkHeader[2] * 256 + abyChunkHeader[3] - 2;
-        nChunkLoc += 4 + nMarkerLength;
 
         if (abyChunkHeader[1] == 0xe1 &&
             memcmp(abyChunkHeader + 4, "FLIR\0", 5) == 0)

@@ -117,7 +117,7 @@ The driver can be installed as a plugin for the ``libgdal`` conda-forge package 
     conda install -c conda-forge libgdal-arrow-parquet
 
 Standalone plugin compilation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------
 
 .. versionadded:: 3.10
 
@@ -140,6 +140,26 @@ Note that such a plugin, when used against a libgdal not aware of it, will be
 systematically loaded at GDAL driver initialization time, and will not benefit from
 `deferred plugin loading capabilities <rfc-96>`. For that, libgdal itself must be built with the
 CMake variable OGR_REGISTER_DRIVER_ARROW_FOR_LATER_PLUGIN=ON set.
+
+Arrow VSI file system
+---------------------
+
+.. versionadded:: 3.10
+
+Starting with GDAL 3.10 and Arrow 16.0, any GDAL Virtual File System can be
+used (in a read-only context) wherever the Arrow C++ library expects a URI, in
+particular outside of the context of the OGR Arrow driver, by:
+
+- loading the libgdal.so/dll library (or the ogr_Arrow.so/dll plugin library if
+  the Arrow driver is built as a library) with the arrow::fs::LoadFileSystemFactories()
+  function (cf `Defining new filesystems <https://arrow.apache.org/docs/cpp/io.html#defining-new-filesystems>`__)
+  Note: if the Arrow driver is fully loaded, e.g. by querying
+  GetGDALDriverManager()->GetDriverByName("ARROW")->GetMetadata(), the Arrow VSI
+  file system will be also registered.
+
+- Prefixing any GDAL file name with the ``vsi://`` URI scheme prefix. In addition
+  to any potential vsi prefix in the GDAL file name. So the ``/vsicurl/http://example.com``
+  GDAL file name becomes the ``vsi:///vsicurl/http://example.com`` Arrow URI.
 
 Links
 -----

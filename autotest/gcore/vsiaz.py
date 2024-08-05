@@ -29,6 +29,7 @@
 ###############################################################################
 
 import copy
+import os
 import sys
 
 import gdaltest
@@ -835,6 +836,12 @@ def test_vsiaz_write_appendblob_retry():
 # Test writing a block blob
 
 
+# Often fails at the gdal.VSIFWriteL(b"x" * (1024 * 1024 - 1), 1024 * 1024 - 1, 1, f)
+# which returns 0
+@pytest.mark.skipif(
+    "CI" in os.environ,
+    reason="Flaky",
+)
 def test_vsiaz_write_blockblob_chunk_size_1():
 
     if gdaltest.webserver_port == 0:
