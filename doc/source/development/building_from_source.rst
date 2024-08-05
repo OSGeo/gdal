@@ -1160,7 +1160,7 @@ It is used by the internal libtiff library or the :ref:`raster.zarr` driver.
 libOpenDRIVE
 ************
 
-`libOpenDRIVE <https://github.com/pageldev/libOpenDRIVE>`_ is required for the :ref:`vector.xodr` driver.
+`libOpenDRIVE <https://github.com/pageldev/libOpenDRIVE>`_ in version >= 0.6.0 is required for the :ref:`vector.xodr` driver.
 
 .. option:: OpenDrive_DIR
 
