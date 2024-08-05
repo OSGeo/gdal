@@ -7,7 +7,7 @@ XODR -- OpenDRIVE Road Description Format
 
 .. shortname:: XODR
 
-.. build_dependencies:: libOpenDRIVE >= 0.5.0, GEOS
+.. build_dependencies:: libOpenDRIVE >= 0.6.0, GEOS
 
 This driver provides read access to road network elements of OpenDRIVE datasets.
 

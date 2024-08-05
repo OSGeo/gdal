@@ -35,6 +35,15 @@ using namespace std;
 bool OGRXODRDataSource::Open(const char *pszFilename, CSLConstList openOptions)
 {
     odr::OpenDriveMap xodr(pszFilename, false);
+    pugi::xml_parse_result parse_result = xodr.xml_parse_result;
+    if (!parse_result ||
+        parse_result.status != pugi::xml_parse_status::status_ok)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OpenDRIVE dataset %s could not be parsed: %s.", pszFilename,
+                 parse_result.description());
+        return FALSE;
+    }
     bool parsingFailed = xodr.xml_doc.child("OpenDRIVE").empty();
     if (parsingFailed)
     {
