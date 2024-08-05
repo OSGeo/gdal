@@ -1242,7 +1242,7 @@ def test_ogr_hana_39():
     )
 
     # Insert points
-    points_wkt = ['POINT(0 0)', 'POINT(10 0)', 'POINT(40 0)']
+    points_wkt = ["POINT(0 0)", "POINT(10 0)", "POINT(40 0)"]
     for id, wkt in enumerate(points_wkt):
         execute_sql(
             conn,
