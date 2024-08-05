@@ -1,11 +1,11 @@
 /******************************************************************************
  *
- * Project:  Arrow generic code
- * Purpose:  Arrow generic code
+ * Project:  GDAL
+ * Purpose:  Arrow virtual file system using VSI
  * Author:   Even Rouault, <even.rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2022, Planet Labs
+ * Copyright (c) 2024, Even Rouault, <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,41 +26,36 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef OGR_INCLUDE_ARROW_H
-#define OGR_INCLUDE_ARROW_H
+#include "cpl_error.h"
 
-#if defined(__GNUC__) && !defined(_MSC_VER)
-#pragma GCC system_header
+#include "../arrow_common/ogr_include_arrow.h"
+#include "../arrow_common/vsiarrowfilesystem.hpp"
+
+// Only available since Arrow 17.0
+#ifndef ARROW_REGISTER_FILESYSTEM
+namespace arrow::fs
+{
+#define ARROW_REGISTER_FILESYSTEM(scheme, factory_function, finalizer)         \
+    ::arrow::fs::FileSystemRegistrar                                           \
+    {                                                                          \
+        scheme, ::arrow::fs::FileSystemFactory{factory_function}, finalizer    \
+    }
+}  // namespace arrow::fs
 #endif
 
-#ifdef _MSC_VER
-#pragma warning(push)
-// warning 4244: 'initializing': conversion from 'int32_t' to 'int16_t',
-// possible loss of data
-#pragma warning(disable : 4244)
-// warning 4458: declaration of 'type_id' hides class member
-#pragma warning(disable : 4458)
-#endif
-
-#include "arrow/array.h"
-#include "arrow/builder.h"
-#include "arrow/array/array_dict.h"
-#include "arrow/c/bridge.h"
-#include "arrow/filesystem/filesystem.h"
-#if ARROW_VERSION_MAJOR >= 16
-#include "arrow/filesystem/filesystem_library.h"
-#endif
-#include "arrow/ipc/reader.h"
-#include "arrow/ipc/writer.h"
-#include "arrow/io/file.h"
-#include "arrow/memory_pool.h"
-#include "arrow/record_batch.h"
-#include "arrow/util/decimal.h"
-#include "arrow/util/key_value_metadata.h"
-#include "arrow/util/uri.h"
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-#endif
+auto kVSIFileSystemModule = ARROW_REGISTER_FILESYSTEM(
+    []()
+    {
+        CPLDebugOnly("ARROW", "Register VSI Arrow file system");
+        return "vsi";
+    }(),
+    [](const arrow::fs::Uri &uri, const arrow::io::IOContext & /* io_context */,
+       std::string *out_path)
+        -> arrow::Result<std::shared_ptr<arrow::fs::FileSystem>>
+    {
+        constexpr std::string_view kScheme = "vsi://";
+        if (out_path)
+            *out_path = uri.ToString().substr(kScheme.size());
+        return std::make_shared<VSIArrowFileSystem>("ARROW", std::string());
+    },
+    {});

@@ -4097,3 +4097,20 @@ def test_ogr_parquet_ignored_fields_bounding_box_column_arrow_dataset(tmp_path):
     lyr.SetSpatialFilterRect(0, 0, 0, 0)
     lyr.ResetReading()
     assert lyr.GetNextFeature() is None
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_vsi_arrow_file_system():
+
+    version = int(
+        ogr.GetDriverByName("ARROW").GetMetadataItem("ARROW_VERSION").split(".")[0]
+    )
+    if version < 16:
+        pytest.skip("requires Arrow >= 16.0.0")
+
+    ds = ogr.Open("PARQUET:vsi://data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() > 0

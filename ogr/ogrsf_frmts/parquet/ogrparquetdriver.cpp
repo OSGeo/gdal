@@ -36,203 +36,12 @@
 #include "ogrparquetdrivercore.h"
 
 #include "../arrow_common/ograrrowrandomaccessfile.h"
+#include "../arrow_common/vsiarrowfilesystem.hpp"
 #include "../arrow_common/ograrrowwritablefile.h"
 #include "../arrow_common/ograrrowdataset.hpp"
 #include "../arrow_common/ograrrowlayer.hpp"  // for the destructor
 
 #ifdef GDAL_USE_ARROWDATASET
-
-/************************************************************************/
-/*                         VSIArrowFileSystem                           */
-/************************************************************************/
-
-class VSIArrowFileSystem final : public arrow::fs::FileSystem
-{
-    const std::string m_osQueryParameters;
-
-  public:
-    explicit VSIArrowFileSystem(const std::string &osQueryParameters)
-        : m_osQueryParameters(osQueryParameters)
-    {
-    }
-
-    std::string type_name() const override
-    {
-        return "vsi";
-    }
-
-    using arrow::fs::FileSystem::Equals;
-
-    bool Equals(const arrow::fs::FileSystem &other) const override
-    {
-        const auto poOther = dynamic_cast<const VSIArrowFileSystem *>(&other);
-        return poOther != nullptr &&
-               poOther->m_osQueryParameters == m_osQueryParameters;
-    }
-
-    using arrow::fs::FileSystem::GetFileInfo;
-
-    arrow::Result<arrow::fs::FileInfo>
-    GetFileInfo(const std::string &path) override
-    {
-        auto fileType = arrow::fs::FileType::Unknown;
-        VSIStatBufL sStat;
-        if (VSIStatL(path.c_str(), &sStat) == 0)
-        {
-            if (VSI_ISREG(sStat.st_mode))
-                fileType = arrow::fs::FileType::File;
-            else if (VSI_ISDIR(sStat.st_mode))
-                fileType = arrow::fs::FileType::Directory;
-        }
-        else
-        {
-            fileType = arrow::fs::FileType::NotFound;
-        }
-        arrow::fs::FileInfo info(path, fileType);
-        if (fileType == arrow::fs::FileType::File)
-            info.set_size(sStat.st_size);
-        return info;
-    }
-
-    arrow::Result<arrow::fs::FileInfoVector>
-    GetFileInfo(const arrow::fs::FileSelector &select) override
-    {
-        arrow::fs::FileInfoVector res;
-        VSIDIR *psDir = VSIOpenDir(select.base_dir.c_str(),
-                                   select.recursive ? -1 : 0, nullptr);
-        if (psDir == nullptr)
-            return res;
-
-        bool bParquetFound = false;
-        const int nMaxNonParquetFiles = atoi(
-            CPLGetConfigOption("OGR_PARQUET_MAX_NON_PARQUET_FILES", "100"));
-        const int nMaxListedFiles =
-            atoi(CPLGetConfigOption("OGR_PARQUET_MAX_LISTED_FILES", "1000000"));
-        while (const auto psEntry = VSIGetNextDirEntry(psDir))
-        {
-            if (!bParquetFound)
-                bParquetFound =
-                    EQUAL(CPLGetExtension(psEntry->pszName), "parquet");
-
-            const std::string osFilename =
-                select.base_dir + '/' + psEntry->pszName;
-            int nMode = psEntry->nMode;
-            if (!psEntry->bModeKnown)
-            {
-                VSIStatBufL sStat;
-                if (VSIStatL(osFilename.c_str(), &sStat) == 0)
-                    nMode = sStat.st_mode;
-            }
-
-            auto fileType = arrow::fs::FileType::Unknown;
-            if (VSI_ISREG(nMode))
-                fileType = arrow::fs::FileType::File;
-            else if (VSI_ISDIR(nMode))
-                fileType = arrow::fs::FileType::Directory;
-
-            arrow::fs::FileInfo info(osFilename, fileType);
-            if (fileType == arrow::fs::FileType::File && psEntry->bSizeKnown)
-            {
-                info.set_size(psEntry->nSize);
-            }
-            res.push_back(info);
-
-            // Avoid iterating over too many files if there's no likely parquet
-            // files.
-            if (static_cast<int>(res.size()) == nMaxNonParquetFiles &&
-                !bParquetFound)
-                break;
-            if (static_cast<int>(res.size()) == nMaxListedFiles)
-                break;
-        }
-        VSICloseDir(psDir);
-        return res;
-    }
-
-    arrow::Status CreateDir(const std::string & /*path*/,
-                            bool /*recursive*/ = true) override
-    {
-        return arrow::Status::IOError("CreateDir() unimplemented");
-    }
-
-    arrow::Status DeleteDir(const std::string & /*path*/) override
-    {
-        return arrow::Status::IOError("DeleteDir() unimplemented");
-    }
-
-    arrow::Status DeleteDirContents(const std::string & /*path*/
-#if ARROW_VERSION_MAJOR >= 8
-                                    ,
-                                    bool /*missing_dir_ok*/ = false
-#endif
-                                    ) override
-    {
-        return arrow::Status::IOError("DeleteDirContents() unimplemented");
-    }
-
-    arrow::Status DeleteRootDirContents() override
-    {
-        return arrow::Status::IOError("DeleteRootDirContents() unimplemented");
-    }
-
-    arrow::Status DeleteFile(const std::string & /*path*/) override
-    {
-        return arrow::Status::IOError("DeleteFile() unimplemented");
-    }
-
-    arrow::Status Move(const std::string & /*src*/,
-                       const std::string & /*dest*/) override
-    {
-        return arrow::Status::IOError("Move() unimplemented");
-    }
-
-    arrow::Status CopyFile(const std::string & /*src*/,
-                           const std::string & /*dest*/) override
-    {
-        return arrow::Status::IOError("CopyFile() unimplemented");
-    }
-
-    using arrow::fs::FileSystem::OpenInputStream;
-
-    arrow::Result<std::shared_ptr<arrow::io::InputStream>>
-    OpenInputStream(const std::string &path) override
-    {
-        return OpenInputFile(path);
-    }
-
-    using arrow::fs::FileSystem::OpenInputFile;
-
-    arrow::Result<std::shared_ptr<arrow::io::RandomAccessFile>>
-    OpenInputFile(const std::string &path) override
-    {
-        std::string osPath(path);
-        osPath += m_osQueryParameters;
-        CPLDebugOnly("PARQUET", "Opening %s", osPath.c_str());
-        auto fp = VSIVirtualHandleUniquePtr(VSIFOpenL(osPath.c_str(), "rb"));
-        if (fp == nullptr)
-            return arrow::Status::IOError("OpenInputFile() failed for " +
-                                          osPath);
-        return std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
-    }
-
-    using arrow::fs::FileSystem::OpenOutputStream;
-
-    arrow::Result<std::shared_ptr<arrow::io::OutputStream>>
-    OpenOutputStream(const std::string & /*path*/,
-                     const std::shared_ptr<const arrow::KeyValueMetadata>
-                         & /* metadata */) override
-    {
-        return arrow::Status::IOError("OpenOutputStream() unimplemented");
-    }
-
-    arrow::Result<std::shared_ptr<arrow::io::OutputStream>>
-    OpenAppendStream(const std::string & /*path*/,
-                     const std::shared_ptr<const arrow::KeyValueMetadata>
-                         & /* metadata */) override
-    {
-        return arrow::Status::IOError("OpenAppendStream() unimplemented");
-    }
-};
 
 /************************************************************************/
 /*                      OpenFromDatasetFactory()                        */
@@ -264,16 +73,20 @@ static GDALDataset *OpenFromDatasetFactory(
 
 static std::shared_ptr<arrow::fs::FileSystem>
 GetFileSystem(std::string &osBasePathInOut,
-              const std::string &osQueryParameters)
+              const std::string &osQueryParameters, std::string &osFSFilename)
 {
     // Instantiate file system:
     // - VSIArrowFileSystem implementation for /vsi files
     // - base implementation for local files (if OGR_PARQUET_USE_VSI set to NO)
     std::shared_ptr<arrow::fs::FileSystem> fs;
     const bool bIsVSI = STARTS_WITH(osBasePathInOut.c_str(), "/vsi");
-    if (bIsVSI || CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_VSI", "YES")))
+    VSIStatBufL sStat;
+    if ((bIsVSI ||
+         CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_VSI", "YES"))) &&
+        VSIStatL(osBasePathInOut.c_str(), &sStat) == 0)
     {
-        fs = std::make_shared<VSIArrowFileSystem>(osQueryParameters);
+        osFSFilename = osBasePathInOut;
+        fs = std::make_shared<VSIArrowFileSystem>("PARQUET", osQueryParameters);
     }
     else
     {
@@ -288,7 +101,8 @@ GetFileSystem(std::string &osBasePathInOut,
             osPath = CPLFormFilename(pszCurDir, osPath.c_str(), nullptr);
             CPLFree(pszCurDir);
         }
-        PARQUET_ASSIGN_OR_THROW(fs, arrow::fs::FileSystemFromUriOrPath(osPath));
+        PARQUET_ASSIGN_OR_THROW(
+            fs, arrow::fs::FileSystemFromUriOrPath(osPath, &osFSFilename));
     }
     return fs;
 }
@@ -302,7 +116,8 @@ static GDALDataset *OpenParquetDatasetWithMetadata(
     const std::string &osQueryParameters, CSLConstList papszOpenOptions)
 {
     std::string osBasePath(osBasePathIn);
-    auto fs = GetFileSystem(osBasePath, osQueryParameters);
+    std::string osFSFilename;
+    auto fs = GetFileSystem(osBasePath, osQueryParameters, osFSFilename);
 
     arrow::dataset::ParquetFactoryOptions options;
     auto partitioningFactory = arrow::dataset::HivePartitioning::MakeFactory();
@@ -312,7 +127,7 @@ static GDALDataset *OpenParquetDatasetWithMetadata(
     std::shared_ptr<arrow::dataset::DatasetFactory> factory;
     PARQUET_ASSIGN_OR_THROW(
         factory, arrow::dataset::ParquetDatasetFactory::Make(
-                     osBasePath + '/' + pszMetadataFile, std::move(fs),
+                     osFSFilename + '/' + pszMetadataFile, std::move(fs),
                      std::make_shared<arrow::dataset::ParquetFileFormat>(),
                      std::move(options)));
 
@@ -329,16 +144,18 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
                                   CSLConstList papszOpenOptions)
 {
     std::string osBasePath(osBasePathIn);
-    auto fs = GetFileSystem(osBasePath, osQueryParameters);
+    std::string osFSFilename;
+    auto fs = GetFileSystem(osBasePath, osQueryParameters, osFSFilename);
 
     arrow::dataset::FileSystemFactoryOptions options;
     std::shared_ptr<arrow::dataset::DatasetFactory> factory;
-    VSIStatBufL sStat;
-    if (VSIStatL(osBasePath.c_str(), &sStat) == 0 && VSI_ISREG(sStat.st_mode))
+
+    const auto fileInfo = fs->GetFileInfo(osFSFilename);
+    if (fileInfo->IsFile())
     {
         PARQUET_ASSIGN_OR_THROW(
             factory, arrow::dataset::FileSystemDatasetFactory::Make(
-                         std::move(fs), {osBasePath},
+                         std::move(fs), {osFSFilename},
                          std::make_shared<arrow::dataset::ParquetFileFormat>(),
                          std::move(options)));
     }
@@ -350,7 +167,7 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
             std::move(partitioningFactory));
 
         arrow::fs::FileSelector selector;
-        selector.base_dir = osBasePath;
+        selector.base_dir = osFSFilename;
         selector.recursive = true;
 
         PARQUET_ASSIGN_OR_THROW(
@@ -909,9 +726,26 @@ void RegisterOGRParquet()
     poDriver->pfnOpen = OGRParquetDriverOpen;
     poDriver->pfnCreate = OGRParquetDriverCreate;
 
+    poDriver->SetMetadataItem("ARROW_VERSION", ARROW_VERSION_STRING);
 #ifdef GDAL_USE_ARROWDATASET
     poDriver->SetMetadataItem("ARROW_DATASET", "YES");
 #endif
 
     GetGDALDriverManager()->RegisterDriver(poDriver.release());
+
+#if ARROW_VERSION_MAJOR >= 16
+    // Mostly for tests
+    const char *pszPath =
+        CPLGetConfigOption("OGR_PARQUET_LOAD_FILE_SYSTEM_FACTORIES", nullptr);
+    if (pszPath)
+    {
+        auto result = arrow::fs::LoadFileSystemFactories(pszPath);
+        if (!result.ok())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "arrow::fs::LoadFileSystemFactories() failed with %s",
+                     result.message().c_str());
+        }
+    }
+#endif
 }
