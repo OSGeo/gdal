@@ -1221,6 +1221,94 @@ def test_ogr_hana_38():
 
 
 ###############################################################################
+# Verify a working fast extent implementation
+
+
+def test_ogr_hana_39():
+    conn = create_connection()
+
+    def delta_merge():
+        execute_sql(
+            conn,
+            f"MERGE DELTA OF {table_name}",
+        )
+
+    # Create test table
+    layer_name = get_test_name()
+    table_name = f'"{gdaltest.hana_schema_name}"."{layer_name}"'
+    execute_sql(
+        conn,
+        f"CREATE COLUMN TABLE {table_name} (id INT, geom ST_Geometry(4326)) NO AUTO MERGE",
+    )
+
+    # Insert points
+    points_wkt = ["POINT(0 0)", "POINT(10 0)", "POINT(40 0)"]
+    for id, wkt in enumerate(points_wkt):
+        execute_sql(
+            conn,
+            f"INSERT INTO {table_name} (id, geom) VALUES ({id}, ST_GeomFromText('{wkt}', 4326))",
+        )
+    delta_merge()
+
+    # Check extent (1.)
+    ds = open_datasource(0)
+    layer = ds.GetLayerByName(layer_name)
+    assert layer is not None, "did not get layer"
+    check_extent(layer, (0, 40, 0, 0), force=False)
+
+    # Delete outer most point...
+    # Because of the disabled delta merge, the extent should remain unchanged
+    # when the fast extent estimation is used.
+    execute_sql(
+        conn,
+        f"DELETE FROM {table_name} WHERE id=2",
+    )
+    check_extent(layer, (0, 40, 0, 0), force=False)
+    delta_merge()
+    check_extent(layer, (0, 10, 0, 0), force=False)
+
+    # Tear-down
+    execute_sql(conn, f"DROP TABLE {table_name}")
+
+
+###############################################################################
+# Verify a working fallback in case the fast extent estimation fails
+
+
+def test_ogr_hana_40():
+    conn = create_connection()
+
+    # Create test table
+    layer_name = get_test_name()
+    table_name = f'"{gdaltest.hana_schema_name}"."{layer_name}"'
+    execute_sql(
+        conn,
+        f"CREATE COLUMN TABLE {table_name} (id INT, geom ST_Geometry(4326)) NO AUTO MERGE",
+    )
+
+    # Check extent. The table is empty so the extent should be (0, 0, 0, 0)
+    ds = open_datasource(0)
+    layer = ds.GetLayerByName(layer_name)
+    assert layer is not None, "did not get layer"
+    check_extent(layer, (0, 0, 0, 0), force=False)
+
+    # Insert points without merging the delta.
+    # The fallback should be triggered and return the correct extent.
+    execute_sql(
+        conn,
+        f"INSERT INTO {table_name} (id, geom) VALUES (0, ST_GeomFromText('POINT(0 10)', 4326))",
+    )
+    execute_sql(
+        conn,
+        f"INSERT INTO {table_name} (id, geom) VALUES (0, ST_GeomFromText('POINT(0 40)', 4326))",
+    )
+    check_extent(layer, (0, 0, 10, 40), force=False)
+
+    # Tear-down
+    execute_sql(conn, f"DROP TABLE {table_name}")
+
+
+###############################################################################
 #  Create a table from data/poly.shp
 
 
@@ -1363,8 +1451,8 @@ def open_datasource(update=0, open_opts=None):
         return gdal.OpenEx(conn_str, update, open_options=[open_opts])
 
 
-def check_extent(layer, expected, max_error=0.001):
-    actual = layer.GetExtent()
+def check_extent(layer, expected, force=True, max_error=0.001):
+    actual = layer.GetExtent(force=force)
     minx = abs(actual[0] - expected[0])
     maxx = abs(actual[1] - expected[1])
     miny = abs(actual[2] - expected[2])
