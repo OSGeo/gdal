@@ -124,6 +124,8 @@ def test_osr_epsg_6():
         (5042, False),  # WGS 84 / UPS South (E,N)
         (3031, False),  # WGS 84 / Antarctic Polar Stereographic
         (5482, True),  # RSRGD2000 / RSPS2000
+        (3903, True),  # ETRS89 / TM35FIN(N,E) + N2000 height
+        (5698, False),  # RGF93 v1 / Lambert-93 + NGF-IGN69 height
     ],
 )
 def test_osr_epsg_treats_as_northing_easting(epsg_code, is_northing_easting):
