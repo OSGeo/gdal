@@ -344,11 +344,12 @@ int SRTMHGTDataset::Identify(GDALOpenInfo *poOpenInfo)
 
     if (VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
         return FALSE;
-    if (fileStat.st_size != 3601 * 3601 &&
+    if (fileStat.st_size != 1201 * 1201 * 2 &&
+        fileStat.st_size != 1801 * 3601 * 2 &&
+        fileStat.st_size != 3601 * 3601 &&
         fileStat.st_size != 3601 * 3601 * 2 &&
         fileStat.st_size != 3601 * 3601 * 4 &&  // .hgts
-        fileStat.st_size != 1801 * 3601 * 2 &&
-        fileStat.st_size != 1201 * 1201 * 2)
+        fileStat.st_size != 7201 * 7201 * 2)
         return FALSE;
 
     return TRUE;
@@ -443,6 +444,13 @@ GDALDataset *SRTMHGTDataset::Open(GDALOpenInfo *poOpenInfo)
     GDALDataType eDT = GDT_Int16;
     switch (fileStat.st_size)
     {
+        case 1201 * 1201 * 2:
+            numPixels_x = numPixels_y = 1201;
+            break;
+        case 1801 * 3601 * 2:
+            numPixels_x = 1801;
+            numPixels_y = 3601;
+            break;
         case 3601 * 3601:
             numPixels_x = numPixels_y = 3601;
             eDT = GDT_Byte;
@@ -454,12 +462,8 @@ GDALDataset *SRTMHGTDataset::Open(GDALOpenInfo *poOpenInfo)
             numPixels_x = numPixels_y = 3601;
             eDT = GDT_Float32;
             break;
-        case 1801 * 3601 * 2:
-            numPixels_x = 1801;
-            numPixels_y = 3601;
-            break;
-        case 1201 * 1201 * 2:
-            numPixels_x = numPixels_y = 1201;
+        case 7201 * 7201 * 2:
+            numPixels_x = numPixels_y = 7201;
             break;
         default:
             numPixels_x = numPixels_y = 0;
