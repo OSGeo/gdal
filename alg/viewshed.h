@@ -34,6 +34,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <string>
 
 #include "cpl_progress.h"
@@ -197,7 +198,8 @@ class Viewshed
     CPL_DLL bool run(GDALRasterBandH hBand,
                      GDALProgressFunc pfnProgress = GDALDummyProgress,
                      void *pProgressArg = nullptr);
-    CPL_DLL bool runCumulative(GDALProgressFunc pfnProgress = GDALDummyProgress,
+    CPL_DLL bool runCumulative(const std::string &srcFilename,
+                               GDALProgressFunc pfnProgress = GDALDummyProgress,
                                void *pProgressArg = nullptr);
 
     /**
@@ -231,6 +233,9 @@ class Viewshed
                      const std::array<double, 6> &adfInvTransform);
     DatasetPtr createOutputDataset(GDALRasterBand &srcBand,
                                    const std::string &outFilename);
+    void createCumulativeDataset(size_t cnt, std::queue<DatasetPtr> &queue,
+                                 std::mutex &mutex, std::condition_variable &cv,
+                                 size_t numObservers);
     bool lineProgress();
     bool emitProgress(double fraction);
     bool setupProgress(GDALProgressFunc pfnProgress, void *pProgressArg);
