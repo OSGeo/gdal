@@ -99,8 +99,7 @@ endif()
 
 gdal_check_package(XercesC "Read and write XML formats (needed for GMLAS and ILI drivers)" CAN_DISABLE)
 
-gdal_check_package(ZLIB "zlib (external)" CAN_DISABLE)
-gdal_internal_library(ZLIB REQUIRED)
+include(CheckDependentLibrariesZLIB)
 
 gdal_check_package(Deflate "Enable libdeflate compression library (complement to ZLib)" CAN_DISABLE)
 
@@ -168,46 +167,7 @@ include(CheckDependentLibrariesGeoTIFF)
 gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE RECOMMENDED VERSION "1.6")
 gdal_internal_library(PNG)
 
-gdal_check_package(JPEG "JPEG compression library (external)" CAN_DISABLE RECOMMENDED)
-if (GDAL_USE_JPEG AND (JPEG_LIBRARY MATCHES ".*turbojpeg\.(so|lib)"))
-  message(
-    FATAL_ERROR
-      "JPEG_LIBRARY should point to a library with libjpeg ABI, not TurboJPEG. See https://libjpeg-turbo.org/About/TurboJPEG for the difference"
-    )
-endif ()
-if (GDAL_USE_JPEG AND TARGET JPEG::JPEG)
-  set(EXPECTED_JPEG_LIB_VERSION "" CACHE STRING "Expected libjpeg version number")
-  mark_as_advanced(GDAL_CHECK_PACKAGE_${name}_NAMES)
-  if (EXPECTED_JPEG_LIB_VERSION)
-    get_property(_jpeg_old_icd TARGET JPEG::JPEG PROPERTY INTERFACE_COMPILE_DEFINITIONS)
-    set_property(TARGET JPEG::JPEG PROPERTY
-                 INTERFACE_COMPILE_DEFINITIONS "${_jpeg_old_icd};EXPECTED_JPEG_LIB_VERSION=${EXPECTED_JPEG_LIB_VERSION}")
-  endif()
-
-  # Check for jpeg12_read_scanlines() which has been added in libjpeg-turbo 2.2
-  # for dual 8/12 bit mode.
-  include(CheckCSourceCompiles)
-  include(CMakePushCheckState)
-  cmake_push_check_state(RESET)
-  set(CMAKE_REQUIRED_INCLUDES "${JPEG_INCLUDE_DIRS}")
-  set(CMAKE_REQUIRED_LIBRARIES "${JPEG_LIBRARIES}")
-  check_c_source_compiles(
-      "
-      #include <stddef.h>
-      #include <stdio.h>
-      #include \"jpeglib.h\"
-      int main()
-      {
-          jpeg_read_scanlines(0,0,0);
-          jpeg12_read_scanlines(0,0,0);
-          return 0;
-      }
-      "
-      HAVE_JPEGTURBO_DUAL_MODE_8_12)
-  cmake_pop_check_state()
-
-endif()
-gdal_internal_library(JPEG)
+include(CheckDependentLibrariesJpeg)
 
 gdal_check_package(GIF "GIF compression library (external)" CAN_DISABLE)
 gdal_internal_library(GIF)
@@ -443,7 +403,8 @@ gdal_check_package(GEOS "Geometry Engine - Open Source (GDAL core dependency)" R
 )
 gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
 
-gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
+include(CheckDependentLibrariesECW)
+
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
   NAMES netCDF
   TARGETS netCDF::netcdf NETCDF::netCDF
@@ -501,8 +462,7 @@ gdal_check_package(PDFIUM "Enable PDF driver with Pdfium (read side)" CAN_DISABL
 gdal_check_package(Podofo "Enable PDF driver with Podofo (read side)" CAN_DISABLE)
 
 
-set(Oracle_CAN_USE_CLNTSH_AS_MAIN_LIBRARY ON)
-gdal_check_package(Oracle "Enable Oracle OCI driver" CAN_DISABLE)
+include(CheckDependentLibrariesOracle)
 gdal_check_package(TEIGHA "Enable DWG and DGNv8 drivers" CAN_DISABLE)
 gdal_check_package(FileGDB "Enable FileGDB (based on closed-source SDK) driver" CAN_DISABLE)
 

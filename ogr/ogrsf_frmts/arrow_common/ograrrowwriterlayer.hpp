@@ -153,6 +153,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
     {
         const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
         std::shared_ptr<arrow::DataType> dt;
+        const auto eDT = poFieldDefn->GetType();
         const auto eSubDT = poFieldDefn->GetSubType();
         const auto &osDomainName = poFieldDefn->GetDomainName();
         const OGRFieldDomain *poFieldDomain = nullptr;
@@ -172,7 +173,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 poFieldDomain = oIter->second.get();
             }
         }
-        switch (poFieldDefn->GetType())
+        switch (eDT)
         {
             case OFTInteger:
                 if (eSubDT == OFSTBoolean)
@@ -209,7 +210,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
 
             case OFTString:
             case OFTWideString:
-                if (eSubDT != OFSTNone || nWidth > 0)
+                if ((eSubDT != OFSTNone && eSubDT != OFSTJSON) || nWidth > 0)
                     bNeedGDALSchema = true;
                 dt = arrow::utf8();
                 break;
@@ -265,9 +266,18 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
             }
         }
-        fields.emplace_back(arrow::field(poFieldDefn->GetNameRef(),
-                                         std::move(dt),
-                                         poFieldDefn->IsNullable()));
+
+        auto field = arrow::field(poFieldDefn->GetNameRef(), std::move(dt),
+                                  poFieldDefn->IsNullable());
+        if (eDT == OFTString && eSubDT == OFSTJSON)
+        {
+            auto kvMetadata = std::make_shared<arrow::KeyValueMetadata>();
+            kvMetadata->Append(ARROW_EXTENSION_NAME_KEY,
+                               EXTENSION_NAME_ARROW_JSON);
+            field = field->WithMetadata(kvMetadata);
+        }
+
+        fields.emplace_back(std::move(field));
         if (poFieldDefn->GetAlternativeNameRef()[0])
             bNeedGDALSchema = true;
         if (!poFieldDefn->GetComment().empty())
@@ -389,7 +399,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                                   ? field->metadata()->Copy()
                                   : std::make_shared<arrow::KeyValueMetadata>();
             kvMetadata->Append(
-                "ARROW:extension:name",
+                ARROW_EXTENSION_NAME_KEY,
                 GetGeomEncodingAsString(m_aeGeomEncoding[i], false));
             field = field->WithMetadata(kvMetadata);
         }

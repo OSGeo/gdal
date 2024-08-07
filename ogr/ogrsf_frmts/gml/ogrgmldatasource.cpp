@@ -557,6 +557,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     const char *pszExposeFid =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "EXPOSE_FID",
                              CPLGetConfigOption("GML_EXPOSE_FID", nullptr));
+
     if (pszExposeFid)
         bExposeFid = CPLTestBool(pszExposeFid);
 
@@ -1124,9 +1125,12 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         if (bHasFoundXSD)
         {
             std::vector<GMLFeatureClass *> aosClasses;
+            bool bUseSchemaImports = CPLFetchBool(
+                poOpenInfo->papszOpenOptions, "USE_SCHEMA_IMPORT",
+                CPLTestBool(CPLGetConfigOption("GML_USE_SCHEMA_IMPORT", "NO")));
             bool bFullyUnderstood = false;
-            bHaveSchema =
-                GMLParseXSD(osXSDFilename, aosClasses, bFullyUnderstood);
+            bHaveSchema = GMLParseXSD(osXSDFilename, bUseSchemaImports,
+                                      aosClasses, bFullyUnderstood);
 
             if (bHaveSchema && !bFullyUnderstood && bIsWFSJointLayer)
             {

@@ -19,6 +19,7 @@ Synopsis
                             [-xml] [-lifonly] [-valonly]
                             [-E] [-field_sep <sep>] [-ignore_extra_input]
                             [-b <band>]... [-overview <overview_level>]
+                            [-r {nearest|bilinear|cubic|cubicspline}]
                             [[-l_srs <srs_def>] | [-geoloc] | [-wgs84]]
                             [-oo <NAME>=<VALUE>]... <srcfile> [<x> <y>]
 
@@ -53,6 +54,22 @@ reporting options are provided.
 
     Selects a band to query.  Multiple bands can be listed.  By default all
     bands are queried.
+
+.. option:: -r {nearest|bilinear|cubic|cubicspline}
+
+    .. versionadded:: 3.10
+
+    Select a sampling algorithm. The default is ``nearest``.
+
+    The available methods are:
+
+    ``nearest`` applies a nearest neighbour.
+
+    ``bilinear`` applies a bilinear convolution kernel.
+
+    ``cubic`` applies a cubic convolution kernel.
+
+    ``cubicspline`` applies a B-Spline convolution kernel.
 
 .. option:: -overview <overview_level>
 

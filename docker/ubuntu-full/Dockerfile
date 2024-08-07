@@ -173,7 +173,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     ); fi
 
 # Build libOpenDRIVE
-ARG OPENDRIVE_VERSION=0.5.0-gdal
+ARG OPENDRIVE_VERSION=0.6.0-gdal
 RUN . /buildscripts/bh-set-envvars.sh \
     && if test "${OPENDRIVE_VERSION}" != ""; then ( \
     wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \

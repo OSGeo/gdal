@@ -14,6 +14,8 @@ of a RFC (request for comment) document.
 
 GDAL's policy on substantial code additions is documented at :ref:`rfc-85`.
 
+.. _cpl:
+
 Portability
 -----------
 
@@ -257,3 +259,50 @@ committed to https://github.com/OSGeo/gdal
 
 Committing symbolic links is allowed only under the .github directory in order to
 avoid potential problems on Windows.
+
+Source tree layout
+------------------
+
+- :file:`alg`: Algorithms: rasterization, polygonization, warper engine, etc.
+- :file:`apps`: C++ command line utilities
+- :file:`autotest`: Regression test suite (C++ and Python)
+- :file:`cmake`: CMake modules and helpers functions
+- :file:`doc`: Source code of GDAL documentation and scripts
+- :file:`docker`: Dockerfile's for `GDAL Docker images <https://github.com/OSGeo/gdal/blob/master/docker/README.md>`__
+- :file:`gcore`: Raster core functionality. Base classes: :cpp:class:`GDALDataset`, :cpp:class:`GDALRasterBand`, :cpp:class:`GDALDriver`, overview building, etc.
+- :file:`frmts`: GDAL/raster drivers (mostly, with the exception of the GDAL GeoPackage raster support in ogr/ogrsf_frmts/gpkg)
+- :file:`fuzzer`: Source code and scripts for GDAL `OSS-Fuzz integration <https://github.com/google/oss-fuzz>`__
+- :file:`gnm`: Source code for :ref:`gnm_data_model`
+- :file:`ogr`: OGR vector core classes: :cpp:class:`OGRFieldDefn`, :cpp:class:`OGRGeomFieldDefn`, :cpp:class:`OGRFeatureDefn`, :cpp:class:`OGRGeometry` and derived classes, OGR SQL, etc.
+- :file:`ogr/ogrsf_frmts`: OGR/vector drivers
+- :file:`ogr/ogrsf_frmts/generic`: OGR vector core class: `OGRLayer`, OGR SQL generic layer
+- :file:`port`: :ref:`CPL (Common Portability Library) <cpl>`
+- :file:`perftests`: C++ and Python scripts to check the speed/performance of various aspects of GDAL.
+- :file:`scripts`: various utility scripts used for Continuous Integration, release generation, and other auxiliary tasks. None of them are for end users.
+- :file:`swig/include`: definition of SWIG Python, Java, C# bindings
+- :file:`swig/python/gdal-utils/scripts`: Launcher scripts for installed/public GDAL Python utilities. No real functionality there
+- :file:`swig/python/gdal-utils/osgeo_utils`: Core code for GDAL Python utilities. Available in the PyPI gdal and gdal-utils packages.
+- :file:`swig/python/gdal-utils/samples`: Scripts that are not installed and generally not or very little documented. May serve as a staging area for future scripts that are going to be promoted as official.
+- :file:`swig/python/gdal-utils/auxiliary`: Helper methods and classes used by GDAL Python utilities. Available in the PyPI gdal and gdal-utils packages.
+- :file:`third_pary`: Third-party libraries used by libgdal. Other may be found in:
+
+  * :file:`alg/internal_libqhull`
+  * :file:`apps/argparse`
+  * :file:`frmts/gtiff/libtiff`
+  * :file:`frmts/gtiff/libgeotiff`
+  * :file:`frmts/hdf4/hdf-eos`
+  * :file:`frmts/jpeg/libjpeg`
+  * :file:`frmts/jpeg/libjpeg12`
+  * :file:`frmts/grib/degrib/degrib`
+  * :file:`frmts/grib/degrib/g2clib`
+  * :file:`frmts/pcidsk/sdk`
+  * :file:`frmts/pcraster/libcsf`
+  * :file:`frmts/png/libpng`
+  * :file:`frmts/gif/giflib`
+  * :file:`frmts/zlib/`
+  * :file:`ogr/ogrsf_frmts/cad/libopencad`
+  * :file:`ogr/ogrsf_frmts/geojson/libjson`
+  * :file:`ogr/ogrsf_frmts/flatgeobuf/flatbuffers`
+  * :file:`ogr/ogrsf_frmts/pmtiles/pmtiles`
+  * :file:`ogr/ogrsf_frmts/sqlite/sqlite_rtree_bulk_load`
+

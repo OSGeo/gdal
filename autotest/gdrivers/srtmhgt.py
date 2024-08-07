@@ -191,3 +191,39 @@ def test_srtmhgt_hgts():
 
     assert min_ == 1.25
     assert max_ == 1.25
+
+
+###############################################################################
+# Test reading files of all supported sizes
+
+
+@pytest.mark.parametrize(
+    "width,height,nb_bytes",
+    [
+        (1201, 1201, 2),
+        (1801, 3601, 2),
+        (3601, 3601, 1),
+        (3601, 3601, 2),
+        (3601, 3601, 4),
+        (7201, 7201, 2),
+    ],
+)
+def test_srtmhgt_all_supported_sizes(tmp_vsimem, width, height, nb_bytes):
+
+    filename = str(tmp_vsimem / "n00e000.hgt")
+    f = gdal.VSIFOpenL(filename, "wb")
+    if f is None:
+        pytest.skip()
+    gdal.VSIFTruncateL(f, width * height * nb_bytes)
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.Open(filename)
+    assert ds is not None
+    assert ds.GetGeoTransform()[1] == pytest.approx(1.0 / (width - 1), rel=1e-8)
+    assert ds.GetRasterBand(1).DataType == (
+        gdal.GDT_Byte
+        if nb_bytes == 1
+        else gdal.GDT_Int16
+        if nb_bytes == 2
+        else gdal.GDT_Float32
+    )

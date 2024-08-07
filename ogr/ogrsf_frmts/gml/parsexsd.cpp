@@ -882,6 +882,29 @@ static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
 }
 
 /************************************************************************/
+/*                         ExcludeBaseGMLSchemas()                            */
+/************************************************************************/
+
+static bool ExcludeBaseGMLSchemas(const char *pszFilename)
+{
+    // List of substrings to exclude
+    const std::vector<std::string> excludedBaseGMLReferencedSchemasList = {
+        "/gml/3.2.1/", "gml/3.1.1/", "/gml/2.1.2/", "/gmlsfProfile/"};
+    if (pszFilename != nullptr)
+    {
+        const std::string osFilename(pszFilename);
+        for (const auto &pattern : excludedBaseGMLReferencedSchemasList)
+        {
+            if (osFilename.find(pattern) != std::string::npos)
+            {
+                return false;  // Found one of the excluded base GML referenced schema
+            }
+        }
+    }
+    return true;  // None of the base GML referenced schemas were found
+}
+
+/************************************************************************/
 /*                         GMLParseXMLFile()                            */
 /************************************************************************/
 
@@ -943,7 +966,8 @@ static CPLXMLNode *CPLGetLastNode(CPLXMLNode *psNode)
 /************************************************************************/
 
 static void CPLXMLSchemaResolveInclude(const char *pszMainSchemaLocation,
-                                       CPLXMLNode *psSchemaNode)
+                                       CPLXMLNode *psSchemaNode,
+                                       bool bUseSchemaImports)
 {
     std::set<CPLString> osAlreadyIncluded;
 
@@ -956,11 +980,16 @@ static void CPLXMLSchemaResolveInclude(const char *pszMainSchemaLocation,
         CPLXMLNode *psThis = psSchemaNode->psChild;
         for (; psThis != nullptr; psThis = psThis->psNext)
         {
+            const char *pszSchemaLocation =
+                CPLGetXMLValue(psThis, "schemaLocation", nullptr);
+
             if (psThis->eType == CXT_Element &&
-                EQUAL(psThis->pszValue, "include"))
+                (EQUAL(psThis->pszValue, "include") ||
+                 (bUseSchemaImports == TRUE &&
+                  EQUAL(psThis->pszValue, "import") &&
+                  ExcludeBaseGMLSchemas(pszSchemaLocation))))
             {
-                const char *pszSchemaLocation =
-                    CPLGetXMLValue(psThis, "schemaLocation", nullptr);
+
                 if (pszSchemaLocation != nullptr &&
                     osAlreadyIncluded.count(pszSchemaLocation) == 0)
                 {
@@ -1064,7 +1093,7 @@ GetUniqueConstraints(const CPLXMLNode *psNode)
 /*                          GMLParseXSD()                               */
 /************************************************************************/
 
-bool GMLParseXSD(const char *pszFile,
+bool GMLParseXSD(const char *pszFile, bool bUseSchemaImports,
                  std::vector<GMLFeatureClass *> &aosClasses,
                  bool &bFullyUnderstood)
 
@@ -1100,7 +1129,7 @@ bool GMLParseXSD(const char *pszFile,
     /* ==================================================================== */
     /*      Process each include directive.                                 */
     /* ==================================================================== */
-    CPLXMLSchemaResolveInclude(pszFile, psSchemaNode);
+    CPLXMLSchemaResolveInclude(pszFile, psSchemaNode, bUseSchemaImports);
 
     // CPLSerializeXMLTreeToFile(psSchemaNode, "/vsistdout/");
 

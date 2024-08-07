@@ -3232,7 +3232,7 @@ char **GDALDataset::GetFileList()
     const GDALAntiRecursionStruct::DatasetContext datasetCtxt(osMainFilename, 0,
                                                               std::string());
     auto &aosDatasetList = sAntiRecursion.aosDatasetNamesWithFlags;
-    if (aosDatasetList.find(datasetCtxt) != aosDatasetList.end())
+    if (cpl::contains(aosDatasetList, datasetCtxt))
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -3626,8 +3626,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
         osAllowedDrivers += pszDriverName;
     auto dsCtxt = GDALAntiRecursionStruct::DatasetContext(
         std::string(pszFilename), nOpenFlags, osAllowedDrivers);
-    if (sAntiRecursion.aosDatasetNamesWithFlags.find(dsCtxt) !=
-        sAntiRecursion.aosDatasetNamesWithFlags.end())
+    if (cpl::contains(sAntiRecursion.aosDatasetNamesWithFlags, dsCtxt))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GDALOpen() called on %s recursively", pszFilename);

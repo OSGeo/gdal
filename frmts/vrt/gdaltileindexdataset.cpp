@@ -370,6 +370,9 @@ class GDALTileIndexBand final : public GDALPamRasterBand
                      GSpacing nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
+    int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nMaskFlagStop, double *pdfDataPct) override;
+
     int GetMaskFlags() override
     {
         if (m_poDS->m_poMaskBand && m_poDS->m_poMaskBand.get() != this)
@@ -2327,6 +2330,151 @@ CPLErr GDALTileIndexBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              nBufXSize, nBufYSize, eBufType, 1, anBand,
                              nPixelSpace, nLineSpace, 0, psExtraArg);
 }
+
+/************************************************************************/
+/*                         IGetDataCoverageStatus()                     */
+/************************************************************************/
+
+#ifndef HAVE_GEOS
+int GDALTileIndexBand::IGetDataCoverageStatus(int /* nXOff */, int /* nYOff */,
+                                              int /* nXSize */,
+                                              int /* nYSize */,
+                                              int /* nMaskFlagStop */,
+                                              double *pdfDataPct)
+{
+    if (pdfDataPct != nullptr)
+        *pdfDataPct = -1.0;
+    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+           GDAL_DATA_COVERAGE_STATUS_DATA;
+}
+#else
+int GDALTileIndexBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
+                                              int nYSize, int nMaskFlagStop,
+                                              double *pdfDataPct)
+{
+    if (pdfDataPct != nullptr)
+        *pdfDataPct = -1.0;
+
+    const double dfMinX = m_poDS->m_adfGeoTransform[GT_TOPLEFT_X] +
+                          nXOff * m_poDS->m_adfGeoTransform[GT_WE_RES];
+    const double dfMaxX =
+        dfMinX + nXSize * m_poDS->m_adfGeoTransform[GT_WE_RES];
+    const double dfMaxY = m_poDS->m_adfGeoTransform[GT_TOPLEFT_Y] +
+                          nYOff * m_poDS->m_adfGeoTransform[GT_NS_RES];
+    const double dfMinY =
+        dfMaxY + nYSize * m_poDS->m_adfGeoTransform[GT_NS_RES];
+    m_poDS->m_poLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
+    m_poDS->m_poLayer->ResetReading();
+
+    int nStatus = 0;
+
+    auto poPolyNonCoveredBySources = std::make_unique<OGRPolygon>();
+    {
+        auto poLR = std::make_unique<OGRLinearRing>();
+        poLR->addPoint(nXOff, nYOff);
+        poLR->addPoint(nXOff, nYOff + nYSize);
+        poLR->addPoint(nXOff + nXSize, nYOff + nYSize);
+        poLR->addPoint(nXOff + nXSize, nYOff);
+        poLR->addPoint(nXOff, nYOff);
+        poPolyNonCoveredBySources->addRingDirectly(poLR.release());
+    }
+    while (true)
+    {
+        auto poFeature =
+            std::unique_ptr<OGRFeature>(m_poDS->m_poLayer->GetNextFeature());
+        if (!poFeature)
+            break;
+        if (!poFeature->IsFieldSetAndNotNull(m_poDS->m_nLocationFieldIndex))
+        {
+            continue;
+        }
+
+        const auto poGeom = poFeature->GetGeometryRef();
+        if (!poGeom || poGeom->IsEmpty())
+            continue;
+
+        OGREnvelope sSourceEnvelope;
+        poGeom->getEnvelope(&sSourceEnvelope);
+
+        const double dfDstXOff =
+            std::max<double>(nXOff, (sSourceEnvelope.MinX -
+                                     m_poDS->m_adfGeoTransform[GT_TOPLEFT_X]) /
+                                        m_poDS->m_adfGeoTransform[GT_WE_RES]);
+        const double dfDstXOff2 = std::min<double>(
+            nXOff + nXSize,
+            (sSourceEnvelope.MaxX - m_poDS->m_adfGeoTransform[GT_TOPLEFT_X]) /
+                m_poDS->m_adfGeoTransform[GT_WE_RES]);
+        const double dfDstYOff =
+            std::max<double>(nYOff, (sSourceEnvelope.MaxY -
+                                     m_poDS->m_adfGeoTransform[GT_TOPLEFT_Y]) /
+                                        m_poDS->m_adfGeoTransform[GT_NS_RES]);
+        const double dfDstYOff2 = std::min<double>(
+            nYOff + nYSize,
+            (sSourceEnvelope.MinY - m_poDS->m_adfGeoTransform[GT_TOPLEFT_Y]) /
+                m_poDS->m_adfGeoTransform[GT_NS_RES]);
+
+        // CPLDebug("GTI", "dfDstXOff=%f, dfDstXOff2=%f, dfDstYOff=%f, dfDstYOff2=%f",
+        //         dfDstXOff, dfDstXOff2, dfDstYOff, dfDstXOff2);
+
+        // Check if the AOI is fully inside the source
+        if (nXOff >= dfDstXOff && nYOff >= dfDstYOff &&
+            nXOff + nXSize <= dfDstXOff2 && nYOff + nYSize <= dfDstYOff2)
+        {
+            if (pdfDataPct)
+                *pdfDataPct = 100.0;
+            return GDAL_DATA_COVERAGE_STATUS_DATA;
+        }
+
+        // Check intersection of bounding boxes.
+        if (dfDstXOff2 > nXOff && dfDstYOff2 > nYOff &&
+            dfDstXOff < nXOff + nXSize && dfDstYOff < nYOff + nYSize)
+        {
+            nStatus |= GDAL_DATA_COVERAGE_STATUS_DATA;
+            if (poPolyNonCoveredBySources)
+            {
+                OGRPolygon oPolySource;
+                auto poLR = std::make_unique<OGRLinearRing>();
+                poLR->addPoint(dfDstXOff, dfDstYOff);
+                poLR->addPoint(dfDstXOff, dfDstYOff2);
+                poLR->addPoint(dfDstXOff2, dfDstYOff2);
+                poLR->addPoint(dfDstXOff2, dfDstYOff);
+                poLR->addPoint(dfDstXOff, dfDstYOff);
+                oPolySource.addRingDirectly(poLR.release());
+                auto poRes = std::unique_ptr<OGRGeometry>(
+                    poPolyNonCoveredBySources->Difference(&oPolySource));
+                if (poRes && poRes->IsEmpty())
+                {
+                    if (pdfDataPct)
+                        *pdfDataPct = 100.0;
+                    return GDAL_DATA_COVERAGE_STATUS_DATA;
+                }
+                else if (poRes && poRes->getGeometryType() == wkbPolygon)
+                {
+                    poPolyNonCoveredBySources.reset(
+                        poRes.release()->toPolygon());
+                }
+                else
+                {
+                    poPolyNonCoveredBySources.reset();
+                }
+            }
+        }
+        if (nMaskFlagStop != 0 && (nStatus & nMaskFlagStop) != 0)
+        {
+            return nStatus;
+        }
+    }
+    if (poPolyNonCoveredBySources)
+    {
+        if (!poPolyNonCoveredBySources->IsEmpty())
+            nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
+        if (pdfDataPct)
+            *pdfDataPct = 100.0 * (1.0 - poPolyNonCoveredBySources->get_Area() /
+                                             nXSize / nYSize);
+    }
+    return nStatus;
+}
+#endif  // HAVE_GEOS
 
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */

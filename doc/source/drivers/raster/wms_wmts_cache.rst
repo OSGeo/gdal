@@ -3,7 +3,7 @@ WMS (or WMTS) configuration file.
 
 Before GDAL 3.9, if the <Path> sub-element of <Cache> was not specified, the
 directory of the cache was ``./gdalwmscache`` (that is to say a ``gdalwmscache``
-subdiretory of the current directory), unless the :config:`GDAL_DEFAULT_WMS_CACHE_PATH`
+subdirectory of the current directory), unless the :config:`GDAL_DEFAULT_WMS_CACHE_PATH`
 configuration option is specified.
 
 Starting with GDAL 3.9, the directory of the cache is set according to the

@@ -1,0 +1,31 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:ft2="http://www.esdi-humboldt.eu/hale/shp/sanier" xmlns:xlink="http://www.w3.org/1999/xlink" targetNamespace="http://www.esdi-humboldt.eu/hale/shp/sanier" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+<element name="sanier" substitutionGroup="gml:AbstractFeature">
+<complexType>
+<complexContent>
+<extension base="gml:AbstractFeatureType">
+<sequence>
+<element name="arokstatus" minOccurs="0" type="string"/>
+<element name="oa_nr" minOccurs="0" type="string"/>
+<element name="bezeich" minOccurs="0" type="string"/>
+<element name="aktennr" minOccurs="0" type="string"/>
+<element name="dat_erst" minOccurs="0" type="date"/>
+<element name="erst_ID" minOccurs="0" type="string"/>
+<element name="bearbeiter" minOccurs="0" type="string"/>
+<element name="dat_geneh" minOccurs="0" type="date"/>
+<element name="inkraft" minOccurs="0" type="date"/>
+<element name="bemerk" minOccurs="0" type="string"/>
+<element name="sonderfest" minOccurs="0" type="string"/>
+<element name="ars" minOccurs="0" type="string"/>
+<element name="ars_text" minOccurs="0" type="string"/>
+<element name="UUID" minOccurs="0" type="string"/>
+<element name="SHAPE_Leng" minOccurs="0" type="decimal"/>
+<element name="SHAPE_Area" minOccurs="0" type="decimal"/>
+<element name="quelle" minOccurs="0" type="string"/>
+<element name="geometry" minOccurs="0" type="gml:MultiSurfacePropertyType"/>
+</sequence>
+</extension>
+</complexContent>
+</complexType>
+</element>
+</schema>

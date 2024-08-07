@@ -1,0 +1,30 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:ft1="http://www.esdi-humboldt.eu/hale/shp/entwick" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.esdi-humboldt.eu/hale/shp/entwick">
+<import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+<element name="entwick" substitutionGroup="gml:AbstractFeature">
+<complexType>
+<complexContent>
+<extension base="gml:AbstractFeatureType">
+<sequence>
+<element minOccurs="0" name="arokstatus" type="decimal"/>
+<element minOccurs="0" name="oa_nr" type="decimal"/>
+<element minOccurs="0" name="bezeich" type="string"/>
+<element minOccurs="0" name="aktennr" type="string"/>
+<element minOccurs="0" name="quelle" type="string"/>
+<element minOccurs="0" name="dat_erst" type="date"/>
+<element minOccurs="0" name="erst_ID" type="decimal"/>
+<element minOccurs="0" name="bearbeiter" type="string"/>
+<element minOccurs="0" name="dat_geneh" type="date"/>
+<element minOccurs="0" name="inkraft" type="date"/>
+<element minOccurs="0" name="bemerk" type="string"/>
+<element minOccurs="0" name="sonderfest" type="string"/>
+<element minOccurs="0" name="SHAPE_Leng" type="decimal"/>
+<element minOccurs="0" name="SHAPE_Area" type="decimal"/>
+<element minOccurs="0" name="ars" type="string"/>
+<element minOccurs="0" name="UUID" type="string"/>
+<element minOccurs="0" name="geometry" type="gml:MultiSurfacePropertyType"/>
+</sequence>
+</extension>
+</complexContent>
+</complexType>
+</element>
+</schema>

@@ -1479,7 +1479,7 @@ def test_ecw_41(tmp_path):
     # Check that no statistics is already included in the file
     assert ds.GetRasterBand(1).GetMinimum() is None
     assert ds.GetRasterBand(1).GetMaximum() is None
-    assert ds.GetRasterBand(1).GetStatistics(1, 0) == [0.0, 0.0, 0.0, -1.0]
+    assert ds.GetRasterBand(1).GetStatistics(1, 0) is None
     assert ds.GetRasterBand(1).GetDefaultHistogram(force=0) is None
 
     # Now compute the stats

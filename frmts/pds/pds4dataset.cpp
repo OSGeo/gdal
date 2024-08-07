@@ -1584,6 +1584,13 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
         "");
     const bool bBottomToTop = EQUAL(pszVertDir, "Bottom to Top");
 
+    const char *pszHorizDir = CPLGetXMLValue(
+        psProduct,
+        "Observation_Area.Discipline_Area.Display_Settings.Display_Direction."
+        "horizontal_display_direction",
+        "");
+    const bool bRightToLeft = EQUAL(pszHorizDir, "Right to Left");
+
     auto poDS = std::make_unique<PDS4Dataset>();
     poDS->m_osXMLFilename = osXMLFilename;
     poDS->eAccess = eAccess;
@@ -1999,14 +2006,21 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
 
             for (int i = 0; i < l_nBands; i++)
             {
+                vsi_l_offset nThisBandOffset = nOffset + nBandOffset * i;
+                if (bBottomToTop)
+                {
+                    nThisBandOffset +=
+                        static_cast<vsi_l_offset>(nLines - 1) * nLineOffset;
+                }
+                if (bRightToLeft)
+                {
+                    nThisBandOffset +=
+                        static_cast<vsi_l_offset>(nSamples - 1) * nPixelOffset;
+                }
                 auto poBand = std::make_unique<PDS4RawRasterBand>(
-                    poDS.get(), i + 1, poDS->m_fpImage,
-                    (bBottomToTop) ? nOffset + nBandOffset * i +
-                                         static_cast<vsi_l_offset>(nLines - 1) *
-                                             nLineOffset
-                                   : nOffset + nBandOffset * i,
-                    nPixelOffset, (bBottomToTop) ? -nLineOffset : nLineOffset,
-                    eDT,
+                    poDS.get(), i + 1, poDS->m_fpImage, nThisBandOffset,
+                    bRightToLeft ? -nPixelOffset : nPixelOffset,
+                    bBottomToTop ? -nLineOffset : nLineOffset, eDT,
                     bLSBOrder ? RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
                               : RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN);
                 if (!poBand->IsValid())
