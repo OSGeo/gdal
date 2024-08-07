@@ -509,6 +509,8 @@ OGRErr OGRLIBKMLLayer::ICreateFeature(OGRFeature *poOgrFeat)
     FeaturePtr poKmlFeature =
         feat2kml(m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory(),
                  m_bUseSimpleField);
+    if (!poKmlFeature)
+        return OGRERR_FAILURE;
 
     if (poGeomBackup)
         poOgrFeat->SetGeometryDirectly(poGeomBackup);
