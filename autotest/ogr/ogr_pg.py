@@ -5887,7 +5887,8 @@ def test_ogr_pg_field_comment(pg_ds):
 def test_ogr_pg_long_identifiers(pg_ds):
 
     long_name = "test_" + ("X" * 64) + "_long_name"
-    short_name = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    short_name = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_3ba7c630"
+    assert len(short_name) == 63
     with gdal.quiet_errors():
         lyr = pg_ds.CreateLayer(long_name)
     assert lyr.GetName() == short_name
@@ -5895,11 +5896,25 @@ def test_ogr_pg_long_identifiers(pg_ds):
     assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     assert lyr.SyncToDisk() == ogr.OGRERR_NONE
 
+    long_name2 = "test_" + ("X" * 64) + "_long_name2"
+    short_name2 = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_bb4afe1c"
+    assert len(short_name2) == 63
+    with gdal.quiet_errors():
+        lyr = pg_ds.CreateLayer(long_name2)
+    assert lyr.GetName() == short_name2
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
     pg_ds = reconnect(pg_ds, update=1)
 
-    got_lyr = pg_ds.GetLayerByName(long_name)
+    got_lyr = pg_ds.GetLayerByName(short_name)
     assert got_lyr
     assert got_lyr.GetName() == short_name
+
+    got_lyr = pg_ds.GetLayerByName(short_name2)
+    assert got_lyr
+    assert got_lyr.GetName() == short_name2
 
 
 ###############################################################################
