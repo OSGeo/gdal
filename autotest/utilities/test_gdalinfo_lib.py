@@ -309,3 +309,35 @@ def test_gdalinfo_lib_json_engineering_crs():
     assert "coordinateSystem" in ret
     assert "cornerCoordinates" in ret
     assert "wgs84Extent" not in ret
+
+
+###############################################################################
+# Test -nonodata
+
+
+def test_gdalinfo_lib_nonodata(tmp_path):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds.GetRasterBand(1).SetNoDataValue(1)
+
+    ret = gdal.Info(ds, format="json")
+    assert "noDataValue" in ret["bands"][0]
+
+    ret = gdal.Info(ds, format="json", showNodata=False)
+    assert "noDataValue" not in ret["bands"][0]
+
+
+###############################################################################
+# Test -nomask
+
+
+def test_gdalinfo_lib_nomask(tmp_path):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
+
+    ret = gdal.Info(ds, format="json")
+    assert "mask" in ret["bands"][0]
+
+    ret = gdal.Info(ds, format="json", showMask=False)
+    assert "mask" not in ret["bands"][0]

@@ -43,6 +43,12 @@
 #include <fcntl.h>
 #endif
 
+#ifndef _WIN32
+#include <unistd.h>  // isatty()
+#else
+#include <io.h>  // _isatty()
+#endif
+
 #include <algorithm>
 #include <set>
 #include <string>
@@ -903,14 +909,70 @@ CPLErr GRIBRasterBand::LoadData()
 }
 
 /************************************************************************/
+/*                       IsGdalinfoInteractive()                        */
+/************************************************************************/
+
+#ifdef BUILD_APPS
+static bool IsGdalinfoInteractive()
+{
+    static const bool bIsGdalinfoInteractive = []()
+    {
+#ifndef _WIN32
+        if (isatty(static_cast<int>(fileno(stdout))))
+#else
+        if (_isatty(_fileno(stdout)))
+#endif
+        {
+            std::string osPath;
+            osPath.resize(1024);
+            if (CPLGetExecPath(&osPath[0], static_cast<int>(osPath.size())))
+            {
+                osPath = CPLGetBasename(osPath.c_str());
+            }
+            return osPath == "gdalinfo";
+        }
+        return false;
+    }();
+    return bIsGdalinfoInteractive;
+}
+#endif
+
+/************************************************************************/
 /*                             GetMetaData()                            */
 /************************************************************************/
 char **GRIBRasterBand::GetMetadata(const char *pszDomain)
 {
     FindMetaData();
-    if (m_nGribVersion == 2 &&
+    if ((pszDomain == nullptr || pszDomain[0] == 0) && m_nGribVersion == 2 &&
         CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
     {
+#ifdef BUILD_APPS
+        // Detect slow execution of e.g.
+        // "gdalinfo /vsis3/noaa-hrrr-bdp-pds/hrrr.20220804/conus/hrrr.t00z.wrfsfcf01.grib2"
+        GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+        if (poGDS->m_bSideCarIdxUsed && !poGDS->m_bWarnedGdalinfoNomd &&
+            poGDS->GetRasterCount() > 10 &&
+            !VSIIsLocal(poGDS->GetDescription()) && IsGdalinfoInteractive())
+        {
+            if (poGDS->m_nFirstMetadataQueriedTimeStamp)
+            {
+                if (time(nullptr) - poGDS->m_nFirstMetadataQueriedTimeStamp > 2)
+                {
+                    poGDS->m_bWarnedGdalinfoNomd = true;
+
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "If metadata does not matter, faster result could be "
+                        "obtained by adding the -nomd switch to gdalinfo");
+                }
+            }
+            else
+            {
+                poGDS->m_nFirstMetadataQueriedTimeStamp = time(nullptr);
+            }
+        }
+#endif
+
         FindPDSTemplateGRIB2();
     }
     return GDALPamRasterBand::GetMetadata(pszDomain);
@@ -1012,6 +1074,34 @@ double GRIBRasterBand::GetNoDataValue(int *pbSuccess)
     if (m_Grib_MetaData == nullptr)
     {
         GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+
+#ifdef BUILD_APPS
+        // Detect slow execution of e.g.
+        // "gdalinfo /vsis3/noaa-hrrr-bdp-pds/hrrr.20220804/conus/hrrr.t00z.wrfsfcf01.grib2"
+
+        if (poGDS->m_bSideCarIdxUsed && !poGDS->m_bWarnedGdalinfoNonodata &&
+            poGDS->GetRasterCount() > 10 &&
+            !VSIIsLocal(poGDS->GetDescription()) && IsGdalinfoInteractive())
+        {
+            if (poGDS->m_nFirstNodataQueriedTimeStamp)
+            {
+                if (time(nullptr) - poGDS->m_nFirstNodataQueriedTimeStamp > 2)
+                {
+                    poGDS->m_bWarnedGdalinfoNonodata = true;
+
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "If nodata value does not matter, faster result "
+                             "could be obtained by adding the -nonodata switch "
+                             "to gdalinfo");
+                }
+            }
+            else
+            {
+                poGDS->m_nFirstNodataQueriedTimeStamp = time(nullptr);
+            }
+        }
+#endif
+
         ReadGribData(poGDS->fp, start, subgNum, nullptr, &m_Grib_MetaData);
         if (m_Grib_MetaData == nullptr)
         {
@@ -1316,7 +1406,7 @@ CPLErr GRIBDataset::GetGeoTransform(double *padfTransform)
 /************************************************************************/
 
 std::unique_ptr<gdal::grib::InventoryWrapper>
-GRIBDataset::Inventory(VSILFILE *fp, GDALOpenInfo *poOpenInfo)
+GRIBDataset::Inventory(GDALOpenInfo *poOpenInfo)
 {
     std::unique_ptr<gdal::grib::InventoryWrapper> pInventories;
 
@@ -1354,6 +1444,9 @@ GRIBDataset::Inventory(VSILFILE *fp, GDALOpenInfo *poOpenInfo)
         if (pInventories->result() <= 0 || pInventories->length() == 0)
             pInventories = nullptr;
         VSIFCloseL(fpSideCar);
+#ifdef BUILD_APPS
+        m_bSideCarIdxUsed = true;
+#endif
     }
     else
         CPLDebug("GRIB", "Failed opening sidecar %s",
@@ -1447,7 +1540,7 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
     // The band-data that is read is stored into the first RasterBand,
     // simply so that the same portion of the file is not read twice.
 
-    auto pInventories = Inventory(poDS->fp, poOpenInfo);
+    auto pInventories = poDS->Inventory(poOpenInfo);
     if (pInventories->result() <= 0)
     {
         char *errMsg = errSprintf(nullptr);

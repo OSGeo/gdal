@@ -44,6 +44,7 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#include <time.h>
 
 #include <algorithm>
 #include <memory>
@@ -114,8 +115,7 @@ class GRIBDataset final : public GDALPamDataset
   private:
     void SetGribMetaData(grib_MetaData *meta);
     static GDALDataset *OpenMultiDim(GDALOpenInfo *);
-    static std::unique_ptr<gdal::grib::InventoryWrapper>
-    Inventory(VSILFILE *, GDALOpenInfo *);
+    std::unique_ptr<gdal::grib::InventoryWrapper> Inventory(GDALOpenInfo *);
 
     VSILFILE *fp;
     // Calculate and store once as GetGeoTransform may be called multiple times.
@@ -135,6 +135,14 @@ class GRIBDataset final : public GDALPamDataset
     std::shared_ptr<OGRSpatialReference> m_poSRS{};
     std::unique_ptr<OGRSpatialReference> m_poLL{};
     std::unique_ptr<OGRCoordinateTransformation> m_poCT{};
+
+#ifdef BUILD_APPS
+    bool m_bSideCarIdxUsed = false;
+    bool m_bWarnedGdalinfoNomd = false;
+    time_t m_nFirstMetadataQueriedTimeStamp = 0;
+    bool m_bWarnedGdalinfoNonodata = false;
+    time_t m_nFirstNodataQueriedTimeStamp = 0;
+#endif
 };
 
 /************************************************************************/
