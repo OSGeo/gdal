@@ -306,12 +306,12 @@ void OGRGeoJSONReaderStreamingParser::GotFeature(json_object *poObj,
             if (nFID == OGRNullFID)
             {
                 nFID = static_cast<GIntBig>(m_oSetUsedFIDs.size());
-                while (m_oSetUsedFIDs.find(nFID) != m_oSetUsedFIDs.end())
+                while (cpl::contains(m_oSetUsedFIDs, nFID))
                 {
                     ++nFID;
                 }
             }
-            else if (m_oSetUsedFIDs.find(nFID) != m_oSetUsedFIDs.end())
+            else if (cpl::contains(m_oSetUsedFIDs, nFID))
             {
                 if (!m_bOriginalIdModifiedEmitted)
                 {
@@ -324,7 +324,7 @@ void OGRGeoJSONReaderStreamingParser::GotFeature(json_object *poObj,
                     m_bOriginalIdModifiedEmitted = true;
                 }
                 nFID = static_cast<GIntBig>(m_oSetUsedFIDs.size());
-                while (m_oSetUsedFIDs.find(nFID) != m_oSetUsedFIDs.end())
+                while (cpl::contains(m_oSetUsedFIDs, nFID))
                 {
                     ++nFID;
                 }
@@ -786,8 +786,7 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, GIntBig nFID)
                     if (poFeat)
                     {
                         const GIntBig nThisFID = poFeat->GetFID();
-                        if (oMapFIDToOffsetSize_.find(nThisFID) ==
-                            oMapFIDToOffsetSize_.end())
+                        if (!cpl::contains(oMapFIDToOffsetSize_, nThisFID))
                         {
                             oMapFIDToOffsetSize_[nThisFID] =
                                 std::pair<vsi_l_offset, vsi_l_offset>(
@@ -806,7 +805,7 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, GIntBig nFID)
         bOriginalIdModifiedEmitted_ = oParser.GetOriginalIdModifiedEmitted();
     }
 
-    auto oIter = oMapFIDToOffsetSize_.find(nFID);
+    const auto oIter = oMapFIDToOffsetSize_.find(nFID);
     if (oIter == oMapFIDToOffsetSize_.end())
     {
         return nullptr;
@@ -1348,7 +1347,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
         return;
     }
 
-    auto oMapFieldNameToIdxIter = oMapFieldNameToIdx.find(pszKey);
+    const auto oMapFieldNameToIdxIter = oMapFieldNameToIdx.find(pszKey);
     if (oMapFieldNameToIdxIter == oMapFieldNameToIdx.end())
     {
         OGRFieldSubType eSubType;
@@ -1385,8 +1384,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
             GeoJSONPropertyToFieldType(poVal, eNewSubType, bArrayAsString);
         const bool bNewIsEmptyArray =
             (jType == json_type_array && json_object_array_length(poVal) == 0);
-        if (aoSetUndeterminedTypeFields.find(nIndex) !=
-            aoSetUndeterminedTypeFields.end())
+        if (cpl::contains(aoSetUndeterminedTypeFields, nIndex))
         {
             poFDefn->SetSubType(OFSTNone);
             poFDefn->SetType(eNewType);
@@ -1656,7 +1654,7 @@ void OGRGeoJSONGenerateFeatureDefnDealWithID(
     json_object *poObjId = OGRGeoJSONFindMemberByName(poObj, "id");
     if (poObjId)
     {
-        auto iterIdxId = oMapFieldNameToIdx.find("id");
+        const auto iterIdxId = oMapFieldNameToIdx.find("id");
         if (iterIdxId == oMapFieldNameToIdx.end())
         {
             if (json_object_get_type(poObjId) == json_type_int)
@@ -1813,7 +1811,7 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn(
         json_object_object_foreachC(poObjProps, it)
         {
             if (!bIsGeocouchSpatiallistFormat &&
-                oMapFieldNameToIdx.find(it.key) == oMapFieldNameToIdx.end())
+                !cpl::contains(oMapFieldNameToIdx, it.key))
             {
                 // Detect the special kind of GeoJSON output by a spatiallist of
                 // GeoCouch such as:
@@ -1844,7 +1842,7 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn(
                                 "GEOJSON_FLATTEN_GEOCOUCH", "TRUE"));
                     if (bFlattenGeocouchSpatiallistFormat)
                     {
-                        auto typeIter = oMapFieldNameToIdx.find("type");
+                        const auto typeIter = oMapFieldNameToIdx.find("type");
                         if (typeIter != oMapFieldNameToIdx.end())
                         {
                             const int nIdx = typeIter->second;
@@ -1901,7 +1899,7 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn(
                 strcmp(it.key, "centroid") != 0 &&
                 strcmp(it.key, "bbox") != 0 && strcmp(it.key, "center") != 0)
             {
-                if (oMapFieldNameToIdx.find(it.key) == oMapFieldNameToIdx.end())
+                if (!cpl::contains(oMapFieldNameToIdx, it.key))
                 {
                     anCurFieldIndices.clear();
                     OGRGeoJSONReaderAddOrUpdateField(

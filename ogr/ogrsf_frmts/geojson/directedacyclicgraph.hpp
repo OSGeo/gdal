@@ -134,11 +134,11 @@ const char *DirectedAcyclicGraph<T, V>::addEdge(const T &i, const T &j)
         return "already inserted edge";
     }
 
-    if (nodes.find(i) == nodes.end())
+    if (!cpl::contains(nodes, i))
     {
         return "node i unknown";
     }
-    if (nodes.find(j) == nodes.end())
+    if (!cpl::contains(nodes, j))
     {
         return "node j unknown";
     }
@@ -195,7 +195,7 @@ bool DirectedAcyclicGraph<T, V>::isTherePathFromTo(const T &i, const T &j) const
         {
             for (const T &k : iter->second)
             {
-                if (plannedForVisit.find(k) == plannedForVisit.end())
+                if (!cpl::contains(plannedForVisit, k))
                 {
                     plannedForVisit.insert(k);
                     toVisit.push(k);
@@ -212,7 +212,7 @@ std::vector<T> DirectedAcyclicGraph<T, V>::findStartingNodes() const
     std::vector<T> ret;
     for (const auto &i : nodes)
     {
-        if (incomingNodes.find(i) == incomingNodes.end())
+        if (!cpl::contains(incomingNodes, i))
             ret.emplace_back(i);
     }
     return ret;
@@ -253,7 +253,7 @@ std::vector<T> DirectedAcyclicGraph<T, V>::getTopologicalOrdering()
                 const char *retRemoveEdge = removeEdge(n, m);
                 (void)retRemoveEdge;
                 assert(retRemoveEdge == nullptr);
-                if (incomingNodes.find(m) == incomingNodes.end())
+                if (!cpl::contains(incomingNodes, m))
                 {
                     S.insert(m);
                 }

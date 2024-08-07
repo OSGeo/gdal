@@ -255,8 +255,7 @@ OGRSpatialReference *
 GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
                                      bool bEmitErrorIfNotFound)
 {
-    std::map<int, OGRSpatialReference *>::const_iterator oIter =
-        m_oMapSrsIdToSrs.find(iSrsId);
+    const auto oIter = m_oMapSrsIdToSrs.find(iSrsId);
     if (oIter != m_oMapSrsIdToSrs.end())
     {
         if (oIter->second == nullptr)
@@ -1807,8 +1806,7 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                     pszGeomColName ? std::string(pszTableName) + " (" +
                                          pszGeomColName + ')'
                                    : std::string(pszTableName);
-                if (oExistingLayers.find(osLayerNameWithGeomColName) !=
-                    oExistingLayers.end())
+                if (cpl::contains(oExistingLayers, osLayerNameWithGeomColName))
                     continue;
                 oExistingLayers.insert(osLayerNameWithGeomColName);
                 const std::string osLayerName = bTableHasSeveralGeomColumns
@@ -9235,7 +9233,7 @@ static void GPKG_GDAL_HasColorTable(sqlite3_context *pContext, int /*argc*/,
 GDALDataset *
 GDALGeoPackageDataset::GetRasterLayerDataset(const char *pszLayerName)
 {
-    auto oIter = m_oCachedRasterDS.find(pszLayerName);
+    const auto oIter = m_oCachedRasterDS.find(pszLayerName);
     if (oIter != m_oCachedRasterDS.end())
         return oIter->second.get();
 

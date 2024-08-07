@@ -2305,8 +2305,8 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     std::map<std::string, int> oMapSchemaChildrenNameToIdx;
     for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
     {
-        if (oMapSchemaChildrenNameToIdx.find(schema->children[i]->name) !=
-            oMapSchemaChildrenNameToIdx.end())
+        if (cpl::contains(oMapSchemaChildrenNameToIdx,
+                          schema->children[i]->name))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Several fields with same name '%s' found",
@@ -2319,7 +2319,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         {
             const auto oMetadata =
                 OGRParseArrowMetadata(schema->children[i]->metadata);
-            auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
+            const auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
             if (oIter != oMetadata.end() &&
                 (oIter->second == EXTENSION_NAME_OGC_WKB ||
                  oIter->second == EXTENSION_NAME_GEOARROW_WKB))
@@ -2575,8 +2575,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
 
     for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
     {
-        if (oSetReferencedFieldsInArraySchema.find(i) ==
-            oSetReferencedFieldsInArraySchema.end())
+        if (!cpl::contains(oSetReferencedFieldsInArraySchema, i))
         {
             if (m_osFIDColumn.empty() &&
                 strcmp(schema->children[i]->name, pszFIDName) == 0)
@@ -2842,7 +2841,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         std::vector<std::shared_ptr<arrow::Array>> apoArrays;
         for (int i = 0; i < m_poSchema->num_fields(); ++i)
         {
-            auto oIter =
+            const auto oIter =
                 oMapGeomFieldNameToArray.find(m_poSchema->field(i)->name());
             if (oIter != oMapGeomFieldNameToArray.end())
                 apoArrays.emplace_back(oIter->second);

@@ -1305,8 +1305,7 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
                     // Default is to not write as it is not CF-1.
                     bWriteVal = false;
                     // Test if there is no standard_parallel1.
-                    if (oValMap.find(std::string(CF_PP_STD_PARALLEL_1)) ==
-                        oValMap.end())
+                    if (!cpl::contains(oValMap, CF_PP_STD_PARALLEL_1))
                     {
                         // If scale factor != 1.0, write value for GDAL, but
                         // this is not supported by CF-1.
@@ -1362,7 +1361,7 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
             const auto &osGDALAtt = oValIter.first;
             const double dfValue = oValIter.second;
 
-            const auto &oAttIter = oAttMap.find(osGDALAtt);
+            const auto oAttIter = oAttMap.find(osGDALAtt);
 
             if (oAttIter != oAttMap.end())
             {

@@ -372,7 +372,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
                 break;
             }
 
-            if (aSetReadPages.find(nPrevPage) != aSetReadPages.end())
+            if (cpl::contains(aSetReadPages, nPrevPage))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Cyclic page refererencing in %s", osFilename.c_str());
@@ -585,7 +585,7 @@ bool FileGDBTable::CheckFreeListConsistency()
     uint32_t nFreePage = GetUInt32(abyTrailer.data() + sizeof(uint32_t), 0);
     while (nFreePage != MINUS_ONE)
     {
-        if (setVisitedPages.find(nFreePage) != setVisitedPages.end())
+        if (cpl::contains(setVisitedPages, nFreePage))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cyclic page refererencing in free pages");
@@ -629,7 +629,7 @@ bool FileGDBTable::CheckFreeListConsistency()
         uint32_t nActualCount = 0;
         while (nPageIdx != MINUS_ONE)
         {
-            if (setVisitedPages.find(nPageIdx) != setVisitedPages.end())
+            if (cpl::contains(setVisitedPages, nPageIdx))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cyclic page refererencing or page referenced more "
@@ -706,7 +706,7 @@ bool FileGDBTable::CheckFreeListConsistency()
                     return false;
                 }
 
-                if (aSetOffsets.find(nOffset) != aSetOffsets.end())
+                if (cpl::contains(aSetOffsets, nOffset))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Page %u contains free area that points to "

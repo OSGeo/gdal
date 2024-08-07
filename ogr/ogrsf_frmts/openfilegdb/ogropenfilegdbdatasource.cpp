@@ -462,8 +462,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
                 const int idx = oIter.second;
                 CPLString osFilename(CPLFormFilename(
                     m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable"));
-                if (oSetIgnoredRasterLayerTableNum.find(idx) ==
-                        oSetIgnoredRasterLayerTableNum.end() &&
+                if (!cpl::contains(oSetIgnoredRasterLayerTableNum, idx) &&
                     FileExists(osFilename))
                 {
                     m_apoLayers.emplace_back(
@@ -528,14 +527,13 @@ OGRLayer *OGROpenFileGDBDataSource::AddLayer(
     const CPLString &osDocumentation, OGRwkbGeometryType eGeomType,
     const std::string &osParentDefinition)
 {
-    std::map<std::string, int>::const_iterator oIter =
-        m_osMapNameToIdx.find(osName);
+    const auto oIter = m_osMapNameToIdx.find(osName);
     int idx = 0;
     if (oIter != m_osMapNameToIdx.end())
         idx = oIter->second;
     if (idx > 0 && (nInterestTable <= 0 || nInterestTable == idx))
     {
-        m_osMapNameToIdx.erase(osName);
+        m_osMapNameToIdx.erase(oIter);
 
         CPLString osFilename =
             CPLFormFilename(m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable");
@@ -1226,11 +1224,10 @@ std::unique_ptr<OGROpenFileGDBLayer>
 OGROpenFileGDBDataSource::BuildLayerFromName(const char *pszName)
 {
 
-    std::map<std::string, int>::const_iterator oIter =
-        m_osMapNameToIdx.find(pszName);
+    const auto oIter = m_osMapNameToIdx.find(pszName);
     if (oIter != m_osMapNameToIdx.end())
     {
-        int idx = oIter->second;
+        const int idx = oIter->second;
         CPLString osFilename(
             CPLFormFilename(m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable"));
         if (FileExists(osFilename))
