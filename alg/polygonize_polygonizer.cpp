@@ -35,29 +35,18 @@ namespace gdal
 {
 namespace polygonizer
 {
-
-RPolygon::~RPolygon()
-{
-    for (auto &arc : oArcs)
-    {
-        delete arc;
-    }
-}
-
 IndexedArc RPolygon::newArc(bool bFollowRighthand)
 {
-    Arc *poArc = new Arc();
-    std::size_t iArcIndex = oArcs.size();
-    oArcs.push_back(poArc);
-    oArcRighthandFollow.push_back(bFollowRighthand);
-    oArcConnections.push_back(iArcIndex);
-    return IndexedArc{poArc, iArcIndex};
+    const std::size_t iArcIndex = oArcs.size();
+    const auto &oNewArc =
+        oArcs.emplace_back(static_cast<unsigned>(iArcIndex), bFollowRighthand);
+    return IndexedArc{oNewArc.poArc.get(), iArcIndex};
 }
 
 void RPolygon::setArcConnection(const IndexedArc &oArc,
                                 const IndexedArc &oNextArc)
 {
-    oArcConnections[oArc.iIndex] = oNextArc.iIndex;
+    oArcs[oArc.iIndex].nConnection = static_cast<unsigned>(oNextArc.iIndex);
 }
 
 void RPolygon::updateBottomRightPos(IndexType iRow, IndexType iCol)
@@ -361,13 +350,14 @@ Polygonizer<PolyIdType, DataType>::~Polygonizer()
 template <typename PolyIdType, typename DataType>
 RPolygon *Polygonizer<PolyIdType, DataType>::getPolygon(PolyIdType nPolygonId)
 {
-    if (oPolygonMap_.count(nPolygonId) == 0)
+    const auto oIter = oPolygonMap_.find(nPolygonId);
+    if (oIter == oPolygonMap_.end())
     {
         return createPolygon(nPolygonId);
     }
     else
     {
-        return oPolygonMap_[nPolygonId];
+        return oIter->second;
     }
 }
 
@@ -383,75 +373,87 @@ Polygonizer<PolyIdType, DataType>::createPolygon(PolyIdType nPolygonId)
 template <typename PolyIdType, typename DataType>
 void Polygonizer<PolyIdType, DataType>::destroyPolygon(PolyIdType nPolygonId)
 {
-    delete oPolygonMap_[nPolygonId];
-    oPolygonMap_.erase(nPolygonId);
+    const auto oIter = oPolygonMap_.find(nPolygonId);
+    CPLAssert(oIter != oPolygonMap_.end());
+    delete oIter->second;
+    oPolygonMap_.erase(oIter);
 }
 
 template <typename PolyIdType, typename DataType>
-void Polygonizer<PolyIdType, DataType>::processLine(
+bool Polygonizer<PolyIdType, DataType>::processLine(
     const PolyIdType *panThisLineId, const DataType *panLastLineVal,
     TwoArm *poThisLineArm, TwoArm *poLastLineArm, const IndexType nCurrentRow,
     const IndexType nCols)
 {
     TwoArm *poCurrent, *poAbove, *poLeft;
 
-    poCurrent = poThisLineArm + 1;
-    poCurrent->iRow = nCurrentRow;
-    poCurrent->iCol = 0;
-    poCurrent->poPolyInside = getPolygon(panThisLineId[0]);
-    poAbove = poLastLineArm + 1;
-    poLeft = poThisLineArm;
-    poLeft->poPolyInside = poTheOuterPolygon_;
-    ProcessArmConnections(poCurrent, poAbove, poLeft);
-    for (IndexType col = 1; col < nCols; ++col)
+    try
     {
-        IndexType iArmIndex = col + 1;
-        poCurrent = poThisLineArm + iArmIndex;
+        poCurrent = poThisLineArm + 1;
         poCurrent->iRow = nCurrentRow;
-        poCurrent->iCol = col;
-        poCurrent->poPolyInside = getPolygon(panThisLineId[col]);
-        poAbove = poLastLineArm + iArmIndex;
-        poLeft = poThisLineArm + iArmIndex - 1;
+        poCurrent->iCol = 0;
+        poCurrent->poPolyInside = getPolygon(panThisLineId[0]);
+        poAbove = poLastLineArm + 1;
+        poLeft = poThisLineArm;
+        poLeft->poPolyInside = poTheOuterPolygon_;
         ProcessArmConnections(poCurrent, poAbove, poLeft);
-    }
-    poCurrent = poThisLineArm + nCols + 1;
-    poCurrent->iRow = nCurrentRow;
-    poCurrent->iCol = nCols;
-    poCurrent->poPolyInside = poTheOuterPolygon_;
-    poAbove = poLastLineArm + nCols + 1;
-    poAbove->poPolyInside = poTheOuterPolygon_;
-    poLeft = poThisLineArm + nCols;
-    ProcessArmConnections(poCurrent, poAbove, poLeft);
-
-    /**
-     *
-     * Find those polygons haven't been processed on this line as we can be sure they are completed
-     *
-     */
-    std::vector<PolygonMapEntry> oCompletedPolygons;
-    for (auto &entry : oPolygonMap_)
-    {
-        RPolygon *poPolygon = entry.second;
-
-        if (poPolygon->iBottomRightRow + 1 == nCurrentRow)
+        for (IndexType col = 1; col < nCols; ++col)
         {
-            oCompletedPolygons.push_back(entry);
+            IndexType iArmIndex = col + 1;
+            poCurrent = poThisLineArm + iArmIndex;
+            poCurrent->iRow = nCurrentRow;
+            poCurrent->iCol = col;
+            poCurrent->poPolyInside = getPolygon(panThisLineId[col]);
+            poAbove = poLastLineArm + iArmIndex;
+            poLeft = poThisLineArm + iArmIndex - 1;
+            ProcessArmConnections(poCurrent, poAbove, poLeft);
         }
-    }
-    // cppcheck-suppress constVariableReference
-    for (auto &entry : oCompletedPolygons)
-    {
-        PolyIdType nPolyId = entry.first;
-        RPolygon *poPolygon = entry.second;
+        poCurrent = poThisLineArm + nCols + 1;
+        poCurrent->iRow = nCurrentRow;
+        poCurrent->iCol = nCols;
+        poCurrent->poPolyInside = poTheOuterPolygon_;
+        poAbove = poLastLineArm + nCols + 1;
+        poAbove->poPolyInside = poTheOuterPolygon_;
+        poLeft = poThisLineArm + nCols;
+        ProcessArmConnections(poCurrent, poAbove, poLeft);
 
-        // emit valid polygon only
-        if (nPolyId != nInvalidPolyId_)
+        /**
+         *
+         * Find those polygons haven't been processed on this line as we can be sure they are completed
+         *
+         */
+        std::vector<PolygonMapEntry> oCompletedPolygons;
+        for (auto &entry : oPolygonMap_)
         {
-            poPolygonReceiver_->receive(
-                poPolygon, panLastLineVal[poPolygon->iBottomRightCol]);
-        }
+            RPolygon *poPolygon = entry.second;
 
-        destroyPolygon(nPolyId);
+            if (poPolygon->iBottomRightRow + 1 == nCurrentRow)
+            {
+                oCompletedPolygons.push_back(entry);
+            }
+        }
+        // cppcheck-suppress constVariableReference
+        for (auto &entry : oCompletedPolygons)
+        {
+            PolyIdType nPolyId = entry.first;
+            RPolygon *poPolygon = entry.second;
+
+            // emit valid polygon only
+            if (nPolyId != nInvalidPolyId_)
+            {
+                poPolygonReceiver_->receive(
+                    poPolygon, panLastLineVal[poPolygon->iBottomRightCol]);
+            }
+
+            destroyPolygon(nPolyId);
+        }
+        return true;
+    }
+    catch (const std::bad_alloc &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Out of memory in Polygonizer::processLine");
+        return false;
     }
 }
 
@@ -459,35 +461,62 @@ template <typename DataType>
 OGRPolygonWriter<DataType>::OGRPolygonWriter(OGRLayerH hOutLayer,
                                              int iPixValField,
                                              double *padfGeoTransform)
-    : PolygonReceiver<DataType>(), hOutLayer_(hOutLayer),
+    : PolygonReceiver<DataType>(), poOutLayer_(OGRLayer::FromHandle(hOutLayer)),
       iPixValField_(iPixValField), padfGeoTransform_(padfGeoTransform)
 {
+    poFeature_ = std::make_unique<OGRFeature>(poOutLayer_->GetLayerDefn());
+    poPolygon_ = new OGRPolygon();
+    poFeature_->SetGeometryDirectly(poPolygon_);
 }
 
 template <typename DataType>
 void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
                                          DataType nPolygonCellValue)
 {
-    std::vector<bool> oAccessedArc(poPolygon->oArcConnections.size(), false);
+    std::vector<bool> oAccessedArc(poPolygon->oArcs.size(), false);
     double *padfGeoTransform = padfGeoTransform_;
 
-    OGRGeometryH hPolygon = OGR_G_CreateGeometry(wkbPolygon);
-
-    auto AddRingToPolygon = [&poPolygon, &oAccessedArc, &hPolygon,
-                             padfGeoTransform](std::size_t iFirstArcIndex)
+    OGRLinearRing *poFirstRing = poPolygon_->getExteriorRing();
+    if (poFirstRing && poPolygon_->getNumInteriorRings() == 0)
     {
-        OGRGeometryH hRing = OGR_G_CreateGeometry(wkbLinearRing);
+        poFirstRing->empty();
+    }
+    else
+    {
+        poFirstRing = nullptr;
+        poPolygon_->empty();
+    }
+
+    auto AddRingToPolygon =
+        [this, &poPolygon, &oAccessedArc,
+         padfGeoTransform](std::size_t iFirstArcIndex, OGRLinearRing *poRing)
+    {
+        std::unique_ptr<OGRLinearRing> poNewRing;
+        if (!poRing)
+        {
+            poNewRing = std::make_unique<OGRLinearRing>();
+            poRing = poNewRing.get();
+        }
 
         auto AddArcToRing =
-            [&poPolygon, &hRing, padfGeoTransform](std::size_t iArcIndex)
+            [&poPolygon, poRing, padfGeoTransform](std::size_t iArcIndex)
         {
-            auto oArc = poPolygon->oArcs[iArcIndex];
-            bool bArcFollowRighthand =
-                poPolygon->oArcRighthandFollow[iArcIndex];
-            for (std::size_t i = 0; i < oArc->size(); ++i)
+            const auto &oArc = poPolygon->oArcs[iArcIndex];
+            const bool bArcFollowRighthand = oArc.bFollowRighthand;
+            const int nArcPointCount = static_cast<int>(oArc.poArc->size());
+            int nDstPointIdx = poRing->getNumPoints();
+            poRing->setNumPoints(nDstPointIdx + nArcPointCount,
+                                 /* bZeroizeNewContent = */ false);
+            if (poRing->getNumPoints() < nDstPointIdx + nArcPointCount)
+            {
+                return false;
+            }
+            for (int i = 0; i < nArcPointCount; ++i)
             {
                 const Point &oPixel =
-                    (*oArc)[bArcFollowRighthand ? i : (oArc->size() - i - 1)];
+                    (*oArc.poArc)[bArcFollowRighthand
+                                      ? i
+                                      : (nArcPointCount - i - 1)];
 
                 const double dfX = padfGeoTransform[0] +
                                    oPixel[1] * padfGeoTransform[1] +
@@ -496,51 +525,68 @@ void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
                                    oPixel[1] * padfGeoTransform[4] +
                                    oPixel[0] * padfGeoTransform[5];
 
-                OGR_G_AddPoint_2D(hRing, dfX, dfY);
+                poRing->setPoint(nDstPointIdx, dfX, dfY);
+                ++nDstPointIdx;
             }
+            return true;
         };
 
-        AddArcToRing(iFirstArcIndex);
+        if (!AddArcToRing(iFirstArcIndex))
+        {
+            return false;
+        }
 
         std::size_t iArcIndex = iFirstArcIndex;
-        std::size_t iNextArcIndex = poPolygon->oArcConnections[iArcIndex];
+        std::size_t iNextArcIndex = poPolygon->oArcs[iArcIndex].nConnection;
         oAccessedArc[iArcIndex] = true;
         while (iNextArcIndex != iFirstArcIndex)
         {
-            AddArcToRing(iNextArcIndex);
+            if (!AddArcToRing(iNextArcIndex))
+            {
+                return false;
+            }
             iArcIndex = iNextArcIndex;
-            iNextArcIndex = poPolygon->oArcConnections[iArcIndex];
+            iNextArcIndex = poPolygon->oArcs[iArcIndex].nConnection;
             oAccessedArc[iArcIndex] = true;
         }
 
         // close ring manually
-        OGR_G_AddPoint_2D(hRing, OGR_G_GetX(hRing, 0), OGR_G_GetY(hRing, 0));
+        poRing->closeRings();
 
-        OGR_G_AddGeometryDirectly(hPolygon, hRing);
+        if (poNewRing)
+            poPolygon_->addRingDirectly(poNewRing.release());
+        return true;
     };
 
-    std::vector<bool>::iterator ite;
-    while ((ite = std::find_if_not(oAccessedArc.begin(), oAccessedArc.end(),
-                                   [](bool accessed) { return accessed; })) !=
-           oAccessedArc.end())
+    for (size_t i = 0; i < oAccessedArc.size(); ++i)
     {
-        AddRingToPolygon(ite - oAccessedArc.begin());
+        if (!oAccessedArc[i])
+        {
+            if (!AddRingToPolygon(i, poFirstRing))
+            {
+                eErr_ = CE_Failure;
+                return;
+            }
+            poFirstRing = nullptr;
+        }
     }
 
     // Create the feature object
-    OGRFeatureH hFeat = OGR_F_Create(OGR_L_GetLayerDefn(hOutLayer_));
-
-    OGR_F_SetGeometryDirectly(hFeat, hPolygon);
-
+    poFeature_->SetFID(OGRNullFID);
     if (iPixValField_ >= 0)
-        OGR_F_SetFieldDouble(hFeat, iPixValField_,
+        poFeature_->SetField(iPixValField_,
                              static_cast<double>(nPolygonCellValue));
 
     // Write the to the layer.
-    if (OGR_L_CreateFeature(hOutLayer_, hFeat) != OGRERR_NONE)
+    if (poOutLayer_->CreateFeature(poFeature_.get()) != OGRERR_NONE)
         eErr_ = CE_Failure;
 
-    OGR_F_Destroy(hFeat);
+    // Shouldn't happen for well behaved drivers, but better check...
+    else if (poFeature_->GetGeometryRef() != poPolygon_)
+    {
+        poPolygon_ = new OGRPolygon();
+        poFeature_->SetGeometryDirectly(poPolygon_);
+    }
 }
 
 }  // namespace polygonizer
