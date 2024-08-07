@@ -36,6 +36,8 @@
 #include <cmath>
 #include <sstream>
 
+#include "cpl_float.h"
+
 namespace rdb
 {
 void RDBOverview::addRDBNode(RDBNode &oRDBNode, double dfXMin, double dfYMin,
@@ -184,22 +186,22 @@ template <typename T> class RDBRasterBandInternal final : public RDBRasterBand
         }
         else
         {
-            if (oPointAttribute.maximumValue < std::numeric_limits<T>::max())
+            if (oPointAttribute.maximumValue < GDALNumericLimits<T>::max())
             {
                 if (pbSuccess != nullptr)
                 {
                     *pbSuccess = TRUE;
                 }
-                return std::numeric_limits<T>::max();
+                return GDALNumericLimits<T>::max();
             }
             else if (oPointAttribute.minimumValue >
-                     std::numeric_limits<T>::lowest())
+                     GDALNumericLimits<T>::lowest())
             {
                 if (pbSuccess != nullptr)
                 {
                     *pbSuccess = TRUE;
                 }
-                return std::numeric_limits<T>::lowest();
+                return GDALNumericLimits<T>::lowest();
             }
             // Another no data value could be any value that is actually not in
             // the data but in the range of specified rdb attribute. However,

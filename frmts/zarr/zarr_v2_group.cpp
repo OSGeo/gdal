@@ -749,6 +749,12 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
                     dtype.Set(dummy, "<i8");
                     break;
                 }
+                case GDT_Float16:
+                {
+                    elt.nativeType = DtypeElt::NativeType::IEEEFP;
+                    dtype.Set(dummy, "<f2");
+                    break;
+                }
                 case GDT_Float32:
                 {
                     elt.nativeType = DtypeElt::NativeType::IEEEFP;
@@ -768,6 +774,12 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
                     bUnsupported = true;
                     break;
                 }
+                case GDT_CFloat16:
+                {
+                    elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
+                    dtype.Set(dummy, "<c4");
+                    break;
+                }
                 case GDT_CFloat32:
                 {
                     elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
@@ -782,8 +794,8 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
                 }
                 case GDT_TypeCount:
                 {
-                    static_assert(GDT_TypeCount == GDT_Int8 + 1,
-                                  "GDT_TypeCount == GDT_Int8 + 1");
+                    static_assert(GDT_TypeCount == GDT_CFloat16 + 1,
+                                  "GDT_TypeCount == GDT_CFloat16 + 1");
                     break;
                 }
             }
@@ -1049,6 +1061,9 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
                 case GDT_Int64:
                     oFilter.Add("dtype", "<i8");
                     break;
+                case GDT_Float16:
+                    oFilter.Add("dtype", "<f2");
+                    break;
                 case GDT_Float32:
                     oFilter.Add("dtype", "<f4");
                     break;
@@ -1060,6 +1075,9 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
                     break;
                 case GDT_CInt32:
                     oFilter.Add("dtype", "<i4");
+                    break;
+                case GDT_CFloat16:
+                    oFilter.Add("dtype", "<f2");
                     break;
                 case GDT_CFloat32:
                     oFilter.Add("dtype", "<f4");

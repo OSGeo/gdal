@@ -595,6 +595,13 @@ extern "C++"
 #ifndef DOXYGEN_SKIP
 #include <cmath>
 #endif
+#ifdef SIZEOF__FLOAT16
+    static inline int CPLIsNan(_Float16 f)
+    {
+        return std::isnan(float(f));
+    }
+#endif
+
     static inline int CPLIsNan(float f)
     {
         return std::isnan(f);
@@ -605,6 +612,13 @@ extern "C++"
         return std::isnan(f);
     }
 
+#ifdef SIZEOF__FLOAT16
+    static inline int CPLIsInf(_Float16 f)
+    {
+        return std::isinf(float(f));
+    }
+#endif
+
     static inline int CPLIsInf(float f)
     {
         return std::isinf(f);
@@ -614,6 +628,13 @@ extern "C++"
     {
         return std::isinf(f);
     }
+
+#ifdef SIZEOF__FLOAT16
+    static inline int CPLIsFinite(_Float16 f)
+    {
+        return std::isfinite(float(f));
+    }
+#endif
 
     static inline int CPLIsFinite(float f)
     {
@@ -633,6 +654,13 @@ extern "C++"
 /* gcc -Wfloat-conversion when using isnan()/isinf() macros */
 extern "C++"
 {
+#ifdef SIZEOF__FLOAT16
+    static inline int CPLIsNan(_Float16 f)
+    {
+        return __isnanf(float(f));
+    }
+#endif
+
     static inline int CPLIsNan(float f)
     {
         return __isnanf(f);
@@ -643,6 +671,13 @@ extern "C++"
         return __isnan(f);
     }
 
+#ifdef SIZEOF__FLOAT16
+    static inline int CPLIsInf(_Float16 f)
+    {
+        return __isinff(float(f));
+    }
+#endif
+
     static inline int CPLIsInf(float f)
     {
         return __isinff(f);
@@ -652,6 +687,13 @@ extern "C++"
     {
         return __isinf(f);
     }
+
+#ifdef SIZEOF__FLOAT16
+    static inline int CPLIsFinite(_Float16 f)
+    {
+        return !__isnanf(float(f)) && !__isinff(float(f));
+    }
+#endif
 
     static inline int CPLIsFinite(float f)
     {

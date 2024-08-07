@@ -28,6 +28,7 @@
 
 #include "tiledbheaders.h"
 
+#include "cpl_float.h"
 #include "cpl_json.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
@@ -2384,8 +2385,8 @@ CreateQueryConditionForIntType(tiledb::Context &ctx,
                                tiledb_query_condition_op_t tiledb_op,
                                bool &bAlwaysTrue, bool &bAlwaysFalse)
 {
-    if (nVal >= static_cast<int>(std::numeric_limits<T>::min()) &&
-        nVal <= static_cast<int>(std::numeric_limits<T>::max()))
+    if (nVal >= static_cast<int>(GDALNumericLimits<T>::min()) &&
+        nVal <= static_cast<int>(GDALNumericLimits<T>::max()))
     {
         return std::make_unique<tiledb::QueryCondition>(
             tiledb::QueryCondition::create(ctx, poFieldDefn->GetNameRef(),
@@ -2399,12 +2400,12 @@ CreateQueryConditionForIntType(tiledb::Context &ctx,
     {
         bAlwaysTrue = true;
     }
-    else if (nVal > static_cast<int>(std::numeric_limits<T>::max()))
+    else if (nVal > static_cast<int>(GDALNumericLimits<T>::max()))
     {
         bAlwaysTrue = (tiledb_op == TILEDB_LE || tiledb_op == TILEDB_LT);
         bAlwaysFalse = (tiledb_op == TILEDB_GE || tiledb_op == TILEDB_GT);
     }
-    else if (nVal < static_cast<int>(std::numeric_limits<T>::min()))
+    else if (nVal < static_cast<int>(GDALNumericLimits<T>::min()))
     {
         bAlwaysTrue = (tiledb_op == TILEDB_GE || tiledb_op == TILEDB_GT);
         bAlwaysFalse = (tiledb_op == TILEDB_LE || tiledb_op == TILEDB_LT);
@@ -4101,7 +4102,7 @@ OGRErr OGRTileDBLayer::ICreateFeature(OGRFeature *poFeature)
             {
                 const double dfVal =
                     bFieldIsValid ? poFeature->GetFieldAsDoubleUnsafe(i)
-                                  : std::numeric_limits<double>::quiet_NaN();
+                                  : GDALNumericLimits<double>::quiet_NaN();
                 if (poFieldDefn->GetSubType() == OFSTFloat32)
                     std::get<std::shared_ptr<std::vector<float>>>(fieldValues)
                         ->push_back(static_cast<float>(dfVal));

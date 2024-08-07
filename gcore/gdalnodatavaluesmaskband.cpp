@@ -143,6 +143,8 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
             eWrkDT = GDT_Int32;
             break;
 
+        case GDT_Float16:
+        case GDT_CFloat16:
         case GDT_Float32:
         case GDT_CFloat32:
             eWrkDT = GDT_Float32;

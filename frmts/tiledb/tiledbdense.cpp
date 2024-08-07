@@ -529,6 +529,11 @@ double TileDBRasterBand::GetNoDataValue(int *pbHasNoData)
                     dfNoData = static_cast<double>(
                         *static_cast<const int64_t *>(value));
                     break;
+                case GDT_Float16:
+                case GDT_CFloat16:
+                    // tileDB does not support float16
+                    CPLAssert(false);
+                    break;
                 case GDT_Float32:
                 case GDT_CFloat32:
                     dfNoData = *static_cast<const float *>(value);
@@ -615,9 +620,14 @@ CPLErr TileDBRasterBand::SetNoDataValue(double dfNoData)
         case GDT_Int64:
             bIsValid = IsValidNoData<int64_t>(dfNoData);
             break;
+        case GDT_Float16:
+        case GDT_CFloat16:
+            // tileDB does not support float16
+            bIsValid = CPLIsNan(dfNoData) || IsValidNoData<float>(dfNoData);
+            break;
         case GDT_Float32:
         case GDT_CFloat32:
-            bIsValid = std::isnan(dfNoData) || IsValidNoData<float>(dfNoData);
+            bIsValid = CPLIsNan(dfNoData) || IsValidNoData<float>(dfNoData);
             break;
         case GDT_Float64:
         case GDT_CFloat64:

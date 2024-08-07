@@ -93,6 +93,7 @@ class GDALRasterAttributeTableFromMDArrays final
             case GDT_UInt32:
             case GDT_Int64:
             case GDT_UInt64:
+            case GDT_Float16:
             case GDT_Float32:
             case GDT_Float64:
                 return GFT_Real;

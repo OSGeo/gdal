@@ -52,6 +52,9 @@
 /* The size of `long int', as computed by sizeof. */
 #cmakedefine SIZEOF_LONG_INT @SIZEOF_LONG_INT@
 
+/* The size of `_Float16', as computed by sizeof. */
+#cmakedefine SIZEOF__FLOAT16 @SIZEOF__FLOAT16@
+
 /* Define if you want to use pthreads based multiprocessing support */
 #cmakedefine CPL_MULTIPROC_PTHREAD 1
 

@@ -38,6 +38,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_mask.h"
 #include "cpl_minixml.h"
 #include "cpl_progress.h"
@@ -325,8 +326,8 @@ static CPLErr GDALWarpNoDataMaskerT(const double *padfNoData, size_t nPixels,
                                     int *pbOutAllValid)
 {
     // Nothing to do if value is out of range.
-    if (padfNoData[0] < std::numeric_limits<T>::min() ||
-        padfNoData[0] > std::numeric_limits<T>::max() + 0.000001 ||
+    if (padfNoData[0] < GDALNumericLimits<T>::min() ||
+        padfNoData[0] > GDALNumericLimits<T>::max() + 0.000001 ||
         padfNoData[1] != 0.0)
     {
         *pbOutAllValid = TRUE;
@@ -2060,17 +2061,17 @@ GDALWarpOptions *CPL_STDCALL GDALDeserializeWarpOptions(CPLXMLNode *psTree)
                                        GDALDataType eDataType) -> double
         {
             if (eDataType == GDT_Float32 &&
-                CPLString().Printf(
-                    "%.16g", -std::numeric_limits<float>::max()) == pszValueIn)
+                CPLString().Printf("%.16g", -GDALNumericLimits<float>::max()) ==
+                    pszValueIn)
             {
-                return -std::numeric_limits<float>::max();
+                return -GDALNumericLimits<float>::max();
             }
             else if (eDataType == GDT_Float32 &&
                      CPLString().Printf("%.16g",
-                                        std::numeric_limits<float>::max()) ==
+                                        GDALNumericLimits<float>::max()) ==
                          pszValueIn)
             {
-                return std::numeric_limits<float>::max();
+                return GDALNumericLimits<float>::max();
             }
             else
             {

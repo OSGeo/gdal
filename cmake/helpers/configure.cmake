@@ -43,6 +43,7 @@ check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
 check_type_size("long int" SIZEOF_LONG_INT)
 check_type_size("void*" SIZEOF_VOIDP)
 check_type_size("size_t" SIZEOF_SIZE_T)
+check_type_size("_Float16" SIZEOF__FLOAT16)
 
 check_function_exists(ctime_r HAVE_CTIME_R)
 check_function_exists(gmtime_r HAVE_GMTIME_R)
