@@ -1387,6 +1387,13 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
         "style1_highlight", 'SYMBOL(id:"http://style1_highlight",c:#10325476)'
     )
     ds.SetStyleTable(style_table)
+    lyr = ds.CreateLayer("test")
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetStyleString("@style1_normal")
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetStyleString("@unknown_style")
+    lyr.CreateFeature(feat)
     ds = None
 
     with gdaltest.vsi_open(
@@ -1428,6 +1435,21 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
     if lines_got != lines_ref:
         print(data)
         pytest.fail(styles)
+
+    ds = ogr.Open(tmp_vsimem / "ogr_libkml_read_write_style_write.kml")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetStyleString() == "@style1_normal"
+    f = lyr.GetNextFeature()
+    assert f.GetStyleString() == "@unknown_style"
+
+    with gdaltest.config_option("LIBKML_RESOLVE_STYLE", "YES"):
+        ds = ogr.Open(tmp_vsimem / "ogr_libkml_read_write_style_write.kml")
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetStyleString() == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
+        f = lyr.GetNextFeature()
+        assert f.GetStyleString() == "@unknown_style"
 
 
 ###############################################################################
