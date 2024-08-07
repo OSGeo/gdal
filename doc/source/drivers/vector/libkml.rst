@@ -420,7 +420,8 @@ options :
 -  .. lco:: NAME
 
       `<name> <https://developers.google.com/kml/documentation/kmlreference#name>`__
-      element
+      element. Also used to set the name of the NetworkLink pointing to the layer,
+      starting with GDAL 3.10
 
 -  .. lco:: VISIBILITY
 
