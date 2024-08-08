@@ -741,12 +741,11 @@ def test_ogr_rfc28_union_all_three_branch_and(data_ds):
 # Test lack of end-of-string character
 
 
+@gdaltest.enable_exceptions()
 def test_ogr_rfc28_33(data_ds):
 
-    with gdal.quiet_errors():
-        lyr = data_ds.ExecuteSQL("select * from idlink where name='foo")
-
-    assert lyr is None
+    with pytest.raises(Exception, match="Did not find end-of-string character"):
+        data_ds.ExecuteSQL("select * from idlink'")
 
 
 ###############################################################################
