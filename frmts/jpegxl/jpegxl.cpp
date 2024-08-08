@@ -1838,7 +1838,8 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
                                    nJPEGXLContent);
 
                 size_t nInsertPos = 0;
-                if (abyData[0] == 0xff && abyData[1] == 0x0a)
+                if (abyData.size() >= 2 && abyData[0] == 0xff &&
+                    abyData[1] == 0x0a)
                 {
                     // If we get a "naked" codestream, insert it into a
                     // ISOBMFF-based container
