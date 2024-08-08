@@ -118,11 +118,14 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
 
         while (*pszInput != '\0')
         {
-            if (chQuote == '"' && *pszInput == '\\' && pszInput[1] == '"')
+            // Not totally sure we need to preserve this way of escaping for
+            // strings between double-quotes
+            if (chQuote == '"' && *pszInput == '\\')
+            {
                 pszInput++;
-            else if (chQuote == '\'' && *pszInput == '\\' &&
-                     pszInput[1] == '\'')
-                pszInput++;
+                if (*pszInput == '\0')
+                    break;
+            }
             else if (chQuote == '\'' && *pszInput == '\'' &&
                      pszInput[1] == '\'')
                 pszInput++;

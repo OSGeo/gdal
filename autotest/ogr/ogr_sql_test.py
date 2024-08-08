@@ -1206,11 +1206,11 @@ def test_ogr_sql_42(data_ds):
 
 def test_ogr_sql_43(data_ds):
 
-    sql = "SELECT '\"' as a, '\\'' as b, '''' as c FROM poly"
+    sql = "SELECT '\"' as a, '\\' as b, '''' as c FROM poly"
     with data_ds.ExecuteSQL(sql) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat["a"] == '"'
-        assert feat["b"] == "'"
+        assert feat["b"] == "\\"
         assert feat["c"] == "'"
 
 
