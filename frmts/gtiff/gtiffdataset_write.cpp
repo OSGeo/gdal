@@ -2803,7 +2803,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     CPLString osMetadata;
 
-    GTIFFBuildOverviewMetadata("NONE", this, osMetadata);
+    GTIFFBuildOverviewMetadata("NONE", this, false, osMetadata);
 
     int nCompression;
     uint16_t nPlanarConfig;
@@ -3094,7 +3094,8 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     /* -------------------------------------------------------------------- */
     CPLString osMetadata;
 
-    GTIFFBuildOverviewMetadata(pszResampling, this, osMetadata);
+    const bool bIsForMaskBand = nBands == 1 && GetRasterBand(1)->IsMaskBand();
+    GTIFFBuildOverviewMetadata(pszResampling, this, bIsForMaskBand, osMetadata);
 
     int nCompression;
     uint16_t nPlanarConfig;
