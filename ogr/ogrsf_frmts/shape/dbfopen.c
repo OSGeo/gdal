@@ -1144,6 +1144,8 @@ static bool DBFIsValueNULL(char chType, const char *pszValue, int size)
             return true;
 
         case 'D':
+        {
+            const char DIGIT_ZERO = '0';
             /* NULL date fields have value "00000000" or "0"*size */
             /* Some DBF files have fields filled with spaces */
             /* (trimmed by DBFReadStringAttribute) to indicate null */
@@ -1154,9 +1156,10 @@ static bool DBFIsValueNULL(char chType, const char *pszValue, int size)
                 strcmp(pszValue, " ") == 0 || strcmp(pszValue, "0") == 0)
                 return true;
             for (int i = 0; i < size; i++)
-                if (pszValue[i] != '0')
+                if (pszValue[i] != DIGIT_ZERO)
                     return false;
             return true;
+        }
 
         case 'L':
             /* NULL boolean fields have value "?" */
