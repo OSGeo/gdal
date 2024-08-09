@@ -2536,23 +2536,8 @@ OGRPGTableLayer::RunCreateSpatialIndex(const OGRPGGeomFieldDefn *poGeomField,
     PGconn *hPGConn = poDS->GetPGConn();
     CPLString osCommand;
 
-    std::string osIndexName(pszTableName);
-    std::string osSuffix("_");
-    osSuffix += poGeomField->GetNameRef();
-    osSuffix += "_geom_idx";
-    if (bLaunderColumnNames)
-    {
-        if (osSuffix.size() >= static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
-        {
-            osSuffix = "_";
-            osSuffix += CPLSPrintf("%d", nIdx);
-            osSuffix += "_geom_idx";
-        }
-        if (osIndexName.size() + osSuffix.size() >
-            static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
-            osIndexName.resize(OGR_PG_NAMEDATALEN - 1 - osSuffix.size());
-    }
-    osIndexName += osSuffix;
+    const std::string osIndexName(OGRPGCommonGenerateSpatialIndexName(
+        pszTableName, poGeomField->GetNameRef(), nIdx));
 
     osCommand.Printf("CREATE INDEX %s ON %s USING %s (%s)",
                      OGRPGEscapeColumnName(osIndexName.c_str()).c_str(),
