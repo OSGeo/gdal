@@ -60,13 +60,11 @@ Options parseArgs(GDALArgumentParser &argParser, const CPLStringList &aosArgv)
     argParser.add_output_format_argument(opts.outputFormat);
     argParser.add_argument("-ox")
         .store_into(opts.observer.x)
-        .required()
         .metavar("<value>")
         .help(_("The X position of the observer (in SRS units)."));
 
     argParser.add_argument("-oy")
         .store_into(opts.observer.y)
-        .required()
         .metavar("<value>")
         .help(_("The Y position of the observer (in SRS units)."));
 
@@ -226,11 +224,22 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
 
     if (opts.outputMode == Viewshed::OutputMode::Cumulative)
     {
-        for (const char *opt : {"-ox", "-oy", "-oz", "-vv", "-iv", "-md"})
+        for (const char *opt : {"-ox", "-oy", "-vv", "-iv", "-md"})
             if (argParser.is_used(opt))
             {
-                std::string err = "Options " + std::string(opt) +
+                std::string err = "Option " + std::string(opt) +
                                   " can't be used in cumulative mode.";
+                CPLError(CE_Failure, CPLE_AppDefined, "%s", err.c_str());
+                exit(2);
+            }
+    }
+    else
+    {
+        for (const char *opt : {"-ox", "-oy"})
+            if (!argParser.is_used(opt))
+            {
+                std::string err =
+                    "Option " + std::string(opt) + " is required.";
                 CPLError(CE_Failure, CPLE_AppDefined, "%s", err.c_str());
                 exit(2);
             }

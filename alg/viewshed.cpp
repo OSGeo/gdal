@@ -25,9 +25,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/**
-#include <iostream>
-**/
 #include <future>
 
 #include "gdal_alg.h"
@@ -453,6 +450,11 @@ bool Viewshed::runCumulative(const std::string &srcFilename,
 {
     std::vector<std::pair<int, int>> observers;
 
+    // In cumulative view, we run the executors in normal mode and want "1" where things
+    // are visible.
+    oOpts.outputMode = OutputMode::Normal;
+    oOpts.visibleVal = 1;
+
     //ABELL
     /**
     if (!setupProgress(pfnProgress, pProgressArg))
@@ -466,8 +468,8 @@ bool Viewshed::runCumulative(const std::string &srcFilename,
     oOutExtent.xStop = GDALGetRasterBandXSize(pSrcBand);
     oOutExtent.yStop = GDALGetRasterBandYSize(pSrcBand);
 
-    for (int x = 0; x < oCurExtent.xStop; x += oOpts.observerSpacing)
-        for (int y = 0; y < oCurExtent.yStop; y += oOpts.observerSpacing)
+    for (int x = 0; x < oOutExtent.xStop; x += oOpts.observerSpacing)
+        for (int y = 0; y < oOutExtent.yStop; y += oOpts.observerSpacing)
             observers.emplace_back(x, y);
 
     std::queue<DatasetPtr> outputQueue;
@@ -490,12 +492,12 @@ bool Viewshed::runCumulative(const std::string &srcFilename,
 
                 DatasetPtr srcDs(
                     GDALDataset::Open(srcFilename.c_str(), GA_ReadOnly));
+
                 GDALDriver *memDriver =
                     GetGDALDriverManager()->GetDriverByName("MEM");
                 DatasetPtr dstDs(memDriver->Create("", oOutExtent.xSize(),
                                                    oOutExtent.ySize(), 1,
                                                    GDT_Byte, nullptr));
-
                 ViewshedExecutor executor(*srcDs->GetRasterBand(1),
                                           *dstDs->GetRasterBand(1), x, y,
                                           oOutExtent, oOutExtent, oOpts);
@@ -512,8 +514,6 @@ bool Viewshed::runCumulative(const std::string &srcFilename,
             });
     }
 
-    createOutputDataset(*pSrcBand, oOpts.outputFilename);
-
     // The first argument need not be the number of threads.
     createCumulativeDataset(numThreads, outputQueue, mutex, cv,
                             observers.size());
@@ -528,43 +528,26 @@ namespace
 
 bool sumDatasets(GDALDataset &dstDs, GDALDataset &srcDs)
 {
-    GDALRasterBand *srcBand = srcDs.GetRasterBand(1);
     GDALRasterBand *dstBand = dstDs.GetRasterBand(1);
-    int xsize = srcBand->GetXSize();
-    int ysize = srcBand->GetYSize();
+    int xsize = dstBand->GetXSize();
+    int ysize = dstBand->GetYSize();
 
-    int xBlockSize;
-    int yBlockSize;
-    srcBand->GetBlockSize(&xBlockSize, &yBlockSize);
+    // Source dataset is always a memory buffer.
+    uint8_t *pSrc = static_cast<uint8_t *>(srcDs.GetInternalHandle("MEMORY1"));
+    assert(pSrc);
 
-    std::vector<uint8_t> srcBuf(xBlockSize * yBlockSize);
-    std::vector<uint8_t> dstBuf(xBlockSize * yBlockSize);
+    // Space for destination line.
+    std::vector<uint8_t> dstBuf(xsize);
 
-    int x = 0;
-    int y = 0;
-    int xoff = 0;  // Block X offset
-    int yoff = 0;  // Block Y offset
-    while (y < ysize)
+    for (int y = 0; y < ysize; ++y)
     {
-        while (x < xsize)
-        {
-            if (srcBand->ReadBlock(xoff, yoff, srcBuf.data()) ||
-                dstBand->ReadBlock(xoff, yoff, dstBuf.data()))
-                return false;
-
-            for (size_t i = 0; i < srcBuf.size(); ++i)
-                dstBuf[i] += srcBuf[i];
-
-            if (dstBand->WriteBlock(xoff, yoff, dstBuf.data()))
-                return false;
-            std::fill(srcBuf.begin(), srcBuf.end(), 0);
-            xoff++;
-            x += xBlockSize;
-        }
-        x = 0;
-        xoff = 0;
-        y += yBlockSize;
-        yoff++;
+        (void)dstBand->RasterIO(GF_Read, 0, y, xsize, 1, dstBuf.data(), xsize,
+                                1, GDT_Byte, 0, 0, nullptr);
+        uint8_t *pDst = dstBuf.data();
+        for (int i = 0; i < xsize; ++i)
+            *pDst++ += *pSrc++;
+        (void)dstBand->RasterIO(GF_Write, 0, y, xsize, 1, dstBuf.data(), xsize,
+                                1, GDT_Byte, 0, 0, nullptr);
     }
     return true;
 }
@@ -647,8 +630,15 @@ void Combiner::sum(Viewshed::DatasetPtr src)
         m_dataset = std::move(src);
         return;
     }
+    GDALRasterBand *dstBand = m_dataset->GetRasterBand(1);
 
-    sumDatasets(*m_dataset, *src);
+    size_t size = dstBand->GetXSize() * dstBand->GetYSize();
+
+    uint8_t *dstP =
+        static_cast<uint8_t *>(m_dataset->GetInternalHandle("MEMORY1"));
+    uint8_t *srcP = static_cast<uint8_t *>(src->GetInternalHandle("MEMORY1"));
+    for (size_t i = 0; i <= size; ++i)
+        *dstP++ += *srcP++;
 }
 
 void Viewshed::createCumulativeDataset(size_t cnt,
@@ -657,6 +647,8 @@ void Viewshed::createCumulativeDataset(size_t cnt,
                                        std::condition_variable &cv,
                                        size_t numObservers)
 {
+    cnt = 1;
+
     // Make cnt observers.
     std::vector<Combiner> combiners(cnt,
                                     Combiner(queue, mutex, cv, numObservers));
@@ -671,10 +663,16 @@ void Viewshed::createCumulativeDataset(size_t cnt,
         f.wait();
 
     poDstDS = createOutputDataset(*pSrcBand, oOpts.outputFilename);
+    GDALRasterBand *band = poDstDS->GetRasterBand(1);
+    band->Fill(0);
 
     // Add it all up into the final dataset.
     for (Combiner &c : combiners)
-        sumDatasets(*poDstDS, *c.dataset());
+    {
+        DatasetPtr pSrcDataset = c.dataset();
+        if (pSrcDataset)
+            sumDatasets(*poDstDS, *pSrcDataset);
+    }
 }
 
 }  // namespace gdal
