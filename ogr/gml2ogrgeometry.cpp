@@ -852,6 +852,20 @@ static double GetDistanceInMetre(double dfDistance, const char *pszUnits)
 }
 
 /************************************************************************/
+/*                            GetSemiMajor()                            */
+/************************************************************************/
+
+static double GetSemiMajor(const OGRSpatialReference *poSRS)
+{
+    double dfSemiMajor = poSRS->GetSemiMajor();
+    // Standardize on OGR_GREATCIRCLE_DEFAULT_RADIUS for Earth ellipsoids.
+    if (std::fabs(dfSemiMajor - OGR_GREATCIRCLE_DEFAULT_RADIUS) <
+        0.05 * OGR_GREATCIRCLE_DEFAULT_RADIUS)
+        dfSemiMajor = OGR_GREATCIRCLE_DEFAULT_RADIUS;
+    return dfSemiMajor;
+}
+
+/************************************************************************/
 /*                      GML2OGRGeometry_XMLNode()                       */
 /*                                                                      */
 /*      Translates the passed XMLnode and its children into an         */
@@ -1155,7 +1169,8 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
     const auto storeArcByCenterPointParameters =
         [](const CPLXMLNode *psChild, const char *l_pszSRSName,
            bool &bIsApproximateArc, double &dfLastCurveApproximateArcRadius,
-           bool &bLastCurveWasApproximateArcInvertedAxisOrder)
+           bool &bLastCurveWasApproximateArcInvertedAxisOrder,
+           double &dfSemiMajor)
     {
         const CPLXMLNode *psRadius = FindBareXMLChild(psChild, "radius");
         if (psRadius && psRadius->eType == CXT_Element)
@@ -1173,6 +1188,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     {
                         bInvertedAxisOrder =
                             CPL_TO_BOOL(oSRS.EPSGTreatsAsLatLong());
+                        dfSemiMajor = GetSemiMajor(&oSRS);
                         bSRSUnitIsDegree =
                             fabs(oSRS.GetAngularUnits(nullptr) -
                                  CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
@@ -1194,7 +1210,8 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         [](OGRGeometry *poGeom, OGRCompoundCurve *poCC,
            const bool bIsApproximateArc, const bool bLastCurveWasApproximateArc,
            const double dfLastCurveApproximateArcRadius,
-           const bool bLastCurveWasApproximateArcInvertedAxisOrder)
+           const bool bLastCurveWasApproximateArcInvertedAxisOrder,
+           const double dfSemiMajor)
     {
         if (bIsApproximateArc)
         {
@@ -1213,10 +1230,12 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     double dfDistance = 0.0;
                     if (bLastCurveWasApproximateArcInvertedAxisOrder)
                         dfDistance = OGR_GreatCircle_Distance(
-                            p.getX(), p.getY(), p2.getX(), p2.getY());
+                            p.getX(), p.getY(), p2.getX(), p2.getY(),
+                            dfSemiMajor);
                     else
                         dfDistance = OGR_GreatCircle_Distance(
-                            p.getY(), p.getX(), p2.getY(), p2.getX());
+                            p.getY(), p.getX(), p2.getY(), p2.getX(),
+                            dfSemiMajor);
                     // CPLDebug("OGR", "%f %f",
                     //          dfDistance,
                     //          dfLastCurveApproximateArcRadius
@@ -1249,10 +1268,12 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     double dfDistance = 0.0;
                     if (bLastCurveWasApproximateArcInvertedAxisOrder)
                         dfDistance = OGR_GreatCircle_Distance(
-                            p.getX(), p.getY(), p2.getX(), p2.getY());
+                            p.getX(), p.getY(), p2.getX(), p2.getY(),
+                            dfSemiMajor);
                     else
                         dfDistance = OGR_GreatCircle_Distance(
-                            p.getY(), p.getX(), p2.getY(), p2.getX());
+                            p.getY(), p.getX(), p2.getY(), p2.getX(),
+                            dfSemiMajor);
                     // CPLDebug(
                     //    "OGR", "%f %f",
                     //    dfDistance,
@@ -1289,6 +1310,8 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         bool bFirstChildIsApproximateArc = false;
         double dfFirstChildApproximateArcRadius = 0.0;
         bool bFirstChildWasApproximateArcInvertedAxisOrder = false;
+
+        double dfSemiMajor = OGR_GREATCIRCLE_DEFAULT_RADIUS;
 
         for (const CPLXMLNode *psChild = psNode->psChild; psChild != nullptr;
              psChild = psChild->psNext)
@@ -1352,7 +1375,8 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     storeArcByCenterPointParameters(
                         psChild3, pszSRSName, bIsApproximateArc,
                         dfLastCurveApproximateArcRadius,
-                        bLastCurveWasApproximateArcInvertedAxisOrder);
+                        bLastCurveWasApproximateArcInvertedAxisOrder,
+                        dfSemiMajor);
                     if (bIsFirstChild && bIsApproximateArc)
                     {
                         bFirstChildIsApproximateArc = true;
@@ -1390,7 +1414,8 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                         poGeom.get(), poCC.get(), bIsApproximateArc,
                         bLastCurveWasApproximateArc,
                         dfLastCurveApproximateArcRadius,
-                        bLastCurveWasApproximateArcInvertedAxisOrder);
+                        bLastCurveWasApproximateArcInvertedAxisOrder,
+                        dfSemiMajor);
 
                     auto poCurve =
                         std::unique_ptr<OGRCurve>(poGeom.release()->toCurve());
@@ -1448,7 +1473,8 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                                     psChild2, pszSRSName,
                                     bLastChildIsApproximateArc,
                                     dfLastCurveApproximateArcRadius,
-                                    bLastCurveWasApproximateArcInvertedAxisOrder);
+                                    bLastCurveWasApproximateArcInvertedAxisOrder,
+                                    dfSemiMajor);
                             }
                             else
                             {
@@ -1486,11 +1512,11 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 poLS->EndPoint(&p2);
                 double dfDistance = 0.0;
                 if (bFirstChildWasApproximateArcInvertedAxisOrder)
-                    dfDistance = OGR_GreatCircle_Distance(p.getX(), p.getY(),
-                                                          p2.getX(), p2.getY());
+                    dfDistance = OGR_GreatCircle_Distance(
+                        p.getX(), p.getY(), p2.getX(), p2.getY(), dfSemiMajor);
                 else
-                    dfDistance = OGR_GreatCircle_Distance(p.getY(), p.getX(),
-                                                          p2.getY(), p2.getX());
+                    dfDistance = OGR_GreatCircle_Distance(
+                        p.getY(), p.getX(), p2.getY(), p2.getX(), dfSemiMajor);
                 if (dfDistance < dfFirstChildApproximateArcRadius / 5.0)
                 {
                     CPLDebug("OGR", "Moving approximate start of "
@@ -1511,11 +1537,11 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 poLS->EndPoint(&p2);
                 double dfDistance = 0.0;
                 if (bLastCurveWasApproximateArcInvertedAxisOrder)
-                    dfDistance = OGR_GreatCircle_Distance(p.getX(), p.getY(),
-                                                          p2.getX(), p2.getY());
+                    dfDistance = OGR_GreatCircle_Distance(
+                        p.getX(), p.getY(), p2.getX(), p2.getY(), dfSemiMajor);
                 else
-                    dfDistance = OGR_GreatCircle_Distance(p.getY(), p.getX(),
-                                                          p2.getY(), p2.getX());
+                    dfDistance = OGR_GreatCircle_Distance(
+                        p.getY(), p.getX(), p2.getY(), p2.getX(), dfSemiMajor);
                 if (dfDistance < dfLastCurveApproximateArcRadius / 5.0)
                 {
                     CPLDebug("OGR", "Moving approximate end of "
@@ -1778,6 +1804,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
 
         bool bSRSUnitIsDegree = false;
         bool bInvertedAxisOrder = false;
+        double dfSemiMajor = OGR_GREATCIRCLE_DEFAULT_RADIUS;
         if (pszSRSName != nullptr)
         {
             OGRSpatialReference oSRS;
@@ -1785,6 +1812,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             {
                 if (oSRS.IsGeographic())
                 {
+                    dfSemiMajor = GetSemiMajor(&oSRS);
                     bInvertedAxisOrder =
                         CPL_TO_BOOL(oSRS.EPSGTreatsAsLatLong());
                     bSRSUnitIsDegree = fabs(oSRS.GetAngularUnits(nullptr) -
@@ -1792,6 +1820,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 }
                 else if (oSRS.IsProjected())
                 {
+                    dfSemiMajor = GetSemiMajor(&oSRS);
                     bInvertedAxisOrder =
                         CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting());
                 }
@@ -1822,15 +1851,15 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                         dfCenterX, dfCenterY, dfDistance,
                         // See
                         // https://ext.eurocontrol.int/aixm_confluence/display/ACG/ArcByCenterPoint+Interpretation+Summary
-                        dfAngle, &dfLat, &dfLong);
+                        dfAngle, dfSemiMajor, &dfLat, &dfLong);
                     p.setX(dfLat);  // yes, external code will do the swap later
                     p.setY(dfLong);
                 }
                 else
                 {
-                    OGR_GreatCircle_ExtendPosition(dfCenterY, dfCenterX,
-                                                   dfDistance, 90 - dfAngle,
-                                                   &dfLat, &dfLong);
+                    OGR_GreatCircle_ExtendPosition(
+                        dfCenterY, dfCenterX, dfDistance, 90 - dfAngle,
+                        dfSemiMajor, &dfLat, &dfLong);
                     p.setX(dfLong);
                     p.setY(dfLat);
                 }
@@ -1842,15 +1871,16 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             if (bInvertedAxisOrder)
             {
                 OGR_GreatCircle_ExtendPosition(dfCenterX, dfCenterY, dfDistance,
-                                               dfEndAngle, &dfLat, &dfLong);
+                                               dfEndAngle, dfSemiMajor, &dfLat,
+                                               &dfLong);
                 p.setX(dfLat);  // yes, external code will do the swap later
                 p.setY(dfLong);
             }
             else
             {
                 OGR_GreatCircle_ExtendPosition(dfCenterY, dfCenterX, dfDistance,
-                                               90 - dfEndAngle, &dfLat,
-                                               &dfLong);
+                                               90 - dfEndAngle, dfSemiMajor,
+                                               &dfLat, &dfLong);
                 p.setX(dfLong);
                 p.setY(dfLat);
             }
@@ -1902,6 +1932,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
 
         bool bSRSUnitIsDegree = false;
         bool bInvertedAxisOrder = false;
+        double dfSemiMajor = OGR_GREATCIRCLE_DEFAULT_RADIUS;
         if (pszSRSName != nullptr)
         {
             OGRSpatialReference oSRS;
@@ -1909,6 +1940,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
             {
                 if (oSRS.IsGeographic())
                 {
+                    dfSemiMajor = GetSemiMajor(&oSRS);
                     bInvertedAxisOrder =
                         CPL_TO_BOOL(oSRS.EPSGTreatsAsLatLong());
                     bSRSUnitIsDegree = fabs(oSRS.GetAngularUnits(nullptr) -
@@ -1916,6 +1948,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 }
                 else if (oSRS.IsProjected())
                 {
+                    dfSemiMajor = GetSemiMajor(&oSRS);
                     bInvertedAxisOrder =
                         CPL_TO_BOOL(oSRS.EPSGTreatsAsNorthingEasting());
                 }
@@ -1938,17 +1971,17 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                 double dfLat = 0.0;
                 if (bInvertedAxisOrder)
                 {
-                    OGR_GreatCircle_ExtendPosition(dfCenterX, dfCenterY,
-                                                   dfDistance, dfAngle, &dfLat,
-                                                   &dfLong);
+                    OGR_GreatCircle_ExtendPosition(
+                        dfCenterX, dfCenterY, dfDistance, dfAngle, dfSemiMajor,
+                        &dfLat, &dfLong);
                     p.setX(dfLat);  // yes, external code will do the swap later
                     p.setY(dfLong);
                 }
                 else
                 {
-                    OGR_GreatCircle_ExtendPosition(dfCenterY, dfCenterX,
-                                                   dfDistance, dfAngle, &dfLat,
-                                                   &dfLong);
+                    OGR_GreatCircle_ExtendPosition(
+                        dfCenterY, dfCenterX, dfDistance, dfAngle, dfSemiMajor,
+                        &dfLat, &dfLong);
                     p.setX(dfLong);
                     p.setY(dfLat);
                 }
@@ -2547,6 +2580,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
         bool bLastCurveWasApproximateArc = false;
         bool bLastCurveWasApproximateArcInvertedAxisOrder = false;
         double dfLastCurveApproximateArcRadius = 0.0;
+        double dfSemiMajor = OGR_GREATCIRCLE_DEFAULT_RADIUS;
 
         for (const CPLXMLNode *psChild = psNode->psChild; psChild != nullptr;
              psChild = psChild->psNext)
@@ -2583,7 +2617,8 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                     storeArcByCenterPointParameters(
                         psChild, pszSRSName, bIsApproximateArc,
                         dfLastCurveApproximateArcRadius,
-                        bLastCurveWasApproximateArcInvertedAxisOrder);
+                        bLastCurveWasApproximateArcInvertedAxisOrder,
+                        dfSemiMajor);
                 }
 
                 if (wkbFlatten(poGeom->getGeometryType()) != wkbLineString)
@@ -2609,7 +2644,8 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                         poGeom.get(), poCC.get(), bIsApproximateArc,
                         bLastCurveWasApproximateArc,
                         dfLastCurveApproximateArcRadius,
-                        bLastCurveWasApproximateArcInvertedAxisOrder);
+                        bLastCurveWasApproximateArcInvertedAxisOrder,
+                        dfSemiMajor);
 
                     auto poAsCurve =
                         std::unique_ptr<OGRCurve>(poGeom.release()->toCurve());

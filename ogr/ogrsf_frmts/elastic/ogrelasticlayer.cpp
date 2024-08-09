@@ -1579,6 +1579,8 @@ void OGRElasticLayer::BuildFeature(OGRFeature *poFeature, json_object *poSource,
         else if ((oIter = m_aosMapToGeomFieldIndex.find(osCurPath)) !=
                  m_aosMapToGeomFieldIndex.end())
         {
+            const auto poSRS = m_poFeatureDefn->GetGeomFieldDefn(oIter->second)
+                                   ->GetSpatialRef();
             OGRGeometry *poGeom = nullptr;
             if (m_abIsGeoPoint[oIter->second])
             {
@@ -1677,12 +1679,16 @@ void OGRElasticLayer::BuildFeature(OGRFeature *poFeature, json_object *poSource,
                     {
                         dfRadius *= dfUnit;
                         OGRLinearRing *poRing = new OGRLinearRing();
+                        double dfSemiMajor = OGR_GREATCIRCLE_DEFAULT_RADIUS;
+                        if (poSRS && poSRS->IsGeographic())
+                            dfSemiMajor = poSRS->GetSemiMajor();
                         for (double dfStep = 0; dfStep <= 360; dfStep += 4)
                         {
                             double dfLat = 0.0;
                             double dfLon = 0.0;
-                            OGR_GreatCircle_ExtendPosition(
-                                dfY, dfX, dfRadius, dfStep, &dfLat, &dfLon);
+                            OGR_GreatCircle_ExtendPosition(dfY, dfX, dfRadius,
+                                                           dfSemiMajor, dfStep,
+                                                           &dfLat, &dfLon);
                             poRing->addPoint(dfLon, dfLat);
                         }
                         OGRPolygon *poPoly = new OGRPolygon();
@@ -1740,9 +1746,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature *poFeature, json_object *poSource,
 
             if (poGeom != nullptr)
             {
-                poGeom->assignSpatialReference(
-                    m_poFeatureDefn->GetGeomFieldDefn(oIter->second)
-                        ->GetSpatialRef());
+                poGeom->assignSpatialReference(poSRS);
                 poFeature->SetGeomFieldDirectly(oIter->second, poGeom);
             }
         }

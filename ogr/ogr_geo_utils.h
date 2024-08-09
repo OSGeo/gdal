@@ -41,8 +41,13 @@
  * for an airport runway, from its extreme points, track and length.
  */
 
+// Such that OGR_GREATCIRCLE_DEFAULT_RADIUS * M_PI * 2 == 360 * 60.0 * 1852.0
+// that is that one degree == 60 nautical miles
+constexpr double OGR_GREATCIRCLE_DEFAULT_RADIUS = 6366707.01949370746;
+
 double OGR_GreatCircle_Distance(double dfLatA_deg, double dfLonA_deg,
-                                double dfLatB_deg, double dfLonB_deg);
+                                double dfLatB_deg, double dfLonB_deg,
+                                double dfRadius);
 
 double OGR_GreatCircle_InitialHeading(double dfLatA_deg, double dfLonA_deg,
                                       double dfLatB_deg, double dfLonB_deg);
@@ -50,7 +55,7 @@ double OGR_GreatCircle_InitialHeading(double dfLatA_deg, double dfLonA_deg,
 /* such as ExtendPosition(A, Distance(A,B), InitialHeading(A,B)) ~= B */
 int CPL_DLL OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
                                            double dfDistance,
-                                           double dfHeadingInA,
+                                           double dfHeadingInA, double dfRadius,
                                            double *pdfLatB_deg,
                                            double *pdfLonB_deg);
 
