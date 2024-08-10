@@ -3155,6 +3155,32 @@ def test_ogr_csv_inf_nan():
 
 
 ###############################################################################
+# Test reading invalid WKT
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_csv_invalid_wkt(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.csv")
+
+    with gdaltest.vsi_open(filename, "wb") as fdest:
+        fdest.write(b"id,WKT\n")
+        fdest.write(b'1,"POINT (1"\n')
+        fdest.write(b'1,"POINT (1 2)"\n')
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        f = lyr.GetNextFeature()
+    assert gdal.GetLastErrorMsg() == "Ignoring invalid WKT: POINT (1"
+    assert f.GetGeometryRef() is None
+    f = lyr.GetNextFeature()
+    assert gdal.GetLastErrorMsg() == ""
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+
+###############################################################################
 
 
 if __name__ == "__main__":
