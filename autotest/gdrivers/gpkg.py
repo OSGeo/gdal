@@ -4206,6 +4206,18 @@ def test_gpkg_sql_gdal_get_layer_pixel_value():
     ds.ReleaseResultSet(sql_lyr)
     assert f[0] == 156
 
+    with ds.ExecuteSQL(
+        "select gdal_get_layer_pixel_value('byte', 1, 'georef', 440780 + 30, 3751080 - 30)"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == 156
+
+    with ds.ExecuteSQL(
+        "select gdal_get_layer_pixel_value('byte', 1, 'georef', 440780 + 30, 3751080 - 30, 'cubicspline')"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == pytest.approx(150.1388888888889)
+
     sql_lyr = ds.ExecuteSQL(
         "select gdal_get_layer_pixel_value('float32', 1, 'pixel', 0, 1)"
     )
