@@ -839,6 +839,16 @@ class CPL_DLL GDALDataset : public GDALMajorObject
         return papszOpenOptions;
     }
 
+#ifndef DOXYGEN_SKIP
+    /** Return open options.
+     * @return open options.
+     */
+    CSLConstList GetOpenOptions() const
+    {
+        return papszOpenOptions;
+    }
+#endif
+
     static GDALDataset **GetOpenDatasets(int *pnDatasetCount);
 
 #ifndef DOXYGEN_SKIP
@@ -4418,7 +4428,7 @@ void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
                                    OGRSpatialReference **ppoGCP_SRS);
 
 void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
-                                   char **papszOpenOptions);
+                                   CSLConstList papszOpenOptions);
 char **GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode);
 
 int GDALCanFileAcceptSidecarFile(const char *pszFilename);
