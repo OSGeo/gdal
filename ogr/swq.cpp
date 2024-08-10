@@ -410,8 +410,7 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
             pszValue = SZ_OGR_NULL;
         try
         {
-            if (summary.oSetDistinctValues.find(pszValue) ==
-                summary.oSetDistinctValues.end())
+            if (!cpl::contains(summary.oSetDistinctValues, pszValue))
             {
                 summary.oSetDistinctValues.insert(pszValue);
                 if (select_info->order_specs == 0)
