@@ -1453,6 +1453,54 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
 
 
 ###############################################################################
+# Test style in KMZ file
+
+
+def test_ogr_libkml_write_style_kmz(tmp_vsimem):
+
+    filename = tmp_vsimem / "ogr_libkml_read_write_style_write.kmz"
+    # Automatic StyleMap creation testing
+    ds = ogr.GetDriverByName("LIBKML").CreateDataSource(filename)
+    style_table = ogr.StyleTable()
+    style_table.AddStyle(
+        "style1_normal", 'SYMBOL(id:"http://style1_normal",c:#67452301)'
+    )
+    style_table.AddStyle(
+        "style1_highlight", 'SYMBOL(id:"http://style1_highlight",c:#10325476)'
+    )
+    ds.SetStyleTable(style_table)
+    lyr = ds.CreateLayer("test")
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetStyleString("@style1_normal")
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetStyleString("@unknown_style")
+    lyr.CreateFeature(feat)
+    ds = None
+
+    f = gdal.VSIFOpenL(f"/vsizip/{filename}/layers/test.kml", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    assert b"<styleUrl>../style/style.kml#style1_normal</styleUrl>" in data
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetStyleString() == "@style1_normal"
+    f = lyr.GetNextFeature()
+    assert f.GetStyleString() == "@unknown_style"
+
+    with gdaltest.config_option("LIBKML_RESOLVE_STYLE", "YES"):
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetStyleString() == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
+        f = lyr.GetNextFeature()
+        assert f.GetStyleString() == "@unknown_style"
+
+
+###############################################################################
 # Test writing Update
 
 
