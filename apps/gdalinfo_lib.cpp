@@ -105,6 +105,12 @@ struct GDALInfoOptions
     /*! force computation of the checksum for each band in the dataset */
     bool bComputeChecksum = false;
 
+    /*! allow or suppress printing of nodata value */
+    bool bShowNodata = true;
+
+    /*! allow or suppress printing of mask information */
+    bool bShowMask = true;
+
     /*! allow or suppress ground control points list printing. It may be useful
         for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
         which contain thousands of them. */
@@ -261,6 +267,8 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
         .store_into(psOptions->bReportHistograms)
         .help(_("Report histogram information for all bands."));
 
+    argParser->add_usage_newline();
+
     argParser->add_inverted_logic_flag(
         "-nogcp", &psOptions->bShowGCPs,
         _("Suppress ground control points list printing."));
@@ -277,6 +285,15 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
 
     argParser->add_inverted_logic_flag("-nofl", &psOptions->bShowFileList,
                                        _("Suppress display of the file list."));
+
+    argParser->add_inverted_logic_flag(
+        "-nonodata", &psOptions->bShowNodata,
+        _("Suppress nodata printing (implies -nomask)."));
+
+    argParser->add_inverted_logic_flag("-nomask", &psOptions->bShowMask,
+                                       _("Suppress mask printing."));
+
+    argParser->add_usage_newline();
 
     argParser->add_argument("-checksum")
         .flag()
@@ -1360,7 +1377,11 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
         }
 
         int bGotNodata = FALSE;
-        if (eDT == GDT_Int64)
+        if (!psOptions->bShowNodata)
+        {
+            // nothing to do
+        }
+        else if (eDT == GDT_Int64)
         {
             const auto nNoData =
                 GDALGetRasterNoDataValueAsInt64(hBand, &bGotNodata);
@@ -1596,7 +1617,8 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             Concat(osStr, psOptions->bStdoutOutput, "  Overviews: arbitrary\n");
         }
 
-        const int nMaskFlags = GDALGetMaskFlags(hBand);
+        const int nMaskFlags =
+            psOptions->bShowMask ? GDALGetMaskFlags(hBand) : GMF_ALL_VALID;
         if ((nMaskFlags & (GMF_NODATA | GMF_ALL_VALID)) == 0 ||
             nMaskFlags == (GMF_NODATA | GMF_PER_DATASET))
         {
@@ -2306,6 +2328,9 @@ GDALInfoOptionsNew(char **papszArgv,
         CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
         return nullptr;
     }
+
+    if (!psOptions->bShowNodata)
+        psOptions->bShowMask = false;
 
     return psOptions.release();
 }
