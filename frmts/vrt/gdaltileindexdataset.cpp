@@ -3174,19 +3174,13 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
         poSource = std::move(poComplexSource);
     }
 
-    if (!GetSrcDstWin(adfGeoTransformTile, poTileDS->GetRasterXSize(),
-                      poTileDS->GetRasterYSize(), m_adfGeoTransform.data(),
-                      GetRasterXSize(), GetRasterYSize(),
-                      &poSource->m_dfSrcXOff, &poSource->m_dfSrcYOff,
-                      &poSource->m_dfSrcXSize, &poSource->m_dfSrcYSize,
-                      &poSource->m_dfDstXOff, &poSource->m_dfDstYOff,
-                      &poSource->m_dfDstXSize, &poSource->m_dfDstYSize))
-    {
-        // Should not happen on a consistent tile index
-        CPLDebug("VRT", "Tile %s does not actually intersect area of interest",
-                 osTileName.c_str());
-        return false;
-    }
+    GetSrcDstWin(adfGeoTransformTile, poTileDS->GetRasterXSize(),
+                 poTileDS->GetRasterYSize(), m_adfGeoTransform.data(),
+                 GetRasterXSize(), GetRasterYSize(), &poSource->m_dfSrcXOff,
+                 &poSource->m_dfSrcYOff, &poSource->m_dfSrcXSize,
+                 &poSource->m_dfSrcYSize, &poSource->m_dfDstXOff,
+                 &poSource->m_dfDstYOff, &poSource->m_dfDstXSize,
+                 &poSource->m_dfDstYSize);
 
     oSourceDesc.osName = osTileName;
     oSourceDesc.poDS = std::move(poTileDS);
@@ -3389,6 +3383,61 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
         SourceDesc oSourceDesc;
         if (!GetSourceDesc(osTileName, oSourceDesc, nullptr))
             continue;
+
+        // Check consistency of bounding box in tile index vs actual
+        // extent of the tile.
+        double adfTileGT[6];
+        if (oSourceDesc.poDS->GetGeoTransform(adfTileGT) == CE_None &&
+            adfTileGT[GT_ROTATION_PARAM1] == 0 &&
+            adfTileGT[GT_ROTATION_PARAM2] == 0)
+        {
+            OGREnvelope sActualTileExtent;
+            sActualTileExtent.MinX = adfTileGT[GT_TOPLEFT_X];
+            sActualTileExtent.MaxX =
+                sActualTileExtent.MinX +
+                oSourceDesc.poDS->GetRasterXSize() * adfTileGT[GT_WE_RES];
+            sActualTileExtent.MaxY = adfTileGT[GT_TOPLEFT_Y];
+            sActualTileExtent.MinY =
+                sActualTileExtent.MaxY +
+                oSourceDesc.poDS->GetRasterYSize() * adfTileGT[GT_NS_RES];
+            const auto poGeom = poFeature->GetGeometryRef();
+            if (poGeom && !poGeom->IsEmpty())
+            {
+                OGREnvelope sGeomTileExtent;
+                poGeom->getEnvelope(&sGeomTileExtent);
+                sGeomTileExtent.MinX -= m_adfGeoTransform[GT_WE_RES];
+                sGeomTileExtent.MaxX += m_adfGeoTransform[GT_WE_RES];
+                sGeomTileExtent.MinY -= std::fabs(m_adfGeoTransform[GT_NS_RES]);
+                sGeomTileExtent.MaxY += std::fabs(m_adfGeoTransform[GT_NS_RES]);
+                if (!sGeomTileExtent.Contains(sActualTileExtent))
+                {
+                    if (!sGeomTileExtent.Intersects(sActualTileExtent))
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Tile index is out of sync with actual "
+                                 "extent of %s. Bounding box from tile index "
+                                 "is (%g, %g, %g, %g) does not intersect at "
+                                 "all bounding box from tile (%g, %g, %g, %g)",
+                                 osTileName.c_str(), sGeomTileExtent.MinX,
+                                 sGeomTileExtent.MinY, sGeomTileExtent.MaxX,
+                                 sGeomTileExtent.MaxY, sActualTileExtent.MinX,
+                                 sActualTileExtent.MinY, sActualTileExtent.MaxX,
+                                 sActualTileExtent.MaxY);
+                        continue;
+                    }
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Tile index is out of sync with actual extent "
+                             "of %s. Bounding box from tile index is (%g, %g, "
+                             "%g, %g) does not fully contain bounding box from "
+                             "tile (%g, %g, %g, %g)",
+                             osTileName.c_str(), sGeomTileExtent.MinX,
+                             sGeomTileExtent.MinY, sGeomTileExtent.MaxX,
+                             sGeomTileExtent.MaxY, sActualTileExtent.MinX,
+                             sActualTileExtent.MinY, sActualTileExtent.MaxX,
+                             sActualTileExtent.MaxY);
+                }
+            }
+        }
 
         const auto &poSource = oSourceDesc.poSource;
         if (dfXOff >= poSource->m_dfDstXOff + poSource->m_dfDstXSize ||

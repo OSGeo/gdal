@@ -2080,6 +2080,47 @@ def test_gti_overlapping_sources_mask_band(tmp_vsimem):
     ) == (255, 254)
 
 
+def test_gti_consistency_index_geometry_vs_source_extent(tmp_vsimem):
+
+    filename1 = str(tmp_vsimem / "test.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename1, 10, 10)
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    ds.GetRasterBand(1).Fill(255)
+    expected_cs = ds.GetRasterBand(1).Checksum()
+    del ds
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(
+        index_filename,
+        [gdal.Open(filename1)],
+    )
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+    with gdal.quiet_errors():
+        gdal.ErrorReset()
+        assert vrt_ds.GetRasterBand(1).Checksum() == expected_cs
+        assert gdal.GetLastErrorMsg() == ""
+
+    # No intersection
+    with gdal.Open(filename1, gdal.GA_Update) as ds:
+        ds.SetGeoTransform([100, 1, 0, 49, 0, -1])
+
+    vrt_ds = gdal.Open(index_filename)
+    with gdal.quiet_errors():
+        assert vrt_ds.GetRasterBand(1).Checksum() == 0
+        assert "does not intersect at all" in gdal.GetLastErrorMsg()
+
+    # Partial intersection
+    with gdal.Open(filename1, gdal.GA_Update) as ds:
+        ds.SetGeoTransform([4, 1, 0, 49, 0, -1])
+
+    vrt_ds = gdal.Open(index_filename)
+    with gdal.quiet_errors():
+        assert vrt_ds.GetRasterBand(1).Checksum() == 958
+        assert "does not fully contain" in gdal.GetLastErrorMsg()
+
+
 def test_gti_mask_band_explicit(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
