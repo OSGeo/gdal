@@ -76,7 +76,10 @@ if (GDAL_USE_PDFIUM)
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_PDFIUM)
   gdal_target_link_libraries(gdal_PDF PRIVATE PDFIUM::PDFIUM)
   if (UNIX)
-    find_library(LCMS2_LIBRARY NAMES lcms2)
+    find_package(JPEG REQUIRED)
+    find_package(PNG REQUIRED)
+    find_package(OpenJPEG REQUIRED)
+    find_library(LCMS2_LIBRARY NAMES lcms2 REQUIRED)
 
     # Rather hacky... Related how we build pdfium in https://github.com/rouault/pdfium_build_gdal_3_4
     gdal_target_link_libraries(
