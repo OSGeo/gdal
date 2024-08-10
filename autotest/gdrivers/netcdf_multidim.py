@@ -4074,3 +4074,27 @@ def test_netcdf_multidim_as_classic_dataset_overview(tmp_path):
 
     test()
     test2()
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_chunk_cache_options():
+
+    ds = gdal.OpenEx("data/netcdf/nc4_vars.nc", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+
+    var = rg.OpenMDArray(
+        "Band1",
+        [
+            "RAW_DATA_CHUNK_CACHE_SIZE=2000000",
+            "CHUNK_SLOTS=1000",
+            "PREEMPTION=0.9",
+            "INCLUDE_CHUNK_CACHE_PARAMETERS_IN_STRUCTURAL_INFO=YES",
+        ],
+    )
+    assert var.GetStructuralInfo() == {
+        "RAW_DATA_CHUNK_CACHE_SIZE": "2000000",
+        "CHUNK_SLOTS": "1000",
+        "PREEMPTION": "0.900000",
+    }
