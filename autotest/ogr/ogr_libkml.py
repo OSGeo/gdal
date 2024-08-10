@@ -1912,6 +1912,25 @@ def test_ogr_libkml_write_container_properties(tmp_vsimem):
 
 
 ###############################################################################
+# Test effect of NAME layer creation option
+
+
+@pytest.mark.parametrize("filename", ["out_dir", "out.kml", "out.kmz"])
+def test_ogr_libkml_name_layer_creation_option(tmp_vsimem, filename):
+
+    ds = ogr.GetDriverByName("LIBKML").CreateDataSource(tmp_vsimem / filename)
+    ds.CreateLayer(
+        "test",
+        options=["NAME=lyr_name"],
+    )
+    ds = None
+
+    ds = ogr.Open(tmp_vsimem / filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == "lyr_name"
+
+
+###############################################################################
 # Test reading gx:TimeStamp and gx:TimeSpan
 
 
