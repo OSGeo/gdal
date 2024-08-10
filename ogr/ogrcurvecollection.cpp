@@ -542,36 +542,39 @@ OGRBoolean OGRCurveCollection::Equals(const OGRCurveCollection *poOCC) const
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRCurveCollection::setCoordinateDimension(OGRGeometry *poGeom,
+bool OGRCurveCollection::setCoordinateDimension(OGRGeometry *poGeom,
                                                 int nNewDimension)
 {
     for (auto &&poSubGeom : *this)
     {
-        poSubGeom->setCoordinateDimension(nNewDimension);
+        if (!poSubGeom->setCoordinateDimension(nNewDimension))
+            return false;
     }
 
-    poGeom->OGRGeometry::setCoordinateDimension(nNewDimension);
+    return poGeom->OGRGeometry::setCoordinateDimension(nNewDimension);
 }
 
-void OGRCurveCollection::set3D(OGRGeometry *poGeom, OGRBoolean bIs3D)
+bool OGRCurveCollection::set3D(OGRGeometry *poGeom, OGRBoolean bIs3D)
 {
     for (auto &&poSubGeom : *this)
     {
-        poSubGeom->set3D(bIs3D);
+        if (!poSubGeom->set3D(bIs3D))
+            return false;
     }
 
-    poGeom->OGRGeometry::set3D(bIs3D);
+    return poGeom->OGRGeometry::set3D(bIs3D);
 }
 
-void OGRCurveCollection::setMeasured(OGRGeometry *poGeom,
+bool OGRCurveCollection::setMeasured(OGRGeometry *poGeom,
                                      OGRBoolean bIsMeasured)
 {
     for (auto &&poSubGeom : *this)
     {
-        poSubGeom->setMeasured(bIsMeasured);
+        if (!poSubGeom->setMeasured(bIsMeasured))
+            return false;
     }
 
-    poGeom->OGRGeometry::setMeasured(bIsMeasured);
+    return poGeom->OGRGeometry::setMeasured(bIsMeasured);
 }
 
 /************************************************************************/
@@ -685,12 +688,14 @@ void OGRCurveCollection::flattenTo2D(OGRGeometry *poGeom)
 /*                              segmentize()                            */
 /************************************************************************/
 
-void OGRCurveCollection::segmentize(double dfMaxLength)
+bool OGRCurveCollection::segmentize(double dfMaxLength)
 {
     for (auto &&poSubGeom : *this)
     {
-        poSubGeom->segmentize(dfMaxLength);
+        if (!poSubGeom->segmentize(dfMaxLength))
+            return false;
     }
+    return true;
 }
 
 /************************************************************************/
