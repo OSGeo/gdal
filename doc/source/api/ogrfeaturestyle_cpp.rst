@@ -9,5 +9,13 @@
 OGRFeature Style C++ API
 ================================================================================
 
+Include file
+------------
+
+:file:`ogr_featurestyle.h`
+
+OGRFeature Style C++ API
+------------------------
+
 .. doxygenfile:: ogr_featurestyle.h
    :project: api
