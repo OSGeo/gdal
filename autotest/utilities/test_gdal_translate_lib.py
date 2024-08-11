@@ -1155,7 +1155,7 @@ def test_gdal_translate_lib_scale_and_unscale_incompatible():
 
 
 ###############################################################################
-# Test -a_offset -inf (dummy example, but to proove -inf works as a value
+# Test -a_offset -inf (dummy example, but to prove -inf works as a value
 # numeric value)
 
 
