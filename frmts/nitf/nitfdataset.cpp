@@ -4593,7 +4593,6 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     {
         if (((poSrcDS->GetRasterCount() == 3 && bJPEG) ||
              (poSrcDS->GetRasterCount() >= 3 && !bJPEG)) &&
-            eType == GDT_Byte &&
             poSrcDS->GetRasterBand(1)->GetColorInterpretation() ==
                 GCI_RedBand &&
             poSrcDS->GetRasterBand(2)->GetColorInterpretation() ==
@@ -4606,6 +4605,23 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             else
                 papszFullOptions =
                     CSLSetNameValue(papszFullOptions, "IREP", "RGB");
+        }
+        else if (poSrcDS->GetRasterCount() >= 3 && !bJPEG &&
+                 poSrcDS->GetRasterBand(1)->GetColorInterpretation() ==
+                     GCI_BlueBand &&
+                 poSrcDS->GetRasterBand(2)->GetColorInterpretation() ==
+                     GCI_GreenBand &&
+                 poSrcDS->GetRasterBand(3)->GetColorInterpretation() ==
+                     GCI_RedBand &&
+                 CSLFetchNameValue(papszFullOptions, "IREPBAND") == nullptr)
+        {
+            papszFullOptions =
+                CSLSetNameValue(papszFullOptions, "IREP", "MULTI");
+            std::string osIREPBAND = "B,G,R";
+            for (int i = 4; i <= poSrcDS->GetRasterCount(); ++i)
+                osIREPBAND += ",M";
+            papszFullOptions = CSLSetNameValue(papszFullOptions, "IREPBAND",
+                                               osIREPBAND.c_str());
         }
         else if (poSrcDS->GetRasterCount() == 1 && eType == GDT_Byte &&
                  poBand1->GetColorTable() != nullptr)
