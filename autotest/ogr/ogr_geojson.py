@@ -4487,6 +4487,7 @@ def test_ogr_geojson_write_geometry_validity_fixing_rfc7946(tmp_vsimem):
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().IsValid()
+    assert "((6.3889058 51.3181847," in f.GetGeometryRef().ExportToWkt()
 
 
 ###############################################################################
