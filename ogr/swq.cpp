@@ -142,7 +142,7 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Did not find end-of-string character");
             CPLFree(token);
-            return 0;
+            return YYerror;
         }
 
         *ppNode = new swq_expr_node(token);
