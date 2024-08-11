@@ -2494,6 +2494,12 @@ GDALMDArrayH CPL_DLL GDALMDArrayGetGridded(
 GDALMDArrayH CPL_DLL *
 GDALMDArrayGetCoordinateVariables(GDALMDArrayH hArray,
                                   size_t *pnCount) CPL_WARN_UNUSED_RESULT;
+
+GDALMDArrayH CPL_DLL *
+GDALMDArrayGetMeshGrid(const GDALMDArrayH *pahInputArrays,
+                       size_t nCountInputArrays, size_t *pnCountOutputArrays,
+                       CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+
 void CPL_DLL GDALReleaseArrays(GDALMDArrayH *arrays, size_t nCount);
 int CPL_DLL GDALMDArrayCache(GDALMDArrayH hArray, CSLConstList papszOptions);
 bool CPL_DLL GDALMDArrayRename(GDALMDArrayH hArray, const char *pszNewName);
