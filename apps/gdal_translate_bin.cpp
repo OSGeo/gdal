@@ -33,6 +33,28 @@
 #include "ogr_spatialref.h"
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
+#include "gdal_priv.h"
+#include "cpl_conv.h"
+
+void GDALTranslate(const char* pszSrcFilename, const char* pszDstFilename);
+
+int main(int argc, char* argv[]) {
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s <src_filename> <dst_filename>\n", argv[0]);
+        return 1;
+    }
+
+    GDALAllRegister();
+
+    GDALTranslate(argv[1], argv[2]);
+
+    return 0;
+}
+
+void GDALTranslate(const char* pszSrcFilename, const char* pszDstFilename) {
+    // Function implementation
+}
+
 
 /*  ******************************************************************* */
 /*                               Usage()                                */
