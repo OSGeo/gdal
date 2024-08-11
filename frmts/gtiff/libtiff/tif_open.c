@@ -366,6 +366,7 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
     strcpy(tif->tif_name, name);
     tif->tif_mode = m & ~(O_CREAT | O_TRUNC);
     tif->tif_curdir = TIFF_NON_EXISTENT_DIR_NUMBER; /* non-existent directory */
+    tif->tif_curdircount = TIFF_NON_EXISTENT_DIR_NUMBER;
     tif->tif_curoff = 0;
     tif->tif_curstrip = (uint32_t)-1; /* invalid strip */
     tif->tif_row = (uint32_t)-1;      /* read/write pre-increment */
@@ -607,6 +608,9 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
         tif->tif_diroff = 0;
         tif->tif_lastdiroff = 0;
         tif->tif_setdirectory_force_absolute = FALSE;
+        /* tif_curdircount = 0 means 'empty file opened for writing, but no IFD
+         * written yet' */
+        tif->tif_curdircount = 0;
         return (tif);
     }
 
