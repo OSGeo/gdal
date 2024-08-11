@@ -1864,7 +1864,9 @@ int OGRLIBKMLDataSource::CreateKmz(const char * /* pszFilename */,
         }
     }
 
-    m_osStylePath = "style/style.kml";
+    // Layers are written in a layers/ subdirectory, hence ../style
+    // to access style/style.kml
+    m_osStylePath = "../style/style.kml";
 
     m_isKmz = true;
     bUpdated = true;

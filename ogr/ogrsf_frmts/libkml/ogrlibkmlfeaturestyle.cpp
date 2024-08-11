@@ -171,7 +171,17 @@ void kml2featurestyle(FeaturePtr poKmlFeature, OGRLIBKMLDataSource *poOgrDS,
     for (int i = 0; i < nStyleURLIterations; ++i)
     {
         /***** is the name in the layer style table *****/
-        const std::string osUrl(poKmlFeature->get_styleurl());
+        std::string osUrl(poKmlFeature->get_styleurl());
+
+        // Starting with GDAL 3.9.2, style URLs in KMZ files we generate start
+        // with ../style/style.kml# to reflect the file hierarchy
+        // Strip the leading ../ for correct resolution.
+        constexpr const char *DOTDOT_URL = "../style/style.kml#";
+        if (osUrl.size() > strlen(DOTDOT_URL) &&
+            memcmp(osUrl.data(), DOTDOT_URL, strlen(DOTDOT_URL)) == 0)
+        {
+            osUrl = osUrl.substr(strlen("../"));
+        }
 
         OGRStyleTable *poOgrSTBLLayer = nullptr;
         const char *pszTest = nullptr;
