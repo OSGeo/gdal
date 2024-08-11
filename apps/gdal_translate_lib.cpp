@@ -57,6 +57,12 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 #include "vrtdataset.h"
+#include "gdal_priv.h"
+#include "cpl_conv.h"
+
+void GDALTranslate(const char* pszSrcFilename, const char* pszDstFilename) {
+    // Function implementation
+}
 
 static void AttachMetadata(GDALDatasetH, const CPLStringList &);
 static void AttachDomainMetadata(GDALDatasetH, const CPLStringList &);
