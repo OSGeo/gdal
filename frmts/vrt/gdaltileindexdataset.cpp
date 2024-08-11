@@ -1738,7 +1738,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            for (int iOvr = 1;; ++iOvr)
+            for (int iOvr = 0;; ++iOvr)
             {
                 const char *pszOvrDSName =
                     GetOption(CPLSPrintf("OVERVIEW_%d_DATASET", iOvr));
@@ -1749,7 +1749,12 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                 const char *pszOvrFactor =
                     GetOption(CPLSPrintf("OVERVIEW_%d_FACTOR", iOvr));
                 if (!pszOvrDSName && !pszOvrLayer && !pszOvrFactor)
+                {
+                    // Before GDAL 3.9.2, we started the iteration at 1.
+                    if (iOvr == 0)
+                        continue;
                     break;
+                }
                 m_aoOverviewDescriptor.emplace_back(
                     std::string(pszOvrDSName ? pszOvrDSName : ""),
                     pszOpenOptions ? CPLStringList(CSLTokenizeString2(
@@ -2175,11 +2180,54 @@ void GDALTileIndexDataset::LoadOverviews()
                 !osDSName.empty() ? osDSName.c_str() : GetDescription(),
                 GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,
                 aosNewOpenOptions.List(), nullptr));
-            if (poOvrDS)
+
+            const auto IsSmaller =
+                [](const GDALDataset *a, const GDALDataset *b)
+            {
+                return (a->GetRasterXSize() < b->GetRasterXSize() &&
+                        a->GetRasterYSize() <= b->GetRasterYSize()) ||
+                       (a->GetRasterYSize() < b->GetRasterYSize() &&
+                        a->GetRasterXSize() <= b->GetRasterXSize());
+            };
+
+            if (poOvrDS &&
+                ((m_apoOverviews.empty() && IsSmaller(poOvrDS.get(), this)) ||
+                 ((!m_apoOverviews.empty() &&
+                   IsSmaller(poOvrDS.get(), m_apoOverviews.back().get())))))
             {
                 if (poOvrDS->GetRasterCount() == GetRasterCount())
                 {
                     m_apoOverviews.emplace_back(std::move(poOvrDS));
+                    // Add the overviews of the overview, unless the OVERVIEW_LEVEL
+                    // option option is specified
+                    if (aosOpenOptions.FetchNameValue("OVERVIEW_LEVEL") ==
+                        nullptr)
+                    {
+                        const int nOverviewCount = m_apoOverviews.back()
+                                                       ->GetRasterBand(1)
+                                                       ->GetOverviewCount();
+                        for (int i = 0; i < nOverviewCount; ++i)
+                        {
+                            aosNewOpenOptions.SetNameValue("OVERVIEW_LEVEL",
+                                                           CPLSPrintf("%d", i));
+                            std::unique_ptr<GDALDataset> poOvrOfOvrDS(
+                                GDALDataset::Open(
+                                    !osDSName.empty() ? osDSName.c_str()
+                                                      : GetDescription(),
+                                    GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                                    nullptr, aosNewOpenOptions.List(),
+                                    nullptr));
+                            if (poOvrOfOvrDS &&
+                                poOvrOfOvrDS->GetRasterCount() ==
+                                    GetRasterCount() &&
+                                IsSmaller(poOvrOfOvrDS.get(),
+                                          m_apoOverviews.back().get()))
+                            {
+                                m_apoOverviews.emplace_back(
+                                    std::move(poOvrOfOvrDS));
+                            }
+                        }
+                    }
                 }
                 else
                 {
