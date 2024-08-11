@@ -1,0 +1,16 @@
+diff --git a/recipe/install_python.sh b/recipe/install_python.sh
+index 9cdaa2c..48d4ad2 100644
+--- a/recipe/install_python.sh
++++ b/recipe/install_python.sh
+@@ -10,8 +10,11 @@ rm -rf swig/python
+ 
+ Python_LOOKUP_VERSION=$($PYTHON -c "import sys; print(str(sys.version_info.major)+'.'+str(sys.version_info.minor)+'.'+str(sys.version_info.micro))")
+ 
++Python_NumPy_INCLUDE_DIR=$($PYTHON -c "import numpy; print(numpy.get_include())")
++
+ cmake "-UPython*" "-U*LATER_PLUGIN" \
+       -DPython_LOOKUP_VERSION=${Python_LOOKUP_VERSION} \
++      -DPython_NumPy_INCLUDE_DIR=${Python_NumPy_INCLUDE_DIR} \
+       -DBUILD_PYTHON_BINDINGS:BOOL=ON \
+       ${SRC_DIR} || (cat CMakeFiles/CMakeError.log;false)
+ 
