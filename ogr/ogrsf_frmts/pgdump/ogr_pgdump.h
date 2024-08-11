@@ -72,6 +72,12 @@ char CPL_DLL *OGRPGCommonLaunderName(const char *pszSrcName,
                                      const char *pszDebugPrefix,
                                      bool bUTF8ToASCII);
 
+std::string CPL_DLL
+OGRPGCommonGenerateShortEnoughIdentifier(const char *pszIdentifier);
+
+std::string CPL_DLL OGRPGCommonGenerateSpatialIndexName(
+    const char *pszTableName, const char *pszGeomFieldName, int nGeomFieldIdx);
+
 /************************************************************************/
 /*                        OGRPGDumpGeomFieldDefn                        */
 /************************************************************************/
