@@ -6064,6 +6064,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
             reinterpret_cast<GDALDriver *>(GDALGetDriverByName("GPKG"));
         if (poThisDriver != nullptr)
         {
+            apszUpdatedOptions.SetNameValue("SKIP_HOLES", "YES");
             poDS = cpl::down_cast<GDALGeoPackageDataset *>(
                 poThisDriver->DefaultCreateCopy(pszFilename, poSrcDS, bStrict,
                                                 apszUpdatedOptions, pfnProgress,

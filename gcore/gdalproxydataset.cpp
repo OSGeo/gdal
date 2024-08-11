@@ -339,6 +339,25 @@ CPLErr GDALProxyRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     return ret;
 }
 
+int GDALProxyRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
+                                                int nXSize, int nYSize,
+                                                int nMaskFlagStop,
+                                                double *pdfDataPct)
+{
+    if (pdfDataPct)
+        *pdfDataPct = 0.0;
+    int ret = GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+              GDAL_DATA_COVERAGE_STATUS_EMPTY;
+    GDALRasterBand *poSrcBand = RefUnderlyingRasterBand();
+    if (poSrcBand)
+    {
+        ret = poSrcBand->GetDataCoverageStatus(nXOff, nYOff, nXSize, nYSize,
+                                               nMaskFlagStop, pdfDataPct);
+        UnrefUnderlyingRasterBand(poSrcBand);
+    }
+    return ret;
+}
+
 RB_PROXY_METHOD_WITH_RET(char **, nullptr, GetMetadataDomainList, (), ())
 RB_PROXY_METHOD_WITH_RET(char **, nullptr, GetMetadata, (const char *pszDomain),
                          (pszDomain))
