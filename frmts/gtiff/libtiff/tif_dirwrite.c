@@ -1185,17 +1185,12 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
         }
         if (tif->tif_dataoff & 1)
             tif->tif_dataoff++;
-        if (isimage)
-        {
-            if (tif->tif_curdir == TIFF_NON_EXISTENT_DIR_NUMBER)
-                tif->tif_curdir = 0;
-            else
-                tif->tif_curdir++;
-        }
     } /* while() */
     if (isimage)
     {
-        /* For SubIFDs remember offset of SubIFD tag within main IFD. */
+        /* For SubIFDs remember offset of SubIFD tag within main IFD.
+         * However, might be already done in TIFFWriteDirectoryTagSubifd() if
+         * there are more than one SubIFD. */
         if (TIFFFieldSet(tif, FIELD_SUBIFD) && (tif->tif_subifdoff == 0))
         {
             uint32_t na;
@@ -1297,7 +1292,8 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
     dir = NULL;
     if (!SeekOK(tif, tif->tif_diroff))
     {
-        TIFFErrorExtR(tif, module, "IO error writing directory");
+        TIFFErrorExtR(tif, module,
+                      "IO error writing directory at seek to offset");
         goto bad;
     }
     if (!WriteOK(tif, dirmem, (tmsize_t)dirsize))
@@ -1306,6 +1302,68 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
         goto bad;
     }
     _TIFFfreeExt(tif, dirmem);
+
+    /* Increment tif_curdir if IFD wasn't already written to file and no error
+     * occurred during IFD writing above. */
+    if (isimage && !tif->tif_dir.td_iswrittentofile)
+    {
+        if (!((tif->tif_flags & TIFF_INSUBIFD) &&
+              !(TIFFFieldSet(tif, FIELD_SUBIFD))))
+        {
+            /*-- Normal main-IFD case --*/
+            if (tif->tif_curdircount != TIFF_NON_EXISTENT_DIR_NUMBER)
+            {
+                tif->tif_curdir = tif->tif_curdircount;
+            }
+            else
+            {
+                /*ToDo SU: NEW_IFD_CURDIR_INCREMENTING:  Delete this
+                 * unexpected case after some testing time. */
+                /* Attention: tif->tif_curdircount is already set within
+                 * TIFFNumberOfDirectories() */
+                tif->tif_curdircount = TIFFNumberOfDirectories(tif);
+                tif->tif_curdir = tif->tif_curdircount;
+                TIFFErrorExtR(
+                    tif, module,
+                    "tif_curdircount is TIFF_NON_EXISTENT_DIR_NUMBER, "
+                    "not expected !! Line %d",
+                    __LINE__);
+                goto bad;
+            }
+        }
+        else
+        {
+            /*-- SubIFD case -- */
+            /* tif_curdir is always set to 0 for all SubIFDs. */
+            tif->tif_curdir = 0;
+        }
+    }
+    /* Increment tif_curdircount only if main-IFD of an image was not already
+     * present on file. */
+    /* Check in combination with (... && !(TIFFFieldSet(tif, FIELD_SUBIFD)))
+     * is necessary here because TIFF_INSUBIFD was already set above for the
+     * next SubIFD when this main-IFD (with FIELD_SUBIFD) is currently being
+     * written. */
+    if (isimage && !tif->tif_dir.td_iswrittentofile &&
+        !((tif->tif_flags & TIFF_INSUBIFD) &&
+          !(TIFFFieldSet(tif, FIELD_SUBIFD))))
+        tif->tif_curdircount++;
+
+    tif->tif_dir.td_iswrittentofile = TRUE;
+
+    /* Reset SubIFD writing stage after last SubIFD has been written. */
+    if (imagedone && (tif->tif_flags & TIFF_INSUBIFD) && tif->tif_nsubifd == 0)
+        tif->tif_flags &= ~TIFF_INSUBIFD;
+
+    /* Add or update this directory to the IFD list. */
+    if (!_TIFFCheckDirNumberAndOffset(tif, tif->tif_curdir, tif->tif_diroff))
+    {
+        TIFFErrorExtR(tif, module,
+                      "Starting directory %u at offset 0x%" PRIx64 " (%" PRIu64
+                      ") might cause an IFD loop",
+                      tif->tif_curdir, tif->tif_diroff, tif->tif_diroff);
+    }
+
     if (imagedone)
     {
         TIFFFreeDirectory(tif);
@@ -1317,9 +1375,8 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
     }
     else
     {
-        /* IFD is only checkpointed to file, thus set IFD data size written to
-         * file.
-         */
+        /* IFD is only checkpointed to file (or a custom IFD like EXIF is
+         * written), thus set IFD data size written to file. */
         tif->tif_dir.td_dirdatasize_read = tif->tif_dir.td_dirdatasize_write;
     }
     return (1);
@@ -3073,15 +3130,15 @@ static int TIFFLinkDirectory(TIFF *tif)
                               "Error writing SubIFD directory link");
                 return (0);
             }
+
             /*
              * Advance to the next SubIFD or, if this is
-             * the last one configured, revert back to the
-             * normal directory linkage.
+             * the last one configured, reverting back to the
+             * normal directory linkage is done in TIFFWriteDirectorySec()
+             * by tif->tif_flags &= ~TIFF_INSUBIFD;.
              */
             if (--tif->tif_nsubifd)
                 tif->tif_subifdoff += 4;
-            else
-                tif->tif_flags &= ~TIFF_INSUBIFD;
             return (1);
         }
         else
@@ -3097,19 +3154,23 @@ static int TIFFLinkDirectory(TIFF *tif)
                               "Error writing SubIFD directory link");
                 return (0);
             }
+
             /*
              * Advance to the next SubIFD or, if this is
-             * the last one configured, revert back to the
-             * normal directory linkage.
+             * the last one configured, reverting back to the
+             * normal directory linkage is done in TIFFWriteDirectorySec()
+             * by tif->tif_flags &= ~TIFF_INSUBIFD;.
              */
             if (--tif->tif_nsubifd)
                 tif->tif_subifdoff += 8;
-            else
-                tif->tif_flags &= ~TIFF_INSUBIFD;
             return (1);
         }
     }
 
+    /*
+     * Handle main-IFDs
+     */
+    tdir_t ndir = 1; /* count current number of main-IFDs */
     if (!(tif->tif_flags & TIFF_BIGTIFF))
     {
         uint32_t m;
@@ -3130,18 +3191,26 @@ static int TIFFLinkDirectory(TIFF *tif)
                 TIFFErrorExtR(tif, tif->tif_name, "Error writing TIFF header");
                 return (0);
             }
+            if (!tif->tif_dir.td_iswrittentofile)
+                tif->tif_curdircount = 0;
             return (1);
         }
         /*
          * Not the first directory, search to the last and append.
          */
-        if (tif->tif_lastdiroff != 0)
+        tdir_t dirn = -1;
+        if (tif->tif_lastdiroff != 0 &&
+            _TIFFGetDirNumberFromOffset(tif, tif->tif_lastdiroff, &dirn))
         {
+            /* Start searching from the lastely written IFD. Thus get its IFD
+             * number. */
             nextdir = (uint32_t)tif->tif_lastdiroff;
+            ndir = dirn + 1;
         }
         else
         {
             nextdir = tif->tif_header.classic.tiff_diroff;
+            ndir = 1; /* start searching from the first IFD */
         }
 
         while (1)
@@ -3176,10 +3245,12 @@ static int TIFFLinkDirectory(TIFF *tif)
                 break;
             }
             nextdir = nextnextdir;
+            ndir++;
         }
     }
     else
     {
+        /*- BigTIFF -*/
         uint64_t m;
         uint64_t nextdir;
         m = tif->tif_diroff;
@@ -3198,18 +3269,26 @@ static int TIFFLinkDirectory(TIFF *tif)
                 TIFFErrorExtR(tif, tif->tif_name, "Error writing TIFF header");
                 return (0);
             }
+            if (!tif->tif_dir.td_iswrittentofile)
+                tif->tif_curdircount = 0;
             return (1);
         }
         /*
          * Not the first directory, search to the last and append.
          */
-        if (tif->tif_lastdiroff != 0)
+        tdir_t dirn = -1;
+        if (tif->tif_lastdiroff != 0 &&
+            _TIFFGetDirNumberFromOffset(tif, tif->tif_lastdiroff, &dirn))
         {
+            /* Start searching from the lastely written IFD. Thus get its IFD
+             * number. */
             nextdir = tif->tif_lastdiroff;
+            ndir = dirn + 1;
         }
         else
         {
             nextdir = tif->tif_header.big.tiff_diroff;
+            ndir = 1; /* start searching from the first IFD */
         }
         while (1)
         {
@@ -3252,7 +3331,19 @@ static int TIFFLinkDirectory(TIFF *tif)
                 break;
             }
             nextdir = nextnextdir;
+            ndir++;
         }
+    }
+    /* Offset of next IFD is written to file.
+     * Update number of main-IFDs in file.
+     * However, tif_curdircount shall count only newly written main-IFDs with
+     * entries and not only number of linked offsets! Thus, tif_curdircount is
+     * incremented at the end of TIFFWriteDirectorySec().
+     * TIFF_NON_EXISTENT_DIR_NUMBER means 'dont know number of IFDs'
+     * 0 means 'empty file opened for writing, but no IFD written yet' */
+    if (!tif->tif_dir.td_iswrittentofile && !(tif->tif_flags & TIFF_INSUBIFD))
+    {
+        tif->tif_curdircount = ndir;
     }
     return (1);
 }
