@@ -19,7 +19,6 @@ git clone  https://github.com/conda-forge/gdal-feedstock.git
 
 cd gdal-feedstock
 
-patch -p1 < ../ci/travis/conda/meta.yaml.patch
 patch -p1 < ../ci/travis/conda/install_python.sh.patch
 
 cat > recipe/recipe_clobber.yaml <<EOL
