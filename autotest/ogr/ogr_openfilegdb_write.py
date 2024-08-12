@@ -1546,6 +1546,7 @@ def test_ogr_openfilegdb_write_spatial_index(
 ###############################################################################
 
 
+@gdaltest.enable_exceptions()
 def test_ogr_openfilegdb_write_attribute_index(tmp_vsimem):
 
     dirname = tmp_vsimem / "out.gdb"
@@ -1589,31 +1590,35 @@ def test_ogr_openfilegdb_write_attribute_index(tmp_vsimem):
     f = None
 
     # Errors of index creation
-    with gdal.quiet_errors():
-        gdal.ErrorReset()
+    with pytest.raises(
+        Exception, match="Invalid index name: cannot be greater than 16 characters"
+    ):
         ds.ExecuteSQL("CREATE INDEX this_name_is_wayyyyy_tooo_long ON test(int16)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        gdal.ErrorReset()
+    with pytest.raises(Exception, match="Invalid layer name: non_existing_layer"):
         ds.ExecuteSQL("CREATE INDEX idx_int16 ON non_existing_layer(int16)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        gdal.ErrorReset()
+    with pytest.raises(Exception, match="Cannot find field invalid_field"):
         ds.ExecuteSQL("CREATE INDEX invalid_field ON test(invalid_field)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        # Reserved keyword
-        gdal.ErrorReset()
+    with pytest.raises(
+        Exception, match="Invalid index name: must not be a reserved keyword"
+    ):
         ds.ExecuteSQL("CREATE INDEX SELECT ON test(int16)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        gdal.ErrorReset()
+    with pytest.raises(Exception, match="Invalid index name: must start with a letter"):
         ds.ExecuteSQL("CREATE INDEX _starting_by_ ON test(int16)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        gdal.ErrorReset()
+    with pytest.raises(
+        Exception,
+        match="Invalid index name: must contain only alpha numeric character or _",
+    ):
         ds.ExecuteSQL("CREATE INDEX a&b ON test(int16)")
-        assert gdal.GetLastErrorMsg() != ""
+
+    with pytest.raises(
+        Exception, match="Creation of multiple-column indices is not supported"
+    ):
+        ds.ExecuteSQL("CREATE INDEX index_on_two_cols ON test(int16, int32)")
 
     # Create indexes
     gdal.ErrorReset()
@@ -1631,20 +1636,18 @@ def test_ogr_openfilegdb_write_attribute_index(tmp_vsimem):
     fld_defn = ogr.FieldDefn("unindexed", ogr.OFTString)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    with gdal.quiet_errors():
+    with pytest.raises(Exception, match="An index with same name already exists"):
         # Re-using an index name
-        gdal.ErrorReset()
         ds.ExecuteSQL("CREATE INDEX idx_int16 ON test(unindexed)")
-        assert gdal.GetLastErrorMsg() != ""
 
+    with pytest.raises(Exception, match="Field int16 has already a registered index"):
         # Trying to index twice a field
-        gdal.ErrorReset()
         ds.ExecuteSQL("CREATE INDEX int16_again ON test(int16)")
-        assert gdal.GetLastErrorMsg() != ""
 
-        gdal.ErrorReset()
+    with pytest.raises(
+        Exception, match="Field lower_str has already a registered index"
+    ):
         ds.ExecuteSQL("CREATE INDEX lower_str_again ON test(lower_str)")
-        assert gdal.GetLastErrorMsg() != ""
 
     ds = None
 

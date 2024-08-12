@@ -1716,6 +1716,13 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                 const std::string osLayerName = afterOn.substr(0, nOpenParPos);
                 const std::string osExpression = afterOn.substr(
                     nOpenParPos + 1, afterOn.size() - nOpenParPos - 2);
+                if (osExpression.find(',') != std::string::npos)
+                {
+                    CPLError(
+                        CE_Failure, CPLE_NotSupported,
+                        "Creation of multiple-column indices is not supported");
+                    return nullptr;
+                }
                 auto poLayer = GetLayerByName(osLayerName.c_str());
                 if (poLayer)
                 {
