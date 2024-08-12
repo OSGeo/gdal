@@ -1324,6 +1324,7 @@ int GDALGPKGMBTilesLikeRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
         {
             for (int iX = iColMin; iX <= iColMax; ++iX)
             {
+                // coverity[swapped_arguments]
                 if (oSetTiles.find(std::pair(iY, iX)) == oSetTiles.end())
                 {
                     nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;

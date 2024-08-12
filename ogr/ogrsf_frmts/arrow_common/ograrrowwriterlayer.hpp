@@ -294,19 +294,16 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
         const bool pointFieldNullable = GetDriverUCName() == "PARQUET";
 
         // Fixed Size List GeoArrow encoding
-        std::shared_ptr<arrow::Field> pointField;
-        if (nDim == 2)
-            pointField =
-                arrow::field("xy", arrow::float64(), pointFieldNullable);
-        else if (nDim == 3 && OGR_GT_HasZ(eGType))
-            pointField =
-                arrow::field("xyz", arrow::float64(), pointFieldNullable);
-        else if (nDim == 3 && OGR_GT_HasM(eGType))
-            pointField =
-                arrow::field("xym", arrow::float64(), pointFieldNullable);
-        else
-            pointField =
-                arrow::field("xyzm", arrow::float64(), pointFieldNullable);
+        const auto getFixedSizeListOfPoint =
+            [nDim, eGType, pointFieldNullable]()
+        {
+            return arrow::fixed_size_list(
+                arrow::field(nDim == 2   ? "xy"
+                             : nDim == 3 ? (OGR_GT_HasZ(eGType) ? "xyz" : "xym")
+                                         : "xyzm",
+                             arrow::float64(), pointFieldNullable),
+                nDim);
+        };
 
         // Struct GeoArrow encoding
         auto xField(arrow::field("x", arrow::float64(), false));
@@ -339,30 +336,28 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_POINT:
-                dt = arrow::fixed_size_list(pointField, nDim);
+                dt = getFixedSizeListOfPoint();
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_LINESTRING:
-                dt = arrow::list(arrow::fixed_size_list(pointField, nDim));
+                dt = arrow::list(getFixedSizeListOfPoint());
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_POLYGON:
-                dt = arrow::list(
-                    arrow::list(arrow::fixed_size_list(pointField, nDim)));
+                dt = arrow::list(arrow::list(getFixedSizeListOfPoint()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOINT:
-                dt = arrow::list(arrow::fixed_size_list(pointField, nDim));
+                dt = arrow::list(getFixedSizeListOfPoint());
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTILINESTRING:
-                dt = arrow::list(
-                    arrow::list(arrow::fixed_size_list(pointField, nDim)));
+                dt = arrow::list(arrow::list(getFixedSizeListOfPoint()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOLYGON:
-                dt = arrow::list(arrow::list(
-                    arrow::list(arrow::fixed_size_list(pointField, nDim))));
+                dt = arrow::list(
+                    arrow::list(arrow::list(getFixedSizeListOfPoint())));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT:

@@ -666,6 +666,9 @@ bool FileGDBTable::CheckFreeListConsistency()
             {
                 const uint32_t nFreeAreaSize = GetUInt32(
                     abyPage.data() + nPageHeaderSize + i * nEntrySize, 0);
+                assert(iSlot + 1 <
+                       static_cast<int>(CPL_ARRAYSIZE(anHoleSizes)));
+                // coverity[overrun-local]
                 if (nFreeAreaSize < anHoleSizes[iSlot] ||
                     nFreeAreaSize >= anHoleSizes[iSlot + 1])
                 {
