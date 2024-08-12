@@ -255,6 +255,20 @@ def test_gdallocationinfo_echo(gdallocationinfo_path):
     )
     assert "1,2,132" in ret
 
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path
+        + ' -geoloc -E -valonly -field_sep "," ../gcore/data/byte.tif',
+        strin="440780.5 3751200.5",
+    )
+    assert "440780.5,3751200.5,132" in ret
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path
+        + ' -geoloc -E -valonly -field_sep "," ../gcore/data/byte.tif',
+        strin="440780.5 3751200.5 extra_content",
+    )
+    assert "440780.5,3751200.5,132,extra_content" in ret
+
 
 ###############################################################################
 # Test out of raster coordinates

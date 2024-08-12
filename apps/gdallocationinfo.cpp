@@ -342,6 +342,8 @@ MAIN_START(argc, argv)
     while (inputAvailable)
     {
         int iPixel, iLine;
+        const double dfXIn = dfGeoX;
+        const double dfYIn = dfGeoY;
 
         if (hCT)
         {
@@ -411,7 +413,7 @@ MAIN_START(argc, argv)
         }
         else if (bEcho)
         {
-            printf("%d%s%d%s", iPixel, osFieldSep.c_str(), iLine,
+            printf("%.15g%s%.15g%s", dfXIn, osFieldSep.c_str(), dfYIn,
                    osFieldSep.c_str());
         }
 
