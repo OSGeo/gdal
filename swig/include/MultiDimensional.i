@@ -691,8 +691,8 @@ public:
   {
 
     const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(self);
-    std::vector<size_t> count_internal(nExpectedDims);
-    if( nExpectedDims != 1 )
+    std::vector<size_t> count_internal(nExpectedDims + 1);
+    if( nExpectedDims > 1 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Unsupported number of dimensions");
@@ -707,23 +707,26 @@ public:
             return CE_Failure;
         }
     }
-    if( nDims1 != 1 )
+    if( nExpectedDims == 1 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "Wrong number of values in array_start_idx");
-        return CE_Failure;
-    }
-    if( nDims2 != 1 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "Wrong number of values in count");
-        return CE_Failure;
-    }
-    if( nDims3 != 1 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "Wrong number of values in array_step");
-        return CE_Failure;
+        if( nDims1 != 1 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Wrong number of values in array_start_idx");
+            return CE_Failure;
+        }
+        if( nDims2 != 1 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Wrong number of values in count");
+            return CE_Failure;
+        }
+        if( nDims3 != 1 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Wrong number of values in array_step");
+            return CE_Failure;
+        }
     }
 
     CPLErr eErr = GDALMDArrayWrite(self,
