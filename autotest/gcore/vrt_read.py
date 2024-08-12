@@ -852,6 +852,36 @@ def test_vrt_read_21():
 
 
 ###############################################################################
+# Test implicit virtual overviews
+
+
+def test_vrt_read_virtual_overview_no_srcrect_dstrect(tmp_vsimem):
+
+    ds = gdal.Open("data/byte.tif")
+    data = ds.ReadRaster(0, 0, 20, 20, 400, 400)
+    ds = None
+    tmp_tif = str(tmp_vsimem / "tmp.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(tmp_tif, 400, 400)
+    ds.WriteRaster(0, 0, 400, 400, data)
+    ds.BuildOverviews("NEAR", [2])
+    ref_cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    ds = gdal.Open(
+        f"""<VRTDataset rasterXSize="400" rasterYSize="400">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename>{tmp_tif}</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == ref_cs
+
+
+###############################################################################
 # Test that we honour NBITS with SimpleSource and ComplexSource
 
 

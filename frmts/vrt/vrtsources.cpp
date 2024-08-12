@@ -114,15 +114,34 @@ VRTSimpleSource::VRTSimpleSource(const VRTSimpleSource *poSrcSource,
       m_dfSrcYOff(poSrcSource->m_dfSrcYOff),
       m_dfSrcXSize(poSrcSource->m_dfSrcXSize),
       m_dfSrcYSize(poSrcSource->m_dfSrcYSize),
-      m_dfDstXOff(poSrcSource->m_dfDstXOff * dfXDstRatio),
-      m_dfDstYOff(poSrcSource->m_dfDstYOff * dfYDstRatio),
-      m_dfDstXSize(poSrcSource->m_dfDstXSize * dfXDstRatio),
-      m_dfDstYSize(poSrcSource->m_dfDstYSize * dfYDstRatio),
       m_nMaxValue(poSrcSource->m_nMaxValue), m_bRelativeToVRTOri(-1),
       m_nExplicitSharedStatus(poSrcSource->m_nExplicitSharedStatus),
       m_osSrcDSName(poSrcSource->m_osSrcDSName),
       m_bDropRefOnSrcBand(poSrcSource->m_bDropRefOnSrcBand)
 {
+    if (!poSrcSource->IsSrcWinSet() && !poSrcSource->IsDstWinSet() &&
+        (dfXDstRatio != 1.0 || dfYDstRatio != 1.0))
+    {
+        auto l_band = GetRasterBand();
+        if (l_band)
+        {
+            m_dfSrcXOff = 0;
+            m_dfSrcYOff = 0;
+            m_dfSrcXSize = l_band->GetXSize();
+            m_dfSrcYSize = l_band->GetYSize();
+            m_dfDstXOff = 0;
+            m_dfDstYOff = 0;
+            m_dfDstXSize = l_band->GetXSize() * dfXDstRatio;
+            m_dfDstYSize = l_band->GetYSize() * dfYDstRatio;
+        }
+    }
+    else if (poSrcSource->IsDstWinSet())
+    {
+        m_dfDstXOff = poSrcSource->m_dfDstXOff * dfXDstRatio;
+        m_dfDstYOff = poSrcSource->m_dfDstYOff * dfYDstRatio;
+        m_dfDstXSize = poSrcSource->m_dfDstXSize * dfXDstRatio;
+        m_dfDstYSize = poSrcSource->m_dfDstYSize * dfYDstRatio;
+    }
 }
 
 /************************************************************************/
