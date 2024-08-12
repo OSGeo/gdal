@@ -1250,6 +1250,15 @@ def test_netcdf_multidim_create_nc4():
         assert var
         assert var.Read() == ["", "0123456789"]
 
+        var = rg.CreateMDArray(
+            "my_var_string_array_zero_dim", [], gdal.ExtendedDataType.CreateString()
+        )
+        assert var
+        assert var.Write(["foo"]) == gdal.CE_None
+        var = rg.OpenMDArray("my_var_string_array_zero_dim")
+        assert var
+        assert var.Read() == ["foo"]
+
     f()
 
     def f2():
