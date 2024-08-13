@@ -3469,9 +3469,9 @@ bool netCDFVariable::ReadOneElement(const GDALExtendedDataType &src_datatype,
         NCDF_ERR(ret);
         if (ret != NC_NOERR)
             return false;
-        nc_free_string(1, &pszStr);
         GDALExtendedDataType::CopyValue(&pszStr, src_datatype, pDstBuffer,
                                         bufferDataType);
+        nc_free_string(1, &pszStr);
         return true;
     }
 
