@@ -137,6 +137,10 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        `Route4Me, Inc. <https://route4me.com>`__
+
+    .. container:: horizontal-logo
+
         `Satelligence <https://satelligence.com/>`__
 
     .. container:: horizontal-logo
