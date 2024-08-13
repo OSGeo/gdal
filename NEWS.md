@@ -36,6 +36,7 @@ GDAL 3.9.2 is a bugfix release.
 * gdal_retile: error out with clear message when trying to retile a file with a
   geotransform with rotation terms, or several input files with inconsistent SRS
   (#10333)
+* gdallocationinfo: in -E echo mode, always report input coordinates, not pixel,line
 * gdal2tiles: update links in generate_leaflet(), remove OSM Toner (#10304)
 * gdal2tiles: uUse correct OpenStreetMap tile url (openstreetmap/operations#737)
 * gdal2tiles: fix exception with --nodata-values-pct-threshold but not
@@ -61,6 +62,9 @@ KEA driver:
 JPEG driver:
  * ReadFLIRMetadata(): avoid potential infinite loop
 
+netCDF driver:
+ * multidim: fix use-after-free on string variables in ReadOneElement()
+
 NITF driver:
  * 12-bit JPEG writer: fix crash if raster width > block width (#10441)
 
@@ -71,6 +75,9 @@ OGCAPI driver:
 
 SRTMHGT driver:
  * add support for 0.5 deg resolution datasets (#10514)
+
+VRT driver:
+ * fix reading from virtual overviews when SrcRect / DstRect elements are missing
 
 WMTS driver:
  * make sure not to request tiles outside of tile matrix / tile matrix limits,
@@ -152,6 +159,7 @@ XLSX driver:
 ## Python bindings
 
 * fix typos in gdal.Footprint() help message
+* make MDArray.Write(array_of_strings) work with a 0-d string variable
 
 # GDAL/OGR 3.9.1 Release Notes
 
