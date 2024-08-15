@@ -755,6 +755,9 @@ static int OJPEGPreDecode(TIFF *tif, uint16_t s)
         if (OJPEGWriteHeaderInfo(tif) == 0)
             return (0);
     }
+
+    sp->subsampling_convert_state = 0;
+
     while (sp->write_curstrile < m)
     {
         if (sp->libjpeg_jpeg_query_style == 0)
@@ -840,12 +843,14 @@ static int OJPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
     (void)s;
     if (!sp->decoder_ok)
     {
+        memset(buf, 0, (size_t)cc);
         TIFFErrorExtR(tif, module,
                       "Cannot decode: decoder not correctly initialized");
         return 0;
     }
     if (sp->libjpeg_session_active == 0)
     {
+        memset(buf, 0, (size_t)cc);
         /* This should normally not happen, except that it does when */
         /* using TIFFReadScanline() which calls OJPEGPostDecode() for */
         /* each scanline, which assumes that a whole strile was read */
@@ -859,17 +864,24 @@ static int OJPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
     }
     if (sp->error_in_raw_data_decoding)
     {
+        memset(buf, 0, (size_t)cc);
         return 0;
     }
     if (sp->libjpeg_jpeg_query_style == 0)
     {
         if (OJPEGDecodeRaw(tif, buf, cc) == 0)
+        {
+            memset(buf, 0, (size_t)cc);
             return (0);
+        }
     }
     else
     {
         if (OJPEGDecodeScanlines(tif, buf, cc) == 0)
+        {
+            memset(buf, 0, (size_t)cc);
             return (0);
+        }
     }
     return (1);
 }
