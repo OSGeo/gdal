@@ -729,7 +729,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference *poSRSIn)
     if (poSRSIn->GetCoordinateEpoch() > 0 && m_bHasEpochColumn)
     {
         osEpochTest =
-            CPLSPrintf(" AND epoch = %.18g", poSRSIn->GetCoordinateEpoch());
+            CPLSPrintf(" AND epoch = %.17g", poSRSIn->GetCoordinateEpoch());
     }
 
     if (!(poSRS->IsGeographic() && poSRS->GetAxesCount() == 3))
@@ -927,7 +927,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference *poSRSIn)
     if (poSRSIn->GetCoordinateEpoch() > 0)
     {
         osEpochColumn = ", epoch";
-        osEpochVal = CPLSPrintf(", %.18g", poSRSIn->GetCoordinateEpoch());
+        osEpochVal = CPLSPrintf(", %.17g", poSRSIn->GetCoordinateEpoch());
     }
 
     // Add new SRS row to gpkg_spatial_ref_sys.
@@ -2987,16 +2987,16 @@ bool GDALGeoPackageDataset::OpenRaster(
         const int nTileWidth = atoi(oResult->GetValue(3, 0));
         const int nTileHeight = atoi(oResult->GetValue(4, 0));
         osContentsMinX =
-            CPLSPrintf("%.18g", dfMinX + dfPixelXSize * nTileWidth *
+            CPLSPrintf("%.17g", dfMinX + dfPixelXSize * nTileWidth *
                                              atoi(oResult2->GetValue(0, 0)));
         osContentsMaxY =
-            CPLSPrintf("%.18g", dfMaxY - dfPixelYSize * nTileHeight *
+            CPLSPrintf("%.17g", dfMaxY - dfPixelYSize * nTileHeight *
                                              atoi(oResult2->GetValue(1, 0)));
         osContentsMaxX = CPLSPrintf(
-            "%.18g", dfMinX + dfPixelXSize * nTileWidth *
+            "%.17g", dfMinX + dfPixelXSize * nTileWidth *
                                   (1 + atoi(oResult2->GetValue(2, 0))));
         osContentsMinY = CPLSPrintf(
-            "%.18g", dfMaxY - dfPixelYSize * nTileHeight *
+            "%.17g", dfMaxY - dfPixelYSize * nTileHeight *
                                   (1 + atoi(oResult2->GetValue(3, 0))));
         pszContentsMinX = osContentsMinX.c_str();
         pszContentsMinY = osContentsMinY.c_str();
@@ -3022,7 +3022,7 @@ bool GDALGeoPackageDataset::OpenRaster(
                 static_cast<int>(dfGPKGNoDataValue) != dfGPKGNoDataValue)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "data_null = %.18g is invalid for integer data_type",
+                         "data_null = %.17g is invalid for integer data_type",
                          dfGPKGNoDataValue);
             }
             else
@@ -3368,7 +3368,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
         "INSERT INTO gpkg_contents "
         "(table_name,data_type,identifier,description,min_x,min_y,max_x,max_y,"
         "last_change,srs_id) VALUES "
-        "('%q','%q','%q','%q',%.18g,%.18g,%.18g,%.18g,");
+        "('%q','%q','%q','%q',%.17g,%.17g,%.17g,%.17g,");
     osInsertGpkgContentsFormatting += (pszCurrentDate) ? "'%q'" : "%s";
     osInsertGpkgContentsFormatting += ",%d)";
     char *pszSQL = sqlite3_mprintf(
@@ -3396,7 +3396,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     pszSQL =
         sqlite3_mprintf("INSERT INTO gpkg_tile_matrix_set "
                         "(table_name,srs_id,min_x,min_y,max_x,max_y) VALUES "
-                        "('%q',%d,%.18g,%.18g,%.18g,%.18g)",
+                        "('%q',%d,%.17g,%.17g,%.17g,%.17g)",
                         m_osRasterTable.c_str(), m_nSRID, m_dfTMSMinX,
                         dfTMSMinY, dfTMSMaxX, m_dfTMSMaxY);
     eErr = SQLCommand(hDB, pszSQL);
@@ -3435,7 +3435,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
             "INSERT INTO gpkg_tile_matrix "
             "(table_name,zoom_level,matrix_width,matrix_height,tile_width,tile_"
             "height,pixel_x_size,pixel_y_size) VALUES "
-            "('%q',%d,%d,%d,%d,%d,%.18g,%.18g)",
+            "('%q',%d,%d,%d,%d,%d,%.17g,%.17g)",
             m_osRasterTable.c_str(), i, nTileMatrixWidth, nTileMatrixHeight,
             nTileWidth, nTileHeight, dfPixelXSizeZoomLevel,
             dfPixelYSizeZoomLevel);
@@ -3828,7 +3828,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                     "INSERT INTO gpkg_tile_matrix "
                     "(table_name,zoom_level,matrix_width,matrix_height,tile_"
                     "width,tile_height,pixel_x_size,pixel_y_size) VALUES "
-                    "('%q',%d,%d,%d,%d,%d,%.18g,%.18g)",
+                    "('%q',%d,%d,%d,%d,%d,%.17g,%.17g)",
                     m_osRasterTable.c_str(), nNewZoomLevel, nTileMatrixWidth,
                     nTileMatrixHeight, nTileWidth, nTileHeight,
                     dfPixelXSizeZoomLevel, dfPixelYSizeZoomLevel);
@@ -4917,7 +4917,7 @@ void GDALGeoPackageDataset::FlushMetadata()
             if (bHasNoData)
             {
                 oLocalMDMD.SetMetadataItem("NODATA_VALUE",
-                                           CPLSPrintf("%.18g", dfNoDataValue),
+                                           CPLSPrintf("%.17g", dfNoDataValue),
                                            "IMAGE_STRUCTURE");
             }
         }
@@ -5915,7 +5915,7 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char **papszOptions)
         "INSERT INTO gpkg_2d_gridded_coverage_ancillary "
         "(tile_matrix_set_name, datatype, scale, offset, precision, "
         "grid_cell_encoding, uom, field_name, quantity_definition) "
-        "VALUES (%Q, '%s', %.18g, %.18g, %.18g, %Q, %Q, %Q, %Q)",
+        "VALUES (%Q, '%s', %.17g, %.17g, %.17g, %Q, %Q, %Q, %Q)",
         m_osRasterTable.c_str(),
         (m_eTF == GPKG_TF_PNG_16BIT) ? "integer" : "float", m_dfScale,
         m_dfOffset, m_dfPrecision, osGridCellEncoding.c_str(),
@@ -6138,13 +6138,13 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
                 aosOptions.AddString("VRT");
                 aosOptions.AddString("-projwin");
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0]));
-                aosOptions.AddString(CPLSPrintf("%.18g", maxLat));
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0]));
+                aosOptions.AddString(CPLSPrintf("%.17g", maxLat));
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0] +
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0] +
                                             poSrcDS->GetRasterXSize() *
                                                 adfSrcGeoTransform[1]));
-                aosOptions.AddString(CPLSPrintf("%.18g", minLat));
+                aosOptions.AddString(CPLSPrintf("%.17g", minLat));
                 auto psOptions =
                     GDALTranslateOptionsNew(aosOptions.List(), nullptr);
                 poTmpDS.reset(GDALDataset::FromHandle(GDALTranslate(

@@ -2471,7 +2471,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                         "INSERT INTO gpkg_2d_gridded_tile_ancillary "
                         "(tpudt_name, tpudt_id, scale, offset, min, max, "
                         "mean, std_dev) VALUES "
-                        "('%q', ?, %.18g, %.18g, ?, ?, ?, ?)",
+                        "('%q', ?, %.17g, %.17g, ?, ?, ?, ?)",
                         m_osRasterTable.c_str(), dfTileScale, dfTileOffset);
 #ifdef DEBUG_VERBOSE
                     CPLDebug("GPKG", "%s", pszSQL);
@@ -3713,7 +3713,7 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue(double dfNoDataValue)
               static_cast<int>(dfNoDataValue) == dfNoDataValue))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Invalid nodata value for a Byte band: %.18g",
+                     "Invalid nodata value for a Byte band: %.17g",
                      dfNoDataValue);
             return CE_Failure;
         }

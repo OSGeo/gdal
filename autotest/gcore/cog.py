@@ -634,8 +634,8 @@ def test_cog_byte_to_web_mercator_manual():
         options=[
             "BLOCKSIZE=256",
             "TARGET_SRS=EPSG:3857",
-            "RES=%.18g" % res,
-            "EXTENT=%.18g,%.18g,%.18g,%.18g" % (minx, miny, maxx, maxy),
+            "RES=%.17g" % res,
+            "EXTENT=%.17g,%.17g,%.17g,%.17g" % (minx, miny, maxx, maxy),
         ],
     )
     assert ds
@@ -674,7 +674,7 @@ def test_cog_byte_to_web_mercator_manual():
     gdal.Translate(
         filename2,
         filename,
-        options="-of COG -co TILING_SCHEME=GoogleMapsCompatible -a_ullr %.18g %.18g %.18g %.18g"
+        options="-of COG -co TILING_SCHEME=GoogleMapsCompatible -a_ullr %.17g %.17g %.17g %.17g"
         % (minx - eps, maxy + eps, maxx + eps, miny - eps),
     )
     ds = gdal.Open(filename2)

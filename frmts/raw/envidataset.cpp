@@ -341,7 +341,7 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
     if (bHasNoData)
     {
         bOK &=
-            VSIFPrintfL(fp, "data ignore value = %.18g\n", dfNoDataValue) >= 0;
+            VSIFPrintfL(fp, "data ignore value = %.17g\n", dfNoDataValue) >= 0;
     }
 
     // Write "data offset values", if needed
@@ -363,7 +363,7 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
                 double dfValue = GetRasterBand(i)->GetOffset(&bHasValue);
                 if (!bHasValue)
                     dfValue = 0;
-                bOK &= VSIFPrintfL(fp, "%.18g", dfValue) >= 0;
+                bOK &= VSIFPrintfL(fp, "%.17g", dfValue) >= 0;
                 if (i != nBands)
                     bOK &= VSIFPrintfL(fp, ", ") >= 0;
             }
@@ -390,7 +390,7 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
                 double dfValue = GetRasterBand(i)->GetScale(&bHasValue);
                 if (!bHasValue)
                     dfValue = 1;
-                bOK &= VSIFPrintfL(fp, "%.18g", dfValue) >= 0;
+                bOK &= VSIFPrintfL(fp, "%.17g", dfValue) >= 0;
                 if (i != nBands)
                     bOK &= VSIFPrintfL(fp, ", ") >= 0;
             }
@@ -2838,8 +2838,8 @@ CPLErr ENVIRasterBand::SetNoDataValue(double dfNoDataValue)
             dfOtherBandNoData != dfNoDataValue)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Nodata value of band %d (%.18g) is different from nodata "
-                     "value from band %d (%.18g). Only the later will be "
+                     "Nodata value of band %d (%.17g) is different from nodata "
+                     "value from band %d (%.17g). Only the later will be "
                      "written in the ENVI header as the \"data ignore value\"",
                      nBand, dfNoDataValue, nOtherBand, dfOtherBandNoData);
         }

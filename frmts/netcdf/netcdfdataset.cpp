@@ -1469,7 +1469,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
             !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode())
         {
             CPLDebug("GDAL_netCDF",
-                     "Setting NoDataValue to %.18g (previously set to %.18g) "
+                     "Setting NoDataValue to %.17g (previously set to %.17g) "
                      "but file is no longer in define mode (id #%d, band #%d)",
                      dfNoData, m_dfNoDataValue, cdfid, nBand);
         }
@@ -1477,7 +1477,7 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
         else
         {
             CPLDebug("GDAL_netCDF",
-                     "Setting NoDataValue to %.18g (id #%d, band #%d)",
+                     "Setting NoDataValue to %.17g (id #%d, band #%d)",
                      dfNoData, cdfid, nBand);
         }
 #endif

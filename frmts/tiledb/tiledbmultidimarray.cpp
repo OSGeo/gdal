@@ -741,7 +741,7 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
                             {
                                 if (!osVal.empty())
                                     osVal += ',';
-                                osVal += CPLSPrintf("%.18g", dfVal);
+                                osVal += CPLSPrintf("%.17g", dfVal);
                             }
                             aosGridMappingKeyValues.AddNameValue(osKey.c_str(),
                                                                  osVal.c_str());

@@ -194,7 +194,7 @@ bool GH5_FetchAttribute(hid_t loc_id, const char *pszAttrName, double &dfResult,
         {
             CPLDebug("HDF5",
                      "Loss of accuracy when reading attribute %s. "
-                     "Value " CPL_FRMT_GIB " will be read as %.18g",
+                     "Value " CPL_FRMT_GIB " will be read as %.17g",
                      pszAttrName, static_cast<GIntBig>(nVal), dfResult);
         }
     }
@@ -206,7 +206,7 @@ bool GH5_FetchAttribute(hid_t loc_id, const char *pszAttrName, double &dfResult,
         {
             CPLDebug("HDF5",
                      "Loss of accuracy when reading attribute %s. "
-                     "Value " CPL_FRMT_GUIB " will be read as %.18g",
+                     "Value " CPL_FRMT_GUIB " will be read as %.17g",
                      pszAttrName, static_cast<GUIntBig>(nVal), dfResult);
         }
     }

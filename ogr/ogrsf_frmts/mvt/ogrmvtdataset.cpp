@@ -5392,7 +5392,7 @@ static bool WriteMetadataItem(const char *pszKey, int nValue,
 static bool WriteMetadataItem(const char *pszKey, double dfValue,
                               sqlite3 *hDBMBTILES, CPLJSONObject &oRoot)
 {
-    return WriteMetadataItemT(pszKey, dfValue, "%.18g", hDBMBTILES, oRoot);
+    return WriteMetadataItemT(pszKey, dfValue, "%.17g", hDBMBTILES, oRoot);
 }
 
 /************************************************************************/

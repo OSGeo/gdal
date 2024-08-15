@@ -2778,7 +2778,7 @@ void ZarrArray::ParseSpecialAttributes(
                         {
                             if (!osVal.empty())
                                 osVal += ',';
-                            osVal += CPLSPrintf("%.18g", val);
+                            osVal += CPLSPrintf("%.17g", val);
                         }
                         aosKeyValues.SetNameValue(poAttr->GetName().c_str(),
                                                   osVal.c_str());

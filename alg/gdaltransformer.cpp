@@ -3091,14 +3091,14 @@ static CPLXMLNode *GDALSerializeGenImgProjTransformer(void *pTransformArg)
     else
     {
         CPLsnprintf(
-            szWork, sizeof(szWork), "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+            szWork, sizeof(szWork), "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
             psInfo->adfSrcGeoTransform[0], psInfo->adfSrcGeoTransform[1],
             psInfo->adfSrcGeoTransform[2], psInfo->adfSrcGeoTransform[3],
             psInfo->adfSrcGeoTransform[4], psInfo->adfSrcGeoTransform[5]);
         CPLCreateXMLElementAndValue(psTree, "SrcGeoTransform", szWork);
 
         CPLsnprintf(
-            szWork, sizeof(szWork), "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+            szWork, sizeof(szWork), "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
             psInfo->adfSrcInvGeoTransform[0], psInfo->adfSrcInvGeoTransform[1],
             psInfo->adfSrcInvGeoTransform[2], psInfo->adfSrcInvGeoTransform[3],
             psInfo->adfSrcInvGeoTransform[4], psInfo->adfSrcInvGeoTransform[5]);
@@ -3128,14 +3128,14 @@ static CPLXMLNode *GDALSerializeGenImgProjTransformer(void *pTransformArg)
     else
     {
         CPLsnprintf(
-            szWork, sizeof(szWork), "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+            szWork, sizeof(szWork), "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
             psInfo->adfDstGeoTransform[0], psInfo->adfDstGeoTransform[1],
             psInfo->adfDstGeoTransform[2], psInfo->adfDstGeoTransform[3],
             psInfo->adfDstGeoTransform[4], psInfo->adfDstGeoTransform[5]);
         CPLCreateXMLElementAndValue(psTree, "DstGeoTransform", szWork);
 
         CPLsnprintf(
-            szWork, sizeof(szWork), "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+            szWork, sizeof(szWork), "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
             psInfo->adfDstInvGeoTransform[0], psInfo->adfDstInvGeoTransform[1],
             psInfo->adfDstInvGeoTransform[2], psInfo->adfDstInvGeoTransform[3],
             psInfo->adfDstInvGeoTransform[4], psInfo->adfDstInvGeoTransform[5]);

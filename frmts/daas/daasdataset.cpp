@@ -1085,7 +1085,7 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject &oProperties)
                 continue;
             }
             aoRPC.SetNameValue(asRPCSingleValues[i].pszGDALName,
-                               CPLSPrintf("%.18g", dfRPCVal));
+                               CPLSPrintf("%.17g", dfRPCVal));
         }
 
         const struct
@@ -1110,7 +1110,7 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject &oProperties)
                 {
                     if (j > 0)
                         osVal += " ";
-                    osVal += CPLSPrintf("%.18g", oRPCArray[j].ToDouble());
+                    osVal += CPLSPrintf("%.17g", oRPCArray[j].ToDouble());
                 }
                 aoRPC.SetNameValue(asRPCArrayValues[i].pszGDALName,
                                    osVal.c_str());
