@@ -1281,11 +1281,15 @@ def test_gdal_translate_ovr_rpc():
     src_rpc = src_ds.GetMetadata("RPC")
     ovr_rpc = ds.GetMetadata("RPC")
     assert ovr_rpc
-    assert float(ovr_rpc["LINE_OFF"]) == pytest.approx(0.5 * float(src_rpc["LINE_OFF"]))
+    assert float(ovr_rpc["LINE_OFF"]) == pytest.approx(
+        0.5 * (float(src_rpc["LINE_OFF"]) + 0.5) - 0.5
+    )
     assert float(ovr_rpc["LINE_SCALE"]) == pytest.approx(
         0.5 * float(src_rpc["LINE_SCALE"])
     )
-    assert float(ovr_rpc["SAMP_OFF"]) == pytest.approx(0.5 * float(src_rpc["SAMP_OFF"]))
+    assert float(ovr_rpc["SAMP_OFF"]) == pytest.approx(
+        0.5 * (float(src_rpc["SAMP_OFF"]) + 0.5) - 0.5
+    )
     assert float(ovr_rpc["SAMP_SCALE"]) == pytest.approx(
         0.5 * float(src_rpc["SAMP_SCALE"])
     )
