@@ -669,10 +669,20 @@ void CPLJobQueue::WaitCompletion(int nMaxRemainingJobs)
 bool CPLJobQueue::WaitEvent()
 {
     std::unique_lock<std::mutex> oGuard(m_mutex);
-    // coverity[missing_lock:FALSE]
-    if (m_nPendingJobs > 0)
+    while (true)
     {
+        // coverity[missing_lock:FALSE]
+        const int nPendingJobsBefore = m_nPendingJobs;
+        if (nPendingJobsBefore == 0)
+        {
+            return false;
+        }
         m_cv.wait(oGuard);
+        // cppcheck-suppress knownConditionTrueFalse
+        // coverity[missing_lock:FALSE]
+        if (m_nPendingJobs < nPendingJobsBefore)
+        {
+            return m_nPendingJobs > 0;
+        }
     }
-    return m_nPendingJobs > 0;
 }

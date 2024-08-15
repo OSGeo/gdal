@@ -167,7 +167,7 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
             std::move(partitioningFactory));
 
         arrow::fs::FileSelector selector;
-        selector.base_dir = osFSFilename;
+        selector.base_dir = std::move(osFSFilename);
         selector.recursive = true;
 
         PARQUET_ASSIGN_OR_THROW(
