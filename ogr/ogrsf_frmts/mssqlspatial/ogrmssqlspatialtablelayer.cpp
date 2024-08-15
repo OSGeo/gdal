@@ -31,6 +31,7 @@
 #include "ogr_mssqlspatial.h"
 #include "ogr_p.h"
 
+#include <cmath>
 #include <memory>
 #include <string_view>
 
@@ -608,10 +609,10 @@ OGRMSSQLSpatialTableLayer::BuildStatement(const char *pszColumns)
         if (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY ||
             nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
         {
-            if (!CPLIsInf(m_sFilterEnvelope.MinX) &&
-                !CPLIsInf(m_sFilterEnvelope.MinY) &&
-                !CPLIsInf(m_sFilterEnvelope.MaxX) &&
-                !CPLIsInf(m_sFilterEnvelope.MaxY))
+            if (!std::isinf(m_sFilterEnvelope.MinX) &&
+                !std::isinf(m_sFilterEnvelope.MinY) &&
+                !std::isinf(m_sFilterEnvelope.MaxX) &&
+                !std::isinf(m_sFilterEnvelope.MaxY))
             {
                 if (pszQuery == nullptr)
                     poStatement->Append(" where ");

@@ -369,7 +369,7 @@ OGRErr OGRPoint::importFromWkb(const unsigned char *pabyData, size_t nSize,
     }
 
     // Detect coordinates are not NaN --> NOT EMPTY.
-    if (!(CPLIsNan(x) && CPLIsNan(y)))
+    if (!(std::isnan(x) && std::isnan(y)))
         flags |= OGR_G_NOT_EMPTY_POINT;
 
     return OGRERR_NONE;

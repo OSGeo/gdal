@@ -32,6 +32,7 @@
 #include "cpl_time.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <ctime>
 #include <limits>

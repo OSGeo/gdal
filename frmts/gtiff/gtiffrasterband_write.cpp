@@ -31,6 +31,7 @@
 #include "gtiffdataset.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "cpl_vsi_virtual.h"

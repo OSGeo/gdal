@@ -31,6 +31,7 @@
 #include <array>
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <limits>
 #include <mutex>
 #include <set>

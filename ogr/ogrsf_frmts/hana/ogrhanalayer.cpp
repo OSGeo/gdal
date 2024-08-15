@@ -31,6 +31,7 @@
 #include "ogrhanautils.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <sstream>
 #include <memory>
@@ -74,8 +75,8 @@ CPLString BuildSpatialFilter(int dbVersion, const OGRGeometry &geom,
     OGREnvelope env;
     geom.getEnvelope(&env);
 
-    if ((CPLIsInf(env.MinX) || CPLIsInf(env.MinY) || CPLIsInf(env.MaxX) ||
-         CPLIsInf(env.MaxY)))
+    if ((std::isinf(env.MinX) || std::isinf(env.MinY) || std::isinf(env.MaxX) ||
+         std::isinf(env.MaxY)))
         return "";
 
     auto clampValue = [](double v)

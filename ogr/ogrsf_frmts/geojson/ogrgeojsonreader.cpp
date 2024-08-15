@@ -33,6 +33,7 @@
 #include "ogrjsoncollectionstreamingparser.h"
 #include "ogr_api.h"
 
+#include <cmath>
 #include <limits>
 #include <set>
 #include <functional>

@@ -28,6 +28,7 @@
 
 /*! @cond Doxygen_Suppress */
 
+#include <cmath>
 #include <vector>
 #include <string>
 
@@ -240,11 +241,11 @@ void CPLJSonStreamingWriter::Add(std::uint64_t nVal)
 void CPLJSonStreamingWriter::Add(float fVal, int nPrecision)
 {
     EmitCommaIfNeeded();
-    if (CPLIsNan(fVal))
+    if (std::isnan(fVal))
     {
         Print("\"NaN\"");
     }
-    else if (CPLIsInf(fVal))
+    else if (std::isinf(fVal))
     {
         Print(fVal > 0 ? "\"Infinity\"" : "\"-Infinity\"");
     }
@@ -259,11 +260,11 @@ void CPLJSonStreamingWriter::Add(float fVal, int nPrecision)
 void CPLJSonStreamingWriter::Add(double dfVal, int nPrecision)
 {
     EmitCommaIfNeeded();
-    if (CPLIsNan(dfVal))
+    if (std::isnan(dfVal))
     {
         Print("\"NaN\"");
     }
-    else if (CPLIsInf(dfVal))
+    else if (std::isinf(dfVal))
     {
         Print(dfVal > 0 ? "\"Infinity\"" : "\"-Infinity\"");
     }

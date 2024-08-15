@@ -34,6 +34,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "cpl_conv.h"
@@ -397,7 +398,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const float fNoData = static_cast<float>(padfNoData[0]);
             const float *pafData = reinterpret_cast<float *>(*ppImageData);
-            const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(fNoData));
+            const bool bIsNoDataNan = CPL_TO_BOOL(std::isnan(fNoData));
 
             // Nothing to do if value is out of range.
             if (padfNoData[1] != 0.0)
@@ -410,7 +411,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
             for (size_t iOffset = 0; iOffset < nPixels; ++iOffset)
             {
                 float fVal = pafData[iOffset];
-                if ((bIsNoDataNan && CPLIsNan(fVal)) ||
+                if ((bIsNoDataNan && std::isnan(fVal)) ||
                     (!bIsNoDataNan && ARE_REAL_EQUAL(fVal, fNoData)))
                 {
                     bAllValid = FALSE;
@@ -425,7 +426,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const double dfNoData = padfNoData[0];
             const double *padfData = reinterpret_cast<double *>(*ppImageData);
-            const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(dfNoData));
+            const bool bIsNoDataNan = CPL_TO_BOOL(std::isnan(dfNoData));
 
             // Nothing to do if value is out of range.
             if (padfNoData[1] != 0.0)
@@ -438,7 +439,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
             for (size_t iOffset = 0; iOffset < nPixels; ++iOffset)
             {
                 double dfVal = padfData[iOffset];
-                if ((bIsNoDataNan && CPLIsNan(dfVal)) ||
+                if ((bIsNoDataNan && std::isnan(dfVal)) ||
                     (!bIsNoDataNan && ARE_REAL_EQUAL(dfVal, dfNoData)))
                 {
                     bAllValid = FALSE;
@@ -453,7 +454,8 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const int nWordSize = GDALGetDataTypeSizeBytes(eType);
 
-            const bool bIsNoDataRealNan = CPL_TO_BOOL(CPLIsNan(padfNoData[0]));
+            const bool bIsNoDataRealNan =
+                CPL_TO_BOOL(std::isnan(padfNoData[0]));
 
             double *padfWrk =
                 static_cast<double *>(CPLMalloc(nXSize * sizeof(double) * 2));
@@ -466,7 +468,8 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
 
                 for (int iPixel = 0; iPixel < nXSize; ++iPixel)
                 {
-                    if (((bIsNoDataRealNan && CPLIsNan(padfWrk[iPixel * 2])) ||
+                    if (((bIsNoDataRealNan &&
+                          std::isnan(padfWrk[iPixel * 2])) ||
                          (!bIsNoDataRealNan &&
                           ARE_REAL_EQUAL(padfWrk[iPixel * 2], padfNoData[0]))))
                     {
@@ -1801,7 +1804,7 @@ CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
 
         if (psWO->padfSrcNoDataImag != nullptr)
         {
-            if (CPLIsNan(psWO->padfSrcNoDataImag[i]))
+            if (std::isnan(psWO->padfSrcNoDataImag[i]))
                 CPLCreateXMLElementAndValue(psBand, "SrcNoDataImag", "nan");
             else
                 CPLCreateXMLElementAndValue(
@@ -1826,7 +1829,7 @@ CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
 
         if (psWO->padfDstNoDataImag != nullptr)
         {
-            if (CPLIsNan(psWO->padfDstNoDataImag[i]))
+            if (std::isnan(psWO->padfDstNoDataImag[i]))
                 CPLCreateXMLElementAndValue(psBand, "DstNoDataImag", "nan");
             else
                 CPLCreateXMLElementAndValue(

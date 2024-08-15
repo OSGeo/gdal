@@ -31,6 +31,7 @@
 #include "ogr_vrt.h"
 
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -1247,13 +1248,13 @@ bool OGRVRTLayer::ResetSourceReading()
                     m_poFilterGeom->getEnvelope(&sEnvelope);
                 }
 
-                if (!CPLIsInf(sEnvelope.MinX))
+                if (!std::isinf(sEnvelope.MinX))
                     osFilter +=
                         CPLSPrintf("\"%s\" > %.15g", pszXField, sEnvelope.MinX);
                 else if (sEnvelope.MinX > 0)
                     osFilter += "0 = 1";
 
-                if (!CPLIsInf(sEnvelope.MaxX))
+                if (!std::isinf(sEnvelope.MaxX))
                 {
                     if (!osFilter.empty())
                         osFilter += " AND ";
@@ -1267,7 +1268,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     osFilter += "0 = 1";
                 }
 
-                if (!CPLIsInf(sEnvelope.MinY))
+                if (!std::isinf(sEnvelope.MinY))
                 {
                     if (!osFilter.empty())
                         osFilter += " AND ";
@@ -1281,7 +1282,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     osFilter += "0 = 1";
                 }
 
-                if (!CPLIsInf(sEnvelope.MaxY))
+                if (!std::isinf(sEnvelope.MaxY))
                 {
                     if (!osFilter.empty())
                         osFilter += " AND ";
@@ -1367,10 +1368,12 @@ bool OGRVRTLayer::ResetSourceReading()
                 {
                     OGREnvelope sEnvelope;
                     m_poFilterGeom->getEnvelope(&sEnvelope);
-                    if (CPLIsInf(sEnvelope.MinX) && CPLIsInf(sEnvelope.MinY) &&
-                        CPLIsInf(sEnvelope.MaxX) && CPLIsInf(sEnvelope.MaxY) &&
-                        sEnvelope.MinX < 0 && sEnvelope.MinY < 0 &&
-                        sEnvelope.MaxX > 0 && sEnvelope.MaxY > 0)
+                    if (std::isinf(sEnvelope.MinX) &&
+                        std::isinf(sEnvelope.MinY) &&
+                        std::isinf(sEnvelope.MaxX) &&
+                        std::isinf(sEnvelope.MaxY) && sEnvelope.MinX < 0 &&
+                        sEnvelope.MinY < 0 && sEnvelope.MaxX > 0 &&
+                        sEnvelope.MaxY > 0)
                     {
                         poSpatialGeom = poSrcRegion;
                         bDoIntersection = false;

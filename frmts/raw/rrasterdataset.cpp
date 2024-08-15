@@ -36,6 +36,7 @@
 #include "ogr_spatialref.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <memory>
 
@@ -330,7 +331,7 @@ static void GetMinMax(const T *buffer, int nBufXSize, int nBufYSize,
         for (int iX = 0; iX < nBufXSize; iX++)
         {
             const double dfVal = buffer[iY * nLineSpace + iX * nPixelSpace];
-            if (dfVal != dfNoDataValue && !CPLIsNan(dfVal))
+            if (dfVal != dfNoDataValue && !std::isnan(dfVal))
             {
                 dfMin = std::min(dfMin, dfVal);
                 dfMax = std::max(dfMax, dfVal);
@@ -1025,7 +1026,7 @@ bool RRASTERDataset::ComputeSpacings(const CPLString &osBandOrder, int nCols,
 
 static float CastToFloat(double dfVal)
 {
-    if (CPLIsInf(dfVal) || CPLIsNan(dfVal) ||
+    if (std::isinf(dfVal) || std::isnan(dfVal) ||
         (dfVal >= -std::numeric_limits<float>::max() &&
          dfVal <= std::numeric_limits<float>::max()))
     {

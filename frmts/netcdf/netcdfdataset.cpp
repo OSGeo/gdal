@@ -2173,7 +2173,7 @@ void netCDFRasterBand::CheckData(void *pImage, void *pImageNC,
                 // Check for nodata and nan.
                 if (CPLIsEqual((double)ptrImage[k], m_dfNoDataValue))
                     continue;
-                if (bCheckIsNan && CPLIsNan((double)ptrImage[k]))
+                if (bCheckIsNan && std::isnan((double)ptrImage[k]))
                 {
                     ptrImage[k] = (T)m_dfNoDataValue;
                     continue;
@@ -2258,7 +2258,7 @@ void netCDFRasterBand::CheckDataCpx(void *pImage, void *pImageNC,
                 // Check for nodata and nan.
                 if (CPLIsEqual((double)ptrImage[k], m_dfNoDataValue))
                     continue;
-                if (bCheckIsNan && CPLIsNan((double)ptrImage[k]))
+                if (bCheckIsNan && std::isnan((double)ptrImage[k]))
                 {
                     ptrImage[k] = (T)m_dfNoDataValue;
                     continue;

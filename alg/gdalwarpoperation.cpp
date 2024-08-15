@@ -756,12 +756,12 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
                        0, std::min(255, static_cast<int>(adfInitRealImag[0]))),
                    nBandSize);
         }
-        else if (!CPLIsNan(adfInitRealImag[0]) && adfInitRealImag[0] == 0.0 &&
-                 !CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0)
+        else if (!std::isnan(adfInitRealImag[0]) && adfInitRealImag[0] == 0.0 &&
+                 !std::isnan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0)
         {
             memset(pBandData, 0, nBandSize);
         }
-        else if (!CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0)
+        else if (!std::isnan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0)
         {
             GDALCopyWords64(&adfInitRealImag, GDT_Float64, 0, pBandData,
                             psOptions->eWorkingDataType, nWordSize,
@@ -2830,7 +2830,7 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
         }
 
         // If this happens this is likely the symptom of a bug somewhere.
-        if (CPLIsNan(padfX[i]) || CPLIsNan(padfY[i]))
+        if (std::isnan(padfX[i]) || std::isnan(padfY[i]))
         {
             static bool bNanCoordFound = false;
             if (!bNanCoordFound)

@@ -349,7 +349,7 @@ OGRErr OGRSpatialReference::importFromESRI(char **papszPrj)
         const double dfZone = OSR_GDV(papszPrj, "zone", 0.0);
 
         if (dfZone < std::numeric_limits<int>::min() ||
-            dfZone > std::numeric_limits<int>::max() || CPLIsNan(dfZone))
+            dfZone > std::numeric_limits<int>::max() || std::isnan(dfZone))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "zone out of range: %f",
                      dfZone);
@@ -366,7 +366,7 @@ OGRErr OGRSpatialReference::importFromESRI(char **papszPrj)
 
             if (dfFipszone < std::numeric_limits<int>::min() ||
                 dfFipszone > std::numeric_limits<int>::max() ||
-                CPLIsNan(dfFipszone))
+                std::isnan(dfFipszone))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "fipszone out of range: %f", dfFipszone);
@@ -468,7 +468,7 @@ OGRErr OGRSpatialReference::importFromESRI(char **papszPrj)
         const double dfStdPCount = OSR_GDV(papszPrj, "PARAM_1", 0.0);
         // TODO(schwehr): What is a reasonable range for StdPCount?
         if (dfStdPCount < 0 || dfStdPCount > std::numeric_limits<int>::max() ||
-            CPLIsNan(dfStdPCount))
+            std::isnan(dfStdPCount))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "StdPCount out of range: %lf",
                      dfStdPCount);
