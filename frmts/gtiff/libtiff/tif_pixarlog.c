@@ -859,6 +859,7 @@ static int PixarLogDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
             TIFFErrorExtR(tif, module,
                           "%" PRIu16 " bit input not supported in PixarLog",
                           td->td_bitspersample);
+            memset(op, 0, (size_t)occ);
             return 0;
     }
 
@@ -879,12 +880,14 @@ static int PixarLogDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
     if (sp->stream.avail_out != nsamples * sizeof(uint16_t))
     {
         TIFFErrorExtR(tif, module, "ZLib cannot deal with buffers this size");
+        memset(op, 0, (size_t)occ);
         return (0);
     }
     /* Check that we will not fill more than what was allocated */
     if ((tmsize_t)sp->stream.avail_out > sp->tbuf_size)
     {
         TIFFErrorExtR(tif, module, "sp->stream.avail_out > sp->tbuf_size");
+        memset(op, 0, (size_t)occ);
         return (0);
     }
     do
@@ -899,12 +902,14 @@ static int PixarLogDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
             TIFFErrorExtR(
                 tif, module, "Decoding error at scanline %" PRIu32 ", %s",
                 tif->tif_row, sp->stream.msg ? sp->stream.msg : "(null)");
+            memset(op, 0, (size_t)occ);
             return (0);
         }
         if (state != Z_OK)
         {
             TIFFErrorExtR(tif, module, "ZLib error: %s",
                           sp->stream.msg ? sp->stream.msg : "(null)");
+            memset(op, 0, (size_t)occ);
             return (0);
         }
     } while (sp->stream.avail_out > 0);
@@ -916,6 +921,7 @@ static int PixarLogDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
                       "Not enough data at scanline %" PRIu32
                       " (short %u bytes)",
                       tif->tif_row, sp->stream.avail_out);
+        memset(op, 0, (size_t)occ);
         return (0);
     }
 
@@ -977,6 +983,7 @@ static int PixarLogDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
             default:
                 TIFFErrorExtR(tif, module, "Unsupported bits/sample: %" PRIu16,
                               td->td_bitspersample);
+                memset(op, 0, (size_t)occ);
                 return (0);
         }
     }
