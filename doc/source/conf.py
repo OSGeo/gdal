@@ -71,6 +71,7 @@ extensions = [
     "source_file",
     "sphinx.ext.napoleon",
     "sphinxcontrib.jquery",
+    "sphinxcontrib.spelling",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -533,3 +534,10 @@ options_since_ignore_before = "3.0"
 # -- Redirects --------------------------------------------------
 
 enable_redirects = False
+
+# -- Spelling --------------------------------------------------
+
+# Avoid running git
+spelling_ignore_contributor_names = False
+
+spelling_word_list_filename = ["spelling_wordlist.txt"]

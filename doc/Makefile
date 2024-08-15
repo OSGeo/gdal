@@ -94,6 +94,9 @@ man: generated_rst_files
 latexpdf: generated_rst_files
 	$(SPHINXBUILD) -M latexpdf "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
+spelling: generated_rst_files
+	@$(SPHINXBUILD) -b spelling "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
 clean:
 	rm -rf "$(BUILDDIR)/xml"
 	rm -rf "$(BUILDDIR)/doxygen_html"
