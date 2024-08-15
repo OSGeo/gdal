@@ -284,7 +284,7 @@ Source tree layout
 - :file:`swig/python/gdal-utils/osgeo_utils`: Core code for GDAL Python utilities. Available in the PyPI gdal and gdal-utils packages.
 - :file:`swig/python/gdal-utils/samples`: Scripts that are not installed and generally not or very little documented. May serve as a staging area for future scripts that are going to be promoted as official.
 - :file:`swig/python/gdal-utils/auxiliary`: Helper methods and classes used by GDAL Python utilities. Available in the PyPI gdal and gdal-utils packages.
-- :file:`third_pary`: Third-party libraries used by libgdal. Other may be found in:
+- :file:`third_party`: Third-party libraries used by libgdal. Other may be found in:
 
   * :file:`alg/internal_libqhull`
   * :file:`apps/argparse`
