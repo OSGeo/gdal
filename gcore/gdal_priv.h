@@ -3658,6 +3658,10 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
                const std::shared_ptr<GDALMDArray> &poYArray = nullptr,
                CSLConstList papszOptions = nullptr) const;
 
+    static std::vector<std::shared_ptr<GDALMDArray>>
+    GetMeshGrid(const std::vector<std::shared_ptr<GDALMDArray>> &apoArrays,
+                CSLConstList papszOptions = nullptr);
+
     virtual GDALDataset *
     AsClassicDataset(size_t iXDim, size_t iYDim,
                      const std::shared_ptr<GDALGroup> &poRootGroup = nullptr,

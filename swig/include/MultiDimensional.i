@@ -1163,6 +1163,18 @@ public:
 %clear OSRSpatialReferenceShadow**;
 #endif
 
+
+#if defined(SWIGPYTHON)
+%newobject GetMeshGrid;
+%apply (int object_list_count, GDALMDArrayHS **poObjects) {(int nInputArrays, GDALMDArrayHS **ahInputArrays)};
+%apply (GDALMDArrayHS*** parrays, size_t* pnCount) {(GDALMDArrayHS*** outputArrays, size_t* pnCountOutputArrays)};
+  static void GetMeshGrid(int nInputArrays, GDALMDArrayHS **ahInputArrays,
+                          GDALMDArrayHS*** outputArrays, size_t* pnCountOutputArrays, char **options = 0)
+  {
+    *outputArrays = GDALMDArrayGetMeshGrid(ahInputArrays, nInputArrays, pnCountOutputArrays, options);
+  }
+#endif
+
   bool Cache( char** options = NULL )
   {
       return GDALMDArrayCache(self, options);
