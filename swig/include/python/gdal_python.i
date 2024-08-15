@@ -3908,10 +3908,10 @@ def RasterizeOptions(options=None, format=None,
         render path, or whose center point is within the polygon.
     burnValues:
         list of fixed values to burn into each band for all objects.
-        Excusive with attribute.
+        Exclusive with attribute.
     attribute:
         identifies an attribute field on the features to be used for a burn-in value.
-        The value will be burned into all output bands. Excusive with burnValues.
+        The value will be burned into all output bands. Exclusive with burnValues.
     useZ:
         whether to indicate that a burn value should be extracted from the "Z" values
         of the feature. These values are added to the burn value given by burnValues

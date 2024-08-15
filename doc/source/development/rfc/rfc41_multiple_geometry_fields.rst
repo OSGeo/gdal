@@ -122,7 +122,7 @@ The OGRFeatureDefn class will be extended as the following :
            virtual void        AddGeomFieldDefn( OGRGeomFieldDefn * );
            virtual OGRErr      DeleteGeomFieldDefn( int iGeomField );
 
-           // Route OGRwkbGeometryType GetGeomType() and void SetGeomType() 
+           // Route OGRwkbGeometryType GetGeomType() and void SetGeomType()
            // on the first geometry field definition.
 
            // Same for IsGeometryIgnored() and SetGeometryIgnored()
@@ -179,7 +179,7 @@ The OGRFeature class will be extended as following :
            OGRErr              SetGeomFieldDirectly( int iField, OGRGeometry * );
            OGRErr              SetGeomField( int iField, OGRGeometry * );
 
-           // Route SetGeometryDirectly(), SetGeometry(), GetGeometryRef(), 
+           // Route SetGeometryDirectly(), SetGeometry(), GetGeometryRef(),
            // StealGeometry() on the first geometry field in the array
 
            // Modify implementation of SetFrom() to replicate all geometries
@@ -343,7 +343,7 @@ different in most use cases.
 
 (On the other side, if we introduce 64bit integer as a OGR type (this is
 an RFC that is waiting for implementation...), the above code would
-still produce a meaningful result. The string reprentation of a 64bit
+still produce a meaningful result. The string representation of a 64bit
 integer is not that bad as a default behavior.)
 
 GetFieldCount() would also take into account geometry fields, but in

@@ -482,7 +482,7 @@ The following creation options are available:
       these variables by default. In import the CF "grid_mapping" variable
       takes precedence and the GDAL tags are used if they do not conflict
       with CF metadata. In GDAL 4, spatial_ref will not be exported. The
-      crs_wkt CF metatata attribute will be used instead.
+      crs_wkt CF metadata attribute will be used instead.
 
 -  .. co:: WRITE_LONLAT
       :choices: YES, NO, IF_NEEDED

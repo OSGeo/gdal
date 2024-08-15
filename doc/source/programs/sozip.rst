@@ -79,7 +79,7 @@ The :program:`sozip` utility can be used to:
     Validates a SOZip file. Baseline ZIP validation is done in a light way,
     limited to being able to browse through ZIP records with the InfoZIP-based
     ZIP reader used by GDAL. But validation of the SOZip-specific aspects is
-    done in a more thoroughful way.
+    done in a more thorougful way.
 
 .. option:: -r
 .. option:: --recurse-paths

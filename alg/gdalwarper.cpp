@@ -1221,7 +1221,7 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * is sufficient.  Depending on the transformation in effect, the source
  * window may be a bit too small, or even missing large areas.  Problem
  * situations are those where the transformation is very non-linear or
- * "inside out".  Examples are transforming from WGS84 to Polar Steregraphic
+ * "inside out".  Examples are transforming from WGS84 to Polar Stereographic
  * for areas around the pole, or transformations where some of the image is
  * untransformable.  The following options provide some additional control
  * to deal with errors in computing the source window:

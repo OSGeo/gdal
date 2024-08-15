@@ -395,13 +395,13 @@ keywords. So various combinations are possible :
 ::
 
 
-   def WarpOptions(options = [], format = 'GTiff', 
+   def WarpOptions(options = [], format = 'GTiff',
             outputBounds = None,
             outputBoundsSRS = None,
             xRes = None, yRes = None, targetAlignedPixels = False,
             width = 0, height = 0,
             srcSRS = None, dstSRS = None,
-            srcAlpha = False, dstAlpha = False, 
+            srcAlpha = False, dstAlpha = False,
             warpOptions = None, errorThreshold = None,
             warpMemoryLimit = None, creationOptions = None, outputType = GDT_Unknown,
             workingType = GDT_Unknown, resampleAlg = None,
@@ -467,7 +467,7 @@ keywords. So various combinations are possible :
 ::
 
 
-   def VectorTranslateOptions(options = [], format = 'ESRI Shapefile', 
+   def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
             accessMode = None,
             srcSRS = None, dstSRS = None, reproject = True,
             SQLStatement = None, SQLDialect = None, where = None, selectFields = None, spatFilter = None,
@@ -553,7 +553,7 @@ keywords. So various combinations are possible :
 
 ::
 
-   def NearblackOptions(options = [], format = 'GTiff', 
+   def NearblackOptions(options = [], format = 'GTiff',
             creationOptions = None, white = False, colors = None,
             maxNonBlack = None, nearDist = None, setAlpha = False, setMask = False,
             callback = None, callback_data = None):
@@ -564,7 +564,7 @@ keywords. So various combinations are possible :
              creationOptions --- list of creation options
              white --- whether to search for nearly white (255) pixels instead of nearly black pixels.
              colors --- list of colors  to search for, e.g. ((0,0,0),(255,255,255)). The pixels that are considered as the collar are set to 0
-             maxNonBlack --- number of non-black (or other searched colors specified with white / colors) pixels that can be encountered before the giving up search inwards. Defaults to 2. 
+             maxNonBlack --- number of non-black (or other searched colors specified with white / colors) pixels that can be encountered before the giving up search inwards. Defaults to 2.
              nearDist --- select how far from black, white or custom colors the pixel values can be and still considered near black, white or custom color.  Defaults to 15.
              setAlpha --- adds an alpha band if the output file.
              setMask --- adds a mask band to the output file.
@@ -635,7 +635,7 @@ keywords. So various combinations are possible :
 
 ::
 
-   def RasterizeOptions(options = [], format = None, 
+   def RasterizeOptions(options = [], format = None,
             creationOptions = None, noData = None, initValues = None,
             outputBounds = None, outputSRS = None,
             width = None, height = None,
@@ -660,8 +660,8 @@ keywords. So various combinations are possible :
              bands --- list of output bands to burn values into
              inverse --- whether to invert rasterization, ie burn the fixed burn value, or the burn value associated  with the first feature into all parts of the image not inside the provided a polygon.
              allTouched -- whether to enable the ALL_TOUCHED rasterization option so that all pixels touched by lines or polygons will be updated, not just those on the line render path, or whose center point is within the polygon.
-             burnValues -- list of fixed values to burn into each band for all objects. Excusive with attribute.
-             attribute --- identifies an attribute field on the features to be used for a burn-in value. The value will be burned into all output bands. Excusive with burnValues.
+             burnValues -- list of fixed values to burn into each band for all objects. Exclusive with attribute.
+             attribute --- identifies an attribute field on the features to be used for a burn-in value. The value will be burned into all output bands. Exclusive with burnValues.
              useZ --- whether to indicate that a burn value should be extracted from the "Z" values of the feature. These values are added to the burn value given by burnValues or attribute if provided. As of now, only points and lines are drawn in 3D.
              layers --- list of layers from the datasource that will be used for input features.
              SQLStatement --- SQL statement to apply to the source dataset

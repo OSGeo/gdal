@@ -74,7 +74,7 @@ class CPL_DLL CPLODBCDriverInstaller
 
     /**
      * Installs ODBC driver or updates definition of already installed driver.
-     * Interanally, it calls ODBC's SQLInstallDriverEx function.
+     * Internally, it calls ODBC's SQLInstallDriverEx function.
      *
      * @param pszDriver - The driver definition as a list of keyword-value
      * pairs describing the driver (See ODBC API Reference).
