@@ -106,6 +106,7 @@ jobs:
       if: ${{ github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }}
       shell: bash -l {0}
       run: |
+        apt install -y ssh
         mkdir -p /root/.ssh && echo "${{ secrets.SSH_KEY_DOCS }}" > /root/.ssh/id_rsa
         chmod 700 /root/.ssh && chmod 600 /root/.ssh/id_rsa
         ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
