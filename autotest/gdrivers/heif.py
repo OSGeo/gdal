@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import shutil
+
 import pytest
 
 from osgeo import gdal
@@ -130,9 +132,12 @@ def test_heif_rgba_16bit():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
 
 
-def test_heif_subdatasets():
+def test_heif_subdatasets(tmp_path):
 
-    ds = gdal.Open("data/heif/subdatasets.heic")
+    filename = str(tmp_path / "out.heic")
+    shutil.copy("data/heif/subdatasets.heic", filename)
+
+    ds = gdal.Open(filename)
     assert ds
     assert len(ds.GetSubDatasets()) == 2
     subds1_name = ds.GetSubDatasets()[0][0]
@@ -141,15 +146,23 @@ def test_heif_subdatasets():
     ds = gdal.Open(subds1_name)
     assert ds
     assert ds.RasterXSize == 64
+    assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is None
+    assert ds.GetRasterBand(1).ComputeStatistics(False)
+    assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is not None
+    ds.Close()
+
+    ds = gdal.Open(subds1_name)
+    assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is not None
 
     ds = gdal.Open(subds2_name)
     assert ds
     assert ds.RasterXSize == 162
+    assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is None
 
     with pytest.raises(Exception):
-        gdal.Open("HEIF:0:data/heif/subdatasets.heic")
+        gdal.Open(f"HEIF:0:{filename}")
     with pytest.raises(Exception):
-        gdal.Open("HEIF:3:data/heif/subdatasets.heic")
+        gdal.Open(f"HEIF:3:{filename}")
     with pytest.raises(Exception):
         gdal.Open("HEIF:1:non_existing.heic")
     with pytest.raises(Exception):
