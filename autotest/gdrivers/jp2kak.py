@@ -457,6 +457,51 @@ def test_jp2kak_lossless_uint32_nbits_20():
 
 
 ###############################################################################
+# Test lossless copying of multi band with tiling (to cause a stripe_height != 1)
+
+
+@pytest.mark.parametrize("use_stripe_compressor", ["YES", "NO"])
+def test_jp2kak_lossless_multiband(tmp_vsimem, use_stripe_compressor):
+
+    src_ds = gdal.Open("data/rgbsmall.tif")
+    out_filename = str(tmp_vsimem / "out.jp2")
+    with gdaltest.config_option("JP2KAK_USE_STRIPE_COMPRESSOR", use_stripe_compressor):
+        gdal.GetDriverByName("JP2KAK").CreateCopy(
+            out_filename,
+            src_ds,
+            options=["QUALITY=100", "BLOCKXSIZE=32", "BLOCKYSIZE=24"],
+        )
+    ds = gdal.Open(out_filename)
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+        src_ds.GetRasterBand(i + 1).Checksum() for i in range(3)
+    ]
+
+
+###############################################################################
+# Test lossless copying of multi band with tiling (to cause a stripe_height != 1)
+
+
+@pytest.mark.parametrize("use_stripe_compressor", ["YES", "NO"])
+def test_jp2kak_lossless_multiband_non_byte(tmp_vsimem, use_stripe_compressor):
+
+    src_ds = gdal.Open("data/rgbsmall.tif")
+    src_ds = gdal.Translate(
+        "", src_ds, options="-f MEM -ot UInt16 -scale 0 255 0 65535"
+    )
+    out_filename = str(tmp_vsimem / "out.jp2")
+    with gdaltest.config_option("JP2KAK_USE_STRIPE_COMPRESSOR", use_stripe_compressor):
+        gdal.GetDriverByName("JP2KAK").CreateCopy(
+            out_filename,
+            src_ds,
+            options=["QUALITY=100", "BLOCKXSIZE=32", "BLOCKYSIZE=24"],
+        )
+    ds = gdal.Open(out_filename)
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+        src_ds.GetRasterBand(i + 1).Checksum() for i in range(3)
+    ]
+
+
+###############################################################################
 # Test lossy copying of Int32
 
 
