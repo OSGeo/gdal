@@ -2904,7 +2904,9 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
         std::vector<int> precisions(num_components);
         for (int i = 0; i < num_components; ++i)
         {
-            stripe_bufs[i] = pBuffer + nXSize * nDataTypeSizeBytes * i;
+            stripe_bufs[i] = pBuffer + static_cast<size_t>(nXSize) *
+                                           nDataTypeSizeBytes * i *
+                                           stripe_height;
             is_signed[i] = CPL_TO_BOOL(GDALDataTypeIsSigned(eType));
             precisions[i] = nBits;
         }
@@ -2919,6 +2921,9 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
                 for (int i = 0; i < num_components; ++i)
                 {
                     stripe_heights[i] = nHeight;
+                    stripe_bufs[i] = pBuffer + static_cast<size_t>(nXSize) *
+                                                   nDataTypeSizeBytes * i *
+                                                   nHeight;
                 }
             }
             if (poSrcDS->RasterIO(GF_Read, 0, iY, nXSize, nHeight, pBuffer,
