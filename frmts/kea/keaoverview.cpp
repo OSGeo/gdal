@@ -48,6 +48,9 @@ KEAOverview::KEAOverview(KEADataset *pDataset, int nSrcBand,
 
 KEAOverview::~KEAOverview()
 {
+    // according to the docs, this is required
+    // otherwise not all tiles will be written.
+    this->FlushCache();
 }
 
 // overridden implementation - calls readFromOverview instead
