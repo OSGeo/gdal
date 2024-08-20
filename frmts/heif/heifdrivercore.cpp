@@ -67,7 +67,7 @@ int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
             return true;
         }
     }
-    for (uint32_t offset = 16; offset < lengthHostEndian; offset += 4)
+    for (uint32_t offset = 16; offset + 4 <= lengthHostEndian; offset += 4)
     {
         for (const GByte *supportedBrand : supportedBrands)
         {
