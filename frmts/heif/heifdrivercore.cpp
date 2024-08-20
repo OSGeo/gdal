@@ -56,9 +56,9 @@ int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
     uint32_t lengthBigEndian;
     memcpy(&lengthBigEndian, poOpenInfo->pabyHeader, sizeof(uint32_t));
     uint32_t lengthHostEndian = CPL_MSBWORD32(lengthBigEndian);
-    if (lengthHostEndian > (uint32_t)(poOpenInfo->nHeaderBytes))
+    if (lengthHostEndian > static_cast<uint32_t>(poOpenInfo->nHeaderBytes))
     {
-        lengthHostEndian = (uint32_t)(poOpenInfo->nHeaderBytes);
+        lengthHostEndian = static_cast<uint32_t>(poOpenInfo->nHeaderBytes);
     }
     for (const GByte *supportedBrand : supportedBrands)
     {
