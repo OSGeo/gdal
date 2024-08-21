@@ -525,7 +525,9 @@ int GDALDriverManager::RegisterDriver(GDALDriver *poDriver, bool bHidden)
     if (poDriver->pfnVectorTranslateFrom != nullptr)
         poDriver->SetMetadataItem(GDAL_DCAP_VECTOR_TRANSLATE_FROM, "YES");
 
-    if (m_bInDeferredDriverLoading)
+    if (m_bInDeferredDriverLoading &&
+        cpl::contains(oMapNameToDrivers,
+                      CPLString(poDriver->GetDescription()).toupper()))
     {
         if (cpl::contains(m_oMapRealDrivers, poDriver->GetDescription()))
         {
