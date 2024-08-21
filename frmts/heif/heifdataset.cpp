@@ -164,7 +164,7 @@ int64_t GDALHEIFDataset::GetPositionCbk(void *userdata)
 int GDALHEIFDataset::ReadCbk(void *data, size_t size, void *userdata)
 {
     GDALHEIFDataset *poThis = static_cast<GDALHEIFDataset *>(userdata);
-    return VSIFReadL(data, size, 1, poThis->m_fpL) == 1 ? 0 : -1;
+    return VSIFReadL(data, 1, size, poThis->m_fpL) == size ? 0 : -1;
 }
 
 /************************************************************************/
