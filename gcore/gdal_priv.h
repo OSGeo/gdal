@@ -2525,6 +2525,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     //! @cond Doxygen_Suppress
     int GetDriverCount(bool bIncludeHidden) const;
     GDALDriver *GetDriver(int iDriver, bool bIncludeHidden);
+    bool IsKnownDriver(const char *pszDriverName) const;
     //! @endcond
 };
 

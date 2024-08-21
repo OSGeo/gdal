@@ -76,7 +76,10 @@ class GDALHEIFDataset final : public GDALPamDataset
     GDALHEIFDataset();
     ~GDALHEIFDataset();
 
-    static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
+    static GDALDataset *OpenHEIF(GDALOpenInfo *poOpenInfo);
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)
+    static GDALDataset *OpenAVIF(GDALOpenInfo *poOpenInfo);
+#endif
 };
 
 /************************************************************************/
@@ -314,6 +317,12 @@ bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
 
     OpenThumbnails();
 
+    if (poOpenInfo->nHeaderBytes > 12 &&
+        memcmp(poOpenInfo->pabyHeader + 4, "ftypavif", 8) == 0)
+    {
+        poDriver = GetGDALDriverManager()->GetDriverByName("AVIF_HEIF");
+    }
+
     // Initialize any PAM information.
     if (nSubdatasets > 1)
     {
@@ -517,6 +526,7 @@ static int HEIFDriverIdentify(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->nHeaderBytes < 12 || poOpenInfo->fpL == nullptr)
         return false;
+
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
     const auto res =
         heif_check_filetype(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes);
@@ -561,10 +571,10 @@ static int HEIFDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Open()                                  */
+/*                            OpenHEIF()                                */
 /************************************************************************/
 
-GDALDataset *GDALHEIFDataset::Open(GDALOpenInfo *poOpenInfo)
+GDALDataset *GDALHEIFDataset::OpenHEIF(GDALOpenInfo *poOpenInfo)
 {
     if (!HEIFDriverIdentify(poOpenInfo))
         return nullptr;
@@ -581,6 +591,44 @@ GDALDataset *GDALHEIFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     return poDS.release();
 }
+
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)
+
+/************************************************************************/
+/*                     HEIFIdentifyOnlyAVIF()                           */
+/************************************************************************/
+
+static int HEIFIdentifyOnlyAVIF(GDALOpenInfo *poOpenInfo)
+{
+    if (poOpenInfo->nHeaderBytes < 12 || poOpenInfo->fpL == nullptr)
+        return false;
+    if (memcmp(poOpenInfo->pabyHeader + 4, "ftypavif", 8) == 0)
+        return true;
+    return false;
+}
+
+/************************************************************************/
+/*                              OpenAVIF()                              */
+/************************************************************************/
+
+GDALDataset *GDALHEIFDataset::OpenAVIF(GDALOpenInfo *poOpenInfo)
+{
+    if (!HEIFIdentifyOnlyAVIF(poOpenInfo))
+        return nullptr;
+    if (poOpenInfo->eAccess == GA_Update)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Update of existing AVIF file not supported");
+        return nullptr;
+    }
+
+    auto poDS = std::make_unique<GDALHEIFDataset>();
+    if (!poDS->Init(poOpenInfo))
+        return nullptr;
+
+    return poDS.release();
+}
+#endif
 
 /************************************************************************/
 /*                          GDALHEIFRasterBand()                        */
@@ -700,10 +748,45 @@ void GDALRegister_HEIF()
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
-    GDALDriver *poDriver = new GDALDriver();
-    HEIFDriverSetCommonMetadata(poDriver);
+    auto poDM = GetGDALDriverManager();
+    {
+        GDALDriver *poDriver = new GDALDriver();
+        HEIFDriverSetCommonMetadata(poDriver);
 
-    poDriver->pfnOpen = GDALHEIFDataset::Open;
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)
+        // If the AVIF dedicated driver is not available, register an AVIF driver,
+        // called AVIF_HEIF, based on libheif, if it has AV1 decoding capabilities.
+        if (heif_have_decoder_for_format(heif_compression_AV1))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_AVIF", "YES", "HEIF");
+        }
+#endif
 
-    GetGDALDriverManager()->RegisterDriver(poDriver);
+        poDriver->pfnOpen = GDALHEIFDataset::OpenHEIF;
+        poDM->RegisterDriver(poDriver);
+    }
+
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)
+    // If the AVIF dedicated driver is not available, register an AVIF driver,
+    // called AVIF_HEIF, based on libheif, if it has AV1 decoding capabilities.
+    if (heif_have_decoder_for_format(heif_compression_AV1) &&
+        !poDM->IsKnownDriver("AVIF") && !poDM->IsKnownDriver("AVIF_HEIF"))
+    {
+        GDALDriver *poAVIF_HEIFDriver = new GDALDriver();
+        poAVIF_HEIFDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+        poAVIF_HEIFDriver->SetDescription("AVIF_HEIF");
+        poAVIF_HEIFDriver->SetMetadataItem(
+            GDAL_DMD_LONGNAME, "AV1 Image File Format (using libheif)");
+        poAVIF_HEIFDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/avif");
+        poAVIF_HEIFDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
+                                           "drivers/raster/heif.html");
+        poAVIF_HEIFDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "avif");
+        poAVIF_HEIFDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+
+        poAVIF_HEIFDriver->pfnOpen = GDALHEIFDataset::OpenAVIF;
+        poAVIF_HEIFDriver->pfnIdentify = HEIFIdentifyOnlyAVIF;
+
+        poDM->RegisterDriver(poAVIF_HEIFDriver);
+    }
+#endif
 }

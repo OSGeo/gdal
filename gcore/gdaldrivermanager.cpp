@@ -368,6 +368,26 @@ int GDALDriverManager::GetDriverCount(bool bIncludeHidden) const
 //! @endcond
 
 /************************************************************************/
+/*                            IsKnownDriver()                           */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+bool GDALDriverManager::IsKnownDriver(const char *pszDriverName) const
+{
+    CPLMutexHolderD(&hDMMutex);
+    if (cpl::contains(oMapNameToDrivers, CPLString(pszDriverName).toupper()))
+        return true;
+    for (const auto &poDriver : m_aoHiddenDrivers)
+    {
+        if (EQUAL(poDriver->GetDescription(), pszDriverName))
+            return true;
+    }
+    return false;
+}
+
+//! @endcond
+
+/************************************************************************/
 /*                         GDALGetDriverCount()                         */
 /************************************************************************/
 
