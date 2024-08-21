@@ -26,6 +26,7 @@ Raster drivers
    adrg
    aig
    airsar
+   avif
    bag
    basisu
    blx
