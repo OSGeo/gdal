@@ -33,42 +33,51 @@
 /*                    HEIFDriverIdentifySimplified()                    */
 /************************************************************************/
 
-int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
+static const GByte FTYP_4CC[] = {'f', 't', 'y', 'p'};
+static const GByte supportedBrands[][4]{
+    {'a', 'v', 'i', 'f'}, {'h', 'e', 'i', 'c'}, {'h', 'e', 'i', 'x'},
+    {'j', '2', 'k', 'i'}, {'j', 'p', 'e', 'g'}, {'m', 'i', 'a', 'f'},
+    {'m', 'i', 'f', '1'}, {'m', 'i', 'f', '2'}};
 
+int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
 {
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "HEIF:"))
+    {
         return true;
-
-    if (poOpenInfo->nHeaderBytes < 12 || poOpenInfo->fpL == nullptr)
+    }
+    if (poOpenInfo->nHeaderBytes < 16 || poOpenInfo->fpL == nullptr)
+    {
         return false;
-
-    // Simplistic test...
-    const unsigned char abySig1[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x20"
-                                    "ftypheic";
-    const unsigned char abySig2[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x18"
-                                    "ftypheic";
-    const unsigned char abySig3[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x18"
-                                    "ftypmif1"
-                                    "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "mif1heic";
-    return (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig1)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig1, sizeof(abySig1)) == 0) ||
-           (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig2)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig2, sizeof(abySig2)) == 0) ||
-           (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig3)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig3, sizeof(abySig3)) == 0);
+    }
+    if (memcmp(poOpenInfo->pabyHeader + 4, FTYP_4CC, sizeof(FTYP_4CC)) != 0)
+    {
+        return false;
+    }
+    uint32_t lengthBigEndian;
+    memcpy(&lengthBigEndian, poOpenInfo->pabyHeader, sizeof(uint32_t));
+    uint32_t lengthHostEndian = CPL_MSBWORD32(lengthBigEndian);
+    if (lengthHostEndian > static_cast<uint32_t>(poOpenInfo->nHeaderBytes))
+    {
+        lengthHostEndian = static_cast<uint32_t>(poOpenInfo->nHeaderBytes);
+    }
+    for (const GByte *supportedBrand : supportedBrands)
+    {
+        if (memcmp(poOpenInfo->pabyHeader + 8, supportedBrand, 4) == 0)
+        {
+            return true;
+        }
+    }
+    for (uint32_t offset = 16; offset + 4 <= lengthHostEndian; offset += 4)
+    {
+        for (const GByte *supportedBrand : supportedBrands)
+        {
+            if (memcmp(poOpenInfo->pabyHeader + offset, supportedBrand, 4) == 0)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 /************************************************************************/
