@@ -519,6 +519,20 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
         GDALDataset::SetMetadata(const_cast<char **>(apszMD), "xml:XMP");
     }
 
+    if (m_decoder->image->icc.size > 0)
+    {
+        // Escape the profile.
+        char *pszBase64Profile =
+            CPLBase64Encode(static_cast<int>(m_decoder->image->icc.size),
+                            m_decoder->image->icc.data);
+
+        // Set ICC profile metadata.
+        SetMetadataItem("SOURCE_ICC_PROFILE", pszBase64Profile,
+                        "COLOR_PROFILE");
+
+        CPLFree(pszBase64Profile);
+    }
+
     // Initialize any PAM information.
     if (m_decoder->imageCount > 1)
     {
@@ -850,6 +864,25 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
         }
     }
 
+#if AVIF_VERSION_MAJOR >= 1
+    const char *pszICCProfile =
+        CSLFetchNameValue(papszOptions, "SOURCE_ICC_PROFILE");
+    if (pszICCProfile == nullptr)
+    {
+        pszICCProfile =
+            poSrcDS->GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE");
+    }
+    if (pszICCProfile && pszICCProfile[0] != '\0')
+    {
+        char *pEmbedBuffer = CPLStrdup(pszICCProfile);
+        const GInt32 nEmbedLen =
+            CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(pEmbedBuffer));
+        CPL_IGNORE_RET_VAL(avifImageSetProfileICC(
+            image, reinterpret_cast<const uint8_t *>(pEmbedBuffer), nEmbedLen));
+        CPLFree(pEmbedBuffer);
+    }
+#endif
+
     avifErr =
         avifEncoderAddImage(encoder, image, 1, AVIF_ADD_IMAGE_FLAG_SINGLE);
     if (avifErr != AVIF_RESULT_OK)
@@ -1039,6 +1072,16 @@ void GDALAVIFDriver::InitMetadata()
                                    "Whether to write XMP metadata");
         CPLAddXMLAttributeAndValue(psOption, "default", "YES");
     }
+
+#if AVIF_VERSION_MAJOR >= 1
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "SOURCE_ICC_PROFILE");
+        CPLAddXMLAttributeAndValue(psOption, "type", "string");
+        CPLAddXMLAttributeAndValue(psOption, "description",
+                                   "ICC profile encoded in Base64");
+    }
+#endif
 
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");

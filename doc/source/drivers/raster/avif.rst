@@ -33,6 +33,14 @@ Driver capabilities
 
 .. supports_createcopy
 
+Color Profile Metadata
+----------------------
+
+GDAL can deal with the following color profile
+metadata in the COLOR_PROFILE domain:
+
+-  SOURCE_ICC_PROFILE (Base64 encoded ICC profile embedded in file.)
+
 Creation options
 ----------------
 
@@ -71,6 +79,11 @@ The following creation options are supported:
       :default: ALL_CPUS
 
       Number of worker threads for compression.
+
+-  .. co:: SOURCE_ICC_PROFILE
+
+      ICC profile encoded in Base64. Can also be
+      set to empty string to avoid the ICC profile from the source dataset to be used.
 
 -  .. co:: WRITE_EXIF_METADATA
       :choices: YES, NO
