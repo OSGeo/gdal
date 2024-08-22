@@ -586,22 +586,8 @@ CPLJobQueue::~CPLJobQueue()
 
 struct JobQueueJob
 {
-    CPLJobQueue *poQueue = nullptr;
-    CPLThreadFunc pfnFunc = nullptr;
-    void *pData = nullptr;
+    std::function<void()> task;
 };
-
-/************************************************************************/
-/*                          JobQueueFunction()                          */
-/************************************************************************/
-
-void CPLJobQueue::JobQueueFunction(void *pData)
-{
-    JobQueueJob *poJob = static_cast<JobQueueJob *>(pData);
-    poJob->pfnFunc(poJob->pData);
-    poJob->poQueue->DeclareJobFinished();
-    delete poJob;
-}
 
 /************************************************************************/
 /*                          DeclareJobFinished()                        */
@@ -626,16 +612,23 @@ void CPLJobQueue::DeclareJobFinished()
  */
 bool CPLJobQueue::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
 {
-    JobQueueJob *poJob = new JobQueueJob;
-    poJob->poQueue = this;
-    poJob->pfnFunc = pfnFunc;
-    poJob->pData = pData;
+    return SubmitJob([=] { pfnFunc(pData); });
+}
+
+bool CPLJobQueue::SubmitJob(std::function<void()> task)
+{
     {
         std::lock_guard<std::mutex> oGuard(m_mutex);
         m_nPendingJobs++;
     }
+
     // cppcheck-suppress knownConditionTrueFalse
-    return m_poPool->SubmitJob(JobQueueFunction, poJob);
+    return m_poPool->SubmitJob(
+        [this, task]
+        {
+            task();
+            DeclareJobFinished();
+        });
 }
 
 /************************************************************************/

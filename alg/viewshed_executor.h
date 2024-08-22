@@ -46,6 +46,7 @@ class ViewshedExecutor
     bool run();
 
   private:
+    CPLWorkerThreadPool m_pool;
     GDALRasterBand &m_srcBand;
     GDALRasterBand &m_dstBand;
     const Viewshed::Window oOutExtent;

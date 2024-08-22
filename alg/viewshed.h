@@ -38,6 +38,7 @@
 #include <string>
 
 #include "cpl_progress.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdal_priv.h"
 
 namespace gdal
@@ -103,6 +104,12 @@ class Viewshed
         int ySize() const
         {
             return yStop - yStart;
+        }
+
+        /// \brief  Number of cells.
+        size_t size() const
+        {
+            return static_cast<size_t>(xSize()) * ySize();
         }
 
         /// \brief  Determine if the X window contains the index.
@@ -188,7 +195,7 @@ class Viewshed
     */
     CPL_DLL explicit Viewshed(const Options &opts)
         : oOpts{opts}, oOutExtent{}, oCurExtent{}, poDstDS{}, pSrcBand{},
-          pDstBand{}, nLineCount{0}, oProgress{}
+          nLineCount{0}, oProgress{}
     {
     }
 
@@ -218,7 +225,7 @@ class Viewshed
     Window oCurExtent;
     DatasetPtr poDstDS;
     GDALRasterBand *pSrcBand;
-    GDALRasterBand *pDstBand;
+    //    GDALRasterBand *pDstBand;
     int nLineCount;
     using ProgressFunc = std::function<bool(double frac, const char *msg)>;
     ProgressFunc oProgress;
@@ -233,7 +240,7 @@ class Viewshed
                      const std::array<double, 6> &adfInvTransform);
     DatasetPtr createOutputDataset(GDALRasterBand &srcBand,
                                    const std::string &outFilename);
-    void createCumulativeDataset(size_t cnt, std::queue<DatasetPtr> &queue,
+    void createCumulativeDataset(std::queue<DatasetPtr> &queue,
                                  std::mutex &mutex, std::condition_variable &cv,
                                  size_t numObservers);
     bool lineProgress();

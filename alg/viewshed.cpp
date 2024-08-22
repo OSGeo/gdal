@@ -25,14 +25,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <iostream>
 #include <future>
 
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
-#include "cpl_worker_thread_pool.h"
 
+#include "notifyqueue.h"
 #include "viewshed.h"
 #include "viewshed_executor.h"
+
+const int NUM_JOBS = 2;
 
 /************************************************************************/
 /*                        GDALViewshedGenerate()                        */
@@ -366,8 +369,8 @@ Viewshed::createOutputDataset(GDALRasterBand &srcBand,
     adfDstTransform[5] = adfSrcTransform[5];
     dataset->SetGeoTransform(adfDstTransform.data());
 
-    pDstBand = dataset->GetRasterBand(1);
-    if (!pDstBand)
+    GDALRasterBand *pBand = dataset->GetRasterBand(1);
+    if (!pBand)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot get band for %s",
                  outFilename.c_str());
@@ -375,7 +378,7 @@ Viewshed::createOutputDataset(GDALRasterBand &srcBand,
     }
 
     if (oOpts.nodataVal >= 0)
-        GDALSetRasterNoDataValue(pDstBand, oOpts.nodataVal);
+        GDALSetRasterNoDataValue(pBand, oOpts.nodataVal);
     return dataset;
 }
 
@@ -434,6 +437,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         return false;
 
     // Execute the viewshed algorithm.
+    GDALRasterBand *pDstBand = poDstDS->GetRasterBand(1);
     ViewshedExecutor executor(*pSrcBand, *pDstBand, nX, nY, oOutExtent,
                               oCurExtent, oOpts);
     executor.run();
@@ -472,9 +476,11 @@ bool Viewshed::runCumulative(const std::string &srcFilename,
         for (int y = 0; y < oOutExtent.yStop; y += oOpts.observerSpacing)
             observers.emplace_back(x, y);
 
+    std::cerr << "Observers total = " << observers.size() << "!\n";
+
     std::queue<DatasetPtr> outputQueue;
 
-    const int numThreads = 5;
+    const int numThreads = NUM_JOBS;
     CPLWorkerThreadPool pool(numThreads);
 
     std::mutex mutex;
@@ -482,107 +488,95 @@ bool Viewshed::runCumulative(const std::string &srcFilename,
     std::atomic<bool> err = false;
 
     // Queue all the jobs.
-    for (auto [x, y] : observers)
+    auto executorJob =
+        [this, &observers, &outputQueue, &mutex, &cv, &srcFilename, &err]
     {
-        pool.SubmitJob(
-            [this, x = x, y = y, &outputQueue, &mutex, &cv, &srcFilename, &err]
+        int x;
+        int y;
+
+        auto nextObserver = [&x, &y, &observers, &mutex]
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            if (observers.empty())
+                return false;
+            x = observers.back().first;
+            y = observers.back().second;
+            observers.resize(observers.size() - 1);
+            return true;
+        };
+
+        while (!err && nextObserver())
+        {
+            DatasetPtr srcDs(
+                GDALDataset::Open(srcFilename.c_str(), GA_ReadOnly));
+
+            GDALDriver *memDriver =
+                GetGDALDriverManager()->GetDriverByName("MEM");
+            DatasetPtr dstDs(memDriver->Create("", oOutExtent.xSize(),
+                                               oOutExtent.ySize(), 1, GDT_Byte,
+                                               nullptr));
+            ViewshedExecutor executor(*srcDs->GetRasterBand(1),
+                                      *dstDs->GetRasterBand(1), x, y,
+                                      oOutExtent, oOutExtent, oOpts);
+            if (!executor.run())
             {
-                if (err)
-                    return;
+                err = true;
+                dstDs.reset();  // So we push a NULL dataset on the queue.
+            }
+            {
+                std::lock_guard<std::mutex> lock(mutex);
+                outputQueue.push(std::move(dstDs));
+            }
+            cv.notify_one();
+        }
+    };
 
-                DatasetPtr srcDs(
-                    GDALDataset::Open(srcFilename.c_str(), GA_ReadOnly));
+    for (int i = 0; i < numThreads; ++i)
+        pool.SubmitJob(executorJob);
+    std::cerr << "Submitted executor jobs!\n";
 
-                GDALDriver *memDriver =
-                    GetGDALDriverManager()->GetDriverByName("MEM");
-                DatasetPtr dstDs(memDriver->Create("", oOutExtent.xSize(),
-                                                   oOutExtent.ySize(), 1,
-                                                   GDT_Byte, nullptr));
-                ViewshedExecutor executor(*srcDs->GetRasterBand(1),
-                                          *dstDs->GetRasterBand(1), x, y,
-                                          oOutExtent, oOutExtent, oOpts);
-                if (!executor.run())
-                {
-                    err = true;
-                    dstDs.reset();
-                }
-                {
-                    std::lock_guard<std::mutex> lock(mutex);
-                    outputQueue.push(std::move(dstDs));
-                }
-                cv.notify_one();
-            });
-    }
-
+    std::cerr << "Creating cum dataset!\n";
     // The first argument need not be the number of threads.
-    createCumulativeDataset(numThreads, outputQueue, mutex, cv,
-                            observers.size());
+    createCumulativeDataset(outputQueue, mutex, cv, observers.size());
 
+    pool.WaitCompletion();
+    std::cerr << "Done create cum dataset!\n";
     (void)pfnProgress;
     (void)pProgressArg;
     return true;
 }
 
-namespace
-{
-
-bool sumDatasets(GDALDataset &dstDs, GDALDataset &srcDs)
-{
-    GDALRasterBand *dstBand = dstDs.GetRasterBand(1);
-    int xsize = dstBand->GetXSize();
-    int ysize = dstBand->GetYSize();
-
-    // Source dataset is always a memory buffer.
-    uint8_t *pSrc = static_cast<uint8_t *>(srcDs.GetInternalHandle("MEMORY1"));
-    assert(pSrc);
-
-    // Space for destination line.
-    std::vector<uint8_t> dstBuf(xsize);
-
-    for (int y = 0; y < ysize; ++y)
-    {
-        (void)dstBand->RasterIO(GF_Read, 0, y, xsize, 1, dstBuf.data(), xsize,
-                                1, GDT_Byte, 0, 0, nullptr);
-        uint8_t *pDst = dstBuf.data();
-        for (int i = 0; i < xsize; ++i)
-            *pDst++ += *pSrc++;
-        (void)dstBand->RasterIO(GF_Write, 0, y, xsize, 1, dstBuf.data(), xsize,
-                                1, GDT_Byte, 0, 0, nullptr);
-    }
-    return true;
-}
-
-}  // unnamed namespace
+using Buf32 = std::vector<uint32_t>;
+using Buf32Queue = NotifyQueue<Buf32>;
 
 class Combiner
 {
   public:
-    Combiner(std::queue<Viewshed::DatasetPtr> &outputQueue, std::mutex &mutex,
-             std::condition_variable &cv, size_t &remaining)
-        : m_outputQueue(outputQueue), m_mutex(mutex), m_cv(cv),
-          m_remaining(remaining)
+    Combiner(std::queue<Viewshed::DatasetPtr> &inputQueue, std::mutex &mutex,
+             std::condition_variable &cv, size_t &remaining,
+             Buf32Queue &outputQueue)
+        : m_inputQueue(inputQueue), m_mutex(mutex), m_cv(cv),
+          m_remaining(remaining), m_outputQueue(outputQueue)
     {
     }
 
     Combiner(const Combiner &src)
-        : m_outputQueue(src.m_outputQueue), m_mutex(src.m_mutex),
-          m_cv(src.m_cv), m_remaining(src.m_remaining)
+        : m_inputQueue(src.m_inputQueue), m_mutex(src.m_mutex), m_cv(src.m_cv),
+          m_remaining(src.m_remaining), m_outputQueue(src.m_outputQueue)
     {
     }
 
+    void queueOutputBuffer();
     void run();
 
-    Viewshed::DatasetPtr dataset()
-    {
-        return std::move(m_dataset);
-    }
-
   private:
-    std::queue<Viewshed::DatasetPtr> &m_outputQueue;
+    std::queue<Viewshed::DatasetPtr> &m_inputQueue;
     std::mutex &m_mutex;
     std::condition_variable &m_cv;
     size_t &m_remaining;
+    Buf32Queue &m_outputQueue;
     Viewshed::DatasetPtr m_dataset;
+    size_t m_count{0};
 
     void sum(Viewshed::DatasetPtr srcDs);
 };
@@ -599,15 +593,15 @@ void Combiner::run()
         }
 
         std::unique_lock<std::mutex> lock(m_mutex);
-        m_cv.wait(lock, [this]
-                  { return m_remaining == 0 || !m_outputQueue.empty(); });
+        m_cv.wait(lock,
+                  [this] { return m_remaining == 0 || !m_inputQueue.empty(); });
 
         // If some other thread said there are no remaining datasets, just exit.
         if (m_remaining == 0)
             break;
 
-        Viewshed::DatasetPtr p = std::move(m_outputQueue.front());
-        m_outputQueue.pop();
+        Viewshed::DatasetPtr p = std::move(m_inputQueue.front());
+        m_inputQueue.pop();
         if (!p)
         {
             m_remaining = 0;
@@ -621,6 +615,9 @@ void Combiner::run()
             sum(std::move(p));
         }
     }
+
+    // Queue remaining summed rasters.
+    queueOutputBuffer();
 }
 
 void Combiner::sum(Viewshed::DatasetPtr src)
@@ -639,40 +636,106 @@ void Combiner::sum(Viewshed::DatasetPtr src)
     uint8_t *srcP = static_cast<uint8_t *>(src->GetInternalHandle("MEMORY1"));
     for (size_t i = 0; i <= size; ++i)
         *dstP++ += *srcP++;
+    if (++m_count == 255)
+        queueOutputBuffer();
 }
 
-void Viewshed::createCumulativeDataset(size_t cnt,
-                                       std::queue<DatasetPtr> &queue,
+void Combiner::queueOutputBuffer()
+{
+    if (!m_dataset)
+        return;
+
+    std::cerr << "Queue buffer!\n";
+    uint8_t *srcP =
+        static_cast<uint8_t *>(m_dataset->GetInternalHandle("MEMORY1"));
+
+    GDALRasterBand *srcBand = m_dataset->GetRasterBand(1);
+    size_t size = srcBand->GetXSize() * srcBand->GetYSize();
+
+    Buf32 buf(size);
+    uint32_t *dstP = buf.data();
+    for (size_t i = 0; i <= size; ++i)
+        *dstP++ = *srcP++;
+    m_dataset.reset();
+    m_count = 0;
+    m_outputQueue.push(std::move(buf));
+}
+
+namespace
+{
+
+void scaleOutputData(Buf32 &finalBuf)
+{
+    uint32_t m = 0;  // This gathers all the bits set.
+    for (uint32_t &val : finalBuf)
+        m = std::max(val, m);
+
+    std::cerr << "Max = " << m << "!\n";
+    double factor =
+        std::numeric_limits<uint8_t>::max() / static_cast<double>(m);
+
+    for (uint32_t &val : finalBuf)
+        val = static_cast<uint32_t>(std::floor(factor * val));
+    std::map<uint32_t, uint32_t> bins;
+    for (uint32_t &val : finalBuf)
+        bins[val]++;
+    for (auto [val, count] : bins)
+        std::cerr << "Value " << val << " = " << count << "!\n";
+}
+
+}  // unnamed namespace
+
+void Viewshed::createCumulativeDataset(std::queue<DatasetPtr> &queue,
                                        std::mutex &mutex,
                                        std::condition_variable &cv,
                                        size_t numObservers)
 {
-    cnt = 1;
+    size_t rasterSize = oOutExtent.size();
 
-    // Make cnt observers.
-    std::vector<Combiner> combiners(cnt,
-                                    Combiner(queue, mutex, cv, numObservers));
-    std::vector<std::future<void>> futures;
+    NotifyQueue<Buf32> bigQueue;
+    Buf32 finalBuf(rasterSize);
 
-    // Run the combiners.
-    for (Combiner &c : combiners)
-        futures.emplace_back(std::async([&c] { c.run(); }));
+    std::thread bigRasterThread(
+        [&bigQueue, &finalBuf, rasterSize]
+        {
+            Buf32 buf(rasterSize);
+            while (true)
+            {
+                if (!bigQueue.pop(buf))
+                    break;
 
-    // Wait for the combiners to complete.
-    for (std::future<void> &f : futures)
-        f.wait();
+                for (size_t i = 0; i < rasterSize; ++i)
+                    finalBuf[i] += buf[i];
+            }
+        });
 
-    poDstDS = createOutputDataset(*pSrcBand, oOpts.outputFilename);
-    GDALRasterBand *band = poDstDS->GetRasterBand(1);
-    band->Fill(0);
-
-    // Add it all up into the final dataset.
-    for (Combiner &c : combiners)
+    // Run the combiners in a job queue and wait for them to complete.
     {
-        DatasetPtr pSrcDataset = c.dataset();
-        if (pSrcDataset)
-            sumDatasets(*poDstDS, *pSrcDataset);
+        const int numJobs = NUM_JOBS;
+        CPLWorkerThreadPool pool(numJobs);
+
+        std::vector<Combiner> combiners(
+            numJobs, Combiner(queue, mutex, cv, numObservers, bigQueue));
+        for (Combiner &c : combiners)
+            pool.SubmitJob([&c] { c.run(); });
+        pool.WaitCompletion();
     }
+
+    // When all the combiners have finished, everything is in the 32-bit data queue, so
+    // set the queue done.
+    bigQueue.done();
+
+    std::cerr << "Joining bigRaster!\n";
+    // Wait for finalBuf to be fully filled.
+    bigRasterThread.join();
+
+    scaleOutputData(finalBuf);
+
+    DatasetPtr pDstDS = createOutputDataset(*pSrcBand, oOpts.outputFilename);
+    GDALRasterBand *pBand = pDstDS->GetRasterBand(1);
+    (void)pBand->RasterIO(
+        GF_Write, 0, 0, oOutExtent.xSize(), oOutExtent.ySize(), finalBuf.data(),
+        oOutExtent.xSize(), oOutExtent.ySize(), GDT_UInt32, 0, 0, nullptr);
 }
 
 }  // namespace gdal

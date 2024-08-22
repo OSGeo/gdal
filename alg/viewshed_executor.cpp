@@ -84,7 +84,7 @@ ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
                                    const Viewshed::Window &outExtent,
                                    const Viewshed::Window &curExtent,
                                    const Viewshed::Options &opts)
-    : m_srcBand(srcBand), m_dstBand(dstBand), oOutExtent(outExtent),
+    : m_pool(4), m_srcBand(srcBand), m_dstBand(dstBand), oOutExtent(outExtent),
       oCurExtent(curExtent), m_nX(nX - oOutExtent.xStart), m_nY(nY),
       oOpts(opts), m_dfMaxDistance2(opts.maxDistance * opts.maxDistance)
 {
@@ -290,6 +290,17 @@ bool ViewshedExecutor::processFirstLine(std::vector<double> &vLastLineVal)
         processFirstLineTopOrBottom(iLeft, iRight, vResult, vThisLineVal);
     else
     {
+        CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
+        pQueue->SubmitJob(
+            [&, left = iLeft]() {
+                processFirstLineLeft(m_nX - 1, left - 1, vResult, vThisLineVal);
+            });
+
+        pQueue->SubmitJob(
+            [&, right = iRight]()
+            { processFirstLineRight(m_nX + 1, right, vResult, vThisLineVal); });
+        pQueue->WaitCompletion();
+        /**
         auto t1 = std::async(std::launch::async,
                              [&, left = iLeft]() {
                                  processFirstLineLeft(m_nX - 1, left - 1,
@@ -301,6 +312,7 @@ bool ViewshedExecutor::processFirstLine(std::vector<double> &vLastLineVal)
             { processFirstLineRight(m_nX + 1, right, vResult, vThisLineVal); });
         t1.wait();
         t2.wait();
+        **/
     }
 
     // Make the current line the last line.
@@ -578,6 +590,21 @@ bool ViewshedExecutor::processLine(int nLine, std::vector<double> &vLastLineVal)
     }
 
     // process left half then right half of line
+    CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
+    pQueue->SubmitJob(
+        [&, left = iLeft]()
+        {
+            processLineLeft(nYOffset, m_nX - 1, left - 1, vResult, vThisLineVal,
+                            vLastLineVal);
+        });
+    pQueue->SubmitJob(
+        [&, right = iRight]()
+        {
+            processLineRight(nYOffset, m_nX + 1, right, vResult, vThisLineVal,
+                             vLastLineVal);
+        });
+    pQueue->WaitCompletion();
+    /**
     auto t1 =
         std::async(std::launch::async,
                    [&, left = iLeft]()
@@ -595,6 +622,7 @@ bool ViewshedExecutor::processLine(int nLine, std::vector<double> &vLastLineVal)
                    });
     t1.wait();
     t2.wait();
+    **/
 
     // Make the current line the last line.
     vLastLineVal = std::move(vThisLineVal);
@@ -628,6 +656,30 @@ bool ViewshedExecutor::run()
     // scan upwards
     int yStart = oCurExtent.clampY(m_nY);
     std::atomic<bool> err(false);
+    CPLJobQueuePtr pQueue = m_pool.CreateJobQueue();
+    pQueue->SubmitJob(
+        [&]()
+        {
+            std::vector<double> vLastLineVal = vFirstLineVal;
+
+            for (int nLine = yStart - 1; nLine >= oCurExtent.yStart && !err;
+                 nLine--)
+                if (!processLine(nLine, vLastLineVal))
+                    err = true;
+        });
+
+    // scan downwards
+    pQueue->SubmitJob(
+        [&]()
+        {
+            std::vector<double> vLastLineVal = vFirstLineVal;
+
+            for (int nLine = yStart + 1; nLine < oCurExtent.yStop && !err;
+                 nLine++)
+                if (!processLine(nLine, vLastLineVal))
+                    err = true;
+        });
+    /**
     auto tUp = std::async(std::launch::async,
                           [&]()
                           {
@@ -654,6 +706,7 @@ bool ViewshedExecutor::run()
 
     tUp.wait();
     tDown.wait();
+    **/
 
     //ABELL
     /**
