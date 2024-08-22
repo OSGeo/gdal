@@ -74,6 +74,7 @@ typedef enum
 #endif  // ndef DOXYGEN_SKIP
 
 class CPLJobQueue;
+/// Unique pointer to a job queue.
 using CPLJobQueuePtr = std::unique_ptr<CPLJobQueue>;
 
 /** Pool of worker threads */

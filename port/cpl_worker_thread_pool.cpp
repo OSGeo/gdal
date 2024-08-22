@@ -598,6 +598,11 @@ bool CPLJobQueue::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
     return SubmitJob([=] { pfnFunc(pData); });
 }
 
+/** Queue a new job.
+ *
+ * @param task  Task to execute.
+ * @return true in case of success.
+ */
 bool CPLJobQueue::SubmitJob(std::function<void()> task)
 {
     {
