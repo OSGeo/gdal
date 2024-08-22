@@ -831,12 +831,12 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
             if (EQUAL(pszTypname, "geometry"))
             {
                 bHavePostGIS = TRUE;
-                nGeometryOID = atoi(pszOid);
+                nGeometryOID = static_cast<Oid>(strtoul(pszOid, nullptr, 10));
             }
             else if (CPLTestBool(CPLGetConfigOption("PG_USE_GEOGRAPHY", "YES")))
             {
                 bHaveGeography = TRUE;
-                nGeographyOID = atoi(pszOid);
+                nGeographyOID = static_cast<Oid>(strtoul(pszOid, nullptr, 10));
             }
         }
     }
@@ -1589,7 +1589,9 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
             pszTableName = OGRPGCommonLaunderName(pszDotPos + 1, "PG",
                                                   bUTF8ToASCII);  // skip "."
         else
-            pszTableName = CPLStrdup(pszDotPos + 1);  // skip "."
+            pszTableName = CPLStrdup(
+                OGRPGCommonGenerateShortEnoughIdentifier(pszDotPos + 1)
+                    .c_str());  // skip "."
     }
     else
     {
@@ -1598,7 +1600,9 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
             pszTableName = OGRPGCommonLaunderName(pszLayerName, "PG",
                                                   bUTF8ToASCII);  // skip "."
         else
-            pszTableName = CPLStrdup(pszLayerName);  // skip "."
+            pszTableName =
+                CPLStrdup(OGRPGCommonGenerateShortEnoughIdentifier(pszLayerName)
+                              .c_str());  // skip "."
     }
 
     /* -------------------------------------------------------------------- */
@@ -1936,32 +1940,11 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
 
         if (eType != wkbNone && bHavePostGIS && bCreateSpatialIndex)
         {
-            /* --------------------------------------------------------------------
-             */
-            /*      Create the spatial index. */
-            /*                                                                      */
-            /*      We're doing this before we add geometry and record to the
-             * table */
-            /*      so this may not be exactly the best way to do it. */
-            /* --------------------------------------------------------------------
-             */
-            std::string osIndexName(pszTableName);
-            std::string osSuffix("_");
-            osSuffix += pszGFldName;
-            osSuffix += "_geom_idx";
-            if (bLaunder)
-            {
-                if (osSuffix.size() >=
-                    static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
-                {
-                    osSuffix = "_0_geom_idx";
-                }
-                if (osIndexName.size() + osSuffix.size() >
-                    static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
-                    osIndexName.resize(OGR_PG_NAMEDATALEN - 1 -
-                                       osSuffix.size());
-            }
-            osIndexName += osSuffix;
+            // Create the spatial index.
+            // We're doing this before we add geometry and record to the
+            // table, so this may not be exactly the best way to do it.
+            const std::string osIndexName(OGRPGCommonGenerateSpatialIndexName(
+                pszTableName, pszGFldName, 0));
 
             osCommand.Printf("CREATE INDEX %s ON %s.%s USING %s (%s)",
                              OGRPGEscapeColumnName(osIndexName.c_str()).c_str(),

@@ -4206,6 +4206,18 @@ def test_gpkg_sql_gdal_get_layer_pixel_value():
     ds.ReleaseResultSet(sql_lyr)
     assert f[0] == 156
 
+    with ds.ExecuteSQL(
+        "select gdal_get_layer_pixel_value('byte', 1, 'georef', 440780 + 30, 3751080 - 30)"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == 156
+
+    with ds.ExecuteSQL(
+        "select gdal_get_layer_pixel_value('byte', 1, 'georef', 440780 + 30, 3751080 - 30, 'cubicspline')"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == pytest.approx(150.1388888888889)
+
     sql_lyr = ds.ExecuteSQL(
         "select gdal_get_layer_pixel_value('float32', 1, 'pixel', 0, 1)"
     )
@@ -4348,3 +4360,62 @@ def test_gpkg_rename_raster_table(data_type, tmp_vsimem):
     gdal.VSIFCloseL(f)
 
     assert "weird" not in content
+
+
+###############################################################################
+# Test GetDataCoverageStatus() is used on the source dataset
+
+
+def test_gpkg_copy_using_get_data_coverage_status(tmp_vsimem):
+
+    tmp_gtiff = str(tmp_vsimem / "tmp.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_gtiff,
+        1024,
+        768,
+        1,
+        options=["TILED=YES", "BLOCKXSIZE=256", "BLOCKYSIZE=256", "SPARSE_OK=YES"],
+    )
+    src_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+    src_ds.WriteRaster(512, 256, 256, 256, b"\x01" * (256 * 256))
+
+    tmp_gpkg = str(tmp_vsimem / "tmp.gpkg")
+    gdaltest.gpkg_dr.CreateCopy(tmp_gpkg, src_ds)
+
+    ds = gdal.Open(tmp_gpkg)
+    assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+    with ds.ExecuteSQL("SELECT COUNT(*) FROM tmp") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 1024, 768)
+    assert (
+        flags
+        == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
+        and pct == 100.0 / 12
+    )
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 1024, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 512, 1024, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 512, 768)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(768, 0, 256, 768)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(512, 256, 256, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(512 + 1, 256 + 2, 3, 4)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(512 - 1, 256 - 1, 2, 2)
+    assert (
+        flags
+        == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
+        and pct == 25.0
+    )

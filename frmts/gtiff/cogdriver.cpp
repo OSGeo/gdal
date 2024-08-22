@@ -737,19 +737,25 @@ GDALCOGCreator::~GDALCOGCreator()
     // may reference the later
     m_poRGBMaskDS.reset();
 
-    if (m_poReprojectedDS)
+    // Config option just for testing purposes
+    const bool bDeleteTempFiles =
+        CPLTestBool(CPLGetConfigOption("COG_DELETE_TEMP_FILES", "YES"));
+    if (bDeleteTempFiles)
     {
-        CPLString osProjectedDSName(m_poReprojectedDS->GetDescription());
-        m_poReprojectedDS.reset();
-        VSIUnlink(osProjectedDSName);
-    }
-    if (!m_osTmpOverviewFilename.empty())
-    {
-        VSIUnlink(m_osTmpOverviewFilename);
-    }
-    if (!m_osTmpMskOverviewFilename.empty())
-    {
-        VSIUnlink(m_osTmpMskOverviewFilename);
+        if (m_poReprojectedDS)
+        {
+            CPLString osProjectedDSName(m_poReprojectedDS->GetDescription());
+            m_poReprojectedDS.reset();
+            VSIUnlink(osProjectedDSName);
+        }
+        if (!m_osTmpOverviewFilename.empty())
+        {
+            VSIUnlink(m_osTmpOverviewFilename);
+        }
+        if (!m_osTmpMskOverviewFilename.empty())
+        {
+            VSIUnlink(m_osTmpMskOverviewFilename);
+        }
     }
 }
 

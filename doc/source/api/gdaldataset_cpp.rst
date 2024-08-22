@@ -9,6 +9,14 @@
 GDALDataset C++ API
 ================================================================================
 
+Include file
+------------
+
+:file:`gdal_priv.h`
+
+GDALDataset class
+-----------------
+
 .. doxygenclass:: GDALDataset
    :project: api
    :members:

@@ -9,7 +9,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2012-2016, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2012-2024, Even Rouault <even dot rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT OR LGPL-2.0-or-later
  ******************************************************************************
@@ -231,7 +231,7 @@ extern "C"
 #define SHPP_RING 5
 
     /* -------------------------------------------------------------------- */
-    /*      SHPObject - represents on shape (without attributes) read       */
+    /*      SHPObject - represents one shape (without attributes) read      */
     /*      from the .shp file.                                             */
     /* -------------------------------------------------------------------- */
     struct tagSHPObject

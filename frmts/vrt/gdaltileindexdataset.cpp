@@ -30,19 +30,24 @@
 
 #include <array>
 #include <algorithm>
+#include <atomic>
 #include <limits>
+#include <mutex>
 #include <set>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 #include "cpl_port.h"
+#include "cpl_error_internal.h"
 #include "cpl_mem_cache.h"
 #include "cpl_minixml.h"
+#include "cpl_quad_tree.h"
 #include "vrtdataset.h"
 #include "vrt_priv.h"
 #include "ogrsf_frmts.h"
 #include "gdal_proxy.h"
+#include "gdal_thread_pool.h"
 #include "gdal_utils.h"
 
 #if defined(__SSE2__) || defined(_M_X64)
@@ -276,6 +281,16 @@ class GDALTileIndexDataset final : public GDALPamDataset
     //! Cache of buffers used by VRTComplexSource to avoid memory reallocation.
     VRTSource::WorkingState m_oWorkingState{};
 
+    //! Used by IRasterIO() when using multi-threading
+    struct QueueWorkingStates
+    {
+        std::mutex oMutex{};
+        std::vector<std::unique_ptr<VRTSource::WorkingState>> oStates{};
+    };
+
+    //! Used by IRasterIO() when using multi-threading
+    QueueWorkingStates m_oQueueWorkingStates{};
+
     //! Structure describing one of the source raster in the tile index.
     struct SourceDesc
     {
@@ -292,7 +307,7 @@ class GDALTileIndexDataset final : public GDALPamDataset
         std::unique_ptr<OGRFeature> poFeature{};
 
         //! Work buffer containing the value of the mask band for the current pixel query.
-        std::vector<GByte> abyMask{};
+        mutable std::vector<GByte> abyMask{};
 
         //! Whether the source covers the whole area of interest of the current pixel query.
         bool bCoversWholeAOI = false;
@@ -313,13 +328,20 @@ class GDALTileIndexDataset final : public GDALPamDataset
     //! Array of sources participating to the current pixel query.
     std::vector<SourceDesc> m_aoSourceDesc{};
 
+    //! Maximum number of threads. Updated by CollectSources().
+    int m_nNumThreads = -1;
+
+    //! Whereas the multi-threading rendering code path must be used. Updated by CollectSources().
+    bool m_bLastMustUseMultiThreading = false;
+
     //! From a source dataset name, return its SourceDesc description structure.
-    bool GetSourceDesc(const std::string &osTileName, SourceDesc &oSourceDesc);
+    bool GetSourceDesc(const std::string &osTileName, SourceDesc &oSourceDesc,
+                       std::mutex *pMutex);
 
     //! Collect sources corresponding to the georeferenced window of interest,
     //! and store them in m_aoSourceDesc[].
     bool CollectSources(double dfXOff, double dfYOff, double dfXSize,
-                        double dfYSize);
+                        double dfYSize, bool bMultiThreadAllowed);
 
     //! Sort sources according to m_nSortFieldIndex.
     void SortSourceDesc();
@@ -334,8 +356,55 @@ class GDALTileIndexDataset final : public GDALPamDataset
                     const int *panBandMap, GSpacing nPixelSpace,
                     GSpacing nLineSpace, GSpacing nBandSpace) const;
 
+    //! Render one source. Used by IRasterIO()
+    CPLErr RenderSource(const SourceDesc &oSourceDesc, bool bNeedInitBuffer,
+                        int nBandNrMax, int nXOff, int nYOff, int nXSize,
+                        int nYSize, double dfXOff, double dfYOff,
+                        double dfXSize, double dfYSize, int nBufXSize,
+                        int nBufYSize, void *pData, GDALDataType eBufType,
+                        int nBandCount, BANDMAP_TYPE panBandMap,
+                        GSpacing nPixelSpace, GSpacing nLineSpace,
+                        GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg,
+                        VRTSource::WorkingState &oWorkingState) const;
+
     //! Whether m_poVectorDS supports SetMetadata()/SetMetadataItem()
     bool TileIndexSupportsEditingLayerMetadata() const;
+
+    //! Return number of threads that can be used
+    int GetNumThreads() const;
+
+    /** Structure used to declare a threaded job to satisfy IRasterIO()
+     * on a given source.
+     */
+    struct RasterIOJob
+    {
+        std::atomic<int> *pnCompletedJobs = nullptr;
+        std::atomic<bool> *pbSuccess = nullptr;
+        GDALTileIndexDataset *poDS = nullptr;
+        GDALTileIndexDataset::QueueWorkingStates *poQueueWorkingStates =
+            nullptr;
+        int nBandNrMax = 0;
+        std::string *posErrorMsg = nullptr;
+
+        int nXOff = 0;
+        int nYOff = 0;
+        int nXSize = 0;
+        int nYSize = 0;
+        void *pData = nullptr;
+        int nBufXSize = 0;
+        int nBufYSize = 0;
+        int nBandCount = 0;
+        BANDMAP_TYPE panBandMap = nullptr;
+        GDALDataType eBufType = GDT_Unknown;
+        GSpacing nPixelSpace = 0;
+        GSpacing nLineSpace = 0;
+        GSpacing nBandSpace = 0;
+        GDALRasterIOExtraArg *psExtraArg = nullptr;
+
+        std::string osTileName{};
+
+        static void Func(void *pData);
+    };
 
     CPL_DISALLOW_COPY_ASSIGN(GDALTileIndexDataset)
 };
@@ -1741,7 +1810,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            for (int iOvr = 1;; ++iOvr)
+            for (int iOvr = 0;; ++iOvr)
             {
                 const char *pszOvrDSName =
                     GetOption(CPLSPrintf("OVERVIEW_%d_DATASET", iOvr));
@@ -1752,7 +1821,12 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                 const char *pszOvrFactor =
                     GetOption(CPLSPrintf("OVERVIEW_%d_FACTOR", iOvr));
                 if (!pszOvrDSName && !pszOvrLayer && !pszOvrFactor)
+                {
+                    // Before GDAL 3.9.2, we started the iteration at 1.
+                    if (iOvr == 0)
+                        continue;
                     break;
+                }
                 m_aoOverviewDescriptor.emplace_back(
                     std::string(pszOvrDSName ? pszOvrDSName : ""),
                     pszOpenOptions ? CPLStringList(CSLTokenizeString2(
@@ -1860,6 +1934,10 @@ const char *GDALTileIndexDataset::GetMetadataItem(const char *pszName,
         else if (EQUAL(pszName, "NUMBER_OF_CONTRIBUTING_SOURCES"))
         {
             return CPLSPrintf("%d", static_cast<int>(m_aoSourceDesc.size()));
+        }
+        else if (EQUAL(pszName, "MULTI_THREADED_RASTERIO_LAST_USED"))
+        {
+            return m_bLastMustUseMultiThreading ? "1" : "0";
         }
     }
     return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
@@ -2197,11 +2275,54 @@ void GDALTileIndexDataset::LoadOverviews()
                 !osDSName.empty() ? osDSName.c_str() : GetDescription(),
                 GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,
                 aosNewOpenOptions.List(), nullptr));
-            if (poOvrDS)
+
+            const auto IsSmaller =
+                [](const GDALDataset *a, const GDALDataset *b)
+            {
+                return (a->GetRasterXSize() < b->GetRasterXSize() &&
+                        a->GetRasterYSize() <= b->GetRasterYSize()) ||
+                       (a->GetRasterYSize() < b->GetRasterYSize() &&
+                        a->GetRasterXSize() <= b->GetRasterXSize());
+            };
+
+            if (poOvrDS &&
+                ((m_apoOverviews.empty() && IsSmaller(poOvrDS.get(), this)) ||
+                 ((!m_apoOverviews.empty() &&
+                   IsSmaller(poOvrDS.get(), m_apoOverviews.back().get())))))
             {
                 if (poOvrDS->GetRasterCount() == GetRasterCount())
                 {
                     m_apoOverviews.emplace_back(std::move(poOvrDS));
+                    // Add the overviews of the overview, unless the OVERVIEW_LEVEL
+                    // option option is specified
+                    if (aosOpenOptions.FetchNameValue("OVERVIEW_LEVEL") ==
+                        nullptr)
+                    {
+                        const int nOverviewCount = m_apoOverviews.back()
+                                                       ->GetRasterBand(1)
+                                                       ->GetOverviewCount();
+                        for (int i = 0; i < nOverviewCount; ++i)
+                        {
+                            aosNewOpenOptions.SetNameValue("OVERVIEW_LEVEL",
+                                                           CPLSPrintf("%d", i));
+                            std::unique_ptr<GDALDataset> poOvrOfOvrDS(
+                                GDALDataset::Open(
+                                    !osDSName.empty() ? osDSName.c_str()
+                                                      : GetDescription(),
+                                    GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                                    nullptr, aosNewOpenOptions.List(),
+                                    nullptr));
+                            if (poOvrOfOvrDS &&
+                                poOvrOfOvrDS->GetRasterCount() ==
+                                    GetRasterCount() &&
+                                IsSmaller(poOvrOfOvrDS.get(),
+                                          m_apoOverviews.back().get()))
+                            {
+                                m_apoOverviews.emplace_back(
+                                    std::move(poOvrOfOvrDS));
+                            }
+                        }
+                    }
                 }
                 else
                 {
@@ -2544,7 +2665,8 @@ const char *GDALTileIndexBand::GetMetadataItem(const char *pszName,
             iLine >= GetYSize())
             return nullptr;
 
-        if (!m_poDS->CollectSources(iPixel, iLine, 1, 1))
+        if (!m_poDS->CollectSources(iPixel, iLine, 1, 1,
+                                    /* bMultiThreadAllowed = */ false))
             return nullptr;
 
         // Format into XML.
@@ -2850,10 +2972,18 @@ GDALTileIndexDataset::GetSourcesMoreRecentThan(int64_t mTime)
 /************************************************************************/
 
 bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
-                                         SourceDesc &oSourceDesc)
+                                         SourceDesc &oSourceDesc,
+                                         std::mutex *pMutex)
 {
     std::shared_ptr<GDALDataset> poTileDS;
-    if (!m_oMapSharedSources.tryGet(osTileName, poTileDS))
+
+    if (pMutex)
+        pMutex->lock();
+    const bool bTileKnown = m_oMapSharedSources.tryGet(osTileName, poTileDS);
+    if (pMutex)
+        pMutex->unlock();
+
+    if (!bTileKnown)
     {
         poTileDS = std::shared_ptr<GDALDataset>(
             GDALProxyPoolDataset::Create(
@@ -2986,7 +3116,11 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
             poTileDS.reset(poWarpDS.release());
         }
 
+        if (pMutex)
+            pMutex->lock();
         m_oMapSharedSources.insert(osTileName, poTileDS);
+        if (pMutex)
+            pMutex->unlock();
     }
 
     double adfGeoTransformTile[6];
@@ -3040,19 +3174,13 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
         poSource = std::move(poComplexSource);
     }
 
-    if (!GetSrcDstWin(adfGeoTransformTile, poTileDS->GetRasterXSize(),
-                      poTileDS->GetRasterYSize(), m_adfGeoTransform.data(),
-                      GetRasterXSize(), GetRasterYSize(),
-                      &poSource->m_dfSrcXOff, &poSource->m_dfSrcYOff,
-                      &poSource->m_dfSrcXSize, &poSource->m_dfSrcYSize,
-                      &poSource->m_dfDstXOff, &poSource->m_dfDstYOff,
-                      &poSource->m_dfDstXSize, &poSource->m_dfDstYSize))
-    {
-        // Should not happen on a consistent tile index
-        CPLDebug("VRT", "Tile %s does not actually intersect area of interest",
-                 osTileName.c_str());
-        return false;
-    }
+    GetSrcDstWin(adfGeoTransformTile, poTileDS->GetRasterXSize(),
+                 poTileDS->GetRasterYSize(), m_adfGeoTransform.data(),
+                 GetRasterXSize(), GetRasterYSize(), &poSource->m_dfSrcXOff,
+                 &poSource->m_dfSrcYOff, &poSource->m_dfSrcXSize,
+                 &poSource->m_dfSrcYSize, &poSource->m_dfDstXOff,
+                 &poSource->m_dfDstYOff, &poSource->m_dfDstXSize,
+                 &poSource->m_dfDstYSize);
 
     oSourceDesc.osName = osTileName;
     oSourceDesc.poDS = std::move(poTileDS);
@@ -3066,11 +3194,33 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
 }
 
 /************************************************************************/
+/*                           GetNumThreads()                            */
+/************************************************************************/
+
+int GDALTileIndexDataset::GetNumThreads() const
+{
+    const char *pszNumThreads =
+        CSLFetchNameValueDef(GetOpenOptions(), "NUM_THREADS", nullptr);
+    if (!pszNumThreads)
+        pszNumThreads = CPLGetConfigOption("GTI_NUM_THREADS", nullptr);
+    if (!pszNumThreads)
+        pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
+    if (EQUAL(pszNumThreads, "0") || EQUAL(pszNumThreads, "1"))
+        return atoi(pszNumThreads);
+    const int nMaxPoolSize = GDALGetMaxDatasetPoolSize();
+    const int nLimit = std::min(CPLGetNumCPUs(), nMaxPoolSize);
+    if (EQUAL(pszNumThreads, "ALL_CPUS"))
+        return nLimit;
+    return std::min(atoi(pszNumThreads), nLimit);
+}
+
+/************************************************************************/
 /*                        CollectSources()                              */
 /************************************************************************/
 
 bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
-                                          double dfXSize, double dfYSize)
+                                          double dfXSize, double dfYSize,
+                                          bool bMultiThreadAllowed)
 {
     const double dfMinX =
         m_adfGeoTransform[GT_TOPLEFT_X] + dfXOff * m_adfGeoTransform[GT_WE_RES];
@@ -3089,6 +3239,7 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
     m_dfLastMinYFilter = dfMinY;
     m_dfLastMaxXFilter = dfMaxX;
     m_dfLastMaxYFilter = dfMaxY;
+    m_bLastMustUseMultiThreading = false;
 
     m_poLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
     m_poLayer->ResetReading();
@@ -3119,6 +3270,99 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
         }
     }
 
+    constexpr int MINIMUM_PIXEL_COUNT_FOR_THREADED_IO = 1000 * 1000;
+    if (bMultiThreadAllowed && m_aoSourceDesc.size() > 1 &&
+        dfXSize * dfYSize > MINIMUM_PIXEL_COUNT_FOR_THREADED_IO)
+    {
+        if (m_nNumThreads < 0)
+            m_nNumThreads = GetNumThreads();
+        bMultiThreadAllowed = m_nNumThreads > 1;
+    }
+    else
+    {
+        bMultiThreadAllowed = false;
+    }
+
+    if (bMultiThreadAllowed)
+    {
+        CPLRectObj sGlobalBounds;
+        sGlobalBounds.minx = dfXOff;
+        sGlobalBounds.miny = dfYOff;
+        sGlobalBounds.maxx = dfXOff + dfXSize;
+        sGlobalBounds.maxy = dfYOff + dfYSize;
+        CPLQuadTree *hQuadTree = CPLQuadTreeCreate(&sGlobalBounds, nullptr);
+
+        bool bCompatibleOfMultiThread = true;
+        std::set<std::string> oSetTileNames;
+        for (const auto &oSourceDesc : m_aoSourceDesc)
+        {
+            const char *pszTileName =
+                oSourceDesc.poFeature->GetFieldAsString(m_nLocationFieldIndex);
+            if (oSetTileNames.find(pszTileName) != oSetTileNames.end())
+            {
+                bCompatibleOfMultiThread = false;
+                break;
+            }
+            oSetTileNames.insert(pszTileName);
+
+            const auto poGeom = oSourceDesc.poFeature->GetGeometryRef();
+            if (!poGeom || poGeom->IsEmpty())
+                continue;
+
+            OGREnvelope sEnvelope;
+            poGeom->getEnvelope(&sEnvelope);
+
+            CPLRectObj sSourceBounds;
+            sSourceBounds.minx =
+                (sEnvelope.MinX - m_adfGeoTransform[GT_TOPLEFT_X]) /
+                m_adfGeoTransform[GT_WE_RES];
+            sSourceBounds.maxx =
+                (sEnvelope.MaxX - m_adfGeoTransform[GT_TOPLEFT_X]) /
+                m_adfGeoTransform[GT_WE_RES];
+            // Yes use of MaxY to compute miny is intended given that MaxY is
+            // in georeferenced space whereas miny is in pixel space.
+            sSourceBounds.miny =
+                (sEnvelope.MaxY - m_adfGeoTransform[GT_TOPLEFT_Y]) /
+                m_adfGeoTransform[GT_NS_RES];
+            // Same here for maxy vs Miny
+            sSourceBounds.maxy =
+                (sEnvelope.MinY - m_adfGeoTransform[GT_TOPLEFT_Y]) /
+                m_adfGeoTransform[GT_NS_RES];
+
+            // Clamp to global bounds and some epsilon to avoid adjacent tiles
+            // to be considered as overlapping
+            constexpr double EPSILON = 0.1;
+            sSourceBounds.minx =
+                std::max(sGlobalBounds.minx, sSourceBounds.minx) + EPSILON;
+            sSourceBounds.maxx =
+                std::min(sGlobalBounds.maxx, sSourceBounds.maxx) - EPSILON;
+            sSourceBounds.miny =
+                std::max(sGlobalBounds.miny, sSourceBounds.miny) + EPSILON;
+            sSourceBounds.maxy =
+                std::min(sGlobalBounds.maxy, sSourceBounds.maxy) - EPSILON;
+
+            // Check that the new source doesn't overlap an existing one.
+            if (CPLQuadTreeHasMatch(hQuadTree, &sSourceBounds))
+            {
+                bCompatibleOfMultiThread = false;
+                break;
+            }
+
+            CPLQuadTreeInsertWithBounds(
+                hQuadTree,
+                const_cast<void *>(static_cast<const void *>(&oSourceDesc)),
+                &sSourceBounds);
+        }
+
+        CPLQuadTreeDestroy(hQuadTree);
+
+        if (bCompatibleOfMultiThread)
+        {
+            m_bLastMustUseMultiThreading = true;
+            return true;
+        }
+    }
+
     if (m_aoSourceDesc.size() > 1)
     {
         SortSourceDesc();
@@ -3137,8 +3381,63 @@ bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
             GetAbsoluteFileName(pszTileName, GetDescription()));
 
         SourceDesc oSourceDesc;
-        if (!GetSourceDesc(osTileName, oSourceDesc))
+        if (!GetSourceDesc(osTileName, oSourceDesc, nullptr))
             continue;
+
+        // Check consistency of bounding box in tile index vs actual
+        // extent of the tile.
+        double adfTileGT[6];
+        if (oSourceDesc.poDS->GetGeoTransform(adfTileGT) == CE_None &&
+            adfTileGT[GT_ROTATION_PARAM1] == 0 &&
+            adfTileGT[GT_ROTATION_PARAM2] == 0)
+        {
+            OGREnvelope sActualTileExtent;
+            sActualTileExtent.MinX = adfTileGT[GT_TOPLEFT_X];
+            sActualTileExtent.MaxX =
+                sActualTileExtent.MinX +
+                oSourceDesc.poDS->GetRasterXSize() * adfTileGT[GT_WE_RES];
+            sActualTileExtent.MaxY = adfTileGT[GT_TOPLEFT_Y];
+            sActualTileExtent.MinY =
+                sActualTileExtent.MaxY +
+                oSourceDesc.poDS->GetRasterYSize() * adfTileGT[GT_NS_RES];
+            const auto poGeom = poFeature->GetGeometryRef();
+            if (poGeom && !poGeom->IsEmpty())
+            {
+                OGREnvelope sGeomTileExtent;
+                poGeom->getEnvelope(&sGeomTileExtent);
+                sGeomTileExtent.MinX -= m_adfGeoTransform[GT_WE_RES];
+                sGeomTileExtent.MaxX += m_adfGeoTransform[GT_WE_RES];
+                sGeomTileExtent.MinY -= std::fabs(m_adfGeoTransform[GT_NS_RES]);
+                sGeomTileExtent.MaxY += std::fabs(m_adfGeoTransform[GT_NS_RES]);
+                if (!sGeomTileExtent.Contains(sActualTileExtent))
+                {
+                    if (!sGeomTileExtent.Intersects(sActualTileExtent))
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Tile index is out of sync with actual "
+                                 "extent of %s. Bounding box from tile index "
+                                 "is (%g, %g, %g, %g) does not intersect at "
+                                 "all bounding box from tile (%g, %g, %g, %g)",
+                                 osTileName.c_str(), sGeomTileExtent.MinX,
+                                 sGeomTileExtent.MinY, sGeomTileExtent.MaxX,
+                                 sGeomTileExtent.MaxY, sActualTileExtent.MinX,
+                                 sActualTileExtent.MinY, sActualTileExtent.MaxX,
+                                 sActualTileExtent.MaxY);
+                        continue;
+                    }
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Tile index is out of sync with actual extent "
+                             "of %s. Bounding box from tile index is (%g, %g, "
+                             "%g, %g) does not fully contain bounding box from "
+                             "tile (%g, %g, %g, %g)",
+                             osTileName.c_str(), sGeomTileExtent.MinX,
+                             sGeomTileExtent.MinY, sGeomTileExtent.MaxX,
+                             sGeomTileExtent.MaxY, sActualTileExtent.MinX,
+                             sActualTileExtent.MinY, sActualTileExtent.MaxX,
+                             sActualTileExtent.MaxY);
+                }
+            }
+        }
 
         const auto &poSource = oSourceDesc.poSource;
         if (dfXOff >= poSource->m_dfDstXOff + poSource->m_dfDstXSize ||
@@ -3481,6 +3780,378 @@ void GDALTileIndexDataset::InitBuffer(void *pData, int nBufXSize, int nBufYSize,
 }
 
 /************************************************************************/
+/*                            RenderSource()                            */
+/************************************************************************/
+
+CPLErr GDALTileIndexDataset::RenderSource(
+    const SourceDesc &oSourceDesc, bool bNeedInitBuffer, int nBandNrMax,
+    int nXOff, int nYOff, int nXSize, int nYSize, double dfXOff, double dfYOff,
+    double dfXSize, double dfYSize, int nBufXSize, int nBufYSize, void *pData,
+    GDALDataType eBufType, int nBandCount, BANDMAP_TYPE panBandMap,
+    GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
+    GDALRasterIOExtraArg *psExtraArg,
+    VRTSource::WorkingState &oWorkingState) const
+{
+    auto &poTileDS = oSourceDesc.poDS;
+    auto &poSource = oSourceDesc.poSource;
+    auto poComplexSource = dynamic_cast<VRTComplexSource *>(poSource.get());
+    CPLErr eErr = CE_None;
+
+    if (poTileDS->GetRasterCount() + 1 == nBandNrMax &&
+        papoBands[nBandNrMax - 1]->GetColorInterpretation() == GCI_AlphaBand &&
+        papoBands[nBandNrMax - 1]->GetRasterDataType() == GDT_Byte)
+    {
+        // Special case when there's typically a mix of RGB and RGBA source
+        // datasets and we read a RGB one.
+        for (int iBand = 0; iBand < nBandCount && eErr == CE_None; ++iBand)
+        {
+            const int nBandNr = panBandMap[iBand];
+            if (nBandNr == nBandNrMax)
+            {
+                // The window we will actually request from the source raster band.
+                double dfReqXOff = 0.0;
+                double dfReqYOff = 0.0;
+                double dfReqXSize = 0.0;
+                double dfReqYSize = 0.0;
+                int nReqXOff = 0;
+                int nReqYOff = 0;
+                int nReqXSize = 0;
+                int nReqYSize = 0;
+
+                // The window we will actual set _within_ the pData buffer.
+                int nOutXOff = 0;
+                int nOutYOff = 0;
+                int nOutXSize = 0;
+                int nOutYSize = 0;
+
+                bool bError = false;
+
+                auto poTileBand = poTileDS->GetRasterBand(1);
+                poSource->SetRasterBand(poTileBand, false);
+                if (poSource->GetSrcDstWindow(
+                        dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
+                        &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
+                        &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff,
+                        &nOutYOff, &nOutXSize, &nOutYSize, bError))
+                {
+                    GByte *pabyOut =
+                        static_cast<GByte *>(pData) +
+                        static_cast<GPtrDiff_t>(iBand * nBandSpace +
+                                                nOutXOff * nPixelSpace +
+                                                nOutYOff * nLineSpace);
+
+                    constexpr GByte n255 = 255;
+                    for (int iY = 0; iY < nOutYSize; iY++)
+                    {
+                        GDALCopyWords(
+                            &n255, GDT_Byte, 0,
+                            pabyOut + static_cast<GPtrDiff_t>(iY * nLineSpace),
+                            eBufType, static_cast<int>(nPixelSpace), nOutXSize);
+                    }
+                }
+            }
+            else
+            {
+                auto poTileBand = poTileDS->GetRasterBand(nBandNr);
+                if (poComplexSource)
+                {
+                    int bHasNoData = false;
+                    const double dfNoDataValue =
+                        poTileBand->GetNoDataValue(&bHasNoData);
+                    poComplexSource->SetNoDataValue(
+                        bHasNoData ? dfNoDataValue : VRT_NODATA_UNSET);
+                }
+                poSource->SetRasterBand(poTileBand, false);
+
+                GDALRasterIOExtraArg sExtraArg;
+                INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+                if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
+                {
+                    // cppcheck-suppress redundantAssignment
+                    sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
+                }
+                else
+                {
+                    // cppcheck-suppress redundantAssignment
+                    sExtraArg.eResampleAlg = m_eResampling;
+                }
+
+                GByte *pabyBandData =
+                    static_cast<GByte *>(pData) + iBand * nBandSpace;
+                eErr = poSource->RasterIO(
+                    poTileBand->GetRasterDataType(), nXOff, nYOff, nXSize,
+                    nYSize, pabyBandData, nBufXSize, nBufYSize, eBufType,
+                    nPixelSpace, nLineSpace, &sExtraArg, oWorkingState);
+            }
+        }
+        return eErr;
+    }
+    else if (poTileDS->GetRasterCount() < nBandNrMax)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s has not enough bands.",
+                 oSourceDesc.osName.c_str());
+        return CE_Failure;
+    }
+
+    if ((oSourceDesc.poMaskBand && bNeedInitBuffer) || nBandNrMax == 0)
+    {
+        // The window we will actually request from the source raster band.
+        double dfReqXOff = 0.0;
+        double dfReqYOff = 0.0;
+        double dfReqXSize = 0.0;
+        double dfReqYSize = 0.0;
+        int nReqXOff = 0;
+        int nReqYOff = 0;
+        int nReqXSize = 0;
+        int nReqYSize = 0;
+
+        // The window we will actual set _within_ the pData buffer.
+        int nOutXOff = 0;
+        int nOutYOff = 0;
+        int nOutXSize = 0;
+        int nOutYSize = 0;
+
+        bool bError = false;
+
+        auto poFirstTileBand = poTileDS->GetRasterBand(1);
+        poSource->SetRasterBand(poFirstTileBand, false);
+        if (poSource->GetSrcDstWindow(
+                dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
+                &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
+                &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                &nOutXSize, &nOutYSize, bError))
+        {
+            int iMaskBandIdx = -1;
+            if (eBufType == GDT_Byte && nBandNrMax == 0)
+            {
+                // when called from m_poMaskBand
+                iMaskBandIdx = 0;
+            }
+            else if (oSourceDesc.poMaskBand)
+            {
+                // If we request a Byte buffer and the mask band is actually
+                // one of the queried bands of this request, we can save
+                // requesting it separately.
+                const int nMaskBandNr = oSourceDesc.poMaskBand->GetBand();
+                if (eBufType == GDT_Byte && nMaskBandNr >= 1 &&
+                    nMaskBandNr <= poTileDS->GetRasterCount() &&
+                    poTileDS->GetRasterBand(nMaskBandNr) ==
+                        oSourceDesc.poMaskBand)
+                {
+                    for (int iBand = 0; iBand < nBandCount; ++iBand)
+                    {
+                        if (panBandMap[iBand] == nMaskBandNr)
+                        {
+                            iMaskBandIdx = iBand;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            GDALRasterIOExtraArg sExtraArg;
+            INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+            if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
+            {
+                // cppcheck-suppress redundantAssignment
+                sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
+            }
+            else
+            {
+                // cppcheck-suppress redundantAssignment
+                sExtraArg.eResampleAlg = m_eResampling;
+            }
+            sExtraArg.bFloatingPointWindowValidity = TRUE;
+            sExtraArg.dfXOff = dfReqXOff;
+            sExtraArg.dfYOff = dfReqYOff;
+            sExtraArg.dfXSize = dfReqXSize;
+            sExtraArg.dfYSize = dfReqYSize;
+
+            if (iMaskBandIdx < 0 && oSourceDesc.abyMask.empty() &&
+                oSourceDesc.poMaskBand)
+            {
+                // Fetch the mask band
+                try
+                {
+                    oSourceDesc.abyMask.resize(static_cast<size_t>(nOutXSize) *
+                                               nOutYSize);
+                }
+                catch (const std::bad_alloc &)
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory,
+                             "Cannot allocate working buffer for mask");
+                    return CE_Failure;
+                }
+
+                if (oSourceDesc.poMaskBand->RasterIO(
+                        GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                        oSourceDesc.abyMask.data(), nOutXSize, nOutYSize,
+                        GDT_Byte, 0, 0, &sExtraArg) != CE_None)
+                {
+                    oSourceDesc.abyMask.clear();
+                    return CE_Failure;
+                }
+            }
+
+            // Allocate a temporary contiguous buffer to receive pixel data
+            const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
+            const size_t nWorkBufferBandSize =
+                static_cast<size_t>(nOutXSize) * nOutYSize * nBufTypeSize;
+            std::vector<GByte> abyWorkBuffer;
+            try
+            {
+                abyWorkBuffer.resize(nBandCount * nWorkBufferBandSize);
+            }
+            catch (const std::bad_alloc &)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate working buffer");
+                return CE_Failure;
+            }
+
+            const GByte *const pabyMask =
+                iMaskBandIdx >= 0
+                    ? abyWorkBuffer.data() + iMaskBandIdx * nWorkBufferBandSize
+                    : oSourceDesc.abyMask.data();
+
+            if (nBandNrMax == 0)
+            {
+                // Special case when called from m_poMaskBand
+                if (poTileDS->GetRasterBand(1)->GetMaskBand()->RasterIO(
+                        GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                        abyWorkBuffer.data(), nOutXSize, nOutYSize, eBufType, 0,
+                        0, &sExtraArg) != CE_None)
+                {
+                    return CE_Failure;
+                }
+            }
+            else if (poTileDS->RasterIO(GF_Read, nReqXOff, nReqYOff, nReqXSize,
+                                        nReqYSize, abyWorkBuffer.data(),
+                                        nOutXSize, nOutYSize, eBufType,
+                                        nBandCount, panBandMap, 0, 0, 0,
+                                        &sExtraArg) != CE_None)
+            {
+                return CE_Failure;
+            }
+
+            // Compose the temporary contiguous buffer into the target
+            // buffer, taking into account the mask
+            GByte *pabyOut = static_cast<GByte *>(pData) +
+                             static_cast<GPtrDiff_t>(nOutXOff * nPixelSpace +
+                                                     nOutYOff * nLineSpace);
+
+            for (int iBand = 0; iBand < nBandCount && eErr == CE_None; ++iBand)
+            {
+                GByte *pabyDestBand =
+                    pabyOut + static_cast<GPtrDiff_t>(iBand * nBandSpace);
+                const GByte *pabySrc =
+                    abyWorkBuffer.data() + iBand * nWorkBufferBandSize;
+
+                CompositeSrcWithMaskIntoDest(
+                    nOutXSize, nOutYSize, eBufType, nBufTypeSize, nPixelSpace,
+                    nLineSpace, pabySrc, pabyMask, pabyDestBand);
+            }
+        }
+    }
+    else if (m_bSameDataType && !bNeedInitBuffer && oSourceDesc.bHasNoData)
+    {
+        // We create a non-VRTComplexSource SimpleSource copy of poSource
+        // to be able to call DatasetRasterIO()
+        VRTSimpleSource oSimpleSource(poSource.get(), 1.0, 1.0);
+
+        GDALRasterIOExtraArg sExtraArg;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
+        {
+            // cppcheck-suppress redundantAssignment
+            sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
+        }
+        else
+        {
+            // cppcheck-suppress redundantAssignment
+            sExtraArg.eResampleAlg = m_eResampling;
+        }
+
+        auto poTileBand = poTileDS->GetRasterBand(panBandMap[0]);
+        oSimpleSource.SetRasterBand(poTileBand, false);
+        eErr = oSimpleSource.DatasetRasterIO(
+            papoBands[0]->GetRasterDataType(), nXOff, nYOff, nXSize, nYSize,
+            pData, nBufXSize, nBufYSize, eBufType, nBandCount, panBandMap,
+            nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
+    }
+    else if (m_bSameDataType && !poComplexSource)
+    {
+        auto poTileBand = poTileDS->GetRasterBand(panBandMap[0]);
+        poSource->SetRasterBand(poTileBand, false);
+
+        GDALRasterIOExtraArg sExtraArg;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        if (poTileBand->GetColorTable())
+        {
+            // cppcheck-suppress redundantAssignment
+            sExtraArg.eResampleAlg = GRIORA_NearestNeighbour;
+        }
+        else if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
+        {
+            // cppcheck-suppress redundantAssignment
+            sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
+        }
+        else
+        {
+            // cppcheck-suppress redundantAssignment
+            sExtraArg.eResampleAlg = m_eResampling;
+        }
+
+        eErr = poSource->DatasetRasterIO(
+            papoBands[0]->GetRasterDataType(), nXOff, nYOff, nXSize, nYSize,
+            pData, nBufXSize, nBufYSize, eBufType, nBandCount, panBandMap,
+            nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
+    }
+    else
+    {
+        for (int i = 0; i < nBandCount && eErr == CE_None; ++i)
+        {
+            const int nBandNr = panBandMap[i];
+            GByte *pabyBandData = static_cast<GByte *>(pData) + i * nBandSpace;
+            auto poTileBand = poTileDS->GetRasterBand(nBandNr);
+            if (poComplexSource)
+            {
+                int bHasNoData = false;
+                const double dfNoDataValue =
+                    poTileBand->GetNoDataValue(&bHasNoData);
+                poComplexSource->SetNoDataValue(bHasNoData ? dfNoDataValue
+                                                           : VRT_NODATA_UNSET);
+            }
+            poSource->SetRasterBand(poTileBand, false);
+
+            GDALRasterIOExtraArg sExtraArg;
+            INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+            if (poTileBand->GetColorTable())
+            {
+                // cppcheck-suppress redundantAssignment
+                sExtraArg.eResampleAlg = GRIORA_NearestNeighbour;
+            }
+            else if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
+            {
+                // cppcheck-suppress redundantAssignment
+                sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
+            }
+            else
+            {
+                // cppcheck-suppress redundantAssignment
+                sExtraArg.eResampleAlg = m_eResampling;
+            }
+
+            eErr = poSource->RasterIO(
+                papoBands[nBandNr - 1]->GetRasterDataType(), nXOff, nYOff,
+                nXSize, nYSize, pabyBandData, nBufXSize, nBufYSize, eBufType,
+                nPixelSpace, nLineSpace, &sExtraArg, oWorkingState);
+        }
+    }
+    return eErr;
+}
+
+/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -3516,7 +4187,8 @@ CPLErr GDALTileIndexDataset::IRasterIO(
         dfYSize = psExtraArg->dfYSize;
     }
 
-    if (!CollectSources(dfXOff, dfYOff, dfXSize, dfYSize))
+    if (!CollectSources(dfXOff, dfYOff, dfXSize, dfYSize,
+                        /* bMultiThreadAllowed = */ true))
     {
         return CE_Failure;
     }
@@ -3530,364 +4202,232 @@ CPLErr GDALTileIndexDataset::IRasterIO(
         nBandNrMax = std::max(nBandNrMax, nBandNr);
     }
 
-    const bool bNeedInitBuffer = NeedInitBuffer(nBandCount, panBandMap);
-
-    const auto RenderSource = [this, bNeedInitBuffer, nBandNrMax, nXOff, nYOff,
-                               nXSize, nYSize, dfXOff, dfYOff, dfXSize, dfYSize,
-                               nBufXSize, nBufYSize, pData, eBufType,
-                               nBandCount, panBandMap, nPixelSpace, nLineSpace,
-                               nBandSpace, psExtraArg](SourceDesc &oSourceDesc)
-    {
-        auto &poTileDS = oSourceDesc.poDS;
-        auto &poSource = oSourceDesc.poSource;
-        auto poComplexSource = dynamic_cast<VRTComplexSource *>(poSource.get());
-        CPLErr eErr = CE_None;
-
-        if (poTileDS->GetRasterCount() + 1 == nBandNrMax &&
-            GetRasterBand(nBandNrMax)->GetColorInterpretation() ==
-                GCI_AlphaBand &&
-            GetRasterBand(nBandNrMax)->GetRasterDataType() == GDT_Byte)
-        {
-            // Special case when there's typically a mix of RGB and RGBA source
-            // datasets and we read a RGB one.
-            for (int iBand = 0; iBand < nBandCount && eErr == CE_None; ++iBand)
-            {
-                const int nBandNr = panBandMap[iBand];
-                if (nBandNr == nBandNrMax)
-                {
-                    // The window we will actually request from the source raster band.
-                    double dfReqXOff = 0.0;
-                    double dfReqYOff = 0.0;
-                    double dfReqXSize = 0.0;
-                    double dfReqYSize = 0.0;
-                    int nReqXOff = 0;
-                    int nReqYOff = 0;
-                    int nReqXSize = 0;
-                    int nReqYSize = 0;
-
-                    // The window we will actual set _within_ the pData buffer.
-                    int nOutXOff = 0;
-                    int nOutYOff = 0;
-                    int nOutXSize = 0;
-                    int nOutYSize = 0;
-
-                    bool bError = false;
-
-                    auto poTileBand = poTileDS->GetRasterBand(1);
-                    poSource->SetRasterBand(poTileBand, false);
-                    if (poSource->GetSrcDstWindow(
-                            dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize,
-                            nBufYSize, &dfReqXOff, &dfReqYOff, &dfReqXSize,
-                            &dfReqYSize, &nReqXOff, &nReqYOff, &nReqXSize,
-                            &nReqYSize, &nOutXOff, &nOutYOff, &nOutXSize,
-                            &nOutYSize, bError))
-                    {
-                        GByte *pabyOut =
-                            static_cast<GByte *>(pData) +
-                            static_cast<GPtrDiff_t>(iBand * nBandSpace +
-                                                    nOutXOff * nPixelSpace +
-                                                    nOutYOff * nLineSpace);
-
-                        constexpr GByte n255 = 255;
-                        for (int iY = 0; iY < nOutYSize; iY++)
-                        {
-                            GDALCopyWords(&n255, GDT_Byte, 0,
-                                          pabyOut + static_cast<GPtrDiff_t>(
-                                                        iY * nLineSpace),
-                                          eBufType,
-                                          static_cast<int>(nPixelSpace),
-                                          nOutXSize);
-                        }
-                    }
-                }
-                else
-                {
-                    auto poTileBand = poTileDS->GetRasterBand(nBandNr);
-                    if (poComplexSource)
-                    {
-                        int bHasNoData = false;
-                        const double dfNoDataValue =
-                            poTileBand->GetNoDataValue(&bHasNoData);
-                        poComplexSource->SetNoDataValue(
-                            bHasNoData ? dfNoDataValue : VRT_NODATA_UNSET);
-                    }
-                    poSource->SetRasterBand(poTileBand, false);
-
-                    GDALRasterIOExtraArg sExtraArg;
-                    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-                    if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
-                        sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
-                    else
-                        sExtraArg.eResampleAlg = m_eResampling;
-
-                    GByte *pabyBandData =
-                        static_cast<GByte *>(pData) + iBand * nBandSpace;
-                    eErr = poSource->RasterIO(
-                        poTileBand->GetRasterDataType(), nXOff, nYOff, nXSize,
-                        nYSize, pabyBandData, nBufXSize, nBufYSize, eBufType,
-                        nPixelSpace, nLineSpace, &sExtraArg, m_oWorkingState);
-                }
-            }
-            return eErr;
-        }
-        else if (poTileDS->GetRasterCount() < nBandNrMax)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "%s has not enough bands.",
-                     oSourceDesc.osName.c_str());
-            return CE_Failure;
-        }
-
-        if ((oSourceDesc.poMaskBand && bNeedInitBuffer) || nBandNrMax == 0)
-        {
-            // The window we will actually request from the source raster band.
-            double dfReqXOff = 0.0;
-            double dfReqYOff = 0.0;
-            double dfReqXSize = 0.0;
-            double dfReqYSize = 0.0;
-            int nReqXOff = 0;
-            int nReqYOff = 0;
-            int nReqXSize = 0;
-            int nReqYSize = 0;
-
-            // The window we will actual set _within_ the pData buffer.
-            int nOutXOff = 0;
-            int nOutYOff = 0;
-            int nOutXSize = 0;
-            int nOutYSize = 0;
-
-            bool bError = false;
-
-            auto poFirstTileBand = poTileDS->GetRasterBand(1);
-            poSource->SetRasterBand(poFirstTileBand, false);
-            if (poSource->GetSrcDstWindow(
-                    dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
-                    &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
-                    &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
-                    &nOutXSize, &nOutYSize, bError))
-            {
-                int iMaskBandIdx = -1;
-                if (eBufType == GDT_Byte && nBandNrMax == 0)
-                {
-                    // when called from m_poMaskBand
-                    iMaskBandIdx = 0;
-                }
-                else if (oSourceDesc.poMaskBand)
-                {
-                    // If we request a Byte buffer and the mask band is actually
-                    // one of the queried bands of this request, we can save
-                    // requesting it separately.
-                    const int nMaskBandNr = oSourceDesc.poMaskBand->GetBand();
-                    if (eBufType == GDT_Byte && nMaskBandNr >= 1 &&
-                        nMaskBandNr <= poTileDS->GetRasterCount() &&
-                        poTileDS->GetRasterBand(nMaskBandNr) ==
-                            oSourceDesc.poMaskBand)
-                    {
-                        for (int iBand = 0; iBand < nBandCount; ++iBand)
-                        {
-                            if (panBandMap[iBand] == nMaskBandNr)
-                            {
-                                iMaskBandIdx = iBand;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                GDALRasterIOExtraArg sExtraArg;
-                INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-                if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
-                    sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
-                else
-                    sExtraArg.eResampleAlg = m_eResampling;
-                sExtraArg.bFloatingPointWindowValidity = TRUE;
-                sExtraArg.dfXOff = dfReqXOff;
-                sExtraArg.dfYOff = dfReqYOff;
-                sExtraArg.dfXSize = dfReqXSize;
-                sExtraArg.dfYSize = dfReqYSize;
-
-                if (iMaskBandIdx < 0 && oSourceDesc.abyMask.empty() &&
-                    oSourceDesc.poMaskBand)
-                {
-                    // Fetch the mask band
-                    try
-                    {
-                        oSourceDesc.abyMask.resize(
-                            static_cast<size_t>(nOutXSize) * nOutYSize);
-                    }
-                    catch (const std::bad_alloc &)
-                    {
-                        CPLError(CE_Failure, CPLE_OutOfMemory,
-                                 "Cannot allocate working buffer for mask");
-                        return CE_Failure;
-                    }
-
-                    if (oSourceDesc.poMaskBand->RasterIO(
-                            GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                            oSourceDesc.abyMask.data(), nOutXSize, nOutYSize,
-                            GDT_Byte, 0, 0, &sExtraArg) != CE_None)
-                    {
-                        oSourceDesc.abyMask.clear();
-                        return CE_Failure;
-                    }
-                }
-
-                // Allocate a temporary contiguous buffer to receive pixel data
-                const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
-                const size_t nWorkBufferBandSize =
-                    static_cast<size_t>(nOutXSize) * nOutYSize * nBufTypeSize;
-                std::vector<GByte> abyWorkBuffer;
-                try
-                {
-                    abyWorkBuffer.resize(nBandCount * nWorkBufferBandSize);
-                }
-                catch (const std::bad_alloc &)
-                {
-                    CPLError(CE_Failure, CPLE_OutOfMemory,
-                             "Cannot allocate working buffer");
-                    return CE_Failure;
-                }
-
-                const GByte *const pabyMask =
-                    iMaskBandIdx >= 0 ? abyWorkBuffer.data() +
-                                            iMaskBandIdx * nWorkBufferBandSize
-                                      : oSourceDesc.abyMask.data();
-
-                if (nBandNrMax == 0)
-                {
-                    // Special case when called from m_poMaskBand
-                    if (poTileDS->GetRasterBand(1)->GetMaskBand()->RasterIO(
-                            GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                            abyWorkBuffer.data(), nOutXSize, nOutYSize,
-                            eBufType, 0, 0, &sExtraArg) != CE_None)
-                    {
-                        return CE_Failure;
-                    }
-                }
-                else if (poTileDS->RasterIO(
-                             GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                             abyWorkBuffer.data(), nOutXSize, nOutYSize,
-                             eBufType, nBandCount, panBandMap, 0, 0, 0,
-                             &sExtraArg) != CE_None)
-                {
-                    return CE_Failure;
-                }
-
-                // Compose the temporary contiguous buffer into the target
-                // buffer, taking into account the mask
-                GByte *pabyOut =
-                    static_cast<GByte *>(pData) +
-                    static_cast<GPtrDiff_t>(nOutXOff * nPixelSpace +
-                                            nOutYOff * nLineSpace);
-
-                for (int iBand = 0; iBand < nBandCount && eErr == CE_None;
-                     ++iBand)
-                {
-                    GByte *pabyDestBand =
-                        pabyOut + static_cast<GPtrDiff_t>(iBand * nBandSpace);
-                    const GByte *pabySrc =
-                        abyWorkBuffer.data() + iBand * nWorkBufferBandSize;
-
-                    CompositeSrcWithMaskIntoDest(nOutXSize, nOutYSize, eBufType,
-                                                 nBufTypeSize, nPixelSpace,
-                                                 nLineSpace, pabySrc, pabyMask,
-                                                 pabyDestBand);
-                }
-            }
-        }
-        else if (m_bSameDataType && !bNeedInitBuffer && oSourceDesc.bHasNoData)
-        {
-            // We create a non-VRTComplexSource SimpleSource copy of poSource
-            // to be able to call DatasetRasterIO()
-            VRTSimpleSource oSimpleSource(poSource.get(), 1.0, 1.0);
-
-            GDALRasterIOExtraArg sExtraArg;
-            INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-            if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
-                sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
-            else
-                sExtraArg.eResampleAlg = m_eResampling;
-
-            auto poTileBand = poTileDS->GetRasterBand(panBandMap[0]);
-            oSimpleSource.SetRasterBand(poTileBand, false);
-            eErr = oSimpleSource.DatasetRasterIO(
-                papoBands[0]->GetRasterDataType(), nXOff, nYOff, nXSize, nYSize,
-                pData, nBufXSize, nBufYSize, eBufType, nBandCount, panBandMap,
-                nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
-        }
-        else if (m_bSameDataType && !poComplexSource)
-        {
-            auto poTileBand = poTileDS->GetRasterBand(panBandMap[0]);
-            poSource->SetRasterBand(poTileBand, false);
-
-            GDALRasterIOExtraArg sExtraArg;
-            INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-            if (poTileBand->GetColorTable())
-                sExtraArg.eResampleAlg = GRIORA_NearestNeighbour;
-            else if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
-                sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
-            else
-                sExtraArg.eResampleAlg = m_eResampling;
-
-            eErr = poSource->DatasetRasterIO(
-                papoBands[0]->GetRasterDataType(), nXOff, nYOff, nXSize, nYSize,
-                pData, nBufXSize, nBufYSize, eBufType, nBandCount, panBandMap,
-                nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
-        }
-        else
-        {
-            for (int i = 0; i < nBandCount && eErr == CE_None; ++i)
-            {
-                const int nBandNr = panBandMap[i];
-                GByte *pabyBandData =
-                    static_cast<GByte *>(pData) + i * nBandSpace;
-                auto poTileBand = poTileDS->GetRasterBand(nBandNr);
-                if (poComplexSource)
-                {
-                    int bHasNoData = false;
-                    const double dfNoDataValue =
-                        poTileBand->GetNoDataValue(&bHasNoData);
-                    poComplexSource->SetNoDataValue(
-                        bHasNoData ? dfNoDataValue : VRT_NODATA_UNSET);
-                }
-                poSource->SetRasterBand(poTileBand, false);
-
-                GDALRasterIOExtraArg sExtraArg;
-                INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-                if (poTileBand->GetColorTable())
-                    sExtraArg.eResampleAlg = GRIORA_NearestNeighbour;
-                else if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
-                    sExtraArg.eResampleAlg = psExtraArg->eResampleAlg;
-                else
-                    sExtraArg.eResampleAlg = m_eResampling;
-
-                eErr = poSource->RasterIO(
-                    papoBands[nBandNr - 1]->GetRasterDataType(), nXOff, nYOff,
-                    nXSize, nYSize, pabyBandData, nBufXSize, nBufYSize,
-                    eBufType, nPixelSpace, nLineSpace, &sExtraArg,
-                    m_oWorkingState);
-            }
-        }
-        return eErr;
-    };
+    const bool bNeedInitBuffer =
+        m_bLastMustUseMultiThreading || NeedInitBuffer(nBandCount, panBandMap);
 
     if (!bNeedInitBuffer)
     {
-        return RenderSource(m_aoSourceDesc.back());
+        return RenderSource(
+            m_aoSourceDesc.back(), bNeedInitBuffer, nBandNrMax, nXOff, nYOff,
+            nXSize, nYSize, dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize,
+            nBufYSize, pData, eBufType, nBandCount, panBandMap, nPixelSpace,
+            nLineSpace, nBandSpace, psExtraArg, m_oWorkingState);
     }
     else
     {
         InitBuffer(pData, nBufXSize, nBufYSize, eBufType, nBandCount,
                    panBandMap, nPixelSpace, nLineSpace, nBandSpace);
 
-        // Now render from bottom of the stack to top.
-        for (auto &oSourceDesc : m_aoSourceDesc)
+        if (m_bLastMustUseMultiThreading)
         {
-            if (oSourceDesc.poDS && RenderSource(oSourceDesc) != CE_None)
-                return CE_Failure;
-        }
+            std::atomic<bool> bSuccess = true;
+            const int nContributingSources =
+                static_cast<int>(m_aoSourceDesc.size());
+            CPLWorkerThreadPool *psThreadPool = GDALGetGlobalThreadPool(
+                std::min(nContributingSources, m_nNumThreads));
+            const int nThreads =
+                std::min(nContributingSources, psThreadPool->GetThreadCount());
+            CPLDebugOnly("GTI",
+                         "IRasterIO(): use optimized "
+                         "multi-threaded code path. "
+                         "Using %d threads",
+                         nThreads);
 
-        return CE_None;
+            {
+                std::lock_guard oLock(m_oQueueWorkingStates.oMutex);
+                if (m_oQueueWorkingStates.oStates.size() <
+                    static_cast<size_t>(nThreads))
+                {
+                    m_oQueueWorkingStates.oStates.resize(nThreads);
+                }
+                for (int i = 0; i < nThreads; ++i)
+                {
+                    if (!m_oQueueWorkingStates.oStates[i])
+                        m_oQueueWorkingStates.oStates[i] =
+                            std::make_unique<VRTSource::WorkingState>();
+                }
+            }
+
+            auto oQueue = psThreadPool->CreateJobQueue();
+            std::atomic<int> nCompletedJobs = 0;
+            std::string osErrorMsg;
+            for (auto &oSourceDesc : m_aoSourceDesc)
+            {
+                auto psJob = new RasterIOJob();
+                psJob->poDS = this;
+                psJob->pbSuccess = &bSuccess;
+                psJob->pnCompletedJobs = &nCompletedJobs;
+                psJob->poQueueWorkingStates = &m_oQueueWorkingStates;
+                psJob->nBandNrMax = nBandNrMax;
+                psJob->posErrorMsg = &osErrorMsg;
+                psJob->nXOff = nXOff;
+                psJob->nYOff = nYOff;
+                psJob->nXSize = nXSize;
+                psJob->nYSize = nYSize;
+                psJob->pData = pData;
+                psJob->nBufXSize = nBufXSize;
+                psJob->nBufYSize = nBufYSize;
+                psJob->eBufType = eBufType;
+                psJob->nBandCount = nBandCount;
+                psJob->panBandMap = panBandMap;
+                psJob->nPixelSpace = nPixelSpace;
+                psJob->nLineSpace = nLineSpace;
+                psJob->nBandSpace = nBandSpace;
+                psJob->psExtraArg = psExtraArg;
+
+                psJob->osTileName = oSourceDesc.poFeature->GetFieldAsString(
+                    m_nLocationFieldIndex);
+
+                if (!oQueue->SubmitJob(RasterIOJob::Func, psJob))
+                {
+                    delete psJob;
+                    bSuccess = false;
+                    break;
+                }
+            }
+
+            while (oQueue->WaitEvent())
+            {
+                // Quite rough progress callback. We could do better by counting
+                // the number of contributing pixels.
+                if (psExtraArg->pfnProgress)
+                {
+                    psExtraArg->pfnProgress(double(nCompletedJobs.load()) /
+                                                nContributingSources,
+                                            "", psExtraArg->pProgressData);
+                }
+            }
+
+            if (!osErrorMsg.empty())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
+            }
+
+            if (bSuccess && psExtraArg->pfnProgress)
+            {
+                psExtraArg->pfnProgress(1.0, "", psExtraArg->pProgressData);
+            }
+
+            return bSuccess ? CE_None : CE_Failure;
+        }
+        else
+        {
+            // Now render from bottom of the stack to top.
+            for (auto &oSourceDesc : m_aoSourceDesc)
+            {
+                if (oSourceDesc.poDS &&
+                    RenderSource(oSourceDesc, bNeedInitBuffer, nBandNrMax,
+                                 nXOff, nYOff, nXSize, nYSize, dfXOff, dfYOff,
+                                 dfXSize, dfYSize, nBufXSize, nBufYSize, pData,
+                                 eBufType, nBandCount, panBandMap, nPixelSpace,
+                                 nLineSpace, nBandSpace, psExtraArg,
+                                 m_oWorkingState) != CE_None)
+                    return CE_Failure;
+            }
+
+            if (psExtraArg->pfnProgress)
+            {
+                psExtraArg->pfnProgress(1.0, "", psExtraArg->pProgressData);
+            }
+
+            return CE_None;
+        }
     }
+}
+
+/************************************************************************/
+/*                 GDALTileIndexDataset::RasterIOJob::Func()            */
+/************************************************************************/
+
+void GDALTileIndexDataset::RasterIOJob::Func(void *pData)
+{
+    auto psJob =
+        std::unique_ptr<RasterIOJob>(static_cast<RasterIOJob *>(pData));
+    if (*psJob->pbSuccess)
+    {
+        const std::string osTileName(GetAbsoluteFileName(
+            psJob->osTileName.c_str(), psJob->poDS->GetDescription()));
+
+        SourceDesc oSourceDesc;
+
+        std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
+        CPLInstallErrorHandlerAccumulator(aoErrors);
+        const bool bCanOpenSource =
+            psJob->poDS->GetSourceDesc(osTileName, oSourceDesc,
+                                       &psJob->poQueueWorkingStates->oMutex) &&
+            oSourceDesc.poDS;
+        CPLUninstallErrorHandlerAccumulator();
+
+        if (!bCanOpenSource)
+        {
+            if (!aoErrors.empty())
+            {
+                std::lock_guard oLock(psJob->poQueueWorkingStates->oMutex);
+                if (psJob->posErrorMsg->empty())
+                    *(psJob->posErrorMsg) = aoErrors.back().msg;
+            }
+            *psJob->pbSuccess = false;
+        }
+        else
+        {
+            GDALRasterIOExtraArg sArg = *(psJob->psExtraArg);
+            sArg.pfnProgress = nullptr;
+            sArg.pProgressData = nullptr;
+
+            std::unique_ptr<VRTSource::WorkingState> poWorkingState;
+            {
+                std::lock_guard oLock(psJob->poQueueWorkingStates->oMutex);
+                poWorkingState =
+                    std::move(psJob->poQueueWorkingStates->oStates.back());
+                psJob->poQueueWorkingStates->oStates.pop_back();
+                CPLAssert(poWorkingState.get());
+            }
+
+            double dfXOff = psJob->nXOff;
+            double dfYOff = psJob->nYOff;
+            double dfXSize = psJob->nXSize;
+            double dfYSize = psJob->nYSize;
+            if (psJob->psExtraArg->bFloatingPointWindowValidity)
+            {
+                dfXOff = psJob->psExtraArg->dfXOff;
+                dfYOff = psJob->psExtraArg->dfYOff;
+                dfXSize = psJob->psExtraArg->dfXSize;
+                dfYSize = psJob->psExtraArg->dfYSize;
+            }
+
+            aoErrors.clear();
+            CPLInstallErrorHandlerAccumulator(aoErrors);
+            const bool bRenderOK =
+                psJob->poDS->RenderSource(
+                    oSourceDesc, /*bNeedInitBuffer = */ true, psJob->nBandNrMax,
+                    psJob->nXOff, psJob->nYOff, psJob->nXSize, psJob->nYSize,
+                    dfXOff, dfYOff, dfXSize, dfYSize, psJob->nBufXSize,
+                    psJob->nBufYSize, psJob->pData, psJob->eBufType,
+                    psJob->nBandCount, psJob->panBandMap, psJob->nPixelSpace,
+                    psJob->nLineSpace, psJob->nBandSpace, &sArg,
+                    *(poWorkingState.get())) == CE_None;
+            CPLUninstallErrorHandlerAccumulator();
+
+            if (!bRenderOK)
+            {
+                if (!aoErrors.empty())
+                {
+                    std::lock_guard oLock(psJob->poQueueWorkingStates->oMutex);
+                    if (psJob->posErrorMsg->empty())
+                        *(psJob->posErrorMsg) = aoErrors.back().msg;
+                }
+                *psJob->pbSuccess = false;
+            }
+
+            {
+                std::lock_guard oLock(psJob->poQueueWorkingStates->oMutex);
+                psJob->poQueueWorkingStates->oStates.push_back(
+                    std::move(poWorkingState));
+            }
+        }
+    }
+
+    ++(*psJob->pnCompletedJobs);
 }
 
 /************************************************************************/
@@ -3913,20 +4453,24 @@ void GDALRegister_GTI()
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
-                              "<OpenOptionList>"
-                              "  <Option name='LAYER' type='string'/>"
-                              "  <Option name='LOCATION_FIELD' type='string'/>"
-                              "  <Option name='SORT_FIELD' type='string'/>"
-                              "  <Option name='SORT_FIELD_ASC' type='boolean'/>"
-                              "  <Option name='FILTER' type='string'/>"
-                              "  <Option name='RESX' type='float'/>"
-                              "  <Option name='RESY' type='float'/>"
-                              "  <Option name='MINX' type='float'/>"
-                              "  <Option name='MINY' type='float'/>"
-                              "  <Option name='MAXX' type='float'/>"
-                              "  <Option name='MAXY' type='float'/>"
-                              "</OpenOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='LAYER' type='string'/>"
+        "  <Option name='LOCATION_FIELD' type='string'/>"
+        "  <Option name='SORT_FIELD' type='string'/>"
+        "  <Option name='SORT_FIELD_ASC' type='boolean'/>"
+        "  <Option name='FILTER' type='string'/>"
+        "  <Option name='RESX' type='float'/>"
+        "  <Option name='RESY' type='float'/>"
+        "  <Option name='MINX' type='float'/>"
+        "  <Option name='MINY' type='float'/>"
+        "  <Option name='MAXX' type='float'/>"
+        "  <Option name='MAXY' type='float'/>"
+        "<Option name='NUM_THREADS' type='string' description="
+        "'Number of worker threads for reading. Can be set to ALL_CPUS' "
+        "default='ALL_CPUS'/>"
+        "</OpenOptionList>");
 
     GetGDALDriverManager()->RegisterDriver(poDriver.release());
 }

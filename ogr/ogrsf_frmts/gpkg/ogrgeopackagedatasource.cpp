@@ -255,8 +255,7 @@ OGRSpatialReference *
 GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
                                      bool bEmitErrorIfNotFound)
 {
-    std::map<int, OGRSpatialReference *>::const_iterator oIter =
-        m_oMapSrsIdToSrs.find(iSrsId);
+    const auto oIter = m_oMapSrsIdToSrs.find(iSrsId);
     if (oIter != m_oMapSrsIdToSrs.end())
     {
         if (oIter->second == nullptr)
@@ -1807,8 +1806,7 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                     pszGeomColName ? std::string(pszTableName) + " (" +
                                          pszGeomColName + ')'
                                    : std::string(pszTableName);
-                if (oExistingLayers.find(osLayerNameWithGeomColName) !=
-                    oExistingLayers.end())
+                if (cpl::contains(oExistingLayers, osLayerNameWithGeomColName))
                     continue;
                 oExistingLayers.insert(osLayerNameWithGeomColName);
                 const std::string osLayerName = bTableHasSeveralGeomColumns
@@ -6066,6 +6064,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
             reinterpret_cast<GDALDriver *>(GDALGetDriverByName("GPKG"));
         if (poThisDriver != nullptr)
         {
+            apszUpdatedOptions.SetNameValue("SKIP_HOLES", "YES");
             poDS = cpl::down_cast<GDALGeoPackageDataset *>(
                 poThisDriver->DefaultCreateCopy(pszFilename, poSrcDS, bStrict,
                                                 apszUpdatedOptions, pfnProgress,
@@ -9235,7 +9234,7 @@ static void GPKG_GDAL_HasColorTable(sqlite3_context *pContext, int /*argc*/,
 GDALDataset *
 GDALGeoPackageDataset::GetRasterLayerDataset(const char *pszLayerName)
 {
-    auto oIter = m_oCachedRasterDS.find(pszLayerName);
+    const auto oIter = m_oCachedRasterDS.find(pszLayerName);
     if (oIter != m_oCachedRasterDS.end())
         return oIter->second.get();
 
@@ -9254,17 +9253,12 @@ GDALGeoPackageDataset::GetRasterLayerDataset(const char *pszLayerName)
 /*                   GPKG_gdal_get_layer_pixel_value()                  */
 /************************************************************************/
 
-static void GPKG_gdal_get_layer_pixel_value(sqlite3_context *pContext,
-                                            CPL_UNUSED int argc,
+// NOTE: keep in sync implementations in ogrsqlitesqlfunctionscommon.cpp
+// and ogrgeopackagedatasource.cpp
+static void GPKG_gdal_get_layer_pixel_value(sqlite3_context *pContext, int argc,
                                             sqlite3_value **argv)
 {
-    if (sqlite3_value_type(argv[0]) != SQLITE_TEXT ||
-        sqlite3_value_type(argv[1]) != SQLITE_INTEGER ||
-        sqlite3_value_type(argv[2]) != SQLITE_TEXT ||
-        (sqlite3_value_type(argv[3]) != SQLITE_INTEGER &&
-         sqlite3_value_type(argv[3]) != SQLITE_FLOAT) ||
-        (sqlite3_value_type(argv[4]) != SQLITE_INTEGER &&
-         sqlite3_value_type(argv[4]) != SQLITE_FLOAT))
+    if (sqlite3_value_type(argv[0]) != SQLITE_TEXT)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid arguments to gdal_get_layer_pixel_value()");
@@ -9284,78 +9278,8 @@ static void GPKG_gdal_get_layer_pixel_value(sqlite3_context *pContext,
         return;
     }
 
-    const int nBand = sqlite3_value_int(argv[1]);
-    auto poBand = poDS->GetRasterBand(nBand);
-    if (!poBand)
-    {
-        sqlite3_result_null(pContext);
-        return;
-    }
-
-    const char *pszCoordType =
-        reinterpret_cast<const char *>(sqlite3_value_text(argv[2]));
-    int x, y;
-    if (EQUAL(pszCoordType, "georef"))
-    {
-        const double X = sqlite3_value_double(argv[3]);
-        const double Y = sqlite3_value_double(argv[4]);
-        double adfGeoTransform[6];
-        if (poDS->GetGeoTransform(adfGeoTransform) != CE_None)
-        {
-            sqlite3_result_null(pContext);
-            return;
-        }
-        double adfInvGT[6];
-        if (!GDALInvGeoTransform(adfGeoTransform, adfInvGT))
-        {
-            sqlite3_result_null(pContext);
-            return;
-        }
-        x = static_cast<int>(adfInvGT[0] + X * adfInvGT[1] + Y * adfInvGT[2]);
-        y = static_cast<int>(adfInvGT[3] + X * adfInvGT[4] + Y * adfInvGT[5]);
-    }
-    else if (EQUAL(pszCoordType, "pixel"))
-    {
-        x = sqlite3_value_int(argv[3]);
-        y = sqlite3_value_int(argv[4]);
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid value for 3rd argument of gdal_get_pixel_value(): "
-                 "only 'georef' or 'pixel' are supported");
-        sqlite3_result_null(pContext);
-        return;
-    }
-    if (x < 0 || x >= poDS->GetRasterXSize() || y < 0 ||
-        y >= poDS->GetRasterYSize())
-    {
-        sqlite3_result_null(pContext);
-        return;
-    }
-    const auto eDT = poBand->GetRasterDataType();
-    if (eDT != GDT_UInt64 && GDALDataTypeIsInteger(eDT))
-    {
-        int64_t nValue = 0;
-        if (poBand->RasterIO(GF_Read, x, y, 1, 1, &nValue, 1, 1, GDT_Int64, 0,
-                             0, nullptr) != CE_None)
-        {
-            sqlite3_result_null(pContext);
-            return;
-        }
-        return sqlite3_result_int64(pContext, nValue);
-    }
-    else
-    {
-        double dfValue = 0;
-        if (poBand->RasterIO(GF_Read, x, y, 1, 1, &dfValue, 1, 1, GDT_Float64,
-                             0, 0, nullptr) != CE_None)
-        {
-            sqlite3_result_null(pContext);
-            return;
-        }
-        return sqlite3_result_double(pContext, dfValue);
-    }
+    OGRSQLite_gdal_get_pixel_value_common("gdal_get_layer_pixel_value",
+                                          pContext, argc, argv, poDS);
 }
 
 /************************************************************************/
@@ -9548,6 +9472,9 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
     }
 
     sqlite3_create_function(hDB, "gdal_get_layer_pixel_value", 5, SQLITE_UTF8,
+                            this, GPKG_gdal_get_layer_pixel_value, nullptr,
+                            nullptr);
+    sqlite3_create_function(hDB, "gdal_get_layer_pixel_value", 6, SQLITE_UTF8,
                             this, GPKG_gdal_get_layer_pixel_value, nullptr,
                             nullptr);
 

@@ -5444,8 +5444,7 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
                 out_schema->children[j] = out_schema->children[i];
                 ++j;
             }
-            else if (m_oSetBBoxArrowColumns.find(i) !=
-                     m_oSetBBoxArrowColumns.end())
+            else if (cpl::contains(m_oSetBBoxArrowColumns, i))
             {
                 // Remove bounding box columns from exported schema
                 out_schema->children[i]->release(out_schema->children[i]);
@@ -5621,7 +5620,7 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             int j = 0;
             for (int i = 0; i < static_cast<int>(schema.n_children); ++i)
             {
-                if (oSetBBoxArrayIndex.find(i) != oSetBBoxArrayIndex.end() ||
+                if (cpl::contains(oSetBBoxArrayIndex, i) ||
                     IsSilentlyIgnoredFormatForGetArrowSchemaArray(
                         schema.children[i]->format))
                 {

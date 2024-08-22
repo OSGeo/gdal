@@ -1250,6 +1250,15 @@ def test_netcdf_multidim_create_nc4():
         assert var
         assert var.Read() == ["", "0123456789"]
 
+        var = rg.CreateMDArray(
+            "my_var_string_array_zero_dim", [], gdal.ExtendedDataType.CreateString()
+        )
+        assert var
+        assert var.Write(["foo"]) == gdal.CE_None
+        var = rg.OpenMDArray("my_var_string_array_zero_dim")
+        assert var
+        assert var.Read() == ["foo"]
+
     f()
 
     def f2():
@@ -4074,3 +4083,27 @@ def test_netcdf_multidim_as_classic_dataset_overview(tmp_path):
 
     test()
     test2()
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_chunk_cache_options():
+
+    ds = gdal.OpenEx("data/netcdf/nc4_vars.nc", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+
+    var = rg.OpenMDArray(
+        "Band1",
+        [
+            "RAW_DATA_CHUNK_CACHE_SIZE=2000000",
+            "CHUNK_SLOTS=1000",
+            "PREEMPTION=0.9",
+            "INCLUDE_CHUNK_CACHE_PARAMETERS_IN_STRUCTURAL_INFO=YES",
+        ],
+    )
+    assert var.GetStructuralInfo() == {
+        "RAW_DATA_CHUNK_CACHE_SIZE": "2000000",
+        "CHUNK_SLOTS": "1000",
+        "PREEMPTION": "0.900000",
+    }

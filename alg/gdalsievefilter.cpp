@@ -369,7 +369,7 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
     std::vector<int> anBigNeighbour;
     try
     {
-        anBigNeighbour.resize(anPolySizes.size());
+        anBigNeighbour.resize(anPolySizes.size(), -1);
     }
     catch (const std::exception &)
     {
@@ -377,9 +377,6 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
                  __FUNCTION__);
         return CE_Failure;
     }
-
-    for (int iPoly = 0; iPoly < static_cast<int>(anPolySizes.size()); iPoly++)
-        anBigNeighbour[iPoly] = -1;
 
     /* ==================================================================== */
     /*      Second pass ... identify the largest neighbour for each         */

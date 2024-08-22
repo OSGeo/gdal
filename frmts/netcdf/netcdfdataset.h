@@ -144,9 +144,9 @@ static const int NCDF_DEFLATE_LEVEL = 1; /* best time/size ratio */
         if (NCDF_ERR_status_ != NC_NOERR)                                      \
         {                                                                      \
             CPLError(CE_Failure, CPLE_AppDefined,                              \
-                     "netcdf error #%d : %s .\nat (%s,%s,%d)\n", status,       \
-                     nc_strerror(NCDF_ERR_status_), __FILE__, __FUNCTION__,    \
-                     __LINE__);                                                \
+                     "netcdf error #%d : %s .\nat (%s,%s,%d)\n",               \
+                     NCDF_ERR_status_, nc_strerror(NCDF_ERR_status_),          \
+                     __FILE__, __FUNCTION__, __LINE__);                        \
         }                                                                      \
     } while (0)
 

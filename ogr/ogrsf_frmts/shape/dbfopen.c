@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2012-2019, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2012-2024, Even Rouault <even dot rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT OR LGPL-2.0-or-later
  ******************************************************************************/
@@ -481,7 +481,7 @@ DBFHandle SHPAPI_CALL DBFOpenLL(const char *pszFilename, const char *pszAccess,
 
     for (int iField = 0; iField < nFields; iField++)
     {
-        unsigned char *pabyFInfo = pabyBuf + iField * XBASE_FLDHDR_SZ;
+        const unsigned char *pabyFInfo = pabyBuf + iField * XBASE_FLDHDR_SZ;
         if (pabyFInfo[0] == HEADER_RECORD_TERMINATOR)
         {
             psDBF->nFields = iField;
@@ -1119,7 +1119,7 @@ SHPDate SHPAPI_CALL DBFReadDateAttribute(DBFHandle psDBF, int iRecord,
 /*      Return TRUE if the passed string is NULL.                       */
 /************************************************************************/
 
-static bool DBFIsValueNULL(char chType, const char *pszValue)
+static bool DBFIsValueNULL(char chType, const char *pszValue, int size)
 {
     if (pszValue == SHPLIB_NULLPTR)
         return true;
@@ -1144,14 +1144,22 @@ static bool DBFIsValueNULL(char chType, const char *pszValue)
             return true;
 
         case 'D':
-            /* NULL date fields have value "00000000" */
+        {
+            const char DIGIT_ZERO = '0';
+            /* NULL date fields have value "00000000" or "0"*size */
             /* Some DBF files have fields filled with spaces */
             /* (trimmed by DBFReadStringAttribute) to indicate null */
             /* values for dates (#4265). */
             /* And others have '       0': https://lists.osgeo.org/pipermail/gdal-dev/2023-November/058010.html */
             /* And others just empty string: https://github.com/OSGeo/gdal/issues/10405 */
-            return pszValue[0] == 0 || strncmp(pszValue, "00000000", 8) == 0 ||
-                   strcmp(pszValue, " ") == 0 || strcmp(pszValue, "0") == 0;
+            if (pszValue[0] == 0 || strncmp(pszValue, "00000000", 8) == 0 ||
+                strcmp(pszValue, " ") == 0 || strcmp(pszValue, "0") == 0)
+                return true;
+            for (int i = 0; i < size; i++)
+                if (pszValue[i] != DIGIT_ZERO)
+                    return false;
+            return true;
+        }
 
         case 'L':
             /* NULL boolean fields have value "?" */
@@ -1179,7 +1187,8 @@ int SHPAPI_CALL DBFIsAttributeNULL(const DBFHandle psDBF, int iRecord,
     if (pszValue == SHPLIB_NULLPTR)
         return TRUE;
 
-    return DBFIsValueNULL(psDBF->pachFieldType[iField], pszValue);
+    return DBFIsValueNULL(psDBF->pachFieldType[iField], pszValue,
+                          psDBF->panFieldSize[iField]);
 }
 
 /************************************************************************/
@@ -2166,7 +2175,8 @@ int SHPAPI_CALL DBFAlterFieldDefn(DBFHandle psDBF, int iField,
             }
 
             memcpy(pszOldField, pszRecord + nOffset, nOldWidth);
-            const bool bIsNULL = DBFIsValueNULL(chOldType, pszOldField);
+            const bool bIsNULL =
+                DBFIsValueNULL(chOldType, pszOldField, nOldWidth);
 
             if (nWidth != nOldWidth)
             {
@@ -2243,7 +2253,8 @@ int SHPAPI_CALL DBFAlterFieldDefn(DBFHandle psDBF, int iField,
             }
 
             memcpy(pszOldField, pszRecord + nOffset, nOldWidth);
-            const bool bIsNULL = DBFIsValueNULL(chOldType, pszOldField);
+            const bool bIsNULL =
+                DBFIsValueNULL(chOldType, pszOldField, nOldWidth);
 
             if (nOffset + nOldWidth < nOldRecordLength)
             {

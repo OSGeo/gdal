@@ -1921,13 +1921,13 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
       if not buffer_datatype:
         buffer_datatype = self.GetDataType()
 
-      is_1d_string = self.GetDataType().GetClass() == GEDTC_STRING and buffer_datatype.GetClass() == GEDTC_STRING and dimCount == 1
+      is_0d_or_1d_string = self.GetDataType().GetClass() == GEDTC_STRING and buffer_datatype.GetClass() == GEDTC_STRING and dimCount <= 1
 
       if not array_start_idx:
         array_start_idx = [0] * dimCount
 
       if not count:
-        if is_1d_string:
+        if is_0d_or_1d_string:
             assert type(buffer) == type([])
             count = [ len(buffer) ]
         else:
@@ -1946,7 +1946,7 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
             stride *= cnt
         buffer_stride.reverse()
 
-      if is_1d_string:
+      if is_0d_or_1d_string:
           return _gdal.MDArray_WriteStringArray(self, array_start_idx, count, array_step, buffer_datatype, buffer)
 
       return _gdal.MDArray_Write(self, array_start_idx, count, array_step, buffer_stride, buffer_datatype, buffer)
@@ -2190,6 +2190,7 @@ def InfoOptions(options=None, format='text', deserialize=True,
          computeMinMax=False, reportHistograms=False, reportProj4=False,
          stats=False, approxStats=False, computeChecksum=False,
          showGCPs=True, showMetadata=True, showRAT=True, showColorTable=True,
+         showNodata=True, showMask=True,
          listMDD=False, showFileList=True, allMetadata=False,
          extraMDDomains=None, wktFormat=None):
     """ Create a InfoOptions() object that can be passed to gdal.Info()
@@ -2231,6 +2232,10 @@ def InfoOptions(options=None, format='text', deserialize=True,
             new_options += ['-norat']
         if not showColorTable:
             new_options += ['-noct']
+        if not showNodata:
+            new_options += ['-nonodata']
+        if not showMask:
+            new_options += ['-nomask']
         if listMDD:
             new_options += ['-listmdd']
         if not showFileList:

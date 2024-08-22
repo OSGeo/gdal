@@ -1741,8 +1741,8 @@ CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
         CPLCreateXMLElementAndValue(psTree, "SourceDataset",
                                     GDALGetDescription(psWO->hSrcDS));
 
-        char **papszOpenOptions =
-            (static_cast<GDALDataset *>(psWO->hSrcDS))->GetOpenOptions();
+        CSLConstList papszOpenOptions =
+            GDALDataset::FromHandle(psWO->hSrcDS)->GetOpenOptions();
         GDALSerializeOpenOptionsToXML(psTree, papszOpenOptions);
     }
 

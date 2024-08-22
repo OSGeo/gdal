@@ -2705,6 +2705,13 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
             coord.xyzt.t = t ? t[i] : dfDefaultTime;
             proj_errno_reset(pj);
             coord = proj_trans(pj, m_bReversePj ? PJ_INV : PJ_FWD, coord);
+#if 0
+            CPLDebug("OGRCT",
+                     "Transforming (x=%f,y=%f,z=%f,time=%f) to "
+                     "(x=%f,y=%f,z=%f,time=%f)",
+                     x[i], y[i], z ? z[i] : 0, t ? t[i] : dfDefaultTime,
+                     coord.xyzt.x, coord.xyzt.y, coord.xyzt.z, coord.xyzt.t);
+#endif
             x[i] = coord.xyzt.x;
             y[i] = coord.xyzt.y;
             if (z)

@@ -1922,7 +1922,7 @@ void netCDFRasterBand::CreateMetadataFromAttributes()
 
     // Get attribute metadata.
     int nAtt = 0;
-    nc_inq_varnatts(cdfid, nZId, &nAtt);
+    NCDF_ERR(nc_inq_varnatts(cdfid, nZId, &nAtt));
 
     for (int i = 0; i < nAtt; i++)
     {
@@ -7210,7 +7210,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
         {
             char szGroupName[NC_MAX_NAME + 1];
             szGroupName[0] = 0;
-            nc_inq_grpname(panGroupIds[i], szGroupName);
+            NCDF_ERR(nc_inq_grpname(panGroupIds[i], szGroupName));
             int nNewGrpId = -1;
             status = nc_def_grp(new_cdfid, szGroupName, &nNewGrpId);
             NCDF_ERR(status);
