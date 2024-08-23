@@ -300,19 +300,6 @@ bool ViewshedExecutor::processFirstLine(std::vector<double> &vLastLineVal)
             [&, right = iRight]()
             { processFirstLineRight(m_nX + 1, right, vResult, vThisLineVal); });
         pQueue->WaitCompletion();
-        /**
-        auto t1 = std::async(std::launch::async,
-                             [&, left = iLeft]() {
-                                 processFirstLineLeft(m_nX - 1, left - 1,
-                                                      vResult, vThisLineVal);
-                             });
-
-        auto t2 = std::async(
-            std::launch::async, [&, right = iRight]()
-            { processFirstLineRight(m_nX + 1, right, vResult, vThisLineVal); });
-        t1.wait();
-        t2.wait();
-        **/
     }
 
     // Make the current line the last line.
@@ -604,25 +591,6 @@ bool ViewshedExecutor::processLine(int nLine, std::vector<double> &vLastLineVal)
                              vLastLineVal);
         });
     pQueue->WaitCompletion();
-    /**
-    auto t1 =
-        std::async(std::launch::async,
-                   [&, left = iLeft]()
-                   {
-                       processLineLeft(nYOffset, m_nX - 1, left - 1, vResult,
-                                       vThisLineVal, vLastLineVal);
-                   });
-
-    auto t2 =
-        std::async(std::launch::async,
-                   [&, right = iRight]()
-                   {
-                       processLineRight(nYOffset, m_nX + 1, right, vResult,
-                                        vThisLineVal, vLastLineVal);
-                   });
-    t1.wait();
-    t2.wait();
-    **/
 
     // Make the current line the last line.
     vLastLineVal = std::move(vThisLineVal);
@@ -679,34 +647,6 @@ bool ViewshedExecutor::run()
                 if (!processLine(nLine, vLastLineVal))
                     err = true;
         });
-    /**
-    auto tUp = std::async(std::launch::async,
-                          [&]()
-                          {
-                              std::vector<double> vLastLineVal = vFirstLineVal;
-
-                              for (int nLine = yStart - 1;
-                                   nLine >= oCurExtent.yStart && !err; nLine--)
-                                  if (!processLine(nLine, vLastLineVal))
-                                      err = true;
-                          });
-
-    // scan downwards
-    auto tDown = std::async(std::launch::async,
-                            [&]()
-                            {
-                                std::vector<double> vLastLineVal =
-                                    vFirstLineVal;
-
-                                for (int nLine = yStart + 1;
-                                     nLine < oCurExtent.yStop && !err; nLine++)
-                                    if (!processLine(nLine, vLastLineVal))
-                                        err = true;
-                            });
-
-    tUp.wait();
-    tDown.wait();
-    **/
 
     //ABELL
     /**

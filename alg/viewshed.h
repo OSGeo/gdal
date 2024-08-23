@@ -40,6 +40,7 @@
 #include "cpl_progress.h"
 #include "cpl_worker_thread_pool.h"
 #include "gdal_priv.h"
+#include "notifyqueue.h"
 
 namespace gdal
 {
@@ -225,7 +226,6 @@ class Viewshed
     Window oCurExtent;
     DatasetPtr poDstDS;
     GDALRasterBand *pSrcBand;
-    //    GDALRasterBand *pDstBand;
     int nLineCount;
     using ProgressFunc = std::function<bool(double frac, const char *msg)>;
     ProgressFunc oProgress;
@@ -240,9 +240,24 @@ class Viewshed
                      const std::array<double, 6> &adfInvTransform);
     DatasetPtr createOutputDataset(GDALRasterBand &srcBand,
                                    const std::string &outFilename);
-    void createCumulativeDataset(std::queue<DatasetPtr> &queue,
-                                 std::mutex &mutex, std::condition_variable &cv,
-                                 size_t numObservers);
+
+    // Cumulative
+  public:
+    struct Location
+    {
+        int x;
+        int y;
+    };
+
+    using ObserverQueue = NotifyQueue<Location>;
+    using DatasetQueue = NotifyQueue<DatasetPtr>;
+    using Buf32 = std::vector<uint32_t>;
+    using Buf32Queue = NotifyQueue<Buf32>;
+
+  private:
+    bool createCumulativeDataset(DatasetQueue &queue);
+
+    // Progress
     bool lineProgress();
     bool emitProgress(double fraction);
     bool setupProgress(GDALProgressFunc pfnProgress, void *pProgressArg);

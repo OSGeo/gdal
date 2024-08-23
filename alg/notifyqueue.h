@@ -50,7 +50,7 @@ template <class T> class NotifyQueue
     {
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            m_done = true;
+            m_done = !m_stop;  // If we're already stopped, we can't be done.
         }
         m_cv.notify_all();
     }
@@ -60,7 +60,7 @@ template <class T> class NotifyQueue
     {
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            m_stop = true;
+            m_stop = !m_done;  // If we're already done, we can't be stopped.
         }
         m_cv.notify_all();
     }

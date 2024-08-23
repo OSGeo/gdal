@@ -463,7 +463,7 @@ bool Viewshed::runCumulative(const std::string &srcFilename,
     /**
     if (!setupProgress(pfnProgress, pProgressArg))
         return false;
-**/
+    **/
     DatasetPtr srcDS(
         GDALDataset::FromHandle(GDALOpen(srcFilename.c_str(), GA_ReadOnly)));
     pSrcBand = srcDS->GetRasterBand(1);
@@ -472,40 +472,27 @@ bool Viewshed::runCumulative(const std::string &srcFilename,
     oOutExtent.xStop = GDALGetRasterBandXSize(pSrcBand);
     oOutExtent.yStop = GDALGetRasterBandYSize(pSrcBand);
 
+    ObserverQueue observerQueue;
+
+    // Stick all the locations on a queue.
     for (int x = 0; x < oOutExtent.xStop; x += oOpts.observerSpacing)
         for (int y = 0; y < oOutExtent.yStop; y += oOpts.observerSpacing)
-            observers.emplace_back(x, y);
+            observerQueue.push({x, y});
+    observerQueue.done();
 
-    std::cerr << "Observers total = " << observers.size() << "!\n";
-
-    std::queue<DatasetPtr> outputQueue;
-
+    DatasetQueue datasetQueue;
     const int numThreads = NUM_JOBS;
     CPLWorkerThreadPool pool(numThreads);
 
-    std::mutex mutex;
-    std::condition_variable cv;
     std::atomic<bool> err = false;
+    std::atomic<int> running = numThreads;
 
     // Queue all the jobs.
     auto executorJob =
-        [this, &observers, &outputQueue, &mutex, &cv, &srcFilename, &err]
+        [this, &observerQueue, &datasetQueue, &srcFilename, &err, &running]
     {
-        int x;
-        int y;
-
-        auto nextObserver = [&x, &y, &observers, &mutex]
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            if (observers.empty())
-                return false;
-            x = observers.back().first;
-            y = observers.back().second;
-            observers.resize(observers.size() - 1);
-            return true;
-        };
-
-        while (!err && nextObserver())
+        Location loc;
+        while (!err && observerQueue.pop(loc))
         {
             DatasetPtr srcDs(
                 GDALDataset::Open(srcFilename.c_str(), GA_ReadOnly));
@@ -516,53 +503,48 @@ bool Viewshed::runCumulative(const std::string &srcFilename,
                                                oOutExtent.ySize(), 1, GDT_Byte,
                                                nullptr));
             ViewshedExecutor executor(*srcDs->GetRasterBand(1),
-                                      *dstDs->GetRasterBand(1), x, y,
+                                      *dstDs->GetRasterBand(1), loc.x, loc.y,
                                       oOutExtent, oOutExtent, oOpts);
             if (!executor.run())
-            {
-                err = true;
-                dstDs.reset();  // So we push a NULL dataset on the queue.
-            }
-            {
-                std::lock_guard<std::mutex> lock(mutex);
-                outputQueue.push(std::move(dstDs));
-            }
-            cv.notify_one();
+                err = true;  // Signal other threads to stop.
+            else
+                datasetQueue.push(std::move(dstDs));
+        }
+
+        // Job done. Set the output queue state.
+        if (err)
+            datasetQueue.stop();
+        else
+        {
+            running--;
+            if (!running)
+                datasetQueue.done();
         }
     };
 
     for (int i = 0; i < numThreads; ++i)
         pool.SubmitJob(executorJob);
-    std::cerr << "Submitted executor jobs!\n";
 
-    std::cerr << "Creating cum dataset!\n";
     // The first argument need not be the number of threads.
-    createCumulativeDataset(outputQueue, mutex, cv, observers.size());
+    createCumulativeDataset(datasetQueue);
 
     pool.WaitCompletion();
-    std::cerr << "Done create cum dataset!\n";
     (void)pfnProgress;
     (void)pProgressArg;
     return true;
 }
 
-using Buf32 = std::vector<uint32_t>;
-using Buf32Queue = NotifyQueue<Buf32>;
-
 class Combiner
 {
   public:
-    Combiner(std::queue<Viewshed::DatasetPtr> &inputQueue, std::mutex &mutex,
-             std::condition_variable &cv, size_t &remaining,
-             Buf32Queue &outputQueue)
-        : m_inputQueue(inputQueue), m_mutex(mutex), m_cv(cv),
-          m_remaining(remaining), m_outputQueue(outputQueue)
+    Combiner(Viewshed::DatasetQueue &inputQueue,
+             Viewshed::Buf32Queue &outputQueue)
+        : m_inputQueue(inputQueue), m_outputQueue(outputQueue)
     {
     }
 
     Combiner(const Combiner &src)
-        : m_inputQueue(src.m_inputQueue), m_mutex(src.m_mutex), m_cv(src.m_cv),
-          m_remaining(src.m_remaining), m_outputQueue(src.m_outputQueue)
+        : m_inputQueue(src.m_inputQueue), m_outputQueue(src.m_outputQueue)
     {
     }
 
@@ -570,11 +552,8 @@ class Combiner
     void run();
 
   private:
-    std::queue<Viewshed::DatasetPtr> &m_inputQueue;
-    std::mutex &m_mutex;
-    std::condition_variable &m_cv;
-    size_t &m_remaining;
-    Buf32Queue &m_outputQueue;
+    Viewshed::DatasetQueue &m_inputQueue;
+    Viewshed::Buf32Queue &m_outputQueue;
     Viewshed::DatasetPtr m_dataset;
     size_t m_count{0};
 
@@ -583,39 +562,15 @@ class Combiner
 
 void Combiner::run()
 {
-    bool notifyExit = false;
-    while (true)
+    Viewshed::DatasetPtr pTempDataset;
+
+    while (m_inputQueue.pop(pTempDataset))
     {
-        if (notifyExit)
-        {
-            m_cv.notify_all();
-            break;
-        }
-
-        std::unique_lock<std::mutex> lock(m_mutex);
-        m_cv.wait(lock,
-                  [this] { return m_remaining == 0 || !m_inputQueue.empty(); });
-
-        // If some other thread said there are no remaining datasets, just exit.
-        if (m_remaining == 0)
-            break;
-
-        Viewshed::DatasetPtr p = std::move(m_inputQueue.front());
-        m_inputQueue.pop();
-        if (!p)
-        {
-            m_remaining = 0;
-            notifyExit = true;
-        }
+        if (!m_dataset)
+            m_dataset = std::move(pTempDataset);
         else
-        {
-            if (--m_remaining == 0)
-                notifyExit = true;
-            lock.unlock();
-            sum(std::move(p));
-        }
+            sum(std::move(pTempDataset));
     }
-
     // Queue remaining summed rasters.
     queueOutputBuffer();
 }
@@ -645,14 +600,13 @@ void Combiner::queueOutputBuffer()
     if (!m_dataset)
         return;
 
-    std::cerr << "Queue buffer!\n";
     uint8_t *srcP =
         static_cast<uint8_t *>(m_dataset->GetInternalHandle("MEMORY1"));
 
     GDALRasterBand *srcBand = m_dataset->GetRasterBand(1);
     size_t size = srcBand->GetXSize() * srcBand->GetYSize();
 
-    Buf32 buf(size);
+    Viewshed::Buf32 buf(size);
     uint32_t *dstP = buf.data();
     for (size_t i = 0; i <= size; ++i)
         *dstP++ = *srcP++;
@@ -664,36 +618,26 @@ void Combiner::queueOutputBuffer()
 namespace
 {
 
-void scaleOutputData(Buf32 &finalBuf)
+void scaleOutputData(Viewshed::Buf32 &finalBuf)
 {
     uint32_t m = 0;  // This gathers all the bits set.
     for (uint32_t &val : finalBuf)
         m = std::max(val, m);
 
-    std::cerr << "Max = " << m << "!\n";
     double factor =
         std::numeric_limits<uint8_t>::max() / static_cast<double>(m);
-
     for (uint32_t &val : finalBuf)
         val = static_cast<uint32_t>(std::floor(factor * val));
-    std::map<uint32_t, uint32_t> bins;
-    for (uint32_t &val : finalBuf)
-        bins[val]++;
-    for (auto [val, count] : bins)
-        std::cerr << "Value " << val << " = " << count << "!\n";
 }
 
 }  // unnamed namespace
 
-void Viewshed::createCumulativeDataset(std::queue<DatasetPtr> &queue,
-                                       std::mutex &mutex,
-                                       std::condition_variable &cv,
-                                       size_t numObservers)
+bool Viewshed::createCumulativeDataset(Viewshed::DatasetQueue &queue)
 {
     size_t rasterSize = oOutExtent.size();
 
-    NotifyQueue<Buf32> bigQueue;
-    Buf32 finalBuf(rasterSize);
+    Viewshed::Buf32Queue bigQueue;
+    Viewshed::Buf32 finalBuf(rasterSize);
 
     std::thread bigRasterThread(
         [&bigQueue, &finalBuf, rasterSize]
@@ -714,8 +658,7 @@ void Viewshed::createCumulativeDataset(std::queue<DatasetPtr> &queue,
         const int numJobs = NUM_JOBS;
         CPLWorkerThreadPool pool(numJobs);
 
-        std::vector<Combiner> combiners(
-            numJobs, Combiner(queue, mutex, cv, numObservers, bigQueue));
+        std::vector<Combiner> combiners(numJobs, Combiner(queue, bigQueue));
         for (Combiner &c : combiners)
             pool.SubmitJob([&c] { c.run(); });
         pool.WaitCompletion();
@@ -723,9 +666,10 @@ void Viewshed::createCumulativeDataset(std::queue<DatasetPtr> &queue,
 
     // When all the combiners have finished, everything is in the 32-bit data queue, so
     // set the queue done.
+    if (queue.isStopped())
+        return false;
     bigQueue.done();
 
-    std::cerr << "Joining bigRaster!\n";
     // Wait for finalBuf to be fully filled.
     bigRasterThread.join();
 
