@@ -1550,10 +1550,6 @@ CPLErr GDALOpenFileGDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 return CE_Failure;
             }
 
-            VSILFILE *fp = VSIFOpenL("tmp.jpg", "wb");
-            VSIFWriteL(pabyData + nJPEGOffset, nJPEGSize, 1, fp);
-            VSIFCloseL(fp);
-
             CPLString osTmpFilename;
             osTmpFilename.Printf("/vsimem/_openfilegdb/%p.jpg", this);
             VSIFCloseL(VSIFileFromMemBuffer(
