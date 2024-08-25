@@ -1211,27 +1211,63 @@ GDALRasterBand *KmlSuperOverlayRasterBand::GetOverview(int iOvr)
 /*                     KmlSuperOverlayGetBoundingBox()                  */
 /************************************************************************/
 
-static int KmlSuperOverlayGetBoundingBox(CPLXMLNode *psNode, double *adfExtents)
+static bool KmlSuperOverlayGetBoundingBox(const CPLXMLNode *psNode,
+                                          double *adfExtents)
 {
-    CPLXMLNode *psBox = CPLGetXMLNode(psNode, "LatLonBox");
-    if (psBox == nullptr)
+    const CPLXMLNode *psBox = CPLGetXMLNode(psNode, "LatLonBox");
+    if (!psBox)
         psBox = CPLGetXMLNode(psNode, "LatLonAltBox");
-    if (psBox == nullptr)
-        return FALSE;
+    if (psBox)
+    {
+        const char *pszNorth = CPLGetXMLValue(psBox, "north", nullptr);
+        const char *pszSouth = CPLGetXMLValue(psBox, "south", nullptr);
+        const char *pszEast = CPLGetXMLValue(psBox, "east", nullptr);
+        const char *pszWest = CPLGetXMLValue(psBox, "west", nullptr);
+        if (pszNorth && pszSouth && pszEast && pszWest)
+        {
+            adfExtents[0] = CPLAtof(pszWest);
+            adfExtents[1] = CPLAtof(pszSouth);
+            adfExtents[2] = CPLAtof(pszEast);
+            adfExtents[3] = CPLAtof(pszNorth);
 
-    const char *pszNorth = CPLGetXMLValue(psBox, "north", nullptr);
-    const char *pszSouth = CPLGetXMLValue(psBox, "south", nullptr);
-    const char *pszEast = CPLGetXMLValue(psBox, "east", nullptr);
-    const char *pszWest = CPLGetXMLValue(psBox, "west", nullptr);
-    if (pszNorth == nullptr || pszSouth == nullptr || pszEast == nullptr ||
-        pszWest == nullptr)
-        return FALSE;
+            return true;
+        }
+    }
+    else
+    {
+        const CPLXMLNode *psLatLonQuad = CPLGetXMLNode(psNode, "gx:LatLonQuad");
+        if (psLatLonQuad)
+        {
+            const CPLStringList aosTuples(CSLTokenizeString2(
+                CPLGetXMLValue(psLatLonQuad, "coordinates", ""), " \t\n\r", 0));
+            if (aosTuples.size() == 4)
+            {
+                const CPLStringList aosLL(
+                    CSLTokenizeString2(aosTuples[0], ",", 0));
+                const CPLStringList aosLR(
+                    CSLTokenizeString2(aosTuples[1], ",", 0));
+                const CPLStringList aosUR(
+                    CSLTokenizeString2(aosTuples[2], ",", 0));
+                const CPLStringList aosUL(
+                    CSLTokenizeString2(aosTuples[3], ",", 0));
+                if (aosLL.size() >= 2 && aosLR.size() >= 2 &&
+                    aosUR.size() >= 2 && aosUL.size() >= 2 &&
+                    strcmp(aosLL[0], aosUL[0]) == 0 &&
+                    strcmp(aosLL[1], aosLR[1]) == 0 &&
+                    strcmp(aosLR[0], aosUR[0]) == 0 &&
+                    strcmp(aosUR[1], aosUL[1]) == 0)
+                {
+                    adfExtents[0] = CPLAtof(aosLL[0]);
+                    adfExtents[1] = CPLAtof(aosLL[1]);
+                    adfExtents[2] = CPLAtof(aosUR[0]);
+                    adfExtents[3] = CPLAtof(aosUR[1]);
+                    return true;
+                }
+            }
+        }
+    }
 
-    adfExtents[0] = CPLAtof(pszWest);
-    adfExtents[1] = CPLAtof(pszSouth);
-    adfExtents[2] = CPLAtof(pszEast);
-    adfExtents[3] = CPLAtof(pszNorth);
-    return TRUE;
+    return false;
 }
 
 /************************************************************************/
@@ -1712,27 +1748,25 @@ int KmlSuperOverlayReadDataset::Identify(GDALOpenInfo *poOpenInfo)
 
     for (int i = 0; i < 2; i++)
     {
-        if (strstr((const char *)poOpenInfo->pabyHeader, "<NetworkLink>") !=
-                nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "<Region>") !=
-                nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "<Link>") != nullptr)
+        // Leave below variable here as the TryToIngest() at end might
+        // invalidate it
+        const char *pszText =
+            reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+        if (strstr(pszText, "<NetworkLink>") != nullptr &&
+            strstr(pszText, "<Region>") != nullptr &&
+            strstr(pszText, "<Link>") != nullptr)
             return TRUE;
 
-        if (strstr((const char *)poOpenInfo->pabyHeader, "<Document>") !=
-                nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "<Region>") !=
-                nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "<GroundOverlay>") !=
-                nullptr)
+        if (strstr(pszText, "<Document>") != nullptr &&
+            strstr(pszText, "<Region>") != nullptr &&
+            strstr(pszText, "<GroundOverlay>") != nullptr)
             return TRUE;
 
-        if (strstr((const char *)poOpenInfo->pabyHeader, "<GroundOverlay>") !=
-                nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "<Icon>") != nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "<href>") != nullptr &&
-            strstr((const char *)poOpenInfo->pabyHeader, "<LatLonBox>") !=
-                nullptr)
+        if (strstr(pszText, "<GroundOverlay>") != nullptr &&
+            strstr(pszText, "<Icon>") != nullptr &&
+            strstr(pszText, "<href>") != nullptr &&
+            (strstr(pszText, "<LatLonBox>") != nullptr ||
+             strstr(pszText, "<gx:LatLonQuad>") != nullptr))
             return TRUE;
 
         if (i == 0 && !poOpenInfo->TryToIngest(1024 * 10))
