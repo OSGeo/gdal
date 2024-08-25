@@ -71,7 +71,8 @@ class GDALOverviewDataset final : public GDALDataset
     GDALOverviewBand *m_poMaskBand = nullptr;
 
     static void Rescale(char **&papszMD, const char *pszItem, double dfRatio,
-                        double dfDefaultVal);
+                        double dfDefaultVal, double dfPreShift = 0,
+                        double dfPostShift = 0);
 
   protected:
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
@@ -455,12 +456,17 @@ const GDAL_GCP *GDALOverviewDataset::GetGCPs()
 /*                             Rescale()                                */
 /************************************************************************/
 
+/* static */
 void GDALOverviewDataset::Rescale(char **&papszMD, const char *pszItem,
-                                  double dfRatio, double dfDefaultVal)
+                                  double dfRatio, double dfDefaultVal,
+                                  double dfPreShift /*= 0*/,
+                                  double dfPostShift /*= 0*/)
 {
     double dfVal = CPLAtofM(CSLFetchNameValueDef(
         papszMD, pszItem, CPLSPrintf("%.18g", dfDefaultVal)));
+    dfVal += dfPreShift;
     dfVal *= dfRatio;
+    dfVal += dfPostShift;
     papszMD = CSLSetNameValue(papszMD, pszItem, CPLSPrintf("%.18g", dfVal));
 }
 
@@ -487,18 +493,20 @@ char **GDALOverviewDataset::GetMetadata(const char *pszDomain)
             return papszMD_RPC;
         papszMD_RPC = CSLDuplicate(papszMD);
 
-        Rescale(papszMD_RPC, RPC_LINE_OFF,
-                static_cast<double>(nRasterYSize) / poMainDS->GetRasterYSize(),
-                0.0);
-        Rescale(papszMD_RPC, RPC_LINE_SCALE,
-                static_cast<double>(nRasterYSize) / poMainDS->GetRasterYSize(),
-                1.0);
-        Rescale(papszMD_RPC, RPC_SAMP_OFF,
-                static_cast<double>(nRasterXSize) / poMainDS->GetRasterXSize(),
-                0.0);
-        Rescale(papszMD_RPC, RPC_SAMP_SCALE,
-                static_cast<double>(nRasterXSize) / poMainDS->GetRasterXSize(),
-                1.0);
+        const double dfXRatio =
+            static_cast<double>(nRasterXSize) / poMainDS->GetRasterXSize();
+        const double dfYRatio =
+            static_cast<double>(nRasterYSize) / poMainDS->GetRasterYSize();
+
+        // For line offset and pixel offset, we need to convert from RPC
+        // pixel center registration convention to GDAL pixel top-left corner
+        // registration convention by adding an initial 0.5 shift, and un-apply
+        // it after scaling.
+
+        Rescale(papszMD_RPC, RPC_LINE_OFF, dfYRatio, 0.0, 0.5, -0.5);
+        Rescale(papszMD_RPC, RPC_LINE_SCALE, dfYRatio, 1.0);
+        Rescale(papszMD_RPC, RPC_SAMP_OFF, dfXRatio, 0.0, 0.5, -0.5);
+        Rescale(papszMD_RPC, RPC_SAMP_SCALE, dfXRatio, 1.0);
 
         papszMD = papszMD_RPC;
     }

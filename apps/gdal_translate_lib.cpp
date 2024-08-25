@@ -1826,10 +1826,24 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
 
             const double df2 = adfSrcWinOri[2];
             const double df3 = adfSrcWinOri[3];
-            dfSAMP_OFF *= nOXSize / df2;
-            dfLINE_OFF *= nOYSize / df3;
-            dfSAMP_SCALE *= nOXSize / df2;
-            dfLINE_SCALE *= nOYSize / df3;
+            const double dfXRatio = nOXSize / df2;
+            const double dfYRatio = nOYSize / df3;
+
+            // For line offset and pixel offset, we need to convert from RPC
+            // pixel center registration convention to GDAL pixel top-left corner
+            // registration convention by adding an initial 0.5 shift, and un-apply
+            // it after scaling.
+
+            dfSAMP_OFF += 0.5;
+            dfSAMP_OFF *= dfXRatio;
+            dfSAMP_OFF -= 0.5;
+
+            dfLINE_OFF += 0.5;
+            dfLINE_OFF *= dfYRatio;
+            dfLINE_OFF -= 0.5;
+
+            dfSAMP_SCALE *= dfXRatio;
+            dfLINE_SCALE *= dfYRatio;
 
             CPLString osField;
             osField.Printf("%.15g", dfLINE_OFF);

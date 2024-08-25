@@ -872,16 +872,32 @@ def test_gdal_translate_32(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "out.tif")
 
+    src_ds = gdal.Open("../gcore/data/byte_rpc.tif")
+    src_md = src_ds.GetMetadata("RPC")
+    srcxoff = 1
+    srcyoff = 2
+    srcwidth = 13
+    srcheight = 14
+    widthratio = 200
+    heightratio = 300
     gdaltest.runexternal(
-        f"{gdal_translate_path} ../gcore/data/byte_rpc.tif {dst_tif} -srcwin 1 2 13 14 -outsize 150% 300%"
+        f"{gdal_translate_path} ../gcore/data/byte_rpc.tif {dst_tif} -srcwin {srcxoff} {srcyoff} {srcwidth} {srcheight} -outsize {widthratio}% {heightratio}%"
     )
+    widthratio /= 100.0
+    heightratio /= 100.0
     ds = gdal.Open(dst_tif)
     md = ds.GetMetadata("RPC")
-    assert (
-        float(md["LINE_OFF"]) == pytest.approx(47496, abs=1e-5)
-        and float(md["LINE_SCALE"]) == pytest.approx(47502, abs=1e-5)
-        and float(md["SAMP_OFF"]) == pytest.approx(19676.6923076923, abs=1e-5)
-        and float(md["SAMP_SCALE"]) == pytest.approx(19678.1538461538, abs=1e-5)
+    assert float(md["LINE_OFF"]) == pytest.approx(
+        (float(src_md["LINE_OFF"]) - srcyoff + 0.5) * heightratio - 0.5, abs=1e-5
+    )
+    assert float(md["LINE_SCALE"]) == pytest.approx(
+        float(src_md["LINE_SCALE"]) * heightratio, abs=1e-5
+    )
+    assert float(md["SAMP_OFF"]) == pytest.approx(
+        (float(src_md["SAMP_OFF"]) - srcxoff + 0.5) * widthratio - 0.5, abs=1e-5
+    )
+    assert float(md["SAMP_SCALE"]) == pytest.approx(
+        float(src_md["SAMP_SCALE"]) * widthratio, abs=1e-5
     )
 
 
