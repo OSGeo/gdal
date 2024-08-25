@@ -3033,6 +3033,7 @@ CPLErr netCDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
             strchr(osName.c_str(), '#') != nullptr)
         {
             // do nothing
+            return CE_None;
         }
         else
         {
@@ -3065,6 +3066,7 @@ CPLErr netCDFDataset::SetMetadata(char **papszMD, const char *pszDomain)
                 SetMetadataItem(pszName, pszValue);
             CPLFree(pszName);
         }
+        return CE_None;
     }
     return GDALPamDataset::SetMetadata(papszMD, pszDomain);
 }
@@ -3079,47 +3081,6 @@ const OGRSpatialReference *netCDFDataset::GetSpatialRef() const
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 
     return GDALPamDataset::GetSpatialRef();
-}
-
-/************************************************************************/
-/*                           SerializeToXML()                           */
-/************************************************************************/
-
-CPLXMLNode *netCDFDataset::SerializeToXML(const char *pszUnused)
-
-{
-    // Overridden from GDALPamDataset to add only band histogram
-    // and statistics. See bug #4244.
-
-    if (psPam == nullptr)
-        return nullptr;
-
-    // Setup root node and attributes.
-    CPLXMLNode *psDSTree = CPLCreateXMLNode(nullptr, CXT_Element, "PAMDataset");
-
-    // Process bands.
-    for (int iBand = 0; iBand < GetRasterCount(); iBand++)
-    {
-        netCDFRasterBand *poBand =
-            static_cast<netCDFRasterBand *>(GetRasterBand(iBand + 1));
-
-        if (poBand == nullptr || !(poBand->GetMOFlags() & GMO_PAM_CLASS))
-            continue;
-
-        CPLXMLNode *psBandTree = poBand->SerializeToXML(pszUnused);
-
-        if (psBandTree != nullptr)
-            CPLAddXMLChild(psDSTree, psBandTree);
-    }
-
-    // We don't want to return anything if we had no metadata to attach.
-    if (psDSTree->psChild == nullptr)
-    {
-        CPLDestroyXMLNode(psDSTree);
-        psDSTree = nullptr;
-    }
-
-    return psDSTree;
 }
 
 /************************************************************************/
