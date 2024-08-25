@@ -612,6 +612,7 @@ bool CPLJobQueue::SubmitJob(std::function<void()> task)
 
     // cppcheck-suppress knownConditionTrueFalse
     return m_poPool->SubmitJob(
+        // coverity[uninit_member,copy_constructor_call]
         [this, task]
         {
             task();
