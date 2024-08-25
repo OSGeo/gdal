@@ -170,7 +170,7 @@ bool FileGDBTable::RewriteTableToAddLastAddedField()
     {
         nOldCountNullableFields--;
     }
-    const int nOldNullableFieldsSizeInBytes =
+    const unsigned nOldNullableFieldsSizeInBytes =
         BIT_ARRAY_SIZE_IN_BYTES(nOldCountNullableFields);
     int nExtraBytes = 0;
     if (nOldNullableFieldsSizeInBytes != m_nNullableFieldsSizeInBytes)
@@ -320,7 +320,7 @@ bool FileGDBTable::RewriteTableToAddLastAddedField()
                     return false;
 
                 // Write updated feature data
-                if (nOldNullableFieldsSizeInBytes > 0)
+                if (nOldNullableFieldsSizeInBytes != 0)
                 {
                     if (VSIFWriteL(m_abyBuffer.data(),
                                    nOldNullableFieldsSizeInBytes, 1,
@@ -336,7 +336,7 @@ bool FileGDBTable::RewriteTableToAddLastAddedField()
                                    oWholeFileRewriter.m_fpTable) != 1)
                         return false;
                 }
-                if (nFeatureSize - nOldNullableFieldsSizeInBytes > 0)
+                if (nFeatureSize > nOldNullableFieldsSizeInBytes)
                 {
                     if (VSIFWriteL(m_abyBuffer.data() +
                                        nOldNullableFieldsSizeInBytes,
