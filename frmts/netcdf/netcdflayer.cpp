@@ -51,7 +51,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS, int nLayerCDFId,
       m_bProfileVarUnlimited(false), m_nParentIndexVarID(-1),
       layerVID_alloc(poDS->cdfid == m_nLayerCDFId
                          ? nullptr
-                         : new nccfdriver::netCDFVID(m_nLayerCDFId)),
+                         : new nccfdriver::netCDFVID(poDS, m_nLayerCDFId)),
       layerVID(layerVID_alloc.get() == nullptr ? poDS->vcdf : *layerVID_alloc),
       m_SGeometryFeatInd(0), m_poLayerConfig(nullptr),
       m_layerSGDefn(poDS->cdfid, nccfdriver::OGRtoRaw(eGeomType), poDS->vcdf,

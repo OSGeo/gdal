@@ -336,6 +336,7 @@ class netCDFDataset final : public GDALPamDataset
     friend class netCDFRasterBand;  // TMP
     friend class netCDFLayer;
     friend class netCDFVariable;
+    friend class nccfdriver::netCDFVID;
 
     typedef enum
     {

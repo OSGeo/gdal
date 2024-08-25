@@ -2833,7 +2833,7 @@ netCDFDataset::netCDFDataset()
       papszMetadata(nullptr), bBottomUp(true), eFormat(NCDF_FORMAT_NONE),
       bIsGdalFile(false), bIsGdalCfFile(false), pszCFProjection(nullptr),
       pszCFCoordinates(nullptr), nCFVersion(1.6), bSGSupport(false),
-      eMultipleLayerBehavior(SINGLE_LAYER), logCount(0), vcdf(cdfid),
+      eMultipleLayerBehavior(SINGLE_LAYER), logCount(0), vcdf(this, cdfid),
       GeometryScribe(vcdf, this->generateLogName()),
       FieldScribe(vcdf, this->generateLogName()),
       bufManager(CPLGetUsablePhysicalRAM() / 5),
@@ -2907,7 +2907,7 @@ CPLErr netCDFDataset::Close()
         if (netCDFDataset::FlushCache(true) != CE_None)
             eErr = CE_Failure;
 
-        if (!SGCommitPendingTransaction())
+        if (GetAccess() == GA_Update && !SGCommitPendingTransaction())
             eErr = CE_Failure;
 
         for (size_t i = 0; i < apoVectorDatasets.size(); i++)
