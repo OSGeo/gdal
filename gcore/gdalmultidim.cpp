@@ -770,7 +770,7 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
  * @param poSrcDS    Source dataset. Might be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcGroup Source group. Must NOT be nullptr.
- * @param bStrict Whether to enable stict mode. In strict mode, any error will
+ * @param bStrict Whether to enable strict mode. In strict mode, any error will
  *                stop the copy. In relaxed mode, the copy will be attempted to
  *                be pursued.
  * @param nCurCost  Should be provided as a variable initially set to 0.
@@ -2120,7 +2120,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
  * count[] and with the spacing of bufferStride[].
  *
  * @param pDstBufferAllocStart Optional pointer that can be used to validate the
- *                             validty of pDstBuffer. pDstBufferAllocStart
+ *                             validity of pDstBuffer. pDstBufferAllocStart
  * should be the pointer returned by the malloc() or equivalent call used to
  * allocate the buffer. It will generally be equal to pDstBuffer (when
  * bufferStride[] values are all positive), but not necessarily. If specified,
@@ -2128,7 +2128,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
  * validation is needed, nullptr can be passed.
  *
  * @param nDstBufferAllocSize  Optional buffer size, that can be used to
- * validate the validty of pDstBuffer. This is the size of the buffer starting
+ * validate the validity of pDstBuffer. This is the size of the buffer starting
  * at pDstBufferAllocStart. If specified, pDstBufferAllocStart should be also
  *                             set to the appropriate value.
  *                             If no validation is needed, 0 can be passed.
@@ -2224,7 +2224,7 @@ bool GDALAbstractMDArray::IWrite(const GUInt64 *, const size_t *,
  * count[] and with the spacing of bufferStride[].
  *
  * @param pSrcBufferAllocStart Optional pointer that can be used to validate the
- *                             validty of pSrcBuffer. pSrcBufferAllocStart
+ *                             validity of pSrcBuffer. pSrcBufferAllocStart
  * should be the pointer returned by the malloc() or equivalent call used to
  * allocate the buffer. It will generally be equal to pSrcBuffer (when
  * bufferStride[] values are all positive), but not necessarily. If specified,
@@ -2232,7 +2232,7 @@ bool GDALAbstractMDArray::IWrite(const GUInt64 *, const size_t *,
  * validation is needed, nullptr can be passed.
  *
  * @param nSrcBufferAllocSize  Optional buffer size, that can be used to
- * validate the validty of pSrcBuffer. This is the size of the buffer starting
+ * validate the validity of pSrcBuffer. This is the size of the buffer starting
  * at pSrcBufferAllocStart. If specified, pDstBufferAllocStart should be also
  *                             set to the appropriate value.
  *                             If no validation is needed, 0 can be passed.
@@ -3924,7 +3924,7 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray *poSrcArray,
  * @param poSrcDS    Source dataset. Might be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcArray Source array. Should NOT be nullptr.
- * @param bStrict Whether to enable stict mode. In strict mode, any error will
+ * @param bStrict Whether to enable strict mode. In strict mode, any error will
  *                stop the copy. In relaxed mode, the copy will be attempted to
  *                be pursued.
  * @param nCurCost  Should be provided as a variable initially set to 0.
@@ -5697,7 +5697,7 @@ CreateFieldNameExtractArray(const std::shared_ptr<GDALMDArray> &self,
  * array, with the values in first dimension reversed. That is
  * [[4,5,6,7],[0,1,2,3]].</li>
  * <li>GetView("[newaxis,...]"): returns a
- * 3-dimensional array, with an addditional dimension of size 1 put at the
+ * 3-dimensional array, with an additional dimension of size 1 put at the
  * beginning. That is [[[0,1,2,3],[4,5,6,7]]].</li>
  * </ul>
  *

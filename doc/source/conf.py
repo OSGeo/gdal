@@ -71,6 +71,7 @@ extensions = [
     "source_file",
     "sphinx.ext.napoleon",
     "sphinxcontrib.jquery",
+    "sphinxcontrib.spelling",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -516,7 +517,11 @@ latex_logo = "../images/gdalicon_big.png"
 # -- Breathe -------------------------------------------------
 
 # Setup the breathe extension
-breathe_projects = {"api": "../build/xml"}
+
+build_dir = os.environ.get("BUILDDIR", "../build")
+if build_dir == "build":
+    build_dir = "../build"
+breathe_projects = {"api": os.path.join(build_dir, "xml")}
 breathe_default_project = "api"
 
 # Tell sphinx what the primary language being documented is.
@@ -533,3 +538,10 @@ options_since_ignore_before = "3.0"
 # -- Redirects --------------------------------------------------
 
 enable_redirects = False
+
+# -- Spelling --------------------------------------------------
+
+# Avoid running git
+spelling_ignore_contributor_names = False
+
+spelling_word_list_filename = ["spelling_wordlist.txt"]

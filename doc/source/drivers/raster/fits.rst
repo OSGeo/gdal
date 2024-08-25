@@ -244,7 +244,7 @@ of the field.
 Fields that have TSCAL and/or TZERO headers are automatically scaled and offset
 to the physical value (only applies to numeric data types)
 
-TNULL headers are used for integer numeric data types and for a single-occurence
+TNULL headers are used for integer numeric data types and for a single-occurrence
 field to set a OGR field to NULL.
 
 Layer creation options
@@ -351,10 +351,10 @@ Linux
 ^^^^^
 From source
 """""""""""
-Install CFITSIO headers from your distro (eg, cfitsio-devel on Fedora; libcfitsio-dev on Debian-Ubuntu), then compile GDAL as usual. CFITSIO will be automatically detected and linked.
+Install CFITSIO headers from your distribution (eg, cfitsio-devel on Fedora; libcfitsio-dev on Debian-Ubuntu), then compile GDAL as usual. CFITSIO will be automatically detected and linked.
 
-From distros
-""""""""""""
+From distributions
+""""""""""""""""""
 On Fedora/CentOS install CFITSIO then GDAL with dnf (yum): cfitsio is automatically linked.
 
 MacOSX

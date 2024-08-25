@@ -13,7 +13,7 @@ if (UNIX
 else()
     set(BUILD_DOCS_DEFAULT OFF)
 endif()
-option(BUILD_DOCS "Set to ON to define documentation targets: 'html', 'latexpdf', 'man', 'doxygen', 'doxygen_check_warnings', 'clean_doc'" ${BUILD_DOCS_DEFAULT})
+option(BUILD_DOCS "Set to ON to define documentation targets: 'html', 'latexpdf', 'man', 'doxygen', 'doxygen_check_warnings', 'spelling', 'clean_doc'" ${BUILD_DOCS_DEFAULT})
 
 if (BUILD_DOCS)
     if (NOT UNIX)
@@ -57,6 +57,11 @@ if (BUILD_DOCS)
     add_custom_target(
         man
         COMMAND ${MAKE_EXECUTABLE} man BUILDDIR=${DOC_BUILDDIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+    add_custom_target(
+        spelling
+        COMMAND ${MAKE_EXECUTABLE} spelling BUILDDIR=${DOC_BUILDDIR}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
     add_custom_target(

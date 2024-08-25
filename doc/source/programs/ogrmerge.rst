@@ -88,7 +88,7 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
     Name of the output vector layer (in single mode, and the default is
     "merged"), or template to name the output vector layers in default
     mode (the default value is ``{AUTO_NAME}``). The template can be a
-    string with the following variables that will be susbstitued with a
+    string with the following variables that will be substituted with a
     value computed from the input layer being processed:
 
     -  ``{AUTO_NAME}``: equivalent to ``{DS_BASENAME}_{LAYER_NAME}`` if both

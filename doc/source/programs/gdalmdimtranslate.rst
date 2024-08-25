@@ -118,7 +118,7 @@ The following command line parameters can appear in any order.
 
     Performs a subsetting (trimming or slicing) operation along a dimension,
     provided that it is indexed by a 1D variable of numeric or string data type,
-    and whose values are monotically sorted.
+    and whose values are monotonically sorted.
     <subset_spec> follows exactly the `OGC WCS 2.0 KVP encoding <https://portal.opengeospatial.org/files/09-147r3>`__
     for subsetting.
 

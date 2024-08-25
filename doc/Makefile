@@ -73,7 +73,7 @@ generated_rst_files: $(BUILDDIR)/.doxygen_up_to_date
 
 .PHONY: html latexpdf
 html: generated_rst_files
-	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	BUILDDIR="${BUILDDIR}" $(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	# Hack to hide the TOC
 	sed 's/<div class="toctree-wrapper compound">/<div class="toctree-wrapper compound" style="display: none;">/' < "$(BUILDDIR)/html/drivers/raster/index.html" > "$(BUILDDIR)/html/drivers/raster/index.html.mod"
 	mv "$(BUILDDIR)/html/drivers/raster/index.html.mod" "$(BUILDDIR)/html/drivers/raster/index.html"
@@ -89,10 +89,13 @@ html: generated_rst_files
 	cp -f "source/sponsors/Sustainable GDAL Sponsorship Prospectus.pdf" $(BUILDDIR)/html/sponsors
 
 man: generated_rst_files
-	$(SPHINXBUILD) -M man "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	BUILDDIR="${BUILDDIR}" $(SPHINXBUILD) -M man "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 latexpdf: generated_rst_files
-	$(SPHINXBUILD) -M latexpdf "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	BUILDDIR="${BUILDDIR}" $(SPHINXBUILD) -M latexpdf "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+spelling: generated_rst_files
+	BUILDDIR="${BUILDDIR}" $(SPHINXBUILD) -b spelling "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:
 	rm -rf "$(BUILDDIR)/xml"

@@ -85,11 +85,11 @@ jobs:
       run: |
         make latexpdf
       working-directory: ./doc
-    #- name: Spelling
-    #  shell: bash -l {0}
-    #  run: |
-    #    make spelling
-    #  working-directory: ./doc
+    - name: Spelling
+      shell: bash -l {0}
+      run: |
+        make spelling
+      working-directory: ./doc
     - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
       with:
         name: PDF
