@@ -715,6 +715,7 @@ CPLErr GDALRasterBand::ReadRaster(T *pData, size_t nArrayEltCount,
     const bool bCallLeaveReadWrite =
         CPL_TO_BOOL(pThis->EnterReadWrite(GF_Read));
     CPLErr eErr;
+    // coverity[identical_branches]
     if (bForceCachedIO)
         eErr = pThis->GDALRasterBand::IRasterIO(
             GF_Read, nXOff, nYOff, nXSize, nYSize, pData,
@@ -938,6 +939,7 @@ CPLErr GDALRasterBand::ReadRaster(std::vector<T> &vData, double dfXOff,
         CPL_TO_BOOL(pThis->EnterReadWrite(GF_Read));
 
     CPLErr eErr;
+    // coverity[identical_branches]
     if (bForceCachedIO)
         eErr = pThis->GDALRasterBand::IRasterIO(
             GF_Read, nXOff, nYOff, nXSize, nYSize, vData.data(),

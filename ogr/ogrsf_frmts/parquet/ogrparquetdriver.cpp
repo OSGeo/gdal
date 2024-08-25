@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <map>
+#include <tuple>
 
 #include "ogr_parquet.h"
 #include "ogrparquetdrivercore.h"
@@ -71,9 +72,9 @@ static GDALDataset *OpenFromDatasetFactory(
 /*                         GetFileSystem()                              */
 /************************************************************************/
 
-static std::shared_ptr<arrow::fs::FileSystem>
+static std::tuple<std::shared_ptr<arrow::fs::FileSystem>, std::string>
 GetFileSystem(std::string &osBasePathInOut,
-              const std::string &osQueryParameters, std::string &osFSFilename)
+              const std::string &osQueryParameters)
 {
     // Instantiate file system:
     // - VSIArrowFileSystem implementation for /vsi files
@@ -81,6 +82,7 @@ GetFileSystem(std::string &osBasePathInOut,
     std::shared_ptr<arrow::fs::FileSystem> fs;
     const bool bIsVSI = STARTS_WITH(osBasePathInOut.c_str(), "/vsi");
     VSIStatBufL sStat;
+    std::string osFSFilename;
     if ((bIsVSI ||
          CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_VSI", "YES"))) &&
         VSIStatL(osBasePathInOut.c_str(), &sStat) == 0)
@@ -97,14 +99,14 @@ GetFileSystem(std::string &osBasePathInOut,
         {
             char *pszCurDir = CPLGetCurrentDir();
             if (pszCurDir == nullptr)
-                return nullptr;
+                return {nullptr, osFSFilename};
             osPath = CPLFormFilename(pszCurDir, osPath.c_str(), nullptr);
             CPLFree(pszCurDir);
         }
         PARQUET_ASSIGN_OR_THROW(
             fs, arrow::fs::FileSystemFromUriOrPath(osPath, &osFSFilename));
     }
-    return fs;
+    return {fs, osFSFilename};
 }
 
 /************************************************************************/
@@ -116,8 +118,8 @@ static GDALDataset *OpenParquetDatasetWithMetadata(
     const std::string &osQueryParameters, CSLConstList papszOpenOptions)
 {
     std::string osBasePath(osBasePathIn);
-    std::string osFSFilename;
-    auto fs = GetFileSystem(osBasePath, osQueryParameters, osFSFilename);
+    const auto &[fs, osFSFilename] =
+        GetFileSystem(osBasePath, osQueryParameters);
 
     arrow::dataset::ParquetFactoryOptions options;
     auto partitioningFactory = arrow::dataset::HivePartitioning::MakeFactory();
@@ -125,9 +127,10 @@ static GDALDataset *OpenParquetDatasetWithMetadata(
         arrow::dataset::PartitioningOrFactory(std::move(partitioningFactory));
 
     std::shared_ptr<arrow::dataset::DatasetFactory> factory;
+    // coverity[copy_constructor_call]
     PARQUET_ASSIGN_OR_THROW(
         factory, arrow::dataset::ParquetDatasetFactory::Make(
-                     osFSFilename + '/' + pszMetadataFile, std::move(fs),
+                     osFSFilename + '/' + pszMetadataFile, fs,
                      std::make_shared<arrow::dataset::ParquetFileFormat>(),
                      std::move(options)));
 
@@ -144,8 +147,8 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
                                   CSLConstList papszOpenOptions)
 {
     std::string osBasePath(osBasePathIn);
-    std::string osFSFilename;
-    auto fs = GetFileSystem(osBasePath, osQueryParameters, osFSFilename);
+    const auto &[fs, osFSFilename] =
+        GetFileSystem(osBasePath, osQueryParameters);
 
     arrow::dataset::FileSystemFactoryOptions options;
     std::shared_ptr<arrow::dataset::DatasetFactory> factory;
@@ -153,9 +156,10 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
     const auto fileInfo = fs->GetFileInfo(osFSFilename);
     if (fileInfo->IsFile())
     {
+        // coverity[copy_constructor_call]
         PARQUET_ASSIGN_OR_THROW(
             factory, arrow::dataset::FileSystemDatasetFactory::Make(
-                         std::move(fs), {osFSFilename},
+                         fs, {std::move(osFSFilename)},
                          std::make_shared<arrow::dataset::ParquetFileFormat>(),
                          std::move(options)));
     }
@@ -170,9 +174,10 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
         selector.base_dir = std::move(osFSFilename);
         selector.recursive = true;
 
+        // coverity[copy_constructor_call]
         PARQUET_ASSIGN_OR_THROW(
             factory, arrow::dataset::FileSystemDatasetFactory::Make(
-                         std::move(fs), std::move(selector),
+                         fs, std::move(selector),
                          std::make_shared<arrow::dataset::ParquetFileFormat>(),
                          std::move(options)));
     }
