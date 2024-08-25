@@ -531,7 +531,7 @@ class FileGDBTable
     int64_t m_nTotalRecordCount = 0;
     int m_iGeomField = -1;
     int m_nCountNullableFields = 0;
-    int m_nNullableFieldsSizeInBytes = 0;
+    unsigned m_nNullableFieldsSizeInBytes = 0;
 
     std::vector<double> m_adfSpatialIndexGridResolution{};
 
