@@ -1,9 +1,13 @@
 # This is the config file for building GDAL and running its autotest suite
 # with Travis-ci.org
 
+# FIXME: Travis-CI builds are disabled
 branches:
-  except:
-  - /^(cherry-pick-)?backport-\d+-to-/
+  only:
+    - disabled_disabled
+#branches:
+#  except:
+#  - /^(cherry-pick-)?backport-\d+-to-/
 
 matrix:
   fast_finish: true
