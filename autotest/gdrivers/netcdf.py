@@ -6511,6 +6511,32 @@ def test_band_names_creation_option(tmp_path):
 
 
 @gdaltest.enable_exceptions()
+def test_band_names_creation_option_createcopy(tmp_path):
+
+    fname = tmp_path / "out.nc"
+
+    # 1 band, 2 names
+    with pytest.raises(Exception, match="but 2 names provided"):
+        src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+        gdal.GetDriverByName("NetCDF").CreateCopy(
+            fname, src_ds, options={"BAND_NAMES": "t2m,prate"}
+        )
+
+    # 2 bands, 2 names
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    with gdal.GetDriverByName("NetCDF").CreateCopy(
+        fname, src_ds, options={"BAND_NAMES": "t2m,prate"}
+    ):
+        pass
+
+    with gdal.Open(fname) as ds:
+        sds_names = [sds[0] for sds in ds.GetSubDatasets()]
+
+        assert gdal.GetSubdatasetInfo(sds_names[0]).GetSubdatasetComponent() == "t2m"
+        assert gdal.GetSubdatasetInfo(sds_names[1]).GetSubdatasetComponent() == "prate"
+
+
+@gdaltest.enable_exceptions()
 def test_netcdf_create_metadata_with_equal_sign(tmp_path):
 
     fname = tmp_path / "test_netcdf_create_metadata_with_equal_sign.nc"
