@@ -498,6 +498,29 @@ SafeNewStringUTF8(JNIEnv *jenv, const char* pszInput)
     return $jnicall;
   }
 
+/***************************************************
+ * Typemaps for (StringAsByteArray*)
+ ***************************************************/
+
+%typemap(out) (StringAsByteArray*)
+{
+    /* %typemap(out) (StringAsByteArray*) */
+    if(result)
+    {
+        const size_t nLen = strlen((const char*)result);
+        jbyteArray byteArray = jenv->NewByteArray(nLen);
+        jenv->SetByteArrayRegion(byteArray, (jsize)0, (jsize)nLen, (jbyte*)result);
+        $result = byteArray;
+    }
+}
+
+%typemap(jni) (StringAsByteArray*) "jbyteArray"
+%typemap(jtype) (StringAsByteArray*) "byte[]"
+%typemap(jstype) (StringAsByteArray*) "byte[]"
+%typemap(javain) (StringAsByteArray*) "$javainput"
+%typemap(javaout) (StringAsByteArray*) {
+    return $jnicall;
+  }
 
 /***************************************************
  * Typemaps for  (char **ignorechange)
