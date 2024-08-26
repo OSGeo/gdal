@@ -83,5 +83,6 @@ jobs:
     - name: Spelling
       shell: bash -l {0}
       run: |
+        sed -i '/html_extra_path/d' source/conf.py # avoid WARNING: html_extra_path entry '../build/html_extra' is placed inside outdir
         make spelling
       working-directory: ./doc
