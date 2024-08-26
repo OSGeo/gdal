@@ -9483,6 +9483,24 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         }
     }
 
+    CPLStringList aosBandNames;
+    if (const char *pszBandNames =
+            CSLFetchNameValue(papszOptions, "BAND_NAMES"))
+    {
+        aosBandNames =
+            CSLTokenizeString2(pszBandNames, ",", CSLT_HONOURSTRINGS);
+
+        if (aosBandNames.Count() != nBands)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Attempted to create netCDF with %d bands but %d names "
+                     "provided in BAND_NAMES.",
+                     nBands, aosBandNames.Count());
+
+            return nullptr;
+        }
+    }
+
     if (!pfnProgress(0.0, nullptr, pProgressData))
         return nullptr;
 
@@ -9692,7 +9710,12 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         const char *pszNETCDF_VARNAME =
             poSrcBand->GetMetadataItem("NETCDF_VARNAME");
         char szBandName[NC_MAX_NAME + 1];
-        if (pszNETCDF_VARNAME)
+        if (!aosBandNames.empty())
+        {
+            snprintf(szBandName, sizeof(szBandName), "%s",
+                     aosBandNames[iBand - 1]);
+        }
+        else if (pszNETCDF_VARNAME)
         {
             if (nBands > 1 && papszExtraDimNames == nullptr)
                 snprintf(szBandName, sizeof(szBandName), "%s%d",
