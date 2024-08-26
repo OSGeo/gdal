@@ -27,9 +27,21 @@ cmake --install .
 # set rpath for python libraries
 find ${READTHEDOCS_VIRTUALENV_PATH} -wholename "*/osgeo/*.so" -exec patchelf --set-rpath ${READTHEDOCS_VIRTUALENV_PATH}/lib {} \;
 
+# check python import (needed for doc build)
+python3 -c "from osgeo import gdal; print(gdal.__version__)"
+
 # unpack javadoc created during cmake --build into correct location
 mkdir -p ../doc/build/html_extra
 unzip -d ../doc/build/html_extra swig/java/javadoc.zip
 
-# check python import
-python3 -c "from osgeo import gdal; print(gdal.__version__)"
+# copy gdalicon.png into html_extra (used by test suite)
+cp ../data/gdalicon.png ../doc/build/html_extra/
+
+# copy proj_list documentation
+# see https://github.com/OSGeo/gdal/issues/8221
+git clone https://github.com/OSGeo/libgeotiff
+cp -r libgeotiff/geotiff/html/proj_list ../doc/build/html_extra
+
+# copy resources directory for gdal2tiles usage
+# see https://github.com/OSGeo/gdal/pull/6276
+cp -r ../resources ../doc/build/html_extra/resources # Do not change this without changing swig/python/gdal-utils/osgeo_utils/gdal2tiles.py
