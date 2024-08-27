@@ -84,7 +84,8 @@ html_context = {
     "theme_vcs_pageview_mode": "edit",
     "github_user": "OSGeo",
     "github_repo": "gdal",
-    "github_version": "master/doc/source/",
+    "github_version": "master",
+    "conf_py_path": "/doc/source/",
 }
 
 html_theme_options = {
