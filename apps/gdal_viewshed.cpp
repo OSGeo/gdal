@@ -31,16 +31,18 @@
 #include "gdal.h"
 #include "gdalargumentparser.h"
 
-#include "viewshed.h"
+#include "viewshed/cumulative_viewshed.h"
+#include "viewshed/viewshed.h"
 
 namespace gdal
 {
+
 namespace
 {
 
 struct Options
 {
-    Viewshed::Options opts;
+    viewshed::Options opts;
     std::string osSrcFilename;
     int nBandIn{1};
     bool bQuiet;
@@ -55,7 +57,7 @@ Options parseArgs(GDALArgumentParser &argParser, const CPLStringList &aosArgv)
 {
     Options localOpts;
 
-    Viewshed::Options &opts = localOpts.opts;
+    viewshed::Options &opts = localOpts.opts;
 
     argParser.add_output_format_argument(opts.outputFormat);
     argParser.add_argument("-ox")
@@ -148,13 +150,13 @@ Options parseArgs(GDALArgumentParser &argParser, const CPLStringList &aosArgv)
             [&into = opts.outputMode](const std::string &value)
             {
                 if (EQUAL(value.c_str(), "DEM"))
-                    into = Viewshed::OutputMode::DEM;
+                    into = viewshed::OutputMode::DEM;
                 else if (EQUAL(value.c_str(), "GROUND"))
-                    into = Viewshed::OutputMode::Ground;
+                    into = viewshed::OutputMode::Ground;
                 else if (EQUAL(value.c_str(), "CUM"))
-                    into = Viewshed::OutputMode::Cumulative;
+                    into = viewshed::OutputMode::Cumulative;
                 else
-                    into = Viewshed::OutputMode::Normal;
+                    into = viewshed::OutputMode::Normal;
             })
         .nargs(1)
         .help(_("Sets what information the output contains."));
@@ -194,7 +196,7 @@ Options parseArgs(GDALArgumentParser &argParser, const CPLStringList &aosArgv)
 /// \param argParser  Argument parser
 void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
 {
-    Viewshed::Options &opts = localOpts.opts;
+    viewshed::Options &opts = localOpts.opts;
 
     if (opts.maxDistance < 0)
     {
@@ -214,7 +216,7 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
     }
 
     if (argParser.is_used("-os") &&
-        opts.outputMode != Viewshed::OutputMode::Cumulative)
+        opts.outputMode != viewshed::OutputMode::Cumulative)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -222,7 +224,7 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
         exit(2);
     }
 
-    if (opts.outputMode == Viewshed::OutputMode::Cumulative)
+    if (opts.outputMode == viewshed::OutputMode::Cumulative)
     {
         for (const char *opt : {"-ox", "-oy", "-vv", "-iv", "-md"})
             if (argParser.is_used(opt))
@@ -247,7 +249,7 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
 
     // For double values that are out of range for byte raster output,
     // set to zero.  Values less than zero are sentinel as NULL nodata.
-    if (opts.outputMode == Viewshed::OutputMode::Normal &&
+    if (opts.outputMode == viewshed::OutputMode::Normal &&
         opts.nodataVal > std::numeric_limits<uint8_t>::max())
         opts.nodataVal = 0;
 }
@@ -306,7 +308,7 @@ MAIN_START(argc, argv)
                            "https://gdal.org/programs/gdal_viewshed.html"));
 
     Options localOpts = parseArgs(argParser, aosArgv);
-    Viewshed::Options &opts = localOpts.opts;
+    viewshed::Options &opts = localOpts.opts;
 
     validateArgs(localOpts, argParser);
 
@@ -332,22 +334,27 @@ MAIN_START(argc, argv)
     /* -------------------------------------------------------------------- */
     /*      Invoke.                                                         */
     /* -------------------------------------------------------------------- */
-    Viewshed oViewshed(opts);
+
+    GDALDatasetH hDstDS;
 
     bool bSuccess;
-    if (opts.outputMode == Viewshed::OutputMode::Cumulative)
-        bSuccess = oViewshed.runCumulative(localOpts.osSrcFilename,
-                                           localOpts.bQuiet ? GDALDummyProgress
-                                                            : GDALTermProgress);
+    if (opts.outputMode == viewshed::OutputMode::Cumulative)
+    {
+        viewshed::Cumulative oViewshed(opts);
+        bSuccess = oViewshed.run(localOpts.osSrcFilename,
+                                 localOpts.bQuiet ? GDALDummyProgress
+                                                  : GDALTermProgress);
+    }
     else
+    {
+        viewshed::Viewshed oViewshed(opts);
         bSuccess = oViewshed.run(hBand, localOpts.bQuiet ? GDALDummyProgress
                                                          : GDALTermProgress);
-
-    GDALDatasetH hDstDS = GDALDataset::FromHandle(oViewshed.output().release());
-
-    GDALClose(hSrcDS);
-    if (GDALClose(hDstDS) != CE_None)
-        bSuccess = false;
+        hDstDS = GDALDataset::FromHandle(oViewshed.output().release());
+        GDALClose(hSrcDS);
+        if (GDALClose(hDstDS) != CE_None)
+            bSuccess = false;
+    }
 
     GDALDestroyDriverManager();
     OGRCleanupAll();

@@ -8,6 +8,8 @@
 
 namespace gdal
 {
+namespace viewshed
+{
 
 namespace
 {
@@ -81,9 +83,8 @@ double doMax(int nXOffset, int nYOffset, double dfThisPrev, double dfLast,
 //ABELL - Note nX adjustment. Make sure extent is set.
 ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
                                    GDALRasterBand &dstBand, int nX, int nY,
-                                   const Viewshed::Window &outExtent,
-                                   const Viewshed::Window &curExtent,
-                                   const Viewshed::Options &opts)
+                                   const Window &outExtent,
+                                   const Window &curExtent, const Options &opts)
     : m_pool(4), m_srcBand(srcBand), m_dstBand(dstBand), oOutExtent(outExtent),
       oCurExtent(curExtent), m_nX(nX - oOutExtent.xStart), m_nY(nY),
       oOpts(opts), m_dfMaxDistance2(opts.maxDistance * opts.maxDistance)
@@ -124,7 +125,7 @@ double ViewshedExecutor::calcHeightAdjFactor()
 void ViewshedExecutor::setOutput(double &dfResult, double &dfCellVal,
                                  double dfZ)
 {
-    if (oOpts.outputMode != Viewshed::OutputMode::Normal)
+    if (oOpts.outputMode != OutputMode::Normal)
     {
         dfResult += (dfZ - dfCellVal);
         dfResult = std::max(0.0, dfResult);
@@ -273,14 +274,14 @@ bool ViewshedExecutor::processFirstLine(std::vector<double> &vLastLineVal)
     if (oCurExtent.containsX(m_nX))
     {
         m_dfZObserver += vThisLineVal[m_nX];
-        if (oOpts.outputMode == Viewshed::OutputMode::Normal)
+        if (oOpts.outputMode == OutputMode::Normal)
             vResult[m_nX] = oOpts.visibleVal;
     }
     //ABELL - Move to ctor?
     m_dfHeightAdjFactor = calcHeightAdjFactor();
 
     // In DEM mode the base is the pre-adjustment value.  In ground mode the base is zero.
-    if (oOpts.outputMode == Viewshed::OutputMode::DEM)
+    if (oOpts.outputMode == OutputMode::DEM)
         vResult = vThisLineVal;
 
     // iLeft and iRight are the processing limits for the line.
@@ -331,7 +332,7 @@ void ViewshedExecutor::processFirstLineTopOrBottom(
     double *pThis = vThisLineVal.data() + iLeft;
     for (int iPixel = iLeft; iPixel < iRight; ++iPixel, ++pResult, pThis++)
     {
-        if (oOpts.outputMode == Viewshed::OutputMode::Normal)
+        if (oOpts.outputMode == OutputMode::Normal)
             *pResult = oOpts.visibleVal;
         else
             setOutput(*pResult, *pThis, *pThis);
@@ -362,7 +363,7 @@ void ViewshedExecutor::processFirstLineLeft(int iStart, int iEnd,
     // If the start cell is next to the observer, just mark it visible.
     if (iStart + 1 == m_nX || iStart + 1 == oCurExtent.xStop)
     {
-        if (oOpts.outputMode == Viewshed::OutputMode::Normal)
+        if (oOpts.outputMode == OutputMode::Normal)
             vResult[iStart] = oOpts.visibleVal;
         else
             setOutput(vResult[iStart], *pThis, *pThis);
@@ -402,7 +403,7 @@ void ViewshedExecutor::processFirstLineRight(int iStart, int iEnd,
     // If the start cell is next to the observer, just mark it visible.
     if (iStart - 1 == m_nX || iStart == oCurExtent.xStart)
     {
-        if (oOpts.outputMode == Viewshed::OutputMode::Normal)
+        if (oOpts.outputMode == OutputMode::Normal)
             vResult[iStart] = oOpts.visibleVal;
         else
             setOutput(vResult[iStart], *pThis, *pThis);
@@ -448,7 +449,7 @@ void ViewshedExecutor::processLineLeft(int nYOffset, int iStart, int iEnd,
     // with the out of range assignment at the end.
     if (iStart == oCurExtent.xStop - 1)
     {
-        if (oOpts.outputMode == Viewshed::OutputMode::Normal)
+        if (oOpts.outputMode == OutputMode::Normal)
             vResult[iStart] = oOpts.visibleVal;
         else
             setOutput(vResult[iStart], *pThis, *pThis);
@@ -506,7 +507,7 @@ void ViewshedExecutor::processLineRight(int nYOffset, int iStart, int iEnd,
     // with the out of range assignment at the end.
     if (iStart == 0)
     {
-        if (oOpts.outputMode == Viewshed::OutputMode::Normal)
+        if (oOpts.outputMode == OutputMode::Normal)
             vResult[iStart] = oOpts.visibleVal;
         else
             setOutput(vResult[0], *pThis, *pThis);
@@ -554,7 +555,7 @@ bool ViewshedExecutor::processLine(int nLine, std::vector<double> &vLastLineVal)
 
     // In DEM mode the base is the input DEM value.
     // In ground mode the base is zero.
-    if (oOpts.outputMode == Viewshed::OutputMode::DEM)
+    if (oOpts.outputMode == OutputMode::DEM)
         vResult = vThisLineVal;
 
     // Adjust height of the read line.
@@ -612,13 +613,13 @@ bool ViewshedExecutor::run()
     if (!processFirstLine(vFirstLineVal))
         return false;
 
-    if (oOpts.cellMode == Viewshed::CellMode::Edge)
+    if (oOpts.cellMode == CellMode::Edge)
         oZcalc = doEdge;
-    else if (oOpts.cellMode == Viewshed::CellMode::Diagonal)
+    else if (oOpts.cellMode == CellMode::Diagonal)
         oZcalc = doDiagonal;
-    else if (oOpts.cellMode == Viewshed::CellMode::Min)
+    else if (oOpts.cellMode == CellMode::Min)
         oZcalc = doMin;
-    else if (oOpts.cellMode == Viewshed::CellMode::Max)
+    else if (oOpts.cellMode == CellMode::Max)
         oZcalc = doMax;
 
     // scan upwards
@@ -656,4 +657,5 @@ bool ViewshedExecutor::run()
     return true;
 }
 
+}  // namespace viewshed
 }  // namespace gdal

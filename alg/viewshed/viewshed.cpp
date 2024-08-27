@@ -25,17 +25,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <iostream>
 #include <future>
 
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
 
-#include "notifyqueue.h"
+#include "util.h"
 #include "viewshed.h"
 #include "viewshed_executor.h"
-
-const int NUM_JOBS = 2;
 
 /************************************************************************/
 /*                        GDALViewshedGenerate()                        */
@@ -140,7 +137,7 @@ GDALDatasetH GDALViewshedGenerate(
 {
     using namespace gdal;
 
-    Viewshed::Options oOpts;
+    viewshed::Options oOpts;
     oOpts.outputFormat = pszDriverName;
     oOpts.outputFilename = pszTargetRasterName;
     oOpts.creationOpts = papszCreationOptions;
@@ -155,29 +152,29 @@ GDALDatasetH GDALViewshedGenerate(
     switch (eMode)
     {
         case GVM_Edge:
-            oOpts.cellMode = Viewshed::CellMode::Edge;
+            oOpts.cellMode = viewshed::CellMode::Edge;
             break;
         case GVM_Diagonal:
-            oOpts.cellMode = Viewshed::CellMode::Diagonal;
+            oOpts.cellMode = viewshed::CellMode::Diagonal;
             break;
         case GVM_Min:
-            oOpts.cellMode = Viewshed::CellMode::Min;
+            oOpts.cellMode = viewshed::CellMode::Min;
             break;
         case GVM_Max:
-            oOpts.cellMode = Viewshed::CellMode::Max;
+            oOpts.cellMode = viewshed::CellMode::Max;
             break;
     }
 
     switch (heightMode)
     {
         case GVOT_MIN_TARGET_HEIGHT_FROM_DEM:
-            oOpts.outputMode = Viewshed::OutputMode::DEM;
+            oOpts.outputMode = viewshed::OutputMode::DEM;
             break;
         case GVOT_MIN_TARGET_HEIGHT_FROM_GROUND:
-            oOpts.outputMode = Viewshed::OutputMode::Ground;
+            oOpts.outputMode = viewshed::OutputMode::Ground;
             break;
         case GVOT_NORMAL:
-            oOpts.outputMode = Viewshed::OutputMode::Normal;
+            oOpts.outputMode = viewshed::OutputMode::Normal;
             break;
     }
 
@@ -203,7 +200,7 @@ GDALDatasetH GDALViewshedGenerate(
     oOpts.invisibleVal = dfInvisibleVal;
     oOpts.outOfRangeVal = dfOutOfRangeVal;
 
-    gdal::Viewshed v(oOpts);
+    gdal::viewshed::Viewshed v(oOpts);
 
     if (!pfnProgress)
         pfnProgress = GDALDummyProgress;
@@ -213,6 +210,8 @@ GDALDatasetH GDALViewshedGenerate(
 }
 
 namespace gdal
+{
+namespace viewshed
 {
 
 namespace
@@ -324,64 +323,6 @@ bool Viewshed::calcExtents(int nX, int nY,
     return true;
 }
 
-/// Create the output dataset.
-///
-/// @return  True on success, false otherwise.
-Viewshed::DatasetPtr
-Viewshed::createOutputDataset(GDALRasterBand &srcBand,
-                              const std::string &outFilename)
-{
-    GDALDriverManager *hMgr = GetGDALDriverManager();
-    GDALDriver *hDriver = hMgr->GetDriverByName(oOpts.outputFormat.c_str());
-    if (!hDriver)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot get driver");
-        return nullptr;
-    }
-
-    /* create output raster */
-    DatasetPtr dataset(hDriver->Create(
-        outFilename.c_str(), oOutExtent.xSize(), oOutExtent.ySize(), 1,
-        oOpts.outputMode == OutputMode::Normal ? GDT_Byte : GDT_Float64,
-        const_cast<char **>(oOpts.creationOpts.List())));
-    if (!dataset)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot create dataset for %s",
-                 outFilename.c_str());
-        return nullptr;
-    }
-
-    /* copy srs */
-    dataset->SetSpatialRef(srcBand.GetDataset()->GetSpatialRef());
-
-    std::array<double, 6> adfSrcTransform;
-    std::array<double, 6> adfDstTransform;
-    srcBand.GetDataset()->GetGeoTransform(adfSrcTransform.data());
-    adfDstTransform[0] = adfSrcTransform[0] +
-                         adfSrcTransform[1] * oOutExtent.xStart +
-                         adfSrcTransform[2] * oOutExtent.yStart;
-    adfDstTransform[1] = adfSrcTransform[1];
-    adfDstTransform[2] = adfSrcTransform[2];
-    adfDstTransform[3] = adfSrcTransform[3] +
-                         adfSrcTransform[4] * oOutExtent.xStart +
-                         adfSrcTransform[5] * oOutExtent.yStart;
-    adfDstTransform[4] = adfSrcTransform[4];
-    adfDstTransform[5] = adfSrcTransform[5];
-    dataset->SetGeoTransform(adfDstTransform.data());
-
-    GDALRasterBand *pBand = dataset->GetRasterBand(1);
-    if (!pBand)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot get band for %s",
-                 outFilename.c_str());
-        return nullptr;
-    }
-
-    if (oOpts.nodataVal >= 0)
-        GDALSetRasterNoDataValue(pBand, oOpts.nodataVal);
-    return dataset;
-}
-
 bool Viewshed::setupProgress(GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     using namespace std::placeholders;
@@ -432,7 +373,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     if (!calcExtents(nX, nY, adfInvTransform))
         return false;
 
-    poDstDS = createOutputDataset(*pSrcBand, oOpts.outputFilename);
+    poDstDS = createOutputDataset(*pSrcBand, oOpts, oOutExtent);
     if (!poDstDS)
         return false;
 
@@ -444,242 +385,5 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     return static_cast<bool>(poDstDS);
 }
 
-/// Compute the cumulative viewshed of a raster band.
-///
-/// @param pfnProgress  Pointer to the progress function. Can be null.
-/// @param pProgressArg  Argument passed to the progress function
-/// @return  True on success, false otherwise.
-bool Viewshed::runCumulative(const std::string &srcFilename,
-                             GDALProgressFunc pfnProgress, void *pProgressArg)
-{
-    std::vector<std::pair<int, int>> observers;
-
-    // In cumulative view, we run the executors in normal mode and want "1" where things
-    // are visible.
-    oOpts.outputMode = OutputMode::Normal;
-    oOpts.visibleVal = 1;
-
-    //ABELL
-    /**
-    if (!setupProgress(pfnProgress, pProgressArg))
-        return false;
-    **/
-    DatasetPtr srcDS(
-        GDALDataset::FromHandle(GDALOpen(srcFilename.c_str(), GA_ReadOnly)));
-    pSrcBand = srcDS->GetRasterBand(1);
-
-    // In cumulative mode, the output extent is always the entire source raster.
-    oOutExtent.xStop = GDALGetRasterBandXSize(pSrcBand);
-    oOutExtent.yStop = GDALGetRasterBandYSize(pSrcBand);
-
-    ObserverQueue observerQueue;
-
-    // Stick all the locations on a queue.
-    for (int x = 0; x < oOutExtent.xStop; x += oOpts.observerSpacing)
-        for (int y = 0; y < oOutExtent.yStop; y += oOpts.observerSpacing)
-            observerQueue.push({x, y});
-    observerQueue.done();
-
-    DatasetQueue datasetQueue;
-    const int numThreads = NUM_JOBS;
-    CPLWorkerThreadPool pool(numThreads);
-
-    std::atomic<bool> err = false;
-    std::atomic<int> running = numThreads;
-
-    // Queue all the jobs.
-    auto executorJob =
-        [this, &observerQueue, &datasetQueue, &srcFilename, &err, &running]
-    {
-        Location loc;
-        while (!err && observerQueue.pop(loc))
-        {
-            DatasetPtr srcDs(
-                GDALDataset::Open(srcFilename.c_str(), GA_ReadOnly));
-
-            GDALDriver *memDriver =
-                GetGDALDriverManager()->GetDriverByName("MEM");
-            DatasetPtr dstDs(memDriver->Create("", oOutExtent.xSize(),
-                                               oOutExtent.ySize(), 1, GDT_Byte,
-                                               nullptr));
-            ViewshedExecutor executor(*srcDs->GetRasterBand(1),
-                                      *dstDs->GetRasterBand(1), loc.x, loc.y,
-                                      oOutExtent, oOutExtent, oOpts);
-            if (!executor.run())
-                err = true;  // Signal other threads to stop.
-            else
-                datasetQueue.push(std::move(dstDs));
-        }
-
-        // Job done. Set the output queue state.
-        if (err)
-            datasetQueue.stop();
-        else
-        {
-            running--;
-            if (!running)
-                datasetQueue.done();
-        }
-    };
-
-    for (int i = 0; i < numThreads; ++i)
-        pool.SubmitJob(executorJob);
-
-    // The first argument need not be the number of threads.
-    createCumulativeDataset(datasetQueue);
-
-    pool.WaitCompletion();
-    (void)pfnProgress;
-    (void)pProgressArg;
-    return true;
-}
-
-class Combiner
-{
-  public:
-    Combiner(Viewshed::DatasetQueue &inputQueue,
-             Viewshed::Buf32Queue &outputQueue)
-        : m_inputQueue(inputQueue), m_outputQueue(outputQueue)
-    {
-    }
-
-    Combiner(const Combiner &src)
-        : m_inputQueue(src.m_inputQueue), m_outputQueue(src.m_outputQueue)
-    {
-    }
-
-    void queueOutputBuffer();
-    void run();
-
-  private:
-    Viewshed::DatasetQueue &m_inputQueue;
-    Viewshed::Buf32Queue &m_outputQueue;
-    Viewshed::DatasetPtr m_dataset;
-    size_t m_count{0};
-
-    void sum(Viewshed::DatasetPtr srcDs);
-};
-
-void Combiner::run()
-{
-    Viewshed::DatasetPtr pTempDataset;
-
-    while (m_inputQueue.pop(pTempDataset))
-    {
-        if (!m_dataset)
-            m_dataset = std::move(pTempDataset);
-        else
-            sum(std::move(pTempDataset));
-    }
-    // Queue remaining summed rasters.
-    queueOutputBuffer();
-}
-
-void Combiner::sum(Viewshed::DatasetPtr src)
-{
-    if (!m_dataset)
-    {
-        m_dataset = std::move(src);
-        return;
-    }
-    GDALRasterBand *dstBand = m_dataset->GetRasterBand(1);
-
-    size_t size = dstBand->GetXSize() * dstBand->GetYSize();
-
-    uint8_t *dstP =
-        static_cast<uint8_t *>(m_dataset->GetInternalHandle("MEMORY1"));
-    uint8_t *srcP = static_cast<uint8_t *>(src->GetInternalHandle("MEMORY1"));
-    for (size_t i = 0; i <= size; ++i)
-        *dstP++ += *srcP++;
-    if (++m_count == 255)
-        queueOutputBuffer();
-}
-
-void Combiner::queueOutputBuffer()
-{
-    if (!m_dataset)
-        return;
-
-    uint8_t *srcP =
-        static_cast<uint8_t *>(m_dataset->GetInternalHandle("MEMORY1"));
-
-    GDALRasterBand *srcBand = m_dataset->GetRasterBand(1);
-    size_t size = srcBand->GetXSize() * srcBand->GetYSize();
-
-    Viewshed::Buf32 buf(size);
-    uint32_t *dstP = buf.data();
-    for (size_t i = 0; i <= size; ++i)
-        *dstP++ = *srcP++;
-    m_dataset.reset();
-    m_count = 0;
-    m_outputQueue.push(std::move(buf));
-}
-
-namespace
-{
-
-void scaleOutputData(Viewshed::Buf32 &finalBuf)
-{
-    uint32_t m = 0;  // This gathers all the bits set.
-    for (uint32_t &val : finalBuf)
-        m = std::max(val, m);
-
-    double factor =
-        std::numeric_limits<uint8_t>::max() / static_cast<double>(m);
-    for (uint32_t &val : finalBuf)
-        val = static_cast<uint32_t>(std::floor(factor * val));
-}
-
-}  // unnamed namespace
-
-bool Viewshed::createCumulativeDataset(Viewshed::DatasetQueue &queue)
-{
-    size_t rasterSize = oOutExtent.size();
-
-    Viewshed::Buf32Queue bigQueue;
-    Viewshed::Buf32 finalBuf(rasterSize);
-
-    std::thread bigRasterThread(
-        [&bigQueue, &finalBuf, rasterSize]
-        {
-            Buf32 buf(rasterSize);
-            while (true)
-            {
-                if (!bigQueue.pop(buf))
-                    break;
-
-                for (size_t i = 0; i < rasterSize; ++i)
-                    finalBuf[i] += buf[i];
-            }
-        });
-
-    // Run the combiners in a job queue and wait for them to complete.
-    {
-        const int numJobs = NUM_JOBS;
-        CPLWorkerThreadPool pool(numJobs);
-
-        std::vector<Combiner> combiners(numJobs, Combiner(queue, bigQueue));
-        for (Combiner &c : combiners)
-            pool.SubmitJob([&c] { c.run(); });
-        pool.WaitCompletion();
-    }
-
-    // When all the combiners have finished, everything is in the 32-bit data queue, so
-    // set the queue done.
-    if (queue.isStopped())
-        return false;
-    bigQueue.done();
-
-    // Wait for finalBuf to be fully filled.
-    bigRasterThread.join();
-
-    scaleOutputData(finalBuf);
-
-    DatasetPtr pDstDS = createOutputDataset(*pSrcBand, oOpts.outputFilename);
-    GDALRasterBand *pBand = pDstDS->GetRasterBand(1);
-    (void)pBand->RasterIO(
-        GF_Write, 0, 0, oOutExtent.xSize(), oOutExtent.ySize(), finalBuf.data(),
-        oOutExtent.xSize(), oOutExtent.ySize(), GDT_UInt32, 0, 0, nullptr);
-}
-
+}  // namespace viewshed
 }  // namespace gdal

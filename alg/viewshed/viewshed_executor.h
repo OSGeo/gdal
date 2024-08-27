@@ -30,30 +30,32 @@
 #include <mutex>
 
 #include "gdal_priv.h"
+#include "cpl_worker_thread_pool.h"
 
-#include "viewshed.h"
+#include "viewshed_types.h"
 
 namespace gdal
+{
+namespace viewshed
 {
 
 class ViewshedExecutor
 {
   public:
     ViewshedExecutor(GDALRasterBand &srcBand, GDALRasterBand &dstBand, int nX,
-                     int nY, const Viewshed::Window &oOutExtent,
-                     const Viewshed::Window &oCurExtent,
-                     const Viewshed::Options &opts);
+                     int nY, const Window &oOutExtent, const Window &oCurExtent,
+                     const Options &opts);
     bool run();
 
   private:
     CPLWorkerThreadPool m_pool;
     GDALRasterBand &m_srcBand;
     GDALRasterBand &m_dstBand;
-    const Viewshed::Window oOutExtent;
-    const Viewshed::Window oCurExtent;
+    const Window oOutExtent;
+    const Window oCurExtent;
     const int m_nX;
     const int m_nY;
-    const Viewshed::Options oOpts;
+    const Options oOpts;
     double m_dfHeightAdjFactor{0};
     double m_dfMaxDistance2;
     double m_dfZObserver{0};
@@ -89,4 +91,5 @@ class ViewshedExecutor
                                      std::vector<double> &thisLineVal);
 };
 
+}  // namespace viewshed
 }  // namespace gdal

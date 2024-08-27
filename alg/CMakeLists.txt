@@ -36,8 +36,11 @@ add_library(
   rasterfill.cpp
   thinplatespline.cpp
   gdal_simplesurf.cpp
-  viewshed.cpp
-  viewshed_executor.cpp
+  viewshed/viewshed.cpp
+  viewshed/cumulative_viewshed.cpp
+  viewshed/combiner.cpp
+  viewshed/util.cpp
+  viewshed/viewshed_executor.cpp
   gdalgenericinverse.cpp
   gdal_interpolateatpoint.cpp
 )
