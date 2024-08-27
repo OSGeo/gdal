@@ -294,19 +294,16 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
         const bool pointFieldNullable = GetDriverUCName() == "PARQUET";
 
         // Fixed Size List GeoArrow encoding
-        std::shared_ptr<arrow::Field> pointField;
-        if (nDim == 2)
-            pointField =
-                arrow::field("xy", arrow::float64(), pointFieldNullable);
-        else if (nDim == 3 && OGR_GT_HasZ(eGType))
-            pointField =
-                arrow::field("xyz", arrow::float64(), pointFieldNullable);
-        else if (nDim == 3 && OGR_GT_HasM(eGType))
-            pointField =
-                arrow::field("xym", arrow::float64(), pointFieldNullable);
-        else
-            pointField =
-                arrow::field("xyzm", arrow::float64(), pointFieldNullable);
+        const auto getFixedSizeListOfPoint =
+            [nDim, eGType, pointFieldNullable]()
+        {
+            return arrow::fixed_size_list(
+                arrow::field(nDim == 2   ? "xy"
+                             : nDim == 3 ? (OGR_GT_HasZ(eGType) ? "xyz" : "xym")
+                                         : "xyzm",
+                             arrow::float64(), pointFieldNullable),
+                nDim);
+        };
 
         // Struct GeoArrow encoding
         auto xField(arrow::field("x", arrow::float64(), false));
@@ -339,30 +336,28 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_POINT:
-                dt = arrow::fixed_size_list(pointField, nDim);
+                dt = getFixedSizeListOfPoint();
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_LINESTRING:
-                dt = arrow::list(arrow::fixed_size_list(pointField, nDim));
+                dt = arrow::list(getFixedSizeListOfPoint());
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_POLYGON:
-                dt = arrow::list(
-                    arrow::list(arrow::fixed_size_list(pointField, nDim)));
+                dt = arrow::list(arrow::list(getFixedSizeListOfPoint()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOINT:
-                dt = arrow::list(arrow::fixed_size_list(pointField, nDim));
+                dt = arrow::list(getFixedSizeListOfPoint());
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTILINESTRING:
-                dt = arrow::list(
-                    arrow::list(arrow::fixed_size_list(pointField, nDim)));
+                dt = arrow::list(arrow::list(getFixedSizeListOfPoint()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOLYGON:
-                dt = arrow::list(arrow::list(
-                    arrow::list(arrow::fixed_size_list(pointField, nDim))));
+                dt = arrow::list(
+                    arrow::list(arrow::list(getFixedSizeListOfPoint())));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT:
@@ -2305,8 +2300,8 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     std::map<std::string, int> oMapSchemaChildrenNameToIdx;
     for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
     {
-        if (oMapSchemaChildrenNameToIdx.find(schema->children[i]->name) !=
-            oMapSchemaChildrenNameToIdx.end())
+        if (cpl::contains(oMapSchemaChildrenNameToIdx,
+                          schema->children[i]->name))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Several fields with same name '%s' found",
@@ -2319,7 +2314,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         {
             const auto oMetadata =
                 OGRParseArrowMetadata(schema->children[i]->metadata);
-            auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
+            const auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
             if (oIter != oMetadata.end() &&
                 (oIter->second == EXTENSION_NAME_OGC_WKB ||
                  oIter->second == EXTENSION_NAME_GEOARROW_WKB))
@@ -2575,8 +2570,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
 
     for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
     {
-        if (oSetReferencedFieldsInArraySchema.find(i) ==
-            oSetReferencedFieldsInArraySchema.end())
+        if (!cpl::contains(oSetReferencedFieldsInArraySchema, i))
         {
             if (m_osFIDColumn.empty() &&
                 strcmp(schema->children[i]->name, pszFIDName) == 0)
@@ -2842,7 +2836,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         std::vector<std::shared_ptr<arrow::Array>> apoArrays;
         for (int i = 0; i < m_poSchema->num_fields(); ++i)
         {
-            auto oIter =
+            const auto oIter =
                 oMapGeomFieldNameToArray.find(m_poSchema->field(i)->name());
             if (oIter != oMapGeomFieldNameToArray.end())
                 apoArrays.emplace_back(oIter->second);

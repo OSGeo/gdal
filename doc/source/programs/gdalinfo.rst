@@ -17,7 +17,7 @@ Synopsis
 
     gdalinfo [--help] [--help-general]
              [-json] [-mm] [-stats | -approx_stats] [-hist]
-             [-nogcp] [-nomd] [-norat] [-noct] [-nofl]
+             [-nogcp] [-nomd] [-norat] [-noct] [-nofl] [-nonodata] [-nomask]
              [-checksum] [-listmdd] [-mdd <domain>|all]
              [-proj4] [-wkt_format {WKT1|WKT2|<other_format>}]...
              [-sd <subdataset>] [-oo <NAME>=<VALUE>]... [-if <format>]...
@@ -82,6 +82,21 @@ The following command line parameters can appear in any order
 .. option:: -noct
 
     Suppress printing of color table.
+
+.. option:: -nonodata
+
+    .. versionadded:: 3.10
+
+    Suppress nodata printing. Implies :option:`-nomask`.
+
+    Can be useful for example when querying a remove GRIB2 dataset that has an
+    index .idx side-car file, together with :option:`-nomd`
+
+.. option:: -nomask
+
+    .. versionadded:: 3.10
+
+    Suppress band mask printing. Is implied if :option:`-nonodata` is specified.
 
 .. option:: -checksum
 

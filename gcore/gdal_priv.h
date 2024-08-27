@@ -71,12 +71,16 @@ class GDALRelationship;
 #include <stdarg.h>
 
 #include <cmath>
+#include <complex>
 #include <cstdint>
 #include <iterator>
 #include <limits>
 #include <map>
 #include <memory>
 #include <set>
+#if __cplusplus >= 202002L
+#include <span>
+#endif
 #include <vector>
 
 #include "ogr_core.h"
@@ -838,6 +842,16 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     {
         return papszOpenOptions;
     }
+
+#ifndef DOXYGEN_SKIP
+    /** Return open options.
+     * @return open options.
+     */
+    CSLConstList GetOpenOptions() const
+    {
+        return papszOpenOptions;
+    }
+#endif
 
     static GDALDataset **GetOpenDatasets(int *pnDatasetCount);
 
@@ -1694,6 +1708,42 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                     GSpacing nLineSpace,
                     GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 #endif
+
+    template <class T>
+    CPLErr ReadRaster(T *pData, size_t nArrayEltCount = 0, double dfXOff = 0,
+                      double dfYOff = 0, double dfXSize = 0, double dfYSize = 0,
+                      size_t nBufXSize = 0, size_t nBufYSize = 0,
+                      GDALRIOResampleAlg eResampleAlg = GRIORA_NearestNeighbour,
+                      GDALProgressFunc pfnProgress = nullptr,
+                      void *pProgressData = nullptr) const;
+
+    template <class T>
+    CPLErr ReadRaster(std::vector<T> &vData, double dfXOff = 0,
+                      double dfYOff = 0, double dfXSize = 0, double dfYSize = 0,
+                      size_t nBufXSize = 0, size_t nBufYSize = 0,
+                      GDALRIOResampleAlg eResampleAlg = GRIORA_NearestNeighbour,
+                      GDALProgressFunc pfnProgress = nullptr,
+                      void *pProgressData = nullptr) const;
+
+#if __cplusplus >= 202002L
+    //! @cond Doxygen_Suppress
+    template <class T>
+    inline CPLErr
+    ReadRaster(std::span<T> pData, double dfXOff = 0, double dfYOff = 0,
+               double dfXSize = 0, double dfYSize = 0, size_t nBufXSize = 0,
+               size_t nBufYSize = 0,
+               GDALRIOResampleAlg eResampleAlg = GRIORA_NearestNeighbour,
+               GDALProgressFunc pfnProgress = nullptr,
+               void *pProgressData = nullptr) const
+    {
+        return ReadRaster(pData.data(), pData.size(), dfXOff, dfYOff, dfXSize,
+                          dfYSize, nBufXSize, nBufYSize, eResampleAlg,
+                          pfnProgress, pProgressData);
+    }
+
+    //! @endcond
+#endif
+
     CPLErr ReadBlock(int nXBlockOff, int nYBlockOff,
                      void *pImage) CPL_WARN_UNUSED_RESULT;
 
@@ -1847,6 +1897,55 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALRasterBand)
 };
+
+//! @cond Doxygen_Suppress
+#define GDAL_EXTERN_TEMPLATE_READ_RASTER(T)                                    \
+    extern template CPLErr GDALRasterBand::ReadRaster<T>(                      \
+        T * pData, size_t nArrayEltCount, double dfXOff, double dfYOff,        \
+        double dfXSize, double dfYSize, size_t nBufXSize, size_t nBufYSize,    \
+        GDALRIOResampleAlg eResampleAlg, GDALProgressFunc pfnProgress,         \
+        void *pProgressData) const;
+
+GDAL_EXTERN_TEMPLATE_READ_RASTER(uint8_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER(int8_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER(uint16_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER(int16_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER(uint32_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER(int32_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER(uint64_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER(int64_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER(float)
+GDAL_EXTERN_TEMPLATE_READ_RASTER(double)
+// Not allowed by C++ standard
+// GDAL_EXTERN_TEMPLATE_READ_RASTER(std::complex<int16_t>)
+// GDAL_EXTERN_TEMPLATE_READ_RASTER(std::complex<int32_t>)
+GDAL_EXTERN_TEMPLATE_READ_RASTER(std::complex<float>)
+GDAL_EXTERN_TEMPLATE_READ_RASTER(std::complex<double>)
+
+#define GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(T)                             \
+    extern template CPLErr GDALRasterBand::ReadRaster<T>(                      \
+        std::vector<T> & vData, double dfXOff, double dfYOff, double dfXSize,  \
+        double dfYSize, size_t nBufXSize, size_t nBufYSize,                    \
+        GDALRIOResampleAlg eResampleAlg, GDALProgressFunc pfnProgress,         \
+        void *pProgressData) const;
+
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(uint8_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(int8_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(uint16_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(int16_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(uint32_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(int32_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(uint64_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(int64_t)
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(float)
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(double)
+// Not allowed by C++ standard
+// GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(std::complex<int16_t>)
+// GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(std::complex<int32_t>)
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(std::complex<float>)
+GDAL_EXTERN_TEMPLATE_READ_RASTER_VECTOR(std::complex<double>)
+
+//! @endcond
 
 //! @cond Doxygen_Suppress
 /* ******************************************************************** */
@@ -3559,6 +3658,10 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
                const std::shared_ptr<GDALMDArray> &poYArray = nullptr,
                CSLConstList papszOptions = nullptr) const;
 
+    static std::vector<std::shared_ptr<GDALMDArray>>
+    GetMeshGrid(const std::vector<std::shared_ptr<GDALMDArray>> &apoArrays,
+                CSLConstList papszOptions = nullptr);
+
     virtual GDALDataset *
     AsClassicDataset(size_t iXDim, size_t iYDim,
                      const std::shared_ptr<GDALGroup> &poRootGroup = nullptr,
@@ -4382,7 +4485,8 @@ int GDALValidateOptions(const char *pszOptionList,
                         const char *pszErrorMessageOptionType,
                         const char *pszErrorMessageContainerName);
 
-GDALRIOResampleAlg GDALRasterIOGetResampleAlg(const char *pszResampling);
+GDALRIOResampleAlg CPL_DLL
+GDALRasterIOGetResampleAlg(const char *pszResampling);
 const char *GDALRasterIOGetResampleAlg(GDALRIOResampleAlg eResampleAlg);
 
 void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg *psExtraArg,
@@ -4418,7 +4522,7 @@ void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
                                    OGRSpatialReference **ppoGCP_SRS);
 
 void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
-                                   char **papszOpenOptions);
+                                   CSLConstList papszOpenOptions);
 char **GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode);
 
 int GDALCanFileAcceptSidecarFile(const char *pszFilename);

@@ -46,6 +46,7 @@ add_library(
   gdalmultidim.cpp
   gdalmultidim_gridded.cpp
   gdalmultidim_gltorthorectification.cpp
+  gdalmultidim_meshgrid.cpp
   gdalmultidim_subsetdimension.cpp
   gdalmultidim_rat.cpp
   gdalpython.cpp

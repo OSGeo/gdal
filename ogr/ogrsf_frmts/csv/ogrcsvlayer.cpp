@@ -1393,40 +1393,62 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         }
         if (iGeom >= 0)
         {
+            const OGRGeomFieldDefn *poGeomFieldDefn =
+                poFeatureDefn->GetGeomFieldDefn(iGeom);
             if (papszTokens[iAttr][0] != '\0' &&
-                !(poFeatureDefn->GetGeomFieldDefn(iGeom)->IsIgnored()))
+                !(poGeomFieldDefn->IsIgnored()))
             {
                 const char *pszStr = papszTokens[iAttr];
                 while (*pszStr == ' ')
                     pszStr++;
                 OGRGeometry *poGeom = nullptr;
 
-                CPLPushErrorHandler(CPLQuietErrorHandler);
-                if (OGRGeometryFactory::createFromWkt(pszStr, nullptr,
-                                                      &poGeom) == OGRERR_NONE)
+                if (EQUAL(poGeomFieldDefn->GetNameRef(), ""))
+                {
+                    if (OGRGeometryFactory::createFromWkt(
+                            pszStr, nullptr, &poGeom) != OGRERR_NONE)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Ignoring invalid WKT: %s", pszStr);
+                        delete poGeom;
+                        poGeom = nullptr;
+                    }
+                }
+                else
+                {
+                    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+
+                    if (OGRGeometryFactory::createFromWkt(
+                            pszStr, nullptr, &poGeom) != OGRERR_NONE)
+                    {
+                        delete poGeom;
+                        poGeom = nullptr;
+                    }
+
+                    if (!poGeom && *pszStr == '{')
+                    {
+                        poGeom = OGRGeometry::FromHandle(
+                            OGR_G_CreateGeometryFromJson(pszStr));
+                    }
+                    else if (!poGeom && ((*pszStr >= '0' && *pszStr <= '9') ||
+                                         (*pszStr >= 'a' && *pszStr <= 'z') ||
+                                         (*pszStr >= 'A' && *pszStr <= 'Z')))
+                    {
+                        poGeom = OGRGeometryFromHexEWKB(pszStr, nullptr, FALSE);
+                    }
+                }
+
+                if (poGeom)
                 {
                     poGeom->assignSpatialReference(
-                        poFeatureDefn->GetGeomFieldDefn(iGeom)
-                            ->GetSpatialRef());
+                        poGeomFieldDefn->GetSpatialRef());
                     poFeature->SetGeomFieldDirectly(iGeom, poGeom);
                 }
-                else if (*pszStr == '{' &&
-                         (poGeom = OGRGeometry::FromHandle(
-                              OGR_G_CreateGeometryFromJson(pszStr))) != nullptr)
-                {
-                    poFeature->SetGeomFieldDirectly(iGeom, poGeom);
-                }
-                else if (((*pszStr >= '0' && *pszStr <= '9') ||
-                          (*pszStr >= 'a' && *pszStr <= 'z') ||
-                          (*pszStr >= 'A' && *pszStr <= 'Z')) &&
-                         (poGeom = OGRGeometryFromHexEWKB(pszStr, nullptr,
-                                                          FALSE)) != nullptr)
-                {
-                    poFeature->SetGeomFieldDirectly(iGeom, poGeom);
-                }
-                CPLPopErrorHandler();
             }
-            if (!bKeepGeomColumns || (iAttr == 0 && bHiddenWKTColumn))
+
+            const bool bHasAttributeField =
+                bKeepGeomColumns && !(iAttr == 0 && bHiddenWKTColumn);
+            if (!bHasAttributeField)
                 continue;
         }
 

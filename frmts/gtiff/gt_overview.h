@@ -53,7 +53,8 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize,
                            bool bDeferStrileArrayWriting);
 
 void GTIFFBuildOverviewMetadata(const char *pszResampling,
-                                GDALDataset *poBaseDS, CPLString &osMetadata);
+                                GDALDataset *poBaseDS, bool bIsForMaskBand,
+                                CPLString &osMetadata);
 
 CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
                              GDALRasterBand *const *papoBandList,

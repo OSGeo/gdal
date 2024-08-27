@@ -456,7 +456,7 @@
               <xs:element name="MaxFileSize" minOccurs="0">
                 <xs:annotation>
                   <xs:documentation>
-                    Maximum file size allowed. 
+                    Maximum file size allowed.
                     Default: 1 MB.
                   </xs:documentation>
                 </xs:annotation>
@@ -890,7 +890,7 @@
                 <xs:annotation>
                   <xs:documentation>
                     Line format.
-                    Default is platform dependant (CR-LF on Windows, LF otherwise)
+                    Default is platform dependent (CR-LF on Windows, LF otherwise)
                   </xs:documentation>
                 </xs:annotation>
                 <xs:simpleType>
@@ -898,7 +898,7 @@
                         <xs:enumeration value="NATIVE">
                             <xs:annotation>
                                 <xs:documentation>
-                                    Platform dependant (CR-LF on Windows, LF otherwise)
+                                    Platform dependent (CR-LF on Windows, LF otherwise)
                                 </xs:documentation>
                             </xs:annotation>
                         </xs:enumeration>

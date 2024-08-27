@@ -1765,13 +1765,13 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  * a PROJ or WKT string, used as an override over the normally computed
  * pipeline. The pipeline must take into account the axis order of the source
  * and target SRS. <li> COORDINATE_EPOCH: (GDAL &gt;= 3.0) Coordinate epoch,
- * expressed as a decimal year. Useful for time-dependant coordinate operations.
+ * expressed as a decimal year. Useful for time-dependent coordinate operations.
  * </li>
  * <li> SRC_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of source CRS,
- * expressed as a decimal year. Useful for time-dependant coordinate operations.
+ * expressed as a decimal year. Useful for time-dependent coordinate operations.
  * </li>
  * <li> DST_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of target CRS,
- * expressed as a decimal year. Useful for time-dependant coordinate operations.
+ * expressed as a decimal year. Useful for time-dependent coordinate operations.
  * </li>
  * <li> GCPS_OK: If false, GCPs will not be used, default is TRUE.
  * </li>
@@ -3366,11 +3366,11 @@ void *GDALCreateReprojectionTransformer(const char *pszSrcWKT,
  * <li>COORDINATE_OPERATION=string: PROJ or WKT string representing a
  * coordinate operation, overriding the default computed transformation.</li>
  * <li>COORDINATE_EPOCH=decimal_year: Coordinate epoch, expressed as a
- * decimal year. Useful for time-dependant coordinate operations.</li>
+ * decimal year. Useful for time-dependent coordinate operations.</li>
  * <li> SRC_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of source CRS,
- * expressed as a decimal year. Useful for time-dependant coordinate
+ * expressed as a decimal year. Useful for time-dependent coordinate
  *operations.</li> <li> DST_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch
- *of target CRS, expressed as a decimal year. Useful for time-dependant
+ *of target CRS, expressed as a decimal year. Useful for time-dependent
  *coordinate operations.</li>
  * </ul>
  *

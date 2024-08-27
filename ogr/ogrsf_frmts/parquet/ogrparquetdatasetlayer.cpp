@@ -163,6 +163,79 @@ void OGRParquetDatasetLayer::EstablishFeatureDefn()
     }
 
     const auto &fields = m_poSchema->fields();
+
+    // Overture Maps 2024-04-16-beta.0 almost follows GeoParquet 1.1, except
+    // they don't declare the "covering" element in the GeoParquet JSON metadata
+    if (m_oMapGeometryColumns.find("geometry") != m_oMapGeometryColumns.end() &&
+        bUseBBOX &&
+        !m_oMapGeometryColumns["geometry"].GetObj("covering").IsValid() &&
+        m_oMapGeometryColumns["geometry"].GetString("encoding") == "WKB")
+    {
+        for (int i = 0; i < m_poSchema->num_fields(); ++i)
+        {
+            const auto &field = fields[i];
+            if (field->name() == "bbox" &&
+                field->type()->id() == arrow::Type::STRUCT)
+            {
+                bool bXMin = false;
+                bool bXMax = false;
+                bool bYMin = false;
+                bool bYMax = false;
+                const auto subfields = field->Flatten();
+                if (subfields.size() == 4)
+                {
+                    for (int j = 0; j < static_cast<int>(subfields.size()); j++)
+                    {
+                        const auto &subfield = subfields[j];
+                        if (subfield->name() == "bbox.xmin")
+                            bXMin = true;
+                        else if (subfield->name() == "bbox.xmax")
+                            bXMax = true;
+                        else if (subfield->name() == "bbox.ymin")
+                            bYMin = true;
+                        else if (subfield->name() == "bbox.ymax")
+                            bYMax = true;
+                    }
+                }
+                if (bXMin && bXMax && bYMin && bYMax)
+                {
+                    CPLJSONObject oDef = m_oMapGeometryColumns["geometry"];
+                    CPLJSONObject oCovering;
+                    oDef.Add("covering", oCovering);
+                    CPLJSONObject oBBOX;
+                    oCovering.Add("bbox", oBBOX);
+                    {
+                        CPLJSONArray oArray;
+                        oArray.Add("bbox");
+                        oArray.Add("xmin");
+                        oBBOX.Add("xmin", oArray);
+                    }
+                    {
+                        CPLJSONArray oArray;
+                        oArray.Add("bbox");
+                        oArray.Add("ymin");
+                        oBBOX.Add("ymin", oArray);
+                    }
+                    {
+                        CPLJSONArray oArray;
+                        oArray.Add("bbox");
+                        oArray.Add("xmax");
+                        oBBOX.Add("xmax", oArray);
+                    }
+                    {
+                        CPLJSONArray oArray;
+                        oArray.Add("bbox");
+                        oArray.Add("ymax");
+                        oBBOX.Add("ymax", oArray);
+                    }
+                    oSetBBOXColumns.insert("bbox");
+                    m_oMapGeometryColumns["geometry"] = std::move(oDef);
+                }
+                break;
+            }
+        }
+    }
+
     for (int i = 0; i < m_poSchema->num_fields(); ++i)
     {
         const auto &field = fields[i];

@@ -130,12 +130,38 @@ The following creation options are available:
       -  C8 means JPEG2000 compression (one block) and is available for
          CreateCopy() and/or Create() methods. See below paragraph for specificities.
 
+-  .. co:: QUALITY
+      :choices: 10-100
+      :default: 75
+
+      JPEG quality 10-100
+
+-  .. co:: PROGRESSIVE
+      :choices: YES, NO
+      :default: NO
+
+      JPEG progressive mode
+
+-  .. co:: RESTART_INTERVAL
+      :choices: -1, 0, >0
+      :default: -1
+
+      Restart interval (in MCUs) for JPEG compressoin.
+      -1 for auto, 0 for none, > 0 for user specified.
+
 -  .. co:: NUMI
       :default: 1
 
       Number of images.
-      See :ref:`Advanced GDAL NITF Driver Information <raster.nitf_advanced>` for
+      See :ref:`raster.nitf_advanced_write_multiple_image_segments` for
       the procedure to follow to write several images in a NITF file.
+
+-  .. co:: WRITE_ONLY_FIRST_IMAGE
+      :choices: YES, NO
+      :default: NO
+
+      (Only taken into account if NUMI > 1, and on a new NITF file).
+      If YES, only write first image. Subsequent ones must be written with APPEND_SUBDATASET=YES
 
 -  .. co:: WRITE_ALL_IMAGES
       :choices: YES, NO
@@ -212,6 +238,10 @@ The following creation options are available:
 
       Set the block height.
 
+-  .. co:: BLOCKSIZE
+
+      Set the block with and height. Overridden by BLOCKXSIZE and BLOCKYSIZE
+
 -  .. co:: BLOCKA_*
 
       If a complete set of BLOCKA options is provided with
@@ -260,6 +290,14 @@ The following creation options are available:
       Number of DES segments. Only to be used on
       first image segment
 
+-  .. co:: TEXT
+
+      TEXT options as text-option-name=text-option-content. Cf :ref:`raster.nitf_advanced_text`.
+
+-  .. co:: CGM
+
+      CGM options in cgm-option-name=cgm-option-content.  Cf :ref:`raster.nitf_advanced_cgm`.
+
 -  .. co:: SDE_TRE
       :choices: YES, NO
 
@@ -299,6 +337,273 @@ The following creation options are available:
       may needed to set this option to NO if changing the georeferencing of
       the input file.
 
+
+The following creation options to se fields in the NITF file header are available:
+
+-  .. co:: OSTAID
+      :choices: string of up to 10 characters
+
+      Originating Station ID
+
+-  .. co:: FDT
+      :choices: string of up to 14 characters
+
+      File Date and Time
+
+-  .. co:: FTITLE
+      :choices: string of up to 80 characters
+
+      File Title
+
+-  .. co:: FSCLAS
+      :choices: string of 1 character
+
+      File Security Classification
+
+-  .. co:: FSCLSY
+      :choices: string of up to 2 characters
+
+      File Classification Security System
+
+-  .. co:: FSCODE
+      :choices: string of up to 11 characters
+
+      File Codewords
+
+-  .. co:: FSCTLH
+      :choices: string of up to 2 characters
+
+      File Control and Handling
+
+-  .. co:: FSREL
+      :choices: string of up to 20 characters
+
+      File Releasing Instructions
+
+-  .. co:: FSDCTP
+      :choices: string of up to 2 characters
+
+      File Declassification Type
+
+-  .. co:: FSDCDT
+      :choices: string of 8 characters
+
+      File Declassification Date
+
+-  .. co:: FSDCXM
+      :choices: string of up to 4 characters
+
+      File Declassification Exemption
+
+-  .. co:: FSDG
+      :choices: string of 1 character
+
+      File Downgrade
+
+-  .. co:: FSDGDT
+      :choices: string of 8 characters
+
+      File Downgrade Date
+
+-  .. co:: FSCLTX
+      :choices: string of up to 43 characters
+
+      File Classification Text
+
+-  .. co:: FSCATP
+      :choices: string of 1 character
+
+      File Classification Authority Type
+
+-  .. co:: FSCAUT
+      :choices: string of up to 40 characters
+
+      File Classification Authority
+
+-  .. co:: FSCRSN
+      :choices: string of 1 character
+
+      File Classification Reason
+
+-  .. co:: FSSRDT
+      :choices: string of 8 characters
+
+      File Security Source Date
+
+-  .. co:: FSCTLN
+      :choices: string of up to 15 characters
+
+      File Security Control Number
+
+-  .. co:: FSCOP
+      :choices: string of up to 5 characters
+
+      File Copy Number
+
+-  .. co:: FSCPYS
+      :choices: string of up to 5 characters
+
+      File Number of Copies
+
+-  .. co:: ONAME
+      :choices: string of up to 24 characters
+
+      Originator Name
+
+-  .. co:: OPHONE
+      :choices: string of up to 18 characters
+
+      Originator Phone Number
+
+The following creation options to se fields in the NITF image header are available:
+
+-  .. co:: IID1
+      :choices: string of up to 10 characters
+
+      Image Identifier 1
+
+-  .. co:: IDATIM
+      :choices: string of 14 characters
+
+      Image Date and Time
+
+-  .. co:: TGTID
+      :choices: string of up to 17 characters
+
+      Target Identifier
+
+-  .. co:: IID2
+      :choices: string of up to 80 characters
+
+      Image Identifier 2
+
+-  .. co:: ISCLAS
+      :choices: string of 1 character
+
+      Image Security Classification
+
+-  .. co:: ISCLSY
+      :choices: string of up to 2 characters
+
+      Image Classification Security System
+
+-  .. co:: ISCODE
+      :choices: string of up to 11 characters
+
+      Image Codewords
+
+-  .. co:: ISCTLH
+      :choices: string of up to 2 characters
+
+      Image Control and Handling
+
+-  .. co:: ISREL
+      :choices: string of up to 20 characters
+
+      Image Releasing Instructions
+
+-  .. co:: ISDCTP
+      :choices: string of up to 2 characters
+
+      Image Declassification Type
+
+-  .. co:: ISDCDT
+      :choices: string of 8 characters
+
+      Image Declassification Date
+
+-  .. co:: ISDCXM
+      :choices: string of up to 4 characters
+
+      Image Declassification Exemption
+
+-  .. co:: ISDG
+      :choices: string of 1 character
+
+      Image Downgrade
+
+-  .. co:: ISDGDT
+      :choices: string of 8 characters
+
+      Image Downgrade Date
+
+-  .. co:: ISCLTX
+      :choices: string of up to 43 characters
+
+      Image Classification Text
+
+-  .. co:: ISCATP
+      :choices: string of 1 character
+
+      Image Classification Authority Type
+
+-  .. co:: ISCAUT
+      :choices: string of up to 40 characters
+
+      Image Classification Authority
+
+-  .. co:: ISCRSN
+      :choices: string of 1 character
+
+      Image Classification Reason
+
+-  .. co:: ISSRDT
+      :choices: string of 8 characters
+
+      Image Security Source Date
+
+-  .. co:: ISCTLN
+      :choices: string of up to 15 characters
+
+      Image Security Control Number
+
+-  .. co:: ISORCE
+      :choices: string of up to 42 characters
+
+      Image Source
+
+-  .. co:: ICAT
+      :choices: string of up to 8 characters
+
+      Image Category
+
+-  .. co:: ABPP
+      :choices: integer
+
+      Actual Bits-Per-Pixel Per Band.
+      Starting with GDAL 3.10, also available as the ``NBITS`` creation option.
+
+-  .. co:: PJUST
+      :choices: string of 1 character
+
+      Pixel Justification
+
+-  .. co:: ICOM
+      :choices: string of up to 720 characters
+
+      Image Comments (organized as up to 9 lines of 80 characters)
+
+-  .. co:: IDLVL
+      :choices: integer of up to 3 characters
+
+      Image Display Level
+
+-  .. co:: IALVL
+      :choices: integer of up to 3 characters
+
+      Image Attachment Level
+
+-  .. co:: ILOCROW
+      :choices: integer of up to 5 characters
+
+      Image Location Row
+
+-  .. co:: ILOCCOL
+      :choices: integer of up to 5 characters
+
+      Image Location Column
+
+
 JPEG2000 compression (write support)
 ------------------------------------
 
@@ -329,7 +634,9 @@ the JPEG2000 capable driver to use.
   :co:`drivers/raster/jp2openjpeg QUALITY`,
   :co:`drivers/raster/jp2openjpeg BLOCKXSIZE`
   and
-  :co:`drivers/raster/jp2openjpeg BLOCKYSIZE` JP2OpenJPEG-specific creation options can be
+  :co:`drivers/raster/jp2openjpeg BLOCKYSIZE`,
+  :co:`drivers/raster/jp2ecw TARGET` (target size reduction as a
+  percentage of the original) JP2OpenJPEG-specific creation options can be
   used. By default BLOCKXSIZE=BLOCKYSIZE=1024 will be used.
 
   Starting with GDAL 3.4.0 and OpenJPEG 2.5, the

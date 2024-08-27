@@ -145,6 +145,9 @@ typedef struct
     unsigned char
         td_deferstrilearraywriting; /* see TIFFDeferStrileArrayWriting() */
 
+    unsigned char
+        td_iswrittentofile; /* indicates if current IFD is present on file */
+
     /* LibTIFF writes all data that does not fit into the IFD entries directly
      * after the IFD tag entry part. When reading, only the IFD data directly
      * and continuously behind the IFD tags is taken into account for the IFD

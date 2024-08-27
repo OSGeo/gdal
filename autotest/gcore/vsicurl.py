@@ -48,13 +48,7 @@ def curl_version():
     return actual_version
 
 
-pytestmark = [
-    pytest.mark.require_curl(),
-    pytest.mark.skipif(
-        curl_version() >= [8, 9, 1],
-        reason="fail with SIGPIPE",
-    ),
-]
+pytestmark = pytest.mark.require_curl()
 
 ###############################################################################
 #
@@ -1160,6 +1154,11 @@ def test_vsicurl_GDAL_HTTP_HEADERS(server):
 # Test CPL_VSIL_CURL_USE_HEAD=NO
 
 
+# Cf fix of https://github.com/curl/curl/pull/14390
+@pytest.mark.skipif(
+    curl_version() == [8, 9, 1],
+    reason="fail with SIGPIPE with curl 8.9.1",
+)
 def test_vsicurl_test_CPL_VSIL_CURL_USE_HEAD_NO(server):
 
     gdal.VSICurlClearCache()

@@ -225,13 +225,12 @@ def test_overviewds_4(tmp_path):
 
     for key in rpc_md:
         assert ds.GetMetadataItem(key, "RPC") == got_md[key]
-        if (
-            key == "LINE_SCALE"
-            or key == "SAMP_SCALE"
-            or key == "LINE_OFF"
-            or key == "SAMP_OFF"
-        ):
-            assert float(got_md[key]) == myfloat(rpc_md[key]) / 2
+        if key == "LINE_SCALE" or key == "SAMP_SCALE":
+            assert float(got_md[key]) == pytest.approx(myfloat(rpc_md[key]) / 2)
+        elif key == "LINE_OFF" or key == "SAMP_OFF":
+            assert float(got_md[key]) == pytest.approx(
+                (myfloat(rpc_md[key]) + 0.5) / 2 - 0.5
+            )
         elif got_md[key] != rpc_md[key]:
             print(got_md[key])
             print(rpc_md[key])

@@ -146,6 +146,7 @@ static int ZSTDDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
         zstd_ret = ZSTD_decompressStream(sp->dstream, &out_buffer, &in_buffer);
         if (ZSTD_isError(zstd_ret))
         {
+            memset(op + out_buffer.pos, 0, out_buffer.size - out_buffer.pos);
             TIFFErrorExtR(tif, module, "Error in ZSTD_decompressStream(): %s",
                           ZSTD_getErrorName(zstd_ret));
             return 0;
@@ -155,6 +156,7 @@ static int ZSTDDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
 
     if (out_buffer.pos < (size_t)occ)
     {
+        memset(op + out_buffer.pos, 0, out_buffer.size - out_buffer.pos);
         TIFFErrorExtR(tif, module,
                       "Not enough data at scanline %lu (short %lu bytes)",
                       (unsigned long)tif->tif_row,

@@ -135,6 +135,11 @@ target_include_directories(
   gdal_GRIB PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/degrib/degrib>
                     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/degrib/g2clib> $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>)
 target_compile_options(gdal_GRIB PRIVATE ${GDAL_SOFTWARNFLAGS}) # FIXME: only needed for files within degrib/ actually
+
+if (BUILD_APPS)
+  target_compile_definitions(gdal_GRIB PRIVATE -DBUILD_APPS)
+endif()
+
 if (GDAL_USE_PNG_INTERNAL)
   gdal_add_vendored_lib(gdal_GRIB libpng)
   target_compile_definitions(gdal_GRIB PRIVATE -DUSE_PNG)

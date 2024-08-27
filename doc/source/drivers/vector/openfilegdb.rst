@@ -68,6 +68,7 @@ Geodatabases created with ArcGIS 10 or above)
 The "CREATE INDEX idx_name ON layer_name(field_name)" SQL request can be
 used to create an attribute index. idx_name must have 16 characters or less,
 start with a letter and contain only alphanumeric characters or underscore.
+Multiple column indices are not supported.
 
 The "RECOMPUTE EXTENT ON layer_name" SQL request can be used to trigger
 an update of the layer extent in layer metadata. This is useful when updating

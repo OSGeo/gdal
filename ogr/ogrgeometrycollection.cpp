@@ -1100,35 +1100,38 @@ void OGRGeometryCollection::closeRings()
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRGeometryCollection::setCoordinateDimension(int nNewDimension)
+bool OGRGeometryCollection::setCoordinateDimension(int nNewDimension)
 
 {
     for (auto &poSubGeom : *this)
     {
-        poSubGeom->setCoordinateDimension(nNewDimension);
+        if (!poSubGeom->setCoordinateDimension(nNewDimension))
+            return false;
     }
 
-    OGRGeometry::setCoordinateDimension(nNewDimension);
+    return OGRGeometry::setCoordinateDimension(nNewDimension);
 }
 
-void OGRGeometryCollection::set3D(OGRBoolean bIs3D)
+bool OGRGeometryCollection::set3D(OGRBoolean bIs3D)
 {
     for (auto &poSubGeom : *this)
     {
-        poSubGeom->set3D(bIs3D);
+        if (!poSubGeom->set3D(bIs3D))
+            return false;
     }
 
-    OGRGeometry::set3D(bIs3D);
+    return OGRGeometry::set3D(bIs3D);
 }
 
-void OGRGeometryCollection::setMeasured(OGRBoolean bIsMeasured)
+bool OGRGeometryCollection::setMeasured(OGRBoolean bIsMeasured)
 {
     for (auto &poSubGeom : *this)
     {
-        poSubGeom->setMeasured(bIsMeasured);
+        if (!poSubGeom->setMeasured(bIsMeasured))
+            return false;
     }
 
-    OGRGeometry::setMeasured(bIsMeasured);
+    return OGRGeometry::setMeasured(bIsMeasured);
 }
 
 /************************************************************************/
@@ -1317,12 +1320,14 @@ void OGRGeometryCollection::assignSpatialReference(
 /*              OGRGeometryCollection::segmentize()                     */
 /************************************************************************/
 
-void OGRGeometryCollection::segmentize(double dfMaxLength)
+bool OGRGeometryCollection::segmentize(double dfMaxLength)
 {
     for (auto &poSubGeom : *this)
     {
-        poSubGeom->segmentize(dfMaxLength);
+        if (!poSubGeom->segmentize(dfMaxLength))
+            return false;
     }
+    return true;
 }
 
 /************************************************************************/

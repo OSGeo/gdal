@@ -64,11 +64,6 @@ def setup_and_cleanup():
     yield
 
     try:
-        gdal.GetDriverByName("NITF").Delete("tmp/test_create.ntf")
-    except RuntimeError:
-        pass
-
-    try:
         gdal.GetDriverByName("NITF").Delete("tmp/nitf9.ntf")
     except RuntimeError:
         pass
@@ -249,21 +244,20 @@ def test_nitf_3():
 # Test direction creation of an NITF file.
 
 
-def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=False):
+def nitf_create(
+    filename,
+    creation_options,
+    set_inverted_color_interp=True,
+    createcopy=False,
+    nbands=3,
+):
 
     drv = gdal.GetDriverByName("NITF")
 
-    try:
-        os.remove("tmp/test_create.ntf")
-    except OSError:
-        pass
-
     if createcopy:
-        ds = gdal.GetDriverByName("MEM").Create("", 200, 100, 3, gdal.GDT_Byte)
+        ds = gdal.GetDriverByName("MEM").Create("", 200, 100, nbands, gdal.GDT_Byte)
     else:
-        ds = drv.Create(
-            "tmp/test_create.ntf", 200, 100, 3, gdal.GDT_Byte, creation_options
-        )
+        ds = drv.Create(filename, 200, 100, nbands, gdal.GDT_Byte, creation_options)
     ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
     if set_inverted_color_interp:
@@ -276,23 +270,27 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
         ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
 
     my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))
-    try:
-        raw_data = array.array("h", my_list).tobytes()
-    except Exception:
-        # Python 2
-        raw_data = array.array("h", my_list).tostring()
+    if nbands == 4:
+        my_list += list(range(40, 240))
+    raw_data = array.array("h", my_list).tobytes()
 
     for line in range(100):
         ds.WriteRaster(
-            0, line, 200, 1, raw_data, buf_type=gdal.GDT_Int16, band_list=[1, 2, 3]
+            0,
+            line,
+            200,
+            1,
+            raw_data,
+            buf_type=gdal.GDT_Int16,
         )
 
     assert ds.FlushCache() == gdal.CE_None
 
     if createcopy:
-        ds = drv.CreateCopy("tmp/test_create.ntf", ds, options=creation_options)
+        ds = drv.CreateCopy(filename, ds, options=creation_options)
 
     ds = None
+    gdal.Unlink(filename + ".aux.xml")
 
 
 ###############################################################################
@@ -300,11 +298,12 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
 
 
 def nitf_check_created_file(
+    filename,
     checksum1,
     checksum2,
     checksum3,
-    filename="tmp/test_create.ntf",
     set_inverted_color_interp=True,
+    createcopy=False,
 ):
     ds = gdal.Open(filename)
 
@@ -331,6 +330,10 @@ def nitf_check_created_file(
     ), "geotransform differs from expected"
 
     if set_inverted_color_interp:
+
+        if createcopy:
+            assert ds.GetMetadataItem("NITF_IREP") == "MULTI"
+
         assert (
             ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_BlueBand
         ), "Got wrong color interpretation."
@@ -343,6 +346,11 @@ def nitf_check_created_file(
             ds.GetRasterBand(3).GetRasterColorInterpretation() == gdal.GCI_RedBand
         ), "Got wrong color interpretation."
 
+        if ds.RasterCount == 4:
+            assert (
+                ds.GetRasterBand(4).GetRasterColorInterpretation() == gdal.GCI_GrayIndex
+            ), "Got wrong color interpretation."
+
     ds = None
 
 
@@ -350,11 +358,29 @@ def nitf_check_created_file(
 # Test direction creation of an non-compressed NITF file.
 
 
-def test_nitf_5():
+@pytest.mark.parametrize("createcopy", [False, True])
+@pytest.mark.parametrize("set_inverted_color_interp", [False, True])
+@pytest.mark.parametrize("nbands", [3, 4])
+def test_nitf_5(tmp_path, createcopy, set_inverted_color_interp, nbands):
 
-    nitf_create(["ICORDS=G"])
+    filename = str(tmp_path / "test.ntf")
 
-    nitf_check_created_file(32498, 42602, 38982)
+    nitf_create(
+        filename,
+        ["ICORDS=G"],
+        set_inverted_color_interp=set_inverted_color_interp,
+        createcopy=createcopy,
+        nbands=nbands,
+    )
+
+    nitf_check_created_file(
+        filename,
+        32498,
+        42602,
+        38982,
+        set_inverted_color_interp=set_inverted_color_interp,
+        createcopy=createcopy,
+    )
 
 
 ###############################################################################
@@ -827,11 +853,13 @@ def test_nitf_26():
 # Test Create() with IC=NC compression, and multi-blocks
 
 
-def test_nitf_27():
+def test_nitf_27(tmp_path):
 
-    nitf_create(["ICORDS=G", "IC=NC", "BLOCKXSIZE=10", "BLOCKYSIZE=10"])
+    filename = str(tmp_path / "test.ntf")
 
-    nitf_check_created_file(32498, 42602, 38982)
+    nitf_create(filename, ["ICORDS=G", "IC=NC", "BLOCKXSIZE=10", "BLOCKYSIZE=10"])
+
+    nitf_check_created_file(filename, 32498, 42602, 38982)
 
 
 ###############################################################################
@@ -839,7 +867,7 @@ def test_nitf_27():
 
 
 @pytest.mark.require_driver("JP2ECW")
-def test_nitf_28_jp2ecw():
+def test_nitf_28_jp2ecw(tmp_path):
 
     import ecw
 
@@ -849,9 +877,17 @@ def test_nitf_28_jp2ecw():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2ECW")
     try:
-        nitf_create(["ICORDS=G", "IC=C8", "TARGET=75"], set_inverted_color_interp=False)
+        filename = str(tmp_path / "test.ntf")
 
-        nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp=False)
+        nitf_create(
+            filename,
+            ["ICORDS=G", "IC=C8", "TARGET=75"],
+            set_inverted_color_interp=False,
+        )
+
+        nitf_check_created_file(
+            filename, 32398, 42502, 38882, set_inverted_color_interp=False
+        )
 
         tmpfilename = "/vsimem/nitf_28_jp2ecw.ntf"
         src_ds = gdal.GetDriverByName("MEM").Create("", 1025, 1025)
@@ -879,10 +915,10 @@ def test_nitf_28_jp2mrsid():
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2MrSID")
 
     nitf_check_created_file(
+        "data/nitf/test_jp2_ecw33.ntf",
         32398,
         42502,
         38882,
-        filename="data/nitf/test_jp2_ecw33.ntf",
         set_inverted_color_interp=False,
     )
 
@@ -900,10 +936,10 @@ def test_nitf_28_jp2kak():
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2KAK")
 
     nitf_check_created_file(
+        "data/nitf/test_jp2_ecw33.ntf",
         32398,
         42502,
         38882,
-        filename="data/nitf/test_jp2_ecw33.ntf",
         set_inverted_color_interp=False,
     )
 
@@ -921,10 +957,10 @@ def test_nitf_28_jp2openjpeg():
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2OpenJPEG")
     try:
         nitf_check_created_file(
+            "data/nitf/test_jp2_ecw33.ntf",
             32398,
             42502,
             38882,
-            filename="data/nitf/test_jp2_ecw33.ntf",
             set_inverted_color_interp=False,
         )
     finally:
@@ -936,17 +972,20 @@ def test_nitf_28_jp2openjpeg():
 
 
 @pytest.mark.require_driver("JP2OpenJPEG")
-def test_nitf_28_jp2openjpeg_bis():
+def test_nitf_28_jp2openjpeg_bis(tmp_path):
 
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2OpenJPEG")
     try:
+        filename = str(tmp_path / "test.ntf")
+
         nitf_create(
+            filename,
             ["ICORDS=G", "IC=C8", "QUALITY=25"],
             set_inverted_color_interp=False,
             createcopy=True,
         )
-        ds = gdal.Open("tmp/test_create.ntf")
+        ds = gdal.Open(filename)
         assert ds.GetRasterBand(1).Checksum() in (31604, 31741)
         ds = None
 
@@ -966,16 +1005,17 @@ def test_nitf_28_jp2openjpeg_bis():
 # Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
 
 
-def test_nitf_jp2openjpeg_npje_numerically_lossless():
+def test_nitf_jp2openjpeg_npje_numerically_lossless(tmp_vsimem):
     jp2openjpeg_drv = gdal.GetDriverByName("JP2OpenJPEG")
     if jp2openjpeg_drv is None:
         pytest.skip()
 
     src_ds = gdal.Open("../gcore/data/uint16.tif")
     # May throw a warning with openjpeg < 2.5
+    out1_filename = str(tmp_vsimem / "tmp.ntf")
     with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").CreateCopy(
-            "/vsimem/tmp.ntf",
+            out1_filename,
             src_ds,
             strict=False,
             options=[
@@ -986,19 +1026,17 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
             ],
         )
 
-    ds = gdal.Open("/vsimem/tmp.ntf")
+    ds = gdal.Open(out1_filename)
+    assert ds.GetMetadataItem("NITF_ABPP") == "12"
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "12"
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert (
         ds.GetMetadataItem("J2KLRA", "TRE")
         == "0050000102000000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001703.50000001803.90000001912.000000"
     )
     assert ds.GetMetadataItem("COMRAT", "DEBUG") in (
-        "N141",
-        "N142",
-        "N143",
-        "N147",
-        "N169",
-        "N174",
+        "N145",  # OpenJPEG 2.3.1 and 2.4
+        "N172",  # OpenJPEG 2.5
     )
     assert (
         ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
@@ -1018,7 +1056,7 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
         in structure
     )
     assert (
-        '<Field name="Ssiz0" type="uint8" description="Unsigned 16 bits">15</Field>'
+        '<Field name="Ssiz0" type="uint8" description="Unsigned 12 bits">11</Field>'
         in structure
     )
     assert '<Field name="XTsiz" type="uint32">1024</Field>' in structure
@@ -1051,7 +1089,24 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
         assert '<Marker name="TLM"' in structure
         assert '<Marker name="PLT"' in structure
 
-    gdal.Unlink("/vsimem/tmp.ntf")
+    # Check that NBITS is propagated as ABPP
+    out2_filename = str(tmp_vsimem / "tmp.ntf")
+    with gdal.quiet_errors():
+        gdal.GetDriverByName("NITF").CreateCopy(
+            out2_filename,
+            gdal.Open(out1_filename),
+            strict=False,
+            options=[
+                "IC=C8",
+                "JPEG2000_DRIVER=JP2OpenJPEG",
+                "PROFILE=NPJE_NUMERICALLY_LOSSLESS",
+            ],
+        )
+
+    ds = gdal.Open(out2_filename)
+    assert ds.GetMetadataItem("NITF_ABPP") == "12"
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "12"
+    assert ds.GetRasterBand(1).Checksum() == 4672
 
 
 ###############################################################################
@@ -1370,11 +1425,15 @@ def test_nitf_30():
 # Verify we can write a file with a custom TRE and read it back properly.
 
 
-def test_nitf_31():
+def test_nitf_31(tmp_path):
 
-    nitf_create(["TRE=CUSTOM= Test TRE1\\0MORE", "TRE=TOTEST=SecondTRE", "ICORDS=G"])
+    filename = str(tmp_path / "test.ntf")
 
-    ds = gdal.Open("tmp/test_create.ntf")
+    nitf_create(
+        filename, ["TRE=CUSTOM= Test TRE1\\0MORE", "TRE=TOTEST=SecondTRE", "ICORDS=G"]
+    )
+
+    ds = gdal.Open(filename)
 
     md = ds.GetMetadata("TRE")
     assert len(md) == 2, "Did not get expected TRE count"
@@ -1392,27 +1451,31 @@ def test_nitf_31():
     ), "Did not get expected TRE contents"
 
     ds = None
-    return nitf_check_created_file(32498, 42602, 38982)
+    return nitf_check_created_file(filename, 32498, 42602, 38982)
 
 
 ###############################################################################
 # Test Create() with ICORDS=D
 
 
-def test_nitf_32():
+def test_nitf_32(tmp_path):
 
-    nitf_create(["ICORDS=D"])
+    filename = str(tmp_path / "test.ntf")
 
-    return nitf_check_created_file(32498, 42602, 38982)
+    nitf_create(filename, ["ICORDS=D"])
+
+    return nitf_check_created_file(filename, 32498, 42602, 38982)
 
 
 ###############################################################################
 # Test Create() with ICORDS=D and a consistent BLOCKA
 
 
-def test_nitf_33():
+def test_nitf_33(tmp_path):
 
+    filename = str(tmp_path / "test.ntf")
     nitf_create(
+        filename,
         [
             "ICORDS=D",
             "BLOCKA_BLOCK_COUNT=01",
@@ -1422,10 +1485,10 @@ def test_nitf_33():
             "BLOCKA_LRLC_LOC_01=+20.050000+119.950000",
             "BLOCKA_LRFC_LOC_01=+20.050000+100.050000",
             "BLOCKA_FRFC_LOC_01=+29.950000+100.050000",
-        ]
+        ],
     )
 
-    return nitf_check_created_file(32498, 42602, 38982)
+    return nitf_check_created_file(filename, 32498, 42602, 38982)
 
 
 ###############################################################################
@@ -1741,6 +1804,32 @@ def test_nitf_42(not_jpeg_9b):
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     assert stats[2] >= 2385 and stats[2] <= 2386
     ds = None
+
+
+###############################################################################
+# Check creating a 12-bit JPEG compressed NITF
+
+
+def test_nitf_write_jpeg12(not_jpeg_9b, tmp_path):
+    # Check if JPEG driver supports 12bit JPEG reading/writing
+    jpg_drv = gdal.GetDriverByName("JPEG")
+    md = jpg_drv.GetMetadata()
+    if md[gdal.DMD_CREATIONDATATYPES].find("UInt16") == -1:
+        pytest.skip("12bit jpeg not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 10000, 1, 3, gdal.GDT_UInt16)
+    ds.GetRasterBand(1).Fill(4096)
+    ds.GetRasterBand(2).Fill(0)
+    ds.GetRasterBand(3).Fill(4096)
+    out_filename = str(tmp_path / "out.ntf")
+    with gdal.quiet_errors():
+        gdal.GetDriverByName("NITF").CreateCopy(out_filename, ds, options=["IC=C3"])
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+    assert [
+        ds.GetRasterBand(i + 1).GetStatistics(0, 1)[2] for i in range(3)
+    ] == pytest.approx([4095, 0, 4095], abs=1)
 
 
 ###############################################################################
@@ -2898,6 +2987,7 @@ def test_nitf_72():
     src_md = src_md_max_precision
     src_ds.SetMetadata(src_md, "RPC")
 
+    gdal.ErrorReset()
     gdal.GetDriverByName("NITF").CreateCopy("/vsimem/nitf_72.ntf", src_ds)
 
     assert gdal.GetLastErrorMsg() == "", "fail: did not expect warning"
@@ -5325,6 +5415,7 @@ def test_nitf_create_three_images_final_uncompressed():
     src_ds_8193.GetRasterBand(1).Fill(2)
 
     # Write first image segment, reserve space for two other ones and a DES
+    gdal.ErrorReset()
     ds = gdal.GetDriverByName("NITF").CreateCopy(
         "/vsimem/out.ntf", src_ds_2049, options=["NUMI=3", "NUMDES=1"]
     )
@@ -5720,6 +5811,22 @@ def test_nitf_metadata_validation_des():
     assert ds is None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
+
+
+def test_nitf_report_ABPP_as_NBITS(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "tmp.ntf")
+    gdal.GetDriverByName("NITF").Create(
+        out_filename, 1, 1, 1, gdal.GDT_UInt16, options=["NBITS=9"]
+    )
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem("NITF_ABPP") == "09"
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "9"
 
 
 ###############################################################################

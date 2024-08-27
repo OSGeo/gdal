@@ -852,6 +852,36 @@ def test_vrt_read_21():
 
 
 ###############################################################################
+# Test implicit virtual overviews
+
+
+def test_vrt_read_virtual_overview_no_srcrect_dstrect(tmp_vsimem):
+
+    ds = gdal.Open("data/byte.tif")
+    data = ds.ReadRaster(0, 0, 20, 20, 400, 400)
+    ds = None
+    tmp_tif = str(tmp_vsimem / "tmp.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(tmp_tif, 400, 400)
+    ds.WriteRaster(0, 0, 400, 400, data)
+    ds.BuildOverviews("NEAR", [2])
+    ref_cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    ds = gdal.Open(
+        f"""<VRTDataset rasterXSize="400" rasterYSize="400">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename>{tmp_tif}</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == ref_cs
+
+
+###############################################################################
 # Test that we honour NBITS with SimpleSource and ComplexSource
 
 
@@ -1068,6 +1098,48 @@ def test_vrt_read_25():
         flags
         == gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY
         and pct == 25.0
+    )
+
+
+###############################################################################
+# Test GetDataCoverageStatus() on a single source covering the whole dataset
+
+
+def test_vrt_read_get_data_coverage_status_single_source(tmp_vsimem):
+
+    tmp_gtiff = str(tmp_vsimem / "tmp.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_gtiff,
+        512,
+        512,
+        1,
+        options=["TILED=YES", "BLOCKXSIZE=256", "BLOCKYSIZE=256", "SPARSE_OK=YES"],
+    )
+    ds.WriteRaster(256, 256, 256, 256, b"\x01" * (256 * 256))
+    ds = None
+
+    tmp_vrt = str(tmp_vsimem / "tmp.vrt")
+    gdal.Translate(tmp_vrt, tmp_gtiff, format="VRT")
+    ds = gdal.Open(tmp_vrt)
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 512, 512)
+    assert (
+        flags
+        == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
+        and pct == 25.0
+    )
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 256, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(256, 256, 256, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 256, 512, 256)
+    assert (
+        flags
+        == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
+        and pct == 50.0
     )
 
 

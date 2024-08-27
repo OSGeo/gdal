@@ -180,7 +180,7 @@ class GRIB2Section3Writer
     bool WriteMercator1SP();
     bool WriteMercator2SP(OGRSpatialReference *poSRS = nullptr);
     bool WriteTransverseMercator();
-    bool WritePolarSteregraphic();
+    bool WritePolarStereographic();
     bool WriteLCC1SP();
     bool WriteLCC2SPOrAEA(OGRSpatialReference *poSRS = nullptr);
     bool WriteLAEA();
@@ -547,10 +547,10 @@ bool GRIB2Section3Writer::WriteTransverseMercator()
 }
 
 /************************************************************************/
-/*                       WritePolarSteregraphic()                       */
+/*                       WritePolarStereographic()                       */
 /************************************************************************/
 
-bool GRIB2Section3Writer::WritePolarSteregraphic()
+bool GRIB2Section3Writer::WritePolarStereographic()
 {
     WriteUInt16(fp, GS3_POLAR);  // Grid template number
     WriteEllipsoidAndRasterSize();
@@ -803,7 +803,7 @@ bool GRIB2Section3Writer::Write()
     }
     else if (pszProjection && EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC))
     {
-        bRet = WritePolarSteregraphic();
+        bRet = WritePolarStereographic();
     }
     else if (pszProjection != nullptr &&
              EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP))

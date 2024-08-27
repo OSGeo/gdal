@@ -555,6 +555,17 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "   <Option name='USE_DEFAULT_FILL_AS_NODATA' type='boolean' "
         "description='Whether the default fill value should be used as nodata "
         "when there is no _FillValue or missing_value attribute' default='NO'/>"
+        "   <Option name='RAW_DATA_CHUNK_CACHE_SIZE' type='integer' "
+        "description='The total size of the libnetcdf raw data chunk cache, "
+        "in bytes. Only for netCDF4/HDF5 files'/>"
+        "   <Option name='CHUNK_SLOTS' type='integer' "
+        "description='The number of chunk slots in the libnetcdf raw data "
+        "chunk cache. "
+        "Only for netCDF4/HDF5 files'/>"
+        "   <Option name='PREEMPTION' type='float' min='0' max='1' "
+        "description='Indicates how much chunks from libnetcdf chunk cache "
+        "that have been fully read are favored for preemption. "
+        "Only for netCDF4/HDF5 files'/>"
         "</MultiDimArrayOpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST,

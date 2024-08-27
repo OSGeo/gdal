@@ -73,7 +73,7 @@ This change affects compatibility in the sense that users that relied on
 the current permissive behavior will have to adapt their SQL
 expressions. This might be quite tricky to detect as it will not always
 cause obvious runtime failures. For example " SELECT
-'i_thought_this_would_be_interpreted_as_a_column_name_but_now_it_is_a_string_litteral'
+'i_thought_this_would_be_interpreted_as_a_column_name_but_now_it_is_a_string_literal'
 FROM atable " will run without error but not produce the previously
 expected result. So applications will have to review how they build SQL
 filters ( SetAttributeFilter() ) and expressions ( ExecuteSQL() )

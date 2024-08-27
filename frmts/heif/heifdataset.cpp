@@ -315,6 +315,11 @@ bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
     OpenThumbnails();
 
     // Initialize any PAM information.
+    if (nSubdatasets > 1)
+    {
+        SetSubdatasetName(CPLSPrintf("%d", iPart + 1));
+        SetPhysicalFilename(osFilename.c_str());
+    }
     SetDescription(poOpenInfo->pszFilename);
     TryLoadXML(poOpenInfo->GetSiblingFiles());
 

@@ -2225,15 +2225,21 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     }
     else if( nType == NPY_STRING )
     {
-        // have to convert array of strings to a char **
-        char **papszStringData = (char**)CPLCalloc(sizeof(char*), nLength);
-
         // max size of string
-        int nMaxLen = PyArray_ITEMSIZE(psArray);
-        char *pszBuffer = (char*)CPLMalloc((nMaxLen+1) * sizeof(char));
+        const size_t nMaxLen = PyArray_ITEMSIZE(psArray);
+        char *pszBuffer = (char*)VSIMalloc(nMaxLen+1);
+        if (!pszBuffer)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "Out of memory in RATValuesIONumPyWrite()" );
+            return CE_Failure;
+        }
         // make sure there is a null char on the end
         // as there won't be if this string is the maximum size
         pszBuffer[nMaxLen] = '\0';
+
+        // have to convert array of strings to a char **
+        char **papszStringData = (char**)CPLCalloc(sizeof(char*), nLength);
 
         // we can't just use the memory location in the array
         // since long strings won't be null terminated

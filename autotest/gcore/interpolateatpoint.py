@@ -268,3 +268,85 @@ def test_interpolateatpoint_at_borders():
 
     res = mem_ds.GetRasterBand(1).InterpolateAtPoint(3.0, 4.6, gdal.GRIORA_Cubic)
     assert res == pytest.approx(0.6590625, 1e-6)
+
+
+def test_interpolateatpoint_complex_int():
+
+    ds = gdal.Open("data/complex_int32.tif")
+
+    res = ds.GetRasterBand(1).InterpolateAtPoint(0.0, 0.0, gdal.GRIORA_NearestNeighbour)
+    assert res == (-1 + 2j)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(5.1, 7.2, gdal.GRIORA_NearestNeighbour)
+    assert res == (32 - 32j)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(5.5, 7.5, gdal.GRIORA_Bilinear)
+    assert res == (32 - 32j)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(5.5, 7.5, gdal.GRIORA_Cubic)
+    assert res == (32 - 32j)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(5.5, 7.5, gdal.GRIORA_CubicSpline)
+    assert res == pytest.approx((34.361111 - 37.055555j), 1e-6)
+
+
+def test_interpolateatpoint_complex_float():
+
+    ds = gdal.Open("data/complex_float32.tif")
+
+    res = ds.GetRasterBand(1).InterpolateAtPoint(0.0, 0.0, gdal.GRIORA_NearestNeighbour)
+    assert res == pytest.approx((-1.2027 + 1.60096j), 1e-4)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(5.1, 7.2, gdal.GRIORA_NearestNeighbour)
+    assert res == pytest.approx((32.031867 - 31.546283j), 1e-4)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(5.5, 7.5, gdal.GRIORA_Bilinear)
+    assert res == pytest.approx((32.031867 - 31.546283j), 1e-4)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(5.5, 7.5, gdal.GRIORA_Cubic)
+    assert res == pytest.approx((32.031867 - 31.546283j), 1e-4)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(5.5, 7.5, gdal.GRIORA_CubicSpline)
+    assert res == pytest.approx((34.433130 - 36.741504j), 1e-4)
+
+
+def test_interpolateatpoint_big_complex():
+    # The purpose of this test is to check that the algorithm implementation
+    # works for bigger values above the first block of 64x64 pixels.
+    # To do that we are creating a virtual complex band from an existing RGB image.
+
+    ds = gdal.Open(
+        """<VRTDataset rasterXSize="512" rasterYSize="384">
+  <VRTRasterBand dataType="CFloat64" band="1" subClass="VRTDerivedRasterBand">
+    <Description>Complex</Description>
+    <PixelFunctionType>complex</PixelFunctionType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/quad-lzw-old-style.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/quad-lzw-old-style.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+    res = ds.GetRasterBand(1).InterpolateAtPoint(256, 64, gdal.GRIORA_NearestNeighbour)
+    assert res == (179.0 + 127.0j)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(256, 63, gdal.GRIORA_NearestNeighbour)
+    assert res == (182.0 + 127.0j)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(255, 64, gdal.GRIORA_NearestNeighbour)
+    assert res == (179.0 + 123.0j)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(255, 63, gdal.GRIORA_NearestNeighbour)
+    assert res == (182.0 + 122.0j)
+
+    res = ds.GetRasterBand(1).InterpolateAtPoint(256, 64, gdal.GRIORA_Bilinear)
+    assert (
+        res
+        == ((179.0 + 127.0j) + (182.0 + 127.0j) + (179.0 + 123.0j) + (182.0 + 122.0j))
+        / 4
+    )
+
+    res = ds.GetRasterBand(1).InterpolateAtPoint(256.2, 64.3, gdal.GRIORA_Bilinear)
+    assert res == pytest.approx((179.6 + 125.74j), 1e-6)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(256.2, 64.3, gdal.GRIORA_Cubic)
+    assert res == pytest.approx((179.088 + 125.90542j), 1e-6)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(256.2, 64.3, gdal.GRIORA_CubicSpline)
+    assert res == pytest.approx((179.482666 + 125.512282j), 1e-6)
+
+    res = ds.GetRasterBand(1).InterpolateAtPoint(255.5, 63.5, gdal.GRIORA_Bilinear)
+    assert res == pytest.approx((182 + 122j), 1e-6)
+    res = ds.GetRasterBand(1).InterpolateAtPoint(255.5, 63.5, gdal.GRIORA_Cubic)
+    assert res == pytest.approx((182 + 122j), 1e-6)

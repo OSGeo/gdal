@@ -55,6 +55,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libjpeg-dev${APT_ARCH_SUFFIX} libgeos-dev${APT_ARCH_SUFFIX} \
        libexpat-dev${APT_ARCH_SUFFIX} libxerces-c-dev${APT_ARCH_SUFFIX} \
        libwebp-dev${APT_ARCH_SUFFIX} libpng-dev${APT_ARCH_SUFFIX} \
+       libdeflate-dev${APT_ARCH_SUFFIX} \
        libzstd-dev${APT_ARCH_SUFFIX} bash zip curl \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} \
@@ -236,6 +237,7 @@ RUN apt-get update -y \
         libexpat1 \
         libxerces-c3.2 \
         libwebp7 libpng16-16 \
+        libdeflate0 \
         libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite8 \
         # pil for antialias option of gdal2tiles
         python3-pil \

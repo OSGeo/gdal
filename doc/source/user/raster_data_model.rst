@@ -237,7 +237,7 @@ A raster band has the following properties:
     * GCI_AlphaBand: this raster is the alpha portion of an RGBA image
     * GCI_HueBand: this raster is the hue of an HLS image
     * GCI_SaturationBand: this raster is the saturation of an HLS image
-    * GCI_LightnessBand: this raster is the hue of an HLS image
+    * GCI_LightnessBand: this raster is the lightness of an HLS image
     * GCI_CyanBand: this band is the cyan portion of a CMY or CMYK image
     * GCI_MagentaBand: this band is the magenta portion of a CMY or CMYK image
     * GCI_YellowBand: this band is the yellow portion of a CMY or CMYK image

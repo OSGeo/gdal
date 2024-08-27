@@ -304,9 +304,8 @@ bool OGRSQLiteDataSource::AddRelationship(
     {
         const std::set<std::string> uniqueBaseFieldsUC =
             SQLGetUniqueFieldUCConstraints(GetDB(), osLeftTableName.c_str());
-        if (uniqueBaseFieldsUC.find(
-                CPLString(aosLeftTableFields[0]).toupper()) !=
-            uniqueBaseFieldsUC.end())
+        if (cpl::contains(uniqueBaseFieldsUC,
+                          CPLString(aosLeftTableFields[0]).toupper()))
         {
             bBaseKeyIsUnique = true;
         }
@@ -470,13 +469,12 @@ bool OGRSQLiteDataSource::ValidateRelationship(
     }
 
     // ensure relationship is different from existing relationships
-    for (auto it = m_osMapRelationships.begin();
-         it != m_osMapRelationships.end(); ++it)
+    for (const auto &kv : m_osMapRelationships)
     {
-        if (osLeftTableName == it->second->GetLeftTableName() &&
-            osRightTableName == it->second->GetRightTableName() &&
-            aosLeftTableFields == it->second->GetLeftTableFields() &&
-            aosRightTableFields == it->second->GetRightTableFields())
+        if (osLeftTableName == kv.second->GetLeftTableName() &&
+            osRightTableName == kv.second->GetRightTableName() &&
+            aosLeftTableFields == kv.second->GetLeftTableFields() &&
+            aosRightTableFields == kv.second->GetRightTableFields())
         {
             failureReason =
                 "A relationship between these tables and fields already exists";
@@ -760,7 +758,7 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys(
             }
             const std::string osRelationName = stream.str();
 
-            auto it = m_osMapRelationships.find(osRelationName);
+            const auto it = m_osMapRelationships.find(osRelationName);
             if (it != m_osMapRelationships.end())
             {
                 // already have a relationship with this name -- that means that
@@ -814,10 +812,9 @@ std::vector<std::string> OGRSQLiteBaseDataSource::GetRelationshipNames(
 
     std::vector<std::string> oasNames;
     oasNames.reserve(m_osMapRelationships.size());
-    for (auto it = m_osMapRelationships.begin();
-         it != m_osMapRelationships.end(); ++it)
+    for (const auto &kv : m_osMapRelationships)
     {
-        oasNames.emplace_back(it->first);
+        oasNames.emplace_back(kv.first);
     }
     return oasNames;
 }
@@ -835,7 +832,7 @@ OGRSQLiteBaseDataSource::GetRelationship(const std::string &name) const
         LoadRelationships();
     }
 
-    auto it = m_osMapRelationships.find(name);
+    const auto it = m_osMapRelationships.find(name);
     if (it == m_osMapRelationships.end())
         return nullptr;
 
@@ -2649,8 +2646,8 @@ bool OGRSQLiteDataSource::Open(GDALOpenInfo *poOpenInfo)
 
             if (pszTableName == nullptr || pszGeomCol == nullptr)
                 continue;
-            if (!bListAllTables && aoSetTablesToIgnore.find(pszTableName) !=
-                                       aoSetTablesToIgnore.end())
+            if (!bListAllTables &&
+                cpl::contains(aoSetTablesToIgnore, pszTableName))
             {
                 continue;
             }
@@ -2666,8 +2663,8 @@ bool OGRSQLiteDataSource::Open(GDALOpenInfo *poOpenInfo)
 
             if (pszTableName == nullptr)
                 continue;
-            if (!bListAllTables && aoSetTablesToIgnore.find(pszTableName) !=
-                                       aoSetTablesToIgnore.end())
+            if (!bListAllTables &&
+                cpl::contains(aoSetTablesToIgnore, pszTableName))
             {
                 continue;
             }
@@ -4663,7 +4660,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      First, we look through our SRID cache, is it there?             */
     /* -------------------------------------------------------------------- */
-    auto oIter = m_oSRSCache.find(nId);
+    const auto oIter = m_oSRSCache.find(nId);
     if (oIter != m_oSRSCache.end())
     {
         return oIter->second.get();
@@ -4828,8 +4825,7 @@ void OGRSQLiteDataSource::SetName(const char *pszNameIn)
 const OGREnvelope *
 OGRSQLiteBaseDataSource::GetEnvelopeFromSQL(const CPLString &osSQL)
 {
-    std::map<CPLString, OGREnvelope>::iterator oIter =
-        oMapSQLEnvelope.find(osSQL);
+    const auto oIter = oMapSQLEnvelope.find(osSQL);
     if (oIter != oMapSQLEnvelope.end())
         return &oIter->second;
     else

@@ -88,18 +88,18 @@ int TIFFJPEGIsFullStripRequired_12(TIFF *tif);
  * 16bit value?
  */
 
-/* HAVE_JPEGTURBO_DUAL_MODE_8_12 is defined for libjpeg-turbo >= 2.2 which
+/* HAVE_JPEGTURBO_DUAL_MODE_8_12 is defined for libjpeg-turbo >= 3.0 which
  * adds a dual-mode 8/12 bit API in the same library.
  */
 
 #if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
 #define JPEG_DUAL_MODE_8_12
 /* Start by undefining BITS_IN_JSAMPLE which is always set to 8 in libjpeg-turbo
- * >= 2.2 Cf
+ * >= 3.0 Cf
  * https://github.com/libjpeg-turbo/libjpeg-turbo/commit/8b9bc4b9635a2a047fb23ebe70c9acd728d3f99b
  */
 #undef BITS_IN_JSAMPLE
-/* libjpeg-turbo >= 2.2 adds J12xxxx datatypes for the 12-bit mode. */
+/* libjpeg-turbo >= 3.0 adds J12xxxx datatypes for the 12-bit mode. */
 #if defined(FROM_TIF_JPEG_12)
 #define BITS_IN_JSAMPLE 12
 #define TIFF_JSAMPLE J12SAMPLE
@@ -1451,7 +1451,10 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
     sp->src.bytes_in_buffer = (size_t)tif->tif_rawcc;
 
     if (sp->bytesperline == 0)
+    {
+        memset(buf, 0, (size_t)cc);
         return 0;
+    }
 
     nrows = cc / sp->bytesperline;
     if (cc % sp->bytesperline)
@@ -1472,7 +1475,10 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
             JSAMPROW bufptr = (JSAMPROW)buf;
 
             if (TIFFjpeg_read_scanlines(sp, &bufptr, 1) != 1)
+            {
+                memset(buf, 0, (size_t)cc);
                 return (0);
+            }
 
             ++tif->tif_row;
             buf += sp->bytesperline;
@@ -1506,7 +1512,10 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
     sp->src.bytes_in_buffer = (size_t)tif->tif_rawcc;
 
     if (sp->bytesperline == 0)
+    {
+        memset(buf, 0, (size_t)cc);
         return 0;
+    }
 
     nrows = cc / sp->bytesperline;
     if (cc % sp->bytesperline)
@@ -1542,7 +1551,10 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
                  * for 12bit data, which we need to repack.
                  */
                 if (TIFFjpeg_read_scanlines(sp, &line_work_buf, 1) != 1)
+                {
+                    memset(buf, 0, (size_t)cc);
                     return (0);
+                }
 
                 if (sp->cinfo.d.data_precision == 12)
                 {
