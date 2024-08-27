@@ -206,6 +206,11 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
                                      GIntBig *pnLineSpace,
                                      char **papszOptions) override;
 
+    CPLErr InterpolateAtPoint(double dfPixel, double dfLine,
+                              GDALRIOResampleAlg eInterpolation,
+                              double *pdfRealValue,
+                              double *pdfImagValue) const override;
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALProxyRasterBand)
 };

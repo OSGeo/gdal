@@ -512,6 +512,12 @@ RB_PROXY_METHOD_WITH_RET(CPLVirtualMem *, nullptr, GetVirtualMemAuto,
                           GIntBig *pnLineSpace, char **papszOptions),
                          (eRWFlag, pnPixelSpace, pnLineSpace, papszOptions))
 
+RB_PROXY_METHOD_WITH_RET(
+    CPLErr, CE_Failure, InterpolateAtPoint,
+    (double dfPixel, double dfLine, GDALRIOResampleAlg eInterpolation,
+     double *pdfRealValue, double *pdfImagValue = nullptr) const,
+    (dfPixel, dfLine, eInterpolation, pdfRealValue, pdfImagValue))
+
 /************************************************************************/
 /*                 UnrefUnderlyingRasterBand()                        */
 /************************************************************************/

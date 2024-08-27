@@ -1857,10 +1857,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     std::shared_ptr<GDALMDArray> AsMDArray() const;
 
-    CPLErr InterpolateAtPoint(double dfPixel, double dfLine,
-                              GDALRIOResampleAlg eInterpolation,
-                              double *pdfRealValue,
-                              double *pdfImagValue = nullptr) const;
+    virtual CPLErr InterpolateAtPoint(double dfPixel, double dfLine,
+                                      GDALRIOResampleAlg eInterpolation,
+                                      double *pdfRealValue,
+                                      double *pdfImagValue = nullptr) const;
 
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)
