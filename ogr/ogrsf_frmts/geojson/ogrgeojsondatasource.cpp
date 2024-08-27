@@ -814,10 +814,11 @@ int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
     char *pszStoredContent = OGRGeoJSONDriverStealStoredContent(pszSource);
     if (pszStoredContent != nullptr)
     {
-        if ((osJSonFlavor_ == "ESRIJSON" &&
-             ESRIJSONIsObject(pszStoredContent, poOpenInfo)) ||
-            (osJSonFlavor_ == "TopoJSON" &&
-             TopoJSONIsObject(pszStoredContent, poOpenInfo)))
+        if (!EQUAL(pszStoredContent, INVALID_CONTENT_FOR_JSON_LIKE) &&
+            ((osJSonFlavor_ == "ESRIJSON" &&
+              ESRIJSONIsObject(pszStoredContent, poOpenInfo)) ||
+             (osJSonFlavor_ == "TopoJSON" &&
+              TopoJSONIsObject(pszStoredContent, poOpenInfo))))
         {
             pszGeoData_ = pszStoredContent;
             nGeoDataLen_ = strlen(pszGeoData_);
@@ -893,6 +894,11 @@ int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
                 OGRGeoJSONDriverStoreContent(pszSource, pszGeoData_);
                 pszGeoData_ = nullptr;
                 nGeoDataLen_ = 0;
+            }
+            else
+            {
+                OGRGeoJSONDriverStoreContent(
+                    pszSource, CPLStrdup(INVALID_CONTENT_FOR_JSON_LIKE));
             }
             return false;
         }

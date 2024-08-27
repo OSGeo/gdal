@@ -831,7 +831,8 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
             OGRGeoJSONDriverStealStoredContent(pszUnprefixedFilename);
         if (pszStoredContent)
         {
-            if (!GeoJSONSeqIsObject(pszStoredContent, poOpenInfo))
+            if (EQUAL(pszStoredContent, INVALID_CONTENT_FOR_JSON_LIKE) ||
+                !GeoJSONSeqIsObject(pszStoredContent, poOpenInfo))
             {
                 OGRGeoJSONDriverStoreContent(poOpenInfo->pszFilename,
                                              pszStoredContent);
