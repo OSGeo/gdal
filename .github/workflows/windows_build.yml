@@ -157,7 +157,7 @@ jobs:
             $env:PATH="$env:GITHUB_WORKSPACE;$env:PATH"
             $env:PROJ_INSTALL_DIR="$env:GITHUB_WORKSPACE"+"\install-proj"
             $env:CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=" + $env:PROJ_INSTALL_DIR
-            cmake -G $env:VS_VERSION -A $env:CMAKE_ARCHITECTURE .. $env:CMAKE_INSTALL_PREFIX -DPROJ_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_SHARED_LIBS=ON -DENABLE_CURL=OFF -DENABLE_TIFF=OFF -DBUILD_PROJSYNC=OFF
+            cmake -G $env:VS_VERSION -A $env:CMAKE_ARCHITECTURE .. $env:CMAKE_INSTALL_PREFIX -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBPROJ_SHARED=ON -DCMAKE_TOOLCHAIN_FILE=c:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_SHARED_LIBS=ON -DENABLE_CURL=OFF -DENABLE_TIFF=OFF -DBUILD_PROJSYNC=OFF
             exec { cmake --build . --config Release --target install }
             #
             cd $env:GITHUB_WORKSPACE
