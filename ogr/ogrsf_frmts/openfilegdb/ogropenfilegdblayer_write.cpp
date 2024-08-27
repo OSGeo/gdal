@@ -2265,6 +2265,7 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
             }
             continue;
         }
+        memset(&fields[idxFileGDB], 0, sizeof(OGRField));
         switch (m_poLyrTable->GetField(idxFileGDB)->GetType())
         {
             case FGFT_UNDEFINED:

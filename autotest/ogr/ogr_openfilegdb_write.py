@@ -4568,3 +4568,22 @@ def test_ogr_openfilegdb_repair_corrupted_header(tmp_vsimem):
         ds = ogr.Open(filename)
     assert gdal.GetLastErrorMsg() == ""
     assert ds.GetLayerCount() == 1
+
+
+###############################################################################
+# Test writing special value OGRUnsetMarker = -21121 in a int32 field
+
+
+def test_ogr_openfilegdb_write_OGRUnsetMarker(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "out.gdb")
+    with ogr.GetDriverByName("OpenFileGDB").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("i32", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["i32"] = -21121
+        lyr.CreateFeature(f)
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["i32"] == -21121
