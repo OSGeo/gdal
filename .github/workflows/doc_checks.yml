@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   docs:
-    name: Docs
+    name: Documentation checks
 
     runs-on: ubuntu-latest
     strategy:
@@ -40,6 +40,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=/usr \
             -DBUILD_APPS=OFF \
+            -DBUILD_TESTING=OFF \
             -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
             -DOGR_BUILD_OPTIONAL_DRIVERS=OFF
           cmake --build . -j$(nproc)
@@ -75,69 +76,14 @@ jobs:
       run: |
         mkdir -p doc/build
         doxygen Doxyfile
-    - name: HTML
+    - name: Generated RST files
       shell: bash -l {0}
       run: |
-        make html O="-D enable_redirects=1"
-      working-directory: ./doc
-    - name: PDF
-      shell: bash -l {0}
-      run: |
-        make latexpdf
+        make generated_rst_files
       working-directory: ./doc
     - name: Spelling
       shell: bash -l {0}
       run: |
+        sed -i '/html_extra_path/d' source/conf.py # avoid WARNING: html_extra_path entry '../build/html_extra' is placed inside outdir
         make spelling
       working-directory: ./doc
-    - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-      with:
-        name: PDF
-        path: doc/build/latex/gdal.pdf
-    - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-      with:
-        name: HTML
-        path: doc/build/html/*
-    #- uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-    #  with:
-    #    name: Misspelled
-    #    path: doc/build/spelling/output.txt
-    - name: Deploy ssh key
-      if: ${{ github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }}
-      shell: bash -l {0}
-      run: |
-        apt install -y ssh
-        mkdir -p /root/.ssh && echo "${{ secrets.SSH_KEY_DOCS }}" > /root/.ssh/id_rsa
-        chmod 700 /root/.ssh && chmod 600 /root/.ssh/id_rsa
-        ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
-        eval `ssh-agent -s`
-        ssh-add /root/.ssh/id_rsa
-    - name: Deploy to gdal.org
-      if: ${{ github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }}
-      shell: bash -l {0}
-      run: |
-        set -x
-        set -e
-        cd /__w/gdal
-        mv gdal/doc/build/html gdal-docs
-        rm gdal-docs/gdal.pdf
-        cp gdal/doc/build/latex/gdal.pdf gdal-docs
-        cp gdal/data/gdalicon.png gdal-docs # For GDAL autotest...
-        cp -r gdal/resources gdal-docs # Do not change this without changing swig/python/gdal-utils/osgeo_utils/gdal2tiles.py
-        #
-        git clone https://github.com/OSGeo/libgeotiff
-        cp -r libgeotiff/geotiff/html/proj_list gdal-docs/
-        #
-        cd gdal-docs
-        wget http://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
-        unzip -q /tmp/javadoc.zip
-        git init
-        git config user.email "proj4bot@proj4.bot"
-        git config user.name "GDAL Bot"
-        git remote add origin git@github.com:OSGeo/gdal-docs.git
-        git remote -v
-        echo "gdal.org" > CNAME
-        touch .nojekyll
-        git add -A
-        git commit -m "Update with OSGeo/gdal commit $GITHUB_SHA"
-        git push -f origin master
