@@ -43,7 +43,11 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["programs/options/*.rst", "api/python/modules.rst"]
+exclude_patterns = [
+    "substitutions.rst",
+    "programs/options/*.rst",
+    "api/python/modules.rst",
+]
 
 # Prevents double hyphen (--) to be replaced by Unicode long dash character
 # Cf https://stackoverflow.com/questions/15258831/how-to-handle-two-dashes-in-rest
