@@ -1139,15 +1139,38 @@ def test_vsicurl_GDAL_HTTP_HEADERS(server):
     filename = (
         "/vsicurl/http://localhost:%d/test_vsicurl_GDAL_HTTP_HEADERS.bin" % server.port
     )
-    gdal.SetPathSpecificOption(
-        filename,
-        "GDAL_HTTP_HEADERS",
-        r'Foo: Bar,"Baz: escaped backslash \\, escaped double-quote \", end of value",Another: Header',
-    )
-    with webserver.install_http_handler(handler):
-        statres = gdal.VSIStatL(filename)
-    gdal.SetPathSpecificOption(filename, "GDAL_HTTP_HEADERS", None)
-    assert statres.size == 3
+    try:
+        gdal.SetPathSpecificOption(
+            filename,
+            "GDAL_HTTP_HEADERS",
+            r'Foo: Bar,"Baz: escaped backslash \\, escaped double-quote \", end of value",Another: Header',
+        )
+        with webserver.install_http_handler(handler):
+            statres = gdal.VSIStatL(filename)
+        assert statres.size == 3
+
+        gdal.VSICurlClearCache()
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "HEAD",
+            "/test_vsicurl_GDAL_HTTP_HEADERS.bin",
+            200,
+            {"Content-Length": "3"},
+            expected_headers={
+                "Foo": "Bar",
+                "Baz": r'escaped backslash \, escaped double-quote ", end of value',
+                "Another": "Header",
+            },
+        )
+        with webserver.install_http_handler(handler):
+            statres = gdal.VSIStatL(
+                "/vsicurl_streaming/http://localhost:%d/test_vsicurl_GDAL_HTTP_HEADERS.bin"
+                % server.port
+            )
+        assert statres.size == 3
+
+    finally:
+        gdal.SetPathSpecificOption(filename, "GDAL_HTTP_HEADERS", None)
 
 
 ###############################################################################
