@@ -25,6 +25,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <array>
+
 #include "gdal_priv.h"
 #include "viewshed_types.h"
 
