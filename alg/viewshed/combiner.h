@@ -24,6 +24,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#pragma once
+
 #include "cumulative_viewshed.h"
 #include "viewshed_types.h"
 
@@ -52,7 +54,7 @@ class Combiner
   private:
     Cumulative::DatasetQueue &m_inputQueue;
     Cumulative::BufQueue &m_outputQueue;
-    DatasetPtr m_dataset;
+    DatasetPtr m_dataset{};
     size_t m_count{0};
 
     void sum(DatasetPtr srcDs);

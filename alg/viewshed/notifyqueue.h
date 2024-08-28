@@ -86,9 +86,9 @@ template <class T> class NotifyQueue
     }
 
   private:
-    std::queue<T> m_queue;
-    std::mutex m_mutex;
-    std::condition_variable m_cv;
+    std::queue<T> m_queue{};
+    std::mutex m_mutex{};
+    std::condition_variable m_cv{};
     bool m_done{false};
     bool m_stop{false};
 };

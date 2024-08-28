@@ -61,10 +61,10 @@ class Cumulative
 
     Window m_extent;
     Options m_opts;
-    ObserverQueue m_observerQueue;
-    DatasetQueue m_datasetQueue;
-    Buf32 m_finalBuf;
-    BufQueue m_bufQueue;
+    ObserverQueue m_observerQueue{};
+    DatasetQueue m_datasetQueue{};
+    Buf32 m_finalBuf{};
+    BufQueue m_bufQueue{};
 
     void runExecutor(const std::string &srcFilename, std::atomic<bool> &err,
                      std::atomic<int> &running);
