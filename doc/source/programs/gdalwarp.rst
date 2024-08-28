@@ -20,7 +20,7 @@ Synopsis
             [-s_srs <srs_def>] [-t_srs <srs_def>]
             [[-srcalpha]|[-nosrcalpha]]
             [-dstalpha] [-tr <xres> <yres>|square] [-ts <width> <height>]
-            [-te <xmin> <ymin> <max> <ymaX]
+            [-te <xmin> <ymin> <xmax> <ymax]
             [-te_srs <srs_def>]
             [-r near|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum]
             [-ot Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}]
