@@ -6,6 +6,7 @@ GDAL
 
 .. toctree::
     :maxdepth: 2
+    :includehidden:
 
     download
     programs/index
