@@ -25,7 +25,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <future>
+#include <algorithm>
 
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"

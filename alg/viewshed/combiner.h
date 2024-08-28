@@ -43,6 +43,8 @@ class Combiner
     {
     }
 
+    // Allows initialization in a vector of Combiners.
+    // cppcheck-suppress missingMemberCopy
     Combiner(const Combiner &src)
         : m_inputQueue(src.m_inputQueue), m_outputQueue(src.m_outputQueue)
     {

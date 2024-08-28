@@ -40,7 +40,7 @@ namespace viewshed
 class Cumulative
 {
   public:
-    CPL_DLL Cumulative(const Options &opts);
+    CPL_DLL explicit Cumulative(const Options &opts);
     CPL_DLL bool run(const std::string &srcFilename,
                      GDALProgressFunc pfnProgress = GDALDummyProgress,
                      void *pProgressArg = nullptr);

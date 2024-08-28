@@ -26,6 +26,8 @@
 
 const int NUM_JOBS = 2;
 
+#include <algorithm>
+#include <limits>
 #include <thread>
 
 #include "cpl_worker_thread_pool.h"
