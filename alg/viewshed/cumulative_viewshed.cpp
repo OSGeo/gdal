@@ -106,12 +106,12 @@ bool Cumulative::run(const std::string &srcFilename,
     // Wait for finalBuf to be fully filled. Then scale the output data.
     sum.join();
     scaleOutput();
-    writeOutput(*pSrcBand);
+    bool ok = writeOutput(*pSrcBand);
 
     executorPool.WaitCompletion();
     (void)pfnProgress;
     (void)pProgressArg;
-    return true;
+    return ok;
 }
 
 void Cumulative::runExecutor(const std::string &srcFilename,
@@ -175,13 +175,19 @@ void Cumulative::scaleOutput()
         val = static_cast<uint32_t>(std::floor(factor * val));
 }
 
-void Cumulative::writeOutput(GDALRasterBand &srcBand)
+bool Cumulative::writeOutput(GDALRasterBand &srcBand)
 {
     DatasetPtr pDstDS = createOutputDataset(srcBand, m_opts, m_extent);
     GDALRasterBand *pDstBand = pDstDS->GetRasterBand(1);
-    (void)pDstBand->RasterIO(GF_Write, 0, 0, m_extent.xSize(), m_extent.ySize(),
-                             m_finalBuf.data(), m_extent.xSize(),
-                             m_extent.ySize(), GDT_UInt32, 0, 0, nullptr);
+    if (pDstBand->RasterIO(GF_Write, 0, 0, m_extent.xSize(), m_extent.ySize(),
+                           m_finalBuf.data(), m_extent.xSize(),
+                           m_extent.ySize(), GDT_UInt32, 0, 0, nullptr))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to write to output file.");
+        return false;
+    }
+    return true;
 }
 
 }  // namespace viewshed
