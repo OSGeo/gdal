@@ -748,9 +748,7 @@ CPLErr GDALDataset::BlockBasedFlushCache(bool bAtClosing)
         {
             for (int iBand = 0; iBand < nBands; ++iBand)
             {
-                GDALRasterBand *poBand = GetRasterBand(iBand + 1);
-
-                const CPLErr eErr = poBand->FlushBlock(iX, iY);
+                const CPLErr eErr = papoBands[iBand]->FlushBlock(iX, iY);
 
                 if (eErr != CE_None)
                     return CE_Failure;

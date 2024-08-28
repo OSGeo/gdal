@@ -4089,7 +4089,7 @@ CPLErr GDALDataset::BlockBasedRasterIO(
                 {
                     GDALRasterBand *poBand = GetRasterBand(panBandMap[iBand]);
 
-                    eErr = poBand->GDALRasterBand::IRasterIO(
+                    eErr = poBand->IRasterIO(
                         eRWFlag, nChunkXOff, nChunkYOff, nChunkXSize,
                         nChunkYSize,
                         pabyChunkData +

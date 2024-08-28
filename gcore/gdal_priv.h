@@ -579,7 +579,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
               GSpacing nLineSpace, GSpacing nBandSpace,
               GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
-    CPLErr
+    /* This method should only be be overloaded by GDALProxyDataset */
+    virtual CPLErr
     BlockBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                        int nYSize, void *pData, int nBufXSize, int nBufYSize,
                        GDALDataType eBufType, int nBandCount,
@@ -1750,13 +1751,19 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     CPLErr WriteBlock(int nXBlockOff, int nYBlockOff,
                       void *pImage) CPL_WARN_UNUSED_RESULT;
 
-    GDALRasterBlock *
+    // This method should only be overloaded by GDALProxyRasterBand
+    virtual GDALRasterBlock *
     GetLockedBlockRef(int nXBlockOff, int nYBlockOff,
                       int bJustInitialize = FALSE) CPL_WARN_UNUSED_RESULT;
-    GDALRasterBlock *TryGetLockedBlockRef(int nXBlockOff, int nYBlockYOff)
-        CPL_WARN_UNUSED_RESULT;
-    CPLErr FlushBlock(int nXBlockOff, int nYBlockOff,
-                      int bWriteDirtyBlock = TRUE);
+
+    // This method should only be overloaded by GDALProxyRasterBand
+    virtual GDALRasterBlock *
+    TryGetLockedBlockRef(int nXBlockOff,
+                         int nYBlockYOff) CPL_WARN_UNUSED_RESULT;
+
+    // This method should only be overloaded by GDALProxyRasterBand
+    virtual CPLErr FlushBlock(int nXBlockOff, int nYBlockOff,
+                              int bWriteDirtyBlock = TRUE);
 
     unsigned char *
     GetIndexColorTranslationTo(/* const */ GDALRasterBand *poReferenceBand,
