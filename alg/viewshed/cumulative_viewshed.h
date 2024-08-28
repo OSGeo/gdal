@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <vector>
 
 #include "notifyqueue.h"
@@ -59,7 +60,7 @@ class Cumulative
     using DatasetQueue = NotifyQueue<DatasetPtr>;
     using BufQueue = NotifyQueue<Buf8>;
 
-    Window m_extent;
+    Window m_extent{};
     Options m_opts;
     ObserverQueue m_observerQueue{};
     DatasetQueue m_datasetQueue{};
