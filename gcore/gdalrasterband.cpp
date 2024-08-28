@@ -1332,7 +1332,7 @@ CPLErr CPL_STDCALL GDALWriteBlock(GDALRasterBandH hBand, int nXOff, int nYOff,
  * @since GDAL 2.2
  */
 CPLErr GDALRasterBand::GetActualBlockSize(int nXBlockOff, int nYBlockOff,
-                                          int *pnXValid, int *pnYValid)
+                                          int *pnXValid, int *pnYValid) const
 {
     if (nXBlockOff < 0 || nBlockXSize == 0 ||
         nXBlockOff >= DIV_ROUND_UP(nRasterXSize, nBlockXSize) ||
@@ -1434,7 +1434,7 @@ GDALRasterBand::GetSuggestedBlockAccessPattern() const
  * @return the data type of pixels for this band.
  */
 
-GDALDataType GDALRasterBand::GetRasterDataType()
+GDALDataType GDALRasterBand::GetRasterDataType() const
 
 {
     return eDataType;
@@ -1485,7 +1485,7 @@ GDALDataType CPL_STDCALL GDALGetRasterDataType(GDALRasterBandH hBand)
  * @param pnYSize integer to put the Y block size into or NULL.
  */
 
-void GDALRasterBand::GetBlockSize(int *pnXSize, int *pnYSize)
+void GDALRasterBand::GetBlockSize(int *pnXSize, int *pnYSize) const
 
 {
     if (nBlockXSize <= 0 || nBlockYSize <= 0)
@@ -3732,7 +3732,7 @@ CPLErr CPL_STDCALL GDALSetRasterUnitType(GDALRasterBandH hBand,
  * @return the width in pixels of this band.
  */
 
-int GDALRasterBand::GetXSize()
+int GDALRasterBand::GetXSize() const
 
 {
     return nRasterXSize;
@@ -3769,7 +3769,7 @@ int CPL_STDCALL GDALGetRasterBandXSize(GDALRasterBandH hBand)
  * @return the height in pixels of this band.
  */
 
-int GDALRasterBand::GetYSize()
+int GDALRasterBand::GetYSize() const
 
 {
     return nRasterYSize;
@@ -3811,7 +3811,7 @@ int CPL_STDCALL GDALGetRasterBandYSize(GDALRasterBandH hBand)
  * @return band number (1+) or 0 if the band number isn't known.
  */
 
-int GDALRasterBand::GetBand()
+int GDALRasterBand::GetBand() const
 
 {
     return nBand;
@@ -3852,7 +3852,7 @@ int CPL_STDCALL GDALGetBandNumber(GDALRasterBandH hBand)
  * NULL if this cannot be determined.
  */
 
-GDALDataset *GDALRasterBand::GetDataset()
+GDALDataset *GDALRasterBand::GetDataset() const
 
 {
     return poDS;
@@ -8437,7 +8437,7 @@ void GDALRasterBand::IncDirtyBlocks(int nInc)
  */
 
 void GDALRasterBand::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
-                                 const char *fmt, ...)
+                                 const char *fmt, ...) const
 {
     va_list args;
 

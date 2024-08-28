@@ -1583,6 +1583,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
             m_poBandRef = bOwned ? nullptr : poBand;
         }
 
+        const GDALRasterBand *get() const
+        {
+            return static_cast<const GDALRasterBand *>(*this);
+        }
+
         GDALRasterBand *get()
         {
             return static_cast<GDALRasterBand *>(*this);
@@ -1591,6 +1596,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
         bool IsOwned() const
         {
             return m_poBandOwned != nullptr;
+        }
+
+        operator const GDALRasterBand *() const
+        {
+            return m_poBandOwned ? m_poBandOwned.get() : m_poBandRef;
         }
 
         operator GDALRasterBand *()
@@ -1680,15 +1690,15 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     ~GDALRasterBand() override;
 
-    int GetXSize();
-    int GetYSize();
-    int GetBand();
-    GDALDataset *GetDataset();
+    int GetXSize() const;
+    int GetYSize() const;
+    int GetBand() const;
+    GDALDataset *GetDataset() const;
 
-    GDALDataType GetRasterDataType(void);
-    void GetBlockSize(int *pnXSize, int *pnYSize);
+    GDALDataType GetRasterDataType(void) const;
+    void GetBlockSize(int *pnXSize, int *pnYSize) const;
     CPLErr GetActualBlockSize(int nXBlockOff, int nYBlockOff, int *pnXValid,
-                              int *pnYValid);
+                              int *pnYValid) const;
 
     virtual GDALSuggestedBlockAccessPattern
     GetSuggestedBlockAccessPattern() const;
@@ -1870,8 +1880,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                       double *pdfImagValue = nullptr) const;
 
 #ifndef DOXYGEN_XML
-    void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)
-        CPL_PRINT_FUNC_FORMAT(4, 5);
+    void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
+                     ...) const CPL_PRINT_FUNC_FORMAT(4, 5);
 #endif
 
     /** Convert a GDALRasterBand* to a GDALRasterBandH.

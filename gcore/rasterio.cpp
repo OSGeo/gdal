@@ -454,6 +454,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     nXOff <= nLBlockX * nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&
                     (nXOff + nXSize >= nXRight ||
+                     // cppcheck-suppress knownConditionTrueFalse
                      (nXOff + nXSize == GetXSize() && nXRight > GetXSize())) &&
                     (nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize ||
                      (nYOff + nYSize == GetYSize() &&
