@@ -211,6 +211,8 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
                               double *pdfRealValue,
                               double *pdfImagValue) const override;
 
+    void EnablePixelTypeSignedByteWarning(bool b) override;
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALProxyRasterBand)
 };

@@ -518,6 +518,16 @@ RB_PROXY_METHOD_WITH_RET(
      double *pdfRealValue, double *pdfImagValue = nullptr) const,
     (dfPixel, dfLine, eInterpolation, pdfRealValue, pdfImagValue))
 
+void GDALProxyRasterBand::EnablePixelTypeSignedByteWarning(bool b)
+{
+    GDALRasterBand *poSrcBand = RefUnderlyingRasterBand();
+    if (poSrcBand)
+    {
+        poSrcBand->EnablePixelTypeSignedByteWarning(b);
+        UnrefUnderlyingRasterBand(poSrcBand);
+    }
+}
+
 /************************************************************************/
 /*                 UnrefUnderlyingRasterBand()                        */
 /************************************************************************/
