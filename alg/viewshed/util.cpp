@@ -28,6 +28,7 @@
 #include <array>
 
 #include "gdal_priv.h"
+#include "util.h"
 #include "viewshed_types.h"
 
 namespace gdal
