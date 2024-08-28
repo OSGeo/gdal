@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include <array>
 #include <mutex>
 
 #include "gdal_priv.h"
