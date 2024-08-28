@@ -40,6 +40,7 @@ add_library(
   gdalrelationship.cpp
   gdalsubdatasetinfo.cpp
   gdalorienteddataset.cpp
+  gdalthreadsafedataset.cpp
   overview.cpp
   rasterio.cpp
   rawdataset.cpp

@@ -3531,18 +3531,29 @@ static GDALDataset *GetSharedDS(const char *pszFilename,
  *     <li>GDAL_OF_VECTOR for vector drivers,</li>
  *     <li>GDAL_OF_GNM for Geographic Network Model drivers.</li>
  *    </ul>
- *    GDAL_OF_RASTER and GDAL_OF_MULTIDIM_RASTER are generally mutually
+ * GDAL_OF_RASTER and GDAL_OF_MULTIDIM_RASTER are generally mutually
  * exclusive. If none of the value is specified, GDAL_OF_RASTER | GDAL_OF_VECTOR
- * | GDAL_OF_GNM is implied.</li> <li>Access mode: GDAL_OF_READONLY
- * (exclusive)or GDAL_OF_UPDATE.</li> <li>Shared mode: GDAL_OF_SHARED. If set,
+ * | GDAL_OF_GNM is implied.
+ * </li>
+ * <li>Access mode: GDAL_OF_READONLY (exclusive)or GDAL_OF_UPDATE.
+ * </li>
+ * <li>Shared mode: GDAL_OF_SHARED. If set,
  * it allows the sharing of GDALDataset handles for a dataset with other callers
  * that have set GDAL_OF_SHARED. In particular, GDALOpenEx() will first consult
  * its list of currently open and shared GDALDataset's, and if the
  * GetDescription() name for one exactly matches the pszFilename passed to
  * GDALOpenEx() it will be referenced and returned, if GDALOpenEx() is called
- * from the same thread.</li> <li>Verbose error: GDAL_OF_VERBOSE_ERROR. If set,
+ * from the same thread.
+ * </li>
+ * <li>Thread safe mode: GDAL_OF_THREAD_SAFE (added in 3.10).
+ * This must be use in combination with GDAL_OF_RASTER, and is mutually
+ * exclusive with GDAL_OF_UPDATE, GDAL_OF_VECTOR, GDAL_OF_MULTIDIM_RASTER or
+ * GDAL_OF_GNM.
+ * </li>
+ * <li>Verbose error: GDAL_OF_VERBOSE_ERROR. If set,
  * a failed attempt to open the file will lead to an error message to be
- * reported.</li>
+ * reported.
+ * </li>
  * </ul>
  *
  * @param papszAllowedDrivers NULL to consider all candidate drivers, or a NULL
@@ -3580,6 +3591,33 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                                     const char *const *papszSiblingFiles)
 {
     VALIDATE_POINTER1(pszFilename, "GDALOpen", nullptr);
+
+    // Do some sanity checks on incompatible flags with thread-safe mode.
+    if ((nOpenFlags & GDAL_OF_THREAD_SAFE) != 0)
+    {
+        const struct
+        {
+            int nFlag;
+            const char *pszFlagName;
+        } asFlags[] = {
+            {GDAL_OF_UPDATE, "GDAL_OF_UPDATE"},
+            {GDAL_OF_VECTOR, "GDAL_OF_VECTOR"},
+            {GDAL_OF_MULTIDIM_RASTER, "GDAL_OF_MULTIDIM_RASTER"},
+            {GDAL_OF_GNM, "GDAL_OF_GNM"},
+        };
+
+        for (const auto &asFlag : asFlags)
+        {
+            if ((nOpenFlags & asFlag.nFlag) != 0)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "GDAL_OF_THREAD_SAFE and %s are mutually "
+                         "exclusive",
+                         asFlag.pszFlagName);
+                return nullptr;
+            }
+        }
+    }
 
     // If no driver kind is specified, assume all are to be probed.
     if ((nOpenFlags & GDAL_OF_KIND_MASK) == 0)
@@ -3872,7 +3910,12 @@ retry:
                 }
                 else
                 {
-                    if (!(nOpenFlags & GDAL_OF_INTERNAL))
+                    // For thread-safe opening, currently poDS is what will be
+                    // the "master" dataset owned by the thread-safe dataset
+                    // returned to the user, hence we do not register it as a
+                    // visible one in the open dataset list, or mark it as shared.
+                    if (!(nOpenFlags & GDAL_OF_INTERNAL) &&
+                        !(nOpenFlags & GDAL_OF_THREAD_SAFE))
                     {
                         poDS->AddToDatasetOpenList();
                     }
@@ -3881,7 +3924,8 @@ retry:
                         CSLDestroy(poDS->papszOpenOptions);
                         poDS->papszOpenOptions = CSLDuplicate(papszOpenOptions);
                         poDS->nOpenFlags = nOpenFlags;
-                        poDS->MarkAsShared();
+                        if (!(nOpenFlags & GDAL_OF_THREAD_SAFE))
+                            poDS->MarkAsShared();
                     }
                 }
             }
@@ -3895,8 +3939,11 @@ retry:
                              "and description (%s)",
                              pszFilename, poDS->GetDescription());
                 }
-                else
+                else if (!(nOpenFlags & GDAL_OF_THREAD_SAFE))
                 {
+                    // For thread-safe opening, currently poDS is what will be
+                    // the "master" dataset owned by the thread-safe dataset
+                    // returned to the user, hence we do not or mark it as shared.
                     poDS->MarkAsShared();
                 }
             }
@@ -3913,6 +3960,29 @@ retry:
                 poDS = GDALDataset::FromHandle(hDS);
             }
 #endif
+
+            if (poDS)
+            {
+                poDS->m_bCanBeReopened = true;
+
+                if ((nOpenFlags & GDAL_OF_THREAD_SAFE) != 0)
+                {
+                    poDS =
+                        GDALGetThreadSafeDataset(
+                            std::unique_ptr<GDALDataset>(poDS), GDAL_OF_RASTER)
+                            .release();
+                    if (poDS)
+                    {
+                        poDS->m_bCanBeReopened = true;
+                        poDS->poDriver = poDriver;
+                        poDS->nOpenFlags = nOpenFlags;
+                        if (!(nOpenFlags & GDAL_OF_INTERNAL))
+                            poDS->AddToDatasetOpenList();
+                        if (nOpenFlags & GDAL_OF_SHARED)
+                            poDS->MarkAsShared();
+                    }
+                }
+            }
 
             return poDS;
         }
@@ -8180,7 +8250,8 @@ bool GDALDataset::SetQueryLoggerFunc(CPL_UNUSED GDALQueryLoggerFunc callback,
 
 int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 {
-    if (m_poPrivate == nullptr)
+    if (m_poPrivate == nullptr ||
+        IsThreadSafe(GDAL_OF_RASTER | (nOpenFlags & GDAL_OF_UPDATE)))
         return FALSE;
 
     if (m_poPrivate->poParentDataset)
@@ -10136,3 +10207,75 @@ CPLErr GDALDatasetReadCompressedData(GDALDatasetH hDS, const char *pszFormat,
         pszFormat, nXOff, nYOff, nXSize, nYSize, nBandCount, panBandList,
         ppBuffer, pnBufferSize, ppszDetailedFormat);
 }
+
+/************************************************************************/
+/*                           CanBeCloned()                              */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+
+/** This method is called by GDALThreadSafeDataset::Create() to determine if
+ * it is possible to create a thread-safe wrapper for a dataset, which involves
+ * the ability to Clone() it.
+ *
+ * Implementations of this method must be thread-safe.
+ *
+ * @param nScopeFlags Combination of GDAL_OF_RASTER, GDAL_OF_VECTOR, etc. flags,
+ *                    expressing the intended use for thread-safety.
+ *                    Currently, the only valid scope is in the base
+ *                    implementation is GDAL_OF_RASTER.
+ * @param bCanShareState Determines if cloned datasets are allowed to share
+ *                       state with the dataset they have been cloned from.
+ *                       If set to true, the dataset from which they have been
+ *                       cloned from must remain opened during the lifetime of
+ *                       its clones.
+ * @return true if the Clone() method is expecte to succeed with the same values
+ *         of nScopeFlags and bCanShareState.
+ */
+bool GDALDataset::CanBeCloned(int nScopeFlags,
+                              [[maybe_unused]] bool bCanShareState) const
+{
+    return m_bCanBeReopened && nScopeFlags == GDAL_OF_RASTER;
+}
+
+//! @endcond
+
+/************************************************************************/
+/*                               Clone()                                */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+
+/** This method "clones" the current dataset, that is it returns a new instance
+ * that is opened on the same underlying "file".
+ *
+ * The base implementation uses GDALDataset::Open() to re-open the dataset.
+ * The MEM driver has a specialized implementation that returns a new instance,
+ * but which shares the same memory buffer as this.
+ *
+ * Implementations of this method must be thread-safe.
+ *
+ * @param nScopeFlags Combination of GDAL_OF_RASTER, GDAL_OF_VECTOR, etc. flags,
+ *                    expressing the intended use for thread-safety.
+ *                    Currently, the only valid scope is in the base
+ *                    implementation is GDAL_OF_RASTER.
+ * @param bCanShareState Determines if cloned datasets are allowed to share
+ *                       state with the dataset they have been cloned from.
+ *                       If set to true, the dataset from which they have been
+ *                       cloned from must remain opened during the lifetime of
+ *                       its clones.
+ * @return a new instance, or nullptr in case of error.
+ */
+std::unique_ptr<GDALDataset>
+GDALDataset::Clone(int nScopeFlags, [[maybe_unused]] bool bCanShareState) const
+{
+    CPLStringList aosAllowedDrivers;
+    if (poDriver)
+        aosAllowedDrivers.AddString(poDriver->GetDescription());
+    return std::unique_ptr<GDALDataset>(GDALDataset::Open(
+        GetDescription(),
+        nScopeFlags | GDAL_OF_INTERNAL | GDAL_OF_VERBOSE_ERROR,
+        aosAllowedDrivers.List(), papszOpenOptions));
+}
+
+//! @endcond

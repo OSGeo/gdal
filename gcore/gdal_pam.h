@@ -269,6 +269,8 @@ struct GDALRasterBandPamInfo
 
     bool bOffsetSet = false;
     bool bScaleSet = false;
+
+    void CopyFrom(const GDALRasterBandPamInfo &sOther);
 };
 
 //! @endcond

@@ -141,9 +141,6 @@ class CPL_DLL GDALMultiDomainMetadata
     {
         Clear();
     }
-
-  private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALMultiDomainMetadata)
 };
 
 //! @endcond
@@ -620,6 +617,15 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     void ShareLockWithParentDataset(GDALDataset *poParentDataset);
 
+    bool m_bCanBeReopened = false;
+
+    virtual bool CanBeCloned(int nScopeFlags, bool bCanShareState) const;
+
+    friend class GDALThreadSafeDataset;
+    friend class MEMDataset;
+    virtual std::unique_ptr<GDALDataset> Clone(int nScopeFlags,
+                                               bool bCanShareState) const;
+
     //! @endcond
 
     void CleanupPostFileClosing();
@@ -831,7 +837,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     /** Return MarkSuppressOnClose flag.
     * @return MarkSuppressOnClose flag.
     */
-    bool IsMarkedSuppressOnClose()
+    bool IsMarkedSuppressOnClose() const
     {
         return bSuppressOnClose;
     }
@@ -843,6 +849,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     {
         return papszOpenOptions;
     }
+
+    bool IsThreadSafe(int nScopeFlags) const;
 
 #ifndef DOXYGEN_SKIP
     /** Return open options.
@@ -4480,6 +4488,12 @@ void CPL_DLL GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg *psDestArg,
                                       GDALRasterIOExtraArg *psSrcArg);
 
 CPL_C_END
+
+std::unique_ptr<GDALDataset> CPL_DLL
+GDALGetThreadSafeDataset(std::unique_ptr<GDALDataset> poDS, int nScopeFlags);
+
+GDALDataset CPL_DLL *GDALGetThreadSafeDataset(GDALDataset *poDS,
+                                              int nScopeFlags);
 
 void GDALNullifyOpenDatasetsList();
 CPLMutex **GDALGetphDMMutex();

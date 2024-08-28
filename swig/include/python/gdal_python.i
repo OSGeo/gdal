@@ -1614,6 +1614,16 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return get(value)
 %}
 
+%feature("pythonappend") GetThreadSafeDataset %{
+    if val:
+        val._parent_ds = self
+
+        import weakref
+        if not hasattr(self, '_child_references'):
+            self._child_references = weakref.WeakSet()
+        self._child_references.add(val)
+%}
+
 %feature("pythonprepend") Close %{
     self._invalidate_children()
 %}

@@ -2050,6 +2050,7 @@ nRecurseDepth
 nRefCount
 nReqOrder
 nSampleStep
+nScopeFlags
 nSecond
 nSize
 nSrcBufferAllocSize

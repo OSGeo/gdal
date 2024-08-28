@@ -295,6 +295,10 @@ public:
     return (GDALRasterBandShadow*) GDALGetOverview( self, i );
   }
 
+  GDALRasterBandShadow *GetSampleOverview(GUIntBig nDesiredSamples) {
+    return (GDALRasterBandShadow*) GDALGetRasterSampleOverview( self, nDesiredSamples );
+  }
+
 #if defined (SWIGJAVA)
   int Checksum( int xoff, int yoff, int xsize, int ysize) {
     return GDALChecksumImage( self, xoff, yoff, xsize, ysize );
