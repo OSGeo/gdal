@@ -515,3 +515,25 @@ def test_ogr_geojsonseq_force_opening(tmp_vsimem):
 
     drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["GeoJSONSeq"])
     assert drv.GetDescription() == "GeoJSONSeq"
+
+
+###############################################################################
+# Test WRITE_BBOX option
+
+
+def test_ogr_geojsonseq_WRITE_BBOX(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.geojsonl")
+    ds = gdal.GetDriverByName("GeoJSONSeq").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", options=["WRITE_BBOX=YES"])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(2 49,3 50)"))
+    lyr.CreateFeature(f)
+    ds.Close()
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    assert b'"bbox": [ 2.0, 49.0, 3.0, 50.0 ]' in data

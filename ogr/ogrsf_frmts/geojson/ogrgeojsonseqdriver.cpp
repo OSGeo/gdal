@@ -349,6 +349,8 @@ OGRGeoJSONSeqLayer::OGRGeoJSONSeqLayer(
         OGRSpatialReference::GetWGS84SRS());
     m_poCT = std::move(poCT);
 
+    m_oWriteOptions.bWriteBBOX =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"));
     m_oWriteOptions.SetRFC7946Settings();
     m_oWriteOptions.SetIDOptions(papszOptions);
 
@@ -1056,6 +1058,9 @@ void RegisterOGRGeoJSONSeq()
         "    <Value>String</Value>"
         "    <Value>Integer</Value>"
         "  </Option>"
+        "  <Option name='WRITE_BBOX' type='boolean' description='whether to "
+        "write a bbox property with the bounding box of each geometry' "
+        "default='NO'/>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
