@@ -47,6 +47,13 @@ command
 
 Additional information is available about :ref:`build_requirements` and :ref:`building_from_source`.
 
+Maintenance policy
+..................
+
+The GDAL upstream team only maintains the branch on which the latest release has
+been done, with bugfixes releases issued roughly every 2 months.
+So, for example, during the development phase of GDAL 3.10.0, GDAL 3.9.x bugfixes
+releases are done based on the release/3.9 branch, but not older branches (GDAL 3.8.x or older).
 
 .. _binaries:
 
