@@ -330,7 +330,7 @@ def test_gdal_viewshed_missing_ox(gdal_viewshed_path):
     _, err = gdaltest.runexternal_out_and_err(
         gdal_viewshed_path + " /dev/null /dev/null"
     )
-    assert "-ox: required" in err
+    assert "Option -ox is required." in err
 
 
 ###############################################################################
@@ -341,7 +341,7 @@ def test_gdal_viewshed_missing_oy(gdal_viewshed_path):
     _, err = gdaltest.runexternal_out_and_err(
         gdal_viewshed_path + " -ox 0 /dev/null /dev/null"
     )
-    assert "-oy: required" in err
+    assert "Option -oy is required." in err
 
 
 ###############################################################################
