@@ -84,7 +84,7 @@
 #include <string>
 
 #if __cplusplus >= 202002L
-#include <type_traits>  // For std::endian
+#include <bit>  // For std::endian
 #endif
 
 #include "cpl_config.h"
