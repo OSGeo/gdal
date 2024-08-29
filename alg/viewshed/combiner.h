@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "cumulative_viewshed.h"
+#include "cumulative.h"
 #include "viewshed_types.h"
 
 namespace gdal

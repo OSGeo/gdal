@@ -31,7 +31,7 @@
 #include "gdal.h"
 #include "gdalargumentparser.h"
 
-#include "viewshed/cumulative_viewshed.h"
+#include "viewshed/cumulative.h"
 #include "viewshed/viewshed.h"
 
 namespace gdal

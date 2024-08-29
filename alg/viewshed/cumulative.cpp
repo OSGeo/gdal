@@ -33,7 +33,7 @@ const int NUM_JOBS = 3;
 #include "cpl_worker_thread_pool.h"
 
 #include "combiner.h"
-#include "cumulative_viewshed.h"
+#include "cumulative.h"
 #include "notifyqueue.h"
 #include "util.h"
 #include "viewshed_executor.h"
