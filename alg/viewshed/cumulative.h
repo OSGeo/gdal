@@ -54,18 +54,16 @@ class Cumulative
         int y;
     };
 
-    using Buf8 = std::vector<uint8_t>;
     using Buf32 = std::vector<uint32_t>;
     using ObserverQueue = NotifyQueue<Location>;
     using DatasetQueue = NotifyQueue<DatasetPtr>;
-    using BufQueue = NotifyQueue<Buf8>;
 
     Window m_extent{};
     Options m_opts;
     ObserverQueue m_observerQueue{};
     DatasetQueue m_datasetQueue{};
+    DatasetQueue m_rollupQueue{};
     Buf32 m_finalBuf{};
-    BufQueue m_bufQueue{};
 
     void runExecutor(const std::string &srcFilename, std::atomic<bool> &err,
                      std::atomic<int> &running);

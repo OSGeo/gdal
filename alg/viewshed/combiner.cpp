@@ -32,6 +32,7 @@ namespace gdal
 namespace viewshed
 {
 
+// Read viewshed executor output and sum it up in our owned memory raster.
 void Combiner::run()
 {
     DatasetPtr pTempDataset;
@@ -47,6 +48,7 @@ void Combiner::run()
     queueOutputBuffer();
 }
 
+// Add the values of the source dataset to those of the owned dataset.
 void Combiner::sum(DatasetPtr src)
 {
     if (!m_dataset)
@@ -63,25 +65,18 @@ void Combiner::sum(DatasetPtr src)
     uint8_t *srcP = static_cast<uint8_t *>(src->GetInternalHandle("MEMORY1"));
     for (size_t i = 0; i <= size; ++i)
         *dstP++ += *srcP++;
+    // If we've seen 255 inputs, queue our raster for output and rollup since we might overflow
+    // otherwise.
     if (++m_count == 255)
         queueOutputBuffer();
 }
 
+// Queue the owned buffer as for output and rese
 void Combiner::queueOutputBuffer()
 {
-    if (!m_dataset)
-        return;
-
-    uint8_t *srcP =
-        static_cast<uint8_t *>(m_dataset->GetInternalHandle("MEMORY1"));
-
-    GDALRasterBand *srcBand = m_dataset->GetRasterBand(1);
-    size_t size = bandSize(*srcBand);
-
-    Cumulative::Buf8 output(srcP, srcP + size);
-    m_dataset.reset();
+    if (m_dataset)
+        m_outputQueue.push(std::move(m_dataset));
     m_count = 0;
-    m_outputQueue.push(std::move(output));
 }
 
 }  // namespace viewshed

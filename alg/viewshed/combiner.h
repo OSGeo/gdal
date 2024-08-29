@@ -38,7 +38,7 @@ class Combiner
 {
   public:
     Combiner(Cumulative::DatasetQueue &inputQueue,
-             Cumulative::BufQueue &outputQueue)
+             Cumulative::DatasetQueue &outputQueue)
         : m_inputQueue(inputQueue), m_outputQueue(outputQueue)
     {
     }
@@ -55,7 +55,7 @@ class Combiner
 
   private:
     Cumulative::DatasetQueue &m_inputQueue;
-    Cumulative::BufQueue &m_outputQueue;
+    Cumulative::DatasetQueue &m_outputQueue;
     DatasetPtr m_dataset{};
     size_t m_count{0};
 

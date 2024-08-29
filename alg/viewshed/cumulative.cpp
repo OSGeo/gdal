@@ -98,23 +98,26 @@ bool Cumulative::run(const std::string &srcFilename,
     // Run combiners that create 8-bit sums of executor jobs.
     CPLWorkerThreadPool combinerPool(numThreads);
     std::vector<Combiner> combiners(numThreads,
-                                    Combiner(m_datasetQueue, m_bufQueue));
+                                    Combiner(m_datasetQueue, m_rollupQueue));
     for (Combiner &c : combiners)
         combinerPool.SubmitJob([&c] { c.run(); });
 
-    // Run 32-bit rollup job.
+    // Run 32-bit rollup job that combines the 8-bit results from the combiners.
     std::thread sum([this] { rollupRasters(); });
 
-    // When the combiner jobs are done, all the data is in the buf queue.
+    // When the combiner jobs are done, all the data is in the buf queue for rollup.
     combinerPool.WaitCompletion();
     if (m_datasetQueue.isStopped())
         return false;
-    m_bufQueue.done();
+    m_rollupQueue.done();
 
     // Wait for finalBuf to be fully filled. Then scale the output data.
     sum.join();
+    // The executors should exit naturally, but we wait here so that we don't outrun their
+    // completion and exit with outstanding threads.
     executorPool.WaitCompletion();
 
+    // Scale the data so that we can write an 8-bit raster output.
     scaleOutput();
     if (!writeOutput(createOutputDataset(*pSrcBand, m_opts, m_extent)))
     {
@@ -168,14 +171,20 @@ void Cumulative::runExecutor(const std::string &srcFilename,
 // Add 8-bit rasters into the 32-bit raster buffer.
 void Cumulative::rollupRasters()
 {
-    Buf8 buf;
+    DatasetPtr pDS;
 
     m_finalBuf.resize(m_extent.size());
-    while (m_bufQueue.pop(buf))
-        for (size_t i = 0; i < m_finalBuf.size(); ++i)
-            m_finalBuf[i] += buf[i];
+    while (m_rollupQueue.pop(pDS))
+    {
+        uint8_t *srcP =
+            static_cast<uint8_t *>(pDS->GetInternalHandle("MEMORY1"));
+        for (size_t i = 0; i < m_extent.size(); ++i)
+            m_finalBuf[i] += srcP[i];
+    }
 }
 
+// Scale the output so that it's fully spread in 8 bits. Perhaps this shouldn't happen if
+// the max is less than 255?
 void Cumulative::scaleOutput()
 {
     uint32_t m = 0;  // This gathers all the bits set.
