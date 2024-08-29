@@ -7,6 +7,8 @@ namespace gdal
 namespace viewshed
 {
 
+size_t bandSize(GDALRasterBand &band);
+
 DatasetPtr createOutputDataset(GDALRasterBand &srcBand, const Options &opts,
                                const Window &extent);
 

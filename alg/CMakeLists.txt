@@ -37,7 +37,7 @@ add_library(
   thinplatespline.cpp
   gdal_simplesurf.cpp
   viewshed/viewshed.cpp
-  viewshed/cumulative_viewshed.cpp
+  viewshed/cumulative.cpp
   viewshed/combiner.cpp
   viewshed/util.cpp
   viewshed/viewshed_executor.cpp

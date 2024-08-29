@@ -36,8 +36,20 @@ namespace gdal
 namespace viewshed
 {
 
+/// Get the band size
+///
+/// @param  band Raster band
+/// @return  The raster band size.
+size_t bandSize(GDALRasterBand &band)
+{
+    return static_cast<size_t>(band.GetXSize()) * band.GetYSize();
+}
+
 /// Create the output dataset.
 ///
+/// @param  srcBand  Source raster band.
+/// @param  opts  Options.
+/// @param  extent  Output dataset extent.
 /// @return  The output dataset to be filled with data.
 DatasetPtr createOutputDataset(GDALRasterBand &srcBand, const Options &opts,
                                const Window &extent)

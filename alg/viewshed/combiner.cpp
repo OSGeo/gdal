@@ -25,6 +25,7 @@
  ****************************************************************************/
 
 #include "combiner.h"
+#include "util.h"
 
 namespace gdal
 {
@@ -55,7 +56,7 @@ void Combiner::sum(DatasetPtr src)
     }
     GDALRasterBand *dstBand = m_dataset->GetRasterBand(1);
 
-    size_t size = dstBand->GetXSize() * dstBand->GetYSize();
+    size_t size = bandSize(*dstBand);
 
     uint8_t *dstP =
         static_cast<uint8_t *>(m_dataset->GetInternalHandle("MEMORY1"));
@@ -75,7 +76,7 @@ void Combiner::queueOutputBuffer()
         static_cast<uint8_t *>(m_dataset->GetInternalHandle("MEMORY1"));
 
     GDALRasterBand *srcBand = m_dataset->GetRasterBand(1);
-    size_t size = srcBand->GetXSize() * srcBand->GetYSize();
+    size_t size = bandSize(*srcBand);
 
     Cumulative::Buf8 output(srcP, srcP + size);
     m_dataset.reset();

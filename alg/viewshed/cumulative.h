@@ -71,7 +71,7 @@ class Cumulative
                      std::atomic<int> &running);
     void rollupRasters();
     void scaleOutput();
-    bool writeOutput(GDALRasterBand &srcBand);
+    bool writeOutput(DatasetPtr pDstDS);
 };
 
 }  // namespace viewshed

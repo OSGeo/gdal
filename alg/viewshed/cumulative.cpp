@@ -24,7 +24,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-const int NUM_JOBS = 2;
+const int NUM_JOBS = 3;
 
 #include <algorithm>
 #include <limits>
@@ -67,6 +67,12 @@ bool Cumulative::run(const std::string &srcFilename,
     **/
     DatasetPtr srcDS(
         GDALDataset::FromHandle(GDALOpen(srcFilename.c_str(), GA_ReadOnly)));
+    if (!srcDS)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unable open source file.");
+        return false;
+    }
+
     GDALRasterBand *pSrcBand = srcDS->GetRasterBand(1);
 
     // In cumulative mode, the output extent is always the entire source raster.
@@ -107,38 +113,43 @@ bool Cumulative::run(const std::string &srcFilename,
 
     // Wait for finalBuf to be fully filled. Then scale the output data.
     sum.join();
-    scaleOutput();
-    bool ok = writeOutput(*pSrcBand);
-
     executorPool.WaitCompletion();
+
+    scaleOutput();
+    if (!writeOutput(createOutputDataset(*pSrcBand, m_opts, m_extent)))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to write to output file.");
+        return false;
+    }
+
     (void)pfnProgress;
     (void)pProgressArg;
-    return ok;
+    return true;
 }
 
 void Cumulative::runExecutor(const std::string &srcFilename,
                              std::atomic<bool> &err, std::atomic<int> &running)
 {
+    DatasetPtr srcDs(GDALDataset::Open(srcFilename.c_str(), GA_ReadOnly));
+    if (!srcDs)
+        err = true;
+
     Location loc;
     while (!err && m_observerQueue.pop(loc))
     {
-        DatasetPtr srcDs(GDALDataset::Open(srcFilename.c_str(), GA_ReadOnly));
-        if (!srcDs)
-        {
-            err = true;
-            break;
-        }
-
         GDALDriver *memDriver = GetGDALDriverManager()->GetDriverByName("MEM");
         DatasetPtr dstDs(memDriver->Create(
             "", m_extent.xSize(), m_extent.ySize(), 1, GDT_Byte, nullptr));
-        ViewshedExecutor executor(*srcDs->GetRasterBand(1),
-                                  *dstDs->GetRasterBand(1), loc.x, loc.y,
-                                  m_extent, m_extent, m_opts);
-
-        if (!executor.run())
-            err = true;  // Signal other threads to stop.
-        else
+        err = (dstDs == nullptr);
+        if (!err)
+        {
+            ViewshedExecutor executor(*srcDs->GetRasterBand(1),
+                                      *dstDs->GetRasterBand(1), loc.x, loc.y,
+                                      m_extent, m_extent, m_opts);
+            err = !executor.run();
+        }
+        if (!err)
             m_datasetQueue.push(std::move(dstDs));
     }
 
@@ -171,25 +182,25 @@ void Cumulative::scaleOutput()
     for (uint32_t &val : m_finalBuf)
         m = std::max(val, m);
 
+    if (m == 0)
+        return;
+
     double factor =
         std::numeric_limits<uint8_t>::max() / static_cast<double>(m);
     for (uint32_t &val : m_finalBuf)
         val = static_cast<uint32_t>(std::floor(factor * val));
 }
 
-bool Cumulative::writeOutput(GDALRasterBand &srcBand)
+bool Cumulative::writeOutput(DatasetPtr pDstDS)
 {
-    DatasetPtr pDstDS = createOutputDataset(srcBand, m_opts, m_extent);
-    GDALRasterBand *pDstBand = pDstDS->GetRasterBand(1);
-    if (pDstBand->RasterIO(GF_Write, 0, 0, m_extent.xSize(), m_extent.ySize(),
-                           m_finalBuf.data(), m_extent.xSize(),
-                           m_extent.ySize(), GDT_UInt32, 0, 0, nullptr))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to write to output file.");
+    if (!pDstDS)
         return false;
-    }
-    return true;
+
+    GDALRasterBand *pDstBand = pDstDS->GetRasterBand(1);
+    return (pDstBand->RasterIO(GF_Write, 0, 0, m_extent.xSize(),
+                               m_extent.ySize(), m_finalBuf.data(),
+                               m_extent.xSize(), m_extent.ySize(), GDT_UInt32,
+                               0, 0, nullptr) == 0);
 }
 
 }  // namespace viewshed
