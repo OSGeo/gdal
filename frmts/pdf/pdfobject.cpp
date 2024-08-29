@@ -2456,7 +2456,7 @@ const std::string &GDALPDFObjectPdfium::GetString()
         if (bs.IsEmpty())
             return (osStr = "");
         return (osStr = GDALPDFGetUTF8StringFromBytes(
-                    static_cast<const GByte *>(bs.raw_str()),
+                    reinterpret_cast<const GByte *>(bs.c_str()),
                     static_cast<int>(bs.GetLength())));
     }
     else
