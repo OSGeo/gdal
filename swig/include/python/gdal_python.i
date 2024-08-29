@@ -1614,10 +1614,13 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return get(value)
 %}
 
+%feature("pythonprepend") Close %{
+    self._invalidate_children()
+%}
+
 %feature("pythonappend") Close %{
     self.thisown = 0
     self.this = None
-    self._invalidate_children()
 %}
 
 %feature("shadow") ExecuteSQL %{
