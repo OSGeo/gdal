@@ -46,6 +46,7 @@ Cumulative::Cumulative(const Options &opts) : m_opts(opts)
 
 /// Compute the cumulative viewshed of a raster band.
 ///
+/// @param srcFilename  Source filename.
 /// @param pfnProgress  Pointer to the progress function. Can be null.
 /// @param pProgressArg  Argument passed to the progress function
 /// @return  True on success, false otherwise.

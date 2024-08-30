@@ -20,6 +20,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <algorithm>
+
 #include "progress.h"
 
 #include "cpl_error.h"

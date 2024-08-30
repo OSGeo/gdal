@@ -109,6 +109,15 @@ double doMax(int nXOffset, int nYOffset, double dfThisPrev, double dfLast,
 
 }  // unnamed namespace
 
+/// Constructor -- the viewshed algorithm executor
+/// @param srcBand  Source raster band
+/// @param dstBand  Destination raster band
+/// @param nX  X position of observer
+/// @param nY  Y position of observer
+/// @param outExtent  Extent of output raster (relative to input)
+/// @param curExtent  Extent of active raster.
+/// @param opts  Configuration options.
+/// @param progress  Reference to the progress tracker.
 ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
                                    GDALRasterBand &dstBand, int nX, int nY,
                                    const Window &outExtent,
@@ -626,6 +635,8 @@ bool ViewshedExecutor::processLine(int nLine, std::vector<double> &vLastLineVal)
     return oProgress.lineComplete();
 }
 
+/// Run the viewshed computation
+/// @return  Success as true or false.
 bool ViewshedExecutor::run()
 {
     std::vector<double> vFirstLineVal(oCurExtent.xSize());

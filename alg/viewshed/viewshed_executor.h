@@ -44,6 +44,8 @@ namespace viewshed
 
 class Progress;
 
+/// Executes a viewshed computation on a source band, placing the result
+/// in the destination band.
 class ViewshedExecutor
 {
   public:

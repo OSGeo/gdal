@@ -36,13 +36,17 @@ namespace viewshed
 class Combiner
 {
   public:
+    /// Constructor
+    /// @param inputQueue  Reference to input queue of datasets
+    /// @param outputQueue  Reference to output queue of datasets
     Combiner(Cumulative::DatasetQueue &inputQueue,
              Cumulative::DatasetQueue &outputQueue)
         : m_inputQueue(inputQueue), m_outputQueue(outputQueue)
     {
     }
 
-    // Allows initialization in a vector of Combiners.
+    /// Copy ctor. Allows initialization in a vector of Combiners.
+    /// @param src  Source Combiner.
     // cppcheck-suppress missingMemberCopy
     Combiner(const Combiner &src)
         : m_inputQueue(src.m_inputQueue), m_outputQueue(src.m_outputQueue)
