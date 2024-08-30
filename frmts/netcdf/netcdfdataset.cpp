@@ -452,10 +452,10 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
     const char *pszNoValueName = nullptr;
 
     // Find attribute name, either _FillValue or missing_value.
-    int status = nc_inq_att(cdfid, nZId, _FillValue, &atttype, &attlen);
+    int status = nc_inq_att(cdfid, nZId, NCDF_FillValue, &atttype, &attlen);
     if (status == NC_NOERR)
     {
-        pszNoValueName = _FillValue;
+        pszNoValueName = NCDF_FillValue;
     }
     else
     {
@@ -1171,8 +1171,8 @@ CPLErr netCDFRasterBand::SetMetadataItem(const char *pszName,
         // Same logic as in CopyMetadata()
 
         const char *const papszIgnoreBand[] = {
-            CF_ADD_OFFSET, CF_SCALE_FACTOR, "valid_range", "_Unsigned",
-            _FillValue,    "coordinates",   nullptr};
+            CF_ADD_OFFSET,  CF_SCALE_FACTOR, "valid_range", "_Unsigned",
+            NCDF_FillValue, "coordinates",   nullptr};
         // Do not copy varname, stats, NETCDF_DIM_*, nodata
         // and items in papszIgnoreBand.
         if (STARTS_WITH(pszName, "NETCDF_VARNAME") ||
@@ -1490,34 +1490,34 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
             if (bSignedData)
             {
                 signed char cNoDataValue = static_cast<signed char>(dfNoData);
-                status = nc_put_att_schar(cdfid, nZId, _FillValue, nc_datatype,
-                                          1, &cNoDataValue);
+                status = nc_put_att_schar(cdfid, nZId, NCDF_FillValue,
+                                          nc_datatype, 1, &cNoDataValue);
             }
             else
             {
                 const unsigned char ucNoDataValue =
                     static_cast<unsigned char>(dfNoData);
-                status = nc_put_att_uchar(cdfid, nZId, _FillValue, nc_datatype,
-                                          1, &ucNoDataValue);
+                status = nc_put_att_uchar(cdfid, nZId, NCDF_FillValue,
+                                          nc_datatype, 1, &ucNoDataValue);
             }
         }
         else if (eDataType == GDT_Int16)
         {
             short nsNoDataValue = static_cast<short>(dfNoData);
-            status = nc_put_att_short(cdfid, nZId, _FillValue, nc_datatype, 1,
-                                      &nsNoDataValue);
+            status = nc_put_att_short(cdfid, nZId, NCDF_FillValue, nc_datatype,
+                                      1, &nsNoDataValue);
         }
         else if (eDataType == GDT_Int32)
         {
             int nNoDataValue = static_cast<int>(dfNoData);
-            status = nc_put_att_int(cdfid, nZId, _FillValue, nc_datatype, 1,
+            status = nc_put_att_int(cdfid, nZId, NCDF_FillValue, nc_datatype, 1,
                                     &nNoDataValue);
         }
         else if (eDataType == GDT_Float32)
         {
             float fNoDataValue = static_cast<float>(dfNoData);
-            status = nc_put_att_float(cdfid, nZId, _FillValue, nc_datatype, 1,
-                                      &fNoDataValue);
+            status = nc_put_att_float(cdfid, nZId, NCDF_FillValue, nc_datatype,
+                                      1, &fNoDataValue);
         }
         else if (eDataType == GDT_UInt16 &&
                  reinterpret_cast<netCDFDataset *>(poDS)->eFormat ==
@@ -1525,21 +1525,21 @@ CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
         {
             unsigned short usNoDataValue =
                 static_cast<unsigned short>(dfNoData);
-            status = nc_put_att_ushort(cdfid, nZId, _FillValue, nc_datatype, 1,
-                                       &usNoDataValue);
+            status = nc_put_att_ushort(cdfid, nZId, NCDF_FillValue, nc_datatype,
+                                       1, &usNoDataValue);
         }
         else if (eDataType == GDT_UInt32 &&
                  reinterpret_cast<netCDFDataset *>(poDS)->eFormat ==
                      NCDF_FORMAT_NC4)
         {
             unsigned int unNoDataValue = static_cast<unsigned int>(dfNoData);
-            status = nc_put_att_uint(cdfid, nZId, _FillValue, nc_datatype, 1,
-                                     &unNoDataValue);
+            status = nc_put_att_uint(cdfid, nZId, NCDF_FillValue, nc_datatype,
+                                     1, &unNoDataValue);
         }
         else
         {
-            status = nc_put_att_double(cdfid, nZId, _FillValue, nc_datatype, 1,
-                                       &dfNoData);
+            status = nc_put_att_double(cdfid, nZId, NCDF_FillValue, nc_datatype,
+                                       1, &dfNoData);
         }
 
         NCDF_ERR(status);
@@ -1586,7 +1586,7 @@ CPLErr netCDFRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
     // Write value if in update mode.
     if (poDS->GetAccess() == GA_Update)
     {
-        // netcdf-4 does not allow to set _FillValue after leaving define mode,
+        // netcdf-4 does not allow to set NCDF_FillValue after leaving define mode,
         // but it is ok if variable has not been written to, so only print
         // debug. See bug #4484.
         if (m_bNoDataSetAsInt64 &&
@@ -1616,14 +1616,14 @@ CPLErr netCDFRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
             reinterpret_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
         {
             long long tmp = static_cast<long long>(nNoData);
-            status = nc_put_att_longlong(cdfid, nZId, _FillValue, nc_datatype,
-                                         1, &tmp);
+            status = nc_put_att_longlong(cdfid, nZId, NCDF_FillValue,
+                                         nc_datatype, 1, &tmp);
         }
         else
         {
             double dfNoData = static_cast<double>(nNoData);
-            status = nc_put_att_double(cdfid, nZId, _FillValue, nc_datatype, 1,
-                                       &dfNoData);
+            status = nc_put_att_double(cdfid, nZId, NCDF_FillValue, nc_datatype,
+                                       1, &dfNoData);
         }
 
         NCDF_ERR(status);
@@ -1700,14 +1700,14 @@ CPLErr netCDFRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
             reinterpret_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
         {
             unsigned long long tmp = static_cast<long long>(nNoData);
-            status = nc_put_att_ulonglong(cdfid, nZId, _FillValue, nc_datatype,
-                                          1, &tmp);
+            status = nc_put_att_ulonglong(cdfid, nZId, NCDF_FillValue,
+                                          nc_datatype, 1, &tmp);
         }
         else
         {
             double dfNoData = static_cast<double>(nNoData);
-            status = nc_put_att_double(cdfid, nZId, _FillValue, nc_datatype, 1,
-                                       &dfNoData);
+            status = nc_put_att_double(cdfid, nZId, NCDF_FillValue, nc_datatype,
+                                       1, &dfNoData);
         }
 
         NCDF_ERR(status);
@@ -1757,7 +1757,7 @@ CPLErr netCDFRasterBand::DeleteNoDataValue()
         // Make sure we are in define mode.
         static_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
-        status = nc_del_att(cdfid, nZId, _FillValue);
+        status = nc_del_att(cdfid, nZId, NCDF_FillValue);
 
         NCDF_ERR(status);
 
@@ -8988,8 +8988,8 @@ static void CopyMetadata(GDALDataset *poSrcDS, GDALRasterBand *poSrcBand,
 {
     // Remove the following band meta but set them later from band data.
     const char *const papszIgnoreBand[] = {
-        CF_ADD_OFFSET, CF_SCALE_FACTOR, "valid_range", "_Unsigned",
-        _FillValue,    "coordinates",   nullptr};
+        CF_ADD_OFFSET,  CF_SCALE_FACTOR, "valid_range", "_Unsigned",
+        NCDF_FillValue, "coordinates",   nullptr};
     const char *const papszIgnoreGlobal[] = {"NETCDF_DIM_EXTRA", nullptr};
 
     CSLConstList papszMetadata = nullptr;

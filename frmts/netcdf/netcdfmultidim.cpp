@@ -3753,7 +3753,7 @@ const void *netCDFVariable::GetRawNoDataValue() const
 
     m_bGetRawNoDataValueHasRun = true;
 
-    const char *pszAttrName = _FillValue;
+    const char *pszAttrName = NCDF_FillValue;
     auto poAttr = GetAttribute(pszAttrName);
     if (!poAttr)
     {
@@ -3878,9 +3878,9 @@ bool netCDFVariable::SetRawNoDataValue(const void *pNoData)
         m_abyNoData.clear();
         nc_type atttype = NC_NAT;
         size_t attlen = 0;
-        if (nc_inq_att(m_gid, m_varid, _FillValue, &atttype, &attlen) ==
+        if (nc_inq_att(m_gid, m_varid, NCDF_FillValue, &atttype, &attlen) ==
             NC_NOERR)
-            ret = nc_del_att(m_gid, m_varid, _FillValue);
+            ret = nc_del_att(m_gid, m_varid, NCDF_FillValue);
         else
             ret = NC_NOERR;
         if (nc_inq_att(m_gid, m_varid, "missing_value", &atttype, &attlen) ==
@@ -3912,7 +3912,7 @@ bool netCDFVariable::SetRawNoDataValue(const void *pNoData)
         if (nc_inq_att(m_gid, m_varid, "missing_value", &atttype, &attlen) ==
             NC_NOERR)
         {
-            if (nc_inq_att(m_gid, m_varid, _FillValue, &atttype, &attlen) ==
+            if (nc_inq_att(m_gid, m_varid, NCDF_FillValue, &atttype, &attlen) ==
                 NC_NOERR)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
@@ -3925,7 +3925,7 @@ bool netCDFVariable::SetRawNoDataValue(const void *pNoData)
         }
         else
         {
-            ret = nc_put_att(m_gid, m_varid, _FillValue, m_nVarType, 1,
+            ret = nc_put_att(m_gid, m_varid, NCDF_FillValue, m_nVarType, 1,
                              &abyTmp[0]);
         }
     }
@@ -4076,7 +4076,7 @@ netCDFVariable::GetAttributes(CSLConstList papszOptions) const
         char szAttrName[NC_MAX_NAME + 1];
         szAttrName[0] = 0;
         NCDF_ERR(nc_inq_attname(m_gid, m_varid, i, szAttrName));
-        if (bShowAll || (!EQUAL(szAttrName, _FillValue) &&
+        if (bShowAll || (!EQUAL(szAttrName, NCDF_FillValue) &&
                          !EQUAL(szAttrName, "missing_value") &&
                          !EQUAL(szAttrName, CF_UNITS) &&
                          !EQUAL(szAttrName, CF_SCALE_FACTOR) &&
