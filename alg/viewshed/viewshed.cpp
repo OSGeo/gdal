@@ -4,6 +4,8 @@
  * Purpose:  Core algorithm implementation for viewshed generation.
  * Author:   Tamas Szekeres, szekerest@gmail.com
  *
+ * (c) 2024 info@hobu.co
+ *
  ******************************************************************************
  *
  * Permission is hereby granted, free of charge, to any person obtaining a

@@ -1,9 +1,5 @@
 /******************************************************************************
- *
- * Project:  Viewshed Generation
- * Purpose:  Core algorithm implementation for viewshed generation.
- *
- ******************************************************************************
+ * (c) 2024 info@hobu.co
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,6 +30,9 @@ namespace gdal
 namespace viewshed
 {
 
+/// Reads completed viewshed rasters and sums them together. When the
+/// summed values may exceed the 8-bit limit, push it on the output
+/// queue.
 class Combiner
 {
   public:

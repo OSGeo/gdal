@@ -1,3 +1,24 @@
+/******************************************************************************
+ * (c) 2024 info@hobu.co
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
 #pragma once
 
 #include <condition_variable>
@@ -6,16 +27,24 @@
 
 namespace gdal
 {
+namespace viewshed
+{
 
+/// This is a thread-safe queue. Things placed in the queue must be move-constructible.
+/// Readers will wait until there is something in the queue or the queue is empty or stopped.
+/// If the queue is stopped (error), it will never be in the done state. If in the
+/// done state (all writers have finished), it will never be in the error state.
 template <class T> class NotifyQueue
 {
   public:
+    /// Destructor
     ~NotifyQueue()
     {
         done();
     }
 
-    // Push an object on the queue and notify readers.
+    /// Push an object on the queue and notify readers.
+    /// \param t  Object to be moved onto the queue.
     void push(T &&t)
     {
         {
@@ -25,8 +54,10 @@ template <class T> class NotifyQueue
         m_cv.notify_all();
     }
 
-    // Get an item from the queue.
-    // \return True is successful, false on failure.
+    /// Get an item from the queue.
+    /// \param t  Reference to an item to to which a queued item will be moved.
+    /// \return True if an item was popped. False otherwise.  Use isStopped() or isDone()
+    ///    to determine the state if you care when false is returned.
     bool pop(T &t)
     {
         std::unique_lock<std::mutex> lock(m_mutex);
@@ -47,7 +78,7 @@ template <class T> class NotifyQueue
         return false;
     }
 
-    // When we're done putting things in the queue, set the end condition.
+    /// When we're done putting things in the queue, set the end condition.
     void done()
     {
         {
@@ -57,7 +88,7 @@ template <class T> class NotifyQueue
         m_cv.notify_all();
     }
 
-    // Unblock all readers regardless of queue state.
+    /// Unblock all readers regardless of queue state.
     void stop()
     {
         {
@@ -67,26 +98,26 @@ template <class T> class NotifyQueue
         m_cv.notify_all();
     }
 
-    // Determine if the queue was emptied completely. Call after pop() returns false
-    // to check queue state.
-    // \return  Whether the queue was emptied completely.
+    /// Determine if the queue was emptied completely. Call after pop() returns false
+    /// to check queue state.
+    /// \return  Whether the queue was emptied completely.
     bool isDone()
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_done;
     }
 
-    // Determine if the queue was stopped. Call after pop() returns false
-    // to check queue state.
-    // \return  Whether the queue was stopped.
+    /// Determine if the queue was stopped. Call after pop() returns false
+    /// to check queue state.
+    /// \return  Whether the queue was stopped.
     bool isStopped()
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_stop;
     }
 
-    // Get the current size of the queue.
-    // \return Current queue size.
+    /// Get the current size of the queue.
+    /// \return Current queue size.
     size_t size() const
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -101,4 +132,5 @@ template <class T> class NotifyQueue
     bool m_stop{false};
 };
 
+}  // namespace viewshed
 }  // namespace gdal

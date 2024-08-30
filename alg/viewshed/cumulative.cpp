@@ -1,9 +1,5 @@
 /******************************************************************************
- *
- * Project:  Viewshed Generation
- * Purpose:  Core algorithm implementation for viewshed generation.
- *
- ******************************************************************************
+ * (c) 2024 info@hobu.co
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -43,6 +39,9 @@ namespace gdal
 namespace viewshed
 {
 
+/// Constructor
+///
+/// @param opts  Options for viewshed generation.
 Cumulative::Cumulative(const Options &opts) : m_opts(opts)
 {
 }
@@ -55,7 +54,7 @@ Cumulative::Cumulative(const Options &opts) : m_opts(opts)
 bool Cumulative::run(const std::string &srcFilename,
                      GDALProgressFunc pfnProgress, void *pProgressArg)
 {
-    // In cumulative view, we run the executors in normal mode and want "1" where things
+    // In cumulative mode, we run the executors in normal mode and want "1" where things
     // are visible.
     m_opts.outputMode = OutputMode::Normal;
     m_opts.visibleVal = 1;
@@ -103,13 +102,13 @@ bool Cumulative::run(const std::string &srcFilename,
     // Run 32-bit rollup job that combines the 8-bit results from the combiners.
     std::thread sum([this] { rollupRasters(); });
 
-    // When the combiner jobs are done, all the data is in the buf queue for rollup.
+    // When the combiner jobs are done, all the data is in the rollup queue.
     combinerPool.WaitCompletion();
     if (m_datasetQueue.isStopped())
         return false;
     m_rollupQueue.done();
 
-    // Wait for finalBuf to be fully filled. Then scale the output data.
+    // Wait for finalBuf to be fully filled.
     sum.join();
     // The executors should exit naturally, but we wait here so that we don't outrun their
     // completion and exit with outstanding threads.
@@ -128,6 +127,11 @@ bool Cumulative::run(const std::string &srcFilename,
     return true;
 }
 
+/// Run an executor (single viewshed)
+/// @param srcFilename  Source filename
+/// @param progress  Progress supporting support.
+/// @param err  Shared error flag.
+/// @param running  Shared count of number of executors running.
 void Cumulative::runExecutor(const std::string &srcFilename, Progress &progress,
                              std::atomic<bool> &err, std::atomic<int> &running)
 {
@@ -180,8 +184,8 @@ void Cumulative::rollupRasters()
     }
 }
 
-// Scale the output so that it's fully spread in 8 bits. Perhaps this shouldn't happen if
-// the max is less than 255?
+/// Scale the output so that it's fully spread in 8 bits. Perhaps this shouldn't happen if
+/// the max is less than 255?
 void Cumulative::scaleOutput()
 {
     uint32_t m = 0;  // This gathers all the bits set.
@@ -197,6 +201,9 @@ void Cumulative::scaleOutput()
         val = static_cast<uint32_t>(std::floor(factor * val));
 }
 
+/// Write the output dataset.
+/// @param pDstDS  Pointer to the destination dataset.
+/// @return True if the write was successful, false otherwise.
 bool Cumulative::writeOutput(DatasetPtr pDstDS)
 {
     if (!pDstDS)

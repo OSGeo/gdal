@@ -1,9 +1,5 @@
 /******************************************************************************
- *
- * Project:  Viewshed Generation
- * Purpose:  Core algorithm implementation for viewshed generation.
- *
- ******************************************************************************
+ * (c) 2024 info@hobu.co
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +28,7 @@ namespace gdal
 namespace viewshed
 {
 
-// Read viewshed executor output and sum it up in our owned memory raster.
+/// Read viewshed executor output and sum it up in our owned memory raster.
 void Combiner::run()
 {
     DatasetPtr pTempDataset;
@@ -48,7 +44,8 @@ void Combiner::run()
     queueOutputBuffer();
 }
 
-// Add the values of the source dataset to those of the owned dataset.
+/// Add the values of the source dataset to those of the owned dataset.
+/// @param src  Source dataset.
 void Combiner::sum(DatasetPtr src)
 {
     if (!m_dataset)
@@ -71,7 +68,7 @@ void Combiner::sum(DatasetPtr src)
         queueOutputBuffer();
 }
 
-// Queue the owned buffer as for output and rese
+/// Queue the owned buffer as for output.
 void Combiner::queueOutputBuffer()
 {
     if (m_dataset)

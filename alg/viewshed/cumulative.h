@@ -1,9 +1,5 @@
 /******************************************************************************
- *
- * Project:  Viewshed Generation
- * Purpose:  Cumulative viewshed generation.
- *
- ******************************************************************************
+ * (c) 2024 info@hobu.co
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,6 +36,7 @@ namespace viewshed
 
 class Progress;
 
+/// Generates a cumulative viewshed from a matrix of observers.
 class Cumulative
 {
   public:
@@ -49,7 +46,7 @@ class Cumulative
                      void *pProgressArg = nullptr);
 
   private:
-    friend class Combiner;
+    friend class Combiner;  // Provides access to the queue types.
 
     struct Location
     {

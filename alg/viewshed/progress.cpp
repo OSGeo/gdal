@@ -1,9 +1,5 @@
 /******************************************************************************
- *
- * Project:  Viewshed Generation
- * Purpose:  Core algorithm implementation for viewshed generation.
- *
- ******************************************************************************
+ * (c) 2024 info@hobu.co
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,9 +20,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-//ABELL
-#include <iostream>
-
 #include "progress.h"
 
 #include "cpl_error.h"
@@ -46,6 +39,7 @@ Progress::Progress(GDALProgressFunc pfnProgress, void *pProgressArg,
 {
     using namespace std::placeholders;
 
+    // cppcheck-suppress useInitializationList
     m_cb = std::bind(pfnProgress, _1, _2, pProgressArg);
 }
 
