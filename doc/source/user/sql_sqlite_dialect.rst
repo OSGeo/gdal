@@ -88,8 +88,9 @@ In SQLite, the LIKE operator is case insensitive, unless ``PRAGMA case_sensitive
 has been issued.
 
 Starting with GDAL 3.9, GDAL installs a custom LIKE comparison, such that UTF-8
-characters are taken into account by ``LIKE`` and ``ILIKE`` operators.
-For ILIKE case insensitive comparisons, this is restricted to the
+characters are taken into account by ``LIKE`` operator.
+
+For case insensitive comparisons, this is restricted to the
 `ASCII <https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)>`__,
 `Latin-1 Supplement <https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)>`__,
 `Latin Extended-A <https://en.wikipedia.org/wiki/Latin_Extended-A>`__,
