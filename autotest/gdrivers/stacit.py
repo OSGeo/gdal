@@ -361,3 +361,20 @@ def test_stacit_force_opening_no_match():
 
     drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["STACIT"])
     assert drv is None
+
+
+###############################################################################
+# Test opening a top-level Feature
+
+
+def test_stacit_single_feature(tmp_vsimem):
+
+    j = json.loads(open("data/stacit/test.json", "rb").read())
+    j = j["features"][0]
+
+    filename = str(tmp_vsimem / "feature.json")
+    with gdaltest.tempfile(filename, json.dumps(j)):
+        ds = gdal.Open(filename)
+        assert ds is not None
+        assert ds.RasterXSize == 20
+        assert ds.GetRasterBand(1).Checksum() == 4672
