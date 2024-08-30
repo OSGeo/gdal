@@ -229,7 +229,7 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
             if (argParser.is_used(opt))
             {
                 std::string err = "Option " + std::string(opt) +
-                                  " can'only be used in cumulative mode.";
+                                  " can only be used in cumulative mode.";
                 CPLError(CE_Failure, CPLE_AppDefined, "%s", err.c_str());
                 exit(2);
             }
