@@ -3985,7 +3985,8 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
                 {
                     // do nothing
                 }
-                else if (poMulti->getNumGeometries() == 1)
+                else if (poMulti->getNumGeometries() == 1 &&
+                         (eType == wkbPolygon || eType == wkbLineString))
                 {
                     poDstGeom = poMulti->stealGeometry(0);
                 }
