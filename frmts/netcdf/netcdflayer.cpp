@@ -647,14 +647,14 @@ void netCDFLayer::SetRecordDimID(int nRecordDimID)
 
 CPLErr netCDFLayer::GetFillValue(int nVarId, char **ppszValue)
 {
-    if (NCDFGetAttr(m_nLayerCDFId, nVarId, _FillValue, ppszValue) == CE_None)
+    if (NCDFGetAttr(m_nLayerCDFId, nVarId, NCDF_FillValue, ppszValue) == CE_None)
         return CE_None;
     return NCDFGetAttr(m_nLayerCDFId, nVarId, "missing_value", ppszValue);
 }
 
 CPLErr netCDFLayer::GetFillValue(int nVarId, double *pdfValue)
 {
-    if (NCDFGetAttr(m_nLayerCDFId, nVarId, _FillValue, pdfValue) == CE_None)
+    if (NCDFGetAttr(m_nLayerCDFId, nVarId, NCDF_FillValue, pdfValue) == CE_None)
         return CE_None;
     return NCDFGetAttr(m_nLayerCDFId, nVarId, "missing_value", pdfValue);
 }
