@@ -1040,4 +1040,4 @@ def test_numeric_type_code_to_gdal_type_code():
 def test_flip_code():
 
     assert gdal_array.flip_code(numpy.float32) == gdal.GDT_Float32
-    assert gdal_array.flip_code(numpy.int16) == gdal.GDT_Int16
+    assert gdal_array.flip_code(gdal.GDT_Int16) == numpy.int16
