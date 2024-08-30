@@ -126,6 +126,14 @@ Options parseArgs(GDALArgumentParser &argParser, const CPLStringList &aosArgv)
         .nargs(1)
         .help(_("Maximum distance from observer to compute visibility."));
 
+    argParser.add_argument("-j")
+        .default_value(3)
+        .store_into(opts.numJobs)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_(
+            "Number of relative simultaneous jobs to run in cumulative mode"));
+
     // Value for standard atmospheric refraction. See
     // doc/source/programs/gdal_viewshed.rst
     argParser.add_argument("-cc")
@@ -215,13 +223,16 @@ void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
         }
     }
 
-    if (argParser.is_used("-os") &&
-        opts.outputMode != viewshed::OutputMode::Cumulative)
+    if (opts.outputMode != viewshed::OutputMode::Cumulative)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "-os option can only be specified with cumulative output mode.");
-        exit(2);
+        for (const char *opt : {"-os", "-j"})
+            if (argParser.is_used(opt))
+            {
+                std::string err = "Option " + std::string(opt) +
+                                  " can'only be used in cumulative mode.";
+                CPLError(CE_Failure, CPLE_AppDefined, "%s", err.c_str());
+                exit(2);
+            }
     }
 
     if (opts.outputMode == viewshed::OutputMode::Cumulative)

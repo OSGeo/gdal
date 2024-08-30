@@ -23,7 +23,7 @@ Synopsis
                  -ox <observer_x> -oy <observer_y>
                  [-vv <visibility>] [-iv <invisibility>]
                  [-ov <out_of_range>] [-cc <curvature_coef>]
-                 [-os <observer_spacing>]
+                 [-os <observer_spacing>] [-j <relative job count>]
                  [-co <NAME>=<VALUE>]...
                  [-q] [-om <output mode>]
                  <src_filename> <dst_filename>
@@ -162,6 +162,10 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 .. option:: -os <value>
 
    Cell Spacing between observers (only supported in cumulative mode) Default: 10
+
+.. option:: -j <value>
+
+   Relative number of jobs to run at once. (only supported in cumulative mode) Default: 3
 
 
 C API

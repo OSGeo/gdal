@@ -20,8 +20,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-const int NUM_JOBS = 3;
-
 #include <algorithm>
 #include <limits>
 #include <thread>
@@ -81,7 +79,7 @@ bool Cumulative::run(const std::string &srcFilename,
     m_observerQueue.done();
 
     // Run executors.
-    const int numThreads = NUM_JOBS;
+    const int numThreads = m_opts.numJobs;
     std::atomic<bool> err = false;
     std::atomic<int> running = numThreads;
     Progress progress(pfnProgress, pProgressArg,

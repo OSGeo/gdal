@@ -87,7 +87,8 @@ struct Options
     std::string outputFilename{};       //!< output raster filename
     CPLStringList creationOpts{};       //!< options for output raster creation
     CellMode cellMode{CellMode::Edge};  //!< Mode of cell height calculation.
-    int observerSpacing{10};
+    int observerSpacing{10};  //!< Observer spacing in cumulative mode.
+    uint8_t numJobs{3};       //!< Relative number of jobs in cumulative mode.
 };
 
 /**
