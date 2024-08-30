@@ -382,6 +382,7 @@ INPUT                  = port \
                          gcore \
                          frmts/gdalallregister.cpp \
                          alg \
+                         alg/viewshed \
                          frmts/vrt \
                          apps \
                          ogr \

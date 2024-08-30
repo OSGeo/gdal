@@ -30,6 +30,7 @@
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
 
+#include "progress.h"
 #include "util.h"
 #include "viewshed.h"
 #include "viewshed_executor.h"
@@ -231,30 +232,6 @@ bool getTransforms(GDALRasterBand &band, double *pFwdTransform,
 
 }  // unnamed namespace
 
-/// Emit progress information saying that a line has been written to output.
-///
-/// @return  True on success, false otherwise.
-bool Viewshed::lineProgress()
-{
-    if (nLineCount < oCurExtent.ySize())
-        nLineCount++;
-    return emitProgress(nLineCount / static_cast<double>(oCurExtent.ySize()));
-}
-
-/// Emit progress information saying that a fraction of work has been completed.
-///
-/// @return  True on success, false otherwise.
-bool Viewshed::emitProgress(double fraction)
-{
-    // Call the progress function.
-    if (!oProgress(fraction, ""))
-    {
-        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
-        return false;
-    }
-    return true;
-}
-
 /// Calculate the extent of the output raster in terms of the input raster and
 /// save the input raster extent.
 ///
@@ -317,19 +294,9 @@ bool Viewshed::calcExtents(int nX, int nY,
 
     // normalize horizontal index to [ 0, oOutExtent.xSize() )
     oCurExtent = oOutExtent;
-    //ABELL - verify this won't underflow.
     oCurExtent.shiftX(-oOutExtent.xStart);
 
     return true;
-}
-
-bool Viewshed::setupProgress(GDALProgressFunc pfnProgress, void *pProgressArg)
-{
-    using namespace std::placeholders;
-
-    nLineCount = 0;
-    oProgress = std::bind(pfnProgress, _1, _2, pProgressArg);
-    return emitProgress(0);
 }
 
 /// Compute the viewshed of a raster band.
@@ -341,9 +308,6 @@ bool Viewshed::setupProgress(GDALProgressFunc pfnProgress, void *pProgressArg)
 bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                    void *pProgressArg)
 {
-    if (!setupProgress(pfnProgress, pProgressArg))
-        return false;
-
     pSrcBand = static_cast<GDALRasterBand *>(band);
 
     std::array<double, 6> adfFwdTransform;
@@ -377,11 +341,15 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     if (!poDstDS)
         return false;
 
+    // Create the progress reporter.
+    Progress oProgress(pfnProgress, pProgressArg, oOutExtent.ySize());
+
     // Execute the viewshed algorithm.
     GDALRasterBand *pDstBand = poDstDS->GetRasterBand(1);
     ViewshedExecutor executor(*pSrcBand, *pDstBand, nX, nY, oOutExtent,
-                              oCurExtent, oOpts);
+                              oCurExtent, oOpts, oProgress);
     executor.run();
+    oProgress.emit(1);
     return static_cast<bool>(poDstDS);
 }
 

@@ -60,11 +60,6 @@ bool Cumulative::run(const std::string &srcFilename,
     m_opts.outputMode = OutputMode::Normal;
     m_opts.visibleVal = 1;
 
-    //ABELL
-    /**
-    if (!setupProgress(pfnProgress, pProgressArg))
-        return false;
-    **/
     DatasetPtr srcDS(
         GDALDataset::FromHandle(GDALOpen(srcFilename.c_str(), GA_ReadOnly)));
     if (!srcDS)
@@ -90,10 +85,13 @@ bool Cumulative::run(const std::string &srcFilename,
     const int numThreads = NUM_JOBS;
     std::atomic<bool> err = false;
     std::atomic<int> running = numThreads;
+    Progress progress(pfnProgress, pProgressArg,
+                      m_observerQueue.size() * m_extent.ySize());
     CPLWorkerThreadPool executorPool(numThreads);
     for (int i = 0; i < numThreads; ++i)
-        executorPool.SubmitJob([this, &srcFilename, &err, &running]
-                               { runExecutor(srcFilename, err, running); });
+        executorPool.SubmitJob(
+            [this, &srcFilename, &progress, &err, &running]
+            { runExecutor(srcFilename, progress, err, running); });
 
     // Run combiners that create 8-bit sums of executor jobs.
     CPLWorkerThreadPool combinerPool(numThreads);
@@ -125,13 +123,12 @@ bool Cumulative::run(const std::string &srcFilename,
                  "Unable to write to output file.");
         return false;
     }
+    progress.emit(1);
 
-    (void)pfnProgress;
-    (void)pProgressArg;
     return true;
 }
 
-void Cumulative::runExecutor(const std::string &srcFilename,
+void Cumulative::runExecutor(const std::string &srcFilename, Progress &progress,
                              std::atomic<bool> &err, std::atomic<int> &running)
 {
     DatasetPtr srcDs(GDALDataset::Open(srcFilename.c_str(), GA_ReadOnly));
@@ -149,7 +146,7 @@ void Cumulative::runExecutor(const std::string &srcFilename,
         {
             ViewshedExecutor executor(*srcDs->GetRasterBand(1),
                                       *dstDs->GetRasterBand(1), loc.x, loc.y,
-                                      m_extent, m_extent, m_opts);
+                                      m_extent, m_extent, m_opts, progress);
             err = !executor.run();
         }
         if (!err)

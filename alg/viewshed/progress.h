@@ -1,7 +1,8 @@
 /******************************************************************************
  *
  * Project:  Viewshed Generation
- * Purpose:  Cumulative viewshed generation.
+ * Purpose:  Core algorithm implementation for viewshed generation.
+ * Author:   Tamas Szekeres, szekerest@gmail.com
  *
  ******************************************************************************
  *
@@ -26,53 +27,32 @@
 
 #pragma once
 
-#include <atomic>
-#include <vector>
+#include <functional>
+#include <mutex>
 
-#include "notifyqueue.h"
-#include "progress.h"
-#include "viewshed_types.h"
+#include "cpl_progress.h"
 
 namespace gdal
 {
 namespace viewshed
 {
 
-class Progress;
-
-class Cumulative
+class Progress
 {
   public:
-    CPL_DLL explicit Cumulative(const Options &opts);
-    CPL_DLL bool run(const std::string &srcFilename,
-                     GDALProgressFunc pfnProgress = GDALDummyProgress,
-                     void *pProgressArg = nullptr);
+    Progress(GDALProgressFunc pfnProgress, void *pProgressArg,
+             size_t expectedLines);
+
+    bool lineComplete();
+    bool emit(double fraction);
 
   private:
-    friend class Combiner;
+    using ProgressFunc = std::function<bool(double frac, const char *msg)>;
 
-    struct Location
-    {
-        int x;
-        int y;
-    };
-
-    using Buf32 = std::vector<uint32_t>;
-    using ObserverQueue = NotifyQueue<Location>;
-    using DatasetQueue = NotifyQueue<DatasetPtr>;
-
-    Window m_extent{};
-    Options m_opts;
-    ObserverQueue m_observerQueue{};
-    DatasetQueue m_datasetQueue{};
-    DatasetQueue m_rollupQueue{};
-    Buf32 m_finalBuf{};
-
-    void runExecutor(const std::string &srcFilename, Progress &progress,
-                     std::atomic<bool> &err, std::atomic<int> &running);
-    void rollupRasters();
-    void scaleOutput();
-    bool writeOutput(DatasetPtr pDstDS);
+    size_t m_lines{0};       ///< Number of lines completed.
+    size_t m_expectedLines;  ///< Number of lines expected.
+    std::mutex m_mutex{};    ///< Progress function might not be thread-safe.
+    ProgressFunc m_cb{};     ///< Progress callback function.
 };
 
 }  // namespace viewshed

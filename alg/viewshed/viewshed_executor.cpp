@@ -5,6 +5,7 @@
 #include <limits>
 
 #include "viewshed_executor.h"
+#include "progress.h"
 
 namespace gdal
 {
@@ -80,14 +81,15 @@ double doMax(int nXOffset, int nYOffset, double dfThisPrev, double dfLast,
 
 }  // unnamed namespace
 
-//ABELL - Note nX adjustment. Make sure extent is set.
 ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
                                    GDALRasterBand &dstBand, int nX, int nY,
                                    const Window &outExtent,
-                                   const Window &curExtent, const Options &opts)
+                                   const Window &curExtent, const Options &opts,
+                                   Progress &progress)
     : m_pool(4), m_srcBand(srcBand), m_dstBand(dstBand), oOutExtent(outExtent),
       oCurExtent(curExtent), m_nX(nX - oOutExtent.xStart), m_nY(nY),
-      oOpts(opts), m_dfMaxDistance2(opts.maxDistance * opts.maxDistance)
+      oOpts(opts), oProgress(progress),
+      m_dfMaxDistance2(opts.maxDistance * opts.maxDistance)
 {
     if (m_dfMaxDistance2 == 0)
         m_dfMaxDistance2 = std::numeric_limits<double>::max();
@@ -277,7 +279,6 @@ bool ViewshedExecutor::processFirstLine(std::vector<double> &vLastLineVal)
         if (oOpts.outputMode == OutputMode::Normal)
             vResult[m_nX] = oOpts.visibleVal;
     }
-    //ABELL - Move to ctor?
     m_dfHeightAdjFactor = calcHeightAdjFactor();
 
     // In DEM mode the base is the pre-adjustment value.  In ground mode the base is zero.
@@ -310,12 +311,7 @@ bool ViewshedExecutor::processFirstLine(std::vector<double> &vLastLineVal)
     if (!writeLine(nLine, vResult))
         return false;
 
-    //ABELL
-    /**
-    if (!lineProgress())
-        return false;
-    **/
-    return true;
+    return oProgress.lineComplete();
 }
 
 // If the observer is above or below the raster, set all cells in the first line near the
@@ -599,12 +595,7 @@ bool ViewshedExecutor::processLine(int nLine, std::vector<double> &vLastLineVal)
     if (!writeLine(nLine, vResult))
         return false;
 
-    //ABELL
-    /**
-    if (!lineProgress())
-        return false;
-    **/
-    return true;
+    return oProgress.lineComplete();
 }
 
 bool ViewshedExecutor::run()
@@ -648,12 +639,6 @@ bool ViewshedExecutor::run()
                 if (!processLine(nLine, vLastLineVal))
                     err = true;
         });
-
-    //ABELL
-    /**
-    if (!emitProgress(1))
-        return false;
-    **/
     return true;
 }
 

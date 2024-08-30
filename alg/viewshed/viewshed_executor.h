@@ -40,12 +40,14 @@ namespace gdal
 namespace viewshed
 {
 
+class Progress;
+
 class ViewshedExecutor
 {
   public:
     ViewshedExecutor(GDALRasterBand &srcBand, GDALRasterBand &dstBand, int nX,
                      int nY, const Window &oOutExtent, const Window &oCurExtent,
-                     const Options &opts);
+                     const Options &opts, Progress &oProgress);
     bool run();
 
   private:
@@ -57,6 +59,7 @@ class ViewshedExecutor
     const int m_nX;
     const int m_nY;
     const Options oOpts;
+    Progress &oProgress;
     double m_dfHeightAdjFactor{0};
     double m_dfMaxDistance2;
     double m_dfZObserver{0};

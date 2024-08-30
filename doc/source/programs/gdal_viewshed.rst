@@ -145,7 +145,7 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
   Sets what information the output contains.
 
-  Possible values: NORMAL, DEM, GROUND, CUM
+  Possible values: NORMAL, DEM, GROUND, ACCUM
 
   NORMAL returns a raster of type Byte containing visible locations.
 
@@ -153,7 +153,7 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
   height for target to be visible from the DEM surface or ground level respectively.
   Flags -tz, -iv and -vv will be ignored.
 
-  (CUM)ulative mode will create an eight bit raster the same size as the input raster
+  Cumulative (ACCUM) mode will create an eight bit raster the same size as the input raster
   where each cell represents the relative observability from a grid of observer points.
   See the -os option.
 

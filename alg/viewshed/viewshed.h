@@ -58,8 +58,7 @@ class Viewshed
      * @param opts Options to use when calculating viewshed.
     */
     CPL_DLL explicit Viewshed(const Options &opts)
-        : oOpts{opts}, oOutExtent{}, oCurExtent{}, poDstDS{}, pSrcBand{},
-          nLineCount{0}, oProgress{}
+        : oOpts{opts}, oOutExtent{}, oCurExtent{}, poDstDS{}, pSrcBand{}
     {
     }
 
@@ -89,9 +88,6 @@ class Viewshed
     Window oCurExtent;
     DatasetPtr poDstDS;
     GDALRasterBand *pSrcBand;
-    int nLineCount;
-    using ProgressFunc = std::function<bool(double frac, const char *msg)>;
-    ProgressFunc oProgress;
 
     DatasetPtr execute(int nX, int nY, const std::string &outFilename);
     void setOutput(double &dfResult, double &dfCellVal, double dfZ);
@@ -101,12 +97,6 @@ class Viewshed
                                      std::vector<double> &thisLineVal);
     bool calcExtents(int nX, int nY,
                      const std::array<double, 6> &adfInvTransform);
-
-  private:
-    // Progress
-    bool lineProgress();
-    bool emitProgress(double fraction);
-    bool setupProgress(GDALProgressFunc pfnProgress, void *pProgressArg);
 };
 
 }  // namespace viewshed

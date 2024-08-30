@@ -144,8 +144,8 @@ Options parseArgs(GDALArgumentParser &argParser, const CPLStringList &aosArgv)
         .help(_("Select an input band band containing the DEM data."));
 
     argParser.add_argument("-om")
-        .choices("NORMAL", "DEM", "GROUND", "CUM")
-        .metavar("NORMAL|DEM|GROUND|CUM")
+        .choices("NORMAL", "DEM", "GROUND", "ACCUM")
+        .metavar("NORMAL|DEM|GROUND|ACCUM")
         .action(
             [&into = opts.outputMode](const std::string &value)
             {
@@ -153,7 +153,7 @@ Options parseArgs(GDALArgumentParser &argParser, const CPLStringList &aosArgv)
                     into = viewshed::OutputMode::DEM;
                 else if (EQUAL(value.c_str(), "GROUND"))
                     into = viewshed::OutputMode::Ground;
-                else if (EQUAL(value.c_str(), "CUM"))
+                else if (EQUAL(value.c_str(), "ACCUM"))
                     into = viewshed::OutputMode::Cumulative;
                 else
                     into = viewshed::OutputMode::Normal;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  Viewshed Generation
- * Purpose:  Cumulative viewshed generation.
+ * Purpose:  Core algorithm implementation for viewshed generation.
  *
  ******************************************************************************
  *
@@ -24,56 +24,62 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#pragma once
+//ABELL
+#include <iostream>
 
-#include <atomic>
-#include <vector>
-
-#include "notifyqueue.h"
 #include "progress.h"
-#include "viewshed_types.h"
+
+#include "cpl_error.h"
 
 namespace gdal
 {
 namespace viewshed
 {
 
-class Progress;
-
-class Cumulative
+/// Constructor
+/// @param pfnProgress  Pointer to progress function.
+/// @param pProgressArg  Pointer to progress function data.
+/// @param expectedLines  Number of lines expected to be processed.
+Progress::Progress(GDALProgressFunc pfnProgress, void *pProgressArg,
+                   size_t expectedLines)
+    : m_expectedLines(std::max(expectedLines, static_cast<size_t>(1)))
 {
-  public:
-    CPL_DLL explicit Cumulative(const Options &opts);
-    CPL_DLL bool run(const std::string &srcFilename,
-                     GDALProgressFunc pfnProgress = GDALDummyProgress,
-                     void *pProgressArg = nullptr);
+    using namespace std::placeholders;
 
-  private:
-    friend class Combiner;
+    m_cb = std::bind(pfnProgress, _1, _2, pProgressArg);
+}
 
-    struct Location
+/// Emit progress information saying that a line has been written to output.
+///
+/// @return  True on success, false otherwise.
+bool Progress::lineComplete()
+{
+    double fraction;
     {
-        int x;
-        int y;
-    };
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-    using Buf32 = std::vector<uint32_t>;
-    using ObserverQueue = NotifyQueue<Location>;
-    using DatasetQueue = NotifyQueue<DatasetPtr>;
+        if (m_lines < m_expectedLines)
+            m_lines++;
+        fraction = m_lines / static_cast<double>(m_expectedLines);
+    }
+    return emit(fraction);
+}
 
-    Window m_extent{};
-    Options m_opts;
-    ObserverQueue m_observerQueue{};
-    DatasetQueue m_datasetQueue{};
-    DatasetQueue m_rollupQueue{};
-    Buf32 m_finalBuf{};
+/// Emit progress information saying that a fraction of work has been completed.
+///
+/// @return  True on success, false otherwise.
+bool Progress::emit(double fraction)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
 
-    void runExecutor(const std::string &srcFilename, Progress &progress,
-                     std::atomic<bool> &err, std::atomic<int> &running);
-    void rollupRasters();
-    void scaleOutput();
-    bool writeOutput(DatasetPtr pDstDS);
-};
+    // Call the progress function.
+    if (!m_cb(fraction, ""))
+    {
+        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+        return false;
+    }
+    return true;
+}
 
 }  // namespace viewshed
 }  // namespace gdal

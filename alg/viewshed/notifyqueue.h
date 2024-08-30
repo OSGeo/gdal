@@ -85,9 +85,17 @@ template <class T> class NotifyQueue
         return m_stop;
     }
 
+    // Get the current size of the queue.
+    // \return Current queue size.
+    size_t size() const
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_queue.size();
+    }
+
   private:
     std::queue<T> m_queue{};
-    std::mutex m_mutex{};
+    mutable std::mutex m_mutex{};
     std::condition_variable m_cv{};
     bool m_done{false};
     bool m_stop{false};
