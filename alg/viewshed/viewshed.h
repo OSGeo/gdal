@@ -70,9 +70,6 @@ class Viewshed
     CPL_DLL bool run(GDALRasterBandH hBand,
                      GDALProgressFunc pfnProgress = GDALDummyProgress,
                      void *pProgressArg = nullptr);
-    CPL_DLL bool runCumulative(const std::string &srcFilename,
-                               GDALProgressFunc pfnProgress = GDALDummyProgress,
-                               void *pProgressArg = nullptr);
 
     /**
      * Fetch a pointer to the created raster band.
