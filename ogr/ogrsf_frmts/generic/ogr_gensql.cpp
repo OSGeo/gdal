@@ -2543,14 +2543,47 @@ int OGRGenSQLResultsLayer::Compare(const OGRField *pasFirstTuple,
 void OGRGenSQLResultsLayer::AddFieldDefnToSet(int iTable, int iColumn,
                                               CPLHashSet *hSet)
 {
-    if (iTable != -1 && iColumn != -1)
+    if (iTable != -1)
     {
         OGRLayer *poLayer = m_apoTableLayers[iTable];
-        if (iColumn < poLayer->GetLayerDefn()->GetFieldCount())
+        const auto poLayerDefn = poLayer->GetLayerDefn();
+        const int nFieldCount = poLayerDefn->GetFieldCount();
+        if (iColumn == -1)
         {
-            OGRFieldDefn *poFDefn =
-                poLayer->GetLayerDefn()->GetFieldDefn(iColumn);
-            CPLHashSetInsert(hSet, poFDefn);
+            for (int i = 0; i < nFieldCount; ++i)
+            {
+                OGRFieldDefn *poFDefn = poLayerDefn->GetFieldDefn(i);
+                CPLHashSetInsert(hSet, poFDefn);
+            }
+
+            const int nGeomFieldCount = poLayerDefn->GetGeomFieldCount();
+            for (int i = 0; i < nGeomFieldCount; ++i)
+            {
+                OGRGeomFieldDefn *poFDefn = poLayerDefn->GetGeomFieldDefn(i);
+                CPLHashSetInsert(hSet, poFDefn);
+            }
+        }
+        else
+        {
+            if (iColumn < nFieldCount)
+            {
+                OGRFieldDefn *poFDefn = poLayerDefn->GetFieldDefn(iColumn);
+                CPLHashSetInsert(hSet, poFDefn);
+            }
+            else if (iColumn == nFieldCount + SPF_OGR_GEOMETRY ||
+                     iColumn == nFieldCount + SPF_OGR_GEOM_WKT ||
+                     iColumn == nFieldCount + SPF_OGR_GEOM_AREA)
+            {
+                auto poSrcGFDefn = poLayerDefn->GetGeomFieldDefn(0);
+                CPLHashSetInsert(hSet, poSrcGFDefn);
+            }
+            else if (IS_GEOM_FIELD_INDEX(poLayerDefn, iColumn))
+            {
+                const int iSrcGeomField =
+                    ALL_FIELD_INDEX_TO_GEOM_FIELD_INDEX(poLayerDefn, iColumn);
+                auto poSrcGFDefn = poLayerDefn->GetGeomFieldDefn(iSrcGeomField);
+                CPLHashSetInsert(hSet, poSrcGFDefn);
+            }
         }
     }
 }
@@ -2619,10 +2652,23 @@ void OGRGenSQLResultsLayer::FindAndSetIgnoredFields()
         OGRLayer *poLayer = m_apoTableLayers[iTable];
         OGRFeatureDefn *poSrcFDefn = poLayer->GetLayerDefn();
         char **papszIgnoredFields = nullptr;
-        for (int iSrcField = 0; iSrcField < poSrcFDefn->GetFieldCount();
-             iSrcField++)
+        const int nSrcFieldCount = poSrcFDefn->GetFieldCount();
+        for (int iSrcField = 0; iSrcField < nSrcFieldCount; iSrcField++)
         {
             OGRFieldDefn *poFDefn = poSrcFDefn->GetFieldDefn(iSrcField);
+            if (CPLHashSetLookup(hSet, poFDefn) == nullptr)
+            {
+                papszIgnoredFields =
+                    CSLAddString(papszIgnoredFields, poFDefn->GetNameRef());
+                // CPLDebug("OGR", "Adding %s to the list of ignored fields of
+                // layer %s",
+                //          poFDefn->GetNameRef(), poLayer->GetName());
+            }
+        }
+        const int nSrcGeomFieldCount = poSrcFDefn->GetGeomFieldCount();
+        for (int iSrcField = 0; iSrcField < nSrcGeomFieldCount; iSrcField++)
+        {
+            OGRGeomFieldDefn *poFDefn = poSrcFDefn->GetGeomFieldDefn(iSrcField);
             if (CPLHashSetLookup(hSet, poFDefn) == nullptr)
             {
                 papszIgnoredFields =
