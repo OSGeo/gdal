@@ -20,7 +20,8 @@ add_gdal_driver(
           gdaltileindexdataset.cpp
           STRONG_CXX_WFLAGS)
 gdal_standard_includes(gdal_vrt)
-target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw)
+target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw
+                                            $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 
 set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalvrt.xsd
