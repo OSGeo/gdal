@@ -2389,6 +2389,11 @@ codes = {gdalconst.GDT_Byte: numpy.uint8,
          gdalconst.GDT_CFloat32:  numpy.complex64,
          gdalconst.GDT_CFloat64: numpy.complex128}
 
+np_class_to_gdal_code = { v : k for k, v in codes.items() }
+# since several things map to complex64 we must carefully select
+# the opposite that is an exact match (ticket 1518)
+np_class_to_gdal_code[numpy.complex64] = gdalconst.GDT_CFloat32
+np_dtype_to_gdal_code = { numpy.dtype(k) : v for k, v in np_class_to_gdal_code.items() }
 
 def OpenArray(array, prototype_ds=None, interleave='band'):
 
@@ -2410,31 +2415,21 @@ def OpenArray(array, prototype_ds=None, interleave='band'):
 
     return ds
 
-
 def flip_code(code):
-    if isinstance(code, (numpy.dtype, type)):
-        # since several things map to complex64 we must carefully select
-        # the opposite that is an exact match (ticket 1518)
-        if code == numpy.complex64:
-            return gdalconst.GDT_CFloat32
-
-        for key, value in codes.items():
-            if value == code:
-                return key
-        return None
-    else:
-        try:
-            return codes[code]
-        except KeyError:
-            return None
+    try:
+        return NumericTypeCodeToGDALTypeCode(code)
+    except TypeError:
+        return GDALTypeCodeToNumericTypeCode(code)
 
 def NumericTypeCodeToGDALTypeCode(numeric_type):
-    if not isinstance(numeric_type, (numpy.dtype, type)):
-        raise TypeError("Input must be a type")
-    return flip_code(numeric_type)
+    if isinstance(numeric_type, type):
+        return np_class_to_gdal_code.get(numeric_type, None)
+    elif isinstance(numeric_type, numpy.dtype):
+        return np_dtype_to_gdal_code.get(numeric_type, None)
+    raise TypeError("Input must be a type")
 
 def GDALTypeCodeToNumericTypeCode(gdal_code):
-    return flip_code(gdal_code)
+    return codes.get(gdal_code, None)
 
 def _RaiseException():
     if gdal.GetUseExceptions():
