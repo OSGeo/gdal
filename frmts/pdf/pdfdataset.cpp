@@ -1567,7 +1567,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
     virtual bool GetDIBits(RetainPtr<CFX_DIBitmap> bitmap, int left,
                            int top) const override
     {
-        return m_poParent->GetDIBits(bitmap, left, top);
+        return m_poParent->GetDIBits(std::move(bitmap), left, top);
     }
 
     virtual RetainPtr<const CFX_DIBitmap> GetBackDrop() const override
@@ -1675,8 +1675,8 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
     {
         if (!bEnableBitmap && !bTemporaryEnableVectorForTextStroking)
             return true;
-        return m_poParent->SetBitsWithMask(bitmap, mask, left, top, alpha,
-                                           blend_type);
+        return m_poParent->SetBitsWithMask(std::move(bitmap), std::move(mask),
+                                           left, top, alpha, blend_type);
     }
 
     virtual void SetGroupKnockout(bool group_knockout) override
