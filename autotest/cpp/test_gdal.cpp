@@ -807,6 +807,106 @@ TEST_F(test_gdal, GDALIsValueExactAs)
         GDALIsValueExactAs<double>(std::numeric_limits<double>::quiet_NaN()));
 }
 
+// Test GDALIsValueExactAs()
+TEST_F(test_gdal, GDALIsValueExactAs_C_func)
+{
+    EXPECT_TRUE(GDALIsValueExactAs(0, GDT_Byte));
+    EXPECT_TRUE(GDALIsValueExactAs(255, GDT_Byte));
+    EXPECT_FALSE(GDALIsValueExactAs(-1, GDT_Byte));
+    EXPECT_FALSE(GDALIsValueExactAs(256, GDT_Byte));
+    EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_Byte));
+
+    EXPECT_TRUE(GDALIsValueExactAs(-128, GDT_Int8));
+    EXPECT_TRUE(GDALIsValueExactAs(127, GDT_Int8));
+    EXPECT_FALSE(GDALIsValueExactAs(-129, GDT_Int8));
+    EXPECT_FALSE(GDALIsValueExactAs(128, GDT_Int8));
+    EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_Int8));
+
+    EXPECT_TRUE(GDALIsValueExactAs(0, GDT_UInt16));
+    EXPECT_TRUE(GDALIsValueExactAs(65535, GDT_UInt16));
+    EXPECT_FALSE(GDALIsValueExactAs(-1, GDT_UInt16));
+    EXPECT_FALSE(GDALIsValueExactAs(65536, GDT_UInt16));
+    EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_UInt16));
+
+    EXPECT_TRUE(GDALIsValueExactAs(-32768, GDT_Int16));
+    EXPECT_TRUE(GDALIsValueExactAs(32767, GDT_Int16));
+    EXPECT_FALSE(GDALIsValueExactAs(-32769, GDT_Int16));
+    EXPECT_FALSE(GDALIsValueExactAs(32768, GDT_Int16));
+    EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_Int16));
+
+    EXPECT_TRUE(GDALIsValueExactAs(std::numeric_limits<uint32_t>::lowest(),
+                                   GDT_UInt32));
+    EXPECT_TRUE(
+        GDALIsValueExactAs(std::numeric_limits<uint32_t>::max(), GDT_UInt32));
+    EXPECT_FALSE(GDALIsValueExactAs(
+        std::numeric_limits<uint32_t>::lowest() - 1.0, GDT_UInt32));
+    EXPECT_FALSE(GDALIsValueExactAs(std::numeric_limits<uint32_t>::max() + 1.0,
+                                    GDT_UInt32));
+    EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_UInt32));
+
+    EXPECT_TRUE(
+        GDALIsValueExactAs(std::numeric_limits<int32_t>::lowest(), GDT_Int32));
+    EXPECT_TRUE(
+        GDALIsValueExactAs(std::numeric_limits<int32_t>::max(), GDT_Int32));
+    EXPECT_FALSE(GDALIsValueExactAs(
+        std::numeric_limits<int32_t>::lowest() - 1.0, GDT_Int32));
+    EXPECT_FALSE(GDALIsValueExactAs(std::numeric_limits<int32_t>::max() + 1.0,
+                                    GDT_Int32));
+    EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_Int32));
+
+    EXPECT_TRUE(GDALIsValueExactAs(
+        static_cast<double>(std::numeric_limits<uint64_t>::lowest()),
+        GDT_UInt64));
+    // (1 << 64) - 2048
+    EXPECT_TRUE(GDALIsValueExactAs(18446744073709549568.0, GDT_UInt64));
+    EXPECT_FALSE(GDALIsValueExactAs(
+        static_cast<double>(std::numeric_limits<uint64_t>::lowest()) - 1.0,
+        GDT_UInt64));
+    // (1 << 64)
+    EXPECT_FALSE(GDALIsValueExactAs(18446744073709551616.0, GDT_UInt64));
+    EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_UInt64));
+
+    EXPECT_TRUE(GDALIsValueExactAs(
+        static_cast<double>(std::numeric_limits<int64_t>::lowest()),
+        GDT_Int64));
+    // (1 << 63) - 1024
+    EXPECT_TRUE(GDALIsValueExactAs(9223372036854774784.0, GDT_Int64));
+    EXPECT_FALSE(GDALIsValueExactAs(
+        static_cast<double>(std::numeric_limits<int64_t>::lowest()) - 2048.0,
+        GDT_Int64));
+    // (1 << 63) - 512
+    EXPECT_FALSE(GDALIsValueExactAs(9223372036854775296.0, GDT_Int64));
+    EXPECT_FALSE(GDALIsValueExactAs(0.5, GDT_Int64));
+
+    EXPECT_TRUE(
+        GDALIsValueExactAs(-std::numeric_limits<float>::max(), GDT_Float32));
+    EXPECT_TRUE(
+        GDALIsValueExactAs(std::numeric_limits<float>::max(), GDT_Float32));
+    EXPECT_TRUE(GDALIsValueExactAs(-std::numeric_limits<float>::infinity(),
+                                   GDT_Float32));
+    EXPECT_TRUE(GDALIsValueExactAs(std::numeric_limits<float>::infinity(),
+                                   GDT_Float32));
+    EXPECT_TRUE(GDALIsValueExactAs(std::numeric_limits<double>::quiet_NaN(),
+                                   GDT_Float32));
+    EXPECT_TRUE(
+        !GDALIsValueExactAs(-std::numeric_limits<double>::max(), GDT_Float32));
+    EXPECT_TRUE(
+        !GDALIsValueExactAs(std::numeric_limits<double>::max(), GDT_Float32));
+
+    EXPECT_TRUE(GDALIsValueExactAs(-std::numeric_limits<double>::infinity(),
+                                   GDT_Float64));
+    EXPECT_TRUE(GDALIsValueExactAs(std::numeric_limits<double>::infinity(),
+                                   GDT_Float64));
+    EXPECT_TRUE(
+        GDALIsValueExactAs(-std::numeric_limits<double>::max(), GDT_Float64));
+    EXPECT_TRUE(
+        GDALIsValueExactAs(std::numeric_limits<double>::max(), GDT_Float64));
+    EXPECT_TRUE(GDALIsValueExactAs(std::numeric_limits<double>::quiet_NaN(),
+                                   GDT_Float64));
+
+    EXPECT_TRUE(GDALIsValueExactAs(0, GDT_CInt16));
+}
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif

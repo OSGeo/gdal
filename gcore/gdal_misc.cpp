@@ -939,6 +939,58 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
 }
 
 /************************************************************************/
+/*                         GDALIsValueExactAs()                         */
+/************************************************************************/
+
+/**
+ * \brief Check whether the provided value can be exactly represented in a
+ * data type.
+ *
+ * Only implemented for non-complex data types
+ *
+ * @param dfValue value to check.
+ * @param eDT target data type.
+ *
+ * @return true if the provided value can be exactly represented in the
+ * data type.
+ * @since GDAL 3.10
+ */
+bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
+{
+    switch (eDT)
+    {
+        case GDT_Byte:
+            return GDALIsValueExactAs<uint8_t>(dfValue);
+        case GDT_Int8:
+            return GDALIsValueExactAs<int8_t>(dfValue);
+        case GDT_UInt16:
+            return GDALIsValueExactAs<uint16_t>(dfValue);
+        case GDT_Int16:
+            return GDALIsValueExactAs<int16_t>(dfValue);
+        case GDT_UInt32:
+            return GDALIsValueExactAs<uint32_t>(dfValue);
+        case GDT_Int32:
+            return GDALIsValueExactAs<int32_t>(dfValue);
+        case GDT_UInt64:
+            return GDALIsValueExactAs<uint64_t>(dfValue);
+        case GDT_Int64:
+            return GDALIsValueExactAs<int64_t>(dfValue);
+        case GDT_Float32:
+            return GDALIsValueExactAs<float>(dfValue);
+        case GDT_Float64:
+            return true;
+        case GDT_Unknown:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_TypeCount:
+            break;
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                        GDALGetNonComplexDataType()                */
 /************************************************************************/
 /**
