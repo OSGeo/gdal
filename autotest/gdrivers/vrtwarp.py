@@ -746,3 +746,17 @@ def test_vrtwarp_autocreatewarpedvrt_int16_nodata_32767():
     vrt_ds = gdal.AutoCreateWarpedVRT(ds)
     assert vrt_ds.GetRasterBand(1).DataType == gdal.GDT_Int16
     assert vrt_ds.GetRasterBand(1).GetNoDataValue() == 32767
+
+
+###############################################################################
+# Test gdal.AutoCreateWarpedVRT() on a source nodata value that does not fit
+# the source band type
+
+
+def test_vrtwarp_autocreatewarpedvrt_invalid_nodata():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Byte)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.GetRasterBand(1).SetNoDataValue(-9999)
+    vrt_ds = gdal.AutoCreateWarpedVRT(ds)
+    assert vrt_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
