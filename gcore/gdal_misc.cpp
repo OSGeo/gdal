@@ -140,6 +140,11 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
                                            GDALDataType eType2)
 
 {
+    if (eType1 == GDT_Unknown)
+        return eType2;
+    if (eType2 == GDT_Unknown)
+        return eType1;
+
     const int panBits[] = {GetDataTypeElementSizeBits(eType1),
                            GetDataTypeElementSizeBits(eType2)};
 
@@ -383,7 +388,12 @@ GDALDataType CPL_STDCALL GDALFindDataType(int nBits, int bSigned, int bFloating,
  */
 GDALDataType CPL_STDCALL GDALFindDataTypeForValue(double dValue, int bComplex)
 {
-    const bool bFloating = round(dValue) != dValue;
+    const bool bFloating =
+        round(dValue) != dValue ||
+        dValue >
+            static_cast<double>(std::numeric_limits<std::uint64_t>::max()) ||
+        dValue <
+            static_cast<double>(std::numeric_limits<std::int64_t>::lowest());
     const bool bSigned = bFloating || dValue < 0;
     const int nBits = GetMinBitsForValue(dValue);
 

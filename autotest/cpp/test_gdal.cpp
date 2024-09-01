@@ -260,12 +260,74 @@ TEST_F(test_gdal, GDALDataTypeUnion_special_cases)
                                false /* complex */),
               GDT_Int64);
 
-    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -128, 0), GDT_Int16);
-    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -32768, 0), GDT_Int16);
-    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -32769, 0), GDT_Int32);
-    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float32, -99999, 0), GDT_Float32);
-    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float32, -99999.9876, 0),
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -128, false), GDT_Int16);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -32768, false), GDT_Int16);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Byte, -32769, false), GDT_Int32);
+
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Int8, 127, false), GDT_Int8);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Int8, 128, false), GDT_Int16);
+
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Int16, 32767, false), GDT_Int16);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Int16, 32768, false), GDT_Int32);
+
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_UInt16, 65535, false), GDT_UInt16);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_UInt16, 65536, false), GDT_UInt32);
+
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Int32, INT32_MAX, false),
+              GDT_Int32);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Int32, INT32_MAX + 1.0, false),
+              GDT_Int64);
+
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_UInt32, UINT32_MAX, false),
+              GDT_UInt32);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_UInt32, UINT32_MAX + 1.0, false),
+              GDT_UInt64);
+
+    // (1 << 63) - 1024
+    EXPECT_EQ(
+        GDALDataTypeUnionWithValue(GDT_Int64, 9223372036854774784.0, false),
+        GDT_Int64);
+    // (1 << 63) - 512
+    EXPECT_EQ(
+        GDALDataTypeUnionWithValue(GDT_Int64, 9223372036854775296.0, false),
+        GDT_Float64);
+
+    // (1 << 64) - 2048
+    EXPECT_EQ(
+        GDALDataTypeUnionWithValue(GDT_UInt64, 18446744073709549568.0, false),
+        GDT_UInt64);
+    // (1 << 64) + 4096
+    EXPECT_EQ(
+        GDALDataTypeUnionWithValue(GDT_UInt64, 18446744073709555712.0, false),
+        GDT_Float64);
+
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float32, -99999, false),
+              GDT_Float32);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float32, -99999.9876, false),
               GDT_Float64);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(
+                  GDT_Float32, std::numeric_limits<double>::quiet_NaN(), false),
+              GDT_Float32);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(
+                  GDT_Float32, -std::numeric_limits<double>::infinity(), false),
+              GDT_Float32);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(
+                  GDT_Float32, -std::numeric_limits<double>::infinity(), false),
+              GDT_Float32);
+
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Float64, -99999.9876, false),
+              GDT_Float64);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(
+                  GDT_Float64, std::numeric_limits<double>::quiet_NaN(), false),
+              GDT_Float64);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(
+                  GDT_Float64, -std::numeric_limits<double>::infinity(), false),
+              GDT_Float64);
+    EXPECT_EQ(GDALDataTypeUnionWithValue(
+                  GDT_Float64, -std::numeric_limits<double>::infinity(), false),
+              GDT_Float64);
+
+    EXPECT_EQ(GDALDataTypeUnionWithValue(GDT_Unknown, 0, false), GDT_Byte);
 }
 
 // Test GDALAdjustValueToDataType()
