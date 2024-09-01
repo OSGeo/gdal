@@ -60,6 +60,9 @@
  * The returned area will always be in square meters, and assumes that
  * polygon edges describe geodesic lines on the ellipsoid.
  *
+ * <a href="https://geographiclib.sourceforge.io/html/python/geodesics.html">Geodesics</a>
+ * follow the shortest route on the surface of the ellipsoid.
+ *
  * If the geometry' SRS is not a geographic one, geometries are reprojected to
  * the underlying geographic SRS of the geometry' SRS.
  * OGRSpatialReference::GetDataAxisToSRSAxisMapping() is honored.
@@ -92,6 +95,58 @@
  * @param poPoint point to be set with an internal point.
  *
  * @return OGRERR_NONE if it succeeds or OGRERR_FAILURE otherwise.
+ */
+
+/************************************************************************/
+/*                           get_Length()                               */
+/************************************************************************/
+
+/**
+ * \fn double OGRSurface::get_Length() const;
+ *
+ * \brief Get the length of the surface.
+ *
+ * The length is computed as the sum of the lengths of all members
+ * in this collection (including inner rings).
+ *
+ * @return the length of the geometry in meters.
+ *
+ * @see get_GeodesicLength() for an alternative method returning lengths
+ * computed on the ellipsoid, and in meters.
+ *
+ * @since GDAL 3.10
+ */
+
+/************************************************************************/
+/*                        get_GeodesicLength()                          */
+/************************************************************************/
+
+/**
+ * \fn double OGRSurface::get_GeodesicLength(const OGRSpatialReference *poSRSOverride) const;
+ *
+ * \brief Get the length of the surface, where curve edges are geodesic lines
+ * on the underlying ellipsoid of the SRS attached to the geometry.
+ *
+ * The returned length will always be in meters.
+ *
+ * Note that geometries with circular arcs will be linearized in their original
+ * coordinate space first, so the resulting geodesic length will be an
+ * approximation.
+ *
+ * The length is computed as the sum of the lengths of all members
+ * in this collection (including inner rings).
+ *
+ * @note No warning will be issued if a member of the collection does not
+ *       support the get_GeodesicLength method.
+ *
+ * @param poSRSOverride If not null, overrides OGRGeometry::getSpatialReference()
+ * @return the length of the geometry in meters, or a negative value in case
+ * of error.
+ *
+ * @see get_Length() for an alternative method returning lengths computed in
+ * 2D Cartesian space.
+ *
+ * @since GDAL 3.10
  */
 
 /************************************************************************/

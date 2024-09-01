@@ -3471,6 +3471,10 @@ public:
     return OGR_G_Area(self);
   }
 
+  double GeodesicLength() {
+    return OGR_G_GeodesicLength(self);
+  }
+
   double GeodesicArea() {
     return OGR_G_GeodesicArea(self);
   }
