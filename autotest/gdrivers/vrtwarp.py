@@ -732,3 +732,17 @@ def test_vrtwarp_irasterio_optim_window_splitting():
     with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
         expected_data = warped_vrt_ds.ReadRaster()
     assert warped_vrt_ds.ReadRaster() == expected_data
+
+
+###############################################################################
+# Test gdal.AutoCreateWarpedVRT() on a Int16 band with nodata = 32767
+
+
+def test_vrtwarp_autocreatewarpedvrt_int16_nodata_32767():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Int16)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.GetRasterBand(1).SetNoDataValue(32767)
+    vrt_ds = gdal.AutoCreateWarpedVRT(ds)
+    assert vrt_ds.GetRasterBand(1).DataType == gdal.GDT_Int16
+    assert vrt_ds.GetRasterBand(1).GetNoDataValue() == 32767
