@@ -358,6 +358,7 @@ class netCDFDataset final : public GDALPamDataset
     friend class netCDFRasterBand;  // TMP
     friend class netCDFLayer;
     friend class netCDFVariable;
+    friend class nccfdriver::netCDFVID;
 
     typedef enum
     {
@@ -565,8 +566,6 @@ class netCDFDataset final : public GDALPamDataset
     void SetSpatialRefNoUpdate(const OGRSpatialReference *);
 
   protected:
-    CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
-
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;

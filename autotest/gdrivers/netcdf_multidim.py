@@ -4005,9 +4005,17 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
         rg_subset = rg.SubsetDimensionFromSelection("/x=440750")
         rg_subset.OpenMDArray("Band1").GetStatistics(False, force=True)
 
+    def test3():
+        ds = gdal.Open(filename)
+        ds.SetMetadataItem("foo", "bar")
+
     def reopen():
 
+        ds = gdal.Open(filename)
+        assert ds.GetMetadataItem("foo") == "bar"
+
         aux_xml = open(filename + ".aux.xml", "rb").read().decode("UTF-8")
+        assert '<MDI key="foo">bar</MDI>' in aux_xml
         assert (
             '<DerivedDataset name="AsClassicDataset(1,0) view of Sliced view of /Band1 ([0:10,...])">'
             in aux_xml
@@ -4053,6 +4061,7 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
 
     test()
     test2()
+    test3()
     reopen()
 
 

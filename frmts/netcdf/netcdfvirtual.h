@@ -34,6 +34,8 @@
 #include "netcdfsg.h"
 #include "netcdf.h"
 
+class netCDFDataset;
+
 // netCDF Virtual
 // Provides a layer of "virtual ncID"
 // that can be mapped to a real netCDF ID
@@ -320,6 +322,7 @@ class netCDFVVariable
  */
 class netCDFVID
 {
+    netCDFDataset *m_poDS = nullptr;
     int &ncid;  // ncid REF. which tracks ncID changes that may be made upstream
     int dimTicket = 0;
     int varTicket = 0;
@@ -476,7 +479,8 @@ class netCDFVID
     }
 
     // Constructor
-    explicit netCDFVID(int &ncid_in) : ncid(ncid_in)
+    explicit netCDFVID(netCDFDataset *poDS, int &ncid_in)
+        : m_poDS(poDS), ncid(ncid_in)
     {
     }
 };

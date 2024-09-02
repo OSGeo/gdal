@@ -154,12 +154,12 @@ void netCDFVID::nc_resize_vdim(int dimid, size_t dimlen)
 
 void netCDFVID::nc_set_define_mode()
 {
-    NCDF_ERR(nc_redef(ncid));
+    m_poDS->SetDefineMode(true);
 }
 
 void netCDFVID::nc_set_data_mode()
 {
-    NCDF_ERR(nc_enddef(ncid));
+    m_poDS->SetDefineMode(false);
 }
 
 void netCDFVID::nc_vmap()
