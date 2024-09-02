@@ -684,6 +684,45 @@ OGRErr OGRCurvePolygon::transform(OGRCoordinateTransformation *poCT)
 }
 
 /************************************************************************/
+/*                              get_Length()                            */
+/************************************************************************/
+
+double OGRCurvePolygon::get_Length() const
+
+{
+    double dfLength = 0.0;
+    for (const auto &poCurve : *this)
+    {
+        dfLength += poCurve->get_Length();
+    }
+
+    return dfLength;
+}
+
+/************************************************************************/
+/*                        get_GeodesicLength()                          */
+/************************************************************************/
+
+double OGRCurvePolygon::get_GeodesicLength(
+    const OGRSpatialReference *poSRSOverride) const
+
+{
+    if (!poSRSOverride)
+        poSRSOverride = getSpatialReference();
+
+    double dfLength = 0.0;
+    for (const auto &poCurve : *this)
+    {
+        const double dfLocalLength = poCurve->get_GeodesicLength(poSRSOverride);
+        if (dfLocalLength < 0)
+            return dfLocalLength;
+        dfLength += dfLocalLength;
+    }
+
+    return dfLength;
+}
+
+/************************************************************************/
 /*                              get_Area()                              */
 /************************************************************************/
 

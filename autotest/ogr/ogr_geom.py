@@ -1133,7 +1133,7 @@ def test_ogr_geom_length_geometrycollection():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     length = geom.Length()
-    assert length == pytest.approx(4, abs=0.00000000001), (
+    assert length == pytest.approx(8, abs=0.00000000001), (
         "Length() result wrong, got %g." % length
     )
 
@@ -4484,6 +4484,173 @@ def test_ogr_geom_GeodesicArea():
     g.AssignSpatialReference(srs)
     with pytest.raises(Exception, match="CRS has no geodetic CRS"):
         g.GeodesicArea()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_geom_GeodesicLength():
+
+    # Lat, lon order
+    g = ogr.CreateGeometryFromWkt("LINESTRING(49 2,49 3,48 3,49 2)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == pytest.approx(317885.78639964823)
+
+    # Lat, lon order
+    g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == pytest.approx(317885.78639964823)
+
+    # Lon, lat order
+    g = ogr.CreateGeometryFromWkt("POLYGON((2 49,3 49,3 48,2 49))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == pytest.approx(317885.78639964823)
+
+    # Lon, lat order
+    g = ogr.CreateGeometryFromWkt("POLYGON((12 49,13 49,13 48,12 49))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == pytest.approx(317885.78639964823)
+
+    # Lon, lat order
+    g = ogr.CreateGeometryFromWkt("POLYGON((2 89,3 89,3 88,2 89))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == pytest.approx(225369.66747743438)
+
+    # easting, northing
+    g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    other_srs = osr.SpatialReference()
+    other_srs.ImportFromEPSG(32631)
+    g.TransformTo(other_srs)
+    assert g.GeodesicLength() == pytest.approx(317885.78639964823)
+    # For comparison: cartesian length in UTM.
+    assert g.Length() == pytest.approx(317763.15996565996)
+
+    # POLYGON with hole
+    g = ogr.CreateGeometryFromWkt(
+        "POLYGON((49 2,49 3,48 3,49 2),(49 2,49 3,48 3,49 2))"
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == pytest.approx(635771.5727992965)
+
+    # MULTIPOLYGON
+    g = ogr.CreateGeometryFromWkt(
+        "MULTIPOLYGON(((49 2,49 3,48 3,49 2)),((89 2,89 3,88 3,89 2)))"
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == pytest.approx(317885.78639964823 + 225369.66747743438)
+
+    # POLYGON EMPTY
+    g = ogr.CreateGeometryFromWkt("POLYGON EMPTY")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == 0
+
+    # GEOMETRYCOLLECTION
+    g = ogr.CreateGeometryFromWkt(
+        "GEOMETRYCOLLECTION(GEOMETRYCOLLECTION(POLYGON((49 2,49 3,48 3,49 2))),LINESTRING(89 2,89 3,88 3,89 2))))"
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == pytest.approx(317885.78639964823 + 225369.66747743438)
+
+    # CIRCULARSTRING
+    g = ogr.CreateGeometryFromWkt("CIRCULARSTRING(0 0,1 1,2 0,1 -1,0 0)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == ogr.ForceToLineString(g).GeodesicLength()
+
+    # CIRCULARSTRING EMPTY
+    g = ogr.CreateGeometryFromWkt("CIRCULARSTRING EMPTY")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == 0
+
+    # COMPOUNDCURVE
+    g = ogr.CreateGeometryFromWkt("COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0,1 -1,0 0))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == ogr.ForceToLineString(g).GeodesicLength()
+
+    # COMPOUNDCURVE EMPTY
+    g = ogr.CreateGeometryFromWkt("COMPOUNDCURVE EMPTY")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == 0
+
+    # POLYHEDRALSURFACE EMPTY
+    g = ogr.CreateGeometryFromWkt("POLYHEDRALSURFACE EMPTY")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicLength() == 0
+
+    # POLYHEDRALSURFACE
+    g = ogr.CreateGeometryFromWkt("POLYHEDRALSURFACE(((0 0 0,0 1 0,1 1 0,0 0 0)))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    with pytest.raises(Exception, match="not implemented for PolyhedralSurface"):
+        g.GeodesicLength()
+
+    # GEOMETRYCOLLECTION of POLYHEDRALSURFACE
+    g = ogr.CreateGeometryFromWkt(
+        "GEOMETRYCOLLECTION(GEOMETRYCOLLECTION(POLYHEDRALSURFACE(((0 0 0,0 1 0,1 1 0,0 0 0)))))"
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    with pytest.raises(Exception, match="not implemented for PolyhedralSurface"):
+        g.GeodesicLength()
+
+    # Incompatible geometry type
+    g = ogr.CreateGeometryFromWkt("POINT(0 1)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    with pytest.raises(Exception, match="non-curve geometry type"):
+        g.GeodesicLength()
+
+    # No SRS
+    g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")
+    with pytest.raises(
+        Exception, match="Cannot compute length on ellipsoid due to missing SRS"
+    ):
+        g.GeodesicLength()
+
+    # Engineering SRS
+    g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('LOCAL_CS["dummy"]')
+    g.AssignSpatialReference(srs)
+    with pytest.raises(Exception, match="CRS has no geodetic CRS"):
+        g.GeodesicLength()
 
 
 @pytest.mark.require_geos

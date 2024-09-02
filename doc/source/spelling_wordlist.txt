@@ -1046,6 +1046,7 @@ Geodatabase
 geodatabases
 Geodatabases
 GeodesicArea
+GeodesicLength
 Geogrid
 geohash
 geohashes
