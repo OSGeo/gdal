@@ -2232,6 +2232,18 @@ int OGRCoordinateTransformation::TransformWithErrorCodes(size_t nCount,
                                                          int *panErrorCodes)
 
 {
+    if (nCount == 1)
+    {
+        int nSuccess = 0;
+        const bool bOverallSuccess =
+            CPL_TO_BOOL(Transform(nCount, x, y, z, t, &nSuccess));
+        if (panErrorCodes)
+        {
+            panErrorCodes[0] = nSuccess ? 0 : -1;
+        }
+        return bOverallSuccess;
+    }
+
     std::vector<int> abSuccess;
     try
     {
