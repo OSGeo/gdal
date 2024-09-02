@@ -86,10 +86,11 @@ A new C++ function, GDALCreateThreadSafeDataset, is added with two forms:
 
     std::unique_ptr<GDALDataset> GDALCreateThreadSafeDataset(std::unique_ptr<GDALDataset> poDS, int nScopeFlags);
 
-    std::unique_ptr<GDALDataset> GDALCreateThreadSafeDataset(GDALDataset* poDS, int nScopeFlags);
+    GDALDataset* GDALCreateThreadSafeDataset(GDALDataset* poDS, int nScopeFlags);
 
 This function accepts a (generally non thread-safe) source dataset and return
-a new dataset that is a thread-safe wrapper around it.
+a new dataset that is a thread-safe wrapper around it, or the source dataset if
+it is already thread-safe.
 The nScopeFlags argument must be compulsory set to GDAL_OF_RASTER to express that
 the intended scope is read-only raster operations (other values will result in
 an error and a NULL returned dataset).
@@ -104,10 +105,18 @@ patterns like the following one are valid:
 .. code-block:: c++
 
    auto poDS = GDALDataset::Open(...);
-   auto poThreadSafeDS = GDALCreateThreadSafeDataset(poDS, GDAL_OF_RASTER | GDAL_OF_THREAD_SAFE);
-   poDS->ReleaseRef();
-   // ... do something with poThreadSafeDS ...
-   poThreadSafeDS.reset(); // optional
+   GDALDataset* poThreadSafeDS = GDALCreateThreadSafeDataset(poDS, GDAL_OF_RASTER | GDAL_OF_THREAD_SAFE);
+   poDS->ReleaseRef(); // can be done here, or any time later
+   if (poThreadSafeDS )
+   {
+       // ... do something with poThreadSafeDS ...
+       poThreadSafeDS->ReleaseRef();
+   }
+
+
+For proper working both when a new dataset is returned or the passed one if it
+is already thread-safe, :cpp:func:`GDALDataset::ReleaseRef()` (and not delete or
+GDALClose()) must be called on the returned dataset.
 
 
 The corresponding C function for the second form is added:
@@ -143,22 +152,12 @@ Example of a function processing a whole dataset passed as an object:
 
     void foo(GDALDataset* poDS)
     {
-        std::unique_ptr<GDALDataset> poThreadSafeDSUniquePtr; // keep in that scope
-        GDALDataset* poThreadSafeDS;
-        if( poDS->IsThreadSafe(GDAL_OF_RASTER) )
-        {
-            poThreadSafeDS = poDS;
-        }
-        else
-        {
-            poThreadSafeDSUniquePtr = GDALCreateThreadSafeDataset(poDS, GDAL_OF_RASTER);
-            // TODO: check poThreadSafeDSUniquePtr is not null.
-            poThreadSafeDS = poThreadSafeDSUniquePtr.get();
-        }
-
+        GDALDataset* poThreadSafeDS = GDALCreateThreadSafeDataset(poDS, GDAL_OF_RASTER);
         if( poThreadSafeDS )
         {
             // TODO: spawn threads using poThreadSafeDS
+
+            poThreadSafeDS->ReleaseRef();
         }
         else
         {
@@ -174,24 +173,13 @@ Example of a function processing a single band passed as an object:
 
     void foo(GDALRasterBand* poBand)
     {
-        std::unique_ptr<GDALDataset> poThreadSafeDSUniquePtr; // keep in that scope
-
+        GDALDataset* poThreadSafeDS = nullptr;
         GDALRasterBand* poThreadSafeBand = nullptr;
         GDALDataset* poDS = poBand->GetDataset();
         // Check that poBand has a matching owing dataset
         if( poDS && poDS->GetRasterBand(poBand->GetBand()) == poBand )
         {
-            GDALDataset* poThreadSafeDS;
-            if( poDS->IsThreadSafe(GDAL_OF_RASTER) )
-            {
-                poThreadSafeDS = poDS;
-            }
-            else
-            {
-                poThreadSafeDSUniquePtr = GDALCreateThreadSafeDataset(poDS, GDAL_OF_RASTER);
-                poThreadSafeDS = poThreadSafeDSUniquePtr.get();
-            }
-
+            poThreadSafeDS = GDALCreateThreadSafeDataset(poDS, GDAL_OF_RASTER);
             if( poThreadSafeDS )
                 poThreadSafeBand = poThreadSafeDS->GetBand(poBand->GetBand());
         }
@@ -199,6 +187,8 @@ Example of a function processing a single band passed as an object:
         if( poThreadSafeBand )
         {
             // TODO: spawn threads using poThreadSafeBand
+
+            poThreadSafeDS->ReleaseRef();
         }
         else
         {
