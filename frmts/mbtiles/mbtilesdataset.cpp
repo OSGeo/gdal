@@ -1135,7 +1135,7 @@ CPLErr MBTilesDataset::SetGeoTransform(double *padfGeoTransform)
             if (miny < -ok_maxy)
                 miny = -ok_maxy;
 
-            osBounds.Printf("%.18g,%.18g,%.18g,%.18g", minx, miny, maxx, maxy);
+            osBounds.Printf("%.17g,%.17g,%.17g,%.17g", minx, miny, maxx, maxy);
         }
 
         char *pszSQL = sqlite3_mprintf(
@@ -3208,13 +3208,13 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
                 aosOptions.AddString("VRT");
                 aosOptions.AddString("-projwin");
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0]));
-                aosOptions.AddString(CPLSPrintf("%.18g", maxLat));
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0]));
+                aosOptions.AddString(CPLSPrintf("%.17g", maxLat));
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0] +
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0] +
                                             poSrcDS->GetRasterXSize() *
                                                 adfSrcGeoTransform[1]));
-                aosOptions.AddString(CPLSPrintf("%.18g", minLat));
+                aosOptions.AddString(CPLSPrintf("%.17g", minLat));
                 auto psOptions =
                     GDALTranslateOptionsNew(aosOptions.List(), nullptr);
                 poTmpDS.reset(GDALDataset::FromHandle(GDALTranslate(

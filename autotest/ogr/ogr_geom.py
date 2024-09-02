@@ -910,11 +910,11 @@ def test_ogr_geom_segmentize():
     for i in range(g1.GetPointCount()):
         if g1.GetPoint(i) != g2.GetPoint(g1.GetPointCount() - 1 - i):
             print(
-                "%.18g"
+                "%.17g"
                 % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount() - 1 - i)[0])
             )
             pytest.fail(
-                "%.18g"
+                "%.17g"
                 % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount() - 1 - i)[1])
             )
 
@@ -1658,11 +1658,11 @@ def test_ogr_geom_circularstring():
     for i in range(g1.GetPointCount()):
         if g1.GetPoint(i) != g2.GetPoint(g1.GetPointCount() - 1 - i):
             print(
-                "%.18g"
+                "%.17g"
                 % (g1.GetPoint(i)[0] - g2.GetPoint(g1.GetPointCount() - 1 - i)[0])
             )
             pytest.fail(
-                "%.18g"
+                "%.17g"
                 % (g1.GetPoint(i)[1] - g2.GetPoint(g1.GetPointCount() - 1 - i)[1])
             )
 

@@ -583,7 +583,7 @@ CPLString GTiffFormatGDALNoDataTagValue(double dfNoData)
     if (CPLIsNan(dfNoData))
         osVal = "nan";
     else
-        osVal.Printf("%.18g", dfNoData);
+        osVal.Printf("%.17g", dfNoData);
     return osVal;
 }
 

@@ -1014,7 +1014,7 @@ static const char *FileGDBValueToStr(OGRFieldType eOGRFieldType,
         case OFTInteger:
             return CPLSPrintf("%d", psValue->Integer);
         case OFTReal:
-            return CPLSPrintf("%.18g", psValue->Real);
+            return CPLSPrintf("%.17g", psValue->Real);
         case OFTString:
             return psValue->String;
         case OFTDateTime:

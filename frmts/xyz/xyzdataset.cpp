@@ -1677,9 +1677,9 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     char szFormat[50] = {'\0'};
     if (eReqDT == GDT_Int32)
-        strcpy(szFormat, "%.18g%c%.18g%c%d\n");
+        strcpy(szFormat, "%.17g%c%.17g%c%d\n");
     else
-        strcpy(szFormat, "%.18g%c%.18g%c%.18g\n");
+        strcpy(szFormat, "%.17g%c%.17g%c%.17g\n");
     const char *pszDecimalPrecision =
         CSLFetchNameValue(papszOptions, "DECIMAL_PRECISION");
     const char *pszSignificantDigits =

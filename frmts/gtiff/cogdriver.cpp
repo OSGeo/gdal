@@ -267,13 +267,13 @@ static bool COGGetWarpingCharacteristics(
                 aosOptions.AddString("VRT");
                 aosOptions.AddString("-projwin");
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0]));
-                aosOptions.AddString(CPLSPrintf("%.18g", maxLat));
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0]));
+                aosOptions.AddString(CPLSPrintf("%.17g", maxLat));
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0] +
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0] +
                                             poSrcDS->GetRasterXSize() *
                                                 adfSrcGeoTransform[1]));
-                aosOptions.AddString(CPLSPrintf("%.18g", minLat));
+                aosOptions.AddString(CPLSPrintf("%.17g", minLat));
                 auto psOptions =
                     GDALTranslateOptionsNew(aosOptions.List(), nullptr);
                 poTmpDS.reset(GDALDataset::FromHandle(GDALTranslate(
@@ -615,10 +615,10 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     papszArg = CSLAddString(papszArg, "-t_srs");
     papszArg = CSLAddString(papszArg, osTargetSRS);
     papszArg = CSLAddString(papszArg, "-te");
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMinX));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMinY));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMaxX));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMaxY));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMinX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMinY));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMaxX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMaxY));
     papszArg = CSLAddString(papszArg, "-ts");
     papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nXSize));
     papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nYSize));
@@ -632,8 +632,8 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     {
         // Try to produce exactly square pixels
         papszArg = CSLAddString(papszArg, "-tr");
-        papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfRes));
-        papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfRes));
+        papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfRes));
+        papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfRes));
     }
     else
     {

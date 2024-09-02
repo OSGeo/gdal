@@ -965,7 +965,7 @@ def test_vrtmisc_nodata_float32():
 
     # Check that this is still the case after above serialization to .vrt
     # and re-opening. That is check that we serialize the rounded value with
-    # full double precision (%.18g)
+    # full double precision (%.17g)
     ds = gdal.Open(vrt_filename)
     nodata_vrt = ds.GetRasterBand(1).GetNoDataValue()
     assert nodata_vrt == struct.unpack("f", struct.pack("f", nodata))[0]

@@ -1172,9 +1172,9 @@ void VRTMDArraySourceRegularlySpaced::Serialize(CPLXMLNode *psParent,
     CPLXMLNode *psSource =
         CPLCreateXMLNode(psParent, CXT_Element, "RegularlySpacedValues");
     CPLAddXMLAttributeAndValue(psSource, "start",
-                               CPLSPrintf("%.18g", m_dfStart));
+                               CPLSPrintf("%.17g", m_dfStart));
     CPLAddXMLAttributeAndValue(psSource, "increment",
-                               CPLSPrintf("%.18g", m_dfIncrement));
+                               CPLSPrintf("%.17g", m_dfIncrement));
 }
 
 /************************************************************************/
@@ -2566,13 +2566,13 @@ void VRTMDArray::Serialize(CPLXMLNode *psParent, const char *pszVRTPath) const
     if (m_bHasOffset)
     {
         CPLCreateXMLElementAndValue(psArray, "Offset",
-                                    CPLSPrintf("%.18g", m_dfOffset));
+                                    CPLSPrintf("%.17g", m_dfOffset));
     }
 
     if (m_bHasScale)
     {
         CPLCreateXMLElementAndValue(psArray, "Scale",
-                                    CPLSPrintf("%.18g", m_dfScale));
+                                    CPLSPrintf("%.17g", m_dfScale));
     }
 
     for (const auto &poSource : m_sources)

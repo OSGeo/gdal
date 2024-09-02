@@ -97,13 +97,13 @@ CPLString BuildSpatialFilter(int dbVersion, const OGRGeometry &geom,
     // flag.
     if (dbVersion == 1)
         return CPLString().Printf(
-            "\"%s\".ST_IntersectsRect(ST_GeomFromText('POINT(%.18g %.18g)', "
-            "%d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
+            "\"%s\".ST_IntersectsRect(ST_GeomFromText('POINT(%.17g %.17g)', "
+            "%d), ST_GeomFromText('POINT(%.17g %.17g)', %d)) = 1",
             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
     else
         return CPLString().Printf(
-            "\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%.18g "
-            "%.18g)', %d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
+            "\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%.17g "
+            "%.17g)', %d), ST_GeomFromText('POINT(%.17g %.17g)', %d)) = 1",
             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
 }
 

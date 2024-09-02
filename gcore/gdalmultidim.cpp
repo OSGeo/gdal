@@ -1693,7 +1693,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                 str = CPLSPrintf("%.9g", *static_cast<const float *>(pSrc));
                 break;
             case GDT_Float64:
-                str = CPLSPrintf("%.18g", *static_cast<const double *>(pSrc));
+                str = CPLSPrintf("%.17g", *static_cast<const double *>(pSrc));
                 break;
             case GDT_CInt16:
             {
@@ -1716,7 +1716,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
             case GDT_CFloat64:
             {
                 const double *src = static_cast<const double *>(pSrc);
-                str = CPLSPrintf("%.18g+%.18gj", src[0], src[1]);
+                str = CPLSPrintf("%.17g+%.17gj", src[0], src[1]);
                 break;
             }
             case GDT_TypeCount:
@@ -8255,10 +8255,10 @@ std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
         const double dfYMin =
             dfYMax + dfYSpacing * static_cast<double>(poNewDimY->GetSize());
         aosArgv.AddString("-te");
-        aosArgv.AddString(CPLSPrintf("%.18g", dfXMin));
-        aosArgv.AddString(CPLSPrintf("%.18g", dfYMin));
-        aosArgv.AddString(CPLSPrintf("%.18g", dfXMax));
-        aosArgv.AddString(CPLSPrintf("%.18g", dfYMax));
+        aosArgv.AddString(CPLSPrintf("%.17g", dfXMin));
+        aosArgv.AddString(CPLSPrintf("%.17g", dfYMin));
+        aosArgv.AddString(CPLSPrintf("%.17g", dfXMax));
+        aosArgv.AddString(CPLSPrintf("%.17g", dfYMax));
     }
 
     if (poNewDimX && poNewDimY)
@@ -14045,15 +14045,15 @@ void GDALPamMultiDim::Save()
                                                                      : "0");
             CPLCreateXMLElementAndValue(
                 psMDArray, "Minimum",
-                CPLSPrintf("%.18g", kv.second.stats.dfMin));
+                CPLSPrintf("%.17g", kv.second.stats.dfMin));
             CPLCreateXMLElementAndValue(
                 psMDArray, "Maximum",
-                CPLSPrintf("%.18g", kv.second.stats.dfMax));
+                CPLSPrintf("%.17g", kv.second.stats.dfMax));
             CPLCreateXMLElementAndValue(
-                psMDArray, "Mean", CPLSPrintf("%.18g", kv.second.stats.dfMean));
+                psMDArray, "Mean", CPLSPrintf("%.17g", kv.second.stats.dfMean));
             CPLCreateXMLElementAndValue(
                 psMDArray, "StdDev",
-                CPLSPrintf("%.18g", kv.second.stats.dfStdDev));
+                CPLSPrintf("%.17g", kv.second.stats.dfStdDev));
             CPLCreateXMLElementAndValue(
                 psMDArray, "ValidSampleCount",
                 CPLSPrintf(CPL_FRMT_GUIB, kv.second.stats.nValidCount));

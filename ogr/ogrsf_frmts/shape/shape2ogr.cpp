@@ -1734,7 +1734,7 @@ OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                     if (nCounter <= 10)
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Value %.18g of field %s with 0 decimal of "
+                                 "Value %.17g of field %s with 0 decimal of "
                                  "feature " CPL_FRMT_GIB
                                  " is bigger than 2^53. "
                                  "Precision loss likely occurred or going to "
@@ -1752,7 +1752,7 @@ OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                 if (!ret)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Value %.18g of field %s of feature " CPL_FRMT_GIB
+                             "Value %.17g of field %s of feature " CPL_FRMT_GIB
                              " not "
                              "successfully written. Possibly due to too larger "
                              "number "

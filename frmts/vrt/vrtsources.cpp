@@ -2105,7 +2105,7 @@ CPLXMLNode *VRTNoDataFromMaskSource::SerializeToXML(const char *pszVRTPath)
     if (m_bNoDataSet)
     {
         CPLSetXMLValue(psSrc, "MaskValueThreshold",
-                       CPLSPrintf("%.18g", m_dfMaskValueThreshold));
+                       CPLSPrintf("%.17g", m_dfMaskValueThreshold));
 
         GDALDataType eBandDT = GDT_Unknown;
         double dfNoDataValue = m_dfNoDataValue;
@@ -2131,7 +2131,7 @@ CPLXMLNode *VRTNoDataFromMaskSource::SerializeToXML(const char *pszVRTPath)
     if (m_bHasRemappedValue)
     {
         CPLSetXMLValue(psSrc, "RemappedValue",
-                       CPLSPrintf("%.18g", m_dfRemappedValue));
+                       CPLSPrintf("%.17g", m_dfRemappedValue));
     }
 
     return psSrc;
@@ -2647,7 +2647,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML(const char *pszVRTPath)
             CPLString().Printf("%g", m_adfLUTInputs[0]) ==
                 CPLString().Printf("%g", m_adfLUTInputs[1]))
         {
-            osLUT = CPLString().Printf("%.18g:%g", m_adfLUTInputs[0],
+            osLUT = CPLString().Printf("%.17g:%g", m_adfLUTInputs[0],
                                        m_adfLUTOutputs[0]);
         }
         else
@@ -2666,7 +2666,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML(const char *pszVRTPath)
                 // TODO(schwehr): An explanation of the 18 would be helpful.
                 // Can someone distill the issue down to a quick comment?
                 // https://trac.osgeo.org/gdal/ticket/6422
-                osLUT += CPLString().Printf(",%.18g:%g", m_adfLUTInputs[i],
+                osLUT += CPLString().Printf(",%.17g:%g", m_adfLUTInputs[i],
                                             m_adfLUTOutputs[i]);
             }
             else

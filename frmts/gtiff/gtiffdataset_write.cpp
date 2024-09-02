@@ -4185,10 +4185,10 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         {
             char szValue[128] = {};
 
-            CPLsnprintf(szValue, sizeof(szValue), "%.18g", dfOffset);
+            CPLsnprintf(szValue, sizeof(szValue), "%.17g", dfOffset);
             AppendMetadataItem(&psRoot, &psTail, "OFFSET", szValue, nBand,
                                "offset", "");
-            CPLsnprintf(szValue, sizeof(szValue), "%.18g", dfScale);
+            CPLsnprintf(szValue, sizeof(szValue), "%.17g", dfScale);
             AppendMetadataItem(&psRoot, &psTail, "SCALE", szValue, nBand,
                                "scale", "");
         }
