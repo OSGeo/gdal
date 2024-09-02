@@ -647,6 +647,42 @@ def test_ogr_geom_transform_to():
 
 
 ###############################################################################
+# Test TransformTo() with 3D coordinates
+
+
+@pytest.mark.parametrize(
+    "input_wkt,output_wkt",
+    [
+        ("POINT Z (90 -90 0)", "POINT Z (0 0 -6356752.31424518)"),
+        ("POINT ZM (90 -90 0 20)", "POINT ZM (0 0 -6356752.31424518 20)"),
+        (
+            "LINESTRING Z (90 -90 0,0 0 1000000000)",
+            "LINESTRING Z (0 0 -6356752.31424518,1006378137.0 0 0)",
+        ),
+        (
+            "LINESTRING ZM (90 -90 0 20,0 0 1000000000 30)",
+            "LINESTRING ZM (0 0 -6356752.31424518 20,1006378137.0 0 0 30)",
+        ),
+    ],
+)
+def test_ogr_geom_transform_3d_to(input_wkt, output_wkt):
+
+    # Input SRS is EPSG:4979
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4979)
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    # Output SRS is EPSG:4978
+    sr2 = osr.SpatialReference()
+    sr2.ImportFromEPSG(4978)
+
+    geom = ogr.CreateGeometryFromWkt(input_wkt)
+    geom.AssignSpatialReference(sr)
+    assert geom.TransformTo(sr2) == 0
+    ogrtest.check_feature_geometry(geom, output_wkt)
+
+
+###############################################################################
 # Test Transform()
 
 
