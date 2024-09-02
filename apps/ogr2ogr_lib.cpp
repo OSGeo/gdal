@@ -41,6 +41,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <future>
 #include <limits>
 #include <map>
 #include <memory>
@@ -48,7 +49,6 @@
 #include <set>
 #include <unordered_set>
 #include <string>
-#include <thread>
 #include <utility>
 #include <vector>
 
@@ -5983,16 +5983,17 @@ bool LayerTranslator::TranslateArrow(
             if (nArrayLength >= MIN_FEATURES_FOR_THREADED_REPROJ &&
                 nNumReprojectionThreads >= 2)
             {
-                std::vector<std::thread> oThreads;
+                std::vector<std::future<void>> oTasks;
                 for (int iThread = 0; iThread < nNumReprojectionThreads;
                      ++iThread)
                 {
-                    oThreads.emplace_back(oReprojectionLambda, iThread,
-                                          nNumReprojectionThreads);
+                    oTasks.emplace_back(std::async(std::launch::async,
+                                                   oReprojectionLambda, iThread,
+                                                   nNumReprojectionThreads));
                 }
-                for (auto &oThread : oThreads)
+                for (auto &oTask : oTasks)
                 {
-                    oThread.join();
+                    oTask.get();
                 }
             }
             else
