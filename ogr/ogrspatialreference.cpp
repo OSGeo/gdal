@@ -7850,7 +7850,7 @@ int OGRSpatialReference::GetUTMZone(int *pbNorth) const
     const double dfZone = (dfCentralMeridian + 186.0) / 6.0;
 
     if (dfCentralMeridian < -177.00001 || dfCentralMeridian > 177.000001 ||
-        CPLIsNan(dfZone) ||
+        std::isnan(dfZone) ||
         std::abs(dfZone - static_cast<int>(dfZone) - 0.5) > 0.00001)
         return 0;
 

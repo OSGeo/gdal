@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "filegdbtable_priv.h"
 
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>

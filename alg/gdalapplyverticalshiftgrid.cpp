@@ -38,6 +38,7 @@
 
 #include "proj.h"
 
+#include <cmath>
 #include <limits>
 
 /************************************************************************/
@@ -255,7 +256,7 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 if (bHasNoData && fSrcVal == fNoDataValue)
                 {
                 }
-                else if (CPLIsInf(fGridVal))
+                else if (std::isinf(fGridVal))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Missing vertical grid value at source (%d,%d)",

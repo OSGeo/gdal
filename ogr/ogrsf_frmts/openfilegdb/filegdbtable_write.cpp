@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <cinttypes>
+#include <cmath>
 #include <cwchar>
 #include <errno.h>
 #include <limits.h>

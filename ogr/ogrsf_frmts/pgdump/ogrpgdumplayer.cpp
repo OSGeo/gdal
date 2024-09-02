@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 #include "ogr_p.h"
 
+#include <cmath>
 #include <limits>
 
 //
@@ -626,9 +627,9 @@ void OGRPGCommonAppendCopyRegularFields(
 
                 nOff += static_cast<int>(strlen(pszNeedToFree + nOff));
                 // Check for special values. They need to be quoted.
-                if (CPLIsNan(padfItems[j]))
+                if (std::isnan(padfItems[j]))
                     snprintf(pszNeedToFree + nOff, nLen - nOff, "NaN");
-                else if (CPLIsInf(padfItems[j]))
+                else if (std::isinf(padfItems[j]))
                     snprintf(pszNeedToFree + nOff, nLen - nOff,
                              (padfItems[j] > 0) ? "Infinity" : "-Infinity");
                 else
@@ -663,9 +664,9 @@ void OGRPGCommonAppendCopyRegularFields(
         {
             // Check for special values. They need to be quoted.
             double dfVal = poFeature->GetFieldAsDouble(i);
-            if (CPLIsNan(dfVal))
+            if (std::isnan(dfVal))
                 pszStrValue = "NaN";
-            else if (CPLIsInf(dfVal))
+            else if (std::isinf(dfVal))
                 pszStrValue = (dfVal > 0) ? "Infinity" : "-Infinity";
         }
 
@@ -1057,9 +1058,9 @@ void OGRPGCommonAppendFieldValue(CPLString &osCommand, OGRFeature *poFeature,
 
             nOff += static_cast<int>(strlen(pszNeedToFree + nOff));
             // Check for special values. They need to be quoted.
-            if (CPLIsNan(padfItems[j]))
+            if (std::isnan(padfItems[j]))
                 snprintf(pszNeedToFree + nOff, nLen - nOff, "NaN");
-            else if (CPLIsInf(padfItems[j]))
+            else if (std::isinf(padfItems[j]))
                 snprintf(pszNeedToFree + nOff, nLen - nOff,
                          (padfItems[j] > 0) ? "Infinity" : "-Infinity");
             else
@@ -1121,9 +1122,9 @@ void OGRPGCommonAppendFieldValue(CPLString &osCommand, OGRFeature *poFeature,
     {
         // Check for special values. They need to be quoted.
         double dfVal = poFeature->GetFieldAsDouble(i);
-        if (CPLIsNan(dfVal))
+        if (std::isnan(dfVal))
             pszStrValue = "'NaN'";
-        else if (CPLIsInf(dfVal))
+        else if (std::isinf(dfVal))
             pszStrValue = (dfVal > 0) ? "'Infinity'" : "'-Infinity'";
     }
     else if ((nOGRFieldType == OFTInteger || nOGRFieldType == OFTInteger64) &&

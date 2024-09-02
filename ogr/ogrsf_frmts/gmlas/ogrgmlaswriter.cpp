@@ -34,6 +34,7 @@
 #include "cpl_time.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace GMLAS
 {
@@ -1641,14 +1642,14 @@ void GMLASWriter::PrintMultipleValuesSeparator(
 
 static void PrintXMLDouble(VSILFILE *fp, double dfVal)
 {
-    if (CPLIsInf(dfVal))
+    if (std::isinf(dfVal))
     {
         if (dfVal > 0)
             VSIFPrintfL(fp, "INF");
         else
             VSIFPrintfL(fp, "-INF");
     }
-    else if (CPLIsNan(dfVal))
+    else if (std::isnan(dfVal))
         VSIFPrintfL(fp, "NaN");
     else
         VSIFPrintfL(fp, "%.16g", dfVal);

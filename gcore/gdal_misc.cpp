@@ -826,7 +826,7 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
             break;
         case GDT_Float32:
         {
-            if (!CPLIsFinite(dfValue))
+            if (!std::isfinite(dfValue))
                 break;
 
             // TODO(schwehr): ::min() versus ::lowest.

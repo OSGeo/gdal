@@ -44,7 +44,7 @@ namespace
 
 int DoubleToIntClamp(double dfValue)
 {
-    if (CPLIsNan(dfValue))
+    if (std::isnan(dfValue))
         return 0;
     if (dfValue >= std::numeric_limits<int>::max())
         return std::numeric_limits<int>::max();

@@ -28,6 +28,7 @@
 
 #include "gpb.h"
 
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <vector>
@@ -183,7 +184,7 @@ void MVTTileLayerValue::setValue(double dfVal)
     {
         setSIntValue(static_cast<GInt64>(dfVal));
     }
-    else if (!CPLIsFinite(dfVal) ||
+    else if (!std::isfinite(dfVal) ||
              (dfVal >= -std::numeric_limits<float>::max() &&
               dfVal <= std::numeric_limits<float>::max() &&
               dfVal == static_cast<float>(dfVal)))

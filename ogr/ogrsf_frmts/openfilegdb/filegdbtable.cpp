@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
+#include <cmath>
 #include <errno.h>
 #include <limits.h>
 #include <stddef.h>
@@ -1848,7 +1849,7 @@ int FileGDBDoubleDateToOGRDate(double dfVal, bool bHighPrecision,
 {
     // 25569: Number of days between 1899/12/30 00:00:00 and 1970/01/01 00:00:00
     double dfSeconds = (dfVal - 25569.0) * 3600.0 * 24.0;
-    if (CPLIsNan(dfSeconds) ||
+    if (std::isnan(dfSeconds) ||
         dfSeconds <
             static_cast<double>(std::numeric_limits<GIntBig>::min()) + 1000 ||
         dfSeconds >
@@ -1890,7 +1891,7 @@ int FileGDBDoubleDateToOGRDate(double dfVal, bool bHighPrecision,
 int FileGDBDoubleTimeToOGRTime(double dfVal, OGRField *psField)
 {
     double dfSeconds = dfVal * 3600.0 * 24.0;
-    if (CPLIsNan(dfSeconds) || dfSeconds < 0 || dfSeconds > 86400)
+    if (std::isnan(dfSeconds) || dfSeconds < 0 || dfSeconds > 86400)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "FileGDBDoubleTimeToOGRTime: Invalid time: %lf", dfVal);

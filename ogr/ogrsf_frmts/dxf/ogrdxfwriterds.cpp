@@ -30,6 +30,7 @@
 
 #include "cpl_port.h"
 
+#include <cmath>
 #include <cstdlib>
 
 #include "ogr_dxf.h"
@@ -352,10 +353,10 @@ bool OGRDXFWriterDS::TransferUpdateHeader(VSILFILE *fpOut)
 
     // We don't like non-finite extents. In this case, just write a generic
     // bounding box. Most CAD programs probably ignore this anyway.
-    if (!CPLIsFinite(oGlobalEnvelope.MinX) ||
-        !CPLIsFinite(oGlobalEnvelope.MinY) ||
-        !CPLIsFinite(oGlobalEnvelope.MaxX) ||
-        !CPLIsFinite(oGlobalEnvelope.MaxY))
+    if (!std::isfinite(oGlobalEnvelope.MinX) ||
+        !std::isfinite(oGlobalEnvelope.MinY) ||
+        !std::isfinite(oGlobalEnvelope.MaxX) ||
+        !std::isfinite(oGlobalEnvelope.MaxY))
     {
         oGlobalEnvelope.MinX = 0.0;
         oGlobalEnvelope.MinY = 0.0;

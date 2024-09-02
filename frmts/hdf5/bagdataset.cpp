@@ -47,6 +47,7 @@
 #include "rat.h"
 
 #include <cassert>
+#include <cmath>
 #include <algorithm>
 #include <limits>
 #include <map>
@@ -2248,7 +2249,7 @@ CPLErr BAGGeorefMDBandBase::IReadBlockFromElevBand(int nBlockXOff,
         {
             pbyImage[y * nBlockXSize + x] =
                 (afData[y * nBlockXSize + x] == fNoDataValue ||
-                 CPLIsNan(afData[y * nBlockXSize + x]))
+                 std::isnan(afData[y * nBlockXSize + x]))
                     ? 0
                     : 1;
         }

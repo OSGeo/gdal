@@ -27,6 +27,18 @@
 
 #include "ogrmiramon.h"
 
+#include <cmath>
+
+bool MM_IsNANDouble(double x)
+{
+    return std::isnan(x);
+}
+
+bool MM_IsDoubleInfinite(double x)
+{
+    return std::isinf(x);
+}
+
 /****************************************************************************/
 /*                    OGRMMDriverIdentify()                                 */
 /****************************************************************************/

@@ -35,6 +35,7 @@
 
 #include <string>
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <limits>
 

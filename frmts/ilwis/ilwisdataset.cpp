@@ -32,6 +32,7 @@
 #include <climits>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <string>
@@ -1194,8 +1195,8 @@ GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
         adfMinMax[1] = poBand->GetMaximum(&bGotMax);
         if (!(bGotMin && bGotMax))
             GDALComputeRasterMinMax((GDALRasterBandH)poBand, FALSE, adfMinMax);
-        if ((!CPLIsNan(adfMinMax[0])) && CPLIsFinite(adfMinMax[0]) &&
-            (!CPLIsNan(adfMinMax[1])) && CPLIsFinite(adfMinMax[1]))
+        if ((!std::isnan(adfMinMax[0])) && std::isfinite(adfMinMax[0]) &&
+            (!std::isnan(adfMinMax[1])) && std::isfinite(adfMinMax[1]))
         {
             // only write a range if we got a correct one from the source
             // dataset (otherwise ILWIS can't show the map properly)
@@ -1260,13 +1261,13 @@ GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
                         else if (EQUAL(sStoreType.c_str(), "float"))
                         {
                             if ((((float *)pData)[iCol] == dNoDataValue) ||
-                                (CPLIsNan(((float *)pData)[iCol])))
+                                (std::isnan(((float *)pData)[iCol])))
                                 ((float *)pData)[iCol] = flUNDEF;
                         }
                         else if (EQUAL(sStoreType.c_str(), "Real"))
                         {
                             if ((((double *)pData)[iCol] == dNoDataValue) ||
-                                (CPLIsNan(((double *)pData)[iCol])))
+                                (std::isnan(((double *)pData)[iCol])))
                                 ((double *)pData)[iCol] = rUNDEF;
                         }
                     }

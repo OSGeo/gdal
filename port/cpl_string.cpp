@@ -52,6 +52,7 @@
 
 #include <cctype>
 #include <climits>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 
@@ -2863,7 +2864,7 @@ CPLValueType CPLGetValueType(const char *pszValue)
     {
         // cppcheck-suppress unreadVariable
         const double dfVal = CPLAtof(pszValueInit);
-        if (CPLIsInf(dfVal))
+        if (std::isinf(dfVal))
             return CPL_VALUE_STRING;
     }
 
