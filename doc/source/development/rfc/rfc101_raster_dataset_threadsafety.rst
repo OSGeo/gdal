@@ -237,7 +237,9 @@ Usage and design limitations
   case for datasets opened by GDALOpenEx(). A special implementation is also
   made for dataset instances of the MEM driver. But, there is currently no
   support for creating a thread-safe dataset wrapper on on-the-fly datasets
-  returned by some algorithms.
+  returned by some algorithms (e.g GDALTranslate() or GDALWarp() with VRT as
+  the output driver and with an empty filename, or custom GDALDataset
+  implementation by external code).
 
 * Inherent to the selected approach, there is a band block cache per thread, and
   thus no sharing of cached blocks between threads.
@@ -249,7 +251,7 @@ Usage and design limitations
 
 * Due to implementation limitations, :cpp:func:`GDALRasterBand::GetDefaultRAT`
   on a GDALThreadSafeDataset instance only works if the RAT is an instance of
-  :cpp:class:`GDALDefaultRasterAttributeTable`. A clean error is emitted if
+  :cpp:class:`GDALDefaultRasterAttributeTable`. An error is emitted if
   this is not the case. This could potentially be extended to work with any
   subclass of :cpp:class:`GDALRasterAttributeTable` but with significant
   additional coding to create a thread-safe wrapper. (GDALDefaultRasterAttributeTable
@@ -279,7 +281,7 @@ which defines several classes (internal details):
   the number of bands of the source dataset.
   All virtual methods of GDALDataset are redefined by GDALProxyDataset.
   GDALThreadSafeDataset overloads its ReferenceUnderlyingDataset method, so that
-  a thread-locale dataset is opened the first-time a thread calls a method on
+  a thread-local dataset is opened the first-time a thread calls a method on
   the GDALThreadSafeDataset instance, cached for later use, and method call is
   forwarded to it.
 
@@ -287,8 +289,8 @@ which defines several classes (internal details):
   On instantiation, it creates child GDALThreadSafeRasterBand instances for
   band mask and overviews.
   Its ReferenceUnderlyingRasterBand method calls ReferenceUnderlyingDataset
-  on the GDALThreadSafeDataset instance to get a thread-locale dataset, fetches
-  the appropriate thread-locale band and forwards its the method call.
+  on the GDALThreadSafeDataset instance to get a thread-local dataset, fetches
+  the appropriate thread-local band and forwards its the method call.
 
 - ``GDALThreadLocalDatasetCache``. Instances of that class use thread-local
   storage. The main member of such instances is a LRU cache that maps
@@ -314,7 +316,7 @@ anticipated that drivers but the MEM driver need to do that)
 
 - ``std::unique_ptr<GDALDataset> Clone(int nScopeFlags, bool bCanShareState) const``.
   This method returns a "clone" of the dataset on which it is called, and is used
-  by GDALThreadSafeDataset::ReferenceUnderlyingDataset() when a thread-locale
+  by GDALThreadSafeDataset::ReferenceUnderlyingDataset() when a thread-local
   dataset is needed.
   Implementation of that method must be thread-safe.
   The base implementation calls GDALOpenEx() reusing the dataset name, open flags
