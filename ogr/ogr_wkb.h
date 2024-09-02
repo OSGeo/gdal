@@ -32,6 +32,8 @@
 #include "cpl_port.h"
 #include "ogr_core.h"
 
+#include <vector>
+
 bool CPL_DLL OGRWKBGetGeomType(const GByte *pabyWkb, size_t nWKBSize,
                                bool &bNeedSwap, uint32_t &nType);
 bool OGRWKBPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
@@ -61,6 +63,46 @@ void CPL_DLL OGRWKBFixupCounterClockWiseExternalRing(GByte *pabyWkb,
  */
 const GByte CPL_DLL *WKBFromEWKB(GByte *pabyEWKB, size_t nEWKBSize,
                                  size_t &nWKBSizeOut, int *pnSRIDOut);
+
+/** Object to update point coordinates in a WKB geometry */
+class CPL_DLL OGRWKBPointUpdater
+{
+  public:
+    OGRWKBPointUpdater();
+    virtual ~OGRWKBPointUpdater() = default;
+
+    /** Update method */
+    virtual bool update(bool bNeedSwap, void *x, void *y, void *z, void *m) = 0;
+};
+
+bool CPL_DLL OGRWKBUpdatePoints(GByte *pabyWkb, size_t nWKBSize,
+                                OGRWKBPointUpdater &oUpdater);
+
+/** Transformation cache */
+struct CPL_DLL OGRWKBTransformCache
+{
+#ifdef OGR_WKB_TRANSFORM_ALL_AT_ONCE
+    std::vector<bool> abNeedSwap{};
+    std::vector<bool> abIsEmpty{};
+    std::vector<void *> apdfX{};
+    std::vector<void *> apdfY{};
+    std::vector<void *> apdfZ{};
+    std::vector<void *> apdfM{};
+    std::vector<double> adfX{};
+    std::vector<double> adfY{};
+    std::vector<double> adfZ{};
+    std::vector<double> adfM{};
+    std::vector<int> anErrorCodes{};
+
+    void clear();
+#endif
+};
+
+class OGRCoordinateTransformation;
+bool CPL_DLL OGRWKBTransform(GByte *pabyWkb, size_t nWKBSize,
+                             OGRCoordinateTransformation *poCT,
+                             OGRWKBTransformCache &oCache,
+                             OGREnvelope3D &sEnvelope);
 
 /************************************************************************/
 /*                       OGRAppendBuffer                                */
