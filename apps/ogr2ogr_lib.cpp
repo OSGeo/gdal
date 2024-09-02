@@ -1224,20 +1224,24 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
 
 class CompositeCT : public OGRCoordinateTransformation
 {
+    OGRCoordinateTransformation *const poCT1;
+    const bool bOwnCT1;
+    OGRCoordinateTransformation *const poCT2;
+    const bool bOwnCT2;
+
+    // Working buffer
+    std::vector<int> m_anErrorCode{};
+
     CompositeCT(const CompositeCT &other)
         : poCT1(other.poCT1 ? other.poCT1->Clone() : nullptr), bOwnCT1(true),
-          poCT2(other.poCT2 ? other.poCT2->Clone() : nullptr), bOwnCT2(true)
+          poCT2(other.poCT2 ? other.poCT2->Clone() : nullptr), bOwnCT2(true),
+          m_anErrorCode({})
     {
     }
 
     CompositeCT &operator=(const CompositeCT &) = delete;
 
   public:
-    OGRCoordinateTransformation *poCT1;
-    bool bOwnCT1;
-    OGRCoordinateTransformation *poCT2;
-    bool bOwnCT2;
-
     CompositeCT(OGRCoordinateTransformation *poCT1In, bool bOwnCT1In,
                 OGRCoordinateTransformation *poCT2In, bool bOwnCT2In)
         : poCT1(poCT1In), bOwnCT1(bOwnCT1In), poCT2(poCT2In), bOwnCT2(bOwnCT2In)
@@ -1296,6 +1300,35 @@ class CompositeCT : public OGRCoordinateTransformation
             nResult = poCT1->Transform(nCount, x, y, z, t, pabSuccess);
         if (nResult && poCT2)
             nResult = poCT2->Transform(nCount, x, y, z, t, pabSuccess);
+        return nResult;
+    }
+
+    virtual int TransformWithErrorCodes(size_t nCount, double *x, double *y,
+                                        double *z, double *t,
+                                        int *panErrorCodes) override
+    {
+        if (poCT1 && poCT2 && panErrorCodes)
+        {
+            m_anErrorCode.resize(nCount);
+            int nResult = poCT1->TransformWithErrorCodes(nCount, x, y, z, t,
+                                                         m_anErrorCode.data());
+            if (nResult)
+                nResult = poCT2->TransformWithErrorCodes(nCount, x, y, z, t,
+                                                         panErrorCodes);
+            for (size_t i = 0; i < nCount; ++i)
+            {
+                if (m_anErrorCode[i])
+                    panErrorCodes[i] = m_anErrorCode[i];
+            }
+            return nResult;
+        }
+        int nResult = TRUE;
+        if (poCT1)
+            nResult = poCT1->TransformWithErrorCodes(nCount, x, y, z, t,
+                                                     panErrorCodes);
+        if (nResult && poCT2)
+            nResult = poCT2->TransformWithErrorCodes(nCount, x, y, z, t,
+                                                     panErrorCodes);
         return nResult;
     }
 
@@ -1380,6 +1413,20 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         {
             if (pabSuccess)
                 pabSuccess[i] = true;
+            if (bSwapXY)
+                std::swap(x[i], y[i]);
+        }
+        return true;
+    }
+
+    virtual int TransformWithErrorCodes(size_t nCount, double *x, double *y,
+                                        double * /*z*/, double * /*t*/,
+                                        int *panErrorCodes) override
+    {
+        for (size_t i = 0; i < nCount; i++)
+        {
+            if (panErrorCodes)
+                panErrorCodes[i] = 0;
             if (bSwapXY)
                 std::swap(x[i], y[i]);
         }
