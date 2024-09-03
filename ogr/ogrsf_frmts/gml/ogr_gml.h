@@ -72,6 +72,8 @@ class OGRGMLLayer final : public OGRLayer
 
     bool bFaceHoleNegative;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRGMLLayer)
+
   public:
     OGRGMLLayer(const char *pszName, bool bWriter, OGRGMLDataSource *poDS);
 
@@ -125,7 +127,7 @@ class OGRGMLDataSource final : public OGRDataSource
     VSILFILE *fpOutput;
     bool bFpOutputIsNonSeekable;
     bool bFpOutputSingleFile;
-    OGREnvelope3D sBoundingRect;
+    OGREnvelope3D sBoundingRect{};
     bool bBBOX3D;
     int nBoundedByLocation;
 
@@ -146,8 +148,8 @@ class OGRGMLDataSource final : public OGRDataSource
     bool m_bWriteGlobalSRSInit = false;
 
     // input related parameters.
-    CPLString osFilename;
-    CPLString osXSDFilename;
+    CPLString osFilename{};
+    CPLString osXSDFilename{};
 
     IGMLReader *poReader;
     bool bOutIsTempFile;
@@ -183,6 +185,8 @@ class OGRGMLDataSource final : public OGRDataSource
     void BuildJointClassFromScannedSchema();
 
     void WriteTopElements();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGMLDataSource)
 
   public:
     OGRGMLDataSource();

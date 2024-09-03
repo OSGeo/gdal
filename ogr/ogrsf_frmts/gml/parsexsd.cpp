@@ -735,9 +735,8 @@ static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                         {
                             OGRwkbGeometryType eNewType = psIter->eType;
                             OGRwkbGeometryType eOldType =
-                                (OGRwkbGeometryType)poClass
-                                    ->GetGeometryProperty(0)
-                                    ->GetType();
+                                static_cast<OGRwkbGeometryType>(
+                                    poClass->GetGeometryProperty(0)->GetType());
 
                             if ((eNewType == wkbMultiPoint &&
                                  eOldType == wkbPoint) ||
@@ -919,7 +918,8 @@ static CPLXMLNode *GMLParseXMLFile(const char *pszFilename)
         {
             if (psResult->pabyData != nullptr)
             {
-                psRet = CPLParseXMLString((const char *)psResult->pabyData);
+                psRet = CPLParseXMLString(
+                    reinterpret_cast<const char *>(psResult->pabyData));
             }
             CPLHTTPDestroyResult(psResult);
         }
