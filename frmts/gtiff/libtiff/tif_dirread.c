@@ -4282,8 +4282,6 @@ int TIFFReadDirectory(TIFF *tif)
     else
         tif->tif_curdir++;
 
-    (*tif->tif_cleanup)(tif); /* cleanup any previous compression state */
-
     TIFFReadDirectoryCheckOrder(tif, dir, dircount);
 
     /*
@@ -4312,6 +4310,7 @@ int TIFFReadDirectory(TIFF *tif)
     tif->tif_flags &= ~TIFF_CHOPPEDUPARRAYS;
 
     /* free any old stuff and reinit */
+    (*tif->tif_cleanup)(tif); /* cleanup any previous compression state */
     TIFFFreeDirectory(tif);
     TIFFDefaultDirectory(tif);
 
@@ -5281,8 +5280,7 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
     uint16_t di;
     const TIFFField *fip;
     uint32_t fii;
-    (*tif->tif_cleanup)(tif); /* cleanup any previous compression state */
-    _TIFFSetupFields(tif, infoarray);
+
     dircount = TIFFFetchDirectory(tif, diroff, &dir, NULL);
     if (!dircount)
     {
@@ -5291,9 +5289,41 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
                       diroff);
         return 0;
     }
-    TIFFFreeDirectory(tif);
-    _TIFFmemset(&tif->tif_dir, 0, sizeof(TIFFDirectory));
     TIFFReadDirectoryCheckOrder(tif, dir, dircount);
+
+    /*
+     * Mark duplicates of any tag to be ignored (bugzilla 1994)
+     * to avoid certain pathological problems.
+     */
+    {
+        TIFFDirEntry *ma;
+        uint16_t mb;
+        for (ma = dir, mb = 0; mb < dircount; ma++, mb++)
+        {
+            TIFFDirEntry *na;
+            uint16_t nb;
+            for (na = ma + 1, nb = mb + 1; nb < dircount; na++, nb++)
+            {
+                if (ma->tdir_tag == na->tdir_tag)
+                {
+                    na->tdir_ignore = TRUE;
+                }
+            }
+        }
+    }
+
+    /* Free any old stuff and reinit. */
+    (*tif->tif_cleanup)(tif); /* cleanup any previous compression state */
+    TIFFFreeDirectory(tif);
+    /* Even if custom directories do not need the default settings of a standard
+     * IFD, the pointer to the TIFFSetField() and TIFFGetField() (i.e.
+     * tif->tif_tagmethods.vsetfield and tif->tif_tagmethods.vgetfield) need to
+     * be initialized, which is done in TIFFDefaultDirectory().
+     * After that, the field array for the custom tags needs to be setup again.
+     */
+    TIFFDefaultDirectory(tif);
+    _TIFFSetupFields(tif, infoarray);
+
     /* Allocate arrays for offset values outside IFD entry for IFD data size
      * checking. Note: Counter are reset within TIFFFreeDirectory(). */
     tif->tif_dir.td_dirdatasize_offsets =
