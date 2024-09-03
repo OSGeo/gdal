@@ -4067,11 +4067,12 @@ def test_gdalwarp_lib_ortho_to_long_lat():
 ###############################################################################
 # Test warping to a projection that has no inverse
 # Note: this test will break if PROJ get support for inverse isea !
+# Note: disabled since it will actually break with PROJ 9.5 which implements
 
 
 @pytest.mark.require_proj(8, 0, 0)
 @gdaltest.enable_exceptions()
-def test_gdalwarp_lib_to_projection_without_inverse_method():
+def DISABLED_test_gdalwarp_lib_to_projection_without_inverse_method():
 
     with pytest.raises(Exception, match="No inverse operation"):
         gdal.Warp(
