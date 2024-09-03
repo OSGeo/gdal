@@ -53,14 +53,12 @@ void Combiner::sum(DatasetPtr src)
         m_dataset = std::move(src);
         return;
     }
-    GDALRasterBand *dstBand = m_dataset->GetRasterBand(1);
-
-    size_t size = bandSize(*dstBand);
+    size_t size = bandSize(*m_dataset->GetRasterBand(1));
 
     uint8_t *dstP =
         static_cast<uint8_t *>(m_dataset->GetInternalHandle("MEMORY1"));
     uint8_t *srcP = static_cast<uint8_t *>(src->GetInternalHandle("MEMORY1"));
-    for (size_t i = 0; i <= size; ++i)
+    for (size_t i = 0; i < size; ++i)
         *dstP++ += *srcP++;
     // If we've seen 255 inputs, queue our raster for output and rollup since we might overflow
     // otherwise.
