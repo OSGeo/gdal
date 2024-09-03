@@ -2,7 +2,9 @@
 add_gdal_driver(
   TARGET ogr_Shape
   SOURCES shape2ogr.cpp shp_vsi.c ogrshapedatasource.cpp ogrshapedriver.cpp ogrshapelayer.cpp
-  BUILTIN)
+  BUILTIN
+  STRONG_CXX_WFLAGS
+)
 gdal_standard_includes(ogr_Shape)
 target_include_directories(ogr_Shape PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 
