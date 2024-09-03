@@ -101,9 +101,18 @@
 %constant GCI_MagentaBand   = GCI_MagentaBand;
 %constant GCI_YellowBand    = GCI_YellowBand;
 %constant GCI_BlackBand     = GCI_BlackBand;
-%constant GCI_YCbCr_YBand     = GCI_YCbCr_YBand;
-%constant GCI_YCbCr_CrBand     = GCI_YCbCr_CrBand;
-%constant GCI_YCbCr_CbBand     = GCI_YCbCr_CbBand;
+%constant GCI_YCbCr_YBand   = GCI_YCbCr_YBand;
+%constant GCI_YCbCr_CrBand  = GCI_YCbCr_CrBand;
+%constant GCI_YCbCr_CbBand  = GCI_YCbCr_CbBand;
+%constant GCI_PanBand       = GCI_PanBand;
+%constant GCI_CoastalBand   = GCI_CoastalBand;
+%constant GCI_RedEdgeBand   = GCI_RedEdgeBand;
+%constant GCI_NIRBand       = GCI_NIRBand;
+%constant GCI_SWIRBand      = GCI_SWIRBand;
+%constant GCI_MWIRBand      = GCI_MWIRBand;
+%constant GCI_LWIRBand      = GCI_LWIRBand;
+%constant GCI_TIRBand       = GCI_TIRBand;
+%constant GCI_OtherIRBand   = GCI_OtherIRBand;
 
 // GDALResampleAlg
 

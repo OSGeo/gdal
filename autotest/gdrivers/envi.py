@@ -1056,3 +1056,120 @@ byte order = 0
     assert ds.GetRasterBand(1).GetMetadataItem("wavelength") == "3"
     ds = None
     gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+
+###############################################################################
+# Test wavelength / fwhm
+
+
+def test_envi_read_wavelength_fwhm_um():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+samples = 1
+lines = 1
+bands = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+wavelength units = um
+wavelength = {3, 2, 1}
+fwhm = {.3, .2, .1}""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    ds = gdal.Open("/vsimem/test.bin")
+    assert (
+        ds.GetRasterBand(1).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "3.000"
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.300"
+    assert (
+        ds.GetRasterBand(2).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "2.000"
+    )
+    assert ds.GetRasterBand(2).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.200"
+    ds = None
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+
+###############################################################################
+# Test wavelength / fwhm
+
+
+def test_envi_read_wavelength_fwhm_nm():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+samples = 1
+lines = 1
+bands = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+wavelength units = nm
+wavelength = {3000, 2000, 1000}
+fwhm = {300, 200, 100}""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    ds = gdal.Open("/vsimem/test.bin")
+    assert (
+        ds.GetRasterBand(1).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "3.000"
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.300"
+    assert (
+        ds.GetRasterBand(2).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "2.000"
+    )
+    assert ds.GetRasterBand(2).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.200"
+    ds = None
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+
+###############################################################################
+# Test wavelength / fwhm
+
+
+def test_envi_read_wavelength_fwhm_mm():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+samples = 1
+lines = 1
+bands = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+wavelength units = mm
+wavelength = {0.003, 0.002, 0.001}
+fwhm = {0.0003, 0.0002, 0.0001}""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    ds = gdal.Open("/vsimem/test.bin")
+    assert (
+        ds.GetRasterBand(1).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "3.000"
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.300"
+    assert (
+        ds.GetRasterBand(2).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "2.000"
+    )
+    assert ds.GetRasterBand(2).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.200"
+    ds = None
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")

@@ -223,27 +223,52 @@ typedef struct
         (s).bFloatingPointWindowValidity = FALSE;                              \
     } while (0)
 
-/*! Types of color interpretation for raster bands. */
+/** Types of color interpretation for raster bands.
+ *
+ * For spectral bands, the wavelength ranges are indicative only, and may vary
+ * depending on sensors. The CENTRAL_WAVELENGTH_UM and FWHM_UM metadata
+ * items in the IMAGERY metadata domain of the raster band, when present, will
+ * give more accurate characteristics.
+ */
 typedef enum
 {
     /*! Undefined */ GCI_Undefined = 0,
     /*! Greyscale */ GCI_GrayIndex = 1,
     /*! Paletted (see associated color table) */ GCI_PaletteIndex = 2,
-    /*! Red band of RGBA image */ GCI_RedBand = 3,
-    /*! Green band of RGBA image */ GCI_GreenBand = 4,
-    /*! Blue band of RGBA image */ GCI_BlueBand = 5,
+    /*! Red band of RGBA image, or red spectral band [0.62 - 0.69 um]*/
+    GCI_RedBand = 3,
+    /*! Green band of RGBA image, or green spectral band [0.51 - 0.60 um]*/
+    GCI_GreenBand = 4,
+    /*! Blue band of RGBA image, or blue spectral band [0.45 - 0.53 um] */
+    GCI_BlueBand = 5,
     /*! Alpha (0=transparent, 255=opaque) */ GCI_AlphaBand = 6,
     /*! Hue band of HLS image */ GCI_HueBand = 7,
     /*! Saturation band of HLS image */ GCI_SaturationBand = 8,
     /*! Lightness band of HLS image */ GCI_LightnessBand = 9,
     /*! Cyan band of CMYK image */ GCI_CyanBand = 10,
     /*! Magenta band of CMYK image */ GCI_MagentaBand = 11,
-    /*! Yellow band of CMYK image */ GCI_YellowBand = 12,
+    /*! Yellow band of CMYK image, or yellow spectral band [0.58 - 0.62 um] */
+    GCI_YellowBand = 12,
     /*! Black band of CMYK image */ GCI_BlackBand = 13,
     /*! Y Luminance */ GCI_YCbCr_YBand = 14,
     /*! Cb Chroma */ GCI_YCbCr_CbBand = 15,
     /*! Cr Chroma */ GCI_YCbCr_CrBand = 16,
-    /*! Max current value (equals to GCI_YCbCr_CrBand currently) */ GCI_Max = 16
+    /* GDAL 3.10 addition: begin */
+    /*! Panchromatic band [0.40 - 1.00 um] */ GCI_PanBand = 17,
+    /*! Coastal band [0.40 - 0.45 um] */ GCI_CoastalBand = 18,
+    /*! Red-edge band [0.69 - 0.79 um] */ GCI_RedEdgeBand = 19,
+    /*! Near-InfraRed (NIR) band [0.75 - 1.40 um] */ GCI_NIRBand = 20,
+    /*! Short-Wavelength InfraRed (SWIR) band [1.40 - 3.00 um] */ GCI_SWIRBand =
+        21,
+    /*! Mid-Wavelength InfraRed (MWIR) band [3.00 - 8.00 um] */ GCI_MWIRBand =
+        22,
+    /*! Long-Wavelength InfraRed (LWIR) band [8.00 - 15 um] */ GCI_LWIRBand =
+        23,
+    /*! Thermal InfraRed (TIR) band (MWIR or LWIR) [3 - 15 um] */ GCI_TIRBand =
+        24,
+    /*! Other infrared band [0.75 - 1000 um] */ GCI_OtherIRBand = 25,
+    /* GDAL 3.10 addition: end */
+    /*! Max current value (equals to GCI_OtherIRBand currently) */ GCI_Max = 25
 } GDALColorInterp;
 
 const char CPL_DLL *GDALGetColorInterpretationName(GDALColorInterp);

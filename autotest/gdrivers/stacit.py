@@ -162,7 +162,7 @@ def test_stacit_overlapping_sources():
     # Check that the source covered by another one is not listed
     vrt = ds.GetMetadata("xml:VRT")[0]
     only_one_simple_source = """
-    <ColorInterp>Gray</ColorInterp>
+    <ColorInterp>Coastal</ColorInterp>
     <SimpleSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
       <SourceBand>1</SourceBand>
