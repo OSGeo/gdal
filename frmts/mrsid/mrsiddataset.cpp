@@ -254,6 +254,8 @@ class MrSIDDataset final : public GDALJP2AbstractDataset
     void GetGTIFDefn();
     char *GetOGISDefn(GTIFDefn *);
 
+    int m_nInRasterIO = 0;  // Prevent infinite recursion in IRasterIO()
+
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType, int, BANDMAP_TYPE,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
@@ -860,11 +862,17 @@ CPLErr MrSIDDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (CPLTestBool(CPLGetConfigOption("GDAL_ONE_BIG_READ", "NO")))
         bUseBlockedIO = FALSE;
 
-    if (bUseBlockedIO)
-        return GDALDataset::BlockBasedRasterIO(
+    if (bUseBlockedIO && !m_nInRasterIO)
+    {
+        ++m_nInRasterIO;
+        const CPLErr eErr = GDALDataset::BlockBasedRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
             eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace,
             nBandSpace, psExtraArg);
+        --m_nInRasterIO;
+        return eErr;
+    }
+
     CPLDebug("MrSID", "RasterIO() - using optimized dataset level IO.");
 
     /* -------------------------------------------------------------------- */
