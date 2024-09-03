@@ -5315,3 +5315,15 @@ def test_tiff_read_overview_level_open_option_honor_GDAL_DISABLE_READDIR_ON_OPEN
         webserver.server_stop(webserver_process, webserver_port)
 
         gdal.VSICurlClearCache()
+
+
+###############################################################################
+# Test reading a unrecognized value in the special COLORINTERP item in
+# GDAL_METADATA
+
+
+def test_tiff_read_unrecognized_color_interpretation():
+
+    ds = gdal.Open("data/gtiff/unknown_colorinterp.tif")
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_Undefined
+    assert ds.GetRasterBand(1).GetMetadataItem("COLOR_INTERPRETATION") == "XXXX"
