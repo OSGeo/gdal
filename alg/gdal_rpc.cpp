@@ -516,9 +516,9 @@ static void *GDALCreateSimilarRPCTransformer(void *hTransformArg,
 
     char **papszOptions = nullptr;
     papszOptions = CSLSetNameValue(papszOptions, "RPC_HEIGHT",
-                                   CPLSPrintf("%.18g", psInfo->dfHeightOffset));
+                                   CPLSPrintf("%.17g", psInfo->dfHeightOffset));
     papszOptions = CSLSetNameValue(papszOptions, "RPC_HEIGHT_SCALE",
-                                   CPLSPrintf("%.18g", psInfo->dfHeightScale));
+                                   CPLSPrintf("%.17g", psInfo->dfHeightScale));
     if (psInfo->pszDEMPath != nullptr)
     {
         papszOptions =
@@ -529,7 +529,7 @@ static void *GDALCreateSimilarRPCTransformer(void *hTransformArg,
         if (psInfo->bHasDEMMissingValue)
             papszOptions =
                 CSLSetNameValue(papszOptions, "RPC_DEM_MISSING_VALUE",
-                                CPLSPrintf("%.18g", psInfo->dfDEMMissingValue));
+                                CPLSPrintf("%.17g", psInfo->dfDEMMissingValue));
         papszOptions =
             CSLSetNameValue(papszOptions, "RPC_DEM_APPLY_VDATUM_SHIFT",
                             (psInfo->bApplyDEMVDatumShift) ? "TRUE" : "FALSE");
@@ -2032,7 +2032,7 @@ CPLXMLNode *GDALSerializeRPCTransformer(void *pTransformArg)
         {
             CPLCreateXMLElementAndValue(
                 psTree, "DEMMissingValue",
-                CPLSPrintf("%.18g", psInfo->dfDEMMissingValue));
+                CPLSPrintf("%.17g", psInfo->dfDEMMissingValue));
         }
 
         CPLCreateXMLElementAndValue(psTree, "DEMApplyVDatumShift",

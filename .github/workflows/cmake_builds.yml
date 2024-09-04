@@ -142,12 +142,12 @@ jobs:
 
     - name: Install pdfium
       run: |
-        wget -q https://github.com/rouault/pdfium_build_gdal_3_9/releases/download/pdfium_6309_v1/install-ubuntu2004-rev6309.tar.gz \
-          && tar -xzf install-ubuntu2004-rev6309.tar.gz \
+        wget -q https://github.com/rouault/pdfium_build_gdal_3_10/releases/download/pdfium_6677_v1/install-ubuntu2004-rev6677.tar.gz \
+          && tar -xzf install-ubuntu2004-rev6677.tar.gz \
           && sudo chown -R root:root install \
           && sudo mv install/lib/* /usr/lib/ \
           && sudo mv install/include/* /usr/include/ \
-          && sudo rm -rf install-ubuntu2004-rev6309.tar.gz install \
+          && sudo rm -rf install-ubuntu2004-rev6677.tar.gz install \
           && sudo apt-get update -y \
           && sudo apt-get install -y --fix-missing --no-install-recommends liblcms2-dev
     - name: Configure ccache
@@ -314,7 +314,7 @@ jobs:
       - name: Checkout GDAL
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Install development packages
-        uses: msys2/setup-msys2@5df0ca6cbf14efcd08f8d5bd5e049a3cc8e07fd2 # v2.24.0
+        uses: msys2/setup-msys2@ddf331adaebd714795f1042345e6ca57bd66cea8 # v2.24.1
         with:
           msystem: MINGW64
           update: true
@@ -437,8 +437,8 @@ jobs:
     - name: Install pdfium
       shell: bash -l {0}
       run: |
-        curl -LOs https://github.com/rouault/pdfium_build_gdal_3_9/releases/download/pdfium_6309_v1/install-win10-vs2019-x64-rev6309.zip
-        unzip install-win10-vs2019-x64-rev6309.zip
+        curl -LOs https://github.com/rouault/pdfium_build_gdal_3_10/releases/download/pdfium_6677_v1/install-win10-vs2019-x64-rev6677.zip
+        unzip install-win10-vs2019-x64-rev6677.zip
         mv install install-pdfium
 
     - name: Remove conflicting libraries

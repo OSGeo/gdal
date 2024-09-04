@@ -829,7 +829,7 @@ OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
             CPLStringList aosList;
             for (int i = 0; i < nRepeat; ++i)
                 aosList.AddString(
-                    CPLSPrintf("%.18g + %.18gj", x[2 * i + 0], x[2 * i + 1]));
+                    CPLSPrintf("%.17g + %.17gj", x[2 * i + 0], x[2 * i + 1]));
             if (nRepeat == 1)
                 poFeature->SetField(iField, aosList[0]);
             else
@@ -844,7 +844,7 @@ OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
             for (int i = 0; i < nRepeat; ++i)
             {
                 aosList.AddString(
-                    CPLSPrintf("%.18g + %.18gj", x[2 * i + 0], x[2 * i + 1]));
+                    CPLSPrintf("%.17g + %.17gj", x[2 * i + 0], x[2 * i + 1]));
             }
             if (nRepeat == 1)
                 poFeature->SetField(iField, aosList[0]);

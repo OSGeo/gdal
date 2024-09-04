@@ -648,13 +648,13 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(
     if (psBoundingBox)
     {
         bboxX1 = CPLAtof(
-            CPLGetXMLValue(psBoundingBox, "x1", CPLSPrintf("%.18g", bboxX1)));
+            CPLGetXMLValue(psBoundingBox, "x1", CPLSPrintf("%.17g", bboxX1)));
         bboxY1 = CPLAtof(
-            CPLGetXMLValue(psBoundingBox, "y1", CPLSPrintf("%.18g", bboxY1)));
+            CPLGetXMLValue(psBoundingBox, "y1", CPLSPrintf("%.17g", bboxY1)));
         bboxX2 = CPLAtof(
-            CPLGetXMLValue(psBoundingBox, "x2", CPLSPrintf("%.18g", bboxX2)));
+            CPLGetXMLValue(psBoundingBox, "x2", CPLSPrintf("%.17g", bboxX2)));
         bboxY2 = CPLAtof(
-            CPLGetXMLValue(psBoundingBox, "y2", CPLSPrintf("%.18g", bboxY2)));
+            CPLGetXMLValue(psBoundingBox, "y2", CPLSPrintf("%.17g", bboxY2)));
         if (bboxX2 <= bboxX1 || bboxY2 <= bboxY1)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid BoundingBox");
@@ -1350,9 +1350,9 @@ bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
     double dfX1 = CPLAtof(CPLGetXMLValue(psNode, "x1", "0"));
     double dfY1 = CPLAtof(CPLGetXMLValue(psNode, "y1", "0"));
     double dfX2 = CPLAtof(CPLGetXMLValue(
-        psNode, "x2", CPLSPrintf("%.18g", oPageContext.m_dfWidthInUserUnit)));
+        psNode, "x2", CPLSPrintf("%.17g", oPageContext.m_dfWidthInUserUnit)));
     double dfY2 = CPLAtof(CPLGetXMLValue(
-        psNode, "y2", CPLSPrintf("%.18g", oPageContext.m_dfHeightInUserUnit)));
+        psNode, "y2", CPLSPrintf("%.17g", oPageContext.m_dfHeightInUserUnit)));
     if (dfX2 <= dfX1 || dfY2 <= dfY1)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid x1,y1,x2,y2");

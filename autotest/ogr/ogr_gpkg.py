@@ -10542,6 +10542,88 @@ def test_ogr_gpkg_ST_Area_on_ellipsoid(tmp_vsimem):
 
 
 ###############################################################################
+# Test ST_Length(geom)
+
+
+def test_ogr_gpkg_ST_Length(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "test_ogr_sql_ST_Length.gpkg"
+
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(tmpfilename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4258)
+    lyr = ds.CreateLayer("my_layer", srs=srs)
+    geom_colname = lyr.GetGeometryColumn()
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt("POLYGON((2 49,3 49,3 48,2 49))")
+    )
+    lyr.CreateFeature(feat)
+    feat = None
+
+    with ds.ExecuteSQL(f"SELECT ST_Length({geom_colname}) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == pytest.approx(3.414213562373095)
+
+    with ds.ExecuteSQL("SELECT ST_Length(null) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] is None
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL("SELECT ST_Length(X'FF') FROM my_layer") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] is None
+
+
+###############################################################################
+# Test ST_Length(geom, use_ellipsoid=True)
+
+
+def test_ogr_gpkg_ST_Length_on_ellipsoid(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "test_ogr_sql_ST_Length_on_ellipsoid.gpkg"
+
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(tmpfilename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4258)
+    lyr = ds.CreateLayer("my_layer", srs=srs)
+    geom_colname = lyr.GetGeometryColumn()
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt("POLYGON((2 49,3 49,3 48,2 49))")
+    )
+    lyr.CreateFeature(feat)
+    feat = None
+
+    with ds.ExecuteSQL(f"SELECT ST_Length({geom_colname}, 1) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == pytest.approx(317885.7863996293)
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL(
+            f"SELECT ST_Length({geom_colname}, 0) FROM my_layer"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] == pytest.approx(317885.7863996293)
+
+    with ds.ExecuteSQL("SELECT ST_Length(null, 1) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] is None
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL("SELECT ST_Length(X'FF', 1) FROM my_layer") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] is None
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL(
+            f"SELECT ST_Length(SetSRID({geom_colname}, -10), 0) FROM my_layer"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] is None
+
+
+###############################################################################
 # Test LAUNDER=YES layer creation option
 
 

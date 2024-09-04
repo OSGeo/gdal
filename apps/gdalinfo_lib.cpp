@@ -1497,7 +1497,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                     json_object_object_add(poBand, "noDataValue",
                                            poNoDataValue);
                 }
-                else if (CPLIsNan(dfNoData))
+                else if (std::isnan(dfNoData))
                 {
                     Concat(osStr, psOptions->bStdoutOutput,
                            "  NoData Value=nan\n");

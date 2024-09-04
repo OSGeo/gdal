@@ -80,7 +80,7 @@ float DoubleToFloatClamp(double dfValue)
 // to be needed for other formats.
 double MapNoDataToFloat(double dfNoDataValue)
 {
-    if (CPLIsInf(dfNoDataValue) || CPLIsNan(dfNoDataValue))
+    if (std::isinf(dfNoDataValue) || std::isnan(dfNoDataValue))
         return dfNoDataValue;
 
     if (dfNoDataValue >= std::numeric_limits<float>::max())
@@ -611,7 +611,7 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
                  dfNoDataValue > std::numeric_limits<int>::max()))
             {
                 eDataType = GDT_Float32;
-                if (!CPLIsInf(dfNoDataValue) &&
+                if (!std::isinf(dfNoDataValue) &&
                     (fabs(dfNoDataValue) < std::numeric_limits<float>::min() ||
                      fabs(dfNoDataValue) > std::numeric_limits<float>::max()))
                 {
@@ -1523,8 +1523,8 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                     {
                         bHasOutputDecimalDot = true;
                     }
-                    else if (!CPLIsInf(padfScanline[iPixel]) &&
-                             !CPLIsNan(padfScanline[iPixel]))
+                    else if (!std::isinf(padfScanline[iPixel]) &&
+                             !std::isnan(padfScanline[iPixel]))
                     {
                         strcat(szHeader, ".0");
                         bHasOutputDecimalDot = true;

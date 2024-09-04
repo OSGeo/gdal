@@ -40,6 +40,8 @@
 
 #include "ecwdrivercore.h"
 
+#include <cmath>
+
 #undef NOISY_DEBUG
 
 static CPLMutex *hECWDatasetMutex = nullptr;

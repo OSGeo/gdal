@@ -76,6 +76,7 @@ EXCLUDED_FILES="$EXCLUDED_FILES,*/internal_libqhull/*,*/zlib/*,*/libjpeg/*,*/lib
 EXCLUDED_FILES="$EXCLUDED_FILES,./cmake/modules/CMakeCheckCompilerFlagCommonPatterns.cmake"
 EXCLUDED_FILES="$EXCLUDED_FILES,./cmake/modules/Copyright.txt"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/sqlite_rtree_bulk_load/*"
+EXCLUDED_FILES="$EXCLUDED_FILES,*/spelling_wordlist.txt"
 AUTHORIZED_LIST="poSession,FIDN,TRAFIC,HTINK,repID,oCurr,INTREST,oPosition"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,CPL_SUPRESS_CPLUSPLUS,SRP_NAM,ADRG_NAM,'SRP_NAM,AuxilaryTarget"
 # IRIS driver metadata item names: FIXME ?

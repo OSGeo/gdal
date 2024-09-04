@@ -40,6 +40,7 @@
 #include "commonutils.h"
 #include "gdalargumentparser.h"
 
+#include <cmath>
 #include <set>
 
 /*! output format */

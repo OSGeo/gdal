@@ -12,6 +12,7 @@ Free and open source
 - `Bluemapia <https://sourceforge.net/projects/bluemapia/>`_ Multi-Map(Google,Microsoft,Open Street Map, NOAA/BSB Charts,self-calibrated raster) location-based GPS app for Windows Mobile. (GPL v2)
 - `BRL-CAD <https://brlcad.org>`_ An open source solid modeling computer-aided design system.
 - `Demeter <http://demeter.sourceforge.net/>`_ Another OpenGL based terrain engine somewhat similar to VTP.
+- `DuckDB Spatial Extension <https://duckdb.org/docs/extensions/spatial>`_: Spatial extension for DuckDB
 - `EOxServer <http://eoxserver.org>`_  OGC-compliant server for Earth Observation (EO) data supporting WMS and WCS with EO application profiles (EOxServer Open License)
 - `exactextract <https://github.com/isciences/exactextract>`_ Fast and accurate raster/vector zonal statistics (Apache 2.0)
 - `Feature Data Objects (FDO)  <http://fdo.osgeo.org>`_  Open source spatial data access libraries (LGPL)

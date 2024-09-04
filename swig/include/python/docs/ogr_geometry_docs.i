@@ -31,6 +31,36 @@ float:
 
 ";
 
+%feature("docstring")  Length "
+Compute geometry length.
+
+The returned length is a 2D Cartesian (planar) area in units of the
+spatial reference system in use, so potentially 'degrees' for a
+geometry expressed in a geographic SRS.
+
+For more details: :cpp:func:`OGR_G_Length`
+
+Returns
+--------
+float:
+    the length of the geometry in units of the spatial reference
+    system in use, or 0.0 for unsupported geometry types.
+
+";
+
+%feature("docstring")  GeodesicLength "
+Compute geometry length, considered as a curve on the underlying
+ellipsoid of the SRS attached to the geometry.
+
+For more details: :cpp:func:`OGR_G_GeodesicLength`
+
+Returns
+--------
+float:
+    the area in meters, or a negative value for unsupported geometry types.
+
+";
+
 %feature("docstring")  DumpReadable "
 Dump geometry in well known text format to indicated output file.
 

@@ -181,6 +181,28 @@ static const int NCDF_DEFLATE_LEVEL = 1; /* best time/size ratio */
 /* Some additional metadata */
 #define OGR_SG_ORIGINAL_LAYERNAME "ogr_layer_name"
 
+/*
+ * Starting `c26f7ea`, netcdf-c exposes the `NC_FillValue`[1] macro instead of
+ * `_FillValue` to avoid collisions with C++ standard library[2]. However, the
+ * previous macro, `_FillValue`, was fully removed causing netcdf-c consumers,
+ * including GDAL, fail to build.
+ *
+ * It's unlikely that this naming change will be backported to the previous
+ * netcdf-c releases, so we have to account for both macros variants. We do so
+ * by introducing our own macro, `NCDF_FillValue`, and using that in places
+ * where `_FillValue` was previously used. If `NC_FillValue` is defined by
+ * `netcdf.h`, `NCDF_FillValue` expands to it and, if it's not, to `_FillValue`.
+ *
+ * References:
+ * 1. https://github.com/Unidata/netcdf-c/commit/c26f7eabf4a1cd25353f22734f439505fe636a45
+ * 2. https://github.com/Unidata/netcdf-c/issues/2858
+ */
+#if defined(NC_FillValue)
+#define NCDF_FillValue NC_FillValue
+#elif defined(_FillValue)
+#define NCDF_FillValue _FillValue
+#endif
+
 /* -------------------------------------------------------------------- */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
 /* -------------------------------------------------------------------- */
@@ -336,6 +358,7 @@ class netCDFDataset final : public GDALPamDataset
     friend class netCDFRasterBand;  // TMP
     friend class netCDFLayer;
     friend class netCDFVariable;
+    friend class nccfdriver::netCDFVID;
 
     typedef enum
     {
@@ -543,8 +566,6 @@ class netCDFDataset final : public GDALPamDataset
     void SetSpatialRefNoUpdate(const OGRSpatialReference *);
 
   protected:
-    CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
-
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;

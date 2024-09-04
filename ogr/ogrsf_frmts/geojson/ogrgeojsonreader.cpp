@@ -33,6 +33,7 @@
 #include "ogrjsoncollectionstreamingparser.h"
 #include "ogr_api.h"
 
+#include <cmath>
 #include <limits>
 #include <set>
 #include <functional>
@@ -479,7 +480,7 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
             bFirstSeg_ = false;
             nSkip = SkipPrologEpilogAndUpdateJSonPLikeWrapper(nRead);
         }
-        if (bFinished && bJSonPLikeWrapper_ && nRead - nSkip > 0)
+        if (bFinished && bJSonPLikeWrapper_ && nRead > nSkip)
             nRead--;
         if (!oParser.Parse(reinterpret_cast<const char *>(pabyBuffer_ + nSkip),
                            nRead - nSkip, bFinished) ||
@@ -704,7 +705,7 @@ OGRFeature *OGRGeoJSONReader::GetNextFeature(OGRGeoJSONLayer *poLayer)
             bFirstSeg_ = false;
             nSkip = SkipPrologEpilogAndUpdateJSonPLikeWrapper(nRead);
         }
-        if (bFinished && bJSonPLikeWrapper_ && nRead - nSkip > 0)
+        if (bFinished && bJSonPLikeWrapper_ && nRead > nSkip)
             nRead--;
         if (!poStreamingParser_->Parse(
                 reinterpret_cast<const char *>(pabyBuffer_ + nSkip),
@@ -762,7 +763,7 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, GIntBig nFID)
                 bFirstSeg_ = false;
                 nSkip = SkipPrologEpilogAndUpdateJSonPLikeWrapper(nRead);
             }
-            if (bFinished && bJSonPLikeWrapper_ && nRead - nSkip > 0)
+            if (bFinished && bJSonPLikeWrapper_ && nRead > nSkip)
                 nRead--;
             auto pszPtr = reinterpret_cast<const char *>(pabyBuffer_ + nSkip);
             for (size_t i = 0; i < nRead - nSkip; i++)

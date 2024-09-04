@@ -354,10 +354,8 @@ void CPLWorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
     if (nMaxRemainingJobs < 0)
         nMaxRemainingJobs = 0;
     std::unique_lock<std::mutex> oGuard(m_mutex);
-    while (nPendingJobs > nMaxRemainingJobs)
-    {
-        m_cv.wait(oGuard);
-    }
+    m_cv.wait(oGuard, [this, nMaxRemainingJobs]
+              { return nPendingJobs <= nMaxRemainingJobs; });
 }
 
 /************************************************************************/
@@ -368,21 +366,15 @@ void CPLWorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
  */
 void CPLWorkerThreadPool::WaitEvent()
 {
+    // NOTE - This isn't quite right. After nPendingJobsBefore is set but before
+    // a notification occurs, jobs could be submitted which would increase
+    // nPendingJobs, so a job completion may looks like a spurious wakeup.
     std::unique_lock<std::mutex> oGuard(m_mutex);
-    while (true)
-    {
-        const int nPendingJobsBefore = nPendingJobs;
-        if (nPendingJobsBefore == 0)
-        {
-            break;
-        }
-        m_cv.wait(oGuard);
-        // cppcheck-suppress knownConditionTrueFalse
-        if (nPendingJobs < nPendingJobsBefore)
-        {
-            break;
-        }
-    }
+    if (nPendingJobs == 0)
+        return;
+    const int nPendingJobsBefore = nPendingJobs;
+    m_cv.wait(oGuard, [this, nPendingJobsBefore]
+              { return nPendingJobs < nPendingJobsBefore; });
 }
 
 /************************************************************************/
@@ -581,29 +573,6 @@ CPLJobQueue::~CPLJobQueue()
 }
 
 /************************************************************************/
-/*                           JobQueueJob                                */
-/************************************************************************/
-
-struct JobQueueJob
-{
-    CPLJobQueue *poQueue = nullptr;
-    CPLThreadFunc pfnFunc = nullptr;
-    void *pData = nullptr;
-};
-
-/************************************************************************/
-/*                          JobQueueFunction()                          */
-/************************************************************************/
-
-void CPLJobQueue::JobQueueFunction(void *pData)
-{
-    JobQueueJob *poJob = static_cast<JobQueueJob *>(pData);
-    poJob->pfnFunc(poJob->pData);
-    poJob->poQueue->DeclareJobFinished();
-    delete poJob;
-}
-
-/************************************************************************/
 /*                          DeclareJobFinished()                        */
 /************************************************************************/
 
@@ -626,16 +595,29 @@ void CPLJobQueue::DeclareJobFinished()
  */
 bool CPLJobQueue::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
 {
-    JobQueueJob *poJob = new JobQueueJob;
-    poJob->poQueue = this;
-    poJob->pfnFunc = pfnFunc;
-    poJob->pData = pData;
+    return SubmitJob([=] { pfnFunc(pData); });
+}
+
+/** Queue a new job.
+ *
+ * @param task  Task to execute.
+ * @return true in case of success.
+ */
+bool CPLJobQueue::SubmitJob(std::function<void()> task)
+{
     {
         std::lock_guard<std::mutex> oGuard(m_mutex);
         m_nPendingJobs++;
     }
+
     // cppcheck-suppress knownConditionTrueFalse
-    return m_poPool->SubmitJob(JobQueueFunction, poJob);
+    return m_poPool->SubmitJob(
+        // coverity[uninit_member,copy_constructor_call]
+        [this, task]
+        {
+            task();
+            DeclareJobFinished();
+        });
 }
 
 /************************************************************************/
@@ -651,11 +633,8 @@ bool CPLJobQueue::SubmitJob(CPLThreadFunc pfnFunc, void *pData)
 void CPLJobQueue::WaitCompletion(int nMaxRemainingJobs)
 {
     std::unique_lock<std::mutex> oGuard(m_mutex);
-    // coverity[missing_lock:FALSE]
-    while (m_nPendingJobs > nMaxRemainingJobs)
-    {
-        m_cv.wait(oGuard);
-    }
+    m_cv.wait(oGuard, [this, nMaxRemainingJobs]
+              { return m_nPendingJobs <= nMaxRemainingJobs; });
 }
 
 /************************************************************************/
@@ -668,21 +647,15 @@ void CPLJobQueue::WaitCompletion(int nMaxRemainingJobs)
  */
 bool CPLJobQueue::WaitEvent()
 {
+    // NOTE - This isn't quite right. After nPendingJobsBefore is set but before
+    // a notification occurs, jobs could be submitted which would increase
+    // nPendingJobs, so a job completion may looks like a spurious wakeup.
     std::unique_lock<std::mutex> oGuard(m_mutex);
-    while (true)
-    {
-        // coverity[missing_lock:FALSE]
-        const int nPendingJobsBefore = m_nPendingJobs;
-        if (nPendingJobsBefore == 0)
-        {
-            return false;
-        }
-        m_cv.wait(oGuard);
-        // cppcheck-suppress knownConditionTrueFalse
-        // coverity[missing_lock:FALSE]
-        if (m_nPendingJobs < nPendingJobsBefore)
-        {
-            return m_nPendingJobs > 0;
-        }
-    }
+    if (m_nPendingJobs == 0)
+        return false;
+
+    const int nPendingJobsBefore = m_nPendingJobs;
+    m_cv.wait(oGuard, [this, nPendingJobsBefore]
+              { return m_nPendingJobs < nPendingJobsBefore; });
+    return m_nPendingJobs > 0;
 }

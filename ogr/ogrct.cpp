@@ -1684,7 +1684,7 @@ int OGRProjCT::Initialize(const OGRSpatialReference *poSourceIn,
             CPLStringList aosOptions;
             if (options.d->dfAccuracy >= 0)
                 aosOptions.SetNameValue(
-                    "ACCURACY", CPLSPrintf("%.18g", options.d->dfAccuracy));
+                    "ACCURACY", CPLSPrintf("%.17g", options.d->dfAccuracy));
             if (!options.d->bAllowBallpark)
                 aosOptions.SetNameValue("ALLOW_BALLPARK", "NO");
 #if PROJ_VERSION_MAJOR > 9 ||                                                  \

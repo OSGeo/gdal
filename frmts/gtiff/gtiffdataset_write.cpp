@@ -35,6 +35,7 @@
 #include <cerrno>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -527,18 +528,18 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData(const void *pBuffer)
     }
     if (m_nBitsPerSample == 32 && eDT == GDT_Float32)
     {
-        if (CPLIsNan(m_dfNoDataValue))
+        if (std::isnan(m_dfNoDataValue))
             return CPL_TO_BOOL(
-                CPLIsNan(*(static_cast<const float *>(pBuffer))));
+                std::isnan(*(static_cast<const float *>(pBuffer))));
         return GDALIsValueInRange<float>(dfEffectiveNoData) &&
                *(static_cast<const float *>(pBuffer)) ==
                    static_cast<float>(dfEffectiveNoData);
     }
     if (m_nBitsPerSample == 64 && eDT == GDT_Float64)
     {
-        if (CPLIsNan(dfEffectiveNoData))
+        if (std::isnan(dfEffectiveNoData))
             return CPL_TO_BOOL(
-                CPLIsNan(*(static_cast<const double *>(pBuffer))));
+                std::isnan(*(static_cast<const double *>(pBuffer))));
         return *(static_cast<const double *>(pBuffer)) == dfEffectiveNoData;
     }
     return false;
@@ -4185,10 +4186,10 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         {
             char szValue[128] = {};
 
-            CPLsnprintf(szValue, sizeof(szValue), "%.18g", dfOffset);
+            CPLsnprintf(szValue, sizeof(szValue), "%.17g", dfOffset);
             AppendMetadataItem(&psRoot, &psTail, "OFFSET", szValue, nBand,
                                "offset", "");
-            CPLsnprintf(szValue, sizeof(szValue), "%.18g", dfScale);
+            CPLsnprintf(szValue, sizeof(szValue), "%.17g", dfScale);
             AppendMetadataItem(&psRoot, &psTail, "SCALE", szValue, nBand,
                                "scale", "");
         }

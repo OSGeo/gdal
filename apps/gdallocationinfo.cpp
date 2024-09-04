@@ -36,6 +36,7 @@
 #include "ogr_spatialref.h"
 #include "gdalargumentparser.h"
 
+#include <cmath>
 #include <limits>
 #include <vector>
 

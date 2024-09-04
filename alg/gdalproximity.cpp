@@ -103,7 +103,7 @@ the proximity output.
 
   FIXED_BUF_VAL=n
 
-If this option is set, all pixels within the MAXDIST threadhold are
+If this option is set, all pixels within the MAXDIST threshold are
 set to this fixed value instead of to a proximity distance.
 */
 

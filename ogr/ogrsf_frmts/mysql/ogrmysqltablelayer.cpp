@@ -477,8 +477,8 @@ void OGRMySQLTableLayer::BuildWhere()
         const double dfMaxY = sEnvelope.MaxY;
 
         CPLsnprintf(szEnvelope, sizeof(szEnvelope),
-                    "POLYGON((%.18g %.18g, %.18g %.18g, %.18g %.18g, %.18g "
-                    "%.18g, %.18g %.18g))",
+                    "POLYGON((%.17g %.17g, %.17g %.17g, %.17g %.17g, %.17g "
+                    "%.17g, %.17g %.17g))",
                     dfMinX, dfMinY, dfMaxX, dfMinY, dfMaxX, dfMaxY, dfMinX,
                     dfMaxY, dfMinX, dfMinY);
 

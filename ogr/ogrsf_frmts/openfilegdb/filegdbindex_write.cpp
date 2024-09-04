@@ -163,6 +163,7 @@ bool FileGDBTable::CreateIndex(const std::string &osIndexName,
         return false;
     }
 
+    GetIndexCount();
     for (const auto &poIndex : m_apoIndexes)
     {
         if (EQUAL(poIndex->GetIndexName().c_str(), osIndexName.c_str()))

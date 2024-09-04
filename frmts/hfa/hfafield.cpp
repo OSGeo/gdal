@@ -40,6 +40,7 @@
 #include <fcntl.h>
 #endif
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <vector>
 
@@ -55,7 +56,7 @@ namespace
 
 int FloatToIntClamp(float fValue)
 {
-    if (CPLIsNan(fValue))
+    if (std::isnan(fValue))
         return 0;
     if (fValue >= static_cast<float>(std::numeric_limits<int>::max()))
         return std::numeric_limits<int>::max();
@@ -1011,7 +1012,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
                     std::numeric_limits<int>::max() ||
                 static_cast<double>(fNumber) <
                     std::numeric_limits<int>::min() ||
-                CPLIsNan(fNumber))
+                std::isnan(fNumber))
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too large for int: %f",
                          fNumber);
@@ -1035,7 +1036,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
             dfDoubleRet = dfNumber;
             if (dfNumber > std::numeric_limits<int>::max() ||
                 dfNumber < std::numeric_limits<int>::min() ||
-                CPLIsNan(dfNumber))
+                std::isnan(dfNumber))
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too large for int: %f",
                          dfNumber);
@@ -1247,7 +1248,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
                 {
                     nIntRet = nMin;
                 }
-                else if (CPLIsNan(dfDoubleRet))
+                else if (std::isnan(dfDoubleRet))
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "NaN converted to INT_MAX.");

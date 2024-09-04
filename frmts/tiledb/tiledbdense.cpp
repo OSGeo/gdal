@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include <cassert>
+#include <cmath>
 #include <cinttypes>
 #include <limits>
 

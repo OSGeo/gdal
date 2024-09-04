@@ -994,8 +994,8 @@ int VRTSimpleSource::GetSrcDstWindow(
     *pdfReqXSize = dfRXSize * dfScaleX;
     *pdfReqYSize = dfRYSize * dfScaleY;
 
-    if (!CPLIsFinite(*pdfReqXOff) || !CPLIsFinite(*pdfReqYOff) ||
-        !CPLIsFinite(*pdfReqXSize) || !CPLIsFinite(*pdfReqYSize) ||
+    if (!std::isfinite(*pdfReqXOff) || !std::isfinite(*pdfReqYOff) ||
+        !std::isfinite(*pdfReqXSize) || !std::isfinite(*pdfReqYSize) ||
         *pdfReqXOff > INT_MAX || *pdfReqYOff > INT_MAX || *pdfReqXSize < 0 ||
         *pdfReqYSize < 0)
     {
@@ -1938,7 +1938,7 @@ CPLErr VRTAveragedSource::RasterIO(GDALDataType /*eVRTBandDataType*/, int nXOff,
 
                     const float fSampledValue =
                         pafSrc[iX + static_cast<size_t>(iY) * nReqXSize];
-                    if (CPLIsNan(fSampledValue))
+                    if (std::isnan(fSampledValue))
                         continue;
 
                     if (m_bNoDataSet &&
@@ -2105,7 +2105,7 @@ CPLXMLNode *VRTNoDataFromMaskSource::SerializeToXML(const char *pszVRTPath)
     if (m_bNoDataSet)
     {
         CPLSetXMLValue(psSrc, "MaskValueThreshold",
-                       CPLSPrintf("%.18g", m_dfMaskValueThreshold));
+                       CPLSPrintf("%.17g", m_dfMaskValueThreshold));
 
         GDALDataType eBandDT = GDT_Unknown;
         double dfNoDataValue = m_dfNoDataValue;
@@ -2131,7 +2131,7 @@ CPLXMLNode *VRTNoDataFromMaskSource::SerializeToXML(const char *pszVRTPath)
     if (m_bHasRemappedValue)
     {
         CPLSetXMLValue(psSrc, "RemappedValue",
-                       CPLSPrintf("%.18g", m_dfRemappedValue));
+                       CPLSPrintf("%.17g", m_dfRemappedValue));
     }
 
     return psSrc;
@@ -2647,7 +2647,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML(const char *pszVRTPath)
             CPLString().Printf("%g", m_adfLUTInputs[0]) ==
                 CPLString().Printf("%g", m_adfLUTInputs[1]))
         {
-            osLUT = CPLString().Printf("%.18g:%g", m_adfLUTInputs[0],
+            osLUT = CPLString().Printf("%.17g:%g", m_adfLUTInputs[0],
                                        m_adfLUTOutputs[0]);
         }
         else
@@ -2666,7 +2666,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML(const char *pszVRTPath)
                 // TODO(schwehr): An explanation of the 18 would be helpful.
                 // Can someone distill the issue down to a quick comment?
                 // https://trac.osgeo.org/gdal/ticket/6422
-                osLUT += CPLString().Printf(",%.18g:%g", m_adfLUTInputs[i],
+                osLUT += CPLString().Printf(",%.17g:%g", m_adfLUTInputs[i],
                                             m_adfLUTOutputs[i]);
             }
             else
@@ -3295,9 +3295,9 @@ CPLErr VRTComplexSource::RasterIOInternal(
         dfNoDataValue = poSourceBand->GetNoDataValue(&bNoDataSet);
     }
 
-    const bool bNoDataSetIsNan = bNoDataSet && CPLIsNan(dfNoDataValue);
+    const bool bNoDataSetIsNan = bNoDataSet && std::isnan(dfNoDataValue);
     const bool bNoDataSetAndNotNan =
-        bNoDataSet && !CPLIsNan(dfNoDataValue) &&
+        bNoDataSet && !std::isnan(dfNoDataValue) &&
         GDALIsValueInRange<WorkingDT>(dfNoDataValue);
     const auto fWorkingDataTypeNoData = static_cast<WorkingDT>(dfNoDataValue);
 
@@ -3425,7 +3425,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
             if (pafData && !bIsComplex)
             {
                 WorkingDT fResult = pafData[idxBuffer];
-                if (bNoDataSetIsNan && CPLIsNan(fResult))
+                if (bNoDataSetIsNan && std::isnan(fResult))
                     continue;
                 if (bNoDataSetAndNotNan &&
                     ARE_REAL_EQUAL(fResult, fWorkingDataTypeNoData))

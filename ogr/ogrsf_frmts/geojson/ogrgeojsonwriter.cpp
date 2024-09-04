@@ -44,6 +44,7 @@
 #include "ogr_p.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <limits>
 
@@ -936,7 +937,7 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
         else if (OFTReal == eType)
         {
             const double val = poFeature->GetFieldAsDouble(nField);
-            if (!CPLIsFinite(val))
+            if (!std::isfinite(val))
             {
                 if (!oOptions.bAllowNonFiniteValues)
                 {
@@ -1399,7 +1400,7 @@ json_object *OGRGeoJSONWriteCoords(double const &fX, double const &fY,
                                    const OGRGeoJSONWriteOptions &oOptions)
 {
     json_object *poObjCoords = nullptr;
-    if (CPLIsInf(fX) || CPLIsInf(fY) || CPLIsNan(fX) || CPLIsNan(fY))
+    if (std::isinf(fX) || std::isinf(fY) || std::isnan(fX) || std::isnan(fY))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Infinite or NaN coordinate encountered");
@@ -1416,8 +1417,8 @@ json_object *OGRGeoJSONWriteCoords(double const &fX, double const &fY,
                                    double const &fZ,
                                    const OGRGeoJSONWriteOptions &oOptions)
 {
-    if (CPLIsInf(fX) || CPLIsInf(fY) || CPLIsInf(fZ) || CPLIsNan(fX) ||
-        CPLIsNan(fY) || CPLIsNan(fZ))
+    if (std::isinf(fX) || std::isinf(fY) || std::isinf(fZ) || std::isnan(fX) ||
+        std::isnan(fY) || std::isnan(fZ))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Infinite or NaN coordinate encountered");
@@ -1628,9 +1629,9 @@ static int OGR_json_double_with_precision_to_string(struct json_object *jso,
     const uintptr_t nPrecision = reinterpret_cast<uintptr_t>(userData);
     char szBuffer[75] = {};
     const double dfVal = json_object_get_double(jso);
-    if (fabs(dfVal) > 1e50 && !CPLIsInf(dfVal))
+    if (fabs(dfVal) > 1e50 && !std::isinf(dfVal))
     {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.18g", dfVal);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.17g", dfVal);
     }
     else
     {
@@ -1667,9 +1668,9 @@ static int OGR_json_double_with_significant_figures_to_string(
     char szBuffer[75] = {};
     int nSize = 0;
     const double dfVal = json_object_get_double(jso);
-    if (CPLIsNan(dfVal))
+    if (std::isnan(dfVal))
         nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "NaN");
-    else if (CPLIsInf(dfVal))
+    else if (std::isinf(dfVal))
     {
         if (dfVal > 0)
             nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "Infinity");
@@ -1767,9 +1768,9 @@ static int OGR_json_float_with_significant_figures_to_string(
     char szBuffer[75] = {};
     int nSize = 0;
     const float fVal = static_cast<float>(json_object_get_double(jso));
-    if (CPLIsNan(fVal))
+    if (std::isnan(fVal))
         nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "NaN");
-    else if (CPLIsInf(fVal))
+    else if (std::isinf(fVal))
     {
         if (fVal > 0)
             nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "Infinity");

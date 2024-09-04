@@ -33,6 +33,7 @@
 #include "cpl_error.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <set>
 #include <utility>
@@ -1752,7 +1753,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
 
     int bHasNoData = FALSE;
     double dfNoDataValue = IGetRasterBand(1)->GetNoDataValue(&bHasNoData);
-    const bool bHasNanNoData = bHasNoData && CPLIsNan(dfNoDataValue);
+    const bool bHasNanNoData = bHasNoData && std::isnan(dfNoDataValue);
 
     bool bAllOpaque = true;
     // Detect fully transparent tiles, but only if all bands are dirty (that is
@@ -1818,7 +1819,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             const float fVal = pSrc[i];
             if (bHasNanNoData)
             {
-                if (CPLIsNan(fVal))
+                if (std::isnan(fVal))
                     continue;
             }
             else if (fVal == fNoDataValueOrZero)
@@ -2026,7 +2027,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                     const float fVal = pSrc[i];
                     if (bHasNanNoData)
                     {
-                        if (CPLIsNan(fVal))
+                        if (std::isnan(fVal))
                             continue;
                     }
                     else if (bHasNoData &&
@@ -2034,7 +2035,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                     {
                         continue;
                     }
-                    if (CPLIsInf(fVal))
+                    if (std::isinf(fVal))
                         continue;
 
                     if (nValidPixels == 0)
@@ -2092,7 +2093,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                     const float fVal = pSrc[i];
                     if (bHasNanNoData)
                     {
-                        if (CPLIsNan(fVal))
+                        if (std::isnan(fVal))
                         {
                             pTempTileBuffer[i] = m_usGPKGNull;
                             continue;
@@ -2107,7 +2108,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                         }
                     }
                     double dfVal =
-                        CPLIsFinite(fVal)
+                        std::isfinite(fVal)
                             ? ((fVal - m_dfOffset) / m_dfScale - dfTileOffset) /
                                   dfTileScale
                         : (fVal > 0) ? 65535
@@ -2141,7 +2142,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 const float fVal = pSrc[i];
                 if (bHasNanNoData)
                 {
-                    if (CPLIsNan(fVal))
+                    if (std::isnan(fVal))
                         continue;
                 }
                 else if (bHasNoData &&
@@ -2471,7 +2472,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                         "INSERT INTO gpkg_2d_gridded_tile_ancillary "
                         "(tpudt_name, tpudt_id, scale, offset, min, max, "
                         "mean, std_dev) VALUES "
-                        "('%q', ?, %.18g, %.18g, ?, ?, ?, ?)",
+                        "('%q', ?, %.17g, %.17g, ?, ?, ?, ?)",
                         m_osRasterTable.c_str(), dfTileScale, dfTileOffset);
 #ifdef DEBUG_VERBOSE
                     CPLDebug("GPKG", "%s", pszSQL);
@@ -3713,7 +3714,7 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue(double dfNoDataValue)
               static_cast<int>(dfNoDataValue) == dfNoDataValue))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Invalid nodata value for a Byte band: %.18g",
+                     "Invalid nodata value for a Byte band: %.17g",
                      dfNoDataValue);
             return CE_Failure;
         }
@@ -3740,7 +3741,7 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue(double dfNoDataValue)
         return CE_None;
     }
 
-    if (CPLIsNan(dfNoDataValue))
+    if (std::isnan(dfNoDataValue))
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "A NaN nodata value cannot be recorded in "

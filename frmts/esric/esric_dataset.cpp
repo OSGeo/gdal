@@ -722,10 +722,10 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
                 return nullptr;
             }
             aosOptions.AddString("-projwin");
-            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MinX));
-            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MaxY));
-            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MaxX));
-            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MinY));
+            aosOptions.AddString(CPLSPrintf("%.17g", ds->m_sFullExtent.MinX));
+            aosOptions.AddString(CPLSPrintf("%.17g", ds->m_sFullExtent.MaxY));
+            aosOptions.AddString(CPLSPrintf("%.17g", ds->m_sFullExtent.MaxX));
+            aosOptions.AddString(CPLSPrintf("%.17g", ds->m_sFullExtent.MinY));
         }
         else if (pszExtentSource && EQUAL(pszExtentSource, "INITIAL_EXTENT"))
         {
@@ -741,13 +741,13 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
             }
             aosOptions.AddString("-projwin");
             aosOptions.AddString(
-                CPLSPrintf("%.18g", ds->m_sInitialExtent.MinX));
+                CPLSPrintf("%.17g", ds->m_sInitialExtent.MinX));
             aosOptions.AddString(
-                CPLSPrintf("%.18g", ds->m_sInitialExtent.MaxY));
+                CPLSPrintf("%.17g", ds->m_sInitialExtent.MaxY));
             aosOptions.AddString(
-                CPLSPrintf("%.18g", ds->m_sInitialExtent.MaxX));
+                CPLSPrintf("%.17g", ds->m_sInitialExtent.MaxX));
             aosOptions.AddString(
-                CPLSPrintf("%.18g", ds->m_sInitialExtent.MinY));
+                CPLSPrintf("%.17g", ds->m_sInitialExtent.MinY));
         }
 
         if (!aosOptions.empty())

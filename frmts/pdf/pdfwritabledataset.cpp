@@ -31,6 +31,8 @@
 #include "memdataset.h"
 #include "pdfcreatefromcomposition.h"
 
+#include <cmath>
+
 /************************************************************************/
 /*                      PDFWritableVectorDataset()                      */
 /************************************************************************/
@@ -203,7 +205,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
     {
         nWidth = 1024;
         const double dfHeight = nWidth * dfRatio;
-        if (dfHeight < 1 || dfHeight > INT_MAX || CPLIsNan(dfHeight))
+        if (dfHeight < 1 || dfHeight > INT_MAX || std::isnan(dfHeight))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid image dimensions");
             return OGRERR_FAILURE;
@@ -214,7 +216,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
     {
         nHeight = 1024;
         const double dfWidth = nHeight / dfRatio;
-        if (dfWidth < 1 || dfWidth > INT_MAX || CPLIsNan(dfWidth))
+        if (dfWidth < 1 || dfWidth > INT_MAX || std::isnan(dfWidth))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid image dimensions");
             return OGRERR_FAILURE;

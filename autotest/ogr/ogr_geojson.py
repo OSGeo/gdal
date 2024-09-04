@@ -4107,7 +4107,7 @@ def test_ogr_geojson_write_rfc7946_from_3D_crs(tmp_vsimem):
     ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(filename)
     lyr = ds.CreateLayer("out", srs=srs_4326_5773, options=["RFC7946=YES"])
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(%.18g %.18g %.18g)" % (lon, lat, z)))
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(%.17g %.17g %.17g)" % (lon, lat, z)))
     lyr.CreateFeature(f)
     ds = None
 

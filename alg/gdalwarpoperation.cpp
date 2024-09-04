@@ -756,12 +756,12 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
                        0, std::min(255, static_cast<int>(adfInitRealImag[0]))),
                    nBandSize);
         }
-        else if (!CPLIsNan(adfInitRealImag[0]) && adfInitRealImag[0] == 0.0 &&
-                 !CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0)
+        else if (!std::isnan(adfInitRealImag[0]) && adfInitRealImag[0] == 0.0 &&
+                 !std::isnan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0)
         {
             memset(pBandData, 0, nBandSize);
         }
-        else if (!CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0)
+        else if (!std::isnan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0)
         {
             GDALCopyWords64(&adfInitRealImag, GDT_Float64, 0, pBandData,
                             psOptions->eWorkingDataType, nWordSize,
@@ -1381,7 +1381,7 @@ CPLErr GDALWarpOperation::CollectChunkListInternal(int nDstXOff, int nDstYOff,
     // in case the heuristics would cause issues.
 #if DEBUG_VERBOSE
     CPLDebug("WARP",
-             "dst=(%d,%d,%d,%d) src=(%d,%d,%d,%d) srcfillratio=%.18g, "
+             "dst=(%d,%d,%d,%d) src=(%d,%d,%d,%d) srcfillratio=%.17g, "
              "dfTotalMemoryUse=%.1f MB",
              nDstXOff, nDstYOff, nDstXSize, nDstYSize, nSrcXOff, nSrcYOff,
              nSrcXSize, nSrcYSize, dfSrcFillRatio,
@@ -2830,7 +2830,7 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
         }
 
         // If this happens this is likely the symptom of a bug somewhere.
-        if (CPLIsNan(padfX[i]) || CPLIsNan(padfY[i]))
+        if (std::isnan(padfX[i]) || std::isnan(padfY[i]))
         {
             static bool bNanCoordFound = false;
             if (!bNanCoordFound)
@@ -3165,7 +3165,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
 #if DEBUG_VERBOSE
     CPLDebug("WARP",
              "dst=(%d,%d,%d,%d) raw "
-             "src=(minx=%.18g,miny=%.18g,maxx=%.18g,maxy=%.18g)",
+             "src=(minx=%.17g,miny=%.17g,maxx=%.17g,maxy=%.17g)",
              nDstXOff, nDstYOff, nDstXSize, nDstYSize, dfMinXOut, dfMinYOut,
              dfMaxXOut, dfMaxYOut);
 #endif

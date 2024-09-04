@@ -683,6 +683,35 @@ double OGRPolyhedralSurface::get_GeodesicArea(const OGRSpatialReference *) const
 }
 
 /************************************************************************/
+/*                            get_Length()                              */
+/************************************************************************/
+
+double OGRPolyhedralSurface::get_Length() const
+{
+    if (IsEmpty())
+        return 0;
+
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "get_Length() not implemented for PolyhedralSurface");
+    return 0;
+}
+
+/************************************************************************/
+/*                        get_GeodesicLength()                          */
+/************************************************************************/
+
+double
+OGRPolyhedralSurface::get_GeodesicLength(const OGRSpatialReference *) const
+{
+    if (IsEmpty())
+        return 0;
+
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "get_GeodesicLength() not implemented for PolyhedralSurface");
+    return -1;
+}
+
+/************************************************************************/
 /*                           PointOnSurface()                           */
 /************************************************************************/
 

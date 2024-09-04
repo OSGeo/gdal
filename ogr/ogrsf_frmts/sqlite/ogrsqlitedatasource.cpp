@@ -47,6 +47,7 @@
 #include <cstring>
 #include <sys/stat.h>
 #include <map>
+#include <mutex>
 #include <set>
 #include <sstream>
 #include <string>
@@ -201,7 +202,15 @@ void OGRSQLiteBaseDataSource::FinishSpatialite()
 {
     if (hSpatialiteCtxt != nullptr)
     {
-        pfn_spatialite_cleanup_ex(hSpatialiteCtxt);
+        auto ctxt = hSpatialiteCtxt;
+        {
+            // Current implementation of spatialite_cleanup_ex() (as of libspatialite 5.1)
+            // is not re-entrant due to the use of xmlCleanupParser()
+            // Cf https://groups.google.com/g/spatialite-users/c/tsfZ_GDrRKs/m/aj-Dt4xoBQAJ?utm_medium=email&utm_source=footer
+            static std::mutex oCleanupMutex;
+            std::lock_guard oLock(oCleanupMutex);
+            pfn_spatialite_cleanup_ex(ctxt);
+        }
         hSpatialiteCtxt = nullptr;
     }
 }

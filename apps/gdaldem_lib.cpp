@@ -110,6 +110,7 @@
 #endif
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "cpl_error.h"
@@ -217,7 +218,7 @@ float ComputeVal(bool bSrcHasNoData, float fSrcNoDataValue,
 {
     if (bSrcHasNoData &&
         ((!bIsSrcNoDataNan && ARE_REAL_EQUAL(afWin[4], fSrcNoDataValue)) ||
-         (bIsSrcNoDataNan && CPLIsNan(afWin[4]))))
+         (bIsSrcNoDataNan && std::isnan(afWin[4]))))
     {
         return fDstNoDataValue;
     }
@@ -227,7 +228,7 @@ float ComputeVal(bool bSrcHasNoData, float fSrcNoDataValue,
         {
             if ((!bIsSrcNoDataNan &&
                  ARE_REAL_EQUAL(afWin[k], fSrcNoDataValue)) ||
-                (bIsSrcNoDataNan && CPLIsNan(afWin[k])))
+                (bIsSrcNoDataNan && std::isnan(afWin[k])))
             {
                 if (bComputeAtEdges)
                     afWin[k] = afWin[4];
@@ -373,7 +374,7 @@ static CPLErr GDALGeneric3x3Processing(
     {
         eReadDT = GDT_Float32;
         fSrcNoDataValue = static_cast<T>(dfNoDataValue);
-        bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(dfNoDataValue);
+        bIsSrcNoDataNan = bSrcHasNoData && std::isnan(dfNoDataValue);
     }
 
     int bDstHasNoData = FALSE;
@@ -1432,7 +1433,8 @@ static int GDALColorReliefSortColors(const ColorAssociation &pA,
                                      const ColorAssociation &pB)
 {
     /* Sort NaN in first position */
-    return (CPLIsNan(pA.dfVal) && !CPLIsNan(pB.dfVal)) || pA.dfVal < pB.dfVal;
+    return (std::isnan(pA.dfVal) && !std::isnan(pB.dfVal)) ||
+           pA.dfVal < pB.dfVal;
 }
 
 static void
@@ -1549,9 +1551,9 @@ GDALColorReliefGetRGBA(const std::vector<ColorAssociation> &asColorAssociation,
     size_t lower = 0;
 
     // Special case for NaN
-    if (CPLIsNan(asColorAssociation[0].dfVal))
+    if (std::isnan(asColorAssociation[0].dfVal))
     {
-        if (CPLIsNan(dfVal))
+        if (std::isnan(dfVal))
         {
             *pnR = asColorAssociation[0].nR;
             *pnG = asColorAssociation[0].nG;
@@ -1678,7 +1680,7 @@ GDALColorReliefGetRGBA(const std::vector<ColorAssociation> &asColorAssociation,
             return true;
         }
 
-        if (CPLIsNan(asColorAssociation[i - 1].dfVal))
+        if (std::isnan(asColorAssociation[i - 1].dfVal))
         {
             *pnR = asColorAssociation[i].nR;
             *pnG = asColorAssociation[i].nG;
@@ -2758,7 +2760,7 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(
     {
         eReadDT = GDT_Float32;
         fSrcNoDataValue = static_cast<T>(dfNoDataValue);
-        bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(dfNoDataValue);
+        bIsSrcNoDataNan = bSrcHasNoData && std::isnan(dfNoDataValue);
     }
 }
 

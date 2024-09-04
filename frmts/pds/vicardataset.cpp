@@ -1382,7 +1382,7 @@ static void WriteLabelItemValue(std::string &osLabel, const CPLJSONObject &obj)
     else if (eType == CPLJSONObject::Type::Long)
     {
         std::string osVal(
-            CPLSPrintf("%.18g", static_cast<double>(obj.ToLong())));
+            CPLSPrintf("%.17g", static_cast<double>(obj.ToLong())));
         if (osVal.find('.') == std::string::npos)
             osVal += ".0";
         osLabel += osVal;
@@ -1394,7 +1394,7 @@ static void WriteLabelItemValue(std::string &osLabel, const CPLJSONObject &obj)
             dfVal <= static_cast<double>(std::numeric_limits<GIntBig>::max()) &&
             static_cast<double>(static_cast<GIntBig>(dfVal)) == dfVal)
         {
-            std::string osVal(CPLSPrintf("%.18g", dfVal));
+            std::string osVal(CPLSPrintf("%.17g", dfVal));
             if (osVal.find('.') == std::string::npos)
                 osVal += ".0";
             osLabel += osVal;
@@ -1966,7 +1966,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
         if (GDALGTIFKeyGetDOUBLE(hGTIF, gkey, &val, 0, 1))
         {
             oGeoTIFF.Add(CPLString(GTIFKeyName(gkey)).toupper(),
-                         CPLSPrintf("%.18g", val));
+                         CPLSPrintf("%.17g", val));
         }
     }
 
@@ -1999,7 +1999,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
             {
                 if (i > 0)
                     osVal += ',';
-                osVal += CPLSPrintf("%.18g", padfValues[i]);
+                osVal += CPLSPrintf("%.17g", padfValues[i]);
             }
             osVal += ')';
             oGeoTIFF.Add(kv.second, osVal);

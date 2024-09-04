@@ -36,6 +36,7 @@
 #include <utility>
 #include <time.h>
 
+#include <cmath>
 #include <ctype.h>  // isalnum
 
 #include "cpl_error_internal.h"
@@ -770,7 +771,7 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
  * @param poSrcDS    Source dataset. Might be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcGroup Source group. Must NOT be nullptr.
- * @param bStrict Whether to enable stict mode. In strict mode, any error will
+ * @param bStrict Whether to enable strict mode. In strict mode, any error will
  *                stop the copy. In relaxed mode, the copy will be attempted to
  *                be pursued.
  * @param nCurCost  Should be provided as a variable initially set to 0.
@@ -1693,7 +1694,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                 str = CPLSPrintf("%.9g", *static_cast<const float *>(pSrc));
                 break;
             case GDT_Float64:
-                str = CPLSPrintf("%.18g", *static_cast<const double *>(pSrc));
+                str = CPLSPrintf("%.17g", *static_cast<const double *>(pSrc));
                 break;
             case GDT_CInt16:
             {
@@ -1716,7 +1717,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
             case GDT_CFloat64:
             {
                 const double *src = static_cast<const double *>(pSrc);
-                str = CPLSPrintf("%.18g+%.18gj", src[0], src[1]);
+                str = CPLSPrintf("%.17g+%.17gj", src[0], src[1]);
                 break;
             }
             case GDT_TypeCount:
@@ -2120,7 +2121,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
  * count[] and with the spacing of bufferStride[].
  *
  * @param pDstBufferAllocStart Optional pointer that can be used to validate the
- *                             validty of pDstBuffer. pDstBufferAllocStart
+ *                             validity of pDstBuffer. pDstBufferAllocStart
  * should be the pointer returned by the malloc() or equivalent call used to
  * allocate the buffer. It will generally be equal to pDstBuffer (when
  * bufferStride[] values are all positive), but not necessarily. If specified,
@@ -2128,7 +2129,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
  * validation is needed, nullptr can be passed.
  *
  * @param nDstBufferAllocSize  Optional buffer size, that can be used to
- * validate the validty of pDstBuffer. This is the size of the buffer starting
+ * validate the validity of pDstBuffer. This is the size of the buffer starting
  * at pDstBufferAllocStart. If specified, pDstBufferAllocStart should be also
  *                             set to the appropriate value.
  *                             If no validation is needed, 0 can be passed.
@@ -2224,7 +2225,7 @@ bool GDALAbstractMDArray::IWrite(const GUInt64 *, const size_t *,
  * count[] and with the spacing of bufferStride[].
  *
  * @param pSrcBufferAllocStart Optional pointer that can be used to validate the
- *                             validty of pSrcBuffer. pSrcBufferAllocStart
+ *                             validity of pSrcBuffer. pSrcBufferAllocStart
  * should be the pointer returned by the malloc() or equivalent call used to
  * allocate the buffer. It will generally be equal to pSrcBuffer (when
  * bufferStride[] values are all positive), but not necessarily. If specified,
@@ -2232,7 +2233,7 @@ bool GDALAbstractMDArray::IWrite(const GUInt64 *, const size_t *,
  * validation is needed, nullptr can be passed.
  *
  * @param nSrcBufferAllocSize  Optional buffer size, that can be used to
- * validate the validty of pSrcBuffer. This is the size of the buffer starting
+ * validate the validity of pSrcBuffer. This is the size of the buffer starting
  * at pSrcBufferAllocStart. If specified, pDstBufferAllocStart should be also
  *                             set to the appropriate value.
  *                             If no validation is needed, 0 can be passed.
@@ -3924,7 +3925,7 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray *poSrcArray,
  * @param poSrcDS    Source dataset. Might be nullptr (but for correct behavior
  *                   of some output drivers this is not recommended)
  * @param poSrcArray Source array. Should NOT be nullptr.
- * @param bStrict Whether to enable stict mode. In strict mode, any error will
+ * @param bStrict Whether to enable strict mode. In strict mode, any error will
  *                stop the copy. In relaxed mode, the copy will be attempted to
  *                be pursued.
  * @param nCurCost  Should be provided as a variable initially set to 0.
@@ -5697,7 +5698,7 @@ CreateFieldNameExtractArray(const std::shared_ptr<GDALMDArray> &self,
  * array, with the values in first dimension reversed. That is
  * [[4,5,6,7],[0,1,2,3]].</li>
  * <li>GetView("[newaxis,...]"): returns a
- * 3-dimensional array, with an addditional dimension of size 1 put at the
+ * 3-dimensional array, with an additional dimension of size 1 put at the
  * beginning. That is [[[0,1,2,3],[4,5,6,7]]].</li>
  * </ul>
  *
@@ -8255,10 +8256,10 @@ std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
         const double dfYMin =
             dfYMax + dfYSpacing * static_cast<double>(poNewDimY->GetSize());
         aosArgv.AddString("-te");
-        aosArgv.AddString(CPLSPrintf("%.18g", dfXMin));
-        aosArgv.AddString(CPLSPrintf("%.18g", dfYMin));
-        aosArgv.AddString(CPLSPrintf("%.18g", dfXMax));
-        aosArgv.AddString(CPLSPrintf("%.18g", dfYMax));
+        aosArgv.AddString(CPLSPrintf("%.17g", dfXMin));
+        aosArgv.AddString(CPLSPrintf("%.17g", dfYMin));
+        aosArgv.AddString(CPLSPrintf("%.17g", dfXMax));
+        aosArgv.AddString(CPLSPrintf("%.17g", dfYMax));
     }
 
     if (poNewDimX && poNewDimY)
@@ -14045,15 +14046,15 @@ void GDALPamMultiDim::Save()
                                                                      : "0");
             CPLCreateXMLElementAndValue(
                 psMDArray, "Minimum",
-                CPLSPrintf("%.18g", kv.second.stats.dfMin));
+                CPLSPrintf("%.17g", kv.second.stats.dfMin));
             CPLCreateXMLElementAndValue(
                 psMDArray, "Maximum",
-                CPLSPrintf("%.18g", kv.second.stats.dfMax));
+                CPLSPrintf("%.17g", kv.second.stats.dfMax));
             CPLCreateXMLElementAndValue(
-                psMDArray, "Mean", CPLSPrintf("%.18g", kv.second.stats.dfMean));
+                psMDArray, "Mean", CPLSPrintf("%.17g", kv.second.stats.dfMean));
             CPLCreateXMLElementAndValue(
                 psMDArray, "StdDev",
-                CPLSPrintf("%.18g", kv.second.stats.dfStdDev));
+                CPLSPrintf("%.17g", kv.second.stats.dfStdDev));
             CPLCreateXMLElementAndValue(
                 psMDArray, "ValidSampleCount",
                 CPLSPrintf(CPL_FRMT_GUIB, kv.second.stats.nValidCount));

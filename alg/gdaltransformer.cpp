@@ -1765,13 +1765,13 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  * a PROJ or WKT string, used as an override over the normally computed
  * pipeline. The pipeline must take into account the axis order of the source
  * and target SRS. <li> COORDINATE_EPOCH: (GDAL &gt;= 3.0) Coordinate epoch,
- * expressed as a decimal year. Useful for time-dependant coordinate operations.
+ * expressed as a decimal year. Useful for time-dependent coordinate operations.
  * </li>
  * <li> SRC_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of source CRS,
- * expressed as a decimal year. Useful for time-dependant coordinate operations.
+ * expressed as a decimal year. Useful for time-dependent coordinate operations.
  * </li>
  * <li> DST_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of target CRS,
- * expressed as a decimal year. Useful for time-dependant coordinate operations.
+ * expressed as a decimal year. Useful for time-dependent coordinate operations.
  * </li>
  * <li> GCPS_OK: If false, GCPs will not be used, default is TRUE.
  * </li>
@@ -3091,14 +3091,14 @@ static CPLXMLNode *GDALSerializeGenImgProjTransformer(void *pTransformArg)
     else
     {
         CPLsnprintf(
-            szWork, sizeof(szWork), "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+            szWork, sizeof(szWork), "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
             psInfo->adfSrcGeoTransform[0], psInfo->adfSrcGeoTransform[1],
             psInfo->adfSrcGeoTransform[2], psInfo->adfSrcGeoTransform[3],
             psInfo->adfSrcGeoTransform[4], psInfo->adfSrcGeoTransform[5]);
         CPLCreateXMLElementAndValue(psTree, "SrcGeoTransform", szWork);
 
         CPLsnprintf(
-            szWork, sizeof(szWork), "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+            szWork, sizeof(szWork), "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
             psInfo->adfSrcInvGeoTransform[0], psInfo->adfSrcInvGeoTransform[1],
             psInfo->adfSrcInvGeoTransform[2], psInfo->adfSrcInvGeoTransform[3],
             psInfo->adfSrcInvGeoTransform[4], psInfo->adfSrcInvGeoTransform[5]);
@@ -3128,14 +3128,14 @@ static CPLXMLNode *GDALSerializeGenImgProjTransformer(void *pTransformArg)
     else
     {
         CPLsnprintf(
-            szWork, sizeof(szWork), "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+            szWork, sizeof(szWork), "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
             psInfo->adfDstGeoTransform[0], psInfo->adfDstGeoTransform[1],
             psInfo->adfDstGeoTransform[2], psInfo->adfDstGeoTransform[3],
             psInfo->adfDstGeoTransform[4], psInfo->adfDstGeoTransform[5]);
         CPLCreateXMLElementAndValue(psTree, "DstGeoTransform", szWork);
 
         CPLsnprintf(
-            szWork, sizeof(szWork), "%.18g,%.18g,%.18g,%.18g,%.18g,%.18g",
+            szWork, sizeof(szWork), "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g",
             psInfo->adfDstInvGeoTransform[0], psInfo->adfDstInvGeoTransform[1],
             psInfo->adfDstInvGeoTransform[2], psInfo->adfDstInvGeoTransform[3],
             psInfo->adfDstInvGeoTransform[4], psInfo->adfDstInvGeoTransform[5]);
@@ -3366,11 +3366,11 @@ void *GDALCreateReprojectionTransformer(const char *pszSrcWKT,
  * <li>COORDINATE_OPERATION=string: PROJ or WKT string representing a
  * coordinate operation, overriding the default computed transformation.</li>
  * <li>COORDINATE_EPOCH=decimal_year: Coordinate epoch, expressed as a
- * decimal year. Useful for time-dependant coordinate operations.</li>
+ * decimal year. Useful for time-dependent coordinate operations.</li>
  * <li> SRC_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch of source CRS,
- * expressed as a decimal year. Useful for time-dependant coordinate
+ * expressed as a decimal year. Useful for time-dependent coordinate
  *operations.</li> <li> DST_COORDINATE_EPOCH: (GDAL &gt;= 3.4) Coordinate epoch
- *of target CRS, expressed as a decimal year. Useful for time-dependant
+ *of target CRS, expressed as a decimal year. Useful for time-dependent
  *coordinate operations.</li>
  * </ul>
  *

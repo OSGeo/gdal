@@ -70,7 +70,7 @@ periods once the cache is full, and new memory is being initialized in
 GDALRasterBlock::Internalize().
 
 In order to remove the need for this LRU cache to be locked more often a
-new global config option is introducted "GDAL_DATASET_CACHING". This
+new global config option is added "GDAL_DATASET_CACHING". This
 causes the LRU cache to be per dataset when set to "YES", rather then a
 global cache ("NO" Default). Doing this will also allow threaded
 applications to flush only the cache for a single dataset, improving

@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <limits>
 #include <new>
 #include <utility>
@@ -719,7 +720,7 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
             if (std::fabs(dfNoData) > std::numeric_limits<float>::max())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid nodata value %.18g for Float32", dfNoData);
+                         "Invalid nodata value %.17g for Float32", dfNoData);
                 return false;
             }
             bHasNoData = true;
@@ -762,7 +763,7 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
                 dfNoData != static_cast<double>(static_cast<int64_t>(dfNoData)))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid nodata value %.18g for %s", dfNoData,
+                         "Invalid nodata value %.17g for %s", dfNoData,
                          GDALGetDataTypeName(eDT));
                 return false;
             }
@@ -1550,10 +1551,6 @@ CPLErr GDALOpenFileGDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 return CE_Failure;
             }
 
-            VSILFILE *fp = VSIFOpenL("tmp.jpg", "wb");
-            VSIFWriteL(pabyData + nJPEGOffset, nJPEGSize, 1, fp);
-            VSIFCloseL(fp);
-
             CPLString osTmpFilename;
             osTmpFilename.Printf("/vsimem/_openfilegdb/%p.jpg", this);
             VSIFCloseL(VSIFileFromMemBuffer(
@@ -1904,7 +1901,7 @@ CPLErr GDALOpenFileGDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (int x = 0; x < nBlockXSize; ++x)
             {
-                printf("%.18g ", // ok
+                printf("%.17g ", // ok
                        static_cast<double *>(pImage)[y * nBlockXSize + x]);
             }
             printf("\n"); // ok

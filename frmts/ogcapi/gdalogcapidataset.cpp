@@ -832,16 +832,16 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MINX") == nullptr;
     const double dfXMin =
         CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MINX",
-                                     CPLSPrintf("%.18g", oBbox[0].ToDouble())));
+                                     CPLSPrintf("%.17g", oBbox[0].ToDouble())));
     const double dfYMin =
         CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MINY",
-                                     CPLSPrintf("%.18g", oBbox[1].ToDouble())));
+                                     CPLSPrintf("%.17g", oBbox[1].ToDouble())));
     const double dfXMax =
         CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MAXX",
-                                     CPLSPrintf("%.18g", oBbox[2].ToDouble())));
+                                     CPLSPrintf("%.17g", oBbox[2].ToDouble())));
     const double dfYMax =
         CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MAXY",
-                                     CPLSPrintf("%.18g", oBbox[3].ToDouble())));
+                                     CPLSPrintf("%.17g", oBbox[3].ToDouble())));
 
     auto oScaleDenominator = oRoot["scaleDenominator"];
 
@@ -1260,10 +1260,10 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo *poOpenInfo,
                      "        <ServerUrl>%s</ServerUrl>"
                      "    </Service>"
                      "    <DataWindow>"
-                     "        <UpperLeftX>%.18g</UpperLeftX>"
-                     "        <UpperLeftY>%.18g</UpperLeftY>"
-                     "        <LowerRightX>%.18g</LowerRightX>"
-                     "        <LowerRightY>%.18g</LowerRightY>"
+                     "        <UpperLeftX>%.17g</UpperLeftX>"
+                     "        <UpperLeftY>%.17g</UpperLeftY>"
+                     "        <LowerRightX>%.17g</LowerRightX>"
+                     "        <LowerRightY>%.17g</LowerRightY>"
                      "        <SizeX>%d</SizeX>"
                      "        <SizeY>%d</SizeY>"
                      "    </DataWindow>"
@@ -1531,10 +1531,10 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
                      "        <ServerUrl>%s</ServerUrl>"
                      "    </Service>"
                      "    <DataWindow>"
-                     "        <UpperLeftX>%.18g</UpperLeftX>"
-                     "        <UpperLeftY>%.18g</UpperLeftY>"
-                     "        <LowerRightX>%.18g</LowerRightX>"
-                     "        <LowerRightY>%.18g</LowerRightY>"
+                     "        <UpperLeftX>%.17g</UpperLeftX>"
+                     "        <UpperLeftY>%.17g</UpperLeftY>"
+                     "        <LowerRightX>%.17g</LowerRightX>"
+                     "        <LowerRightY>%.17g</LowerRightY>"
                      "        <SizeX>%d</SizeX>"
                      "        <SizeY>%d</SizeY>"
                      "    </DataWindow>"
@@ -2120,10 +2120,10 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                     "        <TileXMultiplier>%d</TileXMultiplier>"
                     "    </Service>"
                     "    <DataWindow>"
-                    "        <UpperLeftX>%.18g</UpperLeftX>"
-                    "        <UpperLeftY>%.18g</UpperLeftY>"
-                    "        <LowerRightX>%.18g</LowerRightX>"
-                    "        <LowerRightY>%.18g</LowerRightY>"
+                    "        <UpperLeftX>%.17g</UpperLeftX>"
+                    "        <UpperLeftY>%.17g</UpperLeftY>"
+                    "        <LowerRightX>%.17g</LowerRightX>"
+                    "        <LowerRightY>%.17g</LowerRightY>"
                     "        <TileLevel>0</TileLevel>"
                     "        <TileY>%d</TileY>"
                     "        <SizeX>%d</SizeX>"
@@ -2253,10 +2253,10 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
             argv.AddString("-of");
             argv.AddString("VRT");
             argv.AddString("-projwin");
-            argv.AddString(CPLSPrintf("%.18g", dfXMin));
-            argv.AddString(CPLSPrintf("%.18g", dfYMax));
-            argv.AddString(CPLSPrintf("%.18g", dfXMax));
-            argv.AddString(CPLSPrintf("%.18g", dfYMin));
+            argv.AddString(CPLSPrintf("%.17g", dfXMin));
+            argv.AddString(CPLSPrintf("%.17g", dfYMax));
+            argv.AddString(CPLSPrintf("%.17g", dfXMax));
+            argv.AddString(CPLSPrintf("%.17g", dfYMin));
             GDALTranslateOptions *psOptions =
                 GDALTranslateOptionsNew(argv.List(), nullptr);
             GDALDatasetH hCroppedDS = GDALTranslate(
@@ -2524,19 +2524,19 @@ GDALDataset *OGCAPITiledLayer::OpenTile(int nX, int nY, bool &bEmptyContent)
             m_bInvertAxis ? m_oTileMatrix.mTopLeftX : m_oTileMatrix.mTopLeftY;
         aosOpenOptions.SetNameValue(
             "@GEOREF_TOPX",
-            CPLSPrintf("%.18g", dfOriX + nX * m_oTileMatrix.mResX *
+            CPLSPrintf("%.17g", dfOriX + nX * m_oTileMatrix.mResX *
                                              m_oTileMatrix.mTileWidth));
         aosOpenOptions.SetNameValue(
             "@GEOREF_TOPY",
-            CPLSPrintf("%.18g", dfOriY - nY * m_oTileMatrix.mResY *
+            CPLSPrintf("%.17g", dfOriY - nY * m_oTileMatrix.mResY *
                                              m_oTileMatrix.mTileHeight));
         aosOpenOptions.SetNameValue(
             "@GEOREF_TILEDIMX",
-            CPLSPrintf("%.18g", nCoalesce * m_oTileMatrix.mResX *
+            CPLSPrintf("%.17g", nCoalesce * m_oTileMatrix.mResX *
                                     m_oTileMatrix.mTileWidth));
         aosOpenOptions.SetNameValue(
             "@GEOREF_TILEDIMY",
-            CPLSPrintf("%.18g",
+            CPLSPrintf("%.17g",
                        m_oTileMatrix.mResY * m_oTileMatrix.mTileWidth));
 
         papszOpenOptions = aosOpenOptions.List();

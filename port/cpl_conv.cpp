@@ -84,7 +84,7 @@
 #include <string>
 
 #if __cplusplus >= 202002L
-#include <type_traits>  // For std::endian
+#include <bit>  // For std::endian
 #endif
 
 #include "cpl_config.h"
@@ -2529,7 +2529,7 @@ const char *CPLDecToDMS(double dfAngle, const char *pszAxis, int nPrecision)
 {
     VALIDATE_POINTER1(pszAxis, "CPLDecToDMS", "");
 
-    if (CPLIsNan(dfAngle))
+    if (std::isnan(dfAngle))
         return "Invalid angle";
 
     const double dfEpsilon = (0.5 / 3600.0) * pow(0.1, nPrecision);

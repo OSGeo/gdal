@@ -67,8 +67,8 @@ OGRErr OGRGeoPackageTableLayer::SaveExtent()
 
     char *pszSQL =
         sqlite3_mprintf("UPDATE gpkg_contents SET "
-                        "min_x = %.18g, min_y = %.18g, "
-                        "max_x = %.18g, max_y = %.18g "
+                        "min_x = %.17g, min_y = %.17g, "
+                        "max_x = %.17g, max_y = %.17g "
                         "WHERE lower(table_name) = lower('%q') AND "
                         "Lower(data_type) = 'features'",
                         m_poExtent->MinX, m_poExtent->MinY, m_poExtent->MaxX,
@@ -3523,9 +3523,9 @@ OGRErr OGRGeoPackageTableLayer::ResetStatementInternal(GIntBig nStartIndex)
                 bUseSpatialIndex = false;
             }
 
-            if (bUseSpatialIndex && !CPLIsInf(sEnvelope.MinX) &&
-                !CPLIsInf(sEnvelope.MinY) && !CPLIsInf(sEnvelope.MaxX) &&
-                !CPLIsInf(sEnvelope.MaxY))
+            if (bUseSpatialIndex && !std::isinf(sEnvelope.MinX) &&
+                !std::isinf(sEnvelope.MinY) && !std::isinf(sEnvelope.MaxX) &&
+                !std::isinf(sEnvelope.MaxY))
             {
                 soSQL.Printf("SELECT %s FROM \"%s\" m "
                              "JOIN \"%s\" r "
@@ -4042,8 +4042,8 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
 
         m_poFilterGeom->getEnvelope(&sEnvelope);
 
-        if (!CPLIsInf(sEnvelope.MinX) && !CPLIsInf(sEnvelope.MinY) &&
-            !CPLIsInf(sEnvelope.MaxX) && !CPLIsInf(sEnvelope.MaxY))
+        if (!std::isinf(sEnvelope.MinX) && !std::isinf(sEnvelope.MinY) &&
+            !std::isinf(sEnvelope.MaxX) && !std::isinf(sEnvelope.MaxY))
         {
             soSQL.Printf("SELECT COUNT(*) FROM \"%s\" WHERE "
                          "maxx >= %.12f AND minx <= %.12f AND "
@@ -5503,10 +5503,10 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int m_iGeomColIn,
         const char *pszC =
             m_poFeatureDefn->GetGeomFieldDefn(m_iGeomColIn)->GetNameRef();
 
-        if (CPLIsInf(sEnvelope.MinX) && sEnvelope.MinX < 0 &&
-            CPLIsInf(sEnvelope.MinY) && sEnvelope.MinY < 0 &&
-            CPLIsInf(sEnvelope.MaxX) && sEnvelope.MaxX > 0 &&
-            CPLIsInf(sEnvelope.MaxY) && sEnvelope.MaxY > 0)
+        if (std::isinf(sEnvelope.MinX) && sEnvelope.MinX < 0 &&
+            std::isinf(sEnvelope.MinY) && sEnvelope.MinY < 0 &&
+            std::isinf(sEnvelope.MaxX) && sEnvelope.MaxX > 0 &&
+            std::isinf(sEnvelope.MaxY) && sEnvelope.MaxY > 0)
         {
             osSpatialWHERE.Printf(
                 "(\"%s\" IS NOT NULL AND NOT ST_IsEmpty(\"%s\"))",
@@ -8478,9 +8478,9 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
                 bUseSpatialIndex = false;
             }
 
-            if (bUseSpatialIndex && !CPLIsInf(sEnvelope.MinX) &&
-                !CPLIsInf(sEnvelope.MinY) && !CPLIsInf(sEnvelope.MaxX) &&
-                !CPLIsInf(sEnvelope.MaxY))
+            if (bUseSpatialIndex && !std::isinf(sEnvelope.MinX) &&
+                !std::isinf(sEnvelope.MinY) && !std::isinf(sEnvelope.MaxX) &&
+                !std::isinf(sEnvelope.MaxY))
             {
                 osSQL +=
                     CPLSPrintf(" JOIN \"%s\" r "
