@@ -194,7 +194,15 @@ Starting with GDAL 3.10, there also exists a raster band level IMAGERY metadata 
 - CENTRAL_WAVELENGTH_UM: Central Wavelength in micrometers.
 - FWHM_UM: Full-width half-maximum (FWHM) in micrometers.
 
-At time of writing, they are set by the SENTINEL2 and ENVI drivers (if corresponding metadata items are found in the ENVI header)
+Clients can get (resp. set) these metadata items with :cpp:func:`GDALRasterBand::GetMetadataItem()`
+(resp. :cpp:func:`GDALRasterBand::SetMetadataItem()`).`
+
+They are specifically set by the :ref:`raster.sentinel2` and
+:ref:`raster.envi` drivers (if corresponding metadata items are found in the ENVI header),
+but may also be found in other drivers handling arbitrary GDAL metadata, such as
+the one using the GDAL Persistent Auxiliary Mechanism (PAM / .aux.xml side car files)
+or :ref:`raster.vrt` drivers. The :ref:`raster.gtiff` driver also supports serializing
+and deserializing the band IMAGERY metadata domain in the ``GDAL_METADATA`` TIFF tag.
 
 xml: Domains
 ++++++++++++
