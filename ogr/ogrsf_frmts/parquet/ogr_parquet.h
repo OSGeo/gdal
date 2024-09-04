@@ -304,9 +304,12 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
 
 class OGRParquetDataset final : public OGRArrowDataset
 {
+    std::shared_ptr<arrow::fs::FileSystem> m_poFS{};
+
   public:
     explicit OGRParquetDataset(
         const std::shared_ptr<arrow::MemoryPool> &poMemoryPool);
+    ~OGRParquetDataset();
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,
@@ -314,6 +317,11 @@ class OGRParquetDataset final : public OGRArrowDataset
     void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
     int TestCapability(const char *) override;
+
+    void SetFileSystem(const std::shared_ptr<arrow::fs::FileSystem> &fs)
+    {
+        m_poFS = fs;
+    }
 };
 
 /************************************************************************/

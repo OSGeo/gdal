@@ -94,8 +94,8 @@ static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
             auto fp = VSIVirtualHandleUniquePtr(VSIFileFromMemBuffer(
                 osTmpFilename.c_str(), poOpenInfo->pabyHeader, nSizeToRead,
                 false));
-            auto infile =
-                std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
+            auto infile = std::make_shared<OGRArrowRandomAccessFile>(
+                osTmpFilename.c_str(), std::move(fp));
             auto options = arrow::ipc::IpcReadOptions::Defaults();
             auto result =
                 arrow::ipc::RecordBatchStreamReader::Open(infile, options);
@@ -113,8 +113,8 @@ static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
             return false;
 
         // Do not give ownership of poOpenInfo->fpL to infile
-        auto infile =
-            std::make_shared<OGRArrowRandomAccessFile>(poOpenInfo->fpL, false);
+        auto infile = std::make_shared<OGRArrowRandomAccessFile>(
+            poOpenInfo->pszFilename, poOpenInfo->fpL, false);
         auto options = arrow::ipc::IpcReadOptions::Defaults();
         auto result =
             arrow::ipc::RecordBatchStreamReader::Open(infile, options);
@@ -164,14 +164,16 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
                      osFilename.c_str());
             return nullptr;
         }
-        infile = std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
+        infile = std::make_shared<OGRArrowRandomAccessFile>(osFilename.c_str(),
+                                                            std::move(fp));
     }
     else if (STARTS_WITH(poOpenInfo->pszFilename, "/vsi") ||
              CPLTestBool(CPLGetConfigOption("OGR_ARROW_USE_VSI", "NO")))
     {
         VSIVirtualHandleUniquePtr fp(poOpenInfo->fpL);
         poOpenInfo->fpL = nullptr;
-        infile = std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
+        infile = std::make_shared<OGRArrowRandomAccessFile>(
+            poOpenInfo->pszFilename, std::move(fp));
     }
     else
     {
