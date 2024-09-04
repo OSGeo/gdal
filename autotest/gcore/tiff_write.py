@@ -11679,3 +11679,57 @@ def test_tiff_write_too_large_webp(
     filename = str(tmp_vsimem / "test.tif")
     with pytest.raises(Exception, match=expected_error_msg):
         gdal.GetDriverByName("GTiff").Create(filename, xsize, ysize, options=options)
+
+
+###############################################################################
+# Test writing/reading band IMAGERY metadata
+
+
+def test_tiff_write_band_IMAGERY(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.tif")
+    with gdal.GetDriverByName("GTiff").Create(filename, 1, 1) as ds:
+        ds.GetRasterBand(1).SetMetadataItem("foo", "bar", "IMAGERY")
+    with gdal.Open(filename) as ds:
+        assert ds.GetRasterBand(1).GetMetadataDomainList() == ["IMAGERY"]
+    with gdal.Open(filename) as ds:
+        assert ds.GetRasterBand(1).GetMetadataItem("foo", "IMAGERY") == "bar"
+    with gdal.Open(filename) as ds:
+        assert ds.GetRasterBand(1).GetMetadata_Dict("IMAGERY") == {"foo": "bar"}
+
+    filename2 = str(tmp_vsimem / "test2.tif")
+
+    with gdal.Open(filename) as ds:
+        gdal.GetDriverByName("GTiff").CreateCopy(filename2, ds)
+    with gdal.Open(filename2) as ds:
+        assert ds.GetRasterBand(1).GetMetadata_Dict("IMAGERY") == {"foo": "bar"}
+
+    with gdal.Open(filename) as ds:
+        gdal.GetDriverByName("GTiff").CreateCopy(
+            filename2, ds, options=["COPY_SRC_MDD=YES"]
+        )
+    with gdal.Open(filename2) as ds:
+        assert ds.GetRasterBand(1).GetMetadata_Dict("IMAGERY") == {"foo": "bar"}
+
+    with gdal.Open(filename) as ds:
+        gdal.GetDriverByName("GTiff").CreateCopy(
+            filename2, ds, options=["COPY_SRC_MDD=NO"]
+        )
+    with gdal.Open(filename2) as ds:
+        assert ds.GetRasterBand(1).GetMetadataDomainList() is None
+        assert ds.GetRasterBand(1).GetMetadata_Dict("IMAGERY") == {}
+
+    with gdal.Open(filename) as ds:
+        gdal.GetDriverByName("GTiff").CreateCopy(
+            filename2, ds, options=["SRC_MDD=not_existing"]
+        )
+    with gdal.Open(filename2) as ds:
+        assert ds.GetRasterBand(1).GetMetadataDomainList() is None
+        assert ds.GetRasterBand(1).GetMetadata_Dict("IMAGERY") == {}
+
+    with gdal.Open(filename) as ds:
+        gdal.GetDriverByName("GTiff").CreateCopy(
+            filename2, ds, options=["SRC_MDD=not_existing", "SRC_MDD=IMAGERY"]
+        )
+    with gdal.Open(filename2) as ds:
+        assert ds.GetRasterBand(1).GetMetadata_Dict("IMAGERY") == {"foo": "bar"}

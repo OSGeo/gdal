@@ -3833,7 +3833,7 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
     for (int iDomain = 0; papszDomainList && papszDomainList[iDomain];
          ++iDomain)
     {
-        char **papszMD = poMDMD->GetMetadata(papszDomainList[iDomain]);
+        CSLConstList papszMD = poMDMD->GetMetadata(papszDomainList[iDomain]);
         bool bIsXML = false;
 
         if (EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE") ||
@@ -4065,6 +4065,11 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     CPLXMLNode *psRoot = nullptr;
     CPLXMLNode *psTail = nullptr;
 
+    const char *pszCopySrcMDD =
+        CSLFetchNameValueDef(papszCreationOptions, "COPY_SRC_MDD", "AUTO");
+    char **papszSrcMDD =
+        CSLFetchNameValueMultiple(papszCreationOptions, "SRC_MDD");
+
     if (bSrcIsGeoTIFF)
     {
         GTiffDataset *poSrcDSGTiff = cpl::down_cast<GTiffDataset *>(poSrcDS);
@@ -4074,15 +4079,11 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     }
     else
     {
-        const char *pszCopySrcMDD =
-            CSLFetchNameValueDef(papszCreationOptions, "COPY_SRC_MDD", "AUTO");
-        char **papszSrcMDD =
-            CSLFetchNameValueMultiple(papszCreationOptions, "SRC_MDD");
         if (EQUAL(pszCopySrcMDD, "AUTO") || CPLTestBool(pszCopySrcMDD) ||
             papszSrcMDD)
         {
             GDALMultiDomainMetadata l_oMDMD;
-            char **papszMD = poSrcDS->GetMetadata();
+            CSLConstList papszMD = poSrcDS->GetMetadata();
             if (CSLCount(papszMD) > 0 &&
                 (!papszSrcMDD || CSLFindString(papszSrcMDD, "") >= 0 ||
                  CSLFindString(papszSrcMDD, "_DEFAULT_") >= 0))
@@ -4094,7 +4095,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                 papszSrcMDD)
             {
                 char **papszDomainList = poSrcDS->GetMetadataDomainList();
-                for (char **papszIter = papszDomainList;
+                for (CSLConstList papszIter = papszDomainList;
                      papszIter && *papszIter; ++papszIter)
                 {
                     const char *pszDomain = *papszIter;
@@ -4111,7 +4112,6 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
 
             WriteMDMetadata(&l_oMDMD, l_hTIFF, &psRoot, &psTail, 0, eProfile);
         }
-        CSLDestroy(papszSrcMDD);
     }
 
     if (!bExcludeRPBandIMGFileWriting)
@@ -4156,13 +4156,44 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         }
         else
         {
-            char **papszMD = poBand->GetMetadata();
+            GDALMultiDomainMetadata l_oMDMD;
+            bool bOMDMDSet = false;
 
-            if (CSLCount(papszMD) > 0)
+            if (EQUAL(pszCopySrcMDD, "AUTO") && !papszSrcMDD)
             {
-                GDALMultiDomainMetadata l_oMDMD;
-                l_oMDMD.SetMetadata(papszMD);
+                for (const char *pszDomain : {"", "IMAGERY"})
+                {
+                    if (CSLConstList papszMD = poBand->GetMetadata(pszDomain))
+                    {
+                        if (papszMD[0])
+                        {
+                            bOMDMDSet = true;
+                            l_oMDMD.SetMetadata(papszMD, pszDomain);
+                        }
+                    }
+                }
+            }
+            else if (CPLTestBool(pszCopySrcMDD) || papszSrcMDD)
+            {
+                char **papszDomainList = poBand->GetMetadataDomainList();
+                for (const char *pszDomain :
+                     cpl::Iterate(CSLConstList(papszDomainList)))
+                {
+                    if (pszDomain[0] != 0 &&
+                        !EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+                        (!papszSrcMDD ||
+                         CSLFindString(papszSrcMDD, pszDomain) >= 0))
+                    {
+                        bOMDMDSet = true;
+                        l_oMDMD.SetMetadata(poBand->GetMetadata(pszDomain),
+                                            pszDomain);
+                    }
+                }
+                CSLDestroy(papszDomainList);
+            }
 
+            if (bOMDMDSet)
+            {
                 WriteMDMetadata(&l_oMDMD, l_hTIFF, &psRoot, &psTail, nBand,
                                 eProfile);
             }
@@ -4233,6 +4264,8 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                                nBand, "colorinterp", "");
         }
     }
+
+    CSLDestroy(papszSrcMDD);
 
     const char *pszTilingSchemeName =
         CSLFetchNameValue(papszCreationOptions, "@TILING_SCHEME_NAME");
