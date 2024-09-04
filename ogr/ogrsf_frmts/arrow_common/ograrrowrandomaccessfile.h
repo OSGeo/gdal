@@ -153,11 +153,6 @@ class OGRArrowRandomAccessFile final : public arrow::io::RandomAccessFile
             return arrow::Status::IOError("File requested to close");
 
         // CPLDebug("ARROW", "Reading %d bytes", int(nbytes));
-        // Ugly hack for https://github.com/OSGeo/gdal/issues/9497
-        if (CPLGetConfigOption("OGR_ARROW_STOP_IO", nullptr))
-        {
-            return arrow::Result<std::shared_ptr<arrow::Buffer>>();
-        }
         auto buffer = arrow::AllocateResizableBuffer(nbytes);
         if (!buffer.ok())
         {
