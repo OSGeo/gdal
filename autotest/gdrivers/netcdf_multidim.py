@@ -2096,6 +2096,9 @@ def test_netcdf_multidim_getcoordinatevariables():
 
 def test_netcdf_multidim_getresampled_with_geoloc():
 
+    if os.path.exists("data/netcdf/sentinel5p_fake.nc.aux.xml"):
+        os.unlink("data/netcdf/sentinel5p_fake.nc.aux.xml")
+
     ds = gdal.OpenEx("data/netcdf/sentinel5p_fake.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
@@ -2117,6 +2120,8 @@ def test_netcdf_multidim_getresampled_with_geoloc():
     with gdaltest.config_option("GDAL_NETCDF_BOTTOMUP", "NO"):
         warped_ds = gdal.Warp("", "data/netcdf/sentinel5p_fake.nc", format="MEM")
     assert warped_ds.ReadRaster() == resampled_ar.Read()
+
+    assert not os.path.exists("data/netcdf/sentinel5p_fake.nc.aux.xml")
 
 
 def test_netcdf_multidim_cache():
@@ -3575,6 +3580,9 @@ def test_netcdf_multidim_compute_statistics_update_metadata():
 
 def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A():
 
+    if os.path.exists("data/netcdf/fake_EMIT_L2A.nc.aux.xml"):
+        os.unlink("data/netcdf/fake_EMIT_L2A.nc.aux.xml")
+
     ds = gdal.OpenEx("data/netcdf/fake_EMIT_L2A.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
@@ -3769,6 +3777,8 @@ def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A():
         10.0,
         20.0,
     )
+
+    assert not os.path.exists("data/netcdf/fake_EMIT_L2A.nc.aux.xml")
 
 
 def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A_with_good_wavelengths():
