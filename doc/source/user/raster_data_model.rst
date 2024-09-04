@@ -269,11 +269,22 @@ A raster band has the following properties:
     * GCI_LWIRBand / "LWIR": Long-Wavelength InfraRed (LWIR) band [8.00 - 15 um]
     * GCI_TIRBand / "TIR": Thermal InfraRed (TIR) band (MWIR or LWIR) [3 - 15 um]
     * GCI_OtherIRBand / "OtherIR": Other infrared band [0.75 - 1000 um]
+    * GCI_SAR_Ka_Band / "SAR_Ka": Synthetic Aperture Radar (SAR) Ka band [0.8 - 1.1 cm / 27 - 40 GHz]
+    * GCI_SAR_K_Band / "SAR_K": Synthetic Aperture Radar (SAR) K band [1.1 - 1.7 cm / 18 - 27 GHz]
+    * GCI_SAR_Ku_Band / "SAR_Ku": Synthetic Aperture Radar (SAR) Ku band [1.7 - 2.4 cm / 12 - 18 GHz]
+    * GCI_SAR_X_Band / "SAR_X": Synthetic Aperture Radar (SAR) X band [2.4 - 3.8 cm / 8 - 12 GHz]
+    * GCI_SAR_C_Band / "SAR_C": Synthetic Aperture Radar (SAR) C band [3.8 - 7.5 cm / 4 - 8 GHz]
+    * GCI_SAR_S_Band / "SAR_S": Synthetic Aperture Radar (SAR) S band [7.5 - 15 cm / 2 - 4 GHz]
+    * GCI_SAR_L_Band / "SAR_L": Synthetic Aperture Radar (SAR) L band [15 - 30 cm / 1 - 2 GHz]
+    * GCI_SAR_P_Band / "SAR_P": Synthetic Aperture Radar (SAR) P band [30 - 100 cm / 0.3 - 1 GHz]
 
   For spectral bands, the wavelength ranges are indicative only, and may vary
   depending on sensors. The ``CENTRAL_WAVELENGTH_UM`` and ``FWHM_UM`` metadata
   items in the band ``IMAGERY`` metadata domain of the raster band, when present, will
   give more accurate characteristics.
+
+  Values belonging to the IR domain are in the [GCI_IR_Start, GCI_IR_End] range.
+  Values belonging to the SAR domain are in the [GCI_SAR_Start, GCI_SAR_End] range.
 
 - A color table, described in more detail later.
 - Knowledge of reduced resolution overviews (pyramids) if available.

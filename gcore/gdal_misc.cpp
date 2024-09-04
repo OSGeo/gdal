@@ -1178,6 +1178,11 @@ const char *GDALGetPaletteInterpretationName(GDALPaletteInterp eInterp)
 const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
 
 {
+    static_assert(GCI_IR_Start == GCI_RedEdgeBand + 1);
+    static_assert(GCI_NIRBand == GCI_IR_Start);
+    static_assert(GCI_SAR_Start == GCI_IR_End + 1);
+    static_assert(GCI_Max == GCI_SAR_End);
+
     switch (eInterp)
     {
         case GCI_Undefined:
@@ -1257,6 +1262,48 @@ const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
 
         case GCI_OtherIRBand:
             return "OtherIR";
+
+        case GCI_IR_Reserved_1:
+            return "IR_Reserved_1";
+
+        case GCI_IR_Reserved_2:
+            return "IR_Reserved_2";
+
+        case GCI_IR_Reserved_3:
+            return "IR_Reserved_3";
+
+        case GCI_IR_Reserved_4:
+            return "IR_Reserved_4";
+
+        case GCI_SAR_Ka_Band:
+            return "SAR_Ka";
+
+        case GCI_SAR_K_Band:
+            return "SAR_K";
+
+        case GCI_SAR_Ku_Band:
+            return "SAR_Ku";
+
+        case GCI_SAR_X_Band:
+            return "SAR_X";
+
+        case GCI_SAR_C_Band:
+            return "SAR_C";
+
+        case GCI_SAR_S_Band:
+            return "SAR_S";
+
+        case GCI_SAR_L_Band:
+            return "SAR_L";
+
+        case GCI_SAR_P_Band:
+            return "SAR_P";
+
+        case GCI_SAR_Reserved_1:
+            return "SAR_Reserved_1";
+
+        case GCI_SAR_Reserved_2:
+            return "SAR_Reserved_2";
     }
     return "Undefined";
 }

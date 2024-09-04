@@ -223,12 +223,51 @@ typedef struct
         (s).bFloatingPointWindowValidity = FALSE;                              \
     } while (0)
 
+/** Value indicating the start of the range for color interpretations belonging
+ * to the InfraRed (IR) domain. All constants of the GDALColorInterp enumeration
+ * in the IR domain are in the [GCI_IR_Start, GCI_IR_End] range.
+ *
+ * @since 3.10
+ */
+#define GCI_IR_Start 20
+
+/** Value indicating the end of the range for color interpretations belonging
+ * to the InfraRed (IR) domain. All constants of the GDALColorInterp enumeration
+ * in the IR domain are in the [GCI_IR_Start, GCI_IR_End] range.
+ *
+ * @since 3.10
+ */
+#define GCI_IR_End 29
+
+/** Value indicating the start of the range for color interpretations belonging
+ * to the Synthetic Aperture Radar (SAR) domain.
+ * All constants of the GDALColorInterp enumeration
+ * in the SAR domain are in the [GCI_SAR_Start, GCI_SAR_End] range.
+ *
+ * @since 3.10
+ */
+#define GCI_SAR_Start 30
+
+/** Value indicating the end of the range for color interpretations belonging
+ * to the Synthetic Aperture Radar (SAR) domain.
+ * All constants of the GDALColorInterp enumeration
+ * in the SAR domain are in the [GCI_SAR_Start, GCI_SAR_End] range.
+ *
+ * @since 3.10
+ */
+#define GCI_SAR_End 39
+
 /** Types of color interpretation for raster bands.
  *
  * For spectral bands, the wavelength ranges are indicative only, and may vary
  * depending on sensors. The CENTRAL_WAVELENGTH_UM and FWHM_UM metadata
  * items in the IMAGERY metadata domain of the raster band, when present, will
  * give more accurate characteristics.
+ *
+ * Values belonging to the IR domain are in the [GCI_IR_Start, GCI_IR_End] range.
+ * Values belonging to the SAR domain are in the [GCI_SAR_Start, GCI_SAR_End] range.
+ *
+ * Values between GCI_PanBand to GCI_SAR_Reserved_2 have been added in GDAL 3.10.
  */
 typedef enum
 {
@@ -253,22 +292,58 @@ typedef enum
     /*! Y Luminance */ GCI_YCbCr_YBand = 14,
     /*! Cb Chroma */ GCI_YCbCr_CbBand = 15,
     /*! Cr Chroma */ GCI_YCbCr_CrBand = 16,
+
     /* GDAL 3.10 addition: begin */
     /*! Panchromatic band [0.40 - 1.00 um] */ GCI_PanBand = 17,
     /*! Coastal band [0.40 - 0.45 um] */ GCI_CoastalBand = 18,
     /*! Red-edge band [0.69 - 0.79 um] */ GCI_RedEdgeBand = 19,
-    /*! Near-InfraRed (NIR) band [0.75 - 1.40 um] */ GCI_NIRBand = 20,
+
+    /*! Near-InfraRed (NIR) band [0.75 - 1.40 um] */ GCI_NIRBand =
+        GCI_IR_Start + 0,
     /*! Short-Wavelength InfraRed (SWIR) band [1.40 - 3.00 um] */ GCI_SWIRBand =
-        21,
+        GCI_IR_Start + 1,
     /*! Mid-Wavelength InfraRed (MWIR) band [3.00 - 8.00 um] */ GCI_MWIRBand =
-        22,
+        GCI_IR_Start + 2,
     /*! Long-Wavelength InfraRed (LWIR) band [8.00 - 15 um] */ GCI_LWIRBand =
-        23,
+        GCI_IR_Start + 3,
     /*! Thermal InfraRed (TIR) band (MWIR or LWIR) [3 - 15 um] */ GCI_TIRBand =
-        24,
-    /*! Other infrared band [0.75 - 1000 um] */ GCI_OtherIRBand = 25,
+        GCI_IR_Start + 4,
+    /*! Other infrared band [0.75 - 1000 um] */ GCI_OtherIRBand =
+        GCI_IR_Start + 5,
+    /*! Reserved value. Do not set it ! */
+    GCI_IR_Reserved_1 = GCI_IR_Start + 6,
+    /*! Reserved value. Do not set it ! */
+    GCI_IR_Reserved_2 = GCI_IR_Start + 7,
+    /*! Reserved value. Do not set it ! */
+    GCI_IR_Reserved_3 = GCI_IR_Start + 8,
+    /*! Reserved value. Do not set it ! */
+    GCI_IR_Reserved_4 = GCI_IR_Start + 9,
+
+    /*! Synthetic Aperture Radar (SAR) Ka band [0.8 - 1.1 cm / 27 - 40 GHz] */
+    GCI_SAR_Ka_Band = GCI_SAR_Start + 0,
+    /*! Synthetic Aperture Radar (SAR) K band [1.1 - 1.7 cm / 18 - 27 GHz] */
+    GCI_SAR_K_Band = GCI_SAR_Start + 1,
+    /*! Synthetic Aperture Radar (SAR) Ku band [1.7 - 2.4 cm / 12 - 18 GHz] */
+    GCI_SAR_Ku_Band = GCI_SAR_Start + 2,
+    /*! Synthetic Aperture Radar (SAR) X band [2.4 - 3.8 cm / 8 - 12 GHz] */
+    GCI_SAR_X_Band = GCI_SAR_Start + 3,
+    /*! Synthetic Aperture Radar (SAR) C band [3.8 - 7.5 cm / 4 - 8 GHz] */
+    GCI_SAR_C_Band = GCI_SAR_Start + 4,
+    /*! Synthetic Aperture Radar (SAR) S band [7.5 - 15 cm / 2 - 4 GHz] */
+    GCI_SAR_S_Band = GCI_SAR_Start + 5,
+    /*! Synthetic Aperture Radar (SAR) L band [15 - 30 cm / 1 - 2 GHz] */
+    GCI_SAR_L_Band = GCI_SAR_Start + 6,
+    /*! Synthetic Aperture Radar (SAR) P band [30 - 100 cm / 0.3 - 1 GHz] */
+    GCI_SAR_P_Band = GCI_SAR_Start + 7,
+    /*! Reserved value. Do not set it ! */
+    GCI_SAR_Reserved_1 = GCI_SAR_Start + 8,
+    /*! Reserved value. Do not set it ! */
+    GCI_SAR_Reserved_2 = GCI_SAR_Start + 9,
+
     /* GDAL 3.10 addition: end */
-    /*! Max current value (equals to GCI_OtherIRBand currently) */ GCI_Max = 25
+
+    /*! Max current value (equals to GCI_SAR_Reserved_2 currently) */ GCI_Max =
+        GCI_SAR_Reserved_2
 } GDALColorInterp;
 
 const char CPL_DLL *GDALGetColorInterpretationName(GDALColorInterp);
