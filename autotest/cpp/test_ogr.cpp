@@ -334,6 +334,39 @@ TEST_F(test_ogr, OGRGeometryCollection_copy_constructor_illegal_use)
     EXPECT_TRUE(mp.IsEmpty());
 }
 
+// Test crazy usage of OGRCurvePolygon copy constructor
+TEST_F(test_ogr, OGRCurvePolygon_copy_constructor_illegal_use)
+{
+    OGRCurvePolygon cp;
+    auto poCC = new OGRCircularString();
+    poCC->addPoint(0, 0);
+    poCC->addPoint(1, 1);
+    poCC->addPoint(2, 0);
+    poCC->addPoint(1, -1);
+    poCC->addPoint(0, 0);
+    cp.addRingDirectly(poCC);
+
+    OGRPolygon poly;
+    auto poLR = new OGRLinearRing();
+    poLR->addPoint(0, 0);
+    poLR->addPoint(1, 1);
+    poLR->addPoint(2, 0);
+    poLR->addPoint(1, -1);
+    poLR->addPoint(0, 0);
+    poly.addRingDirectly(poLR);
+
+    OGRCurvePolygon *poly_as_cp = &poly;
+    CPLErrorReset();
+    {
+        CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+        *poly_as_cp = cp;
+    }
+    EXPECT_STREQ(CPLGetLastErrorMsg(),
+                 "Illegal use of OGRCurvePolygon::operator=(): trying to "
+                 "assign an incomptible sub-geometry");
+    EXPECT_TRUE(poly.IsEmpty());
+}
+
 TEST_F(test_ogr, geometry_get_point)
 {
     {

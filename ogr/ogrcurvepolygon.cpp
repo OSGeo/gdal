@@ -73,6 +73,17 @@ OGRCurvePolygon &OGRCurvePolygon::operator=(const OGRCurvePolygon &other)
     {
         OGRSurface::operator=(other);
 
+        for (const auto *poRing : other.oCC)
+        {
+            if (!checkRing(poRing, /* bOnlyType = */ true))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Illegal use of OGRCurvePolygon::operator=(): "
+                         "trying to assign an incomptible sub-geometry");
+                return *this;
+            }
+        }
+
         oCC = other.oCC;
     }
     return *this;
@@ -340,9 +351,9 @@ OGRErr OGRCurvePolygon::addRing(const OGRCurve *poNewRing)
 /*                            checkRing()                               */
 /************************************************************************/
 
-int OGRCurvePolygon::checkRing(OGRCurve *poNewRing) const
+bool OGRCurvePolygon::checkRing(const OGRCurve *poNewRing, bool bOnlyType) const
 {
-    if (!poNewRing->IsEmpty() && !poNewRing->get_IsClosed())
+    if (!bOnlyType && !poNewRing->IsEmpty() && !poNewRing->get_IsClosed())
     {
         // This configuration option name must be the same as in
         // OGRPolygon::checkRing()
@@ -351,7 +362,7 @@ int OGRCurvePolygon::checkRing(OGRCurve *poNewRing) const
         if (pszEnvVar != nullptr && !CPLTestBool(pszEnvVar))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Non closed ring detected.");
-            return FALSE;
+            return false;
         }
         else
         {
@@ -366,19 +377,19 @@ int OGRCurvePolygon::checkRing(OGRCurve *poNewRing) const
 
     if (wkbFlatten(poNewRing->getGeometryType()) == wkbLineString)
     {
-        if (poNewRing->getNumPoints() < 4)
+        if (!bOnlyType && poNewRing->getNumPoints() < 4)
         {
-            return FALSE;
+            return false;
         }
 
         if (EQUAL(poNewRing->getGeometryName(), "LINEARRING"))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Linearring not allowed.");
-            return FALSE;
+            return false;
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
