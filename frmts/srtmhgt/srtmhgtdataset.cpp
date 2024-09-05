@@ -57,6 +57,8 @@ class SRTMHGTDataset final : public GDALPamDataset
     GByte *pabyBuffer = nullptr;
     OGRSpatialReference m_oSRS{};
 
+    static GDALPamDataset *OpenPAM(GDALOpenInfo *);
+
   public:
     SRTMHGTDataset();
     virtual ~SRTMHGTDataset();
@@ -361,6 +363,15 @@ int SRTMHGTDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *SRTMHGTDataset::Open(GDALOpenInfo *poOpenInfo)
 {
+    return OpenPAM(poOpenInfo);
+}
+
+/************************************************************************/
+/*                              OpenPAM()                               */
+/************************************************************************/
+
+GDALPamDataset *SRTMHGTDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
+{
     if (!Identify(poOpenInfo))
         return nullptr;
 
@@ -374,7 +385,7 @@ GDALDataset *SRTMHGTDataset::Open(GDALOpenInfo *poOpenInfo)
         osFilename += CPLString(fileName).substr(0, 7);
         osFilename += ".hgt";
         GDALOpenInfo oOpenInfo(osFilename, poOpenInfo->eAccess);
-        GDALDataset *poDS = Open(&oOpenInfo);
+        auto poDS = OpenPAM(&oOpenInfo);
         if (poDS != nullptr)
         {
             // override description with the main one
@@ -392,7 +403,7 @@ GDALDataset *SRTMHGTDataset::Open(GDALOpenInfo *poOpenInfo)
         osFilename += CPLString(fileName).substr(0, 7);
         osFilename += ".raw";
         GDALOpenInfo oOpenInfo(osFilename, poOpenInfo->eAccess);
-        GDALDataset *poDS = Open(&oOpenInfo);
+        auto poDS = OpenPAM(&oOpenInfo);
         if (poDS != nullptr)
         {
             // override description with the main one
@@ -427,7 +438,7 @@ GDALDataset *SRTMHGTDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    SRTMHGTDataset *poDS = new SRTMHGTDataset();
+    auto poDS = std::make_unique<SRTMHGTDataset>();
 
     poDS->fpImage = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
@@ -435,7 +446,6 @@ GDALDataset *SRTMHGTDataset::Open(GDALOpenInfo *poOpenInfo)
     VSIStatBufL fileStat;
     if (VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -498,7 +508,7 @@ GDALDataset *SRTMHGTDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create band information object.                                 */
     /* -------------------------------------------------------------------- */
-    SRTMHGTRasterBand *tmpBand = new SRTMHGTRasterBand(poDS, 1, eDT);
+    SRTMHGTRasterBand *tmpBand = new SRTMHGTRasterBand(poDS.get(), 1, eDT);
     poDS->SetBand(1, tmpBand);
 
     /* -------------------------------------------------------------------- */
@@ -510,9 +520,9 @@ GDALDataset *SRTMHGTDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Support overviews.                                              */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -597,12 +607,13 @@ GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
     const int nYSize = poSrcDS->GetRasterYSize();
 
     if (!((nXSize == 1201 && nYSize == 1201) ||
+          (nXSize == 1801 && nYSize == 3601) ||
           (nXSize == 3601 && nYSize == 3601) ||
-          (nXSize == 1801 && nYSize == 3601)))
+          (nXSize == 7201 && nYSize == 7201)))
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Image dimensions should be 1201x1201, 3601x3601 or 1801x3601.");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Image dimensions should be 1201x1201, 1801x3601, 3601x3601 "
+                 "or 7201x7201.");
         return nullptr;
     }
 
@@ -691,8 +702,8 @@ GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Reopen and copy missing information into a PAM file.            */
     /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS =
-        reinterpret_cast<GDALPamDataset *>(GDALOpen(pszFilename, GA_ReadOnly));
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    auto poDS = OpenPAM(&oOpenInfo);
 
     if (poDS)
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
