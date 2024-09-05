@@ -313,6 +313,27 @@ TEST_F(test_ogr, SpatialReference_leak_copy_constructor)
     testCopyEquals<OGRTriangulatedSurface>();
 }
 
+// Test crazy usage of OGRGeometryCollection copy constructor
+TEST_F(test_ogr, OGRGeometryCollection_copy_constructor_illegal_use)
+{
+    OGRGeometryCollection gc;
+    gc.addGeometryDirectly(new OGRPoint(1, 2));
+
+    OGRMultiPolygon mp;
+    mp.addGeometryDirectly(new OGRPolygon());
+
+    OGRGeometryCollection *mp_as_gc = &mp;
+    CPLErrorReset();
+    {
+        CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+        *mp_as_gc = gc;
+    }
+    EXPECT_STREQ(CPLGetLastErrorMsg(),
+                 "Illegal use of OGRGeometryCollection::operator=(): trying to "
+                 "assign an incomptible sub-geometry");
+    EXPECT_TRUE(mp.IsEmpty());
+}
+
 TEST_F(test_ogr, geometry_get_point)
 {
     {

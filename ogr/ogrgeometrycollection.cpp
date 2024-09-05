@@ -99,6 +99,17 @@ OGRGeometryCollection::operator=(const OGRGeometryCollection &other)
 
         OGRGeometry::operator=(other);
 
+        for (const auto *poOtherSubGeom : other)
+        {
+            if (!isCompatibleSubType(poOtherSubGeom->getGeometryType()))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Illegal use of OGRGeometryCollection::operator=(): "
+                         "trying to assign an incomptible sub-geometry");
+                return *this;
+            }
+        }
+
         papoGeoms = static_cast<OGRGeometry **>(
             VSI_CALLOC_VERBOSE(sizeof(OGRGeometry *), other.nGeomCount));
         if (papoGeoms)
