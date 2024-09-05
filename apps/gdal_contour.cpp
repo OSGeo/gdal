@@ -190,7 +190,7 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
                 else
                     psOptions->nGroupTransactions = atoi(s.c_str());
             })
-        .help(_("Group <n> features per transaction "));
+        .help(_("Group <n> features per transaction."));
 
     argParser->add_quiet_argument(&psOptions->bQuiet);
 
