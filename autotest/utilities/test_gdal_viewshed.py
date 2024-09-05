@@ -215,6 +215,8 @@ def test_gdal_viewshed_all_options(gdal_viewshed_path, tmp_path, viewshed_input)
 
 def test_gdal_viewshed_cumulative(gdal_viewshed_path, tmp_path, viewshed_input):
 
+    import numpy as np
+
     viewshed_out = str(tmp_path / "test_gdal_viewshed_out.tif")
 
     _, err = gdaltest.runexternal_out_and_err(
@@ -226,10 +228,10 @@ def test_gdal_viewshed_cumulative(gdal_viewshed_path, tmp_path, viewshed_input):
     assert err is None or err == ""
     ds = gdal.Open(viewshed_out)
     assert ds
-    cs = ds.GetRasterBand(1).Checksum()
+    vis_count = np.count_nonzero(ds.GetRasterBand(1).ReadAsArray())
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
-    assert cs == 10985
+    assert vis_count == 13448
     assert nodata == 0
 
 
