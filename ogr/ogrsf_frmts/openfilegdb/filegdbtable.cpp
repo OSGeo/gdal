@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
+#include <cmath>
 #include <errno.h>
 #include <limits.h>
 #include <stddef.h>
@@ -1848,7 +1849,7 @@ int FileGDBDoubleDateToOGRDate(double dfVal, bool bHighPrecision,
 {
     // 25569: Number of days between 1899/12/30 00:00:00 and 1970/01/01 00:00:00
     double dfSeconds = (dfVal - 25569.0) * 3600.0 * 24.0;
-    if (CPLIsNan(dfSeconds) ||
+    if (std::isnan(dfSeconds) ||
         dfSeconds <
             static_cast<double>(std::numeric_limits<GIntBig>::min()) + 1000 ||
         dfSeconds >
@@ -1890,7 +1891,7 @@ int FileGDBDoubleDateToOGRDate(double dfVal, bool bHighPrecision,
 int FileGDBDoubleTimeToOGRTime(double dfVal, OGRField *psField)
 {
     double dfSeconds = dfVal * 3600.0 * 24.0;
-    if (CPLIsNan(dfSeconds) || dfSeconds < 0 || dfSeconds > 86400)
+    if (std::isnan(dfSeconds) || dfSeconds < 0 || dfSeconds > 86400)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "FileGDBDoubleTimeToOGRTime: Invalid time: %lf", dfVal);
@@ -2730,56 +2731,8 @@ void FileGDBTable::GetMinMaxProjYForSpatialIndex(double &dfYMin,
         return;
     double dfMinLat;
     double dfMaxLat;
-    // Determined through experimentation, e.g with the following script
-#if 0
-    from osgeo import gdal, ogr, osr
-    import struct
-    gdal.RmdirRecursive('test.gdb')
-    ds = ogr.GetDriverByName('FileGDB').CreateDataSource('test.gdb')
-    srs = osr.SpatialReference()
-#srs.SetFromUserInput(                                                         \
-    "+proj=tmerc +lon_0=-40 +lat_0=60 +k=0.9 +x_0=00000 +y_0=00000 +datum=WGS84")
-    srs.SetFromUserInput("+proj=merc +lon_0=-40 +lat_0=60 +k=0.9 +x_0=00000 +y_0=00000 +datum=WGS84")
-    srs_lonlat = srs.CloneGeogCS()
-    srs_lonlat.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-    ct = osr.CoordinateTransformation(srs, srs_lonlat)
-    grid_step = 0.1
-    lyr = ds.CreateLayer('test', geom_type=ogr.wkbPoint, srs=srs)
-#Add 2 dummy features to set the grid_step to what we want
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
-    lyr.CreateFeature(f)
-    f = ogr.Feature(lyr.GetLayerDefn())
-    y = (2**0.5) * grid_step
-    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%f %f)' % (y, y)))
-    lyr.CreateFeature(f)
-    ds = None
-    ds = ogr.GetDriverByName('FileGDB').Open('test.gdb', update=1)
-    lyr = ds.GetLayer(0)
-    lyr.DeleteFeature(1)
-    lyr.DeleteFeature(2)
-    y = 1e9 # some big value
-    f = ogr.Feature(lyr.GetLayerDefn())
-    g = ogr.CreateGeometryFromWkt('POINT(0 %f)' % y)
-    f.SetGeometry(g)
-    lyr.CreateFeature(f)
-    f = ogr.Feature(lyr.GetLayerDefn())
-    g = ogr.CreateGeometryFromWkt('POINT(0 %f)' % -y)
-    f.SetGeometry(g)
-    lyr.CreateFeature(f)
-    ds = None
-    f = open('test.gdb/a00000009.spx', 'rb')
-    f.seek(4)
-    n = ord(f.read(1))
-    for x in range(n):
-        f.seek(1372 + x * 8, 0)
-        v = struct.unpack('Q', f.read(8))[0]
-        x = (v >> 31 & 0x7fffffff - (1 << 29))
-        y = (v & 0x7fffffff) - (1 << 29)
-        print(x, y)  # the y value will be clamped
-        print(ct.TransformPoint(srs.GetProjParm( osr.SRS_PP_FALSE_EASTING, 0.0 ), y * grid_step))
-#endif
 
+    // Determined through experimentation, e.g with the `find_srs_latitude_limits.py` script.
     if (EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR))
     {
         dfMinLat = -90;

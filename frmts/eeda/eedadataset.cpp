@@ -799,7 +799,7 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node *poNode, bool bIsAndTopLevel)
         else if (poNode->papoSubExpr[1]->field_type == SWQ_FLOAT)
         {
             osFilter +=
-                CPLSPrintf("%.18g", poNode->papoSubExpr[1]->float_value);
+                CPLSPrintf("%.17g", poNode->papoSubExpr[1]->float_value);
         }
         else
         {
@@ -890,7 +890,7 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node *poNode, bool bIsAndTopLevel)
             else if (poNode->papoSubExpr[i]->field_type == SWQ_FLOAT)
             {
                 osFilter +=
-                    CPLSPrintf("%.18g", poNode->papoSubExpr[i]->float_value);
+                    CPLSPrintf("%.17g", poNode->papoSubExpr[i]->float_value);
             }
             else
             {

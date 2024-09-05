@@ -281,6 +281,7 @@ OGRGeometryH CPL_DLL OGR_G_SymDifference(OGRGeometryH,
 double CPL_DLL OGR_G_Distance(OGRGeometryH, OGRGeometryH);
 double CPL_DLL OGR_G_Distance3D(OGRGeometryH, OGRGeometryH);
 double CPL_DLL OGR_G_Length(OGRGeometryH);
+double CPL_DLL OGR_G_GeodesicLength(OGRGeometryH);
 double CPL_DLL OGR_G_Area(OGRGeometryH);
 double CPL_DLL OGR_G_GeodesicArea(OGRGeometryH);
 bool CPL_DLL OGR_G_IsClockwise(OGRGeometryH hGeom);

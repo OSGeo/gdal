@@ -1591,9 +1591,9 @@ static void GDALGeoLocRescale(char **&papszMD, const char *pszItem,
 {
     const double dfVal =
         dfRatio * CPLAtofM(CSLFetchNameValueDef(
-                      papszMD, pszItem, CPLSPrintf("%.18g", dfDefaultVal)));
+                      papszMD, pszItem, CPLSPrintf("%.17g", dfDefaultVal)));
 
-    papszMD = CSLSetNameValue(papszMD, pszItem, CPLSPrintf("%.18g", dfVal));
+    papszMD = CSLSetNameValue(papszMD, pszItem, CPLSPrintf("%.17g", dfVal));
 }
 
 /************************************************************************/
@@ -1718,7 +1718,7 @@ CPLStringList GDALCreateGeolocationMetadata(GDALDatasetH hBaseDS,
     if (aosMD.FetchNameValue("PIXEL_STEP") == nullptr)
     {
         aosMD.SetNameValue(
-            "PIXEL_STEP", CPLSPrintf("%.18g", static_cast<double>(
+            "PIXEL_STEP", CPLSPrintf("%.17g", static_cast<double>(
                                                   GDALGetRasterXSize(hBaseDS)) /
                                                   nGeoLocXSize));
     }
@@ -1726,7 +1726,7 @@ CPLStringList GDALCreateGeolocationMetadata(GDALDatasetH hBaseDS,
     if (aosMD.FetchNameValue("LINE_STEP") == nullptr)
     {
         aosMD.SetNameValue(
-            "LINE_STEP", CPLSPrintf("%.18g", static_cast<double>(
+            "LINE_STEP", CPLSPrintf("%.17g", static_cast<double>(
                                                  GDALGetRasterYSize(hBaseDS)) /
                                                  nGeoLocYSize));
     }

@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "vrtdataset.h"
 
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
@@ -616,7 +617,7 @@ CPLErr VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
 CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
                              int nPrecision)
 {
-    if (CPLIsNan(dfVal))
+    if (std::isnan(dfVal))
     {
         return "nan";
     }

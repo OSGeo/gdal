@@ -40,6 +40,7 @@
 #include "tif_jxl.h"
 #include "xtiffio.h"
 #include <cctype>
+#include <cmath>
 
 // Needed to expose WEBP_LOSSLESS option
 #ifdef WEBP_SUPPORT
@@ -580,10 +581,10 @@ char **GTiffDatasetReadRPCTag(TIFF *hTIFF)
 CPLString GTiffFormatGDALNoDataTagValue(double dfNoData)
 {
     CPLString osVal;
-    if (CPLIsNan(dfNoData))
+    if (std::isnan(dfNoData))
         osVal = "nan";
     else
-        osVal.Printf("%.18g", dfNoData);
+        osVal.Printf("%.17g", dfNoData);
     return osVal;
 }
 

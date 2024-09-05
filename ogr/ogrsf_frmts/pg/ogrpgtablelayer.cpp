@@ -1086,9 +1086,9 @@ void OGRPGTableLayer::BuildWhere()
             if (sEnvelope.MaxY > 90.0)
                 sEnvelope.MaxY = 90.0;
         }
-        CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.18g %.18g", sEnvelope.MinX,
+        CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.17g %.17g", sEnvelope.MinX,
                     sEnvelope.MinY);
-        CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX,
+        CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.17g %.17g", sEnvelope.MaxX,
                     sEnvelope.MaxY);
         osWHERE.Printf(
             "WHERE %s && ST_SetSRID('BOX3D(%s, %s)'::box3d,%d) ",

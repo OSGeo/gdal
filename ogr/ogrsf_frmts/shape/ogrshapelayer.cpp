@@ -31,6 +31,7 @@
 
 #include <cerrno>
 #include <limits>
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -1699,8 +1700,8 @@ OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     psExtent->MaxX = adMax[0];
     psExtent->MaxY = adMax[1];
 
-    if (CPLIsNan(adMin[0]) || CPLIsNan(adMin[1]) || CPLIsNan(adMax[0]) ||
-        CPLIsNan(adMax[1]))
+    if (std::isnan(adMin[0]) || std::isnan(adMin[1]) || std::isnan(adMax[0]) ||
+        std::isnan(adMax[1]))
     {
         CPLDebug("SHAPE", "Invalid extent in shape header");
 
@@ -1753,8 +1754,8 @@ OGRErr OGRShapeLayer::GetExtent3D(int, OGREnvelope3D *psExtent3D, int bForce)
         psExtent3D->MaxZ = -std::numeric_limits<double>::infinity();
     }
 
-    if (CPLIsNan(adMin[0]) || CPLIsNan(adMin[1]) || CPLIsNan(adMax[0]) ||
-        CPLIsNan(adMax[1]))
+    if (std::isnan(adMin[0]) || std::isnan(adMin[1]) || std::isnan(adMax[0]) ||
+        std::isnan(adMax[1]))
     {
         CPLDebug("SHAPE", "Invalid extent in shape header");
 

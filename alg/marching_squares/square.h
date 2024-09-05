@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdint>
 #include <math.h>
 #include "utility.h"

@@ -4999,7 +4999,7 @@ GWKCheckAndComputeSrcOffsets(GWKJobStruct *psJob, int *_pabSuccess, int _iDstX,
             return false;
 
         // If this happens this is likely the symptom of a bug somewhere.
-        if (CPLIsNan(_padfX[_iDstX]) || CPLIsNan(_padfY[_iDstX]))
+        if (std::isnan(_padfX[_iDstX]) || std::isnan(_padfY[_iDstX]))
         {
             static bool bNanCoordFound = false;
             if (!bNanCoordFound)

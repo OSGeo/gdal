@@ -741,9 +741,17 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
              * example, it may be broken) and want to proceed to other
              * directories. I this case we use the TIFF_HEADERONLY flag to open
              * file and return immediately after reading TIFF header.
+             * However, the pointer to TIFFSetField() and TIFFGetField()
+             * (i.e. tif->tif_tagmethods.vsetfield and
+             * tif->tif_tagmethods.vgetfield) need to be initialized, which is
+             * done in TIFFDefaultDirectory().
              */
             if (tif->tif_flags & TIFF_HEADERONLY)
+            {
+                if (!TIFFDefaultDirectory(tif))
+                    goto bad;
                 return (tif);
+            }
 
             /*
              * Setup initial directory.

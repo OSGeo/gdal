@@ -96,6 +96,7 @@ void JP2KAKDriverSetCommonMetadata(GDALDriver *poDriver)
         "   <Option name='Cprecincts' type='string'/>"
         "   <Option name='Cmodes' type='string'/>"
         "   <Option name='Clevels' type='string'/>"
+        "   <Option name='Cycc' type='boolean' default='YES'/>"
         "   <Option name='ORGgen_plt' type='string'/>"
         "   <Option name='ORGgen_tlm' type='string'/>"
         "   <Option name='ORGtparts' type='string'/>"

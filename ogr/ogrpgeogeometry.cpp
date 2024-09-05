@@ -385,12 +385,15 @@ OGRGeometry *OGRCreateFromMultiPatch(int nParts, const GInt32 *panPartStart,
             padfX[nPartStart] == padfX[nPartStart + 3] &&
             padfY[nPartStart] == padfY[nPartStart + 3] &&
             padfZ[nPartStart] == padfZ[nPartStart + 3] &&
-            !CPLIsNan(padfX[nPartStart]) && !CPLIsNan(padfX[nPartStart + 1]) &&
-            !CPLIsNan(padfX[nPartStart + 2]) && !CPLIsNan(padfY[nPartStart]) &&
-            !CPLIsNan(padfY[nPartStart + 1]) &&
-            !CPLIsNan(padfY[nPartStart + 2]) && !CPLIsNan(padfZ[nPartStart]) &&
-            !CPLIsNan(padfZ[nPartStart + 1]) &&
-            !CPLIsNan(padfZ[nPartStart + 2]))
+            !std::isnan(padfX[nPartStart]) &&
+            !std::isnan(padfX[nPartStart + 1]) &&
+            !std::isnan(padfX[nPartStart + 2]) &&
+            !std::isnan(padfY[nPartStart]) &&
+            !std::isnan(padfY[nPartStart + 1]) &&
+            !std::isnan(padfY[nPartStart + 2]) &&
+            !std::isnan(padfZ[nPartStart]) &&
+            !std::isnan(padfZ[nPartStart + 1]) &&
+            !std::isnan(padfZ[nPartStart + 2]))
         {
             bool bDuplicate = false;
             if (iPart > 0)

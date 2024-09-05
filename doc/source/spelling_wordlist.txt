@@ -1046,6 +1046,7 @@ Geodatabase
 geodatabases
 Geodatabases
 GeodesicArea
+GeodesicLength
 Geogrid
 geohash
 geohashes
@@ -2299,6 +2300,7 @@ papszSrcDSNames
 papszURL
 papszVectorTranslateArguments
 papszWarpOptions
+Paquet
 paradygm
 parallelisation
 parallelising

@@ -568,6 +568,8 @@ static inline char *CPL_afl_friendly_strstr(const char *haystack,
 #endif
 /*! @endcond */
 
+#ifndef GDAL_COMPILATION
+/*! @cond Doxygen_Suppress */
 /* -------------------------------------------------------------------- */
 /*      Handle isnan() and isinf().  Note that isinf() and isnan()      */
 /*      are supposed to be macros according to C99, defined in math.h   */
@@ -680,6 +682,8 @@ extern "C++"
 #endif
 #endif
 #endif
+/*! @endcond */
+#endif  // GDAL_COMPILATION
 
 /*! @cond Doxygen_Suppress */
 /*---------------------------------------------------------------------

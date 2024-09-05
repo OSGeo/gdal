@@ -32,6 +32,7 @@
 #include "gdal_priv.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <utility>
 
@@ -200,7 +201,7 @@ bool GDALNoDataMaskBand::IsNoDataInRange(double dfNoDataValue,
 
         case GDT_Float32:
         {
-            return CPLIsNan(dfNoDataValue) || CPLIsInf(dfNoDataValue) ||
+            return std::isnan(dfNoDataValue) || std::isinf(dfNoDataValue) ||
                    GDALIsValueInRange<float>(dfNoDataValue);
         }
 
@@ -417,7 +418,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             return eErr;
         }
 
-        const bool bIsNoDataNan = CPLIsNan(m_dfNoDataValue) != 0;
+        const bool bIsNoDataNan = std::isnan(m_dfNoDataValue) != 0;
         GByte *pabyDest = static_cast<GByte *>(pData);
 
         /* --------------------------------------------------------------------
@@ -475,7 +476,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     for (int iX = 0; iX < nBufXSize; iX++)
                     {
                         const float fVal = pafSrc[i];
-                        if (bIsNoDataNan && CPLIsNan(fVal))
+                        if (bIsNoDataNan && std::isnan(fVal))
                             *pabyLineDest = 0;
                         else if (ARE_REAL_EQUAL(fVal, fNoData))
                             *pabyLineDest = 0;
@@ -499,7 +500,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     for (int iX = 0; iX < nBufXSize; iX++)
                     {
                         const double dfVal = padfSrc[i];
-                        if (bIsNoDataNan && CPLIsNan(dfVal))
+                        if (bIsNoDataNan && std::isnan(dfVal))
                             *pabyLineDest = 0;
                         else if (ARE_REAL_EQUAL(dfVal, m_dfNoDataValue))
                             *pabyLineDest = 0;

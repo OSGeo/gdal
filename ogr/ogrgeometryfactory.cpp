@@ -5063,8 +5063,8 @@ int OGRGeometryFactory::GetCurveParameters(double x0, double y0, double x1,
                                            double &alpha0, double &alpha1,
                                            double &alpha2)
 {
-    if (CPLIsNan(x0) || CPLIsNan(y0) || CPLIsNan(x1) || CPLIsNan(y1) ||
-        CPLIsNan(x2) || CPLIsNan(y2))
+    if (std::isnan(x0) || std::isnan(y0) || std::isnan(x1) || std::isnan(y1) ||
+        std::isnan(x2) || std::isnan(y2))
     {
         return FALSE;
     }
@@ -5110,7 +5110,7 @@ int OGRGeometryFactory::GetCurveParameters(double x0, double y0, double x1,
     dy12 *= dfInvScale;
 
     const double det = dx01 * dy12 - dx12 * dy01;
-    if (fabs(det) < 1.0e-8 || CPLIsNan(det))
+    if (fabs(det) < 1.0e-8 || std::isnan(det))
     {
         return FALSE;
     }
@@ -5165,7 +5165,7 @@ static void OGRGeometryFactoryStrokeArc(OGRLineString *poLine, double cx,
     // Constant angle between all points, so as to not depend on winding order.
     const double dfNumSteps = fabs((alpha1 - alpha0) / dfStep) + 0.5;
     if (dfNumSteps >= std::numeric_limits<int>::max() ||
-        dfNumSteps <= std::numeric_limits<int>::min() || CPLIsNan(dfNumSteps))
+        dfNumSteps <= std::numeric_limits<int>::min() || std::isnan(dfNumSteps))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "OGRGeometryFactoryStrokeArc: bogus steps: "
@@ -5448,7 +5448,7 @@ OGRLineString *OGRGeometryFactory::curveToLineString(
                 dfAlphaRatio *= -1;
             }
             else if (dfAlphaRatio >= std::numeric_limits<GUInt32>::max() ||
-                     CPLIsNan(dfAlphaRatio))
+                     std::isnan(dfAlphaRatio))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "AlphaRatio too large: %lf", dfAlphaRatio);

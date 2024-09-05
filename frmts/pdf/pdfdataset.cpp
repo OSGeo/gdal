@@ -1559,18 +1559,18 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
                                             blend_typeL);
     }
 
-    virtual bool GetClipBox(FX_RECT *pRect) override
+    virtual FX_RECT GetClipBox() const override
     {
-        return m_poParent->GetClipBox(pRect);
+        return m_poParent->GetClipBox();
     }
 
-    virtual bool GetDIBits(const RetainPtr<CFX_DIBitmap> &pBitmap, int left,
-                           int top) override
+    virtual bool GetDIBits(RetainPtr<CFX_DIBitmap> bitmap, int left,
+                           int top) const override
     {
-        return m_poParent->GetDIBits(pBitmap, left, top);
+        return m_poParent->GetDIBits(std::move(bitmap), left, top);
     }
 
-    virtual RetainPtr<CFX_DIBitmap> GetBackDrop() override
+    virtual RetainPtr<const CFX_DIBitmap> GetBackDrop() const override
     {
         return m_poParent->GetBackDrop();
     }
@@ -1599,19 +1599,19 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
                                          pClipRect, options, blend_type);
     }
 
-    virtual bool StartDIBits(RetainPtr<const CFX_DIBBase> bitmap, float alpha,
-                             uint32_t color, const CFX_Matrix &matrix,
-                             const FXDIB_ResampleOptions &options,
-                             std::unique_ptr<CFX_ImageRenderer> *handle,
-                             BlendMode blend_type) override
+    virtual StartResult StartDIBits(RetainPtr<const CFX_DIBBase> bitmap,
+                                    float alpha, uint32_t color,
+                                    const CFX_Matrix &matrix,
+                                    const FXDIB_ResampleOptions &options,
+                                    BlendMode blend_type) override
     {
         if (!bEnableBitmap && !bTemporaryEnableVectorForTextStroking)
-            return true;
+            return StartResult(Result::kSuccess, nullptr);
         return m_poParent->StartDIBits(std::move(bitmap), alpha, color, matrix,
-                                       options, handle, blend_type);
+                                       options, blend_type);
     }
 
-    virtual bool ContinueDIBits(CFX_ImageRenderer *handle,
+    virtual bool ContinueDIBits(CFX_AggImageRenderer *handle,
                                 PauseIndicatorIface *pPause) override
     {
         return m_poParent->ContinueDIBits(handle, pPause);
@@ -1646,16 +1646,16 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
         return m_poParent->GetDriverType();
     }
 
-    virtual bool DrawShading(const CPDF_ShadingPattern *pPattern,
-                             const CFX_Matrix *pMatrix,
-                             const FX_RECT &clip_rect, int alpha,
-                             bool bAlphaMode) override
+#if defined(_SKIA_SUPPORT_)
+    virtual bool DrawShading(const CPDF_ShadingPattern &pattern,
+                             const CFX_Matrix &matrix, const FX_RECT &clip_rect,
+                             int alpha) override
     {
         if (!bEnableBitmap && !bTemporaryEnableVectorForTextStroking)
             return true;
-        return m_poParent->DrawShading(pPattern, pMatrix, clip_rect, alpha,
-                                       bAlphaMode);
+        return m_poParent->DrawShading(pattern, matrix, clip_rect, alpha);
     }
+#endif
 
     bool MultiplyAlpha(float alpha) override
     {
@@ -1675,8 +1675,8 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
     {
         if (!bEnableBitmap && !bTemporaryEnableVectorForTextStroking)
             return true;
-        return m_poParent->SetBitsWithMask(bitmap, mask, left, top, alpha,
-                                           blend_type);
+        return m_poParent->SetBitsWithMask(std::move(bitmap), std::move(mask),
+                                           left, top, alpha, blend_type);
     }
 
     virtual void SetGroupKnockout(bool group_knockout) override
@@ -1696,10 +1696,10 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
 /*                         PDFiumRenderPageBitmap()                     */
 /************************************************************************/
 
-/* This method is a customization of FPDF_RenderPageBitmap()
-   from pdfium/fpdfsdk/fpdf_view.cpp to allow selection of which OGC/layer are
+/* This method is a customization of RenderPageImpl()
+   from pdfium/fpdfsdk/cpdfsdk_renderpage.cpp to allow selection of which OGC/layer are
    active. Thus it inherits the following license */
-// Copyright 2014 PDFium Authors. All rights reserved.
+// Copyright 2014-2020 PDFium Authors. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -1781,8 +1781,7 @@ static void myRenderPageImpl(PDFDataset *poDS, CPDF_PageRenderContext *pContext,
 
         // TODO(https://crbug.com/pdfium/993) - maybe pass true here.
         const bool bShowWidget = false;
-        pList->DisplayAnnots(pPage, pContext->m_pDevice.get(),
-                             pContext->m_pContext.get(), bPrinting, matrix,
+        pList->DisplayAnnots(pContext->m_pContext.get(), bPrinting, matrix,
                              bShowWidget);
     }
 

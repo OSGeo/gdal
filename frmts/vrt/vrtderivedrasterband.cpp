@@ -828,10 +828,10 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                     }
 
                     oAdditionalArgs.push_back(std::pair<CPLString, CPLString>(
-                        osValue, CPLSPrintf("%.18g", dfVal)));
+                        osValue, CPLSPrintf("%.17g", dfVal)));
                     CPLDebug("VRT",
                              "Added builtin pixel function argument %s = %s",
-                             osValue.c_str(), CPLSPrintf("%.18g", dfVal));
+                             osValue.c_str(), CPLSPrintf("%.17g", dfVal));
                 }
             }
         }

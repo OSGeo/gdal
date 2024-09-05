@@ -1061,7 +1061,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
                 for (int k = 1; k < nReqYSize * nReqXSize; k++)
                 {
                     float fVal = ((float *)pTileBuffer)[k];
-                    if (CPLIsNan(fVal))
+                    if (std::isnan(fVal))
                     {
                         CPLError(CE_Failure, CPLE_NotSupported,
                                  "NaN value found");

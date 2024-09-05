@@ -1363,7 +1363,6 @@ retry:
                 }
             }
 
-            if (bGetHeaders)
             {
                 char **papszHeaders =
                     CSLTokenizeString2(sWriteFuncHeaderData.pBuffer, "\r\n", 0);
@@ -1374,7 +1373,17 @@ retry:
                         CPLParseNameValue(papszHeaders[i], &pszKey);
                     if (pszKey && pszValue)
                     {
-                        m_aosHeaders.SetNameValue(pszKey, pszValue);
+                        if (bGetHeaders)
+                        {
+                            m_aosHeaders.SetNameValue(pszKey, pszValue);
+                        }
+                        if (EQUAL(pszKey, "Cache-Control") &&
+                            EQUAL(pszValue, "no-cache") &&
+                            CPLTestBool(CPLGetConfigOption(
+                                "CPL_VSIL_CURL_HONOR_CACHE_CONTROL", "YES")))
+                        {
+                            m_bCached = false;
+                        }
                     }
                     CPLFree(pszKey);
                 }

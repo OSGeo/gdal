@@ -31,6 +31,7 @@
 #include <array>
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <limits>
 #include <mutex>
 #include <set>
@@ -2264,7 +2265,7 @@ void GDALTileIndexDataset::LoadOverviews()
             if (dfFactor != 0)
             {
                 aosNewOpenOptions.SetNameValue("@FACTOR",
-                                               CPLSPrintf("%.18g", dfFactor));
+                                               CPLSPrintf("%.17g", dfFactor));
             }
             if (!osLyrName.empty())
             {
@@ -3093,14 +3094,14 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
                     dfVRTResYAbs;
 
             aosOptions.AddString("-te");
-            aosOptions.AddString(CPLSPrintf("%.18g", dfWarpMinX));
-            aosOptions.AddString(CPLSPrintf("%.18g", dfWarpMinY));
-            aosOptions.AddString(CPLSPrintf("%.18g", dfWarpMaxX));
-            aosOptions.AddString(CPLSPrintf("%.18g", dfWarpMaxY));
+            aosOptions.AddString(CPLSPrintf("%.17g", dfWarpMinX));
+            aosOptions.AddString(CPLSPrintf("%.17g", dfWarpMinY));
+            aosOptions.AddString(CPLSPrintf("%.17g", dfWarpMaxX));
+            aosOptions.AddString(CPLSPrintf("%.17g", dfWarpMaxY));
 
             aosOptions.AddString("-tr");
-            aosOptions.AddString(CPLSPrintf("%.18g", dfVRTResX));
-            aosOptions.AddString(CPLSPrintf("%.18g", dfVRTResYAbs));
+            aosOptions.AddString(CPLSPrintf("%.17g", dfVRTResX));
+            aosOptions.AddString(CPLSPrintf("%.17g", dfVRTResYAbs));
 
             aosOptions.AddString("-dstalpha");
 

@@ -47,6 +47,7 @@
 #include "rpftoclib.h"
 
 #include <climits>
+#include <cmath>
 #include <cstring>
 #if HAVE_FCNTL_H
 #include <fcntl.h>
@@ -320,9 +321,9 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
 
         // do some basic plausibility checks for all entries
         if (toc->entries[i].vertInterval <= 1e-10 ||
-            !CPLIsFinite(toc->entries[i].vertInterval) ||
+            !std::isfinite(toc->entries[i].vertInterval) ||
             toc->entries[i].horizInterval <= 1e-10 ||
-            !CPLIsFinite(toc->entries[i].horizInterval) ||
+            !std::isfinite(toc->entries[i].horizInterval) ||
             toc->entries[i].nHorizFrames == 0 ||
             toc->entries[i].nVertFrames == 0 ||
             toc->entries[i].nHorizFrames >

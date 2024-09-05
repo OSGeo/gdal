@@ -702,7 +702,9 @@ CPLErr GDALPamDataset::XMLInit(const CPLXMLNode *psTree, const char *pszUnused)
          psIter = psIter->psNext)
     {
         if (psIter->eType == CXT_Element &&
-            strcmp(psIter->pszValue, "Array") == 0)
+            (strcmp(psIter->pszValue, "Array") == 0 ||
+             (psPam->osDerivedDatasetName.empty() &&
+              strcmp(psIter->pszValue, "DerivedDataset") == 0)))
         {
             CPLXMLNode sArrayTmp = *psIter;
             sArrayTmp.psNext = nullptr;

@@ -463,11 +463,11 @@ void GDALOverviewDataset::Rescale(char **&papszMD, const char *pszItem,
                                   double dfPostShift /*= 0*/)
 {
     double dfVal = CPLAtofM(CSLFetchNameValueDef(
-        papszMD, pszItem, CPLSPrintf("%.18g", dfDefaultVal)));
+        papszMD, pszItem, CPLSPrintf("%.17g", dfDefaultVal)));
     dfVal += dfPreShift;
     dfVal *= dfRatio;
     dfVal += dfPostShift;
-    papszMD = CSLSetNameValue(papszMD, pszItem, CPLSPrintf("%.18g", dfVal));
+    papszMD = CSLSetNameValue(papszMD, pszItem, CPLSPrintf("%.17g", dfVal));
 }
 
 /************************************************************************/

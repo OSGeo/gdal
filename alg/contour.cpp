@@ -44,6 +44,7 @@
 #include "ogr_srs_api.h"
 #include "ogr_geometry.h"
 
+#include <climits>
 #include <limits>
 
 static CPLErr OGRPolygonContourWriter(double dfLevelMin, double dfLevelMax,
@@ -109,9 +110,26 @@ static CPLErr OGRPolygonContourWriter(double dfLevelMin, double dfLevelMax,
 
     OGR_F_SetGeometryDirectly(hFeat, hGeom);
 
-    const OGRErr eErr =
+    OGRErr eErr =
         OGR_L_CreateFeature(static_cast<OGRLayerH>(poInfo->hLayer), hFeat);
     OGR_F_Destroy(hFeat);
+
+    if (eErr == OGRERR_NONE && poInfo->nTransactionCommitInterval > 0)
+    {
+        if (++poInfo->nWrittenFeatureCountSinceLastCommit ==
+            poInfo->nTransactionCommitInterval)
+        {
+            poInfo->nWrittenFeatureCountSinceLastCommit = 0;
+            // CPLDebug("CONTOUR", "Flush transaction");
+            eErr =
+                OGR_L_CommitTransaction(static_cast<OGRLayerH>(poInfo->hLayer));
+            if (eErr == OGRERR_NONE)
+            {
+                eErr = OGR_L_StartTransaction(
+                    static_cast<OGRLayerH>(poInfo->hLayer));
+            }
+        }
+    }
 
     return eErr == OGRERR_NONE ? CE_None : CE_Failure;
 }
@@ -549,6 +567,13 @@ mode.
  * If YES, contour polygons will be created, rather than polygon lines.
  *
  *
+ *   COMMIT_INTERVAL=num
+ *
+ * (GDAL >= 3.10) Interval in number of features at which transactions must be
+ * flushed. The default value of 0 means that no transactions are opened.
+ * A negative value means a single transaction. The function takes care of
+ * issuing the starting transaction and committing the final one.
+ *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
 CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
@@ -672,6 +697,20 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
     if (hSrcDS != nullptr)
         GDALGetGeoTransform(hSrcDS, oCWI.adfGeoTransform);
     oCWI.nNextID = 0;
+    oCWI.nWrittenFeatureCountSinceLastCommit = 0;
+    oCWI.nTransactionCommitInterval =
+        CPLAtoGIntBig(CSLFetchNameValueDef(options, "COMMIT_INTERVAL", "0"));
+
+    if (oCWI.nTransactionCommitInterval < 0)
+        oCWI.nTransactionCommitInterval = std::numeric_limits<GIntBig>::max();
+    if (oCWI.nTransactionCommitInterval > 0)
+    {
+        if (OGR_L_StartTransaction(static_cast<OGRLayerH>(hLayer)) !=
+            OGRERR_NONE)
+        {
+            oCWI.nTransactionCommitInterval = 0;
+        }
+    }
 
     int bSuccessMin = FALSE;
     double dfMinimum = GDALGetRasterMinimum(hBand, &bSuccessMin);
@@ -819,6 +858,17 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
         CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
         return CE_Failure;
     }
+
+    if (oCWI.nTransactionCommitInterval > 0)
+    {
+        // CPLDebug("CONTOUR", "Flush transaction");
+        if (OGR_L_CommitTransaction(static_cast<OGRLayerH>(hLayer)) !=
+            OGRERR_NONE)
+        {
+            ok = false;
+        }
+    }
+
     return ok ? CE_None : CE_Failure;
 }
 

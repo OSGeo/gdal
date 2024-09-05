@@ -32,6 +32,8 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
+#include <cmath>
+
 #define RIK_HEADER_DEBUG 0
 #define RIK_CLEAR_DEBUG 0
 #define RIK_PIXEL_DEBUG 0
@@ -901,8 +903,8 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
         CPL_SWAP32PTR(&header.iMPPNum);
 #endif
 
-        if (!CPLIsFinite(header.fSouth) || !CPLIsFinite(header.fWest) ||
-            !CPLIsFinite(header.fNorth) || !CPLIsFinite(header.fEast) ||
+        if (!std::isfinite(header.fSouth) || !std::isfinite(header.fWest) ||
+            !std::isfinite(header.fNorth) || !std::isfinite(header.fEast) ||
             header.iMPPNum == 0)
         {
             return nullptr;

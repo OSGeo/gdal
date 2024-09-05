@@ -43,6 +43,7 @@
 #include <algorithm>
 #include <cassert>
 #include <climits>
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -3563,10 +3564,10 @@ CPLString OGRSQLiteLayer::FormatSpatialFilterFromRTree(
 
     poFilterGeom->getEnvelope(&sEnvelope);
 
-    if (CPLIsInf(sEnvelope.MinX) && sEnvelope.MinX < 0 &&
-        CPLIsInf(sEnvelope.MinY) && sEnvelope.MinY < 0 &&
-        CPLIsInf(sEnvelope.MaxX) && sEnvelope.MaxX > 0 &&
-        CPLIsInf(sEnvelope.MaxY) && sEnvelope.MaxY > 0)
+    if (std::isinf(sEnvelope.MinX) && sEnvelope.MinX < 0 &&
+        std::isinf(sEnvelope.MinY) && sEnvelope.MinY < 0 &&
+        std::isinf(sEnvelope.MaxX) && sEnvelope.MaxX > 0 &&
+        std::isinf(sEnvelope.MaxY) && sEnvelope.MaxY > 0)
         return "";
 
     osSpatialWHERE.Printf(
@@ -3592,10 +3593,10 @@ OGRSQLiteLayer::FormatSpatialFilterFromMBR(OGRGeometry *poFilterGeom,
 
     poFilterGeom->getEnvelope(&sEnvelope);
 
-    if (CPLIsInf(sEnvelope.MinX) && sEnvelope.MinX < 0 &&
-        CPLIsInf(sEnvelope.MinY) && sEnvelope.MinY < 0 &&
-        CPLIsInf(sEnvelope.MaxX) && sEnvelope.MaxX > 0 &&
-        CPLIsInf(sEnvelope.MaxY) && sEnvelope.MaxY > 0)
+    if (std::isinf(sEnvelope.MinX) && sEnvelope.MinX < 0 &&
+        std::isinf(sEnvelope.MinY) && sEnvelope.MinY < 0 &&
+        std::isinf(sEnvelope.MaxX) && sEnvelope.MaxX > 0 &&
+        std::isinf(sEnvelope.MaxY) && sEnvelope.MaxY > 0)
         return "";
 
     /* A bit inefficient but still faster than OGR filtering */

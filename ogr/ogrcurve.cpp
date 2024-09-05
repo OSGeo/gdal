@@ -140,6 +140,38 @@ int OGRCurve::get_IsClosed() const
  *
  * @return the length of the curve, zero if the curve hasn't been
  * initialized.
+ *
+ * @see get_GeodesicLength() for an alternative method returning lengths
+ * computed on the ellipsoid, and in meters.
+ */
+
+/**
+ * \fn double OGRCurve::get_GeodesicLength(const OGRSpatialReference* poSRSOverride = nullptr) const;
+ *
+ * \brief Get the length of the curve, considered as a geodesic line on the
+ * underlying ellipsoid of the SRS attached to the geometry.
+ *
+ * The returned length will always be in meters.
+ *
+ * <a href="https://geographiclib.sourceforge.io/html/python/geodesics.html">Geodesics</a>
+ * follow the shortest route on the surface of the ellipsoid.
+ *
+ * If the geometry' SRS is not a geographic one, geometries are reprojected to
+ * the underlying geographic SRS of the geometry' SRS.
+ * OGRSpatialReference::GetDataAxisToSRSAxisMapping() is honored.
+ *
+ * Note that geometries with circular arcs will be linearized in their original
+ * coordinate space first, so the resulting geodesic length will be an
+ * approximation.
+ *
+ * @param poSRSOverride If not null, overrides OGRGeometry::getSpatialReference()
+ * @return the length of the geometry in meters, or a negative value in case
+ * of error.
+ *
+ * @see get_Length() for an alternative method returning areas computed in
+ * 2D Cartesian space.
+ *
+ * @since GDAL 3.10
  */
 
 /**
@@ -248,7 +280,7 @@ int OGRCurve::get_IsClosed() const
  * system in use.
  *
  * @see get_GeodesicArea() for an alternative method returning areas
- * computed on the ellipsoid, an in square meters.
+ * computed on the ellipsoid, and in square meters.
  *
  * @since GDAL 2.0
  */
@@ -263,6 +295,13 @@ int OGRCurve::get_IsClosed() const
  *
  * The returned area will always be in square meters, and assumes that
  * polygon edges describe geodesic lines on the ellipsoid.
+ *
+ * <a href="https://geographiclib.sourceforge.io/html/python/geodesics.html">Geodesics</a>
+ * follow the shortest route on the surface of the ellipsoid.
+ *
+ * If the geometry' SRS is not a geographic one, geometries are reprojected to
+ * the underlying geographic SRS of the geometry' SRS.
+ * OGRSpatialReference::GetDataAxisToSRSAxisMapping() is honored.
  *
  * Note that geometries with circular arcs will be linearized in their original
  * coordinate space first, so the resulting geodesic area will be an

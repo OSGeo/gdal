@@ -7850,7 +7850,7 @@ int OGRSpatialReference::GetUTMZone(int *pbNorth) const
     const double dfZone = (dfCentralMeridian + 186.0) / 6.0;
 
     if (dfCentralMeridian < -177.00001 || dfCentralMeridian > 177.000001 ||
-        CPLIsNan(dfZone) ||
+        std::isnan(dfZone) ||
         std::abs(dfZone - static_cast<int>(dfZone) - 0.5) > 0.00001)
         return 0;
 
@@ -8090,8 +8090,8 @@ OGRErr OGRSpatialReference::SetDerivedGeogCRSWithPoleRotationNetCDFCFConvention(
     SetProjection("Rotated_pole");
     SetExtension(
         "PROJCS", "PROJ4",
-        CPLSPrintf("+proj=ob_tran +o_proj=longlat +lon_0=%.18g +o_lon_p=%.18g "
-                   "+o_lat_p=%.18g +a=%.18g +b=%.18g "
+        CPLSPrintf("+proj=ob_tran +o_proj=longlat +lon_0=%.17g +o_lon_p=%.17g "
+                   "+o_lat_p=%.17g +a=%.17g +b=%.17g "
                    "+to_meter=0.0174532925199433 "
                    "+wktext",
                    180.0 + dfGridNorthPoleLon, dfNorthPoleGridLon,

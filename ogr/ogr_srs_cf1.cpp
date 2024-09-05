@@ -1694,7 +1694,7 @@ OGRSpatialReference::exportToCF1(char **ppszGridMappingName,
                     {
                         if (!osVal.empty())
                             osVal += ',';
-                        osVal += CPLSPrintf("%.18g", dfVal);
+                        osVal += CPLSPrintf("%.17g", dfVal);
                     }
                     aosKeyValues.AddNameValue(param.key.c_str(), osVal.c_str());
                 }

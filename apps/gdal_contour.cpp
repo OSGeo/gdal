@@ -64,6 +64,7 @@ struct GDALContourOptions
     bool bQuiet = false;
     std::string aosDestFilename;
     std::string aosSrcFilename;
+    GIntBig nGroupTransactions = 100 * 1000;
 };
 
 /************************************************************************/
@@ -178,6 +179,18 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
         .flag()
         .store_into(psOptions->bPolygonize)
         .help(_("Generate contour polygons instead of lines."));
+
+    argParser->add_argument("-gt")
+        .metavar("<n>|unlimited")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (EQUAL(s.c_str(), "unlimited"))
+                    psOptions->nGroupTransactions = -1;
+                else
+                    psOptions->nGroupTransactions = atoi(s.c_str());
+            })
+        .help(_("Group <n> features per transaction."));
 
     argParser->add_quiet_argument(&psOptions->bQuiet);
 
@@ -358,6 +371,11 @@ MAIN_START(argc, argv)
     if (hLayer == nullptr)
         exit(1);
 
+    if (!OGR_L_TestCapability(hLayer, OLCTransactions))
+    {
+        sOptions.nGroupTransactions = 0;
+    }
+
     OGRFieldDefnH hFld = OGR_Fld_Create("ID", OFTInteger);
     OGR_Fld_SetWidth(hFld, 8);
     OGR_L_CreateField(hLayer, hFld, FALSE);
@@ -484,6 +502,11 @@ MAIN_START(argc, argv)
     if (sOptions.bPolygonize)
     {
         options = CSLAppendPrintf(options, "POLYGONIZE=YES");
+    }
+    if (sOptions.nGroupTransactions)
+    {
+        options = CSLAppendPrintf(options, "COMMIT_INTERVAL=" CPL_FRMT_GIB,
+                                  sOptions.nGroupTransactions);
     }
 
     CPLErr eErr =

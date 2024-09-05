@@ -149,6 +149,10 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        `T-Kartor USA <https://www.t-kartorusa.com/>`__
+
+    .. container:: horizontal-logo
+
         `Umbra <https://umbra.space/>`__
 
     .. container:: horizontal-logo

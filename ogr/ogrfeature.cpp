@@ -2348,7 +2348,7 @@ static void OGRFeatureFormatDateTimeBuffer(char *szTempBuffer, size_t nMaxSize,
                     nYear, nMonth, nDay, nHour, nMinute, fSecond);
     else  // Default format.
     {
-        if (CPLIsNan(fSecond) || fSecond < 0.0 || fSecond > 62.0)
+        if (std::isnan(fSecond) || fSecond < 0.0 || fSecond > 62.0)
         {
             fSecond = 0.0;
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -2598,7 +2598,7 @@ const char *OGRFeature::GetFieldAsString(int iField) const
         constexpr size_t MAX_SIZE = 12 + EXTRA_SPACE_TO_MAKE_GCC_HAPPY + 1;
         m_pszTmpFieldValue = static_cast<char *>(CPLMalloc(MAX_SIZE));
         const int ms = OGR_GET_MS(pauFields[iField].Date.Second);
-        if (ms != 0 || CPLIsNan(pauFields[iField].Date.Second))
+        if (ms != 0 || std::isnan(pauFields[iField].Date.Second))
             snprintf(m_pszTmpFieldValue, MAX_SIZE, "%02d:%02d:%06.3f",
                      pauFields[iField].Date.Hour, pauFields[iField].Date.Minute,
                      pauFields[iField].Date.Second);

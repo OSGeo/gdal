@@ -1352,7 +1352,7 @@ def test_vrt_float32_with_nodata_slightly_below_float_min():
     ), "did not get expected nodata in rewritten VRT"
 
     if nodata != -3.4028234663852886e38:
-        print("%.18g" % nodata)
+        print("%.17g" % nodata)
         pytest.fail("did not get expected nodata")
 
     assert stats == [-3.0, 5.0, 1.0, 4.0], "did not get expected stats"

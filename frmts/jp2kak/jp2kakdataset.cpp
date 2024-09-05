@@ -2472,7 +2472,6 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     // Set some particular parameters.
     oCodeStream.access_siz()->parse_string(
         CPLString().Printf("Clayers=%d", layer_count).c_str());
-    oCodeStream.access_siz()->parse_string("Cycc=no");
     if (eType == GDT_Int16 || eType == GDT_UInt16)
         oCodeStream.access_siz()->parse_string(
             "Qstep=0.0000152588");  // 1. / (1 << 16)
@@ -2487,6 +2486,8 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
 
     // Set some user-overridable parameters.
     const char *const apszParams[] = {
+        "Cycc",
+        "yes",
         "Corder",
         "PCRL",
         "Cprecincts",

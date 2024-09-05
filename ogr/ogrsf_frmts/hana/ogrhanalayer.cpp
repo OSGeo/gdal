@@ -31,6 +31,7 @@
 #include "ogrhanautils.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <sstream>
 #include <memory>
@@ -74,8 +75,8 @@ CPLString BuildSpatialFilter(int dbVersion, const OGRGeometry &geom,
     OGREnvelope env;
     geom.getEnvelope(&env);
 
-    if ((CPLIsInf(env.MinX) || CPLIsInf(env.MinY) || CPLIsInf(env.MaxX) ||
-         CPLIsInf(env.MaxY)))
+    if ((std::isinf(env.MinX) || std::isinf(env.MinY) || std::isinf(env.MaxX) ||
+         std::isinf(env.MaxY)))
         return "";
 
     auto clampValue = [](double v)
@@ -97,13 +98,13 @@ CPLString BuildSpatialFilter(int dbVersion, const OGRGeometry &geom,
     // flag.
     if (dbVersion == 1)
         return CPLString().Printf(
-            "\"%s\".ST_IntersectsRect(ST_GeomFromText('POINT(%.18g %.18g)', "
-            "%d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
+            "\"%s\".ST_IntersectsRect(ST_GeomFromText('POINT(%.17g %.17g)', "
+            "%d), ST_GeomFromText('POINT(%.17g %.17g)', %d)) = 1",
             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
     else
         return CPLString().Printf(
-            "\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%.18g "
-            "%.18g)', %d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
+            "\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%.17g "
+            "%.17g)', %d), ST_GeomFromText('POINT(%.17g %.17g)', %d)) = 1",
             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
 }
 

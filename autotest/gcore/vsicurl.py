@@ -1288,3 +1288,89 @@ def test_vsicurl_404_repeated_same_resource(server):
 
     with pytest.raises(Exception, match="404"):
         gdal.Open("/vsicurl/http://localhost:%d/does/not/exist.bin" % server.port)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_vsicurl_cache_control_not_set(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/", 404)
+    handler.add("HEAD", "/test.txt", 200, {"Content-Length": "3"})
+    handler.add("GET", "/test.txt", 200, {}, "foo")
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL(
+            "/vsicurl/http://localhost:%d/test.txt" % server.port,
+            "rb",
+        )
+        assert f is not None
+        data = gdal.VSIFReadL(1, 3, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+        assert data == "foo"
+
+    with webserver.install_http_handler(webserver.SequentialHandler()):
+        f = gdal.VSIFOpenL(
+            "/vsicurl/http://localhost:%d/test.txt" % server.port,
+            "rb",
+        )
+        assert f is not None
+        data = gdal.VSIFReadL(1, 3, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+        assert data == "foo"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_vsicurl_cache_control_no_cache(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/", 404)
+    handler.add(
+        "HEAD", "/test.txt", 200, {"Content-Length": "3", "Cache-Control": "no-cache"}
+    )
+    handler.add(
+        "GET",
+        "/test.txt",
+        200,
+        {"Content-Length": "3", "Cache-Control": "no-cache"},
+        "foo",
+    )
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL(
+            "/vsicurl/http://localhost:%d/test.txt" % server.port,
+            "rb",
+        )
+        assert f is not None
+        data = gdal.VSIFReadL(1, 3, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+        assert data == "foo"
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/", 404)
+    handler.add(
+        "HEAD", "/test.txt", 200, {"Content-Length": "6", "Cache-Control": "no-cache"}
+    )
+    handler.add(
+        "GET",
+        "/test.txt",
+        200,
+        {"Content-Length": "6", "Cache-Control": "no-cache"},
+        "barbaz",
+    )
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL(
+            "/vsicurl/http://localhost:%d/test.txt" % server.port,
+            "rb",
+        )
+        assert f is not None
+        data = gdal.VSIFReadL(1, 6, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+        assert data == "barbaz"

@@ -123,6 +123,10 @@ Spatialite, are also available :
 -  ST_Area(geom *Geometry*, use_ellipsoid *boolean*): (GDAL >= 3.9): compute
    the area in square meters, considering the geometry on the ellipsoid
    (use_ellipsoid must be set to true/1).
+-  ST_Length(geom *Geometry*): (GDAL >= 3.10): compute the area in units of the geometry SRS.
+-  ST_Length(geom *Geometry*, use_ellipsoid *boolean*): (GDAL >= 3.10): compute
+   the area in meters, considering the geometry on the ellipsoid
+   (use_ellipsoid must be set to true/1).
 -  SetSRID(geom *Geometry*, srs_id *Integer*): overrides the geometry' SRS ID,
    without reprojection.
 -  ST_Transform(geom *Geometry*, target_srs_id *Integer*): reproject the geometry

@@ -31,6 +31,7 @@
 #include "gtiffdataset.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "cpl_vsi_virtual.h"
@@ -756,9 +757,9 @@ CPLErr GTiffRasterBand::SetNoDataValue(double dfNoData)
         {
             ReportError(
                 CE_Warning, CPLE_AppDefined,
-                "Setting nodata to %.18g on band %d, but band %d has nodata "
-                "at %.18g. The TIFFTAG_GDAL_NODATA only support one value "
-                "per dataset. This value of %.18g will be used for all bands "
+                "Setting nodata to %.17g on band %d, but band %d has nodata "
+                "at %.17g. The TIFFTAG_GDAL_NODATA only support one value "
+                "per dataset. This value of %.17g will be used for all bands "
                 "on re-opening",
                 dfNoData, nBand, nOtherBand, dfOtherNoData, dfNoData);
         }

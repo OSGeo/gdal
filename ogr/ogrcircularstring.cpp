@@ -294,7 +294,7 @@ void OGRCircularString::ExtendEnvelopeWithCircular(
         if (OGRGeometryFactory::GetCurveParameters(
                 x0, y0, x1, y1, x2, y2, R, cx, cy, alpha0, alpha1, alpha2))
         {
-            if (CPLIsNan(alpha0) || CPLIsNan(alpha2))
+            if (std::isnan(alpha0) || std::isnan(alpha2))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "GetCurveParameters returned NaN");
@@ -415,7 +415,7 @@ bool OGRCircularString::segmentize(double dfMaxLength)
                 const double dfVal =
                     1 + 2 * std::floor(dfSegmentLength1 / dfMaxLength / 2.0);
                 if (dfVal >= std::numeric_limits<int>::max() || dfVal < 0.0 ||
-                    CPLIsNan(dfVal))
+                    std::isnan(dfVal))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid: %lf",
@@ -451,7 +451,7 @@ bool OGRCircularString::segmentize(double dfMaxLength)
                 const double dfVal =
                     1 + 2 * std::floor(dfSegmentLength2 / dfMaxLength / 2.0);
                 if (dfVal >= std::numeric_limits<int>::max() || dfVal < 0.0 ||
-                    CPLIsNan(dfVal))
+                    std::isnan(dfVal))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid 2: %lf",
@@ -490,7 +490,7 @@ bool OGRCircularString::segmentize(double dfMaxLength)
                 const double dfVal =
                     1 + 2 * std::ceil(dfSegmentLength1 / dfMaxLength / 2.0);
                 if (dfVal >= std::numeric_limits<int>::max() || dfVal < 0.0 ||
-                    CPLIsNan(dfVal))
+                    std::isnan(dfVal))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid 2: %lf",
@@ -521,7 +521,7 @@ bool OGRCircularString::segmentize(double dfMaxLength)
                 const double dfVal =
                     1 + 2 * std::ceil(dfSegmentLength2 / dfMaxLength / 2.0);
                 if (dfVal >= std::numeric_limits<int>::max() || dfVal < 0.0 ||
-                    CPLIsNan(dfVal))
+                    std::isnan(dfVal))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "segmentize nIntermediatePoints invalid 3: %lf",
@@ -927,11 +927,25 @@ double OGRCircularString::get_GeodesicArea(
     if (!poSRSOverride)
         poSRSOverride = getSpatialReference();
 
-    OGRLineString *poLS = CurveToLine();
-    const double dfArea = poLS->get_GeodesicArea(poSRSOverride);
-    delete poLS;
+    auto poLS = std::unique_ptr<OGRLineString>(CurveToLine());
+    return poLS->get_GeodesicArea(poSRSOverride);
+}
 
-    return dfArea;
+/************************************************************************/
+/*                        get_GeodesicLength()                          */
+/************************************************************************/
+
+double OGRCircularString::get_GeodesicLength(
+    const OGRSpatialReference *poSRSOverride) const
+{
+    if (IsEmpty())
+        return 0;
+
+    if (!poSRSOverride)
+        poSRSOverride = getSpatialReference();
+
+    auto poLS = std::unique_ptr<OGRLineString>(CurveToLine());
+    return poLS->get_GeodesicLength(poSRSOverride);
 }
 
 //! @cond Doxygen_Suppress

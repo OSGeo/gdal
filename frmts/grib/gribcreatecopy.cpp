@@ -37,6 +37,7 @@
 #include "memdataset.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "degrib/degrib/meta.h"
@@ -970,7 +971,7 @@ float *GRIB2Section567Writer::GetFloatData()
                 bHasNoDataValuePoint = true;
             continue;
         }
-        if (!CPLIsFinite(pafData[i]))
+        if (!std::isfinite(pafData[i]))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Non-finite values not supported for "
