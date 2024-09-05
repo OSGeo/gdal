@@ -215,7 +215,7 @@ def test_gdal_viewshed_all_options(gdal_viewshed_path, tmp_path, viewshed_input)
 
 def test_gdal_viewshed_cumulative(gdal_viewshed_path, tmp_path, viewshed_input):
 
-    import numpy as np
+    np = pytest.importorskip("numpy")
 
     viewshed_out = str(tmp_path / "test_gdal_viewshed_out.tif")
 
