@@ -262,7 +262,7 @@ template <> OGRPolyhedralSurface *make()
 
 template <class T> void testCopyEquals()
 {
-    T *poOrigin = make<T>();
+    auto poOrigin = std::unique_ptr<T>(make<T>());
     ASSERT_TRUE(nullptr != poOrigin);
 
     T value2(*poOrigin);
@@ -288,7 +288,8 @@ template <class T> void testCopyEquals()
         << poOrigin->getGeometryName()
         << ": assignment operator changed a value";
 
-    OGRGeometryFactory::destroyGeometry(poOrigin);
+    value3 = T();
+    ASSERT_TRUE(value3.IsEmpty());
 }
 
 // Test if copy constructor and assignment operators succeeds on copying the

@@ -95,8 +95,6 @@ OGRGeometryCollection::operator=(const OGRGeometryCollection &other)
 {
     if (this != &other)
     {
-        empty();
-
         OGRGeometry::operator=(other);
 
         for (const auto *poOtherSubGeom : other)

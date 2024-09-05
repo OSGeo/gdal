@@ -158,7 +158,10 @@ OGRPoint &OGRPoint::operator=(const OGRPoint &other)
 {
     if (this != &other)
     {
-        OGRGeometry::operator=(other);
+        // Slightly more efficient to avoid OGRGeometry::operator=(other);
+        // but do what it does to avoid a call to empty()
+        assignSpatialReference(other.getSpatialReference());
+        flags = other.flags;
 
         x = other.x;
         y = other.y;

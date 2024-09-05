@@ -72,13 +72,9 @@ OGRTriangulatedSurface::operator=(const OGRTriangulatedSurface &other)
         // of OGRPolyhedralSurface since it will be confused by a multipolygon
         // of triangles.
         OGRSurface::operator=(other);
-        empty();
-        set3D(other.Is3D());
-        setMeasured(other.IsMeasured());
-        assignSpatialReference(other.getSpatialReference());
-        for (int i = 0; i < other.oMP.nGeomCount; i++)
+        for (const auto *poPoly : other.oMP)
         {
-            OGRTriangulatedSurface::addGeometry(other.oMP.getGeometryRef(i));
+            OGRTriangulatedSurface::addGeometry(poPoly);
         }
     }
     return *this;
