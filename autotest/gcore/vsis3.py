@@ -2200,6 +2200,112 @@ def test_vsis3_4(aws_test_config, webserver_port):
 
 
 ###############################################################################
+# Test that PUT invalidates cached data
+
+
+def test_vsis3_put_invalidate(aws_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
+
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(3, 1, f) == b"foo"
+        finally:
+            gdal.VSIFCloseL(f)
+
+    handler = webserver.SequentialHandler()
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(3, 1, f) == b"foo"
+        finally:
+            gdal.VSIFCloseL(f)
+
+    handler = webserver.SequentialHandler()
+    handler.add("PUT", "/s3_fake_bucket3/test_put_invalidate.bin", 200)
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "wb")
+        assert f is not None
+        try:
+            assert gdal.VSIFWriteL("barbaw", 1, 6, f) == 6
+        finally:
+            gdal.VSIFCloseL(f)
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
+
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(6, 1, f) == b"barbaw"
+        finally:
+            gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test that CopyFile invalidates cached data
+
+
+def test_vsis3_copy_invalidate(aws_test_config, webserver_port, tmp_vsimem):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
+
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(3, 1, f) == b"foo"
+        finally:
+            gdal.VSIFCloseL(f)
+
+    handler = webserver.SequentialHandler()
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(3, 1, f) == b"foo"
+        finally:
+            gdal.VSIFCloseL(f)
+
+    handler = webserver.SequentialHandler()
+    handler.add("PUT", "/s3_fake_bucket3/test_put_invalidate.bin", 200)
+    memfilename = str(tmp_vsimem / "tmp.bin")
+    with webserver.install_http_handler(handler), gdaltest.tempfile(
+        memfilename, b"barbaw"
+    ):
+        gdal.CopyFile(memfilename, "/vsis3/s3_fake_bucket3/test_put_invalidate.bin")
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
+
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(6, 1, f) == b"barbaw"
+        finally:
+            gdal.VSIFCloseL(f)
+
+
+###############################################################################
 # Test simple PUT support with retry logic
 
 
