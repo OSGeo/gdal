@@ -39,7 +39,7 @@
 /*                           OGRDGNLayer()                              */
 /************************************************************************/
 
-OGRDGNLayer::OGRDGNLayer(GDALDataset *poDS, const char *pszName,
+OGRDGNLayer::OGRDGNLayer(OGRDGNDataSource *poDS, const char *pszName,
                          DGNHandle hDGNIn, int bUpdateIn)
     : m_poDS(poDS), poFeatureDefn(new OGRFeatureDefn(pszName)), iNextShapeId(0),
       hDGN(hDGNIn), bUpdate(bUpdateIn)
@@ -628,11 +628,23 @@ OGRFeature *OGRDGNLayer::ElementToFeature(DGNElemCore *psElement, int nRecLevel)
 
             poFeature->SetGeometryDirectly(poPoint);
 
-            const size_t nOgrFSLen = strlen(psText->string) + 150;
+            const auto &osEncoding = m_poDS->GetEncoding();
+            std::string osText;
+            if (!osEncoding.empty() && osEncoding != CPL_ENC_UTF8)
+            {
+                osText = CPLString(psText->string)
+                             .Recode(osEncoding.c_str(), CPL_ENC_UTF8);
+            }
+            else
+            {
+                osText = psText->string;
+            }
+
+            const size_t nOgrFSLen = osText.size() + 150;
             char *pszOgrFS = static_cast<char *>(CPLMalloc(nOgrFSLen));
 
             // setup the basic label.
-            snprintf(pszOgrFS, nOgrFSLen, "LABEL(t:\"%s\"", psText->string);
+            snprintf(pszOgrFS, nOgrFSLen, "LABEL(t:\"%s\"", osText.c_str());
 
             // set the color if we have it.
             if (strlen(szFSColor) > 0)
@@ -793,7 +805,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature(DGNElemCore *psElement, int nRecLevel)
             poFeature->SetStyleString(pszOgrFS);
             CPLFree(pszOgrFS);
 
-            poFeature->SetField("Text", psText->string);
+            poFeature->SetField("Text", osText.c_str());
         }
         break;
 
@@ -927,6 +939,9 @@ int OGRDGNLayer::TestCapability(const char *pszCap)
 
     else if (EQUAL(pszCap, OLCZGeometries))
         return TRUE;
+
+    else if (EQUAL(pszCap, OLCStringsAsUTF8))
+        return !m_poDS->GetEncoding().empty();
 
     return FALSE;
 }
@@ -1183,11 +1198,23 @@ DGNElemCore **OGRDGNLayer::TranslateLabel(OGRFeature *poFeature)
         }
     }
 
+    std::string osText;
+    const auto &osEncoding = m_poDS->GetEncoding();
+    if (!osEncoding.empty() && osEncoding != CPL_ENC_UTF8)
+    {
+        osText = CPLString(pszText).Recode(CPL_ENC_UTF8, osEncoding.c_str());
+    }
+    else
+    {
+        osText = pszText;
+    }
+
     DGNElemCore **papsGroup =
         static_cast<DGNElemCore **>(CPLCalloc(sizeof(void *), 2));
-    papsGroup[0] = DGNCreateTextElem(
-        hDGN, pszText, nFontID, DGNJ_LEFT_BOTTOM, dfCharHeight, dfCharHeight,
-        dfRotation, nullptr, poPoint->getX(), poPoint->getY(), poPoint->getZ());
+    papsGroup[0] =
+        DGNCreateTextElem(hDGN, osText.c_str(), nFontID, DGNJ_LEFT_BOTTOM,
+                          dfCharHeight, dfCharHeight, dfRotation, nullptr,
+                          poPoint->getX(), poPoint->getY(), poPoint->getZ());
 
     if (poLabel)
         delete poLabel;
@@ -1386,4 +1413,13 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom(OGRFeature *poFeature,
     CPLFree(papsGroup);
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRDGNLayer::GetDataset()
+{
+    return m_poDS;
 }

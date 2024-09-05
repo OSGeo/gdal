@@ -37,9 +37,11 @@
 /*                            OGRDGNLayer                               */
 /************************************************************************/
 
+class OGRDGNDataSource;
+
 class OGRDGNLayer final : public OGRLayer
 {
-    GDALDataset *m_poDS = nullptr;
+    OGRDGNDataSource *m_poDS = nullptr;
     OGRFeatureDefn *poFeatureDefn;
 
     int iNextShapeId;
@@ -64,7 +66,7 @@ class OGRDGNLayer final : public OGRLayer
     OGRErr CreateFeatureWithGeom(OGRFeature *, const OGRGeometry *);
 
   public:
-    OGRDGNLayer(GDALDataset *poDS, const char *pszName, DGNHandle hDGN,
+    OGRDGNLayer(OGRDGNDataSource *poDS, const char *pszName, DGNHandle hDGN,
                 int bUpdate);
     virtual ~OGRDGNLayer();
 
@@ -97,10 +99,7 @@ class OGRDGNLayer final : public OGRLayer
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    GDALDataset *GetDataset() override
-    {
-        return m_poDS;
-    }
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/
@@ -109,19 +108,21 @@ class OGRDGNLayer final : public OGRLayer
 
 class OGRDGNDataSource final : public OGRDataSource
 {
-    OGRDGNLayer **papoLayers;
-    int nLayers;
+    OGRDGNLayer **papoLayers = nullptr;
+    int nLayers = 0;
 
-    char *pszName;
-    DGNHandle hDGN;
+    char *pszName = nullptr;
+    DGNHandle hDGN = nullptr;
 
-    char **papszOptions;
+    char **papszOptions = nullptr;
+
+    std::string m_osEncoding{};
 
   public:
     OGRDGNDataSource();
     ~OGRDGNDataSource();
 
-    int Open(const char *, int bTestOpen, int bUpdate);
+    bool Open(GDALOpenInfo *poOpenInfo);
     bool PreCreate(const char *, char **);
 
     OGRLayer *ICreateLayer(const char *pszName,
@@ -141,6 +142,11 @@ class OGRDGNDataSource final : public OGRDataSource
     OGRLayer *GetLayer(int) override;
 
     int TestCapability(const char *) override;
+
+    const std::string &GetEncoding() const
+    {
+        return m_osEncoding;
+    }
 };
 
 #endif /* ndef OGR_DGN_H_INCLUDED */
