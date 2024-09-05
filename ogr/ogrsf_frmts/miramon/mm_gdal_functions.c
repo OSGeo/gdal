@@ -743,19 +743,33 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     if (fwrite_function(&(data_base_XP->dbf_version), 1, 1,
                         data_base_XP->pfDataBase) != 1)
     {
+        fclose_function(data_base_XP->pfDataBase);
+        data_base_XP->pfDataBase = nullptr;
         return FALSE;
     }
 
     /* MM_BYTE from 1 to 3 */
     variable_byte = (MM_BYTE)(data_base_XP->year - 1900);
     if (fwrite_function(&variable_byte, 1, 1, data_base_XP->pfDataBase) != 1)
+    {
+        fclose_function(data_base_XP->pfDataBase);
+        data_base_XP->pfDataBase = nullptr;
         return FALSE;
+    }
     if (fwrite_function(&(data_base_XP->month), 1, 1,
                         data_base_XP->pfDataBase) != 1)
+    {
+        fclose_function(data_base_XP->pfDataBase);
+        data_base_XP->pfDataBase = nullptr;
         return FALSE;
+    }
     if (fwrite_function(&(data_base_XP->day), 1, 1, data_base_XP->pfDataBase) !=
         1)
+    {
+        fclose_function(data_base_XP->pfDataBase);
+        data_base_XP->pfDataBase = nullptr;
         return FALSE;
+    }
 
     /* from 4 a 7, position MM_FIRST_OFFSET_to_N_RECORDS */
     {
@@ -763,40 +777,68 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             (GUInt32)(data_base_XP->nRecords & UINT32_MAX);
         if (fwrite_function(&nRecords32LowBits, 4, 1,
                             data_base_XP->pfDataBase) != 1)
+        {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
+        }
     }
 
     /* from 8 a 9, position MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
     if (fwrite_function(&(data_base_XP->FirstRecordOffset), 2, 1,
                         data_base_XP->pfDataBase) != 1)
+    {
+        fclose_function(data_base_XP->pfDataBase);
+        data_base_XP->pfDataBase = nullptr;
         return FALSE;
+    }
     /* from 10 to 11, & from 12 to 13 */
     if (MM_ES_DBF_ESTESA(data_base_XP->dbf_version))
     {
         if (fwrite_function(&(data_base_XP->BytesPerRecord),
                             sizeof(MM_ACCUMULATED_BYTES_TYPE_DBF), 1,
                             data_base_XP->pfDataBase) != 1)
+        {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
+        }
     }
     else
     {
         /* from 10 to 11 */
         if (fwrite_function(&(data_base_XP->BytesPerRecord), 2, 1,
                             data_base_XP->pfDataBase) != 1)
+        {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
+        }
         /* from 12 to 13 */
         if (fwrite_function(&(data_base_XP->reserved_1), 2, 1,
                             data_base_XP->pfDataBase) != 1)
+        {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
+        }
     }
     /* byte 14 */
     if (fwrite_function(&(data_base_XP->transaction_flag), 1, 1,
                         data_base_XP->pfDataBase) != 1)
+    {
+        fclose_function(data_base_XP->pfDataBase);
+        data_base_XP->pfDataBase = nullptr;
         return FALSE;
+    }
     /* byte 15 */
     if (fwrite_function(&(data_base_XP->encryption_flag), 1, 1,
                         data_base_XP->pfDataBase) != 1)
+    {
+        fclose_function(data_base_XP->pfDataBase);
+        data_base_XP->pfDataBase = nullptr;
         return FALSE;
+    }
 
     /* from 16 to 27 */
     if (data_base_XP->nRecords > UINT32_MAX)
@@ -805,42 +847,70 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         GUInt32 nRecords32HighBits = (GUInt32)(data_base_XP->nRecords >> 32);
         if (fwrite_function(&nRecords32HighBits, 4, 1,
                             data_base_XP->pfDataBase) != 1)
+        {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
+        }
 
         /* from 20 to 27 */
         if (fwrite_function(&(data_base_XP->dbf_on_a_LAN), 8, 1,
                             data_base_XP->pfDataBase) != 1)
+        {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
+        }
     }
     else
     {
         /* from 16 to 27 */
         if (fwrite_function(&(data_base_XP->dbf_on_a_LAN), 12, 1,
                             data_base_XP->pfDataBase) != 1)
+        {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
+        }
     }
     /* byte 28 */
     if (fwrite_function(&(data_base_XP->MDX_flag), 1, 1,
                         data_base_XP->pfDataBase) != 1)
+    {
+        fclose_function(data_base_XP->pfDataBase);
+        data_base_XP->pfDataBase = nullptr;
         return FALSE;
+    }
 
     /* Byte 29 */
     if (fwrite_function(&(data_base_XP->CharSet), 1, 1,
                         data_base_XP->pfDataBase) != 1)
+    {
+        fclose_function(data_base_XP->pfDataBase);
+        data_base_XP->pfDataBase = nullptr;
         return FALSE;
+    }
 
     /* Bytes from 30 to 31, in position MM_SEGON_OFFSET_a_OFFSET_1a_FITXA */
     if (MM_ES_DBF_ESTESA(data_base_XP->dbf_version))
     {
         if (fwrite_function(((char *)&(data_base_XP->FirstRecordOffset)) + 2, 2,
                             1, data_base_XP->pfDataBase) != 1)
+        {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
+        }
     }
     else
     {
         if (fwrite_function(&(data_base_XP->reserved_2), 2, 1,
                             data_base_XP->pfDataBase) != 1)
+        {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
+        }
     }
 
     /* At 32th byte fields description begins   */
@@ -860,6 +930,8 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                                             1, j, data_base_XP->pfDataBase);
             if (retorn_fwrite != (size_t)j)
             {
+                fclose_function(data_base_XP->pfDataBase);
+                data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
             MM_InitializeOffsetExtendedFieldNameFields(data_base_XP, i);
@@ -921,6 +993,8 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                                 1, j, data_base_XP->pfDataBase);
             if (retorn_fwrite != (size_t)j)
             {
+                fclose_function(data_base_XP->pfDataBase);
+                data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
 
@@ -931,24 +1005,32 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         }
         else
         {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
 
         if (fwrite_function(zero, 1, 11 - j, data_base_XP->pfDataBase) !=
             11 - (size_t)j)
         {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
         /* Byte 11, Field type */
         if (fwrite_function(&data_base_XP->pField[i].FieldType, 1, 1,
                             data_base_XP->pfDataBase) != 1)
         {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
         /* Bytes 12 to 15 --> Reserved */
         if (fwrite_function(&data_base_XP->pField[i].reserved_1, 4, 1,
                             data_base_XP->pfDataBase) != 1)
         {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
         /* Byte 16, or OFFSET_BYTESxCAMP_CAMP_CLASSIC --> BytesPerField */
@@ -958,6 +1040,8 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             if (fwrite_function((void *)&byte_zero, 1, 1,
                                 data_base_XP->pfDataBase) != 1)
             {
+                fclose_function(data_base_XP->pfDataBase);
+                data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
         }
@@ -966,6 +1050,8 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             if (fwrite_function(&data_base_XP->pField[i].BytesPerField, 1, 1,
                                 data_base_XP->pfDataBase) != 1)
             {
+                fclose_function(data_base_XP->pfDataBase);
+                data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
         }
@@ -976,6 +1062,8 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             if (fwrite_function(&data_base_XP->pField[i].DecimalsIfFloat, 1, 1,
                                 data_base_XP->pfDataBase) != 1)
             {
+                fclose_function(data_base_XP->pfDataBase);
+                data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
         }
@@ -983,6 +1071,8 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         {
             if (fwrite_function(zero, 1, 1, data_base_XP->pfDataBase) != 1)
             {
+                fclose_function(data_base_XP->pfDataBase);
+                data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
         }
@@ -993,6 +1083,8 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             if (fwrite_function(&data_base_XP->pField[i].reserved_2,
                                 20 - 18 + 1, 1, data_base_XP->pfDataBase) != 1)
             {
+                fclose_function(data_base_XP->pfDataBase);
+                data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
             /* Bytes from 21 to 24 --> OFFSET_BYTESxCAMP_CAMP_ESPECIAL, special fields, like C
@@ -1001,6 +1093,8 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                                 sizeof(MM_BYTES_PER_FIELD_TYPE_DBF), 1,
                                 data_base_XP->pfDataBase) != 1)
             {
+                fclose_function(data_base_XP->pfDataBase);
+                data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
 
@@ -1008,6 +1102,8 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             if (fwrite_function(&data_base_XP->pField[i].reserved_2[25 - 18],
                                 30 - 25 + 1, 1, data_base_XP->pfDataBase) != 1)
             {
+                fclose_function(data_base_XP->pfDataBase);
+                data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
         }
@@ -1021,6 +1117,8 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             if (fwrite_function(&data_base_XP->pField[i].reserved_2, 13, 1,
                                 data_base_XP->pfDataBase) != 1)
             {
+                fclose_function(data_base_XP->pfDataBase);
+                data_base_XP->pfDataBase = nullptr;
                 return FALSE;
             }
         }
@@ -1028,16 +1126,26 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         if (fwrite_function(&data_base_XP->pField[i].MDX_field_flag, 1, 1,
                             data_base_XP->pfDataBase) != 1)
         {
+            fclose_function(data_base_XP->pfDataBase);
+            data_base_XP->pfDataBase = nullptr;
             return FALSE;
         }
     }
 
     variable_byte = 13;
     if (fwrite_function(&variable_byte, 1, 1, data_base_XP->pfDataBase) != 1)
+    {
+        fclose_function(data_base_XP->pfDataBase);
+        data_base_XP->pfDataBase = nullptr;
         return FALSE;
+    }
 
     if (data_base_XP->FirstRecordOffset != bytes_acumulats)
+    {
+        fclose_function(data_base_XP->pfDataBase);
+        data_base_XP->pfDataBase = nullptr;
         return FALSE;
+    }
 
     // Extended fields
     for (i = 0; i < data_base_XP->nFields; i++)
@@ -1058,7 +1166,11 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                                             data_base_XP->pfDataBase);
 
             if (retorn_fwrite != (size_t)name_size)
+            {
+                fclose_function(data_base_XP->pfDataBase);
+                data_base_XP->pfDataBase = nullptr;
                 return FALSE;
+            }
         }
     }
 
