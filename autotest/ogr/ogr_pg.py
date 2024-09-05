@@ -247,17 +247,21 @@ def pg_version(pg_autotest_ds):
         feat = sql_lyr.GetNextFeature()
         v = feat.GetFieldAsString("version")
 
-    pos = v.find(" ")  # "PostgreSQL 12.0beta1" or "PostgreSQL 12.2 ...."
+    # return of version() is something like "PostgreSQL 12.0[rcX|betaX] ...otherstuff..."
+
+    tokens = v.split(" ")
+    assert len(tokens) >= 2
+    # First token is "PostgreSQL" (or some enterprise DB alternative name)
+    v = tokens[1]
+    pos = v.find("beta")
     if pos > 0:
-        v = v[pos + 1 :]
-        pos = v.find("beta")
-        if pos > 0:
-            v = v[0:pos]
-        pos = v.find(" ")
+        v = v[0:pos]
+    else:
+        pos = v.find("rc")
         if pos > 0:
             v = v[0:pos]
 
-        return tuple([int(x) for x in v.split(".")])
+    return tuple([int(x) for x in v.split(".")])
 
 
 @pytest.fixture(scope="module")
