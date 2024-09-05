@@ -1965,6 +1965,7 @@ void netCDFRasterBand::CreateMetadataFromOtherVars()
     m_bCreateMetadataFromOtherVarsDone = true;
 
     netCDFDataset *l_poDS = reinterpret_cast<netCDFDataset *>(poDS);
+    const int nPamFlagsBackup = l_poDS->nPamFlags;
 
     // Compute all dimensions from Band number and save in Metadata.
     int nd = 0;
@@ -2134,6 +2135,8 @@ void netCDFRasterBand::CreateMetadataFromOtherVars()
 
         Taken += result * Sum;
     }  // End loop non-spatial dimensions.
+
+    l_poDS->nPamFlags = nPamFlagsBackup;
 }
 
 /************************************************************************/
