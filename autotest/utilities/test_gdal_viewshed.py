@@ -212,7 +212,15 @@ def test_gdal_viewshed_all_options(gdal_viewshed_path, tmp_path, viewshed_input)
 
 ###############################################################################
 
-
+# NOTE: Various compilers (notably Intel), may give different values when
+#  doing floating point math (because of -ffast-math, for example).
+#  The test below checks that the COUNT of visible cells is the same, but it is
+#  not the case that the actual cells marked visible aren't different. That the
+#  count is the same is luck.  If changes are made or compliers/options change,
+#  the expected value in the test below may need to be changed/added to in order
+#  to accommodate all the compilers with a single test.  See
+#  ViewshedExecutor::setOutput for the comparison that is at issue.
+#
 def test_gdal_viewshed_cumulative(gdal_viewshed_path, tmp_path, viewshed_input):
 
     np = pytest.importorskip("numpy")
