@@ -99,9 +99,15 @@ OGRGeometryCollection::operator=(const OGRGeometryCollection &other)
 
         OGRGeometry::operator=(other);
 
-        for (const auto &poSubGeom : other)
+        papoGeoms = static_cast<OGRGeometry **>(
+            VSI_CALLOC_VERBOSE(sizeof(OGRGeometry *), other.nGeomCount));
+        if (papoGeoms)
         {
-            addGeometry(poSubGeom);
+            nGeomCount = other.nGeomCount;
+            for (int i = 0; i < other.nGeomCount; i++)
+            {
+                papoGeoms[i] = other.papoGeoms[i]->clone();
+            }
         }
     }
     return *this;
