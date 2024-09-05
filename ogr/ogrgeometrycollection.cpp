@@ -29,16 +29,6 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                       OGRGeometryCollection()                        */
-/************************************************************************/
-
-/**
- * \brief Create an empty geometry collection.
- */
-
-OGRGeometryCollection::OGRGeometryCollection() = default;
-
-/************************************************************************/
 /*         OGRGeometryCollection( const OGRGeometryCollection& )        */
 /************************************************************************/
 

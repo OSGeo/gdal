@@ -32,16 +32,6 @@ static inline double dist(double x0, double y0, double x1, double y1)
 }
 
 /************************************************************************/
-/*                         OGRCircularString()                          */
-/************************************************************************/
-
-/**
- * \brief Create an empty circular string.
- */
-
-OGRCircularString::OGRCircularString() = default;
-
-/************************************************************************/
 /*              OGRCircularString( const OGRCircularString& )           */
 /************************************************************************/
 
@@ -55,12 +45,6 @@ OGRCircularString::OGRCircularString() = default;
  */
 
 OGRCircularString::OGRCircularString(const OGRCircularString &) = default;
-
-/************************************************************************/
-/*                        ~OGRCircularString()                          */
-/************************************************************************/
-
-OGRCircularString::~OGRCircularString() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRCircularString& )               */

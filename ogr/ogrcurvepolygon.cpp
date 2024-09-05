@@ -24,16 +24,6 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                            OGRCurvePolygon()                         */
-/************************************************************************/
-
-/**
- * \brief Create an empty curve polygon.
- */
-
-OGRCurvePolygon::OGRCurvePolygon() = default;
-
-/************************************************************************/
 /*               OGRCurvePolygon( const OGRCurvePolygon& )              */
 /************************************************************************/
 
@@ -47,12 +37,6 @@ OGRCurvePolygon::OGRCurvePolygon() = default;
  */
 
 OGRCurvePolygon::OGRCurvePolygon(const OGRCurvePolygon &) = default;
-
-/************************************************************************/
-/*                           ~OGRCurvePolygon()                         */
-/************************************************************************/
-
-OGRCurvePolygon::~OGRCurvePolygon() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRCurvePolygon&)                  */

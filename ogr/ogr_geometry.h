@@ -1145,7 +1145,6 @@ class CPL_DLL OGRPoint : public OGRGeometry
     OGRPoint(double x, double y, double z, double m);
     OGRPoint(const OGRPoint &other);
     static OGRPoint *createXYM(double x, double y, double m);
-    ~OGRPoint() override;
 
     OGRPoint &operator=(const OGRPoint &other);
 
@@ -1316,8 +1315,8 @@ class CPL_DLL OGRCurve : public OGRGeometry
 {
   protected:
     //! @cond Doxygen_Suppress
-    OGRCurve();
-    OGRCurve(const OGRCurve &other);
+    OGRCurve() = default;
+    OGRCurve(const OGRCurve &other) = default;
 
     virtual OGRCurveCasterToLineString GetCasterToLineString() const = 0;
     virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const = 0;
@@ -1349,8 +1348,6 @@ class CPL_DLL OGRCurve : public OGRGeometry
     friend inline ConstIterator end(const OGRCurve *);
 
   public:
-    ~OGRCurve() override;
-
     //! @cond Doxygen_Suppress
     OGRCurve &operator=(const OGRCurve &other);
     //! @endcond
@@ -1512,11 +1509,11 @@ class CPL_DLL OGRSimpleCurve : public OGRCurve
     //! @cond Doxygen_Suppress
     friend class OGRGeometry;
 
-    int nPointCount;
+    int nPointCount = 0;
     int m_nPointCapacity = 0;
-    OGRRawPoint *paoPoints;
-    double *padfZ;
-    double *padfM;
+    OGRRawPoint *paoPoints = nullptr;
+    double *padfZ = nullptr;
+    double *padfM = nullptr;
 
     bool Make3D();
     void Make2D();
@@ -1530,7 +1527,9 @@ class CPL_DLL OGRSimpleCurve : public OGRCurve
 
     virtual double get_LinearArea() const;
 
-    OGRSimpleCurve();
+    /** Constructor */
+    OGRSimpleCurve() = default;
+
     OGRSimpleCurve(const OGRSimpleCurve &other);
 
   private:
@@ -1774,9 +1773,9 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
     static OGRLinearRing *CastToLinearRing(OGRLineString *poLS);
 
   public:
-    OGRLineString();
+    /** Create an empty line string. */
+    OGRLineString() = default;
     OGRLineString(const OGRLineString &other);
-    ~OGRLineString() override;
 
     OGRLineString &operator=(const OGRLineString &other);
 
@@ -1880,10 +1879,10 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     static OGRLineString *CastToLineString(OGRLinearRing *poLR);
 
   public:
-    OGRLinearRing();
+    /** Constructor */
+    OGRLinearRing() = default;
     OGRLinearRing(const OGRLinearRing &other);
-    explicit OGRLinearRing(OGRLinearRing *);
-    ~OGRLinearRing() override;
+    explicit OGRLinearRing(const OGRLinearRing *);
 
     OGRLinearRing &operator=(const OGRLinearRing &other);
 
@@ -1962,9 +1961,10 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
     //! @endcond
 
   public:
-    OGRCircularString();
+    /** Create an empty circular string. */
+    OGRCircularString() = default;
+
     OGRCircularString(const OGRCircularString &other);
-    ~OGRCircularString() override;
 
     OGRCircularString &operator=(const OGRCircularString &other);
 
@@ -2072,7 +2072,7 @@ class CPL_DLL OGRCurveCollection
     OGRCurve **papoCurves = nullptr;
 
   public:
-    OGRCurveCollection();
+    OGRCurveCollection() = default;
     OGRCurveCollection(const OGRCurveCollection &other);
     ~OGRCurveCollection();
 
@@ -2203,9 +2203,10 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     //! @endcond
 
   public:
-    OGRCompoundCurve();
+    /** Create an empty compound curve. */
+    OGRCompoundCurve() = default;
+
     OGRCompoundCurve(const OGRCompoundCurve &other);
-    ~OGRCompoundCurve() override;
 
     OGRCompoundCurve &operator=(const OGRCompoundCurve &other);
 
@@ -2469,9 +2470,10 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     static OGRPolygon *CastToPolygon(OGRCurvePolygon *poCP);
 
   public:
-    OGRCurvePolygon();
+    /** Create an empty curve polygon. */
+    OGRCurvePolygon() = default;
+
     OGRCurvePolygon(const OGRCurvePolygon &);
-    ~OGRCurvePolygon() override;
 
     OGRCurvePolygon &operator=(const OGRCurvePolygon &other);
 
@@ -2676,9 +2678,10 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     //! @endcond
 
   public:
-    OGRPolygon();
+    /** Create an empty polygon. */
+    OGRPolygon() = default;
+
     OGRPolygon(const OGRPolygon &other);
-    ~OGRPolygon() override;
 
     OGRPolygon &operator=(const OGRPolygon &other);
 
@@ -2846,12 +2849,13 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     //! @endcond
 
   public:
-    OGRTriangle();
+    /** Constructor. */
+    OGRTriangle() = default;
     OGRTriangle(const OGRPoint &p, const OGRPoint &q, const OGRPoint &r);
     OGRTriangle(const OGRTriangle &other);
     OGRTriangle(const OGRPolygon &other, OGRErr &eErr);
     OGRTriangle &operator=(const OGRTriangle &other);
-    ~OGRTriangle() override;
+
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
     virtual OGRTriangle *clone() const override;
@@ -2927,7 +2931,9 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRBoolean isCompatibleSubType(OGRwkbGeometryType) const;
 
   public:
-    OGRGeometryCollection();
+    /** Create an empty geometry collection. */
+    OGRGeometryCollection() = default;
+
     OGRGeometryCollection(const OGRGeometryCollection &other);
     ~OGRGeometryCollection() override;
 
@@ -3109,9 +3115,10 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     virtual OGRBoolean isCompatibleSubType(OGRwkbGeometryType) const override;
 
   public:
-    OGRMultiSurface();
+    /** Create an empty multi surface collection. */
+    OGRMultiSurface() = default;
+
     OGRMultiSurface(const OGRMultiSurface &other);
-    ~OGRMultiSurface() override;
 
     OGRMultiSurface &operator=(const OGRMultiSurface &other);
 
@@ -3276,9 +3283,10 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     //! @endcond
 
   public:
-    OGRMultiPolygon();
+    /** Create an empty multi polygon collection. */
+    OGRMultiPolygon() = default;
+
     OGRMultiPolygon(const OGRMultiPolygon &other);
-    ~OGRMultiPolygon() override;
 
     OGRMultiPolygon &operator=(const OGRMultiPolygon &other);
 
@@ -3438,9 +3446,11 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     //! @endcond
 
   public:
-    OGRPolyhedralSurface();
+    /** Create an empty PolyhedralSurface */
+    OGRPolyhedralSurface() = default;
+
     OGRPolyhedralSurface(const OGRPolyhedralSurface &poGeom);
-    ~OGRPolyhedralSurface() override;
+
     OGRPolyhedralSurface &operator=(const OGRPolyhedralSurface &other);
 
     /** Type of child elements. */
@@ -3612,9 +3622,10 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
     //! @endcond
 
   public:
-    OGRTriangulatedSurface();
+    /** Constructor */
+    OGRTriangulatedSurface() = default;
+
     OGRTriangulatedSurface(const OGRTriangulatedSurface &other);
-    ~OGRTriangulatedSurface();
 
     /** Type of child elements. */
     typedef OGRTriangle ChildType;
@@ -3746,9 +3757,10 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     virtual OGRBoolean isCompatibleSubType(OGRwkbGeometryType) const override;
 
   public:
-    OGRMultiPoint();
+    /** Create an empty multi point collection. */
+    OGRMultiPoint() = default;
+
     OGRMultiPoint(const OGRMultiPoint &other);
-    ~OGRMultiPoint() override;
 
     OGRMultiPoint &operator=(const OGRMultiPoint &other);
 
@@ -3903,9 +3915,10 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     virtual OGRBoolean isCompatibleSubType(OGRwkbGeometryType) const override;
 
   public:
-    OGRMultiCurve();
+    /** Create an empty multi curve collection. */
+    OGRMultiCurve() = default;
+
     OGRMultiCurve(const OGRMultiCurve &other);
-    ~OGRMultiCurve() override;
 
     OGRMultiCurve &operator=(const OGRMultiCurve &other);
 
@@ -4055,9 +4068,10 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     virtual OGRBoolean isCompatibleSubType(OGRwkbGeometryType) const override;
 
   public:
-    OGRMultiLineString();
+    /** Create an empty multi line string collection. */
+    OGRMultiLineString() = default;
+
     OGRMultiLineString(const OGRMultiLineString &other);
-    ~OGRMultiLineString() override;
 
     OGRMultiLineString &operator=(const OGRMultiLineString &other);
 

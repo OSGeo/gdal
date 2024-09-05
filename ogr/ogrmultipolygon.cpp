@@ -19,16 +19,6 @@
 #include "ogr_p.h"
 
 /************************************************************************/
-/*                          OGRMultiPolygon()                           */
-/************************************************************************/
-
-/**
- * \brief Create an empty multi polygon collection.
- */
-
-OGRMultiPolygon::OGRMultiPolygon() = default;
-
-/************************************************************************/
 /*              OGRMultiPolygon( const OGRMultiPolygon& )               */
 /************************************************************************/
 
@@ -42,12 +32,6 @@ OGRMultiPolygon::OGRMultiPolygon() = default;
  */
 
 OGRMultiPolygon::OGRMultiPolygon(const OGRMultiPolygon &) = default;
-
-/************************************************************************/
-/*                         ~OGRMultiPolygon()                           */
-/************************************************************************/
-
-OGRMultiPolygon::~OGRMultiPolygon() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRMultiPolygon&)                    */
