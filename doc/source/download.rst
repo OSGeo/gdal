@@ -18,11 +18,11 @@ Source Code
 Current Release
 ...............
 
-* **2024-06-26** `gdal-3.9.1.tar.gz`_ `3.9.1 Release Notes`_ (`3.9.1 md5`_)
+* **2024-08-16** `gdal-3.9.2.tar.gz`_ `3.9.2 Release Notes`_ (`3.9.2 md5`_)
 
-.. _`3.9.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.9.1/NEWS.md
-.. _`gdal-3.9.1.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.9.1/gdal-3.9.1.tar.gz
-.. _`3.9.1 md5`: https://github.com/OSGeo/gdal/releases/download/v3.9.1/gdal-3.9.1.tar.gz.md5
+.. _`3.9.2 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.9.2/NEWS.md
+.. _`gdal-3.9.2.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.9.2/gdal-3.9.2.tar.gz
+.. _`3.9.2 md5`: https://github.com/OSGeo/gdal/releases/download/v3.9.2/gdal-3.9.2.tar.gz.md5
 
 Past Releases
 .............
@@ -47,6 +47,13 @@ command
 
 Additional information is available about :ref:`build_requirements` and :ref:`building_from_source`.
 
+Maintenance policy
+..................
+
+The GDAL upstream team only maintains the branch on which the latest release has
+been done, with bugfixes releases issued roughly every 2 months.
+So, for example, during the development phase of GDAL 3.10.0, GDAL 3.9.x bugfixes
+releases are done based on the release/3.9 branch, but not older branches (GDAL 3.8.x or older).
 
 .. _binaries:
 

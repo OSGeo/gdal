@@ -88,8 +88,9 @@ In SQLite, the LIKE operator is case insensitive, unless ``PRAGMA case_sensitive
 has been issued.
 
 Starting with GDAL 3.9, GDAL installs a custom LIKE comparison, such that UTF-8
-characters are taken into account by ``LIKE`` and ``ILIKE`` operators.
-For ILIKE case insensitive comparisons, this is restricted to the
+characters are taken into account by ``LIKE`` operator.
+
+For case insensitive comparisons, this is restricted to the
 `ASCII <https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)>`__,
 `Latin-1 Supplement <https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)>`__,
 `Latin Extended-A <https://en.wikipedia.org/wiki/Latin_Extended-A>`__,
@@ -315,7 +316,7 @@ The ``gdal_get_pixel_value()`` function (added in GDAL 3.7) can be used to extra
 of a pixel in a GDAL dataset. It requires the configuration option OGR_SQLITE_ALLOW_EXTERNAL_ACCESS
 to be set to YES (for security reasons).
 
-It takes 5 arguments:
+It takes 5 or 6 arguments:
 
 * a string with the dataset name
 * a band number (numbering starting at 1)
@@ -324,11 +325,13 @@ It takes 5 arguments:
   pixel space
 * georeferenced X value or column number
 * georeferenced Y value or line number
+* resampling method among ``nearest`` (default), ``bilinear``, ``cubic``, ``cubicspline``. Optional, added in GDAL 3.10
 
 .. code-block::
 
     SELECT gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'georef', 440720, 3751320)
     SELECT gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', 0, 0)
+    SELECT gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', 0.5, 0.5, 'bilinear')  -- GDAL >= 3.10
 
 
 OGR geocoding functions

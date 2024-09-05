@@ -1987,7 +1987,7 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
         {
             if (!psOptions->bQuiet)
             {
-                if (CPLIsNan(dfReal))
+                if (std::isnan(dfReal))
                     printf("Using internal nodata values (e.g. nan) for image "
                            "%s.\n",
                            GDALGetDescription(hSrcDS));

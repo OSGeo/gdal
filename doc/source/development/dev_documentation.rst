@@ -41,6 +41,11 @@ The following targets are available:
   verifies that there are no Doxygen warnings.
   Requires Doxygen >= 1.9.3 to be warning free.
 
+* ``spelling``: runs spell checking on the documentation, covering as well as
+  documentation generated from C/C++ API (Doxygen) and Python API. Words unknown
+  to the spell checker but still considered valid should be added to the allow
+  list in :file:`doc/source/spelling_wordlist.txt`
+
 * ``clean``: clean the ``doc/build`` directory.
 
 It is also possible to run those targets as CMake targets. In that case, the

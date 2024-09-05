@@ -130,7 +130,7 @@ def test_stats_approx_nodata():
     os.remove("tmp/minfloat.tif")
 
     if nodata != -3.4028234663852886e38:
-        print("%.18g" % nodata)
+        print("%.17g" % nodata)
         pytest.fail("did not get expected nodata")
 
     assert stats == [-3.0, 5.0, 1.0, 4.0], "did not get expected stats"
@@ -411,7 +411,7 @@ def test_stats_flt_min():
     os.remove("tmp/flt_min.tif")
 
     if nodata != 1.17549435082228751e-38:
-        print("%.18g" % nodata)
+        print("%.17g" % nodata)
         pytest.fail("did not get expected nodata")
 
     assert stats == [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] or stats == [
@@ -450,7 +450,7 @@ def test_stats_dbl_min():
     os.remove("tmp/dbl_min.tif")
 
     if nodata != 2.22507385850720138e-308:
-        print("%.18g" % nodata)
+        print("%.17g" % nodata)
         pytest.fail("did not get expected nodata")
 
     assert stats == [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] or stats == [

@@ -624,10 +624,7 @@ int OGRHanaDataSource::Open(const char *newName, char **openOptions, int update)
 
         if (conn_->connected())
         {
-            odbc::DatabaseMetaDataRef dbmd = conn_->getDatabaseMetaData();
-            CPLString dbVersion(dbmd->getDBMSVersion());
-            majorVersion_ =
-                atoi(dbVersion.substr(0u, dbVersion.find('.')).c_str());
+            DetermineVersions();
 
             const char *paramTables = CSLFetchNameValueDef(
                 connOptions, OGRHanaOpenOptionsConstants::TABLES, "");
@@ -696,6 +693,29 @@ void OGRHanaDataSource::CreateTable(
     }
 
     ExecuteSQL(sql);
+}
+
+void OGRHanaDataSource::DetermineVersions()
+{
+    odbc::DatabaseMetaDataRef dbmd = conn_->getDatabaseMetaData();
+    CPLString dbVersion(dbmd->getDBMSVersion());
+    hanaVersion_ = HanaVersion::fromString(dbVersion);
+
+    if (hanaVersion_.major() < 4)
+    {
+        cloudVersion_ = HanaVersion(0, 0, 0);
+        return;
+    }
+
+    odbc::StatementRef stmt = conn_->createStatement();
+    const char *sql = "SELECT CLOUD_VERSION FROM SYS.M_DATABASE;";
+
+    odbc::ResultSetRef rsVersion = stmt->executeQuery(sql);
+    if (rsVersion->next())
+        cloudVersion_ =
+            HanaVersion::fromString(rsVersion->getString(1)->c_str());
+
+    rsVersion->close();
 }
 
 /************************************************************************/

@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import shutil
 import struct
 
 import gdaltest
@@ -330,3 +331,37 @@ def test_s102_force_opening_no_match():
 
     drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["S102"])
     assert drv is None
+
+
+###############################################################################
+
+
+def test_s102_metadata_compute_stats_first(tmp_path):
+
+    out_filename = str(tmp_path / "out.h5")
+    shutil.copy("data/s102/test_s102_v2.1.h5", out_filename)
+    with gdal.Open(out_filename) as ds:
+        ds.GetRasterBand(1).ComputeStatistics(False)
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is not None
+        ds.SetMetadataItem("foo", "bar")
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is not None
+        assert ds.GetMetadataItem("foo") == "bar"
+
+
+###############################################################################
+
+
+def test_s102_metadata_compute_stats_after(tmp_path):
+
+    out_filename = str(tmp_path / "out.h5")
+    shutil.copy("data/s102/test_s102_v2.1.h5", out_filename)
+    with gdal.Open(out_filename) as ds:
+        ds.SetMetadataItem("foo", "bar")
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetMetadataItem("foo") == "bar"
+        ds.GetRasterBand(1).ComputeStatistics(False)
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is not None
+        assert ds.GetMetadataItem("foo") == "bar"

@@ -60,7 +60,7 @@ CPLErr WMSMiniDriver_OGCAPIMaps::TiledImageRequest(
 
     URLPrepare(url);
     url +=
-        CPLOPrintf("width=%d&height=%d&bbox=%.18g,%.18g,%.18g,%.18g", iri.m_sx,
+        CPLOPrintf("width=%d&height=%d&bbox=%.17g,%.17g,%.17g,%.17g", iri.m_sx,
                    iri.m_sy, iri.m_x0, iri.m_y1, iri.m_x1, iri.m_y0);
 
     return CE_None;

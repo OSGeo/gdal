@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 import time
 
@@ -38,13 +37,18 @@ import webserver
 
 from osgeo import gdal, ogr
 
-pytestmark = [
-    pytest.mark.require_curl(),
-    pytest.mark.skipif(
-        os.environ.get("BUILD_NAME", "") in ("macos_build_conda", "fedora_rawhide"),
-        reason="fail with SIGPIPE",
-    ),
-]
+
+def curl_version():
+    actual_version = [0, 0, 0]
+    for build_info_item in gdal.VersionInfo("BUILD_INFO").strip().split("\n"):
+        if build_info_item.startswith("CURL_VERSION="):
+            actual_version = [
+                int(x) for x in build_info_item[len("CURL_VERSION=") :].split(".")
+            ]
+    return actual_version
+
+
+pytestmark = pytest.mark.require_curl()
 
 ###############################################################################
 #
@@ -1150,6 +1154,11 @@ def test_vsicurl_GDAL_HTTP_HEADERS(server):
 # Test CPL_VSIL_CURL_USE_HEAD=NO
 
 
+# Cf fix of https://github.com/curl/curl/pull/14390
+@pytest.mark.skipif(
+    curl_version() == [8, 9, 1],
+    reason="fail with SIGPIPE with curl 8.9.1",
+)
 def test_vsicurl_test_CPL_VSIL_CURL_USE_HEAD_NO(server):
 
     gdal.VSICurlClearCache()
@@ -1279,3 +1288,89 @@ def test_vsicurl_404_repeated_same_resource(server):
 
     with pytest.raises(Exception, match="404"):
         gdal.Open("/vsicurl/http://localhost:%d/does/not/exist.bin" % server.port)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_vsicurl_cache_control_not_set(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/", 404)
+    handler.add("HEAD", "/test.txt", 200, {"Content-Length": "3"})
+    handler.add("GET", "/test.txt", 200, {}, "foo")
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL(
+            "/vsicurl/http://localhost:%d/test.txt" % server.port,
+            "rb",
+        )
+        assert f is not None
+        data = gdal.VSIFReadL(1, 3, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+        assert data == "foo"
+
+    with webserver.install_http_handler(webserver.SequentialHandler()):
+        f = gdal.VSIFOpenL(
+            "/vsicurl/http://localhost:%d/test.txt" % server.port,
+            "rb",
+        )
+        assert f is not None
+        data = gdal.VSIFReadL(1, 3, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+        assert data == "foo"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_vsicurl_cache_control_no_cache(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/", 404)
+    handler.add(
+        "HEAD", "/test.txt", 200, {"Content-Length": "3", "Cache-Control": "no-cache"}
+    )
+    handler.add(
+        "GET",
+        "/test.txt",
+        200,
+        {"Content-Length": "3", "Cache-Control": "no-cache"},
+        "foo",
+    )
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL(
+            "/vsicurl/http://localhost:%d/test.txt" % server.port,
+            "rb",
+        )
+        assert f is not None
+        data = gdal.VSIFReadL(1, 3, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+        assert data == "foo"
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/", 404)
+    handler.add(
+        "HEAD", "/test.txt", 200, {"Content-Length": "6", "Cache-Control": "no-cache"}
+    )
+    handler.add(
+        "GET",
+        "/test.txt",
+        200,
+        {"Content-Length": "6", "Cache-Control": "no-cache"},
+        "barbaz",
+    )
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL(
+            "/vsicurl/http://localhost:%d/test.txt" % server.port,
+            "rb",
+        )
+        assert f is not None
+        data = gdal.VSIFReadL(1, 6, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+        assert data == "barbaz"

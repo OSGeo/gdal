@@ -1198,7 +1198,7 @@ CPLErr swq_select::parse(swq_field_list *field_list,
 bool swq_select::IsFieldExcluded(int src_index, const char *pszTableName,
                                  const char *pszFieldName)
 {
-    auto list_it = m_exclude_fields.find(src_index);
+    const auto list_it = m_exclude_fields.find(src_index);
 
     if (list_it == m_exclude_fields.end())
     {

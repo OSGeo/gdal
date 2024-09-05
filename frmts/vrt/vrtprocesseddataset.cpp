@@ -573,7 +573,7 @@ bool VRTProcessedDataset::ParseStep(const CPLXMLNode *psStep, bool bIsFinalStep,
         if (bHasVal)
         {
             oStep.aosArguments.AddNameValue("nodata",
-                                            CPLSPrintf("%.18g", dfVal));
+                                            CPLSPrintf("%.17g", dfVal));
         }
     }
 
@@ -586,7 +586,7 @@ bool VRTProcessedDataset::ParseStep(const CPLXMLNode *psStep, bool bIsFinalStep,
             const double dfVal = GetRasterBand(i)->GetOffset(&bHasVal);
             oStep.aosArguments.AddNameValue(
                 CPLSPrintf("offset_%d", i),
-                CPLSPrintf("%.18g", bHasVal ? dfVal : 0.0));
+                CPLSPrintf("%.17g", bHasVal ? dfVal : 0.0));
         }
     }
 
@@ -599,7 +599,7 @@ bool VRTProcessedDataset::ParseStep(const CPLXMLNode *psStep, bool bIsFinalStep,
             const double dfVal = GetRasterBand(i)->GetScale(&bHasVal);
             oStep.aosArguments.AddNameValue(
                 CPLSPrintf("scale_%d", i),
-                CPLSPrintf("%.18g", bHasVal ? dfVal : 1.0));
+                CPLSPrintf("%.17g", bHasVal ? dfVal : 1.0));
         }
     }
 

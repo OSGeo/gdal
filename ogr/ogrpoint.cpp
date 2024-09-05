@@ -263,7 +263,7 @@ void OGRPoint::flattenTo2D()
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRPoint::setCoordinateDimension(int nNewDimension)
+bool OGRPoint::setCoordinateDimension(int nNewDimension)
 
 {
     if (nNewDimension == 2)
@@ -272,6 +272,7 @@ void OGRPoint::setCoordinateDimension(int nNewDimension)
         flags |= OGR_G_3D;
 
     setMeasured(FALSE);
+    return true;
 }
 
 /************************************************************************/
@@ -368,7 +369,7 @@ OGRErr OGRPoint::importFromWkb(const unsigned char *pabyData, size_t nSize,
     }
 
     // Detect coordinates are not NaN --> NOT EMPTY.
-    if (!(CPLIsNan(x) && CPLIsNan(y)))
+    if (!(std::isnan(x) && std::isnan(y)))
         flags |= OGR_G_NOT_EMPTY_POINT;
 
     return OGRERR_NONE;

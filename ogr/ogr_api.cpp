@@ -1604,6 +1604,8 @@ OGRErr OGR_G_RemoveGeometry(OGRGeometryH hGeom, int iGeom, int bDelete)
  * \brief Compute length of a geometry.
  *
  * Computes the length for OGRCurve or MultiCurve objects.
+ * For surfaces, compute the sum of the lengths of their exterior
+ * and interior rings (since 3.10).
  * Undefined for all other geometry types (returns zero).
  *
  * This function utilizes the C++ get_Length() method.
@@ -1612,6 +1614,9 @@ OGRErr OGR_G_RemoveGeometry(OGRGeometryH hGeom, int iGeom, int bDelete)
  * @return the length or 0.0 for unsupported geometry types.
  *
  * @since OGR 1.8.0
+ *
+ * @see OGR_G_GeodesicLength() for an alternative method returning lengths
+ * computed on the ellipsoid, and in meters.
  */
 
 double OGR_G_Length(OGRGeometryH hGeom)
@@ -1622,14 +1627,16 @@ double OGR_G_Length(OGRGeometryH hGeom)
     double dfLength = 0.0;
 
     const auto poGeom = ToPointer(hGeom);
-    const OGRwkbGeometryType eType =
-        wkbFlatten(ToPointer(hGeom)->getGeometryType());
+    const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
     if (OGR_GT_IsCurve(eType))
     {
         dfLength = poGeom->toCurve()->get_Length();
     }
-    else if (OGR_GT_IsSubClassOf(eType, wkbMultiCurve) ||
-             eType == wkbGeometryCollection)
+    else if (OGR_GT_IsSurface(eType))
+    {
+        dfLength = poGeom->toSurface()->get_Length();
+    }
+    else if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
     {
         dfLength = poGeom->toGeometryCollection()->get_Length();
     }
@@ -1638,6 +1645,67 @@ double OGR_G_Length(OGRGeometryH hGeom)
         CPLError(CE_Warning, CPLE_AppDefined,
                  "OGR_G_Length() called against a non-curve geometry type.");
         dfLength = 0.0;
+    }
+
+    return dfLength;
+}
+
+/************************************************************************/
+/*                      OGR_G_GeodesicLength()                          */
+/************************************************************************/
+
+/**
+ * \brief Get the length of the curve, considered as a geodesic line on the
+ * underlying ellipsoid of the SRS attached to the geometry.
+ *
+ * The returned length will always be in meters.
+ *
+ * <a href="https://geographiclib.sourceforge.io/html/python/geodesics.html">Geodesics</a>
+ * follow the shortest route on the surface of the ellipsoid.
+ *
+ * If the geometry' SRS is not a geographic one, geometries are reprojected to
+ * the underlying geographic SRS of the geometry' SRS.
+ * OGRSpatialReference::GetDataAxisToSRSAxisMapping() is honored.
+ *
+ * Note that geometries with circular arcs will be linearized in their original
+ * coordinate space first, so the resulting geodesic length will be an
+ * approximation.
+ *
+ * This function utilizes the C++ get_GeodesicLength() method.
+ *
+ * @param hGeom the geometry to operate on.
+ * @return the length or a negative value for unsupported geometry types.
+ *
+ * @since OGR 3.10
+ */
+
+double OGR_G_GeodesicLength(OGRGeometryH hGeom)
+
+{
+    VALIDATE_POINTER1(hGeom, "OGR_G_GeodesicLength", -1);
+
+    double dfLength = 0.0;
+
+    const auto poGeom = ToPointer(hGeom);
+    const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    if (OGR_GT_IsCurve(eType))
+    {
+        dfLength = poGeom->toCurve()->get_GeodesicLength();
+    }
+    else if (OGR_GT_IsSurface(eType))
+    {
+        dfLength = poGeom->toSurface()->get_GeodesicLength();
+    }
+    else if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
+    {
+        dfLength = poGeom->toGeometryCollection()->get_GeodesicLength();
+    }
+    else
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGR_G_GeodesicLength() called against a non-curve geometry type.");
+        dfLength = -1.0;
     }
 
     return dfLength;
@@ -1664,7 +1732,7 @@ double OGR_G_Length(OGRGeometryH hGeom)
  * system in use, or 0.0 for unsupported geometry types.
 
  * @see OGR_G_GeodesicArea() for an alternative function returning areas
- * computed on the ellipsoid, an in square meters.
+ * computed on the ellipsoid, and in square meters.
  *
  * @since OGR 1.8.0
  */
@@ -1686,8 +1754,7 @@ double OGR_G_Area(OGRGeometryH hGeom)
     {
         dfArea = poGeom->toCurve()->get_Area();
     }
-    else if (OGR_GT_IsSubClassOf(eType, wkbMultiSurface) ||
-             eType == wkbGeometryCollection)
+    else if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
     {
         dfArea = poGeom->toGeometryCollection()->get_Area();
     }
@@ -1724,6 +1791,9 @@ double OGR_G_GetArea(OGRGeometryH hGeom)
  *
  * The returned area will always be in square meters, and assumes that
  * polygon edges describe geodesic lines on the ellipsoid.
+ *
+ * <a href="https://geographiclib.sourceforge.io/html/python/geodesics.html">Geodesics</a>
+ * follow the shortest route on the surface of the ellipsoid.
  *
  * If the geometry' SRS is not a geographic one, geometries are reprojected to
  * the underlying geographic SRS of the geometry' SRS.
@@ -1765,8 +1835,7 @@ double OGR_G_GeodesicArea(OGRGeometryH hGeom)
     {
         dfArea = poGeom->toCurve()->get_GeodesicArea();
     }
-    else if (OGR_GT_IsSubClassOf(eType, wkbMultiSurface) ||
-             eType == wkbGeometryCollection)
+    else if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
     {
         dfArea = poGeom->toGeometryCollection()->get_GeodesicArea();
     }

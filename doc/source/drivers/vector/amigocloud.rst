@@ -42,7 +42,7 @@ Currently the following one is supported :
 
 If several parameters are specified, they must be separated by a space.
 
-If no datset_id is provided, the driver will print list of available
+If no dataset_id is provided, the driver will print list of available
 datasets for given project.
 
 For example: **"AmigoCloud:1234 datasets"**

@@ -451,7 +451,7 @@ Extracting:
    gdal_translate geor:spock/lion@orcl,gdal_rdt,101 out.tif
 
 Note: On the above example that accessing by RDT/RID doesn't need
-schame name as long as the users is granted full access to both
+same name as long as the users is granted full access to both
 tables.
 
 Loading:

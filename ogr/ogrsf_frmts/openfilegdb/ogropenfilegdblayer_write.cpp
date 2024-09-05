@@ -208,34 +208,34 @@ static void XMLSerializeGeomFieldBase(CPLXMLNode *psRoot,
     }
     CPLCreateXMLElementAndValue(
         psSpatialReference, "XOrigin",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetXOrigin()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetXOrigin()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "YOrigin",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetYOrigin()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetYOrigin()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "XYScale",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetXYScale()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetXYScale()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "ZOrigin",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetZOrigin()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetZOrigin()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "ZScale",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetZScale()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetZScale()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "MOrigin",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetMOrigin()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetMOrigin()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "MScale",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetMScale()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetMScale()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "XYTolerance",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetXYTolerance()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetXYTolerance()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "ZTolerance",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetZTolerance()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetZTolerance()));
     CPLCreateXMLElementAndValue(
         psSpatialReference, "MTolerance",
-        CPLSPrintf("%.18g", poGeomFieldDefn->GetMTolerance()));
+        CPLSPrintf("%.17g", poGeomFieldDefn->GetMTolerance()));
     CPLCreateXMLElementAndValue(psSpatialReference, "HighPrecision", "true");
     if (poSRS)
     {
@@ -824,7 +824,7 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
         {
             auto psDefaultValue = CPLCreateXMLElementAndValue(
                 GPFieldInfoEx, "DefaultValueNumeric",
-                CPLSPrintf("%.18g", psDefault->Real));
+                CPLSPrintf("%.17g", psDefault->Real));
             if (!bArcGISPro32OrLater)
             {
                 CPLAddXMLAttributeAndValue(
@@ -843,7 +843,7 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
         {
             CPLCreateXMLElementAndValue(
                 GPFieldInfoEx, "DefaultValueNumeric",
-                CPLSPrintf("%.18g", FileGDBOGRDateToDoubleDate(
+                CPLSPrintf("%.17g", FileGDBOGRDateToDoubleDate(
                                         psDefault, /* bConvertToUTC = */ true,
                                         poGDBFieldDefn->IsHighPrecision())));
         }
@@ -2265,6 +2265,7 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
             }
             continue;
         }
+        memset(&fields[idxFileGDB], 0, sizeof(OGRField));
         switch (m_poLyrTable->GetField(idxFileGDB)->GetType())
         {
             case FGFT_UNDEFINED:

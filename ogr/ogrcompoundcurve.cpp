@@ -380,19 +380,19 @@ OGRBoolean OGRCompoundCurve::Equals(const OGRGeometry *poOther) const
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRCompoundCurve::setCoordinateDimension(int nNewDimension)
+bool OGRCompoundCurve::setCoordinateDimension(int nNewDimension)
 {
-    oCC.setCoordinateDimension(this, nNewDimension);
+    return oCC.setCoordinateDimension(this, nNewDimension);
 }
 
-void OGRCompoundCurve::set3D(OGRBoolean bIs3D)
+bool OGRCompoundCurve::set3D(OGRBoolean bIs3D)
 {
-    oCC.set3D(this, bIs3D);
+    return oCC.set3D(this, bIs3D);
 }
 
-void OGRCompoundCurve::setMeasured(OGRBoolean bIsMeasured)
+bool OGRCompoundCurve::setMeasured(OGRBoolean bIsMeasured)
 {
-    oCC.setMeasured(this, bIsMeasured);
+    return oCC.setMeasured(this, bIsMeasured);
 }
 
 /************************************************************************/
@@ -667,9 +667,9 @@ void OGRCompoundCurve::flattenTo2D()
 /*                              segmentize()                            */
 /************************************************************************/
 
-void OGRCompoundCurve::segmentize(double dfMaxLength)
+bool OGRCompoundCurve::segmentize(double dfMaxLength)
 {
-    oCC.segmentize(dfMaxLength);
+    return oCC.segmentize(dfMaxLength);
 }
 
 /************************************************************************/
@@ -946,11 +946,25 @@ double OGRCompoundCurve::get_GeodesicArea(
     if (!poSRSOverride)
         poSRSOverride = getSpatialReference();
 
-    OGRLineString *poLS = CurveToLine();
-    const double dfArea = poLS->get_GeodesicArea(poSRSOverride);
-    delete poLS;
+    auto poLS = std::unique_ptr<OGRLineString>(CurveToLine());
+    return poLS->get_GeodesicArea(poSRSOverride);
+}
 
-    return dfArea;
+/************************************************************************/
+/*                        get_GeodesicLength()                          */
+/************************************************************************/
+
+double OGRCompoundCurve::get_GeodesicLength(
+    const OGRSpatialReference *poSRSOverride) const
+{
+    if (IsEmpty())
+        return 0;
+
+    if (!poSRSOverride)
+        poSRSOverride = getSpatialReference();
+
+    auto poLS = std::unique_ptr<OGRLineString>(CurveToLine());
+    return poLS->get_GeodesicLength(poSRSOverride);
 }
 
 /************************************************************************/

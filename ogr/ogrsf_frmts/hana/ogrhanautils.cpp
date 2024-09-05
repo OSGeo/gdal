@@ -27,11 +27,24 @@
  ****************************************************************************/
 
 #include "ogrhanautils.h"
+#include "cpl_string.h"
 
 #include <algorithm>
 
 namespace OGRHANA
 {
+
+HanaVersion HanaVersion::fromString(const char *version)
+{
+    CPLString splVersion(version);
+    splVersion.replaceAll('-', '.').replaceAll(' ', '.');
+
+    const CPLStringList parts(CSLTokenizeString2(splVersion, ".", 0));
+    if (parts.size() < 3)
+        return HanaVersion(0, 0, 0);
+
+    return HanaVersion(atoi(parts[0]), atoi(parts[1]), atoi(parts[2]));
+}
 
 const char *SkipLeadingSpaces(const char *value)
 {

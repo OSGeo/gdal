@@ -778,7 +778,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                                 "OpenFileGDB",
                                 "For field %s, XML definition "
                                 "mentions %s as default value whereas "
-                                ".gdbtable header mentions %.18g. Using %s",
+                                ".gdbtable header mentions %.17g. Using %s",
                                 poGDBField->GetName().c_str(), pszDefaultValue,
                                 psDefault->Real, pszDefaultValue);
                         }

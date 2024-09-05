@@ -3317,13 +3317,22 @@ def test_ogr_parquet_bbox_double():
 
 
 @pytest.mark.require_geos
-def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata():
+@pytest.mark.parametrize("use_dataset", [True, False])
+def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata(use_dataset):
 
-    ds = ogr.Open("data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet")
+    if use_dataset and not _has_arrow_dataset():
+        pytest.skip("Test requires build with ArrowDataset")
+
+    prefix = "PARQUET:" if use_dataset else ""
+
+    ds = ogr.Open(
+        prefix + "data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet"
+    )
     lyr = ds.GetLayer(0)
     assert lyr.GetGeometryColumn() == "geometry"
     assert lyr.GetLayerDefn().GetFieldIndex("bbox.xmin") < 0
-    assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
+    if not use_dataset:
+        assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
     minx, maxx, miny, maxy = lyr.GetExtent()
     assert (minx, miny, maxx, maxy) == pytest.approx(
         (478315.53125, 4762880.5, 481645.3125, 4765610.5)
@@ -3337,14 +3346,16 @@ def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata():
         maxy - (maxy - miny) / 2,
     ):
         f = lyr.GetNextFeature()
-        assert f.GetFID() == 8
+        if not use_dataset:
+            assert f.GetFID() == 8
         assert lyr.GetNextFeature() is None
 
     ds = None
 
     with gdaltest.config_option("OGR_PARQUET_USE_BBOX", "NO"):
         ds = ogr.Open(
-            "data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet"
+            prefix
+            + "data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet"
         )
         lyr = ds.GetLayer(0)
         assert lyr.GetGeometryColumn() == "geometry"
@@ -4097,3 +4108,20 @@ def test_ogr_parquet_ignored_fields_bounding_box_column_arrow_dataset(tmp_path):
     lyr.SetSpatialFilterRect(0, 0, 0, 0)
     lyr.ResetReading()
     assert lyr.GetNextFeature() is None
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_vsi_arrow_file_system():
+
+    version = int(
+        ogr.GetDriverByName("ARROW").GetMetadataItem("ARROW_VERSION").split(".")[0]
+    )
+    if version < 16:
+        pytest.skip("requires Arrow >= 16.0.0")
+
+    ds = ogr.Open("PARQUET:vsi://data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() > 0

@@ -39,6 +39,7 @@
 #include "gmlreaderp.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "cpl_conv.h"

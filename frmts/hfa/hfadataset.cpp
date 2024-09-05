@@ -2058,7 +2058,7 @@ void HFARasterBand::ReadHistogramMetadata()
                     static_cast<double>(std::numeric_limits<GUIntBig>::max()) ||
                 dfNumber <
                     static_cast<double>(std::numeric_limits<GUIntBig>::min()) ||
-                CPLIsNan(dfNumber))
+                std::isnan(dfNumber))
             {
                 CPLError(CE_Failure, CPLE_FileIO, "Out of range hist vals.");
                 CPLFree(panHistValues);

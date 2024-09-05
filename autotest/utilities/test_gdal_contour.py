@@ -628,3 +628,28 @@ def test_gdal_contour_fl_e_polygonize(gdal_contour_path, tmp_path):
         )
         i = i + 1
         feat = lyr.GetNextFeature()
+
+
+###############################################################################
+# Test -gt
+
+
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.parametrize("gt", ["0", "1", "unlimited"])
+def test_gdal_contour_gt(gdal_contour_path, tmp_path, gt):
+
+    out_filename = str(tmp_path / "contour.gpkg")
+
+    gdaltest.runexternal(
+        gdal_contour_path
+        + f" -p -amin elev -amax elev2 -fl 76 112 441 -e 3 -gt {gt} ../gdrivers/data/n43.tif {out_filename}"
+    )
+
+    ds = ogr.Open(out_filename)
+
+    lyr = ds.ExecuteSQL("select elev, elev2 from contour order by elev asc")
+
+    # Raster min is 75, max is 460
+    expected_heights = [75, 76, 81, 112, 243, 441]
+
+    assert lyr.GetFeatureCount() == len(expected_heights)

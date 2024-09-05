@@ -118,11 +118,14 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
 
         while (*pszInput != '\0')
         {
-            if (chQuote == '"' && *pszInput == '\\' && pszInput[1] == '"')
+            // Not totally sure we need to preserve this way of escaping for
+            // strings between double-quotes
+            if (chQuote == '"' && *pszInput == '\\')
+            {
                 pszInput++;
-            else if (chQuote == '\'' && *pszInput == '\\' &&
-                     pszInput[1] == '\'')
-                pszInput++;
+                if (*pszInput == '\0')
+                    break;
+            }
             else if (chQuote == '\'' && *pszInput == '\'' &&
                      pszInput[1] == '\'')
                 pszInput++;
@@ -142,7 +145,7 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Did not find end-of-string character");
             CPLFree(token);
-            return 0;
+            return YYerror;
         }
 
         *ppNode = new swq_expr_node(token);
@@ -407,8 +410,7 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
             pszValue = SZ_OGR_NULL;
         try
         {
-            if (summary.oSetDistinctValues.find(pszValue) ==
-                summary.oSetDistinctValues.end())
+            if (!cpl::contains(summary.oSetDistinctValues, pszValue))
             {
                 summary.oSetDistinctValues.insert(pszValue);
                 if (select_info->order_specs == 0)

@@ -634,8 +634,8 @@ def test_cog_byte_to_web_mercator_manual():
         options=[
             "BLOCKSIZE=256",
             "TARGET_SRS=EPSG:3857",
-            "RES=%.18g" % res,
-            "EXTENT=%.18g,%.18g,%.18g,%.18g" % (minx, miny, maxx, maxy),
+            "RES=%.17g" % res,
+            "EXTENT=%.17g,%.17g,%.17g,%.17g" % (minx, miny, maxx, maxy),
         ],
     )
     assert ds
@@ -674,7 +674,7 @@ def test_cog_byte_to_web_mercator_manual():
     gdal.Translate(
         filename2,
         filename,
-        options="-of COG -co TILING_SCHEME=GoogleMapsCompatible -a_ullr %.18g %.18g %.18g %.18g"
+        options="-of COG -co TILING_SCHEME=GoogleMapsCompatible -a_ullr %.17g %.17g %.17g %.17g"
         % (minx - eps, maxy + eps, maxx + eps, miny - eps),
     )
     ds = gdal.Open(filename2)
@@ -1922,3 +1922,32 @@ def test_cog_stats(tmp_vsimem, nbands, co, src_has_stats, expected_val):
     if expected_val and ds.RasterCount == 2:
         assert ds.GetRasterBand(2).GetMetadataItem("STATISTICS_MINIMUM") == "255"
     ds = None
+
+
+###############################################################################
+
+
+def test_cog_mask_band_overviews(tmp_vsimem):
+
+    """Test bugfix for https://github.com/OSGeo/gdal/issues/10536"""
+
+    filename = str(tmp_vsimem / "out.tif")
+    with gdal.config_option("COG_DELETE_TEMP_FILES", "NO"):
+        gdal.Translate(
+            filename,
+            "data/stefan_full_rgba.tif",
+            options="-co RESAMPLING=LANCZOS -co OVERVIEW_COUNT=3 -of COG -outsize 1024 0 -b 1 -b 2 -b 3 -mask 4",
+        )
+
+    ds = gdal.Open(filename)
+    assert [ds.GetRasterBand(i + 1).GetOverview(2).Checksum() for i in range(3)] == [
+        51556,
+        39258,
+        23928,
+    ]
+
+    ds = gdal.Open(filename + ".msk.ovr.tmp")
+    assert ds.GetMetadataItem("INTERNAL_MASK_FLAGS_1") == "2"
+    assert ds.GetRasterBand(1).IsMaskBand()
+    assert ds.GetRasterBand(1).GetOverview(0).IsMaskBand()
+    assert ds.GetRasterBand(1).GetOverview(1).IsMaskBand()

@@ -46,6 +46,10 @@
 #include "arrow/builder.h"
 #include "arrow/array/array_dict.h"
 #include "arrow/c/bridge.h"
+#include "arrow/filesystem/filesystem.h"
+#if ARROW_VERSION_MAJOR >= 16
+#include "arrow/filesystem/filesystem_library.h"
+#endif
 #include "arrow/ipc/reader.h"
 #include "arrow/ipc/writer.h"
 #include "arrow/io/file.h"
@@ -53,6 +57,7 @@
 #include "arrow/record_batch.h"
 #include "arrow/util/decimal.h"
 #include "arrow/util/key_value_metadata.h"
+#include "arrow/util/uri.h"
 
 #ifdef _MSC_VER
 #pragma warning(pop)

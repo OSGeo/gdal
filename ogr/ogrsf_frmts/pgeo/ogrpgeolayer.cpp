@@ -34,6 +34,7 @@
 #include "ogrpgeogeometry.h"
 
 #include <algorithm>
+#include <cmath>
 
 /************************************************************************/
 /*                            OGRPGeoLayer()                            */

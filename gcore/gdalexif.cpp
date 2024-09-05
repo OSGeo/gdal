@@ -35,6 +35,7 @@
 #include "gdalexif.h"
 
 #include <climits>
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -1016,7 +1017,7 @@ static bool GetNumDenomFromDouble(GDALEXIFTIFFDataType datatype, double dfVal,
 {
     nNum = 0;
     nDenom = 1;
-    if (CPLIsNan(dfVal))
+    if (std::isnan(dfVal))
     {
         return false;
     }

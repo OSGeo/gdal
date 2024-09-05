@@ -564,7 +564,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
     for (int iField = 0; iField < PQnfields(hResult); iField++)
     {
 #if defined(BINARY_CURSOR_ENABLED)
-        int nTypeOID = PQftype(hResult, iField);
+        const Oid nTypeOID = PQftype(hResult, iField);
 #endif
         const char *pszFieldName = PQfname(hResult, iField);
 

@@ -37,6 +37,7 @@
 #include "gdal_proxy.h"
 #include "gdal_rat.h"
 
+#include <cmath>
 #include <limits>
 
 /************************************************************************/

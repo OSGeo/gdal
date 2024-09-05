@@ -646,41 +646,80 @@ void VRTSourcedRasterBand::RasterIOJob::Func(void *pData)
 /*                         IGetDataCoverageStatus()                     */
 /************************************************************************/
 
-#ifndef HAVE_GEOS
-int VRTSourcedRasterBand::IGetDataCoverageStatus(
-    int /* nXOff */, int /* nYOff */, int /* nXSize */, int /* nYSize */,
-    int /* nMaskFlagStop */, double *pdfDataPct)
-{
-    // TODO(rouault): Should this set pdfDataPct?
-    if (pdfDataPct != nullptr)
-        *pdfDataPct = -1.0;
-    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
-           GDAL_DATA_COVERAGE_STATUS_DATA;
-}
-#else
 int VRTSourcedRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
                                                  int nXSize, int nYSize,
                                                  int nMaskFlagStop,
                                                  double *pdfDataPct)
 {
-    if (pdfDataPct != nullptr)
+    if (pdfDataPct)
         *pdfDataPct = -1.0;
+
+    // Particular case for a single simple source covering the whole dataset
+    if (nSources == 1 && papoSources[0]->IsSimpleSource() &&
+        papoSources[0]->GetType() == VRTSimpleSource::GetTypeStatic())
+    {
+        VRTSimpleSource *poSource =
+            static_cast<VRTSimpleSource *>(papoSources[0]);
+
+        GDALRasterBand *poBand = poSource->GetRasterBand();
+        if (!poBand)
+            poBand = poSource->GetMaskBandMainBand();
+        if (!poBand)
+        {
+            return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+                   GDAL_DATA_COVERAGE_STATUS_DATA;
+        }
+
+        /* Check that it uses the full source dataset */
+        double dfReqXOff = 0.0;
+        double dfReqYOff = 0.0;
+        double dfReqXSize = 0.0;
+        double dfReqYSize = 0.0;
+        int nReqXOff = 0;
+        int nReqYOff = 0;
+        int nReqXSize = 0;
+        int nReqYSize = 0;
+        int nOutXOff = 0;
+        int nOutYOff = 0;
+        int nOutXSize = 0;
+        int nOutYSize = 0;
+        bool bError = false;
+        if (poSource->GetSrcDstWindow(
+                0, 0, GetXSize(), GetYSize(), GetXSize(), GetYSize(),
+                &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize, &nReqXOff,
+                &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff, &nOutYOff,
+                &nOutXSize, &nOutYSize, bError) &&
+            nReqXOff == 0 && nReqYOff == 0 && nReqXSize == GetXSize() &&
+            nReqXSize == poBand->GetXSize() && nReqYSize == GetYSize() &&
+            nReqYSize == poBand->GetYSize() && nOutXOff == 0 && nOutYOff == 0 &&
+            nOutXSize == GetXSize() && nOutYSize == GetYSize())
+        {
+            return poBand->GetDataCoverageStatus(nXOff, nYOff, nXSize, nYSize,
+                                                 nMaskFlagStop, pdfDataPct);
+        }
+    }
+
+#ifndef HAVE_GEOS
+    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+           GDAL_DATA_COVERAGE_STATUS_DATA;
+#else
     int nStatus = 0;
 
-    OGRPolygon *poPolyNonCoveredBySources = new OGRPolygon();
-    OGRLinearRing *poLR = new OGRLinearRing();
-    poLR->addPoint(nXOff, nYOff);
-    poLR->addPoint(nXOff, nYOff + nYSize);
-    poLR->addPoint(nXOff + nXSize, nYOff + nYSize);
-    poLR->addPoint(nXOff + nXSize, nYOff);
-    poLR->addPoint(nXOff, nYOff);
-    poPolyNonCoveredBySources->addRingDirectly(poLR);
+    auto poPolyNonCoveredBySources = std::make_unique<OGRPolygon>();
+    {
+        auto poLR = std::make_unique<OGRLinearRing>();
+        poLR->addPoint(nXOff, nYOff);
+        poLR->addPoint(nXOff, nYOff + nYSize);
+        poLR->addPoint(nXOff + nXSize, nYOff + nYSize);
+        poLR->addPoint(nXOff + nXSize, nYOff);
+        poLR->addPoint(nXOff, nYOff);
+        poPolyNonCoveredBySources->addRingDirectly(poLR.release());
+    }
 
     for (int iSource = 0; iSource < nSources; iSource++)
     {
         if (!papoSources[iSource]->IsSimpleSource())
         {
-            delete poPolyNonCoveredBySources;
             return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
                    GDAL_DATA_COVERAGE_STATUS_DATA;
         }
@@ -705,7 +744,6 @@ int VRTSourcedRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
         {
             if (pdfDataPct)
                 *pdfDataPct = 100.0;
-            delete poPolyNonCoveredBySources;
             return GDAL_DATA_COVERAGE_STATUS_DATA;
         }
         // Check intersection of bounding boxes.
@@ -713,58 +751,51 @@ int VRTSourcedRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
             dfDstXOff < nXOff + nXSize && dfDstYOff < nYOff + nYSize)
         {
             nStatus |= GDAL_DATA_COVERAGE_STATUS_DATA;
-            if (poPolyNonCoveredBySources != nullptr)
+            if (poPolyNonCoveredBySources)
             {
                 OGRPolygon oPolySource;
-                poLR = new OGRLinearRing();
+                auto poLR = std::make_unique<OGRLinearRing>();
                 poLR->addPoint(dfDstXOff, dfDstYOff);
                 poLR->addPoint(dfDstXOff, dfDstYOff + dfDstYSize);
                 poLR->addPoint(dfDstXOff + dfDstXSize, dfDstYOff + dfDstYSize);
                 poLR->addPoint(dfDstXOff + dfDstXSize, dfDstYOff);
                 poLR->addPoint(dfDstXOff, dfDstYOff);
-                oPolySource.addRingDirectly(poLR);
-                OGRGeometry *poRes =
-                    poPolyNonCoveredBySources->Difference(&oPolySource);
-                if (poRes != nullptr && poRes->IsEmpty())
+                oPolySource.addRingDirectly(poLR.release());
+                auto poRes = std::unique_ptr<OGRGeometry>(
+                    poPolyNonCoveredBySources->Difference(&oPolySource));
+                if (poRes && poRes->IsEmpty())
                 {
-                    delete poRes;
                     if (pdfDataPct)
                         *pdfDataPct = 100.0;
-                    delete poPolyNonCoveredBySources;
                     return GDAL_DATA_COVERAGE_STATUS_DATA;
                 }
-                else if (poRes != nullptr &&
-                         poRes->getGeometryType() == wkbPolygon)
+                else if (poRes && poRes->getGeometryType() == wkbPolygon)
                 {
-                    delete poPolyNonCoveredBySources;
-                    poPolyNonCoveredBySources = poRes->toPolygon();
+                    poPolyNonCoveredBySources.reset(
+                        poRes.release()->toPolygon());
                 }
                 else
                 {
-                    delete poRes;
-                    delete poPolyNonCoveredBySources;
-                    poPolyNonCoveredBySources = nullptr;
+                    poPolyNonCoveredBySources.reset();
                 }
             }
         }
         if (nMaskFlagStop != 0 && (nStatus & nMaskFlagStop) != 0)
         {
-            delete poPolyNonCoveredBySources;
             return nStatus;
         }
     }
-    if (poPolyNonCoveredBySources != nullptr)
+    if (poPolyNonCoveredBySources)
     {
         if (!poPolyNonCoveredBySources->IsEmpty())
             nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
-        if (pdfDataPct != nullptr)
+        if (pdfDataPct)
             *pdfDataPct = 100.0 * (1.0 - poPolyNonCoveredBySources->get_Area() /
                                              nXSize / nYSize);
     }
-    delete poPolyNonCoveredBySources;
     return nStatus;
-}
 #endif  // HAVE_GEOS
+}
 
 /************************************************************************/
 /*                             IReadBlock()                             */

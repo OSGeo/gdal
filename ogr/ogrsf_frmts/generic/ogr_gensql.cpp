@@ -1324,7 +1324,7 @@ static CPLString GetFilterForJoin(swq_expr_node *poExpr, OGRFeature *poSrcFeat,
                         break;
                     case SWQ_FLOAT:
                         return CPLString().Printf(
-                            "%.18g",
+                            "%.17g",
                             poSrcFeat->GetFieldAsDouble(poExpr->field_index));
                         break;
                     default:
@@ -1359,7 +1359,7 @@ static CPLString GetFilterForJoin(swq_expr_node *poExpr, OGRFeature *poSrcFeat,
                         break;
 
                     case OFTReal:
-                        return CPLString().Printf("%.18g", psSrcField->Real);
+                        return CPLString().Printf("%.17g", psSrcField->Real);
                         break;
 
                     case OFTString:

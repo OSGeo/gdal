@@ -37,6 +37,7 @@
 #include "memdataset.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "degrib/degrib/meta.h"
@@ -180,7 +181,7 @@ class GRIB2Section3Writer
     bool WriteMercator1SP();
     bool WriteMercator2SP(OGRSpatialReference *poSRS = nullptr);
     bool WriteTransverseMercator();
-    bool WritePolarSteregraphic();
+    bool WritePolarStereographic();
     bool WriteLCC1SP();
     bool WriteLCC2SPOrAEA(OGRSpatialReference *poSRS = nullptr);
     bool WriteLAEA();
@@ -547,10 +548,10 @@ bool GRIB2Section3Writer::WriteTransverseMercator()
 }
 
 /************************************************************************/
-/*                       WritePolarSteregraphic()                       */
+/*                       WritePolarStereographic()                       */
 /************************************************************************/
 
-bool GRIB2Section3Writer::WritePolarSteregraphic()
+bool GRIB2Section3Writer::WritePolarStereographic()
 {
     WriteUInt16(fp, GS3_POLAR);  // Grid template number
     WriteEllipsoidAndRasterSize();
@@ -803,7 +804,7 @@ bool GRIB2Section3Writer::Write()
     }
     else if (pszProjection && EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC))
     {
-        bRet = WritePolarSteregraphic();
+        bRet = WritePolarStereographic();
     }
     else if (pszProjection != nullptr &&
              EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP))
@@ -970,7 +971,7 @@ float *GRIB2Section567Writer::GetFloatData()
                 bHasNoDataValuePoint = true;
             continue;
         }
-        if (!CPLIsFinite(pafData[i]))
+        if (!std::isfinite(pafData[i]))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Non-finite values not supported for "

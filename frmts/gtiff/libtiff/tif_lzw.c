@@ -417,6 +417,7 @@ static int LZWDecode(TIFF *tif, uint8_t *op0, tmsize_t occ0, uint16_t s)
 
     if (sp->read_error)
     {
+        memset(op, 0, (size_t)occ);
         TIFFErrorExtR(tif, module,
                       "LZWDecode: Scanline %" PRIu32 " cannot be read due to "
                       "previous error",
@@ -731,6 +732,7 @@ after_loop:
 
     if (occ > 0)
     {
+        memset(op, 0, (size_t)occ);
         TIFFErrorExtR(tif, module,
                       "Not enough data at scanline %" PRIu32 " (short %" PRIu64
                       " bytes)",
@@ -740,12 +742,14 @@ after_loop:
     return (1);
 
 no_eoi:
+    memset(op, 0, (size_t)occ);
     sp->read_error = 1;
     TIFFErrorExtR(tif, module,
                   "LZWDecode: Strip %" PRIu32 " not terminated with EOI code",
                   tif->tif_curstrip);
     return 0;
 error_code:
+    memset(op, 0, (size_t)occ);
     sp->read_error = 1;
     TIFFErrorExtR(tif, tif->tif_name, "Using code not yet in table");
     return 0;

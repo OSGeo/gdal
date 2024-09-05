@@ -42,6 +42,63 @@ namespace OGRHANA
 
 constexpr const char *ARRAY_VALUES_DELIMITER = "^%^";
 
+class HanaVersion
+{
+
+  public:
+    explicit HanaVersion(unsigned int major, unsigned int minor,
+                         unsigned int patch)
+        : components_{major, minor, patch}
+    {
+    }
+
+    HanaVersion() : components_{0, 0, 0}
+    {
+    }
+
+    unsigned int major() const
+    {
+        return components_[0];
+    }
+
+    unsigned int minor() const
+    {
+        return components_[1];
+    }
+
+    unsigned int patch() const
+    {
+        return components_[2];
+    }
+
+    bool operator<=(const HanaVersion &other)
+    {
+        for (size_t i = 0; i < 3; ++i)
+            if (components_[i] != other.components_[i])
+                return components_[i] < other.components_[i];
+        return true;
+    }
+
+    bool operator>=(const HanaVersion &other)
+    {
+        return !(*this <= other) || (*this == other);
+    }
+
+    bool operator==(const HanaVersion &other)
+    {
+        for (size_t i = 0; i < 3; ++i)
+            if (components_[i] != other.components_[i])
+                return false;
+        return true;
+    }
+
+  public:
+    static HanaVersion fromString(const char *str);
+
+  private:
+    unsigned int components_[3];
+};
+
 const char *SkipLeadingSpaces(const char *value);
 CPLString JoinStrings(const std::vector<CPLString> &strs, const char *delimiter,
                       CPLString (*decorator)(const CPLString &str) = nullptr);

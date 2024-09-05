@@ -111,7 +111,7 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML(const char * /* pszUnused */)
 
     if (psPam->bNoDataValueSet)
     {
-        if (CPLIsNan(psPam->dfNoDataValue))
+        if (std::isnan(psPam->dfNoDataValue))
             CPLSetXMLValue(psTree, "NoDataValue", "nan");
         else
             CPLSetXMLValue(psTree, "NoDataValue",

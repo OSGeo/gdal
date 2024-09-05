@@ -873,6 +873,15 @@ void GDALDataset::SetBand(int nNewBand, GDALRasterBand *poBand)
             papoBands[i] = nullptr;
 
         nBands = std::max(nBands, nNewBand);
+
+        if (m_poPrivate)
+        {
+            for (int i = static_cast<int>(m_poPrivate->m_anBandMap.size());
+                 i < nBands; ++i)
+            {
+                m_poPrivate->m_anBandMap.push_back(i + 1);
+            }
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -2781,13 +2790,7 @@ CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         if (!m_poPrivate)
             return CE_Failure;
-        const int nOldBandMapSize =
-            static_cast<int>(m_poPrivate->m_anBandMap.size());
-        if (nOldBandMapSize < nBandCount)
-        {
-            for (int i = nOldBandMapSize; i < nBandCount; ++i)
-                m_poPrivate->m_anBandMap.push_back(i + 1);
-        }
+        CPLAssert(static_cast<int>(m_poPrivate->m_anBandMap.size()) == nBands);
         panBandMap = m_poPrivate->m_anBandMap.data();
     }
 

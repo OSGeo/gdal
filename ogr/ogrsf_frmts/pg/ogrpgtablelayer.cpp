@@ -1086,9 +1086,9 @@ void OGRPGTableLayer::BuildWhere()
             if (sEnvelope.MaxY > 90.0)
                 sEnvelope.MaxY = 90.0;
         }
-        CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.18g %.18g", sEnvelope.MinX,
+        CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.17g %.17g", sEnvelope.MinX,
                     sEnvelope.MinY);
-        CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX,
+        CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.17g %.17g", sEnvelope.MaxX,
                     sEnvelope.MaxY);
         osWHERE.Printf(
             "WHERE %s && ST_SetSRID('BOX3D(%s, %s)'::box3d,%d) ",
@@ -2536,23 +2536,8 @@ OGRPGTableLayer::RunCreateSpatialIndex(const OGRPGGeomFieldDefn *poGeomField,
     PGconn *hPGConn = poDS->GetPGConn();
     CPLString osCommand;
 
-    std::string osIndexName(pszTableName);
-    std::string osSuffix("_");
-    osSuffix += poGeomField->GetNameRef();
-    osSuffix += "_geom_idx";
-    if (bLaunderColumnNames)
-    {
-        if (osSuffix.size() >= static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
-        {
-            osSuffix = "_";
-            osSuffix += CPLSPrintf("%d", nIdx);
-            osSuffix += "_geom_idx";
-        }
-        if (osIndexName.size() + osSuffix.size() >
-            static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
-            osIndexName.resize(OGR_PG_NAMEDATALEN - 1 - osSuffix.size());
-    }
-    osIndexName += osSuffix;
+    const std::string osIndexName(OGRPGCommonGenerateSpatialIndexName(
+        pszTableName, poGeomField->GetNameRef(), nIdx));
 
     osCommand.Printf("CREATE INDEX %s ON %s USING %s (%s)",
                      OGRPGEscapeColumnName(osIndexName.c_str()).c_str(),

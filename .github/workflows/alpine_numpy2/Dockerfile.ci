@@ -67,7 +67,7 @@ RUN apk add \
     zlib-dev \
     zstd-dev
 
-# Commenting out those packages to be sure to test numpy 2.0.0rc1
+# Commenting out those packages to be sure to test numpy 2.0.0
 #    py3-numpy \
 #    py3-numpy-dev \
 #    py3-pyarrow \
@@ -77,6 +77,6 @@ RUN apk add \
 RUN mv /usr/lib/python3.12/site-packages/pyarrow /usr/lib/python3.12/site-packages/pyarrow.disabled
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install --break-system-packages numpy==2.0.0rc1
+RUN python3 -m pip install --break-system-packages numpy==2.0.0
 RUN python3 -m pip install --break-system-packages -U -r /tmp/requirements.txt
 

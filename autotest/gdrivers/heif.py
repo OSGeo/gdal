@@ -29,6 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
+import shutil
+
 import pytest
 
 from osgeo import gdal
@@ -130,9 +133,12 @@ def test_heif_rgba_16bit():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
 
 
-def test_heif_subdatasets():
+def test_heif_subdatasets(tmp_path):
 
-    ds = gdal.Open("data/heif/subdatasets.heic")
+    filename = str(tmp_path / "out.heic")
+    shutil.copy("data/heif/subdatasets.heic", filename)
+
+    ds = gdal.Open(filename)
     assert ds
     assert len(ds.GetSubDatasets()) == 2
     subds1_name = ds.GetSubDatasets()[0][0]
@@ -141,15 +147,23 @@ def test_heif_subdatasets():
     ds = gdal.Open(subds1_name)
     assert ds
     assert ds.RasterXSize == 64
+    assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is None
+    assert ds.GetRasterBand(1).ComputeStatistics(False)
+    assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is not None
+    ds.Close()
+
+    ds = gdal.Open(subds1_name)
+    assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is not None
 
     ds = gdal.Open(subds2_name)
     assert ds
     assert ds.RasterXSize == 162
+    assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is None
 
     with pytest.raises(Exception):
-        gdal.Open("HEIF:0:data/heif/subdatasets.heic")
+        gdal.Open(f"HEIF:0:{filename}")
     with pytest.raises(Exception):
-        gdal.Open("HEIF:3:data/heif/subdatasets.heic")
+        gdal.Open(f"HEIF:3:{filename}")
     with pytest.raises(Exception):
         gdal.Open("HEIF:1:non_existing.heic")
     with pytest.raises(Exception):
@@ -158,3 +172,61 @@ def test_heif_subdatasets():
         gdal.Open("HEIF:1")
     with pytest.raises(Exception):
         gdal.Open("HEIF:1:")
+
+
+def test_heif_identify_no_match():
+
+    drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["HEIF"])
+    assert drv is None
+
+
+def test_heif_identify_heic():
+
+    drv = gdal.IdentifyDriverEx("data/heif/subdatasets.heic", allowed_drivers=["HEIF"])
+    assert drv.GetDescription() == "HEIF"
+
+
+@pytest.mark.parametrize(
+    "major_brand,compatible_brands,expect_success",
+    [
+        ("heic", [], True),
+        ("heix", [], True),
+        ("j2ki", [], True),
+        ("j2ki", ["j2ki"], True),
+        ("jpeg", [], True),
+        ("jpg ", [], False),
+        ("miaf", [], True),
+        ("mif1", [], True),
+        ("mif2", [], True),
+        ("mif9", [], False),  # this doesn't exist
+        ("fake", ["miaf"], True),
+        ("j2kj", [], False),
+        ("fake", [], False),
+        ("fake", ["fake", "also"], False),
+        ("fake", ["fake", "avif"], True),
+        ("fake", ["fake", "bvif"], False),
+        ("fake", ["fake", "mif2"], True),
+        ("fake", ["fake", "mif9"], False),
+    ],
+)
+def test_identify_various(major_brand, compatible_brands, expect_success):
+
+    f = gdal.VSIFOpenL("/vsimem/heif_header.bin", "wb")
+    gdal.VSIFSeekL(f, 4, os.SEEK_SET)
+    gdal.VSIFWriteL("ftyp", 1, 4, f)  # box type
+    gdal.VSIFWriteL(major_brand, 1, 4, f)
+    gdal.VSIFWriteL(b"\x00\x00\x00\x00", 1, 4, f)  # minor_version
+    for brand in compatible_brands:
+        gdal.VSIFWriteL(brand, 1, 4, f)
+    length = gdal.VSIFTellL(f)
+    gdal.VSIFSeekL(f, 0, os.SEEK_SET)  # go back and fill in actual box size
+    gdal.VSIFWriteL(length.to_bytes(4, "big"), 1, 4, f)
+    gdal.VSIFCloseL(f)
+
+    drv = gdal.IdentifyDriverEx("/vsimem/heif_header.bin", allowed_drivers=["HEIF"])
+    if expect_success:
+        assert drv.GetDescription() == "HEIF"
+    else:
+        assert drv is None
+
+    gdal.Unlink("/vsimem/heif_header.bin")

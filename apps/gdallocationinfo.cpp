@@ -31,10 +31,12 @@
 #include "cpl_minixml.h"
 #include "gdal_version.h"
 #include "gdal.h"
+#include "gdal_priv.h"
 #include "commonutils.h"
 #include "ogr_spatialref.h"
 #include "gdalargumentparser.h"
 
+#include <cmath>
 #include <limits>
 #include <vector>
 
@@ -251,24 +253,12 @@ MAIN_START(argc, argv)
         exit(1);
     }
 
-    GDALRIOResampleAlg eInterpolation{GRIORA_NearestNeighbour};
-    if (osResampling.empty() || STARTS_WITH_CI(osResampling.c_str(), "NEAR"))
-    {
-        eInterpolation = GRIORA_NearestNeighbour;
-    }
-    else if (EQUAL(osResampling.c_str(), "BILINEAR"))
-    {
-        eInterpolation = GRIORA_Bilinear;
-    }
-    else if (EQUAL(osResampling.c_str(), "CUBICSPLINE"))
-    {
-        eInterpolation = GRIORA_CubicSpline;
-    }
-    else if (EQUAL(osResampling.c_str(), "CUBIC"))
-    {
-        eInterpolation = GRIORA_Cubic;
-    }
-    else
+    const GDALRIOResampleAlg eInterpolation =
+        osResampling.empty() ? GRIORA_NearestNeighbour
+                             : GDALRasterIOGetResampleAlg(osResampling.c_str());
+    if (eInterpolation != GRIORA_NearestNeighbour &&
+        eInterpolation != GRIORA_Bilinear && eInterpolation != GRIORA_Cubic &&
+        eInterpolation != GRIORA_CubicSpline)
     {
         fprintf(stderr, "-r can only be used with values nearest, bilinear, "
                         "cubic and cubicspline\n");
@@ -382,6 +372,8 @@ MAIN_START(argc, argv)
     {
         int iPixel, iLine;
         double dfPixel{0}, dfLine{0};
+        const double dfXIn = dfGeoX;
+        const double dfYIn = dfGeoY;
 
         if (hCT)
         {
@@ -463,7 +455,7 @@ MAIN_START(argc, argv)
         }
         else if (bEcho)
         {
-            printf("%d%s%d%s", iPixel, osFieldSep.c_str(), iLine,
+            printf("%.15g%s%.15g%s", dfXIn, osFieldSep.c_str(), dfYIn,
                    osFieldSep.c_str());
         }
 
@@ -607,18 +599,10 @@ MAIN_START(argc, argv)
                 GDALDataTypeIsComplex(GDALGetRasterDataType(hBand)));
 
             CPLErr err;
-            if (bIsComplex)
-            {
-                err = GDALRasterIO(hBand, GF_Read, iPixelToQuery, iLineToQuery,
-                                   1, 1, adfPixel, 1, 1, GDT_CFloat64, 0, 0);
-            }
-            else
-            {
-                // GDALRasterInterpolateAtPoint is not implemented yet for complex datatype
-                err = GDALRasterInterpolateAtPoint(
-                    hBand, dfPixelToQuery, dfLineToQuery, eInterpolation,
-                    adfPixel, nullptr);
-            }
+            err = GDALRasterInterpolateAtPoint(hBand, dfPixelToQuery,
+                                               dfLineToQuery, eInterpolation,
+                                               &adfPixel[0], &adfPixel[1]);
+
             if (err == CE_None)
             {
                 CPLString osValue;

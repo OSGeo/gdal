@@ -32,6 +32,7 @@
 #include "rawdataset.h"
 
 #include <algorithm>
+#include <cmath>
 
 #ifndef UTM_FORMAT_defined
 #define UTM_FORMAT_defined
@@ -231,10 +232,10 @@ GDALDataset *DOQ1Dataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Do these values look coherent for a DOQ file?  It would be      */
     /*      nice to do a more comprehensive test than this!                 */
     /* -------------------------------------------------------------------- */
-    if (dfWidth < 500 || dfWidth > 25000 || CPLIsNan(dfWidth) ||
-        dfHeight < 500 || dfHeight > 25000 || CPLIsNan(dfHeight) ||
-        dfBandStorage < 0 || dfBandStorage > 4 || CPLIsNan(dfBandStorage) ||
-        dfBandTypes < 1 || dfBandTypes > 9 || CPLIsNan(dfBandTypes))
+    if (dfWidth < 500 || dfWidth > 25000 || std::isnan(dfWidth) ||
+        dfHeight < 500 || dfHeight > 25000 || std::isnan(dfHeight) ||
+        dfBandStorage < 0 || dfBandStorage > 4 || std::isnan(dfBandStorage) ||
+        dfBandTypes < 1 || dfBandTypes > 9 || std::isnan(dfBandTypes))
         return nullptr;
 
     const int nWidth = static_cast<int>(dfWidth);

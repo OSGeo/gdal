@@ -173,7 +173,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     ); fi
 
 # Build libOpenDRIVE
-ARG OPENDRIVE_VERSION=0.5.0-gdal
+ARG OPENDRIVE_VERSION=0.6.0-gdal
 RUN . /buildscripts/bh-set-envvars.sh \
     && if test "${OPENDRIVE_VERSION}" != ""; then ( \
     wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
@@ -190,7 +190,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd .. \
     && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
     ); fi
-    
+
 #Build File Geodatabase
 
 ARG WITH_FILEGDB=
@@ -221,12 +221,12 @@ RUN . /buildscripts/bh-set-envvars.sh \
 
 ARG WITH_PDFIUM=yes
 RUN if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  wget -q https://github.com/rouault/pdfium_build_gdal_3_9/releases/download/pdfium_6309_v1/install-ubuntu2004-rev6309.tar.gz \
-  && tar -xzf install-ubuntu2004-rev6309.tar.gz \
+  wget -q https://github.com/rouault/pdfium_build_gdal_3_10/releases/download/pdfium_6677_v1/install-ubuntu2004-rev6677.tar.gz \
+  && tar -xzf install-ubuntu2004-rev6677.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev6309.tar.gz install \
+  && rm -rf install-ubuntu2004-rev6677.tar.gz install \
   && apt-get update -y \
   && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev${APT_ARCH_SUFFIX} \
   && rm -rf /var/lib/apt/lists/* \

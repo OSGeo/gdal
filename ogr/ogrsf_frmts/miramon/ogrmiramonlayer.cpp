@@ -2216,6 +2216,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
     MM_EXT_DBF_N_FIELDS nNumFields = m_poFeatureDefn->GetFieldCount();
     MM_EXT_DBF_N_MULTIPLE_RECORDS nNumRecords, nRealNumRecords;
     hMMFeature.nNumMRecords = 0;
+#define MAX_SIZE_OF_FIELD_NUMBER_WITH_MINUS 22
 
     for (MM_EXT_DBF_N_FIELDS iField = 0; iField < nNumFields; iField++)
     {
@@ -2427,7 +2428,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
 
-                char szChain[21];
+                char szChain[MAX_SIZE_OF_FIELD_NUMBER_WITH_MINUS];
                 MM_SprintfDoubleSignifFigures(
                     szChain, sizeof(szChain),
                     phMiraMonLayer->pLayerDB->pFields[iField].nNumberOfDecimals,
@@ -2643,7 +2644,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 0;
             else
             {
-                char szChain[21];
+                char szChain[MAX_SIZE_OF_FIELD_NUMBER_WITH_MINUS];
                 MM_SprintfDoubleSignifFigures(
                     szChain, sizeof(szChain),
                     phMiraMonLayer->pLayerDB->pFields[iField].nNumberOfDecimals,

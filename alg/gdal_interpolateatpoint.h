@@ -54,7 +54,7 @@ bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
                             GDALRIOResampleAlg eResampleAlg,
                             std::unique_ptr<DoublePointsCache> &cache,
                             const double dfXIn, const double dfYIn,
-                            double *pdfOutputValue);
+                            double *pdfOutputReal, double *pdfOutputImag);
 
 /*! @endcond */
 

@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <algorithm>
+#include <cmath>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -100,7 +101,7 @@ static void MakeKMLCoordinate(char *pszTarget, size_t nTargetLen, double x,
             }
 
             // Trash drastically non-sensical values.
-            if (x > 1.0e6 || x < -1.0e6 || CPLIsNan(x))
+            if (x > 1.0e6 || x < -1.0e6 || std::isnan(x))
             {
                 static bool bFirstWarning2 = true;
                 if (bFirstWarning2)

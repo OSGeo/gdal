@@ -336,17 +336,29 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
                         : oFirstEnum.panPolyIdMap[panThisLineId[iX]];
             }
 
-            oPolygonizer.processLine(panLastLineId, panLastLineVal,
-                                     paoThisLineArm, paoLastLineArm, iY,
-                                     nXSize);
-            eErr = oPolygonWriter.getErr();
+            if (!oPolygonizer.processLine(panLastLineId, panLastLineVal,
+                                          paoThisLineArm, paoLastLineArm, iY,
+                                          nXSize))
+            {
+                eErr = CE_Failure;
+            }
+            else
+            {
+                eErr = oPolygonWriter.getErr();
+            }
         }
         else
         {
-            oPolygonizer.processLine(panThisLineId, panLastLineVal,
-                                     paoThisLineArm, paoLastLineArm, iY,
-                                     nXSize);
-            eErr = oPolygonWriter.getErr();
+            if (!oPolygonizer.processLine(panThisLineId, panLastLineVal,
+                                          paoThisLineArm, paoLastLineArm, iY,
+                                          nXSize))
+            {
+                eErr = CE_Failure;
+            }
+            else
+            {
+                eErr = oPolygonWriter.getErr();
+            }
         }
 
         if (eErr != CE_None)

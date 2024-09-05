@@ -264,7 +264,7 @@ Drivers and driver registration
      driver level because, in practice, layer creation options do not depend on the
      dataset instance.
      The value of this item is an XML snippet with a format similar to dataset creation
-     options. 
+     options.
      If specified, the passed creation options to CreateLayer() are validated
      against that authorized creation option list.
      Below an example of such an authorized open option list in the Shapefile driver.
@@ -305,17 +305,17 @@ Datasets / Datasources
 
        virtual int         TestCapability( const char * ) { return FALSE; }
 
-       virtual OGRLayer   *CreateLayer( const char *pszName, 
+       virtual OGRLayer   *CreateLayer( const char *pszName,
                                         OGRSpatialReference *poSpatialRef = NULL,
                                         OGRwkbGeometryType eGType = wkbUnknown,
                                         char ** papszOptions = NULL );
-       virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer, 
-                                      const char *pszNewName, 
+       virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer,
+                                      const char *pszNewName,
                                       char **papszOptions = NULL );
 
        virtual OGRStyleTable *GetStyleTable();
        virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable );
-                               
+
        virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
 
        virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
@@ -337,7 +337,7 @@ Datasets / Datasources
    OGRLayerH CPL_DLL GDALDatasetGetLayer( GDALDatasetH, int );
    OGRLayerH CPL_DLL GDALDatasetGetLayerByName( GDALDatasetH, const char * );
    OGRErr    CPL_DLL GDALDatasetDeleteLayer( GDALDatasetH, int );
-   OGRLayerH CPL_DLL GDALDatasetCreateLayer( GDALDatasetH, const char *, 
+   OGRLayerH CPL_DLL GDALDatasetCreateLayer( GDALDatasetH, const char *,
                                          OGRSpatialReferenceH, OGRwkbGeometryType,
                                          char ** );
    OGRLayerH CPL_DLL GDALDatasetCopyLayer( GDALDatasetH, OGRLayerH, const char *,
@@ -383,7 +383,7 @@ Datasets / Datasources
 
 ::
 
-       virtual OGRLayer   *ICreateLayer( const char *pszName, 
+       virtual OGRLayer   *ICreateLayer( const char *pszName,
                                         OGRSpatialReference *poSpatialRef = NULL,
                                         OGRwkbGeometryType eGType = wkbUnknown,
                                         char ** papszOptions = NULL );
@@ -397,7 +397,7 @@ Datasets / Datasources
    creation option list (GDAL_DS_LAYER_CREATIONOPTIONLIST), before calling
    ICreateLayer() (this is similar to RasterIO() / IRasterIO() )
    A global pass on all in-tree OGR drivers has been made to rename CreateLayer()
-   as ICreateLayer(). 
+   as ICreateLayer().
 
 -  GDALOpenEx() is added to be able to open raster-only, vector-only, or
    raster-vector datasets. It accepts read-only/update mode,
@@ -533,7 +533,7 @@ Changes in drivers
    a file to determine if they recognize it. They have been converted to
    GDALDriver to accept a GDALOpenInfo argument and they now use its
    pabyHeader field to examine the first bytes of files. The number of
-   system calls realated to file access (open/stat), in order to
+   system calls related to file access (open/stat), in order to
    determine that a file is not recognized by any OGR driver, has now
    dropped from 46 in GDAL 1.11 to 1. The converted drivers are :
    AeronavFAA, ArcGEN, AVCBin, AVCE00, BNA, CSV, DGN, EDIGEO, ESRI

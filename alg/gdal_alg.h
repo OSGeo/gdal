@@ -310,6 +310,9 @@ typedef struct
     int nElevFieldMax;
     int nIDField;
     int nNextID;
+
+    GIntBig nWrittenFeatureCountSinceLastCommit;
+    GIntBig nTransactionCommitInterval;
 } OGRContourWriterInfo;
 
 CPLErr CPL_DLL OGRContourWriter(double, int, double *, double *, void *pInfo);

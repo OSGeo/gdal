@@ -26,6 +26,14 @@ add_library(
   printbuf.c
   random_seed.c
   strerror_override.c)
+
+if ((MSVC AND NOT (MSVC_VERSION LESS 1800)) OR MINGW OR CYGWIN OR UNIX)
+    check_symbol_exists(INFINITY    "math.h" HAVE_DECL_INFINITY)
+    check_symbol_exists(isinf       "math.h" HAVE_DECL_ISINF)
+    check_symbol_exists(isnan       "math.h" HAVE_DECL_ISNAN)
+    check_symbol_exists(NAN         "math.h" HAVE_DECL_NAN)
+endif()
+
 # -D_XOPEN_SOURCE=700 to enable strdup() definition in C11 mode
 target_compile_definitions(libjson PRIVATE -D_XOPEN_SOURCE=700)
 target_include_directories(libjson PRIVATE $<TARGET_PROPERTY:cpl,SOURCE_DIR> $<TARGET_PROPERTY:cpl,BINARY_DIR>)
@@ -36,5 +44,18 @@ if (MSVC)
   target_compile_options(libjson PRIVATE ${GDAL_SOFTWARNFLAGS} /wd4306)
 endif ()
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libjson>)
+
+if(HAVE_DECL_INFINITY)
+    target_compile_definitions(libjson PRIVATE HAVE_DECL_INFINITY)
+endif()
+if(HAVE_DECL_ISINF)
+    target_compile_definitions(libjson PRIVATE HAVE_DECL_ISINF)
+endif()
+if(HAVE_DECL_ISNAN)
+    target_compile_definitions(libjson PRIVATE HAVE_DECL_ISNAN)
+endif()
+if(HAVE_DECL_NAN)
+    target_compile_definitions(libjson PRIVATE HAVE_DECL_NAN)
+endif()
 
 set_property(TARGET libjson PROPERTY UNITY_BUILD OFF)

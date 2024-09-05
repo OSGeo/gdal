@@ -1100,35 +1100,38 @@ void OGRGeometryCollection::closeRings()
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRGeometryCollection::setCoordinateDimension(int nNewDimension)
+bool OGRGeometryCollection::setCoordinateDimension(int nNewDimension)
 
 {
     for (auto &poSubGeom : *this)
     {
-        poSubGeom->setCoordinateDimension(nNewDimension);
+        if (!poSubGeom->setCoordinateDimension(nNewDimension))
+            return false;
     }
 
-    OGRGeometry::setCoordinateDimension(nNewDimension);
+    return OGRGeometry::setCoordinateDimension(nNewDimension);
 }
 
-void OGRGeometryCollection::set3D(OGRBoolean bIs3D)
+bool OGRGeometryCollection::set3D(OGRBoolean bIs3D)
 {
     for (auto &poSubGeom : *this)
     {
-        poSubGeom->set3D(bIs3D);
+        if (!poSubGeom->set3D(bIs3D))
+            return false;
     }
 
-    OGRGeometry::set3D(bIs3D);
+    return OGRGeometry::set3D(bIs3D);
 }
 
-void OGRGeometryCollection::setMeasured(OGRBoolean bIsMeasured)
+bool OGRGeometryCollection::setMeasured(OGRBoolean bIsMeasured)
 {
     for (auto &poSubGeom : *this)
     {
-        poSubGeom->setMeasured(bIsMeasured);
+        if (!poSubGeom->setMeasured(bIsMeasured))
+            return false;
     }
 
-    OGRGeometry::setMeasured(bIsMeasured);
+    return OGRGeometry::setMeasured(bIsMeasured);
 }
 
 /************************************************************************/
@@ -1159,8 +1162,12 @@ double OGRGeometryCollection::get_Length() const
             const OGRCurve *poCurve = poSubGeom->toCurve();
             dfLength += poCurve->get_Length();
         }
-        else if (OGR_GT_IsSubClassOf(eType, wkbMultiCurve) ||
-                 eType == wkbGeometryCollection)
+        else if (OGR_GT_IsSurface(eType))
+        {
+            const OGRSurface *poSurface = poSubGeom->toSurface();
+            dfLength += poSurface->get_Length();
+        }
+        else if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
         {
             const OGRGeometryCollection *poColl =
                 poSubGeom->toGeometryCollection();
@@ -1224,6 +1231,9 @@ double OGRGeometryCollection::get_Area() const
  * The returned area will always be in square meters, and assumes that
  * polygon edges describe geodesic lines on the ellipsoid.
  *
+ * <a href="https://geographiclib.sourceforge.io/html/python/geodesics.html">Geodesics</a>
+ * follow the shortest route on the surface of the ellipsoid.
+ *
  * If the geometry' SRS is not a geographic one, geometries are reprojected to
  * the underlying geographic SRS of the geometry' SRS.
  * OGRSpatialReference::GetDataAxisToSRSAxisMapping() is honored.
@@ -1246,9 +1256,6 @@ double OGRGeometryCollection::get_Area() const
 double OGRGeometryCollection::get_GeodesicArea(
     const OGRSpatialReference *poSRSOverride) const
 {
-    if (!poSRSOverride)
-        poSRSOverride = getSpatialReference();
-
     double dfArea = 0.0;
     for (const auto &poSubGeom : *this)
     {
@@ -1270,8 +1277,7 @@ double OGRGeometryCollection::get_GeodesicArea(
                 return dfLocalArea;
             dfArea += dfLocalArea;
         }
-        else if (OGR_GT_IsSubClassOf(eType, wkbMultiSurface) ||
-                 eType == wkbGeometryCollection)
+        else if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
         {
             const double dfLocalArea =
                 poSubGeom->toGeometryCollection()->get_GeodesicArea(
@@ -1283,6 +1289,82 @@ double OGRGeometryCollection::get_GeodesicArea(
     }
 
     return dfArea;
+}
+
+/************************************************************************/
+/*                        get_GeodesicLength()                          */
+/************************************************************************/
+
+/**
+ * \brief Get the length of the collection,where curve edges are geodesic lines
+ * on the underlying ellipsoid of the SRS attached to the geometry.
+ *
+ * The returned length will always be in meters.
+ *
+ * <a href="https://geographiclib.sourceforge.io/html/python/geodesics.html">Geodesics</a>
+ * follow the shortest route on the surface of the ellipsoid.
+ *
+ * If the geometry' SRS is not a geographic one, geometries are reprojected to
+ * the underlying geographic SRS of the geometry' SRS.
+ * OGRSpatialReference::GetDataAxisToSRSAxisMapping() is honored.
+ *
+ * Note that geometries with circular arcs will be linearized in their original
+ * coordinate space first, so the resulting geodesic length will be an
+ * approximation.
+ *
+ * The length is computed as the sum of the lengths of all members
+ * in this collection.
+ *
+ * @note No warning will be issued if a member of the collection does not
+ *       support the get_GeodesicLength method.
+ *
+ * @param poSRSOverride If not null, overrides OGRGeometry::getSpatialReference()
+ * @return the length of the geometry in meters, or a negative value in case
+ * of error.
+ *
+ * @see get_Length() for an alternative method returning areas computed in
+ * 2D Cartesian space.
+ *
+ * @since GDAL 3.10
+ */
+double OGRGeometryCollection::get_GeodesicLength(
+    const OGRSpatialReference *poSRSOverride) const
+{
+    double dfLength = 0.0;
+    for (const auto &poSubGeom : *this)
+    {
+        const OGRwkbGeometryType eType =
+            wkbFlatten(poSubGeom->getGeometryType());
+        if (OGR_GT_IsSurface(eType))
+        {
+            const OGRSurface *poSurface = poSubGeom->toSurface();
+            const double dfLocalLength =
+                poSurface->get_GeodesicLength(poSRSOverride);
+            if (dfLocalLength < 0)
+                return dfLocalLength;
+            dfLength += dfLocalLength;
+        }
+        else if (OGR_GT_IsCurve(eType))
+        {
+            const OGRCurve *poCurve = poSubGeom->toCurve();
+            const double dfLocalLength =
+                poCurve->get_GeodesicLength(poSRSOverride);
+            if (dfLocalLength < 0)
+                return dfLocalLength;
+            dfLength += dfLocalLength;
+        }
+        else if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
+        {
+            const double dfLocalLength =
+                poSubGeom->toGeometryCollection()->get_GeodesicLength(
+                    poSRSOverride);
+            if (dfLocalLength < 0)
+                return dfLocalLength;
+            dfLength += dfLocalLength;
+        }
+    }
+
+    return dfLength;
 }
 
 /************************************************************************/
@@ -1317,12 +1399,14 @@ void OGRGeometryCollection::assignSpatialReference(
 /*              OGRGeometryCollection::segmentize()                     */
 /************************************************************************/
 
-void OGRGeometryCollection::segmentize(double dfMaxLength)
+bool OGRGeometryCollection::segmentize(double dfMaxLength)
 {
     for (auto &poSubGeom : *this)
     {
-        poSubGeom->segmentize(dfMaxLength);
+        if (!poSubGeom->segmentize(dfMaxLength))
+            return false;
     }
+    return true;
 }
 
 /************************************************************************/

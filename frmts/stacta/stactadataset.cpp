@@ -1170,10 +1170,10 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                 aosOptions.AddString("-of");
                 aosOptions.AddString("VRT");
                 aosOptions.AddString("-projwin");
-                aosOptions.AddString(CPLSPrintf("%.18g", dfMinX));
-                aosOptions.AddString(CPLSPrintf("%.18g", dfMaxY));
-                aosOptions.AddString(CPLSPrintf("%.18g", dfMaxX));
-                aosOptions.AddString(CPLSPrintf("%.18g", dfMinY));
+                aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
+                aosOptions.AddString(CPLSPrintf("%.17g", dfMaxY));
+                aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
+                aosOptions.AddString(CPLSPrintf("%.17g", dfMinY));
                 auto psOptions =
                     GDALTranslateOptionsNew(aosOptions.List(), nullptr);
                 auto hDS =

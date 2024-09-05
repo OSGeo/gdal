@@ -592,8 +592,8 @@ void PDSDataset::ParseSRS()
         // acknowledged in
         // https://pds-imaging.jpl.nasa.gov/documentation/Cassini_BIDRSIS.PDF in
         // the middle of page 10
-        oProj4String.Printf("+proj=ob_tran +o_proj=eqc +o_lon_p=%.18g "
-                            "+o_lat_p=%.18g +lon_0=%.18g",
+        oProj4String.Printf("+proj=ob_tran +o_proj=eqc +o_lon_p=%.17g "
+                            "+o_lat_p=%.17g +lon_0=%.17g",
                             -poleRotation, 180 - poleLatitude, poleLongitude);
         oSRS.SetFromUserInput(oProj4String);
     }

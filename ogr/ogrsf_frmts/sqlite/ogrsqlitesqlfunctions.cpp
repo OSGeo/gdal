@@ -671,6 +671,52 @@ static void OGR2SQLITE_ST_GeodesicArea(sqlite3_context *pContext, int argc,
     }
 }
 
+/************************************************************************/
+/*                     OGR2SQLITE_ST_GeodesicLength()                   */
+/************************************************************************/
+
+static void OGR2SQLITE_ST_GeodesicLength(sqlite3_context *pContext, int argc,
+                                         sqlite3_value **argv)
+{
+    if (sqlite3_value_int(argv[1]) != 1)
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "ST_Length(geom, use_ellipsoid) is only supported for "
+                 "use_ellipsoid = 1");
+    }
+
+    int nSRSId = -1;
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
+    if (poGeom != nullptr)
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (nSRSId > 0)
+        {
+            if (oSRS.importFromEPSG(nSRSId) != OGRERR_NONE)
+            {
+                sqlite3_result_null(pContext);
+                return;
+            }
+        }
+        else
+        {
+            CPLDebug("OGR_SQLITE",
+                     "Assuming EPSG:4326 for GeodesicLength() computation");
+            oSRS.importFromEPSG(4326);
+        }
+        poGeom->assignSpatialReference(&oSRS);
+        sqlite3_result_double(
+            pContext,
+            OGR_G_GeodesicLength(OGRGeometry::ToHandle(poGeom.get())));
+        poGeom->assignSpatialReference(nullptr);
+    }
+    else
+    {
+        sqlite3_result_null(pContext);
+    }
+}
+
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
 
 /************************************************************************/
@@ -927,6 +973,25 @@ static void OGR2SQLITE_ST_Area(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
+/*                      OGR2SQLITE_ST_Length()                          */
+/************************************************************************/
+
+static void OGR2SQLITE_ST_Length(sqlite3_context *pContext, int argc,
+                                 sqlite3_value **argv)
+{
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);
+    if (poGeom != nullptr)
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        sqlite3_result_double(
+            pContext, OGR_G_Length(OGRGeometry::ToHandle(poGeom.get())));
+        CPLPopErrorHandler();
+    }
+    else
+        sqlite3_result_null(pContext);
+}
+
+/************************************************************************/
 /*                     OGR2SQLITE_ST_Buffer()                           */
 /************************************************************************/
 
@@ -1148,6 +1213,9 @@ static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
 
         REGISTER_ST_op(1, SRID);
         REGISTER_ST_op(1, Area);
+        // length() is a reserved SQLite function
+        sqlite3_create_function(hDB, "ST_Length", 1, UTF8_INNOCUOUS, nullptr,
+                                OGR2SQLITE_ST_Length, nullptr, nullptr);
         REGISTER_ST_op(2, Buffer);
         REGISTER_ST_op(2, MakePoint);
         REGISTER_ST_op(3, MakePoint);
@@ -1162,6 +1230,11 @@ static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
                                 OGR2SQLITE_ST_GeodesicArea, nullptr, nullptr);
         sqlite3_create_function(hDB, "ST_Area", 2, UTF8_INNOCUOUS, nullptr,
                                 OGR2SQLITE_ST_GeodesicArea, nullptr, nullptr);
+
+        // We add a ST_Length() method with 2 arguments even when Spatialite
+        // is there to indicate we want to use the ellipsoid version
+        sqlite3_create_function(hDB, "ST_Length", 2, UTF8_INNOCUOUS, nullptr,
+                                OGR2SQLITE_ST_GeodesicLength, nullptr, nullptr);
 
         static bool gbRegisterMakeValid = [bSpatialiteAvailable, hDB]()
         {

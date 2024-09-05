@@ -28,6 +28,8 @@
 
 #ifndef DOXYGEN_SKIP
 
+#include <cmath>
+
 #include "ogrwarpedlayer.h"
 
 /************************************************************************/
@@ -112,8 +114,8 @@ void OGRWarpedLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
         {
             OGREnvelope sEnvelope;
             poGeom->getEnvelope(&sEnvelope);
-            if (CPLIsInf(sEnvelope.MinX) && CPLIsInf(sEnvelope.MinY) &&
-                CPLIsInf(sEnvelope.MaxX) && CPLIsInf(sEnvelope.MaxY))
+            if (std::isinf(sEnvelope.MinX) && std::isinf(sEnvelope.MinY) &&
+                std::isinf(sEnvelope.MaxX) && std::isinf(sEnvelope.MaxY))
             {
                 m_poDecoratedLayer->SetSpatialFilterRect(
                     m_iGeomFieldFilter, sEnvelope.MinX, sEnvelope.MinY,

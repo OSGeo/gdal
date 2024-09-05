@@ -49,14 +49,19 @@ def create_basic_tileindex(
     sort_field_name=None,
     sort_field_type=None,
     sort_values=None,
+    lyr_name="index",
+    add_to_existing=False,
 ):
     if isinstance(src_ds, list):
         src_ds_list = src_ds
     else:
         src_ds_list = [src_ds]
-    index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
+    if add_to_existing:
+        index_ds = ogr.Open(index_filename, update=1)
+    else:
+        index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
     lyr = index_ds.CreateLayer(
-        "index", srs=(src_ds_list[0].GetSpatialRef() if src_ds_list else None)
+        lyr_name, srs=(src_ds_list[0].GetSpatialRef() if src_ds_list else None)
     )
     lyr.CreateField(ogr.FieldDefn(location_field_name))
     if sort_values:
@@ -2075,6 +2080,47 @@ def test_gti_overlapping_sources_mask_band(tmp_vsimem):
     ) == (255, 254)
 
 
+def test_gti_consistency_index_geometry_vs_source_extent(tmp_vsimem):
+
+    filename1 = str(tmp_vsimem / "test.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename1, 10, 10)
+    ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    ds.GetRasterBand(1).Fill(255)
+    expected_cs = ds.GetRasterBand(1).Checksum()
+    del ds
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(
+        index_filename,
+        [gdal.Open(filename1)],
+    )
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+    with gdal.quiet_errors():
+        gdal.ErrorReset()
+        assert vrt_ds.GetRasterBand(1).Checksum() == expected_cs
+        assert gdal.GetLastErrorMsg() == ""
+
+    # No intersection
+    with gdal.Open(filename1, gdal.GA_Update) as ds:
+        ds.SetGeoTransform([100, 1, 0, 49, 0, -1])
+
+    vrt_ds = gdal.Open(index_filename)
+    with gdal.quiet_errors():
+        assert vrt_ds.GetRasterBand(1).Checksum() == 0
+        assert "does not intersect at all" in gdal.GetLastErrorMsg()
+
+    # Partial intersection
+    with gdal.Open(filename1, gdal.GA_Update) as ds:
+        ds.SetGeoTransform([4, 1, 0, 49, 0, -1])
+
+    vrt_ds = gdal.Open(index_filename)
+    with gdal.quiet_errors():
+        assert vrt_ds.GetRasterBand(1).Checksum() == 958
+        assert "does not fully contain" in gdal.GetLastErrorMsg()
+
+
 def test_gti_mask_band_explicit(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -2131,7 +2177,7 @@ def test_gti_ovr_factor(tmp_vsimem):
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
     lyr.SetMetadataItem("MASK_BAND", "YES")
-    lyr.SetMetadataItem("OVERVIEW_1_FACTOR", "2")
+    lyr.SetMetadataItem("OVERVIEW_0_FACTOR", "2")
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)
@@ -2168,6 +2214,7 @@ def test_gti_ovr_factor_invalid(tmp_vsimem):
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
+    # Also test GDAL 3.9.0 and 3.9.1 where the idx started at 1
     lyr.SetMetadataItem("OVERVIEW_1_FACTOR", "0.5")
     del index_ds
 
@@ -2182,7 +2229,7 @@ def test_gti_ovr_ds_name(tmp_vsimem):
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
-    lyr.SetMetadataItem("OVERVIEW_1_DATASET", "/i/do/not/exist")
+    lyr.SetMetadataItem("OVERVIEW_0_DATASET", "/i/do/not/exist")
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)
@@ -2196,12 +2243,63 @@ def test_gti_ovr_lyr_name(tmp_vsimem):
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
-    lyr.SetMetadataItem("OVERVIEW_1_LAYER", "non_existing")
+    lyr.SetMetadataItem("OVERVIEW_0_LAYER", "non_existing")
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)
     with pytest.raises(Exception, match="Layer non_existing does not exist"):
         vrt_ds.GetRasterBand(1).GetOverviewCount()
+
+
+def test_gti_ovr_of_ovr(tmp_vsimem):
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    ovr_filename = str(tmp_vsimem / "byte_ovr.tif")
+    ovr_ds = gdal.Translate(ovr_filename, "data/byte.tif", width=10)
+    ovr_ds.BuildOverviews("NEAR", [2])
+    ovr_ds = None
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
+    lyr.SetMetadataItem("OVERVIEW_0_DATASET", ovr_filename)
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+    ovr_ds = gdal.Open(ovr_filename)
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 2
+    assert (
+        vrt_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+        == ovr_ds.GetRasterBand(1).ReadRaster()
+    )
+    assert (
+        vrt_ds.GetRasterBand(1).GetOverview(1).ReadRaster()
+        == ovr_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    )
+
+
+def test_gti_ovr_of_ovr_OVERVIEW_LEVEL_NONE(tmp_vsimem):
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    ovr_filename = str(tmp_vsimem / "byte_ovr.tif")
+    ovr_ds = gdal.Translate(ovr_filename, "data/byte.tif", width=10)
+    ovr_ds.BuildOverviews("NEAR", [2])
+    ovr_ds = None
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
+    lyr.SetMetadataItem("OVERVIEW_0_DATASET", ovr_filename)
+    lyr.SetMetadataItem("OVERVIEW_0_OPEN_OPTIONS", "OVERVIEW_LEVEL=NONE")
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+    ovr_ds = gdal.Open(ovr_filename)
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert (
+        vrt_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+        == ovr_ds.GetRasterBand(1).ReadRaster()
+    )
 
 
 def test_gti_external_ovr(tmp_vsimem):
@@ -2373,7 +2471,10 @@ def test_gti_xml(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
-    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    tile_filename = str(tmp_vsimem / "byte.tif")
+    gdal.Translate(tile_filename, "data/byte.tif")
+
+    src_ds = gdal.Open(tile_filename)
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
     del index_ds
 
@@ -2498,30 +2599,46 @@ def test_gti_xml(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).GetOverview(0).XSize == 10
     del vrt_ds
 
+    tile_ovr_filename = str(tmp_vsimem / "byte_ovr.tif")
+    gdal.Translate(tile_ovr_filename, "data/byte.tif", width=10)
+
+    index2_filename = str(tmp_vsimem / "index2.gti.gpkg")
+    create_basic_tileindex(index2_filename, gdal.Open(tile_ovr_filename))
+
     xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
+  <IndexLayer>index</IndexLayer>
       <Overview>
-          <Dataset>{index_filename}</Dataset>
+          <Dataset>{index2_filename}</Dataset>
       </Overview>
 </GDALTileIndexDataset>"""
     vrt_ds = gdal.Open(xml_content)
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
-    assert vrt_ds.GetRasterBand(1).GetOverview(0).XSize == 20
+    assert vrt_ds.GetRasterBand(1).GetOverview(0).XSize == 10
     del vrt_ds
+
+    create_basic_tileindex(
+        index_filename,
+        gdal.Open(tile_ovr_filename),
+        add_to_existing=True,
+        lyr_name="index_ovr",
+    )
 
     xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
+  <IndexLayer>index</IndexLayer>
       <Overview>
-          <Layer>index</Layer>
+          <Layer>index_ovr</Layer>
       </Overview>
 </GDALTileIndexDataset>"""
     vrt_ds = gdal.Open(xml_content)
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
-    assert vrt_ds.GetRasterBand(1).GetOverview(0).XSize == 20
+    assert vrt_ds.GetRasterBand(1).GetOverview(0).XSize == 10
     del vrt_ds
 
     xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
+  <IndexLayer>index</IndexLayer>
       <Overview>
           <Layer>index</Layer>
           <OpenOptions>
@@ -2584,6 +2701,7 @@ def test_gti_xml(tmp_vsimem):
 
     xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
+  <IndexLayer>index</IndexLayer>
       <Overview>
       </Overview>
 </GDALTileIndexDataset>"""
@@ -2595,6 +2713,7 @@ def test_gti_xml(tmp_vsimem):
 
     xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
+  <IndexLayer>index</IndexLayer>
       <Overview>
           <Dataset>i_do_not_exist</Dataset>
       </Overview>
@@ -2605,6 +2724,7 @@ def test_gti_xml(tmp_vsimem):
 
     xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
+  <IndexLayer>index</IndexLayer>
       <Overview>
           <Layer>i_do_not_exist</Layer>
       </Overview>
@@ -2669,3 +2789,161 @@ def test_gti_xml_vrtti_embedded(tmp_vsimem):
     assert band.GetCategoryNames() == ["cat"]
     assert band.GetDefaultRAT() is not None
     del vrt_ds
+
+
+###############################################################################
+# Test multi-threaded reading
+
+
+@pytest.mark.parametrize("use_threads", [True, False])
+@pytest.mark.parametrize("num_tiles", [2, 128])
+def test_gti_read_multi_threaded(tmp_vsimem, use_threads, num_tiles):
+
+    width = 2048
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=width, format="MEM"
+    )
+    assert width % num_tiles == 0
+    tile_width = width // num_tiles
+    tiles_ds = []
+    for i in range(num_tiles):
+        tile_filename = str(tmp_vsimem / ("%d.tif" % i))
+        gdal.Translate(
+            tile_filename, src_ds, srcWin=[i * tile_width, 0, tile_width, 1024]
+        )
+        tiles_ds.append(gdal.Open(tile_filename))
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(index_filename, tiles_ds)
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+
+    pcts = []
+
+    def cbk(pct, msg, user_data):
+        if pcts:
+            assert pct >= pcts[-1]
+        pcts.append(pct)
+        return 1
+
+    with gdal.config_options({} if use_threads else {"GTI_NUM_THREADS": "0"}):
+        assert vrt_ds.ReadRaster(1, 2, 1030, 1020, callback=cbk) == src_ds.ReadRaster(
+            1, 2, 1030, 1020
+        )
+    assert pcts[-1] == 1.0
+
+    assert vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == (
+        "1" if gdal.GetNumCPUs() >= 2 and use_threads else "0"
+    )
+
+    # Again
+    pcts = []
+    with gdal.config_options({} if use_threads else {"GTI_NUM_THREADS": "0"}):
+        assert vrt_ds.ReadRaster(1, 2, 1030, 1020, callback=cbk) == src_ds.ReadRaster(
+            1, 2, 1030, 1020
+        )
+    assert pcts[-1] == 1.0
+
+    assert vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == (
+        "1" if gdal.GetNumCPUs() >= 2 and use_threads else "0"
+    )
+
+
+###############################################################################
+# Test multi-threaded reading
+
+
+def test_gti_read_multi_threaded_disabled_since_overlapping_sources(tmp_vsimem):
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=2048, format="MEM"
+    )
+    OVERLAP = 1
+    left_filename = str(tmp_vsimem / "left.tif")
+    gdal.Translate(left_filename, src_ds, srcWin=[0, 0, 1024 + OVERLAP, 1024])
+    right_filename = str(tmp_vsimem / "right.tif")
+    gdal.Translate(right_filename, src_ds, srcWin=[1024, 0, 1024, 1024])
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(
+        index_filename, [gdal.Open(left_filename), gdal.Open(right_filename)]
+    )
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+
+    assert vrt_ds.ReadRaster(1, 2, 1030, 1020) == src_ds.ReadRaster(1, 2, 1030, 1020)
+
+    assert (
+        vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == "0"
+    )
+
+
+###############################################################################
+# Test multi-threaded reading
+
+
+def test_gti_read_multi_threaded_disabled_because_invalid_filename(tmp_vsimem):
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=2048, format="MEM"
+    )
+    left_filename = str(tmp_vsimem / "left.tif")
+    gdal.Translate(left_filename, src_ds, srcWin=[0, 0, 1024, 1024])
+    right_filename = str(tmp_vsimem / "right.tif")
+    gdal.Translate(right_filename, src_ds, srcWin=[1024, 0, 1024, 1024])
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(
+        index_filename, [gdal.Open(left_filename), gdal.Open(right_filename)]
+    )
+    lyr = index_ds.GetLayer(0)
+    f = lyr.GetFeature(2)
+    f["location"] = "/i/do/not/exist"
+    lyr.SetFeature(f)
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+
+    with pytest.raises(Exception, match="/i/do/not/exist"):
+        vrt_ds.ReadRaster()
+
+    assert vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == (
+        "1" if gdal.GetNumCPUs() >= 2 else "0"
+    )
+
+
+###############################################################################
+# Test multi-threaded reading
+
+
+def test_gti_read_multi_threaded_disabled_because_truncated_source(tmp_vsimem):
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", width=2048, format="MEM"
+    )
+    left_filename = str(tmp_vsimem / "left.tif")
+    gdal.Translate(left_filename, src_ds, srcWin=[0, 0, 1024, 1024])
+    right_filename = str(tmp_vsimem / "right.tif")
+    gdal.Translate(right_filename, src_ds, srcWin=[1024, 0, 1024, 1024])
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_ds, _ = create_basic_tileindex(
+        index_filename, [gdal.Open(left_filename), gdal.Open(right_filename)]
+    )
+    del index_ds
+
+    f = gdal.VSIFOpenL(right_filename, "rb+")
+    assert f
+    gdal.VSIFTruncateL(f, gdal.VSIStatL(right_filename).size - 10)
+    gdal.VSIFCloseL(f)
+
+    vrt_ds = gdal.Open(index_filename)
+
+    with pytest.raises(Exception, match="right.tif"):
+        vrt_ds.ReadRaster()
+
+    assert vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == (
+        "1" if gdal.GetNumCPUs() >= 2 else "0"
+    )

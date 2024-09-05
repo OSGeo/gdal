@@ -149,12 +149,12 @@ template <class T> inline bool GDALIsValueInRange(double dfValue)
 
 template <> inline bool GDALIsValueInRange<double>(double dfValue)
 {
-    return !CPLIsNan(dfValue);
+    return !std::isnan(dfValue);
 }
 
 template <> inline bool GDALIsValueInRange<float>(double dfValue)
 {
-    return CPLIsInf(dfValue) ||
+    return std::isinf(dfValue) ||
            (dfValue >= -std::numeric_limits<float>::max() &&
             dfValue <= std::numeric_limits<float>::max());
 }
@@ -288,7 +288,7 @@ template <class Tout> struct sGDALCopyWord<float, Tout>
 {
     static inline void f(const float fValueIn, Tout &tValueOut)
     {
-        if (CPLIsNan(fValueIn))
+        if (std::isnan(fValueIn))
         {
             tValueOut = 0;
             return;
@@ -304,7 +304,7 @@ template <> struct sGDALCopyWord<float, short>
 {
     static inline void f(const float fValueIn, short &nValueOut)
     {
-        if (CPLIsNan(fValueIn))
+        if (std::isnan(fValueIn))
         {
             nValueOut = 0;
             return;
@@ -321,7 +321,7 @@ template <> struct sGDALCopyWord<float, signed char>
 {
     static inline void f(const float fValueIn, signed char &nValueOut)
     {
-        if (CPLIsNan(fValueIn))
+        if (std::isnan(fValueIn))
         {
             nValueOut = 0;
             return;
@@ -338,7 +338,7 @@ template <class Tout> struct sGDALCopyWord<double, Tout>
 {
     static inline void f(const double dfValueIn, Tout &tValueOut)
     {
-        if (CPLIsNan(dfValueIn))
+        if (std::isnan(dfValueIn))
         {
             tValueOut = 0;
             return;
@@ -354,7 +354,7 @@ template <> struct sGDALCopyWord<double, int>
 {
     static inline void f(const double dfValueIn, int &nValueOut)
     {
-        if (CPLIsNan(dfValueIn))
+        if (std::isnan(dfValueIn))
         {
             nValueOut = 0;
             return;
@@ -371,16 +371,45 @@ template <> struct sGDALCopyWord<double, std::int64_t>
 {
     static inline void f(const double dfValueIn, std::int64_t &nValueOut)
     {
-        if (CPLIsNan(dfValueIn))
+        if (std::isnan(dfValueIn))
         {
             nValueOut = 0;
-            return;
         }
-        double dfMaxVal, dfMinVal;
-        GDALGetDataLimits<double, std::int64_t>(dfMaxVal, dfMinVal);
-        double dfValue = dfValueIn >= 0.0 ? dfValueIn + 0.5 : dfValueIn - 0.5;
-        nValueOut = static_cast<std::int64_t>(
-            GDALClampValue(dfValue, dfMaxVal, dfMinVal));
+        else if (dfValueIn >=
+                 static_cast<double>(std::numeric_limits<std::int64_t>::max()))
+        {
+            nValueOut = std::numeric_limits<std::int64_t>::max();
+        }
+        else if (dfValueIn <=
+                 static_cast<double>(std::numeric_limits<std::int64_t>::min()))
+        {
+            nValueOut = std::numeric_limits<std::int64_t>::min();
+        }
+        else
+        {
+            nValueOut = static_cast<std::int64_t>(
+                dfValueIn > 0.0f ? dfValueIn + 0.5f : dfValueIn - 0.5f);
+        }
+    }
+};
+
+template <> struct sGDALCopyWord<double, std::uint64_t>
+{
+    static inline void f(const double dfValueIn, std::uint64_t &nValueOut)
+    {
+        if (!(dfValueIn > 0))
+        {
+            nValueOut = 0;
+        }
+        else if (dfValueIn >
+                 static_cast<double>(std::numeric_limits<uint64_t>::max()))
+        {
+            nValueOut = std::numeric_limits<uint64_t>::max();
+        }
+        else
+        {
+            nValueOut = static_cast<std::uint64_t>(dfValueIn + 0.5);
+        }
     }
 };
 
@@ -388,7 +417,7 @@ template <> struct sGDALCopyWord<double, short>
 {
     static inline void f(const double dfValueIn, short &nValueOut)
     {
-        if (CPLIsNan(dfValueIn))
+        if (std::isnan(dfValueIn))
         {
             nValueOut = 0;
             return;
@@ -405,7 +434,7 @@ template <> struct sGDALCopyWord<double, signed char>
 {
     static inline void f(const double dfValueIn, signed char &nValueOut)
     {
-        if (CPLIsNan(dfValueIn))
+        if (std::isnan(dfValueIn))
         {
             nValueOut = 0;
             return;
@@ -424,7 +453,12 @@ template <> struct sGDALCopyWord<float, int>
 {
     static inline void f(const float fValueIn, int &nValueOut)
     {
-        if (fValueIn >= static_cast<float>(std::numeric_limits<int>::max()))
+        if (std::isnan(fValueIn))
+        {
+            nValueOut = 0;
+        }
+        else if (fValueIn >=
+                 static_cast<float>(std::numeric_limits<int>::max()))
         {
             nValueOut = std::numeric_limits<int>::max();
         }
@@ -447,15 +481,14 @@ template <> struct sGDALCopyWord<float, unsigned int>
 {
     static inline void f(const float fValueIn, unsigned int &nValueOut)
     {
-        if (fValueIn >=
-            static_cast<float>(std::numeric_limits<unsigned int>::max()))
+        if (!(fValueIn > 0))
+        {
+            nValueOut = 0;
+        }
+        else if (fValueIn >=
+                 static_cast<float>(std::numeric_limits<unsigned int>::max()))
         {
             nValueOut = std::numeric_limits<unsigned int>::max();
-        }
-        else if (fValueIn <=
-                 static_cast<float>(std::numeric_limits<unsigned int>::min()))
-        {
-            nValueOut = std::numeric_limits<unsigned int>::min();
         }
         else
         {
@@ -470,8 +503,12 @@ template <> struct sGDALCopyWord<float, std::int64_t>
 {
     static inline void f(const float fValueIn, std::int64_t &nValueOut)
     {
-        if (fValueIn >=
-            static_cast<float>(std::numeric_limits<std::int64_t>::max()))
+        if (std::isnan(fValueIn))
+        {
+            nValueOut = 0;
+        }
+        else if (fValueIn >=
+                 static_cast<float>(std::numeric_limits<std::int64_t>::max()))
         {
             nValueOut = std::numeric_limits<std::int64_t>::max();
         }
@@ -494,15 +531,14 @@ template <> struct sGDALCopyWord<float, std::uint64_t>
 {
     static inline void f(const float fValueIn, std::uint64_t &nValueOut)
     {
-        if (fValueIn >=
-            static_cast<float>(std::numeric_limits<std::uint64_t>::max()))
+        if (!(fValueIn > 0))
+        {
+            nValueOut = 0;
+        }
+        else if (fValueIn >=
+                 static_cast<float>(std::numeric_limits<std::uint64_t>::max()))
         {
             nValueOut = std::numeric_limits<std::uint64_t>::max();
-        }
-        else if (fValueIn <=
-                 static_cast<float>(std::numeric_limits<std::uint64_t>::min()))
-        {
-            nValueOut = std::numeric_limits<std::uint64_t>::min();
         }
         else
         {

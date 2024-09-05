@@ -58,8 +58,8 @@ Ubuntu version:
 * Vector drivers: all built-in + XML based ones + SQLite-based ones + network-based ones + PostgreSQL
 * Using internal libtiff and libgeotiff
 * External libraries enabled: libsqlite3, libproj, libcurl, libjpeg, libpng, libwebp,
-  libzstd, libexpat, libxerces-c, libpq, libssl, libgeos, libspatialite
-* GDAL Python (Python 3.8 for Ubuntu 20.04, Python 3.10 for Ubuntu 22.04)
+  libzstd, libdeflate, libexpat, libxerces-c, libpq, libssl, libgeos, libspatialite
+* GDAL Python (Python 3.8 for Ubuntu 20.04, Python 3.10 for Ubuntu 22.04, Python 3.12 for Ubuntu 24.04)
 * Base PROJ grid package (http://download.osgeo.org/proj/proj-datumgrid-1.8.zip)
 * Overall licensing terms of the GDAL build: LGPL + permissive (MIT, BSD style, Apache, etc..)
 
@@ -74,7 +74,7 @@ See [ubuntu-small/Dockerfile](ubuntu-small/Dockerfile)
 * External libraries enabled: small + libnetcdf, libhdf4, libhdf5, libtiledb, libkea,
   mongocxx 3.4, libspatialite, unixodbc, libxml2, libcfitsio, libmysqlclient,
   libkml, libpoppler, pdfium, openexr, libheif, libdeflate, libparquet, libjxl
-* GDAL Python (Python 3.8 for Ubuntu 20.04, Python 3.10 for Ubuntu 22.04)
+* GDAL Python (Python 3.8 for Ubuntu 20.04, Python 3.10 for Ubuntu 22.04, Python 3.12 for Ubuntu 24.04)
 * *All* PROJ grid packages (equivalent of latest of proj-data-X.zip from http://download.osgeo.org/proj/ at time of generation, > 500 MB)
 * Overall licensing terms of the GDAL build: copy-left (GPL) + LGPL + permissive
 
@@ -100,11 +100,11 @@ If you are getting a ``<jemalloc>: arena 0 background thread creation failed (1)
 
 # Images of releases
 
-Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.9.1 and PROJ 9.4.1, for linux/amd64 and linux/arm64:
-* ghcr.io/osgeo/gdal:alpine-small-3.9.1
-* ghcr.io/osgeo/gdal:alpine-normal-3.9.1
-* ghcr.io/osgeo/gdal:ubuntu-small-3.9.1
-* ghcr.io/osgeo/gdal:ubuntu-full-3.9.1
+Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.9.2 and PROJ 9.4.1, for linux/amd64 and linux/arm64:
+* ghcr.io/osgeo/gdal:alpine-small-3.9.2
+* ghcr.io/osgeo/gdal:alpine-normal-3.9.2
+* ghcr.io/osgeo/gdal:ubuntu-small-3.9.2
+* ghcr.io/osgeo/gdal:ubuntu-full-3.9.2
 
 ## Multi-arch Images
 

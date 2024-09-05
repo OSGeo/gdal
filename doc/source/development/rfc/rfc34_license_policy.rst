@@ -1,14 +1,14 @@
 .. _rfc-34:
 
 ================================================================================
-RFC 34: License Policy Enforcement
+RFC 34: License Policy Enforcement (not implemented)
 ================================================================================
 
 Authors: Frank Warmerdam
 
 Contact: warmerdam@pobox.com
 
-Status: Development
+Status: On hold / not implemented
 
 Summary
 -------

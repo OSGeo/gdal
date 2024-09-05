@@ -108,12 +108,126 @@ a GDALExtendedDataType.
     GDALDataType does. So a driver may decide to expose a GDT\_Cxxxx datatype
     from a HDF5 Compound data type representing a complex value.
 
+Objects lifetime
+----------------
+
+Driver implementations of the multidimensional API are such that instances of
+GDALGroup, GDALMDArray, GDALAttribute and GDALDimension can be used independently
+of the objects from which they have been obtained from. So:
+
+- the GDALGroup instance returned by :cpp:func:`GDALDataset::GetRootGroup()` can
+  be used after the dataset has been closed.
+
+- Sub-groups obtained from :cpp:func:`GDALGroup::OpenGroup()`
+  or arrays obtained from :cpp:func:`GDALGroup::OpenMDArray()` can be used after
+  the owning group has been released.
+
+- Similarly for attributes or dimensions obtained from a group or an array.
+
+
+So the following is perfectly legal:
+
+.. code-block:: c++
+
+    #include "gdal_priv.h"
+
+    std::shared_ptr<GDALMDArray> GetArray()
+    {
+        auto poDataset = std::unique_ptr<GDALDataset>(
+            GDALDataset::Open( "in.nc", GDAL_OF_MULTIDIM_RASTER ));
+        if( !poDataset )
+        {
+            return nullptr:
+        }
+        auto poRootGroup = poDataset->GetRootGroup();
+        if( !poRootGroup )
+        {
+            return nullptr:
+        }
+        auto poVar = poRootGroup->OpenMDArray("temperature");
+        if( !poVar )
+        {
+            return nullptr:
+        }
+        return poVar;
+    }
+
+    int main()
+    {
+        GDALAllRegister();
+        auto poVar = GetArray();
+        if( !poVar )
+        {
+            exit(1);
+        }
+
+        // Do something with poVar
+
+        return 0;
+    }
+
+
+A potential point of attention is that, when creating / editing a dataset, all
+those objects keep alive the underlying file descriptors, so changes are only
+guaranteed to be serialized when all objects related to a dataset have been released.
+
+Example in C++:
+
+.. code-block:: c++
+
+    int main()
+    {
+        GDALAllRegister();
+
+        auto poDataset = std::unique_ptr<GDALDataset>(
+            GetGDALDriverManager()->GetDriverByName("netCDF")->
+                CreateMultiDimensional( "new.nc", nullptr, nullptr ));
+        auto poRootGroup = poDataset->GetRootGroup();
+
+        // Could be closed a bit later too
+        poDataset.reset();
+
+        auto poDim = poRootGroup->CreateDimension(
+            "my_dim", std::string(), std::string(), 10);
+        auto poArray = poRootGroup->CreateMDArray(
+            "my_var", {poDim}, GDALExtendedDataType::Create(GDT_Byte), nullptr);
+
+        // Can be closed in any order
+        poArray.reset();
+        poDim.reset();
+        poRootGroup.reset();
+
+        // new.nc is fully valid just now
+
+        return 0;
+    }
+
+
+Example in Python:
+
+.. code-block:: python
+
+    from osgeo import gdal
+
+    with gdal.GetDriverByName("netCDF").CreateMultiDimensional("new.nc") as ds:
+        rg = ds.GetRootGroup()
+        dim = rg.CreateDimension("my_dim", "", "", 10)
+        array = rg.CreateMDArray("my_var", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+        del array
+        del dim
+        del rg
+
+    # new.nc is fully valid just now
+
 Differences with the GDAL 2D raster data model
 ----------------------------------------------
 
 - The concept of GDALRasterBand is no longer used for multidimensional.
   This can be modelled as either different GDALMDArray, or using a compound
   data type.
+- There is not yet a standardized concept multi-resolution arrays/overviews in
+  the multidimensional API
 
 Bridges between GDAL 2D classic raster data model and multidimensional data model
 ---------------------------------------------------------------------------------

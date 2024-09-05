@@ -9,7 +9,7 @@ Parameters
 src : SpatialReference
     source spatial reference system
 dst : SpatialReference
-    target spatial reference ystem
+    target spatial reference system
 options : CoordinateTransformationOptions
 
 Returns

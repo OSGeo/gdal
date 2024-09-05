@@ -29,6 +29,7 @@
 ###############################################################################
 
 import array
+import itertools
 import json
 import math
 
@@ -1140,3 +1141,195 @@ def test_multidim_CreateRasterAttributeTableFromMDArrays():
     assert rat.GetUsageOfCol(1) == gdal.GFU_PixelCount
     assert rat.GetColOfUsage(gdal.GFU_PixelCount) == 1
     assert rat.GetColOfUsage(gdal.GFU_Min) == -1
+
+
+@gdaltest.enable_exceptions()
+def test_multidim_GetMeshGrid():
+
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds")
+    rg = mem_ds.GetRootGroup()
+    dim2 = rg.CreateDimension("dim2", None, None, 2)
+    dim3 = rg.CreateDimension("dim3", None, None, 3)
+    ar2 = rg.CreateMDArray(
+        "ar2", [dim2], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    ar2_vals = [1, 2]
+    ar2.SetNoDataValueDouble(0)
+    ar2.SetUnit("m")
+    ar2.SetOffset(1)
+    ar2.SetScale(10)
+    ar2.CreateAttribute("attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    ar2.Write(ar2_vals)
+    ar3 = rg.CreateMDArray(
+        "ar3", [dim3], gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+    )
+    ar3_vals = [3, 4, 5]
+    ar3.Write(ar3_vals)
+
+    with pytest.raises(Exception, match="Only 1-D input arrays are accepted"):
+        gdal.MDArray.GetMeshGrid(
+            [
+                rg.CreateMDArray(
+                    "2d_array",
+                    [dim2, dim3],
+                    gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+                )
+            ]
+        )
+
+    with pytest.raises(Exception, match="Only INDEXING=xy or ij is accepted"):
+        gdal.MDArray.GetMeshGrid([ar2, ar3], ["INDEXING=unsupported"])
+
+    ret = gdal.MDArray.GetMeshGrid([])
+    assert len(ret) == 0
+
+    ret = gdal.MDArray.GetMeshGrid([ar2, ar3], ["INDEXING=IJ"])
+    assert len(ret) == 2
+
+    assert ret[0].GetDataType().GetNumericDataType() == gdal.GDT_Float64
+    assert ret[0].GetDimensionCount() == 2
+    assert ret[0].GetDimensions()[0].GetSize() == dim2.GetSize()
+    assert ret[0].GetDimensions()[1].GetSize() == dim3.GetSize()
+    assert ret[0].GetNoDataValueAsDouble() == 0
+    assert ret[0].GetUnit() == "m"
+    assert ret[0].GetOffset() == 1
+    assert ret[0].GetScale() == 10
+    assert len(ret[0].GetAttributes()) == 1
+    assert ret[0].GetAttribute("attr")
+    with pytest.raises(Exception, match="Cannot cache an array with an empty filename"):
+        ret[0].Cache()  # Test GetFilename()
+    with pytest.raises(
+        Exception,
+        match="Write operation not permitted on dataset opened in read-only mode",
+    ):
+        ret[0].AsClassicDataset(0, 1).WriteRaster(
+            0, 0, 2, 3, array.array("d", [0] * 6)
+        )  # Test IsWritable()
+
+    assert ret[1].GetDataType().GetNumericDataType() == gdal.GDT_Float32
+    assert ret[1].GetDimensionCount() == 2
+    assert ret[1].GetDimensions()[0].GetSize() == dim2.GetSize()
+    assert ret[1].GetDimensions()[1].GetSize() == dim3.GetSize()
+
+    assert ret[0].Read() == array.array(
+        "d",
+        list(itertools.chain.from_iterable([[v] * dim3.GetSize() for v in ar2_vals])),
+    )
+    assert ret[1].Read() == array.array("f", ar3_vals * dim2.GetSize())
+
+    # Check interoperability with numpy.meshgrid()
+    try:
+        import numpy as np
+
+        from osgeo import gdal_array  # NOQA
+
+        has_numpy = True
+    except ImportError:
+        has_numpy = False
+
+    if has_numpy:
+        xv, yv = np.meshgrid(ar2.ReadAsArray(), ar3.ReadAsArray(), indexing="ij")
+        assert np.all(xv == ret[0].ReadAsArray())
+        assert np.all(yv == ret[1].ReadAsArray())
+
+    ret = gdal.MDArray.GetMeshGrid([ar2, ar3], ["INDEXING=XY"])
+    assert len(ret) == 2
+    assert ret[0].GetDataType().GetNumericDataType() == gdal.GDT_Float64
+    assert ret[0].GetDimensionCount() == 2
+    assert ret[0].GetDimensions()[0].GetSize() == dim3.GetSize()
+    assert ret[0].GetDimensions()[1].GetSize() == dim2.GetSize()
+    assert ret[1].GetDataType().GetNumericDataType() == gdal.GDT_Float32
+    assert ret[1].GetDimensionCount() == 2
+    assert ret[1].GetDimensions()[0].GetSize() == dim3.GetSize()
+    assert ret[1].GetDimensions()[1].GetSize() == dim2.GetSize()
+
+    assert ret[0].Read() == array.array("d", ar2_vals * dim3.GetSize())
+    assert ret[1].Read() == array.array(
+        "f",
+        list(itertools.chain.from_iterable([[v] * dim2.GetSize() for v in ar3_vals])),
+    )
+
+    # Check interoperability with numpy.meshgrid()
+    if has_numpy:
+        xv, yv = np.meshgrid(ar2.ReadAsArray(), ar3.ReadAsArray(), indexing="xy")
+        assert np.all(xv == ret[0].ReadAsArray())
+        assert np.all(yv == ret[1].ReadAsArray())
+
+    # Test 3D
+
+    dim4 = rg.CreateDimension("dim4", None, None, 4)
+    ar4 = rg.CreateMDArray("ar4", [dim4], gdal.ExtendedDataType.CreateString())
+    ar4_vals = ["a", "bc", "def", "ghij"]
+    ar4.Write(ar4_vals)
+
+    ret = gdal.MDArray.GetMeshGrid([ar2, ar3, ar4], ["INDEXING=IJ"])
+    assert len(ret) == 3
+    assert ret[0].GetDimensionCount() == 3
+    assert ret[0].GetDimensions()[0].GetSize() == dim2.GetSize()
+    assert ret[0].GetDimensions()[1].GetSize() == dim3.GetSize()
+    assert ret[0].GetDimensions()[2].GetSize() == dim4.GetSize()
+
+    # print(ret[0].ReadAsArray())
+    # print(ret[1].ReadAsArray())
+    # print(ret[2].Read())
+
+    assert ret[0].Read() == array.array(
+        "d",
+        list(
+            itertools.chain.from_iterable(
+                [[v] * (dim3.GetSize() * dim4.GetSize()) for v in ar2_vals]
+            )
+        ),
+    )
+    assert ret[1].Read() == array.array(
+        "f",
+        list(itertools.chain.from_iterable([[v] * dim4.GetSize() for v in ar3_vals]))
+        * dim2.GetSize(),
+    )
+    assert ret[2].Read() == ar4_vals * (dim2.GetSize() * dim3.GetSize())
+
+    # Check interoperability with numpy.meshgrid()
+    if has_numpy:
+        xv, yv, zv = np.meshgrid(
+            ar2.ReadAsArray(), ar3.ReadAsArray(), ar4_vals, indexing="ij"
+        )
+        assert np.all(xv == ret[0].ReadAsArray())
+        assert np.all(yv == ret[1].ReadAsArray())
+        assert np.all(zv == np.array(ret[2].Read()).reshape(zv.shape))
+
+    ret = gdal.MDArray.GetMeshGrid([ar2, ar3, ar4], ["INDEXING=XY"])
+    assert len(ret) == 3
+    assert ret[0].GetDimensionCount() == 3
+    assert ret[0].GetDimensions()[0].GetSize() == dim3.GetSize()
+    assert ret[0].GetDimensions()[1].GetSize() == dim2.GetSize()
+    assert ret[0].GetDimensions()[2].GetSize() == dim4.GetSize()
+
+    # print(ret[0].ReadAsArray())
+    # print(ret[1].ReadAsArray())
+    # print(ret[2].Read())
+
+    assert ret[0].Read() == array.array(
+        "d",
+        list(itertools.chain.from_iterable([[v] * dim4.GetSize() for v in ar2_vals]))
+        * dim3.GetSize(),
+    )
+    assert ret[1].Read() == array.array(
+        "f",
+        list(
+            itertools.chain.from_iterable(
+                [[v] * (dim2.GetSize() * dim4.GetSize()) for v in ar3_vals]
+            )
+        ),
+    )
+    assert ret[2].Read() == ar4_vals * (dim2.GetSize() * dim3.GetSize())
+
+    # Check interoperability with numpy.meshgrid()
+
+    if has_numpy:
+        xv, yv, zv = np.meshgrid(
+            ar2.ReadAsArray(), ar3.ReadAsArray(), ar4_vals, indexing="xy"
+        )
+        assert np.all(xv == ret[0].ReadAsArray())
+        assert np.all(yv == ret[1].ReadAsArray())
+        assert np.all(zv == np.array(ret[2].Read()).reshape(zv.shape))

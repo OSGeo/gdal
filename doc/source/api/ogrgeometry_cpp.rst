@@ -9,7 +9,10 @@
 OGRGeometry C++ API
 ================================================================================
 
-Include file: ogr_geometry.h
+Include file
+------------
+
+:file:`ogr_geometry.h`
 
 OGRGeometryFactory class
 ------------------------

@@ -26,6 +26,7 @@
  ****************************************************************************/
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <map>
 
@@ -765,7 +766,7 @@ netCDFGroup::netCDFGroup(const std::shared_ptr<netCDFSharedResources> &poShared,
     if (m_gid == m_poShared->GetCDFId())
     {
         int nFormat = 0;
-        nc_inq_format(m_gid, &nFormat);
+        NCDF_ERR(nc_inq_format(m_gid, &nFormat));
         if (nFormat == NC_FORMAT_CLASSIC)
         {
             m_aosStructuralInfo.SetNameValue("NC_FORMAT", "CLASSIC");
@@ -1530,10 +1531,11 @@ netCDFGroup::OpenMDArray(const std::string &osName,
     int nVarId = 0;
     if (nc_inq_varid(m_gid, osName.c_str(), &nVarId) != NC_NOERR)
         return nullptr;
+
     auto poVar = netCDFVariable::Create(
         m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
-        m_gid, nVarId, std::vector<std::shared_ptr<GDALDimension>>(), nullptr,
-        false);
+        m_gid, nVarId, std::vector<std::shared_ptr<GDALDimension>>(),
+        papszOptions, false);
     if (poVar)
     {
         poVar->SetUseDefaultFillAsNoData(CPLTestBool(CSLFetchNameValueDef(
@@ -2081,6 +2083,49 @@ netCDFVariable::netCDFVariable(
                      poShared->GetPAM()),
       m_poShared(poShared), m_gid(gid), m_varid(varid), m_dims(dims)
 {
+    {
+        // Cf https://docs.unidata.ucar.edu/netcdf-c/current/group__variables.html#gae6b59e92d1140b5fec56481b0f41b610
+        size_t nRawDataChunkCacheSize = 0;
+        size_t nChunkSlots = 0;
+        float fPreemption = 0.0f;
+        int ret =
+            nc_get_var_chunk_cache(m_gid, m_varid, &nRawDataChunkCacheSize,
+                                   &nChunkSlots, &fPreemption);
+        if (ret == NC_NOERR)
+        {
+            if (const char *pszVar = CSLFetchNameValue(
+                    papszOptions, "RAW_DATA_CHUNK_CACHE_SIZE"))
+            {
+                nRawDataChunkCacheSize =
+                    static_cast<size_t>(std::min<unsigned long long>(
+                        std::strtoull(pszVar, nullptr, 10),
+                        std::numeric_limits<size_t>::max()));
+            }
+            if (const char *pszVar =
+                    CSLFetchNameValue(papszOptions, "CHUNK_SLOTS"))
+            {
+                nChunkSlots = static_cast<size_t>(std::min<unsigned long long>(
+                    std::strtoull(pszVar, nullptr, 10),
+                    std::numeric_limits<size_t>::max()));
+            }
+            if (const char *pszVar =
+                    CSLFetchNameValue(papszOptions, "PREEMPTION"))
+            {
+                fPreemption = std::max(
+                    0.0f, std::min(1.0f, static_cast<float>(CPLAtof(pszVar))));
+            }
+            NCDF_ERR(nc_set_var_chunk_cache(m_gid, m_varid,
+                                            nRawDataChunkCacheSize, nChunkSlots,
+                                            fPreemption));
+        }
+        else if (ret != NC_ENOTNC4)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "netcdf error #%d : %s .\nat (%s,%s,%d)\n", ret,
+                     nc_strerror(ret), __FILE__, __FUNCTION__, __LINE__);
+        }
+    }
+
     NCDF_ERR(nc_inq_varndims(m_gid, m_varid, &m_nDims));
     NCDF_ERR(nc_inq_vartype(m_gid, m_varid, &m_nVarType));
     if (m_nDims == 2 && m_nVarType == NC_CHAR)
@@ -2119,6 +2164,27 @@ netCDFVariable::netCDFVariable(
     }
     m_bWriteGDALTags = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "WRITE_GDAL_TAGS", "YES"));
+
+    // Non-documented option. Only used for test purposes.
+    if (CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "INCLUDE_CHUNK_CACHE_PARAMETERS_IN_STRUCTURAL_INFO",
+            "NO")))
+    {
+        size_t nRawDataChunkCacheSize = 0;
+        size_t nChunkSlots = 0;
+        float fPreemption = 0.0f;
+        NCDF_ERR(nc_get_var_chunk_cache(m_gid, m_varid, &nRawDataChunkCacheSize,
+                                        &nChunkSlots, &fPreemption));
+        m_aosStructuralInfo.SetNameValue(
+            "RAW_DATA_CHUNK_CACHE_SIZE",
+            CPLSPrintf("%" PRIu64,
+                       static_cast<uint64_t>(nRawDataChunkCacheSize)));
+        m_aosStructuralInfo.SetNameValue(
+            "CHUNK_SLOTS",
+            CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nChunkSlots)));
+        m_aosStructuralInfo.SetNameValue("PREEMPTION",
+                                         CPLSPrintf("%f", fPreemption));
+    }
 }
 
 /************************************************************************/
@@ -3403,9 +3469,9 @@ bool netCDFVariable::ReadOneElement(const GDALExtendedDataType &src_datatype,
         NCDF_ERR(ret);
         if (ret != NC_NOERR)
             return false;
-        nc_free_string(1, &pszStr);
         GDALExtendedDataType::CopyValue(&pszStr, src_datatype, pDstBuffer,
                                         bufferDataType);
+        nc_free_string(1, &pszStr);
         return true;
     }
 
@@ -3687,7 +3753,7 @@ const void *netCDFVariable::GetRawNoDataValue() const
 
     m_bGetRawNoDataValueHasRun = true;
 
-    const char *pszAttrName = _FillValue;
+    const char *pszAttrName = NCDF_FillValue;
     auto poAttr = GetAttribute(pszAttrName);
     if (!poAttr)
     {
@@ -3812,9 +3878,9 @@ bool netCDFVariable::SetRawNoDataValue(const void *pNoData)
         m_abyNoData.clear();
         nc_type atttype = NC_NAT;
         size_t attlen = 0;
-        if (nc_inq_att(m_gid, m_varid, _FillValue, &atttype, &attlen) ==
+        if (nc_inq_att(m_gid, m_varid, NCDF_FillValue, &atttype, &attlen) ==
             NC_NOERR)
-            ret = nc_del_att(m_gid, m_varid, _FillValue);
+            ret = nc_del_att(m_gid, m_varid, NCDF_FillValue);
         else
             ret = NC_NOERR;
         if (nc_inq_att(m_gid, m_varid, "missing_value", &atttype, &attlen) ==
@@ -3846,7 +3912,7 @@ bool netCDFVariable::SetRawNoDataValue(const void *pNoData)
         if (nc_inq_att(m_gid, m_varid, "missing_value", &atttype, &attlen) ==
             NC_NOERR)
         {
-            if (nc_inq_att(m_gid, m_varid, _FillValue, &atttype, &attlen) ==
+            if (nc_inq_att(m_gid, m_varid, NCDF_FillValue, &atttype, &attlen) ==
                 NC_NOERR)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
@@ -3859,7 +3925,7 @@ bool netCDFVariable::SetRawNoDataValue(const void *pNoData)
         }
         else
         {
-            ret = nc_put_att(m_gid, m_varid, _FillValue, m_nVarType, 1,
+            ret = nc_put_att(m_gid, m_varid, NCDF_FillValue, m_nVarType, 1,
                              &abyTmp[0]);
         }
     }
@@ -4010,7 +4076,7 @@ netCDFVariable::GetAttributes(CSLConstList papszOptions) const
         char szAttrName[NC_MAX_NAME + 1];
         szAttrName[0] = 0;
         NCDF_ERR(nc_inq_attname(m_gid, m_varid, i, szAttrName));
-        if (bShowAll || (!EQUAL(szAttrName, _FillValue) &&
+        if (bShowAll || (!EQUAL(szAttrName, NCDF_FillValue) &&
                          !EQUAL(szAttrName, "missing_value") &&
                          !EQUAL(szAttrName, CF_UNITS) &&
                          !EQUAL(szAttrName, CF_SCALE_FACTOR) &&

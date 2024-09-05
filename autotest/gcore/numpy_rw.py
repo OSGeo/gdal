@@ -1015,3 +1015,29 @@ def test_numpy_rw_masked_array_2():
     assert numpy.all(masked_arr.mask[mask != 255])
 
     assert masked_arr.sum() == arr[mask == 255].sum()
+
+
+###############################################################################
+# Test type code mapping
+
+
+def test_gdal_type_code_to_numeric_type_code():
+
+    assert gdal_array.GDALTypeCodeToNumericTypeCode(gdal.GDT_Float32) == numpy.float32
+
+    # invalid type code
+    assert gdal_array.GDALTypeCodeToNumericTypeCode(802) is None
+
+
+def test_numeric_type_code_to_gdal_type_code():
+
+    assert gdal_array.NumericTypeCodeToGDALTypeCode(numpy.float32) == gdal.GDT_Float32
+    assert (
+        gdal_array.NumericTypeCodeToGDALTypeCode(numpy.dtype("int16")) == gdal.GDT_Int16
+    )
+
+
+def test_flip_code():
+
+    assert gdal_array.flip_code(numpy.float32) == gdal.GDT_Float32
+    assert gdal_array.flip_code(gdal.GDT_Int16) == numpy.int16

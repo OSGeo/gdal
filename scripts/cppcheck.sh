@@ -120,6 +120,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -i ogrdissolve.cpp \
         -i gdalasyncread.cpp \
         -i gdaltorture.cpp \
+        -i vsifilesystemregistrar.cpp \
         $dirname \
         -j "$(nproc)" >>${LOG_FILE} 2>&1 &
     # Display some progress to avoid Travis-CI killing the job after 10 minutes

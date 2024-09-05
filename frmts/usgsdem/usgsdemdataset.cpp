@@ -35,6 +35,7 @@
 #include "ogr_spatialref.h"
 
 #include <algorithm>
+#include <cmath>
 
 typedef struct
 {
@@ -452,7 +453,7 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
             dyStart = dyStart / 3600.0;
 
         double dygap = (dfYMin - dyStart) / poGDS->adfGeoTransform[5] + 0.5;
-        if (dygap <= INT_MIN || dygap >= INT_MAX || !CPLIsFinite(dygap))
+        if (dygap <= INT_MIN || dygap >= INT_MAX || !std::isfinite(dygap))
         {
             CPLFree(sBuffer.buffer);
             return CE_Failure;

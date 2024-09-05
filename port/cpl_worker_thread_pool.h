@@ -74,6 +74,8 @@ typedef enum
 #endif  // ndef DOXYGEN_SKIP
 
 class CPLJobQueue;
+/// Unique pointer to a job queue.
+using CPLJobQueuePtr = std::unique_ptr<CPLJobQueue>;
 
 /** Pool of worker threads */
 class CPL_DLL CPLWorkerThreadPool
@@ -106,7 +108,7 @@ class CPL_DLL CPLWorkerThreadPool
     bool Setup(int nThreads, CPLThreadFunc pfnInitFunc, void **pasInitData,
                bool bWaitallStarted);
 
-    std::unique_ptr<CPLJobQueue> CreateJobQueue();
+    CPLJobQueuePtr CreateJobQueue();
 
     bool SubmitJob(std::function<void()> task);
     bool SubmitJob(CPLThreadFunc pfnFunc, void *pData);
@@ -127,7 +129,6 @@ class CPL_DLL CPLJobQueue
     std::condition_variable m_cv{};
     int m_nPendingJobs = 0;
 
-    static void JobQueueFunction(void *);
     void DeclareJobFinished();
 
     //! @cond Doxygen_Suppress
@@ -146,6 +147,7 @@ class CPL_DLL CPLJobQueue
     }
 
     bool SubmitJob(CPLThreadFunc pfnFunc, void *pData);
+    bool SubmitJob(std::function<void()> task);
     void WaitCompletion(int nMaxRemainingJobs = 0);
     bool WaitEvent();
 };

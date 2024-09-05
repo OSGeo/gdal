@@ -51,7 +51,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS, int nLayerCDFId,
       m_bProfileVarUnlimited(false), m_nParentIndexVarID(-1),
       layerVID_alloc(poDS->cdfid == m_nLayerCDFId
                          ? nullptr
-                         : new nccfdriver::netCDFVID(m_nLayerCDFId)),
+                         : new nccfdriver::netCDFVID(poDS, m_nLayerCDFId)),
       layerVID(layerVID_alloc.get() == nullptr ? poDS->vcdf : *layerVID_alloc),
       m_SGeometryFeatInd(0), m_poLayerConfig(nullptr),
       m_layerSGDefn(poDS->cdfid, nccfdriver::OGRtoRaw(eGeomType), poDS->vcdf,
@@ -647,14 +647,15 @@ void netCDFLayer::SetRecordDimID(int nRecordDimID)
 
 CPLErr netCDFLayer::GetFillValue(int nVarId, char **ppszValue)
 {
-    if (NCDFGetAttr(m_nLayerCDFId, nVarId, _FillValue, ppszValue) == CE_None)
+    if (NCDFGetAttr(m_nLayerCDFId, nVarId, NCDF_FillValue, ppszValue) ==
+        CE_None)
         return CE_None;
     return NCDFGetAttr(m_nLayerCDFId, nVarId, "missing_value", ppszValue);
 }
 
 CPLErr netCDFLayer::GetFillValue(int nVarId, double *pdfValue)
 {
-    if (NCDFGetAttr(m_nLayerCDFId, nVarId, _FillValue, pdfValue) == CE_None)
+    if (NCDFGetAttr(m_nLayerCDFId, nVarId, NCDF_FillValue, pdfValue) == CE_None)
         return CE_None;
     return NCDFGetAttr(m_nLayerCDFId, nVarId, "missing_value", pdfValue);
 }

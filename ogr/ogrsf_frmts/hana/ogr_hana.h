@@ -29,6 +29,7 @@
 #ifndef OGR_HANA_H_INCLUDED
 #define OGR_HANA_H_INCLUDED
 
+#include "hana/ogrhanautils.h"
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
 
@@ -230,7 +231,8 @@ class OGRHanaLayer : public OGRLayer
                                  const CPLString &tableName,
                                  const CPLString &query,
                                  const CPLString &featureDefName);
-    void ReadGeometryExtent(int geomField, OGREnvelope *extent);
+    void ReadGeometryExtent(int geomField, OGREnvelope *extent, int force);
+    bool IsFastExtentAvailable();
 
   public:
     explicit OGRHanaLayer(OGRHanaDataSource *datasource);
@@ -416,13 +418,15 @@ class OGRHanaDataSource final : public GDALDataset
     SrsCache srsCache_;
     odbc::EnvironmentRef connEnv_;
     odbc::ConnectionRef conn_;
-    int majorVersion_ = 0;
+    OGRHANA::HanaVersion hanaVersion_;
+    OGRHANA::HanaVersion cloudVersion_;
 
   private:
     void CreateTable(const CPLString &tableName, const CPLString &fidName,
                      const CPLString &fidType, const CPLString &geomColumnName,
                      OGRwkbGeometryType geomType, bool geomColumnNullable,
                      const CPLString &geomColumnIndexType, int geomSrid);
+    void DetermineVersions();
 
   protected:
     std::pair<CPLString, CPLString> FindSchemaAndTableNames(const char *query);
@@ -469,9 +473,14 @@ class OGRHanaDataSource final : public GDALDataset
 
     int Open(const char *newName, char **options, int update);
 
-    int GetMajorVersion() const
+    OGRHANA::HanaVersion GetHanaVersion() const
     {
-        return majorVersion_;
+        return hanaVersion_;
+    }
+
+    OGRHANA::HanaVersion GetHanaCloudVersion() const
+    {
+        return cloudVersion_;
     }
 
     OGRErr DeleteLayer(int index) override;

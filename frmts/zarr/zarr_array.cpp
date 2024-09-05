@@ -35,6 +35,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <limits>
 #include <map>
@@ -2778,7 +2779,7 @@ void ZarrArray::ParseSpecialAttributes(
                         {
                             if (!osVal.empty())
                                 osVal += ',';
-                            osVal += CPLSPrintf("%.18g", val);
+                            osVal += CPLSPrintf("%.17g", val);
                         }
                         aosKeyValues.SetNameValue(poAttr->GetName().c_str(),
                                                   osVal.c_str());

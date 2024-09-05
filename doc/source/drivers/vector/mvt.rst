@@ -442,7 +442,7 @@ See Also:
 -  `Mapbox Vector Tile
    Specification <https://github.com/mapbox/vector-tile-spec>`__
 -  :ref:`MBTiles <raster.mbtiles>` driver
--  `tippecanoe <https://github.com/mapbox/tippecanoe>`__: Builds vector
+-  `tippecanoe <https://github.com/felt/tippecanoe>`__: Builds vector
    tilesets from large (or small) collections of GeoJSON, Geobuf, or CSV
    features
 -  `Links to tools dealing with Mapbox Vector

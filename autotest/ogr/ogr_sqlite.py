@@ -4094,6 +4094,49 @@ def test_ogr_sql_ST_Area_on_ellipsoid(tmp_vsimem, require_spatialite):
         assert f[0] is None
 
 
+###############################################################################
+# Test ST_Length(geom, use_ellipsoid=True)
+
+
+def test_ogr_sql_ST_Length_on_ellipsoid(tmp_vsimem, require_spatialite):
+
+    tmpfilename = tmp_vsimem / "test_ogr_sql_ST_Length_on_ellipsoid.db"
+
+    ds = ogr.GetDriverByName("SQLite").CreateDataSource(
+        tmpfilename, options=["SPATIALITE=YES"]
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4258)
+    lyr = ds.CreateLayer("my_layer", srs=srs)
+    geom_colname = lyr.GetGeometryColumn()
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt("LINESTRING(2 49,3 49,3 48,2 49)")
+    )
+    lyr.CreateFeature(feat)
+    feat = None
+
+    with ds.ExecuteSQL(f"SELECT ST_Length({geom_colname}, 1) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == pytest.approx(317885.7863996293)
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL(
+            f"SELECT ST_Length({geom_colname}, 0) FROM my_layer"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] == pytest.approx(317885.7863996293)
+
+    with ds.ExecuteSQL("SELECT ST_Length(null, 1) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] is None
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL("SELECT ST_Length(X'FF', 1) FROM my_layer") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] is None
+
+
 def test_ogr_sqlite_stddev():
     """Test STDDEV_POP() and STDDEV_SAMP"""
 
@@ -4104,3 +4147,18 @@ def test_ogr_sqlite_stddev():
         f = sql_lyr.GetNextFeature()
         assert f.GetField(0) == pytest.approx(0.5, rel=1e-15)
         assert f.GetField(1) == pytest.approx(0.5**0.5, rel=1e-15)
+
+
+def test_ogr_sqlite_run_deferred_actions_before_start_transaction():
+
+    ds = ogr.Open(":memory:", update=1)
+    lyr = ds.CreateLayer("test")
+    ds.StartTransaction()
+    ds.ExecuteSQL("INSERT INTO test VALUES (1, NULL)")
+    ds.RollbackTransaction()
+    ds.StartTransaction()
+    ds.ExecuteSQL("INSERT INTO test VALUES (1, NULL)")
+    ds.CommitTransaction()
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1
