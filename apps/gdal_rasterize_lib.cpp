@@ -58,29 +58,30 @@
 
 struct GDALRasterizeOptions
 {
-    std::vector<int> anBandList;
-    std::vector<double> adfBurnValues;
+    std::vector<int> anBandList{};
+    std::vector<double> adfBurnValues{};
     bool bInverse = false;
-    std::string osFormat;
+    std::string osFormat{};
     bool b3D = false;
     GDALProgressFunc pfnProgress = GDALDummyProgress;
-    void *pProgressData;
-    std::vector<std::string> aosLayers;
-    std::string osSQL;
-    std::string osDialect;
-    std::string osBurnAttribute;
-    std::string osWHERE;
-    CPLStringList aosRasterizeOptions;
-    CPLStringList aosTO;
-    double dfXRes;
-    double dfYRes;
-    CPLStringList aosCreationOptions;
-    GDALDataType eOutputType;
-    std::vector<double> adfInitVals;
-    std::string osNoData;
-    OGREnvelope sEnvelop;
-    int nXSize, nYSize;
-    OGRSpatialReference oOutputSRS;
+    void *pProgressData = nullptr;
+    std::vector<std::string> aosLayers{};
+    std::string osSQL{};
+    std::string osDialect{};
+    std::string osBurnAttribute{};
+    std::string osWHERE{};
+    CPLStringList aosRasterizeOptions{};
+    CPLStringList aosTO{};
+    double dfXRes = 0;
+    double dfYRes = 0;
+    CPLStringList aosCreationOptions{};
+    GDALDataType eOutputType = GDT_Undefined;
+    std::vector<double> adfInitVals{};
+    std::string osNoData{};
+    OGREnvelope sEnvelop{};
+    int nXSize = 0;
+    int nYSize = 0;
+    OGRSpatialReference oOutputSRS{};
 
     bool bTargetAlignedPixels = false;
     bool bCreateOutput = false;
@@ -121,12 +122,11 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         .action(
             [psOptions](const std::string &)
             {
-                psOptions->aosRasterizeOptions = CSLSetNameValue(
-                    psOptions->aosRasterizeOptions, "ALL_TOUCHED", "TRUE");
+                psOptions->aosRasterizeOptions.SetNameValue("ALL_TOUCHED", "TRUE");
             })
         .help(_("Enables the ALL_TOUCHED rasterization option."));
 
-    // Mutex for burn/3d/a
+    // Mutually exclusive options: -burn, -3d, -a
     {
         // Required if options for binary
         auto &group = argParser->add_mutually_exclusive_group(
@@ -140,11 +140,11 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
             .action(
                 [psOptions](const std::string &s)
                 {
-                    char **papszTokens = CSLTokenizeString2(s.c_str(), " ", 0);
-                    for (int i = 0; papszTokens[i] != nullptr; i++)
+                    const CPLStringList aosTokens(CSLTokenizeString2(s.c_str(), " ", 0));
+                    for (int i = 0; i < aosTokens.size(); i++)
                     {
                         psOptions->adfBurnValues.push_back(
-                            CPLAtof(papszTokens[i]));
+                            CPLAtof(aosTokens[i]));
                     }
                 })
             .help(_("A fixed value to burn into the raster band(s)."));
@@ -161,8 +161,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
             .action(
                 [psOptions](const std::string &)
                 {
-                    psOptions->aosRasterizeOptions = CSLSetNameValue(
-                        psOptions->aosRasterizeOptions, "BURN_VALUE_FROM", "Z");
+                    psOptions->aosRasterizeOptions.SetNameValue("BURN_VALUE_FROM", "Z");
                 })
             .help(_("Indicates that a burn value should be extracted from the "
                     "\"Z\" values of the feature."));
@@ -173,8 +172,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         .action(
             [psOptions](const std::string &)
             {
-                psOptions->aosRasterizeOptions = CSLSetNameValue(
-                    psOptions->aosRasterizeOptions, "MERGE_ALG", "ADD");
+                psOptions->aosRasterizeOptions.SetNameValue("MERGE_ALG", "ADD");
             })
         .help(_("Instead of burning a new value, this adds the new value to "
                 "the existing raster."));
@@ -186,8 +184,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         .action(
             [psOptions](const std::string &s)
             {
-                psOptions->aosRasterizeOptions = CSLSetNameValue(
-                    psOptions->aosRasterizeOptions, "CHUNKYSIZE", s.c_str());
+                psOptions->aosRasterizeOptions.SetNameValue("CHUNKYSIZE", s.c_str());
             });
 
     // Mutex with -sql
@@ -207,7 +204,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
                 [psOptions](const std::string &sql)
                 {
                     GByte *pabyRet = nullptr;
-                    if (sql.at(0) == '@' &&
+                    if (!sql.empty() && sql.at(0) == '@' &&
                         VSIIngestFile(nullptr, sql.substr(1).c_str(), &pabyRet,
                                       nullptr, 1024 * 1024))
                     {
@@ -249,10 +246,10 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         .action(
             [psOptions](const std::string &s)
             {
-                char **papszTokens = CSLTokenizeString2(s.c_str(), " ", 0);
-                for (int i = 0; papszTokens[i] != nullptr; i++)
+                const CPLStringList aosTokens(CSLTokenizeString2(s.c_str(), " ", 0));
+                for (int i = 0; i < aosTokens.size(); i++)
                 {
-                    psOptions->adfInitVals.push_back(CPLAtof(papszTokens[i]));
+                    psOptions->adfInitVals.push_back(CPLAtof(aosTokens[i]));
                 }
                 psOptions->bCreateOutput = true;
             })
@@ -323,8 +320,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         .action(
             [psOptions](const std::string &s)
             {
-                psOptions->aosRasterizeOptions = CSLSetNameValue(
-                    psOptions->aosRasterizeOptions, "OPTIM", s.c_str());
+                psOptions->aosRasterizeOptions.SetNameValue("OPTIM", s.c_str());
             })
         .help(_("Force the algorithm used."));
 
@@ -351,12 +347,12 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         argParser->add_argument("src_datasource")
             .metavar("<src_datasource>")
             .store_into(psOptionsForBinary->osSource)
-            .help(_("Any OGR supported readable datasource."));
+            .help(_("Any vector supported readable datasource."));
 
         argParser->add_argument("dst_filename")
             .metavar("<dst_filename>")
             .store_into(psOptionsForBinary->osDest)
-            .help(_("The GDAL supported output file."));
+            .help(_("The GDAL raster supported output file."));
     }
 
     return argParser;
@@ -542,7 +538,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
                            GDALDatasetH hDstDS,
                            const std::vector<int> &anBandList,
                            const std::vector<double> &adfBurnValues, bool b3D,
-                           bool bInverse, const std::string osBurnAttribute,
+                           bool bInverse, const std::string& osBurnAttribute,
                            CSLConstList papszRasterizeOptions,
                            CSLConstList papszTO, GDALProgressFunc pfnProgress,
                            void *pProgressData)
