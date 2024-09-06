@@ -75,7 +75,7 @@ struct GDALRasterizeOptions
     double dfXRes = 0;
     double dfYRes = 0;
     CPLStringList aosCreationOptions{};
-    GDALDataType eOutputType = GDT_Undefined;
+    GDALDataType eOutputType = GDT_Unknown;
     std::vector<double> adfInitVals{};
     std::string osNoData{};
     OGREnvelope sEnvelop{};
