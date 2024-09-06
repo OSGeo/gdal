@@ -361,23 +361,8 @@ For example on a 20x20 raster:
     sys     0m0.029s
 
 
-But on a 4096x4096 raster with a number of iterations reduced to 100. the
-thread_safe mode is slightly faster:
-
-.. code-block:: shell
-
-    $ time multireadtest -t 4 -i 100 4096x4096.tif
-    real    0m4.845s
-    user    0m18.666s
-    sys     0m0.084s
-
-    vs
-
-    $ time multireadtest -thread_safe -t 4 -i 100 4096x4096.tif
-    real    0m4.255s
-    user    0m16.370s
-    sys     0m0.096s
-
+But on a 4096x4096 raster with a number of iterations reduced to 100, the
+timings between the default and thread_safe modes are very similar.
 
 A Python equivalent of multireadtest has been written. Scalability depends
 on how much Python code is executed. If relatively few long-enough calls to
