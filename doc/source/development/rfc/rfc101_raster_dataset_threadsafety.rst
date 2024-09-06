@@ -235,7 +235,7 @@ Usage and design limitations
   thus no sharing of cached blocks between threads.
   However, this should not be a too severe limitation for algorithms where
   threads process independent regions of the raster, hence reuse of cached blocks
-  would be inexistent or low. Optimal algorithms will make sure to work on
+  would be non-existent or low. Optimal algorithms will make sure to work on
   regions of interest aligned on the block size (this advice also applies for
   the current approach of manually opening a dataset for each worker thread).
 
@@ -416,52 +416,50 @@ or in the usage of some methods of GDALDataset, GDALRasterBand and related objec
 (particularly existing non-virtual methods of those classes that could happen
 to have a non thread-safe implementation)
 
-Open questions
---------------
-
-The question in this section needs to be solved during the discussion phase of
-the RFC.
-
-For the unusual situations where a dataset cannot be reopened and thus
-GDALCreateThreadSafeDataset() fails, should we provide an additional ``bForce``
-argument to force it to still return a dataset, where calls to the wrapped
-dataset are protected by a mutex? This would enable to always write multi-thread
-safe code, even if the access to the dataset is serialized.
-Similarly we could have a
-``std::unique_ptr<GDALRasterBand> GDALCreateThreadSafeRasterBand(GDALRasterBand* poBand, int nOpenFlags, bool bForce)``
-function that would try to use GDALCreateThreadSafeDataset() internally if it
-manages to identify the dataset to which the band belongs to, and otherwise would
-fallback to protecting calls to the wrapped band with a mutex.
-
 Design discussion
 -----------------
 
 This paragraph discusses a number of thoughts that arose during the writing of
 this RFC.
 
-A significantly different alternative could have consisted in adding native
-thread-safety in each driver. But this is not realistic for the following reasons:
+1.  A significantly different alternative could have consisted in adding native
+    thread-safety in each driver. But this is not realistic for the following reasons:
 
-* if that was feasible, it would require considerable development effort to
-  rework each drivers. So realistically, only a few select drivers would be updated.
+    * if that was feasible, it would require considerable development effort to
+      rework each drivers. So realistically, only a few select drivers would be updated.
 
-* Even updating a reduced number of drivers would be extremely difficult, in
-  particular the GeoTIFF one, due to the underlying library not being reentrant,
-  and deferred loading strategies and many state variables being modified even
-  by read-only APIs. And this applies to most typical drivers.
+    * Even updating a reduced number of drivers would be extremely difficult, in
+      particular the GeoTIFF one, due to the underlying library not being reentrant,
+      and deferred loading strategies and many state variables being modified even
+      by read-only APIs. And this applies to most typical drivers.
 
-* Due to the inevitable locks, there would be a (small) cost bore by callers
-  even on single-thread uses of thread-safe native drivers.
+    * Due to the inevitable locks, there would be a (small) cost bore by callers
+      even on single-thread uses of thread-safe native drivers.
 
-* Some core mechanisms, particularly around the per-band block cache structures,
-  are not currently thread-safe.
+    * Some core mechanisms, particularly around the per-band block cache structures,
+      are not currently thread-safe.
 
-A variant of the proposed implementation that did not use thread-local storage
-has been initially attempted. It stored instead a
-``std::map<thread_id, std::unique_ptr<GDALDataset>>`` on each GDALThreadSafeDataset
-instance. This implementation was simpler, but unfortunately suffered from high
-lock contention since a mutex had to be taken around each access to this map,
-with the contention increasing with the number of concurrent threads.
+2.  A variant of the proposed implementation that did not use thread-local storage
+    has been initially attempted. It stored instead a
+    ``std::map<thread_id, std::unique_ptr<GDALDataset>>`` on each GDALThreadSafeDataset
+    instance. This implementation was simpler, but unfortunately suffered from high
+    lock contention since a mutex had to be taken around each access to this map,
+    with the contention increasing with the number of concurrent threads.
+
+3.  For the unusual situations where a dataset cannot be reopened and thus
+    GDALCreateThreadSafeDataset() fails, should we provide an additional ``bForce``
+    argument to force it to still return a dataset, where calls to the wrapped
+    dataset are protected by a mutex? This would enable to always write multi-thread
+    safe code, even if the access to the dataset is serialized.
+    Similarly we could have a
+    ``std::unique_ptr<GDALRasterBand> GDALCreateThreadSafeRasterBand(GDALRasterBand* poBand, int nOpenFlags, bool bForce)``
+    function that would try to use GDALCreateThreadSafeDataset() internally if it
+    manages to identify the dataset to which the band belongs to, and otherwise would
+    fallback to protecting calls to the wrapped band with a mutex.
+
+    Given the absence of evidence that such option is necessary, this has been excluded
+    from the scope of this RFC.
+
 
 Related issues and PRs
 ----------------------
