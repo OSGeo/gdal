@@ -1167,7 +1167,7 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
     const int nLayerCount =
         (psOptions->osSQL.empty() && psOptions->aosLayers.empty())
             ? 1
-            : psOptions->aosLayers.size();
+            : static_cast<int>(psOptions->aosLayers.size());
 
     if (bCreateOutput && hDstDS == nullptr)
     {
