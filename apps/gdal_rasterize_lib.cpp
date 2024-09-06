@@ -120,9 +120,9 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
     argParser->add_argument("-at")
         .flag()
         .action(
-            [psOptions](const std::string &)
-            {
-                psOptions->aosRasterizeOptions.SetNameValue("ALL_TOUCHED", "TRUE");
+            [psOptions](const std::string &) {
+                psOptions->aosRasterizeOptions.SetNameValue("ALL_TOUCHED",
+                                                            "TRUE");
             })
         .help(_("Enables the ALL_TOUCHED rasterization option."));
 
@@ -140,7 +140,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
             .action(
                 [psOptions](const std::string &s)
                 {
-                    const CPLStringList aosTokens(CSLTokenizeString2(s.c_str(), " ", 0));
+                    const CPLStringList aosTokens(
+                        CSLTokenizeString2(s.c_str(), " ", 0));
                     for (int i = 0; i < aosTokens.size(); i++)
                     {
                         psOptions->adfBurnValues.push_back(
@@ -159,9 +160,9 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
             .flag()
             .store_into(psOptions->b3D)
             .action(
-                [psOptions](const std::string &)
-                {
-                    psOptions->aosRasterizeOptions.SetNameValue("BURN_VALUE_FROM", "Z");
+                [psOptions](const std::string &) {
+                    psOptions->aosRasterizeOptions.SetNameValue(
+                        "BURN_VALUE_FROM", "Z");
                 })
             .help(_("Indicates that a burn value should be extracted from the "
                     "\"Z\" values of the feature."));
@@ -170,8 +171,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
     argParser->add_argument("-add")
         .flag()
         .action(
-            [psOptions](const std::string &)
-            {
+            [psOptions](const std::string &) {
                 psOptions->aosRasterizeOptions.SetNameValue("MERGE_ALG", "ADD");
             })
         .help(_("Instead of burning a new value, this adds the new value to "
@@ -182,12 +182,12 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         .flag()
         .hidden()
         .action(
-            [psOptions](const std::string &s)
-            {
-                psOptions->aosRasterizeOptions.SetNameValue("CHUNKYSIZE", s.c_str());
+            [psOptions](const std::string &s) {
+                psOptions->aosRasterizeOptions.SetNameValue("CHUNKYSIZE",
+                                                            s.c_str());
             });
 
-    // Mutex with -sql
+    // Mutually exclusive -l, -sql
     {
         auto &group = argParser->add_mutually_exclusive_group(false);
 
@@ -246,7 +246,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         .action(
             [psOptions](const std::string &s)
             {
-                const CPLStringList aosTokens(CSLTokenizeString2(s.c_str(), " ", 0));
+                const CPLStringList aosTokens(
+                    CSLTokenizeString2(s.c_str(), " ", 0));
                 for (int i = 0; i < aosTokens.size(); i++)
                 {
                     psOptions->adfInitVals.push_back(CPLAtof(aosTokens[i]));
@@ -318,8 +319,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
     argParser->add_argument("-optim")
         .metavar("AUTO|VECTOR|RASTER")
         .action(
-            [psOptions](const std::string &s)
-            {
+            [psOptions](const std::string &s) {
                 psOptions->aosRasterizeOptions.SetNameValue("OPTIM", s.c_str());
             })
         .help(_("Force the algorithm used."));
@@ -538,7 +538,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
                            GDALDatasetH hDstDS,
                            const std::vector<int> &anBandList,
                            const std::vector<double> &adfBurnValues, bool b3D,
-                           bool bInverse, const std::string& osBurnAttribute,
+                           bool bInverse, const std::string &osBurnAttribute,
                            CSLConstList papszRasterizeOptions,
                            CSLConstList papszTO, GDALProgressFunc pfnProgress,
                            void *pProgressData)
