@@ -118,7 +118,7 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     osBaseURL = CPLURLAddKVP(osBaseURL, "BBOXORDER", nullptr);
 
     if (!osBaseURL.empty() && osBaseURL.back() == '&')
-        osBaseURL.resize(osBaseURL.size() - 1);
+        osBaseURL.pop_back();
 
     if (osVersion.empty())
         osVersion = "1.1.1";

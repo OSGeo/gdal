@@ -119,7 +119,7 @@ bool OGRCSVLayer::Matches(const char *pszFieldName, char **papszPossibleNames)
                 {
                     // *pattern*
                     CPLString oPattern(pszPattern + 1);
-                    oPattern.resize(oPattern.size() - 1);
+                    oPattern.pop_back();
                     if (CPLString(pszFieldName).ifind(oPattern) !=
                         std::string::npos)
                         return true;

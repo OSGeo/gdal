@@ -450,7 +450,7 @@ CPLHTTPResult *PLMosaicDataset::Download(const char *pszURL, int bQuiet404Error)
         vsi_l_offset nDataLength = 0;
         CPLString osURL(pszURL);
         if (osURL.back() == '/')
-            osURL.resize(osURL.size() - 1);
+            osURL.pop_back();
         GByte *pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLength, FALSE);
         if (pabyBuf)
         {

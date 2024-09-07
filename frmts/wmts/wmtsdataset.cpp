@@ -604,7 +604,7 @@ CPLString WMTSDataset::FixCRSName(const char *pszCRS)
     while (osRet.size() && (osRet.back() == ' ' || osRet.back() == '\r' ||
                             osRet.back() == '\n'))
     {
-        osRet.resize(osRet.size() - 1);
+        osRet.pop_back();
     }
     return osRet;
 }

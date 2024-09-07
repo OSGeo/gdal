@@ -163,7 +163,7 @@ MAIN_START(nArgc, papszArgv)
                                     "Z"))
             {
                 bIs3D = TRUE;
-                osGeomName.resize(osGeomName.size() - 1);
+                osGeomName.pop_back();
             }
             if (EQUAL(osGeomName, "NONE"))
                 eGType = wkbNone;

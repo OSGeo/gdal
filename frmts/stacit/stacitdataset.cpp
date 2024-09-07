@@ -178,7 +178,7 @@ static std::string SanitizeCRSValue(const std::string &v)
         }
     }
     if (!ret.empty() && ret.back() == '_')
-        ret.resize(ret.size() - 1);
+        ret.pop_back();
     return ret;
 }
 

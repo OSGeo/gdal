@@ -2250,7 +2250,7 @@ static void WriteAssembledPDS(VSILFILE *fp, const gtemplate *mappds,
         else if (nEltSize == 4)
         {
             GIntBig nBigVal = CPLAtoGIntBig(papszTokens[i]);
-            anVals[anVals.size() - 1] = static_cast<int>(nBigVal);
+            anVals.back() = static_cast<int>(nBigVal);
             if (nBigVal < 0 || nBigVal > static_cast<GIntBig>(UINT_MAX))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,

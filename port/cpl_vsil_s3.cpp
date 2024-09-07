@@ -167,7 +167,7 @@ void VSIDIRWithMissingDirSynthesis::SynthetizeMissingDirectories(
         }
 
         while (depth <= m_aosSubpathsStack.size())
-            m_aosSubpathsStack.resize(m_aosSubpathsStack.size() - 1);
+            m_aosSubpathsStack.pop_back();
 
         if (!m_aosSubpathsStack.empty() &&
             osCurSubdir.compare(0, nLastSlashPos, m_aosSubpathsStack.back()) !=
@@ -258,7 +258,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                 {
                     std::string osKey = pszKey;
                     if (!osKey.empty() && osKey.back() == '/')
-                        osKey.resize(osKey.size() - 1);
+                        osKey.pop_back();
                     if (osKey.size() > osPrefix.size())
                     {
                         ret = true;
@@ -391,7 +391,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                 {
                     std::string osKey = pszKey;
                     if (!osKey.empty() && osKey.back() == '/')
-                        osKey.resize(osKey.size() - 1);
+                        osKey.pop_back();
                     if (osKey.size() > osPrefix.size())
                     {
                         aoEntries.push_back(
@@ -645,7 +645,8 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     const char *GetDebugKey() const override
     {
@@ -1202,7 +1203,7 @@ void VSIMultipartWriteHandle::InvalidateParentDirectory()
 
     std::string osFilenameWithoutSlash(m_osFilename);
     if (!osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/')
-        osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() - 1);
+        osFilenameWithoutSlash.pop_back();
     m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
 }
 
@@ -1530,7 +1531,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::AbortPendingUploads(
     std::string osDirnameWithoutPrefix = pszFilename + GetFSPrefix().size();
     if (!osDirnameWithoutPrefix.empty() && osDirnameWithoutPrefix.back() == '/')
     {
-        osDirnameWithoutPrefix.resize(osDirnameWithoutPrefix.size() - 1);
+        osDirnameWithoutPrefix.pop_back();
     }
 
     std::string osBucket(osDirnameWithoutPrefix);
@@ -2120,7 +2121,7 @@ int IVSIS3LikeFSHandler::RmdirRecursiveInternal(const char *pszDirname,
     std::string osDirnameWithoutEndSlash(pszDirname);
     if (!osDirnameWithoutEndSlash.empty() &&
         osDirnameWithoutEndSlash.back() == '/')
-        osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+        osDirnameWithoutEndSlash.pop_back();
 
     CPLStringList aosOptions;
     aosOptions.SetNameValue("CACHE_ENTRIES", "FALSE");
@@ -2641,7 +2642,7 @@ int IVSIS3LikeFSHandler::MkdirInternal(const char *pszDirname, long /*nMode*/,
     if (ret == 0)
     {
         std::string osDirnameWithoutEndSlash(osDirname);
-        osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+        osDirnameWithoutEndSlash.pop_back();
 
         InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash.c_str()));
 
@@ -2708,7 +2709,7 @@ int IVSIS3LikeFSHandler::Rmdir(const char *pszDirname)
     }
 
     std::string osDirnameWithoutEndSlash(osDirname);
-    osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+    osDirnameWithoutEndSlash.pop_back();
     if (osDirnameWithoutEndSlash.find('/', GetFSPrefix().size()) ==
         std::string::npos)
     {
@@ -2752,7 +2753,7 @@ int IVSIS3LikeFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
 
     std::string osFilenameWithoutSlash(osFilename);
     if (osFilenameWithoutSlash.back() == '/')
-        osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() - 1);
+        osFilenameWithoutSlash.pop_back();
 
     // If there's directory content for the directory where this file belongs
     // to, use it to detect if the object does not exist
@@ -2825,22 +2826,22 @@ VSICurlHandle *VSIS3FSHandler::CreateFileHandle(const char *pszFilename)
 /*                          GetURLFromFilename()                         */
 /************************************************************************/
 
-std::string VSIS3FSHandler::GetURLFromFilename(const std::string &osFilename)
+std::string
+VSIS3FSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
-    std::string osFilenameWithoutPrefix =
+    const std::string osFilenameWithoutPrefix =
         osFilename.substr(GetFSPrefix().size());
 
-    VSIS3HandleHelper *poS3HandleHelper = VSIS3HandleHelper::BuildFromURI(
-        osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str(), true);
-    if (poS3HandleHelper == nullptr)
+    auto poS3HandleHelper =
+        std::unique_ptr<VSIS3HandleHelper>(VSIS3HandleHelper::BuildFromURI(
+            osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str(), true));
+    if (!poS3HandleHelper)
     {
-        return "";
+        return std::string();
     }
     std::string osBaseURL(poS3HandleHelper->GetURL());
     if (!osBaseURL.empty() && osBaseURL.back() == '/')
-        osBaseURL.resize(osBaseURL.size() - 1);
-    delete poS3HandleHelper;
-
+        osBaseURL.pop_back();
     return osBaseURL;
 }
 
@@ -3266,7 +3267,7 @@ VSIDIR *IVSIS3LikeFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
     std::string osDirnameWithoutPrefix = pszPath + GetFSPrefix().size();
     if (!osDirnameWithoutPrefix.empty() && osDirnameWithoutPrefix.back() == '/')
     {
-        osDirnameWithoutPrefix.resize(osDirnameWithoutPrefix.size() - 1);
+        osDirnameWithoutPrefix.pop_back();
     }
 
     std::string osBucket(osDirnameWithoutPrefix);
@@ -3961,7 +3962,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     if (osSourceWithoutSlash.back() == '/' ||
         osSourceWithoutSlash.back() == '\\')
     {
-        osSourceWithoutSlash.resize(osSourceWithoutSlash.size() - 1);
+        osSourceWithoutSlash.pop_back();
     }
 
     const CPLHTTPRetryParameters oRetryParameters(

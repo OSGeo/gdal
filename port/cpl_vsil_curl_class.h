@@ -333,7 +333,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     void SetCachedDirList(const char *pszURL, CachedDirList &oCachedDirList);
     bool ExistsInCacheDirList(const std::string &osDirname, bool *pbIsDir);
 
-    virtual std::string GetURLFromFilename(const std::string &osFilename);
+    virtual std::string GetURLFromFilename(const std::string &osFilename) const;
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override = 0;
