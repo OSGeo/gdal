@@ -111,7 +111,7 @@ CPLString OGRGMLASTruncateIdentifier(const CPLString &osName,
     {
         if (nLastTokenSize > nExtra)
         {
-            aosTokens[aosTokens.size() - 1].resize(nLastTokenSize - nExtra);
+            aosTokens.back().resize(nLastTokenSize - nExtra);
             nExtra = 0;
         }
     }
@@ -127,7 +127,7 @@ CPLString OGRGMLASTruncateIdentifier(const CPLString &osName,
             // than previous ones.
             if (nLastTokenSize > 2 * iter->first)
             {
-                aosTokens[aosTokens.size() - 1].resize(nLastTokenSize - 1);
+                aosTokens.back().resize(nLastTokenSize - 1);
                 nLastTokenSize--;
                 bHasDoneSomething = true;
                 nExtra--;
