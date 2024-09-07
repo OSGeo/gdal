@@ -6336,7 +6336,7 @@ ogr.OGRERR_NONE.  An error is only returned if an error occurs while attempting
 to flush to disk.
 <p>
 The default implementation of this method just calls the SyncToDisk() method
-on each of the layers.  Conceptionally, calling SyncToDisk() on a datasource
+on each of the layers.  Conceptually, calling SyncToDisk() on a datasource
 should include any work that might be accomplished by calling SyncToDisk()
 on layers in that data source.
 <p>
