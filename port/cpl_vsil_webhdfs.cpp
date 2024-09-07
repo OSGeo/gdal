@@ -81,7 +81,8 @@ class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBaseWritable
     char **GetFileList(const char *pszFilename, int nMaxFiles,
                        bool *pbGotFileList) override;
 
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     VSIVirtualHandleUniquePtr
     CreateWriteHandle(const char *pszFilename,
@@ -564,11 +565,11 @@ VSICurlHandle *VSIWebHDFSFSHandler::CreateFileHandle(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                          GetURLFromFilename()                         */
+/*                          GetURLFromFilename()                        */
 /************************************************************************/
 
 std::string
-VSIWebHDFSFSHandler::GetURLFromFilename(const std::string &osFilename)
+VSIWebHDFSFSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
     return osFilename.substr(GetFSPrefix().size());
 }

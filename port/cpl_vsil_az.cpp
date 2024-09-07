@@ -509,7 +509,8 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     VSIAzureBlobHandleHelper *CreateAzHandleHelper(const char *pszURI,
                                                    bool bAllowNoObject);
@@ -1423,18 +1424,17 @@ void VSIAzureFSHandler::ClearCache()
 /*                          GetURLFromFilename()                        */
 /************************************************************************/
 
-std::string VSIAzureFSHandler::GetURLFromFilename(const std::string &osFilename)
+std::string
+VSIAzureFSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
     std::string osFilenameWithoutPrefix =
         osFilename.substr(GetFSPrefix().size());
-    VSIAzureBlobHandleHelper *poHandleHelper =
+    auto poHandleHelper = std::unique_ptr<VSIAzureBlobHandleHelper>(
         VSIAzureBlobHandleHelper::BuildFromURI(osFilenameWithoutPrefix.c_str(),
-                                               GetFSPrefix().c_str());
-    if (poHandleHelper == nullptr)
+                                               GetFSPrefix().c_str()));
+    if (!poHandleHelper)
         return std::string();
-    std::string osURL(poHandleHelper->GetURLNoKVP());
-    delete poHandleHelper;
-    return osURL;
+    return poHandleHelper->GetURLNoKVP();
 }
 
 /************************************************************************/

@@ -645,7 +645,8 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     const char *GetDebugKey() const override
     {
@@ -2825,22 +2826,22 @@ VSICurlHandle *VSIS3FSHandler::CreateFileHandle(const char *pszFilename)
 /*                          GetURLFromFilename()                         */
 /************************************************************************/
 
-std::string VSIS3FSHandler::GetURLFromFilename(const std::string &osFilename)
+std::string
+VSIS3FSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
-    std::string osFilenameWithoutPrefix =
+    const std::string osFilenameWithoutPrefix =
         osFilename.substr(GetFSPrefix().size());
 
-    VSIS3HandleHelper *poS3HandleHelper = VSIS3HandleHelper::BuildFromURI(
-        osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str(), true);
-    if (poS3HandleHelper == nullptr)
+    auto poS3HandleHelper =
+        std::unique_ptr<VSIS3HandleHelper>(VSIS3HandleHelper::BuildFromURI(
+            osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str(), true));
+    if (!poS3HandleHelper)
     {
-        return "";
+        return std::string();
     }
     std::string osBaseURL(poS3HandleHelper->GetURL());
     if (!osBaseURL.empty() && osBaseURL.back() == '/')
-        osBaseURL.resize(osBaseURL.size() - 1);
-    delete poS3HandleHelper;
-
+        osBaseURL.pop_back();
     return osBaseURL;
 }
 

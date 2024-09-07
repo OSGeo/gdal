@@ -212,7 +212,8 @@ class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     const char *GetDebugKey() const override
     {
@@ -385,22 +386,22 @@ VSICurlHandle *VSISwiftFSHandler::CreateFileHandle(const char *pszFilename)
 /*                         GetURLFromFilename()                         */
 /************************************************************************/
 
-std::string VSISwiftFSHandler::GetURLFromFilename(const std::string &osFilename)
+std::string
+VSISwiftFSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
-    std::string osFilenameWithoutPrefix =
+    const std::string osFilenameWithoutPrefix =
         osFilename.substr(GetFSPrefix().size());
 
-    VSISwiftHandleHelper *poHandleHelper = VSISwiftHandleHelper::BuildFromURI(
-        osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str());
-    if (poHandleHelper == nullptr)
+    auto poHandleHelper = std::unique_ptr<VSISwiftHandleHelper>(
+        VSISwiftHandleHelper::BuildFromURI(osFilenameWithoutPrefix.c_str(),
+                                           GetFSPrefix().c_str()));
+    if (!poHandleHelper)
     {
-        return "";
+        return std::string();
     }
     std::string osBaseURL(poHandleHelper->GetURL());
     if (!osBaseURL.empty() && osBaseURL.back() == '/')
-        osBaseURL.resize(osBaseURL.size() - 1);
-    delete poHandleHelper;
-
+        osBaseURL.pop_back();
     return osBaseURL;
 }
 
