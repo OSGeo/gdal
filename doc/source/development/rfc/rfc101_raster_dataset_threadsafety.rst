@@ -80,13 +80,13 @@ The corresponding C function is added:
                                  CSLConstList papszOptions);
 
 
-A new C++ function, GDALCreateThreadSafeDataset, is added with two forms:
+A new C++ function, GDALGetThreadSafeDataset, is added with two forms:
 
 .. code-block:: c++
 
-    std::unique_ptr<GDALDataset> GDALCreateThreadSafeDataset(std::unique_ptr<GDALDataset> poDS, int nScopeFlags);
+    std::unique_ptr<GDALDataset> GDALGetThreadSafeDataset(std::unique_ptr<GDALDataset> poDS, int nScopeFlags);
 
-    GDALDataset* GDALCreateThreadSafeDataset(GDALDataset* poDS, int nScopeFlags);
+    GDALDataset* GDALGetThreadSafeDataset(GDALDataset* poDS, int nScopeFlags);
 
 This function accepts a (generally non thread-safe) source dataset and return
 a new dataset that is a thread-safe wrapper around it, or the source dataset if
@@ -105,7 +105,7 @@ patterns like the following one are valid:
 .. code-block:: c++
 
    auto poDS = GDALDataset::Open(...);
-   GDALDataset* poThreadSafeDS = GDALCreateThreadSafeDataset(poDS, GDAL_OF_RASTER | GDAL_OF_THREAD_SAFE);
+   GDALDataset* poThreadSafeDS = GDALGetThreadSafeDataset(poDS, GDAL_OF_RASTER | GDAL_OF_THREAD_SAFE);
    poDS->ReleaseRef(); // can be done here, or any time later
    if (poThreadSafeDS )
    {
@@ -123,7 +123,7 @@ The corresponding C function for the second form is added:
 
 .. code-block:: c
 
-    GDALDatasetH GDALCreateThreadSafeDataset(GDALDatasetH hDS, int nScopeFlags, CSLConstList papszOptions);
+    GDALDatasetH GDALGetThreadSafeDataset(GDALDatasetH hDS, int nScopeFlags, CSLConstList papszOptions);
 
 
 Usage examples
@@ -152,7 +152,7 @@ Example of a function processing a whole dataset passed as an object:
 
     void foo(GDALDataset* poDS)
     {
-        GDALDataset* poThreadSafeDS = GDALCreateThreadSafeDataset(poDS, GDAL_OF_RASTER);
+        GDALDataset* poThreadSafeDS = GDALGetThreadSafeDataset(poDS, GDAL_OF_RASTER);
         if( poThreadSafeDS )
         {
             // TODO: spawn threads using poThreadSafeDS
@@ -179,7 +179,7 @@ Example of a function processing a single band passed as an object:
         // Check that poBand has a matching owing dataset
         if( poDS && poDS->GetRasterBand(poBand->GetBand()) == poBand )
         {
-            poThreadSafeDS = GDALCreateThreadSafeDataset(poDS, GDAL_OF_RASTER);
+            poThreadSafeDS = GDALGetThreadSafeDataset(poDS, GDAL_OF_RASTER);
             if( poThreadSafeDS )
                 poThreadSafeBand = poThreadSafeDS->GetBand(poBand->GetBand());
         }
@@ -206,7 +206,7 @@ The new C macro and functions are bound to SWIG as:
 
 - ``gdal.OF_THREAD_SAFE``
 - :py:func:`Dataset.IsThreadSafe(nScopeFlags)`
-- :py:func:`Dataset.CreateThreadSafeDataset(nScopeFlags)`. The Python
+- :py:func:`Dataset.GetThreadSafeDataset(nScopeFlags)`. The Python
   implementation of this method takes care of keeping a reference on the source
   dataset in the returned thread-safe dataset, so the user does not have to
   care about their respective lifetimes.
@@ -222,7 +222,7 @@ Usage and design limitations
   (1024 on most Linux systems) could be hit if working with a sufficiently large
   number of worker threads and/or instances of GDALThreadSafeDataset.
 
-* The generic implementation of GDALCreateThreadSafeDataset assumes that the
+* The generic implementation of GDALGetThreadSafeDataset assumes that the
   source dataset can be re-opened by its name (GetDescription()), which is the
   case for datasets opened by GDALOpenEx(). A special implementation is also
   made for dataset instances of the MEM driver. But, there is currently no
@@ -266,7 +266,7 @@ The gist of the implementation lies in a new file ``gcore/gdalthreadsafedataset.
 which defines several classes (internal details):
 
 - ``GDALThreadSafeDataset`` extending :cpp:class:`GDALProxyDataset`.
-  Instances of that class are returned by GDALCreateThreadSafeDataset().
+  Instances of that class are returned by GDALGetThreadSafeDataset().
   On instantiation, it creates as many GDALThreadSafeRasterBand instances as
   the number of bands of the source dataset.
   All virtual methods of GDALDataset are redefined by GDALProxyDataset.
@@ -432,13 +432,13 @@ this RFC.
     with the contention increasing with the number of concurrent threads.
 
 3.  For the unusual situations where a dataset cannot be reopened and thus
-    GDALCreateThreadSafeDataset() fails, should we provide an additional ``bForce``
+    GDALGetThreadSafeDataset() fails, should we provide an additional ``bForce``
     argument to force it to still return a dataset, where calls to the wrapped
     dataset are protected by a mutex? This would enable to always write multi-thread
     safe code, even if the access to the dataset is serialized.
     Similarly we could have a
-    ``std::unique_ptr<GDALRasterBand> GDALCreateThreadSafeRasterBand(GDALRasterBand* poBand, int nOpenFlags, bool bForce)``
-    function that would try to use GDALCreateThreadSafeDataset() internally if it
+    ``std::unique_ptr<GDALRasterBand> GDALGetThreadSafeRasterBand(GDALRasterBand* poBand, int nOpenFlags, bool bForce)``
+    function that would try to use GDALGetThreadSafeDataset() internally if it
     manages to identify the dataset to which the band belongs to, and otherwise would
     fallback to protecting calls to the wrapped band with a mutex.
 
