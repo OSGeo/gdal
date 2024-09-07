@@ -1245,6 +1245,91 @@ def generate_extension_json():
     )
 
 
+def generate_arrow_stringview():
+    import pathlib
+
+    import pyarrow as pa
+    import pyarrow.feather as feather
+
+    stringview = pa.array(["foo", "bar", "looooooooooong string"], pa.string_view())
+    list_stringview = pa.array(
+        [None, [None], ["foo", "bar", "looooooooooong string"]],
+        pa.list_(pa.string_view()),
+    )
+    list_of_list_stringview = pa.array(
+        [None, [None], [["foo", "bar", "looooooooooong string"]]],
+        pa.list_(pa.list_(pa.string_view())),
+    )
+    map_stringview = pa.array(
+        [None, [], [("x", "x_val"), ("y", None)]],
+        type=pa.map_(pa.string_view(), pa.string_view()),
+    )
+
+    names = [
+        "stringview",
+        "list_stringview",
+        "list_of_list_stringview",
+        "map_stringview",
+    ]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    HERE = pathlib.Path(__file__).parent
+    feather.write_feather(table, HERE / "ogr/data/arrow/stringview.feather")
+
+
+def generate_arrow_binaryview():
+    import pathlib
+
+    import pyarrow as pa
+    import pyarrow.feather as feather
+
+    binaryview = pa.array([b"foo", b"bar", b"looooooooooong binary"], pa.binary_view())
+
+    names = ["binaryview"]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    HERE = pathlib.Path(__file__).parent
+    feather.write_feather(table, HERE / "ogr/data/arrow/binaryview.feather")
+
+
+def generate_arrow_listview():
+    import pathlib
+
+    import pyarrow as pa
+    import pyarrow.feather as feather
+
+    listview = pa.array([[1]], pa.list_view(pa.int32()))
+
+    names = ["listview"]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    HERE = pathlib.Path(__file__).parent
+    feather.write_feather(table, HERE / "ogr/data/arrow/listview.feather")
+
+
+def generate_arrow_largelistview():
+    import pathlib
+
+    import pyarrow as pa
+    import pyarrow.feather as feather
+
+    largelistview = pa.array([[1]], pa.large_list_view(pa.int32()))
+
+    names = ["largelistview"]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    HERE = pathlib.Path(__file__).parent
+    feather.write_feather(table, HERE / "ogr/data/arrow/largelistview.feather")
+
+
 if __name__ == "__main__":
     generate_test_parquet()
     generate_all_geoms_parquet()
@@ -1252,3 +1337,7 @@ if __name__ == "__main__":
     generate_nested_types()
     generate_extension_custom()
     generate_extension_json()
+    generate_arrow_stringview()
+    generate_arrow_binaryview()
+    generate_arrow_listview()
+    generate_arrow_largelistview()

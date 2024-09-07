@@ -794,3 +794,58 @@ def test_ogr_arrow_vsi_arrow_file_system():
         pytest.skip("requires Arrow >= 16.0.0")
 
     ogr.Open("vsi://data/arrow/test.feather")
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_arrow_string_view():
+
+    version = int(
+        ogr.GetDriverByName("ARROW").GetMetadataItem("ARROW_VERSION").split(".")[0]
+    )
+    if version < 15:
+        pytest.skip("requires Arrow >= 15")
+
+    with ogr.Open("data/arrow/stringview.feather") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["stringview"] == "foo"
+        assert f["list_stringview"] is None
+        assert f["list_of_list_stringview"] is None
+        assert f["map_stringview"] is None
+
+        f = lyr.GetNextFeature()
+        assert f["stringview"] == "bar"
+        assert f["list_stringview"] == [""]
+        assert f["list_of_list_stringview"] == "[null]"
+        assert f["map_stringview"] == "{}"
+
+        f = lyr.GetNextFeature()
+        assert f["stringview"] == "looooooooooong string"
+        assert f["list_stringview"] == ["foo", "bar", "looooooooooong string"]
+        assert f["list_of_list_stringview"] == '[["foo","bar","looooooooooong string"]]'
+        assert f["map_stringview"] == '{"x":"x_val","y":null}'
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_arrow_binary_view():
+
+    version = int(
+        ogr.GetDriverByName("ARROW").GetMetadataItem("ARROW_VERSION").split(".")[0]
+    )
+    if version < 15:
+        pytest.skip("requires Arrow >= 15")
+
+    with ogr.Open("data/arrow/binaryview.feather") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetFieldAsBinary("binaryview") == b"foo"
+        f = lyr.GetNextFeature()
+        assert f.GetFieldAsBinary("binaryview") == b"bar"
+        f = lyr.GetNextFeature()
+        assert f.GetFieldAsBinary("binaryview") == b"looooooooooong binary"
