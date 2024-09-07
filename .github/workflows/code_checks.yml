@@ -101,6 +101,20 @@ jobs:
         # SC2129: (style): Consider using { cmd1; cmd2; } >> file instead of individual redirects
         run: shellcheck -e SC2086,SC2046,SC2164,SC2054,SC2129 $(find . -name '*.sh' -a -not -name ltmain.sh -a -not -wholename "./autotest/*" -a -not -wholename "./.github/*")
 
+  binary_files:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Install Requirements
+        run: |
+            sudo apt-get install -y python3 coreutils
+
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Detect binary files
+        run: python3 ./scripts/check_binaries.py
+
   linting:
     runs-on: ubuntu-latest
     steps:
