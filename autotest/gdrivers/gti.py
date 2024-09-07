@@ -2947,3 +2947,38 @@ def test_gti_read_multi_threaded_disabled_because_truncated_source(tmp_vsimem):
     assert vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == (
         "1" if gdal.GetNumCPUs() >= 2 else "0"
     )
+
+
+###############################################################################
+
+
+@pytest.mark.require_curl()
+@pytest.mark.require_driver("Parquet")
+def test_gti_stac_geoparquet():
+
+    url = (
+        "https://github.com/stac-utils/stac-geoparquet/raw/main/tests/data/naip.parquet"
+    )
+
+    conn = gdaltest.gdalurlopen(url, timeout=4)
+    if conn is None:
+        pytest.skip("cannot open URL")
+
+    ds = gdal.Open("GTI:/vsicurl/" + url)
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "26914"
+    assert ds.GetGeoTransform() == pytest.approx(
+        (408231.0, 1.0, 0.0, 3873862.0, 0.0, -1.0), rel=1e-5
+    )
+    assert ds.RasterCount == 4
+    assert [band.GetColorInterpretation() for band in ds] == [
+        gdal.GCI_RedBand,
+        gdal.GCI_GreenBand,
+        gdal.GCI_BlueBand,
+        gdal.GCI_Undefined,
+    ]
+    assert [band.GetDescription() for band in ds] == [
+        "Red",
+        "Green",
+        "Blue",
+        "NIR (near-infrared)",
+    ]
