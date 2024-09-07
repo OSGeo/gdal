@@ -449,7 +449,7 @@ this RFC.
 Related issues and PRs
 ----------------------
 
-- Candidate implementation: https://github.com/OSGeo/gdal/compare/master...rouault:gdal:raster_multi_thread?expand=1
+- Candidate implementation: https://github.com/OSGeo/gdal/pull/10746
 
 - https://github.com/OSGeo/gdal/issues/8448: GTiff: Allow concurrent reading of single blocks
 
