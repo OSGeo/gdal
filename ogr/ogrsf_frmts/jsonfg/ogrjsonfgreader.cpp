@@ -136,7 +136,8 @@ OGRJSONFGReadCoordRefSys(json_object *poCoordRefSys, bool bCanRecurse = true)
             }
             return poSRS;
         }
-        else if (STARTS_WITH(pszStr, "http://www.opengis.net/def/crs/"))
+        else if (STARTS_WITH(pszStr, "http://www.opengis.net/def/crs/") ||
+                 STARTS_WITH(pszStr, "https://www.opengis.net/def/crs/"))
         {
             // OGC URI, e.g. "http://www.opengis.net/def/crs/EPSG/0/4326"
             auto poSRS = std::make_unique<OGRSpatialReference>();
