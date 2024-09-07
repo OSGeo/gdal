@@ -480,8 +480,10 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char *pszGeomCol,
                 {
                     int nGeomType = atoi(papszRow[1]);
 
-                    if (nGeomType >= 0 && nGeomType <= 7) /* XY */
-                        eGeomType = (OGRwkbGeometryType)nGeomType;
+                    if (nGeomType >= static_cast<int>(wkbPoint) &&
+                        nGeomType <=
+                            static_cast<int>(wkbGeometryCollection)) /* XY */
+                        eGeomType = static_cast<OGRwkbGeometryType>(nGeomType);
                     else if (nGeomType >= 1000 && nGeomType <= 1007) /* XYZ */
                         eGeomType = wkbSetZ(wkbFlatten(nGeomType));
                     else if (nGeomType >= 2000 && nGeomType <= 2007) /* XYM */
@@ -507,7 +509,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char *pszGeomCol,
             }
             else
             {
-                eGeomType = (OGRwkbGeometryType)atoi(papszRow[1]);
+                eGeomType = static_cast<OGRwkbGeometryType>(atoi(papszRow[1]));
                 if (atoi(papszRow[2]) > 2)
                     eGeomType = wkbSetZ(eGeomType);
                 eGeomFormat = GetGeomFormat(papszRow[3]);
@@ -786,8 +788,8 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
     int nRawColumns = sqlite3_column_count(hColStmt);
 
     CPLFree(m_panFieldOrdinals);
-    m_panFieldOrdinals =
-        (int *)CPLMalloc(sizeof(int) * m_poFeatureDefn->GetFieldCount());
+    m_panFieldOrdinals = static_cast<int *>(
+        CPLMalloc(sizeof(int) * m_poFeatureDefn->GetFieldCount()));
     int nCountFieldOrdinals = 0;
     int nCountGeomFieldOrdinals = 0;
     m_iFIDCol = -1;
@@ -1827,7 +1829,8 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn(
                 "geometry_type, coord_dimension, srid) VALUES "
                 "('%s','%s','%s', %d, %d, %d)",
                 m_pszEscapedTableName, SQLEscapeLiteral(pszGeomCol).c_str(),
-                pszGeomFormat, (int)wkbFlatten(eType), nCoordDim, nSRSId);
+                pszGeomFormat, static_cast<int>(wkbFlatten(eType)), nCoordDim,
+                nSRSId);
         }
         else
         {
@@ -1837,7 +1840,7 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn(
                 "geometry_type, coord_dimension) VALUES "
                 "('%s','%s','%s', %d, %d)",
                 m_pszEscapedTableName, SQLEscapeLiteral(pszGeomCol).c_str(),
-                pszGeomFormat, (int)wkbFlatten(eType), nCoordDim);
+                pszGeomFormat, static_cast<int>(wkbFlatten(eType)), nCoordDim);
         }
     }
 
@@ -1878,8 +1881,8 @@ void OGRSQLiteTableLayer::InitFieldListForRecrerate(
     }
 
     nBufLenOut = nFieldListLen;
-    pszFieldListForSelect = (char *)CPLCalloc(1, nFieldListLen);
-    pszNewFieldList = (char *)CPLCalloc(1, nFieldListLen);
+    pszFieldListForSelect = static_cast<char *>(CPLCalloc(1, nFieldListLen));
+    pszNewFieldList = static_cast<char *>(CPLCalloc(1, nFieldListLen));
 
     /* -------------------------------------------------------------------- */
     /*      Build list of old fields, and the list of new fields.           */
@@ -2597,7 +2600,8 @@ OGRErr OGRSQLiteTableLayer::BindValues(OGRFeature *poFeature,
                              "Too large geometry");
                     return OGRERR_FAILURE;
                 }
-                GByte *pabyWKB = (GByte *)VSI_MALLOC_VERBOSE(nWKBLen);
+                GByte *pabyWKB =
+                    static_cast<GByte *>(VSI_MALLOC_VERBOSE(nWKBLen));
                 if (pabyWKB)
                 {
                     poGeom->exportToWkb(wkbNDR, pabyWKB);
@@ -2745,7 +2749,7 @@ OGRErr OGRSQLiteTableLayer::BindValues(OGRFeature *poFeature,
                                  nHour, nMinute, fSecond);
                     else
                         snprintf(szBuffer, sizeof(szBuffer), "%02d:%02d:%02d",
-                                 nHour, nMinute, (int)fSecond);
+                                 nHour, nMinute, static_cast<int>(fSecond));
                     rc = sqlite3_bind_text(m_hStmtIn, nBindField++, szBuffer,
                                            -1, SQLITE_TRANSIENT);
                     break;
