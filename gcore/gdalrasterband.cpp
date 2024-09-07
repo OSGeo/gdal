@@ -3351,12 +3351,10 @@ GDALGetRasterSampleOverviewEx(GDALRasterBandH hBand, GUIntBig nDesiredSamples)
  * CE_Failure is returned, and CPLGetLastErrorNo() will return
  * CPLE_NotSupported.
  *
- * WARNING:  It is not possible to build overviews for a single band in
- * TIFF format, and thus this method does not work for TIFF format, or any
- * formats that use the default overview building in TIFF format.  Instead
- * it is necessary to build overviews on the dataset as a whole using
- * GDALDataset::BuildOverviews().  That makes this method pretty useless
- * from a practical point of view.
+ * WARNING: Most formats don't support per-band overview computation, but
+ * require that overviews are computed for all bands of a dataset, using
+ * GDALDataset::BuildOverviews(). The only exception for official GDAL drivers
+ * is the HFA driver which supports this method.
  *
  * @param pszResampling one of "NEAREST", "GAUSS", "CUBIC", "AVERAGE", "MODE",
  * "AVERAGE_MAGPHASE" "RMS" or "NONE" controlling the downsampling method
