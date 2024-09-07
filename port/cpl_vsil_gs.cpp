@@ -163,7 +163,6 @@ class VSIGSHandle final : public IVSIS3LikeHandle
 VSIGSFSHandler::~VSIGSFSHandler()
 {
     VSICurlFilesystemHandlerBase::ClearCache();
-    VSIGSHandleHelper::CleanMutex();
 }
 
 /************************************************************************/
