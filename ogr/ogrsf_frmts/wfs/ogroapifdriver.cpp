@@ -431,10 +431,15 @@ bool OGROAPIFDataset::Download(const CPLString &osURL, const char *pszAccept,
 
     if (psResult->pszErrBuf != nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                 psResult->pabyData
-                     ? reinterpret_cast<const char *>(psResult->pabyData)
-                     : psResult->pszErrBuf);
+        std::string osErrorMsg(psResult->pszErrBuf);
+        const char *pszData =
+            reinterpret_cast<const char *>(psResult->pabyData);
+        if (pszData)
+        {
+            osErrorMsg += ", ";
+            osErrorMsg.append(pszData, CPLStrnlen(pszData, 1000));
+        }
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
         CPLHTTPDestroyResult(psResult);
         return false;
     }

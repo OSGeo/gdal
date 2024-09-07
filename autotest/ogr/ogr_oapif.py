@@ -66,7 +66,15 @@ def test_ogr_oapif_errors():
     handler = webserver.SequentialHandler()
     handler.add("GET", "/oapif/collections", 404)
     with webserver.install_http_handler(handler):
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match="HTTP error code : 404"):
+            ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/oapif/collections", 404, {}, "unavailable resource")
+    with webserver.install_http_handler(handler):
+        with pytest.raises(
+            Exception, match="HTTP error code : 404, unavailable resource"
+        ):
             ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
 
     # No Content-Type
