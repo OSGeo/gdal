@@ -40,6 +40,9 @@
 #include "ogrgeojsonutils.h"
 #include "ogrgeojsonwriter.h"
 
+constexpr const char *INVALID_CONTENT_FOR_JSON_LIKE =
+    "__INVALID_CONTENT_FOR_JSON_LIKE__";
+
 class OGRGeoJSONDataSource;
 
 GDALDataset *OGRGeoJSONDriverOpenInternal(GDALOpenInfo *poOpenInfo,
