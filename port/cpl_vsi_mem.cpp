@@ -945,7 +945,7 @@ std::string VSIMemFilesystemHandler::NormalizePath(const std::string &in)
     std::replace(s.begin(), s.end(), '\\', '/');
     s.replaceAll("//", '/');
     if (!s.empty() && s.back() == '/')
-        s.resize(s.size() - 1);
+        s.pop_back();
 #if __GNUC__ >= 13
     // gcc 13 complains about below explicit std::move()
     return s;

@@ -199,7 +199,7 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
                 {
                     std::string osKey = pszKey;
                     if (!osKey.empty() && osKey.back() == '/')
-                        osKey.resize(osKey.size() - 1);
+                        osKey.pop_back();
                     if (osKey.size() > osPrefix.size())
                     {
                         aoNameCount[osKey.c_str() + osPrefix.size()]++;
@@ -322,7 +322,7 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
                 {
                     std::string osKey = pszKey;
                     if (!osKey.empty() && osKey.back() == '/')
-                        osKey.resize(osKey.size() - 1);
+                        osKey.pop_back();
                     if (osKey.size() > osPrefix.size())
                     {
                         aoEntries.push_back(
@@ -1245,7 +1245,7 @@ void VSIAzureWriteHandle::InvalidateParentDirectory()
 
     std::string osFilenameWithoutSlash(m_osFilename);
     if (!osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/')
-        osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() - 1);
+        osFilenameWithoutSlash.pop_back();
     m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
 }
 
@@ -1730,7 +1730,7 @@ int VSIAzureFSHandler::MkdirInternal(const char *pszDirname, long /* nMode */,
     }
 
     std::string osDirnameWithoutEndSlash(osDirname);
-    osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+    osDirnameWithoutEndSlash.pop_back();
     if (osDirnameWithoutEndSlash.size() > GetFSPrefix().size() &&
         osDirnameWithoutEndSlash.find('/', GetFSPrefix().size()) ==
             std::string::npos)
@@ -1892,7 +1892,7 @@ int VSIAzureFSHandler::Rmdir(const char *pszDirname)
     }
 
     std::string osDirnameWithoutEndSlash(osDirname);
-    osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+    osDirnameWithoutEndSlash.pop_back();
     if (osDirnameWithoutEndSlash.size() > GetFSPrefix().size() &&
         osDirnameWithoutEndSlash.find('/', GetFSPrefix().size()) ==
             std::string::npos)
@@ -2511,7 +2511,7 @@ VSIDIR *VSIAzureFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
     std::string osDirnameWithoutPrefix = pszPath + GetFSPrefix().size();
     if (!osDirnameWithoutPrefix.empty() && osDirnameWithoutPrefix.back() == '/')
     {
-        osDirnameWithoutPrefix.resize(osDirnameWithoutPrefix.size() - 1);
+        osDirnameWithoutPrefix.pop_back();
     }
 
     std::string osBucket(osDirnameWithoutPrefix);
@@ -2588,7 +2588,7 @@ bool VSIAzureHandle::IsDirectoryFromExists(const char * /*pszVerb*/,
     std::string osDirname(m_osFilename);
     if (osDirname.size() > poFS->GetFSPrefix().size() &&
         osDirname.back() == '/')
-        osDirname.resize(osDirname.size() - 1);
+        osDirname.pop_back();
     bool bIsDir;
     if (poFS->ExistsInCacheDirList(osDirname, &bIsDir))
         return bIsDir;

@@ -554,7 +554,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
     /*      Apply text after stripping off any extra terminating newline.   */
     /* -------------------------------------------------------------------- */
     if (!osText.empty() && osText.back() == '\n')
-        osText.resize(osText.size() - 1);
+        osText.pop_back();
 
     poFeature->SetField("Text", osText);
 

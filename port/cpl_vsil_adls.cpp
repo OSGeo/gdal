@@ -94,7 +94,7 @@ static std::string RemoveTrailingSlash(const std::string &osFilename)
 {
     std::string osWithoutSlash(osFilename);
     if (!osWithoutSlash.empty() && osWithoutSlash.back() == '/')
-        osWithoutSlash.resize(osWithoutSlash.size() - 1);
+        osWithoutSlash.pop_back();
     return osWithoutSlash;
 }
 

@@ -573,7 +573,7 @@ json_object *OGRGeoJSONSeqLayer::GetNextObject(bool bLooseIdentification)
                (m_osFeatureBuffer.back() == '\r' ||
                 m_osFeatureBuffer.back() == '\n'))
         {
-            m_osFeatureBuffer.resize(m_osFeatureBuffer.size() - 1);
+            m_osFeatureBuffer.pop_back();
         }
         if (!m_osFeatureBuffer.empty())
         {

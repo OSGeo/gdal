@@ -1389,7 +1389,7 @@ CPLXMLNode *MRFDataset::BuildConfig()
             options += optlist[i];
             options += ' ';
         }
-        options.resize(options.size() - 1);
+        options.pop_back();
         CPLCreateXMLElementAndValue(config, "Options", options);
     }
 

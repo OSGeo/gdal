@@ -438,7 +438,7 @@ int VSITarReader::GotoNextFile()
                 return FALSE;
             osNextFileName.resize(static_cast<size_t>(nNextFileSize));
             if (osNextFileName.back() == '\0')
-                osNextFileName.resize(osNextFileName.size() - 1);
+                osNextFileName.pop_back();
         }
         else
         {

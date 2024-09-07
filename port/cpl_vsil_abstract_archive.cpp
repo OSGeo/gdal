@@ -432,7 +432,7 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
             {
                 const char lastC = osFileInArchive.back();
                 if (IsEitherSlash(lastC))
-                    osFileInArchive.resize(osFileInArchive.size() - 1);
+                    osFileInArchive.pop_back();
             }
 
             return archiveFilename;
@@ -563,7 +563,7 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                 {
                     const char lastC = osFileInArchive.back();
                     if (IsEitherSlash(lastC))
-                        osFileInArchive.resize(osFileInArchive.size() - 1);
+                        osFileInArchive.pop_back();
                 }
 
                 return archiveFilename;

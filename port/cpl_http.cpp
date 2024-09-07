@@ -2082,7 +2082,7 @@ static int CPLHTTPCurlDebugFunction(CURL *handle, curl_infotype type,
     {
         std::string osMsg(data, size);
         if (!osMsg.empty() && osMsg.back() == '\n')
-            osMsg.resize(osMsg.size() - 1);
+            osMsg.pop_back();
         CPLDebug(pszDebugKey, "%s", osMsg.c_str());
     }
     return 0;

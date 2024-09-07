@@ -6451,7 +6451,7 @@ void netCDFDataset::CreateSubDatasetList(int nGroupId)
             nc_type nVarType;
             nc_inq_vartype(nGroupId, nVar, &nVarType);
             // Get rid of the last "x" character.
-            osDim.resize(osDim.size() - 1);
+            osDim.pop_back();
             const char *pszType = "";
             switch (nVarType)
             {
@@ -7649,11 +7649,11 @@ bool netCDFDatasetCreateTempFile(NetCDFFormatEnum eFormat,
                     {
                         if (osVal.back() == ';' || osVal.back() == ' ')
                         {
-                            osVal.resize(osVal.size() - 1);
+                            osVal.pop_back();
                         }
                         else if (osVal.back() == '"')
                         {
-                            osVal.resize(osVal.size() - 1);
+                            osVal.pop_back();
                             break;
                         }
                         else
@@ -7672,7 +7672,7 @@ bool netCDFDatasetCreateTempFile(NetCDFFormatEnum eFormat,
                     {
                         if (osVal.back() == ';' || osVal.back() == ' ')
                         {
-                            osVal.resize(osVal.size() - 1);
+                            osVal.pop_back();
                         }
                         else
                         {
@@ -7683,12 +7683,12 @@ bool netCDFDatasetCreateTempFile(NetCDFFormatEnum eFormat,
                     if (!osVal.empty() && osVal.back() == 'b')
                     {
                         nc_datatype = NC_BYTE;
-                        osVal.resize(osVal.size() - 1);
+                        osVal.pop_back();
                     }
                     else if (!osVal.empty() && osVal.back() == 's')
                     {
                         nc_datatype = NC_SHORT;
-                        osVal.resize(osVal.size() - 1);
+                        osVal.pop_back();
                     }
                     if (CPLGetValueType(osVal) == CPL_VALUE_INTEGER)
                     {
@@ -7782,7 +7782,7 @@ bool netCDFDatasetCreateTempFile(NetCDFFormatEnum eFormat,
                 }
                 if (pszLine == nullptr)
                     break;
-                osAccVal.resize(osAccVal.size() - 1);
+                osAccVal.pop_back();
 
                 const std::vector<int> aoDimIds =
                     oMapVarIdToVectorOfDimId[nVarId];

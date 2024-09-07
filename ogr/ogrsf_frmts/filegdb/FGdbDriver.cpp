@@ -294,7 +294,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
     CPLString osName(poMutexedDS->GetName());
     CPLString osNameOri(osName);
     if (osName.back() == '/' || osName.back() == '\\')
-        osName.resize(osName.size() - 1);
+        osName.pop_back();
 
 #ifndef _WIN32
     int bPerLayerCopyingForTransaction =
@@ -452,7 +452,7 @@ OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
     CPLString osName(poMutexedDS->GetName());
     CPLString osNameOri(osName);
     if (osName.back() == '/' || osName.back() == '\\')
-        osName.resize(osName.size() - 1);
+        osName.pop_back();
 
 #ifndef _WIN32
     int bPerLayerCopyingForTransaction =
@@ -696,7 +696,7 @@ OGRErr FGdbTransactionManager::RollbackTransaction(OGRDataSource *&poDSInOut,
     CPLString osName(poMutexedDS->GetName());
     CPLString osNameOri(osName);
     if (osName.back() == '/' || osName.back() == '\\')
-        osName.resize(osName.size() - 1);
+        osName.pop_back();
 
     // int bPerLayerCopyingForTransaction =
     // poDS->HasPerLayerCopyingForTransaction();

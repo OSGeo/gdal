@@ -622,7 +622,7 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
                         while (!osAuthorName.empty() &&
                                osAuthorName.back() == ' ')
                         {
-                            osAuthorName.resize(osAuthorName.size() - 1);
+                            osAuthorName.pop_back();
                         }
                         poDS->GDALDataset::SetMetadataItem(
                             "AUTHOR_NAME", osAuthorName.c_str());
@@ -645,7 +645,7 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
                             osLine.resize(strlen(osLine.c_str()));
                             while (!osLine.empty() && osLine.back() == ' ')
                             {
-                                osLine.resize(osLine.size() - 1);
+                                osLine.pop_back();
                             }
                             if (i > 0)
                                 osComments += '\n';

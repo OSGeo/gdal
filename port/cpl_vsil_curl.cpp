@@ -5824,7 +5824,7 @@ void NetworkStatisticsLogger::Stats::AsJSON(CPLJSONObject &oJSON) const
             if (!osName.empty() && osName[0] == '/')
                 osName = osName.substr(1);
             if (!osName.empty() && osName.back() == '/')
-                osName.resize(osName.size() - 1);
+                osName.pop_back();
             oJSON.Add(("handlers/" + osName).c_str(), childJSON);
         }
         else if (kv.first.eType == ContextPathType::FILE)

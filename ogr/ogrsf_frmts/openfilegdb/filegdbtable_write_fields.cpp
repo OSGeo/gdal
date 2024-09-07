@@ -151,7 +151,7 @@ bool FileGDBTable::CreateField(std::unique_ptr<FileGDBField> &&psField)
             m_nNullableFieldsSizeInBytes =
                 BIT_ARRAY_SIZE_IN_BYTES(m_nCountNullableFields);
         }
-        m_apoFields.resize(m_apoFields.size() - 1);
+        m_apoFields.pop_back();
         m_bDirtyFieldDescriptors = true;
         return false;
     }

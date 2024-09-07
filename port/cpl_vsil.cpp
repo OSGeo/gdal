@@ -1817,7 +1817,7 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
     if (osSourceWithoutSlash.back() == '/' ||
         osSourceWithoutSlash.back() == '\\')
     {
-        osSourceWithoutSlash.resize(osSourceWithoutSlash.size() - 1);
+        osSourceWithoutSlash.pop_back();
     }
     if (VSIStatL(osSourceWithoutSlash, &sSource) < 0)
     {
@@ -2235,7 +2235,7 @@ int VSIFilesystemHandler::RmdirRecursive(const char *pszDirname)
         (osDirnameWithoutEndSlash.back() == '/' ||
          osDirnameWithoutEndSlash.back() == '\\'))
     {
-        osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+        osDirnameWithoutEndSlash.pop_back();
     }
 
     const char SEP = VSIGetDirectorySeparator(pszDirname)[0];

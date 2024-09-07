@@ -149,7 +149,7 @@ void VSICurlFilesystemHandlerBase::AnalyseSwiftFileList(
         {
             osNextMarker = osSubdir;
             if (osSubdir.back() == '/')
-                osSubdir.resize(osSubdir.size() - 1);
+                osSubdir.pop_back();
             if (STARTS_WITH(osSubdir.c_str(), osPrefix.c_str()))
             {
 
@@ -431,7 +431,7 @@ int VSISwiftFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
 
     std::string osFilename(pszFilename);
     if (osFilename.back() == '/')
-        osFilename.resize(osFilename.size() - 1);
+        osFilename.pop_back();
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
@@ -517,7 +517,7 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
     std::string osDirnameWithoutPrefix = pszDirname + GetFSPrefix().size();
     if (!osDirnameWithoutPrefix.empty() && osDirnameWithoutPrefix.back() == '/')
     {
-        osDirnameWithoutPrefix.resize(osDirnameWithoutPrefix.size() - 1);
+        osDirnameWithoutPrefix.pop_back();
     }
 
     std::string osBucket(osDirnameWithoutPrefix);
