@@ -661,6 +661,7 @@ dfTargetHeight
 dfTimeout
 dfTolerance
 dfURY
+dfValue
 dfVisibleVal
 dfXOff
 dfXSize

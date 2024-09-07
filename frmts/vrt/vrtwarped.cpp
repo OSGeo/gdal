@@ -180,6 +180,9 @@ GDALDatasetH CPL_STDCALL GDALAutoCreateWarpedVRTEx(
     if (psWO->padfSrcNoDataReal == nullptr &&
         psWO->padfDstNoDataReal == nullptr && psWO->nSrcAlphaBand == 0)
     {
+        // If none of the provided input nodata values can be represented in the
+        // data type of the corresponding source band, ignore them.
+        int nCountInvalidSrcNoDataReal = 0;
         for (int i = 0; i < psWO->nBandCount; i++)
         {
             GDALRasterBandH rasterBand =
@@ -189,22 +192,42 @@ GDALDatasetH CPL_STDCALL GDALAutoCreateWarpedVRTEx(
             double noDataValue =
                 GDALGetRasterNoDataValue(rasterBand, &hasNoDataValue);
 
-            if (hasNoDataValue)
+            if (hasNoDataValue &&
+                !GDALIsValueExactAs(noDataValue,
+                                    GDALGetRasterDataType(rasterBand)))
             {
-                // Check if the nodata value is out of range
-                int bClamped = FALSE;
-                int bRounded = FALSE;
-                CPL_IGNORE_RET_VAL(GDALAdjustValueToDataType(
-                    GDALGetRasterDataType(rasterBand), noDataValue, &bClamped,
-                    &bRounded));
-                if (!bClamped)
+                nCountInvalidSrcNoDataReal++;
+            }
+        }
+
+        if (nCountInvalidSrcNoDataReal != psWO->nBandCount)
+        {
+            for (int i = 0; i < psWO->nBandCount; i++)
+            {
+                GDALRasterBandH rasterBand =
+                    GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[i]);
+
+                int hasNoDataValue;
+                double noDataValue =
+                    GDALGetRasterNoDataValue(rasterBand, &hasNoDataValue);
+
+                if (hasNoDataValue)
                 {
-                    GDALWarpInitNoDataReal(psWO, -1e10);
-                    if (psWO->padfSrcNoDataReal != nullptr &&
-                        psWO->padfDstNoDataReal != nullptr)
+                    // Check if the nodata value is out of range
+                    int bClamped = FALSE;
+                    int bRounded = FALSE;
+                    CPL_IGNORE_RET_VAL(GDALAdjustValueToDataType(
+                        GDALGetRasterDataType(rasterBand), noDataValue,
+                        &bClamped, &bRounded));
+                    if (!bClamped)
                     {
-                        psWO->padfSrcNoDataReal[i] = noDataValue;
-                        psWO->padfDstNoDataReal[i] = noDataValue;
+                        GDALWarpInitNoDataReal(psWO, -1e10);
+                        if (psWO->padfSrcNoDataReal != nullptr &&
+                            psWO->padfDstNoDataReal != nullptr)
+                        {
+                            psWO->padfSrcNoDataReal[i] = noDataValue;
+                            psWO->padfDstNoDataReal[i] = noDataValue;
+                        }
                     }
                 }
             }
