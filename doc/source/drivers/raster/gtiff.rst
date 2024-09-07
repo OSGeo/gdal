@@ -397,7 +397,7 @@ This driver supports the following creation options:
       :choices: YES, NO
 
       Force the generation of an associated ESRI world file
-      (.tfw).See the :ref:`World Files <raster.wld>` page for details.
+      (.tfw). See the :ref:`World Files <raster.wld>` page for details.
 
 -  .. co:: RPB
       :choices: YES, NO
