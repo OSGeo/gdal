@@ -40,11 +40,9 @@
 /************************************************************************/
 
 GMLPropertyDefn::GMLPropertyDefn(const char *pszName, const char *pszSrcElement)
-    : m_pszName(CPLStrdup(pszName)), m_eType(GMLPT_Untyped), m_nWidth(0),
-      m_nPrecision(0),
+    : m_pszName(CPLStrdup(pszName)),
       m_pszSrcElement(pszSrcElement ? CPLStrdup(pszSrcElement) : nullptr),
-      m_nSrcElementLen(pszSrcElement ? strlen(pszSrcElement) : 0),
-      m_pszCondition(nullptr), m_bNullable(true)
+      m_nSrcElementLen(pszSrcElement ? strlen(pszSrcElement) : 0)
 {
 }
 

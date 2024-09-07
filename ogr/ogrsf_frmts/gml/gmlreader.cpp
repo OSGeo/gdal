@@ -115,25 +115,7 @@ GMLReader::GMLReader(
     bool bUseExpatParserPreferably,
     bool bInvertAxisOrderIfLatLong, bool bConsiderEPSGAsURN,
     GMLSwapCoordinatesEnum eSwapCoordinates, bool bGetSecondaryGeometryOption)
-    : m_bClassListLocked(false), m_nClassCount(0), m_papoClass(nullptr),
-      m_bLookForClassAtAnyLevel(false), m_pszFilename(nullptr),
-#ifndef HAVE_XERCES
-      bUseExpatReader(true),
-#else
-      bUseExpatReader(false),
-#endif
-      m_poGMLHandler(nullptr),
-#ifdef HAVE_XERCES
-      m_poSAXReader(nullptr), m_poCompleteFeature(nullptr),
-      m_GMLInputSource(nullptr), m_bEOF(false), m_bXercesInitialized(false),
-#endif
-#ifdef HAVE_EXPAT
-      oParser(nullptr), ppoFeatureTab(nullptr), nFeatureTabLength(0),
-      nFeatureTabIndex(0), nFeatureTabAlloc(0), pabyBuf(nullptr),
-#endif
-      fpGML(nullptr), m_bReadStarted(false), m_poState(nullptr),
-      m_poRecycledState(nullptr), m_bStopParsing(false),
-      // Experimental. Not publicly advertized. See commented doc in
+    :  // Experimental. Not publicly advertized. See commented doc in
       // drv_gml.html
       m_bFetchAllGeometries(
           CPLTestBool(CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"))),
@@ -141,15 +123,10 @@ GMLReader::GMLReader(
       m_bConsiderEPSGAsURN(bConsiderEPSGAsURN),
       m_eSwapCoordinates(eSwapCoordinates),
       m_bGetSecondaryGeometryOption(bGetSecondaryGeometryOption),
-      m_pszGlobalSRSName(nullptr), m_bCanUseGlobalSRSName(false),
-      m_pszFilteredClassName(nullptr), m_nFilteredClassIndex(-1),
-      m_nHasSequentialLayers(-1),
       // Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer(),
       // and GMLReader::GMLReader().
       m_bFaceHoleNegative(
-          CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"))),
-      m_bSetWidthFlag(true), m_bReportAllAttributes(false),
-      m_bIsWFSJointLayer(false), m_bEmptyAsNull(true)
+          CPLTestBool(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO")))
 {
 #ifndef HAVE_XERCES
 #else
@@ -539,11 +516,12 @@ GMLFeature *GMLReader::NextFeatureExpat()
         {
             // Defer emission of the error message until we have to return
             // nullptr
-            m_osErrorMessage.Printf("XML parsing of GML file failed : %s "
-                                    "at line %d, column %d",
-                                    XML_ErrorString(XML_GetErrorCode(oParser)),
-                                    (int)XML_GetCurrentLineNumber(oParser),
-                                    (int)XML_GetCurrentColumnNumber(oParser));
+            m_osErrorMessage.Printf(
+                "XML parsing of GML file failed : %s "
+                "at line %d, column %d",
+                XML_ErrorString(XML_GetErrorCode(oParser)),
+                static_cast<int>(XML_GetCurrentLineNumber(oParser)),
+                static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
             m_bStopParsing = true;
         }
         if (!m_bStopParsing)
@@ -717,19 +695,19 @@ int GMLReader::GetFeatureElementIndex(const char *pszElement,
         }
 
         // Begin of CSW SearchResults.
-        else if (nElementLength == (int)strlen("BriefRecord") &&
+        else if (nElementLength == static_cast<int>(strlen("BriefRecord")) &&
                  nLenLast == strlen("SearchResults") &&
                  strcmp(pszElement, "BriefRecord") == 0 &&
                  strcmp(pszLast, "SearchResults") == 0)
         {
         }
-        else if (nElementLength == (int)strlen("SummaryRecord") &&
+        else if (nElementLength == static_cast<int>(strlen("SummaryRecord")) &&
                  nLenLast == strlen("SearchResults") &&
                  strcmp(pszElement, "SummaryRecord") == 0 &&
                  strcmp(pszLast, "SearchResults") == 0)
         {
         }
-        else if (nElementLength == (int)strlen("Record") &&
+        else if (nElementLength == static_cast<int>(strlen("Record")) &&
                  nLenLast == strlen("SearchResults") &&
                  strcmp(pszElement, "Record") == 0 &&
                  strcmp(pszLast, "SearchResults") == 0)
@@ -779,7 +757,8 @@ int GMLReader::GetFeatureElementIndex(const char *pszElement,
     // otherwise, find a class with the desired element name.
     for (int i = 0; i < m_nClassCount; i++)
     {
-        if (nElementLength == (int)m_papoClass[i]->GetElementNameLen() &&
+        if (nElementLength ==
+                static_cast<int>(m_papoClass[i]->GetElementNameLen()) &&
             memcmp(pszElement, m_papoClass[i]->GetElementName(),
                    nElementLength) == 0)
             return i;
@@ -908,8 +887,8 @@ void GMLReader::PopState()
             if (nFeatureTabLength >= nFeatureTabAlloc)
             {
                 nFeatureTabAlloc = nFeatureTabLength * 4 / 3 + 16;
-                ppoFeatureTab = (GMLFeature **)CPLRealloc(
-                    ppoFeatureTab, sizeof(GMLFeature *) * (nFeatureTabAlloc));
+                ppoFeatureTab = static_cast<GMLFeature **>(CPLRealloc(
+                    ppoFeatureTab, sizeof(GMLFeature *) * (nFeatureTabAlloc)));
             }
             ppoFeatureTab[nFeatureTabLength] = m_poState->m_poFeature;
             nFeatureTabLength++;

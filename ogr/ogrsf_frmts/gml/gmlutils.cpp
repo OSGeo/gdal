@@ -124,66 +124,79 @@ bool GML_IsSRSLatLongOrder(const char *pszSRSName)
 /*                GML_BuildOGRGeometryFromList_CreateCache()            */
 /************************************************************************/
 
+namespace
+{
 class SRSDesc
 {
   public:
-    std::string osSRSName;
-    bool bAxisInvert;
-    OGRSpatialReference *poSRS;
+    std::string osSRSName{};
+    bool bAxisInvert = false;
+    OGRSpatialReference *poSRS = nullptr;
 
-    SRSDesc() : bAxisInvert(false), poSRS(nullptr)
+    SRSDesc() = default;
+
+    SRSDesc &operator=(SRSDesc &&other)
     {
+        osSRSName = std::move(other.osSRSName);
+        bAxisInvert = other.bAxisInvert;
+        if (poSRS)
+            poSRS->Release();
+        poSRS = other.poSRS;
+        other.poSRS = nullptr;
+        return *this;
     }
+
+    ~SRSDesc()
+    {
+        if (poSRS)
+            poSRS->Release();
+    }
+
+    CPL_DISALLOW_COPY_ASSIGN(SRSDesc)
 };
 
 class SRSCache
 {
-    std::map<std::string, SRSDesc> oMap;
-    SRSDesc oLastDesc;
+    std::map<std::string, SRSDesc> oMap{};
+    SRSDesc *poLastDesc = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(SRSCache)
 
   public:
-    SRSCache()
-    {
-    }
+    SRSCache() = default;
 
-    ~SRSCache()
+    const SRSDesc &Get(const std::string &osSRSName)
     {
-        std::map<std::string, SRSDesc>::iterator oIter;
-        for (oIter = oMap.begin(); oIter != oMap.end(); ++oIter)
-        {
-            if (oIter->second.poSRS != nullptr)
-                oIter->second.poSRS->Release();
-        }
-    }
-
-    SRSDesc &Get(const std::string &osSRSName)
-    {
-        if (osSRSName == oLastDesc.osSRSName)
-            return oLastDesc;
+        if (poLastDesc && osSRSName == poLastDesc->osSRSName)
+            return *poLastDesc;
 
         std::map<std::string, SRSDesc>::iterator oIter = oMap.find(osSRSName);
         if (oIter != oMap.end())
         {
-            oLastDesc = oIter->second;
-            return oLastDesc;
+            poLastDesc = &(oIter->second);
+            return *poLastDesc;
         }
 
-        oLastDesc.osSRSName = osSRSName;
-        oLastDesc.bAxisInvert = GML_IsSRSLatLongOrder(osSRSName.c_str());
-        oLastDesc.poSRS = new OGRSpatialReference();
-        oLastDesc.poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if (oLastDesc.poSRS->SetFromUserInput(
+        SRSDesc oDesc;
+        oDesc.osSRSName = osSRSName;
+        oDesc.bAxisInvert = GML_IsSRSLatLongOrder(osSRSName.c_str());
+        oDesc.poSRS = new OGRSpatialReference();
+        oDesc.poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (oDesc.poSRS->SetFromUserInput(
                 osSRSName.c_str(),
                 OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
             OGRERR_NONE)
         {
-            delete oLastDesc.poSRS;
-            oLastDesc.poSRS = nullptr;
+            delete oDesc.poSRS;
+            oDesc.poSRS = nullptr;
         }
-        oMap[osSRSName] = oLastDesc;
-        return oLastDesc;
+        oMap[osSRSName] = std::move(oDesc);
+        poLastDesc = &(oMap[osSRSName]);
+        return *poLastDesc;
     }
 };
+
+}  // namespace
 
 void *GML_BuildOGRGeometryFromList_CreateCache()
 {
