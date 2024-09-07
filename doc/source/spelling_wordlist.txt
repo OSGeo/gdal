@@ -200,6 +200,7 @@ BBoxOrder
 bc
 bCatchDebug
 bCopy
+bDelete
 bDstToSrc
 bedrijven
 behaviours
