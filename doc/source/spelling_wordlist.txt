@@ -58,7 +58,6 @@ Amici
 amongst
 amz
 Amz
-analygous
 analyse
 Analyse
 analysing
@@ -79,7 +78,6 @@ api
 Api
 apoNewDims
 apploy
-appoach
 approximator
 AppVeyor
 APSTILE
@@ -97,7 +95,6 @@ arra
 Arrayname
 arrayStartIdx
 ASC
-ascendent
 ascii
 askin
 aspatial
@@ -133,7 +130,7 @@ autocommit
 autoconf
 Autoconf
 autocorrelation
-autodection
+autodetection
 Autodesk
 autodetect
 autodetected
@@ -439,9 +436,6 @@ ComplexSource
 compoundcurves
 compressiblity
 compressions
-compressoin
-comptatible
-Conceptionally
 conceptualhelp
 cond
 conda

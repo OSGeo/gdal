@@ -48,7 +48,7 @@
  * by using a modified algorithm of "Generating Viewsheds without Using
  * Sightlines" published at
  * https://www.asprs.org/wp-content/uploads/pers/2000journal/january/2000_jan_87-90.pdf
- * This appoach provides a relatively fast calculation, since the output raster
+ * This approach provides a relatively fast calculation, since the output raster
  * is generated in a single scan. The gdal/apps/gdal_viewshed.cpp mainline can
  * be used as an example of how to use this function. The output raster will be
  * of type Byte or Float64.

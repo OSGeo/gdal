@@ -146,7 +146,7 @@ The following creation options are available:
       :choices: -1, 0, >0
       :default: -1
 
-      Restart interval (in MCUs) for JPEG compressoin.
+      Restart interval (in MCUs) for JPEG compression.
       -1 for auto, 0 for none, > 0 for user specified.
 
 -  .. co:: NUMI
