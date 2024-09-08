@@ -100,6 +100,7 @@
 #include "commonutils.h"
 #include "gdalargumentparser.h"
 
+#include <cassert>
 #include <cfloat>
 #include <cmath>
 #include <cstdio>
@@ -1666,13 +1667,10 @@ GDALColorReliefGetRGBA(const std::vector<ColorAssociation> &asColorAssociation,
         if (eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY &&
             asColorAssociation[i - 1].dfVal != dfVal)
         {
-            size_t index = i;
-            if (dfVal - asColorAssociation[i - 1].dfVal <
-                asColorAssociation[i].dfVal - dfVal)
-            {
-                --index;
-            }
-
+            const size_t index = (dfVal - asColorAssociation[i - 1].dfVal <
+                                  asColorAssociation[i].dfVal - dfVal)
+                                     ? i - 1
+                                     : i;
             *pnR = asColorAssociation[index].nR;
             *pnG = asColorAssociation[index].nG;
             *pnB = asColorAssociation[index].nB;

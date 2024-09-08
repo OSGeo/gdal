@@ -1184,7 +1184,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                                 ? dfOutMaxY
                                 : std::ceil(dfOutMaxY / dfResY) * dfResY);
 
-                        m_oSRS = oSTACSRS;
+                        m_oSRS = std::move(oSTACSRS);
                         pszResX = osResX.c_str();
                         pszResY = osResY.c_str();
                         pszMinX = osMinX.c_str();

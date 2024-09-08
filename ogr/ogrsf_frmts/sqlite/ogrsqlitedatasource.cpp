@@ -211,6 +211,7 @@ void OGRSQLiteBaseDataSource::FinishSpatialite()
             std::lock_guard oLock(oCleanupMutex);
             pfn_spatialite_cleanup_ex(ctxt);
         }
+        // coverity[thread1_overwrites_value_in_field]
         hSpatialiteCtxt = nullptr;
     }
 }
