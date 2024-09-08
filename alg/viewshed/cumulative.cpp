@@ -136,24 +136,34 @@ void Cumulative::runExecutor(const std::string &srcFilename, Progress &progress,
 {
     DatasetPtr srcDs(GDALDataset::Open(srcFilename.c_str(), GA_ReadOnly));
     if (!srcDs)
-        err = true;
-
-    Location loc;
-    while (!err && m_observerQueue.pop(loc))
     {
-        GDALDriver *memDriver = GetGDALDriverManager()->GetDriverByName("MEM");
-        DatasetPtr dstDs(memDriver->Create(
-            "", m_extent.xSize(), m_extent.ySize(), 1, GDT_Byte, nullptr));
-        err = (dstDs == nullptr);
-        if (!err)
+        err = true;
+    }
+    else
+    {
+        Location loc;
+        while (!err && m_observerQueue.pop(loc))
         {
-            ViewshedExecutor executor(*srcDs->GetRasterBand(1),
-                                      *dstDs->GetRasterBand(1), loc.x, loc.y,
-                                      m_extent, m_extent, m_opts, progress);
-            err = !executor.run();
+            GDALDriver *memDriver =
+                GetGDALDriverManager()->GetDriverByName("MEM");
+            DatasetPtr dstDs(memDriver ? memDriver->Create("", m_extent.xSize(),
+                                                           m_extent.ySize(), 1,
+                                                           GDT_Byte, nullptr)
+                                       : nullptr);
+            if (!dstDs)
+            {
+                err = true;
+            }
+            else
+            {
+                ViewshedExecutor executor(
+                    *srcDs->GetRasterBand(1), *dstDs->GetRasterBand(1), loc.x,
+                    loc.y, m_extent, m_extent, m_opts, progress);
+                err = !executor.run();
+                if (!err)
+                    m_datasetQueue.push(std::move(dstDs));
+            }
         }
-        if (!err)
-            m_datasetQueue.push(std::move(dstDs));
     }
 
     // Job done. Set the output queue state.  If all the executor jobs have completed,

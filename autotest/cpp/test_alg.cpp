@@ -157,6 +157,8 @@ TEST_F(test_alg, GDALWarpResolveWorkingDataType_padfSrcNoDataReal_with_band)
     GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
                                   ->Create("", 1, 1, 1, GDT_Byte, nullptr));
     GDALWarpOptions *psOptions = GDALCreateWarpOptions();
+    // False-positive: hSrcDS is no longer used after GDALDestroyWarpOptions()
+    // coverity[escape]
     psOptions->hSrcDS = GDALDataset::ToHandle(poDS.get());
     psOptions->nBandCount = 1;
     psOptions->panSrcBands =

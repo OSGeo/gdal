@@ -556,7 +556,7 @@ char **CPLHTTPGetOptionsFromEnv(const char *pszFilename)
 {
     CPLStringList aosOptions;
     std::string osNonStreamingFilename;
-    if (STARTS_WITH(pszFilename, "/vsi"))
+    if (pszFilename && STARTS_WITH(pszFilename, "/vsi"))
     {
         VSIFilesystemHandler *poFSHandler =
             VSIFileManager::GetHandler(pszFilename);
