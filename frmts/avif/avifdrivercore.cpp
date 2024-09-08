@@ -48,7 +48,8 @@ int AVIFDriverIdentify(GDALOpenInfo *poOpenInfo)
 /*                     AVIFDriverSetCommonMetadata()                    */
 /************************************************************************/
 
-void AVIFDriverSetCommonMetadata(GDALDriver *poDriver)
+void AVIFDriverSetCommonMetadata(GDALDriver *poDriver,
+                                 bool bMayHaveWriteSupport)
 {
     poDriver->SetDescription(DRIVER_NAME);
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
@@ -57,12 +58,16 @@ void AVIFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/avif.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "avif");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte UInt16");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
 
     poDriver->pfnIdentify = AVIFDriverIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+
+    if (bMayHaveWriteSupport)
+    {
+        poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte UInt16");
+        poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+    }
 }
 
 /************************************************************************/
@@ -81,7 +86,7 @@ void DeclareDeferredAVIFPlugin()
     poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
                               PLUGIN_INSTALLATION_MESSAGE);
 #endif
-    AVIFDriverSetCommonMetadata(poDriver);
+    AVIFDriverSetCommonMetadata(poDriver, /* bMayHaveWriteSupport = */ true);
     GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
 }
 #endif

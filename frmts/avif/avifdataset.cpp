@@ -580,6 +580,14 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
                                          GDALProgressFunc pfnProgress,
                                          void *pProgressData)
 {
+    auto poDrv = GetGDALDriverManager()->GetDriverByName(DRIVER_NAME);
+    if (poDrv && poDrv->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST) == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "This build of libavif has been done without any AV1 encoder");
+        return nullptr;
+    }
+
     // Perform various validations on source dataset
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
@@ -959,7 +967,7 @@ class GDALAVIFDriver final : public GDALDriver
 
   public:
     const char *GetMetadataItem(const char *pszName,
-                                const char *pszDomain) override
+                                const char *pszDomain = "") override
     {
         if (EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
         {
@@ -981,6 +989,23 @@ void GDALAVIFDriver::InitMetadata()
         return;
     m_bMetadataInitialized = true;
 
+    std::vector<std::string> aosCodecNames;
+    for (auto eMethod : {AVIF_CODEC_CHOICE_AUTO, AVIF_CODEC_CHOICE_AOM,
+                         AVIF_CODEC_CHOICE_RAV1E, AVIF_CODEC_CHOICE_SVT})
+    {
+        const char *pszName =
+            avifCodecName(eMethod, AVIF_CODEC_FLAG_CAN_ENCODE);
+        if (pszName)
+        {
+            aosCodecNames.push_back(eMethod == AVIF_CODEC_CHOICE_AUTO
+                                        ? CPLString("AUTO")
+                                        : CPLString(pszName).toupper());
+        }
+    }
+
+    if (aosCodecNames.empty())
+        return;
+
     CPLXMLTreeCloser oTree(
         CPLCreateXMLNode(nullptr, CXT_Element, "CreationOptionList"));
 
@@ -991,21 +1016,10 @@ void GDALAVIFDriver::InitMetadata()
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    "Compression CODEC");
         CPLAddXMLAttributeAndValue(psOption, "default", "AUTO");
-
-        for (auto eMethod : {AVIF_CODEC_CHOICE_AUTO, AVIF_CODEC_CHOICE_AOM,
-                             AVIF_CODEC_CHOICE_RAV1E, AVIF_CODEC_CHOICE_SVT})
+        for (const std::string &osCodecName : aosCodecNames)
         {
-            const char *pszName =
-                avifCodecName(eMethod, AVIF_CODEC_FLAG_CAN_ENCODE);
-            if (pszName)
-            {
-                auto poValueNode =
-                    CPLCreateXMLNode(psOption, CXT_Element, "Value");
-                CPLCreateXMLNode(poValueNode, CXT_Text,
-                                 eMethod == AVIF_CODEC_CHOICE_AUTO
-                                     ? "AUTO"
-                                     : CPLString(pszName).toupper().c_str());
-            }
+            auto poValueNode = CPLCreateXMLNode(psOption, CXT_Element, "Value");
+            CPLCreateXMLNode(poValueNode, CXT_Text, osCodecName.c_str());
         }
     }
 
@@ -1145,10 +1159,21 @@ void GDALRegister_AVIF()
     }
 
     auto poDriver = std::make_unique<GDALAVIFDriver>();
-    AVIFDriverSetCommonMetadata(poDriver.get());
+    auto poDM = GetGDALDriverManager();
+    bool bMayHaveWriteSupport = true;
+    if (!poDM->IsKnownDriver("AVIF"))
+    {
+        // If we are not built as a defered plugin, check now if libavif has
+        // write support
+        bMayHaveWriteSupport =
+            poDriver->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST) != nullptr;
+    }
+
+    AVIFDriverSetCommonMetadata(poDriver.get(), bMayHaveWriteSupport);
 
     poDriver->pfnOpen = GDALAVIFDataset::Open;
-    poDriver->pfnCreateCopy = GDALAVIFDataset::CreateCopy;
+    if (bMayHaveWriteSupport)
+        poDriver->pfnCreateCopy = GDALAVIFDataset::CreateCopy;
 
-    GetGDALDriverManager()->RegisterDriver(poDriver.release());
+    poDM->RegisterDriver(poDriver.release());
 }

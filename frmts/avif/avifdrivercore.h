@@ -38,6 +38,7 @@ constexpr const char *DRIVER_NAME = "AVIF";
 
 int AVIFDriverIdentify(GDALOpenInfo *poOpenInfo);
 
-void AVIFDriverSetCommonMetadata(GDALDriver *poDriver);
+void AVIFDriverSetCommonMetadata(GDALDriver *poDriver,
+                                 bool bMayHaveWriteSupport);
 
 #endif
