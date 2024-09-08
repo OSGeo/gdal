@@ -2191,9 +2191,12 @@ static int JPEGPreEncode(TIFF *tif, uint16_t s)
         segment_width = TIFFhowmany_32(segment_width, sp->h_sampling);
         segment_height = TIFFhowmany_32(segment_height, sp->v_sampling);
     }
-    if (segment_width > 65535 || segment_height > 65535)
+    if (segment_width > (uint32_t)JPEG_MAX_DIMENSION ||
+        segment_height > (uint32_t)JPEG_MAX_DIMENSION)
     {
-        TIFFErrorExtR(tif, module, "Strip/tile too large for JPEG");
+        TIFFErrorExtR(tif, module,
+                      "Strip/tile too large for JPEG. Maximum dimension is %d",
+                      (int)JPEG_MAX_DIMENSION);
         return (0);
     }
     sp->cinfo.c.image_width = segment_width;

@@ -11597,3 +11597,85 @@ def test_tiff_write_colormap_256_mult_factor(tmp_vsimem):
         and ct.GetColorEntry(1) == (0, 1, 2, 255)
         and ct.GetColorEntry(2) == (254, 254, 254, 255)
     ), "Wrong color table entry."
+
+
+###############################################################################
+@pytest.mark.require_creation_option("GTiff", "JPEG")
+@pytest.mark.parametrize(
+    "xsize,ysize,options,expected_error_msg",
+    [
+        (
+            65501,
+            1,
+            ["COMPRESS=JPEG"],
+            "COMPRESS=JPEG is only compatible of un-tiled images whose width is lesser or equal to 65500 pixels",
+        ),
+        (
+            1,
+            65501,
+            ["COMPRESS=JPEG", "BLOCKYSIZE=65501"],
+            "COMPRESS=JPEG is only compatible of images whose BLOCKYSIZE is lesser or equal to 65500 pixels",
+        ),
+        (
+            1,
+            1,
+            ["COMPRESS=JPEG", "TILED=YES", "BLOCKXSIZE=65536"],
+            "COMPRESS=JPEG is only compatible of tiled images whose BLOCKXSIZE is lesser or equal to 65500 pixels",
+        ),
+        (
+            1,
+            1,
+            ["COMPRESS=JPEG", "TILED=YES", "BLOCKYSIZE=65536"],
+            "COMPRESS=JPEG is only compatible of images whose BLOCKYSIZE is lesser or equal to 65500 pixels",
+        ),
+    ],
+)
+@gdaltest.enable_exceptions()
+def test_tiff_write_too_large_jpeg(
+    tmp_vsimem, xsize, ysize, options, expected_error_msg
+):
+
+    filename = str(tmp_vsimem / "test.tif")
+    with pytest.raises(Exception, match=expected_error_msg):
+        gdal.GetDriverByName("GTiff").Create(filename, xsize, ysize, options=options)
+
+
+###############################################################################
+@pytest.mark.require_creation_option("GTiff", "WEBP")
+@pytest.mark.parametrize(
+    "xsize,ysize,options,expected_error_msg",
+    [
+        (
+            16384,
+            1,
+            ["COMPRESS=WEBP"],
+            "COMPRESS=WEBP is only compatible of un-tiled images whose width is lesser or equal to 16383 pixels",
+        ),
+        (
+            1,
+            16384,
+            ["COMPRESS=WEBP", "BLOCKYSIZE=16384"],
+            "COMPRESS=WEBP is only compatible of images whose BLOCKYSIZE is lesser or equal to 16383 pixels",
+        ),
+        (
+            1,
+            1,
+            ["COMPRESS=WEBP", "TILED=YES", "BLOCKXSIZE=16384"],
+            "COMPRESS=WEBP is only compatible of tiled images whose BLOCKXSIZE is lesser or equal to 16383 pixels",
+        ),
+        (
+            1,
+            1,
+            ["COMPRESS=WEBP", "TILED=YES", "BLOCKYSIZE=16384"],
+            "COMPRESS=WEBP is only compatible of images whose BLOCKYSIZE is lesser or equal to 16383 pixels",
+        ),
+    ],
+)
+@gdaltest.enable_exceptions()
+def test_tiff_write_too_large_webp(
+    tmp_vsimem, xsize, ysize, options, expected_error_msg
+):
+
+    filename = str(tmp_vsimem / "test.tif")
+    with pytest.raises(Exception, match=expected_error_msg):
+        gdal.GetDriverByName("GTiff").Create(filename, xsize, ysize, options=options)
