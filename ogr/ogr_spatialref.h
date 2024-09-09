@@ -194,6 +194,8 @@ class CPL_DLL OGRSpatialReference
     OGRSpatialReference &operator=(const OGRSpatialReference &);
     OGRSpatialReference &operator=(OGRSpatialReference &&);
 
+    OGRSpatialReference &AssignAndSetThreadSafe(const OGRSpatialReference &);
+
     int Reference();
     int Dereference();
     int GetReferenceCount() const;
