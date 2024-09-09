@@ -950,7 +950,7 @@ def test_jsonfg_write_several_layers():
         [["GEOMETRYCOLLECTION (POINT (1 2))"], ogr.wkbGeometryCollection],
         [["GEOMETRYCOLLECTION Z (POINT Z (1 2 3))"], ogr.wkbGeometryCollection25D],
         [["POINT (1 2)", "LINESTRING (1 2,3 4)"], ogr.wkbUnknown],
-        [["POLYHEDRALSURFACE EMPTY"], ogr.wkbPolyhedralSurface],
+        [["POLYHEDRALSURFACE Z EMPTY"], ogr.wkbPolyhedralSurfaceZ],
         [
             [
                 "POLYHEDRALSURFACE Z (((0 0 0,0 1 0,1 1 0,0 0 0)),((0 0 0,1 0 0,0 0 1,0 0 0)),((0 0 0,0 1 0,0 0 1,0 0 0)),((0 1 0,1 0 0,0 0 1,0 1 0)))"
