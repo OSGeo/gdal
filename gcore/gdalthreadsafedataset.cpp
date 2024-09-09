@@ -177,6 +177,71 @@ class GDALThreadSafeDataset final : public GDALProxyDataset
 
     static GDALDataset *Create(GDALDataset *poPrototypeDS, int nScopeFlags);
 
+    /* All below public methods override GDALDataset methods, and instead of
+     * forwarding to a thread-local dataset, they act on the prototype dataset,
+     * because they return a non-trivial type, that could be invalidated
+     * otherwise if the thread-local dataset is evicted from the LRU cache.
+     */
+    const OGRSpatialReference *GetSpatialRef() const override
+    {
+        std::lock_guard oGuard(m_oPrototypeDSMutex);
+        if (m_oSRS.IsEmpty())
+        {
+            auto poSRS = m_poPrototypeDS->GetSpatialRef();
+            if (poSRS)
+            {
+                m_oSRS.AssignAndSetThreadSafe(*poSRS);
+            }
+        }
+        return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
+    }
+
+    const OGRSpatialReference *GetGCPSpatialRef() const override
+    {
+        std::lock_guard oGuard(m_oPrototypeDSMutex);
+        if (m_oGCPSRS.IsEmpty())
+        {
+            auto poSRS = m_poPrototypeDS->GetGCPSpatialRef();
+            if (poSRS)
+            {
+                m_oGCPSRS.AssignAndSetThreadSafe(*poSRS);
+            }
+        }
+        return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
+    }
+
+    const GDAL_GCP *GetGCPs() override
+    {
+        std::lock_guard oGuard(m_oPrototypeDSMutex);
+        return const_cast<GDALDataset *>(m_poPrototypeDS)->GetGCPs();
+    }
+
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain = "") override
+    {
+        std::lock_guard oGuard(m_oPrototypeDSMutex);
+        return const_cast<GDALDataset *>(m_poPrototypeDS)
+            ->GetMetadataItem(pszName, pszDomain);
+    }
+
+    char **GetMetadata(const char *pszDomain = "") override
+    {
+        std::lock_guard oGuard(m_oPrototypeDSMutex);
+        return const_cast<GDALDataset *>(m_poPrototypeDS)
+            ->GetMetadata(pszDomain);
+    }
+
+    /* End of methods that forward on the prototype dataset */
+
+    GDALAsyncReader *BeginAsyncReader(int, int, int, int, void *, int, int,
+                                      GDALDataType, int, int *, int, int, int,
+                                      char **) override
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALThreadSafeDataset::BeginAsyncReader() not supported");
+        return nullptr;
+    }
+
   protected:
     GDALDataset *RefUnderlyingDataset() const override;
 
@@ -190,7 +255,7 @@ class GDALThreadSafeDataset final : public GDALProxyDataset
     friend class GDALThreadLocalDatasetCache;
 
     /** Mutex that protects accesses to m_poPrototypeDS */
-    std::mutex m_oPrototypeDSMutex{};
+    mutable std::mutex m_oPrototypeDSMutex{};
 
     /** "Prototype" dataset, that is the dataset that was passed to the
      * GDALThreadSafeDataset constructor. All calls on to it should be on
@@ -207,6 +272,12 @@ class GDALThreadSafeDataset final : public GDALProxyDataset
      * has been constructed.
      */
     const CPLStringList m_aosThreadLocalConfigOptions{};
+
+    /** Cached value returned by GetSpatialRef() */
+    mutable OGRSpatialReference m_oSRS{};
+
+    /** Cached value returned by GetGCPSpatialRef() */
+    mutable OGRSpatialReference m_oGCPSRS{};
 
     /** Structure that references all GDALThreadLocalDatasetCache* instances.
      */
@@ -274,6 +345,48 @@ class GDALThreadSafeRasterBand final : public GDALProxyRasterBand
     GDALRasterBand *GetRasterSampleOverview(GUIntBig nDesiredSamples) override;
 
     GDALRasterAttributeTable *GetDefaultRAT() override;
+
+    /* All below public methods override GDALRasterBand methods, and instead of
+     * forwarding to a thread-local dataset, they act on the prototype band,
+     * because they return a non-trivial type, that could be invalidated
+     * otherwise if the thread-local dataset is evicted from the LRU cache.
+     */
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain = "") override
+    {
+        std::lock_guard oGuard(m_poTSDS->m_oPrototypeDSMutex);
+        return const_cast<GDALRasterBand *>(m_poPrototypeBand)
+            ->GetMetadataItem(pszName, pszDomain);
+    }
+
+    char **GetMetadata(const char *pszDomain = "") override
+    {
+        std::lock_guard oGuard(m_poTSDS->m_oPrototypeDSMutex);
+        return const_cast<GDALRasterBand *>(m_poPrototypeBand)
+            ->GetMetadata(pszDomain);
+    }
+
+    const char *GetUnitType() override
+    {
+        std::lock_guard oGuard(m_poTSDS->m_oPrototypeDSMutex);
+        return const_cast<GDALRasterBand *>(m_poPrototypeBand)->GetUnitType();
+    }
+
+    GDALColorTable *GetColorTable() override
+    {
+        std::lock_guard oGuard(m_poTSDS->m_oPrototypeDSMutex);
+        return const_cast<GDALRasterBand *>(m_poPrototypeBand)->GetColorTable();
+    }
+
+    /* End of methods that forward on the prototype band */
+
+    CPLVirtualMem *GetVirtualMemAuto(GDALRWFlag, int *, GIntBig *,
+                                     char **) override
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALThreadSafeRasterBand::GetVirtualMemAuto() not supported");
+        return nullptr;
+    }
 
   protected:
     GDALRasterBand *RefUnderlyingRasterBand(bool bForceOpen) const override;
