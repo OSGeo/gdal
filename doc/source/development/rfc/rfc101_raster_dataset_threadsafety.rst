@@ -273,14 +273,26 @@ which defines several classes (internal details):
   GDALThreadSafeDataset overloads its ReferenceUnderlyingDataset method, so that
   a thread-local dataset is opened the first-time a thread calls a method on
   the GDALThreadSafeDataset instance, cached for later use, and method call is
-  forwarded to it.
+  generally forwarded to it. There are exceptions for methods like
+  :cpp:func:`GDALDataset::GetSpatialRef`, :cpp:func:`GDALDataset::GetGCPSpatialRef`,
+  :cpp:func:`GDALDataset::GetGCPs`, :cpp:func:`GDALDataset::GetMetadata`,
+  :cpp:func:`GDALDataset::GetMetadataItem` that return non-primitive types
+  where the calls are forwarded to the dataset used to construct GDALThreadSafeDataset,
+  with a mutex being taken around them. If the call was otherwise forwarded to
+  a thread-local instance, there would be a risk of use-after-free situations
+  when the returned value is used by different threads.
 
 - ``GDALThreadSafeRasterBand`` extending :cpp:class:`GDALProxyRasterBand`.
   On instantiation, it creates child GDALThreadSafeRasterBand instances for
   band mask and overviews.
   Its ReferenceUnderlyingRasterBand method calls ReferenceUnderlyingDataset
   on the GDALThreadSafeDataset instance to get a thread-local dataset, fetches
-  the appropriate thread-local band and forwards its the method call.
+  the appropriate thread-local band and generally forwards its the method call.
+  There are exceptions for methods like
+  :cpp:func:`GDALRasterBand::GetUnitType`, :cpp:func:`GDALRasterBand::GetMetadata`,
+  :cpp:func:`GDALRasterBand::GetMetadataItem` that return non-primitive types where
+  the calls are forwarded to the band used to construct GDALThreadSafeRasterBand,
+  with a mutex being taken around them, and the returned value being .
 
 - ``GDALThreadLocalDatasetCache``. Instances of that class use thread-local
   storage. The main member of such instances is a LRU cache that maps
@@ -333,6 +345,17 @@ wouldn't be thread-safe.
   it uses a per-band cache
 - :cpp:func:`GDALRasterBand::EnablePixelTypeSignedByteWarning`: it should
   already have been made virtual for GDALProxyRasterBand needs.
+
+Non-virtual methods :cpp:func:`GDALDataset::GetProjectionRef` and
+:cpp:func:`GDALDataset::GetGCPProjection`, which cache the return value, have
+been modify to apply a mutex when run on a dataset that IsThreadSafe() to be
+effectively thread-safe.
+
+A SetThreadSafe() method has been added to :cpp:class:`OGRSpatialReference`.
+When it is called, all methods of that class run under a per-instance (recursive)
+mutex. This is used by GDALThreadSafeDataset for its implementation of the
+:cpp:func:`GDALDataset::GetSpatialRef` and :cpp:func:`GDALDataset::GetGCPSpatialRef`
+methods, such that the returned OGRSpatialReference instances are thread-safe.
 
 Performance
 -----------
