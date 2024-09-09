@@ -38,6 +38,7 @@
 #include <cstring>
 #include <algorithm>
 #include <map>
+#include <mutex>
 #include <new>
 #include <set>
 #include <string>
@@ -113,6 +114,8 @@ class GDALDataset::Private
     GIntBig nTotalFeaturesInLayer = TOTAL_FEATURES_NOT_INIT;
     GIntBig nTotalFeatures = TOTAL_FEATURES_NOT_INIT;
     OGRLayer *poCurrentLayer = nullptr;
+
+    std::mutex m_oMutexWKT{};
 
     char *m_pszWKTCached = nullptr;
     OGRSpatialReference *m_poSRSCached = nullptr;
@@ -1166,6 +1169,11 @@ const char *GDALDataset::GetProjectionRef() const
     {
         return "";
     }
+
+    // If called on a thread-safe dataset, we might be called by several
+    // threads, so make sure our accesses to m_pszWKTCached are protected
+    // by a mutex.
+    std::lock_guard oLock(m_poPrivate->m_oMutexWKT);
     if (m_poPrivate->m_pszWKTCached &&
         strcmp(pszWKT, m_poPrivate->m_pszWKTCached) == 0)
     {
@@ -1831,6 +1839,11 @@ const char *GDALDataset::GetGCPProjection()
     {
         return "";
     }
+
+    // If called on a thread-safe dataset, we might be called by several
+    // threads, so make sure our accesses to m_pszWKTCached are protected
+    // by a mutex.
+    std::lock_guard oLock(m_poPrivate->m_oMutexWKT);
     if (m_poPrivate->m_pszWKTGCPCached &&
         strcmp(pszWKT, m_poPrivate->m_pszWKTGCPCached) == 0)
     {
