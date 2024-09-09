@@ -151,6 +151,24 @@ class OGRGenSQLResultsLayer final : public OGRLayer
 
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
+
+    bool GetArrowStream(struct ArrowArrayStream *out_stream,
+                        CSLConstList papszOptions = nullptr) override;
+
+    int GetArrowSchema(struct ArrowArrayStream *stream,
+                       struct ArrowSchema *out_schema) override;
+
+  protected:
+    friend struct OGRGenSQLResultsLayerArrowStreamPrivateData;
+
+    int GetArrowSchemaForwarded(struct ArrowArrayStream *stream,
+                                struct ArrowSchema *out_schema) const;
+
+    int GetNextArrowArray(struct ArrowArrayStream *stream,
+                          struct ArrowArray *out_array) override;
+
+    int GetNextArrowArrayForwarded(struct ArrowArrayStream *stream,
+                                   struct ArrowArray *out_array);
 };
 
 /*! @endcond */
