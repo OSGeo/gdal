@@ -2099,9 +2099,39 @@ static CPLErr GDALResampleChunk_Gauss(const GDALOverviewResampleArgs &args,
 /*                      GDALResampleChunk_Mode()                        */
 /************************************************************************/
 
+template <class T> static inline bool IsSame(T a, T b)
+{
+    return a == b;
+}
+
+template <> bool IsSame<float>(float a, float b)
+{
+    return a == b || (std::isnan(a) && std::isnan(b));
+}
+
+template <> bool IsSame<double>(double a, double b)
+{
+    return a == b || (std::isnan(a) && std::isnan(b));
+}
+
+template <>
+bool IsSame<std::complex<float>>(std::complex<float> a, std::complex<float> b)
+{
+    return a == b || (std::isnan(a.real()) && std::isnan(a.imag()) &&
+                      std::isnan(b.real()) && std::isnan(b.imag()));
+}
+
+template <>
+bool IsSame<std::complex<double>>(std::complex<double> a,
+                                  std::complex<double> b)
+{
+    return a == b || (std::isnan(a.real()) && std::isnan(a.imag()) &&
+                      std::isnan(b.real()) && std::isnan(b.imag()));
+}
+
 template <class T>
-static CPLErr GDALResampleChunk_Mode_T(const GDALOverviewResampleArgs &args,
-                                       const T *pChunk, T *const pDstBuffer)
+static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
+                                      const T *pChunk, T *const pDstBuffer)
 
 {
     const double dfXRatioDstToSrc = args.dfXRatioDstToSrc;
@@ -2118,19 +2148,25 @@ static CPLErr GDALResampleChunk_Mode_T(const GDALOverviewResampleArgs &args,
     const int nDstYOff = args.nDstYOff;
     const int nDstYOff2 = args.nDstYOff2;
     const bool bHasNoData = args.bHasNoData;
-    const double dfNoDataValue = args.dfNoDataValue;
     const GDALColorTable *poColorTable = args.poColorTable;
-    const GDALDataType eSrcDataType = args.eSrcDataType;
     const int nDstXSize = nDstXOff2 - nDstXOff;
 
     T tNoDataValue;
-    if (!bHasNoData || !GDALIsValueInRange<T>(dfNoDataValue))
+    if constexpr (std::is_same<T, std::complex<float>>::value ||
+                  std::is_same<T, std::complex<double>>::value)
+    {
+        using BaseT = typename T::value_type;
+        tNoDataValue =
+            std::complex<BaseT>(std::numeric_limits<BaseT>::quiet_NaN(),
+                                std::numeric_limits<BaseT>::quiet_NaN());
+    }
+    else if (!bHasNoData || !GDALIsValueInRange<T>(args.dfNoDataValue))
         tNoDataValue = 0;
     else
-        tNoDataValue = static_cast<T>(dfNoDataValue);
+        tNoDataValue = static_cast<T>(args.dfNoDataValue);
 
     size_t nMaxNumPx = 0;
-    T *padfVals = nullptr;
+    T *paVals = nullptr;
     int *panSums = nullptr;
 
     const int nChunkRightXOff = nChunkXOff + nChunkXSize;
@@ -2213,8 +2249,13 @@ static CPLErr GDALResampleChunk_Mode_T(const GDALOverviewResampleArgs &args,
             if (nSrcXOff2 > nChunkRightXOff)
                 nSrcXOff2 = nChunkRightXOff;
 
-            if (eSrcDataType != GDT_Byte ||
-                (poColorTable && poColorTable->GetColorEntryCount() > 256))
+            bool bRegularProcessing = false;
+            if constexpr (!std::is_same<T, GByte>::value)
+                bRegularProcessing = true;
+            else if (poColorTable && poColorTable->GetColorEntryCount() > 256)
+                bRegularProcessing = true;
+
+            if (bRegularProcessing)
             {
                 // Not sure how much sense it makes to run a majority
                 // filter on floating point data, but here it is for the sake
@@ -2229,7 +2270,7 @@ static CPLErr GDALResampleChunk_Mode_T(const GDALOverviewResampleArgs &args,
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Too big downsampling factor");
-                    CPLFree(padfVals);
+                    CPLFree(paVals);
                     CPLFree(panSums);
                     return CE_Failure;
                 }
@@ -2240,19 +2281,19 @@ static CPLErr GDALResampleChunk_Mode_T(const GDALOverviewResampleArgs &args,
                 size_t iMaxVal = 0;
                 bool biMaxValdValid = false;
 
-                if (padfVals == nullptr || nNumPx > nMaxNumPx)
+                if (paVals == nullptr || nNumPx > nMaxNumPx)
                 {
-                    T *padfValsNew = static_cast<T *>(
-                        VSI_REALLOC_VERBOSE(padfVals, nNumPx * sizeof(T)));
+                    T *paValsNew = static_cast<T *>(
+                        VSI_REALLOC_VERBOSE(paVals, nNumPx * sizeof(T)));
                     int *panSumsNew = static_cast<int *>(
                         VSI_REALLOC_VERBOSE(panSums, nNumPx * sizeof(int)));
-                    if (padfValsNew != nullptr)
-                        padfVals = padfValsNew;
+                    if (paValsNew != nullptr)
+                        paVals = paValsNew;
                     if (panSumsNew != nullptr)
                         panSums = panSumsNew;
-                    if (padfValsNew == nullptr || panSumsNew == nullptr)
+                    if (paValsNew == nullptr || panSumsNew == nullptr)
                     {
-                        CPLFree(padfVals);
+                        CPLFree(paVals);
                         CPLFree(panSums);
                         return CE_Failure;
                     }
@@ -2269,12 +2310,12 @@ static CPLErr GDALResampleChunk_Mode_T(const GDALOverviewResampleArgs &args,
                         if (pabySrcScanlineNodataMask == nullptr ||
                             pabySrcScanlineNodataMask[iX + iTotYOff])
                         {
-                            const T dfVal = paSrcScanline[iX + iTotYOff];
+                            const T val = paSrcScanline[iX + iTotYOff];
                             size_t i = 0;  // Used after for.
 
                             // Check array for existing entry.
                             for (; i < iMaxInd; ++i)
-                                if (padfVals[i] == dfVal &&
+                                if (IsSame(paVals[i], val) &&
                                     ++panSums[i] > panSums[iMaxVal])
                                 {
                                     iMaxVal = i;
@@ -2285,7 +2326,7 @@ static CPLErr GDALResampleChunk_Mode_T(const GDALOverviewResampleArgs &args,
                             // Add to arr if entry not already there.
                             if (i == iMaxInd)
                             {
-                                padfVals[iMaxInd] = dfVal;
+                                paVals[iMaxInd] = val;
                                 panSums[iMaxInd] = 1;
 
                                 if (!biMaxValdValid)
@@ -2303,9 +2344,10 @@ static CPLErr GDALResampleChunk_Mode_T(const GDALOverviewResampleArgs &args,
                 if (!biMaxValdValid)
                     paDstScanline[iDstPixel - nDstXOff] = tNoDataValue;
                 else
-                    paDstScanline[iDstPixel - nDstXOff] = padfVals[iMaxVal];
+                    paDstScanline[iDstPixel - nDstXOff] = paVals[iMaxVal];
             }
-            else  // if( eSrcDataType == GDT_Byte && nEntryCount < 256 )
+            else if constexpr (std::is_same<T, GByte>::value)
+            // ( eSrcDataType == GDT_Byte && nEntryCount < 256 )
             {
                 // So we go here for a paletted or non-paletted byte band.
                 // The input values are then between 0 and 255.
@@ -2348,7 +2390,7 @@ static CPLErr GDALResampleChunk_Mode_T(const GDALOverviewResampleArgs &args,
         }
     }
 
-    CPLFree(padfVals);
+    CPLFree(paVals);
     CPLFree(panSums);
 
     return CE_None;
@@ -2366,38 +2408,89 @@ static CPLErr GDALResampleChunk_Mode(const GDALOverviewResampleArgs &args,
         return CE_Failure;
     }
 
+    CPLAssert(args.eSrcDataType == args.eWrkDataType);
+
     *peDstBufferDataType = args.eWrkDataType;
     switch (args.eWrkDataType)
     {
+        // For mode resampling, as no computation is done, only the
+        // size of the data type matters... except for Byte where we have
+        // special processing. And for floating point values
         case GDT_Byte:
         {
-            return GDALResampleChunk_Mode_T<GByte>(
-                args, static_cast<const GByte *>(pChunk),
-                static_cast<GByte *>(*ppDstBuffer));
+            return GDALResampleChunk_ModeT(args,
+                                           static_cast<const GByte *>(pChunk),
+                                           static_cast<GByte *>(*ppDstBuffer));
         }
 
+        case GDT_Int8:
+        {
+            return GDALResampleChunk_ModeT(args,
+                                           static_cast<const int8_t *>(pChunk),
+                                           static_cast<int8_t *>(*ppDstBuffer));
+        }
+
+        case GDT_Int16:
         case GDT_UInt16:
         {
-            return GDALResampleChunk_Mode_T<GUInt16>(
-                args, static_cast<const GUInt16 *>(pChunk),
-                static_cast<GUInt16 *>(*ppDstBuffer));
+            CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 2);
+            return GDALResampleChunk_ModeT(
+                args, static_cast<const uint16_t *>(pChunk),
+                static_cast<uint16_t *>(*ppDstBuffer));
+        }
+
+        case GDT_CInt16:
+        case GDT_Int32:
+        case GDT_UInt32:
+        {
+            CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 4);
+            return GDALResampleChunk_ModeT(
+                args, static_cast<const uint32_t *>(pChunk),
+                static_cast<uint32_t *>(*ppDstBuffer));
         }
 
         case GDT_Float32:
         {
-            return GDALResampleChunk_Mode_T<float>(
-                args, static_cast<const float *>(pChunk),
-                static_cast<float *>(*ppDstBuffer));
+            CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 4);
+            return GDALResampleChunk_ModeT(args,
+                                           static_cast<const float *>(pChunk),
+                                           static_cast<float *>(*ppDstBuffer));
+        }
+
+        case GDT_CInt32:
+        case GDT_Int64:
+        case GDT_UInt64:
+        {
+            CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 8);
+            return GDALResampleChunk_ModeT(
+                args, static_cast<const uint64_t *>(pChunk),
+                static_cast<uint64_t *>(*ppDstBuffer));
         }
 
         case GDT_Float64:
         {
-            return GDALResampleChunk_Mode_T<double>(
-                args, static_cast<const double *>(pChunk),
-                static_cast<double *>(*ppDstBuffer));
+            CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 8);
+            return GDALResampleChunk_ModeT(args,
+                                           static_cast<const double *>(pChunk),
+                                           static_cast<double *>(*ppDstBuffer));
         }
 
-        default:
+        case GDT_CFloat32:
+        {
+            return GDALResampleChunk_ModeT(
+                args, static_cast<const std::complex<float> *>(pChunk),
+                static_cast<std::complex<float> *>(*ppDstBuffer));
+        }
+
+        case GDT_CFloat64:
+        {
+            return GDALResampleChunk_ModeT(
+                args, static_cast<const std::complex<double> *>(pChunk),
+                static_cast<std::complex<double> *>(*ppDstBuffer));
+        }
+
+        case GDT_Unknown:
+        case GDT_TypeCount:
             break;
     }
 
@@ -4139,7 +4232,7 @@ GDALResampleFunction GDALGetResampleFunction(const char *pszResampling,
 GDALDataType GDALGetOvrWorkDataType(const char *pszResampling,
                                     GDALDataType eSrcDataType)
 {
-    if (STARTS_WITH_CI(pszResampling, "NEAR"))
+    if (STARTS_WITH_CI(pszResampling, "NEAR") || EQUAL(pszResampling, "MODE"))
     {
         return eSrcDataType;
     }
@@ -4403,11 +4496,13 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
     poSrcBand->GetBlockSize(&nFRXBlockSize, &nFRYBlockSize);
 
     const GDALDataType eSrcDataType = poSrcBand->GetRasterDataType();
+    const bool bUseGenericResampleFn = STARTS_WITH_CI(pszResampling, "NEAR") ||
+                                       EQUAL(pszResampling, "MODE") ||
+                                       !GDALDataTypeIsComplex(eSrcDataType);
     const GDALDataType eWrkDataType =
-        (GDALDataTypeIsComplex(eSrcDataType) &&
-         !STARTS_WITH_CI(pszResampling, "NEAR"))
-            ? GDT_CFloat32
-            : GDALGetOvrWorkDataType(pszResampling, eSrcDataType);
+        bUseGenericResampleFn
+            ? GDALGetOvrWorkDataType(pszResampling, eSrcDataType)
+            : GDT_CFloat32;
 
     const int nWidth = poSrcBand->GetXSize();
     const int nHeight = poSrcBand->GetYSize();
@@ -4509,6 +4604,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         int nDstWidth = 0;
         GDALOverviewResampleArgs args{};
         const void *pChunk = nullptr;
+        bool bUseGenericResampleFn = false;
 
         // Output values of resampling function
         CPLErr eErr = CE_Failure;
@@ -4538,7 +4634,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
     {
         OvrJob *poJob = static_cast<OvrJob *>(pData);
 
-        if (poJob->args.eWrkDataType != GDT_CFloat32)
+        if (poJob->bUseGenericResampleFn)
         {
             poJob->eErr = poJob->pfnResampleFn(poJob->args, poJob->pChunk,
                                                &(poJob->pDstBuffer),
@@ -4862,6 +4958,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
 
             auto poJob = std::make_unique<OvrJob>();
             poJob->pfnResampleFn = pfnResampleFn;
+            poJob->bUseGenericResampleFn = bUseGenericResampleFn;
             poJob->args.eOvrDataType = poDstBand->GetRasterDataType();
             poJob->args.nOvrXSize = poDstBand->GetXSize();
             poJob->args.nOvrYSize = poDstBand->GetYSize();
