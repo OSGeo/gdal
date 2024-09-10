@@ -52,6 +52,7 @@
 #include "cpl_auto_close.h"
 #include "cpl_minixml.h"
 #include "cpl_quad_tree.h"
+#include "cpl_spawn.h"
 #include "cpl_worker_thread_pool.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_threadsafe_queue.hpp"
@@ -5260,5 +5261,29 @@ TEST_F(test_cpl, CPLUTF8ForceToASCII)
         CPLFree(pszOut);
     }
 }
+
+#ifndef _WIN32
+TEST_F(test_cpl, CPLSpawn)
+{
+    VSIStatBufL sStatBuf;
+    if (VSIStatL("/bin/true", &sStatBuf) == 0)
+    {
+        const char *const apszArgs[] = {"/bin/true", nullptr};
+        EXPECT_EQ(CPLSpawn(apszArgs, nullptr, nullptr, false), 0);
+    }
+    if (VSIStatL("/bin/false", &sStatBuf) == 0)
+    {
+        const char *const apszArgs[] = {"/bin/false", nullptr};
+        EXPECT_EQ(CPLSpawn(apszArgs, nullptr, nullptr, false), 1);
+    }
+
+    {
+        const char *const apszArgs[] = {"/i_do/not/exist", nullptr};
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        EXPECT_EQ(CPLSpawn(apszArgs, nullptr, nullptr, false), -1);
+        CPLPopErrorHandler();
+    }
+}
+#endif
 
 }  // namespace
