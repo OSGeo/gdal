@@ -170,35 +170,58 @@ static CPLErr GDALResampleChunk_Near(const GDALOverviewResampleArgs &args,
     *peDstBufferDataType = args.eWrkDataType;
     switch (args.eWrkDataType)
     {
+        // For nearest resampling, as no computation is done, only the
+        // size of the data type matters.
         case GDT_Byte:
+        case GDT_Int8:
         {
+            CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 1);
             return GDALResampleChunk_NearT(
-                args, static_cast<const GByte *>(pChunk),
-                reinterpret_cast<GByte **>(ppDstBuffer));
+                args, static_cast<const uint8_t *>(pChunk),
+                reinterpret_cast<uint8_t **>(ppDstBuffer));
         }
 
+        case GDT_Int16:
         case GDT_UInt16:
         {
+            CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 2);
             return GDALResampleChunk_NearT(
-                args, static_cast<const GUInt16 *>(pChunk),
-                reinterpret_cast<GUInt16 **>(ppDstBuffer));
+                args, static_cast<const uint16_t *>(pChunk),
+                reinterpret_cast<uint16_t **>(ppDstBuffer));
         }
 
+        case GDT_CInt16:
+        case GDT_Int32:
+        case GDT_UInt32:
         case GDT_Float32:
         {
+            CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 4);
             return GDALResampleChunk_NearT(
-                args, static_cast<const float *>(pChunk),
-                reinterpret_cast<float **>(ppDstBuffer));
+                args, static_cast<const uint32_t *>(pChunk),
+                reinterpret_cast<uint32_t **>(ppDstBuffer));
         }
 
+        case GDT_CInt32:
+        case GDT_CFloat32:
+        case GDT_Int64:
+        case GDT_UInt64:
         case GDT_Float64:
         {
+            CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 8);
             return GDALResampleChunk_NearT(
-                args, static_cast<const double *>(pChunk),
-                reinterpret_cast<double **>(ppDstBuffer));
+                args, static_cast<const uint64_t *>(pChunk),
+                reinterpret_cast<uint64_t **>(ppDstBuffer));
         }
 
-        default:
+        case GDT_CFloat64:
+        {
+            return GDALResampleChunk_NearT(
+                args, static_cast<const std::complex<double> *>(pChunk),
+                reinterpret_cast<std::complex<double> **>(ppDstBuffer));
+        }
+
+        case GDT_Unknown:
+        case GDT_TypeCount:
             break;
     }
     CPLAssert(false);
@@ -3032,6 +3055,7 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     // cppcheck-suppress unreadVariable
     const int isIntegerDT = GDALDataTypeIsInteger(dstDataType);
     const auto nNodataValueInt64 = static_cast<GInt64>(dfNoDataValue);
+    constexpr int nWrkDataTypeSize = static_cast<int>(sizeof(Twork));
 
     // TODO: we should have some generic function to do this.
     Twork fDstMin = -std::numeric_limits<Twork>::max();
@@ -3067,6 +3091,20 @@ static CPLErr GDALResampleChunk_ConvolutionT(
         fDstMin = static_cast<Twork>(std::numeric_limits<GInt32>::min());
         // cppcheck-suppress unreadVariable
         fDstMax = static_cast<Twork>(std::numeric_limits<GInt32>::max());
+    }
+    else if (dstDataType == GDT_UInt64)
+    {
+        // cppcheck-suppress unreadVariable
+        fDstMin = static_cast<Twork>(std::numeric_limits<uint64_t>::min());
+        // cppcheck-suppress unreadVariable
+        fDstMax = static_cast<Twork>(std::numeric_limits<uint64_t>::max());
+    }
+    else if (dstDataType == GDT_Int64)
+    {
+        // cppcheck-suppress unreadVariable
+        fDstMin = static_cast<Twork>(std::numeric_limits<int64_t>::min());
+        // cppcheck-suppress unreadVariable
+        fDstMax = static_cast<Twork>(std::numeric_limits<int64_t>::max());
     }
 
     auto replaceValIfNodata = [bHasNoData, isIntegerDT, fDstMin, fDstMax,
@@ -3585,7 +3623,7 @@ static CPLErr GDALResampleChunk_ConvolutionT(
 
         if (pafWrkScanline)
         {
-            GDALCopyWords(pafWrkScanline, eWrkDataType, 4,
+            GDALCopyWords(pafWrkScanline, eWrkDataType, nWrkDataTypeSize,
                           static_cast<GByte *>(pDstBuffer) +
                               static_cast<size_t>(iDstLine - nDstYOff) *
                                   nDstXSize * nDstDataTypeSize,
@@ -4101,33 +4139,38 @@ GDALResampleFunction GDALGetResampleFunction(const char *pszResampling,
 GDALDataType GDALGetOvrWorkDataType(const char *pszResampling,
                                     GDALDataType eSrcDataType)
 {
-    if ((STARTS_WITH_CI(pszResampling, "NEAR") ||
-         STARTS_WITH_CI(pszResampling, "AVER") || EQUAL(pszResampling, "RMS") ||
-         EQUAL(pszResampling, "CUBIC") || EQUAL(pszResampling, "CUBICSPLINE") ||
-         EQUAL(pszResampling, "LANCZOS") || EQUAL(pszResampling, "BILINEAR") ||
-         EQUAL(pszResampling, "MODE")) &&
-        eSrcDataType == GDT_Byte)
+    if (STARTS_WITH_CI(pszResampling, "NEAR"))
     {
-        return GDT_Byte;
+        return eSrcDataType;
     }
-    else if ((STARTS_WITH_CI(pszResampling, "NEAR") ||
-              STARTS_WITH_CI(pszResampling, "AVER") ||
+    else if (eSrcDataType == GDT_Byte &&
+             (STARTS_WITH_CI(pszResampling, "AVER") ||
               EQUAL(pszResampling, "RMS") || EQUAL(pszResampling, "CUBIC") ||
               EQUAL(pszResampling, "CUBICSPLINE") ||
               EQUAL(pszResampling, "LANCZOS") ||
-              EQUAL(pszResampling, "BILINEAR") ||
-              EQUAL(pszResampling, "MODE")) &&
-             eSrcDataType == GDT_UInt16)
+              EQUAL(pszResampling, "BILINEAR") || EQUAL(pszResampling, "MODE")))
+    {
+        return GDT_Byte;
+    }
+    else if (eSrcDataType == GDT_UInt16 &&
+             (STARTS_WITH_CI(pszResampling, "AVER") ||
+              EQUAL(pszResampling, "RMS") || EQUAL(pszResampling, "CUBIC") ||
+              EQUAL(pszResampling, "CUBICSPLINE") ||
+              EQUAL(pszResampling, "LANCZOS") ||
+              EQUAL(pszResampling, "BILINEAR") || EQUAL(pszResampling, "MODE")))
     {
         return GDT_UInt16;
     }
     else if (EQUAL(pszResampling, "GAUSS"))
         return GDT_Float64;
 
-    if (eSrcDataType == GDT_Float64)
-        return GDT_Float64;
-
-    return GDT_Float32;
+    if (eSrcDataType == GDT_Byte || eSrcDataType == GDT_Int8 ||
+        eSrcDataType == GDT_UInt16 || eSrcDataType == GDT_Int16 ||
+        eSrcDataType == GDT_Float32)
+    {
+        return GDT_Float32;
+    }
+    return GDT_Float64;
 }
 
 namespace
@@ -4361,7 +4404,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
 
     const GDALDataType eSrcDataType = poSrcBand->GetRasterDataType();
     const GDALDataType eWrkDataType =
-        GDALDataTypeIsComplex(eSrcDataType)
+        (GDALDataTypeIsComplex(eSrcDataType) &&
+         !STARTS_WITH_CI(pszResampling, "NEAR"))
             ? GDT_CFloat32
             : GDALGetOvrWorkDataType(pszResampling, eSrcDataType);
 
