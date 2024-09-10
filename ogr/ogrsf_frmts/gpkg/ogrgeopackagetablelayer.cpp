@@ -7771,33 +7771,36 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
     auto psFillArrowArray = static_cast<OGRGPKGTableLayerFillArrowArray *>(
         sqlite3_user_data(pContext));
 
-    if (psFillArrowArray->nCountRows >=
-        psFillArrowArray->psHelper->m_nMaxBatchSize)
     {
-        if (psFillArrowArray->bAsynchronousMode)
+        std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
+        if (psFillArrowArray->nCountRows >=
+            psFillArrowArray->psHelper->m_nMaxBatchSize)
         {
-            std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
-            psFillArrowArray->psHelper->Shrink(psFillArrowArray->nCountRows);
-            psFillArrowArray->oCV.notify_one();
-            while (psFillArrowArray->nCountRows > 0)
+            if (psFillArrowArray->bAsynchronousMode)
             {
-                psFillArrowArray->oCV.wait(oLock);
+                psFillArrowArray->psHelper->Shrink(
+                    psFillArrowArray->nCountRows);
+                psFillArrowArray->oCV.notify_one();
+                while (psFillArrowArray->nCountRows > 0)
+                {
+                    psFillArrowArray->oCV.wait(oLock);
+                }
+                // Note that psFillArrowArray->psHelper.get() will generally now be
+                // different from before the wait()
             }
-            // Note that psFillArrowArray->psHelper.get() will generally now be
-            // different from before the wait()
+            else
+            {
+                // should not happen !
+                psFillArrowArray->osErrorMsg = "OGR_GPKG_FillArrowArray_Step() "
+                                               "got more rows than expected!";
+                sqlite3_interrupt(psFillArrowArray->hDB);
+                psFillArrowArray->bErrorOccurred = true;
+                return;
+            }
         }
-        else
-        {
-            // should not happen !
-            psFillArrowArray->osErrorMsg =
-                "OGR_GPKG_FillArrowArray_Step() got more rows than expected!";
-            sqlite3_interrupt(psFillArrowArray->hDB);
-            psFillArrowArray->bErrorOccurred = true;
+        if (psFillArrowArray->nCountRows < 0)
             return;
-        }
     }
-    if (psFillArrowArray->nCountRows < 0)
-        return;
 
     if (psFillArrowArray->nMemLimit == 0)
         psFillArrowArray->nMemLimit = OGRArrowArrayHelper::GetMemLimit();
@@ -7805,8 +7808,13 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
     const int SQLITE_MAX_FUNCTION_ARG =
         sqlite3_limit(psFillArrowArray->hDB, SQLITE_LIMIT_FUNCTION_ARG, -1);
 begin:
-    const int iFeat = psFillArrowArray->nCountRows;
-    auto psHelper = psFillArrowArray->psHelper.get();
+    int iFeat;
+    OGRArrowArrayHelper *psHelper;
+    {
+        std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
+        iFeat = psFillArrowArray->nCountRows;
+        psHelper = psFillArrowArray->psHelper.get();
+    }
     int iCol = 0;
     const int iFieldStart = sqlite3_value_int(argv[iCol]);
     ++iCol;
@@ -7943,7 +7951,7 @@ begin:
                     }
                 }
 
-                if (psFillArrowArray->nCountRows > 0)
+                if (iFeat > 0)
                 {
                     auto panOffsets = static_cast<int32_t *>(
                         const_cast<void *>(psArray->buffers[1]));
@@ -7956,7 +7964,7 @@ begin:
                                  "OGR_GPKG_FillArrowArray_Step(): premature "
                                  "notification of %d features to consumer due "
                                  "to too big array",
-                                 psFillArrowArray->nCountRows);
+                                 iFeat);
                         psFillArrowArray->bMemoryLimitReached = true;
                         if (psFillArrowArray->bAsynchronousMode)
                         {
@@ -8081,7 +8089,7 @@ begin:
                 const void *pabyData = sqlite3_value_blob(argv[iCol]);
                 if (pabyData != nullptr || nBytes == 0)
                 {
-                    if (psFillArrowArray->nCountRows > 0)
+                    if (iFeat > 0)
                     {
                         auto panOffsets = static_cast<int32_t *>(
                             const_cast<void *>(psArray->buffers[1]));
@@ -8094,7 +8102,7 @@ begin:
                                      "OGR_GPKG_FillArrowArray_Step(): "
                                      "premature notification of %d features to "
                                      "consumer due to too big array",
-                                     psFillArrowArray->nCountRows);
+                                     iFeat);
                             psFillArrowArray->bMemoryLimitReached = true;
                             if (psFillArrowArray->bAsynchronousMode)
                             {
@@ -8171,7 +8179,7 @@ begin:
                 if (pszTxt != nullptr)
                 {
                     const size_t nBytes = strlen(pszTxt);
-                    if (psFillArrowArray->nCountRows > 0)
+                    if (iFeat > 0)
                     {
                         auto panOffsets = static_cast<int32_t *>(
                             const_cast<void *>(psArray->buffers[1]));
@@ -8184,7 +8192,7 @@ begin:
                                      "OGR_GPKG_FillArrowArray_Step(): "
                                      "premature notification of %d features to "
                                      "consumer due to too big array",
-                                     psFillArrowArray->nCountRows);
+                                     iFeat);
                             psFillArrowArray->bMemoryLimitReached = true;
                             if (psFillArrowArray->bAsynchronousMode)
                             {
@@ -8231,7 +8239,10 @@ begin:
     }
 
     if (iField == psHelper->m_nFieldCount)
+    {
+        std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
         psFillArrowArray->nCountRows++;
+    }
     return;
 
 error:
@@ -8655,7 +8666,13 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                    sizeof(struct ArrowArray));
             memset(task->m_psArrowArray.get(), 0, sizeof(struct ArrowArray));
 
-            if (task->m_bMemoryLimitReached)
+            const bool bMemoryLimitReached = [&task]()
+            {
+                std::unique_lock oLock(task->m_oMutex);
+                return task->m_bMemoryLimitReached;
+            }();
+
+            if (bMemoryLimitReached)
             {
                 m_nIsCompatOfOptimizedGetNextArrowArray = false;
                 stopThread();
