@@ -107,6 +107,8 @@ GDALRasterBand::~GDALRasterBand()
 
     InvalidateMaskBand();
     nBand = -nBand;
+
+    delete m_poPointsCache;
 }
 
 /************************************************************************/
@@ -9398,11 +9400,11 @@ CPLErr GDALRasterBand::InterpolateAtPoint(double dfPixel, double dfLine,
     }
 
     GDALRasterBand *pBand = const_cast<GDALRasterBand *>(this);
-    if (!m_oPointsCache)
-        m_oPointsCache = std::make_unique<GDALDoublePointsCache>();
+    if (!m_poPointsCache)
+        m_poPointsCache = new GDALDoublePointsCache();
 
     const bool res =
-        GDALInterpolateAtPoint(pBand, eInterpolation, m_oPointsCache->cache,
+        GDALInterpolateAtPoint(pBand, eInterpolation, m_poPointsCache->cache,
                                dfPixel, dfLine, pdfRealValue, pdfImagValue);
 
     return res ? CE_None : CE_Failure;

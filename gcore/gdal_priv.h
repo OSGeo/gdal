@@ -1625,7 +1625,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void InitRWLock();
     void SetValidPercent(GUIntBig nSampleCount, GUIntBig nValidCount);
 
-    mutable std::unique_ptr<GDALDoublePointsCache> m_oPointsCache{};
+    mutable GDALDoublePointsCache *m_poPointsCache = nullptr;
 
     //! @endcond
 
