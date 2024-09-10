@@ -394,6 +394,7 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 - proxyuserpwd=value
 - pc_url_signing=yes/no: whether to use the URL signing mechanism of Microsoft Planetary Computer (https://planetarycomputer.microsoft.com/docs/concepts/sas/). (GDAL >= 3.5.2). Note that starting with GDAL 3.9, this may also be set with the path-specific option ( cf :cpp:func:`VSISetPathSpecificOption`) ``VSICURL_PC_URL_SIGNING`` set to ``YES``.
 - pc_collection=name: name of the collection of the dataset for Planetary Computer URL signing. Only used when pc_url_signing=yes. (GDAL >= 3.5.2)
+- file_size=<value>: (GDAL >= 3.10) File size in bytes, or ``unlimited`` to indicate the largest possible file size. This can be used to work around some non-compliant HTTP servers that don't return a valid Content-Length response header, but support HTTP Range requests. It might also be necessary to set the :config:`GDAL_DISABLE_READDIR_ON_OPEN` configuration option to ``EMPTY_DIR``, to avoid side-car files to be read with the same file size.
 
 Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the :config:`CPL_VSIL_CURL_CHUNK_SIZE` configuration option, with a value in bytes. If the driver detects sequential reading, it will progressively increase the chunk size up to 128 times :config:`CPL_VSIL_CURL_CHUNK_SIZE` (so 2 MB by default) to improve download performance.
 

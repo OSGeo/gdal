@@ -1397,3 +1397,44 @@ def test_vsicurl_cache_control_no_cache(server):
         data = gdal.VSIFReadL(1, 6, f).decode("ascii")
         gdal.VSIFCloseL(f)
         assert data == "barbaz"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_vsicurl_non_compliant_http_range(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/", 404)
+    handler.add(
+        "GET",
+        "/test.txt",
+        200,
+        {"Content-Length": "16384"},
+        "foo" + (" " * (16384 - 3)),
+        expected_headers={"Range": "bytes=0-16383"},
+    )
+    handler.add(
+        "GET",
+        "/test.txt",
+        200,
+        {"Content-Length": "16384"},
+        "bar2" + (" " * (16384 - 4)),
+        expected_headers={"Range": "bytes=32768-49151"},
+    )
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL(
+            "/vsicurl?file_size=unlimited&url=http://localhost:%d/test.txt"
+            % server.port,
+            "rb",
+        )
+        assert f is not None
+        data = gdal.VSIFReadL(1, 3, f).decode("ascii")
+        gdal.VSIFSeekL(f, 32768, 0)
+        data2 = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+        assert data == "foo"
+        assert data2 == "bar2"

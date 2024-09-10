@@ -301,7 +301,8 @@ static std::string VSICurlGetURLFromFilename(
     const char *pszFilename, CPLHTTPRetryParameters *poRetryParameters,
     bool *pbUseHead, bool *pbUseRedirectURLIfNoQueryStringParams,
     bool *pbListDir, bool *pbEmptyDir, CPLStringList *paosHTTPOptions,
-    bool *pbPlanetaryComputerURLSigning, char **ppszPlanetaryComputerCollection)
+    bool *pbPlanetaryComputerURLSigning, char **ppszPlanetaryComputerCollection,
+    uint64_t *pnFileSize = nullptr)
 {
     if (ppszPlanetaryComputerCollection)
         *ppszPlanetaryComputerCollection = nullptr;
@@ -424,6 +425,16 @@ static std::string VSICurlGetURLFromFilename(
                         *ppszPlanetaryComputerCollection = CPLStrdup(pszValue);
                     }
                 }
+                else if (EQUAL(pszKey, "file_size"))
+                {
+                    if (pnFileSize)
+                    {
+                        *pnFileSize =
+                            EQUAL(pszValue, "unlimited")
+                                ? std::numeric_limits<uint64_t>::max()
+                                : std::strtoull(pszValue, nullptr, 10);
+                    }
+                }
                 else
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
@@ -461,6 +472,7 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandlerBase *poFSIn,
       m_bUseHead(
           CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", "YES")))
 {
+    uint64_t nFileSize = 0;
     if (pszURLIn)
     {
         m_pszURL = CPLStrdup(pszURLIn);
@@ -468,13 +480,13 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandlerBase *poFSIn,
     else
     {
         char *pszPCCollection = nullptr;
-        m_pszURL =
-            CPLStrdup(VSICurlGetURLFromFilename(
-                          pszFilename, &m_oRetryParameters, &m_bUseHead,
-                          &m_bUseRedirectURLIfNoQueryStringParams, nullptr,
-                          nullptr, &m_aosHTTPOptions,
-                          &m_bPlanetaryComputerURLSigning, &pszPCCollection)
-                          .c_str());
+        m_pszURL = CPLStrdup(VSICurlGetURLFromFilename(
+                                 pszFilename, &m_oRetryParameters, &m_bUseHead,
+                                 &m_bUseRedirectURLIfNoQueryStringParams,
+                                 nullptr, nullptr, &m_aosHTTPOptions,
+                                 &m_bPlanetaryComputerURLSigning,
+                                 &pszPCCollection, &nFileSize)
+                                 .c_str());
         if (pszPCCollection)
             m_osPlanetaryComputerCollection = pszPCCollection;
         CPLFree(pszPCCollection);
@@ -482,6 +494,11 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandlerBase *poFSIn,
 
     m_bCached = poFSIn->AllowCachedDataFor(pszFilename);
     poFS->GetCachedFileProp(m_pszURL, oFileProp);
+    if (nFileSize > 0)
+    {
+        oFileProp.fileSize = nFileSize;
+        oFileProp.eExists = EXIST_YES;
+    }
 }
 
 /************************************************************************/
@@ -722,6 +739,8 @@ size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                 if (psStruct->nHTTPCode == 200 &&
                     psStruct->bDetectRangeDownloadingError &&
                     !psStruct->bMultiRange && !psStruct->bFoundContentRange &&
+                    psStruct->nContentLength !=
+                        (psStruct->nEndOffset - psStruct->nStartOffset + 1) &&
                     (psStruct->nStartOffset != 0 ||
                      psStruct->nContentLength >
                          10 * (psStruct->nEndOffset - psStruct->nStartOffset +
