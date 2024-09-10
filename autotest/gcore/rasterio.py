@@ -944,7 +944,7 @@ def test_rasterio_13(dt):
 
 
 ###############################################################################
-# Test cubic resampling with masking
+# Test nearest and mode resampling
 
 
 @pytest.mark.parametrize(
@@ -966,7 +966,11 @@ def test_rasterio_13(dt):
         "CFloat64",
     ],
 )
-def test_rasterio_nearest(dt):
+@pytest.mark.parametrize(
+    "resample_alg", [gdal.GRIORA_NearestNeighbour, gdal.GRIORA_Mode]
+)
+@pytest.mark.parametrize("use_nan", [True, False])
+def test_rasterio_nearest_or_mode(dt, resample_alg, use_nan):
     numpy = pytest.importorskip("numpy")
     gdal_array = pytest.importorskip("osgeo.gdal_array")
 
@@ -989,24 +993,44 @@ def test_rasterio_nearest(dt):
     elif dt == gdal.GDT_UInt64:
         x = (1 << 64) - 1
     elif dt == gdal.GDT_Float32 or dt == gdal.GDT_CFloat32:
-        x = 1.5
+        x = float("nan") if use_nan else 1.5
     else:
-        x = 1.234567890123
+        x = float("nan") if use_nan else 1.234567890123
 
     if gdal.DataTypeIsComplex(dt):
-        x = complex(x, x)
+        val = complex(x, x)
+    else:
+        val = x
 
     dtype = gdal_array.flip_code(dt)
-    mem_ds.GetRasterBand(1).WriteArray(numpy.full((4, 4), x, dtype=dtype))
+    mem_ds.GetRasterBand(1).WriteArray(numpy.full((4, 4), val, dtype=dtype))
 
-    ar_ds = mem_ds.ReadAsArray(0, 0, 4, 4, buf_xsize=1, buf_ysize=1)
+    ar_ds = mem_ds.ReadAsArray(
+        0, 0, 4, 4, buf_xsize=1, buf_ysize=1, resample_alg=resample_alg
+    )
 
-    expected_ar = numpy.array([[x]]).astype(dtype)
-    assert numpy.array_equal(ar_ds, expected_ar)
+    expected_ar = numpy.array([[val]]).astype(dtype)
+    if math.isnan(x):
+        if gdal.DataTypeIsComplex(dt):
+            assert math.isnan(ar_ds[0][0].real) and math.isnan(ar_ds[0][0].imag)
+        else:
+            assert math.isnan(ar_ds[0][0])
+    else:
+        assert numpy.array_equal(ar_ds, expected_ar)
 
-    mem_ds.BuildOverviews("NEAR", [4])
+    resample_alg_mapping = {
+        gdal.GRIORA_NearestNeighbour: "NEAR",
+        gdal.GRIORA_Mode: "MODE",
+    }
+    mem_ds.BuildOverviews(resample_alg_mapping[resample_alg], [4])
     ar_ds = mem_ds.GetRasterBand(1).GetOverview(0).ReadAsArray()
-    assert numpy.array_equal(ar_ds, expected_ar)
+    if math.isnan(x):
+        if gdal.DataTypeIsComplex(dt):
+            assert math.isnan(ar_ds[0][0].real) and math.isnan(ar_ds[0][0].imag)
+        else:
+            assert math.isnan(ar_ds[0][0])
+    else:
+        assert numpy.array_equal(ar_ds, expected_ar)
 
 
 ###############################################################################
