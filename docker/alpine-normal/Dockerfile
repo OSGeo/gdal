@@ -44,6 +44,7 @@ RUN apk add --no-cache \
     lerc-dev \
     libaec-dev \
     libarchive-dev \
+    libavif-dev \
     libdeflate-dev \
     libgeotiff-dev \
     libheif-dev \
@@ -130,7 +131,7 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     && cd .. \
     && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
     ); fi
-    
+
 RUN apk add --no-cache rsync ccache
 ARG RSYNC_REMOTE
 
@@ -321,6 +322,7 @@ RUN apk add --no-cache \
         libarchive \
         libarrow \
         libarrow_dataset \
+        libavif \
         libcrypto3 \
         libcurl \
         libdeflate \

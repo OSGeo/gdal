@@ -1539,8 +1539,10 @@ LegalConstraints
 len
 Leveller
 lf
+libaom
 libarchive
 libarrow
+libavif
 libblosc
 libbsd
 libcf
@@ -1548,6 +1550,7 @@ libcfitsio
 libcrypto
 libcurl
 libCurl
+libdav
 libde
 libdeflate
 libdf
