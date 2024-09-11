@@ -2804,7 +2804,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
     OGRMVTDataset *poDS = new OGRMVTDataset(nullptr);
 
     const CPLString osMetadataMemFilename =
-        CPLSPrintf("/vsimem/%p_metadata.json", poDS);
+        VSIMemGenerateHiddenFilename("mvt_metadata.json");
     if (!LoadMetadata(osMetadataFile, osMetadataContent, oVectorLayers,
                       oTileStatLayers, oBounds, poDS->m_poSRS,
                       poDS->m_dfTopXOrigin, poDS->m_dfTopYOrigin,
@@ -4484,7 +4484,8 @@ static void GZIPCompress(std::string &oTileBuffer)
 {
     if (!oTileBuffer.empty())
     {
-        CPLString osTmpFilename(CPLSPrintf("/vsimem/%p.gz", &oTileBuffer));
+        const CPLString osTmpFilename(
+            VSIMemGenerateHiddenFilename("mvt_temp.gz"));
         CPLString osTmpGZipFilename("/vsigzip/" + osTmpFilename);
         VSILFILE *fpGZip = VSIFOpenL(osTmpGZipFilename, "wb");
         if (fpGZip)
