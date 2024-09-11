@@ -90,7 +90,7 @@ static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
             }
 
             const std::string osTmpFilename(
-                CPLSPrintf("/vsimem/_arrow/%p", poOpenInfo));
+                VSIMemGenerateHiddenFilename("arrow"));
             auto fp = VSIVirtualHandleUniquePtr(VSIFileFromMemBuffer(
                 osTmpFilename.c_str(), poOpenInfo->pabyHeader, nSizeToRead,
                 false));
