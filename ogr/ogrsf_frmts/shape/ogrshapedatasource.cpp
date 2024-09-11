@@ -1556,7 +1556,7 @@ bool OGRShapeDataSource::UncompressIfNeeded()
          nTotalUncompressedSize <
              static_cast<GUIntBig>(CPLGetUsablePhysicalRAM() / 10)))
     {
-        osTemporaryDir = CPLSPrintf("/vsimem/_shapedriver/%p", this);
+        osTemporaryDir = VSIMemGenerateHiddenFilename("shapedriver");
     }
     CPLDebug("Shape", "Uncompressing to %s", osTemporaryDir.c_str());
 
