@@ -40,7 +40,9 @@ OGRWFSJoinLayer::OGRWFSJoinLayer(OGRWFSDataSource *poDSIn,
       bDistinct(psSelectInfo->query_mode == SWQM_DISTINCT_LIST),
       poBaseDS(nullptr), poBaseLayer(nullptr), bReloadNeeded(false),
       bHasFetched(false), bPagingActive(false), nPagingStartIndex(0),
-      nFeatureRead(0), nFeatureCountRequested(0)
+      nFeatureRead(0), nFeatureCountRequested(0),
+      // If changing that, change in the GML driver too
+      m_osTmpDir(VSIMemGenerateHiddenFilename("_ogr_wfs_"))
 {
     CPLString osName("join_");
     CPLString osLayerName = psSelectInfo->table_defs[0].table_name;
@@ -178,7 +180,7 @@ OGRWFSJoinLayer::OGRWFSJoinLayer(OGRWFSDataSource *poDSIn,
     for (int i = 0; i < (int)apoLayers.size(); i++)
     {
         CPLString osTmpFileName =
-            CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", apoLayers[i]);
+            CPLSPrintf("%s/file.xsd", apoLayers[i]->GetTmpDir().c_str());
         CPLPushErrorHandler(CPLQuietErrorHandler);
         CPLXMLNode *psSchema = CPLParseXMLFile(osTmpFileName);
         CPLPopErrorHandler();
@@ -199,8 +201,7 @@ OGRWFSJoinLayer::OGRWFSJoinLayer(OGRWFSDataSource *poDSIn,
     }
     if (psGlobalSchema)
     {
-        CPLString osTmpFileName =
-            CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
+        CPLString osTmpFileName = CPLSPrintf("%s/file.xsd", m_osTmpDir.c_str());
         CPLSerializeXMLTreeToFile(psGlobalSchema, osTmpFileName);
         CPLDestroyXMLNode(psGlobalSchema);
     }
@@ -217,8 +218,7 @@ OGRWFSJoinLayer::~OGRWFSJoinLayer()
     if (poBaseDS != nullptr)
         GDALClose(poBaseDS);
 
-    CPLString osTmpDirName = CPLSPrintf("/vsimem/tempwfs_%p", this);
-    OGRWFSRecursiveUnlink(osTmpDirName);
+    VSIRmdirRecursive(m_osTmpDir.c_str());
 }
 
 /************************************************************************/
@@ -430,7 +430,7 @@ GDALDataset *OGRWFSJoinLayer::FetchGetFeature()
 
     /* Try streaming when the output format is GML and that we have a .xsd */
     /* that we are able to understand */
-    CPLString osXSDFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
+    CPLString osXSDFileName = CPLSPrintf("%s/file.xsd", m_osTmpDir.c_str());
     VSIStatBufL sBuf;
     if (CPLTestBool(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES")) &&
         VSIStatL(osXSDFileName, &sBuf) == 0 &&
@@ -487,8 +487,7 @@ GDALDataset *OGRWFSJoinLayer::FetchGetFeature()
         return nullptr;
     }
 
-    CPLString osTmpDirName = CPLSPrintf("/vsimem/tempwfs_%p", this);
-    VSIMkdir(osTmpDirName, 0);
+    VSIMkdir(m_osTmpDir.c_str(), 0);
 
     GByte *pabyData = psResult->pabyData;
     int nDataLen = psResult->nDataLen;
@@ -504,10 +503,10 @@ GDALDataset *OGRWFSJoinLayer::FetchGetFeature()
 
     CPLString osTmpFileName;
 
-    osTmpFileName = osTmpDirName + "/file.gfs";
+    osTmpFileName = m_osTmpDir + "/file.gfs";
     VSIUnlink(osTmpFileName);
 
-    osTmpFileName = osTmpDirName + "/file.gml";
+    osTmpFileName = m_osTmpDir + "/file.gml";
 
     VSILFILE *fp =
         VSIFileFromMemBuffer(osTmpFileName, pabyData, nDataLen, TRUE);

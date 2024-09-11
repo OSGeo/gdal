@@ -532,7 +532,8 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
             }
         }
     }
-    else if (STARTS_WITH(pszFilename, "/vsimem/tempwfs_"))
+    else if (STARTS_WITH(pszFilename, "/vsimem/") &&
+             strstr(pszFilename, "_ogr_wfs_"))
     {
         // http://regis.intergraph.com/wfs/dcmetro/request.asp? returns a
         // <G:FeatureCollection> Who knows what servers can return?  When

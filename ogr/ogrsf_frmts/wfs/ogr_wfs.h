@@ -41,7 +41,7 @@
 #include "ogr_swq.h"
 
 const CPLXMLNode *WFSFindNode(const CPLXMLNode *psXML, const char *pszRootName);
-void OGRWFSRecursiveUnlink(const char *pszName);
+
 CPLString
 WFS_TurnSQLFilterToOGCFilter(const swq_expr_node *poExpr, OGRDataSource *poDS,
                              OGRFeatureDefn *poFDefn, int nVersion,
@@ -144,6 +144,8 @@ class OGRWFSLayer final : public OGRLayer
 
     std::vector<std::string> m_aosSupportedCRSList{};
     OGRLayer::GetSupportedSRSListRetType m_apoSupportedCRSList{};
+
+    std::string m_osTmpDir{};
 
   public:
     OGRWFSLayer(OGRWFSDataSource *poDS, OGRSpatialReference *poSRS,
@@ -257,6 +259,11 @@ class OGRWFSLayer final : public OGRLayer
 
     OGRErr SetActiveSRS(int iGeomField,
                         const OGRSpatialReference *poSRS) override;
+
+    const std::string &GetTmpDir() const
+    {
+        return m_osTmpDir;
+    }
 };
 
 /************************************************************************/
@@ -289,6 +296,8 @@ class OGRWFSJoinLayer final : public OGRLayer
     std::vector<CPLString> aoSrcGeomFieldNames;
 
     CPLString osFeatureTypes;
+
+    std::string m_osTmpDir{};
 
     OGRWFSJoinLayer(OGRWFSDataSource *poDS, const swq_select *psSelectInfo,
                     const CPLString &osGlobalFilter);
