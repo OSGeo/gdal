@@ -819,7 +819,7 @@ def test_gdal_rasterize_no_options(tmp_vsimem):
 
     # Create a raster to rasterize into.
     target_ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/rast1.tif", 10, 10, 1, gdal.GDT_Byte
+        tmp_vsimem / "out.tif", 10, 10, 1, gdal.GDT_Byte
     )
 
     assert target_ds
