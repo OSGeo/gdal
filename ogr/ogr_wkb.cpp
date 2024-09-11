@@ -891,7 +891,7 @@ static bool OGRWKBIsClockwiseRing(const GByte *data, const uint32_t nPoints,
             {
                 v = i;
                 vX = x;
-                vY = y;
+                // vY = y;
                 bUseFallback = false;
             }
             else if (x == vX)

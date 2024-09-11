@@ -7002,7 +7002,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
                      pszDefault[strlen(pszDefault) - 1] == '\'')
             {
                 CPLString osDefault(pszDefault + 1);
-                osDefault.resize(osDefault.size() - 1);
+                osDefault.pop_back();
                 char *pszTmp = CPLUnescapeString(osDefault, nullptr, CPLES_SQL);
                 SetField(i, pszTmp);
                 CPLFree(pszTmp);

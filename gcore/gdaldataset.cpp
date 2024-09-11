@@ -544,7 +544,7 @@ void GDALDataset::AddToDatasetOpenList()
  *
  * The default implementation of this method just calls the FlushCache() method
  * on each of the raster bands and the SyncToDisk() method
- * on each of the layers.  Conceptionally, calling FlushCache() on a dataset
+ * on each of the layers.  Conceptually, calling FlushCache() on a dataset
  * should include any work that might be accomplished by calling SyncToDisk()
  * on layers in that dataset.
  *

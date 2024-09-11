@@ -439,7 +439,8 @@ OGRErr OGRGeometryCollection::addGeometry(std::unique_ptr<OGRGeometry> geom)
  *
  * @param bDelete if TRUE the geometry will be deallocated, otherwise it will
  * not.  The default is TRUE as the container is considered to own the
- * geometries in it.
+ * geometries in it. Note: using stealGeometry() might be a better alternative
+ * to using bDelete = false.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
  * out of range.
@@ -468,6 +469,35 @@ OGRErr OGRGeometryCollection::removeGeometry(int iGeom, int bDelete)
     nGeomCount--;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           stealGeometry()                            */
+/************************************************************************/
+
+/**
+ * \brief Remove a geometry from the container and return it to the caller
+ *
+ * Removing a geometry will cause the geometry count to drop by one, and all
+ * "higher" geometries will shuffle down one in index.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param iGeom the index of the geometry to delete.
+ *
+ * @return the sub-geometry, or nullptr in case of error.
+ * @since 3.10
+ */
+
+std::unique_ptr<OGRGeometry> OGRGeometryCollection::stealGeometry(int iGeom)
+{
+    if (iGeom < 0 || iGeom >= nGeomCount)
+        return nullptr;
+
+    auto poSubGeom = std::unique_ptr<OGRGeometry>(papoGeoms[iGeom]);
+    papoGeoms[iGeom] = nullptr;
+    removeGeometry(iGeom);
+    return poSubGeom;
 }
 
 /************************************************************************/

@@ -2659,15 +2659,32 @@ def test_ogr_geojson_57(tmp_vsimem):
 
     got = read_file(tmp_vsimem / "out.json")
     gdal.Unlink(tmp_vsimem / "out.json")
-    expected = """{
-"type": "FeatureCollection",
-"bbox": [ 45.0000000, 64.3861643, 135.0000000, 90.0000000 ],
-"features": [
-{ "type": "Feature", "properties": { }, "bbox": [ 45.0, 64.3861643, 135.0, 90.0 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ 135.0, 64.3861643 ], [ 135.0, 90.0 ], [ 45.0, 90.0 ], [ 45.0, 64.3861643 ], [ 135.0, 64.3861643 ] ] ] } }
-]
-}
-"""
-    assert json.loads(got) == json.loads(expected)
+    expected = {
+        "type": "FeatureCollection",
+        "bbox": [45.0, 64.3861643, 135.0, 90.0],
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {},
+                "bbox": [45.0, 64.3861643, 135.0, 90.0],
+                "geometry": {
+                    "type": "MultiPolygon",
+                    "coordinates": [
+                        [
+                            [
+                                [135.0, 64.3861643],
+                                [135.0, 90.0],
+                                [45.0, 90.0],
+                                [45.0, 64.3861643],
+                                [135.0, 64.3861643],
+                            ]
+                        ]
+                    ],
+                },
+            }
+        ],
+    }
+    assert json.loads(got) == expected
 
     # Polar case: slice of spherical cap crossing the antimeridian
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)

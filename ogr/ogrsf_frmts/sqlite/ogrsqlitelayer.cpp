@@ -93,8 +93,8 @@ void OGRSQLiteLayer::Finalize()
 
     if (m_nFeaturesRead > 0 && m_poFeatureDefn != nullptr)
     {
-        CPLDebug("SQLite", "%d features read on layer '%s'.",
-                 (int)m_nFeaturesRead, m_poFeatureDefn->GetName());
+        CPLDebug("SQLite", CPL_FRMT_GIB " features read on layer '%s'.",
+                 m_nFeaturesRead, m_poFeatureDefn->GetName());
     }
 
     if (m_hStmt != nullptr)
@@ -175,7 +175,8 @@ static int OGRIsBinaryGeomCol(sqlite3_stmt *hStmt, int iCol,
     OGRGeometry *poGeometry = nullptr;
     const int nBytes = sqlite3_column_bytes(hStmt, iCol);
     // coverity[tainted_data_return]
-    GByte *pabyBlob = (GByte *)sqlite3_column_blob(hStmt, iCol);
+    const GByte *pabyBlob =
+        reinterpret_cast<const GByte *>(sqlite3_column_blob(hStmt, iCol));
     int nBytesConsumed = 0;
     CPLPushErrorHandler(CPLQuietErrorHandler);
     /* Try as spatialite first since createFromWkb() can sometimes */
@@ -245,7 +246,8 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
 
     const int nRawColumns = sqlite3_column_count(hStmtIn);
 
-    m_panFieldOrdinals = (int *)CPLMalloc(sizeof(int) * nRawColumns);
+    m_panFieldOrdinals =
+        static_cast<int *>(CPLMalloc(sizeof(int) * nRawColumns));
 
     for (int iCol = 0; iCol < nRawColumns; iCol++)
     {
@@ -828,8 +830,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                      * sure if it is */
                     /* WKB or SpatialLite format */
                     // coverity[tainted_data_return]
-                    GByte *pabyBlob = (GByte *)sqlite3_column_blob(
-                        m_hStmt, poGeomFieldDefn->m_iCol);
+                    const GByte *pabyBlob = reinterpret_cast<const GByte *>(
+                        sqlite3_column_blob(m_hStmt, poGeomFieldDefn->m_iCol));
                     if (ImportSpatiaLiteGeometry(pabyBlob, nBytes,
                                                  &poGeometry) == OGRERR_NONE)
                     {
@@ -862,8 +864,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                 const int nBytes =
                     sqlite3_column_bytes(m_hStmt, poGeomFieldDefn->m_iCol);
                 // coverity[tainted_data_return]
-                GByte *pabyBlob = (GByte *)sqlite3_column_blob(
-                    m_hStmt, poGeomFieldDefn->m_iCol);
+                const GByte *pabyBlob = reinterpret_cast<const GByte *>(
+                    sqlite3_column_blob(m_hStmt, poGeomFieldDefn->m_iCol));
                 CPL_IGNORE_RET_VAL(
                     ImportSpatiaLiteGeometry(pabyBlob, nBytes, &poGeometry));
             }
@@ -904,8 +906,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                 /* Possible since SQLite3 has no strong typing */
                 if (nSQLite3Type == SQLITE_TEXT)
                     poFeature->SetField(
-                        iField,
-                        (const char *)sqlite3_column_text(m_hStmt, iRawField));
+                        iField, reinterpret_cast<const char *>(
+                                    sqlite3_column_text(m_hStmt, iRawField)));
                 else
                     poFeature->SetField(
                         iField, sqlite3_column_int64(m_hStmt, iRawField));
@@ -917,8 +919,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                 /* Possible since SQLite3 has no strong typing */
                 if (nSQLite3Type == SQLITE_TEXT)
                     poFeature->SetField(
-                        iField,
-                        (const char *)sqlite3_column_text(m_hStmt, iRawField));
+                        iField, reinterpret_cast<const char *>(
+                                    sqlite3_column_text(m_hStmt, iRawField)));
                 else
                     poFeature->SetField(
                         iField, sqlite3_column_double(m_hStmt, iRawField));
@@ -949,28 +951,30 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                 {
                     const int nBytes = sqlite3_column_bytes(m_hStmt, iRawField);
                     // coverity[tainted_data_return]
-                    GByte *pabyBlob =
-                        (GByte *)sqlite3_column_blob(m_hStmt, iRawField);
+                    const GByte *pabyBlob = reinterpret_cast<const GByte *>(
+                        sqlite3_column_blob(m_hStmt, iRawField));
 
                     void *pOut =
                         CPLZLibInflate(pabyBlob, nBytes, nullptr, 0, nullptr);
                     if (pOut != nullptr)
                     {
-                        poFeature->SetField(iField, (const char *)pOut);
+                        poFeature->SetField(iField,
+                                            static_cast<const char *>(pOut));
                         CPLFree(pOut);
                     }
                     else
                     {
-                        poFeature->SetField(iField,
-                                            (const char *)sqlite3_column_text(
-                                                m_hStmt, iRawField));
+                        poFeature->SetField(
+                            iField,
+                            reinterpret_cast<const char *>(
+                                sqlite3_column_text(m_hStmt, iRawField)));
                     }
                 }
                 else
                 {
                     poFeature->SetField(
-                        iField,
-                        (const char *)sqlite3_column_text(m_hStmt, iRawField));
+                        iField, reinterpret_cast<const char *>(
+                                    sqlite3_column_text(m_hStmt, iRawField)));
                 }
                 break;
             }
@@ -981,8 +985,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
             {
                 if (sqlite3_column_type(m_hStmt, iRawField) == SQLITE_TEXT)
                 {
-                    const char *pszValue =
-                        (const char *)sqlite3_column_text(m_hStmt, iRawField);
+                    const char *pszValue = reinterpret_cast<const char *>(
+                        sqlite3_column_text(m_hStmt, iRawField));
                     if (!OGRParseDate(pszValue,
                                       poFeature->GetRawFieldRef(iField), 0))
                         poFeature->UnsetField(iField);
@@ -1020,14 +1024,14 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
     if (m_iOGRNativeDataCol >= 0 &&
         sqlite3_column_type(m_hStmt, m_iOGRNativeDataCol) == SQLITE_TEXT)
     {
-        poFeature->SetNativeData(
-            (const char *)sqlite3_column_text(m_hStmt, m_iOGRNativeDataCol));
+        poFeature->SetNativeData(reinterpret_cast<const char *>(
+            sqlite3_column_text(m_hStmt, m_iOGRNativeDataCol)));
     }
     if (m_iOGRNativeMediaTypeCol >= 0 &&
         sqlite3_column_type(m_hStmt, m_iOGRNativeMediaTypeCol) == SQLITE_TEXT)
     {
-        poFeature->SetNativeMediaType((const char *)sqlite3_column_text(
-            m_hStmt, m_iOGRNativeMediaTypeCol));
+        poFeature->SetNativeMediaType(reinterpret_cast<const char *>(
+            sqlite3_column_text(m_hStmt, m_iOGRNativeMediaTypeCol)));
     }
 
     return poFeature;
@@ -1227,7 +1231,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         poGeom = poLS;
         if (!NEED_SWAP_SPATIALITE())
         {
-            poLS->setPoints(nPointCount, (OGRRawPoint *)(pabyData + 8),
+            poLS->setPoints(nPointCount,
+                            reinterpret_cast<const OGRRawPoint *>(pabyData + 8),
                             nullptr);
         }
         else
@@ -1727,8 +1732,10 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
             OGRLinearRing *poLR = new OGRLinearRing();
             if (!NEED_SWAP_SPATIALITE())
             {
-                poLR->setPoints(nPointCount,
-                                (OGRRawPoint *)(pabyData + nNextByte), nullptr);
+                poLR->setPoints(
+                    nPointCount,
+                    reinterpret_cast<const OGRRawPoint *>(pabyData + nNextByte),
+                    nullptr);
                 nNextByte += 2 * 8 * nPointCount;
             }
             else
@@ -3223,7 +3230,8 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
             if (!bUseComprGeom && !NEED_SWAP_SPATIALITE() &&
                 poGeometry->CoordinateDimension() == 2)
             {
-                poLineString->getPoints((OGRRawPoint *)(pabyData + 4), nullptr);
+                poLineString->getPoints(
+                    reinterpret_cast<OGRRawPoint *>(pabyData + 4), nullptr);
                 nTotalSize += nPointCount * 16;
                 return nTotalSize;
             }
@@ -3275,8 +3283,10 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
                 }
                 else /* Compressed intermediate points */
                 {
-                    float deltax = (float)(x - poLineString->getX(i - 1));
-                    float deltay = (float)(y - poLineString->getY(i - 1));
+                    float deltax =
+                        static_cast<float>(x - poLineString->getX(i - 1));
+                    float deltay =
+                        static_cast<float>(y - poLineString->getY(i - 1));
                     memcpy(pabyData + nTotalSize, &deltax, 4);
                     memcpy(pabyData + nTotalSize + 4, &deltay, 4);
                     if (NEED_SWAP_SPATIALITE())
@@ -3287,7 +3297,8 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
                     if (poGeometry->Is3D())
                     {
                         double z = poLineString->getZ(i);
-                        float deltaz = (float)(z - poLineString->getZ(i - 1));
+                        float deltaz =
+                            static_cast<float>(z - poLineString->getZ(i - 1));
                         memcpy(pabyData + nTotalSize + 8, &deltaz, 4);
                         if (NEED_SWAP_SPATIALITE())
                             CPL_SWAP32PTR(pabyData + nTotalSize + 8);
@@ -3418,10 +3429,10 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry(
     const int nDataLen = 44 + nGeomSize;
     OGREnvelope sEnvelope;
 
-    *ppabyData = (GByte *)CPLMalloc(nDataLen);
+    *ppabyData = static_cast<GByte *>(CPLMalloc(nDataLen));
 
     (*ppabyData)[0] = 0x00;
-    (*ppabyData)[1] = (GByte)eByteOrder;
+    (*ppabyData)[1] = static_cast<GByte>(eByteOrder);
 
     // Write out SRID
     memcpy(*ppabyData + 2, &nSRID, 4);

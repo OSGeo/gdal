@@ -1536,6 +1536,32 @@ void CPL_STDCALL GDALWarpResolveWorkingDataType(GDALWarpOptions *psOptions)
 
     psOptions->eWorkingDataType = GDT_Byte;
 
+    // If none of the provided input nodata values can be represented in the
+    // data type of the corresponding source band, ignore them.
+    if (psOptions->hSrcDS && psOptions->padfSrcNoDataReal)
+    {
+        int nCountInvalidSrcNoDataReal = 0;
+        for (int iBand = 0; iBand < psOptions->nBandCount; iBand++)
+        {
+            GDALRasterBandH hSrcBand = GDALGetRasterBand(
+                psOptions->hSrcDS, psOptions->panSrcBands[iBand]);
+
+            if (hSrcBand &&
+                !GDALIsValueExactAs(psOptions->padfSrcNoDataReal[iBand],
+                                    GDALGetRasterDataType(hSrcBand)))
+            {
+                nCountInvalidSrcNoDataReal++;
+            }
+        }
+        if (nCountInvalidSrcNoDataReal == psOptions->nBandCount)
+        {
+            CPLFree(psOptions->padfSrcNoDataReal);
+            psOptions->padfSrcNoDataReal = nullptr;
+            CPLFree(psOptions->padfSrcNoDataImag);
+            psOptions->padfSrcNoDataImag = nullptr;
+        }
+    }
+
     for (int iBand = 0; iBand < psOptions->nBandCount; iBand++)
     {
         if (psOptions->hDstDS != nullptr)

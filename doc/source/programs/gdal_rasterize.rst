@@ -68,6 +68,14 @@ raster data is only supported since GDAL 2.1.0.
     polygon is just touching the pixel center). Defaults to disabled for normal
     rendering rules.
 
+    .. note::
+
+        When this option is enabled, the order of the input features (lines or polygons)
+        can affect the results. When two features touch each other, the last one (i.e. topmost)
+        will determine the burned pixel value at the edge.
+        You may wish to use the :option:`-sql` option to reorder the features (ORDER BY)
+        to achieve a more predictable result.
+
 .. option:: -burn <value>
 
     A fixed value to burn into a band for all objects.  A list of :option:`-burn` options
@@ -94,7 +102,7 @@ raster data is only supported since GDAL 2.1.0.
 
     Indicates the layer(s) from the datasource that will be used for input
     features.  May be specified multiple times, but at least one layer name or a
-    :option:`-sql` option must be specified.
+    :option:`-sql` option must be specified (not both).
 
 .. option:: -where <expression>
 
@@ -107,6 +115,10 @@ raster data is only supported since GDAL 2.1.0.
     virtual layer of features to be burned in.
     Starting with GDAL 3.7, the ``@filename`` syntax can be used to indicate
     that the content is in the pointed filename.
+
+    .. note::
+
+        This option will be ignored if the :option:`-l` option has been set as well.
 
 .. option:: -dialect <dialect>
 

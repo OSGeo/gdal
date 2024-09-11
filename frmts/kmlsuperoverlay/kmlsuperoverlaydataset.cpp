@@ -2793,6 +2793,9 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
         auto poOvrDS = std::make_unique<KmlSuperOverlayReadDataset>();
 
         poOvrDS->bIsOvr = true;
+        // The life-time of objects is such that poOvrDS is destroyed when
+        // poDS is destroyed.
+        // coverity[escape]
         poOvrDS->poParent = poDS.get();
         poOvrDS->nFactor = nFactor;
         poOvrDS->nRasterXSize = nFactor * poDSIcon->GetRasterXSize();

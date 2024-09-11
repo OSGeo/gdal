@@ -1412,7 +1412,7 @@ static void InterpolateSpline(OGRLineString *const poLine,
         adfParameters.push_back(dfParameter);
     }
 
-    const double dfTotalChordLength = adfParameters[adfParameters.size() - 1];
+    const double dfTotalChordLength = adfParameters.back();
 
     // Start tangent can be worked out from the first chord
     DXFTriple oStartTangent(aoDataPoints[1].dfX - aoDataPoints[0].dfX,

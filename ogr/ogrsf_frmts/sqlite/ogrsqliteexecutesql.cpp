@@ -221,14 +221,12 @@ static void OGR2SQLITEAddLayer(const char *&pszStart, int &nNum,
 /*                         StartsAsSQLITEKeyWord()                      */
 /************************************************************************/
 
-static const char *const apszKeywords[] = {
-    "WHERE", "GROUP", "ORDER", "JOIN", "UNION", "INTERSECT", "EXCEPT", "LIMIT"};
-
 static int StartsAsSQLITEKeyWord(const char *pszStr)
 {
-    for (int i = 0; i < (int)(sizeof(apszKeywords) / sizeof(char *)); i++)
+    for (const char *pszKeyword : {"WHERE", "GROUP", "ORDER", "JOIN", "UNION",
+                                   "INTERSECT", "EXCEPT", "LIMIT"})
     {
-        if (EQUALN(pszStr, apszKeywords[i], strlen(apszKeywords[i])))
+        if (STARTS_WITH_CI(pszStr, pszKeyword))
             return TRUE;
     }
     return FALSE;
@@ -496,6 +494,8 @@ class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
     char *m_pszTmpDBName = nullptr;
     bool m_bStringsAsUTF8 = false;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteExecuteSQLLayer)
+
   public:
     OGRSQLiteExecuteSQLLayer(char *pszTmpDBName, OGRSQLiteDataSource *poDS,
                              const CPLString &osSQL, sqlite3_stmt *hStmt,
@@ -565,7 +565,7 @@ static void OGR2SQLITE_IgnoreAllFieldsExceptGeometry(OGRLayer *poLayer)
         papszIgnored = CSLAddString(
             papszIgnored, poFeatureDefn->GetFieldDefn(i)->GetNameRef());
     }
-    poLayer->SetIgnoredFields((const char **)papszIgnored);
+    poLayer->SetIgnoredFields(const_cast<const char **>(papszIgnored));
     CSLDestroy(papszIgnored);
 }
 #endif
@@ -623,7 +623,7 @@ static int OGR2SQLITEDealWithSpatialColumn(
                      "coord_dimension, srid) "
                      "VALUES ('%s','%s','SpatiaLite',%d,%d,%d)",
                      pszLayerNameEscaped, pszGeomColEscaped,
-                     (int)wkbFlatten(poLayer->GetGeomType()),
+                     static_cast<int>(wkbFlatten(poLayer->GetGeomType())),
                      wkbHasZ(poLayer->GetGeomType()) ? 3 : 2, nSRSId);
     }
 #ifdef HAVE_SPATIALITE
@@ -667,9 +667,10 @@ static int OGR2SQLITEDealWithSpatialColumn(
 
         if (poSQLiteDS->HasSpatialite4Layout())
         {
-            int nGeomType = poLayer->GetGeomType();
+            const auto eGeomType = poLayer->GetGeomType();
+            int nGeomType = eGeomType;
             int nCoordDimension = 2;
-            if (wkbHasZ((OGRwkbGeometryType)nGeomType))
+            if (wkbHasZ(eGeomType))
             {
                 nGeomType += 1000;
                 nCoordDimension = 3;
@@ -764,7 +765,8 @@ static int OGR2SQLITEDealWithSpatialColumn(
         if (poGeom != nullptr && !poGeom->IsEmpty())
         {
             poGeom->getEnvelope(&sEnvelope);
-            sqlite3_bind_int64(hStmt, 1, (sqlite3_int64)poFeature->GetFID());
+            sqlite3_bind_int64(hStmt, 1,
+                               static_cast<sqlite3_int64>(poFeature->GetFID()));
             sqlite3_bind_double(hStmt, 2, sEnvelope.MinX);
             sqlite3_bind_double(hStmt, 3, sEnvelope.MaxX);
             sqlite3_bind_double(hStmt, 4, sEnvelope.MinY);
@@ -848,7 +850,7 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
         }
     }
 
-    char *pszTmpDBName = (char *)CPLMalloc(256);
+    char *pszTmpDBName = static_cast<char *>(CPLMalloc(256));
     char szPtr[32];
     snprintf(szPtr, sizeof(szPtr), "%p", pszTmpDBName);
     snprintf(pszTmpDBName, 256, "/vsimem/ogr2sqlite/temp_%s.db", szPtr);
@@ -878,7 +880,7 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
                            "OGR_SQLITE_DIALECT_USE_SPATIALITE", "YES")))
         {
             bTried = true;
-            char *pszCachedFilename = (char *)CPLMalloc(256);
+            char *pszCachedFilename = static_cast<char *>(CPLMalloc(256));
             snprintf(szPtr, sizeof(szPtr), "%p", pszCachedFilename);
             snprintf(pszCachedFilename, 256,
                      "/vsimem/ogr2sqlite/reference_%s.db", szPtr);
@@ -909,7 +911,8 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
         CPLTestBool(
             CPLGetConfigOption("OGR_SQLITE_DIALECT_USE_SPATIALITE", "YES")))
     {
-        GByte *pabyEmptyDBClone = (GByte *)VSI_MALLOC_VERBOSE(nEmptyDBSize);
+        GByte *pabyEmptyDBClone =
+            static_cast<GByte *>(VSI_MALLOC_VERBOSE(nEmptyDBSize));
         if (pabyEmptyDBClone == nullptr)
         {
             CPLFree(pszTmpDBName);
@@ -1033,8 +1036,8 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
         }
         else
         {
-            OGRDataSource *poOtherDS =
-                (OGRDataSource *)OGROpen(oLayerDesc.osDSName, FALSE, nullptr);
+            GDALDataset *poOtherDS = OGRDataSource::FromHandle(
+                OGROpen(oLayerDesc.osDSName, FALSE, nullptr));
             if (poOtherDS == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,

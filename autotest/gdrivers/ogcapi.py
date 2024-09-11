@@ -382,7 +382,10 @@ def test_ogr_ogcapi_raster(api, collection, tmp_path):
 )
 def test_ogc_api_wrong_collection(api, of_type):
 
-    with pytest.raises(Exception, match="Invalid data collection"):
+    with pytest.raises(
+        Exception,
+        match=r"HTTP error code : 400, <h1>GNOSIS Map Server \(OGCAPI\) - 400 Bad Request</h1><h3>Invalid data collection</h3>",
+    ):
         gdal.OpenEx(
             f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/NOT_EXISTS",
             of_type,

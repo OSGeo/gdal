@@ -851,7 +851,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     }
 
     if (!osColumnList.empty())
-        osColumnList.resize(osColumnList.size() - 1);  // remove the last comma
+        osColumnList.pop_back();  // remove the last comma
 
     // ----------------------------------------------------------
     // Read VAT and load RAT

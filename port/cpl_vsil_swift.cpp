@@ -149,7 +149,7 @@ void VSICurlFilesystemHandlerBase::AnalyseSwiftFileList(
         {
             osNextMarker = osSubdir;
             if (osSubdir.back() == '/')
-                osSubdir.resize(osSubdir.size() - 1);
+                osSubdir.pop_back();
             if (STARTS_WITH(osSubdir.c_str(), osPrefix.c_str()))
             {
 
@@ -212,7 +212,8 @@ class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     const char *GetDebugKey() const override
     {
@@ -385,22 +386,22 @@ VSICurlHandle *VSISwiftFSHandler::CreateFileHandle(const char *pszFilename)
 /*                         GetURLFromFilename()                         */
 /************************************************************************/
 
-std::string VSISwiftFSHandler::GetURLFromFilename(const std::string &osFilename)
+std::string
+VSISwiftFSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
-    std::string osFilenameWithoutPrefix =
+    const std::string osFilenameWithoutPrefix =
         osFilename.substr(GetFSPrefix().size());
 
-    VSISwiftHandleHelper *poHandleHelper = VSISwiftHandleHelper::BuildFromURI(
-        osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str());
-    if (poHandleHelper == nullptr)
+    auto poHandleHelper = std::unique_ptr<VSISwiftHandleHelper>(
+        VSISwiftHandleHelper::BuildFromURI(osFilenameWithoutPrefix.c_str(),
+                                           GetFSPrefix().c_str()));
+    if (!poHandleHelper)
     {
-        return "";
+        return std::string();
     }
     std::string osBaseURL(poHandleHelper->GetURL());
     if (!osBaseURL.empty() && osBaseURL.back() == '/')
-        osBaseURL.resize(osBaseURL.size() - 1);
-    delete poHandleHelper;
-
+        osBaseURL.pop_back();
     return osBaseURL;
 }
 
@@ -430,7 +431,7 @@ int VSISwiftFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
 
     std::string osFilename(pszFilename);
     if (osFilename.back() == '/')
-        osFilename.resize(osFilename.size() - 1);
+        osFilename.pop_back();
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
@@ -516,7 +517,7 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
     std::string osDirnameWithoutPrefix = pszDirname + GetFSPrefix().size();
     if (!osDirnameWithoutPrefix.empty() && osDirnameWithoutPrefix.back() == '/')
     {
-        osDirnameWithoutPrefix.resize(osDirnameWithoutPrefix.size() - 1);
+        osDirnameWithoutPrefix.pop_back();
     }
 
     std::string osBucket(osDirnameWithoutPrefix);

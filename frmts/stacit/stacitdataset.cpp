@@ -178,7 +178,7 @@ static std::string SanitizeCRSValue(const std::string &v)
         }
     }
     if (!ret.empty() && ret.back() == '_')
-        ret.resize(ret.size() - 1);
+        ret.pop_back();
     return ret;
 }
 
@@ -852,11 +852,19 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
                 return false;
         }
         const auto oRoot = oDoc.GetRoot();
-        const auto oFeatures = oRoot.GetArray("features");
+        auto oFeatures = oRoot.GetArray("features");
         if (!oFeatures.IsValid())
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Missing features");
-            return false;
+            if (oRoot.GetString("type") == "Feature")
+            {
+                oFeatures = CPLJSONArray();
+                oFeatures.Add(oRoot);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Missing features");
+                return false;
+            }
         }
         for (const auto &oFeature : oFeatures)
         {

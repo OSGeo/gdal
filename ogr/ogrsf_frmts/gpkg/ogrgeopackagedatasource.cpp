@@ -7521,7 +7521,7 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
 
     CPLString osSQLCommand(pszSQLCommand);
     if (!osSQLCommand.empty() && osSQLCommand.back() == ';')
-        osSQLCommand.resize(osSQLCommand.size() - 1);
+        osSQLCommand.pop_back();
 
     if (pszDialect == nullptr || !EQUAL(pszDialect, "DEBUG"))
     {

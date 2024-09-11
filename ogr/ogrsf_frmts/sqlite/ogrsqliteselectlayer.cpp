@@ -100,8 +100,8 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer(
             if (nColType == SQLITE_BLOB)
             {
                 // Is it a Spatialite geometry ?
-                const GByte *pabyBlob = (const GByte *)sqlite3_column_blob(
-                    m_hStmt, poGeomFieldDefn->m_iCol);
+                const GByte *pabyBlob = reinterpret_cast<const GByte *>(
+                    sqlite3_column_blob(m_hStmt, poGeomFieldDefn->m_iCol));
                 if (sqlite3_column_bytes(m_hStmt, poGeomFieldDefn->m_iCol) >
                         39 &&
                     pabyBlob[0] == 0x00 &&
@@ -263,7 +263,7 @@ OGRSQLiteSelectLayerCommonBehaviour::SetAttributeFilter(const char *pszQuery)
     const bool bHasSpecialFields =
         (pszQuery != nullptr && pszQuery[0] != '\0' &&
          oQuery.Compile(m_poLayer->GetLayerDefn(), pszQuery) == OGRERR_NONE &&
-         HasSpecialFields((swq_expr_node *)oQuery.GetSWQExpr(),
+         HasSpecialFields(static_cast<swq_expr_node *>(oQuery.GetSWQExpr()),
                           m_poLayer->GetLayerDefn()->GetFieldCount()));
     CPLPopErrorHandler();
 

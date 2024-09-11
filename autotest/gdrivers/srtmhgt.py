@@ -227,3 +227,6 @@ def test_srtmhgt_all_supported_sizes(tmp_vsimem, width, height, nb_bytes):
         if nb_bytes == 2
         else gdal.GDT_Float32
     )
+
+    out_filename = str(tmp_vsimem / "create" / "n00e000.hgt")
+    gdal.GetDriverByName("SRTMHGT").CreateCopy(out_filename, ds)

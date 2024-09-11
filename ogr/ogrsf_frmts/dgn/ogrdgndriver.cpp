@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 
 /************************************************************************/
-/*                                Open()                                */
+/*                       OGRDGNDriverIdentify()                         */
 /************************************************************************/
 
 static int OGRDGNDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -76,9 +76,7 @@ static GDALDataset *OGRDGNDriverOpen(GDALOpenInfo *poOpenInfo)
 
     OGRDGNDataSource *poDS = new OGRDGNDataSource();
 
-    if (!poDS->Open(poOpenInfo->pszFilename, TRUE,
-                    (poOpenInfo->eAccess == GA_Update)) ||
-        poDS->GetLayerCount() == 0)
+    if (!poDS->Open(poOpenInfo) || poDS->GetLayerCount() == 0)
     {
         delete poDS;
         return nullptr;
@@ -132,6 +130,13 @@ void RegisterOGRDGN()
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
     poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='ENCODING' type='string' description="
+        "'Encoding name, as supported by iconv'/>"
+        "</OpenOptionList>");
+
+    poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
         "<CreationOptionList>"
         "  <Option name='3D' type='boolean' description='whether 2D "
@@ -167,6 +172,8 @@ void RegisterOGRDGN()
         "  <Option name='ORIGIN' type='string' description='Value as x,y,z. "
         "Override the origin of the design plane. By default the origin from "
         "the seed file is used.'/>"
+        "  <Option name='ENCODING' type='string' description="
+        "'Encoding name, as supported by iconv'/>"
         "</CreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST,

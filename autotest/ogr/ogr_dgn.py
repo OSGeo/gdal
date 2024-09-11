@@ -315,3 +315,32 @@ def test_ogr_dgn_open_dgnv8_not_supported():
     finally:
         if dgnv8_drv:
             dgnv8_drv.Register()
+
+
+###############################################################################
+# Test ENCODING creation option and open option
+
+
+def test_ogr_dgn_encoding(tmp_path):
+
+    filename = tmp_path / "test.dgn"
+    with ogr.GetDriverByName("DGN").CreateDataSource(
+        filename, options=["ENCODING=ISO-8859-1"]
+    ) as ds:
+        lyr = ds.CreateLayer("elements")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["Text"] = "\xc3\xa9ven"  # UTF-8 encoded
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+        lyr.CreateFeature(f)
+
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 0
+        f = lyr.GetNextFeature()
+        assert f["Text"] == "\xe9ven"  # ISO-8859-1
+
+    with gdal.OpenEx(filename, open_options=["ENCODING=ISO-8859-1"]) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
+        f = lyr.GetNextFeature()
+        assert f["Text"] == "\xc3\xa9ven"  # UTF-8

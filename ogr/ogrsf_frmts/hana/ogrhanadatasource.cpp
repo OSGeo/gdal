@@ -1714,7 +1714,7 @@ OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
 
     layers_.push_back(std::move(layer));
 
-    return layers_[layers_.size() - 1].get();
+    return layers_.back().get();
 }
 
 /************************************************************************/

@@ -58,7 +58,6 @@ Amici
 amongst
 amz
 Amz
-analygous
 analyse
 Analyse
 analysing
@@ -79,7 +78,6 @@ api
 Api
 apoNewDims
 apploy
-appoach
 approximator
 AppVeyor
 APSTILE
@@ -97,7 +95,6 @@ arra
 Arrayname
 arrayStartIdx
 ASC
-ascendent
 ascii
 askin
 aspatial
@@ -133,7 +130,7 @@ autocommit
 autoconf
 Autoconf
 autocorrelation
-autodection
+autodetection
 Autodesk
 autodetect
 autodetected
@@ -200,6 +197,7 @@ BBoxOrder
 bc
 bCatchDebug
 bCopy
+bDelete
 bDstToSrc
 bedrijven
 behaviours
@@ -438,9 +436,6 @@ ComplexSource
 compoundcurves
 compressiblity
 compressions
-compressoin
-comptatible
-Conceptionally
 conceptualhelp
 cond
 conda
@@ -660,6 +655,7 @@ dfTargetHeight
 dfTimeout
 dfTolerance
 dfURY
+dfValue
 dfVisibleVal
 dfXOff
 dfXSize
@@ -1543,8 +1539,10 @@ LegalConstraints
 len
 Leveller
 lf
+libaom
 libarchive
 libarrow
+libavif
 libblosc
 libbsd
 libcf
@@ -1552,6 +1550,7 @@ libcfitsio
 libcrypto
 libcurl
 libCurl
+libdav
 libde
 libdeflate
 libdf

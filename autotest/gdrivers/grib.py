@@ -2419,3 +2419,10 @@ def test_grib_grib2_template_5_42_CCDS_aes_decompression():
         assert ds.GetRasterBand(1).Checksum() == 41970
     else:
         assert ds.GetRasterBand(1).Checksum() == -1
+
+
+# https://github.com/OSGeo/gdal/issues/10655
+def test_grib_grib2_minx_180():
+    ds = gdal.Open("data/grib/minx_180.grib2")
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx((-180.0625, 0.125, 0.0, 90.0625, 0.0, -0.125), rel=1e-6)

@@ -196,7 +196,7 @@ odbc::String OGRHanaFeatureReader::GetFieldAsString(int fieldIndex,
         defaultValue[strlen(defaultValue) - 1] == '\'')
     {
         CPLString str(defaultValue + 1);
-        str.resize(str.size() - 1);
+        str.pop_back();
         char *tmp = CPLUnescapeString(str, nullptr, CPLES_SQL);
         odbc::String ret = getString(tmp);
         CPLFree(tmp);
@@ -256,7 +256,7 @@ odbc::String OGRHanaFeatureReader::GetFieldAsNString(int fieldIndex,
         defaultValue[strlen(defaultValue) - 1] == '\'')
     {
         CPLString str(defaultValue + 1);
-        str.resize(str.size() - 1);
+        str.pop_back();
         char *tmp = CPLUnescapeString(str, nullptr, CPLES_SQL);
         odbc::String ret = getString(tmp);
         CPLFree(tmp);

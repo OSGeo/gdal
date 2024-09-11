@@ -1222,7 +1222,7 @@ char *GDALMultiDimInfo(GDALDatasetH hDataset,
                 }
                 curGroup = std::move(curGroupNew);
             }
-            const char *pszArrayName = aosTokens[aosTokens.size() - 1];
+            const char *pszArrayName = aosTokens.back();
             auto array(curGroup->OpenMDArray(pszArrayName));
             if (!array)
             {

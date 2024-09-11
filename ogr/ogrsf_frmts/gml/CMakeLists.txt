@@ -22,7 +22,9 @@ add_gdal_driver(
           gmlutils.cpp
           ogrgmldatasource.cpp
           parsexsd.h
-  BUILTIN)
+  BUILTIN
+  STRONG_CXX_WFLAGS
+)
 gdal_standard_includes(ogr_GML)
 
 set(GDAL_DATA_FILES

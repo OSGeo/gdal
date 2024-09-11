@@ -455,7 +455,7 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount,
             if (osCoordinateEpoch.find('.') != std::string::npos)
             {
                 while (osCoordinateEpoch.back() == '0')
-                    osCoordinateEpoch.resize(osCoordinateEpoch.size() - 1);
+                    osCoordinateEpoch.pop_back();
             }
 
             std::string osWKT("COORDINATEMETADATA[");

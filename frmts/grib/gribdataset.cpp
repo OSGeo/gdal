@@ -2773,6 +2773,13 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
             if (rPixelSizeX * nRasterXSize > 360 + rPixelSizeX / 4)
                 CPLDebug("GRIB", "Cannot properly handle GRIB2 files with "
                                  "overlaps and 0-360 longitudes");
+            else if (rMinX == 180)
+            {
+                // Case of https://github.com/OSGeo/gdal/issues/10655
+                CPLDebug("GRIB", "Shifting longitudes from %lf:%lf to %lf:%lf",
+                         rMinX, rMaxX, -180.0, Lon360to180(rMaxX));
+                rMinX = -180;
+            }
             else if (fabs(360 - rPixelSizeX * nRasterXSize) < rPixelSizeX / 4 &&
                      rMinX <= 180 && meta->gds.projType == GS3_LATLON)
             {

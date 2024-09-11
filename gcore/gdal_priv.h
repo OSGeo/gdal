@@ -1625,7 +1625,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void InitRWLock();
     void SetValidPercent(GUIntBig nSampleCount, GUIntBig nValidCount);
 
-    mutable std::unique_ptr<GDALDoublePointsCache> m_oPointsCache{};
+    mutable GDALDoublePointsCache *m_poPointsCache = nullptr;
 
     //! @endcond
 
@@ -2525,6 +2525,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     //! @cond Doxygen_Suppress
     int GetDriverCount(bool bIncludeHidden) const;
     GDALDriver *GetDriver(int iDriver, bool bIncludeHidden);
+    bool IsKnownDriver(const char *pszDriverName) const;
     //! @endcond
 };
 

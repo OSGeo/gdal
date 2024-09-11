@@ -26,6 +26,16 @@ matches the one of the full resolution image)
 
 If a file contains several top-level images, they will be exposed as GDAL subdatasets.
 
+AVIF support
+------------
+
+Starting with GDAL 3.10, the AVIF_HEIF companion driver to the HEIF driver may
+be used to open images encoding with the AVIF (AV1 Image File) codec if the
+:ref:`raster.avif` driver is not available and if libheif has been compiled with
+support for one of the libraries it support that are able of AV1 decoding
+(libaom or libdav1d).
+
+
 Driver capabilities
 -------------------
 

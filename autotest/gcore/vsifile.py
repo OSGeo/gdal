@@ -148,6 +148,8 @@ def vsifile_generic(filename, options=[]):
         if fp:
             gdal.VSIFCloseL(fp)
 
+    gdal.Unlink(filename)
+
 
 ###############################################################################
 # Test /vsimem

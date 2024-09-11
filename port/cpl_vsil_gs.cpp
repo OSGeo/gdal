@@ -83,7 +83,8 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
         return m_osPrefix;
     }
 
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     IVSIS3LikeHandleHelper *CreateHandleHelper(const char *pszURI,
                                                bool bAllowNoObject) override;
@@ -163,7 +164,6 @@ class VSIGSHandle final : public IVSIS3LikeHandle
 VSIGSFSHandler::~VSIGSFSHandler()
 {
     VSICurlFilesystemHandlerBase::ClearCache();
-    VSIGSHandleHelper::CleanMutex();
 }
 
 /************************************************************************/
@@ -292,17 +292,17 @@ char *VSIGSFSHandler::GetSignedURL(const char *pszFilename,
 /*                          GetURLFromFilename()                         */
 /************************************************************************/
 
-std::string VSIGSFSHandler::GetURLFromFilename(const std::string &osFilename)
+std::string
+VSIGSFSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
-    std::string osFilenameWithoutPrefix =
+    const std::string osFilenameWithoutPrefix =
         osFilename.substr(GetFSPrefix().size());
-    VSIGSHandleHelper *poHandleHelper = VSIGSHandleHelper::BuildFromURI(
-        osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str());
+    auto poHandleHelper =
+        std::unique_ptr<VSIGSHandleHelper>(VSIGSHandleHelper::BuildFromURI(
+            osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str()));
     if (poHandleHelper == nullptr)
         return std::string();
-    std::string osURL(poHandleHelper->GetURL());
-    delete poHandleHelper;
-    return osURL;
+    return poHandleHelper->GetURL();
 }
 
 /************************************************************************/

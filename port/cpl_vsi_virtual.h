@@ -341,6 +341,12 @@ class CPL_DLL VSIFilesystemHandler
         return osFilename;
     }
 
+    virtual std::string
+    GetNonStreamingFilename(const std::string &osFilename) const
+    {
+        return osFilename;
+    }
+
     /** Return the canonical filename.
      *
      * May be implemented by case-insensitive filesystems

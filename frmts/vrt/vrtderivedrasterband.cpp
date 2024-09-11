@@ -720,7 +720,7 @@ bool VRTDerivedRasterBand::InitializePython()
             CPLString osException = GetPyExceptionString();
             if (!osException.empty() && osException.back() == '\n')
             {
-                osException.resize(osException.size() - 1);
+                osException.pop_back();
             }
             if (osException.find("ModuleNotFoundError") == 0)
             {

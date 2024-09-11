@@ -414,7 +414,8 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
 
     // Might be a OS-Mastermap gzipped GML, so let be nice and try to open
     // it transparently with /vsigzip/.
-    if (((GByte *)szHeader)[0] == 0x1f && ((GByte *)szHeader)[1] == 0x8b &&
+    if (static_cast<GByte>(szHeader[0]) == 0x1f &&
+        static_cast<GByte>(szHeader[1]) == 0x8b &&
         EQUAL(CPLGetExtension(pszFilename), "gz") &&
         !STARTS_WITH(pszFilename, "/vsigzip/"))
     {
@@ -1182,9 +1183,9 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
                     // it is, we force to 25D.
                     if (bHas3D && poClass->GetGeometryPropertyCount() == 1)
                     {
-                        poClass->GetGeometryProperty(0)->SetType(wkbSetZ(
-                            (OGRwkbGeometryType)poClass->GetGeometryProperty(0)
-                                ->GetType()));
+                        poClass->GetGeometryProperty(0)->SetType(
+                            wkbSetZ(static_cast<OGRwkbGeometryType>(
+                                poClass->GetGeometryProperty(0)->GetType())));
                     }
 
                     bool bAddClass = true;
@@ -2980,9 +2981,11 @@ void OGRGMLDataSource::PrintLine(VSILFILE *fp, const char *fmt, ...)
 class OGRGMLSingleFeatureLayer final : public OGRLayer
 {
   private:
-    int nVal;
-    OGRFeatureDefn *poFeatureDefn;
-    int iNextShapeId;
+    const int nVal;
+    OGRFeatureDefn *poFeatureDefn = nullptr;
+    int iNextShapeId = 0;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGMLSingleFeatureLayer)
 
   public:
     explicit OGRGMLSingleFeatureLayer(int nVal);

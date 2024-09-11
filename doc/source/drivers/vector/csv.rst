@@ -84,7 +84,7 @@ per line must be present. Lines may be terminated by a DOS (CR/LF) or
 Unix (LF) style line terminators. Each record should have the same
 number of fields. The driver will also accept a semicolon, a tabulation,
 a pipe, or a space character as field separator.
-Starting with GDAL 3.8, the autodection will select the separator with the
+Starting with GDAL 3.8, the autodetection will select the separator with the
 most occurrences if there are several candidates  on the first line of the CSV
 file (and warn about that). The :oo:`SEPARATOR` open option may also be set to
 define the desired separator.

@@ -449,6 +449,8 @@ gdal_check_package(MONGOCXX "Enable MongoDBV3 driver" CAN_DISABLE)
 define_find_package2(HEIF libheif/heif.h heif PKGCONFIG_NAME libheif)
 gdal_check_package(HEIF "HEIF >= 1.1" CAN_DISABLE)
 
+include(CheckDependentLibrariesAVIF)
+
 include(CheckDependentLibrariesOpenJPEG)
 
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)

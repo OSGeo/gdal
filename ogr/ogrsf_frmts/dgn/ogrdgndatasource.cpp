@@ -34,11 +34,7 @@
 /*                         OGRDGNDataSource()                           */
 /************************************************************************/
 
-OGRDGNDataSource::OGRDGNDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr), hDGN(nullptr),
-      papszOptions(nullptr)
-{
-}
+OGRDGNDataSource::OGRDGNDataSource() = default;
 
 /************************************************************************/
 /*                        ~OGRDGNDataSource()                           */
@@ -62,54 +58,32 @@ OGRDGNDataSource::~OGRDGNDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRDGNDataSource::Open(const char *pszNewName, int bTestOpen, int bUpdate)
+bool OGRDGNDataSource::Open(GDALOpenInfo *poOpenInfo)
 
 {
+    m_osEncoding =
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "ENCODING", "");
+
     CPLAssert(nLayers == 0);
-
-    /* -------------------------------------------------------------------- */
-    /*      For now we require files to have the .dgn or .DGN               */
-    /*      extension.  Eventually we will implement a more                 */
-    /*      sophisticated test to see if it is a dgn file.                  */
-    /* -------------------------------------------------------------------- */
-    if (bTestOpen)
-    {
-
-        VSILFILE *fp = VSIFOpenL(pszNewName, "rb");
-        if (fp == nullptr)
-            return FALSE;
-
-        GByte abyHeader[512];
-        const int nHeaderBytes =
-            static_cast<int>(VSIFReadL(abyHeader, 1, sizeof(abyHeader), fp));
-
-        VSIFCloseL(fp);
-
-        if (nHeaderBytes < 512)
-            return FALSE;
-
-        if (!DGNTestOpen(abyHeader, nHeaderBytes))
-            return FALSE;
-    }
 
     /* -------------------------------------------------------------------- */
     /*      Try to open the file as a DGN file.                             */
     /* -------------------------------------------------------------------- */
-    hDGN = DGNOpen(pszNewName, bUpdate);
+    const bool bUpdate = (poOpenInfo->eAccess == GA_Update);
+    hDGN = DGNOpen(poOpenInfo->pszFilename, bUpdate);
     if (hDGN == nullptr)
     {
-        if (!bTestOpen)
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unable to open %s as a Microstation .dgn file.",
-                     pszNewName);
-        return FALSE;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to open %s as a Microstation .dgn file.",
+                 poOpenInfo->pszFilename);
+        return false;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */
     OGRDGNLayer *poLayer = new OGRDGNLayer(this, "elements", hDGN, bUpdate);
-    pszName = CPLStrdup(pszNewName);
+    pszName = CPLStrdup(poOpenInfo->pszFilename);
 
     /* -------------------------------------------------------------------- */
     /*      Add layer to data source layer list.                            */
@@ -118,7 +92,7 @@ int OGRDGNDataSource::Open(const char *pszNewName, int bTestOpen, int bUpdate)
         CPLRealloc(papoLayers, sizeof(OGRDGNLayer *) * (nLayers + 1)));
     papoLayers[nLayers++] = poLayer;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -163,6 +137,7 @@ bool OGRDGNDataSource::PreCreate(const char *pszFilename, char **papszOptionsIn)
     papszOptions = CSLDuplicate(papszOptionsIn);
     pszName = CPLStrdup(pszFilename);
 
+    m_osEncoding = CSLFetchNameValueDef(papszOptionsIn, "ENCODING", "");
     return true;
 }
 

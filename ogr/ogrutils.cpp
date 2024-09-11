@@ -151,7 +151,7 @@ std::string intelliround(std::string &s)
     if (s[i - 2] == '0' && s[i - 3] == '0' && s[i - 4] == '0' &&
         s[i - 5] == '0' && s[i - 6] == '0')
     {
-        s.resize(s.size() - 1);
+        s.pop_back();
     }
     // I don't understand this case exactly.  It's like saying if the
     // value is large enough and there are sufficient sig digits before

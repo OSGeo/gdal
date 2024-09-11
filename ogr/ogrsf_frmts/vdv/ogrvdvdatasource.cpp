@@ -1048,7 +1048,7 @@ OGRFeature *OGRVDVLayer::GetNextFeature()
                     osToken = papszTokens[i];
                 // Strip trailing spaces
                 while (!osToken.empty() && osToken.back() == ' ')
-                    osToken.resize(osToken.size() - 1);
+                    osToken.pop_back();
                 OGRFieldType eFieldType =
                     m_poFeatureDefn->GetFieldDefn(i)->GetType();
                 if (m_bRecodeFromLatin1 && eFieldType == OFTString)

@@ -1455,7 +1455,7 @@ static int GetFieldType(const char *pszArg, int *pnSubFieldType)
                 *pnSubFieldType = -1;
                 CPLString osArgSubType = pszOpenParenthesis + 1;
                 if (!osArgSubType.empty() && osArgSubType.back() == ')')
-                    osArgSubType.resize(osArgSubType.size() - 1);
+                    osArgSubType.pop_back();
                 for (int iSubType = 0;
                      iSubType <= static_cast<int>(OFSTMaxSubType); iSubType++)
                 {
@@ -6880,7 +6880,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
                              osGeomName.c_str() + osGeomName.size() - 1, "Z"))
                 {
                     bIs3D = true;
-                    osGeomName.resize(osGeomName.size() - 1);
+                    osGeomName.pop_back();
                 }
                 if (EQUAL(osGeomName.c_str(), "NONE"))
                 {

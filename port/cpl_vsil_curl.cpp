@@ -1363,7 +1363,6 @@ retry:
                 }
             }
 
-            if (bGetHeaders)
             {
                 char **papszHeaders =
                     CSLTokenizeString2(sWriteFuncHeaderData.pBuffer, "\r\n", 0);
@@ -1374,7 +1373,17 @@ retry:
                         CPLParseNameValue(papszHeaders[i], &pszKey);
                     if (pszKey && pszValue)
                     {
-                        m_aosHeaders.SetNameValue(pszKey, pszValue);
+                        if (bGetHeaders)
+                        {
+                            m_aosHeaders.SetNameValue(pszKey, pszValue);
+                        }
+                        if (EQUAL(pszKey, "Cache-Control") &&
+                            EQUAL(pszValue, "no-cache") &&
+                            CPLTestBool(CPLGetConfigOption(
+                                "CPL_VSIL_CURL_HONOR_CACHE_CONTROL", "YES")))
+                        {
+                            m_bCached = false;
+                        }
                     }
                     CPLFree(pszKey);
                 }
@@ -4762,8 +4771,8 @@ static bool VSICurlParseFullFTPLine(char *pszLine, char *&pszFilename,
 /*                          GetURLFromFilename()                         */
 /************************************************************************/
 
-std::string
-VSICurlFilesystemHandlerBase::GetURLFromFilename(const std::string &osFilename)
+std::string VSICurlFilesystemHandlerBase::GetURLFromFilename(
+    const std::string &osFilename) const
 {
     return VSICurlGetURLFromFilename(osFilename.c_str(), nullptr, nullptr,
                                      nullptr, nullptr, nullptr, nullptr,
@@ -5815,7 +5824,7 @@ void NetworkStatisticsLogger::Stats::AsJSON(CPLJSONObject &oJSON) const
             if (!osName.empty() && osName[0] == '/')
                 osName = osName.substr(1);
             if (!osName.empty() && osName.back() == '/')
-                osName.resize(osName.size() - 1);
+                osName.pop_back();
             oJSON.Add(("handlers/" + osName).c_str(), childJSON);
         }
         else if (kv.first.eType == ContextPathType::FILE)

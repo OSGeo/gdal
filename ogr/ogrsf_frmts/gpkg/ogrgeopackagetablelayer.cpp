@@ -7805,12 +7805,13 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
     const int SQLITE_MAX_FUNCTION_ARG =
         sqlite3_limit(psFillArrowArray->hDB, SQLITE_LIMIT_FUNCTION_ARG, -1);
 begin:
-    const int iFeat = [psFillArrowArray]()
+    int iFeat;
+    OGRArrowArrayHelper *psHelper;
     {
         std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
-        return psFillArrowArray->nCountRows;
-    }();
-    auto psHelper = psFillArrowArray->psHelper.get();
+        iFeat = psFillArrowArray->nCountRows;
+        psHelper = psFillArrowArray->psHelper.get();
+    }
     int iCol = 0;
     const int iFieldStart = sqlite3_value_int(argv[iCol]);
     ++iCol;

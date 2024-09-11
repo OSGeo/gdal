@@ -140,6 +140,11 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
                                            GDALDataType eType2)
 
 {
+    if (eType1 == GDT_Unknown)
+        return eType2;
+    if (eType2 == GDT_Unknown)
+        return eType1;
+
     const int panBits[] = {GetDataTypeElementSizeBits(eType1),
                            GetDataTypeElementSizeBits(eType2)};
 
@@ -169,19 +174,89 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
  * \brief Union a data type with the one found for a value
  *
  * @param eDT the first data type
- * @param dValue the value for which to find a data type and union with eDT
+ * @param dfValue the value for which to find a data type and union with eDT
  * @param bComplex if the value is complex
  *
- * @return a data type able to express eDT and dValue.
+ * @return a data type able to express eDT and dfValue.
  * @since GDAL 2.3
  */
 GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
-                                                    double dValue, int bComplex)
+                                                    double dfValue,
+                                                    int bComplex)
 {
-    if (eDT == GDT_Float32 && !bComplex && static_cast<float>(dValue) == dValue)
-        return eDT;
+    if (!bComplex && !GDALDataTypeIsComplex(eDT))
+    {
+        switch (eDT)
+        {
+            case GDT_Byte:
+            {
+                if (GDALIsValueExactAs<uint8_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int8:
+            {
+                if (GDALIsValueExactAs<int8_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_UInt16:
+            {
+                if (GDALIsValueExactAs<uint16_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int16:
+            {
+                if (GDALIsValueExactAs<int16_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_UInt32:
+            {
+                if (GDALIsValueExactAs<uint32_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int32:
+            {
+                if (GDALIsValueExactAs<int32_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_UInt64:
+            {
+                if (GDALIsValueExactAs<uint64_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int64:
+            {
+                if (GDALIsValueExactAs<int64_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Float32:
+            {
+                if (GDALIsValueExactAs<float>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Float64:
+            {
+                return eDT;
+            }
+            case GDT_Unknown:
+            case GDT_CInt16:
+            case GDT_CInt32:
+            case GDT_CFloat32:
+            case GDT_CFloat64:
+            case GDT_TypeCount:
+                break;
+        }
+    }
 
-    const GDALDataType eDT2 = GDALFindDataTypeForValue(dValue, bComplex);
+    const GDALDataType eDT2 = GDALFindDataTypeForValue(dfValue, bComplex);
     return GDALDataTypeUnion(eDT, eDT2);
 }
 
@@ -313,7 +388,12 @@ GDALDataType CPL_STDCALL GDALFindDataType(int nBits, int bSigned, int bFloating,
  */
 GDALDataType CPL_STDCALL GDALFindDataTypeForValue(double dValue, int bComplex)
 {
-    const bool bFloating = round(dValue) != dValue;
+    const bool bFloating =
+        round(dValue) != dValue ||
+        dValue >
+            static_cast<double>(std::numeric_limits<std::uint64_t>::max()) ||
+        dValue <
+            static_cast<double>(std::numeric_limits<std::int64_t>::lowest());
     const bool bSigned = bFloating || dValue < 0;
     const int nBits = GetMinBitsForValue(dValue);
 
@@ -866,6 +946,58 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
     if (pbRounded)
         *pbRounded = bRounded;
     return dfValue;
+}
+
+/************************************************************************/
+/*                         GDALIsValueExactAs()                         */
+/************************************************************************/
+
+/**
+ * \brief Check whether the provided value can be exactly represented in a
+ * data type.
+ *
+ * Only implemented for non-complex data types
+ *
+ * @param dfValue value to check.
+ * @param eDT target data type.
+ *
+ * @return true if the provided value can be exactly represented in the
+ * data type.
+ * @since GDAL 3.10
+ */
+bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
+{
+    switch (eDT)
+    {
+        case GDT_Byte:
+            return GDALIsValueExactAs<uint8_t>(dfValue);
+        case GDT_Int8:
+            return GDALIsValueExactAs<int8_t>(dfValue);
+        case GDT_UInt16:
+            return GDALIsValueExactAs<uint16_t>(dfValue);
+        case GDT_Int16:
+            return GDALIsValueExactAs<int16_t>(dfValue);
+        case GDT_UInt32:
+            return GDALIsValueExactAs<uint32_t>(dfValue);
+        case GDT_Int32:
+            return GDALIsValueExactAs<int32_t>(dfValue);
+        case GDT_UInt64:
+            return GDALIsValueExactAs<uint64_t>(dfValue);
+        case GDT_Int64:
+            return GDALIsValueExactAs<int64_t>(dfValue);
+        case GDT_Float32:
+            return GDALIsValueExactAs<float>(dfValue);
+        case GDT_Float64:
+            return true;
+        case GDT_Unknown:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_TypeCount:
+            break;
+    }
+    return true;
 }
 
 /************************************************************************/

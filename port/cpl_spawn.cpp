@@ -887,6 +887,14 @@ int CPLSpawnAsyncFinish(CPLSpawnedProcess *p, int bWait, CPL_UNUSED int bKill)
             }
             else
             {
+                if (WIFEXITED(status))
+                {
+                    status = WEXITSTATUS(status);
+                }
+                else
+                {
+                    status = -1;
+                }
                 break;
             }
         }

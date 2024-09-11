@@ -9500,6 +9500,12 @@ lbl_next_depth:
         }
         poDS->SetDerivedDatasetName(osDerivedDatasetName.c_str());
         poDS->TryLoadXML();
+
+        for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(
+                 CSLConstList(poDS->GDALPamDataset::GetMetadata())))
+        {
+            poDS->m_oMDD.SetMetadataItem(pszKey, pszValue);
+        }
     }
 
     return poDS.release();

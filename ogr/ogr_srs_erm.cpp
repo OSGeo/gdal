@@ -120,7 +120,7 @@ OGRErr OGRSpatialReference::importFromERM(const char *pszProj,
         }
 
         // Remove trailing ]
-        osProjWKT.resize(osProjWKT.size() - 1);
+        osProjWKT.pop_back();
 
         // Remove any UNIT
         auto nPos = osProjWKT.find(",UNIT");

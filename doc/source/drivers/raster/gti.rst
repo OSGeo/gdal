@@ -73,6 +73,19 @@ The GTI driver accepts different types of connection strings:
 
   For example: ``tileindex.gti``
 
+STAC GeoParquet support
+-----------------------
+
+.. versionadded:: 3.10
+
+The driver can support `STAC GeoParquet catalogs <https://stac-utils.github.io/stac-geoparquet/latest/spec/stac-geoparquet-spec>`_,
+provided GDAL is build with :ref:`vector.parquet` support.
+It can make use of fields ``proj:epsg`` and ``proj:transform`` from the
+`Projection Extension Specification <https://github.com/stac-extensions/projection/>`_,
+to correctly infer the appropriate projection and resolution.
+
+Example of a valid connection string: ``GTI:/vsicurl/https://github.com/stac-utils/stac-geoparquet/raw/main/tests/data/naip.parquet``
+
 Tile index requirements
 -----------------------
 
@@ -163,7 +176,7 @@ PostGIS, ...), the following layer metadata items may be set:
   virtual mosaic (unless SORT_FIELD_ASC=NO is set)
 
 * ``SORT_FIELD_ASC=YES|NO``: whether the values in SORT_FIELD should be sorted
-  in ascendent or descent order. Defaults to YES (ascendent)
+  in ascending or descending order. Defaults to YES (ascending)
 
 * ``BLOCKXSIZE=<int>`` and ``BLOCKYSIZE=<int>``: Block size of bands of the
   virtual mosaic. Defaults to 256x256.
@@ -367,13 +380,13 @@ You can refer to the documentation of the :ref:`VRT <raster.vrt>` driver for
 their syntax and semantics.
 
 
-How to build a GTI comptatible index ?
+How to build a GTI compatible index ?
 ----------------------------------------
 
 The :ref:`gdaltindex` program may be used to generate both a vector tile index,
 and optionally a wrapping .gti XML file.
 
-A GTI comptatible index may also be created by any programmatic means, provided
+A GTI compatible index may also be created by any programmatic means, provided
 the above format specifications are met.
 
 
@@ -413,7 +426,7 @@ also defined as layer metadata items or in the .gti XML file
       :choices: YES, NO
       :default: YES
 
-      Whether the values in SORT_FIELD should be sorted in ascendent or descent order
+      Whether the values in SORT_FIELD should be sorted in ascending or descending order
 
 -  .. oo:: FILTER
       :choices: <string>

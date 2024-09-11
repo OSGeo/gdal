@@ -44,7 +44,7 @@ ZarrSharedResource::ZarrSharedResource(const std::string &osRootDirectoryName,
     m_osRootDirectoryName = osRootDirectoryName;
     if (!m_osRootDirectoryName.empty() && m_osRootDirectoryName.back() == '/')
     {
-        m_osRootDirectoryName.resize(m_osRootDirectoryName.size() - 1);
+        m_osRootDirectoryName.pop_back();
     }
     m_poPAM = std::make_shared<GDALPamMultiDim>(
         CPLFormFilename(m_osRootDirectoryName.c_str(), "pam", nullptr));

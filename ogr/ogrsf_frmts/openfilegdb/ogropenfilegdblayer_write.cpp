@@ -1007,7 +1007,7 @@ static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
             if (osDefaultVal[0] == '\'' && osDefaultVal.back() == '\'')
             {
                 osDefaultVal = osDefaultVal.substr(1);
-                osDefaultVal.resize(osDefaultVal.size() - 1);
+                osDefaultVal.pop_back();
                 char *pszTmp =
                     CPLUnescapeString(osDefaultVal.c_str(), nullptr, CPLES_SQL);
                 osDefaultVal = pszTmp;
@@ -1036,7 +1036,7 @@ static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
             if (osDefaultVal[0] == '\'' && osDefaultVal.back() == '\'')
             {
                 osDefaultVal = osDefaultVal.substr(1);
-                osDefaultVal.resize(osDefaultVal.size() - 1);
+                osDefaultVal.pop_back();
                 char *pszTmp =
                     CPLUnescapeString(osDefaultVal.c_str(), nullptr, CPLES_SQL);
                 osDefaultVal = pszTmp;

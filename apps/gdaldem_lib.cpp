@@ -100,6 +100,7 @@
 #include "commonutils.h"
 #include "gdalargumentparser.h"
 
+#include <cassert>
 #include <cfloat>
 #include <cmath>
 #include <cstdio>
@@ -1666,13 +1667,10 @@ GDALColorReliefGetRGBA(const std::vector<ColorAssociation> &asColorAssociation,
         if (eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY &&
             asColorAssociation[i - 1].dfVal != dfVal)
         {
-            size_t index = i;
-            if (dfVal - asColorAssociation[i - 1].dfVal <
-                asColorAssociation[i].dfVal - dfVal)
-            {
-                --index;
-            }
-
+            const size_t index = (dfVal - asColorAssociation[i - 1].dfVal <
+                                  asColorAssociation[i].dfVal - dfVal)
+                                     ? i - 1
+                                     : i;
             *pnR = asColorAssociation[index].nR;
             *pnG = asColorAssociation[index].nG;
             *pnB = asColorAssociation[index].nB;
@@ -1692,34 +1690,21 @@ GDALColorReliefGetRGBA(const std::vector<ColorAssociation> &asColorAssociation,
         const double dfRatio =
             (dfVal - asColorAssociation[i - 1].dfVal) /
             (asColorAssociation[i].dfVal - asColorAssociation[i - 1].dfVal);
-        *pnR = static_cast<int>(0.45 + asColorAssociation[i - 1].nR +
-                                dfRatio * (asColorAssociation[i].nR -
-                                           asColorAssociation[i - 1].nR));
-        if (*pnR < 0)
-            *pnR = 0;
-        else if (*pnR > 255)
-            *pnR = 255;
-        *pnG = static_cast<int>(0.45 + asColorAssociation[i - 1].nG +
-                                dfRatio * (asColorAssociation[i].nG -
-                                           asColorAssociation[i - 1].nG));
-        if (*pnG < 0)
-            *pnG = 0;
-        else if (*pnG > 255)
-            *pnG = 255;
-        *pnB = static_cast<int>(0.45 + asColorAssociation[i - 1].nB +
-                                dfRatio * (asColorAssociation[i].nB -
-                                           asColorAssociation[i - 1].nB));
-        if (*pnB < 0)
-            *pnB = 0;
-        else if (*pnB > 255)
-            *pnB = 255;
-        *pnA = static_cast<int>(0.45 + asColorAssociation[i - 1].nA +
-                                dfRatio * (asColorAssociation[i].nA -
-                                           asColorAssociation[i - 1].nA));
-        if (*pnA < 0)
-            *pnA = 0;
-        else if (*pnA > 255)
-            *pnA = 255;
+        const auto LinearInterpolation = [dfRatio](int nValBefore, int nVal)
+        {
+            return std::clamp(static_cast<int>(0.45 + nValBefore +
+                                               dfRatio * (nVal - nValBefore)),
+                              0, 255);
+        };
+
+        *pnR = LinearInterpolation(asColorAssociation[i - 1].nR,
+                                   asColorAssociation[i].nR);
+        *pnG = LinearInterpolation(asColorAssociation[i - 1].nG,
+                                   asColorAssociation[i].nG);
+        *pnB = LinearInterpolation(asColorAssociation[i - 1].nB,
+                                   asColorAssociation[i].nB);
+        *pnA = LinearInterpolation(asColorAssociation[i - 1].nA,
+                                   asColorAssociation[i].nA);
 
         return true;
     }
@@ -1767,14 +1752,13 @@ static bool GDALColorReliefFindNamedColor(const char *pszColorName, int *pnR,
     *pnR = 0;
     *pnG = 0;
     *pnB = 0;
-    for (unsigned int i = 0; i < sizeof(namedColors) / sizeof(namedColors[0]);
-         i++)
+    for (const auto &namedColor : namedColors)
     {
-        if (EQUAL(pszColorName, namedColors[i].name))
+        if (EQUAL(pszColorName, namedColor.name))
         {
-            *pnR = static_cast<int>(255.0 * namedColors[i].r);
-            *pnG = static_cast<int>(255.0 * namedColors[i].g);
-            *pnB = static_cast<int>(255.0 * namedColors[i].b);
+            *pnR = static_cast<int>(255.0 * namedColor.r);
+            *pnG = static_cast<int>(255.0 * namedColor.g);
+            *pnB = static_cast<int>(255.0 * namedColor.b);
             return true;
         }
     }
@@ -2178,8 +2162,9 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
     /*      for GDT_Byte, GDT_Int16 or GDT_UInt16                           */
     /* -------------------------------------------------------------------- */
     int nIndexOffset = 0;
-    GByte *pabyPrecomputed = GDALColorReliefPrecompute(
-        hSrcBand, asColorAssociation, eColorSelectionMode, &nIndexOffset);
+    std::unique_ptr<GByte, VSIFreeReleaser> pabyPrecomputed(
+        GDALColorReliefPrecompute(hSrcBand, asColorAssociation,
+                                  eColorSelectionMode, &nIndexOffset));
 
     /* -------------------------------------------------------------------- */
     /*      Initialize progress counter.                                    */
@@ -2188,15 +2173,17 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
     const int nXSize = GDALGetRasterBandXSize(hSrcBand);
     const int nYSize = GDALGetRasterBandYSize(hSrcBand);
 
-    float *pafSourceBuf = nullptr;
-    int *panSourceBuf = nullptr;
+    std::unique_ptr<float, VSIFreeReleaser> pafSourceBuf;
+    std::unique_ptr<int, VSIFreeReleaser> panSourceBuf;
     if (pabyPrecomputed)
-        panSourceBuf =
-            static_cast<int *>(VSI_MALLOC2_VERBOSE(sizeof(int), nXSize));
+        panSourceBuf.reset(
+            static_cast<int *>(VSI_MALLOC2_VERBOSE(sizeof(int), nXSize)));
     else
-        pafSourceBuf =
-            static_cast<float *>(VSI_MALLOC2_VERBOSE(sizeof(float), nXSize));
-    GByte *pabyDestBuf1 = static_cast<GByte *>(VSI_MALLOC2_VERBOSE(4, nXSize));
+        pafSourceBuf.reset(
+            static_cast<float *>(VSI_MALLOC2_VERBOSE(sizeof(float), nXSize)));
+    std::unique_ptr<GByte, VSIFreeReleaser> pabyDestBuf(
+        static_cast<GByte *>(VSI_MALLOC2_VERBOSE(4, nXSize)));
+    GByte *pabyDestBuf1 = pabyDestBuf.get();
     GByte *pabyDestBuf2 = pabyDestBuf1 ? pabyDestBuf1 + nXSize : nullptr;
     GByte *pabyDestBuf3 = pabyDestBuf2 ? pabyDestBuf2 + nXSize : nullptr;
     GByte *pabyDestBuf4 = pabyDestBuf3 ? pabyDestBuf3 + nXSize : nullptr;
@@ -2205,22 +2192,12 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
         (pabyPrecomputed == nullptr && pafSourceBuf == nullptr) ||
         pabyDestBuf1 == nullptr)
     {
-        VSIFree(pabyPrecomputed);
-        CPLFree(pafSourceBuf);
-        CPLFree(panSourceBuf);
-        CPLFree(pabyDestBuf1);
-
         return CE_Failure;
     }
 
     if (!pfnProgress(0.0, nullptr, pProgressData))
     {
         CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
-        VSIFree(pabyPrecomputed);
-        CPLFree(pafSourceBuf);
-        CPLFree(panSourceBuf);
-        CPLFree(pabyDestBuf1);
-
         return CE_Failure;
     }
 
@@ -2234,34 +2211,33 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
         /* Read source buffer */
         CPLErr eErr = GDALRasterIO(
             hSrcBand, GF_Read, 0, i, nXSize, 1,
-            panSourceBuf ? static_cast<void *>(panSourceBuf)
-                         : static_cast<void *>(pafSourceBuf),
+            panSourceBuf ? static_cast<void *>(panSourceBuf.get())
+                         : static_cast<void *>(pafSourceBuf.get()),
             nXSize, 1, panSourceBuf ? GDT_Int32 : GDT_Float32, 0, 0);
         if (eErr != CE_None)
         {
-            VSIFree(pabyPrecomputed);
-            CPLFree(pafSourceBuf);
-            CPLFree(panSourceBuf);
-            CPLFree(pabyDestBuf1);
             return eErr;
         }
 
         if (pabyPrecomputed)
         {
+            const auto pabyPrecomputedRaw = pabyPrecomputed.get();
+            const auto panSourceBufRaw = panSourceBuf.get();
             for (int j = 0; j < nXSize; j++)
             {
-                int nIndex = panSourceBuf[j] + nIndexOffset;
-                pabyDestBuf1[j] = pabyPrecomputed[4 * nIndex];
-                pabyDestBuf2[j] = pabyPrecomputed[4 * nIndex + 1];
-                pabyDestBuf3[j] = pabyPrecomputed[4 * nIndex + 2];
-                pabyDestBuf4[j] = pabyPrecomputed[4 * nIndex + 3];
+                int nIndex = panSourceBufRaw[j] + nIndexOffset;
+                pabyDestBuf1[j] = pabyPrecomputedRaw[4 * nIndex];
+                pabyDestBuf2[j] = pabyPrecomputedRaw[4 * nIndex + 1];
+                pabyDestBuf3[j] = pabyPrecomputedRaw[4 * nIndex + 2];
+                pabyDestBuf4[j] = pabyPrecomputedRaw[4 * nIndex + 3];
             }
         }
         else
         {
+            const auto pafSourceBufRaw = pafSourceBuf.get();
             for (int j = 0; j < nXSize; j++)
             {
-                GDALColorReliefGetRGBA(asColorAssociation, pafSourceBuf[j],
+                GDALColorReliefGetRGBA(asColorAssociation, pafSourceBufRaw[j],
                                        eColorSelectionMode, &nR, &nG, &nB, &nA);
                 pabyDestBuf1[j] = static_cast<GByte>(nR);
                 pabyDestBuf2[j] = static_cast<GByte>(nG);
@@ -2275,74 +2251,35 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
          */
         eErr = GDALRasterIO(hDstBand1, GF_Write, 0, i, nXSize, 1, pabyDestBuf1,
                             nXSize, 1, GDT_Byte, 0, 0);
-        if (eErr != CE_None)
+        if (eErr == CE_None)
         {
-            VSIFree(pabyPrecomputed);
-            CPLFree(pafSourceBuf);
-            CPLFree(panSourceBuf);
-            CPLFree(pabyDestBuf1);
-
-            return eErr;
+            eErr = GDALRasterIO(hDstBand2, GF_Write, 0, i, nXSize, 1,
+                                pabyDestBuf2, nXSize, 1, GDT_Byte, 0, 0);
         }
-
-        eErr = GDALRasterIO(hDstBand2, GF_Write, 0, i, nXSize, 1, pabyDestBuf2,
-                            nXSize, 1, GDT_Byte, 0, 0);
-        if (eErr != CE_None)
+        if (eErr == CE_None)
         {
-            VSIFree(pabyPrecomputed);
-            CPLFree(pafSourceBuf);
-            CPLFree(panSourceBuf);
-            CPLFree(pabyDestBuf1);
-
-            return eErr;
+            eErr = GDALRasterIO(hDstBand3, GF_Write, 0, i, nXSize, 1,
+                                pabyDestBuf3, nXSize, 1, GDT_Byte, 0, 0);
         }
-
-        eErr = GDALRasterIO(hDstBand3, GF_Write, 0, i, nXSize, 1, pabyDestBuf3,
-                            nXSize, 1, GDT_Byte, 0, 0);
-        if (eErr != CE_None)
-        {
-            VSIFree(pabyPrecomputed);
-            CPLFree(pafSourceBuf);
-            CPLFree(panSourceBuf);
-            CPLFree(pabyDestBuf1);
-
-            return eErr;
-        }
-
-        if (hDstBand4)
+        if (eErr == CE_None && hDstBand4)
         {
             eErr = GDALRasterIO(hDstBand4, GF_Write, 0, i, nXSize, 1,
                                 pabyDestBuf4, nXSize, 1, GDT_Byte, 0, 0);
-            if (eErr != CE_None)
-            {
-                VSIFree(pabyPrecomputed);
-                CPLFree(pafSourceBuf);
-                CPLFree(panSourceBuf);
-                CPLFree(pabyDestBuf1);
-
-                return eErr;
-            }
         }
 
-        if (!pfnProgress(1.0 * (i + 1) / nYSize, nullptr, pProgressData))
+        if (eErr == CE_None &&
+            !pfnProgress(1.0 * (i + 1) / nYSize, nullptr, pProgressData))
         {
             CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
-
-            VSIFree(pabyPrecomputed);
-            CPLFree(pafSourceBuf);
-            CPLFree(panSourceBuf);
-            CPLFree(pabyDestBuf1);
-
-            return CE_Failure;
+            eErr = CE_Failure;
+        }
+        if (eErr != CE_None)
+        {
+            return eErr;
         }
     }
 
     pfnProgress(1.0, nullptr, pProgressData);
-
-    VSIFree(pabyPrecomputed);
-    CPLFree(pafSourceBuf);
-    CPLFree(panSourceBuf);
-    CPLFree(pabyDestBuf1);
 
     return CE_None;
 }
@@ -2587,24 +2524,23 @@ template <class T>
 static float GDALRoughnessAlg(const T *afWin, float /*fDstNoDataValue*/,
                               void * /*pData*/)
 {
-    // Roughness is the largest difference
-    //  between any two cells
+    // Roughness is the largest difference between any two cells
 
-    T pafRoughnessMin = afWin[0];
-    T pafRoughnessMax = afWin[0];
+    T fRoughnessMin = afWin[0];
+    T fRoughnessMax = afWin[0];
 
     for (int k = 1; k < 9; k++)
     {
-        if (afWin[k] > pafRoughnessMax)
+        if (afWin[k] > fRoughnessMax)
         {
-            pafRoughnessMax = afWin[k];
+            fRoughnessMax = afWin[k];
         }
-        if (afWin[k] < pafRoughnessMin)
+        if (afWin[k] < fRoughnessMin)
         {
-            pafRoughnessMin = afWin[k];
+            fRoughnessMin = afWin[k];
         }
     }
-    return static_cast<float>(pafRoughnessMax - pafRoughnessMin);
+    return static_cast<float>(fRoughnessMax - fRoughnessMin);
 }
 
 /************************************************************************/

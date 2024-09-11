@@ -344,7 +344,7 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
     {
         VSIStatBufL sStat;
         if (!osBasePath.empty() && osBasePath.back() == '/')
-            osBasePath.resize(osBasePath.size() - 1);
+            osBasePath.pop_back();
         std::string osMetadataPath =
             CPLFormFilename(osBasePath.c_str(), "_metadata", nullptr);
         if (CPLTestBool(
