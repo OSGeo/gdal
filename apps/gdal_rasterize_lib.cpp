@@ -1446,6 +1446,11 @@ GDALRasterizeOptionsNew(char **papszArgv,
             if (!psOptions->osFormat.empty())
                 psOptionsForBinary->osFormat = psOptions->osFormat;
         }
+        else if (psOptions->adfBurnValues.empty() &&
+                 psOptions->osBurnAttribute.empty() && !psOptions->b3D)
+        {
+            psOptions->adfBurnValues.push_back(255);
+        }
     }
     catch (const std::exception &e)
     {
