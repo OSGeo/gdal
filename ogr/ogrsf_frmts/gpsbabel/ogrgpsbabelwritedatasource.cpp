@@ -193,7 +193,7 @@ int OGRGPSBabelWriteDataSource::Create(const char *pszNameIn,
     if (pszOptionUseTempFile && CPLTestBool(pszOptionUseTempFile))
         osTmpFileName = CPLGenerateTempFilename(nullptr);
     else
-        osTmpFileName.Printf("/vsimem/ogrgpsbabeldatasource_%p", this);
+        osTmpFileName = VSIMemGenerateHiddenFilename("gpsbabel");
 
     poGPXDS = poGPXDriver->Create(osTmpFileName.c_str(), 0, 0, 0, GDT_Unknown,
                                   papszOptions);
