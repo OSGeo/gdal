@@ -701,8 +701,8 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     if (!TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &(l_nBitsPerSample)))
         l_nBitsPerSample = 1;
 
-    CPLString osTmpFilenameIn;
-    osTmpFilenameIn.Printf("/vsimem/gtiffdataset_jpg_tmp_%p", hTIFF);
+    const CPLString osTmpFilenameIn(
+        VSIMemGenerateHiddenFilename("gtiffdataset_jpg_tmp"));
     VSILFILE *fpTmp = nullptr;
     CPLString osTmp;
     char **papszLocalParameters = nullptr;
