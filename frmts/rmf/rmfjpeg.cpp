@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include "cpl_conv.h"
+#include "cpl_vsi.h"
 #include "rmfdataset.h"
 #include "../mem/memdataset.h"
 
@@ -46,13 +47,10 @@ size_t RMFDataset::JPEGDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
         nSizeIn < 2)
         return 0;
 
-    CPLString osTmpFilename;
-    VSILFILE *fp;
+    const CPLString osTmpFilename(VSIMemGenerateHiddenFilename("rmfjpeg.jpg"));
 
-    osTmpFilename.Printf("/vsimem/rmfjpeg/%p.jpg", pabyIn);
-
-    fp = VSIFileFromMemBuffer(osTmpFilename, const_cast<GByte *>(pabyIn),
-                              nSizeIn, FALSE);
+    VSILFILE *fp = VSIFileFromMemBuffer(
+        osTmpFilename, const_cast<GByte *>(pabyIn), nSizeIn, FALSE);
 
     if (fp == nullptr)
     {
@@ -165,8 +163,7 @@ size_t RMFDataset::JPEGCompress(const GByte *pabyIn, GUInt32 nSizeIn,
         poMemDS->AddMEMBand(hBand);
     }
 
-    CPLString osTmpFilename;
-    osTmpFilename.Printf("/vsimem/rmfjpeg/%p.jpg", pabyIn);
+    const CPLString osTmpFilename(VSIMemGenerateHiddenFilename("rmfjpeg.jpg"));
 
     char szQuality[32] = {};
     if (poDS != nullptr && poDS->sHeader.iJpegQuality > 0)
