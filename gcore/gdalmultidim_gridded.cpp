@@ -665,9 +665,8 @@ GDALMDArray::GetGridded(const std::string &osGridOptions,
     }
 
     // Create a in-memory vector layer with (X,Y) points
-    CPLString osTmpFilename;
-    osTmpFilename.Printf("/vsimem/GDALMDArray::GetGridded_%p_%p.%s", this,
-                         pOptions, pszExt);
+    const std::string osTmpFilename(VSIMemGenerateHiddenFilename(
+        std::string("tmp.").append(pszExt).c_str()));
     auto poDS = std::unique_ptr<GDALDataset>(
         poDrv->Create(osTmpFilename.c_str(), 0, 0, 0, GDT_Unknown, nullptr));
     if (!poDS)

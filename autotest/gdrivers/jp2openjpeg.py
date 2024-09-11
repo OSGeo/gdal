@@ -2744,10 +2744,10 @@ def test_jp2openjpeg_45():
     )
     del out_ds
 
-    dircontent = gdal.ReadDir("/vsimem/")
+    dircontent = gdal.ReadDir("/vsimem/.#!HIDDEN!#.")
     if dircontent:
         for filename in dircontent:
-            assert not filename.startswith("gmljp2")
+            assert "gmljp2" not in filename
 
     ds = ogr.Open("/vsimem/jp2openjpeg_45.jp2")
     assert ds.GetLayerCount() == 1

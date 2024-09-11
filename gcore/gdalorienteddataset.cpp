@@ -149,8 +149,7 @@ CPLErr GDALOrientedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             }
             else
             {
-                osTmpName =
-                    CPLSPrintf("/vsimem/_gdalorienteddataset/%p.tif", this);
+                osTmpName = VSIMemGenerateHiddenFilename(nullptr);
             }
         }
         GDALTranslateOptions *psOptions =
