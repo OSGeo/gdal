@@ -629,10 +629,11 @@ int main(int nArgc, char **papszArgv)
                       "CSSHPA DES"))
             {
                 char szFilename[40];
-                char szRadix[32];
+                char szRadix[256];
                 if (bExtractSHPInMem)
                     snprintf(szRadix, sizeof(szRadix),
-                             "/vsimem/nitf_segment_%d", iSegment + 1);
+                             VSIMemGenerateHiddenFilename(
+                                 CPLSPrintf("nitf_segment_%d", iSegment + 1)));
                 else
                     snprintf(szRadix, sizeof(szRadix), "nitf_segment_%d",
                              iSegment + 1);

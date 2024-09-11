@@ -33,7 +33,6 @@
 #include <cstring>
 
 #include "cpl_conv.h"
-#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
@@ -57,10 +56,8 @@ int NITFUncompressBILEVEL(NITFImage *psImage, GByte *pabyInputData,
     const int nOutputBytes =
         (psImage->nBlockWidth * psImage->nBlockHeight + 7) / 8;
 
-    CPLString osFilename;
-
-    osFilename.Printf("/vsimem/nitf-wrk-%ld.tif", (long)CPLGetPID());
-
+    const CPLString osFilename(
+        VSIMemGenerateHiddenFilename("nitf_bilevel.tif"));
     VSILFILE *fpL = VSIFOpenL(osFilename, "w+");
     if (fpL == nullptr)
         return FALSE;
