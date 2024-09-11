@@ -2719,3 +2719,19 @@ def test_ogr_openfilegdb_get_extent_getextent3d():
             0.0,
         )
     )
+
+
+###############################################################################
+# Test reading a geometry where there is an arc with an interior point, but
+# it is actually flagged as a line
+
+
+def test_ogr_openfilegdb_arc_interior_point_bug_line():
+
+    with ogr.Open("data/filegdb/arc_segment_interior_point_but_line.gdb.zip") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(
+            f,
+            "MULTILINESTRING ((37252520.1717 7431529.9154,38549084.9654 758964.7573))",
+        )
