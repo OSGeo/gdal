@@ -547,6 +547,8 @@ GByte CPL_DLL *VSIGetMemFileBuffer(const char *pszFilename,
                                    vsi_l_offset *pnDataLength,
                                    int bUnlinkAndSeize);
 
+const char CPL_DLL *VSIMemGenerateHiddenFilename(const char *pszFilename);
+
 /** Callback used by VSIStdoutSetRedirection() */
 typedef size_t (*VSIWriteFunction)(const void *ptr, size_t size, size_t nmemb,
                                    FILE *stream);
