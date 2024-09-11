@@ -614,7 +614,7 @@ bool STACITDataset::SetupDataset(
             if (eInterp != GCI_Undefined)
             {
                 auto osCommonName = band["eo:common_name"].ToString();
-                if (osBandName.empty())
+                if (osCommonName.empty())
                     osCommonName = band["common_name"].ToString();
                 if (osCommonName == "red")
                     poVRTBand->SetColorInterpretation(GCI_RedBand);
