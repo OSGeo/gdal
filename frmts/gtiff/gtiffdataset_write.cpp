@@ -5875,7 +5875,6 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     // strip/tile writing, which is too late, since we have already crystalized
     // the directory. This way we avoid a directory rewriting.
     if (l_nCompression == COMPRESSION_JPEG &&
-        !STARTS_WITH(pszFilename, szJPEGGTiffDatasetTmpPrefix) &&
         CPLTestBool(
             CSLFetchNameValueDef(papszParamList, "WRITE_JPEGTABLE_TAG", "YES")))
     {

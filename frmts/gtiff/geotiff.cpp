@@ -702,7 +702,7 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
         l_nBitsPerSample = 1;
 
     CPLString osTmpFilenameIn;
-    osTmpFilenameIn.Printf("%s%p", szJPEGGTiffDatasetTmpPrefix, hTIFF);
+    osTmpFilenameIn.Printf("/vsimem/gtiffdataset_jpg_tmp_%p", hTIFF);
     VSILFILE *fpTmp = nullptr;
     CPLString osTmp;
     char **papszLocalParameters = nullptr;
@@ -723,6 +723,8 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
                                            CPLSPrintf("%u", l_nBitsPerSample));
     papszLocalParameters = CSLSetNameValue(papszLocalParameters,
                                            "JPEGTABLESMODE", pszJPEGTablesMode);
+    papszLocalParameters =
+        CSLSetNameValue(papszLocalParameters, "WRITE_JPEGTABLE_TAG", "NO");
 
     TIFF *hTIFFTmp =
         GTiffDataset::CreateLL(osTmpFilenameIn, nInMemImageWidth,
