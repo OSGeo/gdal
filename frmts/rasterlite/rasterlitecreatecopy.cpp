@@ -581,8 +581,8 @@ GDALDataset *RasterliteCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         return nullptr;
     }
 
-    CPLString osTempFileName;
-    osTempFileName.Printf("/vsimem/%p", hDS);
+    const CPLString osTempFileName(
+        VSIMemGenerateHiddenFilename("rasterlite_tile"));
 
     int nTileId = 0;
     int nBlocks = 0;

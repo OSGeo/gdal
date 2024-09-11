@@ -350,8 +350,8 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
         return CE_Failure;
     }
 
-    CPLString osTempFileName;
-    osTempFileName.Printf("/vsimem/%p", hDS);
+    const CPLString osTempFileName(
+        VSIMemGenerateHiddenFilename("rasterlite_tile"));
 
     int nTileId = 0;
     int nBlocks = 0;

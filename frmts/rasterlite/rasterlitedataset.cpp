@@ -156,8 +156,8 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         return CE_None;
     }
 
-    CPLString osMemFileName;
-    osMemFileName.Printf("/vsimem/%p", this);
+    const CPLString osMemFileName(
+        VSIMemGenerateHiddenFilename("rasterlite_tile"));
 
 #ifdef RASTERLITE_DEBUG
     if (nBand == 1)
@@ -912,8 +912,8 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevelIn,
         return FALSE;
     }
 
-    CPLString osMemFileName;
-    osMemFileName.Printf("/vsimem/%p", this);
+    const CPLString osMemFileName(
+        VSIMemGenerateHiddenFilename("rasterlite_tile"));
     VSILFILE *fp =
         VSIFileFromMemBuffer(osMemFileName.c_str(), pabyData, nDataSize, FALSE);
     VSIFCloseL(fp);
