@@ -1329,6 +1329,7 @@ GDALDataset *PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
 
         CreateMosaicCachePathIfNecessary();
 
+        bool bUnlink = false;
         VSILFILE *fp =
             osCachePathRoot.size() ? VSIFOpenL(osTmpFilename, "wb") : nullptr;
         if (fp)
@@ -1349,9 +1350,10 @@ GDALDataset *PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
                 FlushDatasetsCache();
                 nCacheMaxSize = 1;
             }
-            osTmpFilename =
-                CPLSPrintf("/vsimem/single_tile_plmosaic_cache/%s/%d_%d.tif",
-                           osMosaic.c_str(), tile_x, tile_y);
+            bUnlink = true;
+            osTmpFilename = VSIMemGenerateHiddenFilename(
+                CPLSPrintf("single_tile_plmosaic_cache_%s_%d_%d.tif",
+                           osMosaic.c_str(), tile_x, tile_y));
             fp = VSIFOpenL(osTmpFilename, "wb");
             if (fp)
             {
@@ -1362,7 +1364,7 @@ GDALDataset *PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
         CPLHTTPDestroyResult(psResult);
         GDALDataset *poDS = OpenAndInsertNewDataset(osTmpFilename, osTilename);
 
-        if (STARTS_WITH(osTmpFilename, "/vsimem/single_tile_plmosaic_cache/"))
+        if (bUnlink)
             VSIUnlink(osTilename);
 
         return poDS;
