@@ -358,11 +358,9 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     CPL_LSBPTR32(&nTiffDirStart);
                 }
-                const std::string osTmpFilename =
-                    CPLSPrintf("/vsimem/jxl/%p", this);
-                VSILFILE *fpEXIF = VSIFileFromMemBuffer(
-                    osTmpFilename.c_str(), abyBoxBuffer.data() + 4,
-                    abyBoxBuffer.size() - 4, false);
+                VSILFILE *fpEXIF =
+                    VSIFileFromMemBuffer(nullptr, abyBoxBuffer.data() + 4,
+                                         abyBoxBuffer.size() - 4, false);
                 int nExifOffset = 0;
                 int nInterOffset = 0;
                 int nGPSOffset = 0;
