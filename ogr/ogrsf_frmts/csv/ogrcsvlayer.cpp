@@ -960,7 +960,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(CSLConstList papszOpenOptions,
         nRead = VSIFReadL(pszData, 1, nRequested, fpCSV);
         pszData[nRead] = 0;
 
-        osTmpMemFile = CPLSPrintf("/vsimem/tmp%p", this);
+        osTmpMemFile = VSIMemGenerateHiddenFilename("temp.csv");
         fp = VSIFileFromMemBuffer(osTmpMemFile.c_str(),
                                   reinterpret_cast<GByte *>(pszData), nRead,
                                   FALSE);
