@@ -2885,7 +2885,7 @@ int OGROSMDataSource::Open(const char *pszFilename,
         }
 
         m_bInMemoryNodesFile = true;
-        m_osNodesFilename.Printf("/vsimem/osm_temp_nodes_%p", this);
+        m_osNodesFilename = VSIMemGenerateHiddenFilename("osm_temp_nodes");
         m_fpNodes = VSIFOpenL(m_osNodesFilename, "wb+");
         if (m_fpNodes == nullptr)
         {
@@ -2971,7 +2971,7 @@ bool OGROSMDataSource::CreateTempDB()
     }
     else
     {
-        m_osTmpDBName.Printf("/vsimem/osm_temp_%p.sqlite", this);
+        m_osTmpDBName = VSIMemGenerateHiddenFilename("osm_temp.sqlite");
 
         // On 32 bit, the virtual memory space is scarce, so we need to
         // reserve it right now. Will not hurt on 64 bit either.
