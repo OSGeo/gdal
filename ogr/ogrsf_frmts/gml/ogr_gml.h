@@ -150,6 +150,7 @@ class OGRGMLDataSource final : public OGRDataSource
     // input related parameters.
     CPLString osFilename{};
     CPLString osXSDFilename{};
+    bool m_bUnlinkXSDFilename = false;
 
     IGMLReader *poReader;
     bool bOutIsTempFile;
