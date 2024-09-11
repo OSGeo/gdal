@@ -638,8 +638,7 @@ OGCAPIDataset::OpenTile(const CPLString &osURLPattern, int nMatrix, int nColumn,
     if (bEmptyContent)
         return nullptr;
 
-    CPLString osTempFile;
-    osTempFile.Printf("/vsimem/ogcapi/%p", this);
+    const CPLString osTempFile(VSIMemGenerateHiddenFilename("ogcapi"));
     VSIFCloseL(VSIFileFromMemBuffer(osTempFile.c_str(),
                                     reinterpret_cast<GByte *>(&m_osTileData[0]),
                                     m_osTileData.size(), false));
