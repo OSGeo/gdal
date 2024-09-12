@@ -874,6 +874,23 @@ def test_ogr_flatgeobuf_read_invalid_geometries(filename):
         for f in lyr:
             pass
 
+###############################################################################
+# Check that we don't crash
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "test_ogr_flatgeobuf_singlepart_mls_new.fgb",
+    ],
+)
+def test_ogr_flatgeobuf_read_invalid_geometries(filename):
+    with gdal.quiet_errors():
+        ds = gdal.OpenEx(filename)
+        lyr = ds.GetLayer(0)
+        for f in lyr:
+            pass
+
 
 ###############################################################################
 
