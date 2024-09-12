@@ -104,7 +104,9 @@ class Option:
         elif len(self.choices) == 1:
             text += f"={self.choices[0]}: "
         else:
-            text += f'=[{"/".join(self.choices)}]: '
+            # Insert space around /, so that all browsers produce line breaks
+            # Cf https://github.com/OSGeo/gdal/issues/10778
+            text += f'=[{" / ".join(self.choices)}]: '
 
         para += nodes.strong(text, text)
 
