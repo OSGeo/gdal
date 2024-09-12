@@ -33,6 +33,7 @@
 #ifndef DOXYGEN_SKIP
 
 #include "ogrlayerdecorator.h"
+#include <memory>
 
 /************************************************************************/
 /*                           OGRWarpedLayer                             */
@@ -49,15 +50,16 @@ class OGRWarpedLayer : public OGRLayerDecorator
     OGRCoordinateTransformation *m_poCT;
     OGRCoordinateTransformation *m_poReversedCT; /* may be NULL */
     OGRSpatialReference *m_poSRS;
-    std::vector<int> m_anMapSrcFieldsToDstFields{};
 
     OGREnvelope sStaticEnvelope{};
 
     static int ReprojectEnvelope(OGREnvelope *psEnvelope,
                                  OGRCoordinateTransformation *poCT);
 
-    OGRFeature *SrcFeatureToWarpedFeature(OGRFeature *poFeature);
-    OGRFeature *WarpedFeatureToSrcFeature(OGRFeature *poFeature);
+    std::unique_ptr<OGRFeature>
+    SrcFeatureToWarpedFeature(std::unique_ptr<OGRFeature> poFeature);
+    std::unique_ptr<OGRFeature>
+    WarpedFeatureToSrcFeature(std::unique_ptr<OGRFeature> poFeature);
 
   public:
     OGRWarpedLayer(
