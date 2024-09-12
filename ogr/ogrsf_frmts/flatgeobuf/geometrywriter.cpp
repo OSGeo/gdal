@@ -91,12 +91,6 @@ uint32_t GeometryWriter::writeSimpleCurve(const OGRSimpleCurve *sc)
 
 void GeometryWriter::writeMultiLineString(const OGRMultiLineString *mls)
 {
-    // NOTE: should not write ends if only single part
-    if (mls->getNumGeometries() == 1)
-    {
-        writeSimpleCurve(mls->getGeometryRef(0));
-        return;
-    }
     uint32_t e = 0;
     for (const auto part : *mls)
         if (!part->IsEmpty())
