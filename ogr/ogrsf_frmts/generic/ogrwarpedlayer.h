@@ -49,6 +49,7 @@ class OGRWarpedLayer : public OGRLayerDecorator
     OGRCoordinateTransformation *m_poCT;
     OGRCoordinateTransformation *m_poReversedCT; /* may be NULL */
     OGRSpatialReference *m_poSRS;
+    std::vector<int> m_anMapSrcFieldsToDstFields{};
 
     OGREnvelope sStaticEnvelope{};
 

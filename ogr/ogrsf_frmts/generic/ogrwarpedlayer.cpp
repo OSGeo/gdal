@@ -158,7 +158,7 @@ void OGRWarpedLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
 OGRFeature *OGRWarpedLayer::SrcFeatureToWarpedFeature(OGRFeature *poSrcFeature)
 {
     OGRFeature *poFeature = new OGRFeature(GetLayerDefn());
-    poFeature->SetFrom(poSrcFeature);
+    poFeature->SetFrom(poSrcFeature, m_anMapSrcFieldsToDstFields.data());
     poFeature->SetFID(poSrcFeature->GetFID());
 
     OGRGeometry *poGeom = poFeature->GetGeomFieldRef(m_iGeomField);
@@ -181,7 +181,7 @@ OGRFeature *OGRWarpedLayer::WarpedFeatureToSrcFeature(OGRFeature *poFeature)
 {
     OGRFeature *poSrcFeature =
         new OGRFeature(m_poDecoratedLayer->GetLayerDefn());
-    poSrcFeature->SetFrom(poFeature);
+    poSrcFeature->SetFrom(poFeature, m_anMapSrcFieldsToDstFields.data());
     poSrcFeature->SetFID(poFeature->GetFID());
 
     OGRGeometry *poGeom = poSrcFeature->GetGeomFieldRef(m_iGeomField);
@@ -341,6 +341,10 @@ OGRFeatureDefn *OGRWarpedLayer::GetLayerDefn()
     m_poFeatureDefn->Reference();
     if (m_poFeatureDefn->GetGeomFieldCount() > 0)
         m_poFeatureDefn->GetGeomFieldDefn(m_iGeomField)->SetSpatialRef(m_poSRS);
+
+    const int nFieldCount = m_poFeatureDefn->GetFieldCount();
+    for (int i = 0; i < nFieldCount; ++i)
+        m_anMapSrcFieldsToDstFields.push_back(i);
 
     return m_poFeatureDefn;
 }
