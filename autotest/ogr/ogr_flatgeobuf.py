@@ -881,7 +881,7 @@ def test_ogr_flatgeobuf_read_invalid_geometries(filename):
 @pytest.mark.parametrize(
     "filename",
     [
-        "test_ogr_flatgeobuf_singlepart_mls_new.fgb",
+        "data/flatgeobuf/test_ogr_flatgeobuf_singlepart_mls_new.fgb",
     ],
 )
 def test_ogr_flatgeobuf_read_singlepart_mls_new(filename):
