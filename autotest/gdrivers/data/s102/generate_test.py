@@ -35,7 +35,13 @@ import h5py
 import numpy as np
 
 
-def generate(filename, version, with_QualityOfSurvey=False):
+def generate(
+    filename,
+    version,
+    with_QualityOfSurvey=False,
+    with_QualityOfCoverage=False,
+    use_compound_type_for_Quality=False,
+):
     f = h5py.File(os.path.join(os.path.dirname(__file__), f"{filename}.h5"), "w")
     BathymetryCoverage = f.create_group("BathymetryCoverage")
     BathymetryCoverage_01 = BathymetryCoverage.create_group("BathymetryCoverage.01")
@@ -71,7 +77,7 @@ def generate(filename, version, with_QualityOfSurvey=False):
     f.attrs["issueDate"] = "2023-12-31"
     f.attrs["geographicIdentifier"] = "Somewhere"
     f.attrs["verticalDatum"] = np.int16(12)
-    if version == "INT.IHO.S-102.2.2":
+    if version >= "INT.IHO.S-102.2.2":
         f.attrs["horizontalCRS"] = np.int32(4326)
         f.attrs["verticalCS"] = np.int32(6498)  # Depth, metres, orientation down
         f.attrs["verticalCoordinateBase"] = np.int32(2)
@@ -90,9 +96,12 @@ def generate(filename, version, with_QualityOfSurvey=False):
         b"<nothing/>"
     )
 
-    if with_QualityOfSurvey:
-        QualityOfSurvey = f.create_group("QualityOfSurvey")
-        QualityOfSurvey_01 = QualityOfSurvey.create_group("QualityOfSurvey.01")
+    if with_QualityOfSurvey or with_QualityOfCoverage:
+        quality_name = (
+            "QualityOfSurvey" if with_QualityOfSurvey else "QualityOfBathymetryCoverage"
+        )
+        qualityGroup = f.create_group(quality_name)
+        quality01Group = qualityGroup.create_group(quality_name + ".01")
 
         for attr_name in (
             "gridOriginLongitude",
@@ -102,16 +111,26 @@ def generate(filename, version, with_QualityOfSurvey=False):
             "numPointsLongitudinal",
             "numPointsLatitudinal",
         ):
-            QualityOfSurvey_01.attrs[attr_name] = BathymetryCoverage_01.attrs[attr_name]
+            quality01Group.attrs[attr_name] = BathymetryCoverage_01.attrs[attr_name]
 
-        Group_001 = QualityOfSurvey_01.create_group("Group_001")
+        Group_001 = quality01Group.create_group("Group_001")
 
-        values = Group_001.create_dataset("values", (2, 3), dtype=np.uint32)
-        data = np.array(
-            [0, 1, 2, 1000000, 3, 2],
-            dtype=np.uint32,
-        ).reshape(values.shape)
-        values[...] = data
+        if use_compound_type_for_Quality:
+            # As found in product 102DE00CA22_UNC_MD.H5
+            data_struct_type = np.dtype([("iD", "u4")])
+            values = Group_001.create_dataset("values", (2, 3), dtype=data_struct_type)
+            data = np.array(
+                [(0), (1), (2), (1000000), (3), (2)],
+                dtype=data_struct_type,
+            ).reshape(values.shape)
+            values[...] = data
+        else:
+            values = Group_001.create_dataset("values", (2, 3), dtype=np.uint32)
+            data = np.array(
+                [0, 1, 2, 1000000, 3, 2],
+                dtype=np.uint32,
+            ).reshape(values.shape)
+            values[...] = data
 
         featureAttributeTable_struct_type = np.dtype(
             [
@@ -121,7 +140,7 @@ def generate(filename, version, with_QualityOfSurvey=False):
             ]
         )
 
-        featureAttributeTable = QualityOfSurvey.create_dataset(
+        featureAttributeTable = qualityGroup.create_dataset(
             "featureAttributeTable", (5,), dtype=featureAttributeTable_struct_type
         )
 
@@ -137,7 +156,7 @@ def generate(filename, version, with_QualityOfSurvey=False):
         )
         featureAttributeTable[...] = data
 
-        GroupFQualityOfSurvey_struct_type = np.dtype(
+        GroupFQuality_struct_type = np.dtype(
             [
                 ("code", "S16"),
                 ("name", "S16"),
@@ -149,12 +168,12 @@ def generate(filename, version, with_QualityOfSurvey=False):
                 ("closure", "S16"),
             ]
         )
-        GroupFQualityOfSurvey = group_f.create_dataset(
-            "QualityOfSurvey", (1,), dtype=GroupFQualityOfSurvey_struct_type
+        GroupFQuality = group_f.create_dataset(
+            quality_name, (1,), dtype=GroupFQuality_struct_type
         )
-        GroupFQualityOfSurvey[...] = np.array(
+        GroupFQuality[...] = np.array(
             [("id", "", "", "0", "H5T_INTEGER", "1", "", "geSemiInterval")],
-            dtype=GroupFQualityOfSurvey_struct_type,
+            dtype=GroupFQuality_struct_type,
         )
 
 
@@ -165,4 +184,11 @@ generate(
     "test_s102_v2.2_with_QualityOfSurvey",
     "INT.IHO.S-102.2.2",
     with_QualityOfSurvey=True,
+)
+
+generate(
+    "test_s102_v3.0_with_QualityOfBathymetryCoverage",
+    "INT.IHO.S-102.3.0.0",
+    with_QualityOfCoverage=True,
+    use_compound_type_for_Quality=True,
 )

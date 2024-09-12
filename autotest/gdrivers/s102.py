@@ -211,34 +211,40 @@ def test_s102_multidim():
 ###############################################################################
 
 
-def test_s102_QualityOfSurvey():
+@pytest.mark.parametrize(
+    "filename,quality_group_name",
+    [
+        ("data/s102/test_s102_v2.2_with_QualityOfSurvey.h5", "QualityOfSurvey"),
+        (
+            "data/s102/test_s102_v3.0_with_QualityOfBathymetryCoverage.h5",
+            "QualityOfBathymetryCoverage",
+        ),
+    ],
+)
+def test_s102_QualityOfSurvey(filename, quality_group_name):
 
-    ds = gdal.Open("data/s102/test_s102_v2.2_with_QualityOfSurvey.h5")
+    ds = gdal.Open(filename)
     assert ds.GetSubDatasets() == [
         (
-            'S102:"data/s102/test_s102_v2.2_with_QualityOfSurvey.h5":BathymetryCoverage',
+            f'S102:"{filename}":BathymetryCoverage',
             "Bathymetric gridded data",
         ),
         (
-            'S102:"data/s102/test_s102_v2.2_with_QualityOfSurvey.h5":QualityOfSurvey',
-            "Georeferenced metadata QualityOfSurvey",
+            f'S102:"{filename}":{quality_group_name}',
+            f"Georeferenced metadata {quality_group_name}",
         ),
     ]
 
     with pytest.raises(Exception, match="Unsupported subdataset component"):
-        gdal.Open('S102:"data/s102/test_s102_v2.2_with_QualityOfSurvey.h5":invalid')
+        gdal.Open(f'S102:"{filename}":invalid')
 
-    ds = gdal.Open(
-        'S102:"data/s102/test_s102_v2.2_with_QualityOfSurvey.h5":BathymetryCoverage'
-    )
+    ds = gdal.Open(f'S102:"{filename}":BathymetryCoverage')
     assert len(ds.GetSubDatasets()) == 0
     assert ds.RasterCount == 2
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
 
-    ds = gdal.Open(
-        'S102:"data/s102/test_s102_v2.2_with_QualityOfSurvey.h5":QualityOfSurvey'
-    )
+    ds = gdal.Open(f'S102:"{filename}":{quality_group_name}')
     assert len(ds.GetSubDatasets()) == 0
     assert ds.RasterCount == 1
     assert ds.RasterXSize == 3
@@ -278,7 +284,7 @@ def test_s102_QualityOfSurvey():
     assert rat.GetValueAsString(4, 2) == "e"
 
     ds = gdal.OpenEx(
-        'S102:"data/s102/test_s102_v2.2_with_QualityOfSurvey.h5":QualityOfSurvey',
+        f'S102:"{filename}":{quality_group_name}',
         open_options=["NORTH_UP=NO"],
     )
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.4, 0.0, 47.75, 0.0, 0.5))
