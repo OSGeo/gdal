@@ -120,7 +120,7 @@ OGRMultiLineString *GeometryReader::readMultiLineString()
     if (ends == nullptr || ends->size() < 2)
     {
         m_length = m_length / 2;
-        const auto part = readSimpleCurve<OGRLinearRing>();
+        const auto part = readSimpleCurve<OGRLineString>();
         if (part == nullptr)
             return nullptr;
         mls->addGeometryDirectly(part);
