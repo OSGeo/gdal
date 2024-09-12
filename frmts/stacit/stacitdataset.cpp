@@ -139,7 +139,9 @@ int STACITDataset::Identify(GDALOpenInfo *poOpenInfo)
             return pszHeader[0] == '{';
         }
 
-        if (strstr(pszHeader, "\"stac_version\"") != nullptr)
+        if (strstr(pszHeader, "\"stac_version\"") != nullptr &&
+            (strstr(pszHeader, "\"proj:transform\"") != nullptr ||
+             strstr(pszHeader, "\"proj:bbox\"") != nullptr))
         {
             return true;
         }
@@ -239,7 +241,8 @@ static void ParseAsset(const CPLJSONObject &jAsset,
     {
         osProjUserString = oProjCode.ToString();
     }
-    else {
+    else
+    {
         auto oProjEPSG = GetAssetOrFeatureProperty("proj:epsg");
         if (oProjEPSG.IsValid() &&
             oProjEPSG.GetType() != CPLJSONObject::Type::Null)
@@ -265,8 +268,8 @@ static void ParseAsset(const CPLJSONObject &jAsset,
                 else
                 {
                     CPLDebug("STACIT",
-                            "Skipping asset %s that lacks a valid CRS member",
-                            osAssetName.c_str());
+                             "Skipping asset %s that lacks a valid CRS member",
+                             osAssetName.c_str());
                     return;
                 }
             }
@@ -622,13 +625,15 @@ bool STACITDataset::SetupDataset(
                     poVRTBand->SetColorInterpretation(GCI_GreenBand);
                 else if (osCommonName == "blue")
                     poVRTBand->SetColorInterpretation(GCI_BlueBand);
+                else if (osCommonName == "alpha")
+                    poVRTBand->SetColorInterpretation(GCI_AlphaBand);
             }
 
             for (const auto &bandChild : band.GetChildren())
             {
                 const auto osChildName = bandChild.GetName();
-                if (osChildName != "name" && osChildName != "common_name"
-                    && osChildName != "eo:common_name")
+                if (osChildName != "name" && osChildName != "common_name" &&
+                    osChildName != "eo:common_name")
                 {
                     poVRTBand->SetMetadataItem(osChildName.c_str(),
                                                bandChild.ToString().c_str());
