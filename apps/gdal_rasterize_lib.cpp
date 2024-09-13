@@ -109,7 +109,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         .metavar("<band>")
         .append()
         .scan<'i', int>()
-        .nargs(argparse::nargs_pattern::at_least_one)
+        //.nargs(argparse::nargs_pattern::at_least_one)
         .help(_("The band(s) to burn values into."));
 
     argParser->add_argument("-i")
@@ -232,7 +232,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
     argParser->add_argument("-init")
         .metavar("<value>")
         .append()
-        .nargs(argparse::nargs_pattern::at_least_one)
+        //.nargs(argparse::nargs_pattern::at_least_one)
         .scan<'g', double>()
         .help(_("Initialize the output bands to the specified value."));
 
