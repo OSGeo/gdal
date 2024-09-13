@@ -34,6 +34,7 @@
 
 #include "cpl_minixml.h"
 #include "gdal_priv.h"
+#include <array>
 #include <limits>
 #include <map>
 #include <vector>
@@ -95,7 +96,7 @@ class GDALDatasetPamInfo
     OGRSpatialReference *poSRS = nullptr;
 
     int bHaveGeoTransform = false;
-    double adfGeoTransform[6]{0, 0, 0, 0, 0, 0};
+    std::array<double, 6> adfGeoTransform{};
 
     std::vector<gdal::GCP> asGCPs{};
     OGRSpatialReference *poGCP_SRS = nullptr;

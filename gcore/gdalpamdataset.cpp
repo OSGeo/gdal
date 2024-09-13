@@ -1403,7 +1403,8 @@ CPLErr GDALPamDataset::GetGeoTransform(double *padfTransform)
 {
     if (psPam && psPam->bHaveGeoTransform)
     {
-        memcpy(padfTransform, psPam->adfGeoTransform, sizeof(double) * 6);
+        memcpy(padfTransform, psPam->adfGeoTransform.data(),
+               sizeof(psPam->adfGeoTransform));
         return CE_None;
     }
 
@@ -1423,7 +1424,8 @@ CPLErr GDALPamDataset::SetGeoTransform(double *padfTransform)
     {
         MarkPamDirty();
         psPam->bHaveGeoTransform = TRUE;
-        memcpy(psPam->adfGeoTransform, padfTransform, sizeof(double) * 6);
+        memcpy(psPam->adfGeoTransform.data(), padfTransform,
+               sizeof(psPam->adfGeoTransform));
         return (CE_None);
     }
 
@@ -1689,7 +1691,7 @@ CPLErr GDALPamDataset::TryLoadAux(CSLConstList papszSiblingFiles)
     /* -------------------------------------------------------------------- */
     /*      Geotransform.                                                   */
     /* -------------------------------------------------------------------- */
-    if (poAuxDS->GetGeoTransform(psPam->adfGeoTransform) == CE_None)
+    if (poAuxDS->GetGeoTransform(psPam->adfGeoTransform.data()) == CE_None)
         psPam->bHaveGeoTransform = TRUE;
 
     /* -------------------------------------------------------------------- */
