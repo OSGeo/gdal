@@ -214,10 +214,10 @@ with control information.
 
 .. option:: -et <err_threshold>
 
-    Error threshold for transformation approximation (in pixel units -
-    defaults to 0.125, unless, starting with GDAL 2.1, the RPC_DEM transformer
+    Error threshold for transformation approximation in source pixel units.
+    Defaults to 0.125 source pixels unless the ``RPC_DEM`` transformer
     option is specified, in which case, an exact transformer, i.e.
-    err_threshold=0, will be used).
+    ``err_threshold=0``, will be used).
 
 .. option:: -refine_gcps <tolerance> [<minimum_gcps>]
 
@@ -559,17 +559,21 @@ Approximate transformation
 --------------------------
 
 By default :program:`gdalwarp` uses a linear approximator for the
-transformations with a permitted error of 0.125 pixels. The approximator
-basically transforms three points on a scanline: the start, end and middle.
-Then it compares the linear approximation of the center based on the end points
-to the real thing and checks the error. If the error is less than the error
-threshold then the remaining points are approximated (in two chunks utilizing
-the center point). If the error exceeds the threshold, the scanline is split
-into two sections, and the approximator is recursively applied to each section
-until the error is less than the threshold or all points have been exactly
-computed.
+transformations with a permitted error of 0.125 pixels in the source dataset.
+The approximator precisely transforms three points per output scanline (the
+start, middle, and end) from a row and column in the output dataset to a
+row and column in the source dataset.
+It then compares a linear approximation of the center point coordinates to the
+precisely transformed value.
+If the sum of the horizontal and vertical errors is less than the error
+threshold then the remaining source points are approximated using linear
+interpolation between the start and middle point, and between the middle and
+end point.
+If the error exceeds the threshold, the scanline is split into two sections and
+the approximator is recursively applied to each section until the error is less
+than the threshold or all points have been exactly computed.
 
-The error threshold (in pixels) can be controlled with the gdalwarp
+The error threshold (in source dataset pixels) can be controlled with the gdalwarp
 :option:`-et` switch. If you want to compare a true pixel-by-pixel reprojection
 use :option:`-et 0` which disables this approximator entirely.
 
