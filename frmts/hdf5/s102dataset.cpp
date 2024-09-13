@@ -511,9 +511,9 @@ bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,
                      GDT_UInt32)
         {
             // seen in a S102 v3 product (102DE00CA22_UNC_MD.H5), although
-            // I believe this is non-conforment.
+            // I believe this is non-conformant.
 
-            // Escape potentials single-quote and double-quote with anti-slash
+            // Escape potentials single-quote and double-quote with back-slash
             const auto osEscapedCompName =
                 CPLString(oType.GetComponents()[0]->GetName())
                     .replaceAll("\\", "\\\\")
