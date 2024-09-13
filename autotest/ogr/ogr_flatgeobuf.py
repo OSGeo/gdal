@@ -874,6 +874,7 @@ def test_ogr_flatgeobuf_read_invalid_geometries(filename):
         for f in lyr:
             pass
 
+
 ###############################################################################
 # Check that we don't crash
 
@@ -890,6 +891,7 @@ def test_ogr_flatgeobuf_read_singlepart_mls_new(filename):
         lyr = ds.GetLayer(0)
         for f in lyr:
             pass
+
 
 ###############################################################################
 
