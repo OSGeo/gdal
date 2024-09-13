@@ -2451,7 +2451,8 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
                     if (nBits & EXT_SHAPE_ARC_IP)
                         CPLDebug("OGR", "  DefinedIP");
 #endif
-                    if ((nBits & EXT_SHAPE_ARC_IP) != 0)
+                    if ((nBits & EXT_SHAPE_ARC_IP) != 0 &&
+                        (nBits & EXT_SHAPE_ARC_LINE) == 0)
                     {
                         pasCurves[iCurve].eType = CURVE_ARC_INTERIOR_POINT;
                         pasCurves[iCurve].u.ArcByIntermediatePoint.dfX = dfVal1;
