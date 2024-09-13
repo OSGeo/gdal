@@ -752,15 +752,3 @@ C API
 -----
 
 This utility is also callable from C with :cpp:func:`GDALWarp`.
-
-
-See also
---------
-
-.. only:: not man
-
-    `Wiki page discussing options and behaviours of gdalwarp <https://trac.osgeo.org/gdal/wiki/UserDocs/GdalWarp>`_
-
-.. only:: man
-
-    Wiki page discussing options and behaviours of gdalwarp: https://trac.osgeo.org/gdal/wiki/UserDocs/GdalWarp
