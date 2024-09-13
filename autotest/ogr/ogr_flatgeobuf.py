@@ -891,7 +891,6 @@ def test_ogr_flatgeobuf_read_singlepart_mls_new(filename):
         for f in lyr:
             pass
 
-
 ###############################################################################
 
 
