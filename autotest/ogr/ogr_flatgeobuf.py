@@ -41,12 +41,6 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("FlatGeobuf")
 
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
@@ -648,11 +642,10 @@ def test_ogr_flatgeobuf_huge_number_of_columns():
             lyr.CreateField(ogr.FieldDefn("col%d" % i, ogr.OFTInteger))
             == ogr.OGRERR_NONE
         ), i
-    with gdal.quiet_errors():
-        assert (
-            lyr.CreateField(ogr.FieldDefn("col65536", ogr.OFTInteger))
-            == ogr.OGRERR_FAILURE
-        )
+    with pytest.raises(
+        Exception, match="Cannot create features with more than 65536 columns"
+    ):
+        lyr.CreateField(ogr.FieldDefn("col65536", ogr.OFTInteger))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
     for i in range(65536):
@@ -765,7 +758,8 @@ def test_ogr_flatgeobuf_editing():
 
     assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
     assert lyr.DeleteFeature(1) == 0
-    assert lyr.DeleteFeature(1) == ogr.OGRERR_NON_EXISTING_FEATURE
+    with pytest.raises(Exception, match="Non existing feature"):
+        lyr.DeleteFeature(1)
     assert lyr.TestCapability(ogr.OLCReorderFields) == 1
     # assert lyr.ReorderFields([0, 1]) == 0
     assert lyr.DeleteField(1) == 0
@@ -797,8 +791,8 @@ def test_ogr_flatgeobuf_editing():
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 1)"))
-    with gdal.quiet_errors():
-        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    with pytest.raises(Exception, match="not supported on read-only layer"):
+        lyr.CreateFeature(f)
 
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
     assert not gdal.VSIStatL("/vsimem/test.fgb")
@@ -871,8 +865,27 @@ def test_ogr_flatgeobuf_read_invalid_geometries(filename):
     with gdal.quiet_errors():
         ds = gdal.OpenEx(filename)
         lyr = ds.GetLayer(0)
-        for f in lyr:
-            pass
+        with pytest.raises(Exception, match="Fatal error parsing feature"):
+            for f in lyr:
+                pass
+
+
+###############################################################################
+# Check that we can read multilinestrings with a single part, without the
+# "ends" array (cf https://github.com/OSGeo/gdal/issues/10774)
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "data/flatgeobuf/test_ogr_flatgeobuf_singlepart_mls_new.fgb",
+    ],
+)
+def test_ogr_flatgeobuf_read_singlepart_mls_new(filename):
+    with gdal.OpenEx(filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(f, "MULTILINESTRING ((0 0,1 1))")
 
 
 ###############################################################################
@@ -959,8 +972,8 @@ def test_ogr_flatgeobuf_coordinate_epoch_custom_wkt():
 def test_ogr_flatgeobuf_invalid_output_filename():
 
     ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource("/i_do/not_exist/my.fgb")
-    with gdal.quiet_errors():
-        assert ds.CreateLayer("foo") is None
+    with pytest.raises(Exception, match="Failed to create"):
+        ds.CreateLayer("foo")
 
 
 ###############################################################################
@@ -1208,12 +1221,11 @@ def test_ogr_flatgeobuf_issue_7401():
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
     lyr.CreateFeature(f)
     f = ogr.Feature(lyr.GetLayerDefn())
-    lyr.CreateFeature(f)
+    with pytest.raises(
+        Exception, match="NULL geometry not supported with spatial index"
+    ):
+        lyr.CreateFeature(f)
     ds = None
-    assert (
-        gdal.GetLastErrorMsg()
-        == "ICreateFeature: NULL geometry not supported with spatial index"
-    )
 
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
     assert not gdal.VSIStatL("/vsimem/test.fgb")
