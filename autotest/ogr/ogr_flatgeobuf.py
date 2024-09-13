@@ -884,6 +884,7 @@ def test_ogr_flatgeobuf_read_invalid_geometries(filename):
         "data/flatgeobuf/test_ogr_flatgeobuf_singlepart_mls_new.fgb",
     ],
 )
+@gdaltest.enable_exceptions()
 def test_ogr_flatgeobuf_read_singlepart_mls_new(filename):
     with gdal.quiet_errors():
         ds = gdal.OpenEx(filename)
