@@ -200,7 +200,7 @@ void OGRUnionLayer::SetFeatureCount(int nFeatureCountIn)
 /************************************************************************/
 
 static void MergeFieldDefn(OGRFieldDefn *poFieldDefn,
-                           OGRFieldDefn *poSrcFieldDefn)
+                           const OGRFieldDefn *poSrcFieldDefn)
 {
     if (poFieldDefn->GetType() != poSrcFieldDefn->GetType())
     {
@@ -306,14 +306,17 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
     }
     else if (eFieldStrategy == FIELD_FROM_FIRST_LAYER)
     {
-        OGRFeatureDefn *poSrcFeatureDefn = papoSrcLayers[0]->GetLayerDefn();
-        for (int i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++)
+        const OGRFeatureDefn *poSrcFeatureDefn =
+            papoSrcLayers[0]->GetLayerDefn();
+        const int nSrcFieldCount = poSrcFeatureDefn->GetFieldCount();
+        for (int i = 0; i < nSrcFieldCount; i++)
             poFeatureDefn->AddFieldDefn(poSrcFeatureDefn->GetFieldDefn(i));
         for (int i = 0;
              nGeomFields != -1 && i < poSrcFeatureDefn->GetGeomFieldCount();
              i++)
         {
-            OGRGeomFieldDefn *poFldDefn = poSrcFeatureDefn->GetGeomFieldDefn(i);
+            const OGRGeomFieldDefn *poFldDefn =
+                poSrcFeatureDefn->GetGeomFieldDefn(i);
             poFeatureDefn->AddGeomFieldDefn(
                 std::make_unique<OGRUnionLayerGeomFieldDefn>(poFldDefn));
         }
@@ -327,20 +330,31 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                     papoGeomFields[0]));
         }
 
+        int nDstFieldCount = 0;
+        std::map<std::string, int> oMapDstFieldNameToIdx;
+
         for (int iLayer = 0; iLayer < nSrcLayers; iLayer++)
         {
-            OGRFeatureDefn *poSrcFeatureDefn =
+            const OGRFeatureDefn *poSrcFeatureDefn =
                 papoSrcLayers[iLayer]->GetLayerDefn();
 
             /* Add any field that is found in the source layers */
-            for (int i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++)
+            const int nSrcFieldCount = poSrcFeatureDefn->GetFieldCount();
+            for (int i = 0; i < nSrcFieldCount; i++)
             {
-                OGRFieldDefn *poSrcFieldDefn =
+                const OGRFieldDefn *poSrcFieldDefn =
                     poSrcFeatureDefn->GetFieldDefn(i);
-                int nIndex =
-                    poFeatureDefn->GetFieldIndex(poSrcFieldDefn->GetNameRef());
+                const auto oIter =
+                    oMapDstFieldNameToIdx.find(poSrcFieldDefn->GetNameRef());
+                const int nIndex =
+                    oIter == oMapDstFieldNameToIdx.end() ? -1 : oIter->second;
                 if (nIndex < 0)
+                {
+                    oMapDstFieldNameToIdx[poSrcFieldDefn->GetNameRef()] =
+                        nDstFieldCount;
+                    nDstFieldCount++;
                     poFeatureDefn->AddFieldDefn(poSrcFieldDefn);
+                }
                 else
                 {
                     OGRFieldDefn *poFieldDefn =
@@ -353,7 +367,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                  nGeomFields != -1 && i < poSrcFeatureDefn->GetGeomFieldCount();
                  i++)
             {
-                OGRGeomFieldDefn *poSrcFieldDefn =
+                const OGRGeomFieldDefn *poSrcFieldDefn =
                     poSrcFeatureDefn->GetGeomFieldDefn(i);
                 int nIndex = poFeatureDefn->GetGeomFieldIndex(
                     poSrcFieldDefn->GetNameRef());
@@ -513,17 +527,29 @@ void OGRUnionLayer::ConfigureActiveLayer()
 
     /* Establish map */
     GetLayerDefn();
-    OGRFeatureDefn *poSrcFeatureDefn = papoSrcLayers[iCurLayer]->GetLayerDefn();
-    CPLFree(panMap);
-    panMap = static_cast<int *>(
-        CPLMalloc(poSrcFeatureDefn->GetFieldCount() * sizeof(int)));
-    for (int i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++)
+    const OGRFeatureDefn *poSrcFeatureDefn =
+        papoSrcLayers[iCurLayer]->GetLayerDefn();
+    const int nSrcFieldCount = poSrcFeatureDefn->GetFieldCount();
+    const int nDstFieldCount = poFeatureDefn->GetFieldCount();
+
+    std::map<std::string, int> oMapDstFieldNameToIdx;
+    for (int i = 0; i < nDstFieldCount; i++)
     {
-        OGRFieldDefn *poSrcFieldDefn = poSrcFeatureDefn->GetFieldDefn(i);
+        const OGRFieldDefn *poDstFieldDefn = poFeatureDefn->GetFieldDefn(i);
+        oMapDstFieldNameToIdx[poDstFieldDefn->GetNameRef()] = i;
+    }
+
+    CPLFree(panMap);
+    panMap = static_cast<int *>(CPLMalloc(nSrcFieldCount * sizeof(int)));
+    for (int i = 0; i < nSrcFieldCount; i++)
+    {
+        const OGRFieldDefn *poSrcFieldDefn = poSrcFeatureDefn->GetFieldDefn(i);
         if (m_aosIgnoredFields.FindString(poSrcFieldDefn->GetNameRef()) == -1)
         {
+            const auto oIter =
+                oMapDstFieldNameToIdx.find(poSrcFieldDefn->GetNameRef());
             panMap[i] =
-                poFeatureDefn->GetFieldIndex(poSrcFieldDefn->GetNameRef());
+                oIter == oMapDstFieldNameToIdx.end() ? -1 : oIter->second;
         }
         else
         {
@@ -545,19 +571,28 @@ void OGRUnionLayer::ConfigureActiveLayer()
             }
         }
 
+        std::map<std::string, int> oMapSrcFieldNameToIdx;
+        for (int i = 0; i < nSrcFieldCount; i++)
+        {
+            const OGRFieldDefn *poSrcFieldDefn =
+                poSrcFeatureDefn->GetFieldDefn(i);
+            oMapSrcFieldNameToIdx[poSrcFieldDefn->GetNameRef()] = i;
+        }
+
         /* Attribute fields */
-        std::vector<bool> abSrcFieldsUsed(poSrcFeatureDefn->GetFieldCount());
-        for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++)
+        std::vector<bool> abSrcFieldsUsed(nSrcFieldCount);
+        for (int iField = 0; iField < nDstFieldCount; iField++)
         {
             const OGRFieldDefn *poFieldDefn =
                 poFeatureDefn->GetFieldDefn(iField);
+            const auto oIter =
+                oMapSrcFieldNameToIdx.find(poFieldDefn->GetNameRef());
             const int iSrcField =
-                poSrcFeatureDefn->GetFieldIndex(poFieldDefn->GetNameRef());
+                oIter == oMapSrcFieldNameToIdx.end() ? -1 : oIter->second;
             if (iSrcField >= 0)
                 abSrcFieldsUsed[iSrcField] = true;
         }
-        for (int iSrcField = 0; iSrcField < poSrcFeatureDefn->GetFieldCount();
-             iSrcField++)
+        for (int iSrcField = 0; iSrcField < nSrcFieldCount; iSrcField++)
         {
             if (!abSrcFieldsUsed[iSrcField])
             {

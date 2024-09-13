@@ -173,7 +173,8 @@ int OGR_Dr_TestCapability(OGRSFDriverH hDriver, const char *pszCap)
     GDALDriver *poDriver = reinterpret_cast<GDALDriver *>(hDriver);
     if (EQUAL(pszCap, ODrCCreateDataSource))
     {
-        return poDriver->pfnCreate != nullptr ||
+        return poDriver->GetMetadataItem(GDAL_DCAP_CREATE) ||
+               poDriver->pfnCreate != nullptr ||
                poDriver->pfnCreateVectorOnly != nullptr;
     }
     else if (EQUAL(pszCap, ODrCDeleteDataSource))

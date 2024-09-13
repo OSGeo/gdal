@@ -335,7 +335,7 @@ with control information.
         resolution.
         The resampling method used to create those overviews is generally not the one you
         specify through the :option:`-r` option. Some formats, like JPEG2000, can contain
-        significant outliers due to wavelet compression works. It might thus be useful in
+        significant outliers due to how wavelet compression works. It might thus be useful in
         those situations to use the :option:`-ovr` ``NONE`` option to prevent existing overviews to
         be used.
 
@@ -752,15 +752,3 @@ C API
 -----
 
 This utility is also callable from C with :cpp:func:`GDALWarp`.
-
-
-See also
---------
-
-.. only:: not man
-
-    `Wiki page discussing options and behaviours of gdalwarp <https://trac.osgeo.org/gdal/wiki/UserDocs/GdalWarp>`_
-
-.. only:: man
-
-    Wiki page discussing options and behaviours of gdalwarp: https://trac.osgeo.org/gdal/wiki/UserDocs/GdalWarp
