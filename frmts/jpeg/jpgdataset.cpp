@@ -3744,7 +3744,7 @@ void JPGDataset::EmitMessage(j_common_ptr cinfo, int msg_level)
                              buffer);
                 }
             }
-            else if (pszVal == nullptr || CPLTestBool(pszVal))
+            else if (pszVal == nullptr || !CPLTestBool(pszVal))
             {
                 if (pszVal == nullptr)
                 {
