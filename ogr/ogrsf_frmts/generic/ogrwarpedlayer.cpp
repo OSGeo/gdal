@@ -155,17 +155,15 @@ void OGRWarpedLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
 /*                     SrcFeatureToWarpedFeature()                      */
 /************************************************************************/
 
-OGRFeature *OGRWarpedLayer::SrcFeatureToWarpedFeature(OGRFeature *poSrcFeature)
+std::unique_ptr<OGRFeature>
+OGRWarpedLayer::SrcFeatureToWarpedFeature(std::unique_ptr<OGRFeature> poFeature)
 {
-    OGRFeature *poFeature = new OGRFeature(GetLayerDefn());
-    poFeature->SetFrom(poSrcFeature);
-    poFeature->SetFID(poSrcFeature->GetFID());
+    // This is safe to do here as they have matching attribute and geometry
+    // fields
+    poFeature->SetFDefnUnsafe(GetLayerDefn());
 
     OGRGeometry *poGeom = poFeature->GetGeomFieldRef(m_iGeomField);
-    if (poGeom == nullptr)
-        return poFeature;
-
-    if (poGeom->transform(m_poCT) != OGRERR_NONE)
+    if (poGeom && poGeom->transform(m_poCT) != OGRERR_NONE)
     {
         delete poFeature->StealGeometry(m_iGeomField);
     }
@@ -177,30 +175,21 @@ OGRFeature *OGRWarpedLayer::SrcFeatureToWarpedFeature(OGRFeature *poSrcFeature)
 /*                     WarpedFeatureToSrcFeature()                      */
 /************************************************************************/
 
-OGRFeature *OGRWarpedLayer::WarpedFeatureToSrcFeature(OGRFeature *poFeature)
+std::unique_ptr<OGRFeature>
+OGRWarpedLayer::WarpedFeatureToSrcFeature(std::unique_ptr<OGRFeature> poFeature)
 {
-    OGRFeature *poSrcFeature =
-        new OGRFeature(m_poDecoratedLayer->GetLayerDefn());
-    poSrcFeature->SetFrom(poFeature);
-    poSrcFeature->SetFID(poFeature->GetFID());
+    // This is safe to do here as they have matching attribute and geometry
+    // fields
+    poFeature->SetFDefnUnsafe(m_poDecoratedLayer->GetLayerDefn());
 
-    OGRGeometry *poGeom = poSrcFeature->GetGeomFieldRef(m_iGeomField);
-    if (poGeom != nullptr)
+    OGRGeometry *poGeom = poFeature->GetGeomFieldRef(m_iGeomField);
+    if (poGeom &&
+        (!m_poReversedCT || poGeom->transform(m_poReversedCT) != OGRERR_NONE))
     {
-        if (m_poReversedCT == nullptr)
-        {
-            delete poSrcFeature;
-            return nullptr;
-        }
-
-        if (poGeom->transform(m_poReversedCT) != OGRERR_NONE)
-        {
-            delete poSrcFeature;
-            return nullptr;
-        }
+        return nullptr;
     }
 
-    return poSrcFeature;
+    return poFeature;
 }
 
 /************************************************************************/
@@ -211,21 +200,19 @@ OGRFeature *OGRWarpedLayer::GetNextFeature()
 {
     while (true)
     {
-        OGRFeature *poFeature = m_poDecoratedLayer->GetNextFeature();
-        if (poFeature == nullptr)
+        auto poFeature =
+            std::unique_ptr<OGRFeature>(m_poDecoratedLayer->GetNextFeature());
+        if (!poFeature)
             return nullptr;
 
-        OGRFeature *poFeatureNew = SrcFeatureToWarpedFeature(poFeature);
-        delete poFeature;
-
-        OGRGeometry *poGeom = poFeatureNew->GetGeomFieldRef(m_iGeomField);
+        auto poFeatureNew = SrcFeatureToWarpedFeature(std::move(poFeature));
+        const OGRGeometry *poGeom = poFeatureNew->GetGeomFieldRef(m_iGeomField);
         if (m_poFilterGeom != nullptr && !FilterGeometry(poGeom))
         {
-            delete poFeatureNew;
             continue;
         }
 
-        return poFeatureNew;
+        return poFeatureNew.release();
     }
 }
 
@@ -235,14 +222,13 @@ OGRFeature *OGRWarpedLayer::GetNextFeature()
 
 OGRFeature *OGRWarpedLayer::GetFeature(GIntBig nFID)
 {
-    OGRFeature *poFeature = m_poDecoratedLayer->GetFeature(nFID);
-    if (poFeature != nullptr)
+    auto poFeature =
+        std::unique_ptr<OGRFeature>(m_poDecoratedLayer->GetFeature(nFID));
+    if (poFeature)
     {
-        OGRFeature *poFeatureNew = SrcFeatureToWarpedFeature(poFeature);
-        delete poFeature;
-        poFeature = poFeatureNew;
+        poFeature = SrcFeatureToWarpedFeature(std::move(poFeature));
     }
-    return poFeature;
+    return poFeature.release();
 }
 
 /************************************************************************/
@@ -251,17 +237,12 @@ OGRFeature *OGRWarpedLayer::GetFeature(GIntBig nFID)
 
 OGRErr OGRWarpedLayer::ISetFeature(OGRFeature *poFeature)
 {
-    OGRErr eErr;
-
-    OGRFeature *poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
-    if (poFeatureNew == nullptr)
+    auto poFeatureNew = WarpedFeatureToSrcFeature(
+        std::unique_ptr<OGRFeature>(poFeature->Clone()));
+    if (!poFeatureNew)
         return OGRERR_FAILURE;
 
-    eErr = m_poDecoratedLayer->SetFeature(poFeatureNew);
-
-    delete poFeatureNew;
-
-    return eErr;
+    return m_poDecoratedLayer->SetFeature(poFeatureNew.get());
 }
 
 /************************************************************************/
@@ -270,17 +251,12 @@ OGRErr OGRWarpedLayer::ISetFeature(OGRFeature *poFeature)
 
 OGRErr OGRWarpedLayer::ICreateFeature(OGRFeature *poFeature)
 {
-    OGRErr eErr;
-
-    OGRFeature *poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
-    if (poFeatureNew == nullptr)
+    auto poFeatureNew = WarpedFeatureToSrcFeature(
+        std::unique_ptr<OGRFeature>(poFeature->Clone()));
+    if (!poFeatureNew)
         return OGRERR_FAILURE;
 
-    eErr = m_poDecoratedLayer->CreateFeature(poFeatureNew);
-
-    delete poFeatureNew;
-
-    return eErr;
+    return m_poDecoratedLayer->CreateFeature(poFeatureNew.get());
 }
 
 /************************************************************************/
@@ -289,17 +265,12 @@ OGRErr OGRWarpedLayer::ICreateFeature(OGRFeature *poFeature)
 
 OGRErr OGRWarpedLayer::IUpsertFeature(OGRFeature *poFeature)
 {
-    OGRErr eErr;
-
-    OGRFeature *poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
+    auto poFeatureNew = WarpedFeatureToSrcFeature(
+        std::unique_ptr<OGRFeature>(poFeature->Clone()));
     if (poFeatureNew == nullptr)
         return OGRERR_FAILURE;
 
-    eErr = m_poDecoratedLayer->UpsertFeature(poFeatureNew);
-
-    delete poFeatureNew;
-
-    return eErr;
+    return m_poDecoratedLayer->UpsertFeature(poFeatureNew.get());
 }
 
 /************************************************************************/
@@ -313,19 +284,14 @@ OGRErr OGRWarpedLayer::IUpdateFeature(OGRFeature *poFeature,
                                       const int *panUpdatedGeomFieldsIdx,
                                       bool bUpdateStyleString)
 {
-    OGRErr eErr;
-
-    OGRFeature *poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
-    if (poFeatureNew == nullptr)
+    auto poFeatureNew = WarpedFeatureToSrcFeature(
+        std::unique_ptr<OGRFeature>(poFeature->Clone()));
+    if (!poFeatureNew)
         return OGRERR_FAILURE;
 
-    eErr = m_poDecoratedLayer->UpdateFeature(
-        poFeatureNew, nUpdatedFieldsCount, panUpdatedFieldsIdx,
+    return m_poDecoratedLayer->UpdateFeature(
+        poFeatureNew.get(), nUpdatedFieldsCount, panUpdatedFieldsIdx,
         nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
-
-    delete poFeatureNew;
-
-    return eErr;
 }
 
 /************************************************************************/
