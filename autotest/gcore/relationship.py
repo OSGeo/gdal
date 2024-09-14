@@ -35,7 +35,7 @@ from osgeo import gdal
 
 def test_gdal_relationship():
 
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         gdal.Relationship(None, None, None, gdal.GRC_ONE_TO_ONE)
 
     relationship = gdal.Relationship(

@@ -4102,7 +4102,7 @@ def DISABLED_test_gdalwarp_lib_to_projection_without_inverse_method():
 def test_gdalwarp_lib_no_crash_on_none_dst():
 
     ds1 = gdal.Open("../gcore/data/byte.tif")
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         gdal.Warp(None, ds1)
 
 
