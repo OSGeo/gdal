@@ -3828,7 +3828,8 @@ static CPLXMLNode *GDALSerializeApproxTransformer(void *pTransformArg)
  * @param pBaseTransformArg the callback argument for the high precision
  * transformer.
  * @param dfMaxError the maximum cartesian error in the "output" space that
- * is to be accepted in the linear approximation.
+ * is to be accepted in the linear approximation, evaluated as a Manhattan
+ * distance.
  *
  * @return callback pointer suitable for use with GDALApproxTransform().  It
  * should be deallocated with GDALDestroyApproxTransformer().
