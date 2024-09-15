@@ -2559,6 +2559,25 @@ def test_ogr_gml_64(parser):
 
 
 ###############################################################################
+# Test we don't spend too much time parsing documents featuring the billion
+# laugh attack
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("parser", ("XERCES", "EXPAT"))
+def test_ogr_gml_billion_laugh(parser):
+
+    with gdal.config_option("GML_PARSER", parser), pytest.raises(
+        Exception, match="File probably corrupted"
+    ):
+        with gdal.OpenEx("data/gml/billionlaugh.gml") as ds:
+            assert ds.GetDriver().GetDescription() == "GML"
+            for lyr in ds:
+                for f in lyr:
+                    pass
+
+
+###############################################################################
 # Test SRSDIMENSION_LOC=GEOMETRY option (#5606)
 
 
