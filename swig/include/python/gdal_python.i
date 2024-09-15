@@ -2992,7 +2992,12 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
     Parameters
     ----------
     destNameOrDestDS:
-        Output dataset name or object
+        Output dataset name or object.
+
+        If passed as a dataset name, a potentially existing output dataset of
+        the same name will be overwritten. To update an existing output dataset,
+        it must be passed as a dataset object.
+
     srcDSOrSrcDSTab:
         an array of Dataset objects or filenames, or a Dataset object or a filename
     kwargs:
@@ -3408,6 +3413,13 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
     ----------
     destNameOrDestDS:
         Output dataset name or object
+
+        If passed as a dataset name, a potentially existing output dataset of
+        the same name will be overwritten. To update an existing output dataset,
+        it must be passed as a dataset object. Note that the accessMode parameter
+        also controls, at the layer level, if existing layers must be overwritten
+        or updated.
+
     srcDS:
         a Dataset object or a filename
     kwargs:
@@ -3675,6 +3687,11 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
     ----------
     destNameOrDestDS:
         Output dataset name or object
+
+        If passed as a dataset name, a potentially existing output dataset of
+        the same name will be overwritten. To update an existing output dataset,
+        it must be passed as a dataset object.
+
     srcDS:
         a Dataset object or a filename
     kwargs:
@@ -4030,7 +4047,12 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
     Parameters
     ----------
     destNameOrDestDS:
-        Output dataset name or object
+        Output dataset name or object.
+
+        If passed as a dataset name, a potentially existing output dataset of
+        the same name will be overwritten. To update an existing output dataset,
+        it must be passed as a dataset object.
+
     srcDS:
         a Dataset object or a filename
     kwargs:
@@ -4199,6 +4221,11 @@ def Footprint(destNameOrDestDS, srcDS, **kwargs):
     ----------
     destNameOrDestDS:
         Output dataset name or object
+
+        If passed as a dataset name, a potentially existing output dataset of
+        the same name will be overwritten. To update an existing output dataset,
+        it must be passed as a dataset object.
+
     srcDS:
         a Dataset object or a filename
     kwargs:
