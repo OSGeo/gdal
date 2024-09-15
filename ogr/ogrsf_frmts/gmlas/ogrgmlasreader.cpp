@@ -1131,6 +1131,8 @@ void GMLASReader::startElement(const XMLCh *const uri,
                                ,
                                const Attributes &attrs)
 {
+    m_nEntityCounter = 0;
+
     const CPLString &osLocalname(transcode(localname, m_osLocalname));
     const CPLString &osNSURI(transcode(uri, m_osNSUri));
     const CPLString &osNSPrefix(m_osNSPrefix = m_oMapURIToPrefix[osNSURI]);
@@ -2387,6 +2389,8 @@ void GMLASReader::endElement(const XMLCh *const uri,
 #endif
 )
 {
+    m_nEntityCounter = 0;
+
     m_nLevel--;
 
 #ifdef DEBUG_VERBOSE
@@ -2672,6 +2676,20 @@ void GMLASReader::endElement(const XMLCh *const uri,
             CPLDestroyXMLNode(psRoot);
             m_apsXMLNodeStack.clear();
         }
+    }
+}
+
+/************************************************************************/
+/*                             startEntity()                            */
+/************************************************************************/
+
+void GMLASReader::startEntity(const XMLCh *const /* name */)
+{
+    m_nEntityCounter++;
+    if (m_nEntityCounter > 1000 && !m_bParsingError)
+    {
+        throw SAXNotSupportedException(
+            "File probably corrupted (million laugh pattern)");
     }
 }
 
