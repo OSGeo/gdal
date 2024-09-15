@@ -75,6 +75,9 @@ static int OGRGMLDriverIdentify(GDALOpenInfo *poOpenInfo)
         if (!poOpenInfo->TryToIngest(4096))
             return FALSE;
 
+        if (poOpenInfo->IsSingleAllowedDriver("GML"))
+            return TRUE;
+
         return OGRGMLDataSource::CheckHeader(
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader));
     }
