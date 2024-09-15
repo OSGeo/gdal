@@ -283,3 +283,17 @@ def test_ogr_nas_5():
         os.remove("data/nas/replace_nas.gfs")
     except OSError:
         pass
+
+
+###############################################################################
+# Test we don't spend too much time parsing documents featuring the billion
+# laugh attack
+
+
+def test_ogr_nas_billion_laugh():
+
+    with gdal.config_option("NAS_GFS_TEMPLATE", ""):
+        with gdal.quiet_errors(), pytest.raises(
+            Exception, match="File probably corrupted"
+        ):
+            ogr.Open("data/nas/billionlaugh.xml")

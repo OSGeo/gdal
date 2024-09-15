@@ -84,6 +84,8 @@ class NASHandler final : public DefaultHandler
 
     const Locator *m_Locator;
 
+    int m_nEntityCounter = 0;
+
   public:
     explicit NASHandler(NASReader *poReader);
     virtual ~NASHandler();
@@ -100,6 +102,8 @@ class NASHandler final : public DefaultHandler
 #endif
 
     void fatalError(const SAXParseException &) override;
+
+    void startEntity(const XMLCh *const name) override;
 
     void setDocumentLocator(const Locator *locator) override;
 
