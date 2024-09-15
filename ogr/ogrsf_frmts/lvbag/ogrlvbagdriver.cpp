@@ -39,12 +39,15 @@ static int OGRLVBAGDriverIdentify(GDALOpenInfo *poOpenInfo)
         return FALSE;
     if (poOpenInfo->bIsDirectory)
         return -1;  // Check later
-    if (poOpenInfo->fpL == nullptr)
+    if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes == 0)
         return FALSE;
 
     auto pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
-    if (poOpenInfo->nHeaderBytes == 0 || pszPtr[0] != '<')
+    if (pszPtr[0] != '<')
         return FALSE;
+
+    if (poOpenInfo->IsSingleAllowedDriver("LVBAG"))
+        return TRUE;
 
     // Can't handle mutations just yet
     if (strstr(pszPtr,
