@@ -393,8 +393,6 @@ CSF_CR GDALType2CellRepresentation(GDALDataType type, bool exact)
 /*!
   \param     cellRepresentation Cell representation of the data.
   \return    Missing value.
-  \exception .
-  \sa        .
 */
 double missingValue(CSF_CR cellRepresentation)
 {
@@ -468,9 +466,6 @@ double missingValue(CSF_CR cellRepresentation)
 /*!
   \param     filename Filename of raster to open.
   \return    Pointer to CSF MAP structure.
-  \exception .
-  \warning   .
-  \sa        .
 */
 MAP *mapOpen(std::string const &filename, MOPEN_PERM mode)
 {
