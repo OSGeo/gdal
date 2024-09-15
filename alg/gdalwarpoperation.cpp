@@ -832,22 +832,6 @@ void GDALDestroyWarpOperation(GDALWarpOperationH hOperation)
 /*                          CollectChunkList()                          */
 /************************************************************************/
 
-static int OrderWarpChunk(const void *_a, const void *_b)
-{
-    const GDALWarpChunk *a = static_cast<const GDALWarpChunk *>(_a);
-    const GDALWarpChunk *b = static_cast<const GDALWarpChunk *>(_b);
-    if (a->dy < b->dy)
-        return -1;
-    else if (a->dy > b->dy)
-        return 1;
-    else if (a->dx < b->dx)
-        return -1;
-    else if (a->dx > b->dx)
-        return 1;
-    else
-        return 0;
-}
-
 void GDALWarpOperation::CollectChunkList(int nDstXOff, int nDstYOff,
                                          int nDstXSize, int nDstYSize)
 
@@ -859,10 +843,18 @@ void GDALWarpOperation::CollectChunkList(int nDstXOff, int nDstYOff,
     CollectChunkListInternal(nDstXOff, nDstYOff, nDstXSize, nDstYSize);
 
     // Sort chunks from top to bottom, and for equal y, from left to right.
-    // TODO(schwehr): Use std::sort.
-    if (pasChunkList)
-        qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk),
-              OrderWarpChunk);
+    if (nChunkListCount > 1)
+    {
+        std::sort(pasChunkList, pasChunkList + nChunkListCount,
+                  [](const GDALWarpChunk &a, const GDALWarpChunk &b)
+                  {
+                      if (a.dy < b.dy)
+                          return true;
+                      if (a.dy > b.dy)
+                          return false;
+                      return a.dx < b.dx;
+                  });
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Find the global source window.                                  */

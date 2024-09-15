@@ -33,7 +33,6 @@
 #include "ogr_swq.h"
 
 #include <cstddef>
-#include <cstdlib>
 #include <algorithm>
 
 #include "cpl_conv.h"
@@ -407,18 +406,6 @@ int OGRFeatureQuery::CanUseIndex(const swq_expr_node *psExpr, OGRLayer *poLayer)
 /*      multi-part queries with ranges.                                 */
 /************************************************************************/
 
-static int CompareGIntBig(const void *pa, const void *pb)
-{
-    const GIntBig a = *(reinterpret_cast<const GIntBig *>(pa));
-    const GIntBig b = *(reinterpret_cast<const GIntBig *>(pb));
-    if (a < b)
-        return -1;
-    else if (a > b)
-        return 1;
-    else
-        return 0;
-}
-
 GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(OGRLayer *poLayer,
                                                  OGRErr *peErr)
 
@@ -668,8 +655,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
         if (nFIDCount > 1)
         {
             // The returned FIDs are expected to be in sorted order.
-            qsort(panFIDs, static_cast<size_t>(nFIDCount), sizeof(GIntBig),
-                  CompareGIntBig);
+            std::sort(panFIDs, panFIDs + nFIDCount);
         }
         return panFIDs;
     }
@@ -712,9 +698,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
     if (nFIDCount > 1)
     {
         // The returned FIDs are expected to be sorted.
-        // TODO(schwehr): Use std::sort.
-        qsort(panFIDs, static_cast<size_t>(nFIDCount), sizeof(GIntBig),
-              CompareGIntBig);
+        std::sort(panFIDs, panFIDs + nFIDCount);
     }
     return panFIDs;
 }
