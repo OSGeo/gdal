@@ -2846,22 +2846,23 @@ TEST_F(test_cpl, CPLJSONDocument)
 }
 
 // Test CPLRecodeIconv() with re-allocation
+// (this test also passed on Windows using its native recoding API)
 TEST_F(test_cpl, CPLRecodeIconv)
 {
-#ifdef CPL_RECODE_ICONV
+#if defined(CPL_RECODE_ICONV) || defined(_WIN32)
     int N = 32800;
     char *pszIn = static_cast<char *>(CPLMalloc(N + 1));
     for (int i = 0; i < N; i++)
-        pszIn[i] = '\xE9';
+        pszIn[i] = '\xA1';
     pszIn[N] = 0;
     char *pszExpected = static_cast<char *>(CPLMalloc(N * 2 + 1));
     for (int i = 0; i < N; i++)
     {
-        pszExpected[2 * i] = '\xC3';
-        pszExpected[2 * i + 1] = '\xA9';
+        pszExpected[2 * i] = '\xD0';
+        pszExpected[2 * i + 1] = '\x81';
     }
     pszExpected[N * 2] = 0;
-    char *pszRet = CPLRecode(pszIn, "ISO-8859-2", CPL_ENC_UTF8);
+    char *pszRet = CPLRecode(pszIn, "ISO-8859-5", CPL_ENC_UTF8);
     EXPECT_EQ(memcmp(pszExpected, pszRet, N * 2 + 1), 0);
     CPLFree(pszIn);
     CPLFree(pszRet);
@@ -2869,6 +2870,50 @@ TEST_F(test_cpl, CPLRecodeIconv)
 #else
     GTEST_SKIP() << "CPL_RECODE_ICONV missing";
 #endif
+}
+
+// Test CP1252 to UTF-8
+TEST_F(test_cpl, CPLRecodeStubCP1252_to_UTF8_strict_alloc)
+{
+    CPLClearRecodeWarningFlags();
+    CPLErrorReset();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    // Euro character expands to 3-bytes
+    char *pszRet = CPLRecode("\x80", "CP1252", CPL_ENC_UTF8);
+    CPLPopErrorHandler();
+    EXPECT_STREQ(CPLGetLastErrorMsg(), "");
+    EXPECT_EQ(memcmp(pszRet, "\xE2\x82\xAC\x00", 4), 0);
+    CPLFree(pszRet);
+}
+
+// Test CP1252 to UTF-8
+TEST_F(test_cpl, CPLRecodeStubCP1252_to_UTF8_with_ascii)
+{
+    CPLClearRecodeWarningFlags();
+    CPLErrorReset();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    char *pszRet = CPLRecode("x\x80y", "CP1252", CPL_ENC_UTF8);
+    CPLPopErrorHandler();
+    EXPECT_STREQ(CPLGetLastErrorMsg(), "");
+    EXPECT_EQ(memcmp(pszRet, "x\xE2\x82\xACy\x00", 6), 0);
+    CPLFree(pszRet);
+}
+
+// Test CP1252 to UTF-8
+TEST_F(test_cpl, CPLRecodeStubCP1252_to_UTF8_with_warning)
+{
+    CPLClearRecodeWarningFlags();
+    CPLErrorReset();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    // \x90 is an invalid CP1252 character. Will be skipped
+    char *pszRet = CPLRecode("\x90\x80", "CP1252", CPL_ENC_UTF8);
+    CPLPopErrorHandler();
+    EXPECT_STREQ(
+        CPLGetLastErrorMsg(),
+        "One or several characters couldn't be converted correctly from CP1252 "
+        "to UTF-8. This warning will not be emitted anymore");
+    EXPECT_EQ(memcmp(pszRet, "\xE2\x82\xAC\x00", 4), 0);
+    CPLFree(pszRet);
 }
 
 // Test CPLHTTPParseMultipartMime()

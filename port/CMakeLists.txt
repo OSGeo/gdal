@@ -374,3 +374,12 @@ if (NOT CMAKE_CROSSCOMPILING AND BUILD_VSIPRELOAD AND "${CMAKE_SYSTEM}" MATCHES 
     endforeach()
   endif ()
 endif ()
+
+# Utility to generate cpl_character_sets.h and .c
+add_executable(character_set_conv_table_generator EXCLUDE_FROM_ALL character_set_conv_table_generator.c)
+
+# Custom target that must be manually invoked if character_set_conv_table_generator.c is modified
+add_custom_target(generate_cpl_character_sets
+                  COMMAND $<TARGET_FILE:character_set_conv_table_generator>
+                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                  DEPENDS character_set_conv_table_generator)
