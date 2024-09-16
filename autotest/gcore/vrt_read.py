@@ -2493,30 +2493,68 @@ def test_vrt_read_top_and_bottom_strips_average():
 
 
 @pytest.mark.parametrize(
-    "input_datatype", [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_Int16]
-)
-@pytest.mark.parametrize("vrt_type", ["Byte", "UInt16", "Int16"])
-@pytest.mark.parametrize("nodata", [0, 254])
-@pytest.mark.parametrize(
-    "request_type", [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_Int16]
+    "input_datatype,vrt_type,nodata,vrt_nodata,request_type",
+    [
+        (gdal.GDT_Byte, "Byte", 0, 255, gdal.GDT_Byte),
+        (gdal.GDT_Byte, "Byte", 254, 255, gdal.GDT_Byte),
+        (gdal.GDT_Byte, "Int8", 254, 255, gdal.GDT_Byte),
+        (gdal.GDT_Byte, "Byte", 254, 127, gdal.GDT_Int8),
+        (gdal.GDT_Byte, "UInt16", 254, 255, gdal.GDT_Byte),
+        (gdal.GDT_Byte, "Byte", 254, 255, gdal.GDT_UInt16),
+        (gdal.GDT_Int8, "Int8", 0, 127, gdal.GDT_Int8),
+        (gdal.GDT_Int8, "Int16", 0, 127, gdal.GDT_Int8),
+        (gdal.GDT_UInt16, "UInt16", 0, 65535, gdal.GDT_UInt16),
+        (gdal.GDT_Int16, "Int16", 0, 32767, gdal.GDT_Int16),
+        (gdal.GDT_UInt32, "UInt32", 0, (1 << 31) - 1, gdal.GDT_UInt32),
+        (gdal.GDT_Int32, "Int32", 0, (1 << 30) - 1, gdal.GDT_Int32),
+        (gdal.GDT_Int32, "Float32", 0, (1 << 30) - 1, gdal.GDT_Float64),
+        (gdal.GDT_UInt64, "UInt64", 0, (1 << 63) - 1, gdal.GDT_UInt64),
+        (gdal.GDT_Int64, "Int64", 0, (1 << 62) - 1, gdal.GDT_Int64),
+        (gdal.GDT_Int64, "Float32", 0, (1 << 62), gdal.GDT_Int64),
+        (gdal.GDT_Float32, "Float32", 0, 1.5, gdal.GDT_Float32),
+        (gdal.GDT_Float32, "Float32", 0, 1.5, gdal.GDT_Float64),
+        (gdal.GDT_Float32, "Float64", 0, 1.5, gdal.GDT_Float32),
+        (gdal.GDT_Float32, "Float64", 0, 1.5, gdal.GDT_Float64),
+        (gdal.GDT_Float64, "Float64", 0, 1.5, gdal.GDT_Float64),
+        (gdal.GDT_Float64, "Float32", 0, 1.5, gdal.GDT_Float64),
+    ],
 )
 def test_vrt_read_complex_source_nodata(
-    tmp_vsimem, input_datatype, vrt_type, nodata, request_type
+    tmp_vsimem, input_datatype, vrt_type, nodata, vrt_nodata, request_type
 ):
+    def get_array_type(dt):
+        m = {
+            gdal.GDT_Byte: "B",
+            gdal.GDT_Int8: "b",
+            gdal.GDT_UInt16: "H",
+            gdal.GDT_Int16: "h",
+            gdal.GDT_UInt32: "I",
+            gdal.GDT_Int32: "i",
+            gdal.GDT_UInt64: "Q",
+            gdal.GDT_Int64: "q",
+            gdal.GDT_Float32: "f",
+            gdal.GDT_Float64: "d",
+        }
+        return m[dt]
 
-    if input_datatype == gdal.GDT_Byte:
-        array_type = "B"
-    elif input_datatype == gdal.GDT_UInt16:
-        array_type = "H"
-    elif input_datatype == gdal.GDT_Int16:
-        array_type = "h"
+    if input_datatype in (gdal.GDT_Float32, gdal.GDT_Float64):
+        input_val = 1.75
+        if vrt_type in ("Float32", "Float64") and request_type in (
+            gdal.GDT_Float32,
+            gdal.GDT_Float64,
+        ):
+            expected_val = input_val
+        else:
+            expected_val = math.round(input_val)
     else:
-        assert False
+        input_val = 1
+        expected_val = input_val
+
     input_data = array.array(
-        array_type,
+        get_array_type(input_datatype),
         [
             nodata,
-            1,
+            input_val,
             2,
             3,
             nodata,  # EOL
@@ -2553,7 +2591,7 @@ def test_vrt_read_complex_source_nodata(
     ds.Close()
     complex_xml = f"""<VRTDataset rasterXSize="5" rasterYSize="6">
   <VRTRasterBand dataType="{vrt_type}" band="1">
-    <NoDataValue>255</NoDataValue>
+    <NoDataValue>{vrt_nodata}</NoDataValue>
     <ComplexSource>
       <SourceFilename relativeToVRT="0">{input_filename}</SourceFilename>
       <SourceBand>1</SourceBand>
@@ -2563,24 +2601,16 @@ def test_vrt_read_complex_source_nodata(
 </VRTDataset>
 """
     vrt_ds = gdal.Open(complex_xml)
-    if request_type == gdal.GDT_Byte:
-        array_request_type = "B"
-    elif request_type == gdal.GDT_UInt16:
-        array_request_type = "H"
-    elif request_type == gdal.GDT_Int16:
-        array_request_type = "h"
-    else:
-        assert False
     got_data = vrt_ds.ReadRaster(buf_type=request_type)
-    got_data = struct.unpack(array_request_type * (5 * 6), got_data)
+    got_data = struct.unpack(get_array_type(request_type) * (5 * 6), got_data)
     assert got_data == (
-        255,
-        1,
+        vrt_nodata,
+        expected_val,
         2,
         3,
-        255,  # EOL
+        vrt_nodata,  # EOL
         4,
-        255,
+        vrt_nodata,
         5,
         6,
         7,  # EOL
@@ -2591,18 +2621,18 @@ def test_vrt_read_complex_source_nodata(
         20,  # EOL
         8,
         9,
-        255,
+        vrt_nodata,
         10,
         11,  # EOL
-        255,
-        255,
-        255,
-        255,
-        255,  # EOL
+        vrt_nodata,
+        vrt_nodata,
+        vrt_nodata,
+        vrt_nodata,
+        vrt_nodata,  # EOL
         12,
         13,
         14,
-        255,
+        vrt_nodata,
         15,  # EOL
     )
 
