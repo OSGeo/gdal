@@ -3360,6 +3360,7 @@ UpdateFeature
 updateTime
 UpperLeftX
 UpperLeftY
+upsampling
 upsert
 uri
 url
