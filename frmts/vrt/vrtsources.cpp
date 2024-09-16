@@ -2860,10 +2860,10 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     GByte *const pabyOut = static_cast<GByte *>(pData) +
                            nPixelSpace * nOutXOff +
                            static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff;
+    const auto eSourceType = poSourceBand->GetRasterDataType();
     if (m_nProcessingFlags == PROCESSING_FLAG_NODATA)
     {
         // Optimization if doing only nodata processing
-        const auto eSourceType = poSourceBand->GetRasterDataType();
         if (eSourceType == GDT_Byte)
         {
             if (!GDALIsValueInRange<GByte>(m_dfNoDataValue))
@@ -2917,7 +2917,10 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     // For Int32, float32 isn't sufficiently precise as working data type
     if (eVRTBandDataType == GDT_CInt32 || eVRTBandDataType == GDT_CFloat64 ||
         eVRTBandDataType == GDT_Int32 || eVRTBandDataType == GDT_UInt32 ||
-        eVRTBandDataType == GDT_Float64)
+        eVRTBandDataType == GDT_Int64 || eVRTBandDataType == GDT_UInt64 ||
+        eVRTBandDataType == GDT_Float64 || eSourceType == GDT_Int32 ||
+        eSourceType == GDT_UInt32 || eSourceType == GDT_Int64 ||
+        eSourceType == GDT_UInt64)
     {
         eErr = RasterIOInternal<double>(
             poSourceBand, eVRTBandDataType, nReqXOff, nReqYOff, nReqXSize,
