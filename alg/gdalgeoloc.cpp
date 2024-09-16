@@ -2007,7 +2007,7 @@ void *GDALCreateGeoLocTransformerEx(GDALDatasetH hBaseDS,
     else
     {
         psTransform->bUseArray = nXSize < 16 * 1000 * 1000 / nYSize;
-        if (psTransform->bUseArray)
+        if (!psTransform->bUseArray)
         {
             CPLDebug("GEOLOC",
                      "Using temporary GTiff backing to store backmap, because "
