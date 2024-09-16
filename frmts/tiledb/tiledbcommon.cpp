@@ -118,54 +118,24 @@ CPLErr TileDBDataset::AddFilter(tiledb::Context &ctx,
 int TileDBDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB:"))
+    int nRet = TileDBDriverIdentifySimplified(poOpenInfo);
+    if (nRet == GDAL_IDENTIFY_UNKNOWN)
     {
-        return TRUE;
-    }
-
-    if (poOpenInfo->IsSingleAllowedDriver("TileDB"))
-    {
-        return TRUE;
-    }
-
-    try
-    {
-        const char *pszConfig =
-            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "TILEDB_CONFIG");
-
-        if (pszConfig != nullptr)
-        {
-            return TRUE;
-        }
-
-        const bool bIsS3OrGS =
-            STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIS3/") ||
-            STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIGS/");
-        // If this is a /vsi virtual file systems, bail out, except if it is S3 or GS.
-        if (!bIsS3OrGS && STARTS_WITH(poOpenInfo->pszFilename, "/vsi"))
-        {
-            return false;
-        }
-
-        if (poOpenInfo->bIsDirectory ||
-            (bIsS3OrGS &&
-             !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "tif")))
+        try
         {
             tiledb::Context ctx;
             CPLString osArrayPath =
                 TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
             const auto eType = tiledb::Object::object(ctx, osArrayPath).type();
-            if (eType == tiledb::Object::Type::Array ||
-                eType == tiledb::Object::Type::Group)
-                return true;
+            nRet = (eType == tiledb::Object::Type::Array ||
+                    eType == tiledb::Object::Type::Group);
         }
-
-        return FALSE;
+        catch (...)
+        {
+            nRet = FALSE;
+        }
     }
-    catch (...)
-    {
-        return FALSE;
-    }
+    return nRet;
 }
 
 /************************************************************************/
