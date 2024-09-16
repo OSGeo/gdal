@@ -31,6 +31,7 @@
 #include "gmlreader.h"
 #include "gmlreaderp.h"
 
+#include <algorithm>
 #include <climits>
 #include <cstddef>
 #include <cstdlib>
@@ -487,23 +488,6 @@ struct _GeometryNamesStruct
 };
 
 /************************************************************************/
-/*                    GMLHandlerSortGeometryElements()                  */
-/************************************************************************/
-
-static int GMLHandlerSortGeometryElements(const void *pAIn, const void *pBIn)
-{
-    const GeometryNamesStruct *pA =
-        static_cast<const GeometryNamesStruct *>(pAIn);
-    const GeometryNamesStruct *pB =
-        static_cast<const GeometryNamesStruct *>(pBIn);
-    CPLAssert(pA->nHash != pB->nHash);
-    if (pA->nHash < pB->nHash)
-        return -1;
-    else
-        return 1;
-}
-
-/************************************************************************/
 /*                            GMLHandler()                              */
 /************************************************************************/
 
@@ -520,8 +504,9 @@ GMLHandler::GMLHandler(GMLReader *poReader)
         pasGeometryNames[i].nHash =
             CPLHashSetHashStr(pasGeometryNames[i].pszName);
     }
-    qsort(pasGeometryNames, GML_GEOMETRY_TYPE_COUNT,
-          sizeof(GeometryNamesStruct), GMLHandlerSortGeometryElements);
+    std::sort(pasGeometryNames, pasGeometryNames + GML_GEOMETRY_TYPE_COUNT,
+              [](const GeometryNamesStruct &a, const GeometryNamesStruct &b)
+              { return a.nHash < b.nHash; });
 
     stateStack[0] = STATE_TOP;
 }
