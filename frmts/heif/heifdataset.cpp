@@ -392,8 +392,8 @@ void GDALHEIFDataset::ReadMetadata()
                 }
             }
 
-            CPLString osTempFile;
-            osTempFile.Printf("/vsimem/heif_exif_%p.tif", this);
+            const CPLString osTempFile(
+                VSIMemGenerateHiddenFilename("heif_exif.tif"));
             VSILFILE *fpTemp =
                 VSIFileFromMemBuffer(osTempFile, &data[nTIFFFileOffset],
                                      nCount - nTIFFFileOffset, FALSE);

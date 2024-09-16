@@ -947,8 +947,8 @@ void GTiffDataset::InitCompressionThreads(bool bUpdateMode,
                          i < static_cast<int>(m_asCompressionJobs.size()); ++i)
                     {
                         m_asCompressionJobs[i].pszTmpFilename =
-                            CPLStrdup(CPLSPrintf("/vsimem/gtiff/thread/job/%p",
-                                                 &m_asCompressionJobs[i]));
+                            CPLStrdup(VSIMemGenerateHiddenFilename(
+                                CPLSPrintf("thread_job_%d.tif", i)));
                         m_asCompressionJobs[i].nStripOrTile = -1;
                     }
 
@@ -1383,7 +1383,7 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
             memset(&sJob, 0, sizeof(sJob));
             SetupJob(sJob);
             sJob.pszTmpFilename =
-                CPLStrdup(CPLSPrintf("/vsimem/gtiff/%p", this));
+                CPLStrdup(VSIMemGenerateHiddenFilename("temp.tif"));
 
             ThreadCompressionFunc(&sJob);
 
@@ -5344,8 +5344,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     }
     if (bStreaming)
     {
-        static int nCounter = 0;
-        l_osTmpFilename = CPLSPrintf("/vsimem/vsistdout_%d.tif", ++nCounter);
+        l_osTmpFilename = VSIMemGenerateHiddenFilename("vsistdout.tif");
         pszFilename = l_osTmpFilename.c_str();
     }
 
@@ -5875,7 +5874,6 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     // strip/tile writing, which is too late, since we have already crystalized
     // the directory. This way we avoid a directory rewriting.
     if (l_nCompression == COMPRESSION_JPEG &&
-        !STARTS_WITH(pszFilename, szJPEGGTiffDatasetTmpPrefix) &&
         CPLTestBool(
             CSLFetchNameValueDef(papszParamList, "WRITE_JPEGTABLE_TAG", "YES")))
     {
@@ -6068,9 +6066,8 @@ int GTiffDataset::GuessJPEGQuality(bool &bOutHasQuantizationTable,
         papszLocalParameters =
             CSLSetNameValue(papszLocalParameters, "NBITS", "12");
 
-    CPLString osTmpFilenameIn;
-    osTmpFilenameIn.Printf("/vsimem/gtiffdataset_guess_jpeg_quality_tmp_%p",
-                           this);
+    const CPLString osTmpFilenameIn(
+        VSIMemGenerateHiddenFilename("gtiffdataset_guess_jpeg_quality_tmp"));
 
     int nRet = -1;
     for (int nQuality = 0; nQuality <= 100 && nRet < 0; ++nQuality)

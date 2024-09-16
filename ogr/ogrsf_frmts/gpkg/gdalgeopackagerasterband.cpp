@@ -243,8 +243,8 @@ GDALColorTable *GDALGPKGMBTilesLikeRasterBand::GetColorTable()
                     const int nBytes = sqlite3_column_bytes(hStmt, 0);
                     GByte *pabyRawData = reinterpret_cast<GByte *>(
                         const_cast<void *>(sqlite3_column_blob(hStmt, 0)));
-                    CPLString osMemFileName;
-                    osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
+                    const CPLString osMemFileName(
+                        VSIMemGenerateHiddenFilename("gpkg_read_tile"));
                     VSILFILE *fp = VSIFileFromMemBuffer(
                         osMemFileName.c_str(), pabyRawData, nBytes, FALSE);
                     VSIFCloseL(fp);
@@ -915,8 +915,8 @@ GByte *GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol,
             (m_eDT == GDT_Byte) ? 0 : sqlite3_column_int64(hStmt, 1);
         GByte *pabyRawData = static_cast<GByte *>(
             const_cast<void *>(sqlite3_column_blob(hStmt, 0)));
-        CPLString osMemFileName;
-        osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
+        const CPLString osMemFileName(
+            VSIMemGenerateHiddenFilename("gpkg_read_tile"));
         VSILFILE *fp = VSIFileFromMemBuffer(osMemFileName.c_str(), pabyRawData,
                                             nBytes, FALSE);
         VSIFCloseL(fp);
@@ -1847,8 +1847,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                  nRow, nCol, m_nZoomLevel);
     }
 
-    CPLString osMemFileName;
-    osMemFileName.Printf("/vsimem/gpkg_write_tile_%p", this);
+    const CPLString osMemFileName(
+        VSIMemGenerateHiddenFilename("gpkg_write_tile"));
     const char *pszDriverName = "PNG";
     bool bTileDriverSupports1Band = false;
     bool bTileDriverSupports2Bands = false;
@@ -2727,8 +2727,8 @@ GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartialFlush)
                         GByte *pabyRawData =
                             const_cast<GByte *>(static_cast<const GByte *>(
                                 sqlite3_column_blob(hNewStmt, 0)));
-                        CPLString osMemFileName;
-                        osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
+                        const CPLString osMemFileName(
+                            VSIMemGenerateHiddenFilename("gpkg_read_tile"));
                         VSILFILE *fp = VSIFileFromMemBuffer(
                             osMemFileName.c_str(), pabyRawData, nBytes, FALSE);
                         VSIFCloseL(fp);

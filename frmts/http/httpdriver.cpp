@@ -29,7 +29,6 @@
 
 #include "cpl_string.h"
 #include "cpl_http.h"
-#include "cpl_atomic_ops.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
@@ -87,8 +86,6 @@ static std::string HTTPFetchContentDispositionFilename(char **papszHeaders)
 static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    static volatile int nCounter = 0;
-
     if (poOpenInfo->nHeaderBytes != 0)
         return nullptr;
 
@@ -116,10 +113,6 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a memory file from the result.                           */
     /* -------------------------------------------------------------------- */
-    CPLString osResultFilename;
-
-    int nNewCounter = CPLAtomicInc(&nCounter);
-
     std::string osFilename =
         HTTPFetchContentDispositionFilename(psResult->papszHeaders);
     if (osFilename.empty())
@@ -130,8 +123,9 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
             osFilename = "file.dat";
     }
 
-    osResultFilename.Printf("/vsimem/http_%d_%s", nNewCounter,
-                            osFilename.c_str());
+    // If changing the _gdal_http_ marker, change jpgdataset.cpp that tests for it
+    const CPLString osResultFilename = VSIMemGenerateHiddenFilename(
+        std::string("_gdal_http_").append(osFilename).c_str());
 
     VSILFILE *fp = VSIFileFromMemBuffer(osResultFilename, psResult->pabyData,
                                         psResult->nDataLen, TRUE);

@@ -269,9 +269,10 @@ OGRGMLDataSource::~OGRGMLDataSource()
 
     delete poStoredGMLFeature;
 
-    if (osXSDFilename.compare(CPLSPrintf("/vsimem/tmp_gml_xsd_%p.xsd", this)) ==
-        0)
+    if (m_bUnlinkXSDFilename)
+    {
         VSIUnlink(osXSDFilename);
+    }
 }
 
 /************************************************************************/
@@ -532,7 +533,8 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
             }
         }
     }
-    else if (STARTS_WITH(pszFilename, "/vsimem/tempwfs_"))
+    else if (STARTS_WITH(pszFilename, "/vsimem/") &&
+             strstr(pszFilename, "_ogr_wfs_"))
     {
         // http://regis.intergraph.com/wfs/dcmetro/request.asp? returns a
         // <G:FeatureCollection> Who knows what servers can return?  When
@@ -1101,8 +1103,10 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
                                         psResult->pabyData != nullptr)
                                     {
                                         bHasFoundXSD = true;
-                                        osXSDFilename = CPLSPrintf(
-                                            "/vsimem/tmp_gml_xsd_%p.xsd", this);
+                                        m_bUnlinkXSDFilename = true;
+                                        osXSDFilename =
+                                            VSIMemGenerateHiddenFilename(
+                                                "tmp_ogr_gml.xsd");
                                         VSILFILE *fpMem = VSIFileFromMemBuffer(
                                             osXSDFilename, psResult->pabyData,
                                             psResult->nDataLen, TRUE);

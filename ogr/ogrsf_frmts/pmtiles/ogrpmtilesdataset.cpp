@@ -239,7 +239,8 @@ bool OGRPMTilesDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLDebugOnly("PMTiles", "Metadata = %s", posMetadata->c_str());
     m_osMetadata = *posMetadata;
 
-    m_osMetadataFilename = CPLSPrintf("/vsimem/pmtiles/metadata_%p.json", this);
+    m_osMetadataFilename =
+        VSIMemGenerateHiddenFilename("pmtiles_metadata.json");
     VSIFCloseL(VSIFileFromMemBuffer(m_osMetadataFilename.c_str(),
                                     reinterpret_cast<GByte *>(&m_osMetadata[0]),
                                     m_osMetadata.size(), false));

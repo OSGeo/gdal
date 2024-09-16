@@ -378,7 +378,7 @@ static bool LoadPythonAPI()
                                                         "-c", pszPrintVersion,
                                                         nullptr};
                         const CPLString osTmpFilename(
-                            "/vsimem/LoadPythonAPI/out.txt");
+                            VSIMemGenerateHiddenFilename("out.txt"));
                         VSILFILE *fout = VSIFOpenL(osTmpFilename, "wb+");
                         if (CPLSpawn(apszArgv, nullptr, fout, FALSE) == 0)
                         {

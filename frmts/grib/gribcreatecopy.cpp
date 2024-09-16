@@ -1664,7 +1664,7 @@ bool GRIB2Section567Writer::WritePNG()
     GDALDataset *poMEMDS =
         WrapArrayAsMemDataset(m_nXSize, m_nYSize, eReducedDT, panData);
 
-    CPLString osTmpFile(CPLSPrintf("/vsimem/grib_driver_%p.png", m_poSrcDS));
+    const CPLString osTmpFile(VSIMemGenerateHiddenFilename("grib_driver.png"));
     GDALDataset *poPNGDS = poPNGDriver->CreateCopy(
         osTmpFile, poMEMDS, FALSE, aosPNGOptions.List(), nullptr, nullptr);
     if (poPNGDS == nullptr)
@@ -1850,7 +1850,7 @@ bool GRIB2Section567Writer::WriteJPEG2000(char **papszOptions)
     GDALDataset *poMEMDS =
         WrapArrayAsMemDataset(m_nXSize, m_nYSize, eReducedDT, panData);
 
-    CPLString osTmpFile(CPLSPrintf("/vsimem/grib_driver_%p.j2k", m_poSrcDS));
+    const CPLString osTmpFile(VSIMemGenerateHiddenFilename("grib_driver.j2k"));
     GDALDataset *poJ2KDS = poJ2KDriver->CreateCopy(
         osTmpFile, poMEMDS, FALSE, aosJ2KOptions.List(), nullptr, nullptr);
     if (poJ2KDS == nullptr)

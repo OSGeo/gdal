@@ -471,8 +471,9 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
                     (EQUAL(osExt, "SQLITE") || EQUAL(osExt, "CSV")))
                 {
                     CPLFree(hSession->pszCacheFilename);
-                    hSession->pszCacheFilename = CPLStrdup(CPLSPrintf(
-                        "/vsimem/%s.%s", CACHE_LAYER_NAME, osExt.c_str()));
+                    hSession->pszCacheFilename =
+                        CPLStrdup(VSIMemGenerateHiddenFilename(CPLSPrintf(
+                            "%s.%s", CACHE_LAYER_NAME, osExt.c_str())));
                     CPLDebug("OGR", "Switch geocode cache file to %s",
                              hSession->pszCacheFilename);
                     poDS = reinterpret_cast<OGRDataSource *>(

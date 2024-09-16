@@ -331,7 +331,7 @@ GDALDataset *CALSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Create a TIFF header for a single-strip CCITTFAX4 file.
     poDS->osTIFFHeaderFilename =
-        CPLSPrintf("/vsimem/cals/header_%p.tiff", poDS);
+        VSIMemGenerateHiddenFilename("cals_header.tiff");
     VSILFILE *fp = VSIFOpenL(poDS->osTIFFHeaderFilename, "wb");
     const int nTagCount = 10;
     const int nHeaderSize = 4 + 4 + 2 + nTagCount * 12 + 4;
@@ -359,7 +359,7 @@ GDALDataset *CALSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Create a /vsisparse/ description file assembling the TIFF header
     // with the FAX4 codestream that starts at offset 2048 of the CALS file.
-    poDS->osSparseFilename = CPLSPrintf("/vsimem/cals/sparse_%p.xml", poDS);
+    poDS->osSparseFilename = VSIMemGenerateHiddenFilename("cals_sparse.xml");
     fp = VSIFOpenL(poDS->osSparseFilename, "wb");
     CPLAssert(fp);
     VSIFPrintfL(fp,
@@ -473,7 +473,8 @@ GDALDataset *CALSDataset::CreateCopy(const char *pszFilename,
 
     // Write a in-memory TIFF with just the TIFF header to figure out
     // how large it will be.
-    CPLString osTmpFilename(CPLSPrintf("/vsimem/cals/tmp_%p", poSrcDS));
+    const CPLString osTmpFilename(
+        VSIMemGenerateHiddenFilename("tmp_tif_header"));
     char **papszOptions = nullptr;
     papszOptions = CSLSetNameValue(papszOptions, "COMPRESS", "CCITTFAX4");
     papszOptions = CSLSetNameValue(papszOptions, "NBITS", "1");

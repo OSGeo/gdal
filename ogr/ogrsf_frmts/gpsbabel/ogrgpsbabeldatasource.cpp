@@ -261,7 +261,7 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
     if (pszOptionUseTempFile && CPLTestBool(pszOptionUseTempFile))
         osTmpFileName = CPLGenerateTempFilename(nullptr);
     else
-        osTmpFileName.Printf("/vsimem/ogrgpsbabeldatasource_%p", this);
+        osTmpFileName = VSIMemGenerateHiddenFilename("gpsbabel");
 
     bool bRet = false;
     if (IsSpecialFile(pszFilename))

@@ -2859,7 +2859,8 @@ GDALDataset *JPGDatasetCommon::OpenFLIRRawThermalImage()
 
     GByte *pabyData =
         static_cast<GByte *>(CPLMalloc(m_abyRawThermalImage.size()));
-    const std::string osTmpFilename(CPLSPrintf("/vsimem/jpeg/%p", pabyData));
+    const std::string osTmpFilename(
+        VSIMemGenerateHiddenFilename("jpeg_flir_raw"));
     memcpy(pabyData, m_abyRawThermalImage.data(), m_abyRawThermalImage.size());
     VSILFILE *fpRaw = VSIFileFromMemBuffer(osTmpFilename.c_str(), pabyData,
                                            m_abyRawThermalImage.size(), true);
@@ -3235,7 +3236,8 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
         // will unlink the temporary /vsimem file just after GDALOpen(), so
         // later VSIFOpenL() when reading internal overviews would fail.
         // Initialize them now.
-        if (STARTS_WITH(real_filename, "/vsimem/http_"))
+        if (STARTS_WITH(real_filename, "/vsimem/") &&
+            strstr(real_filename, "_gdal_http_"))
         {
             poDS->InitInternalOverviews();
         }
@@ -4097,7 +4099,7 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
             return;
         }
 
-        CPLString osTmpFile(CPLSPrintf("/vsimem/ovrjpg%p", poMemDS));
+        const CPLString osTmpFile(VSIMemGenerateHiddenFilename("ovrjpg"));
         GDALDataset *poOutDS = pCreateCopy(osTmpFile, poMemDS, 0, nullptr,
                                            GDALDummyProgress, nullptr);
         const bool bExifOverviewSuccess = poOutDS != nullptr;

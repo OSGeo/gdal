@@ -195,8 +195,9 @@ int OGRGeoJSONDataSource::Open(GDALOpenInfo *poOpenInfo,
         bool bEmitError = true;
         if (eGeoJSONSourceService == nSrcType)
         {
-            const CPLString osTmpFilename = CPLSPrintf(
-                "/vsimem/%p/%s", this, CPLGetFilename(poOpenInfo->pszFilename));
+            const CPLString osTmpFilename =
+                VSIMemGenerateHiddenFilename(CPLSPrintf(
+                    "geojson_%s", CPLGetFilename(poOpenInfo->pszFilename)));
             VSIFCloseL(VSIFileFromMemBuffer(osTmpFilename, (GByte *)pszGeoData_,
                                             nGeoDataLen_, TRUE));
             pszGeoData_ = nullptr;

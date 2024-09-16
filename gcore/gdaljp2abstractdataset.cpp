@@ -368,6 +368,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
         return;
     }
 
+    const std::string osTmpDir = VSIMemGenerateHiddenFilename("gmljp2");
+
     // Find feature collections.
     int nLayersAtCC = 0;
     int nLayersAtGC = 0;
@@ -451,7 +453,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
 
             if (psFC != nullptr)
             {
-                osGMLTmpFile = CPLSPrintf("/vsimem/gmljp2_%p/my.gml", this);
+                osGMLTmpFile =
+                    CPLFormFilename(osTmpDir.c_str(), "my.gml", nullptr);
                 // Create temporary .gml file.
                 CPLSerializeXMLTreeToFile(psFC, osGMLTmpFile);
             }
@@ -486,8 +489,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                                     CPLSPrintf("xml:%s", pszBoxName));
                                 if (papszBoxData != nullptr)
                                 {
-                                    osXSDTmpFile = CPLSPrintf(
-                                        "/vsimem/gmljp2_%p/my.xsd", this);
+                                    osXSDTmpFile = CPLFormFilename(
+                                        osTmpDir.c_str(), "my.xsd", nullptr);
                                     CPL_IGNORE_RET_VAL(
                                         VSIFCloseL(VSIFileFromMemBuffer(
                                             osXSDTmpFile,
@@ -551,7 +554,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                          "No GML driver found to read feature collection");
             }
 
-            VSIRmdirRecursive(CPLSPrintf("/vsimem/gmljp2_%p", this));
+            VSIRmdirRecursive(osTmpDir.c_str());
         }
     }
 
@@ -589,8 +592,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
 
             // Create temporary .kml file.
             CPLXMLNode *const psKML = psGCorGMLJP2FeaturesChildIter->psChild;
-            CPLString osKMLTmpFile(
-                CPLSPrintf("/vsimem/gmljp2_%p_my.kml", this));
+            const CPLString osKMLTmpFile(
+                VSIMemGenerateHiddenFilename("my.kml"));
             CPLSerializeXMLTreeToFile(psKML, osKMLTmpFile);
 
             GDALDatasetUniquePtr poTmpDS(GDALDataset::Open(

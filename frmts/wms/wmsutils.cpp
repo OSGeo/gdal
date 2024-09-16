@@ -70,9 +70,7 @@ void URLPrepare(CPLString &url)
 
 CPLString BufferToVSIFile(GByte *buffer, size_t size)
 {
-    CPLString file_name;
-
-    file_name.Printf("/vsimem/wms/%p/wmsresult.dat", buffer);
+    const CPLString file_name(VSIMemGenerateHiddenFilename("wmsresult.dat"));
     VSILFILE *f = VSIFileFromMemBuffer(file_name.c_str(), buffer, size, false);
     if (f == nullptr)
         return CPLString();

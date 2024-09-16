@@ -818,7 +818,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
         if (poOpenInfo->eAccess == GA_Update)
             return false;
 
-        m_osTmpFile = CPLSPrintf("/vsimem/geojsonseq/%p", this);
+        m_osTmpFile = VSIMemGenerateHiddenFilename("geojsonseq");
         m_fp = VSIFileFromMemBuffer(
             m_osTmpFile.c_str(),
             reinterpret_cast<GByte *>(CPLStrdup(poOpenInfo->pszFilename)),
@@ -842,7 +842,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
             }
             else
             {
-                m_osTmpFile = CPLSPrintf("/vsimem/geojsonseq/%p", this);
+                m_osTmpFile = VSIMemGenerateHiddenFilename("geojsonseq");
                 m_fp = VSIFileFromMemBuffer(
                     m_osTmpFile.c_str(),
                     reinterpret_cast<GByte *>(pszStoredContent),
@@ -873,7 +873,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
                 return false;
             }
 
-            m_osTmpFile = CPLSPrintf("/vsimem/geojsonseq/%p", this);
+            m_osTmpFile = VSIMemGenerateHiddenFilename("geojsonseq");
             m_fp = VSIFileFromMemBuffer(m_osTmpFile.c_str(), pResult->pabyData,
                                         pResult->nDataLen, true);
             pResult->pabyData = nullptr;

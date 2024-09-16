@@ -150,6 +150,26 @@ def vsifile_generic(filename, options=[]):
 
     gdal.Unlink(filename)
 
+    if not filename.startswith("/vsicrypt/"):
+        assert gdal.RmdirRecursive(filename + "/i_dont_exist") == -1
+
+        subdir = filename + "/subdir"
+        assert gdal.MkdirRecursive(subdir + "/subsubdir", 0o755) == 0
+
+        assert gdal.VSIStatL(subdir) is not None
+        assert gdal.VSIStatL(subdir + "/subsubdir") is not None
+
+        if not filename.startswith("/vsimem/"):
+            assert gdal.Rmdir(subdir) == -1
+            assert gdal.VSIStatL(subdir) is not None
+
+        # Safety belt...
+        assert filename.startswith("tmp/") or filename.startswith("/vsimem/")
+        assert gdal.RmdirRecursive(filename) == 0
+
+        assert gdal.VSIStatL(subdir) is None
+        assert gdal.VSIStatL(subdir + "/subsubdir") is None
+
 
 ###############################################################################
 # Test /vsimem

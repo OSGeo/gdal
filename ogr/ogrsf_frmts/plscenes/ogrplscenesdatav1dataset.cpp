@@ -626,7 +626,11 @@ retry:
             {
                 // Set a dummy name so that PAM goes here
                 CPLPushErrorHandler(CPLQuietErrorHandler);
-                poOutDS->SetDescription("/vsimem/tmp/ogrplscenesDataV1");
+
+                const std::string osTmpFilename =
+                    VSIMemGenerateHiddenFilename("ogrplscenesDataV1");
+
+                poOutDS->SetDescription(osTmpFilename.c_str());
 
                 /* Attach scene metadata. */
                 poLayer->SetAttributeFilter(
@@ -663,8 +667,9 @@ retry:
                 delete poFeat;
 
                 poOutDS->FlushCache(false);
-                VSIUnlink("/vsimem/tmp/ogrplscenesDataV1");
-                VSIUnlink("/vsimem/tmp/ogrplscenesDataV1.aux.xml");
+                VSIUnlink(osTmpFilename.c_str());
+                VSIUnlink(
+                    std::string(osTmpFilename).append(".aux.xml").c_str());
                 CPLPopErrorHandler();
             }
         }

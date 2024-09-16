@@ -5331,4 +5331,194 @@ TEST_F(test_cpl, CPLSpawn)
 }
 #endif
 
+static bool ENDS_WITH(const char *pszStr, const char *pszEnd)
+{
+    return strlen(pszStr) >= strlen(pszEnd) &&
+           strcmp(pszStr + strlen(pszStr) - strlen(pszEnd), pszEnd) == 0;
+}
+
+TEST_F(test_cpl, VSIMemGenerateHiddenFilename)
+{
+    {
+        // Initial cleanup
+        VSIRmdirRecursive("/vsimem/");
+        VSIRmdirRecursive("/vsimem/.#!HIDDEN!#.");
+
+        // Generate unlisted filename
+        const std::string osFilename1 = VSIMemGenerateHiddenFilename(nullptr);
+        const char *pszFilename1 = osFilename1.c_str();
+        EXPECT_TRUE(STARTS_WITH(pszFilename1, "/vsimem/.#!HIDDEN!#./"));
+        EXPECT_TRUE(ENDS_WITH(pszFilename1, "/unnamed"));
+
+        {
+            // Check the file doesn't exist yet
+            VSIStatBufL sStat;
+            EXPECT_EQ(VSIStatL(pszFilename1, &sStat), -1);
+        }
+
+        // Create the file with some content
+        GByte abyDummyData[1] = {0};
+        VSIFCloseL(VSIFileFromMemBuffer(pszFilename1, abyDummyData,
+                                        sizeof(abyDummyData), false));
+
+        {
+            // Check the file exists now
+            VSIStatBufL sStat;
+            EXPECT_EQ(VSIStatL(pszFilename1, &sStat), 0);
+        }
+
+        // Get's back content
+        EXPECT_EQ(VSIGetMemFileBuffer(pszFilename1, nullptr, false),
+                  abyDummyData);
+
+        {
+            // Check the hidden file doesn't popup
+            const CPLStringList aosFiles(VSIReadDir("/vsimem/"));
+            EXPECT_EQ(aosFiles.size(), 0);
+        }
+
+        {
+            // Check that we can list the below directory if we know it exists
+            // and there's just one subdir
+            const CPLStringList aosFiles(VSIReadDir("/vsimem/.#!HIDDEN!#."));
+            EXPECT_EQ(aosFiles.size(), 1);
+        }
+
+        {
+            // but that it is not an explicit directory
+            VSIStatBufL sStat;
+            EXPECT_EQ(VSIStatL("/vsimem/.#!HIDDEN!#.", &sStat), -1);
+        }
+
+        // Creates second file
+        const std::string osFilename2 = VSIMemGenerateHiddenFilename(nullptr);
+        const char *pszFilename2 = osFilename2.c_str();
+        EXPECT_TRUE(strcmp(pszFilename1, pszFilename2) != 0);
+
+        // Create it
+        VSIFCloseL(VSIFileFromMemBuffer(pszFilename2, abyDummyData,
+                                        sizeof(abyDummyData), false));
+
+        {
+            // Check that we can list the root hidden dir if we know it exists
+            const CPLStringList aosFiles(VSIReadDir("/vsimem/.#!HIDDEN!#."));
+            EXPECT_EQ(aosFiles.size(), 2);
+        }
+
+        {
+            // Create an explicit subdirectory in a hidden directory
+            const std::string osBaseName =
+                VSIMemGenerateHiddenFilename(nullptr);
+            const std::string osSubDir =
+                CPLFormFilename(osBaseName.c_str(), "mysubdir", nullptr);
+            EXPECT_EQ(VSIMkdir(osSubDir.c_str(), 0), 0);
+
+            // Check the subdirectory exists
+            {
+                VSIStatBufL sStat;
+                EXPECT_EQ(VSIStatL(osSubDir.c_str(), &sStat), 0);
+            }
+
+            // but not its hidden parent
+            {
+                VSIStatBufL sStat;
+                EXPECT_EQ(VSIStatL(osBaseName.c_str(), &sStat), -1);
+            }
+
+            // Create file within the subdirectory
+            VSIFCloseL(VSIFileFromMemBuffer(
+                CPLFormFilename(osSubDir.c_str(), "my.bin", nullptr),
+                abyDummyData, sizeof(abyDummyData), false));
+
+            {
+                // Check that we can list the subdirectory
+                const CPLStringList aosFiles(VSIReadDir(osSubDir.c_str()));
+                EXPECT_EQ(aosFiles.size(), 1);
+            }
+
+            {
+                // Check that we can list the root hidden dir if we know it exists
+                const CPLStringList aosFiles(
+                    VSIReadDir("/vsimem/.#!HIDDEN!#."));
+                EXPECT_EQ(aosFiles.size(), 3);
+            }
+        }
+
+        // Directly create a directory with the return of VSIMemGenerateHiddenFilename()
+        {
+            const std::string osDirname = VSIMemGenerateHiddenFilename(nullptr);
+            EXPECT_EQ(VSIMkdir(osDirname.c_str(), 0), 0);
+
+            // Check the subdirectory exists
+            {
+                VSIStatBufL sStat;
+                EXPECT_EQ(VSIStatL(osDirname.c_str(), &sStat), 0);
+            }
+
+            // Create file within the subdirectory
+            VSIFCloseL(VSIFileFromMemBuffer(
+                CPLFormFilename(osDirname.c_str(), "my.bin", nullptr),
+                abyDummyData, sizeof(abyDummyData), false));
+
+            {
+                // Check there's a file in this subdirectory
+                const CPLStringList aosFiles(VSIReadDir(osDirname.c_str()));
+                EXPECT_EQ(aosFiles.size(), 1);
+            }
+
+            EXPECT_EQ(VSIRmdirRecursive(osDirname.c_str()), 0);
+
+            {
+                // Check there's no longer any file in this subdirectory
+                const CPLStringList aosFiles(VSIReadDir(osDirname.c_str()));
+                EXPECT_EQ(aosFiles.size(), 0);
+            }
+
+            {
+                // Check that it no longer exists
+                VSIStatBufL sStat;
+                EXPECT_EQ(VSIStatL(osDirname.c_str(), &sStat), -1);
+            }
+        }
+
+        // Check that operations on "/vsimem/" do not interfere with hidden files
+        {
+            // Create regular file
+            VSIFCloseL(VSIFileFromMemBuffer("/vsimem/regular_file",
+                                            abyDummyData, sizeof(abyDummyData),
+                                            false));
+
+            // Check it is visible
+            EXPECT_EQ(CPLStringList(VSIReadDir("/vsimem/")).size(), 1);
+
+            // Clean root /vsimem/
+            VSIRmdirRecursive("/vsimem/");
+
+            // No more user files
+            EXPECT_TRUE(CPLStringList(VSIReadDir("/vsimem/")).empty());
+
+            // But still hidden files
+            EXPECT_TRUE(
+                !CPLStringList(VSIReadDir("/vsimem/.#!HIDDEN!#.")).empty());
+        }
+
+        // Clean-up hidden files
+        EXPECT_EQ(VSIRmdirRecursive("/vsimem/.#!HIDDEN!#."), 0);
+
+        {
+            // Check the root hidden dir is empty
+            const CPLStringList aosFiles(VSIReadDir("/vsimem/.#!HIDDEN!#."));
+            EXPECT_TRUE(aosFiles.empty());
+        }
+
+        EXPECT_EQ(VSIRmdirRecursive("/vsimem/.#!HIDDEN!#."), 0);
+    }
+
+    {
+        const std::string osFilename = VSIMemGenerateHiddenFilename("foo.bar");
+        const char *pszFilename = osFilename.c_str();
+        EXPECT_TRUE(STARTS_WITH(pszFilename, "/vsimem/.#!HIDDEN!#./"));
+        EXPECT_TRUE(ENDS_WITH(pszFilename, "/foo.bar"));
+    }
+}
 }  // namespace

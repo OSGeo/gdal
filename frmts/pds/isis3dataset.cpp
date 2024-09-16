@@ -3618,8 +3618,7 @@ void ISIS3Dataset::WriteLabel()
 
 CPLString ISIS3Dataset::SerializeAsPDL(const CPLJSONObject &oObj)
 {
-    CPLString osTmpFile(
-        CPLSPrintf("/vsimem/isis3_%p", oObj.GetInternalHandle()));
+    const CPLString osTmpFile(VSIMemGenerateHiddenFilename("isis3_pdl"));
     VSILFILE *fpTmp = VSIFOpenL(osTmpFile, "wb+");
     SerializeAsPDL(fpTmp, oObj);
     VSIFCloseL(fpTmp);

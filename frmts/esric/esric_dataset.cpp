@@ -896,9 +896,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
                  GUInt64(size), GUInt64(offset));
         return CE_Failure;
     }
-    CPLString magic;
-    // Should use some sort of unique
-    magic.Printf("/vsimem/esric_%p.tmp", this);
+    const CPLString magic(VSIMemGenerateHiddenFilename("esric.tmp"));
     auto mfh = VSIFileFromMemBuffer(magic.c_str(), fbuffer.data(), size, false);
     VSIFCloseL(mfh);
     // Can't open a raster by handle?

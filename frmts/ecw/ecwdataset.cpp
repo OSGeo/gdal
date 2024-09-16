@@ -2850,10 +2850,11 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
 /*      There are issues at least in the 5.x series.                    */
 /* -------------------------------------------------------------------- */
 #if ECWSDK_VERSION >= 40
+    constexpr const char *szDETECT_BUG_FILENAME =
+        "__detect_ecw_uint32_bug__.j2k";
     if (bIsJPEG2000 && poDS->eNCSRequestDataType == NCSCT_UINT32 &&
         CPLTestBool(CPLGetConfigOption("ECW_CHECK_CORRECT_DECODING", "TRUE")) &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename,
-                        "/vsimem/detect_ecw_uint32_bug"))
+        strstr(poOpenInfo->pszFilename, szDETECT_BUG_FILENAME) == nullptr)
     {
         static bool bUINT32_Ok = false;
         {
@@ -2878,7 +2879,7 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
                     0xDF, 0xFF, 0x7F, 0x5F, 0xFF, 0xD9};
 
                 const std::string osTmpFilename =
-                    CPLSPrintf("/vsimem/detect_ecw_uint32_bug_%p.j2k", poDS);
+                    VSIMemGenerateHiddenFilename(szDETECT_BUG_FILENAME);
                 VSIFCloseL(VSIFileFromMemBuffer(
                     osTmpFilename.c_str(),
                     const_cast<GByte *>(abyTestUInt32ImageData),

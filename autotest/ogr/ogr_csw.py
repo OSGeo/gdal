@@ -46,8 +46,13 @@ def module_disable_exceptions():
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def setup_and_cleanup():
+
+    vsimem_hidden_before = gdal.ReadDirRecursive("/vsimem/.#!HIDDEN!#.")
+
     with gdal.config_option("CPL_CURL_ENABLE_VSIMEM", "YES"):
         yield
+
+    assert gdal.ReadDirRecursive("/vsimem/.#!HIDDEN!#.") == vsimem_hidden_before
 
 
 ###############################################################################

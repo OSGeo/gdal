@@ -33,7 +33,6 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
@@ -54,7 +53,6 @@ typedef struct
     sqlite3_vfs *pDefaultVFS;
     pfnNotifyFileOpenedType pfn;
     void *pfnUserData;
-    int nCounter;
 } OGRSQLiteVFSAppDataStruct;
 
 #define GET_UNDERLYING_VFS(pVFS)                                               \
@@ -243,22 +241,19 @@ static const sqlite3_io_methods OGRSQLiteIOMethods = {
     nullptr,  // xUnfetch
 };
 
-static int OGRSQLiteVFSOpen(sqlite3_vfs *pVFS, const char *zName,
+static int OGRSQLiteVFSOpen(sqlite3_vfs *pVFS, const char *zNameIn,
                             sqlite3_file *pFile, int flags, int *pOutFlags)
 {
 #ifdef DEBUG_IO
-    CPLDebug("SQLITE", "OGRSQLiteVFSOpen(%s, %d)", zName ? zName : "(null)",
+    CPLDebug("SQLITE", "OGRSQLiteVFSOpen(%s, %d)", zNameIn ? zNameIn : "(null)",
              flags);
 #endif
 
     OGRSQLiteVFSAppDataStruct *pAppData =
         static_cast<OGRSQLiteVFSAppDataStruct *>(pVFS->pAppData);
 
-    if (zName == nullptr)
-    {
-        zName = CPLSPrintf("/vsimem/sqlite/%p_%d", pVFS,
-                           CPLAtomicInc(&(pAppData->nCounter)));
-    }
+    const std::string osName(
+        zNameIn ? zNameIn : VSIMemGenerateHiddenFilename("sqlitevfs"));
 
     OGRSQLiteFileStruct *pMyFile =
         reinterpret_cast<OGRSQLiteFileStruct *>(pFile);
@@ -266,17 +261,17 @@ static int OGRSQLiteVFSOpen(sqlite3_vfs *pVFS, const char *zName,
     pMyFile->bDeleteOnClose = FALSE;
     pMyFile->pszFilename = nullptr;
     if (flags & SQLITE_OPEN_READONLY)
-        pMyFile->fp = VSIFOpenL(zName, "rb");
+        pMyFile->fp = VSIFOpenL(osName.c_str(), "rb");
     else if (flags & SQLITE_OPEN_CREATE)
     {
         VSIStatBufL sStatBufL;
-        if (VSIStatExL(zName, &sStatBufL, VSI_STAT_EXISTS_FLAG) == 0)
-            pMyFile->fp = VSIFOpenL(zName, "rb+");
+        if (VSIStatExL(osName.c_str(), &sStatBufL, VSI_STAT_EXISTS_FLAG) == 0)
+            pMyFile->fp = VSIFOpenL(osName.c_str(), "rb+");
         else
-            pMyFile->fp = VSIFOpenL(zName, "wb+");
+            pMyFile->fp = VSIFOpenL(osName.c_str(), "wb+");
     }
     else if (flags & SQLITE_OPEN_READWRITE)
-        pMyFile->fp = VSIFOpenL(zName, "rb+");
+        pMyFile->fp = VSIFOpenL(osName.c_str(), "rb+");
     else
         pMyFile->fp = nullptr;
 
@@ -290,12 +285,12 @@ static int OGRSQLiteVFSOpen(sqlite3_vfs *pVFS, const char *zName,
     pfnNotifyFileOpenedType pfn = pAppData->pfn;
     if (pfn)
     {
-        pfn(pAppData->pfnUserData, zName, pMyFile->fp);
+        pfn(pAppData->pfnUserData, osName.c_str(), pMyFile->fp);
     }
 
     pMyFile->pMethods = &OGRSQLiteIOMethods;
     pMyFile->bDeleteOnClose = (flags & SQLITE_OPEN_DELETEONCLOSE);
-    pMyFile->pszFilename = CPLStrdup(zName);
+    pMyFile->pszFilename = CPLStrdup(osName.c_str());
 
     if (pOutFlags != nullptr)
         *pOutFlags = flags;
@@ -514,7 +509,6 @@ sqlite3_vfs *OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void *pfnUserData)
     pVFSAppData->pDefaultVFS = pDefaultVFS;
     pVFSAppData->pfn = pfn;
     pVFSAppData->pfnUserData = pfnUserData;
-    pVFSAppData->nCounter = 0;
 
     pMyVFS->iVersion = 2;
     pMyVFS->szOsFile = sizeof(OGRSQLiteFileStruct);

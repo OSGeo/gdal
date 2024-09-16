@@ -152,7 +152,8 @@ bool GMLASXSDCache::CacheAllGML321()
     CPLHTTPResult *psResult = CPLHTTPFetch(pszHTTPZIP, nullptr);
     if (psResult && psResult->nDataLen)
     {
-        const std::string osZIPFilename(CPLSPrintf("/vsimem/%p.zip", this));
+        const std::string osZIPFilename(
+            VSIMemGenerateHiddenFilename("temp.zip"));
         auto fpZIP =
             VSIFileFromMemBuffer(osZIPFilename.c_str(), psResult->pabyData,
                                  psResult->nDataLen, FALSE);
@@ -220,7 +221,8 @@ bool GMLASXSDCache::CacheAllISO20070417()
     CPLHTTPResult *psResult = CPLHTTPFetch(pszHTTPZIP, nullptr);
     if (psResult && psResult->nDataLen)
     {
-        const std::string osZIPFilename(CPLSPrintf("/vsimem/%p.zip", this));
+        const std::string osZIPFilename(
+            VSIMemGenerateHiddenFilename("temp.zip"));
         auto fpZIP =
             VSIFileFromMemBuffer(osZIPFilename.c_str(), psResult->pabyData,
                                  psResult->nDataLen, FALSE);
