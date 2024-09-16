@@ -46,8 +46,8 @@
 
 class S102Dataset final : public S100BaseDataset
 {
-    bool OpenQualityOfSurvey(GDALOpenInfo *poOpenInfo,
-                             const std::shared_ptr<GDALGroup> &poRootGroup);
+    bool OpenQuality(GDALOpenInfo *poOpenInfo,
+                     const std::shared_ptr<GDALGroup> &poRootGroup);
 
   public:
     explicit S102Dataset(const std::string &osFilename)
@@ -169,7 +169,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     std::string osFilename(poOpenInfo->pszFilename);
     bool bIsSubdataset = false;
-    bool bIsQualityOfSurvey = false;
+    bool bIsQuality = false;
     if (STARTS_WITH(poOpenInfo->pszFilename, "S102:"))
     {
         const CPLStringList aosTokens(
@@ -188,9 +188,10 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 // Default dataset
             }
-            else if (EQUAL(aosTokens[2], "QualityOfSurvey"))
+            else if (EQUAL(aosTokens[2], "QualityOfSurvey") ||  // < v3
+                     EQUAL(aosTokens[2], "QualityOfBathymetryCoverage"))  // v3
             {
-                bIsQualityOfSurvey = true;
+                bIsQuality = true;
             }
             else
             {
@@ -220,9 +221,9 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     const bool bNorthUp = CPLTestBool(
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
 
-    if (bIsQualityOfSurvey)
+    if (bIsQuality)
     {
-        if (!poDS->OpenQualityOfSurvey(poOpenInfo, poRootGroup))
+        if (!poDS->OpenQuality(poOpenInfo, poRootGroup))
             return nullptr;
 
         // Setup/check for pam .aux.xml.
@@ -376,12 +377,21 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     poDS->GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
 
-    auto poGroupQualityOfSurvey = poRootGroup->OpenGroup("QualityOfSurvey");
-    if (!bIsSubdataset && poGroupQualityOfSurvey)
+    auto poGroupQuality = poRootGroup->OpenGroup("QualityOfSurvey");
+    const bool bIsNamedQualityOfSurvey = poGroupQuality != nullptr;
+    if (!bIsNamedQualityOfSurvey)
     {
-        auto poGroupQualityOfSurvey01 =
-            poGroupQualityOfSurvey->OpenGroup("QualityOfSurvey.01");
-        if (poGroupQualityOfSurvey01)
+        // S102 v3 now uses QualityOfBathymetryCoverage instead of QualityOfSurvey
+        poGroupQuality = poRootGroup->OpenGroup("QualityOfBathymetryCoverage");
+    }
+    if (!bIsSubdataset && poGroupQuality)
+    {
+        const char *pszNameOfQualityGroup = bIsNamedQualityOfSurvey
+                                                ? "QualityOfSurvey"
+                                                : "QualityOfBathymetryCoverage";
+        auto poGroupQuality01 = poGroupQuality->OpenGroup(
+            CPLSPrintf("%s.01", pszNameOfQualityGroup));
+        if (poGroupQuality01)
         {
             poDS->GDALDataset::SetMetadataItem(
                 "SUBDATASET_1_NAME",
@@ -393,10 +403,12 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 
             poDS->GDALDataset::SetMetadataItem(
                 "SUBDATASET_2_NAME",
-                CPLSPrintf("S102:\"%s\":QualityOfSurvey", osFilename.c_str()),
+                CPLSPrintf("S102:\"%s\":%s", osFilename.c_str(),
+                           pszNameOfQualityGroup),
                 "SUBDATASETS");
             poDS->GDALDataset::SetMetadataItem(
-                "SUBDATASET_2_DESC", "Georeferenced metadata QualityOfSurvey",
+                "SUBDATASET_2_DESC",
+                CPLSPrintf("Georeferenced metadata %s", pszNameOfQualityGroup),
                 "SUBDATASETS");
         }
     }
@@ -412,34 +424,45 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       OpenQualityOfSurvey()                          */
+/*                       OpenQuality()                          */
 /************************************************************************/
 
-bool S102Dataset::OpenQualityOfSurvey(
-    GDALOpenInfo *poOpenInfo, const std::shared_ptr<GDALGroup> &poRootGroup)
+bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,
+                              const std::shared_ptr<GDALGroup> &poRootGroup)
 {
     const bool bNorthUp = CPLTestBool(
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
 
-    auto poGroupQualityOfSurvey = poRootGroup->OpenGroup("QualityOfSurvey");
-    if (!poGroupQualityOfSurvey)
+    const char *pszNameOfQualityGroup = "QualityOfSurvey";
+    auto poGroupQuality = poRootGroup->OpenGroup(pszNameOfQualityGroup);
+    if (!poGroupQuality)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find group /QualityOfSurvey");
+        pszNameOfQualityGroup = "QualityOfBathymetryCoverage";
+        poGroupQuality = poRootGroup->OpenGroup(pszNameOfQualityGroup);
+        if (!poGroupQuality)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot find group /QualityOfSurvey or "
+                     "/QualityOfBathymetryCoverage");
+            return false;
+        }
+    }
+
+    const std::string osQuality01Name =
+        std::string(pszNameOfQualityGroup).append(".01");
+    const std::string osQuality01FullName = std::string("/")
+                                                .append(pszNameOfQualityGroup)
+                                                .append("/")
+                                                .append(osQuality01Name);
+    auto poGroupQuality01 = poGroupQuality->OpenGroup(osQuality01Name);
+    if (!poGroupQuality01)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find group %s",
+                 osQuality01FullName.c_str());
         return false;
     }
 
-    auto poGroupQualityOfSurvey01 =
-        poGroupQualityOfSurvey->OpenGroup("QualityOfSurvey.01");
-    if (!poGroupQualityOfSurvey01)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find group /QualityOfSurvey/QualityOfSurvey.01");
-        return false;
-    }
-
-    if (auto poStartSequence =
-            poGroupQualityOfSurvey01->GetAttribute("startSequence"))
+    if (auto poStartSequence = poGroupQuality01->GetAttribute("startSequence"))
     {
         const char *pszStartSequence = poStartSequence->ReadAsString();
         if (pszStartSequence && !EQUAL(pszStartSequence, "0,0"))
@@ -452,15 +475,14 @@ bool S102Dataset::OpenQualityOfSurvey(
     }
 
     // Compute geotransform
-    m_bHasGT = S100GetGeoTransform(poGroupQualityOfSurvey01.get(),
-                                   m_adfGeoTransform, bNorthUp);
+    m_bHasGT = S100GetGeoTransform(poGroupQuality01.get(), m_adfGeoTransform,
+                                   bNorthUp);
 
-    auto poGroup001 = poGroupQualityOfSurvey01->OpenGroup("Group_001");
+    auto poGroup001 = poGroupQuality01->OpenGroup("Group_001");
     if (!poGroup001)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Cannot find group /QualityOfSurvey/QualityOfSurvey.01/Group_001");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find group %s/Group_001",
+                 osQuality01FullName.c_str());
         return false;
     }
 
@@ -469,14 +491,42 @@ bool S102Dataset::OpenQualityOfSurvey(
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find array "
-                 "/QualityOfSurvey/QualityOfSurvey.01/Group_001/values");
+                 "%s/Group_001/values",
+                 osQuality01FullName.c_str());
         return false;
     }
 
     {
         const auto &oType = poValuesArray->GetDataType();
-        if (oType.GetClass() != GEDTC_NUMERIC &&
-            oType.GetNumericDataType() != GDT_UInt32)
+        if (oType.GetClass() == GEDTC_NUMERIC &&
+            oType.GetNumericDataType() == GDT_UInt32)
+        {
+            // ok
+        }
+        else if (oType.GetClass() == GEDTC_COMPOUND &&
+                 oType.GetComponents().size() == 1 &&
+                 oType.GetComponents()[0]->GetType().GetClass() ==
+                     GEDTC_NUMERIC &&
+                 oType.GetComponents()[0]->GetType().GetNumericDataType() ==
+                     GDT_UInt32)
+        {
+            // seen in a S102 v3 product (102DE00CA22_UNC_MD.H5), although
+            // I believe this is non-conformant.
+
+            // Escape potentials single-quote and double-quote with back-slash
+            const auto osEscapedCompName =
+                CPLString(oType.GetComponents()[0]->GetName())
+                    .replaceAll("\\", "\\\\")
+                    .replaceAll("'", "\\'")
+                    .replaceAll("\"", "\\\"");
+
+            // Gets a view with that single component extracted.
+            poValuesArray = poValuesArray->GetView(
+                std::string("['").append(osEscapedCompName).append("']"));
+            if (!poValuesArray)
+                return false;
+        }
+        else
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Unsupported data type for %s",
@@ -494,11 +544,12 @@ bool S102Dataset::OpenQualityOfSurvey(
     }
 
     auto poFeatureAttributeTable =
-        poGroupQualityOfSurvey->OpenMDArray("featureAttributeTable");
+        poGroupQuality->OpenMDArray("featureAttributeTable");
     if (!poFeatureAttributeTable)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find array /QualityOfSurvey/featureAttributeTable");
+                 "Cannot find array /%s/featureAttributeTable",
+                 pszNameOfQualityGroup);
         return false;
     }
 
@@ -527,6 +578,8 @@ bool S102Dataset::OpenQualityOfSurvey(
 
     auto poDS =
         std::unique_ptr<GDALDataset>(poValuesArray->AsClassicDataset(1, 0));
+    if (!poDS)
+        return false;
 
     nRasterXSize = poDS->GetRasterXSize();
     nRasterYSize = poDS->GetRasterYSize();

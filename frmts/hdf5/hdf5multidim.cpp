@@ -1070,17 +1070,28 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
     }
 
     // Special case for S102 QualityOfSurvey nodata value that is typically at 0
-    if (GetFullName() ==
-            "/QualityOfSurvey/QualityOfSurvey.01/Group_001/values" &&
-        m_dt.GetClass() == GEDTC_NUMERIC &&
-        m_dt.GetNumericDataType() == GDT_UInt32)
+    const bool bIsQualityOfSurvey =
+        (GetFullName() ==
+         "/QualityOfSurvey/QualityOfSurvey.01/Group_001/values");
+    const bool bIsQualityOfBathymetryCoverage =
+        (GetFullName() == "/QualityOfBathymetryCoverage/"
+                          "QualityOfBathymetryCoverage.01/Group_001/values");
+    if ((bIsQualityOfSurvey || bIsQualityOfBathymetryCoverage) &&
+        ((m_dt.GetClass() == GEDTC_NUMERIC &&
+          m_dt.GetNumericDataType() == GDT_UInt32) ||
+         (m_dt.GetClass() == GEDTC_COMPOUND &&
+          m_dt.GetComponents().size() == 1 &&
+          m_dt.GetComponents()[0]->GetType().GetClass() == GEDTC_NUMERIC &&
+          m_dt.GetComponents()[0]->GetType().GetNumericDataType() ==
+              GDT_UInt32)))
     {
         if (auto poRootGroup = HDF5Array::GetRootGroup())
         {
             if (const auto poGroupF = poRootGroup->OpenGroup("Group_F"))
             {
-                const auto poGroupFArray =
-                    poGroupF->OpenMDArray("QualityOfSurvey");
+                const auto poGroupFArray = poGroupF->OpenMDArray(
+                    bIsQualityOfSurvey ? "QualityOfSurvey"
+                                       : "QualityOfBathymetryCoverage");
                 if (poGroupFArray &&
                     poGroupFArray->GetDataType().GetClass() == GEDTC_COMPOUND &&
                     poGroupFArray->GetDataType().GetComponents().size() == 8 &&
