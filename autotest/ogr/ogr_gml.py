@@ -4626,3 +4626,18 @@ def test_ogr_gml_get_layers_by_name_from_imported_schema_more_tests(tmp_path):
     assert isinstance(
         dat_erst, list
     ), f"Expected 'dat_erst' to be of type 'list', but got {type(dat_erst)}"
+
+
+###############################################################################
+# Test force opening a GML file
+
+
+def test_ogr_gml_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gml")
+    gdal.FileFromMemBuffer(filename, open("data/nas/empty_nas.xml", "rb").read())
+
+    # Would be opened by NAS driver if not forced
+    with gdal.config_option("NAS_GFS_TEMPLATE", ""):
+        ds = gdal.OpenEx(filename, allowed_drivers=["GML"])
+        assert ds.GetDriver().GetDescription() == "GML"
