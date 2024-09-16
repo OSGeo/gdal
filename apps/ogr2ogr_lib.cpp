@@ -43,6 +43,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <unordered_set>
 #include <string>
@@ -1205,6 +1206,14 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
 
     virtual OGRCoordinateTransformation *GetInverse() const override
     {
+        static std::once_flag flag;
+        std::call_once(flag,
+                       []()
+                       {
+                           CPLDebug("OGR2OGR",
+                                    "GCPCoordTransformation::GetInverse() "
+                                    "called, but not implemented");
+                       });
         return nullptr;
     }
 };
@@ -1292,7 +1301,21 @@ class CompositeCT : public OGRCoordinateTransformation
 
     virtual OGRCoordinateTransformation *GetInverse() const override
     {
-        return nullptr;
+        if (!poCT1 && !poCT2)
+            return nullptr;
+        if (!poCT2)
+            return poCT1->GetInverse();
+        if (!poCT1)
+            return poCT2->GetInverse();
+        auto poInvCT1 =
+            std::unique_ptr<OGRCoordinateTransformation>(poCT1->GetInverse());
+        auto poInvCT2 =
+            std::unique_ptr<OGRCoordinateTransformation>(poCT2->GetInverse());
+        if (!poInvCT1 || !poInvCT2)
+            return nullptr;
+        return std::make_unique<CompositeCT>(poInvCT2.release(), true,
+                                             poInvCT1.release(), true)
+            .release();
     }
 };
 
@@ -1302,9 +1325,14 @@ class CompositeCT : public OGRCoordinateTransformation
 
 class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
 {
-  public:
     bool bSwapXY = false;
 
+    explicit AxisMappingCoordinateTransformation(bool bSwapXYIn)
+        : bSwapXY(bSwapXYIn)
+    {
+    }
+
+  public:
     AxisMappingCoordinateTransformation(const std::vector<int> &mappingIn,
                                         const std::vector<int> &mappingOut)
     {
@@ -1360,7 +1388,7 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
 
     virtual OGRCoordinateTransformation *GetInverse() const override
     {
-        return nullptr;
+        return new AxisMappingCoordinateTransformation(bSwapXY);
     }
 };
 

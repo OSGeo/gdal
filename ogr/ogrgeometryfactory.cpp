@@ -3302,15 +3302,15 @@ static void AlterPole(OGRGeometry *poGeom, OGRPoint *poPole,
 }
 
 /************************************************************************/
-/*                          IsPolarToWGS84()                            */
+/*                        IsPolarToGeographic()                         */
 /*                                                                      */
 /* Returns true if poCT transforms from a projection that includes one  */
 /* of the pole in a continuous way.                                     */
 /************************************************************************/
 
-static bool IsPolarToWGS84(OGRCoordinateTransformation *poCT,
-                           OGRCoordinateTransformation *poRevCT,
-                           bool &bIsNorthPolarOut)
+static bool IsPolarToGeographic(OGRCoordinateTransformation *poCT,
+                                OGRCoordinateTransformation *poRevCT,
+                                bool &bIsNorthPolarOut)
 {
     bool bIsNorthPolar = false;
     bool bIsSouthPolar = false;
@@ -3366,14 +3366,14 @@ static bool IsPolarToWGS84(OGRCoordinateTransformation *poCT,
 }
 
 /************************************************************************/
-/*                     TransformBeforePolarToWGS84()                    */
+/*                 TransformBeforePolarToGeographic()                   */
 /*                                                                      */
 /* Transform the geometry (by intersection), so as to cut each geometry */
 /* that crosses the pole, in 2 parts. Do also tricks for geometries     */
 /* that just touch the pole.                                            */
 /************************************************************************/
 
-static std::unique_ptr<OGRGeometry> TransformBeforePolarToWGS84(
+static std::unique_ptr<OGRGeometry> TransformBeforePolarToGeographic(
     OGRCoordinateTransformation *poRevCT, bool bIsNorthPolar,
     std::unique_ptr<OGRGeometry> poDstGeom, bool &bNeedPostCorrectionOut)
 {
@@ -3449,15 +3449,15 @@ static std::unique_ptr<OGRGeometry> TransformBeforePolarToWGS84(
 }
 
 /************************************************************************/
-/*                        IsAntimeridianProjToWGS84()                   */
+/*                   IsAntimeridianProjToGeographic()                   */
 /*                                                                      */
 /* Returns true if poCT transforms from a projection that includes the  */
 /* antimeridian in a continuous way.                                    */
 /************************************************************************/
 
-static bool IsAntimeridianProjToWGS84(OGRCoordinateTransformation *poCT,
-                                      OGRCoordinateTransformation *poRevCT,
-                                      OGRGeometry *poDstGeometry)
+static bool IsAntimeridianProjToGeographic(OGRCoordinateTransformation *poCT,
+                                           OGRCoordinateTransformation *poRevCT,
+                                           OGRGeometry *poDstGeometry)
 {
     const bool bBackupEmitErrors = poCT->GetEmitErrors();
     poRevCT->SetEmitErrors(false);
@@ -3633,13 +3633,13 @@ struct SortPointsByAscendingY
 };
 
 /************************************************************************/
-/*                  TransformBeforeAntimeridianToWGS84()                */
+/*              TransformBeforeAntimeridianToGeographic()               */
 /*                                                                      */
 /* Transform the geometry (by intersection), so as to cut each geometry */
 /* that crosses the antimeridian, in 2 parts.                           */
 /************************************************************************/
 
-static std::unique_ptr<OGRGeometry> TransformBeforeAntimeridianToWGS84(
+static std::unique_ptr<OGRGeometry> TransformBeforeAntimeridianToGeographic(
     OGRCoordinateTransformation *poCT, OGRCoordinateTransformation *poRevCT,
     std::unique_ptr<OGRGeometry> poDstGeom, bool &bNeedPostCorrectionOut)
 {
@@ -3820,9 +3820,22 @@ static void SnapCoordsCloseToLatLongBounds(OGRGeometry *poGeom)
 
 struct OGRGeometryFactory::TransformWithOptionsCache::Private
 {
+    const OGRSpatialReference *poSourceCRS = nullptr;
+    const OGRSpatialReference *poTargetCRS = nullptr;
+    const OGRCoordinateTransformation *poCT = nullptr;
     std::unique_ptr<OGRCoordinateTransformation> poRevCT{};
     bool bIsPolar = false;
     bool bIsNorthPolar = false;
+
+    void clear()
+    {
+        poSourceCRS = nullptr;
+        poTargetCRS = nullptr;
+        poCT = nullptr;
+        poRevCT.reset();
+        bIsPolar = false;
+        bIsNorthPolar = false;
+    }
 };
 
 /************************************************************************/
@@ -3858,52 +3871,76 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
     char **papszOptions, CPL_UNUSED const TransformWithOptionsCache &cache)
 {
     auto poDstGeom = std::unique_ptr<OGRGeometry>(poSrcGeom->clone());
-    if (poCT != nullptr)
+    if (poCT)
     {
 #ifdef HAVE_GEOS
         bool bNeedPostCorrection = false;
-
-        auto poSourceCRS = poCT->GetSourceCS();
-        auto poTargetCRS = poCT->GetTargetCS();
-        if (poSourceCRS != nullptr && poTargetCRS != nullptr &&
-            poSourceCRS->IsProjected() && poTargetCRS->IsGeographic())
+        const auto poSourceCRS = poCT->GetSourceCS();
+        const auto poTargetCRS = poCT->GetTargetCS();
+        const auto eSrcGeomType = wkbFlatten(poSrcGeom->getGeometryType());
+        // Check if we are transforming from projected coordinates to
+        // geographic coordinates, with a chance that there might be polar or
+        // anti-meridian discontinuities. If so, create the inverse transform.
+        if (eSrcGeomType != wkbPoint && eSrcGeomType != wkbMultiPoint &&
+            (poSourceCRS != cache.d->poSourceCRS ||
+             poTargetCRS != cache.d->poTargetCRS || poCT != cache.d->poCT))
         {
-            OGRSpatialReference oSRSWGS84;
-            oSRSWGS84.SetWellKnownGeogCS("WGS84");
-            oSRSWGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            if (poTargetCRS->IsSame(&oSRSWGS84))
+            cache.d->clear();
+            cache.d->poSourceCRS = poSourceCRS;
+            cache.d->poTargetCRS = poTargetCRS;
+            cache.d->poCT = poCT;
+            if (poSourceCRS && poTargetCRS && poSourceCRS->IsProjected() &&
+                poTargetCRS->IsGeographic() &&
+                poTargetCRS->GetAxisMappingStrategy() ==
+                    OAMS_TRADITIONAL_GIS_ORDER &&
+                // check that angular units is degree
+                std::fabs(poTargetCRS->GetAngularUnits(nullptr) -
+                          CPLAtof(SRS_UA_DEGREE_CONV)) <=
+                    1e-8 * CPLAtof(SRS_UA_DEGREE_CONV))
             {
-                if (cache.d->poRevCT == nullptr ||
-                    !cache.d->poRevCT->GetTargetCS()->IsSame(poSourceCRS))
+                double dfWestLong = 0.0;
+                double dfSouthLat = 0.0;
+                double dfEastLong = 0.0;
+                double dfNorthLat = 0.0;
+                if (poSourceCRS->GetAreaOfUse(&dfWestLong, &dfSouthLat,
+                                              &dfEastLong, &dfNorthLat,
+                                              nullptr) &&
+                    !(dfSouthLat == -90.0 || dfNorthLat == 90.0 ||
+                      dfWestLong == -180.0 || dfEastLong == 180.0 ||
+                      dfWestLong > dfEastLong))
+                {
+                    // Not a global geographic CRS
+                }
+                else
                 {
                     cache.d->poRevCT.reset(OGRCreateCoordinateTransformation(
-                        &oSRSWGS84, poSourceCRS));
+                        poTargetCRS, poSourceCRS));
                     cache.d->bIsNorthPolar = false;
                     cache.d->bIsPolar = false;
+                    cache.d->poRevCT.reset(poCT->GetInverse());
                     if (cache.d->poRevCT &&
-                        IsPolarToWGS84(poCT, cache.d->poRevCT.get(),
-                                       cache.d->bIsNorthPolar))
+                        IsPolarToGeographic(poCT, cache.d->poRevCT.get(),
+                                            cache.d->bIsNorthPolar))
                     {
                         cache.d->bIsPolar = true;
                     }
                 }
-                auto poRevCT = cache.d->poRevCT.get();
-                if (poRevCT != nullptr)
-                {
-                    if (cache.d->bIsPolar)
-                    {
-                        poDstGeom = TransformBeforePolarToWGS84(
-                            poRevCT, cache.d->bIsNorthPolar,
-                            std::move(poDstGeom), bNeedPostCorrection);
-                    }
-                    else if (IsAntimeridianProjToWGS84(poCT, poRevCT,
-                                                       poDstGeom.get()))
-                    {
-                        poDstGeom = TransformBeforeAntimeridianToWGS84(
-                            poCT, poRevCT, std::move(poDstGeom),
-                            bNeedPostCorrection);
-                    }
-                }
+            }
+        }
+
+        if (auto poRevCT = cache.d->poRevCT.get())
+        {
+            if (cache.d->bIsPolar)
+            {
+                poDstGeom = TransformBeforePolarToGeographic(
+                    poRevCT, cache.d->bIsNorthPolar, std::move(poDstGeom),
+                    bNeedPostCorrection);
+            }
+            else if (IsAntimeridianProjToGeographic(poCT, poRevCT,
+                                                    poDstGeom.get()))
+            {
+                poDstGeom = TransformBeforeAntimeridianToGeographic(
+                    poCT, poRevCT, std::move(poDstGeom), bNeedPostCorrection);
             }
         }
 #endif
