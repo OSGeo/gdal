@@ -136,7 +136,7 @@ ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
 // calculate the height adjustment factor.
 double ViewshedExecutor::calcHeightAdjFactor()
 {
-    std::lock_guard g(iMutex);
+    std::lock_guard g(oMutex);
 
     const OGRSpatialReference *poDstSRS =
         m_dstBand.GetDataset()->GetSpatialRef();
