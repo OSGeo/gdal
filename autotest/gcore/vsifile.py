@@ -702,6 +702,15 @@ def test_vsifile_14():
 
 
 ###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/10821
+
+
+def test_vsifile_vsitar_of_vsitar():
+
+    gdal.Open("/vsitar/{/vsitar/data/tar_of_tar_gzip.tar}/byte_tif.tar.gz/byte.tif")
+
+
+###############################################################################
 # Test issue with Error() not detecting end of corrupted gzip stream (#6944)
 
 
