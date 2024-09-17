@@ -186,11 +186,8 @@ bool CPLWorkerThreadPool::SubmitJob(std::function<void()> task)
     if (static_cast<int>(aWT.size()) < m_nMaxThreads)
     {
         // CPLDebug("CPL", "Starting new thread...");
-        std::unique_ptr<CPLWorkerThread> wt(new CPLWorkerThread);
-        wt->pfnInitFunc = nullptr;
-        wt->pInitData = nullptr;
+        auto wt = std::make_unique<CPLWorkerThread>();
         wt->poTP = this;
-        wt->bMarkedAsWaiting = false;
         //ABELL - Why should this fail? And this is a *pool* thread, not necessarily
         //  tied to the submitted job. The submitted job still needs to run, even if
         //  this fails. If we can't create a thread, should the entire pool become invalid?
@@ -279,10 +276,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
         if (static_cast<int>(aWT.size()) < m_nMaxThreads)
         {
             std::unique_ptr<CPLWorkerThread> wt(new CPLWorkerThread);
-            wt->pfnInitFunc = nullptr;
-            wt->pInitData = nullptr;
             wt->poTP = this;
-            wt->bMarkedAsWaiting = false;
             wt->hThread =
                 CPLCreateJoinableThread(WorkerThreadFunction, wt.get());
             if (wt->hThread == nullptr)
@@ -425,10 +419,6 @@ bool CPLWorkerThreadPool::Setup(int nThreads, CPLThreadFunc pfnInitFunc,
         wt->pfnInitFunc = pfnInitFunc;
         wt->pInitData = pasInitData ? pasInitData[i] : nullptr;
         wt->poTP = this;
-        {
-            std::lock_guard<std::mutex> oGuard(wt->m_mutex);
-            wt->bMarkedAsWaiting = false;
-        }
         wt->hThread = CPLCreateJoinableThread(WorkerThreadFunction, wt.get());
         if (wt->hThread == nullptr)
         {
@@ -529,10 +519,7 @@ CPLWorkerThreadPool::GetNextJob(CPLWorkerThread *psWorkerThread)
         std::unique_lock<std::mutex> oGuardThisThread(psWorkerThread->m_mutex);
         // coverity[uninit_use_in_call]
         oGuard.unlock();
-        while (psWorkerThread->bMarkedAsWaiting && eState != CPLWTS_STOP)
-        {
-            psWorkerThread->m_cv.wait(oGuardThisThread);
-        }
+        psWorkerThread->m_cv.wait(oGuardThisThread);
     }
 }
 
