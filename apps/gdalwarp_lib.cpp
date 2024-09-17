@@ -4428,10 +4428,14 @@ static GDALDatasetH GDALWarpCreateOutput(
             nPixels = static_cast<int>((psOptions->dfMaxX - psOptions->dfMinX +
                                         (psOptions->dfXRes / 2.0)) /
                                        psOptions->dfXRes);
+            if (nPixels == 0)
+                nPixels = 1;
             nLines = static_cast<int>(
                 (std::fabs(psOptions->dfMaxY - psOptions->dfMinY) +
                  (psOptions->dfYRes / 2.0)) /
                 psOptions->dfYRes);
+            if (nLines == 0)
+                nLines = 1;
             adfDstGeoTransform[0] = psOptions->dfMinX;
             adfDstGeoTransform[3] = psOptions->dfMaxY;
             adfDstGeoTransform[1] = psOptions->dfXRes;
@@ -4445,7 +4449,7 @@ static GDALDatasetH GDALWarpCreateOutput(
         {
             // Try to detect if the edge of the raster would be blank
             // Cf https://github.com/OSGeo/gdal/issues/7905
-            while (true)
+            while (nPixels > 1 || nLines > 1)
             {
                 UpdateGeoTransformandAndPixelLines();
 
@@ -4547,18 +4551,30 @@ static GDALDatasetH GDALWarpCreateOutput(
 
                 if (bTopBlankLine)
                 {
+                    if (psOptions->dfMaxY - psOptions->dfMinY <=
+                        2 * psOptions->dfYRes)
+                        break;
                     psOptions->dfMaxY -= psOptions->dfYRes;
                 }
                 if (bBottomBlankLine)
                 {
+                    if (psOptions->dfMaxY - psOptions->dfMinY <=
+                        2 * psOptions->dfYRes)
+                        break;
                     psOptions->dfMinY += psOptions->dfYRes;
                 }
                 if (bLeftBlankCol)
                 {
+                    if (psOptions->dfMaxX - psOptions->dfMinX <=
+                        2 * psOptions->dfXRes)
+                        break;
                     psOptions->dfMinX += psOptions->dfXRes;
                 }
                 if (bRightBlankCol)
                 {
+                    if (psOptions->dfMaxX - psOptions->dfMinX <=
+                        2 * psOptions->dfXRes)
+                        break;
                     psOptions->dfMaxX -= psOptions->dfXRes;
                 }
             }
