@@ -20,7 +20,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#pragma once
+#ifndef VIEWSHED_UTIL_H_INCLUDED
+#define VIEWSHED_UTIL_H_INCLUDED
 
 #include "viewshed_types.h"
 
@@ -36,3 +37,5 @@ DatasetPtr createOutputDataset(GDALRasterBand &srcBand, const Options &opts,
 
 }  // namespace viewshed
 }  // namespace gdal
+
+#endif

@@ -20,7 +20,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#pragma once
+#ifndef VIEWSHED_PROGRESS_H_INCLUDED
+#define VIEWSHED_PROGRESS_H_INCLUDED
 
 #include <functional>
 #include <mutex>
@@ -54,3 +55,5 @@ class Progress
 
 }  // namespace viewshed
 }  // namespace gdal
+
+#endif

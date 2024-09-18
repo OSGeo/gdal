@@ -19,7 +19,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#pragma once
+
+#ifndef VIEWSHED_NOTIFYQUEUE_H_INCLUDED
+#define VIEWSHED_NOTIFYQUEUE_H_INCLUDED
+
+#include "cpl_port.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -134,3 +138,5 @@ template <class T> class NotifyQueue
 
 }  // namespace viewshed
 }  // namespace gdal
+
+#endif
