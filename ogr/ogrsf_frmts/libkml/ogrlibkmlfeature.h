@@ -45,13 +45,13 @@ kmldom::FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS,
 ******************************************************************************/
 
 OGRFeature *kml2feat(kmldom::PlacemarkPtr poKmlPlacemark,
-                     OGRLIBKMLDataSource *poOgrDS, OGRLayer *poOgrLayer,
+                     OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
                      OGRFeatureDefn *poOgrFeatDefn,
                      OGRSpatialReference *poOgrSRS);
 
 OGRFeature *kmlgroundoverlay2feat(kmldom::GroundOverlayPtr poKmlOverlay,
                                   OGRLIBKMLDataSource *poOgrDS,
-                                  OGRLayer *poOgrLayer,
+                                  OGRLIBKMLLayer *poOgrLayer,
                                   OGRFeatureDefn *poOgrFeatDefn,
                                   OGRSpatialReference *poOgrSRS);
 

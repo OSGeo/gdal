@@ -273,7 +273,7 @@ static char *OGRLIBKMLSanitizeUTF8String(const char *pszString)
 
 void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
                KmlFactory *poKmlFactory, FeaturePtr poKmlFeature,
-               int bUseSimpleFieldIn)
+               int bUseSimpleFieldIn, const fieldconfig &oFC)
 {
     const bool bUseSimpleField = CPL_TO_BOOL(bUseSimpleFieldIn);
     SchemaDataPtr poKmlSchemaData = nullptr;
@@ -292,10 +292,6 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
             poKmlSchemaData->set_schemaurl(oKmlSchemaURL);
         }
     }
-
-    /***** Get the field config *****/
-    struct fieldconfig oFC;
-    get_fieldconfig(&oFC);
 
     TimeSpanPtr poKmlTimeSpan = nullptr;
 
@@ -338,6 +334,13 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
                     continue;
                 }
 
+                /***** id *****/
+                if (EQUAL(name, oFC.idfield))
+                {
+                    poKmlFeature->set_id(pszUTF8String);
+                    CPLFree(pszUTF8String);
+                    continue;
+                }
                 /***** name *****/
                 if (EQUAL(name, oFC.namefield))
                 {
@@ -1157,13 +1160,19 @@ static void kmldatetime2ogr(OGRFeature *poOgrFeat, const char *pszOGRField,
  function to read kml into ogr fields
 ******************************************************************************/
 
-void kml2field(OGRFeature *poOgrFeat, FeaturePtr poKmlFeature)
+void kml2field(OGRFeature *poOgrFeat, FeaturePtr poKmlFeature,
+               const fieldconfig &oFC)
 {
-    /***** get the field config *****/
+    /***** id *****/
 
-    struct fieldconfig oFC;
-    get_fieldconfig(&oFC);
+    if (poKmlFeature->has_id())
+    {
+        const std::string oKmlId = poKmlFeature->get_id();
+        int iField = poOgrFeat->GetFieldIndex(oFC.idfield);
 
+        if (iField > -1)
+            poOgrFeat->SetField(iField, oKmlId.c_str());
+    }
     /***** name *****/
 
     if (poKmlFeature->has_name())
@@ -1552,15 +1561,13 @@ void kml2field(OGRFeature *poOgrFeat, FeaturePtr poKmlFeature)
 ******************************************************************************/
 
 SimpleFieldPtr FieldDef2kml(const OGRFieldDefn *poOgrFieldDef,
-                            KmlFactory *poKmlFactory, bool bApproxOK)
+                            KmlFactory *poKmlFactory, bool bApproxOK,
+                            const fieldconfig &oFC)
 {
-    /***** Get the field config. *****/
-    struct fieldconfig oFC;
-    get_fieldconfig(&oFC);
-
     const char *pszFieldName = poOgrFieldDef->GetNameRef();
 
-    if (EQUAL(pszFieldName, oFC.namefield) ||
+    if (EQUAL(pszFieldName, oFC.idfield) ||
+        EQUAL(pszFieldName, oFC.namefield) ||
         EQUAL(pszFieldName, oFC.descfield) ||
         EQUAL(pszFieldName, oFC.tsfield) ||
         EQUAL(pszFieldName, oFC.beginfield) ||
@@ -1724,6 +1731,7 @@ void kml2FeatureDef(SchemaPtr poKmlSchema, OGRFeatureDefn *poOgrFeatureDefn)
 
 void get_fieldconfig(struct fieldconfig *oFC)
 {
+    oFC->idfield = CPLGetConfigOption("LIBKML_ID_FIELD", "id");
     oFC->namefield = CPLGetConfigOption("LIBKML_NAME_FIELD", "Name");
     oFC->descfield =
         CPLGetConfigOption("LIBKML_DESCRIPTION_FIELD", "description");

@@ -347,8 +347,7 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
                 bool bError;
                 {
                     CPLErrorStateBackuper oErrorStateBackuper;
-                    bError = !poOgrGeom->IsValid() ||
-                             CPLGetLastErrorType() != CE_None;
+                    bError = !poOgrGeom->IsValid();
                 }
                 if (bError)
                 {
@@ -390,8 +389,7 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
                 bool bError;
                 {
                     CPLErrorStateBackuper oErrorStateBackuper;
-                    bError = !poOgrGeom->IsValid() ||
-                             CPLGetLastErrorType() != CE_None;
+                    bError = !poOgrGeom->IsValid();
                 }
                 if (bError)
                 {

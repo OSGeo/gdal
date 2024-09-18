@@ -33,6 +33,7 @@
 #include "ogrsf_frmts.h"
 
 #include "libkml_headers.h"
+#include "fieldconfig.h"
 
 #include <map>
 
@@ -47,18 +48,20 @@ CPLString OGRLIBKMLGetSanitizedNCName(const char *pszName);
 class OGRLIBKMLLayer final : public OGRLayer,
                              public OGRGetNextFeatureThroughRaw<OGRLIBKMLLayer>
 {
-    int bUpdate;
+    int bUpdate = false;
 
-    int nFeatures;
-    int iFeature;
-    long nFID;
+    int nFeatures = 0;
+    int iFeature = 0;
+    GIntBig nFID = 1;
     const char *m_pszName;
     const char *m_pszFileName;
+    std::string m_osSanitizedNCName;
 
     kmldom::ContainerPtr m_poKmlLayer;
     kmldom::ElementPtr m_poKmlLayerRoot;
     kmldom::UpdatePtr m_poKmlUpdate;
 
+    fieldconfig m_oFieldConfig;
     OGRLIBKMLDataSource *m_poOgrDS;
     OGRFeatureDefn *m_poOgrFeatureDefn;
     kmldom::SchemaPtr m_poKmlSchema;
@@ -84,6 +87,11 @@ class OGRLIBKMLLayer final : public OGRLayer,
 
     bool m_bUpdateIsFolder;
 
+    bool m_bAllReadAtLeastOnce = false;
+    std::map<GIntBig, std::string> m_oMapOGRIdToKmlId{};
+    std::map<std::string, GIntBig> m_oMapKmlIdToOGRId{};
+
+    void ScanAllFeatures();
     OGRFeature *GetNextRawFeature();
 
   public:
@@ -159,6 +167,11 @@ class OGRLIBKMLLayer final : public OGRLayer,
     const char *GetFileName()
     {
         return m_pszFileName;
+    }
+
+    const fieldconfig &GetFieldConfig() const
+    {
+        return m_oFieldConfig;
     }
 
     void SetLookAt(const char *pszLookatLongitude,
