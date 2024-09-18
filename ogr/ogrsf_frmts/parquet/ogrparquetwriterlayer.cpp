@@ -1281,6 +1281,28 @@ bool OGRParquetWriterLayer::IsArrowSchemaSupported(
         osErrorMsg = "float16 not supported";
         return false;
     }
+    if (schema->format[0] == 'v' && schema->format[1] == 'u')
+    {
+        osErrorMsg = "StringView not supported";
+        return false;
+    }
+    if (schema->format[0] == 'v' && schema->format[1] == 'z')
+    {
+        osErrorMsg = "BinaryView not supported";
+        return false;
+    }
+    if (schema->format[0] == '+' && schema->format[1] == 'v' &&
+        schema->format[1] == 'l')
+    {
+        osErrorMsg = "ListView not supported";
+        return false;
+    }
+    if (schema->format[0] == '+' && schema->format[1] == 'v' &&
+        schema->format[1] == 'L')
+    {
+        osErrorMsg = "LargeListView not supported";
+        return false;
+    }
     for (int64_t i = 0; i < schema->n_children; ++i)
     {
         if (!IsArrowSchemaSupported(schema->children[i], papszOptions,
