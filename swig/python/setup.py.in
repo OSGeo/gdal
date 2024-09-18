@@ -321,6 +321,14 @@ class gdal_ext(build_ext):
         # the Extension() instantiations below because we want to use the same
         # logic to resolve the location of gdal-config throughout.
         ext.extra_compile_args.extend(self.extra_cflags)
+
+        # Work around "swig/python detected a memory leak" bug
+        # Cf https://github.com/swig/swig/issues/2638#issuecomment-2345002698
+        if self.get_compiler() == 'msvc':
+            ext.extra_compile_args.append("/DSWIG_PYTHON_SILENT_MEMLEAK")
+        else:
+            ext.extra_compile_args.append("-DSWIG_PYTHON_SILENT_MEMLEAK")
+
         return build_ext.build_extension(self, ext)
 
 
