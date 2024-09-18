@@ -5122,6 +5122,55 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
             return nullptr;
     }
 
+    constexpr int JPEG_MAX_DIMENSION = 65500;  // Defined in jpeglib.h
+    constexpr int WEBP_MAX_DIMENSION = 16383;
+
+    const struct
+    {
+        int nCodecID;
+        const char *pszCodecName;
+        int nMaxDim;
+    } asLimitations[] = {
+        {COMPRESSION_JPEG, "JPEG", JPEG_MAX_DIMENSION},
+        {COMPRESSION_WEBP, "WEBP", WEBP_MAX_DIMENSION},
+    };
+
+    for (const auto &sLimitation : asLimitations)
+    {
+        if (l_nCompression == sLimitation.nCodecID && !bTiled &&
+            nXSize > sLimitation.nMaxDim)
+        {
+            ReportError(
+                pszFilename, CE_Failure, CPLE_IllegalArg,
+                "COMPRESS=%s is only compatible of un-tiled images whose "
+                "width is lesser or equal to %d pixels. "
+                "To overcome this limitation, set the TILED=YES creation "
+                "option.",
+                sLimitation.pszCodecName, sLimitation.nMaxDim);
+            return nullptr;
+        }
+        else if (l_nCompression == sLimitation.nCodecID && bTiled &&
+                 l_nBlockXSize > sLimitation.nMaxDim)
+        {
+            ReportError(pszFilename, CE_Failure, CPLE_IllegalArg,
+                        "COMPRESS=%s is only compatible of tiled images whose "
+                        "BLOCKXSIZE is lesser or equal to %d pixels.",
+                        sLimitation.pszCodecName, sLimitation.nMaxDim);
+            return nullptr;
+        }
+        else if (l_nCompression == sLimitation.nCodecID &&
+                 l_nBlockYSize > sLimitation.nMaxDim)
+        {
+            ReportError(pszFilename, CE_Failure, CPLE_IllegalArg,
+                        "COMPRESS=%s is only compatible of images whose "
+                        "BLOCKYSIZE is lesser or equal to %d pixels. "
+                        "To overcome this limitation, set the TILED=YES "
+                        "creation option",
+                        sLimitation.pszCodecName, sLimitation.nMaxDim);
+            return nullptr;
+        }
+    }
+
     /* -------------------------------------------------------------------- */
     /*      How many bits per sample?  We have a special case if NBITS      */
     /*      specified for GDT_Byte, GDT_UInt16, GDT_UInt32.                 */
