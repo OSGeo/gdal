@@ -1806,7 +1806,11 @@ def test_ogr_geojson_48(tmp_vsimem):
 # Test UpdateFeature() support
 
 
-def test_ogr_geojson_update_feature(tmp_vsimem):
+@pytest.mark.parametrize("check_after_update_before_reopen", [True, False])
+@pytest.mark.parametrize("sync_to_disk_after_update", [True, False])
+def test_ogr_geojson_update_feature(
+    tmp_vsimem, check_after_update_before_reopen, sync_to_disk_after_update
+):
 
     filename = str(tmp_vsimem / "test.json")
 
@@ -1821,13 +1825,21 @@ def test_ogr_geojson_update_feature(tmp_vsimem):
         lyr = ds.GetLayer(0)
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(0)
-        f["int64list"] = [123456790123, -123456790123]
+        f["int64list"] = [-123456790123, 123456790123]
         lyr.UpdateFeature(f, [0], [], False)
+
+        if sync_to_disk_after_update:
+            lyr.SyncToDisk()
+
+        if check_after_update_before_reopen:
+            lyr.ResetReading()
+            f = lyr.GetNextFeature()
+            assert f["int64list"] == [-123456790123, 123456790123]
 
     with ogr.Open(filename) as ds:
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
-        assert f["int64list"] == [123456790123, -123456790123]
+        assert f["int64list"] == [-123456790123, 123456790123]
 
 
 ###############################################################################
