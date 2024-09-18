@@ -2598,6 +2598,12 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  * buffer size (nBufXSize x nBufYSize) is different than the size of the
  * region being accessed (nXSize x nYSize).
  *
+ * The window of interest expressed by (nXOff, nYOff, nXSize, nYSize) should be
+ * fully within the raster space, that is nXOff >= 0, nYOff >= 0,
+ * nXOff + nXSize <= GetRasterXSize() and nYOff + nYSize <= GetRasterYSize().
+ * If reads larger than the raster space are wished, GDALTranslate() might be used.
+ * Or use nLineSpace and a possibly shifted pData value.
+ *
  * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
  * writing from various organization of buffers.
  *

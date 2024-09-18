@@ -133,6 +133,12 @@ GDALRasterBand::~GDALRasterBand()
  * buffer size (nBufXSize x nBufYSize) is different than the size of the
  * region being accessed (nXSize x nYSize).
  *
+ * The window of interest expressed by (nXOff, nYOff, nXSize, nYSize) should be
+ * fully within the raster space, that is nXOff >= 0, nYOff >= 0,
+ * nXOff + nXSize <= GetXSize() and nYOff + nYSize <= GetYSize().
+ * If reads larger than the raster space are wished, GDALTranslate() might be used.
+ * Or use nLineSpace and a possibly shifted pData value.
+ *
  * The nPixelSpace and nLineSpace parameters allow reading into or
  * writing from unusually organized buffers. This is primarily used
  * for buffers containing more than one bands raster data in interleaved
@@ -233,6 +239,12 @@ GDALRasterBand::~GDALRasterBand()
  * The method also takes care of image decimation / replication if the
  * buffer size (nBufXSize x nBufYSize) is different than the size of the
  * region being accessed (nXSize x nYSize).
+ *
+ * The window of interest expressed by (nXOff, nYOff, nXSize, nYSize) should be
+ * fully within the raster space, that is nXOff >= 0, nYOff >= 0,
+ * nXOff + nXSize <= GetXSize() and nYOff + nYSize <= GetYSize().
+ * If reads larger than the raster space are wished, GDALTranslate() might be used.
+ * Or use nLineSpace and a possibly shifted pData value.
  *
  * The nPixelSpace and nLineSpace parameters allow reading into or
  * writing from unusually organized buffers. This is primarily used
@@ -582,6 +594,12 @@ DEFINE_GetGDTFromCppType(std::complex<double>, GDT_CFloat64);
  * be called on the same GDALRasterBand instance (or another GDALRasterBand
  * instance of this dataset) concurrently from several threads.
  *
+ * The window of interest expressed by (dfXOff, dfYOff, dfXSize, dfYSize) should be
+ * fully within the raster space, that is dfXOff >= 0, dfYOff >= 0,
+ * dfXOff + dfXSize <= GetXSize() and dfYOff + dfYSize <= GetYSize().
+ * If reads larger than the raster space are wished, GDALTranslate() might be used.
+ * Or use nLineSpace and a possibly shifted pData value.
+ *
  * @param[out] pData The buffer into which the data should be written.
  * This buffer must contain at least nBufXSize *
  * nBufYSize words of type T. It is organized in left to right,
@@ -797,6 +815,12 @@ INSTANTIATE_READ_RASTER(std::complex<double>)
  * As nearly all GDAL methods, this method is *NOT* thread-safe, that is it cannot
  * be called on the same GDALRasterBand instance (or another GDALRasterBand
  * instance of this dataset) concurrently from several threads.
+ *
+ * The window of interest expressed by (dfXOff, dfYOff, dfXSize, dfYSize) should be
+ * fully within the raster space, that is dfXOff >= 0, dfYOff >= 0,
+ * dfXOff + dfXSize <= GetXSize() and dfYOff + dfYSize <= GetYSize().
+ * If reads larger than the raster space are wished, GDALTranslate() might be used.
+ * Or use nLineSpace and a possibly shifted pData value.
  *
  * @param[out] vData The vector into which the data should be written.
  * The vector will be resized, if needed, to contain at least nBufXSize *
