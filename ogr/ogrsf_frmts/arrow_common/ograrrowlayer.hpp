@@ -3897,62 +3897,65 @@ OGRArrowLayer::SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
             {
                 const int idx = m_bIgnoredFields ? oIter->second.iArrayIdx
                                                  : oIter->second.iArrowCol;
-                CPLAssert(idx >= 0);
-                CPLAssert(static_cast<size_t>(idx) < m_poBatchColumns.size());
-                m_poArrayBBOX = m_poBatchColumns[idx].get();
-                CPLAssert(m_poArrayBBOX->type_id() == arrow::Type::STRUCT);
-                const auto castArray =
-                    static_cast<const arrow::StructArray *>(m_poArrayBBOX);
-                const auto &subArrays = castArray->fields();
-                CPLAssert(
-                    static_cast<size_t>(oIter->second.iArrowSubfieldXMin) <
-                    subArrays.size());
-                const auto xminArray =
-                    subArrays[oIter->second.iArrowSubfieldXMin].get();
-                CPLAssert(
-                    static_cast<size_t>(oIter->second.iArrowSubfieldYMin) <
-                    subArrays.size());
-                const auto yminArray =
-                    subArrays[oIter->second.iArrowSubfieldYMin].get();
-                CPLAssert(
-                    static_cast<size_t>(oIter->second.iArrowSubfieldXMax) <
-                    subArrays.size());
-                const auto xmaxArray =
-                    subArrays[oIter->second.iArrowSubfieldXMax].get();
-                CPLAssert(
-                    static_cast<size_t>(oIter->second.iArrowSubfieldYMax) <
-                    subArrays.size());
-                const auto ymaxArray =
-                    subArrays[oIter->second.iArrowSubfieldYMax].get();
-                if (oIter->second.bIsFloat)
+                if (idx >= 0)
                 {
-                    CPLAssert(xminArray->type_id() == arrow::Type::FLOAT);
-                    m_poArrayXMinFloat =
-                        static_cast<const arrow::FloatArray *>(xminArray);
-                    CPLAssert(yminArray->type_id() == arrow::Type::FLOAT);
-                    m_poArrayYMinFloat =
-                        static_cast<const arrow::FloatArray *>(yminArray);
-                    CPLAssert(xmaxArray->type_id() == arrow::Type::FLOAT);
-                    m_poArrayXMaxFloat =
-                        static_cast<const arrow::FloatArray *>(xmaxArray);
-                    CPLAssert(ymaxArray->type_id() == arrow::Type::FLOAT);
-                    m_poArrayYMaxFloat =
-                        static_cast<const arrow::FloatArray *>(ymaxArray);
-                }
-                else
-                {
-                    CPLAssert(xminArray->type_id() == arrow::Type::DOUBLE);
-                    m_poArrayXMinDouble =
-                        static_cast<const arrow::DoubleArray *>(xminArray);
-                    CPLAssert(yminArray->type_id() == arrow::Type::DOUBLE);
-                    m_poArrayYMinDouble =
-                        static_cast<const arrow::DoubleArray *>(yminArray);
-                    CPLAssert(xmaxArray->type_id() == arrow::Type::DOUBLE);
-                    m_poArrayXMaxDouble =
-                        static_cast<const arrow::DoubleArray *>(xmaxArray);
-                    CPLAssert(ymaxArray->type_id() == arrow::Type::DOUBLE);
-                    m_poArrayYMaxDouble =
-                        static_cast<const arrow::DoubleArray *>(ymaxArray);
+                    CPLAssert(static_cast<size_t>(idx) <
+                              m_poBatchColumns.size());
+                    m_poArrayBBOX = m_poBatchColumns[idx].get();
+                    CPLAssert(m_poArrayBBOX->type_id() == arrow::Type::STRUCT);
+                    const auto castArray =
+                        static_cast<const arrow::StructArray *>(m_poArrayBBOX);
+                    const auto &subArrays = castArray->fields();
+                    CPLAssert(
+                        static_cast<size_t>(oIter->second.iArrowSubfieldXMin) <
+                        subArrays.size());
+                    const auto xminArray =
+                        subArrays[oIter->second.iArrowSubfieldXMin].get();
+                    CPLAssert(
+                        static_cast<size_t>(oIter->second.iArrowSubfieldYMin) <
+                        subArrays.size());
+                    const auto yminArray =
+                        subArrays[oIter->second.iArrowSubfieldYMin].get();
+                    CPLAssert(
+                        static_cast<size_t>(oIter->second.iArrowSubfieldXMax) <
+                        subArrays.size());
+                    const auto xmaxArray =
+                        subArrays[oIter->second.iArrowSubfieldXMax].get();
+                    CPLAssert(
+                        static_cast<size_t>(oIter->second.iArrowSubfieldYMax) <
+                        subArrays.size());
+                    const auto ymaxArray =
+                        subArrays[oIter->second.iArrowSubfieldYMax].get();
+                    if (oIter->second.bIsFloat)
+                    {
+                        CPLAssert(xminArray->type_id() == arrow::Type::FLOAT);
+                        m_poArrayXMinFloat =
+                            static_cast<const arrow::FloatArray *>(xminArray);
+                        CPLAssert(yminArray->type_id() == arrow::Type::FLOAT);
+                        m_poArrayYMinFloat =
+                            static_cast<const arrow::FloatArray *>(yminArray);
+                        CPLAssert(xmaxArray->type_id() == arrow::Type::FLOAT);
+                        m_poArrayXMaxFloat =
+                            static_cast<const arrow::FloatArray *>(xmaxArray);
+                        CPLAssert(ymaxArray->type_id() == arrow::Type::FLOAT);
+                        m_poArrayYMaxFloat =
+                            static_cast<const arrow::FloatArray *>(ymaxArray);
+                    }
+                    else
+                    {
+                        CPLAssert(xminArray->type_id() == arrow::Type::DOUBLE);
+                        m_poArrayXMinDouble =
+                            static_cast<const arrow::DoubleArray *>(xminArray);
+                        CPLAssert(yminArray->type_id() == arrow::Type::DOUBLE);
+                        m_poArrayYMinDouble =
+                            static_cast<const arrow::DoubleArray *>(yminArray);
+                        CPLAssert(xmaxArray->type_id() == arrow::Type::DOUBLE);
+                        m_poArrayXMaxDouble =
+                            static_cast<const arrow::DoubleArray *>(xmaxArray);
+                        CPLAssert(ymaxArray->type_id() == arrow::Type::DOUBLE);
+                        m_poArrayYMaxDouble =
+                            static_cast<const arrow::DoubleArray *>(ymaxArray);
+                    }
                 }
             }
         }
