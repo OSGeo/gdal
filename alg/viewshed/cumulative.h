@@ -20,7 +20,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#pragma once
+#ifndef VIEWSHED_CUMULATIVE_H_INCLUDED
+#define VIEWSHED_CUMULATIVE_H_INCLUDED
 
 #include <atomic>
 #include <vector>
@@ -41,6 +42,11 @@ class Cumulative
 {
   public:
     CPL_DLL explicit Cumulative(const Options &opts);
+    // We define an explicit destructor, whose implementation is in libgdal,
+    // otherwise with gcc 9.4 of Ubuntu 20.04 in debug mode, this would need to
+    // redefinition of the NotifyQueue class in both libgdal and gdal_viewshed,
+    // leading to weird things related to mutex.
+    CPL_DLL ~Cumulative();
     CPL_DLL bool run(const std::string &srcFilename,
                      GDALProgressFunc pfnProgress = GDALDummyProgress,
                      void *pProgressArg = nullptr);
@@ -70,7 +76,12 @@ class Cumulative
     void rollupRasters();
     void scaleOutput();
     bool writeOutput(DatasetPtr pDstDS);
+
+    Cumulative(const Cumulative &) = delete;
+    Cumulative &operator=(const Cumulative &) = delete;
 };
 
 }  // namespace viewshed
 }  // namespace gdal
+
+#endif

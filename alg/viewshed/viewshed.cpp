@@ -234,6 +234,12 @@ bool getTransforms(GDALRasterBand &band, double *pFwdTransform,
 
 }  // unnamed namespace
 
+Viewshed::Viewshed(const Options &opts) : oOpts{opts}
+{
+}
+
+Viewshed::~Viewshed() = default;
+
 /// Calculate the extent of the output raster in terms of the input raster and
 /// save the input raster extent.
 ///

@@ -44,6 +44,10 @@ Cumulative::Cumulative(const Options &opts) : m_opts(opts)
 {
 }
 
+/// Destructor
+///
+Cumulative::~Cumulative() = default;
+
 /// Compute the cumulative viewshed of a raster band.
 ///
 /// @param srcFilename  Source filename.

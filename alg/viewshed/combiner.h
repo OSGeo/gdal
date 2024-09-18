@@ -20,7 +20,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#pragma once
+#ifndef VIEWSHED_COMBINER_H_INCLUDED
+#define VIEWSHED_COMBINER_H_INCLUDED
 
 #include "cumulative.h"
 #include "viewshed_types.h"
@@ -67,3 +68,5 @@ class Combiner
 
 }  // namespace viewshed
 }  // namespace gdal
+
+#endif

@@ -19,7 +19,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#pragma once
+#ifndef VIEWSHED_TYPES_H_INCLUDED
+#define VIEWSHED_TYPES_H_INCLUDED
 
 #include <algorithm>
 #include <string>
@@ -171,3 +172,5 @@ struct Window
 
 }  // namespace viewshed
 }  // namespace gdal
+
+#endif

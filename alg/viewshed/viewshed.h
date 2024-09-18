@@ -27,7 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#pragma once
+#ifndef VIEWSHED_H_INCLUDED
+#define VIEWSHED_H_INCLUDED
 
 #include <algorithm>
 #include <array>
@@ -59,13 +60,10 @@ class Viewshed
      *
      * @param opts Options to use when calculating viewshed.
     */
-    CPL_DLL explicit Viewshed(const Options &opts)
-        : oOpts{opts}, oOutExtent{}, oCurExtent{}, poDstDS{}, pSrcBand{}
-    {
-    }
+    CPL_DLL explicit Viewshed(const Options &opts);
 
-    Viewshed(const Viewshed &) = delete;
-    Viewshed &operator=(const Viewshed &) = delete;
+    /** Destructor */
+    CPL_DLL ~Viewshed();
 
     CPL_DLL bool run(GDALRasterBandH hBand,
                      GDALProgressFunc pfnProgress = GDALDummyProgress,
@@ -83,10 +81,10 @@ class Viewshed
 
   private:
     Options oOpts;
-    Window oOutExtent;
-    Window oCurExtent;
-    DatasetPtr poDstDS;
-    GDALRasterBand *pSrcBand;
+    Window oOutExtent{};
+    Window oCurExtent{};
+    DatasetPtr poDstDS{};
+    GDALRasterBand *pSrcBand = nullptr;
 
     DatasetPtr execute(int nX, int nY, const std::string &outFilename);
     void setOutput(double &dfResult, double &dfCellVal, double dfZ);
@@ -96,7 +94,12 @@ class Viewshed
                                      std::vector<double> &thisLineVal);
     bool calcExtents(int nX, int nY,
                      const std::array<double, 6> &adfInvTransform);
+
+    Viewshed(const Viewshed &) = delete;
+    Viewshed &operator=(const Viewshed &) = delete;
 };
 
 }  // namespace viewshed
 }  // namespace gdal
+
+#endif
