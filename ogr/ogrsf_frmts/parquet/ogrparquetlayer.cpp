@@ -1980,8 +1980,7 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
                         m_oMapGeomFieldIndexToGeomColBBOXParquet.find(i);
                     if (oIter != m_oMapGeomFieldIndexToGeomColBBOX.end() &&
                         oIterParquet !=
-                            m_oMapGeomFieldIndexToGeomColBBOXParquet.end() &&
-                        !OGRArrowIsGeoArrowStruct(m_aeGeomEncoding[i]))
+                            m_oMapGeomFieldIndexToGeomColBBOXParquet.end())
                     {
                         oIter->second.iArrayIdx = nBatchColumns++;
                         m_anRequestedParquetColumns.insert(

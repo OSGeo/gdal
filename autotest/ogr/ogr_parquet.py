@@ -3870,6 +3870,8 @@ def test_ogr_parquet_geoarrow(
     lyr = ds.GetLayer(0)
     lyr.SetIgnoredFields(["foo"])
     check(lyr)
+    lyr.SetSpatialFilter(geom)
+    assert lyr.GetFeatureCount() == (3 if geom.GetGeometryCount() > 1 else 2)
 
     ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
