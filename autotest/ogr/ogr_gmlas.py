@@ -3485,3 +3485,19 @@ def test_ogr_gmlas_ossfuzz_70511():
         Exception, match="Cannot get type definition for attribute y"
     ):
         gdal.OpenEx("GMLAS:", open_options=["XSD=data/gmlas/test_ossfuzz_70511.xsd"])
+
+
+###############################################################################
+# Test we don't spend too much time parsing documents featuring the billion
+# laugh attack
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gmlas_billion_laugh():
+
+    with gdal.quiet_errors(), pytest.raises(Exception, match="File probably corrupted"):
+        with gdal.OpenEx("GMLAS:data/gml/billionlaugh.gml") as ds:
+            assert ds.GetDriver().GetDescription() == "GMLAS"
+            for lyr in ds:
+                for f in lyr:
+                    pass

@@ -266,6 +266,13 @@ GMLFeature *NASReader::NextFeature()
         CPLDebug("NAS", "Error during NextFeature()! Message:\n%s",
                  transcode(toCatch.getMessage()).c_str());
     }
+    catch (const SAXException &toCatch)
+    {
+        CPLString osErrMsg;
+        transcode(toCatch.getMessage(), osErrMsg);
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrMsg.c_str());
+        m_bStopParsing = true;
+    }
 
     return poReturn;
 }
