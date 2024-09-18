@@ -47,4 +47,7 @@ bool CPL_DLL OGRCloneArrowArray(const struct ArrowSchema *schema,
                                 const struct ArrowArray *array,
                                 struct ArrowArray *out_array);
 
+bool CPL_DLL OGRCloneArrowSchema(const struct ArrowSchema *schema,
+                                 struct ArrowSchema *out_schema);
+
 #endif  // OGRLAYERARROW_H_DEFINED

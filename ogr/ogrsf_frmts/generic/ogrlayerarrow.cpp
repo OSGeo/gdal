@@ -270,25 +270,29 @@ inline void UnsetBit(uint8_t *pabyData, size_t nIdx)
 /*                          DefaultReleaseSchema()                      */
 /************************************************************************/
 
-static void OGRLayerDefaultReleaseSchema(struct ArrowSchema *schema)
+static void OGRLayerReleaseSchema(struct ArrowSchema *schema,
+                                  bool bFullFreeFormat)
 {
     CPLAssert(schema->release != nullptr);
-    if (STARTS_WITH(schema->format, "w:") ||
+    if (bFullFreeFormat || STARTS_WITH(schema->format, "w:") ||
         STARTS_WITH(schema->format, "tsm:"))
     {
         CPLFree(const_cast<char *>(schema->format));
     }
     CPLFree(const_cast<char *>(schema->name));
     CPLFree(const_cast<char *>(schema->metadata));
-    for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
+    if (schema->children)
     {
-        if (schema->children[i]->release)
+        for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
         {
-            schema->children[i]->release(schema->children[i]);
-            CPLFree(schema->children[i]);
+            if (schema->children[i] && schema->children[i]->release)
+            {
+                schema->children[i]->release(schema->children[i]);
+                CPLFree(schema->children[i]);
+            }
         }
+        CPLFree(schema->children);
     }
-    CPLFree(schema->children);
     if (schema->dictionary)
     {
         if (schema->dictionary->release)
@@ -298,6 +302,16 @@ static void OGRLayerDefaultReleaseSchema(struct ArrowSchema *schema)
         }
     }
     schema->release = nullptr;
+}
+
+static void OGRLayerPartialReleaseSchema(struct ArrowSchema *schema)
+{
+    OGRLayerReleaseSchema(schema, /* bFullFreeFormat = */ false);
+}
+
+static void OGRLayerFullReleaseSchema(struct ArrowSchema *schema)
+{
+    OGRLayerReleaseSchema(schema, /* bFullFreeFormat = */ true);
 }
 
 /** Release a ArrowSchema.
@@ -311,7 +325,7 @@ static void OGRLayerDefaultReleaseSchema(struct ArrowSchema *schema)
 
 void OGRLayer::ReleaseSchema(struct ArrowSchema *schema)
 {
-    OGRLayerDefaultReleaseSchema(schema);
+    OGRLayerPartialReleaseSchema(schema);
 }
 
 /************************************************************************/
@@ -355,7 +369,7 @@ static void AddDictToSchema(struct ArrowSchema *psChild,
     auto psChildDict = static_cast<struct ArrowSchema *>(
         CPLCalloc(1, sizeof(struct ArrowSchema)));
     psChild->dictionary = psChildDict;
-    psChildDict->release = OGRLayerDefaultReleaseSchema;
+    psChildDict->release = OGRLayerPartialReleaseSchema;
     psChildDict->name = CPLStrdup(poCodedDomain->GetName().c_str());
     psChildDict->format = "u";
     if (nCountNull)
@@ -5462,6 +5476,103 @@ bool OGRCloneArrowArray(const struct ArrowSchema *schema,
                         struct ArrowArray *out_array)
 {
     return OGRCloneArrowArray(schema, src_array, out_array, 0);
+}
+
+/************************************************************************/
+/*                     OGRCloneArrowMetadata()                          */
+/************************************************************************/
+
+static void *OGRCloneArrowMetadata(const void *pMetadata)
+{
+    if (!pMetadata)
+        return nullptr;
+    std::vector<GByte> abyOut;
+    const GByte *pabyMetadata = static_cast<const GByte *>(pMetadata);
+    int32_t nKVP;
+    abyOut.insert(abyOut.end(), pabyMetadata, pabyMetadata + sizeof(int32_t));
+    memcpy(&nKVP, pabyMetadata, sizeof(int32_t));
+    pabyMetadata += sizeof(int32_t);
+    for (int i = 0; i < nKVP; ++i)
+    {
+        int32_t nSizeKey;
+        abyOut.insert(abyOut.end(), pabyMetadata,
+                      pabyMetadata + sizeof(int32_t));
+        memcpy(&nSizeKey, pabyMetadata, sizeof(int32_t));
+        pabyMetadata += sizeof(int32_t);
+        abyOut.insert(abyOut.end(), pabyMetadata, pabyMetadata + nSizeKey);
+        pabyMetadata += nSizeKey;
+
+        int32_t nSizeValue;
+        abyOut.insert(abyOut.end(), pabyMetadata,
+                      pabyMetadata + sizeof(int32_t));
+        memcpy(&nSizeValue, pabyMetadata, sizeof(int32_t));
+        pabyMetadata += sizeof(int32_t);
+        abyOut.insert(abyOut.end(), pabyMetadata, pabyMetadata + nSizeValue);
+        pabyMetadata += nSizeValue;
+    }
+
+    GByte *pabyOut = static_cast<GByte *>(VSI_MALLOC_VERBOSE(abyOut.size()));
+    if (pabyOut)
+        memcpy(pabyOut, abyOut.data(), abyOut.size());
+    return pabyOut;
+}
+
+/************************************************************************/
+/*                          OGRCloneArrowSchema()                       */
+/************************************************************************/
+
+/** Full/deep copy of a schema.
+ *
+ * In case of failure, out_schema will be let in a released state.
+ *
+ * @param schema Schema to clone. Must *NOT* be NULL.
+ * @param out_schema Output schema.  Must *NOT* be NULL (but its content may be random)
+ * @return true if success.
+ */
+bool OGRCloneArrowSchema(const struct ArrowSchema *schema,
+                         struct ArrowSchema *out_schema)
+{
+    memset(out_schema, 0, sizeof(*out_schema));
+    out_schema->release = OGRLayerFullReleaseSchema;
+    out_schema->format = CPLStrdup(schema->format);
+    out_schema->name = CPLStrdup(schema->name);
+    out_schema->metadata = static_cast<const char *>(
+        const_cast<const void *>(OGRCloneArrowMetadata(schema->metadata)));
+    out_schema->flags = schema->flags;
+    if (schema->n_children)
+    {
+        out_schema->children =
+            static_cast<struct ArrowSchema **>(VSI_CALLOC_VERBOSE(
+                static_cast<int>(schema->n_children), sizeof(ArrowSchema *)));
+        if (!out_schema->children)
+        {
+            out_schema->release(out_schema);
+            return false;
+        }
+        out_schema->n_children = schema->n_children;
+        for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
+        {
+            out_schema->children[i] = static_cast<struct ArrowSchema *>(
+                CPLMalloc(sizeof(ArrowSchema)));
+            if (!OGRCloneArrowSchema(schema->children[i],
+                                     out_schema->children[i]))
+            {
+                out_schema->release(out_schema);
+                return false;
+            }
+        }
+    }
+    if (schema->dictionary)
+    {
+        out_schema->dictionary =
+            static_cast<struct ArrowSchema *>(CPLMalloc(sizeof(ArrowSchema)));
+        if (!OGRCloneArrowSchema(schema->dictionary, out_schema->dictionary))
+        {
+            out_schema->release(out_schema);
+            return false;
+        }
+    }
+    return true;
 }
 
 /************************************************************************/

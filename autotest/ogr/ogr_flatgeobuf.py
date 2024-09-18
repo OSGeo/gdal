@@ -1431,3 +1431,152 @@ def test_ogr_flatgeobuf_write_mismatch_geom_type(tmp_vsimem):
         match="ICreateFeature: Mismatched geometry type. Feature geometry type is Line String, expected layer geometry type is Point",
     ):
         lyr.CreateFeature(f)
+
+
+###############################################################################
+# Test OGRGenSQLResultLayer::GetArrowStream() implementation.
+# There isn't much specific of the FlatGeoBuf driver, except it is the
+# only one in a default build that implements OLCFastGetArrowStream and doesn't
+# have a specialized ExecuteSQL() implementation.
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_flatgeobuf_sql_arrow(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "temp.fgb")
+    with ogr.GetDriverByName("FlatGeoBuf").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+        lyr.CreateField(ogr.FieldDefn("foo"))
+        lyr.CreateField(ogr.FieldDefn("bar"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "bar"
+        f["bar"] = "baz"
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "bar2"
+        f["bar"] = "baz2"
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr.CreateFeature(f)
+
+    with ogr.Open(filename) as ds:
+        with ds.ExecuteSQL("SELECT 'a' FROM test") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+            tmp_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+            tmp_lyr = tmp_ds.CreateLayer("test")
+            tmp_lyr.WriteArrow(lyr)
+            f = tmp_lyr.GetNextFeature()
+            assert f["FIELD_1"] == "a"
+
+        with ds.ExecuteSQL("SELECT foo, foo FROM test") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT CONCAT(foo, 'x') FROM test") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT foo AS renamed, foo FROM test") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT bar, foo FROM test") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT CAST(foo AS float) FROM test") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT MIN(foo) FROM test") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT COUNT(*) FROM test") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT * FROM test a JOIN test b ON a.foo = b.foo") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT * FROM test OFFSET 1") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT * FROM test ORDER BY foo") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT *, OGR_STYLE HIDDEN FROM test") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT DISTINCT foo FROM test") as lyr:
+            assert not lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+        with ds.ExecuteSQL("SELECT * FROM test") as lyr:
+            try:
+                stream = lyr.GetArrowStreamAsNumPy()
+            except ImportError:
+                stream = None
+        if stream:
+            with pytest.raises(
+                Exception,
+                match=r"Calling get_next\(\) on a freed OGRLayer is not supported",
+            ):
+                [batch for batch in stream]
+
+        sql = "SELECT foo, bar AS bar_renamed FROM test"
+        with ds.ExecuteSQL(sql) as lyr:
+            assert lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+            tmp_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+            tmp_lyr = tmp_ds.CreateLayer("test")
+            tmp_lyr.WriteArrow(lyr)
+            assert tmp_lyr.GetLayerDefn().GetFieldCount() == 2
+            assert tmp_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+            assert tmp_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "bar_renamed"
+            assert tmp_lyr.GetFeatureCount() == 2
+            f = tmp_lyr.GetNextFeature()
+            assert f["foo"] == "bar2"
+            assert f["bar_renamed"] == "baz2"
+            assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
+            f = tmp_lyr.GetNextFeature()
+            assert f["foo"] == "bar"
+            assert f["bar_renamed"] == "baz"
+            assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+        sql = "SELECT bar FROM test LIMIT 1"
+        with ds.ExecuteSQL(sql) as lyr:
+            assert lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+            tmp_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+            tmp_lyr = tmp_ds.CreateLayer("test")
+            tmp_lyr.WriteArrow(lyr)
+            assert tmp_lyr.GetLayerDefn().GetFieldCount() == 1
+            assert tmp_lyr.GetFeatureCount() == 1
+            f = tmp_lyr.GetNextFeature()
+            assert f["bar"] == "baz2"
+            assert f.GetGeometryRef().ExportToWkt() == "POINT (3 4)"
+
+        sql = "SELECT * EXCLUDE (\"_ogr_geometry_\") FROM test WHERE foo = 'bar'"
+        with ds.ExecuteSQL(sql) as lyr:
+            assert lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+            tmp_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+            tmp_lyr = tmp_ds.CreateLayer("test")
+            tmp_lyr.WriteArrow(lyr)
+            assert tmp_lyr.GetFeatureCount() == 1
+            f = tmp_lyr.GetNextFeature()
+            assert f["foo"] == "bar"
+            assert f["bar"] == "baz"
+            assert f.GetGeometryRef() is None
+
+        sql = "SELECT * FROM test"
+        with ds.ExecuteSQL(sql) as lyr:
+            lyr.SetSpatialFilterRect(1, 2, 1, 2)
+            assert lyr.TestCapability(ogr.OLCFastGetArrowStream)
+
+            tmp_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+            tmp_lyr = tmp_ds.CreateLayer("test")
+            tmp_lyr.WriteArrow(lyr)
+            assert tmp_lyr.GetLayerDefn().GetFieldCount() == 2
+            assert tmp_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "foo"
+            assert tmp_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "bar"
+            assert tmp_lyr.GetFeatureCount() == 1
+            f = tmp_lyr.GetNextFeature()
+            assert f["foo"] == "bar"
+            assert f["bar"] == "baz"
+            assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+            f = tmp_lyr.GetNextFeature()

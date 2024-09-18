@@ -32,9 +32,13 @@
 #include "ogr_gensql.h"
 #include "cpl_string.h"
 #include "ogr_api.h"
+#include "ogr_recordbatch.h"
+#include "ogrlayerarrow.h"
 #include "cpl_time.h"
 #include <algorithm>
 #include <limits>
+#include <map>
+#include <set>
 #include <vector>
 
 //! @cond Doxygen_Suppress
@@ -745,7 +749,7 @@ GIntBig OGRGenSQLResultsLayer::GetFeatureCount(int bForce)
 int OGRGenSQLResultsLayer::TestCapability(const char *pszCap)
 
 {
-    swq_select *psSelectInfo = m_pSelectInfo.get();
+    const swq_select *psSelectInfo = m_pSelectInfo.get();
 
     if (EQUAL(pszCap, OLCFastSetNextByIndex))
     {
@@ -772,6 +776,58 @@ int OGRGenSQLResultsLayer::TestCapability(const char *pszCap)
         EQUAL(pszCap, OLCMeasuredGeometries) || EQUAL(pszCap, OLCZGeometries))
     {
         return m_poSrcLayer->TestCapability(pszCap);
+    }
+
+    else if (EQUAL(pszCap, OLCFastGetArrowStream))
+    {
+        // Make sure the SQL is something as simple as
+        // "SELECT field1 [AS renamed], ... FROM ... WHERE ....", without
+        // duplicated fields
+        if (m_bForwardWhereToSourceLayer &&
+            psSelectInfo->query_mode == SWQM_RECORDSET &&
+            psSelectInfo->offset == 0 && psSelectInfo->join_count == 0 &&
+            psSelectInfo->order_specs == 0)
+        {
+            std::set<int> oSetFieldIndex;
+            int nLastIdxRegularField = -1;
+            for (std::size_t iField = 0;
+                 iField < psSelectInfo->column_defs.size(); iField++)
+            {
+                const swq_col_def *psColDef =
+                    &psSelectInfo->column_defs[iField];
+                if (psColDef->bHidden || psColDef->table_index < 0 ||
+                    psColDef->col_func != SWQCF_NONE ||
+                    cpl::contains(oSetFieldIndex, psColDef->field_index))
+                {
+                    return false;
+                }
+
+                oSetFieldIndex.insert(psColDef->field_index);
+
+                const auto poLayerDefn =
+                    m_apoTableLayers[psColDef->table_index]->GetLayerDefn();
+
+                if (psColDef->field_index >= 0 && poLayerDefn != nullptr &&
+                    psColDef->field_index < poLayerDefn->GetFieldCount())
+                {
+                    // We do not support re-ordered fields
+                    if (psColDef->field_index <= nLastIdxRegularField)
+                        return false;
+                    nLastIdxRegularField = psColDef->field_index;
+                }
+                else if (poLayerDefn != nullptr &&
+                         IS_GEOM_FIELD_INDEX(poLayerDefn,
+                                             psColDef->field_index))
+                {
+                    // ok
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return m_poSrcLayer->TestCapability(pszCap);
+        }
     }
 
     return FALSE;
@@ -2736,6 +2792,304 @@ void OGRGenSQLResultsLayer::SetSpatialFilter(int iGeomField,
         OGRLayer::SetSpatialFilter(poGeom);
     else
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
+}
+
+/************************************************************************/
+/*                  OGRGenSQLResultsLayerArrowStreamPrivateData         */
+/************************************************************************/
+
+// Structure whose instances are set on the ArrowArrayStream::private_data
+// member of the ArrowArrayStream returned by OGRGenSQLResultsLayer::GetArrowStream()
+struct OGRGenSQLResultsLayerArrowStreamPrivateData
+{
+    // Member shared with OGRLayer::m_poSharedArrowArrayStreamPrivateData
+    // If the layer pointed by poShared->poLayer is destroyed, before its
+    // destruction, it nullifies poShared->poLayer, which we can detect.
+    std::shared_ptr<OGRLayer::ArrowArrayStreamPrivateData> poShared{};
+
+    // ArrowArrayStream to be used with poShared->poLayer
+    struct ArrowArrayStream *psSrcLayerStream = nullptr;
+
+    // Original release() callback of the ArrowArrayStream passed to
+    // OGRGenSQLResultsLayer::GetArrowStream()
+    void (*release_backup)(struct ArrowArrayStream *) = nullptr;
+
+    // Original private_data member of the ArrowArrayStream passed to
+    // OGRGenSQLResultsLayer::GetArrowStream()
+    void *private_data_backup = nullptr;
+
+    // Set as the ArrowArrayStream::release callback member of the
+    // ArrowArrayStream returned by OGRGenSQLResultsLayer::GetArrowStream()
+    static void Release(struct ArrowArrayStream *self)
+    {
+        OGRGenSQLResultsLayerArrowStreamPrivateData *psPrivateData =
+            static_cast<OGRGenSQLResultsLayerArrowStreamPrivateData *>(
+                self->private_data);
+
+        // Release source layer stream
+        if (psPrivateData->psSrcLayerStream->release)
+            psPrivateData->psSrcLayerStream->release(
+                psPrivateData->psSrcLayerStream);
+        CPLFree(psPrivateData->psSrcLayerStream);
+
+        // Release ourselves using the base method
+        self->private_data = psPrivateData->private_data_backup;
+        self->release = psPrivateData->release_backup;
+        delete psPrivateData;
+        if (self->release)
+            self->release(self);
+    }
+
+    // Set as the ArrowArrayStream::get_schema callback member of the
+    // ArrowArrayStream returned by OGRGenSQLResultsLayer::GetArrowStream()
+    static int GetSchema(struct ArrowArrayStream *self, struct ArrowSchema *out)
+    {
+        OGRGenSQLResultsLayerArrowStreamPrivateData *psPrivateData =
+            static_cast<OGRGenSQLResultsLayerArrowStreamPrivateData *>(
+                self->private_data);
+        auto poLayer = dynamic_cast<OGRGenSQLResultsLayer *>(
+            psPrivateData->poShared->m_poLayer);
+        if (!poLayer)
+        {
+            CPLError(
+                CE_Failure, CPLE_NotSupported,
+                "Calling get_schema() on a freed OGRLayer is not supported");
+            return EINVAL;
+        }
+        return poLayer->GetArrowSchemaForwarded(self, out);
+    }
+
+    // Set as the ArrowArrayStream::get_next callback member of the
+    // ArrowArrayStream returned by OGRGenSQLResultsLayer::GetArrowStream()
+    static int GetNext(struct ArrowArrayStream *self, struct ArrowArray *out)
+    {
+        OGRGenSQLResultsLayerArrowStreamPrivateData *psPrivateData =
+            static_cast<OGRGenSQLResultsLayerArrowStreamPrivateData *>(
+                self->private_data);
+        auto poLayer = dynamic_cast<OGRGenSQLResultsLayer *>(
+            psPrivateData->poShared->m_poLayer);
+        if (!poLayer)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Calling get_next() on a freed OGRLayer is not supported");
+            return EINVAL;
+        }
+        return poLayer->GetNextArrowArrayForwarded(self, out);
+    }
+};
+
+/************************************************************************/
+/*                          GetArrowStream()                            */
+/************************************************************************/
+
+bool OGRGenSQLResultsLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
+                                           CSLConstList papszOptions)
+{
+    if (!TestCapability(OLCFastGetArrowStream) ||
+        CPLTestBool(CPLGetConfigOption("OGR_GENSQL_STREAM_BASE_IMPL", "NO")))
+    {
+        CPLStringList aosOptions(papszOptions);
+        aosOptions.SetNameValue("OGR_GENSQL_STREAM_BASE_IMPL", "YES");
+        return OGRLayer::GetArrowStream(out_stream, aosOptions.List());
+    }
+
+    const swq_select *psSelectInfo = m_pSelectInfo.get();
+    if (m_nIteratedFeatures != -1)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetArrowStream() not supported on non-rewinded layer");
+        return false;
+    }
+    CPLStringList aosOptions(papszOptions);
+    if (psSelectInfo->limit > 0)
+    {
+        aosOptions.SetNameValue(
+            "MAX_FEATURES_IN_BATCH",
+            CPLSPrintf(CPL_FRMT_GIB,
+                       std::min(psSelectInfo->limit,
+                                CPLAtoGIntBig(aosOptions.FetchNameValueDef(
+                                    "MAX_FEATURES_IN_BATCH", "65536")))));
+    }
+    bool bRet = OGRLayer::GetArrowStream(out_stream, aosOptions.List());
+    if (bRet)
+    {
+        auto psSrcLayerStream = static_cast<struct ArrowArrayStream *>(
+            CPLMalloc(sizeof(ArrowArrayStream)));
+        if (m_poSrcLayer->GetArrowStream(psSrcLayerStream, aosOptions.List()))
+        {
+            auto psPrivateData =
+                new OGRGenSQLResultsLayerArrowStreamPrivateData;
+            CPLAssert(m_poSharedArrowArrayStreamPrivateData);
+            psPrivateData->poShared = m_poSharedArrowArrayStreamPrivateData;
+            psPrivateData->psSrcLayerStream = psSrcLayerStream;
+            psPrivateData->release_backup = out_stream->release;
+            psPrivateData->private_data_backup = out_stream->private_data;
+            out_stream->get_schema =
+                OGRGenSQLResultsLayerArrowStreamPrivateData::GetSchema;
+            out_stream->get_next =
+                OGRGenSQLResultsLayerArrowStreamPrivateData::GetNext;
+            out_stream->release =
+                OGRGenSQLResultsLayerArrowStreamPrivateData::Release;
+            out_stream->private_data = psPrivateData;
+        }
+        else
+        {
+            if (psSrcLayerStream->release)
+                psSrcLayerStream->release(psSrcLayerStream);
+            CPLFree(psSrcLayerStream);
+            if (out_stream->release)
+                out_stream->release(out_stream);
+            bRet = false;
+        }
+    }
+    return bRet;
+}
+
+/************************************************************************/
+/*                          GetArrowSchema()                            */
+/************************************************************************/
+
+int OGRGenSQLResultsLayer::GetArrowSchema(struct ArrowArrayStream *stream,
+                                          struct ArrowSchema *out_schema)
+{
+    if (m_aosArrowArrayStreamOptions.FetchNameValue(
+            "OGR_GENSQL_STREAM_BASE_IMPL") ||
+        !TestCapability(OLCFastGetArrowStream))
+    {
+        return OGRLayer::GetArrowSchema(stream, out_schema);
+    }
+
+    return GetArrowSchemaForwarded(stream, out_schema);
+}
+
+/************************************************************************/
+/*                      GetArrowSchemaForwarded()                       */
+/************************************************************************/
+
+int OGRGenSQLResultsLayer::GetArrowSchemaForwarded(
+    struct ArrowArrayStream *stream, struct ArrowSchema *out_schema) const
+{
+    const swq_select *psSelectInfo = m_pSelectInfo.get();
+    OGRGenSQLResultsLayerArrowStreamPrivateData *psPrivateData =
+        static_cast<OGRGenSQLResultsLayerArrowStreamPrivateData *>(
+            stream->private_data);
+    int ret = m_poSrcLayer->GetArrowSchema(psPrivateData->psSrcLayerStream,
+                                           out_schema);
+    if (ret == 0)
+    {
+        struct ArrowSchema newSchema;
+        ret = OGRCloneArrowSchema(out_schema, &newSchema) ? 0 : EIO;
+        if (out_schema->release)
+            out_schema->release(out_schema);
+        if (ret == 0)
+        {
+            std::map<std::string, std::string> oMapSrcNameToRenamed;
+            for (std::size_t iField = 0;
+                 iField < psSelectInfo->column_defs.size(); iField++)
+            {
+                const swq_col_def *psColDef =
+                    &psSelectInfo->column_defs[iField];
+                CPLAssert(!psColDef->bHidden);
+                CPLAssert(psColDef->table_index >= 0);
+                CPLAssert(psColDef->col_func == SWQCF_NONE);
+
+                const auto poLayerDefn =
+                    m_apoTableLayers[psColDef->table_index]->GetLayerDefn();
+                CPLAssert(poLayerDefn);
+
+                if (psColDef->field_index >= 0 &&
+                    psColDef->field_index < poLayerDefn->GetFieldCount())
+                {
+                    const auto poSrcFDefn =
+                        poLayerDefn->GetFieldDefn(psColDef->field_index);
+                    if (psColDef->field_alias)
+                        oMapSrcNameToRenamed[poSrcFDefn->GetNameRef()] =
+                            psColDef->field_alias;
+                }
+                else if (IS_GEOM_FIELD_INDEX(poLayerDefn,
+                                             psColDef->field_index))
+                {
+                    const int iSrcGeomField =
+                        ALL_FIELD_INDEX_TO_GEOM_FIELD_INDEX(
+                            poLayerDefn, psColDef->field_index);
+                    const auto poSrcGFDefn =
+                        poLayerDefn->GetGeomFieldDefn(iSrcGeomField);
+                    if (psColDef->field_alias)
+                        oMapSrcNameToRenamed[poSrcGFDefn->GetNameRef()] =
+                            psColDef->field_alias;
+                }
+            }
+
+            for (int i = 0; i < newSchema.n_children; ++i)
+            {
+                const auto oIter =
+                    oMapSrcNameToRenamed.find(newSchema.children[i]->name);
+                if (oIter != oMapSrcNameToRenamed.end())
+                {
+                    CPLFree(const_cast<char *>(newSchema.children[i]->name));
+                    newSchema.children[i]->name =
+                        CPLStrdup(oIter->second.c_str());
+                }
+            }
+
+            memcpy(out_schema, &newSchema, sizeof(newSchema));
+        }
+    }
+    return ret;
+}
+
+/************************************************************************/
+/*                      GetNextArrowArray()                             */
+/************************************************************************/
+
+int OGRGenSQLResultsLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
+                                             struct ArrowArray *out_array)
+{
+    if (m_aosArrowArrayStreamOptions.FetchNameValue(
+            "OGR_GENSQL_STREAM_BASE_IMPL") ||
+        !TestCapability(OLCFastGetArrowStream))
+    {
+        return OGRLayer::GetNextArrowArray(stream, out_array);
+    }
+
+    return GetNextArrowArrayForwarded(stream, out_array);
+}
+
+/************************************************************************/
+/*                  GetNextArrowArrayForwarded()                        */
+/************************************************************************/
+
+int OGRGenSQLResultsLayer::GetNextArrowArrayForwarded(
+    struct ArrowArrayStream *stream, struct ArrowArray *out_array)
+{
+    const swq_select *psSelectInfo = m_pSelectInfo.get();
+    if (psSelectInfo->limit >= 0 && m_nIteratedFeatures >= psSelectInfo->limit)
+    {
+        memset(out_array, 0, sizeof(*out_array));
+        return 0;
+    }
+
+    OGRGenSQLResultsLayerArrowStreamPrivateData *psPrivateData =
+        static_cast<OGRGenSQLResultsLayerArrowStreamPrivateData *>(
+            stream->private_data);
+    const int ret = m_poSrcLayer->GetNextArrowArray(
+        psPrivateData->psSrcLayerStream, out_array);
+    if (ret == 0 && psSelectInfo->limit >= 0)
+    {
+        if (m_nIteratedFeatures < 0)
+            m_nIteratedFeatures = 0;
+        m_nIteratedFeatures += out_array->length;
+        if (m_nIteratedFeatures > psSelectInfo->limit)
+        {
+            out_array->length -= m_nIteratedFeatures - psSelectInfo->limit;
+            for (int i = 0; i < out_array->n_children; ++i)
+            {
+                out_array->children[i]->length -=
+                    m_nIteratedFeatures - psSelectInfo->limit;
+            }
+        }
+    }
+    return ret;
 }
 
 //! @endcond

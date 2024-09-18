@@ -133,6 +133,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     //! @cond Doxygen_Suppress
     CPLStringList m_aosArrowArrayStreamOptions{};
 
+    friend struct OGRGenSQLResultsLayerArrowStreamPrivateData;
+
     struct ArrowArrayStreamPrivateData
     {
         bool m_bArrowArrayStreamInProgress = false;
@@ -153,6 +155,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     //! @endcond
 
     friend class OGRArrowArrayHelper;
+    friend class OGRGenSQLResultsLayer;
     static void ReleaseArray(struct ArrowArray *array);
     static void ReleaseSchema(struct ArrowSchema *schema);
     static void ReleaseStream(struct ArrowArrayStream *stream);
