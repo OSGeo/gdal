@@ -3862,7 +3862,12 @@ static OGRBoolean OGRGEOSBooleanPredicate(
 /**
  * \brief Attempts to make an invalid geometry valid without losing vertices.
  *
- * Already-valid geometries are cloned without further intervention.
+ * Already-valid geometries are cloned without further intervention
+ * for default MODE=LINEWORK. Already-valid geometries with MODE=STRUCTURE
+ * may be subject to non-significant transformations, such as duplicated point
+ * removal, change in ring winding order, etc. (before GDAL 3.10, single-part
+ * geometry collections could be returned a single geometry. GDAL 3.10
+ * returns the same type of geometry).
  *
  * Running OGRGeometryFactory::removeLowerDimensionSubGeoms() as a
  * post-processing step is often desired.
@@ -3973,6 +3978,20 @@ OGRGeometry *OGRGeometry::MakeValid(CSLConstList papszOptions) const
             poOGRProduct =
                 OGRGeometryRebuildCurves(this, nullptr, poOGRProduct);
             GEOSGeom_destroy_r(hGEOSCtxt, hGEOSRet);
+
+#if GEOS_VERSION_MAJOR > 3 ||                                                  \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 10)
+            // METHOD=STRUCTURE is not guaranteed to return a multiple geometry
+            // if the input is a multiple geometry
+            if (poOGRProduct && bStructureMethod &&
+                OGR_GT_IsSubClassOf(getGeometryType(), wkbGeometryCollection) &&
+                !OGR_GT_IsSubClassOf(poOGRProduct->getGeometryType(),
+                                     wkbGeometryCollection))
+            {
+                poOGRProduct = OGRGeometryFactory::forceTo(poOGRProduct,
+                                                           getGeometryType());
+            }
+#endif
         }
     }
     freeGEOSContext(hGEOSCtxt);
