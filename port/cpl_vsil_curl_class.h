@@ -42,6 +42,7 @@
 #include "cpl_curl_priv.h"
 
 #include <algorithm>
+#include <atomic>
 #include <condition_variable>
 #include <set>
 #include <map>
@@ -411,6 +412,8 @@ class VSICurlHandle : public VSIVirtualHandle
     bool m_bUseHead = false;
     bool m_bUseRedirectURLIfNoQueryStringParams = false;
 
+    mutable std::atomic<bool> m_bInterrupt = false;
+
     // Specific to Planetary Computer signing:
     // https://planetarycomputer.microsoft.com/docs/concepts/sas/
     mutable bool m_bPlanetaryComputerURLSigning = false;
@@ -496,6 +499,11 @@ class VSICurlHandle : public VSIVirtualHandle
     int Error() override;
     int Flush() override;
     int Close() override;
+
+    void Interrupt() override
+    {
+        m_bInterrupt = true;
+    }
 
     bool HasPRead() const override
     {
@@ -1188,7 +1196,8 @@ void VSICURLInitWriteFuncStruct(cpl::WriteFuncStruct *psStruct, VSILFILE *fp,
                                 void *pReadCbkUserData);
 size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                               void *req);
-void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle = nullptr);
+void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle = nullptr,
+                         std::atomic<bool> *pbInterrupt = nullptr);
 void VSICURLResetHeaderAndWriterFunctions(CURL *hCurlHandle);
 
 int VSICurlParseUnixPermissions(const char *pszPermissions);

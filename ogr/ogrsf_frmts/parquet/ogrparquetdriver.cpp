@@ -51,7 +51,8 @@
 static GDALDataset *OpenFromDatasetFactory(
     const std::string &osBasePath,
     const std::shared_ptr<arrow::dataset::DatasetFactory> &factory,
-    CSLConstList papszOpenOptions)
+    CSLConstList papszOpenOptions,
+    const std::shared_ptr<arrow::fs::FileSystem> &fs)
 {
     std::shared_ptr<arrow::dataset::Dataset> dataset;
     PARQUET_ASSIGN_OR_THROW(dataset, factory->Finish());
@@ -65,6 +66,7 @@ static GDALDataset *OpenFromDatasetFactory(
         poDS.get(), CPLGetBasename(osBasePath.c_str()), bIsVSI, dataset,
         papszOpenOptions);
     poDS->SetLayer(std::move(poLayer));
+    poDS->SetFileSystem(fs);
     return poDS.release();
 }
 
@@ -134,7 +136,7 @@ static GDALDataset *OpenParquetDatasetWithMetadata(
                      std::make_shared<arrow::dataset::ParquetFileFormat>(),
                      std::move(options)));
 
-    return OpenFromDatasetFactory(osBasePath, factory, papszOpenOptions);
+    return OpenFromDatasetFactory(osBasePath, factory, papszOpenOptions, fs);
 }
 
 /************************************************************************/
@@ -182,7 +184,7 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
                          std::move(options)));
     }
 
-    return OpenFromDatasetFactory(osBasePath, factory, papszOpenOptions);
+    return OpenFromDatasetFactory(osBasePath, factory, papszOpenOptions, fs);
 }
 
 #endif
@@ -448,7 +450,8 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
                 if (fp == nullptr)
                     return nullptr;
             }
-            infile = std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
+            infile = std::make_shared<OGRArrowRandomAccessFile>(osFilename,
+                                                                std::move(fp));
         }
         else
         {

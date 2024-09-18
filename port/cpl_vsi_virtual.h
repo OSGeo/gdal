@@ -139,6 +139,14 @@ struct CPL_DLL VSIVirtualHandle
     virtual size_t PRead(void *pBuffer, size_t nSize,
                          vsi_l_offset nOffset) const;
 
+    /** Ask current operations to be interrupted.
+     * Implementations must be thread-safe, as this will typically be called
+     * from another thread than the active one for this file.
+     */
+    virtual void Interrupt()
+    {
+    }
+
     // NOTE: when adding new methods, besides the "actual" implementations,
     // also consider the VSICachedFile one.
 
