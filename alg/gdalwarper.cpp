@@ -1167,6 +1167,20 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * will be selected, not just those whose center point falls within the
  * polygon.</li>
  *
+ * <li>XSCALE: Ratio expressing the resampling factor (number of destination
+ * pixels per source pixel) along the target horizontal axis.
+ * The scale is used to determine the number of source pixels along the x-axis
+ * that are considered by the resampling algorithm.
+ * Equals to one for no resampling, below one for downsampling
+ * and above one for upsampling. This is automatically computed, for each
+ * processing chunk, and may thus vary among them, depending on the
+ * shape of output regions vs input regions. Such variations can be undesired
+ * in some situations. If the resampling factor can be considered as constant
+ * over the warped area, setting a constant value can lead to more reproducible
+ * pixel output.</li>
+ *
+ * <li>YSCALE: Same as XSCALE, but along the horizontal axis.</li>
+ *
  * <li>OPTIMIZE_SIZE: This defaults to FALSE, but may be set to TRUE
  * typically when writing to a compressed dataset (GeoTIFF with
  * COMPRESS creation option set for example) for achieving a smaller
@@ -1176,7 +1190,11 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * of the file. However sticking to target block size may cause major
  * processing slowdown for some particular reprojections. Starting
  * with GDAL 3.8, OPTIMIZE_SIZE mode is automatically enabled when it is safe
- * to do so.</li>
+ * to do so.
+ * As this parameter influences the shape of warping chunk, and by default the
+ * XSCALE and YSCALE parameters are computed per warping chunk, this parameter may
+ * influence the pixel output.
+ * </li>
  *
  * <li>NUM_THREADS: (GDAL >= 1.10) Can be set to a numeric value or ALL_CPUS to
  * set the number of threads to use to parallelize the computation part of the
