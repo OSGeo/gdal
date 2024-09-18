@@ -140,7 +140,8 @@ static GDALDataType GetWorkDataType(GDALDataType eDataType)
             eWrkDT = eDataType;
             break;
 
-        default:
+        case GDT_Unknown:
+        case GDT_TypeCount:
             CPLAssert(false);
             eWrkDT = GDT_Float64;
             break;
