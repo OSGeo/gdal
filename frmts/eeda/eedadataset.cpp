@@ -1245,11 +1245,16 @@ void GDALRegister_EEDA()
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Earth Engine Data API");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/eeda.html");
     poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "EEDA:");
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
-                              "<OpenOptionList>"
-                              "  <Option name='COLLECTION' type='string' "
-                              "description='Collection name'/>"
-                              "</OpenOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='COLLECTION' type='string' "
+        "description='Collection name'/>"
+        "  <Option name='VSI_PATH_FOR_AUTH' type='string' "
+        "description='/vsigs/... path onto which a "
+        "GOOGLE_APPLICATION_CREDENTIALS path specific "
+        "option is set'/>"
+        "</OpenOptionList>");
 
     poDriver->pfnOpen = GDALEEDAOpen;
     poDriver->pfnIdentify = GDALEEDAdentify;
