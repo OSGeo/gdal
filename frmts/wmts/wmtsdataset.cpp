@@ -1226,20 +1226,21 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (STARTS_WITH(osGetCapabilitiesURL, "/vsimem/"))
     {
-        const char *pszHref = CPLGetXMLValue(
-            psXML, "=Capabilities.ServiceMetadataURL.href", nullptr);
-        if (pszHref)
-            osGetCapabilitiesURL = pszHref;
+        osGetCapabilitiesURL = GetOperationKVPURL(psXML, "GetCapabilities");
+        if (osGetCapabilitiesURL.empty())
+        {
+            // (ERO) I'm not even sure this is correct at all...
+            const char *pszHref = CPLGetXMLValue(
+                psXML, "=Capabilities.ServiceMetadataURL.href", nullptr);
+            if (pszHref)
+                osGetCapabilitiesURL = pszHref;
+        }
         else
         {
-            osGetCapabilitiesURL = GetOperationKVPURL(psXML, "GetCapabilities");
-            if (!osGetCapabilitiesURL.empty())
-            {
-                osGetCapabilitiesURL =
-                    CPLURLAddKVP(osGetCapabilitiesURL, "service", "WMTS");
-                osGetCapabilitiesURL = CPLURLAddKVP(
-                    osGetCapabilitiesURL, "request", "GetCapabilities");
-            }
+            osGetCapabilitiesURL =
+                CPLURLAddKVP(osGetCapabilitiesURL, "service", "WMTS");
+            osGetCapabilitiesURL = CPLURLAddKVP(osGetCapabilitiesURL, "request",
+                                                "GetCapabilities");
         }
     }
     CPLString osCapabilitiesFilename(osGetCapabilitiesURL);

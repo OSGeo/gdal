@@ -880,6 +880,7 @@ def test_wmts_15():
             </TileMatrix>
         </TileMatrixSet>
     </Contents>
+    <ServiceMetadataURL xlink:href="/vsimem/do_not_use"/>
 </Capabilities>""",
     )
 
