@@ -3856,6 +3856,50 @@ OGRGeometryFactory::TransformWithOptionsCache::~TransformWithOptionsCache()
 }
 
 /************************************************************************/
+/*              isTransformWithOptionsRegularTransform()                */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/*static */
+bool OGRGeometryFactory::isTransformWithOptionsRegularTransform(
+    [[maybe_unused]] const OGRSpatialReference *poSourceCRS,
+    [[maybe_unused]] const OGRSpatialReference *poTargetCRS,
+    CSLConstList papszOptions)
+{
+    if (papszOptions)
+        return false;
+
+#ifdef HAVE_GEOS
+    if (poSourceCRS->IsProjected() && poTargetCRS->IsGeographic() &&
+        poTargetCRS->GetAxisMappingStrategy() == OAMS_TRADITIONAL_GIS_ORDER &&
+        // check that angular units is degree
+        std::fabs(poTargetCRS->GetAngularUnits(nullptr) -
+                  CPLAtof(SRS_UA_DEGREE_CONV)) <=
+            1e-8 * CPLAtof(SRS_UA_DEGREE_CONV))
+    {
+        double dfWestLong = 0.0;
+        double dfSouthLat = 0.0;
+        double dfEastLong = 0.0;
+        double dfNorthLat = 0.0;
+        if (poSourceCRS->GetAreaOfUse(&dfWestLong, &dfSouthLat, &dfEastLong,
+                                      &dfNorthLat, nullptr) &&
+            !(dfSouthLat == -90.0 || dfNorthLat == 90.0 ||
+              dfWestLong == -180.0 || dfEastLong == 180.0 ||
+              dfWestLong > dfEastLong))
+        {
+            // Not a global geographic CRS
+            return true;
+        }
+        return false;
+    }
+#endif
+
+    return true;
+}
+
+//! @endcond
+
+/************************************************************************/
 /*                       transformWithOptions()                         */
 /************************************************************************/
 
@@ -3889,41 +3933,20 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
             cache.d->poSourceCRS = poSourceCRS;
             cache.d->poTargetCRS = poTargetCRS;
             cache.d->poCT = poCT;
-            if (poSourceCRS && poTargetCRS && poSourceCRS->IsProjected() &&
-                poTargetCRS->IsGeographic() &&
-                poTargetCRS->GetAxisMappingStrategy() ==
-                    OAMS_TRADITIONAL_GIS_ORDER &&
-                // check that angular units is degree
-                std::fabs(poTargetCRS->GetAngularUnits(nullptr) -
-                          CPLAtof(SRS_UA_DEGREE_CONV)) <=
-                    1e-8 * CPLAtof(SRS_UA_DEGREE_CONV))
+            if (poSourceCRS && poTargetCRS &&
+                !isTransformWithOptionsRegularTransform(
+                    poSourceCRS, poTargetCRS, papszOptions))
             {
-                double dfWestLong = 0.0;
-                double dfSouthLat = 0.0;
-                double dfEastLong = 0.0;
-                double dfNorthLat = 0.0;
-                if (poSourceCRS->GetAreaOfUse(&dfWestLong, &dfSouthLat,
-                                              &dfEastLong, &dfNorthLat,
-                                              nullptr) &&
-                    !(dfSouthLat == -90.0 || dfNorthLat == 90.0 ||
-                      dfWestLong == -180.0 || dfEastLong == 180.0 ||
-                      dfWestLong > dfEastLong))
+                cache.d->poRevCT.reset(OGRCreateCoordinateTransformation(
+                    poTargetCRS, poSourceCRS));
+                cache.d->bIsNorthPolar = false;
+                cache.d->bIsPolar = false;
+                cache.d->poRevCT.reset(poCT->GetInverse());
+                if (cache.d->poRevCT &&
+                    IsPolarToGeographic(poCT, cache.d->poRevCT.get(),
+                                        cache.d->bIsNorthPolar))
                 {
-                    // Not a global geographic CRS
-                }
-                else
-                {
-                    cache.d->poRevCT.reset(OGRCreateCoordinateTransformation(
-                        poTargetCRS, poSourceCRS));
-                    cache.d->bIsNorthPolar = false;
-                    cache.d->bIsPolar = false;
-                    cache.d->poRevCT.reset(poCT->GetInverse());
-                    if (cache.d->poRevCT &&
-                        IsPolarToGeographic(poCT, cache.d->poRevCT.get(),
-                                            cache.d->bIsNorthPolar))
-                    {
-                        cache.d->bIsPolar = true;
-                    }
+                    cache.d->bIsPolar = true;
                 }
             }
         }

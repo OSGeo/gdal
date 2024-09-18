@@ -8905,21 +8905,40 @@ void OGRGeoPackageTransform(sqlite3_context *pContext, int argc,
         poCT = poDS->m_poLastCachedCT.get();
     }
 
-    auto poGeom = std::unique_ptr<OGRGeometry>(
-        GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr));
-    if (poGeom == nullptr)
+    if (sHeader.nHeaderLen >= 8)
     {
-        // Try also spatialite geometry blobs
-        OGRGeometry *poGeomSpatialite = nullptr;
-        if (OGRSQLiteImportSpatiaLiteGeometry(pabyBLOB, nBLOBLen,
-                                              &poGeomSpatialite) != OGRERR_NONE)
+        std::vector<GByte> &abyNewBLOB = poDS->m_abyWKBTransformCache;
+        abyNewBLOB.resize(nBLOBLen);
+        memcpy(abyNewBLOB.data(), pabyBLOB, nBLOBLen);
+
+        OGREnvelope3D oEnv3d;
+        if (!OGRWKBTransform(abyNewBLOB.data() + sHeader.nHeaderLen,
+                             nBLOBLen - sHeader.nHeaderLen, poCT,
+                             poDS->m_oWKBTransformCache, oEnv3d) ||
+            !GPkgUpdateHeader(abyNewBLOB.data(), nBLOBLen, nDestSRID,
+                              oEnv3d.MinX, oEnv3d.MaxX, oEnv3d.MinY,
+                              oEnv3d.MaxY, oEnv3d.MinZ, oEnv3d.MaxZ))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
             sqlite3_result_blob(pContext, nullptr, 0, nullptr);
             return;
         }
-        poGeom.reset(poGeomSpatialite);
+
+        sqlite3_result_blob(pContext, abyNewBLOB.data(), nBLOBLen,
+                            SQLITE_TRANSIENT);
+        return;
     }
+
+    // Try also spatialite geometry blobs
+    OGRGeometry *poGeomSpatialite = nullptr;
+    if (OGRSQLiteImportSpatiaLiteGeometry(pabyBLOB, nBLOBLen,
+                                          &poGeomSpatialite) != OGRERR_NONE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
+        sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+        return;
+    }
+    auto poGeom = std::unique_ptr<OGRGeometry>(poGeomSpatialite);
 
     if (poGeom->transform(poCT) != OGRERR_NONE)
     {

@@ -40,6 +40,8 @@
 #include <cstring>
 
 #include <algorithm>
+#include <atomic>
+#include <future>
 #include <limits>
 #include <map>
 #include <memory>
@@ -69,8 +71,10 @@
 #include "ogr_p.h"
 #include "ogr_recordbatch.h"
 #include "ogr_spatialref.h"
+#include "ogrlayerarrow.h"
 #include "ogrlayerdecorator.h"
 #include "ogrsf_frmts.h"
+#include "ogr_wkb.h"
 
 typedef enum
 {
@@ -520,38 +524,39 @@ class SetupTargetLayer
                                bool &bError);
 
   public:
-    GDALDataset *m_poSrcDS;
-    GDALDataset *m_poDstDS;
-    char **m_papszLCO;
-    OGRSpatialReference *m_poOutputSRS;
+    GDALDataset *m_poSrcDS = nullptr;
+    GDALDataset *m_poDstDS = nullptr;
+    CSLConstList m_papszLCO = nullptr;
+    const OGRSpatialReference *m_poUserSourceSRS = nullptr;
+    const OGRSpatialReference *m_poOutputSRS = nullptr;
     bool m_bTransform = false;
-    bool m_bNullifyOutputSRS;
+    bool m_bNullifyOutputSRS = false;
     bool m_bSelFieldsSet = false;
-    char **m_papszSelFields;
-    bool m_bAppend;
-    bool m_bAddMissingFields;
-    int m_eGType;
-    GeomTypeConversion m_eGeomTypeConversion;
-    int m_nCoordDim;
-    bool m_bOverwrite;
-    char **m_papszFieldTypesToString;
-    char **m_papszMapFieldType;
-    bool m_bUnsetFieldWidth;
-    bool m_bExplodeCollections;
-    const char *m_pszZField;
-    char **m_papszFieldMap;
-    const char *m_pszWHERE;
-    bool m_bExactFieldNameMatch;
-    bool m_bQuiet;
-    bool m_bForceNullable;
-    bool m_bResolveDomains;
-    bool m_bUnsetDefault;
-    bool m_bUnsetFid;
-    bool m_bPreserveFID;
-    bool m_bCopyMD;
-    bool m_bNativeData;
-    bool m_bNewDataSource;
-    const char *m_pszCTPipeline;
+    CSLConstList m_papszSelFields = nullptr;
+    bool m_bAppend = false;
+    bool m_bAddMissingFields = false;
+    int m_eGType = 0;
+    GeomTypeConversion m_eGeomTypeConversion = GTC_DEFAULT;
+    int m_nCoordDim = 0;
+    bool m_bOverwrite = false;
+    CSLConstList m_papszFieldTypesToString = nullptr;
+    CSLConstList m_papszMapFieldType = nullptr;
+    bool m_bUnsetFieldWidth = false;
+    bool m_bExplodeCollections = false;
+    const char *m_pszZField = nullptr;
+    CSLConstList m_papszFieldMap = nullptr;
+    const char *m_pszWHERE = nullptr;
+    bool m_bExactFieldNameMatch = false;
+    bool m_bQuiet = false;
+    bool m_bForceNullable = false;
+    bool m_bResolveDomains = false;
+    bool m_bUnsetDefault = false;
+    bool m_bUnsetFid = false;
+    bool m_bPreserveFID = false;
+    bool m_bCopyMD = false;
+    bool m_bNativeData = false;
+    bool m_bNewDataSource = false;
+    const char *m_pszCTPipeline = nullptr;
 
     std::unique_ptr<TargetLayerInfo>
     Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
@@ -560,11 +565,10 @@ class SetupTargetLayer
 
 class LayerTranslator
 {
-    static bool TranslateArrow(const TargetLayerInfo *psInfo,
-                               GIntBig nCountLayerFeatures,
-                               GIntBig *pnReadFeatureCount,
-                               GDALProgressFunc pfnProgress, void *pProgressArg,
-                               const GDALVectorTranslateOptions *psOptions);
+    bool TranslateArrow(TargetLayerInfo *psInfo, GIntBig nCountLayerFeatures,
+                        GIntBig *pnReadFeatureCount,
+                        GDALProgressFunc pfnProgress, void *pProgressArg,
+                        const GDALVectorTranslateOptions *psOptions);
 
   public:
     GDALDataset *m_poSrcDS = nullptr;
@@ -572,9 +576,9 @@ class LayerTranslator
     bool m_bTransform = false;
     bool m_bWrapDateline = false;
     CPLString m_osDateLineOffset{};
-    OGRSpatialReference *m_poOutputSRS = nullptr;
+    const OGRSpatialReference *m_poOutputSRS = nullptr;
     bool m_bNullifyOutputSRS = false;
-    OGRSpatialReference *m_poUserSourceSRS = nullptr;
+    const OGRSpatialReference *m_poUserSourceSRS = nullptr;
     OGRCoordinateTransformation *m_poGCPCoordTrans = nullptr;
     int m_eGType = -1;
     GeomTypeConversion m_eGeomTypeConversion = GTC_DEFAULT;
@@ -586,20 +590,20 @@ class LayerTranslator
 
     OGRGeometry *m_poClipSrcOri = nullptr;
     bool m_bWarnedClipSrcSRS = false;
-    std::unique_ptr<OGRGeometry> m_poClipSrcReprojectedToSrcSRS;
+    std::unique_ptr<OGRGeometry> m_poClipSrcReprojectedToSrcSRS{};
     const OGRSpatialReference *m_poClipSrcReprojectedToSrcSRS_SRS = nullptr;
     OGREnvelope m_oClipSrcEnv{};
 
     OGRGeometry *m_poClipDstOri = nullptr;
     bool m_bWarnedClipDstSRS = false;
-    std::unique_ptr<OGRGeometry> m_poClipDstReprojectedToDstSRS;
+    std::unique_ptr<OGRGeometry> m_poClipDstReprojectedToDstSRS{};
     const OGRSpatialReference *m_poClipDstReprojectedToDstSRS_SRS = nullptr;
     OGREnvelope m_oClipDstEnv{};
 
     bool m_bExplodeCollections = false;
     bool m_bNativeData = false;
     GIntBig m_nLimit = -1;
-    OGRGeometryFactory::TransformWithOptionsCache m_transformWithOptionsCache;
+    OGRGeometryFactory::TransformWithOptionsCache m_transformWithOptionsCache{};
 
     bool Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                    GIntBig nCountLayerFeatures, GIntBig *pnReadFeatureCount,
@@ -1224,20 +1228,24 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
 
 class CompositeCT : public OGRCoordinateTransformation
 {
+    OGRCoordinateTransformation *const poCT1;
+    const bool bOwnCT1;
+    OGRCoordinateTransformation *const poCT2;
+    const bool bOwnCT2;
+
+    // Working buffer
+    std::vector<int> m_anErrorCode{};
+
     CompositeCT(const CompositeCT &other)
         : poCT1(other.poCT1 ? other.poCT1->Clone() : nullptr), bOwnCT1(true),
-          poCT2(other.poCT2 ? other.poCT2->Clone() : nullptr), bOwnCT2(true)
+          poCT2(other.poCT2 ? other.poCT2->Clone() : nullptr), bOwnCT2(true),
+          m_anErrorCode({})
     {
     }
 
     CompositeCT &operator=(const CompositeCT &) = delete;
 
   public:
-    OGRCoordinateTransformation *poCT1;
-    bool bOwnCT1;
-    OGRCoordinateTransformation *poCT2;
-    bool bOwnCT2;
-
     CompositeCT(OGRCoordinateTransformation *poCT1In, bool bOwnCT1In,
                 OGRCoordinateTransformation *poCT2In, bool bOwnCT2In)
         : poCT1(poCT1In), bOwnCT1(bOwnCT1In), poCT2(poCT2In), bOwnCT2(bOwnCT2In)
@@ -1296,6 +1304,35 @@ class CompositeCT : public OGRCoordinateTransformation
             nResult = poCT1->Transform(nCount, x, y, z, t, pabSuccess);
         if (nResult && poCT2)
             nResult = poCT2->Transform(nCount, x, y, z, t, pabSuccess);
+        return nResult;
+    }
+
+    virtual int TransformWithErrorCodes(size_t nCount, double *x, double *y,
+                                        double *z, double *t,
+                                        int *panErrorCodes) override
+    {
+        if (poCT1 && poCT2 && panErrorCodes)
+        {
+            m_anErrorCode.resize(nCount);
+            int nResult = poCT1->TransformWithErrorCodes(nCount, x, y, z, t,
+                                                         m_anErrorCode.data());
+            if (nResult)
+                nResult = poCT2->TransformWithErrorCodes(nCount, x, y, z, t,
+                                                         panErrorCodes);
+            for (size_t i = 0; i < nCount; ++i)
+            {
+                if (m_anErrorCode[i])
+                    panErrorCodes[i] = m_anErrorCode[i];
+            }
+            return nResult;
+        }
+        int nResult = TRUE;
+        if (poCT1)
+            nResult = poCT1->TransformWithErrorCodes(nCount, x, y, z, t,
+                                                     panErrorCodes);
+        if (nResult && poCT2)
+            nResult = poCT2->TransformWithErrorCodes(nCount, x, y, z, t,
+                                                     panErrorCodes);
         return nResult;
     }
 
@@ -1380,6 +1417,20 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         {
             if (pabSuccess)
                 pabSuccess[i] = true;
+            if (bSwapXY)
+                std::swap(x[i], y[i]);
+        }
+        return true;
+    }
+
+    virtual int TransformWithErrorCodes(size_t nCount, double *x, double *y,
+                                        double * /*z*/, double * /*t*/,
+                                        int *panErrorCodes) override
+    {
+        for (size_t i = 0; i < nCount; i++)
+        {
+            if (panErrorCodes)
+                panErrorCodes[i] = 0;
             if (bSwapXY)
                 std::swap(x[i], y[i]);
         }
@@ -2863,6 +2914,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     oSetup.m_poOutputSRS = oOutputSRSHolder.get();
     oSetup.m_bTransform = psOptions->bTransform;
     oSetup.m_bNullifyOutputSRS = psOptions->bNullifyOutputSRS;
+    oSetup.m_poUserSourceSRS = poSourceSRS;
     oSetup.m_bSelFieldsSet = psOptions->bSelFieldsSet;
     oSetup.m_papszSelFields = psOptions->aosSelFields.List();
     oSetup.m_bAppend = bAppend;
@@ -3760,8 +3812,8 @@ static OGRwkbGeometryType ConvertType(GeomTypeConversion eGeomTypeConversion,
 
 static void DoFieldTypeConversion(GDALDataset *poDstDS,
                                   OGRFieldDefn &oFieldDefn,
-                                  char **papszFieldTypesToString,
-                                  char **papszMapFieldType,
+                                  CSLConstList papszFieldTypesToString,
+                                  CSLConstList papszMapFieldType,
                                   bool bUnsetFieldWidth, bool bQuiet,
                                   bool bForceNullable, bool bUnsetDefault)
 {
@@ -3907,6 +3959,47 @@ static void DoFieldTypeConversion(GDALDataset *poDstDS,
 }
 
 /************************************************************************/
+/*                        GetArrowGeomFieldIndex()                      */
+/************************************************************************/
+
+static int GetArrowGeomFieldIndex(const struct ArrowSchema *psLayerSchema,
+                                  const char *pszFieldName)
+{
+    if (strcmp(psLayerSchema->format, "+s") == 0)  // struct
+    {
+        for (int i = 0; i < psLayerSchema->n_children; ++i)
+        {
+            const auto psSchema = psLayerSchema->children[i];
+            if (strcmp(psSchema->format, "z") == 0)  // binary
+            {
+                if (strcmp(psSchema->name, pszFieldName) == 0)
+                {
+                    return i;
+                }
+                else
+                {
+                    // Check if ARROW:extension:name = ogc.wkb or geoarrow.wkb
+                    const char *pabyMetadata = psSchema->metadata;
+                    if (pabyMetadata)
+                    {
+                        const auto oMetadata =
+                            OGRParseArrowMetadata(pabyMetadata);
+                        auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
+                        if (oIter != oMetadata.end() &&
+                            (oIter->second == EXTENSION_NAME_OGC_WKB ||
+                             oIter->second == EXTENSION_NAME_GEOARROW_WKB))
+                        {
+                            return i;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return -1;
+}
+
+/************************************************************************/
 /*                 SetupTargetLayer::CanUseWriteArrowBatch()            */
 /************************************************************************/
 
@@ -3933,11 +4026,11 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
           !psOptions->aosLCO.FetchNameValue("BATCH_SIZE") &&
           CPLTestBool(CPLGetConfigOption("OGR2OGR_USE_ARROW_API", "YES"))) ||
          CPLTestBool(CPLGetConfigOption("OGR2OGR_USE_ARROW_API", "NO"))) &&
-        !psOptions->bSkipFailures && !psOptions->bTransform &&
-        !psOptions->poClipSrc && !psOptions->poClipDst &&
-        psOptions->oGCPs.nGCPCount == 0 && !psOptions->bWrapDateline &&
-        !m_papszSelFields && !m_bAddMissingFields &&
-        m_eGType == GEOMTYPE_UNCHANGED && psOptions->eGeomOp == GEOMOP_NONE &&
+        !psOptions->bSkipFailures && !psOptions->poClipSrc &&
+        !psOptions->poClipDst && psOptions->oGCPs.nGCPCount == 0 &&
+        !psOptions->bWrapDateline && !m_papszSelFields &&
+        !m_bAddMissingFields && m_eGType == GEOMTYPE_UNCHANGED &&
+        psOptions->eGeomOp == GEOMOP_NONE &&
         m_eGeomTypeConversion == GTC_DEFAULT && m_nCoordDim < 0 &&
         !m_papszFieldTypesToString && !m_papszMapFieldType &&
         !m_bUnsetFieldWidth && !m_bExplodeCollections && !m_pszZField &&
@@ -3946,6 +4039,26 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
         psOptions->dfXYRes == OGRGeomCoordinatePrecision::UNKNOWN &&
         !psOptions->bMakeValid && !psOptions->bSkipInvalidGeom)
     {
+        if (psOptions->bTransform)
+        {
+            // To simplify implementation for now
+            if (poSrcLayer->GetLayerDefn()->GetGeomFieldCount() != 1 ||
+                poDstLayer->GetLayerDefn()->GetGeomFieldCount() != 1)
+            {
+                return false;
+            }
+            auto poSrcSRS = m_poUserSourceSRS ? m_poUserSourceSRS
+                                              : poSrcLayer->GetLayerDefn()
+                                                    ->GetGeomFieldDefn(0)
+                                                    ->GetSpatialRef();
+            if (!poSrcSRS ||
+                !OGRGeometryFactory::isTransformWithOptionsRegularTransform(
+                    poSrcSRS, m_poOutputSRS, nullptr))
+            {
+                return false;
+            }
+        }
+
         struct ArrowArrayStream streamSrc;
         const char *const apszOptions[] = {"SILENCE_GET_SCHEMA_ERROR=YES",
                                            nullptr};
@@ -3954,6 +4067,15 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
             struct ArrowSchema schemaSrc;
             if (streamSrc.get_schema(&streamSrc, &schemaSrc) == 0)
             {
+                if (psOptions->bTransform &&
+                    GetArrowGeomFieldIndex(&schemaSrc,
+                                           poSrcLayer->GetGeometryColumn()) < 0)
+                {
+                    schemaSrc.release(&schemaSrc);
+                    streamSrc.release(&streamSrc);
+                    return false;
+                }
+
                 std::string osErrorMsg;
                 if (poDstLayer->IsArrowSchemaSupported(&schemaSrc, nullptr,
                                                        osErrorMsg))
@@ -5652,7 +5774,7 @@ SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
 /************************************************************************/
 
 bool LayerTranslator::TranslateArrow(
-    const TargetLayerInfo *psInfo, GIntBig nCountLayerFeatures,
+    TargetLayerInfo *psInfo, GIntBig nCountLayerFeatures,
     GIntBig *pnReadFeatureCount, GDALProgressFunc pfnProgress,
     void *pProgressArg, const GDALVectorTranslateOptions *psOptions)
 {
@@ -5702,10 +5824,52 @@ bool LayerTranslator::TranslateArrow(
         return false;
     }
 
+    int iArrowGeomFieldIndex = -1;
+    if (m_bTransform)
+    {
+        iArrowGeomFieldIndex = GetArrowGeomFieldIndex(
+            &schema, psInfo->m_poSrcLayer->GetGeometryColumn());
+        if (!SetupCT(psInfo, psInfo->m_poSrcLayer, m_bTransform,
+                     m_bWrapDateline, m_osDateLineOffset, m_poUserSourceSRS,
+                     nullptr, m_poOutputSRS, m_poGCPCoordTrans, false))
+        {
+            return false;
+        }
+    }
+
     bool bRet = true;
 
     GIntBig nCount = 0;
     bool bGoOn = true;
+    std::vector<GByte> abyModifiedWKB;
+    const int nNumReprojectionThreads = []()
+    {
+        const int nNumCPUs = CPLGetNumCPUs();
+        if (nNumCPUs <= 1)
+        {
+            return 1;
+        }
+        else
+        {
+            const char *pszNumThreads =
+                CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+            if (pszNumThreads)
+            {
+                if (EQUAL(pszNumThreads, "ALL_CPUS"))
+                    return CPLGetNumCPUs();
+                return std::min(atoi(pszNumThreads), 1024);
+            }
+            else
+            {
+                return std::max(2, nNumCPUs / 2);
+            }
+        }
+    }();
+
+    // Somewhat arbitrary threshold (config option only/mostly for autotest purposes)
+    const int MIN_FEATURES_FOR_THREADED_REPROJ = atoi(CPLGetConfigOption(
+        "OGR2OGR_MIN_FEATURES_FOR_THREADED_REPROJ", "10000"));
+
     while (bGoOn)
     {
         struct ArrowArray array;
@@ -5742,9 +5906,122 @@ bool LayerTranslator::TranslateArrow(
             nCount += array.length;
         }
 
+        const auto nArrayLength = array.length;
+
+        // Coordinate reprojection
+        const void *backupGeomArrayBuffers2 = nullptr;
+        if (m_bTransform)
+        {
+            auto *psGeomArray = array.children[iArrowGeomFieldIndex];
+            GByte *pabyWKB = static_cast<GByte *>(
+                const_cast<void *>(psGeomArray->buffers[2]));
+            const uint32_t *panOffsets =
+                static_cast<const uint32_t *>(psGeomArray->buffers[1]);
+            auto poCT = psInfo->m_aoReprojectionInfo[0].m_poCT.get();
+
+            try
+            {
+                abyModifiedWKB.resize(panOffsets[nArrayLength]);
+            }
+            catch (const std::exception &)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
+                bRet = false;
+                if (array.release)
+                    array.release(&array);
+                break;
+            }
+            memcpy(abyModifiedWKB.data(), pabyWKB, panOffsets[nArrayLength]);
+            backupGeomArrayBuffers2 = psGeomArray->buffers[2];
+            psGeomArray->buffers[2] = abyModifiedWKB.data();
+
+            std::atomic<bool> atomicRet{true};
+            const auto oReprojectionLambda =
+                [psGeomArray, nArrayLength, panOffsets, &atomicRet,
+                 &abyModifiedWKB, &poCT](int iThread, int nThreads)
+            {
+                OGRWKBTransformCache oCache;
+                OGREnvelope3D sEnv3D;
+                auto poThisCT =
+                    std::unique_ptr<OGRCoordinateTransformation>(poCT->Clone());
+                if (!poThisCT)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot clone OGRCoordinateTransformation");
+                    atomicRet = false;
+                    return;
+                }
+
+                const GByte *pabyValidity =
+                    static_cast<const GByte *>(psGeomArray->buffers[0]);
+                const size_t iStart =
+                    static_cast<size_t>(iThread * nArrayLength / nThreads);
+                const size_t iMax = static_cast<size_t>(
+                    (iThread + 1) * nArrayLength / nThreads);
+                for (size_t i = iStart; i < iMax; ++i)
+                {
+                    const size_t iShifted =
+                        static_cast<size_t>(i + psGeomArray->offset);
+                    if (!pabyValidity || (pabyValidity[iShifted >> 8] &
+                                          (1 << (iShifted % 8))) != 0)
+                    {
+                        const auto nWKBSize =
+                            panOffsets[iShifted + 1] - panOffsets[iShifted];
+                        if (!OGRWKBTransform(
+                                abyModifiedWKB.data() + panOffsets[iShifted],
+                                nWKBSize, poThisCT.get(), oCache, sEnv3D))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Reprojection failed");
+                            atomicRet = false;
+                            break;
+                        }
+                    }
+                }
+            };
+
+            if (nArrayLength >= MIN_FEATURES_FOR_THREADED_REPROJ &&
+                nNumReprojectionThreads >= 2)
+            {
+                std::vector<std::future<void>> oTasks;
+                for (int iThread = 0; iThread < nNumReprojectionThreads;
+                     ++iThread)
+                {
+                    oTasks.emplace_back(std::async(std::launch::async,
+                                                   oReprojectionLambda, iThread,
+                                                   nNumReprojectionThreads));
+                }
+                for (auto &oTask : oTasks)
+                {
+                    oTask.get();
+                }
+            }
+            else
+            {
+                oReprojectionLambda(0, 1);
+            }
+
+            bRet = atomicRet;
+            if (!bRet)
+            {
+                psGeomArray->buffers[2] = backupGeomArrayBuffers2;
+                if (array.release)
+                    array.release(&array);
+                break;
+            }
+        }
+
         // Write batch to target layer
-        if (!psInfo->m_poDstLayer->WriteArrowBatch(
-                &schema, &array, aosOptionsWriteArrowBatch.List()))
+        const bool bWriteOK = psInfo->m_poDstLayer->WriteArrowBatch(
+            &schema, &array, aosOptionsWriteArrowBatch.List());
+
+        if (backupGeomArrayBuffers2)
+        {
+            auto *psGeomArray = array.children[iArrowGeomFieldIndex];
+            psGeomArray->buffers[2] = backupGeomArrayBuffers2;
+        }
+
+        if (!bWriteOK)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "WriteArrowBatch() failed");
             if (array.release)

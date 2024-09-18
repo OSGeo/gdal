@@ -72,4 +72,8 @@ bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
                             bool bNeedExtent, bool bNeedExtent3D,
                             int iGeomIdx = 0);
 
+bool GPkgUpdateHeader(GByte *pabyGpkg, size_t nGpkgLen, int nSrsId, double MinX,
+                      double MaxX, double MinY, double MaxY, double MinZ,
+                      double MaxZ);
+
 #endif

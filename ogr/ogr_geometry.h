@@ -4285,6 +4285,12 @@ class CPL_DLL OGRGeometryFactory
         ~TransformWithOptionsCache();
     };
 
+    //! @cond Doxygen_Suppress
+    static bool isTransformWithOptionsRegularTransform(
+        const OGRSpatialReference *poSourceCRS,
+        const OGRSpatialReference *poTargetCRS, CSLConstList papszOptions);
+    //! @endcond
+
     static OGRGeometry *transformWithOptions(
         const OGRGeometry *poSrcGeom, OGRCoordinateTransformation *poCT,
         char **papszOptions,
