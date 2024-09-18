@@ -664,6 +664,50 @@ const char *OGRJSONFGReader::GetLayerNameForFeature(json_object *poObj) const
 }
 
 /************************************************************************/
+/*                     OGRJSONFGGetOGRGeometryType()                    */
+/************************************************************************/
+
+static OGRwkbGeometryType OGRJSONFGGetOGRGeometryType(json_object *poObj)
+{
+    const auto eType = OGRGeoJSONGetOGRGeometryType(poObj);
+    if (eType != wkbUnknown)
+        return eType;
+
+    json_object *poObjType = CPL_json_object_object_get(poObj, "type");
+    const char *pszType = json_object_get_string(poObjType);
+    if (!pszType)
+        return wkbNone;
+
+    if (strcmp(pszType, "Polyhedron") == 0)
+    {
+        return wkbPolyhedralSurfaceZ;
+    }
+    else if (strcmp(pszType, "Prism") == 0)
+    {
+        auto poBase = CPL_json_object_object_get(poObj, "base");
+        if (!poBase || json_object_get_type(poBase) != json_type_object)
+        {
+            return wkbNone;
+        }
+
+        const auto eBaseGeomType = OGRGeoJSONGetOGRGeometryType(poBase);
+        if (eBaseGeomType == wkbPoint)
+        {
+            return wkbLineString25D;
+        }
+        else if (eBaseGeomType == wkbLineString)
+        {
+            return wkbMultiPolygon25D;
+        }
+        else if (eBaseGeomType == wkbPolygon)
+        {
+            return wkbPolyhedralSurfaceZ;
+        }
+    }
+    return wkbNone;
+}
+
+/************************************************************************/
 /*                   OGRJSONFGCreateNonGeoJSONGeometry()                */
 /************************************************************************/
 
@@ -708,6 +752,8 @@ OGRJSONFGCreateNonGeoJSONGeometry(json_object *poObj, bool bWarn)
             if (poGeom->addGeometryDirectly(poPoly) != OGRERR_NONE)
                 return nullptr;
         }
+        if (nPolys == 0)
+            poGeom->set3D(true);
 
         return poGeom;
     }
@@ -904,22 +950,8 @@ bool OGRJSONFGReader::GenerateLayerDefnFromFeature(json_object *poObj)
             (eGeometryElement_ != GeometryElement::PLACE);
         if (poPlace && json_object_get_type(poPlace) == json_type_object)
         {
-            const auto eType = OGRGeoJSONGetOGRGeometryType(poPlace);
-            if (eType == wkbUnknown)
-            {
-                auto poGeom =
-                    OGRJSONFGCreateNonGeoJSONGeometry(poPlace, /*bWarn=*/true);
-                if (poGeom)
-                {
-                    bFallbackToGeometry = false;
-                    poContext->bDetectLayerGeomType =
-                        OGRGeoJSONUpdateLayerGeomType(
-                            poContext->bFirstGeometry,
-                            poGeom->getGeometryType(),
-                            poContext->eLayerGeomType);
-                }
-            }
-            else
+            const auto eType = OGRJSONFGGetOGRGeometryType(poPlace);
+            if (eType != wkbNone)
             {
                 bFallbackToGeometry = false;
                 poContext->bDetectLayerGeomType = OGRGeoJSONUpdateLayerGeomType(
