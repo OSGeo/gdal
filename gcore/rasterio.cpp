@@ -1005,9 +1005,10 @@ CPLErr GDALRasterBand::RasterIOResampled(
     GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     // Determine if we use warping resampling or overview resampling
-    bool bUseWarp = false;
-    if (GDALDataTypeIsComplex(eDataType))
-        bUseWarp = true;
+    const bool bUseWarp =
+        (GDALDataTypeIsComplex(eDataType) &&
+         psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
+         psExtraArg->eResampleAlg != GRIORA_Mode);
 
     double dfXOff = nXOff;
     double dfYOff = nYOff;
