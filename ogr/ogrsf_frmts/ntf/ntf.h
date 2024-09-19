@@ -597,10 +597,8 @@ class OGRNTFRasterLayer final : public OGRLayer
 /*                           OGRNTFDataSource                           */
 /************************************************************************/
 
-class OGRNTFDataSource final : public OGRDataSource
+class OGRNTFDataSource final : public GDALDataset
 {
-    char *pszName;
-
     int nLayers;
     OGRLayer **papoLayers;
 
@@ -637,11 +635,6 @@ class OGRNTFDataSource final : public OGRDataSource
 
     int Open(const char *pszName, int bTestOpen = FALSE,
              char **papszFileList = nullptr);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;

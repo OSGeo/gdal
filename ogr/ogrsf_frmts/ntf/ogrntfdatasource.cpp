@@ -35,10 +35,10 @@
 /************************************************************************/
 
 OGRNTFDataSource::OGRNTFDataSource()
-    : pszName(nullptr), nLayers(0), papoLayers(nullptr), poFCLayer(nullptr),
-      iCurrentFC(0), iCurrentReader(-1), nCurrentPos(0), nCurrentFID(0),
-      nNTFFileCount(0), papoNTFFileReader(nullptr), nFCCount(0),
-      papszFCNum(nullptr), papszFCName(nullptr),
+    : nLayers(0), papoLayers(nullptr), poFCLayer(nullptr), iCurrentFC(0),
+      iCurrentReader(-1), nCurrentPos(0), nCurrentFID(0), nNTFFileCount(0),
+      papoNTFFileReader(nullptr), nFCCount(0), papszFCNum(nullptr),
+      papszFCName(nullptr),
       poSpatialRef(new OGRSpatialReference(
           "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\","
           "DATUM[\"OSGB_1936\",SPHEROID[\"Airy 1830\",6377563.396,299.3249646,"
@@ -86,8 +86,6 @@ OGRNTFDataSource::~OGRNTFDataSource()
         delete poFCLayer;
 
     CPLFree(papoLayers);
-
-    CPLFree(pszName);
 
     CSLDestroy(papszOptions);
 
@@ -178,8 +176,6 @@ int OGRNTFDataSource::Open(const char *pszFilename, int bTestOpen,
 {
     VSIStatBufL stat;
     char **papszFileList = nullptr;
-
-    pszName = CPLStrdup(pszFilename);
 
     /* -------------------------------------------------------------------- */
     /*      Is the given path a directory or a regular file?                */
