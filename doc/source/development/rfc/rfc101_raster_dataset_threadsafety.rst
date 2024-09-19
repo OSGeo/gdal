@@ -8,7 +8,7 @@ RFC 101: Raster dataset read-only thread-safety
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2024-Aug-29
-Status:        Draft
+Status:        Adopted, implemented
 Target:        GDAL 3.10
 ============== =============================================
 
@@ -479,4 +479,4 @@ Related issues and PRs
 Voting history
 --------------
 
-TBD
++1 from PSC members KurtS, JukkaR, JavierJS and EvenR
