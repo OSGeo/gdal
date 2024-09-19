@@ -41,7 +41,7 @@ static const char *const apszURNNames[] = {
 /************************************************************************/
 
 OGRNASDataSource::OGRNASDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr), poReader(nullptr)
+    : papoLayers(nullptr), nLayers(0), poReader(nullptr)
 {
 }
 
@@ -52,8 +52,6 @@ OGRNASDataSource::OGRNASDataSource()
 OGRNASDataSource::~OGRNASDataSource()
 
 {
-    CPLFree(pszName);
-
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 
@@ -82,8 +80,6 @@ int OGRNASDataSource::Open(const char *pszNewName)
     }
 
     poReader->SetSourceFile(pszNewName);
-
-    pszName = CPLStrdup(pszNewName);
 
     bool bHaveSchema = false;
     bool bHaveTemplate = false;
@@ -320,13 +316,4 @@ OGRLayer *OGRNASDataSource::GetLayer(int iLayer)
         return nullptr;
 
     return papoLayers[iLayer];
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRNASDataSource::TestCapability(const char * /* pszCap */)
-{
-    return FALSE;
 }
