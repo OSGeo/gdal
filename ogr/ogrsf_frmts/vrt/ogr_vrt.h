@@ -217,13 +217,11 @@ typedef enum
     OGR_VRT_OTHER_LAYER,
 } OGRLayerType;
 
-class OGRVRTDataSource final : public OGRDataSource
+class OGRVRTDataSource final : public GDALDataset
 {
     OGRLayer **papoLayers;
     OGRLayerType *paeLayerType;
     int nLayers;
-
-    char *pszName;
 
     CPLXMLNode *psTree;
 
@@ -257,11 +255,6 @@ class OGRVRTDataSource final : public OGRDataSource
                                        int nRecLevel);
 
     bool Initialize(CPLXMLNode *psXML, const char *pszName, int bUpdate);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

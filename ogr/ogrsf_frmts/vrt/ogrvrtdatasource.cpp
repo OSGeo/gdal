@@ -149,8 +149,8 @@ CPLString OGRVRTGetSerializedGeometryType(OGRwkbGeometryType eGeomType)
 /************************************************************************/
 
 OGRVRTDataSource::OGRVRTDataSource(GDALDriver *poDriverIn)
-    : papoLayers(nullptr), paeLayerType(nullptr), nLayers(0), pszName(nullptr),
-      psTree(nullptr), nCallLevel(0), poLayerPool(nullptr), poParentDS(nullptr),
+    : papoLayers(nullptr), paeLayerType(nullptr), nLayers(0), psTree(nullptr),
+      nCallLevel(0), poLayerPool(nullptr), poParentDS(nullptr),
       bRecursionDetected(false)
 {
     poDriver = poDriverIn;
@@ -163,8 +163,6 @@ OGRVRTDataSource::OGRVRTDataSource(GDALDriver *poDriverIn)
 OGRVRTDataSource::~OGRVRTDataSource()
 
 {
-    CPLFree(pszName);
-
     OGRVRTDataSource::CloseDependentDatasets();
 
     CPLFree(paeLayerType);
@@ -852,8 +850,6 @@ bool OGRVRTDataSource::Initialize(CPLXMLNode *psTreeIn, const char *pszNewName,
     // for relative datasources.
     CPLString osVRTDirectory = CPLGetPath(pszNewName);
 
-    pszName = CPLStrdup(pszNewName);
-
     // Look for the OGRVRTDataSource node, it might be after an <xml> node.
     CPLXMLNode *psVRTDSXML = CPLGetXMLNode(psTree, "=OGRVRTDataSource");
     if (psVRTDSXML == nullptr)
@@ -966,7 +962,7 @@ bool OGRVRTDataSource::IsInForbiddenNames(const char *pszOtherDSName) const
 char **OGRVRTDataSource::GetFileList()
 {
     CPLStringList oList;
-    oList.AddString(GetName());
+    oList.AddString(GetDescription());
     for (int i = 0; i < nLayers; i++)
     {
         OGRLayer *poLayer = papoLayers[i];
