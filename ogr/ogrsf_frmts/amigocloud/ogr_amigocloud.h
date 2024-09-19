@@ -257,12 +257,11 @@ class OGRAmigoCloudResultLayer final : public OGRAmigoCloudLayer
 };
 
 /************************************************************************/
-/*                           OGRAmigoCloudDataSource                       */
+/*                           OGRAmigoCloudDataSource                    */
 /************************************************************************/
 
-class OGRAmigoCloudDataSource final : public OGRDataSource
+class OGRAmigoCloudDataSource final : public GDALDataset
 {
-    char *pszName;
     char *pszProjectId;
 
     OGRAmigoCloudTableLayer **papoLayers;
@@ -284,11 +283,6 @@ class OGRAmigoCloudDataSource final : public OGRDataSource
     virtual ~OGRAmigoCloudDataSource();
 
     int Open(const char *pszFilename, char **papszOpenOptions, int bUpdate);
-
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
 
     virtual int GetLayerCount() override
     {
