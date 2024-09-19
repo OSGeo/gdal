@@ -158,9 +158,8 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
 /************************************************************************/
 
 OGRWFSDataSource::OGRWFSDataSource()
-    : pszName(nullptr), bRewriteFile(false), psFileXML(nullptr),
-      papoLayers(nullptr), nLayers(0), bUpdate(false),
-      bGetFeatureSupportHits(false), bNeedNAMESPACE(false),
+    : bRewriteFile(false), psFileXML(nullptr), papoLayers(nullptr), nLayers(0),
+      bUpdate(false), bGetFeatureSupportHits(false), bNeedNAMESPACE(false),
       bHasMinOperators(false), bHasNullCheck(false),
       // Advertized by deegree but not implemented.
       bPropertyIsNotEqualToSupported(true),
@@ -210,7 +209,7 @@ OGRWFSDataSource::~OGRWFSDataSource()
     {
         if (bRewriteFile)
         {
-            CPLSerializeXMLTreeToFile(psFileXML, pszName);
+            CPLSerializeXMLTreeToFile(psFileXML, GetDescription());
         }
 
         CPLDestroyXMLNode(psFileXML);
@@ -225,18 +224,8 @@ OGRWFSDataSource::~OGRWFSDataSource()
     delete poLayerMetadataDS;
     delete poLayerGetCapabilitiesDS;
 
-    CPLFree(pszName);
     CSLDestroy(papszIdGenMethods);
     CSLDestroy(papszHttpOptions);
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRWFSDataSource::TestCapability(CPL_UNUSED const char *pszCap)
-{
-    return FALSE;
 }
 
 /************************************************************************/
@@ -273,8 +262,9 @@ OGRLayer *OGRWFSDataSource::GetLayerByName(const char *pszNameIn)
         VSIFCloseL(VSIFileFromMemBuffer(osLayerMetadataTmpFileName,
                                         (GByte *)osLayerMetadataCSV.c_str(),
                                         osLayerMetadataCSV.size(), FALSE));
-        poLayerMetadataDS = (OGRDataSource *)OGROpen(osLayerMetadataTmpFileName,
-                                                     FALSE, nullptr);
+        poLayerMetadataDS =
+            GDALDataset::Open(osLayerMetadataTmpFileName, GDAL_OF_VECTOR,
+                              nullptr, nullptr, nullptr);
         if (poLayerMetadataDS)
             poLayerMetadataLayer = poLayerMetadataDS->GetLayer(0);
         return poLayerMetadataLayer;
@@ -285,7 +275,7 @@ OGRLayer *OGRWFSDataSource::GetLayerByName(const char *pszNameIn)
             return poLayerGetCapabilitiesLayer;
 
         GDALDriver *poMEMDrv =
-            OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+            GetGDALDriverManager()->GetDriverByName("Memory");
         if (poMEMDrv == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -906,8 +896,6 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
 
 {
     bUpdate = CPL_TO_BOOL(bUpdateIn);
-    CPLFree(pszName);
-    pszName = CPLStrdup(pszFilename);
 
     const CPLXMLNode *psWFSCapabilities = nullptr;
     CPLXMLNode *psXML = nullptr;
@@ -2274,7 +2262,7 @@ OGRLayer *OGRWFSDataSource::ExecuteSQL(const char *pszSQLCommand,
         }
 
         GDALDriver *poMEMDrv =
-            OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+            GetGDALDriverManager()->GetDriverByName("Memory");
         if (poMEMDrv == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -2485,7 +2473,7 @@ OGRLayer *OGRWFSDataSource::ExecuteSQL(const char *pszSQLCommand,
         delete psSelectInfo;
     }
 
-    OGRLayer *poResLayer = OGRDataSource::ExecuteSQL(
+    OGRLayer *poResLayer = GDALDataset::ExecuteSQL(
         pszSQLCommand, poSpatialFilter, pszDialect, &oParseOptions);
     oMap[poResLayer] = nullptr;
     return poResLayer;
