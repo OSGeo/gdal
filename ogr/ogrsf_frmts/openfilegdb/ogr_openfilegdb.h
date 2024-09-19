@@ -438,7 +438,7 @@ class OGROpenFileGDBFeatureDefn : public OGRFeatureDefn
 /*                       OGROpenFileGDBDataSource                       */
 /************************************************************************/
 
-class OGROpenFileGDBDataSource final : public OGRDataSource
+class OGROpenFileGDBDataSource final : public GDALDataset
 {
     friend class OGROpenFileGDBLayer;
     friend class GDALOpenFileGDBRasterBand;
@@ -544,11 +544,6 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     bool Create(const char *pszName);
 
     virtual CPLErr FlushCache(bool bAtClosing = false) override;
-
-    virtual const char *GetName() override
-    {
-        return m_osDirName.c_str();
-    }
 
     virtual int GetLayerCount() override
     {
