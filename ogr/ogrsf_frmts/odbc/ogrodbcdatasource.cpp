@@ -36,8 +36,7 @@
 /*                         OGRODBCDataSource()                          */
 /************************************************************************/
 
-OGRODBCDataSource::OGRODBCDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr)
+OGRODBCDataSource::OGRODBCDataSource() : papoLayers(nullptr), nLayers(0)
 {
 }
 
@@ -48,8 +47,6 @@ OGRODBCDataSource::OGRODBCDataSource()
 OGRODBCDataSource::~OGRODBCDataSource()
 
 {
-    CPLFree(pszName);
-
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 
@@ -126,8 +123,6 @@ int OGRODBCDataSource::OpenMDB(GDALOpenInfo *poOpenInfo)
     // avoid loss of precision and missing values on Windows (see
     // https://github.com/OSGeo/gdal/issues/3885)
     m_nStatementFlags |= CPLODBCStatement::Flag::RetrieveNumericColumnsAsDouble;
-
-    pszName = CPLStrdup(pszNewName);
 
     // Collate a list of all tables in the data source
     CPLODBCStatement oTableList(&oSession);
@@ -337,8 +332,6 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
         CPLFree(pszSRSTableName);
         return FALSE;
     }
-
-    pszName = CPLStrdup(pszNewName);
 
     /* -------------------------------------------------------------------- */
     /*      If no explicit list of tables was given, check for a list in    */
@@ -576,8 +569,8 @@ OGRLayer *OGRODBCDataSource::ExecuteSQL(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Execute statement.                                              */

@@ -185,12 +185,10 @@ class OGRODBCSelectLayer final : public OGRODBCLayer
 /*                           OGRODBCDataSource                          */
 /************************************************************************/
 
-class OGRODBCDataSource final : public OGRDataSource
+class OGRODBCDataSource final : public GDALDataset
 {
     OGRODBCLayer **papoLayers;
     int nLayers;
-
-    char *pszName;
 
     CPLODBCSession oSession;
 
@@ -219,11 +217,6 @@ class OGRODBCDataSource final : public OGRDataSource
 
     int Open(GDALOpenInfo *poOpenInfo);
     int OpenTable(const char *pszTableName, const char *pszGeomCol);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {
