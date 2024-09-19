@@ -985,6 +985,7 @@ gdalbuildvrt
 gdalcompare
 gdalconst
 gdaldata
+GDALDataset
 gdaldem
 gdaldriver
 gdalenhance
@@ -1014,6 +1015,7 @@ gdalrasterblock
 gdalrc
 gdalsrsinfo
 gdaltest
+GDALThreadLocalDatasetCache
 gdaltindex
 gdaltransform
 gdalvirtualmem
@@ -1853,6 +1855,7 @@ MultiPolygon
 multipolygons
 multiproc
 multiprocess
+multireadtest
 multirecords
 multispectral
 multistring
@@ -2050,6 +2053,7 @@ nRecurseDepth
 nRefCount
 nReqOrder
 nSampleStep
+nScopeFlags
 nSecond
 nSize
 nSrcBufferAllocSize
