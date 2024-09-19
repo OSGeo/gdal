@@ -48,7 +48,7 @@ CPLErr RasterliteDataset::ReloadOverviews()
 
     CPLString osSQL;
     OGRLayerH hRasterPyramidsLyr =
-        OGR_DS_GetLayerByName(hDS, "raster_pyramids");
+        GDALDatasetGetLayerByName(hDS, "raster_pyramids");
     if (hRasterPyramidsLyr)
     {
         osSQL.Printf("SELECT pixel_x_size, pixel_y_size "
@@ -64,7 +64,8 @@ CPLErr RasterliteDataset::ReloadOverviews()
                      osTableName.c_str());
     }
 
-    OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    OGRLayerH hSQLLyr =
+        GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
     if (hSQLLyr == nullptr)
     {
         if (hRasterPyramidsLyr == nullptr)
@@ -75,7 +76,7 @@ CPLErr RasterliteDataset::ReloadOverviews()
                      "ORDER BY pixel_x_size ASC",
                      osTableName.c_str());
 
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+        hSQLLyr = GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
         if (hSQLLyr == nullptr)
             return CE_Failure;
     }
@@ -118,7 +119,7 @@ CPLErr RasterliteDataset::ReloadOverviews()
         }
     }
 
-    OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+    GDALDatasetReleaseResultSet(hDS, hSQLLyr);
     hSQLLyr = nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -130,7 +131,7 @@ CPLErr RasterliteDataset::ReloadOverviews()
         osRasterTableName += "_rasters";
 
         OGRLayerH hRasterLyr =
-            OGR_DS_GetLayerByName(hDS, osRasterTableName.c_str());
+            GDALDatasetGetLayerByName(hDS, osRasterTableName.c_str());
 
         papoOverviews = reinterpret_cast<RasterliteDataset **>(
             CPLCalloc(nResolutions - 1, sizeof(RasterliteDataset *)));
@@ -178,7 +179,7 @@ CPLErr RasterliteDataset::CleanOverviews()
         return CE_Failure;
 
     CPLString osSQL("BEGIN");
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     const CPLString osResolutionCond =
         "NOT " +
@@ -188,24 +189,24 @@ CPLErr RasterliteDataset::CleanOverviews()
                  "IN(SELECT id FROM \"%s_metadata\" WHERE %s)",
                  osTableName.c_str(), osTableName.c_str(),
                  osResolutionCond.c_str());
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     osSQL.Printf("DELETE FROM \"%s_metadata\" WHERE %s", osTableName.c_str(),
                  osResolutionCond.c_str());
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     OGRLayerH hRasterPyramidsLyr =
-        OGR_DS_GetLayerByName(hDS, "raster_pyramids");
+        GDALDatasetGetLayerByName(hDS, "raster_pyramids");
     if (hRasterPyramidsLyr)
     {
         osSQL.Printf(
             "DELETE FROM raster_pyramids WHERE table_prefix = '%s' AND %s",
             osTableName.c_str(), osResolutionCond.c_str());
-        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+        GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
     }
 
     osSQL = "COMMIT";
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     for (int i = 1; i < nResolutions; i++)
         delete papoOverviews[i - 1];
@@ -246,7 +247,7 @@ CPLErr RasterliteDataset::CleanOverviewLevel(int nOvrFactor)
     /* -------------------------------------------------------------------- */
 
     CPLString osSQL("BEGIN");
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     CPLString osResolutionCond = RasterliteGetPixelSizeCond(
         padfXResolutions[iLev], padfYResolutions[iLev]);
@@ -255,24 +256,24 @@ CPLErr RasterliteDataset::CleanOverviewLevel(int nOvrFactor)
                  "IN(SELECT id FROM \"%s_metadata\" WHERE %s)",
                  osTableName.c_str(), osTableName.c_str(),
                  osResolutionCond.c_str());
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     osSQL.Printf("DELETE FROM \"%s_metadata\" WHERE %s", osTableName.c_str(),
                  osResolutionCond.c_str());
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     OGRLayerH hRasterPyramidsLyr =
-        OGR_DS_GetLayerByName(hDS, "raster_pyramids");
+        GDALDatasetGetLayerByName(hDS, "raster_pyramids");
     if (hRasterPyramidsLyr)
     {
         osSQL.Printf(
             "DELETE FROM raster_pyramids WHERE table_prefix = '%s' AND %s",
             osTableName.c_str(), osResolutionCond.c_str());
-        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+        GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
     }
 
     osSQL = "COMMIT";
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     return CE_None;
 }
@@ -366,9 +367,10 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
     CPLString osMetatadataLayer;
     osMetatadataLayer.Printf("%s_metadata", osTableName.c_str());
 
-    OGRLayerH hRasterLayer = OGR_DS_GetLayerByName(hDS, osRasterLayer.c_str());
+    OGRLayerH hRasterLayer =
+        GDALDatasetGetLayerByName(hDS, osRasterLayer.c_str());
     OGRLayerH hMetadataLayer =
-        OGR_DS_GetLayerByName(hDS, osMetatadataLayer.c_str());
+        GDALDatasetGetLayerByName(hDS, osMetatadataLayer.c_str());
 
     CPLString osSourceName = "unknown";
 
@@ -382,7 +384,8 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
         osMetatadataLayer.c_str(),
         RasterliteGetPixelSizeCond(padfXResolutions[0], padfYResolutions[0])
             .c_str());
-    OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    OGRLayerH hSQLLyr =
+        GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
     if (hSQLLyr)
     {
         OGRFeatureH hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -393,7 +396,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
                 osSourceName = pszVal;
             OGR_F_Destroy(hFeat);
         }
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
     }
 
     /* -------------------------------------------------------------------- */
@@ -448,7 +451,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
     char **papszTileDriverOptions =
         RasterliteGetTileDriverOptions(papszOptions);
 
-    OGR_DS_ExecuteSQL(hDS, "BEGIN", nullptr, nullptr);
+    GDALDatasetExecuteSQL(hDS, "BEGIN", nullptr, nullptr);
 
     CPLErr eErr = CE_None;
     for (int nBlockYOff = 0; eErr == CE_None && nBlockYOff < nYBlocks;
@@ -642,9 +645,9 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
     VSIUnlink((osTempFileName + ".aux.xml").c_str());
 
     if (eErr == CE_None)
-        OGR_DS_ExecuteSQL(hDS, "COMMIT", nullptr, nullptr);
+        GDALDatasetExecuteSQL(hDS, "COMMIT", nullptr, nullptr);
     else
-        OGR_DS_ExecuteSQL(hDS, "ROLLBACK", nullptr, nullptr);
+        GDALDatasetExecuteSQL(hDS, "ROLLBACK", nullptr, nullptr);
 
     VSIFree(pabyMEMDSBuffer);
     VSIFree(pabyPrevOvrMEMDSBuffer);
@@ -659,7 +662,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
         return eErr;
 
     OGRLayerH hRasterPyramidsLyr =
-        OGR_DS_GetLayerByName(hDS, "raster_pyramids");
+        GDALDatasetGetLayerByName(hDS, "raster_pyramids");
     if (hRasterPyramidsLyr == nullptr)
     {
         osSQL.Printf("CREATE TABLE raster_pyramids ("
@@ -667,14 +670,14 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
                      "pixel_x_size DOUBLE NOT NULL,"
                      "pixel_y_size DOUBLE NOT NULL,"
                      "tile_count INTEGER NOT NULL)");
-        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+        GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
         /* Re-open the DB to take into account the new tables*/
-        OGRReleaseDataSource(hDS);
+        GDALClose(hDS);
 
         hDS = RasterliteOpenSQLiteDB(osFileName.c_str(), GA_Update);
 
-        hRasterPyramidsLyr = OGR_DS_GetLayerByName(hDS, "raster_pyramids");
+        hRasterPyramidsLyr = GDALDatasetGetLayerByName(hDS, "raster_pyramids");
         if (hRasterPyramidsLyr == nullptr)
             return CE_Failure;
     }
@@ -688,7 +691,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
         osTableName.c_str(),
         RasterliteGetPixelSizeCond(padfXResolutions[0], padfYResolutions[0])
             .c_str());
-    hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    hSQLLyr = GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
     if (hSQLLyr)
     {
         OGRFeatureH hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -697,7 +700,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
             bHasBaseResolution = true;
             OGR_F_Destroy(hFeat);
         }
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
     }
 
     if (!bHasBaseResolution)
@@ -709,7 +712,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
 
         int nBlocksMainRes = 0;
 
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+        hSQLLyr = GDALDatasetExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
         if (hSQLLyr)
         {
             OGRFeatureH hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -718,7 +721,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
                 nBlocksMainRes = OGR_F_GetFieldAsInteger(hFeat, 0);
                 OGR_F_Destroy(hFeat);
             }
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            GDALDatasetReleaseResultSet(hDS, hSQLLyr);
         }
 
         OGRFeatureH hFeat = OGR_F_Create(hFDefn);
