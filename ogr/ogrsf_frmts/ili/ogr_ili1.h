@@ -107,10 +107,9 @@ class OGRILI1Layer final : public OGRLayer
 /*                          OGRILI1DataSource                           */
 /************************************************************************/
 
-class OGRILI1DataSource final : public OGRDataSource
+class OGRILI1DataSource final : public GDALDataset
 {
   private:
-    char *pszName;
     ImdReader *poImdReader;
     IILI1Reader *poReader;
     VSILFILE *fpTransfer;
@@ -126,11 +125,6 @@ class OGRILI1DataSource final : public OGRDataSource
 
     int Open(const char *, char **papszOpenOptions, int bTestOpen);
     int Create(const char *pszFile, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

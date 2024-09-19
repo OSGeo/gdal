@@ -91,7 +91,7 @@ class OGRILI2Layer final : public OGRLayer
 /*                          OGRILI2DataSource                           */
 /************************************************************************/
 
-class OGRILI2DataSource final : public OGRDataSource
+class OGRILI2DataSource final : public GDALDataset
 {
   private:
     std::list<OGRLayer *> listLayer;
@@ -112,11 +112,6 @@ class OGRILI2DataSource final : public OGRDataSource
 
     int Open(const char *, char **papszOpenOptions, int bTestOpen);
     int Create(const char *pszFile, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {
