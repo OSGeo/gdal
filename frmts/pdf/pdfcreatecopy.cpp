@@ -2178,13 +2178,15 @@ bool GDALPDFWriter::WriteOGRDataSource(const char *pszOGRDataSource,
                                        const char *pszOGRLinkField,
                                        int bWriteOGRAttributes)
 {
-    OGRDataSourceH hDS = OGROpen(pszOGRDataSource, 0, nullptr);
+    GDALDatasetH hDS =
+        GDALOpenEx(pszOGRDataSource, GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
+                   nullptr, nullptr, nullptr);
     if (hDS == nullptr)
         return false;
 
     int iObj = 0;
 
-    int nLayers = OGR_DS_GetLayerCount(hDS);
+    int nLayers = GDALDatasetGetLayerCount(hDS);
 
     char **papszLayerNames =
         CSLTokenizeString2(pszOGRDisplayLayerNames, ",", 0);
@@ -2193,7 +2195,7 @@ bool GDALPDFWriter::WriteOGRDataSource(const char *pszOGRDataSource,
     {
         CPLString osLayerName;
         if (CSLCount(papszLayerNames) < nLayers)
-            osLayerName = OGR_L_GetName(OGR_DS_GetLayer(hDS, iLayer));
+            osLayerName = OGR_L_GetName(GDALDatasetGetLayer(hDS, iLayer));
         else
             osLayerName = papszLayerNames[iLayer];
 
@@ -2201,7 +2203,7 @@ bool GDALPDFWriter::WriteOGRDataSource(const char *pszOGRDataSource,
                       osLayerName, bWriteOGRAttributes, iObj);
     }
 
-    OGRReleaseDataSource(hDS);
+    GDALClose(hDS);
 
     CSLDestroy(papszLayerNames);
 
@@ -2273,7 +2275,7 @@ void GDALPDFWriter::EndOGRLayer(GDALPDFLayerDesc &osVectorDesc)
 /*                           WriteOGRLayer()                            */
 /************************************************************************/
 
-int GDALPDFWriter::WriteOGRLayer(OGRDataSourceH hDS, int iLayer,
+int GDALPDFWriter::WriteOGRLayer(GDALDatasetH hDS, int iLayer,
                                  const char *pszOGRDisplayField,
                                  const char *pszOGRLinkField,
                                  const std::string &osLayerName,
@@ -2286,7 +2288,7 @@ int GDALPDFWriter::WriteOGRLayer(OGRDataSourceH hDS, int iLayer,
 
     GDALPDFLayerDesc osVectorDesc =
         StartOGRLayer(osLayerName, bWriteOGRAttributes);
-    OGRLayerH hLyr = OGR_DS_GetLayer(hDS, iLayer);
+    OGRLayerH hLyr = GDALDatasetGetLayer(hDS, iLayer);
 
     const auto poLayerDefn = OGRLayer::FromHandle(hLyr)->GetLayerDefn();
     for (int i = 0; i < poLayerDefn->GetFieldCount(); i++)
