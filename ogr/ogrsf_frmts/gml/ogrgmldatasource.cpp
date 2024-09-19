@@ -80,10 +80,10 @@ static CPLString ReplaceSpaceByPct20IfNeeded(const char *pszURL)
 /************************************************************************/
 
 OGRGMLDataSource::OGRGMLDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr),
-      papszCreateOptions(nullptr), fpOutput(nullptr),
-      bFpOutputIsNonSeekable(false), bFpOutputSingleFile(false), bBBOX3D(false),
-      nBoundedByLocation(-1), nSchemaInsertLocation(-1), bIsOutputGML3(false),
+    : papoLayers(nullptr), nLayers(0), papszCreateOptions(nullptr),
+      fpOutput(nullptr), bFpOutputIsNonSeekable(false),
+      bFpOutputSingleFile(false), bBBOX3D(false), nBoundedByLocation(-1),
+      nSchemaInsertLocation(-1), bIsOutputGML3(false),
       bIsOutputGML3Deegree(false), bIsOutputGML32(false),
       eSRSNameFormat(SRSNAME_SHORT), bWriteSpaceIndentation(true),
       poReader(nullptr), bOutIsTempFile(false), bExposeGMLId(false),
@@ -253,7 +253,6 @@ OGRGMLDataSource::~OGRGMLDataSource()
     }
 
     CSLDestroy(papszCreateOptions);
-    CPLFree(pszName);
 
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
@@ -381,8 +380,6 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     }
 
     const char *pszFilename = osFilename.c_str();
-
-    pszName = CPLStrdup(poOpenInfo->pszFilename);
 
     // Open the source file.
     VSILFILE *fpToClose = nullptr;
@@ -1856,8 +1853,8 @@ bool OGRGMLDataSource::Create(const char *pszFilename, char **papszOptions)
         CSLFetchNameValueDef(papszCreateOptions, "SPACE_INDENTATION", "YES"));
 
     // Create the output file.
-    pszName = CPLStrdup(pszFilename);
-    osFilename = pszName;
+    osFilename = pszFilename;
+    SetDescription(pszFilename);
 
     if (strcmp(pszFilename, "/vsistdout/") == 0 ||
         STARTS_WITH(pszFilename, "/vsigzip/"))
@@ -1870,12 +1867,10 @@ bool OGRGMLDataSource::Create(const char *pszFilename, char **papszOptions)
     {
         if (EQUAL(CPLGetExtension(pszFilename), "zip"))
         {
-            CPLFree(pszName);
-            pszName =
-                CPLStrdup(CPLFormFilename(pszFilename, "out.gml", nullptr));
+            SetDescription(CPLFormFilename(pszFilename, "out.gml", nullptr));
         }
 
-        fpOutput = VSIFOpenExL(pszName, "wb", true);
+        fpOutput = VSIFOpenExL(GetDescription(), "wb", true);
         bFpOutputIsNonSeekable = true;
     }
     else
@@ -1927,7 +1922,7 @@ bool OGRGMLDataSource::Create(const char *pszFilename, char **papszOptions)
     }
     else if (pszSchemaOpt == nullptr || EQUAL(pszSchemaOpt, "EXTERNAL"))
     {
-        char *pszBasename = CPLStrdup(CPLGetBasename(pszName));
+        char *pszBasename = CPLStrdup(CPLGetBasename(GetDescription()));
 
         PrintLine(
             fpOutput,
@@ -2064,7 +2059,7 @@ OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
         CPLError(CE_Failure, CPLE_NoWriteAccess,
                  "Data source %s opened for read access.\n"
                  "New layer %s cannot be created.\n",
-                 pszName, pszLayerName);
+                 GetDescription(), pszLayerName);
 
         return nullptr;
     }
@@ -2202,7 +2197,7 @@ void OGRGMLDataSource::InsertHeader()
     VSILFILE *fpSchema = nullptr;
     if (pszSchemaOpt == nullptr || EQUAL(pszSchemaOpt, "EXTERNAL"))
     {
-        const char *pszXSDFilename = CPLResetExtension(pszName, "xsd");
+        const char *pszXSDFilename = CPLResetExtension(GetDescription(), "xsd");
 
         fpSchema = VSIFOpenL(pszXSDFilename, "wt");
         if (fpSchema == nullptr)
@@ -3064,8 +3059,7 @@ OGRLayer *OGRGMLDataSource::ExecuteSQL(const char *pszSQLCommand,
         return new OGRGMLSingleFeatureLayer(bIsValid);
     }
 
-    return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                     pszDialect);
+    return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
 }
 
 /************************************************************************/
