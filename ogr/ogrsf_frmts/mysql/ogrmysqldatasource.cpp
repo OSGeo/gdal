@@ -52,8 +52,8 @@ inline void FreeResultAndNullify(MYSQL_RES *&hResult)
 /************************************************************************/
 
 OGRMySQLDataSource::OGRMySQLDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr), bDSUpdate(FALSE),
-      hConn(nullptr), poLongResultLayer(nullptr)
+    : papoLayers(nullptr), nLayers(0), bDSUpdate(FALSE), hConn(nullptr),
+      poLongResultLayer(nullptr)
 {
 }
 
@@ -65,8 +65,6 @@ OGRMySQLDataSource::~OGRMySQLDataSource()
 
 {
     InterruptLongResult();
-
-    CPLFree(pszName);
 
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
@@ -247,8 +245,6 @@ int OGRMySQLDataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
         // and at any point on more recent versions.
         mysql_options(hConn, MYSQL_OPT_RECONNECT, &reconnect);
     }
-
-    pszName = CPLStrdup(pszNewName);
 
     bDSUpdate = bUpdate;
 
@@ -984,8 +980,8 @@ OGRLayer *OGRMySQLDataSource::ExecuteSQL(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
