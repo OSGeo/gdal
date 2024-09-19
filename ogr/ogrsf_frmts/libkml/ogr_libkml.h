@@ -205,9 +205,8 @@ class OGRLIBKMLLayer final : public OGRLayer,
   datasource class
 ******************************************************************************/
 
-class OGRLIBKMLDataSource final : public OGRDataSource
+class OGRLIBKMLDataSource final : public GDALDataset
 {
-    char *m_pszName;
     bool m_bIssuedCTError = false;
 
     /***** layers *****/
@@ -251,11 +250,6 @@ class OGRLIBKMLDataSource final : public OGRDataSource
   public:
     explicit OGRLIBKMLDataSource(kmldom::KmlFactory *poKmlFactory);
     ~OGRLIBKMLDataSource();
-
-    const char *GetName() override
-    {
-        return m_pszName;
-    }
 
     int GetLayerCount() override
     {
