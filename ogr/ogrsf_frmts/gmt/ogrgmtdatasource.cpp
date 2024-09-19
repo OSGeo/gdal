@@ -35,7 +35,7 @@
 /************************************************************************/
 
 OGRGmtDataSource::OGRGmtDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr), bUpdate(false)
+    : papoLayers(nullptr), nLayers(0), bUpdate(false)
 {
 }
 
@@ -49,7 +49,6 @@ OGRGmtDataSource::~OGRGmtDataSource()
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
     CPLFree(papoLayers);
-    CPLFree(pszName);
 }
 
 /************************************************************************/
@@ -74,24 +73,6 @@ int OGRGmtDataSource::Open(const char *pszFilename, VSILFILE *fp,
         CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRGmtLayer *)));
     papoLayers[nLayers] = poLayer;
     nLayers++;
-
-    CPLFree(pszName);
-    pszName = CPLStrdup(pszFilename);
-
-    return TRUE;
-}
-
-/************************************************************************/
-/*                               Create()                               */
-/*                                                                      */
-/*      Create a new datasource.  This does not really do anything      */
-/*      currently but save the name.                                    */
-/************************************************************************/
-
-int OGRGmtDataSource::Create(const char *pszDSName, char ** /* papszOptions */)
-
-{
-    pszName = CPLStrdup(pszDSName);
 
     return TRUE;
 }
@@ -148,8 +129,8 @@ OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
     /*      layer name with the name from the gmt.                          */
     /* -------------------------------------------------------------------- */
 
-    CPLString osPath = CPLGetPath(pszName);
-    CPLString osFilename(pszName);
+    CPLString osPath = CPLGetPath(GetDescription());
+    CPLString osFilename(GetDescription());
     const char *pszFlags = "wb+";
 
     if (osFilename == "/dev/stdout")
@@ -157,7 +138,7 @@ OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
 
     if (STARTS_WITH(osFilename, "/vsistdout"))
         pszFlags = "wb";
-    else if (!EQUAL(CPLGetExtension(pszName), "gmt"))
+    else if (!EQUAL(CPLGetExtension(GetDescription()), "gmt"))
         osFilename = CPLFormFilename(osPath, pszLayerName, "gmt");
 
     /* -------------------------------------------------------------------- */

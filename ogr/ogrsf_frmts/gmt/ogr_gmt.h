@@ -108,12 +108,10 @@ class OGRGmtLayer final : public OGRLayer,
 /*                           OGRGmtDataSource                           */
 /************************************************************************/
 
-class OGRGmtDataSource final : public OGRDataSource
+class OGRGmtDataSource final : public GDALDataset
 {
     OGRGmtLayer **papoLayers;
     int nLayers;
-
-    char *pszName;
 
     bool bUpdate;
 
@@ -123,12 +121,6 @@ class OGRGmtDataSource final : public OGRDataSource
 
     int Open(const char *pszFilename, VSILFILE *fp,
              const OGRSpatialReference *poSRS, int bUpdate);
-    int Create(const char *pszFilename, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {
