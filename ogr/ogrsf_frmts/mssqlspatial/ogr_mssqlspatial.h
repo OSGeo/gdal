@@ -584,7 +584,7 @@ class OGRMSSQLSpatialSelectLayer final : public OGRMSSQLSpatialLayer
 /*                           OGRODBCDataSource                          */
 /************************************************************************/
 
-class OGRMSSQLSpatialDataSource final : public OGRDataSource
+class OGRMSSQLSpatialDataSource final : public GDALDataset
 {
     typedef struct
     {
@@ -596,8 +596,6 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
 
     OGRMSSQLSpatialTableLayer **papoLayers;
     int nLayers;
-
-    char *pszName;
 
     char *pszCatalog;
 
@@ -646,11 +644,6 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
                   const char *pszGeomCol, int nCoordDimension, int nSRID,
                   const char *pszSRText, OGRwkbGeometryType eType,
                   bool bUpdate);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;
