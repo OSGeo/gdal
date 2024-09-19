@@ -1535,6 +1535,8 @@ contrary to the Python interactive interpreter, the current path is not
 automatically added when used from GDAL. So you may need to define the
 **PYTHONPATH** environment variable if you get ModuleNotFoundError exceptions.
 
+.. _raster_vrt_security_implications:
+
 Security implications
 *********************
 
