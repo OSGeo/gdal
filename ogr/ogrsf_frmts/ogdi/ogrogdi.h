@@ -100,7 +100,7 @@ class OGROGDILayer final : public OGRLayer
 /*                          OGROGDIDataSource                           */
 /************************************************************************/
 
-class OGROGDIDataSource final : public OGRDataSource
+class OGROGDIDataSource final : public GDALDataset
 {
     OGROGDILayer **m_papoLayers;
     int m_nLayers;
@@ -112,8 +112,6 @@ class OGROGDIDataSource final : public OGRDataSource
 
     OGROGDILayer *m_poCurrentLayer;
 
-    char *m_pszFullName;
-
     int m_bLaunderLayerNames;
 
     void IAddLayer(const char *pszLayerName, ecs_Family eFamily);
@@ -124,19 +122,12 @@ class OGROGDIDataSource final : public OGRDataSource
 
     int Open(const char *);
 
-    const char *GetName() override
-    {
-        return m_pszFullName;
-    }
-
     int GetLayerCount() override
     {
         return m_nLayers;
     }
 
     OGRLayer *GetLayer(int) override;
-
-    int TestCapability(const char *) override;
 
     ecs_Region *GetGlobalBounds()
     {
