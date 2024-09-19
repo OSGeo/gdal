@@ -92,10 +92,8 @@ class OGRXLSLayer final : public OGRLayer,
 /*                           OGRXLSDataSource                           */
 /************************************************************************/
 
-class OGRXLSDataSource final : public OGRDataSource
+class OGRXLSDataSource final : public GDALDataset
 {
-    char *pszName;
-
     OGRLayer **papoLayers;
     int nLayers;
 
@@ -111,19 +109,12 @@ class OGRXLSDataSource final : public OGRDataSource
 
     int Open(const char *pszFilename, int bUpdate);
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
-
     virtual int GetLayerCount() override
     {
         return nLayers;
     }
 
     virtual OGRLayer *GetLayer(int) override;
-
-    virtual int TestCapability(const char *) override;
 
     const void *GetXLSHandle();
 };
