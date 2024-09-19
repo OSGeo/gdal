@@ -45,8 +45,7 @@
 /*                         OGRPGeoDataSource()                          */
 /************************************************************************/
 
-OGRPGeoDataSource::OGRPGeoDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr)
+OGRPGeoDataSource::OGRPGeoDataSource() : papoLayers(nullptr), nLayers(0)
 {
     // Retrieve numeric values from MS Access files using ODBC numeric types, to
     // avoid loss of precision and missing values on Windows (see
@@ -61,8 +60,6 @@ OGRPGeoDataSource::OGRPGeoDataSource()
 OGRPGeoDataSource::~OGRPGeoDataSource()
 
 {
-    CPLFree(pszName);
-
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 
@@ -144,8 +141,6 @@ int OGRPGeoDataSource::Open(GDALOpenInfo *poOpenInfo)
             return FALSE;
         }
     }
-
-    pszName = CPLStrdup(pszNewName);
 
     /* -------------------------------------------------------------------- */
     /*      Collect list of tables and their supporting info from           */
@@ -545,8 +540,8 @@ OGRLayer *OGRPGeoDataSource::ExecuteSQL(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Execute statement.                                              */
