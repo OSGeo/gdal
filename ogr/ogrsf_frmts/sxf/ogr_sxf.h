@@ -123,14 +123,12 @@ class OGRSXFLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                        OGRSXFDataSource                       */
+/*                           OGRSXFDataSource                           */
 /************************************************************************/
 
-class OGRSXFDataSource final : public OGRDataSource
+class OGRSXFDataSource final : public GDALDataset
 {
     SXFPassport oSXFPassport;
-
-    CPLString pszName{};
 
     std::vector<std::unique_ptr<OGRSXFLayer>> m_apoLayers{};
 
@@ -155,11 +153,6 @@ class OGRSXFDataSource final : public OGRDataSource
     int Open(const char *pszFilename, bool bUpdate,
              const char *const *papszOpenOpts = nullptr);
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
-
     virtual int GetLayerCount() override
     {
         return static_cast<int>(m_apoLayers.size());
@@ -169,20 +162,6 @@ class OGRSXFDataSource final : public OGRDataSource
 
     virtual int TestCapability(const char *) override;
     void CloseFile();
-};
-
-/************************************************************************/
-/*                         OGRSXFDriver                          */
-/************************************************************************/
-
-class OGRSXFDriver final : public GDALDriver
-{
-  public:
-    ~OGRSXFDriver();
-
-    static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
-    static CPLErr DeleteDataSource(const char *pszName);
 };
 
 #endif
