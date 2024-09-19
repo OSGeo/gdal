@@ -39,10 +39,9 @@
 /************************************************************************/
 
 OGRS57DataSource::OGRS57DataSource(char **papszOpenOptionsIn)
-    : pszName(nullptr), nLayers(0), papoLayers(nullptr),
-      poSpatialRef(new OGRSpatialReference()), papszOptions(nullptr),
-      nModules(0), papoModules(nullptr), poWriter(nullptr),
-      poClassContentExplorer(nullptr), bExtentsSet(false)
+    : nLayers(0), papoLayers(nullptr), poSpatialRef(new OGRSpatialReference()),
+      papszOptions(nullptr), nModules(0), papoModules(nullptr),
+      poWriter(nullptr), poClassContentExplorer(nullptr), bExtentsSet(false)
 {
     poSpatialRef->SetWellKnownGeogCS("WGS84");
     poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -98,8 +97,6 @@ OGRS57DataSource::~OGRS57DataSource()
         delete papoModules[i];
     CPLFree(papoModules);
 
-    CPLFree(pszName);
-
     CSLDestroy(papszOptions);
 
     poSpatialRef->Release();
@@ -153,8 +150,6 @@ int OGRS57DataSource::TestCapability(const char *pszCap)
 int OGRS57DataSource::Open(const char *pszFilename)
 
 {
-    pszName = CPLStrdup(pszFilename);
-
     /* -------------------------------------------------------------------- */
     /*      Setup reader options.                                           */
     /* -------------------------------------------------------------------- */
@@ -477,7 +472,6 @@ int OGRS57DataSource::Create(const char *pszFilename, char **papszOptionsIn)
 
     poWriter->SetClassBased(OGRS57Driver::GetS57Registrar(),
                             poClassContentExplorer);
-    pszName = CPLStrdup(pszFilename);
 
     /* -------------------------------------------------------------------- */
     /*      Add the primitive layers if they are called for.                */
