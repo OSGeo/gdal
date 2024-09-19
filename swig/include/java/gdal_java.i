@@ -1312,7 +1312,8 @@ import org.gdal.gdalconst.gdalconstConstants;
 // Add a Java reference to prevent premature garbage collection and resulting use
 // of dangling C++ pointer. Intended for methods that return pointers or
 // references to a member variable.
-%typemap(javaout) GDALRasterBandShadow* GetRasterBand,
+%typemap(javaout) GDALDatasetShadow* GetThreadSafeDataset,
+                  GDALRasterBandShadow* GetRasterBand,
                   GDALRasterBandShadow* GetOverview,
                   GDALRasterBandShadow* GetMaskBand,
                   GDALColorTableShadow* GetColorTable,

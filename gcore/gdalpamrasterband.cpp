@@ -51,6 +51,61 @@
 #include "gdal_rat.h"
 
 /************************************************************************/
+/*                           CopyFrom()                                 */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+
+void GDALRasterBandPamInfo::CopyFrom(const GDALRasterBandPamInfo &sOther)
+{
+    bNoDataValueSet = sOther.bNoDataValueSet;
+    bNoDataValueSetAsInt64 = sOther.bNoDataValueSetAsInt64;
+    bNoDataValueSetAsUInt64 = sOther.bNoDataValueSetAsUInt64;
+
+    dfNoDataValue = sOther.dfNoDataValue;
+    nNoDataValueInt64 = sOther.nNoDataValueInt64;
+    nNoDataValueUInt64 = sOther.nNoDataValueUInt64;
+
+    delete poColorTable;
+    poColorTable = sOther.poColorTable
+                       ? new GDALColorTable(*(sOther.poColorTable))
+                       : nullptr;
+
+    eColorInterp = sOther.eColorInterp;
+
+    CPLFree(pszUnitType);
+    pszUnitType = sOther.pszUnitType ? CPLStrdup(sOther.pszUnitType) : nullptr;
+
+    CSLDestroy(papszCategoryNames);
+    papszCategoryNames = CSLDuplicate(sOther.papszCategoryNames);
+
+    dfOffset = sOther.dfOffset;
+    dfScale = sOther.dfScale;
+
+    bHaveMinMax = sOther.bHaveMinMax;
+    dfMin = sOther.dfMin;
+    dfMax = sOther.dfMax;
+
+    bHaveStats = sOther.bHaveStats;
+    dfMean = sOther.dfMean;
+    dfStdDev = sOther.dfStdDev;
+
+    if (psSavedHistograms)
+        CPLDestroyXMLNode(psSavedHistograms);
+    psSavedHistograms = sOther.psSavedHistograms
+                            ? CPLCloneXMLTree(sOther.psSavedHistograms)
+                            : nullptr;
+
+    delete poDefaultRAT;
+    poDefaultRAT = sOther.poDefaultRAT ? sOther.poDefaultRAT->Clone() : nullptr;
+
+    bOffsetSet = sOther.bOffsetSet;
+    bScaleSet = sOther.bScaleSet;
+}
+
+//! @endcond
+
+/************************************************************************/
 /*                         GDALPamRasterBand()                          */
 /************************************************************************/
 

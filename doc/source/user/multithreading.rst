@@ -4,8 +4,8 @@
 Multi-threading
 ===============
 
-GDAL API: re-entrant, but not thread-safe
------------------------------------------
+GDAL API: re-entrant, but (generally) not thread-safe
+-----------------------------------------------------
 
 The exact meaning of the terms ``thread-safe`` or ``re-entrant`` is not fully
 standardized. We will use here the `QT definitions <https://doc.qt.io/qt-5/threads-reentrancy.html>`__.
@@ -42,6 +42,26 @@ that are not thread-safe.
 
 Those restrictions apply to the C and C++ ABI, and all languages bindings (unless
 they would take special precautions to serialize calls)
+
+Thread-safe GDAL dataset instances for raster read-only use cases
+-----------------------------------------------------------------
+
+.. versionadded:: 3.10
+
+RFC 101 adds a new capability to open, or obtain, a thread-safe dataset from
+any dataset, but only for raster read-only use cases.
+
+At open time, this can be done by passing ``GDAL_OF_RASTER | GDAL_OF_THREAD_SAFE``
+to :cpp:func:`GDALOpenEx` / :cpp:func:`GDALDataset::Open`.
+
+Given an existing GDALDataset* instance, :cpp:func:`GDALDataset::IsThreadSafe`
+can be used to determine if it is thread-safe or not. If not,
+:cpp:func:`GDALDataset::GetThreadSafeDataset` can be used.
+
+Note that the generic implementation of this capability involves opening one
+dataset the first time a thread-safe dataset/raster band is accessed by a thread.
+While this is an implementation detail that can be ignored to develop code, it is
+important to note regarding potential performance impacts
 
 GDAL block cache and multi-threading
 ------------------------------------

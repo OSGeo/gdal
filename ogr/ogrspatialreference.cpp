@@ -107,6 +107,7 @@ struct OGRSpatialReference::Private
     std::vector<std::string> m_wktImportErrors{};
     CPLString m_osAreaName{};
 
+    bool m_bIsThreadSafe = false;
     bool m_bNodesChanged = false;
     bool m_bNodesWKT2 = false;
     OGR_SRSNode *m_poRoot = nullptr;
@@ -133,7 +134,7 @@ struct OGRSpatialReference::Private
 
     std::shared_ptr<Listener> m_poListener{};
 
-    std::mutex m_mutex{};
+    std::recursive_mutex m_mutex{};
 
     OSRAxisMappingStrategy m_axisMappingStrategy = OAMS_AUTHORITY_COMPLIANT;
     std::vector<int> m_axisMapping{1, 2, 3};
@@ -144,6 +145,11 @@ struct OGRSpatialReference::Private
     ~Private();
     Private(const Private &) = delete;
     Private &operator=(const Private &) = delete;
+
+    void SetThreadSafe()
+    {
+        m_bIsThreadSafe = true;
+    }
 
     void clear();
     void setPjCRS(PJ *pj_crsIn, bool doRefreshAxisMapping = true);
@@ -172,7 +178,41 @@ struct OGRSpatialReference::Private
     const char *nullifyTargetKeyIfPossible(const char *pszTargetKey);
 
     void refreshAxisMapping();
+
+    // This structures enables locking during calls to OGRSpatialReference
+    // public methods. Locking is only needed for instances of
+    // OGRSpatialReference that have been asked to be thread-safe at
+    // construction.
+    // The lock is not just for a single call to OGRSpatialReference::Private,
+    // but for the series of calls done by a OGRSpatialReference method.
+    // We need a recursive mutex, because some OGRSpatialReference methods
+    // may call other ones.
+    struct OptionalLockGuard
+    {
+        Private &m_private;
+
+        explicit OptionalLockGuard(Private *p) : m_private(*p)
+        {
+            if (m_private.m_bIsThreadSafe)
+                m_private.m_mutex.lock();
+        }
+
+        ~OptionalLockGuard()
+        {
+            if (m_private.m_bIsThreadSafe)
+                m_private.m_mutex.unlock();
+        }
+    };
+
+    inline OptionalLockGuard GetOptionalLockGuard()
+    {
+        return OptionalLockGuard(this);
+    }
 };
+
+#define TAKE_OPTIONAL_LOCK()                                                   \
+    auto lock = d->GetOptionalLockGuard();                                     \
+    CPL_IGNORE_RET_VAL(lock)
 
 static OSRAxisMappingStrategy GetDefaultAxisMappingStrategy()
 {
@@ -990,6 +1030,28 @@ OGRSpatialReference::operator=(OGRSpatialReference &&oSource)
 }
 
 /************************************************************************/
+/*                      AssignAndSetThreadSafe()                        */
+/************************************************************************/
+
+/** Assignment method, with thread-safety.
+ *
+ * Same as an assignment operator, but asking also that the *this instance
+ * becomes thread-safe.
+ *
+ * @param oSource SRS to assign to *this
+ * @return *this
+ * @since 3.10
+ */
+
+OGRSpatialReference &
+OGRSpatialReference::AssignAndSetThreadSafe(const OGRSpatialReference &oSource)
+{
+    *this = oSource;
+    d->SetThreadSafe();
+    return *this;
+}
+
+/************************************************************************/
 /*                             Reference()                              */
 /************************************************************************/
 
@@ -1117,6 +1179,8 @@ void OSRRelease(OGRSpatialReferenceH hSRS)
 
 OGR_SRSNode *OGRSpatialReference::GetRoot()
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (!d->m_poRoot)
     {
         d->refreshRootFromProjObj();
@@ -1126,6 +1190,8 @@ OGR_SRSNode *OGRSpatialReference::GetRoot()
 
 const OGR_SRSNode *OGRSpatialReference::GetRoot() const
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (!d->m_poRoot)
     {
         d->refreshRootFromProjObj();
@@ -1320,6 +1386,8 @@ const char *CPL_STDCALL OSRGetAttrValue(OGRSpatialReferenceH hSRS,
 
 const char *OGRSpatialReference::GetName() const
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     if (!d->m_pj_crs)
         return nullptr;
@@ -1377,6 +1445,8 @@ OGRSpatialReference *OGRSpatialReference::Clone() const
 
 {
     OGRSpatialReference *poNewRef = new OGRSpatialReference();
+
+    TAKE_OPTIONAL_LOCK();
 
     d->refreshProjObj();
     if (d->m_pj_crs != nullptr)
@@ -1613,7 +1683,7 @@ OGRErr OGRSpatialReference::exportToWkt(char **ppszResult,
     // In the past calling this method was thread-safe, even if we never
     // guaranteed it. Now proj_as_wkt() will cache the result internally,
     // so this is no longer thread-safe.
-    std::lock_guard<std::mutex> oLock(d->m_mutex);
+    std::lock_guard oLock(d->m_mutex);
 
     d->refreshProjObj();
     if (!d->m_pj_crs)
@@ -1949,6 +2019,8 @@ OGRErr OSRExportToWktEx(OGRSpatialReferenceH hSRS, char **ppszReturn,
 OGRErr OGRSpatialReference::exportToPROJJSON(
     char **ppszResult, CPL_UNUSED const char *const *papszOptions) const
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     if (!d->m_pj_crs)
     {
@@ -2114,6 +2186,8 @@ OGRErr OGRSpatialReference::importFromWkt(const char **ppszInput,
                                           CSLConstList papszOptions)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (!ppszInput || !*ppszInput)
         return OGRERR_FAILURE;
 
@@ -2297,6 +2371,8 @@ OGRErr OGRSpatialReference::importFromWkt(const char *pszInput)
 OGRErr OGRSpatialReference::Validate() const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     for (const auto &str : d->m_wktImportErrors)
     {
         CPLDebug("OGRSpatialReference::Validate", "%s", str.c_str());
@@ -2380,6 +2456,8 @@ OGRErr OGRSpatialReference::SetNode(const char *pszNodePath,
                                     const char *pszNewNodeValue)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     char **papszPathTokens =
         CSLTokenizeStringComplex(pszNodePath, "|", TRUE, FALSE);
 
@@ -2517,6 +2595,8 @@ OGRErr OGRSpatialReference::SetAngularUnits(const char *pszUnitsName,
                                             double dfInRadians)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->bNormInfoSet = FALSE;
 
     d->refreshProjObj();
@@ -2582,6 +2662,8 @@ OGRErr OSRSetAngularUnits(OGRSpatialReferenceH hSRS, const char *pszUnits,
 double OGRSpatialReference::GetAngularUnits(const char **ppszName) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
 
     if (!d->m_osAngularUnits.empty())
@@ -2720,6 +2802,8 @@ OGRErr OGRSpatialReference::SetLinearUnitsAndUpdateParameters(
     const char *pszUnitCode)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (dfInMeters <= 0.0)
         return OGRERR_FAILURE;
 
@@ -2855,6 +2939,8 @@ OGRErr OGRSpatialReference::SetTargetLinearUnits(const char *pszTargetKey,
                                                  const char *pszUnitCode)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (dfInMeters <= 0.0)
         return OGRERR_FAILURE;
 
@@ -3044,6 +3130,8 @@ double OGRSpatialReference::GetTargetLinearUnits(const char *pszTargetKey,
                                                  const char **ppszName) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
 
     pszTargetKey = d->nullifyTargetKeyIfPossible(pszTargetKey);
@@ -3271,6 +3359,8 @@ double OSRGetTargetLinearUnits(OGRSpatialReferenceH hSRS,
 double OGRSpatialReference::GetPrimeMeridian(const char **ppszName) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
 
     if (!d->m_osPrimeMeridianName.empty())
@@ -3408,6 +3498,8 @@ OGRErr OGRSpatialReference::SetGeogCS(
     double dfConvertToRadians)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->bNormInfoSet = FALSE;
     d->m_osAngularUnits.clear();
     d->m_dfAngularUnitToRadian = 0.0;
@@ -3516,6 +3608,8 @@ OGRErr OSRSetGeogCS(OGRSpatialReferenceH hSRS, const char *pszGeogName,
 OGRErr OGRSpatialReference::SetWellKnownGeogCS(const char *pszName)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     /* -------------------------------------------------------------------- */
     /*      Check for EPSG authority numbers.                               */
     /* -------------------------------------------------------------------- */
@@ -3658,6 +3752,8 @@ OGRErr OSRSetWellKnownGeogCS(OGRSpatialReferenceH hSRS, const char *pszName)
 OGRErr OGRSpatialReference::CopyGeogCSFrom(const OGRSpatialReference *poSrcSRS)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->bNormInfoSet = FALSE;
     d->m_osAngularUnits.clear();
     d->m_dfAngularUnitToRadian = 0.0;
@@ -3907,6 +4003,8 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition)
 OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
                                              CSLConstList papszOptions)
 {
+    TAKE_OPTIONAL_LOCK();
+
     // Skip leading white space
     while (isspace(static_cast<unsigned char>(*pszDefinition)))
         pszDefinition++;
@@ -4274,6 +4372,8 @@ OGRErr OSRSetFromUserInputEx(OGRSpatialReferenceH hSRS, const char *pszDef,
 OGRErr OGRSpatialReference::importFromUrl(const char *pszUrl)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (!STARTS_WITH_CI(pszUrl, "http://") &&
         !STARTS_WITH_CI(pszUrl, "https://"))
     {
@@ -4484,6 +4584,8 @@ OGRErr OGRSpatialReference::importFromURNPart(const char *pszAuthority,
 OGRErr OGRSpatialReference::importFromURN(const char *pszURN)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
 #if PROJ_AT_LEAST_VERSION(8, 1, 0)
 
     // PROJ 8.2.0 has support for IAU codes now.
@@ -4672,6 +4774,8 @@ OGRErr OGRSpatialReference::importFromURN(const char *pszURN)
 OGRErr OGRSpatialReference::importFromCRSURL(const char *pszURL)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
 #if PROJ_AT_LEAST_VERSION(8, 1, 0)
     if (strlen(pszURL) >= 10000)
     {
@@ -4853,6 +4957,8 @@ OGRErr OGRSpatialReference::importFromCRSURL(const char *pszURL)
 OGRErr OGRSpatialReference::importFromWMSAUTO(const char *pszDefinition)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
 #if PROJ_AT_LEAST_VERSION(8, 1, 0)
     if (strlen(pszDefinition) >= 10000)
     {
@@ -5010,6 +5116,8 @@ OGRErr OGRSpatialReference::importFromWMSAUTO(const char *pszDefinition)
 double OGRSpatialReference::GetSemiMajor(OGRErr *pnErr) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (pnErr != nullptr)
         *pnErr = OGRERR_FAILURE;
 
@@ -5071,6 +5179,8 @@ double OSRGetSemiMajor(OGRSpatialReferenceH hSRS, OGRErr *pnErr)
 double OGRSpatialReference::GetInvFlattening(OGRErr *pnErr) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (pnErr != nullptr)
         *pnErr = OGRERR_FAILURE;
 
@@ -5230,6 +5340,8 @@ double OSRGetSemiMinor(OGRSpatialReferenceH hSRS, OGRErr *pnErr)
 OGRErr OGRSpatialReference::SetLocalCS(const char *pszName)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (d->m_pjType == PJ_TYPE_UNKNOWN ||
         d->m_pjType == PJ_TYPE_ENGINEERING_CRS)
     {
@@ -5288,6 +5400,8 @@ OGRErr OSRSetLocalCS(OGRSpatialReferenceH hSRS, const char *pszName)
 OGRErr OGRSpatialReference::SetGeocCS(const char *pszName)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     OGRErr eErr = OGRERR_NONE;
     d->refreshProjObj();
     d->demoteFromBoundCRS();
@@ -5391,6 +5505,8 @@ OGRErr OGRSpatialReference::SetVertCS(const char *pszVertCSName,
                                       int nVertDatumType)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     CPL_IGNORE_RET_VAL(nVertDatumType);
 
     d->refreshProjObj();
@@ -5463,6 +5579,8 @@ OGRErr OGRSpatialReference::SetCompoundCS(const char *pszName,
                                           const OGRSpatialReference *poVertSRS)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     /* -------------------------------------------------------------------- */
     /*      Verify these are legal horizontal and vertical coordinate       */
     /*      systems.                                                        */
@@ -5537,6 +5655,8 @@ OGRErr OSRSetCompoundCS(OGRSpatialReferenceH hSRS, const char *pszName,
 OGRErr OGRSpatialReference::SetProjCS(const char *pszName)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     d->demoteFromBoundCRS();
     if (d->m_pjType == PJ_TYPE_PROJECTED_CRS)
@@ -5597,6 +5717,8 @@ OGRErr OSRSetProjCS(OGRSpatialReferenceH hSRS, const char *pszName)
 OGRErr OGRSpatialReference::SetProjection(const char *pszProjection)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     OGR_SRSNode *poGeogCS = nullptr;
 
     if (GetRoot() != nullptr && EQUAL(d->m_poRoot->GetValue(), "GEOGCS"))
@@ -5666,6 +5788,8 @@ OGRSpatialReference::GetWKT2ProjectionMethod(const char **ppszMethodName,
                                              const char **ppszMethodAuthName,
                                              const char **ppszMethodCode) const
 {
+    TAKE_OPTIONAL_LOCK();
+
     auto conv = proj_crs_get_coordoperation(d->getPROJContext(), d->m_pj_crs);
     if (!conv)
         return OGRERR_FAILURE;
@@ -5717,6 +5841,8 @@ OGRErr OGRSpatialReference::SetProjParm(const char *pszParamName,
                                         double dfValue)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     OGR_SRSNode *poPROJCS = GetAttrNode("PROJCS");
 
     if (poPROJCS == nullptr)
@@ -5789,6 +5915,8 @@ int OGRSpatialReference::FindProjParm(const char *pszParameter,
                                       const OGR_SRSNode *poPROJCS) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (poPROJCS == nullptr)
         poPROJCS = GetAttrNode("PROJCS");
 
@@ -5883,6 +6011,8 @@ double OGRSpatialReference::GetProjParm(const char *pszName,
                                         OGRErr *pnErr) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     GetRoot();  // force update of d->m_bNodesWKT2
 
@@ -5969,6 +6099,8 @@ double OGRSpatialReference::GetNormProjParm(const char *pszName,
                                             OGRErr *pnErr) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     GetNormInfo();
 
     OGRErr nError = OGRERR_NONE;
@@ -6032,6 +6164,8 @@ double OSRGetNormProjParm(OGRSpatialReferenceH hSRS, const char *pszName,
 OGRErr OGRSpatialReference::SetNormProjParm(const char *pszName, double dfValue)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     GetNormInfo();
 
     if (d->dfToDegrees != 0.0 &&
@@ -6074,6 +6208,8 @@ OGRErr OGRSpatialReference::SetTM(double dfCenterLat, double dfCenterLong,
                                   double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_transverse_mercator(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfScale,
@@ -6106,6 +6242,8 @@ OGRErr OGRSpatialReference::SetTMVariant(const char *pszVariantName,
                                          double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     SetProjection(pszVariantName);
     SetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat);
     SetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, dfCenterLong);
@@ -6141,6 +6279,8 @@ OGRErr OGRSpatialReference::SetTMSO(double dfCenterLat, double dfCenterLong,
                                     double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     auto conv = proj_create_conversion_transverse_mercator_south_oriented(
         d->getPROJContext(), dfCenterLat, dfCenterLong, dfScale, dfFalseEasting,
         dfFalseNorthing, nullptr, 0.0, nullptr, 0.0);
@@ -6194,6 +6334,8 @@ OGRErr OGRSpatialReference::SetTPED(double dfLat1, double dfLong1,
                                     double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_two_point_equidistant(
             d->getPROJContext(), dfLat1, dfLong1, dfLat2, dfLong2,
@@ -6224,6 +6366,8 @@ OGRErr OGRSpatialReference::SetTMG(double dfCenterLat, double dfCenterLong,
                                    double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_tunisia_mapping_grid(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfFalseEasting,
@@ -6255,6 +6399,8 @@ OGRErr OGRSpatialReference::SetACEA(double dfStdP1, double dfStdP2,
                                     double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     // Note different order of parameters. The one in PROJ is conformant with
     // EPSG
     return d->replaceConversionAndUnref(
@@ -6286,6 +6432,8 @@ OGRErr OGRSpatialReference::SetAE(double dfCenterLat, double dfCenterLong,
                                   double dfFalseEasting, double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_azimuthal_equidistant(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfFalseEasting,
@@ -6316,6 +6464,8 @@ OGRErr OGRSpatialReference::SetBonne(double dfStdP1, double dfCentralMeridian,
                                      double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(proj_create_conversion_bonne(
         d->getPROJContext(), dfStdP1, dfCentralMeridian, dfFalseEasting,
         dfFalseNorthing, nullptr, 0.0, nullptr, 0.0));
@@ -6345,6 +6495,8 @@ OGRErr OGRSpatialReference::SetCEA(double dfStdP1, double dfCentralMeridian,
                                    double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_lambert_cylindrical_equal_area(
             d->getPROJContext(), dfStdP1, dfCentralMeridian, dfFalseEasting,
@@ -6374,6 +6526,8 @@ OGRErr OGRSpatialReference::SetCS(double dfCenterLat, double dfCenterLong,
                                   double dfFalseEasting, double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(proj_create_conversion_cassini_soldner(
         d->getPROJContext(), dfCenterLat, dfCenterLong, dfFalseEasting,
         dfFalseNorthing, nullptr, 0.0, nullptr, 0.0));
@@ -6403,6 +6557,8 @@ OGRErr OGRSpatialReference::SetEC(double dfStdP1, double dfStdP2,
                                   double dfFalseEasting, double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     // Note: different order of arguments
     return d->replaceConversionAndUnref(
         proj_create_conversion_equidistant_conic(
@@ -6435,6 +6591,8 @@ OGRErr OGRSpatialReference::SetEckert(int nVariation,  // 1-6.
                                       double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     PJ *conv;
     if (nVariation == 1)
     {
@@ -6563,6 +6721,8 @@ OGRErr OGRSpatialReference::SetEquirectangular(double dfCenterLat,
                                                double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (dfCenterLat == 0.0)
     {
         return d->replaceConversionAndUnref(
@@ -6608,6 +6768,8 @@ OGRErr OGRSpatialReference::SetEquirectangular2(double dfCenterLat,
                                                 double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (dfCenterLat == 0.0)
     {
         return d->replaceConversionAndUnref(
@@ -6678,6 +6840,8 @@ OGRErr OGRSpatialReference::SetGH(double dfCentralMeridian,
                                   double dfFalseEasting, double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(proj_create_conversion_goode_homolosine(
         d->getPROJContext(), dfCentralMeridian, dfFalseEasting, dfFalseNorthing,
         nullptr, 0.0, nullptr, 0.0));
@@ -6704,6 +6868,8 @@ OGRErr OSRSetGH(OGRSpatialReferenceH hSRS, double dfCentralMeridian,
 OGRErr OGRSpatialReference::SetIGH()
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_interrupted_goode_homolosine(
             d->getPROJContext(), 0.0, 0.0, 0.0, nullptr, 0.0, nullptr, 0.0));
@@ -6731,6 +6897,8 @@ OGRErr OGRSpatialReference::SetGEOS(double dfCentralMeridian,
                                     double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_geostationary_satellite_sweep_y(
             d->getPROJContext(), dfCentralMeridian, dfSatelliteHeight,
@@ -6763,6 +6931,8 @@ OGRErr OGRSpatialReference::SetGaussSchreiberTMercator(double dfCenterLat,
                                                        double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_gauss_schreiber_transverse_mercator(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfScale,
@@ -6794,6 +6964,8 @@ OGRErr OGRSpatialReference::SetGnomonic(double dfCenterLat, double dfCenterLong,
                                         double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(proj_create_conversion_gnomonic(
         d->getPROJContext(), dfCenterLat, dfCenterLong, dfFalseEasting,
         dfFalseNorthing, nullptr, 0.0, nullptr, 0.0));
@@ -6845,6 +7017,8 @@ OGRErr OGRSpatialReference::SetHOMAC(double dfCenterLat, double dfCenterLong,
                                      double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_hotine_oblique_mercator_variant_b(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfAzimuth,
@@ -6904,6 +7078,8 @@ OGRErr OGRSpatialReference::SetHOM(double dfCenterLat, double dfCenterLong,
                                    double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_hotine_oblique_mercator_variant_a(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfAzimuth,
@@ -6960,6 +7136,8 @@ OGRErr OGRSpatialReference::SetHOM2PNO(double dfCenterLat, double dfLat1,
                                        double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_hotine_oblique_mercator_two_point_natural_origin(
             d->getPROJContext(), dfCenterLat, dfLat1, dfLong1, dfLat2, dfLong2,
@@ -7013,6 +7191,8 @@ OGRErr OGRSpatialReference::SetLOM(double dfCenterLat, double dfCenterLong,
                                    double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_laborde_oblique_mercator(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfAzimuth, dfScale,
@@ -7029,6 +7209,8 @@ OGRErr OGRSpatialReference::SetIWMPolyconic(double dfLat1, double dfLat2,
                                             double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_international_map_world_polyconic(
             d->getPROJContext(), dfCenterLong, dfLat1, dfLat2, dfFalseEasting,
@@ -7066,6 +7248,8 @@ OGRErr OGRSpatialReference::SetKrovak(double dfCenterLat, double dfCenterLong,
                                       double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_krovak_north_oriented(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfAzimuth,
@@ -7099,6 +7283,8 @@ OGRErr OGRSpatialReference::SetLAEA(double dfCenterLat, double dfCenterLong,
                                     double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     auto conv = proj_create_conversion_lambert_azimuthal_equal_area(
         d->getPROJContext(), dfCenterLat, dfCenterLong, dfFalseEasting,
         dfFalseNorthing, nullptr, 0.0, nullptr, 0.0);
@@ -7157,6 +7343,8 @@ OGRErr OGRSpatialReference::SetLCC(double dfStdP1, double dfStdP2,
                                    double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_lambert_conic_conformal_2sp(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfStdP1, dfStdP2,
@@ -7187,6 +7375,8 @@ OGRErr OGRSpatialReference::SetLCC1SP(double dfCenterLat, double dfCenterLong,
                                       double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_lambert_conic_conformal_1sp(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfScale,
@@ -7218,6 +7408,8 @@ OGRErr OGRSpatialReference::SetLCCB(double dfStdP1, double dfStdP2,
                                     double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_lambert_conic_conformal_2sp_belgium(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfStdP1, dfStdP2,
@@ -7247,6 +7439,8 @@ OGRErr OGRSpatialReference::SetMC(double dfCenterLat, double dfCenterLong,
                                   double dfFalseEasting, double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     (void)dfCenterLat;  // ignored
 
     return d->replaceConversionAndUnref(
@@ -7279,6 +7473,8 @@ OGRErr OGRSpatialReference::SetMercator(double dfCenterLat, double dfCenterLong,
                                         double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (dfCenterLat != 0.0 && dfScale == 1.0)
     {
         // Not sure this is correct, but this is how it has been used
@@ -7327,6 +7523,8 @@ OGRErr OGRSpatialReference::SetMercator2SP(double dfStdP1, double dfCenterLat,
                 dfFalseNorthing, nullptr, 0, nullptr, 0));
     }
 
+    TAKE_OPTIONAL_LOCK();
+
     SetProjection(SRS_PT_MERCATOR_2SP);
 
     SetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, dfStdP1);
@@ -7362,6 +7560,8 @@ OGRErr OGRSpatialReference::SetMollweide(double dfCentralMeridian,
                                          double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(proj_create_conversion_mollweide(
         d->getPROJContext(), dfCentralMeridian, dfFalseEasting, dfFalseNorthing,
         nullptr, 0, nullptr, 0));
@@ -7390,6 +7590,8 @@ OGRErr OGRSpatialReference::SetNZMG(double dfCenterLat, double dfCenterLong,
                                     double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_new_zealand_mapping_grid(
             d->getPROJContext(), dfCenterLat, dfCenterLong, dfFalseEasting,
@@ -7420,6 +7622,8 @@ OGRErr OGRSpatialReference::SetOS(double dfOriginLat, double dfCMeridian,
                                   double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_oblique_stereographic(
             d->getPROJContext(), dfOriginLat, dfCMeridian, dfScale,
@@ -7451,6 +7655,8 @@ OGRErr OGRSpatialReference::SetOrthographic(double dfCenterLat,
                                             double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(proj_create_conversion_orthographic(
         d->getPROJContext(), dfCenterLat, dfCenterLong, dfFalseEasting,
         dfFalseNorthing, nullptr, 0, nullptr, 0));
@@ -7481,6 +7687,8 @@ OGRErr OGRSpatialReference::SetPolyconic(double dfCenterLat,
                                          double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     // note: it seems that by some definitions this should include a
     //       scale_factor parameter.
     return d->replaceConversionAndUnref(
@@ -7522,6 +7730,8 @@ OGRErr OGRSpatialReference::SetPS(double dfCenterLat, double dfCenterLong,
                                   double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     PJ *conv;
     if (dfScale == 1.0 && std::abs(std::abs(dfCenterLat) - 90) > 1e-8)
     {
@@ -7586,6 +7796,8 @@ OGRErr OGRSpatialReference::SetRobinson(double dfCenterLong,
                                         double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(proj_create_conversion_robinson(
         d->getPROJContext(), dfCenterLong, dfFalseEasting, dfFalseNorthing,
         nullptr, 0, nullptr, 0));
@@ -7614,6 +7826,8 @@ OGRErr OGRSpatialReference::SetSinusoidal(double dfCenterLong,
                                           double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(proj_create_conversion_sinusoidal(
         d->getPROJContext(), dfCenterLong, dfFalseEasting, dfFalseNorthing,
         nullptr, 0, nullptr, 0));
@@ -7643,6 +7857,8 @@ OGRErr OGRSpatialReference::SetStereographic(double dfOriginLat,
                                              double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(proj_create_conversion_stereographic(
         d->getPROJContext(), dfOriginLat, dfCMeridian, dfScale, dfFalseEasting,
         dfFalseNorthing, nullptr, 0, nullptr, 0));
@@ -7679,6 +7895,8 @@ OGRErr OGRSpatialReference::SetSOC(double dfLatitudeOfOrigin,
                                    double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_hotine_oblique_mercator_variant_b(
             d->getPROJContext(), dfLatitudeOfOrigin, dfCentralMeridian, 90.0,
@@ -7718,6 +7936,8 @@ OGRErr OGRSpatialReference::SetVDG(double dfCMeridian, double dfFalseEasting,
                                    double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(proj_create_conversion_van_der_grinten(
         d->getPROJContext(), dfCMeridian, dfFalseEasting, dfFalseNorthing,
         nullptr, 0, nullptr, 0));
@@ -7762,6 +7982,8 @@ OGRErr OSRSetVDG(OGRSpatialReferenceH hSRS, double dfCentralMeridian,
 OGRErr OGRSpatialReference::SetUTM(int nZone, int bNorth)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (nZone < 0 || nZone > 60)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid zone: %d", nZone);
@@ -7813,6 +8035,8 @@ OGRErr OSRSetUTM(OGRSpatialReferenceH hSRS, int nZone, int bNorth)
 int OGRSpatialReference::GetUTMZone(int *pbNorth) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (IsProjected() && GetAxesCount() == 3)
     {
         OGRSpatialReference *poSRSTmp = Clone();
@@ -7883,6 +8107,8 @@ OGRErr OGRSpatialReference::SetWagner(int nVariation,  // 1--7.
                                       double dfFalseNorthing)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     PJ *conv;
     if (nVariation == 1)
     {
@@ -7957,6 +8183,8 @@ OGRErr OSRSetWagner(OGRSpatialReferenceH hSRS, int nVariation,
 
 OGRErr OGRSpatialReference::SetQSC(double dfCenterLat, double dfCenterLong)
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_quadrilateralized_spherical_cube(
             d->getPROJContext(), dfCenterLat, dfCenterLong, 0.0, 0.0, nullptr,
@@ -7984,6 +8212,8 @@ OGRErr OGRSpatialReference::SetSCH(double dfPegLat, double dfPegLong,
                                    double dfPegHeading, double dfPegHgt)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_spherical_cross_track_height(
             d->getPROJContext(), dfPegLat, dfPegLong, dfPegHeading, dfPegHgt,
@@ -8011,6 +8241,8 @@ OGRErr OGRSpatialReference::SetVerticalPerspective(
     double dfTopoOriginLat, double dfTopoOriginLon, double dfTopoOriginHeight,
     double dfViewPointHeight, double dfFalseEasting, double dfFalseNorthing)
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->replaceConversionAndUnref(
         proj_create_conversion_vertical_perspective(
             d->getPROJContext(), dfTopoOriginLat, dfTopoOriginLon,
@@ -8044,6 +8276,8 @@ OGRErr OGRSpatialReference::SetDerivedGeogCRSWithPoleRotationGRIBConvention(
     const char *pszCRSName, double dfSouthPoleLat, double dfSouthPoleLon,
     double dfAxisRotation)
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     if (!d->m_pj_crs)
         return OGRERR_FAILURE;
@@ -8068,6 +8302,8 @@ OGRErr OGRSpatialReference::SetDerivedGeogCRSWithPoleRotationNetCDFCFConvention(
     const char *pszCRSName, double dfGridNorthPoleLat,
     double dfGridNorthPoleLon, double dfNorthPoleGridLon)
 {
+    TAKE_OPTIONAL_LOCK();
+
 #if PROJ_VERSION_MAJOR > 8 ||                                                  \
     (PROJ_VERSION_MAJOR == 8 && PROJ_VERSION_MINOR >= 2)
     d->refreshProjObj();
@@ -8124,6 +8360,8 @@ OGRErr OGRSpatialReference::SetAuthority(const char *pszTargetKey,
                                          const char *pszAuthority, int nCode)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     pszTargetKey = d->nullifyTargetKeyIfPossible(pszTargetKey);
 
@@ -8254,6 +8492,8 @@ const char *
 OGRSpatialReference::GetAuthorityCode(const char *pszTargetKey) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     const char *pszInputTargetKey = pszTargetKey;
     pszTargetKey = d->nullifyTargetKeyIfPossible(pszTargetKey);
@@ -8388,6 +8628,8 @@ const char *
 OGRSpatialReference::GetAuthorityName(const char *pszTargetKey) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     const char *pszInputTargetKey = pszTargetKey;
     pszTargetKey = d->nullifyTargetKeyIfPossible(pszTargetKey);
@@ -8507,7 +8749,7 @@ const char *OSRGetAuthorityName(OGRSpatialReferenceH hSRS,
  * a compound CRS whose horizontal and vertical parts have a top-level
  * identifier.
  *
- * @return a string to free with CPLFree(), or nulptr when no result can be
+ * @return a string to free with CPLFree(), or nullptr when no result can be
  * generated
  *
  * @since GDAL 3.5
@@ -8516,6 +8758,8 @@ const char *OSRGetAuthorityName(OGRSpatialReferenceH hSRS,
 char *OGRSpatialReference::GetOGCURN() const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     const char *pszAuthName = GetAuthorityName(nullptr);
     const char *pszAuthCode = GetAuthorityCode(nullptr);
     if (pszAuthName && pszAuthCode)
@@ -8565,6 +8809,8 @@ char *OGRSpatialReference::GetOGCURN() const
 OGRErr OGRSpatialReference::StripVertical()
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     d->demoteFromBoundCRS();
     if (!d->m_pj_crs || d->m_pjType != PJ_TYPE_COMPOUND_CRS)
@@ -8668,6 +8914,8 @@ bool OGRSpatialReference::StripTOWGS84IfKnownDatumAndAllowed()
 bool OGRSpatialReference::StripTOWGS84IfKnownDatum()
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     if (!d->m_pj_crs || d->m_pjType != PJ_TYPE_BOUND_CRS)
     {
@@ -8758,6 +9006,8 @@ bool OGRSpatialReference::StripTOWGS84IfKnownDatum()
 int OGRSpatialReference::IsCompound() const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     d->demoteFromBoundCRS();
     bool isCompound = d->m_pjType == PJ_TYPE_COMPOUND_CRS;
@@ -8799,6 +9049,8 @@ int OSRIsCompound(OGRSpatialReferenceH hSRS)
 int OGRSpatialReference::IsProjected() const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     d->demoteFromBoundCRS();
     bool isProjected = d->m_pjType == PJ_TYPE_PROJECTED_CRS;
@@ -8860,6 +9112,8 @@ int OSRIsProjected(OGRSpatialReferenceH hSRS)
 int OGRSpatialReference::IsGeocentric() const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     d->demoteFromBoundCRS();
     bool isGeocentric = d->m_pjType == PJ_TYPE_GEOCENTRIC_CRS;
@@ -8895,6 +9149,8 @@ int OSRIsGeocentric(OGRSpatialReferenceH hSRS)
 
 bool OGRSpatialReference::IsEmpty() const
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     return d->m_pj_crs == nullptr;
 }
@@ -8916,6 +9172,8 @@ bool OGRSpatialReference::IsEmpty() const
 int OGRSpatialReference::IsGeographic() const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     d->demoteFromBoundCRS();
     bool isGeog = d->m_pjType == PJ_TYPE_GEOGRAPHIC_2D_CRS ||
@@ -8979,6 +9237,8 @@ int OSRIsGeographic(OGRSpatialReferenceH hSRS)
 int OGRSpatialReference::IsDerivedGeographic() const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     d->demoteFromBoundCRS();
     const bool isGeog = d->m_pjType == PJ_TYPE_GEOGRAPHIC_2D_CRS ||
@@ -9022,6 +9282,7 @@ int OGRSpatialReference::IsDerivedProjected() const
 
 {
 #if PROJ_AT_LEAST_VERSION(9, 2, 0)
+    TAKE_OPTIONAL_LOCK();
     d->refreshProjObj();
     d->demoteFromBoundCRS();
     const bool isDerivedProjected =
@@ -9067,6 +9328,7 @@ int OSRIsDerivedProjected(OGRSpatialReferenceH hSRS)
 int OGRSpatialReference::IsLocal() const
 
 {
+    TAKE_OPTIONAL_LOCK();
     d->refreshProjObj();
     return d->m_pjType == PJ_TYPE_ENGINEERING_CRS;
 }
@@ -9106,6 +9368,7 @@ int OSRIsLocal(OGRSpatialReferenceH hSRS)
 int OGRSpatialReference::IsVertical() const
 
 {
+    TAKE_OPTIONAL_LOCK();
     d->refreshProjObj();
     d->demoteFromBoundCRS();
     bool isVertical = d->m_pjType == PJ_TYPE_VERTICAL_CRS;
@@ -9173,6 +9436,7 @@ int OSRIsVertical(OGRSpatialReferenceH hSRS)
 bool OGRSpatialReference::IsDynamic() const
 
 {
+    TAKE_OPTIONAL_LOCK();
     bool isDynamic = false;
     d->refreshProjObj();
     d->demoteFromBoundCRS();
@@ -9282,6 +9546,7 @@ bool OGRSpatialReference::HasPointMotionOperation() const
 {
 #if PROJ_VERSION_MAJOR > 9 ||                                                  \
     (PROJ_VERSION_MAJOR == 9 && PROJ_VERSION_MINOR >= 4)
+    TAKE_OPTIONAL_LOCK();
     d->refreshProjObj();
     d->demoteFromBoundCRS();
     auto ctxt = d->getPROJContext();
@@ -9330,6 +9595,7 @@ int OSRHasPointMotionOperation(OGRSpatialReferenceH hSRS)
 OGRSpatialReference *OGRSpatialReference::CloneGeogCS() const
 
 {
+    TAKE_OPTIONAL_LOCK();
     d->refreshProjObj();
     if (d->m_pj_crs)
     {
@@ -9447,6 +9713,8 @@ int OGRSpatialReference::IsSameGeogCS(const OGRSpatialReference *poOther,
                                       const char *const *papszOptions) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     CPL_IGNORE_RET_VAL(papszOptions);
 
     d->refreshProjObj();
@@ -9514,6 +9782,8 @@ int OSRIsSameGeogCS(OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2)
 int OGRSpatialReference::IsSameVertCS(const OGRSpatialReference *poOther) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     /* -------------------------------------------------------------------- */
     /*      Does the datum name match?                                      */
     /* -------------------------------------------------------------------- */
@@ -9599,6 +9869,8 @@ int OGRSpatialReference::IsSame(const OGRSpatialReference *poOtherSRS,
                                 const char *const *papszOptions) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     poOtherSRS->d->refreshProjObj();
     if (!d->m_pj_crs || !poOtherSRS->d->m_pj_crs)
@@ -9718,6 +9990,8 @@ OGRSpatialReference *OGRSpatialReference::convertToOtherProjection(
     const char *pszTargetProjection,
     CPL_UNUSED const char *const *papszOptions) const
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (pszTargetProjection == nullptr)
         return nullptr;
     int new_code;
@@ -9923,6 +10197,8 @@ OGRSpatialReference::FindBestMatch(int nMinimumMatchConfidence,
                                    const char *pszPreferredAuthority,
                                    CSLConstList papszOptions) const
 {
+    TAKE_OPTIONAL_LOCK();
+
     CPL_IGNORE_RET_VAL(papszOptions);  // ignored for now.
 
     if (nMinimumMatchConfidence == 0)
@@ -10049,6 +10325,8 @@ OGRErr OGRSpatialReference::SetTOWGS84(double dfDX, double dfDY, double dfDZ,
                                        double dfPPM)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     if (d->m_pj_crs == nullptr)
     {
@@ -10220,6 +10498,8 @@ OGRErr OSRSetTOWGS84(OGRSpatialReferenceH hSRS, double dfDX, double dfDY,
 OGRErr OGRSpatialReference::GetTOWGS84(double *padfCoeff, int nCoeffCount) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     if (d->m_pjType != PJ_TYPE_BOUND_CRS)
         return OGRERR_FAILURE;
@@ -10261,6 +10541,7 @@ OGRErr OSRGetTOWGS84(OGRSpatialReferenceH hSRS, double *padfCoeff,
  * @return TRUE or FALSE
  */
 
+/* static */
 int OGRSpatialReference::IsAngularParameter(const char *pszParameterName)
 
 {
@@ -10285,6 +10566,7 @@ int OGRSpatialReference::IsAngularParameter(const char *pszParameterName)
  * @return TRUE or FALSE
  */
 
+/* static */
 int OGRSpatialReference::IsLongitudeParameter(const char *pszParameterName)
 
 {
@@ -10304,6 +10586,8 @@ int OGRSpatialReference::IsLongitudeParameter(const char *pszParameterName)
  *
  * @return TRUE or FALSE
  */
+
+/* static */
 int OGRSpatialReference::IsLinearParameter(const char *pszParameterName)
 
 {
@@ -10325,6 +10609,8 @@ int OGRSpatialReference::IsLinearParameter(const char *pszParameterName)
 void OGRSpatialReference::GetNormInfo() const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (d->bNormInfoSet)
         return;
 
@@ -10362,6 +10648,8 @@ const char *OGRSpatialReference::GetExtension(const char *pszTargetKey,
                                               const char *pszDefault) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     /* -------------------------------------------------------------------- */
     /*      Find the target node.                                           */
     /* -------------------------------------------------------------------- */
@@ -10410,6 +10698,8 @@ OGRErr OGRSpatialReference::SetExtension(const char *pszTargetKey,
                                          const char *pszValue)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     /* -------------------------------------------------------------------- */
     /*      Find the target node.                                           */
     /* -------------------------------------------------------------------- */
@@ -10491,6 +10781,8 @@ void OSRCleanup(void)
  */
 int OGRSpatialReference::GetAxesCount() const
 {
+    TAKE_OPTIONAL_LOCK();
+
     int axisCount = 0;
     d->refreshProjObj();
     if (d->m_pj_crs == nullptr)
@@ -10588,6 +10880,8 @@ const char *OGRSpatialReference::GetAxis(const char *pszTargetKey, int iAxis,
                                          double *pdfConvUnit) const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (peOrientation != nullptr)
         *peOrientation = OAO_Other;
     if (pdfConvUnit != nullptr)
@@ -10852,6 +11146,8 @@ OGRErr OGRSpatialReference::SetAxes(const char *pszTargetKey,
                                     OGRAxisOrientation eYAxisOrientation)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     /* -------------------------------------------------------------------- */
     /*      Find the target node.                                           */
     /* -------------------------------------------------------------------- */
@@ -11177,6 +11473,8 @@ OGRErr OSRImportFromProj4(OGRSpatialReferenceH hSRS, const char *pszProj4)
 OGRErr OGRSpatialReference::importFromProj4(const char *pszProj4)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (strlen(pszProj4) >= 10000)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Too long PROJ string");
@@ -11285,7 +11583,7 @@ OGRErr OGRSpatialReference::exportToProj4(char **ppszProj4) const
     // In the past calling this method was thread-safe, even if we never
     // guaranteed it. Now proj_as_proj_string() will cache the result
     // internally, so this is no longer thread-safe.
-    std::lock_guard<std::mutex> oLock(d->m_mutex);
+    std::lock_guard oLock(d->m_mutex);
 
     d->refreshProjObj();
     if (d->m_pj_crs == nullptr || d->m_pjType == PJ_TYPE_ENGINEERING_CRS)
@@ -11380,6 +11678,8 @@ OGRErr OGRSpatialReference::exportToProj4(char **ppszProj4) const
 OGRErr OGRSpatialReference::morphToESRI()
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     d->setMorphToESRI(true);
 
@@ -11430,6 +11730,8 @@ OGRErr OSRMorphToESRI(OGRSpatialReferenceH hSRS)
 OGRErr OGRSpatialReference::morphFromESRI()
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     d->setMorphToESRI(false);
 
@@ -11489,6 +11791,8 @@ OGRSpatialReferenceH *
 OGRSpatialReference::FindMatches(char **papszOptions, int *pnEntries,
                                  int **ppanMatchConfidence) const
 {
+    TAKE_OPTIONAL_LOCK();
+
     CPL_IGNORE_RET_VAL(papszOptions);
 
     if (pnEntries)
@@ -11629,6 +11933,8 @@ OGRSpatialReference::FindMatches(char **papszOptions, int *pnEntries,
 OGRErr OGRSpatialReference::importFromEPSGA(int nCode)
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     Clear();
 
     const char *pszUseNonDeprecated =
@@ -11738,6 +12044,8 @@ OGRErr OGRSpatialReference::importFromEPSGA(int nCode)
  */
 OGRErr OGRSpatialReference::AddGuessedTOWGS84()
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     if (!d->m_pj_crs)
         return OGRERR_FAILURE;
@@ -11869,6 +12177,8 @@ OGRErr CPL_STDCALL OSRImportFromEPSG(OGRSpatialReferenceH hSRS, int nCode)
 int OGRSpatialReference::EPSGTreatsAsLatLong() const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (!IsGeographic())
         return FALSE;
 
@@ -11978,6 +12288,8 @@ int OSREPSGTreatsAsLatLong(OGRSpatialReferenceH hSRS)
 int OGRSpatialReference::EPSGTreatsAsNorthingEasting() const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (!IsProjected())
         return FALSE;
 
@@ -12050,6 +12362,8 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT(const char *prjName,
                                                        const char *unitsName,
                                                        const char *crsName)
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (centralMeridian < -93 || centralMeridian > -87)
         return OGRERR_FAILURE;
     if (latOfOrigin < 40 || latOfOrigin > 47)
@@ -12201,6 +12515,8 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT(const char *prjName,
  */
 OSRAxisMappingStrategy OGRSpatialReference::GetAxisMappingStrategy() const
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->m_axisMappingStrategy;
 }
 
@@ -12239,6 +12555,8 @@ OSRAxisMappingStrategy OSRGetAxisMappingStrategy(OGRSpatialReferenceH hSRS)
 void OGRSpatialReference::SetAxisMappingStrategy(
     OSRAxisMappingStrategy strategy)
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->m_axisMappingStrategy = strategy;
     d->refreshAxisMapping();
 }
@@ -12276,6 +12594,8 @@ void OSRSetAxisMappingStrategy(OGRSpatialReferenceH hSRS,
  */
 const std::vector<int> &OGRSpatialReference::GetDataAxisToSRSAxisMapping() const
 {
+    TAKE_OPTIONAL_LOCK();
+
     return d->m_axisMapping;
 }
 
@@ -12343,6 +12663,8 @@ const int *OSRGetDataAxisToSRSAxisMapping(OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::SetDataAxisToSRSAxisMapping(
     const std::vector<int> &mapping)
 {
+    TAKE_OPTIONAL_LOCK();
+
     if (mapping.size() < 2)
         return OGRERR_FAILURE;
     d->m_axisMappingStrategy = OAMS_CUSTOM;
@@ -12412,6 +12734,8 @@ bool OGRSpatialReference::GetAreaOfUse(double *pdfWestLongitudeDeg,
                                        double *pdfNorthLatitudeDeg,
                                        const char **ppszAreaName) const
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     if (!d->m_pj_crs)
     {
@@ -12575,6 +12899,8 @@ void OSRDestroyCRSInfoList(OSRCRSInfo **list)
  */
 void OGRSpatialReference::UpdateCoordinateSystemFromGeogCRS()
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     if (!d->m_pj_crs)
         return;
@@ -12667,6 +12993,8 @@ void OGRSpatialReference::UpdateCoordinateSystemFromGeogCRS()
  */
 OGRErr OGRSpatialReference::PromoteTo3D(const char *pszName)
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     if (!d->m_pj_crs)
         return OGRERR_FAILURE;
@@ -12708,6 +13036,8 @@ OGRErr OSRPromoteTo3D(OGRSpatialReferenceH hSRS, const char *pszName)
  */
 OGRErr OGRSpatialReference::DemoteTo2D(const char *pszName)
 {
+    TAKE_OPTIONAL_LOCK();
+
     d->refreshProjObj();
     if (!d->m_pj_crs)
         return OGRERR_FAILURE;
@@ -12749,6 +13079,8 @@ OGRErr OSRDemoteTo2D(OGRSpatialReferenceH hSRS, const char *pszName)
 int OGRSpatialReference::GetEPSGGeogCS() const
 
 {
+    TAKE_OPTIONAL_LOCK();
+
     /* -------------------------------------------------------------------- */
     /*      Check axis order.                                               */
     /* -------------------------------------------------------------------- */

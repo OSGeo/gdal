@@ -1131,6 +1131,14 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared(const char *, GDALAccess)
 #define GDAL_OF_FROM_GDALOPEN 0x400
 #endif
 
+/** Open in thread-safe mode. Not compatible with
+ * GDAL_OF_VECTOR, GDAL_OF_MULTIDIM_RASTER or GDAL_OF_UPDATE
+ *
+ * Used by GDALOpenEx().
+ * @since GDAL 3.10
+ */
+#define GDAL_OF_THREAD_SAFE 0x800
+
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenEx(
     const char *pszFilename, unsigned int nOpenFlags,
     const char *const *papszAllowedDrivers, const char *const *papszOpenOptions,
@@ -1240,6 +1248,11 @@ int CPL_DLL CPL_STDCALL GDALGetRasterXSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterYSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterCount(GDALDatasetH);
 GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetRasterBand(GDALDatasetH, int);
+
+bool CPL_DLL GDALDatasetIsThreadSafe(GDALDatasetH, int nScopeFlags,
+                                     CSLConstList papszOptions);
+GDALDatasetH CPL_DLL GDALGetThreadSafeDataset(GDALDatasetH, int nScopeFlags,
+                                              CSLConstList papszOptions);
 
 CPLErr CPL_DLL CPL_STDCALL GDALAddBand(GDALDatasetH hDS, GDALDataType eType,
                                        CSLConstList papszOptions);

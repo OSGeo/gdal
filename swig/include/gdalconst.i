@@ -197,6 +197,7 @@
 %constant OF_UPDATE = GDAL_OF_UPDATE;
 %constant OF_SHARED = GDAL_OF_SHARED;
 %constant OF_VERBOSE_ERROR = GDAL_OF_VERBOSE_ERROR;
+%constant OF_THREAD_SAFE = GDAL_OF_THREAD_SAFE;
 
 #if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 

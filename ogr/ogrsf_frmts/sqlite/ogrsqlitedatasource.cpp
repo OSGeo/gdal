@@ -2165,7 +2165,7 @@ bool OGRSQLiteDataSource::Open(GDALOpenInfo *poOpenInfo)
     const char *pszNewName = poOpenInfo->pszFilename;
     CPLAssert(m_apoLayers.empty());
     eAccess = poOpenInfo->eAccess;
-    nOpenFlags = poOpenInfo->nOpenFlags;
+    nOpenFlags = poOpenInfo->nOpenFlags & ~GDAL_OF_THREAD_SAFE;
     SetDescription(pszNewName);
 
     if (m_pszFilename == nullptr)
