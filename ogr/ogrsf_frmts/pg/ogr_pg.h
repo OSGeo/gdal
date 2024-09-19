@@ -582,7 +582,7 @@ class OGRPGResultLayer final : public OGRPGLayer
 /*                           OGRPGDataSource                            */
 /************************************************************************/
 
-class OGRPGDataSource final : public OGRDataSource
+class OGRPGDataSource final : public GDALDataset
 {
     OGRPGDataSource(const OGRPGDataSource &) = delete;
     OGRPGDataSource &operator=(const OGRPGDataSource &) = delete;
@@ -596,8 +596,6 @@ class OGRPGDataSource final : public OGRDataSource
 
     OGRPGTableLayer **papoLayers = nullptr;
     int nLayers = 0;
-
-    char *pszName = nullptr;
 
     bool m_bUTF8ClientEncoding = false;
 
@@ -702,11 +700,6 @@ class OGRPGDataSource final : public OGRDataSource
     OpenTable(CPLString &osCurrentSchema, const char *pszTableName,
               const char *pszSchemaName, const char *pszDescription,
               const char *pszGeomColForced, int bUpdate, int bTestOpen);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;

@@ -54,7 +54,6 @@ OGRPGDataSource::~OGRPGDataSource()
 {
     OGRPGDataSource::FlushCache(true);
 
-    CPLFree(pszName);
     CPLFree(pszForcedTables);
     CSLDestroy(papszSchemaList);
 
@@ -305,8 +304,6 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
         return FALSE;
     }
 
-    pszName = CPLStrdup(pszNewName);
-
     const auto QuoteAndEscapeConnectionParam = [](const char *pszParam)
     {
         CPLString osRet("\'");
@@ -323,7 +320,7 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
         return osRet;
     };
 
-    CPLString osConnectionName(pszName);
+    CPLString osConnectionName(pszNewName);
     if (osConnectionName.find("PG:postgresql://") == 0)
         osConnectionName = osConnectionName.substr(3);
     const bool bIsURI = osConnectionName.find("postgresql://") == 0;
@@ -380,7 +377,7 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
     /*      Set application name if not found in connection string          */
     /* -------------------------------------------------------------------- */
 
-    if (strstr(pszName, "application_name") == nullptr &&
+    if (strstr(pszNewName, "application_name") == nullptr &&
         getenv("PGAPPNAME") == nullptr)
     {
         if (bIsURI)
@@ -2950,7 +2947,7 @@ const char *OGRPGDataSource::GetMetadataItem(const char *pszKey,
             return pszRet;
         }
     }
-    return OGRDataSource::GetMetadataItem(pszKey, pszDomain);
+    return GDALDataset::GetMetadataItem(pszKey, pszDomain);
 }
 
 /************************************************************************/
@@ -2972,8 +2969,8 @@ OGRLayer *OGRPGDataSource::ExecuteSQL(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Special case DELLAYER: command.                                 */
@@ -3018,7 +3015,7 @@ OGRLayer *OGRPGDataSource::ExecuteSQL(const char *pszSQLCommand,
             CPLDebug("PG", "Command Results Tuples = %d", PQntuples(hResult));
 
             GDALDriver *poMemDriver =
-                OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+                GetGDALDriverManager()->GetDriverByName("Memory");
             if (poMemDriver)
             {
                 OGRPGLayer *poResultLayer =
