@@ -34,7 +34,7 @@
 /************************************************************************/
 
 OGRSVGDataSource::OGRSVGDataSource()
-    : pszName(nullptr), papoLayers(nullptr), nLayers(0)
+    : papoLayers(nullptr), nLayers(0)
 #ifdef HAVE_EXPAT
       ,
       eValidity(SVG_VALIDITY_UNKNOWN), bIsCloudmade(false),
@@ -53,7 +53,6 @@ OGRSVGDataSource::~OGRSVGDataSource()
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
     CPLFree(papoLayers);
-    CPLFree(pszName);
 }
 
 /************************************************************************/
@@ -140,8 +139,6 @@ int OGRSVGDataSource::Open(const char *pszFilename)
 
 {
 #ifdef HAVE_EXPAT
-    pszName = CPLStrdup(pszFilename);
-
     /* -------------------------------------------------------------------- */
     /*      Try to open the file.                                           */
     /* -------------------------------------------------------------------- */
@@ -262,13 +259,4 @@ int OGRSVGDataSource::Open(const char *pszFilename)
     }
     return FALSE;
 #endif
-}
-
-/************************************************************************/
-/*                            TestCapability()                          */
-/************************************************************************/
-
-int OGRSVGDataSource::TestCapability(CPL_UNUSED const char *pszCap)
-{
-    return FALSE;
 }
