@@ -614,6 +614,7 @@ describedby
 deserialization
 deserialize
 deserialized
+deserializing
 desirabled
 dest
 destructor
@@ -1392,6 +1393,7 @@ InfoFormat
 InfoOptions
 Informatisé
 Informix
+InfraRed
 ing
 ini
 init
@@ -1508,6 +1510,7 @@ KShortest
 kslikebase
 KSpread
 ktx
+Ku
 Kubernetes
 Kumar
 Kuratomi

@@ -442,6 +442,23 @@
             <xs:enumeration value="YCbCr_Cb"/>
             <xs:enumeration value="YCbCr_Cr"/>
             <xs:enumeration value="Undefined"/>
+            <xs:enumeration value="Pan"/> <!-- 3.10 addition -->
+            <xs:enumeration value="Coastal"/> <!-- 3.10 addition -->
+            <xs:enumeration value="RedEdge"/> <!-- 3.10 addition -->
+            <xs:enumeration value="NIR"/> <!-- 3.10 addition -->
+            <xs:enumeration value="SWIR"/> <!-- 3.10 addition -->
+            <xs:enumeration value="MWIR"/> <!-- 3.10 addition -->
+            <xs:enumeration value="LWIR"/> <!-- 3.10 addition -->
+            <xs:enumeration value="TIR"/> <!-- 3.10 addition -->
+            <xs:enumeration value="OtherIR"/> <!-- 3.10 addition -->
+            <xs:enumeration value="SAR_Ka"/> <!-- 3.10 addition -->
+            <xs:enumeration value="SAR_K"/> <!-- 3.10 addition -->
+            <xs:enumeration value="SAR_Ku"/> <!-- 3.10 addition -->
+            <xs:enumeration value="SAR_X"/> <!-- 3.10 addition -->
+            <xs:enumeration value="SAR_C"/> <!-- 3.10 addition -->
+            <xs:enumeration value="SAR_S"/> <!-- 3.10 addition -->
+            <xs:enumeration value="SAR_L"/> <!-- 3.10 addition -->
+            <xs:enumeration value="SAR_P"/> <!-- 3.10 addition -->
         </xs:restriction>
     </xs:simpleType>
 

@@ -369,6 +369,7 @@ $1;
 %rename (GetDataTypeByName) GDALGetDataTypeByName;
 %rename (DataTypeUnion) GDALDataTypeUnion;
 %rename (GetColorInterpretationName) GDALGetColorInterpretationName;
+%rename (GetColorInterpretationByName) GDALGetColorInterpretationByName;
 %rename (GetPaletteInterpretationName) GDALGetPaletteInterpretationName;
 %rename (DecToDMS) GDALDecToDMS;
 %rename (PackedDMSToDec) GDALPackedDMSToDec;
@@ -724,6 +725,8 @@ GDALDataType GDALGetDataTypeByName( const char * pszDataTypeName );
 GDALDataType GDALDataTypeUnion( GDALDataType a, GDALDataType b );
 
 const char *GDALGetColorInterpretationName( GDALColorInterp eColorInterp );
+
+GDALColorInterp GDALGetColorInterpretationByName( const char* pszColorInterpName );
 
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp ePaletteInterp );
 

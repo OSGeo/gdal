@@ -32,8 +32,8 @@ Synopsis
        [-a_gt <gt0> <gt1> <gt2> <gt3> <gt4> <gt5>]
        [-a_scale <value>] [-a_offset <value>]
        [-nogcp] [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...
-       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
-       |-colorinterp {red|green|blue|alpha|gray|undefined},...]
+       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...}]
+       |-colorinterp {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...},...]
        [-mo <META-TAG>=<VALUE>]... [-dmo "DOMAIN:META-TAG=VALUE"]... [-q] [-sds]
        [-co <NAME>=<VALUE>]... [-stats] [-norat] [-noxmp]
        [-oo <NAME>=<VALUE>]...
@@ -289,14 +289,14 @@ resampling, and rescaling pixels in the process.
     nodata value, this does not cause pixel values that are equal to that nodata
     value to be changed to the value specified with this option.
 
-.. option:: -colorinterp_X <red|green|blue|alpha|gray|undefined>
+.. option:: -colorinterp_X <red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...>
 
     Override the color interpretation of band X (where X is a valid band number,
     starting at 1)
 
     .. versionadded:: 2.3
 
-.. option:: -colorinterp {red|green|blue|alpha|gray|undefined},...
+.. option:: -colorinterp {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...},...
 
     Override the color interpretation of all specified bands. For
     example -colorinterp red,green,blue,alpha for a 4 band output dataset.

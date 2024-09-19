@@ -341,3 +341,14 @@ def test_gdalinfo_lib_nomask(tmp_path):
 
     ret = gdal.Info(ds, format="json", showMask=False)
     assert "mask" not in ret["bands"][0]
+
+
+###############################################################################
+
+
+def test_gdalinfo_lib_json_stac_common_name():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_PanBand)
+    ret = gdal.Info(ds, options="-json")
+    assert ret["stac"]["eo:bands"][0]["common_name"] == "pan"

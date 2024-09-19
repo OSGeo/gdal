@@ -5679,8 +5679,19 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     }
                     else if (EQUAL(pszRole, "colorinterp"))
                     {
-                        poBand->m_eBandInterp =
-                            GDALGetColorInterpretationByName(pszUnescapedValue);
+                        if (EQUAL(pszUnescapedValue, "undefined"))
+                            poBand->m_eBandInterp = GCI_Undefined;
+                        else
+                        {
+                            poBand->m_eBandInterp =
+                                GDALGetColorInterpretationByName(
+                                    pszUnescapedValue);
+                            if (poBand->m_eBandInterp == GCI_Undefined)
+                            {
+                                poBand->m_oGTiffMDMD.SetMetadataItem(
+                                    "COLOR_INTERPRETATION", pszUnescapedValue);
+                            }
+                        }
                     }
                     else
                     {

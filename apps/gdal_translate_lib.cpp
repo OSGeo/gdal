@@ -2737,18 +2737,11 @@ static void CopyBandInfo(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
 
 static int GetColorInterp(const char *pszStr)
 {
-    if (EQUAL(pszStr, "red"))
-        return GCI_RedBand;
-    if (EQUAL(pszStr, "green"))
-        return GCI_GreenBand;
-    if (EQUAL(pszStr, "blue"))
-        return GCI_BlueBand;
-    if (EQUAL(pszStr, "alpha"))
-        return GCI_AlphaBand;
-    if (EQUAL(pszStr, "gray") || EQUAL(pszStr, "grey"))
-        return GCI_GrayIndex;
     if (EQUAL(pszStr, "undefined"))
         return GCI_Undefined;
+    const int eInterp = GDALGetColorInterpretationByName(pszStr);
+    if (eInterp != GCI_Undefined)
+        return eInterp;
     CPLError(CE_Warning, CPLE_NotSupported,
              "Unsupported color interpretation: %s", pszStr);
     return -1;
@@ -3078,7 +3071,8 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
             _("Add the indicated ground control point to the output dataset."));
 
     argParser->add_argument("-colorinterp")
-        .metavar("{red|green|blue|alpha|gray|undefined},...")
+        .metavar("{red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|"
+                 "swir|mwir|lwir|...},...")
         .action(
             [psOptions](const std::string &s)
             {
@@ -3093,7 +3087,8 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
 
     argParser->add_argument("-colorinterp_X")
         .append()
-        .metavar("{red|green|blue|alpha|gray|undefined}")
+        .metavar("{red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|"
+                 "swir|mwir|lwir|...}")
         .help(_("Override the color interpretation of band X."));
 
     {

@@ -602,17 +602,13 @@ bool STACITDataset::SetupDataset(
             if (!osBandName.empty())
                 poVRTBand->SetDescription(osBandName.c_str());
 
-            if (eInterp != GCI_Undefined)
+            const auto osCommonName = eoBand["common_name"].ToString();
+            if (!osCommonName.empty())
             {
-                const auto osCommonName = eoBand["common_name"].ToString();
-                if (osCommonName == "red")
-                    poVRTBand->SetColorInterpretation(GCI_RedBand);
-                else if (osCommonName == "green")
-                    poVRTBand->SetColorInterpretation(GCI_GreenBand);
-                else if (osCommonName == "blue")
-                    poVRTBand->SetColorInterpretation(GCI_BlueBand);
-                else if (osCommonName == "alpha")
-                    poVRTBand->SetColorInterpretation(GCI_AlphaBand);
+                const auto eInterpFromCommonName =
+                    GDALGetColorInterpFromSTACCommonName(osCommonName.c_str());
+                if (eInterpFromCommonName != GCI_Undefined)
+                    poVRTBand->SetColorInterpretation(eInterpFromCommonName);
             }
 
             for (const auto &eoBandChild : eoBand.GetChildren())

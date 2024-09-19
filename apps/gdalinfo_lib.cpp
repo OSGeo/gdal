@@ -1128,25 +1128,21 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             json_object_object_add(poStacEOBand, "name", poBandName);
         }
 
-        if (GDALGetDescription(hBand) != nullptr &&
-            strlen(GDALGetDescription(hBand)) > 0)
+        const char *pszBandDesc = GDALGetDescription(hBand);
+        if (pszBandDesc != nullptr && strlen(pszBandDesc) > 0)
         {
             if (bJson)
             {
-                json_object *poBandDescription =
-                    json_object_new_string(GDALGetDescription(hBand));
                 json_object_object_add(poBand, "description",
-                                       poBandDescription);
+                                       json_object_new_string(pszBandDesc));
 
-                json_object *poStacBandDescription =
-                    json_object_new_string(GDALGetDescription(hBand));
                 json_object_object_add(poStacEOBand, "description",
-                                       poStacBandDescription);
+                                       json_object_new_string(pszBandDesc));
             }
             else
             {
                 Concat(osStr, psOptions->bStdoutOutput, "  Description = %s\n",
-                       GDALGetDescription(hBand));
+                       pszBandDesc);
             }
         }
         else
@@ -1158,6 +1154,17 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                         GDALGetRasterColorInterpretation(hBand)));
                 json_object_object_add(poStacEOBand, "description",
                                        poColorInterp);
+            }
+        }
+
+        if (bJson)
+        {
+            const char *pszCommonName = GDALGetSTACCommonNameFromColorInterp(
+                GDALGetRasterColorInterpretation(hBand));
+            if (pszCommonName)
+            {
+                json_object_object_add(poStacEOBand, "common_name",
+                                       json_object_new_string(pszCommonName));
             }
         }
 
@@ -2269,6 +2276,9 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
         GDALInfoPrintMetadata(psOptions, hObject, "RPC", "RPC Metadata",
                               pszIndent, bJson, poMetadata, osStr);
     }
+
+    GDALInfoPrintMetadata(psOptions, hObject, "IMAGERY", "Imagery", pszIndent,
+                          bJson, poMetadata, osStr);
 }
 
 /************************************************************************/

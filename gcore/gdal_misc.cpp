@@ -1178,10 +1178,15 @@ const char *GDALGetPaletteInterpretationName(GDALPaletteInterp eInterp)
 const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
 
 {
+    static_assert(GCI_IR_Start == GCI_RedEdgeBand + 1);
+    static_assert(GCI_NIRBand == GCI_IR_Start);
+    static_assert(GCI_SAR_Start == GCI_IR_End + 1);
+    static_assert(GCI_Max == GCI_SAR_End);
+
     switch (eInterp)
     {
         case GCI_Undefined:
-            return "Undefined";
+            break;
 
         case GCI_GrayIndex:
             return "Gray";
@@ -1231,9 +1236,76 @@ const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
         case GCI_YCbCr_CrBand:
             return "YCbCr_Cr";
 
-        default:
-            return "Unknown";
+        case GCI_PanBand:
+            return "Pan";
+
+        case GCI_CoastalBand:
+            return "Coastal";
+
+        case GCI_RedEdgeBand:
+            return "RedEdge";
+
+        case GCI_NIRBand:
+            return "NIR";
+
+        case GCI_SWIRBand:
+            return "SWIR";
+
+        case GCI_MWIRBand:
+            return "MWIR";
+
+        case GCI_LWIRBand:
+            return "LWIR";
+
+        case GCI_TIRBand:
+            return "TIR";
+
+        case GCI_OtherIRBand:
+            return "OtherIR";
+
+        case GCI_IR_Reserved_1:
+            return "IR_Reserved_1";
+
+        case GCI_IR_Reserved_2:
+            return "IR_Reserved_2";
+
+        case GCI_IR_Reserved_3:
+            return "IR_Reserved_3";
+
+        case GCI_IR_Reserved_4:
+            return "IR_Reserved_4";
+
+        case GCI_SAR_Ka_Band:
+            return "SAR_Ka";
+
+        case GCI_SAR_K_Band:
+            return "SAR_K";
+
+        case GCI_SAR_Ku_Band:
+            return "SAR_Ku";
+
+        case GCI_SAR_X_Band:
+            return "SAR_X";
+
+        case GCI_SAR_C_Band:
+            return "SAR_C";
+
+        case GCI_SAR_S_Band:
+            return "SAR_S";
+
+        case GCI_SAR_L_Band:
+            return "SAR_L";
+
+        case GCI_SAR_P_Band:
+            return "SAR_P";
+
+        case GCI_SAR_Reserved_1:
+            return "SAR_Reserved_1";
+
+        case GCI_SAR_Reserved_2:
+            return "SAR_Reserved_2";
     }
+    return "Undefined";
 }
 
 /************************************************************************/
@@ -1270,7 +1342,83 @@ GDALColorInterp GDALGetColorInterpretationByName(const char *pszName)
         }
     }
 
+    // Accept British English spelling
+    if (EQUAL(pszName, "grey"))
+        return GCI_GrayIndex;
+
     return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                  GDALGetColorInterpFromSTACCommonName()              */
+/************************************************************************/
+
+static const struct
+{
+    const char *pszName;
+    GDALColorInterp eInterp;
+} asSTACCommonNames[] = {
+    {"pan", GCI_PanBand},
+    {"coastal", GCI_CoastalBand},
+    {"blue", GCI_BlueBand},
+    {"green", GCI_GreenBand},
+    {"green05", GCI_GreenBand},  // no exact match
+    {"yellow", GCI_YellowBand},
+    {"red", GCI_RedBand},
+    {"rededge", GCI_RedEdgeBand},
+    {"rededge071", GCI_RedEdgeBand},  // no exact match
+    {"rededge075", GCI_RedEdgeBand},  // no exact match
+    {"rededge078", GCI_RedEdgeBand},  // no exact match
+    {"nir", GCI_NIRBand},
+    {"nir08", GCI_NIRBand},   // no exact match
+    {"nir09", GCI_NIRBand},   // no exact match
+    {"cirrus", GCI_NIRBand},  // no exact match
+    {nullptr,
+     GCI_SWIRBand},  // so that GDALGetSTACCommonNameFromColorInterp returns null on GCI_SWIRBand
+    {"swir16", GCI_SWIRBand},  // no exact match
+    {"swir22", GCI_SWIRBand},  // no exact match
+    {"lwir", GCI_LWIRBand},
+    {"lwir11", GCI_LWIRBand},  // no exact match
+    {"lwir12", GCI_LWIRBand},  // no exact match
+};
+
+/** Get color interpreetation from STAC eo:common_name
+ *
+ * Cf https://github.com/stac-extensions/eo?tab=readme-ov-file#common-band-names
+ *
+ * @since GDAL 3.10
+ */
+GDALColorInterp GDALGetColorInterpFromSTACCommonName(const char *pszName)
+{
+
+    for (const auto &sAssoc : asSTACCommonNames)
+    {
+        if (sAssoc.pszName && EQUAL(pszName, sAssoc.pszName))
+            return sAssoc.eInterp;
+    }
+    return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                  GDALGetSTACCommonNameFromColorInterp()              */
+/************************************************************************/
+
+/** Get STAC eo:common_name from GDAL color interpretation
+ *
+ * Cf https://github.com/stac-extensions/eo?tab=readme-ov-file#common-band-names
+ *
+ * @return nullptr if there is no match
+ *
+ * @since GDAL 3.10
+ */
+const char *GDALGetSTACCommonNameFromColorInterp(GDALColorInterp eInterp)
+{
+    for (const auto &sAssoc : asSTACCommonNames)
+    {
+        if (eInterp == sAssoc.eInterp)
+            return sAssoc.pszName;
+    }
+    return nullptr;
 }
 
 /************************************************************************/
