@@ -88,9 +88,8 @@ class OGRSOSILayer final : public OGRLayer
  * OGRSOSIDataSource reads a SOSI file, prebuilds the features, and     *
  * creates one OGRSOSILayer per geometry type                           *
  ************************************************************************/
-class OGRSOSIDataSource final : public OGRDataSource
+class OGRSOSIDataSource final : public GDALDataset
 {
-    char *pszName;
     OGRSOSILayer **papoLayers;
     int nLayers;
 
@@ -127,11 +126,6 @@ class OGRSOSIDataSource final : public OGRDataSource
 #ifdef WRITE_SUPPORT
     int Create(const char *pszFilename);
 #endif
-    const char *GetName() override
-    {
-        return pszName;
-    }
-
     int GetLayerCount() override
     {
         return nLayers;
@@ -144,7 +138,6 @@ class OGRSOSIDataSource final : public OGRDataSource
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = NULL) override;
 #endif
-    int TestCapability(const char *) override;
 };
 
 /************************************************************************
