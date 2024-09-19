@@ -86,14 +86,12 @@ class OGRVFKLayer : public OGRLayer
 /************************************************************************/
 /*                           OGRVFKDataSource                           */
 /************************************************************************/
-class OGRVFKDataSource : public OGRDataSource
+class OGRVFKDataSource : public GDALDataset
 {
   private:
     /* list of available layers */
     OGRVFKLayer **papoLayers;
     int nLayers;
-
-    char *pszName;
 
     /* input related parameters */
     IVFKReader *poReader;
@@ -106,11 +104,6 @@ class OGRVFKDataSource : public OGRDataSource
     ~OGRVFKDataSource();
 
     int Open(GDALOpenInfo *poOpenInfo);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {
