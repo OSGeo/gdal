@@ -52,7 +52,6 @@ constexpr int anEPSGOracleMapping[] = {
 OGROCIDataSource::OGROCIDataSource()
 
 {
-    pszName = nullptr;
     pszDBName = nullptr;
     papoLayers = nullptr;
     nLayers = 0;
@@ -70,7 +69,6 @@ OGROCIDataSource::~OGROCIDataSource()
 {
     int i;
 
-    CPLFree(pszName);
     CPLFree(pszDBName);
 
     for (i = 0; i < nLayers; i++)
@@ -197,8 +195,6 @@ int OGROCIDataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
 
         oValidateStmt.Execute(oValidateCmd.GetString());
     }
-
-    pszName = CPLStrdup(pszNewName);
 
     bDSUpdate = bUpdate;
 
@@ -704,8 +700,8 @@ OGRLayer *OGROCIDataSource::ExecuteSQL(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Ensure any pending stuff is flushed to the database.            */
