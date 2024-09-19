@@ -37,7 +37,7 @@
 /************************************************************************/
 
 OGRAVCE00DataSource::OGRAVCE00DataSource()
-    : nLayers(0), pszName(nullptr), psE00(nullptr), papoLayers(nullptr)
+    : nLayers(0), psE00(nullptr), papoLayers(nullptr)
 {
 }
 
@@ -53,8 +53,6 @@ OGRAVCE00DataSource::~OGRAVCE00DataSource()
         AVCE00ReadCloseE00(psE00);
         psE00 = nullptr;
     }
-
-    CPLFree(pszName);
 
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
@@ -105,7 +103,6 @@ int OGRAVCE00DataSource::Open(const char *pszNewName, int bTestOpen)
         return FALSE;
     }
 
-    pszName = CPLStrdup(pszNewName);
     /* pszCoverageName = CPLStrdup( psE00->pszCoverName ); */
     pszCoverageName = CPLStrdup(pszNewName);
 
