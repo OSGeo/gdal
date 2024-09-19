@@ -1033,8 +1033,9 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
         }
         else
         {
-            GDALDataset *poOtherDS = OGRDataSource::FromHandle(
-                OGROpen(oLayerDesc.osDSName, FALSE, nullptr));
+            auto poOtherDS = std::unique_ptr<GDALDataset>(
+                GDALDataset::Open(oLayerDesc.osDSName, GDAL_OF_VECTOR, nullptr,
+                                  nullptr, nullptr));
             if (poOtherDS == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1053,7 +1054,6 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
                          "Cannot find layer '%s' in '%s'",
                          oLayerDesc.osLayerName.c_str(),
                          oLayerDesc.osDSName.c_str());
-                delete poOtherDS;
                 delete poSQLiteDS;
                 VSIUnlink(pszTmpDBName);
                 CPLFree(pszTmpDBName);
@@ -1062,7 +1062,7 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
 
             osTableName = oLayerDesc.osSubstitutedName;
 
-            nExtraDS = OGR2SQLITE_AddExtraDS(poModule, poOtherDS);
+            nExtraDS = OGR2SQLITE_AddExtraDS(poModule, poOtherDS.release());
         }
 
         if (!poLayer->TestCapability(OLCStringsAsUTF8))
