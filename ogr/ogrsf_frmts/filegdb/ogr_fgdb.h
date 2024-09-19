@@ -317,7 +317,7 @@ class FGdbResultLayer final : public FGdbBaseLayer
 class FGdbDatabaseConnection;
 class OGRFileGDBGroup;
 
-class FGdbDataSource final : public OGRDataSource
+class FGdbDataSource final : public GDALDataset
 {
     CPLString m_osFSName;
     CPLString m_osPublicName;
@@ -335,11 +335,6 @@ class FGdbDataSource final : public OGRDataSource
     virtual ~FGdbDataSource();
 
     int Open(const char *pszFSName, int bUpdate, const char *pszPublicName);
-
-    const char *GetName() override
-    {
-        return m_osPublicName.c_str();
-    }
 
     const char *GetFSName()
     {
@@ -510,11 +505,11 @@ class FGdbDatabaseConnection
 class FGdbTransactionManager final : public IOGRTransactionBehaviour
 {
   public:
-    virtual OGRErr StartTransaction(OGRDataSource *&poDSInOut,
+    virtual OGRErr StartTransaction(GDALDataset *&poDSInOut,
                                     int &bOutHasReopenedDS) override;
-    virtual OGRErr CommitTransaction(OGRDataSource *&poDSInOut,
+    virtual OGRErr CommitTransaction(GDALDataset *&poDSInOut,
                                      int &bOutHasReopenedDS) override;
-    virtual OGRErr RollbackTransaction(OGRDataSource *&poDSInOut,
+    virtual OGRErr RollbackTransaction(GDALDataset *&poDSInOut,
                                        int &bOutHasReopenedDS) override;
 };
 

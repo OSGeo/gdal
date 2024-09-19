@@ -117,9 +117,9 @@ OGRLayer *OGRFileGDBGroup::OpenVectorLayer(const std::string &osName,
 FGdbDataSource::FGdbDataSource(bool bUseDriverMutex,
                                FGdbDatabaseConnection *pConnection,
                                bool bUseOpenFileGDB)
-    : OGRDataSource(), m_bUseDriverMutex(bUseDriverMutex),
-      m_pConnection(pConnection), m_pGeodatabase(nullptr), m_bUpdate(false),
-      m_poOpenFileGDBDrv(nullptr), m_bUseOpenFileGDB(bUseOpenFileGDB)
+    : m_bUseDriverMutex(bUseDriverMutex), m_pConnection(pConnection),
+      m_pGeodatabase(nullptr), m_bUpdate(false), m_poOpenFileGDBDrv(nullptr),
+      m_bUseOpenFileGDB(bUseOpenFileGDB)
 {
     bPerLayerCopyingForTransaction = -1;
     SetDescription(pConnection->m_osName.c_str());
@@ -822,8 +822,8 @@ OGRLayer *FGdbDataSource::ExecuteSQL(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Special case GetLayerDefinition                                 */
@@ -888,8 +888,8 @@ OGRLayer *FGdbDataSource::ExecuteSQL(const char *pszSQLCommand,
                          "So for now, we use default OGR SQL engine. "
                          "Explicitly specify -dialect FileGDB\n"
                          "to use the SQL engine from the FileGDB SDK API");
-        OGRLayer *poLayer = OGRDataSource::ExecuteSQL(
-            pszSQLCommand, poSpatialFilter, pszDialect);
+        OGRLayer *poLayer =
+            GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
         if (poLayer)
             m_oSetSelectLayers.insert(poLayer);
         return poLayer;

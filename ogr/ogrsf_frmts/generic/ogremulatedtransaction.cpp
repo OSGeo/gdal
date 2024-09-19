@@ -77,12 +77,12 @@ class OGRLayerWithTransaction final : public OGRLayerDecorator
     virtual OGRErr Rename(const char *pszNewName) override;
 };
 
-class OGRDataSourceWithTransaction final : public OGRDataSource
+class OGRDataSourceWithTransaction final : public GDALDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRDataSourceWithTransaction)
 
   protected:
-    OGRDataSource *m_poBaseDataSource;
+    GDALDataset *m_poBaseDataSource;
     IOGRTransactionBehaviour *m_poTransactionBehavior;
     int m_bHasOwnershipDataSource;
     int m_bHasOwnershipTransactionBehavior;
@@ -97,7 +97,7 @@ class OGRDataSourceWithTransaction final : public OGRDataSource
 
   public:
     OGRDataSourceWithTransaction(
-        OGRDataSource *poBaseDataSource,
+        GDALDataset *poBaseDataSource,
         IOGRTransactionBehaviour *poTransactionBehaviour,
         int bTakeOwnershipDataSource, int bTakeOwnershipTransactionBehavior);
 
@@ -107,8 +107,6 @@ class OGRDataSourceWithTransaction final : public OGRDataSource
     {
         return m_bInTransaction;
     }
-
-    virtual const char *GetName() override;
 
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;
@@ -181,8 +179,8 @@ IOGRTransactionBehaviour::~IOGRTransactionBehaviour()
 /*              OGRCreateEmulatedTransactionDataSourceWrapper()         */
 /************************************************************************/
 
-OGRDataSource *OGRCreateEmulatedTransactionDataSourceWrapper(
-    OGRDataSource *poBaseDataSource,
+GDALDataset *OGRCreateEmulatedTransactionDataSourceWrapper(
+    GDALDataset *poBaseDataSource,
     IOGRTransactionBehaviour *poTransactionBehaviour,
     int bTakeOwnershipDataSource, int bTakeOwnershipTransactionBehavior)
 {
@@ -196,7 +194,7 @@ OGRDataSource *OGRCreateEmulatedTransactionDataSourceWrapper(
 /************************************************************************/
 
 OGRDataSourceWithTransaction::OGRDataSourceWithTransaction(
-    OGRDataSource *poBaseDataSource,
+    GDALDataset *poBaseDataSource,
     IOGRTransactionBehaviour *poTransactionBehaviour,
     int bTakeOwnershipDataSource, int bTakeOwnershipTransactionBehavior)
     : m_poBaseDataSource(poBaseDataSource),
@@ -253,13 +251,6 @@ void OGRDataSourceWithTransaction::RemapLayers()
         }
     }
     m_oMapLayers.clear();
-}
-
-const char *OGRDataSourceWithTransaction::GetName()
-{
-    if (!m_poBaseDataSource)
-        return "";
-    return m_poBaseDataSource->GetName();
 }
 
 int OGRDataSourceWithTransaction::GetLayerCount()

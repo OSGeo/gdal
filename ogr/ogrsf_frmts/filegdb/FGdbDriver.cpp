@@ -172,7 +172,7 @@ static GDALDataset *OGRFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        OGRMutexedDataSource *poMutexedDS =
+        auto poMutexedDS =
             new OGRMutexedDataSource(pDS, TRUE, FGdbDriver::hMutex, TRUE);
         if (bUpdate)
             return OGRCreateEmulatedTransactionDataSourceWrapper(
@@ -263,15 +263,16 @@ OGRFileGDBDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 /*                           StartTransaction()                         */
 /************************************************************************/
 
-OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
+OGRErr FGdbTransactionManager::StartTransaction(GDALDataset *&poDSInOut,
                                                 int &bOutHasReopenedDS)
 {
     CPLMutexHolderOptionalLockD(FGdbDriver::hMutex);
 
     bOutHasReopenedDS = FALSE;
 
-    OGRMutexedDataSource *poMutexedDS = (OGRMutexedDataSource *)poDSInOut;
-    FGdbDataSource *poDS = (FGdbDataSource *)poMutexedDS->GetBaseDataSource();
+    auto poMutexedDS = (OGRMutexedDataSource *)poDSInOut;
+    FGdbDataSource *poDS =
+        cpl::down_cast<FGdbDataSource *>(poMutexedDS->GetBaseDataSource());
     if (!poDS->GetUpdate())
         return OGRERR_FAILURE;
     FGdbDatabaseConnection *pConnection = poDS->GetConnection();
@@ -291,7 +292,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
 
     bOutHasReopenedDS = TRUE;
 
-    CPLString osName(poMutexedDS->GetName());
+    CPLString osName(poMutexedDS->GetDescription());
     CPLString osNameOri(osName);
     if (osName.back() == '/' || osName.back() == '\\')
         osName.pop_back();
@@ -431,7 +432,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
 /*                           CommitTransaction()                        */
 /************************************************************************/
 
-OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
+OGRErr FGdbTransactionManager::CommitTransaction(GDALDataset *&poDSInOut,
                                                  int &bOutHasReopenedDS)
 {
     CPLMutexHolderOptionalLockD(FGdbDriver::hMutex);
@@ -449,7 +450,7 @@ OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
 
     bOutHasReopenedDS = TRUE;
 
-    CPLString osName(poMutexedDS->GetName());
+    CPLString osName(poMutexedDS->GetDescription());
     CPLString osNameOri(osName);
     if (osName.back() == '/' || osName.back() == '\\')
         osName.pop_back();
@@ -675,7 +676,7 @@ OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
 /*                           RollbackTransaction()                      */
 /************************************************************************/
 
-OGRErr FGdbTransactionManager::RollbackTransaction(OGRDataSource *&poDSInOut,
+OGRErr FGdbTransactionManager::RollbackTransaction(GDALDataset *&poDSInOut,
                                                    int &bOutHasReopenedDS)
 {
     CPLMutexHolderOptionalLockD(FGdbDriver::hMutex);
@@ -693,7 +694,7 @@ OGRErr FGdbTransactionManager::RollbackTransaction(OGRDataSource *&poDSInOut,
 
     bOutHasReopenedDS = TRUE;
 
-    CPLString osName(poMutexedDS->GetName());
+    CPLString osName(poMutexedDS->GetDescription());
     CPLString osNameOri(osName);
     if (osName.back() == '/' || osName.back() == '\\')
         osName.pop_back();
