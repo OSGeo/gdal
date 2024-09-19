@@ -71,10 +71,9 @@ class OGRSDTSLayer final : public OGRLayer
 /*                          OGRSDTSDataSource                           */
 /************************************************************************/
 
-class OGRSDTSDataSource final : public OGRDataSource
+class OGRSDTSDataSource final : public GDALDataset
 {
     SDTSTransfer *poTransfer;
-    char *pszName;
 
     int nLayers;
     OGRSDTSLayer **papoLayers;
@@ -87,23 +86,12 @@ class OGRSDTSDataSource final : public OGRDataSource
 
     int Open(const char *pszFilename, int bTestOpen);
 
-    const char *GetName() override
-    {
-        return pszName;
-    }
-
     int GetLayerCount() override
     {
         return nLayers;
     }
 
     OGRLayer *GetLayer(int) override;
-    int TestCapability(const char *) override;
-
-    OGRSpatialReference *DSGetSpatialRef()
-    {
-        return poSRS;
-    }
 };
 
 #endif /* ndef OGR_SDTS_H_INCLUDED */
