@@ -152,7 +152,7 @@ class OGRSelafinLayer final : public OGRLayer
 /*                           OGRSelafinDataSource                       */
 /************************************************************************/
 
-class OGRSelafinDataSource final : public OGRDataSource
+class OGRSelafinDataSource final : public GDALDataset
 {
   private:
     char *pszName;
@@ -169,11 +169,6 @@ class OGRSelafinDataSource final : public OGRDataSource
     virtual ~OGRSelafinDataSource();
     int Open(const char *pszFilename, int bUpdate, int bCreate);
     int OpenTable(const char *pszFilename);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {
