@@ -121,7 +121,7 @@ void GDALPDFComposerWriter::WritePages()
         GDALPDFDictionaryRW oDict;
         GDALPDFArrayRW *poKids = new GDALPDFArrayRW();
         oDict.Add("Type", GDALPDFObjectRW::CreateName("Pages"))
-            .Add("Count", (int)m_asPageId.size())
+            .Add("Count", static_cast<int>(m_asPageId.size()))
             .Add("Kids", poKids);
 
         for (size_t i = 0; i < m_asPageId.size(); i++)
@@ -1498,20 +1498,22 @@ bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
                     /* Re-compute (x,y,width,height) subwindow of current raster
                      * from */
                     /* the extent of the clipped block */
-                    nX = (int)((dfIntersectMinX - dfRasterMinX) /
-                                   adfRasterGT[1] +
-                               0.5);
-                    nY = (int)((dfRasterMaxY - dfIntersectMaxY) /
-                                   (-adfRasterGT[5]) +
-                               0.5);
-                    nReqWidth = (int)((dfIntersectMaxX - dfRasterMinX) /
-                                          adfRasterGT[1] +
-                                      0.5) -
-                                nX;
-                    nReqHeight = (int)((dfRasterMaxY - dfIntersectMinY) /
-                                           (-adfRasterGT[5]) +
-                                       0.5) -
-                                 nY;
+                    nX = static_cast<int>((dfIntersectMinX - dfRasterMinX) /
+                                              adfRasterGT[1] +
+                                          0.5);
+                    nY = static_cast<int>((dfRasterMaxY - dfIntersectMaxY) /
+                                              (-adfRasterGT[5]) +
+                                          0.5);
+                    nReqWidth =
+                        static_cast<int>((dfIntersectMaxX - dfRasterMinX) /
+                                             adfRasterGT[1] +
+                                         0.5) -
+                        nX;
+                    nReqHeight =
+                        static_cast<int>((dfRasterMaxY - dfIntersectMinY) /
+                                             (-adfRasterGT[5]) +
+                                         0.5) -
+                        nY;
 
                     if (nReqWidth > 0 && nReqHeight > 0)
                     {

@@ -77,24 +77,26 @@ class VSIPDFFileStream final : public BaseStream
     virtual bool hasGetChars() override;
     virtual int getChars(int nChars, unsigned char *buffer) override;
 
-    VSIPDFFileStream *poParent;
-    GooString *poFilename;
-    VSILFILE *f;
-    vsi_l_offset nStart;
-    bool bLimited;
-    vsi_l_offset nLength;
+    VSIPDFFileStream *poParent = nullptr;
+    GooString *poFilename = nullptr;
+    VSILFILE *f = nullptr;
+    vsi_l_offset nStart = 0;
+    bool bLimited = false;
+    vsi_l_offset nLength = 0;
 
-    vsi_l_offset nCurrentPos;
-    int bHasSavedPos;
-    vsi_l_offset nSavedPos;
+    vsi_l_offset nCurrentPos = VSI_L_OFFSET_MAX;
+    int bHasSavedPos = FALSE;
+    vsi_l_offset nSavedPos = 0;
 
     GByte abyBuffer[BUFFER_SIZE];
-    int nPosInBuffer;
-    int nBufferLength;
+    int nPosInBuffer = -1;
+    int nBufferLength = -1;
 
     bool bFoundLinearizedHint = false;
 
     int FillBuffer();
+
+    CPL_DISALLOW_COPY_ASSIGN(VSIPDFFileStream)
 };
 
 #endif  // PDFIO_H_INCLUDED

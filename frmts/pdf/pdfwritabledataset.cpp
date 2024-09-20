@@ -123,8 +123,8 @@ PDFWritableVectorDataset::ICreateLayer(const char *pszLayerName,
     if (poSRSClone)
         poSRSClone->Release();
 
-    papoLayers =
-        (OGRLayer **)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer *));
+    papoLayers = static_cast<OGRLayer **>(
+        CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer *)));
     papoLayers[nLayers] = poLayer;
     nLayers++;
 

@@ -83,6 +83,8 @@ class OGRPDFLayer final : public OGRMemLayer
     int bGeomTypeSet;
     int bGeomTypeMixed;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRPDFLayer)
+
   public:
     OGRPDFLayer(PDFDataset *poDS, const char *pszName,
                 OGRSpatialReference *poSRS, OGRwkbGeometryType eGeomType);
@@ -105,6 +107,8 @@ class PDFWritableVectorDataset;
 class OGRPDFWritableLayer final : public OGRMemLayer
 {
     PDFWritableVectorDataset *poDS;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRPDFWritableLayer)
 
   public:
     OGRPDFWritableLayer(PDFWritableVectorDataset *poDS, const char *pszName,
@@ -161,13 +165,13 @@ typedef std::map<int, TPdfiumPageStruct *> TMapPdfiumPages;
 /************************************************************************/
 
 // Structure for Mutex on File
-typedef struct
+struct TPdfiumDocumentStruct
 {
-    char *filename;
-    CPDF_Document *doc;
-    TMapPdfiumPages pages;
-    FPDF_FILEACCESS *psFileAccess;
-} TPdfiumDocumentStruct;
+    char *filename = nullptr;
+    CPDF_Document *doc = nullptr;
+    TMapPdfiumPages pages{};
+    FPDF_FILEACCESS *psFileAccess = nullptr;
+};
 
 #endif  // ~ HAVE_PDFIUM
 
@@ -265,6 +269,8 @@ class PDFDataset final : public GDALPamDataset
     void GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands);
     void FindXMP(GDALPDFObject *poObj);
     void ParseInfo(GDALPDFObject *poObj);
+
+    CPL_DISALLOW_COPY_ASSIGN(PDFDataset)
 
 #ifdef HAVE_POPPLER
     std::unique_ptr<Object> m_poCatalogObjectPoppler{};
@@ -535,6 +541,8 @@ class PDFWritableVectorDataset final : public GDALDataset
     OGRLayer **papoLayers;
 
     int bModified;
+
+    CPL_DISALLOW_COPY_ASSIGN(PDFWritableVectorDataset)
 
   public:
     PDFWritableVectorDataset();

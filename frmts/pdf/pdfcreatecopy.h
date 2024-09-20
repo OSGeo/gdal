@@ -304,6 +304,9 @@ class GDALPDFBaseWriter
                              const char *pszSUBJECT, const char *pszTITLE,
                              const char *pszKEYWORDS);
     GDALPDFObjectNum SetXMP(GDALDataset *poSrcDS, const char *pszXMP);
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALPDFBaseWriter)
 };
 
 class GDALPDFUpdateWriter final : public GDALPDFBaseWriter
