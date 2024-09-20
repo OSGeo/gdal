@@ -374,12 +374,14 @@ def test_pdf_ogcbp(poppler_or_pdfium_or_podofo):
         tst = gdaltest.GDALTest(
             "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP"]
         )
+        gdal.ErrorReset()
         tst.testCreateCopy(
             check_minmax=0,
             check_gt=1,
             check_srs=True,
             check_checksum_not_null=pdf_checksum_available(),
         )
+        assert gdal.GetLastErrorMsg() == ""
 
 
 ###############################################################################

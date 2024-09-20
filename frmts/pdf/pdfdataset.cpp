@@ -5951,6 +5951,7 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary *poLGIDict,
                 poRing->addPoint(dfX, dfY);
             }
         }
+        poRing->closeRings();
         m_poNeatLine->addRingDirectly(poRing);
     }
 
