@@ -967,36 +967,41 @@ PROJ options
 
 -  .. config:: CHECK_WITH_INVERT_PROJ
       :since: 1.7.0
+      :default: NO
 
       Used by :source_file:`ogr/ogrct.cpp` and :source_file:`apps/gdalwarp_lib.cpp`.
 
-      This option can be used to control the behavior of gdalwarp when warping global
+      This option can be used to control the behavior of :program:`gdalwarp` when warping global
       datasets or when transforming from/to polar projections, which causes
       coordinate discontinuities. See http://trac.osgeo.org/gdal/ticket/2305.
 
-      The background is that PROJ does not guarantee that converting from src_srs to
-      dst_srs and then from dst_srs to src_srs will yield to the initial coordinates.
+      The background is that PROJ does not guarantee that converting from ``src_srs`` to
+      ``dst_srs`` and then from ``dst_srs`` to ``src_srs`` will yield the initial coordinates.
       This can lead to errors in the computation of the target bounding box of
-      gdalwarp, or to visual artifacts.
+      :program:`gdalwarp`, or to visual artifacts.
 
-      If CHECK_WITH_INVERT_PROJ option is not set, gdalwarp will check that the the
+      If :config:`CHECK_WITH_INVERT_PROJ` option is not set, :program:`gdalwarp` will check that the
       computed coordinates of the edges of the target image are in the validity area
       of the target projection. If they are not, it will retry computing them by
-      setting :config:`CHECK_WITH_INVERT_PROJ=TRUE` that forces ogrct.cpp to check the
-      consistency of each requested projection result with the invert projection.
+      setting :config:`CHECK_WITH_INVERT_PROJ=TRUE` that forces
+      :source_file:`ogr/ogrct.cpp` to check the consistency of each requested
+      projection result with the inverse projection.
 
-      If set to NO, gdalwarp will not attempt to use the invert projection.
+      If set to ``NO``, :program:`gdalwarp` will not attempt to use the inverse projection.
 
 -  .. config:: THRESHOLD
       :since: 1.7.0
+      :default: 0.1 for geographic SRS, 10000 otherwise
 
       Used by :source_file:`ogr/ogrct.cpp`.
 
-      Used in combination with :config:`CHECK_WITH_INVERT_PROJ=TRUE`. Define
-      the acceptable threshold used to check if the roundtrip from src_srs to
-      dst_srs and from dst_srs to srs_srs yield to the initial coordinates. The
-      value must be expressed in the units of the source SRS (typically degrees
-      for a geographic SRS, meters for a projected SRS)
+      Used in combination with :config:`CHECK_WITH_INVERT_PROJ=TRUE`. Defines
+      the acceptable threshold used to check if the round-trip from ``src_srs`` to
+      ``dst_srs`` and from ``dst_srs`` to ``srs_srs`` yields the initial coordinates.
+      The round-trip transformation will be considered successful if the ``x`` and ``y``
+      values are both within :config:`THRESHOLD` of the original values.
+      The value must be expressed in the units of the source SRS (typically degrees
+      for a geographic SRS, meters for a projected SRS).
 
 -  .. config:: OGR_ENABLE_PARTIAL_REPROJECTION
       :since: 1.8.0
