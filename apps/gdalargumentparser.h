@@ -45,7 +45,16 @@
 #pragma warning(disable : 4702)
 #endif
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
+
 #include "argparse/argparse.hpp"
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -156,7 +165,7 @@ class GDALArgumentParser : public ArgumentParser
   private:
     std::map<std::string, ArgumentParser::argument_it>::iterator
     find_argument(const std::string &name);
-    std::vector<std::unique_ptr<GDALArgumentParser>> aoSubparsers;
+    std::vector<std::unique_ptr<GDALArgumentParser>> aoSubparsers{};
     std::string m_osExtraUsageHint{};
 };
 

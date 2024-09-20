@@ -135,7 +135,7 @@ struct GDALInfoOptions
     /*! report metadata for the specified domains. "all" can be used to report
         metadata in all domains.
         */
-    CPLStringList aosExtraMDDomains;
+    CPLStringList aosExtraMDDomains{};
 
     /*! WKT format used for SRS */
     std::string osWKTFormat = "WKT2";

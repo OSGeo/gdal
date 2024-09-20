@@ -116,6 +116,8 @@ struct GDALGridOptions
                                          &l_pOptions);
         pOptions.reset(l_pOptions);
     }
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALGridOptions)
 };
 
 /************************************************************************/
