@@ -3026,9 +3026,9 @@ static int GDALPDFParseStreamContent(const char *pszContent,
                                         INT_MAX &&
                                     dfHeight / dfScaleY * DEFAULT_DPI < INT_MAX)
                                 {
-                                    double dfDPI_X = ROUND_TO_INT_IF_CLOSE(
+                                    double dfDPI_X = ROUND_IF_CLOSE(
                                         dfWidth / dfScaleX * DEFAULT_DPI, 1e-3);
-                                    double dfDPI_Y = ROUND_TO_INT_IF_CLOSE(
+                                    double dfDPI_Y = ROUND_IF_CLOSE(
                                         dfHeight / dfScaleY * DEFAULT_DPI,
                                         1e-3);
                                     // CPLDebug("PDF", "Image %s, width = %.16g,
@@ -3463,8 +3463,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands)
             (poUserUnit->GetType() == PDFObjectType_Int ||
              poUserUnit->GetType() == PDFObjectType_Real))
         {
-            m_dfDPI =
-                ROUND_TO_INT_IF_CLOSE(Get(poUserUnit) * DEFAULT_DPI, 1e-5);
+            m_dfDPI = ROUND_IF_CLOSE(Get(poUserUnit) * DEFAULT_DPI, 1e-5);
             CPLDebug("PDF", "Found UserUnit in Page --> DPI = %.16g", m_dfDPI);
             SetMetadataItem("DPI", CPLSPrintf("%.16g", m_dfDPI));
         }
@@ -5399,13 +5398,11 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                        ? 1e-5
                        : 1e-8;
     poDS->m_adfGeoTransform[0] =
-        ROUND_TO_INT_IF_CLOSE(poDS->m_adfGeoTransform[0], dfEps);
-    poDS->m_adfGeoTransform[1] =
-        ROUND_TO_INT_IF_CLOSE(poDS->m_adfGeoTransform[1]);
+        ROUND_IF_CLOSE(poDS->m_adfGeoTransform[0], dfEps);
+    poDS->m_adfGeoTransform[1] = ROUND_IF_CLOSE(poDS->m_adfGeoTransform[1]);
     poDS->m_adfGeoTransform[3] =
-        ROUND_TO_INT_IF_CLOSE(poDS->m_adfGeoTransform[3], dfEps);
-    poDS->m_adfGeoTransform[5] =
-        ROUND_TO_INT_IF_CLOSE(poDS->m_adfGeoTransform[5]);
+        ROUND_IF_CLOSE(poDS->m_adfGeoTransform[3], dfEps);
+    poDS->m_adfGeoTransform[5] = ROUND_IF_CLOSE(poDS->m_adfGeoTransform[5]);
 
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
@@ -7209,8 +7206,8 @@ int PDFDataset::ParseMeasure(GDALPDFObject *poMeasure, double dfMediaBoxWidth,
             }
         }
 
-        x = ROUND_TO_INT_IF_CLOSE(x);
-        y = ROUND_TO_INT_IF_CLOSE(y);
+        x = ROUND_IF_CLOSE(x);
+        y = ROUND_IF_CLOSE(y);
 
         asGCPS[i].dfGCPX = x;
         asGCPS[i].dfGCPY = y;

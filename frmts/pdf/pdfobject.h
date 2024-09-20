@@ -46,7 +46,7 @@
 #define DEFAULT_DPI (72.0)
 #define USER_UNIT_IN_INCH (1.0 / DEFAULT_DPI)
 
-double ROUND_TO_INT_IF_CLOSE(double x, double eps = 0);
+double ROUND_IF_CLOSE(double x, double eps = 0);
 
 typedef enum
 {

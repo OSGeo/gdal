@@ -40,10 +40,10 @@
 #include "pdfobject.h"
 
 /************************************************************************/
-/*                        ROUND_TO_INT_IF_CLOSE()                       */
+/*                        ROUND_IF_CLOSE()                       */
 /************************************************************************/
 
-double ROUND_TO_INT_IF_CLOSE(double x, double eps)
+double ROUND_IF_CLOSE(double x, double eps)
 {
     if (eps == 0.0)
         eps = fabs(x) < 1 ? 1e-10 : 1e-8;
@@ -297,7 +297,7 @@ void GDALPDFObject::Serialize(CPLString &osStr, bool bEmitRef)
         {
             char szReal[512];
             double dfRealNonRounded = GetReal();
-            double dfReal = ROUND_TO_INT_IF_CLOSE(dfRealNonRounded);
+            double dfReal = ROUND_IF_CLOSE(dfRealNonRounded);
             if (dfReal >=
                     static_cast<double>(std::numeric_limits<GIntBig>::min()) &&
                 dfReal <=
