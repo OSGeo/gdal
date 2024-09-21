@@ -43,8 +43,6 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-constexpr double EPSILON = 1e-8;
-
 /************************************************************************/
 /*                        MakeKMLCoordinate()                           */
 /************************************************************************/
@@ -53,6 +51,8 @@ static void MakeKMLCoordinate(char *pszTarget, size_t nTargetLen, double x,
                               double y, double z, bool b3D)
 
 {
+    constexpr double EPSILON = 1e-8;
+
     if (y < -90 || y > 90)
     {
         if (y > 90 && y < 90 + EPSILON)
