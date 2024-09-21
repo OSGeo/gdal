@@ -546,6 +546,14 @@ jobs:
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
 
+    - name: Re-enable shapefile driver (otherwise lots of python tests would fail)
+      shell: bash -l {0}
+      run: |
+        cmake -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DOGR_ENABLE_DRIVER_SHAPE=ON -DOGR_ENABLE_DRIVER_SHAPE_PLUGIN=ON
+    - name: Build
+      shell: bash -l {0}
+      run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
+
     # Works around https://github.com/actions/runner-images/issues/10055
     - name: Remove conflicting libraries
       shell: bash -l {0}

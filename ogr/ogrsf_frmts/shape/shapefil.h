@@ -419,7 +419,7 @@ extern "C"
     /************************************************************************/
     /*                             DBF Support.                             */
     /************************************************************************/
-    typedef struct
+    typedef struct DBFInfo
     {
         SAHooks sHooks;
 
@@ -467,7 +467,7 @@ extern "C"
         int bRequireNextWriteSeek;
     } DBFInfo;
 
-    typedef DBFInfo *DBFHandle;
+    typedef struct DBFInfo *DBFHandle;
 
     typedef enum
     {

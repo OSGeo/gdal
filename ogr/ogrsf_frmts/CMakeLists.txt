@@ -14,7 +14,7 @@ add_dependencies(ogrsf_frmts generate_gdal_version_h)
 ogr_default_driver(mem "Read/write driver for MEMORY virtual files")
 ogr_default_driver(geojson "GeoJSON/ESRIJSON/TopoJSON driver")
 ogr_default_driver2(mitab TAB "MapInfo TAB and MIF/MID")
-ogr_default_driver(shape "ESRI shape-file")
+ogr_optional_driver(shape "ESRI shape-file")
 
 # ######################################################################################################################
 ogr_optional_driver(kml KML) # when not found EXPAT, it use CPL_MINIXML (ex. android)
