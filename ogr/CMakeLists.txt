@@ -63,6 +63,7 @@ add_library(
   ogr_proj_p.cpp
   ogr_wkb.cpp
   ogrvrtgeometrytypes.cpp
+  ogr2kmlgeometry.cpp
 )
 add_dependencies(ogr generate_gdal_version_h)
 

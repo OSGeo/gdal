@@ -17,7 +17,7 @@ ogr_default_driver2(mitab TAB "MapInfo TAB and MIF/MID")
 ogr_default_driver(shape "ESRI shape-file")
 
 # ######################################################################################################################
-ogr_default_driver(kml KML) # when not found EXPAT, it use CPL_MINIXML (ex. android)
+ogr_optional_driver(kml KML) # when not found EXPAT, it use CPL_MINIXML (ex. android)
 ogr_optional_driver(vrt "VRT - Virtual Format")
 
 # Caution: if modifying AVC declaration here, also modify it in gdal.cmake
