@@ -53,6 +53,7 @@ def gdal_footprint_path():
 ###############################################################################
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_footprint_basic(gdal_footprint_path, tmp_path):
 
     footprint_json = str(tmp_path / "out_footprint.json")

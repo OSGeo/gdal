@@ -2182,6 +2182,7 @@ def test_ogr2ogr_lib_reprojection_curve_geometries_forced_geom_type(geometryType
 
 
 @pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("GeoJSON")
 def test_ogr2ogr_lib_reprojection_curve_geometries_output_does_not_support_curve(
     tmp_vsimem,
 ):

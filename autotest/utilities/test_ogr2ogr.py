@@ -2082,6 +2082,7 @@ def ogr2ogr_62_json(tmp_path):
     return fname
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogr2ogr_62(ogr2ogr_path, ogr2ogr_62_json, tmp_path):
 
     dst_json = str(tmp_path / "test_ogr2ogr_62.json")
@@ -2097,6 +2098,7 @@ def test_ogr2ogr_62(ogr2ogr_path, ogr2ogr_62_json, tmp_path):
     assert "bar" in data and "baz" in data
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogr2ogr_62bis(ogr2ogr_path, ogr2ogr_62_json, tmp_path):
 
     dst_json = str(tmp_path / "test_ogr2ogr_62bis.json")

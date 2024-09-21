@@ -795,6 +795,7 @@ def test_gdalwarp_lib_45():
 
 
 @pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_46(tmp_vsimem):
 
     ds = gdal.Warp(
@@ -891,6 +892,7 @@ def test_gdalwarp_lib_46(tmp_vsimem):
 # Test -crop_to_cutline -tr X Y -wo CUTLINE_ALL_TOUCHED=YES (fixes for #1360)
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_cutline_all_touched_single_pixel(tmp_vsimem):
 
     cutlineDSName = (
@@ -941,6 +943,7 @@ def test_gdalwarp_lib_cutline_all_touched_single_pixel(tmp_vsimem):
 
 
 @pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_crop_to_cutline_slightly_shifted_wrt_pixel_boundaries(tmp_vsimem):
 
     cutlineDSName = (
@@ -1505,6 +1508,7 @@ def test_gdalwarp_lib_dstnodata(dstNodata):
 # Test automatic densification of cutline (#6375)
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_128(tmp_vsimem):
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1177, 4719)
@@ -1600,6 +1604,7 @@ def test_gdalwarp_lib_128(tmp_vsimem):
 
 
 @pytest.mark.require_geos
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_129(tmp_vsimem):
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1000, 2000)
@@ -3058,6 +3063,7 @@ def test_gdalwarp_lib_scale_offset():
 # Test cutline with zero-width sliver
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_cutline_zero_width_sliver(tmp_vsimem):
 
     # Geometry valid in EPSG:4326, but that has a zero-width sliver
@@ -3079,6 +3085,7 @@ def test_gdalwarp_lib_cutline_zero_width_sliver(tmp_vsimem):
 # Test cutline with zero-width sliver
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_cutline_zero_width_sliver_remove_empty_polygon(tmp_vsimem):
 
     geojson = {
@@ -3120,6 +3127,7 @@ def test_gdalwarp_lib_cutline_zero_width_sliver_remove_empty_polygon(tmp_vsimem)
 # Test cutline with zero-width sliver
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_cutline_zero_width_sliver_remove_empty_inner_ring(tmp_vsimem):
 
     geojson = {
@@ -3913,6 +3921,7 @@ def test_gdalwarp_lib_working_data_type_with_source_dataset_of_different_types()
 
 
 @pytest.mark.require_geos
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_cutline_crossing_antimeridian_in_EPSG_32601_and_raster_in_EPSG_4326(
     tmp_vsimem,
 ):

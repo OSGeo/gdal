@@ -799,4 +799,10 @@ void RegisterOGRGeoJSON()
     poDriver->pfnUnloadDriver = OGRGeoJSONDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
+
+#ifdef BUILT_AS_PLUGIN
+    RegisterOGRTopoJSON();
+    RegisterOGRESRIJSON();
+    RegisterOGRGeoJSONSeq();
+#endif
 }

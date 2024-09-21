@@ -34,6 +34,8 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("GeoJSONSeq")
+
 
 def _ogr_geojsonseq_create(filename, lco, expect_rs):
 

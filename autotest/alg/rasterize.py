@@ -853,6 +853,9 @@ def test_rasterize_merge_alg_add_polygon(wkt):
 
 
 ###############################################################################
+
+
+@pytest.mark.require_driver("GeoJSON")
 def test_rasterize_bugfix_gh6981():
 
     bad_geometry = {

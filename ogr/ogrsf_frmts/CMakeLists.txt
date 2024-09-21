@@ -12,7 +12,7 @@ add_dependencies(ogrsf_frmts generate_gdal_version_h)
 
 # Obligatory for building GDAL; always compile in.
 ogr_default_driver(mem "Read/write driver for MEMORY virtual files")
-ogr_default_driver(geojson "GeoJSON/ESRIJSON/TopoJSON driver")
+ogr_optional_driver(geojson "GeoJSON/ESRIJSON/TopoJSON driver")
 ogr_default_driver2(mitab TAB "MapInfo TAB and MIF/MID")
 ogr_optional_driver(shape "ESRI shape-file")
 
@@ -46,13 +46,16 @@ ogr_optional_driver(jml JML)
 ogr_optional_driver(vdv "VDV-451/VDV-452/INTREST Data Format")
 ogr_optional_driver(flatgeobuf FlatGeobuf)
 ogr_optional_driver(mapml MapML)
-ogr_optional_driver(jsonfg JSONFG)
+
 if( NOT WORDS_BIGENDIAN )
     ogr_optional_driver(miramon "MiraMonVector")
 endif()
 
 # ######################################################################################################################
 #
+if (NOT OGR_ENABLE_DRIVER_GEOJSON_PLUGIN)
+    ogr_dependent_driver(jsonfg JSONFG "OGR_ENABLE_DRIVER_GEOJSON")
+endif()
 
 ogr_dependent_driver(sdts SDTS "GDAL_ENABLE_DRIVER_SDTS")
 
