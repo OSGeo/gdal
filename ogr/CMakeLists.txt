@@ -64,6 +64,10 @@ add_library(
   ogr_wkb.cpp
   ogrvrtgeometrytypes.cpp
   ogr2kmlgeometry.cpp
+  ogrlibjsonutils.cpp
+  ogrgeojsongeometry.cpp
+  ogrgeojsonwriter.cpp
+  ogresrijsongeometry.cpp
 )
 add_dependencies(ogr generate_gdal_version_h)
 
@@ -87,7 +91,7 @@ set_property(
 include(GdalStandardIncludes)
 gdal_standard_includes(ogr)
 target_compile_options(ogr PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
-target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
+target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 set_property(TARGET ogr PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogr>)
 

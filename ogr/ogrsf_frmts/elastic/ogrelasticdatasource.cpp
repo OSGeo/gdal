@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 #include "cpl_http.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 #include "ogr_swq.h"
 
 /************************************************************************/

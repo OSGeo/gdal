@@ -32,8 +32,10 @@
 #include "cpl_vsi_error.h"
 
 #include "ogr_geojson.h"
+#include "ogrlibjsonutils.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonwriter.h"
+#include "ogrgeojsongeometry.h"
 
 #include <algorithm>
 #include <memory>

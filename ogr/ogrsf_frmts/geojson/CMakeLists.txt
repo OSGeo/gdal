@@ -6,7 +6,6 @@ add_gdal_driver(
           ogrgeojsonreader.cpp
           ogrgeojsonutils.cpp
           ogrgeojsonwritelayer.cpp
-          ogrgeojsonwriter.cpp
           ogrgeojsondriver.cpp
           ogrgeojsonseqdriver.cpp
           ogresrijsonreader.cpp

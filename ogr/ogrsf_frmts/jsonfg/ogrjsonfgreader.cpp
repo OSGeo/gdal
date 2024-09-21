@@ -30,6 +30,8 @@
 
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonutils.h"
+#include "ogrlibjsonutils.h"
+#include "ogrgeojsongeometry.h"
 #include "ogr_geojson.h"
 
 #include "cpl_vsi_virtual.h"

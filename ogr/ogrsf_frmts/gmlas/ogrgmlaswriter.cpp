@@ -30,7 +30,7 @@
 
 #include "ogr_gmlas.h"
 #include "ogr_p.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 #include "cpl_time.h"
 
 #include <algorithm>

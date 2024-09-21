@@ -27,7 +27,7 @@
  ****************************************************************************/
 
 #include "ogr_elastic.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 #include "cpl_json.h"
 
 #include <algorithm>

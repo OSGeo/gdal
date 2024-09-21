@@ -44,7 +44,7 @@
 #include "ogrsqlitebase.h"
 
 #include "zlib.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 
 #include <math.h>
 #include <algorithm>

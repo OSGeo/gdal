@@ -29,8 +29,7 @@
 #include "gdal_priv.h"
 #include "cpl_http.h"
 #include "cpl_conv.h"
-#include "ogrgeojsonreader.h"
-#include "ogrgeojsonwriter.h"
+#include "ogrlibjsonutils.h"
 #include "eeda.h"
 
 #include <algorithm>

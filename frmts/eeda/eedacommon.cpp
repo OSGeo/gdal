@@ -28,7 +28,7 @@
 
 #include "cpl_http.h"
 #include "eeda.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 
 #include <stdlib.h>
 #include <limits>

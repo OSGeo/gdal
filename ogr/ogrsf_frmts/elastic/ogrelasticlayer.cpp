@@ -34,9 +34,9 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogr_swq.h"
-#include "../geojson/ogrgeojsonwriter.h"
-#include "../geojson/ogrgeojsonreader.h"
-#include "../geojson/ogrgeojsonutils.h"
+#include "ogrgeojsonwriter.h"
+#include "ogrlibjsonutils.h"
+#include "ogrgeojsongeometry.h"
 #include "ogr_geo_utils.h"
 
 #include <cstdlib>

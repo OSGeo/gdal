@@ -29,7 +29,7 @@
 #include "ogr_amigocloud.h"
 #include "ogr_p.h"
 #include "ogr_pgdump.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 #include <sstream>
 #include <iomanip>
 

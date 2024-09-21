@@ -28,7 +28,7 @@
 
 #include "ogr_amigocloud.h"
 #include "ogr_pgdump.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 #include <sstream>
 
 CPLString OGRAMIGOCLOUDGetOptionValue(const char *pszFilename,

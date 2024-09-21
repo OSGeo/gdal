@@ -29,7 +29,9 @@
 #include "ogrjsoncollectionstreamingparser.h"
 
 #include "cpl_string.h"
-#include "ogrgeojsonreader.h"  // CPL_json_object_object_get
+#include "ogrlibjsonutils.h"  // CPL_json_object_object_get
+
+#include "ogr_feature.h"
 
 #define JSON_C_VER_013 (13 << 8)
 

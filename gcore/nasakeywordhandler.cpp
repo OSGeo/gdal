@@ -53,7 +53,7 @@
  ****************************************************************************/
 
 #include "nasakeywordhandler.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 #include <vector>
 
 //! @cond Doxygen_Suppress

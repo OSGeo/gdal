@@ -29,7 +29,7 @@
 
 #include "cpl_port.h"
 #include "cpl_json.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 #include "cpl_string.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"

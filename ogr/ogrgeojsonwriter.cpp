@@ -27,12 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+/*! @cond Doxygen_Suppress */
+
 #define JSON_C_VER_013 (13 << 8)
 
 #include "ogrgeojsonwriter.h"
-#include "ogrgeojsonutils.h"
-#include "ogr_geojson.h"
-#include "ogrgeojsonreader.h"
+#include "ogr_geometry.h"
+#include "ogrgeojsongeometry.h"
+#include "ogrlibjsonutils.h"
+#include "ogr_feature.h"
+#include "ogr_p.h"
 #include <json.h>  // JSON-C
 
 #if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
@@ -41,7 +45,6 @@
 
 #include <printbuf.h>
 #include "ogr_api.h"
-#include "ogr_p.h"
 
 #include <algorithm>
 #include <cmath>
@@ -51,6 +54,46 @@
 static json_object *
 json_object_new_float_with_significant_figures(float fVal,
                                                int nSignificantFigures);
+
+static json_object *
+OGRGeoJSONWritePoint(const OGRPoint *poPoint,
+                     const OGRGeoJSONWriteOptions &oOptions);
+
+static json_object *
+OGRGeoJSONWriteLineString(const OGRLineString *poLine,
+                          const OGRGeoJSONWriteOptions &oOptions);
+
+static json_object *
+OGRGeoJSONWriteMultiPoint(const OGRMultiPoint *poGeometry,
+                          const OGRGeoJSONWriteOptions &oOptions);
+
+static json_object *
+OGRGeoJSONWriteMultiLineString(const OGRMultiLineString *poGeometry,
+                               const OGRGeoJSONWriteOptions &oOptions);
+
+static json_object *
+OGRGeoJSONWriteMultiPolygon(const OGRMultiPolygon *poGeometry,
+                            const OGRGeoJSONWriteOptions &oOptions);
+
+static json_object *
+OGRGeoJSONWriteGeometryCollection(const OGRGeometryCollection *poGeometry,
+                                  const OGRGeoJSONWriteOptions &oOptions);
+
+static json_object *
+OGRGeoJSONWriteCoords(double const &fX, double const &fY,
+                      const OGRGeoJSONWriteOptions &oOptions);
+
+static json_object *
+OGRGeoJSONWriteCoords(double const &fX, double const &fY, double const &fZ,
+                      const OGRGeoJSONWriteOptions &oOptions);
+
+static json_object *
+OGRGeoJSONWriteLineCoords(const OGRLineString *poLine,
+                          const OGRGeoJSONWriteOptions &oOptions);
+
+static json_object *
+OGRGeoJSONWriteRingCoords(const OGRLinearRing *poLine, bool bIsExteriorRing,
+                          const OGRGeoJSONWriteOptions &oOptions);
 
 /************************************************************************/
 /*                         SetRFC7946Settings()                         */
@@ -928,8 +971,8 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
         else if (OFTInteger64 == eType)
         {
             if (eSubType == OFSTBoolean)
-                poObjProp = json_object_new_boolean(
-                    (json_bool)poFeature->GetFieldAsInteger64(nField));
+                poObjProp = json_object_new_boolean(static_cast<json_bool>(
+                    poFeature->GetFieldAsInteger64(nField)));
             else
                 poObjProp = json_object_new_int64(
                     poFeature->GetFieldAsInteger64(nField));
@@ -1502,6 +1545,67 @@ json_object *OGRGeoJSONWriteRingCoords(const OGRLinearRing *poLine,
 }
 
 /************************************************************************/
+/*             OGR_json_float_with_significant_figures_to_string()      */
+/************************************************************************/
+
+static int OGR_json_float_with_significant_figures_to_string(
+    struct json_object *jso, struct printbuf *pb, int /* level */,
+    int /* flags */)
+{
+    char szBuffer[75] = {};
+    int nSize = 0;
+    const float fVal = static_cast<float>(json_object_get_double(jso));
+    if (std::isnan(fVal))
+        nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "NaN");
+    else if (std::isinf(fVal))
+    {
+        if (fVal > 0)
+            nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "Infinity");
+        else
+            nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "-Infinity");
+    }
+    else
+    {
+        const void *userData =
+#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
+            jso->_userdata;
+#else
+            json_object_get_userdata(jso);
+#endif
+        const uintptr_t nSignificantFigures =
+            reinterpret_cast<uintptr_t>(userData);
+        const bool bSignificantFiguresIsNegative =
+            (nSignificantFigures >> (8 * sizeof(nSignificantFigures) - 1)) != 0;
+        const int nInitialSignificantFigures =
+            bSignificantFiguresIsNegative
+                ? 8
+                : static_cast<int>(nSignificantFigures);
+        nSize = OGRFormatFloat(szBuffer, sizeof(szBuffer), fVal,
+                               nInitialSignificantFigures, 'g');
+    }
+
+    return printbuf_memappend(pb, szBuffer, nSize);
+}
+
+/************************************************************************/
+/*              json_object_new_float_with_significant_figures()        */
+/************************************************************************/
+
+json_object *
+json_object_new_float_with_significant_figures(float fVal,
+                                               int nSignificantFigures)
+{
+    json_object *jso = json_object_new_double(fVal);
+    json_object_set_serializer(
+        jso, OGR_json_float_with_significant_figures_to_string,
+        reinterpret_cast<void *>(static_cast<uintptr_t>(nSignificantFigures)),
+        nullptr);
+    return jso;
+}
+
+/*! @endcond */
+
+/************************************************************************/
 /*                           OGR_G_ExportToJson                         */
 /************************************************************************/
 
@@ -1608,210 +1712,4 @@ char *OGR_G_ExportToJsonEx(OGRGeometryH hGeometry, char **papszOptions)
 
     // Translation failed.
     return nullptr;
-}
-
-/************************************************************************/
-/*               OGR_json_double_with_precision_to_string()             */
-/************************************************************************/
-
-static int OGR_json_double_with_precision_to_string(struct json_object *jso,
-                                                    struct printbuf *pb,
-                                                    int /* level */,
-                                                    int /* flags */)
-{
-    const void *userData =
-#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
-        jso->_userdata;
-#else
-        json_object_get_userdata(jso);
-#endif
-    // Precision is stored as a uintptr_t content casted to void*
-    const uintptr_t nPrecision = reinterpret_cast<uintptr_t>(userData);
-    char szBuffer[75] = {};
-    const double dfVal = json_object_get_double(jso);
-    if (fabs(dfVal) > 1e50 && !std::isinf(dfVal))
-    {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.17g", dfVal);
-    }
-    else
-    {
-        const bool bPrecisionIsNegative =
-            (nPrecision >> (8 * sizeof(nPrecision) - 1)) != 0;
-        OGRFormatDouble(szBuffer, sizeof(szBuffer), dfVal, '.',
-                        bPrecisionIsNegative ? 15
-                                             : static_cast<int>(nPrecision));
-    }
-    return printbuf_memappend(pb, szBuffer, static_cast<int>(strlen(szBuffer)));
-}
-
-/************************************************************************/
-/*                   json_object_new_double_with_precision()            */
-/************************************************************************/
-
-json_object *json_object_new_double_with_precision(double dfVal,
-                                                   int nCoordPrecision)
-{
-    json_object *jso = json_object_new_double(dfVal);
-    json_object_set_serializer(jso, OGR_json_double_with_precision_to_string,
-                               (void *)(uintptr_t)nCoordPrecision, nullptr);
-    return jso;
-}
-
-/************************************************************************/
-/*             OGR_json_double_with_significant_figures_to_string()     */
-/************************************************************************/
-
-static int OGR_json_double_with_significant_figures_to_string(
-    struct json_object *jso, struct printbuf *pb, int /* level */,
-    int /* flags */)
-{
-    char szBuffer[75] = {};
-    int nSize = 0;
-    const double dfVal = json_object_get_double(jso);
-    if (std::isnan(dfVal))
-        nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "NaN");
-    else if (std::isinf(dfVal))
-    {
-        if (dfVal > 0)
-            nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "Infinity");
-        else
-            nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "-Infinity");
-    }
-    else
-    {
-        char szFormatting[32] = {};
-        const void *userData =
-#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
-            jso->_userdata;
-#else
-            json_object_get_userdata(jso);
-#endif
-        const uintptr_t nSignificantFigures =
-            reinterpret_cast<uintptr_t>(userData);
-        const bool bSignificantFiguresIsNegative =
-            (nSignificantFigures >> (8 * sizeof(nSignificantFigures) - 1)) != 0;
-        const int nInitialSignificantFigures =
-            bSignificantFiguresIsNegative
-                ? 17
-                : static_cast<int>(nSignificantFigures);
-        CPLsnprintf(szFormatting, sizeof(szFormatting), "%%.%dg",
-                    nInitialSignificantFigures);
-        nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), szFormatting, dfVal);
-        const char *pszDot = strchr(szBuffer, '.');
-
-        // Try to avoid .xxxx999999y or .xxxx000000y rounding issues by
-        // decreasing a bit precision.
-        if (nInitialSignificantFigures > 10 && pszDot != nullptr &&
-            (strstr(pszDot, "999999") != nullptr ||
-             strstr(pszDot, "000000") != nullptr))
-        {
-            bool bOK = false;
-            for (int i = 1; i <= 3; i++)
-            {
-                CPLsnprintf(szFormatting, sizeof(szFormatting), "%%.%dg",
-                            nInitialSignificantFigures - i);
-                nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), szFormatting,
-                                    dfVal);
-                pszDot = strchr(szBuffer, '.');
-                if (pszDot != nullptr && strstr(pszDot, "999999") == nullptr &&
-                    strstr(pszDot, "000000") == nullptr)
-                {
-                    bOK = true;
-                    break;
-                }
-            }
-            if (!bOK)
-            {
-                CPLsnprintf(szFormatting, sizeof(szFormatting), "%%.%dg",
-                            nInitialSignificantFigures);
-                nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), szFormatting,
-                                    dfVal);
-            }
-        }
-
-        if (nSize + 2 < static_cast<int>(sizeof(szBuffer)) &&
-            strchr(szBuffer, '.') == nullptr &&
-            strchr(szBuffer, 'e') == nullptr)
-        {
-            nSize +=
-                CPLsnprintf(szBuffer + nSize, sizeof(szBuffer) - nSize, ".0");
-        }
-    }
-
-    return printbuf_memappend(pb, szBuffer, nSize);
-}
-
-/************************************************************************/
-/*              json_object_new_double_with_significant_figures()       */
-/************************************************************************/
-
-json_object *
-json_object_new_double_with_significant_figures(double dfVal,
-                                                int nSignificantFigures)
-{
-    json_object *jso = json_object_new_double(dfVal);
-    json_object_set_serializer(
-        jso, OGR_json_double_with_significant_figures_to_string,
-        reinterpret_cast<void *>(static_cast<uintptr_t>(nSignificantFigures)),
-        nullptr);
-    return jso;
-}
-
-/************************************************************************/
-/*             OGR_json_float_with_significant_figures_to_string()      */
-/************************************************************************/
-
-static int OGR_json_float_with_significant_figures_to_string(
-    struct json_object *jso, struct printbuf *pb, int /* level */,
-    int /* flags */)
-{
-    char szBuffer[75] = {};
-    int nSize = 0;
-    const float fVal = static_cast<float>(json_object_get_double(jso));
-    if (std::isnan(fVal))
-        nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "NaN");
-    else if (std::isinf(fVal))
-    {
-        if (fVal > 0)
-            nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "Infinity");
-        else
-            nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "-Infinity");
-    }
-    else
-    {
-        const void *userData =
-#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
-            jso->_userdata;
-#else
-            json_object_get_userdata(jso);
-#endif
-        const uintptr_t nSignificantFigures =
-            reinterpret_cast<uintptr_t>(userData);
-        const bool bSignificantFiguresIsNegative =
-            (nSignificantFigures >> (8 * sizeof(nSignificantFigures) - 1)) != 0;
-        const int nInitialSignificantFigures =
-            bSignificantFiguresIsNegative
-                ? 8
-                : static_cast<int>(nSignificantFigures);
-        nSize = OGRFormatFloat(szBuffer, sizeof(szBuffer), fVal,
-                               nInitialSignificantFigures, 'g');
-    }
-
-    return printbuf_memappend(pb, szBuffer, nSize);
-}
-
-/************************************************************************/
-/*              json_object_new_float_with_significant_figures()        */
-/************************************************************************/
-
-json_object *
-json_object_new_float_with_significant_figures(float fVal,
-                                               int nSignificantFigures)
-{
-    json_object *jso = json_object_new_double(fVal);
-    json_object_set_serializer(
-        jso, OGR_json_float_with_significant_figures_to_string,
-        reinterpret_cast<void *>(static_cast<uintptr_t>(nSignificantFigures)),
-        nullptr);
-    return jso;
 }

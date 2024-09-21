@@ -62,33 +62,6 @@ class OGRGeoJSONLayer;
 class OGRSpatialReference;
 
 /************************************************************************/
-/*                           GeoJSONObject                              */
-/************************************************************************/
-
-struct GeoJSONObject
-{
-    enum Type
-    {
-        eUnknown = wkbUnknown,  // non-GeoJSON properties
-        ePoint = wkbPoint,
-        eLineString = wkbLineString,
-        ePolygon = wkbPolygon,
-        eMultiPoint = wkbMultiPoint,
-        eMultiLineString = wkbMultiLineString,
-        eMultiPolygon = wkbMultiPolygon,
-        eGeometryCollection = wkbGeometryCollection,
-        eFeature,
-        eFeatureCollection
-    };
-
-    enum CoordinateDimension
-    {
-        eMinCoordinateDimension = 2,
-        eMaxCoordinateDimension = 3
-    };
-};
-
-/************************************************************************/
 /*                        OGRGeoJSONBaseReader                          */
 /************************************************************************/
 
@@ -258,49 +231,12 @@ void OGRGeoJSONReaderAddOrUpdateField(
 /*                 GeoJSON Parsing Utilities                            */
 /************************************************************************/
 
-lh_entry *OGRGeoJSONFindMemberEntryByName(json_object *poObj,
-                                          const char *pszName);
-json_object *OGRGeoJSONFindMemberByName(json_object *poObj,
-                                        const char *pszName);
-GeoJSONObject::Type OGRGeoJSONGetType(json_object *poObj);
-
-json_object CPL_DLL *json_ex_get_object_by_path(json_object *poObj,
-                                                const char *pszPath);
-
-json_object CPL_DLL *CPL_json_object_object_get(struct json_object *obj,
-                                                const char *key);
-
-bool CPL_DLL OGRJSonParse(const char *pszText, json_object **ppoObj,
-                          bool bVerboseError = true);
-
 bool OGRGeoJSONUpdateLayerGeomType(bool &bFirstGeom,
                                    OGRwkbGeometryType eGeomType,
                                    OGRwkbGeometryType &eLayerGeomType);
 
 // Get the 3D extent from the geometry coordinates of a feature
 bool OGRGeoJSONGetExtent3D(json_object *poObj, OGREnvelope3D *poEnvelope);
-
-/************************************************************************/
-/*                 GeoJSON Geometry Translators                         */
-/************************************************************************/
-
-OGRwkbGeometryType OGRGeoJSONGetOGRGeometryType(json_object *poObj);
-
-bool OGRGeoJSONReadRawPoint(json_object *poObj, OGRPoint &point);
-OGRGeometry CPL_DLL *
-OGRGeoJSONReadGeometry(json_object *poObj,
-                       OGRSpatialReference *poParentSRS = nullptr);
-OGRPoint *OGRGeoJSONReadPoint(json_object *poObj);
-OGRMultiPoint *OGRGeoJSONReadMultiPoint(json_object *poObj);
-OGRLineString *OGRGeoJSONReadLineString(json_object *poObj, bool bRaw = false);
-OGRMultiLineString *OGRGeoJSONReadMultiLineString(json_object *poObj);
-OGRLinearRing *OGRGeoJSONReadLinearRing(json_object *poObj);
-OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw = false);
-OGRMultiPolygon *OGRGeoJSONReadMultiPolygon(json_object *poObj);
-OGRGeometryCollection *
-OGRGeoJSONReadGeometryCollection(json_object *poObj,
-                                 OGRSpatialReference *poSRS = nullptr);
-OGRSpatialReference *OGRGeoJSONReadSpatialReference(json_object *poObj);
 
 /************************************************************************/
 /*                          OGRESRIJSONReader                           */
@@ -340,14 +276,6 @@ class OGRESRIJSONReader
     OGRFeature *ReadFeature(json_object *poObj);
     OGRGeoJSONLayer *ReadFeatureCollection(json_object *poObj);
 };
-
-OGRGeometry *OGRESRIJSONReadGeometry(json_object *poObj);
-OGRSpatialReference *OGRESRIJSONReadSpatialReference(json_object *poObj);
-OGRwkbGeometryType OGRESRIJSONGetGeometryType(json_object *poObj);
-OGRPoint *OGRESRIJSONReadPoint(json_object *poObj);
-OGRGeometry *OGRESRIJSONReadLineString(json_object *poObj);
-OGRGeometry *OGRESRIJSONReadPolygon(json_object *poObj);
-OGRMultiPoint *OGRESRIJSONReadMultiPoint(json_object *poObj);
 
 /************************************************************************/
 /*                          OGRTopoJSONReader                           */
