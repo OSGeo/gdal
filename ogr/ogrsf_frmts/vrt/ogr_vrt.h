@@ -310,7 +310,4 @@ class OGRVRTDataSource final : public OGRDataSource
     bool IsInForbiddenNames(const char *pszOtherDSName) const;
 };
 
-OGRwkbGeometryType OGRVRTGetGeometryType(const char *pszGType, int *pbError);
-CPLString CPL_DLL OGRVRTGetSerializedGeometryType(OGRwkbGeometryType eGeomType);
-
 #endif  // ndef OGR_VRT_H_INCLUDED

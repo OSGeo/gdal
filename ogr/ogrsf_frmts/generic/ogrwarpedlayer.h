@@ -39,7 +39,7 @@
 /*                           OGRWarpedLayer                             */
 /************************************************************************/
 
-class OGRWarpedLayer : public OGRLayerDecorator
+class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRWarpedLayer)
 

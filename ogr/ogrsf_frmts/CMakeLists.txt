@@ -18,7 +18,7 @@ ogr_default_driver(shape "ESRI shape-file")
 
 # ######################################################################################################################
 ogr_default_driver(kml KML) # when not found EXPAT, it use CPL_MINIXML (ex. android)
-ogr_default_driver(vrt "VRT - Virtual Format")
+ogr_optional_driver(vrt "VRT - Virtual Format")
 
 # Caution: if modifying AVC declaration here, also modify it in gdal.cmake
 ogr_optional_driver(avc AVC)

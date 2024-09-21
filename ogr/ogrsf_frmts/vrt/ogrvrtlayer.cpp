@@ -52,8 +52,8 @@
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 #include "ogrpgeogeometry.h"
-#include "ogrsf_frmts/ogrsf_frmts.h"
-#include "ogrsf_frmts/vrt/ogr_vrt.h"
+#include "ogrsf_frmts.h"
+#include "ogrvrtgeometrytypes.h"
 
 #define UNSUPPORTED_OP_READ_ONLY                                               \
     "%s : unsupported operation on a read-only datasource."

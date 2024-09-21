@@ -1285,6 +1285,7 @@ def test_ogr_sql_hstore_get_value_valid(data_ds, sql, expected):
 # Test 64 bit GetFeatureCount()
 
 
+@pytest.mark.require_driver("OGR_VRT")
 def test_ogr_sql_45():
 
     ds = ogr.Open(

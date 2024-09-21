@@ -61,7 +61,9 @@ add_library(
   ogr_xerces.cpp
   ogr_geo_utils.cpp
   ogr_proj_p.cpp
-  ogr_wkb.cpp)
+  ogr_wkb.cpp
+  ogrvrtgeometrytypes.cpp
+)
 add_dependencies(ogr generate_gdal_version_h)
 
 set(GDAL_DATA_FILES

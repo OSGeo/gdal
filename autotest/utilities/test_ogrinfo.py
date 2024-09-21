@@ -521,6 +521,7 @@ OGRFeature(test_ogrinfo_23):2
 # Test metadata
 
 
+@pytest.mark.require_driver("OGR_VRT")
 def test_ogrinfo_24(ogrinfo_path, tmp_path):
 
     vrt_fname = str(tmp_path / "test_ogrinfo_24.vrt")
