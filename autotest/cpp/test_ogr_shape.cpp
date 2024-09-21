@@ -63,6 +63,8 @@ struct test_ogr_shape : public ::testing::Test
 
     void TearDown() override
     {
+        if (!drv_)
+            return;
         OGRDataSourceH ds =
             OGR_Dr_CreateDataSource(drv_, data_tmp_.c_str(), nullptr);
         if (ds == nullptr)
@@ -545,7 +547,7 @@ TEST_F(test_ogr_shape, spatial_filtering)
     OGR_DS_Destroy(ds);
 }
 
-TEST(test_ogr_shape_gdal, create)
+TEST_F(test_ogr_shape, create_gdal)
 {
     GDALDriver *shpDriver =
         GetGDALDriverManager()->GetDriverByName("ESRI Shapefile");
