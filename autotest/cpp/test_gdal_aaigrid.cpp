@@ -219,6 +219,11 @@ TEST_F(test_gdal_aaigrid, nodata)
 // Create simple copy and check
 TEST_F(test_gdal_aaigrid, copy)
 {
+    if (!GDALGetDriverByName("GTiff"))
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
+
     // Index of test file being tested
     const std::size_t fileIdx = 0;
 

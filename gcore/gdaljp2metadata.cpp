@@ -52,7 +52,9 @@
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "gdaljp2metadatagenerator.h"
+#ifdef HAVE_TIFF
 #include "gt_wkt_srs_for_gdal.h"
+#endif
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_geometry.h"
@@ -580,6 +582,7 @@ int GDALJP2Metadata::ReadBoxes(VSILFILE *fpVSIL)
 int GDALJP2Metadata::ParseJP2GeoTIFF()
 
 {
+#ifdef HAVE_TIFF
     if (!CPLTestBool(CPLGetConfigOption("GDAL_USE_GEOJP2", "TRUE")))
         return FALSE;
 
@@ -691,6 +694,9 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
     }
 
     return iBestIndex >= 0;
+#else
+    return false;
+#endif
 }
 
 /************************************************************************/
@@ -1223,6 +1229,7 @@ void GDALJP2Metadata::SetRPCMD(char **papszRPCMDIn)
 GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
 
 {
+#ifdef HAVE_TIFF
     /* -------------------------------------------------------------------- */
     /*      Prepare the memory buffer containing the degenerate GeoTIFF     */
     /*      file.                                                           */
@@ -1248,6 +1255,9 @@ GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
     CPLFree(pabyGTBuf);
 
     return poBox;
+#else
+    return nullptr;
+#endif
 }
 
 /************************************************************************/

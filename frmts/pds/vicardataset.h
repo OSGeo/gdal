@@ -102,9 +102,11 @@ class VICARDataset final : public RawDataset
                                         char **papszOptions);
 
     void ReadProjectionFromMapGroup();
-    void ReadProjectionFromGeoTIFFGroup();
     void BuildLabelPropertyMap(CPLJSONObject &oLabel);
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
+    void ReadProjectionFromGeoTIFFGroup();
     void BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel);
+#endif
 
     CPLErr Close() override;
 

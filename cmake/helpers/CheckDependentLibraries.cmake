@@ -147,7 +147,7 @@ set_package_properties(
   URL "https://libtiff.gitlab.io/libtiff/"
   DESCRIPTION "Support for the Tag Image File Format (TIFF)."
   TYPE RECOMMENDED)
-gdal_internal_library(TIFF REQUIRED)
+gdal_internal_library(TIFF)
 
 if (DEFINED ENV{CONDA_PREFIX} AND UNIX)
     # Currently on Unix, the Zstd cmake config file is buggy. It declares a
