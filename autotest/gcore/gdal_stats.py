@@ -286,6 +286,7 @@ def stats_nodata_inf_progress_cbk(value, string, extra):
     extra[0] = value
 
 
+@pytest.mark.require_driver("HFA")
 def test_stats_nodata_inf():
 
     ds = gdal.GetDriverByName("HFA").Create(

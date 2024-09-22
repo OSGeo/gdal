@@ -122,6 +122,10 @@ if (NOT GDAL_ENABLE_DRIVER_DERIVED)
   target_compile_definitions(gcore PRIVATE -DWITHOUT_DERIVED)
 endif ()
 
+if (NOT GDAL_ENABLE_DRIVER_HFA OR GDAL_ENABLE_DRIVER_HFA_PLUGIN)
+  target_compile_definitions(gcore PRIVATE -DNO_HFA_SUPPORT)
+endif()
+
 add_subdirectory(mdreader)
 
 # External libs now

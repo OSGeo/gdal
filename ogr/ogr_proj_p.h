@@ -39,7 +39,7 @@
 
 /*! @cond Doxygen_Suppress */
 
-PJ_CONTEXT *OSRGetProjTLSContext();
+PJ_CONTEXT CPL_DLL *OSRGetProjTLSContext();
 void OSRCleanupTLSContext();
 
 class OSRProjTLSCache

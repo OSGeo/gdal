@@ -33,6 +33,8 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("HFA")
+
 ###############################################################################
 # Write a HFA/Imagine and read it back to check its SRS
 crs_list = [

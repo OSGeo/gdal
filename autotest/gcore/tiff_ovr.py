@@ -287,6 +287,8 @@ def test_tiff_ovr_6(tmp_path, both_endian):
         callback_data=tab,
         options=["USE_RRD=YES"],
     )
+    if gdal.GetLastErrorMsg() == "This build does not support creating .aux overviews":
+        pytest.skip(gdal.GetLastErrorMsg())
     assert tab[0] == 1.0
 
     try:

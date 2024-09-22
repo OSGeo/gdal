@@ -40,6 +40,8 @@ import webserver
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("HFA")
+
 init_list = [
     ("byte.tif", 1, 4672),
     ("uint16_sgilog.tif", 1, 4672),

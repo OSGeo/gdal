@@ -34,7 +34,10 @@ import pytest
 
 from osgeo import gdal
 
-pytestmark = pytest.mark.random_order(disabled=True)
+pytestmark = [
+    pytest.mark.random_order(disabled=True),
+    pytest.mark.require_driver("HFA"),
+]
 
 # All tests will be skipped if numpy is unavailable.
 np = pytest.importorskip("numpy")

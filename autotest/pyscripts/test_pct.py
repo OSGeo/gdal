@@ -248,6 +248,7 @@ def test_rgb2pct_3(script_path, tmp_path, rgb2pct2_tif):
 # Test pct2rgb with big CT (>256 entries)
 
 
+@pytest.mark.require_driver("HFA")
 def test_pct2rgb_4(script_path, tmp_path):
     gdal_array = pytest.importorskip("osgeo.gdal_array")
     try:

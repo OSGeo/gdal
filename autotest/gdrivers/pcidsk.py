@@ -526,6 +526,8 @@ def test_pcidsk_external_ovr_rrd():
     with gdaltest.config_option("USE_RRD", "YES"):
         ds.BuildOverviews("NEAR", [2])
     ds = None
+    if gdal.GetLastErrorMsg() == "This build does not support creating .aux overviews":
+        pytest.skip(gdal.GetLastErrorMsg())
     assert gdal.VSIStatL("/vsimem/test.aux") is not None
     ds = gdal.Open("/vsimem/test.pix")
     assert ds.GetRasterBand(1).GetOverviewCount() == 1
