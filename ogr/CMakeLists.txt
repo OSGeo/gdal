@@ -95,6 +95,10 @@ target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 set_property(TARGET ogr PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogr>)
 
+if (OGR_ENABLE_DRIVER_TAB AND NOT OGR_ENABLE_DRIVER_TAB_PLUGIN)
+  target_compile_definitions(ogr PRIVATE -DHAVE_MITAB)
+endif()
+
 if (GDAL_USE_ZLIB_INTERNAL)
   gdal_add_vendored_lib(ogr libz)
 endif ()
@@ -102,8 +106,6 @@ endif ()
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(ogr libjson)
 endif ()
-
-target_compile_definitions(ogr PRIVATE HAVE_MITAB)
 
 gdal_target_link_libraries(ogr PRIVATE PROJ::proj)
 

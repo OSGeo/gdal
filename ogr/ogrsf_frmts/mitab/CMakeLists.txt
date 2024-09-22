@@ -2,7 +2,8 @@
 add_gdal_driver(
   TARGET ogr_TAB
   DEF MITAB_ENABLED
-  BUILTIN
+  PLUGIN_CAPABLE
+  NO_DEPS
   SOURCES mitab_rawbinblock.cpp
           mitab_mapheaderblock.cpp
           mitab_mapindexblock.cpp

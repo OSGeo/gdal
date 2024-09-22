@@ -11251,7 +11251,8 @@ OGRErr OSRExportToMICoordSys(OGRSpatialReferenceH hSRS, char **ppszReturn)
  * OGRERR_UNSUPPORTED_OPERATION if MITAB library was not linked in.
  */
 
-OGRErr OGRSpatialReference::exportToMICoordSys(char **ppszResult) const
+OGRErr OGRSpatialReference::exportToMICoordSys(
+    [[maybe_unused]] char **ppszResult) const
 
 {
 #ifdef HAVE_MITAB
@@ -11305,7 +11306,8 @@ OGRErr OSRImportFromMICoordSys(OGRSpatialReferenceH hSRS,
  * OGRERR_UNSUPPORTED_OPERATION if MITAB library was not linked in.
  */
 
-OGRErr OGRSpatialReference::importFromMICoordSys(const char *pszCoordSys)
+OGRErr OGRSpatialReference::importFromMICoordSys(
+    [[maybe_unused]] const char *pszCoordSys)
 
 {
 #ifdef HAVE_MITAB

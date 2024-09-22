@@ -774,6 +774,7 @@ def test_tiff_read_stats_from_pam(tmp_path):
 # Test extracting georeferencing from a .TAB file
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_tiff_read_from_tab(tmp_path):
 
     ds = gdal.GetDriverByName("GTiff").Create(tmp_path / "tiff_read_from_tab.tif", 1, 1)
@@ -2822,6 +2823,7 @@ def test_tiff_read_one_strip_no_bytecount():
 # Test GDAL_GEOREF_SOURCES
 
 
+@pytest.mark.require_driver("MapInfo File")
 @pytest.mark.parametrize(
     "config_option_value,copy_pam,copy_worldfile,copy_tabfile,expected_srs,expected_gt",
     [
@@ -3027,6 +3029,7 @@ def test_tiff_read_nogeoref(
 # Test GDAL_GEOREF_SOURCES
 
 
+@pytest.mark.require_driver("MapInfo File")
 @pytest.mark.parametrize(
     "config_option_value,copy_pam,copy_worldfile,copy_tabfile,expected_srs,expected_gt",
     [

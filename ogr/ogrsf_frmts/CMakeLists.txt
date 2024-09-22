@@ -13,7 +13,12 @@ add_dependencies(ogrsf_frmts generate_gdal_version_h)
 # Obligatory for building GDAL; always compile in.
 ogr_default_driver(mem "Read/write driver for MEMORY virtual files")
 ogr_optional_driver(geojson "GeoJSON/ESRIJSON/TopoJSON driver")
-ogr_default_driver2(mitab TAB "MapInfo TAB and MIF/MID")
+
+add_feature_info(ogr_TAB OGR_ENABLE_DRIVER_TAB "MapInfo TAB and MIF/MID")
+if (OGR_ENABLE_DRIVER_TAB)
+    add_subdirectory(mitab)
+endif ()
+
 ogr_optional_driver(shape "ESRI shape-file")
 
 # ######################################################################################################################

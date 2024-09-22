@@ -923,6 +923,7 @@ def test_ogr_feature_GetFieldAsISO8601DateTime():
     assert feature.GetFieldAsISO8601DateTime("field_datetime") == ""
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_feature_dump_readable():
 
     ds = ogr.Open("data/mitab/single_point_mapinfo.tab")

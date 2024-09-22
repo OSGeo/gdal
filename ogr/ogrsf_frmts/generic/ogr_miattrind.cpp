@@ -29,6 +29,9 @@
  ****************************************************************************/
 
 #include "ogr_attrind.h"
+
+#ifdef HAVE_MITAB
+
 #include "mitab/mitab_priv.h"
 #include "cpl_minixml.h"
 
@@ -829,3 +832,17 @@ OGRErr OGRMIAttrIndex::Clear()
 {
     return OGRERR_UNSUPPORTED_OPERATION;
 }
+
+#else
+
+/************************************************************************/
+/*                     OGRCreateDefaultLayerIndex()                     */
+/************************************************************************/
+
+OGRLayerAttrIndex *OGRCreateDefaultLayerIndex()
+
+{
+    return nullptr;
+}
+
+#endif
