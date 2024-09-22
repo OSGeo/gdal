@@ -34,6 +34,8 @@ import gdaltest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("NWT_GRD")
+
 ###############################################################################
 # Test a GRD dataset with three bands + Z
 

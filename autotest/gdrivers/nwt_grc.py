@@ -30,6 +30,9 @@
 
 
 import gdaltest
+import pytest
+
+pytestmark = pytest.mark.require_driver("NWT_GRC")
 
 ###############################################################################
 # Test a GRC dataset
