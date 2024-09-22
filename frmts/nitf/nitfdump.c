@@ -628,10 +628,10 @@ int main(int nArgc, char **papszArgv)
                 EQUAL(CSLFetchNameValueDef(psDES->papszMetadata, "DESID", ""),
                       "CSSHPA DES"))
             {
-                char szFilename[40];
+                char szFilename[512];
                 char szRadix[256];
                 if (bExtractSHPInMem)
-                    snprintf(szRadix, sizeof(szRadix),
+                    snprintf(szRadix, sizeof(szRadix), "%s",
                              VSIMemGenerateHiddenFilename(
                                  CPLSPrintf("nitf_segment_%d", iSegment + 1)));
                 else
