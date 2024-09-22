@@ -122,6 +122,10 @@ def test_gdallocationinfo_4(gdallocationinfo_path):
 # Test -lifonly
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdallocationinfo_5(gdallocationinfo_path):
 
     ret = gdaltest.runexternal(

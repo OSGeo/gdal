@@ -37,6 +37,11 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
+
 
 def _xmlsearch(root, nodetype, name):
     for node in root[2:]:

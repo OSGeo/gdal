@@ -40,6 +40,11 @@ import struct
 import gdaltest
 import pytest
 
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
+
 from osgeo import gdal, osr
 
 ###############################################################################

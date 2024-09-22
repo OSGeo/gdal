@@ -85,6 +85,10 @@ def test_prf_3():
     ds = None
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_prf_4():
 
     tst = gdaltest.GDALTest("prf", "./PRF/dem.x-dem", 1, 0)

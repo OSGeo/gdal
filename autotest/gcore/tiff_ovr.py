@@ -122,6 +122,10 @@ def mfloat32_tif(tmp_path):
     yield dst_fname
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_1(mfloat32_tif, both_endian):
 
     ds = gdal.Open(mfloat32_tif)
@@ -151,6 +155,10 @@ def test_tiff_ovr_1(mfloat32_tif, both_endian):
 # Open target file in update mode, and create internal overviews.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_3(mfloat32_tif, both_endian):
 
     src_ds = gdal.Open(mfloat32_tif, gdal.GA_Update)
@@ -531,6 +539,10 @@ def test_tiff_ovr_12(tmp_path, both_endian):
 # Test gaussian resampling
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_13(mfloat32_tif, both_endian):
 
     ds = gdal.Open(mfloat32_tif)
@@ -608,6 +620,10 @@ def test_tiff_ovr_15(tmp_path, both_endian):
 # Test mode resampling on non-byte dataset
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_16(tmp_path, both_endian):
 
     tif_fname = str(tmp_path / "ovr16.tif")

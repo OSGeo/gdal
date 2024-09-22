@@ -381,6 +381,10 @@ def test_gdaldem_color_relief_cpt(gdaldem_path, tmp_path):
 # Test gdaldem color relief to VRT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdaldem_color_relief_vrt(gdaldem_path, n43_colorrelief_tif, tmp_path):
 
     output_vrt = str(tmp_path / "n43_colorrelief.vrt")
@@ -518,6 +522,10 @@ def test_gdaldem_color_relief_nearest_color_entry(gdaldem_path, tmp_path):
 # Test gdaldem color relief with -nearest_color_entry and -of VRT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdaldem_color_relief_nearest_color_entry_vrt(gdaldem_path, tmp_path):
 
     output_vrt = str(tmp_path / "n43_colorrelief_nearest.vrt")
@@ -584,6 +592,10 @@ NODATA_value nan
 # Test gdaldem color relief with entries with repeated DEM values in the color table (#6422)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("AAIGRID")
 def test_gdaldem_color_relief_repeated_entry(gdaldem_path, tmp_path):
 

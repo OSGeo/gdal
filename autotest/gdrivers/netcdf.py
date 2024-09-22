@@ -1190,6 +1190,10 @@ def test_netcdf_28(tmp_path):
 # metadata to netcdf file with SetMetadata() and SetMetadataItem()).
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_netcdf_29(tmp_path):
 
     # create tif file using gdalwarp
@@ -1451,6 +1455,10 @@ def test_netcdf_38():
 # Test VRT and NETCDF:
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_netcdf_39():
 
     shutil.copy("data/netcdf/two_vars_scale_offset.nc", "tmp")
@@ -1482,6 +1490,10 @@ def test_netcdf_39():
     assert cs == 65463
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_netcdf_39_absolute():
 
     if (

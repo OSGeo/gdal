@@ -108,6 +108,10 @@ def test_vsistdin_3():
 # Test fix for #6061
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_vsistdin_4():
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip()

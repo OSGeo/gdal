@@ -153,6 +153,10 @@ def test_ehdr_7():
 # Test signed 8bit integer support. (#2717)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_ehdr_8():
 
     drv = gdal.GetDriverByName("EHDR")

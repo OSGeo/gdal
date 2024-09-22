@@ -50,6 +50,10 @@ def gdalmdimtranslate_path():
 # Simple test
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_1(gdalmdimtranslate_path, tmp_path):
 
     dst_vrt = str(tmp_path / "out.vrt")
@@ -65,6 +69,10 @@ def test_gdalmdimtranslate_1(gdalmdimtranslate_path, tmp_path):
 # Test -if option
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_if(gdalmdimtranslate_path, tmp_path):
 
     dst_vrt = str(tmp_path / "out.vrt")

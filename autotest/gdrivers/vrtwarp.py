@@ -38,6 +38,11 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
+
 ###############################################################################
 # Verify reading from simple existing warp definition.
 

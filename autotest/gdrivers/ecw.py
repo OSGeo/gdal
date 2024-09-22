@@ -1038,6 +1038,10 @@ def test_ecw_31():
 # It ignores the content of panBandMap. (#4234)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_ecw_32():
 
     ds = gdal.Open("data/ecw/jrc.ecw")

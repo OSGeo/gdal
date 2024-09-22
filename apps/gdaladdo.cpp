@@ -311,6 +311,17 @@ static bool PartialRefreshFromSourceTimestamp(
             }
         }
     }
+#ifdef GTI_DRIVER_DISABLED_OR_PLUGIN
+    else if (poDS->GetDriver() &&
+             EQUAL(poDS->GetDriver()->GetDescription(), "GTI"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "--partial-refresh-from-source-timestamp only works on a GTI "
+                 "dataset if the GTI driver is not built as a plugin, "
+                 "but in core library");
+        return false;
+    }
+#else
     else if (auto poGTIDS = GDALDatasetCastToGTIDataset(poDS))
     {
         regions = GTIGetSourcesMoreRecentThan(poGTIDS, sStatVRTOvr.st_mtime);
@@ -320,6 +331,7 @@ static bool PartialRefreshFromSourceTimestamp(
                 static_cast<double>(region.nDstXSize) * region.nDstYSize;
         }
     }
+#endif
     else
     {
         CPLError(CE_Failure, CPLE_AppDefined,

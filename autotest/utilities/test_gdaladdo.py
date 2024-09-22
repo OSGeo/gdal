@@ -54,6 +54,10 @@ def gdaladdo_path():
 # Similar to tiff_ovr_1
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdaladdo_1(gdaladdo_path, tmp_path):
 
     shutil.copy("../gcore/data/mfloat32.vrt", f"{tmp_path}/mfloat32.vrt")
@@ -230,6 +234,10 @@ def test_gdaladdo_partial_refresh_from_projwin(gdaladdo_path, tmp_path):
 # Test --partial-refresh-from-source-timestamp
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdaladdo_partial_refresh_from_source_timestamp(gdaladdo_path, tmp_path):
 
     left_tif = str(tmp_path / "left.tif")
@@ -284,6 +292,10 @@ def test_gdaladdo_partial_refresh_from_source_timestamp(gdaladdo_path, tmp_path)
 # Test --partial-refresh-from-source-extent
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdaladdo_partial_refresh_from_source_extent(gdaladdo_path, tmp_path):
 
     left_tif = str(tmp_path / "left.tif")
@@ -330,6 +342,10 @@ def test_gdaladdo_partial_refresh_from_source_extent(gdaladdo_path, tmp_path):
 # Test reuse of previous resampling method and overview levels
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.parametrize("read_only", [True, False])
 def test_gdaladdo_reuse_previous_resampling_and_levels(
     gdaladdo_path, tmp_path, read_only
@@ -382,7 +398,12 @@ def test_gdaladdo_reuse_previous_resampling_and_levels(
 
 
 @pytest.mark.require_driver("GPKG")
+@pytest.mark.require_driver("GTI")
 def test_gdaladdo_partial_refresh_from_source_timestamp_gti(gdaladdo_path, tmp_path):
+
+    gti_drv = gdal.GetDriverByName("GTI")
+    if gti_drv.GetMetadataItem("IS_PLUGIN"):
+        pytest.skip("Test skipped because GTI driver as a plugin")
 
     left_tif = str(tmp_path / "left.tif")
     right_tif = str(tmp_path / "right.tif")

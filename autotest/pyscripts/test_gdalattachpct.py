@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 import pytest
 import test_py_scripts
 
@@ -91,6 +92,10 @@ def test_gdalattachpct_basic(script_path, tmp_path, palette_file):
 # Test outputting to VRT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalattachpct_vrt_output(script_path, tmp_path, palette_file):
 
     src_filename = str(tmp_path / "src.tif")

@@ -291,6 +291,10 @@ def my_pyDerivedPixelFunc(
     return 0
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_testnonboundtoswig_VRTDerivedBands():
 
     DerivedPixelFuncType = ctypes.CFUNCTYPE(

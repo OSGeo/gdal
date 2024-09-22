@@ -302,6 +302,10 @@ def test_interpolateatpoint_complex_float():
     assert res == pytest.approx((34.433130 - 36.741504j), 1e-4)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_interpolateatpoint_big_complex():
     # The purpose of this test is to check that the algorithm implementation
     # works for bigger values above the first block of 64x64 pixels.

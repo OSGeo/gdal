@@ -31,6 +31,7 @@
 import os
 import shutil
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -41,6 +42,10 @@ pytestmark = pytest.mark.require_driver("DIMAP")
 # Open and verify a the GCPs and metadata.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_dimap_1():
 
     shutil.copy("data/dimap/METADATA.DIM", "tmp")

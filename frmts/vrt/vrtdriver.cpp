@@ -542,10 +542,12 @@ void GDALRegister_VRT()
         "   <Option name='BLOCKYSIZE' type='int' description='Block height'/>\n"
         "</CreationOptionList>\n");
 
-    poDriver->pfnOpen = VRTDataset::Open;
     poDriver->pfnCreateCopy = VRTCreateCopy;
     poDriver->pfnCreate = VRTDataset::Create;
     poDriver->pfnCreateMultiDimensional = VRTDataset::CreateMultiDimensional;
+
+#ifndef NO_OPEN
+    poDriver->pfnOpen = VRTDataset::Open;
     poDriver->pfnIdentify = VRTDataset::Identify;
     poDriver->pfnDelete = VRTDataset::Delete;
 
@@ -561,6 +563,7 @@ void GDALRegister_VRT()
         "'Number of worker threads for reading. Can be set to ALL_CPUS' "
         "default='ALL_CPUS'/>"
         "</OpenOptionList>");
+#endif
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");

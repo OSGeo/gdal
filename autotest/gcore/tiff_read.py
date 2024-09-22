@@ -5189,6 +5189,10 @@ def test_tiff_read_webp_lossless_rgba_alpha_fully_opaque():
 # Test complex scenario of https://github.com/OSGeo/gdal/issues/9563
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_jpeg_cached_multi_range_issue_9563(tmp_vsimem):
 

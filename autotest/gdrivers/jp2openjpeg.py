@@ -389,6 +389,10 @@ def test_jp2openjpeg_12():
 # Check that PAM overrides internal GCPs (#5279)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jp2openjpeg_13():
 
     # Create a dataset with GCPs
@@ -1446,6 +1450,10 @@ def test_jp2openjpeg_32():
 # Test crazy tile size
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jp2openjpeg_33():
 
     src_ds = gdal.Open(
@@ -3818,6 +3826,10 @@ def test_jp2openjpeg_mosaic():
 
 
 @pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jp2openjpeg_vrt_protocol():
 
     (webserver_process, webserver_port) = webserver.launch(

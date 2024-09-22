@@ -236,6 +236,10 @@ def test_aaigrid_6bis():
 # Verify writing files with non-square pixels.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_aaigrid_7():
 
     tst = gdaltest.GDALTest("AAIGRID", "aaigrid/nonsquare.vrt", 1, 12481)

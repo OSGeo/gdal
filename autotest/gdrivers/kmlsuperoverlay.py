@@ -127,6 +127,10 @@ def test_kmlsuperoverlay_3():
 # Test overviews
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_kmlsuperoverlay_4():
 
     vrt_xml = """<VRTDataset rasterXSize="800" rasterYSize="400">
@@ -231,6 +235,10 @@ def test_kmlsuperoverlay_4():
 # Test that a raster which crosses the anti-meridian will be able to be displayed correctly (#4528)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_kmlsuperoverlay_5():
 
     from xml.etree import ElementTree
@@ -398,6 +406,10 @@ def test_kmlsuperoverlay_gx_latlonquad():
 # KML/PNG files in transparent areas
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_kmlsuperoverlay_8():
 
     # a large raster with actual data on each end and blank space in between

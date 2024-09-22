@@ -51,8 +51,8 @@
 
 CPLErr GDALRegisterDefaultPixelFunc();
 void GDALVRTRegisterDefaultProcessedDatasetFuncs();
-CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
-                             int nPrecision);
+CPLString CPL_DLL VRTSerializeNoData(double dfVal, GDALDataType eDataType,
+                                     int nPrecision);
 
 #if 0
 int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,

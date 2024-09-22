@@ -1599,6 +1599,10 @@ def test_gdalwarp_lib_128(tmp_vsimem):
 # to an invalid geometry (#6375)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_geos
 def test_gdalwarp_lib_129(tmp_vsimem):
 
@@ -2069,6 +2073,10 @@ def test_gdalwarp_lib_135h(gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx):
     assert data == pytest.approx(115 / (1200.0 / 3937)), "Bad value"
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("GTX")
 def test_gdalwarp_lib_135i(
     gdalwarp_135_src_ds, gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx, tmp_path
@@ -3324,6 +3332,10 @@ def test_gdalwarp_lib_src_nodata_with_dstalpha():
 # Test warping from a dataset with points outside of Earth (fixes #4934)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalwarp_lib_src_points_outside_of_earth():
     class MyHandler:
         def __init__(self):

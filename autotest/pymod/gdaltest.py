@@ -2199,3 +2199,8 @@ class VSIFile:
 
 def vsi_open(path, mode="r"):
     return VSIFile(path, mode)
+
+
+def vrt_has_open_support():
+    drv = gdal.GetDriverByName("VRT")
+    return drv is not None and drv.GetMetadataItem(gdal.DMD_OPENOPTIONLIST) is not None

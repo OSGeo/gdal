@@ -41,6 +41,10 @@ from osgeo import gdal, osr
 # Verify warped result.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_geoloc_1():
 
     tst = gdaltest.GDALTest("VRT", "warpsst.vrt", 1, 63034)

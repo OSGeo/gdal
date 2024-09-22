@@ -383,6 +383,10 @@ def test_gdalwarp_14(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 # Test -of VRT which is a special case
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalwarp_16(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 
     dst_vrt = str(tmp_path / "testgdalwarp16.vrt")
@@ -463,6 +467,10 @@ def test_gdalwarp_19(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 # Test -of VRT -et 0 which is a special case
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalwarp_20(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 
     dst_vrt = str(tmp_path / "testgdalwarp20.vrt")
@@ -1047,6 +1055,10 @@ def test_gdalwarp_39(gdalwarp_path, tmp_path):
 # Test -ovr
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalwarp_40(gdalwarp_path, tmp_path):
 
     src_tif = str(tmp_path / "test_gdalwarp_40_src.tif")

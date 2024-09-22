@@ -35,10 +35,16 @@ import test_cli_utilities
 
 from osgeo import gdal, osr
 
-pytestmark = pytest.mark.skipif(
-    test_cli_utilities.get_gdalbuildvrt_path() is None,
-    reason="gdalbuildvrt not available",
-)
+pytestmark = [
+    pytest.mark.skipif(
+        test_cli_utilities.get_gdalbuildvrt_path() is None,
+        reason="gdalbuildvrt not available",
+    ),
+    pytest.mark.skipif(
+        not gdaltest.vrt_has_open_support(),
+        reason="VRT driver open missing",
+    ),
+]
 
 
 @pytest.fixture(scope="module")

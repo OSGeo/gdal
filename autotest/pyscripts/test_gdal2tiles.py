@@ -43,10 +43,15 @@ import test_py_scripts  # noqa  # pylint: disable=E0401
 from osgeo import gdal, osr  # noqa
 from osgeo_utils.gdalcompare import compare_db
 
-pytestmark = pytest.mark.skipif(
-    test_py_scripts.get_py_script("gdal2tiles") is None,
-    reason="gdal2tiles not available",
-)
+pytestmark = [
+    pytest.mark.skipif(
+        test_py_scripts.get_py_script("gdal2tiles") is None,
+        reason="gdal2tiles not available",
+    ),
+    pytest.mark.skipif(
+        not gdaltest.vrt_has_open_support(), reason="VRT driver open missing"
+    ),
+]
 
 
 @pytest.fixture()
