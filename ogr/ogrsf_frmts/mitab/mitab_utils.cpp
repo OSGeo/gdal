@@ -537,68 +537,6 @@ char *TABCleanFieldName(const char *pszSrcName, const char *pszEncoding,
 }
 
 /**********************************************************************
- * MapInfo Units string to numeric ID conversion
- **********************************************************************/
-typedef struct
-{
-    int nUnitId;
-    const char *pszAbbrev;
-} MapInfoUnitsInfo;
-
-static const MapInfoUnitsInfo gasUnitsList[] = {
-    {0, "mi"},        {1, "km"},          {2, "in"},  {3, "ft"},
-    {4, "yd"},        {5, "mm"},          {6, "cm"},  {7, "m"},
-    {8, "survey ft"}, {8, "survey foot"},  // alternate
-    {13, nullptr},    {9, "nmi"},         {30, "li"}, {31, "ch"},
-    {32, "rd"},       {-1, nullptr}};
-
-/**********************************************************************
- *                       TABUnitIdToString()
- *
- * Return the MIF units name for specified units id.
- * Return "" if no match found.
- *
- * The returned string should not be freed by the caller.
- **********************************************************************/
-const char *TABUnitIdToString(int nId)
-{
-    const MapInfoUnitsInfo *psList = gasUnitsList;
-
-    while (psList->nUnitId != -1)
-    {
-        if (psList->nUnitId == nId)
-            return psList->pszAbbrev;
-        psList++;
-    }
-
-    return "";
-}
-
-/**********************************************************************
- *                       TABUnitIdFromString()
- *
- * Return the units ID for specified MIF units name
- *
- * Returns -1 if no match found.
- **********************************************************************/
-int TABUnitIdFromString(const char *pszName)
-{
-    if (pszName == nullptr)
-        return 13;
-
-    const MapInfoUnitsInfo *psList = gasUnitsList;
-
-    while (psList->nUnitId != -1)
-    {
-        if (psList->pszAbbrev != nullptr && EQUAL(psList->pszAbbrev, pszName))
-            return psList->nUnitId;
-        psList++;
-    }
-
-    return -1;
-}
-
-/**********************************************************************
  *                       TABSaturatedAdd()
  ***********************************************************************/
 

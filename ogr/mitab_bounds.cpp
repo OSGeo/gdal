@@ -29,8 +29,7 @@
  **********************************************************************/
 
 #include "cpl_port.h"
-#include "mitab.h"
-#include "mitab_priv.h"
+#include "ogrmitabspatialref.h"
 
 #include <cmath>
 #include <cstring>
@@ -20552,14 +20551,4 @@ void MITABFreeCoordSysTable()
     CPLFree(gpasExtBoundsList);
     gpasExtBoundsList = nullptr;
     nExtBoundsListCount = -1;
-}
-
-/**********************************************************************
- *                     MITABCoordSysTableLoaded()
- *
- * Returns TRUE if a coordsys table was loaded, FALSE otherwise.
- **********************************************************************/
-bool MITABCoordSysTableLoaded()
-{
-    return nExtBoundsListCount >= 0;
 }

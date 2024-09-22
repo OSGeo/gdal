@@ -33,8 +33,6 @@ import pytest
 
 from osgeo import osr
 
-pytestmark = pytest.mark.require_driver("MapInfo File")
-
 ###############################################################################
 # Test the osr.SpatialReference.ImportFromMICoordSys() function.
 #

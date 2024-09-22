@@ -68,6 +68,8 @@ add_library(
   ogrgeojsongeometry.cpp
   ogrgeojsonwriter.cpp
   ogresrijsongeometry.cpp
+  ogrmitabspatialref.cpp
+  mitab_bounds.cpp
 )
 add_dependencies(ogr generate_gdal_version_h)
 
@@ -94,10 +96,6 @@ target_compile_options(ogr PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_C
 target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 set_property(TARGET ogr PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogr>)
-
-if (OGR_ENABLE_DRIVER_TAB AND NOT OGR_ENABLE_DRIVER_TAB_PLUGIN)
-  target_compile_definitions(ogr PRIVATE -DHAVE_MITAB)
-endif()
 
 if (GDAL_USE_ZLIB_INTERNAL)
   gdal_add_vendored_lib(ogr libz)
