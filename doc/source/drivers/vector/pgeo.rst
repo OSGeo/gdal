@@ -104,8 +104,7 @@ How to use PGeo driver with unixODBC and MDB Tools (on Unix and Linux)
 
 This article gives step-by-step explanation of how to use OGR with
 unixODBC package and how to access Personal Geodatabase with PGeo
-driver. See also `GDAL wiki for other
-details <http://trac.osgeo.org/gdal/wiki/mdbtools>`__
+driver.
 
 Prerequisites
 ~~~~~~~~~~~~~

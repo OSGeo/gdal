@@ -117,7 +117,6 @@ API
 
        Go <https://github.com/lukeroth/gdal>
        Julia <https://github.com/JuliaGeo/GDAL.jl>
-       Lua <https://trac.osgeo.org/gdal/wiki/GdalOgrInLua>
        Original Node.js bindings <https://github.com/naturalatlas/node-gdal>
        Node.js fork with full Promise-based async and TypeScript support <https://www.npmjs.com/package/gdal-async>
        Perl <https://metacpan.org/release/Geo-GDAL-FFI>
@@ -125,10 +124,6 @@ API
        R <https://cran.r-project.org/web/packages/gdalraster/index.html>
        Ruby <https://github.com/telus-agcg/ffi-gdal>
        Rust <https://github.com/georust/gdal>
-
-    .. warning::
-        For Perl, since GDAL 3.5 the link `Perl <https://trac.osgeo.org/gdal/wiki/GdalOgrInPerl>`__ is deprecated, use above link instead.
-
 
 
     There are also more Pythonic ways of using the vector/OGR functions with

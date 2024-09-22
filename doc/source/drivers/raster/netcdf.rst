@@ -750,9 +750,6 @@ This driver is compiled with the UNIDATA NetCDF library.
 You need to download or compile the NetCDF library before configuring
 GDAL with NetCDF support.
 
-See `NetCDF GDAL wiki <http://trac.osgeo.org/gdal/wiki/NetCDF>`__ for
-build instructions and information regarding HDF4, NetCDF-4 and HDF5.
-
 See Also:
 ---------
 

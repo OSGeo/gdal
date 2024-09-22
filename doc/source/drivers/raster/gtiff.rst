@@ -384,9 +384,6 @@ The TIFF format only supports R,G,B components for palettes / color
 tables. Thus on writing the alpha information will be silently
 discarded.
 
-You may want to read hints to `generate and read cloud optimized GeoTIFF
-files <https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF>`__
-
 Creation Options
 ~~~~~~~~~~~~~~~~
 
