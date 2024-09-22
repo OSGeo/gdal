@@ -2237,14 +2237,22 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                                    CURLAUTH_ANYSAFE);
     else if (EQUAL(pszHttpAuth, "BEARER"))
     {
-        const char *pszBearer = CSLFetchNameValue(papszOptions, "HTTP_BEARER");
-        if (pszBearer == nullptr)
-            pszBearer = CPLGetConfigOption("GDAL_HTTP_BEARER", nullptr);
-        if (pszBearer != nullptr)
-            unchecked_curl_easy_setopt(http_handle, CURLOPT_XOAUTH2_BEARER,
-                                       pszBearer);
-        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH,
-                                   CURLAUTH_BEARER);
+        const char *pszAuthorizationHeaderAllowed = CSLFetchNameValueDef(
+            papszOptions, "AUTHORIZATION_HEADER_ALLOWED", "YES");
+        const bool bAuthorizationHeaderAllowed =
+            CPLTestBool(pszAuthorizationHeaderAllowed);
+        if (bAuthorizationHeaderAllowed)
+        {
+            const char *pszBearer =
+                CSLFetchNameValue(papszOptions, "HTTP_BEARER");
+            if (pszBearer == nullptr)
+                pszBearer = CPLGetConfigOption("GDAL_HTTP_BEARER", nullptr);
+            if (pszBearer != nullptr)
+                unchecked_curl_easy_setopt(http_handle, CURLOPT_XOAUTH2_BEARER,
+                                           pszBearer);
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH,
+                                       CURLAUTH_BEARER);
+        }
     }
     else if (EQUAL(pszHttpAuth, "NEGOTIATE"))
         unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH,
@@ -2365,6 +2373,15 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                                1L);
 
     unchecked_curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1);
+    const char *pszUnrestrictedAuth = CPLGetConfigOption(
+        "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT",
+        "IF_SAME_HOST");
+    if (!EQUAL(pszUnrestrictedAuth, "IF_SAME_HOST") &&
+        CPLTestBool(pszUnrestrictedAuth))
+    {
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_UNRESTRICTED_AUTH, 1);
+    }
+
     unchecked_curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10);
     unchecked_curl_easy_setopt(http_handle, CURLOPT_POSTREDIR,
                                CURL_REDIR_POST_ALL);
@@ -2664,6 +2681,11 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
         }
         if (!bHeadersDone)
         {
+            const char *pszAuthorizationHeaderAllowed = CSLFetchNameValueDef(
+                papszOptions, "AUTHORIZATION_HEADER_ALLOWED", "YES");
+            const bool bAuthorizationHeaderAllowed =
+                CPLTestBool(pszAuthorizationHeaderAllowed);
+
             // We accept both raw headers with \r\n as a separator, or as
             // a comma separated list of foo: bar values.
             const CPLStringList aosTokens(
@@ -2672,7 +2694,11 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                     : CSLTokenizeString2(pszHeaders, ",", CSLT_HONOURSTRINGS));
             for (int i = 0; i < aosTokens.size(); ++i)
             {
-                headers = curl_slist_append(headers, aosTokens[i]);
+                if (bAuthorizationHeaderAllowed ||
+                    !STARTS_WITH_CI(aosTokens[i], "Authorization:"))
+                {
+                    headers = curl_slist_append(headers, aosTokens[i]);
+                }
             }
         }
     }

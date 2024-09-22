@@ -234,10 +234,203 @@ def server():
 
 
 ###############################################################################
+# Test regular redirection
+
+
+@pytest.mark.parametrize(
+    "authorization_header_allowed", [None, "YES", "NO", "IF_SAME_HOST"]
+)
+def test_vsicurl_test_redirect(server, authorization_header_allowed):
+
+    gdal.VSICurlClearCache()
+
+    expected_headers = None
+    unexpected_headers = []
+    if authorization_header_allowed != "NO":
+        expected_headers = {"Authorization": "Bearer xxx"}
+    else:
+        unexpected_headers = ["Authorization"]
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/test_redirect/", 404)
+    handler.add(
+        "HEAD",
+        "/test_redirect/test.bin",
+        301,
+        {"Location": "http://localhost:%d/redirected/test.bin" % server.port},
+        expected_headers={"Authorization": "Bearer xxx"},
+    )
+
+    # Curl always forward Authorization if same server when handling itself
+    # the redirect, so this means that CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT=NO
+    # is not honored for that particular request. To honour it, we would have
+    # to disable CURLOPT_FOLLOWLOCATION and implement it at hand
+    handler.add(
+        "HEAD",
+        "/redirected/test.bin",
+        200,
+        {"Content-Length": "3"},
+        expected_headers={"Authorization": "Bearer xxx"},
+    )
+
+    handler.add(
+        "GET",
+        "/redirected/test.bin",
+        200,
+        {"Content-Length": "3"},
+        b"xyz",
+        expected_headers=expected_headers,
+        unexpected_headers=unexpected_headers,
+    )
+
+    options = {"GDAL_HTTP_HEADERS": "Authorization: Bearer xxx"}
+    if authorization_header_allowed:
+        options[
+            "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"
+        ] = authorization_header_allowed
+    with webserver.install_http_handler(handler), gdal.config_options(options):
+        f = gdal.VSIFOpenL(
+            "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
+            "rb",
+        )
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(1, 3, f) == b"xyz"
+        finally:
+            gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test regular redirection
+
+
+@pytest.mark.parametrize(
+    "authorization_header_allowed", [None, "YES", "NO", "IF_SAME_HOST"]
+)
+def test_vsicurl_test_redirect_different_server(server, authorization_header_allowed):
+
+    gdal.VSICurlClearCache()
+
+    expected_headers = None
+    unexpected_headers = []
+    if authorization_header_allowed == "YES":
+        expected_headers = {"Authorization": "Bearer xxx"}
+    else:
+        unexpected_headers = ["Authorization"]
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/test_redirect/", 404)
+    handler.add(
+        "HEAD",
+        "/test_redirect/test.bin",
+        301,
+        {"Location": "http://127.0.0.1:%d/redirected/test.bin" % server.port},
+        expected_headers={"Authorization": "Bearer xxx"},
+    )
+    handler.add(
+        "HEAD",
+        "/redirected/test.bin",
+        200,
+        {"Content-Length": "3"},
+        expected_headers=expected_headers,
+        unexpected_headers=unexpected_headers,
+    )
+    handler.add(
+        "GET",
+        "/redirected/test.bin",
+        200,
+        {"Content-Length": "3"},
+        b"xyz",
+        expected_headers=expected_headers,
+        unexpected_headers=unexpected_headers,
+    )
+
+    options = {"GDAL_HTTP_HEADERS": "Authorization: Bearer xxx"}
+    if authorization_header_allowed:
+        options[
+            "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"
+        ] = authorization_header_allowed
+    with webserver.install_http_handler(handler), gdal.config_options(options):
+        f = gdal.VSIFOpenL(
+            "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
+            "rb",
+        )
+        try:
+            assert gdal.VSIFReadL(1, 3, f) == b"xyz"
+        finally:
+            gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test regular redirection
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_curl(7, 61, 0)
+@pytest.mark.parametrize(
+    "authorization_header_allowed", [None, "YES", "NO", "IF_SAME_HOST"]
+)
+def test_vsicurl_test_redirect_different_server_with_bearer(
+    server, authorization_header_allowed
+):
+
+    gdal.VSICurlClearCache()
+
+    expected_headers = None
+    unexpected_headers = []
+    if authorization_header_allowed == "YES":
+        expected_headers = {"Authorization": "Bearer xxx"}
+    else:
+        unexpected_headers = ["Authorization"]
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/test_redirect/", 404)
+    handler.add(
+        "HEAD",
+        "/test_redirect/test.bin",
+        301,
+        {"Location": "http://127.0.0.1:%d/redirected/test.bin" % server.port},
+        expected_headers={"Authorization": "Bearer xxx"},
+    )
+    handler.add(
+        "HEAD",
+        "/redirected/test.bin",
+        200,
+        {"Content-Length": "3"},
+        expected_headers=expected_headers,
+        unexpected_headers=unexpected_headers,
+    )
+    handler.add(
+        "GET",
+        "/redirected/test.bin",
+        200,
+        {"Content-Length": "3"},
+        b"xyz",
+        expected_headers=expected_headers,
+        unexpected_headers=unexpected_headers,
+    )
+
+    options = {"GDAL_HTTP_AUTH": "BEARER", "GDAL_HTTP_BEARER": "xxx"}
+    if authorization_header_allowed:
+        options[
+            "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"
+        ] = authorization_header_allowed
+    with webserver.install_http_handler(handler), gdal.config_options(options):
+        f = gdal.VSIFOpenL(
+            "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
+            "rb",
+        )
+        try:
+            assert gdal.VSIFReadL(1, 3, f) == b"xyz"
+        finally:
+            gdal.VSIFCloseL(f)
+
+
+###############################################################################
 # Test redirection with Expires= type of signed URLs
 
 
-def test_vsicurl_test_redirect(server):
+def test_vsicurl_test_redirect_with_expires(server):
 
     gdal.VSICurlClearCache()
 

@@ -626,6 +626,20 @@ Networking options
       Try to query quietly redirected URLs to Amazon S3 signed URLs during their
       validity period, so as to minimize round-trips.
 
+-  .. config:: CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT
+      :choices: YES, NO, IF_SAME_HOST
+      :default: IF_SAME_HOST
+      :since: 3.10
+
+      Determines if the HTTP ``Authorization`` header must be forwarded when
+      redirections are followed:
+
+      - ``NO`` to always disable forwarding of Authorization header
+      - ``YES`` to always enable forwarding of Authorization header (was the
+        default value prior to GDAL 3.10)
+      - ``IF_SAME_HOST`` to enable forwarding of Authorization header only if
+        the redirection is to the same host.
+
 -  .. config:: CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE
       :choices: YES, NO
 
