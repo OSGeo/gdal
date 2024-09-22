@@ -60,6 +60,7 @@ def test_pcidsk_1():
 # Test lossless copying (16, multiband) via Create().
 
 
+@pytest.mark.require_driver("PNG")
 def test_pcidsk_2():
 
     tst = gdaltest.GDALTest("PCIDSK", "png/rgba16.png", 2, 2042)
@@ -222,6 +223,7 @@ def test_pcidsk_5(tmp_path):
 # Test FILE interleaving.
 
 
+@pytest.mark.require_driver("PNG")
 def test_pcidsk_8():
 
     tst = gdaltest.GDALTest(
@@ -284,6 +286,7 @@ def test_pcidsk_10():
 # Test INTERLEAVING=TILED interleaving.
 
 
+@pytest.mark.require_driver("PNG")
 def test_pcidsk_11():
 
     tst = gdaltest.GDALTest(
@@ -297,6 +300,7 @@ def test_pcidsk_11():
     tst.testCreate()
 
 
+@pytest.mark.require_driver("PNG")
 def test_pcidsk_11_v1():
 
     tst = gdaltest.GDALTest(
@@ -310,6 +314,7 @@ def test_pcidsk_11_v1():
     tst.testCreate()
 
 
+@pytest.mark.require_driver("PNG")
 def test_pcidsk_11_v2():
 
     tst = gdaltest.GDALTest(
@@ -327,6 +332,7 @@ def test_pcidsk_11_v2():
 # Test INTERLEAVING=TILED interleaving and COMPRESSION=RLE
 
 
+@pytest.mark.require_driver("PNG")
 def test_pcidsk_12():
 
     tst = gdaltest.GDALTest(
@@ -340,6 +346,7 @@ def test_pcidsk_12():
     tst.testCreate()
 
 
+@pytest.mark.require_driver("PNG")
 def test_pcidsk_12_v1():
 
     tst = gdaltest.GDALTest(
@@ -358,6 +365,7 @@ def test_pcidsk_12_v1():
     tst.testCreate()
 
 
+@pytest.mark.require_driver("PNG")
 def test_pcidsk_12_v2():
 
     tst = gdaltest.GDALTest(
