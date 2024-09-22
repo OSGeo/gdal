@@ -29,6 +29,8 @@
 #ifndef OGR_WKB_H_INCLUDED
 #define OGR_WKB_H_INCLUDED
 
+#include <cstdint>
+
 #include "cpl_port.h"
 #include "ogr_core.h"
 
