@@ -156,7 +156,14 @@ def test_mem_2(mem_native_memory):
         for i in range(width * height):
             float_p[i] = 5.0
 
-        dsro = gdal.Open(dsname)
+        with pytest.raises(
+            Exception,
+            match="Opening a MEM dataset with the MEM:::DATAPOINTER= syntax is no longer supported by default for security reasons",
+        ):
+            gdal.Open(dsname)
+
+        with gdal.config_option("GDAL_MEM_ENABLE_OPEN", "YES"):
+            dsro = gdal.Open(dsname)
         if dsro is None:
             free(p)
             pytest.fail("opening MEM dataset failed in read only mode.")
@@ -168,7 +175,8 @@ def test_mem_2(mem_native_memory):
             pytest.fail("checksum failed.")
         dsro = None
 
-        dsup = gdal.Open(dsname, gdal.GA_Update)
+        with gdal.config_option("GDAL_MEM_ENABLE_OPEN", "YES"):
+            dsup = gdal.Open(dsname, gdal.GA_Update)
         if dsup is None:
             free(p)
             pytest.fail("opening MEM dataset failed in update mode.")
@@ -210,9 +218,10 @@ def test_geotransform(ds_definition, expected_sr, mem_native_memory):
     proj_crs = "+proj=laea +lon_0=147 +lat_0=-42"
     ll_crs = """GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0,AUTHORITY[\\"EPSG\\",\\"8901\\"]],UNIT[\\"degree\\",0.0174532925199433,AUTHORITY[\\"EPSG\\",\\"9122\\"]],AXIS[\\"Latitude\\",NORTH],AXIS[\\"Longitude\\",EAST],AUTHORITY[\\"EPSG\\",\\"4326\\"]]"""
 
-    dsro = gdal.Open(
-        ds_definition.format(datapointer=p, proj_crs=proj_crs, ll_crs=ll_crs)
-    )
+    with gdal.config_option("GDAL_MEM_ENABLE_OPEN", "YES"):
+        dsro = gdal.Open(
+            ds_definition.format(datapointer=p, proj_crs=proj_crs, ll_crs=ll_crs)
+        )
     if dsro is None:
         free(p)
         pytest.fail("opening MEM dataset failed in read only mode.")
