@@ -1291,17 +1291,18 @@ bool OGRParquetWriterLayer::IsArrowSchemaSupported(
         osErrorMsg = "BinaryView not supported";
         return false;
     }
-    if (schema->format[0] == '+' && schema->format[1] == 'v' &&
-        schema->format[1] == 'l')
+    if (schema->format[0] == '+' && schema->format[1] == 'v')
     {
-        osErrorMsg = "ListView not supported";
-        return false;
-    }
-    if (schema->format[0] == '+' && schema->format[1] == 'v' &&
-        schema->format[1] == 'L')
-    {
-        osErrorMsg = "LargeListView not supported";
-        return false;
+        if (schema->format[2] == 'l')
+        {
+            osErrorMsg = "ListView not supported";
+            return false;
+        }
+        else if (schema->format[2] == 'L')
+        {
+            osErrorMsg = "LargeListView not supported";
+            return false;
+        }
     }
     for (int64_t i = 0; i < schema->n_children; ++i)
     {

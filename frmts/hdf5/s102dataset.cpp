@@ -514,11 +514,10 @@ bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,
             // I believe this is non-conformant.
 
             // Escape potentials single-quote and double-quote with back-slash
-            const auto osEscapedCompName =
-                CPLString(oType.GetComponents()[0]->GetName())
-                    .replaceAll("\\", "\\\\")
-                    .replaceAll("'", "\\'")
-                    .replaceAll("\"", "\\\"");
+            CPLString osEscapedCompName(oType.GetComponents()[0]->GetName());
+            osEscapedCompName.replaceAll("\\", "\\\\")
+                .replaceAll("'", "\\'")
+                .replaceAll("\"", "\\\"");
 
             // Gets a view with that single component extracted.
             poValuesArray = poValuesArray->GetView(

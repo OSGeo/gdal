@@ -476,7 +476,10 @@ GDALThreadLocalDatasetCache::~GDALThreadLocalDatasetCache()
     {
         // Leak datasets when GDAL has been de-initialized
         if (!m_poCache->empty())
+        {
+            // coverity[leaked_storage]
             CPL_IGNORE_RET_VAL(m_poCache.release());
+        }
         return;
     }
 
@@ -747,6 +750,7 @@ GDALDataset *GDALThreadSafeDataset::RefUnderlyingDataset() const
     // "Clone" the prototype dataset, which in 99% of the cases, involves
     // doing a GDALDataset::Open() call to re-open it. Do that by temporarily
     // dropping the lock that protects poCache->m_oCache.
+    // coverity[uninit_use_in_call]
     oLock.unlock();
     poTLSDS = m_poPrototypeDS->Clone(GDAL_OF_RASTER, /* bCanShareState=*/true);
     if (poTLSDS)
