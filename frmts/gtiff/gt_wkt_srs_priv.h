@@ -40,14 +40,14 @@
 
 #else
 
-int GDALGTIFKeyGetASCII(GTIF *hGTIF, geokey_t key, char *szStr,
-                        int szStrMaxLen);
+int CPL_DLL GDALGTIFKeyGetASCII(GTIF *hGTIF, geokey_t key, char *szStr,
+                                int szStrMaxLen);
 
-int GDALGTIFKeyGetSHORT(GTIF *hGTIF, geokey_t key, unsigned short *pnVal,
-                        int nIndex, int nCount);
+int CPL_DLL GDALGTIFKeyGetSHORT(GTIF *hGTIF, geokey_t key,
+                                unsigned short *pnVal, int nIndex, int nCount);
 
-int GDALGTIFKeyGetDOUBLE(GTIF *hGTIF, geokey_t key, double *pdfVal, int nIndex,
-                         int nCount);
+int CPL_DLL GDALGTIFKeyGetDOUBLE(GTIF *hGTIF, geokey_t key, double *pdfVal,
+                                 int nIndex, int nCount);
 
 #endif
 
