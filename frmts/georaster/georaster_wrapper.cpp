@@ -217,7 +217,8 @@ char **GeoRasterWrapper::ParseIdentificator(const char *pszStringID)
     char **papszParam =
         CSLTokenizeString2(pszStartPos, ",@",
                            CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS |
-                               CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+                               CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES |
+                               CSLT_PRESERVEQUOTES);
 
     //  -------------------------------------------------------------------
     //  The "/" should not be catch on the previous parser
