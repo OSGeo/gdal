@@ -55,8 +55,9 @@ if (NOT GDAL_ENABLE_DRIVER_VRT)
     # Most of it
     add_subdirectory(vrt)
 endif()
+
 # Note: derived is derived of vrt
-add_subdirectory(derived)
+gdal_optional_format(derived "Derived datasets")
 
 gdal_optional_format(gti "GDAL Tile Index")
 

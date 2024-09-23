@@ -118,6 +118,10 @@ if (ENABLE_PAM)
   target_compile_definitions(gcore PRIVATE -DPAM_ENABLED)
 endif ()
 
+if (NOT GDAL_ENABLE_DRIVER_DERIVED)
+  target_compile_definitions(gcore PRIVATE -DWITHOUT_DERIVED)
+endif ()
+
 add_subdirectory(mdreader)
 
 # External libs now

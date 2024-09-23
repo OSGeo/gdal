@@ -329,6 +329,9 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_vrt
     GDALRegister_VRT();
+#endif
+
+#ifdef FRMT_derived
     GDALRegister_Derived();
 #endif
 
