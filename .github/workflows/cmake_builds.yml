@@ -485,6 +485,17 @@ jobs:
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
         export PATH=$GITHUB_WORKSPACE/install-gdal/Scripts:$PATH
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages gdal_edit --version
+    - name: Check the build includes the expected drivers
+      shell: bash -l {0}
+      run: |
+        export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
+        gdalinfo --formats > found_formats.txt
+        ogrinfo --formats >> found_formats.txt
+        cat found_formats.txt
+        cat $GITHUB_WORKSPACE/.github/workflows/windows_conda_expected_gdalinfo_formats.txt $GITHUB_WORKSPACE/.github/workflows/windows_conda_expected_ogrinfo_formats.txt > expected_formats.txt
+        dos2unix expected_formats.txt
+        dos2unix found_formats.txt
+        diff -u expected_formats.txt found_formats.txt
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc
