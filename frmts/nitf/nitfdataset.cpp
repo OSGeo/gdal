@@ -7210,7 +7210,7 @@ void NITFDriver::InitCreationOptionList()
 void GDALRegister_NITF()
 
 {
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    if (GDALGetDriverByName(NITF_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new NITFDriver();
@@ -7221,4 +7221,9 @@ void GDALRegister_NITF()
     poDriver->pfnCreateCopy = NITFDataset::NITFCreateCopy;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
+
+#ifdef NITF_PLUGIN
+    GDALRegister_RPFTOC();
+    GDALRegister_ECRGTOC();
+#endif
 }

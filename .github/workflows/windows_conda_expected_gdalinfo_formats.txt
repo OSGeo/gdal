@@ -5,6 +5,8 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   GTiff -raster- (rw+vs): GeoTIFF (*.tif, *.tiff)
   COG -raster- (wv): Cloud optimized GeoTIFF generator (*.tif, *.tiff)
   NITF -raster- (rw+vs): National Imagery Transmission Format (*.ntf)
+  RPFTOC -raster- (rovs): Raster Product Format TOC format (*.toc)
+  ECRGTOC -raster- (rovs): ECRG TOC format (*.xml)
   HFA -raster- (rw+v): Erdas Imagine Images (.img) (*.img)
   SAR_CEOS -raster- (rov): CEOS SAR Image
   CEOS -raster- (rov): CEOS Image

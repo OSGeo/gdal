@@ -42,6 +42,11 @@ target_include_directories(gdal_NITF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gt
 
 set_property(SOURCE nitfwritejpeg.cpp nitfwritejpeg_12.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 
+# When build as plugin, initialize all drivers from GDALRegister_NITF
+if (GDAL_ENABLE_DRIVER_NITF_PLUGIN)
+  target_compile_definitions(gdal_NITF PRIVATE -DNITF_PLUGIN)
+endif ()
+
 if (GDAL_USE_TIFF_INTERNAL)
   gdal_add_vendored_lib(gdal_NITF libtiff)
 endif()

@@ -66,7 +66,7 @@ typedef struct
     int nCCS_C;
 } NITFSegmentInfo;
 
-typedef struct
+typedef struct NITFFile
 {
     VSILFILE *fp;
 
