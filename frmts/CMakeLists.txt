@@ -139,6 +139,7 @@ gdal_optional_format(grib "WMO General Regularly-distributed Information in Bina
 gdal_optional_format(bmp "Microsoft Windows Device Independent Bitmap")
 gdal_optional_format(tga "TGA")
 gdal_optional_format(stacta "STACTA")
+gdal_optional_format(snap_tiff "SNAP TIFF")
 
 # optional Formats
 gdal_optional_format(bsb "Maptech/NOAA BSB Nautical Chart Format")

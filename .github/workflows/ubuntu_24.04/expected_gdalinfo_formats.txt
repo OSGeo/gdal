@@ -2,6 +2,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   VRT -raster,multidimensional raster- (rw+v): Virtual Raster (*.vrt)
   DERIVED -raster- (ro): Derived datasets using VRT pixel functions
   GTI -raster- (rov): GDAL Raster Tile Index (*.gti.gpkg, *.gti.fgb, *.gti)
+  SNAP_TIFF -raster- (rov): Sentinel Application Processing GeoTIFF (*.tif, *.tiff)
   GTiff -raster- (rw+vs): GeoTIFF (*.tif, *.tiff)
   COG -raster- (wv): Cloud optimized GeoTIFF generator (*.tif, *.tiff)
   NITF -raster- (rw+vs): National Imagery Transmission Format (*.ntf)
