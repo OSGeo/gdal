@@ -5244,3 +5244,25 @@ def test_tiff_read_missing_extrasamples_multi_threaded():
     with gdal.config_option("GDAL_NUM_THREADS", "2"):
         ds.ReadRaster()
     assert gdal.GetLastErrorMsg() == ""
+
+
+###############################################################################
+# Check that cleaning overviews on a DIMAP2 GeoTIFF file with external overviews
+# does not cause the DIMAP XML file to be cleaned
+
+
+def test_tiff_read_ovr_dimap_pleiades(tmp_path):
+
+    shutil.copytree("../gdrivers/data/dimap2/bundle", tmp_path / "bundle")
+    filename = str(tmp_path / "bundle" / "IMG_foo_R1C1.TIF")
+    ds = gdal.Open(filename)
+    ds.BuildOverviews("NEAR", [2])
+    ds = None
+    ds = gdal.Open(filename + ".ovr")
+    assert ds.GetFileList() == [filename + ".ovr"]
+    ds = None
+    ds = gdal.Open(filename)
+    ds.BuildOverviews("", [])
+    ds = None
+    # Check that cleaning overviews did not suppress the DIMAP XML file
+    assert os.path.exists(tmp_path / "bundle" / "DIM_foo.XML")
