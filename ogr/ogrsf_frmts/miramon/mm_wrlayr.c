@@ -6255,6 +6255,11 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
             hMiraMonLayer->nSRSType = MM_SRS_LAYER_IS_GEOGRAPHIC_TYPE;
     }
 
+    // Before allocating new memory, there might be some previously allocated but unused memory.
+    // Let's free that memory first.
+    if (hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP)
+        MM_ReleaseDBFHeader(&hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP);
+
     if (hMiraMonLayer->bIsPoint)
     {
         if (hMiraMonLayer->pLayerDB)
@@ -6293,6 +6298,11 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                           : 9)))
             return 1;
 
+        // Before allocating new memory, there might be some previously allocated but unused memory.
+        // Let's free that memory first.
+        if (hMiraMonLayer->MMArc.MMNode.MMAdmDB.pMMBDXP)
+            MM_ReleaseDBFHeader(&hMiraMonLayer->MMArc.MMNode.MMAdmDB.pMMBDXP);
+
         pBD_XP_Aux = hMiraMonLayer->MMArc.MMNode.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(3, hMiraMonLayer->nCharSet);
 
@@ -6325,6 +6335,11 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                      ? 3
                      : 12)))
             return 1;
+
+        // Before allocating new memory, there might be some previously allocated but unused memory.
+        // Let's free that memory first.
+        if (hMiraMonLayer->MMArc.MMNode.MMAdmDB.pMMBDXP)
+            MM_ReleaseDBFHeader(&hMiraMonLayer->MMArc.MMNode.MMAdmDB.pMMBDXP);
 
         pBD_XP_Aux = hMiraMonLayer->MMPolygon.MMArc.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(5, hMiraMonLayer->nCharSet);
