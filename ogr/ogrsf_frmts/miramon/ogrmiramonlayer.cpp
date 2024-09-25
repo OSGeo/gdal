@@ -527,6 +527,9 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         if (MMCloseLayer(&hMiraMonLayerPOL))
         {
             CPLDebugOnly("MiraMon", "Error closing polygons layer");
+
+            // In case of closing we need to destroy memory
+            MMDestroyLayer(&hMiraMonLayerPOL);
         }
         if (hMiraMonLayerPOL.TopHeader.nElemCount)
         {
@@ -548,6 +551,9 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         if (MMCloseLayer(&hMiraMonLayerARC))
         {
             CPLDebugOnly("MiraMon", "Error closing arcs layer");
+
+            // In case of closing we need to destroy memory
+            MMDestroyLayer(&hMiraMonLayerARC);
         }
         if (hMiraMonLayerARC.TopHeader.nElemCount)
         {
@@ -570,6 +576,9 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         if (MMCloseLayer(&hMiraMonLayerPNT))
         {
             CPLDebugOnly("MiraMon", "Error closing points layer");
+
+            // In case of closing we need to destroy memory
+            MMDestroyLayer(&hMiraMonLayerPNT);
         }
         if (hMiraMonLayerPNT.TopHeader.nElemCount)
         {
@@ -593,7 +602,11 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
             {
                 CPLDebugOnly("MiraMon", "Closing MiraMon DBF table ...");
             }
-            MMCloseLayer(&hMiraMonLayerReadOrNonGeom);
+            if (MMCloseLayer(&hMiraMonLayerReadOrNonGeom))
+            {
+                // In case of closing we need to destroy memory
+                MMDestroyLayer(&hMiraMonLayerReadOrNonGeom);
+            }
             if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITING_MODE)
             {
                 CPLDebugOnly("MiraMon", "MiraMon DBF table closed");
@@ -610,7 +623,11 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         {
             CPLDebugOnly("MiraMon", "Closing MiraMon layer ...");
         }
-        MMCloseLayer(&hMiraMonLayerReadOrNonGeom);
+        if (MMCloseLayer(&hMiraMonLayerReadOrNonGeom))
+        {
+            // In case of closing we need to destroy memory
+            MMDestroyLayer(&hMiraMonLayerReadOrNonGeom);
+        }
         if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITING_MODE)
         {
             CPLDebugOnly("MiraMon", "MiraMon layer closed");
