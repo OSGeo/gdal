@@ -16,8 +16,9 @@ A GIF image with transparency will have that entry marked as having an
 alpha value of 0.0 (transparent). Also, the transparent value will be
 returned as the NoData value for the band.
 
-If an ESRI world file exists with the .gfw, .gifw or .wld extension, it
-will be read and used to establish the geotransform for the image.
+If an ESRI :ref:`world file <raster.wld>` exists with the .gfw, .gifw
+or .wld extension, it will be read and used to establish the geotransform
+for the image.
 
 XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.
@@ -45,6 +46,7 @@ The following creation options are supported:
      :default: OFF
 
      Force the generation of an associated ESRI world file (.wld).
+     See :ref:`World Files <raster.wld>` section for details.
 
 - .. co:: INTERLACING
      :choices: ON, OFF

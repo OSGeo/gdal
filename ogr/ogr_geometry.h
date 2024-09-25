@@ -3047,6 +3047,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRErr addGeometryDirectly(OGRGeometry *);
     OGRErr addGeometry(std::unique_ptr<OGRGeometry> geom);
     virtual OGRErr removeGeometry(int iIndex, int bDelete = TRUE);
+    std::unique_ptr<OGRGeometry> stealGeometry(int iIndex);
 
     bool hasEmptyParts() const override;
     void removeEmptyParts() override;
@@ -4283,6 +4284,12 @@ class CPL_DLL OGRGeometryFactory
         TransformWithOptionsCache();
         ~TransformWithOptionsCache();
     };
+
+    //! @cond Doxygen_Suppress
+    static bool isTransformWithOptionsRegularTransform(
+        const OGRSpatialReference *poSourceCRS,
+        const OGRSpatialReference *poTargetCRS, CSLConstList papszOptions);
+    //! @endcond
 
     static OGRGeometry *transformWithOptions(
         const OGRGeometry *poSrcGeom, OGRCoordinateTransformation *poCT,

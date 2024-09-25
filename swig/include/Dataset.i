@@ -300,6 +300,17 @@ public:
     return (GDALRasterBandShadow*) GDALGetRasterBand( self, nBand );
   }
 
+  bool IsThreadSafe(int nScopeFlags)
+  {
+      return GDALDatasetIsThreadSafe(self, nScopeFlags, nullptr);
+  }
+
+%newobject GetThreadSafeDataset;
+  GDALDatasetShadow* GetThreadSafeDataset(int nScopeFlags)
+  {
+      return GDALGetThreadSafeDataset(self, nScopeFlags, nullptr);
+  }
+
 %newobject GetRootGroup;
   GDALGroupHS* GetRootGroup() {
     return GDALDatasetGetRootGroup(self);

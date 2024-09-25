@@ -214,10 +214,10 @@ char **GeoRasterWrapper::ParseIdentificator(const char *pszStringID)
 
     char *pszStartPos = (char *)strstr(pszStringID, ":") + 1;
 
-    char **papszParam =
-        CSLTokenizeString2(pszStartPos, ",@",
-                           CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS |
-                               CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+    char **papszParam = CSLTokenizeString2(
+        pszStartPos, ",@",
+        CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES |
+            CSLT_STRIPENDSPACES | CSLT_PRESERVEQUOTES);
 
     //  -------------------------------------------------------------------
     //  The "/" should not be catch on the previous parser
@@ -4236,13 +4236,13 @@ void GeoRasterWrapper::UncompressJpeg(unsigned long nInSize)
     //  Load JPEG in a virtual file
     //  --------------------------------------------------------------------
 
-    const char *pszMemFile = CPLSPrintf("/vsimem/geor_%p.jpg", pabyBlockBuf);
+    const CPLString osMemFile = VSIMemGenerateHiddenFilename("geor.jpg");
 
-    VSILFILE *fpImage = VSIFOpenL(pszMemFile, "wb");
+    VSILFILE *fpImage = VSIFOpenL(osMemFile, "wb");
     VSIFWriteL(pabyBlockBuf, nInSize, 1, fpImage);
     VSIFCloseL(fpImage);
 
-    fpImage = VSIFOpenL(pszMemFile, "rb");
+    fpImage = VSIFOpenL(osMemFile, "rb");
 
     //  --------------------------------------------------------------------
     //  Initialize decompressor
@@ -4299,7 +4299,7 @@ void GeoRasterWrapper::UncompressJpeg(unsigned long nInSize)
 
     VSIFCloseL(fpImage);
 
-    VSIUnlink(pszMemFile);
+    VSIUnlink(osMemFile);
 }
 
 //  ---------------------------------------------------------------------------
@@ -4312,9 +4312,9 @@ unsigned long GeoRasterWrapper::CompressJpeg(void)
     //  Load JPEG in a virtual file
     //  --------------------------------------------------------------------
 
-    const char *pszMemFile = CPLSPrintf("/vsimem/geor_%p.jpg", pabyBlockBuf);
+    const CPLString osMemFile = VSIMemGenerateHiddenFilename("geor.jpg");
 
-    VSILFILE *fpImage = VSIFOpenL(pszMemFile, "wb");
+    VSILFILE *fpImage = VSIFOpenL(osMemFile, "wb");
 
     bool write_all_tables = TRUE;
 
@@ -4389,11 +4389,11 @@ unsigned long GeoRasterWrapper::CompressJpeg(void)
 
     VSIFCloseL(fpImage);
 
-    fpImage = VSIFOpenL(pszMemFile, "rb");
+    fpImage = VSIFOpenL(osMemFile, "rb");
     size_t nSize = VSIFReadL(pabyCompressBuf, 1, nBlockBytes, fpImage);
     VSIFCloseL(fpImage);
 
-    VSIUnlink(pszMemFile);
+    VSIUnlink(osMemFile);
 
     return (unsigned long)nSize;
 }

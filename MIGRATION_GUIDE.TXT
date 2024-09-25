@@ -18,6 +18,9 @@ MIGRATION GUIDE FROM GDAL 3.9 to GDAL 3.10
 - Python bindings: Band.GetStatistics() and Band.ComputeStatistics() now
   return a None value in case of error (when exceptions are not enabled)
 
+- New color interpretation (GCI_xxxx) items have been added to the GDALColorInterp
+  enumeration. Code testing color interpretation may need to be adapted.
+
 MIGRATION GUIDE FROM GDAL 3.8 to GDAL 3.9
 -----------------------------------------
 

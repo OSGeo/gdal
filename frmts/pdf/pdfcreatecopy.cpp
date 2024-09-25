@@ -4311,7 +4311,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
         eCompressMethod == COMPRESS_JPEG2000)
     {
         GDALDriver *poJPEGDriver = nullptr;
-        char szTmp[64];
+        std::string osTmpfilename;
         char **papszOptions = nullptr;
 
         bool bEcwEncodeKeyRequiredButNotFound = false;
@@ -4321,7 +4321,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
             if (poJPEGDriver != nullptr && nJPEGQuality > 0)
                 papszOptions = CSLAddString(
                     papszOptions, CPLSPrintf("QUALITY=%d", nJPEGQuality));
-            snprintf(szTmp, sizeof(szTmp), "/vsimem/pdftemp/%p.jpg", this);
+            osTmpfilename = VSIMemGenerateHiddenFilename("pdf_temp.jpg");
         }
         else
         {
@@ -4374,7 +4374,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
                     papszOptions = CSLAddString(papszOptions, "GMLJP2=OFF");
                 }
             }
-            snprintf(szTmp, sizeof(szTmp), "/vsimem/pdftemp/%p.jp2", this);
+            osTmpfilename = VSIMemGenerateHiddenFilename("pdf_temp.jp2");
         }
 
         if (poJPEGDriver == nullptr)
@@ -4396,8 +4396,8 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
         }
 
         GDALDataset *poJPEGDS =
-            poJPEGDriver->CreateCopy(szTmp, poBlockSrcDS, FALSE, papszOptions,
-                                     pfnProgress, pProgressData);
+            poJPEGDriver->CreateCopy(osTmpfilename.c_str(), poBlockSrcDS, FALSE,
+                                     papszOptions, pfnProgress, pProgressData);
 
         CSLDestroy(papszOptions);
         if (poJPEGDS == nullptr)
@@ -4409,7 +4409,8 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
         GDALClose(poJPEGDS);
 
         vsi_l_offset nJPEGDataSize = 0;
-        GByte *pabyJPEGData = VSIGetMemFileBuffer(szTmp, &nJPEGDataSize, TRUE);
+        GByte *pabyJPEGData =
+            VSIGetMemFileBuffer(osTmpfilename.c_str(), &nJPEGDataSize, TRUE);
         VSIFWriteL(pabyJPEGData, static_cast<size_t>(nJPEGDataSize), 1, m_fp);
         CPLFree(pabyJPEGData);
     }

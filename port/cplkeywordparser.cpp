@@ -247,7 +247,7 @@ bool CPLKeywordParser::ReadPair(CPLString &osName, CPLString &osValue)
                 osTxt.resize(nSemiColonPos);
                 osValue = osTxt;
                 while (!osValue.empty() && osValue.back() == ' ')
-                    osValue.resize(osValue.size() - 1);
+                    osValue.pop_back();
                 return true;
             }
         }

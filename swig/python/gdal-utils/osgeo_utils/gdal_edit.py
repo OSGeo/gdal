@@ -50,7 +50,7 @@ def Usage(isError):
         "                 [-offset <value>] [-scale <value>] [-units <value>]", file=f
     )
     print(
-        "                 [-colorinterp_<X> {red|green|blue|alpha|gray|undefined]]...",
+        "                 [-colorinterp_<X> {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...]]...",
         file=f,
     )
     print("                 [-a_coord_epoch <epoch>] [-unsetepoch]", file=f)
@@ -251,26 +251,17 @@ def gdal_edit(argv):
             i = i + 1
         elif argv[i].startswith("-colorinterp_") and i < len(argv) - 1:
             band = int(argv[i][len("-colorinterp_") :])
-            val = argv[i + 1]
-            if val.lower() == "red":
-                val = gdal.GCI_RedBand
-            elif val.lower() == "green":
-                val = gdal.GCI_GreenBand
-            elif val.lower() == "blue":
-                val = gdal.GCI_BlueBand
-            elif val.lower() == "alpha":
-                val = gdal.GCI_AlphaBand
-            elif val.lower() == "gray" or val.lower() == "grey":
-                val = gdal.GCI_GrayIndex
-            elif val.lower() == "undefined":
+            val_str = argv[i + 1]
+            if val_str.lower() == "undefined":
                 val = gdal.GCI_Undefined
             else:
-                print(
-                    "Unsupported color interpretation %s.\n" % val
-                    + "Only red, green, blue, alpha, gray, undefined are supported.\n",
-                    file=sys.stderr,
-                )
-                return Usage(isError=True)
+                val = gdal.GetColorInterpretationByName(val_str)
+                if val == gdal.GCI_Undefined:
+                    print(
+                        "Unsupported color interpretation %s.\n" % val_str,
+                        file=sys.stderr,
+                    )
+                    return Usage(isError=True)
             colorinterp[band] = val
             i = i + 1
         elif argv[i][0] == "-":

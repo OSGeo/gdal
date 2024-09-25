@@ -2401,9 +2401,12 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     {
         char **papszBandNames = poDS->SplitList(pszBandNames);
         char **papszWL = poDS->SplitList(pszWaveLength);
+        const char *pszFWHM = poDS->m_aosHeader["fwhm"];
+        char **papszFWHM = pszFWHM ? poDS->SplitList(pszFWHM) : nullptr;
 
         const char *pszWLUnits = nullptr;
         const int nWLCount = CSLCount(papszWL);
+        const int nFWHMCount = CSLCount(papszFWHM);
         if (papszWL)
         {
             // If WL information is present, process wavelength units.
@@ -2460,6 +2463,29 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             CPLString osBandId = CPLSPrintf("Band_%i", i + 1);
             poDS->SetMetadataItem(osBandId, osBandName.c_str());
 
+            const auto ConvertWaveLength =
+                [pszWLUnits](double dfVal) -> const char *
+            {
+                if (EQUAL(pszWLUnits, "Micrometers") || EQUAL(pszWLUnits, "um"))
+                {
+                    return CPLSPrintf("%.3f", dfVal);
+                }
+                else if (EQUAL(pszWLUnits, "Nanometers") ||
+                         EQUAL(pszWLUnits, "nm"))
+                {
+                    return CPLSPrintf("%.3f", dfVal / 1000);
+                }
+                else if (EQUAL(pszWLUnits, "Millimeters") ||
+                         EQUAL(pszWLUnits, "mm"))
+                {
+                    return CPLSPrintf("%.3f", dfVal * 1000);
+                }
+                else
+                {
+                    return nullptr;
+                }
+            };
+
             // Set wavelength metadata to band.
             if (papszWL && nWLCount > i)
             {
@@ -2470,11 +2496,29 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                 {
                     poDS->GetRasterBand(i + 1)->SetMetadataItem(
                         "wavelength_units", pszWLUnits);
+
+                    if (const char *pszVal =
+                            ConvertWaveLength(CPLAtof(papszWL[i])))
+                    {
+                        poDS->GetRasterBand(i + 1)->SetMetadataItem(
+                            "CENTRAL_WAVELENGTH_UM", pszVal, "IMAGERY");
+                    }
+                }
+            }
+
+            if (papszFWHM && nFWHMCount > i && pszWLUnits)
+            {
+                if (const char *pszVal =
+                        ConvertWaveLength(CPLAtof(papszFWHM[i])))
+                {
+                    poDS->GetRasterBand(i + 1)->SetMetadataItem(
+                        "FWHM_UM", pszVal, "IMAGERY");
                 }
             }
         }
         CSLDestroy(papszWL);
         CSLDestroy(papszBandNames);
+        CSLDestroy(papszFWHM);
     }
 
     // Apply "default bands" if we have it to set RGB color interpretation.

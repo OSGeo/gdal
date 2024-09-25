@@ -335,3 +335,13 @@ div.horizontal-logos::after {
     clear: both;
     display: table;
 }
+
+
+/* background of logo area */
+div.wy-side-nav-search {
+    background: white
+}
+
+.wy-side-nav-search > div.version {
+    color: #343131
+}

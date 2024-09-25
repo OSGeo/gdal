@@ -593,7 +593,7 @@ def test_jpeg_17():
 
     assert not (
         gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == ""
-    )
+    ), "Premature end of file should be a failure by default"
 
     gdal.ErrorReset()
     ds = gdal.Open("data/jpeg/byte_corrupted2.jpg")
@@ -603,7 +603,7 @@ def test_jpeg_17():
 
     assert not (
         gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == ""
-    )
+    ), "Premature end of file should be a failure with GDAL_ERROR_ON_LIBJPEG_WARNING = TRUE"
 
     gdal.ErrorReset()
     ds = gdal.Open("data/jpeg/byte_corrupted2.jpg")
@@ -613,7 +613,35 @@ def test_jpeg_17():
 
     assert not (
         gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == ""
-    )
+    ), "Premature end of file should be a warning with GDAL_ERROR_ON_LIBJPEG_WARNING = FALSE"
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler("CPLQuietErrorHandler"):
+        ds = gdal.Open("data/jpeg/byte_corrupted3.jpg")
+        assert ds.GetRasterBand(1).Checksum() != 0
+
+    assert not (
+        gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == ""
+    ), "Extraneous bytes before marker should be a warning by default"
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler("CPLQuietErrorHandler"):
+        with gdaltest.config_option("GDAL_ERROR_ON_LIBJPEG_WARNING", "TRUE"):
+            ds = gdal.Open("data/jpeg/byte_corrupted3.jpg")
+
+    assert not (
+        gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == ""
+    ), "Extraneous bytes before marker should be a failure with GDAL_ERROR_ON_LIBJPEG_WARNING = TRUE"
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler("CPLQuietErrorHandler"):
+        with gdaltest.config_option("GDAL_ERROR_ON_LIBJPEG_WARNING", "FALSE"):
+            ds = gdal.Open("data/jpeg/byte_corrupted3.jpg")
+            assert ds.GetRasterBand(1).Checksum() != 0
+
+    assert not (
+        gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == ""
+    ), "Extraneous bytes before marker should be a warning with GDAL_ERROR_ON_LIBJPEG_WARNING = FALSE"
 
 
 ###############################################################################

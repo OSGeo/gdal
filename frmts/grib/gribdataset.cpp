@@ -1489,10 +1489,7 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
     // for other thread safe formats
     CPLMutexHolderD(&hGRIBMutex);
 
-    CPLString tmpFilename;
-    tmpFilename.Printf("/vsimem/gribdataset-%p", poOpenInfo);
-
-    VSILFILE *memfp = VSIFileFromMemBuffer(tmpFilename, poOpenInfo->pabyHeader,
+    VSILFILE *memfp = VSIFileFromMemBuffer(nullptr, poOpenInfo->pabyHeader,
                                            poOpenInfo->nHeaderBytes, FALSE);
     if (memfp == nullptr ||
         ReadSECT0(memfp, &buff, &buffLen, -1, sect0, &gribLen, &version) < 0)
@@ -1500,7 +1497,6 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
         if (memfp != nullptr)
         {
             VSIFCloseL(memfp);
-            VSIUnlink(tmpFilename);
         }
         free(buff);
         char *errMsg = errSprintf(nullptr);
@@ -1510,7 +1506,6 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
     VSIFCloseL(memfp);
-    VSIUnlink(tmpFilename);
     free(buff);
 
     // Confirm the requested access is supported.

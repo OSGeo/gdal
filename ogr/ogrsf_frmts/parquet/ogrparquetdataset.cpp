@@ -32,6 +32,7 @@
 
 #include "../arrow_common/ograrrowdataset.hpp"
 #include "../arrow_common/ograrrowlayer.hpp"
+#include "../arrow_common/vsiarrowfilesystem.hpp"
 
 /************************************************************************/
 /*                         OGRParquetDataset()                          */
@@ -41,6 +42,25 @@ OGRParquetDataset::OGRParquetDataset(
     const std::shared_ptr<arrow::MemoryPool> &poMemoryPool)
     : OGRArrowDataset(poMemoryPool)
 {
+}
+
+/************************************************************************/
+/*                        ~OGRParquetDataset()                          */
+/************************************************************************/
+
+OGRParquetDataset::~OGRParquetDataset()
+{
+    // libarrow might continue to do I/O in auxiliary threads on the underlying
+    // files when using the arrow::dataset API even after we closed the dataset.
+    // This is annoying as it can cause crashes when closing GDAL, in particular
+    // the virtual file manager, as this could result in VSI files being
+    // accessed after their VSIVirtualFileSystem has been destroyed, resulting
+    // in crashes. The workaround is to make sure that VSIArrowFileSystem
+    // waits for all file handles it is aware of to have been destroyed.
+    close();
+    auto poFS = std::dynamic_pointer_cast<VSIArrowFileSystem>(m_poFS);
+    if (poFS)
+        poFS->AskToClose();
 }
 
 /***********************************************************************/

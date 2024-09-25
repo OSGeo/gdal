@@ -37,6 +37,7 @@
 #include <limits>
 #include <list>
 #include <mutex>
+#include <thread>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -765,6 +766,9 @@ class OGRProjCT : public OGRCoordinateTransformation
 
     double dfThreshold = 0.0;
 
+    PJ_CONTEXT *m_psLastContext = nullptr;
+    std::thread::id m_nLastContextThreadId{};
+
     PjPtr m_pj{};
     bool m_bReversePj = false;
 
@@ -1277,9 +1281,10 @@ OGRProjCT::OGRProjCT(const OGRProjCT &other)
       m_osTargetSRS(other.m_osTargetSRS),
       bWebMercatorToWGS84LongLat(other.bWebMercatorToWGS84LongLat),
       nErrorCount(other.nErrorCount), dfThreshold(other.dfThreshold),
-      m_pj(other.m_pj), m_bReversePj(other.m_bReversePj),
-      m_bEmitErrors(other.m_bEmitErrors), bNoTransform(other.bNoTransform),
-      m_eStrategy(other.m_eStrategy),
+      m_psLastContext(nullptr),
+      m_nLastContextThreadId(std::this_thread::get_id()), m_pj(other.m_pj),
+      m_bReversePj(other.m_bReversePj), m_bEmitErrors(other.m_bEmitErrors),
+      bNoTransform(other.bNoTransform), m_eStrategy(other.m_eStrategy),
       m_oTransformations(other.m_oTransformations),
       m_iCurTransformation(other.m_iCurTransformation),
       m_options(other.m_options)
@@ -2232,6 +2237,18 @@ int OGRCoordinateTransformation::TransformWithErrorCodes(size_t nCount,
                                                          int *panErrorCodes)
 
 {
+    if (nCount == 1)
+    {
+        int nSuccess = 0;
+        const bool bOverallSuccess =
+            CPL_TO_BOOL(Transform(nCount, x, y, z, t, &nSuccess));
+        if (panErrorCodes)
+        {
+            panErrorCodes[0] = nSuccess ? 0 : -1;
+        }
+        return bOverallSuccess;
+    }
+
     std::vector<int> abSuccess;
     try
     {
@@ -2532,7 +2549,15 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
     /*      Select dynamically the best transformation for the data, if     */
     /*      needed.                                                         */
     /* -------------------------------------------------------------------- */
-    auto ctx = OSRGetProjTLSContext();
+    PJ_CONTEXT *ctx = m_psLastContext;
+    const auto nThisThreadId = std::this_thread::get_id();
+    if (!ctx || nThisThreadId != m_nLastContextThreadId)
+    {
+        m_nLastContextThreadId = nThisThreadId;
+        m_psLastContext = OSRGetProjTLSContext();
+        ctx = m_psLastContext;
+    }
+
     PJ *pj = m_pj;
     if (!bTransformDone && !pj)
     {

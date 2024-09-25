@@ -425,7 +425,7 @@ def test_gdal_rasterize_8(gdal_rasterize_path, tmp_path):
     f.write('"LINESTRING (0 0, 5 5, 10 0, 10 10)",1'.encode("ascii"))
     f.close()
 
-    cmds = f"""{input_csv} {output_tif} -init 0 -burn 1 -tr 1 1"""
+    cmds = f"""{input_csv} {output_tif} -tr 1 1 -init 0 -burn 1"""
 
     gdaltest.runexternal(gdal_rasterize_path + " " + cmds)
 

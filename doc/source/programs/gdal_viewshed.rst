@@ -23,6 +23,7 @@ Synopsis
                  -ox <observer_x> -oy <observer_y>
                  [-vv <visibility>] [-iv <invisibility>]
                  [-ov <out_of_range>] [-cc <curvature_coef>]
+                 [-os <observer_spacing>] [-j <relative job count>]
                  [-co <NAME>=<VALUE>]...
                  [-q] [-om <output mode>]
                  <src_filename> <dst_filename>
@@ -62,13 +63,13 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
    The X position of the observer (in SRS units).  If the coordinate is outside of the
    raster, all space between the observer and the raster is assumed not to occlude
-   visibility of the raster.
+   visibility of the raster. (Not supported in cumulative mode.)
 
 .. option:: -oy <value>
 
    The Y position of the observer (in SRS units).  If the coordinate is outside of the
    raster, all space between the observer and the raster is assumed not to occlude
-   visibility of the raster.
+   visibility of the raster. (Not supported in cumulative mode.)
 
 .. option:: -oz <value>
 
@@ -80,8 +81,9 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
 .. option:: -md <value>
 
-   Maximum distance from observer to compute visibiliy.
+   Maximum distance from observer to compute visibility.
    It is also used to clamp the extent of the output raster.
+   (Not supported in cumulative mode)
 
 .. option:: -cc <value>
 
@@ -128,22 +130,22 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
 .. option:: -iv <value>
 
-   Pixel value to set for invisible areas. Default: 0
+   Pixel value to set for invisible areas. (Not supported in cumulative mode) Default: 0
 
 .. option:: -ov <value>
 
    Pixel value to set for the cells that fall outside of the range specified by
-   the observer location and the maximum distance. Default: 0
+   the observer location and the maximum distance. (Not supported in cumulative mode) Default: 0
 
 .. option:: -vv <value>
 
-   Pixel value to set for visible areas. Default: 255
+   Pixel value to set for visible areas. (Not supported in cumulative mode) Default: 255
 
 .. option:: -om <output mode>
 
   Sets what information the output contains.
 
-  Possible values: NORMAL, DEM, GROUND
+  Possible values: NORMAL, DEM, GROUND, ACCUM
 
   NORMAL returns a raster of type Byte containing visible locations.
 
@@ -151,7 +153,20 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
   height for target to be visible from the DEM surface or ground level respectively.
   Flags -tz, -iv and -vv will be ignored.
 
+  Cumulative (ACCUM) mode will create an eight bit raster the same size as the input raster
+  where each cell represents the relative observability from a grid of observer points.
+  See the -os option.
+
   Default NORMAL
+
+.. option:: -os <value>
+
+   Cell Spacing between observers (only supported in cumulative mode) Default: 10
+
+.. option:: -j <value>
+
+   Relative number of jobs to run at once. (only supported in cumulative mode) Default: 3
+
 
 C API
 -----

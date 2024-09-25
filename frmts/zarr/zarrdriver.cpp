@@ -58,7 +58,7 @@ GDALDataset *ZarrDataset::OpenMultidim(const char *pszFilename,
 {
     CPLString osFilename(pszFilename);
     if (osFilename.back() == '/')
-        osFilename.resize(osFilename.size() - 1);
+        osFilename.pop_back();
 
     auto poSharedResource = ZarrSharedResource::Create(osFilename, bUpdateMode);
     poSharedResource->SetOpenOptions(papszOpenOptionsIn);

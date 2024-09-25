@@ -511,10 +511,15 @@ bool OGCAPIDataset::Download(const CPLString &osURL, const char *pszPostContent,
 
     if (psResult->pszErrBuf != nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                 psResult->pabyData
-                     ? reinterpret_cast<const char *>(psResult->pabyData)
-                     : psResult->pszErrBuf);
+        std::string osErrorMsg(psResult->pszErrBuf);
+        const char *pszData =
+            reinterpret_cast<const char *>(psResult->pabyData);
+        if (pszData)
+        {
+            osErrorMsg += ", ";
+            osErrorMsg.append(pszData, CPLStrnlen(pszData, 1000));
+        }
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
         CPLHTTPDestroyResult(psResult);
         return false;
     }
@@ -633,8 +638,7 @@ OGCAPIDataset::OpenTile(const CPLString &osURLPattern, int nMatrix, int nColumn,
     if (bEmptyContent)
         return nullptr;
 
-    CPLString osTempFile;
-    osTempFile.Printf("/vsimem/ogcapi/%p", this);
+    const CPLString osTempFile(VSIMemGenerateHiddenFilename("ogcapi"));
     VSIFCloseL(VSIFileFromMemBuffer(osTempFile.c_str(),
                                     reinterpret_cast<GByte *>(&m_osTileData[0]),
                                     m_osTileData.size(), false));

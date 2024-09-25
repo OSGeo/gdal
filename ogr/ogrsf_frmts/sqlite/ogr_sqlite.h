@@ -172,6 +172,8 @@ class OGRSQLiteLayer CPL_NON_FINAL : public OGRLayer,
                                                 bool bUseComprGeom,
                                                 GByte *pabyData);
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteLayer)
+
   protected:
     OGRSQLiteFeatureDefn *m_poFeatureDefn = nullptr;
 
@@ -355,6 +357,8 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
     OGRErr RunAddGeometryColumn(const OGRSQLiteGeomFieldDefn *poGeomField,
                                 bool bAddColumnsForNonSpatialite);
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteTableLayer)
+
   public:
     explicit OGRSQLiteTableLayer(OGRSQLiteDataSource *);
     virtual ~OGRSQLiteTableLayer();
@@ -488,6 +492,8 @@ class OGRSQLiteViewLayer final : public OGRSQLiteLayer
     virtual OGRErr ResetStatement() override;
 
     CPLErr EstablishFeatureDefn();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteViewLayer)
 
   public:
     explicit OGRSQLiteViewLayer(OGRSQLiteDataSource *);
@@ -675,8 +681,7 @@ class OGR2SQLITEModule;
 
 class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 {
-    OGRSQLiteLayer **m_papoLayers = nullptr;
-    int m_nLayers = 0;
+    std::vector<std::unique_ptr<OGRSQLiteLayer>> m_apoLayers{};
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
@@ -710,7 +715,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     void SaveStatistics();
 
-    std::vector<OGRLayer *> m_apoInvisibleLayers{};
+    std::vector<std::unique_ptr<OGRLayer>> m_apoInvisibleLayers{};
 
 #ifdef HAVE_RASTERLITE2
     void *m_hRL2Ctxt = nullptr;
@@ -745,6 +750,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     void PostInitSpatialite();
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteDataSource)
+
   public:
     OGRSQLiteDataSource();
     virtual ~OGRSQLiteDataSource();
@@ -760,7 +767,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     virtual int GetLayerCount() override
     {
-        return m_nLayers;
+        return static_cast<int>(m_apoLayers.size());
     }
 
     virtual OGRLayer *GetLayer(int) override;
@@ -895,10 +902,12 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
 class RL2RasterBand final : public GDALPamRasterBand
 {
-    bool m_bHasNoData;
-    double m_dfNoDataValue;
-    GDALColorInterp m_eColorInterp;
-    GDALColorTable *m_poCT;
+    bool m_bHasNoData = false;
+    double m_dfNoDataValue = 0;
+    GDALColorInterp m_eColorInterp = GCI_Undefined;
+    GDALColorTable *m_poCT = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(RL2RasterBand)
 
   public:
     RL2RasterBand(int nBandIn, int nPixelType, GDALDataType eDT, int nBits,

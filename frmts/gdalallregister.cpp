@@ -185,6 +185,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_HANA_DRIVER)
     DeclareDeferredOGRHANAPlugin();
 #endif
+#if defined(DEFERRED_AVIF_DRIVER)
+    DeclareDeferredAVIFPlugin();
+#endif
 #if defined(DEFERRED_HEIF_DRIVER)
     DeclareDeferredHEIFPlugin();
 #endif
@@ -763,6 +766,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_exr
     GDALRegister_EXR();
+#endif
+
+#ifdef FRMT_avif
+    GDALRegister_AVIF();
 #endif
 
 #ifdef FRMT_heif

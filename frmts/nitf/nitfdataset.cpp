@@ -3366,7 +3366,7 @@ int NITFDataset::CheckForRSets(const char *pszNITFFilename,
         if (isR0File)
         {
             osTarget = pszNITFFilename;
-            osTarget[osTarget.size() - 1] = static_cast<char>('0' + i);
+            osTarget.back() = static_cast<char>('0' + i);
         }
         else
             osTarget.Printf("%s.r%d", pszNITFFilename, i);

@@ -1123,7 +1123,7 @@ static const char *TrimSpaces(CPLString &oText)
 
     // Trim trailing spaces.
     while (!oText.empty() && oText.back() == ' ')
-        oText.resize(oText.size() - 1);
+        oText.pop_back();
 
     // Skip leading newline and spaces.
     const char *pszText = oText.c_str();

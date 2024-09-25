@@ -3847,7 +3847,7 @@ static void NITFLoadLocationTable(NITFImage *psImage)
     GUInt32 nHeaderOffset = 0;
     int i;
     int nTRESize;
-    char szTempFileName[32];
+    char szTempFileName[256];
     VSILFILE *fpTemp;
 
     pszTRE =
@@ -3855,7 +3855,8 @@ static void NITFLoadLocationTable(NITFImage *psImage)
     if (pszTRE == NULL)
         return;
 
-    snprintf(szTempFileName, sizeof(szTempFileName), "/vsimem/%p", pszTRE);
+    snprintf(szTempFileName, sizeof(szTempFileName), "%s",
+             VSIMemGenerateHiddenFilename("nitf_tre"));
     fpTemp =
         VSIFileFromMemBuffer(szTempFileName, (GByte *)pszTRE, nTRESize, FALSE);
     psImage->pasLocations =

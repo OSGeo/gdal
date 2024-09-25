@@ -267,7 +267,7 @@ OGRLayer *OGRWFSDataSource::GetLayerByName(const char *pszNameIn)
             return poLayerMetadataLayer;
 
         osLayerMetadataTmpFileName =
-            CPLSPrintf("/vsimem/tempwfs_%p/WFSLayerMetadata.csv", this);
+            VSIMemGenerateHiddenFilename("WFSLayerMetadata.csv");
         osLayerMetadataCSV = "layer_name,title,abstract\n" + osLayerMetadataCSV;
 
         VSIFCloseL(VSIFileFromMemBuffer(osLayerMetadataTmpFileName,
@@ -1911,9 +1911,7 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char *pszLayerName,
         return;
     }
 
-    CPLString osTmpFileName;
-
-    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
+    const CPLString osTmpFileName = VSIMemGenerateHiddenFilename("file.xsd");
     CPLSerializeXMLTreeToFile(psSchema, osTmpFileName);
 
     std::vector<GMLFeatureClass *> aosClasses;

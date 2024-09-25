@@ -831,7 +831,8 @@ static GIntBig VSICurlGetExpiresFromS3LikeSignedURL(const char *pszURL)
 /*                       VSICURLMultiPerform()                          */
 /************************************************************************/
 
-void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle)
+void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle,
+                         std::atomic<bool> *pbInterrupt)
 {
     int repeats = 0;
 
@@ -866,6 +867,9 @@ void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle)
 #endif
 
         CPLMultiPerformWait(hCurlMultiHandle, repeats);
+
+        if (pbInterrupt && *pbInterrupt)
+            break;
     }
     CPLHTTPRestoreSigPipeHandler(old_handler);
 
@@ -1150,7 +1154,7 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
-    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle, &m_bInterrupt);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -1872,7 +1876,7 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
-    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle, &m_bInterrupt);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -1880,9 +1884,12 @@ retry:
 
     NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
 
-    if (sWriteFuncData.bInterrupted)
+    if (sWriteFuncData.bInterrupted || m_bInterrupt)
     {
         bInterrupted = true;
+
+        // Notify that the download of the current region is finished
+        currentDownload.SetData(std::string());
 
         CPLFree(sWriteFuncData.pBuffer);
         CPLFree(sWriteFuncHeaderData.pBuffer);
@@ -3101,8 +3108,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     CURLM *hMultiHandle = poFS->GetCurlMultiHandleFor(osURL);
-    curl_multi_add_handle(hMultiHandle, hCurlHandle);
-    VSICURLMultiPerform(hMultiHandle);
+    VSICURLMultiPerform(hMultiHandle, hCurlHandle, &m_bInterrupt);
 
     {
         std::lock_guard<std::mutex> oLock(m_oMutex);
@@ -3125,9 +3131,12 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     if ((response_code != 206 && response_code != 225) ||
         sWriteFuncData.nSize == 0)
     {
-        CPLDebug(poFS->GetDebugKey(),
-                 "Request for %s failed with response_code=%ld", rangeStr,
-                 response_code);
+        if (!m_bInterrupt)
+        {
+            CPLDebug(poFS->GetDebugKey(),
+                     "Request for %s failed with response_code=%ld", rangeStr,
+                     response_code);
+        }
         nRet = static_cast<size_t>(-1);
     }
     else
@@ -3137,7 +3146,6 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
             memcpy(pBuffer, sWriteFuncData.pBuffer, nRet);
     }
 
-    curl_multi_remove_handle(hMultiHandle, hCurlHandle);
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
     curl_easy_cleanup(hCurlHandle);
     CPLFree(sWriteFuncData.pBuffer);
@@ -4771,8 +4779,8 @@ static bool VSICurlParseFullFTPLine(char *pszLine, char *&pszFilename,
 /*                          GetURLFromFilename()                         */
 /************************************************************************/
 
-std::string
-VSICurlFilesystemHandlerBase::GetURLFromFilename(const std::string &osFilename)
+std::string VSICurlFilesystemHandlerBase::GetURLFromFilename(
+    const std::string &osFilename) const
 {
     return VSICurlGetURLFromFilename(osFilename.c_str(), nullptr, nullptr,
                                      nullptr, nullptr, nullptr, nullptr,
@@ -5824,7 +5832,7 @@ void NetworkStatisticsLogger::Stats::AsJSON(CPLJSONObject &oJSON) const
             if (!osName.empty() && osName[0] == '/')
                 osName = osName.substr(1);
             if (!osName.empty() && osName.back() == '/')
-                osName.resize(osName.size() - 1);
+                osName.pop_back();
             oJSON.Add(("handlers/" + osName).c_str(), childJSON);
         }
         else if (kv.first.eType == ContextPathType::FILE)

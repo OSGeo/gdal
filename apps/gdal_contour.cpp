@@ -155,13 +155,9 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
         .help(_("Generate levels on an exponential scale: base ^ k, for k an "
                 "integer."));
 
-    argParser->add_argument("-fl")
-        .metavar("<level>")
-        .nargs(argparse::nargs_pattern::at_least_one)
-        .scan<'g', double>()
-        .action([psOptions](const std::string &s)
-                { psOptions->adfFixedLevels.push_back(CPLAtof(s.c_str())); })
-        .help(_("Name one or more \"fixed levels\" to extract."));
+    // Dealt manually as argparse::nargs_pattern::at_least_one is problematic
+    argParser->add_argument("-fl").scan<'g', double>().metavar("<level>").help(
+        _("Name one or more \"fixed levels\" to extract."));
 
     argParser->add_argument("-off")
         .metavar("<offset>")
@@ -246,6 +242,7 @@ MAIN_START(argc, argv)
 
     if (argc < 2)
     {
+
         try
         {
             GDALContourOptions sOptions;
@@ -261,11 +258,54 @@ MAIN_START(argc, argv)
     }
 
     GDALContourOptions sOptions;
+    CPLStringList aosArgv;
 
     try
     {
+        /* -------------------------------------------------------------------- */
+        /*      Pre-processing for custom syntax that ArgumentParser does not   */
+        /*      support.                                                        */
+        /* -------------------------------------------------------------------- */
+        for (int i = 1; i < argc && argv != nullptr && argv[i] != nullptr; i++)
+        {
+            // argparser is confused by arguments that have at_least_one
+            // cardinality, if they immediately precede positional arguments.
+            if (EQUAL(argv[i], "-fl") && argv[i + 1])
+            {
+                if (strchr(argv[i + 1], ' '))
+                {
+                    const CPLStringList aosTokens(
+                        CSLTokenizeString(argv[i + 1]));
+                    for (const char *pszToken : aosTokens)
+                    {
+                        sOptions.adfFixedLevels.push_back(CPLAtof(pszToken));
+                    }
+                    i += 1;
+                }
+                else
+                {
+                    auto isNumeric = [](const char *pszArg) -> bool
+                    {
+                        char *pszEnd = nullptr;
+                        CPLStrtod(pszArg, &pszEnd);
+                        return pszEnd != nullptr && pszEnd[0] == '\0';
+                    };
+
+                    while (i < argc - 1 && isNumeric(argv[i + 1]))
+                    {
+                        sOptions.adfFixedLevels.push_back(CPLAtof(argv[i + 1]));
+                        i += 1;
+                    }
+                }
+            }
+            else
+            {
+                aosArgv.AddString(argv[i]);
+            }
+        }
+
         auto argParser = GDALContourAppOptionsGetParser(&sOptions);
-        argParser->parse_args_without_binary_name(argv + 1);
+        argParser->parse_args_without_binary_name(aosArgv.List());
 
         if (sOptions.dfInterval == 0.0 && sOptions.adfFixedLevels.empty() &&
             sOptions.dfExpBase == 0.0)

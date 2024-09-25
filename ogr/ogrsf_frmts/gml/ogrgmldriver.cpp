@@ -55,11 +55,12 @@ static int OGRGMLDriverIdentify(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        const char *szPtr = (const char *)poOpenInfo->pabyHeader;
+        const char *szPtr =
+            reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
 
-        if (((unsigned char)szPtr[0] == 0xEF) &&
-            ((unsigned char)szPtr[1] == 0xBB) &&
-            ((unsigned char)szPtr[2] == 0xBF))
+        if ((static_cast<unsigned char>(szPtr[0]) == 0xEF) &&
+            (static_cast<unsigned char>(szPtr[1]) == 0xBB) &&
+            (static_cast<unsigned char>(szPtr[2]) == 0xBF))
         {
             szPtr += 3;
         }
@@ -74,8 +75,11 @@ static int OGRGMLDriverIdentify(GDALOpenInfo *poOpenInfo)
         if (!poOpenInfo->TryToIngest(4096))
             return FALSE;
 
+        if (poOpenInfo->IsSingleAllowedDriver("GML"))
+            return TRUE;
+
         return OGRGMLDataSource::CheckHeader(
-            (const char *)poOpenInfo->pabyHeader);
+            reinterpret_cast<const char *>(poOpenInfo->pabyHeader));
     }
 }
 

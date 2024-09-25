@@ -37,6 +37,7 @@
 #include "cpl_threadsafe_queue.hpp"
 #include "ograrrowarrayhelper.h"
 #include "ogr_p.h"
+#include "ogr_wkb.h"
 
 #include <condition_variable>
 #include <limits>
@@ -185,6 +186,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     int m_nLastCachedCTSrcSRId = -1;
     int m_nLastCachedCTDstSRId = -1;
     std::unique_ptr<OGRCoordinateTransformation> m_poLastCachedCT{};
+    OGRWKBTransformCache m_oWKBTransformCache{};
+    std::vector<GByte> m_abyWKBTransformCache{};
 
     int m_nOverviewCount = 0;
     GDALGeoPackageDataset **m_papoOverviewDS = nullptr;

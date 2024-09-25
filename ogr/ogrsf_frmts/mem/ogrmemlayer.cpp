@@ -498,6 +498,9 @@ OGRErr OGRMemLayer::IUpdateFeature(OGRFeature *poFeature,
     {
         poFeatureRef->SetStyleString(poFeature->GetStyleString());
     }
+
+    m_bUpdated = true;
+
     return OGRERR_NONE;
 }
 

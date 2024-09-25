@@ -43,6 +43,7 @@
 #include "cpl_http.h"
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
+#include "cpl_vsi_virtual.h"
 #include "cpl_vsil_curl_class.h"
 
 // gcc or clang complains about C-style cast in #define like
@@ -554,13 +555,40 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] = {
 char **CPLHTTPGetOptionsFromEnv(const char *pszFilename)
 {
     CPLStringList aosOptions;
+    std::string osNonStreamingFilename;
+    if (pszFilename && STARTS_WITH(pszFilename, "/vsi"))
+    {
+        VSIFilesystemHandler *poFSHandler =
+            VSIFileManager::GetHandler(pszFilename);
+        osNonStreamingFilename =
+            poFSHandler->GetNonStreamingFilename(pszFilename);
+        if (osNonStreamingFilename == pszFilename)
+        {
+            osNonStreamingFilename.clear();
+        }
+        else
+        {
+            // CPLDebug("HTTP", "Non-streaming filename for %s: %s", pszFilename, osNonStreamingFilename.c_str());
+        }
+    }
     for (const auto &sTuple : asAssocEnvVarOptionName)
     {
-        const char *pszVal =
-            pszFilename ? VSIGetPathSpecificOption(pszFilename,
-                                                   sTuple.pszEnvVar, nullptr)
-                        : CPLGetConfigOption(sTuple.pszEnvVar, nullptr);
-        if (pszVal != nullptr)
+        const char *pszVal = nullptr;
+        if (pszFilename)
+        {
+            pszVal = VSIGetPathSpecificOption(pszFilename, sTuple.pszEnvVar,
+                                              nullptr);
+            if (!pszVal && !osNonStreamingFilename.empty())
+            {
+                pszVal = VSIGetPathSpecificOption(
+                    osNonStreamingFilename.c_str(), sTuple.pszEnvVar, nullptr);
+            }
+        }
+        if (!pszVal)
+        {
+            pszVal = CPLGetConfigOption(sTuple.pszEnvVar, nullptr);
+        }
+        if (pszVal)
         {
             aosOptions.AddNameValue(sTuple.pszOptionName, pszVal);
         }
@@ -2082,7 +2110,7 @@ static int CPLHTTPCurlDebugFunction(CURL *handle, curl_infotype type,
     {
         std::string osMsg(data, size);
         if (!osMsg.empty() && osMsg.back() == '\n')
-            osMsg.resize(osMsg.size() - 1);
+            osMsg.pop_back();
         CPLDebug(pszDebugKey, "%s", osMsg.c_str());
     }
     return 0;

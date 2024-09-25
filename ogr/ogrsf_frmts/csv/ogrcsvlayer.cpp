@@ -119,7 +119,7 @@ bool OGRCSVLayer::Matches(const char *pszFieldName, char **papszPossibleNames)
                 {
                     // *pattern*
                     CPLString oPattern(pszPattern + 1);
-                    oPattern.resize(oPattern.size() - 1);
+                    oPattern.pop_back();
                     if (CPLString(pszFieldName).ifind(oPattern) !=
                         std::string::npos)
                         return true;
@@ -960,7 +960,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(CSLConstList papszOpenOptions,
         nRead = VSIFReadL(pszData, 1, nRequested, fpCSV);
         pszData[nRead] = 0;
 
-        osTmpMemFile = CPLSPrintf("/vsimem/tmp%p", this);
+        osTmpMemFile = VSIMemGenerateHiddenFilename("temp.csv");
         fp = VSIFileFromMemBuffer(osTmpMemFile.c_str(),
                                   reinterpret_cast<GByte *>(pszData), nRead,
                                   FALSE);

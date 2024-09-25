@@ -68,6 +68,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libbrotli-dev${APT_ARCH_SUFFIX} \
        libarchive-dev${APT_ARCH_SUFFIX} \
        libaec-dev${APT_ARCH_SUFFIX} \
+       libavif-dev${APT_ARCH_SUFFIX} \
     && rm -rf /var/lib/apt/lists/*
 
 # Build likbkea
@@ -341,6 +342,7 @@ RUN apt-get update \
         libbrotli1 \
         libarchive13 \
         libaec0 \
+        libavif16 \
         libspdlog1.12 libmagic1t64 \
         python-is-python3 \
         # pil for antialias option of gdal2tiles

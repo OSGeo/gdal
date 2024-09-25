@@ -137,6 +137,17 @@ CPLErr GDALProxyDataset::IRasterIO(
     return ret;
 }
 
+D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BlockBasedRasterIO,
+                        (GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                         int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                         GDALDataType eBufType, int nBandCount,
+                         const int *panBandMap, GSpacing nPixelSpace,
+                         GSpacing nLineSpace, GSpacing nBandSpace,
+                         GDALRasterIOExtraArg *psExtraArg),
+                        (eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
+                         nBufXSize, nBufYSize, eBufType, nBandCount, panBandMap,
+                         nPixelSpace, nLineSpace, nBandSpace, psExtraArg))
+
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, IBuildOverviews,
                         (const char *pszResampling, int nOverviews,
                          const int *panOverviewList, int nListBands,
@@ -159,17 +170,8 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ReadCompressedData,
                          panBandList, ppBuffer, pnBufferSize,
                          ppszDetailedFormat))
 
-CPLErr GDALProxyDataset::FlushCache(bool bAtClosing)
-{
-    CPLErr eErr = CE_None;
-    GDALDataset *poUnderlyingDataset = RefUnderlyingDataset();
-    if (poUnderlyingDataset)
-    {
-        eErr = poUnderlyingDataset->FlushCache(bAtClosing);
-        UnrefUnderlyingDataset(poUnderlyingDataset);
-    }
-    return eErr;
-}
+D_PROXY_METHOD_WITH_RET(CPLErr, CE_None, FlushCache, (bool bAtClosing),
+                        (bAtClosing))
 
 D_PROXY_METHOD_WITH_RET(char **, nullptr, GetMetadataDomainList, (), ())
 D_PROXY_METHOD_WITH_RET(char **, nullptr, GetMetadata, (const char *pszDomain),
@@ -386,6 +388,18 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadataItem,
                           const char *pszDomain),
                          (pszName, pszValue, pszDomain))
 
+RB_PROXY_METHOD_WITH_RET(GDALRasterBlock *, nullptr, GetLockedBlockRef,
+                         (int nXBlockOff, int nYBlockOff, int bJustInitialize),
+                         (nXBlockOff, nYBlockOff, bJustInitialize))
+
+RB_PROXY_METHOD_WITH_RET(GDALRasterBlock *, nullptr, TryGetLockedBlockRef,
+                         (int nXBlockOff, int nYBlockOff),
+                         (nXBlockOff, nYBlockOff))
+
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, FlushBlock,
+                         (int nXBlockOff, int nYBlockOff, int bWriteDirtyBlock),
+                         (nXBlockOff, nYBlockOff, bWriteDirtyBlock))
+
 CPLErr GDALProxyRasterBand::FlushCache(bool bAtClosing)
 {
     // We need to make sure that all cached bocks at the proxy level are
@@ -511,6 +525,22 @@ RB_PROXY_METHOD_WITH_RET(CPLVirtualMem *, nullptr, GetVirtualMemAuto,
                          (GDALRWFlag eRWFlag, int *pnPixelSpace,
                           GIntBig *pnLineSpace, char **papszOptions),
                          (eRWFlag, pnPixelSpace, pnLineSpace, papszOptions))
+
+RB_PROXY_METHOD_WITH_RET(
+    CPLErr, CE_Failure, InterpolateAtPoint,
+    (double dfPixel, double dfLine, GDALRIOResampleAlg eInterpolation,
+     double *pdfRealValue, double *pdfImagValue = nullptr) const,
+    (dfPixel, dfLine, eInterpolation, pdfRealValue, pdfImagValue))
+
+void GDALProxyRasterBand::EnablePixelTypeSignedByteWarning(bool b)
+{
+    GDALRasterBand *poSrcBand = RefUnderlyingRasterBand();
+    if (poSrcBand)
+    {
+        poSrcBand->EnablePixelTypeSignedByteWarning(b);
+        UnrefUnderlyingRasterBand(poSrcBand);
+    }
+}
 
 /************************************************************************/
 /*                 UnrefUnderlyingRasterBand()                        */

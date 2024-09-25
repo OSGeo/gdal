@@ -132,14 +132,12 @@ OGRSQLiteLayer *OGRSQLiteViewLayer::GetUnderlyingLayer()
             osNewUnderlyingTableName.Printf(
                 "%s(%s)", m_osUnderlyingTableName.c_str(),
                 m_osUnderlyingGeometryColumn.c_str());
-            m_poUnderlyingLayer =
-                (OGRSQLiteLayer *)m_poDS->GetLayerByNameNotVisible(
-                    osNewUnderlyingTableName);
+            m_poUnderlyingLayer = cpl::down_cast<OGRSQLiteLayer *>(
+                m_poDS->GetLayerByNameNotVisible(osNewUnderlyingTableName));
         }
         if (m_poUnderlyingLayer == nullptr)
-            m_poUnderlyingLayer =
-                (OGRSQLiteLayer *)m_poDS->GetLayerByNameNotVisible(
-                    m_osUnderlyingTableName);
+            m_poUnderlyingLayer = cpl::down_cast<OGRSQLiteLayer *>(
+                m_poDS->GetLayerByNameNotVisible(m_osUnderlyingTableName));
     }
     return m_poUnderlyingLayer;
 }
@@ -331,9 +329,9 @@ OGRFeature *OGRSQLiteViewLayer::GetFeature(GIntBig nFeatureId)
 
     m_iNextShapeId = nFeatureId;
 
-    osSQL.Printf("SELECT \"%s\", * FROM '%s' WHERE \"%s\" = %d",
+    osSQL.Printf("SELECT \"%s\", * FROM '%s' WHERE \"%s\" = " CPL_FRMT_GIB,
                  SQLEscapeName(m_pszFIDColumn).c_str(), m_pszEscapedTableName,
-                 SQLEscapeName(m_pszFIDColumn).c_str(), (int)nFeatureId);
+                 SQLEscapeName(m_pszFIDColumn).c_str(), nFeatureId);
 
     CPLDebug("OGR_SQLITE", "exec(%s)", osSQL.c_str());
 

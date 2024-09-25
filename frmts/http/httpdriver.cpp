@@ -29,15 +29,26 @@
 
 #include "cpl_string.h"
 #include "cpl_http.h"
-#include "cpl_atomic_ops.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+
+static std::string SanitizeDispositionFilename(const std::string &osVal)
+{
+    std::string osRet(osVal);
+    if (!osRet.empty() && osRet[0] == '"')
+    {
+        const auto nEnd = osRet.find('"', 1);
+        if (nEnd != std::string::npos)
+            return osRet.substr(1, nEnd - 1);
+    }
+    return osRet;
+}
 
 /************************************************************************/
 /*               HTTPFetchContentDispositionFilename()                 */
 /************************************************************************/
 
-static const char *HTTPFetchContentDispositionFilename(char **papszHeaders)
+static std::string HTTPFetchContentDispositionFilename(char **papszHeaders)
 {
     char **papszIter = papszHeaders;
     while (papszIter && *papszIter)
@@ -47,25 +58,25 @@ static const char *HTTPFetchContentDispositionFilename(char **papszHeaders)
         if (STARTS_WITH(*papszIter,
                         "Content-Disposition: attachment; filename="))
         {
-            return *papszIter + 42;
+            return SanitizeDispositionFilename(*papszIter + 42);
         }
         /* For single part, the headers are in KEY=VAL format, but with e-o-l
          * ... */
         else if (STARTS_WITH(*papszIter,
                              "Content-Disposition=attachment; filename="))
         {
-            char *pszVal = (char *)(*papszIter + 41);
+            char *pszVal = (*papszIter + 41);
             char *pszEOL = strchr(pszVal, '\r');
             if (pszEOL)
                 *pszEOL = 0;
             pszEOL = strchr(pszVal, '\n');
             if (pszEOL)
                 *pszEOL = 0;
-            return pszVal;
+            return SanitizeDispositionFilename(pszVal);
         }
         papszIter++;
     }
-    return nullptr;
+    return std::string();
 }
 
 /************************************************************************/
@@ -75,8 +86,6 @@ static const char *HTTPFetchContentDispositionFilename(char **papszHeaders)
 static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    static volatile int nCounter = 0;
-
     if (poOpenInfo->nHeaderBytes != 0)
         return nullptr;
 
@@ -104,21 +113,19 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a memory file from the result.                           */
     /* -------------------------------------------------------------------- */
-    CPLString osResultFilename;
-
-    int nNewCounter = CPLAtomicInc(&nCounter);
-
-    const char *pszFilename =
+    std::string osFilename =
         HTTPFetchContentDispositionFilename(psResult->papszHeaders);
-    if (pszFilename == nullptr)
+    if (osFilename.empty())
     {
-        pszFilename = CPLGetFilename(poOpenInfo->pszFilename);
+        osFilename = CPLGetFilename(poOpenInfo->pszFilename);
         /* If we have special characters, let's default to a fixed name */
-        if (strchr(pszFilename, '?') || strchr(pszFilename, '&'))
-            pszFilename = "file.dat";
+        if (strchr(osFilename.c_str(), '?') || strchr(osFilename.c_str(), '&'))
+            osFilename = "file.dat";
     }
 
-    osResultFilename.Printf("/vsimem/http_%d/%s", nNewCounter, pszFilename);
+    // If changing the _gdal_http_ marker, change jpgdataset.cpp that tests for it
+    const CPLString osResultFilename = VSIMemGenerateHiddenFilename(
+        std::string("_gdal_http_").append(osFilename).c_str());
 
     VSILFILE *fp = VSIFileFromMemBuffer(osResultFilename, psResult->pabyData,
                                         psResult->nDataLen, TRUE);

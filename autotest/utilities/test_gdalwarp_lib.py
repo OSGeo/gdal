@@ -4102,7 +4102,7 @@ def DISABLED_test_gdalwarp_lib_to_projection_without_inverse_method():
 def test_gdalwarp_lib_no_crash_on_none_dst():
 
     ds1 = gdal.Open("../gcore/data/byte.tif")
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         gdal.Warp(None, ds1)
 
 
@@ -4259,3 +4259,31 @@ def test_gdalwarp_lib_minus_180_plus_180_to_span_over_180(tmp_vsimem, extra_colu
     ) == src_ds.GetRasterBand(1).ReadRaster(
         0, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
     )
+
+
+###############################################################################
+# Test bugfix for https://lists.osgeo.org/pipermail/gdal-dev/2024-September/059512.html
+
+
+@pytest.mark.parametrize("with_tap", [True, False])
+def test_gdalwarp_lib_blank_edge_one_by_one(with_tap):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([6.8688, 0.0009, 0, 51.3747, 0, -0.0009])
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_ds.SetSpatialRef(srs)
+    options = "-f MEM -tr 1000 1000 -t_srs EPSG:32631"
+    if with_tap:
+        options += " -tap"
+    out_ds = gdal.Warp("", src_ds, options=options)
+    assert out_ds.RasterXSize == 1
+    assert out_ds.RasterYSize == 1
+    gt = out_ds.GetGeoTransform()
+    if with_tap:
+        assert gt == pytest.approx((769000.0, 1000.0, 0.0, 5699000.0, 0.0, -1000.0))
+    else:
+        assert gt == pytest.approx(
+            (769234.6506516202, 1000.0, 0.0, 5698603.782217737, 0.0, -1000.0)
+        )

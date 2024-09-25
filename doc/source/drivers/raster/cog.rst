@@ -53,9 +53,7 @@ General creation options
       * ``JPEG`` should generally only be used with
         Byte data (8 bit per channel). But if GDAL is built with internal libtiff and
         libjpeg, it is    possible to read and write TIFF files with 12bit JPEG compressed TIFF
-        files (seen as UInt16 bands with NBITS=12). See the `"8 and 12 bit
-        JPEG in TIFF" <http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG>`__ wiki
-        page for more details.
+        files (seen as UInt16 bands with NBITS=12).
         For the COG driver, JPEG compression for 3 or 4-band images automatically
         selects the PHOTOMETRIC=YCBCR colorspace with a 4:2:2 subsampling of the Y,Cb,Cr
         components.
@@ -612,8 +610,6 @@ See Also
 --------
 
 - :ref:`raster.gtiff` driver
--  `How to generate and read cloud optimized GeoTIFF
-   files <https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF>`__ (before GDAL 3.1)
 - If your source dataset is an internally tiled geotiff with the desired georeferencing and compression,
   using `cogger <https://github.com/airbusgeo/cogger>`__ (possibly along with gdaladdo to create overviews) will
   be much faster than the COG driver.

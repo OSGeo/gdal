@@ -603,3 +603,14 @@ def test_ogr_lvbag_test_ogrsf_num():
     )
 
     assert "INFO" in ret and "ERROR" not in ret
+
+
+###############################################################################
+# Test force opening
+
+
+def test_ogr_lvbag_force_opening():
+
+    # Would be opened by GML driver if not forced
+    ds = gdal.OpenEx("data/gml/empty.gml", allowed_drivers=["LVBAG"])
+    assert ds.GetDriver().GetDescription() == "LVBAG"

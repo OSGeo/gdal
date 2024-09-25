@@ -1710,8 +1710,8 @@ GIntBig MBTilesVectorLayer::GetFeatureCount(int bForce)
                 {
                     VSIUnlink(m_osTmpFilename);
                 }
-                m_osTmpFilename =
-                    CPLSPrintf("/vsimem/mvt_%p_%d_%d.pbf", this, m_nX, m_nY);
+                m_osTmpFilename = VSIMemGenerateHiddenFilename(
+                    CPLSPrintf("mvt_%d_%d.pbf", m_nX, m_nY));
                 VSIFCloseL(VSIFileFromMemBuffer(m_osTmpFilename, pabyDataDup,
                                                 nDataSize, true));
 
@@ -1794,8 +1794,8 @@ OGRFeature *MBTilesVectorLayer::GetNextSrcFeature()
             {
                 VSIUnlink(m_osTmpFilename);
             }
-            m_osTmpFilename =
-                CPLSPrintf("/vsimem/mvt_%p_%d_%d.pbf", this, m_nX, m_nY);
+            m_osTmpFilename = VSIMemGenerateHiddenFilename(
+                CPLSPrintf("mvt_%d_%d.pbf", m_nX, m_nY));
             VSIFCloseL(VSIFileFromMemBuffer(m_osTmpFilename, pabyDataDup,
                                             nDataSize, true));
 
@@ -1903,8 +1903,8 @@ OGRFeature *MBTilesVectorLayer::GetFeature(GIntBig nFID)
     OGR_F_Destroy(hFeat);
     OGR_DS_ReleaseResultSet(m_poDS->hDS, hSQLLyr);
 
-    CPLString osTmpFilename =
-        CPLSPrintf("/vsimem/mvt_getfeature_%p_%d_%d.pbf", this, nX, nY);
+    const CPLString osTmpFilename = VSIMemGenerateHiddenFilename(
+        CPLSPrintf("mvt_get_feature_%d_%d.pbf", m_nX, m_nY));
     VSIFCloseL(
         VSIFileFromMemBuffer(osTmpFilename, pabyDataDup, nDataSize, true));
 
@@ -1979,7 +1979,8 @@ void MBTilesDataset::InitVector(double dfMinX, double dfMinY, double dfMaxX,
         OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
     }
 
-    m_osMetadataMemFilename = CPLSPrintf("/vsimem/%p_metadata.json", this);
+    m_osMetadataMemFilename =
+        VSIMemGenerateHiddenFilename("mbtiles_metadata.json");
     oDoc.Save(m_osMetadataMemFilename);
 
     CPLJSONArray oVectorLayers;
@@ -2556,8 +2557,7 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
             break;
     }
 
-    CPLString osMemFileName;
-    osMemFileName.Printf("/vsimem/%p", hSQLLyr);
+    const CPLString osMemFileName(VSIMemGenerateHiddenFilename("mvt_temp.db"));
 
     int nDataSize = 0;
     GByte *pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);

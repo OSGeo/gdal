@@ -53,7 +53,7 @@
 #include <sqlite3.h>
 
 #undef SQLITE_STATIC
-#define SQLITE_STATIC ((sqlite3_destructor_type) nullptr)
+#define SQLITE_STATIC static_cast<sqlite3_destructor_type>(nullptr)
 
 #endif
 
@@ -1037,7 +1037,7 @@ static void gmlHugeFileNodeCoords(struct huge_tag *pItem,
         CPLCreateXMLNode(nullptr, CXT_Element, "TopoCurve");
     CPLXMLNode *psDirEdge =
         CPLCreateXMLNode(psTopoCurve, CXT_Element, "directedEdge");
-    CPLXMLNode *psEdge = CPLCloneXMLTree((CPLXMLNode *)psNode);
+    CPLXMLNode *psEdge = CPLCloneXMLTree(psNode);
     CPLAddXMLChild(psDirEdge, psEdge);
     OGRGeometry *poTopoCurve = GML2OGRGeometry_XMLNode(psTopoCurve, FALSE);
     CPLDestroyXMLNode(psTopoCurve);
@@ -1782,7 +1782,7 @@ static bool gmlHugeFileWriteResolved(huge_helper *helper,
                 if (bNotToBeResolved)
                 {
                     VSIFPrintfL(fp, "      <ResolvedGeometry> \n");
-                    pszResolved = CPLSerializeXMLTree((CPLXMLNode *)psNode);
+                    pszResolved = CPLSerializeXMLTree(psNode);
                     VSIFPrintfL(fp, "        %s\n", pszResolved);
                     CPLFree(pszResolved);
                     VSIFPrintfL(fp, "      </ResolvedGeometry>\n");

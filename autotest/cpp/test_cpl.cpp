@@ -52,6 +52,7 @@
 #include "cpl_auto_close.h"
 #include "cpl_minixml.h"
 #include "cpl_quad_tree.h"
+#include "cpl_spawn.h"
 #include "cpl_worker_thread_pool.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_threadsafe_queue.hpp"
@@ -2845,22 +2846,23 @@ TEST_F(test_cpl, CPLJSONDocument)
 }
 
 // Test CPLRecodeIconv() with re-allocation
+// (this test also passed on Windows using its native recoding API)
 TEST_F(test_cpl, CPLRecodeIconv)
 {
-#ifdef CPL_RECODE_ICONV
+#if defined(CPL_RECODE_ICONV) || defined(_WIN32)
     int N = 32800;
     char *pszIn = static_cast<char *>(CPLMalloc(N + 1));
     for (int i = 0; i < N; i++)
-        pszIn[i] = '\xE9';
+        pszIn[i] = '\xA1';
     pszIn[N] = 0;
     char *pszExpected = static_cast<char *>(CPLMalloc(N * 2 + 1));
     for (int i = 0; i < N; i++)
     {
-        pszExpected[2 * i] = '\xC3';
-        pszExpected[2 * i + 1] = '\xA9';
+        pszExpected[2 * i] = '\xD0';
+        pszExpected[2 * i + 1] = '\x81';
     }
     pszExpected[N * 2] = 0;
-    char *pszRet = CPLRecode(pszIn, "ISO-8859-2", CPL_ENC_UTF8);
+    char *pszRet = CPLRecode(pszIn, "ISO-8859-5", CPL_ENC_UTF8);
     EXPECT_EQ(memcmp(pszExpected, pszRet, N * 2 + 1), 0);
     CPLFree(pszIn);
     CPLFree(pszRet);
@@ -2868,6 +2870,50 @@ TEST_F(test_cpl, CPLRecodeIconv)
 #else
     GTEST_SKIP() << "CPL_RECODE_ICONV missing";
 #endif
+}
+
+// Test CP1252 to UTF-8
+TEST_F(test_cpl, CPLRecodeStubCP1252_to_UTF8_strict_alloc)
+{
+    CPLClearRecodeWarningFlags();
+    CPLErrorReset();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    // Euro character expands to 3-bytes
+    char *pszRet = CPLRecode("\x80", "CP1252", CPL_ENC_UTF8);
+    CPLPopErrorHandler();
+    EXPECT_STREQ(CPLGetLastErrorMsg(), "");
+    EXPECT_EQ(memcmp(pszRet, "\xE2\x82\xAC\x00", 4), 0);
+    CPLFree(pszRet);
+}
+
+// Test CP1252 to UTF-8
+TEST_F(test_cpl, CPLRecodeStubCP1252_to_UTF8_with_ascii)
+{
+    CPLClearRecodeWarningFlags();
+    CPLErrorReset();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    char *pszRet = CPLRecode("x\x80y", "CP1252", CPL_ENC_UTF8);
+    CPLPopErrorHandler();
+    EXPECT_STREQ(CPLGetLastErrorMsg(), "");
+    EXPECT_EQ(memcmp(pszRet, "x\xE2\x82\xACy\x00", 6), 0);
+    CPLFree(pszRet);
+}
+
+// Test CP1252 to UTF-8
+TEST_F(test_cpl, CPLRecodeStubCP1252_to_UTF8_with_warning)
+{
+    CPLClearRecodeWarningFlags();
+    CPLErrorReset();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    // \x90 is an invalid CP1252 character. Will be skipped
+    char *pszRet = CPLRecode("\x90\x80", "CP1252", CPL_ENC_UTF8);
+    CPLPopErrorHandler();
+    EXPECT_STREQ(
+        CPLGetLastErrorMsg(),
+        "One or several characters couldn't be converted correctly from CP1252 "
+        "to UTF-8. This warning will not be emitted anymore");
+    EXPECT_EQ(memcmp(pszRet, "\xE2\x82\xAC\x00", 4), 0);
+    CPLFree(pszRet);
 }
 
 // Test CPLHTTPParseMultipartMime()
@@ -5261,4 +5307,218 @@ TEST_F(test_cpl, CPLUTF8ForceToASCII)
     }
 }
 
+#ifndef _WIN32
+TEST_F(test_cpl, CPLSpawn)
+{
+    VSIStatBufL sStatBuf;
+    if (VSIStatL("/bin/true", &sStatBuf) == 0)
+    {
+        const char *const apszArgs[] = {"/bin/true", nullptr};
+        EXPECT_EQ(CPLSpawn(apszArgs, nullptr, nullptr, false), 0);
+    }
+    if (VSIStatL("/bin/false", &sStatBuf) == 0)
+    {
+        const char *const apszArgs[] = {"/bin/false", nullptr};
+        EXPECT_EQ(CPLSpawn(apszArgs, nullptr, nullptr, false), 1);
+    }
+
+    {
+        const char *const apszArgs[] = {"/i_do/not/exist", nullptr};
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        EXPECT_EQ(CPLSpawn(apszArgs, nullptr, nullptr, false), -1);
+        CPLPopErrorHandler();
+    }
+}
+#endif
+
+static bool ENDS_WITH(const char *pszStr, const char *pszEnd)
+{
+    return strlen(pszStr) >= strlen(pszEnd) &&
+           strcmp(pszStr + strlen(pszStr) - strlen(pszEnd), pszEnd) == 0;
+}
+
+TEST_F(test_cpl, VSIMemGenerateHiddenFilename)
+{
+    {
+        // Initial cleanup
+        VSIRmdirRecursive("/vsimem/");
+        VSIRmdirRecursive("/vsimem/.#!HIDDEN!#.");
+
+        // Generate unlisted filename
+        const std::string osFilename1 = VSIMemGenerateHiddenFilename(nullptr);
+        const char *pszFilename1 = osFilename1.c_str();
+        EXPECT_TRUE(STARTS_WITH(pszFilename1, "/vsimem/.#!HIDDEN!#./"));
+        EXPECT_TRUE(ENDS_WITH(pszFilename1, "/unnamed"));
+
+        {
+            // Check the file doesn't exist yet
+            VSIStatBufL sStat;
+            EXPECT_EQ(VSIStatL(pszFilename1, &sStat), -1);
+        }
+
+        // Create the file with some content
+        GByte abyDummyData[1] = {0};
+        VSIFCloseL(VSIFileFromMemBuffer(pszFilename1, abyDummyData,
+                                        sizeof(abyDummyData), false));
+
+        {
+            // Check the file exists now
+            VSIStatBufL sStat;
+            EXPECT_EQ(VSIStatL(pszFilename1, &sStat), 0);
+        }
+
+        // Get's back content
+        EXPECT_EQ(VSIGetMemFileBuffer(pszFilename1, nullptr, false),
+                  abyDummyData);
+
+        {
+            // Check the hidden file doesn't popup
+            const CPLStringList aosFiles(VSIReadDir("/vsimem/"));
+            EXPECT_EQ(aosFiles.size(), 0);
+        }
+
+        {
+            // Check that we can list the below directory if we know it exists
+            // and there's just one subdir
+            const CPLStringList aosFiles(VSIReadDir("/vsimem/.#!HIDDEN!#."));
+            EXPECT_EQ(aosFiles.size(), 1);
+        }
+
+        {
+            // but that it is not an explicit directory
+            VSIStatBufL sStat;
+            EXPECT_EQ(VSIStatL("/vsimem/.#!HIDDEN!#.", &sStat), -1);
+        }
+
+        // Creates second file
+        const std::string osFilename2 = VSIMemGenerateHiddenFilename(nullptr);
+        const char *pszFilename2 = osFilename2.c_str();
+        EXPECT_TRUE(strcmp(pszFilename1, pszFilename2) != 0);
+
+        // Create it
+        VSIFCloseL(VSIFileFromMemBuffer(pszFilename2, abyDummyData,
+                                        sizeof(abyDummyData), false));
+
+        {
+            // Check that we can list the root hidden dir if we know it exists
+            const CPLStringList aosFiles(VSIReadDir("/vsimem/.#!HIDDEN!#."));
+            EXPECT_EQ(aosFiles.size(), 2);
+        }
+
+        {
+            // Create an explicit subdirectory in a hidden directory
+            const std::string osBaseName =
+                VSIMemGenerateHiddenFilename(nullptr);
+            const std::string osSubDir =
+                CPLFormFilename(osBaseName.c_str(), "mysubdir", nullptr);
+            EXPECT_EQ(VSIMkdir(osSubDir.c_str(), 0), 0);
+
+            // Check the subdirectory exists
+            {
+                VSIStatBufL sStat;
+                EXPECT_EQ(VSIStatL(osSubDir.c_str(), &sStat), 0);
+            }
+
+            // but not its hidden parent
+            {
+                VSIStatBufL sStat;
+                EXPECT_EQ(VSIStatL(osBaseName.c_str(), &sStat), -1);
+            }
+
+            // Create file within the subdirectory
+            VSIFCloseL(VSIFileFromMemBuffer(
+                CPLFormFilename(osSubDir.c_str(), "my.bin", nullptr),
+                abyDummyData, sizeof(abyDummyData), false));
+
+            {
+                // Check that we can list the subdirectory
+                const CPLStringList aosFiles(VSIReadDir(osSubDir.c_str()));
+                EXPECT_EQ(aosFiles.size(), 1);
+            }
+
+            {
+                // Check that we can list the root hidden dir if we know it exists
+                const CPLStringList aosFiles(
+                    VSIReadDir("/vsimem/.#!HIDDEN!#."));
+                EXPECT_EQ(aosFiles.size(), 3);
+            }
+        }
+
+        // Directly create a directory with the return of VSIMemGenerateHiddenFilename()
+        {
+            const std::string osDirname = VSIMemGenerateHiddenFilename(nullptr);
+            EXPECT_EQ(VSIMkdir(osDirname.c_str(), 0), 0);
+
+            // Check the subdirectory exists
+            {
+                VSIStatBufL sStat;
+                EXPECT_EQ(VSIStatL(osDirname.c_str(), &sStat), 0);
+            }
+
+            // Create file within the subdirectory
+            VSIFCloseL(VSIFileFromMemBuffer(
+                CPLFormFilename(osDirname.c_str(), "my.bin", nullptr),
+                abyDummyData, sizeof(abyDummyData), false));
+
+            {
+                // Check there's a file in this subdirectory
+                const CPLStringList aosFiles(VSIReadDir(osDirname.c_str()));
+                EXPECT_EQ(aosFiles.size(), 1);
+            }
+
+            EXPECT_EQ(VSIRmdirRecursive(osDirname.c_str()), 0);
+
+            {
+                // Check there's no longer any file in this subdirectory
+                const CPLStringList aosFiles(VSIReadDir(osDirname.c_str()));
+                EXPECT_EQ(aosFiles.size(), 0);
+            }
+
+            {
+                // Check that it no longer exists
+                VSIStatBufL sStat;
+                EXPECT_EQ(VSIStatL(osDirname.c_str(), &sStat), -1);
+            }
+        }
+
+        // Check that operations on "/vsimem/" do not interfere with hidden files
+        {
+            // Create regular file
+            VSIFCloseL(VSIFileFromMemBuffer("/vsimem/regular_file",
+                                            abyDummyData, sizeof(abyDummyData),
+                                            false));
+
+            // Check it is visible
+            EXPECT_EQ(CPLStringList(VSIReadDir("/vsimem/")).size(), 1);
+
+            // Clean root /vsimem/
+            VSIRmdirRecursive("/vsimem/");
+
+            // No more user files
+            EXPECT_TRUE(CPLStringList(VSIReadDir("/vsimem/")).empty());
+
+            // But still hidden files
+            EXPECT_TRUE(
+                !CPLStringList(VSIReadDir("/vsimem/.#!HIDDEN!#.")).empty());
+        }
+
+        // Clean-up hidden files
+        EXPECT_EQ(VSIRmdirRecursive("/vsimem/.#!HIDDEN!#."), 0);
+
+        {
+            // Check the root hidden dir is empty
+            const CPLStringList aosFiles(VSIReadDir("/vsimem/.#!HIDDEN!#."));
+            EXPECT_TRUE(aosFiles.empty());
+        }
+
+        EXPECT_EQ(VSIRmdirRecursive("/vsimem/.#!HIDDEN!#."), 0);
+    }
+
+    {
+        const std::string osFilename = VSIMemGenerateHiddenFilename("foo.bar");
+        const char *pszFilename = osFilename.c_str();
+        EXPECT_TRUE(STARTS_WITH(pszFilename, "/vsimem/.#!HIDDEN!#./"));
+        EXPECT_TRUE(ENDS_WITH(pszFilename, "/foo.bar"));
+    }
+}
 }  // namespace

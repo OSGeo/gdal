@@ -214,10 +214,10 @@ with control information.
 
 .. option:: -et <err_threshold>
 
-    Error threshold for transformation approximation (in pixel units -
-    defaults to 0.125, unless, starting with GDAL 2.1, the RPC_DEM transformer
-    option is specified, in which case, an exact transformer, i.e.
-    err_threshold=0, will be used).
+    Error threshold for transformation approximation, expressed as a number of
+    source pixels. Defaults to 0.125 pixels unless the ``RPC_DEM`` transformer
+    option is specified, in which case an exact transformer, i.e.
+    ``err_threshold=0``, will be used.
 
 .. option:: -refine_gcps <tolerance> [<minimum_gcps>]
 
@@ -335,7 +335,7 @@ with control information.
         resolution.
         The resampling method used to create those overviews is generally not the one you
         specify through the :option:`-r` option. Some formats, like JPEG2000, can contain
-        significant outliers due to wavelet compression works. It might thus be useful in
+        significant outliers due to how wavelet compression works. It might thus be useful in
         those situations to use the :option:`-ovr` ``NONE`` option to prevent existing overviews to
         be used.
 
@@ -490,21 +490,43 @@ with control information.
     The destination file name.
 
 
-Mosaicing into an existing output file is supported if the output file
-already exists. The spatial extent of the existing file will not
-be modified to accommodate new data, so you may have to remove it in that case, or
-use the -overwrite option.
+Overview
+--------
 
-Polygon cutlines may be used as a mask to restrict the area of the
-destination file that may be updated, including blending.  If the OGR
-layer containing the cutline features has no explicit SRS, the cutline
-features must be in the SRS of the destination file. When writing to a
-not yet existing target dataset, its extent will be the one of the
-original raster unless -te or -crop_to_cutline are specified.
+:program:`gdalwarp` transforms images between different coordinate reference
+systems and spatial resolutions.
 
-Starting with GDAL 3.1, it is possible to use as output format a driver that
-only supports the CreateCopy operation. This may internally imply creation of
-a temporary file.
+First, :program:`gdalwarp` must determine the extent and resolution of the
+output, if these have not been specified using :option:`-te` and :option:`-tr`.
+These are determined by transforming a sample of points from the source CRS to
+the destination CRS. Details of the procedure can be found in the documentation
+for :cpp:func:`GDALSuggestedWarpOutput`. If multiple inputs are provided to
+:program:`gdalwarp`, the output extent will be calculated to cover all of them,
+at a resolution consistent with the highest-resolution input.
+
+Once the dimensions of the output image have been determined,
+:program:`gdalwarp` divides the output image into chunks that can be processed
+independently within the amount of memory specified by :option:`-wm`.
+:program:`gdalwarp` then iterates over scanlines in these chunks, and for each
+output pixel determines the set of source pixels that contribute to the value
+of the output pixel. These source pixels are provided to a function that
+performs the resampling algorithm selected with :option:`-r`.
+
+Writing to an existing file
+---------------------------
+
+Mosaicing into an existing output file is supported if the output file already
+exists. The spatial extent of the existing file will not be modified to
+accommodate new data, so you may have to remove it in that case, or use the
+:option:`-overwrite` option.
+
+Polygon cutlines may be used as a mask to restrict the area of the destination
+file that may be updated, including blending.  If the OGR layer containing the
+cutline features has no explicit SRS, the cutline features are assumed to be in
+the SRS of the destination file. When writing to a not yet existing target
+dataset, its extent will be the one of the original raster unless :option:`-te`
+or :option:`-crop_to_cutline` are specified.
+
 
 .. _gdalwarp_nodata:
 
@@ -559,30 +581,34 @@ Approximate transformation
 --------------------------
 
 By default :program:`gdalwarp` uses a linear approximator for the
-transformations with a permitted error of 0.125 pixels. The approximator
-basically transforms three points on a scanline: the start, end and middle.
-Then it compares the linear approximation of the center based on the end points
-to the real thing and checks the error. If the error is less than the error
-threshold then the remaining points are approximated (in two chunks utilizing
-the center point). If the error exceeds the threshold, the scanline is split
-into two sections, and the approximator is recursively applied to each section
-until the error is less than the threshold or all points have been exactly
-computed.
+transformations with a permitted error of 0.125 pixels in the source dataset.
+The approximator precisely transforms three points per output scanline (the
+start, middle, and end) from a row and column in the output dataset to a
+row and column in the source dataset.
+It then compares a linear approximation of the center point coordinates to the
+precisely transformed value.
+If the sum of the horizontal and vertical errors is less than the error
+threshold then the remaining source points are approximated using linear
+interpolation between the start and middle point, and between the middle and
+end point.
+If the error exceeds the threshold, the scanline is split into two sections and
+the approximator is recursively applied to each section until the error is less
+than the threshold or all points have been exactly computed.
 
-The error threshold (in pixels) can be controlled with the gdalwarp
+The error threshold (in source dataset pixels) can be controlled with the gdalwarp
 :option:`-et` switch. If you want to compare a true pixel-by-pixel reprojection
 use :option:`-et 0` which disables this approximator entirely.
 
 Vertical transformation
 -----------------------
 
-While gdalwarp can essentially perform coordinate transformations in the 2D
-space, it can perform as well vertical transformations. This is automatically
-enabled when the 2 following conditions are met:
+While gdalwarp is most commonly used to perform coordinate transformations in the 2D
+space, it can also perform vertical transformations. Vertical transformations are
+automatically performed when the following two conditions are met:
 
 - at least one of the source or target CRS has an explicit vertical CRS
-  (as part of a compound CRS) or is a 3D (generally geographic) CRS,
-- and the raster has a single band.
+  (as part of a compound CRS) or is a 3D (generally geographic) CRS, and
+- the raster has a single band
 
 This mode can also be forced by using the :option:`-vshift` (this is
 essentially useful when the CRS involved are not explicitly 3D, but a
@@ -752,15 +778,3 @@ C API
 -----
 
 This utility is also callable from C with :cpp:func:`GDALWarp`.
-
-
-See also
---------
-
-.. only:: not man
-
-    `Wiki page discussing options and behaviours of gdalwarp <https://trac.osgeo.org/gdal/wiki/UserDocs/GdalWarp>`_
-
-.. only:: man
-
-    Wiki page discussing options and behaviours of gdalwarp: https://trac.osgeo.org/gdal/wiki/UserDocs/GdalWarp

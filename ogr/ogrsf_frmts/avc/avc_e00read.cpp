@@ -1003,7 +1003,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo, char **papszCoverDir)
     }
 
     CPLString osCoverPathTruncated(psInfo->pszCoverPath);
-    osCoverPathTruncated.resize(osCoverPathTruncated.size() - 1);
+    osCoverPathTruncated.pop_back();
     pszEXPPath = CPLStrdup(
         CPLSPrintf("EXP  0 %s%s.E00", szCWD, osCoverPathTruncated.c_str()));
     pcTmp = pszEXPPath;

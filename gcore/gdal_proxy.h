@@ -59,6 +59,13 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, int, BANDMAP_TYPE, GSpacing, GSpacing,
                      GSpacing, GDALRasterIOExtraArg *psExtraArg) override;
+    CPLErr BlockBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                              int nXSize, int nYSize, void *pData,
+                              int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType, int nBandCount,
+                              const int *panBandMap, GSpacing nPixelSpace,
+                              GSpacing nLineSpace, GSpacing nBandSpace,
+                              GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
     char **GetMetadataDomainList() override;
@@ -140,6 +147,16 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
                                 const char *pszDomain) override;
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain) override;
+
+    GDALRasterBlock *GetLockedBlockRef(int nXBlockOff, int nYBlockOff,
+                                       int bJustInitialize) override;
+
+    GDALRasterBlock *TryGetLockedBlockRef(int nXBlockOff,
+                                          int nYBlockYOff) override;
+
+    CPLErr FlushBlock(int nXBlockOff, int nYBlockOff,
+                      int bWriteDirtyBlock) override;
+
     CPLErr FlushCache(bool bAtClosing) override;
     char **GetCategoryNames() override;
     double GetNoDataValue(int *pbSuccess = nullptr) override;
@@ -205,6 +222,13 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
     CPLVirtualMem *GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
                                      GIntBig *pnLineSpace,
                                      char **papszOptions) override;
+
+    CPLErr InterpolateAtPoint(double dfPixel, double dfLine,
+                              GDALRIOResampleAlg eInterpolation,
+                              double *pdfRealValue,
+                              double *pdfImagValue) const override;
+
+    void EnablePixelTypeSignedByteWarning(bool b) override;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALProxyRasterBand)

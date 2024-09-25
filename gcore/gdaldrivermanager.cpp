@@ -368,6 +368,26 @@ int GDALDriverManager::GetDriverCount(bool bIncludeHidden) const
 //! @endcond
 
 /************************************************************************/
+/*                            IsKnownDriver()                           */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+bool GDALDriverManager::IsKnownDriver(const char *pszDriverName) const
+{
+    CPLMutexHolderD(&hDMMutex);
+    if (cpl::contains(oMapNameToDrivers, CPLString(pszDriverName).toupper()))
+        return true;
+    for (const auto &poDriver : m_aoHiddenDrivers)
+    {
+        if (EQUAL(poDriver->GetDescription(), pszDriverName))
+            return true;
+    }
+    return false;
+}
+
+//! @endcond
+
+/************************************************************************/
 /*                         GDALGetDriverCount()                         */
 /************************************************************************/
 
@@ -525,7 +545,9 @@ int GDALDriverManager::RegisterDriver(GDALDriver *poDriver, bool bHidden)
     if (poDriver->pfnVectorTranslateFrom != nullptr)
         poDriver->SetMetadataItem(GDAL_DCAP_VECTOR_TRANSLATE_FROM, "YES");
 
-    if (m_bInDeferredDriverLoading)
+    if (m_bInDeferredDriverLoading &&
+        cpl::contains(oMapNameToDrivers,
+                      CPLString(poDriver->GetDescription()).toupper()))
     {
         if (cpl::contains(m_oMapRealDrivers, poDriver->GetDescription()))
         {

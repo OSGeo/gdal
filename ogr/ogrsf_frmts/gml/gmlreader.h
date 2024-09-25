@@ -80,16 +80,18 @@ typedef struct
 
 class CPL_DLL GMLPropertyDefn
 {
-    char *m_pszName;
-    GMLPropertyType m_eType;
-    int m_nWidth;
-    int m_nPrecision;
-    char *m_pszSrcElement;
-    size_t m_nSrcElementLen;
-    char *m_pszCondition;
-    bool m_bNullable;
+    char *m_pszName = nullptr;
+    GMLPropertyType m_eType = GMLPT_Untyped;
+    int m_nWidth = 0;
+    int m_nPrecision = 0;
+    char *m_pszSrcElement = nullptr;
+    size_t m_nSrcElementLen = 0;
+    char *m_pszCondition = nullptr;
+    bool m_bNullable = true;
     bool m_bUnique = false;
     std::string m_osDocumentation{};
+
+    CPL_DISALLOW_COPY_ASSIGN(GMLPropertyDefn)
 
   public:
     explicit GMLPropertyDefn(const char *pszName,
@@ -196,14 +198,16 @@ class CPL_DLL GMLPropertyDefn
 
 class CPL_DLL GMLGeometryPropertyDefn
 {
-    char *m_pszName;
-    char *m_pszSrcElement;
+    char *m_pszName = nullptr;
+    char *m_pszSrcElement = nullptr;
     OGRwkbGeometryType m_nGeometryType = wkbUnknown;
-    int m_nAttributeIndex;
-    bool m_bNullable;
+    const int m_nAttributeIndex = -1;
+    const bool m_bNullable = true;
     bool m_bSRSNameConsistent = true;
     std::string m_osSRSName{};
     OGRGeomCoordinatePrecision m_oCoordPrecision{};
+
+    CPL_DISALLOW_COPY_ASSIGN(GMLGeometryPropertyDefn)
 
   public:
     GMLGeometryPropertyDefn(const char *pszName, const char *pszSrcElement,
@@ -265,6 +269,7 @@ class CPL_DLL GMLGeometryPropertyDefn
 /************************************************************************/
 /*                           GMLFeatureClass                            */
 /************************************************************************/
+
 class CPL_DLL GMLFeatureClass
 {
     char *m_pszName;
@@ -273,8 +278,8 @@ class CPL_DLL GMLFeatureClass
     int n_nElementNameLen;
     int m_nPropertyCount;
     GMLPropertyDefn **m_papoProperty;
-    std::map<CPLString, int> m_oMapPropertyNameToIndex;
-    std::map<CPLString, int> m_oMapPropertySrcElementToIndex;
+    std::map<CPLString, int> m_oMapPropertyNameToIndex{};
+    std::map<CPLString, int> m_oMapPropertySrcElementToIndex{};
 
     int m_nGeometryPropertyCount;
     GMLGeometryPropertyDefn **m_papoGeometryProperty;
@@ -296,6 +301,8 @@ class CPL_DLL GMLFeatureClass
 
     bool m_bIsConsistentSingleGeomElemPath = true;
     std::string m_osSingleGeomElemPath{};
+
+    CPL_DISALLOW_COPY_ASSIGN(GMLFeatureClass)
 
   public:
     explicit GMLFeatureClass(const char *pszName = "");
@@ -418,6 +425,8 @@ class CPL_DLL GMLFeature
     CPLXMLNode *m_apsGeometry[2]; /* NULL-terminated */
 
     CPLXMLNode *m_psBoundedByGeometry = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(GMLFeature)
 
   public:
     explicit GMLFeature(GMLFeatureClass *);

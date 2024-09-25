@@ -81,7 +81,8 @@ class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBaseWritable
     char **GetFileList(const char *pszFilename, int nMaxFiles,
                        bool *pbGotFileList) override;
 
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     VSIVirtualHandleUniquePtr
     CreateWriteHandle(const char *pszFilename,
@@ -283,7 +284,7 @@ void VSIWebHDFSWriteHandle::InvalidateParentDirectory()
 
     std::string osFilenameWithoutSlash(m_osFilename);
     if (!osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/')
-        osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() - 1);
+        osFilenameWithoutSlash.pop_back();
     m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
 }
 
@@ -564,11 +565,11 @@ VSICurlHandle *VSIWebHDFSFSHandler::CreateFileHandle(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                          GetURLFromFilename()                         */
+/*                          GetURLFromFilename()                        */
 /************************************************************************/
 
 std::string
-VSIWebHDFSFSHandler::GetURLFromFilename(const std::string &osFilename)
+VSIWebHDFSFSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
     return osFilename.substr(GetFSPrefix().size());
 }
@@ -753,7 +754,7 @@ int VSIWebHDFSFSHandler::Unlink(const char *pszFilename)
         std::string osFilenameWithoutSlash(pszFilename);
         if (!osFilenameWithoutSlash.empty() &&
             osFilenameWithoutSlash.back() == '/')
-            osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() - 1);
+            osFilenameWithoutSlash.pop_back();
 
         InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
     }
@@ -794,7 +795,7 @@ int VSIWebHDFSFSHandler::Mkdir(const char *pszDirname, long nMode)
     if (!osDirnameWithoutEndSlash.empty() &&
         osDirnameWithoutEndSlash.back() == '/')
     {
-        osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+        osDirnameWithoutEndSlash.pop_back();
     }
 
     if (osDirnameWithoutEndSlash.find("/webhdfs/v1") ==

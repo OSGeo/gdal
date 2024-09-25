@@ -71,7 +71,7 @@ GTiffJPEGOverviewDS::GTiffJPEGOverviewDS(GTiffDataset *poParentDSIn,
 {
     ShareLockWithParentDataset(poParentDSIn);
 
-    m_osTmpFilenameJPEGTable.Printf("/vsimem/jpegtable_%p", this);
+    m_osTmpFilenameJPEGTable = VSIMemGenerateHiddenFilename("jpegtable");
 
     const GByte abyAdobeAPP14RGB[] = {0xFF, 0xEE, 0x00, 0x0E, 0x41, 0x64,
                                       0x6F, 0x62, 0x65, 0x00, 0x64, 0x00,
@@ -221,7 +221,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         nByteCount -= 2;
 
         CPLString osFileToOpen;
-        m_poGDS->m_osTmpFilename.Printf("/vsimem/sparse_%p", m_poGDS);
+        m_poGDS->m_osTmpFilename = VSIMemGenerateHiddenFilename("sparse");
         VSILFILE *fp = VSIFOpenL(m_poGDS->m_osTmpFilename, "wb+");
 
         // If the size of the JPEG strip/tile is small enough, we will

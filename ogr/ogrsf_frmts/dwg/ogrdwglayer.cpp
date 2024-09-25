@@ -423,7 +423,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT(OdDbEntityPtr poEntity)
     CPLString osText = TextUnescape(poMTE->contents(), true);
 
     if (!osText.empty() && osText.back() == '\n')
-        osText.resize(osText.size() - 1);
+        osText.pop_back();
 
     poFeature->SetField("Text", osText);
 
@@ -543,7 +543,7 @@ OGRFeature *OGRDWGLayer::TranslateTEXT(OdDbEntityPtr poEntity)
     CPLString osText = TextUnescape(poText->textString(), false);
 
     if (!osText.empty() && osText.back() == '\n')
-        osText.resize(osText.size() - 1);
+        osText.pop_back();
 
     poFeature->SetField("Text", osText);
 

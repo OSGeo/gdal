@@ -155,8 +155,8 @@ OGRwkbGeometryType OGRPMTilesVectorLayer::GuessGeometryType(
         }
         osTileData = *posStr;
 
-        std::string osTmpFilename =
-            CPLSPrintf("/vsimem/mvt_%p_%u_%u.pbf", poDS, sTile.x, sTile.y);
+        const std::string osTmpFilename = VSIMemGenerateHiddenFilename(
+            CPLSPrintf("pmtiles_%u_%u.pbf", sTile.x, sTile.y));
         VSIFCloseL(VSIFileFromMemBuffer(
             osTmpFilename.c_str(), reinterpret_cast<GByte *>(&osTileData[0]),
             osTileData.size(), false));
@@ -226,8 +226,8 @@ GIntBig OGRPMTilesVectorLayer::GetTotalFeatureCount() const
         }
         osTileData = *posStr;
 
-        std::string osTmpFilename = CPLSPrintf(
-            "/vsimem/mvt_%p_%u_%u_getfeaturecount.pbf", this, sTile.x, sTile.y);
+        const std::string osTmpFilename = VSIMemGenerateHiddenFilename(
+            CPLSPrintf("pmtiles_%u_%u_getfeaturecount.pbf", sTile.x, sTile.y));
         VSIFCloseL(VSIFileFromMemBuffer(
             osTmpFilename.c_str(), reinterpret_cast<GByte *>(&osTileData[0]),
             osTileData.size(), false));
@@ -300,8 +300,8 @@ OGRFeature *OGRPMTilesVectorLayer::GetFeature(GIntBig nFID)
     }
     std::string osTileData = *posStr;
 
-    std::string osTmpFilename = CPLSPrintf(
-        "/vsimem/mvt_%p_%u_%u_getfeature.pbf", this, sTile.x, sTile.y);
+    const std::string osTmpFilename = VSIMemGenerateHiddenFilename(
+        CPLSPrintf("pmtiles_getfeature_%u_%u.pbf", sTile.x, sTile.y));
     VSIFCloseL(VSIFileFromMemBuffer(osTmpFilename.c_str(),
                                     reinterpret_cast<GByte *>(&osTileData[0]),
                                     osTileData.size(), false));
@@ -408,8 +408,8 @@ std::unique_ptr<OGRFeature> OGRPMTilesVectorLayer::GetNextSrcFeature()
             }
 
             m_poTileDS.reset();
-            const std::string osTmpFilename =
-                CPLSPrintf("/vsimem/mvt_%p_%u_%u.pbf", this, sTile.x, sTile.y);
+            const std::string osTmpFilename = VSIMemGenerateHiddenFilename(
+                CPLSPrintf("pmtiles_%u_%u.pbf", sTile.x, sTile.y));
             VSIFCloseL(VSIFileFromMemBuffer(
                 osTmpFilename.c_str(),
                 reinterpret_cast<GByte *>(&m_osTileData[0]),

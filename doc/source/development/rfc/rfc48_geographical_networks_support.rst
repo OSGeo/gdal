@@ -19,7 +19,7 @@ project “GDAL/OGR Geography Network support” into GDAL library. GNM
 create, manage and analyse networks built over spatial data in GDAL.
 
 GSoC project description:
-`http://trac.osgeo.org/gdal/wiki/geography_network_support <http://trac.osgeo.org/gdal/wiki/geography_network_support>`__
+`http://web.archive.org/web/20240812232429/https://trac.osgeo.org/gdal/wiki/geography_network_support <http://web.archive.org/web/20240812232429/https://trac.osgeo.org/gdal/wiki/geography_network_support>`__
 
 GDAL fork with all changes in trunk:
 `https://github.com/MikhanGusev/gdal <https://github.com/MikhanGusev/gdal>`__

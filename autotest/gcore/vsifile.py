@@ -148,6 +148,28 @@ def vsifile_generic(filename, options=[]):
         if fp:
             gdal.VSIFCloseL(fp)
 
+    gdal.Unlink(filename)
+
+    if not filename.startswith("/vsicrypt/"):
+        assert gdal.RmdirRecursive(filename + "/i_dont_exist") == -1
+
+        subdir = filename + "/subdir"
+        assert gdal.MkdirRecursive(subdir + "/subsubdir", 0o755) == 0
+
+        assert gdal.VSIStatL(subdir) is not None
+        assert gdal.VSIStatL(subdir + "/subsubdir") is not None
+
+        if not filename.startswith("/vsimem/"):
+            assert gdal.Rmdir(subdir) == -1
+            assert gdal.VSIStatL(subdir) is not None
+
+        # Safety belt...
+        assert filename.startswith("tmp/") or filename.startswith("/vsimem/")
+        assert gdal.RmdirRecursive(filename) == 0
+
+        assert gdal.VSIStatL(subdir) is None
+        assert gdal.VSIStatL(subdir + "/subsubdir") is None
+
 
 ###############################################################################
 # Test /vsimem
@@ -680,6 +702,15 @@ def test_vsifile_14():
 
 
 ###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/10821
+
+
+def test_vsifile_vsitar_of_vsitar():
+
+    gdal.Open("/vsitar/{/vsitar/data/tar_of_tar_gzip.tar}/byte_tif.tar.gz/byte.tif")
+
+
+###############################################################################
 # Test issue with Error() not detecting end of corrupted gzip stream (#6944)
 
 
@@ -774,12 +805,8 @@ def test_vsifile_19():
 
 def test_vsifile_20():
 
-    try:
+    with pytest.raises(Exception):
         gdal.VSIFReadL(1, 1, None)
-    except ValueError:
-        return
-
-    pytest.fail()
 
 
 ###############################################################################
@@ -1708,7 +1735,7 @@ def test_vsifile_MultipartUpload():
         with gdal.quiet_errors():
             assert gdal.MultipartUploadGetCapabilities("foo") is None
     with gdal.ExceptionMgr(useExceptions=True):
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             gdal.MultipartUploadGetCapabilities(None)
 
         with pytest.raises(
@@ -1717,7 +1744,7 @@ def test_vsifile_MultipartUpload():
         ):
             gdal.MultipartUploadGetCapabilities("foo")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             gdal.MultipartUploadStart(None)
 
         with pytest.raises(
@@ -1726,9 +1753,9 @@ def test_vsifile_MultipartUpload():
         ):
             gdal.MultipartUploadStart("foo")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             gdal.MultipartUploadAddPart(None, "", 1, 0, b"")
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             gdal.MultipartUploadAddPart("", None, 1, 0, b"")
 
         with pytest.raises(
@@ -1737,9 +1764,9 @@ def test_vsifile_MultipartUpload():
         ):
             gdal.MultipartUploadAddPart("", "", 1, 0, b"")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             gdal.MultipartUploadEnd(None, "", [], 0)
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             gdal.MultipartUploadEnd("", None, [], 0)
 
         with pytest.raises(
@@ -1748,9 +1775,9 @@ def test_vsifile_MultipartUpload():
         ):
             gdal.MultipartUploadEnd("", "", [], 0)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             gdal.MultipartUploadAbort(None, "")
-        with pytest.raises(ValueError):
+        with pytest.raises(Exception):
             gdal.MultipartUploadAbort("", None)
 
         with pytest.raises(

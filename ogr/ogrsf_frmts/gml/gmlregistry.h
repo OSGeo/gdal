@@ -38,10 +38,10 @@
 class GMLRegistryFeatureType
 {
   public:
-    CPLString osElementName;
-    CPLString osElementValue;
-    CPLString osSchemaLocation;
-    CPLString osGFSSchemaLocation;
+    CPLString osElementName{};
+    CPLString osElementValue{};
+    CPLString osSchemaLocation{};
+    CPLString osGFSSchemaLocation{};
 
     bool Parse(const char *pszRegistryFilename, CPLXMLNode *psNode);
 };
@@ -49,24 +49,22 @@ class GMLRegistryFeatureType
 class GMLRegistryNamespace
 {
   public:
-    GMLRegistryNamespace() : bUseGlobalSRSName(false)
-    {
-    }
+    GMLRegistryNamespace() = default;
 
-    CPLString osPrefix;
-    CPLString osURI;
-    bool bUseGlobalSRSName;
-    std::vector<GMLRegistryFeatureType> aoFeatureTypes;
+    CPLString osPrefix{};
+    CPLString osURI{};
+    bool bUseGlobalSRSName = false;
+    std::vector<GMLRegistryFeatureType> aoFeatureTypes{};
 
     bool Parse(const char *pszRegistryFilename, CPLXMLNode *psNode);
 };
 
 class GMLRegistry
 {
-    CPLString osRegistryPath;
+    CPLString osRegistryPath{};
 
   public:
-    std::vector<GMLRegistryNamespace> aoNamespaces;
+    std::vector<GMLRegistryNamespace> aoNamespaces{};
 
     explicit GMLRegistry(const CPLString &osRegistryPathIn)
         : osRegistryPath(osRegistryPathIn)

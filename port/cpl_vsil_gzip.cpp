@@ -960,10 +960,12 @@ bool VSIGZipHandle::gzseek(vsi_l_offset offset, int whence)
     {
         m_uncompressed_size = out;
 
-        if (m_pszBaseFileName &&
-            !STARTS_WITH_CI(m_pszBaseFileName, "/vsicurl/") &&
-            m_bWriteProperties)
+        if (m_pszBaseFileName && !STARTS_WITH(m_pszBaseFileName, "/vsicurl/") &&
+            !STARTS_WITH(m_pszBaseFileName, "/vsitar/") &&
+            !STARTS_WITH(m_pszBaseFileName, "/vsizip/") && m_bWriteProperties)
         {
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+
             CPLString osCacheFilename(m_pszBaseFileName);
             osCacheFilename += ".properties";
 

@@ -2829,3 +2829,105 @@ def test_ogr2ogr_lib_skip_invalid(tmp_vsimem):
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
     ds = None
+
+
+###############################################################################
+# Test -t_srs in Arrow code path
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("force_reproj_threading", [False, True])
+@pytest.mark.parametrize("source_driver", ["GPKG", "Parquet"])
+def test_ogr2ogr_lib_reproject_arrow(tmp_vsimem, source_driver, force_reproj_threading):
+
+    src_driver = gdal.GetDriverByName(source_driver)
+    if src_driver is None:
+        pytest.skip(f"{source_driver} is not available")
+    src_filename = str(tmp_vsimem / ("in." + source_driver.lower()))
+    with src_driver.Create(src_filename, 0, 0, 0, gdal.GDT_Unknown) as srcDS:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(32631)
+        srcLayer = srcDS.CreateLayer("test", srs=srs)
+        f = ogr.Feature(srcLayer.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(500000 4500000)"))
+        srcLayer.CreateFeature(f)
+        f = ogr.Feature(srcLayer.GetLayerDefn())
+        srcLayer.CreateFeature(f)
+        f = ogr.Feature(srcLayer.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(500000 4000000)"))
+        srcLayer.CreateFeature(f)
+
+    config_options = {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    if force_reproj_threading:
+        config_options["OGR2OGR_MIN_FEATURES_FOR_THREADED_REPROJ"] = "0"
+
+    with gdal.OpenEx(src_filename) as src_ds:
+        for i in range(2):
+
+            got_msg = []
+
+            def my_handler(errorClass, errno, msg):
+                got_msg.append(msg)
+                return
+
+            with gdaltest.error_handler(my_handler), gdaltest.config_options(
+                config_options
+            ):
+                ds = gdal.VectorTranslate(
+                    "", src_ds, format="Memory", dstSRS="EPSG:4326"
+                )
+
+            assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+            lyr = ds.GetLayer(0)
+            assert lyr.GetFeatureCount() == 3
+            f = lyr.GetNextFeature()
+            ogrtest.check_feature_geometry(f, "POINT(3 40.65085651557158)")
+            f = lyr.GetNextFeature()
+            assert f.GetGeometryRef() is None
+            f = lyr.GetNextFeature()
+            ogrtest.check_feature_geometry(f, "POINT(3 36.14471809881776)")
+
+
+###############################################################################
+# Test -t_srs in Arrow code path in a situation where it cannot be triggered
+# currently (source CRS is crossing anti-meridian)
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_geos
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_reproject_arrow_optim_cannot_trigger(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "in.gpkg")
+    with gdal.GetDriverByName("GPKG").Create(
+        src_filename, 0, 0, 0, gdal.GDT_Unknown
+    ) as srcDS:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(32660)
+        srcLayer = srcDS.CreateLayer("test", srs=srs)
+        f = ogr.Feature(srcLayer.GetLayerDefn())
+        f.SetGeometry(
+            ogr.CreateGeometryFromWkt(
+                "LINESTRING(657630.64 4984896.17,815261.43 4990738.26)"
+            )
+        )
+        srcLayer.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    config_options = {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(config_options):
+        ds = gdal.VectorTranslate("", src_filename, format="Memory", dstSRS="EPSG:4326")
+
+    assert "OGR2OGR: Using WriteArrowBatch()" not in got_msg
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString
+    assert f.GetGeometryRef().GetGeometryCount() == 2

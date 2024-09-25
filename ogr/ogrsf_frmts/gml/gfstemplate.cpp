@@ -50,10 +50,12 @@
 class GFSTemplateItem
 {
   private:
-    char *m_pszName;
-    int n_nItemCount;
-    int n_nGeomCount;
-    GFSTemplateItem *pNext;
+    char *m_pszName = nullptr;
+    int n_nItemCount = 0;
+    int n_nGeomCount = 0;
+    GFSTemplateItem *pNext = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(GFSTemplateItem)
 
   public:
     explicit GFSTemplateItem(const char *pszName);
@@ -340,8 +342,7 @@ int GFSTemplateList::GetClassCount()
 /***************************************************/
 
 GFSTemplateItem::GFSTemplateItem(const char *pszName)
-    : m_pszName(CPLStrdup(pszName)), n_nItemCount(0), n_nGeomCount(0),
-      pNext(nullptr)
+    : m_pszName(CPLStrdup(pszName))
 {
 }
 

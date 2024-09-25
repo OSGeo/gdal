@@ -720,7 +720,7 @@ GDALDataset *WCSDataset::GDALOpenResult(CPLHTTPResult *psResult)
 #endif
     // Eventually we should be looking at mime info and stuff to figure
     // out an optimal filename, but for now we just use a fixed one.
-    osResultFilename = CPLString().Printf("/vsimem/wcs/%p/wcsresult.dat", this);
+    osResultFilename = VSIMemGenerateHiddenFilename("wcsresult.dat");
 
     VSILFILE *fp = VSIFileFromMemBuffer(osResultFilename.c_str(), pabyData,
                                         nDataLen, FALSE);

@@ -454,6 +454,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     nXOff <= nLBlockX * nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&
                     (nXOff + nXSize >= nXRight ||
+                     // cppcheck-suppress knownConditionTrueFalse
                      (nXOff + nXSize == GetXSize() && nXRight > GetXSize())) &&
                     (nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize ||
                      (nYOff + nYSize == GetYSize() &&
@@ -1005,9 +1006,10 @@ CPLErr GDALRasterBand::RasterIOResampled(
     GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     // Determine if we use warping resampling or overview resampling
-    bool bUseWarp = false;
-    if (GDALDataTypeIsComplex(eDataType))
-        bUseWarp = true;
+    const bool bUseWarp =
+        (GDALDataTypeIsComplex(eDataType) &&
+         psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
+         psExtraArg->eResampleAlg != GRIORA_Mode);
 
     double dfXOff = nXOff;
     double dfYOff = nYOff;
@@ -4088,7 +4090,7 @@ CPLErr GDALDataset::BlockBasedRasterIO(
                 {
                     GDALRasterBand *poBand = GetRasterBand(panBandMap[iBand]);
 
-                    eErr = poBand->GDALRasterBand::IRasterIO(
+                    eErr = poBand->IRasterIO(
                         eRWFlag, nChunkXOff, nChunkYOff, nChunkXSize,
                         nChunkYSize,
                         pabyChunkData +

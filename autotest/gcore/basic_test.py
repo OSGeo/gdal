@@ -990,3 +990,13 @@ def test_band_getitem():
 
     with pytest.raises(IndexError):
         ds[5]
+
+
+def test_colorinterp():
+
+    d = {}
+    for c in range(gdal.GCI_Max + 1):
+        name = gdal.GetColorInterpretationName(c)
+        assert name not in d
+        d[name] = c
+        assert gdal.GetColorInterpretationByName(name) == c

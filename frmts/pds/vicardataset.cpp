@@ -1913,8 +1913,8 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
 
     // Create a in-memory GeoTIFF file
 
-    char szFilename[100] = {};
-    snprintf(szFilename, sizeof(szFilename), "/vsimem/vicar_tmp_%p.tif", this);
+    const std::string osTmpFilename(
+        VSIMemGenerateHiddenFilename("vicar_tmp.tif"));
     GDALDriver *poGTiffDriver =
         GDALDriver::FromHandle(GDALGetDriverByName("GTiff"));
     if (poGTiffDriver == nullptr)
@@ -1923,8 +1923,8 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
         return;
     }
     const char *const apszOptions[] = {"GEOTIFF_VERSION=1.0", nullptr};
-    auto poDS = std::unique_ptr<GDALDataset>(
-        poGTiffDriver->Create(szFilename, 1, 1, 1, GDT_Byte, apszOptions));
+    auto poDS = std::unique_ptr<GDALDataset>(poGTiffDriver->Create(
+        osTmpFilename.c_str(), 1, 1, 1, GDT_Byte, apszOptions));
     if (!poDS)
         return;
     poDS->SetSpatialRef(&m_oSRS);
@@ -1935,14 +1935,14 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
     poDS.reset();
 
     // Open it with libtiff/libgeotiff
-    VSILFILE *fpL = VSIFOpenL(szFilename, "r");
+    VSILFILE *fpL = VSIFOpenL(osTmpFilename.c_str(), "r");
     if (fpL == nullptr)
     {
-        VSIUnlink(szFilename);
+        VSIUnlink(osTmpFilename.c_str());
         return;
     }
 
-    TIFF *hTIFF = VSI_TIFFOpen(szFilename, "r", fpL);
+    TIFF *hTIFF = VSI_TIFFOpen(osTmpFilename.c_str(), "r", fpL);
     CPLAssert(hTIFF);
 
     GTIF *hGTIF = GTIFNew(hTIFF);
@@ -2008,7 +2008,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
 
     XTIFFClose(hTIFF);
     CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
-    VSIUnlink(szFilename);
+    VSIUnlink(osTmpFilename.c_str());
 }
 
 /************************************************************************/
@@ -2320,8 +2320,8 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
     // We will build a in-memory temporary GeoTIFF file from the VICAR GEOTIFF
     // metadata items.
 
-    char szFilename[100] = {};
-    snprintf(szFilename, sizeof(szFilename), "/vsimem/vicar_tmp_%p.tif", this);
+    const std::string osTmpFilename(
+        VSIMemGenerateHiddenFilename("vicar_tmp.tif"));
 
     /* -------------------------------------------------------------------- */
     /*      Initialization of libtiff and libgeotiff.                       */
@@ -2332,11 +2332,11 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
     /* -------------------------------------------------------------------- */
     /*      Initialize access to the memory geotiff structure.              */
     /* -------------------------------------------------------------------- */
-    VSILFILE *fpL = VSIFOpenL(szFilename, "w");
+    VSILFILE *fpL = VSIFOpenL(osTmpFilename.c_str(), "w");
     if (fpL == nullptr)
         return;
 
-    TIFF *hTIFF = VSI_TIFFOpen(szFilename, "w", fpL);
+    TIFF *hTIFF = VSI_TIFFOpen(osTmpFilename.c_str(), "w", fpL);
 
     if (hTIFF == nullptr)
     {
@@ -2451,7 +2451,7 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
     /*      Get georeferencing from file.                                   */
     /* -------------------------------------------------------------------- */
     auto poGTiffDS =
-        std::unique_ptr<GDALDataset>(GDALDataset::Open(szFilename));
+        std::unique_ptr<GDALDataset>(GDALDataset::Open(osTmpFilename.c_str()));
     if (poGTiffDS)
     {
         auto poSRS = poGTiffDS->GetSpatialRef();
@@ -2469,7 +2469,7 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
             GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, pszAreaOrPoint);
     }
 
-    VSIUnlink(szFilename);
+    VSIUnlink(osTmpFilename.c_str());
 }
 
 /************************************************************************/

@@ -407,7 +407,7 @@ VRTGroup::GetDimensionFromFullName(const std::string &name,
                 return nullptr;
             }
         }
-        auto poDim(curGroup->GetDimension(aosTokens[aosTokens.size() - 1]));
+        auto poDim(curGroup->GetDimension(aosTokens.back()));
         if (!poDim)
         {
             if (bEmitError)

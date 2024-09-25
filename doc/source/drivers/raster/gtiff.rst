@@ -384,9 +384,6 @@ The TIFF format only supports R,G,B components for palettes / color
 tables. Thus on writing the alpha information will be silently
 discarded.
 
-You may want to read hints to `generate and read cloud optimized GeoTIFF
-files <https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF>`__
-
 Creation Options
 ~~~~~~~~~~~~~~~~
 
@@ -397,7 +394,7 @@ This driver supports the following creation options:
       :choices: YES, NO
 
       Force the generation of an associated ESRI world file
-      (.tfw).See the :ref:`World Files <raster.wld>` page for details.
+      (.tfw). See the :ref:`World Files <raster.wld>` page for details.
 
 -  .. co:: RPB
       :choices: YES, NO

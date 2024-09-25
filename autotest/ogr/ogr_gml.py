@@ -2559,6 +2559,25 @@ def test_ogr_gml_64(parser):
 
 
 ###############################################################################
+# Test we don't spend too much time parsing documents featuring the billion
+# laugh attack
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("parser", ("XERCES", "EXPAT"))
+def test_ogr_gml_billion_laugh(parser):
+
+    with gdal.config_option("GML_PARSER", parser), pytest.raises(
+        Exception, match="File probably corrupted"
+    ):
+        with gdal.OpenEx("data/gml/billionlaugh.gml") as ds:
+            assert ds.GetDriver().GetDescription() == "GML"
+            for lyr in ds:
+                for f in lyr:
+                    pass
+
+
+###############################################################################
 # Test SRSDIMENSION_LOC=GEOMETRY option (#5606)
 
 
@@ -4626,3 +4645,18 @@ def test_ogr_gml_get_layers_by_name_from_imported_schema_more_tests(tmp_path):
     assert isinstance(
         dat_erst, list
     ), f"Expected 'dat_erst' to be of type 'list', but got {type(dat_erst)}"
+
+
+###############################################################################
+# Test force opening a GML file
+
+
+def test_ogr_gml_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gml")
+    gdal.FileFromMemBuffer(filename, open("data/nas/empty_nas.xml", "rb").read())
+
+    # Would be opened by NAS driver if not forced
+    with gdal.config_option("NAS_GFS_TEMPLATE", ""):
+        ds = gdal.OpenEx(filename, allowed_drivers=["GML"])
+        assert ds.GetDriver().GetDescription() == "GML"

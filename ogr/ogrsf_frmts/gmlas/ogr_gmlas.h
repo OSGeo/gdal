@@ -1792,6 +1792,9 @@ class GMLASReader final : public DefaultHandler
     /** Stack of contexts to build XML tree of GML Geometry */
     std::vector<NodeLastChild> m_apsXMLNodeStack{};
 
+    /** Counter used to prevent XML billion laugh attacks */
+    int m_nEntityCounter = 0;
+
     /** Maximum allowed number of XML nesting level */
     int m_nMaxLevel = 100;
 
@@ -2047,6 +2050,8 @@ class GMLASReader final : public DefaultHandler
 
     virtual void characters(const XMLCh *const chars,
                             const XMLSize_t length) override;
+
+    void startEntity(const XMLCh *const name) override;
 
     bool RunFirstPass(GDALProgressFunc pfnProgress, void *pProgressData,
                       bool bRemoveUnusedLayers, bool bRemoveUnusedFields,

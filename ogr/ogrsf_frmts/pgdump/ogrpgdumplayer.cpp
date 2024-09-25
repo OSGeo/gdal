@@ -1550,7 +1550,7 @@ CPLString OGRPGCommonLayerGetPGDefault(OGRFieldDefn *poFieldDefn)
     if (sscanf(osRet, "'%d/%d/%d %d:%d:%f'", &nYear, &nMonth, &nDay, &nHour,
                &nMinute, &fSecond) == 6)
     {
-        osRet.resize(osRet.size() - 1);
+        osRet.pop_back();
         osRet += "+00'::timestamp with time zone";
     }
     return osRet;

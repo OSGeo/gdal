@@ -104,21 +104,20 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
         (poOpenInfo->nHeaderBytes > HDF5_SIG_OFFSET + HDF5_SIG_LEN &&
          memcmp(pszHeader + HDF5_SIG_OFFSET, HDF5_SIG, HDF5_SIG_LEN) == 0))
     {
+        // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
+
         // If only the netCDF driver is allowed, immediately recognize the file
         if (poOpenInfo->IsSingleAllowedDriver("netCDF"))
         {
             return NCDF_FORMAT_NC4;
         }
 
-        // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
-        // If HDF5 is not supported in GDAL, this driver will try to open the
-        // file. Else, make sure this driver does not try to open HDF5 files. If
-        // user really wants to open with this driver, use NETCDF:file.h5
-        // format.  This check should be relaxed, but there is no clear way to
-        // make a difference.
+        // If there is a HDF5 GDAL driver available, delegate to it.
+        // Otherwise open it with this driver.
+        // If the user really wants to open with this driver, use NETCDF:file.h5
+        // format.
 
-// Check for HDF5 support in GDAL.
-#ifdef HAVE_HDF5
+        // Check for HDF5 driver availability.
         if (bCheckExt)
         {
             // Check by default.
@@ -134,38 +133,35 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
                 }
             }
         }
-#endif
 
         return NCDF_FORMAT_NC4;
     }
     else if (STARTS_WITH_CI(pszHeader, "\016\003\023\001"))
     {
-        // Check for HDF4 support in libnetcdf.
 #ifdef NETCDF_HAS_HDF4
-        // If only the netCDF driver is allowed, immediately recognize the file
+        // There is HDF4 support in libnetcdf and only the netCDF driver is
+        // allowed ==> immediately recognize the file.
         if (poOpenInfo->IsSingleAllowedDriver("netCDF"))
         {
             return NCDF_FORMAT_HDF4;
         }
 #endif
 
-        // Requires HDF4 support in libnetcdf, but if HDF4 is supported by GDAL
-        // don't try to open.
-        // If user really wants to open with this driver, use NETCDF:file.hdf
-        // syntax.
+        // If there is a HDF4 GDAL driver available, delegate to it.
+        // Otherwise open it with this driver.
+        // If the user really wants to open with this driver, use NETCDF:file.hdf
+        // format.
 
-// Check for HDF4 support in GDAL.
-#ifdef HAVE_HDF4
+        // Check for HDF4 driver availability.
         if (bCheckExt && GDALGetDriverByName("HDF4") != nullptr)
         {
             // Check by default.
             // Always treat as HDF4 file.
             return NCDF_FORMAT_HDF4;
         }
-#endif
 
-// Check for HDF4 support in libnetcdf.
 #ifdef NETCDF_HAS_HDF4
+        // There is HDF4 support in libnetcdf.
         return NCDF_FORMAT_HDF4;
 #else
         return NCDF_FORMAT_NONE;
@@ -493,12 +489,7 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
 #ifdef NETCDF_HAS_HDF4
     poDriver->SetMetadataItem("NETCDF_HAS_HDF4", "YES");
 #endif
-#ifdef HAVE_HDF4
-    poDriver->SetMetadataItem("GDAL_HAS_HDF4", "YES");
-#endif
-#ifdef HAVE_HDF5
-    poDriver->SetMetadataItem("GDAL_HAS_HDF5", "YES");
-#endif
+
     poDriver->SetMetadataItem("NETCDF_HAS_NETCDF_MEM", "YES");
 
 #ifdef ENABLE_NCDUMP

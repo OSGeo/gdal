@@ -2546,5 +2546,5 @@ crashes will occur at runtime (often at process termination with a
 Autoconf/nmake (GDAL versions < 3.5.0)
 --------------------------------------------------------------------------------
 
-See https://trac.osgeo.org/gdal/wiki/BuildHints for hints for GDAL < 3.5
+See http://web.archive.org/https://trac.osgeo.org/gdal/wiki/BuildHints for hints for GDAL < 3.5
 autoconf and nmake build systems.

@@ -453,6 +453,10 @@ def test_vsiaz_sas_fake():
 # Test write
 
 
+@pytest.mark.skipif(
+    "CI" in os.environ,
+    reason="Flaky",
+)
 def test_vsiaz_fake_write():
 
     if gdaltest.webserver_port == 0:

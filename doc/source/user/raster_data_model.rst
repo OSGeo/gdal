@@ -189,6 +189,21 @@ For satellite or aerial imagery the IMAGERY Domain may be present. It depends on
 - CLOUDCOVER: Cloud coverage. The value between 0 - 100 or 999 if not available
 - ACQUISITIONDATETIME: The image acquisition date time in UTC
 
+Starting with GDAL 3.10, there also exists a raster band level IMAGERY metadata domain with the following items:
+
+- CENTRAL_WAVELENGTH_UM: Central Wavelength in micrometers.
+- FWHM_UM: Full-width half-maximum (FWHM) in micrometers.
+
+Clients can get (resp. set) these metadata items with :cpp:func:`GDALRasterBand::GetMetadataItem()`
+(resp. :cpp:func:`GDALRasterBand::SetMetadataItem()`).`
+
+They are specifically set by the :ref:`raster.sentinel2` and
+:ref:`raster.envi` drivers (if corresponding metadata items are found in the ENVI header),
+but may also be found in other drivers handling arbitrary GDAL metadata, such as
+the one using the GDAL Persistent Auxiliary Mechanism (PAM / .aux.xml side car files)
+or :ref:`raster.vrt` drivers. The :ref:`raster.gtiff` driver also supports serializing
+and deserializing the band IMAGERY metadata domain in the ``GDAL_METADATA`` TIFF tag.
+
 xml: Domains
 ++++++++++++
 
@@ -228,20 +243,48 @@ A raster band has the following properties:
 - An optional raster unit name. For instance, this might indicate linear units for elevation data.
 - A color interpretation for the band. This is one of:
 
-    * GCI_Undefined: the default, nothing is known.
-    * GCI_GrayIndex: this is an independent gray-scale image
-    * GCI_PaletteIndex: this raster acts as an index into a color table
-    * GCI_RedBand: this raster is the red portion of an RGB or RGBA image
-    * GCI_GreenBand: this raster is the green portion of an RGB or RGBA image
-    * GCI_BlueBand: this raster is the blue portion of an RGB or RGBA image
-    * GCI_AlphaBand: this raster is the alpha portion of an RGBA image
-    * GCI_HueBand: this raster is the hue of an HLS image
-    * GCI_SaturationBand: this raster is the saturation of an HLS image
-    * GCI_LightnessBand: this raster is the lightness of an HLS image
-    * GCI_CyanBand: this band is the cyan portion of a CMY or CMYK image
-    * GCI_MagentaBand: this band is the magenta portion of a CMY or CMYK image
-    * GCI_YellowBand: this band is the yellow portion of a CMY or CMYK image
-    * GCI_BlackBand: this band is the black portion of a CMYK image.
+    * GCI_Undefined / "Undefined": default, nothing is known.
+    * GCI_GrayIndex / "Gray": independent gray-scale image
+    * GCI_PaletteIndex / "Palette": this raster acts as an index into a color table
+    * GCI_RedBand / "Red": red portion of an RGB or RGBA image, or red spectral band [0.62 - 0.69 um]
+    * GCI_GreenBand/ "Green": green portion of an RGB or RGBA image, or green spectral band [0.51 - 0.60 um]
+    * GCI_BlueBand / "Blue": blue portion of an RGB or RGBA image, or blue spectral band [0.45 - 0.53 um]
+    * GCI_AlphaBand / "Alpha": alpha portion of an RGBA image
+    * GCI_HueBand / "Hue": hue of a HLS image
+    * GCI_SaturationBand / "Saturation": saturation of a HLS image
+    * GCI_LightnessBand / "Lightness": lightness of a HLS image
+    * GCI_CyanBand / "Cyan": cyan portion of a CMY or CMYK image
+    * GCI_MagentaBand / "Magenta": magenta portion of a CMY or CMYK image
+    * GCI_YellowBand / "Yellow": yellow portion of a CMY or CMYK image, or yellow spectral band [0.58 - 0.62 um]
+    * GCI_BlackBand / "Black": black portion of a CMYK image.
+
+  Below values have been added in GDAL 3.10:
+
+    * GCI_PanBand / "Pan": Panchromatic band [0.40 - 1.00 um]
+    * GCI_CoastalBand / "Coastal": Coastal band [0.40 - 0.45 um]
+    * GCI_RedEdgeBand / "RedEdge": Red-edge band [0.69 - 0.79 um]
+    * GCI_NIRBand / "NIR": Near-InfraRed (NIR) band [0.75 - 1.40 um]
+    * GCI_SWIRBand / "SWIR": Short-Wavelength InfraRed (SWIR) band [1.40 - 3.00 um]
+    * GCI_MWIRBand / "MWIR": Mid-Wavelength InfraRed (MWIR) band [3.00 - 8.00 um]
+    * GCI_LWIRBand / "LWIR": Long-Wavelength InfraRed (LWIR) band [8.00 - 15 um]
+    * GCI_TIRBand / "TIR": Thermal InfraRed (TIR) band (MWIR or LWIR) [3 - 15 um]
+    * GCI_OtherIRBand / "OtherIR": Other infrared band [0.75 - 1000 um]
+    * GCI_SAR_Ka_Band / "SAR_Ka": Synthetic Aperture Radar (SAR) Ka band [0.8 - 1.1 cm / 27 - 40 GHz]
+    * GCI_SAR_K_Band / "SAR_K": Synthetic Aperture Radar (SAR) K band [1.1 - 1.7 cm / 18 - 27 GHz]
+    * GCI_SAR_Ku_Band / "SAR_Ku": Synthetic Aperture Radar (SAR) Ku band [1.7 - 2.4 cm / 12 - 18 GHz]
+    * GCI_SAR_X_Band / "SAR_X": Synthetic Aperture Radar (SAR) X band [2.4 - 3.8 cm / 8 - 12 GHz]
+    * GCI_SAR_C_Band / "SAR_C": Synthetic Aperture Radar (SAR) C band [3.8 - 7.5 cm / 4 - 8 GHz]
+    * GCI_SAR_S_Band / "SAR_S": Synthetic Aperture Radar (SAR) S band [7.5 - 15 cm / 2 - 4 GHz]
+    * GCI_SAR_L_Band / "SAR_L": Synthetic Aperture Radar (SAR) L band [15 - 30 cm / 1 - 2 GHz]
+    * GCI_SAR_P_Band / "SAR_P": Synthetic Aperture Radar (SAR) P band [30 - 100 cm / 0.3 - 1 GHz]
+
+  For spectral bands, the wavelength ranges are indicative only, and may vary
+  depending on sensors. The ``CENTRAL_WAVELENGTH_UM`` and ``FWHM_UM`` metadata
+  items in the band ``IMAGERY`` metadata domain of the raster band, when present, will
+  give more accurate characteristics.
+
+  Values belonging to the IR domain are in the [GCI_IR_Start, GCI_IR_End] range.
+  Values belonging to the SAR domain are in the [GCI_SAR_Start, GCI_SAR_End] range.
 
 - A color table, described in more detail later.
 - Knowledge of reduced resolution overviews (pyramids) if available.

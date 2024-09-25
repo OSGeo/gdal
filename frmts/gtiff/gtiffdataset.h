@@ -54,9 +54,6 @@ enum class GTiffProfile : GByte
 // This must be a #define, since it is used in a XSTRINGIFY() macro
 #define DEFAULT_WEBP_LEVEL 75
 
-constexpr const char *const szJPEGGTiffDatasetTmpPrefix =
-    "/vsimem/gtiffdataset_jpg_tmp_";
-
 class GTiffBitmapBand;
 class GTiffDataset;
 class GTiffJPEGOverviewBand;

@@ -792,3 +792,37 @@ def test_gdal_rasterize_lib_dict_arguments():
     ind = opt.index("-co")
 
     assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]
+
+
+###############################################################################
+# Test doesn't crash without options
+
+
+def test_gdal_rasterize_no_options(tmp_vsimem):
+    """Test doesn't crash without options"""
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        r"""{
+                "type": "FeatureCollection",
+                "name": "test",
+                "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } },
+                "features": [
+                    { "type": "Feature", "properties": { "id": 1 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 0, 0 ], [ 0, 1 ], [ 1, 1 ], [ 1, 0 ], [ 0, 0 ] ] ] } }
+                ]
+            }""",
+    )
+
+    # Open the dataset
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+    assert ds
+
+    # Create a raster to rasterize into.
+    target_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "out.tif", 10, 10, 1, gdal.GDT_Byte
+    )
+
+    assert target_ds
+
+    # Call rasterize
+    ds = gdal.Rasterize(target_ds, ds)

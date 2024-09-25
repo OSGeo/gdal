@@ -431,10 +431,15 @@ bool OGROAPIFDataset::Download(const CPLString &osURL, const char *pszAccept,
 
     if (psResult->pszErrBuf != nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                 psResult->pabyData
-                     ? reinterpret_cast<const char *>(psResult->pabyData)
-                     : psResult->pszErrBuf);
+        std::string osErrorMsg(psResult->pszErrBuf);
+        const char *pszData =
+            reinterpret_cast<const char *>(psResult->pabyData);
+        if (pszData)
+        {
+            osErrorMsg += ", ";
+            osErrorMsg.append(pszData, CPLStrnlen(pszData, 1000));
+        }
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
         CPLHTTPDestroyResult(psResult);
         return false;
     }
@@ -1885,7 +1890,7 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     if (!m_poDS->DownloadJSon(osURL, oDoc))
         return;
 
-    CPLString osTmpFilename(CPLSPrintf("/vsimem/oapif_%p.json", this));
+    const CPLString osTmpFilename(VSIMemGenerateHiddenFilename("oapif.json"));
     oDoc.Save(osTmpFilename);
     std::unique_ptr<GDALDataset> poDS(GDALDataset::FromHandle(
         GDALOpenEx(osTmpFilename, GDAL_OF_VECTOR | GDAL_OF_INTERNAL, nullptr,
@@ -2129,7 +2134,8 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
                 }
             }
 
-            CPLString osTmpFilename(CPLSPrintf("/vsimem/oapif_%p.json", this));
+            const CPLString osTmpFilename(
+                VSIMemGenerateHiddenFilename("oapif.json"));
             m_oCurDoc.Save(osTmpFilename);
             m_poUnderlyingDS =
                 std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(

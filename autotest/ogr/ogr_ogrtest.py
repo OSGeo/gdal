@@ -87,7 +87,7 @@ def test_check_geometry_equals_ngeoms_mismatch():
 
 def test_check_geometry_equals_orientation_differs():
     poly_ccw = ogr.CreateGeometryFromWkt("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))")
-    poly_cw = ogr.CreateGeometryFromWkt("POLYGON ((0 0, 0 1, 1 1, 0 1, 0 0))")
+    poly_cw = ogr.CreateGeometryFromWkt("POLYGON ((0 0, 0 1, 1 1, 1 0, 0 0))")
 
     if ogrtest.have_geos():
         ogrtest.check_feature_geometry(poly_ccw, poly_cw)

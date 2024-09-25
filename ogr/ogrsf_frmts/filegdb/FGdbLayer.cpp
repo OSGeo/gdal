@@ -1837,7 +1837,7 @@ char *FGdbLayer::CreateFieldDefn(OGRFieldDefn &oField, int bApproxOK,
             if (osVal[0] == '\'' && osVal.back() == '\'')
             {
                 osVal = osVal.substr(1);
-                osVal.resize(osVal.size() - 1);
+                osVal.pop_back();
                 char *pszTmp = CPLUnescapeString(osVal, nullptr, CPLES_SQL);
                 osVal = pszTmp;
                 CPLFree(pszTmp);

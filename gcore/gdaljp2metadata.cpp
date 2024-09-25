@@ -2593,6 +2593,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
         "</gmljp2:GMLJP2CoverageCollection>\n",
         osRootGMLId.c_str(), osGridCoverage.c_str());
 
+    const std::string osTmpDir = VSIMemGenerateHiddenFilename("gmljp2");
+
     /* -------------------------------------------------------------------- */
     /*      Process metadata, annotations and features collections.         */
     /* -------------------------------------------------------------------- */
@@ -2756,7 +2758,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                     if (hSrcDS)
                     {
                         CPLString osTmpFile =
-                            CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.gml", this, i,
+                            CPLSPrintf("%s/%d/%s.gml", osTmpDir.c_str(), i,
                                        CPLGetBasename(aoGMLFiles[i].osFile));
                         char **papszOptions = nullptr;
                         papszOptions =
@@ -2864,7 +2866,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                     !aoGMLFiles[i].osRemoteResource.empty())
                 {
                     osTmpFile =
-                        CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.gml", this, i,
+                        CPLSPrintf("%s/%d/%s.gml", osTmpDir.c_str(), i,
                                    CPLGetBasename(aoGMLFiles[i].osFile));
 
                     GMLJP2V2BoxDesc oDesc;
@@ -3044,7 +3046,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                 if (hSrcDS)
                 {
                     CPLString osTmpFile =
-                        CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.kml", this, i,
+                        CPLSPrintf("%s/%d/%s.kml", osTmpDir.c_str(), i,
                                    CPLGetBasename(aoAnnotations[i].osFile));
                     char **papszOptions = nullptr;
                     if (aoAnnotations.size() > 1)
@@ -3260,7 +3262,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
     for (auto &poGMLBox : apoGMLBoxes)
         delete poGMLBox;
 
-    VSIRmdirRecursive(CPLSPrintf("/vsimem/gmljp2_%p", this));
+    VSIRmdirRecursive(osTmpDir.c_str());
 
     return poGMLData;
 }

@@ -3986,21 +3986,57 @@ def test_ogr_geom_makevalid():
             g, "MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))"
         )
 
-    if (
-        ogr.GetGEOSVersionMajor() * 10000
-        + ogr.GetGEOSVersionMinor() * 100
-        + ogr.GetGEOSVersionMicro()
-        >= 31000
-    ):
-        g = ogr.CreateGeometryFromWkt(
-            "POLYGON ((0 0,0 10,10 10,10 0,0 0),(5 5,15 10,15 0,5 5))"
-        )
-        # Only since GEOS 3.10
-        g = g.MakeValid(["METHOD=STRUCTURE"])
-        if g is not None:
-            ogrtest.check_feature_geometry(
-                g, "POLYGON ((0 10,10 10,10.0 7.5,5 5,10.0 2.5,10 0,0 0,0 10))"
-            )
+
+###############################################################################
+
+
+@pytest.mark.require_geos(3, 10, 0)
+def test_ogr_geom_makevalid_structure():
+
+    g = ogr.CreateGeometryFromWkt(
+        "POLYGON ((0 0,0 10,10 10,10 0,0 0),(5 5,15 10,15 0,5 5))"
+    )
+    g = g.MakeValid(["METHOD=STRUCTURE"])
+    ogrtest.check_feature_geometry(
+        g, "POLYGON ((0 10,10 10,10.0 7.5,5 5,10.0 2.5,10 0,0 0,0 10))"
+    )
+
+    # Already valid multi-polygon made of a single-part
+    g = ogr.CreateGeometryFromWkt("MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))")
+    g = g.MakeValid(["METHOD=STRUCTURE"])
+    assert (
+        g.ExportToIsoWkt() == "MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))"
+        or g.ExportToIsoWkt() == "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))"
+    )
+
+    # Already valid multi-polygon made of a single-part, with duplicated point
+    g = ogr.CreateGeometryFromWkt("MULTIPOLYGON (((0 0,1 0,1 0,1 1,0 1,0 0)))")
+    g = g.MakeValid(["METHOD=STRUCTURE"])
+    assert (
+        g.ExportToIsoWkt() == "MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))"
+        or g.ExportToIsoWkt() == "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))"
+    )
+
+    # Already valid multi-polygon made of a single-part
+    g = ogr.CreateGeometryFromWkt(
+        "MULTIPOLYGON Z (((0 0 10,1 0 10,1 1 10,0 1 10,0 0 10)))"
+    )
+    g = g.MakeValid(["METHOD=STRUCTURE"])
+    assert (
+        g.ExportToIsoWkt() == "MULTIPOLYGON Z (((0 0 10,1 0 10,1 1 10,0 1 10,0 0 10)))"
+        or g.ExportToIsoWkt()
+        == "MULTIPOLYGON Z (((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10)))"
+    )
+
+    # Already valid geometry collection
+    g = ogr.CreateGeometryFromWkt(
+        "GEOMETRYCOLLECTION (POLYGON ((0 0,1 0,1 1,0 1,0 0)))"
+    )
+    g = g.MakeValid(["METHOD=STRUCTURE"])
+    assert (
+        g.ExportToIsoWkt() == "GEOMETRYCOLLECTION (POLYGON ((0 0,1 0,1 1,0 1,0 0)))"
+        or g.ExportToIsoWkt() == "GEOMETRYCOLLECTION (POLYGON ((0 0,0 1,1 1,1 0,0 0)))"
+    )
 
 
 ###############################################################################

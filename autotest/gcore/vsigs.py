@@ -1188,6 +1188,15 @@ def test_vsigs_read_credentials_oauth2_authorized_user_json_file(
 
         assert data == "foo"
 
+        handler = webserver.SequentialHandler()
+        handler.add("GET", "/gs_fake_bucket/resource2", custom_method=method)
+        with webserver.install_http_handler(handler):
+            f = open_for_read("/vsigs/gs_fake_bucket/resource2")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+            gdal.VSIFCloseL(f)
+        assert data == "foo"
+
         gdal.Unlink("/vsimem/service_account.json")
 
 

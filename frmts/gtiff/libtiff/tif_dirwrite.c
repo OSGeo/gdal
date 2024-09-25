@@ -869,7 +869,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                     if ((o->field_bit >= FIELD_CODEC) &&
                         (TIFFFieldSet(tif, o->field_bit)))
                     {
-                        switch (o->get_field_type)
+                        switch (o->set_field_type)
                         {
                             case TIFF_SETGET_ASCII:
                             {

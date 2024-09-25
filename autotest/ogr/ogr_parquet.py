@@ -3870,6 +3870,8 @@ def test_ogr_parquet_geoarrow(
     lyr = ds.GetLayer(0)
     lyr.SetIgnoredFields(["foo"])
     check(lyr)
+    lyr.SetSpatialFilter(geom)
+    assert lyr.GetFeatureCount() == (3 if geom.GetGeometryCount() > 1 else 2)
 
     ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
@@ -4125,3 +4127,42 @@ def test_ogr_parquet_vsi_arrow_file_system():
     ds = ogr.Open("PARQUET:vsi://data/parquet/test.parquet")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() > 0
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("ARROW")
+@pytest.mark.parametrize(
+    "src_filename,expected_error_msg",
+    [
+        ("data/arrow/stringview.feather", "StringView not supported"),
+        ("data/arrow/binaryview.feather", "BinaryView not supported"),
+    ],
+)
+def test_ogr_parquet_IsArrowSchemaSupported_arrow_15_types(
+    src_filename, expected_error_msg, tmp_vsimem
+):
+
+    version = int(
+        ogr.GetDriverByName("ARROW").GetMetadataItem("ARROW_VERSION").split(".")[0]
+    )
+    if version < 15:
+        pytest.skip("requires Arrow >= 15.0.0")
+
+    src_ds = ogr.Open(src_filename)
+    src_lyr = src_ds.GetLayer(0)
+
+    outfilename = str(tmp_vsimem / "test.parquet")
+    with ogr.GetDriverByName("Parquet").CreateDataSource(outfilename) as dst_ds:
+        dst_lyr = dst_ds.CreateLayer(
+            "test", srs=src_lyr.GetSpatialRef(), geom_type=ogr.wkbPoint, options=[]
+        )
+
+        stream = src_lyr.GetArrowStream()
+        schema = stream.GetSchema()
+
+        success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
+        assert not success
+        assert error_msg == expected_error_msg

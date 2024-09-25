@@ -2420,7 +2420,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     }
     else
     {
-        CPLString osTmpMemFile = CPLSPrintf("/vsimem/daas_%p", this);
+        const CPLString osTmpMemFile = VSIMemGenerateHiddenFilename("daas");
         VSIFCloseL(VSIFileFromMemBuffer(
             osTmpMemFile, psResult->pasMimePart[iDataPart].pabyData,
             psResult->pasMimePart[iDataPart].nDataLen, false));

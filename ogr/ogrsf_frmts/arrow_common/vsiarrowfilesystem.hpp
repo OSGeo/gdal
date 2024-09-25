@@ -33,6 +33,12 @@
 
 #include "ograrrowrandomaccessfile.h"
 
+#include <atomic>
+#include <memory>
+#include <mutex>
+#include <vector>
+#include <utility>
+
 /************************************************************************/
 /*                         VSIArrowFileSystem                           */
 /************************************************************************/
@@ -42,12 +48,52 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
     const std::string m_osEnvVarPrefix;
     const std::string m_osQueryParameters;
 
+    std::atomic<bool> m_bAskedToClosed = false;
+    std::mutex m_oMutex{};
+    std::vector<std::pair<std::string, std::weak_ptr<OGRArrowRandomAccessFile>>>
+        m_oSetFiles{};
+
   public:
-    explicit VSIArrowFileSystem(const std::string &osEnvVarPrefix,
-                                const std::string &osQueryParameters)
+    VSIArrowFileSystem(const std::string &osEnvVarPrefix,
+                       const std::string &osQueryParameters)
         : m_osEnvVarPrefix(osEnvVarPrefix),
           m_osQueryParameters(osQueryParameters)
     {
+    }
+
+    // Cf comment in OGRParquetDataset::~OGRParquetDataset() for rationale
+    // for this method
+    void AskToClose()
+    {
+        m_bAskedToClosed = true;
+        std::vector<
+            std::pair<std::string, std::weak_ptr<OGRArrowRandomAccessFile>>>
+            oSetFiles;
+        {
+            std::lock_guard oLock(m_oMutex);
+            oSetFiles = m_oSetFiles;
+        }
+        for (auto &[osName, poFile] : oSetFiles)
+        {
+            bool bWarned = false;
+            while (!poFile.expired())
+            {
+                if (!bWarned)
+                {
+                    bWarned = true;
+                    auto poFileLocked = poFile.lock();
+                    if (poFileLocked)
+                    {
+                        CPLDebug("PARQUET",
+                                 "Still on-going reads on %s. Waiting for it "
+                                 "to be closed.",
+                                 osName.c_str());
+                        poFileLocked->AskToClose();
+                    }
+                }
+                CPLSleep(0.01);
+            }
+        }
     }
 
     std::string type_name() const override
@@ -203,6 +249,10 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
     arrow::Result<std::shared_ptr<arrow::io::RandomAccessFile>>
     OpenInputFile(const std::string &path) override
     {
+        if (m_bAskedToClosed)
+            return arrow::Status::IOError(
+                "OpenInputFile(): file system in shutdown");
+
         std::string osPath(path);
         osPath += m_osQueryParameters;
         CPLDebugOnly(m_osEnvVarPrefix.c_str(), "Opening %s", osPath.c_str());
@@ -210,7 +260,13 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
         if (fp == nullptr)
             return arrow::Status::IOError("OpenInputFile() failed for " +
                                           osPath);
-        return std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
+        auto poFile =
+            std::make_shared<OGRArrowRandomAccessFile>(osPath, std::move(fp));
+        {
+            std::lock_guard oLock(m_oMutex);
+            m_oSetFiles.emplace_back(path, poFile);
+        }
+        return poFile;
     }
 
     using arrow::fs::FileSystem::OpenOutputStream;

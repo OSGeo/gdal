@@ -653,6 +653,7 @@ char **CPLStringList::StealList()
     return papszRetList;
 }
 
+/* Case insensitive comparison function */
 static int CPLCompareKeyValueString(const char *pszKVa, const char *pszKVb)
 {
     const char *pszItera = pszKVa;
@@ -686,19 +687,6 @@ static int CPLCompareKeyValueString(const char *pszKVa, const char *pszKVb)
 }
 
 /************************************************************************/
-/*                            llCompareStr()                            */
-/*                                                                      */
-/*      Note this is case insensitive!  This is because we normally     */
-/*      treat key value keywords as case insensitive.                   */
-/************************************************************************/
-static int llCompareStr(const void *a, const void *b)
-{
-    return CPLCompareKeyValueString(
-        *static_cast<const char **>(const_cast<void *>(a)),
-        *static_cast<const char **>(const_cast<void *>(b)));
-}
-
-/************************************************************************/
 /*                                Sort()                                */
 /************************************************************************/
 
@@ -721,8 +709,12 @@ CPLStringList &CPLStringList::Sort()
     if (!MakeOurOwnCopy())
         return *this;
 
-    if (nCount)
-        qsort(papszList, nCount, sizeof(char *), llCompareStr);
+    if (nCount > 1)
+    {
+        std::sort(papszList, papszList + nCount,
+                  [](const char *a, const char *b)
+                  { return CPLCompareKeyValueString(a, b) < 0; });
+    }
     bIsSorted = true;
 
     return *this;

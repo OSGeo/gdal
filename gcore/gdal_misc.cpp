@@ -140,6 +140,11 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
                                            GDALDataType eType2)
 
 {
+    if (eType1 == GDT_Unknown)
+        return eType2;
+    if (eType2 == GDT_Unknown)
+        return eType1;
+
     const int panBits[] = {GetDataTypeElementSizeBits(eType1),
                            GetDataTypeElementSizeBits(eType2)};
 
@@ -169,19 +174,89 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
  * \brief Union a data type with the one found for a value
  *
  * @param eDT the first data type
- * @param dValue the value for which to find a data type and union with eDT
+ * @param dfValue the value for which to find a data type and union with eDT
  * @param bComplex if the value is complex
  *
- * @return a data type able to express eDT and dValue.
+ * @return a data type able to express eDT and dfValue.
  * @since GDAL 2.3
  */
 GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
-                                                    double dValue, int bComplex)
+                                                    double dfValue,
+                                                    int bComplex)
 {
-    if (eDT == GDT_Float32 && !bComplex && static_cast<float>(dValue) == dValue)
-        return eDT;
+    if (!bComplex && !GDALDataTypeIsComplex(eDT))
+    {
+        switch (eDT)
+        {
+            case GDT_Byte:
+            {
+                if (GDALIsValueExactAs<uint8_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int8:
+            {
+                if (GDALIsValueExactAs<int8_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_UInt16:
+            {
+                if (GDALIsValueExactAs<uint16_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int16:
+            {
+                if (GDALIsValueExactAs<int16_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_UInt32:
+            {
+                if (GDALIsValueExactAs<uint32_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int32:
+            {
+                if (GDALIsValueExactAs<int32_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_UInt64:
+            {
+                if (GDALIsValueExactAs<uint64_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int64:
+            {
+                if (GDALIsValueExactAs<int64_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Float32:
+            {
+                if (GDALIsValueExactAs<float>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Float64:
+            {
+                return eDT;
+            }
+            case GDT_Unknown:
+            case GDT_CInt16:
+            case GDT_CInt32:
+            case GDT_CFloat32:
+            case GDT_CFloat64:
+            case GDT_TypeCount:
+                break;
+        }
+    }
 
-    const GDALDataType eDT2 = GDALFindDataTypeForValue(dValue, bComplex);
+    const GDALDataType eDT2 = GDALFindDataTypeForValue(dfValue, bComplex);
     return GDALDataTypeUnion(eDT, eDT2);
 }
 
@@ -313,7 +388,12 @@ GDALDataType CPL_STDCALL GDALFindDataType(int nBits, int bSigned, int bFloating,
  */
 GDALDataType CPL_STDCALL GDALFindDataTypeForValue(double dValue, int bComplex)
 {
-    const bool bFloating = round(dValue) != dValue;
+    const bool bFloating =
+        round(dValue) != dValue ||
+        dValue >
+            static_cast<double>(std::numeric_limits<std::uint64_t>::max()) ||
+        dValue <
+            static_cast<double>(std::numeric_limits<std::int64_t>::lowest());
     const bool bSigned = bFloating || dValue < 0;
     const int nBits = GetMinBitsForValue(dValue);
 
@@ -869,6 +949,58 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
 }
 
 /************************************************************************/
+/*                         GDALIsValueExactAs()                         */
+/************************************************************************/
+
+/**
+ * \brief Check whether the provided value can be exactly represented in a
+ * data type.
+ *
+ * Only implemented for non-complex data types
+ *
+ * @param dfValue value to check.
+ * @param eDT target data type.
+ *
+ * @return true if the provided value can be exactly represented in the
+ * data type.
+ * @since GDAL 3.10
+ */
+bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
+{
+    switch (eDT)
+    {
+        case GDT_Byte:
+            return GDALIsValueExactAs<uint8_t>(dfValue);
+        case GDT_Int8:
+            return GDALIsValueExactAs<int8_t>(dfValue);
+        case GDT_UInt16:
+            return GDALIsValueExactAs<uint16_t>(dfValue);
+        case GDT_Int16:
+            return GDALIsValueExactAs<int16_t>(dfValue);
+        case GDT_UInt32:
+            return GDALIsValueExactAs<uint32_t>(dfValue);
+        case GDT_Int32:
+            return GDALIsValueExactAs<int32_t>(dfValue);
+        case GDT_UInt64:
+            return GDALIsValueExactAs<uint64_t>(dfValue);
+        case GDT_Int64:
+            return GDALIsValueExactAs<int64_t>(dfValue);
+        case GDT_Float32:
+            return GDALIsValueExactAs<float>(dfValue);
+        case GDT_Float64:
+            return true;
+        case GDT_Unknown:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_TypeCount:
+            break;
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                        GDALGetNonComplexDataType()                */
 /************************************************************************/
 /**
@@ -1046,10 +1178,15 @@ const char *GDALGetPaletteInterpretationName(GDALPaletteInterp eInterp)
 const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
 
 {
+    static_assert(GCI_IR_Start == GCI_RedEdgeBand + 1);
+    static_assert(GCI_NIRBand == GCI_IR_Start);
+    static_assert(GCI_SAR_Start == GCI_IR_End + 1);
+    static_assert(GCI_Max == GCI_SAR_End);
+
     switch (eInterp)
     {
         case GCI_Undefined:
-            return "Undefined";
+            break;
 
         case GCI_GrayIndex:
             return "Gray";
@@ -1099,9 +1236,76 @@ const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
         case GCI_YCbCr_CrBand:
             return "YCbCr_Cr";
 
-        default:
-            return "Unknown";
+        case GCI_PanBand:
+            return "Pan";
+
+        case GCI_CoastalBand:
+            return "Coastal";
+
+        case GCI_RedEdgeBand:
+            return "RedEdge";
+
+        case GCI_NIRBand:
+            return "NIR";
+
+        case GCI_SWIRBand:
+            return "SWIR";
+
+        case GCI_MWIRBand:
+            return "MWIR";
+
+        case GCI_LWIRBand:
+            return "LWIR";
+
+        case GCI_TIRBand:
+            return "TIR";
+
+        case GCI_OtherIRBand:
+            return "OtherIR";
+
+        case GCI_IR_Reserved_1:
+            return "IR_Reserved_1";
+
+        case GCI_IR_Reserved_2:
+            return "IR_Reserved_2";
+
+        case GCI_IR_Reserved_3:
+            return "IR_Reserved_3";
+
+        case GCI_IR_Reserved_4:
+            return "IR_Reserved_4";
+
+        case GCI_SAR_Ka_Band:
+            return "SAR_Ka";
+
+        case GCI_SAR_K_Band:
+            return "SAR_K";
+
+        case GCI_SAR_Ku_Band:
+            return "SAR_Ku";
+
+        case GCI_SAR_X_Band:
+            return "SAR_X";
+
+        case GCI_SAR_C_Band:
+            return "SAR_C";
+
+        case GCI_SAR_S_Band:
+            return "SAR_S";
+
+        case GCI_SAR_L_Band:
+            return "SAR_L";
+
+        case GCI_SAR_P_Band:
+            return "SAR_P";
+
+        case GCI_SAR_Reserved_1:
+            return "SAR_Reserved_1";
+
+        case GCI_SAR_Reserved_2:
+            return "SAR_Reserved_2";
     }
+    return "Undefined";
 }
 
 /************************************************************************/
@@ -1138,7 +1342,83 @@ GDALColorInterp GDALGetColorInterpretationByName(const char *pszName)
         }
     }
 
+    // Accept British English spelling
+    if (EQUAL(pszName, "grey"))
+        return GCI_GrayIndex;
+
     return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                  GDALGetColorInterpFromSTACCommonName()              */
+/************************************************************************/
+
+static const struct
+{
+    const char *pszName;
+    GDALColorInterp eInterp;
+} asSTACCommonNames[] = {
+    {"pan", GCI_PanBand},
+    {"coastal", GCI_CoastalBand},
+    {"blue", GCI_BlueBand},
+    {"green", GCI_GreenBand},
+    {"green05", GCI_GreenBand},  // no exact match
+    {"yellow", GCI_YellowBand},
+    {"red", GCI_RedBand},
+    {"rededge", GCI_RedEdgeBand},
+    {"rededge071", GCI_RedEdgeBand},  // no exact match
+    {"rededge075", GCI_RedEdgeBand},  // no exact match
+    {"rededge078", GCI_RedEdgeBand},  // no exact match
+    {"nir", GCI_NIRBand},
+    {"nir08", GCI_NIRBand},   // no exact match
+    {"nir09", GCI_NIRBand},   // no exact match
+    {"cirrus", GCI_NIRBand},  // no exact match
+    {nullptr,
+     GCI_SWIRBand},  // so that GDALGetSTACCommonNameFromColorInterp returns null on GCI_SWIRBand
+    {"swir16", GCI_SWIRBand},  // no exact match
+    {"swir22", GCI_SWIRBand},  // no exact match
+    {"lwir", GCI_LWIRBand},
+    {"lwir11", GCI_LWIRBand},  // no exact match
+    {"lwir12", GCI_LWIRBand},  // no exact match
+};
+
+/** Get color interpreetation from STAC eo:common_name
+ *
+ * Cf https://github.com/stac-extensions/eo?tab=readme-ov-file#common-band-names
+ *
+ * @since GDAL 3.10
+ */
+GDALColorInterp GDALGetColorInterpFromSTACCommonName(const char *pszName)
+{
+
+    for (const auto &sAssoc : asSTACCommonNames)
+    {
+        if (sAssoc.pszName && EQUAL(pszName, sAssoc.pszName))
+            return sAssoc.eInterp;
+    }
+    return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                  GDALGetSTACCommonNameFromColorInterp()              */
+/************************************************************************/
+
+/** Get STAC eo:common_name from GDAL color interpretation
+ *
+ * Cf https://github.com/stac-extensions/eo?tab=readme-ov-file#common-band-names
+ *
+ * @return nullptr if there is no match
+ *
+ * @since GDAL 3.10
+ */
+const char *GDALGetSTACCommonNameFromColorInterp(GDALColorInterp eInterp)
+{
+    for (const auto &sAssoc : asSTACCommonNames)
+    {
+        if (eInterp == sAssoc.eInterp)
+            return sAssoc.pszName;
+    }
+    return nullptr;
 }
 
 /************************************************************************/

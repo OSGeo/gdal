@@ -2642,7 +2642,9 @@ def test_tiff_ovr_fallback_to_multiband_overview_generate():
         "data/byte.tif",
         options="-b 1 -b 1 -b 1 -co INTERLEAVE=BAND -co TILED=YES -outsize 1024 1024",
     )
-    with gdaltest.config_option("GDAL_OVR_CHUNK_MAX_SIZE", "1000"):
+    with gdaltest.config_options(
+        {"GDAL_OVR_CHUNK_MAX_SIZE": "1000", "GDAL_OVR_TEMP_DRIVER": "MEM"}
+    ):
         ds.BuildOverviews("NEAR", overviewlist=[2, 4, 8])
     ds = None
 

@@ -303,7 +303,7 @@ CPLXMLNode *VRTDataset::SerializeToXML(const char *pszVRTPathIn)
             if (osCoordinateEpoch.find('.') != std::string::npos)
             {
                 while (osCoordinateEpoch.back() == '0')
-                    osCoordinateEpoch.resize(osCoordinateEpoch.size() - 1);
+                    osCoordinateEpoch.pop_back();
             }
             CPLAddXMLAttributeAndValue(psSRSNode, "coordinateEpoch",
                                        osCoordinateEpoch.c_str());
@@ -2795,7 +2795,7 @@ bool VRTDataset::AddVirtualOverview(int nOvFactor, const char *pszResampling)
     GDALDatasetH hOverviewDS =
         GDALTranslate("", GDALDataset::ToHandle(this), psOptions, nullptr);
     m_bCanTakeRef = true;
-    m_apoOverviews.resize(m_apoOverviews.size() - 1);
+    m_apoOverviews.pop_back();
 
     GDALTranslateOptionsFree(psOptions);
     if (hOverviewDS == nullptr)

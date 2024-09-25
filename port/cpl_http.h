@@ -277,9 +277,43 @@ class GOA2Manager
         return m_osClientEmail;
     }
 
+    /** Returns a key that can be used to uniquely identify the instance
+     * parameters (excluding bearer)
+     */
+    std::string GetKey() const
+    {
+        std::string osKey(std::to_string(static_cast<int>(m_eMethod))
+                              .append(",client-id=")
+                              .append(m_osClientId)
+                              .append(",client-secret=")
+                              .append(m_osClientSecret)
+                              .append(",refresh-token=")
+                              .append(m_osRefreshToken)
+                              .append(",private-key=")
+                              .append(m_osPrivateKey)
+                              .append(",client-email=")
+                              .append(m_osClientEmail)
+                              .append(",scope=")
+                              .append(m_osScope));
+        osKey.append(",additional-claims=");
+        for (const auto *pszOption : m_aosAdditionalClaims)
+        {
+            osKey.append(pszOption);
+            osKey.append("+");
+        }
+        osKey.append(",options=");
+        for (const auto *pszOption : m_aosOptions)
+        {
+            osKey.append(pszOption);
+            osKey.append("+");
+        }
+        return osKey;
+    }
+
   private:
     mutable CPLString m_osCurrentBearer{};
     mutable time_t m_nExpirationTime = 0;
+
     AuthMethod m_eMethod = NONE;
 
     // for ACCESS_TOKEN_FROM_REFRESH

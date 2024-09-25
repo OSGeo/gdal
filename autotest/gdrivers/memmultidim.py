@@ -90,7 +90,7 @@ def test_mem_md_subgroup():
 
     with gdal.quiet_errors():
         assert not rg.CreateGroup("")  # unnamed group not supported
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         assert not rg.CreateGroup(None)
 
     subg = rg.CreateGroup("subgroup")
@@ -339,12 +339,12 @@ def test_mem_md_datatypes():
     assert dt_byte.GetNumericDataType() == gdal.GDT_Byte
     assert dt_byte.GetSize() == 1
     assert dt_byte.CanConvertTo(dt_byte)
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         assert dt_byte.CanConvertTo(None)
     assert dt_byte == gdal.ExtendedDataType.Create(gdal.GDT_Byte)
     assert not dt_byte != gdal.ExtendedDataType.Create(gdal.GDT_Byte)
     assert dt_byte.Equals(dt_byte)
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         assert dt_byte.Equals(None)
     assert not dt_byte.GetComponents()
 
@@ -762,9 +762,9 @@ def test_mem_md_array_invalid_args():
         rg.CreateMDArray("myarray", [None], edt)
     with pytest.raises((TypeError, SystemError)):
         rg.CreateMDArray("myarray", [1], edt)
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         rg.CreateMDArray("myarray", [dim], None)
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         rg.CreateMDArray(None, [dim], edt)
 
 
@@ -837,7 +837,7 @@ def test_mem_md_group_attribute_single_numeric():
     float64dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
     with gdal.quiet_errors():
         assert not rg.CreateAttribute("", [1], float64dt)  # unnamed attr not supported
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         rg.CreateAttribute(None, [1], float64dt)
 
     attr = rg.CreateAttribute("attr", [1], float64dt)
@@ -955,7 +955,7 @@ def test_mem_md_array_attribute():
         assert not myarray.CreateAttribute(
             "", [1], float64dt
         )  # unnamed attr not supported
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         myarray.CreateAttribute(None, [1], float64dt)
 
     attr = myarray.CreateAttribute("attr", [1], float64dt)

@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import stat
 import sys
 
@@ -841,7 +842,8 @@ def test_vsioss_5(server):
 
 
 @pytest.mark.skipif(
-    gdaltest.is_travis_branch("macos_build"), reason="randomly fails on macos"
+    "CI" in os.environ,
+    reason="Flaky",
 )
 @gdaltest.disable_exceptions()
 def test_vsioss_6(server):

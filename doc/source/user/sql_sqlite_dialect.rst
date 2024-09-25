@@ -208,8 +208,18 @@ Statistics functions
 In addition to standard COUNT(), SUM(), AVG(), MIN(), MAX(), the following
 aggregate functions are available:
 
-- STDDEV_POP: (GDAL >= 3.10) numerical population standard deviation.
-- STDDEV_SAMP: (GDAL >= 3.10) numerical `sample standard deviation <https://en.wikipedia.org/wiki/Standard_deviation#Sample_standard_deviation>`__
+- ``STDDEV_POP(numeric_value)``: (GDAL >= 3.10) numerical population standard deviation.
+- ``STDDEV_SAMP(numeric_value)``: (GDAL >= 3.10) numerical `sample standard deviation <https://en.wikipedia.org/wiki/Standard_deviation#Sample_standard_deviation>`__
+
+Ordered-set aggregate functions
++++++++++++++++++++++++++++++++
+
+The following aggregate functions are available. Note that they require to allocate an amount of memory proportional to the number of selected rows (for ``MEDIAN``, ``PERCENTILE`` and ``PERCENTILE_CONT``) or to the number of values (for ``MODE``).
+
+- ``MEDIAN(numeric_value)``: (GDAL >= 3.10) (continuous) median (equivalent to ``PERCENTILE(numeric_value, 50)``). NULL values are ignored.
+- ``PERCENTILE(numeric_value, percentage)``: (GDAL >= 3.10) (continuous) percentile, with percentage between 0 and 100 (equivalent to ``PERCENTILE_CONT(numeric_value, percentage / 100)``). NULL values are ignored.
+- ``PERCENTILE_CONT(numeric_value, fraction)``: (GDAL >= 3.10) (continuous) percentile, with fraction between 0 and 1. NULL values are ignored.
+- ``MODE(value)``: (GDAL >= 3.10): mode, i.e. most frequent input value (strings and numeric values are supported), arbitrarily choosing the first one if there are multiple equally-frequent results. NULL values are ignored.
 
 Spatialite SQL functions
 ++++++++++++++++++++++++

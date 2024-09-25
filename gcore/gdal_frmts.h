@@ -228,6 +228,8 @@ void CPL_DLL GDALRegister_COG(void);
 void CPL_DLL GDALRegister_RDB(void);
 void CPL_DLL GDALRegister_EXR(void);
 void DeclareDeferredEXRPlugin(void);
+void CPL_DLL GDALRegister_AVIF(void);
+void DeclareDeferredAVIFPlugin(void);
 void CPL_DLL GDALRegister_HEIF(void);
 void DeclareDeferredHEIFPlugin(void);
 void CPL_DLL GDALRegister_TGA(void);

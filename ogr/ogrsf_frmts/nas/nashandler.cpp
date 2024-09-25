@@ -181,6 +181,8 @@ void NASHandler::startElement(const XMLCh *const /* uri */,
                               const Attributes &attrs)
 
 {
+    m_nEntityCounter = 0;
+
     GMLReadState *poState = m_poReader->GetState();
 
     transcode(localname, m_osElementName);
@@ -438,6 +440,8 @@ void NASHandler::endElement(const XMLCh *const /* uri */,
                             const XMLCh *const /* qname */)
 
 {
+    m_nEntityCounter = 0;
+
     GMLReadState *poState = m_poReader->GetState();
 
     transcode(localname, m_osElementName);
@@ -659,6 +663,20 @@ void NASHandler::endElement(const XMLCh *const /* uri */,
     if (m_osDeleteContext == m_osElementName)
     {
         m_osDeleteContext = "";
+    }
+}
+
+/************************************************************************/
+/*                             startEntity()                            */
+/************************************************************************/
+
+void NASHandler::startEntity(const XMLCh *const /* name */)
+{
+    m_nEntityCounter++;
+    if (m_nEntityCounter > 1000 && !m_poReader->HasStoppedParsing())
+    {
+        throw SAXNotSupportedException(
+            "File probably corrupted (million laugh pattern)");
     }
 }
 

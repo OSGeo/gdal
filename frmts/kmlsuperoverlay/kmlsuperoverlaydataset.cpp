@@ -31,7 +31,6 @@
 #include "kmlsuperoverlaydataset.h"
 
 #include <array>
-#include <atomic>
 #include <cmath>
 #include <cstring>
 #include <algorithm>
@@ -1799,9 +1798,7 @@ KmlSuperOverlayLoadIcon(const char *pszBaseFilename, const char *pszIcon)
         return nullptr;
     }
 
-    static std::atomic<int> nInc = 0;
-    osSubFilename =
-        CPLSPrintf("/vsimem/kmlsuperoverlay_%d_%p", nInc++, pszBaseFilename);
+    osSubFilename = VSIMemGenerateHiddenFilename("kmlsuperoverlay");
     VSIFCloseL(VSIFileFromMemBuffer(osSubFilename, pabyBuffer, nRead, TRUE));
 
     auto poDSIcon = std::unique_ptr<GDALDataset>(GDALDataset::Open(
@@ -2793,6 +2790,9 @@ KmlSuperOverlayReadDataset::Open(const char *pszFilename,
         auto poOvrDS = std::make_unique<KmlSuperOverlayReadDataset>();
 
         poOvrDS->bIsOvr = true;
+        // The life-time of objects is such that poOvrDS is destroyed when
+        // poDS is destroyed.
+        // coverity[escape]
         poOvrDS->poParent = poDS.get();
         poOvrDS->nFactor = nFactor;
         poOvrDS->nRasterXSize = nFactor * poDSIcon->GetRasterXSize();

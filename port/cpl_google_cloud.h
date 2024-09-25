@@ -107,7 +107,6 @@ class VSIGSHandleHelper final : public IVSIS3LikeHandleHelper
 
     std::string GetSignedURL(CSLConstList papszOptions);
 
-    static void CleanMutex();
     static void ClearCache();
 };
 

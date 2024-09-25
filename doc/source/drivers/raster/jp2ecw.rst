@@ -379,4 +379,3 @@ See Also
 -  Support for non-GDAL specific issues should be directed to the
    `Hexagon Geospatial public
    forum <https://sgisupport.intergraph.com/infocenter/index?page=forums&forum=507301383c17ef4e013d8dfa30c2007ef1>`__
--  `GDAL ECW Build Hints <http://trac.osgeo.org/gdal/wiki/ECW>`__

@@ -678,7 +678,7 @@ static bool ReadAWSTokenFile(const std::string &osAWSTokenFile,
     VSIFree(pabyOut);
     // Remove trailing end-of-line character
     if (!awsToken.empty() && awsToken.back() == '\n')
-        awsToken.resize(awsToken.size() - 1);
+        awsToken.pop_back();
     return !awsToken.empty();
 }
 

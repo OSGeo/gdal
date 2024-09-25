@@ -2870,3 +2870,92 @@ def test_ogr_openfilegdb_read_objectid_64bit_sparse_test_ogrsf(ogrsf_path):
 
     success = "INFO" in ret and "ERROR" not in ret
     assert success
+
+
+###############################################################################
+# Test reading http:// resource
+
+
+@pytest.mark.require_curl()
+@pytest.mark.require_driver("HTTP")
+def test_ogr_openfilegdb_read_from_http():
+
+    import webserver
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    response = open("data/filegdb/testopenfilegdb.gdb.zip", "rb").read()
+
+    try:
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/foo",
+            200,
+            {
+                "Content-Disposition": 'attachment; filename="foo.gdb.zip"; size='
+                + str(len(response))
+            },
+            response,
+        )
+        with webserver.install_http_handler(handler):
+            ds = gdal.OpenEx(
+                "http://localhost:%d/foo" % webserver_port,
+                allowed_drivers=["OpenFileGDB", "HTTP"],
+            )
+            assert ds is not None
+            assert ds.GetLayerCount() != 0
+
+        # If we have the GeoJSON driver, there will be one initial GET done by it
+        if ogr.GetDriverByName("GeoJSON"):
+            handler = webserver.SequentialHandler()
+            handler.add(
+                "GET",
+                "/foo",
+                200,
+                {
+                    "Content-Disposition": 'attachment; filename="foo.gdb.zip"; size='
+                    + str(len(response))
+                },
+                response,
+            )
+            handler.add(
+                "GET",
+                "/foo",
+                200,
+                {
+                    "Content-Disposition": 'attachment; filename="foo.gdb.zip"; size='
+                    + str(len(response))
+                },
+                response,
+            )
+            with webserver.install_http_handler(handler):
+                ds = gdal.OpenEx(
+                    "http://localhost:%d/foo" % webserver_port,
+                    allowed_drivers=["GeoJSON", "OpenFileGDB", "HTTP"],
+                )
+                assert ds is not None
+                assert ds.GetLayerCount() != 0
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+
+###############################################################################
+# Test reading a geometry where there is an arc with an interior point, but
+# it is actually flagged as a line
+
+
+def test_ogr_openfilegdb_arc_interior_point_bug_line():
+
+    with ogr.Open("data/filegdb/arc_segment_interior_point_but_line.gdb.zip") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(
+            f,
+            "MULTILINESTRING ((37252520.1717 7431529.9154,38549084.9654 758964.7573))",
+        )

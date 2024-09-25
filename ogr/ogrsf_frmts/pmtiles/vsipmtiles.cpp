@@ -141,7 +141,7 @@ VSIPMTilesOpen(const char *pszFilename, std::string &osSubfilename,
 
     std::string osFilename(pszFilename);
     if (!osFilename.empty() && osFilename.back() == '/')
-        osFilename.resize(osFilename.size() - 1);
+        osFilename.pop_back();
     pszFilename = osFilename.c_str();
 
     nZ = nX = nY = -1;

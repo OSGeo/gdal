@@ -252,6 +252,8 @@ std::string CPL_DLL GDALTileIndexAppGetParserUsage();
 
 std::string CPL_DLL GDALFootprintAppGetParserUsage();
 
+std::string CPL_DLL GDALRasterizeAppGetParserUsage();
+
 /**
  * Returns the gdaldem usage help string
  * @param osProcessingMode          Processing mode (subparser name)

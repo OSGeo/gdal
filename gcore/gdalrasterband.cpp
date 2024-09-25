@@ -107,6 +107,8 @@ GDALRasterBand::~GDALRasterBand()
 
     InvalidateMaskBand();
     nBand = -nBand;
+
+    delete m_poPointsCache;
 }
 
 /************************************************************************/
@@ -130,6 +132,12 @@ GDALRasterBand::~GDALRasterBand()
  * The method also takes care of image decimation / replication if the
  * buffer size (nBufXSize x nBufYSize) is different than the size of the
  * region being accessed (nXSize x nYSize).
+ *
+ * The window of interest expressed by (nXOff, nYOff, nXSize, nYSize) should be
+ * fully within the raster space, that is nXOff >= 0, nYOff >= 0,
+ * nXOff + nXSize <= GetXSize() and nYOff + nYSize <= GetYSize().
+ * If reads larger than the raster space are wished, GDALTranslate() might be used.
+ * Or use nLineSpace and a possibly shifted pData value.
  *
  * The nPixelSpace and nLineSpace parameters allow reading into or
  * writing from unusually organized buffers. This is primarily used
@@ -231,6 +239,12 @@ GDALRasterBand::~GDALRasterBand()
  * The method also takes care of image decimation / replication if the
  * buffer size (nBufXSize x nBufYSize) is different than the size of the
  * region being accessed (nXSize x nYSize).
+ *
+ * The window of interest expressed by (nXOff, nYOff, nXSize, nYSize) should be
+ * fully within the raster space, that is nXOff >= 0, nYOff >= 0,
+ * nXOff + nXSize <= GetXSize() and nYOff + nYSize <= GetYSize().
+ * If reads larger than the raster space are wished, GDALTranslate() might be used.
+ * Or use nLineSpace and a possibly shifted pData value.
  *
  * The nPixelSpace and nLineSpace parameters allow reading into or
  * writing from unusually organized buffers. This is primarily used
@@ -580,6 +594,12 @@ DEFINE_GetGDTFromCppType(std::complex<double>, GDT_CFloat64);
  * be called on the same GDALRasterBand instance (or another GDALRasterBand
  * instance of this dataset) concurrently from several threads.
  *
+ * The window of interest expressed by (dfXOff, dfYOff, dfXSize, dfYSize) should be
+ * fully within the raster space, that is dfXOff >= 0, dfYOff >= 0,
+ * dfXOff + dfXSize <= GetXSize() and dfYOff + dfYSize <= GetYSize().
+ * If reads larger than the raster space are wished, GDALTranslate() might be used.
+ * Or use nLineSpace and a possibly shifted pData value.
+ *
  * @param[out] pData The buffer into which the data should be written.
  * This buffer must contain at least nBufXSize *
  * nBufYSize words of type T. It is organized in left to right,
@@ -795,6 +815,12 @@ INSTANTIATE_READ_RASTER(std::complex<double>)
  * As nearly all GDAL methods, this method is *NOT* thread-safe, that is it cannot
  * be called on the same GDALRasterBand instance (or another GDALRasterBand
  * instance of this dataset) concurrently from several threads.
+ *
+ * The window of interest expressed by (dfXOff, dfYOff, dfXSize, dfYSize) should be
+ * fully within the raster space, that is dfXOff >= 0, dfYOff >= 0,
+ * dfXOff + dfXSize <= GetXSize() and dfYOff + dfYSize <= GetYSize().
+ * If reads larger than the raster space are wished, GDALTranslate() might be used.
+ * Or use nLineSpace and a possibly shifted pData value.
  *
  * @param[out] vData The vector into which the data should be written.
  * The vector will be resized, if needed, to contain at least nBufXSize *
@@ -1306,7 +1332,7 @@ CPLErr CPL_STDCALL GDALWriteBlock(GDALRasterBandH hBand, int nXOff, int nYOff,
  * @since GDAL 2.2
  */
 CPLErr GDALRasterBand::GetActualBlockSize(int nXBlockOff, int nYBlockOff,
-                                          int *pnXValid, int *pnYValid)
+                                          int *pnXValid, int *pnYValid) const
 {
     if (nXBlockOff < 0 || nBlockXSize == 0 ||
         nXBlockOff >= DIV_ROUND_UP(nRasterXSize, nBlockXSize) ||
@@ -1408,7 +1434,7 @@ GDALRasterBand::GetSuggestedBlockAccessPattern() const
  * @return the data type of pixels for this band.
  */
 
-GDALDataType GDALRasterBand::GetRasterDataType()
+GDALDataType GDALRasterBand::GetRasterDataType() const
 
 {
     return eDataType;
@@ -1459,7 +1485,7 @@ GDALDataType CPL_STDCALL GDALGetRasterDataType(GDALRasterBandH hBand)
  * @param pnYSize integer to put the Y block size into or NULL.
  */
 
-void GDALRasterBand::GetBlockSize(int *pnXSize, int *pnYSize)
+void GDALRasterBand::GetBlockSize(int *pnXSize, int *pnYSize) const
 
 {
     if (nBlockXSize <= 0 || nBlockYSize <= 0)
@@ -3351,12 +3377,10 @@ GDALGetRasterSampleOverviewEx(GDALRasterBandH hBand, GUIntBig nDesiredSamples)
  * CE_Failure is returned, and CPLGetLastErrorNo() will return
  * CPLE_NotSupported.
  *
- * WARNING:  It is not possible to build overviews for a single band in
- * TIFF format, and thus this method does not work for TIFF format, or any
- * formats that use the default overview building in TIFF format.  Instead
- * it is necessary to build overviews on the dataset as a whole using
- * GDALDataset::BuildOverviews().  That makes this method pretty useless
- * from a practical point of view.
+ * WARNING: Most formats don't support per-band overview computation, but
+ * require that overviews are computed for all bands of a dataset, using
+ * GDALDataset::BuildOverviews(). The only exception for official GDAL drivers
+ * is the HFA driver which supports this method.
  *
  * @param pszResampling one of "NEAREST", "GAUSS", "CUBIC", "AVERAGE", "MODE",
  * "AVERAGE_MAGPHASE" "RMS" or "NONE" controlling the downsampling method
@@ -3708,7 +3732,7 @@ CPLErr CPL_STDCALL GDALSetRasterUnitType(GDALRasterBandH hBand,
  * @return the width in pixels of this band.
  */
 
-int GDALRasterBand::GetXSize()
+int GDALRasterBand::GetXSize() const
 
 {
     return nRasterXSize;
@@ -3745,7 +3769,7 @@ int CPL_STDCALL GDALGetRasterBandXSize(GDALRasterBandH hBand)
  * @return the height in pixels of this band.
  */
 
-int GDALRasterBand::GetYSize()
+int GDALRasterBand::GetYSize() const
 
 {
     return nRasterYSize;
@@ -3787,7 +3811,7 @@ int CPL_STDCALL GDALGetRasterBandYSize(GDALRasterBandH hBand)
  * @return band number (1+) or 0 if the band number isn't known.
  */
 
-int GDALRasterBand::GetBand()
+int GDALRasterBand::GetBand() const
 
 {
     return nBand;
@@ -3828,7 +3852,7 @@ int CPL_STDCALL GDALGetBandNumber(GDALRasterBandH hBand)
  * NULL if this cannot be determined.
  */
 
-GDALDataset *GDALRasterBand::GetDataset()
+GDALDataset *GDALRasterBand::GetDataset() const
 
 {
     return poDS;
@@ -8413,7 +8437,7 @@ void GDALRasterBand::IncDirtyBlocks(int nInc)
  */
 
 void GDALRasterBand::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
-                                 const char *fmt, ...)
+                                 const char *fmt, ...) const
 {
     va_list args;
 
@@ -9400,11 +9424,11 @@ CPLErr GDALRasterBand::InterpolateAtPoint(double dfPixel, double dfLine,
     }
 
     GDALRasterBand *pBand = const_cast<GDALRasterBand *>(this);
-    if (!m_oPointsCache)
-        m_oPointsCache = std::make_unique<GDALDoublePointsCache>();
+    if (!m_poPointsCache)
+        m_poPointsCache = new GDALDoublePointsCache();
 
     const bool res =
-        GDALInterpolateAtPoint(pBand, eInterpolation, m_oPointsCache->cache,
+        GDALInterpolateAtPoint(pBand, eInterpolation, m_poPointsCache->cache,
                                dfPixel, dfLine, pdfRealValue, pdfImagValue);
 
     return res ? CE_None : CE_Failure;

@@ -115,22 +115,31 @@ OGRMultiPoint *GeometryReader::readMultiPoint()
 
 OGRMultiLineString *GeometryReader::readMultiLineString()
 {
-    const auto pEnds = m_geometry->ends();
-    if (pEnds == nullptr)
-        return CPLErrorInvalidPointer("MultiLineString ends data");
+    const auto ends = m_geometry->ends();
     auto mls = std::make_unique<OGRMultiLineString>();
-    m_offset = 0;
-    for (uint32_t i = 0; i < pEnds->size(); i++)
+    if (ends == nullptr || ends->size() < 2)
     {
-        const auto e = pEnds->Get(i);
-        if (e < m_offset)
-            return CPLErrorInvalidLength("MultiLineString");
-        m_length = e - m_offset;
-        const auto ls = readSimpleCurve<OGRLineString>();
-        if (ls == nullptr)
+        m_length = m_length / 2;
+        const auto part = readSimpleCurve<OGRLineString>();
+        if (part == nullptr)
             return nullptr;
-        mls->addGeometryDirectly(ls);
-        m_offset = e;
+        mls->addGeometryDirectly(part);
+    }
+    else
+    {
+        m_offset = 0;
+        for (uint32_t i = 0; i < ends->size(); i++)
+        {
+            const auto e = ends->Get(i);
+            if (e < m_offset)
+                return CPLErrorInvalidLength("MultiLineString");
+            m_length = e - m_offset;
+            const auto ls = readSimpleCurve<OGRLineString>();
+            if (ls == nullptr)
+                return nullptr;
+            mls->addGeometryDirectly(ls);
+            m_offset = e;
+        }
     }
     return mls.release();
 }

@@ -349,6 +349,8 @@ OGRGeoJSONSeqLayer::OGRGeoJSONSeqLayer(
         OGRSpatialReference::GetWGS84SRS());
     m_poCT = std::move(poCT);
 
+    m_oWriteOptions.bWriteBBOX =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"));
     m_oWriteOptions.SetRFC7946Settings();
     m_oWriteOptions.SetIDOptions(papszOptions);
 
@@ -573,7 +575,7 @@ json_object *OGRGeoJSONSeqLayer::GetNextObject(bool bLooseIdentification)
                (m_osFeatureBuffer.back() == '\r' ||
                 m_osFeatureBuffer.back() == '\n'))
         {
-            m_osFeatureBuffer.resize(m_osFeatureBuffer.size() - 1);
+            m_osFeatureBuffer.pop_back();
         }
         if (!m_osFeatureBuffer.empty())
         {
@@ -816,7 +818,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
         if (poOpenInfo->eAccess == GA_Update)
             return false;
 
-        m_osTmpFile = CPLSPrintf("/vsimem/geojsonseq/%p", this);
+        m_osTmpFile = VSIMemGenerateHiddenFilename("geojsonseq");
         m_fp = VSIFileFromMemBuffer(
             m_osTmpFile.c_str(),
             reinterpret_cast<GByte *>(CPLStrdup(poOpenInfo->pszFilename)),
@@ -831,7 +833,8 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
             OGRGeoJSONDriverStealStoredContent(pszUnprefixedFilename);
         if (pszStoredContent)
         {
-            if (!GeoJSONSeqIsObject(pszStoredContent, poOpenInfo))
+            if (EQUAL(pszStoredContent, INVALID_CONTENT_FOR_JSON_LIKE) ||
+                !GeoJSONSeqIsObject(pszStoredContent, poOpenInfo))
             {
                 OGRGeoJSONDriverStoreContent(poOpenInfo->pszFilename,
                                              pszStoredContent);
@@ -839,7 +842,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
             }
             else
             {
-                m_osTmpFile = CPLSPrintf("/vsimem/geojsonseq/%p", this);
+                m_osTmpFile = VSIMemGenerateHiddenFilename("geojsonseq");
                 m_fp = VSIFileFromMemBuffer(
                     m_osTmpFile.c_str(),
                     reinterpret_cast<GByte *>(pszStoredContent),
@@ -870,7 +873,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
                 return false;
             }
 
-            m_osTmpFile = CPLSPrintf("/vsimem/geojsonseq/%p", this);
+            m_osTmpFile = VSIMemGenerateHiddenFilename("geojsonseq");
             m_fp = VSIFileFromMemBuffer(m_osTmpFile.c_str(), pResult->pabyData,
                                         pResult->nDataLen, true);
             pResult->pabyData = nullptr;
@@ -1056,6 +1059,9 @@ void RegisterOGRGeoJSONSeq()
         "    <Value>String</Value>"
         "    <Value>Integer</Value>"
         "  </Option>"
+        "  <Option name='WRITE_BBOX' type='boolean' description='whether to "
+        "write a bbox property with the bounding box of each geometry' "
+        "default='NO'/>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

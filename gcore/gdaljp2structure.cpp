@@ -251,8 +251,7 @@ static void DumpGeoTIFFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         static_cast<GDALDriver *>(GDALGetDriverByName("VRT"));
     if (pabyBoxData && poVRTDriver)
     {
-        CPLString osTmpFilename(
-            CPLSPrintf("/vsimem/tmp_%p.tif", oBox.GetFILE()));
+        const CPLString osTmpFilename(VSIMemGenerateHiddenFilename("tmp.tif"));
         CPL_IGNORE_RET_VAL(VSIFCloseL(VSIFileFromMemBuffer(
             osTmpFilename, pabyBoxData, nBoxDataLength, FALSE)));
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -267,8 +266,8 @@ static void DumpGeoTIFFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         }
         if (poDS)
         {
-            CPLString osTmpVRTFilename(
-                CPLSPrintf("/vsimem/tmp_%p.vrt", oBox.GetFILE()));
+            const CPLString osTmpVRTFilename(
+                CPLResetExtension(osTmpFilename.c_str(), "vrt"));
             GDALDataset *poVRTDS = poVRTDriver->CreateCopy(
                 osTmpVRTFilename, poDS, FALSE, nullptr, nullptr, nullptr);
             GDALClose(poVRTDS);

@@ -704,8 +704,8 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
     {
         // Generate a dummy in-memory TIFF file that has all the needed tags
         // from the original file
-        CPLString osTmpFilename;
-        osTmpFilename.Printf("/vsimem/decompress_%p.tif", psJob);
+        const CPLString osTmpFilename(
+            VSIMemGenerateHiddenFilename("decompress.tif"));
         VSILFILE *fpTmp = VSIFOpenL(osTmpFilename.c_str(), "wb+");
         TIFF *hTIFFTmp =
             VSI_TIFFOpen(osTmpFilename.c_str(),
@@ -3524,9 +3524,8 @@ static bool GTIFFExtendMemoryFile(const CPLString &osTmpFilename,
 
 static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
 {
-    CPLString osTmpFilename;
-    static int nCounter = 0;
-    osTmpFilename.Printf("/vsimem/stream_%d.tif", ++nCounter);
+    const CPLString osTmpFilename(
+        VSIMemGenerateHiddenFilename("GTIFFMakeBufferedStream.tif"));
     VSILFILE *fpTemp = VSIFOpenL(osTmpFilename, "wb+");
     if (fpTemp == nullptr)
         return false;
@@ -5680,8 +5679,19 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     }
                     else if (EQUAL(pszRole, "colorinterp"))
                     {
-                        poBand->m_eBandInterp =
-                            GDALGetColorInterpretationByName(pszUnescapedValue);
+                        if (EQUAL(pszUnescapedValue, "undefined"))
+                            poBand->m_eBandInterp = GCI_Undefined;
+                        else
+                        {
+                            poBand->m_eBandInterp =
+                                GDALGetColorInterpretationByName(
+                                    pszUnescapedValue);
+                            if (poBand->m_eBandInterp == GCI_Undefined)
+                            {
+                                poBand->m_oGTiffMDMD.SetMetadataItem(
+                                    "COLOR_INTERPRETATION", pszUnescapedValue);
+                            }
+                        }
                     }
                     else
                     {

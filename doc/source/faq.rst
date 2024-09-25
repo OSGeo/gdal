@@ -4,7 +4,7 @@
 FAQ
 ================================================================================
 
-.. TODO maybe migrate the chapters 2 and following of https://trac.osgeo.org/gdal/wiki/FAQ
+.. TODO maybe migrate the chapters 2 and following of http://web.archive.org/web/https://trac.osgeo.org/gdal/wiki/FAQ
 
 .. only:: not latex
 
