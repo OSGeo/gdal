@@ -12,13 +12,30 @@ add_dependencies(ogrsf_frmts generate_gdal_version_h)
 
 # Obligatory for building GDAL; always compile in.
 ogr_default_driver(mem "Read/write driver for MEMORY virtual files")
-ogr_optional_driver(geojson "GeoJSON/ESRIJSON/TopoJSON driver")
+
+# Exception to the rule: enable the GeoJSON driver by default, even if
+# OGR_BUILD_OPTIONAL_DRIVERS=OFF.
+if (NOT DEFINED OGR_ENABLE_DRIVER_GEOJSON AND
+    DEFINED OGR_BUILD_OPTIONAL_DRIVERS AND
+    NOT OGR_BUILD_OPTIONAL_DRIVERS)
+    message(WARNING "Enabling OGR_ENABLE_DRIVER_GEOJSON=ON, despite OGR_BUILD_OPTIONAL_DRIVERS=OFF. You can of course override this choice by setting OGR_ENABLE_DRIVER_GEOJSON=OFF")
+    option(OGR_ENABLE_DRIVER_GEOJSON "Set ON to build GeoJSON/GeoJSONSeq/ESRIJSON/TopoJSON drivers" ON)
+endif()
+ogr_optional_driver(geojson "GeoJSON/GeoJSONSeq/ESRIJSON/TopoJSON drivers")
 
 add_feature_info(ogr_TAB OGR_ENABLE_DRIVER_TAB "MapInfo TAB and MIF/MID")
 if (OGR_ENABLE_DRIVER_TAB)
     add_subdirectory(mitab)
 endif ()
 
+# Exception to the rule: enable the Shapefile driver by default, even if
+# OGR_BUILD_OPTIONAL_DRIVERS=OFF.
+if (NOT DEFINED OGR_ENABLE_DRIVER_SHAPE AND
+    DEFINED OGR_BUILD_OPTIONAL_DRIVERS AND
+    NOT OGR_BUILD_OPTIONAL_DRIVERS)
+    message(WARNING "Enabling OGR_ENABLE_DRIVER_SHAPE=ON, despite OGR_BUILD_OPTIONAL_DRIVERS=OFF. You can of course override this choice by setting OGR_ENABLE_DRIVER_SHAPE=OFF")
+    option(OGR_ENABLE_DRIVER_SHAPE "Set ON to build Shapefile driver" ON)
+endif()
 ogr_optional_driver(shape "ESRI shape-file")
 
 # ######################################################################################################################
