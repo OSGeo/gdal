@@ -217,7 +217,7 @@ Tile formats
 
 MBTiles can store tiles in PNG, JPEG or WEBP (since 3.8). Support for
 those tile formats depend if the underlying drivers are available
-in GDAL. By default, GDAL will PNG tiles.
+in GDAL. By default, GDAL will produce PNG tiles.
 
 It is possible to select the tile format by setting the creation/open
 option TILE_FORMAT to one of PNG, PNG8, JPEG or WEBP. When using JPEG,
