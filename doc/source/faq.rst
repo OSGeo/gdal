@@ -93,7 +93,7 @@ Is GDAL thread-safe ?
 See :ref:`multithreading`
 
 Does GDAL provide a Section 508 information?
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++
 
 No, GDAL itself is an open-source software and project, not a Vendor. If your organization considers they need a `VPAT or Section 508 <https://www.section508.gov/sell/acr/>`_ form to be able to use GDAL, it is their responsibility to fulfill themselves the needed steps.
 
