@@ -2006,14 +2006,20 @@ void *GDALCreateGeoLocTransformerEx(GDALDatasetH hBaseDS,
         psTransform->bUseArray = !CPLTestBool(pszUseTempDatasets);
     else
     {
-        psTransform->bUseArray = nXSize < 16 * 1000 * 1000 / nYSize;
-        if (psTransform->bUseArray)
+        constexpr int MEGAPIXEL_LIMIT = 24;
+        psTransform->bUseArray =
+            nXSize < MEGAPIXEL_LIMIT * 1000 * 1000 / nYSize;
+        if (!psTransform->bUseArray)
         {
             CPLDebug("GEOLOC",
                      "Using temporary GTiff backing to store backmap, because "
-                     "geoloc arrays exceed 16 megapixels. You can set the "
+                     "geoloc arrays require %d megapixels, exceeding the %d "
+                     "megapixels limit. You can set the "
                      "GDAL_GEOLOC_USE_TEMP_DATASETS configuration option to "
-                     "NO to force RAM storage of backmap");
+                     "NO to force RAM storage of backmap",
+                     static_cast<int>(static_cast<int64_t>(nXSize) * nYSize /
+                                      (1000 * 1000)),
+                     MEGAPIXEL_LIMIT);
         }
     }
 
