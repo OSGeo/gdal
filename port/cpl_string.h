@@ -112,6 +112,9 @@ bool CPL_DLL CPLTestBool(const char *pszValue);
 bool CPL_DLL CPLFetchBool(CSLConstList papszStrList, const char *pszKey,
                           bool bDefault);
 
+CPLErr CPL_DLL CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
+                                  bool *pbUnitSpecified);
+
 const char CPL_DLL *CPLParseNameValue(const char *pszNameValue, char **ppszKey);
 const char CPL_DLL *CPLParseNameValueSep(const char *pszNameValue,
                                          char **ppszKey, char chSep);

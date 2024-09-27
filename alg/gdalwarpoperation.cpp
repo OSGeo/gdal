@@ -1267,7 +1267,7 @@ void GDALWarpOperation::WipeChunkList()
 /*                       GetWorkingMemoryForWindow()                    */
 /************************************************************************/
 
-/** Retrurns the amount of working memory, in bytes, required to process
+/** Returns the amount of working memory, in bytes, required to process
  * a warped window of source dimensions nSrcXSize x nSrcYSize and target
  * dimensions nDstXSize x nDstYSize.
  */

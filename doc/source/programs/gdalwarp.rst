@@ -385,8 +385,13 @@ with control information.
 .. option:: -wm <memory_in_mb>
 
     Set the amount of memory that the
-    warp API is allowed to use for caching. The value is interpreted as being
-    in megabytes if the value is less than 10000. For values >=10000, this is
+    warp API is allowed to use for caching.
+    Defaults to 64 MB.
+    Since GDAL 3.10, the value can be specified either as a fixed amount of
+    memory (e.g., ``-wm 200MB``, ``-wm 1G``) or as a percentage of usable
+    RAM (``-wm 10%``).
+    In earlier versions, or if a unit is not specified, the value is interpreted as being
+    in megabytes if the value is less than 10000. For values >=10000, it is
     interpreted as bytes.
 
     The warper will total up the memory required to hold the input and output
