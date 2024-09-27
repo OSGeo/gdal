@@ -337,16 +337,16 @@ struct Square
 
                     const Point nextPoint(interpolate(border, level));
                     if (reverse)
-                        writer.addBorderSegment(levelIdx, nextPoint, lastPoint);
+                        writer.addSegment(levelIdx, nextPoint, lastPoint);
                     else
-                        writer.addBorderSegment(levelIdx, lastPoint, nextPoint);
+                        writer.addSegment(levelIdx, lastPoint, nextPoint);
                     lastPoint = nextPoint;
                 }
                 // last level (past the end)
                 if (reverse)
-                    writer.addBorderSegment((*it).first, endPoint, lastPoint);
+                    writer.addSegment((*it).first, endPoint, lastPoint);
                 else
-                    writer.addBorderSegment((*it).first, lastPoint, endPoint);
+                    writer.addSegment((*it).first, lastPoint, endPoint);
             }
         }
 
