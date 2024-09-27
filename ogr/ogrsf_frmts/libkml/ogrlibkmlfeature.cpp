@@ -815,7 +815,12 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
         {
             ElementPtr poKmlElement = geom2kml(poOgrGeom, -1, poKmlFactory);
             if (!poKmlElement)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot translate feature: %s",
+                         poOgrFeat->DumpReadableAsString().c_str());
                 return nullptr;
+            }
 
             poKmlPlacemark->set_geometry(AsGeometry(std::move(poKmlElement)));
         }
