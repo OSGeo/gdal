@@ -508,9 +508,26 @@ Once the dimensions of the output image have been determined,
 :program:`gdalwarp` divides the output image into chunks that can be processed
 independently within the amount of memory specified by :option:`-wm`.
 :program:`gdalwarp` then iterates over scanlines in these chunks, and for each
-output pixel determines the set of source pixels that contribute to the value
-of the output pixel. These source pixels are provided to a function that
-performs the resampling algorithm selected with :option:`-r`.
+output pixel determines a rectangular region of source pixels that contribute
+to the value of the output pixel. The dimensions of this rectangular region
+are typically determined by estimating the relative scales of the source and
+destination raster, but can be manually specified (see documentation of the
+``XSCALE`` parameter in :cpp:member:`GDALWarpOptions::papszWarpOptions`).
+Because the source region is a simple rectangle, it is not possible for an
+output pixel to be associated with source pixels from both sides of the
+antimeridian or pole (when transforming from geographic coordinates).
+
+The rectangular region of source pixels is then provided to a function that
+performs the resampling algorithm selected with :option:`-r`.  Depending on the
+resampling algorithm and relative scales of the source and destination rasters,
+source pixels may be weighted either according to the approximate fraction of
+the source pixel that is covered by the destination pixel (e.g., "mean" and
+"sum" resampling), or by horizontal and vertical Cartesian distances between
+the center of the source pixel and the center of the target pixel (e.g.,
+bilinear or cubic spline resampling). In the latter case, the relative weight
+of an individual source pixel is determined by the product of the weights
+determined for its row and column; the diagonal Cartesian distance is not
+calculated.
 
 Writing to an existing file
 ---------------------------
