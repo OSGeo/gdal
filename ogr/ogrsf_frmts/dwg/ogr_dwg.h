@@ -168,9 +168,8 @@ class OGRDWGLayer final : public OGRLayer
 /*                           OGRDWGDataSource                           */
 /************************************************************************/
 
-class OGRDWGDataSource final : public OGRDataSource
+class OGRDWGDataSource final : public GDALDataset
 {
-    CPLString m_osName;
     std::vector<OGRLayer *> apoLayers;
 
     std::set<CPLString> attributeFields;
@@ -206,19 +205,12 @@ class OGRDWGDataSource final : public OGRDataSource
     int Open(OGRDWGServices *poServices, const char *pszFilename,
              int bHeaderOnly = FALSE);
 
-    const char *GetName() override
-    {
-        return m_osName;
-    }
-
     int GetLayerCount() override
     {
         return static_cast<int>(apoLayers.size());
     }
 
     OGRLayer *GetLayer(int) override;
-
-    int TestCapability(const char *) override;
 
     // The following is only used by OGRDWGLayer
 

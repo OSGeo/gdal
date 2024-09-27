@@ -126,9 +126,7 @@ int OGRSXFDataSource::Open(const char *pszFilename, bool bUpdateIn,
         return FALSE;
     }
 
-    pszName = pszFilename;
-
-    fpSXF = VSIFOpenL(pszName, "rb");
+    fpSXF = VSIFOpenL(pszFilename, "rb");
     if (fpSXF == nullptr)
     {
         CPLError(CE_Warning, CPLE_OpenFailed, "SXF open file %s failed",

@@ -564,12 +564,11 @@ class OGROCISelectLayer final : public OGROCILayer
 /*                           OGROCIDataSource                           */
 /************************************************************************/
 
-class OGROCIDataSource final : public OGRDataSource
+class OGROCIDataSource final : public GDALDataset
 {
     OGROCILayer **papoLayers;
     int nLayers;
 
-    char *pszName;
     char *pszDBName;
 
     int bDSUpdate;
@@ -596,11 +595,6 @@ class OGROCIDataSource final : public OGRDataSource
              int bTestOpen);
     int OpenTable(const char *pszTableName, int nSRID, int bUpdate,
                   int bTestOpen, char **papszOpenOptionsIn);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

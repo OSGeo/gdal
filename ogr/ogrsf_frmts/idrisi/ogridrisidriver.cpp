@@ -31,36 +31,14 @@
 #include "ogr_idrisi.h"
 #include "ogrsf_frmts.h"
 
-// g++ ogr/ogrsf_frmts/idrisi/*.cpp -Wall -g -fPIC -shared -o ogr_Idrisi.so
-// -Iport -Igcore -Iogr -Iogr/ogrsf_frmts/idrisi -Iogr/ogrsf_frmts
-// -Ifrmts/idrisi
-
-/************************************************************************/
-/*                       ~OGRIdrisiDriver()                         */
-/************************************************************************/
-
-OGRIdrisiDriver::~OGRIdrisiDriver()
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRIdrisiDriver::GetName()
-
-{
-    return "Idrisi";
-}
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRIdrisiDriver::Open(const char *pszFilename, int bUpdate)
+static GDALDataset *OGRIdrisiOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if (bUpdate)
+    if (poOpenInfo->eAccess == GA_Update)
     {
         return nullptr;
     }
@@ -68,31 +46,21 @@ OGRDataSource *OGRIdrisiDriver::Open(const char *pszFilename, int bUpdate)
     // --------------------------------------------------------------------
     //      Does this appear to be a .vct file?
     // --------------------------------------------------------------------
-    if (!EQUAL(CPLGetExtension(pszFilename), "vct"))
+    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "vct"))
         return nullptr;
 
-    OGRIdrisiDataSource *poDS = new OGRIdrisiDataSource();
+    auto poDS = std::make_unique<OGRIdrisiDataSource>();
 
-    if (!poDS->Open(pszFilename))
+    if (!poDS->Open(poOpenInfo->pszFilename))
     {
-        delete poDS;
-        poDS = nullptr;
+        return nullptr;
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRIdrisiDriver::TestCapability(const char * /* pszCap */)
-{
-    return FALSE;
-}
-
-/************************************************************************/
-/*                        RegisterOGRIdrisi()                       */
+/*                        RegisterOGRIdrisi()                           */
 /************************************************************************/
 
 void RegisterOGRIdrisi()
@@ -101,9 +69,12 @@ void RegisterOGRIdrisi()
     if (GDALGetDriverByName("Idrisi") != nullptr)
         return;
 
-    OGRSFDriver *poDriver = new OGRIdrisiDriver;
+    GDALDriver *poDriver = new GDALDriver();
+    poDriver->SetDescription("Idrisi");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Idrisi Vector (.vct)");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "vct");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->pfnOpen = OGRIdrisiOpen;
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

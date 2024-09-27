@@ -42,12 +42,11 @@
  * These classes handle all the file types supported by the MITAB lib.
  * through the IMapInfoFile interface.
  *====================================================================*/
-class OGRTABDataSource : public OGRDataSource
+class OGRTABDataSource : public GDALDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRTABDataSource)
 
   private:
-    char *m_pszName;
     char *m_pszDirectory;
 
     int m_nLayerCount;
@@ -72,11 +71,6 @@ class OGRTABDataSource : public OGRDataSource
 
     int Open(GDALOpenInfo *poOpenInfo, int bTestOpen);
     int Create(const char *pszName, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return m_pszName;
-    }
 
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;

@@ -589,14 +589,14 @@ class OGRDXFLayer final : public OGRLayer
     {                                                                          \
         CPLError(CE_Failure, CPLE_AppDefined,                                  \
                  "%s, %d: error at line %d of %s", __FILE__, __LINE__,         \
-                 GetLineNumber(), GetName());                                  \
+                 GetLineNumber(), GetDescription());                           \
     } while (0)
 #define DXF_LAYER_READER_ERROR()                                               \
     do                                                                         \
     {                                                                          \
         CPLError(CE_Failure, CPLE_AppDefined,                                  \
                  "%s, %d: error at line %d of %s", __FILE__, __LINE__,         \
-                 poDS->GetLineNumber(), poDS->GetName());                      \
+                 poDS->GetLineNumber(), poDS->GetDescription());               \
     } while (0)
 
 class OGRDXFReader
@@ -643,11 +643,10 @@ enum OGRDXFFieldModes
 /*                           OGRDXFDataSource                           */
 /************************************************************************/
 
-class OGRDXFDataSource final : public OGRDataSource
+class OGRDXFDataSource final : public GDALDataset
 {
     VSILFILE *fp;
 
-    CPLString osName;
     std::vector<OGRLayer *> apoLayers;
 
     unsigned int iEntitiesOffset;
@@ -692,11 +691,6 @@ class OGRDXFDataSource final : public OGRDataSource
 
     int Open(const char *pszFilename, bool bHeaderOnly,
              CSLConstList papszOptionsIn);
-
-    const char *GetName() override
-    {
-        return osName;
-    }
 
     int GetLayerCount() override
     {
@@ -939,13 +933,12 @@ class OGRDXFBlocksWriterLayer final : public OGRLayer
 /*                           OGRDXFWriterDS                             */
 /************************************************************************/
 
-class OGRDXFWriterDS final : public OGRDataSource
+class OGRDXFWriterDS final : public GDALDataset
 {
     friend class OGRDXFWriterLayer;
 
     int nNextFID;
 
-    CPLString osName;
     OGRDXFWriterLayer *poLayer;
     OGRDXFBlocksWriterLayer *poBlocksLayer;
     VSILFILE *fp;
@@ -982,11 +975,6 @@ class OGRDXFWriterDS final : public OGRDataSource
     ~OGRDXFWriterDS();
 
     int Open(const char *pszFilename, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return osName;
-    }
 
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;

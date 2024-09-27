@@ -47,7 +47,6 @@ OGRDGNDataSource::~OGRDGNDataSource()
         delete papoLayers[i];
 
     CPLFree(papoLayers);
-    CPLFree(pszName);
     CSLDestroy(papszOptions);
 
     if (hDGN != nullptr)
@@ -83,7 +82,6 @@ bool OGRDGNDataSource::Open(GDALOpenInfo *poOpenInfo)
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */
     OGRDGNLayer *poLayer = new OGRDGNLayer(this, "elements", hDGN, bUpdate);
-    pszName = CPLStrdup(poOpenInfo->pszFilename);
 
     /* -------------------------------------------------------------------- */
     /*      Add layer to data source layer list.                            */
@@ -128,17 +126,15 @@ OGRLayer *OGRDGNDataSource::GetLayer(int iLayer)
 /*                                                                      */
 /*      Called by OGRDGNDriver::Create() method to setup a stub         */
 /*      OGRDataSource object without the associated file created        */
-/*      yet.  It will be created by theICreateLayer() call.             */
+/*      yet.  It will be created by the ICreateLayer() call.            */
 /************************************************************************/
 
-bool OGRDGNDataSource::PreCreate(const char *pszFilename, char **papszOptionsIn)
+void OGRDGNDataSource::PreCreate(CSLConstList papszOptionsIn)
 
 {
     papszOptions = CSLDuplicate(papszOptionsIn);
-    pszName = CPLStrdup(pszFilename);
 
     m_osEncoding = CSLFetchNameValueDef(papszOptionsIn, "ENCODING", "");
-    return true;
 }
 
 /************************************************************************/
@@ -282,8 +278,9 @@ OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Try creating the base file.                                     */
     /* -------------------------------------------------------------------- */
-    hDGN = DGNCreate(pszName, pszSeed, nCreationFlags, dfOriginX, dfOriginY,
-                     dfOriginZ, nSUPerMU, nUORPerSU, pszMasterUnit, pszSubUnit);
+    hDGN = DGNCreate(GetDescription(), pszSeed, nCreationFlags, dfOriginX,
+                     dfOriginY, dfOriginZ, nSUPerMU, nUORPerSU, pszMasterUnit,
+                     pszSubUnit);
     if (hDGN == nullptr)
         return nullptr;
 

@@ -640,13 +640,14 @@ int main(int nArgc, char **papszArgv)
 
                 if (NITFDESExtractShapefile(psDES, szRadix))
                 {
-                    OGRDataSourceH hDS;
+                    GDALDatasetH hDS;
                     snprintf(szFilename, sizeof(szFilename), "%s.SHP", szRadix);
-                    hDS = OGROpen(szFilename, FALSE, NULL);
+                    hDS = GDALOpenEx(szFilename, GDAL_OF_VECTOR, NULL, NULL,
+                                     NULL);
                     if (hDS)
                     {
                         int nGeom = 0;
-                        OGRLayerH hLayer = OGR_DS_GetLayer(hDS, 0);
+                        OGRLayerH hLayer = GDALDatasetGetLayer(hDS, 0);
                         if (hLayer)
                         {
                             OGRFeatureH hFeat;
@@ -668,7 +669,7 @@ int main(int nArgc, char **papszArgv)
                                 OGR_F_Destroy(hFeat);
                             }
                         }
-                        OGR_DS_Destroy(hDS);
+                        GDALClose(hDS);
                     }
                 }
 

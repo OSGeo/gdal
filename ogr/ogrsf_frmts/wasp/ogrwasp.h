@@ -183,7 +183,7 @@ class OGRWAsPLayer final : public OGRLayer,
 /*                           OGRWAsPDataSource                          */
 /************************************************************************/
 
-class OGRWAsPDataSource final : public OGRDataSource
+class OGRWAsPDataSource final : public GDALDataset
 {
     CPLString sFilename;
     VSILFILE *hFile;
@@ -196,11 +196,6 @@ class OGRWAsPDataSource final : public OGRDataSource
     /** @note takes ownership of hFile (i.e. responsibility for closing) */
     OGRWAsPDataSource(const char *pszName, VSILFILE *hFile);
     virtual ~OGRWAsPDataSource();
-
-    virtual const char *GetName() override
-    {
-        return sFilename.c_str();
-    }
 
     virtual int GetLayerCount() override
     {
@@ -216,33 +211,6 @@ class OGRWAsPDataSource final : public OGRDataSource
 
     virtual int TestCapability(const char *) override;
     OGRErr Load(bool bSilent = false);
-};
-
-/************************************************************************/
-/*                             OGRWAsPDriver                            */
-/************************************************************************/
-
-class OGRWAsPDriver final : public OGRSFDriver
-{
-
-  public:
-    ~OGRWAsPDriver()
-    {
-    }
-
-    virtual const char *GetName() override
-    {
-        return "WAsP";
-    }
-
-    virtual OGRDataSource *Open(const char *, int) override;
-
-    virtual OGRDataSource *CreateDataSource(const char *pszName,
-                                            char ** = nullptr) override;
-
-    virtual OGRErr DeleteDataSource(const char *pszName) override;
-
-    virtual int TestCapability(const char *) override;
 };
 
 #endif /* ndef OGR_WASP_H_INCLUDED */

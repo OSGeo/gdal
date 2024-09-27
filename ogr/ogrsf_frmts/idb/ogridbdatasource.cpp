@@ -38,7 +38,6 @@
 OGRIDBDataSource::OGRIDBDataSource()
 
 {
-    pszName = nullptr;
     papoLayers = nullptr;
     nLayers = 0;
     poConn = nullptr;
@@ -53,8 +52,6 @@ OGRIDBDataSource::~OGRIDBDataSource()
 
 {
     int i;
-
-    CPLFree(pszName);
 
     for (i = 0; i < nLayers; i++)
         delete papoLayers[i];
@@ -136,8 +133,6 @@ int OGRIDBDataSource::Open(const char *pszNewName, int bUpdate,
         CSLDestroy(papszTables);
         return FALSE;
     }
-
-    pszName = CPLStrdup(pszNewName);
 
     bDSUpdate = bUpdate;
 
@@ -283,8 +278,8 @@ OGRLayer *OGRIDBDataSource::ExecuteSQL(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Execute statement.                                              */

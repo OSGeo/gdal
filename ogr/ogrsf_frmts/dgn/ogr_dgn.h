@@ -106,12 +106,11 @@ class OGRDGNLayer final : public OGRLayer
 /*                          OGRDGNDataSource                            */
 /************************************************************************/
 
-class OGRDGNDataSource final : public OGRDataSource
+class OGRDGNDataSource final : public GDALDataset
 {
     OGRDGNLayer **papoLayers = nullptr;
     int nLayers = 0;
 
-    char *pszName = nullptr;
     DGNHandle hDGN = nullptr;
 
     char **papszOptions = nullptr;
@@ -123,16 +122,11 @@ class OGRDGNDataSource final : public OGRDataSource
     ~OGRDGNDataSource();
 
     bool Open(GDALOpenInfo *poOpenInfo);
-    bool PreCreate(const char *, char **);
+    void PreCreate(CSLConstList);
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList) override;
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

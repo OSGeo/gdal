@@ -38,7 +38,7 @@
 /************************************************************************/
 
 OGRGeoconceptDataSource::OGRGeoconceptDataSource()
-    : _papoLayers(nullptr), _nLayers(0), _pszGCT(nullptr), _pszName(nullptr),
+    : _papoLayers(nullptr), _nLayers(0), _pszGCT(nullptr),
       _pszDirectory(nullptr), _pszExt(nullptr), _papszOptions(nullptr),
       _bSingleNewFile(false), _bUpdate(false), _hGXT(nullptr)
 {
@@ -57,7 +57,6 @@ OGRGeoconceptDataSource::~OGRGeoconceptDataSource()
     }
     CPLFree(_papoLayers);
     CPLFree(_pszGCT);
-    CPLFree(_pszName);
     CPLFree(_pszDirectory);
     CPLFree(_pszExt);
     CSLDestroy(_papszOptions);
@@ -106,11 +105,12 @@ int OGRGeoconceptDataSource::Open(const char *pszName, bool bTestOpen,
         return FALSE;
     }
 
+    SetDescription(pszName);
+
     if (VSI_ISREG(sStat.st_mode))
     {
         _bSingleNewFile = false;
         _bUpdate = bUpdate;
-        _pszName = CPLStrdup(pszName);
         if (!LoadFile(_bUpdate ? "a+t" : "rt"))
         {
             CPLDebug("GEOCONCEPT",
@@ -136,15 +136,16 @@ int OGRGeoconceptDataSource::LoadFile(const char *pszMode)
 {
     if (_pszExt == nullptr)
     {
-        const char *pszExtension = CPLGetExtension(_pszName);
+        const char *pszExtension = CPLGetExtension(GetDescription());
         _pszExt = CPLStrdup(pszExtension);
     }
     CPLStrlwr(_pszExt);
 
     if (!_pszDirectory)
-        _pszDirectory = CPLStrdup(CPLGetPath(_pszName));
+        _pszDirectory = CPLStrdup(CPLGetPath(GetDescription()));
 
-    if ((_hGXT = Open_GCIO(_pszName, _pszExt, pszMode, _pszGCT)) == nullptr)
+    if ((_hGXT = Open_GCIO(GetDescription(), _pszExt, pszMode, _pszGCT)) ==
+        nullptr)
     {
         return FALSE;
     }
@@ -215,7 +216,6 @@ int OGRGeoconceptDataSource::LoadFile(const char *pszMode)
 int OGRGeoconceptDataSource::Create(const char *pszName, char **papszOptions)
 
 {
-    CPLFree(_pszName);
     _papszOptions = CSLDuplicate(papszOptions);
 
     const char *pszConf = CSLFetchNameValue(papszOptions, "CONFIG");
@@ -259,14 +259,13 @@ int OGRGeoconceptDataSource::Create(const char *pszName, char **papszOptions)
             pszbName = CPLStrdup(CPLGetBasename(pszNameDup));
             CPLFree(pszNameDup);
         }
-        _pszName = CPLStrdup(
-            (char *)CPLFormFilename(_pszDirectory, pszbName, nullptr));
+        SetDescription(CPLFormFilename(_pszDirectory, pszbName, nullptr));
         CPLFree(pszbName);
     }
     else
     {
         _pszDirectory = CPLStrdup(CPLGetPath(pszName));
-        _pszName = CPLStrdup(pszName);
+        SetDescription(pszName);
     }
 
     /* -------------------------------------------------------------------- */

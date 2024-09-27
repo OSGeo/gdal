@@ -279,7 +279,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 /*                           OGRCSVDataSource                           */
 /************************************************************************/
 
-class OGRCSVDataSource final : public OGRDataSource
+class OGRCSVDataSource final : public GDALDataset
 {
     char *pszName = nullptr;
 
@@ -300,11 +300,6 @@ class OGRCSVDataSource final : public OGRDataSource
     bool OpenTable(const char *pszFilename, CSLConstList papszOpenOptions,
                    const char *pszNfdcRunwaysGeomField = nullptr,
                    const char *pszGeonamesGeomFieldPrefix = nullptr);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

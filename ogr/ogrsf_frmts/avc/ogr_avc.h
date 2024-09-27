@@ -77,7 +77,7 @@ class OGRAVCLayer CPL_NON_FINAL : public OGRLayer
 /*                         OGRAVCDataSource                             */
 /************************************************************************/
 
-class OGRAVCDataSource CPL_NON_FINAL : public OGRDataSource
+class OGRAVCDataSource CPL_NON_FINAL : public GDALDataset
 {
   protected:
     bool m_bSRSFetched = false;
@@ -144,8 +144,6 @@ class OGRAVCBinDataSource final : public OGRAVCDataSource
     OGRLayer **papoLayers;
     int nLayers;
 
-    char *pszName;
-
     AVCE00ReadPtr psAVC;
 
   public:
@@ -153,11 +151,6 @@ class OGRAVCBinDataSource final : public OGRAVCDataSource
     ~OGRAVCBinDataSource();
 
     int Open(const char *, int bTestOpen);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {
@@ -220,7 +213,6 @@ class OGRAVCE00Layer final : public OGRAVCLayer
 class OGRAVCE00DataSource final : public OGRAVCDataSource
 {
     int nLayers;
-    char *pszName;
     AVCE00ReadE00Ptr psE00;
     OGRAVCE00Layer **papoLayers;
 
@@ -236,11 +228,6 @@ class OGRAVCE00DataSource final : public OGRAVCDataSource
     AVCE00ReadE00Ptr GetInfo()
     {
         return psE00;
-    }
-
-    const char *GetName() override
-    {
-        return pszName;
     }
 
     int GetLayerCount() override

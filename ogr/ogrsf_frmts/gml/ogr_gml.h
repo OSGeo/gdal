@@ -112,12 +112,10 @@ class OGRGMLLayer final : public OGRLayer
 /*                           OGRGMLDataSource                           */
 /************************************************************************/
 
-class OGRGMLDataSource final : public OGRDataSource
+class OGRGMLDataSource final : public GDALDataset
 {
     OGRLayer **papoLayers;
     int nLayers;
-
-    char *pszName;
 
     OGRGMLLayer *TranslateGMLSchema(GMLFeatureClass *);
 
@@ -195,11 +193,6 @@ class OGRGMLDataSource final : public OGRDataSource
 
     bool Open(GDALOpenInfo *poOpenInfo);
     bool Create(const char *pszFile, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

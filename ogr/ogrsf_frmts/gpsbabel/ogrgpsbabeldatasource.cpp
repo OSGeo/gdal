@@ -50,7 +50,6 @@ OGRGPSBabelDataSource::OGRGPSBabelDataSource()
 OGRGPSBabelDataSource::~OGRGPSBabelDataSource()
 
 {
-    CPLFree(pszName);
     CPLFree(pszGPSBabelDriverName);
     CPLFree(pszFilename);
 
@@ -174,8 +173,6 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
                 return FALSE;
         }
     }
-
-    pszName = CPLStrdup(pszDatasourceName);
 
     bool bExplicitFeatures = false;
     bool bWaypoints = true;
@@ -379,15 +376,6 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
     }
 
     return nLayers > 0;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRGPSBabelDataSource::TestCapability(const char * /* pszCap */)
-{
-    return FALSE;
 }
 
 /************************************************************************/

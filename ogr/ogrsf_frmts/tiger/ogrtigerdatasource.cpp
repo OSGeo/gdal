@@ -234,10 +234,9 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion(TigerVersion nOldVersion,
 /************************************************************************/
 
 OGRTigerDataSource::OGRTigerDataSource()
-    : pszName(nullptr), nLayers(0), papoLayers(nullptr),
-      poSpatialRef(new OGRSpatialReference()), papszOptions(nullptr),
-      pszPath(nullptr), nModules(0), papszModules(nullptr), nVersionCode(0),
-      nVersion(TIGER_Unknown)
+    : nLayers(0), papoLayers(nullptr), poSpatialRef(new OGRSpatialReference()),
+      papszOptions(nullptr), pszPath(nullptr), nModules(0),
+      papszModules(nullptr), nVersionCode(0), nVersion(TIGER_Unknown)
 {
     poSpatialRef->SetWellKnownGeogCS("NAD83");
     poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -255,7 +254,6 @@ OGRTigerDataSource::~OGRTigerDataSource()
 
     CPLFree(papoLayers);
 
-    CPLFree(pszName);
     CPLFree(pszPath);
 
     CSLDestroy(papszOptions);
@@ -326,8 +324,6 @@ int OGRTigerDataSource::Open(const char *pszFilename, int bTestOpen,
                              char **papszLimitedFileList)
 
 {
-    pszName = CPLStrdup(pszFilename);
-
     /* -------------------------------------------------------------------- */
     /*      Is the given path a directory or a regular file?                */
     /* -------------------------------------------------------------------- */
@@ -743,14 +739,4 @@ char *OGRTigerDataSource::BuildFilename(const char *pszModuleName,
                  pszModuleName, pszExtension);
 
     return pszFilename;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRTigerDataSource::TestCapability(const char *)
-
-{
-    return FALSE;
 }

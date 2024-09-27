@@ -31,7 +31,7 @@
 #include "ogrmutexeddatasource.h"
 #include "cpl_multiproc.h"
 
-OGRMutexedDataSource::OGRMutexedDataSource(OGRDataSource *poBaseDataSource,
+OGRMutexedDataSource::OGRMutexedDataSource(GDALDataset *poBaseDataSource,
                                            int bTakeOwnership,
                                            CPLMutex *hMutexIn,
                                            int bWrapLayersInMutexedLayer)
@@ -52,12 +52,6 @@ OGRMutexedDataSource::~OGRMutexedDataSource()
 
     if (m_bHasOwnership)
         delete m_poBaseDataSource;
-}
-
-const char *OGRMutexedDataSource::GetName()
-{
-    CPLMutexHolderOptionalLockD(m_hGlobalMutex);
-    return m_poBaseDataSource->GetName();
 }
 
 int OGRMutexedDataSource::GetLayerCount()

@@ -236,18 +236,14 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
 /*                           OGRGeoJSONDataSource                       */
 /************************************************************************/
 
-class OGRGeoJSONDataSource final : public OGRDataSource
+class OGRGeoJSONDataSource final : public GDALDataset
 {
   public:
     OGRGeoJSONDataSource();
     virtual ~OGRGeoJSONDataSource();
 
-    //
-    // OGRDataSource Interface
-    //
     int Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType,
              const char *pszJSonFlavor);
-    const char *GetName() override;
     int GetLayerCount() override;
     OGRLayer *GetLayer(int nLayer) override;
     OGRLayer *ICreateLayer(const char *pszName,

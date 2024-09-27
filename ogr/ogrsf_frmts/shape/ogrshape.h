@@ -320,11 +320,10 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
 /*                          OGRShapeDataSource                          */
 /************************************************************************/
 
-class OGRShapeDataSource final : public OGRDataSource
+class OGRShapeDataSource final : public GDALDataset
 {
     OGRShapeLayer **papoLayers;
     int nLayers;
-    char *pszName;
     bool bSingleFileDataSource;
     OGRLayerPool *poPool;
 
@@ -365,11 +364,6 @@ class OGRShapeDataSource final : public OGRDataSource
     bool OpenZip(GDALOpenInfo *poOpenInfo, const char *pszOriFilename);
     bool CreateZip(const char *pszOriFilename);
 
-    const char *GetName() override
-    {
-        return pszName;
-    }
-
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;
     OGRLayer *GetLayerByName(const char *) override;
@@ -408,7 +402,7 @@ class OGRShapeDataSource final : public OGRDataSource
 
     CPLString GetVSIZipPrefixeDir() const
     {
-        return CPLString("/vsizip/{") + pszName + '}';
+        return CPLString("/vsizip/{").append(GetDescription()).append("}");
     }
 
     const CPLString &GetTemporaryUnzipDir() const

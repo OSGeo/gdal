@@ -251,12 +251,10 @@ class OGRMySQLResultLayer final : public OGRMySQLLayer
 /*                          OGRMySQLDataSource                          */
 /************************************************************************/
 
-class OGRMySQLDataSource final : public OGRDataSource
+class OGRMySQLDataSource final : public GDALDataset
 {
     OGRMySQLLayer **papoLayers;
     int nLayers;
-
-    char *pszName;
 
     int bDSUpdate;
 
@@ -297,11 +295,6 @@ class OGRMySQLDataSource final : public OGRDataSource
 
     int Open(const char *, char **papszOpenOptions, int bUpdate);
     int OpenTable(const char *, int bUpdate);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

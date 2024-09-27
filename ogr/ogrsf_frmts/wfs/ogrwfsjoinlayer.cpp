@@ -515,8 +515,8 @@ GDALDataset *OGRWFSJoinLayer::FetchGetFeature()
 
     CPLHTTPDestroyResult(psResult);
 
-    OGRDataSource *l_poDS =
-        (OGRDataSource *)OGROpen(osTmpFileName, FALSE, nullptr);
+    auto l_poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+        osTmpFileName, GDAL_OF_VECTOR, nullptr, nullptr, nullptr));
     if (l_poDS == nullptr)
     {
         if (strstr((const char *)pabyData, "<wfs:FeatureCollection") ==
@@ -534,11 +534,10 @@ GDALDataset *OGRWFSJoinLayer::FetchGetFeature()
     OGRLayer *poLayer = l_poDS->GetLayer(0);
     if (poLayer == nullptr)
     {
-        OGRDataSource::DestroyDataSource(l_poDS);
         return nullptr;
     }
 
-    return l_poDS;
+    return l_poDS.release();
 }
 
 /************************************************************************/

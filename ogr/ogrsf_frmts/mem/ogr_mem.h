@@ -177,23 +177,16 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 /*                           OGRMemDataSource                           */
 /************************************************************************/
 
-class OGRMemDataSource CPL_NON_FINAL : public OGRDataSource
+class OGRMemDataSource CPL_NON_FINAL : public GDALDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMemDataSource)
 
     OGRMemLayer **papoLayers;
     int nLayers;
 
-    char *pszName;
-
   public:
     OGRMemDataSource(const char *, char **);
     virtual ~OGRMemDataSource();
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {
@@ -217,24 +210,6 @@ class OGRMemDataSource CPL_NON_FINAL : public OGRDataSource
 
     bool UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                            std::string &failureReason) override;
-};
-
-/************************************************************************/
-/*                             OGRMemDriver                             */
-/************************************************************************/
-
-class OGRMemDriver final : public OGRSFDriver
-{
-  public:
-    virtual ~OGRMemDriver();
-
-    const char *GetName() override;
-    OGRDataSource *Open(const char *, int) override;
-
-    virtual OGRDataSource *CreateDataSource(const char *pszName,
-                                            char ** = nullptr) override;
-
-    int TestCapability(const char *) override;
 };
 
 #endif  // ndef OGRMEM_H_INCLUDED

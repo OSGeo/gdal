@@ -95,12 +95,10 @@ class OGRIdrisiLayer final : public OGRLayer,
 /*                        OGRIdrisiDataSource                           */
 /************************************************************************/
 
-class OGRIdrisiDataSource final : public OGRDataSource
+class OGRIdrisiDataSource final : public GDALDataset
 {
-    char *pszName;
-
-    OGRLayer **papoLayers;
-    int nLayers;
+    OGRLayer **papoLayers = nullptr;
+    int nLayers = 0;
 
   public:
     OGRIdrisiDataSource();
@@ -108,33 +106,12 @@ class OGRIdrisiDataSource final : public OGRDataSource
 
     int Open(const char *pszFilename);
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
-
     virtual int GetLayerCount() override
     {
         return nLayers;
     }
 
     virtual OGRLayer *GetLayer(int) override;
-
-    virtual int TestCapability(const char *) override;
-};
-
-/************************************************************************/
-/*                         OGRIdrisiDriver                              */
-/************************************************************************/
-
-class OGRIdrisiDriver final : public OGRSFDriver
-{
-  public:
-    virtual ~OGRIdrisiDriver();
-
-    virtual const char *GetName() override;
-    virtual OGRDataSource *Open(const char *, int) override;
-    virtual int TestCapability(const char *) override;
 };
 
 #endif  // ndef OGR_IDRISI_H_INCLUDED

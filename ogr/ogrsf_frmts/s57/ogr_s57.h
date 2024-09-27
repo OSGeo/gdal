@@ -86,10 +86,8 @@ class OGRS57Layer final : public OGRLayer
 /*                          OGRS57DataSource                            */
 /************************************************************************/
 
-class OGRS57DataSource final : public OGRDataSource
+class OGRS57DataSource final : public GDALDataset
 {
-    char *pszName;
-
     int nLayers;
     OGRS57Layer **papoLayers;
 
@@ -118,11 +116,6 @@ class OGRS57DataSource final : public OGRDataSource
 
     int Open(const char *pszName);
     int Create(const char *pszName, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

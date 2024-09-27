@@ -161,7 +161,6 @@ OGRSOSIDataSource::OGRSOSIDataSource()
     poBaseadm = nullptr;
     papoBuiltGeometries = nullptr;
     papoLayers = nullptr;
-    pszName = nullptr;
     poSRS = nullptr;
 
     poPolyHeaders = nullptr;
@@ -232,8 +231,6 @@ OGRSOSIDataSource::~OGRSOSIDataSource()
 
     if (poSRS != nullptr)
         poSRS->Release();
-    if (pszName != nullptr)
-        CPLFree(pszName);
 }
 
 static OGRFeatureDefn *defineLayer(const char *szName,
@@ -271,7 +268,6 @@ int OGRSOSIDataSource::Open(const char *pszFilename, int bUpdate)
     papoBuiltGeometries = nullptr;
     poFileadm = nullptr;
     poBaseadm = nullptr;
-    char *pszPos;
 
     if (bUpdate)
     {
@@ -285,18 +281,16 @@ int OGRSOSIDataSource::Open(const char *pszFilename, int bUpdate)
     if (VSIStat(pszFilename, &sStat) != 0)
         return FALSE;
 
-    pszName = CPLStrdup(pszFilename);
+    std::string osName(pszFilename);
     /* We ignore any layer parameters for now. */
-    pszPos = strchr(pszName, ',');
-    if (pszPos != nullptr)
-    {
-        pszPos[0] = '\0';
-    }
+    const auto nPos = osName.find(',');
+    if (nPos != std::string::npos)
+        osName.resize(nPos);
 
     /* Confirm that we are dealing with a SOSI file. Used also by data
      * format auto-detection in some ogr utilities. */
     UT_INT64 nEnd = 0;
-    int bIsSosi = HO_TestSOSI(pszName, &nEnd);
+    int bIsSosi = HO_TestSOSI(osName.c_str(), &nEnd);
     if (bIsSosi == UT_FALSE)
     {
         return FALSE; /* No error message: This is used by file format
@@ -307,15 +301,15 @@ int OGRSOSIDataSource::Open(const char *pszFilename, int bUpdate)
 
     /* open index base and sosi file */
     poBaseadm = LC_OpenBase(LC_BASE);
-    nStatus = LC_OpenSos(pszName, LC_BASE_FRAMGR, LC_GML_IDX, LC_INGEN_STATUS,
-                         &poFileadm, &nDetStatus);
+    nStatus = LC_OpenSos(osName.c_str(), LC_BASE_FRAMGR, LC_GML_IDX,
+                         LC_INGEN_STATUS, &poFileadm, &nDetStatus);
     if (nStatus == UT_FALSE)
     {
         char *pszErrorMessage;
         LC_StrError(nDetStatus, &pszErrorMessage);
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "File %s could not be opened by SOSI Driver: %s", pszName,
-                 pszErrorMessage);
+                 "File %s could not be opened by SOSI Driver: %s",
+                 osName.c_str(), pszErrorMessage);
         return FALSE;
     }
 
@@ -863,19 +857,4 @@ void OGRSOSIDataSource::buildOGRPoint(long iSerial)
     double dfEast = 0, dfNorth = 0;
     LC_GetTK(1, &dfEast, &dfNorth);
     papoBuiltGeometries[iSerial] = new OGRPoint(dfEast, dfNorth);
-}
-
-/************************************************************************/
-/*                              TestCapability()                        */
-/************************************************************************/
-
-int OGRSOSIDataSource::TestCapability(CPL_UNUSED const char *pszCap)
-{
-#ifdef WRITE_SUPPORT
-    if (strcmp("CreateLayer", pszCap) == 0)
-    {
-        return TRUE;
-    }
-#endif
-    return FALSE;
 }

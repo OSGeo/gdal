@@ -56,7 +56,7 @@ class CPL_DLL IOGRTransactionBehaviour
      * been closed
      * @return OGRERR_NONE in case of success
      */
-    virtual OGRErr StartTransaction(OGRDataSource *&poDSInOut,
+    virtual OGRErr StartTransaction(GDALDataset *&poDSInOut,
                                     int &bOutHasReopenedDS) = 0;
 
     /** Commit a transaction.
@@ -73,7 +73,7 @@ class CPL_DLL IOGRTransactionBehaviour
      * been closed
      * @return OGRERR_NONE in case of success
      */
-    virtual OGRErr CommitTransaction(OGRDataSource *&poDSInOut,
+    virtual OGRErr CommitTransaction(GDALDataset *&poDSInOut,
                                      int &bOutHasReopenedDS) = 0;
 
     /** Rollback a transaction.
@@ -90,7 +90,7 @@ class CPL_DLL IOGRTransactionBehaviour
      * been closed
      * @return OGRERR_NONE in case of success
      */
-    virtual OGRErr RollbackTransaction(OGRDataSource *&poDSInOut,
+    virtual OGRErr RollbackTransaction(GDALDataset *&poDSInOut,
                                        int &bOutHasReopenedDS) = 0;
 };
 
@@ -124,8 +124,8 @@ class CPL_DLL IOGRTransactionBehaviour
  * @return a new datasource handle
  * @since GDAL 2.0
  */
-OGRDataSource CPL_DLL *OGRCreateEmulatedTransactionDataSourceWrapper(
-    OGRDataSource *poBaseDataSource,
+GDALDataset CPL_DLL *OGRCreateEmulatedTransactionDataSourceWrapper(
+    GDALDataset *poBaseDataSource,
     IOGRTransactionBehaviour *poTransactionBehaviour,
     int bTakeOwnershipDataSource, int bTakeOwnershipTransactionBehavior);
 

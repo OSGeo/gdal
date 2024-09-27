@@ -35,8 +35,7 @@
 /************************************************************************/
 
 OGRSDTSDataSource::OGRSDTSDataSource()
-    : poTransfer(nullptr), pszName(nullptr), nLayers(0), papoLayers(nullptr),
-      poSRS(nullptr)
+    : poTransfer(nullptr), nLayers(0), papoLayers(nullptr), poSRS(nullptr)
 {
 }
 
@@ -52,23 +51,11 @@ OGRSDTSDataSource::~OGRSDTSDataSource()
 
     CPLFree(papoLayers);
 
-    CPLFree(pszName);
-
     if (poSRS)
         poSRS->Release();
 
     if (poTransfer)
         delete poTransfer;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRSDTSDataSource::TestCapability(const char *)
-
-{
-    return FALSE;
 }
 
 /************************************************************************/
@@ -91,8 +78,6 @@ OGRLayer *OGRSDTSDataSource::GetLayer(int iLayer)
 int OGRSDTSDataSource::Open(const char *pszFilename, int bTestOpen)
 
 {
-    pszName = CPLStrdup(pszFilename);
-
     /* -------------------------------------------------------------------- */
     /*      Verify that the extension is DDF if we are testopening.         */
     /* -------------------------------------------------------------------- */

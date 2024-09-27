@@ -37,19 +37,19 @@
 #include "ogrmutexedlayer.h"
 #include <map>
 
-/** OGRMutexedDataSource class protects all virtual methods of OGRDataSource
- *  with a mutex.
+/** OGRMutexedDataSource class protects all virtual methods of GDALDataset,
+ *  related to vector layers, with a mutex.
  *  If the passed mutex is NULL, then no locking will be done.
  *
  *  Note that the constructors and destructors are not explicitly protected
  *  by the mutex.
  */
-class CPL_DLL OGRMutexedDataSource : public OGRDataSource
+class CPL_DLL OGRMutexedDataSource : public GDALDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMutexedDataSource)
 
   protected:
-    OGRDataSource *m_poBaseDataSource;
+    GDALDataset *m_poBaseDataSource;
     int m_bHasOwnership;
     CPLMutex *m_hGlobalMutex;
     int m_bWrapLayersInMutexedLayer;
@@ -60,18 +60,16 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
 
   public:
     /* The construction of the object isn't protected by the mutex */
-    OGRMutexedDataSource(OGRDataSource *poBaseDataSource, int bTakeOwnership,
+    OGRMutexedDataSource(GDALDataset *poBaseDataSource, int bTakeOwnership,
                          CPLMutex *hMutexIn, int bWrapLayersInMutexedLayer);
 
     /* The destruction of the object isn't protected by the mutex */
     virtual ~OGRMutexedDataSource() override;
 
-    OGRDataSource *GetBaseDataSource()
+    GDALDataset *GetBaseDataSource()
     {
         return m_poBaseDataSource;
     }
-
-    virtual const char *GetName() override;
 
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;

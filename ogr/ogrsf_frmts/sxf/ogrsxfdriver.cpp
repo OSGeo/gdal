@@ -32,21 +32,11 @@
 #include "cpl_conv.h"
 #include "ogr_sxf.h"
 
-extern "C" void RegisterOGRSXF();
-
-/************************************************************************/
-/*                       ~OGRSXFDriver()                         */
-/************************************************************************/
-
-OGRSXFDriver::~OGRSXFDriver()
-{
-}
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *OGRSXFDriver::Open(GDALOpenInfo *poOpenInfo)
+static GDALDataset *OGRSXFDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
     /* -------------------------------------------------------------------- */
@@ -75,7 +65,7 @@ GDALDataset *OGRSXFDriver::Open(GDALOpenInfo *poOpenInfo)
 /*                              Identify()                              */
 /************************************************************************/
 
-int OGRSXFDriver::Identify(GDALOpenInfo *poOpenInfo)
+static int OGRSXFDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "sxf") ||
         !poOpenInfo->bStatOK || poOpenInfo->bIsDirectory)
@@ -97,10 +87,10 @@ int OGRSXFDriver::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           DeleteDataSource()                         */
+/*                          GRSXFDriverDelete()                         */
 /************************************************************************/
 
-CPLErr OGRSXFDriver::DeleteDataSource(const char *pszName)
+static CPLErr OGRSXFDriverDelete(const char *pszName)
 {
     // TODO: add more extensions if aplicable
     static const char *const apszExtensions[] = {"szf", "rsc", "SZF", "RSC",
@@ -133,7 +123,7 @@ void RegisterOGRSXF()
     if (GDALGetDriverByName("SXF") != nullptr)
         return;
 
-    OGRSXFDriver *poDriver = new OGRSXFDriver;
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription("SXF");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
@@ -155,9 +145,9 @@ void RegisterOGRSXF()
         "if exist' default='NO'/>"
         "</OpenOptionList>");
 
-    poDriver->pfnOpen = OGRSXFDriver::Open;
-    poDriver->pfnDelete = OGRSXFDriver::DeleteDataSource;
-    poDriver->pfnIdentify = OGRSXFDriver::Identify;
+    poDriver->pfnOpen = OGRSXFDriverOpen;
+    poDriver->pfnDelete = OGRSXFDriverDelete;
+    poDriver->pfnIdentify = OGRSXFDriverIdentify;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

@@ -454,7 +454,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
         for (const auto &oIter : m_osMapNameToIdx)
         {
             // test if layer is already added
-            if (OGRDataSource::GetLayerByName(oIter.first.c_str()))
+            if (GDALDataset::GetLayerByName(oIter.first.c_str()))
                 continue;
 
             if (bListAllTables || !IsPrivateLayerName(oIter.first))
@@ -1302,7 +1302,7 @@ char **OGROpenFileGDBDataSource::GetMetadata(const char *pszDomain)
 {
     if (pszDomain && EQUAL(pszDomain, "SUBDATASETS"))
         return m_aosSubdatasets.List();
-    return OGRDataSource::GetMetadata(pszDomain);
+    return GDALDataset::GetMetadata(pszDomain);
 }
 
 /************************************************************************/
@@ -2089,8 +2089,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
-    return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                     pszDialect);
+    return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
 }
 
 /***********************************************************************/
