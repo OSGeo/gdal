@@ -120,7 +120,7 @@ stored in RAM using normal mechanisms. Consequently they could potentially be
 recovered by untrusted code that would run in the same process as GDAL code.
 
 The same applies for connection strings to some drivers such as PostgreSQL, MySQL, etc.
-which my include passwords.
+which may include passwords.
 
 Known issues in API
 -------------------
