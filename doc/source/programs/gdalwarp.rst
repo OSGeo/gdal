@@ -394,6 +394,9 @@ with control information.
     the "warp memory" allowed it will subdivide the chunk into smaller chunks
     and try again.
 
+    A -wm value of "unlimited" will prevent this chunking. If sufficient
+    memory is not available, the program will fail.
+
     If the -wm value is very small there is some extra overhead in doing many
     small chunks so setting it larger is better but it is a matter of
     diminishing returns.

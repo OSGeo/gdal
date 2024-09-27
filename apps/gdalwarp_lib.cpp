@@ -5754,11 +5754,20 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
         .action(
             [psOptions](const std::string &s)
             {
-                if (CPLAtofM(s.c_str()) < 10000)
+                if (EQUAL("unlimited", s.c_str()))
+                {
+                    psOptions->dfWarpMemoryLimit =
+                        std::numeric_limits<double>::infinity();
+                }
+                else if (CPLAtofM(s.c_str()) < 10000)
+                {
                     psOptions->dfWarpMemoryLimit =
                         CPLAtofM(s.c_str()) * 1024 * 1024;
+                }
                 else
+                {
                     psOptions->dfWarpMemoryLimit = CPLAtofM(s.c_str());
+                }
             })
         .help(_("Set max warp memory."));
 
