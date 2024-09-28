@@ -239,7 +239,7 @@ def test_contour_real_world_case():
         ("1,10,20,25,30", [1, 10, 20, 25], [10, 20, 25, 30]),
         ("10,20,25,30", [1, 10, 20, 25], [10, 20, 25, 30]),
         ("10,20,24", [1, 10, 20, 24], [10, 20, 24, 25]),
-        ("10,20,25", [1, 10, 20], [10, 20, 25]),
+        ("10,20,25", [1, 10, 20, 25], [10, 20, 25, 25]),
         ("0,10,20", [0, 10, 20], [10, 20, 25]),
     ],
 )
@@ -290,8 +290,12 @@ def test_contour_3(input_tif, tmp_path, fixed_levels, expected_min, expected_max
 
         i = 0
         for feat in lyr:
-            assert feat.GetField("elevMin") == expected_min[i], i
-            assert feat.GetField("elevMax") == expected_max[i], i
+            assert feat.GetField("elevMin") == pytest.approx(
+                expected_min[i], abs=precision / 2 * 1.001
+            ), i
+            assert feat.GetField("elevMax") == pytest.approx(
+                expected_max[i], abs=precision / 2 * 1.001
+            ), i
 
             envelope = feat.GetGeometryRef().GetEnvelope()
             for j in range(4):

@@ -81,12 +81,12 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
         }
     }
 
-    void addBorderSegment(int levelIdx, const Point &start, const Point &end)
+    void addSegment(int levelIdx, const Point &start, const Point &end)
     {
         addSegment_(levelIdx, start, end);
     }
 
-    void addSegment(int levelIdx, const Point &start, const Point &end)
+    void addBorderSegment(int levelIdx, const Point &start, const Point &end)
     {
         addSegment_(levelIdx, start, end);
     }
