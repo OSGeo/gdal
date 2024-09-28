@@ -773,7 +773,7 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
                 // last level polygons
                 if (maxLevel == dfMaximum)
                 {
-                    dfMaximum += 1e-10;
+                    dfMaximum = std::nextafter(dfMaximum, std::numeric_limits<double>::infinity());
                 }
             }
 
