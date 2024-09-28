@@ -86,6 +86,11 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
         addSegment_(levelIdx, start, end);
     }
 
+    void addBorderSegment(int levelIdx, const Point &start, const Point &end)
+    {
+        addSegment_(levelIdx, start, end);
+    }
+
     void beginningOfLine()
     {
         if (polygonize)
