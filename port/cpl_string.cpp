@@ -2792,6 +2792,10 @@ CPLValueType CPLGetValueType(const char *pszValue)
     if (*pszValue == '+' || *pszValue == '-')
         ++pszValue;
 
+    constexpr char DIGIT_ZERO = '0';
+    if (pszValue[0] == DIGIT_ZERO && pszValue[1] != '\0' && pszValue[1] != '.')
+        return CPL_VALUE_STRING;
+
     bool bFoundDot = false;
     bool bFoundExponent = false;
     bool bIsLastCharExponent = false;

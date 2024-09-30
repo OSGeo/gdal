@@ -2434,7 +2434,9 @@ OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
                     pszContent, -1,
                     (m_eStringQuoting == StringQuoting::ALWAYS ||
                      (m_eStringQuoting == StringQuoting::IF_AMBIGUOUS &&
-                      CPLGetValueType(pszContent) != CPL_VALUE_STRING))
+                      (CPLGetValueType(pszContent) != CPL_VALUE_STRING ||
+                       (pszContent[0] == DIGIT_ZERO && pszContent[1] != '\0' &&
+                        pszContent[1] != '.'))))
                         ? CPLES_CSV_FORCE_QUOTING
                         : CPLES_CSV);
             }
