@@ -963,8 +963,10 @@ static bool LoadAuxData(double dfULX, double dfULY, double dfLRX, double dfLRY,
         return false;
     }
 
-    const int nAuxXOff = std::max(0, static_cast<int>(std::round(dfULPixel)));
-    const int nAuxYOff = std::max(0, static_cast<int>(std::round(dfULLine)));
+    const int nAuxXOff = std::clamp(static_cast<int>(std::round(dfULPixel)), 0,
+                                    poAuxBand->GetXSize() - 1);
+    const int nAuxYOff = std::clamp(static_cast<int>(std::round(dfULLine)), 0,
+                                    poAuxBand->GetYSize() - 1);
     const int nAuxX2Off = std::min(poAuxBand->GetXSize(),
                                    static_cast<int>(std::round(dfLRPixel)));
     const int nAuxY2Off =
