@@ -43,6 +43,8 @@
 #include "ogr_srs_api.h"
 #include "ogr_geometry.h"
 
+#include <limits>
+
 static CPLErr OGRPolygonContourWriter(double dfLevelMin, double dfLevelMax,
                                       const OGRMultiPolygon &multipoly,
                                       void *pInfo)
