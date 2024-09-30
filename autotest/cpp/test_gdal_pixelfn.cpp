@@ -170,6 +170,15 @@ struct test_gdal_pixelfn : public ::testing::Test
         src_ += SEP;
         src_ += "pixelfn.vrt";
     }
+
+    void SetUp() override
+    {
+        if (GDALGetMetadataItem(GDALGetDriverByName("VRT"),
+                                GDAL_DMD_OPENOPTIONLIST, nullptr) == nullptr)
+        {
+            GTEST_SKIP() << "VRT driver Open() missing";
+        }
+    }
 };
 
 // Test constant parameters in a custom pixel function

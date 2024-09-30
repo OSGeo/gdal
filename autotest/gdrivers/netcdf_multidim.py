@@ -1528,6 +1528,10 @@ def test_netcdf_multidim_create_dim_zero():
     gdal.Unlink(tmpfilename2)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_netcdf_multidim_dims_with_same_name_different_size():
 
     src_ds = gdal.OpenEx(

@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
+import gdaltest
 import pytest
 import test_py_scripts
 
@@ -95,6 +95,10 @@ def test_gdal_pansharpen_version(script_path):
 # Simple test
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_pansharpen_1(script_path, tmp_path, small_world_pan_tif):
 
     out_tif = str(tmp_path / "out.tif")
@@ -120,6 +124,10 @@ def test_gdal_pansharpen_1(script_path, tmp_path, small_world_pan_tif):
 # Full options
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_pansharpen_2(script_path, tmp_path, small_world_pan_tif):
 
     out_vrt = str(tmp_path / "out.vrt")

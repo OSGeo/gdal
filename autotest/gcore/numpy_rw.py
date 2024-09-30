@@ -732,6 +732,10 @@ def test_numpy_rw_18():
 # The VRT references a non existing TIF file, but using the proxy pool dataset API (#2837)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_numpy_rw_failure_in_readasarray():
 
     ds = gdal.Open("data/idontexist2.vrt")
@@ -964,6 +968,10 @@ def test_numpy_rw_band_read_as_array_error_cases():
 # Test that we can get an error (#5374)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_numpy_rw_band_read_as_array_getlasterrormsg():
 
     ds = gdal.Open(

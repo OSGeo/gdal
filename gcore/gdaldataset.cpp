@@ -4683,6 +4683,7 @@ void GDALDataset::ReportErrorV(const char *pszDSName, CPLErr eErrClass,
 /************************************************************************/
 char **GDALDataset::GetMetadata(const char *pszDomain)
 {
+#ifndef WITHOUT_DERIVED
     if (pszDomain != nullptr && EQUAL(pszDomain, "DERIVED_SUBDATASETS"))
     {
         oDerivedMetadataList.Clear();
@@ -4735,6 +4736,7 @@ char **GDALDataset::GetMetadata(const char *pszDomain)
         }
         return oDerivedMetadataList.List();
     }
+#endif
 
     return GDALMajorObject::GetMetadata(pszDomain);
 }

@@ -420,6 +420,10 @@ def test_gdal_translate_15(gdal_translate_path, tmp_path):
 # Test -of VRT which is a special case
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_16(gdal_translate_path, tmp_path):
 
     dst_vrt = str(tmp_path / "test16.vrt")
@@ -440,6 +444,10 @@ def test_gdal_translate_16(gdal_translate_path, tmp_path):
 # Test -expand option to VRT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("GIF")
 def test_gdal_translate_17(gdal_translate_path, tmp_path):
 
@@ -483,6 +491,10 @@ def test_gdal_translate_17(gdal_translate_path, tmp_path):
 # Test translation of a VRT made of VRT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("BMP")
 def test_gdal_translate_18(gdal_translate_path, tmp_path):
 
@@ -781,6 +793,10 @@ def test_gdal_translate_28(gdal_translate_path, tmp_path):
 # Test -r
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_29(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "test_gdal_translate_29.tif")
@@ -962,6 +978,10 @@ def test_gdal_translate_33ter(gdal_translate_path, tmp_path):
 # Test NBITS is preserved
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_34(gdal_translate_path, tmp_path):
 
     dst_vrt = str(tmp_path / "test_gdal_translate_34.vrt")

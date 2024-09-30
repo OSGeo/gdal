@@ -31,6 +31,7 @@
 
 
 import gdaltest
+import pytest
 
 ###############################################################################
 # Create simple copy and check.
@@ -49,6 +50,10 @@ def test_sigdem_copy_check_prj():
 # Verify writing files with non-square pixels.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_sigdem_non_square():
 
     tst = gdaltest.GDALTest("SIGDEM", "sigdem/nonsquare_nad27_utm11.vrt", 1, 12481)

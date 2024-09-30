@@ -140,6 +140,10 @@ def test_ers_7():
 # Test GCP support
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_ers_8():
 
     src_ds = gdal.Open("../gcore/data/gcps.vrt")

@@ -39,9 +39,27 @@ gdal_optional_format(raw "Raw formats:EOSAT FAST Format, FARSITE LCP and Vexcel 
 gdal_format(gtiff "GeoTIFF image format")
 set_package_properties(TIFF PROPERTIES PURPOSE "gdal_GTIFF: GeoTIFF image format")
 gdal_format(mem "Read/write data in Memory")
-gdal_format(vrt "Virtual GDAL Datasets")
+
+# Exception to the rule: enable the VRT driver by default, even if
+# GDAL_BUILD_OPTIONAL_DRIVERS=OFF.
+if (NOT DEFINED GDAL_ENABLE_DRIVER_VRT AND
+    DEFINED GDAL_BUILD_OPTIONAL_DRIVERS AND
+    NOT GDAL_BUILD_OPTIONAL_DRIVERS)
+    message(WARNING "Enabling GDAL_ENABLE_DRIVER_VRT=ON, despite GDAL_BUILD_OPTIONAL_DRIVERS=OFF. You can of course override this choice by setting GDAL_ENABLE_DRIVER_VRT=OFF")
+    option(GDAL_ENABLE_DRIVER_VRT "Set ON to build Virtual GDAL Datasets" ON)
+endif()
+
+gdal_optional_format(vrt "Virtual GDAL Datasets")
+if (NOT GDAL_ENABLE_DRIVER_VRT)
+    # Even if we don't enable the driver (Open method), we still need to compile
+    # Most of it
+    add_subdirectory(vrt)
+endif()
+
 # Note: derived is derived of vrt
-add_subdirectory(derived)
+gdal_optional_format(derived "Derived datasets")
+
+gdal_optional_format(gti "GDAL Tile Index")
 
 # default formats
 

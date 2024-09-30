@@ -850,6 +850,10 @@ def test_gpkg_10():
 # Single band with 32 bit color table
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.parametrize("tile_drv_name", ["JPEG", "WEBP"])
 def test_gpkg_11(tile_drv_name):
 

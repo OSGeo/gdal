@@ -29,10 +29,16 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
 from osgeo_utils import gdal2tiles
+
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 
 
 def test_gdal2tiles_vsimem():

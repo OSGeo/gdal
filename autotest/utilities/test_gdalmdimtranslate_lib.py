@@ -42,6 +42,10 @@ from osgeo import gdal
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_no_arg(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"
@@ -53,6 +57,10 @@ def test_gdalmdimtranslate_no_arg(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_multidim_to_mem():
 
     out_ds = gdal.MultiDimTranslate("", "data/mdim.vrt", format="MEM")
@@ -67,6 +75,10 @@ def test_gdalmdimtranslate_multidim_to_mem():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_multidim_to_classic(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.tif"
@@ -84,6 +96,10 @@ def test_gdalmdimtranslate_multidim_to_classic(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_multidim_1d_to_classic(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.tif"
@@ -112,6 +128,10 @@ def test_gdalmdimtranslate_classic_to_classic(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_classic_to_multidim(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"
@@ -171,6 +191,10 @@ def test_gdalmdimtranslate_classic_to_multidim(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_array(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"
@@ -252,6 +276,10 @@ def test_gdalmdimtranslate_array(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_array_with_transpose_and_view(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"
@@ -327,6 +355,10 @@ def test_gdalmdimtranslate_array_with_transpose_and_view(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_group(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"
@@ -392,6 +424,10 @@ def test_gdalmdimtranslate_group(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_two_groups(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"
@@ -462,6 +498,10 @@ def test_gdalmdimtranslate_two_groups(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_subset(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"
@@ -717,6 +757,10 @@ def test_gdalmdimtranslate_subset(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_scaleaxes(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"
@@ -791,6 +835,10 @@ def test_gdalmdimtranslate_scaleaxes(tmp_vsimem):
     )
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdimtranslate_dims_with_same_name_different_size(tmp_vsimem):
 
     srcfile = tmp_vsimem / "in.vrt"

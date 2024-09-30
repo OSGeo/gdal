@@ -97,6 +97,10 @@ def test_gdalbuildvrt_lib_2():
 # Test creating overviews
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalbuildvrt_lib_ovr(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "my.vrt"
@@ -668,6 +672,12 @@ def test_gdalbuildvrt_lib_strict_mode():
 
 
 ###############################################################################
+
+
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalbuildvrt_lib_te_touching_on_edge(tmp_vsimem):
 
     tmp_filename = tmp_vsimem / "test_gdalbuildvrt_lib_te_touching_on_edge.vrt"
@@ -794,6 +804,10 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgba(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
 
     # UInt16, VRTNodata=0

@@ -3114,6 +3114,12 @@ TEST_F(test_gdal, GDALCachedPixelAccessor)
 // (https://github.com/OSGeo/gdal/issues/5989)
 TEST_F(test_gdal, VRTCachingOpenOptions)
 {
+    if (GDALGetMetadataItem(GDALGetDriverByName("VRT"), GDAL_DMD_OPENOPTIONLIST,
+                            nullptr) == nullptr)
+    {
+        GTEST_SKIP() << "VRT driver Open() missing";
+    }
+
     class TestRasterBand : public GDALRasterBand
     {
       protected:

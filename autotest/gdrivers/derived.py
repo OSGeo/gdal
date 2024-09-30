@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -159,6 +160,12 @@ def test_derived_test3():
         # Raster with zero band
         gdal.Open("DERIVED_SUBDATASET:LOGAMPLITUDE:data/hdf5/CSK_DGM.h5")
 
+
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
+def test_derived_vrt_errors():
     for function in [
         "real",
         "imag",

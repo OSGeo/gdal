@@ -52,10 +52,10 @@ GDALTileIndexDataset CPL_DLL *GDALDatasetCastToGTIDataset(GDALDataset *poDS);
 std::vector<GTISourceDesc> CPL_DLL
 GTIGetSourcesMoreRecentThan(GDALTileIndexDataset *poDS, int64_t mTime);
 
-CPLStringList VRTParseCategoryNames(const CPLXMLNode *psCategoryNames);
+CPLStringList CPL_DLL VRTParseCategoryNames(const CPLXMLNode *psCategoryNames);
 
 std::unique_ptr<GDALColorTable>
-VRTParseColorTable(const CPLXMLNode *psColorTable);
+    CPL_DLL VRTParseColorTable(const CPLXMLNode *psColorTable);
 
 #endif
 

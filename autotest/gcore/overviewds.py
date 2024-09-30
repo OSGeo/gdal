@@ -32,6 +32,7 @@
 import shutil
 import struct
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -250,6 +251,10 @@ def test_overviewds_4(tmp_path):
 # Test GEOLOCATION
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_overviewds_5(tmp_path):
 
     shutil.copy("data/sstgeo.tif", tmp_path)
@@ -296,6 +301,10 @@ def test_overviewds_5(tmp_path):
 # Test VRT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_overviewds_6(tmp_path):
 
     shutil.copy("data/byte.tif", tmp_path)

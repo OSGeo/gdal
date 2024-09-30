@@ -212,6 +212,10 @@ def test_tiff_write_4():
 # Write a file with GCPs.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_5():
 
     src_ds = gdal.Open("data/gcps.vrt")
@@ -434,6 +438,10 @@ def test_tiff_write_14():
 # file using the PROFILE creation option with CreateCopy()
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_15():
 
     ds_in = gdal.Open("data/byte.vrt")
@@ -484,6 +492,10 @@ def test_tiff_write_15():
 # file using the PROFILE creation option with Create()
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_16():
 
     ds_in = gdal.Open("data/byte.vrt")
@@ -548,6 +560,10 @@ def test_tiff_write_16():
 # Test writing a TIFF with an RPC tag.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_17():
 
     # Translate RPC controlled data to GeoTIFF.
@@ -608,6 +624,10 @@ def test_tiff_write_17():
 # case (#3996)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_17_disable_readdir():
     with gdal.config_option("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE"):
         test_tiff_write_17()
@@ -617,6 +637,10 @@ def test_tiff_write_17_disable_readdir():
 # Test writing a TIFF with an RPB file and IMD file.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_18():
 
     # Translate RPC controlled data to GeoTIFF.
@@ -713,6 +737,10 @@ def test_tiff_write_imd_with_space_in_values():
 # case (#3996)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_18_disable_readdir():
     with gdal.config_option("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE"):
         test_tiff_write_18()
@@ -722,6 +750,10 @@ def test_tiff_write_18_disable_readdir():
 # Test writing a TIFF with an _RPC.TXT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_rpc_txt():
 
     # Translate RPC controlled data to GeoTIFF.
@@ -774,6 +806,10 @@ def test_tiff_write_rpc_txt():
 # Test writing a TIFF with an RPC in .aux.xml
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_rpc_in_pam():
 
     ds_in = gdal.Open("data/rpc.vrt")
@@ -1269,6 +1305,10 @@ def test_tiff_write_31():
 # Create a rotated image
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_32():
 
     ds_in = gdal.Open("data/byte.vrt")
@@ -1309,6 +1349,10 @@ def test_tiff_write_32():
 # (BASELINE is tested by tiff_write_15)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_33():
 
     ds_in = gdal.Open("data/byte.vrt")
@@ -1464,6 +1508,10 @@ def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
 # Test copy with NBITS=9, INTERLEAVE=PIXEL
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_36():
     return tiff_write_big_odd_bits("data/uint16_3band.vrt", "tmp/tw_36.tif", 9, "PIXEL")
 
@@ -1472,6 +1520,10 @@ def test_tiff_write_36():
 # Test copy with NBITS=9, INTERLEAVE=BAND
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_37():
     return tiff_write_big_odd_bits("data/uint16_3band.vrt", "tmp/tw_37.tif", 9, "BAND")
 
@@ -1480,6 +1532,10 @@ def test_tiff_write_37():
 # Test copy with NBITS=12, INTERLEAVE=PIXEL
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_38():
     return tiff_write_big_odd_bits(
         "data/uint16_3band.vrt", "tmp/tw_38.tif", 12, "PIXEL"
@@ -1490,6 +1546,10 @@ def test_tiff_write_38():
 # Test copy with NBITS=12, INTERLEAVE=BAND
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_39():
     return tiff_write_big_odd_bits("data/uint16_3band.vrt", "tmp/tw_39.tif", 12, "BAND")
 
@@ -1498,6 +1558,10 @@ def test_tiff_write_39():
 # Test copy with NBITS=17, INTERLEAVE=PIXEL
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_40():
     return tiff_write_big_odd_bits("data/uint32_3band.vrt", "tmp/tw_40tif", 17, "PIXEL")
 
@@ -1506,6 +1570,10 @@ def test_tiff_write_40():
 # Test copy with NBITS=17, INTERLEAVE=BAND
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_41():
     return tiff_write_big_odd_bits("data/uint32_3band.vrt", "tmp/tw_41.tif", 17, "BAND")
 
@@ -1514,6 +1582,10 @@ def test_tiff_write_41():
 # Test copy with NBITS=24, INTERLEAVE=PIXEL
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_42():
     return tiff_write_big_odd_bits(
         "data/uint32_3band.vrt", "tmp/tw_42.tif", 24, "PIXEL"
@@ -1524,6 +1596,10 @@ def test_tiff_write_42():
 # Test copy with NBITS=24, INTERLEAVE=BAND
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_43():
     return tiff_write_big_odd_bits("data/uint32_3band.vrt", "tmp/tw_43.tif", 24, "BAND")
 
@@ -4892,6 +4968,10 @@ def test_tiff_write_120():
 # Test error cases of COPY_SRC_OVERVIEWS creation option
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_121():
 
     # Test when the overview band is NULL
@@ -5326,6 +5406,10 @@ def test_tiff_write_125():
 # Test implicit JPEG-in-TIFF overviews
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_creation_option("GTiff", "JPEG")
 @pytest.mark.require_driver("JPEG")
 def test_tiff_write_126():
@@ -6444,6 +6528,10 @@ def test_tiff_write_134():
 # Test clearing GCPs (#5945)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_135():
 
     # Simple clear
@@ -7876,6 +7964,10 @@ def test_tiff_write_160():
 # Test setting GCPs on an image with already a geotransform and vice-versa (#6751)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_161():
 
     ds = gdaltest.tiff_drv.Create("/vsimem/tiff_write_161.tif", 1, 1)
@@ -7910,6 +8002,10 @@ def test_tiff_write_161():
 # Test creating a JPEG compressed file with big tiles (#6757)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_162():
 
@@ -9252,6 +9348,10 @@ def test_tiff_write_compression_create_and_createcopy():
 # Attempt at creating a file with more tile arrays larger than 2 GB
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_write_too_many_tiles():
 
     src_ds = gdal.Open(

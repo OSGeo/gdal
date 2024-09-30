@@ -31,6 +31,7 @@
 import os
 import shutil
 
+import gdaltest
 import pytest
 import test_py_scripts
 
@@ -154,6 +155,10 @@ def test_gdalinfo_py_6(script_path):
 # Test a dataset with GCPs
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalinfo_py_7(script_path):
 
     ret = test_py_scripts.run_py_script(

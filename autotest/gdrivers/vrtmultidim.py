@@ -36,6 +36,10 @@ import pytest
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")

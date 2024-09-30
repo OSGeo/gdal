@@ -666,6 +666,10 @@ def test_hfa_vsimem():
 # the .img file.  (#2422)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_hfa_proName():
 
     drv = gdal.GetDriverByName("HFA")

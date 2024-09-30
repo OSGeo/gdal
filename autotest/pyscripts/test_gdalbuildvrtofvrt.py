@@ -30,6 +30,7 @@
 
 import os
 
+import gdaltest
 import pytest
 import test_py_scripts
 
@@ -40,6 +41,9 @@ pytestmark = [
     pytest.mark.skipif(
         test_py_scripts.get_py_script("gdalbuildvrtofvrt") is None,
         reason="gdalbuildvrtofvrt.py not available",
+    ),
+    pytest.mark.skipif(
+        not gdaltest.vrt_has_open_support(), reason="VRT driver open missing"
     ),
 ]
 

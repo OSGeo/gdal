@@ -4626,7 +4626,7 @@ void GDALRegister_GTI()
     if (GDALGetDriverByName("GTI") != nullptr)
         return;
 
-    auto poDriver = std::make_unique<VRTDriver>();
+    auto poDriver = std::make_unique<GDALDriver>();
 
     poDriver->SetDescription("GTI");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
@@ -4659,7 +4659,10 @@ void GDALRegister_GTI()
         "default='ALL_CPUS'/>"
         "</OpenOptionList>");
 
+#ifdef BUILT_AS_PLUGIN
+    // Used by gdaladdo and test_gdaladdo.py
+    poDriver->SetMetadataItem("IS_PLUGIN", "YES");
+#endif
+
     GetGDALDriverManager()->RegisterDriver(poDriver.release());
 }
-
-/*! @endcond */

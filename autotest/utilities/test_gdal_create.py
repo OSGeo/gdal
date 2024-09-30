@@ -222,6 +222,10 @@ def test_gdal_create_input_file_overrrides(gdal_create_path, tmp_path):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_create_input_file_gcps(gdal_create_path, tmp_path):
 
     output_tif = str(tmp_path / "tmp.tif")

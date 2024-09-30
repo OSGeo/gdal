@@ -1506,6 +1506,10 @@ def test_nitf_34():
 # Test CreateCopy() writing file with a text segment.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_35():
 
     src_ds = gdal.Open("data/nitf/text_md.vrt")
@@ -1598,6 +1602,10 @@ def test_nitf_37():
 # Create and read a NITF file with 999 images
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_38():
 
     ds = gdal.Open("data/byte.tif")
@@ -1978,6 +1986,10 @@ def test_nitf_check_jpeg2000_overviews(driver_to_test):
 # Check reading of rsets.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_47():
 
     ds = gdal.Open("data/nitf/rset.ntf.r0")
@@ -1997,6 +2009,10 @@ def test_nitf_47():
 # Check building of standard overviews in place of rset overviews.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_48():
 
     try:
@@ -2038,6 +2054,10 @@ def test_nitf_48():
 # Test TEXT and CGM creation options with CreateCopy() (#3376)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_49():
 
     options = [
@@ -2759,6 +2779,10 @@ def test_nitf_68():
 # Test SetGCPs() support
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_69():
 
     vrt_txt = """<VRTDataset rasterXSize="20" rasterYSize="20">

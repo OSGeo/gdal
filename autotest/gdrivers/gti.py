@@ -820,9 +820,9 @@ def test_gti_invalid_srs(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_gti_valid_srs(tmp_vsimem):
+def test_gti_valid_srs(tmp_path):
 
-    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_filename = str(tmp_path / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -1019,6 +1019,10 @@ def test_gti_no_metadata_rgb(tmp_vsimem):
     check_basic(vrt_ds, src_ds)
 
 
+@pytest.mark.skipif(
+    gdal.GetDriverByName("VRT").GetMetadataItem(gdal.DMD_OPENOPTIONLIST) is None,
+    reason="VRT driver open missing",
+)
 def test_gti_rgb_left_right(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -1078,6 +1082,10 @@ def test_gti_rgb_left_right(tmp_vsimem):
         assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
 
 
+@pytest.mark.skipif(
+    gdal.GetDriverByName("VRT").GetMetadataItem(gdal.DMD_OPENOPTIONLIST) is None,
+    reason="VRT driver open missing",
+)
 def test_gti_overlapping_sources(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
@@ -1345,6 +1353,10 @@ def test_gti_overlapping_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 2, sort_values
 
 
+@pytest.mark.skipif(
+    gdal.GetDriverByName("VRT").GetMetadataItem(gdal.DMD_OPENOPTIONLIST) is None,
+    reason="VRT driver open missing",
+)
 def test_gti_gap_between_sources(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
@@ -1380,6 +1392,10 @@ def test_gti_gap_between_sources(tmp_vsimem):
         )
 
 
+@pytest.mark.skipif(
+    gdal.GetDriverByName("VRT").GetMetadataItem(gdal.DMD_OPENOPTIONLIST) is None,
+    reason="VRT driver open missing",
+)
 def test_gti_no_source(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")

@@ -36,9 +36,15 @@ import sys
 import tempfile
 from pathlib import Path
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, osr
+
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 
 ###############################################################################
 # Test linear scaling

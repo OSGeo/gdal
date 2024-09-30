@@ -597,6 +597,10 @@ def test_gdal_translate_lib_104():
 # Test GCPs propagation in "VRT path"
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_lib_gcp_vrt_path():
 
     src_ds = gdal.Open("../gcore/data/gcps.vrt")
@@ -613,6 +617,10 @@ def test_gdal_translate_lib_gcp_vrt_path():
 # Test RPC propagation in "VRT path"
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_lib_rcp_vrt_path():
 
     src_ds = gdal.Open("../gcore/data/rpc.vrt")
@@ -624,6 +632,10 @@ def test_gdal_translate_lib_rcp_vrt_path():
 # Test GeoLocation propagation in "VRT path"
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_lib_geolocation_vrt_path(tmp_vsimem):
 
     src_ds = gdal.Open("../gcore/data/sstgeo.vrt")

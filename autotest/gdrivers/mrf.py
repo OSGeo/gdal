@@ -203,6 +203,10 @@ def cleanup(base="/vsimem/out."):
         gdal.Unlink(base + ext)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_mrf_zen_test():
 
     expectedCS = 770

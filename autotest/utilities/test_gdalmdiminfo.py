@@ -48,6 +48,10 @@ def gdalmdiminfo_path():
 # Simple test
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdiminfo_1(gdalmdiminfo_path):
 
     (ret, err) = gdaltest.runexternal_out_and_err(gdalmdiminfo_path + " data/mdim.vrt")
@@ -59,6 +63,10 @@ def test_gdalmdiminfo_1(gdalmdiminfo_path):
 # Test -if option
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalmdiminfo_if_option(gdalmdiminfo_path):
 
     (ret, err) = gdaltest.runexternal_out_and_err(

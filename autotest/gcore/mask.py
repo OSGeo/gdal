@@ -72,6 +72,10 @@ def test_mask_1():
 # Verify the checksum and flags for "nodata" case.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_mask_2():
 
     ds = gdal.Open("data/byte.vrt")

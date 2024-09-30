@@ -70,6 +70,10 @@ def test_transformer_1():
 # Test GCP based transformer with polynomials.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_2():
 
     ds = gdal.Open("data/gcps.vrt")
@@ -98,6 +102,10 @@ def test_transformer_2():
 # Test GCP based transformer with thin plate splines.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_3():
 
     ds = gdal.Open("data/gcps.vrt")
@@ -126,6 +134,10 @@ def test_transformer_3():
 # Test geolocation based transformer.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_4():
 
     ds = gdal.Open("data/sstgeo.vrt")
@@ -154,6 +166,10 @@ def test_transformer_4():
 # Test RPC based transformer.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_5():
 
     ds = gdal.Open("data/rpc.vrt")
@@ -364,6 +380,10 @@ def test_transformer_5():
 # Test RPC convergence bug (bug # 5395)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_6():
 
     ds = gdal.Open("data/rpc_5395.vrt")
@@ -402,6 +422,10 @@ def test_transformer_7():
 # Test handling of nodata in RPC DEM (#5680)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_8():
 
     ds = gdal.Open("data/rpc.vrt")
@@ -448,6 +472,10 @@ def test_transformer_8():
 # Test RPC DEM line optimization
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_9():
 
     ds = gdal.Open("data/rpc.vrt")
@@ -504,6 +532,10 @@ def test_transformer_9():
 # Test RPC DEM transform from geoid height to ellipsoidal height
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("GTX")
 def test_transformer_10():
 
@@ -637,6 +669,10 @@ def test_transformer_11():
 # Test degenerate cases of TPS transformer
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_12():
 
     ds = gdal.Open(
@@ -834,6 +870,10 @@ def test_transformer_14():
 # beyond
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_15():
 
     ds = gdal.GetDriverByName("MEM").Create("", 6600, 4400)
@@ -933,6 +973,10 @@ def test_transformer_15():
 # (we mostly test that the parameters are well recognized and serialized)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_16():
 
     gdal.Translate(
@@ -966,6 +1010,10 @@ def test_transformer_16():
 # Test RPC DEM with unexisting RPC DEM file
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_17():
 
     ds = gdal.Open("data/rpc.vrt")
@@ -1018,6 +1066,10 @@ def test_transformer_no_reverse_method():
 # Test precision of GCP based transformer with thin plate splines and lots of GCPs (2115).
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_tps_precision():
 
     ds = gdal.Open("data/gcps_2115.vrt")
@@ -1099,6 +1151,10 @@ def test_transformer_image_no_srs():
 # Test RPC_DEM_SRS by adding vertical component egm 96 geoid
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_dem_overrride_srs():
     ds = gdal.Open("data/rpc.vrt")
     ds_dem = gdal.GetDriverByName("GTiff").Create("/vsimem/dem.tif", 100, 100, 1)
@@ -1191,6 +1247,10 @@ def test_transformer_SuggestedWarpOutput_from_options():
 # Test GCP antimerdian unwrap (https://github.com/OSGeo/gdal/issues/8371)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_transformer_gcp_antimeridian_unwrap():
 
     ds = gdal.Open("data/test_gcp_antimeridian_unwrap.vrt")

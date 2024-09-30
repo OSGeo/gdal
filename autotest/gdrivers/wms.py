@@ -568,6 +568,10 @@ def test_wms_12():
 # Test reading WMS through VRT (test effect of r21866)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @gdaltest.disable_exceptions()
 def test_wms_13():
 

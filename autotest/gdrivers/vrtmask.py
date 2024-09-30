@@ -36,6 +36,11 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
+
 ###############################################################################
 # Test with a global dataset mask band
 

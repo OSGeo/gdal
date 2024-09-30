@@ -135,6 +135,10 @@ def test_gdalinfo_6(gdalinfo_path):
 # Test a dataset with GCPs
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalinfo_7(gdalinfo_path):
 
     ret = gdaltest.runexternal(
@@ -549,6 +553,10 @@ def test_gdalinfo_33(gdalinfo_path):
 # Test a dataset with GCPs
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalinfo_34(gdalinfo_path):
 
     ret = gdaltest.runexternal(gdalinfo_path + " -json ../gcore/data/gcps.vrt")

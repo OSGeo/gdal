@@ -114,6 +114,10 @@ def validate(filename, inspire_tg=True, expected_gmljp2=True, oidoc=None):
 # Highly corrupted file
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_validate_jp2_2():
 
     import build_jp2_from_xml
@@ -284,6 +288,10 @@ def test_validate_jp2_4():
 # Also a RGN marker
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_validate_jp2_5():
 
     import build_jp2_from_xml

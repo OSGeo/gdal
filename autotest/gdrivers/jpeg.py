@@ -800,6 +800,10 @@ def test_jpeg_mask_lsb_order_issue_4351():
 # Test correct GCP reading with PAM (#5352)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jpeg_20():
 
     src_ds = gdal.Open("data/rgb_gcp.vrt")

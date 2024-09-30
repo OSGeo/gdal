@@ -526,6 +526,10 @@ def test_gdaldem_lib_color_relief_nodata_value(tmp_vsimem):
     gdal.Unlink(colorFilename)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.parametrize(
     "colorSelection",
     ["nearest_color_entry", "exact_color_entry", "linear_interpolation"],
@@ -563,6 +567,10 @@ def test_gdaldem_lib_color_relief_synthetic(tmp_path, colorSelection, format):
     assert struct.unpack("B" * 4, ds.GetRasterBand(3).ReadRaster()) == (0, 12, 22, 32)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.parametrize(
     "colorSelection",
     ["nearest_color_entry", "exact_color_entry", "linear_interpolation"],

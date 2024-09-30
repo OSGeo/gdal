@@ -98,6 +98,10 @@ def test_gta_2():
 # Test writing and readings GCPs
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gta_3():
 
     src_ds = gdal.Open("../gcore/data/gcps.vrt")
