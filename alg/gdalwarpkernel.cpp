@@ -6685,9 +6685,26 @@ static void GWKAverageOrModeThread(void *pData)
                 (nSrcXSize - padfX2[iDstX]) * poWK->dfXScale <
                     nThresholdWrapOverX)
             {
-                bWrapOverX = true;
-                std::swap(padfX[iDstX], padfX2[iDstX]);
-                padfX2[iDstX] += nSrcXSize;
+                // Check there is a discontinuity by checking at mid-pixel.
+                // NOTE: all this remains fragile. To confidently
+                // detect antimeridian warping we should probably try to access
+                // georeferenced coordinates, and not rely only on tests on
+                // image space coordinates. But accessing georeferenced
+                // coordinates from here is not trivial, and we would for example
+                // have to handle both geographic, Mercator, etc.
+                // Let's hope this heuristics is good enough for now.
+                double x = iDstX + 0.5 + poWK->nDstXOff;
+                double y = iDstY + poWK->nDstYOff;
+                double z = 0;
+                int bSuccess = FALSE;
+                poWK->pfnTransformer(psJob->pTransformerArg, TRUE, 1, &x, &y,
+                                     &z, &bSuccess);
+                if (bSuccess && x < padfX[iDstX])
+                {
+                    bWrapOverX = true;
+                    std::swap(padfX[iDstX], padfX2[iDstX]);
+                    padfX2[iDstX] += nSrcXSize;
+                }
             }
 
             const double dfXMin = padfX[iDstX] - poWK->nSrcXOff;

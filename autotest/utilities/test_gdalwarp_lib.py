@@ -4287,3 +4287,22 @@ def test_gdalwarp_lib_blank_edge_one_by_one(with_tap):
         assert gt == pytest.approx(
             (769234.6506516202, 1000.0, 0.0, 5698603.782217737, 0.0, -1000.0)
         )
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/10892
+
+
+def test_gdalwarp_lib_average_ten_ten_to_one_one():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_ds.SetSpatialRef(srs)
+    src_ds.GetRasterBand(1).Fill(1)
+    out_ds = gdal.Warp(
+        "", src_ds, width=1, height=1, resampleAlg=gdal.GRIORA_Average, format="MEM"
+    )
+    assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (1, 1)
