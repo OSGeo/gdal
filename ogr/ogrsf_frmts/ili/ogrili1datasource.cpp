@@ -40,8 +40,8 @@
 /************************************************************************/
 
 OGRILI1DataSource::OGRILI1DataSource()
-    : pszName(nullptr), poImdReader(new ImdReader(1)), poReader(nullptr),
-      fpTransfer(nullptr), pszTopic(nullptr), nLayers(0), papoLayers(nullptr)
+    : poImdReader(new ImdReader(1)), poReader(nullptr), fpTransfer(nullptr),
+      pszTopic(nullptr), nLayers(0), papoLayers(nullptr)
 {
 }
 
@@ -58,7 +58,6 @@ OGRILI1DataSource::~OGRILI1DataSource()
     }
     CPLFree(papoLayers);
 
-    CPLFree(pszName);
     CPLFree(pszTopic);
     DestroyILI1Reader(poReader);
     delete poImdReader;
@@ -161,8 +160,6 @@ int OGRILI1DataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
     }
 
     poReader->OpenFile(osBasename.c_str());
-
-    pszName = CPLStrdup(osBasename.c_str());
 
     if (osModelFilename.length() > 0)
         poReader->ReadModel(poImdReader, osModelFilename.c_str(), this);
@@ -349,10 +346,10 @@ OGRILI1Layer *OGRILI1DataSource::GetLayerByName(const char *pszLayerName)
 {
     if (!poReader)
     {
-        return reinterpret_cast<OGRILI1Layer *>(
-            OGRDataSource::GetLayerByName(pszLayerName));
+        return cpl::down_cast<OGRILI1Layer *>(
+            GDALDataset::GetLayerByName(pszLayerName));
     }
 
-    return reinterpret_cast<OGRILI1Layer *>(
+    return cpl::down_cast<OGRILI1Layer *>(
         poReader->GetLayerByName(pszLayerName));
 }

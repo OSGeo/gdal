@@ -39,9 +39,8 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char *pszFilename,
 /************************************************************************/
 
 OGRAmigoCloudDataSource::OGRAmigoCloudDataSource()
-    : pszName(nullptr), pszProjectId(nullptr), papoLayers(nullptr), nLayers(0),
-      bReadWrite(false), bUseHTTPS(true), bMustCleanPersistent(false),
-      bHasOGRMetadataFunction(-1)
+    : pszProjectId(nullptr), papoLayers(nullptr), nLayers(0), bReadWrite(false),
+      bUseHTTPS(true), bMustCleanPersistent(false), bHasOGRMetadataFunction(-1)
 {
 }
 
@@ -66,7 +65,6 @@ OGRAmigoCloudDataSource::~OGRAmigoCloudDataSource()
         CSLDestroy(papszOptions);
     }
 
-    CPLFree(pszName);
     CPLFree(pszProjectId);
 }
 
@@ -117,7 +115,7 @@ OGRLayer *OGRAmigoCloudDataSource::GetLayerByName(const char *pszLayerName)
 {
     if (nLayers > 1)
     {
-        return OGRDataSource::GetLayerByName(pszLayerName);
+        return GDALDataset::GetLayerByName(pszLayerName);
     }
     else if (nLayers == 1)
     {
@@ -217,7 +215,6 @@ int OGRAmigoCloudDataSource::Open(const char *pszFilename,
 
     bReadWrite = CPL_TO_BOOL(bUpdateIn);
 
-    pszName = CPLStrdup(pszFilename);
     pszProjectId = CPLStrdup(pszFilename + strlen("AMIGOCLOUD:"));
     char *pchSpace = strchr(pszProjectId, ' ');
     if (pchSpace)

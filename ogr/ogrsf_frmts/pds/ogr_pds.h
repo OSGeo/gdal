@@ -112,10 +112,8 @@ class OGRPDSLayer final : public OGRLayer,
 /*                           OGRPDSDataSource                           */
 /************************************************************************/
 
-class OGRPDSDataSource final : public OGRDataSource
+class OGRPDSDataSource final : public GDALDataset
 {
-    char *pszName;
-
     OGRLayer **papoLayers;
     int nLayers;
 
@@ -134,19 +132,12 @@ class OGRPDSDataSource final : public OGRDataSource
 
     int Open(const char *pszFilename);
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
-
     virtual int GetLayerCount() override
     {
         return nLayers;
     }
 
     virtual OGRLayer *GetLayer(int) override;
-
-    virtual int TestCapability(const char *) override;
 
     static void CleanString(CPLString &osInput);
 };

@@ -100,6 +100,12 @@ def test_vrtwarp_4():
     tmp_ds.BuildOverviews("NONE", overviewlist=[2, 4])
     tmp_ds.GetRasterBand(1).GetOverview(0).Fill(127)
     cs_ov0 = tmp_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    data_ov0 = tmp_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    data_ov0_subsampled = (
+        tmp_ds.GetRasterBand(1)
+        .GetOverview(0)
+        .ReadRaster(0, 0, 10, 10, 9, 9, resample_alg=gdal.GRIORA_Bilinear)
+    )
     tmp_ds.GetRasterBand(1).GetOverview(1).Fill(255)
     cs_ov1 = tmp_ds.GetRasterBand(1).GetOverview(1).Checksum()
 
@@ -109,6 +115,8 @@ def test_vrtwarp_4():
     for i in range(3):
         assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 2
         assert vrtwarp_ds.GetRasterBand(1).Checksum() == cs_main, i
+        assert vrtwarp_ds.GetRasterBand(1).GetOverview(-1) is None
+        assert vrtwarp_ds.GetRasterBand(1).GetOverview(2) is None
         assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == cs_ov0
         assert vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() == cs_ov1
         if i == 0:
@@ -136,6 +144,13 @@ def test_vrtwarp_4():
     assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 3
     assert vrtwarp_ds.GetRasterBand(1).Checksum() == cs_main
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == cs_ov0
+    assert vrtwarp_ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, 10, 10) == data_ov0
+    assert (
+        vrtwarp_ds.GetRasterBand(1).ReadRaster(
+            0, 0, 20, 20, 9, 9, resample_alg=gdal.GRIORA_Bilinear
+        )
+        == data_ov0_subsampled
+    )
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() == cs_ov1
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(2).Checksum() == expected_cs_ov2
     vrtwarp_ds = None

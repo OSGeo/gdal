@@ -668,8 +668,9 @@ try_again:
             // Is it a VRT datasource?
             if (poSrcDS != nullptr && poSrcDS->GetDriver() == poDS->GetDriver())
             {
-                OGRVRTDataSource *poVRTSrcDS = (OGRVRTDataSource *)poSrcDS;
-                poVRTSrcDS->AddForbiddenNames(poDS->GetName());
+                OGRVRTDataSource *poVRTSrcDS =
+                    cpl::down_cast<OGRVRTDataSource *>(poSrcDS);
+                poVRTSrcDS->AddForbiddenNames(poDS->GetDescription());
             }
         }
     }

@@ -51,7 +51,7 @@ OGRSDTSLayer::OGRSDTSLayer(SDTSTransfer *poTransferIn, int iLayerIn,
         new OGRFeatureDefn(poTransfer->GetCATD()->GetEntryModule(iCATDEntry));
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
-    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->DSGetSpatialRef());
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSpatialRef());
 
     OGRFieldDefn oRecId("RCID", OFTInteger);
     poFeatureDefn->AddFieldDefn(&oRecId);
@@ -405,7 +405,7 @@ OGRFeature *OGRSDTSLayer::GetNextUnfilteredFeature()
     poFeature->SetField(0, (int)poSDTSFeature->oModId.nRecord);
     if (poFeature->GetGeometryRef() != nullptr)
         poFeature->GetGeometryRef()->assignSpatialReference(
-            poDS->DSGetSpatialRef());
+            poDS->GetSpatialRef());
 
     if (!bIsIndexed)
         delete poSDTSFeature;

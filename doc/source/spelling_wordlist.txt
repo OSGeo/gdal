@@ -130,7 +130,6 @@ autocommit
 autoconf
 Autoconf
 autocorrelation
-autodetection
 Autodesk
 autodetect
 autodetected
@@ -1553,6 +1552,7 @@ libbsd
 libcf
 libcfitsio
 libcrypto
+libcsf
 libcurl
 libCurl
 libdav
@@ -1579,6 +1579,7 @@ libkdu
 libkea
 libkml
 Libkml
+liblerc
 libltidsdk
 liblz
 libmdbodbc

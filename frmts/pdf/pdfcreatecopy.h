@@ -377,7 +377,7 @@ class GDALPDFWriter final : public GDALPDFBaseWriter
                                    int bWriteOGRAttributes);
     void EndOGRLayer(GDALPDFLayerDesc &osVectorDesc);
 
-    int WriteOGRLayer(OGRDataSourceH hDS, int iLayer,
+    int WriteOGRLayer(GDALDatasetH hDS, int iLayer,
                       const char *pszOGRDisplayField,
                       const char *pszOGRLinkField,
                       const std::string &osLayerName, int bWriteOGRAttributes,

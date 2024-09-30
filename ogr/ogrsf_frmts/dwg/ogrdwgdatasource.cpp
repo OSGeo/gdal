@@ -59,16 +59,6 @@ OGRDWGDataSource::~OGRDWGDataSource()
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRDWGDataSource::TestCapability(const char * /*pszCap*/)
-
-{
-    return FALSE;
-}
-
-/************************************************************************/
 /*                              GetLayer()                              */
 /************************************************************************/
 
@@ -92,8 +82,6 @@ int OGRDWGDataSource::Open(OGRDWGServices *poServicesIn,
     poServices = poServicesIn;
 
     osEncoding = CPL_ENC_ISO8859_1;
-
-    m_osName = pszFilename;
 
     bInlineBlocks =
         CPLTestBool(CPLGetConfigOption("DWG_INLINE_BLOCKS", "TRUE"));

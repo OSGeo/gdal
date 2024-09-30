@@ -81,12 +81,10 @@ class OGRNASLayer final : public OGRLayer
 /*                           OGRNASDataSource                           */
 /************************************************************************/
 
-class OGRNASDataSource final : public OGRDataSource
+class OGRNASDataSource final : public GDALDataset
 {
     OGRLayer **papoLayers;
     int nLayers;
-
-    char *pszName;
 
     OGRNASLayer *TranslateNASSchema(GMLFeatureClass *);
 
@@ -102,19 +100,12 @@ class OGRNASDataSource final : public OGRDataSource
     int Open(const char *);
     int Create(const char *pszFile, char **papszOptions);
 
-    const char *GetName() override
-    {
-        return pszName;
-    }
-
     int GetLayerCount() override
     {
         return nLayers;
     }
 
     OGRLayer *GetLayer(int) override;
-
-    int TestCapability(const char *) override;
 
     IGMLReader *GetReader()
     {

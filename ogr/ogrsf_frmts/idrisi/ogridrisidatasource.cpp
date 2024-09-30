@@ -35,10 +35,7 @@
 /*                        OGRIdrisiDataSource()                         */
 /************************************************************************/
 
-OGRIdrisiDataSource::OGRIdrisiDataSource()
-    : pszName(nullptr), papoLayers(nullptr), nLayers(0)
-{
-}
+OGRIdrisiDataSource::OGRIdrisiDataSource() = default;
 
 /************************************************************************/
 /*                       ~OGRIdrisiDataSource()                         */
@@ -47,19 +44,9 @@ OGRIdrisiDataSource::OGRIdrisiDataSource()
 OGRIdrisiDataSource::~OGRIdrisiDataSource()
 
 {
-    CPLFree(pszName);
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
     CPLFree(papoLayers);
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRIdrisiDataSource::TestCapability(const char * /* pszCap */)
-{
-    return FALSE;
 }
 
 /************************************************************************/
@@ -82,8 +69,6 @@ OGRLayer *OGRIdrisiDataSource::GetLayer(int iLayer)
 int OGRIdrisiDataSource::Open(const char *pszFilename)
 
 {
-    pszName = CPLStrdup(pszFilename);
-
     VSILFILE *fpVCT = VSIFOpenL(pszFilename, "rb");
     if (fpVCT == nullptr)
         return FALSE;

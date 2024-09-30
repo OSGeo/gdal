@@ -501,10 +501,16 @@ class CPL_DLL VRTWarpedDataset final : public VRTDataset
 {
     GDALWarpOperation *m_poWarper;
 
-    int m_nOverviewCount;
-    VRTWarpedDataset **m_papoOverviews;
+    bool m_bIsOverview = false;
+    std::vector<VRTWarpedDataset *> m_apoOverviews{};
     int m_nSrcOvrLevel;
 
+    bool GetOverviewSize(GDALDataset *poSrcDS, int iOvr, int iSrcOvr,
+                         int &nOvrXSize, int &nOvrYSize, double &dfSrcRatioX,
+                         double &dfSrcRatioY, double &dfTargetRatio) const;
+    int GetOverviewCount() const;
+    int GetSrcOverviewLevel(int iOvr, bool &bThisLevelOnlyOut) const;
+    VRTWarpedDataset *CreateImplicitOverview(int iOvr) const;
     void CreateImplicitOverviews();
 
     friend class VRTWarpedRasterBand;
@@ -1108,6 +1114,10 @@ class CPL_DLL VRTWarpedRasterBand final : public VRTRasterBand
   private:
     int m_nIRasterIOCounter =
         0;  //! Protects against infinite recursion inside IRasterIO()
+
+    int GetBestOverviewLevel(int &nXOff, int &nYOff, int &nXSize, int &nYSize,
+                             int nBufXSize, int nBufYSize,
+                             GDALRasterIOExtraArg *psExtraArg) const;
 };
 
 /************************************************************************/

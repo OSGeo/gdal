@@ -36,53 +36,24 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                          ~OGRMemDriver()                             */
-/************************************************************************/
-
-OGRMemDriver::~OGRMemDriver()
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRMemDriver::GetName()
-{
-    return "Memory";
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRMemDriver::Open(const char * /* pszFilename */, int)
+static GDALDataset *OGRMemDriverOpen(GDALOpenInfo *)
 {
     return nullptr;
 }
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                       OGRMemDriverCreate()                           */
 /************************************************************************/
 
-OGRDataSource *OGRMemDriver::CreateDataSource(const char *pszName,
-                                              char **papszOptions)
+static GDALDataset *OGRMemDriverCreate(const char *pszName, int /* nXSize */,
+                                       int /* nYSize */, int /* nBandCount */,
+                                       GDALDataType, char **papszOptions)
 
 {
     return new OGRMemDataSource(pszName, papszOptions);
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRMemDriver::TestCapability(const char *pszCap)
-
-{
-    if (EQUAL(pszCap, ODrCCreateDataSource))
-        return TRUE;
-
-    return FALSE;
 }
 
 /************************************************************************/
@@ -95,7 +66,8 @@ void RegisterOGRMEM()
     if (GDALGetDriverByName("Memory") != nullptr)
         return;
 
-    OGRSFDriver *poDriver = new OGRMemDriver;
+    GDALDriver *poDriver = new GDALDriver();
+    poDriver->SetDescription("Memory");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
@@ -137,5 +109,8 @@ void RegisterOGRMEM()
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS,
                               "Name Type Nullable SRS CoordinateEpoch");
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->pfnOpen = OGRMemDriverOpen;
+    poDriver->pfnCreate = OGRMemDriverCreate;
+
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

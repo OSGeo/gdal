@@ -161,7 +161,7 @@ class OGRGeoRSSLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRGeoRSSDataSource                           */
+/*                           OGRGeoRSSDataSource                        */
 /************************************************************************/
 
 typedef enum
@@ -171,10 +171,8 @@ typedef enum
     GEORSS_VALIDITY_VALID
 } OGRGeoRSSValidity;
 
-class OGRGeoRSSDataSource final : public OGRDataSource
+class OGRGeoRSSDataSource final : public GDALDataset
 {
-    char *pszName;
-
     OGRGeoRSSLayer **papoLayers;
     int nLayers;
 
@@ -200,11 +198,6 @@ class OGRGeoRSSDataSource final : public OGRDataSource
     int Open(const char *pszFilename, int bUpdate);
 
     int Create(const char *pszFilename, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

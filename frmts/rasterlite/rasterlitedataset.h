@@ -35,8 +35,8 @@
 
 char **RasterliteGetTileDriverOptions(CSLConstList papszOptions);
 
-OGRDataSourceH RasterliteOpenSQLiteDB(const char *pszFilename,
-                                      GDALAccess eAccess);
+GDALDatasetH RasterliteOpenSQLiteDB(const char *pszFilename,
+                                    GDALAccess eAccess);
 CPLString RasterliteGetPixelSizeCond(double dfPixelXSize, double dfPixelYSize,
                                      const char *pszTablePrefixWithDot = "");
 CPLString RasterliteGetSpatialFilterCond(double minx, double miny, double maxx,
@@ -109,7 +109,7 @@ class RasterliteDataset final : public GDALPamDataset
     int bCheckForExistingOverview;
     CPLString osOvrFileName;
 
-    OGRDataSourceH hDS;
+    GDALDatasetH hDS;
 
     int m_nLastBadTileId = -1;
 

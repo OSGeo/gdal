@@ -169,12 +169,10 @@ class OGRIDBSelectLayer final : public OGRIDBLayer
 /*                           OGRIDBDataSource                          */
 /************************************************************************/
 
-class OGRIDBDataSource final : public OGRDataSource
+class OGRIDBDataSource final : public GDALDataset
 {
     OGRIDBLayer **papoLayers;
     int nLayers;
-
-    char *pszName;
 
     int bDSUpdate;
     ITConnection *poConn;
@@ -186,11 +184,6 @@ class OGRIDBDataSource final : public OGRDataSource
     int Open(const char *, int bUpdate, int bTestOpen);
     int OpenTable(const char *pszTableName, const char *pszGeomCol,
                   int bUpdate);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

@@ -39,7 +39,6 @@
 OGROGDIDataSource::OGROGDIDataSource()
     : m_papoLayers(nullptr), m_nLayers(0), m_nClientID(-1),
       m_poSpatialRef(nullptr), m_poCurrentLayer(nullptr),
-      m_pszFullName(nullptr),
       m_bLaunderLayerNames(
           CPLTestBool(CPLGetConfigOption("OGR_OGDI_LAUNDER_LAYER_NAMES", "NO")))
 {
@@ -58,8 +57,6 @@ OGROGDIDataSource::OGROGDIDataSource()
 OGROGDIDataSource::~OGROGDIDataSource()
 
 {
-    CPLFree(m_pszFullName);
-
     for (int i = 0; i < m_nLayers; i++)
         delete m_papoLayers[i];
     CPLFree(m_papoLayers);
@@ -136,8 +133,6 @@ int OGROGDIDataSource::Open(const char *pszNewName)
         return FALSE;
     }
 
-    m_pszFullName = CPLStrdup(pszNewName);
-
     /* -------------------------------------------------------------------- */
     /*      Capture some information from the file.                         */
     /* -------------------------------------------------------------------- */
@@ -208,7 +203,7 @@ int OGROGDIDataSource::Open(const char *pszNewName)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid or unsupported family name (%s) in URL %s\n",
-                     pszFamily, m_pszFullName);
+                     pszFamily, pszNewName);
             CPLFree(pszWorkingName);
             return FALSE;
         }
@@ -271,16 +266,6 @@ void OGROGDIDataSource::IAddLayer(const char *pszLayerName, ecs_Family eFamily)
         m_papoLayers, (m_nLayers + 1) * sizeof(OGROGDILayer *));
 
     m_papoLayers[m_nLayers++] = new OGROGDILayer(this, pszLayerName, eFamily);
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGROGDIDataSource::TestCapability(CPL_UNUSED const char *pszCap)
-
-{
-    return FALSE;
 }
 
 /************************************************************************/

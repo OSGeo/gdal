@@ -35,7 +35,6 @@
 
 OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() : bDSUpdate(false)
 {
-    pszName = nullptr;
     pszCatalog = nullptr;
     papoLayers = nullptr;
     nLayers = 0;
@@ -83,7 +82,6 @@ OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
 
     CPLFree(papoLayers);
 
-    CPLFree(pszName);
     CPLFree(pszCatalog);
 
     CPLFree(pszConnection);
@@ -810,8 +808,6 @@ int OGRMSSQLSpatialDataSource::Open(const char *pszNewName, bool bUpdate,
         return FALSE;
     }
 
-    pszName = CPLStrdup(pszNewName);
-
     char **papszTableNames = nullptr;
     char **papszSchemaNames = nullptr;
     char **papszGeomColumnNames = nullptr;
@@ -1232,8 +1228,8 @@ OGRLayer *OGRMSSQLSpatialDataSource::ExecuteSQL(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Special case DELLAYER: command.                                 */

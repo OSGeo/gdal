@@ -38,12 +38,11 @@
 /*                        OGRGPSBabelDataSource                         */
 /************************************************************************/
 
-class OGRGPSBabelDataSource final : public OGRDataSource
+class OGRGPSBabelDataSource final : public GDALDataset
 {
     int nLayers = 0;
     std::array<OGRLayer *, 5> apoLayers{
         {nullptr, nullptr, nullptr, nullptr, nullptr}};
-    char *pszName = nullptr;
     char *pszGPSBabelDriverName = nullptr;
     char *pszFilename = nullptr;
     CPLString osTmpFileName{};
@@ -55,19 +54,12 @@ class OGRGPSBabelDataSource final : public OGRDataSource
 
     virtual int CloseDependentDatasets() override;
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
-
     virtual int GetLayerCount() override
     {
         return nLayers;
     }
 
     virtual OGRLayer *GetLayer(int) override;
-
-    virtual int TestCapability(const char *) override;
 
     int Open(const char *pszFilename, const char *pszGPSBabelDriverNameIn,
              char **papszOpenOptions);
@@ -80,9 +72,8 @@ class OGRGPSBabelDataSource final : public OGRDataSource
 /*                   OGRGPSBabelWriteDataSource                         */
 /************************************************************************/
 
-class OGRGPSBabelWriteDataSource final : public OGRDataSource
+class OGRGPSBabelWriteDataSource final : public GDALDataset
 {
-    char *pszName;
     char *pszGPSBabelDriverName;
     char *pszFilename;
     CPLString osTmpFileName;
@@ -93,11 +84,6 @@ class OGRGPSBabelWriteDataSource final : public OGRDataSource
   public:
     OGRGPSBabelWriteDataSource();
     virtual ~OGRGPSBabelWriteDataSource();
-
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
 
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;

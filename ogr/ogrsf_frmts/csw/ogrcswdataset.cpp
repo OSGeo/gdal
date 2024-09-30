@@ -94,9 +94,8 @@ class OGRCSWLayer final : public OGRLayer
 /*                           OGRCSWDataSource                           */
 /************************************************************************/
 
-class OGRCSWDataSource final : public OGRDataSource
+class OGRCSWDataSource final : public GDALDataset
 {
-    char *pszName;
     CPLString osBaseURL;
     CPLString osVersion;
     CPLString osElementSetName;
@@ -114,22 +113,12 @@ class OGRCSWDataSource final : public OGRDataSource
 
     int Open(const char *pszFilename, char **papszOpenOptions);
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
-
     virtual int GetLayerCount() override
     {
         return poLayer != nullptr;
     }
 
     virtual OGRLayer *GetLayer(int) override;
-
-    virtual int TestCapability(const char *) override
-    {
-        return FALSE;
-    }
 
     static CPLHTTPResult *HTTPFetch(const char *pszURL, const char *pszPost);
 
@@ -918,8 +907,7 @@ void OGRCSWLayer::BuildQuery()
 /************************************************************************/
 
 OGRCSWDataSource::OGRCSWDataSource()
-    : pszName(nullptr), nMaxRecords(500), poLayer(nullptr),
-      bFullExtentRecordsAsNonSpatial(false)
+    : nMaxRecords(500), poLayer(nullptr), bFullExtentRecordsAsNonSpatial(false)
 {
 }
 
@@ -930,7 +918,6 @@ OGRCSWDataSource::OGRCSWDataSource()
 OGRCSWDataSource::~OGRCSWDataSource()
 {
     delete poLayer;
-    CPLFree(pszName);
 }
 
 /************************************************************************/

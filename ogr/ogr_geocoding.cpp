@@ -100,7 +100,7 @@ struct _OGRGeocodingSessionHS
     bool bReadCache;
     bool bWriteCache;
     double dfDelayBetweenQueries;
-    OGRDataSource *poDS;
+    GDALDataset *poDS;
 };
 
 static CPLMutex *hOGRGeocodingMutex = nullptr;
@@ -397,7 +397,7 @@ void OGRGeocodeDestroySession(OGRGeocodingSessionH hSession)
     CPLFree(hSession->pszQueryTemplate);
     CPLFree(hSession->pszReverseQueryTemplate);
     if (hSession->poDS)
-        OGRReleaseDataSource(reinterpret_cast<OGRDataSourceH>(hSession->poDS));
+        delete hSession->poDS;
     CPLFree(hSession);
 }
 
@@ -409,13 +409,13 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
                                          bool bCreateIfNecessary,
                                          int *pnIdxBlob)
 {
-    OGRDataSource *poDS = hSession->poDS;
+    GDALDataset *poDS = hSession->poDS;
     CPLString osExt = CPLGetExtension(hSession->pszCacheFilename);
 
     if (poDS == nullptr)
     {
-        if (OGRGetDriverCount() == 0)
-            OGRRegisterAll();
+        if (GDALGetDriverCount() == 0)
+            GDALAllRegister();
 
         const bool bHadValue =
             CPLGetConfigOption("OGR_SQLITE_SYNCHRONOUS", nullptr) != nullptr;
@@ -423,13 +423,15 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
 
         CPLSetThreadLocalConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF");
 
-        poDS = reinterpret_cast<OGRDataSource *>(
-            OGROpen(hSession->pszCacheFilename, TRUE, nullptr));
+        poDS = GDALDataset::Open(hSession->pszCacheFilename,
+                                 GDAL_OF_VECTOR | GDAL_OF_UPDATE, nullptr,
+                                 nullptr, nullptr);
         if (poDS == nullptr &&
             EQUAL(hSession->pszCacheFilename, DEFAULT_CACHE_SQLITE))
         {
-            poDS = reinterpret_cast<OGRDataSource *>(
-                OGROpen(DEFAULT_CACHE_CSV, TRUE, nullptr));
+            poDS = GDALDataset::Open(DEFAULT_CACHE_CSV,
+                                     GDAL_OF_VECTOR | GDAL_OF_UPDATE, nullptr,
+                                     nullptr, nullptr);
             if (poDS != nullptr)
             {
                 CPLFree(hSession->pszCacheFilename);
@@ -443,8 +445,8 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
         if (bCreateIfNecessary && poDS == nullptr &&
             !STARTS_WITH_CI(hSession->pszCacheFilename, "PG:"))
         {
-            OGRSFDriverH hDriver = OGRGetDriverByName(osExt);
-            if (hDriver == nullptr &&
+            auto poDriver = GetGDALDriverManager()->GetDriverByName(osExt);
+            if (poDriver == nullptr &&
                 EQUAL(hSession->pszCacheFilename, DEFAULT_CACHE_SQLITE))
             {
                 CPLFree(hSession->pszCacheFilename);
@@ -452,9 +454,9 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
                 CPLDebug("OGR", "Switch geocode cache file to %s",
                          hSession->pszCacheFilename);
                 osExt = "csv";
-                hDriver = OGRGetDriverByName(osExt);
+                poDriver = GetGDALDriverManager()->GetDriverByName(osExt);
             }
-            if (hDriver != nullptr)
+            if (poDriver != nullptr)
             {
                 char **papszOptions = nullptr;
                 if (EQUAL(osExt, "SQLITE"))
@@ -463,9 +465,8 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
                         CSLAddNameValue(papszOptions, "METADATA", "FALSE");
                 }
 
-                poDS =
-                    reinterpret_cast<OGRDataSource *>(OGR_Dr_CreateDataSource(
-                        hDriver, hSession->pszCacheFilename, papszOptions));
+                poDS = poDriver->Create(hSession->pszCacheFilename, 0, 0, 0,
+                                        GDT_Unknown, papszOptions);
 
                 if (poDS == nullptr &&
                     (EQUAL(osExt, "SQLITE") || EQUAL(osExt, "CSV")))
@@ -476,9 +477,8 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
                             "%s.%s", CACHE_LAYER_NAME, osExt.c_str())));
                     CPLDebug("OGR", "Switch geocode cache file to %s",
                              hSession->pszCacheFilename);
-                    poDS = reinterpret_cast<OGRDataSource *>(
-                        OGR_Dr_CreateDataSource(
-                            hDriver, hSession->pszCacheFilename, papszOptions));
+                    poDS = poDriver->Create(hSession->pszCacheFilename, 0, 0, 0,
+                                            GDT_Unknown, papszOptions);
                 }
 
                 CSLDestroy(papszOptions);

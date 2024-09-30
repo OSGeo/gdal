@@ -35,10 +35,10 @@
 /************************************************************************/
 
 OGREDIGEODataSource::OGREDIGEODataSource()
-    : pszName(nullptr), fpTHF(nullptr), papoLayers(nullptr), nLayers(0),
-      poSRS(nullptr), bExtentValid(FALSE), dfMinX(0), dfMinY(0), dfMaxX(0),
-      dfMaxY(0), bRecodeToUTF8(CPLTestBool(
-                     CPLGetConfigOption("OGR_EDIGEO_RECODE_TO_UTF8", "YES"))),
+    : fpTHF(nullptr), papoLayers(nullptr), nLayers(0), poSRS(nullptr),
+      bExtentValid(FALSE), dfMinX(0), dfMinY(0), dfMaxX(0), dfMaxY(0),
+      bRecodeToUTF8(
+          CPLTestBool(CPLGetConfigOption("OGR_EDIGEO_RECODE_TO_UTF8", "YES"))),
       bHasUTF8ContentOnly(TRUE), iATR(-1), iDI3(-1), iDI4(-1), iHEI(-1),
       iFON(-1), iATR_VAL(-1), iANGLE(-1), iSIZE(-1), iOBJ_LNK(-1),
       iOBJ_LNK_LAYER(-1),
@@ -64,22 +64,11 @@ OGREDIGEODataSource::~OGREDIGEODataSource()
         delete papoLayers[i];
     CPLFree(papoLayers);
 
-    CPLFree(pszName);
-
     if (fpTHF)
         VSIFCloseL(fpTHF);
 
     if (poSRS)
         poSRS->Release();
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGREDIGEODataSource::TestCapability(CPL_UNUSED const char *pszCap)
-{
-    return FALSE;
 }
 
 /************************************************************************/
@@ -183,14 +172,14 @@ VSILFILE *OGREDIGEODataSource::OpenFile(const char *pszType,
                                         const CPLString &osExt)
 {
     CPLString osTmp = osLON + pszType;
-    CPLString osFilename =
-        CPLFormCIFilename(CPLGetPath(pszName), osTmp.c_str(), osExt.c_str());
+    CPLString osFilename = CPLFormCIFilename(CPLGetPath(GetDescription()),
+                                             osTmp.c_str(), osExt.c_str());
     VSILFILE *fp = VSIFOpenL(osFilename, "rb");
     if (fp == nullptr)
     {
         const CPLString osExtLower = CPLString(osExt).tolower();
         const CPLString osFilename2 = CPLFormCIFilename(
-            CPLGetPath(pszName), osTmp.c_str(), osExtLower.c_str());
+            CPLGetPath(GetDescription()), osTmp.c_str(), osExtLower.c_str());
         fp = VSIFOpenL(osFilename2, "rb");
         if (fp == nullptr)
         {
@@ -1384,8 +1373,6 @@ static int OGREDIGEOSortForQGIS(const void *a, const void *b)
 int OGREDIGEODataSource::Open(const char *pszFilename)
 
 {
-    pszName = CPLStrdup(pszFilename);
-
     fpTHF = VSIFOpenL(pszFilename, "rb");
     if (fpTHF == nullptr)
         return FALSE;

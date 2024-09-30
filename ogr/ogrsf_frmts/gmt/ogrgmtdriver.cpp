@@ -74,18 +74,12 @@ static GDALDataset *OGRGMTDriverOpen(GDALOpenInfo *poOpenInfo)
 /*                         OGRGMTDriverCreate()                         */
 /************************************************************************/
 
-static GDALDataset *
-OGRGMTDriverCreate(const char *pszName, CPL_UNUSED int nBands,
-                   CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                   CPL_UNUSED GDALDataType eDT, char **papszOptions)
+static GDALDataset *OGRGMTDriverCreate(const char *, CPL_UNUSED int nBands,
+                                       CPL_UNUSED int nXSize,
+                                       CPL_UNUSED int nYSize,
+                                       CPL_UNUSED GDALDataType eDT, char **)
 {
-    OGRGmtDataSource *poDS = new OGRGmtDataSource();
-
-    if (poDS->Create(pszName, papszOptions))
-        return poDS;
-
-    delete poDS;
-    return nullptr;
+    return new OGRGmtDataSource();
 }
 
 /************************************************************************/

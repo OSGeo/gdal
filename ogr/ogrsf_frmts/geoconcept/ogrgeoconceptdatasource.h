@@ -37,14 +37,13 @@
 /**********************************************************************/
 /*            OGCGeoconceptDataSource Class                           */
 /**********************************************************************/
-class OGRGeoconceptDataSource : public OGRDataSource
+class OGRGeoconceptDataSource : public GDALDataset
 {
   private:
     OGRGeoconceptLayer **_papoLayers;
     int _nLayers;
 
     char *_pszGCT;
-    char *_pszName;
     char *_pszDirectory;
     char *_pszExt;
     char **_papszOptions;
@@ -58,11 +57,6 @@ class OGRGeoconceptDataSource : public OGRDataSource
 
     int Open(const char *pszName, bool bTestOpen, bool bUpdate);
     int Create(const char *pszName, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return _pszName;
-    }
 
     int GetLayerCount() override
     {

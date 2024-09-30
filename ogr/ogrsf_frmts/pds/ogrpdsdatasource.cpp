@@ -36,8 +36,7 @@ using namespace OGRPDS;
 /*                           OGRPDSDataSource()                         */
 /************************************************************************/
 
-OGRPDSDataSource::OGRPDSDataSource()
-    : pszName(nullptr), papoLayers(nullptr), nLayers(0)
+OGRPDSDataSource::OGRPDSDataSource() : papoLayers(nullptr), nLayers(0)
 {
 }
 
@@ -51,17 +50,6 @@ OGRPDSDataSource::~OGRPDSDataSource()
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
     CPLFree(papoLayers);
-
-    CPLFree(pszName);
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRPDSDataSource::TestCapability(const char * /* pszCap */)
-{
-    return FALSE;
 }
 
 /************************************************************************/
@@ -289,8 +277,6 @@ bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
 int OGRPDSDataSource::Open(const char *pszFilename)
 
 {
-    pszName = CPLStrdup(pszFilename);
-
     // --------------------------------------------------------------------
     //      Does this appear to be a .PDS table file?
     // --------------------------------------------------------------------

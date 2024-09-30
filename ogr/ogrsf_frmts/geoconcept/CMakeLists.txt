@@ -6,7 +6,6 @@ add_gdal_driver(
           ogrgeoconceptlayer.cpp
           geoconcept_syscoord.h
           ogrgeoconceptdatasource.h
-          ogrgeoconceptdriver.h
           ogrgeoconceptlayer.h
           geoconcept.c
           geoconcept_syscoord.c

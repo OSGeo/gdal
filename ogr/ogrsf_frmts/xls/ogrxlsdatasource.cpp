@@ -41,7 +41,7 @@
 /************************************************************************/
 
 OGRXLSDataSource::OGRXLSDataSource()
-    : pszName(nullptr), papoLayers(nullptr), nLayers(0), xlshandle(nullptr)
+    : papoLayers(nullptr), nLayers(0), xlshandle(nullptr)
 {
 }
 
@@ -56,8 +56,6 @@ OGRXLSDataSource::~OGRXLSDataSource()
         delete papoLayers[i];
     CPLFree(papoLayers);
 
-    CPLFree(pszName);
-
     if (xlshandle)
         freexl_close(xlshandle);
 #ifdef _WIN32
@@ -66,16 +64,6 @@ OGRXLSDataSource::~OGRXLSDataSource()
         VSIUnlink(m_osTempFilename);
     }
 #endif
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRXLSDataSource::TestCapability(CPL_UNUSED const char *pszCap)
-
-{
-    return FALSE;
 }
 
 /************************************************************************/
@@ -103,7 +91,6 @@ int OGRXLSDataSource::Open(const char *pszFilename, int bUpdateIn)
         return FALSE;
     }
 
-    pszName = CPLStrdup(pszFilename);
     m_osANSIFilename = pszFilename;
 #ifdef _WIN32
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))

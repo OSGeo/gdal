@@ -103,21 +103,13 @@ class OGRKMLLayer final : public OGRLayer
 /*                           OGRKMLDataSource                           */
 /************************************************************************/
 
-class OGRKMLDataSource final : public OGRDataSource
+class OGRKMLDataSource final : public GDALDataset
 {
   public:
     OGRKMLDataSource();
     ~OGRKMLDataSource();
 
-    //
-    // OGRDataSource Interface
-    //
     int Open(const char *pszName, int bTestOpen);
-
-    const char *GetName() override
-    {
-        return pszName_;
-    }
 
     int GetLayerCount() override
     {
@@ -177,8 +169,6 @@ class OGRKMLDataSource final : public OGRDataSource
 #ifdef HAVE_EXPAT
     KML *poKMLFile_;
 #endif
-
-    char *pszName_;
 
     OGRKMLLayer **papoLayers_;
     int nLayers_;

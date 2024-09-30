@@ -609,6 +609,8 @@ jobs:
         brew link --force sqlite
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
+        # Workaround for https://github.com/Homebrew/homebrew-core/pull/170959#issuecomment-2379606442
+        sed -i .bak 's/hdf5_hl;hdf5;/hdf5_hl-shared;hdf5-shared;/g' "$(brew --prefix netcdf)/lib/cmake/netCDF/netCDFTargets.cmake"
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}

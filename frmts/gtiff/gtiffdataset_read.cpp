@@ -4763,7 +4763,8 @@ void GTiffDataset::LoadICCProfile()
     {
         if (TIFFGetField(m_hTIFF, TIFFTAG_WHITEPOINT, &pWP))
         {
-            if (!TIFFGetFieldDefaulted(m_hTIFF, TIFFTAG_TRANSFERFUNCTION, &pTFR,
+            if (m_nBitsPerSample > 24 ||
+                !TIFFGetFieldDefaulted(m_hTIFF, TIFFTAG_TRANSFERFUNCTION, &pTFR,
                                        &pTFG, &pTFB) ||
                 pTFR == nullptr || pTFG == nullptr || pTFB == nullptr)
             {

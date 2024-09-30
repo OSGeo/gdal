@@ -35,7 +35,7 @@
 /************************************************************************/
 
 OGRAVCBinDataSource::OGRAVCBinDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr), psAVC(nullptr)
+    : papoLayers(nullptr), nLayers(0), psAVC(nullptr)
 {
     poSRS = nullptr;
 }
@@ -52,8 +52,6 @@ OGRAVCBinDataSource::~OGRAVCBinDataSource()
         AVCE00ReadClose(psAVC);
         psAVC = nullptr;
     }
-
-    CPLFree(pszName);
 
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
@@ -86,7 +84,6 @@ int OGRAVCBinDataSource::Open(const char *pszNewName, int bTestOpen)
     if (psAVC == nullptr)
         return FALSE;
 
-    pszName = CPLStrdup(pszNewName);
     pszCoverageName = CPLStrdup(psAVC->pszCoverName);
 
     // Read SRS first

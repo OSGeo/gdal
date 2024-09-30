@@ -53,13 +53,14 @@ class GDALGeoLocDatasetAccessors
     bool LoadGeoloc(bool bIsRegularGrid);
 
   public:
-    static constexpr int TILE_SIZE = 1024;
+    static constexpr int TILE_SIZE = 256;
+    static constexpr int TILE_COUNT = 64;
 
-    GDALCachedPixelAccessor<double, TILE_SIZE> geolocXAccessor;
-    GDALCachedPixelAccessor<double, TILE_SIZE> geolocYAccessor;
-    GDALCachedPixelAccessor<float, TILE_SIZE> backMapXAccessor;
-    GDALCachedPixelAccessor<float, TILE_SIZE> backMapYAccessor;
-    GDALCachedPixelAccessor<float, TILE_SIZE> backMapWeightAccessor;
+    GDALCachedPixelAccessor<double, TILE_SIZE, TILE_COUNT> geolocXAccessor;
+    GDALCachedPixelAccessor<double, TILE_SIZE, TILE_COUNT> geolocYAccessor;
+    GDALCachedPixelAccessor<float, TILE_SIZE, TILE_COUNT> backMapXAccessor;
+    GDALCachedPixelAccessor<float, TILE_SIZE, TILE_COUNT> backMapYAccessor;
+    GDALCachedPixelAccessor<float, TILE_SIZE, TILE_COUNT> backMapWeightAccessor;
 
     explicit GDALGeoLocDatasetAccessors(GDALGeoLocTransformInfo *psTransform)
         : m_psTransform(psTransform), geolocXAccessor(nullptr),

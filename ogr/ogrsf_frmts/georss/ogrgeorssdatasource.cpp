@@ -50,7 +50,7 @@
 /************************************************************************/
 
 OGRGeoRSSDataSource::OGRGeoRSSDataSource()
-    : pszName(nullptr), papoLayers(nullptr), nLayers(0), fpOutput(nullptr),
+    : papoLayers(nullptr), nLayers(0), fpOutput(nullptr),
 #ifdef HAVE_EXPAT
       validity(GEORSS_VALIDITY_UNKNOWN),
 #endif
@@ -90,7 +90,6 @@ OGRGeoRSSDataSource::~OGRGeoRSSDataSource()
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
     CPLFree(papoLayers);
-    CPLFree(pszName);
 }
 
 /************************************************************************/
@@ -161,8 +160,8 @@ OGRGeoRSSDataSource::ICreateLayer(const char *pszLayerName,
         poSRSClone = poSRS->Clone();
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
-    papoLayers[nLayers - 1] =
-        new OGRGeoRSSLayer(pszName, pszLayerName, this, poSRSClone, TRUE);
+    papoLayers[nLayers - 1] = new OGRGeoRSSLayer(GetDescription(), pszLayerName,
+                                                 this, poSRSClone, TRUE);
     if (poSRSClone)
         poSRSClone->Release();
 
@@ -257,7 +256,6 @@ int OGRGeoRSSDataSource::Open(const char *pszFilename, int bUpdateIn)
         return FALSE;
     }
 #ifdef HAVE_EXPAT
-    pszName = CPLStrdup(pszFilename);
 
     // Try to open the file.
     VSILFILE *fp = VSIFOpenL(pszFilename, "r");
@@ -338,7 +336,7 @@ int OGRGeoRSSDataSource::Open(const char *pszFilename, int bUpdateIn)
         papoLayers = static_cast<OGRGeoRSSLayer **>(
             CPLRealloc(papoLayers, nLayers * sizeof(OGRGeoRSSLayer *)));
         papoLayers[0] =
-            new OGRGeoRSSLayer(pszName, "georss", this, nullptr, FALSE);
+            new OGRGeoRSSLayer(pszFilename, "georss", this, nullptr, FALSE);
     }
 
     return validity == GEORSS_VALIDITY_VALID;
@@ -396,8 +394,6 @@ int OGRGeoRSSDataSource::Create(const char *pszFilename, char **papszOptions)
     /* -------------------------------------------------------------------- */
     /*      Create the output file.                                         */
     /* -------------------------------------------------------------------- */
-    pszName = CPLStrdup(pszFilename);
-
     fpOutput = VSIFOpenL(pszFilename, "w");
     if (fpOutput == nullptr)
     {

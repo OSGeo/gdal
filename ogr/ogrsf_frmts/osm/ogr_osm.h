@@ -387,12 +387,11 @@ typedef struct
 } CollisionBucket;
 #endif
 
-class OGROSMDataSource final : public OGRDataSource
+class OGROSMDataSource final : public GDALDataset
 {
     friend class OGROSMLayer;
 
     std::vector<std::unique_ptr<OGROSMLayer>> m_apoLayers{};
-    char *m_pszName = nullptr;
 
     std::string m_osConfigFile{};
 
@@ -585,11 +584,6 @@ class OGROSMDataSource final : public OGRDataSource
   public:
     OGROSMDataSource();
     virtual ~OGROSMDataSource();
-
-    virtual const char *GetName() override
-    {
-        return m_pszName;
-    }
 
     virtual int GetLayerCount() override
     {

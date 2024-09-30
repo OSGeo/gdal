@@ -179,15 +179,13 @@ class OGRPGeoSelectLayer final : public OGRPGeoLayer
 };
 
 /************************************************************************/
-/*                           OGRPGeoDataSource                            */
+/*                           OGRPGeoDataSource                          */
 /************************************************************************/
 
-class OGRPGeoDataSource final : public OGRDataSource
+class OGRPGeoDataSource final : public GDALDataset
 {
     OGRPGeoLayer **papoLayers;
     int nLayers;
-
-    char *pszName;
 
     mutable CPLODBCSession oSession;
 
@@ -215,11 +213,6 @@ class OGRPGeoDataSource final : public OGRDataSource
     int Open(GDALOpenInfo *poOpenInfo);
     int OpenTable(const char *pszTableName, const char *pszGeomCol,
                   int bUpdate);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {

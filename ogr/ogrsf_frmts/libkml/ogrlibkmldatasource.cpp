@@ -87,8 +87,8 @@ static ElementPtr OGRLIBKMLParse(const std::string &oKml, std::string *posError)
 ******************************************************************************/
 
 OGRLIBKMLDataSource::OGRLIBKMLDataSource(KmlFactory *poKmlFactory)
-    : m_pszName(nullptr), papoLayers(nullptr), nLayers(0), nAllocated(0),
-      bUpdate(false), bUpdated(false), m_papszOptions(nullptr), m_isKml(false),
+    : papoLayers(nullptr), nLayers(0), nAllocated(0), bUpdate(false),
+      bUpdated(false), m_papszOptions(nullptr), m_isKml(false),
       m_poKmlDSKml(nullptr), m_poKmlDSContainer(nullptr),
       m_poKmlUpdate(nullptr), m_isKmz(false), m_poKmlDocKml(nullptr),
       m_poKmlDocKmlRoot(nullptr), m_poKmlStyleKml(nullptr), m_isDir(false),
@@ -306,7 +306,7 @@ static void OGRLIBKMLPostProcessOutput(std::string &oKml)
 
 bool OGRLIBKMLDataSource::WriteKml()
 {
-    std::string oKmlFilename = m_pszName;
+    std::string oKmlFilename = GetDescription();
 
     if (m_poKmlDSContainer && m_poKmlDSContainer->IsA(kmldom::Type_Document))
     {
@@ -413,20 +413,22 @@ static KmlPtr OGRLIBKMLCreateOGCKml22(KmlFactory *poFactory,
 bool OGRLIBKMLDataSource::WriteKmz()
 {
     std::string osTmpFilename;
-    if (!VSISupportsRandomWrite(m_pszName, false) ||
+    if (!VSISupportsRandomWrite(GetDescription(), false) ||
         EQUAL(CPLGetConfigOption("CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", ""),
               "FORCED"))
     {
-        osTmpFilename = CPLGenerateTempFilename(CPLGetBasename(m_pszName));
+        osTmpFilename =
+            CPLGenerateTempFilename(CPLGetBasename(GetDescription()));
     }
 
-    void *hZIP = CPLCreateZip(
-        osTmpFilename.empty() ? m_pszName : osTmpFilename.c_str(), nullptr);
+    void *hZIP = CPLCreateZip(osTmpFilename.empty() ? GetDescription()
+                                                    : osTmpFilename.c_str(),
+                              nullptr);
 
     if (!hZIP)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess, "Error creating %s: %s",
-                 m_pszName, VSIGetLastErrorMsg());
+                 GetDescription(), VSIGetLastErrorMsg());
         return false;
     }
 
@@ -465,7 +467,7 @@ bool OGRLIBKMLDataSource::WriteKmz()
         {
             bRet = false;
             CPLError(CE_Failure, CPLE_FileIO, "ERROR adding %s to %s",
-                     "doc.kml", m_pszName);
+                     "doc.kml", GetDescription());
         }
         CPLCloseFileInZip(hZIP);
     }
@@ -519,7 +521,7 @@ bool OGRLIBKMLDataSource::WriteKmz()
             CPLWriteFileInZip(hZIP, oKmlOut.data(),
                               static_cast<int>(oKmlOut.size())) != CE_None)
             CPLError(CE_Failure, CPLE_FileIO, "ERROR adding %s to %s",
-                     papoLayers[iLayer]->GetFileName(), m_pszName);
+                     papoLayers[iLayer]->GetFileName(), GetDescription());
         CPLCloseFileInZip(hZIP);
     }
 
@@ -539,7 +541,7 @@ bool OGRLIBKMLDataSource::WriteKmz()
         {
             bRet = false;
             CPLError(CE_Failure, CPLE_FileIO, "ERROR adding %s to %s",
-                     "style/style.kml", m_pszName);
+                     "style/style.kml", GetDescription());
         }
         CPLCloseFileInZip(hZIP);
     }
@@ -550,10 +552,10 @@ bool OGRLIBKMLDataSource::WriteKmz()
     {
         if (bRet)
         {
-            bRet = CPLCopyFile(m_pszName, osTmpFilename.c_str()) == 0;
+            bRet = CPLCopyFile(GetDescription(), osTmpFilename.c_str()) == 0;
             if (!bRet)
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Cannot copy temporary file to %s", m_pszName);
+                         "Cannot copy temporary file to %s", GetDescription());
         }
         VSIUnlink(osTmpFilename.c_str());
     }
@@ -597,13 +599,14 @@ bool OGRLIBKMLDataSource::WriteDir()
         std::string oKmlOut = kmldom::SerializePretty(m_poKmlDocKmlRoot);
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
-        const char *pszOutfile = CPLFormFilename(m_pszName, "doc.kml", nullptr);
+        const char *pszOutfile =
+            CPLFormFilename(GetDescription(), "doc.kml", nullptr);
 
         VSILFILE *fp = VSIFOpenExL(pszOutfile, "wb", true);
         if (fp == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Error writing %s to %s: %s",
-                     "doc.kml", m_pszName, VSIGetLastErrorMsg());
+                     "doc.kml", GetDescription(), VSIGetLastErrorMsg());
             return false;
         }
 
@@ -647,13 +650,13 @@ bool OGRLIBKMLDataSource::WriteDir()
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
         const char *pszOutfile = CPLFormFilename(
-            m_pszName, papoLayers[iLayer]->GetFileName(), nullptr);
+            GetDescription(), papoLayers[iLayer]->GetFileName(), nullptr);
 
         VSILFILE *fp = VSIFOpenL(pszOutfile, "wb");
         if (fp == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "ERROR Writing %s to %s",
-                     papoLayers[iLayer]->GetFileName(), m_pszName);
+                     papoLayers[iLayer]->GetFileName(), GetDescription());
             return false;
         }
 
@@ -673,13 +676,13 @@ bool OGRLIBKMLDataSource::WriteDir()
         OGRLIBKMLPostProcessOutput(oKmlOut);
 
         const char *pszOutfile =
-            CPLFormFilename(m_pszName, "style.kml", nullptr);
+            CPLFormFilename(GetDescription(), "style.kml", nullptr);
 
         VSILFILE *fp = VSIFOpenL(pszOutfile, "wb");
         if (fp == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "ERROR Writing %s to %s",
-                     "style.kml", m_pszName);
+                     "style.kml", GetDescription());
             return false;
         }
 
@@ -739,8 +742,6 @@ OGRLIBKMLDataSource::~OGRLIBKMLDataSource()
 {
     /***** sync the DS to disk *****/
     OGRLIBKMLDataSource::FlushCache(true);
-
-    CPLFree(m_pszName);
 
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
@@ -1532,7 +1533,6 @@ static bool CheckIsKMZ(const char *pszFilename)
 int OGRLIBKMLDataSource::Open(const char *pszFilename, int bUpdateIn)
 {
     bUpdate = CPL_TO_BOOL(bUpdateIn);
-    m_pszName = CPLStrdup(pszFilename);
 
     /***** dir *****/
     VSIStatBufL sStatBuf;
@@ -1948,7 +1948,7 @@ int OGRLIBKMLDataSource::Create(const char *pszFilename, char **papszOptions)
     if (strcmp(pszFilename, "/dev/stdout") == 0)
         pszFilename = "/vsistdout/";
 
-    m_pszName = CPLStrdup(pszFilename);
+    SetDescription(pszFilename);
     bUpdate = true;
 
     osUpdateTargetHref =
@@ -2131,7 +2131,7 @@ OGRErr OGRLIBKMLDataSource::DeleteLayer(int iLayer)
 
         /***** delete the file the layer corresponds to *****/
         const char *pszFilePath = CPLFormFilename(
-            m_pszName, papoLayers[iLayer]->GetFileName(), nullptr);
+            GetDescription(), papoLayers[iLayer]->GetFileName(), nullptr);
         VSIStatBufL oStatBufL;
         if (!VSIStatL(pszFilePath, &oStatBufL))
         {

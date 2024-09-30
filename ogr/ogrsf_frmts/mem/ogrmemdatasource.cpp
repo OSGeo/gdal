@@ -41,8 +41,9 @@
 
 OGRMemDataSource::OGRMemDataSource(const char *pszFilename,
                                    char ** /* papszOptions */)
-    : papoLayers(nullptr), nLayers(0), pszName(CPLStrdup(pszFilename))
+    : papoLayers(nullptr), nLayers(0)
 {
+    SetDescription(pszFilename);
 }
 
 /************************************************************************/
@@ -52,8 +53,6 @@ OGRMemDataSource::OGRMemDataSource(const char *pszFilename,
 OGRMemDataSource::~OGRMemDataSource()
 
 {
-    CPLFree(pszName);
-
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 

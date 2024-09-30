@@ -196,7 +196,7 @@ struct PolygonContourWriter
     std::unique_ptr<OGRMultiPolygon> currentGeometry_ = {};
     OGRPolygon *currentPart_ = nullptr;
     OGRContourWriterInfo *poInfo_ = nullptr;
-    double currentLevel_;
+    double currentLevel_ = 0;
     double previousLevel_ = 0;
 };
 
@@ -748,6 +748,33 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
                             break;
                         }
                     }
+                }
+
+                // Largest requested level (levels are sorted)
+                const double maxLevel{fixedLevels.back()};
+
+                // If the maximum raster value is smaller than the last requested
+                // level, select the requested level that is just above the
+                // maximum raster value
+                if (maxLevel > dfMaximum)
+                {
+                    for (size_t i = fixedLevels.size() - 1; i > 0; --i)
+                    {
+                        if (fixedLevels[i] <= dfMaximum)
+                        {
+                            dfMaximum = fixedLevels[i + 1];
+                            break;
+                        }
+                    }
+                }
+
+                // If the maximum raster value is equal to the last requested
+                // level, add a small value to the maximum to avoid skipping the
+                // last level polygons
+                if (maxLevel == dfMaximum)
+                {
+                    dfMaximum = std::nextafter(
+                        dfMaximum, std::numeric_limits<double>::infinity());
                 }
             }
 

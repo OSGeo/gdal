@@ -266,9 +266,8 @@ class OGRCARTOResultLayer final : public OGRCARTOLayer
 /*                           OGRCARTODataSource                         */
 /************************************************************************/
 
-class OGRCARTODataSource final : public OGRDataSource
+class OGRCARTODataSource final : public GDALDataset
 {
-    char *pszName;
     char *pszAccount;
 
     OGRCARTOTableLayer **papoLayers;
@@ -297,18 +296,12 @@ class OGRCARTODataSource final : public OGRDataSource
 
     int Open(const char *pszFilename, char **papszOpenOptions, int bUpdate);
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
-
     virtual int GetLayerCount() override
     {
         return nLayers;
     }
 
     virtual OGRLayer *GetLayer(int) override;
-    virtual OGRLayer *GetLayerByName(const char *) override;
 
     virtual int TestCapability(const char *) override;
 

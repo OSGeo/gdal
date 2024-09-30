@@ -56,10 +56,9 @@ OGRKMLDataSource::OGRKMLDataSource()
 #ifdef HAVE_EXPAT
       poKMLFile_(nullptr),
 #endif
-      pszName_(nullptr), papoLayers_(nullptr), nLayers_(0),
-      pszNameField_(nullptr), pszDescriptionField_(nullptr),
-      pszAltitudeMode_(nullptr), papszCreateOptions_(nullptr),
-      fpOutput_(nullptr), bIssuedCTError_(false)
+      papoLayers_(nullptr), nLayers_(0), pszNameField_(nullptr),
+      pszDescriptionField_(nullptr), pszAltitudeMode_(nullptr),
+      papszCreateOptions_(nullptr), fpOutput_(nullptr), bIssuedCTError_(false)
 {
 }
 
@@ -98,7 +97,6 @@ OGRKMLDataSource::~OGRKMLDataSource()
     }
 
     CSLDestroy(papszCreateOptions_);
-    CPLFree(pszName_);
     CPLFree(pszNameField_);
     CPLFree(pszDescriptionField_);
     CPLFree(pszAltitudeMode_);
@@ -135,8 +133,6 @@ int OGRKMLDataSource::Open(const char *pszNewName, int bTestOpen)
         poKMLFile_ = nullptr;
         return FALSE;
     }
-
-    pszName_ = CPLStrdup(pszNewName);
 
     /* -------------------------------------------------------------------- */
     /*      If we aren't sure it is KML, validate it by start parsing       */
@@ -335,8 +331,6 @@ int OGRKMLDataSource::Create(const char *pszName, char **papszOptions)
     if (strcmp(pszName, "/dev/stdout") == 0)
         pszName = "/vsistdout/";
 
-    pszName_ = CPLStrdup(pszName);
-
     fpOutput_ = VSIFOpenExL(pszName, "wb", true);
     if (fpOutput_ == nullptr)
     {
@@ -378,7 +372,7 @@ OGRKMLDataSource::ICreateLayer(const char *pszLayerName,
         CPLError(CE_Failure, CPLE_NoWriteAccess,
                  "Data source %s opened for read access.  "
                  "New layer %s cannot be created.",
-                 pszName_, pszLayerName);
+                 GetDescription(), pszLayerName);
 
         return nullptr;
     }

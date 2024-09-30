@@ -379,9 +379,9 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
         else
             osLayerName = papszLayerNames[i];
 
-        oWriter.WriteOGRLayer((OGRDataSourceH)this, i, pszOGRDisplayField,
-                              pszOGRLinkField, osLayerName, bWriteOGRAttributes,
-                              iObj);
+        oWriter.WriteOGRLayer(GDALDataset::ToHandle(this), i,
+                              pszOGRDisplayField, pszOGRLinkField, osLayerName,
+                              bWriteOGRAttributes, iObj);
     }
 
     CSLDestroy(papszLayerNames);

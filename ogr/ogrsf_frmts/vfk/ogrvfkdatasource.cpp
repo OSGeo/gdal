@@ -36,7 +36,7 @@
   \brief OGRVFKDataSource constructor
 */
 OGRVFKDataSource::OGRVFKDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr), poReader(nullptr)
+    : papoLayers(nullptr), nLayers(0), poReader(nullptr)
 {
 }
 
@@ -45,8 +45,6 @@ OGRVFKDataSource::OGRVFKDataSource()
 */
 OGRVFKDataSource::~OGRVFKDataSource()
 {
-    CPLFree(pszName);
-
     if (poReader)
         delete poReader;
 
@@ -65,8 +63,6 @@ OGRVFKDataSource::~OGRVFKDataSource()
 */
 int OGRVFKDataSource::Open(GDALOpenInfo *poOpenInfo)
 {
-    pszName = CPLStrdup(poOpenInfo->pszFilename);
-
     /* create VFK reader */
     poReader = CreateVFKReader(poOpenInfo);
     if (poReader == nullptr || !poReader->IsValid())

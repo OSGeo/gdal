@@ -106,8 +106,6 @@ int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
 {
     osEncoding = CPL_ENC_ISO8859_1;
 
-    osName = pszFilename;
-
     bInlineBlocks = CPLTestBool(
         CSLFetchNameValueDef(papszOptionsIn, "INLINE_BLOCKS",
                              CPLGetConfigOption("DXF_INLINE_BLOCKS", "TRUE")));

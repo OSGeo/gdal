@@ -153,11 +153,10 @@ class OGREDIGEOFEADesc
     CPLString osQUP_RID; /* e.g. Actualite_Objet_X */
 };
 
-class OGREDIGEODataSource final : public OGRDataSource
+class OGREDIGEODataSource final : public GDALDataset
 {
     friend class OGREDIGEOLayer;
 
-    char *pszName;
     VSILFILE *fpTHF;
 
     OGRLayer **papoLayers;
@@ -249,15 +248,8 @@ class OGREDIGEODataSource final : public OGRDataSource
 
     int Open(const char *pszFilename);
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
-
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;
-
-    virtual int TestCapability(const char *) override;
 
     int HasUTF8ContentOnly()
     {

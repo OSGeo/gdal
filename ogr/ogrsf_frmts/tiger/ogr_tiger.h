@@ -501,10 +501,8 @@ class OGRTigerLayer final : public OGRLayer
 /*                          OGRTigerDataSource                          */
 /************************************************************************/
 
-class OGRTigerDataSource final : public OGRDataSource
+class OGRTigerDataSource final : public GDALDataset
 {
-    char *pszName;
-
     int nLayers;
     OGRTigerLayer **papoLayers;
 
@@ -543,17 +541,11 @@ class OGRTigerDataSource final : public OGRDataSource
     int Open(const char *pszName, int bTestOpen = FALSE,
              char **papszFileList = nullptr);
 
-    const char *GetName() override
-    {
-        return pszName;
-    }
-
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;
     OGRLayer *GetLayer(const char *pszLayerName);
 
     void AddLayer(OGRTigerLayer *);
-    int TestCapability(const char *) override;
 
     OGRSpatialReference *DSGetSpatialRef()
     {

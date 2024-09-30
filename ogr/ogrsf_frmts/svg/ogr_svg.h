@@ -137,10 +137,8 @@ typedef enum
     SVG_VALIDITY_VALID
 } OGRSVGValidity;
 
-class OGRSVGDataSource final : public OGRDataSource
+class OGRSVGDataSource final : public GDALDataset
 {
-    char *pszName;
-
     OGRSVGLayer **papoLayers;
     int nLayers;
 
@@ -157,19 +155,12 @@ class OGRSVGDataSource final : public OGRDataSource
 
     int Open(const char *pszFilename);
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
-
     virtual int GetLayerCount() override
     {
         return nLayers;
     }
 
     virtual OGRLayer *GetLayer(int) override;
-
-    virtual int TestCapability(const char *) override;
 
 #ifdef HAVE_EXPAT
     void startElementValidateCbk(const char *pszName, const char **ppszAttr);

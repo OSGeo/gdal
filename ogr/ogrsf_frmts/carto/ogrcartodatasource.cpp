@@ -35,8 +35,8 @@
 /************************************************************************/
 
 OGRCARTODataSource::OGRCARTODataSource()
-    : pszName(nullptr), pszAccount(nullptr), papoLayers(nullptr), nLayers(0),
-      bReadWrite(false), bBatchInsert(true), bCopyMode(true), bUseHTTPS(false),
+    : pszAccount(nullptr), papoLayers(nullptr), nLayers(0), bReadWrite(false),
+      bBatchInsert(true), bCopyMode(true), bUseHTTPS(false),
       bMustCleanPersistent(false), bHasOGRMetadataFunction(-1),
       nPostGISMajor(2), nPostGISMinor(0)
 {
@@ -62,7 +62,6 @@ OGRCARTODataSource::~OGRCARTODataSource()
         CSLDestroy(papszOptions);
     }
 
-    CPLFree(pszName);
     CPLFree(pszAccount);
 }
 
@@ -96,16 +95,6 @@ OGRLayer *OGRCARTODataSource::GetLayer(int iLayer)
         return nullptr;
     else
         return papoLayers[iLayer];
-}
-
-/************************************************************************/
-/*                          GetLayerByName()                            */
-/************************************************************************/
-
-OGRLayer *OGRCARTODataSource::GetLayerByName(const char *pszLayerName)
-{
-    OGRLayer *poLayer = OGRDataSource::GetLayerByName(pszLayerName);
-    return poLayer;
 }
 
 /************************************************************************/
@@ -144,7 +133,6 @@ int OGRCARTODataSource::Open(const char *pszFilename, char **papszOpenOptionsIn,
     if (bCopyMode)
         bBatchInsert = TRUE;
 
-    pszName = CPLStrdup(pszFilename);
     if (CSLFetchNameValue(papszOpenOptionsIn, "ACCOUNT"))
         pszAccount =
             CPLStrdup(CSLFetchNameValue(papszOpenOptionsIn, "ACCOUNT"));
@@ -888,8 +876,8 @@ OGRLayer *OGRCARTODataSource::ExecuteSQLInternal(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Special case DELLAYER: command.                                 */
