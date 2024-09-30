@@ -76,6 +76,8 @@ void OGRODBCDriverSetCommonMetadata(GDALDriver *poDriver)
 {
     poDriver->SetDescription(DRIVER_NAME);
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "Open Database Connectivity (ODBC)");
     poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "ODBC:");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "mdb accdb");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/odbc.html");
