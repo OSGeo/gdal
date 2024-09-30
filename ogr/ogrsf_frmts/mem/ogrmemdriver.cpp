@@ -68,6 +68,7 @@ void RegisterOGRMEM()
 
     GDALDriver *poDriver = new GDALDriver();
     poDriver->SetDescription("Memory");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Memory");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
