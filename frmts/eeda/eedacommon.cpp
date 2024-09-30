@@ -386,8 +386,15 @@ char **GDALEEDABaseDataset::GetBaseHTTPOptions()
                 }
             }
 
-            CPLString osServiceAccountJson(
-                CPLGetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", ""));
+            CPLString osServiceAccountJson;
+            const char *pszVSIPath =
+                CSLFetchNameValue(papszOpenOptions, "VSI_PATH_FOR_AUTH");
+            if (pszVSIPath)
+                osServiceAccountJson = VSIGetPathSpecificOption(
+                    pszVSIPath, "GOOGLE_APPLICATION_CREDENTIALS", "");
+            if (osServiceAccountJson.empty())
+                osServiceAccountJson =
+                    CPLGetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", "");
             if (!osServiceAccountJson.empty())
             {
                 CPLJSONDocument oDoc;
@@ -443,7 +450,8 @@ char **GDALEEDABaseDataset::GetBaseHTTPOptions()
                          "Missing EEDA_BEARER, EEDA_BEARER_FILE or "
                          "GOOGLE_APPLICATION_CREDENTIALS or "
                          "EEDA_PRIVATE_KEY/EEDA_PRIVATE_KEY_FILE + "
-                         "EEDA_CLIENT_EMAIL config option");
+                         "EEDA_CLIENT_EMAIL config option or "
+                         "VSI_PATH_FOR_AUTH open option");
                 CSLDestroy(papszOptions);
                 return nullptr;
             }

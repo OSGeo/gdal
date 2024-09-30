@@ -302,7 +302,8 @@ gwE6fxOLyJDxuWRf
 # Test OAuth2 with GOOGLE_APPLICATION_CREDENTIALS
 
 
-def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
+@pytest.mark.parametrize("use_vsi_path", [False, True])
+def test_eedai_GOOGLE_APPLICATION_CREDENTIALS(use_vsi_path):
 
     gdal.FileFromMemBuffer(
         "/vsimem/my.json",
@@ -313,7 +314,12 @@ def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
     )
 
     gdal.SetConfigOption("EEDA_URL", "/vsimem/ee/")
-    gdal.SetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", "/vsimem/my.json")
+    if use_vsi_path:
+        gdal.SetPathSpecificOption(
+            "/vsigs/to_test_eeda", "GOOGLE_APPLICATION_CREDENTIALS", "/vsimem/my.json"
+        )
+    else:
+        gdal.SetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", "/vsimem/my.json")
     gdal.SetConfigOption("EEDA_PRIVATE_KEY", None)
     gdal.SetConfigOption("EEDA_CLIENT_EMAIL", None)
     gdal.SetConfigOption("GO2A_AUD", "/vsimem/oauth2/v4/token")
@@ -323,8 +329,11 @@ def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
         '{ "access_token": "my_token", "token_type": "Bearer", "expires_in": 3600 }',
     )
 
+    open_options = []
+    if use_vsi_path:
+        open_options.append("VSI_PATH_FOR_AUTH=/vsigs/to_test_eeda")
     try:
-        ds = gdal.Open("EEDAI:image")
+        ds = gdal.OpenEx("EEDAI:image", open_options=open_options)
         assert ds is not None
     except RuntimeError:
         pass
@@ -335,6 +344,7 @@ def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
         gdal.SetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", None)
         gdal.SetConfigOption("EEDA_PRIVATE_KEY", None)
         gdal.SetConfigOption("EEDA_CLIENT_EMAIL", None)
+        gdal.ClearPathSpecificOptions("/vsigs/to_test_eeda")
 
     if "CPLRSASHA256Sign() not implemented" in gdal.GetLastErrorMsg():
         pytest.skip("CPLRSASHA256Sign() not implemented")
