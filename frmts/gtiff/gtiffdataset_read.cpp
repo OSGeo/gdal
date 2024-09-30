@@ -6654,6 +6654,18 @@ void GTiffDataset::LoadMetadata()
         return;
     m_bIMDRPCMetadataLoaded = true;
 
+    if (EQUAL(CPLGetExtension(GetDescription()), "ovr"))
+    {
+        // Do not attempt to retrieve metadata files on .tif.ovr files.
+        // For example the Pleiades metadata reader might wrongly associate a
+        // DIM_xxx.XML file that was meant to be associated with the main
+        // TIFF file. The consequence of that wrong association is that if
+        // one cleans overviews, then the Delete() method would then delete
+        // that DIM_xxx.XML file since it would be reported in the GetFileList()
+        // of the overview dataset.
+        return;
+    }
+
     GDALMDReaderManager mdreadermanager;
     GDALMDReaderBase *mdreader = mdreadermanager.GetReader(
         m_pszFilename, oOvManager.GetSiblingFiles(), MDR_ANY);
