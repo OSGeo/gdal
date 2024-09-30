@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
 import gdaltest
 import ogrtest
 import pytest
@@ -289,7 +288,7 @@ def ogr_libkml_write(filename):
         lyr = ds.CreateLayer("test_wgs72", srs=srs)
 
         assert lyr.TestCapability(ogr.OLCSequentialWrite) == 1
-        assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 1
 
         dst_feat = ogr.Feature(lyr.GetLayerDefn())
         dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 49)"))
@@ -528,6 +527,32 @@ def test_ogr_libkml_test_ogrsf():
         or ret.find("INFO") == -1
         or ret.find("ERROR") != -1
     )
+
+
+###############################################################################
+# Run test_ogrsf
+
+
+def test_ogr_libkml_test_ogrsf_write(tmp_path):
+
+    test_filename = str(tmp_path / "test.kml")
+    gdal.VectorTranslate(
+        test_filename, "data/poly.shp", options="-s_srs EPSG:32631 -t_srs EPSG:4326"
+    )
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path()
+        + f" --config OGR_SKIP KML {test_filename}"
+    )
+
+    assert "using driver `LIBKML'" in ret
+    assert "INFO" in ret
+    assert "ERROR" not in ret
 
 
 ###############################################################################
@@ -2253,3 +2278,64 @@ def test_ogr_libkml_write_geometries(input_wkt, expected_wkt, tmp_vsimem):
             assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
         else:
             assert f is None
+
+
+###############################################################################
+# Test update of existing file
+
+
+@pytest.mark.parametrize("custom_id", [False, True])
+def test_ogr_libkml_update_delete_existing_kml(tmp_vsimem, custom_id):
+
+    filename = str(tmp_vsimem / "test.kml")
+    with ogr.GetDriverByName("LIBKML").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("id"))
+        lyr.CreateField(ogr.FieldDefn("name"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        if custom_id:
+            f["id"] = "feat1"
+        f["name"] = "name1"
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        if custom_id:
+            f["id"] = "feat2"
+        f["name"] = "name2"
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr.CreateFeature(f)
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        with pytest.raises(Exception, match="Non existing feature"):
+            lyr.DeleteFeature(0)
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        with pytest.raises(Exception, match="Non existing feature"):
+            lyr.DeleteFeature(3)
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        lyr.DeleteFeature(1)
+        assert lyr.GetFeatureCount() == 1
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 2
+        if custom_id:
+            assert f["id"] == "feat2"
+        assert f["name"] == "name2"
+        f["name"] = "name2_updated"
+        lyr.SetFeature(f)
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if custom_id:
+            # FIDs are renumbered after feature update/deletion´if using
+            # custom KML ids
+            assert f.GetFID() == 1
+            assert f["id"] == "feat2"
+        else:
+            assert f.GetFID() == 2
+        assert f["name"] == "name2_updated"

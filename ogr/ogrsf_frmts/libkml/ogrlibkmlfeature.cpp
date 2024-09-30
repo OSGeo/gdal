@@ -225,9 +225,7 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
                     int bUseSimpleField)
 {
     FeaturePtr poKmlFeature = nullptr;
-
-    struct fieldconfig oFC;
-    get_fieldconfig(&oFC);
+    const auto &oFC = poOgrLayer->GetFieldConfig();
 
     /***** geometry *****/
     OGRGeometry *poOgrGeom = poOgrFeat->GetGeometryRef();
@@ -838,13 +836,13 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
 
     /***** fields *****/
     field2kml(poOgrFeat, poOgrLayer, poKmlFactory, poKmlFeature,
-              bUseSimpleField);
+              bUseSimpleField, oFC);
 
     return poKmlFeature;
 }
 
 OGRFeature *kml2feat(PlacemarkPtr poKmlPlacemark, OGRLIBKMLDataSource *poOgrDS,
-                     OGRLayer *poOgrLayer, OGRFeatureDefn *poOgrFeatDefn,
+                     OGRLIBKMLLayer *poOgrLayer, OGRFeatureDefn *poOgrFeatDefn,
                      OGRSpatialReference *poOgrSRS)
 {
     OGRFeature *poOgrFeat = new OGRFeature(poOgrFeatDefn);
@@ -877,14 +875,15 @@ OGRFeature *kml2feat(PlacemarkPtr poKmlPlacemark, OGRLIBKMLDataSource *poOgrDS,
     }
 
     /***** fields *****/
-    kml2field(poOgrFeat, AsFeature(poKmlPlacemark));
+    kml2field(poOgrFeat, AsFeature(poKmlPlacemark),
+              poOgrLayer->GetFieldConfig());
 
     return poOgrFeat;
 }
 
 OGRFeature *kmlgroundoverlay2feat(GroundOverlayPtr poKmlOverlay,
                                   OGRLIBKMLDataSource * /* poOgrDS */,
-                                  OGRLayer * /* poOgrLayer */,
+                                  OGRLIBKMLLayer *poOgrLayer,
                                   OGRFeatureDefn *poOgrFeatDefn,
                                   OGRSpatialReference *poOgrSRS)
 {
@@ -905,7 +904,7 @@ OGRFeature *kmlgroundoverlay2feat(GroundOverlayPtr poKmlOverlay,
     }
 
     /***** fields *****/
-    kml2field(poOgrFeat, AsFeature(poKmlOverlay));
+    kml2field(poOgrFeat, AsFeature(poKmlOverlay), poOgrLayer->GetFieldConfig());
 
     return poOgrFeat;
 }
