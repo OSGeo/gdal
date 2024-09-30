@@ -32,6 +32,7 @@ RUN apt-get update && \
     libgif-dev \
     libhdf4-alt-dev \
     libhdf5-serial-dev \
+    libheif-dev \
     libjpeg-dev \
     libjxl-dev \
     libkml-dev \

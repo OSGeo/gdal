@@ -46,6 +46,7 @@
 #include "ogr_spatialref.h"
 #include "nitflib.h"
 #include "vrtdataset.h"
+#include "nitfdrivercore.h"
 
 constexpr int GEOTRSFRM_TOPLEFT_X = 0;
 constexpr int GEOTRSFRM_WE_RES = 1;
@@ -140,13 +141,10 @@ class RPFTOCDataset final : public GDALPamDataset
     }
 
     static int IsNITFFileTOC(NITFFile *psFile);
-    static int IsNonNITFFileTOC(GDALOpenInfo *poOpenInfo,
-                                const char *pszFilename);
     static GDALDataset *OpenFileTOC(NITFFile *psFile, const char *pszFilename,
                                     const char *entryName,
                                     const char *openInformationName);
 
-    static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
 };
 
@@ -1077,38 +1075,6 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
 }
 
 /************************************************************************/
-/*                          IsNonNITFFileTOC()                          */
-/************************************************************************/
-
-/* Check whether the file is a TOC file without NITF header */
-int RPFTOCDataset::IsNonNITFFileTOC(GDALOpenInfo *poOpenInfo,
-                                    const char *pszFilename)
-{
-    const char pattern[] = {0,   0,   '0', ' ', ' ', ' ', ' ', ' ',
-                            ' ', ' ', 'A', '.', 'T', 'O', 'C'};
-    if (poOpenInfo)
-    {
-        if (poOpenInfo->nHeaderBytes < 48)
-            return FALSE;
-        return memcmp(pattern, poOpenInfo->pabyHeader, 15) == 0;
-    }
-    else
-    {
-        VSILFILE *fp = VSIFOpenL(pszFilename, "rb");
-        if (fp == nullptr)
-        {
-            return FALSE;
-        }
-
-        char buffer[48];
-        int ret = (VSIFReadL(buffer, 1, 48, fp) == 48) &&
-                  memcmp(pattern, buffer, 15) == 0;
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-        return ret;
-    }
-}
-
-/************************************************************************/
 /*                             IsNITFFileTOC()                          */
 /************************************************************************/
 
@@ -1295,56 +1261,13 @@ GDALDataset *RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int RPFTOCDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    const char *pszFilename = poOpenInfo->pszFilename;
-
-    /* -------------------------------------------------------------------- */
-    /*      Is this a sub-dataset selector? If so, it is obviously RPFTOC.  */
-    /* -------------------------------------------------------------------- */
-
-    if (STARTS_WITH_CI(pszFilename, "NITF_TOC_ENTRY:"))
-        return TRUE;
-
-    /* -------------------------------------------------------------------- */
-    /*      First we check to see if the file has the expected header       */
-    /*      bytes.                                                          */
-    /* -------------------------------------------------------------------- */
-    if (poOpenInfo->nHeaderBytes < 48)
-        return FALSE;
-
-    if (IsNonNITFFileTOC(poOpenInfo, pszFilename))
-        return TRUE;
-
-    if (!STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "NITF") &&
-        !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "NSIF") &&
-        !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "NITF"))
-        return FALSE;
-
-    /* If it is a NITF A.TOC file, it must contain A.TOC in its header */
-    for (int i = 0; i < static_cast<int>(poOpenInfo->nHeaderBytes) -
-                            static_cast<int>(strlen("A.TOC"));
-         i++)
-    {
-        if (STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + i, "A.TOC"))
-            return TRUE;
-    }
-
-    return FALSE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *RPFTOCDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    if (!Identify(poOpenInfo))
+    if (!RPFTOCDriverIdentify(poOpenInfo))
         return nullptr;
 
     const char *pszFilename = poOpenInfo->pszFilename;
@@ -1369,8 +1292,8 @@ GDALDataset *RPFTOCDataset::Open(GDALOpenInfo *poOpenInfo)
         pszFilename++;
     }
 
-    if (IsNonNITFFileTOC((entryName != nullptr) ? nullptr : poOpenInfo,
-                         pszFilename))
+    if (RPFTOCIsNonNITFFileTOC((entryName != nullptr) ? nullptr : poOpenInfo,
+                               pszFilename))
     {
         GDALDataset *poDS = OpenFileTOC(nullptr, pszFilename, entryName,
                                         poOpenInfo->pszFilename);
@@ -1435,23 +1358,13 @@ GDALDataset *RPFTOCDataset::Open(GDALOpenInfo *poOpenInfo)
 void GDALRegister_RPFTOC()
 
 {
-    if (GDALGetDriverByName("RPFTOC") != nullptr)
+    if (GDALGetDriverByName(RPFTOC_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
+    RPFTOCDriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("RPFTOC");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "Raster Product Format TOC format");
-
-    poDriver->pfnIdentify = RPFTOCDataset::Identify;
     poDriver->pfnOpen = RPFTOCDataset::Open;
-
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/rpftoc.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "toc");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

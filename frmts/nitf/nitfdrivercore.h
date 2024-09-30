@@ -35,7 +35,7 @@
 
 #include "gdal_priv.h"
 
-constexpr const char *DRIVER_NAME = "NITF";
+constexpr const char *NITF_DRIVER_NAME = "NITF";
 
 #define NITFDriverIdentify PLUGIN_SYMBOL_NAME(NITFDriverIdentify)
 #define NITFDriverSetCommonMetadata                                            \
@@ -44,5 +44,28 @@ constexpr const char *DRIVER_NAME = "NITF";
 int NITFDriverIdentify(GDALOpenInfo *poOpenInfo);
 
 void NITFDriverSetCommonMetadata(GDALDriver *poDriver);
+
+constexpr const char *RPFTOC_DRIVER_NAME = "RPFTOC";
+
+#define RPFTOCDriverIdentify PLUGIN_SYMBOL_NAME(RPFTOCDriverIdentify)
+#define RPFTOCDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(RPFTOCDriverSetCommonMetadata)
+#define RPFTOCIsNonNITFFileTOC PLUGIN_SYMBOL_NAME(RPFTOCIsNonNITFFileTOC)
+
+int RPFTOCDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void RPFTOCDriverSetCommonMetadata(GDALDriver *poDriver);
+
+int RPFTOCIsNonNITFFileTOC(GDALOpenInfo *poOpenInfo, const char *pszFilename);
+
+constexpr const char *ECRGTOC_DRIVER_NAME = "ECRGTOC";
+
+#define ECRGTOCDriverIdentify PLUGIN_SYMBOL_NAME(ECRGTOCDriverIdentify)
+#define ECRGTOCDriverSetCommonMetadata                                         \
+    PLUGIN_SYMBOL_NAME(ECRGTOCDriverSetCommonMetadata)
+
+int ECRGTOCDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void ECRGTOCDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

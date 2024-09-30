@@ -7,6 +7,13 @@ set -e
 LD_LIBRARY_PATH="/opt/instantclient_19_9:/opt/instantclient_19_9/lib:${LD_LIBRARY_PATH}"
 export LD_LIBRARY_PATH
 
+# Check the build includes the expected drivers
+gdalinfo --formats > found_formats.txt
+ogrinfo --formats >> found_formats.txt
+cat found_formats.txt
+cat ../.github/workflows/ubuntu_24.04/expected_gdalinfo_formats.txt ../.github/workflows/ubuntu_24.04/expected_ogrinfo_formats.txt > expected_formats.txt
+diff -u expected_formats.txt found_formats.txt
+
 # Test development launcher script
 gdal_edit --version
 
