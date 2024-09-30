@@ -331,7 +331,7 @@ static void OGRSQLITE_STDDEV_SAMP_Finalize(sqlite3_context *pContext)
 // Percentile related code inspired from https://sqlite.org/src/file/ext/misc/percentile.c
 // of https://www.sqlite.org/draft/percentile.html
 
-// Constant addd to Percentile::rPct, since rPct is initialized to 0 when unset.
+// Constant added to Percentile::rPct, since rPct is initialized to 0 when unset.
 constexpr double PERCENT_ADD_CONSTANT = 1;
 
 namespace

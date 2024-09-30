@@ -1115,7 +1115,7 @@ std::unique_ptr<GDALDataset> MEMDataset::Clone(int nScopeFlags,
                 poNewBand->psPam->CopyFrom(*(poSrcMEMBand->psPam));
             }
 
-            // Instanciates a mask band when needed.
+            // Instantiates a mask band when needed.
             if ((poSrcMEMBand->nMaskFlags &
                  (GMF_ALL_VALID | GMF_ALPHA | GMF_NODATA)) == 0)
             {

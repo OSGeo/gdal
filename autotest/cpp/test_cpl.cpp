@@ -5367,7 +5367,7 @@ TEST_F(test_cpl, VSIMemGenerateHiddenFilename)
             EXPECT_EQ(VSIStatL(pszFilename1, &sStat), 0);
         }
 
-        // Get's back content
+        // Gets back content
         EXPECT_EQ(VSIGetMemFileBuffer(pszFilename1, nullptr, false),
                   abyDummyData);
 

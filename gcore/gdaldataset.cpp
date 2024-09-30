@@ -10244,7 +10244,7 @@ CPLErr GDALDatasetReadCompressedData(GDALDatasetH hDS, const char *pszFormat,
  *                       If set to true, the dataset from which they have been
  *                       cloned from must remain opened during the lifetime of
  *                       its clones.
- * @return true if the Clone() method is expecte to succeed with the same values
+ * @return true if the Clone() method is expected to succeed with the same values
  *         of nScopeFlags and bCanShareState.
  */
 bool GDALDataset::CanBeCloned(int nScopeFlags,

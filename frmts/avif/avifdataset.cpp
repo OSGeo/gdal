@@ -1163,7 +1163,7 @@ void GDALRegister_AVIF()
     bool bMayHaveWriteSupport = true;
     if (!poDM->IsKnownDriver("AVIF"))
     {
-        // If we are not built as a defered plugin, check now if libavif has
+        // If we are not built as a deferred plugin, check now if libavif has
         // write support
         bMayHaveWriteSupport =
             poDriver->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST) != nullptr;
