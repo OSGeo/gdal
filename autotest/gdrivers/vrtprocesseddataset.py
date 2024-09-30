@@ -720,6 +720,58 @@ def test_vrtprocesseddataset_dehazing_different_resolution(tmp_vsimem):
 
 
 ###############################################################################
+# Test we properly request auxiliary datasets on the right-most/bottom-most
+# truncated tile
+
+
+def test_vrtprocesseddataset_dehazing_edge_effects(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        src_filename,
+        257,
+        257,
+        1,
+        gdal.GDT_Byte,
+        ["TILED=YES", "BLOCKXSIZE=256", "BLOCKYSIZE=256"],
+    )
+    src_ds.GetRasterBand(1).Fill(10)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    src_ds.Close()
+
+    gain_filename = str(tmp_vsimem / "gain.tif")
+    gain_ds = gdal.GetDriverByName("GTiff").Create(gain_filename, 1, 1)
+    gain_ds.GetRasterBand(1).Fill(2)
+    gain_ds.SetGeoTransform([0, 257, 0, 0, 0, -257])
+    gain_ds.Close()
+
+    offset_filename = str(tmp_vsimem / "offset.tif")
+    offset_ds = gdal.GetDriverByName("GTiff").Create(offset_filename, 1, 1)
+    offset_ds.GetRasterBand(1).Fill(3)
+    offset_ds.SetGeoTransform([0, 257, 0, 0, 0, -257])
+    offset_ds.Close()
+
+    ds = gdal.Open(
+        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    <Input>
+        <SourceFilename>{src_filename}</SourceFilename>
+    </Input>
+    <ProcessingSteps>
+        <Step>
+            <Algorithm>LocalScaleOffset</Algorithm>
+            <Argument name="gain_dataset_filename_1">{gain_filename}</Argument>
+            <Argument name="gain_dataset_band_1">1</Argument>
+            <Argument name="offset_dataset_filename_1">{offset_filename}</Argument>
+            <Argument name="offset_dataset_band_1">1</Argument>
+        </Step>
+    </ProcessingSteps>
+    </VRTDataset>
+        """
+    )
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (17, 17)
+
+
+###############################################################################
 # Test error cases of LocalScaleOffset algorithm
 
 
