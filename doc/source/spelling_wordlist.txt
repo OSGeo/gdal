@@ -2733,6 +2733,7 @@ RecordBatch
 RecordBatchAsNumpy
 recurse
 recursionLevel
+redirections
 Redistributable
 reentrancy
 reentrant

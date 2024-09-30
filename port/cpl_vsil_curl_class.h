@@ -116,7 +116,8 @@ struct WriteFuncStruct
     bool bMultiRange = false;
     vsi_l_offset nStartOffset = 0;
     vsi_l_offset nEndOffset = 0;
-    int nHTTPCode = 0;
+    int nHTTPCode = 0;       // potentially after redirect
+    int nFirstHTTPCode = 0;  // the one of the redirect
     vsi_l_offset nContentLength = 0;
     bool bFoundContentRange = false;
     bool bError = false;
@@ -423,7 +424,8 @@ class VSICurlHandle : public VSIVirtualHandle
     int ReadMultiRangeSingleGet(int nRanges, void **ppData,
                                 const vsi_l_offset *panOffsets,
                                 const size_t *panSizes);
-    std::string GetRedirectURLIfValid(bool &bHasExpired) const;
+    std::string GetRedirectURLIfValid(bool &bHasExpired,
+                                      CPLStringList &aosHTTPOptions) const;
 
     void UpdateRedirectInfo(CURL *hCurlHandle,
                             const WriteFuncStruct &sWriteFuncHeaderData);
