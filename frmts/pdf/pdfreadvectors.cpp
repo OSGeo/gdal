@@ -461,10 +461,10 @@ void PDFDataset::PDFCoordsToSRSCoords(double x, double y, double &X, double &Y)
     Y = m_adfGeoTransform[3] + x * m_adfGeoTransform[4] +
         y * m_adfGeoTransform[5];
 
-    if (fabs(X - (int)floor(X + 0.5)) < 1e-8)
-        X = (int)floor(X + 0.5);
-    if (fabs(Y - (int)floor(Y + 0.5)) < 1e-8)
-        Y = (int)floor(Y + 0.5);
+    if (fabs(X - std::round(X)) < 1e-8)
+        X = std::round(X);
+    if (fabs(Y - std::round(Y)) < 1e-8)
+        Y = std::round(Y);
 }
 
 /************************************************************************/
@@ -1500,9 +1500,12 @@ OGRGeometry *PDFDataset::ParseContent(
                             {
                                 poFeature->SetStyleString(CPLSPrintf(
                                     "PEN(c:#%02X%02X%02X)",
-                                    (int)(oGS.adfStrokeColor[0] * 255 + 0.5),
-                                    (int)(oGS.adfStrokeColor[1] * 255 + 0.5),
-                                    (int)(oGS.adfStrokeColor[2] * 255 + 0.5)));
+                                    static_cast<int>(
+                                        oGS.adfStrokeColor[0] * 255 + 0.5),
+                                    static_cast<int>(
+                                        oGS.adfStrokeColor[1] * 255 + 0.5),
+                                    static_cast<int>(
+                                        oGS.adfStrokeColor[2] * 255 + 0.5)));
                             }
                             else if (eType == wkbPolygon ||
                                      eType == wkbMultiPolygon)
@@ -1510,12 +1513,18 @@ OGRGeometry *PDFDataset::ParseContent(
                                 poFeature->SetStyleString(CPLSPrintf(
                                     "PEN(c:#%02X%02X%02X);BRUSH(fc:#%02X%02X%"
                                     "02X)",
-                                    (int)(oGS.adfStrokeColor[0] * 255 + 0.5),
-                                    (int)(oGS.adfStrokeColor[1] * 255 + 0.5),
-                                    (int)(oGS.adfStrokeColor[2] * 255 + 0.5),
-                                    (int)(oGS.adfFillColor[0] * 255 + 0.5),
-                                    (int)(oGS.adfFillColor[1] * 255 + 0.5),
-                                    (int)(oGS.adfFillColor[2] * 255 + 0.5)));
+                                    static_cast<int>(
+                                        oGS.adfStrokeColor[0] * 255 + 0.5),
+                                    static_cast<int>(
+                                        oGS.adfStrokeColor[1] * 255 + 0.5),
+                                    static_cast<int>(
+                                        oGS.adfStrokeColor[2] * 255 + 0.5),
+                                    static_cast<int>(oGS.adfFillColor[0] * 255 +
+                                                     0.5),
+                                    static_cast<int>(oGS.adfFillColor[1] * 255 +
+                                                     0.5),
+                                    static_cast<int>(oGS.adfFillColor[2] * 255 +
+                                                     0.5)));
                             }
                         }
                         poGeom->assignSpatialReference(
@@ -1712,8 +1721,8 @@ OGRGeometry *PDFDataset::BuildGeometry(std::vector<double> &oCoords,
                     poPoly->addRingDirectly(poLS);
                     poLS = nullptr;
 
-                    papoPoly = (OGRGeometry **)CPLRealloc(
-                        papoPoly, (nPolys + 1) * sizeof(OGRGeometry *));
+                    papoPoly = static_cast<OGRGeometry **>(CPLRealloc(
+                        papoPoly, (nPolys + 1) * sizeof(OGRGeometry *)));
                     papoPoly[nPolys++] = poPoly;
                 }
                 delete poLS;
@@ -1783,8 +1792,8 @@ OGRGeometry *PDFDataset::BuildGeometry(std::vector<double> &oCoords,
                         poPoly->addRingDirectly(poLS);
                         poLS = nullptr;
 
-                        papoPoly = (OGRGeometry **)CPLRealloc(
-                            papoPoly, (nPolys + 1) * sizeof(OGRGeometry *));
+                        papoPoly = static_cast<OGRGeometry **>(CPLRealloc(
+                            papoPoly, (nPolys + 1) * sizeof(OGRGeometry *)));
                         papoPoly[nPolys++] = poPoly;
                     }
                     else
@@ -1900,7 +1909,7 @@ void PDFDataset::ExploreContents(GDALPDFObject *poObj,
     if (!pszStr)
         return;
 
-    const char *pszMCID = (const char *)pszStr;
+    const char *pszMCID = pszStr;
     while ((pszMCID = strstr(pszMCID, "/MCID")) != nullptr)
     {
         const char *pszBDC = strstr(pszMCID, "BDC");
@@ -1964,7 +1973,7 @@ void PDFDataset::ExploreContentsNonStructuredInternal(
     {
         GDALPDFArray *poArray = poContents->GetArray();
         char *pszConcatStr = nullptr;
-        int nConcatLen = 0;
+        size_t nConcatLen = 0;
         for (int i = 0; i < poArray->GetLength(); i++)
         {
             GDALPDFObject *poObj = poArray->Get(i);
@@ -1977,9 +1986,9 @@ void PDFDataset::ExploreContentsNonStructuredInternal(
             char *pszStr = poStream->GetBytes();
             if (!pszStr)
                 break;
-            int nLen = (int)strlen(pszStr);
-            char *pszConcatStrNew =
-                (char *)CPLRealloc(pszConcatStr, nConcatLen + nLen + 1);
+            const size_t nLen = strlen(pszStr);
+            char *pszConcatStrNew = static_cast<char *>(
+                CPLRealloc(pszConcatStr, nConcatLen + nLen + 1));
             if (pszConcatStrNew == nullptr)
             {
                 CPLFree(pszStr);

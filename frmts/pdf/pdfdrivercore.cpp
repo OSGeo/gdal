@@ -103,7 +103,7 @@ int PDFDatasetIdentify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 128)
         return FALSE;
 
-    return STARTS_WITH((const char *)poOpenInfo->pabyHeader, "%PDF");
+    return memcmp(poOpenInfo->pabyHeader, "%PDF", 4) == 0;
 }
 
 /************************************************************************/

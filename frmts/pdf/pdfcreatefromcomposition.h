@@ -79,16 +79,16 @@ class GDALPDFComposerWriter final : public GDALPDFBaseWriter
         double m_adfGT[6]{0, 1, 0, 0, 0, 1};
     };
 
-    std::vector<GDALPDFObjectNum> m_anParentElements;
-    std::vector<GDALPDFObjectNum> m_anFeatureLayerId;
-    std::map<CPLString, GDALPDFObjectNum> m_oMapPageIdToObjectNum;
+    std::vector<GDALPDFObjectNum> m_anParentElements{};
+    std::vector<GDALPDFObjectNum> m_anFeatureLayerId{};
+    std::map<CPLString, GDALPDFObjectNum> m_oMapPageIdToObjectNum{};
 
     struct PageContext
     {
         double m_dfWidthInUserUnit = 0;
         double m_dfHeightInUserUnit = 0;
         CPLString m_osDrawingStream{};
-        std::vector<GDALPDFObjectNum> m_anFeatureUserProperties;
+        std::vector<GDALPDFObjectNum> m_anFeatureUserProperties{};
         int m_nMCID = 0;
         PDFCompressMethod m_eStreamCompressMethod = COMPRESS_DEFLATE;
         std::map<CPLString, GDALPDFObjectNum> m_oXObjects{};

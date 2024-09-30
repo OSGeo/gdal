@@ -48,10 +48,9 @@ static vsi_l_offset VSIPDFFileStreamGetSize(VSILFILE *f)
 
 VSIPDFFileStream::VSIPDFFileStream(VSILFILE *fIn, const char *pszFilename,
                                    Object &&dictA)
-    : BaseStream(std::move(dictA), (Goffset)VSIPDFFileStreamGetSize(fIn)),
-      poParent(nullptr), poFilename(new GooString(pszFilename)), f(fIn),
-      nStart(0), bLimited(false), nLength(0), nCurrentPos(VSI_L_OFFSET_MAX),
-      bHasSavedPos(FALSE), nSavedPos(0), nPosInBuffer(-1), nBufferLength(-1)
+    : BaseStream(std::move(dictA),
+                 static_cast<Goffset>(VSIPDFFileStreamGetSize(fIn))),
+      poParent(nullptr), poFilename(new GooString(pszFilename)), f(fIn)
 {
 }
 
@@ -62,10 +61,9 @@ VSIPDFFileStream::VSIPDFFileStream(VSILFILE *fIn, const char *pszFilename,
 VSIPDFFileStream::VSIPDFFileStream(VSIPDFFileStream *poParentIn,
                                    vsi_l_offset startA, bool limitedA,
                                    vsi_l_offset lengthA, Object &&dictA)
-    : BaseStream(std::move(dictA), (Goffset)lengthA), poParent(poParentIn),
-      poFilename(poParentIn->poFilename), f(poParentIn->f), nStart(startA),
-      bLimited(limitedA), nLength(lengthA), nCurrentPos(VSI_L_OFFSET_MAX),
-      bHasSavedPos(FALSE), nSavedPos(0), nPosInBuffer(-1), nBufferLength(-1)
+    : BaseStream(std::move(dictA), static_cast<Goffset>(lengthA)),
+      poParent(poParentIn), poFilename(poParentIn->poFilename),
+      f(poParentIn->f), nStart(startA), bLimited(limitedA), nLength(lengthA)
 {
 }
 
@@ -117,7 +115,7 @@ Goffset VSIPDFFileStream::getPos()
 
 Goffset VSIPDFFileStream::getStart()
 {
-    return (Goffset)nStart;
+    return static_cast<Goffset>(nStart);
 }
 
 /************************************************************************/
@@ -154,12 +152,12 @@ int VSIPDFFileStream::FillBuffer()
     if (!bLimited)
         nToRead = BUFFER_SIZE;
     else if (nCurrentPos + BUFFER_SIZE > nStart + nLength)
-        nToRead = (int)(nStart + nLength - nCurrentPos);
+        nToRead = static_cast<int>(nStart + nLength - nCurrentPos);
     else
         nToRead = BUFFER_SIZE;
     if (nToRead < 0)
         return FALSE;
-    nBufferLength = (int)VSIFReadL(abyBuffer, 1, nToRead, f);
+    nBufferLength = static_cast<int>(VSIFReadL(abyBuffer, 1, nToRead, f));
     if (nBufferLength == 0)
         return FALSE;
 
@@ -173,7 +171,8 @@ int VSIPDFFileStream::FillBuffer()
     // with allocation and liberation of VSIPDFFileStream as PDFDoc::str member.
     if (nCurrentPos == 0 || nCurrentPos == VSI_L_OFFSET_MAX)
     {
-        for (int i = 0; i < nBufferLength - (int)strlen("/Linearized "); i++)
+        for (int i = 0;
+             i < nBufferLength - static_cast<int>(strlen("/Linearized ")); i++)
         {
             if (memcmp(abyBuffer + i, "/Linearized ", strlen("/Linearized ")) ==
                 0)
@@ -279,7 +278,10 @@ void VSIPDFFileStream::unfilteredReset()
 void VSIPDFFileStream::close()
 {
     if (bHasSavedPos)
-        VSIFSeekL(f, nCurrentPos = nSavedPos, SEEK_SET);
+    {
+        nCurrentPos = nSavedPos;
+        VSIFSeekL(f, nCurrentPos, SEEK_SET);
+    }
     bHasSavedPos = FALSE;
     nSavedPos = 0;
 }
@@ -305,7 +307,7 @@ void VSIPDFFileStream::setPos(Goffset pos, int dir)
             VSIFSeekL(f, nStart + nLength, SEEK_SET);
         }
         vsi_l_offset size = VSIFTellL(f);
-        vsi_l_offset newpos = (vsi_l_offset)pos;
+        vsi_l_offset newpos = static_cast<vsi_l_offset>(pos);
         if (newpos > size)
             newpos = size;
         VSIFSeekL(f, nCurrentPos = size - newpos, SEEK_SET);
@@ -321,7 +323,8 @@ void VSIPDFFileStream::setPos(Goffset pos, int dir)
 void VSIPDFFileStream::moveStart(Goffset delta)
 {
     nStart += delta;
-    VSIFSeekL(f, nCurrentPos = nStart, SEEK_SET);
+    nCurrentPos = nStart;
+    VSIFSeekL(f, nCurrentPos, SEEK_SET);
     nPosInBuffer = -1;
     nBufferLength = -1;
 }
@@ -349,7 +352,8 @@ int VSIPDFFileStream::getChars(int nChars, unsigned char *buffer)
         {
             if (!bLimited && nToRead > BUFFER_SIZE)
             {
-                int nJustRead = (int)VSIFReadL(buffer + nRead, 1, nToRead, f);
+                int nJustRead =
+                    static_cast<int>(VSIFReadL(buffer + nRead, 1, nToRead, f));
                 nPosInBuffer = -1;
                 nBufferLength = -1;
                 nCurrentPos += nJustRead;
