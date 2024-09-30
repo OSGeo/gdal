@@ -388,8 +388,6 @@ INPUT                  = port \
                          ogr \
                          ogr/ogrsf_frmts \
                          ogr/ogrsf_frmts/generic \
-                         ogr/ogrsf_frmts/geojson/ogrgeojsonwriter.cpp \
-                         ogr/ogrsf_frmts/kml/ogr2kmlgeometry.cpp \
                          swig/python/gdal-utils/scripts \
                          gnm \
                          doxygen_index.md

@@ -123,6 +123,7 @@ def test_ogrlineref_4(ogrlineref_path, parts_shp, tmp_path):
 # test kml
 
 
+@pytest.mark.require_driver("KML")
 def test_ogrlineref_5(ogrlineref_path, tmp_path):
 
     parts_kml = str(tmp_path / "parts.kml")

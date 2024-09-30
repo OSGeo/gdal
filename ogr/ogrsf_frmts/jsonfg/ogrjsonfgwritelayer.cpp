@@ -28,7 +28,7 @@
 
 #include "ogr_jsonfg.h"
 #include "cpl_time.h"
-#include "ogrgeojsonreader.h"  // OGRJSonParse()
+#include "ogrlibjsonutils.h"  // OGRJSonParse()
 
 #include <algorithm>
 

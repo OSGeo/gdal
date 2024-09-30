@@ -456,7 +456,7 @@ jobs:
       # Build PDF driver as plugin due to the PDFium build including libopenjp2 symbols which would conflict with external libopenjp2
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DUSE_CCACHE=ON" "-DCMAKE_PREFIX_PATH=${CONDA}/envs/gdalenv" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_BUILD_TYPE=Release -DPDFIUM_ROOT=$GITHUB_WORKSPACE/install-pdfium -DGDAL_ENABLE_DRIVER_PDF_PLUGIN:BOOL=ON -DCMAKE_UNITY_BUILD=ON
+        cmake -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DUSE_CCACHE=ON" "-DCMAKE_PREFIX_PATH=${CONDA}/envs/gdalenv" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_BUILD_TYPE=Release -DPDFIUM_ROOT=$GITHUB_WORKSPACE/install-pdfium -DGDAL_ENABLE_DRIVER_PDF_PLUGIN:BOOL=ON -DCMAKE_UNITY_BUILD=ON -DOGR_ENABLE_DRIVER_TAB_PLUGIN=OFF
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
@@ -542,6 +542,14 @@ jobs:
       run: |
         rm -f build/CMakeCache.txt
         cmake -A ${architecture} -G "${generator}" "-DCMAKE_PREFIX_PATH=${CONDA}/envs/gdalenv" -Werror=dev "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF -DWERROR_DEV_FLAG="-Werror=dev"
+    - name: Build
+      shell: bash -l {0}
+      run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
+
+    - name: Re-enable shapefile driver (otherwise lots of python tests would fail)
+      shell: bash -l {0}
+      run: |
+        cmake -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DOGR_ENABLE_DRIVER_SHAPE=ON -DOGR_ENABLE_DRIVER_SHAPE_PLUGIN=ON
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2

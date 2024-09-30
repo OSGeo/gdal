@@ -57,9 +57,6 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst);
 char *TABCleanFieldName(const char *pszSrcName, const char *pszCharset,
                         bool bStrictLaundering);
 
-const char *TABUnitIdToString(int nId);
-int TABUnitIdFromString(const char *pszName);
-
 void TABSaturatedAdd(GInt32 &nVal, GInt32 nAdd);
 GInt16 TABInt16Diff(int a, int b);
 

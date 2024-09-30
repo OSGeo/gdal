@@ -27,7 +27,9 @@
  ****************************************************************************/
 
 #include "ogr_plscenes.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
+#include "ogrgeojsongeometry.h"
+#include "ogrgeojsonwriter.h"
 #include <algorithm>
 
 /************************************************************************/

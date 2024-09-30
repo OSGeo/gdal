@@ -317,6 +317,7 @@ def test_ogrinfo_lib_json_relationships():
 # Test json output with OFSTJSON field
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_OFSTJSON():
 
     ds = gdal.OpenEx(
@@ -375,6 +376,7 @@ def test_ogrinfo_lib_json_OFSTJSON():
 # Test json output with -fields=NO
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_fields_NO():
 
     ds = gdal.OpenEx(
@@ -398,6 +400,7 @@ def test_ogrinfo_lib_json_fields_NO():
 # Test json output with -geom=NO
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_geom_NO():
 
     ds = gdal.OpenEx(

@@ -144,6 +144,7 @@ def test_gdalsrsinfo_6(gdalsrsinfo_path):
 # Test -o mapinfo option
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_gdalsrsinfo_7(gdalsrsinfo_path):
 
     ret = gdaltest.runexternal(gdalsrsinfo_path + " -o mapinfo ../gcore/data/byte.tif")

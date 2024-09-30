@@ -66,24 +66,10 @@ bool TopoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
 bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
 
 /************************************************************************/
-/*                           GeoJSONPropertyToFieldType                 */
-/************************************************************************/
-
-OGRFieldType CPL_DLL GeoJSONPropertyToFieldType(json_object *poObject,
-                                                OGRFieldSubType &eSubType,
-                                                bool bArrayAsString = false);
-
-/************************************************************************/
 /*                      GeoJSONStringPropertyToFieldType                */
 /************************************************************************/
 
 OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
                                               int &nTZFlag);
-
-/************************************************************************/
-/*                           OGRGeoJSONGetGeometryName                  */
-/************************************************************************/
-
-const char *OGRGeoJSONGetGeometryName(OGRGeometry const *poGeometry);
 
 #endif  // OGR_GEOJSONUTILS_H_INCLUDED

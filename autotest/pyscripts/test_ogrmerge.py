@@ -36,10 +36,13 @@ from test_py_scripts import samples_path
 
 from osgeo import gdal, ogr
 
-pytestmark = pytest.mark.skipif(
-    test_py_scripts.get_py_script("ogrmerge") is None,
-    reason="ogrmerge.py not available",
-)
+pytestmark = [
+    pytest.mark.require_driver("OGR_VRT"),
+    pytest.mark.skipif(
+        test_py_scripts.get_py_script("ogrmerge") is None,
+        reason="ogrmerge.py not available",
+    ),
+]
 
 
 @pytest.fixture()

@@ -51,6 +51,7 @@
 #include "ogr_feature.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
+#include "ogrlibjsonutils.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonutils.h"
 #include "ogrgeojsonwriter.h"

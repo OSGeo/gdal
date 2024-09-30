@@ -34,8 +34,7 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 #include "../vrt/gdal_vrt.h"
-
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 
 #include <algorithm>
 

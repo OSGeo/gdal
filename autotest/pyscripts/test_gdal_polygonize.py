@@ -263,6 +263,7 @@ def test_gdal_polygonize_4bis(script_path, tmp_path):
 # Test -8
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_polygonize_minus_8(script_path, tmp_path):
 
     outfilename = str(tmp_path / "out.geojson")

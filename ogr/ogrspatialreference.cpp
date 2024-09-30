@@ -55,6 +55,7 @@
 #include "ogr_p.h"
 #include "ogr_proj_p.h"
 #include "ogr_srs_api.h"
+#include "ogrmitabspatialref.h"
 
 #include "proj.h"
 #include "proj_experimental.h"
@@ -11208,11 +11209,6 @@ OGRErr OSRSetAxes(OGRSpatialReferenceH hSRS, const char *pszTargetKey,
                                     eYAxisOrientation);
 }
 
-#ifdef HAVE_MITAB
-char CPL_DLL *MITABSpatialRef2CoordSys(const OGRSpatialReference *);
-OGRSpatialReference CPL_DLL *MITABCoordSys2SpatialRef(const char *);
-#endif
-
 /************************************************************************/
 /*                       OSRExportToMICoordSys()                        */
 /************************************************************************/
@@ -11254,18 +11250,11 @@ OGRErr OSRExportToMICoordSys(OGRSpatialReferenceH hSRS, char **ppszReturn)
 OGRErr OGRSpatialReference::exportToMICoordSys(char **ppszResult) const
 
 {
-#ifdef HAVE_MITAB
     *ppszResult = MITABSpatialRef2CoordSys(this);
     if (*ppszResult != nullptr && strlen(*ppszResult) > 0)
         return OGRERR_NONE;
 
     return OGRERR_FAILURE;
-#else
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "MITAB not available, CoordSys support disabled.");
-
-    return OGRERR_UNSUPPORTED_OPERATION;
-#endif
 }
 
 /************************************************************************/
@@ -11308,7 +11297,6 @@ OGRErr OSRImportFromMICoordSys(OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::importFromMICoordSys(const char *pszCoordSys)
 
 {
-#ifdef HAVE_MITAB
     OGRSpatialReference *poResult = MITABCoordSys2SpatialRef(pszCoordSys);
 
     if (poResult == nullptr)
@@ -11318,12 +11306,6 @@ OGRErr OGRSpatialReference::importFromMICoordSys(const char *pszCoordSys)
     delete poResult;
 
     return OGRERR_NONE;
-#else
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "MITAB not available, CoordSys support disabled.");
-
-    return OGRERR_UNSUPPORTED_OPERATION;
-#endif
 }
 
 /************************************************************************/

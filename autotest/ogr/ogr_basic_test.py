@@ -1228,6 +1228,8 @@ def test_driver_open_throw_2():
 
     with gdaltest.enable_exceptions():
         drv = ogr.GetDriverByName("MapInfo File")
+        if not drv:
+            pytest.skip("MapInfo driver not available")
 
         assert isinstance(drv, ogr.Driver)
 

@@ -57,7 +57,7 @@
 #include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 
 /*! @cond Doxygen_Suppress */
 

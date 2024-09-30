@@ -8,7 +8,6 @@ add_gdal_driver(
           "NOT GDAL_USE_JSONC_INTERNAL"
           NO_DEPS)
 gdal_standard_includes(gdal_EEDA)
-target_include_directories(gdal_EEDA PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>)
 
 set(GDAL_DATA_FILES
     LICENSE.TXT

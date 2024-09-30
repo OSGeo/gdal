@@ -27,10 +27,10 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"
+#include "ogrsf_frmts.h"
 #include "cpl_http.h"
 #include "cpl_conv.h"
-#include "ogrgeojsonreader.h"
-#include "ogrgeojsonwriter.h"
+#include "ogrlibjsonutils.h"
 #include "ogr_swq.h"
 #include "eeda.h"
 

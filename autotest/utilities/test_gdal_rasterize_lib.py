@@ -798,6 +798,7 @@ def test_gdal_rasterize_lib_dict_arguments():
 # Test doesn't crash without options
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_rasterize_no_options(tmp_vsimem):
     """Test doesn't crash without options"""
 

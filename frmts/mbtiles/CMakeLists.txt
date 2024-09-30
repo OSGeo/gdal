@@ -26,5 +26,5 @@ if (NOT GDAL_USE_JSONC_INTERNAL)
   gdal_target_link_libraries(gdal_MBTiles PRIVATE ${JSONC_TARGET})
 endif ()
 target_include_directories(
-  gdal_MBTiles PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/gpkg
+  gdal_MBTiles PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/gpkg
                        ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/sqlite)

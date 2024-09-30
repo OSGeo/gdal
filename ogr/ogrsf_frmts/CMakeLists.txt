@@ -12,13 +12,35 @@ add_dependencies(ogrsf_frmts generate_gdal_version_h)
 
 # Obligatory for building GDAL; always compile in.
 ogr_default_driver(mem "Read/write driver for MEMORY virtual files")
-ogr_default_driver(geojson "GeoJSON/ESRIJSON/TopoJSON driver")
-ogr_default_driver2(mitab TAB "MapInfo TAB and MIF/MID")
-ogr_default_driver(shape "ESRI shape-file")
+
+# Exception to the rule: enable the GeoJSON driver by default, even if
+# OGR_BUILD_OPTIONAL_DRIVERS=OFF.
+if (NOT DEFINED OGR_ENABLE_DRIVER_GEOJSON AND
+    DEFINED OGR_BUILD_OPTIONAL_DRIVERS AND
+    NOT OGR_BUILD_OPTIONAL_DRIVERS)
+    message(WARNING "Enabling OGR_ENABLE_DRIVER_GEOJSON=ON, despite OGR_BUILD_OPTIONAL_DRIVERS=OFF. You can of course override this choice by setting OGR_ENABLE_DRIVER_GEOJSON=OFF")
+    option(OGR_ENABLE_DRIVER_GEOJSON "Set ON to build GeoJSON/GeoJSONSeq/ESRIJSON/TopoJSON drivers" ON)
+endif()
+ogr_optional_driver(geojson "GeoJSON/GeoJSONSeq/ESRIJSON/TopoJSON drivers")
+
+add_feature_info(ogr_TAB OGR_ENABLE_DRIVER_TAB "MapInfo TAB and MIF/MID")
+if (OGR_ENABLE_DRIVER_TAB)
+    add_subdirectory(mitab)
+endif ()
+
+# Exception to the rule: enable the Shapefile driver by default, even if
+# OGR_BUILD_OPTIONAL_DRIVERS=OFF.
+if (NOT DEFINED OGR_ENABLE_DRIVER_SHAPE AND
+    DEFINED OGR_BUILD_OPTIONAL_DRIVERS AND
+    NOT OGR_BUILD_OPTIONAL_DRIVERS)
+    message(WARNING "Enabling OGR_ENABLE_DRIVER_SHAPE=ON, despite OGR_BUILD_OPTIONAL_DRIVERS=OFF. You can of course override this choice by setting OGR_ENABLE_DRIVER_SHAPE=OFF")
+    option(OGR_ENABLE_DRIVER_SHAPE "Set ON to build Shapefile driver" ON)
+endif()
+ogr_optional_driver(shape "ESRI shape-file")
 
 # ######################################################################################################################
-ogr_default_driver(kml KML) # when not found EXPAT, it use CPL_MINIXML (ex. android)
-ogr_default_driver(vrt "VRT - Virtual Format")
+ogr_optional_driver(kml KML) # when not found EXPAT, it use CPL_MINIXML (ex. android)
+ogr_optional_driver(vrt "VRT - Virtual Format")
 
 # Caution: if modifying AVC declaration here, also modify it in gdal.cmake
 ogr_optional_driver(avc AVC)
@@ -46,13 +68,16 @@ ogr_optional_driver(jml JML)
 ogr_optional_driver(vdv "VDV-451/VDV-452/INTREST Data Format")
 ogr_optional_driver(flatgeobuf FlatGeobuf)
 ogr_optional_driver(mapml MapML)
-ogr_optional_driver(jsonfg JSONFG)
+
 if( NOT WORDS_BIGENDIAN )
     ogr_optional_driver(miramon "MiraMonVector")
 endif()
 
 # ######################################################################################################################
 #
+if (NOT OGR_ENABLE_DRIVER_GEOJSON_PLUGIN)
+    ogr_dependent_driver(jsonfg JSONFG "OGR_ENABLE_DRIVER_GEOJSON")
+endif()
 
 ogr_dependent_driver(sdts SDTS "GDAL_ENABLE_DRIVER_SDTS")
 

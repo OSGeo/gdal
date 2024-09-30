@@ -345,12 +345,6 @@ class TABFile final : public IMapInfoFile
 
     virtual OGRSpatialReference *GetSpatialRef() override;
 
-    static OGRSpatialReference *
-    GetSpatialRefFromTABProj(const TABProjInfo &sTABProj);
-    static int GetTABProjFromSpatialRef(const OGRSpatialReference *poSpatialRef,
-                                        TABProjInfo &sTABProj,
-                                        int &nParamCount);
-
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
                                       int &numRegions, int &numTexts,
                                       GBool bForce = TRUE) override;
@@ -2245,55 +2239,5 @@ class TABDebugFeature final : public TABFeature
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 };
-
-/* -------------------------------------------------------------------- */
-/*      Some stuff related to spatial reference system handling.        */
-/*                                                                      */
-/*      In GDAL we make use of the coordsys transformation from         */
-/*      other places (sometimes even from plugins), so we               */
-/*      deliberately export these two functions from the DLL.           */
-/* -------------------------------------------------------------------- */
-
-char CPL_DLL *MITABSpatialRef2CoordSys(const OGRSpatialReference *);
-OGRSpatialReference CPL_DLL *MITABCoordSys2SpatialRef(const char *);
-
-bool MITABExtractCoordSysBounds(const char *pszCoordSys, double &dXMin,
-                                double &dYMin, double &dXMax, double &dYMax);
-int MITABCoordSys2TABProjInfo(const char *pszCoordSys, TABProjInfo *psProj);
-
-typedef struct
-{
-    int nDatumEPSGCode;
-    int nMapInfoDatumID;
-    const char *pszOGCDatumName;
-    int nEllipsoid;
-    double dfShiftX;
-    double dfShiftY;
-    double dfShiftZ;
-    double dfDatumParm0; /* RotX */
-    double dfDatumParm1; /* RotY */
-    double dfDatumParm2; /* RotZ */
-    double dfDatumParm3; /* Scale Factor */
-    double dfDatumParm4; /* Prime Meridian */
-} MapInfoDatumInfo;
-
-typedef struct
-{
-    int nMapInfoId;
-    const char *pszMapinfoName;
-    double dfA;             /* semi major axis in meters */
-    double dfInvFlattening; /* Inverse flattening */
-} MapInfoSpheroidInfo;
-
-/*---------------------------------------------------------------------
- * The following are used for coordsys bounds lookup
- *--------------------------------------------------------------------*/
-
-bool MITABLookupCoordSysBounds(TABProjInfo *psCS, double &dXMin, double &dYMin,
-                               double &dXMax, double &dYMax,
-                               bool bOnlyUserTable = false);
-int MITABLoadCoordSysTable(const char *pszFname);
-void MITABFreeCoordSysTable();
-bool MITABCoordSysTableLoaded();  // TODO(schwehr): Unused?
 
 #endif /* MITAB_H_INCLUDED_ */

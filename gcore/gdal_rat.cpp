@@ -54,7 +54,7 @@
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-#include "ogrgeojsonwriter.h"
+#include "ogrlibjsonutils.h"
 
 /**
  * \class GDALRasterAttributeTable

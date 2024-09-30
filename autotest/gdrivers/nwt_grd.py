@@ -31,8 +31,11 @@
 import shutil
 
 import gdaltest
+import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("NWT_GRD")
 
 ###############################################################################
 # Test a GRD dataset with three bands + Z
@@ -51,6 +54,13 @@ def test_nwt_grd_1():
 
 
 def test_nwt_grd_2():
+
+    if (
+        gdal.GetDriverByName("NWT_GRD").GetMetadataItem(gdal.DMD_CREATIONDATATYPES)
+        is None
+    ):
+        pytest.skip("NWT_GRD driver has no write support due to missing MITAB driver")
+
     """
     Test writing a GRD via CreateCopy
     """

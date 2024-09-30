@@ -30,12 +30,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "northwood.h"
-
-#ifdef MSVC
-#include "..\..\ogr\ogrsf_frmts\mitab\mitab.h"
-#else
-#include "../../ogr/ogrsf_frmts/mitab/mitab.h"
-#endif
+#include "ogrmitabspatialref.h"
 
 /************************************************************************/
 /* ==================================================================== */

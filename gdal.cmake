@@ -314,6 +314,16 @@ if (GDAL_USE_SHAPELIB_INTERNAL)
   mark_as_advanced(RENAME_INTERNAL_SHAPELIB_SYMBOLS)
 endif ()
 
+# Must be set before including ogr
+option(OGR_ENABLE_DRIVER_TAB
+       "Set ON to build MapInfo TAB and MIF/MID driver (required by Northwoord driver, and Shapefile attribute indexing)"
+       ${OGR_BUILD_OPTIONAL_DRIVERS})
+if(OGR_ENABLE_DRIVER_TAB AND
+   NOT DEFINED OGR_ENABLE_DRIVER_TAB_PLUGIN AND
+   GDAL_ENABLE_PLUGINS_NO_DEPS)
+    option(OGR_ENABLE_DRIVER_TAB_PLUGIN "Set ON to build OGR MapInfo TAB and MIF/MID driver as plugin" ON)
+endif()
+
 # Core components
 add_subdirectory(alg)
 add_subdirectory(ogr)

@@ -28,7 +28,7 @@
 
 #include "ogr_amigocloud.h"
 #include "ogr_p.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 
 /************************************************************************/
 /*                         OGRAmigoCloudLayer()                            */

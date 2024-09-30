@@ -419,6 +419,7 @@ def test_ogr_sql_13(data_ds):
 # Verify selection of, and on ogr_style and ogr_geom_wkt.
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_14():
 
     expect = [
@@ -452,6 +453,7 @@ def test_ogr_sql_15(data_ds):
 ###############################################################################
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_16():
 
     expect = [2]
@@ -465,6 +467,7 @@ def test_ogr_sql_16():
 ###############################################################################
 # Test the RFC 21 CAST operator.
 #
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_17():
 
     expect = ["1", "2"]
@@ -1285,6 +1288,7 @@ def test_ogr_sql_hstore_get_value_valid(data_ds, sql, expected):
 # Test 64 bit GetFeatureCount()
 
 
+@pytest.mark.require_driver("OGR_VRT")
 def test_ogr_sql_45():
 
     ds = ogr.Open(

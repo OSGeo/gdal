@@ -1,8 +1,9 @@
-# gdal core depends on kml driver, so it should not be a plugin.
 add_gdal_driver(
   TARGET ogr_KML
-  SOURCES kmlutility.h ogr_kml.h ogrkmldriver.cpp ogr2kmlgeometry.cpp ogrkmldatasource.cpp ogrkmllayer.cpp
-  BUILTIN)
+  SOURCES kmlutility.h ogr_kml.h ogrkmldriver.cpp ogrkmldatasource.cpp ogrkmllayer.cpp
+  PLUGIN_CAPABLE
+  NO_DEPS
+)
 gdal_standard_includes(ogr_KML)
 
 if (GDAL_USE_EXPAT)

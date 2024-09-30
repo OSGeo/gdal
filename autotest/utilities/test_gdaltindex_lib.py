@@ -234,6 +234,7 @@ def test_gdaltindex_lib_outputSRS_writeAbsoluePath(tmp_path, four_tile_index):
 # Test -f, -lyr_name
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_gdaltindex_lib_format_layerName(tmp_path, four_tiles):
 
     index_mif = str(tmp_path / "test_gdaltindex6.mif")

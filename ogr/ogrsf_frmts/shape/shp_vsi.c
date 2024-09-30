@@ -34,6 +34,8 @@
 #include "cpl_vsi_error.h"
 #include <limits.h>
 
+#include "shapefil_private.h"
+
 typedef struct
 {
     VSILFILE *fp;
@@ -42,26 +44,6 @@ typedef struct
     int bHasWarned2GB;
     SAOffset nCurOffset;
 } OGRSHPDBFFile;
-
-/************************************************************************/
-/*                         VSI_SHP_GetVSIL()                            */
-/************************************************************************/
-
-VSILFILE *VSI_SHP_GetVSIL(SAFile file)
-{
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
-    return pFile->fp;
-}
-
-/************************************************************************/
-/*                        VSI_SHP_GetFilename()                         */
-/************************************************************************/
-
-const char *VSI_SHP_GetFilename(SAFile file)
-{
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
-    return pFile->pszFilename;
-}
 
 /************************************************************************/
 /*                         VSI_SHP_OpenInternal()                       */
@@ -73,8 +55,8 @@ static SAFile VSI_SHP_OpenInternal(const char *pszFilename,
 {
     OGRSHPDBFFile *pFile;
     VSILFILE *fp = VSIFOpenExL(pszFilename, pszAccess, TRUE);
-    if (fp == NULL)
-        return NULL;
+    if (fp == SHPLIB_NULLPTR)
+        return SHPLIB_NULLPTR;
     pFile = (OGRSHPDBFFile *)CPLCalloc(1, sizeof(OGRSHPDBFFile));
     pFile->fp = fp;
     pFile->pszFilename = CPLStrdup(pszFilename);
@@ -93,18 +75,6 @@ static SAFile VSI_SHP_Open(const char *pszFilename, const char *pszAccess,
 {
     (void)userData;
     return VSI_SHP_OpenInternal(pszFilename, pszAccess, FALSE);
-}
-
-/************************************************************************/
-/*                        VSI_SHP_Open2GBLimit()                        */
-/************************************************************************/
-
-static SAFile VSI_SHP_Open2GBLimit(const char *pszFilename,
-                                   const char *pszAccess, void *userData)
-
-{
-    (void)userData;
-    return VSI_SHP_OpenInternal(pszFilename, pszAccess, TRUE);
 }
 
 /************************************************************************/
@@ -259,7 +229,41 @@ void SASetupDefaultHooks(SAHooks *psHooks)
 
     psHooks->Error = VSI_SHP_Error;
     psHooks->Atof = CPLAtof;
-    psHooks->pvUserData = NULL;
+    psHooks->pvUserData = SHPLIB_NULLPTR;
+}
+
+#ifndef SHP_VSI_ONLY_SETUP_HOOKS
+
+/************************************************************************/
+/*                         VSI_SHP_GetVSIL()                            */
+/************************************************************************/
+
+VSILFILE *VSI_SHP_GetVSIL(SAFile file)
+{
+    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
+    return pFile->fp;
+}
+
+/************************************************************************/
+/*                        VSI_SHP_GetFilename()                         */
+/************************************************************************/
+
+const char *VSI_SHP_GetFilename(SAFile file)
+{
+    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
+    return pFile->pszFilename;
+}
+
+/************************************************************************/
+/*                        VSI_SHP_Open2GBLimit()                        */
+/************************************************************************/
+
+static SAFile VSI_SHP_Open2GBLimit(const char *pszFilename,
+                                   const char *pszAccess, void *userData)
+
+{
+    (void)userData;
+    return VSI_SHP_OpenInternal(pszFilename, pszAccess, TRUE);
 }
 
 /************************************************************************/
@@ -280,3 +284,5 @@ const SAHooks *VSI_SHP_GetHook(int b2GBLimit)
 {
     return (b2GBLimit) ? &sOGRHook2GBLimit : &sOGRHook;
 }
+
+#endif

@@ -4555,7 +4555,8 @@ void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
 
 void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
                                    CSLConstList papszOpenOptions);
-char **GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode);
+char CPL_DLL **
+GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode);
 
 int GDALCanFileAcceptSidecarFile(const char *pszFilename);
 

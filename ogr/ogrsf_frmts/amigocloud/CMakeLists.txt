@@ -10,8 +10,7 @@ add_gdal_driver(
           "NOT GDAL_USE_JSONC_INTERNAL"
           NO_DEPS)
 gdal_standard_includes(ogr_AmigoCloud)
-target_include_directories(ogr_AmigoCloud PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/pgdump
-                                                  ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson)
+target_include_directories(ogr_AmigoCloud PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/pgdump)
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(ogr_AmigoCloud libjson)
 else ()

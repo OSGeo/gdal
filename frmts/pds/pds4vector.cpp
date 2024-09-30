@@ -27,7 +27,7 @@
  ****************************************************************************/
 
 #include "pds4dataset.h"
-#include "ogr_vrt.h"
+#include "ogrvrtgeometrytypes.h"
 
 #include "ogr_p.h"
 

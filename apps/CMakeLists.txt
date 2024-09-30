@@ -28,7 +28,7 @@ gdal_standard_includes(appslib)
 target_compile_options(appslib PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 target_include_directories(
   appslib PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
-                  $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
+                  $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 
 gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
 
@@ -132,7 +132,7 @@ if (BUILD_APPS)
     add_dependencies(${UTILCMD} generate_gdal_version_h)
     target_include_directories(
       ${UTILCMD} PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
-                         $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
+                         $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
     if (MSVC)
       set_target_properties(${UTILCMD} PROPERTIES LINK_FLAGS "wsetargv.obj")
     endif ()
@@ -200,7 +200,7 @@ if (BUILD_APPS)
     endif ()
     target_include_directories(
       ${UTILCMD} PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
-                         $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
+                         $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
     target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
   endforeach ()
 endif ()

@@ -58,7 +58,8 @@
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 #include "ogr_spatialref.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
+#include "ogrgeojsongeometry.h"
 #include "ogrgeojsonwriter.h"
 
 using std::vector;

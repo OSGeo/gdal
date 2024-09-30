@@ -54,7 +54,7 @@
 #include "ogr_featurestyle.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 
 #include "cpl_json_header.h"
 

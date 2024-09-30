@@ -44,7 +44,8 @@
 #ifdef HAVE_GEOS
 #include "geos_c.h"
 #endif
-#include "ogrgeojsonreader.h"
+
+#include "ogrgeojsongeometry.h"
 
 #include <cassert>
 #include <climits>

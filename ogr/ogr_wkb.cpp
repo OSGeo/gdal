@@ -828,8 +828,6 @@ bool OGRWKBIntersectsPessimistic(const GByte *pabyWkb, size_t nWKBSize,
 /*                            epsilonEqual()                            */
 /************************************************************************/
 
-constexpr double EPSILON = 1.0E-5;
-
 static inline bool epsilonEqual(double a, double b, double eps)
 {
     return ::fabs(a - b) < eps;
@@ -864,6 +862,8 @@ static inline double GetY(const GByte *data, uint32_t i, int nDim,
 static bool OGRWKBIsClockwiseRing(const GByte *data, const uint32_t nPoints,
                                   const int nDim, const bool bNeedSwap)
 {
+    constexpr double EPSILON = 1.0E-5;
+
     // WARNING: keep in sync OGRLineString::isClockwise(),
     // OGRCurve::isClockwise() and OGRWKBIsClockwiseRing()
 

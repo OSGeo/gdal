@@ -56,6 +56,7 @@ def gdal_rasterize_path():
 # Simple polygon rasterization (adapted from alg/rasterize.py).
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_gdal_rasterize_1(gdal_rasterize_path, tmp_path):
 
     output_tif = str(tmp_path / "rast1.tif")

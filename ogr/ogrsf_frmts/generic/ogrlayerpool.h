@@ -101,7 +101,7 @@ class CPL_DLL OGRLayerPool
 /*                           OGRProxiedLayer                            */
 /************************************************************************/
 
-class OGRProxiedLayer : public OGRAbstractProxiedLayer
+class CPL_DLL OGRProxiedLayer : public OGRAbstractProxiedLayer
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRProxiedLayer)
 

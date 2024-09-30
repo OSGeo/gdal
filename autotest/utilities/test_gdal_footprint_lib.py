@@ -123,6 +123,7 @@ def test_gdal_footprint_lib_destSRS():
 #
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_footprint_lib_inline_geojson():
 
     ret = gdal.Footprint("", "../gcore/data/byte.tif", format="GeoJSON")
@@ -134,6 +135,7 @@ def test_gdal_footprint_lib_inline_geojson():
 #
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdal_footprint_lib_inline_wkt():
 
     ret = gdal.Footprint("", "../gcore/data/byte.tif", format="WKT")

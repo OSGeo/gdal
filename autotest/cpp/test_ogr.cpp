@@ -51,7 +51,6 @@ namespace
 // Common fixture with test data
 struct test_ogr : public ::testing::Test
 {
-    std::string drv_shape_{"ESRI Shapefile"};
     std::string data_{tut::common::data_basedir};
     std::string data_tmp_{tut::common::tmp_basedir};
 };
@@ -60,14 +59,6 @@ struct test_ogr : public ::testing::Test
 TEST_F(test_ogr, GetGDALDriverManager)
 {
     ASSERT_TRUE(nullptr != GetGDALDriverManager());
-}
-
-// Test if Shapefile driver is registered
-TEST_F(test_ogr, Shapefile_driver)
-{
-    GDALDriver *drv =
-        GetGDALDriverManager()->GetDriverByName(drv_shape_.c_str());
-    ASSERT_TRUE(nullptr != drv);
 }
 
 template <class T>
@@ -1333,6 +1324,12 @@ TEST_F(test_ogr, OGRToOGCGeomType)
 // Test layer, dataset-feature and layer-feature iterators
 TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
 {
+    if (!GDALGetDriverByName("ESRI Shapefile"))
+    {
+        GTEST_SKIP() << "ESRI Shapefile driver missing";
+        return;
+    }
+
     std::string file(data_ + SEP + "poly.shp");
     GDALDatasetUniquePtr poDS(GDALDataset::Open(file.c_str(), GDAL_OF_VECTOR));
     ASSERT_TRUE(poDS != nullptr);
