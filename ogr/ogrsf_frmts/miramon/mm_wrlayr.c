@@ -6255,11 +6255,6 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
             hMiraMonLayer->nSRSType = MM_SRS_LAYER_IS_GEOGRAPHIC_TYPE;
     }
 
-    // Before allocating new memory, there might be some previously allocated but unused memory.
-    // Let's free that memory first.
-    if (hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP)
-        MM_ReleaseDBFHeader(&hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP);
-
     if (hMiraMonLayer->bIsPoint)
     {
         if (hMiraMonLayer->pLayerDB)
@@ -6267,6 +6262,12 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 MM_PRIVATE_POINT_DB_FIELDS + hMiraMonLayer->pLayerDB->nNFields;
         else
             nNFields = MM_PRIVATE_POINT_DB_FIELDS;
+
+        // Before allocating new memory, there might be some previously allocated but unused memory.
+        // Let's free that memory first.
+        if (hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP)
+            MM_ReleaseDBFHeader(&hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP);
+
         pBD_XP = hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(nNFields, hMiraMonLayer->nCharSet);
 
@@ -6284,6 +6285,11 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 MM_PRIVATE_ARC_DB_FIELDS + hMiraMonLayer->pLayerDB->nNFields;
         else
             nNFields = MM_PRIVATE_ARC_DB_FIELDS;
+
+        // Before allocating new memory, there might be some previously allocated but unused memory.
+        // Let's free that memory first.
+        if (hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP)
+            MM_ReleaseDBFHeader(&hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP);
 
         pBD_XP = hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(nNFields, hMiraMonLayer->nCharSet);
@@ -6319,6 +6325,11 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                        hMiraMonLayer->pLayerDB->nNFields;
         else
             nNFields = MM_PRIVATE_POLYGON_DB_FIELDS;
+
+        // Before allocating new memory, there might be some previously allocated but unused memory.
+        // Let's free that memory first.
+        if (hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP)
+            MM_ReleaseDBFHeader(&hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP);
 
         pBD_XP = hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(nNFields, hMiraMonLayer->nCharSet);
