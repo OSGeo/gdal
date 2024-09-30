@@ -393,6 +393,13 @@ schema_multidim_dimension_creationoptionslist_xml = etree.XML(
 
 
 @pytest.mark.parametrize("driver_name", all_driver_names)
+def test_metadata_has_long_name(driver_name):
+
+    driver = gdal.GetDriverByName(driver_name)
+    assert driver.GetMetadataItem(gdal.DMD_LONGNAME) is not None
+
+
+@pytest.mark.parametrize("driver_name", all_driver_names)
 def test_metadata_dcap_yes(driver_name):
     """Test that the only value of DCAP_ elements is YES"""
 
