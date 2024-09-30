@@ -55,7 +55,7 @@ struct GDALVectorInfoOptions
     GDALVectorInfoFormat eFormat = FORMAT_TEXT;
     std::string osWHERE{};
     CPLStringList aosLayers{};
-    std::unique_ptr<OGRGeometry> poSpatialFilter;
+    std::unique_ptr<OGRGeometry> poSpatialFilter{};
     bool bAllLayers = false;
     std::string osSQLStatement{};
     std::string osDialect{};

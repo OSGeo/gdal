@@ -123,7 +123,7 @@ struct GDALFootprintOptions
     /*! Whether to force writing absolute paths in location field. */
     bool bAbsolutePath = false;
 
-    std::string osSrcNoData;
+    std::string osSrcNoData{};
 };
 
 static std::unique_ptr<GDALArgumentParser> GDALFootprintAppOptionsGetParser(
@@ -294,6 +294,8 @@ static std::unique_ptr<GDALArgumentParser> GDALFootprintAppOptionsGetParser(
 class GDALFootprintMaskBand final : public GDALRasterBand
 {
     GDALRasterBand *m_poSrcBand = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALFootprintMaskBand)
 
   public:
     explicit GDALFootprintMaskBand(GDALRasterBand *poSrcBand)

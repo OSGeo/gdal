@@ -387,6 +387,8 @@ struct GDALTileIndexTileIterator
     int iCurSrc = 0;
     VSIDIR *psDir = nullptr;
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALTileIndexTileIterator)
+
     GDALTileIndexTileIterator(const GDALTileIndexOptions *psOptionsIn,
                               int nSrcCountIn,
                               const char *const *papszSrcDSNamesIn)

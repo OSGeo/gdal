@@ -58,10 +58,10 @@ struct GDALInfoOptionsForBinary
 
 struct GDALDEMProcessingOptionsForBinary
 {
-    std::string osProcessing;
-    std::string osSrcFilename;
-    std::string osColorFilename;
-    std::string osDstFilename;
+    std::string osProcessing{};
+    std::string osSrcFilename{};
+    std::string osColorFilename{};
+    std::string osDstFilename{};
     bool bQuiet = false;
 };
 
@@ -83,7 +83,7 @@ struct GDALVectorTranslateOptionsForBinary
     std::string osDestDataSource{};
     bool bQuiet = false;
     CPLStringList aosOpenOptions{};
-    std::string osFormat;
+    std::string osFormat{};
     GDALVectorTranslateAccessMode eAccessMode = ACCESS_CREATION;
     bool bShowUsageIfError = false;
 

@@ -4868,6 +4868,8 @@ static GDALDatasetH GDALWarpCreateOutput(
 
 class CutlineTransformer : public OGRCoordinateTransformation
 {
+    CPL_DISALLOW_COPY_ASSIGN(CutlineTransformer)
+
   public:
     void *hSrcImageTransformer = nullptr;
 

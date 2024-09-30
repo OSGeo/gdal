@@ -279,6 +279,8 @@ class VRTBuilder
     void CreateVRTSeparate(VRTDatasetH hVRTDS);
     void CreateVRTNonSeparate(VRTDatasetH hVRTDS);
 
+    CPL_DISALLOW_COPY_ASSIGN(VRTBuilder)
+
   public:
     VRTBuilder(bool bStrictIn, const char *pszOutputFilename, int nInputFiles,
                const char *const *ppszInputFilenames, GDALDatasetH *pahSrcDSIn,

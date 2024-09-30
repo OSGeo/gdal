@@ -158,7 +158,7 @@ using namespace gdal::GDALDEM;
 struct GDALDEMProcessingOptions
 {
     /*! output format. Use the short format name. */
-    std::string osFormat;
+    std::string osFormat{};
 
     /*! the progress function to use */
     GDALProgressFunc pfnProgress = nullptr;
@@ -184,7 +184,7 @@ struct GDALDEMProcessingOptions
     bool bCombined = false;
     bool bIgor = false;
     bool bMultiDirectional = false;
-    CPLStringList aosCreationOptions;
+    CPLStringList aosCreationOptions{};
     int nBand = 1;
 };
 
@@ -1972,6 +1972,8 @@ class GDALColorReliefDataset : public GDALDataset
     int nCurBlockXOff;
     int nCurBlockYOff;
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALColorReliefDataset)
+
   public:
     GDALColorReliefDataset(GDALDatasetH hSrcDS, GDALRasterBandH hSrcBand,
                            const char *pszColorFilename,
@@ -2564,6 +2566,8 @@ template <class T> class GDALGeneric3x3Dataset : public GDALDataset
     double dfDstNoDataValue;
     int nCurLine;
     bool bComputeAtEdges;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALGeneric3x3Dataset)
 
   public:
     GDALGeneric3x3Dataset(GDALDatasetH hSrcDS, GDALRasterBandH hSrcBand,
