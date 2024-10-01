@@ -164,7 +164,7 @@ typedef struct
 // Test CPLGetValueType
 TEST_F(test_cpl, CPLGetValueType)
 {
-    TestStringStruct apszTestStrings[] = {
+    TestStringStruct asTestStrings[] = {
         {"+25.e+3", CPL_VALUE_REAL},   {"-25.e-3", CPL_VALUE_REAL},
         {"25.e3", CPL_VALUE_REAL},     {"25e3", CPL_VALUE_REAL},
         {" 25e3 ", CPL_VALUE_REAL},    {".1e3", CPL_VALUE_REAL},
@@ -177,15 +177,16 @@ TEST_F(test_cpl, CPLGetValueType)
         {"25.25.3", CPL_VALUE_STRING}, {"25e25e3", CPL_VALUE_STRING},
         {"25e2500", CPL_VALUE_STRING}, /* #6128 */
 
-        {"d1", CPL_VALUE_STRING} /* #6305 */
+        {"d1", CPL_VALUE_STRING}, /* #6305 */
+
+        {"01", CPL_VALUE_STRING},      {"0.1", CPL_VALUE_REAL},
+        {"0", CPL_VALUE_INTEGER},
     };
 
-    size_t i;
-    for (i = 0; i < sizeof(apszTestStrings) / sizeof(apszTestStrings[0]); i++)
+    for (const auto &sText : asTestStrings)
     {
-        EXPECT_EQ(CPLGetValueType(apszTestStrings[i].testString),
-                  apszTestStrings[i].expectedResult)
-            << apszTestStrings[i].testString;
+        EXPECT_EQ(CPLGetValueType(sText.testString), sText.expectedResult)
+            << sText.testString;
     }
 }
 
