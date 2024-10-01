@@ -33,6 +33,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("Derived")
+
 
 def test_derived_test1():
     filename = "../gcore/data/cfloat64.tif"
