@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-#include "gmlreader.h"
+#include "gmlfeature.h"
 
 #include <cmath>
 #include <cstddef>

@@ -149,4 +149,8 @@ void RegisterOGRWFS()
     poDriver->pfnOpen = OGRWFSDriverOpen;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
+
+#ifdef PLUGIN
+    RegisterOGROAPIF();
+#endif
 }

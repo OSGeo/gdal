@@ -35,6 +35,7 @@
 #include "parsexsd.h"
 #include "ogr_swq.h"
 #include "ogr_p.h"
+#include "ogrwfsfilter.h"
 
 #include <algorithm>
 

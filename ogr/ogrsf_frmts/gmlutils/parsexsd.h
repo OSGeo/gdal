@@ -34,7 +34,7 @@
 #include "cpl_port.h"
 
 #include <vector>
-#include "gmlreader.h"
+#include "gmlfeature.h"
 
 bool CPL_DLL GMLParseXSD(const char *pszFile, bool bUseSchemaImports,
                          std::vector<GMLFeatureClass *> &aosClasses,

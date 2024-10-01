@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_wfs.h"
+#include "ogrwfsfilter.h"
 #include "ogr_p.h"
 
 typedef struct
@@ -154,13 +154,12 @@ static const char *WFS_ExprGetSRSName(const swq_expr_node *poExpr,
     else if (poExpr->nSubExprCount == iSubArgIndex + 1 &&
              poExpr->papoSubExpr[iSubArgIndex]->field_type == SWQ_INTEGER)
     {
-        if (oSRS.importFromEPSGA(
-                (int)poExpr->papoSubExpr[iSubArgIndex]->int_value) ==
-            OGRERR_NONE)
+        if (oSRS.importFromEPSGA(static_cast<int>(
+                poExpr->papoSubExpr[iSubArgIndex]->int_value)) == OGRERR_NONE)
         {
             return CPLSPrintf(
                 "urn:ogc:def:crs:EPSG::%d",
-                (int)poExpr->papoSubExpr[iSubArgIndex]->int_value);
+                static_cast<int>(poExpr->papoSubExpr[iSubArgIndex]->int_value));
         }
     }
     else if (poExpr->nSubExprCount == iSubArgIndex &&
@@ -522,7 +521,8 @@ static bool WFS_ExprDumpAsOGCFilter(CPLString &osFilter,
         papszOptions =
             CSLSetNameValue(papszOptions, "GMLID",
                             CPLSPrintf("id%d", psOptions->nUniqueGeomGMLId++));
-        char *pszGML = OGR_G_ExportToGMLEx((OGRGeometryH)poGeom, papszOptions);
+        char *pszGML =
+            OGR_G_ExportToGMLEx(OGRGeometry::ToHandle(poGeom), papszOptions);
         osFilter += pszGML;
         CSLDestroy(papszOptions);
         delete poGeom;
@@ -690,8 +690,8 @@ static bool OGRWFSCheckSRIDArg(swq_expr_node *op, int iSubArgIndex)
     if (op->papoSubExpr[iSubArgIndex]->field_type == SWQ_INTEGER)
     {
         OGRSpatialReference oSRS;
-        if (oSRS.importFromEPSGA(
-                (int)op->papoSubExpr[iSubArgIndex]->int_value) != OGRERR_NONE)
+        if (oSRS.importFromEPSGA(static_cast<int>(
+                op->papoSubExpr[iSubArgIndex]->int_value)) != OGRERR_NONE)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Wrong value for argument %d of %s", iSubArgIndex + 1,
@@ -885,11 +885,10 @@ static const swq_operation OGRWFSSpatialOps[] = {
 
 const swq_operation *OGRWFSCustomFuncRegistrar::GetOperator(const char *pszName)
 {
-    for (int i = 0;
-         i < (int)(sizeof(OGRWFSSpatialOps) / sizeof(OGRWFSSpatialOps[0])); i++)
+    for (const auto &op : OGRWFSSpatialOps)
     {
-        if (EQUAL(OGRWFSSpatialOps[i].pszName, pszName))
-            return &OGRWFSSpatialOps[i];
+        if (EQUAL(op.pszName, pszName))
+            return &op;
     }
     return nullptr;
 }

@@ -36,19 +36,11 @@
 
 #include "cpl_minixml.h"
 #include "ogrsf_frmts.h"
-#include "gmlreader.h"
+#include "gmlfeature.h"
 #include "cpl_http.h"
 #include "ogr_swq.h"
 
 const CPLXMLNode *WFSFindNode(const CPLXMLNode *psXML, const char *pszRootName);
-
-CPLString
-WFS_TurnSQLFilterToOGCFilter(const swq_expr_node *poExpr, GDALDataset *poDS,
-                             OGRFeatureDefn *poFDefn, int nVersion,
-                             int bPropertyIsNotEqualToSupported,
-                             int bUseFeatureId, int bGmlObjectIdNeedsGMLPrefix,
-                             const char *pszNSPrefix, int *pbOutNeedsNullCheck);
-swq_custom_func_registrar *WFSGetCustomFuncRegistrar();
 
 const char *FindSubStringInsensitive(const char *pszStr, const char *pszSubStr);
 
