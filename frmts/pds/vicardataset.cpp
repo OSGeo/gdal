@@ -44,16 +44,19 @@ constexpr double VICAR_NULL3 = -32768.0;
 #include "pdsdrivercore.h"
 #include "json_utils.h"
 
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
 #include "gtiff.h"
 #include "geotiff.h"
 #include "tifvsi.h"
 #include "xtiffio.h"
 #include "gt_wkt_srs_priv.h"
+#endif
 
 #include <exception>
 #include <limits>
 #include <string>
 
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
 /* GeoTIFF 1.0 geokeys */
 
 static const geokey_t GTiffAsciiKeys[] = {GTCitationGeoKey, GeogCitationGeoKey,
@@ -84,6 +87,7 @@ static const geokey_t GTiffShortKeys[] = {
     ProjectionGeoKey,       GeogPrimeMeridianGeoKey, GeogLinearUnitsGeoKey,
     GeogAzimuthUnitsGeoKey, VerticalCSTypeGeoKey,    VerticalDatumGeoKey,
     VerticalUnitsGeoKey};
+#endif
 
 /************************************************************************/
 /*                     OGRVICARBinaryPrefixesLayer                      */
@@ -1762,7 +1766,9 @@ void VICARDataset::BuildLabel()
         }
         if (!m_oSRS.IsEmpty())
         {
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
             BuildLabelPropertyGeoTIFF(oLabel);
+#endif
         }
     }
 
@@ -1900,6 +1906,7 @@ void VICARDataset::BuildLabelPropertyMap(CPLJSONObject &oLabel)
 /*                    BuildLabelPropertyGeoTIFF()                       */
 /************************************************************************/
 
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
 void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
 {
     auto oProperty = GetOrCreateJSONObject(oLabel, "PROPERTY");
@@ -2010,6 +2017,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
     CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
     VSIUnlink(osTmpFilename.c_str());
 }
+#endif
 
 /************************************************************************/
 /*                       ReadProjectionFromMapGroup()                   */
@@ -2313,6 +2321,7 @@ void VICARDataset::ReadProjectionFromMapGroup()
 /*                    ReadProjectionFromGeoTIFFGroup()                  */
 /************************************************************************/
 
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
 void VICARDataset::ReadProjectionFromGeoTIFFGroup()
 {
     m_bGeoRefFormatIsMIPL = true;
@@ -2471,6 +2480,7 @@ void VICARDataset::ReadProjectionFromGeoTIFFGroup()
 
     VSIUnlink(osTmpFilename.c_str());
 }
+#endif
 
 /************************************************************************/
 /*                                Open()                                */
@@ -2612,11 +2622,13 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         poDS->ReadProjectionFromMapGroup();
     }
+#if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
     else if (poDS->GetKeyword("GEOTIFF.GTMODELTYPEGEOKEY")[0] != '\0' ||
              poDS->GetKeyword("GEOTIFF.MODELTIEPOINTTAG")[0] != '\0')
     {
         poDS->ReadProjectionFromGeoTIFFGroup();
     }
+#endif
 
     if (!poDS->m_bGotTransform)
         poDS->m_bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(

@@ -184,6 +184,11 @@ struct test_gdal_pixelfn : public ::testing::Test
 // Test constant parameters in a custom pixel function
 TEST_F(test_gdal_pixelfn, custom_pixel_fn_constant_parameters)
 {
+    if (!GDALGetDriverByName("GTiff"))
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
+
     GDALAddDerivedBandPixelFuncWithArgs("custom", CustomPixelFuncWithMetadata,
                                         pszFuncMetadata);
     GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
@@ -204,6 +209,11 @@ TEST_F(test_gdal_pixelfn, custom_pixel_fn_constant_parameters)
 // Test registering of a custom pixel function without metadata
 TEST_F(test_gdal_pixelfn, custom_pixel_fn_without_metadata)
 {
+    if (!GDALGetDriverByName("GTiff"))
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
+
     GDALAddDerivedBandPixelFuncWithArgs("custom2", CustomPixelFunc, nullptr);
     GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
     ASSERT_TRUE(nullptr != ds);
@@ -227,6 +237,11 @@ TEST_F(test_gdal_pixelfn, custom_pixel_fn_without_metadata)
 // Test the registering of a custom pixel function without args
 TEST_F(test_gdal_pixelfn, custom_pixel_fn_without_args)
 {
+    if (!GDALGetDriverByName("GTiff"))
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
+
     GDALAddDerivedBandPixelFunc("custom3", CustomPixelFuncNoArgs);
     GDALDatasetH ds = GDALOpen(src_.c_str(), GA_ReadOnly);
     ASSERT_TRUE(nullptr != ds);

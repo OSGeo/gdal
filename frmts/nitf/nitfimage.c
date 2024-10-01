@@ -1605,6 +1605,7 @@ int NITFReadImageBlock(NITFImage *psImage, int nBlockX, int nBlockY, int nBand,
     /* -------------------------------------------------------------------- */
     else if (EQUAL(psImage->szIC, "C1") || EQUAL(psImage->szIC, "M1"))
     {
+#ifdef HAVE_TIFF
         GIntBig nSignedRawBytes;
         size_t nRawBytes;
         NITFSegmentInfo *psSegInfo;
@@ -1669,6 +1670,12 @@ int NITFReadImageBlock(NITFImage *psImage, int nBlockX, int nBlockY, int nBand,
             return BLKREAD_OK;
         else
             return BLKREAD_FAIL;
+#else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "BILEVEL compression not supported because of lack of "
+                 "TIFF support");
+        return BLKREAD_FAIL;
+#endif
     }
 
     /* -------------------------------------------------------------------- */

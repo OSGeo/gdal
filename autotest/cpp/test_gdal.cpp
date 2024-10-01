@@ -630,6 +630,11 @@ TEST_F(test_gdal, GDALWarp_error_flush_cache)
 // source dataset when we want.
 TEST_F(test_gdal, GDALWarp_VRT)
 {
+    auto hDrv = GDALGetDriverByName("GTiff");
+    if (!hDrv)
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
     const char *args[] = {"-of", "VRT", nullptr};
     GDALWarpAppOptions *psOptions =
         GDALWarpAppOptionsNew((char **)args, nullptr);
@@ -646,6 +651,11 @@ TEST_F(test_gdal, GDALWarp_VRT)
 // source dataset when we want.
 TEST_F(test_gdal, GDALTranslate_VRT)
 {
+    auto hDrv = GDALGetDriverByName("GTiff");
+    if (!hDrv)
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
     const char *args[] = {"-of", "VRT", nullptr};
     GDALTranslateOptions *psOptions =
         GDALTranslateOptionsNew((char **)args, nullptr);
@@ -662,6 +672,11 @@ TEST_F(test_gdal, GDALTranslate_VRT)
 // source dataset when we want.
 TEST_F(test_gdal, GDALBuildVRT)
 {
+    auto hDrv = GDALGetDriverByName("GTiff");
+    if (!hDrv)
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
     GDALDatasetH hSrcDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
     GDALDatasetH hOutDS =
         GDALBuildVRT("", 1, &hSrcDS, nullptr, nullptr, nullptr);
@@ -3004,10 +3019,15 @@ TEST_F(test_gdal, MarkSuppressOnClose)
 {
     const char *pszFilename = "/vsimem/out.tif";
     const char *const apszOptions[] = {"PROFILE=BASELINE", nullptr};
+    auto hDrv = GDALGetDriverByName("GTiff");
+    if (!hDrv)
     {
-        GDALDatasetUniquePtr poDstDS(
-            GDALDriver::FromHandle(GDALGetDriverByName("GTiff"))
-                ->Create(pszFilename, 1, 1, 1, GDT_Byte, apszOptions));
+        GTEST_SKIP() << "GTiff driver missing";
+    }
+    else
+    {
+        GDALDatasetUniquePtr poDstDS(GDALDriver::FromHandle(hDrv)->Create(
+            pszFilename, 1, 1, 1, GDT_Byte, apszOptions));
         poDstDS->SetMetadataItem("FOO", "BAR");
         poDstDS->MarkSuppressOnClose();
         poDstDS->GetRasterBand(1)->Fill(255);
@@ -3031,10 +3051,15 @@ TEST_F(test_gdal, UnMarkSuppressOnClose)
 {
     const char *pszFilename = "/vsimem/out.tif";
     const char *const apszOptions[] = {"PROFILE=BASELINE", nullptr};
+    auto hDrv = GDALGetDriverByName("GTiff");
+    if (!hDrv)
     {
-        GDALDatasetUniquePtr poDstDS(
-            GDALDriver::FromHandle(GDALGetDriverByName("GTiff"))
-                ->Create(pszFilename, 1, 1, 1, GDT_Byte, apszOptions));
+        GTEST_SKIP() << "GTiff driver missing";
+    }
+    else
+    {
+        GDALDatasetUniquePtr poDstDS(GDALDriver::FromHandle(hDrv)->Create(
+            pszFilename, 1, 1, 1, GDT_Byte, apszOptions));
         poDstDS->MarkSuppressOnClose();
         poDstDS->GetRasterBand(1)->Fill(255);
         if (poDstDS->IsMarkedSuppressOnClose())
@@ -3446,6 +3471,10 @@ TEST_F(test_gdal, GDALDatasetReportError)
 // Test GDALDataset::GetCompressionFormats() and ReadCompressedData()
 TEST_F(test_gdal, gtiff_ReadCompressedData)
 {
+    if (!GDALGetDriverByName("GTiff"))
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
     if (GDALGetDriverByName("JPEG") == nullptr)
     {
         GTEST_SKIP() << "JPEG support missing";
@@ -3607,6 +3636,10 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
 // Test GDALDataset::GetCompressionFormats() and ReadCompressedData()
 TEST_F(test_gdal, gtiff_ReadCompressedData_jpeg_rgba)
 {
+    if (!GDALGetDriverByName("GTiff"))
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
     if (GDALGetDriverByName("JPEG") == nullptr)
     {
         GTEST_SKIP() << "JPEG support missing";
@@ -3947,6 +3980,11 @@ TEST_F(test_gdal, jpegxl_jpeg_compatible_ReadCompressedData)
 // Test GDAL_OF_SHARED flag and open options
 TEST_F(test_gdal, open_shared_open_options)
 {
+    if (!GDALGetDriverByName("GTiff"))
+    {
+        GTEST_SKIP() << "GTiff driver missing";
+    }
+
     CPLErrorReset();
     const char *const apszOpenOptions[] = {"OVERVIEW_LEVEL=NONE", nullptr};
     {

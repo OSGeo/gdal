@@ -1120,6 +1120,8 @@ static bool CanUseBuildVRT(int nSrcCount, GDALDatasetH *pahSrcDS)
     return bCanUseBuildVRT;
 }
 
+#ifdef HAVE_TIFF
+
 /************************************************************************/
 /*                      DealWithCOGOptions()                            */
 /************************************************************************/
@@ -1224,6 +1226,8 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
     return bRet;
 }
 
+#endif
+
 /************************************************************************/
 /*                      GDALWarpIndirect()                              */
 /************************************************************************/
@@ -1289,11 +1293,14 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
         if ((nBands == 1 ||
              (nBands > 1 && GDALGetRasterColorInterpretation(GDALGetRasterBand(
                                 pahSrcDS[0], nBands)) != GCI_AlphaBand)) &&
-            (psOptions->bEnableDstAlpha ||
-             (EQUAL(psOptions->osFormat.c_str(), "COG") &&
-              COGHasWarpingOptions(aosCreateOptions.List()) &&
-              CPLTestBool(
-                  aosCreateOptions.FetchNameValueDef("ADD_ALPHA", "YES")))))
+            (psOptions->bEnableDstAlpha
+#ifdef HAVE_TIFF
+             || (EQUAL(psOptions->osFormat.c_str(), "COG") &&
+                 COGHasWarpingOptions(aosCreateOptions.List()) &&
+                 CPLTestBool(
+                     aosCreateOptions.FetchNameValueDef("ADD_ALPHA", "YES")))
+#endif
+                 ))
         {
             aosArgv.AddString("-addalpha");
         }
@@ -1309,6 +1316,7 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
     double dfStartPctCreateCopy = 0.0;
     if (hTmpDS == nullptr)
     {
+#ifdef HAVE_TIFF
         // Special processing for COG output. As some of its options do
         // on-the-fly reprojection, take them into account now, and remove them
         // from the COG creation stage.
@@ -1318,6 +1326,7 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
         {
             return nullptr;
         }
+#endif
 
         // Materialize a temporary GeoTIFF with the result of the warp
         psOptions->osFormat = "GTiff";

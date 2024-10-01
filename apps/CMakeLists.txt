@@ -34,6 +34,10 @@ gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
 
 set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 
+if (GDAL_ENABLE_DRIVER_GTIFF)
+  target_compile_definitions(appslib PRIVATE -DHAVE_TIFF)
+endif()
+
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(appslib libjson)
 else ()
