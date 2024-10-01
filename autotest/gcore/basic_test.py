@@ -176,17 +176,20 @@ def test_basic_test_8():
         license_text.startswith("GDAL/OGR is released under the MIT license")
         or "GDAL/OGR Licensing" in license_text
     )
+    if "EMBED_RESOURCE_FILES=YES" in gdal.VersionInfo("BUILD_INFO"):
+        assert len(license_text) > 1000
 
-    # Use a subprocess to avoid the cached license text
-    env = os.environ.copy()
-    env["GDAL_DATA"] = "tmp"
-    with open("tmp/LICENSE.TXT", "wt") as f:
-        f.write("fake_license")
-    license_text = subprocess.check_output(
-        [sys.executable, "basic_test_subprocess.py"], env=env
-    ).decode("utf-8")
-    os.unlink("tmp/LICENSE.TXT")
-    assert license_text.startswith("fake_license")
+    if "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES" not in gdal.VersionInfo("BUILD_INFO"):
+        # Use a subprocess to avoid the cached license text
+        env = os.environ.copy()
+        env["GDAL_DATA"] = "tmp"
+        with open("tmp/LICENSE.TXT", "wt") as f:
+            f.write("fake_license")
+        license_text = subprocess.check_output(
+            [sys.executable, "basic_test_subprocess.py"], env=env
+        ).decode("utf-8")
+        os.unlink("tmp/LICENSE.TXT")
+        assert license_text.startswith("fake_license")
 
 
 ###############################################################################
