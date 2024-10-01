@@ -150,8 +150,7 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix,
         }
     }
 
-    if (i == OGR_PG_NAMEDATALEN - 1 && pszSafeName[i] != '\0' &&
-        pszSafeName[i + 1] != '\0')
+    if (i == OGR_PG_NAMEDATALEN - 1 && pszSafeName[i] != '\0')
     {
         constexpr int FIRST_8_CHARS_OF_MD5 = 8;
         pszSafeName[i - FIRST_8_CHARS_OF_MD5 - 1] = '_';
