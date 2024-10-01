@@ -954,6 +954,9 @@ class OGRDXFWriterDS final : public GDALDataset
 
     OGREnvelope oGlobalEnvelope;
 
+    bool m_bHeaderFileIsTemp = false;
+    bool m_bTrailerFileIsTemp = false;
+
   public:
     OGRDXFWriterDS();
     ~OGRDXFWriterDS();
