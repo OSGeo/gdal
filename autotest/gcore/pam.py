@@ -175,6 +175,7 @@ def test_pam_5():
 #
 
 
+@pytest.mark.require_driver("HFA")
 def test_pam_6():
 
     ds = gdal.Open("data/f2r23.tif")

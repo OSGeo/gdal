@@ -851,6 +851,11 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
         pScaledOverviewWithoutMask);
     if (bOvrIsAux)
     {
+#ifdef NO_HFA_SUPPORT
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "This build does not support creating .aux overviews");
+        eErr = CE_Failure;
+#else
         if (nNewOverviews == 0)
         {
             /* if we call HFAAuxBuildOverviews() with nNewOverviews == 0 */
@@ -873,6 +878,7 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
             if (abValidLevel[j])
                 abRequireRefresh[j] = true;
         }
+#endif
     }
 
     /* -------------------------------------------------------------------- */

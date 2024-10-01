@@ -141,6 +141,7 @@ def test_gdalinfo_py_5(script_path):
 # Test a dataset with overviews and RAT
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdalinfo_py_6(script_path):
 
     ret = test_py_scripts.run_py_script(

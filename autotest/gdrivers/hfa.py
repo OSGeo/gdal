@@ -38,6 +38,8 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("HFA")
+
 ###############################################################################
 # Verify we can read the special histogram metadata from a provided image.
 

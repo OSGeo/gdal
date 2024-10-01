@@ -79,7 +79,7 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug" OR GDAL_ENABLE_DRIVER_NULL)
   gdal_optional_format(null "NULL dummy driver")
 endif ()
 
-gdal_format(hfa "Erdas Imagine .img")
+gdal_optional_format(hfa "Erdas Imagine .img")
 gdal_optional_format(sdts "SDTS translator")
 gdal_optional_format(nitf "National Imagery Transmission Format")
 gdal_optional_format(gxf "GXF")

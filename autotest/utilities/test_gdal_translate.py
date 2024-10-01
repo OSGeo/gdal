@@ -581,6 +581,7 @@ def test_gdal_translate_20(gdal_translate_path, tmp_path):
 # in that case, they must be copied
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_21(gdal_translate_path, tmp_path):
 
     dst_img = str(tmp_path / "test_gdal_translate_21.img")
@@ -606,6 +607,7 @@ def test_gdal_translate_21(gdal_translate_path, tmp_path):
 # in that case, they must *NOT* be copied
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_22(gdal_translate_path, tmp_path):
 
     dst_img = str(tmp_path / "test_gdal_translate_22.img")
@@ -674,6 +676,7 @@ def test_gdal_translate_24(gdal_translate_path, tmp_path):
 # Test -norat
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_25(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "test_gdal_translate_25.tif")
@@ -1027,6 +1030,7 @@ def test_gdal_translate_35(gdal_translate_path, tmp_vsimem):
 # Test RAT is copied from hfa to gtiff - continuous/athematic
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_36(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "test_gdal_translate_36.tif")
@@ -1052,6 +1056,7 @@ def test_gdal_translate_36(gdal_translate_path, tmp_path):
 # Test RAT is copied from hfa to gtiff - thematic
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_37(gdal_translate_path, tmp_path):
 
     dst1_tif = str(tmp_path / "test_gdal_translate_37.tif")

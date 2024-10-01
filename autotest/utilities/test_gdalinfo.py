@@ -124,6 +124,7 @@ def test_gdalinfo_5(gdalinfo_path, tmp_path):
 # Test a dataset with overviews and RAT
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdalinfo_6(gdalinfo_path):
 
     ret = gdaltest.runexternal(gdalinfo_path + " ../gdrivers/data/hfa/int.img")
@@ -541,6 +542,7 @@ def test_gdalinfo_stats(gdalinfo_path, tmp_path):
 # Test a dataset with overviews and RAT
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdalinfo_33(gdalinfo_path):
 
     ret = gdaltest.runexternal(gdalinfo_path + " -json ../gdrivers/data/hfa/int.img")
