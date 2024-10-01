@@ -34,7 +34,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   OGR_GMT -vector- (rw+v): GMT ASCII Vectors (.gmt) (*.gmt)
   GPKG -raster,vector- (rw+vs): GeoPackage (*.gpkg, *.gpkg.zip)
   SQLite -vector- (rw+v): SQLite / Spatialite (*.sqlite, *.db)
-  ODBC -vector- (ro):  (*.mdb, *.accdb)
+  ODBC -vector- (ro): Open Database Connectivity (ODBC) (*.mdb, *.accdb)
   WAsP -vector- (rw+v): WAsP .map format (*.map)
   PGeo -vector- (ro): ESRI Personal GeoDatabase (*.mdb)
   MSSQLSpatial -vector- (rw+): Microsoft SQL Server Spatial Database (BCP)
