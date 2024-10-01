@@ -2939,6 +2939,7 @@ sig
 Sightlines
 signedness
 significants
+Simmon
 sinc
 sizeBytes
 sizeKnown
