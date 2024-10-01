@@ -2183,3 +2183,82 @@ def test_ogr_oapif_initial_request_page_size():
     )
     with webserver.install_http_handler(handler):
         assert lyr.GetLayerDefn().GetFieldCount() == 1
+
+
+def test_ogr_oapif_datetime_open_option():
+    """Test DATETIME open option"""
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections",
+        200,
+        {"Content-Type": "application/json"},
+        '{ "collections" : [ { "name": "foo" }] }',
+    )
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "http://localhost:%d/oapif" % gdaltest.webserver_port,
+            gdal.OF_VECTOR,
+            open_options=["DATETIME=2011-01-03T12:31:00Z"],
+            allowed_drivers=["OAPIF"],
+        )
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=20",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }
+                ] }""",
+    )
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=1000&datetime=2011-01-03T12:31:00Z",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "bar": "baz"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        assert lyr.GetFeatureCount() == 2
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=1000&datetime=2011-01-03T12:31:00Z",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+        assert f["foo"] == "bar"

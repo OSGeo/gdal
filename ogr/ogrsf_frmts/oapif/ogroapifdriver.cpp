@@ -91,6 +91,8 @@ class OGROAPIFDataset final : public GDALDataset
 
     bool m_bIgnoreSchema = false;
 
+    std::string m_osDateTime{};
+
     bool Download(const CPLString &osURL, const char *pszAccept,
                   CPLString &osResult, CPLString &osContentType,
                   CPLStringList *paosHeaders = nullptr);
@@ -1144,6 +1146,9 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
         m_bPageSizeSetFromOpenOptions = true;
     }
 
+    m_osDateTime =
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "DATETIME", "");
+
     const int initialRequestPageSize = atoi(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "INITIAL_REQUEST_PAGE_SIZE", "-1"));
 
@@ -2030,6 +2035,15 @@ CPLString OGROAPIFLayer::AddFilters(const CPLString &osURL)
             osURLNew += "&";
         osURLNew += m_osAttributeFilter;
     }
+    if (!m_poDS->m_osDateTime.empty())
+    {
+        if (osURLNew.find('?') == std::string::npos)
+            osURLNew += "?";
+        else
+            osURLNew += "&";
+        osURLNew += "datetime=";
+        osURLNew += m_poDS->m_osDateTime;
+    }
     return osURLNew;
 }
 
@@ -2368,7 +2382,8 @@ bool OGROAPIFLayer::SupportsResultTypeHits()
 GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
 {
 
-    if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
+    if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr &&
+        m_poDS->m_osDateTime.empty())
     {
         GetLayerDefn();
         if (m_nTotalFeatureCount >= 0)
@@ -3249,6 +3264,9 @@ void RegisterOGROAPIF()
         "    <Value>AUTHORITY_COMPLIANT</Value>"
         "    <Value>GIS_FRIENDLY</Value>"
         "  </Option>"
+        "  <Option name='DATETIME' type='string' "
+        "description=\"Date-time filter to pass to items requests with the "
+        "'datetime' parameter\"/>"
         "</OpenOptionList>");
 
     poDriver->pfnIdentify = OGROAPIFDriverIdentify;
