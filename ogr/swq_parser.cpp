@@ -83,23 +83,7 @@
  ******************************************************************************
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -622,17 +606,17 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   125,   125,   126,   132,   139,   144,   149,   154,   161,
-     169,   177,   185,   193,   201,   209,   217,   225,   233,   241,
-     253,   262,   275,   283,   295,   304,   317,   326,   339,   348,
-     361,   368,   380,   386,   393,   395,   398,   406,   419,   424,
-     429,   433,   438,   443,   448,   483,   490,   497,   504,   511,
-     518,   554,   562,   568,   575,   584,   602,   622,   623,   626,
-     631,   637,   638,   640,   648,   649,   652,   662,   663,   666,
-     667,   670,   679,   690,   705,   720,   741,   772,   807,   832,
-     861,   867,   870,   872,   881,   882,   887,   888,   894,   901,
-     902,   905,   906,   909,   915,   921,   928,   929,   936,   937,
-     945,   955,   966,   977,   990,  1001
+       0,   109,   109,   110,   116,   123,   128,   133,   138,   145,
+     153,   161,   169,   177,   185,   193,   201,   209,   217,   225,
+     237,   246,   259,   267,   279,   288,   301,   310,   323,   332,
+     345,   352,   364,   370,   377,   379,   382,   390,   403,   408,
+     413,   417,   422,   427,   432,   467,   474,   481,   488,   495,
+     502,   538,   546,   552,   559,   568,   586,   606,   607,   610,
+     615,   621,   622,   624,   632,   633,   636,   646,   647,   650,
+     651,   654,   663,   674,   689,   704,   725,   756,   791,   816,
+     845,   851,   854,   856,   865,   866,   871,   872,   878,   885,
+     886,   889,   890,   893,   899,   905,   912,   913,   920,   921,
+     929,   939,   950,   961,   974,   985
 };
 #endif
 

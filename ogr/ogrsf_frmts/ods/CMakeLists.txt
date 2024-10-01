@@ -35,7 +35,7 @@ add_custom_target(check_ods_formula_parser_md5 ALL
                   COMMAND ${CMAKE_COMMAND}
                       "-DIN_FILE=ods_formula_parser.y"
                       "-DTARGET=generate_ods_formula_parser"
-                      "-DEXPECTED_MD5SUM=acf825ac2d574098a64c74c864aee15e"
+                      "-DEXPECTED_MD5SUM=4471312c8be1baeef3509fb36ab668df"
                       "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
                       -P "${PROJECT_SOURCE_DIR}/cmake/helpers/check_md5sum.cmake"
                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
