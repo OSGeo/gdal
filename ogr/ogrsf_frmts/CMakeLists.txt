@@ -48,8 +48,9 @@ ogr_optional_driver(avc AVC)
 if (NOT(DEFINED OGR_ENABLE_DRIVER_GML AND NOT OGR_ENABLE_DRIVER_GML AND
         ((NOT GDAL_USE_CURL) OR
          (DEFINED OGR_ENABLE_DRIVER_WFS AND NOT OGR_ENABLE_DRIVER_WFS AND
+          DEFINED OGR_ENABLE_DRIVER_OAPIF AND NOT OGR_ENABLE_DRIVER_OAPIF AND
           DEFINED OGR_ENABLE_DRIVER_CSW AND NOT OGR_ENABLE_DRIVER_CSW))))
-    # Only build gmlutils if we have GML, WFS or CSW
+    # Only build gmlutils if we have GML, WFS, OAPIF or CSW
     add_subdirectory(gmlutils)
 endif()
 
@@ -108,6 +109,7 @@ ogr_dependent_driver(nas "NAS/ALKIS" "GDAL_USE_XERCESC;OGR_ENABLE_DRIVER_GML")
 ogr_dependent_driver(plscenes PLSCENES "GDAL_USE_CURL")
 ogr_dependent_driver(sosi "SOSI:Systematic Organization of Spatial Information" "GDAL_USE_FYBA")
 ogr_dependent_driver(wfs "OGC WFS service" "GDAL_USE_CURL")
+ogr_dependent_driver(oapif "OGC API Features service" "GDAL_USE_CURL")
 ogr_dependent_driver(ngw "NextGIS Web" "GDAL_USE_CURL")
 ogr_dependent_driver(elastic "ElasticSearch" "GDAL_USE_CURL")
 ogr_dependent_driver(xodr OpenDRIVE "GDAL_USE_OPENDRIVE;GDAL_USE_GEOS")
