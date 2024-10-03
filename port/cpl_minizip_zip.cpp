@@ -33,7 +33,7 @@
    archives Oct-2009 - Mathias Svensson - Did some code cleanup and refactoring
    to get better overview of some functions. Oct-2009 - Mathias Svensson - Added
    zipRemoveExtraInfoBlock to strip extra field data from its ZIP64 data It is
-   used when recreting zip archive with RAW when deleting items from a zip.
+   used when recreating zip archive with RAW when deleting items from a zip.
                                  ZIP64 data is automatically added to items that
    needs it, and existing ZIP64 data need to be removed. Oct-2009 - Mathias
    Svensson - Added support for BZIP2 as compression mode (bzip2 lib is
@@ -2289,7 +2289,7 @@ CPLErr CPLCloseFileInZip(void *hZip)
 
 /** Add a file inside a ZIP file opened/created with CPLCreateZip().
  *
- * This combines calls sto CPLCreateFileInZip(), CPLWriteFileInZip(),
+ * This combines calls to CPLCreateFileInZip(), CPLWriteFileInZip(),
  * and CPLCloseFileInZip() in a more convenient and powerful way.
  *
  * In particular, this enables to add a compressed file using the seek

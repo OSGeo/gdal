@@ -753,7 +753,7 @@ VSIMultipartWriteHandle::VSIMultipartWriteHandle(
       m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename)),
       m_oRetryParameters(m_aosHTTPOptions)
 {
-    // AWS S3, OSS and GCS can use the mulipart upload mechanism, which has
+    // AWS S3, OSS and GCS can use the multipart upload mechanism, which has
     // the advantage of being retryable in case of errors.
     // Swift only supports the "Transfer-Encoding: chunked" PUT mechanism.
     // So two different implementations.
