@@ -2952,7 +2952,7 @@ def WarpOptions(options=None, format=None,
         if transformerOptions is not None:
             if isinstance(transformerOptions, dict):
                 for k, v in transformerOptions.items():
-                    new_options += ['-to', opt]
+                    new_options += ['-to', f'{k}={v}']
             else:
                 for opt in transformerOptions:
                     new_options += ['-to', opt]
