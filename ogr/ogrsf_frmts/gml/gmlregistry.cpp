@@ -17,21 +17,47 @@
 
 #include "cpl_conv.h"
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 /************************************************************************/
 /*                           Parse()                                    */
 /************************************************************************/
 
 bool GMLRegistry::Parse()
 {
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
     if (osRegistryPath.empty())
     {
+#ifdef EMBED_RESOURCE_FILES
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+#endif
         const char *pszFilename = CPLFindFile("gdal", "gml_registry.xml");
         if (pszFilename)
             osRegistryPath = pszFilename;
     }
-    if (osRegistryPath.empty())
-        return false;
-    CPLXMLNode *psRootNode = CPLParseXMLFile(osRegistryPath);
+#endif
+    CPLXMLNode *psRootNode = nullptr;
+    if (!osRegistryPath.empty())
+    {
+        psRootNode = CPLParseXMLFile(osRegistryPath);
+    }
+#ifdef EMBED_RESOURCE_FILES
+    else
+    {
+        const char *pszContent = GMLGetFileContent("gml_registry.xml");
+        if (pszContent)
+        {
+            static const bool bOnce [[maybe_unused]] = []()
+            {
+                CPLDebug("GML", "Using embedded gml_registry.xml");
+                return true;
+            }();
+            psRootNode = CPLParseXMLString(pszContent);
+        }
+    }
+#endif
     if (psRootNode == nullptr)
         return false;
     CPLXMLNode *psRegistryNode = CPLGetXMLNode(psRootNode, "=gml_registry");
@@ -116,7 +142,8 @@ bool GMLRegistryFeatureType::Parse(const char *pszRegistryFilename,
 
     if (pszSchemaLocation != nullptr)
     {
-        if (!STARTS_WITH(pszSchemaLocation, "http://") &&
+        if (pszRegistryFilename[0] &&
+            !STARTS_WITH(pszSchemaLocation, "http://") &&
             !STARTS_WITH(pszSchemaLocation, "https://") &&
             CPLIsFilenameRelative(pszSchemaLocation))
         {
@@ -127,7 +154,8 @@ bool GMLRegistryFeatureType::Parse(const char *pszRegistryFilename,
     }
     else if (pszGFSSchemaLocation != nullptr)
     {
-        if (!STARTS_WITH(pszGFSSchemaLocation, "http://") &&
+        if (pszRegistryFilename[0] &&
+            !STARTS_WITH(pszGFSSchemaLocation, "http://") &&
             !STARTS_WITH(pszGFSSchemaLocation, "https://") &&
             CPLIsFilenameRelative(pszGFSSchemaLocation))
         {
