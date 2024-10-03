@@ -122,6 +122,10 @@ Loading of the embedded :file:`proj.db` will involve using the
 as done by
 `DuckDB Spatial <https://github.com/duckdb/duckdb_spatial/blob/9c14a8b4a9093d981123a7d9f620a675ab29c6d5/spatial/src/spatial/proj/module.cpp#L56>`__
 
+Note: acknowledging how critical access to proj.db is, we make an exception of
+also allowing embedding it with non-C23 capable compilers, using a CMake script,
+derived from https://jonathanhamberg.com/post/cmake-file-embedding/.
+
 Considered alternatives
 -----------------------
 
@@ -162,7 +166,9 @@ Related issues and PRs
 
 - https://github.com/OSGeo/gdal/issues/10780
 
-- Candidate implementation (in progress): https://github.com/OSGeo/gdal/compare/master...rouault:gdal:embedded_resources?expand=1
+- GDAL candidate implementation (in progress): https://github.com/OSGeo/gdal/compare/master...rouault:gdal:embedded_resources?expand=1
+
+- PROJ candidate implementation: https://github.com/OSGeo/PROJ/pull/4265
 
 Voting history
 --------------
