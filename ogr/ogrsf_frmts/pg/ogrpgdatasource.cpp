@@ -3153,6 +3153,16 @@ bool OGRPGDataSource::CreateMetadataTableIfNeeded()
 
     m_bCreateMetadataTableIfNeededRun = true;
 
+    const bool bIsSuperUser = IsSuperUser();
+    if (!bIsSuperUser && !OGRSystemTablesEventTriggerExists())
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "User lacks super user privilege to be able to create event "
+                 "trigger ogr_system_tables_event_trigger_for_metadata");
+        m_bCreateMetadataTableIfNeededSuccess = true;
+        return true;
+    }
+
     PGresult *hResult;
 
     hResult = OGRPG_PQexec(
@@ -3266,35 +3276,67 @@ bool OGRPGDataSource::CreateMetadataTableIfNeeded()
     }
     OGRPGClearResult(hResult);
 
-    hResult =
-        OGRPG_PQexec(hPGConn, "DROP EVENT TRIGGER IF EXISTS "
-                              "ogr_system_tables_event_trigger_for_metadata");
-    if (!hResult || (PQresultStatus(hResult) != PGRES_COMMAND_OK &&
-                     PQresultStatus(hResult) != PGRES_TUPLES_OK))
+    if (bIsSuperUser)
     {
+        hResult = OGRPG_PQexec(hPGConn,
+                               "DROP EVENT TRIGGER IF EXISTS "
+                               "ogr_system_tables_event_trigger_for_metadata");
+        if (!hResult || (PQresultStatus(hResult) != PGRES_COMMAND_OK &&
+                         PQresultStatus(hResult) != PGRES_TUPLES_OK))
+        {
+            OGRPGClearResult(hResult);
+            return false;
+        }
         OGRPGClearResult(hResult);
-        return false;
-    }
-    OGRPGClearResult(hResult);
 
-    hResult = OGRPG_PQexec(
-        hPGConn,
-        "CREATE EVENT TRIGGER ogr_system_tables_event_trigger_for_metadata "
-        "ON sql_drop "
-        "EXECUTE FUNCTION "
-        "ogr_system_tables.event_trigger_function_for_metadata()");
-    if (!hResult || (PQresultStatus(hResult) != PGRES_COMMAND_OK &&
-                     PQresultStatus(hResult) != PGRES_TUPLES_OK))
-    {
+        hResult = OGRPG_PQexec(
+            hPGConn,
+            "CREATE EVENT TRIGGER ogr_system_tables_event_trigger_for_metadata "
+            "ON sql_drop "
+            "EXECUTE FUNCTION "
+            "ogr_system_tables.event_trigger_function_for_metadata()");
+        if (!hResult || (PQresultStatus(hResult) != PGRES_COMMAND_OK &&
+                         PQresultStatus(hResult) != PGRES_TUPLES_OK))
+        {
+            OGRPGClearResult(hResult);
+            return false;
+        }
         OGRPGClearResult(hResult);
-        return false;
     }
-    OGRPGClearResult(hResult);
 
     m_bCreateMetadataTableIfNeededSuccess = true;
     m_bOgrSystemTablesMetadataTableExistenceTested = true;
     m_bOgrSystemTablesMetadataTableFound = true;
     return true;
+}
+
+/************************************************************************/
+/*                               IsSuperUser()                          */
+/************************************************************************/
+
+bool OGRPGDataSource::IsSuperUser()
+{
+    PGresult *hResult = OGRPG_PQexec(
+        hPGConn, "SELECT usesuper FROM pg_user WHERE usename = CURRENT_USER");
+    const bool bRet =
+        (hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult, 0, 0) &&
+         strcmp(PQgetvalue(hResult, 0, 0), "t") == 0);
+    OGRPGClearResult(hResult);
+    return bRet;
+}
+
+/************************************************************************/
+/*                  OGRSystemTablesEventTriggerExists()                 */
+/************************************************************************/
+
+bool OGRPGDataSource::OGRSystemTablesEventTriggerExists()
+{
+    PGresult *hResult =
+        OGRPG_PQexec(hPGConn, "SELECT 1 FROM pg_event_trigger WHERE evtname = "
+                              "'ogr_system_tables_event_trigger_for_metadata'");
+    const bool bRet = (hResult && PQntuples(hResult) == 1);
+    OGRPGClearResult(hResult);
+    return bRet;
 }
 
 /************************************************************************/

@@ -657,6 +657,9 @@ class OGRPGDataSource final : public GDALDataset
 
     std::optional<std::string> FindSchema(const char *pszSchemaNameIn);
 
+    bool IsSuperUser();
+    bool OGRSystemTablesEventTriggerExists();
+
   public:
     PGver sPostgreSQLVersion = {0, 0, 0};
     PGver sPostGISVersion = {0, 0, 0};
