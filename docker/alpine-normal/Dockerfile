@@ -62,6 +62,7 @@ RUN apk add --no-cache \
     make \
     mariadb-connector-c-dev \
     netcdf-dev \
+    ninja-build \
     odbc-cpp-wrapper-dev \
     ogdi-dev \
     openexr-dev \
@@ -89,6 +90,9 @@ RUN apk add --no-cache \
     zlib-dev \
     zstd-dev \
     && mkdir -p /build_thirdparty/usr/lib
+
+# Ninja is not in the default path on Alpine.
+ENV PATH=/usr/lib/ninja-build/bin:$PATH
 
 RUN if test "$(uname -m)" = "x86_64"; then ( \
     apk add --no-cache librasterlite2-dev \
@@ -121,10 +125,10 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
     && rm -f ${OPENDRIVE_VERSION}.tar.gz \
     && cd libOpenDRIVE-${OPENDRIVE_VERSION} \
-    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    && cmake . -G Ninja -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr/ \
-    && make -j$(nproc) \
-    && make install \
+    && ninja \
+    && ninja install \
     && mkdir -p /build_thirdparty/usr/lib \
     && cp -P /usr/lib/libOpenDrive*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -153,14 +157,15 @@ RUN mkdir proj \
     fi \
     # IPO disabled since it crashes with gcc 13.2.1
     && cmake . \
+        -G Ninja \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DENABLE_IPO=OFF \
         -DBUILD_TESTING=OFF \
-    && make -j$(nproc) \
-    && make install \
-    && make install DESTDIR="/build_proj" \
+    && ninja \
+    && ninja install \
+    && DESTDIR="/build_proj" ninja install \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
@@ -251,6 +256,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mkdir build \
     && cd build \
     && cmake .. \
+        -G Ninja \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DCMAKE_BUILD_TYPE=Release \
         -DGDAL_USE_TIFF_INTERNAL=ON \
@@ -260,9 +266,9 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         -DBUILD_TESTING=OFF \
         -DOpenDrive_DIR=/usr/lib/ \
         -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE \
-    && make -j$(nproc) \
-    && make install DESTDIR="/build" \
-    && (make -j$(nproc) multireadtest && cp apps/multireadtest /build/usr/bin) \
+    && ninja \
+    && DESTDIR="/build" ninja install \
+    && (ninja multireadtest && cp apps/multireadtest /build/usr/bin) \
     && cd .. \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
