@@ -120,16 +120,14 @@ between double quotes, the internal double quotes must be escaped with \\
 Geometry field
 ++++++++++++++
 
-The ``GEOMETRY`` special field represents the geometry of the feature
-returned by OGRFeature::GetGeometryRef(). It can be explicitly specified
-in the result column list of a SELECT, and is automatically selected if the
-* wildcard is used.
+Geometry fields can be explicitly specified in the result column list of a SELECT,
+or automatically selected if the * wildcard is used.
 
 For OGR layers that have a non-empty geometry column name (generally for RDBMS datasources),
 as returned by OGRLayer::GetGeometryColumn(), the name of the geometry special field
-in the SQL statement will be the name of the geometry column of the underlying OGR layer.
+in the SQL statement must be the name of the geometry column of the underlying OGR layer.
 If the name of the geometry column in the source layer is empty, like with shapefiles etc.,
-the name to use in the SQL statement is always "geometry". Here we'll use it case-insensitively
+the name to use in the SQL statement must be "geometry". Here we'll use it case-insensitively
 (as all field names are in a SELECT statement):
 
 .. code-block::
