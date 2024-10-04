@@ -826,8 +826,8 @@ int DIMAPDataset::ReadImageInformation()
     /*      Try and open the file.                                          */
     /* -------------------------------------------------------------------- */
 
-    auto poImageDS =
-        std::unique_ptr<GDALDataset>(GDALDataset::Open(osImageFilename));
+    auto poImageDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+        osImageFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
     if (poImageDS == nullptr)
     {
         return FALSE;
@@ -1233,8 +1233,8 @@ int DIMAPDataset::ReadImageInformation2()
     /* -------------------------------------------------------------------- */
     /*      Try and open the file.                                          */
     /* -------------------------------------------------------------------- */
-    auto poImageDS =
-        std::unique_ptr<GDALDataset>(GDALDataset::Open(osImageDSFilename));
+    auto poImageDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+        osImageDSFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
     if (poImageDS == nullptr)
     {
         return FALSE;
