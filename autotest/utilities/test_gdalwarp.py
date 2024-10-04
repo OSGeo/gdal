@@ -1176,6 +1176,25 @@ def test_gdalwarp_40(gdalwarp_path, tmp_path):
     expected_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
+    # Test that tiny variations in -te that result in a target resampling factor
+    # very close to the one of overview 0 lead to overview 0 been selected
+
+    gdaltest.runexternal(
+        f"{gdalwarp_path} {src_tif} {dst_vrt} -overwrite -ts 10 10 -te 440721 3750120 441920 3751320 -of VRT"
+    )
+
+    ds = gdal.Open(dst_vrt)
+    assert ds.GetRasterBand(1).Checksum() == cs_ov0
+    ds = None
+
+    gdaltest.runexternal(
+        f"{gdalwarp_path} {src_tif} {dst_vrt} -overwrite -ts 10 10 -te 440719 3750120 441920 3751320 -of VRT"
+    )
+
+    ds = gdal.Open(dst_vrt)
+    assert ds.GetRasterBand(1).Checksum() == cs_ov0
+    ds = None
+
     # Should select overview 0 too
     gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ts 7 7")
 
