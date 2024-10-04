@@ -99,7 +99,7 @@ ARG HDF4_VERSION=4.2.16
 RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     apk add --no-cache byacc flex portablexdr-dev \
     && mkdir hdf4 \
-    && wget -q https://support.hdfgroup.org/ftp/HDF/releases/HDF${HDF4_VERSION}/src/hdf-${HDF4_VERSION}.tar.gz -O - \
+    && curl -L -fsS https://support.hdfgroup.org/ftp/HDF/releases/HDF${HDF4_VERSION}/src/hdf-${HDF4_VERSION}.tar.gz \
         | tar xz -C hdf4 --strip-components=2 \
     && cd hdf4 \
     && LDFLAGS=-lportablexdr ./configure --prefix=/usr --enable-shared --disable-static \
@@ -117,7 +117,7 @@ RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
 # Build libOpenDRIVE
 ARG OPENDRIVE_VERSION=0.6.0-gdal
 RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
-    wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
+    curl -LO -fsS https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
     && rm -f ${OPENDRIVE_VERSION}.tar.gz \
     && cd libOpenDRIVE-${OPENDRIVE_VERSION} \
@@ -138,7 +138,7 @@ ARG RSYNC_REMOTE
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN mkdir proj \
-    && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
+    && curl -L -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && if test "${RSYNC_REMOTE}" != ""; then \
@@ -178,7 +178,7 @@ RUN mkdir proj \
 # Build spatialite
 ARG SPATIALITE_VERSION=5.1.0
 RUN if test "${SPATIALITE_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
-    wget -q https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-${SPATIALITE_VERSION}.tar.gz \
+    curl -LO -fsS https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && tar xzf libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && rm -f libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && cd libspatialite-${SPATIALITE_VERSION} \
@@ -231,7 +231,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         && export LDFLAGS="-lportablexdr ${LDFLAGS}"; \
     fi \
     && mkdir gdal \
-    && wget -q https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz -O - \
+    && curl -L -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal \
     && if test "${RSYNC_REMOTE}" != ""; then \

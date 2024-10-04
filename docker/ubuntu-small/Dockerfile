@@ -66,7 +66,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
 ARG OPENJPEG_VERSION=
 RUN . /buildscripts/bh-set-envvars.sh \
     && if test "${OPENJPEG_VERSION}" != ""; then ( \
-    wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
+    curl -LO -fsS https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
     && tar xzf v${OPENJPEG_VERSION}.tar.gz \
     && rm -f v${OPENJPEG_VERSION}.tar.gz \
     && cd openjpeg-${OPENJPEG_VERSION} \
@@ -85,7 +85,7 @@ ARG PROJ_INSTALL_PREFIX
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
     mkdir -p /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && curl -LO -fsS http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
     && rm -f *.zip
 
@@ -98,7 +98,7 @@ ARG RSYNC_REMOTE
 ARG PROJ_VERSION=master
 RUN . /buildscripts/bh-set-envvars.sh \
     && mkdir proj \
-    && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
+    && curl -L -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
@@ -158,7 +158,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
     && mkdir gdal \
-    && wget -q https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz -O - \
+    && curl -L -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
