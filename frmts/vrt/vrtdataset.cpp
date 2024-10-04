@@ -1053,8 +1053,9 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
     // http://.jp2 file with the JP2OpenJPEG driver through the HTTP driver,
     // which returns a /vsimem/ file
     auto poSrcDS = std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>(
-        GDALDataset::Open(osFilename, GDAL_OF_RASTER, aosAllowedDrivers.List(),
-                          aosOpenOptions.List(), nullptr));
+        GDALDataset::Open(osFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                          aosAllowedDrivers.List(), aosOpenOptions.List(),
+                          nullptr));
     if (poSrcDS == nullptr)
     {
         return nullptr;
@@ -1103,7 +1104,8 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                     if (bFound)
                     {
                         poSrcDS.reset(GDALDataset::Open(
-                            osSubdatasetSource.c_str(), GDAL_OF_RASTER,
+                            osSubdatasetSource.c_str(),
+                            GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
                             aosAllowedDrivers.List(), aosOpenOptions.List(),
                             nullptr));
                         if (poSrcDS == nullptr)
@@ -1158,7 +1160,8 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 }
 
                 poSrcDS.reset(GDALDataset::Open(
-                    osSubdatasetSource.c_str(), GDAL_OF_RASTER,
+                    osSubdatasetSource.c_str(),
+                    GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
                     aosAllowedDrivers.List(), aosOpenOptions.List(), nullptr));
                 if (poSrcDS == nullptr)
                 {
