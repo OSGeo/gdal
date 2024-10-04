@@ -986,8 +986,37 @@ def test_nitf_28_jp2openjpeg_bis(tmp_path):
             createcopy=True,
         )
         ds = gdal.Open(filename)
+        size = os.stat(filename).st_size
         assert ds.GetRasterBand(1).Checksum() in (31604, 31741)
         ds = None
+
+        nitf_create(
+            filename,
+            ["ICORDS=G", "IC=C8", "QUALITY=1,25"],
+            set_inverted_color_interp=False,
+            createcopy=True,
+        )
+        ds = gdal.Open(filename)
+        size2 = os.stat(filename).st_size
+        assert ds.GetRasterBand(1).Checksum() in (31604, 31741)
+        ds = None
+
+        assert size2 > size
+
+        # Check that floating-point values in QUALITY are honored
+        nitf_create(
+            filename,
+            ["ICORDS=G", "IC=C8", "QUALITY=1.9,25"],
+            set_inverted_color_interp=False,
+            createcopy=True,
+        )
+        ds = gdal.Open(filename)
+        size3 = os.stat(filename).st_size
+        assert ds.GetRasterBand(1).Checksum() in (31604, 31741)
+        ds = None
+
+        # The fact that size3 > size2 is a bit of a chance here...
+        assert size3 > size2
 
         tmpfilename = "/vsimem/nitf_28_jp2openjpeg_bis.ntf"
         src_ds = gdal.GetDriverByName("MEM").Create("", 1025, 1025)
@@ -1100,6 +1129,7 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless(tmp_vsimem):
                 "IC=C8",
                 "JPEG2000_DRIVER=JP2OpenJPEG",
                 "PROFILE=NPJE_NUMERICALLY_LOSSLESS",
+                "QUALITY=10,100",
             ],
         )
 

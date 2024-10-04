@@ -4018,8 +4018,15 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
 {
     char **papszJP2Options = CSLAddString(nullptr, "CODEC=J2K");
 
-    double dfQuality =
-        CPLAtof(CSLFetchNameValueDef(papszOptions, "QUALITY", "0"));
+    const char *pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
+    double dfQuality = 0;
+    if (pszQuality)
+    {
+        for (const char *pszVal :
+             CPLStringList(CSLTokenizeString2(pszQuality, ",", 0)))
+            dfQuality = std::max(dfQuality, CPLAtof(pszVal));
+    }
+
     double dfTarget =
         CPLAtof(CSLFetchNameValueDef(papszOptions, "TARGET", "0"));
 
@@ -4036,10 +4043,10 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
     }
 
     // Set it now before the NPJE profiles have a chance to override it
-    if (dfQuality > 0)
+    if (pszQuality)
     {
-        papszJP2Options = CSLSetNameValue(papszJP2Options, "QUALITY",
-                                          CPLSPrintf("%f", dfQuality));
+        papszJP2Options =
+            CSLSetNameValue(papszJP2Options, "QUALITY", pszQuality);
     }
 
     const char *pszProfile = CSLFetchNameValueDef(papszOptions, "PROFILE", "");
@@ -4049,6 +4056,14 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
         // ISO/IEC BIIF Profile BPJ2K01.10
         // (https://nsgreg.nga.mil/doc/view?i=2031&month=3&day=22&year=2021),
         // for NPJE (Appendix D ) profile
+
+        if (pszQuality && strchr(pszQuality, ','))
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Only largest value of QUALITY used when PROFILE=%s "
+                     "is specified",
+                     pszProfile);
+        }
 
         papszJP2Options =
             CSLAddString(papszJP2Options, "@BLOCKSIZE_STRICT=YES");
@@ -7051,11 +7066,21 @@ void NITFDriver::InitCreationOptionList()
     if (bHasJPEG2000Drivers)
         osCreationOptions += "       <Value>C8</Value>";
 
-    osCreationOptions +=
-        "   </Option>"
+    osCreationOptions += "   </Option>";
+
+#if !defined(JPEG_SUPPORTED)
+    if (bHasJPEG2000Drivers)
+#endif
+    {
+        osCreationOptions +=
+            "   <Option name='QUALITY' type='string' "
+            "description='JPEG (10-100) or JPEG2000 quality, possibly as a"
+            "separated list of values for JPEG2000_DRIVER=JP2OPENJPEG' "
+            "default='75'/>";
+    }
+
 #ifdef JPEG_SUPPORTED
-        "   <Option name='QUALITY' type='int' description='JPEG quality "
-        "10-100' default='75'/>"
+    osCreationOptions +=
         "   <Option name='PROGRESSIVE' type='boolean' description='JPEG "
         "progressive mode'/>"
         "   <Option name='RESTART_INTERVAL' type='int' description='Restart "
