@@ -129,6 +129,27 @@ reported when asking the metadata list.
       -  C8 means JPEG2000 compression (one block) and is available for
          CreateCopy() and/or Create() methods. See below paragraph for specificities.
 
+-  .. co:: QUALITY
+      :default: 75
+
+      For JPEG, quality as integer values in the 10-100 range
+      For JPEG2000, quality as a floating-point value in >0 - 100 range.
+      When JPEG2000_DRIVER=JP2OpenJPEG and PROFILE is not one of the NPJE ones,
+      several quality layers can be specified as a comma-separated list of values.
+
+-  .. co:: PROGRESSIVE
+      :choices: YES, NO
+      :default: NO
+
+      JPEG progressive mode
+
+-  .. co:: RESTART_INTERVAL
+      :choices: -1, 0, >0
+      :default: -1
+
+      Restart interval (in MCUs) for JPEG compression.
+      -1 for auto, 0 for none, > 0 for user specified.
+
 -  .. co:: NUMI
       :default: 1
 
