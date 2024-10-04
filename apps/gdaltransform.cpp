@@ -402,6 +402,11 @@ MAIN_START(argc, argv)
             if (fgets(szLine, sizeof(szLine) - 1, stdin) == nullptr)
                 break;
 
+            size_t nLen = strlen(szLine);
+            if (nLen && szLine[nLen - 1] == '\n')
+                szLine[--nLen] = 0;
+            if (nLen && szLine[nLen - 1] == '\r')
+                szLine[--nLen] = 0;
             const CPLStringList aosTokens(CSLTokenizeString(szLine));
             const int nCount = aosTokens.size();
 
