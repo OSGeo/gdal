@@ -460,9 +460,13 @@ The following configuration options are available:
       :default: YES
       :since: 3.9
 
-      If set to "YES" (the default), the driver will try to use (and potentially
-      create) the ``ogr_system_tables.metadata`` table to retrieve and store
-      layer metadata.
+      If set to "YES" (the default), the driver will try to use the
+      ``ogr_system_tables.metadata`` table to retrieve and store
+      layer metadata. To be able to store metadata, the schema ``ogr_system_tables``
+      and the event trigger ``ogr_system_tables_event_trigger_for_metadata`` must
+      already exist in the database, or the current user must have sufficient rights
+      (super-user rights for the event trigger) to be able to create them. If not,
+      a warning will be raised.
 
 -  .. config:: OGR_PG_SKIP_CONFLICTS
       :choices: YES, NO

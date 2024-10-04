@@ -4849,6 +4849,13 @@ def test_ogr_pg_84(pg_ds):
 def test_ogr_pg_metadata(pg_ds, run_number):
 
     pg_ds = reconnect(pg_ds, update=1)
+
+    if run_number == 1:
+        pg_ds.ExecuteSQL(
+            "DROP EVENT TRIGGER IF EXISTS ogr_system_tables_event_trigger_for_metadata"
+        )
+        pg_ds.ExecuteSQL("DROP SCHEMA ogr_system_tables CASCADE")
+
     pg_ds.StartTransaction()
     lyr = pg_ds.CreateLayer(
         "test_ogr_pg_metadata", geom_type=ogr.wkbPoint, options=["OVERWRITE=YES"]
@@ -4903,7 +4910,6 @@ def test_ogr_pg_metadata_restricted_user(pg_ds):
     pg_ds = reconnect(pg_ds, update=1)
 
     try:
-
         pg_ds.ExecuteSQL("CREATE ROLE test_ogr_pg_metadata_restricted_user")
         with pg_ds.ExecuteSQL("SELECT current_schema()") as lyr:
             f = lyr.GetNextFeature()
@@ -4923,6 +4929,7 @@ def test_ogr_pg_metadata_restricted_user(pg_ds):
         )
 
         pg_ds = reconnect(pg_ds, update=1)
+        pg_ds.ExecuteSQL("DROP SCHEMA ogr_system_tables CASCADE")
         pg_ds.ExecuteSQL("SET ROLE test_ogr_pg_metadata_restricted_user")
 
         lyr = pg_ds.CreateLayer(
@@ -4933,9 +4940,12 @@ def test_ogr_pg_metadata_restricted_user(pg_ds):
         with gdal.quiet_errors():
             lyr.SetMetadata({"foo": "bar"})
 
-        gdal.ErrorReset()
-        pg_ds = reconnect(pg_ds, update=1)
-        assert gdal.GetLastErrorMsg() == ""
+            gdal.ErrorReset()
+            pg_ds = reconnect(pg_ds, update=1)
+        assert (
+            gdal.GetLastErrorMsg()
+            == "User lacks super user privilege to be able to create event trigger ogr_system_tables_event_trigger_for_metadata"
+        )
 
     finally:
         pg_ds = reconnect(pg_ds, update=1)
