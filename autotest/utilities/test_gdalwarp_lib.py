@@ -1839,7 +1839,10 @@ def test_gdalwarp_lib_134(tmp_vsimem):
         "",
         src_ds,
         format="MEM",
-        transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM", "DST_METHOD=NO_GEOTRANSFORM"],
+        transformerOptions={
+            "SRC_METHOD": "NO_GEOTRANSFORM",
+            "DST_METHOD": "NO_GEOTRANSFORM",
+        },
         outputBounds=[1, 2, 4, 6],
     )
     assert ds is not None
