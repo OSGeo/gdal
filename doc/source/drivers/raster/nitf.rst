@@ -131,10 +131,12 @@ The following creation options are available:
          CreateCopy() and/or Create() methods. See below paragraph for specificities.
 
 -  .. co:: QUALITY
-      :choices: 10-100
       :default: 75
 
-      JPEG quality 10-100
+      For JPEG, quality as integer values in the 10-100 range
+      For JPEG2000, quality as a floating-point value in >0 - 100 range.
+      When JPEG2000_DRIVER=JP2OpenJPEG and PROFILE is not one of the NPJE ones,
+      several quality layers can be specified as a comma-separated list of values.
 
 -  .. co:: PROGRESSIVE
       :choices: YES, NO
