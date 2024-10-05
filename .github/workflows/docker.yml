@@ -1,0 +1,47 @@
+name: Docker
+
+on:
+    pull_request:
+        paths:
+            - 'docker/**'
+            - '.github/workflows/docker.yml'
+
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+
+  docker_builds:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: alpine-small
+
+          - name: alpine-normal
+
+          - name: ubuntu-small
+
+          - name: ubuntu-full
+
+    name: ${{ matrix.name }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+
+      - name: Build
+        shell: bash -l {0}
+        run: |
+          cd docker/${{ matrix.name }}
+          ./build.sh --platform linux/amd64
