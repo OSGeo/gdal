@@ -9,7 +9,7 @@ ARG PROJ_INSTALL_PREFIX=/usr/local
 ARG BASE_IMAGE=ubuntu:24.04
 ARG TARGET_BASE_IMAGE=ubuntu:24.04
 
-FROM $BASE_IMAGE as builder
+FROM $BASE_IMAGE AS builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
@@ -213,7 +213,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_gdal_version_changing/usr/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
-FROM $TARGET_BASE_IMAGE as runner
+FROM $TARGET_BASE_IMAGE AS runner
 
 USER root
 RUN date

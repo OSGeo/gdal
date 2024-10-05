@@ -6,7 +6,7 @@
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
 ARG ALPINE_VERSION=3.20
-FROM alpine:${ALPINE_VERSION} as builder
+FROM alpine:${ALPINE_VERSION} AS builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
@@ -152,7 +152,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && apk del cmake
 
 # Build final image
-FROM alpine:${ALPINE_VERSION} as runner
+FROM alpine:${ALPINE_VERSION} AS runner
 
 RUN date
 
