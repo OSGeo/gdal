@@ -4,6 +4,7 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
+            - 'docker/**'
         branches-ignore:
             - 'backport**'
             - 'dependabot**'

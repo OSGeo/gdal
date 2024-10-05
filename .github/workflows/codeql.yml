@@ -4,12 +4,14 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
+            - 'docker/**'
         branches-ignore:
           - 'backport**'
           - 'dependabot**'
     pull_request:
         paths-ignore:
             - 'doc/**'
+            - 'docker/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
