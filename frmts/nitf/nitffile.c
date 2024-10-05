@@ -2472,6 +2472,9 @@ static const char *NITFFindValRecursive(char **papszMD, int nMDSize,
             pszLastUnderscore = strrchr(pszMDPrefixShortened, '_');
         }
         CPLFree(pszMDPrefixShortened);
+
+        if (!pszCondVal)
+            pszCondVal = NITFFindValFromEnd(papszMD, nMDSize, pszVar, NULL);
     }
     CPLFree(pszMDItemName);
 
