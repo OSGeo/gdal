@@ -1,6 +1,14 @@
 MIGRATION GUIDE FROM GDAL 3.9 to GDAL 3.10
 ------------------------------------------
 
+- The Erdas Imagine (HFA) and Derived drivers are now optional drivers. Users
+  building with GDAL_BUILD_OPTIONAL_DRIVERS=OFF may need to explicitly enable
+  them with GDAL_ENABLE_DRIVER_HFA=ON and GDAL_ENABLE_DRIVER_DERIVED=ON.
+  The MapInfo, OGR_VRT and KML drivers are now an optional driver. Users
+  building with OGR_BUILD_OPTIONAL_DRIVERS=OFF may need to explicitly enable
+  them with OGR_ENABLE_DRIVER_TAB=ON, OGR_ENABLE_DRIVER_VRT=ON and
+  OGR_ENABLE_DRIVER_KML=ON.
+
 - User code using VSIFEofL() to potentially to end read loops should also test
   the return code of the new VSIFError() function. Some virtual file systems
   that used to report errors through VSIFEofL() now do through VSIFError().
