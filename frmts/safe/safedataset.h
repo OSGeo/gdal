@@ -50,7 +50,7 @@
 
 class SAFEDataset final : public GDALPamDataset
 {
-    CPLXMLNode *psManifest = nullptr;
+    CPLXMLTreeCloser psManifest{nullptr};
 
     int nGCPCount = 0;
     GDAL_GCP *pasGCPList = nullptr;
@@ -64,10 +64,12 @@ class SAFEDataset final : public GDALPamDataset
   protected:
     virtual int CloseDependentDatasets() override;
 
-    static CPLXMLNode *GetMetaDataObject(CPLXMLNode *, const char *);
+    static const CPLXMLNode *GetMetaDataObject(const CPLXMLNode *,
+                                               const char *);
 
-    static CPLXMLNode *GetDataObject(CPLXMLNode *, const char *);
-    static CPLXMLNode *GetDataObject(CPLXMLNode *, CPLXMLNode *, const char *);
+    static const CPLXMLNode *GetDataObject(const CPLXMLNode *, const char *);
+    static const CPLXMLNode *GetDataObject(const CPLXMLNode *,
+                                           const CPLXMLNode *, const char *);
 
     void AddSubDataset(const CPLString &osName, const CPLString &osDesc);
 
@@ -89,9 +91,9 @@ class SAFEDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
 
-    CPLXMLNode *GetManifest()
+    const CPLXMLNode *GetManifest()
     {
-        return psManifest;
+        return psManifest.get();
     }
 };
 
