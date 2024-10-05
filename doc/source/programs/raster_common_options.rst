@@ -21,6 +21,10 @@ All GDAL command line programs support the following common options.
 
     List detailed information about a single format driver. The format should be the short name reported in the --formats list, such as GTiff.
 
+.. option:: --formats
+
+    List all drivers. Can be combined with ``-json`` switch of :program:`gdalinfo` of since GDAL 3.10
+
 .. _raster_common_options_optfile:
 .. option:: --optfile <filename>
 

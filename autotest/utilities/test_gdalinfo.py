@@ -349,6 +349,25 @@ def test_gdalinfo_20(gdalinfo_path):
 
 
 ###############################################################################
+# Test --formats -json
+
+
+@pytest.mark.require_driver("VRT")
+def test_gdalinfo_formats_json(gdalinfo_path):
+
+    ret = json.loads(
+        gdaltest.runexternal(gdalinfo_path + " --formats -json", check_memleak=False)
+    )
+    assert {
+        "short_name": "VRT",
+        "long_name": "Virtual Raster",
+        "scopes": ["raster", "multidimensional_raster"],
+        "capabilities": ["open", "create", "create_copy", "virtual_io"],
+        "file_extensions": ["vrt"],
+    } in ret
+
+
+###############################################################################
 # Test erroneous use of --format.
 
 

@@ -46,6 +46,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_json.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
@@ -3425,7 +3426,7 @@ static void StripIrrelevantOptions(CPLXMLNode *psCOL, int nOptions)
  *  --version: report version of GDAL in use.
  *  --build: report build info about GDAL in use.
  *  --license: report GDAL license info.
- *  --formats: report all format drivers configured.
+ *  --formats: report all format drivers configured. Can be used with -json since 3.10
  *  --format [format]: report details of one format driver.
  *  --optfile filename: expand an option file into the argument list.
  *  --config key value: set system configuration option.
@@ -3716,6 +3717,88 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             if (nOptions == 0)
                 nOptions = GDAL_OF_RASTER;
 
+            bool bJSON = false;
+            for (int i = 1; i < nArgc; i++)
+            {
+                if (strcmp(papszArgv[i], "-json") == 0)
+                {
+                    bJSON = true;
+                    break;
+                }
+            }
+
+            if (bJSON)
+            {
+                auto poDM = GetGDALDriverManager();
+                CPLJSONArray oArray;
+                const int nDriverCount = poDM->GetDriverCount();
+                for (int iDr = 0; iDr < nDriverCount; ++iDr)
+                {
+                    auto poDriver = poDM->GetDriver(iDr);
+                    CSLConstList papszMD = poDriver->GetMetadata();
+
+                    if (nOptions == GDAL_OF_RASTER &&
+                        !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
+                        continue;
+                    if (nOptions == GDAL_OF_VECTOR &&
+                        !CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
+                        continue;
+                    if (nOptions == GDAL_OF_GNM &&
+                        !CPLFetchBool(papszMD, GDAL_DCAP_GNM, false))
+                        continue;
+                    if (nOptions == GDAL_OF_MULTIDIM_RASTER &&
+                        !CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER,
+                                      false))
+                        continue;
+
+                    CPLJSONObject oJDriver;
+                    oJDriver.Set("short_name", poDriver->GetDescription());
+                    if (const char *pszLongName =
+                            CSLFetchNameValue(papszMD, GDAL_DMD_LONGNAME))
+                        oJDriver.Set("long_name", pszLongName);
+                    CPLJSONArray oJScopes;
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
+                        oJScopes.Add("raster");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
+                        oJScopes.Add("multidimensional_raster");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
+                        oJScopes.Add("vector");
+                    oJDriver.Add("scopes", oJScopes);
+                    CPLJSONArray oJCaps;
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_OPEN, false))
+                        oJCaps.Add("open");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_CREATE, false))
+                        oJCaps.Add("create");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_CREATECOPY, false))
+                        oJCaps.Add("create_copy");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
+                        oJCaps.Add("virtual_io");
+                    oJDriver.Add("capabilities", oJCaps);
+
+                    if (const char *pszExtensions = CSLFetchNameValueDef(
+                            papszMD, GDAL_DMD_EXTENSIONS,
+                            CSLFetchNameValue(papszMD, GDAL_DMD_EXTENSION)))
+                    {
+                        const CPLStringList aosExt(
+                            CSLTokenizeString2(pszExtensions, " ", 0));
+                        CPLJSONArray oJExts;
+                        for (int i = 0; i < aosExt.size(); ++i)
+                        {
+                            oJExts.Add(aosExt[i]);
+                        }
+                        oJDriver.Add("file_extensions", oJExts);
+                    }
+
+                    oArray.Add(oJDriver);
+                }
+                printf(/*ok*/
+                       "%s\n",
+                       oArray.Format(CPLJSONObject::PrettyFormat::Pretty)
+                           .c_str());
+
+                return 0;
+            }
+
             printf(/*ok*/
                    "Supported Formats: (ro:read-only, rw:read-write, +:update, "
                    "v:virtual-I/O s:subdatasets)\n");
@@ -3725,7 +3808,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
 
                 const char *pszRFlag = "", *pszWFlag, *pszVirtualIO,
                            *pszSubdatasets;
-                char **papszMD = GDALGetMetadata(hDriver, nullptr);
+                CSLConstList papszMD = GDALGetMetadata(hDriver, nullptr);
 
                 if (nOptions == GDAL_OF_RASTER &&
                     !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
