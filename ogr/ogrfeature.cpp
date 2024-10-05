@@ -4440,8 +4440,8 @@ void OGRFeature::SetField(int iField, const char *pszValue)
             }
             else
             {
-                const char *papszValues[2] = {pszValue, nullptr};
-                SetField(iField, const_cast<char **>(papszValues));
+                const char *const papszValues[2] = {pszValue, nullptr};
+                SetField(iField, papszValues);
             }
         }
     }
@@ -5062,8 +5062,7 @@ void OGR_F_SetFieldStringList(OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER0(hFeat, "OGR_F_SetFieldStringList");
 
-    OGRFeature::FromHandle(hFeat)->SetField(
-        iField, const_cast<const char *const *>(papszValues));
+    OGRFeature::FromHandle(hFeat)->SetField(iField, papszValues);
 }
 
 /************************************************************************/
@@ -6576,9 +6575,7 @@ OGRErr OGRFeature::SetFieldsFrom(const OGRFeature *poSrcFeature,
                 if (eDstType == OFTDate || eDstType == OFTTime ||
                     eDstType == OFTDateTime)
                 {
-                    SetField(iDstField,
-                             const_cast<OGRField *>(
-                                 poSrcFeature->GetRawFieldRef(iField)));
+                    SetField(iDstField, poSrcFeature->GetRawFieldRef(iField));
                 }
                 else if (eDstType == OFTString || eDstType == OFTStringList)
                 {
@@ -6598,9 +6595,7 @@ OGRErr OGRFeature::SetFieldsFrom(const OGRFeature *poSrcFeature,
             {
                 if (eSrcType == eDstType)
                 {
-                    SetField(iDstField,
-                             const_cast<OGRField *>(
-                                 poSrcFeature->GetRawFieldRef(iField)));
+                    SetField(iDstField, poSrcFeature->GetRawFieldRef(iField));
                 }
                 else if (eDstType == OFTString || eDstType == OFTStringList)
                 {
