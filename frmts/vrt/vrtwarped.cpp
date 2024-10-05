@@ -1968,8 +1968,16 @@ CPLErr VRTWarpedDataset::IRasterIO(
 
     // Build a map from warped output bands to their index
     std::map<int, int> oMapBandToWarpingBandIndex;
+    bool bAllBandsIncreasingOrder =
+        (psWO->nBandCount == nBands && nBands == nBandCount);
     for (int i = 0; i < psWO->nBandCount; ++i)
+    {
         oMapBandToWarpingBandIndex[psWO->panDstBands[i]] = i;
+        if (psWO->panDstBands[i] != i + 1 || panBandMap[i] != i + 1)
+        {
+            bAllBandsIncreasingOrder = false;
+        }
+    }
 
     // Check that all requested bands are actually warped output bands.
     for (int i = 0; i < nBandCount; ++i)
@@ -2054,51 +2062,72 @@ CPLErr VRTWarpedDataset::IRasterIO(
     CPLDebugOnly("VRT",
                  "Using optimized VRTWarpedDataset::IRasterIO() code path");
 
-    // Allocate a warping destination buffer
-    // Note: we could potentially use the pData target buffer argument of this
-    // function in some circumstances... but probably not worth the complication
-    GByte *pabyWarpBuffer = static_cast<GByte *>(
-        m_poWarper->CreateDestinationBuffer(nXSize, nYSize));
+    // Allocate a warping destination buffer if needed.
+    // We can use directly the output buffer pData if:
+    // - we request exactly all warped bands, and that there are as many
+    //   warped bands as dataset bands (no alpha)
+    // - the output buffer data atype is the warping working data type
+    // - the output buffer has a band-sequential layout.
+    GByte *pabyWarpBuffer;
 
-    if (pabyWarpBuffer == nullptr)
+    if (bAllBandsIncreasingOrder && psWO->eWorkingDataType == eBufType &&
+        nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
+        nLineSpace == nPixelSpace * nXSize &&
+        (nBands == 1 || nBandSpace == nLineSpace * nYSize))
     {
-        return CE_Failure;
+        pabyWarpBuffer = static_cast<GByte *>(pData);
+        m_poWarper->InitializeDestinationBuffer(pabyWarpBuffer, nXSize, nYSize);
+    }
+    else
+    {
+        pabyWarpBuffer = static_cast<GByte *>(
+            m_poWarper->CreateDestinationBuffer(nXSize, nYSize));
+
+        if (pabyWarpBuffer == nullptr)
+        {
+            return CE_Failure;
+        }
     }
 
     const CPLErr eErr = m_poWarper->WarpRegionToBuffer(
         nXOff, nYOff, nXSize, nYSize, pabyWarpBuffer, psWO->eWorkingDataType,
         nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, dfSrcXExtraSize,
         dfSrcYExtraSize);
-    if (eErr == CE_None)
+
+    if (pabyWarpBuffer != pData)
     {
-        // Copy warping buffer into user destination buffer
-        for (int i = 0; i < nBandCount; i++)
+        if (eErr == CE_None)
         {
-            const int nRasterIOBand = panBandMap[i];
-            const auto oIterToWarpingBandIndex =
-                oMapBandToWarpingBandIndex.find(nRasterIOBand);
-            // cannot happen due to earlier check
-            CPLAssert(oIterToWarpingBandIndex !=
-                      oMapBandToWarpingBandIndex.end());
-
-            const GByte *const pabyWarpBandBuffer =
-                pabyWarpBuffer +
-                static_cast<GPtrDiff_t>(oIterToWarpingBandIndex->second) *
-                    nXSize * nYSize * nWarpDTSize;
-            GByte *const pabyDstBand = pabyDst + i * nBandSpace;
-
-            for (int iY = 0; iY < nYSize; iY++)
+            // Copy warping buffer into user destination buffer
+            for (int i = 0; i < nBandCount; i++)
             {
-                GDALCopyWords(pabyWarpBandBuffer + static_cast<GPtrDiff_t>(iY) *
-                                                       nXSize * nWarpDTSize,
-                              psWO->eWorkingDataType, nWarpDTSize,
-                              pabyDstBand + iY * nLineSpace, eBufType,
-                              static_cast<int>(nPixelSpace), nXSize);
+                const int nRasterIOBand = panBandMap[i];
+                const auto oIterToWarpingBandIndex =
+                    oMapBandToWarpingBandIndex.find(nRasterIOBand);
+                // cannot happen due to earlier check
+                CPLAssert(oIterToWarpingBandIndex !=
+                          oMapBandToWarpingBandIndex.end());
+
+                const GByte *const pabyWarpBandBuffer =
+                    pabyWarpBuffer +
+                    static_cast<GPtrDiff_t>(oIterToWarpingBandIndex->second) *
+                        nXSize * nYSize * nWarpDTSize;
+                GByte *const pabyDstBand = pabyDst + i * nBandSpace;
+
+                for (int iY = 0; iY < nYSize; iY++)
+                {
+                    GDALCopyWords(pabyWarpBandBuffer +
+                                      static_cast<GPtrDiff_t>(iY) * nXSize *
+                                          nWarpDTSize,
+                                  psWO->eWorkingDataType, nWarpDTSize,
+                                  pabyDstBand + iY * nLineSpace, eBufType,
+                                  static_cast<int>(nPixelSpace), nXSize);
+                }
             }
         }
-    }
 
-    m_poWarper->DestroyDestinationBuffer(pabyWarpBuffer);
+        m_poWarper->DestroyDestinationBuffer(pabyWarpBuffer);
+    }
 
     return eErr;
 }
