@@ -29,8 +29,9 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_http.h"
-#include "ogr_wfs.h"
 #include "ogr_p.h"
+#include "ogr_swq.h"
+#include "ogrwfsfilter.h"
 #include "gmlutils.h"
 
 extern "C" void RegisterOGRCSW();

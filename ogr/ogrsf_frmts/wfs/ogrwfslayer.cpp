@@ -32,6 +32,7 @@
 #include "cpl_minixml.h"
 #include "cpl_http.h"
 #include "parsexsd.h"
+#include "ogrwfsfilter.h"
 
 /************************************************************************/
 /*                            OGRWFSLayer()                             */

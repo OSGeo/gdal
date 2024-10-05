@@ -180,6 +180,8 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef WFS_ENABLED
     RegisterOGRWFS();
+#endif
+#ifdef OAPIF_ENABLED
     RegisterOGROAPIF();
 #endif
 #ifdef SOSI_ENABLED

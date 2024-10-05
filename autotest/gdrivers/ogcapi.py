@@ -211,6 +211,7 @@ def init():
 
 
 @pytest.mark.parametrize("remove_type_application_json", [False, True])
+@pytest.mark.require_driver("OAPIF")
 def test_ogr_ogcapi_features(remove_type_application_json):
 
     global global_remove_type_application_json
