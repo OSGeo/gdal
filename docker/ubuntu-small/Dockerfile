@@ -103,11 +103,12 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd proj \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/proj/${GCC_ARCH}/ $HOME/; \
+        mkdir -p $HOME/.cache; \
+        rsync -ra ${RSYNC_REMOTE}/proj/${GCC_ARCH}/ $HOME/.cache/; \
         echo "Finished"; \
         export CC="ccache ${GCC_ARCH}-linux-gnu-gcc"; \
         export CXX="ccache ${GCC_ARCH}-linux-gnu-g++"; \
-        export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
+        export PROJ_DB_CACHE_DIR="$HOME/.cache"; \
         ccache -M 100M; \
     fi \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
@@ -121,9 +122,9 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/${GCC_ARCH}/; \
+        rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/proj/${GCC_ARCH}/; \
         echo "Finished"; \
-        rm -rf $HOME/.ccache; \
+        rm -rf $HOME/.cache; \
         unset CC; \
         unset CXX; \
     fi \
@@ -163,7 +164,8 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd gdal \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/ $HOME/; \
+        mkdir -p $HOME/.cache; \
+        rsync -ra ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/ $HOME/.cache/; \
         echo "Finished"; \
         # Little trick to avoid issues with Python bindings
         printf "#!/bin/sh\nccache %s-linux-gnu-gcc \$*" "${GCC_ARCH}" > ccache_gcc.sh; \
@@ -192,9 +194,9 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/; \
+        rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/; \
         echo "Finished"; \
-        rm -rf $HOME/.ccache; \
+        rm -rf $HOME/.cache; \
         unset CC; \
         unset CXX; \
     fi \

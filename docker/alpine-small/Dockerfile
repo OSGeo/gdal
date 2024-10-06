@@ -61,12 +61,12 @@ RUN mkdir proj \
     && cd proj \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/proj/$(uname -m)/ $HOME/; \
+        mkdir -p "$HOME/.cache"; \
+        rsync -ra ${RSYNC_REMOTE}/proj/$(uname -m)/ $HOME/.cache/; \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
-        mkdir -p "$HOME/.ccache"; \
-        export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
+        export PROJ_DB_CACHE_DIR="$HOME/.cache"; \
         ccache -M 100M; \
     fi \
     # IPO disabled since it crashes with gcc 13.2.1
@@ -82,9 +82,9 @@ RUN mkdir proj \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/$(uname -m)/; \
+        rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/proj/$(uname -m)/; \
         echo "Finished"; \
-        rm -rf $HOME/.ccache; \
+        rm -rf $HOME/.cache; \
         unset CC; \
         unset CXX; \
     fi \
@@ -110,11 +110,11 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     fi \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/gdal/$(uname -m)/ $HOME/; \
+        mkdir -p "$HOME/.cache"; \
+        rsync -ra ${RSYNC_REMOTE}/gdal/$(uname -m)/ $HOME/.cache/; \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
-        mkdir -p "$HOME/.ccache"; \
         ccache -M 1G; \
     fi \
     && mkdir gdal \
@@ -135,9 +135,9 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && if test "${RSYNC_REMOTE}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/$(uname -m)/; \
+        rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/gdal/$(uname -m)/; \
         echo "Finished"; \
-        rm -rf $HOME/.ccache; \
+        rm -rf $HOME/.cache; \
         unset CC; \
         unset CXX; \
     fi \
