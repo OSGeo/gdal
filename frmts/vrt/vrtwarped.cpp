@@ -1903,10 +1903,14 @@ CPLErr VRTWarpedDataset::IRasterIO(
     int nBandCount, BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
     GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 {
+    const bool bWholeImage = nXOff == 0 && nYOff == 0 &&
+                             nXSize == nRasterXSize && nYSize == nRasterYSize;
+
     if (eRWFlag == GF_Write ||
         // For too small request fall back to the block-based approach to
         // benefit from caching
-        nBufXSize <= m_nBlockXSize || nBufYSize <= m_nBlockYSize ||
+        (!bWholeImage &&
+         (nBufXSize <= m_nBlockXSize || nBufYSize <= m_nBlockYSize)) ||
         // Or if we don't request all bands at once
         nBandCount < nBands ||
         !CPLTestBool(
@@ -1933,22 +1937,76 @@ CPLErr VRTWarpedDataset::IRasterIO(
         }
     }
 
-    // Fallback to default block-based implementation when not requesting at
-    // the nominal resolution (in theory we could construct a warper taking
-    // into account that, like we do for virtual warped overviews, but that
-    // would be a complication).
-    if (nBufXSize != nXSize || nBufYSize != nYSize)
-    {
-        return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                      pData, nBufXSize, nBufYSize, eBufType,
-                                      nBandCount, panBandMap, nPixelSpace,
-                                      nLineSpace, nBandSpace, psExtraArg);
-    }
-
     if (m_poWarper == nullptr)
         return CE_Failure;
 
     const GDALWarpOptions *psWO = m_poWarper->GetOptions();
+
+    if (nBufXSize != nXSize || nBufYSize != nYSize)
+    {
+        if (!bWholeImage || !GDALTransformHasFastClone(psWO->pTransformerArg))
+        {
+            return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                          pData, nBufXSize, nBufYSize, eBufType,
+                                          nBandCount, panBandMap, nPixelSpace,
+                                          nLineSpace, nBandSpace, psExtraArg);
+        }
+
+        // Build a temporary dataset taking into account the rescaling
+        void *pTransformerArg = GDALCloneTransformer(psWO->pTransformerArg);
+        if (pTransformerArg == nullptr)
+        {
+            return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                          pData, nBufXSize, nBufYSize, eBufType,
+                                          nBandCount, panBandMap, nPixelSpace,
+                                          nLineSpace, nBandSpace, psExtraArg);
+        }
+
+        GDALWarpOptions *psRescaledWO = GDALCloneWarpOptions(psWO);
+        psRescaledWO->hSrcDS = psWO->hSrcDS;
+        psRescaledWO->pfnTransformer = psWO->pfnTransformer;
+        psRescaledWO->pTransformerArg = pTransformerArg;
+
+        // Rescale the output geotransform on the transformer.
+        double adfDstGeoTransform[6] = {0.0};
+        GDALGetTransformerDstGeoTransform(psRescaledWO->pTransformerArg,
+                                          adfDstGeoTransform);
+        RescaleDstGeoTransform(adfDstGeoTransform, nRasterXSize, nBufXSize,
+                               nRasterYSize, nBufYSize);
+        GDALSetTransformerDstGeoTransform(psRescaledWO->pTransformerArg,
+                                          adfDstGeoTransform);
+
+        GDALDatasetH hDstDS =
+            GDALCreateWarpedVRT(psWO->hSrcDS, nBufXSize, nBufYSize,
+                                adfDstGeoTransform, psRescaledWO);
+
+        GDALDestroyWarpOptions(psRescaledWO);
+
+        if (hDstDS == nullptr)
+        {
+            // Not supposed to happen in nominal circumstances. Could perhaps
+            // happen if some memory allocation error occured in code called
+            // by GDALCreateWarpedVRT()
+            GDALDestroyTransformer(pTransformerArg);
+            return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                          pData, nBufXSize, nBufYSize, eBufType,
+                                          nBandCount, panBandMap, nPixelSpace,
+                                          nLineSpace, nBandSpace, psExtraArg);
+        }
+
+        auto poOvrDS = static_cast<VRTWarpedDataset *>(hDstDS);
+        poOvrDS->m_bIsOverview = true;
+
+        GDALRasterIOExtraArg sExtraArg;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        CPLErr eErr = poOvrDS->IRasterIO(GF_Read, 0, 0, nBufXSize, nBufYSize,
+                                         pData, nBufXSize, nBufYSize, eBufType,
+                                         nBandCount, panBandMap, nPixelSpace,
+                                         nLineSpace, nBandSpace, &sExtraArg);
+
+        poOvrDS->ReleaseRef();
+        return eErr;
+    }
 
     // Build a map from warped output bands to their index
     std::map<int, int> oMapBandToWarpingBandIndex;
