@@ -21,7 +21,8 @@ curl -L -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
         echo "Downloading cache..."
-        rsync -ra "${RSYNC_REMOTE}/proj/${GCC_ARCH}/" "$HOME/"
+        mkdir -p "$HOME/.cache"
+        rsync -ra "${RSYNC_REMOTE}/proj/${GCC_ARCH}/" "$HOME/.cache/"
         echo "Finished"
 
         export CC="ccache ${GCC_ARCH}-linux-gnu-gcc"
@@ -47,7 +48,7 @@ curl -L -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
         ccache -s
 
         echo "Uploading cache..."
-        rsync -ra --delete "$HOME/.cache" "${RSYNC_REMOTE}/proj/${GCC_ARCH}/"
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/proj/${GCC_ARCH}/"
         echo "Finished"
 
         rm -rf "$HOME/.cache"

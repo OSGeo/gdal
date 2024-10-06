@@ -23,7 +23,8 @@ curl -L -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.
 
     if test "${RSYNC_REMOTE:-}" != ""; then
         echo "Downloading cache..."
-        rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/"
+        mkdir -p "$HOME/.cache/"
+        rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/.cache/"
         echo "Finished"
 
         # Little trick to avoid issues with Python bindings
@@ -86,7 +87,7 @@ curl -L -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.
         ccache -s
 
         echo "Uploading cache..."
-        rsync -ra --delete "$HOME/.cache" "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/"
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/"
         echo "Finished"
 
         rm -rf "$HOME/.cache"
