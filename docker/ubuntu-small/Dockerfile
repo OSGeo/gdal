@@ -9,7 +9,7 @@ ARG PROJ_INSTALL_PREFIX=/usr/local
 ARG BASE_IMAGE=ubuntu:24.04
 ARG TARGET_BASE_IMAGE=ubuntu:24.04
 
-FROM $BASE_IMAGE as builder
+FROM $BASE_IMAGE AS builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
@@ -42,7 +42,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
             build-essential ca-certificates \
-            git make cmake wget unzip libtool automake \
+            git make ninja-build cmake wget unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff-dev${APT_ARCH_SUFFIX} \
     && rm -rf /var/lib/apt/lists/*
@@ -70,10 +70,10 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && tar xzf v${OPENJPEG_VERSION}.tar.gz \
     && rm -f v${OPENJPEG_VERSION}.tar.gz \
     && cd openjpeg-${OPENJPEG_VERSION} \
-    && cmake . -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
+    && cmake . -G Ninja -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
-    && make -j$(nproc) \
-    && make install \
+    && ninja \
+    && ninja install \
     && mkdir -p /build_thirdparty/usr/lib \
     && cp -P /usr/lib/libopenjp2*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -112,12 +112,13 @@ RUN . /buildscripts/bh-set-envvars.sh \
     fi \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
         cmake . \
+	-G Ninja \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX} \
         -DBUILD_TESTING=OFF \
-    && make -j$(nproc) \
-    && make install DESTDIR="/build" \
+    && ninja \
+    && DESTDIR="/build" ninja install \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         ccache -s; \
         echo "Uploading cache..."; \
@@ -179,6 +180,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     # -Wno-psabi avoid 'note: parameter passing for argument of type 'std::pair<double, double>' when C++17 is enabled changed to match C++14 in GCC 10.1' on arm64
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -Wno-psabi' \
        cmake .. \
+        -G Ninja \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DGDAL_FIND_PACKAGE_PROJ_MODE=MODULE \
         -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
@@ -186,8 +188,8 @@ RUN . /buildscripts/bh-set-envvars.sh \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON \
         -DBUILD_TESTING=OFF \
-    && make -j$(nproc) \
-    && make install DESTDIR="/build" \
+    && ninja \
+    && DESTDIR="/build" ninja install \
     && cd .. \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         ccache -s; \
@@ -213,7 +215,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_gdal_version_changing/usr/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
-FROM $TARGET_BASE_IMAGE as runner
+FROM $TARGET_BASE_IMAGE AS runner
 
 USER root
 RUN date

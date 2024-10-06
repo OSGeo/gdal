@@ -8,7 +8,7 @@
 ARG BASE_IMAGE=ubuntu:24.04
 ARG TARGET_BASE_IMAGE=ubuntu:24.04
 
-FROM $BASE_IMAGE as builder
+FROM $BASE_IMAGE AS builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
@@ -41,7 +41,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
             build-essential ca-certificates \
-            git make cmake wget unzip libtool automake \
+            git make ninja-build cmake wget unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff-dev${APT_ARCH_SUFFIX} \
     && rm -rf /var/lib/apt/lists/*
@@ -78,12 +78,12 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && unzip -q kealib-${KEA_VERSION}.zip \
     && rm -f kealib-${KEA_VERSION}.zip \
     && cd kealib-kealib-${KEA_VERSION} \
-    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    && cmake . -G Ninja -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5/serial \
         -DHDF5_LIB_PATH=/usr/lib/${GCC_ARCH}-linux-gnu/hdf5/serial -DLIBKEA_WITH_GDAL=OFF \
-    && make -j$(nproc) \
-    && make install DESTDIR="/build_thirdparty" \
-    && make install \
+    && ninja \
+    && DESTDIR="/build_thirdparty" ninja install \
+    && ninja install \
     && cd .. \
     && rm -rf kealib-kealib-${KEA_VERSION} \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -98,10 +98,10 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd mongo-c-driver \
     && mkdir build_cmake \
     && cd build_cmake \
-    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_TESTS=NO -DCMAKE_BUILD_TYPE=Release \
-    && make -j$(nproc) \
-    && make install DESTDIR="/build_thirdparty" \
-    && make install \
+    && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_TESTS=NO -DCMAKE_BUILD_TYPE=Release \
+    && ninja \
+    && DESTDIR="/build_thirdparty" ninja install \
+    && ninja install \
     && cd ../.. \
     && rm -rf mongo-c-driver \
     && rm /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/*.a \
@@ -117,10 +117,10 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd mongocxx \
     && mkdir build_cmake \
     && cd build_cmake \
-    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DENABLE_TESTS=OFF -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release -DBUILD_VERSION=${MONGOCXX_VERSION} \
-    && make -j$(nproc) \
-    && make install DESTDIR="/build_thirdparty" \
-    && make install \
+    && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DENABLE_TESTS=OFF -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release -DBUILD_VERSION=${MONGOCXX_VERSION} \
+    && ninja \
+    && DESTDIR="/build_thirdparty" ninja install \
+    && ninja install \
     && cd ../.. \
     && rm -rf mongocxx \
     && for i in /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -143,10 +143,10 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && patch -p0 < /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch \
     && mkdir build_cmake \
     && cd build_cmake \
-    && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DTILEDB_WERROR=OFF -DTILEDB_SUPERBUILD=OFF  -DTILEDB_TESTS=OFF -DCOMPILER_SUPPORTS_AVX2=FALSE  -DOPENSSL_INCLUDE_DIR=/usr/include -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/${GCC_ARCH}-linux-gnu/libcrypto.so -DOPENSSL_SSL_LIBRARY=/usr/lib/${GCC_ARCH}-linux-gnu/libssl.so \
-    && make -j$(nproc) \
-    && make -j$(nproc) install DESTDIR="/build_thirdparty" \
-    && make -j$(nproc) install \
+    && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DTILEDB_WERROR=OFF -DTILEDB_SUPERBUILD=OFF  -DTILEDB_TESTS=OFF -DCOMPILER_SUPPORTS_AVX2=FALSE  -DOPENSSL_INCLUDE_DIR=/usr/include -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/${GCC_ARCH}-linux-gnu/libcrypto.so -DOPENSSL_SSL_LIBRARY=/usr/lib/${GCC_ARCH}-linux-gnu/libssl.so \
+    && ninja \
+    && DESTDIR="/build_thirdparty" ninja install \
+    && ninja install \
     && cd ../.. \
     && rm -rf tiledb \
     && for i in /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -160,10 +160,10 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && tar xzf v${OPENJPEG_VERSION}.tar.gz \
     && rm -f v${OPENJPEG_VERSION}.tar.gz \
     && cd openjpeg-${OPENJPEG_VERSION} \
-    && cmake . -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
+    && cmake . -G Ninja -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
-    && make -j$(nproc) \
-    && make install \
+    && ninja \
+    && ninja install \
     && mkdir -p /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu \
     && rm -f /usr/lib/${GCC_ARCH}-linux-gnu/libopenjp2.so* \
     && mv /usr/lib/libopenjp2.so* /usr/lib/${GCC_ARCH}-linux-gnu \
@@ -181,10 +181,10 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
     && rm -f ${OPENDRIVE_VERSION}.tar.gz \
     && cd libOpenDRIVE-${OPENDRIVE_VERSION} \
-    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    && cmake . -G Ninja -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr/ \
-    && make -j$(nproc) \
-    && make install \
+    && ninja \
+    && ninja install \
     && mkdir -p /build_thirdparty/usr/lib \
     && cp -P /usr/lib/libOpenDrive*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -213,10 +213,10 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd QB3/QB3lib \
     && mkdir build \
     && cd build \
-    && cmake .. ${CMAKE_EXTRA_ARGS} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
-    && make -j$(nproc) \
-    && make -j$(nproc) install \
-    && make install DESTDIR="/build_thirdparty" \
+    && cmake .. -G Ninja ${CMAKE_EXTRA_ARGS} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
+    && ninja \
+    && ninja install \
+    && DESTDIR="/build_thirdparty" ninja install \
     && cd ../../.. \
     && rm -rf QB3
 
@@ -241,10 +241,10 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd libjxl \
     && mkdir build \
     && cd build \
-    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DJPEGXL_ENABLE_JPEGLI_LIBJPEG=OFF -DBUILD_TESTING=OFF -DJPEGXL_ENABLE_TOOLS=OFF -DJPEGXL_ENABLE_BENCHMARK=OFF .. \
-    && make -j$(nproc) \
-    && make -j$(nproc) install \
-    && make install DESTDIR="/build_thirdparty" \
+    && cmake -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DJPEGXL_ENABLE_JPEGLI_LIBJPEG=OFF -DBUILD_TESTING=OFF -DJPEGXL_ENABLE_TOOLS=OFF -DJPEGXL_ENABLE_BENCHMARK=OFF .. \
+    && ninja \
+    && ninja install \
+    && DESTDIR="/build_thirdparty" ninja install \
     && rm -f /lib/${GCC_ARCH}-linux-gnu/libjxl*.a \
     && rm -f /build_thirdparty/lib/${GCC_ARCH}-linux-gnu/libjxl*.a \
     && cd ../.. \
@@ -309,7 +309,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && /buildscripts/bh-gdal.sh
 
 # Build final image
-FROM $TARGET_BASE_IMAGE as runner
+FROM $TARGET_BASE_IMAGE AS runner
 
 USER root
 RUN date

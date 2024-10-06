@@ -35,12 +35,13 @@ curl -L -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
     export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g"
 
     cmake . \
+        -G Ninja \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX:-/usr/local} \
         -DBUILD_TESTING=OFF
 
-    make "-j$(nproc)"
-    make install DESTDIR="${DESTDIR}"
+    ninja
+    DESTDIR="${DESTDIR}" ninja install
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
         ccache -s
