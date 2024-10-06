@@ -700,21 +700,12 @@ class GDALWarpCoordRescaler : public OGRCoordinateTransformation
 
 static void RescaleDstGeoTransform(double adfDstGeoTransform[6],
                                    int nRasterXSize, int nDstPixels,
-                                   int nRasterYSize, int nDstLines,
-                                   double dfTargetRatio)
+                                   int nRasterYSize, int nDstLines)
 {
-    if (adfDstGeoTransform[2] == 0.0 && adfDstGeoTransform[4] == 0.0)
-    {
-        adfDstGeoTransform[1] *= static_cast<double>(nRasterXSize) / nDstPixels;
-        adfDstGeoTransform[5] *= static_cast<double>(nRasterYSize) / nDstLines;
-    }
-    else
-    {
-        adfDstGeoTransform[1] *= dfTargetRatio;
-        adfDstGeoTransform[2] *= dfTargetRatio;
-        adfDstGeoTransform[4] *= dfTargetRatio;
-        adfDstGeoTransform[5] *= dfTargetRatio;
-    }
+    adfDstGeoTransform[1] *= static_cast<double>(nRasterXSize) / nDstPixels;
+    adfDstGeoTransform[2] *= static_cast<double>(nRasterXSize) / nDstPixels;
+    adfDstGeoTransform[4] *= static_cast<double>(nRasterYSize) / nDstLines;
+    adfDstGeoTransform[5] *= static_cast<double>(nRasterYSize) / nDstLines;
 }
 
 /************************************************************************/
@@ -751,8 +742,7 @@ int VRTWarpedDataset::GetSrcOverviewLevel(int iOvr,
 bool VRTWarpedDataset::GetOverviewSize(GDALDataset *poSrcDS, int iOvr,
                                        int iSrcOvr, int &nOvrXSize,
                                        int &nOvrYSize, double &dfSrcRatioX,
-                                       double &dfSrcRatioY,
-                                       double &dfTargetRatio) const
+                                       double &dfSrcRatioY) const
 {
     auto poSrcOvrBand = iSrcOvr >= 0
                             ? poSrcDS->GetRasterBand(1)->GetOverview(iSrcOvr)
@@ -765,8 +755,9 @@ bool VRTWarpedDataset::GetOverviewSize(GDALDataset *poSrcDS, int iOvr,
                   poSrcOvrBand->GetXSize();
     dfSrcRatioY = static_cast<double>(poSrcDS->GetRasterYSize()) /
                   poSrcOvrBand->GetYSize();
-    dfTargetRatio = static_cast<double>(poSrcDS->GetRasterXSize()) /
-                    poSrcDS->GetRasterBand(1)->GetOverview(iOvr)->GetXSize();
+    const double dfTargetRatio =
+        static_cast<double>(poSrcDS->GetRasterXSize()) /
+        poSrcDS->GetRasterBand(1)->GetOverview(iOvr)->GetXSize();
 
     nOvrXSize = static_cast<int>(nRasterXSize / dfTargetRatio + 0.5);
     nOvrYSize = static_cast<int>(nRasterYSize / dfTargetRatio + 0.5);
@@ -802,19 +793,13 @@ VRTWarpedDataset *VRTWarpedDataset::CreateImplicitOverview(int iOvr) const
     int nDstLines = 0;
     double dfSrcRatioX = 0;
     double dfSrcRatioY = 0;
-    double dfTargetRatio = 0;
     // Figure out the desired output bounds and resolution.
     if (!GetOverviewSize(poSrcDS, iOvr, iSrcOvr, nDstPixels, nDstLines,
-                         dfSrcRatioX, dfSrcRatioY, dfTargetRatio))
+                         dfSrcRatioX, dfSrcRatioY))
     {
         poSrcOvrDS->ReleaseRef();
         return nullptr;
     }
-
-    double adfDstGeoTransform[6] = {0.0};
-    const_cast<VRTWarpedDataset *>(this)->GetGeoTransform(adfDstGeoTransform);
-    RescaleDstGeoTransform(adfDstGeoTransform, nRasterXSize, nDstPixels,
-                           nRasterYSize, nDstLines, dfTargetRatio);
 
     /* --------------------------------------------------------------------
      */
@@ -850,10 +835,11 @@ VRTWarpedDataset *VRTWarpedDataset::CreateImplicitOverview(int iOvr) const
     /*      Rescale the output geotransform on the transformer. */
     /* --------------------------------------------------------------------
      */
+    double adfDstGeoTransform[6] = {0.0};
     GDALGetTransformerDstGeoTransform(psWOOvr->pTransformerArg,
                                       adfDstGeoTransform);
     RescaleDstGeoTransform(adfDstGeoTransform, nRasterXSize, nDstPixels,
-                           nRasterYSize, nDstLines, dfTargetRatio);
+                           nRasterYSize, nDstLines);
     GDALSetTransformerDstGeoTransform(psWOOvr->pTransformerArg,
                                       adfDstGeoTransform);
 
@@ -905,10 +891,8 @@ int VRTWarpedDataset::GetOverviewCount() const
                     int nDstLines = 0;
                     double dfSrcRatioX = 0;
                     double dfSrcRatioY = 0;
-                    double dfTargetRatio = 0;
                     if (!GetOverviewSize(poSrcDS, i, iSrcOvr, nDstPixels,
-                                         nDstLines, dfSrcRatioX, dfSrcRatioY,
-                                         dfTargetRatio))
+                                         nDstLines, dfSrcRatioX, dfSrcRatioY))
                     {
                         break;
                     }
@@ -2321,10 +2305,8 @@ int VRTWarpedRasterBand::GetBestOverviewLevel(
         int nDstLines = 0;
         double dfSrcRatioX = 0;
         double dfSrcRatioY = 0;
-        double dfTargetRatio = 0;
         if (!poWDS->GetOverviewSize(poSrcDS, iOverview, iSrcOvr, nDstPixels,
-                                    nDstLines, dfSrcRatioX, dfSrcRatioY,
-                                    dfTargetRatio))
+                                    nDstLines, dfSrcRatioX, dfSrcRatioY))
         {
             break;
         }
