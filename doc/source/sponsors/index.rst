@@ -129,6 +129,10 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        `Phoenix LiDAR Systems, LLC <https://phoenixlidar.com/>`__
+
+    .. container:: horizontal-logo
+
         `PIX4D <https://www.pix4d.com/>`__
 
     .. container:: horizontal-logo
