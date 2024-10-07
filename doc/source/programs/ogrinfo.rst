@@ -17,7 +17,7 @@ Synopsis
 .. code-block::
 
     ogrinfo [--help] [--help-general]
-            [-if <driver_name>] [-json] [-ro] [-q] [-where <restricted_where>|@f<ilename>]
+            [-if <driver_name>] [-json] [-ro] [-q] [-where <restricted_where>|@<filename>]
             [-spat <xmin> <ymin> <xmax> <ymax>] [-geomfield <field>] [-fid <fid>]
             [-sql <statement>|@<filename>] [-dialect <sql_dialect>] [-al] [-rl]
             [-so|-features] [-limit <nb_features>] [-fields={YES|NO}]]
