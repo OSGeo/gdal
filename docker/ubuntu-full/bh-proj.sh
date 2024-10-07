@@ -18,10 +18,10 @@ curl -L -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
 
 (
     cd proj
+    export PROJ_DB_CACHE_PARAM=""
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
         echo "Downloading cache..."
-        mkdir -p "$HOME/.cache"
         rsync -ra "${RSYNC_REMOTE}/proj/${GCC_ARCH}/" "$HOME/.cache/"
         echo "Finished"
 
@@ -51,7 +51,6 @@ curl -L -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
         rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/proj/${GCC_ARCH}/"
         echo "Finished"
 
-        rm -rf "$HOME/.cache"
         unset CC
         unset CXX
     fi

@@ -126,13 +126,6 @@ if test "${DOCKER_BUILDKIT}" = "1" && test "${DOCKER_CLI_EXPERIMENTAL}" = "enabl
   DOCKER_BUILDX_ARGS=("--platform" "${ARCH_PLATFORMS}")
 fi
 
-# Docker 23 uses BuildKit by default on Linux, but BuildKit prevents
-# custom networks using docker build --network, so disable BuildKit for now.
-# https://github.com/moby/buildkit/issues/978
-if test -z "${DOCKER_BUILDKIT}"; then
-  export DOCKER_BUILDKIT=0
-fi
-
 if test "${RELEASE}" = "yes"; then
     if test "${GDAL_VERSION}" = ""; then
         echo "--gdal tag must be specified when --release is used."
@@ -270,7 +263,6 @@ echo "Using GDAL_REPOSITORY=${GDAL_REPOSITORY}"
 
 IMAGE_NAME="${TARGET_IMAGE}-${TAG_NAME}"
 REPO_IMAGE_NAME="${DOCKER_REPO}/${IMAGE_NAME}"
-BUILDER_IMAGE_NAME="${DOCKER_REPO}/${IMAGE_NAME}_builder"
 
 if test "${RELEASE}" = "yes"; then
     BUILD_ARGS=(
@@ -302,7 +294,6 @@ if test "${RELEASE}" = "yes"; then
     if test "${DOCKER_BUILDX}" = "buildx" -a "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
         docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${REPO_IMAGE_NAME}" --push "${SCRIPT_DIR}"
     else
-        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
         docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${REPO_IMAGE_NAME}" "${SCRIPT_DIR}"
 
         if test "${DOCKER_BUILDX}" != "buildx"; then
@@ -324,11 +315,9 @@ else
         if test "${DOCKER_BUILDX}" != "buildx"; then
           ARCH_PLATFORM_ARCH=$(echo ${ARCH_PLATFORMS} | sed "s/linux\///")
           IMAGE_NAME_WITH_ARCH="${REPO_IMAGE_NAME}-${ARCH_PLATFORM_ARCH}"
-          BUILDER_IMAGE_NAME="${BUILDER_IMAGE_NAME}_${ARCH_PLATFORM_ARCH}"
         fi
     fi
 
-    OLD_BUILDER_ID=$(docker image ls "${BUILDER_IMAGE_NAME}" -q)
     OLD_IMAGE_ID=$(docker image ls "${IMAGE_NAME_WITH_ARCH}" -q)
 
     if test "${GDAL_RELEASE_DATE}" = ""; then
@@ -337,7 +326,6 @@ else
     echo "Using GDAL_RELEASE_DATE=${GDAL_RELEASE_DATE}"
 
     RSYNC_DAEMON_CONTAINER=gdal_rsync_daemon
-    BUILD_NETWORK=docker_build_gdal
     HOST_CACHE_DIR="$HOME/gdal-docker-cache"
 
     mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/proj/x86_64"
@@ -368,23 +356,18 @@ CMD rsync --daemon --port 23985 && while sleep 1; do true; done
 
 EOF
 
-        if ! docker network ls | grep "${BUILD_NETWORK}"; then
-            docker network create "${BUILD_NETWORK}"
-        fi
-
         THE_UID=$(id -u "${USER}")
         THE_GID=$(id -g "${USER}")
 
         docker run -d -u "${THE_UID}:${THE_GID}" --rm \
             -v "${HOST_CACHE_DIR}":/opt/gdal-docker-cache \
             --name "${RSYNC_DAEMON_CONTAINER}" \
-            --network "${BUILD_NETWORK}" \
-            --network-alias "${RSYNC_DAEMON_CONTAINER}" \
+            --network host \
             "${RSYNC_DAEMON_IMAGE}"
 
     fi
 
-    RSYNC_REMOTE="rsync://${RSYNC_DAEMON_CONTAINER}:23985/gdal-docker-cache/${TARGET_IMAGE}"
+    RSYNC_REMOTE="rsync://127.0.0.1:23985/gdal-docker-cache/${TARGET_IMAGE}"
 
     BUILD_ARGS=(
         "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
@@ -394,6 +377,7 @@ EOF
         "--build-arg" "GDAL_RELEASE_DATE=${GDAL_RELEASE_DATE}" \
         "--build-arg" "RSYNC_REMOTE=${RSYNC_REMOTE}" \
         "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
+        "--build-arg" "BUILDKIT_INLINE_CACHE=1" \
     )
 
     if test "${BASE_IMAGE}" != ""; then
@@ -435,10 +419,7 @@ EOF
       fi
     fi
 
-    docker $(build_cmd) --network "${BUILD_NETWORK}" "${BUILD_ARGS[@]}" --target builder \
-        -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
-
-    docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" "${SCRIPT_DIR}"
+    docker $(build_cmd) --network=host "${BUILD_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" "${SCRIPT_DIR}"
 
     if test "${DOCKER_BUILDX}" != "buildx"; then
         check_image "${IMAGE_NAME_WITH_ARCH}"
@@ -464,11 +445,7 @@ EOF
     fi
 
     # Cleanup previous images
-    NEW_BUILDER_ID=$(docker image ls "${BUILDER_IMAGE_NAME}" -q)
     NEW_IMAGE_ID=$(docker image ls "${IMAGE_NAME_WITH_ARCH}" -q)
-    if test "${OLD_BUILDER_ID}" != "" -a  "${OLD_BUILDER_ID}" != "${NEW_BUILDER_ID}"; then
-        docker rmi "${OLD_BUILDER_ID}"
-    fi
     if test "${OLD_IMAGE_ID}" != "" -a  "${OLD_IMAGE_ID}" != "${NEW_IMAGE_ID}"; then
         docker rmi "${OLD_IMAGE_ID}"
     fi
