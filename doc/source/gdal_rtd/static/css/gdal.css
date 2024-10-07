@@ -329,3 +329,21 @@ div.horizontal-logos::after {
     clear: both;
     display: table;
 }
+
+.wy-side-nav-search > div.switch-menus > div.version-switch {
+    background: white;
+    color: #343131;
+}
+
+.wy-side-nav-search > div.switch-menus > div.version-switch select {
+    background: white;
+    color: #343131;
+}
+
+.wy-side-nav-search > div.switch-menus > div.version-switch select:active,
+.wy-side-nav-search > div.switch-menus > div.version-switch select:focus,
+.wy-side-nav-search > div.switch-menus > div.version-switch select:hover
+{
+    background: white;
+    color: #343131;
+}
