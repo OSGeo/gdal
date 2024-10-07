@@ -791,8 +791,8 @@ typedef enum
 
 typedef enum
 {
-    /** Simple 32bit integer */ OFTInteger = 0,
-    /** List of 32bit integers */ OFTIntegerList = 1,
+    /** Single signed 32bit integer */ OFTInteger = 0,
+    /** List of signed 32bit integers */ OFTIntegerList = 1,
     /** Double Precision floating point */ OFTReal = 2,
     /** List of doubles */ OFTRealList = 3,
     /** String of ASCII chars */ OFTString = 4,
@@ -803,8 +803,8 @@ typedef enum
     /** Date */ OFTDate = 9,
     /** Time */ OFTTime = 10,
     /** Date and Time */ OFTDateTime = 11,
-    /** Single 64bit integer */ OFTInteger64 = 12,
-    /** List of 64bit integers */ OFTInteger64List = 13,
+    /** Single signed 64bit integer */ OFTInteger64 = 12,
+    /** List of signed 64bit integers */ OFTInteger64List = 13,
     OFTMaxType = 13
 } OGRFieldType;
 
