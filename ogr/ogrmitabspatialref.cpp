@@ -10,6 +10,7 @@
 
 #include "cpl_port.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -251,6 +252,7 @@ const MapInfoDatumInfo asDatumInfoList[] = {
     {6258, 115, "European_Terrestrial_Reference_System_1989", 0, 0, 0, 0, 0, 0,
      0, 0, 0},
     {6258, 115, "Euref_89", 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {6180, 115, "Estonia_1997", 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {6283, 116, "GDA94", 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {6283, 116, "Geocentric_Datum_of_Australia_1994", 0, 0, 0, 0, 0, 0, 0, 0,
      0},
@@ -760,8 +762,7 @@ static const MapInfoLCCSRS asMapInfoLCCSRSList[] = {
 
 static bool TAB_EQUAL(double a, double b)
 {
-    // TODO(schwehr): Use std::abs.
-    return (a < b ? (b - a) : (a - b)) < 1.0e-10;
+    return std::fabs(a - b) < 1.0e-10;
 }
 
 OGRSpatialReference *
@@ -1373,6 +1374,7 @@ TABFileGetSpatialRefFromTABProj(const TABProjInfo &sTABProj)
     /* For LCC, standard parallel 1 and 2 can be switched indifferently */
     /* So the MapInfo order and the EPSG order are not generally identical */
     /* which may cause recognition problems when reading in MapInfo */
+    int nEPSGCandidateCode = 0;
     if (sTABProj.nProjId == 3)
     {
         double dfCenterLong = sTABProj.adProjParams[0];
@@ -1389,8 +1391,19 @@ TABFileGetSpatialRefFromTABProj(const TABProjInfo &sTABProj)
                 TAB_EQUAL(dfCenterLat, asMapInfoLCCSRSList[i].dfCenterLat))
             {
                 if (TAB_EQUAL(dfStdP1, asMapInfoLCCSRSList[i].dfStdP1) &&
-                    TAB_EQUAL(dfStdP2, asMapInfoLCCSRSList[i].dfStdP2))
+                    (TAB_EQUAL(dfStdP2, asMapInfoLCCSRSList[i].dfStdP2) ||
+                     // EPSG:3301 "Estonian Coordinate System of 1997"
+                     // MapInfo uses a less accurate value of StdP2 than EPSG
+                     (TAB_EQUAL(asMapInfoLCCSRSList[i].dfStdP2, 59.33333333) &&
+                      TAB_EQUAL(dfStdP2, 59.3333333333333))))
                 {
+                    if (nEPSGCandidateCode)
+                    {
+                        poSpatialRef->SetAuthority("PROJCS", "EPSG",
+                                                   nEPSGCandidateCode);
+                        nEPSGCandidateCode = 0;
+                        break;
+                    }
                     if (asMapInfoLCCSRSList[i].bReverseStdP)
                     {
                         CPLDebug("MITAB",
@@ -1401,9 +1414,9 @@ TABFileGetSpatialRefFromTABProj(const TABProjInfo &sTABProj)
                             sTABProj.adProjParams[4], sTABProj.adProjParams[5]);
                     }
                     if (asMapInfoLCCSRSList[i].nEPSGCode > 0)
-                        poSpatialRef->SetAuthority(
-                            "PROJCS", "EPSG", asMapInfoLCCSRSList[i].nEPSGCode);
-                    break;
+                        nEPSGCandidateCode = asMapInfoLCCSRSList[i].nEPSGCode;
+                    else
+                        break;
                 }
             }
         }
@@ -1418,6 +1431,16 @@ TABFileGetSpatialRefFromTABProj(const TABProjInfo &sTABProj)
     {
         poSpatialRef->SetTargetLinearUnits(nullptr, pszUnitsName,
                                            CPLAtof(pszUnitsConv));
+    }
+
+    if (nEPSGCandidateCode)
+    {
+        OGRSpatialReference oTmp;
+        oTmp.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (oTmp.importFromEPSG(nEPSGCandidateCode) == OGRERR_NONE)
+        {
+            *poSpatialRef = std::move(oTmp);
+        }
     }
 
     /*-----------------------------------------------------------------
@@ -2170,36 +2193,50 @@ int TABFileGetTABProjFromSpatialRef(const OGRSpatialReference *poSpatialRef,
         /* which may cause recognition problems when reading in MapInfo */
         if (sTABProj.nProjId == 3)
         {
-            double dfCenterLong = params[0];
-            double dfCenterLat = params[1];
-            double dfStdP1 = params[2];
-            double dfStdP2 = params[3];
+            const double dfCenterLong = params[0];
+            const double dfCenterLat = params[1];
+            const double dfStdP1 = params[2];
+            const double dfStdP2 = params[3];
 
-            for (size_t i = 0; i < sizeof(asMapInfoLCCSRSList) /
-                                       sizeof(asMapInfoLCCSRSList[0]);
-                 i++)
+            // EPSG:3301 "Estonian Coordinate System of 1997"
+            if (std::fabs(dfCenterLong - 24) <= 1e-10 &&
+                std::fabs(dfCenterLat - 57.51755393056) <= 1e-10 &&
+                // MapInfo uses a less accurate value of StdP2 than EPSG
+                std::fabs(dfStdP1 - 59.33333333) <= 1e-8 &&
+                std::fabs(dfStdP2 - 58) <= 1e-8)
             {
-                if (sTABProj.nDatumId ==
-                        asMapInfoLCCSRSList[i].nMapInfoDatumID &&
-                    TAB_EQUAL(dfCenterLong,
-                              asMapInfoLCCSRSList[i].dfCenterLong) &&
-                    TAB_EQUAL(dfCenterLat, asMapInfoLCCSRSList[i].dfCenterLat))
+                CPLDebug("MITAB", "Switching standard parallel 1 and 2");
+                std::swap(params[2], params[3]);
+            }
+            else
+            {
+                for (size_t i = 0; i < sizeof(asMapInfoLCCSRSList) /
+                                           sizeof(asMapInfoLCCSRSList[0]);
+                     i++)
                 {
-                    if (TAB_EQUAL(dfStdP1, asMapInfoLCCSRSList[i].dfStdP1) &&
-                        TAB_EQUAL(dfStdP2, asMapInfoLCCSRSList[i].dfStdP2))
+                    if (sTABProj.nDatumId ==
+                            asMapInfoLCCSRSList[i].nMapInfoDatumID &&
+                        TAB_EQUAL(dfCenterLong,
+                                  asMapInfoLCCSRSList[i].dfCenterLong) &&
+                        TAB_EQUAL(dfCenterLat,
+                                  asMapInfoLCCSRSList[i].dfCenterLat))
                     {
-                        break;
-                    }
-                    else if (TAB_EQUAL(dfStdP1,
-                                       asMapInfoLCCSRSList[i].dfStdP2) &&
-                             TAB_EQUAL(dfStdP2, asMapInfoLCCSRSList[i].dfStdP1))
-                    {
-                        CPLDebug("MITAB",
-                                 "Switching standard parallel 1 and 2");
-                        double dfTmp = params[2];
-                        params[2] = params[3];
-                        params[3] = dfTmp;
-                        break;
+                        if (TAB_EQUAL(dfStdP1,
+                                      asMapInfoLCCSRSList[i].dfStdP1) &&
+                            TAB_EQUAL(dfStdP2, asMapInfoLCCSRSList[i].dfStdP2))
+                        {
+                            break;
+                        }
+                        else if (TAB_EQUAL(dfStdP1,
+                                           asMapInfoLCCSRSList[i].dfStdP2) &&
+                                 TAB_EQUAL(dfStdP2,
+                                           asMapInfoLCCSRSList[i].dfStdP1))
+                        {
+                            CPLDebug("MITAB",
+                                     "Switching standard parallel 1 and 2");
+                            std::swap(params[2], params[3]);
+                            break;
+                        }
                     }
                 }
             }
