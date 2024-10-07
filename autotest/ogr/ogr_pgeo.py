@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import shutil
 import sys
 
 import gdaltest
@@ -977,3 +978,14 @@ def test_ogr_openfilegdb_read_relationships():
     assert rel.GetForwardPathLabel() == "attachment"
     assert rel.GetBackwardPathLabel() == "object"
     assert rel.GetRelatedTableType() == "media"
+
+
+def test_ogr_pgeo_non_ascii(tmp_path):
+
+    non_ascii_filename = str(tmp_path / "éé.mdb")
+    shutil.copy("data/pgeo/sample.mdb", non_ascii_filename)
+
+    pgeo_ds = ogr.Open(non_ascii_filename)
+    assert pgeo_ds is not None
+
+    assert pgeo_ds.GetLayerCount() == 4
