@@ -5,7 +5,7 @@ sphinx
 breathe
 sphinx_bootstrap_theme
 sphinxcontrib-bibtex
-sphinx_rtd_theme
+sphinx_rtd_theme<3.0.0
 recommonmark
 sphinx-markdown-tables
 sphinxcontrib-spelling
