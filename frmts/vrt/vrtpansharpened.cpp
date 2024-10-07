@@ -339,12 +339,11 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
         const CPLStringList aosOpenOptions(
             GDALDeserializeOpenOptionsFromXML(psPanchroBand));
 
-        poPanDataset = GDALDataset::Open(osSourceFilename, GDAL_OF_RASTER,
+        poPanDataset = GDALDataset::Open(osSourceFilename,
+                                         GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
                                          nullptr, aosOpenOptions.List());
         if (poPanDataset == nullptr)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "%s not a valid dataset",
-                     osSourceFilename.c_str());
             return CE_Failure;
         }
         poPanDatasetToClose = poPanDataset;
@@ -543,13 +542,11 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                 const CPLStringList aosOpenOptions(
                     GDALDeserializeOpenOptionsFromXML(psIter));
 
-                poDataset = GDALDataset::Open(osSourceFilename, GDAL_OF_RASTER,
-                                              nullptr, aosOpenOptions.List());
+                poDataset = GDALDataset::Open(
+                    osSourceFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                    nullptr, aosOpenOptions.List());
                 if (poDataset == nullptr)
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "%s not a valid dataset",
-                             osSourceFilename.c_str());
                     goto error;
                 }
                 oMapNamesToDataset[osSourceFilename] = poDataset;
