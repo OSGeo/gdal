@@ -48,7 +48,7 @@ do
             shift
         ;;
 
-        docker-repository)
+        --docker-repository)
             shift
             DOCKER_REPO="$1"
             shift
