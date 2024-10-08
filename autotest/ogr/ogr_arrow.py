@@ -833,3 +833,93 @@ def test_ogr_arrow_binary_view():
         assert f.GetFieldAsBinary("binaryview") == b"bar"
         f = lyr.GetNextFeature()
         assert f.GetFieldAsBinary("binaryview") == b"looooooooooong binary"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "geom_type,encoding,expected_arrow_type",
+    [
+        (
+            ogr.wkbPoint,
+            "GEOARROW_STRUCT",
+            "struct<x: double not null, y: double not null>",
+        ),
+        (
+            ogr.wkbPoint,
+            "GEOARROW_INTERLEAVED",
+            "fixed_size_list<xy: double not null>[2]",
+        ),
+        (
+            ogr.wkbLineString,
+            "GEOARROW_STRUCT",
+            "list<vertices: struct<x: double not null, y: double not null>>",
+        ),
+        (
+            ogr.wkbLineString,
+            "GEOARROW_INTERLEAVED",
+            "list<vertices: fixed_size_list<xy: double not null>[2]>",
+        ),
+        (
+            ogr.wkbPolygon,
+            "GEOARROW_STRUCT",
+            "list<rings: list<vertices: struct<x: double not null, y: double not null>>>",
+        ),
+        (
+            ogr.wkbPolygon,
+            "GEOARROW_INTERLEAVED",
+            "list<rings: list<vertices: fixed_size_list<xy: double not null>[2]>>",
+        ),
+        (
+            ogr.wkbMultiPoint,
+            "GEOARROW_STRUCT",
+            "list<points: struct<x: double not null, y: double not null>>",
+        ),
+        (
+            ogr.wkbMultiPoint,
+            "GEOARROW_INTERLEAVED",
+            "list<points: fixed_size_list<xy: double not null>[2]>",
+        ),
+        (
+            ogr.wkbMultiLineString,
+            "GEOARROW_STRUCT",
+            "list<linestrings: list<vertices: struct<x: double not null, y: double not null>>>",
+        ),
+        (
+            ogr.wkbMultiLineString,
+            "GEOARROW_INTERLEAVED",
+            "list<linestrings: list<vertices: fixed_size_list<xy: double not null>[2]>>",
+        ),
+        (
+            ogr.wkbMultiPolygon,
+            "GEOARROW_STRUCT",
+            "list<polygons: list<rings: list<vertices: struct<x: double not null, y: double not null>>>>",
+        ),
+        (
+            ogr.wkbMultiPolygon,
+            "GEOARROW_INTERLEAVED",
+            "list<polygons: list<rings: list<vertices: fixed_size_list<xy: double not null>[2]>>>",
+        ),
+    ],
+)
+def test_ogr_arrow_check_geoarrow_types(
+    tmp_path, geom_type, encoding, expected_arrow_type
+):
+    pytest.importorskip("pyarrow")
+    import pyarrow.feather
+
+    filename = str(tmp_path / "out.feather")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    with ogr.GetDriverByName("ARROW").CreateDataSource(filename) as ds:
+        ds.CreateLayer(
+            "test",
+            geom_type=geom_type,
+            srs=srs,
+            options=["GEOMETRY_ENCODING=" + encoding],
+        )
+
+    schema = pyarrow.feather.read_table(filename).schema
+    assert str(schema.field("geometry").type) == expected_arrow_type
