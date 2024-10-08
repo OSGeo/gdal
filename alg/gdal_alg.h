@@ -81,7 +81,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALSieveFilter(
  * All transformer arguments should have a GDALTransformerInfo member as their
  * first member.
  */
-typedef void *GDALTransformerArg;
+typedef struct GDALTransformerArgOpaque *GDALTransformerArg;
 
 typedef int (*GDALTransformerFunc)(GDALTransformerArg pTransformerArg,
                                    int bDstToSrc, int nPointCount, double *x,

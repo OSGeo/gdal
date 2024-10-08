@@ -29,6 +29,15 @@ MIGRATION GUIDE FROM GDAL 3.9 to GDAL 3.10
 - New color interpretation (GCI_xxxx) items have been added to the GDALColorInterp
   enumeration. Code testing color interpretation may need to be adapted.
 
+- Out of tree code using GDALTransformer. "void* pTransformArg" arguments are
+  now "GDALTransformerArg pTransformArg" where GDALTransformerArg is
+  a typedef to a pointer to an anonymous struct. Code doing things like
+  static_cast<MyCustomTransformerInfo*>(...) must now use
+  reinterpret_cast<MyCustomTransformerInfo>(...)
+  and code returning a void* that is a transformer argument must use
+  reinterpret_cast<GDALTransformerArg>(...).
+
+
 MIGRATION GUIDE FROM GDAL 3.8 to GDAL 3.9
 -----------------------------------------
 
