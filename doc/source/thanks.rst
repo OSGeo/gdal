@@ -81,7 +81,7 @@ of the following persons:
 - `Markus Neteler <https://github.com/neteler>`__: various contributions to GDAL documentation
 - Adam Nowacki: WMS driver.
 - Jens Oberender: KML driver.
-- `Alessandro Passoti <https://github.com/elpaso>`__: co-maintainer, from 2022 to date.
+- `Alessandro Pasotti <https://github.com/elpaso>`__: co-maintainer, from 2022 to date.
 - `Kai Pastor <https://github.com/dg0yt>`__: contributions to the CMake build system.
 - `Abel Pau <https://github.com/AbelPau>`__: MiraMon driver.
 - `Matthew Perry <https://github.com/perrygeo>`__: gdaldem
