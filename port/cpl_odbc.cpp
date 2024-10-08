@@ -701,6 +701,16 @@ int CPLODBCSession::EstablishSession(const char *pszDSN, const char *pszUserid,
     if (pszPassword == nullptr)
         pszPassword = "";
 
+    std::string osDSN(pszDSN);
+#if defined(_WIN32)
+    if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
+    {
+        char *pszTemp = CPLRecode(pszDSN, CPL_ENC_UTF8, "CP_ACP");
+        osDSN = pszTemp;
+        CPLFree(pszTemp);
+    }
+#endif
+
     bool bFailed = false;
     if (strstr(pszDSN, "=") != nullptr)
     {
@@ -710,7 +720,7 @@ int CPLODBCSession::EstablishSession(const char *pszDSN, const char *pszUserid,
 
         bFailed = CPL_TO_BOOL(Failed(SQLDriverConnect(
             m_hDBC, nullptr,
-            reinterpret_cast<SQLCHAR *>(const_cast<char *>(pszDSN)),
+            reinterpret_cast<SQLCHAR *>(const_cast<char *>(osDSN.c_str())),
             static_cast<SQLSMALLINT>(strlen(pszDSN)), szOutConnString,
             sizeof(szOutConnString), &nOutConnStringLen, SQL_DRIVER_NOPROMPT)));
     }
@@ -718,7 +728,8 @@ int CPLODBCSession::EstablishSession(const char *pszDSN, const char *pszUserid,
     {
         CPLDebug("ODBC", "SQLConnect(%s)", pszDSN);
         bFailed = CPL_TO_BOOL(Failed(SQLConnect(
-            m_hDBC, reinterpret_cast<SQLCHAR *>(const_cast<char *>(pszDSN)),
+            m_hDBC,
+            reinterpret_cast<SQLCHAR *>(const_cast<char *>(osDSN.c_str())),
             SQL_NTS, reinterpret_cast<SQLCHAR *>(const_cast<char *>(pszUserid)),
             SQL_NTS,
             reinterpret_cast<SQLCHAR *>(const_cast<char *>(pszPassword)),
