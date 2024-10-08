@@ -49,7 +49,7 @@
 CPLErr GDALTransformGeolocations(GDALRasterBandH hXBand, GDALRasterBandH hYBand,
                                  GDALRasterBandH hZBand,
                                  GDALTransformerFunc pfnTransformer,
-                                 void *pTransformArg,
+                                 GDALTransformerArg pTransformArg,
                                  GDALProgressFunc pfnProgress,
                                  void *pProgressArg,
                                  CPL_UNUSED char **papszOptions)

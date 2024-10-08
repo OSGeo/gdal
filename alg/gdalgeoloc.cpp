@@ -54,8 +54,8 @@ constexpr float INVALID_BMXY = -10.0f;
 #endif
 
 CPL_C_START
-CPLXMLNode *GDALSerializeGeoLocTransformer(void *pTransformArg);
-void *GDALDeserializeGeoLocTransformer(CPLXMLNode *psTree);
+CPLXMLNode *GDALSerializeGeoLocTransformer(GDALTransformerArg pTransformArg);
+GDALTransformerArg GDALDeserializeGeoLocTransformer(const CPLXMLNode *psTree);
 CPL_C_END
 
 /************************************************************************/
@@ -1584,9 +1584,9 @@ static void GDALGeoLocRescale(char **&papszMD, const char *pszItem,
 /*                 GDALCreateSimilarGeoLocTransformer()                 */
 /************************************************************************/
 
-static void *GDALCreateSimilarGeoLocTransformer(void *hTransformArg,
-                                                double dfRatioX,
-                                                double dfRatioY)
+static GDALTransformerArg
+GDALCreateSimilarGeoLocTransformer(GDALTransformerArg hTransformArg,
+                                   double dfRatioX, double dfRatioY)
 {
     VALIDATE_POINTER1(hTransformArg, "GDALCreateSimilarGeoLocTransformer",
                       nullptr);
@@ -1742,10 +1742,9 @@ CPLStringList GDALCreateGeolocationMetadata(GDALDatasetH hBaseDS,
 /*                    GDALCreateGeoLocTransformer()                     */
 /************************************************************************/
 
-void *GDALCreateGeoLocTransformerEx(GDALDatasetH hBaseDS,
-                                    CSLConstList papszGeolocationInfo,
-                                    int bReversed, const char *pszSourceDataset,
-                                    CSLConstList papszTransformOptions)
+GDALTransformerArg GDALCreateGeoLocTransformerEx(
+    GDALDatasetH hBaseDS, CSLConstList papszGeolocationInfo, int bReversed,
+    const char *pszSourceDataset, CSLConstList papszTransformOptions)
 
 {
 
@@ -2032,8 +2031,9 @@ void *GDALCreateGeoLocTransformerEx(GDALDatasetH hBaseDS,
 }
 
 /** Create GeoLocation transformer */
-void *GDALCreateGeoLocTransformer(GDALDatasetH hBaseDS,
-                                  char **papszGeolocationInfo, int bReversed)
+GDALTransformerArg GDALCreateGeoLocTransformer(GDALDatasetH hBaseDS,
+                                               char **papszGeolocationInfo,
+                                               int bReversed)
 
 {
     return GDALCreateGeoLocTransformerEx(hBaseDS, papszGeolocationInfo,
@@ -2045,7 +2045,7 @@ void *GDALCreateGeoLocTransformer(GDALDatasetH hBaseDS,
 /************************************************************************/
 
 /** Destroy GeoLocation transformer */
-void GDALDestroyGeoLocTransformer(void *pTransformAlg)
+void GDALDestroyGeoLocTransformer(GDALTransformerArg pTransformAlg)
 
 {
     if (pTransformAlg == nullptr)
@@ -2078,9 +2078,9 @@ void GDALDestroyGeoLocTransformer(void *pTransformAlg)
 }
 
 /** Use GeoLocation transformer */
-int GDALGeoLocTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
-                        double *padfX, double *padfY, double *padfZ,
-                        int *panSuccess)
+int GDALGeoLocTransform(GDALTransformerArg pTransformArg, int bDstToSrc,
+                        int nPointCount, double *padfX, double *padfY,
+                        double *padfZ, int *panSuccess)
 {
     GDALGeoLocTransformInfo *psTransform =
         static_cast<GDALGeoLocTransformInfo *>(pTransformArg);
@@ -2102,7 +2102,7 @@ int GDALGeoLocTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
 /*                   GDALSerializeGeoLocTransformer()                   */
 /************************************************************************/
 
-CPLXMLNode *GDALSerializeGeoLocTransformer(void *pTransformArg)
+CPLXMLNode *GDALSerializeGeoLocTransformer(GDALTransformerArg pTransformArg)
 
 {
     VALIDATE_POINTER1(pTransformArg, "GDALSerializeGeoLocTransformer", nullptr);
@@ -2145,13 +2145,13 @@ CPLXMLNode *GDALSerializeGeoLocTransformer(void *pTransformArg)
 /*                   GDALDeserializeGeoLocTransformer()                 */
 /************************************************************************/
 
-void *GDALDeserializeGeoLocTransformer(CPLXMLNode *psTree)
+GDALTransformerArg GDALDeserializeGeoLocTransformer(const CPLXMLNode *psTree)
 
 {
     /* -------------------------------------------------------------------- */
     /*      Collect metadata.                                               */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psMetadata = CPLGetXMLNode(psTree, "Metadata");
+    const CPLXMLNode *psMetadata = CPLGetXMLNode(psTree, "Metadata");
 
     if (psMetadata == nullptr || psMetadata->eType != CXT_Element ||
         !EQUAL(psMetadata->pszValue, "Metadata"))
@@ -2159,7 +2159,7 @@ void *GDALDeserializeGeoLocTransformer(CPLXMLNode *psTree)
 
     char **papszMD = nullptr;
 
-    for (CPLXMLNode *psMDI = psMetadata->psChild; psMDI != nullptr;
+    for (const CPLXMLNode *psMDI = psMetadata->psChild; psMDI != nullptr;
          psMDI = psMDI->psNext)
     {
         if (!EQUAL(psMDI->pszValue, "MDI") || psMDI->eType != CXT_Element ||
@@ -2184,8 +2184,8 @@ void *GDALDeserializeGeoLocTransformer(CPLXMLNode *psTree)
     const char *pszSourceDataset =
         CPLGetXMLValue(psTree, "SourceDataset", nullptr);
 
-    void *pResult = GDALCreateGeoLocTransformerEx(nullptr, papszMD, bReversed,
-                                                  pszSourceDataset, nullptr);
+    GDALTransformerArg pResult = GDALCreateGeoLocTransformerEx(
+        nullptr, papszMD, bReversed, pszSourceDataset, nullptr);
 
     /* -------------------------------------------------------------------- */
     /*      Cleanup GCP copy.                                               */

@@ -440,7 +440,7 @@ GDALDatasetH GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
                        dfSouthLatitudeDeg, dfEastLongitudeDeg,
                        dfNorthLatitudeDeg));
     }
-    void *hTransform = GDALCreateGenImgProjTransformer4(
+    GDALTransformerArg hTransform = GDALCreateGenImgProjTransformer4(
         hGridSRS, adfGridGT, OGRSpatialReference::ToHandle(&oSrcSRS), adfSrcGT,
         aosOptions.List());
     if (hTransform == nullptr)

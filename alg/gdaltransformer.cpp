@@ -42,28 +42,34 @@
 #include "ogr_srs_api.h"
 
 CPL_C_START
-void *GDALDeserializeGCPTransformer(CPLXMLNode *psTree);
-void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree);
-void *GDALDeserializeGeoLocTransformer(CPLXMLNode *psTree);
-void *GDALDeserializeRPCTransformer(CPLXMLNode *psTree);
+GDALTransformerArg GDALDeserializeGCPTransformer(const CPLXMLNode *psTree);
+GDALTransformerArg GDALDeserializeTPSTransformer(const CPLXMLNode *psTree);
+GDALTransformerArg GDALDeserializeGeoLocTransformer(const CPLXMLNode *psTree);
+GDALTransformerArg GDALDeserializeRPCTransformer(const CPLXMLNode *psTree);
 CPL_C_END
 
-static CPLXMLNode *GDALSerializeReprojectionTransformer(void *pTransformArg);
-static void *GDALDeserializeReprojectionTransformer(CPLXMLNode *psTree);
+static CPLXMLNode *
+GDALSerializeReprojectionTransformer(GDALTransformerArg pTransformArg);
+static GDALTransformerArg
+GDALDeserializeReprojectionTransformer(const CPLXMLNode *psTree);
 
-static CPLXMLNode *GDALSerializeGenImgProjTransformer(void *pTransformArg);
-static void *GDALDeserializeGenImgProjTransformer(CPLXMLNode *psTree);
+static CPLXMLNode *
+GDALSerializeGenImgProjTransformer(GDALTransformerArg pTransformArg);
+static GDALTransformerArg
+GDALDeserializeGenImgProjTransformer(const CPLXMLNode *psTree);
 
-static void *GDALCreateApproxTransformer2(GDALTransformerFunc pfnRawTransformer,
-                                          void *pRawTransformerArg,
-                                          double dfMaxErrorForward,
-                                          double dfMaxErrorReverse);
+static GDALTransformerArg
+GDALCreateApproxTransformer2(GDALTransformerFunc pfnRawTransformer,
+                             GDALTransformerArg pRawTransformerArg,
+                             double dfMaxErrorForward,
+                             double dfMaxErrorReverse);
 
 /************************************************************************/
 /*                            GDALIsTransformer()                       */
 /************************************************************************/
 
-bool GDALIsTransformer(void *hTransformerArg, const char *pszClassName)
+bool GDALIsTransformer(GDALTransformerArg hTransformerArg,
+                       const char *pszClassName)
 {
     if (!hTransformerArg)
         return false;
@@ -83,7 +89,7 @@ bool GDALIsTransformer(void *hTransformerArg, const char *pszClassName)
 
 /*!
 
-\typedef typedef int (*GDALTransformerFunc)( void *pTransformerArg, int
+\typedef typedef int (*GDALTransformerFunc)( GDALTransformerArg pTransformerArg, int
 bDstToSrc, int nPointCount, double *x, double *y, double *z, int *panSuccess );
 
 Generic signature for spatial point transformers.
@@ -99,7 +105,7 @@ applications can implement their own transformers to the following signature.
 
 \code
 typedef int
-(*GDALTransformerFunc)( void *pTransformerArg,
+(*GDALTransformerFunc)( GDALTransformerArg pTransformerArg,
                         int bDstToSrc, int nPointCount,
                         double *x, double *y, double *z, int *panSuccess );
 \endcode
@@ -171,7 +177,7 @@ points may have failed) or FALSE if the overall transformation fails.
 
 CPLErr CPL_STDCALL GDALSuggestedWarpOutput(GDALDatasetH hSrcDS,
                                            GDALTransformerFunc pfnTransformer,
-                                           void *pTransformArg,
+                                           GDALTransformerArg pTransformArg,
                                            double *padfGeoTransformOut,
                                            int *pnPixels, int *pnLines)
 
@@ -186,8 +192,8 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput(GDALDatasetH hSrcDS,
 }
 
 static int GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
-    GDALTransformerFunc pfnTransformer, void *pTransformArg, double *padfExtent,
-    CPL_UNUSED int nPixels, int nLines, double dfPixelSizeX,
+    GDALTransformerFunc pfnTransformer, GDALTransformerArg pTransformArg,
+    double *padfExtent, CPL_UNUSED int nPixels, int nLines, double dfPixelSizeX,
     double dfPixelSizeY)
 {
     double adfX[21] = {};
@@ -242,8 +248,8 @@ static int GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
 }
 
 static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
-    GDALTransformerFunc pfnTransformer, void *pTransformArg, double *padfExtent,
-    int nPixels, CPL_UNUSED int nLines, double dfPixelSizeX,
+    GDALTransformerFunc pfnTransformer, GDALTransformerArg pTransformArg,
+    double *padfExtent, int nPixels, CPL_UNUSED int nLines, double dfPixelSizeX,
     double dfPixelSizeY)
 {
     double adfX[21] = {};
@@ -346,7 +352,7 @@ static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
 
 CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
                                             GDALTransformerFunc pfnTransformer,
-                                            void *pTransformArg,
+                                            GDALTransformerArg pTransformArg,
                                             double *padfGeoTransformOut,
                                             int *pnPixels, int *pnLines,
                                             double *padfExtent, int nOptions)
@@ -1254,9 +1260,9 @@ static bool GetCurrentCheckWithInvertPROJ()
 /*               GDALCreateGenImgProjTransformerInternal()              */
 /************************************************************************/
 
-static void *GDALCreateSimilarGenImgProjTransformer(void *hTransformArg,
-                                                    double dfRatioX,
-                                                    double dfRatioY);
+static GDALTransformerArg
+GDALCreateSimilarGenImgProjTransformer(GDALTransformerArg hTransformArg,
+                                       double dfRatioX, double dfRatioY);
 
 static GDALGenImgProjTransformInfo *GDALCreateGenImgProjTransformerInternal()
 {
@@ -1285,9 +1291,9 @@ static GDALGenImgProjTransformInfo *GDALCreateGenImgProjTransformerInternal()
 /*                GDALCreateSimilarGenImgProjTransformer()              */
 /************************************************************************/
 
-static void *GDALCreateSimilarGenImgProjTransformer(void *hTransformArg,
-                                                    double dfRatioX,
-                                                    double dfRatioY)
+static GDALTransformerArg
+GDALCreateSimilarGenImgProjTransformer(GDALTransformerArg hTransformArg,
+                                       double dfRatioX, double dfRatioY)
 {
     VALIDATE_POINTER1(hTransformArg, "GDALCreateSimilarGenImgProjTransformer",
                       nullptr);
@@ -1390,12 +1396,10 @@ static void *GDALCreateSimilarGenImgProjTransformer(void *hTransformArg,
  * deallocated with GDALDestroyGenImgProjTransformer().
  */
 
-void *GDALCreateGenImgProjTransformer(GDALDatasetH hSrcDS,
-                                      const char *pszSrcWKT,
-                                      GDALDatasetH hDstDS,
-                                      const char *pszDstWKT, int bGCPUseOK,
-                                      CPL_UNUSED double dfGCPErrorThreshold,
-                                      int nOrder)
+GDALTransformerArg GDALCreateGenImgProjTransformer(
+    GDALDatasetH hSrcDS, const char *pszSrcWKT, GDALDatasetH hDstDS,
+    const char *pszDstWKT, int bGCPUseOK, CPL_UNUSED double dfGCPErrorThreshold,
+    int nOrder)
 {
     char **papszOptions = nullptr;
 
@@ -1409,7 +1413,8 @@ void *GDALCreateGenImgProjTransformer(GDALDatasetH hSrcDS,
         papszOptions = CSLSetNameValue(papszOptions, "MAX_GCP_ORDER",
                                        CPLString().Printf("%d", nOrder));
 
-    void *pRet = GDALCreateGenImgProjTransformer2(hSrcDS, hDstDS, papszOptions);
+    GDALTransformerArg pRet =
+        GDALCreateGenImgProjTransformer2(hSrcDS, hDstDS, papszOptions);
     CSLDestroy(papszOptions);
 
     return pRet;
@@ -1899,8 +1904,9 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  */
 /* clang-format on */
 
-void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
-                                       char **papszOptions)
+GDALTransformerArg GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS,
+                                                    GDALDatasetH hDstDS,
+                                                    char **papszOptions)
 
 {
     CSLConstList papszMD = nullptr;
@@ -2193,7 +2199,7 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             CSLFetchNameValue(papszOptions, "SRC_APPROX_ERROR_IN_PIXEL");
         if (pszSrcApproxErrorFwd && pszSrcApproxErrorReverse)
         {
-            void *pArg = GDALCreateApproxTransformer2(
+            GDALTransformerArg pArg = GDALCreateApproxTransformer2(
                 psInfo->pSrcTransformer, psInfo->pSrcTransformArg,
                 CPLAtof(pszSrcApproxErrorFwd),
                 CPLAtof(pszSrcApproxErrorReverse));
@@ -2400,7 +2406,7 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             CSLFetchNameValue(papszOptions, "DST_APPROX_ERROR_IN_SRS_UNIT");
         if (pszDstApproxErrorFwd && pszDstApproxErrorReverse)
         {
-            void *pArg = GDALCreateApproxTransformer2(
+            GDALTransformerArg pArg = GDALCreateApproxTransformer2(
                 psInfo->pDstTransformer, psInfo->pDstTransformArg,
                 CPLAtof(pszDstApproxErrorFwd),
                 CPLAtof(pszDstApproxErrorReverse));
@@ -2520,7 +2526,7 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             papszOptions, "REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT");
         if (psApproxErrorFwd && psApproxErrorReverse)
         {
-            void *pArg = GDALCreateApproxTransformer2(
+            GDALTransformerArg pArg = GDALCreateApproxTransformer2(
                 psInfo->pReproject, psInfo->pReprojectArg,
                 CPLAtof(psApproxErrorFwd), CPLAtof(psApproxErrorReverse));
             if (pArg == nullptr)
@@ -2542,7 +2548,7 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /*                  GDALRefreshGenImgProjTransformer()                  */
 /************************************************************************/
 
-void GDALRefreshGenImgProjTransformer(void *hTransformArg)
+void GDALRefreshGenImgProjTransformer(GDALTransformerArg hTransformArg)
 {
     GDALGenImgProjTransformInfo *psInfo =
         static_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
@@ -2602,10 +2608,9 @@ void GDALRefreshGenImgProjTransformer(void *hTransformArg)
  * deallocated with GDALDestroyGenImgProjTransformer() or NULL on failure.
  */
 
-void *GDALCreateGenImgProjTransformer3(const char *pszSrcWKT,
-                                       const double *padfSrcGeoTransform,
-                                       const char *pszDstWKT,
-                                       const double *padfDstGeoTransform)
+GDALTransformerArg GDALCreateGenImgProjTransformer3(
+    const char *pszSrcWKT, const double *padfSrcGeoTransform,
+    const char *pszDstWKT, const double *padfDstGeoTransform)
 
 {
     OGRSpatialReference oSrcSRS;
@@ -2651,11 +2656,10 @@ void *GDALCreateGenImgProjTransformer3(const char *pszSrcWKT,
  *
  * @since GDAL 3.0
  */
-void *GDALCreateGenImgProjTransformer4(OGRSpatialReferenceH hSrcSRS,
-                                       const double *padfSrcGeoTransform,
-                                       OGRSpatialReferenceH hDstSRS,
-                                       const double *padfDstGeoTransform,
-                                       const char *const *papszOptions)
+GDALTransformerArg GDALCreateGenImgProjTransformer4(
+    OGRSpatialReferenceH hSrcSRS, const double *padfSrcGeoTransform,
+    OGRSpatialReferenceH hDstSRS, const double *padfDstGeoTransform,
+    const char *const *papszOptions)
 {
     /* -------------------------------------------------------------------- */
     /*      Initialize the transform info.                                  */
@@ -2759,8 +2763,8 @@ void *GDALCreateGenImgProjTransformer4(OGRSpatialReferenceH hSrcSRS,
  * @param padfGeoTransform the destination geotransform to apply (six doubles).
  */
 
-void GDALSetGenImgProjTransformerDstGeoTransform(void *hTransformArg,
-                                                 const double *padfGeoTransform)
+void GDALSetGenImgProjTransformerDstGeoTransform(
+    GDALTransformerArg hTransformArg, const double *padfGeoTransform)
 
 {
     VALIDATE_POINTER0(hTransformArg,
@@ -2790,7 +2794,7 @@ void GDALSetGenImgProjTransformerDstGeoTransform(void *hTransformArg,
  * @param hTransformArg the handle to deallocate.
  */
 
-void GDALDestroyGenImgProjTransformer(void *hTransformArg)
+void GDALDestroyGenImgProjTransformer(GDALTransformerArg hTransformArg)
 
 {
     if (hTransformArg == nullptr)
@@ -2828,7 +2832,7 @@ void GDALDestroyGenImgProjTransformer(void *hTransformArg)
 int countGDALGenImgProjTransform = 0;
 #endif
 
-int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
+int GDALGenImgProjTransform(GDALTransformerArg pTransformArgIn, int bDstToSrc,
                             int nPointCount, double *padfX, double *padfY,
                             double *padfZ, int *panSuccess)
 {
@@ -2850,7 +2854,7 @@ int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
     /*      georeferenced coordinates.                                      */
     /* -------------------------------------------------------------------- */
     double *padfGeoTransform = nullptr;
-    void *pTransformArg = nullptr;
+    GDALTransformerArg pTransformArg = nullptr;
     GDALTransformerFunc pTransformer = nullptr;
     if (bDstToSrc)
     {
@@ -2948,8 +2952,8 @@ int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
 /*              GDALTransformLonLatToDestGenImgProjTransformer()        */
 /************************************************************************/
 
-int GDALTransformLonLatToDestGenImgProjTransformer(void *hTransformArg,
-                                                   double *pdfX, double *pdfY)
+int GDALTransformLonLatToDestGenImgProjTransformer(
+    GDALTransformerArg hTransformArg, double *pdfX, double *pdfY)
 {
     GDALGenImgProjTransformInfo *psInfo =
         static_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
@@ -3011,7 +3015,7 @@ int GDALTransformLonLatToDestGenImgProjTransformer(void *hTransformArg,
     }
 
     double *padfGeoTransform = psInfo->adfDstInvGeoTransform;
-    void *pTransformArg = psInfo->pDstTransformArg;
+    GDALTransformerArg pTransformArg = psInfo->pDstTransformArg;
     GDALTransformerFunc pTransformer = psInfo->pDstTransformer;
     if (pTransformArg != nullptr)
     {
@@ -3041,7 +3045,8 @@ int GDALTransformLonLatToDestGenImgProjTransformer(void *hTransformArg,
 /*                 GDALSerializeGenImgProjTransformer()                 */
 /************************************************************************/
 
-static CPLXMLNode *GDALSerializeGenImgProjTransformer(void *pTransformArg)
+static CPLXMLNode *
+GDALSerializeGenImgProjTransformer(GDALTransformerArg pTransformArg)
 
 {
     GDALGenImgProjTransformInfo *psInfo =
@@ -3160,7 +3165,8 @@ static void GDALDeserializeGeoTransform(const char *pszGT,
 /*                GDALDeserializeGenImgProjTransformer()                */
 /************************************************************************/
 
-void *GDALDeserializeGenImgProjTransformer(CPLXMLNode *psTree)
+GDALTransformerArg
+GDALDeserializeGenImgProjTransformer(const CPLXMLNode *psTree)
 
 {
     /* -------------------------------------------------------------------- */
@@ -3262,7 +3268,7 @@ void *GDALDeserializeGenImgProjTransformer(CPLXMLNode *psTree)
     /* -------------------------------------------------------------------- */
     /*      Reproject transformer                                           */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psSubtree = CPLGetXMLNode(psTree, "ReprojectTransformer");
+    const CPLXMLNode *psSubtree = CPLGetXMLNode(psTree, "ReprojectTransformer");
     if (psSubtree != nullptr && psSubtree->psChild != nullptr)
     {
         GDALDeserializeTransformer(psSubtree->psChild, &psInfo->pReproject,
@@ -3295,8 +3301,8 @@ void *GDALDeserializeGenImgProjTransformer(CPLXMLNode *psTree)
  * system fails to initialize the reprojection.
  **/
 
-void *GDALCreateReprojectionTransformer(const char *pszSrcWKT,
-                                        const char *pszDstWKT)
+GDALTransformerArg GDALCreateReprojectionTransformer(const char *pszSrcWKT,
+                                                     const char *pszDstWKT)
 
 {
     /* -------------------------------------------------------------------- */
@@ -3364,9 +3370,10 @@ void *GDALCreateReprojectionTransformer(const char *pszSrcWKT,
  * @since GDAL 3.0
  **/
 
-void *GDALCreateReprojectionTransformerEx(OGRSpatialReferenceH hSrcSRS,
-                                          OGRSpatialReferenceH hDstSRS,
-                                          const char *const *papszOptions)
+GDALTransformerArg
+GDALCreateReprojectionTransformerEx(OGRSpatialReferenceH hSrcSRS,
+                                    OGRSpatialReferenceH hDstSRS,
+                                    const char *const *papszOptions)
 {
     OGRSpatialReference *poSrcSRS = OGRSpatialReference::FromHandle(hSrcSRS);
     OGRSpatialReference *poDstSRS = OGRSpatialReference::FromHandle(hDstSRS);
@@ -3460,7 +3467,7 @@ void *GDALCreateReprojectionTransformerEx(OGRSpatialReferenceH hSrcSRS,
  * GDALCreateReprojectionTransformer().
  */
 
-void GDALDestroyReprojectionTransformer(void *pTransformArg)
+void GDALDestroyReprojectionTransformer(GDALTransformerArg pTransformArg)
 
 {
     if (pTransformArg == nullptr)
@@ -3493,7 +3500,7 @@ void GDALDestroyReprojectionTransformer(void *pTransformArg)
  * there.
  */
 
-int GDALReprojectionTransform(void *pTransformArg, int bDstToSrc,
+int GDALReprojectionTransform(GDALTransformerArg pTransformArg, int bDstToSrc,
                               int nPointCount, double *padfX, double *padfY,
                               double *padfZ, int *panSuccess)
 
@@ -3541,7 +3548,8 @@ int GDALReprojectionTransform(void *pTransformArg, int bDstToSrc,
 /*                GDALSerializeReprojectionTransformer()                */
 /************************************************************************/
 
-static CPLXMLNode *GDALSerializeReprojectionTransformer(void *pTransformArg)
+static CPLXMLNode *
+GDALSerializeReprojectionTransformer(GDALTransformerArg pTransformArg)
 
 {
     CPLXMLNode *psTree;
@@ -3627,13 +3635,14 @@ static CPLXMLNode *GDALSerializeReprojectionTransformer(void *pTransformArg)
 /*               GDALDeserializeReprojectionTransformer()               */
 /************************************************************************/
 
-static void *GDALDeserializeReprojectionTransformer(CPLXMLNode *psTree)
+static GDALTransformerArg
+GDALDeserializeReprojectionTransformer(const CPLXMLNode *psTree)
 
 {
     const char *pszSourceSRS = CPLGetXMLValue(psTree, "SourceSRS", nullptr);
     const char *pszTargetSRS = CPLGetXMLValue(psTree, "TargetSRS", nullptr);
     char *pszSourceWKT = nullptr, *pszTargetWKT = nullptr;
-    void *pResult = nullptr;
+    GDALTransformerArg pResult = nullptr;
 
     OGRSpatialReference oSrcSRS;
     OGRSpatialReference oDstSRS;
@@ -3691,7 +3700,7 @@ typedef struct
     GDALTransformerInfo sTI;
 
     GDALTransformerFunc pfnBaseTransformer;
-    void *pBaseCBData;
+    GDALTransformerArg pBaseCBData;
     double dfMaxErrorForward;
     double dfMaxErrorReverse;
 
@@ -3702,9 +3711,9 @@ typedef struct
 /*                  GDALCreateSimilarApproxTransformer()                */
 /************************************************************************/
 
-static void *GDALCreateSimilarApproxTransformer(void *hTransformArg,
-                                                double dfSrcRatioX,
-                                                double dfSrcRatioY)
+static GDALTransformerArg
+GDALCreateSimilarApproxTransformer(GDALTransformerArg hTransformArg,
+                                   double dfSrcRatioX, double dfSrcRatioY)
 {
     VALIDATE_POINTER1(hTransformArg, "GDALCreateSimilarApproxTransformer",
                       nullptr);
@@ -3735,7 +3744,8 @@ static void *GDALCreateSimilarApproxTransformer(void *hTransformArg,
 /*                   GDALSerializeApproxTransformer()                   */
 /************************************************************************/
 
-static CPLXMLNode *GDALSerializeApproxTransformer(void *pTransformArg)
+static CPLXMLNode *
+GDALSerializeApproxTransformer(GDALTransformerArg pTransformArg)
 
 {
     CPLXMLNode *psTree;
@@ -3819,18 +3829,20 @@ static CPLXMLNode *GDALSerializeApproxTransformer(void *pTransformArg)
  * should be deallocated with GDALDestroyApproxTransformer().
  */
 
-void *GDALCreateApproxTransformer(GDALTransformerFunc pfnBaseTransformer,
-                                  void *pBaseTransformArg, double dfMaxError)
+GDALTransformerArg
+GDALCreateApproxTransformer(GDALTransformerFunc pfnBaseTransformer,
+                            GDALTransformerArg pBaseTransformArg,
+                            double dfMaxError)
 
 {
     return GDALCreateApproxTransformer2(pfnBaseTransformer, pBaseTransformArg,
                                         dfMaxError, dfMaxError);
 }
 
-static void *
+static GDALTransformerArg
 GDALCreateApproxTransformer2(GDALTransformerFunc pfnBaseTransformer,
-                             void *pBaseTransformArg, double dfMaxErrorForward,
-                             double dfMaxErrorReverse)
+                             GDALTransformerArg pBaseTransformArg,
+                             double dfMaxErrorForward, double dfMaxErrorReverse)
 
 {
     ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(
@@ -3857,7 +3869,8 @@ GDALCreateApproxTransformer2(GDALTransformerFunc pfnBaseTransformer,
 /************************************************************************/
 
 /** Set bOwnSubtransformer flag */
-void GDALApproxTransformerOwnsSubtransformer(void *pCBData, int bOwnFlag)
+void GDALApproxTransformerOwnsSubtransformer(GDALTransformerArg pCBData,
+                                             int bOwnFlag)
 
 {
     ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
@@ -3878,7 +3891,7 @@ void GDALApproxTransformerOwnsSubtransformer(void *pCBData, int bOwnFlag)
  * GDALCreateApproxTransformer().
  */
 
-void GDALDestroyApproxTransformer(void *pCBData)
+void GDALDestroyApproxTransformer(GDALTransformerArg pCBData)
 
 {
     if (pCBData == nullptr)
@@ -3896,7 +3909,7 @@ void GDALDestroyApproxTransformer(void *pCBData)
 /*                  GDALRefreshApproxTransformer()                      */
 /************************************************************************/
 
-void GDALRefreshApproxTransformer(void *hTransformArg)
+void GDALRefreshApproxTransformer(GDALTransformerArg hTransformArg)
 {
     ApproxTransformInfo *psInfo =
         static_cast<ApproxTransformInfo *>(hTransformArg);
@@ -3912,9 +3925,9 @@ void GDALRefreshApproxTransformer(void *hTransformArg)
 /*                      GDALApproxTransformInternal()                   */
 /************************************************************************/
 
-static int GDALApproxTransformInternal(void *pCBData, int bDstToSrc,
-                                       int nPoints, double *x, double *y,
-                                       double *z, int *panSuccess,
+static int GDALApproxTransformInternal(GDALTransformerArg pCBData,
+                                       int bDstToSrc, int nPoints, double *x,
+                                       double *y, double *z, int *panSuccess,
                                        // SME = Start, Middle, End.
                                        const double xSMETransformed[3],
                                        const double ySMETransformed[3],
@@ -4172,8 +4185,8 @@ static int GDALApproxTransformInternal(void *pCBData, int bDstToSrc,
  * there.
  */
 
-int GDALApproxTransform(void *pCBData, int bDstToSrc, int nPoints, double *x,
-                        double *y, double *z, int *panSuccess)
+int GDALApproxTransform(GDALTransformerArg pCBData, int bDstToSrc, int nPoints,
+                        double *x, double *y, double *z, int *panSuccess)
 
 {
     ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
@@ -4240,7 +4253,7 @@ end:
 /*                  GDALDeserializeApproxTransformer()                  */
 /************************************************************************/
 
-static void *GDALDeserializeApproxTransformer(CPLXMLNode *psTree)
+static GDALTransformerArg GDALDeserializeApproxTransformer(CPLXMLNode *psTree)
 
 {
     double dfMaxErrorForward = 0.25;
@@ -4265,7 +4278,7 @@ static void *GDALDeserializeApproxTransformer(CPLXMLNode *psTree)
     }
 
     GDALTransformerFunc pfnBaseTransform = nullptr;
-    void *pBaseCBData = nullptr;
+    GDALTransformerArg pBaseCBData = nullptr;
 
     CPLXMLNode *psContainer = CPLGetXMLNode(psTree, "BaseTransformer");
 
@@ -4282,7 +4295,7 @@ static void *GDALDeserializeApproxTransformer(CPLXMLNode *psTree)
         return nullptr;
     }
 
-    void *pApproxCBData = GDALCreateApproxTransformer2(
+    GDALTransformerArg pApproxCBData = GDALCreateApproxTransformer2(
         pfnBaseTransform, pBaseCBData, dfMaxErrorForward, dfMaxErrorReverse);
     GDALApproxTransformerOwnsSubtransformer(pApproxCBData, TRUE);
 
@@ -4293,7 +4306,7 @@ static void *GDALDeserializeApproxTransformer(CPLXMLNode *psTree)
 /*                 GDALTransformLonLatToDestApproxTransformer()         */
 /************************************************************************/
 
-int GDALTransformLonLatToDestApproxTransformer(void *hTransformArg,
+int GDALTransformLonLatToDestApproxTransformer(GDALTransformerArg hTransformArg,
                                                double *pdfX, double *pdfY)
 {
     ApproxTransformInfo *psInfo =
@@ -4414,7 +4427,7 @@ int CPL_STDCALL GDALInvGeoTransform(const double *gt_in, double *gt_out)
 /************************************************************************/
 
 CPLXMLNode *GDALSerializeTransformer(GDALTransformerFunc /* pfnFunc */,
-                                     void *pTransformArg)
+                                     GDALTransformerArg pTransformArg)
 {
     VALIDATE_POINTER1(pTransformArg, "GDALSerializeTransformer", nullptr);
 
@@ -4517,7 +4530,7 @@ void GDALCleanupTransformDeserializerMutex()
 
 CPLErr GDALDeserializeTransformer(CPLXMLNode *psTree,
                                   GDALTransformerFunc *ppfnFunc,
-                                  void **ppTransformArg)
+                                  GDALTransformerArg *ppTransformArg)
 
 {
     *ppfnFunc = nullptr;
@@ -4602,7 +4615,7 @@ CPLErr GDALDeserializeTransformer(CPLXMLNode *psTree,
 /*                       GDALDestroyTransformer()                       */
 /************************************************************************/
 
-void GDALDestroyTransformer(void *pTransformArg)
+void GDALDestroyTransformer(GDALTransformerArg pTransformArg)
 
 {
     if (pTransformArg == nullptr)
@@ -4626,8 +4639,9 @@ void GDALDestroyTransformer(void *pTransformArg)
 /*                         GDALUseTransformer()                         */
 /************************************************************************/
 
-int GDALUseTransformer(void *pTransformArg, int bDstToSrc, int nPointCount,
-                       double *x, double *y, double *z, int *panSuccess)
+int GDALUseTransformer(GDALTransformerArg pTransformArg, int bDstToSrc,
+                       int nPointCount, double *x, double *y, double *z,
+                       int *panSuccess)
 {
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
@@ -4648,7 +4662,7 @@ int GDALUseTransformer(void *pTransformArg, int bDstToSrc, int nPointCount,
 /*                        GDALCloneTransformer()                        */
 /************************************************************************/
 
-void *GDALCloneTransformer(void *pTransformArg)
+GDALTransformerArg GDALCloneTransformer(GDALTransformerArg pTransformArg)
 {
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
@@ -4677,7 +4691,7 @@ void *GDALCloneTransformer(void *pTransformArg)
     if (pSerialized == nullptr)
         return nullptr;
     GDALTransformerFunc pfnTransformer = nullptr;
-    void *pClonedTransformArg = nullptr;
+    GDALTransformerArg pClonedTransformArg = nullptr;
     if (GDALDeserializeTransformer(pSerialized, &pfnTransformer,
                                    &pClonedTransformArg) != CE_None)
     {
@@ -4694,8 +4708,9 @@ void *GDALCloneTransformer(void *pTransformArg)
 /*                   GDALCreateSimilarTransformer()                     */
 /************************************************************************/
 
-void *GDALCreateSimilarTransformer(void *pTransformArg, double dfRatioX,
-                                   double dfRatioY)
+GDALTransformerArg
+GDALCreateSimilarTransformer(GDALTransformerArg pTransformArg, double dfRatioX,
+                             double dfRatioY)
 {
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
@@ -4722,8 +4737,9 @@ void *GDALCreateSimilarTransformer(void *pTransformArg, double dfRatioX,
 /*                      GetGenImgProjTransformInfo()                    */
 /************************************************************************/
 
-static GDALTransformerInfo *GetGenImgProjTransformInfo(const char *pszFunc,
-                                                       void *pTransformArg)
+static GDALTransformerInfo *
+GetGenImgProjTransformInfo(const char *pszFunc,
+                           GDALTransformerArg pTransformArg)
 {
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
@@ -4787,7 +4803,7 @@ static GDALTransformerInfo *GetGenImgProjTransformInfo(const char *pszFunc,
  * @param padfGeoTransform the destination geotransform to apply (six doubles).
  */
 
-void GDALSetTransformerDstGeoTransform(void *pTransformArg,
+void GDALSetTransformerDstGeoTransform(GDALTransformerArg pTransformArg,
                                        const double *padfGeoTransform)
 {
     VALIDATE_POINTER0(pTransformArg, "GDALSetTransformerDstGeoTransform");
@@ -4812,7 +4828,7 @@ void GDALSetTransformerDstGeoTransform(void *pTransformArg,
  * doubles).
  */
 
-void GDALGetTransformerDstGeoTransform(void *pTransformArg,
+void GDALGetTransformerDstGeoTransform(GDALTransformerArg pTransformArg,
                                        double *padfGeoTransform)
 {
     VALIDATE_POINTER0(pTransformArg, "GDALGetTransformerDstGeoTransform");
@@ -4833,8 +4849,8 @@ void GDALGetTransformerDstGeoTransform(void *pTransformArg,
 /*            GDALTransformIsTranslationOnPixelBoundaries()             */
 /************************************************************************/
 
-bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc,
-                                                 void *pTransformerArg)
+bool GDALTransformIsTranslationOnPixelBoundaries(
+    GDALTransformerFunc, GDALTransformerArg pTransformerArg)
 {
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
@@ -4881,7 +4897,8 @@ bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc,
 /*                   GDALTransformIsAffineNoRotation()                  */
 /************************************************************************/
 
-bool GDALTransformIsAffineNoRotation(GDALTransformerFunc, void *pTransformerArg)
+bool GDALTransformIsAffineNoRotation(GDALTransformerFunc,
+                                     GDALTransformerArg pTransformerArg)
 {
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
@@ -4912,7 +4929,7 @@ bool GDALTransformIsAffineNoRotation(GDALTransformerFunc, void *pTransformerArg)
  * "fast"
  * Counter-examples are GCPs or TPSs transformers.
  */
-bool GDALTransformHasFastClone(void *pTransformerArg)
+bool GDALTransformHasFastClone(GDALTransformerArg pTransformerArg)
 {
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {

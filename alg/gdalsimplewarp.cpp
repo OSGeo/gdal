@@ -217,7 +217,7 @@ static void GDALSimpleWarpRemapping(int nBandCount, GByte **papabySrcData,
 int CPL_STDCALL GDALSimpleImageWarp(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                     int nBandCount, int *panBandList,
                                     GDALTransformerFunc pfnTransform,
-                                    void *pTransformArg,
+                                    GDALTransformerArg pTransformArg,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressArg, char **papszWarpOptions)
 

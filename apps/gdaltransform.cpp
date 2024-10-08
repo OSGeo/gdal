@@ -120,7 +120,7 @@ MAIN_START(argc, argv)
     const char *pszSrcFilename = nullptr;
     const char *pszDstFilename = nullptr;
     int nOrder = 0;
-    void *hTransformArg;
+    GDALTransformerArg hTransformArg;
     GDALTransformerFunc pfnTransformer = nullptr;
     int nGCPCount = 0;
     GDAL_GCP *pasGCPs = nullptr;

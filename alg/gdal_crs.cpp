@@ -103,8 +103,8 @@ struct GCPTransformInfo
 };
 
 CPL_C_START
-CPLXMLNode *GDALSerializeGCPTransformer(void *pTransformArg);
-void *GDALDeserializeGCPTransformer(CPLXMLNode *psTree);
+CPLXMLNode *GDALSerializeGCPTransformer(GDALTransformerArg pTransformArg);
+GDALTransformerArg GDALDeserializeGCPTransformer(const CPLXMLNode *psTree);
 CPL_C_END
 
 /* crs.c */
@@ -133,8 +133,9 @@ static const char *const CRS_error_message[] = {
 /*                   GDALCreateSimilarGCPTransformer()                  */
 /************************************************************************/
 
-static void *GDALCreateSimilarGCPTransformer(void *hTransformArg,
-                                             double dfRatioX, double dfRatioY)
+static GDALTransformerArg
+GDALCreateSimilarGCPTransformer(GDALTransformerArg hTransformArg,
+                                double dfRatioX, double dfRatioY)
 {
     GCPTransformInfo *psInfo = static_cast<GCPTransformInfo *>(hTransformArg);
 
@@ -169,11 +170,10 @@ static void *GDALCreateSimilarGCPTransformer(void *hTransformArg,
 /*                      GDALCreateGCPTransformer()                      */
 /************************************************************************/
 
-static void *GDALCreateGCPTransformerEx(int nGCPCount,
-                                        const GDAL_GCP *pasGCPList,
-                                        int nReqOrder, bool bReversed,
-                                        bool bRefine, double dfTolerance,
-                                        int nMinimumGcps)
+static GDALTransformerArg
+GDALCreateGCPTransformerEx(int nGCPCount, const GDAL_GCP *pasGCPList,
+                           int nReqOrder, bool bReversed, bool bRefine,
+                           double dfTolerance, int nMinimumGcps)
 
 {
     // If no minimumGcp parameter was passed, we  use the default value
@@ -351,8 +351,9 @@ static void *GDALCreateGCPTransformerEx(int nGCPCount,
  *
  * @return the transform argument or nullptr if creation fails.
  */
-void *GDALCreateGCPTransformer(int nGCPCount, const GDAL_GCP *pasGCPList,
-                               int nReqOrder, int bReversed)
+GDALTransformerArg GDALCreateGCPTransformer(int nGCPCount,
+                                            const GDAL_GCP *pasGCPList,
+                                            int nReqOrder, int bReversed)
 
 {
     return GDALCreateGCPTransformerEx(nGCPCount, pasGCPList, nReqOrder,
@@ -362,9 +363,11 @@ void *GDALCreateGCPTransformer(int nGCPCount, const GDAL_GCP *pasGCPList,
 /** Create GCP based polynomial transformer, with a tolerance threshold to
  * discard GCPs that transform badly.
  */
-void *GDALCreateGCPRefineTransformer(int nGCPCount, const GDAL_GCP *pasGCPList,
-                                     int nReqOrder, int bReversed,
-                                     double dfTolerance, int nMinimumGcps)
+GDALTransformerArg GDALCreateGCPRefineTransformer(int nGCPCount,
+                                                  const GDAL_GCP *pasGCPList,
+                                                  int nReqOrder, int bReversed,
+                                                  double dfTolerance,
+                                                  int nMinimumGcps)
 
 {
     return GDALCreateGCPTransformerEx(nGCPCount, pasGCPList, nReqOrder,
@@ -386,7 +389,7 @@ void *GDALCreateGCPRefineTransformer(int nGCPCount, const GDAL_GCP *pasGCPList,
  * GDALCreateGCPTransformer().
  */
 
-void GDALDestroyGCPTransformer(void *pTransformArg)
+void GDALDestroyGCPTransformer(GDALTransformerArg pTransformArg)
 
 {
     if (pTransformArg == nullptr)
@@ -425,9 +428,9 @@ void GDALDestroyGCPTransformer(void *pTransformArg)
  * @return TRUE.
  */
 
-int GDALGCPTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
-                     double *x, double *y, CPL_UNUSED double *z,
-                     int *panSuccess)
+int GDALGCPTransform(GDALTransformerArg pTransformArg, int bDstToSrc,
+                     int nPointCount, double *x, double *y,
+                     CPL_UNUSED double *z, int *panSuccess)
 
 {
     int i = 0;
@@ -466,7 +469,7 @@ int GDALGCPTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
 /*                    GDALSerializeGCPTransformer()                     */
 /************************************************************************/
 
-CPLXMLNode *GDALSerializeGCPTransformer(void *pTransformArg)
+CPLXMLNode *GDALSerializeGCPTransformer(GDALTransformerArg pTransformArg)
 
 {
     CPLXMLNode *psTree = nullptr;
@@ -517,11 +520,11 @@ CPLXMLNode *GDALSerializeGCPTransformer(void *pTransformArg)
 /*               GDALDeserializeReprojectionTransformer()               */
 /************************************************************************/
 
-void *GDALDeserializeGCPTransformer(CPLXMLNode *psTree)
+GDALTransformerArg GDALDeserializeGCPTransformer(const CPLXMLNode *psTree)
 
 {
     std::vector<gdal::GCP> asGCPs;
-    void *pResult = nullptr;
+    GDALTransformerArg pResult = nullptr;
     int nReqOrder = 0;
     int bReversed = 0;
     int bRefine = 0;
@@ -531,7 +534,7 @@ void *GDALDeserializeGCPTransformer(CPLXMLNode *psTree)
     /* -------------------------------------------------------------------- */
     /*      Check for GCPs.                                                 */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psGCPList = CPLGetXMLNode(psTree, "GCPList");
+    const CPLXMLNode *psGCPList = CPLGetXMLNode(psTree, "GCPList");
 
     if (psGCPList != nullptr)
     {

@@ -250,8 +250,8 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
 static GDALDatasetH GDALWarpCreateOutput(
     int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFilename,
     const char *pszFormat, char **papszTO, CSLConstList papszCreateOptions,
-    GDALDataType eDT, void **phTransformArg, bool bSetColorInterpretation,
-    GDALWarpAppOptions *psOptions);
+    GDALDataType eDT, GDALTransformerArg *phTransformArg,
+    bool bSetColorInterpretation, GDALWarpAppOptions *psOptions);
 
 static void RemoveConflictingMetadata(GDALMajorObjectH hObj,
                                       CSLConstList papszMetadata,
@@ -1693,7 +1693,7 @@ static GDALDatasetH CreateOutput(const char *pszDest, int nSrcCount,
                                  GDALDatasetH *pahSrcDS,
                                  GDALWarpAppOptions *psOptions,
                                  const bool bInitDestSetByUser,
-                                 void *&hUniqueTransformArg)
+                                 GDALTransformerArg &hUniqueTransformArg)
 {
     if (nSrcCount == 1 && !psOptions->bDisableSrcAlpha)
     {
@@ -2329,7 +2329,8 @@ static void SetupSkipNoSource(int iSrc, GDALDatasetH hDstDS,
  */
 static bool AdjustOutputExtentForRPC(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                      GDALTransformerFunc pfnTransformer,
-                                     void *hTransformArg, GDALWarpOptions *psWO,
+                                     GDALTransformerArg hTransformArg,
+                                     GDALWarpOptions *psWO,
                                      GDALWarpAppOptions *psOptions,
                                      int &nWarpDstXOff, int &nWarpDstYOff,
                                      int &nWarpDstXSize, int &nWarpDstYSize)
@@ -2472,7 +2473,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
     /* -------------------------------------------------------------------- */
     /*      If the target dataset does not exist, we need to create it.     */
     /* -------------------------------------------------------------------- */
-    void *hUniqueTransformArg = nullptr;
+    GDALTransformerArg hUniqueTransformArg = nullptr;
     const bool bInitDestSetByUser =
         (psOptions->aosWarpOptions.FetchNameValue("INIT_DEST") != nullptr);
 
@@ -2575,7 +2576,7 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
     /*      Loop over all source files, processing each in turn.            */
     /* -------------------------------------------------------------------- */
     GDALTransformerFunc pfnTransformer = nullptr;
-    void *hTransformArg = nullptr;
+    GDALTransformerArg hTransformArg = nullptr;
     bool bHasGotErr = false;
     for (int iSrc = 0; iSrc < nSrcCount; iSrc++)
     {
@@ -3490,13 +3491,13 @@ error:
 static GDALDatasetH GDALWarpCreateOutput(
     int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFilename,
     const char *pszFormat, char **papszTO, CSLConstList papszCreateOptions,
-    GDALDataType eDT, void **phTransformArg, bool bSetColorInterpretation,
-    GDALWarpAppOptions *psOptions)
+    GDALDataType eDT, GDALTransformerArg *phTransformArg,
+    bool bSetColorInterpretation, GDALWarpAppOptions *psOptions)
 
 {
     GDALDriverH hDriver;
     GDALDatasetH hDstDS;
-    void *hTransformArg;
+    GDALTransformerArg hTransformArg;
     GDALColorTableH hCT = nullptr;
     GDALRasterAttributeTableH hRAT = nullptr;
     double dfWrkMinX = 0, dfWrkMaxX = 0, dfWrkMinY = 0, dfWrkMaxY = 0;
@@ -4882,9 +4883,9 @@ class CutlineTransformer : public OGRCoordinateTransformation
     CPL_DISALLOW_COPY_ASSIGN(CutlineTransformer)
 
   public:
-    void *hSrcImageTransformer = nullptr;
+    GDALTransformerArg hSrcImageTransformer = nullptr;
 
-    explicit CutlineTransformer(void *hTransformArg)
+    explicit CutlineTransformer(GDALTransformerArg hTransformArg)
         : hSrcImageTransformer(hTransformArg)
     {
     }

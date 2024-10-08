@@ -790,7 +790,7 @@ VRTWarpedDataset *VRTWarpedDataset::CreateImplicitOverview(int iOvr) const
     /*      Create transformer and warping options. */
     /* --------------------------------------------------------------------
      */
-    void *pTransformerArg = GDALCreateSimilarTransformer(
+    auto pTransformerArg = GDALCreateSimilarTransformer(
         psWO->pTransformerArg, dfSrcRatioX, dfSrcRatioY);
     if (pTransformerArg == nullptr)
     {
@@ -952,22 +952,25 @@ typedef struct
     GDALTransformerInfo sTI;
 
     GDALTransformerFunc pfnBaseTransformer;
-    void *pBaseTransformerArg;
+    GDALTransformerArg pBaseTransformerArg;
     bool bOwnSubtransformer;
 
     double dfXOverviewFactor;
     double dfYOverviewFactor;
 } VWOTInfo;
 
-static void *VRTCreateWarpedOverviewTransformer(
-    GDALTransformerFunc pfnBaseTransformer, void *pBaseTransformArg,
-    double dfXOverviewFactor, double dfYOverviewFactor);
-static void VRTDestroyWarpedOverviewTransformer(void *pTransformArg);
+static GDALTransformerArg
+VRTCreateWarpedOverviewTransformer(GDALTransformerFunc pfnBaseTransformer,
+                                   GDALTransformerArg pBaseTransformArg,
+                                   double dfXOverviewFactor,
+                                   double dfYOverviewFactor);
+static void
+VRTDestroyWarpedOverviewTransformer(GDALTransformerArg pTransformArg);
 
-static int VRTWarpedOverviewTransform(void *pTransformArg, int bDstToSrc,
-                                      int nPointCount, double *padfX,
-                                      double *padfY, double *padfZ,
-                                      int *panSuccess);
+static int VRTWarpedOverviewTransform(GDALTransformerArg pTransformArg,
+                                      int bDstToSrc, int nPointCount,
+                                      double *padfX, double *padfY,
+                                      double *padfZ, int *panSuccess);
 
 #if 0   // TODO: Why?
 /************************************************************************/
@@ -1064,9 +1067,11 @@ void* VRTDeserializeWarpedOverviewTransformer( CPLXMLNode *psTree )
 /*                   VRTCreateWarpedOverviewTransformer()               */
 /************************************************************************/
 
-static void *VRTCreateWarpedOverviewTransformer(
-    GDALTransformerFunc pfnBaseTransformer, void *pBaseTransformerArg,
-    double dfXOverviewFactor, double dfYOverviewFactor)
+static GDALTransformerArg
+VRTCreateWarpedOverviewTransformer(GDALTransformerFunc pfnBaseTransformer,
+                                   GDALTransformerArg pBaseTransformerArg,
+                                   double dfXOverviewFactor,
+                                   double dfYOverviewFactor)
 
 {
     if (pfnBaseTransformer == nullptr)
@@ -1094,7 +1099,8 @@ static void *VRTCreateWarpedOverviewTransformer(
 /*               VRTDestroyWarpedOverviewTransformer()                  */
 /************************************************************************/
 
-static void VRTDestroyWarpedOverviewTransformer(void *pTransformArg)
+static void
+VRTDestroyWarpedOverviewTransformer(GDALTransformerArg pTransformArg)
 {
     VWOTInfo *psInfo = static_cast<VWOTInfo *>(pTransformArg);
 
@@ -1108,10 +1114,10 @@ static void VRTDestroyWarpedOverviewTransformer(void *pTransformArg)
 /*                     VRTWarpedOverviewTransform()                     */
 /************************************************************************/
 
-static int VRTWarpedOverviewTransform(void *pTransformArg, int bDstToSrc,
-                                      int nPointCount, double *padfX,
-                                      double *padfY, double *padfZ,
-                                      int *panSuccess)
+static int VRTWarpedOverviewTransform(GDALTransformerArg pTransformArg,
+                                      int bDstToSrc, int nPointCount,
+                                      double *padfX, double *padfY,
+                                      double *padfZ, int *panSuccess)
 
 {
     VWOTInfo *psInfo = static_cast<VWOTInfo *>(pTransformArg);
@@ -1274,7 +1280,7 @@ CPLErr VRTWarpedDataset::IBuildOverviews(
         /* --------------------------------------------------------------------
          */
         GDALTransformerFunc pfnTransformerBase = psWO->pfnTransformer;
-        void *pTransformerBaseArg = psWO->pTransformerArg;
+        GDALTransformerArg pTransformerBaseArg = psWO->pTransformerArg;
 
         psWO->pfnTransformer = VRTWarpedOverviewTransform;
         psWO->pTransformerArg = VRTCreateWarpedOverviewTransformer(
@@ -1937,7 +1943,7 @@ CPLErr VRTWarpedDataset::IRasterIO(
         }
 
         // Build a temporary dataset taking into account the rescaling
-        void *pTransformerArg = GDALCloneTransformer(psWO->pTransformerArg);
+        auto pTransformerArg = GDALCloneTransformer(psWO->pTransformerArg);
         if (pTransformerArg == nullptr)
         {
             return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,

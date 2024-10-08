@@ -32,8 +32,8 @@
 #include "gdalgenericinverse.h"
 
 CPL_C_START
-CPLXMLNode *GDALSerializeTPSTransformer(void *pTransformArg);
-void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree);
+CPLXMLNode *GDALSerializeTPSTransformer(GDALTransformerArg pTransformArg);
+GDALTransformerArg GDALDeserializeTPSTransformer(const CPLXMLNode *psTree);
 CPL_C_END
 
 struct TPSTransformInfo
@@ -57,8 +57,9 @@ struct TPSTransformInfo
 /*                   GDALCreateSimilarTPSTransformer()                  */
 /************************************************************************/
 
-static void *GDALCreateSimilarTPSTransformer(void *hTransformArg,
-                                             double dfRatioX, double dfRatioY)
+static GDALTransformerArg
+GDALCreateSimilarTPSTransformer(GDALTransformerArg hTransformArg,
+                                double dfRatioX, double dfRatioY)
 {
     VALIDATE_POINTER1(hTransformArg, "GDALCreateSimilarTPSTransformer",
                       nullptr);
@@ -120,8 +121,9 @@ static void *GDALCreateSimilarTPSTransformer(void *hTransformArg,
  * @return the transform argument or NULL if creation fails.
  */
 
-void *GDALCreateTPSTransformer(int nGCPCount, const GDAL_GCP *pasGCPList,
-                               int bReversed)
+GDALTransformerArg GDALCreateTPSTransformer(int nGCPCount,
+                                            const GDAL_GCP *pasGCPList,
+                                            int bReversed)
 {
     return GDALCreateTPSTransformerInt(nGCPCount, pasGCPList, bReversed,
                                        nullptr);
@@ -133,8 +135,10 @@ static void GDALTPSComputeForwardInThread(void *pData)
     psInfo->bForwardSolved = psInfo->poForward->solve() != 0;
 }
 
-void *GDALCreateTPSTransformerInt(int nGCPCount, const GDAL_GCP *pasGCPList,
-                                  int bReversed, char **papszOptions)
+GDALTransformerArg GDALCreateTPSTransformerInt(int nGCPCount,
+                                               const GDAL_GCP *pasGCPList,
+                                               int bReversed,
+                                               char **papszOptions)
 
 {
     /* -------------------------------------------------------------------- */
@@ -285,7 +289,7 @@ void *GDALCreateTPSTransformerInt(int nGCPCount, const GDAL_GCP *pasGCPList,
  * GDALCreateTPSTransformer().
  */
 
-void GDALDestroyTPSTransformer(void *pTransformArg)
+void GDALDestroyTPSTransformer(GDALTransformerArg pTransformArg)
 
 {
     if (pTransformArg == nullptr)
@@ -327,9 +331,9 @@ void GDALDestroyTPSTransformer(void *pTransformArg)
  * @return TRUE.
  */
 
-int GDALTPSTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
-                     double *x, double *y, CPL_UNUSED double *z,
-                     int *panSuccess)
+int GDALTPSTransform(GDALTransformerArg pTransformArg, int bDstToSrc,
+                     int nPointCount, double *x, double *y,
+                     CPL_UNUSED double *z, int *panSuccess)
 {
     VALIDATE_POINTER1(pTransformArg, "GDALTPSTransform", 0);
 
@@ -383,7 +387,7 @@ int GDALTPSTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
 /*                    GDALSerializeTPSTransformer()                     */
 /************************************************************************/
 
-CPLXMLNode *GDALSerializeTPSTransformer(void *pTransformArg)
+CPLXMLNode *GDALSerializeTPSTransformer(GDALTransformerArg pTransformArg)
 
 {
     VALIDATE_POINTER1(pTransformArg, "GDALSerializeTPSTransformer", nullptr);
@@ -422,13 +426,13 @@ CPLXMLNode *GDALSerializeTPSTransformer(void *pTransformArg)
 /*                   GDALDeserializeTPSTransformer()                    */
 /************************************************************************/
 
-void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree)
+GDALTransformerArg GDALDeserializeTPSTransformer(const CPLXMLNode *psTree)
 
 {
     /* -------------------------------------------------------------------- */
     /*      Check for GCPs.                                                 */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psGCPList = CPLGetXMLNode(psTree, "GCPList");
+    const CPLXMLNode *psGCPList = CPLGetXMLNode(psTree, "GCPList");
 
     std::vector<gdal::GCP> asGCPs;
     if (psGCPList != nullptr)
@@ -449,9 +453,7 @@ void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree)
     /* -------------------------------------------------------------------- */
     /*      Generate transformation.                                        */
     /* -------------------------------------------------------------------- */
-    void *pResult = GDALCreateTPSTransformerInt(static_cast<int>(asGCPs.size()),
-                                                gdal::GCP::c_ptr(asGCPs),
-                                                bReversed, aosOptions.List());
-
-    return pResult;
+    return GDALCreateTPSTransformerInt(static_cast<int>(asGCPs.size()),
+                                       gdal::GCP::c_ptr(asGCPs), bReversed,
+                                       aosOptions.List());
 }

@@ -693,7 +693,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
     /*      options.                                                        */
     /* -------------------------------------------------------------------- */
 
-    void *pTransformArg = nullptr;
+    GDALTransformerArg pTransformArg = nullptr;
     GDALTransformerFunc pfnTransformer = nullptr;
     CPLErr eErr = CE_None;
     if (papszTO != nullptr)

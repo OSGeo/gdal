@@ -199,7 +199,7 @@ typedef struct
     GDALTransformerFunc pfnTransformer;
 
     /*! Handle to image transformer setup structure */
-    void *pTransformerArg;
+    GDALTransformerArg pTransformerArg;
 
     /** Unused. Must be NULL */
     GDALMaskFunc *papfnSrcPerBandValidityMaskFunc;
@@ -423,7 +423,7 @@ class CPL_DLL GDALWarpKernel
     /** Pixel transformation function */
     GDALTransformerFunc pfnTransformer;
     /** User data provided to pfnTransformer */
-    void *pTransformerArg;
+    GDALTransformerArg pTransformerArg;
 
     /** Progress function */
     GDALProgressFunc pfnProgress;
@@ -463,7 +463,7 @@ class CPL_DLL GDALWarpKernel
 /*! @cond Doxygen_Suppress */
 void *GWKThreadsCreate(char **papszWarpOptions,
                        GDALTransformerFunc pfnTransformer,
-                       void *pTransformerArg);
+                       GDALTransformerArg pTransformerArg);
 void GWKThreadsEnd(void *psThreadDataIn);
 /*! @endcond */
 

@@ -205,7 +205,7 @@ static bool COGGetWarpingCharacteristics(
 
     CPLStringList aosTO;
     aosTO.SetNameValue("DST_SRS", osTargetSRS);
-    void *hTransformArg = nullptr;
+    GDALTransformerArg hTransformArg = nullptr;
 
     OGRSpatialReference oTargetSRS;
     oTargetSRS.SetFromUserInput(
