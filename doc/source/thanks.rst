@@ -5,7 +5,7 @@ Thanks
 ================================================================================
 
 As of 2024, GDAL has now a 26 year-long existence, and many individuals, companies,
-without forgetting its :ref:`sponsors`, have contributed to its development and success.
+and :ref:`sponsors` have contributed to its development and success.
 While it is always difficult to properly acknowledge all contributions, a few
 individuals particularly stand out:
 
@@ -22,12 +22,12 @@ individuals particularly stand out:
   Howard was the coordinator of the fundraising that lead to the advent of
   GDAL 3 and PROJ 6, and since 2021, he has been instrumental in setting up the
   GDAL Sponsorship Program and serves as its head, liaising with our sponsors
-  and NumFOCUS, and animating GDAL contributor monthly meetings.
+  and NumFOCUS, and hosting GDAL contributor monthly meetings.
 
 - `Jukka Rahkonen <https://github.com/jratike80>`__, Chief IT Specialist at the National Land Survey of Finland,
   power-user and long-time passionate of GDAL, PSC member.
   Over the last 15 years, Jukka has been tirelessly helping users and triaging
-  reports on the issue tracker or other support forums.
+  reports on the issue tracker and other support forums.
 
 - `Even Rouault <https://github.com/rouault>`__, involved since 2007, main maintainer since 2014, current PSC chair,
   director of Spatialys.
@@ -81,7 +81,7 @@ of the following persons:
 - `Markus Neteler <https://github.com/neteler>`__: various contributions to GDAL documentation
 - Adam Nowacki: WMS driver.
 - Jens Oberender: KML driver.
-- `Alessandro Pasotti <https://github.com/elpaso>`__: co-maintainer, from 2022 to date.
+- `Alessandro Pasotti <https://github.com/elpaso>`__: co-maintainer since 2022.
 - `Kai Pastor <https://github.com/dg0yt>`__: contributions to the CMake build system.
 - `Abel Pau <https://github.com/AbelPau>`__: MiraMon driver.
 - `Matthew Perry <https://github.com/perrygeo>`__: gdaldem
