@@ -30,6 +30,12 @@ def test_safe_1():
     tst = gdaltest.GDALTest("SAFE", "SAFE_FAKE/test.SAFE/manifest.safe", 1, 65372)
     tst.testOpen()
 
+    ds = gdal.Open("data/SAFE_FAKE/test.SAFE/manifest.safe")
+    assert (
+        ds.GetMetadataItem("FOOTPRINT")
+        == "POLYGON((-8.407759 38.130520,-11.335915 38.535374,-11.026125 40.036644,-8.035001 39.633217, -8.407759 38.130520))"
+    )
+
 
 def test_safe_2():
 
