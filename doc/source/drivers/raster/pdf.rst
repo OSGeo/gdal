@@ -193,7 +193,7 @@ at the first access to a raster block, the whole page will be rasterized
 (with Poppler), which can be a slow operation.
 
 Note: some raster-only PDF files (such as some
-USGS GeoPDF files), that are regularly tiled are exposed as tiled
+USGS PDF files), that are regularly tiled are exposed as tiled
 dataset by the GDAL PDF driver, and can be rendered with any backends.
 
 Only a few of the possible Datums available in the OGC best practice
@@ -809,7 +809,7 @@ See also
 
 Specifications :
 
--  `OGC GeoPDF Encoding Best Practice Version 2.2
+-  `OGC PDF Georegistration Encoding Best Practice Version 2.2
    (08-139r3) <http://portal.opengeospatial.org/files/?artifact_id=40537>`__
 -  `Adobe Supplement to ISO
    32000 <http://www.adobe.com/devnet/acrobat/pdfs/adobe_supplement_iso32000.pdf>`__
