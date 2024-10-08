@@ -64,7 +64,8 @@ GDALCreateSimilarTPSTransformer(GDALTransformerArg hTransformArg,
     VALIDATE_POINTER1(hTransformArg, "GDALCreateSimilarTPSTransformer",
                       nullptr);
 
-    TPSTransformInfo *psInfo = static_cast<TPSTransformInfo *>(hTransformArg);
+    TPSTransformInfo *psInfo =
+        reinterpret_cast<TPSTransformInfo *>(hTransformArg);
 
     if (dfRatioX == 1.0 && dfRatioY == 1.0)
     {
@@ -80,12 +81,12 @@ GDALCreateSimilarTPSTransformer(GDALTransformerArg hTransformArg,
             gcp.Pixel() /= dfRatioX;
             gcp.Line() /= dfRatioY;
         }
-        psInfo = static_cast<TPSTransformInfo *>(GDALCreateTPSTransformer(
+        psInfo = reinterpret_cast<TPSTransformInfo *>(GDALCreateTPSTransformer(
             static_cast<int>(newGCPs.size()), gdal::GCP::c_ptr(newGCPs),
             psInfo->bReversed));
     }
 
-    return psInfo;
+    return reinterpret_cast<GDALTransformerArg>(psInfo);
 }
 
 /************************************************************************/
@@ -226,7 +227,8 @@ GDALTransformerArg GDALCreateTPSTransformerInt(int nGCPCount,
         }
         if (!bOK)
         {
-            GDALDestroyTPSTransformer(psInfo);
+            GDALDestroyTPSTransformer(
+                reinterpret_cast<GDALTransformerArg>(psInfo));
             return nullptr;
         }
     }
@@ -268,11 +270,11 @@ GDALTransformerArg GDALCreateTPSTransformerInt(int nGCPCount,
 
     if (!psInfo->bForwardSolved || !psInfo->bReverseSolved)
     {
-        GDALDestroyTPSTransformer(psInfo);
+        GDALDestroyTPSTransformer(reinterpret_cast<GDALTransformerArg>(psInfo));
         return nullptr;
     }
 
-    return psInfo;
+    return reinterpret_cast<GDALTransformerArg>(psInfo);
 }
 
 /************************************************************************/
@@ -295,7 +297,8 @@ void GDALDestroyTPSTransformer(GDALTransformerArg pTransformArg)
     if (pTransformArg == nullptr)
         return;
 
-    TPSTransformInfo *psInfo = static_cast<TPSTransformInfo *>(pTransformArg);
+    TPSTransformInfo *psInfo =
+        reinterpret_cast<TPSTransformInfo *>(pTransformArg);
 
     if (CPLAtomicDec(&(psInfo->nRefCount)) == 0)
     {
@@ -337,7 +340,8 @@ int GDALTPSTransform(GDALTransformerArg pTransformArg, int bDstToSrc,
 {
     VALIDATE_POINTER1(pTransformArg, "GDALTPSTransform", 0);
 
-    TPSTransformInfo *psInfo = static_cast<TPSTransformInfo *>(pTransformArg);
+    TPSTransformInfo *psInfo =
+        reinterpret_cast<TPSTransformInfo *>(pTransformArg);
 
     for (int i = 0; i < nPointCount; i++)
     {
@@ -392,7 +396,8 @@ CPLXMLNode *GDALSerializeTPSTransformer(GDALTransformerArg pTransformArg)
 {
     VALIDATE_POINTER1(pTransformArg, "GDALSerializeTPSTransformer", nullptr);
 
-    TPSTransformInfo *psInfo = static_cast<TPSTransformInfo *>(pTransformArg);
+    TPSTransformInfo *psInfo =
+        reinterpret_cast<TPSTransformInfo *>(pTransformArg);
 
     CPLXMLNode *psTree =
         CPLCreateXMLNode(nullptr, CXT_Element, "TPSTransformer");

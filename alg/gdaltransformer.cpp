@@ -75,7 +75,7 @@ bool GDALIsTransformer(GDALTransformerArg hTransformerArg,
         return false;
     // All transformers should have a GDALTransformerInfo member as their first members
     GDALTransformerInfo *psInfo =
-        static_cast<GDALTransformerInfo *>(hTransformerArg);
+        reinterpret_cast<GDALTransformerInfo *>(hTransformerArg);
     return memcmp(psInfo->abySignature, GDAL_GTI2_SIGNATURE,
                   strlen(GDAL_GTI2_SIGNATURE)) == 0 &&
            strcmp(psInfo->pszClassName, pszClassName) == 0;
@@ -388,7 +388,8 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
         pTransformArg && bIsGDALGenImgProjTransform)
     {
         const GDALGenImgProjTransformInfo *psInfo =
-            static_cast<const GDALGenImgProjTransformInfo *>(pTransformArg);
+            reinterpret_cast<const GDALGenImgProjTransformInfo *>(
+                pTransformArg);
 
         if (!psInfo->pSrcTransformer &&
             !psInfo->bHasCustomTransformationPipeline &&
@@ -407,7 +408,7 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
             if (psInfo->pReprojectArg)
             {
                 const GDALReprojectionTransformInfo *psRTI =
-                    static_cast<const GDALReprojectionTransformInfo *>(
+                    reinterpret_cast<const GDALReprojectionTransformInfo *>(
                         psInfo->pReprojectArg);
                 poSourceCRS = psRTI->poForwardTransform->GetSourceCS();
                 poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
@@ -879,7 +880,8 @@ retry:
     if (bIsGDALGenImgProjTransform)
     {
         const GDALGenImgProjTransformInfo *pGIPTI =
-            static_cast<const GDALGenImgProjTransformInfo *>(pTransformArg);
+            reinterpret_cast<const GDALGenImgProjTransformInfo *>(
+                pTransformArg);
         if (pGIPTI->pSrcTransformer == GDALGeoLocTransform &&
             pGIPTI->pDstTransformer == nullptr &&
             pGIPTI->adfDstGeoTransform[0] == 0 &&
@@ -896,7 +898,7 @@ retry:
             /* --------------------------------------------------------------------
              */
             const GDALGeoLocTransformInfo *pGLTI =
-                static_cast<const GDALGeoLocTransformInfo *>(
+                reinterpret_cast<const GDALGeoLocTransformInfo *>(
                     pGIPTI->pSrcTransformArg);
 
             if (pGIPTI->pReproject == nullptr)
@@ -960,7 +962,7 @@ retry:
             /* reprojection to deal with the poles.                          */
             /* ------------------------------------------------------------- */
             const GDALReprojectionTransformInfo *psRTI =
-                static_cast<const GDALReprojectionTransformInfo *>(
+                reinterpret_cast<const GDALReprojectionTransformInfo *>(
                     pGIPTI->pReprojectArg);
             const OGRSpatialReference *poSourceCRS =
                 psRTI->poForwardTransform->GetSourceCS();
@@ -984,8 +986,9 @@ retry:
                         "CHECK_WITH_INVERT_PROJ", "NO", false);
                     GDALRefreshGenImgProjTransformer(pTransformArg);
                     // GDALRefreshGenImgProjTransformer() has invalidated psRTI
-                    psRTI = static_cast<const GDALReprojectionTransformInfo *>(
-                        pGIPTI->pReprojectArg);
+                    psRTI =
+                        reinterpret_cast<const GDALReprojectionTransformInfo *>(
+                            pGIPTI->pReprojectArg);
                 }
 
                 for (const auto &sign : iSignArray)
@@ -1041,10 +1044,12 @@ retry:
                 {
                     poSetter.reset();
                     GDALRefreshGenImgProjTransformer(pTransformArg);
-                    pGIPTI = static_cast<const GDALGenImgProjTransformInfo *>(
-                        pTransformArg);
-                    psRTI = static_cast<const GDALReprojectionTransformInfo *>(
-                        pGIPTI->pReprojectArg);
+                    pGIPTI =
+                        reinterpret_cast<const GDALGenImgProjTransformInfo *>(
+                            pTransformArg);
+                    psRTI =
+                        reinterpret_cast<const GDALReprojectionTransformInfo *>(
+                            pGIPTI->pReprojectArg);
                     poSourceCRS = psRTI->poForwardTransform->GetSourceCS();
                     poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
                 }
@@ -1288,6 +1293,17 @@ static GDALGenImgProjTransformInfo *GDALCreateGenImgProjTransformerInternal()
 }
 
 /************************************************************************/
+/*                   GDALDestroyGenImgProjTransformer()                 */
+/************************************************************************/
+
+static void
+GDALDestroyGenImgProjTransformer(GDALGenImgProjTransformInfo *psInfo)
+{
+    GDALDestroyGenImgProjTransformer(
+        reinterpret_cast<GDALTransformerArg>(psInfo));
+}
+
+/************************************************************************/
 /*                GDALCreateSimilarGenImgProjTransformer()              */
 /************************************************************************/
 
@@ -1299,7 +1315,7 @@ GDALCreateSimilarGenImgProjTransformer(GDALTransformerArg hTransformArg,
                       nullptr);
 
     GDALGenImgProjTransformInfo *psInfo =
-        static_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
+        reinterpret_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
 
     GDALGenImgProjTransformInfo *psClonedInfo =
         GDALCreateGenImgProjTransformerInternal();
@@ -1345,7 +1361,7 @@ GDALCreateSimilarGenImgProjTransformer(GDALTransformerArg hTransformArg,
         psClonedInfo->pDstTransformArg =
             GDALCloneTransformer(psInfo->pDstTransformArg);
 
-    return psClonedInfo;
+    return reinterpret_cast<GDALTransformerArg>(psClonedInfo);
 }
 
 /************************************************************************/
@@ -2541,7 +2557,7 @@ GDALTransformerArg GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS,
         }
     }
 
-    return psInfo;
+    return reinterpret_cast<GDALTransformerArg>(psInfo);
 }
 
 /************************************************************************/
@@ -2551,7 +2567,7 @@ GDALTransformerArg GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS,
 void GDALRefreshGenImgProjTransformer(GDALTransformerArg hTransformArg)
 {
     GDALGenImgProjTransformInfo *psInfo =
-        static_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
+        reinterpret_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
 
     if (psInfo->pReprojectArg &&
         psInfo->bCheckWithInvertPROJ != GetCurrentCheckWithInvertPROJ())
@@ -2740,7 +2756,7 @@ GDALTransformerArg GDALCreateGenImgProjTransformer4(
                sizeof(double) * 6);
     }
 
-    return psInfo;
+    return reinterpret_cast<GDALTransformerArg>(psInfo);
 }
 
 /************************************************************************/
@@ -2771,7 +2787,7 @@ void GDALSetGenImgProjTransformerDstGeoTransform(
                       "GDALSetGenImgProjTransformerDstGeoTransform");
 
     GDALGenImgProjTransformInfo *psInfo =
-        static_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
+        reinterpret_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
 
     memcpy(psInfo->adfDstGeoTransform, padfGeoTransform, sizeof(double) * 6);
     if (!GDALInvGeoTransform(psInfo->adfDstGeoTransform,
@@ -2801,7 +2817,7 @@ void GDALDestroyGenImgProjTransformer(GDALTransformerArg hTransformArg)
         return;
 
     GDALGenImgProjTransformInfo *psInfo =
-        static_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
+        reinterpret_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
 
     if (psInfo->pSrcTransformArg != nullptr)
         GDALDestroyTransformer(psInfo->pSrcTransformArg);
@@ -2837,7 +2853,7 @@ int GDALGenImgProjTransform(GDALTransformerArg pTransformArgIn, int bDstToSrc,
                             double *padfZ, int *panSuccess)
 {
     GDALGenImgProjTransformInfo *psInfo =
-        static_cast<GDALGenImgProjTransformInfo *>(pTransformArgIn);
+        reinterpret_cast<GDALGenImgProjTransformInfo *>(pTransformArgIn);
 
 #ifdef DEBUG_APPROX_TRANSFORMER
     CPLAssert(nPointCount > 0);
@@ -2956,14 +2972,15 @@ int GDALTransformLonLatToDestGenImgProjTransformer(
     GDALTransformerArg hTransformArg, double *pdfX, double *pdfY)
 {
     GDALGenImgProjTransformInfo *psInfo =
-        static_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
+        reinterpret_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
 
     if (psInfo->pReprojectArg == nullptr ||
         psInfo->pReproject != GDALReprojectionTransform)
         return false;
 
     GDALReprojectionTransformInfo *psReprojInfo =
-        static_cast<GDALReprojectionTransformInfo *>(psInfo->pReprojectArg);
+        reinterpret_cast<GDALReprojectionTransformInfo *>(
+            psInfo->pReprojectArg);
     if (psReprojInfo->poForwardTransform == nullptr ||
         psReprojInfo->poForwardTransform->GetSourceCS() == nullptr)
         return false;
@@ -3050,7 +3067,7 @@ GDALSerializeGenImgProjTransformer(GDALTransformerArg pTransformArg)
 
 {
     GDALGenImgProjTransformInfo *psInfo =
-        static_cast<GDALGenImgProjTransformInfo *>(pTransformArg);
+        reinterpret_cast<GDALGenImgProjTransformInfo *>(pTransformArg);
 
     CPLXMLNode *psTree =
         CPLCreateXMLNode(nullptr, CXT_Element, "GenImgProjTransformer");
@@ -3275,7 +3292,7 @@ GDALDeserializeGenImgProjTransformer(const CPLXMLNode *psTree)
                                    &psInfo->pReprojectArg);
     }
 
-    return psInfo;
+    return reinterpret_cast<GDALTransformerArg>(psInfo);
 }
 
 /************************************************************************/
@@ -3453,7 +3470,7 @@ GDALCreateReprojectionTransformerEx(OGRSpatialReferenceH hSrcSRS,
     psInfo->sTI.pfnCleanup = GDALDestroyReprojectionTransformer;
     psInfo->sTI.pfnSerialize = GDALSerializeReprojectionTransformer;
 
-    return psInfo;
+    return reinterpret_cast<GDALTransformerArg>(psInfo);
 }
 
 /************************************************************************/
@@ -3474,7 +3491,7 @@ void GDALDestroyReprojectionTransformer(GDALTransformerArg pTransformArg)
         return;
 
     GDALReprojectionTransformInfo *psInfo =
-        static_cast<GDALReprojectionTransformInfo *>(pTransformArg);
+        reinterpret_cast<GDALReprojectionTransformInfo *>(pTransformArg);
 
     if (psInfo->poForwardTransform)
         OGRCoordinateTransformation::DestroyCT(psInfo->poForwardTransform);
@@ -3506,7 +3523,7 @@ int GDALReprojectionTransform(GDALTransformerArg pTransformArg, int bDstToSrc,
 
 {
     GDALReprojectionTransformInfo *psInfo =
-        static_cast<GDALReprojectionTransformInfo *>(pTransformArg);
+        reinterpret_cast<GDALReprojectionTransformInfo *>(pTransformArg);
     int bSuccess;
 
     std::vector<double> adfTime;
@@ -3554,7 +3571,7 @@ GDALSerializeReprojectionTransformer(GDALTransformerArg pTransformArg)
 {
     CPLXMLNode *psTree;
     GDALReprojectionTransformInfo *psInfo =
-        static_cast<GDALReprojectionTransformInfo *>(pTransformArg);
+        reinterpret_cast<GDALReprojectionTransformInfo *>(pTransformArg);
 
     psTree = CPLCreateXMLNode(nullptr, CXT_Element, "ReprojectionTransformer");
 
@@ -3719,7 +3736,7 @@ GDALCreateSimilarApproxTransformer(GDALTransformerArg hTransformArg,
                       nullptr);
 
     ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(hTransformArg);
+        reinterpret_cast<ApproxTransformInfo *>(hTransformArg);
 
     ApproxTransformInfo *psClonedInfo = static_cast<ApproxTransformInfo *>(
         CPLMalloc(sizeof(ApproxTransformInfo)));
@@ -3737,7 +3754,7 @@ GDALCreateSimilarApproxTransformer(GDALTransformerArg hTransformArg,
     }
     psClonedInfo->bOwnSubtransformer = TRUE;
 
-    return psClonedInfo;
+    return reinterpret_cast<GDALTransformerArg>(psClonedInfo);
 }
 
 /************************************************************************/
@@ -3750,7 +3767,7 @@ GDALSerializeApproxTransformer(GDALTransformerArg pTransformArg)
 {
     CPLXMLNode *psTree;
     ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(pTransformArg);
+        reinterpret_cast<ApproxTransformInfo *>(pTransformArg);
 
     psTree = CPLCreateXMLNode(nullptr, CXT_Element, "ApproxTransformer");
 
@@ -3861,7 +3878,7 @@ GDALCreateApproxTransformer2(GDALTransformerFunc pfnBaseTransformer,
     psATInfo->sTI.pfnSerialize = GDALSerializeApproxTransformer;
     psATInfo->sTI.pfnCreateSimilar = GDALCreateSimilarApproxTransformer;
 
-    return psATInfo;
+    return reinterpret_cast<GDALTransformerArg>(psATInfo);
 }
 
 /************************************************************************/
@@ -3873,7 +3890,8 @@ void GDALApproxTransformerOwnsSubtransformer(GDALTransformerArg pCBData,
                                              int bOwnFlag)
 
 {
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    ApproxTransformInfo *psATInfo =
+        reinterpret_cast<ApproxTransformInfo *>(pCBData);
 
     psATInfo->bOwnSubtransformer = bOwnFlag;
 }
@@ -3897,7 +3915,8 @@ void GDALDestroyApproxTransformer(GDALTransformerArg pCBData)
     if (pCBData == nullptr)
         return;
 
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    ApproxTransformInfo *psATInfo =
+        reinterpret_cast<ApproxTransformInfo *>(pCBData);
 
     if (psATInfo->bOwnSubtransformer)
         GDALDestroyTransformer(psATInfo->pBaseCBData);
@@ -3912,7 +3931,7 @@ void GDALDestroyApproxTransformer(GDALTransformerArg pCBData)
 void GDALRefreshApproxTransformer(GDALTransformerArg hTransformArg)
 {
     ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(hTransformArg);
+        reinterpret_cast<ApproxTransformInfo *>(hTransformArg);
 
     if (GDALIsTransformer(psInfo->pBaseCBData,
                           GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
@@ -3933,7 +3952,8 @@ static int GDALApproxTransformInternal(GDALTransformerArg pCBData,
                                        const double ySMETransformed[3],
                                        const double zSMETransformed[3])
 {
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    ApproxTransformInfo *psATInfo =
+        reinterpret_cast<ApproxTransformInfo *>(pCBData);
     const int nMiddle = (nPoints - 1) / 2;
 
 #ifdef notdef_sanify_check
@@ -4079,7 +4099,8 @@ static int GDALApproxTransformInternal(GDALTransformerArg pCBData,
             z2[2] = zMiddle[1];
 
             bSuccess = GDALApproxTransformInternal(
-                psATInfo, bDstToSrc, nMiddle, x, y, z, panSuccess, x2, y2, z2);
+                reinterpret_cast<GDALTransformerArg>(psATInfo), bDstToSrc,
+                nMiddle, x, y, z, panSuccess, x2, y2, z2);
         }
         else
         {
@@ -4108,8 +4129,9 @@ static int GDALApproxTransformInternal(GDALTransformerArg pCBData,
             z2[2] = zSMETransformed[2];
 
             bSuccess = GDALApproxTransformInternal(
-                psATInfo, bDstToSrc, nPoints - nMiddle, x + nMiddle,
-                y + nMiddle, z + nMiddle, panSuccess + nMiddle, x2, y2, z2);
+                reinterpret_cast<GDALTransformerArg>(psATInfo), bDstToSrc,
+                nPoints - nMiddle, x + nMiddle, y + nMiddle, z + nMiddle,
+                panSuccess + nMiddle, x2, y2, z2);
         }
         else
         {
@@ -4189,7 +4211,8 @@ int GDALApproxTransform(GDALTransformerArg pCBData, int bDstToSrc, int nPoints,
                         double *x, double *y, double *z, int *panSuccess)
 
 {
-    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    ApproxTransformInfo *psATInfo =
+        reinterpret_cast<ApproxTransformInfo *>(pCBData);
     double x2[3] = {};
     double y2[3] = {};
     double z2[3] = {};
@@ -4310,7 +4333,7 @@ int GDALTransformLonLatToDestApproxTransformer(GDALTransformerArg hTransformArg,
                                                double *pdfX, double *pdfY)
 {
     ApproxTransformInfo *psInfo =
-        static_cast<ApproxTransformInfo *>(hTransformArg);
+        reinterpret_cast<ApproxTransformInfo *>(hTransformArg);
 
     if (GDALIsTransformer(psInfo->pBaseCBData,
                           GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
@@ -4432,7 +4455,7 @@ CPLXMLNode *GDALSerializeTransformer(GDALTransformerFunc /* pfnFunc */,
     VALIDATE_POINTER1(pTransformArg, "GDALSerializeTransformer", nullptr);
 
     GDALTransformerInfo *psInfo =
-        static_cast<GDALTransformerInfo *>(pTransformArg);
+        reinterpret_cast<GDALTransformerInfo *>(pTransformArg);
 
     if (psInfo == nullptr || memcmp(psInfo->abySignature, GDAL_GTI2_SIGNATURE,
                                     strlen(GDAL_GTI2_SIGNATURE)) != 0)
@@ -4622,7 +4645,7 @@ void GDALDestroyTransformer(GDALTransformerArg pTransformArg)
         return;
 
     GDALTransformerInfo *psInfo =
-        static_cast<GDALTransformerInfo *>(pTransformArg);
+        reinterpret_cast<GDALTransformerInfo *>(pTransformArg);
 
     if (memcmp(psInfo->abySignature, GDAL_GTI2_SIGNATURE,
                strlen(GDAL_GTI2_SIGNATURE)) != 0)
@@ -4644,7 +4667,7 @@ int GDALUseTransformer(GDALTransformerArg pTransformArg, int bDstToSrc,
                        int *panSuccess)
 {
     GDALTransformerInfo *psInfo =
-        static_cast<GDALTransformerInfo *>(pTransformArg);
+        reinterpret_cast<GDALTransformerInfo *>(pTransformArg);
 
     if (psInfo == nullptr || memcmp(psInfo->abySignature, GDAL_GTI2_SIGNATURE,
                                     strlen(GDAL_GTI2_SIGNATURE)) != 0)
@@ -4665,7 +4688,7 @@ int GDALUseTransformer(GDALTransformerArg pTransformArg, int bDstToSrc,
 GDALTransformerArg GDALCloneTransformer(GDALTransformerArg pTransformArg)
 {
     GDALTransformerInfo *psInfo =
-        static_cast<GDALTransformerInfo *>(pTransformArg);
+        reinterpret_cast<GDALTransformerInfo *>(pTransformArg);
 
     if (psInfo == nullptr || memcmp(psInfo->abySignature, GDAL_GTI2_SIGNATURE,
                                     strlen(GDAL_GTI2_SIGNATURE)) != 0)
@@ -4677,7 +4700,7 @@ GDALTransformerArg GDALCloneTransformer(GDALTransformerArg pTransformArg)
 
     if (psInfo->pfnCreateSimilar != nullptr)
     {
-        return psInfo->pfnCreateSimilar(psInfo, 1.0, 1.0);
+        return psInfo->pfnCreateSimilar(pTransformArg, 1.0, 1.0);
     }
 
     if (psInfo->pfnSerialize == nullptr)
@@ -4713,7 +4736,7 @@ GDALCreateSimilarTransformer(GDALTransformerArg pTransformArg, double dfRatioX,
                              double dfRatioY)
 {
     GDALTransformerInfo *psInfo =
-        static_cast<GDALTransformerInfo *>(pTransformArg);
+        reinterpret_cast<GDALTransformerInfo *>(pTransformArg);
 
     if (psInfo == nullptr || memcmp(psInfo->abySignature, GDAL_GTI2_SIGNATURE,
                                     strlen(GDAL_GTI2_SIGNATURE)) != 0)
@@ -4730,7 +4753,8 @@ GDALCreateSimilarTransformer(GDALTransformerArg pTransformArg, double dfRatioX,
         return nullptr;
     }
 
-    return psInfo->pfnCreateSimilar(psInfo, dfRatioX, dfRatioY);
+    return psInfo->pfnCreateSimilar(
+        reinterpret_cast<GDALTransformerArg>(psInfo), dfRatioX, dfRatioY);
 }
 
 /************************************************************************/
@@ -4742,7 +4766,7 @@ GetGenImgProjTransformInfo(const char *pszFunc,
                            GDALTransformerArg pTransformArg)
 {
     GDALTransformerInfo *psInfo =
-        static_cast<GDALTransformerInfo *>(pTransformArg);
+        reinterpret_cast<GDALTransformerInfo *>(pTransformArg);
 
     if (psInfo == nullptr || memcmp(psInfo->abySignature, GDAL_GTI2_SIGNATURE,
                                     strlen(GDAL_GTI2_SIGNATURE)) != 0)
@@ -4757,8 +4781,8 @@ GetGenImgProjTransformInfo(const char *pszFunc,
     if (EQUAL(psInfo->pszClassName, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         ApproxTransformInfo *psATInfo =
-            static_cast<ApproxTransformInfo *>(pTransformArg);
-        psInfo = static_cast<GDALTransformerInfo *>(psATInfo->pBaseCBData);
+            reinterpret_cast<ApproxTransformInfo *>(pTransformArg);
+        psInfo = reinterpret_cast<GDALTransformerInfo *>(psATInfo->pBaseCBData);
 
         if (psInfo == nullptr ||
             memcmp(psInfo->abySignature, GDAL_GTI2_SIGNATURE,
@@ -4812,7 +4836,8 @@ void GDALSetTransformerDstGeoTransform(GDALTransformerArg pTransformArg,
         "GDALSetTransformerDstGeoTransform", pTransformArg);
     if (psInfo)
     {
-        GDALSetGenImgProjTransformerDstGeoTransform(psInfo, padfGeoTransform);
+        GDALSetGenImgProjTransformerDstGeoTransform(
+            reinterpret_cast<GDALTransformerArg>(psInfo), padfGeoTransform);
     }
 }
 
@@ -4855,13 +4880,13 @@ bool GDALTransformIsTranslationOnPixelBoundaries(
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         const auto *pApproxInfo =
-            static_cast<const ApproxTransformInfo *>(pTransformerArg);
+            reinterpret_cast<const ApproxTransformInfo *>(pTransformerArg);
         pTransformerArg = pApproxInfo->pBaseCBData;
     }
     if (GDALIsTransformer(pTransformerArg, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
     {
         const auto *pGenImgpProjInfo =
-            static_cast<GDALGenImgProjTransformInfo *>(pTransformerArg);
+            reinterpret_cast<GDALGenImgProjTransformInfo *>(pTransformerArg);
         const auto IsCloseToInteger = [](double dfVal)
         { return std::fabs(dfVal - std::round(dfVal)) <= 1e-6; };
         return pGenImgpProjInfo->pSrcTransformArg == nullptr &&
@@ -4903,13 +4928,13 @@ bool GDALTransformIsAffineNoRotation(GDALTransformerFunc,
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         const auto *pApproxInfo =
-            static_cast<const ApproxTransformInfo *>(pTransformerArg);
+            reinterpret_cast<const ApproxTransformInfo *>(pTransformerArg);
         pTransformerArg = pApproxInfo->pBaseCBData;
     }
     if (GDALIsTransformer(pTransformerArg, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
     {
         const auto *pGenImgpProjInfo =
-            static_cast<GDALGenImgProjTransformInfo *>(pTransformerArg);
+            reinterpret_cast<GDALGenImgProjTransformInfo *>(pTransformerArg);
         return pGenImgpProjInfo->pSrcTransformArg == nullptr &&
                pGenImgpProjInfo->pDstTransformArg == nullptr &&
                pGenImgpProjInfo->pReproject == nullptr &&
@@ -4934,7 +4959,7 @@ bool GDALTransformHasFastClone(GDALTransformerArg pTransformerArg)
     if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         const auto *pApproxInfo =
-            static_cast<const ApproxTransformInfo *>(pTransformerArg);
+            reinterpret_cast<const ApproxTransformInfo *>(pTransformerArg);
         pTransformerArg = pApproxInfo->pBaseCBData;
         // Fallback to next lines
     }
@@ -4942,7 +4967,7 @@ bool GDALTransformHasFastClone(GDALTransformerArg pTransformerArg)
     if (GDALIsTransformer(pTransformerArg, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
     {
         const auto *pGenImgpProjInfo =
-            static_cast<GDALGenImgProjTransformInfo *>(pTransformerArg);
+            reinterpret_cast<GDALGenImgProjTransformInfo *>(pTransformerArg);
         return (pGenImgpProjInfo->pSrcTransformArg == nullptr ||
                 GDALTransformHasFastClone(
                     pGenImgpProjInfo->pSrcTransformArg)) &&

@@ -192,12 +192,12 @@ static CPLErr BlendMaskGenerator(int nXOff, int nYOff, int nXSize, int nYSize,
 /*      relative to the current chunk.                                  */
 /************************************************************************/
 
-static int CutlineTransformer(void *pTransformArg, int bDstToSrc,
+static int CutlineTransformer(GDALTransformerArg pTransformArg, int bDstToSrc,
                               int nPointCount, double *x, double *y,
                               double * /* z */, int * /* panSuccess */)
 {
-    int nXOff = static_cast<int *>(pTransformArg)[0];
-    int nYOff = static_cast<int *>(pTransformArg)[1];
+    int nXOff = reinterpret_cast<int *>(pTransformArg)[0];
+    int nYOff = reinterpret_cast<int *>(pTransformArg)[1];
 
     if (bDstToSrc)
     {
@@ -369,8 +369,9 @@ CPLErr GDALWarpCutlineMaskerEx(void *pMaskFuncArg, int /* nBandCount */,
     int anXYOff[2] = {nXOff, nYOff};
 
     CPLErr eErr = GDALRasterizeGeometries(
-        hMemDS, 1, &nTargetBand, 1, &hPolygon, CutlineTransformer, anXYOff,
-        &dfBurnValue, papszRasterizeOptions, nullptr, nullptr);
+        hMemDS, 1, &nTargetBand, 1, &hPolygon, CutlineTransformer,
+        reinterpret_cast<GDALTransformerArg>(anXYOff), &dfBurnValue,
+        papszRasterizeOptions, nullptr, nullptr);
 
     CSLDestroy(papszRasterizeOptions);
 

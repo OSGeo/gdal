@@ -6158,7 +6158,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
     }
 
     GDALTransformerInfo *psInfo =
-        static_cast<GDALTransformerInfo *>(hTransformArg);
+        reinterpret_cast<GDALTransformerInfo *>(hTransformArg);
     double adfGeoTransform[6];
     double adfExtent[4];
     int nXSize, nYSize;

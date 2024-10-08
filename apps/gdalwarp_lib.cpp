@@ -3879,7 +3879,7 @@ static GDALDatasetH GDALWarpCreateOutput(
         }
 
         GDALTransformerInfo *psInfo =
-            static_cast<GDALTransformerInfo *>(hTransformArg);
+            reinterpret_cast<GDALTransformerInfo *>(hTransformArg);
 
         /* --------------------------------------------------------------------
          */
@@ -3935,7 +3935,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             bool transformedToSrcCRS{false};
 
             GDALGenImgProjTransformInfo *psTransformInfo{
-                static_cast<GDALGenImgProjTransformInfo *>(hTransformArg)};
+                reinterpret_cast<GDALGenImgProjTransformInfo *>(hTransformArg)};
 
             // If a transformer is available, use an extent that covers the
             // target extent instead of the real source image extent, but also
@@ -3944,7 +3944,7 @@ static GDALDatasetH GDALWarpCreateOutput(
                 psTransformInfo->pSrcTransformer == nullptr)
             {
                 const GDALReprojectionTransformInfo *psRTI =
-                    static_cast<const GDALReprojectionTransformInfo *>(
+                    reinterpret_cast<const GDALReprojectionTransformInfo *>(
                         psTransformInfo->pReprojectArg);
                 if (psRTI && psRTI->poReverseTransform)
                 {

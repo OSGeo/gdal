@@ -1092,7 +1092,7 @@ VRTCreateWarpedOverviewTransformer(GDALTransformerFunc pfnBaseTransformer,
 #if 0
     psSCTInfo->sTI.pfnSerialize = VRTSerializeWarpedOverviewTransformer;
 #endif
-    return psSCTInfo;
+    return reinterpret_cast<GDALTransformerArg>(psSCTInfo);
 }
 
 /************************************************************************/
@@ -1102,7 +1102,7 @@ VRTCreateWarpedOverviewTransformer(GDALTransformerFunc pfnBaseTransformer,
 static void
 VRTDestroyWarpedOverviewTransformer(GDALTransformerArg pTransformArg)
 {
-    VWOTInfo *psInfo = static_cast<VWOTInfo *>(pTransformArg);
+    VWOTInfo *psInfo = reinterpret_cast<VWOTInfo *>(pTransformArg);
 
     if (psInfo->bOwnSubtransformer)
         GDALDestroyTransformer(psInfo->pBaseTransformerArg);
@@ -1120,7 +1120,7 @@ static int VRTWarpedOverviewTransform(GDALTransformerArg pTransformArg,
                                       double *padfZ, int *panSuccess)
 
 {
-    VWOTInfo *psInfo = static_cast<VWOTInfo *>(pTransformArg);
+    VWOTInfo *psInfo = reinterpret_cast<VWOTInfo *>(pTransformArg);
 
     if (bDstToSrc)
     {

@@ -137,7 +137,8 @@ static GDALTransformerArg
 GDALCreateSimilarGCPTransformer(GDALTransformerArg hTransformArg,
                                 double dfRatioX, double dfRatioY)
 {
-    GCPTransformInfo *psInfo = static_cast<GCPTransformInfo *>(hTransformArg);
+    GCPTransformInfo *psInfo =
+        reinterpret_cast<GCPTransformInfo *>(hTransformArg);
 
     VALIDATE_POINTER1(hTransformArg, "GDALCreateSimilarGCPTransformer",
                       nullptr);
@@ -158,12 +159,12 @@ GDALCreateSimilarGCPTransformer(GDALTransformerArg hTransformArg,
         }
         /* As remove_outliers modifies the provided GCPs we don't need to
          * reapply it */
-        psInfo = static_cast<GCPTransformInfo *>(GDALCreateGCPTransformer(
+        psInfo = reinterpret_cast<GCPTransformInfo *>(GDALCreateGCPTransformer(
             static_cast<int>(newGCPs.size()), gdal::GCP::c_ptr(newGCPs),
             psInfo->nOrder, psInfo->bReversed));
     }
 
-    return psInfo;
+    return reinterpret_cast<GDALTransformerArg>(psInfo);
 }
 
 /************************************************************************/
@@ -314,12 +315,12 @@ GDALCreateGCPTransformerEx(int nGCPCount, const GDAL_GCP *pasGCPList,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s",
                  CRS_error_message[-nCRSresult]);
-        GDALDestroyGCPTransformer(psInfo);
+        GDALDestroyGCPTransformer(reinterpret_cast<GDALTransformerArg>(psInfo));
         return nullptr;
     }
     else
     {
-        return psInfo;
+        return reinterpret_cast<GDALTransformerArg>(psInfo);
     }
 }
 
@@ -395,7 +396,8 @@ void GDALDestroyGCPTransformer(GDALTransformerArg pTransformArg)
     if (pTransformArg == nullptr)
         return;
 
-    GCPTransformInfo *psInfo = static_cast<GCPTransformInfo *>(pTransformArg);
+    GCPTransformInfo *psInfo =
+        reinterpret_cast<GCPTransformInfo *>(pTransformArg);
 
     if (CPLAtomicDec(&(psInfo->nRefCount)) == 0)
     {
@@ -434,7 +436,8 @@ int GDALGCPTransform(GDALTransformerArg pTransformArg, int bDstToSrc,
 
 {
     int i = 0;
-    GCPTransformInfo *psInfo = static_cast<GCPTransformInfo *>(pTransformArg);
+    GCPTransformInfo *psInfo =
+        reinterpret_cast<GCPTransformInfo *>(pTransformArg);
 
     if (psInfo->bReversed)
         bDstToSrc = !bDstToSrc;
@@ -473,7 +476,8 @@ CPLXMLNode *GDALSerializeGCPTransformer(GDALTransformerArg pTransformArg)
 
 {
     CPLXMLNode *psTree = nullptr;
-    GCPTransformInfo *psInfo = static_cast<GCPTransformInfo *>(pTransformArg);
+    GCPTransformInfo *psInfo =
+        reinterpret_cast<GCPTransformInfo *>(pTransformArg);
 
     VALIDATE_POINTER1(pTransformArg, "GDALSerializeGCPTransformer", nullptr);
 
