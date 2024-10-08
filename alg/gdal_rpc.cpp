@@ -32,6 +32,7 @@
 #include "gdal.h"
 #include "gdal_interpolateatpoint.h"
 #include "gdal_mdreader.h"
+#include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 #if defined(__x86_64) || defined(_M_X64)
 #define USE_SSE2_OPTIM
@@ -821,7 +822,7 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
 
     memcpy(psTransform->sTI.abySignature, GDAL_GTI2_SIGNATURE,
            strlen(GDAL_GTI2_SIGNATURE));
-    psTransform->sTI.pszClassName = "GDALRPCTransformer";
+    psTransform->sTI.pszClassName = GDAL_RPC_TRANSFORMER_CLASS_NAME;
     psTransform->sTI.pfnTransform = GDALRPCTransform;
     psTransform->sTI.pfnCleanup = GDALDestroyRPCTransformer;
     psTransform->sTI.pfnSerialize = GDALSerializeRPCTransformer;

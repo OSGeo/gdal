@@ -491,7 +491,7 @@ class CPL_DLL VRTWarpedDataset final : public VRTDataset
 
     bool GetOverviewSize(GDALDataset *poSrcDS, int iOvr, int iSrcOvr,
                          int &nOvrXSize, int &nOvrYSize, double &dfSrcRatioX,
-                         double &dfSrcRatioY, double &dfTargetRatio) const;
+                         double &dfSrcRatioY) const;
     int GetOverviewCount() const;
     int GetSrcOverviewLevel(int iOvr, bool &bThisLevelOnlyOut) const;
     VRTWarpedDataset *CreateImplicitOverview(int iOvr) const;

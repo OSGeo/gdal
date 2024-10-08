@@ -157,6 +157,7 @@ constexpr const char *GDAL_APPROX_TRANSFORMER_CLASS_NAME =
     "GDALApproxTransformer";
 constexpr const char *GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME =
     "GDALGenImgProjTransformer";
+constexpr const char *GDAL_RPC_TRANSFORMER_CLASS_NAME = "GDALRPCTransformer";
 
 bool GDALIsTransformer(void *hTransformerArg, const char *pszClassName);
 
@@ -189,6 +190,8 @@ bool GDALTransformIsTranslationOnPixelBoundaries(
 
 bool GDALTransformIsAffineNoRotation(GDALTransformerFunc pfnTransformer,
                                      void *pTransformerArg);
+
+bool GDALTransformHasFastClone(void *pTransformerArg);
 
 typedef struct _CPLQuadTree CPLQuadTree;
 

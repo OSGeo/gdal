@@ -678,10 +678,40 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
     void *pDstBuffer = VSI_MALLOC3_VERBOSE(
         cpl::fits_on<int>(nWordSize * psOptions->nBandCount), nDstXSize,
         nDstYSize);
-    if (pDstBuffer == nullptr)
+    if (pDstBuffer)
     {
-        return nullptr;
+        InitializeDestinationBuffer(pDstBuffer, nDstXSize, nDstYSize,
+                                    pbInitialized);
     }
+    return pDstBuffer;
+}
+
+/**
+ * This method initializes a destination buffer for use with WarpRegionToBuffer.
+ *
+ * It is initialized based on the INIT_DEST settings.
+ *
+ * This method is called by CreateDestinationBuffer().
+ * It is meant at being used by callers that have already allocated the
+ * destination buffer without using CreateDestinationBuffer().
+ *
+ * @param pDstBuffer Buffer of size
+ *                   GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType) *
+ *                   nDstXSize * nDstYSize * psOptions->nBandCount bytes.
+ * @param nDstXSize Width of output window on destination buffer to be produced.
+ * @param nDstYSize Height of output window on destination buffer to be
+ *                  produced.
+ * @param pbInitialized Filled with boolean indicating if the buffer was
+ *                      initialized.
+ * @since 3.10
+ */
+void GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
+                                                    int nDstXSize,
+                                                    int nDstYSize,
+                                                    int *pbInitialized)
+{
+    const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
+
     const GPtrDiff_t nBandSize =
         static_cast<GPtrDiff_t>(nWordSize) * nDstXSize * nDstYSize;
 
@@ -697,8 +727,7 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
         {
             *pbInitialized = FALSE;
         }
-
-        return pDstBuffer;
+        return;
     }
 
     if (pbInitialized != nullptr)
@@ -760,8 +789,6 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
     }
 
     CSLDestroy(papszInitValues);
-
-    return pDstBuffer;
 }
 
 /**

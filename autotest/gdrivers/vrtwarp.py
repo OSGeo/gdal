@@ -718,8 +718,15 @@ def test_vrtwarp_irasterio_optim_three_band():
     assert warped_vrt_ds.ReadRaster(buf_type=gdal.GDT_UInt16) == expected_data
 
     with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
-        expected_data = warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=20)
-    assert warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=20) == expected_data
+        expected_data = warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=40)
+    assert warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=40) == expected_data
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster(1, 2, 3, 4, buf_xsize=20, buf_ysize=40)
+    assert (
+        warped_vrt_ds.ReadRaster(1, 2, 3, 4, buf_xsize=20, buf_ysize=40)
+        == expected_data
+    )
 
 
 ###############################################################################
