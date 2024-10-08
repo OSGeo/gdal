@@ -113,7 +113,7 @@ RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
         echo "Finished"; \
         export CC="ccache ${GCC_ARCH}-linux-gnu-gcc"; \
         export CXX="ccache ${GCC_ARCH}-linux-gnu-g++"; \
-        export PROJ_DB_CACHE_DIR="$HOME/.cache"; \
+        export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"; \
         ccache -M 100M; \
     fi \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
@@ -123,6 +123,7 @@ RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX} \
         -DBUILD_TESTING=OFF \
+        $PROJ_DB_CACHE_PARAM \
     && ninja \
     && DESTDIR="/build" ninja install \
     && if test "${RSYNC_REMOTE:-}" != ""; then \

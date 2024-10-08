@@ -27,7 +27,7 @@ curl -L -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
 
         export CC="ccache ${GCC_ARCH}-linux-gnu-gcc"
         export CXX="ccache ${GCC_ARCH}-linux-gnu-g++"
-        export PROJ_DB_CACHE_DIR="$HOME/.cache"
+        export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"
 
         ccache -M 100M
     fi
@@ -39,7 +39,8 @@ curl -L -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
         -G Ninja \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX:-/usr/local} \
-        -DBUILD_TESTING=OFF
+        -DBUILD_TESTING=OFF \
+        $PROJ_DB_CACHE_PARAM
 
     ninja
     DESTDIR="${DESTDIR}" ninja install

@@ -156,7 +156,7 @@ RUN --mount=type=cache,id=alpine-normal-proj,target=$HOME/.cache \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
-        export PROJ_DB_CACHE_DIR="$HOME/.cache"; \
+        export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"; \
         ccache -M 100M; \
     fi \
     # IPO disabled since it crashes with gcc 13.2.1
@@ -167,6 +167,7 @@ RUN --mount=type=cache,id=alpine-normal-proj,target=$HOME/.cache \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DENABLE_IPO=OFF \
         -DBUILD_TESTING=OFF \
+        $PROJ_DB_CACHE_PARAM \
     && ninja \
     && ninja install \
     && DESTDIR="/build_proj" ninja install \
