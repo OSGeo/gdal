@@ -5819,6 +5819,10 @@ CSLConstList GTiffDataset::GetSiblingFiles()
     {
         return oOvManager.GetSiblingFiles();
     }
+    if (m_poBaseDS)
+    {
+        return m_poBaseDS->GetSiblingFiles();
+    }
 
     m_bHasGotSiblingFiles = true;
     const int nMaxFiles =
