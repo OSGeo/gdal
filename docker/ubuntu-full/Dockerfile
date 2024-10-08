@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 ##
 # osgeo/gdal:ubuntu-full
 
@@ -12,6 +14,8 @@ FROM $BASE_IMAGE AS builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
+
+ENV HOME="/root"
 
 ARG TARGET_ARCH=
 RUN echo ${TARGET_ARCH}
@@ -295,7 +299,8 @@ RUN . /buildscripts/bh-set-envvars.sh \
 
 # Build PROJ
 ARG PROJ_VERSION=master
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-proj,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && /buildscripts/bh-proj.sh
 
 # Build GDAL
@@ -305,7 +310,8 @@ ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
 
 COPY ./bh-gdal.sh /buildscripts/bh-gdal.sh
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-gdal,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && /buildscripts/bh-gdal.sh
 
 # Build final image

@@ -23,7 +23,6 @@ curl -L -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.
 
     if test "${RSYNC_REMOTE:-}" != ""; then
         echo "Downloading cache..."
-        mkdir -p "$HOME/.cache/"
         rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/.cache/"
         echo "Finished"
 
@@ -90,7 +89,6 @@ curl -L -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.
         rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/"
         echo "Finished"
 
-        rm -rf "$HOME/.cache"
         unset CC
         unset CXX
     fi

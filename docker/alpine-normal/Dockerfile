@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 ##
 # osgeo/gdal:alpine-normal
 
@@ -10,6 +12,8 @@ FROM alpine:${ALPINE_VERSION} AS builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
+
+ENV HOME="/root"
 
 # Setup build env for PROJ
 RUN apk add --no-cache  wget curl unzip cmake make libtool autoconf automake pkgconfig gcc g++ sqlite sqlite-dev tiff-dev
@@ -141,18 +145,18 @@ ARG RSYNC_REMOTE
 
 # Build PROJ
 ARG PROJ_VERSION=master
-RUN mkdir proj \
+RUN --mount=type=cache,id=alpine-normal-proj,target=$HOME/.cache \
+    mkdir proj \
     && curl -L -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
-        mkdir -p "$HOME/.cache"; \
         rsync -ra ${RSYNC_REMOTE}/proj/$(uname -m)/ $HOME/.cache/; \
         echo "Finished"; \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
-        export PROJ_DB_CACHE_DIR="$HOME/.cache"; \
+        export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"; \
         ccache -M 100M; \
     fi \
     # IPO disabled since it crashes with gcc 13.2.1
@@ -163,6 +167,7 @@ RUN mkdir proj \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DENABLE_IPO=OFF \
         -DBUILD_TESTING=OFF \
+        $PROJ_DB_CACHE_PARAM \
     && ninja \
     && ninja install \
     && DESTDIR="/build_proj" ninja install \
@@ -171,7 +176,6 @@ RUN mkdir proj \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/proj/$(uname -m)/; \
         echo "Finished"; \
-        rm -rf $HOME/.cache; \
         unset CC; \
         unset CXX; \
     fi \
@@ -182,7 +186,8 @@ RUN mkdir proj \
 
 # Build spatialite
 ARG SPATIALITE_VERSION=5.1.0
-RUN if test "${SPATIALITE_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
+RUN --mount=type=cache,id=alpine-normal-spatialite,target=$HOME/.cache \
+    if test "${SPATIALITE_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     curl -LO -fsS https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && tar xzf libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && rm -f libspatialite-${SPATIALITE_VERSION}.tar.gz \
@@ -190,7 +195,6 @@ RUN if test "${SPATIALITE_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     && apk add --no-cache minizip-dev \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
-        mkdir -p "$HOME/.cache"; \
         rsync -ra ${RSYNC_REMOTE}/spatialite/ $HOME/.cache/; \
         echo "Finished"; \
         export CC="ccache gcc"; \
@@ -205,7 +209,6 @@ RUN if test "${SPATIALITE_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/spatialite/; \
         echo "Finished"; \
-        rm -rf $HOME/.cache; \
         unset CC; \
         unset CXX; \
     fi \
@@ -224,7 +227,8 @@ ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
 
-RUN if test "${GDAL_VERSION}" = "master"; then \
+RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
+    if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
@@ -241,7 +245,6 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && cd gdal \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
-        mkdir -p "$HOME/.cache"; \
         rsync -ra ${RSYNC_REMOTE}/gdal/$(uname -m)/ $HOME/.cache/; \
         echo "Finished"; \
         # Little trick to avoid issues with Python bindings
@@ -275,7 +278,6 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/gdal/$(uname -m)/; \
         echo "Finished"; \
-        rm -rf $HOME/.cache; \
         unset CC; \
         unset CXX; \
     fi \

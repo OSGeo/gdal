@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 ##
 # osgeo/gdal:ubuntu-small
 
@@ -13,6 +15,8 @@ FROM $BASE_IMAGE AS builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
+
+ENV HOME="/root"
 
 ARG TARGET_ARCH=
 RUN echo ${TARGET_ARCH}
@@ -96,19 +100,20 @@ ARG RSYNC_REMOTE
 
 # Build PROJ
 ARG PROJ_VERSION=master
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && mkdir proj \
     && curl -L -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
         | tar xz -C proj --strip-components=1 \
+    && export PROJ_DB_CACHE_PARAM="" \
     && cd proj \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Downloading cache..."; \
-        mkdir -p $HOME/.cache; \
         rsync -ra ${RSYNC_REMOTE}/proj/${GCC_ARCH}/ $HOME/.cache/; \
         echo "Finished"; \
         export CC="ccache ${GCC_ARCH}-linux-gnu-gcc"; \
         export CXX="ccache ${GCC_ARCH}-linux-gnu-g++"; \
-        export PROJ_DB_CACHE_DIR="$HOME/.cache"; \
+        export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"; \
         ccache -M 100M; \
     fi \
     && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
@@ -118,6 +123,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX} \
         -DBUILD_TESTING=OFF \
+        $PROJ_DB_CACHE_PARAM \
     && ninja \
     && DESTDIR="/build" ninja install \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
@@ -125,7 +131,6 @@ RUN . /buildscripts/bh-set-envvars.sh \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/proj/${GCC_ARCH}/; \
         echo "Finished"; \
-        rm -rf $HOME/.cache; \
         unset CC; \
         unset CXX; \
     fi \
@@ -151,7 +156,8 @@ ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
 
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
@@ -165,7 +171,6 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd gdal \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Downloading cache..."; \
-        mkdir -p $HOME/.cache; \
         rsync -ra ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/ $HOME/.cache/; \
         echo "Finished"; \
         # Little trick to avoid issues with Python bindings
@@ -198,7 +203,6 @@ RUN . /buildscripts/bh-set-envvars.sh \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/; \
         echo "Finished"; \
-        rm -rf $HOME/.cache; \
         unset CC; \
         unset CXX; \
     fi \
