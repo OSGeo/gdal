@@ -1299,8 +1299,11 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
             /*      Try and open the file. */
             /* --------------------------------------------------------------------
              */
+            CPLTurnFailureIntoWarning(true);
             auto poBandFile = std::unique_ptr<GDALDataset>(
-                GDALDataset::Open(osFullFilename.c_str()));
+                GDALDataset::Open(osFullFilename.c_str(),
+                                  GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
+            CPLTurnFailureIntoWarning(false);
             if (poBandFile == nullptr)
             {
                 // NOP
