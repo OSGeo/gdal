@@ -11,3 +11,12 @@ const char *PDS4GetEmbeddedTemplate()
 {
     return szPDS4Template;
 }
+
+static const char szVICARJson[] = {
+#embed "data/vicar.json"
+    , 0};
+
+const char *VICARGetEmbeddedConf(void)
+{
+    return szVICARJson;
+}

@@ -14,11 +14,12 @@ add_gdal_driver(
   NO_SHARED_SYMBOL_WITH_CORE
 )
 
-set(GDAL_DATA_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/vicar.json
-)
+
 if (NOT USE_ONLY_EMBEDDED_RESOURCE_FILES)
-    list(APPEND GDAL_DATA_FILES ${CMAKE_CURRENT_SOURCE_DIR}/data/pds4_template.xml)
+    set(GDAL_DATA_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/data/vicar.json
+        ${CMAKE_CURRENT_SOURCE_DIR}/data/pds4_template.xml
+    )
 endif()
 
 set_property(

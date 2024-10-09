@@ -6,5 +6,6 @@
 CPL_C_START
 
 const char *PDS4GetEmbeddedTemplate(void);
+const char *VICARGetEmbeddedConf(void);
 
 CPL_C_END
