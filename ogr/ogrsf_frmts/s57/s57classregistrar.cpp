@@ -16,10 +16,6 @@
 #include "cpl_string.h"
 #include "s57.h"
 
-#ifdef S57_BUILTIN_CLASSES
-#include "s57tables.h"
-#endif
-
 #ifdef EMBED_RESOURCE_FILES
 #include "embedded_resources.h"
 #endif
@@ -125,15 +121,6 @@ bool S57ClassRegistrar::FindFile(const char *pszTarget,
         *pfp = VSIFOpenL(pszFilename, "rb");
     }
 
-#ifdef S57_BUILTIN_CLASSES
-    if (*pfp == NULL)
-    {
-        if (EQUAL(pszTarget, "s57objectclasses.csv"))
-            papszNextLine = gpapszS57Classes;
-        else
-            papszNextLine = gpapszS57attributes;
-    }
-#else
     if (*pfp == nullptr)
     {
         if (bReportErr)
@@ -141,7 +128,6 @@ bool S57ClassRegistrar::FindFile(const char *pszTarget,
                      pszFilename);
         return FALSE;
     }
-#endif
 
     return TRUE;
 }
