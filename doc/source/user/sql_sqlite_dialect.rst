@@ -167,14 +167,6 @@ so use the name ``rowid``.
 Starting with GDAL 3.8, if the layer has a named FID column
 (:cpp:func:`OGRLayer::GetFIDColumn` != ""), this name may also be used.
 
-The field wildcard expansions will not include the feature id, but it may be
-explicitly included using a syntax like:
-
-.. code-block::
-
-    SELECT ROWID, * FROM nation
-
-
 The field wildcard expansions will not include
 the feature id, but it may be explicitly included using a syntax like:
 
