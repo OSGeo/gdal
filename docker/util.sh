@@ -17,7 +17,7 @@ fi
 
 usage()
 {
-    echo "Usage: build.sh [--push] [--docker-repository repo] [--tag name] [--gdal tag|sha1|master] [--gdal-repository repo] [--proj tag|sha1|master] [--release]"
+    echo "Usage: build.sh [--push] [--docker-repository repo] [--tag name] [--gdal tag|sha1|master] [--gdal-repository repo] [--proj tag|sha1|master] [--release] [--docker-cache|--no-docker-cache]"
     # Non-documented: --test-python
     echo ""
     echo "--push: push image to docker repository (defaults to ghcr.io)"
@@ -26,6 +26,7 @@ usage()
     echo "--proj tag|sha1|master: PROJ version to use. Defaults to master"
     echo "--gdal-repository repo: github repository. Defaults to OSGeo/gdal"
     echo "--release. Whether this is a release build. In which case --gdal tag must be used."
+    echo "--docker-cache/--no-docker-cache: instruct Docker to build with/without using its cache. Defaults to no cache for release builds."
     echo "--with-debug-symbols/--without-debug-symbols. Whether to include debug symbols. Only applies to ubuntu-full, default is to include for non-release builds."
     exit 1
 }
@@ -100,6 +101,15 @@ do
             shift
         ;;
 
+        --docker-cache)
+            DOCKER_CACHE_PARAM=""
+            shift
+        ;;
+        --no-docker-cache)
+            DOCKER_CACHE_PARAM="--no-cache"
+            shift
+        ;;
+
         --without-debug-symbols)
             WITH_DEBUG_SYMBOLS=no
             shift
@@ -145,6 +155,7 @@ if test "${RELEASE}" = "yes"; then
     if test "${WITH_DEBUG_SYMBOLS}" = ""; then
         WITH_DEBUG_SYMBOLS=no
     fi
+    [ -v DOCKER_CACHE_PARAM ] || DOCKER_CACHE_PARAM="--no-cache"
 else
     if test "${TAG_NAME}" = ""; then
         TAG_NAME=latest
@@ -152,6 +163,7 @@ else
     if test "${WITH_DEBUG_SYMBOLS}" = ""; then
         WITH_DEBUG_SYMBOLS=yes
     fi
+    [ -v DOCKER_CACHE_PARAM ] || DOCKER_CACHE_PARAM=""
 fi
 
 check_image()
@@ -196,6 +208,7 @@ REPO_IMAGE_NAME="${DOCKER_REPO}/${IMAGE_NAME}"
 
 if test "${RELEASE}" = "yes"; then
     BUILD_ARGS=(
+        $DOCKER_CACHE_PARAM \
         "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
         "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
@@ -300,6 +313,7 @@ EOF
     RSYNC_REMOTE="rsync://127.0.0.1:23985/gdal-docker-cache/${TARGET_IMAGE}"
 
     BUILD_ARGS=(
+        $DOCKER_CACHE_PARAM \
         "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
         "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
         "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
