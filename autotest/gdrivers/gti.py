@@ -2954,6 +2954,9 @@ def test_gti_read_multi_threaded_disabled_because_truncated_source(tmp_vsimem):
 
 @pytest.mark.require_curl()
 @pytest.mark.require_driver("Parquet")
+@pytest.mark.xfail(
+    reason="https://naipeuwest.blob.core.windows.net/naip/v002/ok/2010/ok_100cm_2010/34099/m_3409901_nw_14_1_20100425.tif now leads to HTTP/1.1 409 Public access is not permitted on this storage account."
+)
 def test_gti_stac_geoparquet():
 
     url = (
