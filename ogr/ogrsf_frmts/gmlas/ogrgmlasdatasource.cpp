@@ -175,6 +175,18 @@ OGRGMLASDataSource::OGRGMLASDataSource()
 }
 
 /************************************************************************/
+/*                        ~OGRGMLASDataSource()                         */
+/************************************************************************/
+
+OGRGMLASDataSource::~OGRGMLASDataSource()
+{
+    if (m_bUnlinkConfigFileAfterUse)
+    {
+        VSIUnlink(m_osConfigFile.c_str());
+    }
+}
+
+/************************************************************************/
 /*                            GetLayerCount()                           */
 /************************************************************************/
 
@@ -658,16 +670,14 @@ OGRGMLASDataSource::BuildXSDVector(const CPLString &osXSDFilenames)
 
 bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
 {
-    CPLString osConfigFile = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
-                                                  szCONFIG_FILE_OPTION, "");
-    if (osConfigFile.empty())
+    m_osConfigFile = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                          szCONFIG_FILE_OPTION, "");
+    if (m_osConfigFile.empty())
     {
-        const char *pszConfigFile =
-            CPLFindFile("gdal", szDEFAULT_CONF_FILENAME);
-        if (pszConfigFile)
-            osConfigFile = pszConfigFile;
+        m_osConfigFile =
+            GMLASConfiguration::GetDefaultConfFile(m_bUnlinkConfigFileAfterUse);
     }
-    if (osConfigFile.empty())
+    if (m_osConfigFile.empty())
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "No configuration file found. Using hard-coded defaults");
@@ -675,7 +685,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        if (!m_oConf.Load(osConfigFile))
+        if (!m_oConf.Load(m_osConfigFile.c_str()))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Loading of configuration failed");
@@ -866,7 +876,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
 
     const std::set<CPLString> &oSetSchemaURLs = oAnalyzer.GetSchemaURLS();
 
-    FillOtherMetadataLayer(poOpenInfo, osConfigFile, aoXSDs, oSetSchemaURLs);
+    FillOtherMetadataLayer(poOpenInfo, m_osConfigFile, aoXSDs, oSetSchemaURLs);
 
     if (CPLFetchBool(poOpenInfo->papszOpenOptions,
                      szEXPOSE_METADATA_LAYERS_OPTION,
