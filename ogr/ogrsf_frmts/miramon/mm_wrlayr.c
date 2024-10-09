@@ -37,6 +37,10 @@
 #endif
 #endif
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 #ifdef GDAL_COMPILATION
 CPL_C_START  // Necessary for compiling in GDAL project
 #endif       // GDAL_COMPILATION
@@ -5313,7 +5317,7 @@ int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
                                 MM_BYTE direction)
 {
     char *aMMIDDBFFile = nullptr;  //m_idofic.dbf
-    FILE_TYPE *pfMMSRS;
+    FILE_TYPE *pfMMSRS = nullptr;
     const char *pszLine;
     size_t nLong;
     char *id_geodes, *psidgeodes, *epsg;
@@ -5328,7 +5332,27 @@ int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
     }
 
 #ifdef GDAL_COMPILATION
-    aMMIDDBFFile = strdup_function(CPLFindFile("gdal", "MM_m_idofic.csv"));
+    {
+#ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
+        const char *pszFilename = nullptr;
+#else
+        const char *pszFilename = CPLFindFile("gdal", "MM_m_idofic.csv");
+#endif
+#ifdef EMBED_RESOURCE_FILES
+        if (!pszFilename || EQUAL(pszFilename, "MM_m_idofic.csv"))
+        {
+            pfMMSRS = VSIFileFromMemBuffer(
+                nullptr, (GByte *)(MiraMonGetMM_m_idofic_csv()),
+                (int)(strlen(MiraMonGetMM_m_idofic_csv())),
+                /* bTakeOwnership = */ false);
+        }
+        else
+#endif
+            if (pszFilename)
+        {
+            aMMIDDBFFile = strdup_function(pszFilename);
+        }
+    }
 #else
     {
         char temp_file[MM_CPL_PATH_BUF_SIZE];
@@ -5337,22 +5361,27 @@ int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
     }
 #endif
 
-    if (!aMMIDDBFFile)
+#ifdef EMBED_RESOURCE_FILES
+    if (!pfMMSRS)
+#endif
     {
-        MMCPLError(CE_Failure, CPLE_OpenFailed,
-                   "Error opening data\\MM_m_idofic.csv.\n");
-        return 1;
-    }
+        if (!aMMIDDBFFile)
+        {
+            MMCPLError(CE_Failure, CPLE_OpenFailed,
+                       "Error opening data\\MM_m_idofic.csv.\n");
+            return 1;
+        }
 
-    // Opening the file with SRS information
-    if (nullptr == (pfMMSRS = fopen_function(aMMIDDBFFile, "r")))
-    {
+        // Opening the file with SRS information
+        if (nullptr == (pfMMSRS = fopen_function(aMMIDDBFFile, "r")))
+        {
+            free_function(aMMIDDBFFile);
+            MMCPLError(CE_Failure, CPLE_OpenFailed,
+                       "Error opening data\\MM_m_idofic.csv.\n");
+            return 1;
+        }
         free_function(aMMIDDBFFile);
-        MMCPLError(CE_Failure, CPLE_OpenFailed,
-                   "Error opening data\\MM_m_idofic.csv.\n");
-        return 1;
     }
-    free_function(aMMIDDBFFile);
 
 // Checking the header of the csv file
 #ifndef GDAL_COMPILATION
