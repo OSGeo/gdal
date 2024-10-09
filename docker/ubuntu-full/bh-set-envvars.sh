@@ -20,3 +20,5 @@ else
   export GCC_ARCH
   export CMAKE_EXTRA_ARGS=""
 fi
+
+export CCACHE_PARAM=""

@@ -282,11 +282,10 @@ else
         RSYNC_DAEMON_CONTAINER=gdal_rsync_daemon
         HOST_CACHE_DIR="$HOME/gdal-docker-cache"
 
-        mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/proj/x86_64"
-        mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/proj/aarch64"
-        mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/gdal/x86_64"
-        mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/gdal/aarch64"
+        mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/proj/"{x86_64,aarch64}
+        mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/gdal/"{x86_64,aarch64}
         mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/spatialite"
+        mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/tiledb/"{x86_64,aarch64}
 
         # Start a Docker container that has a rsync daemon, mounting HOST_CACHE_DIR
         if ! docker ps | grep "${RSYNC_DAEMON_CONTAINER}"; then
