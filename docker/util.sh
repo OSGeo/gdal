@@ -206,16 +206,17 @@ echo "Using GDAL_REPOSITORY=${GDAL_REPOSITORY}"
 IMAGE_NAME="${TARGET_IMAGE}-${TAG_NAME}"
 REPO_IMAGE_NAME="${DOCKER_REPO}/${IMAGE_NAME}"
 
+BUILD_ARGS=(
+    "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
+    "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
+    "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
+    "--build-arg" "GDAL_REPOSITORY=${GDAL_REPOSITORY}" \
+    "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
+)
+[ -z "${DOCKER_CACHE_PARAM}" ] || BUILD_ARGS+=("${DOCKER_CACHE_PARAM}")
+
 if test "${RELEASE}" = "yes"; then
-    BUILD_ARGS=(
-        $DOCKER_CACHE_PARAM \
-        "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
-        "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
-        "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
-        "--build-arg" "GDAL_REPOSITORY=${GDAL_REPOSITORY}" \
-        "--build-arg" "GDAL_BUILD_IS_RELEASE=YES" \
-        "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
-    )
+    BUILD_ARGS+=("--build-arg" "GDAL_BUILD_IS_RELEASE=YES")
 
     if test "${BASE_IMAGE}" != ""; then
         BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
@@ -312,15 +313,9 @@ EOF
 
     RSYNC_REMOTE="rsync://127.0.0.1:23985/gdal-docker-cache/${TARGET_IMAGE}"
 
-    BUILD_ARGS=(
-        $DOCKER_CACHE_PARAM \
-        "--build-arg" "PROJ_DATUMGRID_LATEST_LAST_MODIFIED=${PROJ_DATUMGRID_LATEST_LAST_MODIFIED}" \
-        "--build-arg" "PROJ_VERSION=${PROJ_VERSION}" \
-        "--build-arg" "GDAL_VERSION=${GDAL_VERSION}" \
-        "--build-arg" "GDAL_REPOSITORY=${GDAL_REPOSITORY}" \
+    BUILD_ARGS+=(
         "--build-arg" "GDAL_RELEASE_DATE=${GDAL_RELEASE_DATE}" \
         "--build-arg" "RSYNC_REMOTE=${RSYNC_REMOTE}" \
-        "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
         "--build-arg" "BUILDKIT_INLINE_CACHE=1" \
     )
 
