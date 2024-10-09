@@ -31,7 +31,6 @@
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
-#include "gdal_version.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_p.h"
