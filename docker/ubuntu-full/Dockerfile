@@ -44,10 +44,11 @@ USER root
 RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
-            build-essential ca-certificates \
+            build-essential ca-certificates ccache\
             git make ninja-build cmake wget unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff-dev${APT_ARCH_SUFFIX} \
+            rsync \
     && rm -rf /var/lib/apt/lists/*
 
 ARG JAVA_VERSION=17
@@ -275,9 +276,6 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && rm -rf /var/lib/apt/lists/* \
     && rm apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
 
-RUN apt-get update -y \
-    && apt-get install -y --fix-missing --no-install-recommends rsync ccache \
-    && rm -rf /var/lib/apt/lists/*
 ARG RSYNC_REMOTE
 ARG WITH_CCACHE
 

@@ -82,6 +82,7 @@ RUN apk add --no-cache \
     py3-setuptools \
     python3-dev \
     qhull-dev \
+    rsync \
     sfcgal-dev \
     snappy-dev \
     sqlite-dev \
@@ -140,7 +141,6 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
     ); fi
 
-RUN apk add --no-cache rsync ccache
 ARG RSYNC_REMOTE
 ARG WITH_CCACHE
 
