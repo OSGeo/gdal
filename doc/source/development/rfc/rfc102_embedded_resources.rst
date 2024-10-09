@@ -9,7 +9,7 @@ Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2024-Oct-01
 Status:        Draft
-Target:        GDAL 3.10 or 3.11
+Target:        GDAL 3.11, PROJ 9.6
 ============== =============================================
 
 Summary
@@ -17,8 +17,9 @@ Summary
 
 This RFC uses C23 ``#embed`` pre-processor directive, when available,
 to be able to optionally embed GDAL resource files directly into libgdal.
-It is also intended to be used for PROJ, in particular for its :file:`proj.db` file.
-For PROJ, a fallback mechanism will be used to not require C23.
+It is also intended to be used for PROJ, for its :file:`proj.db` and
+:file:`proj.ini` files. For PROJ, a fallback mechanism will be used to not
+require C23.
 
 Motivation
 ----------
@@ -123,7 +124,8 @@ Loading of the embedded :file:`proj.db` will involve using the
 as done by
 `DuckDB Spatial <https://github.com/duckdb/duckdb_spatial/blob/9c14a8b4a9093d981123a7d9f620a675ab29c6d5/spatial/src/spatial/proj/module.cpp#L56>`__
 
-Embedding of resource files in PROJ is limited to :file:`proj.db`
+Embedding of resource files in PROJ is limited to :file:`proj.db` and
+ :file:`proj.ini`.
 
 Note: acknowledging how critical access to proj.db is, we make an exception of
 also allowing embedding it with non-C23 capable compilers, using a CMake script,
