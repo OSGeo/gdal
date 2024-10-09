@@ -24,7 +24,8 @@ curl -L -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
         echo "Downloading cache..."
         rsync -ra "${RSYNC_REMOTE}/proj/${GCC_ARCH}/" "$HOME/.cache/"
         echo "Finished"
-
+    fi
+    if [ -n "${WITH_CCACHE:-}" ]; then
         export CC="ccache ${GCC_ARCH}-linux-gnu-gcc"
         export CXX="ccache ${GCC_ARCH}-linux-gnu-g++"
         export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"
@@ -46,12 +47,12 @@ curl -L -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
     DESTDIR="${DESTDIR}" ninja install
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
-        ccache -s
-
         echo "Uploading cache..."
         rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/proj/${GCC_ARCH}/"
         echo "Finished"
-
+    fi
+    if [ -n "${WITH_CCACHE:-}" ]; then
+        ccache -s
         unset CC
         unset CXX
     fi

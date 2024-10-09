@@ -279,6 +279,7 @@ RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends rsync ccache \
     && rm -rf /var/lib/apt/lists/*
 ARG RSYNC_REMOTE
+ARG WITH_CCACHE
 
 ARG WITH_DEBUG_SYMBOLS=no
 

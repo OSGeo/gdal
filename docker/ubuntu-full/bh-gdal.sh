@@ -25,7 +25,8 @@ curl -L -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.
         echo "Downloading cache..."
         rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/.cache/"
         echo "Finished"
-
+    fi
+    if [ -n "${WITH_CCACHE:-}" ]; then
         # Little trick to avoid issues with Python bindings
         printf "#!/bin/sh\nccache %s-linux-gnu-gcc \$*" "${GCC_ARCH}" > ccache_gcc.sh
         chmod +x ccache_gcc.sh
@@ -83,12 +84,12 @@ curl -L -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.
     cd ..
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
-        ccache -s
-
         echo "Uploading cache..."
         rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/"
         echo "Finished"
-
+    fi
+    if [ -n "${WITH_CCACHE:-}" ]; then
+        ccache -s
         unset CC
         unset CXX
     fi

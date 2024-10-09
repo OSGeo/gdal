@@ -97,6 +97,7 @@ RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends rsync ccache \
     && rm -rf /var/lib/apt/lists/*
 ARG RSYNC_REMOTE
+ARG WITH_CCACHE
 
 # Build PROJ
 ARG PROJ_VERSION=master
@@ -111,6 +112,8 @@ RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/proj/${GCC_ARCH}/ $HOME/.cache/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
         export CC="ccache ${GCC_ARCH}-linux-gnu-gcc"; \
         export CXX="ccache ${GCC_ARCH}-linux-gnu-g++"; \
         export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"; \
@@ -127,10 +130,12 @@ RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
     && ninja \
     && DESTDIR="/build" ninja install \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
-        ccache -s; \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/proj/${GCC_ARCH}/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
         unset CC; \
         unset CXX; \
     fi \
@@ -173,6 +178,8 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/ $HOME/.cache/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
         # Little trick to avoid issues with Python bindings
         printf "#!/bin/sh\nccache %s-linux-gnu-gcc \$*" "${GCC_ARCH}" > ccache_gcc.sh; \
         chmod +x ccache_gcc.sh; \
@@ -199,10 +206,12 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     && DESTDIR="/build" ninja install \
     && cd .. \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
-        ccache -s; \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
         unset CC; \
         unset CXX; \
     fi \

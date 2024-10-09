@@ -257,6 +257,7 @@ if test "${RELEASE}" = "yes"; then
 
 else
     BUILD_ARGS+=("--build-arg" "BUILDKIT_INLINE_CACHE=1")
+    BUILD_ARGS+=("--build-arg" "WITH_CCACHE=1")
 
     IMAGE_NAME_WITH_ARCH="${REPO_IMAGE_NAME}"
     if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest" \

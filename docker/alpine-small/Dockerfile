@@ -57,6 +57,7 @@ RUN \
     && rm -f *.zip
 
 ARG RSYNC_REMOTE
+ARG WITH_CCACHE
 
 # Build PROJ
 ARG PROJ_VERSION=master
@@ -69,6 +70,8 @@ RUN --mount=type=cache,id=alpine-small-proj,target=$HOME/.cache \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/proj/$(uname -m)/ $HOME/.cache/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
         export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"; \
@@ -87,10 +90,12 @@ RUN --mount=type=cache,id=alpine-small-proj,target=$HOME/.cache \
     && ninja install \
     && DESTDIR="/build_proj" ninja install \
     && if test "${RSYNC_REMOTE}" != ""; then \
-        ccache -s; \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/proj/$(uname -m)/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
         unset CC; \
         unset CXX; \
     fi \
@@ -117,6 +122,8 @@ RUN --mount=type=cache,id=alpine-small-gdal,target=$HOME/.cache \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/gdal/$(uname -m)/ $HOME/.cache/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
         ccache -M 1G; \
@@ -138,10 +145,12 @@ RUN --mount=type=cache,id=alpine-small-gdal,target=$HOME/.cache \
     && DESTDIR="/build" ninja install \
     && cd .. \
     && if test "${RSYNC_REMOTE}" != ""; then \
-        ccache -s; \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/gdal/$(uname -m)/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
         unset CC; \
         unset CXX; \
     fi \
