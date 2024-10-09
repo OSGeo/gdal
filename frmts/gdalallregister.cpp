@@ -323,6 +323,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_GTI();
 #endif
 
+#ifdef FRMT_snap_tiff
+    GDALRegister_SNAP_TIFF();
+#endif
+
 #ifdef FRMT_gtiff
     GDALRegister_GTiff();
     GDALRegister_COG();
