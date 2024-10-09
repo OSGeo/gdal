@@ -1740,10 +1740,13 @@ int CSLFindName(CSLConstList papszStrList, const char *pszName)
 
 /** Parse a memory size from a string.
  *
- * The string may indicate the units of the memory (e.g., "230k", "500MB").
- * The string may alternatively specify memory as a fraction of the usable
- * RAM (e.g., "25%"). If the string cannot be understood, the function
- * will return CE_Failure.
+ * The string may indicate the units of the memory (e.g., "230k", "500 MB"),
+ * using the prefixes "k", "m", or "g" in either lower or upper-case,
+ * optionally followed by a "b" or "B". The string may alternatively specify
+ * memory as a fraction of the usable RAM (e.g., "25%"). Spaces before the
+ * number, between the number and the units, or after the units are ignored,
+ * but other characters will cause a parsing failure. If the string cannot
+ * be understood, the function will return CE_Failure.
  *
  * @param pszValue the string to parse
  * @param[out] pnValue the parsed size, converted to bytes (if unit was specified)
