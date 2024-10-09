@@ -2,7 +2,6 @@ add_gdal_driver(
   TARGET ogr_S57
   SOURCES ogr_s57.h
           s57.h
-          s57tables.h
           ogrs57driver.cpp
           ogrs57datasource.cpp
           ogrs57layer.cpp
