@@ -64,6 +64,7 @@ of the following persons:
 - `Andrey Kiselev <https://github.com/dron>`__: BMP, HDF4, HDF5, L1B, MrSID and RMF support, gdal_grid, past PSC member.
 - `Dan Jacobson <https://github.com/jidanni>`__: documentation enhancements.
 - `Kor de Jong <https://github.com/kordejong>`__: PCRaster driver.
+- `Peter A. Jonsson <https://github.com/pjonsson>`__: Docker scripts enhancements.
 - Chaitanya Kumar CH: past GDAL maintainer.
 - `Martin Lambers <https://github.com/marlam>`__: GTA driver.
 - `Martin Landa <https://github.com/landam>`__: VFK driver.
