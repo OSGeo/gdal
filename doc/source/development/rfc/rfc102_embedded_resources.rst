@@ -16,8 +16,9 @@ Summary
 -------
 
 This RFC uses C23 ``#embed`` pre-processor directive, when available,
-to be able to embed GDAL resource files directly into libgdal. It is also
-intended to be used for PROJ, in particular for its :file:`proj.db` file.
+to be able to optionally embed GDAL resource files directly into libgdal.
+It is also intended to be used for PROJ, in particular for its :file:`proj.db` file.
+For PROJ, a fallback mechanism will be used to not require C23.
 
 Motivation
 ----------
@@ -88,7 +89,7 @@ locate resource files in the GDAL_DATA directory burnt at build time into libgda
 (``${install_prefix}/share/gdal``), or by the :config:`GDAL_DATA` configuration option.
 
 Said otherwise, if ``EMBED_RESOURCE_FILES=ON`` but ``USE_ONLY_EMBEDDED_RESOURCE_FILES=OFF``,
-GDAL will first try to locate resource files from the file system, and
+GDAL/PROJ will first try to locate resource files from the file system, and
 fallback to the embedded version if not found.
 
 The resource files will still be installed in ``${install_prefix}/share/gdal``,
@@ -102,7 +103,7 @@ Impacted code
 - frmts/hdf5: embedding bag_template.xml
 - frmts/nitf: embedding nitf_spec.xml
 - frmts/pdf: embedding pdf_composition.xml
-- frmts/pds: embedding pds4_template.xml
+- frmts/pds: embedding pds4_template.xml and vicar.json
 - ogr/ogrsf_frmts/dgn: embedding seed_2d.dgn and seed_3d.dgn
 - ogr/ogrsf_frmts/dxf: embedding header.dxf and leader.dxf
 - ogr/ogrsf_frmts/gml: embedding .gfs files and gml_registry.xml
@@ -121,6 +122,8 @@ Loading of the embedded :file:`proj.db` will involve using the
 `SQLite3 memvfs <https://www.sqlite.org/src/doc/tip/ext/misc/memvfs.c>`__,
 as done by
 `DuckDB Spatial <https://github.com/duckdb/duckdb_spatial/blob/9c14a8b4a9093d981123a7d9f620a675ab29c6d5/spatial/src/spatial/proj/module.cpp#L56>`__
+
+Embedding of resource files in PROJ is limited to :file:`proj.db`
 
 Note: acknowledging how critical access to proj.db is, we make an exception of
 also allowing embedding it with non-C23 capable compilers, using a CMake script,
@@ -145,7 +148,7 @@ Backward compatibility
 
 Fully backwards compatible.
 
-C23 is not required if EMBED_RESOURCE_FILES is not enabled.
+C23 is not required, unless EMBED_RESOURCE_FILES is enabled in GDAL.
 
 Documentation
 -------------
@@ -166,7 +169,7 @@ Related issues and PRs
 
 - https://github.com/OSGeo/gdal/issues/10780
 
-- GDAL candidate implementation (in progress): https://github.com/OSGeo/gdal/compare/master...rouault:gdal:embedded_resources?expand=1
+- GDAL candidate implementation: https://github.com/OSGeo/gdal/pull/10972
 
 - PROJ candidate implementation: https://github.com/OSGeo/PROJ/pull/4265
 
