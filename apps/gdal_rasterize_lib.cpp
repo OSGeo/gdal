@@ -1414,10 +1414,10 @@ GDALRasterizeOptionsNew(char **papszArgv,
             psOptions->bCreateOutput = true;
         }
 
-        if (auto oTs = argParser->present<int>("-ts"))
+        if (auto oTs = argParser->present<std::vector<int>>("-ts"))
         {
-            psOptions->nXSize = oTs.value();
-            psOptions->nYSize = oTs.value();
+            psOptions->nXSize = oTs.value()[0];
+            psOptions->nYSize = oTs.value()[1];
 
             if (psOptions->nXSize <= 0 || psOptions->nYSize <= 0)
             {
