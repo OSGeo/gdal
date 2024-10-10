@@ -25,13 +25,6 @@
 #include "ogr_p.h"
 
 /************************************************************************/
-/*                           OGRLinearRing()                            */
-/************************************************************************/
-
-/** Constructor */
-OGRLinearRing::OGRLinearRing() = default;
-
-/************************************************************************/
 /*                  OGRLinearRing( const OGRLinearRing& )               */
 /************************************************************************/
 
@@ -47,19 +40,13 @@ OGRLinearRing::OGRLinearRing() = default;
 OGRLinearRing::OGRLinearRing(const OGRLinearRing &) = default;
 
 /************************************************************************/
-/*                          ~OGRLinearRing()                            */
-/************************************************************************/
-
-OGRLinearRing::~OGRLinearRing() = default;
-
-/************************************************************************/
 /*                           OGRLinearRing()                            */
 /************************************************************************/
 
 /** Constructor
  * @param poSrcRing source ring.
  */
-OGRLinearRing::OGRLinearRing(OGRLinearRing *poSrcRing)
+OGRLinearRing::OGRLinearRing(const OGRLinearRing *poSrcRing)
 
 {
     if (poSrcRing == nullptr)

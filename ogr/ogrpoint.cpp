@@ -136,12 +136,6 @@ OGRPoint *OGRPoint::createXYM(double x, double y, double m)
 OGRPoint::OGRPoint(const OGRPoint &) = default;
 
 /************************************************************************/
-/*                             ~OGRPoint()                              */
-/************************************************************************/
-
-OGRPoint::~OGRPoint() = default;
-
-/************************************************************************/
 /*                       operator=( const OGRPoint& )                   */
 /************************************************************************/
 
@@ -158,7 +152,10 @@ OGRPoint &OGRPoint::operator=(const OGRPoint &other)
 {
     if (this != &other)
     {
-        OGRGeometry::operator=(other);
+        // Slightly more efficient to avoid OGRGeometry::operator=(other);
+        // but do what it does to avoid a call to empty()
+        assignSpatialReference(other.getSpatialReference());
+        flags = other.flags;
 
         x = other.x;
         y = other.y;

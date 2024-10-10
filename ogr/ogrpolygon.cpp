@@ -28,16 +28,6 @@
 #include "ogr_p.h"
 
 /************************************************************************/
-/*                             OGRPolygon()                             */
-/************************************************************************/
-
-/**
- * \brief Create an empty polygon.
- */
-
-OGRPolygon::OGRPolygon() = default;
-
-/************************************************************************/
 /*                     OGRPolygon( const OGRPolygon& )                  */
 /************************************************************************/
 
@@ -51,12 +41,6 @@ OGRPolygon::OGRPolygon() = default;
  */
 
 OGRPolygon::OGRPolygon(const OGRPolygon &) = default;
-
-/************************************************************************/
-/*                            ~OGRPolygon()                             */
-/************************************************************************/
-
-OGRPolygon::~OGRPolygon() = default;
 
 /************************************************************************/
 /*                     operator=( const OGRPolygon&)                    */
@@ -263,18 +247,26 @@ OGRLinearRing *OGRPolygon::stealInteriorRing(int iRing)
 }
 
 /*! @cond Doxygen_Suppress */
+
+/************************************************************************/
+/*                            isRingCorrectType()                               */
+/************************************************************************/
+bool OGRPolygon::isRingCorrectType(const OGRCurve *poRing) const
+{
+    return poRing != nullptr && EQUAL(poRing->getGeometryName(), "LINEARRING");
+}
+
 /************************************************************************/
 /*                            checkRing()                               */
 /************************************************************************/
 
-int OGRPolygon::checkRing(OGRCurve *poNewRing) const
+bool OGRPolygon::checkRing(const OGRCurve *poNewRing) const
 {
-    if (poNewRing == nullptr ||
-        !(EQUAL(poNewRing->getGeometryName(), "LINEARRING")))
+    if (!isRingCorrectType(poNewRing))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Wrong curve type. Expected LINEARRING.");
-        return FALSE;
+        return false;
     }
 
     if (!poNewRing->IsEmpty() && !poNewRing->get_IsClosed())
@@ -286,7 +278,7 @@ int OGRPolygon::checkRing(OGRCurve *poNewRing) const
         if (pszEnvVar != nullptr && !CPLTestBool(pszEnvVar))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Non closed ring detected.");
-            return FALSE;
+            return false;
         }
         else
         {
@@ -299,7 +291,7 @@ int OGRPolygon::checkRing(OGRCurve *poNewRing) const
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 /*! @endcond */

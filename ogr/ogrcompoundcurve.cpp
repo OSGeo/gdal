@@ -23,16 +23,6 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                         OGRCompoundCurve()                           */
-/************************************************************************/
-
-/**
- * \brief Create an empty compound curve.
- */
-
-OGRCompoundCurve::OGRCompoundCurve() = default;
-
-/************************************************************************/
 /*             OGRCompoundCurve( const OGRCompoundCurve& )              */
 /************************************************************************/
 
@@ -46,12 +36,6 @@ OGRCompoundCurve::OGRCompoundCurve() = default;
  */
 
 OGRCompoundCurve::OGRCompoundCurve(const OGRCompoundCurve &) = default;
-
-/************************************************************************/
-/*                         ~OGRCompoundCurve()                          */
-/************************************************************************/
-
-OGRCompoundCurve::~OGRCompoundCurve() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRCompoundCurve&)                  */

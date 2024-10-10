@@ -26,16 +26,6 @@
 #include "ogr_p.h"
 
 /************************************************************************/
-/*                           OGRMultiPoint()                            */
-/************************************************************************/
-
-/**
- * \brief Create an empty multi point collection.
- */
-
-OGRMultiPoint::OGRMultiPoint() = default;
-
-/************************************************************************/
 /*                OGRMultiPoint( const OGRMultiPoint& )                 */
 /************************************************************************/
 
@@ -49,12 +39,6 @@ OGRMultiPoint::OGRMultiPoint() = default;
  */
 
 OGRMultiPoint::OGRMultiPoint(const OGRMultiPoint &) = default;
-
-/************************************************************************/
-/*                          ~OGRMultiPoint()                            */
-/************************************************************************/
-
-OGRMultiPoint::~OGRMultiPoint() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRMultiPoint&)                    */
