@@ -704,6 +704,7 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         CPLError(CE_Failure, CPLE_AppDefined, "%s",
                  err.message ? err.message : "Cannot decode image");
         poGDS->m_bFailureDecoding = true;
+        heif_decoding_options_free(decode_options);
         return CE_Failure;
     }
     heif_decoding_options_free(decode_options);
