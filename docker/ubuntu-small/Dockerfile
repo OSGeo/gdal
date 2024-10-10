@@ -22,7 +22,12 @@ ARG TARGET_ARCH=
 RUN echo ${TARGET_ARCH}
 COPY ./bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
 
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN rm -f /etc/apt/apt.conf.d/docker-clean \
+    && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
+    && echo 'Acquire::Retries "10";' > /etc/apt/apt.conf.d/80-retries
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    . /buildscripts/bh-set-envvars.sh \
     && if test "${TARGET_ARCH}" != ""; then \
     rm -f /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources \
     && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble main restricted universe" >> /etc/apt/sources.list \
@@ -36,23 +41,26 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-13-${GCC_ARCH}-linux-gnu \
     && ln -s ${GCC_ARCH}-linux-gnu-gcc-13 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
-    && ln -s ${GCC_ARCH}-linux-gnu-g++-13 /usr/bin/${GCC_ARCH}-linux-gnu-g++ \
-    && rm -rf /var/lib/apt/lists/*; \
+    && ln -s ${GCC_ARCH}-linux-gnu-g++-13 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
     fi
 
 # Setup build env for PROJ
 USER root
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
-            build-essential ca-certificates \
+            build-essential ca-certificates ccache \
             git make ninja-build cmake wget unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff-dev${APT_ARCH_SUFFIX} \
-    && rm -rf /var/lib/apt/lists/*
+            rsync
 
 # Setup build env for GDAL
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing --no-install-recommends \
        python3-dev${APT_ARCH_SUFFIX} python3-numpy${APT_ARCH_SUFFIX} python3-setuptools${APT_ARCH_SUFFIX} \
@@ -63,8 +71,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libzstd-dev${APT_ARCH_SUFFIX} bash zip curl \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libopenjp2-7-dev${APT_ARCH_SUFFIX} \
        libspatialite-dev${APT_ARCH_SUFFIX} \
-       autoconf automake sqlite3 bash-completion swig \
-    && rm -rf /var/lib/apt/lists/*
+       autoconf automake sqlite3 bash-completion swig
 
 # Build openjpeg
 ARG OPENJPEG_VERSION=
@@ -93,13 +100,16 @@ RUN \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
     && rm -f *.zip
 
-RUN apt-get update -y \
-    && apt-get install -y --fix-missing --no-install-recommends rsync ccache \
-    && rm -rf /var/lib/apt/lists/*
 ARG RSYNC_REMOTE
+ARG WITH_CCACHE
 
 # Build PROJ
 ARG PROJ_VERSION=master
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y patchelf
+
 RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && mkdir proj \
@@ -111,6 +121,8 @@ RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/proj/${GCC_ARCH}/ $HOME/.cache/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
         export CC="ccache ${GCC_ARCH}-linux-gnu-gcc"; \
         export CXX="ccache ${GCC_ARCH}-linux-gnu-g++"; \
         export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"; \
@@ -127,10 +139,12 @@ RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
     && ninja \
     && DESTDIR="/build" ninja install \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
-        ccache -s; \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/proj/${GCC_ARCH}/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
         unset CC; \
         unset CXX; \
     fi \
@@ -144,9 +158,6 @@ RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
     && rm /build${PROJ_INSTALL_PREFIX}/lib/libproj.*  \
     && ${GCC_ARCH}-linux-gnu-strip -s /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
     && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
-    && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y patchelf \
-    && rm -rf /var/lib/apt/lists/* \
     && patchelf --set-soname libinternalproj.so.${PROJ_SO_FIRST} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
     && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do patchelf --replace-needed libproj.so.${PROJ_SO_FIRST} libinternalproj.so.${PROJ_SO_FIRST} $i; done
 
@@ -173,6 +184,8 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/ $HOME/.cache/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
         # Little trick to avoid issues with Python bindings
         printf "#!/bin/sh\nccache %s-linux-gnu-gcc \$*" "${GCC_ARCH}" > ccache_gcc.sh; \
         chmod +x ccache_gcc.sh; \
@@ -199,10 +212,12 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     && DESTDIR="/build" ninja install \
     && cd .. \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
-        ccache -s; \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
         unset CC; \
         unset CXX; \
     fi \
@@ -227,19 +242,17 @@ USER root
 RUN date
 
 # Update distro
-RUN apt-get update -y && apt-get upgrade -y \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update \
-# PROJ dependencies
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update -y \
+    && apt-get upgrade -y \
+    # PROJ dependencies
+    && apt-get install -y --no-install-recommends \
         libsqlite3-0 libtiff6 libcurl4 \
         curl unzip ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-# GDAL dependencies
-RUN apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y  --no-install-recommends \
+    # GDAL dependencies
+    && apt-get install -y --no-install-recommends \
         python3-numpy libpython3.12 \
         libjpeg-turbo8 libgeos3.12.1 libgeos-c1v5 \
         libexpat1 \
@@ -249,12 +262,7 @@ RUN apt-get update -y \
         libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite8 \
         # pil for antialias option of gdal2tiles
         python3-pil \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        python-is-python3 \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y python-is-python3
 
 # Order layers starting with less frequently varying ones
 # Only used for custom libopenjp2

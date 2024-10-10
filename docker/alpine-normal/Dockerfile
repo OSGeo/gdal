@@ -82,6 +82,7 @@ RUN apk add --no-cache \
     py3-setuptools \
     python3-dev \
     qhull-dev \
+    rsync \
     sfcgal-dev \
     snappy-dev \
     sqlite-dev \
@@ -140,8 +141,8 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
     ); fi
 
-RUN apk add --no-cache rsync ccache
 ARG RSYNC_REMOTE
+ARG WITH_CCACHE
 
 # Build PROJ
 ARG PROJ_VERSION=master
@@ -154,6 +155,8 @@ RUN --mount=type=cache,id=alpine-normal-proj,target=$HOME/.cache \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/proj/$(uname -m)/ $HOME/.cache/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
         export PROJ_DB_CACHE_PARAM="-DPROJ_DB_CACHE_DIR=$HOME/.cache"; \
@@ -172,10 +175,12 @@ RUN --mount=type=cache,id=alpine-normal-proj,target=$HOME/.cache \
     && ninja install \
     && DESTDIR="/build_proj" ninja install \
     && if test "${RSYNC_REMOTE}" != ""; then \
-        ccache -s; \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/proj/$(uname -m)/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
         unset CC; \
         unset CXX; \
     fi \
@@ -197,6 +202,8 @@ RUN --mount=type=cache,id=alpine-normal-spatialite,target=$HOME/.cache \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/spatialite/ $HOME/.cache/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
         export CC="ccache gcc"; \
         export CXX="ccache g++"; \
         ccache -M 100M; \
@@ -205,10 +212,12 @@ RUN --mount=type=cache,id=alpine-normal-spatialite,target=$HOME/.cache \
     && make -j$(nproc) \
     && make install \
     && if test "${RSYNC_REMOTE}" != ""; then \
-        ccache -s; \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/spatialite/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
         unset CC; \
         unset CXX; \
     fi \
@@ -247,6 +256,8 @@ RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/gdal/$(uname -m)/ $HOME/.cache/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
         # Little trick to avoid issues with Python bindings
         printf "#!/bin/sh\nccache gcc \$*" > ccache_gcc.sh; \
         chmod +x ccache_gcc.sh; \
@@ -274,10 +285,12 @@ RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
     && (ninja multireadtest && cp apps/multireadtest /build/usr/bin) \
     && cd .. \
     && if test "${RSYNC_REMOTE}" != ""; then \
-        ccache -s; \
         echo "Uploading cache..."; \
         rsync -ra --delete $HOME/.cache/ ${RSYNC_REMOTE}/gdal/$(uname -m)/; \
         echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
         unset CC; \
         unset CXX; \
     fi \
