@@ -14,6 +14,23 @@ of a RFC (request for comment) document.
 
 GDAL's policy on substantial code additions is documented at :ref:`rfc-85`.
 
+Licensing
+---------
+
+All changes subject to copyright contributed to GDAL must be under the MIT
+license. You need to ensure you are in a capacity to contribute changes under
+that license.
+
+Policy regarding the use of generative Artificial Intelligence (AI) tools
+-------------------------------------------------------------------------
+
+Due to legal uncertainties regarding the output of generative AI tools, in
+particular due to their ability to produce content that may come from copyrighted
+sources without referencing the original appropriate copyright and licensing terms,
+use of generative AI tools to contribute copyrighted material is prohibited
+(it may be acceptable to use such tools to do changes that are not subject to
+copyright law, such as fixing spelling and grammar mistakes).
+
 .. _cpl:
 
 Portability
