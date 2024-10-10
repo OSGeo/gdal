@@ -35,10 +35,16 @@ class GDALHEIFDataset final : public GDALPamDataset
 
     heif_context *m_hCtxt = nullptr;
     heif_image_handle *m_hImageHandle = nullptr;
+#ifndef LIBHEIF_SUPPORTS_TILES
     heif_image *m_hImage = nullptr;
+#endif
     bool m_bFailureDecoding = false;
     std::vector<std::unique_ptr<GDALHEIFDataset>> m_apoOvrDS{};
     bool m_bIsThumbnail = false;
+
+#ifdef LIBHEIF_SUPPORTS_TILES
+    heif_image_tiling m_tiling;
+#endif
 
 #ifdef HAS_CUSTOM_FILE_READER
     heif_reader m_oReader{};
@@ -126,8 +132,10 @@ GDALHEIFDataset::~GDALHEIFDataset()
     if (m_fpL)
         VSIFCloseL(m_fpL);
 #endif
+#ifndef LIBHEIF_SUPPORTS_TILES
     if (m_hImage)
         heif_image_release(m_hImage);
+#endif
     if (m_hImageHandle)
         heif_image_handle_release(m_hImageHandle);
 }
@@ -287,6 +295,16 @@ bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
                  err.message ? err.message : "Cannot open image");
         return false;
     }
+
+#ifdef LIBHEIF_SUPPORTS_TILES
+    err = heif_image_handle_get_image_tiling(m_hImageHandle, true, &m_tiling);
+    if (err.code != heif_error_Ok)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                 err.message ? err.message : "Cannot get image tiling");
+        return false;
+    }
+#endif
 
     nRasterXSize = heif_image_handle_get_width(m_hImageHandle);
     nRasterYSize = heif_image_handle_get_height(m_hImageHandle);
@@ -637,14 +655,88 @@ GDALHEIFRasterBand::GDALHEIFRasterBand(GDALHEIFDataset *poDSIn, int nBandIn)
                                         "IMAGE_STRUCTURE");
     }
 #endif
+
+#ifdef LIBHEIF_SUPPORTS_TILES
+    nBlockXSize = poDSIn->m_tiling.tile_width;
+    nBlockYSize = poDSIn->m_tiling.tile_height;
+#else
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
+#endif
 }
 
 /************************************************************************/
 /*                            IReadBlock()                              */
 /************************************************************************/
+#ifdef LIBHEIF_SUPPORTS_TILES
+CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+                                      void *pImage)
+{
+    GDALHEIFDataset *poGDS = static_cast<GDALHEIFDataset *>(poDS);
+    if (poGDS->m_bFailureDecoding)
+        return CE_Failure;
+    const int nBands = poGDS->GetRasterCount();
+    heif_image *hImage = nullptr;
+    struct heif_decoding_options *decode_options =
+        heif_decoding_options_alloc();
 
+    auto err = heif_image_handle_decode_image_tile(
+        poGDS->m_hImageHandle, &hImage, heif_colorspace_RGB,
+        nBands == 3
+            ? (eDataType == GDT_UInt16 ?
+#if CPL_IS_LSB
+                                       heif_chroma_interleaved_RRGGBB_LE
+#else
+                                       heif_chroma_interleaved_RRGGBB_BE
+#endif
+                                       : heif_chroma_interleaved_RGB)
+            : (eDataType == GDT_UInt16 ?
+#if CPL_IS_LSB
+                                       heif_chroma_interleaved_RRGGBBAA_LE
+#else
+                                       heif_chroma_interleaved_RRGGBBAA_BE
+#endif
+                                       : heif_chroma_interleaved_RGBA),
+        decode_options, nBlockXOff, nBlockYOff);
+
+    if (err.code != heif_error_Ok)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                 err.message ? err.message : "Cannot decode image");
+        poGDS->m_bFailureDecoding = true;
+        return CE_Failure;
+    }
+    heif_decoding_options_free(decode_options);
+    int nStride = 0;
+    const uint8_t *pSrcData = heif_image_get_plane_readonly(
+        hImage, heif_channel_interleaved, &nStride);
+    if (eDataType == GDT_Byte)
+    {
+        for (int y = 0; y < nBlockYSize; y++)
+        {
+            for (int x = 0; x < nBlockXSize; x++)
+            {
+                (static_cast<GByte *>(pImage))[y * nBlockXSize + x] =
+                    pSrcData[y * nStride + x * nBands + nBand - 1];
+            }
+        }
+    }
+    else
+    {
+        for (int y = 0; y < nBlockYSize; y++)
+        {
+            for (int x = 0; x < nBlockXSize; x++)
+            {
+                (static_cast<GUInt16 *>(pImage))[y * nBlockXSize + x] =
+                    (reinterpret_cast<const GUInt16 *>(
+                        pSrcData))[y * nStride + x * nBands + nBand - 1];
+            }
+        }
+    }
+
+    return CE_None;
+}
+#else
 CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
 {
     GDALHEIFDataset *poGDS = static_cast<GDALHEIFDataset *>(poDS);
@@ -718,6 +810,7 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
 
     return CE_None;
 }
+#endif
 
 /************************************************************************/
 /*                       GDALRegister_HEIF()                            */
