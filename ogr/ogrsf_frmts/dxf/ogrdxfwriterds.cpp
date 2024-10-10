@@ -22,6 +22,10 @@
 #include "cpl_string.h"
 #include "cpl_vsi_error.h"
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 /************************************************************************/
 /*                          OGRDXFWriterDS()                          */
 /************************************************************************/
@@ -118,6 +122,11 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
     delete poBlocksLayer;
 
     CSLDestroy(papszLayersToCreate);
+
+    if (m_bHeaderFileIsTemp)
+        VSIUnlink(osHeaderFile.c_str());
+    if (m_bTrailerFileIsTemp)
+        VSIUnlink(osTrailerFile.c_str());
 }
 
 /************************************************************************/
@@ -175,13 +184,36 @@ int OGRDXFWriterDS::Open(const char *pszFilename, char **papszOptions)
         osHeaderFile = CSLFetchNameValue(papszOptions, "HEADER");
     else
     {
+#ifdef EMBED_RESOURCE_FILES
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+#endif
+#ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
+        const char *pszValue = nullptr;
+#else
         const char *pszValue = CPLFindFile("gdal", "header.dxf");
         if (pszValue == nullptr)
+#endif
         {
+#ifdef EMBED_RESOURCE_FILES
+            static const bool bOnce [[maybe_unused]] = []()
+            {
+                CPLDebug("DXF", "Using embedded header.dxf");
+                return true;
+            }();
+            pszValue = VSIMemGenerateHiddenFilename("header.dxf");
+            VSIFCloseL(VSIFileFromMemBuffer(
+                pszValue,
+                const_cast<GByte *>(
+                    reinterpret_cast<const GByte *>(OGRDXFGetHEADER())),
+                static_cast<int>(strlen(OGRDXFGetHEADER())),
+                /* bTakeOwnership = */ false));
+            m_bHeaderFileIsTemp = true;
+#else
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "Failed to find template header file header.dxf for "
                      "reading,\nis GDAL_DATA set properly?");
             return FALSE;
+#endif
         }
         osHeaderFile = pszValue;
     }
@@ -193,9 +225,34 @@ int OGRDXFWriterDS::Open(const char *pszFilename, char **papszOptions)
         osTrailerFile = CSLFetchNameValue(papszOptions, "TRAILER");
     else
     {
+#ifdef EMBED_RESOURCE_FILES
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+#endif
+#ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
+        const char *pszValue = nullptr;
+#else
         const char *pszValue = CPLFindFile("gdal", "trailer.dxf");
         if (pszValue != nullptr)
             osTrailerFile = pszValue;
+#endif
+#ifdef EMBED_RESOURCE_FILES
+        if (!pszValue)
+        {
+            static const bool bOnce [[maybe_unused]] = []()
+            {
+                CPLDebug("DXF", "Using embedded trailer.dxf");
+                return true;
+            }();
+            osTrailerFile = VSIMemGenerateHiddenFilename("trailer.dxf");
+            m_bTrailerFileIsTemp = false;
+            VSIFCloseL(VSIFileFromMemBuffer(
+                osTrailerFile.c_str(),
+                const_cast<GByte *>(
+                    reinterpret_cast<const GByte *>(OGRDXFGetTRAILER())),
+                static_cast<int>(strlen(OGRDXFGetTRAILER())),
+                /* bTakeOwnership = */ false));
+        }
+#endif
     }
 
 /* -------------------------------------------------------------------- */

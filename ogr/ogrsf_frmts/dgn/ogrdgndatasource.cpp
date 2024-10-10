@@ -14,6 +14,10 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 /************************************************************************/
 /*                         OGRDGNDataSource()                           */
 /************************************************************************/
@@ -180,19 +184,58 @@ OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
     const bool b3DRequested =
         CPLFetchBool(papszOptions, "3D", wkbHasZ(eGeomType));
 
-    const char *pszSeed = CSLFetchNameValue(papszOptions, "SEED");
+    const char *pszRequestSeed = CSLFetchNameValue(papszOptions, "SEED");
+    const char *pszSeed = pszRequestSeed;
     int nCreationFlags = 0;
+#ifdef EMBED_RESOURCE_FILES
+    std::string osTmpSeedFilename;
+#endif
     if (pszSeed)
         nCreationFlags |= DGNCF_USE_SEED_ORIGIN | DGNCF_USE_SEED_UNITS;
-    else if (b3DRequested)
-        pszSeed = CPLFindFile("gdal", "seed_3d.dgn");
     else
-        pszSeed = CPLFindFile("gdal", "seed_2d.dgn");
+    {
+        pszRequestSeed = b3DRequested ? "seed_3d.dgn" : "seed_2d.dgn";
+#ifdef EMBED_RESOURCE_FILES
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+#endif
+        pszSeed = CPLFindFile("gdal", pszRequestSeed);
+#ifdef EMBED_RESOURCE_FILES
+        if (!pszSeed)
+        {
+            if (b3DRequested)
+            {
+                static const bool bOnce [[maybe_unused]] = []()
+                {
+                    CPLDebug("DGN", "Using embedded seed_3d");
+                    return true;
+                }();
+            }
+            else
+            {
+                static const bool bOnce [[maybe_unused]] = []()
+                {
+                    CPLDebug("DGN", "Using embedded seed_2d");
+                    return true;
+                }();
+            }
+            unsigned nSize = 0;
+            const unsigned char *pabyData =
+                b3DRequested ? DGNGetSeed3D(&nSize) : DGNGetSeed2D(&nSize);
+            osTmpSeedFilename = VSIMemGenerateHiddenFilename(pszRequestSeed);
+            pszSeed = osTmpSeedFilename.c_str();
+            VSIFCloseL(VSIFileFromMemBuffer(osTmpSeedFilename.c_str(),
+                                            const_cast<GByte *>(pabyData),
+                                            static_cast<int>(nSize),
+                                            /* bTakeOwnership = */ false));
+        }
+#endif
+    }
 
     if (pszSeed == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "No seed file provided, and unable to find seed_2d.dgn.");
+                 "No seed file provided, and unable to find %s.",
+                 pszRequestSeed);
         return nullptr;
     }
 
@@ -254,6 +297,10 @@ OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "ORIGIN is not a valid 2d or 3d tuple.\n"
                      "Separate tuple values with comma.");
+#ifdef EMBED_RESOURCE_FILES
+            if (!osTmpSeedFilename.empty())
+                VSIUnlink(osTmpSeedFilename.c_str());
+#endif
             return nullptr;
         }
         CSLDestroy(papszTuple);
@@ -265,6 +312,11 @@ OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
     hDGN = DGNCreate(GetDescription(), pszSeed, nCreationFlags, dfOriginX,
                      dfOriginY, dfOriginZ, nSUPerMU, nUORPerSU, pszMasterUnit,
                      pszSubUnit);
+#ifdef EMBED_RESOURCE_FILES
+    if (!osTmpSeedFilename.empty())
+        VSIUnlink(osTmpSeedFilename.c_str());
+#endif
+
     if (hDGN == nullptr)
         return nullptr;
 

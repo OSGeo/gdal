@@ -30,6 +30,10 @@
 #include "gmlutils.h"
 #include "ogr_geometry.h"
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 /************************************************************************/
 /*                            ~IGMLReader()                             */
 /************************************************************************/
@@ -1123,11 +1127,29 @@ bool GMLReader::LoadClasses(const char *pszFile)
     /*      Load the raw XML file.                                          */
     /* -------------------------------------------------------------------- */
     GByte *pabyRet = nullptr;
-    if (!VSIIngestFile(nullptr, pszFile, &pabyRet, nullptr, 100 * 1024 * 1024))
+    const char *pszWholeText = nullptr;
     {
-        return false;
+#ifdef EMBED_RESOURCE_FILES
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+#endif
+        if (VSIIngestFile(nullptr, pszFile, &pabyRet, nullptr,
+                          100 * 1024 * 1024))
+        {
+            pszWholeText = reinterpret_cast<const char *>(pabyRet);
+        }
+        else
+        {
+#ifdef EMBED_RESOURCE_FILES
+            pszWholeText = GMLGetFileContent(pszFile);
+            if (pszWholeText)
+            {
+                CPLDebug("GML", "Using embedded %s", pszFile);
+            }
+#endif
+        }
     }
-    const char *pszWholeText = reinterpret_cast<const char *>(pabyRet);
+    if (!pszWholeText)
+        return false;
 
     if (strstr(pszWholeText, "<GMLFeatureClassList") == nullptr)
     {

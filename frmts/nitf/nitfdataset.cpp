@@ -46,6 +46,10 @@
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
                                  GUIntBig nImageOffset, GIntBig nPixelCount,
                                  const char *pszIC, vsi_l_offset nICOffset,
@@ -1770,12 +1774,37 @@ static OGRErr LoadDODDatum(OGRSpatialReference *poSRS, const char *pszDatumName)
         return OGRERR_NONE;
     }
 
+#if defined(USE_ONLY_EMBEDDED_RESOURCE_FILES) && !defined(EMBED_RESOURCE_FILES)
+    return OGRERR_FAILURE;
+#else
+
     /* -------------------------------------------------------------------- */
     /*      All the rest we will try and load from gt_datum.csv             */
     /*      (Geotrans datum file).                                          */
     /* -------------------------------------------------------------------- */
     char szExpanded[6];
-    const char *pszGTDatum = CSVFilename("gt_datum.csv");
+    const char *pszGTDatum = nullptr;
+    CPL_IGNORE_RET_VAL(pszGTDatum);
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+    pszGTDatum = CSVFilename("gt_datum.csv");
+#endif
+#ifdef EMBED_RESOURCE_FILES
+    std::string osTmpFilename;
+    // CSVFilename() returns the same content as pszFilename if it does not
+    // find the file.
+    if (!pszGTDatum || strcmp(pszGTDatum, "gt_datum.csv") == 0)
+    {
+        osTmpFilename = VSIMemGenerateHiddenFilename("gt_datum.csv");
+        const char *pszFileContent = NITFGetGTDatum();
+        VSIFCloseL(VSIFileFromMemBuffer(
+            osTmpFilename.c_str(),
+            const_cast<GByte *>(
+                reinterpret_cast<const GByte *>(pszFileContent)),
+            static_cast<int>(strlen(pszFileContent)),
+            /* bTakeOwnership = */ false));
+        pszGTDatum = osTmpFilename.c_str();
+    }
+#endif
 
     strncpy(szExpanded, pszDatumName, 3);
     szExpanded[3] = '\0';
@@ -1795,6 +1824,14 @@ static OGRErr LoadDODDatum(OGRSpatialReference *poSRS, const char *pszDatumName)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to find datum %s/%s in gt_datum.csv.", pszDatumName,
                  szExpanded);
+
+#ifdef EMBED_RESOURCE_FILES
+        if (!osTmpFilename.empty())
+        {
+            CSVDeaccess(osTmpFilename.c_str());
+            VSIUnlink(osTmpFilename.c_str());
+        }
+#endif
         return OGRERR_FAILURE;
     }
 
@@ -1807,10 +1844,40 @@ static OGRErr LoadDODDatum(OGRSpatialReference *poSRS, const char *pszDatumName)
     double dfDeltaZ = CPLAtof(
         CSVGetField(pszGTDatum, "CODE", szExpanded, CC_ApproxString, "DELTAZ"));
 
+#ifdef EMBED_RESOURCE_FILES
+    if (!osTmpFilename.empty())
+    {
+        CSVDeaccess(osTmpFilename.c_str());
+        VSIUnlink(osTmpFilename.c_str());
+        osTmpFilename.clear();
+    }
+#endif
+
     /* -------------------------------------------------------------------- */
     /*      Lookup the ellipse code.                                        */
     /* -------------------------------------------------------------------- */
-    const char *pszGTEllipse = CSVFilename("gt_ellips.csv");
+    const char *pszGTEllipse = nullptr;
+    CPL_IGNORE_RET_VAL(pszGTEllipse);
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+    pszGTEllipse = CSVFilename("gt_ellips.csv");
+#endif
+
+#ifdef EMBED_RESOURCE_FILES
+    // CSVFilename() returns the same content as pszFilename if it does not
+    // find the file.
+    if (!pszGTEllipse || strcmp(pszGTEllipse, "gt_ellips.csv") == 0)
+    {
+        osTmpFilename = VSIMemGenerateHiddenFilename("gt_ellips");
+        const char *pszFileContent = NITFGetGTEllips();
+        VSIFCloseL(VSIFileFromMemBuffer(
+            osTmpFilename.c_str(),
+            const_cast<GByte *>(
+                reinterpret_cast<const GByte *>(pszFileContent)),
+            static_cast<int>(strlen(pszFileContent)),
+            /* bTakeOwnership = */ false));
+        pszGTEllipse = osTmpFilename.c_str();
+    }
+#endif
 
     CPLString osEName = CSVGetField(pszGTEllipse, "CODE", osEllipseCode,
                                     CC_ApproxString, "NAME");
@@ -1820,6 +1887,14 @@ static OGRErr LoadDODDatum(OGRSpatialReference *poSRS, const char *pszDatumName)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to find datum %s in gt_ellips.csv.",
                  osEllipseCode.c_str());
+
+#ifdef EMBED_RESOURCE_FILES
+        if (!osTmpFilename.empty())
+        {
+            CSVDeaccess(osTmpFilename.c_str());
+            VSIUnlink(osTmpFilename.c_str());
+        }
+#endif
         return OGRERR_FAILURE;
     }
 
@@ -1835,7 +1910,17 @@ static OGRErr LoadDODDatum(OGRSpatialReference *poSRS, const char *pszDatumName)
 
     poSRS->SetTOWGS84(dfDeltaX, dfDeltaY, dfDeltaZ);
 
+#ifdef EMBED_RESOURCE_FILES
+    if (!osTmpFilename.empty())
+    {
+        CSVDeaccess(osTmpFilename.c_str());
+        VSIUnlink(osTmpFilename.c_str());
+        osTmpFilename.clear();
+    }
+#endif
+
     return OGRERR_NONE;
+#endif
 }
 
 /************************************************************************/
