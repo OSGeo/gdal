@@ -375,11 +375,24 @@ if (NOT CMAKE_CROSSCOMPILING AND BUILD_VSIPRELOAD AND "${CMAKE_SYSTEM}" MATCHES 
   endif ()
 endif ()
 
-# Utility to generate cpl_character_sets.h and .c
-add_executable(character_set_conv_table_generator EXCLUDE_FROM_ALL character_set_conv_table_generator.c)
+if (GDAL_USE_ICONV)
+    # Utility to generate cpl_character_sets.h and .c
+    add_executable(character_set_conv_table_generator EXCLUDE_FROM_ALL character_set_conv_table_generator.c)
 
-# Custom target that must be manually invoked if character_set_conv_table_generator.c is modified
-add_custom_target(generate_cpl_character_sets
-                  COMMAND $<TARGET_FILE:character_set_conv_table_generator>
-                  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-                  DEPENDS character_set_conv_table_generator)
+      if (NOT Iconv_IS_BUILT_IN)
+        if (APPLE)
+          # linkage against OSX's system iconv is going to require LIBICONV_PLUG to be defined, but other self-built
+          # situations like CondaForge or Homebrew might not need this
+          if (HAVE_ICONV_CLOSE)
+            target_compile_definitions(character_set_conv_table_generator PRIVATE -DLIBICONV_PLUG)
+          endif (HAVE_ICONV_CLOSE)
+        endif (APPLE)
+        target_link_libraries(character_set_conv_table_generator PRIVATE Iconv::Iconv)
+      endif ()
+
+    # Custom target that must be manually invoked if character_set_conv_table_generator.c is modified
+    add_custom_target(generate_cpl_character_sets
+                      COMMAND $<TARGET_FILE:character_set_conv_table_generator>
+                      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                      DEPENDS character_set_conv_table_generator)
+endif()
