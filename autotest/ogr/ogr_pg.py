@@ -6200,3 +6200,34 @@ def test_ogr_pg_ogr2ogr_with_multiple_dotted_table_name(pg_ds):
 
     finally:
         pg_ds.ExecuteSQL(f'DROP SCHEMA "{tmp_schema}" CASCADE')
+
+
+###############################################################################
+# Test scenario of https://lists.osgeo.org/pipermail/gdal-dev/2024-October/059608.html
+
+
+@only_without_postgis
+@gdaltest.enable_exceptions()
+def test_ogr_pg_empty_search_path(pg_ds):
+
+    with pg_ds.ExecuteSQL("SHOW search_path") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        old_search_path = f.GetField(0)
+        old_search_path = old_search_path.replace(
+            "test_ogr_pg_empty_search_path_no_postgis, ", ""
+        )
+
+    with pg_ds.ExecuteSQL("SELECT CURRENT_USER") as lyr:
+        f = lyr.GetNextFeature()
+        current_user = f.GetField(0)
+    pg_ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = ''")
+    try:
+        ds = reconnect(pg_ds, update=1)
+
+        with ds.ExecuteSQL("SHOW search_path") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            new_search_path = f.GetField(0)
+            assert new_search_path == "test_ogr_pg_empty_search_path_no_postgis, public"
+
+    finally:
+        ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = {old_search_path}")
