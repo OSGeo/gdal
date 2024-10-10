@@ -21,6 +21,7 @@ GDAL
     contributing/index
     faq
     license
+    thanks
 
 Index
 =====
