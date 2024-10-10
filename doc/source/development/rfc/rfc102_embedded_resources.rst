@@ -9,7 +9,7 @@ Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2024-Oct-01
 Status:        Draft
-Target:        GDAL 3.11, PROJ 9.6
+Target:        GDAL 3.11
 ============== =============================================
 
 Summary
@@ -17,9 +17,9 @@ Summary
 
 This RFC uses C23 ``#embed`` pre-processor directive, when available,
 to be able to optionally embed GDAL resource files directly into libgdal.
-It is also intended to be used for PROJ, for its :file:`proj.db` and
-:file:`proj.ini` files. For PROJ, a fallback mechanism will be used to not
-require C23.
+
+A similar `PROJ RFC-8 <https://github.com/OSGeo/PROJ/pull/4274>`__ has been
+submitted for PROJ to embed its :file:`proj.db` and :file:`proj.ini` files.
 
 Motivation
 ----------
@@ -90,7 +90,7 @@ locate resource files in the GDAL_DATA directory burnt at build time into libgda
 (``${install_prefix}/share/gdal``), or by the :config:`GDAL_DATA` configuration option.
 
 Said otherwise, if ``EMBED_RESOURCE_FILES=ON`` but ``USE_ONLY_EMBEDDED_RESOURCE_FILES=OFF``,
-GDAL/PROJ will first try to locate resource files from the file system, and
+GDAL will first try to locate resource files from the file system, and
 fallback to the embedded version if not found.
 
 The resource files will still be installed in ``${install_prefix}/share/gdal``,
@@ -115,21 +115,6 @@ Impacted code
 - ogr/ogrsf_frmts/s57: embedding s57*.csv files
 - ogr/ogrsf_frmts/sxf: embedding default.rsc
 - ogr/ogrsf_frmts/vdv: embedding vdv452.xml
-
-PROJ specificities
-------------------
-
-Loading of the embedded :file:`proj.db` will involve using the
-`SQLite3 memvfs <https://www.sqlite.org/src/doc/tip/ext/misc/memvfs.c>`__,
-as done by
-`DuckDB Spatial <https://github.com/duckdb/duckdb_spatial/blob/9c14a8b4a9093d981123a7d9f620a675ab29c6d5/spatial/src/spatial/proj/module.cpp#L56>`__
-
-Embedding of resource files in PROJ is limited to :file:`proj.db` and
- :file:`proj.ini`.
-
-Note: acknowledging how critical access to proj.db is, we make an exception of
-also allowing embedding it with non-C23 capable compilers, using a CMake script,
-derived from https://jonathanhamberg.com/post/cmake-file-embedding/.
 
 Considered alternatives
 -----------------------
@@ -171,9 +156,9 @@ Related issues and PRs
 
 - https://github.com/OSGeo/gdal/issues/10780
 
-- GDAL candidate implementation: https://github.com/OSGeo/gdal/pull/10972
+- `GDAL candidate implementation <https://github.com/OSGeo/gdal/pull/10972>`__
 
-- PROJ candidate implementation: https://github.com/OSGeo/PROJ/pull/4265
+- `PROJ RFC-8 Embedding resource files into libproj <https://github.com/OSGeo/PROJ/pull/4274>`__
 
 Voting history
 --------------
