@@ -1734,6 +1734,118 @@ int CSLFindName(CSLConstList papszStrList, const char *pszName)
     return -1;
 }
 
+/************************************************************************/
+/*                     CPLParseMemorySize()                             */
+/************************************************************************/
+
+/** Parse a memory size from a string.
+ *
+ * The string may indicate the units of the memory (e.g., "230k", "500 MB"),
+ * using the prefixes "k", "m", or "g" in either lower or upper-case,
+ * optionally followed by a "b" or "B". The string may alternatively specify
+ * memory as a fraction of the usable RAM (e.g., "25%"). Spaces before the
+ * number, between the number and the units, or after the units are ignored,
+ * but other characters will cause a parsing failure. If the string cannot
+ * be understood, the function will return CE_Failure.
+ *
+ * @param pszValue the string to parse
+ * @param[out] pnValue the parsed size, converted to bytes (if unit was specified)
+ * @param[out] pbUnitSpecified whether the string indicated the units
+ *
+ * @return CE_None on success, CE_Failure otherwise
+ * @since 3.10
+ */
+CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
+                          bool *pbUnitSpecified)
+{
+    const char *start = pszValue;
+    char *end = nullptr;
+
+    // trim leading whitespace
+    while (*start == ' ')
+    {
+        start++;
+    }
+
+    auto len = CPLStrnlen(start, 100);
+    double value = CPLStrtodM(start, &end);
+    const char *unit = nullptr;
+    bool unitIsNotPercent = false;
+
+    if (end == start)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Received non-numeric value: %s",
+                 pszValue);
+        return CE_Failure;
+    }
+
+    if (value <= 0 || !std::isfinite(value))
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Memory size must be a positive number.");
+        return CE_Failure;
+    }
+
+    for (const char *c = end; c < start + len; c++)
+    {
+        if (unit == nullptr)
+        {
+            // check various suffixes and convert number into bytes
+            if (*c == '%')
+            {
+                if (value < 0 || value > 100)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Memory percentage must be between 0 and 100.");
+                    return CE_Failure;
+                }
+                auto bytes = CPLGetUsablePhysicalRAM();
+                value *= static_cast<double>(bytes / 100);
+                unit = c;
+            }
+            else
+            {
+                switch (*c)
+                {
+                    case 'G':
+                    case 'g':
+                        value *= 1024;  // fall-through
+                    case 'M':
+                    case 'm':
+                        value *= 1024;  // fall-through
+                    case 'K':
+                    case 'k':
+                        value *= 1024;
+                        unit = c;
+                        unitIsNotPercent = true;
+                        break;
+                    case ' ':
+                        break;
+                    default:
+                        CPLError(CE_Failure, CPLE_IllegalArg,
+                                 "Unexpected value: %s", pszValue);
+                        return CE_Failure;
+                }
+            }
+        }
+        else if (unitIsNotPercent && c == unit + 1 && (*c == 'b' || *c == 'B'))
+        {
+            // ignore 'B' or 'b' as part of unit
+            continue;
+        }
+        else if (*c != ' ')
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Unexpected value: %s",
+                     pszValue);
+            return CE_Failure;
+        }
+    }
+
+    *pnValue = static_cast<GIntBig>(value);
+    *pbUnitSpecified = (unit != nullptr);
+    return CE_None;
+}
+
 /**********************************************************************
  *                       CPLParseNameValue()
  **********************************************************************/

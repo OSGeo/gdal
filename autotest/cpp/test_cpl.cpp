@@ -1745,6 +1745,68 @@ TEST_F(test_cpl, CPLParseRFC822DateTime)
                                         &weekday));
 }
 
+// Test CPLParseMemorySize()
+TEST_F(test_cpl, CPLParseMemorySize)
+{
+    GIntBig nValue;
+    bool bUnitSpecified;
+    CPLErr result;
+
+    result = CPLParseMemorySize("327mb", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_None);
+    EXPECT_EQ(nValue, 327 * 1024 * 1024);
+    EXPECT_TRUE(bUnitSpecified);
+
+    result = CPLParseMemorySize("327MB", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_None);
+    EXPECT_EQ(nValue, 327 * 1024 * 1024);
+    EXPECT_TRUE(bUnitSpecified);
+
+    result = CPLParseMemorySize("102.9K", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_None);
+    EXPECT_EQ(nValue, static_cast<GIntBig>(102.9 * 1024));
+    EXPECT_TRUE(bUnitSpecified);
+
+    result = CPLParseMemorySize("102.9 kB", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_None);
+    EXPECT_EQ(nValue, static_cast<GIntBig>(102.9 * 1024));
+    EXPECT_TRUE(bUnitSpecified);
+
+    result = CPLParseMemorySize("100%", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_None);
+    EXPECT_GT(nValue, 100 * 1024 * 1024);
+    EXPECT_TRUE(bUnitSpecified);
+
+    result = CPLParseMemorySize("  802  ", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_None);
+    EXPECT_EQ(nValue, 802);
+    EXPECT_FALSE(bUnitSpecified);
+
+    result = CPLParseMemorySize("110%", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_Failure);
+
+    result = CPLParseMemorySize("8kbit", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_Failure);
+
+    result = CPLParseMemorySize("8ZB", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_Failure);
+
+    result = CPLParseMemorySize("8Z", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_Failure);
+
+    result = CPLParseMemorySize("", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_Failure);
+
+    result = CPLParseMemorySize("  ", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_Failure);
+
+    result = CPLParseMemorySize("-100MB", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_Failure);
+
+    result = CPLParseMemorySize("nan", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_Failure);
+}
+
 // Test CPLCopyTree()
 TEST_F(test_cpl, CPLCopyTree)
 {

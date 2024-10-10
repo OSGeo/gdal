@@ -5767,11 +5767,21 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
         .action(
             [psOptions](const std::string &s)
             {
-                if (CPLAtofM(s.c_str()) < 10000)
-                    psOptions->dfWarpMemoryLimit =
-                        CPLAtofM(s.c_str()) * 1024 * 1024;
+                bool bUnitSpecified = false;
+                GIntBig nBytes;
+                if (CPLParseMemorySize(s.c_str(), &nBytes, &bUnitSpecified) ==
+                    CE_None)
+                {
+                    if (!bUnitSpecified && nBytes < 10000)
+                    {
+                        nBytes *= (1024 * 1024);
+                    }
+                    psOptions->dfWarpMemoryLimit = static_cast<double>(nBytes);
+                }
                 else
-                    psOptions->dfWarpMemoryLimit = CPLAtofM(s.c_str());
+                {
+                    throw std::invalid_argument("Failed to parse value of -wm");
+                }
             })
         .help(_("Set max warp memory."));
 
