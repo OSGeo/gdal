@@ -25,7 +25,6 @@ RUN apk add \
     libavif-dev \
     libdeflate-dev \
     libgeotiff-dev \
-    libheif-dev \
     libjpeg-turbo-dev \
     libjxl-dev \
     libkml-dev \
@@ -79,5 +78,14 @@ RUN apk add git autoconf automake libtool bison && \
     cd swig-git && \
     ./autogen.sh && \
     ./configure --prefix=/usr && \
+    make -j$(nproc) && \
+    make install
+
+RUN apk add aom-dev brotli-dev libde265-dev x265-dev && \
+    git clone --depth 1 https://github.com/strukturag/libheif.git libheif-git && \
+    cd libheif-git && \
+    mkdir build && \
+    cd build && \
+    cmake --preset=develop .. && \
     make -j$(nproc) && \
     make install
