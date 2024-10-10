@@ -1,7 +1,7 @@
 .. _python_osgeo:
 
-Miscellaneous Python API
-========================
+GDAL Python submodules
+======================
 
 
 Submodules
