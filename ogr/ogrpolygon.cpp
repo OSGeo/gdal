@@ -247,21 +247,29 @@ OGRLinearRing *OGRPolygon::stealInteriorRing(int iRing)
 }
 
 /*! @cond Doxygen_Suppress */
+
+/************************************************************************/
+/*                            isRingCorrectType()                               */
+/************************************************************************/
+bool OGRPolygon::isRingCorrectType(const OGRCurve *poRing) const
+{
+    return poRing != nullptr && EQUAL(poRing->getGeometryName(), "LINEARRING");
+}
+
 /************************************************************************/
 /*                            checkRing()                               */
 /************************************************************************/
 
-bool OGRPolygon::checkRing(const OGRCurve *poNewRing, bool bOnlyType) const
+bool OGRPolygon::checkRing(const OGRCurve *poNewRing) const
 {
-    if (poNewRing == nullptr ||
-        !(EQUAL(poNewRing->getGeometryName(), "LINEARRING")))
+    if (!isRingCorrectType(poNewRing))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Wrong curve type. Expected LINEARRING.");
         return false;
     }
 
-    if (!bOnlyType && !poNewRing->IsEmpty() && !poNewRing->get_IsClosed())
+    if (!poNewRing->IsEmpty() && !poNewRing->get_IsClosed())
     {
         // This configuration option name must be the same as in
         // OGRCurvePolygon::checkRing()

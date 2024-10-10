@@ -59,7 +59,7 @@ OGRCurvePolygon &OGRCurvePolygon::operator=(const OGRCurvePolygon &other)
 
         for (const auto *poRing : other.oCC)
         {
-            if (!checkRing(poRing, /* bOnlyType = */ true))
+            if (!isRingCorrectType(poRing))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Illegal use of OGRCurvePolygon::operator=(): "
@@ -332,12 +332,26 @@ OGRErr OGRCurvePolygon::addRing(const OGRCurve *poNewRing)
 }
 
 /************************************************************************/
+/*                            isRingCorrectType()                       */
+/************************************************************************/
+bool OGRCurvePolygon::isRingCorrectType(const OGRCurve *poRing) const
+{
+    return poRing && !EQUAL(poRing->getGeometryName(), "LINEARRING");
+}
+
+/************************************************************************/
 /*                            checkRing()                               */
 /************************************************************************/
 
-bool OGRCurvePolygon::checkRing(const OGRCurve *poNewRing, bool bOnlyType) const
+bool OGRCurvePolygon::checkRing(const OGRCurve *poNewRing) const
 {
-    if (!bOnlyType && !poNewRing->IsEmpty() && !poNewRing->get_IsClosed())
+    if (!isRingCorrectType(poNewRing))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Linearring not allowed.");
+        return false;
+    }
+
+    if (!poNewRing->IsEmpty() && !poNewRing->get_IsClosed())
     {
         // This configuration option name must be the same as in
         // OGRPolygon::checkRing()
@@ -361,14 +375,8 @@ bool OGRCurvePolygon::checkRing(const OGRCurve *poNewRing, bool bOnlyType) const
 
     if (wkbFlatten(poNewRing->getGeometryType()) == wkbLineString)
     {
-        if (!bOnlyType && poNewRing->getNumPoints() < 4)
+        if (poNewRing->getNumPoints() < 4)
         {
-            return false;
-        }
-
-        if (EQUAL(poNewRing->getGeometryName(), "LINEARRING"))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Linearring not allowed.");
             return false;
         }
     }
