@@ -107,3 +107,4 @@ RFC list
     rfc98_build_requirements_gdal_3_9
     rfc99_geometry_coordinate_precision
     rfc101_raster_dataset_threadsafety
+    rfc102_embedded_resources
