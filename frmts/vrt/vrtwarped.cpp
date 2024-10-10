@@ -1969,7 +1969,7 @@ CPLErr VRTWarpedDataset::IRasterIO(
         if (hDstDS == nullptr)
         {
             // Not supposed to happen in nominal circumstances. Could perhaps
-            // happen if some memory allocation error occured in code called
+            // happen if some memory allocation error occurred in code called
             // by GDALCreateWarpedVRT()
             GDALDestroyTransformer(pTransformerArg);
             return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
