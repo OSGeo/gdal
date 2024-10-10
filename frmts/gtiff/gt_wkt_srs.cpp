@@ -3248,7 +3248,9 @@ int GTIFSetFromOGISDefnEx(GTIF *psGTIF, OGRSpatialReferenceH hSRS,
     /* -------------------------------------------------------------------- */
     if (nPCS == KvUserDefined)
     {
-        if (nGCS == KvUserDefined)
+        if (nGCS == KvUserDefined && poSRS->IsGeographic() &&
+            std::fabs(poSRS->GetAngularUnits() - CPLAtof(SRS_UA_DEGREE_CONV)) <
+                1e-9)
         {
             if (nDatum == Datum_North_American_Datum_1927)
                 nGCS = GCS_NAD27;
