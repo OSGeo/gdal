@@ -880,10 +880,11 @@ def test_nitf_28_jp2ecw(tmp_path):
         blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
         ds = None
         gdal.Unlink(tmpfilename)
-        assert (blockxsize, blockysize) == (
-            256,
-            256,
-        )  # 256 since this is hardcoded as such in the ECW driver
+        # 256 for ECW < 5.1, 1024 for ECW >= 5.1
+        assert (blockxsize, blockysize) == (256, 256) or (blockxsize, blockysize) == (
+            1024,
+            1024,
+        )
     finally:
         gdaltest.reregister_all_jpeg2000_drivers()
 
