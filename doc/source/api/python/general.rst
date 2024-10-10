@@ -95,6 +95,26 @@ Error Handling
 File Management
 ---------------
 
+osgeo.gdal_fsspec module
+++++++++++++++++++++++++
+
+.. automodule:: osgeo.gdal_fsspec
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+osgeo.gdal.VSIFile class
+++++++++++++++++++++++++
+
+.. autoclass:: osgeo.gdal.VSIFile
+   :members:
+   :undoc-members:
+   :noindex:
+
+Low level functions
++++++++++++++++++++
+
 .. autofunction:: osgeo.gdal.CloseDir
 
 .. autofunction:: osgeo.gdal.CopyFile

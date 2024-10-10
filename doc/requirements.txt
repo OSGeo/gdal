@@ -1,5 +1,6 @@
 # This file may be used to create an environment using:
 # $ pip install --upgrade -r <this file>
+fsspec
 numpy
 sphinx
 breathe

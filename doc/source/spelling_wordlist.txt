@@ -3455,6 +3455,7 @@ vsiaz
 vsicached
 vsicrypt
 vsicurl
+VSIFile
 VSIFOpen
 vsigs
 vsigz
