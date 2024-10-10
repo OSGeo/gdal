@@ -540,7 +540,7 @@ static void gv_rasterize_one_shape(
     GDALDataType eBurnValueType, const double *padfBurnValues,
     const int64_t *panBurnValues, GDALBurnValueSrc eBurnValueSrc,
     GDALRasterMergeAlg eMergeAlg, GDALTransformerFunc pfnTransformer,
-    void *pTransformArg)
+    GDALTransformerArg pTransformArg)
 
 {
     if (poShape == nullptr || poShape->IsEmpty())
@@ -828,7 +828,7 @@ static CPLErr GDALRasterizeOptions(CSLConstList papszOptions, int *pbAllTouched,
 static CPLErr GDALRasterizeGeometriesInternal(
     GDALDatasetH hDS, int nBandCount, const int *panBandList, int nGeomCount,
     const OGRGeometryH *pahGeometries, GDALTransformerFunc pfnTransformer,
-    void *pTransformArg, GDALDataType eBurnValueType,
+    GDALTransformerArg pTransformArg, GDALDataType eBurnValueType,
     const double *padfGeomBurnValues, const int64_t *panGeomBurnValues,
     CSLConstList papszOptions, GDALProgressFunc pfnProgress,
     void *pProgressArg);
@@ -945,7 +945,7 @@ static CPLErr GDALRasterizeGeometriesInternal(
 CPLErr GDALRasterizeGeometries(
     GDALDatasetH hDS, int nBandCount, const int *panBandList, int nGeomCount,
     const OGRGeometryH *pahGeometries, GDALTransformerFunc pfnTransformer,
-    void *pTransformArg, const double *padfGeomBurnValues,
+    GDALTransformerArg pTransformArg, const double *padfGeomBurnValues,
     CSLConstList papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -968,7 +968,7 @@ CPLErr GDALRasterizeGeometries(
 CPLErr GDALRasterizeGeometriesInt64(
     GDALDatasetH hDS, int nBandCount, const int *panBandList, int nGeomCount,
     const OGRGeometryH *pahGeometries, GDALTransformerFunc pfnTransformer,
-    void *pTransformArg, const int64_t *panGeomBurnValues,
+    GDALTransformerArg pTransformArg, const int64_t *panGeomBurnValues,
     CSLConstList papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -983,7 +983,7 @@ CPLErr GDALRasterizeGeometriesInt64(
 static CPLErr GDALRasterizeGeometriesInternal(
     GDALDatasetH hDS, int nBandCount, const int *panBandList, int nGeomCount,
     const OGRGeometryH *pahGeometries, GDALTransformerFunc pfnTransformer,
-    void *pTransformArg, GDALDataType eBurnValueType,
+    GDALTransformerArg pTransformArg, GDALDataType eBurnValueType,
     const double *padfGeomBurnValues, const int64_t *panGeomBurnValues,
     CSLConstList papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
 
@@ -1492,9 +1492,9 @@ static CPLErr GDALRasterizeGeometriesInternal(
 CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
                            int nLayerCount, OGRLayerH *pahLayers,
                            GDALTransformerFunc pfnTransformer,
-                           void *pTransformArg, double *padfLayerBurnValues,
-                           char **papszOptions, GDALProgressFunc pfnProgress,
-                           void *pProgressArg)
+                           GDALTransformerArg pTransformArg,
+                           double *padfLayerBurnValues, char **papszOptions,
+                           GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
     VALIDATE_POINTER1(hDS, "GDALRasterizeLayers", CE_Failure);
@@ -1867,8 +1867,9 @@ CPLErr GDALRasterizeLayersBuf(
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
     int nPixelSpace, int nLineSpace, int nLayerCount, OGRLayerH *pahLayers,
     const char *pszDstProjection, double *padfDstGeoTransform,
-    GDALTransformerFunc pfnTransformer, void *pTransformArg, double dfBurnValue,
-    char **papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)
+    GDALTransformerFunc pfnTransformer, GDALTransformerArg pTransformArg,
+    double dfBurnValue, char **papszOptions, GDALProgressFunc pfnProgress,
+    void *pProgressArg)
 
 {
     /* -------------------------------------------------------------------- */
