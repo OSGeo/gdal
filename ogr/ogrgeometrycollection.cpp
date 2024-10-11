@@ -29,16 +29,6 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                       OGRGeometryCollection()                        */
-/************************************************************************/
-
-/**
- * \brief Create an empty geometry collection.
- */
-
-OGRGeometryCollection::OGRGeometryCollection() = default;
-
-/************************************************************************/
 /*         OGRGeometryCollection( const OGRGeometryCollection& )        */
 /************************************************************************/
 
@@ -95,13 +85,28 @@ OGRGeometryCollection::operator=(const OGRGeometryCollection &other)
 {
     if (this != &other)
     {
-        empty();
-
         OGRGeometry::operator=(other);
 
-        for (const auto &poSubGeom : other)
+        for (const auto *poOtherSubGeom : other)
         {
-            addGeometry(poSubGeom);
+            if (!isCompatibleSubType(poOtherSubGeom->getGeometryType()))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Illegal use of OGRGeometryCollection::operator=(): "
+                         "trying to assign an incomptible sub-geometry");
+                return *this;
+            }
+        }
+
+        papoGeoms = static_cast<OGRGeometry **>(
+            VSI_CALLOC_VERBOSE(sizeof(OGRGeometry *), other.nGeomCount));
+        if (papoGeoms)
+        {
+            nGeomCount = other.nGeomCount;
+            for (int i = 0; i < other.nGeomCount; i++)
+            {
+                papoGeoms[i] = other.papoGeoms[i]->clone();
+            }
         }
     }
     return *this;

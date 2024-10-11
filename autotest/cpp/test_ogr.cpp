@@ -262,7 +262,7 @@ template <> OGRPolyhedralSurface *make()
 
 template <class T> void testCopyEquals()
 {
-    T *poOrigin = make<T>();
+    auto poOrigin = std::unique_ptr<T>(make<T>());
     ASSERT_TRUE(nullptr != poOrigin);
 
     T value2(*poOrigin);
@@ -288,7 +288,8 @@ template <class T> void testCopyEquals()
         << poOrigin->getGeometryName()
         << ": assignment operator changed a value";
 
-    OGRGeometryFactory::destroyGeometry(poOrigin);
+    value3 = T();
+    ASSERT_TRUE(value3.IsEmpty());
 }
 
 // Test if copy constructor and assignment operators succeeds on copying the
@@ -311,6 +312,60 @@ TEST_F(test_ogr, SpatialReference_leak_copy_constructor)
     testCopyEquals<OGRTriangle>();
     testCopyEquals<OGRPolyhedralSurface>();
     testCopyEquals<OGRTriangulatedSurface>();
+}
+
+// Test crazy usage of OGRGeometryCollection copy constructor
+TEST_F(test_ogr, OGRGeometryCollection_copy_constructor_illegal_use)
+{
+    OGRGeometryCollection gc;
+    gc.addGeometryDirectly(new OGRPoint(1, 2));
+
+    OGRMultiPolygon mp;
+    mp.addGeometryDirectly(new OGRPolygon());
+
+    OGRGeometryCollection *mp_as_gc = &mp;
+    CPLErrorReset();
+    {
+        CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+        *mp_as_gc = gc;
+    }
+    EXPECT_STREQ(CPLGetLastErrorMsg(),
+                 "Illegal use of OGRGeometryCollection::operator=(): trying to "
+                 "assign an incomptible sub-geometry");
+    EXPECT_TRUE(mp.IsEmpty());
+}
+
+// Test crazy usage of OGRCurvePolygon copy constructor
+TEST_F(test_ogr, OGRCurvePolygon_copy_constructor_illegal_use)
+{
+    OGRCurvePolygon cp;
+    auto poCC = new OGRCircularString();
+    poCC->addPoint(0, 0);
+    poCC->addPoint(1, 1);
+    poCC->addPoint(2, 0);
+    poCC->addPoint(1, -1);
+    poCC->addPoint(0, 0);
+    cp.addRingDirectly(poCC);
+
+    OGRPolygon poly;
+    auto poLR = new OGRLinearRing();
+    poLR->addPoint(0, 0);
+    poLR->addPoint(1, 1);
+    poLR->addPoint(2, 0);
+    poLR->addPoint(1, -1);
+    poLR->addPoint(0, 0);
+    poly.addRingDirectly(poLR);
+
+    OGRCurvePolygon *poly_as_cp = &poly;
+    CPLErrorReset();
+    {
+        CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+        *poly_as_cp = cp;
+    }
+    EXPECT_STREQ(CPLGetLastErrorMsg(),
+                 "Illegal use of OGRCurvePolygon::operator=(): trying to "
+                 "assign an incomptible sub-geometry");
+    EXPECT_TRUE(poly.IsEmpty());
 }
 
 TEST_F(test_ogr, geometry_get_point)
@@ -4186,69 +4241,157 @@ TEST_F(test_ogr, OGRCurve_reversePoints)
 TEST_F(test_ogr, transformWithOptions)
 {
     // Projected CRS to national geographic CRS (not including poles or antimeridian)
-    {
-        OGRGeometry *poGeom = nullptr;
-        OGRGeometryFactory::createFromWkt(
-            "LINESTRING(700000 6600000, 700001 6600001)", nullptr, &poGeom);
-        ASSERT_NE(poGeom, nullptr);
+    OGRGeometry *poGeom = nullptr;
+    OGRGeometryFactory::createFromWkt(
+        "LINESTRING(700000 6600000, 700001 6600001)", nullptr, &poGeom);
+    ASSERT_NE(poGeom, nullptr);
 
-        OGRSpatialReference oEPSG_2154;
-        oEPSG_2154.importFromEPSG(2154);  // "RGF93 v1 / Lambert-93"
-        OGRSpatialReference oEPSG_4171;
-        oEPSG_4171.importFromEPSG(4171);  // "RGF93 v1"
-        oEPSG_4171.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
-            OGRCreateCoordinateTransformation(&oEPSG_2154, &oEPSG_4171));
-        OGRGeometryFactory::TransformWithOptionsCache oCache;
-        poGeom = OGRGeometryFactory::transformWithOptions(poGeom, poCT.get(),
-                                                          nullptr, oCache);
-        EXPECT_NEAR(poGeom->toLineString()->getX(0), 3, 1e-8);
-        EXPECT_NEAR(poGeom->toLineString()->getY(0), 46.5, 1e-8);
+    OGRSpatialReference oEPSG_2154;
+    oEPSG_2154.importFromEPSG(2154);  // "RGF93 v1 / Lambert-93"
+    OGRSpatialReference oEPSG_4171;
+    oEPSG_4171.importFromEPSG(4171);  // "RGF93 v1"
+    oEPSG_4171.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+        OGRCreateCoordinateTransformation(&oEPSG_2154, &oEPSG_4171));
+    OGRGeometryFactory::TransformWithOptionsCache oCache;
+    poGeom = OGRGeometryFactory::transformWithOptions(poGeom, poCT.get(),
+                                                      nullptr, oCache);
+    EXPECT_NEAR(poGeom->toLineString()->getX(0), 3, 1e-8);
+    EXPECT_NEAR(poGeom->toLineString()->getY(0), 46.5, 1e-8);
 
-        delete poGeom;
-    }
+    delete poGeom;
+}
 
 #ifdef HAVE_GEOS
-    // Projected CRS to national geographic CRS including antimeridian
-    {
-        OGRGeometry *poGeom = nullptr;
-        OGRGeometryFactory::createFromWkt(
-            "LINESTRING(657630.64 4984896.17,815261.43 4990738.26)", nullptr,
-            &poGeom);
-        ASSERT_NE(poGeom, nullptr);
 
-        OGRSpatialReference oEPSG_6329;
-        oEPSG_6329.importFromEPSG(6329);  // "NAD83(2011) / UTM zone 60N"
-        OGRSpatialReference oEPSG_6318;
-        oEPSG_6318.importFromEPSG(6318);  // "NAD83(2011)"
-        oEPSG_6318.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
-            OGRCreateCoordinateTransformation(&oEPSG_6329, &oEPSG_6318));
-        OGRGeometryFactory::TransformWithOptionsCache oCache;
-        poGeom = OGRGeometryFactory::transformWithOptions(poGeom, poCT.get(),
-                                                          nullptr, oCache);
-        EXPECT_EQ(poGeom->getGeometryType(), wkbMultiLineString);
-        if (poGeom->getGeometryType() == wkbMultiLineString)
+// Test OGRGeometryFactory::transformWithOptions()
+TEST_F(test_ogr, transformWithOptions_GEOS)
+{
+    // Projected CRS to national geographic CRS including antimeridian
+    OGRGeometry *poGeom = nullptr;
+    OGRGeometryFactory::createFromWkt(
+        "LINESTRING(657630.64 4984896.17,815261.43 4990738.26)", nullptr,
+        &poGeom);
+    ASSERT_NE(poGeom, nullptr);
+
+    OGRSpatialReference oEPSG_6329;
+    oEPSG_6329.importFromEPSG(6329);  // "NAD83(2011) / UTM zone 60N"
+    OGRSpatialReference oEPSG_6318;
+    oEPSG_6318.importFromEPSG(6318);  // "NAD83(2011)"
+    oEPSG_6318.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+        OGRCreateCoordinateTransformation(&oEPSG_6329, &oEPSG_6318));
+    OGRGeometryFactory::TransformWithOptionsCache oCache;
+    poGeom = OGRGeometryFactory::transformWithOptions(poGeom, poCT.get(),
+                                                      nullptr, oCache);
+    EXPECT_EQ(poGeom->getGeometryType(), wkbMultiLineString);
+    if (poGeom->getGeometryType() == wkbMultiLineString)
+    {
+        const auto poMLS = poGeom->toMultiLineString();
+        EXPECT_EQ(poMLS->getNumGeometries(), 2);
+        if (poMLS->getNumGeometries() == 2)
         {
-            const auto poMLS = poGeom->toMultiLineString();
-            EXPECT_EQ(poMLS->getNumGeometries(), 2);
-            if (poMLS->getNumGeometries() == 2)
+            const auto poLS = poMLS->getGeometryRef(0);
+            EXPECT_EQ(poLS->getNumPoints(), 2);
+            if (poLS->getNumPoints() == 2)
             {
-                const auto poLS = poMLS->getGeometryRef(0);
-                EXPECT_EQ(poLS->getNumPoints(), 2);
-                if (poLS->getNumPoints() == 2)
-                {
-                    EXPECT_NEAR(poLS->getX(0), 179, 1e-6);
-                    EXPECT_NEAR(poLS->getY(0), 45, 1e-6);
-                    EXPECT_NEAR(poLS->getX(1), 180, 1e-6);
-                    EXPECT_NEAR(poLS->getY(1), 45.004384301691303, 1e-6);
-                }
+                EXPECT_NEAR(poLS->getX(0), 179, 1e-6);
+                EXPECT_NEAR(poLS->getY(0), 45, 1e-6);
+                EXPECT_NEAR(poLS->getX(1), 180, 1e-6);
+                EXPECT_NEAR(poLS->getY(1), 45.004384301691303, 1e-6);
             }
         }
-
-        delete poGeom;
     }
+
+    delete poGeom;
+}
 #endif
+
+// Test OGRCurvePolygon::addRingDirectly
+TEST_F(test_ogr, OGRCurvePolygon_addRingDirectly)
+{
+    OGRCurvePolygon cp;
+    OGRGeometry *ring;
+
+    // closed CircularString
+    OGRGeometryFactory::createFromWkt(
+        "CIRCULARSTRING (0 0, 1 1, 2 0, 1 -1, 0 0)", nullptr, &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(cp.addRingDirectly(ring->toCurve()), OGRERR_NONE);
+
+    // open CircularString
+    OGRGeometryFactory::createFromWkt("CIRCULARSTRING (0 0, 1 1, 2 0)", nullptr,
+                                      &ring);
+    ASSERT_TRUE(ring);
+    {
+        CPLConfigOptionSetter oSetter("OGR_GEOMETRY_ACCEPT_UNCLOSED_RING", "NO",
+                                      false);
+        ASSERT_EQ(cp.addRingDirectly(ring->toCurve()),
+                  OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
+    }
+    EXPECT_EQ(cp.addRingDirectly(ring->toCurve()), OGRERR_NONE);
+
+    // closed CompoundCurve
+    OGRGeometryFactory::createFromWkt(
+        "COMPOUNDCURVE( CIRCULARSTRING (0 0, 1 1, 2 0), (2 0, 0 0))", nullptr,
+        &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(cp.addRingDirectly(ring->toCurve()), OGRERR_NONE);
+
+    // closed LineString
+    OGRGeometryFactory::createFromWkt("LINESTRING (0 0, 1 0, 1 1, 0 1, 0 0)",
+                                      nullptr, &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(cp.addRingDirectly(ring->toCurve()), OGRERR_NONE);
+
+    // LinearRing
+    auto lr = std::make_unique<OGRLinearRing>();
+    lr->addPoint(0, 0);
+    lr->addPoint(1, 0);
+    lr->addPoint(1, 1);
+    lr->addPoint(0, 1);
+    lr->addPoint(0, 0);
+    ASSERT_TRUE(ring);
+    ASSERT_EQ(cp.addRingDirectly(lr.get()), OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
+}
+
+// Test OGRPolygon::addRingDirectly
+TEST_F(test_ogr, OGRPolygon_addRingDirectly)
+{
+    OGRPolygon p;
+    OGRGeometry *ring;
+
+    // closed CircularString
+    OGRGeometryFactory::createFromWkt(
+        "CIRCULARSTRING (0 0, 1 1, 2 0, 1 -1, 0 0)", nullptr, &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(p.addRingDirectly(ring->toCurve()),
+              OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
+    delete ring;
+
+    // closed LineString
+    OGRGeometryFactory::createFromWkt("LINESTRING (0 0, 1 0, 1 1, 0 1, 0 0)",
+                                      nullptr, &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(p.addRingDirectly(ring->toCurve()),
+              OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
+    delete ring;
+
+    // open LineString
+    OGRGeometryFactory::createFromWkt("LINESTRING (0 0, 1 0)", nullptr, &ring);
+    ASSERT_TRUE(ring);
+    EXPECT_EQ(p.addRingDirectly(ring->toCurve()),
+              OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
+    delete ring;
+
+    // LinearRing
+    auto lr = std::make_unique<OGRLinearRing>();
+    lr->addPoint(0, 0);
+    lr->addPoint(1, 0);
+    lr->addPoint(1, 1);
+    lr->addPoint(0, 1);
+    lr->addPoint(0, 0);
+    ASSERT_EQ(p.addRingDirectly(lr.release()), OGRERR_NONE);
 }
 
 }  // namespace

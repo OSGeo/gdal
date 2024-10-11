@@ -24,16 +24,6 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                            OGRCurvePolygon()                         */
-/************************************************************************/
-
-/**
- * \brief Create an empty curve polygon.
- */
-
-OGRCurvePolygon::OGRCurvePolygon() = default;
-
-/************************************************************************/
 /*               OGRCurvePolygon( const OGRCurvePolygon& )              */
 /************************************************************************/
 
@@ -47,12 +37,6 @@ OGRCurvePolygon::OGRCurvePolygon() = default;
  */
 
 OGRCurvePolygon::OGRCurvePolygon(const OGRCurvePolygon &) = default;
-
-/************************************************************************/
-/*                           ~OGRCurvePolygon()                         */
-/************************************************************************/
-
-OGRCurvePolygon::~OGRCurvePolygon() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRCurvePolygon&)                  */
@@ -72,6 +56,17 @@ OGRCurvePolygon &OGRCurvePolygon::operator=(const OGRCurvePolygon &other)
     if (this != &other)
     {
         OGRSurface::operator=(other);
+
+        for (const auto *poRing : other.oCC)
+        {
+            if (!isRingCorrectType(poRing))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Illegal use of OGRCurvePolygon::operator=(): "
+                         "trying to assign an incomptible sub-geometry");
+                return *this;
+            }
+        }
 
         oCC = other.oCC;
     }
@@ -337,11 +332,25 @@ OGRErr OGRCurvePolygon::addRing(const OGRCurve *poNewRing)
 }
 
 /************************************************************************/
+/*                            isRingCorrectType()                       */
+/************************************************************************/
+bool OGRCurvePolygon::isRingCorrectType(const OGRCurve *poRing) const
+{
+    return poRing && !EQUAL(poRing->getGeometryName(), "LINEARRING");
+}
+
+/************************************************************************/
 /*                            checkRing()                               */
 /************************************************************************/
 
-int OGRCurvePolygon::checkRing(OGRCurve *poNewRing) const
+bool OGRCurvePolygon::checkRing(const OGRCurve *poNewRing) const
 {
+    if (!isRingCorrectType(poNewRing))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Linearring not allowed.");
+        return false;
+    }
+
     if (!poNewRing->IsEmpty() && !poNewRing->get_IsClosed())
     {
         // This configuration option name must be the same as in
@@ -351,7 +360,7 @@ int OGRCurvePolygon::checkRing(OGRCurve *poNewRing) const
         if (pszEnvVar != nullptr && !CPLTestBool(pszEnvVar))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Non closed ring detected.");
-            return FALSE;
+            return false;
         }
         else
         {
@@ -368,17 +377,11 @@ int OGRCurvePolygon::checkRing(OGRCurve *poNewRing) const
     {
         if (poNewRing->getNumPoints() < 4)
         {
-            return FALSE;
-        }
-
-        if (EQUAL(poNewRing->getGeometryName(), "LINEARRING"))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Linearring not allowed.");
-            return FALSE;
+            return false;
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
