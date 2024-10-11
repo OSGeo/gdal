@@ -4314,3 +4314,19 @@ def test_gdalwarp_lib_average_ten_ten_to_one_one():
         "", src_ds, width=1, height=1, resampleAlg=gdal.GRIORA_Average, format="MEM"
     )
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (1, 1)
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/10975
+
+
+def test_gdalwarp_lib_src_is_geog_arc_second():
+
+    out_ds = gdal.Warp(
+        "",
+        "data/geog_arc_second.tif",
+        options="-f MEM -srcnodata 0 -te -81.5 28.5 -81.0 29.0 -t_srs EPSG:4326",
+    )
+    assert out_ds.RasterXSize == 5464
+    assert out_ds.RasterYSize == 5464
+    assert out_ds.GetRasterBand(1).Checksum() == 31856

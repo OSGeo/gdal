@@ -869,7 +869,7 @@ retry:
                  "transform.",
                  nFailedCount, nSamplePoints);
 
-    bool bIsGeographicCoords = false;
+    bool bIsGeographicCoordsDeg = false;
     if (bIsGDALGenImgProjTransform)
     {
         const GDALGenImgProjTransformInfo *pGIPTI =
@@ -899,15 +899,17 @@ retry:
                     CSLFetchNameValue(pGLTI->papszGeolocationInfo, "SRS");
                 if (pszGLSRS == nullptr)
                 {
-                    bIsGeographicCoords = true;
+                    bIsGeographicCoordsDeg = true;
                 }
                 else
                 {
                     OGRSpatialReference oSRS;
                     if (oSRS.SetFromUserInput(pszGLSRS) == OGRERR_NONE &&
-                        oSRS.IsGeographic())
+                        oSRS.IsGeographic() &&
+                        std::fabs(oSRS.GetAngularUnits() -
+                                  CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-9)
                     {
-                        bIsGeographicCoords = true;
+                        bIsGeographicCoordsDeg = true;
                     }
                 }
             }
@@ -967,7 +969,7 @@ retry:
                      CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-9 &&
                 (!poSourceCRS || !poSourceCRS->IsGeographic()))
             {
-                bIsGeographicCoords = true;
+                bIsGeographicCoordsDeg = true;
 
                 std::unique_ptr<CPLConfigOptionSetter> poSetter;
                 if (pGIPTI->bCheckWithInvertPROJ)
@@ -1194,7 +1196,7 @@ retry:
     /*      Recompute some bounds so that all return values are consistent  */
     /* -------------------------------------------------------------------- */
     double dfMaxXOutNew = dfMinXOut + (*pnPixels) * dfPixelSizeX;
-    if (bIsGeographicCoords &&
+    if (bIsGeographicCoordsDeg &&
         ((dfMaxXOut <= 180 && dfMaxXOutNew > 180) || dfMaxXOut == 180))
     {
         dfMaxXOut = 180;
@@ -1206,7 +1208,7 @@ retry:
     }
 
     double dfMinYOutNew = dfMaxYOut - (*pnLines) * dfPixelSizeY;
-    if (bIsGeographicCoords && dfMinYOut >= -90 && dfMinYOutNew < -90)
+    if (bIsGeographicCoordsDeg && dfMinYOut >= -90 && dfMinYOutNew < -90)
     {
         dfMinYOut = -90;
         dfPixelSizeY = (dfMaxYOut - dfMinYOut) / *pnLines;
@@ -1426,8 +1428,11 @@ static void InsertCenterLong(GDALDatasetH hDS, OGRSpatialReference *poSRS,
                              CPLStringList &aosOptions)
 
 {
-    if (!poSRS->IsGeographic())
+    if (!poSRS->IsGeographic() || std::fabs(poSRS->GetAngularUnits() -
+                                            CPLAtof(SRS_UA_DEGREE_CONV)) > 1e-9)
+    {
         return;
+    }
 
     if (poSRS->GetExtension(nullptr, "CENTER_LONG"))
         return;
@@ -2967,7 +2972,9 @@ int GDALTransformLonLatToDestGenImgProjTransformer(void *hTransformArg,
     double z = 0;
     int success = true;
     auto poSourceCRS = psReprojInfo->poForwardTransform->GetSourceCS();
-    if (poSourceCRS->IsGeographic())
+    if (poSourceCRS->IsGeographic() &&
+        std::fabs(poSourceCRS->GetAngularUnits() -
+                  CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-9)
     {
         // Optimization to avoid creating a OGRCoordinateTransformation
         OGRAxisOrientation eSourceFirstAxisOrient = OAO_Other;
