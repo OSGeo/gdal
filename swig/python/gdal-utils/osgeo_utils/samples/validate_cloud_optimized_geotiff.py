@@ -425,6 +425,8 @@ def main(argv=sys.argv):
     if filename is None:
         return Usage()
 
+    gdal.UseExceptions()
+
     if full_check is None:
         full_check = filename.startswith("/vsimem/") or os.path.exists(filename)
 
