@@ -95,6 +95,10 @@ def startup_and_cleanup():
     else:
         gdaltest.ecw_drv.major_version = 3
         gdaltest.ecw_drv.minor_version = 3
+    gdaltest.ecw_drv.version = (
+        gdaltest.ecw_drv.major_version,
+        gdaltest.ecw_drv.minor_version,
+    )
 
     # we set ECW to not resolve projection and datum strings to get 3.x behavior.
     with gdal.config_option("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES"):
@@ -2464,4 +2468,17 @@ def test_ecw_online_7():
     assert ds.RasterCount == expected_band_count, "Expected %d bands, got %d" % (
         expected_band_count,
         ds.RasterCount,
+    )
+
+
+###############################################################################
+# Test reading a dataset whose tile dimensions are larger than dataset ones
+
+
+def test_ecw_byte_tile_2048():
+
+    ds = gdal.Open("data/jpeg2000/byte_tile_2048.jp2")
+    (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
+    assert (blockxsize, blockysize) == (
+        (20, 20) if gdaltest.ecw_drv.version >= (5, 1) else (256, 256)
     )

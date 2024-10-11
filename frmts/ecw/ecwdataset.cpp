@@ -24,6 +24,7 @@
 
 #include "ecwdrivercore.h"
 
+#include <algorithm>
 #include <cmath>
 
 #undef NOISY_DEBUG
@@ -33,7 +34,7 @@ static int bNCSInitialized = FALSE;
 
 void ECWInitialize(void);
 
-#define BLOCK_SIZE 256
+constexpr int DEFAULT_BLOCK_SIZE = 256;
 
 GDALDataset *ECWDatasetOpenJPEG2000(GDALOpenInfo *poOpenInfo);
 
@@ -71,8 +72,39 @@ ECWRasterBand::ECWRasterBand(ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
     nRasterXSize = poDS->GetRasterXSize() / (1 << (iOverview + 1));
     nRasterYSize = poDS->GetRasterYSize() / (1 << (iOverview + 1));
 
-    nBlockXSize = BLOCK_SIZE;
-    nBlockYSize = BLOCK_SIZE;
+#if ECWSDK_VERSION >= 51
+    if (poDSIn->bIsJPEG2000 && poDSIn->poFileView)
+    {
+        UINT32 nTileWidth = 0;
+        poDSIn->poFileView->GetParameter(
+            const_cast<char *>("JPC:DECOMPRESS:TILESIZE:X"), &nTileWidth);
+        if (nTileWidth <= static_cast<UINT32>(INT_MAX))
+        {
+            nBlockXSize = static_cast<int>(nTileWidth);
+        }
+        nBlockXSize = std::min(nBlockXSize, nRasterXSize);
+
+        UINT32 nTileHeight = 0;
+        poDSIn->poFileView->GetParameter(
+            const_cast<char *>("JPC:DECOMPRESS:TILESIZE:Y"), &nTileHeight);
+        if (nTileHeight <= static_cast<UINT32>(INT_MAX))
+        {
+            nBlockYSize = static_cast<int>(nTileHeight);
+        }
+        nBlockYSize = std::min(nBlockYSize, nRasterYSize);
+    }
+#endif
+
+    // Slightly arbitrary value. Too large values would defeat the purpose
+    // of the block concept.
+    constexpr int LIMIT_FOR_BLOCK_SIZE = 2048;
+    if (nBlockXSize <= 0 || nBlockYSize <= 0 ||
+        nBlockXSize > LIMIT_FOR_BLOCK_SIZE ||
+        nBlockYSize > LIMIT_FOR_BLOCK_SIZE)
+    {
+        nBlockXSize = DEFAULT_BLOCK_SIZE;
+        nBlockYSize = DEFAULT_BLOCK_SIZE;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Work out band color interpretation.                             */
