@@ -273,6 +273,7 @@ def ogr_libkml_write(filename):
 
         assert lyr.TestCapability(ogr.OLCSequentialWrite) == 1
         assert lyr.TestCapability(ogr.OLCRandomWrite) == 1
+        assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
 
         dst_feat = ogr.Feature(lyr.GetLayerDefn())
         dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 49)"))
@@ -2274,6 +2275,8 @@ def test_ogr_libkml_update_delete_existing_kml(tmp_vsimem, custom_id):
     filename = str(tmp_vsimem / "test.kml")
     with ogr.GetDriverByName("LIBKML").CreateDataSource(filename) as ds:
         lyr = ds.CreateLayer("test")
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 1
+        assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
         lyr.CreateField(ogr.FieldDefn("id"))
         lyr.CreateField(ogr.FieldDefn("name"))
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -2282,6 +2285,8 @@ def test_ogr_libkml_update_delete_existing_kml(tmp_vsimem, custom_id):
         f["name"] = "name1"
         f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
         lyr.CreateFeature(f)
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 1
+        assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
         f = ogr.Feature(lyr.GetLayerDefn())
         if custom_id:
             f["id"] = "feat2"
@@ -2291,6 +2296,8 @@ def test_ogr_libkml_update_delete_existing_kml(tmp_vsimem, custom_id):
 
     with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
         lyr = ds.GetLayer(0)
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 1
+        assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
         with pytest.raises(Exception, match="Non existing feature"):
             lyr.DeleteFeature(0)
 
@@ -2323,3 +2330,15 @@ def test_ogr_libkml_update_delete_existing_kml(tmp_vsimem, custom_id):
         else:
             assert f.GetFID() == 2
         assert f["name"] == "name2_updated"
+
+
+###############################################################################
+# Test that we don't report edit capabilities for a KML file without Placemark.id
+
+
+def ogr_libkml_non_editable():
+
+    with gdal.OpenEx("data/kml/placemark.kml", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
+        assert lyr.TestCapability(ogr.OLCDeleteFeature) == 0
