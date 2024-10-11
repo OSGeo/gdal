@@ -1,3 +1,168 @@
+# GDAL/OGR 3.9.3 Release Notes
+
+GDAL 3.9.3 is a bugfix release.
+
+## Build
+
+* Java bindings: remove unneeded dependency on Java AWT
+* Use the right header for std::endian cpl_conv.cpp (C++20 compilation)
+* Fix build failure with upstream netcdf caused by _FillValue macro renaming
+
+## GDAL 3.9.3
+
+### Port
+
+* /vsitar/: fix support of /vsitar/ of /vsitar/ (#10821)
+* CPLGetValueType(): do not recognize '01' as integer, but as string
+  (Toblerity/Fiona#1454)
+
+### Algorithms
+
+* Geoloc array: fix bad usage of path API that resulted in temporary files
+  not being created where expected (#10671)
+* GDALCreateGeoLocTransformer(): fix inverted logic to decide for a debug
+  message
+* GDALCreateGeoLocTransformer(): increase threshold to use GTiff geoloc
+  working datasets to 24 megapixels (#10809)
+* GDALGeoLocDatasetAccessors: use smaller, but more, cached tiles (#10809)
+* Warper: fix too lax heuristics about antimeridian warping for Avg/Sum/Q1/
+  Q3/Mode algorithms (#10892)
+
+### Core
+
+* Fix GDALDataTypeUnion() to check that the provided value fits into eDT
+* GDALRegenerateOverviewsMultiBand(): make sure than when computing large
+  reduction factors (like > 1024) on huge rasters does not lead to excessive
+  memory requirements
+* Overview: fix nearest resampling to be exact with all data types (#10758).
+  Also make sure that for other resampling methods, the working data type
+  is large enough (e.g using Float64 for Int32/UInt32/Int64/UInt64).
+
+### Raster utilities
+
+* gdal_translate/GDALOverviewDataset: fix half-pixel shift issue when
+  rescaling RPC (#10600)
+* gdaldem color-relief: fix issues with entry at 0 and -exact_color_entry
+  mode, and other issues
+* gdalwarp: fix crash/infinite loop when using -tr one a 1x1 blank raster
+  (3.8.0 regression)
+* gdalwarp: be more robust to numerical instability when selecting overviews
+  (#10873)
+* gdal_contour: Fix regression when fixed level == raster max (#10854)
+
+### Raster drivers
+
+DIMAP driver:
+ * emit verbose error message if not able to open image file (#10928)
+
+GeoRaster driver:
+ * Preserve quote in the connection string to the GeoRaster driver so that
+   Oracle Database wallet can be supported (#10869)
+
+GRIB:
+ * adjust longitude range from \[180, xxx\] to \[-180, xxx\] (#10655)
+
+GTiff driver:
+ * do not query TIFFTAG_TRANSFERFUNCTION if m_nBitsPerSample > 24 (#10875)
+ * fix to not delete DIMAP XML files when cleaning overviews on a DIMAP2
+   GeoTIFF file with external overviews
+
+JPEG driver:
+ * Fix inverted handling of GDAL_ERROR_ON_LIBJPEG_WARNING
+
+JP2KAK driver:
+ * fix data corruption when creating multi-band tiled with the stripe
+   compressor code path (#10598)
+
+KEA driver:
+ * fix overview writing
+
+MrSID driver:
+ * prevent infinite recursion in IRasterIO() in some cases (#10697)
+
+netCDF driver:
+ * honour BAND_NAMES creation option in CreateCopy() (#10646)
+
+NITF driver:
+ * properly take into account comma-separated list of values for JPEG2000
+   QUALITY when JPEG2000_DRIVER=JP2OpenJPEG (#10927)
+ * fix parsing of CSCSDB DES
+
+OpenFileGDB raster:
+ * do not generate debug 'tmp.jpg' file when reading JPEG tiles
+
+PDF driver:
+ * avoid 'Non closed ring detected' warning when reading neatlines from OGC
+   Best Practice encoding
+
+TileDB driver:
+ * make Identify() method return false if passed object is not a directory
+
+VRT driver:
+ * VRTSourcedRasterBand::IRasterIO(): initialize output buffer to nodata
+   value if VRT band type is Int64 or UInt64
+ * VRTComplexSource::RasterIO(): use double working data type for more
+   source or VRT data types
+ * VRTComplexSource::RasterIO(): speed-up pixel copy in more cases (#10809)
+ * VRTProcessedDataset: fix issue when computing RasterIO window on
+   auxiliary datasets on right-most/bottom-most tiles
+
+## OGR 3.9.3
+
+### Core
+
+* Make OGRSFDriver::TestCapability(ODrCCreateDataSource) work with
+  defered-loaded drivers (#10783)
+* MEM layer: fix UpdateFeature() that didn't mark the layer as updated,
+  which caused GeoJSON files to not be updated (qgis/QGIS#57736)
+
+### Vector drivers
+
+FlatGeobuf driver:
+ * Fix reading of conformant single-part MultiLineString (#10774)
+
+GeoPackage driver:
+ * OGR_GPKG_FillArrowArray_Step(): more rigorous locking
+
+GMLAS driver:
+ * make it robust to XML billion laugh attack
+
+JSONFG driver:
+ * accept coordRefSys starting with https://www.opengis.net/def/crs/
+
+NAS driver:
+ * make it robust to XML billion laugh attack
+
+OpenFileGDB driver:
+ * add missing GetIndexCount() in FileGDBTable::CreateIndex
+ * fix writing a Int32 field with value -21121
+ * exclude straight line segments when parsing arcs (#10763)
+
+Parquet driver:
+ * fix crash when using SetIgnoredFields() + SetSpatialFilter() on
+   GEOMETRY_ENCODING=GEOARROW layers with a covering bounding box
+   (qgis/QGIS#58086)
+
+PostgreSQL/PGDump drivers:
+ * properly truncates identifiers exactly of 64 characters (#10907)
+
+PostgreSQL driver:
+ * ensure current user has superuser privilege beore attemption to create
+   event trigger for metadata table (#10925)
+
+Shapefile driver:
+ * Add new shapelib API functions to the symbol rename header
+
+SQLite/GPKG drivers:
+ * fix potential double-free issue when concurrently closing datasets when
+   Spatialite is available
+
+## Python bindings
+
+* Silence SWIG 'detected a memory leak' message (#4907)
+* fix passing a dict value to the transformerOptions argument of gdal.Warp()
+  (#10919)
+
 # GDAL/OGR 3.9.2 Release Notes
 
 GDAL 3.9.2 is a bugfix release.
