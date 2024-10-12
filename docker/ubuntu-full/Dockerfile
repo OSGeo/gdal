@@ -101,19 +101,39 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
+ARG RSYNC_REMOTE
+ARG WITH_CCACHE
+
 # Build mongo-c-driver
 ARG MONGO_C_DRIVER_VERSION=1.24.4
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-mongo-c-driver,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && mkdir mongo-c-driver \
     && curl -L -fsS https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz \
         | tar xz -C mongo-c-driver --strip-components=1 \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/mongo-c-driver/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -M 100M; \
+    fi \
     && cd mongo-c-driver \
     && mkdir build_cmake \
     && cd build_cmake \
-    && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_TESTS=NO -DCMAKE_BUILD_TYPE=Release \
+    && cmake .. -G Ninja $CCACHE_PARAM -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_TESTS=NO -DCMAKE_BUILD_TYPE=Release \
     && ninja \
     && DESTDIR="/build_thirdparty" ninja install \
     && ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/mongo-c-driver/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && cd ../.. \
     && rm -rf mongo-c-driver \
     && rm /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/*.a \
@@ -122,24 +142,38 @@ RUN . /buildscripts/bh-set-envvars.sh \
 
 # Build mongocxx
 ARG MONGOCXX_VERSION=3.8.1
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-mongo-cxx-driver,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && mkdir mongocxx \
     && curl -L -fsS https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz \
         | tar xz -C mongocxx --strip-components=1 \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/mongo-cxx-driver/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -M 100M; \
+    fi \
     && cd mongocxx \
     && mkdir build_cmake \
     && cd build_cmake \
-    && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DENABLE_TESTS=OFF -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release -DBUILD_VERSION=${MONGOCXX_VERSION} \
+    && cmake .. -G Ninja $CCACHE_PARAM -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DENABLE_TESTS=OFF -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release -DBUILD_VERSION=${MONGOCXX_VERSION} \
     && ninja \
     && DESTDIR="/build_thirdparty" ninja install \
     && ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/mongo-cxx-driver/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && cd ../.. \
     && rm -rf mongocxx \
     && for i in /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
-
-ARG RSYNC_REMOTE
-ARG WITH_CCACHE
 
 # Build tiledb
 ARG TILEDB_VERSION=2.23.0
