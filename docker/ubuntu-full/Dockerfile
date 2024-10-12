@@ -83,26 +83,43 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libaec-dev${APT_ARCH_SUFFIX} \
        libavif-dev${APT_ARCH_SUFFIX}
 
-# Build likbkea
+ARG RSYNC_REMOTE
+ARG WITH_CCACHE
+
+# Build libkea
 ARG KEA_VERSION=1.5.2
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-kealib,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && curl -LO -fsS https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
     && unzip -q kealib-${KEA_VERSION}.zip \
     && rm -f kealib-${KEA_VERSION}.zip \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/kealib/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -M 100M; \
+    fi \
     && cd kealib-kealib-${KEA_VERSION} \
-    && cmake . -G Ninja -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    && cmake . -G Ninja $CCACHE_PARAM -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5/serial \
         -DHDF5_LIB_PATH=/usr/lib/${GCC_ARCH}-linux-gnu/hdf5/serial -DLIBKEA_WITH_GDAL=OFF \
     && ninja \
     && DESTDIR="/build_thirdparty" ninja install \
     && ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/kealib/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && cd .. \
     && rm -rf kealib-kealib-${KEA_VERSION} \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
-
-ARG RSYNC_REMOTE
-ARG WITH_CCACHE
 
 # Build mongo-c-driver
 ARG MONGO_C_DRIVER_VERSION=1.24.4

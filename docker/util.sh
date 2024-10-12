@@ -284,6 +284,7 @@ else
 
         mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/proj/"{x86_64,aarch64}
         mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/gdal/"{x86_64,aarch64}
+        mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/kealib/"{x86_64,aarch64}
         mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/"mongo-{c,cxx}-driver/{x86_64,aarch64}
         mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/spatialite"
         mkdir -p "${HOST_CACHE_DIR}/${TARGET_IMAGE}/tiledb/"{x86_64,aarch64}
