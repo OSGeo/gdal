@@ -777,7 +777,7 @@ def test_ogr_arrow_vsi_arrow_file_system():
     if version < 16:
         pytest.skip("requires Arrow >= 16.0.0")
 
-    ogr.Open("vsi://data/arrow/test.feather")
+    ogr.Open("gdalvsi://data/arrow/test.feather")
 
 
 ###############################################################################

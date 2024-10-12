@@ -121,10 +121,11 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
 
     GDALOpenInfo *poOpenInfoForIdentify = poOpenInfo;
     std::unique_ptr<GDALOpenInfo> poOpenInfoTmp;
-    if (STARTS_WITH(poOpenInfo->pszFilename, "vsi://"))
+    if (STARTS_WITH(poOpenInfo->pszFilename, "gdalvsi://"))
     {
-        poOpenInfoTmp = std::make_unique<GDALOpenInfo>(
-            poOpenInfo->pszFilename + strlen("vsi://"), poOpenInfo->nOpenFlags);
+        poOpenInfoTmp = std::make_unique<GDALOpenInfo>(poOpenInfo->pszFilename +
+                                                           strlen("gdalvsi://"),
+                                                       poOpenInfo->nOpenFlags);
         poOpenInfoForIdentify = poOpenInfoTmp.get();
     }
 

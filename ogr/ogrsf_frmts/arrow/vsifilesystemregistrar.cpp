@@ -31,13 +31,13 @@ auto kVSIFileSystemModule = ARROW_REGISTER_FILESYSTEM(
     []()
     {
         CPLDebugOnly("ARROW", "Register VSI Arrow file system");
-        return "vsi";
+        return "gdalvsi";
     }(),
     [](const arrow::fs::Uri &uri, const arrow::io::IOContext & /* io_context */,
        std::string *out_path)
         -> arrow::Result<std::shared_ptr<arrow::fs::FileSystem>>
     {
-        constexpr std::string_view kScheme = "vsi://";
+        constexpr std::string_view kScheme = "gdalvsi://";
         if (out_path)
             *out_path = uri.ToString().substr(kScheme.size());
         return std::make_shared<VSIArrowFileSystem>("ARROW", std::string());
