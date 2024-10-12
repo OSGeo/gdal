@@ -265,16 +265,33 @@ RUN . /buildscripts/bh-set-envvars.sh \
 
 # Build libOpenDRIVE
 ARG OPENDRIVE_VERSION=0.6.0-gdal
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-libopendrive,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && if test "${OPENDRIVE_VERSION}" != ""; then ( \
     curl -LO -fsS https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
     && rm -f ${OPENDRIVE_VERSION}.tar.gz \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/libopendrive/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -M 100M; \
+    fi \
     && cd libOpenDRIVE-${OPENDRIVE_VERSION} \
-    && cmake . -G Ninja -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    && cmake . -G Ninja $CCACHE_PARAM -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr/ \
     && ninja \
     && ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/libopendrive/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && mkdir -p /build_thirdparty/usr/lib \
     && cp -P /usr/lib/libOpenDrive*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
