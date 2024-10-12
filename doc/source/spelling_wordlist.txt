@@ -1018,6 +1018,7 @@ GDALThreadLocalDatasetCache
 gdaltindex
 gdaltransform
 gdalvirtualmem
+gdalvsi
 gdalwarp
 gdalwmscache
 gdb

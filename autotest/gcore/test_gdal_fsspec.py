@@ -23,13 +23,13 @@ from osgeo import gdal_fsspec  # NOQA
 
 def test_gdal_fsspec_open_read():
 
-    with fsspec.open("vsi://data/byte.tif") as f:
+    with fsspec.open("gdalvsi://data/byte.tif") as f:
         assert len(f.read()) == gdal.VSIStatL("data/byte.tif").size
 
 
 def test_gdal_fsspec_info_file():
 
-    fs = fsspec.filesystem("vsi")
+    fs = fsspec.filesystem("gdalvsi")
     info = fs.info("data/byte.tif")
     assert "mtime" in info
     del info["mtime"]
@@ -44,7 +44,7 @@ def test_gdal_fsspec_info_file():
 
 def test_gdal_fsspec_info_dir():
 
-    fs = fsspec.filesystem("vsi")
+    fs = fsspec.filesystem("gdalvsi")
     info = fs.info("data")
     assert (info["mode"] & 16384) != 0
     del info["mode"]
@@ -57,14 +57,14 @@ def test_gdal_fsspec_info_dir():
 
 def test_gdal_fsspec_info_error():
 
-    fs = fsspec.filesystem("vsi")
+    fs = fsspec.filesystem("gdalvsi")
     with pytest.raises(FileNotFoundError):
         fs.info("/i/do/not/exist")
 
 
 def test_gdal_fsspec_ls():
 
-    fs = fsspec.filesystem("vsi")
+    fs = fsspec.filesystem("gdalvsi")
     ret = fs.ls("data")
     assert len(ret) > 2
     item_of_interest = None
@@ -84,21 +84,21 @@ def test_gdal_fsspec_ls():
 
 def test_gdal_fsspec_ls_file():
 
-    fs = fsspec.filesystem("vsi")
+    fs = fsspec.filesystem("gdalvsi")
     ret = fs.ls("data/byte.tif")
     assert ret == ["data/byte.tif"]
 
 
 def test_gdal_fsspec_ls_error():
 
-    fs = fsspec.filesystem("vsi")
+    fs = fsspec.filesystem("gdalvsi")
     with pytest.raises(FileNotFoundError):
-        fs.ls("vsi://i/do/not/exist")
+        fs.ls("gdalvsi://i/do/not/exist")
 
 
 def test_gdal_fsspec_modified():
 
-    fs = fsspec.filesystem("vsi")
+    fs = fsspec.filesystem("gdalvsi")
     modified = fs.modified("data/byte.tif")
     assert modified is not None
     import datetime
@@ -108,70 +108,70 @@ def test_gdal_fsspec_modified():
 
 def test_gdal_fsspec_modified_error():
 
-    fs = fsspec.filesystem("vsi")
+    fs = fsspec.filesystem("gdalvsi")
     with pytest.raises(FileNotFoundError):
-        fs.modified("vsi://i/do/not/exist")
+        fs.modified("gdalvsi://i/do/not/exist")
 
 
 def test_gdal_fsspec_rm():
 
-    with fsspec.open("vsimem:///foo.bin", "wb") as f:
+    with fsspec.open("gdalvsi:///vsimem/foo.bin", "wb") as f:
         f.write(b"""bar""")
-    fs = fsspec.filesystem("vsimem")
-    fs.info("/foo.bin")
-    fs.rm("/foo.bin")
+    fs = fsspec.filesystem("gdalvsi")
+    fs.info("/vsimem/foo.bin")
+    fs.rm("/vsimem/foo.bin")
     with pytest.raises(FileNotFoundError):
-        fs.info("/foo.bin")
+        fs.info("/vsimem/foo.bin")
 
 
 def test_gdal_fsspec_rm_error():
 
-    fs = fsspec.filesystem("vsimem")
+    fs = fsspec.filesystem("gdalvsi")
     with pytest.raises(FileNotFoundError):
-        fs.rm("/foo.bin")
+        fs.rm("/vsimem/foo.bin")
 
 
 def test_gdal_fsspec_copy():
 
-    with fsspec.open("vsimem://foo.bin", "wb") as f:
+    with fsspec.open("gdalvsi:///vsimem/foo.bin", "wb") as f:
         f.write(b"""bar""")
-    fs = fsspec.filesystem("vsimem")
-    fs.copy("/foo.bin", "/bar.bin")
-    assert fs.info("/bar.bin")["size"] == 3
-    assert fs.info("/foo.bin")["size"] == 3
-    fs.rm("/foo.bin")
-    fs.rm("/bar.bin")
+    fs = fsspec.filesystem("gdalvsi")
+    fs.copy("/vsimem/foo.bin", "/vsimem/bar.bin")
+    assert fs.info("/vsimem/bar.bin")["size"] == 3
+    assert fs.info("/vsimem/foo.bin")["size"] == 3
+    fs.rm("/vsimem/foo.bin")
+    fs.rm("/vsimem/bar.bin")
 
 
 def test_gdal_fsspec_copy_error():
 
-    fs = fsspec.filesystem("vsimem")
+    fs = fsspec.filesystem("gdalvsi")
     with pytest.raises(FileNotFoundError):
-        fs.copy("/foo.bin", "/bar.bin")
+        fs.copy("/vsimem/foo.bin", "/vsimem/bar.bin")
 
 
 def test_gdal_fsspec_mv():
 
-    with fsspec.open("vsimem://foo.bin", "wb") as f:
+    with fsspec.open("gdalvsi:///vsimem/foo.bin", "wb") as f:
         f.write(b"""bar""")
-    fs = fsspec.filesystem("vsimem")
-    fs.mv("/foo.bin", "/bar.bin")
-    assert fs.info("/bar.bin")["size"] == 3
+    fs = fsspec.filesystem("gdalvsi")
+    fs.mv("/vsimem/foo.bin", "/vsimem/bar.bin")
+    assert fs.info("/vsimem/bar.bin")["size"] == 3
     with pytest.raises(FileNotFoundError):
-        fs.info("/foo.bin")
-    fs.rm("/bar.bin")
+        fs.info("/vsimem/foo.bin")
+    fs.rm("/vsimem/bar.bin")
 
 
 def test_gdal_fsspec_mv_error():
 
-    fs = fsspec.filesystem("vsimem")
+    fs = fsspec.filesystem("gdalvsi")
     with pytest.raises(FileNotFoundError):
-        fs.mv("/foo.bin", "/bar.bin")
+        fs.mv("/vsimem/foo.bin", "/bar.bin")
 
 
 def test_gdal_fsspec_mkdir(tmp_path):
 
-    fs = fsspec.filesystem("vsi")
+    fs = fsspec.filesystem("gdalvsi")
 
     my_path = str(tmp_path) + "/my_dir"
 
@@ -189,7 +189,7 @@ def test_gdal_fsspec_mkdir(tmp_path):
     with pytest.raises(FileNotFoundError):
         fs.info(my_path)
 
-    fs = fsspec.filesystem("vsi")
+    fs = fsspec.filesystem("gdalvsi")
     with pytest.raises(Exception):
         fs.mkdir(my_path + "/my_subdir", create_parents=False)
     with pytest.raises(FileNotFoundError):
@@ -198,7 +198,7 @@ def test_gdal_fsspec_mkdir(tmp_path):
 
 def test_gdal_fsspec_makedirs(tmp_path):
 
-    fs = fsspec.filesystem("vsi")
+    fs = fsspec.filesystem("gdalvsi")
 
     my_path = str(tmp_path) + "/my_dir"
     fs.makedirs(my_path)
@@ -218,12 +218,8 @@ def test_gdal_fsspec_usable_by_pyarrow_dataset(tmp_vsimem):
         tmp_vsimem_file, open("../ogr/data/parquet/test.parquet", "rb").read()
     )
 
-    fs_vsimem = fsspec.filesystem("vsimem")
+    fs_vsimem = fsspec.filesystem("gdalvsi")
 
-    assert (
-        ds.dataset(tmp_vsimem_file[len("/vsimem") :], filesystem=fs_vsimem) is not None
-    )
+    assert ds.dataset(tmp_vsimem_file, filesystem=fs_vsimem) is not None
 
-    assert (
-        ds.dataset(str(tmp_vsimem)[len("/vsimem") :], filesystem=fs_vsimem) is not None
-    )
+    assert ds.dataset(str(tmp_vsimem), filesystem=fs_vsimem) is not None

@@ -1,29 +1,18 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2024, Even Rouault <even dot rouault at spatialys.com>
 
-"""Module exposing GDAL Virtual File Systems (VSI) as fsspec implementations.
+"""Module exposing GDAL Virtual File Systems (VSI) as a "gdalvsi" fsspec implementation.
 
    Importing "osgeo.gdal_fsspec" requires the Python "fsspec"
    (https://filesystem-spec.readthedocs.io/en/latest/) module to be available.
 
-   A generic "vsi" fsspec protocol is available. All GDAL VSI file names must be
-   simply prefixed with "vsi://". For example:
+   A generic "gdalvsi" fsspec protocol is available. All GDAL VSI file names must be
+   simply prefixed with "gdalvsi://". For example:
 
-   - "vsi://data/byte.tif" to access relative file "data/byte.tif"
-   - "vsi:///home/user/byte.tif" to access absolute file "/home/user/byte.tif"
-   - "vsi:///vsimem/byte.tif" (note the 3 slashes) to access VSIMem file "/vsimem/byte.tif"
-
-   Each VSI file system is also registered as a distinct fsspec protocol, such
-   as "vsimem", "vsicurl", "vsizip", "vsitar", etc.
-
-   Examples:
-
-   - "vsimem://byte.tif" to access file "/vsimem/byte.tif"
-   - "vsicurl://http://example.com/foo" to access file "/vsicurl/http://example.com/foo"
-   - "vsis3://my_bucket/byte.tif" to access file "/vsis3/my_bucket/byte.tif"
-   - "vsizip:///home/user/my.zip/foo.tif" (note the 3 slashes to indicate absolute path)
-     to access (absolute) file "/vsizip//home/user/my.zip/foo.tif"
-   - "vsizip://my.zip/foo.tif" to access (relative) file "/vsizip/my.zip/foo.tif"
+   - "gdalvsi://data/byte.tif" to access relative file "data/byte.tif"
+   - "gdalvsi:///home/user/byte.tif" to access absolute file "/home/user/byte.tif"
+   - "gdalvsi:///vsimem/byte.tif" (note the 3 slashes) to access VSIMem file "/vsimem/byte.tif"
+   - "gdalvsi:///vsicurl/https://example.com/byte.tif (note the 3 slashes) to access "https://example.com/byte.tif" through /vsicurl/
 
    :since: GDAL 3.11
 """
@@ -44,52 +33,19 @@ class VSIFileSystem(AbstractFileSystem):
     def _get_gdal_path(cls, path):
         """Return a GDAL compatible file from a fsspec file name.
 
-        For the file system using the generic "vsi" protocol,
-        remove the leading vsi:// if found (normally, it should be there,
+        Remove the leading vsi:// if found (normally, it should be there,
         but most AbstractFileSystem implementations seem to be ready to remove
         it if found)
-
-        For specialized file systems, like vsimem://, etc., for an input
-        like "vsimem:///foo", return "/vsimem/foo". And for an input like
-        "/foo" also return "/vsimem/foo".
         """
 
         if isinstance(path, PurePath):
             path = stringify_path(path)
 
-        if cls.protocol == "vsi":
-            # "vsi://something" just becomes "something"
-            if path.startswith("vsi://"):
-                return path[len("vsi://") :]
+        # "vsi://something" just becomes "something"
+        if path.startswith("vsi://"):
+            return path[len("vsi://") :]
 
-            return path
-
-        else:
-            list_protocols_that_need_leeding_slash = [
-                "vsis3",
-                "vsigs",
-                "vsiaz",
-                "vsioss",
-                "vsiswift",
-            ]
-            list_protocols_that_need_leeding_slash += [
-                item + "_streaming" for item in list_protocols_that_need_leeding_slash
-            ]
-            list_protocols_that_need_leeding_slash.append("vsimem")
-
-            # Deal with paths like "vsis3://foo"
-            full_protocol = cls.protocol + "://"
-            if path.startswith(full_protocol):
-                path = path[len(full_protocol) :]
-
-            # Deal with paths like "/foo" with a VSIFileSystem that is something like "vsis3"
-            if (
-                cls.protocol in list_protocols_that_need_leeding_slash
-                and not path.startswith("/")
-            ):
-                path = "/" + path
-
-            return "/" + cls.protocol + path
+        return path
 
     def _open(
         self,
@@ -271,22 +227,10 @@ class VSIFileSystem(AbstractFileSystem):
 
 
 def register_vsi_implementations():
-    """Register a generic "vsi" protocol and "vsimem", "vsitar", etc.
+    """Register a generic "gdalvsi" protocol.
     This method is automatically called on osgeo.gdal_fsspec import.
     """
-    register_implementation("vsi", VSIFileSystem)
-    for vsi_prefix in gdal.GetFileSystemsPrefixes():
-        if vsi_prefix.startswith("/vsi") and not vsi_prefix.endswith("?"):
-            assert vsi_prefix.endswith("/")
-            protocol = vsi_prefix[1:-1]
-            # We need to duplicate the base class for each protocol, so that
-            # each class has a distinct "protocol" member.
-            new_class = type(
-                "VSIFileSystem_" + protocol,
-                VSIFileSystem.__bases__,
-                dict(VSIFileSystem.__dict__),
-            )
-            register_implementation(protocol, new_class)
+    register_implementation("gdalvsi", VSIFileSystem)
 
 
 register_vsi_implementations()
