@@ -287,7 +287,7 @@ The following open options are available:
       valid_min, valid_max or valid_range attributes.
 
 -  .. oo:: IGNORE_XY_AXIS_NAME_CHECKS
-      :choices: YES, NOA
+      :choices: YES, NO
       :default: NO
       :since: 3.4.2
 
