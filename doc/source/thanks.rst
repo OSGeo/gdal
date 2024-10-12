@@ -45,6 +45,7 @@ of the following persons:
 - `Dan Baston <https://github.com/dbaston>`__: modernization of the Python test suite and Python bindings.
 - `Norman Barker <https://github.com/normanb>`__: JPIPKAK and TileDB drivers, PSC member.
 - `Dmitry Baryshnikov <https://github.com/bishopgis>`__: SXF and CAD drivers and the GNM component.
+- `Andrew Bell <https://github.com/abellgithub>`__: gdal_viewshed enhancements.
 - `Pete Bunting <https://github.com/petebunting>`__: KEA driver.
 - `Ragi Yaser Burhum <https://github.com/rburhum>`__: FileGDB driver.
 - Brian Case: LIBKML driver.
