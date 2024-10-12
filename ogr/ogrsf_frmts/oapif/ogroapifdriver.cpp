@@ -2228,6 +2228,7 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
             }
         }
 
+        // cppcheck-suppress nullPointerRedundantCheck
         poSrcFeature = m_poUnderlyingLayer->GetNextFeature();
         if (poSrcFeature)
         {

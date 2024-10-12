@@ -1588,11 +1588,12 @@ void PNGDataset::CollectXMPMetadata()
             if (memcmp(pszContent, "XML:com.adobe.xmp\0\0\0\0\0", 22) == 0)
             {
                 // Avoid setting the PAM dirty bit just for that.
-                int nOldPamFlags = nPamFlags;
+                const int nOldPamFlags = nPamFlags;
 
                 char *apszMDList[2] = {pszContent + 22, nullptr};
                 SetMetadata(apszMDList, "xml:XMP");
 
+                // cppcheck-suppress redundantAssignment
                 nPamFlags = nOldPamFlags;
 
                 VSIFree(pszContent);

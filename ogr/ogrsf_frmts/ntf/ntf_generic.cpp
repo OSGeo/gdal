@@ -720,7 +720,7 @@ static OGRFeature *TranslateGenericPoly(NTFFileReader *poReader,
         poFeature->SetField("NUM_PARTS", nNumLinks);
 
         // DIR
-        int i, anList[MAX_LINK];
+        int i, anList[MAX_LINK] = {0};
 
         for (i = 0; i < nNumLinks; i++)
             anList[i] = atoi(papoGroup[1]->GetField(19 + i * 7, 19 + i * 7));
@@ -804,7 +804,7 @@ static OGRFeature *TranslateGenericCPoly(NTFFileReader *poReader,
     /*      in the RingStart field.                                         */
     /* -------------------------------------------------------------------- */
     int nNumLink = 0;
-    int anPolyId[MAX_LINK * 2];
+    int anPolyId[MAX_LINK * 2] = {0};
 
     nNumLink = atoi(papoGroup[0]->GetField(9, 12));
     if (nNumLink < 0 || nNumLink > MAX_LINK)

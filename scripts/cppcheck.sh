@@ -112,6 +112,9 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DGNMGFIDFormat="\"%lld\"" \
         -DGDAL_RELEASE_NAME="\"dummy\"" \
         "-DBANDMAP_TYPE=int*" \
+        -DSQLITE_UTF8=1 \
+        -DSQLITE_DETERMINISTIC=0x000000800 \
+        -DSQLITE_INNOCUOUS=0x000200000 \
         --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
         -I "${CPL_CONFIG_H_DIR}" \
@@ -122,6 +125,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -i gdalasyncread.cpp \
         -i gdaltorture.cpp \
         -i vsifilesystemregistrar.cpp \
+        -i external_deferred_plugins.cpp \
         $dirname \
         -j "$(nproc)" >>${LOG_FILE} 2>&1 &
     # Display some progress to avoid Travis-CI killing the job after 10 minutes

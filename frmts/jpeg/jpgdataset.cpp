@@ -383,6 +383,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
                     char *apszMDList[2] = {pszXMP, nullptr};
                     SetMetadata(apszMDList, "xml:XMP");
 
+                    // cppcheck-suppress redundantAssignment
                     nPamFlags = nOldPamFlags;
                 }
                 VSIFree(pszXMP);
@@ -3036,7 +3037,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
     // Open the file using the large file api if necessary.
     VSILFILE *fpImage = fpLin;
 
-    if (fpImage == nullptr)
+    if (!fpImage)
     {
         fpImage = VSIFOpenL(real_filename, "rb");
 
@@ -3048,10 +3049,6 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
             delete poDS;
             return nullptr;
         }
-    }
-    else
-    {
-        fpImage = fpLin;
     }
 
     // Create a corresponding GDALDataset.

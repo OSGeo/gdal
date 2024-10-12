@@ -369,6 +369,7 @@ CPLErr GSAGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             }
             else if (*szStart != '\0')
             {
+                // cppcheck-suppress redundantAssignment
                 szEnd = szStart;
                 while (!isspace((unsigned char)*szEnd) && *szEnd != '\0')
                     szEnd++;

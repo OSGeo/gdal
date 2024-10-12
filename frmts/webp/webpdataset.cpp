@@ -247,6 +247,7 @@ char **WEBPDataset::GetMetadata(const char *pszDomain)
                 char *apszMDList[2] = {pszXMP, nullptr};
                 SetMetadata(apszMDList, "xml:XMP");
 
+                // cppcheck-suppress redundantAssignment
                 nPamFlags = nOldPamFlags;
 
                 VSIFree(pszXMP);

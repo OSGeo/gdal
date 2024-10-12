@@ -62,19 +62,14 @@ OGRUnionLayerGeomFieldDefn::~OGRUnionLayerGeomFieldDefn()
 /*                          OGRUnionLayer()                             */
 /************************************************************************/
 
+// cppcheck-suppress uninitMemberVar
 OGRUnionLayer::OGRUnionLayer(const char *pszName, int nSrcLayersIn,
                              OGRLayer **papoSrcLayersIn,
                              int bTakeLayerOwnership)
     : osName(pszName), nSrcLayers(nSrcLayersIn), papoSrcLayers(papoSrcLayersIn),
-      bHasLayerOwnership(bTakeLayerOwnership), poFeatureDefn(nullptr),
-      nFields(0), papoFields(nullptr), nGeomFields(0), papoGeomFields(nullptr),
-      eFieldStrategy(FIELD_UNION_ALL_LAYERS), bPreserveSrcFID(FALSE),
-      nFeatureCount(-1), iCurLayer(-1), pszAttributeFilter(nullptr),
-      nNextFID(0), panMap(nullptr), bAttrFilterPassThroughValue(-1),
+      bHasLayerOwnership(bTakeLayerOwnership),
       pabModifiedLayers(static_cast<int *>(CPLCalloc(sizeof(int), nSrcLayers))),
-      pabCheckIfAutoWrap(
-          static_cast<int *>(CPLCalloc(sizeof(int), nSrcLayers))),
-      poGlobalSRS(nullptr)
+      pabCheckIfAutoWrap(static_cast<int *>(CPLCalloc(sizeof(int), nSrcLayers)))
 {
     CPLAssert(nSrcLayersIn > 0);
 

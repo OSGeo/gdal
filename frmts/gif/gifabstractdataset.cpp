@@ -166,13 +166,14 @@ void GIFAbstractDataset::CollectXMPMetadata()
     if (!osXMP.empty())
     {
         /* Avoid setting the PAM dirty bit just for that */
-        int nOldPamFlags = nPamFlags;
+        const int nOldPamFlags = nPamFlags;
 
         char *apszMDList[2];
         apszMDList[0] = (char *)osXMP.c_str();
         apszMDList[1] = nullptr;
         SetMetadata(apszMDList, "xml:XMP");
 
+        // cppcheck-suppress redundantAssignment
         nPamFlags = nOldPamFlags;
     }
 

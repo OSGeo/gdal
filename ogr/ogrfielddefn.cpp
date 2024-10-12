@@ -2315,6 +2315,7 @@ OGRCodedFieldDomain::~OGRCodedFieldDomain()
 /*                       OGRRangeFieldDomain()                          */
 /************************************************************************/
 
+// cppcheck-suppress uninitMemberVar
 OGRRangeFieldDomain::OGRRangeFieldDomain(
     const std::string &osName, const std::string &osDescription,
     OGRFieldType eFieldType, OGRFieldSubType eFieldSubType,

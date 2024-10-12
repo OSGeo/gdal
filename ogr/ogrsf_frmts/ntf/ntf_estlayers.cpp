@@ -469,7 +469,7 @@ static OGRFeature *TranslateBoundarylineCollection(NTFFileReader *poReader,
     poFeature->SetField(1, nNumLinks);
 
     // POLY_ID
-    int i, anList[MAX_LINK];
+    int i, anList[MAX_LINK] = {0};
 
     for (i = 0; i < nNumLinks; i++)
         anList[i] = atoi(papoGroup[0]->GetField(15 + i * 8, 20 + i * 8));
@@ -520,7 +520,7 @@ static OGRFeature *TranslateBoundarylinePoly(NTFFileReader *poReader,
         poFeature->SetField(4, nNumLinks);
 
         // DIR
-        int i, anList[MAX_LINK];
+        int i, anList[MAX_LINK] = {0};
 
         for (i = 0; i < nNumLinks; i++)
             anList[i] = atoi(papoGroup[2]->GetField(19 + i * 7, 19 + i * 7));
@@ -718,7 +718,7 @@ static OGRFeature *TranslateBL2000Poly(NTFFileReader *poReader,
         poFeature->SetField(3, nNumLinks);
 
         // DIR
-        int i, anList[MAX_LINK];
+        int i, anList[MAX_LINK] = {0};
 
         for (i = 0; i < nNumLinks; i++)
             anList[i] = atoi(papoGroup[2]->GetField(19 + i * 7, 19 + i * 7));
@@ -908,7 +908,7 @@ static OGRFeature *TranslateBL2000Collection(NTFFileReader *poReader,
     poFeature->SetField(1, nNumLinks);
 
     // POLY_ID / COLL_ID_REFS
-    int anList[MAX_LINK], anCollList[MAX_LINK];
+    int anList[MAX_LINK] = {0}, anCollList[MAX_LINK] = {0};
     int nPolys = 0, nCollections = 0;
 
     for (int i = 0; i < nNumLinks; i++)
@@ -1117,7 +1117,7 @@ static OGRFeature *TranslateStrategiNode(CPL_UNUSED NTFFileReader *poReader,
     poFeature->SetField(2, nNumLinks);
 
     // DIR
-    int i, anList[MAX_LINK];
+    int i, anList[MAX_LINK] = {0};
 
     for (i = 0; i < nNumLinks; i++)
         anList[i] = atoi(papoGroup[0]->GetField(19 + i * 12, 19 + i * 12));
@@ -1141,7 +1141,7 @@ static OGRFeature *TranslateStrategiNode(CPL_UNUSED NTFFileReader *poReader,
     // ORIENT (optional)
     if (EQUAL(poFeature->GetDefnRef()->GetFieldDefn(6)->GetNameRef(), "ORIENT"))
     {
-        double adfList[MAX_LINK];
+        double adfList[MAX_LINK] = {0};
 
         for (i = 0; i < nNumLinks; i++)
             adfList[i] = atoi(papoGroup[0]->GetField(19 + i * 12 + 7,

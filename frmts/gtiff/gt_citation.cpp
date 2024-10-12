@@ -621,9 +621,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF *hGTIF, GTIFDefn *psDefn,
     if (GDALGTIFKeyGetASCII(hGTIF, GTCitationGeoKey, szCTString,
                             sizeof(szCTString)))
     {
-        CPLString osLCCT = szCTString;
-
-        osLCCT.tolower();
+        const CPLString osLCCT = CPLString(szCTString).tolower();
 
         if (strstr(osLCCT, "us") && strstr(osLCCT, "survey") &&
             (strstr(osLCCT, "feet") || strstr(osLCCT, "foot")))
@@ -659,8 +657,9 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF *hGTIF, GTIFDefn *psDefn,
 
                     if (poUnit != nullptr && poUnit->GetChildCount() >= 2)
                     {
-                        CPLString unitName = poUnit->GetChild(0)->GetValue();
-                        unitName.tolower();
+                        const CPLString unitName =
+                            CPLString(poUnit->GetChild(0)->GetValue())
+                                .tolower();
 
                         if (strstr(units, "us_survey_feet"))
                         {
@@ -692,9 +691,8 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF *hGTIF, GTIFDefn *psDefn,
         GTIFGetUOMLengthInfo(psDefn->UOMLength, &pszUnitsName, nullptr);
         if (pszUnitsName)
         {
-            CPLString osLCCT = pszUnitsName;
+            const CPLString osLCCT = CPLString(pszUnitsName).tolower();
             GTIFFreeMemory(pszUnitsName);
-            osLCCT.tolower();
 
             if (strstr(osLCCT, "us") && strstr(osLCCT, "survey") &&
                 (strstr(osLCCT, "feet") || strstr(osLCCT, "foot")))

@@ -68,8 +68,8 @@ CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config,
 
     m_image_format = CPLGetXMLValue(config, "ImageFormat", "png");
     m_time_range = CPLGetXMLValue(config, "TimeRange", "");
-    m_transparent = CPLGetXMLValue(config, "Transparent", "");
-    m_transparent.tolower();
+    m_transparent =
+        CPLString(CPLGetXMLValue(config, "Transparent", "")).tolower();
     m_layers = CPLGetXMLValue(config, "Layers", "");
 
     const char *irs = CPLGetXMLValue(config, "SRS", "102100");

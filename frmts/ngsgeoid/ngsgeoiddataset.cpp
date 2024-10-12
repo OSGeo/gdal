@@ -375,8 +375,8 @@ const OGRSpatialReference *NGSGEOIDDataset::GetSpatialRef() const
         return &m_oSRS;
     }
 
-    CPLString osFilename(CPLGetBasename(GetDescription()));
-    osFilename.tolower();
+    const CPLString osFilename =
+        CPLString(CPLGetBasename(GetDescription())).tolower();
 
     // See https://www.ngs.noaa.gov/GEOID/GEOID12B/faq_2012B.shtml
 

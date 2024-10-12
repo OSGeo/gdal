@@ -99,7 +99,7 @@ OGRFeature *TigerAltName::GetFeature(int nRecordId)
     /* -------------------------------------------------------------------- */
 
     OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
-    int anFeatList[5];
+    int anFeatList[5] = {0};
     int nFeatCount = 0;
 
     SetFields(psRTInfo, poFeature, achRecord);

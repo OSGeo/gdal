@@ -205,9 +205,8 @@ void OGRGMLASLayer::ProcessDataRecordOfDataArrayCreateFields(
         if (psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "field") == 0)
         {
-            CPLString osName = CPLGetXMLValue(psIter, "name", "");
-            osName.tolower();
-            OGRFieldDefn oFieldDefn(osName, OFTString);
+            const char *pszName = CPLGetXMLValue(psIter, "name", "");
+            OGRFieldDefn oFieldDefn(CPLString(pszName).tolower(), OFTString);
             OGRFieldType eType;
             OGRFieldSubType eSubType;
             CPLXMLNode *psNode = GetSWEChildAndType(psIter, eType, eSubType);
@@ -257,8 +256,8 @@ void OGRGMLASLayer::ProcessDataRecordCreateFields(
         if (psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "field") == 0)
         {
-            CPLString osName = CPLGetXMLValue(psIter, "name", "");
-            osName = osName.tolower();
+            const char *pszName = CPLGetXMLValue(psIter, "name", "");
+            CPLString osName = CPLString(pszName).tolower();
             OGRFieldDefn oFieldDefn(osName, OFTString);
             OGRFieldType eType;
             OGRFieldSubType eSubType;
@@ -316,8 +315,9 @@ void OGRGMLASLayer::ProcessDataRecordCreateFields(
                     if (psIter2->eType == CXT_Element &&
                         strcmp(psIter2->pszValue, "value") != 0)
                     {
-                        CPLString osName2(osName + "_" + psIter2->pszValue);
-                        osName2.tolower();
+                        const CPLString osName2 =
+                            CPLString(osName + "_" + psIter2->pszValue)
+                                .tolower();
                         for (CPLXMLNode *psIter3 = psIter2->psChild;
                              psIter3 != nullptr; psIter3 = psIter3->psNext)
                         {
@@ -327,9 +327,10 @@ void OGRGMLASLayer::ProcessDataRecordCreateFields(
                                 const char *pszColon = strchr(pszValue, ':');
                                 if (pszColon)
                                     pszValue = pszColon + 1;
-                                CPLString osName3(osName2 + "_" + pszValue);
-                                osName3.tolower();
-                                OGRFieldDefn oFieldDefn2(osName3, OFTString);
+                                OGRFieldDefn oFieldDefn2(
+                                    CPLString(osName2 + "_" + pszValue)
+                                        .tolower(),
+                                    OFTString);
                                 m_poFeatureDefn->AddFieldDefn(&oFieldDefn2);
                             }
                             else if (psIter3->eType == CXT_Text)
@@ -397,8 +398,8 @@ void OGRGMLASLayer::ProcessDataRecordFillFeature(CPLXMLNode *psDataRecord,
         if (psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "field") == 0)
         {
-            CPLString osName = CPLGetXMLValue(psIter, "name", "");
-            osName = osName.tolower();
+            const char *pszName = CPLGetXMLValue(psIter, "name", "");
+            CPLString osName = CPLString(pszName).tolower();
             OGRFieldDefn oFieldDefn(osName, OFTString);
             OGRFieldType eType;
             OGRFieldSubType eSubType;
@@ -416,8 +417,8 @@ void OGRGMLASLayer::ProcessDataRecordFillFeature(CPLXMLNode *psDataRecord,
             {
                 if (psIter2->eType == CXT_Element)
                 {
-                    CPLString osName2(osName + "_" + psIter2->pszValue);
-                    osName2.tolower();
+                    const CPLString osName2 =
+                        CPLString(osName + "_" + psIter2->pszValue).tolower();
                     for (CPLXMLNode *psIter3 = psIter2->psChild;
                          psIter3 != nullptr; psIter3 = psIter3->psNext)
                     {
@@ -427,10 +428,10 @@ void OGRGMLASLayer::ProcessDataRecordFillFeature(CPLXMLNode *psDataRecord,
                             const char *pszColon = strchr(pszValue, ':');
                             if (pszColon)
                                 pszValue = pszColon + 1;
-                            CPLString osName3(osName2 + "_" + pszValue);
-                            osName3.tolower();
-                            SetSWEValue(poFeature, osName3,
-                                        psIter3->psChild->pszValue);
+                            SetSWEValue(
+                                poFeature,
+                                CPLString(osName2 + "_" + pszValue).tolower(),
+                                psIter3->psChild->pszValue);
                         }
                         else if (psIter3->eType == CXT_Text)
                         {
