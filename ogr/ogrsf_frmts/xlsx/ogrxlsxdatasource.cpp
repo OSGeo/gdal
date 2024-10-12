@@ -816,14 +816,22 @@ void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
         apoCurLineValues.clear();
         apoCurLineTypes.clear();
 
-        int nNewCurLine = atoi(GetAttributeValue(ppszAttr, "r", "0"));
-        if (nNewCurLine <= 0)
+        int nNewCurLine;
+        if (const char *pszR = GetAttributeValue(ppszAttr, "r", nullptr))
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid row: %d",
-                     nNewCurLine);
-            return;
+            nNewCurLine = atoi(pszR);
+            if (nNewCurLine <= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid row: %d",
+                         nNewCurLine);
+                return;
+            }
+            nNewCurLine--;
         }
-        nNewCurLine--;
+        else
+        {
+            nNewCurLine = nCurLine;
+        }
         const int nFields = std::max(
             static_cast<int>(apoFirstLineValues.size()),
             poCurLayer != nullptr ? poCurLayer->GetLayerDefn()->GetFieldCount()
