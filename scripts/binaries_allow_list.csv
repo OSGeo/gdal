@@ -17,3 +17,4 @@ filename,sha256sum
 "data/GDALLogoBW.svg",aac9dab33d479e0b832b8bd7c9e5510dcbef34a7c6cc9aea96bbe2aab5161c53
 "data/gdalicon.png",d90f50a8f74c325086c867bf006a92266c259a270d9166b2f41f586b67755729
 "data/GDALLogoColor.svg",2c102a31c6e9116aa9b98787d8bf5cf648dbcc2b930aee653cd35df65ed118d0
+"docker/ubuntu-full/tiledb-cmake-ccache.patch",c1ad2776c1599060613fad9ca784ce140ea7ef795b612d55b7472f0e4e053ad2

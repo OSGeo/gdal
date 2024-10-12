@@ -55,6 +55,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
             git make ninja-build cmake wget unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff-dev${APT_ARCH_SUFFIX} \
+            patchelf \
             rsync
 
 # Setup build env for GDAL
@@ -73,25 +74,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libspatialite-dev${APT_ARCH_SUFFIX} \
        autoconf automake sqlite3 bash-completion swig
 
-# Build openjpeg
-ARG OPENJPEG_VERSION=
-RUN . /buildscripts/bh-set-envvars.sh \
-    && if test "${OPENJPEG_VERSION}" != ""; then ( \
-    curl -LO -fsS https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
-    && tar xzf v${OPENJPEG_VERSION}.tar.gz \
-    && rm -f v${OPENJPEG_VERSION}.tar.gz \
-    && cd openjpeg-${OPENJPEG_VERSION} \
-    && cmake . -G Ninja -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-    && ninja \
-    && ninja install \
-    && mkdir -p /build_thirdparty/usr/lib \
-    && cp -P /usr/lib/libopenjp2*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf openjpeg-${OPENJPEG_VERSION} \
-    ); fi
-
 ARG PROJ_INSTALL_PREFIX
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
@@ -105,11 +87,6 @@ ARG WITH_CCACHE
 
 # Build PROJ
 ARG PROJ_VERSION=master
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y patchelf
-
 RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && mkdir proj \

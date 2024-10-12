@@ -54,6 +54,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
             git make ninja-build cmake wget unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff-dev${APT_ARCH_SUFFIX} \
+            patchelf \
             rsync
 
 ARG JAVA_VERSION=17
@@ -82,19 +83,39 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libaec-dev${APT_ARCH_SUFFIX} \
        libavif-dev${APT_ARCH_SUFFIX}
 
-# Build likbkea
+ARG RSYNC_REMOTE
+ARG WITH_CCACHE
+
+# Build libkea
 ARG KEA_VERSION=1.5.2
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-kealib,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && curl -LO -fsS https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
     && unzip -q kealib-${KEA_VERSION}.zip \
     && rm -f kealib-${KEA_VERSION}.zip \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/kealib/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -M 100M; \
+    fi \
     && cd kealib-kealib-${KEA_VERSION} \
-    && cmake . -G Ninja -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    && cmake . -G Ninja $CCACHE_PARAM -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5/serial \
         -DHDF5_LIB_PATH=/usr/lib/${GCC_ARCH}-linux-gnu/hdf5/serial -DLIBKEA_WITH_GDAL=OFF \
     && ninja \
     && DESTDIR="/build_thirdparty" ninja install \
     && ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/kealib/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && cd .. \
     && rm -rf kealib-kealib-${KEA_VERSION} \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -102,17 +123,34 @@ RUN . /buildscripts/bh-set-envvars.sh \
 
 # Build mongo-c-driver
 ARG MONGO_C_DRIVER_VERSION=1.24.4
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-mongo-c-driver,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && mkdir mongo-c-driver \
     && curl -L -fsS https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz \
         | tar xz -C mongo-c-driver --strip-components=1 \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/mongo-c-driver/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -M 100M; \
+    fi \
     && cd mongo-c-driver \
     && mkdir build_cmake \
     && cd build_cmake \
-    && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_TESTS=NO -DCMAKE_BUILD_TYPE=Release \
+    && cmake .. -G Ninja $CCACHE_PARAM -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_TESTS=NO -DCMAKE_BUILD_TYPE=Release \
     && ninja \
     && DESTDIR="/build_thirdparty" ninja install \
     && ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/mongo-c-driver/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && cd ../.. \
     && rm -rf mongo-c-driver \
     && rm /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/*.a \
@@ -121,17 +159,34 @@ RUN . /buildscripts/bh-set-envvars.sh \
 
 # Build mongocxx
 ARG MONGOCXX_VERSION=3.8.1
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-mongo-cxx-driver,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && mkdir mongocxx \
     && curl -L -fsS https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz \
         | tar xz -C mongocxx --strip-components=1 \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/mongo-cxx-driver/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -M 100M; \
+    fi \
     && cd mongocxx \
     && mkdir build_cmake \
     && cd build_cmake \
-    && cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DENABLE_TESTS=OFF -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release -DBUILD_VERSION=${MONGOCXX_VERSION} \
+    && cmake .. -G Ninja $CCACHE_PARAM -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DENABLE_TESTS=OFF -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release -DBUILD_VERSION=${MONGOCXX_VERSION} \
     && ninja \
     && DESTDIR="/build_thirdparty" ninja install \
     && ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/mongo-cxx-driver/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && cd ../.. \
     && rm -rf mongocxx \
     && for i in /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -148,57 +203,74 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 COPY ./tiledb-FindLZ4_EP.cmake.patch /buildscripts/tiledb-FindLZ4_EP.cmake.patch
 COPY ./tiledb-FindOpenSSL_EP.cmake.patch /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch
-RUN . /buildscripts/bh-set-envvars.sh \
+# Commit from TileDB 2.27.
+COPY ./tiledb-cmake-ccache.patch /buildscripts/tiledb-cmake-ccache.patch
+RUN --mount=type=cache,id=ubuntu-full-tiledb,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/tiledb/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        export CCACHE_PARAM="-DTILEDB_CCACHE=ON"; \
+        ccache -M 100M; \
+    fi \
     && mkdir tiledb \
     && curl -L -fsS https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz \
         | tar xz -C tiledb --strip-components=1 \
     && cd tiledb \
     && patch -p0 < /buildscripts/tiledb-FindLZ4_EP.cmake.patch \
     && patch -p0 < /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch \
+    && patch -p1 < /buildscripts/tiledb-cmake-ccache.patch \
     && mkdir build_cmake \
     && cd build_cmake \
-    && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DTILEDB_WERROR=OFF -DTILEDB_SUPERBUILD=OFF  -DTILEDB_TESTS=OFF -DCOMPILER_SUPPORTS_AVX2=FALSE  -DOPENSSL_INCLUDE_DIR=/usr/include -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/${GCC_ARCH}-linux-gnu/libcrypto.so -DOPENSSL_SSL_LIBRARY=/usr/lib/${GCC_ARCH}-linux-gnu/libssl.so \
+    && cmake .. -G Ninja $CCACHE_PARAM -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DTILEDB_WERROR=OFF -DTILEDB_SUPERBUILD=OFF  -DTILEDB_TESTS=OFF -DCOMPILER_SUPPORTS_AVX2=FALSE  -DOPENSSL_INCLUDE_DIR=/usr/include -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/${GCC_ARCH}-linux-gnu/libcrypto.so -DOPENSSL_SSL_LIBRARY=/usr/lib/${GCC_ARCH}-linux-gnu/libssl.so \
     && ninja \
     && DESTDIR="/build_thirdparty" ninja install \
     && ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/tiledb/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && cd ../.. \
     && rm -rf tiledb \
     && for i in /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
-# Build openjpeg
-ARG OPENJPEG_VERSION=
-RUN . /buildscripts/bh-set-envvars.sh \
-    && if test "${OPENJPEG_VERSION}" != ""; then ( \
-    curl -LO -fsS https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
-    && tar xzf v${OPENJPEG_VERSION}.tar.gz \
-    && rm -f v${OPENJPEG_VERSION}.tar.gz \
-    && cd openjpeg-${OPENJPEG_VERSION} \
-    && cmake . -G Ninja -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-    && ninja \
-    && ninja install \
-    && mkdir -p /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu \
-    && rm -f /usr/lib/${GCC_ARCH}-linux-gnu/libopenjp2.so* \
-    && mv /usr/lib/libopenjp2.so* /usr/lib/${GCC_ARCH}-linux-gnu \
-    && cp -P /usr/lib/${GCC_ARCH}-linux-gnu/libopenjp2.so* /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu \
-    && for i in /build_thirdparty/usr/lib/${GCC_ARCH}-linux-gnu/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf openjpeg-${OPENJPEG_VERSION} \
-    ); fi
-
 # Build libOpenDRIVE
 ARG OPENDRIVE_VERSION=0.6.0-gdal
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-libopendrive,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && if test "${OPENDRIVE_VERSION}" != ""; then ( \
     curl -LO -fsS https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
     && rm -f ${OPENDRIVE_VERSION}.tar.gz \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/libopendrive/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -M 100M; \
+    fi \
     && cd libOpenDRIVE-${OPENDRIVE_VERSION} \
-    && cmake . -G Ninja -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    && cmake . -G Ninja $CCACHE_PARAM -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr/ \
     && ninja \
     && ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/libopendrive/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && mkdir -p /build_thirdparty/usr/lib \
     && cp -P /usr/lib/libOpenDrive*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
@@ -222,15 +294,32 @@ RUN . /buildscripts/bh-set-envvars.sh \
   ) ; fi
 
 # Build libqb3
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-libqb3,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && git clone https://github.com/lucianpls/QB3.git \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/libqb3/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -M 100M; \
+    fi \
     && cd QB3/QB3lib \
     && mkdir build \
     && cd build \
-    && cmake .. -G Ninja ${CMAKE_EXTRA_ARGS} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
+    && cmake .. -G Ninja $CCACHE_PARAM ${CMAKE_EXTRA_ARGS} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
     && ninja \
     && ninja install \
     && DESTDIR="/build_thirdparty" ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/libqb3/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && cd ../../.. \
     && rm -rf QB3
 
@@ -254,14 +343,31 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends libgflags-dev${APT_ARCH_SUFFIX}
-RUN git clone https://github.com/libjxl/libjxl.git --recursive \
+RUN --mount=type=cache,id=ubuntu-full-libjxl,target=$HOME/.cache \
+    git clone https://github.com/libjxl/libjxl.git --recursive \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/libjxl/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -M 100M; \
+    fi \
     && cd libjxl \
     && mkdir build \
     && cd build \
-    && cmake -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DJPEGXL_ENABLE_JPEGLI_LIBJPEG=OFF -DBUILD_TESTING=OFF -DJPEGXL_ENABLE_TOOLS=OFF -DJPEGXL_ENABLE_BENCHMARK=OFF .. \
+    && cmake -G Ninja $CCACHE_PARAM -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -DJPEGXL_ENABLE_JPEGLI_LIBJPEG=OFF -DBUILD_TESTING=OFF -DJPEGXL_ENABLE_TOOLS=OFF -DJPEGXL_ENABLE_BENCHMARK=OFF .. \
     && ninja \
     && ninja install \
     && DESTDIR="/build_thirdparty" ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/libjxl/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && rm -f /lib/${GCC_ARCH}-linux-gnu/libjxl*.a \
     && rm -f /build_thirdparty/lib/${GCC_ARCH}-linux-gnu/libjxl*.a \
     && cd ../.. \
@@ -288,9 +394,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dataset-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
     && rm apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
 
-ARG RSYNC_REMOTE
-ARG WITH_CCACHE
-
 ARG WITH_DEBUG_SYMBOLS=no
 
 # Refresh grids
@@ -310,11 +413,6 @@ RUN --mount=type=cache,id=ubuntu-full-proj,target=$HOME/.cache \
      && rm -rf /build_tmp_proj
 
 # Build PROJ
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y patchelf
-
 ARG PROJ_VERSION=master
 RUN --mount=type=cache,id=ubuntu-full-proj,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
