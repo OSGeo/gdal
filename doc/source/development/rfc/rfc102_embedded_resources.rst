@@ -24,11 +24,10 @@ submitted for PROJ to embed its :file:`proj.db` and :file:`proj.ini` files.
 Motivation
 ----------
 
-Some parts of GDAL core, but mostly drivers, depend on a number of resource
-files for correct execution. Locating those resource files on the filesystem
-can be painful in some use cases of GDAL, that involve relocating the GDAL
-binary at installation time. One such case could be the GDAL embedded in Rasterio
-or Fiona binary wheels where :config:`GDAL_DATA` must be correctly set currently.
+Some parts of GDAL core, mostly drivers, require external resource files located
+in the filesystem. Locating these resource files is difficult for use cases where
+the GDAL binaries are relocated during installation time.
+One such case could be the GDAL embedded in Rasterio or Fiona binary wheels where :config:`GDAL_DATA` must be set to the directory of the resource files.
 Web-assembly (WASM) use cases come also to mind as users of GDAL builds where
 resources are directly included in libgdal.
 
