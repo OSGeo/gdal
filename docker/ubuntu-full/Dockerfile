@@ -298,15 +298,32 @@ RUN . /buildscripts/bh-set-envvars.sh \
   ) ; fi
 
 # Build libqb3
-RUN . /buildscripts/bh-set-envvars.sh \
+RUN --mount=type=cache,id=ubuntu-full-libqb3,target=$HOME/.cache \
+    . /buildscripts/bh-set-envvars.sh \
     && git clone https://github.com/lucianpls/QB3.git \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Downloading cache..."; \
+        rsync -ra "${RSYNC_REMOTE}/libqb3/${GCC_ARCH}/" "$HOME/.cache/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -M 100M; \
+    fi \
     && cd QB3/QB3lib \
     && mkdir build \
     && cd build \
-    && cmake .. -G Ninja ${CMAKE_EXTRA_ARGS} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
+    && cmake .. -G Ninja $CCACHE_PARAM ${CMAKE_EXTRA_ARGS} -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
     && ninja \
     && ninja install \
     && DESTDIR="/build_thirdparty" ninja install \
+    && if [ -n "${RSYNC_REMOTE:-}" ]; then \
+        echo "Uploading cache..."; \
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/libqb3/${GCC_ARCH}/"; \
+        echo "Finished"; \
+    fi \
+    && if [ -n "${WITH_CCACHE:-}" ]; then \
+        ccache -s; \
+    fi \
     && cd ../../.. \
     && rm -rf QB3
 
