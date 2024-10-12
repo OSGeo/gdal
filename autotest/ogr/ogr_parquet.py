@@ -4108,7 +4108,7 @@ def test_ogr_parquet_vsi_arrow_file_system():
     if version < 16:
         pytest.skip("requires Arrow >= 16.0.0")
 
-    ds = ogr.Open("PARQUET:vsi://data/parquet/test.parquet")
+    ds = ogr.Open("PARQUET:gdalvsi://data/parquet/test.parquet")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() > 0
 

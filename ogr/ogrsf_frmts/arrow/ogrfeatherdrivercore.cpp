@@ -131,9 +131,9 @@ bool OGRFeatherDriverIsArrowFileFormat(GDALOpenInfo *poOpenInfo)
 
 int OGRFeatherDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    if (STARTS_WITH(poOpenInfo->pszFilename, "vsi://"))
+    if (STARTS_WITH(poOpenInfo->pszFilename, "gdalvsi://"))
     {
-        GDALOpenInfo oOpenInfo(poOpenInfo->pszFilename + strlen("vsi://"),
+        GDALOpenInfo oOpenInfo(poOpenInfo->pszFilename + strlen("gdalvsi://"),
                                poOpenInfo->nOpenFlags);
         return OGRFeatherDriverIdentify(&oOpenInfo);
     }
