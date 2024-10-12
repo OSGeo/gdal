@@ -97,7 +97,7 @@ of the following persons:
 - `Maxim Rylov <https://github.com/mrylov>`__: Hana driver.
 - `Michael Scholz <https://github.com/michikommader>`__: OpenDRIVE driver.
 - `Kurt Schwehr <https://github.com/schwehr>`__: code linting through the whole codebase, PSC member.
-- `Avyav Kumar Singh <https://github.com/avyavkumar>`__: enhancements in the OGR geometry suport, SFCGAL support.
+- `Avyav Kumar Singh <https://github.com/avyavkumar>`__: enhancements in the OGR geometry support, SFCGAL support.
 - `Craig de Stigter <https://github.com/craigds>`__: port of GDAL Python autotest suite to the pytest framework.
 - `Michael Sumner <https://github.com/mdsumner>`__: documentation enhancements, vrt:// enhancements.
 - `Tamas Szekeres <https://github.com/szekerest>`__: SWIG CSharp bindings, gdal_viewshed, PSC member.
@@ -173,7 +173,6 @@ You can also consult `Frank Warmerdam's sponsors, acknowledgments and credits <h
     Didier
     Rylov
     Scholz
-    suport
     Etienne
     Tourigny
     Vachon
