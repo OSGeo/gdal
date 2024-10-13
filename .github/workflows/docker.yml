@@ -25,14 +25,24 @@ jobs:
       matrix:
         include:
           - name: alpine-small
+            arch: linux/amd64
 
           - name: alpine-normal
+            arch: linux/amd64
 
           - name: ubuntu-small
+            arch: linux/amd64
+
+          - name: ubuntu-small
+            arch: linux/arm64
 
           - name: ubuntu-full
+            arch: linux/amd64
 
-    name: ${{ matrix.name }}
+          - name: ubuntu-full
+            arch: linux/arm64
+
+    name: ${{ matrix.name }}-${{ matrix.arch }}
 
     runs-on: ubuntu-latest
 
@@ -43,5 +53,6 @@ jobs:
       - name: Build
         shell: bash -l {0}
         run: |
+          docker run --rm --privileged linuxkit/binfmt:v0.8
           cd docker/${{ matrix.name }}
-          ./build.sh --platform linux/amd64
+          ./build.sh --platform ${{ matrix.arch }}
