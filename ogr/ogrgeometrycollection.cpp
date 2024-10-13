@@ -93,7 +93,7 @@ OGRGeometryCollection::operator=(const OGRGeometryCollection &other)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Illegal use of OGRGeometryCollection::operator=(): "
-                         "trying to assign an incomptible sub-geometry");
+                         "trying to assign an incompatible sub-geometry");
                 return *this;
             }
         }

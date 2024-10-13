@@ -331,7 +331,7 @@ TEST_F(test_ogr, OGRGeometryCollection_copy_constructor_illegal_use)
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
                  "Illegal use of OGRGeometryCollection::operator=(): trying to "
-                 "assign an incomptible sub-geometry");
+                 "assign an incompatible sub-geometry");
     EXPECT_TRUE(mp.IsEmpty());
 }
 
@@ -364,7 +364,7 @@ TEST_F(test_ogr, OGRCurvePolygon_copy_constructor_illegal_use)
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
                  "Illegal use of OGRCurvePolygon::operator=(): trying to "
-                 "assign an incomptible sub-geometry");
+                 "assign an incompatible sub-geometry");
     EXPECT_TRUE(poly.IsEmpty());
 }
 
