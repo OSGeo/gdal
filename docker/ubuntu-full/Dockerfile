@@ -344,7 +344,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends libgflags-dev${APT_ARCH_SUFFIX}
 RUN --mount=type=cache,id=ubuntu-full-libjxl,target=$HOME/.cache \
-    git clone https://github.com/libjxl/libjxl.git --recursive \
+    . /buildscripts/bh-set-envvars.sh \
+    && git clone https://github.com/libjxl/libjxl.git --recursive \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
         echo "Downloading cache..."; \
         rsync -ra "${RSYNC_REMOTE}/libjxl/${GCC_ARCH}/" "$HOME/.cache/"; \

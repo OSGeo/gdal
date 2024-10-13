@@ -352,7 +352,7 @@ EOF
           echo "${TARGET_BASE_IMAGE_DIGEST}"
           BUILD_ARGS+=("--build-arg" "TARGET_ARCH=${ARCH_PLATFORM_ARCH}")
           #BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}@${TARGET_BASE_IMAGE_DIGEST}")
-          BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${TARGET_BASE_IMAGE_DIGEST}")
+          BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=arm64v8/${BASE_IMAGE}")
           # echo "${BUILD_ARGS[@]}"
         fi
       elif test "${DOCKER_BUILDX}" != "buildx" -a \( "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" -o "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest" \); then
