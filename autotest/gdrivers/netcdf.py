@@ -6542,7 +6542,7 @@ def test_netcdf_create_metadata_with_equal_sign(tmp_path):
 # Test force opening a HDF55 file with netCDF driver
 
 
-def test_netcdf_force_opening_hdf5_file(tmp_vsimem):
+def test_netcdf_force_opening_hdf5_file():
 
     ds = gdal.OpenEx("data/hdf5/groups.h5", allowed_drivers=["netCDF"])
     assert ds.GetDriver().GetDescription() == "netCDF"
@@ -6559,3 +6559,25 @@ def test_netcdf_force_opening_no_match():
 
     drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["netCDF"])
     assert drv is None
+
+
+###############################################################################
+
+
+def test_netcdf_extra_dim_no_georef(tmp_path):
+
+    fname = tmp_path / "out.nc"
+
+    src_ds = gdal.Translate("", "../gcore/data/stefan_full_rgba.tif", format="MEM")
+    size_z = 4
+    src_ds.SetMetadataItem("NETCDF_DIM_EXTRA", "{Z}")
+    src_ds.SetMetadataItem("NETCDF_DIM_Z_DEF", f"{{{size_z},4}}")
+    src_ds.SetMetadataItem("NETCDF_DIM_Z_VALUES", "{0,1,2,3}")
+    src_ds.SetMetadataItem("Z#axis", "Z")
+
+    # Create netCDF file
+    gdal.GetDriverByName("netCDF").CreateCopy(fname, src_ds)
+
+    ds = gdal.Open(fname)
+    assert ds.RasterCount == 4
+    assert ds.ReadRaster() == src_ds.ReadRaster()
