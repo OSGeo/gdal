@@ -90,6 +90,8 @@ class OGRArrowArrayStream
         {
             clear();
             memcpy(&m_stream, &(other.m_stream), sizeof(m_stream));
+            // Reset other content, in particular its "release" member
+            // as per https://arrow.apache.org/docs/format/CDataInterface.html#moving-an-array
             memset(&(other.m_stream), 0, sizeof(m_stream));
         }
         return *this;

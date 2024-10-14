@@ -113,6 +113,7 @@ ogr_dependent_driver(oapif "OGC API Features service" "GDAL_USE_CURL")
 ogr_dependent_driver(ngw "NextGIS Web" "GDAL_USE_CURL")
 ogr_dependent_driver(elastic "ElasticSearch" "GDAL_USE_CURL")
 ogr_dependent_driver(xodr OpenDRIVE "GDAL_USE_OPENDRIVE;GDAL_USE_GEOS")
+ogr_dependent_driver(adbc ADBC "GDAL_USE_ADBCDRIVERMANAGER")
 
 ogr_dependent_driver(idrisi IDRISI "GDAL_ENABLE_DRIVER_IDRISI")
 
