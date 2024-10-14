@@ -1,0 +1,78 @@
+diff --git a/recipe/build.sh b/recipe/build.sh
+index b5329fd..8bfa9ef 100644
+--- a/recipe/build.sh
++++ b/recipe/build.sh
+@@ -48,6 +48,7 @@ cmake -G "Unix Makefiles" \
+       -DGDAL_ENABLE_DRIVER_NETCDF=OFF \
+       -DGDAL_ENABLE_DRIVER_HDF4=OFF \
+       -DGDAL_ENABLE_DRIVER_HDF5=OFF \
++      -DOGR_ENABLE_DRIVER_ADBC=OFF \
+       -DOGR_REGISTER_DRIVER_ARROW_FOR_LATER_PLUGIN=ON \
+       -DOGR_REGISTER_DRIVER_PARQUET_FOR_LATER_PLUGIN=ON \
+       -DGDAL_REGISTER_DRIVER_JP2OPENJPEG_FOR_LATER_PLUGIN=ON \
+@@ -62,6 +63,7 @@ cmake -G "Unix Makefiles" \
+       -DGDAL_REGISTER_DRIVER_NETCDF_FOR_LATER_PLUGIN=ON \
+       -DGDAL_REGISTER_DRIVER_HDF4_FOR_LATER_PLUGIN=ON \
+       -DGDAL_REGISTER_DRIVER_HDF5_FOR_LATER_PLUGIN=ON \
++      -DOGR_REGISTER_DRIVER_ADBC_FOR_LATER_PLUGIN=ON \
+       -DOGR_DRIVER_ARROW_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-arrow-parquet'" \
+       -DOGR_DRIVER_PARQUET_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-arrow-parquet'" \
+       -DGDAL_DRIVER_JP2OPENJPEG_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-jp2openjpeg'" \
+@@ -77,6 +79,7 @@ cmake -G "Unix Makefiles" \
+       -DGDAL_DRIVER_HDF4_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-hdf4'" \
+       -DGDAL_DRIVER_HDF5_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-hdf5'" \
+       -DGDAL_ENABLE_HDF5_GLOBAL_LOCK:BOOL=ON \
++      -DOGR_DRIVER_ADBC_PLUGIN_INSTALLATION_MESSAGE="You may install it with 'conda install -c conda-forge libgdal-adbc'" \
+       -DBUILD_PYTHON_BINDINGS:BOOL=OFF \
+       -DBUILD_JAVA_BINDINGS:BOOL=OFF \
+       -DBUILD_CSHARP_BINDINGS:BOOL=OFF \
+diff --git a/recipe/meta.yaml b/recipe/meta.yaml
+index 067eacd..12aab43 100644
+--- a/recipe/meta.yaml
++++ b/recipe/meta.yaml
+@@ -580,6 +580,45 @@ outputs:
+       license: MIT
+       license_file: LICENSE.TXT
+ 
++  - name: libgdal-adbc
++    script: build_plugin.sh  # [unix]
++    script: build_plugin.bat  # [win]
++    build:
++      # FIXME: libadbc-driver-manager is not available currently on Windows
++      skip: true  # [win]
++      ignore_run_exports_from:
++        - expat
++      script_env:
++        - GDAL_PLUGIN_NAME=ADBC
++        - GDAL_PLUGIN_TYPE=ogr
++        - GDAL_PLUGIN_DEPS=-DGDAL_USE_ADBCDRIVERMANAGER=ON
++    requirements:
++      build:
++        - cmake
++        - {{ compiler('c') }}
++        - {{ stdlib("c") }}
++        - {{ compiler('cxx') }}
++        - pkg-config  # [not win]
++        - make  # [unix]
++        - ninja  # [win]
++      host:
++        - {{ pin_subpackage('libgdal-core', exact=True) }}
++        - libkml-devel
++        - expat
++        - libadbc-driver-manager
++      run:
++        - libgdal-core >={{ ".".join(version.split(".")[:2]) }}
++    test:
++      commands:
++        - test -f ${PREFIX}/lib/gdalplugins/${GDAL_PLUGIN_TYPE}_${GDAL_PLUGIN_NAME}${SHLIB_EXT}      # [unix]
++        - if not exist %LIBRARY_LIB%\gdalplugins\%GDAL_PLUGIN_TYPE%_%GDAL_PLUGIN_NAME%.dll exit 1    # [win]
++        - ogrinfo --format ${GDAL_PLUGIN_NAME}  # [unix]
++        - ogrinfo --format %GDAL_PLUGIN_NAME%   # [win]
++    about:
++      summary: Vector driver ADBC for the Geospatial Data Abstraction Library (GDAL)
++      license: MIT
++      license_file: LICENSE.TXT
++
+   - name: libgdal
+     build:
+       run_exports:
