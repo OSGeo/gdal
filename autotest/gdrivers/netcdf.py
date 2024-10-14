@@ -546,7 +546,9 @@ def test_netcdf_11():
 
 def test_netcdf_cf_geog_with_srs():
 
+    gdal.ErrorReset()
     ds = gdal.Open("data/netcdf/cf_geog_with_srs.nc")
+    assert gdal.GetLastErrorMsg() == ""
 
     gt = ds.GetGeoTransform()
     assert gt == pytest.approx([-0.1, 0.2, 0, -79.1, 0, -0.2], rel=1e-5)
