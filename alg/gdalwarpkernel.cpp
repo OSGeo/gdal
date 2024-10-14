@@ -204,7 +204,7 @@ struct GWKJobStruct
     int iYMin;
     int iYMax;
     int (*pfnProgress)(GWKJobStruct *psJob);
-    void *pTransformerArg;
+    GDALTransformerArg pTransformerArg;
     void (*pfnFunc)(
         void *);  // used by GWKRun() to assign the proper pTransformerArg
 
@@ -227,9 +227,9 @@ struct GWKThreadData
     std::mutex mutex{};
     std::condition_variable cv{};
     bool bTransformerArgInputAssignedToThread{false};
-    void *pTransformerArgInput{
+    GDALTransformerArg pTransformerArgInput{
         nullptr};  // owned by calling layer. Not to be destroyed
-    std::map<GIntBig, void *> mapThreadToTransformerArg{};
+    std::map<GIntBig, GDALTransformerArg> mapThreadToTransformerArg{};
     int nTotalThreadCountForThisRun = 0;
     int nCurThreadCountForThisRun = 0;
 };
@@ -301,7 +301,7 @@ static CPLErr GWKGenericMonoThread(GDALWarpKernel *poWK,
 
 void *GWKThreadsCreate(char **papszWarpOptions,
                        GDALTransformerFunc /* pfnTransformer */,
-                       void *pTransformerArg)
+                       GDALTransformerArg pTransformerArg)
 {
     const char *pszWarpThreads =
         CSLFetchNameValue(papszWarpOptions, "NUM_THREADS");
@@ -370,7 +370,7 @@ static void ThreadFuncAdapter(void *pData)
         static_cast<GWKThreadData *>(psJob->poWK->psThreadData);
 
     // Look if we have already a per-thread transformer
-    void *pTransformerArg = nullptr;
+    GDALTransformerArg pTransformerArg = nullptr;
     const GIntBig nThreadId = CPLGetPID();
 
     {
@@ -4522,8 +4522,8 @@ bool GWKResampleNoMasksT<double>(const GDALWarpKernel *poWK, int iBand,
 static void GWKRoundSourceCoordinates(
     int nDstXSize, double *padfX, double *padfY, double *padfZ, int *pabSuccess,
     double dfSrcCoordPrecision, double dfErrorThreshold,
-    GDALTransformerFunc pfnTransformer, void *pTransformerArg, double dfDstXOff,
-    double dfDstY)
+    GDALTransformerFunc pfnTransformer, GDALTransformerArg pTransformerArg,
+    double dfDstXOff, double dfDstY)
 {
     double dfPct = 0.8;
     if (dfErrorThreshold > 0 && dfSrcCoordPrecision / dfErrorThreshold >= 10.0)

@@ -1155,7 +1155,7 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char *pszTargetSRS)
     char **papszTO = CSLSetNameValue(nullptr, "DST_SRS", pszWKT);
     CPLFree(pszWKT);
 
-    void *hTransformArg =
+    auto hTransformArg =
         GDALCreateGenImgProjTransformer2(this, nullptr, papszTO);
     if (hTransformArg == nullptr)
     {
