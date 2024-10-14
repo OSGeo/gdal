@@ -739,6 +739,8 @@ void CPL_DLL RegisterOGRJSONFG();
 void CPL_DLL RegisterOGRMiraMon();
 void CPL_DLL RegisterOGRXODR();
 void DeclareDeferredOGRXODRPlugin();
+void CPL_DLL RegisterOGRADBC();
+void DeclareDeferredOGRADBCPlugin();
 // @endcond
 
 CPL_C_END
