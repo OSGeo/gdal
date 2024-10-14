@@ -504,7 +504,10 @@ The following options are creation options of the classic raster API only:
 
       When writing a multi-band dataset as a 3D Zarr array, whether the band
       dimension should be the first one/slowest varying one (BAND), or the
-      last one/fastest varying one (INTERLEAVE)
+      last one/fastest varying one (PIXEL)
+      The default value is BAND in Create() mode. In CreateCopy() mode, the
+      default value is the value of the INTERLEAVE metadata item of the
+      IMAGE_STRUCTURE metadata domain of the source dataset, if set.
 
 
 Examples
