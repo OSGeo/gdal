@@ -5523,3 +5523,21 @@ def test_zarr_read_cf1_zarrv3():
         ds.GetSpatialRef().ExportToProj4()
         == "+proj=utm +zone=11 +ellps=clrk66 +units=m +no_defs"
     )
+
+
+###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/issues/11016
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_write_partial_blocks_compressed(tmp_vsimem):
+
+    out_filename = "/vsimem/test.zarr"
+    src_ds = gdal.Open("data/small_world.tif")
+    gdal.Translate(
+        out_filename,
+        src_ds,
+        options="-of ZARR -co FORMAT=ZARR_V2 -co BLOCKSIZE=3,50,50 -co COMPRESS=ZLIB -co INTERLEAVE=BAND",
+    )
+    out_ds = gdal.Open(out_filename)
+    assert out_ds.ReadRaster() == src_ds.ReadRaster()
