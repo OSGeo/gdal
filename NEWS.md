@@ -1,6 +1,6 @@
 # GDAL/OGR 3.10.0 Release Notes
 
-FIXME: Preliminary notes up to commit 6cf71ee2b75087826306b1f42117f1deccb7c56f
+FIXME: Preliminary notes up to commit d8112b785c1a2bedfc11849779bd148d55b10915
 
 GDAL/OGR 3.10.0 is a feature release.
 Those notes include changes since GDAL 3.9.0, but not already included in a
@@ -16,7 +16,8 @@ GDAL 3.9.x bugfix release.
   raster driver for Sentinel Application Processing GeoTIFF files
 * New OGR read-only [XODR](https://gdal.org/en/latest/drivers/vector/xodr.html)
   driver for OpenDRIVE (#9504)
-* Code linting
+* Code linting and security fixes
+* Bump of shared lib major version
 
 ## New optional dependencies
 
@@ -119,6 +120,7 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.10/MIGRAT
   it to GDALDatasetCopyWholeRaster()
 * Multidimensional API: add GDALMDArray::GetMeshGrid()
 * Multidim: AsClassicDataset(): make it able to retrieve dataset metadata from PAM
+* JSON TileMatrixSet parser: accept crs.uri and crs.wkt encodings (#10989)
 
 ### Algorithms
 
@@ -265,6 +267,10 @@ netCDF driver:
  * make sure CreateMetadataFromOtherVars() doesn't set PAM dirty flag
  * simplify identification logic by just checking runtime availability of
    HDF4/HDF5 drivers.
+ * CreateCopy(): fix taking into account NETCDF_DIM_EXTRA when source dataset is
+   not georeferenced
+ * do not emit error when longitude axis unit is degrees_east and latitude axis
+   unit is degrees_north (#11009)
 
 NITF driver:
  * Create()/CreateCopy(): make sure that provided ABPP creation option is zero
@@ -425,6 +431,8 @@ Zarr driver:
 * ogr2ogr: speed-up -clipsrc/-clipdst by avoiding GEOS when possible
 * ogr2ogr: speed-up -t_srs in Arrow code path using multi-threaded coordinate
   transformation
+* ogr2ogr: optim: call GetArrowStream() only once on source layer when using
+  Arrow interface
 * validate_gpkg.py: make it robust to CURRENT_TIMESTAMP instead of 'now'
 
 ### Vector drivers
@@ -487,6 +495,7 @@ HANA driver:
 
 KML driver:
  * make it optional and buildable as plugin
+ * writer: generate a Placemark id
 
 LIBKML driver:
  * writer: validate longitude, latitude to be in range (#10483)
