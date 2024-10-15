@@ -871,7 +871,7 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
     if (!EQUAL(pszCompressor, "NONE"))
     {
         psCompressor = CPLGetCompressor(pszCompressor);
-        psDecompressor = CPLGetCompressor(pszCompressor);
+        psDecompressor = CPLGetDecompressor(pszCompressor);
         if (psCompressor == nullptr || psDecompressor == nullptr)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
