@@ -224,6 +224,22 @@ BUILD_ARGS=(
 if test "${RELEASE}" = "yes"; then
     BUILD_ARGS+=("--build-arg" "GDAL_BUILD_IS_RELEASE=YES")
 
+    if [ -z "${SOURCE_DATE_EPOCH}" ]; then
+        # Try to set SOURCE_DATE_EPOCH to the timestamp of the tar.gz for
+        # the release, so repeated builds give similar output.
+        # https://github.com/moby/buildkit/blob/master/docs/build-repro.md#source_date_epoch
+        # Will proceed without setting SOURCE_DATE_EPOCH when failing to get
+        # the timestamp, so "build.sh --gdal HEAD" works.
+        LAST_MODIFIED=$(curl -L -sI "https://github.com/OSGeo/gdal/releases/download/${GDAL_VERSION}/gdal-${GDAL_VERSION#v}.tar.gz" \
+                            | grep -i last-modified | awk -F: '{print $2}')
+        if [ -n "${LAST_MODIFIED}" ]; then
+            MODIFIED_SINCE_EPOCH=$(date -d "${LAST_MODIFIED}" +%s)
+            if [ -n "${MODIFIED_SINCE_EPOCH}" ]; then
+                export SOURCE_DATE_EPOCH="${MODIFIED_SINCE_EPOCH}"
+            fi
+        fi
+    fi
+
     if test "${BASE_IMAGE}" != ""; then
         BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
         if test "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-full" -o "${TARGET_IMAGE}" = "osgeo/gdal:ubuntu-small"; then
