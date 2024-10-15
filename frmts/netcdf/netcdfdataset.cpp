@@ -9610,11 +9610,6 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         pScaledProgress =
             GDALCreateScaledProgress(0.1, 0.25, pfnProgress, pProgressData);
         poDS->AddProjectionVars(false, GDALScaledProgress, pScaledProgress);
-        // Save X,Y dim positions.
-        panDimIds[nDim - 1] = poDS->nXDimID;
-        panBandDimPos[0] = nDim - 1;
-        panDimIds[nDim - 2] = poDS->nYDimID;
-        panBandDimPos[1] = nDim - 2;
         GDALDestroyScaledProgress(pScaledProgress);
     }
     else
@@ -9627,6 +9622,12 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             poDS->AddProjectionVars(false, nullptr, nullptr);
         }
     }
+
+    // Save X,Y dim positions.
+    panDimIds[nDim - 1] = poDS->nXDimID;
+    panBandDimPos[0] = nDim - 1;
+    panDimIds[nDim - 2] = poDS->nYDimID;
+    panBandDimPos[1] = nDim - 2;
 
     // Write extra dim values - after projection for optimization.
     if (nDim > 2)
