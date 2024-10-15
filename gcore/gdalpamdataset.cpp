@@ -1790,7 +1790,7 @@ void GDALPamDataset::ClearStatistics()
         GDALRasterBand *poBand = GetRasterBand(i);
         CPLStringList aosNewMD;
         for (const char *pszStr :
-             cpl::Iterate(CSLConstList(poBand->GetMetadata())))
+             cpl::Iterate(static_cast<CSLConstList>(poBand->GetMetadata())))
         {
             if (STARTS_WITH_CI(pszStr, "STATISTICS_"))
             {

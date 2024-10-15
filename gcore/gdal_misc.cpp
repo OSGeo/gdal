@@ -1869,9 +1869,9 @@ CPLString GDALFindAssociatedFile(const char *pszBaseFilename,
             CPLString osAltExt = pszExt;
 
             if (islower(static_cast<unsigned char>(pszExt[0])))
-                osAltExt.toupper();
+                osAltExt = osAltExt.toupper();
             else
-                osAltExt.tolower();
+                osAltExt = osAltExt.tolower();
 
             osTarget = CPLResetExtension(pszBaseFilename, osAltExt);
 

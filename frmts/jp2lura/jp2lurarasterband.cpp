@@ -42,18 +42,10 @@ JP2LuraRasterBand::JP2LuraRasterBand(JP2LuraDataset *poDSIn, int nBandIn,
         {
             nBlockXSize = 2048;
         }
-        else
-        {
-            nBlockXSize = nRasterXSize;
-        }
 
         if (nRasterYSize >= 128)
         {
             nBlockYSize = 128;
-        }
-        else
-        {
-            nBlockYSize = nRasterYSize;
         }
     }
 

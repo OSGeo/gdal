@@ -279,6 +279,7 @@ static void InitProxyDB()
     {
         CPLMutexHolderD(&hProxyDBLock);
         // cppcheck-suppress identicalInnerCondition
+        // cppcheck-suppress knownConditionTrueFalse
         if (!bProxyDBInitialized)
         {
             const char *pszProxyDir =

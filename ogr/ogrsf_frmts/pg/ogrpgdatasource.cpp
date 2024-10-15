@@ -2212,9 +2212,8 @@ OGRLayer *OGRPGDataSource::GetLayerByName(const char *pszNameIn)
     {
         EndCopy();
 
-        CPLString osTableName(pszTableName);
-        CPLString osTableNameLower(pszTableName);
-        osTableNameLower.tolower();
+        const CPLString osTableName(pszTableName);
+        const CPLString osTableNameLower = CPLString(pszTableName).tolower();
         if (osTableName != osTableNameLower)
             CPLPushErrorHandler(CPLQuietErrorHandler);
         poLayer = OpenTable(osCurrentSchema, pszTableName, pszSchemaName,

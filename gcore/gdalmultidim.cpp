@@ -6962,7 +6962,8 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         m_poParent->GetRawNoDataValue() == nullptr &&
         GDALDataTypeIsInteger(m_poParent->GetDataType().GetNumericDataType()))
     {
-        if (bufferDataType == m_dt)  // Byte case
+        const bool bBufferDataTypeIsByte = bufferDataType == m_dt;
+        if (bBufferDataTypeIsByte)  // Byte case
         {
             bool bContiguous = true;
             for (size_t i = 0; i < nDims; i++)
@@ -6999,7 +7000,6 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
         size_t dimIdx = 0;
         const size_t nDimsMinus1 = nDims > 0 ? nDims - 1 : 0;
-        const bool bBufferDataTypeIsByte = bufferDataType == m_dt;
         GByte abyOne[16];  // 16 is sizeof GDT_CFloat64
         CPLAssert(nBufferDTSize <= 16);
         const GByte flag = 1;
@@ -7015,6 +7015,7 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
             while (true)
             {
+                // cppcheck-suppress knownConditionTrueFalse
                 if (bBufferDataTypeIsByte)
                 {
                     *dst_ptr = flag;
@@ -9485,8 +9486,9 @@ lbl_next_depth:
         poDS->SetDerivedDatasetName(osDerivedDatasetName.c_str());
         poDS->TryLoadXML();
 
-        for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(
-                 CSLConstList(poDS->GDALPamDataset::GetMetadata())))
+        for (const auto &[pszKey, pszValue] :
+             cpl::IterateNameValue(static_cast<CSLConstList>(
+                 poDS->GDALPamDataset::GetMetadata())))
         {
             poDS->m_oMDD.SetMetadataItem(pszKey, pszValue);
         }

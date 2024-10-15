@@ -1066,13 +1066,12 @@ static int myopen(const char *path, int flags, ...)
             CPLFormFilename(osCurDir.c_str(), path, nullptr));
         if (strchr(osCurDir.c_str(), '/') != nullptr && strcmp(path, "..") == 0)
         {
-            char *lastslash = strrchr(newname, '/');
-            if (lastslash != nullptr)
+            for (int i = 0; i < 2; ++i)
             {
+                char *lastslash = strrchr(newname, '/');
+                if (!lastslash)
+                    break;
                 *lastslash = 0;
-                lastslash = strrchr(newname, '/');
-                if (lastslash != nullptr)
-                    *lastslash = 0;
             }
         }
         if (VSIStatL(newname, &sStatBufL) == 0 && S_ISDIR(sStatBufL.st_mode))
@@ -1136,13 +1135,12 @@ int CPL_DLL open64(const char *path, int flags, ...)
             CPLFormFilename(osCurDir.c_str(), path, nullptr));
         if (strchr(osCurDir.c_str(), '/') != nullptr && strcmp(path, "..") == 0)
         {
-            char *lastslash = strrchr(newname, '/');
-            if (lastslash != nullptr)
+            for (int i = 0; i < 2; ++i)
             {
+                char *lastslash = strrchr(newname, '/');
+                if (!lastslash)
+                    break;
                 *lastslash = 0;
-                lastslash = strrchr(newname, '/');
-                if (lastslash != nullptr)
-                    *lastslash = 0;
             }
         }
         if (VSIStatL(newname, &sStatBufL) == 0 && S_ISDIR(sStatBufL.st_mode))

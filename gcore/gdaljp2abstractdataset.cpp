@@ -208,8 +208,8 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo *poOpenInfo,
             GDALMultiDomainMetadata oLocalMDMD;
             oLocalMDMD.XMLInit(psXMLNode, FALSE);
             GDALDataset::SetMetadata(oLocalMDMD.GetMetadata());
-            for (const char *pszDomain :
-                 cpl::Iterate(CSLConstList(oLocalMDMD.GetDomainList())))
+            for (const char *pszDomain : cpl::Iterate(
+                     static_cast<CSLConstList>(oLocalMDMD.GetDomainList())))
             {
                 if (!EQUAL(pszDomain, "") &&
                     !EQUAL(pszDomain, "IMAGE_STRUCTURE"))

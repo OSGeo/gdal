@@ -53,32 +53,32 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     CPL_DISALLOW_COPY_ASSIGN(OGRUnionLayer)
 
   protected:
-    CPLString osName;
-    int nSrcLayers;
-    OGRLayer **papoSrcLayers;
-    int bHasLayerOwnership;
+    CPLString osName{};
+    int nSrcLayers = 0;
+    OGRLayer **papoSrcLayers = nullptr;
+    int bHasLayerOwnership = false;
 
-    OGRFeatureDefn *poFeatureDefn;
-    int nFields;
-    OGRFieldDefn **papoFields;
-    int nGeomFields;
-    OGRUnionLayerGeomFieldDefn **papoGeomFields;
-    FieldUnionStrategy eFieldStrategy;
+    OGRFeatureDefn *poFeatureDefn = nullptr;
+    int nFields = 0;
+    OGRFieldDefn **papoFields = nullptr;
+    int nGeomFields = 0;
+    OGRUnionLayerGeomFieldDefn **papoGeomFields = nullptr;
+    FieldUnionStrategy eFieldStrategy = FIELD_UNION_ALL_LAYERS;
     CPLString osSourceLayerFieldName{};
 
-    int bPreserveSrcFID;
+    int bPreserveSrcFID = false;
 
-    GIntBig nFeatureCount;
+    GIntBig nFeatureCount = -1;
 
-    int iCurLayer;
-    char *pszAttributeFilter;
-    int nNextFID;
-    int *panMap;
+    int iCurLayer = -1;
+    char *pszAttributeFilter = nullptr;
+    int nNextFID = 0;
+    int *panMap = nullptr;
     CPLStringList m_aosIgnoredFields{};
-    int bAttrFilterPassThroughValue;
-    int *pabModifiedLayers;
-    int *pabCheckIfAutoWrap;
-    const OGRSpatialReference *poGlobalSRS;
+    int bAttrFilterPassThroughValue = -1;
+    int *pabModifiedLayers = nullptr;
+    int *pabCheckIfAutoWrap = nullptr;
+    const OGRSpatialReference *poGlobalSRS = nullptr;
 
     void AutoWarpLayerIfNecessary(int iSubLayer);
     OGRFeature *TranslateFromSrcLayer(OGRFeature *poSrcFeature);
