@@ -90,7 +90,7 @@ ARG PROJ_VERSION=master
 RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && mkdir proj \
-    && curl -L -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
+    && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && export PROJ_DB_CACHE_PARAM="" \
     && cd proj \
@@ -154,7 +154,7 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
     && mkdir gdal \
-    && curl -L -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
+    && wget -q https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
