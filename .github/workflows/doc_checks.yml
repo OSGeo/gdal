@@ -56,10 +56,10 @@ jobs:
           ldconfig
           popd
 
-    - name: Update sphinx-rtd-theme
+    - name: Update components
       shell: bash -l {0}
       run: |
-          pip install -U "sphinx-rtd-theme>=3.0.0"
+          pip install -U "sphinx-rtd-theme>=3.0.0" "sphinxcontrib-spelling>=8.0.0"
 
     - name: Print versions
       shell: bash -l {0}
