@@ -577,7 +577,7 @@ def test_ogr_kml_write_schema(tmp_vsimem):
     <SimpleField name="realfield" type="float"></SimpleField>
 </Schema>
 <Folder><name>lyr</name>
-  <Placemark>
+  <Placemark id="lyr.1">
     <ExtendedData><SchemaData schemaUrl="#lyr">
         <SimpleData name="strfield">strfield_val</SimpleData>
         <SimpleData name="intfield">1</SimpleData>
@@ -648,7 +648,7 @@ def test_ogr_kml_two_layers(tmp_vsimem):
 <Folder><name>empty</name>
 </Folder>
 <Folder><name>lyr</name>
-  <Placemark>
+  <Placemark id="lyr.1">
     <ExtendedData><SchemaData schemaUrl="#lyr">
         <SimpleData name="foo">bar</SimpleData>
     </SchemaData></ExtendedData>

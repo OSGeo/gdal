@@ -74,7 +74,7 @@ class OGRKMLLayer final : public OGRLayer
     int iNextKMLId_;
     bool bWriter_;
     int nLayerNumber_;
-    int nWroteFeatureCount_;
+    GIntBig nWroteFeatureCount_;
     bool bSchemaWritten_;
     bool bClosedForWriting;
     char *pszName_;

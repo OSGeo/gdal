@@ -1403,7 +1403,7 @@ def test_ogr2ogr_49_bis(ogr2ogr_path, tmp_path):
         """<kml xmlns="http://www.opengis.net/kml/2.2">""",
         """<Document id="root_doc">""",
         """<Folder><name>grid</name>""",
-        """  <Placemark>""",
+        """  <Placemark id="grid.1">""",
         """        <name>440750.000</name>""",
         """  </Placemark>""",
         """</Folder>""",

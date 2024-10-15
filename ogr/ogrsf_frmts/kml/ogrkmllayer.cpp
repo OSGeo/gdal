@@ -339,7 +339,11 @@ OGRErr OGRKMLLayer::ICreateFeature(OGRFeature *poFeature)
         VSIFPrintfL(fp, "<Folder><name>%s</name>\n", pszName_);
     }
 
-    VSIFPrintfL(fp, "  <Placemark>\n");
+    ++nWroteFeatureCount_;
+    char *pszEscapedLayerName = OGRGetXML_UTF8_EscapedString(GetDescription());
+    VSIFPrintfL(fp, "  <Placemark id=\"%s." CPL_FRMT_GIB "\">\n",
+                pszEscapedLayerName, nWroteFeatureCount_);
+    CPLFree(pszEscapedLayerName);
 
     if (poFeature->GetFID() == OGRNullFID)
         poFeature->SetFID(iNextKMLId_++);
@@ -561,7 +565,6 @@ OGRErr OGRKMLLayer::ICreateFeature(OGRFeature *poFeature)
     }
 
     VSIFPrintfL(fp, "  </Placemark>\n");
-    nWroteFeatureCount_++;
     return OGRERR_NONE;
 }
 
