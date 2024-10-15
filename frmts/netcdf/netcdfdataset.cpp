@@ -3470,6 +3470,12 @@ void netCDFDataset::SetProjectionFromVar(
     {
         const char *pszUnitsX = FetchAttr(nGroupDimXID, nVarDimXID, "units");
         const char *pszUnitsY = FetchAttr(nGroupDimYID, nVarDimYID, "units");
+        // Normalize degrees_east/degrees_north to degrees
+        // Cf https://github.com/OSGeo/gdal/issues/11009
+        if (pszUnitsX && EQUAL(pszUnitsX, "degrees_east"))
+            pszUnitsX = "degrees";
+        if (pszUnitsY && EQUAL(pszUnitsY, "degrees_north"))
+            pszUnitsY = "degrees";
 
         if (pszUnitsX && pszUnitsY)
         {
