@@ -1000,7 +1000,11 @@ int OGRLIBKMLLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCSequentialWrite))
         result = bUpdate;
     else if (EQUAL(pszCap, OLCRandomWrite))
-        result = bUpdate;
+        result =
+            bUpdate && (m_poKmlUpdate ||
+                        (m_poKmlLayer &&
+                         (m_poKmlLayer->get_feature_array_size() == 0 ||
+                          m_poKmlLayer->get_feature_array_at(0)->has_id())));
     else if (EQUAL(pszCap, OLCFastFeatureCount))
         result = FALSE;
     else if (EQUAL(pszCap, OLCFastSetNextByIndex))
@@ -1008,7 +1012,11 @@ int OGRLIBKMLLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCCreateField))
         result = bUpdate;
     else if (EQUAL(pszCap, OLCDeleteFeature))
-        result = bUpdate;
+        result =
+            bUpdate && (m_poKmlUpdate ||
+                        (m_poKmlLayer &&
+                         (m_poKmlLayer->get_feature_array_size() == 0 ||
+                          m_poKmlLayer->get_feature_array_at(0)->has_id())));
     else if (EQUAL(pszCap, OLCStringsAsUTF8))
         result = TRUE;
     else if (EQUAL(pszCap, OLCZGeometries))
