@@ -134,7 +134,7 @@ You can also consult `Frank Warmerdam's sponsors, acknowledgments and credits <h
 
 .. below is an allow-list for spelling checker.
 
-.. spelling::
+.. spelling:word-list::
     Daho
     Arevalo
     Ragi
