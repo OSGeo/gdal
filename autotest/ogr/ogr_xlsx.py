@@ -649,3 +649,16 @@ def test_ogr_xlsx_read_xml_prefix():
     f = lyr.GetNextFeature()
     assert f["Col1"] == "foo"
     assert f["Col2"] == "bar"
+
+
+###############################################################################
+# Test reading a XLSX file with <row> without "r" attribute
+
+
+def test_ogr_xlsx_read_row_without_r_attribute():
+
+    ds = ogr.Open("data/xlsx/row_without_r_attribute.xlsx")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["ID"] == 1
+    assert f["NAME"] == "TEST123"
