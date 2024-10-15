@@ -49,7 +49,7 @@ class CPL_DLL TileMatrixSet
 
     struct CPL_DLL BoundingBox
     {
-        std::string mCrs{};
+        std::string mCrs{};  //! Can be a URL, a URI, a WKT or PROJJSON string.
         double mLowerCornerX{NaN};
         double mLowerCornerY{NaN};
         double mUpperCornerX{NaN};
@@ -61,6 +61,7 @@ class CPL_DLL TileMatrixSet
         return mBbox;
     }
 
+    //! Can be a URL, a URI, a WKT or PROJJSON string.
     const std::string &crs() const
     {
         return mCrs;
