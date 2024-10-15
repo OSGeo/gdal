@@ -2326,3 +2326,13 @@ int OGR_GET_MS(float fSec)
     const float fValue = (fSec - static_cast<int>(fSec)) * 1000 + 0.5f;
     return static_cast<int>(fValue);
 }
+
+/************************************************************************/
+/*                    OGRDuplicateCharacter()                           */
+/************************************************************************/
+
+std::string OGRDuplicateCharacter(const std::string &osStr, char ch)
+{
+    char aszReplacement[] = {ch, ch, 0};
+    return CPLString(osStr).replaceAll(ch, aszReplacement);
+}
