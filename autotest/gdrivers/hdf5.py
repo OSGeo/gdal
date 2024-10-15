@@ -36,7 +36,9 @@ def check_no_file_leaks():
     yield
 
     diff = len(gdaltest.get_opened_files()) - num_files
-    assert diff == 0, "Leak of file handles: %d leaked" % diff
+    # For some weird reason, we sometimes get less files opened than at the
+    # start. Cf https://github.com/OSGeo/gdal/actions/runs/11349015748/job/31564138716?pr=10896
+    assert diff <= 0, "Leak of file handles: %d leaked" % diff
 
 
 ###############################################################################
