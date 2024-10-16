@@ -381,17 +381,17 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
 
 %rename (GetMemFileBuffer) wrapper_VSIGetMemFileBuffer;
 
-%typemap(cstype) (GIntBig *pnDataLength) "out int";
-%typemap(imtype) (GIntBig *pnDataLength) "out int";
-%apply (int *OUTPUT) {(GIntBig *pnDataLength)}
+%typemap(cstype) (vsi_l_offset *pnDataLength) "out ulong";
+%typemap(imtype) (vsi_l_offset *pnDataLength) "out ulong";
+%apply (unsigned long long *OUTPUT) {(vsi_l_offset *pnDataLength)}
 %typemap(cstype) (int bUnlinkAndSeize) "bool";
 %typemap(csin) (int bUnlinkAndSeize) "$csinput ? 1 : 0";
 
 %inline {
-GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_path, GIntBig *pnDataLength, int bUnlinkAndSeize)
+GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_path, vsi_l_offset *pnDataLength, int bUnlinkAndSeize)
 {
-    return VSIGetMemFileBuffer(utf8_path, reinterpret_cast<vsi_l_offset *>(pnDataLength), bUnlinkAndSeize);
+    return VSIGetMemFileBuffer(utf8_path, pnDataLength, bUnlinkAndSeize);
 }
 }
 
-%clear (GIntBig *pnDataLength);
+%clear (vsi_l_offset *pnDataLength);
