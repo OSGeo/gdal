@@ -43,9 +43,10 @@ else:
     doc_version = open(version_file).read().strip()
     gdal_version = gdal.__version__
     gdal_version_stripped = gdal_version
-    pos_dev = gdal_version_stripped.find("dev")
-    if pos_dev > 0:
-        gdal_version_stripped = gdal_version_stripped[0:pos_dev]
+    for suffix in ["dev", "beta"]:
+        pos_suffix = gdal_version_stripped.find(suffix)
+        if pos_suffix > 0:
+            gdal_version_stripped = gdal_version_stripped[0:pos_suffix]
 
     if doc_version.strip() != gdal_version_stripped:
         logger.warn(
