@@ -300,13 +300,16 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         .action([psOptions](const std::string &)
                 { psOptions->bCreateOutput = true; });
 
+    // Written that way so that in library mode, users can still use the -q
+    // switch, even if it has no effect
+    argParser->add_quiet_argument(
+        psOptionsForBinary ? &(psOptionsForBinary->bQuiet) : nullptr);
+
     if (psOptionsForBinary)
     {
 
         argParser->add_open_options_argument(
             psOptionsForBinary->aosOpenOptions);
-
-        argParser->add_quiet_argument(&psOptionsForBinary->bQuiet);
 
         argParser->add_argument("src_datasource")
             .metavar("<src_datasource>")
