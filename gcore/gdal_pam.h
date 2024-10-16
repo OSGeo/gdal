@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GDAL_PAM_H_INCLUDED
@@ -54,6 +38,7 @@ class GDALPamRasterBand;
 #define GCIF_SCALEOFFSET 0x008000
 #define GCIF_UNITTYPE 0x010000
 #define GCIF_COLORTABLE 0x020000
+/* Same value as GCIF_COLORTABLE */
 #define GCIF_COLORINTERP 0x020000
 #define GCIF_BAND_METADATA 0x040000
 #define GCIF_RAT 0x080000
@@ -66,8 +51,8 @@ class GDALPamRasterBand;
 #define GCIF_PAM_DEFAULT                                                       \
     (GCIF_GEOTRANSFORM | GCIF_PROJECTION | GCIF_METADATA | GCIF_GCPS |         \
      GCIF_NODATA | GCIF_CATEGORYNAMES | GCIF_MINMAX | GCIF_SCALEOFFSET |       \
-     GCIF_UNITTYPE | GCIF_COLORTABLE | GCIF_COLORINTERP | GCIF_BAND_METADATA | \
-     GCIF_RAT | GCIF_MASK | GCIF_ONLY_IF_MISSING | GCIF_PROCESS_BANDS |        \
+     GCIF_UNITTYPE | GCIF_COLORTABLE | GCIF_BAND_METADATA | GCIF_RAT |         \
+     GCIF_MASK | GCIF_ONLY_IF_MISSING | GCIF_PROCESS_BANDS |                   \
      GCIF_BAND_DESCRIPTION)
 
 /* GDAL PAM Flags */

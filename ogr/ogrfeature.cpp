@@ -8,23 +8,7 @@
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -32,6 +16,7 @@
 #include "ogr_feature.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
@@ -54,7 +39,7 @@
 #include "ogr_featurestyle.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 
 #include "cpl_json_header.h"
 
@@ -2013,12 +1998,13 @@ int OGRFeature::GetFieldAsInteger(int iField) const
                                  : nFID < INT_MIN ? INT_MIN
                                                   : static_cast<int>(nFID);
 
-                if (static_cast<GIntBig>(nVal) != nFID)
+                if (nVal != nFID)
                 {
-                    CPLError(
-                        CE_Warning, CPLE_AppDefined,
-                        "Integer overflow occurred when trying to return "
-                        "64bit integer. Use GetFieldAsInteger64() instead");
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Field %s.FID: Integer overflow occurred when "
+                             "trying to return 64 bit integer %" PRId64
+                             ". Use GetFieldAsInteger64() instead",
+                             poDefn->GetName(), static_cast<int64_t>(nVal));
                 }
                 return nVal;
             }
@@ -2034,7 +2020,7 @@ int OGRFeature::GetFieldAsInteger(int iField) const
         }
     }
 
-    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
+    const OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
 
     if (poFDefn == nullptr)
         return 0;
@@ -2054,11 +2040,14 @@ int OGRFeature::GetFieldAsInteger(int iField) const
                          : nVal64 < INT_MIN ? INT_MIN
                                             : static_cast<int>(nVal64);
 
-        if (static_cast<GIntBig>(nVal) != nVal64)
+        if (nVal != nVal64)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Integer overflow occurred when trying to return 64bit "
-                     "integer. Use GetFieldAsInteger64() instead");
+                     "Field %s.%s: Integer overflow occurred when trying to "
+                     "return 64 bit integer %" PRId64
+                     ". Use GetFieldAsInteger64() instead",
+                     poDefn->GetName(), poFDefn->GetNameRef(),
+                     static_cast<int64_t>(nVal64));
         }
         return nVal;
     }
@@ -3472,13 +3461,15 @@ int OGR_F_GetFieldAsDateTimeEx(OGRFeatureH hFeat, int iField, int *pnYear,
 /*                        OGRFeatureGetIntegerValue()                   */
 /************************************************************************/
 
-static int OGRFeatureGetIntegerValue(OGRFieldDefn *poFDefn, int nValue)
+static int OGRFeatureGetIntegerValue(const OGRFeatureDefn *poDefn,
+                                     const OGRFieldDefn *poFDefn, int nValue)
 {
     if (poFDefn->GetSubType() == OFSTBoolean && nValue != 0 && nValue != 1)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Only 0 or 1 should be passed for a OFSTBoolean subtype. "
-                 "Considering this non-zero value as 1.");
+                 "Field %s.%s: Only 0 or 1 should be passed for a OFSTBoolean "
+                 "subtype. Considering non-zero value %d as 1.",
+                 poDefn->GetName(), poFDefn->GetNameRef(), nValue);
         nValue = 1;
     }
     else if (poFDefn->GetSubType() == OFSTInt16)
@@ -3486,15 +3477,17 @@ static int OGRFeatureGetIntegerValue(OGRFieldDefn *poFDefn, int nValue)
         if (nValue < -32768)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Out-of-range value for a OFSTInt16 subtype. "
-                     "Considering this value as -32768.");
+                     "Field %s.%s: Out-of-range value for a OFSTInt16 subtype. "
+                     "Considering value %d as -32768.",
+                     poDefn->GetName(), poFDefn->GetNameRef(), nValue);
             nValue = -32768;
         }
         else if (nValue > 32767)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Out-of-range value for a OFSTInt16 subtype. "
-                     "Considering this value as 32767.");
+                     "Field %s.%s: Out-of-range value for a OFSTInt16 subtype. "
+                     "Considering value %d as 32767.",
+                     poDefn->GetName(), poFDefn->GetNameRef(), nValue);
             nValue = 32767;
         }
     }
@@ -3669,7 +3662,7 @@ char *OGRFeature::GetFieldAsSerializedJSon(int iField) const
 void OGRFeature::SetField(int iField, int nValue)
 
 {
-    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
+    const OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
 
     if (poFDefn == nullptr)
         return;
@@ -3677,14 +3670,15 @@ void OGRFeature::SetField(int iField, int nValue)
     OGRFieldType eType = poFDefn->GetType();
     if (eType == OFTInteger)
     {
-        pauFields[iField].Integer = OGRFeatureGetIntegerValue(poFDefn, nValue);
+        pauFields[iField].Integer =
+            OGRFeatureGetIntegerValue(poDefn, poFDefn, nValue);
         pauFields[iField].Set.nMarker2 = 0;
         pauFields[iField].Set.nMarker3 = 0;
     }
     else if (eType == OFTInteger64)
     {
         pauFields[iField].Integer64 =
-            OGRFeatureGetIntegerValue(poFDefn, nValue);
+            OGRFeatureGetIntegerValue(poDefn, poFDefn, nValue);
     }
     else if (eType == OFTReal)
     {
@@ -3809,7 +3803,7 @@ void OGR_F_SetFieldInteger(OGRFeatureH hFeat, int iField, int nValue)
 void OGRFeature::SetField(int iField, GIntBig nValue)
 
 {
-    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
+    const OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
 
     if (poFDefn == nullptr)
         return;
@@ -3821,11 +3815,14 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
                            : nValue > INT_MAX ? INT_MAX
                                               : static_cast<int>(nValue);
 
-        if (static_cast<GIntBig>(nVal32) != nValue)
+        if (nVal32 != nValue)
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Integer overflow occurred when trying to set "
-                     "32bit field.");
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Field %s.%s: integer overflow occurred when trying to set "
+                "%" PRId64 "as 32 bit integer.",
+                poDefn->GetName(), poFDefn->GetNameRef(),
+                static_cast<int64_t>(nValue));
         }
         SetField(iField, nVal32);
     }
@@ -3843,9 +3840,12 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
                 static_cast<double>(std::numeric_limits<int64_t>::max()) ||
             static_cast<GIntBig>(pauFields[iField].Real) != nValue)
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Lossy conversion occurred when trying to set "
-                     "a real field from a 64 bit integer value.");
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Field %s.%s: Lossy conversion occurred when trying to set "
+                "a real field from 64 bit integer value %" PRId64 ".",
+                poDefn->GetName(), poFDefn->GetNameRef(),
+                static_cast<int64_t>(nValue));
         }
     }
     else if (eType == OFTIntegerList)
@@ -3854,11 +3854,14 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
                      : nValue > INT_MAX ? INT_MAX
                                         : static_cast<int>(nValue);
 
-        if (static_cast<GIntBig>(nVal32) != nValue)
+        if (nVal32 != nValue)
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Integer overflow occurred when trying to set "
-                     "32bit field.");
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Field %s.%s: Integer overflow occurred when trying to set "
+                "%" PRId64 " as 32 bit value.",
+                poDefn->GetName(), poFDefn->GetNameRef(),
+                static_cast<int64_t>(nValue));
         }
         SetField(iField, 1, &nVal32);
     }
@@ -3977,7 +3980,7 @@ void OGR_F_SetFieldInteger64(OGRFeatureH hFeat, int iField, GIntBig nValue)
 void OGRFeature::SetField(int iField, double dfValue)
 
 {
-    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
+    const OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
 
     if (poFDefn == nullptr)
         return;
@@ -4001,9 +4004,11 @@ void OGRFeature::SetField(int iField, double dfValue)
         if (std::isnan(dfValue))
         {
             pauFields[iField].Integer = nMin;
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Lossy conversion occurred when trying to set "
-                     "32 bit integer field from a real value.");
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Field %s.%s: Lossy conversion occurred when trying to set "
+                "32 bit integer field from real value %.17g.",
+                poDefn->GetName(), poFDefn->GetNameRef(), dfValue);
         }
         else
         {
@@ -4012,12 +4017,14 @@ void OGRFeature::SetField(int iField, double dfValue)
                              : dfValue > nMax ? nMax
                                               : static_cast<int>(dfValue);
             pauFields[iField].Integer =
-                OGRFeatureGetIntegerValue(poFDefn, nVal);
+                OGRFeatureGetIntegerValue(poDefn, poFDefn, nVal);
             if (!(nVal == dfValue))
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Lossy conversion occurred when trying to set "
-                         "32 bit integer field from a real value.");
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Field %s.%s: Lossy conversion occurred when trying to set "
+                    "32 bit integer field from real value %.17g.",
+                    poDefn->GetName(), poFDefn->GetNameRef(), dfValue);
             }
         }
         pauFields[iField].Set.nMarker2 = 0;
@@ -4029,9 +4036,11 @@ void OGRFeature::SetField(int iField, double dfValue)
         if (std::isnan(dfValue))
         {
             pauFields[iField].Integer64 = nMin;
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Lossy conversion occurred when trying to set "
-                     "64 bit integer field from a real value.");
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Field %s.%s: Lossy conversion occurred when trying to set "
+                "64 bit integer field from real value %.17g.",
+                poDefn->GetName(), poFDefn->GetNameRef(), dfValue);
         }
         else
         {
@@ -4043,9 +4052,11 @@ void OGRFeature::SetField(int iField, double dfValue)
             pauFields[iField].Integer64 = nVal;
             if (!(static_cast<double>(nVal) == dfValue))
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Lossy conversion occurred when trying to set "
-                         "64 bit integer field from a real value.");
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Field %s.%s: Lossy conversion occurred when trying to set "
+                    "64 bit integer field from real value %.17g.",
+                    poDefn->GetName(), poFDefn->GetNameRef(), dfValue);
             }
         }
         pauFields[iField].Set.nMarker3 = 0;
@@ -4174,7 +4185,7 @@ void OGRFeature::SetField(int iField, const char *pszValue)
         bWarn = CPLTestBool(
             CPLGetConfigOption("OGR_SETFIELD_NUMERIC_WARNING", "YES"));
 
-    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
+    const OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
     if (poFDefn == nullptr)
         return;
 
@@ -4249,7 +4260,7 @@ void OGRFeature::SetField(int iField, const char *pszValue)
                          : nVal64 < INT_MIN ? INT_MIN
                                             : static_cast<int>(nVal64);
             pauFields[iField].Integer =
-                OGRFeatureGetIntegerValue(poFDefn, nVal32);
+                OGRFeatureGetIntegerValue(poDefn, poFDefn, nVal32);
             if (bWarn && pauFields[iField].Integer == nVal32 &&
                 (errno == ERANGE || nVal32 != nVal64 || !pszLast || *pszLast))
                 CPLError(CE_Warning, CPLE_AppDefined,
@@ -4357,7 +4368,9 @@ void OGRFeature::SetField(int iField, const char *pszValue)
                         {
                             CPLError(
                                 CE_Warning, CPLE_AppDefined,
-                                "32 bit integer overflow when converting %s",
+                                "Field %s.%s: 32 bit integer overflow when "
+                                "converting %s",
+                                poDefn->GetName(), poFDefn->GetNameRef(),
                                 pszValue);
                         }
                         anValues.push_back(nVal);
@@ -4440,8 +4453,8 @@ void OGRFeature::SetField(int iField, const char *pszValue)
             }
             else
             {
-                const char *papszValues[2] = {pszValue, nullptr};
-                SetField(iField, const_cast<char **>(papszValues));
+                const char *const papszValues[2] = {pszValue, nullptr};
+                SetField(iField, papszValues);
             }
         }
     }
@@ -4525,7 +4538,7 @@ void OGR_F_SetFieldString(OGRFeatureH hFeat, int iField, const char *pszValue)
 void OGRFeature::SetField(int iField, int nCount, const int *panValues)
 
 {
-    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
+    const OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
 
     if (poFDefn == nullptr)
         return;
@@ -4541,7 +4554,8 @@ void OGRFeature::SetField(int iField, int nCount, const int *panValues)
         {
             for (int i = 0; i < nCount; i++)
             {
-                int nVal = OGRFeatureGetIntegerValue(poFDefn, panValues[i]);
+                int nVal =
+                    OGRFeatureGetIntegerValue(poDefn, poFDefn, panValues[i]);
                 if (panValues[i] != nVal)
                 {
                     if (panValuesMod == nullptr)
@@ -4682,7 +4696,7 @@ void OGR_F_SetFieldIntegerList(OGRFeatureH hFeat, int iField, int nCount,
 void OGRFeature::SetField(int iField, int nCount, const GIntBig *panValues)
 
 {
-    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
+    const OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
 
     if (poFDefn == nullptr)
         return;
@@ -4699,11 +4713,14 @@ void OGRFeature::SetField(int iField, int nCount, const GIntBig *panValues)
                                : nValue > INT_MAX ? INT_MAX
                                                   : static_cast<int>(nValue);
 
-            if (static_cast<GIntBig>(nVal32) != nValue)
+            if (nVal32 != nValue)
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Integer overflow occurred when trying to set "
-                         "32bit field.");
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Field %s.%s: Integer overflow occurred when trying to "
+                    "set %" PRId64 " as 32 bit value.",
+                    poDefn->GetName(), poFDefn->GetNameRef(),
+                    static_cast<int64_t>(nValue));
             }
             anValues.push_back(nVal32);
         }
@@ -4991,9 +5008,10 @@ void OGRFeature::SetField(int iField, const char *const *papszValues)
             int nVal = atoi(papszValues[i]);
             if (errno == ERANGE)
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "32 bit integer overflow when converting %s",
-                         papszValues[i]);
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Field %s.%s: 32 bit integer overflow when converting %s",
+                    poDefn->GetName(), poFDefn->GetNameRef(), papszValues[i]);
                 if (papszValues[i][0] == '-')
                     nVal = INT_MIN;
                 else
@@ -5062,8 +5080,7 @@ void OGR_F_SetFieldStringList(OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER0(hFeat, "OGR_F_SetFieldStringList");
 
-    OGRFeature::FromHandle(hFeat)->SetField(
-        iField, const_cast<const char *const *>(papszValues));
+    OGRFeature::FromHandle(hFeat)->SetField(iField, papszValues);
 }
 
 /************************************************************************/
@@ -6576,9 +6593,7 @@ OGRErr OGRFeature::SetFieldsFrom(const OGRFeature *poSrcFeature,
                 if (eDstType == OFTDate || eDstType == OFTTime ||
                     eDstType == OFTDateTime)
                 {
-                    SetField(iDstField,
-                             const_cast<OGRField *>(
-                                 poSrcFeature->GetRawFieldRef(iField)));
+                    SetField(iDstField, poSrcFeature->GetRawFieldRef(iField));
                 }
                 else if (eDstType == OFTString || eDstType == OFTStringList)
                 {
@@ -6598,9 +6613,7 @@ OGRErr OGRFeature::SetFieldsFrom(const OGRFeature *poSrcFeature,
             {
                 if (eSrcType == eDstType)
                 {
-                    SetField(iDstField,
-                             const_cast<OGRField *>(
-                                 poSrcFeature->GetRawFieldRef(iField)));
+                    SetField(iDstField, poSrcFeature->GetRawFieldRef(iField));
                 }
                 else if (eDstType == OFTString || eDstType == OFTStringList)
                 {
@@ -7137,7 +7150,8 @@ int OGRFeature::Validate(int nValidateFlags, int bEmitError) const
             if (bEmitError)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Field %s has a NULL content which is not allowed",
+                         "Field %s.%s has a NULL content which is not allowed",
+                         poDefn->GetName(),
                          poDefn->GetFieldDefn(i)->GetNameRef());
             }
         }
@@ -7152,8 +7166,9 @@ int OGRFeature::Validate(int nValidateFlags, int bEmitError) const
             if (bEmitError)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Field %s has a %d UTF-8 characters whereas "
+                         "Field %s.%s has a %d UTF-8 characters whereas "
                          "a maximum of %d is allowed",
+                         poDefn->GetName(),
                          poDefn->GetFieldDefn(i)->GetNameRef(),
                          CPLStrlenUTF8(GetFieldAsString(i)),
                          poDefn->GetFieldDefn(i)->GetWidth());

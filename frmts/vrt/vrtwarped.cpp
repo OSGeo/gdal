@@ -8,23 +8,7 @@
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -700,21 +684,12 @@ class GDALWarpCoordRescaler : public OGRCoordinateTransformation
 
 static void RescaleDstGeoTransform(double adfDstGeoTransform[6],
                                    int nRasterXSize, int nDstPixels,
-                                   int nRasterYSize, int nDstLines,
-                                   double dfTargetRatio)
+                                   int nRasterYSize, int nDstLines)
 {
-    if (adfDstGeoTransform[2] == 0.0 && adfDstGeoTransform[4] == 0.0)
-    {
-        adfDstGeoTransform[1] *= static_cast<double>(nRasterXSize) / nDstPixels;
-        adfDstGeoTransform[5] *= static_cast<double>(nRasterYSize) / nDstLines;
-    }
-    else
-    {
-        adfDstGeoTransform[1] *= dfTargetRatio;
-        adfDstGeoTransform[2] *= dfTargetRatio;
-        adfDstGeoTransform[4] *= dfTargetRatio;
-        adfDstGeoTransform[5] *= dfTargetRatio;
-    }
+    adfDstGeoTransform[1] *= static_cast<double>(nRasterXSize) / nDstPixels;
+    adfDstGeoTransform[2] *= static_cast<double>(nRasterXSize) / nDstPixels;
+    adfDstGeoTransform[4] *= static_cast<double>(nRasterYSize) / nDstLines;
+    adfDstGeoTransform[5] *= static_cast<double>(nRasterYSize) / nDstLines;
 }
 
 /************************************************************************/
@@ -751,8 +726,7 @@ int VRTWarpedDataset::GetSrcOverviewLevel(int iOvr,
 bool VRTWarpedDataset::GetOverviewSize(GDALDataset *poSrcDS, int iOvr,
                                        int iSrcOvr, int &nOvrXSize,
                                        int &nOvrYSize, double &dfSrcRatioX,
-                                       double &dfSrcRatioY,
-                                       double &dfTargetRatio) const
+                                       double &dfSrcRatioY) const
 {
     auto poSrcOvrBand = iSrcOvr >= 0
                             ? poSrcDS->GetRasterBand(1)->GetOverview(iSrcOvr)
@@ -765,8 +739,9 @@ bool VRTWarpedDataset::GetOverviewSize(GDALDataset *poSrcDS, int iOvr,
                   poSrcOvrBand->GetXSize();
     dfSrcRatioY = static_cast<double>(poSrcDS->GetRasterYSize()) /
                   poSrcOvrBand->GetYSize();
-    dfTargetRatio = static_cast<double>(poSrcDS->GetRasterXSize()) /
-                    poSrcDS->GetRasterBand(1)->GetOverview(iOvr)->GetXSize();
+    const double dfTargetRatio =
+        static_cast<double>(poSrcDS->GetRasterXSize()) /
+        poSrcDS->GetRasterBand(1)->GetOverview(iOvr)->GetXSize();
 
     nOvrXSize = static_cast<int>(nRasterXSize / dfTargetRatio + 0.5);
     nOvrYSize = static_cast<int>(nRasterYSize / dfTargetRatio + 0.5);
@@ -802,19 +777,13 @@ VRTWarpedDataset *VRTWarpedDataset::CreateImplicitOverview(int iOvr) const
     int nDstLines = 0;
     double dfSrcRatioX = 0;
     double dfSrcRatioY = 0;
-    double dfTargetRatio = 0;
     // Figure out the desired output bounds and resolution.
     if (!GetOverviewSize(poSrcDS, iOvr, iSrcOvr, nDstPixels, nDstLines,
-                         dfSrcRatioX, dfSrcRatioY, dfTargetRatio))
+                         dfSrcRatioX, dfSrcRatioY))
     {
         poSrcOvrDS->ReleaseRef();
         return nullptr;
     }
-
-    double adfDstGeoTransform[6] = {0.0};
-    const_cast<VRTWarpedDataset *>(this)->GetGeoTransform(adfDstGeoTransform);
-    RescaleDstGeoTransform(adfDstGeoTransform, nRasterXSize, nDstPixels,
-                           nRasterYSize, nDstLines, dfTargetRatio);
 
     /* --------------------------------------------------------------------
      */
@@ -850,10 +819,11 @@ VRTWarpedDataset *VRTWarpedDataset::CreateImplicitOverview(int iOvr) const
     /*      Rescale the output geotransform on the transformer. */
     /* --------------------------------------------------------------------
      */
+    double adfDstGeoTransform[6] = {0.0};
     GDALGetTransformerDstGeoTransform(psWOOvr->pTransformerArg,
                                       adfDstGeoTransform);
     RescaleDstGeoTransform(adfDstGeoTransform, nRasterXSize, nDstPixels,
-                           nRasterYSize, nDstLines, dfTargetRatio);
+                           nRasterYSize, nDstLines);
     GDALSetTransformerDstGeoTransform(psWOOvr->pTransformerArg,
                                       adfDstGeoTransform);
 
@@ -905,10 +875,8 @@ int VRTWarpedDataset::GetOverviewCount() const
                     int nDstLines = 0;
                     double dfSrcRatioX = 0;
                     double dfSrcRatioY = 0;
-                    double dfTargetRatio = 0;
                     if (!GetOverviewSize(poSrcDS, i, iSrcOvr, nDstPixels,
-                                         nDstLines, dfSrcRatioX, dfSrcRatioY,
-                                         dfTargetRatio))
+                                         nDstLines, dfSrcRatioX, dfSrcRatioY))
                     {
                         break;
                     }
@@ -1919,10 +1887,14 @@ CPLErr VRTWarpedDataset::IRasterIO(
     int nBandCount, BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
     GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 {
+    const bool bWholeImage = nXOff == 0 && nYOff == 0 &&
+                             nXSize == nRasterXSize && nYSize == nRasterYSize;
+
     if (eRWFlag == GF_Write ||
         // For too small request fall back to the block-based approach to
         // benefit from caching
-        nBufXSize <= m_nBlockXSize || nBufYSize <= m_nBlockYSize ||
+        (!bWholeImage &&
+         (nBufXSize <= m_nBlockXSize || nBufYSize <= m_nBlockYSize)) ||
         // Or if we don't request all bands at once
         nBandCount < nBands ||
         !CPLTestBool(
@@ -1949,27 +1921,89 @@ CPLErr VRTWarpedDataset::IRasterIO(
         }
     }
 
-    // Fallback to default block-based implementation when not requesting at
-    // the nominal resolution (in theory we could construct a warper taking
-    // into account that, like we do for virtual warped overviews, but that
-    // would be a complication).
-    if (nBufXSize != nXSize || nBufYSize != nYSize)
-    {
-        return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                      pData, nBufXSize, nBufYSize, eBufType,
-                                      nBandCount, panBandMap, nPixelSpace,
-                                      nLineSpace, nBandSpace, psExtraArg);
-    }
-
     if (m_poWarper == nullptr)
         return CE_Failure;
 
     const GDALWarpOptions *psWO = m_poWarper->GetOptions();
 
+    if (nBufXSize != nXSize || nBufYSize != nYSize)
+    {
+        if (!bWholeImage || !GDALTransformHasFastClone(psWO->pTransformerArg))
+        {
+            return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                          pData, nBufXSize, nBufYSize, eBufType,
+                                          nBandCount, panBandMap, nPixelSpace,
+                                          nLineSpace, nBandSpace, psExtraArg);
+        }
+
+        // Build a temporary dataset taking into account the rescaling
+        void *pTransformerArg = GDALCloneTransformer(psWO->pTransformerArg);
+        if (pTransformerArg == nullptr)
+        {
+            return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                          pData, nBufXSize, nBufYSize, eBufType,
+                                          nBandCount, panBandMap, nPixelSpace,
+                                          nLineSpace, nBandSpace, psExtraArg);
+        }
+
+        GDALWarpOptions *psRescaledWO = GDALCloneWarpOptions(psWO);
+        psRescaledWO->hSrcDS = psWO->hSrcDS;
+        psRescaledWO->pfnTransformer = psWO->pfnTransformer;
+        psRescaledWO->pTransformerArg = pTransformerArg;
+
+        // Rescale the output geotransform on the transformer.
+        double adfDstGeoTransform[6] = {0.0};
+        GDALGetTransformerDstGeoTransform(psRescaledWO->pTransformerArg,
+                                          adfDstGeoTransform);
+        RescaleDstGeoTransform(adfDstGeoTransform, nRasterXSize, nBufXSize,
+                               nRasterYSize, nBufYSize);
+        GDALSetTransformerDstGeoTransform(psRescaledWO->pTransformerArg,
+                                          adfDstGeoTransform);
+
+        GDALDatasetH hDstDS =
+            GDALCreateWarpedVRT(psWO->hSrcDS, nBufXSize, nBufYSize,
+                                adfDstGeoTransform, psRescaledWO);
+
+        GDALDestroyWarpOptions(psRescaledWO);
+
+        if (hDstDS == nullptr)
+        {
+            // Not supposed to happen in nominal circumstances. Could perhaps
+            // happen if some memory allocation error occurred in code called
+            // by GDALCreateWarpedVRT()
+            GDALDestroyTransformer(pTransformerArg);
+            return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                          pData, nBufXSize, nBufYSize, eBufType,
+                                          nBandCount, panBandMap, nPixelSpace,
+                                          nLineSpace, nBandSpace, psExtraArg);
+        }
+
+        auto poOvrDS = static_cast<VRTWarpedDataset *>(hDstDS);
+        poOvrDS->m_bIsOverview = true;
+
+        GDALRasterIOExtraArg sExtraArg;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+        CPLErr eErr = poOvrDS->IRasterIO(GF_Read, 0, 0, nBufXSize, nBufYSize,
+                                         pData, nBufXSize, nBufYSize, eBufType,
+                                         nBandCount, panBandMap, nPixelSpace,
+                                         nLineSpace, nBandSpace, &sExtraArg);
+
+        poOvrDS->ReleaseRef();
+        return eErr;
+    }
+
     // Build a map from warped output bands to their index
     std::map<int, int> oMapBandToWarpingBandIndex;
+    bool bAllBandsIncreasingOrder =
+        (psWO->nBandCount == nBands && nBands == nBandCount);
     for (int i = 0; i < psWO->nBandCount; ++i)
+    {
         oMapBandToWarpingBandIndex[psWO->panDstBands[i]] = i;
+        if (psWO->panDstBands[i] != i + 1 || panBandMap[i] != i + 1)
+        {
+            bAllBandsIncreasingOrder = false;
+        }
+    }
 
     // Check that all requested bands are actually warped output bands.
     for (int i = 0; i < nBandCount; ++i)
@@ -2054,51 +2088,72 @@ CPLErr VRTWarpedDataset::IRasterIO(
     CPLDebugOnly("VRT",
                  "Using optimized VRTWarpedDataset::IRasterIO() code path");
 
-    // Allocate a warping destination buffer
-    // Note: we could potentially use the pData target buffer argument of this
-    // function in some circumstances... but probably not worth the complication
-    GByte *pabyWarpBuffer = static_cast<GByte *>(
-        m_poWarper->CreateDestinationBuffer(nXSize, nYSize));
+    // Allocate a warping destination buffer if needed.
+    // We can use directly the output buffer pData if:
+    // - we request exactly all warped bands, and that there are as many
+    //   warped bands as dataset bands (no alpha)
+    // - the output buffer data atype is the warping working data type
+    // - the output buffer has a band-sequential layout.
+    GByte *pabyWarpBuffer;
 
-    if (pabyWarpBuffer == nullptr)
+    if (bAllBandsIncreasingOrder && psWO->eWorkingDataType == eBufType &&
+        nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
+        nLineSpace == nPixelSpace * nXSize &&
+        (nBands == 1 || nBandSpace == nLineSpace * nYSize))
     {
-        return CE_Failure;
+        pabyWarpBuffer = static_cast<GByte *>(pData);
+        m_poWarper->InitializeDestinationBuffer(pabyWarpBuffer, nXSize, nYSize);
+    }
+    else
+    {
+        pabyWarpBuffer = static_cast<GByte *>(
+            m_poWarper->CreateDestinationBuffer(nXSize, nYSize));
+
+        if (pabyWarpBuffer == nullptr)
+        {
+            return CE_Failure;
+        }
     }
 
     const CPLErr eErr = m_poWarper->WarpRegionToBuffer(
         nXOff, nYOff, nXSize, nYSize, pabyWarpBuffer, psWO->eWorkingDataType,
         nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, dfSrcXExtraSize,
         dfSrcYExtraSize);
-    if (eErr == CE_None)
+
+    if (pabyWarpBuffer != pData)
     {
-        // Copy warping buffer into user destination buffer
-        for (int i = 0; i < nBandCount; i++)
+        if (eErr == CE_None)
         {
-            const int nRasterIOBand = panBandMap[i];
-            const auto oIterToWarpingBandIndex =
-                oMapBandToWarpingBandIndex.find(nRasterIOBand);
-            // cannot happen due to earlier check
-            CPLAssert(oIterToWarpingBandIndex !=
-                      oMapBandToWarpingBandIndex.end());
-
-            const GByte *const pabyWarpBandBuffer =
-                pabyWarpBuffer +
-                static_cast<GPtrDiff_t>(oIterToWarpingBandIndex->second) *
-                    nXSize * nYSize * nWarpDTSize;
-            GByte *const pabyDstBand = pabyDst + i * nBandSpace;
-
-            for (int iY = 0; iY < nYSize; iY++)
+            // Copy warping buffer into user destination buffer
+            for (int i = 0; i < nBandCount; i++)
             {
-                GDALCopyWords(pabyWarpBandBuffer + static_cast<GPtrDiff_t>(iY) *
-                                                       nXSize * nWarpDTSize,
-                              psWO->eWorkingDataType, nWarpDTSize,
-                              pabyDstBand + iY * nLineSpace, eBufType,
-                              static_cast<int>(nPixelSpace), nXSize);
+                const int nRasterIOBand = panBandMap[i];
+                const auto oIterToWarpingBandIndex =
+                    oMapBandToWarpingBandIndex.find(nRasterIOBand);
+                // cannot happen due to earlier check
+                CPLAssert(oIterToWarpingBandIndex !=
+                          oMapBandToWarpingBandIndex.end());
+
+                const GByte *const pabyWarpBandBuffer =
+                    pabyWarpBuffer +
+                    static_cast<GPtrDiff_t>(oIterToWarpingBandIndex->second) *
+                        nXSize * nYSize * nWarpDTSize;
+                GByte *const pabyDstBand = pabyDst + i * nBandSpace;
+
+                for (int iY = 0; iY < nYSize; iY++)
+                {
+                    GDALCopyWords(pabyWarpBandBuffer +
+                                      static_cast<GPtrDiff_t>(iY) * nXSize *
+                                          nWarpDTSize,
+                                  psWO->eWorkingDataType, nWarpDTSize,
+                                  pabyDstBand + iY * nLineSpace, eBufType,
+                                  static_cast<int>(nPixelSpace), nXSize);
+                }
             }
         }
-    }
 
-    m_poWarper->DestroyDestinationBuffer(pabyWarpBuffer);
+        m_poWarper->DestroyDestinationBuffer(pabyWarpBuffer);
+    }
 
     return eErr;
 }
@@ -2292,10 +2347,8 @@ int VRTWarpedRasterBand::GetBestOverviewLevel(
         int nDstLines = 0;
         double dfSrcRatioX = 0;
         double dfSrcRatioY = 0;
-        double dfTargetRatio = 0;
         if (!poWDS->GetOverviewSize(poSrcDS, iOverview, iSrcOvr, nDstPixels,
-                                    nDstLines, dfSrcRatioX, dfSrcRatioY,
-                                    dfTargetRatio))
+                                    nDstLines, dfSrcRatioX, dfSrcRatioY))
         {
             break;
         }

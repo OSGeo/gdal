@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2020, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef TILEMATRIXSET_HPP_INCLUDED
@@ -65,7 +49,7 @@ class CPL_DLL TileMatrixSet
 
     struct CPL_DLL BoundingBox
     {
-        std::string mCrs{};
+        std::string mCrs{};  //! Can be a URL, a URI, a WKT or PROJJSON string.
         double mLowerCornerX{NaN};
         double mLowerCornerY{NaN};
         double mUpperCornerX{NaN};
@@ -77,6 +61,7 @@ class CPL_DLL TileMatrixSet
         return mBbox;
     }
 
+    //! Can be a URL, a URI, a WKT or PROJJSON string.
     const std::string &crs() const
     {
         return mCrs;

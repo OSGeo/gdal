@@ -9,23 +9,7 @@
  * Copyright (c) 2008-2015, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2015, Faza Mahamood
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -133,6 +117,8 @@ struct CopyableGCPs
             CPLFree(pasGCPs);
         }
     }
+
+    CopyableGCPs &operator=(const CopyableGCPs &) = delete;
 };
 }  // namespace gdal::ogr2ogr_lib
 
@@ -433,7 +419,7 @@ struct GDALVectorTranslateOptions
        whose geometry intersects the extents will be selected. The geometries
        will not be clipped unless GDALVectorTranslateOptions::bClipSrc is true.
      */
-    std::shared_ptr<OGRGeometry> poSpatialFilter;
+    std::shared_ptr<OGRGeometry> poSpatialFilter{};
 
     /*! the progress function to use */
     GDALProgressFunc pfnProgress = nullptr;
@@ -508,6 +494,7 @@ struct TargetLayerInfo
     const char *m_pszGeomField = nullptr;
     std::vector<int> m_anDateTimeFieldIdx{};
     bool m_bSupportCurves = false;
+    OGRArrowArrayStream m_sArrowArrayStream{};
 };
 
 struct AssociatedLayers
@@ -521,7 +508,8 @@ class SetupTargetLayer
     bool CanUseWriteArrowBatch(OGRLayer *poSrcLayer, OGRLayer *poDstLayer,
                                bool bJustCreatedLayer,
                                const GDALVectorTranslateOptions *psOptions,
-                               bool &bError);
+                               bool bPreserveFID, bool &bError,
+                               OGRArrowArrayStream &streamSrc);
 
   public:
     GDALDataset *m_poSrcDS = nullptr;
@@ -743,14 +731,16 @@ typedef struct
 
 class OGRSplitListFieldLayer : public OGRLayer
 {
-    OGRLayer *poSrcLayer;
-    OGRFeatureDefn *poFeatureDefn;
-    ListFieldDesc *pasListFields;
-    int nListFieldCount;
-    int nMaxSplitListSubFields;
+    OGRLayer *poSrcLayer = nullptr;
+    OGRFeatureDefn *poFeatureDefn = nullptr;
+    ListFieldDesc *pasListFields = nullptr;
+    int nListFieldCount = 0;
+    const int nMaxSplitListSubFields;
 
     std::unique_ptr<OGRFeature>
     TranslateFeature(std::unique_ptr<OGRFeature> poSrcFeature);
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRSplitListFieldLayer)
 
   public:
     OGRSplitListFieldLayer(OGRLayer *poSrcLayer, int nMaxSplitListSubFields);
@@ -826,8 +816,7 @@ class OGRSplitListFieldLayer : public OGRLayer
 
 OGRSplitListFieldLayer::OGRSplitListFieldLayer(OGRLayer *poSrcLayerIn,
                                                int nMaxSplitListSubFieldsIn)
-    : poSrcLayer(poSrcLayerIn), poFeatureDefn(nullptr), pasListFields(nullptr),
-      nListFieldCount(0),
+    : poSrcLayer(poSrcLayerIn),
       nMaxSplitListSubFields(
           nMaxSplitListSubFieldsIn < 0 ? INT_MAX : nMaxSplitListSubFieldsIn)
 {
@@ -1569,14 +1558,16 @@ class GDALVectorTranslateWrappedDataset : public GDALDataset
     std::unique_ptr<GDALDriver> m_poDriverToFree{};
     GDALDataset *m_poBase = nullptr;
     OGRSpatialReference *m_poOutputSRS = nullptr;
-    bool m_bTransform = false;
+    const bool m_bTransform = false;
 
     std::vector<std::unique_ptr<OGRLayer>> m_apoLayers{};
-    std::vector<std::unique_ptr<OGRLayer>> m_apoHiddenLayers;
+    std::vector<std::unique_ptr<OGRLayer>> m_apoHiddenLayers{};
 
     GDALVectorTranslateWrappedDataset(GDALDataset *poBase,
                                       OGRSpatialReference *poOutputSRS,
                                       bool bTransform);
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorTranslateWrappedDataset)
 
   public:
     virtual int GetLayerCount() override
@@ -1604,6 +1595,8 @@ class GDALVectorTranslateWrappedLayer : public OGRLayerDecorator
     GDALVectorTranslateWrappedLayer(OGRLayer *poBaseLayer, bool bOwnBaseLayer);
     std::unique_ptr<OGRFeature>
     TranslateFeature(std::unique_ptr<OGRFeature> poSrcFeat);
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorTranslateWrappedLayer)
 
   public:
     virtual ~GDALVectorTranslateWrappedLayer();
@@ -1849,12 +1842,12 @@ void GDALVectorTranslateWrappedDataset::ReleaseResultSet(OGRLayer *poResultsSet)
 
 class OGR2OGRSpatialReferenceHolder
 {
-    OGRSpatialReference *m_poSRS;
+    OGRSpatialReference *m_poSRS = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGR2OGRSpatialReferenceHolder)
 
   public:
-    OGR2OGRSpatialReferenceHolder() : m_poSRS(nullptr)
-    {
-    }
+    OGR2OGRSpatialReferenceHolder() = default;
 
     ~OGR2OGRSpatialReferenceHolder()
     {
@@ -4000,12 +3993,45 @@ static int GetArrowGeomFieldIndex(const struct ArrowSchema *psLayerSchema,
 }
 
 /************************************************************************/
+/*                        BuildGetArrowStreamOptions()                  */
+/************************************************************************/
+
+static CPLStringList
+BuildGetArrowStreamOptions(const GDALVectorTranslateOptions *psOptions,
+                           bool bPreserveFID)
+{
+    CPLStringList aosOptionsGetArrowStream;
+    aosOptionsGetArrowStream.SetNameValue("SILENCE_GET_SCHEMA_ERROR", "YES");
+    aosOptionsGetArrowStream.SetNameValue("GEOMETRY_ENCODING", "WKB");
+    if (!bPreserveFID)
+        aosOptionsGetArrowStream.SetNameValue("INCLUDE_FID", "NO");
+    if (psOptions->nLimit >= 0)
+    {
+        aosOptionsGetArrowStream.SetNameValue(
+            "MAX_FEATURES_IN_BATCH",
+            CPLSPrintf(CPL_FRMT_GIB,
+                       std::min<GIntBig>(psOptions->nLimit,
+                                         (psOptions->nGroupTransactions > 0
+                                              ? psOptions->nGroupTransactions
+                                              : 65536))));
+    }
+    else if (psOptions->nGroupTransactions > 0)
+    {
+        aosOptionsGetArrowStream.SetNameValue(
+            "MAX_FEATURES_IN_BATCH",
+            CPLSPrintf("%d", psOptions->nGroupTransactions));
+    }
+    return aosOptionsGetArrowStream;
+}
+
+/************************************************************************/
 /*                 SetupTargetLayer::CanUseWriteArrowBatch()            */
 /************************************************************************/
 
 bool SetupTargetLayer::CanUseWriteArrowBatch(
     OGRLayer *poSrcLayer, OGRLayer *poDstLayer, bool bJustCreatedLayer,
-    const GDALVectorTranslateOptions *psOptions, bool &bError)
+    const GDALVectorTranslateOptions *psOptions, bool bPreserveFID,
+    bool &bError, OGRArrowArrayStream &streamSrc)
 {
     bError = false;
 
@@ -4059,20 +4085,20 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
             }
         }
 
-        struct ArrowArrayStream streamSrc;
-        const char *const apszOptions[] = {"SILENCE_GET_SCHEMA_ERROR=YES",
-                                           nullptr};
-        if (poSrcLayer->GetArrowStream(&streamSrc, apszOptions))
+        const CPLStringList aosGetArrowStreamOptions(
+            BuildGetArrowStreamOptions(psOptions, bPreserveFID));
+        if (poSrcLayer->GetArrowStream(streamSrc.get(),
+                                       aosGetArrowStreamOptions.List()))
         {
             struct ArrowSchema schemaSrc;
-            if (streamSrc.get_schema(&streamSrc, &schemaSrc) == 0)
+            if (streamSrc.get_schema(&schemaSrc) == 0)
             {
                 if (psOptions->bTransform &&
                     GetArrowGeomFieldIndex(&schemaSrc,
                                            poSrcLayer->GetGeometryColumn()) < 0)
                 {
                     schemaSrc.release(&schemaSrc);
-                    streamSrc.release(&streamSrc);
+                    streamSrc.clear();
                     return false;
                 }
 
@@ -4154,7 +4180,7 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
                                          "Cannot create field %s",
                                          pszFieldName);
                                 schemaSrc.release(&schemaSrc);
-                                streamSrc.release(&streamSrc);
+                                streamSrc.clear();
                                 return false;
                             }
                         }
@@ -4166,7 +4192,8 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
                         // check that it looks to be the same as the source
                         // one
                         struct ArrowArrayStream streamDst;
-                        if (poDstLayer->GetArrowStream(&streamDst, nullptr))
+                        if (poDstLayer->GetArrowStream(
+                                &streamDst, aosGetArrowStreamOptions.List()))
                         {
                             struct ArrowSchema schemaDst;
                             if (streamDst.get_schema(&streamDst, &schemaDst) ==
@@ -4197,7 +4224,8 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
                 }
                 schemaSrc.release(&schemaSrc);
             }
-            streamSrc.release(&streamSrc);
+            if (!bUseWriteArrowBatch)
+                streamSrc.clear();
         }
     }
     return bUseWriteArrowBatch;
@@ -4924,8 +4952,10 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     }
 
     bool bError = false;
-    const bool bUseWriteArrowBatch = CanUseWriteArrowBatch(
-        poSrcLayer, poDstLayer, bJustCreatedLayer, psOptions, bError);
+    OGRArrowArrayStream streamSrc;
+    const bool bUseWriteArrowBatch =
+        CanUseWriteArrowBatch(poSrcLayer, poDstLayer, bJustCreatedLayer,
+                              psOptions, bPreserveFID, bError, streamSrc);
     if (bError)
         return nullptr;
 
@@ -5387,7 +5417,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         nTotalEventsDone = 0;
     }
 
-    std::unique_ptr<TargetLayerInfo> psInfo(new TargetLayerInfo);
+    auto psInfo = std::make_unique<TargetLayerInfo>();
     psInfo->m_bUseWriteArrowBatch = bUseWriteArrowBatch;
     psInfo->m_nFeaturesRead = 0;
     psInfo->m_bPerFeatureCT = false;
@@ -5483,6 +5513,8 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 
     psInfo->m_bSupportCurves =
         CPL_TO_BOOL(poDstLayer->TestCapability(OLCCurveGeometries));
+
+    psInfo->m_sArrowArrayStream = std::move(streamSrc);
 
     return psInfo;
 }
@@ -5778,49 +5810,19 @@ bool LayerTranslator::TranslateArrow(
     GIntBig *pnReadFeatureCount, GDALProgressFunc pfnProgress,
     void *pProgressArg, const GDALVectorTranslateOptions *psOptions)
 {
-    struct ArrowArrayStream stream;
     struct ArrowSchema schema;
-    CPLStringList aosOptionsGetArrowStream;
     CPLStringList aosOptionsWriteArrowBatch;
-    aosOptionsGetArrowStream.SetNameValue("GEOMETRY_ENCODING", "WKB");
-    if (!psInfo->m_bPreserveFID)
-        aosOptionsGetArrowStream.SetNameValue("INCLUDE_FID", "NO");
-    else
+    if (psInfo->m_bPreserveFID)
     {
         aosOptionsWriteArrowBatch.SetNameValue(
             "FID", psInfo->m_poSrcLayer->GetFIDColumn());
         aosOptionsWriteArrowBatch.SetNameValue("IF_FID_NOT_PRESERVED",
                                                "WARNING");
     }
-    if (psOptions->nLimit >= 0)
+
+    if (psInfo->m_sArrowArrayStream.get_schema(&schema) != 0)
     {
-        aosOptionsGetArrowStream.SetNameValue(
-            "MAX_FEATURES_IN_BATCH",
-            CPLSPrintf(CPL_FRMT_GIB,
-                       std::min<GIntBig>(psOptions->nLimit,
-                                         (psOptions->nGroupTransactions > 0
-                                              ? psOptions->nGroupTransactions
-                                              : 65536))));
-    }
-    else if (psOptions->nGroupTransactions > 0)
-    {
-        aosOptionsGetArrowStream.SetNameValue(
-            "MAX_FEATURES_IN_BATCH",
-            CPLSPrintf("%d", psOptions->nGroupTransactions));
-    }
-    if (psInfo->m_poSrcLayer->GetArrowStream(&stream,
-                                             aosOptionsGetArrowStream.List()))
-    {
-        if (stream.get_schema(&stream, &schema) != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "stream.get_schema() failed");
-            stream.release(&stream);
-            return false;
-        }
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "GetArrowStream() failed");
+        CPLError(CE_Failure, CPLE_AppDefined, "stream.get_schema() failed");
         return false;
     }
 
@@ -5874,7 +5876,7 @@ bool LayerTranslator::TranslateArrow(
     {
         struct ArrowArray array;
         // Acquire source batch
-        if (stream.get_next(&stream, &array) != 0)
+        if (psInfo->m_sArrowArrayStream.get_next(&array) != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "stream.get_next() failed");
             bRet = false;
@@ -6052,7 +6054,6 @@ bool LayerTranslator::TranslateArrow(
 
     schema.release(&schema);
 
-    stream.release(&stream);
     return bRet;
 }
 

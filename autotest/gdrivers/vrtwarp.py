@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -37,6 +21,11 @@ import gdaltest
 import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 
 ###############################################################################
 # Verify reading from simple existing warp definition.
@@ -729,8 +718,15 @@ def test_vrtwarp_irasterio_optim_three_band():
     assert warped_vrt_ds.ReadRaster(buf_type=gdal.GDT_UInt16) == expected_data
 
     with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
-        expected_data = warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=20)
-    assert warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=20) == expected_data
+        expected_data = warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=40)
+    assert warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=40) == expected_data
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster(1, 2, 3, 4, buf_xsize=20, buf_ysize=40)
+    assert (
+        warped_vrt_ds.ReadRaster(1, 2, 3, 4, buf_xsize=20, buf_ysize=40)
+        == expected_data
+    )
 
 
 ###############################################################################

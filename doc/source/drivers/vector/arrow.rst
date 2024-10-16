@@ -157,9 +157,9 @@ particular outside of the context of the OGR Arrow driver, by:
   GetGDALDriverManager()->GetDriverByName("ARROW")->GetMetadata(), the Arrow VSI
   file system will be also registered.
 
-- Prefixing any GDAL file name with the ``vsi://`` URI scheme prefix. In addition
+- Prefixing any GDAL file name with the ``gdalvsi://`` URI scheme prefix. In addition
   to any potential vsi prefix in the GDAL file name. So the ``/vsicurl/http://example.com``
-  GDAL file name becomes the ``vsi:///vsicurl/http://example.com`` Arrow URI.
+  GDAL file name becomes the ``gdalvsi:///vsicurl/http://example.com`` Arrow URI.
 
 Links
 -----

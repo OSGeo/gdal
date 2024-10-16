@@ -8,23 +8,7 @@
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -694,10 +678,40 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
     void *pDstBuffer = VSI_MALLOC3_VERBOSE(
         cpl::fits_on<int>(nWordSize * psOptions->nBandCount), nDstXSize,
         nDstYSize);
-    if (pDstBuffer == nullptr)
+    if (pDstBuffer)
     {
-        return nullptr;
+        InitializeDestinationBuffer(pDstBuffer, nDstXSize, nDstYSize,
+                                    pbInitialized);
     }
+    return pDstBuffer;
+}
+
+/**
+ * This method initializes a destination buffer for use with WarpRegionToBuffer.
+ *
+ * It is initialized based on the INIT_DEST settings.
+ *
+ * This method is called by CreateDestinationBuffer().
+ * It is meant at being used by callers that have already allocated the
+ * destination buffer without using CreateDestinationBuffer().
+ *
+ * @param pDstBuffer Buffer of size
+ *                   GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType) *
+ *                   nDstXSize * nDstYSize * psOptions->nBandCount bytes.
+ * @param nDstXSize Width of output window on destination buffer to be produced.
+ * @param nDstYSize Height of output window on destination buffer to be
+ *                  produced.
+ * @param pbInitialized Filled with boolean indicating if the buffer was
+ *                      initialized.
+ * @since 3.10
+ */
+void GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
+                                                    int nDstXSize,
+                                                    int nDstYSize,
+                                                    int *pbInitialized)
+{
+    const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
+
     const GPtrDiff_t nBandSize =
         static_cast<GPtrDiff_t>(nWordSize) * nDstXSize * nDstYSize;
 
@@ -713,8 +727,7 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
         {
             *pbInitialized = FALSE;
         }
-
-        return pDstBuffer;
+        return;
     }
 
     if (pbInitialized != nullptr)
@@ -776,8 +789,6 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
     }
 
     CSLDestroy(papszInitValues);
-
-    return pDstBuffer;
 }
 
 /**
@@ -1256,7 +1267,7 @@ void GDALWarpOperation::WipeChunkList()
 /*                       GetWorkingMemoryForWindow()                    */
 /************************************************************************/
 
-/** Retrurns the amount of working memory, in bytes, required to process
+/** Returns the amount of working memory, in bytes, required to process
  * a warped window of source dimensions nSrcXSize x nSrcYSize and target
  * dimensions nDstXSize x nDstYSize.
  */

@@ -60,6 +60,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DGBool=int -DCPL_HAS_GINT64=1 -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED \
         -DHAVE_SFCGAL -DHAVE_SPATIALITE -DSPATIALITE_412_OR_LATER \
         -D_SC_NPROCESSORS_ONLN -DHAVE_SCHED_GETAFFINITY \
+        -DHAVE_TIFF -DHAVE_GEOTIFF \
         -DHAVE_SQLITE -DSQLITE_VERSION_NUMBER=3031001 -DHAVE_SQLITE_VFS \
         -DHAVE_RASTERLITE2 \
         -DHAVE_CURL -DLIBCURL_VERSION_NUM=0x073800 \
@@ -111,6 +112,9 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DGNMGFIDFormat="\"%lld\"" \
         -DGDAL_RELEASE_NAME="\"dummy\"" \
         "-DBANDMAP_TYPE=int*" \
+        -DSQLITE_UTF8=1 \
+        -DSQLITE_DETERMINISTIC=0x000000800 \
+        -DSQLITE_INNOCUOUS=0x000200000 \
         --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
         -I "${CPL_CONFIG_H_DIR}" \
@@ -121,6 +125,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -i gdalasyncread.cpp \
         -i gdaltorture.cpp \
         -i vsifilesystemregistrar.cpp \
+        -i external_deferred_plugins.cpp \
         $dirname \
         -j "$(nproc)" >>${LOG_FILE} 2>&1 &
     # Display some progress to avoid Travis-CI killing the job after 10 minutes

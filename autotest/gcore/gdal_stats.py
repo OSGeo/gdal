@@ -180,6 +180,10 @@ def test_stats_nan_3():
 # and complex source nodata (#3576)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_stats_nan_4():
 
     ds = gdal.Open("data/nan32_nodata.vrt")
@@ -197,6 +201,10 @@ def test_stats_nan_4():
 # and complex source nodata (nan must be translated to 0 then) (#3576)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_stats_nan_5():
 
     ds = gdal.Open("data/nan32_nodata_nan_to_zero.vrt")
@@ -213,6 +221,10 @@ def test_stats_nan_5():
 # Test reading a warped VRT with nan as src nodata and dest nodata (#3576)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_stats_nan_6():
 
     ds = gdal.Open("data/nan32_nodata_warp.vrt")
@@ -229,6 +241,10 @@ def test_stats_nan_6():
 # Test reading a warped VRT with nan as src nodata and 0 as dest nodata (#3576)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_stats_nan_7():
 
     ds = gdal.Open("data/nan32_nodata_warp_nan_to_zero.vrt")
@@ -245,6 +261,10 @@ def test_stats_nan_7():
 # Test reading a warped VRT with zero as src nodata and nan as dest nodata (#3576)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_stats_nan_8():
 
     ds = gdal.Open("data/nan32_nodata_warp_zero_to_nan.vrt")
@@ -266,6 +286,7 @@ def stats_nodata_inf_progress_cbk(value, string, extra):
     extra[0] = value
 
 
+@pytest.mark.require_driver("HFA")
 def test_stats_nodata_inf():
 
     ds = gdal.GetDriverByName("HFA").Create(

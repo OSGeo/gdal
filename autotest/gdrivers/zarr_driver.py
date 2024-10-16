@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2021, Even Rouault <even.rouault@spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import array
@@ -5539,3 +5523,21 @@ def test_zarr_read_cf1_zarrv3():
         ds.GetSpatialRef().ExportToProj4()
         == "+proj=utm +zone=11 +ellps=clrk66 +units=m +no_defs"
     )
+
+
+###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/issues/11016
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_write_partial_blocks_compressed(tmp_vsimem):
+
+    out_filename = "/vsimem/test.zarr"
+    src_ds = gdal.Open("data/small_world.tif")
+    gdal.Translate(
+        out_filename,
+        src_ds,
+        options="-of ZARR -co FORMAT=ZARR_V2 -co BLOCKSIZE=3,50,50 -co COMPRESS=ZLIB -co INTERLEAVE=BAND",
+    )
+    out_ds = gdal.Open(out_filename)
+    assert out_ds.ReadRaster() == src_ds.ReadRaster()

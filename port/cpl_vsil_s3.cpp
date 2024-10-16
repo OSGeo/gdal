@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2018, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_atomic_ops.h"
@@ -753,7 +737,7 @@ VSIMultipartWriteHandle::VSIMultipartWriteHandle(
       m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename)),
       m_oRetryParameters(m_aosHTTPOptions)
 {
-    // AWS S3, OSS and GCS can use the mulipart upload mechanism, which has
+    // AWS S3, OSS and GCS can use the multipart upload mechanism, which has
     // the advantage of being retryable in case of errors.
     // Swift only supports the "Transfer-Encoding: chunked" PUT mechanism.
     // So two different implementations.
@@ -5027,15 +5011,15 @@ char *IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadStart(
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return nullptr;
-    auto poHandleHelper =
-        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false));
     if (poHandleHelper == nullptr)
         return nullptr;
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
     const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
 
     const std::string osRet = InitiateMultipartUpload(
-        pszFilename, poHandleHelper, oRetryParameters, papszOptions);
+        pszFilename, poHandleHelper.get(), oRetryParameters, papszOptions);
     if (osRet.empty())
         return nullptr;
     return CPLStrdup(osRet.c_str());
@@ -5052,16 +5036,16 @@ char *IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadAddPart(
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return nullptr;
-    auto poHandleHelper =
-        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false));
     if (poHandleHelper == nullptr)
         return nullptr;
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
     const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
 
-    const std::string osRet =
-        UploadPart(pszFilename, nPartNumber, pszUploadId, nFileOffset, pData,
-                   nDataLength, poHandleHelper, oRetryParameters, papszOptions);
+    const std::string osRet = UploadPart(
+        pszFilename, nPartNumber, pszUploadId, nFileOffset, pData, nDataLength,
+        poHandleHelper.get(), oRetryParameters, papszOptions);
     if (osRet.empty())
         return nullptr;
     return CPLStrdup(osRet.c_str());
@@ -5077,8 +5061,8 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadEnd(
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return false;
-    auto poHandleHelper =
-        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false));
     if (poHandleHelper == nullptr)
         return false;
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
@@ -5088,7 +5072,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadEnd(
     for (size_t i = 0; i < nPartIdsCount; ++i)
         aosTags.emplace_back(apszPartIds[i]);
     return CompleteMultipart(pszFilename, pszUploadId, aosTags, nTotalSize,
-                             poHandleHelper, oRetryParameters);
+                             poHandleHelper.get(), oRetryParameters);
 }
 
 /************************************************************************/
@@ -5100,13 +5084,13 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadAbort(
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return false;
-    auto poHandleHelper =
-        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false));
     if (poHandleHelper == nullptr)
         return false;
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
     const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
-    return AbortMultipart(pszFilename, pszUploadId, poHandleHelper,
+    return AbortMultipart(pszFilename, pszUploadId, poHandleHelper.get(),
                           oRetryParameters);
 }
 

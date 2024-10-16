@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGARROWWRITERLAYER_HPP_INCLUDED
@@ -319,6 +303,30 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 arrow::field("m", arrow::float64(), false));
         auto pointStructType(arrow::struct_(std::move(pointFields)));
 
+        const auto getListOfVertices = [&getFixedSizeListOfPoint]()
+        {
+            return arrow::list(std::make_shared<arrow::Field>(
+                "vertices", getFixedSizeListOfPoint()));
+        };
+
+        const auto getListOfRings = [&getListOfVertices]()
+        {
+            return arrow::list(
+                std::make_shared<arrow::Field>("rings", getListOfVertices()));
+        };
+
+        const auto getListOfVerticesStruct = [&pointStructType]()
+        {
+            return arrow::list(
+                std::make_shared<arrow::Field>("vertices", pointStructType));
+        };
+
+        const auto getListOfRingsStruct = [&getListOfVerticesStruct]()
+        {
+            return arrow::list(std::make_shared<arrow::Field>(
+                "rings", getListOfVerticesStruct()));
+        };
+
         std::shared_ptr<arrow::DataType> dt;
         switch (m_aeGeomEncoding[i])
         {
@@ -340,24 +348,26 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_LINESTRING:
-                dt = arrow::list(getFixedSizeListOfPoint());
+                dt = getListOfVertices();
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_POLYGON:
-                dt = arrow::list(arrow::list(getFixedSizeListOfPoint()));
+                dt = getListOfRings();
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOINT:
-                dt = arrow::list(getFixedSizeListOfPoint());
+                dt = arrow::list(std::make_shared<arrow::Field>(
+                    "points", getFixedSizeListOfPoint()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTILINESTRING:
-                dt = arrow::list(arrow::list(getFixedSizeListOfPoint()));
+                dt = arrow::list(std::make_shared<arrow::Field>(
+                    "linestrings", getListOfVertices()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOLYGON:
-                dt = arrow::list(
-                    arrow::list(arrow::list(getFixedSizeListOfPoint())));
+                dt = arrow::list(std::make_shared<arrow::Field>(
+                    "polygons", getListOfRings()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT:
@@ -365,23 +375,26 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_LINESTRING:
-                dt = arrow::list(pointStructType);
+                dt = getListOfVerticesStruct();
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_POLYGON:
-                dt = arrow::list(arrow::list(pointStructType));
+                dt = getListOfRingsStruct();
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOINT:
-                dt = arrow::list(pointStructType);
+                dt = arrow::list(
+                    std::make_shared<arrow::Field>("points", pointStructType));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTILINESTRING:
-                dt = arrow::list(arrow::list(pointStructType));
+                dt = arrow::list(std::make_shared<arrow::Field>(
+                    "linestrings", getListOfVerticesStruct()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOLYGON:
-                dt = arrow::list(arrow::list(arrow::list(pointStructType)));
+                dt = arrow::list(std::make_shared<arrow::Field>(
+                    "polygons", getListOfRingsStruct()));
                 break;
         }
 

@@ -15,23 +15,7 @@
  ******************************************************************************
  * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef PDFOBJECT_H_INCLUDED
@@ -46,7 +30,7 @@
 #define DEFAULT_DPI (72.0)
 #define USER_UNIT_IN_INCH (1.0 / DEFAULT_DPI)
 
-double ROUND_TO_INT_IF_CLOSE(double x, double eps = 0);
+double ROUND_IF_CLOSE(double x, double eps = 0);
 
 typedef enum
 {
@@ -214,18 +198,20 @@ class GDALPDFStream
 class GDALPDFObjectRW : public GDALPDFObject
 {
   private:
-    GDALPDFObjectType m_eType;
-    int m_nVal;
-    double m_dfVal;
-    CPLString m_osVal;
-    GDALPDFDictionaryRW *m_poDict;
-    GDALPDFArrayRW *m_poArray;
-    GDALPDFObjectNum m_nNum;
-    int m_nGen;
-    int m_bCanRepresentRealAsString;
+    const GDALPDFObjectType m_eType;
+    int m_nVal = 0;
+    double m_dfVal = 0;
+    CPLString m_osVal{};
+    GDALPDFDictionaryRW *m_poDict = nullptr;
+    GDALPDFArrayRW *m_poArray = nullptr;
+    GDALPDFObjectNum m_nNum{};
+    int m_nGen = 0;
+    int m_bCanRepresentRealAsString = FALSE;
     int m_nPrecision = 16;
 
     explicit GDALPDFObjectRW(GDALPDFObjectType eType);
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALPDFObjectRW)
 
   protected:
     virtual const char *GetTypeNameNative() override;
@@ -273,7 +259,9 @@ class GDALPDFObjectRW : public GDALPDFObject
 class GDALPDFDictionaryRW : public GDALPDFDictionary
 {
   private:
-    std::map<CPLString, GDALPDFObject *> m_map;
+    std::map<CPLString, GDALPDFObject *> m_map{};
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALPDFDictionaryRW)
 
   public:
     GDALPDFDictionaryRW();
@@ -322,7 +310,9 @@ class GDALPDFDictionaryRW : public GDALPDFDictionary
 class GDALPDFArrayRW : public GDALPDFArray
 {
   private:
-    std::vector<GDALPDFObject *> m_array;
+    std::vector<GDALPDFObject *> m_array{};
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALPDFArrayRW)
 
   public:
     GDALPDFArrayRW();
@@ -379,21 +369,22 @@ class GDALPDFObjectPoppler : public GDALPDFObject
 {
   private:
     Object *m_po;
-    int m_bDestroy;
-    GDALPDFDictionary *m_poDict;
-    GDALPDFArray *m_poArray;
-    GDALPDFStream *m_poStream;
-    std::string osStr;
-    GDALPDFObjectNum m_nRefNum;
-    int m_nRefGen;
+    const bool m_bDestroy;
+    GDALPDFDictionary *m_poDict = nullptr;
+    GDALPDFArray *m_poArray = nullptr;
+    GDALPDFStream *m_poStream = nullptr;
+    std::string osStr{};
+    GDALPDFObjectNum m_nRefNum{};
+    int m_nRefGen = 0;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALPDFObjectPoppler)
 
   protected:
     virtual const char *GetTypeNameNative() override;
 
   public:
-    GDALPDFObjectPoppler(Object *po, int bDestroy)
-        : m_po(po), m_bDestroy(bDestroy), m_poDict(nullptr), m_poArray(nullptr),
-          m_poStream(nullptr), m_nRefNum(0), m_nRefGen(0)
+    GDALPDFObjectPoppler(Object *po, bool bDestroy)
+        : m_po(po), m_bDestroy(bDestroy)
     {
     }
 
@@ -425,10 +416,12 @@ class GDALPDFObjectPodofo : public GDALPDFObject
   private:
     const PoDoFo::PdfObject *m_po;
     const PoDoFo::PdfVecObjects &m_poObjects;
-    GDALPDFDictionary *m_poDict;
-    GDALPDFArray *m_poArray;
-    GDALPDFStream *m_poStream;
-    std::string osStr;
+    GDALPDFDictionary *m_poDict = nullptr;
+    GDALPDFArray *m_poArray = nullptr;
+    GDALPDFStream *m_poStream = nullptr;
+    std::string osStr{};
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALPDFObjectPodofo)
 
   protected:
     virtual const char *GetTypeNameNative() override;
@@ -460,12 +453,14 @@ class GDALPDFObjectPdfium : public GDALPDFObject
 {
   private:
     RetainPtr<const CPDF_Object> m_obj;
-    GDALPDFDictionary *m_poDict;
-    GDALPDFArray *m_poArray;
-    GDALPDFStream *m_poStream;
-    std::string osStr;
+    GDALPDFDictionary *m_poDict = nullptr;
+    GDALPDFArray *m_poArray = nullptr;
+    GDALPDFStream *m_poStream = nullptr;
+    std::string osStr{};
 
     GDALPDFObjectPdfium(RetainPtr<const CPDF_Object> obj);
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALPDFObjectPdfium)
 
   protected:
     virtual const char *GetTypeNameNative() override;

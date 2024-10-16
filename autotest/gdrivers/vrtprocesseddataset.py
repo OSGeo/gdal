@@ -7,29 +7,18 @@
 ###############################################################################
 # Copyright (c) 2024, Even Rouault <even.rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import gdaltest
 import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 
 np = pytest.importorskip("numpy")
 pytest.importorskip("osgeo.gdal_array")
@@ -717,6 +706,58 @@ def test_vrtprocesseddataset_dehazing_different_resolution(tmp_vsimem):
         ds.GetRasterBand(1).GetOverview(0).ReadAsArray(),
         np.array([[1, 6, 15]]),
     )
+
+
+###############################################################################
+# Test we properly request auxiliary datasets on the right-most/bottom-most
+# truncated tile
+
+
+def test_vrtprocesseddataset_dehazing_edge_effects(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        src_filename,
+        257,
+        257,
+        1,
+        gdal.GDT_Byte,
+        ["TILED=YES", "BLOCKXSIZE=256", "BLOCKYSIZE=256"],
+    )
+    src_ds.GetRasterBand(1).Fill(10)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    src_ds.Close()
+
+    gain_filename = str(tmp_vsimem / "gain.tif")
+    gain_ds = gdal.GetDriverByName("GTiff").Create(gain_filename, 1, 1)
+    gain_ds.GetRasterBand(1).Fill(2)
+    gain_ds.SetGeoTransform([0, 257, 0, 0, 0, -257])
+    gain_ds.Close()
+
+    offset_filename = str(tmp_vsimem / "offset.tif")
+    offset_ds = gdal.GetDriverByName("GTiff").Create(offset_filename, 1, 1)
+    offset_ds.GetRasterBand(1).Fill(3)
+    offset_ds.SetGeoTransform([0, 257, 0, 0, 0, -257])
+    offset_ds.Close()
+
+    ds = gdal.Open(
+        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    <Input>
+        <SourceFilename>{src_filename}</SourceFilename>
+    </Input>
+    <ProcessingSteps>
+        <Step>
+            <Algorithm>LocalScaleOffset</Algorithm>
+            <Argument name="gain_dataset_filename_1">{gain_filename}</Argument>
+            <Argument name="gain_dataset_band_1">1</Argument>
+            <Argument name="offset_dataset_filename_1">{offset_filename}</Argument>
+            <Argument name="offset_dataset_band_1">1</Argument>
+        </Step>
+    </ProcessingSteps>
+    </VRTDataset>
+        """
+    )
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (17, 17)
 
 
 ###############################################################################

@@ -9,23 +9,7 @@
  * Copyright (c) 2007,  Frank Warmerdam
  * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "shp_vsi.h"
@@ -33,6 +17,8 @@
 #include "cpl_conv.h"
 #include "cpl_vsi_error.h"
 #include <limits.h>
+
+#include "shapefil_private.h"
 
 typedef struct
 {
@@ -44,26 +30,6 @@ typedef struct
 } OGRSHPDBFFile;
 
 /************************************************************************/
-/*                         VSI_SHP_GetVSIL()                            */
-/************************************************************************/
-
-VSILFILE *VSI_SHP_GetVSIL(SAFile file)
-{
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
-    return pFile->fp;
-}
-
-/************************************************************************/
-/*                        VSI_SHP_GetFilename()                         */
-/************************************************************************/
-
-const char *VSI_SHP_GetFilename(SAFile file)
-{
-    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
-    return pFile->pszFilename;
-}
-
-/************************************************************************/
 /*                         VSI_SHP_OpenInternal()                       */
 /************************************************************************/
 
@@ -73,8 +39,8 @@ static SAFile VSI_SHP_OpenInternal(const char *pszFilename,
 {
     OGRSHPDBFFile *pFile;
     VSILFILE *fp = VSIFOpenExL(pszFilename, pszAccess, TRUE);
-    if (fp == NULL)
-        return NULL;
+    if (fp == SHPLIB_NULLPTR)
+        return SHPLIB_NULLPTR;
     pFile = (OGRSHPDBFFile *)CPLCalloc(1, sizeof(OGRSHPDBFFile));
     pFile->fp = fp;
     pFile->pszFilename = CPLStrdup(pszFilename);
@@ -93,18 +59,6 @@ static SAFile VSI_SHP_Open(const char *pszFilename, const char *pszAccess,
 {
     (void)userData;
     return VSI_SHP_OpenInternal(pszFilename, pszAccess, FALSE);
-}
-
-/************************************************************************/
-/*                        VSI_SHP_Open2GBLimit()                        */
-/************************************************************************/
-
-static SAFile VSI_SHP_Open2GBLimit(const char *pszFilename,
-                                   const char *pszAccess, void *userData)
-
-{
-    (void)userData;
-    return VSI_SHP_OpenInternal(pszFilename, pszAccess, TRUE);
 }
 
 /************************************************************************/
@@ -259,7 +213,41 @@ void SASetupDefaultHooks(SAHooks *psHooks)
 
     psHooks->Error = VSI_SHP_Error;
     psHooks->Atof = CPLAtof;
-    psHooks->pvUserData = NULL;
+    psHooks->pvUserData = SHPLIB_NULLPTR;
+}
+
+#ifndef SHP_VSI_ONLY_SETUP_HOOKS
+
+/************************************************************************/
+/*                         VSI_SHP_GetVSIL()                            */
+/************************************************************************/
+
+VSILFILE *VSI_SHP_GetVSIL(SAFile file)
+{
+    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
+    return pFile->fp;
+}
+
+/************************************************************************/
+/*                        VSI_SHP_GetFilename()                         */
+/************************************************************************/
+
+const char *VSI_SHP_GetFilename(SAFile file)
+{
+    OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
+    return pFile->pszFilename;
+}
+
+/************************************************************************/
+/*                        VSI_SHP_Open2GBLimit()                        */
+/************************************************************************/
+
+static SAFile VSI_SHP_Open2GBLimit(const char *pszFilename,
+                                   const char *pszAccess, void *userData)
+
+{
+    (void)userData;
+    return VSI_SHP_OpenInternal(pszFilename, pszAccess, TRUE);
 }
 
 /************************************************************************/
@@ -280,3 +268,5 @@ const SAHooks *VSI_SHP_GetHook(int b2GBLimit)
 {
     return (b2GBLimit) ? &sOGRHook2GBLimit : &sOGRHook;
 }
+
+#endif

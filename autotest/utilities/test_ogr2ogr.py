@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -1419,7 +1403,7 @@ def test_ogr2ogr_49_bis(ogr2ogr_path, tmp_path):
         """<kml xmlns="http://www.opengis.net/kml/2.2">""",
         """<Document id="root_doc">""",
         """<Folder><name>grid</name>""",
-        """  <Placemark>""",
+        """  <Placemark id="grid.1">""",
         """        <name>440750.000</name>""",
         """  </Placemark>""",
         """</Folder>""",
@@ -2082,6 +2066,7 @@ def ogr2ogr_62_json(tmp_path):
     return fname
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogr2ogr_62(ogr2ogr_path, ogr2ogr_62_json, tmp_path):
 
     dst_json = str(tmp_path / "test_ogr2ogr_62.json")
@@ -2097,6 +2082,7 @@ def test_ogr2ogr_62(ogr2ogr_path, ogr2ogr_62_json, tmp_path):
     assert "bar" in data and "baz" in data
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogr2ogr_62bis(ogr2ogr_path, ogr2ogr_62_json, tmp_path):
 
     dst_json = str(tmp_path / "test_ogr2ogr_62bis.json")

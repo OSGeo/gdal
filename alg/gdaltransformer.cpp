@@ -11,23 +11,7 @@
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2021, CLS
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -885,7 +869,7 @@ retry:
                  "transform.",
                  nFailedCount, nSamplePoints);
 
-    bool bIsGeographicCoords = false;
+    bool bIsGeographicCoordsDeg = false;
     if (bIsGDALGenImgProjTransform)
     {
         const GDALGenImgProjTransformInfo *pGIPTI =
@@ -915,15 +899,17 @@ retry:
                     CSLFetchNameValue(pGLTI->papszGeolocationInfo, "SRS");
                 if (pszGLSRS == nullptr)
                 {
-                    bIsGeographicCoords = true;
+                    bIsGeographicCoordsDeg = true;
                 }
                 else
                 {
                     OGRSpatialReference oSRS;
                     if (oSRS.SetFromUserInput(pszGLSRS) == OGRERR_NONE &&
-                        oSRS.IsGeographic())
+                        oSRS.IsGeographic() &&
+                        std::fabs(oSRS.GetAngularUnits() -
+                                  CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-9)
                     {
-                        bIsGeographicCoords = true;
+                        bIsGeographicCoordsDeg = true;
                     }
                 }
             }
@@ -983,7 +969,7 @@ retry:
                      CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-9 &&
                 (!poSourceCRS || !poSourceCRS->IsGeographic()))
             {
-                bIsGeographicCoords = true;
+                bIsGeographicCoordsDeg = true;
 
                 std::unique_ptr<CPLConfigOptionSetter> poSetter;
                 if (pGIPTI->bCheckWithInvertPROJ)
@@ -1210,7 +1196,7 @@ retry:
     /*      Recompute some bounds so that all return values are consistent  */
     /* -------------------------------------------------------------------- */
     double dfMaxXOutNew = dfMinXOut + (*pnPixels) * dfPixelSizeX;
-    if (bIsGeographicCoords &&
+    if (bIsGeographicCoordsDeg &&
         ((dfMaxXOut <= 180 && dfMaxXOutNew > 180) || dfMaxXOut == 180))
     {
         dfMaxXOut = 180;
@@ -1222,7 +1208,7 @@ retry:
     }
 
     double dfMinYOutNew = dfMaxYOut - (*pnLines) * dfPixelSizeY;
-    if (bIsGeographicCoords && dfMinYOut >= -90 && dfMinYOutNew < -90)
+    if (bIsGeographicCoordsDeg && dfMinYOut >= -90 && dfMinYOutNew < -90)
     {
         dfMinYOut = -90;
         dfPixelSizeY = (dfMaxYOut - dfMinYOut) / *pnLines;
@@ -1442,8 +1428,11 @@ static void InsertCenterLong(GDALDatasetH hDS, OGRSpatialReference *poSRS,
                              CPLStringList &aosOptions)
 
 {
-    if (!poSRS->IsGeographic())
+    if (!poSRS->IsGeographic() || std::fabs(poSRS->GetAngularUnits() -
+                                            CPLAtof(SRS_UA_DEGREE_CONV)) > 1e-9)
+    {
         return;
+    }
 
     if (poSRS->GetExtension(nullptr, "CENTER_LONG"))
         return;
@@ -2983,7 +2972,9 @@ int GDALTransformLonLatToDestGenImgProjTransformer(void *hTransformArg,
     double z = 0;
     int success = true;
     auto poSourceCRS = psReprojInfo->poForwardTransform->GetSourceCS();
-    if (poSourceCRS->IsGeographic())
+    if (poSourceCRS->IsGeographic() &&
+        std::fabs(poSourceCRS->GetAngularUnits() -
+                  CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-9)
     {
         // Optimization to avoid creating a OGRCoordinateTransformation
         OGRAxisOrientation eSourceFirstAxisOrient = OAO_Other;
@@ -4918,4 +4909,43 @@ bool GDALTransformIsAffineNoRotation(GDALTransformerFunc, void *pTransformerArg)
                pGenImgpProjInfo->adfDstGeoTransform[4] == 0;
     }
     return false;
+}
+
+/************************************************************************/
+/*                        GDALTransformHasFastClone()                   */
+/************************************************************************/
+
+/** Returns whether GDALCloneTransformer() on this transformer is
+ * "fast"
+ * Counter-examples are GCPs or TPSs transformers.
+ */
+bool GDALTransformHasFastClone(void *pTransformerArg)
+{
+    if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
+    {
+        const auto *pApproxInfo =
+            static_cast<const ApproxTransformInfo *>(pTransformerArg);
+        pTransformerArg = pApproxInfo->pBaseCBData;
+        // Fallback to next lines
+    }
+
+    if (GDALIsTransformer(pTransformerArg, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
+    {
+        const auto *pGenImgpProjInfo =
+            static_cast<GDALGenImgProjTransformInfo *>(pTransformerArg);
+        return (pGenImgpProjInfo->pSrcTransformArg == nullptr ||
+                GDALTransformHasFastClone(
+                    pGenImgpProjInfo->pSrcTransformArg)) &&
+               (pGenImgpProjInfo->pDstTransformArg == nullptr ||
+                GDALTransformHasFastClone(pGenImgpProjInfo->pDstTransformArg));
+    }
+    else if (GDALIsTransformer(pTransformerArg,
+                               GDAL_RPC_TRANSFORMER_CLASS_NAME))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }

@@ -11,23 +11,7 @@
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import array
@@ -896,10 +880,11 @@ def test_nitf_28_jp2ecw(tmp_path):
         blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
         ds = None
         gdal.Unlink(tmpfilename)
-        assert (blockxsize, blockysize) == (
-            256,
-            256,
-        )  # 256 since this is hardcoded as such in the ECW driver
+        # 256 for ECW < 5.1, 1024 for ECW >= 5.1
+        assert (blockxsize, blockysize) == (256, 256) or (blockxsize, blockysize) == (
+            1024,
+            1024,
+        )
     finally:
         gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -986,8 +971,37 @@ def test_nitf_28_jp2openjpeg_bis(tmp_path):
             createcopy=True,
         )
         ds = gdal.Open(filename)
+        size = os.stat(filename).st_size
         assert ds.GetRasterBand(1).Checksum() in (31604, 31741)
         ds = None
+
+        nitf_create(
+            filename,
+            ["ICORDS=G", "IC=C8", "QUALITY=1,25"],
+            set_inverted_color_interp=False,
+            createcopy=True,
+        )
+        ds = gdal.Open(filename)
+        size2 = os.stat(filename).st_size
+        assert ds.GetRasterBand(1).Checksum() in (31604, 31741)
+        ds = None
+
+        assert size2 > size
+
+        # Check that floating-point values in QUALITY are honored
+        nitf_create(
+            filename,
+            ["ICORDS=G", "IC=C8", "QUALITY=1.9,25"],
+            set_inverted_color_interp=False,
+            createcopy=True,
+        )
+        ds = gdal.Open(filename)
+        size3 = os.stat(filename).st_size
+        assert ds.GetRasterBand(1).Checksum() in (31604, 31741)
+        ds = None
+
+        # The fact that size3 > size2 is a bit of a chance here...
+        assert size3 > size2
 
         tmpfilename = "/vsimem/nitf_28_jp2openjpeg_bis.ntf"
         src_ds = gdal.GetDriverByName("MEM").Create("", 1025, 1025)
@@ -1100,6 +1114,7 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless(tmp_vsimem):
                 "IC=C8",
                 "JPEG2000_DRIVER=JP2OpenJPEG",
                 "PROFILE=NPJE_NUMERICALLY_LOSSLESS",
+                "QUALITY=10,100",
             ],
         )
 
@@ -1506,6 +1521,10 @@ def test_nitf_34():
 # Test CreateCopy() writing file with a text segment.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_35():
 
     src_ds = gdal.Open("data/nitf/text_md.vrt")
@@ -1598,6 +1617,10 @@ def test_nitf_37():
 # Create and read a NITF file with 999 images
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_38():
 
     ds = gdal.Open("data/byte.tif")
@@ -1978,6 +2001,10 @@ def test_nitf_check_jpeg2000_overviews(driver_to_test):
 # Check reading of rsets.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_47():
 
     ds = gdal.Open("data/nitf/rset.ntf.r0")
@@ -1997,6 +2024,10 @@ def test_nitf_47():
 # Check building of standard overviews in place of rset overviews.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_48():
 
     try:
@@ -2038,6 +2069,10 @@ def test_nitf_48():
 # Test TEXT and CGM creation options with CreateCopy() (#3376)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_49():
 
     options = [
@@ -2759,6 +2794,10 @@ def test_nitf_68():
 # Test SetGCPs() support
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_69():
 
     vrt_txt = """<VRTDataset rasterXSize="20" rasterYSize="20">
@@ -4075,6 +4114,386 @@ def test_nitf_86():
     <field name="RESERVED_LEN" value="00000" />
   </tre>
 </tres>
+"""
+    assert data == expected_data
+
+
+###############################################################################
+# Test parsing CSCSDB DES (STDI-0002-1-v5.0 App M)
+
+
+def test_nitf_CSCSDB(tmp_vsimem):
+    tre_data = "DES=CSCSDB=01U                                                                                                                                                                      008517261ee9-2175-4ff2-86ad-dddda1f8270c001002001824ecf8e-1041-4cce-9edb-bc92d88624ca000020050407132420050407072409.88900000031231+2.50000000000000E+03+0.00000000000000E+00+0.00000000000000E+00+2.50000000000000E+03+0.00000000000000E+00+2.50000000000000E+0300101020050407072409.8890000002451+2.01640000000000E-08+0.00000000000000E+00+2.01640000000000E-080010312005040726649.889000000001.8750000000081+7.22500000000000E-09+0.00000000000000E+00+7.22500000000000E-09100104020050407072409.889000000161+2.01640000000000E-0800105020050407072409.889000000171+1.96000000000000E-0400107000100303+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+000910107010101.0001.0000000.00000000.000000+1.00000000000000E+03020101.0001.0000000.00000000.000000+5.00000000000000E+02030101.0001.0000000.00000000.000000+5.00000000000000E+02040101.0001.0000000.00000000.000000+5.00000000000000E+02050101.0001.0000000.00000000.000000+5.00000000000000E+02060101.0001.0000000.00000000.000000+5.00000000000000E+02070101.0001.0000000.00000000.000000+1.00000000000000E+020000000000"
+
+    filename = str(tmp_vsimem / "test.ntf")
+    ds = gdal.GetDriverByName("NITF").Create(filename, 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open(filename)
+    data = ds.GetMetadata("xml:DES")[0]
+    ds = None
+
+    expected_data = """<des_list>
+  <des name="CSCSDB">
+    <field name="DESVER" value="01" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0085" />
+    <field name="DESSHF" value="17261ee9-2175-4ff2-86ad-dddda1f8270c001002001824ecf8e-1041-4cce-9edb-bc92d88624ca0000">
+      <user_defined_fields>
+        <field name="UUID" value="17261ee9-2175-4ff2-86ad-dddda1f8270c" />
+        <field name="NUMAIS" value="001" />
+        <repeated number="1">
+          <group index="0">
+            <field name="AISDLVL" value="002" />
+          </group>
+        </repeated>
+        <field name="NUM_ASSOC_ELEM" value="001" />
+        <repeated name="ASSOC_ELEM" number="1">
+          <group index="0">
+            <field name="ASSOC_ELEM_UUID" value="824ecf8e-1041-4cce-9edb-bc92d88624ca" />
+          </group>
+        </repeated>
+        <field name="RESERVEDSUBH_LEN" value="0000" />
+      </user_defined_fields>
+    </field>
+    <field name="DESDATA" value="MjAwNTA0MDcxMzI0MjAwNTA0MDcwNzI0MDkuODg5MDAwMDAwMzEyMzErMi41MDAwMDAwMDAwMDAwMEUrMDMrMC4wMDAwMDAwMDAwMDAwMEUrMDArMC4wMDAwMDAwMDAwMDAwMEUrMDArMi41MDAwMDAwMDAwMDAwMEUrMDMrMC4wMDAwMDAwMDAwMDAwMEUrMDArMi41MDAwMDAwMDAwMDAwMEUrMDMwMDEwMTAyMDA1MDQwNzA3MjQwOS44ODkwMDAwMDAyNDUxKzIuMDE2NDAwMDAwMDAwMDBFLTA4KzAuMDAwMDAwMDAwMDAwMDBFKzAwKzIuMDE2NDAwMDAwMDAwMDBFLTA4MDAxMDMxMjAwNTA0MDcyNjY0OS44ODkwMDAwMDAwMDEuODc1MDAwMDAwMDA4MSs3LjIyNTAwMDAwMDAwMDAwRS0wOSswLjAwMDAwMDAwMDAwMDAwRSswMCs3LjIyNTAwMDAwMDAwMDAwRS0wOTEwMDEwNDAyMDA1MDQwNzA3MjQwOS44ODkwMDAwMDAxNjErMi4wMTY0MDAwMDAwMDAwMEUtMDgwMDEwNTAyMDA1MDQwNzA3MjQwOS44ODkwMDAwMDAxNzErMS45NjAwMDAwMDAwMDAwMEUtMDQwMDEwNzAwMDEwMDMwMys0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMDA5MTAxMDcwMTAxMDEuMDAwMS4wMDAwMDAwLjAwMDAwMDAwLjAwMDAwMCsxLjAwMDAwMDAwMDAwMDAwRSswMzAyMDEwMS4wMDAxLjAwMDAwMDAuMDAwMDAwMDAuMDAwMDAwKzUuMDAwMDAwMDAwMDAwMDBFKzAyMDMwMTAxLjAwMDEuMDAwMDAwMC4wMDAwMDAwMC4wMDAwMDArNS4wMDAwMDAwMDAwMDAwMEUrMDIwNDAxMDEuMDAwMS4wMDAwMDAwLjAwMDAwMDAwLjAwMDAwMCs1LjAwMDAwMDAwMDAwMDAwRSswMjA1MDEwMS4wMDAxLjAwMDAwMDAuMDAwMDAwMDAuMDAwMDAwKzUuMDAwMDAwMDAwMDAwMDBFKzAyMDYwMTAxLjAwMDEuMDAwMDAwMC4wMDAwMDAwMC4wMDAwMDArNS4wMDAwMDAwMDAwMDAwMEUrMDIwNzAxMDEuMDAwMS4wMDAwMDAwLjAwMDAwMDAwLjAwMDAwMCsxLjAwMDAwMDAwMDAwMDAwRSswMjAwMDAwMDAwMDA=">
+      <data_fields>
+        <field name="COV_VERSION_DATE" value="20050407" />
+        <field name="CORE_SETS" value="1" />
+        <repeated name="CORE_SETS" number="1">
+          <group index="0">
+            <field name="REF_FRAME_POSITION" value="3" />
+            <field name="REF_FRAME_ATTITUDE" value="2" />
+            <field name="NUM_GROUPS" value="4" />
+            <repeated name="GROUPS" number="4">
+              <group index="0">
+                <field name="CORR_REF_DATE" value="20050407" />
+                <field name="CORR_REF_TIME" value="072409.889000000" />
+                <field name="NUM_ADJ_PARM" value="3" />
+                <repeated name="ADJ_PARM" number="3">
+                  <group index="0">
+                    <field name="ADJ_PARM_ID" value="1" />
+                  </group>
+                  <group index="1">
+                    <field name="ADJ_PARM_ID" value="2" />
+                  </group>
+                  <group index="2">
+                    <field name="ADJ_PARM_ID" value="3" />
+                  </group>
+                </repeated>
+                <field name="BASIC_SUB_ALLOC" value="1" />
+                <repeated number="6">
+                  <group index="0">
+                    <field name="ERRCOV_C1" value="+2.50000000000000E+03" />
+                  </group>
+                  <group index="1">
+                    <field name="ERRCOV_C1" value="+0.00000000000000E+00" />
+                  </group>
+                  <group index="2">
+                    <field name="ERRCOV_C1" value="+0.00000000000000E+00" />
+                  </group>
+                  <group index="3">
+                    <field name="ERRCOV_C1" value="+2.50000000000000E+03" />
+                  </group>
+                  <group index="4">
+                    <field name="ERRCOV_C1" value="+0.00000000000000E+00" />
+                  </group>
+                  <group index="5">
+                    <field name="ERRCOV_C1" value="+2.50000000000000E+03" />
+                  </group>
+                </repeated>
+                <field name="BASIC_PF_FLAG" value="0" />
+                <field name="BASIC_PL_FLAG" value="0" />
+                <field name="BASIC_SR_FLAG" value="1" />
+                <field name="BASIC_SR_SPDCF" value="01" />
+                <field name="POST_SUB_ALLOC" value="0" />
+              </group>
+              <group index="1">
+                <field name="CORR_REF_DATE" value="20050407" />
+                <field name="CORR_REF_TIME" value="072409.889000000" />
+                <field name="NUM_ADJ_PARM" value="2" />
+                <repeated name="ADJ_PARM" number="2">
+                  <group index="0">
+                    <field name="ADJ_PARM_ID" value="4" />
+                  </group>
+                  <group index="1">
+                    <field name="ADJ_PARM_ID" value="5" />
+                  </group>
+                </repeated>
+                <field name="BASIC_SUB_ALLOC" value="1" />
+                <repeated number="3">
+                  <group index="0">
+                    <field name="ERRCOV_C1" value="+2.01640000000000E-08" />
+                  </group>
+                  <group index="1">
+                    <field name="ERRCOV_C1" value="+0.00000000000000E+00" />
+                  </group>
+                  <group index="2">
+                    <field name="ERRCOV_C1" value="+2.01640000000000E-08" />
+                  </group>
+                </repeated>
+                <field name="BASIC_PF_FLAG" value="0" />
+                <field name="BASIC_PL_FLAG" value="0" />
+                <field name="BASIC_SR_FLAG" value="1" />
+                <field name="BASIC_SR_SPDCF" value="03" />
+                <field name="POST_SUB_ALLOC" value="1" />
+                <field name="POST_START_DATE" value="20050407" />
+                <field name="POST_START_TIME" value="26649.889000000" />
+                <field name="POST_DT" value="001.875000000" />
+                <field name="NUM_POSTS" value="008" />
+                <field name="COMMON_POSTS_COV" value="1" />
+                <repeated number="3">
+                  <group index="0">
+                    <field name="ERRCOV_C2" value="+7.22500000000000E-09" />
+                  </group>
+                  <group index="1">
+                    <field name="ERRCOV_C2" value="+0.00000000000000E+00" />
+                  </group>
+                  <group index="2">
+                    <field name="ERRCOV_C2" value="+7.22500000000000E-09" />
+                  </group>
+                </repeated>
+                <field name="POST_INTERP" value="1" />
+                <field name="POST_PF_FLAG" value="0" />
+                <field name="POST_PL_FLAG" value="0" />
+                <field name="POST_SR_FLAG" value="1" />
+                <field name="POST_SR_SPDCF" value="04" />
+                <field name="POST_CORR" value="0" />
+              </group>
+              <group index="2">
+                <field name="CORR_REF_DATE" value="20050407" />
+                <field name="CORR_REF_TIME" value="072409.889000000" />
+                <field name="NUM_ADJ_PARM" value="1" />
+                <repeated name="ADJ_PARM" number="1">
+                  <group index="0">
+                    <field name="ADJ_PARM_ID" value="6" />
+                  </group>
+                </repeated>
+                <field name="BASIC_SUB_ALLOC" value="1" />
+                <repeated number="1">
+                  <group index="0">
+                    <field name="ERRCOV_C1" value="+2.01640000000000E-08" />
+                  </group>
+                </repeated>
+                <field name="BASIC_PF_FLAG" value="0" />
+                <field name="BASIC_PL_FLAG" value="0" />
+                <field name="BASIC_SR_FLAG" value="1" />
+                <field name="BASIC_SR_SPDCF" value="05" />
+                <field name="POST_SUB_ALLOC" value="0" />
+              </group>
+              <group index="3">
+                <field name="CORR_REF_DATE" value="20050407" />
+                <field name="CORR_REF_TIME" value="072409.889000000" />
+                <field name="NUM_ADJ_PARM" value="1" />
+                <repeated name="ADJ_PARM" number="1">
+                  <group index="0">
+                    <field name="ADJ_PARM_ID" value="7" />
+                  </group>
+                </repeated>
+                <field name="BASIC_SUB_ALLOC" value="1" />
+                <repeated number="1">
+                  <group index="0">
+                    <field name="ERRCOV_C1" value="+1.96000000000000E-04" />
+                  </group>
+                </repeated>
+                <field name="BASIC_PF_FLAG" value="0" />
+                <field name="BASIC_PL_FLAG" value="0" />
+                <field name="BASIC_SR_FLAG" value="1" />
+                <field name="BASIC_SR_SPDCF" value="07" />
+                <field name="POST_SUB_ALLOC" value="0" />
+              </group>
+            </repeated>
+          </group>
+        </repeated>
+        <field name="IO_CAL_AP" value="0" />
+        <field name="TS_CAL_AP" value="0" />
+        <field name="UE_FLAG" value="1" />
+        <field name="LINE_DIMENSION" value="003" />
+        <field name="SAMPLE_DIMENSION" value="03" />
+        <repeated name="LINE" number="3">
+          <group index="0">
+            <repeated name="SAMPLE" number="3">
+              <group index="0">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="1">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="2">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+            </repeated>
+          </group>
+          <group index="1">
+            <repeated name="SAMPLE" number="3">
+              <group index="0">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="1">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="2">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+            </repeated>
+          </group>
+          <group index="2">
+            <repeated name="SAMPLE" number="3">
+              <group index="0">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="1">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="2">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+            </repeated>
+          </group>
+        </repeated>
+        <field name="LINE_SPDCF" value="09" />
+        <field name="SAMPLE_SPDCF" value="10" />
+        <field name="SPDC_FLAG" value="1" />
+        <field name="NUM_SPDCF" value="07" />
+        <repeated name="SPDCF" number="7">
+          <group index="0">
+            <field name="SPDCF_ID" value="01" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+1.00000000000000E+03" />
+              </group>
+            </repeated>
+          </group>
+          <group index="1">
+            <field name="SPDCF_ID" value="02" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+5.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+          <group index="2">
+            <field name="SPDCF_ID" value="03" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+5.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+          <group index="3">
+            <field name="SPDCF_ID" value="04" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+5.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+          <group index="4">
+            <field name="SPDCF_ID" value="05" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+5.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+          <group index="5">
+            <field name="SPDCF_ID" value="06" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+5.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+          <group index="6">
+            <field name="SPDCF_ID" value="07" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+1.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+        </repeated>
+        <field name="DIRECT_COVARIANCE_FLAG" value="0" />
+        <field name="RESERVED_LEN" value="000000000" />
+      </data_fields>
+    </field>
+  </des>
+</des_list>
 """
     assert data == expected_data
 

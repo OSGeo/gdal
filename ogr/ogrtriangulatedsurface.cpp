@@ -9,39 +9,12 @@
  * Copyright (c) 2016, Avyav Kumar Singh <avyavkumar at gmail dot com>
  * Copyright (c) 2016, Even Rouault <even.roauult at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include "ogr_api.h"
-
-/************************************************************************/
-/*                        OGRTriangulatedSurface()                      */
-/************************************************************************/
-
-/**
- * \brief Constructor.
- *
- */
-
-OGRTriangulatedSurface::OGRTriangulatedSurface() = default;
 
 /************************************************************************/
 /*        OGRTriangulatedSurface( const OGRTriangulatedSurface& )       */
@@ -58,17 +31,6 @@ OGRTriangulatedSurface::OGRTriangulatedSurface(
 {
     *this = other;
 }
-
-/************************************************************************/
-/*                        ~OGRTriangulatedSurface()                     */
-/************************************************************************/
-
-/**
- * \brief Destructor
- *
- */
-
-OGRTriangulatedSurface::~OGRTriangulatedSurface() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRTriangulatedSurface&)            */
@@ -88,13 +50,9 @@ OGRTriangulatedSurface::operator=(const OGRTriangulatedSurface &other)
         // of OGRPolyhedralSurface since it will be confused by a multipolygon
         // of triangles.
         OGRSurface::operator=(other);
-        empty();
-        set3D(other.Is3D());
-        setMeasured(other.IsMeasured());
-        assignSpatialReference(other.getSpatialReference());
-        for (int i = 0; i < other.oMP.nGeomCount; i++)
+        for (const auto *poPoly : other.oMP)
         {
-            OGRTriangulatedSurface::addGeometry(other.oMP.getGeometryRef(i));
+            OGRTriangulatedSurface::addGeometry(poPoly);
         }
     }
     return *this;

@@ -15,23 +15,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GDAL_PDF_H_INCLUDED
@@ -83,6 +67,8 @@ class OGRPDFLayer final : public OGRMemLayer
     int bGeomTypeSet;
     int bGeomTypeMixed;
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRPDFLayer)
+
   public:
     OGRPDFLayer(PDFDataset *poDS, const char *pszName,
                 OGRSpatialReference *poSRS, OGRwkbGeometryType eGeomType);
@@ -105,6 +91,8 @@ class PDFWritableVectorDataset;
 class OGRPDFWritableLayer final : public OGRMemLayer
 {
     PDFWritableVectorDataset *poDS;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRPDFWritableLayer)
 
   public:
     OGRPDFWritableLayer(PDFWritableVectorDataset *poDS, const char *pszName,
@@ -161,13 +149,13 @@ typedef std::map<int, TPdfiumPageStruct *> TMapPdfiumPages;
 /************************************************************************/
 
 // Structure for Mutex on File
-typedef struct
+struct TPdfiumDocumentStruct
 {
-    char *filename;
-    CPDF_Document *doc;
-    TMapPdfiumPages pages;
-    FPDF_FILEACCESS *psFileAccess;
-} TPdfiumDocumentStruct;
+    char *filename = nullptr;
+    CPDF_Document *doc = nullptr;
+    TMapPdfiumPages pages{};
+    FPDF_FILEACCESS *psFileAccess = nullptr;
+};
 
 #endif  // ~ HAVE_PDFIUM
 
@@ -265,6 +253,8 @@ class PDFDataset final : public GDALPamDataset
     void GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands);
     void FindXMP(GDALPDFObject *poObj);
     void ParseInfo(GDALPDFObject *poObj);
+
+    CPL_DISALLOW_COPY_ASSIGN(PDFDataset)
 
 #ifdef HAVE_POPPLER
     std::unique_ptr<Object> m_poCatalogObjectPoppler{};
@@ -535,6 +525,8 @@ class PDFWritableVectorDataset final : public GDALDataset
     OGRLayer **papoLayers;
 
     int bModified;
+
+    CPL_DISALLOW_COPY_ASSIGN(PDFWritableVectorDataset)
 
   public:
     PDFWritableVectorDataset();

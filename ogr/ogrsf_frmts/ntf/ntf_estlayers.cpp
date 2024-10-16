@@ -9,23 +9,7 @@
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include <stdarg.h>
@@ -485,7 +469,7 @@ static OGRFeature *TranslateBoundarylineCollection(NTFFileReader *poReader,
     poFeature->SetField(1, nNumLinks);
 
     // POLY_ID
-    int i, anList[MAX_LINK];
+    int i, anList[MAX_LINK] = {0};
 
     for (i = 0; i < nNumLinks; i++)
         anList[i] = atoi(papoGroup[0]->GetField(15 + i * 8, 20 + i * 8));
@@ -536,7 +520,7 @@ static OGRFeature *TranslateBoundarylinePoly(NTFFileReader *poReader,
         poFeature->SetField(4, nNumLinks);
 
         // DIR
-        int i, anList[MAX_LINK];
+        int i, anList[MAX_LINK] = {0};
 
         for (i = 0; i < nNumLinks; i++)
             anList[i] = atoi(papoGroup[2]->GetField(19 + i * 7, 19 + i * 7));
@@ -734,7 +718,7 @@ static OGRFeature *TranslateBL2000Poly(NTFFileReader *poReader,
         poFeature->SetField(3, nNumLinks);
 
         // DIR
-        int i, anList[MAX_LINK];
+        int i, anList[MAX_LINK] = {0};
 
         for (i = 0; i < nNumLinks; i++)
             anList[i] = atoi(papoGroup[2]->GetField(19 + i * 7, 19 + i * 7));
@@ -924,7 +908,7 @@ static OGRFeature *TranslateBL2000Collection(NTFFileReader *poReader,
     poFeature->SetField(1, nNumLinks);
 
     // POLY_ID / COLL_ID_REFS
-    int anList[MAX_LINK], anCollList[MAX_LINK];
+    int anList[MAX_LINK] = {0}, anCollList[MAX_LINK] = {0};
     int nPolys = 0, nCollections = 0;
 
     for (int i = 0; i < nNumLinks; i++)
@@ -1133,7 +1117,7 @@ static OGRFeature *TranslateStrategiNode(CPL_UNUSED NTFFileReader *poReader,
     poFeature->SetField(2, nNumLinks);
 
     // DIR
-    int i, anList[MAX_LINK];
+    int i, anList[MAX_LINK] = {0};
 
     for (i = 0; i < nNumLinks; i++)
         anList[i] = atoi(papoGroup[0]->GetField(19 + i * 12, 19 + i * 12));
@@ -1157,7 +1141,7 @@ static OGRFeature *TranslateStrategiNode(CPL_UNUSED NTFFileReader *poReader,
     // ORIENT (optional)
     if (EQUAL(poFeature->GetDefnRef()->GetFieldDefn(6)->GetNameRef(), "ORIENT"))
     {
-        double adfList[MAX_LINK];
+        double adfList[MAX_LINK] = {0};
 
         for (i = 0; i < nNumLinks; i++)
             adfList[i] = atoi(papoGroup[0]->GetField(19 + i * 12 + 7,

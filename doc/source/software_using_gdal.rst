@@ -118,7 +118,6 @@ Proprietary license / Other
 - `TacitView  <https://www.insitu.com/information-delivery/information-processing/tacitview>`_  An imagery visualization and exploitation package for military intelligence.
 - `TatukGIS  <http://www.tatukgis.com>`_  Desktop GIS mapping and data editing application.
 - `Team Awareness Kit <https://tak.gov>`_  Suite of georeferenced imagery and situational awareness tools developed for military planning and execution, now available for civilian use.
-- `TerraGo Technologies  <http://www.terragotech.com>`_  The GeoPDF file format is used to distribute and collaborate geospatial data and uses GDAL for data import/export.
 - `TerrainView  <http://www.viewtec.net>`_  Interactive real-time 3D GIS Software.
 - `TransCAD GIS  <http://www.caliper.com>`_  Desktop Transportation Analysis Software
 - `TravTime  <https://travtime.software.informer.com/download/>`_  .NET Application for visualizing, processing and analyzing GPS data for travel time, speed, and de

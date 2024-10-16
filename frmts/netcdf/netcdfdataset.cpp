@@ -11,23 +11,7 @@
  * Copyright (c) 2010, Kyle Shannon <kyle at pobox dot com>
  * Copyright (c) 2021, CLS
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -3486,6 +3470,12 @@ void netCDFDataset::SetProjectionFromVar(
     {
         const char *pszUnitsX = FetchAttr(nGroupDimXID, nVarDimXID, "units");
         const char *pszUnitsY = FetchAttr(nGroupDimYID, nVarDimYID, "units");
+        // Normalize degrees_east/degrees_north to degrees
+        // Cf https://github.com/OSGeo/gdal/issues/11009
+        if (pszUnitsX && EQUAL(pszUnitsX, "degrees_east"))
+            pszUnitsX = "degrees";
+        if (pszUnitsY && EQUAL(pszUnitsY, "degrees_north"))
+            pszUnitsY = "degrees";
 
         if (pszUnitsX && pszUnitsY)
         {
@@ -9620,11 +9610,6 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         pScaledProgress =
             GDALCreateScaledProgress(0.1, 0.25, pfnProgress, pProgressData);
         poDS->AddProjectionVars(false, GDALScaledProgress, pScaledProgress);
-        // Save X,Y dim positions.
-        panDimIds[nDim - 1] = poDS->nXDimID;
-        panBandDimPos[0] = nDim - 1;
-        panDimIds[nDim - 2] = poDS->nYDimID;
-        panBandDimPos[1] = nDim - 2;
         GDALDestroyScaledProgress(pScaledProgress);
     }
     else
@@ -9637,6 +9622,12 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             poDS->AddProjectionVars(false, nullptr, nullptr);
         }
     }
+
+    // Save X,Y dim positions.
+    panDimIds[nDim - 1] = poDS->nXDimID;
+    panBandDimPos[0] = nDim - 1;
+    panDimIds[nDim - 2] = poDS->nYDimID;
+    panBandDimPos[1] = nDim - 2;
 
     // Write extra dim values - after projection for optimization.
     if (nDim > 2)

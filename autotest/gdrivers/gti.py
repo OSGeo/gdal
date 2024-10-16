@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2023, Even Rouault <even.rouault@spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import math
@@ -820,9 +804,9 @@ def test_gti_invalid_srs(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_gti_valid_srs(tmp_vsimem):
+def test_gti_valid_srs(tmp_path):
 
-    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    index_filename = str(tmp_path / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -1019,6 +1003,10 @@ def test_gti_no_metadata_rgb(tmp_vsimem):
     check_basic(vrt_ds, src_ds)
 
 
+@pytest.mark.skipif(
+    gdal.GetDriverByName("VRT").GetMetadataItem(gdal.DMD_OPENOPTIONLIST) is None,
+    reason="VRT driver open missing",
+)
 def test_gti_rgb_left_right(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -1078,6 +1066,10 @@ def test_gti_rgb_left_right(tmp_vsimem):
         assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
 
 
+@pytest.mark.skipif(
+    gdal.GetDriverByName("VRT").GetMetadataItem(gdal.DMD_OPENOPTIONLIST) is None,
+    reason="VRT driver open missing",
+)
 def test_gti_overlapping_sources(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
@@ -1345,6 +1337,10 @@ def test_gti_overlapping_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 2, sort_values
 
 
+@pytest.mark.skipif(
+    gdal.GetDriverByName("VRT").GetMetadataItem(gdal.DMD_OPENOPTIONLIST) is None,
+    reason="VRT driver open missing",
+)
 def test_gti_gap_between_sources(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
@@ -1380,6 +1376,10 @@ def test_gti_gap_between_sources(tmp_vsimem):
         )
 
 
+@pytest.mark.skipif(
+    gdal.GetDriverByName("VRT").GetMetadataItem(gdal.DMD_OPENOPTIONLIST) is None,
+    reason="VRT driver open missing",
+)
 def test_gti_no_source(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -2954,6 +2954,9 @@ def test_gti_read_multi_threaded_disabled_because_truncated_source(tmp_vsimem):
 
 @pytest.mark.require_curl()
 @pytest.mark.require_driver("Parquet")
+@pytest.mark.xfail(
+    reason="https://naipeuwest.blob.core.windows.net/naip/v002/ok/2010/ok_100cm_2010/34099/m_3409901_nw_14_1_20100425.tif now leads to HTTP/1.1 409 Public access is not permitted on this storage account."
+)
 def test_gti_stac_geoparquet():
 
     url = (

@@ -8,23 +8,7 @@
  * Copyright (c) 2000, Frank Warmerdam
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -1115,7 +1099,7 @@ std::unique_ptr<GDALDataset> MEMDataset::Clone(int nScopeFlags,
                 poNewBand->psPam->CopyFrom(*(poSrcMEMBand->psPam));
             }
 
-            // Instanciates a mask band when needed.
+            // Instantiates a mask band when needed.
             if ((poSrcMEMBand->nMaskFlags &
                  (GMF_ALL_VALID | GMF_ALPHA | GMF_NODATA)) == 0)
             {
@@ -1154,6 +1138,20 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "MEM:::") ||
         poOpenInfo->fpL != nullptr)
         return nullptr;
+
+#ifndef GDAL_MEM_ENABLE_OPEN
+    if (!CPLTestBool(CPLGetConfigOption("GDAL_MEM_ENABLE_OPEN", "NO")))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Opening a MEM dataset with the MEM:::DATAPOINTER= syntax "
+                 "is no longer supported by default for security reasons. "
+                 "If you want to allow it, define the "
+                 "GDAL_MEM_ENABLE_OPEN "
+                 "configuration option to YES, or build GDAL with the "
+                 "GDAL_MEM_ENABLE_OPEN compilation definition");
+        return nullptr;
+    }
+#endif
 
     char **papszOptions =
         CSLTokenizeStringComplex(poOpenInfo->pszFilename + 6, ",", TRUE, FALSE);

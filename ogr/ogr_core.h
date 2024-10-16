@@ -9,23 +9,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_CORE_H_INCLUDED
@@ -791,8 +775,8 @@ typedef enum
 
 typedef enum
 {
-    /** Simple 32bit integer */ OFTInteger = 0,
-    /** List of 32bit integers */ OFTIntegerList = 1,
+    /** Single signed 32bit integer */ OFTInteger = 0,
+    /** List of signed 32bit integers */ OFTIntegerList = 1,
     /** Double Precision floating point */ OFTReal = 2,
     /** List of doubles */ OFTRealList = 3,
     /** String of ASCII chars */ OFTString = 4,
@@ -803,8 +787,8 @@ typedef enum
     /** Date */ OFTDate = 9,
     /** Time */ OFTTime = 10,
     /** Date and Time */ OFTDateTime = 11,
-    /** Single 64bit integer */ OFTInteger64 = 12,
-    /** List of 64bit integers */ OFTInteger64List = 13,
+    /** Single signed 64bit integer */ OFTInteger64 = 12,
+    /** List of signed 64bit integers */ OFTInteger64List = 13,
     OFTMaxType = 13
 } OGRFieldType;
 

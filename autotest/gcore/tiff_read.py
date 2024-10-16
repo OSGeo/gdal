@@ -40,6 +40,8 @@ import webserver
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("HFA")
+
 init_list = [
     ("byte.tif", 1, 4672),
     ("uint16_sgilog.tif", 1, 4672),
@@ -774,6 +776,7 @@ def test_tiff_read_stats_from_pam(tmp_path):
 # Test extracting georeferencing from a .TAB file
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_tiff_read_from_tab(tmp_path):
 
     ds = gdal.GetDriverByName("GTiff").Create(tmp_path / "tiff_read_from_tab.tif", 1, 1)
@@ -2822,6 +2825,7 @@ def test_tiff_read_one_strip_no_bytecount():
 # Test GDAL_GEOREF_SOURCES
 
 
+@pytest.mark.require_driver("MapInfo File")
 @pytest.mark.parametrize(
     "config_option_value,copy_pam,copy_worldfile,copy_tabfile,expected_srs,expected_gt",
     [
@@ -3027,6 +3031,7 @@ def test_tiff_read_nogeoref(
 # Test GDAL_GEOREF_SOURCES
 
 
+@pytest.mark.require_driver("MapInfo File")
 @pytest.mark.parametrize(
     "config_option_value,copy_pam,copy_worldfile,copy_tabfile,expected_srs,expected_gt",
     [
@@ -5189,6 +5194,10 @@ def test_tiff_read_webp_lossless_rgba_alpha_fully_opaque():
 # Test complex scenario of https://github.com/OSGeo/gdal/issues/9563
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_jpeg_cached_multi_range_issue_9563(tmp_vsimem):
 
@@ -5327,3 +5336,25 @@ def test_tiff_read_unrecognized_color_interpretation():
     ds = gdal.Open("data/gtiff/unknown_colorinterp.tif")
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_Undefined
     assert ds.GetRasterBand(1).GetMetadataItem("COLOR_INTERPRETATION") == "XXXX"
+
+
+###############################################################################
+# Check that cleaning overviews on a DIMAP2 GeoTIFF file with external overviews
+# does not cause the DIMAP XML file to be cleaned
+
+
+def test_tiff_read_ovr_dimap_pleiades(tmp_path):
+
+    shutil.copytree("../gdrivers/data/dimap2/bundle", tmp_path / "bundle")
+    filename = str(tmp_path / "bundle" / "IMG_foo_R1C1.TIF")
+    ds = gdal.Open(filename)
+    ds.BuildOverviews("NEAR", [2])
+    ds = None
+    ds = gdal.Open(filename + ".ovr")
+    assert ds.GetFileList() == [filename + ".ovr"]
+    ds = None
+    ds = gdal.Open(filename)
+    ds.BuildOverviews("", [])
+    ds = None
+    # Check that cleaning overviews did not suppress the DIMAP XML file
+    assert os.path.exists(tmp_path / "bundle" / "DIM_foo.XML")

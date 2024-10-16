@@ -1,0 +1,83 @@
+Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subdatasets)
+  FITS -raster,vector- (rw+): Flexible Image Transport System (*.fits)
+  PCIDSK -raster,vector- (rw+v): PCIDSK Database File (*.pix)
+  netCDF -raster,multidimensional raster,vector- (rw+s): Network Common Data Format (*.nc)
+  PDS4 -raster,vector- (rw+vs): NASA Planetary Data System 4 (*.xml)
+  VICAR -raster,vector- (rw+v): MIPL VICAR file
+  JP2OpenJPEG -raster,vector- (rwv): JPEG-2000 driver based on JP2OpenJPEG library (*.jp2, *.j2k)
+  PDF -raster,vector- (rw+vs): Geospatial PDF (*.pdf)
+  MBTiles -raster,vector- (rw+v): MBTiles (*.mbtiles)
+  TileDB -raster,multidimensional raster,vector- (rw+vs): TileDB
+  BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
+  EEDA -vector- (ro): Earth Engine Data API
+  OGCAPI -raster,vector- (rov): OGCAPI
+  ESRI Shapefile -vector- (rw+v): ESRI Shapefile (*.shp, *.dbf, *.shz, *.shp.zip)
+  MapInfo File -vector- (rw+v): MapInfo File (*.tab, *.mif, *.mid)
+  UK .NTF -vector- (rov): UK .NTF
+  LVBAG -vector- (rov): Kadaster LV BAG Extract 2.0 (*.xml)
+  OGR_SDTS -vector- (rov): SDTS
+  S57 -vector- (rw+v): IHO S-57 (ENC) (*.000)
+  DGN -vector- (rw+v): Microstation DGN (*.dgn)
+  OGR_VRT -vector- (rov): VRT - Virtual Datasource (*.vrt)
+  Memory -vector- (rw+): Memory
+  CSV -vector- (rw+v): Comma Separated Value (.csv) (*.csv, *.tsv, *.psv)
+  NAS -vector- (rov): NAS - ALKIS (*.xml)
+  GML -vector- (rw+v): Geography Markup Language (GML) (*.gml, *.xml)
+  GPX -vector- (rw+v): GPX (*.gpx)
+  KML -vector- (rw+v): Keyhole Markup Language (KML) (*.kml)
+  GeoJSON -vector- (rw+v): GeoJSON (*.json, *.geojson)
+  GeoJSONSeq -vector- (rw+v): GeoJSON Sequence (*.geojsonl, *.geojsons)
+  ESRIJSON -vector- (rov): ESRIJSON (*.json)
+  TopoJSON -vector- (rov): TopoJSON (*.json, *.topojson)
+  Interlis 1 -vector- (rw+v): Interlis 1 (*.itf, *.ili)
+  Interlis 2 -vector- (rw+v): Interlis 2 (*.xtf, *.xml, *.ili)
+  OGR_GMT -vector- (rw+v): GMT ASCII Vectors (.gmt) (*.gmt)
+  GPKG -raster,vector- (rw+vs): GeoPackage (*.gpkg, *.gpkg.zip)
+  SQLite -vector- (rw+v): SQLite / Spatialite (*.sqlite, *.db)
+  ODBC -vector- (ro): Open Database Connectivity (ODBC) (*.mdb, *.accdb)
+  WAsP -vector- (rw+v): WAsP .map format (*.map)
+  PGeo -vector- (ro): ESRI Personal GeoDatabase (*.mdb)
+  MSSQLSpatial -vector- (rw+): Microsoft SQL Server Spatial Database (BCP)
+  PostgreSQL -vector- (rw+): PostgreSQL/PostGIS
+  OpenFileGDB -raster,vector- (rw+v): ESRI FileGDB (*.gdb)
+  DXF -vector- (rw+v): AutoCAD DXF (*.dxf)
+  CAD -raster,vector- (rovs): AutoCAD Driver (*.dwg)
+  FlatGeobuf -vector- (rw+v): FlatGeobuf (*.fgb)
+  Geoconcept -vector- (rw+v): Geoconcept (*.gxt, *.txt)
+  GeoRSS -vector- (rw+v): GeoRSS
+  VFK -vector- (ro): Czech Cadastral Exchange Data Format (*.vfk)
+  PGDUMP -vector- (w+v): PostgreSQL SQL dump (*.sql)
+  OSM -vector- (rov): OpenStreetMap XML and PBF (*.osm, *.pbf)
+  GPSBabel -vector- (rw+): GPSBabel (*.mps, *.gdb, *.osm, *.tcx, *.igc)
+  OGR_PDS -vector- (rov): Planetary Data Systems TABLE
+  WFS -vector- (rov): OGC WFS (Web Feature Service)
+  OAPIF -vector- (ro): OGC API - Features
+  EDIGEO -vector- (rov): French EDIGEO exchange format (*.thf)
+  SVG -vector- (rov): Scalable Vector Graphics (*.svg)
+  Idrisi -vector- (rov): Idrisi Vector (.vct) (*.vct)
+  XLS -vector- (ro): MS Excel format (*.xls)
+  ODS -vector- (rw+v): Open Document/ LibreOffice / OpenOffice Spreadsheet (*.ods)
+  XLSX -vector- (rw+v): MS Office Open XML spreadsheet (*.xlsx, *.xlsm)
+  Elasticsearch -vector- (rw+): Elastic Search
+  Carto -vector- (rw+): Carto
+  AmigoCloud -vector- (rw+): AmigoCloud
+  SXF -vector- (rov): Storage and eXchange Format (*.sxf)
+  Selafin -vector- (rw+v): Selafin
+  JML -vector- (rw+v): OpenJUMP JML (*.jml)
+  PLSCENES -raster,vector- (ro): Planet Labs Scenes API
+  CSW -vector- (ro): OGC CSW (Catalog  Service for the Web)
+  VDV -vector- (rw+v): VDV-451/VDV-452/INTREST Data Format (*.txt, *.x10)
+  GMLAS -vector- (rwv): Geography Markup Language (GML) driven by application schemas (*.gml, *.xml)
+  MVT -vector- (rw+v): Mapbox Vector Tiles (*.mvt, *.mvt.gz, *.pbf)
+  NGW -raster,vector- (rw+s): NextGIS Web
+  MapML -vector- (rw+v): MapML
+  Parquet -vector- (rw+v): (Geo)Parquet (*.parquet)
+  Arrow -vector- (rw+v): (Geo)Arrow IPC File Format / Stream (*.arrow, *.feather, *.arrows, *.ipc)
+  GTFS -vector- (rov): General Transit Feed Specification (*.zip)
+  PMTiles -vector- (rw+v): ProtoMap Tiles (*.pmtiles)
+  JSONFG -vector- (rw+v): OGC Features and Geometries JSON (*.json)
+  MiraMonVector -vector- (rw+v): MiraMon Vectors (.pol, .arc, .pnt) (*.pol, *.arc, *.pnt)
+  TIGER -vector- (rov): U.S. Census TIGER/Line
+  AVCBin -vector- (rov): Arc/Info Binary Coverage
+  AVCE00 -vector- (rov): Arc/Info E00 (ASCII) Coverage (*.e00)
+  HTTP -raster,vector- (ro): HTTP Fetching Wrapper

@@ -8,23 +8,7 @@
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
  * Copyright (c) 2008-2018, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -55,6 +39,7 @@
 #include "ogr_p.h"
 #include "ogr_proj_p.h"
 #include "ogr_srs_api.h"
+#include "ogrmitabspatialref.h"
 
 #include "proj.h"
 #include "proj_experimental.h"
@@ -11208,11 +11193,6 @@ OGRErr OSRSetAxes(OGRSpatialReferenceH hSRS, const char *pszTargetKey,
                                     eYAxisOrientation);
 }
 
-#ifdef HAVE_MITAB
-char CPL_DLL *MITABSpatialRef2CoordSys(const OGRSpatialReference *);
-OGRSpatialReference CPL_DLL *MITABCoordSys2SpatialRef(const char *);
-#endif
-
 /************************************************************************/
 /*                       OSRExportToMICoordSys()                        */
 /************************************************************************/
@@ -11254,18 +11234,11 @@ OGRErr OSRExportToMICoordSys(OGRSpatialReferenceH hSRS, char **ppszReturn)
 OGRErr OGRSpatialReference::exportToMICoordSys(char **ppszResult) const
 
 {
-#ifdef HAVE_MITAB
     *ppszResult = MITABSpatialRef2CoordSys(this);
     if (*ppszResult != nullptr && strlen(*ppszResult) > 0)
         return OGRERR_NONE;
 
     return OGRERR_FAILURE;
-#else
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "MITAB not available, CoordSys support disabled.");
-
-    return OGRERR_UNSUPPORTED_OPERATION;
-#endif
 }
 
 /************************************************************************/
@@ -11308,7 +11281,6 @@ OGRErr OSRImportFromMICoordSys(OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::importFromMICoordSys(const char *pszCoordSys)
 
 {
-#ifdef HAVE_MITAB
     OGRSpatialReference *poResult = MITABCoordSys2SpatialRef(pszCoordSys);
 
     if (poResult == nullptr)
@@ -11318,12 +11290,6 @@ OGRErr OGRSpatialReference::importFromMICoordSys(const char *pszCoordSys)
     delete poResult;
 
     return OGRERR_NONE;
-#else
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "MITAB not available, CoordSys support disabled.");
-
-    return OGRERR_UNSUPPORTED_OPERATION;
-#endif
 }
 
 /************************************************************************/

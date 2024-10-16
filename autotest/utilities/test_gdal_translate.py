@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -420,6 +404,10 @@ def test_gdal_translate_15(gdal_translate_path, tmp_path):
 # Test -of VRT which is a special case
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_16(gdal_translate_path, tmp_path):
 
     dst_vrt = str(tmp_path / "test16.vrt")
@@ -440,6 +428,10 @@ def test_gdal_translate_16(gdal_translate_path, tmp_path):
 # Test -expand option to VRT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("GIF")
 def test_gdal_translate_17(gdal_translate_path, tmp_path):
 
@@ -483,6 +475,10 @@ def test_gdal_translate_17(gdal_translate_path, tmp_path):
 # Test translation of a VRT made of VRT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("BMP")
 def test_gdal_translate_18(gdal_translate_path, tmp_path):
 
@@ -569,6 +565,7 @@ def test_gdal_translate_20(gdal_translate_path, tmp_path):
 # in that case, they must be copied
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_21(gdal_translate_path, tmp_path):
 
     dst_img = str(tmp_path / "test_gdal_translate_21.img")
@@ -594,6 +591,7 @@ def test_gdal_translate_21(gdal_translate_path, tmp_path):
 # in that case, they must *NOT* be copied
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_22(gdal_translate_path, tmp_path):
 
     dst_img = str(tmp_path / "test_gdal_translate_22.img")
@@ -662,6 +660,7 @@ def test_gdal_translate_24(gdal_translate_path, tmp_path):
 # Test -norat
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_25(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "test_gdal_translate_25.tif")
@@ -781,6 +780,10 @@ def test_gdal_translate_28(gdal_translate_path, tmp_path):
 # Test -r
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_29(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "test_gdal_translate_29.tif")
@@ -962,6 +965,10 @@ def test_gdal_translate_33ter(gdal_translate_path, tmp_path):
 # Test NBITS is preserved
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_34(gdal_translate_path, tmp_path):
 
     dst_vrt = str(tmp_path / "test_gdal_translate_34.vrt")
@@ -1007,6 +1014,7 @@ def test_gdal_translate_35(gdal_translate_path, tmp_vsimem):
 # Test RAT is copied from hfa to gtiff - continuous/athematic
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_36(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "test_gdal_translate_36.tif")
@@ -1032,6 +1040,7 @@ def test_gdal_translate_36(gdal_translate_path, tmp_path):
 # Test RAT is copied from hfa to gtiff - thematic
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_37(gdal_translate_path, tmp_path):
 
     dst1_tif = str(tmp_path / "test_gdal_translate_37.tif")

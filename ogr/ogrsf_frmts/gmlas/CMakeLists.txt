@@ -37,7 +37,7 @@ set_property(
   PROPERTY RESOURCE "${GDAL_DATA_FILES}")
 
 target_include_directories(
-  ogr_GMLAS PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem
+  ogr_GMLAS PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem
                     ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/pgdump)
 
 # Internal libs first

@@ -5,3 +5,7 @@ add_gdal_driver(
   SOURCES grddataset.cpp grcdataset.cpp northwood.cpp northwood.h
   BUILTIN STRONG_CXX_WFLAGS)
 gdal_standard_includes(gdal_northwood)
+
+if (NOT OGR_ENABLE_DRIVER_TAB OR OGR_ENABLE_DRIVER_TAB_PLUGIN)
+  target_compile_definitions(gdal_northwood PRIVATE -DNO_MITAB_SUPPORT)
+endif()

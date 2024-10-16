@@ -2733,6 +2733,7 @@ RecordBatch
 RecordBatchAsNumpy
 recurse
 recursionLevel
+redirections
 Redistributable
 reentrancy
 reentrant
@@ -2938,6 +2939,7 @@ sig
 Sightlines
 signedness
 significants
+Simmon
 sinc
 sizeBytes
 sizeKnown

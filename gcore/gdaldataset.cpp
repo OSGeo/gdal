@@ -8,23 +8,7 @@
  * Copyright (c) 1998, 2003, Frank Warmerdam
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -4683,6 +4667,7 @@ void GDALDataset::ReportErrorV(const char *pszDSName, CPLErr eErrClass,
 /************************************************************************/
 char **GDALDataset::GetMetadata(const char *pszDomain)
 {
+#ifndef WITHOUT_DERIVED
     if (pszDomain != nullptr && EQUAL(pszDomain, "DERIVED_SUBDATASETS"))
     {
         oDerivedMetadataList.Clear();
@@ -4735,6 +4720,7 @@ char **GDALDataset::GetMetadata(const char *pszDomain)
         }
         return oDerivedMetadataList.List();
     }
+#endif
 
     return GDALMajorObject::GetMetadata(pszDomain);
 }
@@ -10244,7 +10230,7 @@ CPLErr GDALDatasetReadCompressedData(GDALDatasetH hDS, const char *pszFormat,
  *                       If set to true, the dataset from which they have been
  *                       cloned from must remain opened during the lifetime of
  *                       its clones.
- * @return true if the Clone() method is expecte to succeed with the same values
+ * @return true if the Clone() method is expected to succeed with the same values
  *         of nScopeFlags and bCanShareState.
  */
 bool GDALDataset::CanBeCloned(int nScopeFlags,

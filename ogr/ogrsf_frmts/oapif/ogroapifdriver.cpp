@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2018-2019, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrsf_frmts.h"
@@ -106,6 +90,8 @@ class OGROAPIFDataset final : public GDALDataset
     CPLJSONDocument m_oLandingPageDoc;
 
     bool m_bIgnoreSchema = false;
+
+    std::string m_osDateTime{};
 
     bool Download(const CPLString &osURL, const char *pszAccept,
                   CPLString &osResult, CPLString &osContentType,
@@ -1160,6 +1146,9 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
         m_bPageSizeSetFromOpenOptions = true;
     }
 
+    m_osDateTime =
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "DATETIME", "");
+
     const int initialRequestPageSize = atoi(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "INITIAL_REQUEST_PAGE_SIZE", "-1"));
 
@@ -2046,6 +2035,15 @@ CPLString OGROAPIFLayer::AddFilters(const CPLString &osURL)
             osURLNew += "&";
         osURLNew += m_osAttributeFilter;
     }
+    if (!m_poDS->m_osDateTime.empty())
+    {
+        if (osURLNew.find('?') == std::string::npos)
+            osURLNew += "?";
+        else
+            osURLNew += "&";
+        osURLNew += "datetime=";
+        osURLNew += m_poDS->m_osDateTime;
+    }
     return osURLNew;
 }
 
@@ -2230,6 +2228,7 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
             }
         }
 
+        // cppcheck-suppress nullPointerRedundantCheck
         poSrcFeature = m_poUnderlyingLayer->GetNextFeature();
         if (poSrcFeature)
         {
@@ -2384,7 +2383,8 @@ bool OGROAPIFLayer::SupportsResultTypeHits()
 GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
 {
 
-    if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
+    if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr &&
+        m_poDS->m_osDateTime.empty())
     {
         GetLayerDefn();
         if (m_nTotalFeatureCount >= 0)
@@ -3265,6 +3265,9 @@ void RegisterOGROAPIF()
         "    <Value>AUTHORITY_COMPLIANT</Value>"
         "    <Value>GIS_FRIENDLY</Value>"
         "  </Option>"
+        "  <Option name='DATETIME' type='string' "
+        "description=\"Date-time filter to pass to items requests with the "
+        "'datetime' parameter\"/>"
         "</OpenOptionList>");
 
     poDriver->pfnIdentify = OGROAPIFDriverIdentify;

@@ -8,23 +8,7 @@
  * Copyright (c) 2000, Frank Warmerdam
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include <string.h>
@@ -669,13 +653,18 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
         {
             osNewSearchPath +=
                 OGRPGEscapeString(hPGConn, osActiveSchema.c_str());
-            osNewSearchPath += ',';
         }
-        osNewSearchPath += osSearchPath;
+        if (!osSearchPath.empty() && osSearchPath != "\"\"")
+        {
+            if (!osNewSearchPath.empty())
+                osNewSearchPath += ',';
+            osNewSearchPath += osSearchPath;
+        }
         if (!osPostgisSchema.empty() &&
             osSearchPath.find(osPostgisSchema) == std::string::npos)
         {
-            osNewSearchPath += ',';
+            if (!osNewSearchPath.empty())
+                osNewSearchPath += ',';
             osNewSearchPath +=
                 OGRPGEscapeString(hPGConn, osPostgisSchema.c_str());
         }
@@ -690,8 +679,9 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
             OGRPGClearResult(hResult);
             CPLDebug("PG", "Command \"%s\" failed. Trying without 'public'.",
                      osCommand.c_str());
-            osCommand =
-                CPLSPrintf("SET search_path='%s'", osActiveSchema.c_str());
+            osCommand = CPLSPrintf(
+                "SET search_path=%s",
+                OGRPGEscapeString(hPGConn, osActiveSchema.c_str()).c_str());
             PGresult *hResult2 = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
             if (!hResult2 || PQresultStatus(hResult2) != PGRES_COMMAND_OK)
@@ -2222,9 +2212,8 @@ OGRLayer *OGRPGDataSource::GetLayerByName(const char *pszNameIn)
     {
         EndCopy();
 
-        CPLString osTableName(pszTableName);
-        CPLString osTableNameLower(pszTableName);
-        osTableNameLower.tolower();
+        const CPLString osTableName(pszTableName);
+        const CPLString osTableNameLower = CPLString(pszTableName).tolower();
         if (osTableName != osTableNameLower)
             CPLPushErrorHandler(CPLQuietErrorHandler);
         poLayer = OpenTable(osCurrentSchema, pszTableName, pszSchemaName,
@@ -3153,6 +3142,16 @@ bool OGRPGDataSource::CreateMetadataTableIfNeeded()
 
     m_bCreateMetadataTableIfNeededRun = true;
 
+    const bool bIsSuperUser = IsSuperUser();
+    if (!bIsSuperUser && !OGRSystemTablesEventTriggerExists())
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "User lacks super user privilege to be able to create event "
+                 "trigger ogr_system_tables_event_trigger_for_metadata");
+        m_bCreateMetadataTableIfNeededSuccess = true;
+        return true;
+    }
+
     PGresult *hResult;
 
     hResult = OGRPG_PQexec(
@@ -3266,35 +3265,67 @@ bool OGRPGDataSource::CreateMetadataTableIfNeeded()
     }
     OGRPGClearResult(hResult);
 
-    hResult =
-        OGRPG_PQexec(hPGConn, "DROP EVENT TRIGGER IF EXISTS "
-                              "ogr_system_tables_event_trigger_for_metadata");
-    if (!hResult || (PQresultStatus(hResult) != PGRES_COMMAND_OK &&
-                     PQresultStatus(hResult) != PGRES_TUPLES_OK))
+    if (bIsSuperUser)
     {
+        hResult = OGRPG_PQexec(hPGConn,
+                               "DROP EVENT TRIGGER IF EXISTS "
+                               "ogr_system_tables_event_trigger_for_metadata");
+        if (!hResult || (PQresultStatus(hResult) != PGRES_COMMAND_OK &&
+                         PQresultStatus(hResult) != PGRES_TUPLES_OK))
+        {
+            OGRPGClearResult(hResult);
+            return false;
+        }
         OGRPGClearResult(hResult);
-        return false;
-    }
-    OGRPGClearResult(hResult);
 
-    hResult = OGRPG_PQexec(
-        hPGConn,
-        "CREATE EVENT TRIGGER ogr_system_tables_event_trigger_for_metadata "
-        "ON sql_drop "
-        "EXECUTE FUNCTION "
-        "ogr_system_tables.event_trigger_function_for_metadata()");
-    if (!hResult || (PQresultStatus(hResult) != PGRES_COMMAND_OK &&
-                     PQresultStatus(hResult) != PGRES_TUPLES_OK))
-    {
+        hResult = OGRPG_PQexec(
+            hPGConn,
+            "CREATE EVENT TRIGGER ogr_system_tables_event_trigger_for_metadata "
+            "ON sql_drop "
+            "EXECUTE FUNCTION "
+            "ogr_system_tables.event_trigger_function_for_metadata()");
+        if (!hResult || (PQresultStatus(hResult) != PGRES_COMMAND_OK &&
+                         PQresultStatus(hResult) != PGRES_TUPLES_OK))
+        {
+            OGRPGClearResult(hResult);
+            return false;
+        }
         OGRPGClearResult(hResult);
-        return false;
     }
-    OGRPGClearResult(hResult);
 
     m_bCreateMetadataTableIfNeededSuccess = true;
     m_bOgrSystemTablesMetadataTableExistenceTested = true;
     m_bOgrSystemTablesMetadataTableFound = true;
     return true;
+}
+
+/************************************************************************/
+/*                               IsSuperUser()                          */
+/************************************************************************/
+
+bool OGRPGDataSource::IsSuperUser()
+{
+    PGresult *hResult = OGRPG_PQexec(
+        hPGConn, "SELECT usesuper FROM pg_user WHERE usename = CURRENT_USER");
+    const bool bRet =
+        (hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult, 0, 0) &&
+         strcmp(PQgetvalue(hResult, 0, 0), "t") == 0);
+    OGRPGClearResult(hResult);
+    return bRet;
+}
+
+/************************************************************************/
+/*                  OGRSystemTablesEventTriggerExists()                 */
+/************************************************************************/
+
+bool OGRPGDataSource::OGRSystemTablesEventTriggerExists()
+{
+    PGresult *hResult =
+        OGRPG_PQexec(hPGConn, "SELECT 1 FROM pg_event_trigger WHERE evtname = "
+                              "'ogr_system_tables_event_trigger_for_metadata'");
+    const bool bRet = (hResult && PQntuples(hResult) == 1);
+    OGRPGClearResult(hResult);
+    return bRet;
 }
 
 /************************************************************************/

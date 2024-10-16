@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2023, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGRLAYERARROW_H_DEFINED
@@ -33,6 +17,8 @@
 
 #include <map>
 #include <string>
+
+#include "ogr_recordbatch.h"
 
 constexpr const char *ARROW_EXTENSION_NAME_KEY = "ARROW:extension:name";
 constexpr const char *ARROW_EXTENSION_METADATA_KEY = "ARROW:extension:metadata";
@@ -49,5 +35,74 @@ bool CPL_DLL OGRCloneArrowArray(const struct ArrowSchema *schema,
 
 bool CPL_DLL OGRCloneArrowSchema(const struct ArrowSchema *schema,
                                  struct ArrowSchema *out_schema);
+
+/** C++ wrapper on top of ArrowArrayStream */
+class OGRArrowArrayStream
+{
+  public:
+    /** Constructor: instantiate an empty ArrowArrayStream  */
+    inline OGRArrowArrayStream()
+    {
+        memset(&m_stream, 0, sizeof(m_stream));
+    }
+
+    /** Destructor: call release() on the ArrowArrayStream if not already done */
+    inline ~OGRArrowArrayStream()
+    {
+        clear();
+    }
+
+    /** Call release() on the ArrowArrayStream if not already done */
+    // cppcheck-suppress functionStatic
+    inline void clear()
+    {
+        if (m_stream.release)
+        {
+            m_stream.release(&m_stream);
+            m_stream.release = nullptr;
+        }
+    }
+
+    /** Return the raw ArrowArrayStream* */
+    inline ArrowArrayStream *get()
+    {
+        return &m_stream;
+    }
+
+    /** Get the schema */
+    // cppcheck-suppress functionStatic
+    inline int get_schema(struct ArrowSchema *schema)
+    {
+        return m_stream.get_schema(&m_stream, schema);
+    }
+
+    /** Get the next ArrowArray batch */
+    // cppcheck-suppress functionStatic
+    inline int get_next(struct ArrowArray *array)
+    {
+        return m_stream.get_next(&m_stream, array);
+    }
+
+    /** Move assignment operator */
+    inline OGRArrowArrayStream &operator=(OGRArrowArrayStream &&other)
+    {
+        if (this != &other)
+        {
+            clear();
+            memcpy(&m_stream, &(other.m_stream), sizeof(m_stream));
+            memset(&(other.m_stream), 0, sizeof(m_stream));
+        }
+        return *this;
+    }
+
+  private:
+    struct ArrowArrayStream m_stream
+    {
+    };
+
+    OGRArrowArrayStream(const OGRArrowArrayStream &) = delete;
+    OGRArrowArrayStream(OGRArrowArrayStream &&) = delete;
+    OGRArrowArrayStream &operator=(const OGRArrowArrayStream &) = delete;
+};
 
 #endif  // OGRLAYERARROW_H_DEFINED

@@ -6,8 +6,8 @@
 # a new member or virtual function in a public C++ class, etc.
 # This will typically happen for each GDAL feature release (change of X or Y in
 # a X.Y.Z numbering scheme), but should not happen for a bugfix release (change of Z)
-# Previous value: 35 for GDAL 3.9
-set(GDAL_SOVERSION 35)
+# Previous value: 36 for GDAL 3.10
+set(GDAL_SOVERSION 36)
 
 # Switches to control build targets(cached)
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
@@ -313,6 +313,16 @@ if (GDAL_USE_SHAPELIB_INTERNAL)
   option(RENAME_INTERNAL_SHAPELIB_SYMBOLS "Rename internal Shapelib symbols" ON)
   mark_as_advanced(RENAME_INTERNAL_SHAPELIB_SYMBOLS)
 endif ()
+
+# Must be set before including ogr
+option(OGR_ENABLE_DRIVER_TAB
+       "Set ON to build MapInfo TAB and MIF/MID driver (required by Northwoord driver, and Shapefile attribute indexing)"
+       ${OGR_BUILD_OPTIONAL_DRIVERS})
+if(OGR_ENABLE_DRIVER_TAB AND
+   NOT DEFINED OGR_ENABLE_DRIVER_TAB_PLUGIN AND
+   GDAL_ENABLE_PLUGINS_NO_DEPS)
+    option(OGR_ENABLE_DRIVER_TAB_PLUGIN "Set ON to build OGR MapInfo TAB and MIF/MID driver as plugin" ON)
+endif()
 
 # Core components
 add_subdirectory(alg)

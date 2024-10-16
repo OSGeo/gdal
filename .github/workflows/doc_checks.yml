@@ -24,7 +24,7 @@ jobs:
     container: ghcr.io/osgeo/proj-docs
 
     steps:
-    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
     - name: Setup environment
       shell: bash -l {0}
       run: |
@@ -55,6 +55,11 @@ jobs:
           python3 -m pip install /tmp/gdal.tar.gz
           ldconfig
           popd
+
+    - name: Update components
+      shell: bash -l {0}
+      run: |
+          pip install -U "sphinx-rtd-theme>=3.0.0" "sphinxcontrib-spelling>=8.0.0"
 
     - name: Print versions
       shell: bash -l {0}

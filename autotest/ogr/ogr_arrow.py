@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2022, Planet Labs
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -793,7 +777,7 @@ def test_ogr_arrow_vsi_arrow_file_system():
     if version < 16:
         pytest.skip("requires Arrow >= 16.0.0")
 
-    ogr.Open("vsi://data/arrow/test.feather")
+    ogr.Open("gdalvsi://data/arrow/test.feather")
 
 
 ###############################################################################
@@ -849,3 +833,93 @@ def test_ogr_arrow_binary_view():
         assert f.GetFieldAsBinary("binaryview") == b"bar"
         f = lyr.GetNextFeature()
         assert f.GetFieldAsBinary("binaryview") == b"looooooooooong binary"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "geom_type,encoding,expected_arrow_type",
+    [
+        (
+            ogr.wkbPoint,
+            "GEOARROW_STRUCT",
+            "struct<x: double not null, y: double not null>",
+        ),
+        (
+            ogr.wkbPoint,
+            "GEOARROW_INTERLEAVED",
+            "fixed_size_list<xy: double not null>[2]",
+        ),
+        (
+            ogr.wkbLineString,
+            "GEOARROW_STRUCT",
+            "list<vertices: struct<x: double not null, y: double not null>>",
+        ),
+        (
+            ogr.wkbLineString,
+            "GEOARROW_INTERLEAVED",
+            "list<vertices: fixed_size_list<xy: double not null>[2]>",
+        ),
+        (
+            ogr.wkbPolygon,
+            "GEOARROW_STRUCT",
+            "list<rings: list<vertices: struct<x: double not null, y: double not null>>>",
+        ),
+        (
+            ogr.wkbPolygon,
+            "GEOARROW_INTERLEAVED",
+            "list<rings: list<vertices: fixed_size_list<xy: double not null>[2]>>",
+        ),
+        (
+            ogr.wkbMultiPoint,
+            "GEOARROW_STRUCT",
+            "list<points: struct<x: double not null, y: double not null>>",
+        ),
+        (
+            ogr.wkbMultiPoint,
+            "GEOARROW_INTERLEAVED",
+            "list<points: fixed_size_list<xy: double not null>[2]>",
+        ),
+        (
+            ogr.wkbMultiLineString,
+            "GEOARROW_STRUCT",
+            "list<linestrings: list<vertices: struct<x: double not null, y: double not null>>>",
+        ),
+        (
+            ogr.wkbMultiLineString,
+            "GEOARROW_INTERLEAVED",
+            "list<linestrings: list<vertices: fixed_size_list<xy: double not null>[2]>>",
+        ),
+        (
+            ogr.wkbMultiPolygon,
+            "GEOARROW_STRUCT",
+            "list<polygons: list<rings: list<vertices: struct<x: double not null, y: double not null>>>>",
+        ),
+        (
+            ogr.wkbMultiPolygon,
+            "GEOARROW_INTERLEAVED",
+            "list<polygons: list<rings: list<vertices: fixed_size_list<xy: double not null>[2]>>>",
+        ),
+    ],
+)
+def test_ogr_arrow_check_geoarrow_types(
+    tmp_path, geom_type, encoding, expected_arrow_type
+):
+    pytest.importorskip("pyarrow")
+    import pyarrow.feather
+
+    filename = str(tmp_path / "out.feather")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    with ogr.GetDriverByName("ARROW").CreateDataSource(filename) as ds:
+        ds.CreateLayer(
+            "test",
+            geom_type=geom_type,
+            srs=srs,
+            options=["GEOMETRY_ENCODING=" + encoding],
+        )
+
+    schema = pyarrow.feather.read_table(filename).schema
+    assert str(schema.field("geometry").type) == expected_arrow_type

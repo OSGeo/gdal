@@ -19,6 +19,7 @@ add_gdal_driver(
           pdfwritabledataset.cpp
           pdfcreatefromcomposition.cpp
   CORE_SOURCES pdfdrivercore.cpp
+  STRONG_CXX_WFLAGS
   PLUGIN_CAPABLE
   NO_SHARED_SYMBOL_WITH_CORE)
 

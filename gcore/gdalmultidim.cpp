@@ -9,23 +9,7 @@
  ******************************************************************************
  * Copyright (c) 2019, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include <assert.h>
@@ -6978,7 +6962,8 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         m_poParent->GetRawNoDataValue() == nullptr &&
         GDALDataTypeIsInteger(m_poParent->GetDataType().GetNumericDataType()))
     {
-        if (bufferDataType == m_dt)  // Byte case
+        const bool bBufferDataTypeIsByte = bufferDataType == m_dt;
+        if (bBufferDataTypeIsByte)  // Byte case
         {
             bool bContiguous = true;
             for (size_t i = 0; i < nDims; i++)
@@ -7015,7 +7000,6 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
         size_t dimIdx = 0;
         const size_t nDimsMinus1 = nDims > 0 ? nDims - 1 : 0;
-        const bool bBufferDataTypeIsByte = bufferDataType == m_dt;
         GByte abyOne[16];  // 16 is sizeof GDT_CFloat64
         CPLAssert(nBufferDTSize <= 16);
         const GByte flag = 1;
@@ -7031,6 +7015,7 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
             while (true)
             {
+                // cppcheck-suppress knownConditionTrueFalse
                 if (bBufferDataTypeIsByte)
                 {
                     *dst_ptr = flag;
@@ -9501,8 +9486,9 @@ lbl_next_depth:
         poDS->SetDerivedDatasetName(osDerivedDatasetName.c_str());
         poDS->TryLoadXML();
 
-        for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(
-                 CSLConstList(poDS->GDALPamDataset::GetMetadata())))
+        for (const auto &[pszKey, pszValue] :
+             cpl::IterateNameValue(static_cast<CSLConstList>(
+                 poDS->GDALPamDataset::GetMetadata())))
         {
             poDS->m_oMDD.SetMetadataItem(pszKey, pszValue);
         }

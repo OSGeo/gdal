@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2012-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef DOXYGEN_SKIP
@@ -78,19 +62,14 @@ OGRUnionLayerGeomFieldDefn::~OGRUnionLayerGeomFieldDefn()
 /*                          OGRUnionLayer()                             */
 /************************************************************************/
 
+// cppcheck-suppress uninitMemberVar
 OGRUnionLayer::OGRUnionLayer(const char *pszName, int nSrcLayersIn,
                              OGRLayer **papoSrcLayersIn,
                              int bTakeLayerOwnership)
     : osName(pszName), nSrcLayers(nSrcLayersIn), papoSrcLayers(papoSrcLayersIn),
-      bHasLayerOwnership(bTakeLayerOwnership), poFeatureDefn(nullptr),
-      nFields(0), papoFields(nullptr), nGeomFields(0), papoGeomFields(nullptr),
-      eFieldStrategy(FIELD_UNION_ALL_LAYERS), bPreserveSrcFID(FALSE),
-      nFeatureCount(-1), iCurLayer(-1), pszAttributeFilter(nullptr),
-      nNextFID(0), panMap(nullptr), bAttrFilterPassThroughValue(-1),
+      bHasLayerOwnership(bTakeLayerOwnership),
       pabModifiedLayers(static_cast<int *>(CPLCalloc(sizeof(int), nSrcLayers))),
-      pabCheckIfAutoWrap(
-          static_cast<int *>(CPLCalloc(sizeof(int), nSrcLayers))),
-      poGlobalSRS(nullptr)
+      pabCheckIfAutoWrap(static_cast<int *>(CPLCalloc(sizeof(int), nSrcLayers)))
 {
     CPLAssert(nSrcLayersIn > 0);
 

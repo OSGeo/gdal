@@ -413,6 +413,11 @@ As an alternative, starting with GDAL 3.6, the
 :config:`GDAL_HTTP_HEADERS` configuration option can also be
 used to specify headers. :config:`CPL_CURL_VERBOSE=YES` allows one to see them and more, when combined with ``--debug``.
 
+Starting with GDAL 3.10, the ``Authorization`` header is no longer automatically
+forwarded when redirections are followed.
+That behavior can be configured by setting the
+:config:`CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT` configuration option.
+
 Starting with GDAL 2.3, the :config:`GDAL_HTTP_MAX_RETRY` (number of attempts) and :config:`GDAL_HTTP_RETRY_DELAY` (in seconds) configuration option can be set, so that request retries are done in case of HTTP errors 429, 502, 503 or 504.
 
 Starting with GDAL 3.6, the following configuration options control the TCP keep-alive functionality (cf https://daniel.haxx.se/blog/2020/02/10/curl-ootw-keepalive-time/ for a detailed explanation):
