@@ -224,6 +224,36 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
     `CMAKE_SKIP_INSTALL_RPATH <https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_RPATH.html>`__
     variable is not set.
 
+Resource files embedding
+++++++++++++++++++++++++
+
+Starting with GDAL 3.11, if a C23-compatible compiler is used, such as
+clang >= 19 or GCC >= 15, it is possible to embed resource files inside
+the GDAL library, without relying on resource files to be available on the file
+system (such resource files are located through an hard-coded
+path at build time in ``${CMAKE_INSTALL_PREFIX}/share/gdal``, or at run-time
+through the :config:`GDAL_DATA` configuration option).
+
+The following CMake options control that behavior:
+
+.. option:: EMBED_RESOURCE_FILES=ON/OFF
+
+    .. versionadded:: 3.11
+
+    Default is OFF for shared library builds (BUILD_SHARED_LIBS=ON), and ON
+    for static library builds (BUILD_SHARED_LIBS=OFF).
+    When ON, resource files needed by GDAL will be embedded into the GDAL library
+    and/or relevant plugins.
+
+.. option:: USE_ONLY_EMBEDDED_RESOURCE_FILES=ON/OFF
+
+    .. versionadded:: 3.11
+
+    Even if EMBED_RESOURCE_FILES=ON, GDAL will still try to locate resource
+    files on the file system by default , and fallback to the embedded version if
+    not found. By setting USE_ONLY_EMBEDDED_RESOURCE_FILES=ON, no attempt
+    at locating resource files on the file system is made. Default is OFF.
+
 CMake package dependent options
 +++++++++++++++++++++++++++++++
 

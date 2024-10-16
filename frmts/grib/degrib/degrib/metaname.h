@@ -46,6 +46,8 @@ void ParseLevelName (unsigned short int center, unsigned short int subcenter,
                      double sndValue, char **shortLevelName,
                      char **longLevelName);
 
+void MetanameCleanup(void);
+
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
