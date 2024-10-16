@@ -7678,6 +7678,8 @@ CPLString PDFSanitizeLayerName(const char *pszName)
         else if (pszName[i] != '"')
             osName += pszName[i];
     }
+    if (osName.empty())
+        osName = "unnamed";
     return osName;
 }
 
