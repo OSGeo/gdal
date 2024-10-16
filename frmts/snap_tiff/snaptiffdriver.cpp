@@ -716,8 +716,11 @@ void GDALRegister_SNAP_TIFF()
                               "Sentinel Application Processing GeoTIFF");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
                               "drivers/raster/snap_tiff.html");
-    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/tiff");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "tif tiff");
+    // Declaring the tif extension confuses QGIS
+    // Cf https://github.com/qgis/QGIS/issues/59112
+    // This driver is of too marginal usage to justify causing chaos downstream.
+    // poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/tiff");
+    // poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "tif tiff");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = SNAPTIFFDataset::Open;
