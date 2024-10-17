@@ -7,11 +7,19 @@ ADBC -- Arrow Database Connectivity
 
 .. shortname:: ADBC
 
-.. build_dependencies:: adbc-driver-manager
+ADBC is a set of APIs and libraries for Arrow-native access to database.
 
-ADBC is a set of APIs and libraries for Arrow-native access to database. This
-driver uses the ``adbc-driver-manager`` library to connect to available ADBC
-drivers, and expose content as classic OGR features, or as a ArrowArrayStream.
+This driver has 2 modes:
+
+- either it has been built against the ``adbc-driver-manager`` library. In that
+  case, it can directly be used to connect to available ADBC drivers, and expose
+  content as classic OGR features, or as a ArrowArrayStream.
+  In that mode the driver metadata exposes the ``HAS_ADBC_DRIVER_MANAGER``
+  metadata item.
+- or it has not, in which case applications embedding GDAL must use
+  :cpp:func:`GDALSetAdbcLoadDriverOverride` as detailed in a below paragraph.
+  Note that use of that function can also be done even if the driver has been built
+  against the ``adbc-driver-manager`` library.
 
 Consult the `installation instruction <https://arrow.apache.org/adbc/current/driver/installation.html>`__
 for the various ADBC drivers. At time of writing, there are drivers for
@@ -79,6 +87,16 @@ through :cpp:func:`GDALDataset::GetLayerByName` (or as the layer name with
 It returns for each table a OGR feature with the following fields (some
 potentially unset or with an empty string): ``catalog_name``, ``schema_name``,
 ``table_name``, ``table_type``.
+
+Custom driver entry point
+-------------------------
+
+A custom driver entry point can be specified by applications by calling
+:cpp:func:`GDALSetAdbcLoadDriverOverride` (defined in header :file:`gdal_adbc.h`)
+before using the driver. The specified init function will be used by the
+GDAL ADBC driver as a way of locating and loading the ADBC driver if GDAL was
+not built with ADBC Driver Manager support or if an embedding application has
+an updated or augmented collection of drivers available.
 
 Examples
 --------

@@ -12,6 +12,7 @@
 
 #include "ogrsf_frmts.h"
 #include "ogradbcdrivercore.h"
+#include "gdal_adbc.h"
 
 /************************************************************************/
 /*                             IsDuckDB()                               */
@@ -55,12 +56,15 @@ bool OGRADBCDriverIsParquet(const GDALOpenInfo *poOpenInfo)
 
 int OGRADBCDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    return (STARTS_WITH(poOpenInfo->pszFilename, "ADBC:") ||
-            OGRADBCDriverIsDuckDB(poOpenInfo) ||
-            OGRADBCDriverIsSQLite3(poOpenInfo) ||
-            OGRADBCDriverIsParquet(poOpenInfo)) &&
-           !STARTS_WITH(poOpenInfo->pszFilename, "/vsi") &&
-           !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "mbtiles");
+    return STARTS_WITH(poOpenInfo->pszFilename, "ADBC:") ||
+           ((OGRADBCDriverIsDuckDB(poOpenInfo) ||
+             OGRADBCDriverIsSQLite3(poOpenInfo) ||
+             OGRADBCDriverIsParquet(poOpenInfo))
+#ifndef OGR_ADBC_HAS_DRIVER_MANAGER
+            && GDALGetAdbcLoadDriverOverride() != nullptr
+#endif
+            && !STARTS_WITH(poOpenInfo->pszFilename, "/vsi") &&
+            !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "mbtiles"));
 }
 
 /************************************************************************/
@@ -88,6 +92,9 @@ void OGRADBCDriverSetCommonMetadata(GDALDriver *poDriver)
         "</OpenOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
                               "NATIVE OGRSQL SQLITE");
+#ifdef OGR_ADBC_HAS_DRIVER_MANAGER
+    poDriver->SetMetadataItem("HAS_ADBC_DRIVER_MANAGER", "YES");
+#endif
 
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->pfnIdentify = OGRADBCDriverIdentify;

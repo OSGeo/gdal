@@ -1,6 +1,7 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 add_library(
   gcore OBJECT
+  gdal_adbc.cpp
   gdalopeninfo.cpp
   gdaldriver.cpp
   gdaldrivermanager.cpp
@@ -194,6 +195,7 @@ target_public_header(
   gdalgeorefpamdataset.h
   gdal_mdreader.h
   gdalsubdatasetinfo.h
+  gdal_adbc.h
 )
 
 set(GDAL_DATA_FILES
