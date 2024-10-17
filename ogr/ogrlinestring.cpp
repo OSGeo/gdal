@@ -395,7 +395,12 @@ bool OGRSimpleCurve::setNumPoints(int nNewPointCount, int bZeroizeNewContent)
         if (nNewPointCount > std::numeric_limits<int>::max() /
                                  static_cast<int>(sizeof(OGRRawPoint)))
         {
-            CPLError(CE_Failure, CPLE_IllegalArg, "Too big point count.");
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Too many points on line/curve (%d points exceeds the "
+                     "limit of %d points)",
+                     nNewPointCount,
+                     std::numeric_limits<int>::max() /
+                         static_cast<int>(sizeof(OGRRawPoint)));
             return false;
         }
 
