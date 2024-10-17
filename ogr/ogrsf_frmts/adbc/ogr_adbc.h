@@ -17,7 +17,7 @@
 #include "ogrsf_frmts.h"
 #include "ogrlayerarrow.h"
 
-#include <arrow-adbc/adbc.h>
+#include "ogr_adbc_internal.h"
 
 /************************************************************************/
 /*                 OGRArrowArrayToOGRFeatureAdapterLayer                */
@@ -138,6 +138,7 @@ class OGRADBCDataset final : public GDALDataset
 {
     friend class OGRADBCLayer;
 
+    AdbcDriver m_driver{};
     AdbcDatabase m_database{};
     std::unique_ptr<AdbcConnection> m_connection{};
     std::vector<std::unique_ptr<OGRLayer>> m_apoLayers{};
@@ -175,12 +176,9 @@ class OGRADBCDataset final : public GDALDataset
 
 struct OGRADBCError
 {
-    AdbcError error{};
+    AdbcError error{ADBC_ERROR_INIT};
 
-    inline OGRADBCError()
-    {
-        memset(&error, 0, sizeof(error));
-    }
+    inline OGRADBCError() = default;
 
     inline ~OGRADBCError()
     {

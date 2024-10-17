@@ -17,7 +17,19 @@ import pytest
 
 from osgeo import gdal, ogr
 
-pytestmark = pytest.mark.require_driver("ADBC")
+
+def _has_adbc_driver_manager():
+    drv = gdal.GetDriverByName("ADBC")
+    return drv and drv.GetMetadataItem("HAS_ADBC_DRIVER_MANAGER")
+
+
+pytestmark = [
+    pytest.mark.require_driver("ADBC"),
+    pytest.mark.skipif(
+        not _has_adbc_driver_manager(),
+        reason="ADBC driver built without AdbcDriverManager",
+    ),
+]
 
 ###############################################################################
 
