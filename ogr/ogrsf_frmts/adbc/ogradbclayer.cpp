@@ -6,12 +6,15 @@
  *
  ******************************************************************************
  * Copyright (c) 2024, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2024, Dewey Dunnington <dewey@voltrondata.com>
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_adbc.h"
 #include "ogr_p.h"
+
+#define ADBC_CALL(func, ...) m_poDS->m_driver.func(__VA_ARGS__)
 
 /************************************************************************/
 /*                            OGRADBCLayer()                            */
@@ -45,7 +48,7 @@ OGRADBCLayer::~OGRADBCLayer()
 {
     OGRADBCError error;
     if (m_statement)
-        AdbcStatementRelease(m_statement.get(), error);
+        ADBC_CALL(StatementRelease, m_statement.get(), error);
     if (m_schema.release)
         m_schema.release(&m_schema);
 }
@@ -173,8 +176,8 @@ bool OGRADBCLayer::GetArrowStreamInternal(struct ArrowArrayStream *out_stream)
 {
     OGRADBCError error;
     int64_t rows_affected = -1;
-    if (AdbcStatementExecuteQuery(m_statement.get(), out_stream, &rows_affected,
-                                  error) != ADBC_STATUS_OK)
+    if (ADBC_CALL(StatementExecuteQuery, m_statement.get(), out_stream,
+                  &rows_affected, error) != ADBC_STATUS_OK)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "AdbcStatementExecuteQuery() failed: %s", error.message());
@@ -254,3 +257,5 @@ GIntBig OGRADBCLayer::GetFeatureCountParquet()
 
     return -1;
 }
+
+#undef ADBC_CALL

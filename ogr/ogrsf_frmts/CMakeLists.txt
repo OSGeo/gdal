@@ -84,6 +84,7 @@ ogr_optional_driver(jml JML)
 ogr_optional_driver(vdv "VDV-451/VDV-452/INTREST Data Format")
 ogr_optional_driver(flatgeobuf FlatGeobuf)
 ogr_optional_driver(mapml MapML)
+ogr_optional_driver(adbc ADBC)
 
 if( NOT WORDS_BIGENDIAN )
     ogr_optional_driver(miramon "MiraMonVector")
@@ -113,7 +114,6 @@ ogr_dependent_driver(oapif "OGC API Features service" "GDAL_USE_CURL")
 ogr_dependent_driver(ngw "NextGIS Web" "GDAL_USE_CURL")
 ogr_dependent_driver(elastic "ElasticSearch" "GDAL_USE_CURL")
 ogr_dependent_driver(xodr OpenDRIVE "GDAL_USE_OPENDRIVE;GDAL_USE_GEOS")
-ogr_dependent_driver(adbc ADBC "GDAL_USE_ADBCDRIVERMANAGER")
 
 ogr_dependent_driver(idrisi IDRISI "GDAL_ENABLE_DRIVER_IDRISI")
 
