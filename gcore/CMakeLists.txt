@@ -194,6 +194,7 @@ target_public_header(
   gdalgeorefpamdataset.h
   gdal_mdreader.h
   gdalsubdatasetinfo.h
+  gdal_typetraits.h
 )
 
 set(GDAL_DATA_FILES
