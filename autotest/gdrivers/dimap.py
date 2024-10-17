@@ -233,6 +233,14 @@ def test_dimap_2_vhr2020_ms_fs():
         "Red Edge",
         "Deep Blue",
     ]
+    assert [ds.GetRasterBand(i + 1).GetColorInterpretation() for i in range(6)] == [
+        gdal.GCI_RedBand,
+        gdal.GCI_GreenBand,
+        gdal.GCI_BlueBand,
+        gdal.GCI_NIRBand,
+        gdal.GCI_RedEdgeBand,
+        gdal.GCI_CoastalBand,
+    ]
     rgb_ds = gdal.Open("data/dimap2/vhr2020_ms_fs/MS-FS/IMG_RGB_R1C1.TIF")
     ned_ds = gdal.Open("data/dimap2/vhr2020_ms_fs/MS-FS/IMG_NED_R1C1.TIF")
     assert ds.ReadRaster() == rgb_ds.ReadRaster() + ned_ds.ReadRaster()
