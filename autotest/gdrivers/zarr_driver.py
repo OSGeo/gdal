@@ -16,6 +16,7 @@ import array
 import base64
 import json
 import math
+import os
 import struct
 import sys
 
@@ -5532,7 +5533,7 @@ def test_zarr_read_cf1_zarrv3():
 @gdaltest.enable_exceptions()
 def test_zarr_write_partial_blocks_compressed(tmp_vsimem):
 
-    out_filename = "/vsimem/test.zarr"
+    out_filename = str(tmp_vsimem / "test.zarr")
     src_ds = gdal.Open("data/small_world.tif")
     gdal.Translate(
         out_filename,
@@ -5541,3 +5542,45 @@ def test_zarr_write_partial_blocks_compressed(tmp_vsimem):
     )
     out_ds = gdal.Open(out_filename)
     assert out_ds.ReadRaster() == src_ds.ReadRaster()
+
+
+###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/issues/11023
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_write_cleanup_create_dir_if_bad_blocksize(tmp_path, format):
+
+    out_dirname = str(tmp_path / "test.zarr")
+    with pytest.raises(Exception):
+        gdal.Translate(
+            out_dirname,
+            "data/byte.tif",
+            options=f"-of ZARR -co FORMAT={format} -co BLOCKSIZE=1,20,20",
+        )
+    assert not os.path.exists(out_dirname)
+
+
+###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/issues/11023
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_write_cleanup_create_dir_if_bad_blocksize_append_subdataset(
+    tmp_path, format
+):
+
+    out_dirname = str(tmp_path / "test.zarr")
+    gdal.Translate(out_dirname, "data/byte.tif", format="ZARR")
+    assert os.path.exists(out_dirname)
+    with pytest.raises(Exception):
+        gdal.Translate(
+            out_dirname,
+            "data/utm.tif",
+            options=f"-of ZARR -co APPEND_SUBDATASET=YES -co FORMAT={format} -co ARRAY_NAME=other -co BLOCKSIZE=1,20,20",
+        )
+    assert os.path.exists(out_dirname)
+    ds = gdal.Open(out_dirname)
+    assert ds.GetRasterBand(1).Checksum() == 4672
