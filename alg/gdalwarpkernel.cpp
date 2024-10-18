@@ -3838,13 +3838,15 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
     const double dfYScale = poWK->dfYScale;
 
     // Space for saved X weights.
-    double *padfWeightsX = psWrkStruct->padfWeightsX;
-    double *padfWeightsY = psWrkStruct->padfWeightsY;
+    double *const padfWeightsXShifted =
+        psWrkStruct->padfWeightsX - poWK->nFiltInitX;
+    double *const padfWeightsYShifted =
+        psWrkStruct->padfWeightsY - poWK->nFiltInitY;
 
     // Space for saving a row of pixels.
-    double *padfRowDensity = psWrkStruct->padfRowDensity;
-    double *padfRowReal = psWrkStruct->padfRowReal;
-    double *padfRowImag = psWrkStruct->padfRowImag;
+    double *const padfRowDensity = psWrkStruct->padfRowDensity;
+    double *const padfRowReal = psWrkStruct->padfRowReal;
+    double *const padfRowImag = psWrkStruct->padfRowImag;
 
     // Skip sampling over edge of image.
     int jMin = poWK->nFiltInitY;
@@ -3873,7 +3875,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
         Naive version:
         for (int i = iMin; i <= iMax; ++i)
         {
-            psWrkStruct->padfWeightsX[i - poWK->nFiltInitX] =
+            psWrkStruct->padfWeightsXShifted[i] =
                 GWKLanczosSinc((i - dfDeltaX) * dfXScale);
         }
 
@@ -3918,7 +3920,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
             const double dfSinPiXScaleOver3 = psWrkStruct->dfSinPiXScaleOver3;
             const double dfCosPiXScale = psWrkStruct->dfCosPiXScale;
             const double dfSinPiXScale = psWrkStruct->dfSinPiXScale;
-            psWrkStruct->padfWeightsX[iMin - poWK->nFiltInitX] =
+            padfWeightsXShifted[iMin] =
                 dfX == 0 ? 1.0 : dfSin * dfSinOver3 / (dfPIX * dfPIXover3);
             for (int i = iMin + 1; i <= iMax; ++i)
             {
@@ -3928,7 +3930,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
                     dfSin * dfCosPiXScale + dfCos * dfSinPiXScale;
                 const double dfNewSinOver3 = dfSinOver3 * dfCosPiXScaleOver3 +
                                              dfCosOver3 * dfSinPiXScaleOver3;
-                psWrkStruct->padfWeightsX[i - poWK->nFiltInitX] =
+                padfWeightsXShifted[i] =
                     dfX == 0 ? 1.0
                              : dfNewSin * dfNewSinOver3 / (dfPIX * dfPIX / 3);
                 const double dfNewCos =
@@ -3998,10 +4000,9 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
             {
                 const double dfX = i - dfDeltaX;
                 if (dfX == 0.0)
-                    padfWeightsX[i - poWK->nFiltInitX] = 1.0;
+                    padfWeightsXShifted[i] = 1.0;
                 else
-                    padfWeightsX[i - poWK->nFiltInitX] =
-                        padfCst[(i + 3) % 3] / (dfX * dfX);
+                    padfWeightsXShifted[i] = padfCst[(i + 3) % 3] / (dfX * dfX);
 #if DEBUG_VERBOSE
                     // TODO(schwehr): AlmostEqual.
                     // CPLAssert(fabs(padfWeightsX[i-poWK->nFiltInitX] -
@@ -4026,7 +4027,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
         Naive version:
         for (int j = jMin; j <= jMax; ++j)
         {
-            psWrkStruct->padfWeightsY[j - poWK->nFiltInitY] =
+            padfWeightsYShifted[j] =
                 GWKLanczosSinc((j - dfDeltaY) * dfYScale);
         }
         */
@@ -4054,7 +4055,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
             const double dfSinPiYScaleOver3 = psWrkStruct->dfSinPiYScaleOver3;
             const double dfCosPiYScale = psWrkStruct->dfCosPiYScale;
             const double dfSinPiYScale = psWrkStruct->dfSinPiYScale;
-            psWrkStruct->padfWeightsY[jMin - poWK->nFiltInitY] =
+            padfWeightsYShifted[jMin] =
                 dfY == 0 ? 1.0 : dfSin * dfSinOver3 / (dfPIY * dfPIYover3);
             for (int j = jMin + 1; j <= iMax; ++j)
             {
@@ -4064,7 +4065,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
                     dfSin * dfCosPiYScale + dfCos * dfSinPiYScale;
                 const double dfNewSinOver3 = dfSinOver3 * dfCosPiYScaleOver3 +
                                              dfCosOver3 * dfSinPiYScaleOver3;
-                psWrkStruct->padfWeightsY[j - poWK->nFiltInitY] =
+                padfWeightsYShifted[j] =
                     dfY == 0 ? 1.0
                              : dfNewSin * dfNewSinOver3 / (dfPIY * dfPIY / 3);
                 const double dfNewCos =
@@ -4117,13 +4118,12 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
             {
                 const double dfY = j - dfDeltaY;
                 if (dfY == 0.0)
-                    padfWeightsY[j - poWK->nFiltInitY] = 1.0;
+                    padfWeightsYShifted[j] = 1.0;
                 else
-                    padfWeightsY[j - poWK->nFiltInitY] =
-                        padfCst[(j + 3) % 3] / (dfY * dfY);
+                    padfWeightsYShifted[j] = padfCst[(j + 3) % 3] / (dfY * dfY);
 #if DEBUG_VERBOSE
                     // TODO(schwehr): AlmostEqual.
-                    // CPLAssert(fabs(padfWeightsY[j-poWK->nFiltInitY] -
+                    // CPLAssert(fabs(padfWeightsYShifted[j] -
                     //               GWKLanczosSinc(dfY, 3.0)) < 1e-10);
 #endif
             }
@@ -4133,9 +4133,6 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
         }
     }
 
-    GPtrDiff_t iRowOffset =
-        iSrcOffset + static_cast<GPtrDiff_t>(jMin - 1) * nSrcXSize + iMin;
-
     // If we have no density information, we can simply compute the
     // accumulated weight.
     if (padfRowDensity == nullptr)
@@ -4143,20 +4140,128 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
         double dfRowAccWeight = 0.0;
         for (int i = iMin; i <= iMax; ++i)
         {
-            dfRowAccWeight += padfWeightsX[i - poWK->nFiltInitX];
+            dfRowAccWeight += padfWeightsXShifted[i];
         }
         double dfColAccWeight = 0.0;
         for (int j = jMin; j <= jMax; ++j)
         {
-            dfColAccWeight += padfWeightsY[j - poWK->nFiltInitY];
+            dfColAccWeight += padfWeightsYShifted[j];
         }
         dfAccumulatorWeight = dfRowAccWeight * dfColAccWeight;
     }
 
+    // Loop over pixel rows in the kernel.
+
+    if (poWK->eWorkingDataType == GDT_Byte && !poWK->panUnifiedSrcValid &&
+        !poWK->papanBandSrcValid && !poWK->pafUnifiedSrcDensity &&
+        !padfRowDensity)
+    {
+        // Optimization for Byte case without any masking/alpha
+
+        if (dfAccumulatorWeight < 0.000001)
+        {
+            *pdfDensity = 0.0;
+            return false;
+        }
+
+        const GByte *pSrc =
+            reinterpret_cast<const GByte *>(poWK->papabySrcImage[iBand]);
+        pSrc += iSrcOffset + static_cast<GPtrDiff_t>(jMin) * nSrcXSize;
+
+#if defined(__x86_64) || defined(_M_X64)
+        if (iMax - iMin + 1 == 6)
+        {
+            // This is just an optimized version of the general case in
+            // the else clause.
+
+            pSrc += iMin;
+            int j = jMin;
+            const auto fourXWeights =
+                XMMReg4Double::Load4Val(padfWeightsXShifted + iMin);
+
+            // Process 2 lines at the same time.
+            for (; j < jMax; j += 2)
+            {
+                const XMMReg4Double v_acc =
+                    XMMReg4Double::Load4Val(pSrc) * fourXWeights;
+                const XMMReg4Double v_acc2 =
+                    XMMReg4Double::Load4Val(pSrc + nSrcXSize) * fourXWeights;
+                const double dfRowAcc = v_acc.GetHorizSum();
+                const double dfRowAccEnd =
+                    pSrc[4] * padfWeightsXShifted[iMin + 4] +
+                    pSrc[5] * padfWeightsXShifted[iMin + 5];
+                dfAccumulatorReal +=
+                    (dfRowAcc + dfRowAccEnd) * padfWeightsYShifted[j];
+                const double dfRowAcc2 = v_acc2.GetHorizSum();
+                const double dfRowAcc2End =
+                    pSrc[nSrcXSize + 4] * padfWeightsXShifted[iMin + 4] +
+                    pSrc[nSrcXSize + 5] * padfWeightsXShifted[iMin + 5];
+                dfAccumulatorReal +=
+                    (dfRowAcc2 + dfRowAcc2End) * padfWeightsYShifted[j + 1];
+                pSrc += 2 * nSrcXSize;
+            }
+            if (j == jMax)
+            {
+                // Process last line if there's an odd number of them.
+
+                const XMMReg4Double v_acc =
+                    XMMReg4Double::Load4Val(pSrc) * fourXWeights;
+                const double dfRowAcc = v_acc.GetHorizSum();
+                const double dfRowAccEnd =
+                    pSrc[4] * padfWeightsXShifted[iMin + 4] +
+                    pSrc[5] * padfWeightsXShifted[iMin + 5];
+                dfAccumulatorReal +=
+                    (dfRowAcc + dfRowAccEnd) * padfWeightsYShifted[j];
+            }
+        }
+        else
+#endif
+        {
+            for (int j = jMin; j <= jMax; ++j)
+            {
+                int i = iMin;
+                double dfRowAcc1 = 0.0;
+                double dfRowAcc2 = 0.0;
+                // A bit of loop unrolling
+                for (; i < iMax; i += 2)
+                {
+                    dfRowAcc1 += pSrc[i] * padfWeightsXShifted[i];
+                    dfRowAcc2 += pSrc[i + 1] * padfWeightsXShifted[i + 1];
+                }
+                if (i == iMax)
+                {
+                    // Process last column if there's an odd number of them.
+                    dfRowAcc1 += pSrc[i] * padfWeightsXShifted[i];
+                }
+
+                dfAccumulatorReal +=
+                    (dfRowAcc1 + dfRowAcc2) * padfWeightsYShifted[j];
+                pSrc += nSrcXSize;
+            }
+        }
+
+        // Calculate the output taking into account weighting.
+        if (dfAccumulatorWeight < 0.99999 || dfAccumulatorWeight > 1.00001)
+        {
+            const double dfInvAcc = 1.0 / dfAccumulatorWeight;
+            *pdfReal = dfAccumulatorReal * dfInvAcc;
+            *pdfDensity = 1.0;
+        }
+        else
+        {
+            *pdfReal = dfAccumulatorReal;
+            *pdfDensity = 1.0;
+        }
+
+        return true;
+    }
+
+    GPtrDiff_t iRowOffset =
+        iSrcOffset + static_cast<GPtrDiff_t>(jMin - 1) * nSrcXSize + iMin;
+
+    int nCountValid = 0;
     const bool bIsNonComplex = !GDALDataTypeIsComplex(poWK->eWorkingDataType);
 
-    // Loop over pixel rows in the kernel.
-    int nCountValid = 0;
     for (int j = jMin; j <= jMax; ++j)
     {
         iRowOffset += nSrcXSize;
@@ -4170,7 +4275,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
                             padfRowDensity, padfRowReal, padfRowImag))
             continue;
 
-        const double dfWeight1 = padfWeightsY[j - poWK->nFiltInitY];
+        const double dfWeight1 = padfWeightsYShifted[j];
 
         // Iterate over pixels in row.
         if (padfRowDensity != nullptr)
@@ -4184,8 +4289,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
                 nCountValid++;
 
                 //  Use a cached set of weights for this row.
-                const double dfWeight2 =
-                    dfWeight1 * padfWeightsX[i - poWK->nFiltInitX];
+                const double dfWeight2 = dfWeight1 * padfWeightsXShifted[i];
 
                 // Accumulate!
                 dfAccumulatorReal += padfRowReal[i - iMin] * dfWeight2;
@@ -4199,7 +4303,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
             double dfRowAccReal = 0.0;
             for (int i = iMin; i <= iMax; ++i)
             {
-                const double dfWeight2 = padfWeightsX[i - poWK->nFiltInitX];
+                const double dfWeight2 = padfWeightsXShifted[i];
 
                 // Accumulate!
                 dfRowAccReal += padfRowReal[i - iMin] * dfWeight2;
@@ -4213,7 +4317,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
             double dfRowAccImag = 0.0;
             for (int i = iMin; i <= iMax; ++i)
             {
-                const double dfWeight2 = padfWeightsX[i - poWK->nFiltInitX];
+                const double dfWeight2 = padfWeightsXShifted[i];
 
                 // Accumulate!
                 dfRowAccReal += padfRowReal[i - iMin] * dfWeight2;
