@@ -3309,7 +3309,13 @@ static double GWKLanczosSinc(double dfX)
     const double dfPIX = M_PI * dfX;
     const double dfPIXoverR = dfPIX / 3;
     const double dfPIX2overR = dfPIX * dfPIXoverR;
-    return sin(dfPIX) * sin(dfPIXoverR) / dfPIX2overR;
+    // Given that sin(3x) = 3 sin(x) - 4 sin^3 (x)
+    // we can compute sin(dfSinPIX) from sin(dfPIXoverR)
+    const double dfSinPIXoverR = sin(dfPIXoverR);
+    const double dfSinPIXoverRSquared = dfSinPIXoverR * dfSinPIXoverR;
+    const double dfSinPIXMulSinPIXoverR =
+        (3 - 4 * dfSinPIXoverRSquared) * dfSinPIXoverRSquared;
+    return dfSinPIXMulSinPIXoverR / dfPIX2overR;
 }
 
 static double GWKLanczosSinc4Values(double *padfValues)
@@ -3325,7 +3331,13 @@ static double GWKLanczosSinc4Values(double *padfValues)
             const double dfPIX = M_PI * padfValues[i];
             const double dfPIXoverR = dfPIX / 3;
             const double dfPIX2overR = dfPIX * dfPIXoverR;
-            padfValues[i] = sin(dfPIX) * sin(dfPIXoverR) / dfPIX2overR;
+            // Given that sin(3x) = 3 sin(x) - 4 sin^3 (x)
+            // we can compute sin(dfSinPIX) from sin(dfPIXoverR)
+            const double dfSinPIXoverR = sin(dfPIXoverR);
+            const double dfSinPIXoverRSquared = dfSinPIXoverR * dfSinPIXoverR;
+            const double dfSinPIXMulSinPIXoverR =
+                (3 - 4 * dfSinPIXoverRSquared) * dfSinPIXoverRSquared;
+            padfValues[i] = dfSinPIXMulSinPIXoverR / dfPIX2overR;
         }
     }
     return padfValues[0] + padfValues[1] + padfValues[2] + padfValues[3];
