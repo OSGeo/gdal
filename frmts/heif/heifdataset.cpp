@@ -717,8 +717,9 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (int x = 0; x < nBlockXSize; x++)
             {
-                (static_cast<GByte *>(pImage))[y * nBlockXSize + x] =
-                    pSrcData[y * nStride + x * nBands + nBand - 1];
+                size_t srcIndex = y * nStride + x * nBands + nBand - 1;
+                size_t outIndex = static_cast<size_t>(y) * nBlockXSize + x;
+                (static_cast<GByte *>(pImage))[outIndex] = pSrcData[srcIndex];
             }
         }
     }
@@ -728,9 +729,11 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (int x = 0; x < nBlockXSize; x++)
             {
-                (static_cast<GUInt16 *>(pImage))[y * nBlockXSize + x] =
-                    (reinterpret_cast<const GUInt16 *>(
-                        pSrcData))[y * nStride + x * nBands + nBand - 1];
+                size_t srcIndex =
+                    static_cast<size_t>(y) * nStride + x * nBands + nBand - 1;
+                size_t outIndex = static_cast<size_t>(y) * nBlockXSize + x;
+                (static_cast<GUInt16 *>(pImage))[outIndex] =
+                    (reinterpret_cast<const GUInt16 *>(pSrcData))[srcIndex];
             }
         }
     }
