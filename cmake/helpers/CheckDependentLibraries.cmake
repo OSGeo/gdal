@@ -462,8 +462,7 @@ check_cxx_source_compiles(
     LIBHEIF_SUPPORTS_TILES
 )
 if (LIBHEIF_SUPPORTS_TILES)
-    set(LIBHEIF_SUPPORTS_TILES 1)
-    add_definitions(-DLIBHEIF_SUPPORTS_TILES)
+  set_property(TARGET HEIF::HEIF APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "LIBHEIF_SUPPORTS_TILES")
 endif ()
 
 include(CheckDependentLibrariesAVIF)
