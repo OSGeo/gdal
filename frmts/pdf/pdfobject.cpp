@@ -100,9 +100,9 @@ static std::string GDALPDFGetUTF8StringFromBytes(const GByte *pabySrc,
                                                  size_t nLen)
 {
     const bool bLEUnicodeMarker =
-        nLen > 2 && pabySrc[0] == 0xFE && pabySrc[1] == 0xFF;
+        nLen >= 2 && pabySrc[0] == 0xFE && pabySrc[1] == 0xFF;
     const bool bBEUnicodeMarker =
-        nLen > 2 && pabySrc[0] == 0xFF && pabySrc[1] == 0xFE;
+        nLen >= 2 && pabySrc[0] == 0xFF && pabySrc[1] == 0xFE;
     if (!bLEUnicodeMarker && !bBEUnicodeMarker)
     {
         std::string osStr;
@@ -1126,10 +1126,10 @@ const std::string &GDALPDFObjectPoppler::GetString()
         const GooString *gooString = m_po->getString();
         const std::string &osStdStr = gooString->toStr();
         const bool bLEUnicodeMarker =
-            osStdStr.size() > 2 && static_cast<uint8_t>(osStdStr[0]) == 0xFE &&
+            osStdStr.size() >= 2 && static_cast<uint8_t>(osStdStr[0]) == 0xFE &&
             static_cast<uint8_t>(osStdStr[1]) == 0xFF;
         const bool bBEUnicodeMarker =
-            osStdStr.size() > 2 && static_cast<uint8_t>(osStdStr[0]) == 0xFF &&
+            osStdStr.size() >= 2 && static_cast<uint8_t>(osStdStr[0]) == 0xFF &&
             static_cast<uint8_t>(osStdStr[1]) == 0xFE;
         if (!bLEUnicodeMarker && !bBEUnicodeMarker)
         {
