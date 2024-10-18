@@ -3154,7 +3154,7 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
 
     char **papszTO = CSLSetNameValue(nullptr, "DST_SRS", SRS_EPSG_3857);
 
-    void *hTransformArg = nullptr;
+    GDALTransformerArg hTransformArg = nullptr;
 
     // Hack to compensate for GDALSuggestedWarpOutput2() failure (or not
     // ideal suggestion with PROJ 8) when reprojecting latitude = +/- 90 to

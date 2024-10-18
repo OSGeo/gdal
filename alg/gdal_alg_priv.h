@@ -159,9 +159,10 @@ constexpr const char *GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME =
     "GDALGenImgProjTransformer";
 constexpr const char *GDAL_RPC_TRANSFORMER_CLASS_NAME = "GDALRPCTransformer";
 
-bool GDALIsTransformer(void *hTransformerArg, const char *pszClassName);
+bool GDALIsTransformer(GDALTransformerArg hTransformerArg,
+                       const char *pszClassName);
 
-typedef void *(*GDALTransformDeserializeFunc)(CPLXMLNode *psTree);
+typedef GDALTransformerArg (*GDALTransformDeserializeFunc)(CPLXMLNode *psTree);
 
 void CPL_DLL *GDALRegisterTransformDeserializer(
     const char *pszTransformName, GDALTransformerFunc pfnTransformerFunc,
@@ -172,26 +173,29 @@ void GDALCleanupTransformDeserializerMutex();
 
 /* Transformer cloning */
 
-void *GDALCreateTPSTransformerInt(int nGCPCount, const GDAL_GCP *pasGCPList,
-                                  int bReversed, char **papszOptions);
+GDALTransformerArg GDALCreateTPSTransformerInt(int nGCPCount,
+                                               const GDAL_GCP *pasGCPList,
+                                               int bReversed,
+                                               char **papszOptions);
 
-void CPL_DLL *GDALCloneTransformer(void *pTransformerArg);
+GDALTransformerArg CPL_DLL
+GDALCloneTransformer(GDALTransformerArg pTransformerArg);
 
-void GDALRefreshGenImgProjTransformer(void *hTransformArg);
-void GDALRefreshApproxTransformer(void *hTransformArg);
+void GDALRefreshGenImgProjTransformer(GDALTransformerArg hTransformArg);
+void GDALRefreshApproxTransformer(GDALTransformerArg hTransformArg);
 
-int GDALTransformLonLatToDestGenImgProjTransformer(void *hTransformArg,
-                                                   double *pdfX, double *pdfY);
-int GDALTransformLonLatToDestApproxTransformer(void *hTransformArg,
+int GDALTransformLonLatToDestGenImgProjTransformer(
+    GDALTransformerArg hTransformArg, double *pdfX, double *pdfY);
+int GDALTransformLonLatToDestApproxTransformer(GDALTransformerArg hTransformArg,
                                                double *pdfX, double *pdfY);
 
 bool GDALTransformIsTranslationOnPixelBoundaries(
-    GDALTransformerFunc pfnTransformer, void *pTransformerArg);
+    GDALTransformerFunc pfnTransformer, GDALTransformerArg pTransformerArg);
 
 bool GDALTransformIsAffineNoRotation(GDALTransformerFunc pfnTransformer,
-                                     void *pTransformerArg);
+                                     GDALTransformerArg pTransformerArg);
 
-bool GDALTransformHasFastClone(void *pTransformerArg);
+bool GDALTransformHasFastClone(GDALTransformerArg pTransformerArg);
 
 typedef struct _CPLQuadTree CPLQuadTree;
 
@@ -287,16 +291,16 @@ typedef struct
     double adfSrcGeoTransform[6];
     double adfSrcInvGeoTransform[6];
 
-    void *pSrcTransformArg;
+    GDALTransformerArg pSrcTransformArg;
     GDALTransformerFunc pSrcTransformer;
 
-    void *pReprojectArg;
+    GDALTransformerArg pReprojectArg;
     GDALTransformerFunc pReproject;
 
     double adfDstGeoTransform[6];
     double adfDstInvGeoTransform[6];
 
-    void *pDstTransformArg;
+    GDALTransformerArg pDstTransformArg;
     GDALTransformerFunc pDstTransformer;
 
     // Memorize the value of the CHECK_WITH_INVERT_PROJ at the time we
@@ -376,10 +380,9 @@ CPLStringList GDALCreateGeolocationMetadata(GDALDatasetH hBaseDS,
                                             const char *pszGeolocationDataset,
                                             bool bIsSource);
 
-void *GDALCreateGeoLocTransformerEx(GDALDatasetH hBaseDS,
-                                    CSLConstList papszGeolocationInfo,
-                                    int bReversed, const char *pszSourceDataset,
-                                    CSLConstList papszTransformOptions);
+GDALTransformerArg GDALCreateGeoLocTransformerEx(
+    GDALDatasetH hBaseDS, CSLConstList papszGeolocationInfo, int bReversed,
+    const char *pszSourceDataset, CSLConstList papszTransformOptions);
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

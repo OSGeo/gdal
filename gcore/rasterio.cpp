@@ -952,12 +952,12 @@ struct GDALRasterIOTransformerStruct
     double dfYRatioDstToSrc;
 };
 
-static int GDALRasterIOTransformer(void *pTransformerArg, int bDstToSrc,
-                                   int nPointCount, double *x, double *y,
-                                   double * /* z */, int *panSuccess)
+static int GDALRasterIOTransformer(GDALTransformerArg pTransformerArg,
+                                   int bDstToSrc, int nPointCount, double *x,
+                                   double *y, double * /* z */, int *panSuccess)
 {
     GDALRasterIOTransformerStruct *psParams =
-        static_cast<GDALRasterIOTransformerStruct *>(pTransformerArg);
+        reinterpret_cast<GDALRasterIOTransformerStruct *>(pTransformerArg);
     if (bDstToSrc)
     {
         for (int i = 0; i < nPointCount; i++)
@@ -1170,7 +1170,8 @@ CPLErr GDALRasterBand::RasterIOResampled(
         sTransformer.dfYOff = bHasYOffVirtual ? 0 : dfYOff;
         sTransformer.dfXRatioDstToSrc = dfXRatioDstToSrc;
         sTransformer.dfYRatioDstToSrc = dfYRatioDstToSrc;
-        psWarpOptions->pTransformerArg = &sTransformer;
+        psWarpOptions->pTransformerArg =
+            reinterpret_cast<GDALTransformerArg>(&sTransformer);
 
         GDALWarpOperationH hWarpOperation =
             GDALCreateWarpOperation(psWarpOptions);
