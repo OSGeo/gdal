@@ -2382,8 +2382,9 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
     OGRPDFLayer *poSingleLayer = nullptr;
     if (m_apoLayers.empty())
     {
-        if (CPLTestBool(
-                CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", "NO")))
+        const char *pszReadNonStructured =
+            CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", nullptr);
+        if (pszReadNonStructured && CPLTestBool(pszReadNonStructured))
         {
             auto poLayer = std::make_unique<OGRPDFLayer>(this, "content",
                                                          nullptr, wkbUnknown);
@@ -2392,6 +2393,15 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
         }
         else
         {
+            if (!pszReadNonStructured)
+            {
+                CPLDebug(
+                    "PDF",
+                    "No structured content nor PDF layers detected, hence "
+                    "vector content detection is disabled. You may force "
+                    "vector content detection by setting the "
+                    "OGR_PDF_READ_NON_STRUCTURED configuration option to YES");
+            }
             return;
         }
     }
