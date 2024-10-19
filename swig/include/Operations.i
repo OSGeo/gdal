@@ -230,7 +230,7 @@ int  RasterizeLayer( GDALDatasetShadow *dataset,
                  int bands, int *band_list,
                  OGRLayerShadow *layer,
                  void *pfnTransformer = NULL,
-                 void *pTransformArg = NULL,
+                 GDALTransformerArg pTransformArg = NULL,
 		 int burn_values = 0, double *burn_values_list = NULL,
                  char **options = NULL,
                  GDALProgressFunc callback=NULL,
@@ -729,7 +729,7 @@ public:
 #endif
 
   ~GDALTransformerInfoShadow() {
-    GDALDestroyTransformer( self );
+    GDALDestroyTransformer( (GDALTransformerArg)self );
   }
 
 // Need to apply argin typemap second so the numinputs=1 version gets applied
@@ -743,7 +743,7 @@ public:
   int TransformPoint( int bDstToSrc, double inout[3] ) {
     int nRet, nSuccess = TRUE;
 
-    nRet = GDALUseTransformer( self, bDstToSrc,
+    nRet = GDALUseTransformer( (GDALTransformerArg)self, bDstToSrc,
                                1, &inout[0], &inout[1], &inout[2],
                                &nSuccess );
 
@@ -758,7 +758,7 @@ public:
     argout[0] = x;
     argout[1] = y;
     argout[2] = z;
-    nRet = GDALUseTransformer( self, bDstToSrc,
+    nRet = GDALUseTransformer( (GDALTransformerArg)self, bDstToSrc,
                                1, &argout[0], &argout[1], &argout[2],
                                &nSuccess );
 
@@ -774,7 +774,7 @@ public:
                        int *panSuccess ) {
     int nRet;
 
-    nRet = GDALUseTransformer( self, bDstToSrc, nCount, x, y, z, panSuccess );
+    nRet = GDALUseTransformer( (GDALTransformerArg)self, bDstToSrc, nCount, x, y, z, panSuccess );
 
     return nRet;
   }
@@ -803,7 +803,7 @@ public:
     CPLErrorReset();
 
     return GDALTransformGeolocations( xBand, yBand, zBand,
-                                      GDALUseTransformer, self,
+                                      GDALUseTransformer, (GDALTransformerArg)self,
                             	      callback, callback_data, options );
   }
 %clear GDALRasterBandShadow *xBand, GDALRasterBandShadow *yBand, GDALRasterBandShadow *zBand;
@@ -883,7 +883,7 @@ struct SuggestedWarpOutputRes
   {
     SuggestedWarpOutputRes* res = (SuggestedWarpOutputRes*)CPLMalloc(sizeof(SuggestedWarpOutputRes));
     double extent[4];
-    if( GDALSuggestedWarpOutput2(src, GDALGenImgProjTransform, transformer,
+    if( GDALSuggestedWarpOutput2(src, GDALGenImgProjTransform, (GDALTransformerArg)transformer,
                                  res->geotransform,&(res->width), &(res->height),
                                  extent, 0) != CE_None )
     {
@@ -914,7 +914,7 @@ struct SuggestedWarpOutputRes
   {
     SuggestedWarpOutputRes* res = (SuggestedWarpOutputRes*)CPLMalloc(sizeof(SuggestedWarpOutputRes));
     double extent[4];
-    void* pTransformArg = GDALCreateGenImgProjTransformer2( src, NULL, options );
+    GDALTransformerArg pTransformArg = GDALCreateGenImgProjTransformer2( src, NULL, options );
     if( GDALSuggestedWarpOutput2(src, GDALGenImgProjTransform, pTransformArg,
                                  res->geotransform,&(res->width), &(res->height),
                                  extent, 0) != CE_None )

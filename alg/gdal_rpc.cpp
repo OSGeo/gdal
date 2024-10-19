@@ -47,8 +47,8 @@
 // #define DEBUG_VERBOSE_EXTRACT_DEM
 
 CPL_C_START
-CPLXMLNode *GDALSerializeRPCTransformer(void *pTransformArg);
-void *GDALDeserializeRPCTransformer(CPLXMLNode *psTree);
+CPLXMLNode *GDALSerializeRPCTransformer(GDALTransformerArg pTransformArg);
+GDALTransformerArg GDALDeserializeRPCTransformer(const CPLXMLNode *psTree);
 CPL_C_END
 
 constexpr int MAX_ABS_VALUE_WARNINGS = 20;
@@ -278,6 +278,11 @@ typedef struct
 
 static bool GDALRPCOpenDEM(GDALRPCTransformInfo *psTransform);
 
+static void GDALDestroyRPCTransformer(GDALRPCTransformInfo *psInfo)
+{
+    GDALDestroyRPCTransformer(reinterpret_cast<GDALTransformerArg>(psInfo));
+}
+
 /************************************************************************/
 /*                            RPCEvaluate()                             */
 /************************************************************************/
@@ -479,14 +484,15 @@ static const char *GDALSerializeRPCDEMResample(DEMResampleAlg eResampleAlg)
 /*                   GDALCreateSimilarRPCTransformer()                  */
 /************************************************************************/
 
-static void *GDALCreateSimilarRPCTransformer(void *hTransformArg,
-                                             double dfRatioX, double dfRatioY)
+static GDALTransformerArg
+GDALCreateSimilarRPCTransformer(GDALTransformerArg hTransformArg,
+                                double dfRatioX, double dfRatioY)
 {
     VALIDATE_POINTER1(hTransformArg, "GDALCreateSimilarRPCTransformer",
                       nullptr);
 
     GDALRPCTransformInfo *psInfo =
-        static_cast<GDALRPCTransformInfo *>(hTransformArg);
+        reinterpret_cast<GDALRPCTransformInfo *>(hTransformArg);
 
     GDALRPCInfoV2 sRPC;
     memcpy(&sRPC, &(psInfo->sRPC), sizeof(GDALRPCInfoV2));
@@ -522,9 +528,8 @@ static void *GDALCreateSimilarRPCTransformer(void *hTransformArg,
     papszOptions = CSLSetNameValue(papszOptions, "RPC_MAX_ITERATIONS",
                                    CPLSPrintf("%d", psInfo->nMaxIterations));
 
-    GDALRPCTransformInfo *psNewInfo =
-        static_cast<GDALRPCTransformInfo *>(GDALCreateRPCTransformerV2(
-            &sRPC, psInfo->bReversed, psInfo->dfPixErrThreshold, papszOptions));
+    auto psNewInfo = GDALCreateRPCTransformerV2(
+        &sRPC, psInfo->bReversed, psInfo->dfPixErrThreshold, papszOptions);
     CSLDestroy(papszOptions);
 
     return psNewInfo;
@@ -630,8 +635,10 @@ static bool GDALRPCGetHeightAtLongLat(GDALRPCTransformInfo *psTransform,
 /*                      GDALCreateRPCTransformer()                      */
 /************************************************************************/
 
-void *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPCInfo, int bReversed,
-                                 double dfPixErrThreshold, char **papszOptions)
+GDALTransformerArg GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPCInfo,
+                                              int bReversed,
+                                              double dfPixErrThreshold,
+                                              char **papszOptions)
 
 {
     GDALRPCInfoV2 sRPCInfo;
@@ -797,15 +804,18 @@ void *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPCInfo, int bReversed,
  * @return transformer callback data (deallocate with GDALDestroyTransformer()).
  */
 
-void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
-                                 double dfPixErrThreshold, char **papszOptions)
+GDALTransformerArg GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo,
+                                              int bReversed,
+                                              double dfPixErrThreshold,
+                                              char **papszOptions)
 
 {
     /* -------------------------------------------------------------------- */
     /*      Initialize core info.                                           */
     /* -------------------------------------------------------------------- */
-    GDALRPCTransformInfo *psTransform = static_cast<GDALRPCTransformInfo *>(
-        CPLCalloc(sizeof(GDALRPCTransformInfo), 1));
+    GDALRPCTransformInfo *psTransform =
+        reinterpret_cast<GDALRPCTransformInfo *>(
+            CPLCalloc(sizeof(GDALRPCTransformInfo), 1));
 
     memcpy(&(psTransform->sRPC), psRPCInfo, sizeof(GDALRPCInfoV2));
     psTransform->bReversed = bReversed;
@@ -995,8 +1005,9 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
         double dfZ = 0.0;
         int nSuccess = 0;
         // Try with DEM first.
-        if (GDALRPCTransform(psTransform, !(psTransform->bReversed), 1, &dfX,
-                             &dfY, &dfZ, &nSuccess) &&
+        if (GDALRPCTransform(reinterpret_cast<GDALTransformerArg>(psTransform),
+                             !(psTransform->bReversed), 1, &dfX, &dfY, &dfZ,
+                             &nSuccess) &&
             nSuccess)
         {
             dfRefPixel = dfX;
@@ -1022,8 +1033,9 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
         double dfZ = 0.0;
         int nSuccess = 0;
         // Try with DEM first.
-        if (GDALRPCTransform(psTransform, !(psTransform->bReversed), 1, &dfX,
-                             &dfY, &dfZ, &nSuccess) &&
+        if (GDALRPCTransform(reinterpret_cast<GDALTransformerArg>(psTransform),
+                             !(psTransform->bReversed), 1, &dfX, &dfY, &dfZ,
+                             &nSuccess) &&
             nSuccess)
         {
             dfRefPixel = dfX;
@@ -1071,7 +1083,7 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
         return nullptr;
     }
 
-    return psTransform;
+    return reinterpret_cast<GDALTransformerArg>(psTransform);
 }
 
 /************************************************************************/
@@ -1079,14 +1091,14 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
 /************************************************************************/
 
 /** Destroy RPC transformer */
-void GDALDestroyRPCTransformer(void *pTransformAlg)
+void GDALDestroyRPCTransformer(GDALTransformerArg pTransformAlg)
 
 {
     if (pTransformAlg == nullptr)
         return;
 
     GDALRPCTransformInfo *psTransform =
-        static_cast<GDALRPCTransformInfo *>(pTransformAlg);
+        reinterpret_cast<GDALRPCTransformInfo *>(pTransformAlg);
 
     CPLFree(psTransform->pszDEMPath);
     CPLFree(psTransform->pszDEMSRS);
@@ -1781,15 +1793,15 @@ static bool GDALRPCOpenDEM(GDALRPCTransformInfo *psTransform)
 /************************************************************************/
 
 /** RPC transform */
-int GDALRPCTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
-                     double *padfX, double *padfY, double *padfZ,
-                     int *panSuccess)
+int GDALRPCTransform(GDALTransformerArg pTransformArg, int bDstToSrc,
+                     int nPointCount, double *padfX, double *padfY,
+                     double *padfZ, int *panSuccess)
 
 {
     VALIDATE_POINTER1(pTransformArg, "GDALRPCTransform", 0);
 
     GDALRPCTransformInfo *psTransform =
-        static_cast<GDALRPCTransformInfo *>(pTransformArg);
+        reinterpret_cast<GDALRPCTransformInfo *>(pTransformArg);
 
     if (psTransform->bReversed)
         bDstToSrc = !bDstToSrc;
@@ -1964,13 +1976,13 @@ int GDALRPCTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
 /*                    GDALSerializeRPCTransformer()                     */
 /************************************************************************/
 
-CPLXMLNode *GDALSerializeRPCTransformer(void *pTransformArg)
+CPLXMLNode *GDALSerializeRPCTransformer(GDALTransformerArg pTransformArg)
 
 {
     VALIDATE_POINTER1(pTransformArg, "GDALSerializeRPCTransformer", nullptr);
 
     GDALRPCTransformInfo *psInfo =
-        static_cast<GDALRPCTransformInfo *>(pTransformArg);
+        reinterpret_cast<GDALRPCTransformInfo *>(pTransformArg);
 
     CPLXMLNode *psTree =
         CPLCreateXMLNode(nullptr, CXT_Element, "RPCTransformer");
@@ -2070,7 +2082,7 @@ CPLXMLNode *GDALSerializeRPCTransformer(void *pTransformArg)
 /*                   GDALDeserializeRPCTransformer()                    */
 /************************************************************************/
 
-void *GDALDeserializeRPCTransformer(CPLXMLNode *psTree)
+GDALTransformerArg GDALDeserializeRPCTransformer(const CPLXMLNode *psTree)
 
 {
     char **papszOptions = nullptr;
@@ -2078,14 +2090,14 @@ void *GDALDeserializeRPCTransformer(CPLXMLNode *psTree)
     /* -------------------------------------------------------------------- */
     /*      Collect metadata.                                               */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psMetadata = CPLGetXMLNode(psTree, "Metadata");
+    const CPLXMLNode *psMetadata = CPLGetXMLNode(psTree, "Metadata");
 
     if (psMetadata == nullptr || psMetadata->eType != CXT_Element ||
         !EQUAL(psMetadata->pszValue, "Metadata"))
         return nullptr;
 
     char **papszMD = nullptr;
-    for (CPLXMLNode *psMDI = psMetadata->psChild; psMDI != nullptr;
+    for (const CPLXMLNode *psMDI = psMetadata->psChild; psMDI != nullptr;
          psMDI = psMDI->psNext)
     {
         if (!EQUAL(psMDI->pszValue, "MDI") || psMDI->eType != CXT_Element ||
@@ -2150,8 +2162,8 @@ void *GDALDeserializeRPCTransformer(CPLXMLNode *psTree)
     /* -------------------------------------------------------------------- */
     /*      Generate transformation.                                        */
     /* -------------------------------------------------------------------- */
-    void *pResult = GDALCreateRPCTransformerV2(&sRPC, bReversed,
-                                               dfPixErrThreshold, papszOptions);
+    GDALTransformerArg pResult = GDALCreateRPCTransformerV2(
+        &sRPC, bReversed, dfPixErrThreshold, papszOptions);
 
     CSLDestroy(papszOptions);
 
