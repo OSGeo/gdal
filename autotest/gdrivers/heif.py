@@ -117,8 +117,14 @@ def test_heif_rgba_16bit():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
 
 
-# TODO: how to selectively enable based on tile capability?
+def _has_tiling_support():
+    drv = gdal.GetDriverByName("HEIF")
+    return drv and drv.GetMetadataItem("HEIF_SUPPORTS_TILES")
+
+
 def test_heif_tiled():
+    if not _has_tiling_support():
+        pytest.skip()
 
     ds = gdal.Open("data/heif/uncompressed_comp_RGB_tiled.heif")
     assert ds
