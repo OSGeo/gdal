@@ -150,8 +150,6 @@ void PDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Format of geo-encoding' default='ISO32000'>\n"
         "     <Value>NONE</Value>\n"
         "     <Value>ISO32000</Value>\n"
-        "     <Value>OGC_BP</Value>\n"
-        "     <Value>BOTH</Value>\n"
         "   </Option>\n"
         "   <Option name='NEATLINE' type='string' description='Neatline'/>\n"
         "   <Option name='DPI' type='float' description='DPI' default='72'/>\n"

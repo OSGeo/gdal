@@ -143,19 +143,12 @@ class GDALPDFComposerWriter final : public GDALPDFBaseWriter
                                 double dfWidthInUserUnit,
                                 double dfHeightInUserUnit,
                                 GDALPDFObjectNum &nViewportId,
-                                GDALPDFObjectNum &nLGIDictId,
                                 Georeferencing &georeferencing);
 
     GDALPDFObjectNum GenerateISO32000_Georeferencing(
         OGRSpatialReferenceH hSRS, double bboxX1, double bboxY1, double bboxX2,
         double bboxY2, const std::vector<gdal::GCP> &aGCPs,
         const std::vector<xyPair> &aBoundingPolygon);
-
-    GDALPDFObjectNum
-    GenerateOGC_BP_Georeferencing(OGRSpatialReferenceH hSRS, double bboxX1,
-                                  double bboxY1, double bboxX2, double bboxY2,
-                                  const std::vector<gdal::GCP> &aGCPs,
-                                  const std::vector<xyPair> &aBoundingPolygon);
 
     bool ExploreContent(const CPLXMLNode *psNode, PageContext &oPageContext);
     bool WriteRaster(const CPLXMLNode *psNode, PageContext &oPageContext);
