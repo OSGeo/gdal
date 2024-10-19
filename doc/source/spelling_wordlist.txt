@@ -369,6 +369,7 @@ cid
 CInt
 circularstrings
 ClampRequests
+clang
 ClassificationCode
 Clayers
 CleanTimeout
