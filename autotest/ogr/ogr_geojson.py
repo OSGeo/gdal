@@ -4605,7 +4605,7 @@ def test_ogr_geojson_arrow_stream_pyarrow_mixed_timezone(tmp_vsimem):
 
 
 def test_ogr_geojson_arrow_stream_pyarrow_utc_plus_five(tmp_vsimem):
-    pytest.importorskip("pyarrow")
+    # pytest.importorskip("pyarrow")
 
     filename = str(
         tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_utc_plus_five.geojson"
@@ -4621,22 +4621,37 @@ def test_ogr_geojson_arrow_stream_pyarrow_utc_plus_five(tmp_vsimem):
     lyr.CreateFeature(f)
     ds = None
 
+    try:
+        import pyarrow  # NOQA
+
+        has_pyarrow = True
+    except ImportError:
+        has_pyarrow = False
+    if has_pyarrow:
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        stream = lyr.GetArrowStreamAsPyArrow()
+        assert stream.schema.field("datetime").type.tz == "+05:00"
+        values = []
+        for batch in stream:
+            for x in batch.field("datetime"):
+                values.append(x.value)
+        assert values == [1653982496789, 1653986096789]
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_lyr = mem_ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
-    stream = lyr.GetArrowStreamAsPyArrow()
-    assert stream.schema.field("datetime").type.tz == "+05:00"
-    values = []
-    for batch in stream:
-        for x in batch.field("datetime"):
-            values.append(x.value)
-    assert values == [1654000496789, 1654004096789]
+    mem_lyr.WriteArrow(lyr)
+
+    f = mem_lyr.GetNextFeature()
+    assert f["datetime"] == "2022/05/31 12:34:56.789+05"
 
 
 ###############################################################################
 
 
 def test_ogr_geojson_arrow_stream_pyarrow_utc_minus_five(tmp_vsimem):
-    pytest.importorskip("pyarrow")
 
     filename = str(
         tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_utc_minus_five.geojson"
@@ -4652,22 +4667,37 @@ def test_ogr_geojson_arrow_stream_pyarrow_utc_minus_five(tmp_vsimem):
     lyr.CreateFeature(f)
     ds = None
 
+    try:
+        import pyarrow  # NOQA
+
+        has_pyarrow = True
+    except ImportError:
+        has_pyarrow = False
+    if has_pyarrow:
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        stream = lyr.GetArrowStreamAsPyArrow()
+        assert stream.schema.field("datetime").type.tz == "-05:00"
+        values = []
+        for batch in stream:
+            for x in batch.field("datetime"):
+                values.append(x.value)
+        assert values == [1654018496789, 1654022096789]
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_lyr = mem_ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
-    stream = lyr.GetArrowStreamAsPyArrow()
-    assert stream.schema.field("datetime").type.tz == "-05:00"
-    values = []
-    for batch in stream:
-        for x in batch.field("datetime"):
-            values.append(x.value)
-    assert values == [1654000496789, 1654004096789]
+    mem_lyr.WriteArrow(lyr)
+
+    f = mem_lyr.GetNextFeature()
+    assert f["datetime"] == "2022/05/31 12:34:56.789-05"
 
 
 ###############################################################################
 
 
 def test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone(tmp_vsimem):
-    pytest.importorskip("pyarrow")
 
     filename = str(
         tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone.geojson"
@@ -4683,15 +4713,33 @@ def test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone(tmp_vsimem):
     lyr.CreateFeature(f)
     ds = None
 
+    try:
+        import pyarrow  # NOQA
+
+        has_pyarrow = True
+    except ImportError:
+        has_pyarrow = False
+    if has_pyarrow:
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        stream = lyr.GetArrowStreamAsPyArrow()
+        assert stream.schema.field("datetime").type.tz is None
+        values = []
+        for batch in stream:
+            for x in batch.field("datetime"):
+                values.append(x.value)
+        assert values == [1654000496789, 1654004096789]
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_lyr = mem_ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
-    stream = lyr.GetArrowStreamAsPyArrow()
-    assert stream.schema.field("datetime").type.tz is None
-    values = []
-    for batch in stream:
-        for x in batch.field("datetime"):
-            values.append(x.value)
-    assert values == [1654000496789, 1654004096789]
+    mem_lyr.WriteArrow(lyr)
+
+    f = mem_lyr.GetNextFeature()
+    # We have lost the timezone info here, as there's no way in Arrow to
+    # have a mixed of with and without timezone in a single column
+    assert f["datetime"] == "2022/05/31 12:34:56.789"
 
 
 ###############################################################################
