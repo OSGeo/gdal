@@ -38,7 +38,7 @@ def has_read_support():
     return True
 
 
-@pytest.fixture(params=("DEFAULT", "PODOFO"))
+@pytest.fixture(params=("DEFAULT", "PDFIUM", "POPPLER", "PODOFO"))
 def pdf_lib(request):
 
     lib_name = request.param
@@ -438,8 +438,10 @@ def test_ogr_pdf_arcgis_12_9():
         force_download="CI" in os.environ,
     )
 
-    ds = ogr.Open("tmp/cache/9130-3N+PARRAMATTA+RIVER.pdf")
-    assert ds.GetLayerCount() == 58
+    # OGR_ORGANIZE_POLYGONS=SKIP to make the test as fast as possible
+    with gdaltest.config_option("OGR_ORGANIZE_POLYGONS", "SKIP"):
+        ds = ogr.Open("tmp/cache/9130-3N+PARRAMATTA+RIVER.pdf")
+    assert ds.GetLayerCount() == 66
     lyr = ds.GetLayer("Background")
     background_extent = lyr.GetExtent()
     assert background_extent == pytest.approx(
@@ -452,3 +454,23 @@ def test_ogr_pdf_arcgis_12_9():
         (314770.38136460556, 338159.3346125973, 6249907.04700745, 6264139.920707164),
         rel=1e-5,
     )
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/11034
+
+
+@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
+def test_ogr_pdf_recursive_resources_and_oc_name_and_empty_ocg_name(pdf_lib):
+
+    with ogr.Open(
+        "data/pdf/recursive_resources_and_oc_name_and_empty_ocg_name.pdf"
+    ) as ds:
+        assert ds.GetLayerCount() == 1
+        lyr = ds.GetLayer("unnamed")
+        assert lyr.GetFeatureCount() == 4
+        feat = lyr.GetNextFeature()
+        expected_wkt = """LINESTRING (210719.044079199 5340565.58196092,210703.077661677 5340510.89851925)"""
+        ogrtest.check_feature_geometry(
+            feat, ogr.CreateGeometryFromWkt(expected_wkt), max_error=1
+        )
