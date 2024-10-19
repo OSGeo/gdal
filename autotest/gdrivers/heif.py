@@ -135,6 +135,7 @@ def test_heif_tiled():
     assert ds.GetRasterBand(1).GetBlockSize() == [15, 5]
     assert ds.GetRasterBand(2).GetBlockSize() == [15, 5]
     assert ds.GetRasterBand(3).GetBlockSize() == [15, 5]
+    pytest.importorskip("osgeo.gdal_array")
     assert (
         ds.GetRasterBand(1).ReadAsArray(0, 0, 30, 1)
         == [
