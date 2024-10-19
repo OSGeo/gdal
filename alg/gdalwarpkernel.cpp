@@ -2849,11 +2849,14 @@ static bool GWKBilinearResampleNoMasks4SampleT(const GDALWarpKernel *poWK,
 // or http://en.wikipedia.org/wiki/Cubic_Hermite_spline : CINTx(p_1,p0,p1,p2)
 // http://en.wikipedia.org/wiki/Bicubic_interpolation: matrix notation
 
-// TODO(schwehr): Use an inline function.
-#define CubicConvolution(distance1, distance2, distance3, f0, f1, f2, f3)      \
-    (f1 + 0.5 * (distance1 * (f2 - f0) +                                       \
-                 distance2 * (2.0 * f0 - 5.0 * f1 + 4.0 * f2 - f3) +           \
-                 distance3 * (3.0 * (f1 - f2) + f3 - f0)))
+template <typename T>
+static inline T CubicConvolution(T distance1, T distance2, T distance3, T f0,
+                                 T f1, T f2, T f3)
+{
+    return (f1 + T(0.5) * (distance1 * (f2 - f0) +
+                           distance2 * (2 * f0 - 5 * f1 + 4 * f2 - f3) +
+                           distance3 * (3 * (f1 - f2) + f3 - f0)));
+}
 
 /************************************************************************/
 /*                       GWKCubicComputeWeights()                       */
@@ -2861,19 +2864,18 @@ static bool GWKBilinearResampleNoMasks4SampleT(const GDALWarpKernel *poWK,
 
 // adfCoeffs[2] = 1.0 - (adfCoeffs[0] + adfCoeffs[1] - adfCoeffs[3]);
 
-// TODO(schwehr): Use an inline function.
-#define GWKCubicComputeWeights(dfX_, adfCoeffs)                                \
-    {                                                                          \
-        const double dfX = dfX_;                                               \
-        const double dfHalfX = 0.5 * dfX;                                      \
-        const double dfThreeX = 3.0 * dfX;                                     \
-        const double dfHalfX2 = dfHalfX * dfX;                                 \
-                                                                               \
-        adfCoeffs[0] = dfHalfX * (-1 + dfX * (2 - dfX));                       \
-        adfCoeffs[1] = 1 + dfHalfX2 * (-5 + dfThreeX);                         \
-        adfCoeffs[2] = dfHalfX * (1 + dfX * (4 - dfThreeX));                   \
-        adfCoeffs[3] = dfHalfX2 * (-1 + dfX);                                  \
-    }
+template <typename T>
+static inline void GWKCubicComputeWeights(T x, T coeffs[4])
+{
+    const T halfX = T(0.5) * x;
+    const T threeX = T(3.0) * x;
+    const T halfX2 = halfX * x;
+
+    coeffs[0] = halfX * (-1 + x * (2 - x));
+    coeffs[1] = 1 + halfX2 * (-5 + threeX);
+    coeffs[2] = halfX * (1 + x * (4 - threeX));
+    coeffs[3] = halfX2 * (-1 + x);
+}
 
 // TODO(schwehr): Use an inline function.
 #define CONVOL4(v1, v2)                                                        \
@@ -2969,10 +2971,7 @@ static bool GWKCubicResample4Sample(const GDALWarpKernel *poWK, int iBand,
     return true;
 }
 
-// We do not define USE_SSE_CUBIC_IMPL since in practice, it gives zero
-// perf benefit.
-
-#if defined(USE_SSE_CUBIC_IMPL) && (defined(__x86_64) || defined(_M_X64))
+#if defined(__x86_64) || defined(_M_X64)
 
 /************************************************************************/
 /*                           XMMLoad4Values()                           */
@@ -2985,7 +2984,7 @@ static CPL_INLINE __m128 XMMLoad4Values(const GByte *ptr)
 {
     unsigned int i;
     memcpy(&i, ptr, 4);
-    __m128i xmm_i = _mm_cvtsi32_si128(s);
+    __m128i xmm_i = _mm_cvtsi32_si128(i);
     // Zero extend 4 packed unsigned 8-bit integers in a to packed
     // 32-bit integers.
 #if __SSE4_1__
@@ -3001,7 +3000,7 @@ static CPL_INLINE __m128 XMMLoad4Values(const GUInt16 *ptr)
 {
     GUInt64 i;
     memcpy(&i, ptr, 8);
-    __m128i xmm_i = _mm_cvtsi64_si128(s);
+    __m128i xmm_i = _mm_cvtsi64_si128(i);
     // Zero extend 4 packed unsigned 16-bit integers in a to packed
     // 32-bit integers.
 #if __SSE4_1__
@@ -3038,7 +3037,7 @@ static CPL_INLINE float XMMHorizontalAdd(__m128 v)
 }
 #endif
 
-#endif  // defined(USE_SSE_CUBIC_IMPL) && (defined(__x86_64) || defined(_M_X64))
+#endif  // (defined(__x86_64) || defined(_M_X64))
 
 /************************************************************************/
 /*            GWKCubicResampleSrcMaskIsDensity4SampleRealT()            */
@@ -3046,6 +3045,8 @@ static CPL_INLINE float XMMHorizontalAdd(__m128 v)
 
 // Note: if USE_SSE_CUBIC_IMPL, only instantiate that for Byte and UInt16,
 // because there are a few assumptions above those types.
+// We do not define USE_SSE_CUBIC_IMPL since in practice, it gives zero
+// perf benefit.
 
 template <class T>
 static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
@@ -5854,6 +5855,141 @@ static CPLErr GWKRealCase(GDALWarpKernel *poWK)
 }
 
 /************************************************************************/
+/*                 GWKCubicResampleNoMasks4MultiBandT()                 */
+/************************************************************************/
+
+/* We restrict to 64bit processors because they are guaranteed to have SSE2 */
+/* and enough SSE registries */
+#if defined(__x86_64) || defined(_M_X64)
+
+static inline float Convolute4x4(const __m128 row0, const __m128 row1,
+                                 const __m128 row2, const __m128 row3,
+                                 const __m128 weightsXY0,
+                                 const __m128 weightsXY1,
+                                 const __m128 weightsXY2,
+                                 const __m128 weightsXY3)
+{
+    return XMMHorizontalAdd(_mm_add_ps(
+        _mm_add_ps(_mm_mul_ps(row0, weightsXY0), _mm_mul_ps(row1, weightsXY1)),
+        _mm_add_ps(_mm_mul_ps(row2, weightsXY2),
+                   _mm_mul_ps(row3, weightsXY3))));
+}
+
+template <class T>
+static void GWKCubicResampleNoMasks4MultiBandT(const GDALWarpKernel *poWK,
+                                               double dfSrcX, double dfSrcY,
+                                               const GPtrDiff_t iDstOffset)
+{
+    const double dfSrcXShifted = dfSrcX - 0.5;
+    const int iSrcX = static_cast<int>(dfSrcXShifted);
+    const double dfSrcYShifted = dfSrcY - 0.5;
+    const int iSrcY = static_cast<int>(dfSrcYShifted);
+    const GPtrDiff_t iSrcOffset =
+        iSrcX + static_cast<GPtrDiff_t>(iSrcY) * poWK->nSrcXSize;
+
+    // Get the bilinear interpolation at the image borders.
+    if (iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize || iSrcY - 1 < 0 ||
+        iSrcY + 2 >= poWK->nSrcYSize)
+    {
+        for (int iBand = 0; iBand < poWK->nBands; iBand++)
+        {
+            T value;
+            GWKBilinearResampleNoMasks4SampleT(poWK, iBand, dfSrcX, dfSrcY,
+                                               &value);
+            reinterpret_cast<T *>(poWK->papabyDstImage[iBand])[iDstOffset] =
+                value;
+        }
+    }
+    else
+    {
+        const float fDeltaX = static_cast<float>(dfSrcXShifted) - iSrcX;
+        const float fDeltaY = static_cast<float>(dfSrcYShifted) - iSrcY;
+
+        float afCoeffsX[4];
+        float afCoeffsY[4];
+        GWKCubicComputeWeights(fDeltaX, afCoeffsX);
+        GWKCubicComputeWeights(fDeltaY, afCoeffsY);
+        const auto weightsX = _mm_loadu_ps(afCoeffsX);
+        const auto weightsXY0 =
+            _mm_mul_ps(_mm_load1_ps(&afCoeffsY[0]), weightsX);
+        const auto weightsXY1 =
+            _mm_mul_ps(_mm_load1_ps(&afCoeffsY[1]), weightsX);
+        const auto weightsXY2 =
+            _mm_mul_ps(_mm_load1_ps(&afCoeffsY[2]), weightsX);
+        const auto weightsXY3 =
+            _mm_mul_ps(_mm_load1_ps(&afCoeffsY[3]), weightsX);
+
+        const GPtrDiff_t iOffset = iSrcOffset - poWK->nSrcXSize - 1;
+
+        int iBand = 0;
+        // Process 2 bands at a time
+        for (; iBand + 1 < poWK->nBands; iBand += 2)
+        {
+            const T *CPL_RESTRICT pBand0 =
+                reinterpret_cast<const T *>(poWK->papabySrcImage[iBand]);
+            const auto row0_0 = XMMLoad4Values(pBand0 + iOffset);
+            const auto row1_0 =
+                XMMLoad4Values(pBand0 + iOffset + poWK->nSrcXSize);
+            const auto row2_0 =
+                XMMLoad4Values(pBand0 + iOffset + 2 * poWK->nSrcXSize);
+            const auto row3_0 =
+                XMMLoad4Values(pBand0 + iOffset + 3 * poWK->nSrcXSize);
+
+            const T *CPL_RESTRICT pBand1 =
+                reinterpret_cast<const T *>(poWK->papabySrcImage[iBand + 1]);
+            const auto row0_1 = XMMLoad4Values(pBand1 + iOffset);
+            const auto row1_1 =
+                XMMLoad4Values(pBand1 + iOffset + poWK->nSrcXSize);
+            const auto row2_1 =
+                XMMLoad4Values(pBand1 + iOffset + 2 * poWK->nSrcXSize);
+            const auto row3_1 =
+                XMMLoad4Values(pBand1 + iOffset + 3 * poWK->nSrcXSize);
+
+            const float fValue_0 =
+                Convolute4x4(row0_0, row1_0, row2_0, row3_0, weightsXY0,
+                             weightsXY1, weightsXY2, weightsXY3);
+
+            const float fValue_1 =
+                Convolute4x4(row0_1, row1_1, row2_1, row3_1, weightsXY0,
+                             weightsXY1, weightsXY2, weightsXY3);
+
+            T *CPL_RESTRICT pDstBand0 =
+                reinterpret_cast<T *>(poWK->papabyDstImage[iBand]);
+            pDstBand0[iDstOffset] = GWKClampValueT<T>(fValue_0);
+
+            T *CPL_RESTRICT pDstBand1 =
+                reinterpret_cast<T *>(poWK->papabyDstImage[iBand + 1]);
+            pDstBand1[iDstOffset] = GWKClampValueT<T>(fValue_1);
+        }
+        if (iBand < poWK->nBands)
+        {
+            const T *CPL_RESTRICT pBand0 =
+                reinterpret_cast<const T *>(poWK->papabySrcImage[iBand]);
+            const auto row0 = XMMLoad4Values(pBand0 + iOffset);
+            const auto row1 =
+                XMMLoad4Values(pBand0 + iOffset + poWK->nSrcXSize);
+            const auto row2 =
+                XMMLoad4Values(pBand0 + iOffset + 2 * poWK->nSrcXSize);
+            const auto row3 =
+                XMMLoad4Values(pBand0 + iOffset + 3 * poWK->nSrcXSize);
+
+            const float fValue =
+                Convolute4x4(row0, row1, row2, row3, weightsXY0, weightsXY1,
+                             weightsXY2, weightsXY3);
+
+            T *CPL_RESTRICT pDstBand =
+                reinterpret_cast<T *>(poWK->papabyDstImage[iBand]);
+            pDstBand[iDstOffset] = GWKClampValueT<T>(fValue);
+        }
+    }
+
+    if (poWK->pafDstDensity)
+        poWK->pafDstDensity[iDstOffset] = 1.0f;
+}
+
+#endif  // defined(__x86_64) || defined(_M_X64)
+
+/************************************************************************/
 /*                GWKResampleNoMasksOrDstDensityOnlyThreadInternal()    */
 /************************************************************************/
 
@@ -5956,6 +6092,22 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal(void *pData)
              */
             const GPtrDiff_t iDstOffset =
                 iDstX + static_cast<GPtrDiff_t>(iDstY) * nDstXSize;
+
+#if defined(__x86_64) || defined(_M_X64)
+            if constexpr (bUse4SamplesFormula && eResample == GRA_Cubic &&
+                          (std::is_same<T, GByte>::value ||
+                           std::is_same<T, GUInt16>::value))
+            {
+                if (poWK->nBands > 1 && !poWK->bApplyVerticalShift)
+                {
+                    GWKCubicResampleNoMasks4MultiBandT<T>(
+                        poWK, padfX[iDstX] - poWK->nSrcXOff,
+                        padfY[iDstX] - poWK->nSrcYOff, iDstOffset);
+
+                    continue;
+                }
+            }
+#endif  // defined(__x86_64) || defined(_M_X64)
 
             [[maybe_unused]] double dfInvWeights = 0;
             for (int iBand = 0; iBand < poWK->nBands; iBand++)
