@@ -509,6 +509,17 @@ void GDALHEIFDataset::OpenThumbnails()
     poOvrDS->m_bIsThumbnail = true;
     poOvrDS->nRasterXSize = heif_image_handle_get_width(hThumbnailHandle);
     poOvrDS->nRasterYSize = heif_image_handle_get_height(hThumbnailHandle);
+#ifdef LIBHEIF_SUPPORTS_TILES
+    auto err = heif_image_handle_get_image_tiling(hThumbnailHandle, true,
+                                                  &poOvrDS->m_tiling);
+    if (err.code != heif_error_Ok)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                 err.message ? err.message : "Cannot get image tiling");
+        heif_image_handle_release(hThumbnailHandle);
+        return;
+    }
+#endif
     for (int i = 0; i < nBands; i++)
     {
         poOvrDS->SetBand(i + 1, new GDALHEIFRasterBand(poOvrDS.get(), i + 1));
@@ -729,8 +740,8 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (int x = 0; x < nBlockXSize; x++)
             {
-                size_t srcIndex =
-                    static_cast<size_t>(y) * nStride + x * nBands + nBand - 1;
+                size_t srcIndex = static_cast<size_t>(y) * (nStride / 2) +
+                                  x * nBands + nBand - 1;
                 size_t outIndex = static_cast<size_t>(y) * nBlockXSize + x;
                 (static_cast<GUInt16 *>(pImage))[outIndex] =
                     (reinterpret_cast<const GUInt16 *>(pSrcData))[srcIndex];

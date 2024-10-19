@@ -75,9 +75,7 @@ def test_heif_thumbnail():
     assert ovrband is not None
     assert ovrband.XSize == 64
     assert ovrband.YSize == 64
-
-
-#    assert ovrband.Checksum() != 0
+    assert ovrband.Checksum() != 0
 
 
 def test_heif_rgb_16bit():
@@ -91,9 +89,7 @@ def test_heif_rgb_16bit():
     assert ds.RasterCount == 3
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "10"
-
-
-#    assert ds.GetRasterBand(1).ComputeRasterMinMax() == pytest.approx((0, 1023), abs=2)
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == pytest.approx((0, 1023), abs=2)
 
 
 def test_heif_rgba():
@@ -108,9 +104,7 @@ def test_heif_rgba():
     assert ovrband is not None
     assert ovrband.XSize == 96
     assert ovrband.YSize == 88
-
-
-#    assert ovrband.Checksum() != 0
+    assert ovrband.Checksum() != 0
 
 
 def test_heif_rgba_16bit():
