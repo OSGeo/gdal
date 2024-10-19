@@ -32,7 +32,6 @@ RUN apt-get update && \
     libgif-dev \
     libhdf4-alt-dev \
     libhdf5-serial-dev \
-    libheif-dev \
     libjpeg-dev \
     libjxl-dev \
     libkml-dev \
@@ -73,6 +72,16 @@ RUN apt-get update && \
     unixodbc-dev \
     wget \
     zip
+
+# temporary libheif build
+RUN apt-get install -y --allow-unauthenticated libaom-dev libbrotli-dev libde265-dev libx265-dev
+RUN git clone --depth 1 https://github.com/strukturag/libheif.git libheif-git && \
+    cd libheif-git && \
+    mkdir build && \
+    cd build && \
+    cmake --preset=develop .. && \
+    make -j$(nproc) && \
+    make install
 
 # MSSQL: client side
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -

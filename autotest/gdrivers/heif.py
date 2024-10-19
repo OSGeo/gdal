@@ -117,6 +117,249 @@ def test_heif_rgba_16bit():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
 
 
+def _has_tiling_support():
+    drv = gdal.GetDriverByName("HEIF")
+    return drv and drv.GetMetadataItem("HEIF_SUPPORTS_TILES")
+
+
+def test_heif_tiled():
+    if not _has_tiling_support():
+        pytest.skip()
+
+    ds = gdal.Open("data/heif/uncompressed_comp_RGB_tiled.heif")
+    assert ds
+    assert ds.RasterXSize == 30
+    assert ds.RasterYSize == 20
+    assert ds.RasterCount == 3
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).GetBlockSize() == [15, 5]
+    assert ds.GetRasterBand(2).GetBlockSize() == [15, 5]
+    assert ds.GetRasterBand(3).GetBlockSize() == [15, 5]
+    pytest.importorskip("osgeo.gdal_array")
+    assert (
+        ds.GetRasterBand(1).ReadAsArray(0, 0, 30, 1)
+        == [
+            [
+                255,
+                255,
+                255,
+                255,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                255,
+                255,
+                255,
+                255,
+                0,
+                0,
+                0,
+                0,
+                255,
+                255,
+                255,
+                255,
+                0,
+                0,
+                0,
+                0,
+                128,
+                128,
+            ]
+        ]
+    ).all()
+    assert (
+        ds.GetRasterBand(1).ReadAsArray(0, 19, 30, 1)
+        == [
+            [
+                0,
+                0,
+                0,
+                0,
+                255,
+                255,
+                255,
+                255,
+                0,
+                0,
+                0,
+                0,
+                128,
+                128,
+                128,
+                128,
+                255,
+                255,
+                255,
+                255,
+                238,
+                238,
+                238,
+                238,
+                255,
+                255,
+                255,
+                255,
+                0,
+                0,
+            ]
+        ]
+    ).all()
+    assert (
+        ds.GetRasterBand(2).ReadAsArray(0, 0, 30, 1)
+        == [
+            [
+                0,
+                0,
+                0,
+                0,
+                128,
+                128,
+                128,
+                128,
+                0,
+                0,
+                0,
+                0,
+                255,
+                255,
+                255,
+                255,
+                0,
+                0,
+                0,
+                0,
+                255,
+                255,
+                255,
+                255,
+                255,
+                255,
+                255,
+                255,
+                128,
+                128,
+            ]
+        ]
+    ).all()
+    assert (
+        ds.GetRasterBand(2).ReadAsArray(0, 19, 30, 1)
+        == [
+            [
+                0,
+                0,
+                0,
+                0,
+                255,
+                255,
+                255,
+                255,
+                255,
+                255,
+                255,
+                255,
+                128,
+                128,
+                128,
+                128,
+                165,
+                165,
+                165,
+                165,
+                130,
+                130,
+                130,
+                130,
+                0,
+                0,
+                0,
+                0,
+                128,
+                128,
+            ]
+        ]
+    ).all()
+    assert (
+        ds.GetRasterBand(3).ReadAsArray(0, 0, 30, 1)
+        == [
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                255,
+                255,
+                255,
+                255,
+                255,
+                255,
+                255,
+                255,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                255,
+                255,
+                255,
+                255,
+                128,
+                128,
+            ]
+        ]
+    ).all()
+    assert (
+        ds.GetRasterBand(3).ReadAsArray(0, 19, 30, 1)
+        == [
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                255,
+                255,
+                255,
+                255,
+                128,
+                128,
+                128,
+                128,
+                0,
+                0,
+                0,
+                0,
+                238,
+                238,
+                238,
+                238,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ]
+        ]
+    ).all()
+
+
 def test_heif_subdatasets(tmp_path):
 
     filename = str(tmp_path / "out.heic")
