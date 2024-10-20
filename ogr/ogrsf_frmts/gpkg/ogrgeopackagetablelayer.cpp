@@ -1729,6 +1729,24 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
             GDALGeoPackageDataset::LaunderName(oFieldDefn.GetNameRef())
                 .c_str());
 
+    if (m_poFeatureDefn->GetFieldIndex(oFieldDefn.GetNameRef()) >= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot create field %s. "
+                 "A field with the same name already exists.",
+                 oFieldDefn.GetNameRef());
+        return OGRERR_FAILURE;
+    }
+
+    if (m_poFeatureDefn->GetGeomFieldIndex(oFieldDefn.GetNameRef()) >= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot create field %s. "
+                 "It has the same name as the geometry field.",
+                 oFieldDefn.GetNameRef());
+        return OGRERR_FAILURE;
+    }
+
     if (m_pszFidColumn != nullptr &&
         EQUAL(oFieldDefn.GetNameRef(), m_pszFidColumn) &&
         poField->GetType() != OFTInteger &&
