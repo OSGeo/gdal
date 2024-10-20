@@ -1761,6 +1761,19 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
         return OGRERR_FAILURE;
     }
 
+    const int nMaxColumns =
+        sqlite3_limit(m_poDS->GetDB(), SQLITE_LIMIT_COLUMN, -1);
+    // + 1 for the FID column
+    if (m_poFeatureDefn->GetFieldCount() +
+            m_poFeatureDefn->GetGeomFieldCount() + 1 >=
+        nMaxColumns)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot add field %s. Limit of %d columns reached",
+                 oFieldDefn.GetNameRef(), nMaxColumns);
+        return OGRERR_FAILURE;
+    }
+
     if (!m_bDeferredCreation)
     {
         CPLString osCommand;
