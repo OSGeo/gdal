@@ -112,34 +112,33 @@ def test_gdal_contour_1(gdal_contour_path, testdata_tif, tmp_path):
     ]
     expected_height = [0, 10, 20]
 
-    lyr = ds.ExecuteSQL("select * from contour order by elev asc")
+    with ds.ExecuteSQL("select * from contour order by elev asc") as lyr:
 
-    raster_srs_wkt = gdal.Open(testdata_tif).GetSpatialRef().ExportToWkt()
+        raster_srs_wkt = gdal.Open(testdata_tif).GetSpatialRef().ExportToWkt()
 
-    assert (
-        lyr.GetSpatialRef().ExportToWkt() == raster_srs_wkt
-    ), "Did not get expected spatial ref"
+        assert (
+            lyr.GetSpatialRef().ExportToWkt() == raster_srs_wkt
+        ), "Did not get expected spatial ref"
 
-    assert lyr.GetFeatureCount() == len(expected_envelopes)
+        assert lyr.GetFeatureCount() == len(expected_envelopes)
 
-    size = 160
-    precision = 1.0 / size
+        size = 160
+        precision = 1.0 / size
 
-    i = 0
-    for feat in lyr:
-        geom = feat.GetGeometryRef()
-        envelope = geom.GetEnvelope()
-        assert feat.GetField("elev") == expected_height[i]
-        for j in range(4):
-            if expected_envelopes[i][j] != pytest.approx(envelope[j], rel=1e-8):
-                print("i=%d, wkt=%s" % (i, geom.ExportToWkt()))
-                print(geom.GetEnvelope())
-                pytest.fail(
-                    "%f, %f" % (expected_envelopes[i][j] - envelope[j], precision / 2)
-                )
-        i = i + 1
-
-    ds.ReleaseResultSet(lyr)
+        i = 0
+        for feat in lyr:
+            geom = feat.GetGeometryRef()
+            envelope = geom.GetEnvelope()
+            assert feat.GetField("elev") == expected_height[i]
+            for j in range(4):
+                if expected_envelopes[i][j] != pytest.approx(envelope[j], rel=1e-8):
+                    print("i=%d, wkt=%s" % (i, geom.ExportToWkt()))
+                    print(geom.GetEnvelope())
+                    pytest.fail(
+                        "%f, %f"
+                        % (expected_envelopes[i][j] - envelope[j], precision / 2)
+                    )
+            i = i + 1
 
 
 ###############################################################################
@@ -173,29 +172,28 @@ def test_gdal_contour_2(gdal_contour_path, testdata_tif, tmp_path):
     ]
     expected_height = [10, 20, 25]
 
-    lyr = ds.ExecuteSQL("select * from contour order by elev asc")
+    with ds.ExecuteSQL("select * from contour order by elev asc") as lyr:
 
-    assert lyr.GetFeatureCount() == len(expected_envelopes)
+        assert lyr.GetFeatureCount() == len(expected_envelopes)
 
-    i = 0
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        assert feat.GetGeometryRef().GetZ(0) == expected_height[i]
-        envelope = feat.GetGeometryRef().GetEnvelope()
-        assert feat.GetField("elev") == expected_height[i]
-        for j in range(4):
-            if expected_envelopes[i][j] != pytest.approx(
-                envelope[j], abs=precision / 2 * 1.001
-            ):
-                print("i=%d, wkt=%s" % (i, feat.GetGeometryRef().ExportToWkt()))
-                print(feat.GetGeometryRef().GetEnvelope())
-                pytest.fail(
-                    "%f, %f" % (expected_envelopes[i][j] - envelope[j], precision / 2)
-                )
-        i = i + 1
+        i = 0
         feat = lyr.GetNextFeature()
-
-    ds.ReleaseResultSet(lyr)
+        while feat is not None:
+            assert feat.GetGeometryRef().GetZ(0) == expected_height[i]
+            envelope = feat.GetGeometryRef().GetEnvelope()
+            assert feat.GetField("elev") == expected_height[i]
+            for j in range(4):
+                if expected_envelopes[i][j] != pytest.approx(
+                    envelope[j], abs=precision / 2 * 1.001
+                ):
+                    print("i=%d, wkt=%s" % (i, feat.GetGeometryRef().ExportToWkt()))
+                    print(feat.GetGeometryRef().GetEnvelope())
+                    pytest.fail(
+                        "%f, %f"
+                        % (expected_envelopes[i][j] - envelope[j], precision / 2)
+                    )
+            i = i + 1
+            feat = lyr.GetNextFeature()
 
 
 ###############################################################################
@@ -213,19 +211,17 @@ def test_gdal_contour_3(gdal_contour_path, tmp_path):
 
     ds = ogr.Open(contour_shp)
 
-    lyr = ds.ExecuteSQL("select distinct elev from contour order by elev asc")
+    with ds.ExecuteSQL("select distinct elev from contour order by elev asc") as lyr:
 
-    expected_heights = [100, 150, 200, 250, 300, 350, 400, 450]
-    assert lyr.GetFeatureCount() == len(expected_heights)
+        expected_heights = [100, 150, 200, 250, 300, 350, 400, 450]
+        assert lyr.GetFeatureCount() == len(expected_heights)
 
-    i = 0
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        assert feat.GetField("elev") == expected_heights[i]
-        i = i + 1
+        i = 0
         feat = lyr.GetNextFeature()
-
-    ds.ReleaseResultSet(lyr)
+        while feat is not None:
+            assert feat.GetField("elev") == expected_heights[i]
+            i = i + 1
+            feat = lyr.GetNextFeature()
 
 
 ###############################################################################
@@ -402,18 +398,18 @@ def test_gdal_contour_fl_and_i(gdal_contour_path, testdata_tif, tmp_path):
 
     ds = ogr.Open(contour_shp)
 
-    lyr = ds.ExecuteSQL("select elev from contour order by elev asc")
+    with ds.ExecuteSQL("select elev from contour order by elev asc") as lyr:
 
-    expected_heights = [0, 6, 10, 16, 20]
+        expected_heights = [0, 6, 10, 16, 20]
 
-    assert lyr.GetFeatureCount() == len(expected_heights)
+        assert lyr.GetFeatureCount() == len(expected_heights)
 
-    i = 0
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        assert feat.GetField("elev") == expected_heights[i]
-        i = i + 1
+        i = 0
         feat = lyr.GetNextFeature()
+        while feat is not None:
+            assert feat.GetField("elev") == expected_heights[i]
+            i = i + 1
+            feat = lyr.GetNextFeature()
 
 
 ###############################################################################
@@ -431,18 +427,18 @@ def test_gdal_contour_fl_e(gdal_contour_path, tmp_path):
 
     ds = ogr.Open(contour_shp)
 
-    lyr = ds.ExecuteSQL("select distinct elev from contour order by elev asc")
+    with ds.ExecuteSQL("select distinct elev from contour order by elev asc") as lyr:
 
-    expected_heights = [76, 81, 112, 243, 441]
+        expected_heights = [76, 81, 112, 243, 441]
 
-    assert lyr.GetFeatureCount() == len(expected_heights)
+        assert lyr.GetFeatureCount() == len(expected_heights)
 
-    i = 0
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        assert feat.GetField("elev") == expected_heights[i]
-        i = i + 1
+        i = 0
         feat = lyr.GetNextFeature()
+        while feat is not None:
+            assert feat.GetField("elev") == expected_heights[i]
+            i = i + 1
+            feat = lyr.GetNextFeature()
 
 
 ###############################################################################
@@ -462,18 +458,18 @@ def test_gdal_contour_fl_ignore_off(gdal_contour_path, testdata_tif, tmp_path):
 
     ds = ogr.Open(contour_shp)
 
-    lyr = ds.ExecuteSQL("select elev from contour order by elev asc")
+    with ds.ExecuteSQL("select elev from contour order by elev asc") as lyr:
 
-    expected_heights = [2, 6, 12, 16, 22]
+        expected_heights = [2, 6, 12, 16, 22]
 
-    assert lyr.GetFeatureCount() == len(expected_heights)
+        assert lyr.GetFeatureCount() == len(expected_heights)
 
-    i = 0
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        assert feat.GetField("elev") == expected_heights[i]
-        i = i + 1
+        i = 0
         feat = lyr.GetNextFeature()
+        while feat is not None:
+            assert feat.GetField("elev") == expected_heights[i]
+            i = i + 1
+            feat = lyr.GetNextFeature()
 
 
 ###############################################################################
@@ -492,18 +488,18 @@ def test_gdal_contour_fl_and_i_no_dups(gdal_contour_path, testdata_tif, tmp_path
 
     ds = ogr.Open(contour_shp)
 
-    lyr = ds.ExecuteSQL("select elev from contour order by elev asc")
+    with ds.ExecuteSQL("select elev from contour order by elev asc") as lyr:
 
-    expected_heights = [0, 6, 10, 16, 20]
+        expected_heights = [0, 6, 10, 16, 20]
 
-    assert lyr.GetFeatureCount() == len(expected_heights)
+        assert lyr.GetFeatureCount() == len(expected_heights)
 
-    i = 0
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        assert feat.GetField("elev") == expected_heights[i]
-        i = i + 1
+        i = 0
         feat = lyr.GetNextFeature()
+        while feat is not None:
+            assert feat.GetField("elev") == expected_heights[i]
+            i = i + 1
+            feat = lyr.GetNextFeature()
 
 
 ###############################################################################
@@ -523,20 +519,20 @@ def test_gdal_contour_i_polygonize(gdal_contour_path, testdata_tif, tmp_path):
 
     ds = ogr.Open(contour_shp)
 
-    lyr = ds.ExecuteSQL("select elev, elev2 from contour order by elev asc")
+    with ds.ExecuteSQL("select elev, elev2 from contour order by elev asc") as lyr:
 
-    # Raster max is 25 so the last contour is 20 (with amax of 25)
-    expected_heights = [0, 5, 10, 15, 20]
+        # Raster max is 25 so the last contour is 20 (with amax of 25)
+        expected_heights = [0, 5, 10, 15, 20]
 
-    assert lyr.GetFeatureCount() == len(expected_heights)
+        assert lyr.GetFeatureCount() == len(expected_heights)
 
-    i = 0
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        assert feat.GetField("elev") == expected_heights[i]
-        assert feat.GetField("elev2") == expected_heights[i] + 5
-        i = i + 1
+        i = 0
         feat = lyr.GetNextFeature()
+        while feat is not None:
+            assert feat.GetField("elev") == expected_heights[i]
+            assert feat.GetField("elev2") == expected_heights[i] + 5
+            i = i + 1
+            feat = lyr.GetNextFeature()
 
 
 ###############################################################################
@@ -559,24 +555,24 @@ def test_gdal_contour_fl_and_i_no_dups_polygonize(
 
     ds = ogr.Open(contour_shp)
 
-    lyr = ds.ExecuteSQL("select elev, elev2 from contour order by elev asc")
+    with ds.ExecuteSQL("select elev, elev2 from contour order by elev asc") as lyr:
 
-    # Raster max is 25 so the last contour is 20 (with amax of 25)
-    expected_heights = [0, 5, 6, 10, 15, 16, 20]
+        # Raster max is 25 so the last contour is 20 (with amax of 25)
+        expected_heights = [0, 5, 6, 10, 15, 16, 20]
 
-    assert lyr.GetFeatureCount() == len(expected_heights)
+        assert lyr.GetFeatureCount() == len(expected_heights)
 
-    i = 0
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        assert feat.GetField("elev") == expected_heights[i]
-        assert (
-            feat.GetField("elev2") == expected_heights[i + 1]
-            if i < len(expected_heights) - 2
-            else expected_heights[i] + 5
-        )
-        i = i + 1
+        i = 0
         feat = lyr.GetNextFeature()
+        while feat is not None:
+            assert feat.GetField("elev") == expected_heights[i]
+            assert (
+                feat.GetField("elev2") == expected_heights[i + 1]
+                if i < len(expected_heights) - 2
+                else expected_heights[i] + 5
+            )
+            i = i + 1
+            feat = lyr.GetNextFeature()
 
 
 ###############################################################################
@@ -594,24 +590,24 @@ def test_gdal_contour_fl_e_polygonize(gdal_contour_path, tmp_path):
 
     ds = ogr.Open(contour_shp)
 
-    lyr = ds.ExecuteSQL("select elev, elev2 from contour order by elev asc")
+    with ds.ExecuteSQL("select elev, elev2 from contour order by elev asc") as lyr:
 
-    # Raster min is 75, max is 460
-    expected_heights = [75, 76, 81, 112, 243, 441]
+        # Raster min is 75, max is 460
+        expected_heights = [75, 76, 81, 112, 243, 441]
 
-    assert lyr.GetFeatureCount() == len(expected_heights)
+        assert lyr.GetFeatureCount() == len(expected_heights)
 
-    i = 0
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        assert feat.GetField("elev") == expected_heights[i]
-        assert (
-            feat.GetField("elev2") == expected_heights[i + 1]
-            if i < len(expected_heights) - 2
-            else 460
-        )
-        i = i + 1
+        i = 0
         feat = lyr.GetNextFeature()
+        while feat is not None:
+            assert feat.GetField("elev") == expected_heights[i]
+            assert (
+                feat.GetField("elev2") == expected_heights[i + 1]
+                if i < len(expected_heights) - 2
+                else 460
+            )
+            i = i + 1
+            feat = lyr.GetNextFeature()
 
 
 ###############################################################################
@@ -631,9 +627,9 @@ def test_gdal_contour_gt(gdal_contour_path, tmp_path, gt):
 
     ds = ogr.Open(out_filename)
 
-    lyr = ds.ExecuteSQL("select elev, elev2 from contour order by elev asc")
+    with ds.ExecuteSQL("select elev, elev2 from contour order by elev asc") as lyr:
 
-    # Raster min is 75, max is 460
-    expected_heights = [75, 76, 81, 112, 243, 441]
+        # Raster min is 75, max is 460
+        expected_heights = [75, 76, 81, 112, 243, 441]
 
-    assert lyr.GetFeatureCount() == len(expected_heights)
+        assert lyr.GetFeatureCount() == len(expected_heights)
