@@ -10664,3 +10664,31 @@ def test_gpkg_rename_hidden_table(tmp_vsimem):
     gdal.VSIFCloseL(f)
 
     assert "hidden_foo_table" not in content
+
+
+###############################################################################
+# Test creating duplicate field names
+
+
+@gdaltest.enable_exceptions()
+def test_gpkg_create_duplicate_field_names(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_gpkg_create_duplicate_field_names.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("foo"))
+        with pytest.raises(
+            Exception, match="A field with the same name already exists"
+        ):
+            lyr.CreateField(ogr.FieldDefn("foo"))
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+        with pytest.raises(
+            Exception, match="A field with the same name already exists"
+        ):
+            lyr.CreateField(ogr.FieldDefn("FOO"))
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+        with pytest.raises(
+            Exception, match="It has the same name as the geometry field"
+        ):
+            lyr.CreateField(ogr.FieldDefn("geom"))
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
