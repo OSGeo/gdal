@@ -3,7 +3,7 @@
  * Project:  OpenGIS Simple Features for OpenDRIVE
  * Purpose:  Implementation of OGRXODRLayer.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
- *           Gülsen Bardak, German Aerospace Center (DLR)        
+ *           Gülsen Bardak, German Aerospace Center (DLR)
  *
  ******************************************************************************
  * Copyright 2024 German Aerospace Center (DLR), Institute of Transportation Systems
@@ -34,7 +34,10 @@ OGRXODRLayer::OGRXODRLayer(const RoadElements &xodrRoadElements,
     : m_roadElements(xodrRoadElements),
       m_bDissolveTIN(dissolveTriangulatedSurface)
 {
-    m_poSRS.importFromProj4(proj4Defn.c_str());
+    if (!proj4Defn.empty())
+    {
+        m_oSRS.importFromProj4(proj4Defn.c_str());
+    }
     resetRoadElementIterators();
 }
 
