@@ -3,7 +3,7 @@
  * Project:  OpenGIS Simple Features for OpenDRIVE
  * Purpose:  Implementation of LaneBorder layer.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
- *           Gülsen Bardak, German Aerospace Center (DLR)        
+ *           Gülsen Bardak, German Aerospace Center (DLR)
  *
  ******************************************************************************
  * Copyright 2024 German Aerospace Center (DLR), Institute of Transportation Systems
@@ -26,7 +26,8 @@ OGRXODRLayerLaneBorder::OGRXODRLayerLaneBorder(
 
     OGRwkbGeometryType wkbLineStringWithZ = OGR_GT_SetZ(wkbLineString);
     m_poFeatureDefn->SetGeomType(wkbLineStringWithZ);
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
+    if (!m_oSRS.IsEmpty())
+        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_oSRS);
 
     OGRFieldDefn oFieldID("ID", OFTInteger);
     m_poFeatureDefn->AddFieldDefn(&oFieldID);
@@ -73,7 +74,8 @@ OGRFeature *OGRXODRLayerLaneBorder::GetNextRawFeature()
             lineString->addPoint(borderVertex[0], borderVertex[1],
                                  borderVertex[2]);
         }
-        lineString->assignSpatialReference(&m_poSRS);
+        if (!m_oSRS.IsEmpty())
+            lineString->assignSpatialReference(&m_oSRS);
         feature->SetGeometryDirectly(lineString.release());
 
         // Populate other fields

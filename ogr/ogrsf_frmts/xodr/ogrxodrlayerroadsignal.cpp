@@ -3,7 +3,7 @@
  * Project:  OpenGIS Simple Features for OpenDRIVE
  * Purpose:  Implementation of RoadSignal layer.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
- *           Gülsen Bardak, German Aerospace Center (DLR)        
+ *           Gülsen Bardak, German Aerospace Center (DLR)
  *
  ******************************************************************************
  * Copyright 2024 German Aerospace Center (DLR), Institute of Transportation Systems
@@ -34,7 +34,8 @@ OGRXODRLayerRoadSignal::OGRXODRLayerRoadSignal(
     {
         m_poFeatureDefn->SetGeomType(wkbTINZ);
     }
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
+    if (!m_oSRS.IsEmpty())
+        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_oSRS);
 
     OGRFieldDefn oFieldSignalID("SignalID", OFTString);
     m_poFeatureDefn->AddFieldDefn(&oFieldSignalID);
@@ -102,14 +103,16 @@ OGRFeature *OGRXODRLayerRoadSignal::GetNextRawFeature()
             odr::Vec3D xyz = road.get_xyz(s, t, h);
 
             auto point = std::make_unique<OGRPoint>(xyz[0], xyz[1], xyz[2]);
-            point->assignSpatialReference(&m_poSRS);
+            if (!m_oSRS.IsEmpty())
+                point->assignSpatialReference(&m_oSRS);
             feature->SetGeometryDirectly(point.release());
         }
         else
         {
             std::unique_ptr<OGRTriangulatedSurface> tin =
                 triangulateSurface(roadSignalMesh);
-            tin->assignSpatialReference(&m_poSRS);
+            if (!m_oSRS.IsEmpty())
+                tin->assignSpatialReference(&m_oSRS);
             feature->SetGeometryDirectly(tin.release());
         }
 

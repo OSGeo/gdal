@@ -3,7 +3,7 @@
  * Project:  OpenGIS Simple Features for OpenDRIVE
  * Purpose:  Implementation of RoadObject layer.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
- *           Gülsen Bardak, German Aerospace Center (DLR)        
+ *           Gülsen Bardak, German Aerospace Center (DLR)
  *
  ******************************************************************************
  * Copyright 2024 German Aerospace Center (DLR), Institute of Transportation Systems
@@ -25,7 +25,8 @@ OGRXODRLayerRoadObject::OGRXODRLayerRoadObject(
     SetDescription(FEATURE_CLASS_NAME.c_str());
 
     m_poFeatureDefn->SetGeomType(wkbTINZ);
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
+    if (!m_oSRS.IsEmpty())
+        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_oSRS);
 
     OGRFieldDefn oFieldObjectID("ObjectID", OFTString);
     m_poFeatureDefn->AddFieldDefn(&oFieldObjectID);
@@ -65,7 +66,8 @@ OGRFeature *OGRXODRLayerRoadObject::GetNextRawFeature()
         // In contrast to other XODR layers, dissolving of RoadObject TINs is not an option, because faces of "true" 3D objects might collapse.
         std::unique_ptr<OGRTriangulatedSurface> tin =
             triangulateSurface(roadObjectMesh);
-        tin->assignSpatialReference(&m_poSRS);
+        if (!m_oSRS.IsEmpty())
+            tin->assignSpatialReference(&m_oSRS);
         feature->SetGeometryDirectly(tin.release());
 
         // Populate other fields

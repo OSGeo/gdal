@@ -62,7 +62,7 @@ class OGRXODRLayer : public OGRLayer
   protected:
     RoadElements m_roadElements{};
     bool m_bDissolveTIN{false};
-    OGRSpatialReference m_poSRS{};
+    OGRSpatialReference m_oSRS{};
     /* Unique feature ID which is automatically incremented for any new road feature creation. */
     int m_nNextFID{0};
 

@@ -3,7 +3,7 @@
  * Project:  OpenGIS Simple Features for OpenDRIVE
  * Purpose:  Implementation of RoadMark layer.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
- *           Gülsen Bardak, German Aerospace Center (DLR)        
+ *           Gülsen Bardak, German Aerospace Center (DLR)
  *
  ******************************************************************************
  * Copyright 2024 German Aerospace Center (DLR), Institute of Transportation Systems
@@ -34,7 +34,8 @@ OGRXODRLayerRoadMark::OGRXODRLayerRoadMark(
     {
         m_poFeatureDefn->SetGeomType(wkbTINZ);
     }
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
+    if (!m_oSRS.IsEmpty())
+        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_oSRS);
 
     OGRFieldDefn oFieldRoadID("RoadID", OFTString);
     m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
@@ -75,7 +76,8 @@ OGRFeature *OGRXODRLayerRoadMark::GetNextRawFeature()
             OGRGeometry *dissolvedPolygon = tin->UnaryUnion();
             if (dissolvedPolygon != nullptr)
             {
-                dissolvedPolygon->assignSpatialReference(&m_poSRS);
+                if (!m_oSRS.IsEmpty())
+                    dissolvedPolygon->assignSpatialReference(&m_oSRS);
                 feature->SetGeometryDirectly(dissolvedPolygon);
             }
             else
@@ -88,7 +90,8 @@ OGRFeature *OGRXODRLayerRoadMark::GetNextRawFeature()
         }
         else
         {
-            tin->assignSpatialReference(&m_poSRS);
+            if (!m_oSRS.IsEmpty())
+                tin->assignSpatialReference(&m_oSRS);
             feature->SetGeometryDirectly(tin.release());
         }
 
