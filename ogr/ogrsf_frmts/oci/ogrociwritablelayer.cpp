@@ -291,7 +291,7 @@ OGRErr OGROCIWritableLayer::CreateField(const OGRFieldDefn *poFieldIn,
     }
     else if (oField.GetType() == OFTDateTime)
     {
-        snprintf(szFieldType, sizeof(szFieldType), "TIMESTAMP");
+        snprintf(szFieldType, sizeof(szFieldType), "TIMESTAMP(3)");
     }
     else if (bApproxOK)
     {
