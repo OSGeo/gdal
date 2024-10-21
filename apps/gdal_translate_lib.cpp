@@ -3415,15 +3415,55 @@ GDALTranslateOptionsNew(char **papszArgv,
         if (auto aosOutSize =
                 argParser->present<std::vector<std::string>>("-outsize"))
         {
-            if ((*aosOutSize)[0].back() == '%')
-                psOptions->dfOXSizePct = CPLAtofM((*aosOutSize)[0].c_str());
-            else
-                psOptions->nOXSizePixel = atoi((*aosOutSize)[0].c_str());
+            const auto &sOutSizeX = (*aosOutSize)[0];
+            const auto &sOutSizeY = (*aosOutSize)[1];
 
-            if ((*aosOutSize)[1].back() == '%')
-                psOptions->dfOYSizePct = CPLAtofM((*aosOutSize)[1].c_str());
+            if (sOutSizeX.back() == '%')
+            {
+                char *end = nullptr;
+                psOptions->dfOXSizePct = CPLStrtodM(sOutSizeX.c_str(), &end);
+                if (*end != '%')
+                {
+                    throw std::invalid_argument(
+                        "Failed to parse first value of -outsize: " +
+                        sOutSizeX);
+                }
+            }
             else
-                psOptions->nOYSizePixel = atoi((*aosOutSize)[1].c_str());
+            {
+                size_t pos;
+                psOptions->nOXSizePixel = std::stoi(sOutSizeX, &pos);
+                if (pos != sOutSizeX.size())
+                {
+                    throw std::invalid_argument(
+                        "Failed to parse first value of -outsize: " +
+                        sOutSizeX);
+                }
+            }
+
+            if (sOutSizeY.back() == '%')
+            {
+                char *end = nullptr;
+                psOptions->dfOYSizePct = CPLStrtodM(sOutSizeY.c_str(), &end);
+                if (*end != '%')
+                {
+                    throw std::invalid_argument(
+                        "Failed to parse second value of -outsize: " +
+                        sOutSizeY);
+                }
+            }
+            else
+            {
+                size_t pos;
+                psOptions->nOYSizePixel = std::stoi(sOutSizeY, &pos);
+                if (pos != sOutSizeY.size())
+                {
+                    throw std::invalid_argument(
+                        "Failed to parse second value of -outsize: " +
+                        sOutSizeY);
+                }
+            }
+
             bOutsizeExplicitlySet = true;
         }
 

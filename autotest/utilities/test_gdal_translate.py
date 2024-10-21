@@ -164,9 +164,16 @@ def test_gdal_translate_5(gdal_translate_path, tmp_path):
 
 def test_gdal_translate_6(gdal_translate_path, tmp_path):
 
-    dst_tif = str(tmp_path / "test6.tif")
+    dst_tif = tmp_path / "test6.tif"
 
-    gdaltest.runexternal(
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_translate_path} -outsize 40 40^ ../gcore/data/byte.tif {dst_tif}"
+    )
+
+    assert "Failed to parse" in err
+    assert not dst_tif.exists()
+
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_translate_path} -outsize 40 40 ../gcore/data/byte.tif {dst_tif}"
     )
 
