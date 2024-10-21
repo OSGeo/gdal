@@ -235,7 +235,7 @@ static OGRErr GDALGPKGImportFromEPSG(OGRSpatialReference *poSpatialRef,
     return eErr;
 }
 
-OGRSpatialReference *
+std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
 GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
                                      bool bEmitErrorIfNotFound)
 {
@@ -245,7 +245,8 @@ GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
         if (oIter->second == nullptr)
             return nullptr;
         oIter->second->Reference();
-        return oIter->second;
+        return std::unique_ptr<OGRSpatialReference,
+                               OGRSpatialReferenceReleaser>(oIter->second);
     }
 
     if (iSrsId == 0 || iSrsId == -1)
@@ -268,7 +269,8 @@ GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
 
         m_oMapSrsIdToSrs[iSrsId] = poSpatialRef;
         poSpatialRef->Reference();
-        return poSpatialRef;
+        return std::unique_ptr<OGRSpatialReference,
+                               OGRSpatialReferenceReleaser>(poSpatialRef);
     }
 
     CPLString oSQL;
@@ -292,7 +294,8 @@ GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
             if (poSRS->importFromEPSG(iSrsId) == OGRERR_NONE)
             {
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                return poSRS;
+                return std::unique_ptr<OGRSpatialReference,
+                                       OGRSpatialReferenceReleaser>(poSRS);
             }
             poSRS->Release();
         }
@@ -349,7 +352,8 @@ GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
     poSpatialRef->SetCoordinateEpoch(dfCoordinateEpoch);
     m_oMapSrsIdToSrs[iSrsId] = poSpatialRef;
     poSpatialRef->Reference();
-    return poSpatialRef;
+    return std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>(
+        poSpatialRef);
 }
 
 const char *GDALGeoPackageDataset::GetSrsName(const OGRSpatialReference &oSRS)
@@ -679,10 +683,8 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference *poSRSIn)
             auto poRefSRS = GetSpatialRef(nSRSId);
             bool bOK =
                 (poRefSRS == nullptr ||
-                 poSRS->IsSame(poRefSRS, apszIsSameOptions) ||
+                 poSRS->IsSame(poRefSRS.get(), apszIsSameOptions) ||
                  !CPLTestBool(CPLGetConfigOption("OGR_GPKG_CHECK_SRS", "YES")));
-            if (poRefSRS)
-                poRefSRS->Release();
             if (bOK)
             {
                 return nSRSId;
@@ -2858,11 +2860,9 @@ bool GDALGeoPackageDataset::OpenRaster(
     m_bRecordInsertedInGPKGContent = true;
     m_nSRID = nSRSId;
 
-    OGRSpatialReference *poSRS = GetSpatialRef(nSRSId);
-    if (poSRS)
+    if (auto poSRS = GetSpatialRef(nSRSId))
     {
-        m_oSRS = *poSRS;
-        poSRS->Release();
+        m_oSRS = *(poSRS.get());
     }
 
     /* Various sanity checks added in the SELECT */
@@ -8704,7 +8704,8 @@ static void OGRGeoPackageGeodesicArea(sqlite3_context *pContext, int argc,
     GDALGeoPackageDataset *poDS =
         static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
 
-    OGRSpatialReference *poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId, true);
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSrcSRS(
+        poDS->GetSpatialRef(sHeader.iSrsId, true));
     if (poSrcSRS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -8729,7 +8730,7 @@ static void OGRGeoPackageGeodesicArea(sqlite3_context *pContext, int argc,
         poGeom.reset(poGeomSpatialite);
     }
 
-    poGeom->assignSpatialReference(poSrcSRS);
+    poGeom->assignSpatialReference(poSrcSRS.get());
     sqlite3_result_double(
         pContext, OGR_G_GeodesicArea(OGRGeometry::ToHandle(poGeom.get())));
 }
@@ -8767,7 +8768,7 @@ static void OGRGeoPackageLengthOrGeodesicLength(sqlite3_context *pContext,
     GDALGeoPackageDataset *poDS =
         static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
 
-    OGRSpatialReference *poSrcSRS = nullptr;
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSrcSRS;
     if (argc == 2)
     {
         poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId, true);
@@ -8797,7 +8798,7 @@ static void OGRGeoPackageLengthOrGeodesicLength(sqlite3_context *pContext,
     }
 
     if (argc == 2)
-        poGeom->assignSpatialReference(poSrcSRS);
+        poGeom->assignSpatialReference(poSrcSRS.get());
 
     sqlite3_result_double(
         pContext,
@@ -8853,8 +8854,8 @@ void OGRGeoPackageTransform(sqlite3_context *pContext, int argc,
     }
     else
     {
-        OGRSpatialReference *poSrcSRS =
-            poDS->GetSpatialRef(sHeader.iSrsId, true);
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+            poSrcSRS(poDS->GetSpatialRef(sHeader.iSrsId, true));
         if (poSrcSRS == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -8863,19 +8864,17 @@ void OGRGeoPackageTransform(sqlite3_context *pContext, int argc,
             return;
         }
 
-        OGRSpatialReference *poDstSRS = poDS->GetSpatialRef(nDestSRID, true);
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+            poDstSRS(poDS->GetSpatialRef(nDestSRID, true));
         if (poDstSRS == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Target SRID (%d) is invalid",
                      nDestSRID);
             sqlite3_result_blob(pContext, nullptr, 0, nullptr);
-            poSrcSRS->Release();
             return;
         }
-        poCT = OGRCreateCoordinateTransformation(poSrcSRS, poDstSRS);
-        poSrcSRS->Release();
-        poDstSRS->Release();
-
+        poCT =
+            OGRCreateCoordinateTransformation(poSrcSRS.get(), poDstSRS.get());
         if (poCT == nullptr)
         {
             sqlite3_result_blob(pContext, nullptr, 0, nullptr);
