@@ -4644,3 +4644,132 @@ def test_ogr_gml_force_opening(tmp_vsimem):
     with gdal.config_option("NAS_GFS_TEMPLATE", ""):
         ds = gdal.OpenEx(filename, allowed_drivers=["GML"])
         assert ds.GetDriver().GetDescription() == "GML"
+
+
+###############################################################################
+# Test field type override open option schema
+#
+
+
+@pytest.mark.parametrize("is_path", [False, True])
+@pytest.mark.parametrize(
+    "open_options, with_xsd, expected_field_types, expected_warning",
+    [
+        ([], True, [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTString], ""),
+        ([], False, [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTInteger], ""),
+        (
+            [r'SCHEMA={"fields": [{ "name": "str", "type": "Real" }]}'],
+            False,
+            [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTReal],
+            "",
+        ),
+        # Case insensitivity test
+        (
+            [r'SCHEMA={"fields": [{ "name": "str", "type": "real" }]}'],
+            False,
+            [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTReal],
+            "",
+        ),
+        # Test override XSD
+        (
+            [r'SCHEMA={"fields": [{ "name": "str", "type": "real" }]}'],
+            True,
+            [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTReal],
+            "",
+        ),
+        # Test with a field that does not exist
+        (
+            [r'SCHEMA={"fields": [{ "name": "xxxx", "type": "Real" }]}'],
+            True,
+            [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTString],
+            "Field xxxx not found in layer test_point",
+        ),
+        # Test with type wich is not recognized
+        (
+            [
+                r'SCHEMA={"fields": [{ "name": "str", "type": "xxxx" }, { "name": "dbl", "type": "String" }]}'
+            ],
+            True,
+            [ogr.OFTString, ogr.OFTString, ogr.OFTInteger, ogr.OFTString],
+            "Unsupported field type: xxxx for field str",
+        ),
+        # Test with layer name
+        (
+            [
+                r'SCHEMA={"layers": [{"name": "xxxx", "fields": [{ "name": "str", "type": "real" }]}]}'
+            ],
+            True,
+            [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTString],
+            "Layer xxxx not found",
+        ),
+        # Test with layer name that does not exist
+        (
+            [
+                r'SCHEMA={"layers": [{"name": "xxxx", "fields": [{ "name": "str", "type": "real" }]}]}'
+            ],
+            True,
+            [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTString],
+            "Layer xxxx not found",
+        ),
+        (
+            [
+                r'SCHEMA={"layers": [{"name": "test_point", "fields": [{ "name": "str", "type": "real" }]},{"name": "xxxx", "fields": [{ "name": "str", "type": "real" }]}]}'
+            ],
+            True,
+            [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTReal],
+            "Layer xxxx not found",
+        ),
+    ],
+)
+def test_ogr_gml_type_override(
+    tmp_path, is_path, open_options, with_xsd, expected_field_types, expected_warning
+):
+
+    shutil.copy("data/gml/test_point.gml", tmp_path)
+
+    if with_xsd:
+        shutil.copy("data/gml/test_point.xsd", tmp_path)
+
+    gdal.ErrorReset()
+
+    try:
+        schema = open_options[0].split("=")[1]
+        open_options = open_options[1:]
+    except IndexError:
+        schema = None
+        is_path = False
+
+    with gdal.quiet_errors():
+
+        if is_path:
+            schema_path = tmp_path / "schema.json"
+            with open(schema_path, "w+") as f:
+                f.write(schema)
+            open_options.append("SCHEMA=" + str(schema_path))
+        elif schema:
+            open_options.append("SCHEMA=" + schema)
+        else:
+            open_options = []
+
+        with gdal.OpenEx(
+            tmp_path / "test_point.gml",
+            gdal.OF_VECTOR | gdal.OF_READONLY,
+            open_options=open_options,
+        ) as gml_ds:
+
+            assert gml_ds.GetLayerCount() == 1, "wrong number of layers"
+
+            lyr = gml_ds.GetLayerByName("test_point")
+
+            feat = lyr.GetNextFeature()
+
+            # Check field types fid, dbl, int, str
+            assert feat.GetFieldDefnRef("fid").GetType() == expected_field_types[0]
+            assert feat.GetFieldDefnRef("dbl").GetType() == expected_field_types[1]
+            assert feat.GetFieldDefnRef("int").GetType() == expected_field_types[2]
+            assert feat.GetFieldDefnRef("str").GetType() == expected_field_types[3]
+
+            if expected_warning:
+                assert (
+                    gdal.GetLastErrorMsg().find(expected_warning) != -1
+                ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"
