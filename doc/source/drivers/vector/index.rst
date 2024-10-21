@@ -22,6 +22,7 @@ Vector drivers
    :maxdepth: 1
    :hidden:
 
+   adbc
    amigocloud
    arrow
    avcbin
