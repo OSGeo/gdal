@@ -75,7 +75,7 @@ _gdalbuildvrt()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --long-usage --help-general --quiet -strict -non_strict -tile_index -resolution -tr -input_file_list -separate -allow_projection_difference -sd -tap -te -addalpha -b -hidenodata -overwrite -srcnodata -vrtnodata -a_srs -r -oo -ignore_srcmaskband -nodata_max_mask_threshold --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general --quiet -strict -non_strict -tile_index -resolution -tr -input_file_list -separate -allow_projection_difference -sd -tap -te -addalpha -b -hidenodata -overwrite -srcnodata -vrtnodata -a_srs -r -oo -co -ignore_srcmaskband -nodata_max_mask_threshold --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -490,7 +490,7 @@ _gdal_rasterize()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --long-usage --help-general -b -i -at -burn -a -3d -add -l -sql -where -dialect -a_nodata -init -a_srs -to -te -tr -ts -tap -optim -co -ot -of -oo --quiet --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general -b -i -at -burn -a -3d -add -l -sql -where -dialect -a_nodata -init -a_srs -to -te -tr -ts -tap -optim -co -ot -of --quiet -oo --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
