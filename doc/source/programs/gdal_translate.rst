@@ -151,8 +151,8 @@ resampling, and rescaling pixels in the process.
     source dataset, in its whole (not just the window of interest potentially
     specified with :option:`-srcwin` or :option:`-projwin`). This may be a
     slow operation on a large source dataset, and if using it multiple times
-    for several gdal_translate invocation, it might be beneficial to call
-    ``gdalinfo -stats {source_dataset}`` priorly to precompute statistics, for
+    for several gdal_translate invocations, it might be beneficial to call
+    ``gdalinfo -stats {source_dataset}`` beforehand to precompute statistics, for
     formats that support serializing statistics computations (GeoTIFF, VRT...)
     Note that the values specified after :option:`-scale` are only used to compute a scale and
     offset to apply to the input raster values. In particular, ``src_min`` and
