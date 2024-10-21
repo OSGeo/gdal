@@ -290,11 +290,20 @@ def test_ogr2ogr_13(ogr2ogr_path, tmp_path):
 
 def test_ogr2ogr_14(ogr2ogr_path, tmp_path):
 
-    output_shp = str(tmp_path / "poly.shp")
+    output_shp = tmp_path / "poly.shp"
 
-    gdaltest.runexternal(
+    # invalid value
+    _, err = gdaltest.runexternal_out_and_err(
+        ogr2ogr_path + f" -segmentize small_bits {output_shp} ../ogr/data/poly.shp poly"
+    )
+    assert "Failed to parse" in err
+    assert not output_shp.exists()
+
+    _, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path + f" -segmentize 100 {output_shp} ../ogr/data/poly.shp poly"
     )
+
+    assert not err
 
     ds = ogr.Open(output_shp)
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
@@ -697,6 +706,42 @@ def test_ogr2ogr_27(ogr2ogr_path, tmp_path):
         479764,
         4764629,
         4764817,
+    ), "unexpected extent"
+
+
+###############################################################################
+# Test -clipdst with clip from bounding box
+
+
+@pytest.mark.require_geos
+def test_ogr2ogr_clipdst_bbox(ogr2ogr_path, tmp_path):
+
+    output_shp = tmp_path / "poly.shp"
+
+    xmin = 479400
+    xmax = 480300
+    ymin = 4764500
+    ymax = 4765100
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{ogr2ogr_path} {output_shp} ../ogr/data/poly.shp -clipdst {xmin}x {ymin} {xmax} {ymax}"
+    )
+
+    assert "cannot load dest clip geometry" in err
+    assert not output_shp.exists()
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{ogr2ogr_path} {output_shp} ../ogr/data/poly.shp -clipdst {xmin} {ymin} {xmax} {ymax}"
+    )
+
+    ds = ogr.Open(output_shp)
+    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 7
+
+    assert ds.GetLayer(0).GetExtent() == (
+        xmin,
+        xmax,
+        ymin,
+        ymax,
     ), "unexpected extent"
 
 
