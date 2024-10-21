@@ -588,7 +588,7 @@ def test_gdal_translate_21(gdal_translate_path, tmp_path):
 
 ###############################################################################
 # Test that statistics are copied only when appropriate (#3889)
-# in that case, they must *NOT* be copied
+# in this case, they must *NOT* be copied
 
 
 @pytest.mark.require_driver("HFA")
@@ -604,13 +604,11 @@ def test_gdal_translate_22(gdal_translate_path, tmp_path):
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
 
-    assert (
-        "STATISTICS_MINIMUM" not in md
-    ), "did not expected a STATISTICS_MINIMUM value."
+    assert "STATISTICS_MINIMUM" not in md, "did not expect a STATISTICS_MINIMUM value."
 
     assert (
         "STATISTICS_HISTOBINVALUES" not in md
-    ), "did not expected a STATISTICS_HISTOBINVALUES value."
+    ), "did not expect a STATISTICS_HISTOBINVALUES value."
 
 
 ###############################################################################
@@ -1137,3 +1135,19 @@ def test_gdal_translate_scale_and_unscale_incompatible(gdal_translate_path, tmp_
         + f" -a_scale 0.0001 -a_offset 0.1 -unscale ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
     )
     assert "-a_scale/-a_offset are not applied by -unscale" in err
+
+
+###############################################################################
+# Test that invalid values of -scale are detected
+
+
+def test_gdal_translate_scale_invalid(gdal_translate_path, tmp_path):
+
+    outfile = tmp_path / "out.tif"
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_translate_path} -scale 0 255 6 -badarg ../gcore/data/byte.tif {outfile}"
+    )
+
+    assert "must be numeric" in err
+    assert not outfile.exists()
