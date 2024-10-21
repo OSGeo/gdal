@@ -32,8 +32,26 @@ def get_version():
     ]
 
 
+def _has_tiling_support():
+    drv = gdal.GetDriverByName("HEIF")
+    return drv and drv.GetMetadataItem("SUPPORTS_TILES", "HEIF")
+
+
+def _has_hevc_decoding_support():
+    drv = gdal.GetDriverByName("HEIF")
+    return drv and drv.GetMetadataItem("SUPPORTS_HEVC", "HEIF")
+
+
+def _has_uncompressed_decoding_support():
+    drv = gdal.GetDriverByName("HEIF")
+    return drv and drv.GetMetadataItem("SUPPORTS_UNCOMPRESSED", "HEIF")
+
+
 @pytest.mark.parametrize("endianness", ["big_endian", "little_endian"])
 def test_heif_exif_endian(endianness):
+    if not _has_hevc_decoding_support():
+        pytest.skip()
+
     filename = "data/heif/byte_exif_%s.heic" % endianness
     gdal.ErrorReset()
     ds = gdal.Open(filename)
@@ -63,6 +81,9 @@ def test_heif_exif_endian(endianness):
 
 
 def test_heif_thumbnail():
+    if not _has_hevc_decoding_support():
+        pytest.skip()
+
     ds = gdal.Open("data/heif/byte_thumbnail.heic")
     assert ds
     assert ds.RasterXSize == 128
@@ -81,6 +102,8 @@ def test_heif_thumbnail():
 def test_heif_rgb_16bit():
     if get_version() < [1, 4, 0]:
         pytest.skip()
+    if not _has_hevc_decoding_support():
+        pytest.skip()
 
     ds = gdal.Open("data/heif/small_world_16.heic")
     assert ds
@@ -93,6 +116,8 @@ def test_heif_rgb_16bit():
 
 
 def test_heif_rgba():
+    if not _has_hevc_decoding_support():
+        pytest.skip()
 
     ds = gdal.Open("data/heif/stefan_full_rgba.heic")
     assert ds
@@ -110,6 +135,8 @@ def test_heif_rgba():
 def test_heif_rgba_16bit():
     if get_version() < [1, 4, 0]:
         pytest.skip()
+    if not _has_hevc_decoding_support():
+        pytest.skip()
 
     ds = gdal.Open("data/heif/stefan_full_rgba_16.heic")
     assert ds
@@ -117,13 +144,10 @@ def test_heif_rgba_16bit():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
 
 
-def _has_tiling_support():
-    drv = gdal.GetDriverByName("HEIF")
-    return drv and drv.GetMetadataItem("HEIF_SUPPORTS_TILES")
-
-
 def test_heif_tiled():
     if not _has_tiling_support():
+        pytest.skip()
+    if not _has_uncompressed_decoding_support():
         pytest.skip()
 
     ds = gdal.Open("data/heif/uncompressed_comp_RGB_tiled.heif")
@@ -361,6 +385,8 @@ def test_heif_tiled():
 
 
 def test_heif_subdatasets(tmp_path):
+    if not _has_hevc_decoding_support():
+        pytest.skip()
 
     filename = str(tmp_path / "out.heic")
     shutil.copy("data/heif/subdatasets.heic", filename)
