@@ -28,6 +28,7 @@ Synopsis
                  [-a_srs <srs_def>]
                  [-r {nearest|bilinear|cubic|cubicspline|lanczos|average|mode}]
                  [-oo <NAME>=<VALUE>]...
+                 [-co <NAME>=<VALUE>]...
                  [-input_file_list <filename>] [-overwrite]
                  [-strict | -non_strict]
                  <output_filename.vrt> <input_raster> [<input_raster>]...
@@ -207,6 +208,12 @@ changed in later versions.
     Dataset open option (format specific)
 
     .. versionadded:: 2.2
+
+.. option:: -co <NAME>=<VALUE>
+
+    Specify a :ref:`VRT driver creation option <raster_vrt_creation_options>`.
+
+    .. versionadded:: 3.10
 
 .. option:: -input_file_list <filename>
 
