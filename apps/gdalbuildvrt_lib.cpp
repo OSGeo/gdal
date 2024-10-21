@@ -238,6 +238,7 @@ class VRTBuilder
     bool bUseSrcMaskBand = true;
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
+    CPLStringList aosCreateOptions{};
 
     /* Internal variables */
     char *pszProjectionRef = nullptr;
@@ -277,7 +278,8 @@ class VRTBuilder
                const char *pszVRTNoData, bool bUseSrcMaskBand,
                bool bNoDataFromMask, double dfMaskValueThreshold,
                const char *pszOutputSRS, const char *pszResampling,
-               const char *const *papszOpenOptionsIn);
+               const char *const *papszOpenOptionsIn,
+               const CPLStringList &aosCreateOptionsIn);
 
     ~VRTBuilder();
 
@@ -299,8 +301,9 @@ VRTBuilder::VRTBuilder(
     const char *pszSrcNoDataIn, const char *pszVRTNoDataIn,
     bool bUseSrcMaskBandIn, bool bNoDataFromMaskIn,
     double dfMaskValueThresholdIn, const char *pszOutputSRSIn,
-    const char *pszResamplingIn, const char *const *papszOpenOptionsIn)
-    : bStrict(bStrictIn)
+    const char *pszResamplingIn, const char *const *papszOpenOptionsIn,
+    const CPLStringList &aosCreateOptionsIn)
+    : bStrict(bStrictIn), aosCreateOptions(aosCreateOptionsIn)
 {
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
@@ -1609,8 +1612,13 @@ GDALDataset *VRTBuilder::Build(GDALProgressFunc pfnProgress,
         return nullptr;
     }
 
-    VRTDatasetH hVRTDS = VRTCreate(nRasterXSize, nRasterYSize);
-    GDALSetDescription(hVRTDS, pszOutputFilename);
+    VRTDatasetH hVRTDS = cpl::down_cast<VRTDataset *>(
+        VRTDataset::Create(pszOutputFilename, nRasterXSize, nRasterYSize, 0,
+                           GDT_Unknown, aosCreateOptions.List()));
+    if (!hVRTDS)
+    {
+        return nullptr;
+    }
 
     if (pszOutputSRS)
     {
@@ -1742,6 +1750,7 @@ struct GDALBuildVRTOptions
     std::vector<int> anSelectedBandList{};
     std::string osResampling{};
     CPLStringList aosOpenOptions{};
+    CPLStringList aosCreateOptions{};
     bool bUseSrcMaskBand = true;
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
@@ -1892,7 +1901,7 @@ GDALDatasetH GDALBuildVRT(const char *pszDest, int nSrcCount,
         sOptions.dfMaskValueThreshold,
         sOptions.osOutputSRS.empty() ? nullptr : sOptions.osOutputSRS.c_str(),
         sOptions.osResampling.empty() ? nullptr : sOptions.osResampling.c_str(),
-        sOptions.aosOpenOptions.List());
+        sOptions.aosOpenOptions.List(), sOptions.aosCreateOptions);
 
     return GDALDataset::ToHandle(
         oBuilder.Build(sOptions.pfnProgress, sOptions.pProgressData));
@@ -2141,6 +2150,8 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
         .help(_("Resampling algorithm."));
 
     argParser->add_open_options_argument(&psOptions->aosOpenOptions);
+
+    argParser->add_creation_options_argument(psOptions->aosCreateOptions);
 
     argParser->add_argument("-ignore_srcmaskband")
         .flag()

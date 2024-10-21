@@ -678,6 +678,26 @@ def test_vrtmisc_blocksize_gdal_translate_direct():
 # Test setting block size through creation options
 
 
+def test_vrtmisc_blocksize_gdalbuildvrt():
+    filename = "/vsimem/test_vrtmisc_blocksize_gdalbuildvrt.vrt"
+    vrt_ds = gdal.BuildVRT(
+        filename, ["data/byte.tif"], creationOptions=["BLOCKXSIZE=32", "BLOCKYSIZE=48"]
+    )
+    vrt_ds = None
+
+    vrt_ds = gdal.Open(filename)
+    blockxsize, blockysize = vrt_ds.GetRasterBand(1).GetBlockSize()
+    assert blockxsize == 32
+    assert blockysize == 48
+    vrt_ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test setting block size through creation options
+
+
 def test_vrtmisc_blocksize_gdal_translate_indirect():
     filename = "/vsimem/test_vrtmisc_blocksize_gdal_translate_indirect.vrt"
     vrt_ds = gdal.Translate(

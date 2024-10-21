@@ -2485,6 +2485,17 @@ mapGRIORAMethodToString = {
     gdalconst.GRIORA_Gauss: 'gauss',
 }
 
+def _addCreationOptions(new_options, creationOptions):
+    """Update new_options with creationOptions formatted as expected by utilities"""
+    if isinstance(creationOptions, str):
+        new_options += ['-co', creationOptions]
+    elif isinstance(creationOptions, dict):
+        for k, v in creationOptions.items():
+            new_options += ['-co', f'{k}={v}']
+    else:
+        for opt in creationOptions:
+            new_options += ['-co', opt]
+
 def TranslateOptions(options=None, format=None,
               outputType = gdalconst.GDT_Unknown, bandList=None, maskBand=None,
               width = 0, height = 0, widthPct = 0.0, heightPct = 0.0,
@@ -2601,14 +2612,7 @@ def TranslateOptions(options=None, format=None,
         elif widthPct != 0 and heightPct != 0:
             new_options += ['-outsize', str(widthPct) + '%%', str(heightPct) + '%%']
         if creationOptions is not None:
-            if isinstance(creationOptions, str):
-                new_options += ['-co', creationOptions]
-            elif isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if srcWin is not None:
             new_options += ['-srcwin', _strHighPrec(srcWin[0]), _strHighPrec(srcWin[1]), _strHighPrec(srcWin[2]), _strHighPrec(srcWin[3])]
         if strict:
@@ -2929,12 +2933,7 @@ def WarpOptions(options=None, format=None,
         if warpMemoryLimit is not None:
             new_options += ['-wm', str(warpMemoryLimit)]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if srcNodata is not None:
             new_options += ['-srcnodata', str(srcNodata)]
         if dstNodata is not None:
@@ -3528,12 +3527,7 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if computeEdges:
             new_options += ['-compute_edges']
         if alg:
@@ -3661,12 +3655,7 @@ def NearblackOptions(options=None, format=None,
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if white:
             new_options += ['-white']
         if colors is not None:
@@ -3816,12 +3805,7 @@ def GridOptions(options=None, format=None,
         if width != 0 or height != 0:
             new_options += ['-outsize', str(width), str(height)]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if outputBounds is not None:
             new_options += ['-txe', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[2]), '-tye', _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[3])]
         if outputSRS is not None:
@@ -3982,12 +3966,7 @@ def RasterizeOptions(options=None, format=None,
         if outputType != gdalconst.GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType)]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if bands is not None:
             for b in bands:
                 new_options += ['-b', str(b)]
@@ -4345,6 +4324,7 @@ def BuildVRTOptions(options=None,
                     hideNodata=None,
                     nodataMaxMaskThreshold=None,
                     strict=False,
+                    creationOptions=None,
                     callback=None, callback_data=None):
     """Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
 
@@ -4385,6 +4365,8 @@ def BuildVRTOptions(options=None,
         value of the mask band of a source below which the source band values should be replaced by VRTNodata (or 0 if not specified)
     strict:
         set to True if warnings should be failures
+    creationOptions:
+        list or dict of creation options
     callback:
         callback method.
     callback_data:
@@ -4437,6 +4419,8 @@ def BuildVRTOptions(options=None,
             new_options += ['-hidenodata']
         if strict:
             new_options += ['-strict']
+        if creationOptions is not None:
+            _addCreationOptions(new_options, creationOptions)
 
     if return_option_list:
         return new_options
@@ -4748,12 +4732,7 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if arraySpecs is not None:
             for s in arraySpecs:
                 new_options += ['-array', s]
