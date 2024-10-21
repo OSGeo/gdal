@@ -7516,7 +7516,13 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
             [psOptions](const std::string &s)
             {
                 psOptions->eGeomOp = GEOMOP_SEGMENTIZE;
-                psOptions->dfGeomOpParam = CPLAtofM(s.c_str());
+                char *end = nullptr;
+                psOptions->dfGeomOpParam = CPLStrtodM(s.c_str(), &end);
+                if (*end != '\0')
+                {
+                    throw std::invalid_argument(
+                        "Failed to parse value of -segmentize");
+                }
             })
         .help(_("Maximum distance between 2 nodes."));
 
@@ -7526,7 +7532,13 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
             [psOptions](const std::string &s)
             {
                 psOptions->eGeomOp = GEOMOP_SIMPLIFY_PRESERVE_TOPOLOGY;
-                psOptions->dfGeomOpParam = CPLAtofM(s.c_str());
+                char *end = nullptr;
+                psOptions->dfGeomOpParam = CPLStrtodM(s.c_str(), &end);
+                if (*end != '\0')
+                {
+                    throw std::invalid_argument(
+                        "Failed to parse value of -simplify");
+                }
             })
         .help(_("Distance tolerance for simplification."));
 
