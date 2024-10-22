@@ -21,6 +21,19 @@ pytestmark = pytest.mark.require_driver("XODR")
 xodr_file = "data/xodr/5g_living_lab_A39_Wolfsburg-West.xodr"
 
 
+def test_ogr_xodr_i_do_not_exist():
+
+    assert gdal.IdentifyDriverEx("i_do_not_exist.xodr") is None
+
+
+def test_ogr_xodr_empty():
+
+    gdal.ErrorReset()
+    with ogr.Open("data/xodr/empty.xodr") as ds:
+        assert gdal.GetLastErrorMsg() == ""
+        assert ds.GetLayerCount() == 6
+
+
 def test_ogr_xodr_test_ogrsf():
 
     import test_cli_utilities
