@@ -41,7 +41,7 @@
 #ifdef HAS_CUSTOM_FILE_WRITER
 
 // Same default as libheif encoder example
-const int DEFAULT_QUALITY = 50;
+constexpr int DEFAULT_QUALITY = 50;
 
 static CPLErr mapColourInterpretation(GDALColorInterp colourInterpretation,
                                       heif_channel *channel)
