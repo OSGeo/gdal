@@ -43,7 +43,7 @@ The option will be used to specify the schema in the form of a JSON document (or
 The schema document will not need to to contain a definition for every field and it will allow partial overrides of the auto-detected fields types.
 
 The structure of the JSON document will be similar to the one produced by the `ogrinfo -json` command
-with the notable exception that (for the scope of this RFC) only the type of the fields will be considered:
+with the notable exception that (for the scope of this RFC) only the information related to the type of the fields will be considered:
 
 .. code-block:: json
 
@@ -51,7 +51,8 @@ with the notable exception that (for the scope of this RFC) only the type of the
     "fields": [
         {
         "name": "field1",
-        "type": "string"
+        "type": "string",
+        "subtype": "JSON"
         },
         {
         "name": "field2",
@@ -74,7 +75,8 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
         "fields": [
             {
             "name": "field1",
-            "type": "string"
+            "type": "string",
+            "subtype": "JSON"
             },
             {
             "name": "field2",
@@ -89,7 +91,8 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
         "fields": [
             {
             "name": "field1",
-            "type": "string"
+            "type": "string",
+            "subtype": "JSON"
             },
             {
             "name": "field2",
