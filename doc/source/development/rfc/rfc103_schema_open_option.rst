@@ -40,6 +40,8 @@ A new open option named SCHEMA will be added to the following drivers:
 
 The option will be used to specify the schema in the form of a JSON document (or a path to a JSON file).
 
+The schema document will not need to to contain a definition for every field and it will allow partial overrides of the auto-detected fields types.
+
 The structure of the JSON document will be similar to the one produced by the `ogrinfo -json` command
 with the notable exception that (for the scope of this RFC) only the type of the fields will be considered:
 
