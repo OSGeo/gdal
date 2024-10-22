@@ -3,7 +3,7 @@
  * Project:  OpenGIS Simple Features for OpenDRIVE
  * Purpose:  Implementation of Lane layer.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
- *           Gülsen Bardak, German Aerospace Center (DLR)        
+ *           Gülsen Bardak, German Aerospace Center (DLR)
  *
  ******************************************************************************
  * Copyright 2024 German Aerospace Center (DLR), Institute of Transportation Systems
@@ -34,7 +34,10 @@ OGRXODRLayerLane::OGRXODRLayerLane(const RoadElements &xodrRoadElements,
     {
         m_poFeatureDefn->SetGeomType(wkbTINZ);
     }
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
+    if (!m_oSRS.IsEmpty())
+    {
+        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_oSRS);
+    }
 
     OGRFieldDefn oFieldLaneID("LaneID", OFTInteger);
     m_poFeatureDefn->AddFieldDefn(&oFieldLaneID);
@@ -91,7 +94,8 @@ OGRFeature *OGRXODRLayerLane::GetNextRawFeature()
             OGRGeometry *dissolvedPolygon = tin->UnaryUnion();
             if (dissolvedPolygon != nullptr)
             {
-                dissolvedPolygon->assignSpatialReference(&m_poSRS);
+                if (!m_oSRS.IsEmpty())
+                    dissolvedPolygon->assignSpatialReference(&m_oSRS);
                 feature->SetGeometryDirectly(dissolvedPolygon);
             }
             else
@@ -104,7 +108,8 @@ OGRFeature *OGRXODRLayerLane::GetNextRawFeature()
         }
         else
         {
-            tin->assignSpatialReference(&m_poSRS);
+            if (!m_oSRS.IsEmpty())
+                tin->assignSpatialReference(&m_oSRS);
             feature->SetGeometryDirectly(tin.release());
         }
 
