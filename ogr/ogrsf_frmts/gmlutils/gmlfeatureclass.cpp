@@ -1125,3 +1125,37 @@ OGRFieldType GML_GetOGRFieldType(GMLPropertyType eType,
         eFType = OFTStringList;
     return eFType;
 }
+
+/************************************************************************/
+/*                       GML_FromOGRFieldType()                          */
+/************************************************************************/
+
+GMLPropertyType GML_FromOGRFieldType(OGRFieldType eType)
+{
+    GMLPropertyType type{GMLPT_Untyped};
+    switch (eType)
+    {
+        case OFTString:
+            type = GMLPT_String;
+            break;
+        case OFTInteger:
+            type = GMLPT_Integer;
+            break;
+        case OFTReal:
+            type = GMLPT_Real;
+            break;
+        case OFTDate:
+            type = GMLPT_Date;
+            break;
+        case OFTDateTime:
+            type = GMLPT_DateTime;
+            break;
+        case OFTTime:
+            type = GMLPT_Time;
+            break;
+        default:
+            type = GMLPT_Untyped;
+            break;
+    }
+    return type;
+}

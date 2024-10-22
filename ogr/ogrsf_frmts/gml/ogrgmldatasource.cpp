@@ -27,7 +27,6 @@
 #include "cpl_conv.h"
 #include "cpl_http.h"
 #include "cpl_string.h"
-#include "cpl_vsi_virtual.h"
 #include "cpl_vsi_error.h"
 #include "cpl_json.h"
 #include "gmlreaderp.h"
@@ -1306,220 +1305,9 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         eReadMode = SEQUENTIAL_LAYERS;
     }
 
-    // If the SCHEMA option was specified, we must override the field types
-    // with the ones specified in the schema.
-    std::string osFieldsSchemaOverrideParam =
-        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "SCHEMA", "");
-
-    if (!osFieldsSchemaOverrideParam.empty())
+    if (!DealWithSchemaOpenOption(poOpenInfo))
     {
-
-        std::string osFieldsSchemaOverride;
-        bool bFieldsSchemaOverrideIsFilePath{false};
-
-        // Try to load the content of the file
-        GByte *pabyRet = nullptr;
-        if (VSIIngestFile(nullptr, osFieldsSchemaOverrideParam.c_str(),
-                          &pabyRet, nullptr, -1) == TRUE)
-        {
-            bFieldsSchemaOverrideIsFilePath = true;
-            osFieldsSchemaOverride =
-                std::string(reinterpret_cast<char *>(pabyRet));
-            VSIFree(pabyRet);
-        }
-
-        if (!bFieldsSchemaOverrideIsFilePath)
-        {
-            osFieldsSchemaOverride = osFieldsSchemaOverrideParam;
-        }
-
-        // Override field types with the ones specified in the schema.
-        if (!osFieldsSchemaOverride.empty())
-        {
-            const int layerCount{poReader->GetClassCount()};
-            std::vector<std::string> aosLayerNames;
-            for (int i = 0; i < layerCount; ++i)
-            {
-                aosLayerNames.push_back(poReader->GetClass(i)->GetName());
-            }
-
-            // Parse the schema to get the field types for each layer and field
-            // name.
-            // NOTE: this will be moved to CPL or other utility class in the future.
-
-            const auto parseFields = [](const CPLJSONArray &oFields)
-                -> std::map<std::string, OGRFieldType>
-            {
-                std::map<std::string, OGRFieldType> oMapFieldTypes;
-                for (const auto &oField : oFields)
-                {
-                    const auto oName = oField.GetString("name");
-                    const auto oType =
-                        CPLString(oField.GetString("type")).tolower();
-                    if (!oName.empty() && !oType.empty())
-                    {
-                        OGRFieldType eType = OFTString;
-                        if (oType == "string")
-                        {
-                            eType = OFTString;
-                        }
-                        else if (oType == "integer")
-                        {
-                            eType = OFTInteger;
-                        }
-                        else if (oType == "real")
-                        {
-                            eType = OFTReal;
-                        }
-                        else if (oType == "date")
-                        {
-                            eType = OFTDate;
-                        }
-                        else if (oType == "datetime")
-                        {
-                            eType = OFTDateTime;
-                        }
-                        else if (oType == "time")
-                        {
-                            eType = OFTTime;
-                        }
-                        // TODO: other supported?
-                        else
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Unsupported field type: %s for field %s",
-                                     oType.c_str(), oName.c_str());
-                            continue;
-                        }
-
-                        oMapFieldTypes[oName] = eType;
-                    }
-                }
-                return oMapFieldTypes;
-            };
-
-            std::map<std::string, std::map<std::string, OGRFieldType>>
-                oMapLayerFieldTypes;
-            CPLJSONDocument oSchemaDoc;
-            if (oSchemaDoc.LoadMemory(osFieldsSchemaOverride))
-            {
-                // If there is just a single layer, there is a chance that the schema
-                // contains only a "fields" object
-                const auto oFields = oSchemaDoc.GetRoot().GetArray("fields");
-                if (oFields.Size() > 0 && layerCount == 1)
-                {
-                    // Parse fields
-                    oMapLayerFieldTypes[aosLayerNames[0]] =
-                        parseFields(oFields);
-                }
-                else  // Full schema
-                {
-                    const auto aoLayers =
-                        oSchemaDoc.GetRoot().GetArray("layers");
-                    // Loop through layer names and get the field type for each field.
-                    for (const auto &oLayer : aoLayers)
-                    {
-                        if (oLayer.IsValid())
-                        {
-                            const auto oLayerFields = oLayer.GetArray("fields");
-                            const auto oLayerName = oLayer.GetString("name");
-                            if (oLayerFields.Size() > 0 && !oLayerName.empty())
-                            {
-                                // Parse fields
-                                oMapLayerFieldTypes[oLayerName] =
-                                    parseFields(oLayerFields);
-                            }
-                        }
-                    }
-                }
-
-                // Apply overrides
-                for (const auto &oLayer : oMapLayerFieldTypes)
-                {
-                    const auto oLayerName = oLayer.first;
-                    const auto oLayerFields = oLayer.second;
-                    CPLDebug("GML", "Applying schema override for layer %s",
-                             oLayerName.c_str());
-
-                    // Warn if the layer name does not exist
-                    if (std::find(aosLayerNames.begin(), aosLayerNames.end(),
-                                  oLayerName) == aosLayerNames.end())
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Layer %s not found", oLayerName.c_str());
-                        continue;
-                    }
-
-                    const auto oClass = poReader->GetClass(oLayerName.c_str());
-                    if (oClass == nullptr)
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Layer %s not found", oLayerName.c_str());
-                        continue;
-                    }
-
-                    // Store actual field names
-                    std::vector<std::string> oFieldNames;
-
-                    for (int j = 0; j < oClass->GetPropertyCount(); ++j)
-                    {
-                        oFieldNames.push_back(
-                            oClass->GetProperty(j)->GetName());
-                    }
-
-                    for (const auto &oField : oLayerFields)
-                    {
-                        const auto oProperty =
-                            oClass->GetProperty(oField.first.c_str());
-                        if (oProperty == nullptr)
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Field %s not found in layer %s",
-                                     oField.first.c_str(), oLayerName.c_str());
-                            continue;
-                        }
-
-                        // Map OGRFieldType to GMLPropertyType
-                        GMLPropertyType type{GMLPT_Untyped};
-                        switch (oField.second)
-                        {
-                            case OFTString:
-                                type = GMLPT_String;
-                                break;
-                            case OFTInteger:
-                                type = GMLPT_Integer;
-                                break;
-                            case OFTReal:
-                                type = GMLPT_Real;
-                                break;
-                            case OFTDate:
-                                type = GMLPT_Date;
-                                break;
-                            case OFTDateTime:
-                                type = GMLPT_DateTime;
-                                break;
-                            case OFTTime:
-                                type = GMLPT_Time;
-                                break;
-                            default:
-                                type = GMLPT_Untyped;
-                                break;
-                        }
-
-                        if (type != GMLPT_Untyped)
-                        {
-                            oProperty->SetType(type);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "SCHEMA info is invalid JSON");
-                return false;
-            }
-        }
+        return false;
     }
 
     // Save the schema file if possible.  Don't make a fuss if we
@@ -2219,6 +2007,206 @@ void OGRGMLDataSource::WriteTopElements()
                                     "gml:null></gml:boundedBy>");
         }
     }
+}
+
+/************************************************************************/
+/*                           DealWithSchemaOpenOption()                              */
+/************************************************************************/
+
+bool OGRGMLDataSource::DealWithSchemaOpenOption(const GDALOpenInfo *poOpenInfo)
+{
+
+    std::string osFieldsSchemaOverrideParam =
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "SCHEMA", "");
+
+    if (!osFieldsSchemaOverrideParam.empty())
+    {
+
+        std::string osFieldsSchemaOverride;
+        bool bFieldsSchemaOverrideIsFilePath{false};
+
+        // Try to load the content of the file
+        GByte *pabyRet = nullptr;
+        if (VSIIngestFile(nullptr, osFieldsSchemaOverrideParam.c_str(),
+                          &pabyRet, nullptr, -1) == TRUE)
+        {
+            bFieldsSchemaOverrideIsFilePath = true;
+            osFieldsSchemaOverride =
+                std::string(reinterpret_cast<char *>(pabyRet));
+            VSIFree(pabyRet);
+        }
+
+        if (!bFieldsSchemaOverrideIsFilePath)
+        {
+            osFieldsSchemaOverride = osFieldsSchemaOverrideParam;
+        }
+
+        // Override field types with the ones specified in the schema.
+        if (!osFieldsSchemaOverride.empty())
+        {
+            const int layerCount{poReader->GetClassCount()};
+            std::vector<std::string> aosLayerNames;
+            for (int i = 0; i < layerCount; ++i)
+            {
+                aosLayerNames.push_back(poReader->GetClass(i)->GetName());
+            }
+
+            // Parse the schema to get the field types for each layer and field
+            // name.
+            // NOTE: this will be moved to CPL or other utility class in the future.
+
+            const auto parseFields = [](const CPLJSONArray &oFields)
+                -> std::map<std::string, OGRFieldType>
+            {
+                std::map<std::string, OGRFieldType> oMapFieldTypes;
+                for (const auto &oField : oFields)
+                {
+                    const auto oName = oField.GetString("name");
+                    const auto oType =
+                        CPLString(oField.GetString("type")).tolower();
+                    if (!oName.empty() && !oType.empty())
+                    {
+                        OGRFieldType eType = OFTString;
+                        if (oType == "string")
+                        {
+                            eType = OFTString;
+                        }
+                        else if (oType == "integer")
+                        {
+                            eType = OFTInteger;
+                        }
+                        else if (oType == "real")
+                        {
+                            eType = OFTReal;
+                        }
+                        else if (oType == "date")
+                        {
+                            eType = OFTDate;
+                        }
+                        else if (oType == "datetime")
+                        {
+                            eType = OFTDateTime;
+                        }
+                        else if (oType == "time")
+                        {
+                            eType = OFTTime;
+                        }
+                        // TODO: other supported?
+                        else
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Unsupported field type: %s for field %s",
+                                     oType.c_str(), oName.c_str());
+                            continue;
+                        }
+
+                        oMapFieldTypes[oName] = eType;
+                    }
+                }
+                return oMapFieldTypes;
+            };
+
+            std::map<std::string, std::map<std::string, OGRFieldType>>
+                oMapLayerFieldTypes;
+            CPLJSONDocument oSchemaDoc;
+            if (oSchemaDoc.LoadMemory(osFieldsSchemaOverride))
+            {
+                // If there is just a single layer, there is a chance that the schema
+                // contains only a "fields" object
+                const auto oFields = oSchemaDoc.GetRoot().GetArray("fields");
+                if (oFields.Size() > 0 && layerCount == 1)
+                {
+                    // Parse fields
+                    oMapLayerFieldTypes[aosLayerNames[0]] =
+                        parseFields(oFields);
+                }
+                else  // Full schema
+                {
+                    const auto aoLayers =
+                        oSchemaDoc.GetRoot().GetArray("layers");
+                    // Loop through layer names and get the field type for each field.
+                    for (const auto &oLayer : aoLayers)
+                    {
+                        if (oLayer.IsValid())
+                        {
+                            const auto oLayerFields = oLayer.GetArray("fields");
+                            const auto oLayerName = oLayer.GetString("name");
+                            if (oLayerFields.Size() > 0 && !oLayerName.empty())
+                            {
+                                // Parse fields
+                                oMapLayerFieldTypes[oLayerName] =
+                                    parseFields(oLayerFields);
+                            }
+                        }
+                    }
+                }
+
+                // Apply overrides
+                for (const auto &oLayer : oMapLayerFieldTypes)
+                {
+                    const auto oLayerName = oLayer.first;
+                    const auto oLayerFields = oLayer.second;
+                    CPLDebug("GML", "Applying schema override for layer %s",
+                             oLayerName.c_str());
+
+                    // Warn if the layer name does not exist
+                    if (std::find(aosLayerNames.begin(), aosLayerNames.end(),
+                                  oLayerName) == aosLayerNames.end())
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Layer %s not found", oLayerName.c_str());
+                        continue;
+                    }
+
+                    const auto oClass = poReader->GetClass(oLayerName.c_str());
+                    if (oClass == nullptr)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Layer %s not found", oLayerName.c_str());
+                        continue;
+                    }
+
+                    // Store actual field names
+                    std::vector<std::string> oFieldNames;
+
+                    for (int j = 0; j < oClass->GetPropertyCount(); ++j)
+                    {
+                        oFieldNames.push_back(
+                            oClass->GetProperty(j)->GetName());
+                    }
+
+                    for (const auto &oField : oLayerFields)
+                    {
+                        const auto oProperty =
+                            oClass->GetProperty(oField.first.c_str());
+                        if (oProperty == nullptr)
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Field %s not found in layer %s",
+                                     oField.first.c_str(), oLayerName.c_str());
+                            continue;
+                        }
+
+                        // Map OGRFieldType to GMLPropertyType
+                        const GMLPropertyType type{
+                            GML_FromOGRFieldType(oField.second)};
+
+                        if (type != GMLPT_Untyped)
+                        {
+                            oProperty->SetType(type);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "SCHEMA info is invalid JSON");
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
