@@ -26,7 +26,7 @@ def Usage(isError):
     f = sys.stderr if isError else sys.stdout
     print(
         """
-Usage: gdal_proximity.py [--help] [--help-general]
+Usage: gdal_proximity [--help] [--help-general]
                   <srcfile> <dstfile> [-srcband <n>] [-dstband <n>]
                   [-of <format>] [-co <name>=<value>]...
                   [-ot {Byte|UInt16|UInt32|Float32|etc}]

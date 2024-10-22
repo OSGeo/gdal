@@ -222,7 +222,7 @@ def move(
 def Usage(isError=True):
     f = sys.stderr if isError else sys.stdout
     print(
-        """Usage: gdalmove.py [--help] [--help-general]
+        """Usage: gdalmove [--help] [--help-general]
                    [-s_srs <srs_defn>] -t_srs <srs_defn>
                    [-et <max_pixel_err>] <target_file>""",
         file=f,

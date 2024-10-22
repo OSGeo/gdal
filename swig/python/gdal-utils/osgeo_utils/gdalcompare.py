@@ -473,7 +473,7 @@ def find_diff(
 
 def Usage(isError=True):
     f = sys.stderr if isError else sys.stdout
-    print("Usage: gdalcompare.py [--help] [--help-general]", file=f)
+    print("Usage: gdalcompare [--help] [--help-general]", file=f)
     print("                      [-dumpdiffs] [-skip_binary] [-skip_overviews]", file=f)
     print("                      [-skip_geolocation] [-skip_geotransform]", file=f)
     print("                      [-skip_metadata] [-skip_rpc] [-skip_srs]", file=f)
