@@ -95,7 +95,7 @@ static heif_compression_format getCompressionType(char **papszOptions)
     return heif_compression_HEVC;
 }
 
-static void setEncoderParameters(heif_encoder *encoder, char **papszOptions)
+static void setEncoderParameters(heif_encoder *encoder, CSLConstList papszOptions)
 {
     const char *pszValue = CSLFetchNameValue(papszOptions, "QUALITY");
     int nQuality = DEFAULT_QUALITY;
