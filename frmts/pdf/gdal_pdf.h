@@ -372,7 +372,8 @@ class PDFDataset final : public GDALPamDataset
 
     void ExploreContentsNonStructuredInternal(
         GDALPDFObject *poContents, GDALPDFObject *poResources,
-        std::map<CPLString, OGRPDFLayer *> &oMapPropertyToLayer,
+        const std::map<CPLString, OGRPDFLayer *> &oMapPropertyToLayer,
+        const std::map<std::pair<int, int>, OGRPDFLayer *> &oMapNumGenToLayer,
         OGRPDFLayer *poSingleLayer);
     void ExploreContentsNonStructured(GDALPDFObject *poObj,
                                       GDALPDFObject *poResources);
@@ -391,11 +392,13 @@ class PDFDataset final : public GDALPamDataset
         void ApplyMatrix(double adfCoords[2]) const;
     };
 
-    OGRGeometry *
-    ParseContent(const char *pszContent, GDALPDFObject *poResources,
-                 int bInitBDCStack, int bMatchQ,
-                 std::map<CPLString, OGRPDFLayer *> &oMapPropertyToLayer,
-                 const GraphicState &graphicStateIn, OGRPDFLayer *poCurLayer);
+    OGRGeometry *ParseContent(
+        const char *pszContent, GDALPDFObject *poResources,
+        bool bCollectAllObjects, bool bInitBDCStack, bool bMatchQ,
+        const std::map<CPLString, OGRPDFLayer *> &oMapPropertyToLayer,
+        const std::map<std::pair<int, int>, OGRPDFLayer *> &oMapNumGenToLayer,
+        const GraphicState &graphicStateIn, OGRPDFLayer *poCurLayer,
+        int nRecLevel);
     OGRGeometry *BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
                                int bHasMultiPart);
 
