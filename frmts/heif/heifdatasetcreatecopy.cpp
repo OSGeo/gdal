@@ -201,7 +201,7 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
         {
             CPLError(CE_Warning, CPLE_NotSupported,
                      "Driver does not support bands other than RGBA yet, "
-                     "ignoring band.\n");
+                     "ignoring band.");
             continue;
         }
         err = heif_image_add_plane(image, channel, poSrcDS->GetRasterXSize(),
