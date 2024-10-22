@@ -1202,12 +1202,11 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                             FALSE);
 
                     /* Read the SRS */
-                    OGRSpatialReference *poSRS = m_poDS->GetSpatialRef(m_iSrs);
+                    auto poSRS = m_poDS->GetSpatialRef(m_iSrs);
                     if (poSRS)
                     {
                         m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(
-                            poSRS);
-                        poSRS->Dereference();
+                            poSRS.get());
                     }
                 }
                 else if (!STARTS_WITH(
@@ -5691,8 +5690,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
                                           /* bEmitErrorIfNotFound = */ false);
                 if (poGotSRS)
                 {
-                    oGeomFieldDefn.SetSpatialRef(poGotSRS);
-                    poGotSRS->Release();
+                    oGeomFieldDefn.SetSpatialRef(poGotSRS.get());
                 }
                 else
                 {
