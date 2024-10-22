@@ -251,6 +251,7 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
     {
         ReportError(pszFilename, CE_Failure, CPLE_OpenFailed,
                     "Unable to create file.");
+        heif_context_free(ctx);
         return nullptr;
     }
     heif_writer writer;
