@@ -1,7 +1,7 @@
 .. _rfc-103:
 
 ===================================================================
-RFC 103 add a SCHEMA open option to selected OGR drivers
+RFC 103 add a OGR_SCHEMA open option to selected OGR drivers
 ===================================================================
 
 =============== =============================================
@@ -14,7 +14,7 @@ Created:        2024-10-22
 Summary
 -------
 
-This RFC enables users to specify a SCHEMA open option in the OGR
+This RFC enables users to specify a OGR_SCHEMA open option in the OGR
 drivers that support it.
 
 The new option will be used to override the auto-detected fields types.
@@ -31,7 +31,7 @@ For the details please see the discussion attached to the issue: https://github.
 Implementation
 --------------
 
-A new open option named SCHEMA will be added to the following drivers:
+A new reserved open option named OGR_SCHEMA will be added to the following drivers:
 
 - CSV
 - GeoJSON
@@ -55,7 +55,9 @@ with the notable exception that (for the scope of this RFC) only the type of the
         },
         {
         "name": "field2",
-        "type": "integer"
+        "type": "integer",
+        "width":11,
+        "precision":5
         }
     ]
     }
@@ -76,7 +78,9 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
             },
             {
             "name": "field2",
-            "type": "integer"
+            "type": "integer",
+            "width":11,
+            "precision":5
             }
         ]
         },
@@ -89,12 +93,17 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
             },
             {
             "name": "field2",
-            "type": "integer"
+            "type": "integer",
+            "width":11,
+            "precision":5
             }
         ]
         }
     ]
     }
+
+
+The new option will be used by applications such as `ogr2ogr` to override the auto-detected fields types.
 
 A preliminary draft of the implementation can be found at:
 https://github.com/elpaso/gdal/commits/enhancement-gh10943-fields-schema-override/
