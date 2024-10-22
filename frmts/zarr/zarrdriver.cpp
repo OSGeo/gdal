@@ -996,6 +996,10 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
                                  int nBandsIn, GDALDataType eType,
                                  char **papszOptions)
 {
+    // To avoid any issue with short-lived string that would be passed to us
+    const std::string osName = pszName;
+    pszName = osName.c_str();
+
     if (nBandsIn <= 0 || nXSize <= 0 || nYSize <= 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1028,6 +1032,22 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
     }
     else
     {
+        VSIStatBufL sStat;
+        const bool bExists = VSIStatL(pszName, &sStat) == 0;
+        const bool bIsFile = bExists && !VSI_ISDIR(sStat.st_mode);
+        const bool bIsDirectory =
+            !bIsFile && ((bExists && VSI_ISDIR(sStat.st_mode)) ||
+                         !CPLStringList(VSIReadDirEx(pszName, 1)).empty());
+        if (bIsFile || bIsDirectory || bExists)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "%s %s already exists.",
+                     bIsFile        ? "File"
+                     : bIsDirectory ? "Directory"
+                                    : "Object",
+                     pszName);
+            return nullptr;
+        }
+
         const char *pszFormat =
             CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2");
         auto poSharedResource =
@@ -1058,6 +1078,50 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
     poDS->nRasterYSize = nYSize;
     poDS->nRasterXSize = nXSize;
     poDS->eAccess = GA_Update;
+
+    const auto CleanupCreatedFiles =
+        [bAppendSubDS, pszName, pszArrayName, &poRG, &poDS]()
+    {
+        // Make sure all objects are released so that ZarrSharedResource
+        // is finalized and all files are serialized.
+        poRG.reset();
+        poDS.reset();
+
+        if (bAppendSubDS)
+        {
+            VSIRmdir(CPLFormFilename(pszName, pszArrayName, nullptr));
+        }
+        else
+        {
+            // Be a bit careful before wiping too much stuff...
+            // At most 5 files expected for ZARR_V2: .zgroup, .zmetadata,
+            // one (empty) subdir, . and ..
+            // and for ZARR_V3: zarr.json, one (empty) subdir, . and ..
+            const CPLStringList aosFiles(VSIReadDirEx(pszName, 6));
+            if (aosFiles.size() < 6)
+            {
+                for (const char *pszFile : aosFiles)
+                {
+                    if (pszArrayName && strcmp(pszFile, pszArrayName) == 0)
+                    {
+                        VSIRmdir(CPLFormFilename(pszName, pszFile, nullptr));
+                    }
+                    else if (!pszArrayName &&
+                             strcmp(pszFile, CPLGetBasename(pszName)) == 0)
+                    {
+                        VSIRmdir(CPLFormFilename(pszName, pszFile, nullptr));
+                    }
+                    else if (strcmp(pszFile, ".zgroup") == 0 ||
+                             strcmp(pszFile, ".zmetadata") == 0 ||
+                             strcmp(pszFile, "zarr.json") == 0)
+                    {
+                        VSIUnlink(CPLFormFilename(pszName, pszFile, nullptr));
+                    }
+                }
+                VSIRmdir(pszName);
+            }
+        }
+    };
 
     if (bAppendSubDS)
     {
@@ -1096,7 +1160,10 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
             poRG->CreateDimension("X", std::string(), std::string(), nXSize);
     }
     if (poDS->m_poDimY == nullptr || poDS->m_poDimX == nullptr)
+    {
+        CleanupCreatedFiles();
         return nullptr;
+    }
 
     const bool bSingleArray =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SINGLE_ARRAY", "YES"));
@@ -1123,7 +1190,10 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
             pszNonNullArrayName, apoDims, GDALExtendedDataType::Create(eType),
             papszOptions);
         if (!poDS->m_poSingleArray)
+        {
+            CleanupCreatedFiles();
             return nullptr;
+        }
         poDS->SetMetadataItem("INTERLEAVE", bBandInterleave ? "BAND" : "PIXEL",
                               "IMAGE_STRUCTURE");
         for (int i = 0; i < nBandsIn; i++)
@@ -1145,7 +1215,10 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
                                : CPLSPrintf("Band%d", i + 1),
                 apoDims, GDALExtendedDataType::Create(eType), papszOptions);
             if (poArray == nullptr)
+            {
+                CleanupCreatedFiles();
                 return nullptr;
+            }
             poDS->SetBand(i + 1, new ZarrRasterBand(poArray));
         }
     }
