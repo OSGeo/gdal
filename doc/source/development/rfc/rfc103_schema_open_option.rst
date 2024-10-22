@@ -59,35 +59,39 @@ with the notable exception that (for the scope of this RFC) only the type of the
     }
 
 
-In case of multi-layered datasets, the schema will be specified as a dictionary with the layer name as the key:
+In case of multi-layered datasets, the schema will be specified as a list of layers:
 
 .. code-block:: json
-    
+
     {
-    "layer1": {
-        "fields": [
+    "layers":[
         {
+        "name": "layer1",
+        "fields": [
+            {
             "name": "field1",
             "type": "string"
-        },
-        {
+            },
+            {
             "name": "field2",
             "type": "integer"
-        }
+            }
         ]
-    },
-    "layer2": {
-        "fields": [
+        },
         {
+        "name": "layer2",
+        "fields": [
+            {
             "name": "field1",
             "type": "string"
-        },
-        {
+            },
+            {
             "name": "field2",
             "type": "integer"
-        }
+            }
         ]
-    }
+        }
+    ]
     }
 
 A preliminary draft of the implementation can be found at:
