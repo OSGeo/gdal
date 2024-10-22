@@ -6333,8 +6333,9 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
         // Before allocating new memory, there might be some previously allocated but unused memory.
         // Let's free that memory first.
-        if (hMiraMonLayer->MMArc.MMNode.MMAdmDB.pMMBDXP)
-            MM_ReleaseDBFHeader(&hMiraMonLayer->MMArc.MMNode.MMAdmDB.pMMBDXP);
+        if (hMiraMonLayer->MMPolygon.MMArc.MMAdmDB.pMMBDXP)
+            MM_ReleaseDBFHeader(
+                &hMiraMonLayer->MMPolygon.MMArc.MMAdmDB.pMMBDXP);
 
         pBD_XP_Aux = hMiraMonLayer->MMPolygon.MMArc.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(5, hMiraMonLayer->nCharSet);
@@ -6348,6 +6349,12 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                          ? 3
                          : 9))
             return 1;
+
+        // Before allocating new memory, there might be some previously allocated but unused memory.
+        // Let's free that memory first.
+        if (hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB.pMMBDXP)
+            MM_ReleaseDBFHeader(
+                &hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB.pMMBDXP);
 
         pBD_XP_Aux = hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(3, hMiraMonLayer->nCharSet);
