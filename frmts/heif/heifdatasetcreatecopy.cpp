@@ -212,7 +212,7 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
             heif_encoder_release(encoder);
             heif_context_free(ctx);
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to add image plane to libheif input image.\n");
+                     "Failed to add image plane to libheif input image.");
             return nullptr;
         }
         int stride;
