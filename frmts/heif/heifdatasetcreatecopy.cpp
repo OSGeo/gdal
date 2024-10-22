@@ -49,7 +49,7 @@ static CPLErr mapColourInterpretation(GDALColorInterp colourInterpretation,
     }
 }
 
-static heif_compression_format getCompressionType(char **papszOptions)
+static heif_compression_format getCompressionType(CSLConstList papszOptions)
 {
     const char *pszValue = CSLFetchNameValue(papszOptions, "CODEC");
     if (pszValue == nullptr)
