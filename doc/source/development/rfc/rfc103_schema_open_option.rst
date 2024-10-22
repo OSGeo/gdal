@@ -44,6 +44,7 @@ The structure of the JSON document will be similar to the one produced by the `o
 with the notable exception that (for the scope of this RFC) only the type of the fields will be considered:
 
 .. code-block:: json
+
     {
     "fields": [
         {
@@ -61,6 +62,7 @@ with the notable exception that (for the scope of this RFC) only the type of the
 In case of multi-layered datasets, the schema will be specified as a dictionary with the layer name as the key:
 
 .. code-block:: json
+    
     {
     "layer1": {
         "fields": [
