@@ -13,6 +13,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import array
 import os
 import shutil
 
@@ -45,6 +46,15 @@ def _has_hevc_decoding_support():
 def _has_uncompressed_decoding_support():
     drv = gdal.GetDriverByName("HEIF")
     return drv and drv.GetMetadataItem("SUPPORTS_UNCOMPRESSED", "HEIF")
+
+
+def _has_read_write_support_for(format):
+    drv = gdal.GetDriverByName("HEIF")
+    return (
+        drv
+        and drv.GetMetadataItem("SUPPORTS_" + format, "HEIF")
+        and drv.GetMetadataItem("SUPPORTS_" + format + "_WRITE", "HEIF")
+    )
 
 
 @pytest.mark.parametrize("endianness", ["big_endian", "little_endian"])
@@ -483,3 +493,127 @@ def test_identify_various(major_brand, compatible_brands, expect_success):
         assert drv is None
 
     gdal.Unlink("/vsimem/heif_header.bin")
+
+
+def make_data():
+    ds = gdal.GetDriverByName("MEM").Create("", 300, 200, 3, gdal.GDT_Byte)
+
+    ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_RedBand)
+    ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
+    ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
+
+    red_green_blue = (
+        ([0xFF] * 100 + [0x00] * 200)
+        + ([0x00] * 100 + [0xFF] * 100 + [0x00] * 100)
+        + ([0x00] * 200 + [0xFF] * 100)
+    )
+    rgb_bytes = array.array("B", red_green_blue).tobytes()
+    for line in range(100):
+        ds.WriteRaster(
+            0, line, 300, 1, rgb_bytes, buf_type=gdal.GDT_Byte, band_list=[1, 2, 3]
+        )
+    black_white = ([0xFF] * 150 + [0x00] * 150) * 3
+    black_white_bytes = array.array("B", black_white).tobytes()
+    for line in range(100):
+        ds.WriteRaster(
+            0,
+            100 + line,
+            300,
+            1,
+            black_white_bytes,
+            buf_type=gdal.GDT_Byte,
+            band_list=[1, 2, 3],
+        )
+
+    assert ds.FlushCache() == gdal.CE_None
+    return ds
+
+
+def make_data_with_alpha():
+    ds = gdal.GetDriverByName("MEM").Create("", 300, 200, 4, gdal.GDT_Byte)
+
+    ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_RedBand)
+    ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
+    ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
+    ds.GetRasterBand(4).SetRasterColorInterpretation(gdal.GCI_AlphaBand)
+
+    red_green_blue_alpha = (
+        ([0xFF] * 100 + [0x00] * 200)
+        + ([0x00] * 100 + [0xFF] * 100 + [0x00] * 100)
+        + ([0x00] * 200 + [0xFF] * 100)
+        + ([0x7F] * 150 + [0xFF] * 150)
+    )
+    rgba_bytes = array.array("B", red_green_blue_alpha).tobytes()
+    for line in range(100):
+        ds.WriteRaster(
+            0, line, 300, 1, rgba_bytes, buf_type=gdal.GDT_Byte, band_list=[1, 2, 3, 4]
+        )
+    black_white = ([0xFF] * 150 + [0x00] * 150) * 4
+    black_white_bytes = array.array("B", black_white).tobytes()
+    for line in range(100):
+        ds.WriteRaster(
+            0,
+            100 + line,
+            300,
+            1,
+            black_white_bytes,
+            buf_type=gdal.GDT_Byte,
+            band_list=[1, 2, 3, 4],
+        )
+
+    assert ds.FlushCache() == gdal.CE_None
+    return ds
+
+
+heif_codecs = ["AV1", "HEVC", "JPEG", "JPEG2000", "UNCOMPRESSED"]
+
+
+@pytest.mark.parametrize("codec", heif_codecs)
+def test_heif_create_copy(tmp_path, codec):
+    if not _has_read_write_support_for(codec):
+        pytest.skip()
+    tempfile = str(tmp_path / ("test_heif_create_copy_" + codec + ".hif"))
+    input_ds = make_data()
+
+    drv = gdal.GetDriverByName("HEIF")
+    result_ds = drv.CreateCopy(tempfile, input_ds, options=["CODEC=" + codec])
+
+    result_ds = None
+
+    result_ds = gdal.Open(tempfile)
+
+    assert result_ds
+
+
+@pytest.mark.parametrize("codec", heif_codecs)
+def test_heif_create_copy_with_alpha(tmp_path, codec):
+    if not _has_read_write_support_for(codec):
+        pytest.skip()
+    tempfile = str(tmp_path / ("test_heif_create_copy_" + codec + "_alpha.hif"))
+    input_ds = make_data_with_alpha()
+
+    drv = gdal.GetDriverByName("HEIF")
+    result_ds = drv.CreateCopy(tempfile, input_ds, options=["CODEC=" + codec])
+
+    result_ds = None
+
+    result_ds = gdal.Open(tempfile)
+
+    assert result_ds
+
+
+def test_heif_create_copy_defaults(tmp_path):
+    if not _has_read_write_support_for("HEVC"):
+        pytest.skip()
+    tempfile = str(tmp_path / "test_heif_create_copy.hif")
+    input_ds = make_data()
+
+    drv = gdal.GetDriverByName("HEIF")
+
+    result_ds = drv.CreateCopy(tempfile, input_ds, options=[])
+
+    result_ds = None
+
+    result_ds = gdal.Open(tempfile)
+
+    assert result_ds
