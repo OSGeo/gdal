@@ -191,7 +191,7 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
             heif_image_release(image);
             heif_encoder_release(encoder);
             heif_context_free(ctx);
-            CPLError(CE_Failure, CPLE_AppDefined, "Unsupported data type.\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "Unsupported data type.");
             return nullptr;
         }
         heif_channel channel;
