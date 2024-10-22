@@ -574,6 +574,9 @@ class ESRICProxyRasterBand final : public GDALProxyRasterBand
 class ESRICProxyDataset final : public GDALProxyDataset
 {
   private:
+    // m_poSrcDS must be placed before m_poUnderlyingDS for proper destruction
+    // as m_poUnderlyingDS references m_poSrcDS
+    std::unique_ptr<GDALDataset> m_poSrcDS{};
     std::unique_ptr<GDALDataset> m_poUnderlyingDS{};
     CPLStringList m_aosFileList{};
 
@@ -584,8 +587,9 @@ class ESRICProxyDataset final : public GDALProxyDataset
     }
 
   public:
-    ESRICProxyDataset(GDALDataset *poUnderlyingDS, const char *pszDescription)
-        : m_poUnderlyingDS(poUnderlyingDS)
+    ESRICProxyDataset(GDALDataset *poSrcDS, GDALDataset *poUnderlyingDS,
+                      const char *pszDescription)
+        : m_poSrcDS(poSrcDS), m_poUnderlyingDS(poUnderlyingDS)
     {
         nRasterXSize = poUnderlyingDS->GetRasterXSize();
         nRasterYSize = poUnderlyingDS->GetRasterYSize();
@@ -744,15 +748,15 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
             aosOptions.AddString(CPLSPrintf("BLOCKYSIZE=%d", ds->TSZ));
             auto psOptions =
                 GDALTranslateOptionsNew(aosOptions.List(), nullptr);
-            auto hDS = GDALTranslate("", GDALDataset::ToHandle(ds.release()),
+            auto hDS = GDALTranslate("", GDALDataset::ToHandle(ds.get()),
                                      psOptions, nullptr);
             GDALTranslateOptionsFree(psOptions);
             if (!hDS)
             {
                 return nullptr;
             }
-            return new ESRICProxyDataset(GDALDataset::FromHandle(hDS),
-                                         pszDescription);
+            return new ESRICProxyDataset(
+                ds.release(), GDALDataset::FromHandle(hDS), pszDescription);
         }
         return ds.release();
     }
