@@ -86,9 +86,6 @@ void HEIFDriverSetCommonMetadata(GDALDriver *poDriver)
 
     poDriver->pfnIdentify = HEIFDriverIdentifySimplified;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
-#ifdef LIBHEIF_SUPPORTS_TILES
-    poDriver->SetMetadataItem("HEIF_SUPPORTS_TILES", "YES");
-#endif
 }
 
 /************************************************************************/

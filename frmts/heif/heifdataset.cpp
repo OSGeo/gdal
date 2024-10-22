@@ -846,14 +846,47 @@ void GDALRegister_HEIF()
         HEIFDriverSetCommonMetadata(poDriver);
 
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)
+        if (heif_have_decoder_for_format(heif_compression_AVC))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_AVC", "YES", "HEIF");
+        }
         // If the AVIF dedicated driver is not available, register an AVIF driver,
         // called AVIF_HEIF, based on libheif, if it has AV1 decoding capabilities.
         if (heif_have_decoder_for_format(heif_compression_AV1))
         {
             poDriver->SetMetadataItem("SUPPORTS_AVIF", "YES", "HEIF");
         }
+        if (heif_have_decoder_for_format(heif_compression_HEVC))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_HEVC", "YES", "HEIF");
+        }
+        if (heif_have_decoder_for_format(heif_compression_JPEG))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_JPEG", "YES", "HEIF");
+        }
+        if (heif_have_decoder_for_format(heif_compression_JPEG2000))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_JPEG2000", "YES", "HEIF");
+        }
+        if (heif_have_decoder_for_format(heif_compression_HTJ2K))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_JPEG2000_HT", "YES", "HEIF");
+        }
+        if (heif_have_decoder_for_format(heif_compression_uncompressed))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_UNCOMPRESSED", "YES", "HEIF");
+        }
+        if (heif_have_decoder_for_format(heif_compression_VVC))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_VVC", "YES", "HEIF");
+        }
+#else
+        // Anything that old probably supports only HEVC
+        poDriver->SetMetadataItem("SUPPORTS_HEVC", "YES", "HEIF");
 #endif
-
+#ifdef LIBHEIF_SUPPORTS_TILES
+        poDriver->SetMetadataItem("SUPPORTS_TILES", "YES", "HEIF");
+#endif
         poDriver->pfnOpen = GDALHEIFDataset::OpenHEIF;
         poDM->RegisterDriver(poDriver);
     }
