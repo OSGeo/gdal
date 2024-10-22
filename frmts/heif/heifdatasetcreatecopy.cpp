@@ -164,7 +164,7 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
         heif_context_free(ctx);
         // TODO: get the error message and printf
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to create libheif encoder.\n");
+                 "Failed to create libheif encoder.");
         return nullptr;
     }
 
