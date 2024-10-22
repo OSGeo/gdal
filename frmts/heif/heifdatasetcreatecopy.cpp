@@ -95,7 +95,8 @@ static heif_compression_format getCompressionType(CSLConstList papszOptions)
     return heif_compression_HEVC;
 }
 
-static void setEncoderParameters(heif_encoder *encoder, CSLConstList papszOptions)
+static void setEncoderParameters(heif_encoder *encoder,
+                                 CSLConstList papszOptions)
 {
     const char *pszValue = CSLFetchNameValue(papszOptions, "QUALITY");
     int nQuality = DEFAULT_QUALITY;
@@ -112,25 +113,26 @@ static void setEncoderParameters(heif_encoder *encoder, CSLConstList papszOption
     heif_encoder_set_lossy_quality(encoder, nQuality);
 }
 
-heif_error
-GDALHEIFDataset::VFS_WriterCallback(struct heif_context *,
-                                    const void *data, size_t size,
-                                    void *userdata)
+heif_error GDALHEIFDataset::VFS_WriterCallback(struct heif_context *,
+                                               const void *data, size_t size,
+                                               void *userdata)
 {
     VSILFILE *fp = static_cast<VSILFILE *>(userdata);
     size_t bytesWritten = VSIFWriteL(data, 1, size, fp);
+    heif_error result;
     if (bytesWritten == size)
     {
-        return heif_error{.code = heif_error_Ok,
-                          .subcode = heif_suberror_Unspecified,
-                          .message = "Success"};
+        result.code = heif_error_Ok;
+        result.subcode = heif_suberror_Unspecified;
+        result.message = "Success";
     }
     else
     {
-        return heif_error{.code = heif_error_Encoding_error,
-                          .subcode = heif_suberror_Cannot_write_output_data,
-                          .message = "Not all data written"};
+        result.code = heif_error_Encoding_error;
+        result.subcode = heif_suberror_Cannot_write_output_data;
+        result.message = "Not all data written";
     }
+    return result;
 }
 
 /************************************************************************/
