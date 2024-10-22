@@ -748,7 +748,7 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             }
         }
     }
-
+    heif_image_release(hImage);
     return CE_None;
 }
 #else
