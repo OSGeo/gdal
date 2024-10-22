@@ -113,7 +113,7 @@ static void setEncoderParameters(heif_encoder *encoder, CSLConstList papszOption
 }
 
 heif_error
-GDALHEIFDataset::VFS_WriterCallback(CPL_UNUSED struct heif_context *ctx,
+GDALHEIFDataset::VFS_WriterCallback(struct heif_context *,
                                     const void *data, size_t size,
                                     void *userdata)
 {
