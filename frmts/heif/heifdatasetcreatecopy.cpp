@@ -149,7 +149,7 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
     if ((nBands != 3) && (nBands != 4))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Driver only supports source dataset with 3 or 4 bands.\n");
+                 "Driver only supports source dataset with 3 or 4 bands.");
         return nullptr;
     }
     // TODO: more sanity checks
