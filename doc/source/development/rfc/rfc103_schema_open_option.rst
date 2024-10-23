@@ -40,10 +40,115 @@ A new reserved open option named OGR_SCHEMA will be added to the following drive
 
 The option will be used to specify the schema in the form of a JSON document (or a path to a JSON file).
 
-The schema document will not need to to contain a definition for every field and it will allow partial overrides of the auto-detected fields types.
+The schema document will allow both "Full" and "Patch" modes.
+"Patch" mode will be the default and will allow partial overrides of the auto-detected fields types
+while "Full" mode will replace all the auto-detected types with the ones specified in the schema.
 
 The structure of the JSON document will be similar to the one produced by the `ogrinfo -json` command
-with the notable exception that (for the scope of this RFC) only the information related to the type of the fields will be considered:
+with the notable exception that (for the scope of this RFC) only the information related to the type of
+the fields will be considered.
+
+The JSON schema for the OGR_SCHEMA open option will be as follows:
+
+.. code-block:: json
+
+    {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "description": "Schema for OGR_SCHEMA open option",
+
+        "oneOf": [
+            {
+                "$ref": "#/definitions/dataset"
+            }
+        ],
+
+        "definitions": {
+            "dataset": {
+                "type": "object",
+                "properties": {
+                    "layers": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/layer"
+                        }
+                    }
+                },
+                "required": ["layers"],
+                "additionalProperties": false
+            },
+
+            "schema_type": {
+                "enum": ["Patch", "Full"],
+                "default": "Patch"
+            },
+
+            "layer": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "schema_type": {
+                        "$ref": "#/definitions/schema_type"
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/field"
+                        }
+                    }
+                },
+                "required": ["name", "fields"],
+                "additionalProperties": false
+            },
+
+            "field": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "$ref": "#/definitions/fieldType"
+                    },
+                    "subType": {
+                        "$ref": "#/definitions/fieldSubType"
+                    },
+                    "width": {
+                        "type": "integer"
+                    },
+                    "precision": {
+                        "type": "integer"
+                    }
+                },
+                "required": ["name", "type"],
+                "additionalProperties": false
+            },
+
+            "fieldType": {
+                "enum": [
+                    "Integer",
+                    "Integer64",
+                    "Real",
+                    "String",
+                    "Binary",
+                    "IntegerList",
+                    "Integer64List",
+                    "RealList",
+                    "StringList",
+                    "Date",
+                    "Time",
+                    "DateTime"
+                ]
+            },
+
+            "fieldSubType": {
+                "enum": ["None", "Boolean", "Int16", "Float32", "JSON", "UUID"]
+            }
+        }
+    }
+
+Here is an example of a schema document that will be used to override the fields types of a dataset using the default "Patch" mode:
 
 .. code-block:: json
 
@@ -51,12 +156,12 @@ with the notable exception that (for the scope of this RFC) only the information
     "fields": [
         {
         "name": "field1",
-        "type": "string",
-        "subtype": "JSON"
+        "type": "String",
+        "subType": "JSON"
         },
         {
         "name": "field2",
-        "type": "integer",
+        "type": "Integer",
         "width":11,
         "precision":5
         }
@@ -64,7 +169,7 @@ with the notable exception that (for the scope of this RFC) only the information
     }
 
 
-In case of multi-layered datasets, the schema will be specified as a list of layers:
+In case of multi-layered datasets, the schema will be specified as a list of layers, each with its own fields definition and Patch/Full mode:
 
 .. code-block:: json
 
@@ -72,11 +177,12 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
     "layers":[
         {
         "name": "layer1",
+        "schema_type": "Full",
         "fields": [
             {
             "name": "field1",
             "type": "string",
-            "subtype": "JSON"
+            "subType": "JSON"
             },
             {
             "name": "field2",
@@ -88,20 +194,21 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
         },
         {
         "name": "layer2",
+        "schema_type": "Patch",
         "fields": [
-            {
+          {
             "name": "field1",
             "type": "string",
-            "subtype": "JSON"
-            },
-            {
+            "subType": "JSON"
+          },
+          {
             "name": "field2",
             "type": "integer",
             "width":11,
             "precision":5
-            }
+          }
         ]
-        }
+      }
     ]
     }
 
@@ -117,9 +224,6 @@ Errors and warnings
 
 - If the schema is not a valid JSON document, a critical error will be raised.
 
-- If the schema is a valid JSON document but does not contain the expected fields or it is a no-op
-  (does not contain any actionable instruction), a warning will be raised and the schema will be ignored.
+- If the schema is a valid JSON document but does not validates against the JSON schema, a critical error will be raised.
 
-- Additional JSON properties will be ignored while parsing the schema.
-
-- If the schema contains a field that is not present in the dataset, a warning will be raised and the field will be ignored.
+- If the schema contains a field that is not present in the dataset, a critical error will be raised.
