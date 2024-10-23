@@ -949,7 +949,7 @@ def UsageFormat():
 
 def Usage(isError):
     f = sys.stderr if isError else sys.stdout
-    print("Usage: gdal_retile.py [--help] [--help-general]", file=f)
+    print("Usage: gdal_retile [--help] [--help-general]", file=f)
     print("        [-v] [-q] [-co <NAME>=<VALUE>]... [-of <out_format>]", file=f)
     print("        [-ps <pixelWidth> <pixelHeight>]", file=f)
     print("        [-overlap <val_in_pixel>]", file=f)

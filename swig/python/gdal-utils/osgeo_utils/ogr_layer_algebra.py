@@ -25,7 +25,7 @@ from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 def Usage(isError):
     print(
         """
-Usage: ogr_layer_algebra.py [--help] [--help-general]
+Usage: ogr_layer_algebra [--help] [--help-general]
                             Union|Intersection|SymDifference|Identity|Update|Clip|Erase
                             -input_ds <path> [-input_lyr <name>]
                             -method_ds <path> [-method_lyr <name>]

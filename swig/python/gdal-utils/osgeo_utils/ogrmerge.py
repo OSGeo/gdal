@@ -27,7 +27,7 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor, enable_gdal_exception
 
 def Usage(isError):
     f = sys.stderr if isError else sys.stdout
-    print("Usage: ogrmerge.py [--help] [--help-general]", file=f)
+    print("Usage: ogrmerge [--help] [--help-general]", file=f)
     print("            -o <out_dsname> <src_dsname> [<src_dsname>]...", file=f)
     print("            [-f <format>] [-single] [-nln <layer_name_template>]", file=f)
     print("            [-update | -overwrite_ds] [-append | -overwrite_layer]", file=f)
