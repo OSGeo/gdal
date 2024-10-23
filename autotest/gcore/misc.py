@@ -281,7 +281,10 @@ def misc_6_internal(datatype, nBands, setDriversDone):
         drv = gdal.GetDriver(i)
         md = drv.GetMetadata()
         if ("DCAP_CREATECOPY" in md or "DCAP_CREATE" in md) and "DCAP_RASTER" in md:
-            # print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+            print(
+                "drv = %s, nBands = %d, datatype = %s"
+                % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+            )
 
             skip = False
             # FIXME: A few cases that crashes and should be investigated
@@ -292,7 +295,14 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                     or datatype == gdal.GDT_UInt16
                 ):
                     skip = True
-
+            # FIXME: this shouldn't be happening
+            if drv.ShortName == "HEIF":
+                if (nBands < 3 or nBands >= 5) or not (
+                    datatype == gdal.GDT_Byte
+                    or datatype == gdal.GDT_Int16
+                    or datatype == gdal.GDT_UInt16
+                ):
+                    skip = False
             if skip is False:
                 dirname = "tmp/tmp/tmp_%s_%d_%s" % (
                     drv.ShortName,
