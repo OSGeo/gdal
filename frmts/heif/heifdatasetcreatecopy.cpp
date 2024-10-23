@@ -201,6 +201,9 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
             mapColourInterpretation(poBand->GetColorInterpretation(), &channel);
         if (mapError != CE_None)
         {
+            heif_image_release(image);
+            heif_encoder_release(encoder);
+            heif_context_free(ctx);
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Driver does not support bands other than RGBA yet.");
             return nullptr;
