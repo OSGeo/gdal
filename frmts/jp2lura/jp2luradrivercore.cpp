@@ -20,15 +20,11 @@
 int JP2LuraDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "JP2Lura:"))
-        return true;
-
-    // Check magic number
-    return poOpenInfo->fpL != nullptr && poOpenInfo->nHeaderBytes >= 4 &&
-           poOpenInfo->pabyHeader[0] == 0x76 &&
-           poOpenInfo->pabyHeader[1] == 0x2f &&
-           poOpenInfo->pabyHeader[2] == 0x31 &&
-           poOpenInfo->pabyHeader[3] == 0x01;
+    return poOpenInfo->nHeaderBytes >= 16 &&
+           (memcmp(poOpenInfo->pabyHeader, jpc_header, sizeof(jpc_header)) ==
+                0 ||
+            memcmp(poOpenInfo->pabyHeader + 4, jp2_box_jp,
+                   sizeof(jp2_box_jp)) == 0);
 }
 
 /************************************************************************/
