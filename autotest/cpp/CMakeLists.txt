@@ -78,6 +78,7 @@ add_executable(
   test_gdal_dted.cpp
   test_gdal_gtiff.cpp
   test_gdal_pixelfn.cpp
+  test_gdal_typetraits.cpp
   test_ogr.cpp
   test_ogr_organize_polygons.cpp
   test_ogr_geometry_stealing.cpp
