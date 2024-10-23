@@ -297,12 +297,12 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                     skip = True
             # FIXME: this shouldn't be happening
             if drv.ShortName == "HEIF":
-                if (nBands < 3 or nBands >= 5) or not (
+                if (nBands == 2 or nBands >= 5) or not (
                     datatype == gdal.GDT_Byte
                     or datatype == gdal.GDT_Int16
                     or datatype == gdal.GDT_UInt16
                 ):
-                    skip = False
+                    skip = True
             if skip is False:
                 dirname = "tmp/tmp/tmp_%s_%d_%s" % (
                     drv.ShortName,
