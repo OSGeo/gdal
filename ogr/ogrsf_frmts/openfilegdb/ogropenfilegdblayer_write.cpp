@@ -40,6 +40,7 @@
 #include "filegdbtable.h"
 #include "filegdbtable_priv.h"
 #include "filegdb_coordprec_write.h"
+#include "filegdb_reserved_keywords.h"
 
 /*************************************************************************/
 /*                            StringToWString()                          */
@@ -137,20 +138,11 @@ static std::wstring EscapeReservedKeywords(const std::wstring &name)
     std::string newName = WStringToString(name);
     std::string upperName = CPLString(newName).toupper();
 
-    // From ESRI docs
-    static const char *const RESERVED_WORDS[] = {
-        "OBJECTID", "ADD",    "ALTER",  "AND",   "AS",     "ASC",    "BETWEEN",
-        "BY",       "COLUMN", "CREATE", "DATE",  "DELETE", "DESC",   "DROP",
-        "EXISTS",   "FOR",    "FROM",   "IN",    "INSERT", "INTO",   "IS",
-        "LIKE",     "NOT",    "NULL",   "OR",    "ORDER",  "SELECT", "SET",
-        "TABLE",    "UPDATE", "VALUES", "WHERE", nullptr};
-
     // Append an underscore to any FGDB reserved words used as field names
     // This is the same behavior ArcCatalog follows.
-    for (int i = 0; RESERVED_WORDS[i] != nullptr; i++)
+    for (const char *pszKeyword : apszRESERVED_WORDS)
     {
-        const char *w = RESERVED_WORDS[i];
-        if (upperName == w)
+        if (upperName == pszKeyword)
         {
             newName += '_';
             break;
