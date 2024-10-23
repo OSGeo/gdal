@@ -5753,10 +5753,10 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
 
     argParser->add_argument("-et")
         .metavar("<err_threshold>")
+        .store_into(psOptions->dfErrorThreshold)
         .action(
-            [psOptions](const std::string &s)
+            [psOptions](const std::string &)
             {
-                psOptions->dfErrorThreshold = CPLAtofM(s.c_str());
                 psOptions->aosWarpOptions.AddString(CPLSPrintf(
                     "ERROR_THRESHOLD=%.16g", psOptions->dfErrorThreshold));
             })

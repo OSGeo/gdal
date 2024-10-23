@@ -435,6 +435,19 @@ def test_gdalwarp_lib_19(testgdalwarp_gcp_tif):
 
 
 ###############################################################################
+# Test invalid value of -et
+
+
+def test_gdalwarp_lib_invalid_et(testgdalwarp_gcp_tif):
+
+    with gdaltest.enable_exceptions():
+        with pytest.raises(Exception, match="Failed to parse"):
+            gdal.Warp(
+                "", "../gcore/data/byte.tif", format="MEM", errorThreshold="minimal"
+            )
+
+
+###############################################################################
 # Test cutline from OGR datasource.
 
 
