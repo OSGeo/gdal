@@ -137,7 +137,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   DAAS -raster- (ro): Airbus DS Intelligence Data As A Service driver
   SIGDEM -raster- (rwv): Scaled Integer Gridded DEM .sigdem (*.sigdem)
   AVIF -raster- (rwvs): AV1 Image File Format (*.avif)
-  HEIF -raster- (rov): ISO/IEC 23008-12:2017 High Efficiency Image File Format (*.heic)
+  HEIF -raster- (rwv): ISO/IEC 23008-12:2017 High Efficiency Image File Format (*.heic)
   TGA -raster- (rov): TGA/TARGA Image File Format (*.tga)
   OGCAPI -raster,vector- (rov): OGCAPI
   STACTA -raster- (rovs): Spatio-Temporal Asset Catalog Tiled Assets (*.json)
