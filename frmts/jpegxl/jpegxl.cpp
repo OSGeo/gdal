@@ -1798,16 +1798,35 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         }
     }
 
+    constexpr int DEFAULT_EFFORT = 5;
+    const int nEffort = atoi(CSLFetchNameValueDef(
+        papszOptions, "EFFORT", CPLSPrintf("%d", DEFAULT_EFFORT)));
+    const char *pszDistance = CSLFetchNameValue(papszOptions, "DISTANCE");
+    const char *pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
+    const char *pszAlphaDistance =
+        CSLFetchNameValue(papszOptions, "ALPHA_DISTANCE");
     const char *pszLossLessCopy =
         CSLFetchNameValueDef(papszOptions, "LOSSLESS_COPY", "AUTO");
-    if (EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy))
+    if ((EQUAL(pszLossLessCopy, "AUTO") && !pszDistance && !pszQuality &&
+         !pszAlphaDistance && nEffort == DEFAULT_EFFORT) ||
+        (!EQUAL(pszLossLessCopy, "AUTO") && CPLTestBool(pszLossLessCopy)))
     {
         void *pJPEGXLContent = nullptr;
         size_t nJPEGXLContent = 0;
-        if (poSrcDS->ReadCompressedData(
-                "JXL", 0, 0, poSrcDS->GetRasterXSize(),
-                poSrcDS->GetRasterYSize(), poSrcDS->GetRasterCount(), nullptr,
-                &pJPEGXLContent, &nJPEGXLContent, nullptr) == CE_None)
+        const bool bSrcIsJXL =
+            (poSrcDS->ReadCompressedData(
+                 "JXL", 0, 0, poSrcDS->GetRasterXSize(),
+                 poSrcDS->GetRasterYSize(), poSrcDS->GetRasterCount(), nullptr,
+                 &pJPEGXLContent, &nJPEGXLContent, nullptr) == CE_None);
+        if (bSrcIsJXL && (pszDistance || pszQuality || pszAlphaDistance ||
+                          nEffort != DEFAULT_EFFORT))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "LOSSLESS_COPY=YES not supported when EFFORT, QUALITY, "
+                     "DISTANCE or ALPHA_DISTANCE are specified");
+            return nullptr;
+        }
+        else if (bSrcIsJXL)
         {
             CPLDebug("JPEGXL", "Lossless copy from source dataset");
             GByte abySizeAndBoxName[8];
@@ -2062,10 +2081,6 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     }
 
     const char *pszLossLess = CSLFetchNameValue(papszOptions, "LOSSLESS");
-    const char *pszDistance = CSLFetchNameValue(papszOptions, "DISTANCE");
-    const char *pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
-    const char *pszAlphaDistance =
-        CSLFetchNameValue(papszOptions, "ALPHA_DISTANCE");
 
     const bool bLossless = (pszLossLess == nullptr && pszDistance == nullptr &&
                             pszQuality == nullptr) ||
@@ -2325,7 +2340,6 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         }
     }
 
-    const int nEffort = atoi(CSLFetchNameValueDef(papszOptions, "EFFORT", "5"));
 #ifdef HAVE_JxlEncoderFrameSettingsSetOption
     if (JxlEncoderFrameSettingsSetOption(opts, JXL_ENC_FRAME_SETTING_EFFORT,
                                          nEffort) != JXL_ENC_SUCCESS)
@@ -2566,6 +2580,17 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
             {
                 if (JXL_ENC_SUCCESS != JxlEncoderSetExtraChannelDistance(
                                            opts, nIndex, fAlphaDistance))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "JxlEncoderSetExtraChannelDistance failed");
+                    return nullptr;
+                }
+            }
+            else if (!bLossless)
+            {
+                // By default libjxl applies lossless encoding for extra channels
+                if (JXL_ENC_SUCCESS !=
+                    JxlEncoderSetExtraChannelDistance(opts, nIndex, fDistance))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "JxlEncoderSetExtraChannelDistance failed");
