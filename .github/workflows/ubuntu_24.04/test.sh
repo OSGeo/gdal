@@ -17,7 +17,7 @@ diff -u expected_formats.txt found_formats.txt
 # Test development launcher script
 gdal_edit --version
 
-export PYTEST="python3 -m pytest -vvs -p no:sugar --color=no"
+export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
 # Run C++ tests
 make quicktest

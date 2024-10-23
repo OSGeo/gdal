@@ -27,7 +27,7 @@ cd autotest
 
 echo "#!/bin/sh" > pytest_wrapper.sh
 echo 'ARGS="$*"' >> pytest_wrapper.sh
-echo "python3 -m pytest --capture=no -ra -vvs -p no:sugar --color=no -o console_output_style=classic \${ARGS} 2>&1" >> pytest_wrapper.sh
+echo "python3 -m pytest --capture=no -ra -vv -p no:sugar --color=no -o console_output_style=classic \${ARGS} 2>&1" >> pytest_wrapper.sh
 cat pytest_wrapper.sh
 chmod +x pytest_wrapper.sh
 

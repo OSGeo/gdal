@@ -4,7 +4,7 @@ set -e
 
 . ../scripts/setdevenv.sh
 
-export PYTEST="python3 -m pytest -vvs -p no:sugar --color=no"
+export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
 make quicktest
 
