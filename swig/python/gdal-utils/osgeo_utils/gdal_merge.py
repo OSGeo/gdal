@@ -366,7 +366,7 @@ class file_info(object):
 # =============================================================================
 def Usage(isError):
     f = sys.stderr if isError else sys.stdout
-    print("Usage: gdal_merge.py [--help] [--help-general]", file=f)
+    print("Usage: gdal_merge [--help] [--help-general]", file=f)
     print(
         "                     [-o <out_filename>] [-of <out_format>] [-co <NAME>=<VALUE>]...",
         file=f,
