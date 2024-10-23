@@ -157,7 +157,9 @@ resampling, and rescaling pixels in the process.
     Note that the values specified after :option:`-scale` are only used to compute a scale and
     offset to apply to the input raster values. In particular, ``src_min`` and
     ``src_max`` are not used to clip input values unless :option:`-exponent`
-    is also specified. If clipping without exponential scaling is desired,
+    is also specified.
+    Instead of being clipped, source values that are outside the range of ``src_min`` and ``src_max`` will be scaled to values outside the range of ``dst_min`` and ``dst_max``. 
+    If clipping without exponential scaling is desired,
     ``-exponent 1`` can be used.
     :option:`-scale` can be repeated several times (if specified only once,
     it also applies to all bands of the output dataset), so as to specify per
