@@ -2610,7 +2610,7 @@ def TranslateOptions(options=None, format=None,
         if width != 0 or height != 0:
             new_options += ['-outsize', str(width), str(height)]
         elif widthPct != 0 and heightPct != 0:
-            new_options += ['-outsize', str(widthPct) + '%%', str(heightPct) + '%%']
+            new_options += ['-outsize', str(widthPct) + '%', str(heightPct) + '%']
         if creationOptions is not None:
             _addCreationOptions(new_options, creationOptions)
         if srcWin is not None:
