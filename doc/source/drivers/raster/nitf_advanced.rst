@@ -338,3 +338,11 @@ Example:
     gdal_translate first_image.tif  dest.tif -co NUMI=3 -co NUMDES=1
     gdal_translate second_image.tif dest.tif -co APPEND_SUBDATASET=YES -co IC=C3 -co IDLVL=2
     gdal_translate third_image.tif  dest.tif -co APPEND_SUBDATASET=YES -co IC=C8 -co IDLVL=3 -co "DES=DES1={des_content}"
+
+Reading SAR products
+--------------------
+
+Starting with GDAL 3.11, NITF products whose ``ICAT`` field is set to ``SAR``
+and which have bands with ``I`` (in-phase) and ``Q`` (quadrature) ``ISUBCAT``
+values will be represented as a single-band of complex type where in-phase is
+the real part and quadrature the imaginary part.
