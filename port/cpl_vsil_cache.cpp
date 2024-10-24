@@ -112,13 +112,30 @@ class VSICachedFile final : public VSIVirtualHandle
 
 static size_t GetCacheMax(size_t nCacheSize)
 {
-    return nCacheSize ? nCacheSize
-                      : static_cast<size_t>(std::min(
-                            static_cast<GUIntBig>(
-                                std::numeric_limits<size_t>::max() / 2),
-                            CPLScanUIntBig(CPLGetConfigOption("VSI_CACHE_SIZE",
-                                                              "25000000"),
-                                           40)));
+    if (nCacheSize)
+    {
+        return nCacheSize;
+    }
+
+    const char *pszCacheSize = CPLGetConfigOption("VSI_CACHE_SIZE", "25000000");
+    GIntBig nMemorySize;
+    bool bUnitSpecified;
+    if (CPLParseMemorySize(pszCacheSize, &nMemorySize, &bUnitSpecified) !=
+        CE_None)
+    {
+        CPLError(
+            CE_Failure, CPLE_IllegalArg,
+            "Failed to parse value of VSI_CACHE_SIZE. Using default of 25MB");
+        nMemorySize = 25000000;
+    }
+    else if (static_cast<size_t>(nMemorySize) >
+             std::numeric_limits<size_t>::max() / 2)
+    {
+        nMemorySize =
+            static_cast<GIntBig>(std::numeric_limits<size_t>::max() / 2);
+    }
+
+    return static_cast<size_t>(nMemorySize);
 }
 
 /************************************************************************/

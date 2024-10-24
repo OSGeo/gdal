@@ -321,6 +321,9 @@ Performance and caching
       Set the size of the VSI cache. Be wary of large values for
       ``VSI_CACHE_SIZE`` when opening VRT datasources containing many source
       rasters, as this is a per-file cache.
+      Since GDAL 3.11, the value of ``VSI_CACHE_SIZE`` may be specified using
+      memory units (e.g., "25 MB").
+
 
 Driver management
 ^^^^^^^^^^^^^^^^^
