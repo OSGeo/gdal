@@ -495,6 +495,8 @@ include(CheckDependentLibrariesArrowParquet)
 
 gdal_check_package(OpenDrive "Enable libOpenDRIVE" CONFIG CAN_DISABLE)
 
+gdal_check_package(AdbcDriverManager "Enable ADBC" CONFIG CAN_DISABLE)
+
 # bindings
 
 # finding python in top of project because of common for autotest and bindings

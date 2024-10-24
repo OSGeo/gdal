@@ -255,6 +255,9 @@ void OGRRegisterAllInternal()
 #ifdef XODR_ENABLED
     RegisterOGRXODR();
 #endif
+#ifdef ADBC_ENABLED
+    RegisterOGRADBC();
+#endif
 
     // NOTE: you need to generally insert your own driver before that line.
 

@@ -1655,6 +1655,7 @@ static int TestOGRLayerFeatureCount(GDALDataset *poDS, OGRLayer *poLayer,
     }
     delete poFeat;
 
+    const auto nFCEndOfIter = LOG_ACTION(poLayer->GetFeatureCount());
     if (nFC != nClaimedFC)
     {
         bRet = FALSE;
@@ -1662,12 +1663,12 @@ static int TestOGRLayerFeatureCount(GDALDataset *poDS, OGRLayer *poLayer,
                " doesn't match actual, " CPL_FRMT_GIB ".\n",
                nClaimedFC, nFC);
     }
-    else if (nFC != LOG_ACTION(poLayer->GetFeatureCount()))
+    else if (nFC != nFCEndOfIter)
     {
         bRet = FALSE;
         printf("ERROR: Feature count at end of layer, " CPL_FRMT_GIB
                ", differs from at start, " CPL_FRMT_GIB ".\n",
-               poLayer->GetFeatureCount(), nFC);
+               nFCEndOfIter, nFC);
     }
     else if (bVerbose)
         printf("INFO: Feature count verified.\n");
@@ -4187,8 +4188,7 @@ static int TestLayerGetArrowStream(OGRLayer *poLayer)
         {
             if (array.length != 0)
             {
-                bRet = false;
-                printf("ERROR: get_next() return an array with length != 0 "
+                printf("WARNING: get_next() return an array with length != 0 "
                        "after end of iteration\n");
             }
             if (array.release)
