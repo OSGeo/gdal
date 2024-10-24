@@ -1779,10 +1779,10 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
         return CE_Failure;
     }
 
-    if (value <= 0 || !std::isfinite(value))
+    if (value < 0 || !std::isfinite(value))
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "Memory size must be a positive number.");
+                 "Memory size must be a positive number or zero.");
         return CE_Failure;
     }
 
@@ -1800,6 +1800,12 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
                     return CE_Failure;
                 }
                 auto bytes = CPLGetUsablePhysicalRAM();
+                if (bytes == 0)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Cannot determine usable physical RAM");
+                    return CE_Failure;
+                }
                 value *= static_cast<double>(bytes / 100);
                 unit = c;
             }
@@ -1842,7 +1848,10 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
     }
 
     *pnValue = static_cast<GIntBig>(value);
-    *pbUnitSpecified = (unit != nullptr);
+    if (pbUnitSpecified)
+    {
+        *pbUnitSpecified = (unit != nullptr);
+    }
     return CE_None;
 }
 

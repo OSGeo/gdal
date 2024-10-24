@@ -237,16 +237,16 @@ def test_vsifile_4():
 # Test vsicache
 
 
-@pytest.mark.parametrize("cache_size", ("0", "65536", None))
-def test_vsifile_5(cache_size):
+@pytest.mark.parametrize("cache_size", ("0", "64kb", None))
+def test_vsifile_5(tmp_path, cache_size):
 
-    fp = gdal.VSIFOpenL("tmp/vsifile_5.bin", "wb")
+    fp = gdal.VSIFOpenL(tmp_path / "vsifile_5.bin", "wb")
     ref_data = "".join(["%08X" % i for i in range(5 * 32768)])
     gdal.VSIFWriteL(ref_data, 1, len(ref_data), fp)
     gdal.VSIFCloseL(fp)
 
     with gdal.config_options({"VSI_CACHE": "YES", "VSI_CACHE_SIZE": cache_size}):
-        fp = gdal.VSIFOpenL("tmp/vsifile_5.bin", "rb")
+        fp = gdal.VSIFOpenL(tmp_path / "vsifile_5.bin", "rb")
 
         gdal.VSIFSeekL(fp, 50000, 0)
         if gdal.VSIFTellL(fp) != 50000:
@@ -276,8 +276,6 @@ def test_vsifile_5(cache_size):
             pytest.fail()
 
         gdal.VSIFCloseL(fp)
-
-    gdal.Unlink("tmp/vsifile_5.bin")
 
 
 ###############################################################################
