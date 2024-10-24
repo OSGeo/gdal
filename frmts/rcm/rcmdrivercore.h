@@ -57,7 +57,7 @@ inline CPLString FormatCalibration(const char *pszCalibName,
 {
     CPLString ptr;
 
-    // Always begin by the layer calibrtion name
+    // Always begin by the layer calibration name
     ptr.append(szLayerCalibration);
 
     if (pszCalibName != nullptr || pszFilename != nullptr)
@@ -95,7 +95,7 @@ inline CPLString FormatCalibration(const char *pszCalibName,
  */
 inline CPLString GetMetadataProduct()
 {
-    // Always begin by the layer calibrtion name
+    // Always begin by the layer calibration name
     CPLString ptr;
     ptr.append("metadata");
     ptr.append(szPathSeparator);

@@ -35,14 +35,13 @@ typedef enum eCalibration_t
 
 class RCMDataset final : public GDALPamDataset
 {
-    CPLXMLNode *psProduct = nullptr;
+    CPLXMLTreeCloser psProduct{nullptr};
 
     int nGCPCount = 0;
     GDAL_GCP *pasGCPList = nullptr;
     OGRSpatialReference m_oSRS{};
     OGRSpatialReference m_oGCPSRS{};
     char **papszSubDatasets = nullptr;
-    char *pszLutApplied = nullptr;
     double adfGeoTransform[6];
     bool bHaveGeoTransform = false;
     bool bPerPolarizationScaling = false;
@@ -77,7 +76,7 @@ class RCMDataset final : public GDALPamDataset
 
     CPLXMLNode *GetProduct()
     {
-        return psProduct;
+        return psProduct.get();
     }
 
     /* If False, this is Magnitude,   True, Complex data with Real and
@@ -252,10 +251,6 @@ class RCMCalibRasterBand final : public GDALPamRasterBand
     bool IsComplex();
 
     eCalibration GetCalibration();
-
-    double *CloneLUT();
-
-    double *CloneNoiseLevels();
 };
 
 #endif /* ndef GDAL_RCM_H_INCLUDED */

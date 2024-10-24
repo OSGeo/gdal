@@ -27,13 +27,7 @@ int RCMDatasetIdentify(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->bIsDirectory)
     {
-        /* Check for directory access when there is a product.xml file in the
-        directory. */
-        CPLString osMDFilename =
-            CPLFormCIFilename(poOpenInfo->pszFilename, "product.xml", nullptr);
-
-        VSIStatBufL sStat;
-        if (VSIStatL(osMDFilename, &sStat) == 0)
+        const auto IsRCM = [](const CPLString &osMDFilename)
         {
             CPLXMLNode *psProduct = CPLParseXMLFile(osMDFilename);
             if (psProduct == nullptr)
@@ -47,7 +41,7 @@ int RCMDatasetIdentify(GDALOpenInfo *poOpenInfo)
                 return FALSE;
             }
 
-            /* Check the namespace only, should be rs2 */
+            /* Check the namespace only, should be rcm */
             const char *szNamespace =
                 CPLGetXMLValue(psProductAttributes, "xmlns", "");
 
@@ -60,6 +54,17 @@ int RCMDatasetIdentify(GDALOpenInfo *poOpenInfo)
 
             CPLDestroyXMLNode(psProduct);
             return TRUE;
+        };
+
+        /* Check for directory access when there is a product.xml file in the
+        directory. */
+        CPLString osMDFilename =
+            CPLFormCIFilename(poOpenInfo->pszFilename, "product.xml", nullptr);
+
+        VSIStatBufL sStat;
+        if (VSIStatL(osMDFilename, &sStat) == 0)
+        {
+            return IsRCM(osMDFilename);
         }
 
         /* If not, check for directory extra 'metadata' access when there is a
@@ -71,32 +76,7 @@ int RCMDatasetIdentify(GDALOpenInfo *poOpenInfo)
         VSIStatBufL sStatMetadata;
         if (VSIStatL(osMDFilenameMetadata, &sStatMetadata) == 0)
         {
-            CPLXMLNode *psProduct = CPLParseXMLFile(osMDFilenameMetadata);
-            if (psProduct == nullptr)
-                return FALSE;
-
-            CPLXMLNode *psProductAttributes =
-                CPLGetXMLNode(psProduct, "=product");
-            if (psProductAttributes == nullptr)
-            {
-                CPLDestroyXMLNode(psProduct);
-                return FALSE;
-            }
-
-            /* Check the namespace only, should be rs2 */
-            const char *szNamespace =
-                CPLGetXMLValue(psProductAttributes, "xmlns", "");
-
-            if (strstr(szNamespace, "rcm") == nullptr)
-            {
-                /* Invalid namespace */
-                CPLDestroyXMLNode(psProduct);
-                return FALSE;
-            }
-
-            CPLDestroyXMLNode(psProduct);
-
-            return TRUE;
+            return IsRCM(osMDFilenameMetadata);
         }
 
         return FALSE;

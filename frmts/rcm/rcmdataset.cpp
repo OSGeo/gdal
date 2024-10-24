@@ -36,23 +36,22 @@ constexpr const char *CALIBRATION_FOLDER = "calibration";
 static bool IsValidXMLFile(const char *pszPath, const char *pszLut)
 {
     /* Return true for valid xml file, false otherwise */
-    char *pszLutFile = VSIStrdup(CPLFormFilename(pszPath, pszLut, nullptr));
+    const std::string osLutFile = CPLFormFilename(pszPath, pszLut, nullptr);
 
-    CPLXMLTreeCloser psLut(CPLParseXMLFile(pszLutFile));
-
-    CPLFree(pszLutFile);
+    CPLXMLTreeCloser psLut(CPLParseXMLFile(osLutFile.c_str()));
 
     if (psLut.get() == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "ERROR: Failed to open the LUT file %s", pszLutFile);
+                 "ERROR: Failed to open the LUT file %s", osLutFile.c_str());
     }
 
     return psLut.get() != nullptr;
 }
 
-static double *InterpolateValues(char **papszList, int tableSize, int stepSize,
-                                 int numberOfValues, int pixelFirstLutValue)
+static double *InterpolateValues(CSLConstList papszList, int tableSize,
+                                 int stepSize, int numberOfValues,
+                                 int pixelFirstLutValue)
 {
     /* Allocate the right LUT size according to the product range pixel */
     double *table = static_cast<double *>(CPLCalloc(sizeof(double), tableSize));
@@ -461,17 +460,20 @@ void RCMCalibRasterBand::ReadLUT()
     char bandNumber[12];
     snprintf(bandNumber, sizeof(bandNumber), "%d", poDS->GetRasterCount() + 1);
 
-    CPLXMLNode *psLUT = CPLParseXMLFile(m_pszLUTFile);
+    CPLXMLTreeCloser psLUT(CPLParseXMLFile(m_pszLUTFile));
+    if (!psLUT)
+        return;
 
-    this->m_nfOffset = CPLAtof(CPLGetXMLValue(psLUT, "=lut.offset", "0.0"));
+    this->m_nfOffset =
+        CPLAtof(CPLGetXMLValue(psLUT.get(), "=lut.offset", "0.0"));
 
     this->pixelFirstLutValue =
-        atoi(CPLGetXMLValue(psLUT, "=lut.pixelFirstLutValue", "0"));
+        atoi(CPLGetXMLValue(psLUT.get(), "=lut.pixelFirstLutValue", "0"));
 
-    this->stepSize = atoi(CPLGetXMLValue(psLUT, "=lut.stepSize", "0"));
+    this->stepSize = atoi(CPLGetXMLValue(psLUT.get(), "=lut.stepSize", "0"));
 
     this->numberOfValues =
-        atoi(CPLGetXMLValue(psLUT, "=lut.numberOfValues", "0"));
+        atoi(CPLGetXMLValue(psLUT.get(), "=lut.numberOfValues", "0"));
 
     if (this->numberOfValues <= 0)
     {
@@ -482,8 +484,9 @@ void RCMCalibRasterBand::ReadLUT()
         return;
     }
 
-    char **papszLUTList = CSLTokenizeString2(
-        CPLGetXMLValue(psLUT, "=lut.gains", ""), " ", CSLT_HONOURSTRINGS);
+    const CPLStringList aosLUTList(
+        CSLTokenizeString2(CPLGetXMLValue(psLUT.get(), "=lut.gains", ""), " ",
+                           CSLT_HONOURSTRINGS));
 
     if (this->stepSize <= 0)
     {
@@ -492,13 +495,21 @@ void RCMCalibRasterBand::ReadLUT()
             CPLError(
                 CE_Failure, CPLE_NotSupported,
                 "ERROR: The RCM driver does not support LUT Pixel First Lut "
-                "Value equal or lower than zero when theproduct is "
+                "Value equal or lower than zero when the product is "
                 "descending.");
             return;
         }
     }
 
     /* Get the Pixel Per range */
+    if (this->stepSize == INT_MIN || this->numberOfValues == INT_MIN ||
+        abs(this->stepSize) > INT_MAX / abs(this->numberOfValues))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Bad values of stepSize / numberOfValues");
+        return;
+    }
+
     this->m_nTableSize = abs(this->stepSize) * abs(this->numberOfValues);
 
     if (this->m_nTableSize < this->m_poBandDataset->GetRasterXSize())
@@ -512,7 +523,7 @@ void RCMCalibRasterBand::ReadLUT()
 
     /* Allocate the right LUT size according to the product range pixel */
     this->m_nfTable =
-        InterpolateValues(papszLUTList, this->m_nTableSize, this->stepSize,
+        InterpolateValues(aosLUTList.List(), this->m_nTableSize, this->stepSize,
                           this->numberOfValues, this->pixelFirstLutValue);
 
     const size_t nLen =
@@ -527,11 +538,6 @@ void RCMCalibRasterBand::ReadLUT()
         snprintf(lut, sizeof(lut), "%e ", this->m_nfTable[i]);
         strcat(lut_gains, lut);
     }
-
-#ifdef _TRACE_RCM
-    write_to_file("RCM ReadLUT m_pszLUTFile=", m_pszLUTFile);
-    write_to_file("   m_nfTable=", lut_gains);
-#endif
 
     poDS->SetMetadataItem(CPLString("LUT_GAINS_").append(bandNumber).c_str(),
                           lut_gains);
@@ -560,10 +566,6 @@ void RCMCalibRasterBand::ReadLUT()
     snprintf(snum, sizeof(snum), "%f", this->m_nfOffset);
     poDS->SetMetadataItem(CPLString("LUT_OFFSET_").append(bandNumber).c_str(),
                           snum);
-
-    CPLDestroyXMLNode(psLUT);
-
-    CSLDestroy(papszLUTList);
 }
 
 /************************************************************************/
@@ -591,15 +593,19 @@ void RCMCalibRasterBand::ReadNoiseLevels()
     char bandNumber[12];
     snprintf(bandNumber, sizeof(bandNumber), "%d", poDS->GetRasterCount() + 1);
 
-    CPLXMLNode *psNoiseLevels = CPLParseXMLFile(this->m_pszNoiseLevelsFile);
+    CPLXMLTreeCloser psNoiseLevels(CPLParseXMLFile(this->m_pszNoiseLevelsFile));
+    if (!psNoiseLevels)
+        return;
 
     // Load Beta Nought, Sigma Nought, Gamma noise levels
     // Loop through all nodes with spaces
-    CPLXMLNode *psreferenceNoiseLevelNode =
-        CPLGetXMLNode(psNoiseLevels, "=noiseLevels");
+    CPLXMLNode *psReferenceNoiseLevelNode =
+        CPLGetXMLNode(psNoiseLevels.get(), "=noiseLevels");
+    if (!psReferenceNoiseLevelNode)
+        return;
 
     CPLXMLNode *psNodeInc;
-    for (psNodeInc = psreferenceNoiseLevelNode->psChild; psNodeInc != nullptr;
+    for (psNodeInc = psReferenceNoiseLevelNode->psChild; psNodeInc != nullptr;
          psNodeInc = psNodeInc->psNext)
     {
         if (EQUAL(psNodeInc->pszValue, "referenceNoiseLevel"))
@@ -658,29 +664,6 @@ void RCMCalibRasterBand::ReadNoiseLevels()
             }
         }
     }
-
-#ifdef _TRACE_RCM
-    if (this->m_nfTableNoiseLevels != nullptr)
-    {
-        const size_t nLen =
-            this->m_nTableNoiseLevelsSize *
-            max_space_for_string;  // 12 max + space + 11 reserved
-        char *noise_levels_values = static_cast<char *>(CPLMalloc(nLen));
-        memset(noise_levels_values, 0, nLen);
-
-        for (int i = 0; i < this->m_nTableNoiseLevelsSize; i++)
-        {
-            char lut[max_space_for_string];
-            // 6.123004711900930e+04  %e Scientific annotation
-            snprintf(lut, sizeof(lut), "%e ", this->m_nfTableNoiseLevels[i]);
-            strcat(noise_levels_values, lut);
-        }
-        write_to_file("RCM ReadNoiseLevel m_pszLUTFile=", m_pszNoiseLevelsFile);
-        write_to_file("   m_nfTableNoiseLevels=", noise_levels_values);
-
-        CPLFree(noise_levels_values);
-    }
-#endif
 }
 
 /************************************************************************/
@@ -879,35 +862,6 @@ void RCMCalibRasterBand::SetPartialLUT(int pixel_offset, int pixel_width)
     }
 }
 
-double *RCMCalibRasterBand::CloneLUT()
-{
-    double *values = nullptr;
-
-    if (this->m_nfTable != nullptr)
-    {
-        values = reinterpret_cast<double *>(
-            CPLMalloc(sizeof(double) * this->m_nTableSize));
-        memcpy(values, this->m_nfTable, sizeof(double) * this->m_nTableSize);
-    }
-
-    return values;
-}
-
-double *RCMCalibRasterBand::CloneNoiseLevels()
-{
-    double *values = nullptr;
-
-    if (this->m_nfTableNoiseLevels != nullptr)
-    {
-        values =
-            (double *)malloc(sizeof(double) * this->m_nTableNoiseLevelsSize);
-        memcpy(values, this->m_nfTableNoiseLevels,
-               sizeof(double) * this->m_nTableNoiseLevelsSize);
-    }
-
-    return values;
-}
-
 /************************************************************************/
 /*                       ~RCMCalibRasterBand()                          */
 /************************************************************************/
@@ -1034,20 +988,6 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 float lutValue =
                     static_cast<float>(m_nfTable[nBlockXOff * nBlockXSize + j]);
                 float calibValue = digitalValue / (lutValue * lutValue);
-
-#ifdef _TRACE_RCM
-                if (nBlockXOff * nBlockXSize + j >= 4961)
-                {
-                    char msgBlocks[2048] = "";
-                    snprintf(msgBlocks, sizeof(msgBlocks),
-                             "IReadBlock: [%d,%d] real=%f img=%f "
-                             "digitalValue=%f lutValue[%d]=%f calibValue=%f",
-                             i, j, real, img, digitalValue,
-                             (nBlockXOff * nBlockXSize + j), lutValue,
-                             calibValue);
-                    write_to_file(msgBlocks, "");
-                }
-#endif
 
                 ((float *)pImage)[nTruePixOff] = calibValue;
             }
@@ -1243,7 +1183,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /*                             RCMDataset()                             */
 /************************************************************************/
 
-RCMDataset::RCMDataset() : pszLutApplied(CPLStrdup(""))
+RCMDataset::RCMDataset()
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -1262,9 +1202,6 @@ RCMDataset::~RCMDataset()
 {
     RCMDataset::FlushCache(true);
 
-    CPLDestroyXMLNode(psProduct);
-    CPLFree(pszLutApplied);
-
     if (nGCPCount > 0)
     {
         GDALDeinitGCPs(nGCPCount, pasGCPList);
@@ -1281,8 +1218,6 @@ RCMDataset::~RCMDataset()
 
     if (m_nfIncidenceAngleTable != nullptr)
         CPLFree(m_nfIncidenceAngleTable);
-
-    psProduct = nullptr;
 }
 
 /************************************************************************/
@@ -1367,7 +1302,9 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            eCalib = None;
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unsupported calibration type");
+            return nullptr;
         }
 
         /* advance the pointer to the actual filename */
@@ -1407,8 +1344,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Ingest the Product.xml file.                                    */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psProduct = CPLParseXMLFile(osMDFilename);
-    if (psProduct == nullptr)
+    CPLXMLTreeCloser psProduct(CPLParseXMLFile(osMDFilename));
+    if (!psProduct)
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -1416,7 +1353,6 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLDestroyXMLNode(psProduct);
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ERROR: The RCM driver does not support update "
                  "access to existing dataset.");
@@ -1424,20 +1360,18 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     CPLXMLNode *psSceneAttributes =
-        CPLGetXMLNode(psProduct, "=product.sceneAttributes");
+        CPLGetXMLNode(psProduct.get(), "=product.sceneAttributes");
     if (psSceneAttributes == nullptr)
     {
-        CPLDestroyXMLNode(psProduct);
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "ERROR: Failed to find <sceneAttributes> in document.");
         return nullptr;
     }
 
-    CPLXMLNode *psImageAttributes =
-        CPLGetXMLNode(psProduct, "=product.sceneAttributes.imageAttributes");
+    CPLXMLNode *psImageAttributes = CPLGetXMLNode(
+        psProduct.get(), "=product.sceneAttributes.imageAttributes");
     if (psImageAttributes == nullptr)
     {
-        CPLDestroyXMLNode(psProduct);
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "ERROR: Failed to find <sceneAttributes.imageAttributes> in "
                  "document.");
@@ -1448,17 +1382,15 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         atoi(CPLGetXMLValue(psSceneAttributes, "numberOfEntries", "0"));
     if (numberOfEntries != 1)
     {
-        CPLDestroyXMLNode(psProduct);
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "ERROR: Only RCM with Complex Single-beam is supported.");
         return nullptr;
     }
 
     CPLXMLNode *psImageReferenceAttributes =
-        CPLGetXMLNode(psProduct, "=product.imageReferenceAttributes");
+        CPLGetXMLNode(psProduct.get(), "=product.imageReferenceAttributes");
     if (psImageReferenceAttributes == nullptr)
     {
-        CPLDestroyXMLNode(psProduct);
         CPLError(
             CE_Failure, CPLE_OpenFailed,
             "ERROR: Failed to find <imageReferenceAttributes> in document.");
@@ -1466,10 +1398,9 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     CPLXMLNode *psImageGenerationParameters =
-        CPLGetXMLNode(psProduct, "=product.imageGenerationParameters");
+        CPLGetXMLNode(psProduct.get(), "=product.imageGenerationParameters");
     if (psImageGenerationParameters == nullptr)
     {
-        CPLDestroyXMLNode(psProduct);
         CPLError(
             CE_Failure, CPLE_OpenFailed,
             "ERROR: Failed to find <imageGenerationParameters> in document.");
@@ -1479,9 +1410,9 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create the dataset.                                             */
     /* -------------------------------------------------------------------- */
-    RCMDataset *poDS = new RCMDataset();
+    auto poDS = std::make_unique<RCMDataset>();
 
-    poDS->psProduct = psProduct;
+    poDS->psProduct = std::move(psProduct);
 
     /* -------------------------------------------------------------------- */
     /*      Get overall image information.                                  */
@@ -1492,7 +1423,6 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLGetXMLValue(psSceneAttributes, "imageAttributes.numLines", "-1"));
     if (poDS->nRasterXSize <= 1 || poDS->nRasterYSize <= 1)
     {
-        delete poDS;
         CPLError(
             CE_Failure, CPLE_OpenFailed,
             "ERROR: Non-sane raster dimensions provided in product.xml. If "
@@ -1513,15 +1443,18 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetMetadataItem("PRODUCT_TYPE", pszItem);
     const char *pszProductType = pszItem;
 
-    pszItem = CPLGetXMLValue(psProduct, "=product.productId", "UNK");
+    pszItem =
+        CPLGetXMLValue(poDS->psProduct.get(), "=product.productId", "UNK");
     poDS->SetMetadataItem("PRODUCT_ID", pszItem);
 
     pszItem = CPLGetXMLValue(
-        psProduct, "=product.securityAttributes.securityClassification", "UNK");
+        poDS->psProduct.get(),
+        "=product.securityAttributes.securityClassification", "UNK");
     poDS->SetMetadataItem("SECURITY_CLASSIFICATION", pszItem);
 
-    pszItem = CPLGetXMLValue(
-        psProduct, "=product.sourceAttributes.polarizationDataMode", "UNK");
+    pszItem =
+        CPLGetXMLValue(poDS->psProduct.get(),
+                       "=product.sourceAttributes.polarizationDataMode", "UNK");
     poDS->SetMetadataItem("POLARIZATION_DATA_MODE", pszItem);
 
     pszItem = CPLGetXMLValue(psImageGenerationParameters,
@@ -1551,9 +1484,6 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     pszItem = CPLGetXMLValue(psImageGenerationParameters,
                              "sarProcessingInformation.lutApplied", "");
     poDS->SetMetadataItem("LUT_APPLIED", pszItem);
-    poDS->pszLutApplied = static_cast<char *>(VSIMalloc(strlen(pszItem) + 2));
-    poDS->pszLutApplied[0] = '\0';
-    strcpy(poDS->pszLutApplied, pszItem);
 
     /*---------------------------------------------------------------------
            If true, a polarization dependent application LUT has been applied
@@ -1671,7 +1601,6 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        delete poDS;
         CPLError(CE_Failure, CPLE_AppDefined,
                  "ERROR: dataType=%s and bitsPerSample=%d are not a supported "
                  "configuration.",
@@ -1715,15 +1644,13 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     // XML
     std::string osNoiseLevelsValues;
 
-    char *pszPath = CPLStrdup(CPLGetPath(osMDFilename));
+    const CPLString osPath = CPLGetPath(osMDFilename);
 
     /* Get a list of all polarizations */
     CPLXMLNode *psSourceAttrs =
-        CPLGetXMLNode(psProduct, "=product.sourceAttributes");
+        CPLGetXMLNode(poDS->psProduct.get(), "=product.sourceAttributes");
     if (psSourceAttrs == nullptr)
     {
-        CPLFree(pszPath);
-        delete poDS;
         CPLError(
             CE_Failure, CPLE_OpenFailed,
             "ERROR: RCM source attributes is missing. Please contact your data "
@@ -1731,12 +1658,10 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    CPLXMLNode *psRadarParameters =
-        CPLGetXMLNode(psProduct, "=product.sourceAttributes.radarParameters");
+    CPLXMLNode *psRadarParameters = CPLGetXMLNode(
+        poDS->psProduct.get(), "=product.sourceAttributes.radarParameters");
     if (psRadarParameters == nullptr)
     {
-        CPLFree(pszPath);
-        delete poDS;
         CPLError(
             CE_Failure, CPLE_OpenFailed,
             "ERROR: RCM radar parameters is missing. Please contact your data "
@@ -1748,8 +1673,6 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLGetXMLValue(psRadarParameters, "polarizations", "");
     if (pszPolarizations == nullptr || strlen(pszPolarizations) == 0)
     {
-        CPLFree(pszPath);
-        delete poDS;
         CPLError(
             CE_Failure, CPLE_OpenFailed,
             "ERROR: RCM polarizations list is missing. Please contact your "
@@ -1765,11 +1688,11 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     const char *psBeams = CPLGetXMLValue(psRadarParameters, "beams", "UNK");
     poDS->SetMetadataItem("BEAMS", psBeams);
 
-    char **papszPolarizationsGrids =
-        CSLTokenizeString2(pszPolarizations, " ", 0);
+    const CPLStringList aosPolarizationsGrids(
+        CSLTokenizeString2(pszPolarizations, " ", 0));
     CPLStringList imageBandList;
     CPLStringList imageBandFileList;
-    const int nPolarizationsGridCount = CSLCount(papszPolarizationsGrids);
+    const int nPolarizationsGridCount = aosPolarizationsGrids.size();
 
     /* File names for full resolution IPDFs. For GeoTIFF format, one entry per
     pole; For NITF 2.1 format, only one entry. */
@@ -1859,23 +1782,24 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         osIncidenceAnglePath.append(pszIncidenceAngleFileName);
 
         /* Check if the file exist */
-        if (IsValidXMLFile(pszPath, osIncidenceAnglePath))
+        if (IsValidXMLFile(osPath, osIncidenceAnglePath))
         {
             CPLString osIncidenceAngleFilePath =
-                CPLFormFilename(pszPath, osIncidenceAnglePath, nullptr);
+                CPLFormFilename(osPath, osIncidenceAnglePath, nullptr);
 
-            CPLXMLNode *psIncidenceAngle =
-                CPLParseXMLFile(osIncidenceAngleFilePath);
+            CPLXMLTreeCloser psIncidenceAngle(
+                CPLParseXMLFile(osIncidenceAngleFilePath));
 
             int pixelFirstLutValue = atoi(
-                CPLGetXMLValue(psIncidenceAngle,
+                CPLGetXMLValue(psIncidenceAngle.get(),
                                "=incidenceAngles.pixelFirstAnglesValue", "0"));
 
             int stepSize = atoi(CPLGetXMLValue(
-                psIncidenceAngle, "=incidenceAngles.stepSize", "0"));
+                psIncidenceAngle.get(), "=incidenceAngles.stepSize", "0"));
 
-            int numberOfValues = atoi(CPLGetXMLValue(
-                psIncidenceAngle, "=incidenceAngles.numberOfValues", "0"));
+            int numberOfValues =
+                atoi(CPLGetXMLValue(psIncidenceAngle.get(),
+                                    "=incidenceAngles.numberOfValues", "0"));
 
             /* Get the Pixel Per range */
             int tableSize = abs(stepSize) * abs(numberOfValues);
@@ -1883,7 +1807,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLString angles;
             // Loop through all nodes with spaces
             CPLXMLNode *psNextNode =
-                CPLGetXMLNode(psIncidenceAngle, "=incidenceAngles");
+                CPLGetXMLNode(psIncidenceAngle.get(), "=incidenceAngles");
 
             CPLXMLNode *psNodeInc;
             for (psNodeInc = psNextNode->psChild; psNodeInc != nullptr;
@@ -1918,7 +1842,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         // Search for a specific band name
         const CPLString pszPole =
-            CPLString(papszPolarizationsGrids[iPoleInx]).toupper();
+            CPLString(aosPolarizationsGrids[iPoleInx]).toupper();
 
         // Look if the NoiseLevel file xml exist for the
         CPLXMLNode *psRefNode = psImageReferenceAttributes->psChild;
@@ -1967,7 +1891,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 oNoiseLevelPath.append(szPathSeparator);
                 oNoiseLevelPath.append(pszNoiseLevelFile);
 
-                if (IsValidXMLFile(pszPath, oNoiseLevelPath))
+                if (IsValidXMLFile(osPath, oNoiseLevelPath))
                 {
                     osNoiseLevelsValues = oNoiseLevelPath;
                 }
@@ -2026,16 +1950,17 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 osCalibPath.append(pszLUTFile);
 
                 CPLString osLUTFilePath =
-                    CPLFormFilename(pszPath, osCalibPath, nullptr);
+                    CPLFormFilename(osPath, osCalibPath, nullptr);
 
                 if (EQUAL(pszLUTType, "Beta Nought") &&
-                    IsValidXMLFile(pszPath, osCalibPath))
+                    IsValidXMLFile(osPath, osCalibPath))
                 {
                     poDS->papszExtraFiles =
                         CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
 
                     CPLString pszBuf(
                         FormatCalibration(szBETA0, osMDFilename.c_str()));
+                    CPLFree(pszBeta0LUT);
                     pszBeta0LUT = VSIStrdup(osCalibPath);
 
                     const char *oldLut =
@@ -2066,13 +1991,14 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                         "Beta Nought calibrated");
                 }
                 else if (EQUAL(pszLUTType, "Sigma Nought") &&
-                         IsValidXMLFile(pszPath, osCalibPath))
+                         IsValidXMLFile(osPath, osCalibPath))
                 {
                     poDS->papszExtraFiles =
                         CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
 
                     CPLString pszBuf(
                         FormatCalibration(szSIGMA0, osMDFilename.c_str()));
+                    CPLFree(pszSigma0LUT);
                     pszSigma0LUT = VSIStrdup(osCalibPath);
 
                     const char *oldLut =
@@ -2103,13 +2029,14 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                         "Sigma Nought calibrated");
                 }
                 else if (EQUAL(pszLUTType, "Gamma") &&
-                         IsValidXMLFile(pszPath, osCalibPath))
+                         IsValidXMLFile(osPath, osCalibPath))
                 {
                     poDS->papszExtraFiles =
                         CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
 
                     CPLString pszBuf(
                         FormatCalibration(szGAMMA, osMDFilename.c_str()));
+                    CPLFree(pszGammaLUT);
                     pszGammaLUT = VSIStrdup(osCalibPath);
 
                     const char *oldLut = poDS->GetMetadataItem("GAMMA_LUT");
@@ -2158,10 +2085,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
             if (bandPositionIndex < 0)
             {
                 CPLFree(imageBandList);
-                CSLDestroy(papszPolarizationsGrids);
                 CPLFree(imageBandFileList);
-                CPLFree(pszPath);
-                delete poDS;
 
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "ERROR: RCM cannot find the polarization %s. Please "
@@ -2195,7 +2119,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         /* --------------------------------------------------------------------
          */
         char *pszFullname =
-            CPLStrdup(CPLFormFilename(pszPath, pszBasename, nullptr));
+            CPLStrdup(CPLFormFilename(osPath, pszBasename, nullptr));
 
         CPLFree(pszBasename);
 
@@ -2204,8 +2128,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         /*      Try and open the file. */
         /* --------------------------------------------------------------------
          */
-        GDALDataset *poBandFile =
-            reinterpret_cast<GDALDataset *>(GDALOpen(pszFullname, GA_ReadOnly));
+        auto poBandFile = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+            pszFullname, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
         if (poBandFile == nullptr)
         {
             CPLFree(pszFullname);
@@ -2213,7 +2137,6 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (poBandFile->GetRasterCount() == 0)
         {
-            GDALClose(reinterpret_cast<GDALRasterBandH>(poBandFile));
             CPLFree(pszFullname);
             continue;
         }
@@ -2229,12 +2152,10 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
             eDataType = GDT_CFloat32;
 
         BandMappingRCM b =
-            checkBandFileMappingRCM(eDataType, poBandFile, bIsNITF);
+            checkBandFileMappingRCM(eDataType, poBandFile.get(), bIsNITF);
         if (b == BANDERROR)
         {
-            GDALClose((GDALRasterBandH)poBandFile);
             CPLFree(pszFullname);
-            delete poDS;
             CPLError(CE_Failure, CPLE_AppDefined,
                      "The underlying band files do not have an appropriate "
                      "data type.");
@@ -2251,9 +2172,9 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         int bandNum = poDS->GetRasterCount() + 1;
         if (eCalib == None || eCalib == Uncalib)
         {
-            RCMRasterBand *poBand =
-                new RCMRasterBand(poDS, bandNum, eDataType, pszPole, poBandFile,
-                                  twoBandComplex, isOneFilePerPol, bIsNITF);
+            RCMRasterBand *poBand = new RCMRasterBand(
+                poDS.get(), bandNum, eDataType, pszPole, poBandFile.release(),
+                twoBandComplex, isOneFilePerPol, bIsNITF);
 
             poDS->SetBand(poDS->GetRasterCount() + 1, poBand);
         }
@@ -2282,9 +2203,9 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 // If Complex, always 32 bits
                 RCMCalibRasterBand *poBand = new RCMCalibRasterBand(
-                    poDS, pszPole, GDT_Float32, poBandFile, eCalib,
-                    CPLFormFilename(pszPath, pszLUT, nullptr),
-                    CPLFormFilename(pszPath, osNoiseLevelsValues.c_str(),
+                    poDS.get(), pszPole, GDT_Float32, poBandFile.release(),
+                    eCalib, CPLFormFilename(osPath, pszLUT, nullptr),
+                    CPLFormFilename(osPath, osNoiseLevelsValues.c_str(),
                                     nullptr),
                     eDataType);
                 poDS->SetBand(poDS->GetRasterCount() + 1, poBand);
@@ -2293,9 +2214,9 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 // Whatever the datatype was previoulsy set
                 RCMCalibRasterBand *poBand = new RCMCalibRasterBand(
-                    poDS, pszPole, eDataType, poBandFile, eCalib,
-                    CPLFormFilename(pszPath, pszLUT, nullptr),
-                    CPLFormFilename(pszPath, osNoiseLevelsValues.c_str(),
+                    poDS.get(), pszPole, eDataType, poBandFile.release(),
+                    eCalib, CPLFormFilename(osPath, pszLUT, nullptr),
+                    CPLFormFilename(osPath, osNoiseLevelsValues.c_str(),
                                     nullptr),
                     eDataType);
                 poDS->SetBand(poDS->GetRasterCount() + 1, poBand);
@@ -2686,7 +2607,6 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    CPLFree(pszPath);
     if (pszBeta0LUT)
         CPLFree(pszBeta0LUT);
     if (pszSigma0LUT)
@@ -2817,11 +2737,11 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
     if (useSubdatasets)
-        poDS->oOvManager.Initialize(poDS, ":::VIRTUAL:::");
+        poDS->oOvManager.Initialize(poDS.get(), ":::VIRTUAL:::");
     else
-        poDS->oOvManager.Initialize(poDS, osMDFilename);
+        poDS->oOvManager.Initialize(poDS.get(), osMDFilename);
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
