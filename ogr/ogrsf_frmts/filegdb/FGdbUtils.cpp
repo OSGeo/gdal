@@ -18,6 +18,7 @@
 
 #include "ogr_api.h"
 #include "ogrpgeogeometry.h"
+#include "filegdb_reserved_keywords.h"
 
 using std::string;
 
@@ -531,21 +532,11 @@ std::wstring FGDBEscapeReservedKeywords(const std::wstring &name)
     std::string newName = WStringToString(name);
     std::string upperName = CPLString(newName).toupper();
 
-    // From ESRI docs
-    static const char *const RESERVED_WORDS[] = {
-        FGDB_OID_NAME, "ADD",   "ALTER",  "AND",    "AS",    "ASC",
-        "BETWEEN",     "BY",    "COLUMN", "CREATE", "DATE",  "DELETE",
-        "DESC",        "DROP",  "EXISTS", "FOR",    "FROM",  "IN",
-        "INSERT",      "INTO",  "IS",     "LIKE",   "NOT",   "NULL",
-        "OR",          "ORDER", "SELECT", "SET",    "TABLE", "UPDATE",
-        "VALUES",      "WHERE", nullptr};
-
     // Append an underscore to any FGDB reserved words used as field names
     // This is the same behavior ArcCatalog follows.
-    for (int i = 0; RESERVED_WORDS[i] != nullptr; i++)
+    for (const char *pszKeyword : apszRESERVED_WORDS)
     {
-        const char *w = RESERVED_WORDS[i];
-        if (upperName == w)
+        if (upperName == pszKeyword)
         {
             newName += '_';
             break;

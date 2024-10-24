@@ -4265,7 +4265,7 @@ def test_ogr_openfilegdb_write_new_datetime_types(tmp_vsimem):
     lyr = ds.GetLayerByName("date_types")
     lyr_defn = lyr.GetLayerDefn()
 
-    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("date_"))
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("date"))
     assert fld_defn.GetType() == ogr.OFTDateTime
     assert fld_defn.GetDefault() == "'2023/02/01 04:05:06'"
 
@@ -4282,13 +4282,13 @@ def test_ogr_openfilegdb_write_new_datetime_types(tmp_vsimem):
     assert fld_defn.GetDefault() == "'2023/02/01 04:05:06.000+06:00'"
 
     f = lyr.GetNextFeature()
-    assert f["date_"] == "2023/11/29 13:14:15+00"
+    assert f["date"] == "2023/11/29 13:14:15+00"
     assert f["date_only"] == "2023/11/29"
     assert f["time_only"] == "13:14:15"
     assert f["timestamp_offset"] == "2023/11/29 13:14:15-05"
 
     f = lyr.GetNextFeature()
-    assert f["date_"] == "2023/12/31 00:01:01+00"
+    assert f["date"] == "2023/12/31 00:01:01+00"
     assert f["date_only"] == "2023/12/31"
     assert f["time_only"] == "00:01:01"
     assert f["timestamp_offset"] == "2023/12/31 00:01:01+10"
@@ -4297,13 +4297,13 @@ def test_ogr_openfilegdb_write_new_datetime_types(tmp_vsimem):
     lyr_defn = lyr.GetLayerDefn()
 
     f = lyr.GetNextFeature()
-    assert f["date_"] == "2023/11/29 13:14:15.678+00"
+    assert f["date"] == "2023/11/29 13:14:15.678+00"
     assert f["date_only"] == "2023/11/29"
     assert f["time_only"] == "13:14:15"
     assert f["timestamp_offset"] == "2023/11/29 13:14:15-05"
 
     f = lyr.GetNextFeature()
-    assert f["date_"] == "2023/12/31 00:01:01.001+00"
+    assert f["date"] == "2023/12/31 00:01:01.001+00"
     assert f["date_only"] == "2023/12/31"
     assert f["time_only"] == "00:01:01"
     assert f["timestamp_offset"] == "2023/12/31 00:01:01+10"
