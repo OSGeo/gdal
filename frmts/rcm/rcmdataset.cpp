@@ -258,74 +258,6 @@ RCMRasterBand::RCMRasterBand(RCMDataset *poDSIn, int nBandIn,
     }
 }
 
-double RCMRasterBand::GetLUT(int)
-{
-    return std::numeric_limits<double>::quiet_NaN();
-}
-
-int RCMRasterBand::GetLUTsize()
-{
-    return 0;
-}
-
-const char *RCMRasterBand::GetLUTFilename()
-{
-    return nullptr;
-}
-
-double RCMRasterBand::GetLUTOffset()
-{
-    return 0.0f;
-}
-
-bool RCMRasterBand::IsComplex()
-{
-    if (this->m_eType == GDT_CInt16 || this->m_eType == GDT_CInt32 ||
-        this->m_eType == GDT_CFloat32 || this->m_eType == GDT_CFloat64)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool RCMRasterBand::IsExistLUT()
-{
-    return false;
-}
-
-eCalibration RCMRasterBand::GetCalibration()
-{
-    return this->m_eCalib;
-}
-
-void RCMRasterBand::SetPartialLUT(int, int)
-{
-    // nothing to do
-}
-
-double RCMRasterBand::GetNoiseLevels(int)
-{
-    return 0.0f;
-}
-
-int RCMRasterBand::GetNoiseLevelsSize()
-{
-    return 0;
-}
-
-const char *RCMRasterBand::GetNoiseLevelsFilename()
-{
-    return nullptr;
-}
-
-bool RCMRasterBand::IsExistNoiseLevels()
-{
-    return false;
-}
-
 /************************************************************************/
 /*                            RCMRasterBand()                            */
 /************************************************************************/
@@ -672,7 +604,7 @@ RCMCalibRasterBand::RCMCalibRasterBand(
     RCMDataset *poDataset, const char *pszPolarization, GDALDataType eType,
     GDALDataset *poBandDataset, eCalibration eCalib, const char *pszLUT,
     const char *pszNoiseLevels, GDALDataType eOriginalType)
-    : m_eCalib(eCalib), m_poBandDataset(poBandDataset), m_eType(eType),
+    : m_eCalib(eCalib), m_poBandDataset(poBandDataset),
       m_eOriginalType(eOriginalType), m_pszLUTFile(VSIStrdup(pszLUT)),
       m_pszNoiseLevelsFile(VSIStrdup(pszNoiseLevels))
 {
@@ -682,8 +614,6 @@ RCMCalibRasterBand::RCMCalibRasterBand(
     {
         SetMetadataItem("POLARIMETRIC_INTERP", pszPolarization);
     }
-
-    // this->eDataType = eType;
 
     if ((eType == GDT_CInt16) || (eType == GDT_CFloat32))
         this->eDataType = GDT_CFloat32;
@@ -695,169 +625,6 @@ RCMCalibRasterBand::RCMCalibRasterBand(
 
     ReadLUT();
     ReadNoiseLevels();
-}
-
-double RCMCalibRasterBand::GetNoiseLevels(int pixel)
-{
-    return this->m_nfTableNoiseLevels[pixel];
-}
-
-int RCMCalibRasterBand::GetNoiseLevelsSize()
-{
-    return this->m_nTableNoiseLevelsSize;
-}
-
-const char *RCMCalibRasterBand::GetNoiseLevelsFilename()
-{
-    return this->m_pszNoiseLevelsFile;
-}
-
-bool RCMCalibRasterBand::IsExistNoiseLevels()
-{
-    if (this->m_nfTableNoiseLevels == nullptr ||
-        this->m_pszNoiseLevelsFile == nullptr ||
-        strlen(this->m_pszNoiseLevelsFile) == 0 ||
-        this->m_nTableNoiseLevelsSize == 0)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-
-bool RCMCalibRasterBand::IsComplex()
-{
-    if (this->m_eType == GDT_CInt16 || this->m_eType == GDT_CInt32 ||
-        this->m_eType == GDT_CFloat32 || this->m_eType == GDT_CFloat64)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-eCalibration RCMCalibRasterBand::GetCalibration()
-{
-    return this->m_eCalib;
-}
-
-double RCMCalibRasterBand::GetLUT(int pixel)
-{
-    return this->m_nfTable[pixel];
-}
-
-int RCMCalibRasterBand::GetLUTsize()
-{
-    return this->m_nTableSize;
-}
-
-const char *RCMCalibRasterBand::GetLUTFilename()
-{
-    return this->m_pszLUTFile;
-}
-
-double RCMCalibRasterBand::GetLUTOffset()
-{
-    return this->m_nfOffset;
-}
-
-bool RCMCalibRasterBand::IsExistLUT()
-{
-    if (this->m_nfTable == nullptr || this->m_pszLUTFile == nullptr ||
-        strlen(this->m_pszLUTFile) == 0 || this->m_nTableSize == 0)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-
-void RCMCalibRasterBand::SetPartialLUT(int pixel_offset, int pixel_width)
-{
-    /* Alway start from 0 */
-    if (pixel_offset < 0)
-    {
-        pixel_offset = 0;
-    }
-
-    if (pixel_offset < this->GetLUTsize())
-    {
-        /* Can only change if the starting pixel in the raster width range */
-        if ((pixel_offset + pixel_width) > this->GetLUTsize() - 1)
-        {
-            /* Ya but the width is way too large based on the raster width range
-            when beginning from a different offset Recalculate the true relative
-            width
-            */
-            pixel_width = this->GetLUTsize() - pixel_offset - 1;
-        }
-
-        if (pixel_width > 0)
-        {
-            /* Prepare a buffer */
-            double *nfTableBuffer =
-                static_cast<double *>(CPLMalloc(sizeof(double) * pixel_width));
-            memset(nfTableBuffer, 0, sizeof(double) * pixel_width);
-
-            /* Copy a range */
-            int j = 0;
-            for (int i = pixel_offset; i < (pixel_offset + pixel_width); i++)
-            {
-                nfTableBuffer[j++] = this->GetLUT(i);
-            }
-
-            const size_t nLen =
-                pixel_width *
-                max_space_for_string;  // 12 max + space + 11 reserved
-            char *lut_gains = static_cast<char *>(CPLMalloc(nLen));
-            memset(lut_gains, 0, nLen);
-
-            for (int i = 0; i < pixel_width; i++)
-            {
-                char lut[max_space_for_string];
-                // 2.390641e+02 %e Scientific annotation
-                snprintf(lut, sizeof(lut), "%e ", nfTableBuffer[i]);
-                strcat(lut_gains, lut);
-            }
-
-            char bandNumber[12];
-            snprintf(bandNumber, sizeof(bandNumber), "%d", this->GetBand());
-
-            poDS->SetMetadataItem(
-                CPLString("LUT_GAINS_").append(bandNumber).c_str(), lut_gains);
-            // Can free this because the function SetMetadataItem takes a copy
-            CPLFree(lut_gains);
-
-            /* and Set new LUT size */
-            char snum[12];
-            snprintf(snum, sizeof(snum), "%d", pixel_width);
-            poDS->SetMetadataItem(
-                CPLString("LUT_SIZE_").append(bandNumber).c_str(), snum);
-
-            /* Change the internal value now */
-            /* Free the old gains value table, not valid anymore */
-            CPLFree(this->m_nfTable);
-
-            /* New gains value table size */
-            this->m_nTableSize = pixel_width;
-
-            /* Realoocate and have new gain values from the buffer */
-            this->m_nfTable = reinterpret_cast<double *>(
-                CPLMalloc(sizeof(double) * this->m_nTableSize));
-            memset(this->m_nfTable, 0, sizeof(double) * this->m_nTableSize);
-            memcpy(this->m_nfTable, nfTableBuffer,
-                   sizeof(double) * this->m_nTableSize);
-
-            /* Free our buffer */
-            CPLFree(nfTableBuffer);
-        }
-    }
 }
 
 /************************************************************************/

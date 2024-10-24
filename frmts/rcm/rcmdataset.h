@@ -131,7 +131,6 @@ class RCMRasterBand final : public GDALPamRasterBand
     GDALDataset *poBandFile = nullptr;
     RCMDataset *poRCMDataset = nullptr;
     GDALDataset *m_poBandDataset = nullptr;
-    GDALDataType m_eType = GDT_Unknown; /* data type of data being ingested */
 
     double *m_nfTable = nullptr;
     int m_nTableSize = 0;
@@ -160,30 +159,6 @@ class RCMRasterBand final : public GDALPamRasterBand
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 
-    static bool IsExistLUT();
-
-    static double GetLUT(int pixel);
-
-    static const char *GetLUTFilename();
-
-    static int GetLUTsize();
-
-    static double GetLUTOffset();
-
-    static void SetPartialLUT(int pixel_offset, int pixel_width);
-
-    bool IsComplex();
-
-    static bool IsExistNoiseLevels();
-
-    static double GetNoiseLevels(int pixel);
-
-    static const char *GetNoiseLevelsFilename();
-
-    static int GetNoiseLevelsSize();
-
-    eCalibration GetCalibration();
-
     static GDALDataset *Open(GDALOpenInfo *);
 };
 
@@ -201,7 +176,6 @@ class RCMCalibRasterBand final : public GDALPamRasterBand
   private:
     eCalibration m_eCalib = eCalibration::Uncalib;
     GDALDataset *m_poBandDataset = nullptr;
-    GDALDataType m_eType = GDT_Unknown; /* data type of data being ingested */
     /* data type that used to be before transformation */
     GDALDataType m_eOriginalType = GDT_Unknown;
 
@@ -233,30 +207,6 @@ class RCMCalibRasterBand final : public GDALPamRasterBand
     ~RCMCalibRasterBand();
 
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
-
-    bool IsExistLUT();
-
-    double GetLUT(int pixel);
-
-    const char *GetLUTFilename();
-
-    int GetLUTsize();
-
-    double GetLUTOffset();
-
-    void SetPartialLUT(int pixel_offset, int pixel_width);
-
-    bool IsExistNoiseLevels();
-
-    double GetNoiseLevels(int pixel);
-
-    const char *GetNoiseLevelsFilename();
-
-    int GetNoiseLevelsSize();
-
-    bool IsComplex();
-
-    eCalibration GetCalibration();
 };
 
 #endif /* ndef GDAL_RCM_H_INCLUDED */
