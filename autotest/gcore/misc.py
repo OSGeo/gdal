@@ -292,7 +292,6 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                     or datatype == gdal.GDT_UInt16
                 ):
                     skip = True
-
             if skip is False:
                 dirname = "tmp/tmp/tmp_%s_%d_%s" % (
                     drv.ShortName,
