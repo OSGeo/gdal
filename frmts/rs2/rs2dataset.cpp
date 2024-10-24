@@ -558,11 +558,8 @@ int RS2Dataset::Identify(GDALOpenInfo *poOpenInfo)
         CPLString osMDFilename =
             CPLFormCIFilename(poOpenInfo->pszFilename, "product.xml", nullptr);
 
-        VSIStatBufL sStat;
-        if (VSIStatL(osMDFilename, &sStat) == 0)
-            return TRUE;
-
-        return FALSE;
+        GDALOpenInfo oOpenInfo(osMDFilename.c_str(), GA_ReadOnly);
+        return Identify(&oOpenInfo);
     }
 
     /* otherwise, do our normal stuff */
