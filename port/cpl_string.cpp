@@ -1800,6 +1800,12 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
                     return CE_Failure;
                 }
                 auto bytes = CPLGetUsablePhysicalRAM();
+                if (bytes == 0)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Cannot determine usable physical RAM");
+                    return CE_Failure;
+                }
                 value *= static_cast<double>(bytes / 100);
                 unit = c;
             }

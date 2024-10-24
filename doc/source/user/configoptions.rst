@@ -222,7 +222,10 @@ Performance and caching
       :program:`gdalwarp`.
       If its value is small (less than 100000), it is assumed to be measured in megabytes,
       otherwise in bytes. Alternatively, the value can be set to "X%" to mean X%
-      of the usable physical RAM. Note that this value is only consulted the first
+      of the usable physical RAM.
+      Since GDAL 3.11, the value of :config:`GDAL_CACHEMAX` may specify the
+      units directly (e.g., "500MB", "2GB").
+      Note that this value is only consulted the first
       time the cache size is requested.  To change this value programmatically
       during operation of the program it is better to use
       :cpp:func:`GDALSetCacheMax` (always in bytes) or or
@@ -421,7 +424,7 @@ General options
       option.
 
 -  .. config:: CPL_VSIL_DEFLATE_CHUNK_SIZE
-      :default: 1 M
+      :default: 1M
 
 -  .. config:: GDAL_DISABLE_CPLLOCALEC
       :choices: YES, NO
