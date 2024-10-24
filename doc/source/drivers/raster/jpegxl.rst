@@ -97,6 +97,8 @@ The following creation options are available:
       If set to NO, or in AUTO mode if the source dataset does not use JPEG
       compression, the regular conversion code path is taken, resulting in a
       lossless or lossy copy depending on the LOSSLESS setting.
+      AUTO mode defaults to NO, if EFFORT, DISTANCE, ALPHA_DISTANCE or QUALITY
+      options are used.
 
 -  .. co:: EFFORT
       :choices: 1-9
