@@ -824,6 +824,7 @@ void GDALRegister_HEIF()
         {
             poDriver->SetMetadataItem("SUPPORTS_JPEG_WRITE", "YES", "HEIF");
         }
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 15, 0)
         if (heif_have_decoder_for_format(heif_compression_JPEG2000))
         {
             poDriver->SetMetadataItem("SUPPORTS_JPEG2000", "YES", "HEIF");
@@ -832,6 +833,8 @@ void GDALRegister_HEIF()
         {
             poDriver->SetMetadataItem("SUPPORTS_JPEG2000_WRITE", "YES", "HEIF");
         }
+#endif
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 18, 0)
         if (heif_have_decoder_for_format(heif_compression_HTJ2K))
         {
             poDriver->SetMetadataItem("SUPPORTS_HTJ2K", "YES", "HEIF");
@@ -840,6 +843,8 @@ void GDALRegister_HEIF()
         {
             poDriver->SetMetadataItem("SUPPORTS_HTJ2K_WRITE", "YES", "HEIF");
         }
+#endif
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 16, 0)
         if (heif_have_decoder_for_format(heif_compression_uncompressed))
         {
             poDriver->SetMetadataItem("SUPPORTS_UNCOMPRESSED", "YES", "HEIF");
@@ -849,6 +854,8 @@ void GDALRegister_HEIF()
             poDriver->SetMetadataItem("SUPPORTS_UNCOMPRESSED_WRITE", "YES",
                                       "HEIF");
         }
+#endif
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 15, 0)
         if (heif_have_decoder_for_format(heif_compression_VVC))
         {
             poDriver->SetMetadataItem("SUPPORTS_VVC", "YES", "HEIF");
@@ -857,6 +864,7 @@ void GDALRegister_HEIF()
         {
             poDriver->SetMetadataItem("SUPPORTS_VVC_WRITE", "YES", "HEIF");
         }
+#endif
 #else
         // Anything that old probably supports only HEVC
         poDriver->SetMetadataItem("SUPPORTS_HEVC", "YES", "HEIF");
