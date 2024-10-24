@@ -53,6 +53,8 @@ class RCMDataset final : public GDALPamDataset
     double *m_nfIncidenceAngleTable = nullptr;
     int m_IncidenceAngleTableSize = 0;
 
+    CPL_DISALLOW_COPY_ASSIGN(RCMDataset)
+
   protected:
     virtual int CloseDependentDatasets() override;
 
@@ -147,6 +149,8 @@ class RCMRasterBand final : public GDALPamRasterBand
     bool isOneFilePerPol = false;
     bool isNITF = false;
 
+    CPL_DISALLOW_COPY_ASSIGN(RCMRasterBand)
+
   public:
     RCMRasterBand(RCMDataset *poDSIn, int nBandIn, GDALDataType eDataTypeIn,
                   const char *pszPole, GDALDataset *poBandFile,
@@ -218,6 +222,8 @@ class RCMCalibRasterBand final : public GDALPamRasterBand
 
     void ReadLUT();
     void ReadNoiseLevels();
+
+    CPL_DISALLOW_COPY_ASSIGN(RCMCalibRasterBand)
 
   public:
     RCMCalibRasterBand(RCMDataset *poDataset, const char *pszPolarization,

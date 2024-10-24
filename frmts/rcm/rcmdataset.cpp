@@ -356,8 +356,7 @@ CPLErr RCMRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
         memset(pImage, 0,
-               (GDALGetDataTypeSize(eDataType) / 8) * nBlockXSize *
-                   nBlockYSize);
+               GDALGetDataTypeSizeBytes(eDataType) * nBlockXSize * nBlockYSize);
     }
     else
     {
@@ -372,8 +371,7 @@ CPLErr RCMRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
         memset(pImage, 0,
-               (GDALGetDataTypeSize(eDataType) / 8) * nBlockXSize *
-                   nBlockYSize);
+               GDALGetDataTypeSizeBytes(eDataType) * nBlockXSize * nBlockYSize);
     }
     else
     {
@@ -895,8 +893,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     {
         nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
         memset(pImage, 0,
-               (GDALGetDataTypeSize(eDataType) / 8) * nBlockXSize *
-                   nBlockYSize);
+               GDALGetDataTypeSizeBytes(eDataType) * nBlockXSize * nBlockYSize);
     }
     else
     {
@@ -911,8 +908,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     {
         nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
         memset(pImage, 0,
-               (GDALGetDataTypeSize(eDataType) / 8) * nBlockXSize *
-                   nBlockYSize);
+               GDALGetDataTypeSizeBytes(eDataType) * nBlockXSize * nBlockYSize);
     }
     else
     {
@@ -923,8 +919,9 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     {
         GInt16 *pnImageTmp;
         /* read in complex values */
-        pnImageTmp = (GInt16 *)CPLMalloc(2 * nBlockXSize * nBlockYSize *
-                                         GDALGetDataTypeSize(GDT_Int16) / 8);
+        pnImageTmp = static_cast<GInt16 *>(
+            CPLMalloc(nBlockXSize * nBlockYSize *
+                      GDALGetDataTypeSizeBytes(m_eOriginalType)));
 
         if (m_poBandDataset->GetRasterCount() == 2)
         {
@@ -978,18 +975,18 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             for (int j = 0; j < nRequestXSize; j++)
             {
                 /* calculate pixel offset in memory*/
-                int nPixOff = (2 * (i * nBlockXSize)) + (j * 2);
-                int nTruePixOff = (i * nBlockXSize) + j;
+                const int nPixOff = 2 * (i * nBlockXSize + j);
+                const int nTruePixOff = (i * nBlockXSize) + j;
 
                 // Formula for Complex Q+J
-                float real = (float)pnImageTmp[nPixOff];
-                float img = (float)pnImageTmp[nPixOff + 1];
-                float digitalValue = (real * real) + (img * img);
-                float lutValue =
+                const float real = static_cast<float>(pnImageTmp[nPixOff]);
+                const float img = static_cast<float>(pnImageTmp[nPixOff + 1]);
+                const float digitalValue = (real * real) + (img * img);
+                const float lutValue =
                     static_cast<float>(m_nfTable[nBlockXOff * nBlockXSize + j]);
-                float calibValue = digitalValue / (lutValue * lutValue);
+                const float calibValue = digitalValue / (lutValue * lutValue);
 
-                ((float *)pImage)[nTruePixOff] = calibValue;
+                reinterpret_cast<float *>(pImage)[nTruePixOff] = calibValue;
             }
         }
 
@@ -1003,13 +1000,14 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         /* read in complex values */
         float *pnImageTmp;
 
-        int dataTypeSize = GDALGetDataTypeSize(this->m_eOriginalType) / 8;
-        GDALDataType bandFileType = this->m_eOriginalType;
-        int bandFileSize = GDALGetDataTypeSize(bandFileType) / 8;
+        const int dataTypeSize =
+            GDALGetDataTypeSizeBytes(this->m_eOriginalType);
+        const GDALDataType bandFileType = this->m_eOriginalType;
+        const int bandFileSize = GDALGetDataTypeSizeBytes(bandFileType);
 
         /* read the original image complex values in a temporary image space */
-        pnImageTmp =
-            (float *)CPLMalloc(2 * nBlockXSize * nBlockYSize * bandFileSize);
+        pnImageTmp = static_cast<float *>(
+            CPLMalloc(2 * nBlockXSize * nBlockYSize * bandFileSize));
 
         eErr =
             // I and Q from each band are pixel-interleaved into this complex
@@ -1026,18 +1024,18 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             for (int j = 0; j < nRequestXSize; j++)
             {
                 /* calculate pixel offset in memory*/
-                int nPixOff = (2 * (i * nBlockXSize)) + (j * 2);
-                int nTruePixOff = (i * nBlockXSize) + j;
+                const int nPixOff = 2 * (i * nBlockXSize + j);
+                const int nTruePixOff = (i * nBlockXSize) + j;
 
                 // Formula for Complex Q+J
-                float real = (float)pnImageTmp[nPixOff];
-                float img = (float)pnImageTmp[nPixOff + 1];
-                float digitalValue = (real * real) + (img * img);
-                float lutValue =
+                const float real = static_cast<float>(pnImageTmp[nPixOff]);
+                const float img = static_cast<float>(pnImageTmp[nPixOff + 1]);
+                const float digitalValue = (real * real) + (img * img);
+                const float lutValue =
                     static_cast<float>(m_nfTable[nBlockXOff * nBlockXSize + j]);
-                float calibValue = digitalValue / (lutValue * lutValue);
+                const float calibValue = digitalValue / (lutValue * lutValue);
 
-                ((float *)pImage)[nTruePixOff] = calibValue;
+                reinterpret_cast<float *>(pImage)[nTruePixOff] = calibValue;
             }
         }
 
@@ -1064,10 +1062,11 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 is first squared, then the offset(B) is added and the result is
                 divided by the gains value(A) corresponding to the range sample.
                 RCM-SP-53-0419  Issue 2/5:  January 2, 2018  Page 7-56 */
-                float digitalValue = ((float *)pImage)[nPixOff];
-                float A =
+                const float digitalValue =
+                    reinterpret_cast<float *>(pImage)[nPixOff];
+                const float A =
                     static_cast<float>(m_nfTable[nBlockXOff * nBlockXSize + j]);
-                ((float *)pImage)[nPixOff] =
+                reinterpret_cast<float *>(pImage)[nPixOff] =
                     ((digitalValue * digitalValue) +
                      static_cast<float>(this->m_nfOffset)) /
                     A;
@@ -1095,10 +1094,11 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 is first squared, then the offset(B) is added and the result is
                 divided by the gains value(A) corresponding to the range sample.
                 RCM-SP-53-0419  Issue 2/5:  January 2, 2018  Page 7-56 */
-                float digitalValue = ((float *)pImage)[nPixOff];
-                float A =
+                const float digitalValue =
+                    reinterpret_cast<float *>(pImage)[nPixOff];
+                const float A =
                     static_cast<float>(m_nfTable[nBlockXOff * nBlockXSize + j]);
-                ((float *)pImage)[nPixOff] =
+                reinterpret_cast<float *>(pImage)[nPixOff] =
                     ((digitalValue * digitalValue) +
                      static_cast<float>(this->m_nfOffset)) /
                     A;
@@ -1110,8 +1110,8 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     {
         GUInt16 *pnImageTmp;
         /* read in detected values */
-        pnImageTmp = (GUInt16 *)CPLMalloc(nBlockXSize * nBlockYSize *
-                                          GDALGetDataTypeSize(GDT_UInt16) / 8);
+        pnImageTmp = static_cast<GUInt16 *>(CPLMalloc(
+            nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(GDT_UInt16)));
         eErr = m_poBandDataset->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
             nRequestXSize, nRequestYSize, pnImageTmp, nRequestXSize,
@@ -1123,12 +1123,13 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (int j = 0; j < nRequestXSize; j++)
             {
-                int nPixOff = (i * nBlockXSize) + j;
+                const int nPixOff = (i * nBlockXSize) + j;
 
-                float digitalValue = (float)pnImageTmp[nPixOff];
-                float A =
+                const float digitalValue =
+                    static_cast<float>(pnImageTmp[nPixOff]);
+                const float A =
                     static_cast<float>(m_nfTable[nBlockXOff * nBlockXSize + j]);
-                ((float *)pImage)[nPixOff] =
+                reinterpret_cast<float *>(pImage)[nPixOff] =
                     ((digitalValue * digitalValue) +
                      static_cast<float>(this->m_nfOffset)) /
                     A;
@@ -1140,8 +1141,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     else if (this->m_eOriginalType == GDT_Byte)
     {
         GByte *pnImageTmp;
-        pnImageTmp = (GByte *)CPLMalloc(nBlockXSize * nBlockYSize *
-                                        GDALGetDataTypeSize(GDT_Byte) / 8);
+        pnImageTmp = static_cast<GByte *>(CPLMalloc(nBlockXSize * nBlockYSize));
         eErr = m_poBandDataset->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
             nRequestXSize, nRequestYSize, pnImageTmp, nRequestXSize,
@@ -1152,12 +1152,13 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (int j = 0; j < nRequestXSize; j++)
             {
-                int nPixOff = (i * nBlockXSize) + j;
+                const int nPixOff = (i * nBlockXSize) + j;
 
-                float digitalValue = (float)pnImageTmp[nPixOff];
-                float A =
+                const float digitalValue =
+                    static_cast<float>(pnImageTmp[nPixOff]);
+                const float A =
                     static_cast<float>(m_nfTable[nBlockXOff * nBlockXSize + j]);
-                ((float *)pImage)[nPixOff] =
+                reinterpret_cast<float *>(pImage)[nPixOff] =
                     ((digitalValue * digitalValue) +
                      static_cast<float>(this->m_nfOffset)) /
                     A;
@@ -2098,7 +2099,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
         int nLength = static_cast<int>(strlen(pszBasedFilename));
-        char *pszBasename = (char *)CPLCalloc(nLength + 1, sizeof(char));
+        char *pszBasename =
+            static_cast<char *>(CPLCalloc(nLength + 1, sizeof(char)));
 
         /* --------------------------------------------------------------------
          */

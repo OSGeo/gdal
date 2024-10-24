@@ -92,11 +92,9 @@ int RCMDatasetIdentify(GDALOpenInfo *poOpenInfo)
         return FALSE;
 
     /* The RCM schema location is rcm_prod_product.xsd */
-    if (strstr((const char *)poOpenInfo->pabyHeader, "/rcm") == nullptr ||
-        strstr((const char *)poOpenInfo->pabyHeader, "<product") == nullptr)
-        return FALSE;
-
-    return TRUE;
+    const char *pszHeader =
+        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+    return strstr(pszHeader, "/rcm") && strstr(pszHeader, "<product");
 }
 
 /************************************************************************/
