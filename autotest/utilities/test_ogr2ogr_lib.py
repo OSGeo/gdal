@@ -1633,6 +1633,13 @@ def test_ogr2ogr_lib_simplify():
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0, 1 0, 10 0)"))
     src_lyr.CreateFeature(f)
 
+    with gdaltest.enable_exceptions(), pytest.raises(
+        Exception, match="Failed to parse"
+    ):
+        gdal.VectorTranslate(
+            "", src_ds, format="Memory", simplifyTolerance="reasonable"
+        )
+
     dst_ds = gdal.VectorTranslate("", src_ds, format="Memory", simplifyTolerance=5)
 
     dst_lyr = dst_ds.GetLayer(0)

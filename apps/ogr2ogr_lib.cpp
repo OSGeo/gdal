@@ -7522,22 +7522,16 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
 
     argParser->add_argument("-segmentize")
         .metavar("<max_dist>")
-        .action(
-            [psOptions](const std::string &s)
-            {
-                psOptions->eGeomOp = GEOMOP_SEGMENTIZE;
-                psOptions->dfGeomOpParam = CPLAtofM(s.c_str());
-            })
+        .store_into(psOptions->dfGeomOpParam)
+        .action([psOptions](const std::string &)
+                { psOptions->eGeomOp = GEOMOP_SEGMENTIZE; })
         .help(_("Maximum distance between 2 nodes."));
 
     argParser->add_argument("-simplify")
         .metavar("<tolerance>")
-        .action(
-            [psOptions](const std::string &s)
-            {
-                psOptions->eGeomOp = GEOMOP_SIMPLIFY_PRESERVE_TOPOLOGY;
-                psOptions->dfGeomOpParam = CPLAtofM(s.c_str());
-            })
+        .store_into(psOptions->dfGeomOpParam)
+        .action([psOptions](const std::string &)
+                { psOptions->eGeomOp = GEOMOP_SIMPLIFY_PRESERVE_TOPOLOGY; })
         .help(_("Distance tolerance for simplification."));
 
     argParser->add_argument("-makevalid")

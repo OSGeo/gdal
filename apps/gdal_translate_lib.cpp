@@ -3276,6 +3276,12 @@ GDALTranslateOptionsNew(char **papszArgv,
             psOptions->asScaleParams[nIndex].bHaveScaleSrc = false;
             if (i < argc - 2 && ArgIsNumeric(papszArgv[i + 1]))
             {
+                if (!ArgIsNumeric(papszArgv[i + 2]))
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Value of -scale must be numeric");
+                    return nullptr;
+                }
                 psOptions->asScaleParams[nIndex].bHaveScaleSrc = true;
                 psOptions->asScaleParams[nIndex].dfScaleSrcMin =
                     CPLAtofM(papszArgv[i + 1]);
@@ -3287,6 +3293,12 @@ GDALTranslateOptionsNew(char **papszArgv,
                 psOptions->asScaleParams[nIndex].bHaveScaleSrc &&
                 ArgIsNumeric(papszArgv[i + 1]))
             {
+                if (!ArgIsNumeric(papszArgv[i + 2]))
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Value of -scale must be numeric");
+                    return nullptr;
+                }
                 psOptions->asScaleParams[nIndex].dfScaleDstMin =
                     CPLAtofM(papszArgv[i + 1]);
                 psOptions->asScaleParams[nIndex].dfScaleDstMax =
