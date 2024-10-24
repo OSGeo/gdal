@@ -1848,7 +1848,10 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
     }
 
     *pnValue = static_cast<GIntBig>(value);
-    *pbUnitSpecified = (unit != nullptr);
+    if (pbUnitSpecified)
+    {
+        *pbUnitSpecified = (unit != nullptr);
+    }
     return CE_None;
 }
 

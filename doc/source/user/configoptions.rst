@@ -616,7 +616,8 @@ Networking options
       :since: 2.3
 
       Size of global least-recently-used (LRU) cache shared among all downloaded
-      content.
+      content. Value is assumed to represent bytes unless memory units are
+      specified (since GDAL 3.11).
 
 -  .. config:: CPL_VSIL_CURL_USE_HEAD
       :choices: YES, NO
@@ -663,6 +664,9 @@ Networking options
 -  .. config:: CPL_VSIL_CURL_CHUNK_SIZE
       :choices: <bytes>
       :since: 2.3
+
+      Value is assumed to represent bytes unless memory units are
+      specified (since GDAL 3.11).
 
 -  .. config:: GDAL_INGESTED_BYTES_AT_OPEN
       :since: 2.3

@@ -137,31 +137,63 @@ static void VSICURLReadGlobalEnvVariables()
         Initializer()
         {
             constexpr int DOWNLOAD_CHUNK_SIZE_DEFAULT = 16384;
+            const char *pszChunkSize =
+                CPLGetConfigOption("CPL_VSIL_CURL_CHUNK_SIZE", nullptr);
+            GIntBig nChunkSize = DOWNLOAD_CHUNK_SIZE_DEFAULT;
 
-            DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY = atoi(CPLGetConfigOption(
-                "CPL_VSIL_CURL_CHUNK_SIZE",
-                CPLSPrintf("%d", DOWNLOAD_CHUNK_SIZE_DEFAULT)));
+            if (pszChunkSize)
+            {
+                if (CPLParseMemorySize(pszChunkSize, &nChunkSize, nullptr) !=
+                    CE_None)
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Could not parse value for CPL_VSIL_CURL_CHUNK_SIZE. "
+                        "Using default value of %d instead.",
+                        DOWNLOAD_CHUNK_SIZE_DEFAULT);
+                }
+            }
+
             constexpr int MIN_CHUNK_SIZE = 1024;
             constexpr int MAX_CHUNK_SIZE = 10 * 1024 * 1024;
-            if (DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY < MIN_CHUNK_SIZE ||
-                DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY > MAX_CHUNK_SIZE)
+            if (nChunkSize < MIN_CHUNK_SIZE || nChunkSize > MAX_CHUNK_SIZE)
             {
-                DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY =
-                    DOWNLOAD_CHUNK_SIZE_DEFAULT;
+                nChunkSize = DOWNLOAD_CHUNK_SIZE_DEFAULT;
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Invalid value for CPL_VSIL_CURL_CHUNK_SIZE. "
                          "Allowed range is [%d, %d]. "
                          "Using CPL_VSIL_CURL_CHUNK_SIZE=%d instead",
                          MIN_CHUNK_SIZE, MAX_CHUNK_SIZE,
-                         DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY);
+                         DOWNLOAD_CHUNK_SIZE_DEFAULT);
             }
+            DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY =
+                static_cast<int>(nChunkSize);
 
             constexpr int N_MAX_REGIONS_DEFAULT = 1000;
             constexpr int CACHE_SIZE_DEFAULT =
                 N_MAX_REGIONS_DEFAULT * DOWNLOAD_CHUNK_SIZE_DEFAULT;
-            GIntBig nCacheSize = CPLAtoGIntBig(
-                CPLGetConfigOption("CPL_VSIL_CURL_CACHE_SIZE",
-                                   CPLSPrintf("%d", CACHE_SIZE_DEFAULT)));
+
+            const char *pszCacheSize =
+                CPLGetConfigOption("CPL_VSIL_CURL_CACHE_SIZE", nullptr);
+            GIntBig nCacheSize = CACHE_SIZE_DEFAULT;
+
+            if (pszCacheSize)
+            {
+                if (CPLParseMemorySize(pszCacheSize, &nCacheSize, nullptr) !=
+                    CE_None)
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Could not parse value for CPL_VSIL_CURL_CACHE_SIZE. "
+                        "Using default value of " CPL_FRMT_GIB " instead.",
+                        nCacheSize);
+                }
+            }
+            else
+            {
+                nCacheSize = CACHE_SIZE_DEFAULT;
+            }
+
             const auto nMaxRAM = CPLGetUsablePhysicalRAM();
             const auto nMinVal = DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY;
             auto nMaxVal = static_cast<GIntBig>(INT_MAX) *
