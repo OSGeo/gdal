@@ -468,7 +468,7 @@ CPLErr RS2CalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             for (int j = 0; j < nBlockXSize; j++)
             {
                 /* calculate pixel offset in memory*/
-                int nPixOff = (2 * (i * nBlockXSize)) + (j * 2);
+                const int nPixOff = 2 * (i * nBlockXSize + j);
 
                 reinterpret_cast<float *>(pImage)[nPixOff] /=
                     m_nfTable[nBlockXOff * nBlockXSize + j];
@@ -977,7 +977,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
             eDataType = GDT_CFloat32;
 
         BandMapping b = GetBandFileMapping(eDataType, poBandFile);
-        bool twoBandComplex = b == TWOBANDCOMPLEX;
+        const bool twoBandComplex = b == TWOBANDCOMPLEX;
 
         poDS->papszExtraFiles =
             CSLAddString(poDS->papszExtraFiles, pszFullname);
