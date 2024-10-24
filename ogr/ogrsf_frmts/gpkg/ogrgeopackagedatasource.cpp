@@ -6083,7 +6083,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
     oSRS.exportToWkt(&pszWKT);
     char **papszTO = CSLSetNameValue(nullptr, "DST_SRS", pszWKT);
 
-    void *hTransformArg = nullptr;
+    GDALTransformerArg hTransformArg = nullptr;
 
     // Hack to compensate for GDALSuggestedWarpOutput2() failure (or not
     // ideal suggestion with PROJ 8) when reprojecting latitude = +/- 90 to
@@ -6158,7 +6158,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
     }
 
     GDALTransformerInfo *psInfo =
-        static_cast<GDALTransformerInfo *>(hTransformArg);
+        reinterpret_cast<GDALTransformerInfo *>(hTransformArg);
     double adfGeoTransform[6];
     double adfExtent[4];
     int nXSize, nYSize;

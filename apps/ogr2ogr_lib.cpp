@@ -1130,7 +1130,7 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
     GCPCoordTransformation &operator=(const GCPCoordTransformation &) = delete;
 
   public:
-    void *hTransformArg;
+    GDALTransformerArg hTransformArg;
     bool bUseTPS;
     OGRSpatialReference *poSRS;
 

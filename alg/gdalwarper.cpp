@@ -91,7 +91,7 @@ CPLErr CPL_STDCALL GDALReprojectImage(
     /* -------------------------------------------------------------------- */
     /*      Setup a reprojection based transformer.                         */
     /* -------------------------------------------------------------------- */
-    void *hTransformArg = GDALCreateGenImgProjTransformer(
+    GDALTransformerArg hTransformArg = GDALCreateGenImgProjTransformer(
         hSrcDS, pszSrcWKT, hDstDS, pszDstWKT, TRUE, 1000.0, 0);
 
     if (hTransformArg == nullptr)
@@ -251,7 +251,7 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
     /*      Create a transformation object from the source to               */
     /*      destination coordinate system.                                  */
     /* -------------------------------------------------------------------- */
-    void *hTransformArg = GDALCreateGenImgProjTransformer(
+    GDALTransformerArg hTransformArg = GDALCreateGenImgProjTransformer(
         hSrcDS, pszSrcWKT, nullptr, pszDstWKT, TRUE, 1000.0, 0);
 
     if (hTransformArg == nullptr)
