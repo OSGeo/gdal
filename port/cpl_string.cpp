@@ -1779,10 +1779,10 @@ CPLErr CPLParseMemorySize(const char *pszValue, GIntBig *pnValue,
         return CE_Failure;
     }
 
-    if (value <= 0 || !std::isfinite(value))
+    if (value < 0 || !std::isfinite(value))
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "Memory size must be a positive number.");
+                 "Memory size must be a positive number or zero.");
         return CE_Failure;
     }
 
