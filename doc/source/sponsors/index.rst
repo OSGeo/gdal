@@ -90,6 +90,13 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        .. image:: ../../images/sponsors/logo-linz.png
+           :class: img-logos
+           :width: 150 px
+           :target: https://www.linz.govt.nz
+
+    .. container:: horizontal-logo
+
         .. image:: ../../images/sponsors/logo-mapgears.png
            :class: img-logos
            :width: 150 px
