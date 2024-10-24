@@ -37,6 +37,8 @@ struct VSILFileReleaser
 };
 }  // namespace
 
+constexpr float MIN_DISTANCE = 0.01f;
+
 /************************************************************************/
 /*                        JPEGXLDataset                                 */
 /************************************************************************/
@@ -2136,18 +2138,19 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
             }
             else
             {
-                fDistance = static_cast<float>(
-                    6.4 + pow(2.5, (30 - quality) / 5.0f) / 6.25f);
+                fDistance =
+                    static_cast<float>(53.0 / 3000.0 * quality * quality -
+                                       23.0 / 20.0 * quality + 25.0);
             }
         }
-        if (fDistance >= 0.0f && fDistance < 0.1f)
-            fDistance = 0.1f;
+        if (fDistance >= 0.0f && fDistance < MIN_DISTANCE)
+            fDistance = MIN_DISTANCE;
 
         if (pszAlphaDistance)
         {
             fAlphaDistance = static_cast<float>(CPLAtof(pszAlphaDistance));
-            if (fAlphaDistance > 0.0f && fAlphaDistance < 0.1f)
-                fAlphaDistance = 0.1f;
+            if (fAlphaDistance > 0.0f && fAlphaDistance < MIN_DISTANCE)
+                fAlphaDistance = MIN_DISTANCE;
         }
     }
 
