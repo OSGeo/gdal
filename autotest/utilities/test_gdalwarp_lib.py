@@ -4343,3 +4343,80 @@ def test_gdalwarp_lib_src_is_geog_arc_second():
     assert out_ds.RasterXSize == 5464
     assert out_ds.RasterYSize == 5464
     assert out_ds.GetRasterBand(1).Checksum() == 31856
+
+
+###############################################################################
+# Test GWKCubicResampleNoMasks4MultiBandT<Byte>()
+
+
+def test_gdalwarp_lib_cubic_multiband_byte_4sample_optim():
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+
+    # RGB only
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-f MEM -tr 0.9 0.9 -te -10 40.1 8.9 59 -r cubic",
+    )
+    assert out_ds.RasterXSize == 21
+    assert out_ds.RasterYSize == 21
+    assert [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+        4785,
+        4689,
+        5007,
+    ]
+
+    # With dest alpha
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-f MEM -tr 0.9 0.9 -te -10 40.1 8.9 59 -r cubic -dstalpha",
+    )
+    assert out_ds.RasterXSize == 21
+    assert out_ds.RasterYSize == 21
+    assert [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+        4785,
+        4689,
+        5007,
+    ]
+    assert out_ds.GetRasterBand(4).ComputeRasterMinMax() == (255, 255)
+
+    # Test edge effects
+    # (slightly change the target resolution so that the nearest approximation
+    # doesn't kick in)
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-f MEM -r cubic -tr 0.9000001 0.9000001 -wo XSCALE=1 -wo YSCALE=1",
+    )
+    assert out_ds.RasterXSize == 400
+    assert out_ds.RasterYSize == 200
+    assert out_ds.ReadRaster() == src_ds.ReadRaster()
+
+
+###############################################################################
+# Test GWKCubicResampleNoMasks4MultiBandT<GUInt16>()
+
+
+def test_gdalwarp_lib_cubic_multiband_uint16_4sample_optim():
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    src_ds = gdal.Translate(
+        "", src_ds, options="-f MEM -ot UInt16 -scale 0 255 0 65535"
+    )
+
+    # RGB only
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-f MEM -tr 0.9 0.9 -te -10 40.1 8.9 59 -r cubic",
+    )
+    out_ds = gdal.Translate("", out_ds, options="-f MEM -ot Byte -scale 0 65535 0 255")
+    assert out_ds.RasterXSize == 21
+    assert out_ds.RasterYSize == 21
+    assert [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+        4785,
+        4689,
+        5007,
+    ]
