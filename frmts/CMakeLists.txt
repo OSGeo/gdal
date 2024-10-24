@@ -154,6 +154,7 @@ gdal_optional_format(rik "RIK -- Swedish Grid Maps")
 gdal_optional_format(stacit "STACIT")
 gdal_optional_format(pdf "Geospatial PDF") # write only if none of GDAL_USE_POPPLER, GDAL_USE_PODOFO or GDAL_USE_PDFIUM
                                            # is set
+gdal_optional_format(rcm "Radarsat Constellation Mission")
 
 # formats with external library dependency
 gdal_dependent_format(png "PNG image format" "GDAL_USE_PNG OR GDAL_USE_PNG_INTERNAL")
