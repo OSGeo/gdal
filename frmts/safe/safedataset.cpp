@@ -795,11 +795,14 @@ int SAFEDataset::Identify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 100)
         return FALSE;
 
-    if (strstr((const char *)poOpenInfo->pabyHeader, "<xfdu:XFDU") == nullptr)
+    const char *pszHeader =
+        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+    if (!strstr(pszHeader, "<xfdu:XFDU"))
         return FALSE;
 
-    // This driver doesn't handle Sentinel-2 data
-    if (strstr((const char *)poOpenInfo->pabyHeader, "sentinel-2") != nullptr)
+    // This driver doesn't handle Sentinel-2 or RCM (RADARSAT Constellation Mission) data
+    if (strstr(pszHeader, "sentinel-2") ||
+        strstr(pszHeader, "rcm_prod_manifest.xsd"))
         return FALSE;
 
     return TRUE;

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<lut xmlns="rcmGsProductSchema"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="rcmGsProductSchema ../../support/schemas/rcm_prod_lut.xsd">
+	<pixelFirstLutValue>10</pixelFirstLutValue>
+	<stepSize>-17915</stepSize>
+	<numberOfValues>1</numberOfValues>
+	<offset>0</offset>
+	<gains>10</gains>
+</lut>

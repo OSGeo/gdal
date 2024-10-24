@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?xml-stylesheet type="text/xsl" href="../support/rcm_prod_product.xslt"?>
+<product xmlns="rcmGsProductSchema" copyright="none" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="rcmGsProductSchema ../support/schemas/rcm_prod_product.xsd">
+	<productId>productId</productId>
+	<productAnnotation>productAnnotation</productAnnotation>
+	<productApplication>productApplication</productApplication>
+	<documentIdentifier>documentIdentifier</documentIdentifier>
+	<securityAttributes>
+		<securityClassification>Non classifié / Unclassified</securityClassification>
+		<specialHandlingRequired>false</specialHandlingRequired>
+		<specialHandlingInstructions>specialHandlingInstructions</specialHandlingInstructions>
+	</securityAttributes>
+	<sourceAttributes>
+		<satellite>RCM-1</satellite>
+		<sensor>SAR</sensor>
+		<polarizationDataMode>Dual Co/Cross</polarizationDataMode>
+		<downlinkSegmentId>downlinkSegmentId</downlinkSegmentId>
+		<inputDatasetFacilityId>inputDatasetFacilityId</inputDatasetFacilityId>
+		<beamMode>Medium Resolution 50m</beamMode>
+		<beamModeDefinitionId>beamModeDefinitionId</beamModeDefinitionId>
+		<beamModeVersion>beamModeVersion</beamModeVersion>
+		<beamModeMnemonic>beamModeMnemonic</beamModeMnemonic>
+		<rawDataStartTime>rawDataStartTime</rawDataStartTime>
+		<radarParameters>
+			<acquisitionType>Medium Resolution 50m</acquisitionType>
+			<beams>beams</beams>
+			<polarizations>VH VV</polarizations>
+            <!-- lots of elements removed -->
+		</radarParameters>
+        <!-- omitted rawDataAttributes element -->
+		<orbitAndAttitude>
+			<orbitInformation>
+				<passDirection>Descending</passDirection>
+				<orbitDataSource>Downlinked</orbitDataSource>
+				<withinOrbitTube>true</withinOrbitTube>
+				<orbitDataFileName>orbitDataFileName</orbitDataFileName>
+                <!-- omitted stateVector elements -->
+			</orbitInformation>
+            <!-- omitted attitudeInformation element -->
+		</orbitAndAttitude>
+	</sourceAttributes>
+	<imageGenerationParameters>
+		<generalProcessingInformation>
+			<productType>GRD</productType>
+			<polarizationsInProduct>VV VH</polarizationsInProduct>
+			<processingFacility>processingFacility</processingFacility>
+			<processingTime>processingTime</processingTime>
+			<softwareVersion>softwareVersion</softwareVersion>
+			<processingMode>Expedited</processingMode>
+		</generalProcessingInformation>
+		<sarProcessingInformation>
+			<lutApplied>Mixed</lutApplied>
+			<perPolarizationScaling>true</perPolarizationScaling>
+			<atmosphericCorrection>false</atmosphericCorrection>
+			<elevationPatternCorrection>true</elevationPatternCorrection>
+			<rangeSpreadingLossCorrection>true</rangeSpreadingLossCorrection>
+			<pulseDependentGainCorrection>true</pulseDependentGainCorrection>
+			<noiseSubtractionPerformed>false</noiseSubtractionPerformed>
+			<receiverSettableGainCorrection>true</receiverSettableGainCorrection>
+			<rawDataCorrection>true</rawDataCorrection>
+			<bistaticCorrectionApplied>true</bistaticCorrectionApplied>
+			<rangeReferenceFunctionSource>Nominal Chirp</rangeReferenceFunctionSource>
+			<atmosphericPropagationDelay units="us">0.000000000000000e+00</atmosphericPropagationDelay>
+			<dopplerSource>Adaptive Analysis</dopplerSource>
+			<estimatedRollAngleUsed>false</estimatedRollAngleUsed>
+			<radiometricSmoothingPerformed>true</radiometricSmoothingPerformed>
+			<zeroDopplerTimeFirstLine>zeroDopplerTimeFirstLine</zeroDopplerTimeFirstLine>
+			<zeroDopplerTimeLastLine>zeroDopplerTimeLastLine</zeroDopplerTimeLastLine>
+			<numberOfLinesProcessed pole="VV">19633</numberOfLinesProcessed>
+			<numberOfLinesProcessed pole="VH">19633</numberOfLinesProcessed>
+			<numberOfRangeLooks>4</numberOfRangeLooks>
+			<rangeLookBandwidth units="Hz">rangeLookBandwidth</rangeLookBandwidth>
+			<totalProcessedRangeBandwidth units="Hz">totalProcessedRangeBandwidth</totalProcessedRangeBandwidth>
+			<perBeamNumberOfRangeLooksUsed>true</perBeamNumberOfRangeLooksUsed>
+            <!-- omitted perBeamNumberOfRangeLooks elements -->
+            <!-- omitted perBeamRangeLookBandwidths elements -->
+            <!-- omitted perBeamTotalProcessedRangeBandwidths elements -->
+			<numberOfAzimuthLooks>1</numberOfAzimuthLooks>
+            <!-- omitted azimuthLookBandwidth elements -->
+            <!-- omitted totalProcessedAzimuthBandwidth elements -->
+            <!-- omitted azimuthWindow elements -->
+            <!-- omitted rangeWindow element -->
+			<satelliteHeight units="m">600000</satelliteHeight>
+		</sarProcessingInformation>
+        <!-- omitted chirp elements -->
+        <!-- omitted slantRangeToGroundRange elements -->
+        <!-- omitted dynamicProcessingParameterFile elements -->
+	</imageGenerationParameters>
+	<imageReferenceAttributes>
+		<productFormat>GeoTIFF</productFormat>
+		<outputMediaInterleaving>BSQ</outputMediaInterleaving>
+		<lookupTableFileName sarCalibrationType="Beta Nought" pole="VV">lutBeta_VV.xml</lookupTableFileName>
+		<lookupTableFileName sarCalibrationType="Sigma Nought" pole="VV">lutSigma_VV.xml</lookupTableFileName>
+		<lookupTableFileName sarCalibrationType="Gamma" pole="VV">lutGamma_VV.xml</lookupTableFileName>
+		<lookupTableFileName sarCalibrationType="Beta Nought" pole="VH">lutBeta_VH.xml</lookupTableFileName>
+		<lookupTableFileName sarCalibrationType="Sigma Nought" pole="VH">lutSigma_VH.xml</lookupTableFileName>
+		<lookupTableFileName sarCalibrationType="Gamma" pole="VH">lutGamma_VH.xml</lookupTableFileName>
+		<incidenceAngleFileName>incidenceAngles.xml</incidenceAngleFileName>
+		<noiseLevelFileName pole="VV">noiseLevels_VV.xml</noiseLevelFileName>
+		<noiseLevelFileName pole="VH">noiseLevels_VH.xml</noiseLevelFileName>
+		<rasterAttributes>
+			<sampleType>Magnitude Detected</sampleType>
+			<dataType>Integer</dataType>
+			<bitsPerSample dataStream="Magnitude">16</bitsPerSample>
+			<sampledPixelSpacing units="m">sampledPixelSpacing</sampledPixelSpacing>
+			<sampledLineSpacing units="m">sampledLineSpacing</sampledLineSpacing>
+			<sampledPixelSpacingTime units="s">sampledPixelSpacingTime</sampledPixelSpacingTime>
+			<sampledLineSpacingTime units="s">sampledLineSpacingTime</sampledLineSpacingTime>
+			<lineTimeOrdering>Increasing</lineTimeOrdering>
+			<pixelTimeOrdering>Decreasing</pixelTimeOrdering>
+		</rasterAttributes>
+		<geographicInformation>
+			<ellipsoidParameters>
+				<ellipsoidName>WGS 1984</ellipsoidName>
+				<semiMajorAxis units="m">6.378137000000000e+06</semiMajorAxis>
+				<semiMinorAxis units="m">6.356752314245179e+06</semiMinorAxis>
+				<datumShiftParameters units="m">0.000000000000000e+00 0.000000000000000e+00 0.000000000000000e+00</datumShiftParameters>
+				<geodeticTerrainHeight units="m">200</geodeticTerrainHeight>
+			</ellipsoidParameters>
+			<geolocationGrid>
+				<imageTiePoint>
+					<imageCoordinate>
+						<line>1</line>
+						<pixel>2</pixel>
+					</imageCoordinate>
+					<geodeticCoordinate>
+						<latitude units="deg">1.5</latitude>
+						<longitude units="deg">2.5</longitude>
+						<height units="m">3.5</height>
+					</geodeticCoordinate>
+				</imageTiePoint>
+			</geolocationGrid>
+			<rationalFunctions>
+				<biasError units="m">0</biasError>
+				<randomError units="m">0</randomError>
+				<lineFitQuality>0</lineFitQuality>
+				<pixelFitQuality>0</pixelFitQuality>
+				<lineOffset>0</lineOffset>
+				<pixelOffset>0</pixelOffset>
+				<latitudeOffset units="deg">0</latitudeOffset>
+				<longitudeOffset units="deg">0</longitudeOffset>
+				<heightOffset units="m">0</heightOffset>
+				<lineScale>0</lineScale>
+				<pixelScale>0</pixelScale>
+				<latitudeScale>0</latitudeScale>
+				<longitudeScale>0</longitudeScale>
+				<heightScale>0</heightScale>
+				<lineNumeratorCoefficients>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</lineNumeratorCoefficients>
+				<lineDenominatorCoefficients>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</lineDenominatorCoefficients>
+				<pixelNumeratorCoefficients>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</pixelNumeratorCoefficients>
+				<pixelDenominatorCoefficients>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</pixelDenominatorCoefficients>
+			</rationalFunctions>
+		</geographicInformation>
+	</imageReferenceAttributes>
+	<sceneAttributes>
+		<numberOfEntries>1</numberOfEntries>
+		<imageAttributes sampleType="Magnitude Detected">
+			<ipdf pole="VV">../imagery/VV.tif</ipdf>
+			<ipdf pole="VH">../imagery/VH.tif</ipdf>
+			<pixelOffset>0</pixelOffset>
+			<lineOffset>0</lineOffset>
+			<numLines>3297</numLines>
+			<samplesPerLine>17915</samplesPerLine>
+			<incAngNearRng units="deg">incAngNearRng</incAngNearRng>
+			<incAngFarRng units="deg">incAngFarRng</incAngFarRng>
+			<slantRangeNearEdge units="m">slantRangeNearEdge</slantRangeNearEdge>
+			<slantRangeFarEdge units="m">slantRangeFarEdge</slantRangeFarEdge>
+			<mean pole="VV">mean_VV</mean>
+			<mean pole="VH">mean_VH</mean>
+			<sigma pole="VV">pole_VV</sigma>
+			<sigma pole="VH">pole_VH</sigma>
+		</imageAttributes>
+	</sceneAttributes>
+    <!-- omitted grdBurstMap element -->
+    <!-- omitted dopplerCentroid element -->
+    <!-- omitted dopplerRate element -->
+</product>
