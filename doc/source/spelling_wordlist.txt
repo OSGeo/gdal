@@ -1018,6 +1018,7 @@ GDALThreadLocalDatasetCache
 gdaltindex
 gdaltransform
 gdalvirtualmem
+gdalvsi
 gdalwarp
 gdalwmscache
 gdb
@@ -3455,6 +3456,7 @@ vsiaz
 vsicached
 vsicrypt
 vsicurl
+VSIFile
 VSIFOpen
 vsigs
 vsigz
