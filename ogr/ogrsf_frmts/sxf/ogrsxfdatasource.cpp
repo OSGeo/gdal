@@ -24,6 +24,10 @@
 #include <map>
 #include <string>
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 // EPSG code range http://gis.stackexchange.com/a/18676/9904
 constexpr int MIN_EPSG = 1000;
 constexpr int MAX_EPSG = 32768;
@@ -229,9 +233,33 @@ int OGRSXFDataSource::Open(const char *pszFilename, bool bUpdateIn,
     // 1. Create layers from RSC file or create default set of layers from
     // gdal_data/default.rsc.
 
+    VSILFILE *fpRSC = nullptr;
     if (soRSCRileName.empty())
     {
+#if defined(USE_ONLY_EMBEDDED_RESOURCE_FILES)
+        pszRSCRileName = nullptr;
+#else
         pszRSCRileName = CPLFindFile("gdal", "default.rsc");
+#endif
+#ifdef EMBED_RESOURCE_FILES
+        if (!pszRSCRileName || EQUAL(pszRSCRileName, "default.rsc"))
+        {
+            static const bool bOnce [[maybe_unused]] = []()
+            {
+                CPLDebug("SXF", "Using embedded default.rsc");
+                return true;
+            }();
+            int sxf_default_rsc_size = 0;
+            const unsigned char *sxf_default_rsc =
+                SXFGetDefaultRSC(&sxf_default_rsc_size);
+            fpRSC = VSIFileFromMemBuffer(
+                nullptr,
+                const_cast<GByte *>(
+                    reinterpret_cast<const GByte *>(sxf_default_rsc)),
+                sxf_default_rsc_size,
+                /* bTakeOwnership = */ false);
+        }
+#endif
         if (nullptr != pszRSCRileName)
         {
             soRSCRileName = pszRSCRileName;
@@ -242,14 +270,23 @@ int OGRSXFDataSource::Open(const char *pszFilename, bool bUpdateIn,
         }
     }
 
-    if (soRSCRileName.empty())
+    if (soRSCRileName.empty()
+#ifdef EMBED_RESOURCE_FILES
+        && !fpRSC
+#endif
+    )
     {
         CPLError(CE_Warning, CPLE_None, "RSC file for %s not exist",
                  pszFilename);
     }
     else
     {
-        VSILFILE *fpRSC = VSIFOpenL(soRSCRileName, "rb");
+#ifdef EMBED_RESOURCE_FILES
+        if (!fpRSC)
+#endif
+        {
+            fpRSC = VSIFOpenL(soRSCRileName, "rb");
+        }
         if (fpRSC == nullptr)
         {
             CPLError(CE_Warning, CPLE_OpenFailed, "RSC file %s open failed",

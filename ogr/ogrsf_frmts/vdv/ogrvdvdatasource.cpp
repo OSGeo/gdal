@@ -15,6 +15,10 @@
 #include "cpl_time.h"
 #include <map>
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 #ifndef STARTS_WITH_CI
 #define STARTS_WITH(a, b) (strncmp(a, b, strlen(b)) == 0)
 #define STARTS_WITH_CI(a, b) EQUALN(a, b, strlen(b))
@@ -1702,14 +1706,34 @@ static bool OGRVDVWriteHeader(VSILFILE *fpL, CSLConstList papszOptions)
 
 static bool OGRVDVLoadVDV452Tables(OGRVDV452Tables &oTables)
 {
+    CPLXMLNode *psRoot = nullptr;
+#if defined(USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    const char *pszXMLDescFilename = nullptr;
+#else
     const char *pszXMLDescFilename = CPLFindFile("gdal", "vdv452.xml");
-    if (pszXMLDescFilename == nullptr)
+#endif
+    if (pszXMLDescFilename == nullptr ||
+        EQUAL(pszXMLDescFilename, "vdv452.xml"))
     {
+#ifdef EMBED_RESOURCE_FILES
+        static const bool bOnce [[maybe_unused]] = []()
+        {
+            CPLDebug("VDV", "Using embedded vdv452.xml");
+            return true;
+        }();
+        psRoot = CPLParseXMLString(VDVGet452XML());
+#else
         CPLDebug("VDV", "Cannot find XML file : %s", "vdv452.xml");
         return false;
+#endif
     }
 
-    CPLXMLNode *psRoot = CPLParseXMLFile(pszXMLDescFilename);
+#ifdef EMBED_RESOURCE_FILES
+    if (!psRoot)
+#endif
+    {
+        psRoot = CPLParseXMLFile(pszXMLDescFilename);
+    }
     if (psRoot == nullptr)
     {
         return false;

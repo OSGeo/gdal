@@ -16,6 +16,10 @@
 #include "ogrgeojsonwriter.h"
 #include <algorithm>
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 /************************************************************************/
 /*                           GetFieldCount()                            */
 /************************************************************************/
@@ -106,21 +110,39 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
         return;
     m_bFeatureDefnEstablished = true;
 
-    const char *pszConfFile = CPLFindFile("gdal", "plscenesconf.json");
+    const char *pzText = nullptr;
+    const char *pszConfFile = nullptr;
+#if !defined(USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    pszConfFile = CPLFindFile("gdal", "plscenesconf.json");
     if (pszConfFile == nullptr)
+#endif
     {
+#ifdef EMBED_RESOURCE_FILES
+        static const bool bOnce [[maybe_unused]] = []()
+        {
+            CPLDebug("PLScenes", "Using embedded plscenes.conf");
+            return true;
+        }();
+        pzText = PLScenesGetConfJson();
+#else
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find plscenesconf.json");
         return;
+#endif
     }
 
     GByte *pabyRet = nullptr;
-    if (!VSIIngestFile(nullptr, pszConfFile, &pabyRet, nullptr, -1))
+#ifdef EMBED_RESOURCE_FILES
+    if (!pzText)
+#endif
     {
-        return;
+        if (!VSIIngestFile(nullptr, pszConfFile, &pabyRet, nullptr, -1))
+        {
+            return;
+        }
+        pzText = reinterpret_cast<char *>(pabyRet);
     }
 
     json_object *poRoot = nullptr;
-    const char *pzText = reinterpret_cast<char *>(pabyRet);
     if (!OGRJSonParse(pzText, &poRoot))
     {
         VSIFree(pabyRet);

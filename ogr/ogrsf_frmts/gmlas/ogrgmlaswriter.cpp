@@ -234,12 +234,10 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress, void *pProgressData)
     // Load configuration file
     CPLString osConfigFile =
         m_aosOptions.FetchNameValueDef(szCONFIG_FILE_OPTION, "");
+    bool bUnlinkAfterUse = false;
     if (osConfigFile.empty())
     {
-        const char *pszConfigFile =
-            CPLFindFile("gdal", szDEFAULT_CONF_FILENAME);
-        if (pszConfigFile)
-            osConfigFile = pszConfigFile;
+        osConfigFile = GMLASConfiguration::GetDefaultConfFile(bUnlinkAfterUse);
     }
     if (osConfigFile.empty())
     {
@@ -249,7 +247,10 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress, void *pProgressData)
     }
     else
     {
-        if (!m_oConf.Load(osConfigFile))
+        const bool bOK = m_oConf.Load(osConfigFile);
+        if (bUnlinkAfterUse)
+            VSIUnlink(osConfigFile.c_str());
+        if (!bOK)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Loading of configuration failed");

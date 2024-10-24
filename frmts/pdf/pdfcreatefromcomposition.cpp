@@ -24,6 +24,10 @@
 #include "cpl_vsi_virtual.h"
 #include "ogr_geometry.h"
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 /************************************************************************/
 /*                         GDALPDFComposerWriter()                      */
 /************************************************************************/
@@ -2434,8 +2438,35 @@ GDALDataset *GDALPDFCreateFromCompositionFile(const char *pszPDFFilename,
     // XML Validation.
     if (CPLTestBool(CPLGetConfigOption("GDAL_XML_VALIDATION", "YES")))
     {
+#ifdef EMBED_RESOURCE_FILES
+        std::string osTmpFilename;
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+#endif
+#ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
+        const char *pszXSD = nullptr;
+#else
         const char *pszXSD = CPLFindFile("gdal", "pdfcomposition.xsd");
+#endif
+#ifdef EMBED_RESOURCE_FILES
+        if (!pszXSD)
+        {
+            static const bool bOnce [[maybe_unused]] = []()
+            {
+                CPLDebug("PDF", "Using embedded pdfcomposition.xsd");
+                return true;
+            }();
+            osTmpFilename = VSIMemGenerateHiddenFilename("pdfcomposition.xsd");
+            pszXSD = osTmpFilename.c_str();
+            VSIFCloseL(VSIFileFromMemBuffer(
+                osTmpFilename.c_str(),
+                const_cast<GByte *>(
+                    reinterpret_cast<const GByte *>(PDFGetCompositionXSD())),
+                static_cast<int>(strlen(PDFGetCompositionXSD())),
+                /* bTakeOwnership = */ false));
+        }
+#else
         if (pszXSD != nullptr)
+#endif
         {
             std::vector<CPLString> aosErrors;
             CPLPushErrorHandlerEx(GDALPDFErrorHandler, &aosErrors);
@@ -2456,6 +2487,11 @@ GDALDataset *GDALPDFCreateFromCompositionFile(const char *pszPDFFilename,
             }
             CPLErrorReset();
         }
+
+#ifdef EMBED_RESOURCE_FILES
+        if (!osTmpFilename.empty())
+            VSIUnlink(osTmpFilename.c_str());
+#endif
     }
 
     /* -------------------------------------------------------------------- */

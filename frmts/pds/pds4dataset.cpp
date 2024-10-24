@@ -21,6 +21,10 @@
 #include "pds4dataset.h"
 #include "pdsdrivercore.h"
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
@@ -4034,16 +4038,33 @@ void PDS4Dataset::WriteHeader()
             psRoot = CPLParseXMLString(m_osXMLPDS4);
         else
         {
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+#ifdef EMBED_RESOURCE_FILES
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+#endif
             const char *pszDefaultTemplateFilename =
                 CPLFindFile("gdal", "pds4_template.xml");
-            if (pszDefaultTemplateFilename == nullptr)
+            if (pszDefaultTemplateFilename)
             {
+                psRoot = CPLParseXMLFile(pszDefaultTemplateFilename);
+            }
+            else
+#endif
+            {
+#ifdef EMBED_RESOURCE_FILES
+                static const bool bOnce [[maybe_unused]] = []()
+                {
+                    CPLDebug("PDS4", "Using embedded pds4_template.xml");
+                    return true;
+                }();
+                psRoot = CPLParseXMLString(PDS4GetEmbeddedTemplate());
+#else
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cannot find pds4_template.xml and TEMPLATE "
                          "creation option not specified");
                 return;
+#endif
             }
-            psRoot = CPLParseXMLFile(pszDefaultTemplateFilename);
         }
     }
     else
