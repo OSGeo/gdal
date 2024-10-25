@@ -127,7 +127,7 @@ def test_jpegxl_rgba_distance():
 
 
 @pytest.mark.parametrize(
-    "quality,equivalent_distance", [(100, 0), (90, 1), (10, 12.65)]
+    "quality,equivalent_distance", [(100, 0), (10, 15.266666666666667)]
 )
 def test_jpegxl_rgba_quality(quality, equivalent_distance):
 

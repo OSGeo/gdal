@@ -635,7 +635,7 @@ This driver supports the following creation options:
       The higher, the smaller file and slower compression time.
 
 -  .. co:: JXL_DISTANCE
-      :choices: [0.1-15]
+      :choices: [0.01-25]
       :default: 1.0
 
       Distance level for lossy JPEG-XL compression.
@@ -647,7 +647,7 @@ This driver supports the following creation options:
       The recommended range is [0.5,3].
 
 -  .. co:: JXL_ALPHA_DISTANCE
-      :choices: -1,0,[0.1-15]
+      :choices: -1,0,[0.01-25]
       :default: -1
       :since: 3.7
 
