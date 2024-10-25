@@ -73,6 +73,10 @@ ECWRasterBand::ECWRasterBand(ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
     nRasterYSize = poDS->GetRasterYSize() / (1 << (iOverview + 1));
 
 #if ECWSDK_VERSION >= 51
+// undefine min macro if any
+#ifdef min
+#undef min
+#endif
     if (poDSIn->bIsJPEG2000 && poDSIn->poFileView)
     {
         UINT32 nTileWidth = 0;
