@@ -13,6 +13,7 @@
 ###############################################################################
 
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -125,3 +126,15 @@ def test_rcm_open_subdatasets():
         gdal.Open("RCM_CALIB:unhandled:data/rcm/fake_VV_VH_GRD/metadata/product.xml")
     with pytest.raises(Exception):
         gdal.Open("RCM_CALIB:UNCALIB:i_do_not_exist/product.xml")
+
+
+@pytest.mark.require_curl
+def test_rcm_open_real_dataset():
+    remote_file = "https://donnees-data.asc-csa.gc.ca/users/OpenData_DonneesOuvertes/pub/RCM/Antarctica/RCM3_OK2120467_PK2120468_3_SC30MCPB_20200124_083635_CH_CV_MLC/metadata/product.xml"
+
+    if gdaltest.gdalurlopen(remote_file) is None:
+        pytest.skip(f"Could not read from {remote_file}")
+
+    ds = gdal.Open("/vsicurl/" + remote_file)
+    assert ds.GetDriver().ShortName == "RCM"
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
