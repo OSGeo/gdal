@@ -96,7 +96,6 @@ Raster drivers
    jdem
    jp2ecw
    jp2kak
-   jp2lura
    jp2mrsid
    jp2openjpeg
    jpeg

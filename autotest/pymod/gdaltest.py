@@ -40,13 +40,11 @@ jpeg2000_drv = None
 jp2ecw_drv = None
 jp2mrsid_drv = None
 jp2openjpeg_drv = None
-jp2lura_drv = None
 jp2kak_drv_unregistered = False
 jpeg2000_drv_unregistered = False
 jp2ecw_drv_unregistered = False
 jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
-jp2lura_drv_unregistered = False
 
 ###############################################################################
 
@@ -1264,8 +1262,8 @@ def compare_ds(ds1, ds2, xoff=0, yoff=0, width=0, height=0, verbose=1):
 
 
 def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
-    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv, jp2lura_drv
-    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered, jp2lura_drv_unregistered
+    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv
+    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered
 
     # Deregister other potential conflicting JPEG2000 drivers that will
     # be re-registered in the cleanup
@@ -1299,12 +1297,6 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
         jp2openjpeg_drv.Deregister()
         jp2openjpeg_drv_unregistered = True
 
-    jp2lura_drv = gdal.GetDriverByName("JP2Lura")
-    if name_of_driver_to_keep != "JP2Lura" and jp2lura_drv:
-        gdal.Debug("gdaltest.", "Deregistering JP2Lura")
-        jp2lura_drv.Deregister()
-        jp2lura_drv_unregistered = True
-
     return True
 
 
@@ -1314,8 +1306,8 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
 
 
 def reregister_all_jpeg2000_drivers():
-    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv, jp2lura_drv
-    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered, jp2lura_drv_unregistered
+    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv
+    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered
 
     if jp2kak_drv_unregistered:
         jp2kak_drv.Register()
@@ -1341,11 +1333,6 @@ def reregister_all_jpeg2000_drivers():
         jp2openjpeg_drv.Register()
         jp2openjpeg_drv_unregistered = False
         gdal.Debug("gdaltest", "Registering JP2OpenJPEG")
-
-    if jp2lura_drv_unregistered:
-        jp2lura_drv.Register()
-        jp2lura_drv_unregistered = False
-        gdal.Debug("gdaltest", "Registering JP2Lura")
 
     return True
 
