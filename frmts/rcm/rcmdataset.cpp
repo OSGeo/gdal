@@ -32,18 +32,43 @@ constexpr int max_space_for_string = 32;
  * Level files */
 constexpr const char *CALIBRATION_FOLDER = "calibration";
 
+/*** Function to format calibration for unique identification for Layer Name
+ * ***/
+/*
+ *  RCM_CALIB : { SIGMA0 | GAMMA0 | BETA0 | UNCALIB } : product.xml full path
+ */
+inline CPLString FormatCalibration(const char *pszCalibName,
+                                   const char *pszFilename)
+{
+    CPLString ptr;
+
+    // Always begin by the layer calibration name
+    ptr.append(szLayerCalibration);
+
+    // A separator is needed before concat calibration name
+    ptr += chLayerSeparator;
+    // Add calibration name
+    ptr.append(pszCalibName);
+
+    // A separator is needed before concat full filename name
+    ptr += chLayerSeparator;
+    // Add full filename name
+    ptr.append(pszFilename);
+
+    /* return calibration format */
+    return ptr;
+}
+
 /*** Function to test for valid LUT files ***/
-static bool IsValidXMLFile(const char *pszPath, const char *pszLut)
+static bool IsValidXMLFile(const char *pszPath)
 {
     /* Return true for valid xml file, false otherwise */
-    const std::string osLutFile = CPLFormFilename(pszPath, pszLut, nullptr);
-
-    CPLXMLTreeCloser psLut(CPLParseXMLFile(osLutFile.c_str()));
+    CPLXMLTreeCloser psLut(CPLParseXMLFile(pszPath));
 
     if (psLut.get() == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "ERROR: Failed to open the LUT file %s", osLutFile.c_str());
+                 "ERROR: Failed to open the LUT file %s", pszPath);
     }
 
     return psLut.get() != nullptr;
@@ -1043,9 +1068,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
     const char *pszFilename = poOpenInfo->pszFilename;
     eCalibration eCalib = None;
 
-    CPLString calibrationFormat(FormatCalibration(nullptr, nullptr));
-
-    if (STARTS_WITH_CI(pszFilename, calibrationFormat))
+    if (STARTS_WITH_CI(pszFilename, szLayerCalibration) &&
+        pszFilename[strlen(szLayerCalibration)] == chLayerSeparator)
     {
         // The calibration name and filename begins after the hard coded layer
         // name
@@ -1544,17 +1568,13 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (pszIncidenceAngleFileName != nullptr)
     {
-        CPLString osIncidenceAnglePath;
-        osIncidenceAnglePath.append(CALIBRATION_FOLDER);
-        osIncidenceAnglePath.append(szPathSeparator);
-        osIncidenceAnglePath.append(pszIncidenceAngleFileName);
+        CPLString osIncidenceAngleFilePath = CPLFormFilename(
+            CPLFormFilename(osPath, CALIBRATION_FOLDER, nullptr),
+            pszIncidenceAngleFileName, nullptr);
 
         /* Check if the file exist */
-        if (IsValidXMLFile(osPath, osIncidenceAnglePath))
+        if (IsValidXMLFile(osIncidenceAngleFilePath))
         {
-            CPLString osIncidenceAngleFilePath =
-                CPLFormFilename(osPath, osIncidenceAnglePath, nullptr);
-
             CPLXMLTreeCloser psIncidenceAngle(
                 CPLParseXMLFile(osIncidenceAngleFilePath));
 
@@ -1654,12 +1674,11 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 /*      called 'calibration' from the 'metadata' folder */
                 /* --------------------------------------------------------------------
                  */
-                CPLString oNoiseLevelPath;
-                oNoiseLevelPath.append(CALIBRATION_FOLDER);
-                oNoiseLevelPath.append(szPathSeparator);
-                oNoiseLevelPath.append(pszNoiseLevelFile);
 
-                if (IsValidXMLFile(osPath, oNoiseLevelPath))
+                const CPLString oNoiseLevelPath = CPLFormFilename(
+                    CPLFormFilename(osPath, CALIBRATION_FOLDER, nullptr),
+                    pszNoiseLevelFile, nullptr);
+                if (IsValidXMLFile(oNoiseLevelPath))
                 {
                     osNoiseLevelsValues = oNoiseLevelPath;
                 }
@@ -1712,16 +1731,12 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 /*      called 'calibration' from the 'metadata' folder */
                 /* --------------------------------------------------------------------
                  */
-                CPLString osCalibPath;
-                osCalibPath.append(CALIBRATION_FOLDER);
-                osCalibPath.append(szPathSeparator);
-                osCalibPath.append(pszLUTFile);
-
-                CPLString osLUTFilePath =
-                    CPLFormFilename(osPath, osCalibPath, nullptr);
+                const CPLString osLUTFilePath = CPLFormFilename(
+                    CPLFormFilename(osPath, CALIBRATION_FOLDER, nullptr),
+                    pszLUTFile, nullptr);
 
                 if (EQUAL(pszLUTType, "Beta Nought") &&
-                    IsValidXMLFile(osPath, osCalibPath))
+                    IsValidXMLFile(osLUTFilePath))
                 {
                     poDS->papszExtraFiles =
                         CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
@@ -1729,13 +1744,13 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                     CPLString pszBuf(
                         FormatCalibration(szBETA0, osMDFilename.c_str()));
                     CPLFree(pszBeta0LUT);
-                    pszBeta0LUT = VSIStrdup(osCalibPath);
+                    pszBeta0LUT = VSIStrdup(osLUTFilePath);
 
                     const char *oldLut =
                         poDS->GetMetadataItem("BETA_NOUGHT_LUT");
                     if (oldLut == nullptr)
                     {
-                        poDS->SetMetadataItem("BETA_NOUGHT_LUT", osCalibPath);
+                        poDS->SetMetadataItem("BETA_NOUGHT_LUT", osLUTFilePath);
                     }
                     else
                     {
@@ -1747,7 +1762,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                             '\0'; /* Just initialize the first byte */
                         strcat(ptrConcatLut, oldLut);
                         strcat(ptrConcatLut, ",");
-                        strcat(ptrConcatLut, osCalibPath);
+                        strcat(ptrConcatLut, osLUTFilePath);
                         poDS->SetMetadataItem("BETA_NOUGHT_LUT", ptrConcatLut);
                         CPLFree(ptrConcatLut);
                     }
@@ -1759,7 +1774,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                         "Beta Nought calibrated");
                 }
                 else if (EQUAL(pszLUTType, "Sigma Nought") &&
-                         IsValidXMLFile(osPath, osCalibPath))
+                         IsValidXMLFile(osLUTFilePath))
                 {
                     poDS->papszExtraFiles =
                         CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
@@ -1767,13 +1782,14 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                     CPLString pszBuf(
                         FormatCalibration(szSIGMA0, osMDFilename.c_str()));
                     CPLFree(pszSigma0LUT);
-                    pszSigma0LUT = VSIStrdup(osCalibPath);
+                    pszSigma0LUT = VSIStrdup(osLUTFilePath);
 
                     const char *oldLut =
                         poDS->GetMetadataItem("SIGMA_NOUGHT_LUT");
                     if (oldLut == nullptr)
                     {
-                        poDS->SetMetadataItem("SIGMA_NOUGHT_LUT", osCalibPath);
+                        poDS->SetMetadataItem("SIGMA_NOUGHT_LUT",
+                                              osLUTFilePath);
                     }
                     else
                     {
@@ -1785,7 +1801,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                             '\0'; /* Just initialize the first byte */
                         strcat(ptrConcatLut, oldLut);
                         strcat(ptrConcatLut, ",");
-                        strcat(ptrConcatLut, osCalibPath);
+                        strcat(ptrConcatLut, osLUTFilePath);
                         poDS->SetMetadataItem("SIGMA_NOUGHT_LUT", ptrConcatLut);
                         CPLFree(ptrConcatLut);
                     }
@@ -1797,7 +1813,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                         "Sigma Nought calibrated");
                 }
                 else if (EQUAL(pszLUTType, "Gamma") &&
-                         IsValidXMLFile(osPath, osCalibPath))
+                         IsValidXMLFile(osLUTFilePath))
                 {
                     poDS->papszExtraFiles =
                         CSLAddString(poDS->papszExtraFiles, osLUTFilePath);
@@ -1805,12 +1821,12 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                     CPLString pszBuf(
                         FormatCalibration(szGAMMA, osMDFilename.c_str()));
                     CPLFree(pszGammaLUT);
-                    pszGammaLUT = VSIStrdup(osCalibPath);
+                    pszGammaLUT = VSIStrdup(osLUTFilePath);
 
                     const char *oldLut = poDS->GetMetadataItem("GAMMA_LUT");
                     if (oldLut == nullptr)
                     {
-                        poDS->SetMetadataItem("GAMMA_LUT", osCalibPath);
+                        poDS->SetMetadataItem("GAMMA_LUT", osLUTFilePath);
                     }
                     else
                     {
@@ -1822,7 +1838,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                             '\0'; /* Just initialize the first byte */
                         strcat(ptrConcatLut, oldLut);
                         strcat(ptrConcatLut, ",");
-                        strcat(ptrConcatLut, osCalibPath);
+                        strcat(ptrConcatLut, osLUTFilePath);
                         poDS->SetMetadataItem("GAMMA_LUT", ptrConcatLut);
                         CPLFree(ptrConcatLut);
                     }
@@ -1865,32 +1881,13 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
             pszBasedFilename = imageBandFileList[bandPositionIndex];
         }
 
-        int nLength = static_cast<int>(strlen(pszBasedFilename));
-        char *pszBasename =
-            static_cast<char *>(CPLCalloc(nLength + 1, sizeof(char)));
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Change folder separator if given full path in wrong OS */
-        /* --------------------------------------------------------------------
-         */
-        for (int i = 0; i < nLength; i++)
-        {
-            if (pszBasedFilename[i] == cOppositePathSeparator)
-                pszBasename[i] = cPathSeparator;
-            else
-                pszBasename[i] = pszBasedFilename[i];
-        }
-
         /* --------------------------------------------------------------------
          */
         /*      Form full filename (path of product.xml + basename). */
         /* --------------------------------------------------------------------
          */
         char *pszFullname =
-            CPLStrdup(CPLFormFilename(osPath, pszBasename, nullptr));
-
-        CPLFree(pszBasename);
+            CPLStrdup(CPLFormFilename(osPath, pszBasedFilename, nullptr));
 
         /* --------------------------------------------------------------------
          */

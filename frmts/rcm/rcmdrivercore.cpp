@@ -18,9 +18,8 @@
 int RCMDatasetIdentify(GDALOpenInfo *poOpenInfo)
 {
     /* Check for the case where we're trying to read the calibrated data: */
-    CPLString calibrationFormat = FormatCalibration(nullptr, nullptr);
-
-    if (STARTS_WITH_CI(poOpenInfo->pszFilename, calibrationFormat))
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, szLayerCalibration) &&
+        poOpenInfo->pszFilename[strlen(szLayerCalibration)] == chLayerSeparator)
     {
         return TRUE;
     }
