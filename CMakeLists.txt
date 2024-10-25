@@ -10,6 +10,14 @@ set(GDAL_LIB_TARGET_NAME GDAL)
 # setup cmake modules paths
 include(cmake/modules/init.cmake)
 
+# Define PROJ_DLL as an empty string for static linking
+add_definitions(-DPROJ_DLL=)
+#define below for including EXPAT as static lib
+add_definitions(-DXML_STATIC -DEXPAT_USE_STATIC_LIBS)
+
+# Print the value for debugging (CMake will output this during configuration)
+message(STATUS "PROJ_DLL is defined as an empty string for static linking")
+
 #
 # template files path
 set(GDAL_CMAKE_TEMPLATE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/template)

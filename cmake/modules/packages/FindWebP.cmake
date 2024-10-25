@@ -34,5 +34,8 @@ if(WEBP_FOUND)
                               INTERFACE_INCLUDE_DIRECTORIES "${WEBP_INCLUDE_DIRS}"
                               IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                               IMPORTED_LOCATION "${WEBP_LIBRARIES}")
+    # For multiple libraries, use IMPORTED_LINK_INTERFACE_LIBRARIES
+    set_target_properties(WEBP::WebP PROPERTIES
+                          IMPORTED_LINK_INTERFACE_LIBRARIES "${SHARPYUV_LIBRARY}")								  
     endif()
 endif()

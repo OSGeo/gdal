@@ -55,12 +55,18 @@ find_package_handle_standard_args(MRSID FOUND_VAR MRSID_FOUND
 
 # Copy the results to the output variables.
 if(MRSID_FOUND)
-  set(MRSID_LIBRARIES ${MRSID_LIBRARY})
-  set(MRSID_INCLUDE_DIRS ${MRSID_INCLUDE_DIR})
+  set(MRSID_LIBRARIES ${MRSID_LIBRARY} ${MRSID_LIDAR_LIBRARY})
+  set(MRSID_INCLUDE_DIRS ${MRSID_INCLUDE_DIR} ${MRSID_LIDAR_INCLUDE_DIR})
   if(NOT TARGET MRSID::MRSID)
     add_library(MRSID::MRSID UNKNOWN IMPORTED)
+    # Set the INTERFACE_INCLUDE_DIRECTORIES
     set_target_properties(MRSID::MRSID PROPERTIES
-                          INTERFACE_INCLUDE_DIRECTORIES "${MRSID_INCLUDE_DIR}"
+                          INTERFACE_INCLUDE_DIRECTORIES "${MRSID_INCLUDE_DIRS}")
+    # Set IMPORTED_LOCATION separately for each library
+    set_target_properties(MRSID::MRSID PROPERTIES
                           IMPORTED_LOCATION "${MRSID_LIBRARY}")
+    # For multiple libraries, use IMPORTED_LINK_INTERFACE_LIBRARIES
+    set_target_properties(MRSID::MRSID PROPERTIES
+                          IMPORTED_LINK_INTERFACE_LIBRARIES "${MRSID_LIDAR_LIBRARY}")						  
   endif()
 endif()

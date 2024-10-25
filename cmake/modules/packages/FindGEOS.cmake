@@ -31,19 +31,33 @@ mark_as_advanced(GEOS_INCLUDE_DIR GEOS_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GEOS FOUND_VAR GEOS_FOUND
-                                  REQUIRED_VARS GEOS_LIBRARY GEOS_INCLUDE_DIR
-                                  VERSION_VAR GEOS_VERSION)
+                                  REQUIRED_VARS GEOS_INCLUDE_DIR GEOS_LIBRARY
+                                  GEOS_C_LIBRARY
+                                  VERSION_VAR GEOS_VERSION)								  
 
 if(GEOS_FOUND)
-    set(GEOS_LIBRARIES ${GEOS_LIBRARY})
+    set(GEOS_LIBRARIES ${GEOS_C_LIBRARY} ${GEOS_LIBRARY})
     set(GEOS_INCLUDE_DIRS ${GEOS_INCLUDE_DIR})
-    set(GEOS_TARGET GEOS::GEOS)
+    set(GEOS_TARGET GEOS::GEOS)	
 
-    if(NOT TARGET ${GEOS_TARGET})
-        add_library(${GEOS_TARGET} UNKNOWN IMPORTED)
-        set_target_properties(${GEOS_TARGET} PROPERTIES
-                              INTERFACE_INCLUDE_DIRECTORIES "${GEOS_INCLUDE_DIR}"
-                              IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                              IMPORTED_LOCATION "${GEOS_LIBRARY}")
+	if(NOT TARGET ${GEOS_TARGET})
+			add_library(${GEOS_TARGET} UNKNOWN IMPORTED)
+			set_target_properties(${GEOS_TARGET} PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES "${GEOS_INCLUDE_DIR}"
+				IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+				
+				# Set locations for Release, Debug, RelWithDebInfo, and MinSizeRel
+				IMPORTED_LOCATION "${GEOS_LIBRARY}" 
+				IMPORTED_LOCATION_RELEASE "${GEOS_LIBRARY}" 
+				IMPORTED_LOCATION_DEBUG "${GEOS_LIBRARY}"
+				IMPORTED_LOCATION_RELWITHDEBINFO "${GEOS_LIBRARY}"
+				IMPORTED_LOCATION_MINSIZEREL "${GEOS_LIBRARY}"
+			
+				# Set the link libraries for all configurations
+				IMPORTED_LINK_INTERFACE_LIBRARIES "${GEOS_LIBRARIES}"	# Link for Linux Build
+				IMPORTED_LINK_INTERFACE_LIBRARIES_RELEASE "${GEOS_LIBRARIES}"	# Link for Release
+				IMPORTED_LINK_INTERFACE_LIBRARIES_DEBUG "${GEOS_LIBRARIES}"    # Link for Debug
+				IMPORTED_LINK_INTERFACE_LIBRARIES_RELWITHDEBINFO "${GEOS_LIBRARIES}"  
+				IMPORTED_LINK_INTERFACE_LIBRARIES_MINSIZEREL "${GEOS_LIBRARIES}")  
     endif()
 endif()
