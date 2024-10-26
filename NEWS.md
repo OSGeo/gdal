@@ -1,7 +1,5 @@
 # GDAL/OGR 3.10.0 Release Notes
 
-FIXME: Preliminary notes up to commit d8112b785c1a2bedfc11849779bd148d55b10915
-
 GDAL/OGR 3.10.0 is a feature release.
 Those notes include changes since GDAL 3.9.0, but not already included in a
 GDAL 3.9.x bugfix release.
@@ -132,6 +130,10 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.10/MIGRAT
   the first level (#10167)
 * GDALWarpResolveWorkingDataType(): ignore srcNoDataValue if it doesn't fit into
   the data type of the source band
+* Warper: fix shifted/aliased result with Lanczos resampling when XSCALE < 1 or
+  YSCALE < 1 (#11042)
+* Warper: optimize speed of Lanczos resampling in Byte case without any
+  masking/alpha
 * Warper: make sure to check that angular unit is degree for heuristics related
   to geographic CRS (#10975)
 
@@ -139,6 +141,7 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.10/MIGRAT
 
 * gdalinfo: add -nonodata and -nomask options
 * gdalinfo/ogrinfo: make --formats -json work (#10878)
+* gdalbuildvrt: add a -co switch (#11062)
 * gdal_translate: use GDALIsValueExactAs<> to check range of [u]int64 nodata
 * gdal_viewshed: multi-threaded optimization (#9991)
 * gdal_viewshed: support observers to left, right, above and below of input
@@ -167,6 +170,10 @@ Multi-driver changes:
 
 Derived driver:
  * make it optional
+
+DIMAP driver:
+ * for PNEO products, use the new color interpretations for the NIR, RedEdge
+   and DeepBlue/Coastal bands
 
 DTED driver:
  * added metadata items Security Control and Security Handling (#10173)
@@ -240,10 +247,19 @@ JP2KAK driver:
  * add Cycc=yes/no creation option to set YCbCr/YUV color space and set it to
    YES by default (#10623)
 
+JP2Lura driver:
+ * fix Identify() method
+ * planned for removal in GDAL 3.11
+
 JPEG driver:
  * make sure not to expose DNG_UniqueCameraModel/DNG_CameraSerialNumber if the
    corresponding EXIF tags are set at the same value
  * add support for reading Pix4DMapper CRS from XMP
+
+JPEGXL driver:
+ * writer: propagate DISTANCE/QUALITY setting to extra channel (#11095)
+ * writer: allow a minimum DISTANCE of 0.01, max of 25 and revise QUALITY to
+   DISTANCE formula (#11095)
 
 KMLSuperOverlay driver:
  * recognize <GroundOverlay> with <gx:LatLonQuad> forming a rectangle (#10629)
@@ -356,9 +372,12 @@ XYZ driver:
  * add COLUMN_ORDER open option
 
 Zarr driver:
+ * Zarr V2 creation: fix bug when creating dataset with partial blocks and need
+   to re-read them in the writing process when compression is involved (#11016)
  * Allow int64 attributes (#10065)
- * SerializeNumericNoData(): use CPLJSonObject::Add(uint64_t) to avoid potential
-   undefined behavior casts
+ * SerializeNumericNoData(): use CPLJSonObject::Add(uint64_t) to avoid
+   potential undefined behavior casts
+ * Create(): remove created files / directories if an error occurs (#11023)
 
 ## OGR 3.10.0
 
@@ -381,6 +400,8 @@ Zarr driver:
 * SQLite/GPKG: Add ST_Length(geom, use_ellipsoid)
 * GetNextArrowArray() generic implementation: avoid calling
   VSI_MALLOC_ALIGNED_AUTO_VERBOSE() with a zero size
+* Arrow reading: generic code path (as used by GeoJSON): fix mis-handling of
+  timezones
 * OGRFeature: optimizations while accessing field count
 * OGRFeature: SetXXX() methods: more informative warning messages reporting
   field name and value for out-of-range values
@@ -433,6 +454,7 @@ Zarr driver:
   transformation
 * ogr2ogr: optim: call GetArrowStream() only once on source layer when using
   Arrow interface
+* ogr2ogr: fix -explodecollections on empty geometries (#11067)
 * validate_gpkg.py: make it robust to CURRENT_TIMESTAMP instead of 'now'
 
 ### Vector drivers
@@ -473,6 +495,10 @@ ESRIJSON driver:
  * make it able to parse response of some CadastralSpecialServices APIs (#9996)
  * use 'alias' field member to set OGR alternative field name
 
+FileGDB/OpenFileGDB drivers:
+ * update (and unify) list of reserved keywords that can't be used for column
+   and table names (#11094)
+
 JSONFG driver:
  * avoid Polyhedron/Prism geometry instantiation during initial scan
 
@@ -488,6 +514,13 @@ GML driver:
  * XSD parser: fix to resolve schema imports using open option USE_SCHEMA_IMPORT
    (#10500)
  * make it buildable as plugin if NAS driver is explicitly disabled
+ * add a GML_DOWNLOAD_SCHEMA config option matching the DOWNLOAD_SCHEMA open
+   option (and deprecate undocumented GML_DOWNLOAD_WFS_SCHEMA)
+
+GPKG driver:
+ * prevent from creating field with same name, or with the name of the geometry
+   field
+ * CreateField(): check we are not reaching the max number of fields
 
 HANA driver:
  * Add support for REAL_VECTOR type (#10499)
@@ -520,6 +553,10 @@ OAPIF driver:
  * make it buildable as plugin (independently of WFS driver)
  * add a DATETIME open option (#10909)
 
+OCI driver:
+ * OCI: use TIMESTAMP(3) and tweak NLS_TIME[STAMP][_TZ]_FORMAT to accept
+   milliseconds (#11057)
+
 ODBC driver:
  * add GDAL_DMD_LONGNAME
 
@@ -540,6 +577,10 @@ Parquet driver:
  * dataset mode: implement SetIgnoredFields() and SetAttributeFilter()
  * dataset mode: detect bbox geometry column when opening current Overture Maps
  * dataset mode: make sure all files are closed before closing the GDALDataset
+
+PDF driver:
+ * reader: fixes to handle recursive resources, /OC property attached to a
+   XObjet and an empty UTF-16 layer name (#11034)
 
 PostgreSQL driver:
  * OGR_PG_SKIP_CONFLICTS: optionally insert with ON CONFLICT DO NOTHING (#10156)
