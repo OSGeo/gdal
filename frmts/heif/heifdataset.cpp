@@ -671,8 +671,11 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (int x = 0; x < nBlockXSize; x++)
             {
-                size_t srcIndex = y * nStride + x * nBands + nBand - 1;
-                size_t outIndex = static_cast<size_t>(y) * nBlockXSize + x;
+                const size_t srcIndex = static_cast<size_t>(y) * nStride +
+                                        static_cast<size_t>(x) * nBands +
+                                        nBand - 1;
+                const size_t outIndex =
+                    static_cast<size_t>(y) * nBlockXSize + x;
                 (static_cast<GByte *>(pImage))[outIndex] = pSrcData[srcIndex];
             }
         }
@@ -683,9 +686,11 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (int x = 0; x < nBlockXSize; x++)
             {
-                size_t srcIndex = static_cast<size_t>(y) * (nStride / 2) +
-                                  x * nBands + nBand - 1;
-                size_t outIndex = static_cast<size_t>(y) * nBlockXSize + x;
+                const size_t srcIndex = static_cast<size_t>(y) * (nStride / 2) +
+                                        static_cast<size_t>(x) * nBands +
+                                        nBand - 1;
+                const size_t outIndex =
+                    static_cast<size_t>(y) * nBlockXSize + x;
                 (static_cast<GUInt16 *>(pImage))[outIndex] =
                     (reinterpret_cast<const GUInt16 *>(pSrcData))[srcIndex];
             }
@@ -751,19 +756,19 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
     int nStride = 0;
     const uint8_t *pSrcData = heif_image_get_plane_readonly(
         poGDS->m_hImage, heif_channel_interleaved, &nStride);
-    pSrcData += nBlockYOff * nStride;
+    pSrcData += static_cast<size_t>(nBlockYOff) * nStride;
     if (eDataType == GDT_Byte)
     {
         for (int i = 0; i < nBlockXSize; i++)
             (static_cast<GByte *>(pImage))[i] =
-                pSrcData[nBand - 1 + i * nBands];
+                pSrcData[nBand - 1 + static_cast<size_t>(i) * nBands];
     }
     else
     {
         for (int i = 0; i < nBlockXSize; i++)
             (static_cast<GUInt16 *>(pImage))[i] =
                 (reinterpret_cast<const GUInt16 *>(
-                    pSrcData))[nBand - 1 + i * nBands];
+                    pSrcData))[nBand - 1 + static_cast<size_t>(i) * nBands];
     }
 
     return CE_None;
