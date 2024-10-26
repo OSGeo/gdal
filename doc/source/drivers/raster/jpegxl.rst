@@ -108,7 +108,7 @@ The following creation options are available:
       The higher, the smaller file and slower compression time.
 
 -  .. co:: DISTANCE
-      :choices: 0.1-15
+      :choices: 0.01-25
       :default: 1.0
 
       Distance level for lossy JPEG-XL compression.
@@ -120,7 +120,7 @@ The following creation options are available:
       The recommended range is [0.5,3].
 
 -  .. co:: ALPHA_DISTANCE
-      :choices: -1, 0, 0.1-15
+      :choices: -1, 0, 0.01-25
       :default: -1.0
       :since: 3.7
 
