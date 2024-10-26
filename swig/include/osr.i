@@ -1556,6 +1556,15 @@ const char* OSRCRSInfo_projection_method_get( OSRCRSInfo *crsInfo ) {
 
 #endif
 
+%apply (char **CSL) {(char **)};
+%inline %{
+char** GetAuthorityListFromDatabase()
+{
+    return OSRGetAuthorityListFromDatabase();
+}
+%}
+%clear (char **);
+
 #ifdef SWIGPYTHON
 %inline %{
 void GetCRSInfoListFromDatabase( const char *authName,
