@@ -847,3 +847,17 @@ def test_jpegxl_identify_raw_codestream():
         f"{gdalmanage_path} identify data/jpegxl/test.jxl.bin"
     )
     assert "JPEGXL" in out
+
+
+###############################################################################
+def test_jpegxl_read_float16():
+
+    # Image produced with:
+    # gdal_translate autotest/gcore/data/rgbsmall.tif float.exr -co PIXEL_TYPE=FLOAT -co TILED=NO -co COMPRESS=PIZ
+    # cjxl -d 0 float.exr float16.jxl
+    ds = gdal.Open("data/jpegxl/float16.jxl")
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+        21212,
+        21053,
+        21349,
+    ]
