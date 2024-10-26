@@ -1037,6 +1037,21 @@ static int JXLPostEncode(TIFF *tif)
                     return 0;
                 }
             }
+            else if (!(sp->lossless))
+            {
+                // By default libjxl applies lossless encoding for extra channels
+                if (JXL_ENC_SUCCESS != JxlEncoderSetExtraChannelDistance(
+                                           opts, iExtraChannel, sp->distance))
+                {
+                    TIFFErrorExtR(
+                        tif, module,
+                        "JxlEncoderSetExtraChannelDistance(%d) failed",
+                        iChannel);
+                    JxlEncoderDestroy(enc);
+                    _TIFFfreeExt(tif, main_buffer);
+                    return 0;
+                }
+            }
 #endif
         }
     }
