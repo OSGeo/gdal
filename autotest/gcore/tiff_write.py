@@ -9750,6 +9750,41 @@ def test_tiff_write_jpegxl_alpha_distance_zero():
 
 
 ###############################################################################
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL_ALPHA_DISTANCE")
+def test_tiff_write_jpegxl_five_bands_lossy(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "test_tiff_write_jpegxl_five_bands_lossy.tif")
+    gdal.Translate(
+        outfilename,
+        "data/byte.tif",
+        options="-co COMPRESS=JXL -co JXL_LOSSLESS=NO -co JXL_DISTANCE=3 -b 1 -b 1 -b 1 -b 1 -b 1",
+    )
+    ds = gdal.Open(outfilename)
+    assert ds.GetRasterBand(3).Checksum() not in (0, 4672)
+    assert ds.GetRasterBand(4).Checksum() not in (0, 4672)
+    assert ds.GetRasterBand(5).Checksum() not in (0, 4672)
+
+
+###############################################################################
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL_ALPHA_DISTANCE")
+def test_tiff_write_jpegxl_five_bands_lossless(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "test_tiff_write_jpegxl_five_bands_lossy.tif")
+    gdal.Translate(
+        outfilename,
+        "data/byte.tif",
+        options="-co COMPRESS=JXL -co JXL_LOSSLESS=YES -b 1 -b 1 -b 1 -b 1 -b 1",
+    )
+    ds = gdal.Open(outfilename)
+    for i in range(5):
+        assert ds.GetRasterBand(i + 1).Checksum() == 4672
+
+
+###############################################################################
 # Test creating overviews with NaN nodata
 
 
