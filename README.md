@@ -10,7 +10,7 @@ GDAL - Geospatial Data Abstraction Library
 [![Build Status](https://github.com/OSGeo/gdal/actions/workflows/conda.yml/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Conda%22+branch%3Amaster)
 [![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal)
 [![Documentation build Status](https://github.com/OSGeo/gdal/workflows/Docs/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Docs%22+branch%3Amaster)
-[![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/gdal.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:gdal)
+[![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/gdal.svg)](https://issues.oss-fuzz.com/issues?q=status:open%20gdal)
 [![Coverage Status](https://coveralls.io/repos/github/OSGeo/gdal/badge.svg?branch=master)](https://coveralls.io/github/OSGeo/gdal?branch=master)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8250/badge)](https://www.bestpractices.dev/projects/8250)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/OSGeo/gdal/badge)](https://securityscorecards.dev/viewer/?uri=github.com/OSGeo/gdal)
