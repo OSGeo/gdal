@@ -76,10 +76,9 @@ def gpkg_ds(gpkg_dsn):
     return ogr.GetDriverByName("GPKG").CreateDataSource(gpkg_dsn)
 
 
-@pytest.fixture()
-def tpoly(gpkg_ds, poly_feat):
+def create_test_layer(ds, src_features, layer_name):
 
-    lyr = gpkg_ds.CreateLayer("tpoly")
+    lyr = ds.CreateLayer(layer_name)
 
     ogrtest.quick_create_layer_def(
         lyr,
@@ -94,9 +93,19 @@ def tpoly(gpkg_ds, poly_feat):
 
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
-    for feat in poly_feat:
+    for feat in src_features:
         dst_feat.SetFrom(feat)
         lyr.CreateFeature(dst_feat)
+
+
+@pytest.fixture()
+def tpoly(gpkg_ds, poly_feat):
+    create_test_layer(gpkg_ds, poly_feat, "tpoly")
+
+
+@pytest.fixture()
+def tpoly_dbl_quote(gpkg_ds, poly_feat):
+    create_test_layer(gpkg_ds, poly_feat, 'tpoly"dbl_quote')
 
 
 @pytest.fixture()
@@ -398,6 +407,177 @@ def test_ogr_gpkg_5(gpkg_ds):
     assert gpkg_ds.DeleteLayer(0) == 0, "got error code from DeleteLayer(0)"
 
     assert gpkg_ds.GetLayerCount() == 0, "unexpected number of layers (not 0)"
+
+
+###############################################################################
+# Truncate a spatial layer
+
+
+@pytest.mark.usefixtures("tpoly_dbl_quote")
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_truncate_spatial_layer(gpkg_ds, poly_feat):
+
+    gpkg_ds.ExecuteSQL('DELETE FROM "tpoly""dbl_quote"')
+
+    lyr = gpkg_ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 0
+
+    # Re-insert records
+    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
+    for feat in poly_feat:
+        dst_feat.SetFrom(feat)
+        lyr.CreateFeature(dst_feat)
+
+    # Check that spatial index works fine
+    for feat in poly_feat:
+        minx, maxx, miny, maxy = feat.GetGeometryRef().GetEnvelope()
+        lyr.SetSpatialFilterRect(minx, miny, maxx, maxy)
+        assert lyr.GetFeatureCount() >= 1
+
+
+###############################################################################
+# Truncate a non-spatial layer
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_truncate_non_spatial_layer(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("foo"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "bar"
+        lyr.CreateFeature(f)
+
+    # Test that the optimization doesn't trigger when there's a WHERE clause
+    with ogr.Open(filename, update=1) as ds:
+        ds.ExecuteSQL("DELETE FROM test WHERE 0")
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+
+    with ogr.Open(filename, update=1) as ds:
+        ds.ExecuteSQL("DELETE FROM test")
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 0
+
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Truncate a layer with a custom trigger
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_truncate_with_custom_trigger(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("foo"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "bar"
+        lyr.CreateFeature(f)
+        ds.ExecuteSQL(
+            "CREATE TABLE counter(table_name TEXT UNIQUE NOT NULL, counter INT)"
+        )
+        ds.ExecuteSQL("INSERT INTO counter VALUES ('test', 1)")
+        ds.ExecuteSQL(
+            "CREATE TRIGGER my_trigger AFTER DELETE ON test BEGIN UPDATE counter SET counter = counter - 1 WHERE table_name = 'test'; END"
+        )
+
+    with ogr.Open(filename, update=1) as ds:
+        with ds.ExecuteSQL(
+            "SELECT counter FROM counter WHERE table_name = 'test'"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f["counter"] == 1
+        ds.ExecuteSQL('DELETE FROM "test"')
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 0
+        with ds.ExecuteSQL(
+            "SELECT counter FROM counter WHERE table_name = 'test'"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f["counter"] == 0
+
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Truncate a layer with a custom trigger that causes an error
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_truncate_with_custom_trigger_error(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("foo"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "bar"
+        lyr.CreateFeature(f)
+        ds.ExecuteSQL(
+            "CREATE TABLE counter(table_name TEXT UNIQUE NOT NULL, counter INT)"
+        )
+        ds.ExecuteSQL("INSERT INTO counter VALUES ('test', 1)")
+        ds.ExecuteSQL(
+            "CREATE TRIGGER my_trigger AFTER DELETE ON test BEGIN SELECT RAISE(ABORT, 'error from trigger'); END"
+        )
+
+    with ogr.Open(filename, update=1) as ds:
+        with ds.ExecuteSQL(
+            "SELECT counter FROM counter WHERE table_name = 'test'"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f["counter"] == 1
+        with pytest.raises(Exception, match="error from trigger"):
+            ds.ExecuteSQL('DELETE FROM "test"')
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+        with ds.ExecuteSQL(
+            "SELECT counter FROM counter WHERE table_name = 'test'"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f["counter"] == 1
+
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+# Truncate a layer in read-only mode (error)
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_truncate_read_only_mode(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(filename) as ds:
+        ds.CreateLayer("test")
+
+    with ogr.Open(filename) as ds:
+        with pytest.raises(Exception, match="read-only"):
+            ds.ExecuteSQL('DELETE FROM "test"')
+
+
+###############################################################################
+# Truncate a layer that doe not exist
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_truncate_non_existing_table(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(filename) as ds:
+        with pytest.raises(Exception, match="no such table"):
+            ds.ExecuteSQL('DELETE FROM "i_do_not_exist"')
 
 
 ###############################################################################
