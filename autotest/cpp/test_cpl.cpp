@@ -1777,6 +1777,16 @@ TEST_F(test_cpl, CPLParseMemorySize)
     EXPECT_GT(nValue, 100 * 1024 * 1024);
     EXPECT_TRUE(bUnitSpecified);
 
+    result = CPLParseMemorySize("0", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_None);
+    EXPECT_EQ(nValue, 0);
+    EXPECT_FALSE(bUnitSpecified);
+
+    result = CPLParseMemorySize("0MB", &nValue, &bUnitSpecified);
+    EXPECT_EQ(result, CE_None);
+    EXPECT_EQ(nValue, 0);
+    EXPECT_TRUE(bUnitSpecified);
+
     result = CPLParseMemorySize("  802  ", &nValue, &bUnitSpecified);
     EXPECT_EQ(result, CE_None);
     EXPECT_EQ(nValue, 802);
