@@ -503,7 +503,7 @@ char** wrapper_GetConfigOptions() {
 
     papszOpts = CSLMerge(papszOpts, papszTLOpts);
 
-    CPLFree(papszTLOpts);
+    CSLDestroy(papszTLOpts);
 
     return papszOpts;
 };
