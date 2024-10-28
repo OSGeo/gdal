@@ -88,3 +88,20 @@ def test_gdalenhance_output_image(gdalenhance_path, tmp_path):
 
         # check that -co was honored
         assert dst.GetMetadata("IMAGE_STRUCTURE")["COMPRESSION"] == "DEFLATE"
+
+
+###############################################################################
+# Usage printed with invalid arguments
+
+
+def test_gdalenhance_invalid_usage(gdalenhance_path, tmp_path):
+
+    infile = "../gcore/data/rgbsmall.tif"
+    outfile = tmp_path / "out.tif"
+
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdalenhance_path} {infile} {outfile}"
+    )
+
+    assert "ret code = 1" in err
+    assert "Usage" in out
