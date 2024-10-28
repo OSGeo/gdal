@@ -58,6 +58,8 @@ This tutorial will cover the .vrt file format (suitable for users editing
 .vrt files), and how .vrt files may be created and manipulated programmatically
 for developers.
 
+.. _raster_vrt_creation_options:
+
 Creation options
 ----------------
 

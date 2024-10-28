@@ -21,4 +21,10 @@
 #define HAS_CUSTOM_FILE_READER
 #endif
 
+#if LIBHEIF_HAVE_VERSION(1, 1, 0)
+#define HAS_CUSTOM_FILE_WRITER
+#endif
+
+#include <iostream>
+
 #endif

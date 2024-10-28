@@ -1069,12 +1069,29 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
                             papszTypeNames =
                                 CSLTokenizeString2(osTypeName, ",", 0);
 
+                            // Old non-documented way
+                            const char *pszGML_DOWNLOAD_WFS_SCHEMA =
+                                CPLGetConfigOption("GML_DOWNLOAD_WFS_SCHEMA",
+                                                   nullptr);
+                            if (pszGML_DOWNLOAD_WFS_SCHEMA)
+                            {
+                                CPLError(
+                                    CE_Warning, CPLE_AppDefined,
+                                    "Configuration option "
+                                    "GML_DOWNLOAD_WFS_SCHEMA is deprecated. "
+                                    "Please use GML_DOWNLOAD_SCHEMA instead of "
+                                    "the DOWNLOAD_SCHEMA open option");
+                            }
+                            else
+                            {
+                                pszGML_DOWNLOAD_WFS_SCHEMA = "YES";
+                            }
                             if (!bHasFoundXSD && CPLHTTPEnabled() &&
-                                CPLFetchBool(
-                                    poOpenInfo->papszOpenOptions,
-                                    "DOWNLOAD_SCHEMA",
-                                    CPLTestBool(CPLGetConfigOption(
-                                        "GML_DOWNLOAD_WFS_SCHEMA", "YES"))))
+                                CPLFetchBool(poOpenInfo->papszOpenOptions,
+                                             "DOWNLOAD_SCHEMA",
+                                             CPLTestBool(CPLGetConfigOption(
+                                                 "GML_DOWNLOAD_SCHEMA",
+                                                 pszGML_DOWNLOAD_WFS_SCHEMA))))
                             {
                                 CPLHTTPResult *psResult =
                                     CPLHTTPFetch(pszEscapedURL, nullptr);

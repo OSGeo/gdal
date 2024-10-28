@@ -1400,22 +1400,30 @@ int DIMAPDataset::ReadImageInformation2()
                 }
                 case 4:
                 {
+                    poBand->SetColorInterpretation(GCI_NIRBand);
                     poBand->SetDescription("NIR");
                     break;
                 }
                 case 5:
                 {
+                    poBand->SetColorInterpretation(GCI_RedEdgeBand);
                     poBand->SetDescription("Red Edge");
                     break;
                 }
                 case 6:
                 {
+                    poBand->SetColorInterpretation(GCI_CoastalBand);
                     poBand->SetDescription("Deep Blue");
                     break;
                 }
                 default:
                     break;
             }
+        }
+        else if (l_nBands == 1 && osSpectralProcessing == "PAN")
+        {
+            poBand->SetColorInterpretation(GCI_PanBand);
+            poBand->SetDescription("Panchromatic");
         }
         SetBand(iBand, poBand);
     }

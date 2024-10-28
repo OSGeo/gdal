@@ -82,7 +82,7 @@ ECWRasterBand::ECWRasterBand(ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
         {
             nBlockXSize = static_cast<int>(nTileWidth);
         }
-        nBlockXSize = std::min(nBlockXSize, nRasterXSize);
+        nBlockXSize = MIN(nBlockXSize, nRasterXSize);
 
         UINT32 nTileHeight = 0;
         poDSIn->poFileView->GetParameter(
@@ -91,7 +91,7 @@ ECWRasterBand::ECWRasterBand(ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
         {
             nBlockYSize = static_cast<int>(nTileHeight);
         }
-        nBlockYSize = std::min(nBlockYSize, nRasterYSize);
+        nBlockYSize = MIN(nBlockYSize, nRasterYSize);
     }
 #endif
 

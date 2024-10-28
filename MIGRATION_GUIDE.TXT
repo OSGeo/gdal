@@ -223,7 +223,7 @@ MIGRATION GUIDE FROM GDAL 2.4 to GDAL 3.0
  - Unix build: Arguments of --with-pg changed to yes/no only.
 - Substantial changes, sometimes backward incompatible, in coordinate reference
   system and coordinate transformations have been introduced per
-  https://trac.osgeo.org/gdal/wiki/rfc73_proj6_wkt2_srsbarn
+  https://gdal.org/en/latest/development/rfc/rfc73_proj6_wkt2_srsbarn.html
     * OSRImportFromEPSG() takes into account official axis order.
       Traditional GIS-friendly axis order can be restored with
       OGRSpatialReference::SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -295,7 +295,7 @@ MIGRATION GUIDE FROM GDAL 2.2 to GDAL 2.3
 
 1) RFC 70: Guessing output format from output file name extension for utilities
 
-Link: https://trac.osgeo.org/gdal/wiki/rfc70_output_format_guess
+Link: https://gdal.org/en/latest/development/rfc/rfc70_output_format_guess.html
 
 Before GDAL 2.3, if not specifying the output format to utilities, GeoTIFF or
 Shapefile were assumed for most utilities. Now, the output format will be
@@ -305,7 +305,7 @@ not specified (but warnings were already emitted in such situations).
 
 2) RFC 68: C++11 Compilation requirement
 
-Link: https://trac.osgeo.org/gdal/wiki/rfc68_cplusplus11
+Link: https://gdal.org/en/latest/development/rfc/rfc68_cplusplus11.html
 
 GDAL now requires a C++11 compatible compiler. External code using GDAL C++ API
 will also need to enable at least C++11 compilation mode, if the compiler
@@ -349,7 +349,7 @@ MIGRATION GUIDE FROM GDAL 2.1 to GDAL 2.2
 
 A) RFC 64: Triangle, Polyhedral surface and TIN
 
-Link: https://trac.osgeo.org/gdal/wiki/rfc64_triangle_polyhedralsurface_tin
+Link: https://gdal.org/en/latest/development/rfc/rfc64_triangle_polyhedralsurface_tin.html
 
 Vector drivers can now return geometries of type wkbPolyhedralSurface, wkbTIN
 and wkbTriangle; and their Z, M and ZM variants (as well as for the type of
@@ -358,7 +358,7 @@ writing geometries, must be ready to deal with them.
 
 B) RFC 67: Null values in OGR
 
-Link: https://trac.osgeo.org/gdal/wiki/rfc67_nullfieldvalues
+Link: https://gdal.org/en/latest/development/rfc/rfc67_nullfieldvalues.html
 
 Previously, the "unset" state of a field was used both for a unset state
 (ie no information for the field of the feature) or the NULL state of the
@@ -383,7 +383,7 @@ MIGRATION GUIDE FROM GDAL 2.0 to GDAL 2.1
 
 A) RFC 61: Support for measured geometries
 
-Link: https://trac.osgeo.org/gdal/wiki/rfc61_support_for_measured_geometries
+Link: https://gdal.org/en/latest/development/rfc/rfc61_support_for_measured_geometries.html
 
 The OGRwkbGeometryType enumeration has been extended with new values for the
 M and ZM variants of the geometry types. Client code may have to be upgraded
@@ -405,7 +405,7 @@ Changes to the Perl bindings API are listed in swig/perl/Changes-in-the-API-in-2
 
 A) RFC 46: Unification of GDAL and OGR driver models
 
-Link: http://trac.osgeo.org/gdal/wiki/rfc46_gdal_ogr_unification
+Link: https://gdal.org/en/latest/development/rfc/rfc46_gdal_ogr_unification.html
 
 C++ API:
 
@@ -449,7 +449,7 @@ Behavior changes :
 
 B) RFC 49: Curve geometries
 
-Link: http://trac.osgeo.org/gdal/wiki/rfc49_curve_geometries
+Link: https://gdal.org/en/latest/development/rfc/rfc49_curve_geometries.html
 
 C/C++ API :
 
@@ -470,7 +470,7 @@ Out-of-tree drivers :
 
 C) RFC 51: RasterIO() improvements : resampling and progress callback
 
-Link: http://trac.osgeo.org/gdal/wiki/rfc51_rasterio_resampling_progress
+Link: https://gdal.org/en/latest/development/rfc/rfc51_rasterio_resampling_progress.html
 
 Out-of-tree drivers :
 
@@ -481,7 +481,7 @@ Out-of-tree drivers :
 
 D) RFC 31: OGR 64bit Integer Fields and FIDs
 
-Link:http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+Link: https://gdal.org/en/latest/development/rfc/rfc31_ogr_64.html
 
 C++ API:
   * OGRLayer::GetFeature(), OGRLayer::DeleteFeature(), OGRLayer::SetNextByIndex() take a GIntBig instead of a long
@@ -502,7 +502,7 @@ Out-of-tree drivers :
 
 E) RFC 52: Strict OGR SQL quoting
 
-Link: http://trac.osgeo.org/gdal/wiki/rfc52_strict_sql_quoting
+Link: https://gdal.org/en/latest/development/rfc/rfc52_strict_sql_quoting.html
 
 No API changes
 
@@ -517,7 +517,7 @@ Behavior changes:
 
 F) RFC 53: OGR not-null constraints and default values
 
-Link: http://trac.osgeo.org/gdal/wiki/rfc53_ogr_notnull_default
+Link: https://gdal.org/en/latest/development/rfc/rfc53_ogr_notnull_default.html
 
 API changes:
     * OGRFieldDefn::SetDefault() now takes a const char* as argument.
@@ -526,7 +526,7 @@ API changes:
 
 G) RFC 54: Dataset transactions
 
-Link: http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions
+Link: https://gdal.org/en/latest/development/rfc/rfc54_dataset_transactions.html
 
 Only API additions.
 
@@ -542,7 +542,7 @@ Behavior changes:
 
 H) RFC 55: Refined SetFeature() and DeleteFeature() semantics
 
-Link: http://trac.osgeo.org/gdal/wiki/rfc55_refined_setfeature_deletefeature_semantics
+Link: https://gdal.org/en/latest/development/rfc/rfc55_refined_setfeature_deletefeature_semantics.html
 
 Behavior changes:
     * Drivers will now return OGRERR_NON_EXISTING_FEATURE when calling SetFeature()
@@ -550,7 +550,7 @@ Behavior changes:
 
 I) RFC 56:
 
-Link: https://trac.osgeo.org/gdal/wiki/rfc56_millisecond_precision
+Link: https://gdal.org/en/latest/development/rfc/rfc56_millisecond_precision.html
 
 API/ABI changes:
 
@@ -593,7 +593,7 @@ Behavior changes:
 
 J) RFC 57: 64-bit bucket count for histograms
 
-Link: https://trac.osgeo.org/gdal/wiki/rfc57_histogram_64bit_count
+Link: https://gdal.org/en/latest/development/rfc/rfc57_histogram_64bit_count.html
 
 C++ API:
   * GDALRasterBand::GetHistogram() and GDALRasterBand::SetDefaultHistogram() take a GUIntBig* instead of a int* for bucket counts.
@@ -616,7 +616,7 @@ This file documents backwards incompatible changes.
 C++ API:
 
   * GDALRasterAttributeTable is now an abstract class.
-    See http://trac.osgeo.org/gdal/wiki/rfc40_enhanced_rat_support
+    See https://gdal.org/en/latest/development/rfc/rfc40_enhanced_rat_support.html
     The functionality of GDAL 1.X GDALRasterAttributeTable is now in
     GDALDefaultRasterAttributeTable.
 
@@ -635,4 +635,4 @@ Changes that should likely not impact anybody :
 
    * OGRGeometryFactory::getGEOSGeometryFactory() has been removed.
      This method returned NULL since 2006
-     ( http://trac.osgeo.org/gdal/changeset/9899/trunk/ogr/ogrgeometryfactory.cpp )
+     ( https://github.com/OSGeo/gdal/commit/42d5fd976795b9c85aac2c4ffac12025e21697c1#diff-9b267dec2a69d6f56247a5525195973890780ce50ae8c9c809bf4818754f4e46L885 )

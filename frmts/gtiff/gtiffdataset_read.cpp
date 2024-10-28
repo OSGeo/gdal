@@ -3928,6 +3928,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
                          "with the IGNORE_COG_LAYOUT_BREAK open option set "
                          "to YES.",
                          pszFilename);
+                XTIFFClose(l_hTIFF);
                 delete poDS;
                 return nullptr;
             }

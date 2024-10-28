@@ -29,29 +29,29 @@ Prerequisites:
 
 Process :
 
-1)    "make completion" to regenerate scripts/gdal-bash-completion.sh
-      if new command line switches have been added. scripts/completionFinder.py
-      must also be edited before if new utilities/scripts are added/removed.
+1) "make completion" to regenerate scripts/gdal-bash-completion.sh
+   if new command line switches have been added. scripts/completionFinder.py
+   must also be edited before if new utilities/scripts are added/removed.
 
-2.1) Update the release date, and number information in gcore/gdal_version.h.in
-     (*NOT* gdal_version.h which is a generated file)
-     Note: the format of GDAL_RELEASE_DATE should be YYYYMMDD.
+2) Update the release date, and number information in gcore/gdal_version.h.in
+   (*NOT* gdal_version.h which is a generated file)
+   Note: the format of GDAL_RELEASE_DATE should be YYYYMMDD.
 
-2.2) Update two instances of year in CITATION file to the current year.
+3) Update two instances of year in CITATION file to the current year.
 
-2.3) Update "version" and "date-released" in CITATION.cff (Note: the DOI does
-     *not* need to be updated as it is a generic one)
+4) Update "version" and "date-released" in CITATION.cff (Note: the DOI does
+   *not* need to be updated as it is a generic one)
 
-3) Update the VERSION file (if not already done)
+5) Update the VERSION file (if not already done)
 
-3.1) Update the version information in the following files:
-     - ./swig/python/gdal-utils/osgeo_utils/__init__.py (gdal-utils python package)
-     - ./swig/python/README.rst (libgdal)
+6) Update the version information in the following files:
+    - ./swig/python/gdal-utils/osgeo_utils/__init__.py (gdal-utils python package)
+    - ./swig/python/README.rst (libgdal)
 
-4) Update the GDAL_SOVERSION number at top of gdal.cmake according to the
+7) Update the GDAL_SOVERSION number at top of gdal.cmake according to the
    directions given in the comment preceding it.
 
-5) Prepare release overview in the NEWS.md file. For example, to get all changes
+8) Prepare release overview in the NEWS.md file. For example, to get all changes
    from v3.4.0 to current HEAD
      git log --reverse -v v3.4.0..HEAD . ":(exclude)autotest" ":(exclude)doc" ":(exclude).github"
 
@@ -62,23 +62,28 @@ Process :
 
   - for bugfixes releases, forward port additions of NEWS.md to master
 
-6) If this is a feature release (e.g 3.1), prepare a branch.
+9) Update doc/source/about_no_title.rst, doc/source/download.rst and doc/source/download_past.rst
+   to advertise the new release and link to the release notes. Do that in a dedicated commit.
+
+   (It is necessary to do that at that stage, so that the ReadTheDocs "stable" branch, based on the latest tag, proposes to download it)
+
+10) If this is a feature release (e.g 3.1), prepare a branch.
 
    git checkout master
    git pull origin master
    git checkout -b release/3.1
    git push origin release/3.1
 
-7) Tag the release with a RC suffix:
+11) Tag the release with a RC suffix:
 
    git checkout release/3.1
    git pull origin release/3.1
    git tag -a -m "Create tag v3.1.0RC1" v3.1.0RC1
    git push origin v3.1.0RC1
 
-8) Prepare archives
+12) Prepare archives
 
-8.0) Ensure you have the following prerequisites (beyond normal build deps):
+12.0) Ensure you have the following prerequisites (beyond normal build deps):
 
    If make is not GNU make, e.g., export MAKE=gmake
 
@@ -97,7 +102,7 @@ Process :
 
    md5sum (GNU version) in path (not a POSIX requirement)
 
-8.1) Create the source distributions using the mkgdaldist.sh script.
+12.1) Create the source distributions using the mkgdaldist.sh script.
    The argument should be the version number (i.e. 1.4.2). As our process involves
    doing betas or RCs, use the -rc option so that the filenames include this
    information (after promotion to official release, filename renaming will have
@@ -118,7 +123,7 @@ Process :
    a previous release (diff -Nur gdal-3.0.1 gdal-3.0.2).
    This is more easily doable for a bugfix release.
 
-8.2) Create a snapshot of the documentation (only for feature releases)
+12.2) Create a snapshot of the documentation (only for feature releases)
 
     1. Refresh
        https://download.osgeo.org/gdal/for_doc/javadoc.zip
@@ -128,7 +133,7 @@ Process :
     3. ./build_doc_snapshot 310
        This generates gdal310doc.zip
 
-8.3) Publish the resulting files on download.osgeo.org,
+12.3) Publish the resulting files on download.osgeo.org,
     in /osgeo/download/gdal/X.Y.Z (where X.Y.Z is the version number)
 
     with ~/.ssh/config containing:
@@ -137,23 +142,23 @@ Process :
         ProxyCommand ssh rouault@download.osgeo.org -W $(sed -e "s/^osgeo7-//;s/$/.lxd/" <<< "%h"):%p
 
 
-9) Announce the release candidate availability to gdal-dev@
-   Example: https://lists.osgeo.org/pipermail/gdal-dev/2019-June/050509.html
+13) Announce the release candidate availability to gdal-dev@
+    Example: https://lists.osgeo.org/pipermail/gdal-dev/2019-June/050509.html
 
-10) If new RC is needed, update gcore/gdal_version.h.in with the new date
+14) If new RC is needed, update gcore/gdal_version.h.in with the new date
     and update NEWS,and go to 7)
 
     If no new RC is needed, after a few days, raise a motion to gdal-dev@ for approval
 
-11) Once the vote has positively completed,
+15) Once the vote has positively completed,
 
-11.1) Tag the release as final:
+15.1) Tag the release as final:
 
     git checkout v3.1.0RC1
     git tag -a -m "Create tag v3.1.0" v3.1.0
     git push origin v3.1.0
 
-11.2) Log on download.osgeo.org, go to /osgeo/download/gdal/X.Y.Z
+15.2) Log on download.osgeo.org, go to /osgeo/download/gdal/X.Y.Z
 
       Remove the RC suffixes for the final RC, like:
       mv gdal-3.8.3rc1.tar.xz gdal-3.8.3.tar.xz
@@ -176,22 +181,18 @@ Process :
       Check that everything is fine:
       md5sum -c *.md5
 
-11.3) In /osgeo/download/gdal, add a symlink from X.Y.Z to CURRENT (except for stable releases in a "old" branch).
+15.3) In /osgeo/download/gdal, add a symlink from X.Y.Z to CURRENT (except for stable releases in a "old" branch).
 
   % ln -sf X.Y.Z CURRENT
 
-12) (Removed)
-
-13) Update doc/source/about_no_title.rst and doc/source/download.rst to advertise the new release and link to the release notes
-
-14) Update GitHub to close the release milestone.
+16) Update GitHub to close the release milestone.
     Then create a new milestone for the next release.
 
-15) Upload the new Python bindings to Pypi (requires upload rights to
+17) Upload the new Python bindings to Pypi (requires upload rights to
 the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
 ( procedure taken from http://peterdowns.com/posts/first-time-with-pypi.html )
 
-15.1) Prerequisite:
+17.1) Prerequisite:
     a) Install twine https://pypi.org/project/twine/
 
     b) Create a $HOME/.pypirc file :
@@ -210,7 +211,7 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
     username: yourlogin
     password: yourpassword
 
-15.2) create gdal sdist and upload to pypi:
+17.2) create gdal sdist and upload to pypi:
 
     a) Create a build directory if not already done. Go to it and run cmake
 
@@ -227,7 +228,7 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
     f) For real :
         twine upload dist/gdal-*.gz
 
-15.3) create gdal-utils wheel and upload to pypi:
+17.3) create gdal-utils wheel and upload to pypi:
 
     a) cd $BUILD_DIR/swig/python/gdal-utils
 
@@ -242,7 +243,7 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
     d) For real :
         twine upload dist/gdal_utils-*.whl
 
-16) Generate signed maven artifacts with GPG for Java bindings.
+18) Generate signed maven artifacts with GPG for Java bindings.
     This step is required in order to deploy the
     maven artifacts to the central Maven repository. Before this step can
     proceed you must set up a signing key as described here:
@@ -272,7 +273,7 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
     that contains all the maven artifacts with signatures. This file is what
     will be uploaded to maven central. See the next step.
 
-17) Deploy maven artifacts to Maven central.
+19) Deploy maven artifacts to Maven central.
 
     NOTE: Before you can deploy to maven central you must set up an account
     in Sonatype JIRA. That can be done here:
@@ -329,14 +330,14 @@ e) Click the "Release" button and that is it! The release should be available in
     - gdalXYZ.zip.md5
     - gdalautotest-X.Y.Z.zip
 
-19) Regenerate Docker images
+20) Regenerate Docker images
 
     e.g
         ./docker/build-all.sh --with-multi-arch --release --tag 3.3.1 --gdal v3.3.1 --proj 8.1.0 --platform linux/arm64,linux/amd64 --push
 
     and update docker/README.md with the latest release
 
-20) Announce release to :
+21) Announce release to :
     - major release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org, news_item@osgeo.org.
     - bugfix release: gdal-dev@lists.osgeo.org, gdal-announce@lists.osgeo.org
 
@@ -348,10 +349,12 @@ Note: gdal-announce@ is moderated. Make sure that your email address is approved
 ('mod' tick disabled in https://lists.osgeo.org/mailman/admin/gdal-announce/members),
 or your message manually approved, with an administrator of the list.
 
-21) For a feature release: after it has been done, in the master branch, update
+22) For a feature release: after it has been done, in the master branch, update
     the VERSION to the next one and in gcore/gdal_version.h.in, update
     GDAL_VERSION_MAJOR/_MINOR, GDAL_RELEASE_NAME (with a dev suffix, like "3.7.0dev"),
     and set GDAL_RELEASE_DATE to a date like {YEAR}9999.
     Update swig/python/gdal-utils/osgeo_utils/__init__.py to something like (3, 6, 99, 0)
     if master is 3.7.0dev
 
+23) For bugfixes releases, forward port to master changes done in
+    doc/source/about_no_title.rst, doc/source/download.rst and doc/source/download_past.rst

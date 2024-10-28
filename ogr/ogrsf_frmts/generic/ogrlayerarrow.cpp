@@ -1780,17 +1780,8 @@ FillDateTimeArray(struct ArrowArray *psChild,
             auto nVal =
                 CPLYMDHMSToUnixTime(&brokenDown) * 1000 +
                 (static_cast<int>(psRawField->Date.Second * 1000 + 0.5) % 1000);
-            if (nFieldTZFlag > OGR_TZFLAG_MIXED_TZ &&
+            if (nFieldTZFlag >= OGR_TZFLAG_MIXED_TZ &&
                 psRawField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
-            {
-                // Convert for psRawField->Date.TZFlag to nFieldTZFlag
-                const int TZOffset =
-                    (psRawField->Date.TZFlag - nFieldTZFlag) * 15;
-                const int TZOffsetMS = TZOffset * 60 * 1000;
-                nVal -= TZOffsetMS;
-            }
-            else if (nFieldTZFlag == OGR_TZFLAG_MIXED_TZ &&
-                     psRawField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
             {
                 // Convert for psRawField->Date.TZFlag to UTC
                 const int TZOffset =

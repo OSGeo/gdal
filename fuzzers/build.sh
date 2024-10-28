@@ -158,11 +158,14 @@ git clone --depth 1 https://gitbox.apache.org/repos/asf/xerces-c.git
 
 # Build sqlite from source to avoid upstream bugs
 rm -rf sqlite
-git clone --depth 1 https://github.com/sqlite/sqlite sqlite
+curl -L https://sqlite.org/2024/sqlite-autoconf-3470000.tar.gz > sqlite-autoconf-3470000.tar.gz && \
+    tar xzf sqlite-autoconf-3470000.tar.gz && \
+    mv sqlite-autoconf-3470000 sqlite && \
+    rm sqlite-autoconf-3470000.tar.gz
 
 # libxerces-c-dev${ARCH_SUFFIX}
 # libsqlite3-dev${ARCH_SUFFIX}
-PACKAGES="tcl-dev${ARCH_SUFFIX} zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
+PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
           libpng-dev${ARCH_SUFFIX} libgif-dev${ARCH_SUFFIX} \
           libjpeg-dev${ARCH_SUFFIX} \
           libwebp-dev${ARCH_SUFFIX} \
@@ -186,7 +189,7 @@ NON_FUZZING_CXXFLAGS="$NON_FUZZING_CFLAGS -stdlib=libc++"
 
 # build sqlite
 cd sqlite
-CFLAGS="$NON_FUZZING_CFLAGS -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=$SRC/install --enable-rtree --with-tcl=/usr/lib/$ARCHITECTURE-linux-gnu/tcl8.6
+CFLAGS="$NON_FUZZING_CFLAGS -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=$SRC/install --enable-rtree
 make clean -s
 make -j$(nproc) -s
 make install

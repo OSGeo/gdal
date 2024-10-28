@@ -30,7 +30,7 @@ from osgeo_utils.auxiliary.util import (
 
 def Usage(isError=True):
     f = sys.stderr if isError else sys.stdout
-    print("Usage: gdalattachpct.py [--help] [--help-general]", file=f)
+    print("Usage: gdalattachpct [--help] [--help-general]", file=f)
     print("                        <pctfile> <infile> <outfile>", file=f)
     return 2 if isError else 0
 

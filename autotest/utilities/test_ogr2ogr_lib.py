@@ -1633,6 +1633,13 @@ def test_ogr2ogr_lib_simplify():
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0, 1 0, 10 0)"))
     src_lyr.CreateFeature(f)
 
+    with gdaltest.enable_exceptions(), pytest.raises(
+        Exception, match="Failed to parse"
+    ):
+        gdal.VectorTranslate(
+            "", src_ds, format="Memory", simplifyTolerance="reasonable"
+        )
+
     dst_ds = gdal.VectorTranslate("", src_ds, format="Memory", simplifyTolerance=5)
 
     dst_lyr = dst_ds.GetLayer(0)
@@ -2916,3 +2923,38 @@ def test_ogr2ogr_lib_reproject_arrow_optim_cannot_trigger(tmp_vsimem):
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString
     assert f.GetGeometryRef().GetGeometryCount() == 2
+
+
+###############################################################################
+# Test -explodecollections on empty geometries
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "input_wkt,expected_output_wkt",
+    [
+        ("MULTIPOINT EMPTY", "POINT EMPTY"),
+        ("MULTIPOINT Z EMPTY", "POINT Z EMPTY"),
+        ("MULTIPOINT M EMPTY", "POINT M EMPTY"),
+        ("MULTIPOINT ZM EMPTY", "POINT ZM EMPTY"),
+        ("MULTILINESTRING EMPTY", "LINESTRING EMPTY"),
+        ("MULTIPOLYGON EMPTY", "POLYGON EMPTY"),
+        ("MULTICURVE EMPTY", "COMPOUNDCURVE EMPTY"),
+        ("MULTISURFACE EMPTY", "CURVEPOLYGON EMPTY"),
+        ("GEOMETRYCOLLECTION EMPTY", "GEOMETRYCOLLECTION EMPTY"),
+    ],
+)
+def test_ogr2ogr_lib_explodecollections_empty_geoms(input_wkt, expected_output_wkt):
+
+    with gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown) as src_ds:
+        src_lyr = src_ds.CreateLayer("test")
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(input_wkt))
+        src_lyr.CreateFeature(f)
+
+        out_ds = gdal.VectorTranslate(
+            "", src_ds, explodeCollections=True, format="Memory"
+        )
+        out_lyr = out_ds.GetLayer(0)
+        f = out_lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == expected_output_wkt

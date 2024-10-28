@@ -6177,9 +6177,9 @@ bool LayerTranslator::Translate(
         int nIters = 1;
         std::unique_ptr<OGRGeometryCollection> poCollToExplode;
         int iGeomCollToExplode = -1;
+        OGRGeometry *poSrcGeometry = nullptr;
         if (bExplodeCollections)
         {
-            OGRGeometry *poSrcGeometry;
             if (iRequestedSrcGeomField >= 0)
                 poSrcGeometry =
                     poFeature->GetGeomFieldRef(iRequestedSrcGeomField);
@@ -6191,7 +6191,9 @@ bool LayerTranslator::Translate(
             {
                 const int nParts =
                     poSrcGeometry->toGeometryCollection()->getNumGeometries();
-                if (nParts > 0)
+                if (nParts > 0 ||
+                    wkbFlatten(poSrcGeometry->getGeometryType()) !=
+                        wkbGeometryCollection)
                 {
                     iGeomCollToExplode = iRequestedSrcGeomField >= 0
                                              ? iRequestedSrcGeomField
@@ -6199,7 +6201,7 @@ bool LayerTranslator::Translate(
                     poCollToExplode.reset(
                         poFeature->StealGeometry(iGeomCollToExplode)
                             ->toGeometryCollection());
-                    nIters = nParts;
+                    nIters = std::max(1, nParts);
                 }
             }
         }
@@ -6416,9 +6418,46 @@ bool LayerTranslator::Translate(
 
                 if (poCollToExplode && iGeom == iGeomCollToExplode)
                 {
-                    OGRGeometry *poPart = poCollToExplode->getGeometryRef(0);
-                    poCollToExplode->removeGeometry(0, FALSE);
-                    poDstGeometry.reset(poPart);
+                    if (poSrcGeometry && poCollToExplode->IsEmpty())
+                    {
+                        const OGRwkbGeometryType eSrcType =
+                            poSrcGeometry->getGeometryType();
+                        const OGRwkbGeometryType eSrcFlattenType =
+                            wkbFlatten(eSrcType);
+                        OGRwkbGeometryType eDstType = eSrcType;
+                        switch (eSrcFlattenType)
+                        {
+                            case wkbMultiPoint:
+                                eDstType = wkbPoint;
+                                break;
+                            case wkbMultiLineString:
+                                eDstType = wkbLineString;
+                                break;
+                            case wkbMultiPolygon:
+                                eDstType = wkbPolygon;
+                                break;
+                            case wkbMultiCurve:
+                                eDstType = wkbCompoundCurve;
+                                break;
+                            case wkbMultiSurface:
+                                eDstType = wkbCurvePolygon;
+                                break;
+                            default:
+                                break;
+                        }
+                        eDstType =
+                            OGR_GT_SetModifier(eDstType, OGR_GT_HasZ(eSrcType),
+                                               OGR_GT_HasM(eSrcType));
+                        poDstGeometry.reset(
+                            OGRGeometryFactory::createGeometry(eDstType));
+                    }
+                    else
+                    {
+                        OGRGeometry *poPart =
+                            poCollToExplode->getGeometryRef(0);
+                        poCollToExplode->removeGeometry(0, FALSE);
+                        poDstGeometry.reset(poPart);
+                    }
                 }
                 else
                 {
@@ -7522,22 +7561,16 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
 
     argParser->add_argument("-segmentize")
         .metavar("<max_dist>")
-        .action(
-            [psOptions](const std::string &s)
-            {
-                psOptions->eGeomOp = GEOMOP_SEGMENTIZE;
-                psOptions->dfGeomOpParam = CPLAtofM(s.c_str());
-            })
+        .store_into(psOptions->dfGeomOpParam)
+        .action([psOptions](const std::string &)
+                { psOptions->eGeomOp = GEOMOP_SEGMENTIZE; })
         .help(_("Maximum distance between 2 nodes."));
 
     argParser->add_argument("-simplify")
         .metavar("<tolerance>")
-        .action(
-            [psOptions](const std::string &s)
-            {
-                psOptions->eGeomOp = GEOMOP_SIMPLIFY_PRESERVE_TOPOLOGY;
-                psOptions->dfGeomOpParam = CPLAtofM(s.c_str());
-            })
+        .store_into(psOptions->dfGeomOpParam)
+        .action([psOptions](const std::string &)
+                { psOptions->eGeomOp = GEOMOP_SIMPLIFY_PRESERVE_TOPOLOGY; })
         .help(_("Distance tolerance for simplification."));
 
     argParser->add_argument("-makevalid")
