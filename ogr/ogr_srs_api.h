@@ -1005,6 +1005,8 @@ OSRGetCRSInfoListFromDatabase(const char *pszAuthName,
 
 void CPL_DLL OSRDestroyCRSInfoList(OSRCRSInfo **list);
 
+char CPL_DLL **OSRGetAuthorityListFromDatabase(void);
+
 /* -------------------------------------------------------------------- */
 /*      OGRCoordinateTransform C API.                                   */
 /* -------------------------------------------------------------------- */

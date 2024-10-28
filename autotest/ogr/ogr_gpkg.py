@@ -10540,3 +10540,49 @@ def test_gpkg_create_more_than_2000_fields(tmp_vsimem):
         with pytest.raises(Exception, match="Limit of 2000 columns reached"):
             lyr.CreateField(ogr.FieldDefn("foo"))
         assert lyr.GetLayerDefn().GetFieldCount() == 2000 - 2
+
+
+###############################################################################
+# Test that secure_delete is turned on
+
+
+@gdaltest.enable_exceptions()
+def test_gpkg_secure_delete(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "secure_delete.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(filename) as ds:
+
+        with ds.ExecuteSQL("PRAGMA secure_delete") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == 1
+
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("foo"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["foo"] = "very_secret"
+        lyr.CreateFeature(f)
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    data = gdal.VSIFReadL(1, 100000, f)
+    gdal.VSIFCloseL(f)
+    assert b"very_secret" in data
+
+    with ogr.Open(filename, update=1) as ds:
+
+        with ds.ExecuteSQL("PRAGMA secure_delete") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == 1
+
+        lyr = ds.GetLayer(0)
+        lyr.DeleteFeature(1)
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    data = gdal.VSIFReadL(1, 100000, f)
+    gdal.VSIFCloseL(f)
+    assert b"very_secret" not in data
+
+    with gdaltest.config_option("OGR_SQLITE_PRAGMA", "secure_delete=0"):
+        with ogr.Open(filename, update=1) as ds:
+            with ds.ExecuteSQL("PRAGMA secure_delete") as sql_lyr:
+                f = sql_lyr.GetNextFeature()
+                assert f.GetField(0) == 0
