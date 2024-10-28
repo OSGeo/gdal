@@ -12855,6 +12855,38 @@ void OSRDestroyCRSInfoList(OSRCRSInfo **list)
 }
 
 /************************************************************************/
+/*                   OSRGetAuthorityListFromDatabase()                  */
+/************************************************************************/
+
+/** \brief Return the list of CRS authorities used in the PROJ database.
+ *
+ * Such as "EPSG", "ESRI", "PROJ", "IGNF", "IAU_2015", etc.
+ *
+ * This is a direct mapping of https://proj.org/en/latest/development/reference/functions.html#c.proj_get_authorities_from_database
+ *
+ * @return nullptr in case of error, or a NULL terminated list of strings to
+ * free with CSLDestroy()
+ * @since GDAL 3.10
+ */
+char **OSRGetAuthorityListFromDatabase()
+{
+    PROJ_STRING_LIST list =
+        proj_get_authorities_from_database(OSRGetProjTLSContext());
+    if (!list)
+    {
+        return nullptr;
+    }
+    int count = 0;
+    while (list[count])
+        ++count;
+    char **res = static_cast<char **>(CPLCalloc(count + 1, sizeof(char *)));
+    for (int i = 0; i < count; ++i)
+        res[i] = CPLStrdup(list[i]);
+    proj_string_list_destroy(list);
+    return res;
+}
+
+/************************************************************************/
 /*                    UpdateCoordinateSystemFromGeogCRS()               */
 /************************************************************************/
 
