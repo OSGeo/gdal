@@ -184,7 +184,19 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             {
                 const int nPrecision = poFieldDefn->GetPrecision();
                 if (nWidth != 0 && nPrecision != 0)
-                    dt = arrow::decimal(nWidth, nPrecision);
+                {
+                    // Since arrow 18.0, we could use arrow::smallest_decimal()
+                    // to return the smallest representation (i.e. possibly
+                    // decimal32 and decimal64). But for now keep decimal128
+                    // as the minimum for backwards compatibility.
+                    // GetValueDecimal() and other functions in
+                    // ogrlayerarrow.cpp would have to be adapted for decimal32
+                    // and decimal64 compatibility.
+                    if (nWidth > 38)
+                        dt = arrow::decimal256(nWidth, nPrecision);
+                    else
+                        dt = arrow::decimal128(nWidth, nPrecision);
+                }
                 else if (eSubDT == OFSTFloat32)
                     dt = arrow::float32();
                 else
