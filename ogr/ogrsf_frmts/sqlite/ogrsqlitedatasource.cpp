@@ -1372,6 +1372,7 @@ bool OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
 #endif
 
     bool bPageSizeFound = false;
+    bool bSecureDeleteFound = false;
 
     const char *pszSqlitePragma =
         CPLGetConfigOption("OGR_SQLITE_PRAGMA", nullptr);
@@ -1456,7 +1457,7 @@ bool OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
             {
                 if (STARTS_WITH_CI(papszTokens[i], "PAGE_SIZE"))
                     bPageSizeFound = true;
-                if (STARTS_WITH_CI(papszTokens[i], "JOURNAL_MODE"))
+                else if (STARTS_WITH_CI(papszTokens[i], "JOURNAL_MODE"))
                 {
                     const char *pszEqual = strchr(papszTokens[i], '=');
                     if (pszEqual)
@@ -1467,6 +1468,8 @@ bool OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
                         continue;
                     }
                 }
+                else if (STARTS_WITH_CI(papszTokens[i], "SECURE_DELETE"))
+                    bSecureDeleteFound = true;
 
                 const char *pszSQL = CPLSPrintf("PRAGMA %s", papszTokens[i]);
 
@@ -1644,6 +1647,16 @@ bool OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
 
         CPL_IGNORE_RET_VAL(
             sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr));
+    }
+
+    if (!bSecureDeleteFound)
+    {
+        // Turn on secure_delete by default (unless the user specifies a
+        // value of this pragma through OGR_SQLITE_PRAGMA)
+        // For example, Debian and Conda-Forge SQLite3 builds already turn on
+        // secure_delete.
+        CPL_IGNORE_RET_VAL(sqlite3_exec(hDB, "PRAGMA secure_delete = 1",
+                                        nullptr, nullptr, nullptr));
     }
 
     SetCacheSize();

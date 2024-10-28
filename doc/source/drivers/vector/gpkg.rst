@@ -809,6 +809,18 @@ Examples
         -sql "SELECT poly.id, other.foo FROM poly JOIN other_schema.other USING (id)" \
         -oo PRELUDE_STATEMENTS="ATTACH DATABASE 'other.gpkg' AS other_schema"
 
+Secure deletion
+---------------
+
+Depending on how SQLite3 is built, `secure deletion <https://www.sqlite.org/pragma.html#pragma_secure_delete>`__
+might or might not be enabled.
+Starting with GDAL 3.10, secure deletion is always enabled, unless
+``SECURE_DELETE`` is specified through the :config:`OGR_SQLITE_PRAGMA`
+configuration option.
+Note that secure deletion does not recover potential lost space, so running
+a `VACUUM <https://sqlite.org/lang_vacuum.html>`__ query is recommended to fully
+optimized a database that has been subject to updates or deletions.
+
 See Also
 --------
 
