@@ -26,12 +26,6 @@
 
 #include <cctype>
 
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
-
 /************************************************************************/
 /*                             GetSRSAsWKT                              */
 /************************************************************************/
@@ -300,7 +294,7 @@ MAIN_START(argc, argv)
     if (std::isnan(dfGeoX))
     {
         // Is it an interactive terminal ?
-        if (isatty(static_cast<int>(fileno(stdin))))
+        if (CPLIsInteractive(stdin))
         {
             if (!osSourceSRS.empty())
             {

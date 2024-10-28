@@ -15,10 +15,6 @@
 
 #include "cpl_error.h"
 
-#ifndef _WIN32
-#include <unistd.h>  // isatty()
-#endif
-
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -1052,7 +1048,7 @@ void CPL_STDCALL CPLDefaultErrorHandler(CPLErr eErrClass, CPLErrorNum nError,
 #ifndef _WIN32
         CPLErrorContext *psCtx = CPLGetErrorContext();
         if (psCtx != nullptr && !IS_PREFEFINED_ERROR_CTX(psCtx) &&
-            fpLog == stderr && isatty(static_cast<int>(fileno(stderr))))
+            fpLog == stderr && CPLIsInteractive(stderr))
         {
             if (psCtx->bProgressMode)
             {
