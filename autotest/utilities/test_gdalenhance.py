@@ -36,7 +36,7 @@ def gdalenhance_path():
 def test_gdalenhance_output_histogram(gdalenhance_path, tmp_path):
 
     out, err = gdaltest.runexternal_out_and_err(
-        f"{gdalenhance_path} -equalize ../gcore/data/rgbsmall.tif"
+        f"{gdalenhance_path} -quiet -equalize ../gcore/data/rgbsmall.tif"
     )
 
     assert not err
@@ -58,7 +58,7 @@ def test_gdalenhance_output_histogram(gdalenhance_path, tmp_path):
     enhanced_fname = tmp_path / "out.tif"
 
     out, err = gdaltest.runexternal_out_and_err(
-        f"{gdalenhance_path} -config {lut_fname} ../gcore/data/rgbsmall.tif {enhanced_fname}"
+        f"{gdalenhance_path} -quiet -config {lut_fname} ../gcore/data/rgbsmall.tif {enhanced_fname}"
     )
 
     assert not err
@@ -100,7 +100,7 @@ def test_gdalenhance_invalid_usage(gdalenhance_path, tmp_path):
     outfile = tmp_path / "out.tif"
 
     out, err = gdaltest.runexternal_out_and_err(
-        f"{gdalenhance_path} {infile} {outfile}"
+        f"{gdalenhance_path} -quiet {infile} {outfile}"
     )
 
     assert "ret code = 1" in err
