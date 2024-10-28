@@ -228,6 +228,10 @@ inline bool OGRArrowLayer::IsHandledListOrMapType(
            itemTypeId == arrow::Type::HALF_FLOAT ||
            itemTypeId == arrow::Type::FLOAT ||
            itemTypeId == arrow::Type::DOUBLE ||
+#if ARROW_VERSION_MAJOR >= 18
+           itemTypeId == arrow::Type::DECIMAL32 ||
+           itemTypeId == arrow::Type::DECIMAL64 ||
+#endif
            itemTypeId == arrow::Type::DECIMAL128 ||
            itemTypeId == arrow::Type::DECIMAL256 ||
            itemTypeId == arrow::Type::STRING ||
@@ -422,6 +426,10 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
                                    // nanosecond accuracy
             break;
 
+#if ARROW_VERSION_MAJOR >= 18
+        case arrow::Type::DECIMAL32:
+        case arrow::Type::DECIMAL64:
+#endif
         case arrow::Type::DECIMAL128:
         case arrow::Type::DECIMAL256:
         {
@@ -468,6 +476,10 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
                     eSubType = OFSTFloat32;
                     break;
                 case arrow::Type::DOUBLE:
+#if ARROW_VERSION_MAJOR >= 18
+                case arrow::Type::DECIMAL32:
+                case arrow::Type::DECIMAL64:
+#endif
                 case arrow::Type::DECIMAL128:
                 case arrow::Type::DECIMAL256:
                     eType = OFTRealList;
@@ -1290,6 +1302,23 @@ static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
                 static_cast<const arrow::DoubleArray *>(array)->Value(nIdx));
             break;
         }
+
+#if ARROW_VERSION_MAJOR >= 18
+        case arrow::Type::DECIMAL32:
+        {
+            oArray.Add(CPLAtof(static_cast<const arrow::Decimal32Array *>(array)
+                                   ->FormatValue(nIdx)
+                                   .c_str()));
+            break;
+        }
+        case arrow::Type::DECIMAL64:
+        {
+            oArray.Add(CPLAtof(static_cast<const arrow::Decimal64Array *>(array)
+                                   ->FormatValue(nIdx)
+                                   .c_str()));
+            break;
+        }
+#endif
         case arrow::Type::DECIMAL128:
         {
             oArray.Add(
@@ -1470,6 +1499,25 @@ static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
                 static_cast<const arrow::DoubleArray *>(array)->Value(nIdx));
             break;
         }
+
+#if ARROW_VERSION_MAJOR >= 18
+        case arrow::Type::DECIMAL32:
+        {
+            oDict.Add(osKey,
+                      CPLAtof(static_cast<const arrow::Decimal32Array *>(array)
+                                  ->FormatValue(nIdx)
+                                  .c_str()));
+            break;
+        }
+        case arrow::Type::DECIMAL64:
+        {
+            oDict.Add(osKey,
+                      CPLAtof(static_cast<const arrow::Decimal64Array *>(array)
+                                  ->FormatValue(nIdx)
+                                  .c_str()));
+            break;
+        }
+#endif
         case arrow::Type::DECIMAL128:
         {
             oDict.Add(osKey,
@@ -1756,6 +1804,48 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
                                                array);
             break;
         }
+
+#if ARROW_VERSION_MAJOR >= 18
+        case arrow::Type::DECIMAL32:
+        {
+            const auto values = std::static_pointer_cast<arrow::Decimal32Array>(
+                array->values());
+            const auto nIdxStart = array->value_offset(nIdxInArray);
+            const int nCount = array->value_length(nIdxInArray);
+            std::vector<double> aValues;
+            aValues.reserve(nCount);
+            for (int k = 0; k < nCount; k++)
+            {
+                if (values->IsNull(nIdxStart + k))
+                    aValues.push_back(std::numeric_limits<double>::quiet_NaN());
+                else
+                    aValues.push_back(
+                        CPLAtof(values->FormatValue(nIdxStart + k).c_str()));
+            }
+            poFeature->SetField(i, nCount, aValues.data());
+            break;
+        }
+
+        case arrow::Type::DECIMAL64:
+        {
+            const auto values = std::static_pointer_cast<arrow::Decimal64Array>(
+                array->values());
+            const auto nIdxStart = array->value_offset(nIdxInArray);
+            const int nCount = array->value_length(nIdxInArray);
+            std::vector<double> aValues;
+            aValues.reserve(nCount);
+            for (int k = 0; k < nCount; k++)
+            {
+                if (values->IsNull(nIdxStart + k))
+                    aValues.push_back(std::numeric_limits<double>::quiet_NaN());
+                else
+                    aValues.push_back(
+                        CPLAtof(values->FormatValue(nIdxStart + k).c_str()));
+            }
+            poFeature->SetField(i, nCount, aValues.data());
+            break;
+        }
+#endif
 
         case arrow::Type::DECIMAL128:
         {
@@ -2405,6 +2495,26 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                     i, static_cast<GIntBig>(castArray->Value(nIdxInBatch)));
                 break;
             }
+
+#if ARROW_VERSION_MAJOR >= 18
+            case arrow::Type::DECIMAL32:
+            {
+                const auto castArray =
+                    static_cast<const arrow::Decimal32Array *>(array);
+                poFeature->SetField(
+                    i, CPLAtof(castArray->FormatValue(nIdxInBatch).c_str()));
+                break;
+            }
+
+            case arrow::Type::DECIMAL64:
+            {
+                const auto castArray =
+                    static_cast<const arrow::Decimal64Array *>(array);
+                poFeature->SetField(
+                    i, CPLAtof(castArray->FormatValue(nIdxInBatch).c_str()));
+                break;
+            }
+#endif
 
             case arrow::Type::DECIMAL128:
             {
@@ -3899,6 +4009,34 @@ inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
                 }
                 break;
             }
+
+#if ARROW_VERSION_MAJOR >= 18
+            case arrow::Type::DECIMAL32:
+            {
+                const auto castArray =
+                    static_cast<const arrow::Decimal32Array *>(array);
+                if (!ConstraintEvaluator(
+                        constraint,
+                        CPLAtof(castArray->FormatValue(m_nIdxInBatch).c_str())))
+                {
+                    return true;
+                }
+                break;
+            }
+
+            case arrow::Type::DECIMAL64:
+            {
+                const auto castArray =
+                    static_cast<const arrow::Decimal64Array *>(array);
+                if (!ConstraintEvaluator(
+                        constraint,
+                        CPLAtof(castArray->FormatValue(m_nIdxInBatch).c_str())))
+                {
+                    return true;
+                }
+                break;
+            }
+#endif
 
             case arrow::Type::DECIMAL128:
             {
