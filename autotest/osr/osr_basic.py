@@ -2478,3 +2478,13 @@ def test_osr_basic_export_wkt_utm_south():
 
     j = json.loads(srs.ExportToPROJJSON())
     assert j["conversion"]["id"]["code"] == 16101
+
+
+###############################################################################
+
+
+def test_osr_basic_GetAuthorityListFromDatabase():
+
+    ret = osr.GetAuthorityListFromDatabase()
+    assert "EPSG" in ret
+    assert "PROJ" in ret
