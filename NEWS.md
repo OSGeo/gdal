@@ -217,6 +217,8 @@ GTiff driver:
  * use main dataset GetSiblingFiles() for overviews
  * SRS writer: do not use EPSG:4326 if angular unit is not degree
  * make driver optional (but must be explicitly disabled)
+ * tif_jxl: writer: propagate DISTANCE/QUALITY setting to extra channel
+ * fix memory leak when trying to open COG in update mode
  * Internal libtiff: resync with upstream
 
 HEIF driver:
@@ -435,6 +437,7 @@ Zarr driver:
   when possible
 * Add OGRWKBTransform() for in-place coordinate transformation of WKB geometries
 * OGR_GreatCircle_ API: do not hardcode Earth radius
+* ogr_core.h: suppress warning when building with -Wpedantic for C < 23 (#2322)
 
 ### OGRSpatialReference
 
@@ -442,6 +445,8 @@ Zarr driver:
   expected axis order
 * OGRSpatialReference::EPSGTreatsAsLatLong()/EPSGTreatsAsNorthingEasting():
   remove the check on the EPSG authority
+* Add OSRGetAuthorityListFromDatabase() to get the list of CRS authorities used
+  in the PROJ database.
 
 ### Utilities
 
@@ -470,6 +475,7 @@ Arrow ecosystem:
  * Arrow/Parquet/generic arrow: add write support for arrow.json extension
  * Add a Arrow VSI file system (for libarrow >= 16.0) allowing to use GDAL
    VSI file systems as libarrow compatible file systems.
+ * Add (minimum) support for libarrow 18.0.0
 
 Arrow driver
  * add read support for StringView and BinaryView (but not in OGR generic Arrow
@@ -521,6 +527,7 @@ GPKG driver:
  * prevent from creating field with same name, or with the name of the geometry
    field
  * CreateField(): check we are not reaching the max number of fields
+ * SQLite/GPKG: turn on SQLite 'PRAGMA secure_delete=1' by default
 
 HANA driver:
  * Add support for REAL_VECTOR type (#10499)
@@ -607,6 +614,7 @@ WFS driver:
 ## SWIG bindings
 
 * Python/Java: replace sprintf() with snprintf() to avoid warnings on OSX
+* fix memleak in gdal.GetConfigOptions()
 
 ### Python bindings
 
@@ -623,6 +631,8 @@ WFS driver:
 * make MDArray.Write(array_of_strings) work with a 0-d string variable
 * Avoid linear scan in gdal_array.NumericTypeCodeToGDALTypeCode (#10694)
 * Dataset.Close(): invalidate children before closing dataset
+* __init__.py: remove calls to warnings.simplefilter() (#11140)
+* fix compatibility issue with SWIG 4.3.0 and PYTHONWARNINGS=error
 
 ### Java bindings
 
