@@ -309,6 +309,12 @@ void CPLCleanupSetlocaleMutex(void);
 */
 int CPL_DLL CPLIsPowerOfTwo(unsigned int i);
 
+/* -------------------------------------------------------------------- */
+/*      Terminal related                                                */
+/* -------------------------------------------------------------------- */
+
+bool CPL_DLL CPLIsInteractive(FILE *f);
+
 CPL_C_END
 
 /* -------------------------------------------------------------------- */

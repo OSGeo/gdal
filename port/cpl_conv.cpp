@@ -62,6 +62,12 @@
 #include <xlocale.h>  // for LC_NUMERIC_MASK on MacOS
 #endif
 
+#ifdef _WIN32
+#include <io.h>  // _isatty
+#else
+#include <unistd.h>  // isatty
+#endif
+
 #ifdef DEBUG_CONFIG_OPTIONS
 #include <set>
 #endif
@@ -3493,3 +3499,24 @@ CPLConfigOptionSetter::~CPLConfigOptionSetter()
 }
 
 //! @endcond
+
+/************************************************************************/
+/*                          CPLIsInteractive()                          */
+/************************************************************************/
+
+/** Returns whether the provided file refers to a terminal.
+ *
+ * This function is a wrapper of the ``isatty()`` POSIX function.
+ *
+ * @param f File to test. Typically stdin, stdout or stderr
+ * @return true if it is an open file referring to a terminal.
+ * @since GDAL 3.11
+ */
+bool CPLIsInteractive(FILE *f)
+{
+#ifndef _WIN32
+    return isatty(static_cast<int>(fileno(f)));
+#else
+    return _isatty(_fileno(f));
+#endif
+}
