@@ -283,279 +283,279 @@ Past Releases
 .. _`2.4.2 md5`: https://download.osgeo.org/gdal/2.4.2/gdal-2.4.2.tar.gz.md5
 
 
-* **2019-05** `gdal-3.0.0.tar.gz`_ `3.0.0 Release Notes`_ (`3.0.0 md5`)_
+* **2019-05** `gdal-3.0.0.tar.gz`_ `3.0.0 Release Notes`_ (`3.0.0 md5`_)
 
 .. _`gdal-3.0.0.tar.gz`: http://download.osgeo.org/gdal/3.0.0/gdal-3.0.0.tar.gz
 .. _`3.0.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.0.0/gdal/NEWS
 .. _`3.0.0 md5`: http://download.osgeo.org/gdal/3.0.0/gdal-3.0.0.tar.gz.md5
 
 
-* **2019-03** `gdal-2.4.1.tar.gz`_ `2.4.1 Release Notes`_ (`2.4.1 md5`)_
+* **2019-03** `gdal-2.4.1.tar.gz`_ `2.4.1 Release Notes`_ (`2.4.1 md5`_)
 
 .. _`gdal-2.4.1.tar.gz`: http://download.osgeo.org/gdal/2.4.1/gdal-2.4.1.tar.gz
 .. _`2.4.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.4.1/gdal/NEWS
 .. _`2.4.1 md5`: http://download.osgeo.org/gdal/2.4.1/gdal-2.4.1.tar.gz.md5
 
 
-* **2018-12** `gdal-2.4.0.tar.gz`_ `2.4.0 Release Notes`_ (`2.4.0 md5`)_
+* **2018-12** `gdal-2.4.0.tar.gz`_ `2.4.0 Release Notes`_ (`2.4.0 md5`_)
 
 .. _`gdal-2.4.0.tar.gz`: http://download.osgeo.org/gdal/2.4.0/gdal-2.4.0.tar.gz
 .. _`2.4.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.4.0/gdal/NEWS
 .. _`2.4.0 md5`: http://download.osgeo.org/gdal/2.4.0/gdal-2.4.0.tar.gz.md5
 
 
-* **2019-05** `gdal-3.0.0.tar.gz`_ `3.0.0 Release Notes`_ (`3.0.0 md5`)_
+* **2019-05** `gdal-3.0.0.tar.gz`_ `3.0.0 Release Notes`_ (`3.0.0 md5`_)
 
 .. _`gdal-3.0.0.tar.gz`: http://download.osgeo.org/gdal/3.0.0/gdal-3.0.0.tar.gz
 .. _`3.0.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.0.0/gdal/NEWS
 .. _`3.0.0 md5`: http://download.osgeo.org/gdal/3.0.0/gdal-3.0.0.tar.gz.md5
 
 
-* **2019-03** `gdal-2.4.1.tar.gz`_ `2.4.1 Release Notes`_ (`2.4.1 md5`)_
+* **2019-03** `gdal-2.4.1.tar.gz`_ `2.4.1 Release Notes`_ (`2.4.1 md5`_)
 
 .. _`gdal-2.4.1.tar.gz`: http://download.osgeo.org/gdal/2.4.1/gdal-2.4.1.tar.gz
 .. _`2.4.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.4.1/gdal/NEWS
 .. _`2.4.1 md5`: http://download.osgeo.org/gdal/2.4.1/gdal-2.4.1.tar.gz.md5
 
 
-* **2018-12** `gdal-2.4.0.tar.gz`_ `2.4.0 Release Notes`_ (`2.4.0 md5`)_
+* **2018-12** `gdal-2.4.0.tar.gz`_ `2.4.0 Release Notes`_ (`2.4.0 md5`_)
 
 .. _`gdal-2.4.0.tar.gz`: http://download.osgeo.org/gdal/2.4.0/gdal-2.4.0.tar.gz
 .. _`2.4.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.4.0/gdal/NEWS
 .. _`2.4.0 md5`: http://download.osgeo.org/gdal/2.4.0/gdal-2.4.0.tar.gz.md5
 
 
-* **2018-12** `gdal-2.3.3.tar.gz`_ `2.3.3 Release Notes`_ (`2.3.3 md5`)_
+* **2018-12** `gdal-2.3.3.tar.gz`_ `2.3.3 Release Notes`_ (`2.3.3 md5`_)
 
 .. _`gdal-2.3.3.tar.gz`: http://download.osgeo.org/gdal/2.3.3/gdal-2.3.3.tar.gz
 .. _`2.3.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.3.3/gdal/NEWS
 .. _`2.3.3 md5`: http://download.osgeo.org/gdal/2.3.3/gdal-2.3.3.tar.gz.md5
 
 
-* **2018-09** `gdal-2.3.2.tar.gz`_ `2.3.2 Release Notes`_ (`2.3.2 md5`)_
+* **2018-09** `gdal-2.3.2.tar.gz`_ `2.3.2 Release Notes`_ (`2.3.2 md5`_)
 
 .. _`gdal-2.3.2.tar.gz`: http://download.osgeo.org/gdal/2.3.2/gdal-2.3.2.tar.gz
 .. _`2.3.2 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.3.2/gdal/NEWS
 .. _`2.3.2 md5`: http://download.osgeo.org/gdal/2.3.2/gdal-2.3.2.tar.gz.md5
 
 
-* **2018-06** `gdal-2.3.1.tar.gz`_ `2.3.1 Release Notes`_ (`2.3.1 md5`)_
+* **2018-06** `gdal-2.3.1.tar.gz`_ `2.3.1 Release Notes`_ (`2.3.1 md5`_)
 
 .. _`gdal-2.3.1.tar.gz`: http://download.osgeo.org/gdal/2.3.1/gdal-2.3.1.tar.gz
 .. _`2.3.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.3.1/gdal/NEWS
 .. _`2.3.1 md5`: http://download.osgeo.org/gdal/2.3.1/gdal-2.3.1.tar.gz.md5
 
 
-* **2018-05** `gdal-2.3.0.tar.gz`_ `2.3.0 Release Notes`_ (`2.3.0 md5`)_
+* **2018-05** `gdal-2.3.0.tar.gz`_ `2.3.0 Release Notes`_ (`2.3.0 md5`_)
 
 .. _`gdal-2.3.0.tar.gz`: http://download.osgeo.org/gdal/2.3.0/gdal-2.3.0.tar.gz
 .. _`2.3.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.3.0/gdal/NEWS
 .. _`2.3.0 md5`: http://download.osgeo.org/gdal/2.3.0/gdal-2.3.0.tar.gz.md5
 
 
-* **2018-03** `gdal-2.2.4.tar.gz`_ `2.2.4 Release Notes`_ (`2.2.4 md5`)_
+* **2018-03** `gdal-2.2.4.tar.gz`_ `2.2.4 Release Notes`_ (`2.2.4 md5`_)
 
 .. _`gdal-2.2.4.tar.gz`: http://download.osgeo.org/gdal/2.2.4/gdal-2.2.4.tar.gz
 .. _`2.2.4 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.2.4/gdal/NEWS
 .. _`2.2.4 md5`: http://download.osgeo.org/gdal/2.2.4/gdal-2.2.4.tar.gz.md5
 
 
-* **2017-11** `gdal-2.2.3.tar.gz`_ `2.2.3 Release Notes`_ (`2.2.3 md5`)_
+* **2017-11** `gdal-2.2.3.tar.gz`_ `2.2.3 Release Notes`_ (`2.2.3 md5`_)
 
 .. _`gdal-2.2.3.tar.gz`: http://download.osgeo.org/gdal/2.2.3/gdal-2.2.3.tar.gz
 .. _`2.2.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.2.3/gdal/NEWS
 .. _`2.2.3 md5`: http://download.osgeo.org/gdal/2.2.3/gdal-2.2.3.tar.gz.md5
 
 
-* **2017-09** `gdal-2.2.2.tar.gz`_ `2.2.2 Release Notes`_ (`2.2.2 md5`)_
+* **2017-09** `gdal-2.2.2.tar.gz`_ `2.2.2 Release Notes`_ (`2.2.2 md5`_)
 
 .. _`gdal-2.2.2.tar.gz`: http://download.osgeo.org/gdal/2.2.2/gdal-2.2.2.tar.gz
 .. _`2.2.2 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.2.2/gdal/NEWS
 .. _`2.2.2 md5`: http://download.osgeo.org/gdal/2.2.2/gdal-2.2.2.tar.gz.md5
 
 
-* **2017-06** `gdal-2.2.1.tar.gz`_ `2.2.1 Release Notes`_ (`2.2.1 md5`)_
+* **2017-06** `gdal-2.2.1.tar.gz`_ `2.2.1 Release Notes`_ (`2.2.1 md5`_)
 
 .. _`gdal-2.2.1.tar.gz`: http://download.osgeo.org/gdal/2.2.1/gdal-2.2.1.tar.gz
 .. _`2.2.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.2.1/gdal/NEWS
 .. _`2.2.1 md5`: http://download.osgeo.org/gdal/2.2.1/gdal-2.2.1.tar.gz.md5
 
 
-* **2017-06** `gdal-2.1.4.tar.gz`_ `2.1.4 Release Notes`_ (`2.1.4 md5`)_
+* **2017-06** `gdal-2.1.4.tar.gz`_ `2.1.4 Release Notes`_ (`2.1.4 md5`_)
 
 .. _`gdal-2.1.4.tar.gz`: http://download.osgeo.org/gdal/2.1.4/gdal-2.1.4.tar.gz
 .. _`2.1.4 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.1.4/gdal/NEWS
 .. _`2.1.4 md5`: http://download.osgeo.org/gdal/2.1.4/gdal-2.1.4.tar.gz.md5
 
 
-* **2017-04** `gdal-2.2.0.tar.gz`_ `2.2.0 Release Notes`_ (`2.2.0 md5`)_
+* **2017-04** `gdal-2.2.0.tar.gz`_ `2.2.0 Release Notes`_ (`2.2.0 md5`_)
 
 .. _`gdal-2.2.0.tar.gz`: http://download.osgeo.org/gdal/2.2.0/gdal-2.2.0.tar.gz
 .. _`2.2.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.2.0/gdal/NEWS
 .. _`2.2.0 md5`: http://download.osgeo.org/gdal/2.2.0/gdal-2.2.0.tar.gz.md5
 
 
-* **2017-01** `gdal-2.1.3.tar.gz`_ `2.1.3 Release Notes`_ (`2.1.3 md5`)_
+* **2017-01** `gdal-2.1.3.tar.gz`_ `2.1.3 Release Notes`_ (`2.1.3 md5`_)
 
 .. _`gdal-2.1.3.tar.gz`: http://download.osgeo.org/gdal/2.1.3/gdal-2.1.3.tar.gz
 .. _`2.1.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.1.3/gdal/NEWS
 .. _`2.1.3 md5`: http://download.osgeo.org/gdal/2.1.3/gdal-2.1.3.tar.gz.md5
 
 
-* **2016-10** `gdal-2.1.2.tar.gz`_ `2.1.2 Release Notes`_ (`2.1.2 md5`)_
+* **2016-10** `gdal-2.1.2.tar.gz`_ `2.1.2 Release Notes`_ (`2.1.2 md5`_)
 
 .. _`gdal-2.1.2.tar.gz`: http://download.osgeo.org/gdal/2.1.2/gdal-2.1.2.tar.gz
 .. _`2.1.2 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.1.2/gdal/NEWS
 .. _`2.1.2 md5`: http://download.osgeo.org/gdal/2.1.2/gdal-2.1.2.tar.gz.md5
 
 
-* **2016-07** `gdal-2.1.1.tar.gz`_ `2.1.1 Release Notes`_ (`2.1.1 md5`)_
+* **2016-07** `gdal-2.1.1.tar.gz`_ `2.1.1 Release Notes`_ (`2.1.1 md5`_)
 
 .. _`gdal-2.1.1.tar.gz`: http://download.osgeo.org/gdal/2.1.1/gdal-2.1.1.tar.gz
 .. _`2.1.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.1.1/gdal/NEWS
 .. _`2.1.1 md5`: http://download.osgeo.org/gdal/2.1.1/gdal-2.1.1.tar.gz.md5
 
 
-* **2016-07** `gdal-2.0.3.tar.gz`_ `2.0.3 Release Notes`_ (`2.0.3 md5`)_
+* **2016-07** `gdal-2.0.3.tar.gz`_ `2.0.3 Release Notes`_ (`2.0.3 md5`_)
 
 .. _`gdal-2.0.3.tar.gz`: http://download.osgeo.org/gdal/2.0.3/gdal-2.0.3.tar.gz
 .. _`2.0.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.0.3/gdal/NEWS
 .. _`2.0.3 md5`: http://download.osgeo.org/gdal/2.0.3/gdal-2.0.3.tar.gz.md5
 
 
-* **2016-07** `gdal-1.11.5.tar.gz`_ `1.11.5 Release Notes`_ (`1.11.5 md5`)_
+* **2016-07** `gdal-1.11.5.tar.gz`_ `1.11.5 Release Notes`_ (`1.11.5 md5`_)
 
 .. _`gdal-1.11.5.tar.gz`: http://download.osgeo.org/gdal/1.11.5/gdal-1.11.5.tar.gz
 .. _`1.11.5 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.11.5/gdal/NEWS
 .. _`1.11.5 md5`: http://download.osgeo.org/gdal/1.11.5/gdal-1.11.5.tar.gz.md5
 
 
-* **2016-04** `gdal-2.1.0.tar.gz`_ `2.1.0 Release Notes`_ (`2.1.0 md5`)_
+* **2016-04** `gdal-2.1.0.tar.gz`_ `2.1.0 Release Notes`_ (`2.1.0 md5`_)
 
 .. _`gdal-2.1.0.tar.gz`: http://download.osgeo.org/gdal/2.1.0/gdal-2.1.0.tar.gz
 .. _`2.1.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.1.0/gdal/NEWS
 .. _`2.1.0 md5`: http://download.osgeo.org/gdal/2.1.0/gdal-2.1.0.tar.gz.md5
 
 
-* **2016-01** `gdal-2.0.2.tar.gz`_ `2.0.2 Release Notes`_ (`2.0.2 md5`)_
+* **2016-01** `gdal-2.0.2.tar.gz`_ `2.0.2 Release Notes`_ (`2.0.2 md5`_)
 
 .. _`gdal-2.0.2.tar.gz`: http://download.osgeo.org/gdal/2.0.2/gdal-2.0.2.tar.gz
 .. _`2.0.2 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.0.2/gdal/NEWS
 .. _`2.0.2 md5`: http://download.osgeo.org/gdal/2.0.2/gdal-2.0.2.tar.gz.md5
 
 
-* **2016-01** `gdal-1.11.4.tar.gz`_ `1.11.4 Release Notes`_ (`1.11.4 md5`)_
+* **2016-01** `gdal-1.11.4.tar.gz`_ `1.11.4 Release Notes`_ (`1.11.4 md5`_)
 
 .. _`gdal-1.11.4.tar.gz`: http://download.osgeo.org/gdal/1.11.4/gdal-1.11.4.tar.gz
 .. _`1.11.4 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.11.4/gdal/NEWS
 .. _`1.11.4 md5`: http://download.osgeo.org/gdal/1.11.4/gdal-1.11.4.tar.gz.md5
 
 
-* **2015-09** `gdal-2.0.1.tar.gz`_ `2.0.1 Release Notes`_ (`2.0.1 md5`)_
+* **2015-09** `gdal-2.0.1.tar.gz`_ `2.0.1 Release Notes`_ (`2.0.1 md5`_)
 
 .. _`gdal-2.0.1.tar.gz`: http://download.osgeo.org/gdal/2.0.1/gdal-2.0.1.tar.gz
 .. _`2.0.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.0.1/gdal/NEWS
 .. _`2.0.1 md5`: http://download.osgeo.org/gdal/2.0.1/gdal-2.0.1.tar.gz.md5
 
 
-* **2015-09** `gdal-1.11.3.tar.gz`_ `1.11.3 Release Notes`_ (`1.11.3 md5`)_
+* **2015-09** `gdal-1.11.3.tar.gz`_ `1.11.3 Release Notes`_ (`1.11.3 md5`_)
 
 .. _`gdal-1.11.3.tar.gz`: http://download.osgeo.org/gdal/1.11.3/gdal-1.11.3.tar.gz
 .. _`1.11.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.11.3/gdal/NEWS
 .. _`1.11.3 md5`: http://download.osgeo.org/gdal/1.11.3/gdal-1.11.3.tar.gz.md5
 
 
-* **2015-06** `gdal-2.0.0.tar.gz`_ `2.0.0 Release Notes`_ (`2.0.0 md5`)_
+* **2015-06** `gdal-2.0.0.tar.gz`_ `2.0.0 Release Notes`_ (`2.0.0 md5`_)
 
 .. _`gdal-2.0.0.tar.gz`: http://download.osgeo.org/gdal/2.0.0/gdal-2.0.0.tar.gz
 .. _`2.0.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v2.0.0/gdal/NEWS
 .. _`2.0.0 md5`: http://download.osgeo.org/gdal/2.0.0/gdal-2.0.0.tar.gz.md5
 
 
-* **2015-02** `gdal-1.11.2.tar.gz`_ `1.11.2 Release Notes`_ (`1.11.2 md5`)_
+* **2015-02** `gdal-1.11.2.tar.gz`_ `1.11.2 Release Notes`_ (`1.11.2 md5`_)
 
 .. _`gdal-1.11.2.tar.gz`: http://download.osgeo.org/gdal/1.11.2/gdal-1.11.2.tar.gz
 .. _`1.11.2 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.11.2/gdal/NEWS
 .. _`1.11.2 md5`: http://download.osgeo.org/gdal/1.11.2/gdal-1.11.2.tar.gz.md5
 
 
-* **2014-09** `gdal-1.11.1.tar.gz`_ `1.11.1 Release Notes`_ (`1.11.1 md5`)_
+* **2014-09** `gdal-1.11.1.tar.gz`_ `1.11.1 Release Notes`_ (`1.11.1 md5`_)
 
 .. _`gdal-1.11.1.tar.gz`: http://download.osgeo.org/gdal/1.11.1/gdal-1.11.1.tar.gz
 .. _`1.11.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.11.1/gdal/NEWS
 .. _`1.11.1 md5`: http://download.osgeo.org/gdal/1.11.1/gdal-1.11.1.tar.gz.md5
 
 
-* **2014-04** `gdal-1.11.0.tar.gz`_ `1.11.0 Release Notes`_ (`1.11.0 md5`)_
+* **2014-04** `gdal-1.11.0.tar.gz`_ `1.11.0 Release Notes`_ (`1.11.0 md5`_)
 
 .. _`gdal-1.11.0.tar.gz`: http://download.osgeo.org/gdal/1.11.0/gdal-1.11.0.tar.gz
 .. _`1.11.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.11.0/gdal/NEWS
 .. _`1.11.0 md5`: http://download.osgeo.org/gdal/1.11.0/gdal-1.11.0.tar.gz.md5
 
 
-* **2013-08** `gdal-1.10.1.tar.gz`_ `1.10.1 Release Notes`_ (`1.10.1 md5`)_
+* **2013-08** `gdal-1.10.1.tar.gz`_ `1.10.1 Release Notes`_ (`1.10.1 md5`_)
 
 .. _`gdal-1.10.1.tar.gz`: http://download.osgeo.org/gdal/1.10.1/gdal-1.10.1.tar.gz
 .. _`1.10.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.10.1/gdal/NEWS
 .. _`1.10.1 md5`: http://download.osgeo.org/gdal/1.10.1/gdal-1.10.1.tar.gz.md5
 
 
-* **2013-04** `gdal-1.10.0.tar.gz`_ `1.10.0 Release Notes`_ (`1.10.0 md5`)_
+* **2013-04** `gdal-1.10.0.tar.gz`_ `1.10.0 Release Notes`_ (`1.10.0 md5`_)
 
 .. _`gdal-1.10.0.tar.gz`: http://download.osgeo.org/gdal/1.10.0/gdal-1.10.0.tar.gz
 .. _`1.10.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.10.0/gdal/NEWS
 .. _`1.10.0 md5`: http://download.osgeo.org/gdal/1.10.0/gdal-1.10.0.tar.gz.md5
 
 
-* **2012-10** `gdal-1.9.2.tar.gz`_ `1.9.2 Release Notes`_ (`1.9.2 md5`)_
+* **2012-10** `gdal-1.9.2.tar.gz`_ `1.9.2 Release Notes`_ (`1.9.2 md5`_)
 
 .. _`gdal-1.9.2.tar.gz`: http://download.osgeo.org/gdal/old_releases/gdal-1.9.2.tar.gz
 .. _`1.9.2 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.9.2/gdal/NEWS
 .. _`1.9.2 md5`: http://download.osgeo.org/gdal/old_releases/gdal-1.9.2.tar.gz.md5
 
 
-* **2012-05** `gdal-1.9.1.tar.gz`_ `1.9.1 Release Notes`_ (`1.9.1 md5`)_
+* **2012-05** `gdal-1.9.1.tar.gz`_ `1.9.1 Release Notes`_ (`1.9.1 md5`_)
 
 .. _`gdal-1.9.1.tar.gz`: http://download.osgeo.org/gdal/old_releases/gdal-1.9.1.tar.gz
 .. _`1.9.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.9.1/gdal/NEWS
 .. _`1.9.1 md5`: http://download.osgeo.org/gdal/old_releases/gdal-1.9.1.tar.gz.md5
 
 
-* **2011-12** `gdal-1.9.0.tar.gz`_ `1.9.0 Release Notes`_ (`1.9.0 md5`)_
+* **2011-12** `gdal-1.9.0.tar.gz`_ `1.9.0 Release Notes`_ (`1.9.0 md5`_)
 
 .. _`gdal-1.9.0.tar.gz`: http://download.osgeo.org/gdal/old_releases/gdal-1.9.0.tar.gz
 .. _`1.9.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.9.0/gdal/NEWS
 .. _`1.9.0 md5`: http://download.osgeo.org/gdal/old_releases/gdal-1.9.0.tar.gz.md5
 
 
-* **2011-07** `gdal-1.8.1.tar.gz`_ `1.8.1 Release Notes`_ (`1.8.1 md5`)_
+* **2011-07** `gdal-1.8.1.tar.gz`_ `1.8.1 Release Notes`_ (`1.8.1 md5`_)
 
 .. _`gdal-1.8.1.tar.gz`: http://download.osgeo.org/gdal/old_releases/gdal-1.8.1.tar.gz
 .. _`1.8.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.8.1/gdal/NEWS
 .. _`1.8.1 md5`: http://download.osgeo.org/gdal/old_releases/gdal-1.8.1.tar.gz.md5
 
 
-* **2011-01** `gdal-1.8.0.tar.gz`_ `1.8.0 Release Notes`_ (`1.8.0 md5`)_
+* **2011-01** `gdal-1.8.0.tar.gz`_ `1.8.0 Release Notes`_ (`1.8.0 md5`_)
 
 .. _`gdal-1.8.0.tar.gz`: http://download.osgeo.org/gdal/old_releases/gdal-1.8.0.tar.gz
 .. _`1.8.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.8.0/gdal/NEWS
 .. _`1.8.0 md5`: http://download.osgeo.org/gdal/old_releases/gdal-1.8.0.tar.gz.md5
 
 
-* **2010-11** `gdal-1.7.3.tar.gz`_ `1.7.3 Release Notes`_ (`1.7.3 md5`)_
+* **2010-11** `gdal-1.7.3.tar.gz`_ `1.7.3 Release Notes`_ (`1.7.3 md5`_)
 
 .. _`gdal-1.7.3.tar.gz`: http://download.osgeo.org/gdal/old_releases/gdal-1.7.3.tar.gz
 .. _`1.7.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.7.3/gdal/NEWS
 .. _`1.7.3 md5`: http://download.osgeo.org/gdal/old_releases/gdal-1.7.3.tar.gz.md5
 
-* **2010-04** `gdal-1.7.2.tar.gz`_ `1.7.2 Release Notes`_ (`1.7.2 md5`)_
+* **2010-04** `gdal-1.7.2.tar.gz`_ `1.7.2 Release Notes`_ (`1.7.2 md5`_)
 
 .. _`gdal-1.7.2.tar.gz`: http://download.osgeo.org/gdal/old_releases/gdal-1.7.2.tar.gz
 .. _`1.7.2 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.7.2/gdal/NEWS
 .. _`1.7.2 md5`: http://download.osgeo.org/gdal/old_releases/gdal-1.7.2.tar.gz.md5
 
 
-* **2010-02** `gdal-1.7.1.tar.gz`_ `1.7.1 Release Notes`_ (`1.7.1 md5`)_
+* **2010-02** `gdal-1.7.1.tar.gz`_ `1.7.1 Release Notes`_ (`1.7.1 md5`_)
 
 .. _`gdal-1.7.1.tar.gz`: http://download.osgeo.org/gdal/old_releases/gdal-1.7.1.tar.gz
 .. _`1.7.1 Release Notes`: https://github.com/OSGeo/gdal/blob/v1.7.1/gdal/NEWS
