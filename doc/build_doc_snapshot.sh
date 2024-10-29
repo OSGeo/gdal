@@ -13,7 +13,9 @@ rm -f .doxygen_up_to_date
 rm -rf build/html
 rm -rf build/latex
 make html
-make latexpdf
+
+python3 -m sphinx -T -b latex -d build/doctrees -D language=en source build/latex
+(cd build/latex && (latexmk -r latexmkrc -pdf -f -dvi- -ps- -jobname=gdal -interaction=nonstopmode || test -f gdal.pdf))
 
 rm -rf "${TMPDIR}"
 mkdir ${TMPDIR}
