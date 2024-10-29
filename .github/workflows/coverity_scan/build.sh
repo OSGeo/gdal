@@ -23,6 +23,7 @@ cmake ${GDAL_SOURCE_DIR:=..} \
 /tmp/cov-analysis-linux64/bin/cov-build --dir cov-int make "-j$(nproc)"
 tar czf cov-int.tgz cov-int
 
+apt-get update -y
 apt-get install -y jq
 
 ## Below from https://scan.coverity.com/projects/gdal/builds/new
