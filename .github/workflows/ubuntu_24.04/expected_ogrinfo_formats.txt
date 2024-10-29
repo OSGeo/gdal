@@ -42,7 +42,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   PostgreSQL -vector- (rw+): PostgreSQL/PostGIS
   MySQL -vector- (rw+): MySQL
   OCI -vector- (rw+): Oracle Spatial
-  OpenFileGDB -raster,vector- (rw+v): ESRI FileGDB (*.gdb)
+  OpenFileGDB -raster,vector- (rw+v): ESRI FileGeodatabase (using OpenFileGDB) (*.gdb)
   FileGDB -vector- (rw+): ESRI FileGDB (*.gdb)
   DXF -vector- (rw+v): AutoCAD DXF (*.dxf)
   CAD -raster,vector- (rovs): AutoCAD Driver (*.dwg)

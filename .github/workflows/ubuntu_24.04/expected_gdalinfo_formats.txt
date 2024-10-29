@@ -145,7 +145,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   JPEGXL -raster- (rwv): JPEG-XL (*.jxl)
   GPKG -raster,vector- (rw+vs): GeoPackage (*.gpkg, *.gpkg.zip)
   SQLite -raster,vector- (rw+v): SQLite / Spatialite / RasterLite2 (*.sqlite, *.db)
-  OpenFileGDB -raster,vector- (rw+v): ESRI FileGDB (*.gdb)
+  OpenFileGDB -raster,vector- (rw+v): ESRI FileGeodatabase (using OpenFileGDB) (*.gdb)
   CAD -raster,vector- (rovs): AutoCAD Driver (*.dwg)
   PLSCENES -raster,vector- (ro): Planet Labs Scenes API
   NGW -raster,vector- (rw+s): NextGIS Web
