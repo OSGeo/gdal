@@ -742,6 +742,14 @@ void CopyFileRestartable(const char* pszSource,
 
 }
 
+%rename (MoveFile) wrapper_MoveFile;
+%inline {
+int wrapper_MoveFile(const char* pszSource, const char* pszTarget)
+{
+    return CPLMoveFile(pszTarget, pszSource);
+}
+}
+
 %clear (const char* pszSource);
 %clear (const char* pszTarget);
 
