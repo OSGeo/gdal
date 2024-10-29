@@ -157,7 +157,7 @@ Related issues and PRs
 
 - `GDAL candidate implementation <https://github.com/OSGeo/gdal/pull/10972>`__
 
-- `PROJ RFC-8 Embedding resource files into libproj <https://github.com/OSGeo/PROJ/pull/4274>`__
+- `PROJ RFC-8 Embedding resource files into libproj <https://proj.org/en/latest/community/rfc/rfc-8.html>`__
 
 Voting history
 --------------
