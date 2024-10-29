@@ -4419,7 +4419,7 @@ inline bool ARE_REAL_EQUAL(double dfVal1, double dfVal2, int ulp = 2)
 
 // The generic function above does not work for _Float16 because
 // GDALNumericLimits<float>::epsilon() is the wrong choice
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
 inline bool ARE_REAL_EQUAL(_Float16 hfVal1, _Float16 hfVal2, int ulp = 2)
 {
     // We need to roll our own `abs` because the C++17 standard

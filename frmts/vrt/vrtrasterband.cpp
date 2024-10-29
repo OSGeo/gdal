@@ -620,7 +620,7 @@ CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
     {
         return "nan";
     }
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
     else if (eDataType == GDT_Float16 && dfVal == -6.55e4)
     {
         // To avoid rounding out of the range of _Float16

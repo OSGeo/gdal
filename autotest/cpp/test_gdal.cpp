@@ -365,7 +365,7 @@ TEST_F(test_gdal, GDALAdjustValueToDataType)
                                           &bRounded) == 10000000000.0 &&
                 !bClamped && !bRounded);
 
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
     EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Float16, 0.0, &bClamped,
                                           &bRounded) == 0.0 &&
                 !bClamped && !bRounded);

@@ -2827,13 +2827,14 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
                            nDstPixelStride, nWordCount);
             break;
         case GDT_Float16:
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
             GDALCopyWordsT(pSrcData, nSrcPixelStride,
                            static_cast<_Float16 *>(pDstData), nDstPixelStride,
                            nWordCount);
 #else
             CPLError(CE_Failure, CPLE_AppDefined,
                      "GDALCopyWordsFromT is not available for Float16");
+            CPLAssert(false);
 #endif
             break;
         case GDT_Float32:
@@ -2877,7 +2878,7 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
             }
             break;
         case GDT_CFloat16:
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
             if (bInComplex)
             {
                 GDALCopyWordsComplexT(pSrcData, nSrcPixelStride,
@@ -2894,6 +2895,7 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
 #else
             CPLError(CE_Failure, CPLE_AppDefined,
                      "GDALCopyWordsFromT is not available for CFloat16");
+            CPLAssert(false);
 #endif
             break;
         case GDT_CFloat32:
@@ -3035,12 +3037,13 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
             CASE_DUPLICATE_SIMPLE(GDT_Int32, GInt32)
             CASE_DUPLICATE_SIMPLE(GDT_UInt64, std::uint64_t)
             CASE_DUPLICATE_SIMPLE(GDT_Int64, std::int64_t)
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
             CASE_DUPLICATE_SIMPLE(GDT_Float16, _Float16)
 #else
         case GDT_Float16:
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "GDALReplicateWord is not available for DFloat16");
+                     "GDALReplicateWord is not available for Float16");
+            CPLAssert(false);
             break;
 #endif
             CASE_DUPLICATE_SIMPLE(GDT_Float32, float)
@@ -3063,12 +3066,13 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
 
             CASE_DUPLICATE_COMPLEX(GDT_CInt16, GInt16)
             CASE_DUPLICATE_COMPLEX(GDT_CInt32, GInt32)
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
             CASE_DUPLICATE_COMPLEX(GDT_CFloat16, _Float16)
 #else
         case GDT_CFloat16:
             CPLError(CE_Failure, CPLE_AppDefined,
                      "GDALReplicateWord is not available for CFloat16");
+            CPLAssert(false);
             break;
 #endif
             CASE_DUPLICATE_COMPLEX(GDT_CFloat32, float)
@@ -3560,13 +3564,14 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
                 false, pDstData, eDstType, nDstPixelStride, nWordCount);
             break;
         case GDT_Float16:
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
             GDALCopyWordsFromT<_Float16>(
                 static_cast<const _Float16 *>(pSrcData), nSrcPixelStride, false,
                 pDstData, eDstType, nDstPixelStride, nWordCount);
 #else
             CPLError(CE_Failure, CPLE_AppDefined,
                      "GDALCopyWords64 is not available for Float16");
+            CPLAssert(false);
 #endif
             break;
         case GDT_Float32:
@@ -3590,13 +3595,14 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
                                     nDstPixelStride, nWordCount);
             break;
         case GDT_CFloat16:
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
             GDALCopyWordsFromT<_Float16>(
                 static_cast<const _Float16 *>(pSrcData), nSrcPixelStride, true,
                 pDstData, eDstType, nDstPixelStride, nWordCount);
 #else
             CPLError(CE_Failure, CPLE_AppDefined,
                      "GDALCopyWords64 is not available for CFloat16");
+            CPLAssert(false);
 #endif
             break;
         case GDT_CFloat32:

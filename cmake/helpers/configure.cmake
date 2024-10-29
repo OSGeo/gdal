@@ -43,7 +43,20 @@ check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
 check_type_size("long int" SIZEOF_LONG_INT)
 check_type_size("void*" SIZEOF_VOIDP)
 check_type_size("size_t" SIZEOF_SIZE_T)
-check_type_size("_Float16" SIZEOF__FLOAT16)
+
+# Check whether the type `_Float16` exists, and whether type
+# conversions work (there might be linker problems)
+check_cxx_source_compiles(
+    "
+      int main() {
+        _Float16 h = 1;
+        float f = h;
+        double d = h;
+        _Float16 h1 = f;
+        _Float16 h2 = d;
+      }
+    "
+    HAVE__FLOAT16)
 
 check_function_exists(ctime_r HAVE_CTIME_R)
 check_function_exists(gmtime_r HAVE_GMTIME_R)

@@ -52,7 +52,7 @@ static inline double GetDstValue(double dfVal, double dfDstNoData,
     {
         return dfReplacementDstNodata;
     }
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
     else if (eIntendedDstDT == GDT_Float16 &&
              static_cast<_Float16>(dfVal) == static_cast<_Float16>(dfDstNoData))
     {

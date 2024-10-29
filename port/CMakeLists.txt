@@ -14,6 +14,7 @@ target_public_header(
   cpl_conv.h
   cpl_csv.h
   cpl_error.h
+  cpl_float.h
   cpl_hash_set.h
   cpl_http.h
   cpl_json.h

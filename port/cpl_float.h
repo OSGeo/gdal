@@ -72,7 +72,7 @@ template <typename T> struct GDALNumericLimits : std::numeric_limits<T>
 {
 };
 
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
 template <> struct GDALNumericLimits<_Float16>
 {
     static constexpr bool has_denorm = true;

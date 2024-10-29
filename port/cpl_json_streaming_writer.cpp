@@ -237,7 +237,7 @@ void CPLJSonStreamingWriter::Add(std::uint64_t nVal)
     Print(CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));
 }
 
-#ifdef SIZEOF__FLOAT16
+#ifdef HAVE__FLOAT16
 void CPLJSonStreamingWriter::Add(_Float16 hfVal, int nPrecision)
 {
     EmitCommaIfNeeded();
