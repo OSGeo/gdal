@@ -25,6 +25,7 @@
 #include <climits>
 #include <cmath>
 #include <memory>
+#include <utility>
 
 /**
  * \file ogr_geometry.h
@@ -4234,6 +4235,8 @@ class CPL_DLL OGRGeometryFactory
                                 OGRGeometry **);
     static OGRErr createFromWkt(const char **, const OGRSpatialReference *,
                                 OGRGeometry **);
+    static std::pair<std::unique_ptr<OGRGeometry>, OGRErr>
+    createFromWkt(const char *, const OGRSpatialReference * = nullptr);
 
     /** Deprecated.
      * @deprecated in GDAL 2.3

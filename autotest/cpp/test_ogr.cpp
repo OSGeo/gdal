@@ -4400,21 +4400,16 @@ TEST_F(test_ogr, OGRFeature_SetGeometry)
     poFeatureDefn->Reference();
 
     OGRFeature oFeat(poFeatureDefn);
-    std::unique_ptr<OGRGeometry> poGeom;
-    OGRGeometry *poTmpGeom;
-    ASSERT_EQ(
-        OGRGeometryFactory::createFromWkt("POINT (3 7)", nullptr, &poTmpGeom),
-        OGRERR_NONE);
-    poGeom.reset(poTmpGeom);
+    auto [poGeom, err] = OGRGeometryFactory::createFromWkt("POINT (3 7)");
+    ASSERT_EQ(err, OGRERR_NONE);
+
     ASSERT_EQ(oFeat.SetGeometry(std::move(poGeom)), OGRERR_NONE);
     EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getX(), 3);
     EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getY(), 7);
 
     // set it again to make sure previous feature geometry is freed
-    ASSERT_EQ(
-        OGRGeometryFactory::createFromWkt("POINT (2 8)", nullptr, &poTmpGeom),
-        OGRERR_NONE);
-    poGeom.reset(poTmpGeom);
+    std::tie(poGeom, err) = OGRGeometryFactory::createFromWkt("POINT (2 8)");
+    ASSERT_EQ(err, OGRERR_NONE);
     ASSERT_EQ(oFeat.SetGeometry(std::move(poGeom)), OGRERR_NONE);
     EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getX(), 2);
     EXPECT_EQ(oFeat.GetGeometryRef()->toPoint()->getY(), 8);
@@ -4434,23 +4429,15 @@ TEST_F(test_ogr, OGRFeature_SetGeomField)
 
     // failure
     {
-        std::unique_ptr<OGRGeometry> poGeom;
-        OGRGeometry *poTmpGeom;
-        ASSERT_EQ(OGRGeometryFactory::createFromWkt("POINT (3 7)", nullptr,
-                                                    &poTmpGeom),
-                  OGRERR_NONE);
-        poGeom.reset(poTmpGeom);
+        auto [poGeom, err] = OGRGeometryFactory::createFromWkt("POINT (3 7)");
+        ASSERT_EQ(err, OGRERR_NONE);
         EXPECT_EQ(oFeat.SetGeomField(13, std::move(poGeom)), OGRERR_FAILURE);
     }
 
     // success
     {
-        std::unique_ptr<OGRGeometry> poGeom;
-        OGRGeometry *poTmpGeom;
-        ASSERT_EQ(OGRGeometryFactory::createFromWkt("POINT (3 7)", nullptr,
-                                                    &poTmpGeom),
-                  OGRERR_NONE);
-        poGeom.reset(poTmpGeom);
+        auto [poGeom, err] = OGRGeometryFactory::createFromWkt("POINT (3 7)");
+        ASSERT_EQ(err, OGRERR_NONE);
         EXPECT_EQ(oFeat.SetGeomField(1, std::move(poGeom)), OGRERR_NONE);
     }
 
