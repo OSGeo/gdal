@@ -168,6 +168,7 @@ static CPLErr GDALResampleChunk_Near(const GDALOverviewResampleArgs &args,
 
         case GDT_Int16:
         case GDT_UInt16:
+        case GDT_Float16:
         {
             CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 2);
             return GDALResampleChunk_NearT(
@@ -176,6 +177,7 @@ static CPLErr GDALResampleChunk_Near(const GDALOverviewResampleArgs &args,
         }
 
         case GDT_CInt16:
+        case GDT_CFloat16:
         case GDT_Int32:
         case GDT_UInt32:
         case GDT_Float32:
@@ -2417,6 +2419,7 @@ static CPLErr GDALResampleChunk_Mode(const GDALOverviewResampleArgs &args,
 
         case GDT_Int16:
         case GDT_UInt16:
+        case GDT_Float16:
         {
             CPLAssert(GDALGetDataTypeSizeBytes(args.eWrkDataType) == 2);
             return GDALResampleChunk_ModeT(
@@ -2425,6 +2428,7 @@ static CPLErr GDALResampleChunk_Mode(const GDALOverviewResampleArgs &args,
         }
 
         case GDT_CInt16:
+        case GDT_CFloat16:
         case GDT_Int32:
         case GDT_UInt32:
         {

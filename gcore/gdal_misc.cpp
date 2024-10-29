@@ -224,16 +224,13 @@ GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
                     return eDT;
                 break;
             }
+            // Do not return `GDT_Float16` because that type is not supported everywhere
             case GDT_Float16:
-            {
-                if (GDALIsValueExactAs<_Float16>(dfValue))
-                    return eDT;
-                break;
-            }
             case GDT_Float32:
             {
                 if (GDALIsValueExactAs<float>(dfValue))
-                    return eDT;
+                    return GDT_Float32;
+                ;
                 break;
             }
             case GDT_Float64:
@@ -243,6 +240,7 @@ GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
             case GDT_Unknown:
             case GDT_CInt16:
             case GDT_CInt32:
+            case GDT_CFloat16:
             case GDT_CFloat32:
             case GDT_CFloat64:
             case GDT_TypeCount:
@@ -1060,6 +1058,12 @@ bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
             return GDALIsValueExactAs<uint64_t>(dfValue);
         case GDT_Int64:
             return GDALIsValueExactAs<int64_t>(dfValue);
+        case GDT_Float16:
+#ifdef HAVE__FLOAT16
+            return GDALIsValueExactAs<_Float16>(dfValue);
+#else
+            return false;
+#endif
         case GDT_Float32:
             return GDALIsValueExactAs<float>(dfValue);
         case GDT_Float64:
@@ -1067,6 +1071,7 @@ bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
         case GDT_Unknown:
         case GDT_CInt16:
         case GDT_CInt32:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
         case GDT_TypeCount:

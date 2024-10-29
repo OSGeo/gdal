@@ -473,11 +473,13 @@ inline OGRFieldType GetOGRFieldType(const GDALDataType gdal_type)
         case GDT_Int64:
             return OFTInteger64;
         case GDT_UInt64:  // Questionable
+        case GDT_Float16:
         case GDT_Float32:
         case GDT_Float64:
             return OFTReal;
         case GDT_CInt16:
         case GDT_CInt32:
+        case GDT_CFloat16:
         case GDT_CFloat32:
         case GDT_CFloat64:
         case GDT_Unknown:

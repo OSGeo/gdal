@@ -552,7 +552,6 @@ static inline char *CPL_afl_friendly_strstr(const char *haystack,
 #endif
 /*! @endcond */
 
-#ifndef GDAL_COMPILATION
 /*! @cond Doxygen_Suppress */
 /* -------------------------------------------------------------------- */
 /*      Handle isnan() and isinf().  Note that isinf() and isnan()      */
@@ -700,16 +699,17 @@ extern "C++"
 #define CPLIsFinite(x) (!isnan(x) && !isinf(x))
 #elif defined(__sun__)
 #include <ieeefp.h>
+#define CPLIsNan(x) isnan(x)
 #define CPLIsInf(x) (!finite(x) && !isnan(x))
 #define CPLIsFinite(x) finite(x)
 #else
+#define CPLIsNan(x) ((x) != (x))
 #define CPLIsInf(x) (0)
 #define CPLIsFinite(x) (!isnan(x))
 #endif
 #endif
 #endif
 /*! @endcond */
-#endif  // GDAL_COMPILATION
 
 /*! @cond Doxygen_Suppress */
 /*---------------------------------------------------------------------
