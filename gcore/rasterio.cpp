@@ -318,6 +318,17 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             {
                 // Type to type conversion.
 
+#ifndef HAVE__FLOAT16
+                if (eBufType == GDT_Float16 || eBufType == GDT_CFloat16 ||
+                    eDataType == GDT_Float16 || eDataType == GDT_CFloat16)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "GDALRasterBand::IRasterIO is not available for "
+                             "Float16 or CFLoat16");
+                    return CE_Failure;
+                }
+#endif
+
                 if (eRWFlag == GF_Read)
                     GDALCopyWords(
                         pabySrcBlock + nSrcByteOffset, eDataType, nBandDataSize,
@@ -515,6 +526,20 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     else
                     {
                         /* type to type conversion */
+
+#ifndef HAVE__FLOAT16
+                        if (eBufType == GDT_Float16 ||
+                            eBufType == GDT_CFloat16 ||
+                            eDataType == GDT_Float16 ||
+                            eDataType == GDT_CFloat16)
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "GDALRasterBand::IRasterIO is not "
+                                     "available for Float16 or CFLoat16");
+                            return CE_Failure;
+                        }
+#endif
+
                         if (eRWFlag == GF_Read)
                             GDALCopyWords(
                                 pabySrcBlock + iSrcOffset, eDataType,
@@ -701,6 +726,17 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 {
                     /* type to type conversion ... ouch, this is expensive way
                     of handling single words */
+
+#ifndef HAVE__FLOAT16
+                    if (eBufType == GDT_Float16 || eBufType == GDT_CFloat16 ||
+                        eDataType == GDT_Float16 || eDataType == GDT_CFloat16)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "GDALRasterBand::IRasterIO is not available "
+                                 "for Float16 or CFLoat16");
+                        return CE_Failure;
+                    }
+#endif
 
                     GDALCopyWords(static_cast<GByte *>(pData) + iBufOffset,
                                   eBufType, 0, pabyDstBlock + iDstOffset,
@@ -912,6 +948,20 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     else
                     {
                         // Type to type conversion ...
+
+#ifndef HAVE__FLOAT16
+                        if (eBufType == GDT_Float16 ||
+                            eBufType == GDT_CFloat16 ||
+                            eDataType == GDT_Float16 ||
+                            eDataType == GDT_CFloat16)
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "GDALRasterBand::IRasterIO is not "
+                                     "available for Float16 or CFLoat16");
+                            return CE_Failure;
+                        }
+#endif
+
                         GPtrDiff_t iSrcOffset =
                             (nDiffX + iSrcOffsetCst) * nBandDataSize;
                         GDALCopyWords(pabySrcBlock + iSrcOffset, eDataType, 0,
@@ -2818,9 +2868,8 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
                            static_cast<_Float16 *>(pDstData), nDstPixelStride,
                            nWordCount);
 #else
-            CPLError(CE_Failure, CPLE_AppDefined,
+            CPLError(CE_Fatal, CPLE_AppDefined,
                      "GDALCopyWordsFromT is not available for Float16");
-            CPLAssert(false);
 #endif
             break;
         case GDT_Float32:
@@ -2879,9 +2928,8 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
                                          nDstPixelStride, nWordCount);
             }
 #else
-            CPLError(CE_Failure, CPLE_AppDefined,
+            CPLError(CE_Fatal, CPLE_AppDefined,
                      "GDALCopyWordsFromT is not available for CFloat16");
-            CPLAssert(false);
 #endif
             break;
         case GDT_CFloat32:
@@ -3027,9 +3075,8 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
             CASE_DUPLICATE_SIMPLE(GDT_Float16, _Float16)
 #else
         case GDT_Float16:
-            CPLError(CE_Failure, CPLE_AppDefined,
+            CPLError(CE_Fatal, CPLE_AppDefined,
                      "GDALReplicateWord is not available for Float16");
-            CPLAssert(false);
             break;
 #endif
             CASE_DUPLICATE_SIMPLE(GDT_Float32, float)
@@ -3056,9 +3103,8 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
             CASE_DUPLICATE_COMPLEX(GDT_CFloat16, _Float16)
 #else
         case GDT_CFloat16:
-            CPLError(CE_Failure, CPLE_AppDefined,
+            CPLError(CE_Fatal, CPLE_AppDefined,
                      "GDALReplicateWord is not available for CFloat16");
-            CPLAssert(false);
             break;
 #endif
             CASE_DUPLICATE_COMPLEX(GDT_CFloat32, float)
@@ -3555,9 +3601,8 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
                 static_cast<const _Float16 *>(pSrcData), nSrcPixelStride, false,
                 pDstData, eDstType, nDstPixelStride, nWordCount);
 #else
-            CPLError(CE_Failure, CPLE_AppDefined,
+            CPLError(CE_Fatal, CPLE_AppDefined,
                      "GDALCopyWords64 is not available for Float16");
-            CPLAssert(false);
 #endif
             break;
         case GDT_Float32:
@@ -3586,9 +3631,8 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
                 static_cast<const _Float16 *>(pSrcData), nSrcPixelStride, true,
                 pDstData, eDstType, nDstPixelStride, nWordCount);
 #else
-            CPLError(CE_Failure, CPLE_AppDefined,
+            CPLError(CE_Fatal, CPLE_AppDefined,
                      "GDALCopyWords64 is not available for CFloat16");
-            CPLAssert(false);
 #endif
             break;
         case GDT_CFloat32:

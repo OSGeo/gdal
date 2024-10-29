@@ -48,6 +48,11 @@ check_type_size("size_t" SIZEOF_SIZE_T)
 # conversions work (there might be linker problems)
 check_cxx_source_compiles(
     "
+      // Make sure that the Intel compiler really supports _Float16
+      template <typename> struct s {};
+      template <> struct s<_Float16> {};
+      s<_Float16> s1;
+
       int main() {
         _Float16 h = 1;
         float f = h;

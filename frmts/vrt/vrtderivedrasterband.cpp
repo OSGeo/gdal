@@ -925,6 +925,15 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     {
         double dfWriteValue = m_dfNoDataValue;
 
+#ifndef HAVE__FLOAT16
+        if (eBufType == GDT_Float16 || eBufType == GDT_CFloat16)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "VRTDerivedRasterBand::IRasterIO is not available for "
+                     "Float16 or CFLoat16");
+            return CE_Failure;
+        }
+#endif
         for (int iLine = 0; iLine < nBufYSize; iLine++)
         {
             GDALCopyWords(&dfWriteValue, GDT_Float64, 0,
@@ -1343,6 +1352,16 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         if (pabyTmpBuffer)
         {
             // Copy numpy destination array to user buffer
+#ifndef HAVE__FLOAT16
+            if (eBufType == GDT_Float16 || eBufType == GDT_CFloat16 ||
+                eDataType == GDT_Float16 || eDataType == GDT_CFloat16)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "VRTDerivedRasterBand::IRasterIO is not available for "
+                         "Float16 or CFLoat16");
+                return CE_Failure;
+            }
+#endif
             for (int iY = 0; iY < nBufYSize; iY++)
             {
                 size_t nSrcOffset =

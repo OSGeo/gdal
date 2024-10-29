@@ -1113,11 +1113,19 @@ GetGDALDataTypeTupleValues()
     for (GDALDataType eIn = GDT_Byte; eIn < GDT_TypeCount;
          eIn = static_cast<GDALDataType>(eIn + 1))
     {
+#ifndef HAVE__FLOAT16
+        if (eIn == GDT_Float16 || eIn == GDT_CFloat16)
+            continue;
+#endif
         if (GDALDataTypeIsComplex(eIn))
             continue;
         for (GDALDataType eOut = GDT_Byte; eOut < GDT_TypeCount;
              eOut = static_cast<GDALDataType>(eOut + 1))
         {
+#ifndef HAVE__FLOAT16
+            if (eOut == GDT_Float16 || eOut == GDT_CFloat16)
+                continue;
+#endif
             if (GDALDataTypeIsComplex(eOut))
                 continue;
             ret.emplace_back(std::make_tuple(eIn, eOut));

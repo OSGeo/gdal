@@ -785,16 +785,25 @@ def test_vrtderived_12():
             cs = ds.GetRasterBand(1).Checksum()
         # CInt16/CInt32/CFloat16 do not map to native numpy types
         if dt == "CInt16" or dt == "CInt32" or dt == "CFloat16":
-            expected_cs = -1  # error
+            expected_cs = [-1]  # error
+        elif dt == "Float16":
+            # Might or might not be supported by GDAL
+            expected_cs = [-1, 100]
         else:
-            expected_cs = 100
-        if cs != expected_cs:
+            expected_cs = [100]
+        if cs not in expected_cs:
             print(dt)
             print(gdal.GetLastErrorMsg())
-            pytest.fail(
-                "invalid checksum, datatype %s, have %d, expected %d"
-                % (dt, cs, expected_cs)
-            )
+            if len(expected_cs) == 1:
+                pytest.fail(
+                    "invalid checksum, datatype %s, have %d, expected %d"
+                    % (dt, cs, expected_cs[0])
+                )
+            else:
+                pytest.fail(
+                    "invalid checksum, datatype %s, have %d, expected one of [%d, %d]"
+                    % (dt, cs, expected_cs[0], expected_cs[1])
+                )
 
     # Same for SourceTransferType
     for dt in ["CInt16", "CInt32", "CFloat16"]:
@@ -1059,7 +1068,14 @@ def identity(in_ar, out_ar, *args, **kwargs):
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
         with gdal.Open(vrt_xml) as vrt_ds:
             arr = vrt_ds.ReadAsArray()
-            if dtype not in {gdal.GDT_CInt16, gdal.GDT_CInt32, gdal.GDT_CFloat16}:
+            # The complex int/float types are not available in numpy.
+            # Float16 may or may not be supported by GDAL.
+            if dtype not in {
+                gdal.GDT_CInt16,
+                gdal.GDT_CInt32,
+                gdal.GDT_Float16,
+                gdal.GDT_CFloat16,
+            }:
                 assert arr[0, 0] == 1
             assert vrt_ds.GetRasterBand(1).DataType == dtype
 
