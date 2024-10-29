@@ -339,6 +339,13 @@ MAIN_START(argc, argv)
         }
     }
 
+    if (padfScaleMin == nullptr || padfScaleMax == nullptr)
+    {
+        fprintf(stderr, "-equalize or -config filename command line options "
+                        "must be specified.\n");
+        Usage();
+    }
+
     /* -------------------------------------------------------------------- */
     /*      If there is no destination, just report the scaling values      */
     /*      and luts.                                                       */
@@ -352,9 +359,8 @@ MAIN_START(argc, argv)
         for (iBand = 0; iBand < nBandCount; iBand++)
         {
             fprintf(fpConfig, "%d:Band ", iBand + 1);
-            if (padfScaleMin != nullptr)
-                fprintf(fpConfig, "%g:ScaleMin %g:ScaleMax ",
-                        padfScaleMin[iBand], padfScaleMax[iBand]);
+            fprintf(fpConfig, "%g:ScaleMin %g:ScaleMax ", padfScaleMin[iBand],
+                    padfScaleMax[iBand]);
 
             if (papanLUTs)
             {
@@ -370,13 +376,6 @@ MAIN_START(argc, argv)
             fclose(fpConfig);
 
         exit(0);
-    }
-
-    if (padfScaleMin == nullptr || padfScaleMax == nullptr)
-    {
-        fprintf(stderr, "-equalize or -config filename command line options "
-                        "must be specified.\n");
-        exit(1);
     }
 
     /* ==================================================================== */

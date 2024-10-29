@@ -144,7 +144,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   STACIT -raster- (rovs): Spatio-Temporal Asset Catalog Items
   NSIDCbin -raster- (rov): NSIDC Sea Ice Concentrations binary (.bin) (*.bin)
   GPKG -raster,vector- (rw+vs): GeoPackage (*.gpkg, *.gpkg.zip)
-  OpenFileGDB -raster,vector- (rw+v): ESRI FileGDB (*.gdb)
+  OpenFileGDB -raster,vector- (rw+v): ESRI FileGeodatabase (using OpenFileGDB) (*.gdb)
   CAD -raster,vector- (rovs): AutoCAD Driver (*.dwg)
   PLSCENES -raster,vector- (ro): Planet Labs Scenes API
   NGW -raster,vector- (rw+s): NextGIS Web

@@ -688,13 +688,13 @@ static std::unique_ptr<OGRGeometry> LoadGeometry(const std::string &osDS,
                                  "should be manually inspected.",
                                  poFeat->GetFID(), osDS.c_str());
 
-                        oGC.addGeometryDirectly(poValid.release());
+                        oGC.addGeometry(std::move(poValid));
                     }
                     else
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Geometry of feature " CPL_FRMT_GIB " of %s "
-                                 "is invalid, and could not been made valid.",
+                                 "is invalid, and could not be made valid.",
                                  poFeat->GetFID(), osDS.c_str());
                         oGC.empty();
                         break;
@@ -702,7 +702,7 @@ static std::unique_ptr<OGRGeometry> LoadGeometry(const std::string &osDS,
                 }
                 else
                 {
-                    oGC.addGeometryDirectly(poSrcGeom.release());
+                    oGC.addGeometry(std::move(poSrcGeom));
                 }
             }
         }

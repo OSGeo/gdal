@@ -218,6 +218,8 @@ jobs:
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3.8/site-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        # Test fix for https://github.com/conda-forge/gdal-feedstock/issues/995
+        PYTHONWARNINGS="error" PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3.8/site-packages python3 -c "from osgeo import gdal"
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3.8/site-packages python3 $GITHUB_WORKSPACE/scripts/check_doc.py
     - name: CMake with rpath
       run: |
@@ -431,7 +433,7 @@ jobs:
             cfitsio freexl geotiff libjpeg-turbo libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd cryptopp cgal doxygen librttopo libkml openssl xz \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc libarchive \
-            arrow-cpp pyarrow libaec libheif libavif cmake
+            arrow-cpp pyarrow libaec libheif libavif cmake fsspec
     - name: Check CMake version
       shell: bash -l {0}
       run: |

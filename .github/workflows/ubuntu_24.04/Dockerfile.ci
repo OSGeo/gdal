@@ -158,3 +158,25 @@ RUN python3 -m pip install -U --break-system-packages -r /tmp/requirements.txt
 # cfchecker requires udunits2
 RUN apt-get install -y --allow-unauthenticated libudunits2-0 libudunits2-data
 RUN python3 -m pip install --break-system-packages cfchecker
+
+RUN python3 -m pip install --break-system-packages fsspec
+
+# Manually install ADBC packages from Ubuntu 22.04 as there are no 24.04 packages at time of writing.
+RUN curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-manager102_14-1_amd64.deb \
+    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-manager-dev_14-1_amd64.deb \
+    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-sqlite102_14-1_amd64.deb \
+    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-sqlite-dev_14-1_amd64.deb \
+    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-snowflake102_14-1_amd64.deb \
+    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-snowflake-dev_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-manager102_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-manager-dev_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-sqlite102_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-sqlite-dev_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-snowflake102_14-1_amd64.deb \
+    && dpkg -i libadbc-driver-snowflake-dev_14-1_amd64.deb
+
+# Install libduckdb
+RUN curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/v1.1.2/libduckdb-linux-amd64.zip \
+    && unzip libduckdb-linux-amd64.zip libduckdb.so \
+    && mv libduckdb.so /usr/lib/x86_64-linux-gnu \
+    && rm -f libduckdb-linux-amd64.zip

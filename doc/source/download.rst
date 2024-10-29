@@ -27,7 +27,13 @@ Current Release
 Past Releases
 .............
 
-Links to :ref:`download_past` are also available.
+.. only:: html
+
+    Links to :ref:`download_past` are also available.
+
+.. only:: not html
+
+    Links to `past releases <https://gdal.org/en/latest/download_past.html>`__ are also available.
 
 .. _source:
 

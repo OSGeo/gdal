@@ -366,7 +366,7 @@ static void InvertGeometries(GDALDatasetH hDstDS,
     double adfGeoTransform[6] = {};
     GDALGetGeoTransform(hDstDS, adfGeoTransform);
 
-    OGRLinearRing *poUniverseRing = new OGRLinearRing();
+    auto poUniverseRing = std::make_unique<OGRLinearRing>();
 
     poUniverseRing->addPoint(
         adfGeoTransform[0] + -2 * adfGeoTransform[1] + -2 * adfGeoTransform[2],
@@ -391,9 +391,9 @@ static void InvertGeometries(GDALDatasetH hDstDS,
         adfGeoTransform[0] + -2 * adfGeoTransform[1] + -2 * adfGeoTransform[2],
         adfGeoTransform[3] + -2 * adfGeoTransform[4] + -2 * adfGeoTransform[5]);
 
-    OGRPolygon *poUniversePoly = new OGRPolygon();
-    poUniversePoly->addRingDirectly(poUniverseRing);
-    poInvertMP->addGeometryDirectly(poUniversePoly);
+    auto poUniversePoly = std::make_unique<OGRPolygon>();
+    poUniversePoly->addRing(std::move(poUniverseRing));
+    poInvertMP->addGeometry(std::move(poUniversePoly));
 
     bool bFoundNonPoly = false;
     // If we have GEOS, use it to "subtract" each polygon from the universe
@@ -434,6 +434,9 @@ static void InvertGeometries(GDALDatasetH hDstDS,
         return;
     }
 
+    OGRPolygon &hUniversePoly =
+        *poInvertMP->getGeometryRef(poInvertMP->getNumGeometries() - 1);
+
     /* -------------------------------------------------------------------- */
     /*      If we don't have GEOS, add outer rings of polygons as inner     */
     /*      rings of poUniversePoly and inner rings as sub-polygons. Note   */
@@ -460,15 +463,18 @@ static void InvertGeometries(GDALDatasetH hDstDS,
         }
 
         const auto ProcessPoly =
-            [poUniversePoly, poInvertMP](OGRPolygon *poPoly)
+            [&hUniversePoly, poInvertMP](OGRPolygon *poPoly)
         {
             for (int i = poPoly->getNumInteriorRings() - 1; i >= 0; --i)
             {
-                auto poNewPoly = new OGRPolygon();
-                poNewPoly->addRingDirectly(poPoly->stealInteriorRing(i));
-                poInvertMP->addGeometryDirectly(poNewPoly);
+                auto poNewPoly = std::make_unique<OGRPolygon>();
+                std::unique_ptr<OGRLinearRing> poRing(
+                    poPoly->stealInteriorRing(i));
+                poNewPoly->addRing(std::move(poRing));
+                poInvertMP->addGeometry(std::move(poNewPoly));
             }
-            poUniversePoly->addRingDirectly(poPoly->stealExteriorRing());
+            std::unique_ptr<OGRLinearRing> poShell(poPoly->stealExteriorRing());
+            hUniversePoly.addRing(std::move(poShell));
         };
 
         if (eGType == wkbPolygon)

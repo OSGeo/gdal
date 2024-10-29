@@ -39,7 +39,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   PGeo -vector- (ro): ESRI Personal GeoDatabase (*.mdb)
   MSSQLSpatial -vector- (rw+): Microsoft SQL Server Spatial Database (BCP)
   PostgreSQL -vector- (rw+): PostgreSQL/PostGIS
-  OpenFileGDB -raster,vector- (rw+v): ESRI FileGDB (*.gdb)
+  OpenFileGDB -raster,vector- (rw+v): ESRI FileGeodatabase (using OpenFileGDB) (*.gdb)
   DXF -vector- (rw+v): AutoCAD DXF (*.dxf)
   CAD -raster,vector- (rovs): AutoCAD Driver (*.dwg)
   FlatGeobuf -vector- (rw+v): FlatGeobuf (*.fgb)
@@ -77,6 +77,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:update, v:virtual-I/O s:subda
   PMTiles -vector- (rw+v): ProtoMap Tiles (*.pmtiles)
   JSONFG -vector- (rw+v): OGC Features and Geometries JSON (*.json)
   MiraMonVector -vector- (rw+v): MiraMon Vectors (.pol, .arc, .pnt) (*.pol, *.arc, *.pnt)
+  ADBC -vector- (ro): Arrow Database Connectivity
   TIGER -vector- (rov): U.S. Census TIGER/Line
   AVCBin -vector- (rov): Arc/Info Binary Coverage
   AVCE00 -vector- (rov): Arc/Info E00 (ASCII) Coverage (*.e00)

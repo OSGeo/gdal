@@ -453,6 +453,8 @@ class GMLASConfiguration
     void Finalize();
 
     static CPLString GetBaseCacheDirectory();
+
+    static std::string GetDefaultConfFile(bool &bUnlinkAfterUse);
 };
 
 /************************************************************************/
@@ -1374,6 +1376,13 @@ class OGRGMLASDataSource final : public GDALDataset
     // Pointers are also included in m_apoLayers
     std::vector<OGRGMLASLayer *> m_apoSWEDataArrayLayersRef{};
 
+    // Path to gmlasconf.xml. It is a /vsimem temporary file if
+    // m_bUnlinkConfigFileAfterUse is set.
+    std::string m_osConfigFile{};
+
+    // Whether m_osConfigFile should be removed at closing.
+    bool m_bUnlinkConfigFileAfterUse = false;
+
     void TranslateClasses(OGRGMLASLayer *poParentLayer,
                           const GMLASFeatureClass &oFC);
 
@@ -1393,6 +1402,8 @@ class OGRGMLASDataSource final : public GDALDataset
 
   public:
     OGRGMLASDataSource();
+
+    ~OGRGMLASDataSource();
 
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;

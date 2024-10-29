@@ -208,6 +208,14 @@ def get_gdaldem_path():
 #
 
 
+def get_gdalenhance_path():
+    return get_cli_utility_path("gdalenhance")
+
+
+###############################################################################
+#
+
+
 def get_gdal_rasterize_path():
     return get_cli_utility_path("gdal_rasterize")
 

@@ -50,6 +50,7 @@ Raster programs
    gdalbuildvrt
    gdalcompare
    gdaldem
+   gdalenhance
    gdalinfo
    gdallocationinfo
    gdalmanage
@@ -89,6 +90,7 @@ Raster programs
     - :ref:`gdalbuildvrt`: Builds a VRT from a list of datasets.
     - :ref:`gdalcompare`: Compare two images.
     - :ref:`gdaldem`: Tools to analyze and visualize DEMs.
+    - :ref:`gdalenhance`: Enhance an image with LUT-based contrast enhancement
     - :ref:`gdalinfo`: Lists information about a raster dataset.
     - :ref:`gdallocationinfo`: Raster query tool
     - :ref:`gdalmanage`: Identify, delete, rename and copy raster data files.

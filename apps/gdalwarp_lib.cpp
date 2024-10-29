@@ -2552,8 +2552,8 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         {
             CPLString osMsg;
             osMsg.Printf("Processing %s [%d/%d]",
-                         GDALGetDescription(pahSrcDS[iSrc]), iSrc + 1,
-                         nSrcCount);
+                         CPLGetFilename(GDALGetDescription(pahSrcDS[iSrc])),
+                         iSrc + 1, nSrcCount);
             return pfnExternalProgress((iSrc + dfComplete) / nSrcCount,
                                        osMsg.c_str(), pExternalProgressData);
         }
@@ -3427,7 +3427,7 @@ static CPLErr LoadCutline(const std::string &osCutlineDSNameOrWKT,
         OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
 
         if (eType == wkbPolygon)
-            poMultiPolygon->addGeometryDirectly(poGeom.release());
+            poMultiPolygon->addGeometry(std::move(poGeom));
         else if (eType == wkbMultiPolygon)
         {
             for (const auto *poSubGeom : poGeom->toMultiPolygon())
@@ -5401,7 +5401,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
     {
         const double dfCutlineBlendDist = CPLAtof(CSLFetchNameValueDef(
             *ppapszWarpOptions, "CUTLINE_BLEND_DIST", "0"));
-        OGRLinearRing *poRing = new OGRLinearRing();
+        auto poRing = std::make_unique<OGRLinearRing>();
         poRing->addPoint(-dfCutlineBlendDist, -dfCutlineBlendDist);
         poRing->addPoint(-dfCutlineBlendDist,
                          dfCutlineBlendDist + poSrcDS->GetRasterYSize());
@@ -5411,7 +5411,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
                          -dfCutlineBlendDist);
         poRing->addPoint(-dfCutlineBlendDist, -dfCutlineBlendDist);
         OGRPolygon oSrcDSFootprint;
-        oSrcDSFootprint.addRingDirectly(poRing);
+        oSrcDSFootprint.addRing(std::move(poRing));
         OGREnvelope sSrcDSEnvelope;
         oSrcDSFootprint.getEnvelope(&sSrcDSEnvelope);
         OGREnvelope sCutlineEnvelope;

@@ -19,6 +19,7 @@ acl
 ACL
 actinia
 ActiveX
+adbc
 addalpha
 addCurve
 addfields
@@ -369,6 +370,7 @@ cid
 CInt
 circularstrings
 ClampRequests
+clang
 ClassificationCode
 Clayers
 CleanTimeout
@@ -1018,6 +1020,7 @@ GDALThreadLocalDatasetCache
 gdaltindex
 gdaltransform
 gdalvirtualmem
+gdalvsi
 gdalwarp
 gdalwmscache
 gdb
@@ -3455,6 +3458,7 @@ vsiaz
 vsicached
 vsicrypt
 vsicurl
+VSIFile
 VSIFOpen
 vsigs
 vsigz

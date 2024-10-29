@@ -14,10 +14,14 @@ add_gdal_driver(
   NO_SHARED_SYMBOL_WITH_CORE
 )
 
-set(GDAL_DATA_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/pds4_template.xml
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/vicar.json
-)
+
+if (NOT USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    set(GDAL_DATA_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/data/vicar.json
+        ${CMAKE_CURRENT_SOURCE_DIR}/data/pds4_template.xml
+    )
+endif()
+
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}
   APPEND
@@ -38,6 +42,13 @@ target_include_directories(
 if (GDAL_ENABLE_DRIVER_PDS_PLUGIN)
   target_compile_definitions(gdal_PDS PRIVATE -DPDS_PLUGIN)
 endif ()
+
+if (EMBED_RESOURCE_FILES)
+    add_driver_embedded_resources(gdal_PDS GDAL_ENABLE_DRIVER_PDS_PLUGIN embedded_resources.c)
+endif()
+if (USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    target_compile_definitions(gdal_PDS PRIVATE USE_ONLY_EMBEDDED_RESOURCE_FILES)
+endif()
 
 # Internal libs first
 if (GDAL_USE_JSONC_INTERNAL)
