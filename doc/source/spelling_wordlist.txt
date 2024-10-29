@@ -19,6 +19,7 @@ acl
 ACL
 actinia
 ActiveX
+adbc
 addalpha
 addCurve
 addfields
