@@ -165,7 +165,6 @@ if (BUILD_APPS)
   add_executable(gdaltorture EXCLUDE_FROM_ALL gdaltorture.cpp)
   add_executable(gdal2ogr EXCLUDE_FROM_ALL gdal2ogr.c)
   add_executable(gdalasyncread EXCLUDE_FROM_ALL gdalasyncread.cpp)
-  add_executable(gdalwarpsimple EXCLUDE_FROM_ALL gdalwarpsimple.c)
   add_executable(multireadtest EXCLUDE_FROM_ALL multireadtest.cpp)
   if(NOT MSVC AND CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(multireadtest PRIVATE ${CMAKE_THREAD_LIBS_INIT})
@@ -180,7 +179,6 @@ if (BUILD_APPS)
           gdalasyncread
           gdaltorture
           gdalflattenmask
-          gdalwarpsimple
           multireadtest
           test_ogrsf
           testreprojmulti)
