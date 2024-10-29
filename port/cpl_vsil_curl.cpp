@@ -189,10 +189,6 @@ static void VSICURLReadGlobalEnvVariables()
                         nCacheSize);
                 }
             }
-            else
-            {
-                nCacheSize = CACHE_SIZE_DEFAULT;
-            }
 
             const auto nMaxRAM = CPLGetUsablePhysicalRAM();
             const auto nMinVal = DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY;
