@@ -3345,3 +3345,14 @@ def test_pdf_iso32000_esri_as_epsg():
     assert sr.GetAuthorityName(None) == "ESRI"
     assert sr.GetAuthorityCode(None) == "102422"
     assert gdal.GetLastErrorMsg() == ""
+
+
+###############################################################################
+# Test bugfix for https://issues.oss-fuzz.com/issues/376126833
+
+
+@pytest.mark.skipif(not have_read_support(), reason="no read support available")
+def test_pdf_iso32000_invalid_srs():
+
+    # Just test that this does not crash
+    gdal.Open("data/pdf/invalid_srs.pdf")
