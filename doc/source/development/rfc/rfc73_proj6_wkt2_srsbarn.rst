@@ -253,7 +253,7 @@ Alternatively the OSR_WKT_FORMAT configuration option can be used to
 modify the WKT version used by exportToWk() (when no explicit version is
 passed in the options of exportToWkt())
 
-The gdalinfo, ogrinfo and gdalsrsinfo utililies will default to
+The gdalinfo, ogrinfo and gdalsrsinfo utilities will default to
 outputting WKT2:2018
 
 Axis order issues

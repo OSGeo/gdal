@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2018, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 
@@ -66,7 +50,15 @@ def test_ogr_oapif_errors():
     handler = webserver.SequentialHandler()
     handler.add("GET", "/oapif/collections", 404)
     with webserver.install_http_handler(handler):
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match="HTTP error code : 404"):
+            ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/oapif/collections", 404, {}, "unavailable resource")
+    with webserver.install_http_handler(handler):
+        with pytest.raises(
+            Exception, match="HTTP error code : 404, unavailable resource"
+        ):
             ogr.Open("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port)
 
     # No Content-Type
@@ -2191,3 +2183,82 @@ def test_ogr_oapif_initial_request_page_size():
     )
     with webserver.install_http_handler(handler):
         assert lyr.GetLayerDefn().GetFieldCount() == 1
+
+
+def test_ogr_oapif_datetime_open_option():
+    """Test DATETIME open option"""
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections",
+        200,
+        {"Content-Type": "application/json"},
+        '{ "collections" : [ { "name": "foo" }] }',
+    )
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "http://localhost:%d/oapif" % gdaltest.webserver_port,
+            gdal.OF_VECTOR,
+            open_options=["DATETIME=2011-01-03T12:31:00Z"],
+            allowed_drivers=["OAPIF"],
+        )
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    _add_dummy_root_and_api_pages(handler)
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=20",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }
+                ] }""",
+    )
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=1000&datetime=2011-01-03T12:31:00Z",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "bar": "baz"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        assert lyr.GetFeatureCount() == 2
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=1000&datetime=2011-01-03T12:31:00Z",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        f = lyr.GetNextFeature()
+        assert f["foo"] == "bar"

@@ -11,7 +11,7 @@ S102 -- S-102 Bathymetric Surface Product
 .. versionadded:: 3.8
 
 This driver provides read-only support for bathymetry data in the S-102 format,
-which is a specific product profile in an HDF5 file
+which is a specific product profile in an HDF5 file.
 
 S-102 files have two image bands representing depth (band 1),
 uncertainty (band 2) values for each cell in a raster grid area.
@@ -24,6 +24,11 @@ to ``ELEVATION`` to expose depth values as elevation values, by negating their s
 Georeferencing is reported.
 
 Nodata, minimum and maximum values for each band are also reported.
+
+Supported versions of the specification are S-102 v2.1, v2.2 and v3.0
+(support for v3.0 spatial metadata added in GDAL 3.10. Multiple grids per
+file, as permitted by S-102 v3.0, are not supported currently. Only the
+first one will be reported.)
 
 Driver capabilities
 -------------------
@@ -63,12 +68,16 @@ The following open options are supported:
 Spatial metadata support
 ------------------------
 
-Starting with GDAL 3.9, GDAL can handle QualityOfSurvey spatial metadata.
+Starting with GDAL 3.9, GDAL can handle QualityOfSurvey
+(or QualityOfBathymetryCoverage in S102 v3.0) spatial metadata.
 
 When such spatial metadata is present, the subdataset list will include
-a name of the form ``S102:"{filename}":QualityOfSurvey``
+a name of the form ``S102:"{filename}":QualityOfSurvey`` (
+or ``S102:"{filename}":QualityOfBathymetryCoverage`` in S102 v3.0)
 
-The ``/QualityOfSurvey/featureAttributeTable`` dataset is exposed as a
+The ``/QualityOfSurvey/featureAttributeTable``
+(``/QualityOfBathymetryCoverage/featureAttributeTable`` in S102 v3.0)
+dataset is exposed as a
 GDAL Raster Attribute Table associated to the GDAL raster band. The pixel
 values of the raster match the ``id`` column of the Raster Attribute Table.
 

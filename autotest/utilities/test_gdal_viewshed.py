@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2020, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import gdaltest
@@ -212,6 +196,39 @@ def test_gdal_viewshed_all_options(gdal_viewshed_path, tmp_path, viewshed_input)
 
 ###############################################################################
 
+# NOTE: Various compilers (notably Intel), may give different values when
+#  doing floating point math (because of -ffast-math, for example).
+#  The test below checks that the COUNT of visible cells is the same, but it is
+#  not the case that the actual cells marked visible aren't different. That the
+#  count is the same is luck.  If changes are made or compilers/options change,
+#  the expected value in the test below may need to be changed/added to in order
+#  to accommodate all the compilers with a single test.  See
+#  ViewshedExecutor::setOutput for the comparison that is at issue.
+#
+def test_gdal_viewshed_cumulative(gdal_viewshed_path, tmp_path, viewshed_input):
+
+    np = pytest.importorskip("numpy")
+
+    viewshed_out = str(tmp_path / "test_gdal_viewshed_out.tif")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_viewshed_path
+        + " -om ACCUM -f GTiff -os 5 -a_nodata 0 {} {}".format(
+            viewshed_input, viewshed_out
+        )
+    )
+    assert err is None or err == ""
+    ds = gdal.Open(viewshed_out)
+    assert ds
+    vis_count = np.count_nonzero(ds.GetRasterBand(1).ReadAsArray())
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+    assert vis_count == 13448
+    assert nodata == 0
+
+
+###############################################################################
+
 
 def test_gdal_viewshed_value_options(gdal_viewshed_path, tmp_path, viewshed_input):
 
@@ -330,7 +347,7 @@ def test_gdal_viewshed_missing_ox(gdal_viewshed_path):
     _, err = gdaltest.runexternal_out_and_err(
         gdal_viewshed_path + " /dev/null /dev/null"
     )
-    assert "-ox: required" in err
+    assert "Option -ox is required." in err
 
 
 ###############################################################################
@@ -341,7 +358,7 @@ def test_gdal_viewshed_missing_oy(gdal_viewshed_path):
     _, err = gdaltest.runexternal_out_and_err(
         gdal_viewshed_path + " -ox 0 /dev/null /dev/null"
     )
-    assert "-oy: required" in err
+    assert "Option -oy is required." in err
 
 
 ###############################################################################

@@ -11,23 +11,7 @@
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -459,12 +443,12 @@ NITFRasterBand::NITFRasterBand(NITFDataset *poDSIn, int nBandIn)
     /* -------------------------------------------------------------------- */
     poColorTable = NITFMakeColorTable(psImage, psBandInfo);
 
-    if (psImage->nBitsPerSample == 1 || psImage->nBitsPerSample == 3 ||
-        psImage->nBitsPerSample == 5 || psImage->nBitsPerSample == 6 ||
-        psImage->nBitsPerSample == 7 || psImage->nBitsPerSample == 12)
-        SetMetadataItem("NBITS",
-                        CPLString().Printf("%d", psImage->nBitsPerSample),
+    if (psImage->nABPP != 8 && psImage->nABPP != 16 && psImage->nABPP != 32 &&
+        psImage->nABPP != 64)
+    {
+        SetMetadataItem("NBITS", CPLString().Printf("%d", psImage->nABPP),
                         "IMAGE_STRUCTURE");
+    }
 
     if (psImage->nBitsPerSample == 3 || psImage->nBitsPerSample == 5 ||
         psImage->nBitsPerSample == 6 || psImage->nBitsPerSample == 7)

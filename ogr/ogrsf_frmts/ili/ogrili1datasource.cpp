@@ -8,23 +8,7 @@
  * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG
  * Copyright (c) 2007-2008, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
@@ -40,8 +24,8 @@
 /************************************************************************/
 
 OGRILI1DataSource::OGRILI1DataSource()
-    : pszName(nullptr), poImdReader(new ImdReader(1)), poReader(nullptr),
-      fpTransfer(nullptr), pszTopic(nullptr), nLayers(0), papoLayers(nullptr)
+    : poImdReader(new ImdReader(1)), poReader(nullptr), fpTransfer(nullptr),
+      pszTopic(nullptr), nLayers(0), papoLayers(nullptr)
 {
 }
 
@@ -58,7 +42,6 @@ OGRILI1DataSource::~OGRILI1DataSource()
     }
     CPLFree(papoLayers);
 
-    CPLFree(pszName);
     CPLFree(pszTopic);
     DestroyILI1Reader(poReader);
     delete poImdReader;
@@ -161,8 +144,6 @@ int OGRILI1DataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
     }
 
     poReader->OpenFile(osBasename.c_str());
-
-    pszName = CPLStrdup(osBasename.c_str());
 
     if (osModelFilename.length() > 0)
         poReader->ReadModel(poImdReader, osModelFilename.c_str(), this);
@@ -349,10 +330,10 @@ OGRILI1Layer *OGRILI1DataSource::GetLayerByName(const char *pszLayerName)
 {
     if (!poReader)
     {
-        return reinterpret_cast<OGRILI1Layer *>(
-            OGRDataSource::GetLayerByName(pszLayerName));
+        return cpl::down_cast<OGRILI1Layer *>(
+            GDALDataset::GetLayerByName(pszLayerName));
     }
 
-    return reinterpret_cast<OGRILI1Layer *>(
+    return cpl::down_cast<OGRILI1Layer *>(
         poReader->GetLayerByName(pszLayerName));
 }

@@ -78,6 +78,7 @@ add_executable(
   test_gdal_dted.cpp
   test_gdal_gtiff.cpp
   test_gdal_pixelfn.cpp
+  test_gdal_typetraits.cpp
   test_ogr.cpp
   test_ogr_organize_polygons.cpp
   test_ogr_geometry_stealing.cpp
@@ -103,7 +104,6 @@ target_link_libraries(gdal_unit_test PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAM
 if(NOT MSVC AND CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(gdal_unit_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 endif()
-add_dependencies(gdal_unit_test ${GDAL_LIB_TARGET_NAME} gdal_plugins)
 gdal_standard_includes(gdal_unit_test)
 target_compile_options(gdal_unit_test PRIVATE ${GDAL_CXX_WARNING_FLAGS})
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")
@@ -171,6 +171,9 @@ macro (register_test _test_name _binary_name)
 endmacro ()
 
 register_test(test-unit gdal_unit_test)
+if (NOT CMAKE_CROSSCOMPILING OR CMAKE_CROSSCOMPILING_EMULATOR)
+    add_dependencies(test-unit ${GDAL_LIB_TARGET_NAME} gdal_plugins)
+endif()
 
 include(GdalTestTarget)
 

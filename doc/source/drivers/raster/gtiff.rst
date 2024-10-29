@@ -384,9 +384,6 @@ The TIFF format only supports R,G,B components for palettes / color
 tables. Thus on writing the alpha information will be silently
 discarded.
 
-You may want to read hints to `generate and read cloud optimized GeoTIFF
-files <https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF>`__
-
 Creation Options
 ~~~~~~~~~~~~~~~~
 
@@ -397,7 +394,7 @@ This driver supports the following creation options:
       :choices: YES, NO
 
       Force the generation of an associated ESRI world file
-      (.tfw).See the :ref:`World Files <raster.wld>` page for details.
+      (.tfw). See the :ref:`World Files <raster.wld>` page for details.
 
 -  .. co:: RPB
       :choices: YES, NO
@@ -488,9 +485,10 @@ This driver supports the following creation options:
       * ``LERC_ZSTD`` is available when ``LERC`` and ``ZSTD`` are available.
 
       * ``JXL`` is for JPEG-XL, and is only available when using internal libtiff and building GDAL against
-        https://github.com/libjxl/libjxl . Supported data types are ``Byte``, ``UInt16`` and ``Float32`` only.
-        For GDAL < 3.6.0, JXL compression may only be used alongside ``INTERLEAVE=PIXEL`` (the default) on
-        datasets with 4 bands or less.
+        https://github.com/libjxl/libjxl . It is recommended to use JXL compression with the ``TILED=YES`` creation
+        option and block size of 256x256, 512x512, or 1024x1024 pixels. Supported data types are ``Byte``,
+        ``UInt16`` and ``Float32`` only. For GDAL < 3.6.0, JXL compression may only be used alongside 
+        ``INTERLEAVE=PIXEL`` (the default) on datasets with 4 bands or less.
 
       * ``NONE`` is the default.
 
@@ -637,7 +635,7 @@ This driver supports the following creation options:
       The higher, the smaller file and slower compression time.
 
 -  .. co:: JXL_DISTANCE
-      :choices: [0.1-15]
+      :choices: [0.01-25]
       :default: 1.0
 
       Distance level for lossy JPEG-XL compression.
@@ -649,7 +647,7 @@ This driver supports the following creation options:
       The recommended range is [0.5,3].
 
 -  .. co:: JXL_ALPHA_DISTANCE
-      :choices: -1,0,[0.1-15]
+      :choices: -1,0,[0.01-25]
       :default: -1
       :since: 3.7
 

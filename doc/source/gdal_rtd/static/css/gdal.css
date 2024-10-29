@@ -203,12 +203,6 @@ a.reference.external::after
     text-decoration: none;
 }
 
-/* Override wy-nav colors to match company branding */
-.wy-side-nav-search, .wy-side-nav-search img, .wy-nav .wy-menu-vertical header, .wy-nav-top, .wy-nav-top img
-{
-	  background-color: #28728d;
-}
-
 /* center figures and captions */
 .rst-content div.figure { text-align: center; }
 
@@ -334,4 +328,22 @@ div.horizontal-logos::after {
     content: "";
     clear: both;
     display: table;
+}
+
+.wy-side-nav-search > div.switch-menus > div.version-switch {
+    background: white;
+    color: #343131;
+}
+
+.wy-side-nav-search > div.switch-menus > div.version-switch select {
+    background: white;
+    color: #343131;
+}
+
+.wy-side-nav-search > div.switch-menus > div.version-switch select:active,
+.wy-side-nav-search > div.switch-menus > div.version-switch select:focus,
+.wy-side-nav-search > div.switch-menus > div.version-switch select:hover
+{
+    background: white;
+    color: #343131;
 }

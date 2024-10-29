@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Install Requirements
         run: |
@@ -47,7 +47,7 @@ jobs:
     container: ubuntu:24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Install Requirements
         run: |
@@ -65,11 +65,45 @@ jobs:
           cd build
           ../scripts/cppcheck.sh
 
+  cppcheck_master:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+
+      - name: Install Requirements
+        run: |
+          sudo apt update
+          sudo apt install -y git libsqlite3-dev ccache sqlite3 libproj-dev cmake g++ make
+
+      - name: Build cppcheck
+        run: |
+          git clone https://github.com/danmar/cppcheck
+          cd cppcheck
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make -j$(nproc)
+          sudo make install
+          cd ../..
+
+      - name: Run cmake
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+
+      - name: Run cppcheck test
+        run: |
+          cd build
+          # Do not fail the job. This is just used as a tool to monitor how we are regarding recent cppcheck
+          ../scripts/cppcheck.sh || /bin/true
+
   code_quality_checks:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Detect tabulations
         run: ./scripts/detect_tabulations.sh
@@ -101,11 +135,25 @@ jobs:
         # SC2129: (style): Consider using { cmd1; cmd2; } >> file instead of individual redirects
         run: shellcheck -e SC2086,SC2046,SC2164,SC2054,SC2129 $(find . -name '*.sh' -a -not -name ltmain.sh -a -not -wholename "./autotest/*" -a -not -wholename "./.github/*")
 
+  binary_files:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Install Requirements
+        run: |
+            sudo apt-get install -y python3 coreutils
+
+      - name: Checkout
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+
+      - name: Detect binary files
+        run: python3 ./scripts/check_binaries.py
+
   linting:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
 
   doxygen:
@@ -113,7 +161,7 @@ jobs:
     container: ghcr.io/osgeo/proj-docs
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Run doxygen
         run: |
@@ -124,12 +172,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Install Requirements
         run: |
             sudo apt install python3-pip wget
-            sudo pip3 install cffconvert
+            # ruamel.yaml.clib 0.2.9 throws a 'TypeError: a string or stream input is required' when running cffconvert --validate
+            sudo pip3 install cffconvert "ruamel.yaml.clib<0.2.9"
 
       - name: Validate citation file
         run: |
@@ -143,9 +192,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
     - name: Set up Python
-      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: 3.8
     - name: Install lint tool
@@ -159,7 +208,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Install requirements
         run: |

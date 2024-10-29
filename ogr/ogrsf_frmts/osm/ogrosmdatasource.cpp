@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2012-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gpb.h"
@@ -241,8 +225,6 @@ OGROSMDataSource::~OGROSMDataSource()
 
 {
     m_apoLayers.clear();
-
-    CPLFree(m_pszName);
 
     if (m_psParser != nullptr)
         CPLDebug("OSM", "Number of bytes read in file : " CPL_FRMT_GUIB,
@@ -2729,9 +2711,7 @@ int OGROSMDataSource::Open(const char *pszFilename,
                            CSLConstList papszOpenOptionsIn)
 
 {
-    m_pszName = CPLStrdup(pszFilename);
-
-    m_psParser = OSM_Open(m_pszName, OGROSMNotifyNodes, OGROSMNotifyWay,
+    m_psParser = OSM_Open(pszFilename, OGROSMNotifyNodes, OGROSMNotifyWay,
                           OGROSMNotifyRelation, OGROSMNotifyBounds, this);
     if (m_psParser == nullptr)
         return FALSE;
@@ -2885,8 +2865,7 @@ int OGROSMDataSource::Open(const char *pszFilename,
         }
 
         m_bInMemoryNodesFile = true;
-        m_osNodesFilename.Printf("/vsimem/osm_importer/osm_temp_nodes_%p",
-                                 this);
+        m_osNodesFilename = VSIMemGenerateHiddenFilename("osm_temp_nodes");
         m_fpNodes = VSIFOpenL(m_osNodesFilename, "wb+");
         if (m_fpNodes == nullptr)
         {
@@ -2939,7 +2918,8 @@ int OGROSMDataSource::Open(const char *pszFilename,
     const bool bRet = CreateTempDB();
     if (bRet)
     {
-        CPLString osInterestLayers = GetInterestLayersForDSName(GetName());
+        CPLString osInterestLayers =
+            GetInterestLayersForDSName(GetDescription());
         if (!osInterestLayers.empty())
         {
             ReleaseResultSet(ExecuteSQL(osInterestLayers, nullptr, nullptr));
@@ -2972,7 +2952,7 @@ bool OGROSMDataSource::CreateTempDB()
     }
     else
     {
-        m_osTmpDBName.Printf("/vsimem/osm_importer/osm_temp_%p.sqlite", this);
+        m_osTmpDBName = VSIMemGenerateHiddenFilename("osm_temp.sqlite");
 
         // On 32 bit, the virtual memory space is scarce, so we need to
         // reserve it right now. Will not hurt on 64 bit either.
@@ -3905,7 +3885,7 @@ OGRFeature *OGROSMDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
         if (m_nFileSize == FILESIZE_NOT_INIT)
         {
             VSIStatBufL sStat;
-            if (VSIStatL(m_pszName, &sStat) == 0)
+            if (VSIStatL(GetDescription(), &sStat) == 0)
             {
                 m_nFileSize = static_cast<GIntBig>(sStat.st_size);
             }
@@ -4539,7 +4519,7 @@ OGRLayer *OGROSMDataSource::ExecuteSQL(const char *pszSQLCommand,
             MyResetReading();
 
             /* Run the request */
-            m_poResultSetLayer = OGRDataSource::ExecuteSQL(
+            m_poResultSetLayer = GDALDataset::ExecuteSQL(
                 pszSQLCommand, poSpatialFilter, pszDialect);
 
             /* If the user explicitly run a COUNT() request, then do it ! */
@@ -4548,7 +4528,7 @@ OGRLayer *OGROSMDataSource::ExecuteSQL(const char *pszSQLCommand,
                 if (pszDialect != nullptr && EQUAL(pszDialect, "SQLITE"))
                 {
                     m_poResultSetLayer = new OGROSMResultLayerDecorator(
-                        m_poResultSetLayer, GetName(), osInterestLayers);
+                        m_poResultSetLayer, GetDescription(), osInterestLayers);
                 }
                 m_bIsFeatureCountEnabled = true;
             }
@@ -4557,8 +4537,7 @@ OGRLayer *OGROSMDataSource::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
-    return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                     pszDialect);
+    return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
 }
 
 /************************************************************************/

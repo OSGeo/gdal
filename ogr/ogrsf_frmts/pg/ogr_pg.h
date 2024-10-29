@@ -9,23 +9,7 @@
  * Copyright (c) 2000, Frank Warmerdam
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_PG_H_INCLUDED
@@ -582,7 +566,7 @@ class OGRPGResultLayer final : public OGRPGLayer
 /*                           OGRPGDataSource                            */
 /************************************************************************/
 
-class OGRPGDataSource final : public OGRDataSource
+class OGRPGDataSource final : public GDALDataset
 {
     OGRPGDataSource(const OGRPGDataSource &) = delete;
     OGRPGDataSource &operator=(const OGRPGDataSource &) = delete;
@@ -596,8 +580,6 @@ class OGRPGDataSource final : public OGRDataSource
 
     OGRPGTableLayer **papoLayers = nullptr;
     int nLayers = 0;
-
-    char *pszName = nullptr;
 
     bool m_bUTF8ClientEncoding = false;
 
@@ -659,6 +641,9 @@ class OGRPGDataSource final : public OGRDataSource
 
     std::optional<std::string> FindSchema(const char *pszSchemaNameIn);
 
+    bool IsSuperUser();
+    bool OGRSystemTablesEventTriggerExists();
+
   public:
     PGver sPostgreSQLVersion = {0, 0, 0};
     PGver sPostGISVersion = {0, 0, 0};
@@ -702,11 +687,6 @@ class OGRPGDataSource final : public OGRDataSource
     OpenTable(CPLString &osCurrentSchema, const char *pszTableName,
               const char *pszSchemaName, const char *pszDescription,
               const char *pszGeomColForced, int bUpdate, int bTestOpen);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;

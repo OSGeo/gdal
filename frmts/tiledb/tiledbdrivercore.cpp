@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2023, TileDB, Inc
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #define INCLUDE_ONLY_TILEDB_VERSION
@@ -35,7 +19,7 @@
 /*                 TileDBDriverIdentifySimplified()                     */
 /************************************************************************/
 
-static int TileDBDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
+int TileDBDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
 
 {
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB:"))
@@ -56,6 +40,11 @@ static int TileDBDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
 
+    if (!poOpenInfo->bIsDirectory)
+    {
+        return false;
+    }
+
     const bool bIsS3OrGS = STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIS3/") ||
                            STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIGS/");
     // If this is a /vsi virtual file systems, bail out, except if it is S3 or GS.
@@ -64,17 +53,7 @@ static int TileDBDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
         return false;
     }
 
-    if (poOpenInfo->bIsDirectory)
-    {
-        return GDAL_IDENTIFY_UNKNOWN;
-    }
-
-    if (bIsS3OrGS && !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "tif"))
-    {
-        return GDAL_IDENTIFY_UNKNOWN;
-    }
-
-    return FALSE;
+    return GDAL_IDENTIFY_UNKNOWN;
 }
 
 /************************************************************************/

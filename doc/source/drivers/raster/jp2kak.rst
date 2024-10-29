@@ -234,19 +234,20 @@ The following creation options are tightly tied to the Kakadu SDK, and are
 considered to be for advanced use only. Consult the Kakadu SDK documentation to
 better understand their meaning.
 
--  **Corder**: Defaults to "PRCL".
--  **Cprecincts**: Defaults to
+-  **Corder**: Progression order. Defaults to "PRCL".
+-  **Cprecincts**: Precincts settings. Defaults to
    "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}".
--  **ORGgen_plt**: Defaults to "yes".
--  **ORGgen_tlm**: Kakadu SDK defaults used.
+-  **ORGgen_plt**: Whether to generate PLT markers (Paquet Length). Defaults to "yes".
+-  **ORGgen_tlm**: Whether to generate TLM markers (Tile Length). Kakadu SDK defaults used.
 -  **ORGtparts**: Kakadu SDK defaults used.
 -  **Cmodes**: Kakadu SDK defaults used.
--  **Clevels**: Kakadu SDK defaults used.
+-  **Clevels**: Quality levels. Kakadu SDK defaults used.
+-  **Cycc** =YES/NO: Whether to use YCbCr (lossy compression) or YUV (lossless compression) color space when encoding RGB images. Default to YES starting with GDAL 3.10 (was hardcoded to NO in previous versions)
 -  **Rshift**: Kakadu SDK defaults used.
 -  **Rlevels**: Kakadu SDK defaults used.
 -  **Rweight**: Kakadu SDK defaults used.
 -  **Qguard**: Kakadu SDK defaults used.
--  **Creversible**: If not set and QUALITY >= 99.5, set to "yes", otherwise to "false".
+-  **Creversible** = YES/NO: If not set and QUALITY >= 99.5, set to "yes", otherwise to "false".
 -  **Sprofile**: Kakadu SDK defaults used.
 -  **RATE**: Kakadu SDK defaults used.
    One or more bit-rates, expressed in terms of the ratio between the total number of compressed bits

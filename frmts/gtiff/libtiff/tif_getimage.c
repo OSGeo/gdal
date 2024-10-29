@@ -766,7 +766,6 @@ static int gtTileContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
         return (0);
     }
 
-
     /*
      *	Leftmost tile is clipped on left side if col_offset > 0.
      */
@@ -1110,7 +1109,6 @@ static int gtStripContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
         TIFFErrorExtR(tif, TIFFFileName(tif), "rowsperstrip is zero");
         return (0);
     }
-
 
     scanline = TIFFScanlineSize(tif);
     fromskew = (w < imagewidth ? imagewidth - w : 0);
@@ -3323,7 +3321,8 @@ int TIFFReadRGBATileExt(TIFF *tif, uint32_t col, uint32_t row, uint32_t *raster,
     TIFFGetFieldDefaulted(tif, TIFFTAG_TILELENGTH, &tile_ysize);
     if (tile_xsize == 0 || tile_ysize == 0)
     {
-        TIFFErrorExtR(tif, TIFFFileName(tif), "tile_xsize or tile_ysize is zero");
+        TIFFErrorExtR(tif, TIFFFileName(tif),
+                      "tile_xsize or tile_ysize is zero");
         return (0);
     }
 

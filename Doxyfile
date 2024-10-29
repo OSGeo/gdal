@@ -382,13 +382,12 @@ INPUT                  = port \
                          gcore \
                          frmts/gdalallregister.cpp \
                          alg \
+                         alg/viewshed \
                          frmts/vrt \
                          apps \
                          ogr \
                          ogr/ogrsf_frmts \
                          ogr/ogrsf_frmts/generic \
-                         ogr/ogrsf_frmts/geojson/ogrgeojsonwriter.cpp \
-                         ogr/ogrsf_frmts/kml/ogr2kmlgeometry.cpp \
                          swig/python/gdal-utils/scripts \
                          gnm \
                          doxygen_index.md
@@ -944,7 +943,8 @@ PREDEFINED             = HAVE_DLFCN_H \
                          CPLSTRING_METHOD_DLL= \
                          CPL_NO_RETURN= \
                          EXPERIMENTAL_CPL_WARN_UNUSED_RESULT= \
-                         CPL_MULTIPROC_PTHREAD
+                         CPL_MULTIPROC_PTHREAD \
+                         CPL_NON_FINAL=
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.

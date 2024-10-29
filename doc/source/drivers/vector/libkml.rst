@@ -420,7 +420,8 @@ options :
 -  .. lco:: NAME
 
       `<name> <https://developers.google.com/kml/documentation/kmlreference#name>`__
-      element
+      element. Also used to set the name of the NetworkLink pointing to the layer,
+      starting with GDAL 3.10
 
 -  .. lco:: VISIBILITY
 
@@ -585,6 +586,13 @@ For example, if you want a field called 'Cities' to map to the
 `<name> <https://developers.google.com/kml/documentation/kmlreference#name>`__;
 tag in KML, you can set a configuration option. Note these are independent of layer
 creation and dataset creation options' `<name>`.
+
+-  .. config:: LIBKML_ID_FIELD
+      :default: id
+      :since: 3.10
+
+      Name of the string field that maps to the kml attribute
+      `<id> <https://developers.google.com/kml/documentation/kmlreference#object>`__.
 
 -  .. config:: LIBKML_NAME_FIELD
       :default: name

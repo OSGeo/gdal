@@ -8,23 +8,7 @@
  * Copyright (c) 1998, 2000, Frank Warmerdam
  * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -123,7 +107,13 @@ GDALDataset *GDALDriver::Open(GDALOpenInfo *poOpenInfo, bool bSetOpenOptions)
 
     if (poDS)
     {
-        poDS->nOpenFlags = poOpenInfo->nOpenFlags & ~GDAL_OF_FROM_GDALOPEN;
+        // Only set GDAL_OF_THREAD_SAFE if the driver itself has set it in
+        // poDS->nOpenFlags
+        int nOpenFlags = poOpenInfo->nOpenFlags &
+                         ~(GDAL_OF_FROM_GDALOPEN | GDAL_OF_THREAD_SAFE);
+        if (poDS->nOpenFlags & GDAL_OF_THREAD_SAFE)
+            nOpenFlags |= GDAL_OF_THREAD_SAFE;
+        poDS->nOpenFlags = nOpenFlags;
 
         if (strlen(poDS->GetDescription()) == 0)
             poDS->SetDescription(poOpenInfo->pszFilename);
@@ -851,8 +841,16 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     /*      Copy image data.                                                */
     /* -------------------------------------------------------------------- */
     if (eErr == CE_None && nDstBands > 0)
-        eErr = GDALDatasetCopyWholeRaster(poSrcDS, poDstDS, nullptr,
-                                          pfnProgress, pProgressData);
+    {
+        const char *const apszCopyRasterOptionsSkipHoles[] = {"SKIP_HOLES=YES",
+                                                              nullptr};
+        const bool bSkipHoles = CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "SKIP_HOLES", "FALSE"));
+        eErr = GDALDatasetCopyWholeRaster(
+            poSrcDS, poDstDS,
+            bSkipHoles ? apszCopyRasterOptionsSkipHoles : nullptr, pfnProgress,
+            pProgressData);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Should we copy some masks over?                                 */
@@ -1463,7 +1461,7 @@ bool GDALDriver::CanVectorTranslateFrom(
     if (!ppapszFailureReasons)
     {
         for (const char *pszReason :
-             cpl::Iterate(CSLConstList(papszFailureReasons)))
+             cpl::Iterate(static_cast<CSLConstList>(papszFailureReasons)))
         {
             CPLDebug("GDAL", "%s", pszReason);
         }
@@ -2124,10 +2122,11 @@ int CPL_STDCALL GDALValidateCreationOptions(GDALDriverH hDriver,
     osDriver.Printf("driver %s",
                     GDALDriver::FromHandle(hDriver)->GetDescription());
     bool bFoundOptionToRemove = false;
+    constexpr const char *const apszExcludedOptions[] = {
+        "APPEND_SUBDATASET", "COPY_SRC_MDD", "SRC_MDD", "SKIP_HOLES"};
     for (const char *pszCO : cpl::Iterate(papszCreationOptions))
     {
-        for (const char *pszExcludedOptions :
-             {"APPEND_SUBDATASET", "COPY_SRC_MDD", "SRC_MDD"})
+        for (const char *pszExcludedOptions : apszExcludedOptions)
         {
             if (STARTS_WITH_CI(pszCO, pszExcludedOptions) &&
                 pszCO[strlen(pszExcludedOptions)] == '=')
@@ -2146,8 +2145,7 @@ int CPL_STDCALL GDALValidateCreationOptions(GDALDriverH hDriver,
         for (const char *pszCO : cpl::Iterate(papszCreationOptions))
         {
             bool bMatch = false;
-            for (const char *pszExcludedOptions :
-                 {"APPEND_SUBDATASET", "COPY_SRC_MDD", "SRC_MDD"})
+            for (const char *pszExcludedOptions : apszExcludedOptions)
             {
                 if (STARTS_WITH_CI(pszCO, pszExcludedOptions) &&
                     pszCO[strlen(pszExcludedOptions)] == '=')

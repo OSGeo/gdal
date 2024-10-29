@@ -9,23 +9,7 @@
  * Copyright (c) 2000, Frank Warmerdam
  * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -207,7 +191,8 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize,
 /************************************************************************/
 
 void GTIFFBuildOverviewMetadata(const char *pszResampling,
-                                GDALDataset *poBaseDS, CPLString &osMetadata)
+                                GDALDataset *poBaseDS, bool bIsForMaskBand,
+                                CPLString &osMetadata)
 
 {
     osMetadata = "<GDALMetadata>";
@@ -220,7 +205,11 @@ void GTIFFBuildOverviewMetadata(const char *pszResampling,
         osMetadata += "</Item>";
     }
 
-    if (poBaseDS->GetMetadataItem("INTERNAL_MASK_FLAGS_1"))
+    if (bIsForMaskBand)
+    {
+        osMetadata += "<Item name=\"INTERNAL_MASK_FLAGS_1\">2</Item>";
+    }
+    else if (poBaseDS->GetMetadataItem("INTERNAL_MASK_FLAGS_1"))
     {
         for (int iBand = 0; iBand < 200; iBand++)
         {
@@ -805,7 +794,10 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
     GDALDataset *poBaseDS = papoBandList[0]->GetDataset();
     if (poBaseDS)
     {
-        GTIFFBuildOverviewMetadata(pszResampling, poBaseDS, osMetadata);
+        const bool bIsForMaskBand =
+            nBands == 1 && papoBandList[0]->IsMaskBand();
+        GTIFFBuildOverviewMetadata(pszResampling, poBaseDS, bIsForMaskBand,
+                                   osMetadata);
     }
 
     if (poBaseDS != nullptr && poBaseDS->GetRasterCount() == nBands)

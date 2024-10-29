@@ -10,23 +10,7 @@
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import contextlib
@@ -2118,84 +2102,10 @@ def reopen(ds, update=False, open_options=None):
     )
 
 
-# VSIFile helper class
-
-
-class VSIFile:
-    def __init__(self, path, mode, encoding="utf-8"):
-        self._path = path
-        self._mode = mode
-
-        self._binary = "b" in mode
-        self._encoding = encoding
-
-        self._fp = gdal.VSIFOpenExL(self._path, self._mode, True)
-        if self._fp is None:
-            raise OSError(gdal.VSIGetLastErrorMsg())
-
-        self._closed = False
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        self.close()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        line = gdal.CPLReadLineL(self._fp)
-        if line is None:
-            raise StopIteration
-        if self._binary:
-            return line.encode()
-        return line
-
-    def close(self):
-        if self._closed:
-            return
-
-        self._closed = True
-        gdal.VSIFCloseL(self._fp)
-
-    def read(self, size=-1):
-        if size == -1:
-            pos = self.tell()
-            self.seek(0, 2)
-            size = self.tell()
-            self.seek(pos)
-
-        raw = gdal.VSIFReadL(1, size, self._fp)
-
-        if self._binary:
-            return bytes(raw)
-        else:
-            return raw.decode(self._encoding)
-
-    def write(self, x):
-
-        if self._binary:
-            assert type(x) in (bytes, bytearray, memoryview)
-        else:
-            assert type(x) is str
-            x = x.encode(self._encoding)
-
-        planned_write = len(x)
-        actual_write = gdal.VSIFWriteL(x, 1, planned_write, self._fp)
-
-        if planned_write != actual_write:
-            raise OSError(
-                f"Expected to write {planned_write} bytes but {actual_write} were written"
-            )
-
-    def seek(self, offset, whence=0):
-        if gdal.VSIFSeekL(self._fp, offset, whence) != 0:
-            raise OSError(gdal.VSIGetLastErrorMsg())
-
-    def tell(self):
-        return gdal.VSIFTellL(self._fp)
-
-
 def vsi_open(path, mode="r"):
-    return VSIFile(path, mode)
+    return gdal.VSIFile(path, mode)
+
+
+def vrt_has_open_support():
+    drv = gdal.GetDriverByName("VRT")
+    return drv is not None and drv.GetMetadataItem(gdal.DMD_OPENOPTIONLIST) is not None

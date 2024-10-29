@@ -20,7 +20,7 @@ Synopsis
                  [-3d] [-inodata] [-snodata <n>] [-f <formatname>] [-i <interval>]
                  [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
                  [-off <offset>] [-fl <level> <level>...] [-e <exp_base>]
-                 [-nln <outlayername>] [-q] [-p]
+                 [-nln <outlayername>] [-q] [-p] [-gt <n>|unlimited]
                  <src_filename> <dst_filename>
 
 Description
@@ -123,6 +123,15 @@ be on the right, i.e. a line string goes clockwise around a top.
     Generate contour polygons rather than contour lines.
 
     .. versionadded:: 2.4.0
+
+.. option:: -gt <n>
+
+    Group n features per transaction (default 100 000). Increase the value for
+    better performance when writing into DBMS drivers that have transaction
+    support. ``n`` can be set to unlimited to load the data into a single
+    transaction. If set to 0, no explicit transaction is done.
+
+    .. versionadded:: 3.10
 
 .. option:: -q
 

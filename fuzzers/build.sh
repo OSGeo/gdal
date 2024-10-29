@@ -145,7 +145,12 @@ curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.13.2.tar.
     rm freetype-2.13.2.tar.xz
 
 rm -rf poppler
-git clone --depth 1 https://anongit.freedesktop.org/git/poppler/poppler.git poppler
+# Poppler git server is too unreliable. Use a snapshot of a given version
+#git clone --depth 1 https://anongit.freedesktop.org/git/poppler/poppler.git poppler
+curl -L https://poppler.freedesktop.org/poppler-24.10.0.tar.xz > poppler-24.10.0.tar.xz && \
+    tar xJf poppler-24.10.0.tar.xz && \
+    mv poppler-24.10.0 poppler && \
+    rm poppler-24.10.0.tar.xz
 
 # Build xerces-c from source to avoid upstream bugs
 rm -rf xerces-c
@@ -153,7 +158,10 @@ git clone --depth 1 https://gitbox.apache.org/repos/asf/xerces-c.git
 
 # Build sqlite from source to avoid upstream bugs
 rm -rf sqlite
-git clone --depth 1 https://github.com/sqlite/sqlite sqlite
+curl -L https://sqlite.org/2024/sqlite-autoconf-3470000.tar.gz > sqlite-autoconf-3470000.tar.gz && \
+    tar xzf sqlite-autoconf-3470000.tar.gz && \
+    mv sqlite-autoconf-3470000 sqlite && \
+    rm sqlite-autoconf-3470000.tar.gz
 
 # libxerces-c-dev${ARCH_SUFFIX}
 # libsqlite3-dev${ARCH_SUFFIX}
@@ -181,7 +189,7 @@ NON_FUZZING_CXXFLAGS="$NON_FUZZING_CFLAGS -stdlib=libc++"
 
 # build sqlite
 cd sqlite
-CFLAGS="$NON_FUZZING_CFLAGS -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=$SRC/install --enable-rtree --disable-tcl
+CFLAGS="$NON_FUZZING_CFLAGS -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=$SRC/install --enable-rtree
 make clean -s
 make -j$(nproc) -s
 make install

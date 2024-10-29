@@ -11,23 +11,7 @@
  * Copyright (c) 1999-2003, Daniel Morissette
  * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  **********************************************************************/
 
 #ifndef MITAB_PRIV_H_INCLUDED_
@@ -36,6 +20,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_feature.h"
+#include "ogrmitabspatialref.h"
 
 #include <set>
 
@@ -255,34 +240,6 @@ typedef struct TABMAPCoordSecHdr_t
     GInt32 nDataOffset;
     int nVertexOffset;
 } TABMAPCoordSecHdr;
-
-/*---------------------------------------------------------------------
- * TABProjInfo
- * struct used to store the projection parameters from the .MAP header
- *--------------------------------------------------------------------*/
-typedef struct TABProjInfo_t
-{
-    GByte nProjId;  // See MapInfo Ref. Manual, App. F and G
-    GByte nEllipsoidId;
-    GByte nUnitsId;
-    double adProjParams[7];  // params in same order as in .MIF COORDSYS
-
-    GInt16 nDatumId;      // Datum Id added in MapInfo 7.8+ (.map V500)
-    double dDatumShiftX;  // Before that, we had to always lookup datum
-    double dDatumShiftY;  // parameters to establish datum id
-    double dDatumShiftZ;
-    double adDatumParams[5];
-
-    // Affine parameters only in .map version 500 and up
-    GByte nAffineFlag;  // 0=No affine param, 1=Affine params
-    GByte nAffineUnits;
-    double dAffineParamA;  // Affine params
-    double dAffineParamB;
-    double dAffineParamC;
-    double dAffineParamD;
-    double dAffineParamE;
-    double dAffineParamF;
-} TABProjInfo;
 
 /*---------------------------------------------------------------------
  * TABPenDef - Pen definition information

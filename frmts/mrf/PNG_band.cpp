@@ -153,7 +153,7 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     {
         // Use the PNG driver for decompression of 8-bit images, as it
         // has optimizations for whole image decompression.
-        CPLString osTmpFilename(CPLSPrintf("/vsimem/mrf/%p.png", &dst));
+        const CPLString osTmpFilename(VSIMemGenerateHiddenFilename("mrf.png"));
         VSIFCloseL(VSIFileFromMemBuffer(
             osTmpFilename.c_str(), reinterpret_cast<GByte *>(src_ori.buffer),
             src_ori.size, false));

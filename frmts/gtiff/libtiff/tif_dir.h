@@ -145,6 +145,9 @@ typedef struct
     unsigned char
         td_deferstrilearraywriting; /* see TIFFDeferStrileArrayWriting() */
 
+    unsigned char
+        td_iswrittentofile; /* indicates if current IFD is present on file */
+
     /* LibTIFF writes all data that does not fit into the IFD entries directly
      * after the IFD tag entry part. When reading, only the IFD data directly
      * and continuously behind the IFD tags is taken into account for the IFD
@@ -332,11 +335,10 @@ extern "C"
         TIFFDataType field_type; /* type of associated data */
         uint32_t
             field_anonymous; /* if true, this is a unknown / anonymous tag */
-        TIFFSetGetFieldType
-            set_field_type; /* type to be passed to TIFFSetField */
-        TIFFSetGetFieldType
-            get_field_type;              /* type to be passed to TIFFGetField */
-        unsigned short field_bit;        /* bit in fieldsset bit vector */
+        TIFFSetGetFieldType set_field_type; /* type to be passed to TIFFSetField
+                                               and TIFFGetField*/
+        TIFFSetGetFieldType get_field_type; /* not used */
+        unsigned short field_bit;           /* bit in fieldsset bit vector */
         unsigned char field_oktochange;  /* if true, can change while writing */
         unsigned char field_passcount;   /* if true, pass dir count on set */
         char *field_name;                /* ASCII name */

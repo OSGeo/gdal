@@ -24,6 +24,7 @@ RUN apk add \
     kealib-dev \
     libaec-dev \
     libarchive-dev \
+    libavif-dev \
     libdeflate-dev \
     libgeotiff-dev \
     libheif-dev \

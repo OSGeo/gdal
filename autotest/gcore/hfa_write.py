@@ -11,23 +11,7 @@
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -38,6 +22,8 @@ import gdaltest
 import pytest
 
 from osgeo import gdal, osr
+
+pytestmark = pytest.mark.require_driver("HFA")
 
 ###############################################################################
 # test that we can write a small file with a custom layer name.
@@ -298,23 +284,30 @@ def test_hfa_use_rrd():
 
 
 @pytest.mark.require_driver("BMP")
-def test_hfa_update_existing_aux_overviews():
+def test_hfa_update_existing_aux_overviews(tmp_path):
+
+    tmp_filename = str(tmp_path / "hfa_update_existing_aux_overviews.bmp")
 
     with gdal.config_option("USE_RRD", "YES"):
 
-        ds = gdal.GetDriverByName("BMP").Create(
-            "tmp/hfa_update_existing_aux_overviews.bmp", 100, 100, 1
-        )
+        ds = gdal.GetDriverByName("BMP").Create(tmp_filename, 100, 100, 1)
         ds.GetRasterBand(1).Fill(255)
         ds = None
 
         # Create overviews
-        ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
-        ds.BuildOverviews("NEAR", overviewlist=[2, 4])
+        ds = gdal.Open(tmp_filename)
+        with gdaltest.disable_exceptions():
+            ret = ds.BuildOverviews("NEAR", overviewlist=[2, 4])
+        if (
+            gdal.GetLastErrorMsg()
+            == "This build does not support creating .aux overviews"
+        ):
+            pytest.skip(gdal.GetLastErrorMsg())
+        assert ret == 0
         ds = None
 
         # Save overviews checksum
-        ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
+        ds = gdal.Open(tmp_filename)
         cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
         cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
 
@@ -322,7 +315,7 @@ def test_hfa_update_existing_aux_overviews():
         ds.BuildOverviews("NEAR", overviewlist=[2, 4])
         ds = None
 
-        ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
+        ds = gdal.Open(tmp_filename)
         # Check overviews checksum
         new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
         new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
@@ -336,7 +329,7 @@ def test_hfa_update_existing_aux_overviews():
         ds.BuildOverviews("NEAR", overviewlist=[2, 4])
         ds = None
 
-        ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
+        ds = gdal.Open(tmp_filename)
         # Check overviews checksum
         new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
         new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
@@ -349,7 +342,7 @@ def test_hfa_update_existing_aux_overviews():
         ds.BuildOverviews("NEAR", overviewlist=[8])
         ds = None
 
-        ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
+        ds = gdal.Open(tmp_filename)
         # Check overviews checksum
         new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
         new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
@@ -359,7 +352,7 @@ def test_hfa_update_existing_aux_overviews():
             pytest.fail()
         ds = None
 
-        gdal.GetDriverByName("BMP").Delete("tmp/hfa_update_existing_aux_overviews.bmp")
+        gdal.GetDriverByName("BMP").Delete(tmp_filename)
 
 
 ###############################################################################

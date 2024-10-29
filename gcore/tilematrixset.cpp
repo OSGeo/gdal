@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2020, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_json.h"
@@ -213,13 +197,46 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
         return nullptr;
     }
 
+    const auto GetCRS = [](const CPLJSONObject &j)
+    {
+        if (j.IsValid())
+        {
+            if (j.GetType() == CPLJSONObject::Type::String)
+                return j.ToString();
+
+            else if (j.GetType() == CPLJSONObject::Type::Object)
+            {
+                const std::string osURI = j.GetString("uri");
+                if (!osURI.empty())
+                    return osURI;
+
+                // Quite a bit of confusion around wkt.
+                // See https://github.com/opengeospatial/ogcapi-tiles/issues/170
+                const auto jWKT = j.GetObj("wkt");
+                if (jWKT.GetType() == CPLJSONObject::Type::String)
+                {
+                    const std::string osWKT = jWKT.ToString();
+                    if (!osWKT.empty())
+                        return osWKT;
+                }
+                else if (jWKT.GetType() == CPLJSONObject::Type::Object)
+                {
+                    const std::string osWKT = jWKT.ToString();
+                    if (!osWKT.empty())
+                        return osWKT;
+                }
+            }
+        }
+        return std::string();
+    };
+
     poTMS->mIdentifier = oRoot.GetString(bIsTMSv2 ? "id" : "identifier");
     poTMS->mTitle = oRoot.GetString("title");
     poTMS->mAbstract = oRoot.GetString(bIsTMSv2 ? "description" : "abstract");
     const auto oBbox = oRoot.GetObj("boundingBox");
     if (oBbox.IsValid())
     {
-        poTMS->mBbox.mCrs = oBbox.GetString("crs");
+        poTMS->mBbox.mCrs = GetCRS(oBbox.GetObj("crs"));
         const auto oLowerCorner = oBbox.GetArray("lowerCorner");
         if (oLowerCorner.IsValid() && oLowerCorner.Size() == 2)
         {
@@ -233,7 +250,7 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
             poTMS->mBbox.mUpperCornerY = oUpperCorner[1].ToDouble(NaN);
         }
     }
-    poTMS->mCrs = oRoot.GetString(bIsTMSv2 ? "crs" : "supportedCRS");
+    poTMS->mCrs = GetCRS(oRoot.GetObj(bIsTMSv2 ? "crs" : "supportedCRS"));
     poTMS->mWellKnownScaleSet = oRoot.GetString("wellKnownScaleSet");
 
     OGRSpatialReference oCrs;

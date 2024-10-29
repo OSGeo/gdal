@@ -67,6 +67,8 @@ typedef struct
 {
     TIFFPredictorState predict;
     z_stream stream;
+    int read_error; /* whether a read error has occurred, and which should cause
+                       further reads in the same strip/tile to be aborted */
     int zipquality; /* compression level */
     int state;      /* state flags */
     int subcodec;   /* DEFLATE_SUBCODEC_ZLIB or DEFLATE_SUBCODEC_LIBDEFLATE */
@@ -150,7 +152,12 @@ static int ZIPPreDecode(TIFF *tif, uint16_t s)
     sp->stream.avail_in = (uint64_t)tif->tif_rawcc < 0xFFFFFFFFU
                               ? (uInt)tif->tif_rawcc
                               : 0xFFFFFFFFU;
-    return (inflateReset(&sp->stream) == Z_OK);
+    if (inflateReset(&sp->stream) == Z_OK)
+    {
+        sp->read_error = 0;
+        return 1;
+    }
+    return 0;
 }
 
 static int ZIPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
@@ -161,6 +168,16 @@ static int ZIPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
     (void)s;
     assert(sp != NULL);
     assert(sp->state == ZSTATE_INIT_DECODE);
+
+    if (sp->read_error)
+    {
+        memset(op, 0, (size_t)occ);
+        TIFFErrorExtR(tif, module,
+                      "ZIPDecode: Scanline %" PRIu32 " cannot be read due to "
+                      "previous error",
+                      tif->tif_row);
+        return 0;
+    }
 
 #if LIBDEFLATE_SUPPORT
     if (sp->libdeflate_state == 1)
@@ -227,8 +244,10 @@ static int ZIPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
             if (res != LIBDEFLATE_SUCCESS &&
                 res != LIBDEFLATE_INSUFFICIENT_SPACE)
             {
+                memset(op, 0, (size_t)occ);
                 TIFFErrorExtR(tif, module, "Decoding error at scanline %lu",
                               (unsigned long)tif->tif_row);
+                sp->read_error = 1;
                 return 0;
             }
 
@@ -263,13 +282,17 @@ static int ZIPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
             break;
         if (state == Z_DATA_ERROR)
         {
+            memset(sp->stream.next_out, 0, sp->stream.avail_out);
             TIFFErrorExtR(tif, module, "Decoding error at scanline %lu, %s",
                           (unsigned long)tif->tif_row, SAFE_MSG(sp));
+            sp->read_error = 1;
             return (0);
         }
         if (state != Z_OK)
         {
+            memset(sp->stream.next_out, 0, sp->stream.avail_out);
             TIFFErrorExtR(tif, module, "ZLib error: %s", SAFE_MSG(sp));
+            sp->read_error = 1;
             return (0);
         }
     } while (occ > 0);
@@ -279,6 +302,8 @@ static int ZIPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
                       "Not enough data at scanline %lu (short %" PRIu64
                       " bytes)",
                       (unsigned long)tif->tif_row, (uint64_t)occ);
+        memset(sp->stream.next_out, 0, sp->stream.avail_out);
+        sp->read_error = 1;
         return (0);
     }
 

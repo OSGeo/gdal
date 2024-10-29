@@ -9,23 +9,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -42,7 +26,6 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
-#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gt_citation.h"
@@ -3265,7 +3248,9 @@ int GTIFSetFromOGISDefnEx(GTIF *psGTIF, OGRSpatialReferenceH hSRS,
     /* -------------------------------------------------------------------- */
     if (nPCS == KvUserDefined)
     {
-        if (nGCS == KvUserDefined)
+        if (nGCS == KvUserDefined && poSRS->IsGeographic() &&
+            std::fabs(poSRS->GetAngularUnits() - CPLAtof(SRS_UA_DEGREE_CONV)) <
+                1e-9)
         {
             if (nDatum == Datum_North_American_Datum_1927)
                 nGCS = GCS_NAD27;
@@ -3513,10 +3498,8 @@ CPLErr GTIFWktFromMemBufEx(int nSize, unsigned char *pabyBuffer,
                            char ***ppapszRPCMD)
 
 {
-    char szFilename[100] = {};
-
-    snprintf(szFilename, sizeof(szFilename), "/vsimem/wkt_from_mem_buf_%ld.tif",
-             static_cast<long>(CPLGetPID()));
+    const std::string osFilename(
+        VSIMemGenerateHiddenFilename("wkt_from_mem_buf.tif"));
 
     /* -------------------------------------------------------------------- */
     /*      Initialization of libtiff and libgeotiff.                       */
@@ -3527,20 +3510,21 @@ CPLErr GTIFWktFromMemBufEx(int nSize, unsigned char *pabyBuffer,
     /* -------------------------------------------------------------------- */
     /*      Create a memory file from the buffer.                           */
     /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFileFromMemBuffer(szFilename, pabyBuffer, nSize, FALSE);
+    VSILFILE *fp =
+        VSIFileFromMemBuffer(osFilename.c_str(), pabyBuffer, nSize, FALSE);
     if (fp == nullptr)
         return CE_Failure;
 
     /* -------------------------------------------------------------------- */
     /*      Initialize access to the memory geotiff structure.              */
     /* -------------------------------------------------------------------- */
-    TIFF *hTIFF = VSI_TIFFOpen(szFilename, "rc", fp);
+    TIFF *hTIFF = VSI_TIFFOpen(osFilename.c_str(), "rc", fp);
 
     if (hTIFF == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "TIFF/GeoTIFF structure is corrupt.");
-        VSIUnlink(szFilename);
+        VSIUnlink(osFilename.c_str());
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return CE_Failure;
     }
@@ -3678,7 +3662,7 @@ CPLErr GTIFWktFromMemBufEx(int nSize, unsigned char *pabyBuffer,
     XTIFFClose(hTIFF);
     CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
-    VSIUnlink(szFilename);
+    VSIUnlink(osFilename.c_str());
 
     if (phSRS && *phSRS == nullptr)
         return CE_Failure;
@@ -3709,10 +3693,8 @@ CPLErr GTIFMemBufFromSRS(OGRSpatialReferenceH hSRS,
                          char **papszRPCMD)
 
 {
-    char szFilename[100] = {};
-
-    snprintf(szFilename, sizeof(szFilename), "/vsimem/wkt_from_mem_buf_%ld.tif",
-             static_cast<long>(CPLGetPID()));
+    const std::string osFilename(
+        VSIMemGenerateHiddenFilename("wkt_from_mem_buf.tif"));
 
     /* -------------------------------------------------------------------- */
     /*      Initialization of libtiff and libgeotiff.                       */
@@ -3723,17 +3705,18 @@ CPLErr GTIFMemBufFromSRS(OGRSpatialReferenceH hSRS,
     /* -------------------------------------------------------------------- */
     /*      Initialize access to the memory geotiff structure.              */
     /* -------------------------------------------------------------------- */
-    VSILFILE *fpL = VSIFOpenL(szFilename, "w");
+    VSILFILE *fpL = VSIFOpenL(osFilename.c_str(), "w");
     if (fpL == nullptr)
         return CE_Failure;
 
-    TIFF *hTIFF = VSI_TIFFOpen(szFilename, "w", fpL);
+    TIFF *hTIFF = VSI_TIFFOpen(osFilename.c_str(), "w", fpL);
 
     if (hTIFF == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "TIFF/GeoTIFF structure is corrupt.");
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
+        VSIUnlink(osFilename.c_str());
         return CE_Failure;
     }
 
@@ -3885,7 +3868,7 @@ CPLErr GTIFMemBufFromSRS(OGRSpatialReferenceH hSRS,
     /* -------------------------------------------------------------------- */
     GUIntBig nBigLength = 0;
 
-    *ppabyBuffer = VSIGetMemFileBuffer(szFilename, &nBigLength, TRUE);
+    *ppabyBuffer = VSIGetMemFileBuffer(osFilename.c_str(), &nBigLength, TRUE);
     *pnSize = static_cast<int>(nBigLength);
 
     return CE_None;

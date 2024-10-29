@@ -8,33 +8,19 @@
  * Copyright (c) 2010, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "gdal_version.h"
 #include "gdal.h"
+#include "gdal_priv.h"
 #include "commonutils.h"
 #include "ogr_spatialref.h"
 #include "gdalargumentparser.h"
 
+#include <cmath>
 #include <limits>
 #include <vector>
 
@@ -140,7 +126,7 @@ MAIN_START(argc, argv)
     std::string osResampling;
     argParser.add_argument("-r")
         .store_into(osResampling)
-        .metavar("nearest|bilinear|cubicspline")
+        .metavar("nearest|bilinear|cubic|cubicspline")
         .help(_("Select an interpolation algorithm."));
 
     {
@@ -251,23 +237,15 @@ MAIN_START(argc, argv)
         exit(1);
     }
 
-    GDALRIOResampleAlg eInterpolation{GRIORA_NearestNeighbour};
-    if (osResampling.empty() || STARTS_WITH_CI(osResampling.c_str(), "NEAR"))
+    const GDALRIOResampleAlg eInterpolation =
+        osResampling.empty() ? GRIORA_NearestNeighbour
+                             : GDALRasterIOGetResampleAlg(osResampling.c_str());
+    if (eInterpolation != GRIORA_NearestNeighbour &&
+        eInterpolation != GRIORA_Bilinear && eInterpolation != GRIORA_Cubic &&
+        eInterpolation != GRIORA_CubicSpline)
     {
-        eInterpolation = GRIORA_NearestNeighbour;
-    }
-    else if (EQUAL(osResampling.c_str(), "BILINEAR"))
-    {
-        eInterpolation = GRIORA_Bilinear;
-    }
-    else if (EQUAL(osResampling.c_str(), "CUBICSPLINE"))
-    {
-        eInterpolation = GRIORA_CubicSpline;
-    }
-    else
-    {
-        fprintf(stderr, "-r can only be used with values nearest, bilinear and "
-                        "cubicspline\n");
+        fprintf(stderr, "-r can only be used with values nearest, bilinear, "
+                        "cubic and cubicspline\n");
         exit(1);
     }
 
@@ -378,6 +356,8 @@ MAIN_START(argc, argv)
     {
         int iPixel, iLine;
         double dfPixel{0}, dfLine{0};
+        const double dfXIn = dfGeoX;
+        const double dfYIn = dfGeoY;
 
         if (hCT)
         {
@@ -459,7 +439,7 @@ MAIN_START(argc, argv)
         }
         else if (bEcho)
         {
-            printf("%d%s%d%s", iPixel, osFieldSep.c_str(), iLine,
+            printf("%.15g%s%.15g%s", dfXIn, osFieldSep.c_str(), dfYIn,
                    osFieldSep.c_str());
         }
 
@@ -603,18 +583,10 @@ MAIN_START(argc, argv)
                 GDALDataTypeIsComplex(GDALGetRasterDataType(hBand)));
 
             CPLErr err;
-            if (bIsComplex)
-            {
-                err = GDALRasterIO(hBand, GF_Read, iPixelToQuery, iLineToQuery,
-                                   1, 1, adfPixel, 1, 1, GDT_CFloat64, 0, 0);
-            }
-            else
-            {
-                // GDALRasterInterpolateAtPoint is not implemented yet for complex datatype
-                err = GDALRasterInterpolateAtPoint(
-                    hBand, dfPixelToQuery, dfLineToQuery, eInterpolation,
-                    adfPixel, nullptr);
-            }
+            err = GDALRasterInterpolateAtPoint(hBand, dfPixelToQuery,
+                                               dfLineToQuery, eInterpolation,
+                                               &adfPixel[0], &adfPixel[1]);
+
             if (err == CE_None)
             {
                 CPLString osValue;

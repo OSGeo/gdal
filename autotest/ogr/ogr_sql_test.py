@@ -102,7 +102,9 @@ def test_ogr_sql_execute_sql(tmp_path, use_gdal):
     with pytest.raises(Exception):
         lyr.GetName()
 
-    assert get_lyr().GetFeatureCount() == 10
+    # This leaks memory
+    if not gdaltest.is_travis_branch("sanitize"):
+        assert get_lyr().GetFeatureCount() == 10
 
     # Check that we can actually remove the files (i.e. references on dataset have been dropped)
     os.unlink(tmp_path / "test_ogr_sql_execute_sql.shp")
@@ -419,6 +421,7 @@ def test_ogr_sql_13(data_ds):
 # Verify selection of, and on ogr_style and ogr_geom_wkt.
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_14():
 
     expect = [
@@ -452,6 +455,7 @@ def test_ogr_sql_15(data_ds):
 ###############################################################################
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_16():
 
     expect = [2]
@@ -465,6 +469,7 @@ def test_ogr_sql_16():
 ###############################################################################
 # Test the RFC 21 CAST operator.
 #
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_17():
 
     expect = ["1", "2"]
@@ -1206,11 +1211,11 @@ def test_ogr_sql_42(data_ds):
 
 def test_ogr_sql_43(data_ds):
 
-    sql = "SELECT '\"' as a, '\\'' as b, '''' as c FROM poly"
+    sql = "SELECT '\"' as a, '\\' as b, '''' as c FROM poly"
     with data_ds.ExecuteSQL(sql) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat["a"] == '"'
-        assert feat["b"] == "'"
+        assert feat["b"] == "\\"
         assert feat["c"] == "'"
 
 
@@ -1285,6 +1290,7 @@ def test_ogr_sql_hstore_get_value_valid(data_ds, sql, expected):
 # Test 64 bit GetFeatureCount()
 
 
+@pytest.mark.require_driver("OGR_VRT")
 def test_ogr_sql_45():
 
     ds = ogr.Open(

@@ -34,6 +34,8 @@ import pytest
 
 from osgeo import ogr
 
+pytestmark = pytest.mark.require_driver("MapInfo File")
+
 ###############################################################################
 
 
@@ -48,18 +50,16 @@ def startup_and_cleanup():
 @contextlib.contextmanager
 def create_index_p_test_file():
     drv = ogr.GetDriverByName("MapInfo File")
-    p_ds = drv.CreateDataSource("index_p.mif")
-    p_lyr = p_ds.CreateLayer("index_p")
+    with drv.CreateDataSource("index_p.mif") as p_ds:
+        p_lyr = p_ds.CreateLayer("index_p")
 
-    ogrtest.quick_create_layer_def(p_lyr, [("PKEY", ogr.OFTInteger)])
-    ogrtest.quick_create_feature(p_lyr, [5], None)
-    ogrtest.quick_create_feature(p_lyr, [10], None)
-    ogrtest.quick_create_feature(p_lyr, [9], None)
-    ogrtest.quick_create_feature(p_lyr, [4], None)
-    ogrtest.quick_create_feature(p_lyr, [3], None)
-    ogrtest.quick_create_feature(p_lyr, [1], None)
-
-    p_ds.Release()
+        ogrtest.quick_create_layer_def(p_lyr, [("PKEY", ogr.OFTInteger)])
+        ogrtest.quick_create_feature(p_lyr, [5], None)
+        ogrtest.quick_create_feature(p_lyr, [10], None)
+        ogrtest.quick_create_feature(p_lyr, [9], None)
+        ogrtest.quick_create_feature(p_lyr, [4], None)
+        ogrtest.quick_create_feature(p_lyr, [3], None)
+        ogrtest.quick_create_feature(p_lyr, [1], None)
 
     yield
 
@@ -69,21 +69,19 @@ def create_index_p_test_file():
 @contextlib.contextmanager
 def create_join_t_test_file(create_index=False):
     drv = ogr.GetDriverByName("ESRI Shapefile")
-    s_ds = drv.CreateDataSource("join_t.dbf")
-    s_lyr = s_ds.CreateLayer("join_t", geom_type=ogr.wkbNone)
+    with drv.CreateDataSource("join_t.dbf") as s_ds:
+        s_lyr = s_ds.CreateLayer("join_t", geom_type=ogr.wkbNone)
 
-    ogrtest.quick_create_layer_def(
-        s_lyr, [("SKEY", ogr.OFTInteger), ("VALUE", ogr.OFTString, 16)]
-    )
+        ogrtest.quick_create_layer_def(
+            s_lyr, [("SKEY", ogr.OFTInteger), ("VALUE", ogr.OFTString, 16)]
+        )
 
-    for i in range(20):
-        ogrtest.quick_create_feature(s_lyr, [i, "Value " + str(i)], None)
+        for i in range(20):
+            ogrtest.quick_create_feature(s_lyr, [i, "Value " + str(i)], None)
 
-    if create_index:
-        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
-        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING skey")
-
-    s_ds.Release()
+        if create_index:
+            s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
+            s_ds.ExecuteSQL("CREATE INDEX ON join_t USING skey")
 
     yield
 
@@ -188,12 +186,9 @@ def test_ogr_index_indexed_join_works():
 
 def test_ogr_index_drop_index_removes_files():
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared("join_t.dbf", update=1)
-
-        s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
-        s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
-
-        s_ds.Release()
+        with ogr.OpenShared("join_t.dbf", update=1) as s_ds:
+            s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
+            s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         # After dataset closing, check that the index files do not exist after
         # dropping the index
@@ -228,17 +223,13 @@ def test_ogr_index_attribute_filter_works_after_drop_index():
 def test_ogr_index_recreating_index_causes_index_files_to_be_created():
 
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared("join_t.dbf", update=1)
-
-        s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
-        s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
-
-        s_ds.Release()
+        with ogr.OpenShared("join_t.dbf", update=1) as s_ds:
+            s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
+            s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         # Re-create an index
-        s_ds = ogr.OpenShared("join_t.dbf", update=1)
-        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
-        s_ds.Release()
+        with ogr.OpenShared("join_t.dbf", update=1) as s_ds:
+            s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
 
         for filename in ["join_t.idm", "join_t.ind"]:
             try:
@@ -255,17 +246,13 @@ def test_ogr_index_recreating_index_causes_index_files_to_be_created():
 def test_ogr_index_recreating_index_causes_index_to_be_populated():
 
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared("join_t.dbf", update=1)
-
-        s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
-        s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
-
-        s_ds.Release()
+        with ogr.OpenShared("join_t.dbf", update=1) as s_ds:
+            s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
+            s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         # Re-create an index
-        s_ds = ogr.OpenShared("join_t.dbf", update=1)
-        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
-        s_ds.Release()
+        with ogr.OpenShared("join_t.dbf", update=1) as s_ds:
+            s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
 
         with open("join_t.idm", "rt") as f:
             xml = f.read()
@@ -280,25 +267,19 @@ def test_ogr_index_recreating_index_causes_index_to_be_populated():
 def test_ogr_index_creating_index_in_separate_steps_works():
 
     with create_join_t_test_file(create_index=True):
-        s_ds = ogr.OpenShared("join_t.dbf", update=1)
-
-        s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
-        s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
-
-        s_ds.Release()
+        with ogr.OpenShared("join_t.dbf", update=1) as s_ds:
+            s_ds.ExecuteSQL("DROP INDEX ON join_t USING value")
+            s_ds.ExecuteSQL("DROP INDEX ON join_t USING skey")
 
         # Re-create an index
-        s_ds = ogr.OpenShared("join_t.dbf", update=1)
-        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
-        s_ds.Release()
+        with ogr.OpenShared("join_t.dbf", update=1) as s_ds:
+            s_ds.ExecuteSQL("CREATE INDEX ON join_t USING value")
 
         # Close the dataset and re-open
-        s_ds = ogr.OpenShared("join_t.dbf", update=1)
-        # At this point the .ind was opened in read-only. Now it
-        # will be re-opened in read-write mode
-        s_ds.ExecuteSQL("CREATE INDEX ON join_t USING skey")
-
-        s_ds.Release()
+        with ogr.OpenShared("join_t.dbf", update=1) as s_ds:
+            # At this point the .ind was opened in read-only. Now it
+            # will be re-opened in read-write mode
+            s_ds.ExecuteSQL("CREATE INDEX ON join_t USING skey")
 
         with open("join_t.idm", "rt") as f:
             xml = f.read()

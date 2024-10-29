@@ -6,12 +6,15 @@ on:
     push:
         paths-ignore:
             - 'doc/**'
+            - 'docker/**'
+
         branches-ignore:
             - 'backport**'
             - 'dependabot**'
     pull_request:
         paths-ignore:
             - 'doc/**'
+            - 'docker/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -32,7 +35,7 @@ jobs:
       cache-name: cmake-ubuntu-focal
     steps:
     - name: Checkout GDAL
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
     - name: Setup cache
       uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
       id: cache
@@ -142,12 +145,12 @@ jobs:
 
     - name: Install pdfium
       run: |
-        wget -q https://github.com/rouault/pdfium_build_gdal_3_9/releases/download/pdfium_6309_v1/install-ubuntu2004-rev6309.tar.gz \
-          && tar -xzf install-ubuntu2004-rev6309.tar.gz \
+        wget -q https://github.com/rouault/pdfium_build_gdal_3_10/releases/download/pdfium_6677_v1/install-ubuntu2004-rev6677.tar.gz \
+          && tar -xzf install-ubuntu2004-rev6677.tar.gz \
           && sudo chown -R root:root install \
           && sudo mv install/lib/* /usr/lib/ \
           && sudo mv install/include/* /usr/include/ \
-          && sudo rm -rf install-ubuntu2004-rev6309.tar.gz install \
+          && sudo rm -rf install-ubuntu2004-rev6677.tar.gz install \
           && sudo apt-get update -y \
           && sudo apt-get install -y --fix-missing --no-install-recommends liblcms2-dev
     - name: Configure ccache
@@ -215,6 +218,8 @@ jobs:
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3.8/site-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        # Test fix for https://github.com/conda-forge/gdal-feedstock/issues/995
+        PYTHONWARNINGS="error" PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3.8/site-packages python3 -c "from osgeo import gdal"
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3.8/site-packages python3 $GITHUB_WORKSPACE/scripts/check_doc.py
     - name: CMake with rpath
       run: |
@@ -312,9 +317,9 @@ jobs:
         run: |
           git config --global core.autocrlf false
       - name: Checkout GDAL
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
       - name: Install development packages
-        uses: msys2/setup-msys2@d0e80f58dffbc64f6a3a1f43527d469b4fc7b6c8 # v2.23.0
+        uses: msys2/setup-msys2@ddf331adaebd714795f1042345e6ca57bd66cea8 # v2.24.1
         with:
           msystem: MINGW64
           update: true
@@ -325,7 +330,7 @@ jobs:
             mingw-w64-x86_64-geos mingw-w64-x86_64-libspatialite mingw-w64-x86_64-proj
             mingw-w64-x86_64-cgal mingw-w64-x86_64-libfreexl mingw-w64-x86_64-hdf5 mingw-w64-x86_64-netcdf mingw-w64-x86_64-poppler  mingw-w64-x86_64-podofo mingw-w64-x86_64-postgresql
             mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg2
-            mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-python-lxml mingw-w64-x86_64-swig mingw-w64-x86_64-python-psutil mingw-w64-x86_64-blosc
+            mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-python-lxml mingw-w64-x86_64-swig mingw-w64-x86_64-python-psutil mingw-w64-x86_64-blosc mingw-w64-x86_64-libavif
       - name: Setup cache
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         id: cache
@@ -405,7 +410,7 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
     - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
     - name: populate JAVA_HOME
       shell: pwsh
@@ -414,7 +419,6 @@ jobs:
     - uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
       with:
         activate-environment: gdalenv
-        miniforge-variant: Mambaforge
         miniforge-version: latest
         use-mamba: true
         auto-update-conda: true
@@ -422,14 +426,14 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet curl libiconv icu python=3.10 swig numpy pytest pytest-env pytest-benchmark filelock zlib lxml jsonschema
+        conda install --yes --quiet curl libiconv icu python=3.10 swig numpy pytest pytest-env pytest-benchmark filelock zlib lxml jsonschema setuptools
         # FIXME: remove libnetcdf=4.9.2=nompi_h5902ca5_107 pinning as soon as https://github.com/conda-forge/libnetcdf-feedstock/issues/182 is resolved
         conda install --yes --quiet proj geos hdf4 hdf5 kealib \
             libnetcdf=4.9.2=nompi_h5902ca5_107 openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff libjpeg-turbo libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd cryptopp cgal doxygen librttopo libkml openssl xz \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc libarchive \
-            arrow-cpp pyarrow libaec cmake
+            arrow-cpp pyarrow libaec libheif libavif cmake fsspec
     - name: Check CMake version
       shell: bash -l {0}
       run: |
@@ -437,8 +441,8 @@ jobs:
     - name: Install pdfium
       shell: bash -l {0}
       run: |
-        curl -LOs https://github.com/rouault/pdfium_build_gdal_3_9/releases/download/pdfium_6309_v1/install-win10-vs2019-x64-rev6309.zip
-        unzip install-win10-vs2019-x64-rev6309.zip
+        curl -LOs https://github.com/rouault/pdfium_build_gdal_3_10/releases/download/pdfium_6677_v1/install-win10-vs2019-x64-rev6677.zip
+        unzip install-win10-vs2019-x64-rev6677.zip
         mv install install-pdfium
 
     - name: Remove conflicting libraries
@@ -456,7 +460,7 @@ jobs:
       # Build PDF driver as plugin due to the PDFium build including libopenjp2 symbols which would conflict with external libopenjp2
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DUSE_CCACHE=ON" "-DCMAKE_PREFIX_PATH=${CONDA}/envs/gdalenv" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_BUILD_TYPE=Release -DPDFIUM_ROOT=$GITHUB_WORKSPACE/install-pdfium -DGDAL_ENABLE_DRIVER_PDF_PLUGIN:BOOL=ON -DCMAKE_UNITY_BUILD=ON
+        cmake -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DUSE_CCACHE=ON" "-DCMAKE_PREFIX_PATH=${CONDA}/envs/gdalenv" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_BUILD_TYPE=Release -DPDFIUM_ROOT=$GITHUB_WORKSPACE/install-pdfium -DGDAL_ENABLE_DRIVER_PDF_PLUGIN:BOOL=ON -DCMAKE_UNITY_BUILD=ON -DOGR_ENABLE_DRIVER_TAB_PLUGIN=OFF -DOGR_ENABLE_DRIVER_GEOJSON_PLUGIN=OFF
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
@@ -485,6 +489,17 @@ jobs:
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
         export PATH=$GITHUB_WORKSPACE/install-gdal/Scripts:$PATH
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages gdal_edit --version
+    - name: Check the build includes the expected drivers
+      shell: bash -l {0}
+      run: |
+        export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
+        gdalinfo --formats > found_formats.txt
+        ogrinfo --formats >> found_formats.txt
+        cat found_formats.txt
+        cat $GITHUB_WORKSPACE/.github/workflows/windows_conda_expected_gdalinfo_formats.txt $GITHUB_WORKSPACE/.github/workflows/windows_conda_expected_ogrinfo_formats.txt > expected_formats.txt
+        dos2unix expected_formats.txt
+        dos2unix found_formats.txt
+        diff -u expected_formats.txt found_formats.txt
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc
@@ -507,11 +522,10 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
     - uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
       with:
         activate-environment: gdalenv
-        miniforge-variant: Mambaforge
         miniforge-version: latest
         use-mamba: true
         auto-update-conda: true
@@ -519,7 +533,7 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet proj pytest pytest-env pytest-benchmark filelock lxml cmake
+        conda install --yes --quiet proj pytest pytest-env pytest-benchmark filelock lxml cmake setuptools
     - name: Check CMake version
       shell: bash -l {0}
       run: |
@@ -541,7 +555,15 @@ jobs:
       shell: bash -l {0}
       run: |
         rm -f build/CMakeCache.txt
-        cmake -A ${architecture} -G "${generator}" "-DCMAKE_PREFIX_PATH=${CONDA}/envs/gdalenv" -Werror=dev "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -A ${architecture} -G "${generator}" "-DCMAKE_PREFIX_PATH=${CONDA}/envs/gdalenv" -Werror=dev "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF -DGDAL_ENABLE_DRIVER_DERIVED=ON -DWERROR_DEV_FLAG="-Werror=dev"
+    - name: Build
+      shell: bash -l {0}
+      run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
+
+    - name: Re-enable shapefile driver (otherwise lots of python tests would fail)
+      shell: bash -l {0}
+      run: |
+        cmake -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DOGR_ENABLE_DRIVER_SHAPE=ON -DOGR_ENABLE_DRIVER_SHAPE_PLUGIN=ON
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
@@ -584,7 +606,7 @@ jobs:
       with:
         xcode-version: 14.3
     - name: Checkout GDAL
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
     - name: Setup cache
       uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
       id: cache
@@ -601,7 +623,6 @@ jobs:
         rm -rf /opt/homebrew/lib/node_modules # conflicts with node@18 from brew
         brew update
         brew outdated
-        brew unlink python
         brew install --overwrite python@3.11 python@3.12
         brew install postgresql || brew link postgresql
         brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif libarchive libkml boost
@@ -609,6 +630,8 @@ jobs:
         brew link --force sqlite
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
+        # Workaround for https://github.com/Homebrew/homebrew-core/pull/170959#issuecomment-2379606442
+        sed -i .bak 's/hdf5_hl;hdf5;/hdf5_hl-shared;hdf5-shared;/g' "$(brew --prefix netcdf)/lib/cmake/netCDF/netCDFTargets.cmake"
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
@@ -664,7 +687,7 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
     - uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
       with:
         activate-environment: gdalenv

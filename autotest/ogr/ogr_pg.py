@@ -247,17 +247,21 @@ def pg_version(pg_autotest_ds):
         feat = sql_lyr.GetNextFeature()
         v = feat.GetFieldAsString("version")
 
-    pos = v.find(" ")  # "PostgreSQL 12.0beta1" or "PostgreSQL 12.2 ...."
+    # return of version() is something like "PostgreSQL 12.0[rcX|betaX] ...otherstuff..."
+
+    tokens = v.split(" ")
+    assert len(tokens) >= 2
+    # First token is "PostgreSQL" (or some enterprise DB alternative name)
+    v = tokens[1]
+    pos = v.find("beta")
     if pos > 0:
-        v = v[pos + 1 :]
-        pos = v.find("beta")
-        if pos > 0:
-            v = v[0:pos]
-        pos = v.find(" ")
+        v = v[0:pos]
+    else:
+        pos = v.find("rc")
         if pos > 0:
             v = v[0:pos]
 
-        return tuple([int(x) for x in v.split(".")])
+    return tuple([int(x) for x in v.split(".")])
 
 
 @pytest.fixture(scope="module")
@@ -4845,6 +4849,13 @@ def test_ogr_pg_84(pg_ds):
 def test_ogr_pg_metadata(pg_ds, run_number):
 
     pg_ds = reconnect(pg_ds, update=1)
+
+    if run_number == 1:
+        pg_ds.ExecuteSQL(
+            "DROP EVENT TRIGGER IF EXISTS ogr_system_tables_event_trigger_for_metadata"
+        )
+        pg_ds.ExecuteSQL("DROP SCHEMA ogr_system_tables CASCADE")
+
     pg_ds.StartTransaction()
     lyr = pg_ds.CreateLayer(
         "test_ogr_pg_metadata", geom_type=ogr.wkbPoint, options=["OVERWRITE=YES"]
@@ -4899,7 +4910,6 @@ def test_ogr_pg_metadata_restricted_user(pg_ds):
     pg_ds = reconnect(pg_ds, update=1)
 
     try:
-
         pg_ds.ExecuteSQL("CREATE ROLE test_ogr_pg_metadata_restricted_user")
         with pg_ds.ExecuteSQL("SELECT current_schema()") as lyr:
             f = lyr.GetNextFeature()
@@ -4919,6 +4929,7 @@ def test_ogr_pg_metadata_restricted_user(pg_ds):
         )
 
         pg_ds = reconnect(pg_ds, update=1)
+        pg_ds.ExecuteSQL("DROP SCHEMA ogr_system_tables CASCADE")
         pg_ds.ExecuteSQL("SET ROLE test_ogr_pg_metadata_restricted_user")
 
         lyr = pg_ds.CreateLayer(
@@ -4929,9 +4940,12 @@ def test_ogr_pg_metadata_restricted_user(pg_ds):
         with gdal.quiet_errors():
             lyr.SetMetadata({"foo": "bar"})
 
-        gdal.ErrorReset()
-        pg_ds = reconnect(pg_ds, update=1)
-        assert gdal.GetLastErrorMsg() == ""
+            gdal.ErrorReset()
+            pg_ds = reconnect(pg_ds, update=1)
+        assert (
+            gdal.GetLastErrorMsg()
+            == "User lacks super user privilege to be able to create event trigger ogr_system_tables_event_trigger_for_metadata"
+        )
 
     finally:
         pg_ds = reconnect(pg_ds, update=1)
@@ -5887,7 +5901,8 @@ def test_ogr_pg_field_comment(pg_ds):
 def test_ogr_pg_long_identifiers(pg_ds):
 
     long_name = "test_" + ("X" * 64) + "_long_name"
-    short_name = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    short_name = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_3ba7c630"
+    assert len(short_name) == 63
     with gdal.quiet_errors():
         lyr = pg_ds.CreateLayer(long_name)
     assert lyr.GetName() == short_name
@@ -5895,11 +5910,54 @@ def test_ogr_pg_long_identifiers(pg_ds):
     assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     assert lyr.SyncToDisk() == ogr.OGRERR_NONE
 
+    long_name2 = "test_" + ("X" * 64) + "_long_name2"
+    short_name2 = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_bb4afe1c"
+    assert len(short_name2) == 63
+    with gdal.quiet_errors():
+        lyr = pg_ds.CreateLayer(long_name2)
+    assert lyr.GetName() == short_name2
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
+    long_name3 = "test_" + ("X" * (64 - len("test_")))
+    assert len(long_name3) == 64
+    short_name3 = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_b7ebb17c"
+    assert len(short_name3) == 63
+    with gdal.quiet_errors():
+        lyr = pg_ds.CreateLayer(long_name3)
+    assert lyr.GetName() == short_name3
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
+    long_name4 = "test_" + ("X" * (63 - len("test_")))
+    assert len(long_name4) == 63
+    short_name4 = "test_" + ("x" * (63 - len("test_")))
+    with gdal.quiet_errors():
+        lyr = pg_ds.CreateLayer(long_name4)
+    assert lyr.GetName() == short_name4
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
     pg_ds = reconnect(pg_ds, update=1)
 
-    got_lyr = pg_ds.GetLayerByName(long_name)
+    got_lyr = pg_ds.GetLayerByName(short_name)
     assert got_lyr
     assert got_lyr.GetName() == short_name
+
+    got_lyr = pg_ds.GetLayerByName(short_name2)
+    assert got_lyr
+    assert got_lyr.GetName() == short_name2
+
+    got_lyr = pg_ds.GetLayerByName(short_name3)
+    assert got_lyr
+    assert got_lyr.GetName() == short_name3
+
+    got_lyr = pg_ds.GetLayerByName(short_name4)
+    assert got_lyr
+    assert got_lyr.GetName() == short_name4
 
 
 ###############################################################################
@@ -6142,3 +6200,34 @@ def test_ogr_pg_ogr2ogr_with_multiple_dotted_table_name(pg_ds):
 
     finally:
         pg_ds.ExecuteSQL(f'DROP SCHEMA "{tmp_schema}" CASCADE')
+
+
+###############################################################################
+# Test scenario of https://lists.osgeo.org/pipermail/gdal-dev/2024-October/059608.html
+
+
+@only_without_postgis
+@gdaltest.enable_exceptions()
+def test_ogr_pg_empty_search_path(pg_ds):
+
+    with pg_ds.ExecuteSQL("SHOW search_path") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        old_search_path = f.GetField(0)
+        old_search_path = old_search_path.replace(
+            "test_ogr_pg_empty_search_path_no_postgis, ", ""
+        )
+
+    with pg_ds.ExecuteSQL("SELECT CURRENT_USER") as lyr:
+        f = lyr.GetNextFeature()
+        current_user = f.GetField(0)
+    pg_ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = ''")
+    try:
+        ds = reconnect(pg_ds, update=1)
+
+        with ds.ExecuteSQL("SHOW search_path") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            new_search_path = f.GetField(0)
+            assert new_search_path == "test_ogr_pg_empty_search_path_no_postgis, public"
+
+    finally:
+        ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = {old_search_path}")

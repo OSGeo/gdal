@@ -8,23 +8,7 @@
  * Copyright (c) 2011, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -128,13 +112,30 @@ class VSICachedFile final : public VSIVirtualHandle
 
 static size_t GetCacheMax(size_t nCacheSize)
 {
-    return nCacheSize ? nCacheSize
-                      : static_cast<size_t>(std::min(
-                            static_cast<GUIntBig>(
-                                std::numeric_limits<size_t>::max() / 2),
-                            CPLScanUIntBig(CPLGetConfigOption("VSI_CACHE_SIZE",
-                                                              "25000000"),
-                                           40)));
+    if (nCacheSize)
+    {
+        return nCacheSize;
+    }
+
+    const char *pszCacheSize = CPLGetConfigOption("VSI_CACHE_SIZE", "25000000");
+    GIntBig nMemorySize;
+    bool bUnitSpecified;
+    if (CPLParseMemorySize(pszCacheSize, &nMemorySize, &bUnitSpecified) !=
+        CE_None)
+    {
+        CPLError(
+            CE_Failure, CPLE_IllegalArg,
+            "Failed to parse value of VSI_CACHE_SIZE. Using default of 25MB");
+        nMemorySize = 25000000;
+    }
+    else if (static_cast<size_t>(nMemorySize) >
+             std::numeric_limits<size_t>::max() / 2)
+    {
+        nMemorySize =
+            static_cast<GIntBig>(std::numeric_limits<size_t>::max() / 2);
+    }
+
+    return static_cast<size_t>(nMemorySize);
 }
 
 /************************************************************************/

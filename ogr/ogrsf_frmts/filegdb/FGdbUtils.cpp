@@ -10,23 +10,7 @@
  * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
  * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "FGdbUtils.h"
@@ -34,6 +18,7 @@
 
 #include "ogr_api.h"
 #include "ogrpgeogeometry.h"
+#include "filegdb_reserved_keywords.h"
 
 using std::string;
 
@@ -547,21 +532,11 @@ std::wstring FGDBEscapeReservedKeywords(const std::wstring &name)
     std::string newName = WStringToString(name);
     std::string upperName = CPLString(newName).toupper();
 
-    // From ESRI docs
-    static const char *const RESERVED_WORDS[] = {
-        FGDB_OID_NAME, "ADD",   "ALTER",  "AND",    "AS",    "ASC",
-        "BETWEEN",     "BY",    "COLUMN", "CREATE", "DATE",  "DELETE",
-        "DESC",        "DROP",  "EXISTS", "FOR",    "FROM",  "IN",
-        "INSERT",      "INTO",  "IS",     "LIKE",   "NOT",   "NULL",
-        "OR",          "ORDER", "SELECT", "SET",    "TABLE", "UPDATE",
-        "VALUES",      "WHERE", nullptr};
-
     // Append an underscore to any FGDB reserved words used as field names
     // This is the same behavior ArcCatalog follows.
-    for (int i = 0; RESERVED_WORDS[i] != nullptr; i++)
+    for (const char *pszKeyword : apszRESERVED_WORDS)
     {
-        const char *w = RESERVED_WORDS[i];
-        if (upperName == w)
+        if (upperName == pszKeyword)
         {
             newName += '_';
             break;

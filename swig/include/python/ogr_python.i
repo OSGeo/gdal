@@ -451,7 +451,12 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
             requested_schema = requested_schema.__arrow_c_schema__()
 
         if hasattr(obj, "__arrow_c_stream__"):
-            stream_capsule = obj.__arrow_c_stream__(requested_schema=requested_schema)
+            if requested_schema:
+                stream_capsule = obj.__arrow_c_stream__(requested_schema=requested_schema)
+            else:
+                # DuckDB 1.1 doesn't support the requested_schema argument at all
+                stream_capsule = obj.__arrow_c_stream__()
+
             return self.WriteArrowStreamCapsule(stream_capsule, createFieldsFromSchema, options)
 
         if hasattr(obj, "__arrow_c_array__"):

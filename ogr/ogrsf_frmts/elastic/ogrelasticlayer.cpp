@@ -8,23 +8,7 @@
  * Copyright (c) 2011, Adam Estrada
  * Copyright (c) 2012-2016, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_elastic.h"
@@ -34,9 +18,9 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogr_swq.h"
-#include "../geojson/ogrgeojsonwriter.h"
-#include "../geojson/ogrgeojsonreader.h"
-#include "../geojson/ogrgeojsonutils.h"
+#include "ogrgeojsonwriter.h"
+#include "ogrlibjsonutils.h"
+#include "ogrgeojsongeometry.h"
 #include "ogr_geo_utils.h"
 
 #include <cstdlib>
@@ -1579,6 +1563,8 @@ void OGRElasticLayer::BuildFeature(OGRFeature *poFeature, json_object *poSource,
         else if ((oIter = m_aosMapToGeomFieldIndex.find(osCurPath)) !=
                  m_aosMapToGeomFieldIndex.end())
         {
+            const auto poSRS = m_poFeatureDefn->GetGeomFieldDefn(oIter->second)
+                                   ->GetSpatialRef();
             OGRGeometry *poGeom = nullptr;
             if (m_abIsGeoPoint[oIter->second])
             {
@@ -1677,12 +1663,16 @@ void OGRElasticLayer::BuildFeature(OGRFeature *poFeature, json_object *poSource,
                     {
                         dfRadius *= dfUnit;
                         OGRLinearRing *poRing = new OGRLinearRing();
+                        double dfSemiMajor = OGR_GREATCIRCLE_DEFAULT_RADIUS;
+                        if (poSRS && poSRS->IsGeographic())
+                            dfSemiMajor = poSRS->GetSemiMajor();
                         for (double dfStep = 0; dfStep <= 360; dfStep += 4)
                         {
                             double dfLat = 0.0;
                             double dfLon = 0.0;
-                            OGR_GreatCircle_ExtendPosition(
-                                dfY, dfX, dfRadius, dfStep, &dfLat, &dfLon);
+                            OGR_GreatCircle_ExtendPosition(dfY, dfX, dfRadius,
+                                                           dfSemiMajor, dfStep,
+                                                           &dfLat, &dfLon);
                             poRing->addPoint(dfLon, dfLat);
                         }
                         OGRPolygon *poPoly = new OGRPolygon();
@@ -1740,9 +1730,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature *poFeature, json_object *poSource,
 
             if (poGeom != nullptr)
             {
-                poGeom->assignSpatialReference(
-                    m_poFeatureDefn->GetGeomFieldDefn(oIter->second)
-                        ->GetSpatialRef());
+                poGeom->assignSpatialReference(poSRS);
                 poFeature->SetGeomFieldDirectly(oIter->second, poGeom);
             }
         }

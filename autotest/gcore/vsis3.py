@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2015, Even Rouault <even dot rouault at spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -2197,6 +2181,112 @@ def test_vsis3_4(aws_test_config, webserver_port):
     with webserver.install_http_handler(handler):
         gdal.VSIFCloseL(f)
     assert gdal.GetLastErrorMsg() == ""
+
+
+###############################################################################
+# Test that PUT invalidates cached data
+
+
+def test_vsis3_put_invalidate(aws_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
+
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(3, 1, f) == b"foo"
+        finally:
+            gdal.VSIFCloseL(f)
+
+    handler = webserver.SequentialHandler()
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(3, 1, f) == b"foo"
+        finally:
+            gdal.VSIFCloseL(f)
+
+    handler = webserver.SequentialHandler()
+    handler.add("PUT", "/s3_fake_bucket3/test_put_invalidate.bin", 200)
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "wb")
+        assert f is not None
+        try:
+            assert gdal.VSIFWriteL("barbaw", 1, 6, f) == 6
+        finally:
+            gdal.VSIFCloseL(f)
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
+
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(6, 1, f) == b"barbaw"
+        finally:
+            gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test that CopyFile invalidates cached data
+
+
+def test_vsis3_copy_invalidate(aws_test_config, webserver_port, tmp_vsimem):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"foo")
+
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(3, 1, f) == b"foo"
+        finally:
+            gdal.VSIFCloseL(f)
+
+    handler = webserver.SequentialHandler()
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(3, 1, f) == b"foo"
+        finally:
+            gdal.VSIFCloseL(f)
+
+    handler = webserver.SequentialHandler()
+    handler.add("PUT", "/s3_fake_bucket3/test_put_invalidate.bin", 200)
+    memfilename = str(tmp_vsimem / "tmp.bin")
+    with webserver.install_http_handler(handler), gdaltest.tempfile(
+        memfilename, b"barbaw"
+    ):
+        gdal.CopyFile(memfilename, "/vsis3/s3_fake_bucket3/test_put_invalidate.bin")
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/s3_fake_bucket3/?delimiter=%2F", 200)
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
+    handler.add("GET", "/s3_fake_bucket3/test_put_invalidate.bin", 200, {}, b"barbaw")
+
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/test_put_invalidate.bin", "rb")
+        assert f is not None
+        try:
+            assert gdal.VSIFReadL(6, 1, f) == b"barbaw"
+        finally:
+            gdal.VSIFCloseL(f)
 
 
 ###############################################################################

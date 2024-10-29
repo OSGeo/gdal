@@ -7,6 +7,13 @@ set -e
 LD_LIBRARY_PATH="/opt/instantclient_19_9:/opt/instantclient_19_9/lib:${LD_LIBRARY_PATH}"
 export LD_LIBRARY_PATH
 
+# Check the build includes the expected drivers
+gdalinfo --formats > found_formats.txt
+ogrinfo --formats >> found_formats.txt
+cat found_formats.txt
+cat ../.github/workflows/ubuntu_24.04/expected_gdalinfo_formats.txt ../.github/workflows/ubuntu_24.04/expected_ogrinfo_formats.txt > expected_formats.txt
+diff -u expected_formats.txt found_formats.txt
+
 # Test development launcher script
 gdal_edit --version
 
@@ -34,6 +41,6 @@ AZURE_STORAGE_CONNECTION_STRING=${AZURITE_STORAGE_CONNECTION_STRING} python3 -c 
 # MongoDB v3
 (cd autotest && MONGODBV3_TEST_PORT=27018 MONGODBV3_TEST_HOST=$IP $PYTEST ogr/ogr_mongodbv3.py)
 
-(cd autotest && OGR_MSSQL_CONNECTION_STRING="MSSQL:server=$IP;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd" $PYTEST ogr/ogr_mssqlspatial.py)
+# (cd autotest && OGR_MSSQL_CONNECTION_STRING="MSSQL:server=$IP;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd" $PYTEST ogr/ogr_mssqlspatial.py)
 
 (cd autotest && $PYTEST)

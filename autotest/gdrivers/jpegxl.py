@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import base64
@@ -143,7 +127,7 @@ def test_jpegxl_rgba_distance():
 
 
 @pytest.mark.parametrize(
-    "quality,equivalent_distance", [(100, 0), (90, 1), (10, 12.65)]
+    "quality,equivalent_distance", [(100, 0), (10, 15.266666666666667)]
 )
 def test_jpegxl_rgba_quality(quality, equivalent_distance):
 
@@ -564,6 +548,24 @@ def test_jpegxl_write_five_bands():
         5095,
         4318,
     ]
+    ds = None
+    gdal.GetDriverByName("JPEGXL").Delete(outfilename)
+
+
+def test_jpegxl_write_five_bands_lossy():
+
+    drv = gdal.GetDriverByName("JPEGXL")
+    if drv.GetMetadataItem("JXL_ENCODER_SUPPORT_EXTRA_CHANNELS") is None:
+        pytest.skip()
+
+    src_ds = gdal.Open("data/jpegxl/five_bands.jxl")
+    outfilename = "/vsimem/out.jxl"
+    gdal.Translate(outfilename, src_ds, options="-of JPEGXL -co DISTANCE=3 -ot Byte")
+    ds = gdal.Open(outfilename)
+    for i in range(5):
+        assert ds.GetRasterBand(i + 1).ComputeRasterMinMax() == pytest.approx(
+            (10.0 * (i + 1), 10.0 * (i + 1)), abs=1
+        )
     ds = None
     gdal.GetDriverByName("JPEGXL").Delete(outfilename)
 

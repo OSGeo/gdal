@@ -51,7 +51,7 @@ are made at the 1:1 resolution level.
    the resolution associated with the requested view-window. The values
    'fx' and 'fy' specify the dimensions of the desired image resolution.
    'roff' is used to identify the upper left hand corner off the spatial
-   region associated with the requested view-windw. 'rsiz' is used to
+   region associated with the requested view-window. 'rsiz' is used to
    identify the horizontal and vertical extents of the spatial region
    associated with the requested view-window.
 

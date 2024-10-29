@@ -1620,10 +1620,23 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return get(value)
 %}
 
+%feature("pythonappend") GetThreadSafeDataset %{
+    if val:
+        val._parent_ds = self
+
+        import weakref
+        if not hasattr(self, '_child_references'):
+            self._child_references = weakref.WeakSet()
+        self._child_references.add(val)
+%}
+
+%feature("pythonprepend") Close %{
+    self._invalidate_children()
+%}
+
 %feature("pythonappend") Close %{
     self.thisown = 0
     self.this = None
-    self._invalidate_children()
 %}
 
 %feature("shadow") ExecuteSQL %{
@@ -1931,13 +1944,13 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
       if not buffer_datatype:
         buffer_datatype = self.GetDataType()
 
-      is_1d_string = self.GetDataType().GetClass() == GEDTC_STRING and buffer_datatype.GetClass() == GEDTC_STRING and dimCount == 1
+      is_0d_or_1d_string = self.GetDataType().GetClass() == GEDTC_STRING and buffer_datatype.GetClass() == GEDTC_STRING and dimCount <= 1
 
       if not array_start_idx:
         array_start_idx = [0] * dimCount
 
       if not count:
-        if is_1d_string:
+        if is_0d_or_1d_string:
             assert type(buffer) == type([])
             count = [ len(buffer) ]
         else:
@@ -1956,7 +1969,7 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
             stride *= cnt
         buffer_stride.reverse()
 
-      if is_1d_string:
+      if is_0d_or_1d_string:
           return _gdal.MDArray_WriteStringArray(self, array_start_idx, count, array_step, buffer_datatype, buffer)
 
       return _gdal.MDArray_Write(self, array_start_idx, count, array_step, buffer_stride, buffer_datatype, buffer)
@@ -2200,6 +2213,7 @@ def InfoOptions(options=None, format='text', deserialize=True,
          computeMinMax=False, reportHistograms=False, reportProj4=False,
          stats=False, approxStats=False, computeChecksum=False,
          showGCPs=True, showMetadata=True, showRAT=True, showColorTable=True,
+         showNodata=True, showMask=True,
          listMDD=False, showFileList=True, allMetadata=False,
          extraMDDomains=None, wktFormat=None):
     """ Create a InfoOptions() object that can be passed to gdal.Info()
@@ -2241,6 +2255,10 @@ def InfoOptions(options=None, format='text', deserialize=True,
             new_options += ['-norat']
         if not showColorTable:
             new_options += ['-noct']
+        if not showNodata:
+            new_options += ['-nonodata']
+        if not showMask:
+            new_options += ['-nomask']
         if listMDD:
             new_options += ['-listmdd']
         if not showFileList:
@@ -2477,6 +2495,17 @@ mapGRIORAMethodToString = {
     gdalconst.GRIORA_Gauss: 'gauss',
 }
 
+def _addCreationOptions(new_options, creationOptions):
+    """Update new_options with creationOptions formatted as expected by utilities"""
+    if isinstance(creationOptions, str):
+        new_options += ['-co', creationOptions]
+    elif isinstance(creationOptions, dict):
+        for k, v in creationOptions.items():
+            new_options += ['-co', f'{k}={v}']
+    else:
+        for opt in creationOptions:
+            new_options += ['-co', opt]
+
 def TranslateOptions(options=None, format=None,
               outputType = gdalconst.GDT_Unknown, bandList=None, maskBand=None,
               width = 0, height = 0, widthPct = 0.0, heightPct = 0.0,
@@ -2591,16 +2620,9 @@ def TranslateOptions(options=None, format=None,
         if width != 0 or height != 0:
             new_options += ['-outsize', str(width), str(height)]
         elif widthPct != 0 and heightPct != 0:
-            new_options += ['-outsize', str(widthPct) + '%%', str(heightPct) + '%%']
+            new_options += ['-outsize', str(widthPct) + '%', str(heightPct) + '%']
         if creationOptions is not None:
-            if isinstance(creationOptions, str):
-                new_options += ['-co', creationOptions]
-            elif isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if srcWin is not None:
             new_options += ['-srcwin', _strHighPrec(srcWin[0]), _strHighPrec(srcWin[1]), _strHighPrec(srcWin[2]), _strHighPrec(srcWin[3])]
         if strict:
@@ -2921,12 +2943,7 @@ def WarpOptions(options=None, format=None,
         if warpMemoryLimit is not None:
             new_options += ['-wm', str(warpMemoryLimit)]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if srcNodata is not None:
             new_options += ['-srcnodata', str(srcNodata)]
         if dstNodata is not None:
@@ -2944,7 +2961,7 @@ def WarpOptions(options=None, format=None,
         if transformerOptions is not None:
             if isinstance(transformerOptions, dict):
                 for k, v in transformerOptions.items():
-                    new_options += ['-to', opt]
+                    new_options += ['-to', f'{k}={v}']
             else:
                 for opt in transformerOptions:
                     new_options += ['-to', opt]
@@ -2997,7 +3014,12 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
     Parameters
     ----------
     destNameOrDestDS:
-        Output dataset name or object
+        Output dataset name or object.
+
+        If passed as a dataset name, a potentially existing output dataset of
+        the same name will be overwritten. To update an existing output dataset,
+        it must be passed as a dataset object.
+
     srcDSOrSrcDSTab:
         an array of Dataset objects or filenames, or a Dataset object or a filename
     kwargs:
@@ -3413,6 +3435,13 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
     ----------
     destNameOrDestDS:
         Output dataset name or object
+
+        If passed as a dataset name, a potentially existing output dataset of
+        the same name will be overwritten. To update an existing output dataset,
+        it must be passed as a dataset object. Note that the accessMode parameter
+        also controls, at the layer level, if existing layers must be overwritten
+        or updated.
+
     srcDS:
         a Dataset object or a filename
     kwargs:
@@ -3508,12 +3537,7 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if computeEdges:
             new_options += ['-compute_edges']
         if alg:
@@ -3641,12 +3665,7 @@ def NearblackOptions(options=None, format=None,
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if white:
             new_options += ['-white']
         if colors is not None:
@@ -3680,6 +3699,11 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
     ----------
     destNameOrDestDS:
         Output dataset name or object
+
+        If passed as a dataset name, a potentially existing output dataset of
+        the same name will be overwritten. To update an existing output dataset,
+        it must be passed as a dataset object.
+
     srcDS:
         a Dataset object or a filename
     kwargs:
@@ -3791,12 +3815,7 @@ def GridOptions(options=None, format=None,
         if width != 0 or height != 0:
             new_options += ['-outsize', str(width), str(height)]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if outputBounds is not None:
             new_options += ['-txe', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[2]), '-tye', _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[3])]
         if outputSRS is not None:
@@ -3913,10 +3932,10 @@ def RasterizeOptions(options=None, format=None,
         render path, or whose center point is within the polygon.
     burnValues:
         list of fixed values to burn into each band for all objects.
-        Excusive with attribute.
+        Exclusive with attribute.
     attribute:
         identifies an attribute field on the features to be used for a burn-in value.
-        The value will be burned into all output bands. Excusive with burnValues.
+        The value will be burned into all output bands. Exclusive with burnValues.
     useZ:
         whether to indicate that a burn value should be extracted from the "Z" values
         of the feature. These values are added to the burn value given by burnValues
@@ -3957,12 +3976,7 @@ def RasterizeOptions(options=None, format=None,
         if outputType != gdalconst.GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType)]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if bands is not None:
             for b in bands:
                 new_options += ['-b', str(b)]
@@ -4035,7 +4049,12 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
     Parameters
     ----------
     destNameOrDestDS:
-        Output dataset name or object
+        Output dataset name or object.
+
+        If passed as a dataset name, a potentially existing output dataset of
+        the same name will be overwritten. To update an existing output dataset,
+        it must be passed as a dataset object.
+
     srcDS:
         a Dataset object or a filename
     kwargs:
@@ -4204,6 +4223,11 @@ def Footprint(destNameOrDestDS, srcDS, **kwargs):
     ----------
     destNameOrDestDS:
         Output dataset name or object
+
+        If passed as a dataset name, a potentially existing output dataset of
+        the same name will be overwritten. To update an existing output dataset,
+        it must be passed as a dataset object.
+
     srcDS:
         a Dataset object or a filename
     kwargs:
@@ -4310,6 +4334,7 @@ def BuildVRTOptions(options=None,
                     hideNodata=None,
                     nodataMaxMaskThreshold=None,
                     strict=False,
+                    creationOptions=None,
                     callback=None, callback_data=None):
     """Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
 
@@ -4350,6 +4375,8 @@ def BuildVRTOptions(options=None,
         value of the mask band of a source below which the source band values should be replaced by VRTNodata (or 0 if not specified)
     strict:
         set to True if warnings should be failures
+    creationOptions:
+        list or dict of creation options
     callback:
         callback method.
     callback_data:
@@ -4402,6 +4429,8 @@ def BuildVRTOptions(options=None,
             new_options += ['-hidenodata']
         if strict:
             new_options += ['-strict']
+        if creationOptions is not None:
+            _addCreationOptions(new_options, creationOptions)
 
     if return_option_list:
         return new_options
@@ -4713,12 +4742,7 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
-            if isinstance(creationOptions, dict):
-                for k, v in creationOptions.items():
-                    new_options += ['-co', f'{k}={v}']
-            else:
-                for opt in creationOptions:
-                    new_options += ['-co', opt]
+            _addCreationOptions(new_options, creationOptions)
         if arraySpecs is not None:
             for s in arraySpecs:
                 new_options += ['-array', s]
@@ -4959,7 +4983,7 @@ def InterpolateAtPoint(self, *args, **kwargs):
        ----------
        pixel : float
        line : float
-       interpolation : GRIOResampleAlg (nearest, bilinear, cubicspline)
+       interpolation : GRIOResampleAlg (nearest, bilinear, cubic, cubicspline)
 
        Returns
        -------
@@ -4976,4 +5000,103 @@ def InterpolateAtPoint(self, *args, **kwargs):
         return complex(ret[1], ret[2])
     else:
         return ret[1]
+%}
+
+%pythoncode %{
+
+# VSIFile: Copyright (c) 2024, Dan Baston <dbaston at gmail.com>
+
+from io import BytesIO
+
+class VSIFile(BytesIO):
+    """Class wrapping a GDAL VSILFILE instance as a Python BytesIO instance
+
+       :since: GDAL 3.11
+    """
+
+    def __init__(self, path, mode, encoding="utf-8"):
+        self._path = path
+        self._mode = mode
+
+        self._binary = "b" in mode
+        self._encoding = encoding
+
+        self._fp = VSIFOpenExL(self._path, self._mode, True)
+        if self._fp is None:
+            raise OSError(VSIGetLastErrorMsg())
+
+        self._closed = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        line = CPLReadLineL(self._fp)
+        if line is None:
+            raise StopIteration
+        if self._binary:
+            return line.encode()
+        return line
+
+    def close(self):
+        if self._closed:
+            return
+
+        self._closed = True
+        VSIFCloseL(self._fp)
+
+    def read(self, size=-1):
+        if size == -1:
+            pos = self.tell()
+            self.seek(0, 2)
+            size = self.tell()
+            self.seek(pos)
+
+        raw = VSIFReadL(1, size, self._fp)
+
+        if self._binary:
+            return bytes(raw)
+        else:
+            return raw.decode(self._encoding)
+
+    def write(self, x):
+
+        if self._binary:
+            assert type(x) in (bytes, bytearray, memoryview)
+        else:
+            assert type(x) is str
+            x = x.encode(self._encoding)
+
+        planned_write = len(x)
+        actual_write = VSIFWriteL(x, 1, planned_write, self._fp)
+
+        if planned_write != actual_write:
+            raise OSError(
+                f"Expected to write {planned_write} bytes but {actual_write} were written"
+            )
+
+    def seek(self, offset, whence=0):
+        # We redefine the docstring since otherwise breathe would complain on the one coming from BytesIO.seek()
+        """Change stream position.
+
+           Seek to byte offset pos relative to position indicated by whence:
+
+           - 0: Start of stream (the default).  pos should be >= 0;
+           - 1: Current position - pos may be negative;
+           - 2: End of stream - pos usually negative.
+
+           Returns the new absolute position.
+        """
+
+        if VSIFSeekL(self._fp, offset, whence) != 0:
+            raise OSError(VSIGetLastErrorMsg())
+
+    def tell(self):
+        return VSIFTellL(self._fp)
 %}

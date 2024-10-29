@@ -15,14 +15,14 @@ Synopsis
 
 .. code-block::
 
-    gdal_edit [--help] [--help-general] [-ro] [-a_srs <srs_def>] 
+    gdal_edit [--help] [--help-general] [-ro] [-a_srs <srs_def>]
             [-a_ullr <ulx> <uly> <lrx> <lry>] [-a_ulurll <ulx> <uly> <urx> <ury> <llx> <lly>]
             [-tr <xres> <yres>] [-unsetgt] [-unsetrpc] [-a_nodata <value>] [-unsetnodata]
             [-a_coord_epoch <epoch>] [-unsetepoch]
             [-unsetstats] [-stats] [-approx_stats]
             [-setstats <min> <max> <mean> <stddev>]
             [-scale <value>] [-offset <value>] [-units <value>]
-            [-colorinterp_<X> {red|green|blue|alpha|gray|undefined}]...
+            [-colorinterp_<X> {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...}]...
             [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...
             [-unsetmd] [-oo <NAME>=<VALUE>]... [-mo <META-TAG>=<VALUE>]...
             <datasetname>
@@ -172,7 +172,7 @@ It works only with raster formats that support update access to existing dataset
 
     .. versionadded:: 3.1
 
-.. option:: -colorinterp_<X> {red|green|blue|alpha|gray|undefined}
+.. option:: -colorinterp_<X> {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...}
 
     Change the color interpretation of band X (where X is a valid band
     number, starting at 1).

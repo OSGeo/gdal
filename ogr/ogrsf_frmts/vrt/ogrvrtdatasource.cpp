@@ -8,23 +8,7 @@
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -48,109 +32,15 @@
 #include "ogrunionlayer.h"
 #include "ogrwarpedlayer.h"
 #include "ogrsf_frmts.h"
-
-/************************************************************************/
-/*                       OGRVRTGetGeometryType()                        */
-/************************************************************************/
-
-#define STRINGIFY(x) x, #x
-
-static const struct
-{
-    OGRwkbGeometryType eType;
-    const char *pszName;
-    bool bIsoFlags;
-} asGeomTypeNames[] = {
-    {STRINGIFY(wkbUnknown), false},
-
-    {STRINGIFY(wkbPoint), false},
-    {STRINGIFY(wkbLineString), false},
-    {STRINGIFY(wkbPolygon), false},
-    {STRINGIFY(wkbMultiPoint), false},
-    {STRINGIFY(wkbMultiLineString), false},
-    {STRINGIFY(wkbMultiPolygon), false},
-    {STRINGIFY(wkbGeometryCollection), false},
-
-    {STRINGIFY(wkbCircularString), true},
-    {STRINGIFY(wkbCompoundCurve), true},
-    {STRINGIFY(wkbCurvePolygon), true},
-    {STRINGIFY(wkbMultiCurve), true},
-    {STRINGIFY(wkbMultiSurface), true},
-    {STRINGIFY(wkbCurve), true},
-    {STRINGIFY(wkbSurface), true},
-    {STRINGIFY(wkbPolyhedralSurface), true},
-    {STRINGIFY(wkbTIN), true},
-    {STRINGIFY(wkbTriangle), true},
-
-    {STRINGIFY(wkbNone), false},
-    {STRINGIFY(wkbLinearRing), false},
-};
-
-OGRwkbGeometryType OGRVRTGetGeometryType(const char *pszGType, int *pbError)
-{
-    if (pbError)
-        *pbError = FALSE;
-
-    for (const auto &entry : asGeomTypeNames)
-    {
-        if (EQUALN(pszGType, entry.pszName, strlen(entry.pszName)))
-        {
-            OGRwkbGeometryType eGeomType = entry.eType;
-
-            if (strstr(pszGType, "25D") != nullptr ||
-                strstr(pszGType, "Z") != nullptr)
-                eGeomType = wkbSetZ(eGeomType);
-            if (pszGType[strlen(pszGType) - 1] == 'M' ||
-                pszGType[strlen(pszGType) - 2] == 'M')
-                eGeomType = wkbSetM(eGeomType);
-            return eGeomType;
-        }
-    }
-
-    if (pbError)
-        *pbError = TRUE;
-    return wkbUnknown;
-}
-
-/************************************************************************/
-/*                     OGRVRTGetSerializedGeometryType()                */
-/************************************************************************/
-
-CPLString OGRVRTGetSerializedGeometryType(OGRwkbGeometryType eGeomType)
-{
-    for (const auto &entry : asGeomTypeNames)
-    {
-        if (entry.eType == wkbFlatten(eGeomType))
-        {
-            CPLString osRet(entry.pszName);
-            if (entry.bIsoFlags || OGR_GT_HasM(eGeomType))
-            {
-                if (OGR_GT_HasZ(eGeomType))
-                {
-                    osRet += "Z";
-                }
-                if (OGR_GT_HasM(eGeomType))
-                {
-                    osRet += "M";
-                }
-            }
-            else if (OGR_GT_HasZ(eGeomType))
-            {
-                osRet += "25D";
-            }
-            return osRet;
-        }
-    }
-    return CPLString();
-}
+#include "ogrvrtgeometrytypes.h"
 
 /************************************************************************/
 /*                          OGRVRTDataSource()                          */
 /************************************************************************/
 
 OGRVRTDataSource::OGRVRTDataSource(GDALDriver *poDriverIn)
-    : papoLayers(nullptr), paeLayerType(nullptr), nLayers(0), pszName(nullptr),
-      psTree(nullptr), nCallLevel(0), poLayerPool(nullptr), poParentDS(nullptr),
+    : papoLayers(nullptr), paeLayerType(nullptr), nLayers(0), psTree(nullptr),
+      nCallLevel(0), poLayerPool(nullptr), poParentDS(nullptr),
       bRecursionDetected(false)
 {
     poDriver = poDriverIn;
@@ -163,8 +53,6 @@ OGRVRTDataSource::OGRVRTDataSource(GDALDriver *poDriverIn)
 OGRVRTDataSource::~OGRVRTDataSource()
 
 {
-    CPLFree(pszName);
-
     OGRVRTDataSource::CloseDependentDatasets();
 
     CPLFree(paeLayerType);
@@ -852,8 +740,6 @@ bool OGRVRTDataSource::Initialize(CPLXMLNode *psTreeIn, const char *pszNewName,
     // for relative datasources.
     CPLString osVRTDirectory = CPLGetPath(pszNewName);
 
-    pszName = CPLStrdup(pszNewName);
-
     // Look for the OGRVRTDataSource node, it might be after an <xml> node.
     CPLXMLNode *psVRTDSXML = CPLGetXMLNode(psTree, "=OGRVRTDataSource");
     if (psVRTDSXML == nullptr)
@@ -966,7 +852,7 @@ bool OGRVRTDataSource::IsInForbiddenNames(const char *pszOtherDSName) const
 char **OGRVRTDataSource::GetFileList()
 {
     CPLStringList oList;
-    oList.AddString(GetName());
+    oList.AddString(GetDescription());
     for (int i = 0; i < nLayers; i++)
     {
         OGRLayer *poLayer = papoLayers[i];

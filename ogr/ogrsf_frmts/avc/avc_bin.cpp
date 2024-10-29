@@ -10,23 +10,7 @@
  **********************************************************************
  * Copyright (c) 1999-2005, Daniel Morissette
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  **********************************************************************
  *
  * $Log: avc_bin.c,v $
@@ -132,6 +116,75 @@
 #include "avc.h"
 
 #include <ctype.h> /* for isspace() */
+
+#ifdef WITHOUT_SHAPEFILE
+
+#define SHP_VSI_ONLY_SETUP_HOOKS
+#define SAOffset vsi_l_offset
+#define SHPAPI_CAL
+
+#define DBFAddField OGRAVC_DBFAddField
+#define DBFAddNativeFieldType OGRAVC_DBFAddNativeFieldType
+#define DBFAlterFieldDefn OGRAVC_DBFAlterFieldDefn
+#define DBFCloneEmpty OGRAVC_DBFCloneEmpty
+#define DBFClose OGRAVC_DBFClose
+#define DBFCreateEx OGRAVC_DBFCreateEx
+#define DBFCreate OGRAVC_DBFCreate
+#define DBFCreateLL OGRAVC_DBFCreateLL
+#define DBFDeleteField OGRAVC_DBFDeleteField
+#define DBFFlushRecord OGRAVC_DBFFlushRecord
+#define DBFGetCodePage OGRAVC_DBFGetCodePage
+#define DBFGetFieldCount OGRAVC_DBFGetFieldCount
+#define DBFGetFieldIndex OGRAVC_DBFGetFieldIndex
+#define DBFGetFieldInfo OGRAVC_DBFGetFieldInfo
+#define DBFGetLenWithoutExtension OGRAVC_DBFGetLenWithoutExtension
+#define DBFGetNativeFieldType OGRAVC_DBFGetNativeFieldType
+#define DBFGetNullCharacter OGRAVC_DBFGetNullCharacter
+#define DBFGetRecordCount OGRAVC_DBFGetRecordCount
+#define DBFIsAttributeNULL OGRAVC_DBFIsAttributeNULL
+#define DBFIsRecordDeleted OGRAVC_DBFIsRecordDeleted
+#define DBFIsValueNULL OGRAVC_DBFIsValueNULL
+#define DBFLoadRecord OGRAVC_DBFLoadRecord
+#define DBFMarkRecordDeleted OGRAVC_DBFMarkRecordDeleted
+#define DBFOpen OGRAVC_DBFOpen
+#define DBFOpenLL OGRAVC_DBFOpenLL
+#define DBFReadAttribute OGRAVC_DBFReadAttribute
+#define DBFReadDoubleAttribute OGRAVC_DBFReadDoubleAttribute
+#define DBFReadIntegerAttribute OGRAVC_DBFReadIntegerAttribute
+#define DBFReadLogicalAttribute OGRAVC_DBFReadLogicalAttribute
+#define DBFReadStringAttribute OGRAVC_DBFReadStringAttribute
+#define DBFReadDateAttribute OGRAVC_DBFReadDateAttribute
+#define DBFReadTuple OGRAVC_DBFReadTuple
+#define DBFReorderFields OGRAVC_DBFReorderFields
+#define DBFSetLastModifiedDate OGRAVC_DBFSetLastModifiedDate
+#define DBFSetWriteEndOfFileChar OGRAVC_DBFSetWriteEndOfFileChar
+#define DBFUpdateHeader OGRAVC_DBFUpdateHeader
+#define DBFWriteAttributeDirectly OGRAVC_DBFWriteAttributeDirectly
+#define DBFWriteAttribute OGRAVC_DBFWriteAttribute
+#define DBFWriteDoubleAttribute OGRAVC_DBFWriteDoubleAttribute
+#define DBFWriteHeader OGRAVC_DBFWriteHeader
+#define DBFWriteIntegerAttribute OGRAVC_DBFWriteIntegerAttribute
+#define DBFWriteLogicalAttribute OGRAVC_DBFWriteLogicalAttribute
+#define DBFWriteNULLAttribute OGRAVC_DBFWriteNULLAttribute
+#define DBFWriteStringAttribute OGRAVC_DBFWriteStringAttribute
+#define DBFWriteDateAttribute OGRAVC_DBFWriteDateAttribute
+#define DBFWriteTuple OGRAVC_DBFWriteTuple
+
+#define VSI_SHP_WriteMoreDataOK OGRAVC_VSI_SHP_WriteMoreDataOK
+#define SASetupDefaultHooks OGRAVC_SASetupDefaultHooks
+
+#include "../shape/shapefil.h"
+#include "../shape/dbfopen.c"
+#include "../shape/shp_vsi.c"
+
+#else
+
+#ifdef RENAME_INTERNAL_SHAPELIB_SYMBOLS
+#include "gdal_shapelib_symbol_rename.h"
+#endif
+#include "shapefil.h"
+
+#endif  // WITHOUT_SHAPEFILE
 
 /* Used by avc_binwr.c */
 extern int _AVCBinReadNextArcDir(AVCRawBinFile *psFile, AVCTableDef *psArcDir);
@@ -2454,9 +2507,8 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
 
     for (iField = 0; iField < psTableDef->numFields; iField++)
     {
-        int nWidth, nDecimals;
+        int nWidth = 0, nDecimals = 0;
         /* DBFFieldType eDBFType; */
-        char cNativeType;
 
         /*-------------------------------------------------------------
          * Fetch DBF Field info and convert to Arc/Info type...
@@ -2466,7 +2518,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
         /* eDBFType = */
         DBFGetFieldInfo(hDBFFile, iField, pasFieldDef[iField].szName, &nWidth,
                         &nDecimals);
-        cNativeType = DBFGetNativeFieldType(hDBFFile, iField);
+        const char cNativeType = DBFGetNativeFieldType(hDBFFile, iField);
 
         pasFieldDef[iField].nFmtWidth = (GInt16)nWidth;
         pasFieldDef[iField].nFmtPrec = (GInt16)nDecimals;

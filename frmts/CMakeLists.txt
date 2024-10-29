@@ -36,12 +36,42 @@ gdal_dependent_format(jpeg "JPEG image format" "GDAL_USE_JPEG OR GDAL_USE_JPEG_I
 # base driver provide frmt core functions
 gdal_optional_format(raw "Raw formats:EOSAT FAST Format, FARSITE LCP and Vexcel MFF2 Image")
 # JPEG must be defined before GTiff
-gdal_format(gtiff "GeoTIFF image format")
+
+# Exception to the rule: enable the GTiff driver by default, even if
+# GDAL_BUILD_OPTIONAL_DRIVERS=OFF.
+if (NOT DEFINED GDAL_ENABLE_DRIVER_GTIFF AND
+    DEFINED GDAL_BUILD_OPTIONAL_DRIVERS AND
+    NOT GDAL_BUILD_OPTIONAL_DRIVERS AND
+    (GDAL_USE_TIFF OR GDAL_USE_TIFF_INTERNAL) AND
+    (GDAL_USE_GEOTIFF OR GDAL_USE_GEOTIFF_INTERNAL))
+    message(WARNING "Enabling GDAL_ENABLE_DRIVER_GTIFF=ON, despite GDAL_BUILD_OPTIONAL_DRIVERS=OFF. You can of course override this choice by setting GDAL_ENABLE_DRIVER_GTIFF=OFF")
+    option(GDAL_ENABLE_DRIVER_GTIFF "Set ON to build GeoTIFF image format format" ON)
+endif()
+
+gdal_dependent_format(gtiff "GeoTIFF image format" "GDAL_USE_TIFF OR GDAL_USE_TIFF_INTERNAL;GDAL_USE_GEOTIFF OR GDAL_USE_GEOTIFF_INTERNAL")
 set_package_properties(TIFF PROPERTIES PURPOSE "gdal_GTIFF: GeoTIFF image format")
 gdal_format(mem "Read/write data in Memory")
-gdal_format(vrt "Virtual GDAL Datasets")
+
+# Exception to the rule: enable the VRT driver by default, even if
+# GDAL_BUILD_OPTIONAL_DRIVERS=OFF.
+if (NOT DEFINED GDAL_ENABLE_DRIVER_VRT AND
+    DEFINED GDAL_BUILD_OPTIONAL_DRIVERS AND
+    NOT GDAL_BUILD_OPTIONAL_DRIVERS)
+    message(WARNING "Enabling GDAL_ENABLE_DRIVER_VRT=ON, despite GDAL_BUILD_OPTIONAL_DRIVERS=OFF. You can of course override this choice by setting GDAL_ENABLE_DRIVER_VRT=OFF")
+    option(GDAL_ENABLE_DRIVER_VRT "Set ON to build Virtual GDAL Datasets" ON)
+endif()
+
+gdal_optional_format(vrt "Virtual GDAL Datasets")
+if (NOT GDAL_ENABLE_DRIVER_VRT)
+    # Even if we don't enable the driver (Open method), we still need to compile
+    # Most of it
+    add_subdirectory(vrt)
+endif()
+
 # Note: derived is derived of vrt
-add_subdirectory(derived)
+gdal_optional_format(derived "Derived datasets")
+
+gdal_optional_format(gti "GDAL Tile Index")
 
 # default formats
 
@@ -49,7 +79,7 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug" OR GDAL_ENABLE_DRIVER_NULL)
   gdal_optional_format(null "NULL dummy driver")
 endif ()
 
-gdal_format(hfa "Erdas Imagine .img")
+gdal_optional_format(hfa "Erdas Imagine .img")
 gdal_optional_format(sdts "SDTS translator")
 gdal_optional_format(nitf "National Imagery Transmission Format")
 gdal_optional_format(gxf "GXF")
@@ -88,6 +118,7 @@ gdal_optional_format(r "R Object Data Store")
 gdal_optional_format(northwood "NWT_GRD/NWT_GRC -- Northwood/Vertical Mapper File Format")
 gdal_optional_format(saga "SAGA GIS Binary Driver")
 gdal_optional_format(xyz "ASCII Gridded XYZ")
+include(avif/driver_declaration.cmake)
 gdal_dependent_format(heif "HEIF" "GDAL_USE_HEIF")
 gdal_optional_format(esric "ESRI compact cache")
 gdal_optional_format(hf2 "HF2/HFZ heightfield raster")
@@ -108,6 +139,7 @@ gdal_optional_format(grib "WMO General Regularly-distributed Information in Bina
 gdal_optional_format(bmp "Microsoft Windows Device Independent Bitmap")
 gdal_optional_format(tga "TGA")
 gdal_optional_format(stacta "STACTA")
+gdal_optional_format(snap_tiff "SNAP TIFF")
 
 # optional Formats
 gdal_optional_format(bsb "Maptech/NOAA BSB Nautical Chart Format")
@@ -161,8 +193,6 @@ include(jp2kak/driver_declaration.cmake)
 gdal_dependent_format(jpipkak "JPIP Streaming" "GDAL_USE_KDU")
 # Luratech SDK
 gdal_dependent_format(jp2lura "JPEG-2000 (based on Luratech)" "GDAL_USE_LURATECH")
-# ESRI ArcSDE C API SDK
-gdal_dependent_format(sde "ESRI ArcSDE Raster" "HAVE_SDE")
 # LizardTech's decoding software development kit (DSDK)
 include(mrsid/driver_declaration.cmake)
 include(georaster/driver_declaration.cmake)

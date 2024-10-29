@@ -82,7 +82,7 @@ but no projection checking is performed (unless projectionCheck option is used).
 
     .. note::
 
-       Despite the datatype set using ``--type``, when doing intermediate aritmethic operations using operands of the
+       Despite the datatype set using ``--type``, when doing intermediate arithmetic operations using operands of the
        same type, the operation result will honor the original datatype. This may lead into unexpected results in the final result.
 
     .. note::

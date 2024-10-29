@@ -73,6 +73,19 @@ The GTI driver accepts different types of connection strings:
 
   For example: ``tileindex.gti``
 
+STAC GeoParquet support
+-----------------------
+
+.. versionadded:: 3.10
+
+The driver can support `STAC GeoParquet catalogs <https://stac-utils.github.io/stac-geoparquet/latest/spec/stac-geoparquet-spec>`_,
+provided GDAL is built with :ref:`vector.parquet` support.
+It can make use of fields ``proj:epsg`` and ``proj:transform`` from the
+`Projection Extension Specification <https://github.com/stac-extensions/projection/>`_,
+to correctly infer the appropriate projection and resolution.
+
+Example of a valid connection string: ``GTI:/vsicurl/https://github.com/stac-utils/stac-geoparquet/raw/main/tests/data/naip.parquet``
+
 Tile index requirements
 -----------------------
 
@@ -163,7 +176,7 @@ PostGIS, ...), the following layer metadata items may be set:
   virtual mosaic (unless SORT_FIELD_ASC=NO is set)
 
 * ``SORT_FIELD_ASC=YES|NO``: whether the values in SORT_FIELD should be sorted
-  in ascendent or descent order. Defaults to YES (ascendent)
+  in ascending or descending order. Defaults to YES (ascending)
 
 * ``BLOCKXSIZE=<int>`` and ``BLOCKYSIZE=<int>``: Block size of bands of the
   virtual mosaic. Defaults to 256x256.
@@ -193,28 +206,43 @@ PostGIS, ...), the following layer metadata items may be set:
 
   Unit of the band.
 
-* ``OVERVIEW_<idx>_DATASET=<string>`` where idx is an integer index starting at 0.
+* ``OVERVIEW_<idx>_DATASET=<string>`` where idx is an integer index (starting at 0
+  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
 
   Name of the dataset to use as the first overview level. This may be a
   raster dataset (for example a GeoTIFF file, or another GTI dataset).
   This may also be a vector dataset with a GTI compatible layer, potentially
   specified with ``OVERVIEW_<idx>_LAYER``.
 
-* ``OVERVIEW_<idx>_OPEN_OPTIONS=<key1=value1>[,key2=value2]...`` where idx is an integer index starting at 0.
+  Starting with GDAL 3.9.2, overviews of ``OVERVIEW_<idx>_DATASET=<string>``
+  are also automatically added, unless ``OVERVIEW_<idx>_OPEN_OPTIONS=OVERVIEW_LEVEL=NONE``
+  is specified.
+
+* ``OVERVIEW_<idx>_OPEN_OPTIONS=<key1=value1>[,key2=value2]...`` where idx is an integer index (starting at 0
+  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
 
   Open options(s) to use to open ``OVERVIEW_<idx>_DATASET``.
 
-* ``OVERVIEW_<idx>_LAYER=<string>`` where idx is an integer index starting at 0.
+* ``OVERVIEW_<idx>_LAYER=<string>`` where idx is an integer index (starting at 0
+  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
+
+  Only taken into account if ``OVERVIEW_<idx>_DATASET=<string>`` is not specified,
+  or points to a GTI dataset.
 
   Name of the vector layer to use as the first overview level, assuming
   ``OVERVIEW_<idx>_DATASET`` points to a vector dataset. ``OVERVIEW_<idx>_DATASET``
   may also not be specified, in which case the vector dataset of the full
   resolution virtual mosaic is used.
 
-* ``OVERVIEW_<idx>_FACTOR=<int>`` where idx is an integer index starting at 0.
+* ``OVERVIEW_<idx>_FACTOR=<int>`` where idx is an integer index (starting at 0
+  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
 
-  Sub-sampling factor, strictly greater than 1. If ``OVERVIEW_<idx>_DATASET``
-  and ``OVERVIEW_<idx>_LAYER`` are not specified, then all tiles of the full
+  Sub-sampling factor, strictly greater than 1.
+
+  Only taken into account if ``OVERVIEW_<idx>_DATASET=<string>`` is not specified,
+  or points to a GTI dataset.
+
+  If ``OVERVIEW_<idx>_DATASET`` and ``OVERVIEW_<idx>_LAYER`` are not specified, then all tiles of the full
   resolution virtual mosaic are used, with the specified sub-sampling factor
   (it is recommended, but not required, that those tiles do have a corresponding overview).
   ``OVERVIEW_<idx>_DATASET`` and/or ``OVERVIEW_<idx>_LAYER`` may also be
@@ -223,6 +251,8 @@ PostGIS, ...), the following layer metadata items may be set:
 All overviews *must* have exactly the same extent as the full resolution
 virtual mosaic. The GTI driver does not check that, and if that condition is
 not met, subsampled pixel request will lead to incorrect result.
+
+They also must be listed by decreasing size with increasing overview index.
 
 In addition to those layer metadata items, the dataset-level metadata item
 ``TILE_INDEX_LAYER`` may be set to indicate, for dataset with multiple layers,
@@ -312,7 +342,8 @@ mentioned in the previous section.
         </Overview>
         <Overview>                                     <!-- optional -->
             <!-- 3rd overview level (and potentially 4th, 5th... depending on
-                 the number of overview levels in the pointed GeoTIFF file)
+                 the number of overview levels in the pointed GeoTIFF file.
+                 Only since GDAL 3.9.2)
             -->
             <Dataset>some.tif</Dataset>
         </Overview>
@@ -349,13 +380,13 @@ You can refer to the documentation of the :ref:`VRT <raster.vrt>` driver for
 their syntax and semantics.
 
 
-How to build a GTI comptatible index ?
+How to build a GTI compatible index ?
 ----------------------------------------
 
 The :ref:`gdaltindex` program may be used to generate both a vector tile index,
 and optionally a wrapping .gti XML file.
 
-A GTI comptatible index may also be created by any programmatic means, provided
+A GTI compatible index may also be created by any programmatic means, provided
 the above format specifications are met.
 
 
@@ -395,7 +426,7 @@ also defined as layer metadata items or in the .gti XML file
       :choices: YES, NO
       :default: YES
 
-      Whether the values in SORT_FIELD should be sorted in ascendent or descent order
+      Whether the values in SORT_FIELD should be sorted in ascending or descending order
 
 -  .. oo:: FILTER
       :choices: <string>
@@ -431,3 +462,33 @@ also defined as layer metadata items or in the .gti XML file
       :choices: <float>
 
       Maximum Y value for the virtual mosaic extent
+
+Multi-threading optimizations
+-----------------------------
+
+Starting with GDAL 3.10, the :oo:`NUM_THREADS` open option can
+be set to control specifically the multi-threading of GTI datasets.
+It defaults to ``ALL_CPUS``, and when set, overrides :config:`GDAL_NUM_THREADS`
+or :config:`GTI_NUM_THREADS`. It applies to band-level and dataset-level
+RasterIO(), if more than 1 million pixels are requested and if the mosaic is
+made of only non-overlapping tiles.
+
+-  .. oo:: NUM_THREADS
+      :choices: integer, ALL_CPUS
+      :default: ALL_CPUS
+
+      Determines the number of threads used when an operation reads from
+      multiple sources.
+
+This can also be specified globally with the :config:`GTI_NUM_THREADS`
+configuration option.
+
+-  .. config:: GTI_NUM_THREADS
+      :choices: integer, ALL_CPUS
+      :default: ALL_CPUS
+
+      Determines the number of threads used when an operation reads from
+      multiple sources.
+
+Note that the number of threads actually used is also limited by the
+:config:`GDAL_MAX_DATASET_POOL_SIZE` configuration option.

@@ -9,23 +9,7 @@
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef VIRTUALDATASET_H_INCLUDED
@@ -51,8 +35,8 @@
 
 CPLErr GDALRegisterDefaultPixelFunc();
 void GDALVRTRegisterDefaultProcessedDatasetFuncs();
-CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
-                             int nPrecision);
+CPLString CPL_DLL VRTSerializeNoData(double dfVal, GDALDataType eDataType,
+                                     int nPrecision);
 
 #if 0
 int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
@@ -501,10 +485,16 @@ class CPL_DLL VRTWarpedDataset final : public VRTDataset
 {
     GDALWarpOperation *m_poWarper;
 
-    int m_nOverviewCount;
-    VRTWarpedDataset **m_papoOverviews;
+    bool m_bIsOverview = false;
+    std::vector<VRTWarpedDataset *> m_apoOverviews{};
     int m_nSrcOvrLevel;
 
+    bool GetOverviewSize(GDALDataset *poSrcDS, int iOvr, int iSrcOvr,
+                         int &nOvrXSize, int &nOvrYSize, double &dfSrcRatioX,
+                         double &dfSrcRatioY) const;
+    int GetOverviewCount() const;
+    int GetSrcOverviewLevel(int iOvr, bool &bThisLevelOnlyOut) const;
+    VRTWarpedDataset *CreateImplicitOverview(int iOvr) const;
     void CreateImplicitOverviews();
 
     friend class VRTWarpedRasterBand;
@@ -1108,6 +1098,10 @@ class CPL_DLL VRTWarpedRasterBand final : public VRTRasterBand
   private:
     int m_nIRasterIOCounter =
         0;  //! Protects against infinite recursion inside IRasterIO()
+
+    int GetBestOverviewLevel(int &nXOff, int &nYOff, int &nXSize, int &nYSize,
+                             int nBufXSize, int nBufYSize,
+                             GDALRasterIOExtraArg *psExtraArg) const;
 };
 
 /************************************************************************/

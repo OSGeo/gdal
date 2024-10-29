@@ -10,23 +10,7 @@
  *
  *  Copyright 2020 Esri
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this softwareand associated documentation files(the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and /or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions :
- *
- * The above copyright noticeand this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 #include "gdal_priv.h"
@@ -590,6 +574,9 @@ class ESRICProxyRasterBand final : public GDALProxyRasterBand
 class ESRICProxyDataset final : public GDALProxyDataset
 {
   private:
+    // m_poSrcDS must be placed before m_poUnderlyingDS for proper destruction
+    // as m_poUnderlyingDS references m_poSrcDS
+    std::unique_ptr<GDALDataset> m_poSrcDS{};
     std::unique_ptr<GDALDataset> m_poUnderlyingDS{};
     CPLStringList m_aosFileList{};
 
@@ -600,8 +587,9 @@ class ESRICProxyDataset final : public GDALProxyDataset
     }
 
   public:
-    ESRICProxyDataset(GDALDataset *poUnderlyingDS, const char *pszDescription)
-        : m_poUnderlyingDS(poUnderlyingDS)
+    ESRICProxyDataset(GDALDataset *poSrcDS, GDALDataset *poUnderlyingDS,
+                      const char *pszDescription)
+        : m_poSrcDS(poSrcDS), m_poUnderlyingDS(poUnderlyingDS)
     {
         nRasterXSize = poUnderlyingDS->GetRasterXSize();
         nRasterYSize = poUnderlyingDS->GetRasterYSize();
@@ -722,10 +710,10 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
                 return nullptr;
             }
             aosOptions.AddString("-projwin");
-            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MinX));
-            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MaxY));
-            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MaxX));
-            aosOptions.AddString(CPLSPrintf("%.18g", ds->m_sFullExtent.MinY));
+            aosOptions.AddString(CPLSPrintf("%.17g", ds->m_sFullExtent.MinX));
+            aosOptions.AddString(CPLSPrintf("%.17g", ds->m_sFullExtent.MaxY));
+            aosOptions.AddString(CPLSPrintf("%.17g", ds->m_sFullExtent.MaxX));
+            aosOptions.AddString(CPLSPrintf("%.17g", ds->m_sFullExtent.MinY));
         }
         else if (pszExtentSource && EQUAL(pszExtentSource, "INITIAL_EXTENT"))
         {
@@ -741,13 +729,13 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
             }
             aosOptions.AddString("-projwin");
             aosOptions.AddString(
-                CPLSPrintf("%.18g", ds->m_sInitialExtent.MinX));
+                CPLSPrintf("%.17g", ds->m_sInitialExtent.MinX));
             aosOptions.AddString(
-                CPLSPrintf("%.18g", ds->m_sInitialExtent.MaxY));
+                CPLSPrintf("%.17g", ds->m_sInitialExtent.MaxY));
             aosOptions.AddString(
-                CPLSPrintf("%.18g", ds->m_sInitialExtent.MaxX));
+                CPLSPrintf("%.17g", ds->m_sInitialExtent.MaxX));
             aosOptions.AddString(
-                CPLSPrintf("%.18g", ds->m_sInitialExtent.MinY));
+                CPLSPrintf("%.17g", ds->m_sInitialExtent.MinY));
         }
 
         if (!aosOptions.empty())
@@ -760,15 +748,15 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
             aosOptions.AddString(CPLSPrintf("BLOCKYSIZE=%d", ds->TSZ));
             auto psOptions =
                 GDALTranslateOptionsNew(aosOptions.List(), nullptr);
-            auto hDS = GDALTranslate("", GDALDataset::ToHandle(ds.release()),
+            auto hDS = GDALTranslate("", GDALDataset::ToHandle(ds.get()),
                                      psOptions, nullptr);
             GDALTranslateOptionsFree(psOptions);
             if (!hDS)
             {
                 return nullptr;
             }
-            return new ESRICProxyDataset(GDALDataset::FromHandle(hDS),
-                                         pszDescription);
+            return new ESRICProxyDataset(
+                ds.release(), GDALDataset::FromHandle(hDS), pszDescription);
         }
         return ds.release();
     }
@@ -896,9 +884,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
                  GUInt64(size), GUInt64(offset));
         return CE_Failure;
     }
-    CPLString magic;
-    // Should use some sort of unique
-    magic.Printf("/vsimem/esric_%p.tmp", this);
+    const CPLString magic(VSIMemGenerateHiddenFilename("esric.tmp"));
     auto mfh = VSIFileFromMemBuffer(magic.c_str(), fbuffer.data(), size, false);
     VSIFCloseL(mfh);
     // Can't open a raster by handle?

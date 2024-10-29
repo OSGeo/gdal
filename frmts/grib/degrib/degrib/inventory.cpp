@@ -20,6 +20,7 @@
 #include <math.h>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "clock.h"
@@ -44,7 +45,7 @@
 static sInt4 DoubleToSInt4Clamp(double val) {
    if (val >= INT_MAX) return INT_MAX;
    if (val <= INT_MIN) return INT_MIN;
-   if (CPLIsNan(val)) return 0;
+   if (std::isnan(val)) return 0;
    return (sInt4)val;
 }
 

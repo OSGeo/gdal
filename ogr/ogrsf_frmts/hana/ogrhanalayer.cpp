@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2020, SAP SE
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_hana.h"
@@ -31,11 +15,13 @@
 #include "ogrhanautils.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <sstream>
 #include <memory>
 
 #include "odbc/Exception.h"
+#include "odbc/PreparedStatement.h"
 #include "odbc/ResultSet.h"
 #include "odbc/Statement.h"
 #include "odbc/Types.h"
@@ -73,8 +59,8 @@ CPLString BuildSpatialFilter(int dbVersion, const OGRGeometry &geom,
     OGREnvelope env;
     geom.getEnvelope(&env);
 
-    if ((CPLIsInf(env.MinX) || CPLIsInf(env.MinY) || CPLIsInf(env.MaxX) ||
-         CPLIsInf(env.MaxY)))
+    if ((std::isinf(env.MinX) || std::isinf(env.MinY) || std::isinf(env.MaxX) ||
+         std::isinf(env.MaxY)))
         return "";
 
     auto clampValue = [](double v)
@@ -96,13 +82,13 @@ CPLString BuildSpatialFilter(int dbVersion, const OGRGeometry &geom,
     // flag.
     if (dbVersion == 1)
         return CPLString().Printf(
-            "\"%s\".ST_IntersectsRect(ST_GeomFromText('POINT(%.18g %.18g)', "
-            "%d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
+            "\"%s\".ST_IntersectsRect(ST_GeomFromText('POINT(%.17g %.17g)', "
+            "%d), ST_GeomFromText('POINT(%.17g %.17g)', %d)) = 1",
             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
     else
         return CPLString().Printf(
-            "\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%.18g "
-            "%.18g)', %d), ST_GeomFromText('POINT(%.18g %.18g)', %d)) = 1",
+            "\"%s\".ST_IntersectsRectPlanar(ST_GeomFromText('POINT(%.17g "
+            "%.17g)', %d), ST_GeomFromText('POINT(%.17g %.17g)', %d)) = 1",
             clmName.c_str(), minX, minY, srid, maxX, maxY, srid);
 }
 
@@ -114,63 +100,73 @@ CreateFieldDefn(const AttributeColumnDescription &columnDesc)
 
     OGRFieldType ogrFieldType = OFTString;
     OGRFieldSubType ogrFieldSubType = OGRFieldSubType::OFSTNone;
+    int width = columnDesc.length;
 
     switch (columnDesc.type)
     {
-        case odbc::SQLDataTypes::Bit:
-        case odbc::SQLDataTypes::Boolean:
+        case QGRHanaDataTypes::Bit:
+        case QGRHanaDataTypes::Boolean:
             ogrFieldType = columnDesc.isArray ? OFTIntegerList : OFTInteger;
             ogrFieldSubType = OGRFieldSubType::OFSTBoolean;
             break;
-        case odbc::SQLDataTypes::TinyInt:
-        case odbc::SQLDataTypes::SmallInt:
+        case QGRHanaDataTypes::TinyInt:
+        case QGRHanaDataTypes::SmallInt:
             ogrFieldType = columnDesc.isArray ? OFTIntegerList : OFTInteger;
             ogrFieldSubType = OGRFieldSubType::OFSTInt16;
             break;
-        case odbc::SQLDataTypes::Integer:
+        case QGRHanaDataTypes::Integer:
             ogrFieldType = columnDesc.isArray ? OFTIntegerList : OFTInteger;
             break;
-        case odbc::SQLDataTypes::BigInt:
+        case QGRHanaDataTypes::BigInt:
             ogrFieldType = columnDesc.isArray ? OFTInteger64List : OFTInteger64;
             break;
-        case odbc::SQLDataTypes::Double:
-        case odbc::SQLDataTypes::Real:
-        case odbc::SQLDataTypes::Float:
+        case QGRHanaDataTypes::Double:
+        case QGRHanaDataTypes::Real:
+        case QGRHanaDataTypes::Float:
             ogrFieldType = columnDesc.isArray ? OFTRealList : OFTReal;
-            if (columnDesc.type != odbc::SQLDataTypes::Double)
+            if (columnDesc.type != QGRHanaDataTypes::Double)
                 ogrFieldSubType = OGRFieldSubType::OFSTFloat32;
             break;
-        case odbc::SQLDataTypes::Decimal:
-        case odbc::SQLDataTypes::Numeric:
+        case QGRHanaDataTypes::Decimal:
+        case QGRHanaDataTypes::Numeric:
             ogrFieldType = columnDesc.isArray ? OFTRealList : OFTReal;
             setFieldPrecision = true;
             break;
-        case odbc::SQLDataTypes::Char:
-        case odbc::SQLDataTypes::VarChar:
-        case odbc::SQLDataTypes::LongVarChar:
-        case odbc::SQLDataTypes::WChar:
-        case odbc::SQLDataTypes::WVarChar:
-        case odbc::SQLDataTypes::WLongVarChar:
+        case QGRHanaDataTypes::Char:
+        case QGRHanaDataTypes::VarChar:
+        case QGRHanaDataTypes::LongVarChar:
+        case QGRHanaDataTypes::WChar:
+        case QGRHanaDataTypes::WVarChar:
+        case QGRHanaDataTypes::WLongVarChar:
             // Note: OFTWideString is deprecated
             ogrFieldType = columnDesc.isArray ? OFTStringList : OFTString;
             setFieldSize = true;
             break;
-        case odbc::SQLDataTypes::Date:
-        case odbc::SQLDataTypes::TypeDate:
+        case QGRHanaDataTypes::Date:
+        case QGRHanaDataTypes::TypeDate:
             ogrFieldType = OFTDate;
             break;
-        case odbc::SQLDataTypes::Time:
-        case odbc::SQLDataTypes::TypeTime:
+        case QGRHanaDataTypes::Time:
+        case QGRHanaDataTypes::TypeTime:
             ogrFieldType = OFTTime;
             break;
-        case odbc::SQLDataTypes::Timestamp:
-        case odbc::SQLDataTypes::TypeTimestamp:
+        case QGRHanaDataTypes::Timestamp:
+        case QGRHanaDataTypes::TypeTimestamp:
             ogrFieldType = OFTDateTime;
             break;
-        case odbc::SQLDataTypes::Binary:
-        case odbc::SQLDataTypes::VarBinary:
-        case odbc::SQLDataTypes::LongVarBinary:
+        case QGRHanaDataTypes::Binary:
+        case QGRHanaDataTypes::VarBinary:
+        case QGRHanaDataTypes::LongVarBinary:
             ogrFieldType = OFTBinary;
+            setFieldSize = true;
+            break;
+        case QGRHanaDataTypes::RealVector:
+            ogrFieldType = OFTBinary;
+            // The .fvecs format is used for REAL_VECTOR with the dimension
+            // lying in the range [1,65000].
+            width = (columnDesc.precision == 0)
+                        ? 65000
+                        : 4 * (columnDesc.precision + 1);
             setFieldSize = true;
             break;
         default:
@@ -189,7 +185,7 @@ CreateFieldDefn(const AttributeColumnDescription &columnDesc)
     if (!columnDesc.isArray)
     {
         if (setFieldSize)
-            field->SetWidth(columnDesc.length);
+            field->SetWidth(width);
         if (setFieldPrecision)
         {
             field->SetWidth(columnDesc.precision);
@@ -344,7 +340,7 @@ void OGRHanaLayer::BuildWhereClause()
             const GeometryColumnDescription &geomClmDesc =
                 geomColumns_[static_cast<std::size_t>(m_iGeomFieldFilter)];
             spatialFilter = BuildSpatialFilter(
-                dataSource_->GetMajorVersion(), *m_poFilterGeom,
+                dataSource_->GetHanaVersion().major(), *m_poFilterGeom,
                 geomClmDesc.name, geomClmDesc.srid);
         }
     }
@@ -472,13 +468,13 @@ OGRFeature *OGRHanaLayer::ReadFeature()
 
         if (clmDesc.isFeatureID)
         {
-            if (clmDesc.type == odbc::SQLDataTypes::Integer)
+            if (clmDesc.type == QGRHanaDataTypes::Integer)
             {
                 odbc::Int val = resultSet_->getInt(paramIndex);
                 if (!val.isNull())
                     feature->SetFID(static_cast<GIntBig>(*val));
             }
-            else if (clmDesc.type == odbc::SQLDataTypes::BigInt)
+            else if (clmDesc.type == QGRHanaDataTypes::BigInt)
             {
                 odbc::Long val = resultSet_->getLong(paramIndex);
                 if (!val.isNull())
@@ -504,41 +500,41 @@ OGRFeature *OGRHanaLayer::ReadFeature()
 
             switch (clmDesc.type)
             {
-                case odbc::SQLDataTypes::Boolean:
+                case QGRHanaDataTypes::Boolean:
                     featWriter.SetFieldValueAsArray<uint8_t, int32_t>(
                         fieldIndex, val);
                     break;
-                case odbc::SQLDataTypes::TinyInt:
+                case QGRHanaDataTypes::TinyInt:
                     featWriter.SetFieldValueAsArray<uint8_t, int32_t>(
                         fieldIndex, val);
                     break;
-                case odbc::SQLDataTypes::SmallInt:
+                case QGRHanaDataTypes::SmallInt:
                     featWriter.SetFieldValueAsArray<int16_t, int32_t>(
                         fieldIndex, val);
                     break;
-                case odbc::SQLDataTypes::Integer:
+                case QGRHanaDataTypes::Integer:
                     featWriter.SetFieldValueAsArray<int32_t, int32_t>(
                         fieldIndex, val);
                     break;
-                case odbc::SQLDataTypes::BigInt:
+                case QGRHanaDataTypes::BigInt:
                     featWriter.SetFieldValueAsArray<GIntBig, GIntBig>(
                         fieldIndex, val);
                     break;
-                case odbc::SQLDataTypes::Float:
-                case odbc::SQLDataTypes::Real:
+                case QGRHanaDataTypes::Float:
+                case QGRHanaDataTypes::Real:
                     featWriter.SetFieldValueAsArray<float, double>(fieldIndex,
                                                                    val);
                     break;
-                case odbc::SQLDataTypes::Double:
+                case QGRHanaDataTypes::Double:
                     featWriter.SetFieldValueAsArray<double, double>(fieldIndex,
                                                                     val);
                     break;
-                case odbc::SQLDataTypes::Char:
-                case odbc::SQLDataTypes::VarChar:
-                case odbc::SQLDataTypes::LongVarChar:
-                case odbc::SQLDataTypes::WChar:
-                case odbc::SQLDataTypes::WVarChar:
-                case odbc::SQLDataTypes::WLongVarChar:
+                case QGRHanaDataTypes::Char:
+                case QGRHanaDataTypes::VarChar:
+                case QGRHanaDataTypes::LongVarChar:
+                case QGRHanaDataTypes::WChar:
+                case QGRHanaDataTypes::WVarChar:
+                case QGRHanaDataTypes::WLongVarChar:
                     featWriter.SetFieldValueAsStringArray(fieldIndex, val);
                     break;
             }
@@ -548,65 +544,65 @@ OGRFeature *OGRHanaLayer::ReadFeature()
 
         switch (clmDesc.type)
         {
-            case odbc::SQLDataTypes::Bit:
-            case odbc::SQLDataTypes::Boolean:
+            case QGRHanaDataTypes::Bit:
+            case QGRHanaDataTypes::Boolean:
             {
                 odbc::Boolean val = resultSet_->getBoolean(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::TinyInt:
+            case QGRHanaDataTypes::TinyInt:
             {
                 odbc::Byte val = resultSet_->getByte(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::SmallInt:
+            case QGRHanaDataTypes::SmallInt:
             {
                 odbc::Short val = resultSet_->getShort(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::Integer:
+            case QGRHanaDataTypes::Integer:
             {
                 odbc::Int val = resultSet_->getInt(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::BigInt:
+            case QGRHanaDataTypes::BigInt:
             {
                 odbc::Long val = resultSet_->getLong(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::Real:
-            case odbc::SQLDataTypes::Float:
+            case QGRHanaDataTypes::Real:
+            case QGRHanaDataTypes::Float:
             {
                 odbc::Float val = resultSet_->getFloat(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::Double:
+            case QGRHanaDataTypes::Double:
             {
                 odbc::Double val = resultSet_->getDouble(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::Decimal:
-            case odbc::SQLDataTypes::Numeric:
+            case QGRHanaDataTypes::Decimal:
+            case QGRHanaDataTypes::Numeric:
             {
                 odbc::Decimal val = resultSet_->getDecimal(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::Char:
-            case odbc::SQLDataTypes::VarChar:
-            case odbc::SQLDataTypes::LongVarChar:
+            case QGRHanaDataTypes::Char:
+            case QGRHanaDataTypes::VarChar:
+            case QGRHanaDataTypes::LongVarChar:
             // Note: NVARCHAR data type is converted to UTF-8 on the HANA side
             // when using a connection setting CHAR_AS_UTF8=1.
-            case odbc::SQLDataTypes::WChar:
-            case odbc::SQLDataTypes::WVarChar:
-            case odbc::SQLDataTypes::WLongVarChar:
+            case QGRHanaDataTypes::WChar:
+            case QGRHanaDataTypes::WVarChar:
+            case QGRHanaDataTypes::WLongVarChar:
             {
                 std::size_t len = resultSet_->getStringLength(paramIndex);
                 if (len == odbc::ResultSet::NULL_DATA)
@@ -627,9 +623,10 @@ OGRFeature *OGRHanaLayer::ReadFeature()
                 }
             }
             break;
-            case odbc::SQLDataTypes::Binary:
-            case odbc::SQLDataTypes::VarBinary:
-            case odbc::SQLDataTypes::LongVarBinary:
+            case QGRHanaDataTypes::Binary:
+            case QGRHanaDataTypes::VarBinary:
+            case QGRHanaDataTypes::LongVarBinary:
+            case QGRHanaDataTypes::RealVector:
             {
                 std::size_t len = resultSet_->getBinaryLength(paramIndex);
                 if (len == 0)
@@ -652,22 +649,22 @@ OGRFeature *OGRHanaLayer::ReadFeature()
                 }
             }
             break;
-            case odbc::SQLDataTypes::Date:
-            case odbc::SQLDataTypes::TypeDate:
+            case QGRHanaDataTypes::Date:
+            case QGRHanaDataTypes::TypeDate:
             {
                 odbc::Date date = resultSet_->getDate(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, date);
             }
             break;
-            case odbc::SQLDataTypes::Time:
-            case odbc::SQLDataTypes::TypeTime:
+            case QGRHanaDataTypes::Time:
+            case QGRHanaDataTypes::TypeTime:
             {
                 odbc::Time time = resultSet_->getTime(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, time);
             }
             break;
-            case odbc::SQLDataTypes::Timestamp:
-            case odbc::SQLDataTypes::TypeTimestamp:
+            case QGRHanaDataTypes::Timestamp:
+            case QGRHanaDataTypes::TypeTimestamp:
             {
                 odbc::Timestamp timestamp =
                     resultSet_->getTimestamp(paramIndex);
@@ -765,48 +762,70 @@ OGRErr OGRHanaLayer::InitFeatureDefinition(const CPLString &schemaName,
 /*                         ReadGeometryExtent()                         */
 /************************************************************************/
 
-void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope *extent)
+void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope *extent,
+                                      int force)
 {
     EnsureInitialized();
 
     OGRGeomFieldDefn *geomFieldDef = featureDefn_->GetGeomFieldDefn(geomField);
     const char *clmName = geomFieldDef->GetNameRef();
-    int srid = GetGeometryColumnSrid(geomField);
-    CPLString sql;
-    if (dataSource_->IsSrsRoundEarth(srid))
+    odbc::PreparedStatementRef stmt;
+    if (!force && IsTableLayer())
     {
-        CPLString quotedClmName = QuotedIdentifier(clmName);
-        bool hasSrsPlanarEquivalent = dataSource_->HasSrsPlanarEquivalent(srid);
-        CPLString geomColumn =
-            !hasSrsPlanarEquivalent
-                ? quotedClmName
-                : CPLString().Printf("%s.ST_SRID(%d)", quotedClmName.c_str(),
-                                     ToPlanarSRID(srid));
-        CPLString columns = CPLString().Printf(
-            "MIN(%s.ST_XMin()), MIN(%s.ST_YMin()), MAX(%s.ST_XMax()), "
-            "MAX(%s.ST_YMax())",
-            geomColumn.c_str(), geomColumn.c_str(), geomColumn.c_str(),
-            geomColumn.c_str());
-        sql = BuildQuery(rawQuery_.c_str(), columns.c_str());
+        auto names = dataSource_->FindSchemaAndTableNames(rawQuery_.c_str());
+        stmt = dataSource_->PrepareStatement(
+            "SELECT MIN_X, MIN_Y, MAX_X, MAX_Y FROM "
+            "SYS.M_ST_GEOMETRY_COLUMNS WHERE SCHEMA_NAME=? AND TABLE_NAME=? "
+            "AND COLUMN_NAME=?");
+        stmt->setString(1, names.first == ""
+                               ? odbc::String(dataSource_->schemaName_)
+                               : odbc::String(names.first));
+        stmt->setString(2, odbc::String(names.second));
+        stmt->setString(3, odbc::String(clmName));
     }
     else
     {
-        CPLString columns = CPLString().Printf(
-            "ST_EnvelopeAggr(%s) AS ext", QuotedIdentifier(clmName).c_str());
-        CPLString subQuery = BuildQuery(rawQuery_.c_str(), columns);
-        sql = CPLString().Printf(
-            "SELECT ext.ST_XMin(),ext.ST_YMin(),ext.ST_XMax(),ext.ST_YMax() "
-            "FROM (%s)",
-            subQuery.c_str());
+        int srid = GetGeometryColumnSrid(geomField);
+        if (dataSource_->IsSrsRoundEarth(srid))
+        {
+            CPLString quotedClmName = QuotedIdentifier(clmName);
+            bool hasSrsPlanarEquivalent =
+                dataSource_->HasSrsPlanarEquivalent(srid);
+            CPLString geomColumn =
+                !hasSrsPlanarEquivalent
+                    ? quotedClmName
+                    : CPLString().Printf("%s.ST_SRID(%d)",
+                                         quotedClmName.c_str(),
+                                         ToPlanarSRID(srid));
+            CPLString columns = CPLString().Printf(
+                "MIN(%s.ST_XMin()), MIN(%s.ST_YMin()), MAX(%s.ST_XMax()), "
+                "MAX(%s.ST_YMax())",
+                geomColumn.c_str(), geomColumn.c_str(), geomColumn.c_str(),
+                geomColumn.c_str());
+            stmt = dataSource_->PrepareStatement(
+                BuildQuery(rawQuery_.c_str(), columns.c_str()));
+        }
+        else
+        {
+            CPLString columns =
+                CPLString().Printf("ST_EnvelopeAggr(%s) AS ext",
+                                   QuotedIdentifier(clmName).c_str());
+            CPLString subQuery = BuildQuery(rawQuery_.c_str(), columns);
+            stmt = dataSource_->PrepareStatement(CPLString().Printf(
+                "SELECT "
+                "ext.ST_XMin(),ext.ST_YMin(),ext.ST_XMax(),ext.ST_YMax() "
+                "FROM (%s)",
+                subQuery.c_str()));
+        }
     }
 
+    bool set = false;
     extent->MinX = 0.0;
     extent->MaxX = 0.0;
     extent->MinY = 0.0;
     extent->MaxY = 0.0;
 
-    odbc::StatementRef stmt = dataSource_->CreateStatement();
-    odbc::ResultSetRef rsExtent = stmt->executeQuery(sql.c_str());
+    odbc::ResultSetRef rsExtent = stmt->executeQuery();
     if (rsExtent->next())
     {
         odbc::Double val = rsExtent->getDouble(1);
@@ -816,9 +835,30 @@ void OGRHanaLayer::ReadGeometryExtent(int geomField, OGREnvelope *extent)
             extent->MinY = *rsExtent->getDouble(2);
             extent->MaxX = *rsExtent->getDouble(3);
             extent->MaxY = *rsExtent->getDouble(4);
+            set = true;
         }
     }
+
     rsExtent->close();
+    if (!set && !force)
+        ReadGeometryExtent(geomField, extent, true);
+}
+
+bool OGRHanaLayer::IsFastExtentAvailable()
+{
+    if (geomColumns_.empty())
+        return false;
+
+    switch (dataSource_->GetHanaVersion().major())
+    {
+        case 2:
+            return dataSource_->GetHanaVersion() >= HanaVersion(2, 0, 80);
+        case 4:
+            return dataSource_->GetHanaCloudVersion() >=
+                   HanaVersion(2024, 2, 0);
+    }
+
+    return false;
 }
 
 /************************************************************************/
@@ -855,7 +895,10 @@ OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope *extent, int force)
 
     try
     {
-        ReadGeometryExtent(iGeomField, extent);
+        if (!force)
+            force = !IsFastExtentAvailable();
+        ReadGeometryExtent(iGeomField, extent, force);
+
         return OGRERR_NONE;
     }
     catch (const std::exception &ex)

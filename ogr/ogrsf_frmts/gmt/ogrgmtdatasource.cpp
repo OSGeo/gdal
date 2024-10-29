@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
@@ -35,7 +19,7 @@
 /************************************************************************/
 
 OGRGmtDataSource::OGRGmtDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr), bUpdate(false)
+    : papoLayers(nullptr), nLayers(0), bUpdate(false)
 {
 }
 
@@ -49,7 +33,6 @@ OGRGmtDataSource::~OGRGmtDataSource()
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
     CPLFree(papoLayers);
-    CPLFree(pszName);
 }
 
 /************************************************************************/
@@ -74,24 +57,6 @@ int OGRGmtDataSource::Open(const char *pszFilename, VSILFILE *fp,
         CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRGmtLayer *)));
     papoLayers[nLayers] = poLayer;
     nLayers++;
-
-    CPLFree(pszName);
-    pszName = CPLStrdup(pszFilename);
-
-    return TRUE;
-}
-
-/************************************************************************/
-/*                               Create()                               */
-/*                                                                      */
-/*      Create a new datasource.  This does not really do anything      */
-/*      currently but save the name.                                    */
-/************************************************************************/
-
-int OGRGmtDataSource::Create(const char *pszDSName, char ** /* papszOptions */)
-
-{
-    pszName = CPLStrdup(pszDSName);
 
     return TRUE;
 }
@@ -148,8 +113,8 @@ OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
     /*      layer name with the name from the gmt.                          */
     /* -------------------------------------------------------------------- */
 
-    CPLString osPath = CPLGetPath(pszName);
-    CPLString osFilename(pszName);
+    CPLString osPath = CPLGetPath(GetDescription());
+    CPLString osFilename(GetDescription());
     const char *pszFlags = "wb+";
 
     if (osFilename == "/dev/stdout")
@@ -157,7 +122,7 @@ OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
 
     if (STARTS_WITH(osFilename, "/vsistdout"))
         pszFlags = "wb";
-    else if (!EQUAL(CPLGetExtension(pszName), "gmt"))
+    else if (!EQUAL(CPLGetExtension(GetDescription()), "gmt"))
         osFilename = CPLFormFilename(osPath, pszLayerName, "gmt");
 
     /* -------------------------------------------------------------------- */

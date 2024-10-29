@@ -8,23 +8,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -101,10 +85,10 @@ static char *CPLGetStaticResult()
 /*                        CPLFindFilenameStart()                        */
 /************************************************************************/
 
-static int CPLFindFilenameStart(const char *pszFilename)
+static int CPLFindFilenameStart(const char *pszFilename, size_t nStart = 0)
 
 {
-    size_t iFileStart = strlen(pszFilename);
+    size_t iFileStart = nStart ? nStart : strlen(pszFilename);
 
     for (; iFileStart > 0 && pszFilename[iFileStart - 1] != '/' &&
            pszFilename[iFileStart - 1] != '\\';
@@ -144,7 +128,15 @@ static int CPLFindFilenameStart(const char *pszFilename)
 const char *CPLGetPath(const char *pszFilename)
 
 {
-    const int iFileStart = CPLFindFilenameStart(pszFilename);
+    size_t nSuffixPos = 0;
+    if (STARTS_WITH(pszFilename, "/vsicurl/http"))
+    {
+        const char *pszQuestionMark = strchr(pszFilename, '?');
+        if (pszQuestionMark)
+            nSuffixPos = static_cast<size_t>(pszQuestionMark - pszFilename);
+    }
+
+    const int iFileStart = CPLFindFilenameStart(pszFilename, nSuffixPos);
     char *pszStaticResult = CPLGetStaticResult();
 
     if (pszStaticResult == nullptr || iFileStart >= CPL_PATH_BUF_SIZE)
@@ -165,6 +157,13 @@ const char *CPLGetPath(const char *pszFilename)
     if (iFileStart > 1 && (pszStaticResult[iFileStart - 1] == '/' ||
                            pszStaticResult[iFileStart - 1] == '\\'))
         pszStaticResult[iFileStart - 1] = '\0';
+
+    if (nSuffixPos)
+    {
+        if (CPLStrlcat(pszStaticResult, pszFilename + nSuffixPos,
+                       CPL_PATH_BUF_SIZE) >= CPL_PATH_BUF_SIZE)
+            return CPLStaticBufferTooSmall(pszStaticResult);
+    }
 
     return pszStaticResult;
 }
@@ -198,7 +197,15 @@ const char *CPLGetPath(const char *pszFilename)
 const char *CPLGetDirname(const char *pszFilename)
 
 {
-    const int iFileStart = CPLFindFilenameStart(pszFilename);
+    size_t nSuffixPos = 0;
+    if (STARTS_WITH(pszFilename, "/vsicurl/http"))
+    {
+        const char *pszQuestionMark = strchr(pszFilename, '?');
+        if (pszQuestionMark)
+            nSuffixPos = static_cast<size_t>(pszQuestionMark - pszFilename);
+    }
+
+    const int iFileStart = CPLFindFilenameStart(pszFilename, nSuffixPos);
     char *pszStaticResult = CPLGetStaticResult();
 
     if (pszStaticResult == nullptr || iFileStart >= CPL_PATH_BUF_SIZE)
@@ -219,6 +226,13 @@ const char *CPLGetDirname(const char *pszFilename)
     if (iFileStart > 1 && (pszStaticResult[iFileStart - 1] == '/' ||
                            pszStaticResult[iFileStart - 1] == '\\'))
         pszStaticResult[iFileStart - 1] = '\0';
+
+    if (nSuffixPos)
+    {
+        if (CPLStrlcat(pszStaticResult, pszFilename + nSuffixPos,
+                       CPL_PATH_BUF_SIZE) >= CPL_PATH_BUF_SIZE)
+            return CPLStaticBufferTooSmall(pszStaticResult);
+    }
 
     return pszStaticResult;
 }
@@ -535,6 +549,19 @@ const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
     if (pszPath == nullptr)
         pszPath = "";
     size_t nLenPath = strlen(pszPath);
+
+    size_t nSuffixPos = 0;
+    if (STARTS_WITH_CI(pszPath, "/vsicurl/http"))
+    {
+        const char *pszQuestionMark = strchr(pszPath, '?');
+        if (pszQuestionMark)
+        {
+            nSuffixPos = static_cast<size_t>(pszQuestionMark - pszPath);
+            nLenPath = nSuffixPos;
+        }
+        pszAddedPathSep = "/";
+    }
+
     if (!CPLIsFilenameRelative(pszPath) && strcmp(pszBasename, "..") == 0)
     {
         // /a/b + .. --> /a
@@ -560,13 +587,15 @@ const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
         else
         {
             nLenPath = nLenPathOri;
-            pszAddedPathSep = VSIGetDirectorySeparator(pszPath);
+            if (pszAddedPathSep[0] == 0)
+                pszAddedPathSep = VSIGetDirectorySeparator(pszPath);
         }
     }
     else if (nLenPath > 0 && pszPath[nLenPath - 1] != '/' &&
              pszPath[nLenPath - 1] != '\\')
     {
-        pszAddedPathSep = VSIGetDirectorySeparator(pszPath);
+        if (pszAddedPathSep[0] == 0)
+            pszAddedPathSep = VSIGetDirectorySeparator(pszPath);
     }
 
     if (pszExtension == nullptr)
@@ -574,17 +603,26 @@ const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
     else if (pszExtension[0] != '.' && strlen(pszExtension) > 0)
         pszAddedExtSep = ".";
 
-    if (CPLStrlcpy(
-            pszStaticResult, pszPath,
-            std::min(nLenPath + 1, static_cast<size_t>(CPL_PATH_BUF_SIZE))) >=
-            static_cast<size_t>(CPL_PATH_BUF_SIZE) ||
-        CPLStrlcat(pszStaticResult, pszAddedPathSep, CPL_PATH_BUF_SIZE) >=
+    if (nLenPath >= static_cast<size_t>(CPL_PATH_BUF_SIZE))
+        return CPLStaticBufferTooSmall(pszStaticResult);
+
+    memcpy(pszStaticResult, pszPath, nLenPath);
+    pszStaticResult[nLenPath] = 0;
+
+    if (CPLStrlcat(pszStaticResult, pszAddedPathSep, CPL_PATH_BUF_SIZE) >=
             static_cast<size_t>(CPL_PATH_BUF_SIZE) ||
         CPLStrlcat(pszStaticResult, pszBasename, CPL_PATH_BUF_SIZE) >=
             static_cast<size_t>(CPL_PATH_BUF_SIZE) ||
         CPLStrlcat(pszStaticResult, pszAddedExtSep, CPL_PATH_BUF_SIZE) >=
             static_cast<size_t>(CPL_PATH_BUF_SIZE) ||
         CPLStrlcat(pszStaticResult, pszExtension, CPL_PATH_BUF_SIZE) >=
+            static_cast<size_t>(CPL_PATH_BUF_SIZE))
+    {
+        return CPLStaticBufferTooSmall(pszStaticResult);
+    }
+
+    if (nSuffixPos &&
+        CPLStrlcat(pszStaticResult, pszPath + nSuffixPos, CPL_PATH_BUF_SIZE) >=
             static_cast<size_t>(CPL_PATH_BUF_SIZE))
     {
         return CPLStaticBufferTooSmall(pszStaticResult);

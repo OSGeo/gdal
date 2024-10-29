@@ -11,23 +11,7 @@
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -4094,6 +4078,49 @@ def test_ogr_sql_ST_Area_on_ellipsoid(tmp_vsimem, require_spatialite):
         assert f[0] is None
 
 
+###############################################################################
+# Test ST_Length(geom, use_ellipsoid=True)
+
+
+def test_ogr_sql_ST_Length_on_ellipsoid(tmp_vsimem, require_spatialite):
+
+    tmpfilename = tmp_vsimem / "test_ogr_sql_ST_Length_on_ellipsoid.db"
+
+    ds = ogr.GetDriverByName("SQLite").CreateDataSource(
+        tmpfilename, options=["SPATIALITE=YES"]
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4258)
+    lyr = ds.CreateLayer("my_layer", srs=srs)
+    geom_colname = lyr.GetGeometryColumn()
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt("LINESTRING(2 49,3 49,3 48,2 49)")
+    )
+    lyr.CreateFeature(feat)
+    feat = None
+
+    with ds.ExecuteSQL(f"SELECT ST_Length({geom_colname}, 1) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == pytest.approx(317885.7863996293)
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL(
+            f"SELECT ST_Length({geom_colname}, 0) FROM my_layer"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] == pytest.approx(317885.7863996293)
+
+    with ds.ExecuteSQL("SELECT ST_Length(null, 1) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] is None
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL("SELECT ST_Length(X'FF', 1) FROM my_layer") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] is None
+
+
 def test_ogr_sqlite_stddev():
     """Test STDDEV_POP() and STDDEV_SAMP"""
 
@@ -4104,3 +4131,135 @@ def test_ogr_sqlite_stddev():
         f = sql_lyr.GetNextFeature()
         assert f.GetField(0) == pytest.approx(0.5, rel=1e-15)
         assert f.GetField(1) == pytest.approx(0.5**0.5, rel=1e-15)
+
+
+@pytest.mark.parametrize(
+    "input_values,expected_res",
+    [
+        ([], None),
+        ([1], 1),
+        ([2.5, None, 1], 1.75),
+        ([3, 2.2, 1], 2.2),
+        ([1, "invalid"], None),
+    ],
+)
+def test_ogr_sqlite_median(input_values, expected_res):
+    """Test MEDIAN"""
+
+    ds = ogr.Open(":memory:", update=1)
+    ds.ExecuteSQL("CREATE TABLE test(v)")
+    for v in input_values:
+        ds.ExecuteSQL(
+            "INSERT INTO test VALUES (%s)"
+            % (
+                "NULL"
+                if v is None
+                else ("'" + v + "'")
+                if isinstance(v, str)
+                else str(v)
+            )
+        )
+    if expected_res is None and input_values:
+        with pytest.raises(Exception), gdaltest.error_handler():
+            with ds.ExecuteSQL("SELECT MEDIAN(v) FROM test"):
+                pass
+    else:
+        with ds.ExecuteSQL("SELECT MEDIAN(v) FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == pytest.approx(expected_res)
+        with ds.ExecuteSQL("SELECT PERCENTILE(v, 50) FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == pytest.approx(expected_res)
+        with ds.ExecuteSQL("SELECT PERCENTILE_CONT(v, 0.5) FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == pytest.approx(expected_res)
+
+
+def test_ogr_sqlite_percentile():
+    """Test PERCENTILE"""
+
+    ds = ogr.Open(":memory:", update=1)
+    ds.ExecuteSQL("CREATE TABLE test(v)")
+    ds.ExecuteSQL("INSERT INTO test VALUES (5),(6),(4),(7),(3),(8),(2),(9),(1),(10)")
+
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE(v, 'invalid') FROM test"):
+            pass
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE(v, -0.1) FROM test"):
+            pass
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE(v, 100.1) FROM test"):
+            pass
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE(v, v) FROM test"):
+            pass
+
+
+def test_ogr_sqlite_percentile_cont():
+    """Test PERCENTILE_CONT"""
+
+    ds = ogr.Open(":memory:", update=1)
+    ds.ExecuteSQL("CREATE TABLE test(v)")
+    ds.ExecuteSQL("INSERT INTO test VALUES (5),(6),(4),(7),(3),(8),(2),(9),(1),(10)")
+
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE_CONT(v, 'invalid') FROM test"):
+            pass
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE_CONT(v, -0.1) FROM test"):
+            pass
+    with pytest.raises(Exception), gdaltest.error_handler():
+        with ds.ExecuteSQL("SELECT PERCENTILE_CONT(v, 1.1) FROM test"):
+            pass
+
+
+@pytest.mark.parametrize(
+    "input_values,expected_res",
+    [
+        ([], None),
+        ([1, 2, None, 3, 2], 2),
+        (["foo", "bar", "baz", "bar"], "bar"),
+        ([1, "foo", 2, "foo", "bar"], "foo"),
+        ([1, "foo", 2, "foo", 1], "foo"),
+    ],
+)
+def test_ogr_sqlite_mode(input_values, expected_res):
+    """Test MODE"""
+
+    ds = ogr.Open(":memory:", update=1)
+    ds.ExecuteSQL("CREATE TABLE test(v)")
+    for v in input_values:
+        ds.ExecuteSQL(
+            "INSERT INTO test VALUES (%s)"
+            % (
+                "NULL"
+                if v is None
+                else ("'" + v + "'")
+                if isinstance(v, str)
+                else str(v)
+            )
+        )
+    if expected_res is None and input_values:
+        with pytest.raises(Exception), gdaltest.error_handler():
+            with ds.ExecuteSQL("SELECT MODE(v) FROM test"):
+                pass
+    else:
+        with ds.ExecuteSQL("SELECT MODE(v) FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0) == expected_res
+
+
+def test_ogr_sqlite_run_deferred_actions_before_start_transaction():
+
+    ds = ogr.Open(":memory:", update=1)
+    lyr = ds.CreateLayer("test")
+    ds.StartTransaction()
+    ds.ExecuteSQL("INSERT INTO test VALUES (1, NULL)")
+    ds.RollbackTransaction()
+    ds.StartTransaction()
+    ds.ExecuteSQL("INSERT INTO test VALUES (1, NULL)")
+    ds.CommitTransaction()
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1

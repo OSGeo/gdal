@@ -25,6 +25,8 @@
 #include "cpl_port.h"
 #include "cpl_csv.h"
 
+#include <cmath>
+
 static const char* GetGRIB2_CSVFilename(const char* pszFilename)
 {
     const char* pszGribTableDirectory = CPLGetConfigOption("GRIB_RESOURCE_DIR", nullptr);
@@ -427,7 +429,7 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
       if (upperProb > tmp ||
           tmp > std::numeric_limits<int>::max() ||
           tmp < std::numeric_limits<int>::min() ||
-          CPLIsNan(tmp) ) {
+          std::isnan(tmp) ) {
          // TODO(schwehr): What is the correct response?
          errSprintf ("ERROR: upperProb out of range.  Setting to 0.\n");
          upperProb = 0.0;

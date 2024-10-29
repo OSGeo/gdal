@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2011, Alessandro Furieri
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *
  ******************************************************************************
  * Contributor: Alessandro Furieri, a.furieri@lqt.it
@@ -50,10 +34,12 @@
 class GFSTemplateItem
 {
   private:
-    char *m_pszName;
-    int n_nItemCount;
-    int n_nGeomCount;
-    GFSTemplateItem *pNext;
+    char *m_pszName = nullptr;
+    int n_nItemCount = 0;
+    int n_nGeomCount = 0;
+    GFSTemplateItem *pNext = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(GFSTemplateItem)
 
   public:
     explicit GFSTemplateItem(const char *pszName);
@@ -340,8 +326,7 @@ int GFSTemplateList::GetClassCount()
 /***************************************************/
 
 GFSTemplateItem::GFSTemplateItem(const char *pszName)
-    : m_pszName(CPLStrdup(pszName)), n_nItemCount(0), n_nGeomCount(0),
-      pNext(nullptr)
+    : m_pszName(CPLStrdup(pszName))
 {
 }
 

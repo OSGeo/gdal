@@ -12,23 +12,7 @@
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef CPL_VSI_VIRTUAL_H_INCLUDED
@@ -138,6 +122,14 @@ struct CPL_DLL VSIVirtualHandle
     virtual bool HasPRead() const;
     virtual size_t PRead(void *pBuffer, size_t nSize,
                          vsi_l_offset nOffset) const;
+
+    /** Ask current operations to be interrupted.
+     * Implementations must be thread-safe, as this will typically be called
+     * from another thread than the active one for this file.
+     */
+    virtual void Interrupt()
+    {
+    }
 
     // NOTE: when adding new methods, besides the "actual" implementations,
     // also consider the VSICachedFile one.
@@ -337,6 +329,12 @@ class CPL_DLL VSIFilesystemHandler
 
     virtual std::string
     GetStreamingFilename(const std::string &osFilename) const
+    {
+        return osFilename;
+    }
+
+    virtual std::string
+    GetNonStreamingFilename(const std::string &osFilename) const
     {
         return osFilename;
     }

@@ -7,23 +7,7 @@
  **********************************************************************
  * Copyright (c) 2012-2016, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #if defined(HAVE_SQLITE) && defined(HAVE_GEOS)
@@ -44,7 +28,7 @@
 #include "ogrsqlitebase.h"
 
 #include "zlib.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 
 #include <math.h>
 #include <algorithm>
@@ -91,15 +75,14 @@ class MBTilesBand;
 /*                         MBTILESOpenSQLiteDB()                        */
 /************************************************************************/
 
-static OGRDataSourceH MBTILESOpenSQLiteDB(const char *pszFilename,
-                                          GDALAccess eAccess)
+static GDALDatasetH MBTILESOpenSQLiteDB(const char *pszFilename,
+                                        GDALAccess eAccess)
 {
     const char *l_apszAllowedDrivers[] = {"SQLITE", nullptr};
-    return (OGRDataSourceH)GDALOpenEx(
-        (CPLString("SQLITE:") + pszFilename).c_str(),
-        GDAL_OF_VECTOR | GDAL_OF_INTERNAL |
-            ((eAccess == GA_Update) ? GDAL_OF_UPDATE : 0),
-        l_apszAllowedDrivers, nullptr, nullptr);
+    return GDALOpenEx((CPLString("SQLITE:") + pszFilename).c_str(),
+                      GDAL_OF_VECTOR | GDAL_OF_INTERNAL |
+                          ((eAccess == GA_Update) ? GDAL_OF_UPDATE : 0),
+                      l_apszAllowedDrivers, nullptr, nullptr);
 }
 
 /************************************************************************/
@@ -172,7 +155,7 @@ class MBTilesDataset final : public GDALPamDataset,
     int m_nOverviewCount;
     MBTilesDataset **m_papoOverviewDS;
 
-    OGRDataSourceH hDS;
+    GDALDatasetH hDS;
     sqlite3 *hDB;
 
     sqlite3_vfs *pMyVFS;
@@ -443,12 +426,12 @@ bool MBTilesDataset::HasNonEmptyGrids()
 
     nHasNonEmptyGrids = false;
 
-    if (OGR_DS_GetLayerByName(hDS, "grids") == nullptr)
+    if (GDALDatasetGetLayerByName(hDS, "grids") == nullptr)
         return false;
 
     const char *pszSQL = "SELECT type FROM sqlite_master WHERE name = 'grids'";
     CPLDebug("MBTILES", "%s", pszSQL);
-    hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+    hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
     if (hSQLLyr == nullptr)
         return false;
 
@@ -456,14 +439,14 @@ bool MBTilesDataset::HasNonEmptyGrids()
     if (hFeat == nullptr || !OGR_F_IsFieldSetAndNotNull(hFeat, 0))
     {
         OGR_F_Destroy(hFeat);
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
         return false;
     }
 
     bool bGridsIsView = strcmp(OGR_F_GetFieldAsString(hFeat, 0), "view") == 0;
 
     OGR_F_Destroy(hFeat);
-    OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+    GDALDatasetReleaseResultSet(hDS, hSQLLyr);
 
     nHasNonEmptyGrids = TRUE;
 
@@ -475,7 +458,7 @@ bool MBTilesDataset::HasNonEmptyGrids()
     if (bGridsIsView)
     {
         OGRLayerH hGridUTFGridLyr;
-        hGridUTFGridLyr = OGR_DS_GetLayerByName(hDS, "grid_utfgrid");
+        hGridUTFGridLyr = GDALDatasetGetLayerByName(hDS, "grid_utfgrid");
         if (hGridUTFGridLyr != nullptr)
         {
             OGR_L_ResetReading(hGridUTFGridLyr);
@@ -531,7 +514,7 @@ char *MBTilesDataset::FindKey(int iPixel, int iLine)
                    "zoom_level = %d AND tile_column = %d AND tile_row = %d",
                    m_nZoomLevel, nTileColumn, nTileRow);
     CPLDebug("MBTILES", "%s", pszSQL);
-    hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+    hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
     if (hSQLLyr == nullptr)
         return nullptr;
 
@@ -539,7 +522,7 @@ char *MBTilesDataset::FindKey(int iPixel, int iLine)
     if (hFeat == nullptr || !OGR_F_IsFieldSetAndNotNull(hFeat, 0))
     {
         OGR_F_Destroy(hFeat);
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
         return nullptr;
     }
 
@@ -551,7 +534,7 @@ char *MBTilesDataset::FindKey(int iPixel, int iLine)
     if (pabyUncompressed == nullptr)
     {
         OGR_F_Destroy(hFeat);
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
         return nullptr;
     }
 
@@ -560,7 +543,7 @@ char *MBTilesDataset::FindKey(int iPixel, int iLine)
     if (inflateInit(&sStream) != Z_OK)
     {
         OGR_F_Destroy(hFeat);
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
         CPLFree(pabyUncompressed);
         return nullptr;
     }
@@ -694,7 +677,7 @@ end:
     if (hFeat)
         OGR_F_Destroy(hFeat);
     if (hSQLLyr)
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
 
     return pszKey;
 }
@@ -790,7 +773,7 @@ const char *MBTilesBand::GetMetadataItem(const char *pszName,
             CPLFree(pszXMLEscaped);
             osLocationInfo += "</Key>";
 
-            if (OGR_DS_GetLayerByName(poGDS->hDS, "grid_data") != nullptr &&
+            if (GDALDatasetGetLayerByName(poGDS->hDS, "grid_data") != nullptr &&
                 strchr(pszKey, '\'') == nullptr)
             {
                 OGRLayerH hSQLLyr;
@@ -802,7 +785,7 @@ const char *MBTilesBand::GetMetadataItem(const char *pszName,
                                pszKey);
                 CPLDebug("MBTILES", "%s", pszSQL);
                 hSQLLyr =
-                    OGR_DS_ExecuteSQL(poGDS->hDS, pszSQL, nullptr, nullptr);
+                    GDALDatasetExecuteSQL(poGDS->hDS, pszSQL, nullptr, nullptr);
                 if (hSQLLyr)
                 {
                     hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -825,7 +808,7 @@ const char *MBTilesBand::GetMetadataItem(const char *pszName,
                     }
                     OGR_F_Destroy(hFeat);
                 }
-                OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
+                GDALDatasetReleaseResultSet(poGDS->hDS, hSQLLyr);
             }
 
             osLocationInfo += "</LocationInfo>";
@@ -931,7 +914,7 @@ MBTilesDataset::~MBTilesDataset()
 
         if (hDS != nullptr)
         {
-            OGRReleaseDataSource(hDS);
+            GDALClose(hDS);
             hDB = nullptr;
         }
         if (hDB != nullptr)
@@ -1135,7 +1118,7 @@ CPLErr MBTilesDataset::SetGeoTransform(double *padfGeoTransform)
             if (miny < -ok_maxy)
                 miny = -ok_maxy;
 
-            osBounds.Printf("%.18g,%.18g,%.18g,%.18g", minx, miny, maxx, maxy);
+            osBounds.Printf("%.17g,%.17g,%.17g,%.17g", minx, miny, maxx, maxy);
         }
 
         char *pszSQL = sqlite3_mprintf(
@@ -1390,7 +1373,7 @@ char **MBTilesDataset::GetMetadata(const char *pszDomain)
     bFetchedMetadata = true;
     aosList = CPLStringList(GDALPamDataset::GetMetadata(), FALSE);
 
-    OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(
+    OGRLayerH hSQLLyr = GDALDatasetExecuteSQL(
         hDS, "SELECT name, value FROM metadata WHERE name != 'json' LIMIT 1000",
         nullptr, nullptr);
     if (hSQLLyr == nullptr)
@@ -1398,7 +1381,7 @@ char **MBTilesDataset::GetMetadata(const char *pszDomain)
 
     if (OGR_FD_GetFieldCount(OGR_L_GetLayerDefn(hSQLLyr)) != 2)
     {
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
         return nullptr;
     }
 
@@ -1421,7 +1404,7 @@ char **MBTilesDataset::GetMetadata(const char *pszDomain)
         }
         OGR_F_Destroy(hFeat);
     }
-    OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+    GDALDatasetReleaseResultSet(hDS, hSQLLyr);
 
     return aosList.List();
 }
@@ -1529,7 +1512,7 @@ MBTilesVectorLayer::~MBTilesVectorLayer()
 {
     m_poFeatureDefn->Release();
     if (m_hTileIteratorLyr)
-        OGR_DS_ReleaseResultSet(m_poDS->hDS, m_hTileIteratorLyr);
+        GDALDatasetReleaseResultSet(m_poDS->hDS, m_hTileIteratorLyr);
     if (!m_osTmpFilename.empty())
     {
         VSIUnlink(m_osTmpFilename);
@@ -1573,7 +1556,7 @@ void MBTilesVectorLayer::ResetReading()
     m_hTileDS = nullptr;
     m_bEOF = false;
     if (m_hTileIteratorLyr)
-        OGR_DS_ReleaseResultSet(m_poDS->hDS, m_hTileIteratorLyr);
+        GDALDatasetReleaseResultSet(m_poDS->hDS, m_hTileIteratorLyr);
     CPLString osSQL;
     osSQL.Printf("SELECT tile_column, tile_row, tile_data FROM tiles "
                  "WHERE zoom_level = %d "
@@ -1582,7 +1565,7 @@ void MBTilesVectorLayer::ResetReading()
                  m_nZoomLevel, m_nFilterMinX, m_nFilterMaxX, m_nFilterMinY,
                  m_nFilterMaxY);
     m_hTileIteratorLyr =
-        OGR_DS_ExecuteSQL(m_poDS->hDS, osSQL.c_str(), nullptr, nullptr);
+        GDALDatasetExecuteSQL(m_poDS->hDS, osSQL.c_str(), nullptr, nullptr);
 }
 
 /************************************************************************/
@@ -1710,8 +1693,8 @@ GIntBig MBTilesVectorLayer::GetFeatureCount(int bForce)
                 {
                     VSIUnlink(m_osTmpFilename);
                 }
-                m_osTmpFilename =
-                    CPLSPrintf("/vsimem/mvt_%p_%d_%d.pbf", this, m_nX, m_nY);
+                m_osTmpFilename = VSIMemGenerateHiddenFilename(
+                    CPLSPrintf("mvt_%d_%d.pbf", m_nX, m_nY));
                 VSIFCloseL(VSIFileFromMemBuffer(m_osTmpFilename, pabyDataDup,
                                                 nDataSize, true));
 
@@ -1794,8 +1777,8 @@ OGRFeature *MBTilesVectorLayer::GetNextSrcFeature()
             {
                 VSIUnlink(m_osTmpFilename);
             }
-            m_osTmpFilename =
-                CPLSPrintf("/vsimem/mvt_%p_%d_%d.pbf", this, m_nX, m_nY);
+            m_osTmpFilename = VSIMemGenerateHiddenFilename(
+                CPLSPrintf("mvt_%d_%d.pbf", m_nX, m_nY));
             VSIFCloseL(VSIFileFromMemBuffer(m_osTmpFilename, pabyDataDup,
                                             nDataSize, true));
 
@@ -1887,13 +1870,13 @@ OGRFeature *MBTilesVectorLayer::GetFeature(GIntBig nFID)
                  "tile_column = %d AND tile_row = %d",
                  m_nZoomLevel, nX, (1 << nZ) - 1 - nY);
     auto hSQLLyr =
-        OGR_DS_ExecuteSQL(m_poDS->hDS, osSQL.c_str(), nullptr, nullptr);
+        GDALDatasetExecuteSQL(m_poDS->hDS, osSQL.c_str(), nullptr, nullptr);
     if (hSQLLyr == nullptr)
         return nullptr;
     auto hFeat = OGR_L_GetNextFeature(hSQLLyr);
     if (hFeat == nullptr)
     {
-        OGR_DS_ReleaseResultSet(m_poDS->hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(m_poDS->hDS, hSQLLyr);
         return nullptr;
     }
     int nDataSize = 0;
@@ -1901,10 +1884,10 @@ OGRFeature *MBTilesVectorLayer::GetFeature(GIntBig nFID)
     GByte *pabyDataDup = static_cast<GByte *>(CPLMalloc(nDataSize));
     memcpy(pabyDataDup, pabyData, nDataSize);
     OGR_F_Destroy(hFeat);
-    OGR_DS_ReleaseResultSet(m_poDS->hDS, hSQLLyr);
+    GDALDatasetReleaseResultSet(m_poDS->hDS, hSQLLyr);
 
-    CPLString osTmpFilename =
-        CPLSPrintf("/vsimem/mvt_getfeature_%p_%d_%d.pbf", this, nX, nY);
+    const CPLString osTmpFilename = VSIMemGenerateHiddenFilename(
+        CPLSPrintf("mvt_get_feature_%d_%d.pbf", m_nX, m_nY));
     VSIFCloseL(
         VSIFileFromMemBuffer(osTmpFilename, pabyDataDup, nDataSize, true));
 
@@ -1964,7 +1947,7 @@ void MBTilesDataset::InitVector(double dfMinX, double dfMinY, double dfMaxX,
     CPLDebug("MBTILES", "%s", pszSQL);
     CPLJSONDocument oJsonDoc;
     CPLJSONDocument oDoc;
-    auto hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+    auto hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
     if (hSQLLyr)
     {
         auto hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -1976,10 +1959,11 @@ void MBTilesDataset::InitVector(double dfMinX, double dfMinY, double dfMaxX,
                 oJsonDoc.LoadMemory(reinterpret_cast<const GByte *>(pszJson)));
             OGR_F_Destroy(hFeat);
         }
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
     }
 
-    m_osMetadataMemFilename = CPLSPrintf("/vsimem/%p_metadata.json", this);
+    m_osMetadataMemFilename =
+        VSIMemGenerateHiddenFilename("mbtiles_metadata.json");
     oDoc.Save(m_osMetadataMemFilename);
 
     CPLJSONArray oVectorLayers;
@@ -2048,7 +2032,7 @@ int MBTilesDataset::Identify(GDALOpenInfo *poOpenInfo)
 /*                        MBTilesGetMinMaxZoomLevel()                   */
 /************************************************************************/
 
-static int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
+static int MBTilesGetMinMaxZoomLevel(GDALDatasetH hDS, int bHasMap,
                                      int &nMinLevel, int &nMaxLevel)
 {
     OGRLayerH hSQLLyr;
@@ -2059,7 +2043,7 @@ static int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
         "SELECT value FROM metadata WHERE name = 'minzoom' UNION ALL "
         "SELECT value FROM metadata WHERE name = 'maxzoom'";
     CPLDebug("MBTILES", "%s", pszSQL);
-    hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+    hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
     if (hSQLLyr)
     {
         hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -2088,7 +2072,7 @@ static int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
             }
         }
 
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
     }
 
     if (!bHasMinMaxLevel)
@@ -2102,7 +2086,7 @@ static int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
                 "SELECT zoom_level FROM %s WHERE zoom_level = %d LIMIT 1",
                 (bHasMap) ? "map" : "tiles", iLevel);
             CPLDebug("MBTILES", "%s", pszSQL);
-            hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+            hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
             if (hSQLLyr)
             {
                 hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -2111,7 +2095,7 @@ static int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
                     nMinLevel = iLevel;
                     OGR_F_Destroy(hFeat);
                 }
-                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+                GDALDatasetReleaseResultSet(hDS, hSQLLyr);
             }
         }
 
@@ -2124,7 +2108,7 @@ static int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
                 "SELECT zoom_level FROM %s WHERE zoom_level = %d LIMIT 1",
                 (bHasMap) ? "map" : "tiles", iLevel);
             CPLDebug("MBTILES", "%s", pszSQL);
-            hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+            hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
             if (hSQLLyr)
             {
                 hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -2134,13 +2118,13 @@ static int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
                     bHasMinMaxLevel = TRUE;
                     OGR_F_Destroy(hFeat);
                 }
-                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+                GDALDatasetReleaseResultSet(hDS, hSQLLyr);
             }
         }
 #else
         pszSQL = "SELECT min(zoom_level), max(zoom_level) FROM tiles";
         CPLDebug("MBTILES", "%s", pszSQL);
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, nullptr);
+        hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, NULL, nullptr);
         if (hSQLLyr == NULL)
         {
             return FALSE;
@@ -2149,7 +2133,7 @@ static int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
         hFeat = OGR_L_GetNextFeature(hSQLLyr);
         if (hFeat == NULL)
         {
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            GDALDatasetReleaseResultSet(hDS, hSQLLyr);
             return FALSE;
         }
 
@@ -2162,7 +2146,7 @@ static int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
         }
 
         OGR_F_Destroy(hFeat);
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
 #endif
     }
 
@@ -2191,7 +2175,7 @@ static double MBTilesWorldCoordToTileCoord(double dfWorldCoord, int nZoomLevel)
 /*                           MBTilesGetBounds()                         */
 /************************************************************************/
 
-static bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds, int nMaxLevel,
+static bool MBTilesGetBounds(GDALDatasetH hDS, bool bUseBounds, int nMaxLevel,
                              double &minX, double &minY, double &maxX,
                              double &maxY)
 {
@@ -2203,7 +2187,7 @@ static bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds, int nMaxLevel,
     {
         const char *pszSQL = "SELECT value FROM metadata WHERE name = 'bounds'";
         CPLDebug("MBTILES", "%s", pszSQL);
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+        hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
         if (hSQLLyr)
         {
             hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -2245,7 +2229,7 @@ static bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds, int nMaxLevel,
 
                 OGR_F_Destroy(hFeat);
             }
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            GDALDatasetReleaseResultSet(hDS, hSQLLyr);
         }
     }
 
@@ -2257,7 +2241,7 @@ static bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds, int nMaxLevel,
                        "WHERE zoom_level = %d",
                        nMaxLevel);
         CPLDebug("MBTILES", "%s", pszSQL);
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+        hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
         if (hSQLLyr == nullptr)
         {
             return false;
@@ -2266,7 +2250,7 @@ static bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds, int nMaxLevel,
         hFeat = OGR_L_GetNextFeature(hSQLLyr);
         if (hFeat == nullptr)
         {
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            GDALDatasetReleaseResultSet(hDS, hSQLLyr);
             return false;
         }
 
@@ -2290,7 +2274,7 @@ static bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds, int nMaxLevel,
         }
 
         OGR_F_Destroy(hFeat);
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
     }
 
     return bHasBounds;
@@ -2442,7 +2426,7 @@ static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE *fp, void *pabyBuffer,
 /*                  MBTilesGetBandCountAndTileSize()                    */
 /************************************************************************/
 
-static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
+static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, GDALDatasetH &hDS,
                                           int nMaxLevel, int nMinTileRow,
                                           int nMaxTileRow, int nMinTileCol,
                                           int nMaxTileCol, int &nTileSize)
@@ -2456,7 +2440,7 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
     nTileSize = 0;
 
     /* Get the VSILFILE associated with the OGR SQLite DB */
-    CPLString osDSName(OGR_DS_GetName(hDS));
+    CPLString osDSName(GDALGetDescription(hDS));
     if (bIsVSICURL)
     {
         auto poDS = dynamic_cast<OGRSQLiteBaseDataSource *>(
@@ -2490,7 +2474,7 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
 
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+        hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
         CPLPopErrorHandler();
 
         VSICurlUninstallReadCbk(fpCURLOGR);
@@ -2501,14 +2485,14 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
         {
             CPLErrorReset();
 
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            GDALDatasetReleaseResultSet(hDS, hSQLLyr);
             hSQLLyr = nullptr;
 
             // Re-open OGR SQLite DB, because with our spy we have simulated an
             // I/O error that SQLite will have difficulties to recover within
             // the existing connection.  This will be fast because
             // the /vsicurl/ cache has cached the already read blocks.
-            OGRReleaseDataSource(hDS);
+            GDALClose(hDS);
             hDS = MBTILESOpenSQLiteDB(osDSName.c_str(), GA_ReadOnly);
             if (hDS == nullptr)
                 return -1;
@@ -2527,7 +2511,7 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
     }
     else
     {
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+        hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
     }
 
     while (true)
@@ -2539,7 +2523,7 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
                                 "zoom_level = %d LIMIT 1",
                                 nMaxLevel);
             CPLDebug("MBTILES", "%s", pszSQL);
-            hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+            hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
             if (hSQLLyr == nullptr)
                 return -1;
         }
@@ -2547,7 +2531,7 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
         hFeat = OGR_L_GetNextFeature(hSQLLyr);
         if (hFeat == nullptr)
         {
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            GDALDatasetReleaseResultSet(hDS, hSQLLyr);
             hSQLLyr = nullptr;
             if (!bFirstSelect)
                 return -1;
@@ -2556,8 +2540,7 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
             break;
     }
 
-    CPLString osMemFileName;
-    osMemFileName.Printf("/vsimem/%p", hSQLLyr);
+    const CPLString osMemFileName(VSIMemGenerateHiddenFilename("mvt_temp.db"));
 
     int nDataSize = 0;
     GByte *pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
@@ -2571,7 +2554,7 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
     {
         VSIUnlink(osMemFileName.c_str());
         OGR_F_Destroy(hFeat);
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
         return -1;
     }
 
@@ -2586,7 +2569,7 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
         GDALClose(hDSTile);
         VSIUnlink(osMemFileName.c_str());
         OGR_F_Destroy(hFeat);
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
         return -1;
     }
 
@@ -2608,7 +2591,7 @@ static int MBTilesGetBandCountAndTileSize(bool bIsVSICURL, OGRDataSourceH &hDS,
     GDALClose(hDSTile);
     VSIUnlink(osMemFileName.c_str());
     OGR_F_Destroy(hFeat);
-    OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+    GDALDatasetReleaseResultSet(hDS, hSQLLyr);
 
     return nBands;
 }
@@ -2636,7 +2619,7 @@ GDALDataset *MBTilesDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Open underlying OGR DB                                          */
     /* -------------------------------------------------------------------- */
 
-    OGRDataSourceH hDS =
+    GDALDatasetH hDS =
         MBTILESOpenSQLiteDB(poOpenInfo->pszFilename, poOpenInfo->eAccess);
 
     MBTilesDataset *poDS = nullptr;
@@ -2661,22 +2644,23 @@ GDALDataset *MBTilesDataset::Open(GDALOpenInfo *poOpenInfo)
 
         osMetadataTableName = "metadata";
 
-        hMetadataLyr = OGR_DS_GetLayerByName(hDS, osMetadataTableName.c_str());
+        hMetadataLyr =
+            GDALDatasetGetLayerByName(hDS, osMetadataTableName.c_str());
         if (hMetadataLyr == nullptr)
             goto end;
 
         osRasterTableName += "tiles";
 
-        hRasterLyr = OGR_DS_GetLayerByName(hDS, osRasterTableName.c_str());
+        hRasterLyr = GDALDatasetGetLayerByName(hDS, osRasterTableName.c_str());
         if (hRasterLyr == nullptr)
             goto end;
 
-        bHasMap = OGR_DS_GetLayerByName(hDS, "map") != nullptr;
+        bHasMap = GDALDatasetGetLayerByName(hDS, "map") != nullptr;
         if (bHasMap)
         {
             bHasMap = FALSE;
 
-            hSQLLyr = OGR_DS_ExecuteSQL(
+            hSQLLyr = GDALDatasetExecuteSQL(
                 hDS, "SELECT type FROM sqlite_master WHERE name = 'tiles'",
                 nullptr, nullptr);
             if (hSQLLyr != nullptr)
@@ -2696,7 +2680,7 @@ GDALDataset *MBTilesDataset::Open(GDALOpenInfo *poOpenInfo)
                     }
                     OGR_F_Destroy(hFeat);
                 }
-                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+                GDALDatasetReleaseResultSet(hDS, hSQLLyr);
             }
         }
 
@@ -2951,7 +2935,7 @@ GDALDataset *MBTilesDataset::Open(GDALOpenInfo *poOpenInfo)
 
 end:
     if (hDS)
-        OGRReleaseDataSource(hDS);
+        GDALClose(hDS);
 
     return poDS;
 }
@@ -3208,13 +3192,13 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
                 aosOptions.AddString("VRT");
                 aosOptions.AddString("-projwin");
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0]));
-                aosOptions.AddString(CPLSPrintf("%.18g", maxLat));
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0]));
+                aosOptions.AddString(CPLSPrintf("%.17g", maxLat));
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0] +
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0] +
                                             poSrcDS->GetRasterXSize() *
                                                 adfSrcGeoTransform[1]));
-                aosOptions.AddString(CPLSPrintf("%.18g", minLat));
+                aosOptions.AddString(CPLSPrintf("%.17g", minLat));
                 auto psOptions =
                     GDALTranslateOptionsNew(aosOptions.List(), nullptr);
                 poTmpDS.reset(GDALDataset::FromHandle(GDALTranslate(

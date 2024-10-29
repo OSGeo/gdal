@@ -19,6 +19,7 @@ add_gdal_driver(
           pdfwritabledataset.cpp
           pdfcreatefromcomposition.cpp
   CORE_SOURCES pdfdrivercore.cpp
+  STRONG_CXX_WFLAGS
   PLUGIN_CAPABLE
   NO_SHARED_SYMBOL_WITH_CORE)
 
@@ -76,7 +77,13 @@ if (GDAL_USE_PDFIUM)
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_PDFIUM)
   gdal_target_link_libraries(gdal_PDF PRIVATE PDFIUM::PDFIUM)
   if (UNIX)
+    find_package(JPEG REQUIRED)
+    find_package(PNG REQUIRED)
+    find_package(OpenJPEG REQUIRED)
     find_library(LCMS2_LIBRARY NAMES lcms2)
+    if(NOT LCMS2_LIBRARY)
+      message(FATAL_ERROR "LCMS2 library not found. Please install liblcms2-dev.")
+    endif()
 
     # Rather hacky... Related how we build pdfium in https://github.com/rouault/pdfium_build_gdal_3_4
     gdal_target_link_libraries(

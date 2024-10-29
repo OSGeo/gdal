@@ -11,23 +11,7 @@
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import array
@@ -122,6 +106,10 @@ def mfloat32_tif(tmp_path):
     yield dst_fname
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_1(mfloat32_tif, both_endian):
 
     ds = gdal.Open(mfloat32_tif)
@@ -151,6 +139,10 @@ def test_tiff_ovr_1(mfloat32_tif, both_endian):
 # Open target file in update mode, and create internal overviews.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_3(mfloat32_tif, both_endian):
 
     src_ds = gdal.Open(mfloat32_tif, gdal.GA_Update)
@@ -279,6 +271,8 @@ def test_tiff_ovr_6(tmp_path, both_endian):
         callback_data=tab,
         options=["USE_RRD=YES"],
     )
+    if gdal.GetLastErrorMsg() == "This build does not support creating .aux overviews":
+        pytest.skip(gdal.GetLastErrorMsg())
     assert tab[0] == 1.0
 
     try:
@@ -531,6 +525,10 @@ def test_tiff_ovr_12(tmp_path, both_endian):
 # Test gaussian resampling
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_13(mfloat32_tif, both_endian):
 
     ds = gdal.Open(mfloat32_tif)
@@ -608,6 +606,10 @@ def test_tiff_ovr_15(tmp_path, both_endian):
 # Test mode resampling on non-byte dataset
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_tiff_ovr_16(tmp_path, both_endian):
 
     tif_fname = str(tmp_path / "ovr16.tif")
@@ -2642,7 +2644,9 @@ def test_tiff_ovr_fallback_to_multiband_overview_generate():
         "data/byte.tif",
         options="-b 1 -b 1 -b 1 -co INTERLEAVE=BAND -co TILED=YES -outsize 1024 1024",
     )
-    with gdaltest.config_option("GDAL_OVR_CHUNK_MAX_SIZE", "1000"):
+    with gdaltest.config_options(
+        {"GDAL_OVR_CHUNK_MAX_SIZE": "1000", "GDAL_OVR_TEMP_DRIVER": "MEM"}
+    ):
         ds.BuildOverviews("NEAR", overviewlist=[2, 4, 8])
     ds = None
 

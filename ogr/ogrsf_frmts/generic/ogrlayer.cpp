@@ -8,23 +8,7 @@
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrsf_frmts.h"
@@ -38,6 +22,7 @@
 
 #include "cpl_time.h"
 #include <cassert>
+#include <cmath>
 #include <limits>
 #include <set>
 
@@ -348,8 +333,8 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent,
         else if (!bExtentSet)
         {
             poGeom->getEnvelope(psExtent);
-            if (!(CPLIsNan(psExtent->MinX) || CPLIsNan(psExtent->MinY) ||
-                  CPLIsNan(psExtent->MaxX) || CPLIsNan(psExtent->MaxY)))
+            if (!(std::isnan(psExtent->MinX) || std::isnan(psExtent->MinY) ||
+                  std::isnan(psExtent->MaxX) || std::isnan(psExtent->MaxY)))
             {
                 bExtentSet = true;
             }
@@ -1942,9 +1927,11 @@ void OGR_L_ResetReading(OGRLayerH hLayer)
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-OGRErr OGRLayer::InitializeIndexSupport(const char *pszFilename)
+OGRErr
+OGRLayer::InitializeIndexSupport([[maybe_unused]] const char *pszFilename)
 
 {
+#ifdef HAVE_MITAB
     OGRErr eErr;
 
     if (m_poAttrIndex != nullptr)
@@ -1960,6 +1947,9 @@ OGRErr OGRLayer::InitializeIndexSupport(const char *pszFilename)
     }
 
     return eErr;
+#else
+    return OGRERR_FAILURE;
+#endif
 }
 
 //! @endcond

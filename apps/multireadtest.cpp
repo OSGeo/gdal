@@ -7,41 +7,30 @@
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal.h"
 #include "gdal_alg.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 #include <vector>
 
 static int nIterations = 1;
 static bool bLockOnOpen = false;
 static int nOpenIterations = 1;
 static volatile int nPendingThreads = 0;
+static bool bThreadCanFinish = false;
+static std::mutex oMutex;
+static std::condition_variable oCond;
 static const char *pszFilename = nullptr;
 static int nChecksum = 0;
 static int nWidth = 0;
 static int nHeight = 0;
-
-static CPLMutex *pGlobalMutex = nullptr;
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -49,8 +38,8 @@ static CPLMutex *pGlobalMutex = nullptr;
 
 static void Usage()
 {
-    printf("multireadtest [-lock_on_open] [-open_in_main] [-t <thread#>]\n"
-           "              [-i <iterations>] [-oi <iterations>]\n"
+    printf("multireadtest [[-thread_safe] | [[-lock_on_open] [-open_in_main]]\n"
+           "              [-t <thread#>] [-i <iterations>] [-oi <iterations>]\n"
            "              [-width <val>] [-height <val>]\n"
            "              filename\n");
     exit(1);
@@ -74,12 +63,12 @@ static void WorkerFunc(void *arg)
         else
         {
             if (bLockOnOpen)
-                CPLAcquireMutex(pGlobalMutex, 100.0);
+                oMutex.lock();
 
             hDS = GDALOpen(pszFilename, GA_ReadOnly);
 
             if (bLockOnOpen)
-                CPLReleaseMutex(pGlobalMutex);
+                oMutex.unlock();
         }
 
         for (int iIter = 0; iIter < nIterations && hDS != nullptr; iIter++)
@@ -99,10 +88,10 @@ static void WorkerFunc(void *arg)
         if (hDS && hDSIn == nullptr)
         {
             if (bLockOnOpen)
-                CPLAcquireMutex(pGlobalMutex, 100.0);
+                oMutex.lock();
             GDALClose(hDS);
             if (bLockOnOpen)
-                CPLReleaseMutex(pGlobalMutex);
+                oMutex.unlock();
         }
         else if (hDSIn != nullptr)
         {
@@ -110,9 +99,13 @@ static void WorkerFunc(void *arg)
         }
     }
 
-    CPLAcquireMutex(pGlobalMutex, 100.0);
-    nPendingThreads--;
-    CPLReleaseMutex(pGlobalMutex);
+    {
+        std::unique_lock oLock(oMutex);
+        nPendingThreads--;
+        oCond.notify_all();
+        while (!bThreadCanFinish)
+            oCond.wait(oLock);
+    }
 }
 
 /************************************************************************/
@@ -131,6 +124,10 @@ int main(int argc, char **argv)
 
     int nThreadCount = 4;
     bool bOpenInThreads = true;
+    bool bThreadSafe = false;
+    bool bJoinAfterClosing = false;
+    bool bDetach = false;
+    bool bClose = true;
 
     for (int iArg = 1; iArg < argc; iArg++)
     {
@@ -154,6 +151,10 @@ int main(int argc, char **argv)
         {
             nHeight = atoi(argv[++iArg]);
         }
+        else if (EQUAL(argv[iArg], "-thread_safe"))
+        {
+            bThreadSafe = true;
+        }
         else if (EQUAL(argv[iArg], "-lock_on_open"))
         {
             bLockOnOpen = true;
@@ -161,6 +162,18 @@ int main(int argc, char **argv)
         else if (EQUAL(argv[iArg], "-open_in_main"))
         {
             bOpenInThreads = false;
+        }
+        else if (EQUAL(argv[iArg], "-join_after_closing"))
+        {
+            bJoinAfterClosing = true;
+        }
+        else if (EQUAL(argv[iArg], "-detach"))
+        {
+            bDetach = true;
+        }
+        else if (EQUAL(argv[iArg], "-do_not_close"))
+        {
+            bClose = false;
         }
         else if (pszFilename == nullptr)
         {
@@ -186,12 +199,10 @@ int main(int argc, char **argv)
     /* -------------------------------------------------------------------- */
     /*      Get the checksum of band1.                                      */
     /* -------------------------------------------------------------------- */
-    GDALDatasetH hDS = nullptr;
-
     GDALAllRegister();
     for (int i = 0; i < 2; i++)
     {
-        hDS = GDALOpen(pszFilename, GA_ReadOnly);
+        GDALDatasetH hDS = GDALOpen(pszFilename, GA_ReadOnly);
         if (hDS == nullptr)
             exit(1);
 
@@ -210,45 +221,97 @@ int main(int argc, char **argv)
     /* -------------------------------------------------------------------- */
     /*      Fire off worker threads.                                        */
     /* -------------------------------------------------------------------- */
-    pGlobalMutex = CPLCreateMutex();
-    CPLReleaseMutex(pGlobalMutex);
 
     nPendingThreads = nThreadCount;
 
+    GDALDatasetH hThreadSafeDS = nullptr;
+    if (bThreadSafe)
+    {
+        hThreadSafeDS =
+            GDALOpenEx(pszFilename, GDAL_OF_RASTER | GDAL_OF_THREAD_SAFE,
+                       nullptr, nullptr, nullptr);
+        if (!hThreadSafeDS)
+            exit(1);
+    }
+    std::vector<std::thread> aoThreads;
     std::vector<GDALDatasetH> aoDS;
     for (int iThread = 0; iThread < nThreadCount; iThread++)
     {
-        hDS = nullptr;
-        if (!bOpenInThreads)
+        GDALDatasetH hDS = nullptr;
+        if (bThreadSafe)
         {
-            hDS = GDALOpen(pszFilename, GA_ReadOnly);
-            if (!hDS)
-            {
-                printf("GDALOpen() failed.\n");
-                exit(1);
-            }
-            aoDS.push_back(hDS);
+            hDS = hThreadSafeDS;
         }
-        if (CPLCreateThread(WorkerFunc, hDS) == -1)
+        else
         {
-            printf("CPLCreateThread() failed.\n");
-            exit(1);
+            if (!bOpenInThreads)
+            {
+                hDS = GDALOpen(pszFilename, GA_ReadOnly);
+                if (!hDS)
+                {
+                    printf("GDALOpen() failed.\n");
+                    exit(1);
+                }
+                aoDS.push_back(hDS);
+            }
+        }
+        aoThreads.push_back(std::thread([hDS]() { WorkerFunc(hDS); }));
+    }
+
+    {
+        std::unique_lock oLock(oMutex);
+        while (nPendingThreads > 0)
+        {
+            // printf("nPendingThreads = %d\n", nPendingThreads);
+            oCond.wait(oLock);
         }
     }
 
-    while (nPendingThreads > 0)
-        CPLSleep(0.5);
-
-    CPLDestroyMutex(pGlobalMutex);
+    if (!bJoinAfterClosing && !bDetach)
+    {
+        {
+            std::lock_guard oLock(oMutex);
+            bThreadCanFinish = true;
+            oCond.notify_all();
+        }
+        for (auto &oThread : aoThreads)
+            oThread.join();
+    }
 
     for (size_t i = 0; i < aoDS.size(); ++i)
         GDALClose(aoDS[i]);
+    if (bClose)
+        GDALClose(hThreadSafeDS);
+
+    if (bDetach)
+    {
+        for (auto &oThread : aoThreads)
+            oThread.detach();
+    }
+    else if (bJoinAfterClosing)
+    {
+        {
+            std::lock_guard oLock(oMutex);
+            bThreadCanFinish = true;
+            oCond.notify_all();
+        }
+        for (auto &oThread : aoThreads)
+            oThread.join();
+    }
 
     printf("All threads complete.\n");
 
     CSLDestroy(argv);
 
     GDALDestroyDriverManager();
+
+    {
+        std::lock_guard oLock(oMutex);
+        bThreadCanFinish = true;
+        oCond.notify_all();
+    }
+
+    printf("End of main.\n");
 
     return 0;
 }

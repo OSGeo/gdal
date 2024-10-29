@@ -11,23 +11,7 @@
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import array
@@ -42,6 +26,10 @@ import test_cli_utilities
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
@@ -852,6 +840,36 @@ def test_vrt_read_21():
 
 
 ###############################################################################
+# Test implicit virtual overviews
+
+
+def test_vrt_read_virtual_overview_no_srcrect_dstrect(tmp_vsimem):
+
+    ds = gdal.Open("data/byte.tif")
+    data = ds.ReadRaster(0, 0, 20, 20, 400, 400)
+    ds = None
+    tmp_tif = str(tmp_vsimem / "tmp.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(tmp_tif, 400, 400)
+    ds.WriteRaster(0, 0, 400, 400, data)
+    ds.BuildOverviews("NEAR", [2])
+    ref_cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    ds = gdal.Open(
+        f"""<VRTDataset rasterXSize="400" rasterYSize="400">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename>{tmp_tif}</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == ref_cs
+
+
+###############################################################################
 # Test that we honour NBITS with SimpleSource and ComplexSource
 
 
@@ -1072,6 +1090,48 @@ def test_vrt_read_25():
 
 
 ###############################################################################
+# Test GetDataCoverageStatus() on a single source covering the whole dataset
+
+
+def test_vrt_read_get_data_coverage_status_single_source(tmp_vsimem):
+
+    tmp_gtiff = str(tmp_vsimem / "tmp.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_gtiff,
+        512,
+        512,
+        1,
+        options=["TILED=YES", "BLOCKXSIZE=256", "BLOCKYSIZE=256", "SPARSE_OK=YES"],
+    )
+    ds.WriteRaster(256, 256, 256, 256, b"\x01" * (256 * 256))
+    ds = None
+
+    tmp_vrt = str(tmp_vsimem / "tmp.vrt")
+    gdal.Translate(tmp_vrt, tmp_gtiff, format="VRT")
+    ds = gdal.Open(tmp_vrt)
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 512, 512)
+    assert (
+        flags
+        == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
+        and pct == 25.0
+    )
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 256, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(256, 256, 256, 256)
+    assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 256, 512, 256)
+    assert (
+        flags
+        == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
+        and pct == 50.0
+    )
+
+
+###############################################################################
 # Test consistency of RasterIO() with resampling, that is extracting different
 # sub-windows give consistent results
 
@@ -1280,7 +1340,7 @@ def test_vrt_float32_with_nodata_slightly_below_float_min():
     ), "did not get expected nodata in rewritten VRT"
 
     if nodata != -3.4028234663852886e38:
-        print("%.18g" % nodata)
+        print("%.17g" % nodata)
         pytest.fail("did not get expected nodata")
 
     assert stats == [-3.0, 5.0, 1.0, 4.0], "did not get expected stats"
@@ -2421,30 +2481,68 @@ def test_vrt_read_top_and_bottom_strips_average():
 
 
 @pytest.mark.parametrize(
-    "input_datatype", [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_Int16]
-)
-@pytest.mark.parametrize("vrt_type", ["Byte", "UInt16", "Int16"])
-@pytest.mark.parametrize("nodata", [0, 254])
-@pytest.mark.parametrize(
-    "request_type", [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_Int16]
+    "input_datatype,vrt_type,nodata,vrt_nodata,request_type",
+    [
+        (gdal.GDT_Byte, "Byte", 0, 255, gdal.GDT_Byte),
+        (gdal.GDT_Byte, "Byte", 254, 255, gdal.GDT_Byte),
+        (gdal.GDT_Byte, "Int8", 254, 255, gdal.GDT_Byte),
+        (gdal.GDT_Byte, "Byte", 254, 127, gdal.GDT_Int8),
+        (gdal.GDT_Byte, "UInt16", 254, 255, gdal.GDT_Byte),
+        (gdal.GDT_Byte, "Byte", 254, 255, gdal.GDT_UInt16),
+        (gdal.GDT_Int8, "Int8", 0, 127, gdal.GDT_Int8),
+        (gdal.GDT_Int8, "Int16", 0, 127, gdal.GDT_Int8),
+        (gdal.GDT_UInt16, "UInt16", 0, 65535, gdal.GDT_UInt16),
+        (gdal.GDT_Int16, "Int16", 0, 32767, gdal.GDT_Int16),
+        (gdal.GDT_UInt32, "UInt32", 0, (1 << 31) - 1, gdal.GDT_UInt32),
+        (gdal.GDT_Int32, "Int32", 0, (1 << 30) - 1, gdal.GDT_Int32),
+        (gdal.GDT_Int32, "Float32", 0, (1 << 30) - 1, gdal.GDT_Float64),
+        (gdal.GDT_UInt64, "UInt64", 0, (1 << 63) - 1, gdal.GDT_UInt64),
+        (gdal.GDT_Int64, "Int64", 0, (1 << 62) - 1, gdal.GDT_Int64),
+        (gdal.GDT_Int64, "Float32", 0, (1 << 62), gdal.GDT_Int64),
+        (gdal.GDT_Float32, "Float32", 0, 1.5, gdal.GDT_Float32),
+        (gdal.GDT_Float32, "Float32", 0, 1.5, gdal.GDT_Float64),
+        (gdal.GDT_Float32, "Float64", 0, 1.5, gdal.GDT_Float32),
+        (gdal.GDT_Float32, "Float64", 0, 1.5, gdal.GDT_Float64),
+        (gdal.GDT_Float64, "Float64", 0, 1.5, gdal.GDT_Float64),
+        (gdal.GDT_Float64, "Float32", 0, 1.5, gdal.GDT_Float64),
+    ],
 )
 def test_vrt_read_complex_source_nodata(
-    tmp_vsimem, input_datatype, vrt_type, nodata, request_type
+    tmp_vsimem, input_datatype, vrt_type, nodata, vrt_nodata, request_type
 ):
+    def get_array_type(dt):
+        m = {
+            gdal.GDT_Byte: "B",
+            gdal.GDT_Int8: "b",
+            gdal.GDT_UInt16: "H",
+            gdal.GDT_Int16: "h",
+            gdal.GDT_UInt32: "I",
+            gdal.GDT_Int32: "i",
+            gdal.GDT_UInt64: "Q",
+            gdal.GDT_Int64: "q",
+            gdal.GDT_Float32: "f",
+            gdal.GDT_Float64: "d",
+        }
+        return m[dt]
 
-    if input_datatype == gdal.GDT_Byte:
-        array_type = "B"
-    elif input_datatype == gdal.GDT_UInt16:
-        array_type = "H"
-    elif input_datatype == gdal.GDT_Int16:
-        array_type = "h"
+    if input_datatype in (gdal.GDT_Float32, gdal.GDT_Float64):
+        input_val = 1.75
+        if vrt_type in ("Float32", "Float64") and request_type in (
+            gdal.GDT_Float32,
+            gdal.GDT_Float64,
+        ):
+            expected_val = input_val
+        else:
+            expected_val = math.round(input_val)
     else:
-        assert False
+        input_val = 1
+        expected_val = input_val
+
     input_data = array.array(
-        array_type,
+        get_array_type(input_datatype),
         [
             nodata,
-            1,
+            input_val,
             2,
             3,
             nodata,  # EOL
@@ -2481,7 +2579,7 @@ def test_vrt_read_complex_source_nodata(
     ds.Close()
     complex_xml = f"""<VRTDataset rasterXSize="5" rasterYSize="6">
   <VRTRasterBand dataType="{vrt_type}" band="1">
-    <NoDataValue>255</NoDataValue>
+    <NoDataValue>{vrt_nodata}</NoDataValue>
     <ComplexSource>
       <SourceFilename relativeToVRT="0">{input_filename}</SourceFilename>
       <SourceBand>1</SourceBand>
@@ -2491,24 +2589,16 @@ def test_vrt_read_complex_source_nodata(
 </VRTDataset>
 """
     vrt_ds = gdal.Open(complex_xml)
-    if request_type == gdal.GDT_Byte:
-        array_request_type = "B"
-    elif request_type == gdal.GDT_UInt16:
-        array_request_type = "H"
-    elif request_type == gdal.GDT_Int16:
-        array_request_type = "h"
-    else:
-        assert False
     got_data = vrt_ds.ReadRaster(buf_type=request_type)
-    got_data = struct.unpack(array_request_type * (5 * 6), got_data)
+    got_data = struct.unpack(get_array_type(request_type) * (5 * 6), got_data)
     assert got_data == (
-        255,
-        1,
+        vrt_nodata,
+        expected_val,
         2,
         3,
-        255,  # EOL
+        vrt_nodata,  # EOL
         4,
-        255,
+        vrt_nodata,
         5,
         6,
         7,  # EOL
@@ -2519,18 +2609,18 @@ def test_vrt_read_complex_source_nodata(
         20,  # EOL
         8,
         9,
-        255,
+        vrt_nodata,
         10,
         11,  # EOL
-        255,
-        255,
-        255,
-        255,
-        255,  # EOL
+        vrt_nodata,
+        vrt_nodata,
+        vrt_nodata,
+        vrt_nodata,
+        vrt_nodata,  # EOL
         12,
         13,
         14,
-        255,
+        vrt_nodata,
         15,  # EOL
     )
 

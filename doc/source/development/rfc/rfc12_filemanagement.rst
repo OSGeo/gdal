@@ -24,7 +24,7 @@ GetFileList()
 -------------
 
 The following new virtual method is added on the GDALDataset class, with
-an analygous C function.
+an analogous C function.
 
 ::
 

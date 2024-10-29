@@ -13,23 +13,7 @@
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -1054,5 +1038,122 @@ byte order = 0
 
     ds = gdal.Open("/vsimem/test.bin")
     assert ds.GetRasterBand(1).GetMetadataItem("wavelength") == "3"
+    ds = None
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+
+###############################################################################
+# Test wavelength / fwhm
+
+
+def test_envi_read_wavelength_fwhm_um():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+samples = 1
+lines = 1
+bands = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+wavelength units = um
+wavelength = {3, 2, 1}
+fwhm = {.3, .2, .1}""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    ds = gdal.Open("/vsimem/test.bin")
+    assert (
+        ds.GetRasterBand(1).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "3.000"
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.300"
+    assert (
+        ds.GetRasterBand(2).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "2.000"
+    )
+    assert ds.GetRasterBand(2).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.200"
+    ds = None
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+
+###############################################################################
+# Test wavelength / fwhm
+
+
+def test_envi_read_wavelength_fwhm_nm():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+samples = 1
+lines = 1
+bands = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+wavelength units = nm
+wavelength = {3000, 2000, 1000}
+fwhm = {300, 200, 100}""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    ds = gdal.Open("/vsimem/test.bin")
+    assert (
+        ds.GetRasterBand(1).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "3.000"
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.300"
+    assert (
+        ds.GetRasterBand(2).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "2.000"
+    )
+    assert ds.GetRasterBand(2).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.200"
+    ds = None
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")
+
+
+###############################################################################
+# Test wavelength / fwhm
+
+
+def test_envi_read_wavelength_fwhm_mm():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+samples = 1
+lines = 1
+bands = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+wavelength units = mm
+wavelength = {0.003, 0.002, 0.001}
+fwhm = {0.0003, 0.0002, 0.0001}""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    ds = gdal.Open("/vsimem/test.bin")
+    assert (
+        ds.GetRasterBand(1).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "3.000"
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.300"
+    assert (
+        ds.GetRasterBand(2).GetMetadataItem("CENTRAL_WAVELENGTH_UM", "IMAGERY")
+        == "2.000"
+    )
+    assert ds.GetRasterBand(2).GetMetadataItem("FWHM_UM", "IMAGERY") == "0.200"
     ds = None
     gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")

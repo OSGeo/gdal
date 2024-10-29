@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 /* WARNING: VERY IMPORTANT NOTE: This file MUST not be directly compiled as */
@@ -100,9 +84,16 @@ static pcre2_code *re_compile_with_cache(sqlite3_context *ctx, const char *re)
         uint32_t has_jit = 0;
         PCRE2_UCHAR8 err_buff[256];
 
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
         pcre2_code *pat =
             pcre2_compile(reinterpret_cast<const PCRE2_UCHAR8 *>(re),
                           PCRE2_ZERO_TERMINATED, 0, &errorcode, &pos, nullptr);
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
         if (!pat)
         {
             pcre2_get_error_message(errorcode, err_buff, sizeof(err_buff));
@@ -151,7 +142,8 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
 {
     CPLAssert(argc == 2);
 
-    const char *re = (const char *)sqlite3_value_text(argv[0]);
+    const char *re =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
     if (!re)
     {
         sqlite3_result_error(ctx, "no regexp", -1);
@@ -164,7 +156,8 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
         return;
     }
 
-    const char *str = (const char *)sqlite3_value_text(argv[1]);
+    const char *str =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[1]));
     if (!str)
     {
         sqlite3_result_error(ctx, "no string", -1);
@@ -181,8 +174,16 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, CPL_UNUSED int argc,
         sqlite3_result_error(ctx, "could not create match data block", -1);
         return;
     }
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
     int rc = pcre2_match(p, reinterpret_cast<const PCRE2_UCHAR8 *>(str),
                          PCRE2_ZERO_TERMINATED, 0, 0, md, nullptr);
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
     sqlite3_result_int(ctx, rc >= 0);
 }
 
@@ -322,7 +323,7 @@ static void *OGRSQLiteRegisterRegExpFunction(sqlite3 *
     }
 
     cache_entry *cache =
-        (cache_entry *)CPLCalloc(CACHE_SIZE, sizeof(cache_entry));
+        static_cast<cache_entry *>(CPLCalloc(CACHE_SIZE, sizeof(cache_entry)));
     sqlite3_create_function(hDB, "REGEXP", 2, SQLITE_UTF8, cache,
                             OGRSQLiteREGEXPFunction, nullptr, nullptr);
 
@@ -349,7 +350,7 @@ static void OGRSQLiteFreeRegExpCache(void *
     if (hRegExpCache == nullptr)
         return;
 
-    cache_entry *cache = (cache_entry *)hRegExpCache;
+    cache_entry *cache = static_cast<cache_entry *>(hRegExpCache);
     for (int i = 0; i < CACHE_SIZE && cache[i].s; i++)
     {
         CPLFree(cache[i].s);
@@ -361,7 +362,7 @@ static void OGRSQLiteFreeRegExpCache(void *
     if (hRegExpCache == nullptr)
         return;
 
-    cache_entry *cache = (cache_entry *)hRegExpCache;
+    cache_entry *cache = static_cast<cache_entry *>(hRegExpCache);
     for (int i = 0; i < CACHE_SIZE && cache[i].s; i++)
     {
         CPLFree(cache[i].s);

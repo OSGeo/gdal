@@ -11,23 +11,7 @@
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -365,7 +349,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
 
         // Not a marker
         if (abyChunkHeader[0] != 0xFF)
-            continue;
+            break;
 
         // Stop on Start of Scan
         if (abyChunkHeader[1] == 0xDA)
@@ -399,6 +383,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
                     char *apszMDList[2] = {pszXMP, nullptr};
                     SetMetadata(apszMDList, "xml:XMP");
 
+                    // cppcheck-suppress redundantAssignment
                     nPamFlags = nOldPamFlags;
                 }
                 VSIFree(pszXMP);
@@ -440,16 +425,17 @@ void JPGDatasetCommon::ReadFLIRMetadata()
             1)
             break;
 
+        const int nMarkerLength =
+            abyChunkHeader[2] * 256 + abyChunkHeader[3] - 2;
+        nChunkLoc += 4 + nMarkerLength;
+
         // Not a marker
         if (abyChunkHeader[0] != 0xFF)
-            continue;
+            break;
 
         // Stop on Start of Scan
         if (abyChunkHeader[1] == 0xDA)
             break;
-
-        int nMarkerLength = abyChunkHeader[2] * 256 + abyChunkHeader[3] - 2;
-        nChunkLoc += 4 + nMarkerLength;
 
         if (abyChunkHeader[1] == 0xe1 &&
             memcmp(abyChunkHeader + 4, "FLIR\0", 5) == 0)
@@ -2858,7 +2844,8 @@ GDALDataset *JPGDatasetCommon::OpenFLIRRawThermalImage()
 
     GByte *pabyData =
         static_cast<GByte *>(CPLMalloc(m_abyRawThermalImage.size()));
-    const std::string osTmpFilename(CPLSPrintf("/vsimem/jpeg/%p", pabyData));
+    const std::string osTmpFilename(
+        VSIMemGenerateHiddenFilename("jpeg_flir_raw"));
     memcpy(pabyData, m_abyRawThermalImage.data(), m_abyRawThermalImage.size());
     VSILFILE *fpRaw = VSIFileFromMemBuffer(osTmpFilename.c_str(), pabyData,
                                            m_abyRawThermalImage.size(), true);
@@ -3050,7 +3037,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
     // Open the file using the large file api if necessary.
     VSILFILE *fpImage = fpLin;
 
-    if (fpImage == nullptr)
+    if (!fpImage)
     {
         fpImage = VSIFOpenL(real_filename, "rb");
 
@@ -3062,10 +3049,6 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
             delete poDS;
             return nullptr;
         }
-    }
-    else
-    {
-        fpImage = fpLin;
     }
 
     // Create a corresponding GDALDataset.
@@ -3234,7 +3217,8 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
         // will unlink the temporary /vsimem file just after GDALOpen(), so
         // later VSIFOpenL() when reading internal overviews would fail.
         // Initialize them now.
-        if (STARTS_WITH(real_filename, "/vsimem/http_"))
+        if (STARTS_WITH(real_filename, "/vsimem/") &&
+            strstr(real_filename, "_gdal_http_"))
         {
             poDS->InitInternalOverviews();
         }
@@ -3743,7 +3727,7 @@ void JPGDataset::EmitMessage(j_common_ptr cinfo, int msg_level)
                              buffer);
                 }
             }
-            else if (pszVal == nullptr || CPLTestBool(pszVal))
+            else if (pszVal == nullptr || !CPLTestBool(pszVal))
             {
                 if (pszVal == nullptr)
                 {
@@ -4096,7 +4080,7 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
             return;
         }
 
-        CPLString osTmpFile(CPLSPrintf("/vsimem/ovrjpg%p", poMemDS));
+        const CPLString osTmpFile(VSIMemGenerateHiddenFilename("ovrjpg"));
         GDALDataset *poOutDS = pCreateCopy(osTmpFile, poMemDS, 0, nullptr,
                                            GDALDummyProgress, nullptr);
         const bool bExifOverviewSuccess = poOutDS != nullptr;

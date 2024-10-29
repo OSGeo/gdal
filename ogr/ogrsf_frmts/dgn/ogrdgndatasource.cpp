@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam (warmerdam@pobox.com)
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_dgn.h"
@@ -34,11 +18,7 @@
 /*                         OGRDGNDataSource()                           */
 /************************************************************************/
 
-OGRDGNDataSource::OGRDGNDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr), hDGN(nullptr),
-      papszOptions(nullptr)
-{
-}
+OGRDGNDataSource::OGRDGNDataSource() = default;
 
 /************************************************************************/
 /*                        ~OGRDGNDataSource()                           */
@@ -51,7 +31,6 @@ OGRDGNDataSource::~OGRDGNDataSource()
         delete papoLayers[i];
 
     CPLFree(papoLayers);
-    CPLFree(pszName);
     CSLDestroy(papszOptions);
 
     if (hDGN != nullptr)
@@ -62,54 +41,31 @@ OGRDGNDataSource::~OGRDGNDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRDGNDataSource::Open(const char *pszNewName, int bTestOpen, int bUpdate)
+bool OGRDGNDataSource::Open(GDALOpenInfo *poOpenInfo)
 
 {
+    m_osEncoding =
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "ENCODING", "");
+
     CPLAssert(nLayers == 0);
-
-    /* -------------------------------------------------------------------- */
-    /*      For now we require files to have the .dgn or .DGN               */
-    /*      extension.  Eventually we will implement a more                 */
-    /*      sophisticated test to see if it is a dgn file.                  */
-    /* -------------------------------------------------------------------- */
-    if (bTestOpen)
-    {
-
-        VSILFILE *fp = VSIFOpenL(pszNewName, "rb");
-        if (fp == nullptr)
-            return FALSE;
-
-        GByte abyHeader[512];
-        const int nHeaderBytes =
-            static_cast<int>(VSIFReadL(abyHeader, 1, sizeof(abyHeader), fp));
-
-        VSIFCloseL(fp);
-
-        if (nHeaderBytes < 512)
-            return FALSE;
-
-        if (!DGNTestOpen(abyHeader, nHeaderBytes))
-            return FALSE;
-    }
 
     /* -------------------------------------------------------------------- */
     /*      Try to open the file as a DGN file.                             */
     /* -------------------------------------------------------------------- */
-    hDGN = DGNOpen(pszNewName, bUpdate);
+    const bool bUpdate = (poOpenInfo->eAccess == GA_Update);
+    hDGN = DGNOpen(poOpenInfo->pszFilename, bUpdate);
     if (hDGN == nullptr)
     {
-        if (!bTestOpen)
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unable to open %s as a Microstation .dgn file.",
-                     pszNewName);
-        return FALSE;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to open %s as a Microstation .dgn file.",
+                 poOpenInfo->pszFilename);
+        return false;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */
     OGRDGNLayer *poLayer = new OGRDGNLayer(this, "elements", hDGN, bUpdate);
-    pszName = CPLStrdup(pszNewName);
 
     /* -------------------------------------------------------------------- */
     /*      Add layer to data source layer list.                            */
@@ -118,7 +74,7 @@ int OGRDGNDataSource::Open(const char *pszNewName, int bTestOpen, int bUpdate)
         CPLRealloc(papoLayers, sizeof(OGRDGNLayer *) * (nLayers + 1)));
     papoLayers[nLayers++] = poLayer;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -154,16 +110,15 @@ OGRLayer *OGRDGNDataSource::GetLayer(int iLayer)
 /*                                                                      */
 /*      Called by OGRDGNDriver::Create() method to setup a stub         */
 /*      OGRDataSource object without the associated file created        */
-/*      yet.  It will be created by theICreateLayer() call.             */
+/*      yet.  It will be created by the ICreateLayer() call.            */
 /************************************************************************/
 
-bool OGRDGNDataSource::PreCreate(const char *pszFilename, char **papszOptionsIn)
+void OGRDGNDataSource::PreCreate(CSLConstList papszOptionsIn)
 
 {
     papszOptions = CSLDuplicate(papszOptionsIn);
-    pszName = CPLStrdup(pszFilename);
 
-    return true;
+    m_osEncoding = CSLFetchNameValueDef(papszOptionsIn, "ENCODING", "");
 }
 
 /************************************************************************/
@@ -307,8 +262,9 @@ OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Try creating the base file.                                     */
     /* -------------------------------------------------------------------- */
-    hDGN = DGNCreate(pszName, pszSeed, nCreationFlags, dfOriginX, dfOriginY,
-                     dfOriginZ, nSUPerMU, nUORPerSU, pszMasterUnit, pszSubUnit);
+    hDGN = DGNCreate(GetDescription(), pszSeed, nCreationFlags, dfOriginX,
+                     dfOriginY, dfOriginZ, nSUPerMU, nUORPerSU, pszMasterUnit,
+                     pszSubUnit);
     if (hDGN == nullptr)
         return nullptr;
 

@@ -8,23 +8,7 @@
  * Copyright (c) 2003, Andrey Kiselev <dron@ak4719.spb.edu>
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #define NO_DELETE
@@ -253,6 +237,8 @@ class MrSIDDataset final : public GDALJP2AbstractDataset
     void FetchProjParams();
     void GetGTIFDefn();
     char *GetOGISDefn(GTIFDefn *);
+
+    int m_nInRasterIO = 0;  // Prevent infinite recursion in IRasterIO()
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType, int, BANDMAP_TYPE,
@@ -860,11 +846,17 @@ CPLErr MrSIDDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (CPLTestBool(CPLGetConfigOption("GDAL_ONE_BIG_READ", "NO")))
         bUseBlockedIO = FALSE;
 
-    if (bUseBlockedIO)
-        return GDALDataset::BlockBasedRasterIO(
+    if (bUseBlockedIO && !m_nInRasterIO)
+    {
+        ++m_nInRasterIO;
+        const CPLErr eErr = GDALDataset::BlockBasedRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
             eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace,
             nBandSpace, psExtraArg);
+        --m_nInRasterIO;
+        return eErr;
+    }
+
     CPLDebug("MrSID", "RasterIO() - using optimized dataset level IO.");
 
     /* -------------------------------------------------------------------- */

@@ -9,23 +9,7 @@
 * Copyright (c) 2009, Even Rouault <even dot rouault at spatialys.com>
 * Copyright (c) 1999-2009, Frank Warmerdam
 *
-* Permission is hereby granted, free of charge, to any person obtaining a
-* copy of this software and associated documentation files (the "Software"),
-* to deal in the Software without restriction, including without limitation
-* the rights to use, copy, modify, merge, publish, distribute, sublicense,
-* and/or sell copies of the Software, and to permit persons to whom the
-* Software is furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included
-* in all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-* DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
 *************************************************************************** */
 
 /* Class gdal */
@@ -6336,7 +6320,7 @@ ogr.OGRERR_NONE.  An error is only returned if an error occurs while attempting
 to flush to disk.
 <p>
 The default implementation of this method just calls the SyncToDisk() method
-on each of the layers.  Conceptionally, calling SyncToDisk() on a datasource
+on each of the layers.  Conceptually, calling SyncToDisk() on a datasource
 should include any work that might be accomplished by calling SyncToDisk()
 on layers in that data source.
 <p>
@@ -6859,8 +6843,21 @@ public class Layer:public FeatureDefn GetLayerDefn()
  * definition initialization.
  *
  * @return the layer name
+ * @see #GetNameAsByteArray()
 */
 public class Layer:public String GetName()
+
+/**
+ * Return the layer name (when it is not UTF-8 encoded).
+ * <p>
+ * This returns the same content as GetLayerDefn().GetName(), but for a
+ * few drivers, calling GetName() directly can avoid lengthy layer
+ * definition initialization.
+ *
+ * @return the layer name
+ * @since 3.10
+*/
+public class Layer:public byte GetNameAsByteArray()
 
 /**
  * Return the layer geometry type.
@@ -7756,6 +7753,7 @@ public class Feature:public int[] GetFieldAsIntegerList(int ifield)
  * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
  *
  * @return the field value.
+ * @see #GetFieldAsStringAsByteArray(int)
  */
 public class Feature:public String GetFieldAsString(int ifield)
 
@@ -7769,8 +7767,37 @@ public class Feature:public String GetFieldAsString(int ifield)
  * @param name the name of the field to fetch.
  *
  * @return the field value.
+ * @see #GetFieldAsStringAsByteArray(String)
  */
 public class Feature:public String GetFieldAsString(String name)
+
+/**
+ * Fetch field value as a string (when it is not UTF-8 encoded).
+ * <p>
+ * OFTReal and OFTInteger fields will be translated to string using
+ * sprintf(), but not necessarily using the established formatting rules.
+ * Other field types, or errors will result in a return value of zero.
+ *
+ * @param ifield the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return the field value.
+ * @since 3.10
+ */
+public class Feature:public byte[] GetFieldAsStringAsByteArray(int ifield)
+
+/**
+ * Fetch field value as a string (when it is not UTF-8 encoded).
+ * <p>
+ * OFTReal and OFTInteger fields will be translated to string using
+ * sprintf(), but not necessarily using the established formatting rules.
+ * Other field types, or errors will result in a return value of zero.
+ *
+ * @param name the name of the field to fetch.
+ *
+ * @return the field value.
+ * @since 3.10
+ */
+public class Feature:public byte[] GetFieldAsStringAsByteArray(String name)
 
 /**
  * Fetch field value as a list of strings.
@@ -7861,8 +7888,22 @@ public class Feature:public Geometry GetGeometryRef()
  *
  * @return a reference to a representation in string format, or null if
  * there isn't one.
+ *
+ * @see #GetStyleStringAsByteArray()
  */
 public class Feature:public String GetStyleString()
+
+/**
+ * Fetch style string for this feature (when it is not UTF-8 encoded).
+ * <p>
+ * Set the OGR Feature Style Specification for details on the format of
+ * this string, and ogr_featurestyle.h for services available to parse it.
+ *
+ * @return a reference to a representation in string format, or null if
+ * there isn't one.
+ * @since 3.10
+ */
+public class Feature:public byte[] GetStyleStringAsByteArray()
 
 /**
  * Test if a field has ever been assigned a value or not.
@@ -9417,6 +9458,15 @@ public class FeatureDefn:public int GetFieldCount()
 public class FeatureDefn:public String GetName()
 
 /**
+ * Get name of this FeatureDefn (when it is not UTF-8 encoded).
+ *
+ * @return the name
+ * @since 3.10
+*/
+public class FeatureDefn:public byte GetNameAsByteArray()
+
+/**
+/**
  * Fetch field definition.
  *
  * @param ifield the field to fetch, between 0 and GetFieldCount()-1.
@@ -9569,11 +9619,19 @@ public class FieldDefn:public String GetFieldTypeName(int type)
 public class FieldDefn:public int GetJustify()
 
 /**
- * Fetch name of this field.
+ * Get the name of this field.
  *
  * @return the name of the field
  */
 public class FieldDefn:public String GetName()
+
+/**
+ * Get the name of this field (when it is not UTF-8 encoded).
+ *
+ * @return the name of the field
+ * @since 3.10
+*/
+public class FieldDefn:public byte GetNameAsByteArray()
 
 /**
  * Fetch name of this field.

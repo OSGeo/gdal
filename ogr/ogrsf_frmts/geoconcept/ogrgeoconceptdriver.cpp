@@ -8,55 +8,21 @@
  ******************************************************************************
  * Copyright (c) 2007,  Geoconcept and IGN
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogrgeoconceptdatasource.h"
-#include "ogrgeoconceptdriver.h"
-
-/************************************************************************/
-/*                          ~OGRGeoconceptDriver()                      */
-/************************************************************************/
-
-OGRGeoconceptDriver::~OGRGeoconceptDriver()
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRGeoconceptDriver::GetName()
-
-{
-    return "Geoconcept";
-}
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRGeoconceptDriver::Open(const char *pszFilename, int bUpdate)
+static GDALDataset *OGRGeoconceptDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
+    const char *pszFilename = poOpenInfo->pszFilename;
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     /* -------------------------------------------------------------------- */
     /*      We will only consider .gxt and .txt files.                      */
@@ -68,9 +34,9 @@ OGRDataSource *OGRGeoconceptDriver::Open(const char *pszFilename, int bUpdate)
     }
 #endif
 
-    OGRGeoconceptDataSource *poDS = new OGRGeoconceptDataSource();
+    auto poDS = new OGRGeoconceptDataSource();
 
-    if (!poDS->Open(pszFilename, true, CPL_TO_BOOL(bUpdate)))
+    if (!poDS->Open(pszFilename, true, poOpenInfo->eAccess == GA_Update))
     {
         delete poDS;
         return nullptr;
@@ -85,8 +51,11 @@ OGRDataSource *OGRGeoconceptDriver::Open(const char *pszFilename, int bUpdate)
 /*   EXTENSION=GXT|TXT (default GXT)                                    */
 /************************************************************************/
 
-OGRDataSource *OGRGeoconceptDriver::CreateDataSource(const char *pszName,
-                                                     char **papszOptions)
+static GDALDataset *OGRGeoconceptDriverCreate(const char *pszName,
+                                              int /* nXSize */,
+                                              int /* nYSize */,
+                                              int /* nBandCount */,
+                                              GDALDataType, char **papszOptions)
 
 {
     VSIStatBufL sStat;
@@ -135,10 +104,10 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource(const char *pszName,
 }
 
 /************************************************************************/
-/*                          DeleteDataSource()                          */
+/*                      OGRGeoconceptDriverDelete()                     */
 /************************************************************************/
 
-OGRErr OGRGeoconceptDriver::DeleteDataSource(const char *pszDataSource)
+static CPLErr OGRGeoconceptDriverDelete(const char *pszDataSource)
 
 {
     VSIStatBufL sStatBuf;
@@ -151,7 +120,7 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource(const char *pszDataSource)
                  "%s does not appear to be a file or directory.",
                  pszDataSource);
 
-        return OGRERR_FAILURE;
+        return CE_Failure;
     }
 
     if (VSI_ISREG(sStatBuf.st_mode) &&
@@ -187,23 +156,7 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource(const char *pszDataSource)
         VSIRmdir(pszDataSource);
     }
 
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRGeoconceptDriver::TestCapability(const char *pszCap)
-
-{
-    if (EQUAL(pszCap, ODrCCreateDataSource))
-        return TRUE;
-
-    if (EQUAL(pszCap, ODrCDeleteDataSource))
-        return TRUE;
-
-    return FALSE;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -213,7 +166,12 @@ int OGRGeoconceptDriver::TestCapability(const char *pszCap)
 void RegisterOGRGeoconcept()
 
 {
-    OGRSFDriver *poDriver = new OGRGeoconceptDriver;
+    if (GDALGetDriverByName("Geoconcept"))
+        return;
+
+    GDALDriver *poDriver = new GDALDriver();
+    poDriver->SetDescription("Geoconcept");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Geoconcept");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
@@ -250,5 +208,9 @@ void RegisterOGRGeoconcept()
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->pfnOpen = OGRGeoconceptDriverOpen;
+    poDriver->pfnCreate = OGRGeoconceptDriverCreate;
+    poDriver->pfnDelete = OGRGeoconceptDriverDelete;
+
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

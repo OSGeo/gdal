@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2012-2022, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 /* WARNING: VERY IMPORTANT NOTE: This file MUST not be directly compiled as */
@@ -37,6 +21,9 @@
 
 #include "ogrsqliteregexp.cpp" /* yes the .cpp file, to make it work on Windows with load_extension('gdalXX.dll') */
 
+#include <algorithm>
+#include <cassert>
+#include <cmath>
 #include <map>
 
 #include "ogr_swq.h"
@@ -181,8 +168,7 @@ GDALDataset *OGRSQLiteExtensionData::GetDataset(const char *pszDSName)
 /*                    OGRSQLITE_gdal_get_pixel_value()                  */
 /************************************************************************/
 
-static void OGRSQLITE_gdal_get_pixel_value(sqlite3_context *pContext,
-                                           CPL_UNUSED int argc,
+static void OGRSQLITE_gdal_get_pixel_value(sqlite3_context *pContext, int argc,
                                            sqlite3_value **argv)
 {
     if (!CPLTestBool(
@@ -196,20 +182,13 @@ static void OGRSQLITE_gdal_get_pixel_value(sqlite3_context *pContext,
         return;
     }
 
-    if (sqlite3_value_type(argv[0]) != SQLITE_TEXT ||
-        sqlite3_value_type(argv[1]) != SQLITE_INTEGER ||
-        sqlite3_value_type(argv[2]) != SQLITE_TEXT ||
-        (sqlite3_value_type(argv[3]) != SQLITE_INTEGER &&
-         sqlite3_value_type(argv[3]) != SQLITE_FLOAT) ||
-        (sqlite3_value_type(argv[4]) != SQLITE_INTEGER &&
-         sqlite3_value_type(argv[4]) != SQLITE_FLOAT))
+    if (sqlite3_value_type(argv[0]) != SQLITE_TEXT)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid arguments to gdal_get_pixel_value()");
+                 "Invalid arguments to gdal_get_layer_pixel_value()");
         sqlite3_result_null(pContext);
         return;
     }
-
     const char *pszDSName =
         reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
 
@@ -222,78 +201,8 @@ static void OGRSQLITE_gdal_get_pixel_value(sqlite3_context *pContext,
         return;
     }
 
-    const int nBand = sqlite3_value_int(argv[1]);
-    auto poBand = poDS->GetRasterBand(nBand);
-    if (!poBand)
-    {
-        sqlite3_result_null(pContext);
-        return;
-    }
-
-    const char *pszCoordType =
-        reinterpret_cast<const char *>(sqlite3_value_text(argv[2]));
-    int x, y;
-    if (EQUAL(pszCoordType, "georef"))
-    {
-        const double X = sqlite3_value_double(argv[3]);
-        const double Y = sqlite3_value_double(argv[4]);
-        double adfGeoTransform[6];
-        if (poDS->GetGeoTransform(adfGeoTransform) != CE_None)
-        {
-            sqlite3_result_null(pContext);
-            return;
-        }
-        double adfInvGT[6];
-        if (!GDALInvGeoTransform(adfGeoTransform, adfInvGT))
-        {
-            sqlite3_result_null(pContext);
-            return;
-        }
-        x = static_cast<int>(adfInvGT[0] + X * adfInvGT[1] + Y * adfInvGT[2]);
-        y = static_cast<int>(adfInvGT[3] + X * adfInvGT[4] + Y * adfInvGT[5]);
-    }
-    else if (EQUAL(pszCoordType, "pixel"))
-    {
-        x = sqlite3_value_int(argv[3]);
-        y = sqlite3_value_int(argv[4]);
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid value for 3rd argument of gdal_get_pixel_value(): "
-                 "only 'georef' or 'pixel' are supported");
-        sqlite3_result_null(pContext);
-        return;
-    }
-    if (x < 0 || x >= poDS->GetRasterXSize() || y < 0 ||
-        y >= poDS->GetRasterYSize())
-    {
-        sqlite3_result_null(pContext);
-        return;
-    }
-    const auto eDT = poBand->GetRasterDataType();
-    if (eDT != GDT_UInt64 && GDALDataTypeIsInteger(eDT))
-    {
-        int64_t nValue = 0;
-        if (poBand->RasterIO(GF_Read, x, y, 1, 1, &nValue, 1, 1, GDT_Int64, 0,
-                             0, nullptr) != CE_None)
-        {
-            sqlite3_result_null(pContext);
-            return;
-        }
-        return sqlite3_result_int64(pContext, nValue);
-    }
-    else
-    {
-        double dfValue = 0;
-        if (poBand->RasterIO(GF_Read, x, y, 1, 1, &dfValue, 1, 1, GDT_Float64,
-                             0, 0, nullptr) != CE_None)
-        {
-            sqlite3_result_null(pContext);
-            return;
-        }
-        return sqlite3_result_double(pContext, dfValue);
-    }
+    OGRSQLite_gdal_get_pixel_value_common("gdal_get_layer_pixel_value",
+                                          pContext, argc, argv, poDS);
 }
 
 /************************************************************************/
@@ -400,6 +309,277 @@ static void OGRSQLITE_STDDEV_SAMP_Finalize(sqlite3_context *pContext)
 }
 
 /************************************************************************/
+/*                     OGRSQLITE_Percentile_Step()                      */
+/************************************************************************/
+
+// Percentile related code inspired from https://sqlite.org/src/file/ext/misc/percentile.c
+// of https://www.sqlite.org/draft/percentile.html
+
+// Constant added to Percentile::rPct, since rPct is initialized to 0 when unset.
+constexpr double PERCENT_ADD_CONSTANT = 1;
+
+namespace
+{
+struct Percentile
+{
+    double rPct; /* PERCENT_ADD_CONSTANT more than the value for P */
+    std::vector<double> *values; /* Array of Y values */
+};
+}  // namespace
+
+/*
+** The "step" function for percentile(Y,P) is called once for each
+** input row.
+*/
+static void OGRSQLITE_Percentile_Step(sqlite3_context *pCtx, int argc,
+                                      sqlite3_value **argv)
+{
+    assert(argc == 2 || argc == 1);
+
+    double rPct;
+
+    if (argc == 1)
+    {
+        /* Requirement 13:  median(Y) is the same as percentile(Y,50). */
+        rPct = 50.0;
+    }
+    else if (sqlite3_user_data(pCtx) == nullptr)
+    {
+        /* Requirement 3:  P must be a number between 0 and 100 */
+        const int eType = sqlite3_value_numeric_type(argv[1]);
+        rPct = sqlite3_value_double(argv[1]);
+        if ((eType != SQLITE_INTEGER && eType != SQLITE_FLOAT) || rPct < 0.0 ||
+            rPct > 100.0)
+        {
+            sqlite3_result_error(pCtx,
+                                 "2nd argument to percentile() is not "
+                                 "a number between 0.0 and 100.0",
+                                 -1);
+            return;
+        }
+    }
+    else
+    {
+        /* Requirement 3:  P must be a number between 0 and 1 */
+        const int eType = sqlite3_value_numeric_type(argv[1]);
+        rPct = sqlite3_value_double(argv[1]);
+        if ((eType != SQLITE_INTEGER && eType != SQLITE_FLOAT) || rPct < 0.0 ||
+            rPct > 1.0)
+        {
+            sqlite3_result_error(pCtx,
+                                 "2nd argument to percentile_cont() is not "
+                                 "a number between 0.0 and 1.0",
+                                 -1);
+            return;
+        }
+        rPct *= 100.0;
+    }
+
+    /* Allocate the session context. */
+    auto p = static_cast<Percentile *>(
+        sqlite3_aggregate_context(pCtx, sizeof(Percentile)));
+    if (!p)
+        return;
+
+    /* Remember the P value.  Throw an error if the P value is different
+  ** from any prior row, per Requirement (2). */
+    if (p->rPct == 0.0)
+    {
+        p->rPct = rPct + PERCENT_ADD_CONSTANT;
+    }
+    else if (p->rPct != rPct + PERCENT_ADD_CONSTANT)
+    {
+        sqlite3_result_error(pCtx,
+                             "2nd argument to percentile() is not the "
+                             "same for all input rows",
+                             -1);
+        return;
+    }
+
+    /* Ignore rows for which the value is NULL */
+    const int eType = sqlite3_value_type(argv[0]);
+    if (eType == SQLITE_NULL)
+        return;
+
+    /* If not NULL, then Y must be numeric.  Otherwise throw an error.
+  ** Requirement 4 */
+    if (eType != SQLITE_INTEGER && eType != SQLITE_FLOAT)
+    {
+        sqlite3_result_error(pCtx,
+                             "1st argument to percentile() is not "
+                             "numeric",
+                             -1);
+        return;
+    }
+
+    /* Ignore rows for which the value is  NaN */
+    const double v = sqlite3_value_double(argv[0]);
+    if (std::isnan(v))
+    {
+        return;
+    }
+
+    if (!p->values)
+        p->values = new std::vector<double>();
+    try
+    {
+        p->values->push_back(v);
+    }
+    catch (const std::exception &)
+    {
+        delete p->values;
+        memset(p, 0, sizeof(*p));
+        sqlite3_result_error_nomem(pCtx);
+        return;
+    }
+}
+
+/************************************************************************/
+/*                   OGRSQLITE_Percentile_Finalize()                    */
+/************************************************************************/
+
+/*
+** Called to compute the final output of percentile() and to clean
+** up all allocated memory.
+*/
+static void OGRSQLITE_Percentile_Finalize(sqlite3_context *pCtx)
+{
+    auto p = static_cast<Percentile *>(sqlite3_aggregate_context(pCtx, 0));
+    if (!p)
+        return;
+    if (!p->values)
+        return;
+    if (!p->values->empty())
+    {
+        std::sort(p->values->begin(), p->values->end());
+        const double ix = (p->rPct - PERCENT_ADD_CONSTANT) *
+                          static_cast<double>(p->values->size() - 1) * 0.01;
+        const size_t i1 = static_cast<size_t>(ix);
+        const size_t i2 =
+            ix == static_cast<double>(i1) || i1 == p->values->size() - 1
+                ? i1
+                : i1 + 1;
+        const double v1 = (*p->values)[i1];
+        const double v2 = (*p->values)[i2];
+        const double vx = v1 + (v2 - v1) * static_cast<double>(ix - i1);
+        sqlite3_result_double(pCtx, vx);
+    }
+    delete p->values;
+    memset(p, 0, sizeof(*p));
+}
+
+/************************************************************************/
+/*                         OGRSQLITE_Mode_Step()                        */
+/************************************************************************/
+
+namespace
+{
+struct Mode
+{
+    std::map<double, uint64_t> *numericValues;
+    std::map<std::string, uint64_t> *stringValues;
+    double mostFrequentNumValue;
+    std::string *mostFrequentStr;
+    uint64_t mostFrequentValueCount;
+    bool mostFrequentValueIsStr;
+};
+}  // namespace
+
+static void OGRSQLITE_Mode_Step(sqlite3_context *pCtx, int /*argc*/,
+                                sqlite3_value **argv)
+{
+    const int eType = sqlite3_value_type(argv[0]);
+    if (eType == SQLITE_NULL)
+        return;
+
+    if (eType == SQLITE_BLOB)
+    {
+        sqlite3_result_error(pCtx, "BLOB argument not supported for mode()",
+                             -1);
+        return;
+    }
+
+    /* Allocate the session context. */
+    auto p = static_cast<Mode *>(sqlite3_aggregate_context(pCtx, sizeof(Mode)));
+    if (!p)
+        return;
+
+    try
+    {
+        if (eType == SQLITE_TEXT)
+        {
+            const char *pszStr =
+                reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
+            if (!p->stringValues)
+            {
+                p->stringValues = new std::map<std::string, uint64_t>();
+                p->mostFrequentStr = new std::string();
+            }
+            const uint64_t count = ++(*p->stringValues)[pszStr];
+            if (count > p->mostFrequentValueCount)
+            {
+                p->mostFrequentValueCount = count;
+                p->mostFrequentValueIsStr = true;
+                *(p->mostFrequentStr) = pszStr;
+            }
+        }
+        else
+        {
+            const double v = sqlite3_value_double(argv[0]);
+            if (std::isnan(v))
+                return;
+            if (!p->numericValues)
+                p->numericValues = new std::map<double, uint64_t>();
+            const uint64_t count = ++(*p->numericValues)[v];
+            if (count > p->mostFrequentValueCount)
+            {
+                p->mostFrequentValueCount = count;
+                p->mostFrequentValueIsStr = false;
+                p->mostFrequentNumValue = v;
+            }
+        }
+    }
+    catch (const std::exception &)
+    {
+        delete p->stringValues;
+        delete p->numericValues;
+        delete p->mostFrequentStr;
+        memset(p, 0, sizeof(*p));
+        sqlite3_result_error_nomem(pCtx);
+        return;
+    }
+}
+
+/************************************************************************/
+/*                       OGRSQLITE_Mode_Finalize()                      */
+/************************************************************************/
+
+static void OGRSQLITE_Mode_Finalize(sqlite3_context *pCtx)
+{
+    auto p = static_cast<Mode *>(sqlite3_aggregate_context(pCtx, 0));
+    if (!p)
+        return;
+
+    if (p->mostFrequentValueCount)
+    {
+        if (p->mostFrequentValueIsStr)
+        {
+            sqlite3_result_text(pCtx, p->mostFrequentStr->c_str(), -1,
+                                SQLITE_TRANSIENT);
+        }
+        else
+        {
+            sqlite3_result_double(pCtx, p->mostFrequentNumValue);
+        }
+    }
+
+    delete p->stringValues;
+    delete p->numericValues;
+    delete p->mostFrequentStr;
+    memset(p, 0, sizeof(*p));
+}
+
+/************************************************************************/
 /*                 OGRSQLiteRegisterSQLFunctionsCommon()                */
 /************************************************************************/
 
@@ -419,6 +599,8 @@ static OGRSQLiteExtensionData *OGRSQLiteRegisterSQLFunctionsCommon(sqlite3 *hDB)
 
     sqlite3_create_function(hDB, "gdal_get_pixel_value", 5, SQLITE_UTF8, pData,
                             OGRSQLITE_gdal_get_pixel_value, nullptr, nullptr);
+    sqlite3_create_function(hDB, "gdal_get_pixel_value", 6, SQLITE_UTF8, pData,
+                            OGRSQLITE_gdal_get_pixel_value, nullptr, nullptr);
 
     if (CPLTestBool(CPLGetConfigOption("OGR_SQLITE_USE_CUSTOM_LIKE", "YES")))
     {
@@ -435,6 +617,22 @@ static OGRSQLiteExtensionData *OGRSQLiteRegisterSQLFunctionsCommon(sqlite3 *hDB)
     sqlite3_create_function(hDB, "STDDEV_SAMP", 1, UTF8_INNOCUOUS, nullptr,
                             nullptr, OGRSQLITE_STDDEV_Step,
                             OGRSQLITE_STDDEV_SAMP_Finalize);
+
+    sqlite3_create_function(hDB, "median", 1, UTF8_INNOCUOUS, nullptr, nullptr,
+                            OGRSQLITE_Percentile_Step,
+                            OGRSQLITE_Percentile_Finalize);
+
+    sqlite3_create_function(hDB, "percentile", 2, UTF8_INNOCUOUS, nullptr,
+                            nullptr, OGRSQLITE_Percentile_Step,
+                            OGRSQLITE_Percentile_Finalize);
+
+    sqlite3_create_function(
+        hDB, "percentile_cont", 2, UTF8_INNOCUOUS,
+        const_cast<char *>("percentile_cont"),  // any non-null ptr
+        nullptr, OGRSQLITE_Percentile_Step, OGRSQLITE_Percentile_Finalize);
+
+    sqlite3_create_function(hDB, "mode", 1, UTF8_INNOCUOUS, nullptr, nullptr,
+                            OGRSQLITE_Mode_Step, OGRSQLITE_Mode_Finalize);
 
     pData->SetRegExpCache(OGRSQLiteRegisterRegExpFunction(hDB));
 

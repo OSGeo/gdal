@@ -2648,6 +2648,7 @@ def _test_srs(workdir, srs, input_srs=None, ext="tab"):
     assert srs
     if isinstance(srs, str):
         tmp = osr.SpatialReference()
+        tmp.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         tmp.SetFromUserInput(srs)
         srs = tmp
     if input_srs and isinstance(input_srs, str):
@@ -2764,6 +2765,17 @@ def test_ogr_mitab_write_etrs89_from_custom_wkt_no_geogcs_code(tmp_vsimem):
         AXIS["Northing",NORTH]]"""
     )
     _test_srs(tmp_vsimem, srs, "EPSG:25832")
+
+
+###############################################################################
+
+
+def test_ogr_mitab_write_estonia_1977(tmp_vsimem):
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3301)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    _test_srs(tmp_vsimem, srs, "EPSG:3301")
 
 
 ###############################################################################

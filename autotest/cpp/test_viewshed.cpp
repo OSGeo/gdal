@@ -6,23 +6,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 /*
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include <algorithm>
@@ -33,9 +17,11 @@
 
 #include "gtest_include.h"
 
-#include "viewshed.h"
+#include "viewshed/viewshed.h"
 
 namespace gdal
+{
+namespace viewshed
 {
 
 namespace
@@ -45,9 +31,9 @@ using DatasetPtr = std::unique_ptr<GDALDataset>;
 using Transform = std::array<double, 6>;
 Transform identity{0, 1, 0, 0, 0, 1};
 
-Viewshed::Options stdOptions(int x, int y)
+Options stdOptions(int x, int y)
 {
-    Viewshed::Options opts;
+    Options opts;
     opts.observer.x = x;
     opts.observer.y = y;
     opts.outputFilename = "none";
@@ -57,13 +43,13 @@ Viewshed::Options stdOptions(int x, int y)
     return opts;
 }
 
-Viewshed::Options stdOptions(const Coord &observer)
+Options stdOptions(const Coord &observer)
 {
     return stdOptions(observer.first, observer.second);
 }
 
 DatasetPtr runViewshed(const int8_t *in, int xlen, int ylen,
-                       const Viewshed::Options &opts)
+                       const Options &opts)
 {
     Viewshed v(opts);
 
@@ -157,8 +143,8 @@ TEST(Viewshed, simple_height)
     {
         std::array<double, xlen * ylen> dem;
         SCOPED_TRACE("simple_height:dem");
-        Viewshed::Options opts = stdOptions(2, 2);
-        opts.outputMode = Viewshed::OutputMode::DEM;
+        Options opts = stdOptions(2, 2);
+        opts.outputMode = OutputMode::DEM;
 
         DatasetPtr output = runViewshed(in.data(), xlen, ylen, opts);
 
@@ -179,8 +165,8 @@ TEST(Viewshed, simple_height)
     {
         std::array<double, xlen * ylen> ground;
         SCOPED_TRACE("simple_height:ground");
-        Viewshed::Options opts = stdOptions(2, 2);
-        opts.outputMode = Viewshed::OutputMode::Ground;
+        Options opts = stdOptions(2, 2);
+        opts.outputMode = OutputMode::Ground;
         DatasetPtr output = runViewshed(in.data(), xlen, ylen, opts);
 
         GDALRasterBand *band = output->GetRasterBand(1);
@@ -210,8 +196,8 @@ TEST(Viewshed, dem_vs_ground)
         const int ylen = 1;
 
         std::array<double, xlen * ylen> out;
-        Viewshed::Options opts = stdOptions(observer);
-        opts.outputMode = Viewshed::OutputMode::Ground;
+        Options opts = stdOptions(observer);
+        opts.outputMode = OutputMode::Ground;
 
         // Verify ground mode.
         DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
@@ -223,7 +209,7 @@ TEST(Viewshed, dem_vs_ground)
             EXPECT_DOUBLE_EQ(out[i], ground[i]);
 
         // Verify DEM mode.
-        opts.outputMode = Viewshed::OutputMode::DEM;
+        opts.outputMode = OutputMode::DEM;
         ds = runViewshed(in.data(), xlen, ylen, opts);
         band = ds->GetRasterBand(1);
         err = band->RasterIO(GF_Read, 0, 0, xlen, ylen, out.data(), xlen, ylen,
@@ -262,8 +248,8 @@ TEST(Viewshed, oor_right)
     // clang-format on
 
     {
-        Viewshed::Options opts = stdOptions(6, 1);
-        opts.outputMode = Viewshed::OutputMode::DEM;
+        Options opts = stdOptions(6, 1);
+        opts.outputMode = OutputMode::DEM;
         DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
         GDALRasterBand *band = ds->GetRasterBand(1);
         std::array<double, xlen * ylen> out;
@@ -285,8 +271,8 @@ TEST(Viewshed, oor_right)
     }
 
     {
-        Viewshed::Options opts = stdOptions(6, 2);
-        opts.outputMode = Viewshed::OutputMode::DEM;
+        Options opts = stdOptions(6, 2);
+        opts.outputMode = OutputMode::DEM;
         DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
         GDALRasterBand *band = ds->GetRasterBand(1);
         std::array<double, xlen * ylen> out;
@@ -323,8 +309,8 @@ TEST(Viewshed, oor_left)
     // clang-format on
 
     {
-        Viewshed::Options opts = stdOptions(-2, 1);
-        opts.outputMode = Viewshed::OutputMode::DEM;
+        Options opts = stdOptions(-2, 1);
+        opts.outputMode = OutputMode::DEM;
         DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
         GDALRasterBand *band = ds->GetRasterBand(1);
         std::array<double, xlen * ylen> out;
@@ -346,8 +332,8 @@ TEST(Viewshed, oor_left)
     }
 
     {
-        Viewshed::Options opts = stdOptions(-2, 2);
-        opts.outputMode = Viewshed::OutputMode::DEM;
+        Options opts = stdOptions(-2, 2);
+        opts.outputMode = OutputMode::DEM;
         DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
         GDALRasterBand *band = ds->GetRasterBand(1);
         std::array<double, xlen * ylen> out;
@@ -384,8 +370,8 @@ TEST(Viewshed, oor_above)
     // clang-format on
 
     {
-        Viewshed::Options opts = stdOptions(2, -2);
-        opts.outputMode = Viewshed::OutputMode::DEM;
+        Options opts = stdOptions(2, -2);
+        opts.outputMode = OutputMode::DEM;
         DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
         GDALRasterBand *band = ds->GetRasterBand(1);
         std::array<double, xlen * ylen> out;
@@ -408,8 +394,8 @@ TEST(Viewshed, oor_above)
     }
 
     {
-        Viewshed::Options opts = stdOptions(-2, -2);
-        opts.outputMode = Viewshed::OutputMode::DEM;
+        Options opts = stdOptions(-2, -2);
+        opts.outputMode = OutputMode::DEM;
         DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
         GDALRasterBand *band = ds->GetRasterBand(1);
         std::array<double, xlen * ylen> out;
@@ -446,8 +432,8 @@ TEST(Viewshed, oor_below)
     // clang-format on
 
     {
-        Viewshed::Options opts = stdOptions(2, 4);
-        opts.outputMode = Viewshed::OutputMode::DEM;
+        Options opts = stdOptions(2, 4);
+        opts.outputMode = OutputMode::DEM;
         DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
         GDALRasterBand *band = ds->GetRasterBand(1);
         std::array<double, xlen * ylen> out;
@@ -470,8 +456,8 @@ TEST(Viewshed, oor_below)
     }
 
     {
-        Viewshed::Options opts = stdOptions(6, 4);
-        opts.outputMode = Viewshed::OutputMode::DEM;
+        Options opts = stdOptions(6, 4);
+        opts.outputMode = OutputMode::DEM;
         DatasetPtr ds = runViewshed(in.data(), xlen, ylen, opts);
         GDALRasterBand *band = ds->GetRasterBand(1);
         std::array<double, xlen * ylen> out;
@@ -493,4 +479,5 @@ TEST(Viewshed, oor_below)
     }
 }
 
+}  // namespace viewshed
 }  // namespace gdal

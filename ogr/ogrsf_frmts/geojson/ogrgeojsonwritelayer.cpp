@@ -8,23 +8,7 @@
  * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2007, Mateusz Loskot
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_geojson.h"
@@ -256,19 +240,45 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
     {
         const double dfXYResolution =
             std::pow(10.0, double(-oWriteOptions_.nXYCoordPrecision));
-        auto poNewGeom = poFeature == poFeatureToWrite
-                             ? poOrigGeom->clone()
-                             : poFeatureToWrite->GetGeometryRef();
-        bool bDeleteNewGeom = (poFeature == poFeatureToWrite);
+        auto poNewGeom = std::unique_ptr<OGRGeometry>(
+            poFeatureToWrite->GetGeometryRef()->clone());
         OGRGeomCoordinatePrecision sPrecision;
         sPrecision.dfXYResolution = dfXYResolution;
         poNewGeom->roundCoordinates(sPrecision);
-        if (!IsValid(poNewGeom))
+        if (!IsValid(poNewGeom.get()))
         {
-            CPLDebug("GeoJSON", "Running SetPrecision() to correct an invalid "
-                                "geometry due to reduced precision output");
-            auto poValidGeom =
-                poOrigGeom->SetPrecision(dfXYResolution, /* nFlags = */ 0);
+            std::unique_ptr<OGRGeometry> poValidGeom;
+            if (poFeature == poFeatureToWrite)
+            {
+                CPLDebug("GeoJSON",
+                         "Running SetPrecision() to correct an invalid "
+                         "geometry due to reduced precision output");
+                poValidGeom.reset(
+                    poOrigGeom->SetPrecision(dfXYResolution, /* nFlags = */ 0));
+            }
+            else
+            {
+                CPLDebug("GeoJSON", "Running MakeValid() to correct an invalid "
+                                    "geometry due to reduced precision output");
+                poValidGeom.reset(poNewGeom->MakeValid());
+                if (poValidGeom)
+                {
+                    auto poValidGeomRoundCoordinates =
+                        std::unique_ptr<OGRGeometry>(poValidGeom->clone());
+                    poValidGeomRoundCoordinates->roundCoordinates(sPrecision);
+                    if (!IsValid(poValidGeomRoundCoordinates.get()))
+                    {
+                        CPLDebug("GeoJSON",
+                                 "Running SetPrecision() to correct an invalid "
+                                 "geometry due to reduced precision output");
+                        auto poValidGeom2 = std::unique_ptr<OGRGeometry>(
+                            poValidGeom->SetPrecision(dfXYResolution,
+                                                      /* nFlags = */ 0));
+                        if (poValidGeom2)
+                            poValidGeom = std::move(poValidGeom2);
+                    }
+                }
+            }
             if (poValidGeom)
             {
                 if (poFeature == poFeatureToWrite)
@@ -277,12 +287,9 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
                     poFeatureToWrite->SetFrom(poFeature);
                     poFeatureToWrite->SetFID(poFeature->GetFID());
                 }
-
-                poFeatureToWrite->SetGeometryDirectly(poValidGeom);
+                poFeatureToWrite->SetGeometryDirectly(poValidGeom.release());
             }
         }
-        if (bDeleteNewGeom)
-            delete poNewGeom;
     }
 
     if (oWriteOptions_.bGenerateID && poFeatureToWrite->GetFID() == OGRNullFID)

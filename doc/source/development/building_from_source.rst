@@ -1160,7 +1160,7 @@ It is used by the internal libtiff library or the :ref:`raster.zarr` driver.
 libOpenDRIVE
 ************
 
-`libOpenDRIVE <https://github.com/pageldev/libOpenDRIVE>`_ is required for the :ref:`vector.xodr` driver.
+`libOpenDRIVE <https://github.com/pageldev/libOpenDRIVE>`_ in version >= 0.6.0 is required for the :ref:`vector.xodr` driver.
 
 .. option:: OpenDrive_DIR
 
@@ -2546,5 +2546,5 @@ crashes will occur at runtime (often at process termination with a
 Autoconf/nmake (GDAL versions < 3.5.0)
 --------------------------------------------------------------------------------
 
-See https://trac.osgeo.org/gdal/wiki/BuildHints for hints for GDAL < 3.5
+See http://web.archive.org/https://trac.osgeo.org/gdal/wiki/BuildHints for hints for GDAL < 3.5
 autoconf and nmake build systems.

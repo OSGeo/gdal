@@ -9,23 +9,7 @@
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -33,7 +17,6 @@
 #include "ogr_swq.h"
 
 #include <cstddef>
-#include <cstdlib>
 #include <algorithm>
 
 #include "cpl_conv.h"
@@ -407,18 +390,6 @@ int OGRFeatureQuery::CanUseIndex(const swq_expr_node *psExpr, OGRLayer *poLayer)
 /*      multi-part queries with ranges.                                 */
 /************************************************************************/
 
-static int CompareGIntBig(const void *pa, const void *pb)
-{
-    const GIntBig a = *(reinterpret_cast<const GIntBig *>(pa));
-    const GIntBig b = *(reinterpret_cast<const GIntBig *>(pb));
-    if (a < b)
-        return -1;
-    else if (a > b)
-        return 1;
-    else
-        return 0;
-}
-
 GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(OGRLayer *poLayer,
                                                  OGRErr *peErr)
 
@@ -668,8 +639,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
         if (nFIDCount > 1)
         {
             // The returned FIDs are expected to be in sorted order.
-            qsort(panFIDs, static_cast<size_t>(nFIDCount), sizeof(GIntBig),
-                  CompareGIntBig);
+            std::sort(panFIDs, panFIDs + nFIDCount);
         }
         return panFIDs;
     }
@@ -712,9 +682,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
     if (nFIDCount > 1)
     {
         // The returned FIDs are expected to be sorted.
-        // TODO(schwehr): Use std::sort.
-        qsort(panFIDs, static_cast<size_t>(nFIDCount), sizeof(GIntBig),
-              CompareGIntBig);
+        std::sort(panFIDs, panFIDs + nFIDCount);
     }
     return panFIDs;
 }

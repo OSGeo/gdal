@@ -7,29 +7,14 @@
  ******************************************************************************
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include <algorithm>
 #include <cstring>
 #include "ogr_pgdump.h"
 #include "cpl_conv.h"
+#include "cpl_md5.h"
 #include "cpl_string.h"
 
 /************************************************************************/
@@ -148,6 +133,15 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix,
             }
         }
     }
+
+    if (i == OGR_PG_NAMEDATALEN - 1 && pszSafeName[i] != '\0')
+    {
+        constexpr int FIRST_8_CHARS_OF_MD5 = 8;
+        pszSafeName[i - FIRST_8_CHARS_OF_MD5 - 1] = '_';
+        memcpy(pszSafeName + i - FIRST_8_CHARS_OF_MD5, CPLMD5String(pszSrcName),
+               FIRST_8_CHARS_OF_MD5);
+    }
+
     pszSafeName[i] = '\0';
 
     if (strcmp(pszSrcName, pszSafeName) != 0)
@@ -274,7 +268,8 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
             CPLFree(pszTmp);
         }
         else
-            osTable = pszDotPos + 1;  // skip "."
+            osTable = OGRPGCommonGenerateShortEnoughIdentifier(pszDotPos +
+                                                               1);  // skip "."
     }
     else
     {
@@ -286,7 +281,7 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
             CPLFree(pszTmp);
         }
         else
-            osTable = pszLayerName;
+            osTable = OGRPGCommonGenerateShortEnoughIdentifier(pszLayerName);
     }
 
     const std::string osTableEscaped =
@@ -498,8 +493,8 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     if (bCreateTable && !osFIDColumnName.empty())
     {
         std::string osConstraintName(osTable);
-        if (bLaunder && osConstraintName.size() + strlen("_pk") >
-                            static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
+        if (osConstraintName.size() + strlen("_pk") >
+            static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
         {
             osConstraintName.resize(OGR_PG_NAMEDATALEN - 1 - strlen("_pk"));
         }
@@ -592,21 +587,8 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     std::vector<std::string> aosSpatialIndexCreationCommands;
     if (bCreateTable && bCreateSpatialIndex && pszGFldName && eType != wkbNone)
     {
-        std::string osIndexName(osTable);
-        std::string osSuffix("_");
-        osSuffix += pszGFldName;
-        osSuffix += "_geom_idx";
-        if (bLaunder)
-        {
-            if (osSuffix.size() >= static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
-            {
-                osSuffix = "_0_geom_idx";
-            }
-            if (osIndexName.size() + osSuffix.size() >
-                static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
-                osIndexName.resize(OGR_PG_NAMEDATALEN - 1 - osSuffix.size());
-        }
-        osIndexName += osSuffix;
+        const std::string osIndexName(OGRPGCommonGenerateSpatialIndexName(
+            osTable.c_str(), pszGFldName, 0));
 
         /* --------------------------------------------------------------- */
         /*      Create the spatial index.                                  */

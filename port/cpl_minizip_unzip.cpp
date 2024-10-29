@@ -1217,6 +1217,7 @@ extern int ZEXPORT cpl_unzLocateFile(unzFile file, const char *szFileName,
     /* We failed, so restore the state of the 'current file' to where we
      * were.
      */
+    // cppcheck-suppress redundantAssignment
     s->num_file = num_fileSaved;
     s->pos_in_central_dir = pos_in_central_dirSaved;
     s->cur_file_info = cur_file_infoSaved;
@@ -1311,7 +1312,7 @@ unzlocal_CheckCurrentFileCoherencyHeader(unz_s *s, uInt *piSizeVar,
               ZLIB_FILEFUNC_SEEK_SET) != 0)
         return UNZ_ERRNO;
 
-    if (err == UNZ_OK)
+    // if (err == UNZ_OK)
     {
         if (unzlocal_getLong(&s->z_filefunc, s->filestream, &uMagic) != UNZ_OK)
             err = UNZ_ERRNO;
@@ -1614,7 +1615,7 @@ extern int cpl_unzCurrentFileInfoFromLocalHeader(
               ZLIB_FILEFUNC_SEEK_SET) != 0)
         return UNZ_ERRNO;
 
-    if (err == UNZ_OK)
+    // if (err == UNZ_OK)
     {
         if (unzlocal_getLong(&s->z_filefunc, s->filestream, &uMagic) != UNZ_OK)
             err = UNZ_ERRNO;

@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2018, Even Rouault <even dot rouault at spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 
@@ -33,6 +17,8 @@ import gdaltest
 import pytest
 
 from osgeo import gdal, ogr, osr
+
+pytestmark = pytest.mark.require_driver("GeoJSONSeq")
 
 
 def _ogr_geojsonseq_create(filename, lco, expect_rs):
@@ -515,3 +501,25 @@ def test_ogr_geojsonseq_force_opening(tmp_vsimem):
 
     drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["GeoJSONSeq"])
     assert drv.GetDescription() == "GeoJSONSeq"
+
+
+###############################################################################
+# Test WRITE_BBOX option
+
+
+def test_ogr_geojsonseq_WRITE_BBOX(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.geojsonl")
+    ds = gdal.GetDriverByName("GeoJSONSeq").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", options=["WRITE_BBOX=YES"])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(2 49,3 50)"))
+    lyr.CreateFeature(f)
+    ds.Close()
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    assert b'"bbox": [ 2.0, 49.0, 3.0, 50.0 ]' in data

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -35,6 +19,7 @@
 #include "parsexsd.h"
 #include "ogr_swq.h"
 #include "ogr_p.h"
+#include "ogrwfsfilter.h"
 
 #include <algorithm>
 
@@ -158,9 +143,8 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
 /************************************************************************/
 
 OGRWFSDataSource::OGRWFSDataSource()
-    : pszName(nullptr), bRewriteFile(false), psFileXML(nullptr),
-      papoLayers(nullptr), nLayers(0), bUpdate(false),
-      bGetFeatureSupportHits(false), bNeedNAMESPACE(false),
+    : bRewriteFile(false), psFileXML(nullptr), papoLayers(nullptr), nLayers(0),
+      bUpdate(false), bGetFeatureSupportHits(false), bNeedNAMESPACE(false),
       bHasMinOperators(false), bHasNullCheck(false),
       // Advertized by deegree but not implemented.
       bPropertyIsNotEqualToSupported(true),
@@ -210,7 +194,7 @@ OGRWFSDataSource::~OGRWFSDataSource()
     {
         if (bRewriteFile)
         {
-            CPLSerializeXMLTreeToFile(psFileXML, pszName);
+            CPLSerializeXMLTreeToFile(psFileXML, GetDescription());
         }
 
         CPLDestroyXMLNode(psFileXML);
@@ -225,18 +209,8 @@ OGRWFSDataSource::~OGRWFSDataSource()
     delete poLayerMetadataDS;
     delete poLayerGetCapabilitiesDS;
 
-    CPLFree(pszName);
     CSLDestroy(papszIdGenMethods);
     CSLDestroy(papszHttpOptions);
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRWFSDataSource::TestCapability(CPL_UNUSED const char *pszCap)
-{
-    return FALSE;
 }
 
 /************************************************************************/
@@ -267,14 +241,15 @@ OGRLayer *OGRWFSDataSource::GetLayerByName(const char *pszNameIn)
             return poLayerMetadataLayer;
 
         osLayerMetadataTmpFileName =
-            CPLSPrintf("/vsimem/tempwfs_%p/WFSLayerMetadata.csv", this);
+            VSIMemGenerateHiddenFilename("WFSLayerMetadata.csv");
         osLayerMetadataCSV = "layer_name,title,abstract\n" + osLayerMetadataCSV;
 
         VSIFCloseL(VSIFileFromMemBuffer(osLayerMetadataTmpFileName,
                                         (GByte *)osLayerMetadataCSV.c_str(),
                                         osLayerMetadataCSV.size(), FALSE));
-        poLayerMetadataDS = (OGRDataSource *)OGROpen(osLayerMetadataTmpFileName,
-                                                     FALSE, nullptr);
+        poLayerMetadataDS =
+            GDALDataset::Open(osLayerMetadataTmpFileName, GDAL_OF_VECTOR,
+                              nullptr, nullptr, nullptr);
         if (poLayerMetadataDS)
             poLayerMetadataLayer = poLayerMetadataDS->GetLayer(0);
         return poLayerMetadataLayer;
@@ -285,7 +260,7 @@ OGRLayer *OGRWFSDataSource::GetLayerByName(const char *pszNameIn)
             return poLayerGetCapabilitiesLayer;
 
         GDALDriver *poMEMDrv =
-            OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+            GetGDALDriverManager()->GetDriverByName("Memory");
         if (poMEMDrv == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -906,8 +881,6 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
 
 {
     bUpdate = CPL_TO_BOOL(bUpdateIn);
-    CPLFree(pszName);
-    pszName = CPLStrdup(pszFilename);
 
     const CPLXMLNode *psWFSCapabilities = nullptr;
     CPLXMLNode *psXML = nullptr;
@@ -1911,14 +1884,13 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char *pszLayerName,
         return;
     }
 
-    CPLString osTmpFileName;
-
-    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
+    const CPLString osTmpFileName = VSIMemGenerateHiddenFilename("file.xsd");
     CPLSerializeXMLTreeToFile(psSchema, osTmpFileName);
 
     std::vector<GMLFeatureClass *> aosClasses;
     bool bFullyUnderstood = false;
-    GMLParseXSD(osTmpFileName, aosClasses, bFullyUnderstood);
+    bool bUseSchemaImports = false;
+    GMLParseXSD(osTmpFileName, bUseSchemaImports, aosClasses, bFullyUnderstood);
 
     int nLayersFound = 0;
     if (!(int)aosClasses.empty())
@@ -2275,7 +2247,7 @@ OGRLayer *OGRWFSDataSource::ExecuteSQL(const char *pszSQLCommand,
         }
 
         GDALDriver *poMEMDrv =
-            OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+            GetGDALDriverManager()->GetDriverByName("Memory");
         if (poMEMDrv == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -2486,7 +2458,7 @@ OGRLayer *OGRWFSDataSource::ExecuteSQL(const char *pszSQLCommand,
         delete psSelectInfo;
     }
 
-    OGRLayer *poResLayer = OGRDataSource::ExecuteSQL(
+    OGRLayer *poResLayer = GDALDataset::ExecuteSQL(
         pszSQLCommand, poSpatialFilter, pszDialect, &oParseOptions);
     oMap[poResLayer] = nullptr;
     return poResLayer;

@@ -130,7 +130,7 @@ def test_stats_approx_nodata():
     os.remove("tmp/minfloat.tif")
 
     if nodata != -3.4028234663852886e38:
-        print("%.18g" % nodata)
+        print("%.17g" % nodata)
         pytest.fail("did not get expected nodata")
 
     assert stats == [-3.0, 5.0, 1.0, 4.0], "did not get expected stats"
@@ -180,6 +180,10 @@ def test_stats_nan_3():
 # and complex source nodata (#3576)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_stats_nan_4():
 
     ds = gdal.Open("data/nan32_nodata.vrt")
@@ -197,6 +201,10 @@ def test_stats_nan_4():
 # and complex source nodata (nan must be translated to 0 then) (#3576)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_stats_nan_5():
 
     ds = gdal.Open("data/nan32_nodata_nan_to_zero.vrt")
@@ -213,6 +221,10 @@ def test_stats_nan_5():
 # Test reading a warped VRT with nan as src nodata and dest nodata (#3576)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_stats_nan_6():
 
     ds = gdal.Open("data/nan32_nodata_warp.vrt")
@@ -229,6 +241,10 @@ def test_stats_nan_6():
 # Test reading a warped VRT with nan as src nodata and 0 as dest nodata (#3576)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_stats_nan_7():
 
     ds = gdal.Open("data/nan32_nodata_warp_nan_to_zero.vrt")
@@ -245,6 +261,10 @@ def test_stats_nan_7():
 # Test reading a warped VRT with zero as src nodata and nan as dest nodata (#3576)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_stats_nan_8():
 
     ds = gdal.Open("data/nan32_nodata_warp_zero_to_nan.vrt")
@@ -266,6 +286,7 @@ def stats_nodata_inf_progress_cbk(value, string, extra):
     extra[0] = value
 
 
+@pytest.mark.require_driver("HFA")
 def test_stats_nodata_inf():
 
     ds = gdal.GetDriverByName("HFA").Create(
@@ -411,7 +432,7 @@ def test_stats_flt_min():
     os.remove("tmp/flt_min.tif")
 
     if nodata != 1.17549435082228751e-38:
-        print("%.18g" % nodata)
+        print("%.17g" % nodata)
         pytest.fail("did not get expected nodata")
 
     assert stats == [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] or stats == [
@@ -450,7 +471,7 @@ def test_stats_dbl_min():
     os.remove("tmp/dbl_min.tif")
 
     if nodata != 2.22507385850720138e-308:
-        print("%.18g" % nodata)
+        print("%.17g" % nodata)
         pytest.fail("did not get expected nodata")
 
     assert stats == [0.0, 1.0, 0.33333333333333337, 0.47140452079103168] or stats == [

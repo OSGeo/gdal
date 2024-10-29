@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2008, Ivan Lucena
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files ( the "Software" ),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 #include <string.h>
@@ -214,10 +198,10 @@ char **GeoRasterWrapper::ParseIdentificator(const char *pszStringID)
 
     char *pszStartPos = (char *)strstr(pszStringID, ":") + 1;
 
-    char **papszParam =
-        CSLTokenizeString2(pszStartPos, ",@",
-                           CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS |
-                               CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+    char **papszParam = CSLTokenizeString2(
+        pszStartPos, ",@",
+        CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES |
+            CSLT_STRIPENDSPACES | CSLT_PRESERVEQUOTES);
 
     //  -------------------------------------------------------------------
     //  The "/" should not be catch on the previous parser
@@ -4236,13 +4220,13 @@ void GeoRasterWrapper::UncompressJpeg(unsigned long nInSize)
     //  Load JPEG in a virtual file
     //  --------------------------------------------------------------------
 
-    const char *pszMemFile = CPLSPrintf("/vsimem/geor_%p.jpg", pabyBlockBuf);
+    const CPLString osMemFile = VSIMemGenerateHiddenFilename("geor.jpg");
 
-    VSILFILE *fpImage = VSIFOpenL(pszMemFile, "wb");
+    VSILFILE *fpImage = VSIFOpenL(osMemFile, "wb");
     VSIFWriteL(pabyBlockBuf, nInSize, 1, fpImage);
     VSIFCloseL(fpImage);
 
-    fpImage = VSIFOpenL(pszMemFile, "rb");
+    fpImage = VSIFOpenL(osMemFile, "rb");
 
     //  --------------------------------------------------------------------
     //  Initialize decompressor
@@ -4299,7 +4283,7 @@ void GeoRasterWrapper::UncompressJpeg(unsigned long nInSize)
 
     VSIFCloseL(fpImage);
 
-    VSIUnlink(pszMemFile);
+    VSIUnlink(osMemFile);
 }
 
 //  ---------------------------------------------------------------------------
@@ -4312,9 +4296,9 @@ unsigned long GeoRasterWrapper::CompressJpeg(void)
     //  Load JPEG in a virtual file
     //  --------------------------------------------------------------------
 
-    const char *pszMemFile = CPLSPrintf("/vsimem/geor_%p.jpg", pabyBlockBuf);
+    const CPLString osMemFile = VSIMemGenerateHiddenFilename("geor.jpg");
 
-    VSILFILE *fpImage = VSIFOpenL(pszMemFile, "wb");
+    VSILFILE *fpImage = VSIFOpenL(osMemFile, "wb");
 
     bool write_all_tables = TRUE;
 
@@ -4389,11 +4373,11 @@ unsigned long GeoRasterWrapper::CompressJpeg(void)
 
     VSIFCloseL(fpImage);
 
-    fpImage = VSIFOpenL(pszMemFile, "rb");
+    fpImage = VSIFOpenL(osMemFile, "rb");
     size_t nSize = VSIFReadL(pabyCompressBuf, 1, nBlockBytes, fpImage);
     VSIFCloseL(fpImage);
 
-    VSIUnlink(pszMemFile);
+    VSIUnlink(osMemFile);
 
     return (unsigned long)nSize;
 }

@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import sys
@@ -122,6 +106,10 @@ def test_gdallocationinfo_4(gdallocationinfo_path):
 # Test -lifonly
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdallocationinfo_5(gdallocationinfo_path):
 
     ret = gdaltest.runexternal(
@@ -255,6 +243,20 @@ def test_gdallocationinfo_echo(gdallocationinfo_path):
     )
     assert "1,2,132" in ret
 
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path
+        + ' -geoloc -E -valonly -field_sep "," ../gcore/data/byte.tif',
+        strin="440780.5 3751200.5",
+    )
+    assert "440780.5,3751200.5,132" in ret
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path
+        + ' -geoloc -E -valonly -field_sep "," ../gcore/data/byte.tif',
+        strin="440780.5 3751200.5 extra_content",
+    )
+    assert "440780.5,3751200.5,132,extra_content" in ret
+
 
 ###############################################################################
 # Test out of raster coordinates
@@ -315,6 +317,17 @@ def test_gdallocationinfo_nad27_interpolate_bilinear(gdallocationinfo_path):
     assert float(ret) == pytest.approx(130.476908, rel=1e-4)
 
 
+def test_gdallocationinfo_nad27_interpolate_cubic(gdallocationinfo_path):
+
+    # run on nad27 explicitly to avoid datum transformations.
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path
+        + " -valonly  -r cubic -l_srs EPSG:4267 ../gcore/data/byte.tif -117.6354747 33.8970515"
+    )
+
+    assert float(ret) == pytest.approx(134.65629, rel=1e-4)
+
+
 def test_gdallocationinfo_nad27_interpolate_cubicspline(gdallocationinfo_path):
 
     ret = gdaltest.runexternal(
@@ -350,6 +363,18 @@ def test_gdallocationinfo_report_interpolate_bilinear(gdallocationinfo_path):
     assert "Value: 137.24" in ret
 
 
+def test_gdallocationinfo_report_interpolate_cubic(gdallocationinfo_path):
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + " -r cubic ../gcore/data/byte.tif 9.98 11.97"
+    )
+    ret = ret.replace("\r\n", "\n")
+    assert "Report:" in ret
+    assert "Location: (9.98" in ret
+    assert "P,11.97" in ret
+    assert "Value: 141.58" in ret
+
+
 def test_gdallocationinfo_value_interpolate_bilinear(gdallocationinfo_path):
 
     # Those coordinates are almost 10,12. It is testing that they are not converted to integer.
@@ -358,6 +383,24 @@ def test_gdallocationinfo_value_interpolate_bilinear(gdallocationinfo_path):
         + " -valonly -r bilinear ../gcore/data/byte.tif 9.9999999 11.9999999"
     )
     assert float(ret) == pytest.approx(139.75, rel=1e-6)
+
+
+def test_gdallocationinfo_value_interpolate_bilinear_near_border(gdallocationinfo_path):
+
+    # Those coordinates are almost 10,12. It is testing that they are not converted to integer.
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path
+        + " -valonly -r bilinear ../gcore/data/byte.tif 19 19.9999999"  # should we allow 20.0?
+    )
+    assert float(ret) == pytest.approx(103, rel=1e-6)
+
+
+def test_gdallocationinfo_value_interpolate_invalid_method(gdallocationinfo_path):
+
+    (_, err) = gdaltest.runexternal_out_and_err(
+        gdallocationinfo_path + " -valonly -r mode ../gcore/data/byte.tif 10 12"
+    )
+    assert "-r can only be used with values" in err
 
 
 def test_gdallocationinfo_interpolate_float_data(gdallocationinfo_path, tmp_path):

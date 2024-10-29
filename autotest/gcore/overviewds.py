@@ -10,28 +10,13 @@
 ###############################################################################
 # Copyright (c) 2014 Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import shutil
 import struct
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -225,13 +210,12 @@ def test_overviewds_4(tmp_path):
 
     for key in rpc_md:
         assert ds.GetMetadataItem(key, "RPC") == got_md[key]
-        if (
-            key == "LINE_SCALE"
-            or key == "SAMP_SCALE"
-            or key == "LINE_OFF"
-            or key == "SAMP_OFF"
-        ):
-            assert float(got_md[key]) == myfloat(rpc_md[key]) / 2
+        if key == "LINE_SCALE" or key == "SAMP_SCALE":
+            assert float(got_md[key]) == pytest.approx(myfloat(rpc_md[key]) / 2)
+        elif key == "LINE_OFF" or key == "SAMP_OFF":
+            assert float(got_md[key]) == pytest.approx(
+                (myfloat(rpc_md[key]) + 0.5) / 2 - 0.5
+            )
         elif got_md[key] != rpc_md[key]:
             print(got_md[key])
             print(rpc_md[key])
@@ -251,6 +235,10 @@ def test_overviewds_4(tmp_path):
 # Test GEOLOCATION
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_overviewds_5(tmp_path):
 
     shutil.copy("data/sstgeo.tif", tmp_path)
@@ -297,6 +285,10 @@ def test_overviewds_5(tmp_path):
 # Test VRT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_overviewds_6(tmp_path):
 
     shutil.copy("data/byte.tif", tmp_path)

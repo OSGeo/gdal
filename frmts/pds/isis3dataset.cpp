@@ -17,23 +17,7 @@
  * Copyright (c) 2017, Dmitry Baryshnikov <polimax@mail.ru>
  * Copyright (c) 2017, NextGIS <info@nextgis.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_json.h"
@@ -1956,8 +1940,8 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         // acknowledged in
         // https://pds-imaging.jpl.nasa.gov/documentation/Cassini_BIDRSIS.PDF in
         // the middle of page 10
-        oProj4String.Printf("+proj=ob_tran +o_proj=eqc +o_lon_p=%.18g "
-                            "+o_lat_p=%.18g +lon_0=%.18g",
+        oProj4String.Printf("+proj=ob_tran +o_proj=eqc +o_lon_p=%.17g "
+                            "+o_lat_p=%.17g +lon_0=%.17g",
                             -poleRotation, 180 - poleLatitude, poleLongitude);
         oSRS.SetFromUserInput(oProj4String);
     }
@@ -3618,8 +3602,7 @@ void ISIS3Dataset::WriteLabel()
 
 CPLString ISIS3Dataset::SerializeAsPDL(const CPLJSONObject &oObj)
 {
-    CPLString osTmpFile(
-        CPLSPrintf("/vsimem/isis3_%p", oObj.GetInternalHandle()));
+    const CPLString osTmpFile(VSIMemGenerateHiddenFilename("isis3_pdl"));
     VSILFILE *fpTmp = VSIFOpenL(osTmpFile, "wb+");
     SerializeAsPDL(fpTmp, oObj);
     VSIFCloseL(fpTmp);
@@ -3762,7 +3745,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
                         }
                         else
                         {
-                            VSIFPrintfL(fp, "%s%s%s = %.18g <%s>\n",
+                            VSIFPrintfL(fp, "%s%s%s = %.17g <%s>\n",
                                         osIndentation.c_str(), osKey.c_str(),
                                         osPadding.c_str(), dfVal,
                                         osUnit.c_str());
@@ -3839,7 +3822,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
             }
             else
             {
-                VSIFPrintfL(fp, "%s%s%s = %.18g\n", osIndentation.c_str(),
+                VSIFPrintfL(fp, "%s%s%s = %.17g\n", osIndentation.c_str(),
                             osKey.c_str(), osPadding.c_str(), dfVal);
             }
         }
@@ -3933,7 +3916,7 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
                     }
                     else
                     {
-                        osVal = CPLSPrintf("%.18g", dfVal);
+                        osVal = CPLSPrintf("%.17g", dfVal);
                     }
                     const size_t nValLen = osVal.size();
                     if (nFirstPos < WIDTH && idx > 0 &&

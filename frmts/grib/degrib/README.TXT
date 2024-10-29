@@ -1,4 +1,4 @@
-PROVENANCE
+Provenance
 ----------
 
 This directory contains a *modified* version of degrib 2.14:

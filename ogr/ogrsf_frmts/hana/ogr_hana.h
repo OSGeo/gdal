@@ -7,28 +7,13 @@
  ******************************************************************************
  * Copyright (c) 2020, SAP SE
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_HANA_H_INCLUDED
 #define OGR_HANA_H_INCLUDED
 
+#include "hana/ogrhanautils.h"
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
 
@@ -38,6 +23,7 @@
 #include <vector>
 
 #include "odbc/Forwards.h"
+#include "odbc/Types.h"
 
 class OGRHanaDataSource;
 
@@ -50,8 +36,75 @@ constexpr static int DEFAULT_STRING_SIZE = 256;
 constexpr static int UNDETERMINED_SRID = -1;
 
 /************************************************************************/
-/*                          Internal struct definitions                 */
+/*                 Internal enum and struct definitions                 */
 /************************************************************************/
+
+class QGRHanaDataTypes
+{
+    QGRHanaDataTypes() = delete;
+
+  public:
+    /// Unknown data type.
+    static constexpr int Unknown = odbc::SQLDataTypes::Unknown;
+    /// 64-bit integer value.
+    static constexpr int BigInt = odbc::SQLDataTypes::BigInt;
+    /// Binary data of fixed length.
+    static constexpr int Binary = odbc::SQLDataTypes::Binary;
+    /// Single bit binary data.
+    static constexpr int Bit = odbc::SQLDataTypes::Bit;
+    /// Boolean value.
+    static constexpr int Boolean = odbc::SQLDataTypes::Boolean;
+    /// Character string of fixed string length.
+    static constexpr int Char = odbc::SQLDataTypes::Char;
+    /// Year, month, and day fields.
+    static constexpr int Date = odbc::SQLDataTypes::Date;
+    /// Year, month, and day fields.
+    static constexpr int DateTime = odbc::SQLDataTypes::DateTime;
+    /// Signed, exact, numeric value.
+    static constexpr int Decimal = odbc::SQLDataTypes::Decimal;
+    /// Double-precision floating point number.
+    static constexpr int Double = odbc::SQLDataTypes::Double;
+    /// Floating point number with driver-specific precision.
+    static constexpr int Float = odbc::SQLDataTypes::Float;
+    /// 32-bit integer value.
+    static constexpr int Integer = odbc::SQLDataTypes::Integer;
+    /// Variable length binary data.
+    static constexpr int LongVarBinary = odbc::SQLDataTypes::LongVarBinary;
+    /// Variable length character data.
+    static constexpr int LongVarChar = odbc::SQLDataTypes::LongVarChar;
+    /// Signed, exact, numeric value.
+    static constexpr int Numeric = odbc::SQLDataTypes::Numeric;
+    /// Single-precision floating point number.
+    static constexpr int Real = odbc::SQLDataTypes::Real;
+    /// 16-bit integer value.
+    static constexpr int SmallInt = odbc::SQLDataTypes::SmallInt;
+    /// Hour, minute, and second fields.
+    static constexpr int Time = odbc::SQLDataTypes::Time;
+    /// Year, month, day, hour, minute, and second fields.
+    static constexpr int Timestamp = odbc::SQLDataTypes::Timestamp;
+    /// 8-bit integer value.
+    static constexpr int TinyInt = odbc::SQLDataTypes::TinyInt;
+    /// Year, month, and day fields.
+    static constexpr int TypeDate = odbc::SQLDataTypes::TypeDate;
+    /// Hour, minute, and second fields.
+    static constexpr int TypeTime = odbc::SQLDataTypes::TypeTime;
+    /// Year, month, day, hour, minute, and second fields.
+    static constexpr int TypeTimestamp = odbc::SQLDataTypes::TypeTimestamp;
+    /// Variable length binary data.
+    static constexpr int VarBinary = odbc::SQLDataTypes::VarBinary;
+    /// Variable-length character string.
+    static constexpr int VarChar = odbc::SQLDataTypes::VarChar;
+    /// Unicode character string of fixed string length.
+    static constexpr int WChar = odbc::SQLDataTypes::WChar;
+    /// Unicode variable-length character data.
+    static constexpr int WLongVarChar = odbc::SQLDataTypes::WLongVarChar;
+    /// Unicode variable-length character string.
+    static constexpr int WVarChar = odbc::SQLDataTypes::WVarChar;
+    /// ST_GEOMETRY/ST_POINT value.
+    static constexpr int Geometry = 29812;
+    /// REAL_VECTOR value.
+    static constexpr int RealVector = 29814;
+};
 
 struct ColumnDefinition
 {
@@ -162,7 +215,8 @@ class OGRHanaLayer : public OGRLayer
                                  const CPLString &tableName,
                                  const CPLString &query,
                                  const CPLString &featureDefName);
-    void ReadGeometryExtent(int geomField, OGREnvelope *extent);
+    void ReadGeometryExtent(int geomField, OGREnvelope *extent, int force);
+    bool IsFastExtentAvailable();
 
   public:
     explicit OGRHanaLayer(OGRHanaDataSource *datasource);
@@ -348,13 +402,15 @@ class OGRHanaDataSource final : public GDALDataset
     SrsCache srsCache_;
     odbc::EnvironmentRef connEnv_;
     odbc::ConnectionRef conn_;
-    int majorVersion_ = 0;
+    OGRHANA::HanaVersion hanaVersion_;
+    OGRHANA::HanaVersion cloudVersion_;
 
   private:
     void CreateTable(const CPLString &tableName, const CPLString &fidName,
                      const CPLString &fidType, const CPLString &geomColumnName,
                      OGRwkbGeometryType geomType, bool geomColumnNullable,
                      const CPLString &geomColumnIndexType, int geomSrid);
+    void DetermineVersions();
 
   protected:
     std::pair<CPLString, CPLString> FindSchemaAndTableNames(const char *query);
@@ -401,9 +457,14 @@ class OGRHanaDataSource final : public GDALDataset
 
     int Open(const char *newName, char **options, int update);
 
-    int GetMajorVersion() const
+    OGRHANA::HanaVersion GetHanaVersion() const
     {
-        return majorVersion_;
+        return hanaVersion_;
+    }
+
+    OGRHANA::HanaVersion GetHanaCloudVersion() const
+    {
+        return cloudVersion_;
     }
 
     OGRErr DeleteLayer(int index) override;

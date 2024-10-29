@@ -12,23 +12,7 @@
  * Copyright (c) 1999-2003, Daniel Morissette
  * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  **********************************************************************/
 
 #include "cpl_port.h"
@@ -3047,4 +3031,111 @@ CPLErr TABFile::SetMetadataItem(const char *pszName, const char *pszValue,
         return result;
     }
     return IMapInfoFile::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+/**********************************************************************
+ *                   TABFile::GetSpatialRef()
+ *
+ * Returns a reference to an OGRSpatialReference for this dataset.
+ * If the projection parameters have not been parsed yet, then we will
+ * parse them before returning.
+ *
+ * The returned object is owned and maintained by this TABFile and
+ * should not be modified or freed by the caller.
+ *
+ * Returns NULL if the SpatialRef cannot be accessed.
+ **********************************************************************/
+OGRSpatialReference *TABFile::GetSpatialRef()
+{
+    if (m_poMAPFile == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "GetSpatialRef() failed: file has not been opened yet.");
+        return nullptr;
+    }
+
+    if (GetGeomType() == wkbNone)
+        return nullptr;
+
+    /*-----------------------------------------------------------------
+     * If projection params have already been processed, just use them.
+     *----------------------------------------------------------------*/
+    if (m_poSpatialRef != nullptr)
+        return m_poSpatialRef;
+
+    /*-----------------------------------------------------------------
+     * Fetch the parameters from the header.
+     *----------------------------------------------------------------*/
+    TABProjInfo sTABProj;
+
+    TABMAPHeaderBlock *poHeader = nullptr;
+    if ((poHeader = m_poMAPFile->GetHeaderBlock()) == nullptr ||
+        poHeader->GetProjInfo(&sTABProj) != 0)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "GetSpatialRef() failed reading projection parameters.");
+        return nullptr;
+    }
+
+    m_poSpatialRef = TABFileGetSpatialRefFromTABProj(sTABProj);
+    return m_poSpatialRef;
+}
+
+/**********************************************************************
+ *                   TABFile::SetSpatialRef()
+ *
+ * Set the OGRSpatialReference for this dataset.
+ * A reference to the OGRSpatialReference will be kept, and it will also
+ * be converted into a TABProjInfo to be stored in the .MAP header.
+ *
+ * Returns 0 on success, and -1 on error.
+ **********************************************************************/
+int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
+{
+    if (m_eAccessMode != TABWrite)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetSpatialRef() can be used only with Write access.");
+        return -1;
+    }
+
+    if (m_poMAPFile == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "SetSpatialRef() failed: file has not been opened yet.");
+        return -1;
+    }
+
+    if (poSpatialRef == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "SetSpatialRef() failed: Called with NULL poSpatialRef.");
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * Keep a copy of the OGRSpatialReference...
+     * Note: we have to take the reference count into account...
+     *----------------------------------------------------------------*/
+    if (m_poSpatialRef && m_poSpatialRef->Dereference() == 0)
+        delete m_poSpatialRef;
+
+    m_poSpatialRef = poSpatialRef->Clone();
+
+    TABProjInfo sTABProj;
+    int nParamCount = 0;
+    TABFileGetTABProjFromSpatialRef(poSpatialRef, sTABProj, nParamCount);
+
+    /*-----------------------------------------------------------------
+     * Set the new parameters in the .MAP header.
+     * This will also trigger lookup of default bounds for the projection.
+     *----------------------------------------------------------------*/
+    if (SetProjInfo(&sTABProj) != 0)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "SetSpatialRef() failed setting projection parameters.");
+        return -1;
+    }
+
+    return 0;
 }

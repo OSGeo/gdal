@@ -7,30 +7,14 @@
  ******************************************************************************
  * Copyright (c) 2017-2018, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_priv.h"
+#include "ogrsf_frmts.h"
 #include "cpl_http.h"
 #include "cpl_conv.h"
-#include "ogrgeojsonreader.h"
-#include "ogrgeojsonwriter.h"
+#include "ogrlibjsonutils.h"
 #include "ogr_swq.h"
 #include "eeda.h"
 
@@ -799,7 +783,7 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node *poNode, bool bIsAndTopLevel)
         else if (poNode->papoSubExpr[1]->field_type == SWQ_FLOAT)
         {
             osFilter +=
-                CPLSPrintf("%.18g", poNode->papoSubExpr[1]->float_value);
+                CPLSPrintf("%.17g", poNode->papoSubExpr[1]->float_value);
         }
         else
         {
@@ -890,7 +874,7 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node *poNode, bool bIsAndTopLevel)
             else if (poNode->papoSubExpr[i]->field_type == SWQ_FLOAT)
             {
                 osFilter +=
-                    CPLSPrintf("%.18g", poNode->papoSubExpr[i]->float_value);
+                    CPLSPrintf("%.17g", poNode->papoSubExpr[i]->float_value);
             }
             else
             {
@@ -1245,11 +1229,16 @@ void GDALRegister_EEDA()
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Earth Engine Data API");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/eeda.html");
     poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "EEDA:");
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
-                              "<OpenOptionList>"
-                              "  <Option name='COLLECTION' type='string' "
-                              "description='Collection name'/>"
-                              "</OpenOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='COLLECTION' type='string' "
+        "description='Collection name'/>"
+        "  <Option name='VSI_PATH_FOR_AUTH' type='string' "
+        "description='/vsigs/... path onto which a "
+        "GOOGLE_APPLICATION_CREDENTIALS path specific "
+        "option is set'/>"
+        "</OpenOptionList>");
 
     poDriver->pfnOpen = GDALEEDAOpen;
     poDriver->pfnIdentify = GDALEEDAdentify;

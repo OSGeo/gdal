@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2013, Paul Ramsey <pramsey@boundlessgeo.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrgeopackageutility.h"
@@ -485,6 +469,87 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen,
     poHeader->nHeaderLen = 8 + 8 * 2 * nEnvelopeDim;
 
     return OGRERR_NONE;
+}
+
+bool GPkgUpdateHeader(GByte *pabyGpkg, size_t nGpkgLen, int nSrsId, double MinX,
+                      double MaxX, double MinY, double MaxY, double MinZ,
+                      double MaxZ)
+{
+    CPLAssert(nGpkgLen >= 8);
+
+    /* Flags */
+    const GByte byFlags = pabyGpkg[3];
+    const auto eByteOrder = static_cast<OGRwkbByteOrder>(byFlags & 0x01);
+    const OGRBoolean bSwap = OGR_SWAP(eByteOrder);
+
+    /* SrsId */
+    if (bSwap)
+    {
+        nSrsId = CPL_SWAP32(nSrsId);
+    }
+    memcpy(pabyGpkg + 4, &nSrsId, 4);
+
+    /* Envelope */
+    const int iEnvelope = (byFlags & (0x07 << 1)) >> 1;
+    int nEnvelopeDim = 0;
+    if (iEnvelope)
+    {
+        if (iEnvelope == 1)
+        {
+            nEnvelopeDim = 2; /* 2D envelope */
+        }
+        else if (iEnvelope == 2)
+        {
+            nEnvelopeDim = 3; /* 2D+Z envelope */
+        }
+        else if (iEnvelope == 3)
+        {
+            nEnvelopeDim = 3; /* 2D+M envelope */
+        }
+        else if (iEnvelope == 4)
+        {
+            nEnvelopeDim = 4; /* 2D+ZM envelope */
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return true;
+    }
+
+    if (nGpkgLen < static_cast<size_t>(8 + 8 * 2 * nEnvelopeDim))
+    {
+        // Not enough bytes
+        return false;
+    }
+
+    /* Envelope */
+    if (bSwap)
+    {
+        CPL_SWAPDOUBLE(&(MinX));
+        CPL_SWAPDOUBLE(&(MaxX));
+        CPL_SWAPDOUBLE(&(MinY));
+        CPL_SWAPDOUBLE(&(MaxY));
+        CPL_SWAPDOUBLE(&(MinZ));
+        CPL_SWAPDOUBLE(&(MaxZ));
+    }
+
+    double *padPtr = reinterpret_cast<double *>(pabyGpkg + 8);
+    memcpy(&padPtr[0], &MinX, sizeof(double));
+    memcpy(&padPtr[1], &MaxX, sizeof(double));
+    memcpy(&padPtr[2], &MinY, sizeof(double));
+    memcpy(&padPtr[3], &MaxY, sizeof(double));
+
+    if (iEnvelope == 2 || iEnvelope == 4)
+    {
+        memcpy(&padPtr[4], &MinZ, sizeof(double));
+        memcpy(&padPtr[5], &MaxZ, sizeof(double));
+    }
+
+    return true;
 }
 
 OGRGeometry *GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen,

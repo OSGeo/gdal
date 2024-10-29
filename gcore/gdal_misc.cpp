@@ -8,23 +8,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -47,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_float.h"
+#include "cpl_json.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
@@ -143,6 +128,11 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
                                            GDALDataType eType2)
 
 {
+    if (eType1 == GDT_Unknown)
+        return eType2;
+    if (eType2 == GDT_Unknown)
+        return eType1;
+
     const int panBits[] = {GetDataTypeElementSizeBits(eType1),
                            GetDataTypeElementSizeBits(eType2)};
 
@@ -172,24 +162,95 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
  * \brief Union a data type with the one found for a value
  *
  * @param eDT the first data type
- * @param dValue the value for which to find a data type and union with eDT
+ * @param dfValue the value for which to find a data type and union with eDT
  * @param bComplex if the value is complex
  *
- * @return a data type able to express eDT and dValue.
+ * @return a data type able to express eDT and dfValue.
  * @since GDAL 2.3
  */
 GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
-                                                    double dValue, int bComplex)
+                                                    double dfValue,
+                                                    int bComplex)
 {
-    // Do not choose Float16 since it isn't supported everywhere
-    // if (eDT == GDT_Float16 && !bComplex &&
-    //     static_cast<_Float16>(dValue) == dValue)
-    //     return GDT_Float16;
-    if ((eDT == GDT_Float16 || eDT == GDT_Float32) && !bComplex &&
-        static_cast<float>(dValue) == dValue)
-        return GDT_Float32;
+    if (!bComplex && !GDALDataTypeIsComplex(eDT))
+    {
+        switch (eDT)
+        {
+            case GDT_Byte:
+            {
+                if (GDALIsValueExactAs<uint8_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int8:
+            {
+                if (GDALIsValueExactAs<int8_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_UInt16:
+            {
+                if (GDALIsValueExactAs<uint16_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int16:
+            {
+                if (GDALIsValueExactAs<int16_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_UInt32:
+            {
+                if (GDALIsValueExactAs<uint32_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int32:
+            {
+                if (GDALIsValueExactAs<int32_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_UInt64:
+            {
+                if (GDALIsValueExactAs<uint64_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Int64:
+            {
+                if (GDALIsValueExactAs<int64_t>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Float16:
+            {
+                if (GDALIsValueExactAs<_Float16>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Float32:
+            {
+                if (GDALIsValueExactAs<float>(dfValue))
+                    return eDT;
+                break;
+            }
+            case GDT_Float64:
+            {
+                return eDT;
+            }
+            case GDT_Unknown:
+            case GDT_CInt16:
+            case GDT_CInt32:
+            case GDT_CFloat32:
+            case GDT_CFloat64:
+            case GDT_TypeCount:
+                break;
+        }
+    }
 
-    const GDALDataType eDT2 = GDALFindDataTypeForValue(dValue, bComplex);
+    const GDALDataType eDT2 = GDALFindDataTypeForValue(dfValue, bComplex);
     return GDALDataTypeUnion(eDT, eDT2);
 }
 
@@ -348,7 +409,12 @@ GDALDataType CPL_STDCALL GDALFindDataType(int nBits, int bSigned, int bFloating,
  */
 GDALDataType CPL_STDCALL GDALFindDataTypeForValue(double dValue, int bComplex)
 {
-    const bool bFloating = round(dValue) != dValue;
+    const bool bFloating =
+        round(dValue) != dValue ||
+        dValue >
+            static_cast<double>(std::numeric_limits<std::uint64_t>::max()) ||
+        dValue <
+            static_cast<double>(std::numeric_limits<std::int64_t>::lowest());
     const bool bSigned = bFloating || dValue < 0;
     const int nBits = GetMinBitsForValue(dValue);
 
@@ -916,7 +982,7 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
         }
         case GDT_Float32:
         {
-            if (!CPLIsFinite(dfValue))
+            if (!std::isfinite(dfValue))
                 break;
 
             // TODO: Use ClampAndRound
@@ -955,6 +1021,58 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
     if (pbRounded)
         *pbRounded = bRounded;
     return dfValue;
+}
+
+/************************************************************************/
+/*                         GDALIsValueExactAs()                         */
+/************************************************************************/
+
+/**
+ * \brief Check whether the provided value can be exactly represented in a
+ * data type.
+ *
+ * Only implemented for non-complex data types
+ *
+ * @param dfValue value to check.
+ * @param eDT target data type.
+ *
+ * @return true if the provided value can be exactly represented in the
+ * data type.
+ * @since GDAL 3.10
+ */
+bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
+{
+    switch (eDT)
+    {
+        case GDT_Byte:
+            return GDALIsValueExactAs<uint8_t>(dfValue);
+        case GDT_Int8:
+            return GDALIsValueExactAs<int8_t>(dfValue);
+        case GDT_UInt16:
+            return GDALIsValueExactAs<uint16_t>(dfValue);
+        case GDT_Int16:
+            return GDALIsValueExactAs<int16_t>(dfValue);
+        case GDT_UInt32:
+            return GDALIsValueExactAs<uint32_t>(dfValue);
+        case GDT_Int32:
+            return GDALIsValueExactAs<int32_t>(dfValue);
+        case GDT_UInt64:
+            return GDALIsValueExactAs<uint64_t>(dfValue);
+        case GDT_Int64:
+            return GDALIsValueExactAs<int64_t>(dfValue);
+        case GDT_Float32:
+            return GDALIsValueExactAs<float>(dfValue);
+        case GDT_Float64:
+            return true;
+        case GDT_Unknown:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_TypeCount:
+            break;
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -1138,10 +1256,15 @@ const char *GDALGetPaletteInterpretationName(GDALPaletteInterp eInterp)
 const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
 
 {
+    static_assert(GCI_IR_Start == GCI_RedEdgeBand + 1);
+    static_assert(GCI_NIRBand == GCI_IR_Start);
+    static_assert(GCI_SAR_Start == GCI_IR_End + 1);
+    static_assert(GCI_Max == GCI_SAR_End);
+
     switch (eInterp)
     {
         case GCI_Undefined:
-            return "Undefined";
+            break;
 
         case GCI_GrayIndex:
             return "Gray";
@@ -1191,9 +1314,76 @@ const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
         case GCI_YCbCr_CrBand:
             return "YCbCr_Cr";
 
-        default:
-            return "Unknown";
+        case GCI_PanBand:
+            return "Pan";
+
+        case GCI_CoastalBand:
+            return "Coastal";
+
+        case GCI_RedEdgeBand:
+            return "RedEdge";
+
+        case GCI_NIRBand:
+            return "NIR";
+
+        case GCI_SWIRBand:
+            return "SWIR";
+
+        case GCI_MWIRBand:
+            return "MWIR";
+
+        case GCI_LWIRBand:
+            return "LWIR";
+
+        case GCI_TIRBand:
+            return "TIR";
+
+        case GCI_OtherIRBand:
+            return "OtherIR";
+
+        case GCI_IR_Reserved_1:
+            return "IR_Reserved_1";
+
+        case GCI_IR_Reserved_2:
+            return "IR_Reserved_2";
+
+        case GCI_IR_Reserved_3:
+            return "IR_Reserved_3";
+
+        case GCI_IR_Reserved_4:
+            return "IR_Reserved_4";
+
+        case GCI_SAR_Ka_Band:
+            return "SAR_Ka";
+
+        case GCI_SAR_K_Band:
+            return "SAR_K";
+
+        case GCI_SAR_Ku_Band:
+            return "SAR_Ku";
+
+        case GCI_SAR_X_Band:
+            return "SAR_X";
+
+        case GCI_SAR_C_Band:
+            return "SAR_C";
+
+        case GCI_SAR_S_Band:
+            return "SAR_S";
+
+        case GCI_SAR_L_Band:
+            return "SAR_L";
+
+        case GCI_SAR_P_Band:
+            return "SAR_P";
+
+        case GCI_SAR_Reserved_1:
+            return "SAR_Reserved_1";
+
+        case GCI_SAR_Reserved_2:
+            return "SAR_Reserved_2";
     }
+    return "Undefined";
 }
 
 /************************************************************************/
@@ -1230,7 +1420,83 @@ GDALColorInterp GDALGetColorInterpretationByName(const char *pszName)
         }
     }
 
+    // Accept British English spelling
+    if (EQUAL(pszName, "grey"))
+        return GCI_GrayIndex;
+
     return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                  GDALGetColorInterpFromSTACCommonName()              */
+/************************************************************************/
+
+static const struct
+{
+    const char *pszName;
+    GDALColorInterp eInterp;
+} asSTACCommonNames[] = {
+    {"pan", GCI_PanBand},
+    {"coastal", GCI_CoastalBand},
+    {"blue", GCI_BlueBand},
+    {"green", GCI_GreenBand},
+    {"green05", GCI_GreenBand},  // no exact match
+    {"yellow", GCI_YellowBand},
+    {"red", GCI_RedBand},
+    {"rededge", GCI_RedEdgeBand},
+    {"rededge071", GCI_RedEdgeBand},  // no exact match
+    {"rededge075", GCI_RedEdgeBand},  // no exact match
+    {"rededge078", GCI_RedEdgeBand},  // no exact match
+    {"nir", GCI_NIRBand},
+    {"nir08", GCI_NIRBand},   // no exact match
+    {"nir09", GCI_NIRBand},   // no exact match
+    {"cirrus", GCI_NIRBand},  // no exact match
+    {nullptr,
+     GCI_SWIRBand},  // so that GDALGetSTACCommonNameFromColorInterp returns null on GCI_SWIRBand
+    {"swir16", GCI_SWIRBand},  // no exact match
+    {"swir22", GCI_SWIRBand},  // no exact match
+    {"lwir", GCI_LWIRBand},
+    {"lwir11", GCI_LWIRBand},  // no exact match
+    {"lwir12", GCI_LWIRBand},  // no exact match
+};
+
+/** Get color interpreetation from STAC eo:common_name
+ *
+ * Cf https://github.com/stac-extensions/eo?tab=readme-ov-file#common-band-names
+ *
+ * @since GDAL 3.10
+ */
+GDALColorInterp GDALGetColorInterpFromSTACCommonName(const char *pszName)
+{
+
+    for (const auto &sAssoc : asSTACCommonNames)
+    {
+        if (sAssoc.pszName && EQUAL(pszName, sAssoc.pszName))
+            return sAssoc.eInterp;
+    }
+    return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                  GDALGetSTACCommonNameFromColorInterp()              */
+/************************************************************************/
+
+/** Get STAC eo:common_name from GDAL color interpretation
+ *
+ * Cf https://github.com/stac-extensions/eo?tab=readme-ov-file#common-band-names
+ *
+ * @return nullptr if there is no match
+ *
+ * @since GDAL 3.10
+ */
+const char *GDALGetSTACCommonNameFromColorInterp(GDALColorInterp eInterp)
+{
+    for (const auto &sAssoc : asSTACCommonNames)
+    {
+        if (eInterp == sAssoc.eInterp)
+            return sAssoc.pszName;
+    }
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1737,9 +2003,9 @@ CPLString GDALFindAssociatedFile(const char *pszBaseFilename,
             CPLString osAltExt = pszExt;
 
             if (islower(static_cast<unsigned char>(pszExt[0])))
-                osAltExt.toupper();
+                osAltExt = osAltExt.toupper();
             else
-                osAltExt.tolower();
+                osAltExt = osAltExt.tolower();
 
             osTarget = CPLResetExtension(pszBaseFilename, osAltExt);
 
@@ -3278,7 +3544,7 @@ static void StripIrrelevantOptions(CPLXMLNode *psCOL, int nOptions)
  *  --version: report version of GDAL in use.
  *  --build: report build info about GDAL in use.
  *  --license: report GDAL license info.
- *  --formats: report all format drivers configured.
+ *  --formats: report all format drivers configured. Can be used with -json since 3.10
  *  --format [format]: report details of one format driver.
  *  --optfile filename: expand an option file into the argument list.
  *  --config key value: set system configuration option.
@@ -3569,6 +3835,88 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             if (nOptions == 0)
                 nOptions = GDAL_OF_RASTER;
 
+            bool bJSON = false;
+            for (int i = 1; i < nArgc; i++)
+            {
+                if (strcmp(papszArgv[i], "-json") == 0)
+                {
+                    bJSON = true;
+                    break;
+                }
+            }
+
+            if (bJSON)
+            {
+                auto poDM = GetGDALDriverManager();
+                CPLJSONArray oArray;
+                const int nDriverCount = poDM->GetDriverCount();
+                for (int iDr = 0; iDr < nDriverCount; ++iDr)
+                {
+                    auto poDriver = poDM->GetDriver(iDr);
+                    CSLConstList papszMD = poDriver->GetMetadata();
+
+                    if (nOptions == GDAL_OF_RASTER &&
+                        !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
+                        continue;
+                    if (nOptions == GDAL_OF_VECTOR &&
+                        !CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
+                        continue;
+                    if (nOptions == GDAL_OF_GNM &&
+                        !CPLFetchBool(papszMD, GDAL_DCAP_GNM, false))
+                        continue;
+                    if (nOptions == GDAL_OF_MULTIDIM_RASTER &&
+                        !CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER,
+                                      false))
+                        continue;
+
+                    CPLJSONObject oJDriver;
+                    oJDriver.Set("short_name", poDriver->GetDescription());
+                    if (const char *pszLongName =
+                            CSLFetchNameValue(papszMD, GDAL_DMD_LONGNAME))
+                        oJDriver.Set("long_name", pszLongName);
+                    CPLJSONArray oJScopes;
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
+                        oJScopes.Add("raster");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
+                        oJScopes.Add("multidimensional_raster");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
+                        oJScopes.Add("vector");
+                    oJDriver.Add("scopes", oJScopes);
+                    CPLJSONArray oJCaps;
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_OPEN, false))
+                        oJCaps.Add("open");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_CREATE, false))
+                        oJCaps.Add("create");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_CREATECOPY, false))
+                        oJCaps.Add("create_copy");
+                    if (CPLFetchBool(papszMD, GDAL_DCAP_VIRTUALIO, false))
+                        oJCaps.Add("virtual_io");
+                    oJDriver.Add("capabilities", oJCaps);
+
+                    if (const char *pszExtensions = CSLFetchNameValueDef(
+                            papszMD, GDAL_DMD_EXTENSIONS,
+                            CSLFetchNameValue(papszMD, GDAL_DMD_EXTENSION)))
+                    {
+                        const CPLStringList aosExt(
+                            CSLTokenizeString2(pszExtensions, " ", 0));
+                        CPLJSONArray oJExts;
+                        for (int i = 0; i < aosExt.size(); ++i)
+                        {
+                            oJExts.Add(aosExt[i]);
+                        }
+                        oJDriver.Add("file_extensions", oJExts);
+                    }
+
+                    oArray.Add(oJDriver);
+                }
+                printf(/*ok*/
+                       "%s\n",
+                       oArray.Format(CPLJSONObject::PrettyFormat::Pretty)
+                           .c_str());
+
+                return 0;
+            }
+
             printf(/*ok*/
                    "Supported Formats: (ro:read-only, rw:read-write, +:update, "
                    "v:virtual-I/O s:subdatasets)\n");
@@ -3578,7 +3926,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
 
                 const char *pszRFlag = "", *pszWFlag, *pszVirtualIO,
                            *pszSubdatasets;
-                char **papszMD = GDALGetMetadata(hDriver, nullptr);
+                CSLConstList papszMD = GDALGetMetadata(hDriver, nullptr);
 
                 if (nOptions == GDAL_OF_RASTER &&
                     !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
@@ -4507,7 +4855,7 @@ void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
 /************************************************************************/
 
 void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
-                                   char **papszOpenOptions)
+                                   CSLConstList papszOpenOptions)
 {
     if (papszOpenOptions != nullptr)
     {
@@ -4515,7 +4863,7 @@ void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
             CPLCreateXMLNode(psParentNode, CXT_Element, "OpenOptions");
         CPLXMLNode *psLastChild = nullptr;
 
-        for (char **papszIter = papszOpenOptions; *papszIter != nullptr;
+        for (CSLConstList papszIter = papszOpenOptions; *papszIter != nullptr;
              papszIter++)
         {
             const char *pszRawValue;

@@ -10,23 +10,7 @@
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2010, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import struct
@@ -191,3 +175,42 @@ def test_srtmhgt_hgts():
 
     assert min_ == 1.25
     assert max_ == 1.25
+
+
+###############################################################################
+# Test reading files of all supported sizes
+
+
+@pytest.mark.parametrize(
+    "width,height,nb_bytes",
+    [
+        (1201, 1201, 2),
+        (1801, 3601, 2),
+        (3601, 3601, 1),
+        (3601, 3601, 2),
+        (3601, 3601, 4),
+        (7201, 7201, 2),
+    ],
+)
+def test_srtmhgt_all_supported_sizes(tmp_vsimem, width, height, nb_bytes):
+
+    filename = str(tmp_vsimem / "n00e000.hgt")
+    f = gdal.VSIFOpenL(filename, "wb")
+    if f is None:
+        pytest.skip()
+    gdal.VSIFTruncateL(f, width * height * nb_bytes)
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.Open(filename)
+    assert ds is not None
+    assert ds.GetGeoTransform()[1] == pytest.approx(1.0 / (width - 1), rel=1e-8)
+    assert ds.GetRasterBand(1).DataType == (
+        gdal.GDT_Byte
+        if nb_bytes == 1
+        else gdal.GDT_Int16
+        if nb_bytes == 2
+        else gdal.GDT_Float32
+    )
+
+    out_filename = str(tmp_vsimem / "create" / "n00e000.hgt")
+    gdal.GetDriverByName("SRTMHGT").CreateCopy(out_filename, ds)

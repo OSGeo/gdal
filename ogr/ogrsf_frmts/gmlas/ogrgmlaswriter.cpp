@@ -9,31 +9,16 @@
  ******************************************************************************
  * Copyright (c) 2016, Even Rouault, <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_gmlas.h"
 #include "ogr_p.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 #include "cpl_time.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace GMLAS
 {
@@ -1641,14 +1626,14 @@ void GMLASWriter::PrintMultipleValuesSeparator(
 
 static void PrintXMLDouble(VSILFILE *fp, double dfVal)
 {
-    if (CPLIsInf(dfVal))
+    if (std::isinf(dfVal))
     {
         if (dfVal > 0)
             VSIFPrintfL(fp, "INF");
         else
             VSIFPrintfL(fp, "-INF");
     }
-    else if (CPLIsNan(dfVal))
+    else if (std::isnan(dfVal))
         VSIFPrintfL(fp, "NaN");
     else
         VSIFPrintfL(fp, "%.16g", dfVal);
@@ -1719,7 +1704,7 @@ bool GMLASWriter::WriteFieldRegular(
     // For extension/* case
     if (!aoFieldComponents.empty() && aoFieldComponents.back().second == "*")
     {
-        aoFieldComponents.resize(aoFieldComponents.size() - 1);
+        aoFieldComponents.pop_back();
     }
 
     const size_t nCommonLength =
@@ -2404,7 +2389,7 @@ bool GMLASWriter::WriteFieldNoLink(
             </xs:element>
             */
             aoNewInitialContext = std::move(aoFieldComponents);
-            aoNewInitialContext.resize(aoNewInitialContext.size() - 1);
+            aoNewInitialContext.pop_back();
         }
         else
         {
@@ -2584,7 +2569,7 @@ bool GMLASWriter::WriteFieldWithLink(
     oSetLayersInIterationSub.insert(oChildLayerDesc.osName);
 
     XPathComponents aoPrefixComponentsNew(aoFieldComponents);
-    aoPrefixComponentsNew.resize(aoPrefixComponentsNew.size() - 1);
+    aoPrefixComponentsNew.pop_back();
 
     if (aoLayerComponents.empty())
     {
@@ -2602,7 +2587,7 @@ bool GMLASWriter::WriteFieldWithLink(
     {
         aoInitialComponents = std::move(aoFieldComponents);
         if (!aoInitialComponents.empty())
-            aoInitialComponents.resize(aoInitialComponents.size() - 1);
+            aoInitialComponents.pop_back();
         WriteClosingAndStartingTags(aoCurComponents, aoInitialComponents,
                                     bCurIsRegularField);
     }
@@ -2753,7 +2738,7 @@ bool GMLASWriter::WriteFieldJunctionTable(
                                            aoPrefixComponents.end());
 
                 if (!aoInitialComponents.empty())
-                    aoInitialComponents.resize(aoInitialComponents.size() - 1);
+                    aoInitialComponents.pop_back();
                 WriteClosingAndStartingTags(
                     aoCurComponents, aoInitialComponents, bCurIsRegularField);
             }

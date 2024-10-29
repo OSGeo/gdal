@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import gdaltest
@@ -1484,17 +1468,72 @@ def test_ogr_pgdump_CREATE_TABLE_NO(tmp_vsimem):
 # Test long identifiers
 
 
-def test_ogr_pgdump_long_identifiers(tmp_vsimem):
+@pytest.mark.parametrize(
+    "launder,long_name,geometry_name,short_name,pk_name,idx_name",
+    [
+        (
+            True,
+            "test_" + ("X" * (63 - len("test_"))),
+            "wkb_geometry",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_pk",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_a5a5c85f_0_geom_idx",
+        ),
+        (
+            True,
+            "test_" + ("X" * (63 - len("test_") - len("wkb_geometry") - 2)),
+            "wkb_geometry",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_pk",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_0_geom_idx",
+        ),
+        (
+            True,
+            "test_" + ("X" * 64) + "_long_name",
+            "wkb_geometry",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_3ba7c630",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_3ba7c_pk",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_05e1f255_0_geom_idx",
+        ),
+        (
+            True,
+            "test_" + ("X" * 64) + "_long_name2",
+            "wkb_geometry",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_bb4afe1c",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_bb4af_pk",
+            "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_950ad059_0_geom_idx",
+        ),
+        (
+            False,
+            "test_" + ("X" * 64) + "_long_name2",
+            "wkb_geometry",
+            "test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_bb4afe1c",
+            "test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_bb4af_pk",
+            "test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_2c8a17fc_0_geom_idx",
+        ),
+    ],
+)
+def test_ogr_pgdump_long_identifiers(
+    tmp_vsimem, launder, long_name, geometry_name, short_name, pk_name, idx_name
+):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
         tmp_vsimem / "test_ogr_pgdump_long_identifiers.sql", options=["LINEFORMAT=LF"]
     )
 
-    long_name = "test_" + ("X" * 64) + "_long_name"
-    short_name = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    assert len(short_name) <= 63
+    assert len(idx_name) <= 63
+    assert len(pk_name) <= 63
 
     with gdal.quiet_errors():
-        lyr = ds.CreateLayer(long_name, geom_type=ogr.wkbPoint)
+        lyr = ds.CreateLayer(
+            long_name,
+            geom_type=ogr.wkbPoint,
+            options=[
+                "LAUNDER=" + ("YES" if launder else "NO"),
+                "GEOMETRY_NAME=" + geometry_name,
+            ],
+        )
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     f["str"] = "foo"
@@ -1515,10 +1554,10 @@ def test_ogr_pgdump_long_identifiers(tmp_vsimem):
 
     check_and_remove(f"""CREATE TABLE "public"."{short_name}"();""")
     check_and_remove(
-        f"""ALTER TABLE "public"."{short_name}" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_pk" PRIMARY KEY;"""
+        f"""ALTER TABLE "public"."{short_name}" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "{pk_name}" PRIMARY KEY;"""
     )
     check_and_remove(
-        f"""CREATE INDEX "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_wkb_geometry_geom_idx" ON "public"."{short_name}" USING GIST ("wkb_geometry");"""
+        f"""CREATE INDEX "{idx_name}" ON "public"."{short_name}" USING GIST ("wkb_geometry");"""
     )
 
 

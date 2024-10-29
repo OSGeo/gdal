@@ -16,7 +16,6 @@ if(NOT TARGET ogr_Elastic)
 endif()
 
 gdal_standard_includes(ogr_Elastic)
-target_include_directories(ogr_Elastic PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson)
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(ogr_Elastic libjson)
 else ()

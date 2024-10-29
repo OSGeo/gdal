@@ -64,9 +64,9 @@ for the field names and types in ogrfeaturequery.cpp as
 
 ::
 
-   char* SpecialFieldNames[SPECIAL_FIELD_COUNT] 
+   char* SpecialFieldNames[SPECIAL_FIELD_COUNT]
        = {"FID", "OGR_GEOMETRY", "OGR_STYLE", "OGR_GEOM_WKT"};
-   swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT] 
+   swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT]
        = {SWQ_INTEGER, SWQ_STRING, SWQ_STRING, SWQ_STRING};
 
 So as to make this array accessible to the other files the followings
@@ -165,7 +165,7 @@ added to OGRFeature in ogrfeature.h as:
 
 ::
 
-   char * m_pszTmpFieldValue; 
+   char * m_pszTmpFieldValue;
 
 This member will be initialized to NULL at the constructor, and will be
 freed using CPLFree() at the destructor of OGRFeature.
@@ -180,7 +180,7 @@ m_pszTmpFieldValue at the beginning of the function:
 ::
 
    CPLFree(m_pszTmpFieldValue);
-   m_pszTmpFieldValue = NULL; 
+   m_pszTmpFieldValue = NULL;
 
 In ogrfeaturequery.cpp we should change OGRFeatureQuery::Compile to add
 the special fields like:
@@ -195,7 +195,7 @@ the special fields like:
        ++iField;
    }
 
-In ogrfeaturequery.cpp OGRFeatureQueryEvaluator() should be modifyed
+In ogrfeaturequery.cpp OGRFeatureQueryEvaluator() should be modified
 according to the field specific actions like
 
 ::
@@ -211,7 +211,7 @@ according to the field specific actions like
                sField.Integer = poFeature->GetFieldAsInteger( op->field_index );
            case SWQ_STRING:
                sField.String = (char*) poFeature->GetFieldAsString( op->field_index );
-           }      
+           }
        }
        else
        {
@@ -224,12 +224,12 @@ according to the field specific actions like
        psField = poFeature->GetRawFieldRef( op->field_index );
 
 In ogrfeaturequery.cpp OGRFeatureQuery::FieldCollector should be
-modifyed to add the field names like:
+modified to add the field names like:
 
 ::
 
    if( op->field_index >= poTargetDefn->GetFieldCount()
-           && op->field_index < poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT) 
+           && op->field_index < poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT)
            pszFieldName = SpecialFieldNames[op->field_index];
 
 In ogrdatasource.cpp ExecuteSQL() will allocate the arrays according to
@@ -237,13 +237,13 @@ the number of the special fields:
 
 ::
 
-   sFieldList.names = (char **) 
+   sFieldList.names = (char **)
            CPLMalloc( sizeof(char *) * (nFieldCount+SPECIAL_FIELD_COUNT) );
-   sFieldList.types = (swq_field_type *)  
+   sFieldList.types = (swq_field_type *)
            CPLMalloc( sizeof(swq_field_type) * (nFieldCount+SPECIAL_FIELD_COUNT) );
-   sFieldList.table_ids = (int *) 
+   sFieldList.table_ids = (int *)
            CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
-   sFieldList.ids = (int *) 
+   sFieldList.ids = (int *)
            CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
 
 And the fields will be added as
@@ -288,10 +288,10 @@ field values):
 
 ::
 
-   pszError = swq_select_summarize( psSelectInfo, iField, 
+   pszError = swq_select_summarize( psSelectInfo, iField,
    poSrcFeature->GetFieldAsString( psColDef->field_index ) );
 
-OGRGenSQLResultsLayer::TranslateFeature should also be modifyed when
+OGRGenSQLResultsLayer::TranslateFeature should also be modified when
 copying the fields from primary record to the destination feature
 
 ::
@@ -350,19 +350,19 @@ the same function as:
    }
 
 When ordering by the field values the OGRGenSQLResultsLayer::Compare
-should also be modifyed:
+should also be modified:
 
 ::
 
    if( psKeyDef->field_index >= iFIDFieldIndex )
        poFDefn = NULL;
    else
-       poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( 
+       poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn(
            psKeyDef->field_index );
 
-   if( (pasFirstTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
+   if( (pasFirstTuple[iKey].Set.nMarker1 == OGRUnsetMarker
            && pasFirstTuple[iKey].Set.nMarker2 == OGRUnsetMarker)
-       || (pasSecondTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
+       || (pasSecondTuple[iKey].Set.nMarker1 == OGRUnsetMarker
            && pasSecondTuple[iKey].Set.nMarker2 == OGRUnsetMarker) )
        nResult = 0;
    else if ( poFDefn == NULL )
@@ -397,7 +397,7 @@ straightforward and the following steps should be made:
 
 3. The field value accessors (OGRFeature::GetFieldAsString,
    OGRFeature::GetFieldAsInteger, OGRFeature::GetFieldAsDouble) should
-   be modifyed to provide the value of the new special field. All of
+   be modified to provide the value of the new special field. All of
    these functions provide const return values so GetFieldAsString
    should retain the value in the m_pszTmpFieldValue member.
 

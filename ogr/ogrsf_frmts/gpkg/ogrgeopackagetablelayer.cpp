@@ -8,23 +8,7 @@
  * Copyright (c) 2013, Paul Ramsey <pramsey@boundlessgeo.com>
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_geopackage.h"
@@ -67,8 +51,8 @@ OGRErr OGRGeoPackageTableLayer::SaveExtent()
 
     char *pszSQL =
         sqlite3_mprintf("UPDATE gpkg_contents SET "
-                        "min_x = %.18g, min_y = %.18g, "
-                        "max_x = %.18g, max_y = %.18g "
+                        "min_x = %.17g, min_y = %.17g, "
+                        "max_x = %.17g, max_y = %.17g "
                         "WHERE lower(table_name) = lower('%q') AND "
                         "Lower(data_type) = 'features'",
                         m_poExtent->MinX, m_poExtent->MinY, m_poExtent->MaxX,
@@ -879,8 +863,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             CPLSPrintf("trigger_delete_feature_count_%s", m_pszTableName));
         const std::map<CPLString, CPLString> &oMap =
             m_poDS->GetNameTypeMapFromSQliteMaster();
-        if (oMap.find(osTrigger1Name.toupper()) != oMap.end() &&
-            oMap.find(osTrigger2Name.toupper()) != oMap.end())
+        if (cpl::contains(oMap, osTrigger1Name.toupper()) &&
+            cpl::contains(oMap, osTrigger2Name.toupper()))
         {
             m_bOGRFeatureCountTriggersEnabled = true;
         }
@@ -941,7 +925,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         /* Check that the table name is registered in gpkg_contents */
         const std::map<CPLString, GPKGContentsDesc> &oMapContents =
             m_poDS->GetContents();
-        std::map<CPLString, GPKGContentsDesc>::const_iterator oIterContents =
+        const auto oIterContents =
             oMapContents.find(CPLString(m_pszTableName).toupper());
         if (oIterContents == oMapContents.end())
         {
@@ -1218,12 +1202,11 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                             FALSE);
 
                     /* Read the SRS */
-                    OGRSpatialReference *poSRS = m_poDS->GetSpatialRef(m_iSrs);
+                    auto poSRS = m_poDS->GetSpatialRef(m_iSrs);
                     if (poSRS)
                     {
                         m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(
-                            poSRS);
-                        poSRS->Dereference();
+                            poSRS.get());
                     }
                 }
                 else if (!STARTS_WITH(
@@ -1268,8 +1251,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 if (bNotNull)
                     oField.SetNullable(FALSE);
 
-                if (uniqueFieldsUC.find(CPLString(pszName).toupper()) !=
-                    uniqueFieldsUC.end())
+                if (cpl::contains(uniqueFieldsUC, CPLString(pszName).toupper()))
                 {
                     oField.SetUnique(TRUE);
                 }
@@ -1746,6 +1728,24 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
             GDALGeoPackageDataset::LaunderName(oFieldDefn.GetNameRef())
                 .c_str());
 
+    if (m_poFeatureDefn->GetFieldIndex(oFieldDefn.GetNameRef()) >= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot create field %s. "
+                 "A field with the same name already exists.",
+                 oFieldDefn.GetNameRef());
+        return OGRERR_FAILURE;
+    }
+
+    if (m_poFeatureDefn->GetGeomFieldIndex(oFieldDefn.GetNameRef()) >= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot create field %s. "
+                 "It has the same name as the geometry field.",
+                 oFieldDefn.GetNameRef());
+        return OGRERR_FAILURE;
+    }
+
     if (m_pszFidColumn != nullptr &&
         EQUAL(oFieldDefn.GetNameRef(), m_pszFidColumn) &&
         poField->GetType() != OFTInteger &&
@@ -1757,6 +1757,19 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for %s",
                  oFieldDefn.GetNameRef());
+        return OGRERR_FAILURE;
+    }
+
+    const int nMaxColumns =
+        sqlite3_limit(m_poDS->GetDB(), SQLITE_LIMIT_COLUMN, -1);
+    // + 1 for the FID column
+    if (m_poFeatureDefn->GetFieldCount() +
+            m_poFeatureDefn->GetGeomFieldCount() + 1 >=
+        nMaxColumns)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot add field %s. Limit of %d columns reached",
+                 oFieldDefn.GetNameRef(), nMaxColumns);
         return OGRERR_FAILURE;
     }
 
@@ -2126,8 +2139,7 @@ void OGRGeoPackageTableLayer::CheckGeometryType(const OGRFeature *poFeature)
             OGRwkbGeometryType eGeomType =
                 wkbFlatten(poGeom->getGeometryType());
             if (!OGR_GT_IsSubClassOf(eGeomType, eFlattenLayerGeomType) &&
-                m_eSetBadGeomTypeWarned.find(eGeomType) ==
-                    m_eSetBadGeomTypeWarned.end())
+                !cpl::contains(m_eSetBadGeomTypeWarned, eGeomType))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "A geometry of type %s is inserted into layer %s "
@@ -3525,9 +3537,9 @@ OGRErr OGRGeoPackageTableLayer::ResetStatementInternal(GIntBig nStartIndex)
                 bUseSpatialIndex = false;
             }
 
-            if (bUseSpatialIndex && !CPLIsInf(sEnvelope.MinX) &&
-                !CPLIsInf(sEnvelope.MinY) && !CPLIsInf(sEnvelope.MaxX) &&
-                !CPLIsInf(sEnvelope.MaxY))
+            if (bUseSpatialIndex && !std::isinf(sEnvelope.MinX) &&
+                !std::isinf(sEnvelope.MinY) && !std::isinf(sEnvelope.MaxX) &&
+                !std::isinf(sEnvelope.MaxY))
             {
                 soSQL.Printf("SELECT %s FROM \"%s\" m "
                              "JOIN \"%s\" r "
@@ -4044,8 +4056,8 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
 
         m_poFilterGeom->getEnvelope(&sEnvelope);
 
-        if (!CPLIsInf(sEnvelope.MinX) && !CPLIsInf(sEnvelope.MinY) &&
-            !CPLIsInf(sEnvelope.MaxX) && !CPLIsInf(sEnvelope.MaxY))
+        if (!std::isinf(sEnvelope.MinX) && !std::isinf(sEnvelope.MinY) &&
+            !std::isinf(sEnvelope.MaxX) && !std::isinf(sEnvelope.MaxY))
         {
             soSQL.Printf("SELECT COUNT(*) FROM \"%s\" WHERE "
                          "maxx >= %.12f AND minx <= %.12f AND "
@@ -4932,8 +4944,7 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
 {
     const std::map<CPLString, std::vector<GPKGExtensionDesc>> &oMap =
         m_poDS->GetUnknownExtensionsTableSpecific();
-    std::map<CPLString, std::vector<GPKGExtensionDesc>>::const_iterator oIter =
-        oMap.find(CPLString(m_pszTableName).toupper());
+    const auto oIter = oMap.find(CPLString(m_pszTableName).toupper());
     if (oIter != oMap.end())
     {
         for (size_t i = 0; i < oIter->second.size(); i++)
@@ -5091,7 +5102,7 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
         CPLString("rtree_").append(pszT).append("_").append(pszC));
     const std::map<CPLString, CPLString> &oMap =
         m_poDS->GetNameTypeMapFromSQliteMaster();
-    if (oMap.find(CPLString(osRTreeName).toupper()) != oMap.end())
+    if (cpl::contains(oMap, CPLString(osRTreeName).toupper()))
     {
         m_bHasSpatialIndex = true;
         m_osRTreeName = osRTreeName;
@@ -5506,10 +5517,10 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int m_iGeomColIn,
         const char *pszC =
             m_poFeatureDefn->GetGeomFieldDefn(m_iGeomColIn)->GetNameRef();
 
-        if (CPLIsInf(sEnvelope.MinX) && sEnvelope.MinX < 0 &&
-            CPLIsInf(sEnvelope.MinY) && sEnvelope.MinY < 0 &&
-            CPLIsInf(sEnvelope.MaxX) && sEnvelope.MaxX > 0 &&
-            CPLIsInf(sEnvelope.MaxY) && sEnvelope.MaxY > 0)
+        if (std::isinf(sEnvelope.MinX) && sEnvelope.MinX < 0 &&
+            std::isinf(sEnvelope.MinY) && sEnvelope.MinY < 0 &&
+            std::isinf(sEnvelope.MaxX) && sEnvelope.MaxX > 0 &&
+            std::isinf(sEnvelope.MaxY) && sEnvelope.MaxY > 0)
         {
             osSpatialWHERE.Printf(
                 "(\"%s\" IS NOT NULL AND NOT ST_IsEmpty(\"%s\"))",
@@ -5679,8 +5690,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
                                           /* bEmitErrorIfNotFound = */ false);
                 if (poGotSRS)
                 {
-                    oGeomFieldDefn.SetSpatialRef(poGotSRS);
-                    poGotSRS->Release();
+                    oGeomFieldDefn.SetSpatialRef(poGotSRS.get());
                 }
                 else
                 {
@@ -7808,8 +7818,13 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
     const int SQLITE_MAX_FUNCTION_ARG =
         sqlite3_limit(psFillArrowArray->hDB, SQLITE_LIMIT_FUNCTION_ARG, -1);
 begin:
-    const int iFeat = psFillArrowArray->nCountRows;
-    auto psHelper = psFillArrowArray->psHelper.get();
+    int iFeat;
+    OGRArrowArrayHelper *psHelper;
+    {
+        std::unique_lock<std::mutex> oLock(psFillArrowArray->oMutex);
+        iFeat = psFillArrowArray->nCountRows;
+        psHelper = psFillArrowArray->psHelper.get();
+    }
     int iCol = 0;
     const int iFieldStart = sqlite3_value_int(argv[iCol]);
     ++iCol;
@@ -8477,9 +8492,9 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
                 bUseSpatialIndex = false;
             }
 
-            if (bUseSpatialIndex && !CPLIsInf(sEnvelope.MinX) &&
-                !CPLIsInf(sEnvelope.MinY) && !CPLIsInf(sEnvelope.MaxX) &&
-                !CPLIsInf(sEnvelope.MaxY))
+            if (bUseSpatialIndex && !std::isinf(sEnvelope.MinX) &&
+                !std::isinf(sEnvelope.MinY) && !std::isinf(sEnvelope.MaxX) &&
+                !std::isinf(sEnvelope.MaxY))
             {
                 osSQL +=
                     CPLSPrintf(" JOIN \"%s\" r "

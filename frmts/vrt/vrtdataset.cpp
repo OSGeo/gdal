@@ -8,23 +8,7 @@
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "vrtdataset.h"
@@ -303,7 +287,7 @@ CPLXMLNode *VRTDataset::SerializeToXML(const char *pszVRTPathIn)
             if (osCoordinateEpoch.find('.') != std::string::npos)
             {
                 while (osCoordinateEpoch.back() == '0')
-                    osCoordinateEpoch.resize(osCoordinateEpoch.size() - 1);
+                    osCoordinateEpoch.pop_back();
             }
             CPLAddXMLAttributeAndValue(psSRSNode, "coordinateEpoch",
                                        osCoordinateEpoch.c_str());
@@ -1053,8 +1037,9 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
     // http://.jp2 file with the JP2OpenJPEG driver through the HTTP driver,
     // which returns a /vsimem/ file
     auto poSrcDS = std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>(
-        GDALDataset::Open(osFilename, GDAL_OF_RASTER, aosAllowedDrivers.List(),
-                          aosOpenOptions.List(), nullptr));
+        GDALDataset::Open(osFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                          aosAllowedDrivers.List(), aosOpenOptions.List(),
+                          nullptr));
     if (poSrcDS == nullptr)
     {
         return nullptr;
@@ -1103,7 +1088,8 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                     if (bFound)
                     {
                         poSrcDS.reset(GDALDataset::Open(
-                            osSubdatasetSource.c_str(), GDAL_OF_RASTER,
+                            osSubdatasetSource.c_str(),
+                            GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
                             aosAllowedDrivers.List(), aosOpenOptions.List(),
                             nullptr));
                         if (poSrcDS == nullptr)
@@ -1158,7 +1144,8 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 }
 
                 poSrcDS.reset(GDALDataset::Open(
-                    osSubdatasetSource.c_str(), GDAL_OF_RASTER,
+                    osSubdatasetSource.c_str(),
+                    GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
                     aosAllowedDrivers.List(), aosOpenOptions.List(), nullptr));
                 if (poSrcDS == nullptr)
                 {
@@ -2795,7 +2782,7 @@ bool VRTDataset::AddVirtualOverview(int nOvFactor, const char *pszResampling)
     GDALDatasetH hOverviewDS =
         GDALTranslate("", GDALDataset::ToHandle(this), psOptions, nullptr);
     m_bCanTakeRef = true;
-    m_apoOverviews.resize(m_apoOverviews.size() - 1);
+    m_apoOverviews.pop_back();
 
     GDALTranslateOptionsFree(psOptions);
     if (hOverviewDS == nullptr)

@@ -1,29 +1,27 @@
 add_gdal_driver(
   TARGET ogr_GML
   SOURCES gfstemplate.cpp
-          gmlpropertydefn.cpp
           gmlreadstate.cpp
-          gmlutils.h
           ogrgmldriver.cpp
           resolvexlinks.cpp
-          gmlfeature.cpp
           gmlreader.cpp
           gmlregistry.cpp
           hugefileresolver.cpp
           ogrgmllayer.cpp
           xercesc_headers.h
-          gmlfeatureclass.cpp
           gmlreader.h
           gmlregistry.h
           ogr_gml.h
-          parsexsd.cpp
           gmlhandler.cpp
           gmlreaderp.h
-          gmlutils.cpp
           ogrgmldatasource.cpp
-          parsexsd.h
-  BUILTIN)
+  PLUGIN_CAPABLE
+  NO_DEPS
+  STRONG_CXX_WFLAGS
+)
 gdal_standard_includes(ogr_GML)
+
+target_include_directories(ogr_GML PRIVATE $<TARGET_PROPERTY:gmlutils,SOURCE_DIR>)
 
 set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gfs.xsd

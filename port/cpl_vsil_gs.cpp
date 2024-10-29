@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2018, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -83,7 +67,8 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
         return m_osPrefix;
     }
 
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     IVSIS3LikeHandleHelper *CreateHandleHelper(const char *pszURI,
                                                bool bAllowNoObject) override;
@@ -163,7 +148,6 @@ class VSIGSHandle final : public IVSIS3LikeHandle
 VSIGSFSHandler::~VSIGSFSHandler()
 {
     VSICurlFilesystemHandlerBase::ClearCache();
-    VSIGSHandleHelper::CleanMutex();
 }
 
 /************************************************************************/
@@ -292,17 +276,17 @@ char *VSIGSFSHandler::GetSignedURL(const char *pszFilename,
 /*                          GetURLFromFilename()                         */
 /************************************************************************/
 
-std::string VSIGSFSHandler::GetURLFromFilename(const std::string &osFilename)
+std::string
+VSIGSFSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
-    std::string osFilenameWithoutPrefix =
+    const std::string osFilenameWithoutPrefix =
         osFilename.substr(GetFSPrefix().size());
-    VSIGSHandleHelper *poHandleHelper = VSIGSHandleHelper::BuildFromURI(
-        osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str());
+    auto poHandleHelper =
+        std::unique_ptr<VSIGSHandleHelper>(VSIGSHandleHelper::BuildFromURI(
+            osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str()));
     if (poHandleHelper == nullptr)
         return std::string();
-    std::string osURL(poHandleHelper->GetURL());
-    delete poHandleHelper;
-    return osURL;
+    return poHandleHelper->GetURL();
 }
 
 /************************************************************************/

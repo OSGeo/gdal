@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2017-2018, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -199,7 +183,7 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
                 {
                     std::string osKey = pszKey;
                     if (!osKey.empty() && osKey.back() == '/')
-                        osKey.resize(osKey.size() - 1);
+                        osKey.pop_back();
                     if (osKey.size() > osPrefix.size())
                     {
                         aoNameCount[osKey.c_str() + osPrefix.size()]++;
@@ -322,7 +306,7 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
                 {
                     std::string osKey = pszKey;
                     if (!osKey.empty() && osKey.back() == '/')
-                        osKey.resize(osKey.size() - 1);
+                        osKey.pop_back();
                     if (osKey.size() > osPrefix.size())
                     {
                         aoEntries.push_back(
@@ -509,7 +493,8 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     VSIAzureBlobHandleHelper *CreateAzHandleHelper(const char *pszURI,
                                                    bool bAllowNoObject);
@@ -1244,7 +1229,7 @@ void VSIAzureWriteHandle::InvalidateParentDirectory()
 
     std::string osFilenameWithoutSlash(m_osFilename);
     if (!osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/')
-        osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() - 1);
+        osFilenameWithoutSlash.pop_back();
     m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
 }
 
@@ -1423,18 +1408,17 @@ void VSIAzureFSHandler::ClearCache()
 /*                          GetURLFromFilename()                        */
 /************************************************************************/
 
-std::string VSIAzureFSHandler::GetURLFromFilename(const std::string &osFilename)
+std::string
+VSIAzureFSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
     std::string osFilenameWithoutPrefix =
         osFilename.substr(GetFSPrefix().size());
-    VSIAzureBlobHandleHelper *poHandleHelper =
+    auto poHandleHelper = std::unique_ptr<VSIAzureBlobHandleHelper>(
         VSIAzureBlobHandleHelper::BuildFromURI(osFilenameWithoutPrefix.c_str(),
-                                               GetFSPrefix().c_str());
-    if (poHandleHelper == nullptr)
+                                               GetFSPrefix().c_str()));
+    if (!poHandleHelper)
         return std::string();
-    std::string osURL(poHandleHelper->GetURLNoKVP());
-    delete poHandleHelper;
-    return osURL;
+    return poHandleHelper->GetURLNoKVP();
 }
 
 /************************************************************************/
@@ -1730,7 +1714,7 @@ int VSIAzureFSHandler::MkdirInternal(const char *pszDirname, long /* nMode */,
     }
 
     std::string osDirnameWithoutEndSlash(osDirname);
-    osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+    osDirnameWithoutEndSlash.pop_back();
     if (osDirnameWithoutEndSlash.size() > GetFSPrefix().size() &&
         osDirnameWithoutEndSlash.find('/', GetFSPrefix().size()) ==
             std::string::npos)
@@ -1892,7 +1876,7 @@ int VSIAzureFSHandler::Rmdir(const char *pszDirname)
     }
 
     std::string osDirnameWithoutEndSlash(osDirname);
-    osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+    osDirnameWithoutEndSlash.pop_back();
     if (osDirnameWithoutEndSlash.size() > GetFSPrefix().size() &&
         osDirnameWithoutEndSlash.find('/', GetFSPrefix().size()) ==
             std::string::npos)
@@ -2511,7 +2495,7 @@ VSIDIR *VSIAzureFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
     std::string osDirnameWithoutPrefix = pszPath + GetFSPrefix().size();
     if (!osDirnameWithoutPrefix.empty() && osDirnameWithoutPrefix.back() == '/')
     {
-        osDirnameWithoutPrefix.resize(osDirnameWithoutPrefix.size() - 1);
+        osDirnameWithoutPrefix.pop_back();
     }
 
     std::string osBucket(osDirnameWithoutPrefix);
@@ -2588,7 +2572,7 @@ bool VSIAzureHandle::IsDirectoryFromExists(const char * /*pszVerb*/,
     std::string osDirname(m_osFilename);
     if (osDirname.size() > poFS->GetFSPrefix().size() &&
         osDirname.back() == '/')
-        osDirname.resize(osDirname.size() - 1);
+        osDirname.pop_back();
     bool bIsDir;
     if (poFS->ExistsInCacheDirList(osDirname, &bIsDir))
         return bIsDir;

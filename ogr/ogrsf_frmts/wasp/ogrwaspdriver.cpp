@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2014, Oslandia <info at oslandia dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrwasp.h"
@@ -34,27 +18,28 @@
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRWAsPDriver::Open(const char *pszFilename, int bUpdate)
+static GDALDataset *OGRWAsPDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if (bUpdate)
+    if (poOpenInfo->eAccess == GA_Update)
     {
         return nullptr;
     }
 
-    if (!EQUAL(CPLGetExtension(pszFilename), "map"))
+    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "map"))
     {
         return nullptr;
     }
 
-    VSILFILE *fh = VSIFOpenL(pszFilename, "r");
+    VSILFILE *fh = VSIFOpenL(poOpenInfo->pszFilename, "r");
     if (!fh)
     {
         /*CPLError( CE_Failure, CPLE_FileIO, "cannot open file %s", pszFilename
          * );*/
         return nullptr;
     }
-    auto pDataSource = std::make_unique<OGRWAsPDataSource>(pszFilename, fh);
+    auto pDataSource =
+        std::make_unique<OGRWAsPDataSource>(poOpenInfo->pszFilename, fh);
 
     if (pDataSource->Load(true) != OGRERR_NONE)
     {
@@ -64,21 +49,11 @@ OGRDataSource *OGRWAsPDriver::Open(const char *pszFilename, int bUpdate)
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
+/*                         OGRWAsPDriverCreate()                        */
 /************************************************************************/
 
-int OGRWAsPDriver::TestCapability(const char *pszCap)
-
-{
-    return EQUAL(pszCap, ODrCCreateDataSource) ||
-           EQUAL(pszCap, ODrCDeleteDataSource);
-}
-
-/************************************************************************/
-/*                           CreateDataSource()                           */
-/************************************************************************/
-
-OGRDataSource *OGRWAsPDriver::CreateDataSource(const char *pszName, char **)
+static GDALDataset *OGRWAsPDriverCreate(const char *pszName, int, int, int,
+                                        GDALDataType, char **)
 
 {
     VSILFILE *fh = VSIFOpenL(pszName, "w");
@@ -91,23 +66,27 @@ OGRDataSource *OGRWAsPDriver::CreateDataSource(const char *pszName, char **)
 }
 
 /************************************************************************/
-/*                           DeleteDataSource()                         */
+/*                         OGRWAsPDriverDelete()                        */
 /************************************************************************/
 
-OGRErr OGRWAsPDriver::DeleteDataSource(const char *pszName)
+static CPLErr OGRWAsPDriverDelete(const char *pszName)
 
 {
-    return VSIUnlink(pszName) == 0 ? OGRERR_NONE : OGRERR_FAILURE;
+    return VSIUnlink(pszName) == 0 ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
-/*                           RegisterOGRWAsP()                           */
+/*                           RegisterOGRWAsP()                          */
 /************************************************************************/
 
 void RegisterOGRWAsP()
 
 {
-    OGRSFDriver *poDriver = new OGRWAsPDriver;
+    if (GDALGetDriverByName("WAsP"))
+        return;
+
+    auto poDriver = new GDALDriver();
+    poDriver->SetDescription("WAsP");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
@@ -120,5 +99,9 @@ void RegisterOGRWAsP()
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/wasp.html");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->pfnOpen = OGRWAsPDriverOpen;
+    poDriver->pfnCreate = OGRWAsPDriverCreate;
+    poDriver->pfnDelete = OGRWAsPDriverDelete;
+
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

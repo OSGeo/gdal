@@ -10,25 +10,8 @@
 ###############################################################################
 # Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
-
 
 import gdaltest
 import ogrtest
@@ -289,7 +272,8 @@ def ogr_libkml_write(filename):
         lyr = ds.CreateLayer("test_wgs72", srs=srs)
 
         assert lyr.TestCapability(ogr.OLCSequentialWrite) == 1
-        assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 1
+        assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
 
         dst_feat = ogr.Feature(lyr.GetLayerDefn())
         dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 49)"))
@@ -528,6 +512,32 @@ def test_ogr_libkml_test_ogrsf():
         or ret.find("INFO") == -1
         or ret.find("ERROR") != -1
     )
+
+
+###############################################################################
+# Run test_ogrsf
+
+
+def test_ogr_libkml_test_ogrsf_write(tmp_path):
+
+    test_filename = str(tmp_path / "test.kml")
+    gdal.VectorTranslate(
+        test_filename, "data/poly.shp", options="-s_srs EPSG:32631 -t_srs EPSG:4326"
+    )
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path()
+        + f" --config OGR_SKIP KML {test_filename}"
+    )
+
+    assert "using driver `LIBKML'" in ret
+    assert "INFO" in ret
+    assert "ERROR" not in ret
 
 
 ###############################################################################
@@ -1387,6 +1397,13 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
         "style1_highlight", 'SYMBOL(id:"http://style1_highlight",c:#10325476)'
     )
     ds.SetStyleTable(style_table)
+    lyr = ds.CreateLayer("test")
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetStyleString("@style1_normal")
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetStyleString("@unknown_style")
+    lyr.CreateFeature(feat)
     ds = None
 
     with gdaltest.vsi_open(
@@ -1428,6 +1445,69 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
     if lines_got != lines_ref:
         print(data)
         pytest.fail(styles)
+
+    ds = ogr.Open(tmp_vsimem / "ogr_libkml_read_write_style_write.kml")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetStyleString() == "@style1_normal"
+    f = lyr.GetNextFeature()
+    assert f.GetStyleString() == "@unknown_style"
+
+    with gdaltest.config_option("LIBKML_RESOLVE_STYLE", "YES"):
+        ds = ogr.Open(tmp_vsimem / "ogr_libkml_read_write_style_write.kml")
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetStyleString() == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
+        f = lyr.GetNextFeature()
+        assert f.GetStyleString() == "@unknown_style"
+
+
+###############################################################################
+# Test style in KMZ file
+
+
+def test_ogr_libkml_write_style_kmz(tmp_vsimem):
+
+    filename = tmp_vsimem / "ogr_libkml_read_write_style_write.kmz"
+    # Automatic StyleMap creation testing
+    ds = ogr.GetDriverByName("LIBKML").CreateDataSource(filename)
+    style_table = ogr.StyleTable()
+    style_table.AddStyle(
+        "style1_normal", 'SYMBOL(id:"http://style1_normal",c:#67452301)'
+    )
+    style_table.AddStyle(
+        "style1_highlight", 'SYMBOL(id:"http://style1_highlight",c:#10325476)'
+    )
+    ds.SetStyleTable(style_table)
+    lyr = ds.CreateLayer("test")
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetStyleString("@style1_normal")
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetStyleString("@unknown_style")
+    lyr.CreateFeature(feat)
+    ds = None
+
+    f = gdal.VSIFOpenL(f"/vsizip/{filename}/layers/test.kml", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    assert b"<styleUrl>../style/style.kml#style1_normal</styleUrl>" in data
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetStyleString() == "@style1_normal"
+    f = lyr.GetNextFeature()
+    assert f.GetStyleString() == "@unknown_style"
+
+    with gdaltest.config_option("LIBKML_RESOLVE_STYLE", "YES"):
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetStyleString() == 'SYMBOL(id:"http://style1_normal",c:#67452301)'
+        f = lyr.GetNextFeature()
+        assert f.GetStyleString() == "@unknown_style"
 
 
 ###############################################################################
@@ -1842,6 +1922,25 @@ def test_ogr_libkml_write_container_properties(tmp_vsimem):
 
 
 ###############################################################################
+# Test effect of NAME layer creation option
+
+
+@pytest.mark.parametrize("filename", ["out_dir", "out.kml", "out.kmz"])
+def test_ogr_libkml_name_layer_creation_option(tmp_vsimem, filename):
+
+    ds = ogr.GetDriverByName("LIBKML").CreateDataSource(tmp_vsimem / filename)
+    ds.CreateLayer(
+        "test",
+        options=["NAME=lyr_name"],
+    )
+    ds = None
+
+    ds = ogr.Open(tmp_vsimem / filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetName() == "lyr_name"
+
+
+###############################################################################
 # Test reading gx:TimeStamp and gx:TimeSpan
 
 
@@ -2095,3 +2194,151 @@ def test_ogr_libkml_read_external_style():
         lyr = ds.GetLayer(0)
         feat = lyr.GetNextFeature()
         assert feat.GetStyleString() == "LABEL(c:#FFFFFFFF,w:110.000000)"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "input_wkt,expected_wkt",
+    [
+        ("POINT (2 90)", "POINT Z (2 90 0)"),
+        ("POINT (2 90.000000001)", "POINT Z (2 90 0)"),
+        ("POINT (2 -90.000000001)", "POINT Z (2 -90 0)"),
+        ("POINT (181 -90)", "POINT Z (-179 -90 0)"),
+        ("POINT (-181 49)", "POINT Z (179 49 0)"),
+        ("POINT (540 49)", "POINT Z (180 49 0)"),
+        ("POINT (-540 49)", "POINT Z (-180 49 0)"),
+        ("POINT (541 49)", None),
+        ("POINT (-541 49)", None),
+        ("POINT (2 91)", None),
+        ("POINT (2 -91)", None),
+        ("POINT Z (2 49 10)", "POINT Z (2 49 10)"),
+        ("POINT Z (2 91 10)", None),
+        ("LINESTRING (2 -90, 3 90)", "LINESTRING Z (2 -90 0,3 90 0)"),
+        ("LINESTRING (2 -90, 3 91)", None),
+        ("LINESTRING Z (2 -90 10, 3 90 10)", "LINESTRING Z (2 -90 10,3 90 10)"),
+        ("LINESTRING Z (2 -90 10, 3 91 10)", None),
+        (
+            "POLYGON ((-180 -90,180 -90,180 90,-180 90,-180 -90),(0 0,0 1,1 1,0 0))",
+            "POLYGON Z ((-180 -90 0,180 -90 0,180 90 0,-180 90 0,-180 -90 0),(0 0 0,0 1 0,1 1 0,0 0 0))",
+        ),
+        ("POLYGON ((-180 -90,180 -90,180 90,-180 91,-180 -90))", None),
+        (
+            "POLYGON ((-180 -90,180 -90,180 90,-180 90,-180 -90),(0 91,1 90,0 90,0 91))",
+            None,
+        ),
+        (
+            "POLYGON Z ((-180 -90 0,180 -90 0,180 90 0,-180 90 0,-180 -90 0),(0 0 0,0 1 0,1 1 0,0 0 0))",
+            "POLYGON Z ((-180 -90 0,180 -90 0,180 90 0,-180 90 0,-180 -90 0),(0 0 0,0 1 0,1 1 0,0 0 0))",
+        ),
+        ("POLYGON Z ((-180 -90 0,180 -90 0,180 90 0,-180 91 0,-180 -90 0))", None),
+        (
+            "POLYGON Z ((-180 -90 0,180 -90 0,180 90 0,-180 90 0,-180 -90 0),(0 91 0,1 90 0,0 90 0,0 91 0))",
+            None,
+        ),
+        ("MULTIPOINT ((2 90))", "POINT Z (2 90 0)"),
+        ("MULTIPOINT ((2 91))", None),
+        ("MULTIPOINT ((2 90),(2 -90))", "MULTIPOINT Z ((2 90 0),(2 -90 0))"),
+        ("MULTIPOINT ((2 90),(2 91))", None),
+    ],
+)
+def test_ogr_libkml_write_geometries(input_wkt, expected_wkt, tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.kml")
+    with ogr.GetDriverByName("LIBKML").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt(input_wkt))
+        if expected_wkt:
+            lyr.CreateFeature(f)
+        else:
+            with pytest.raises(Exception):
+                lyr.CreateFeature(f)
+
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if expected_wkt:
+            assert f.GetGeometryRef().ExportToIsoWkt() == expected_wkt
+        else:
+            assert f is None
+
+
+###############################################################################
+# Test update of existing file
+
+
+@pytest.mark.parametrize("custom_id", [False, True])
+def test_ogr_libkml_update_delete_existing_kml(tmp_vsimem, custom_id):
+
+    filename = str(tmp_vsimem / "test.kml")
+    with ogr.GetDriverByName("LIBKML").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test")
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 1
+        assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
+        lyr.CreateField(ogr.FieldDefn("id"))
+        lyr.CreateField(ogr.FieldDefn("name"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        if custom_id:
+            f["id"] = "feat1"
+        f["name"] = "name1"
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 1
+        assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
+        f = ogr.Feature(lyr.GetLayerDefn())
+        if custom_id:
+            f["id"] = "feat2"
+        f["name"] = "name2"
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr.CreateFeature(f)
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 1
+        assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
+        with pytest.raises(Exception, match="Non existing feature"):
+            lyr.DeleteFeature(0)
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        with pytest.raises(Exception, match="Non existing feature"):
+            lyr.DeleteFeature(3)
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        lyr.DeleteFeature(1)
+        assert lyr.GetFeatureCount() == 1
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 2
+        if custom_id:
+            assert f["id"] == "feat2"
+        assert f["name"] == "name2"
+        f["name"] = "name2_updated"
+        lyr.SetFeature(f)
+
+    with gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if custom_id:
+            # FIDs are renumbered after feature update/deletion´if using
+            # custom KML ids
+            assert f.GetFID() == 1
+            assert f["id"] == "feat2"
+        else:
+            assert f.GetFID() == 2
+        assert f["name"] == "name2_updated"
+
+
+###############################################################################
+# Test that we don't report edit capabilities for a KML file without Placemark.id
+
+
+def ogr_libkml_non_editable():
+
+    with gdal.OpenEx("data/kml/placemark.kml", gdal.OF_VECTOR | gdal.OF_UPDATE) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.TestCapability(ogr.OLCRandomWrite) == 0
+        assert lyr.TestCapability(ogr.OLCDeleteFeature) == 0

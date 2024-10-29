@@ -9,23 +9,7 @@
  * Copyright (c) 2000, Frank Warmerdam
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_pg.h"
@@ -1086,9 +1070,9 @@ void OGRPGTableLayer::BuildWhere()
             if (sEnvelope.MaxY > 90.0)
                 sEnvelope.MaxY = 90.0;
         }
-        CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.18g %.18g", sEnvelope.MinX,
+        CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.17g %.17g", sEnvelope.MinX,
                     sEnvelope.MinY);
-        CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX,
+        CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.17g %.17g", sEnvelope.MaxX,
                     sEnvelope.MaxY);
         osWHERE.Printf(
             "WHERE %s && ST_SetSRID('BOX3D(%s, %s)'::box3d,%d) ",
@@ -2536,23 +2520,8 @@ OGRPGTableLayer::RunCreateSpatialIndex(const OGRPGGeomFieldDefn *poGeomField,
     PGconn *hPGConn = poDS->GetPGConn();
     CPLString osCommand;
 
-    std::string osIndexName(pszTableName);
-    std::string osSuffix("_");
-    osSuffix += poGeomField->GetNameRef();
-    osSuffix += "_geom_idx";
-    if (bLaunderColumnNames)
-    {
-        if (osSuffix.size() >= static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
-        {
-            osSuffix = "_";
-            osSuffix += CPLSPrintf("%d", nIdx);
-            osSuffix += "_geom_idx";
-        }
-        if (osIndexName.size() + osSuffix.size() >
-            static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
-            osIndexName.resize(OGR_PG_NAMEDATALEN - 1 - osSuffix.size());
-    }
-    osIndexName += osSuffix;
+    const std::string osIndexName(OGRPGCommonGenerateSpatialIndexName(
+        pszTableName, poGeomField->GetNameRef(), nIdx));
 
     osCommand.Printf("CREATE INDEX %s ON %s USING %s (%s)",
                      OGRPGEscapeColumnName(osIndexName.c_str()).c_str(),

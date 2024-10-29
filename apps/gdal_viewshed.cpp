@@ -6,23 +6,7 @@
  *
  ******************************************************************************
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include <limits>
@@ -31,46 +15,42 @@
 #include "gdal.h"
 #include "gdalargumentparser.h"
 
-#include "viewshed.h"
+#include "viewshed/cumulative.h"
+#include "viewshed/viewshed.h"
 
-/************************************************************************/
-/*                                main()                                */
-/************************************************************************/
-
-MAIN_START(argc, argv)
+namespace gdal
 {
-    using namespace gdal;
 
-    EarlySetConfigOptions(argc, argv);
+namespace
+{
 
-    GDALAllRegister();
+struct Options
+{
+    viewshed::Options opts;
+    std::string osSrcFilename;
+    int nBandIn{1};
+    bool bQuiet;
+};
 
-    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
-    CPLStringList aosArgv;
-    aosArgv.Assign(argv, /* bTakeOwnership= */ true);
-    if (argc < 1)
-        std::exit(-argc);
+/// Parse arguments into options structure.
+///
+/// \param argParser  Argument parser
+/// \param aosArgv  Command line options as a string list
+/// \return  Command line parsed as options
+Options parseArgs(GDALArgumentParser &argParser, const CPLStringList &aosArgv)
+{
+    Options localOpts;
 
-    GDALArgumentParser argParser(aosArgv[0], /* bForBinary=*/true);
-
-    argParser.add_description(
-        _("Calculates a viewshed raster from an input raster DEM."));
-
-    argParser.add_epilog(_("For more details, consult "
-                           "https://gdal.org/programs/gdal_viewshed.html"));
-
-    Viewshed::Options opts;
+    viewshed::Options &opts = localOpts.opts;
 
     argParser.add_output_format_argument(opts.outputFormat);
     argParser.add_argument("-ox")
         .store_into(opts.observer.x)
-        .required()
         .metavar("<value>")
         .help(_("The X position of the observer (in SRS units)."));
 
     argParser.add_argument("-oy")
         .store_into(opts.observer.y)
-        .required()
         .metavar("<value>")
         .help(_("The Y position of the observer (in SRS units)."));
 
@@ -130,6 +110,14 @@ MAIN_START(argc, argv)
         .nargs(1)
         .help(_("Maximum distance from observer to compute visibility."));
 
+    argParser.add_argument("-j")
+        .default_value(3)
+        .store_into(opts.numJobs)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_(
+            "Number of relative simultaneous jobs to run in cumulative mode"));
+
     // Value for standard atmospheric refraction. See
     // doc/source/programs/gdal_viewshed.rst
     argParser.add_argument("-cc")
@@ -140,36 +128,42 @@ MAIN_START(argc, argv)
         .help(_("Coefficient to consider the effect of the curvature and "
                 "refraction."));
 
-    int nBandIn = 1;
     argParser.add_argument("-b")
-        .default_value(nBandIn)
-        .store_into(nBandIn)
+        .default_value(localOpts.nBandIn)
+        .store_into(localOpts.nBandIn)
         .metavar("<value>")
         .nargs(1)
         .help(_("Select an input band band containing the DEM data."));
 
     argParser.add_argument("-om")
-        .choices("NORMAL", "DEM", "GROUND")
-        .metavar("NORMAL|DEM|GROUND")
+        .choices("NORMAL", "DEM", "GROUND", "ACCUM")
+        .metavar("NORMAL|DEM|GROUND|ACCUM")
         .action(
             [&into = opts.outputMode](const std::string &value)
             {
                 if (EQUAL(value.c_str(), "DEM"))
-                    into = Viewshed::OutputMode::DEM;
+                    into = viewshed::OutputMode::DEM;
                 else if (EQUAL(value.c_str(), "GROUND"))
-                    into = Viewshed::OutputMode::Ground;
+                    into = viewshed::OutputMode::Ground;
+                else if (EQUAL(value.c_str(), "ACCUM"))
+                    into = viewshed::OutputMode::Cumulative;
                 else
-                    into = Viewshed::OutputMode::Normal;
+                    into = viewshed::OutputMode::Normal;
             })
         .nargs(1)
         .help(_("Sets what information the output contains."));
 
-    bool bQuiet = false;
-    argParser.add_quiet_argument(&bQuiet);
+    argParser.add_argument("-os")
+        .default_value(10)
+        .store_into(opts.observerSpacing)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_("Spacing between observer cells when using cumulative mode."));
 
-    std::string osSrcFilename;
+    argParser.add_quiet_argument(&localOpts.bQuiet);
+
     argParser.add_argument("src_filename")
-        .store_into(osSrcFilename)
+        .store_into(localOpts.osSrcFilename)
         .metavar("<src_filename>");
 
     argParser.add_argument("dst_filename")
@@ -185,6 +179,16 @@ MAIN_START(argc, argv)
         argParser.display_error_and_usage(err);
         std::exit(1);
     }
+    return localOpts;
+}
+
+/// Validate specified options.
+///
+/// \param localOpts  Options to validate
+/// \param argParser  Argument parser
+void validateArgs(Options &localOpts, const GDALArgumentParser &argParser)
+{
+    viewshed::Options &opts = localOpts.opts;
 
     if (opts.maxDistance < 0)
     {
@@ -203,59 +207,149 @@ MAIN_START(argc, argv)
         }
     }
 
+    if (opts.outputMode != viewshed::OutputMode::Cumulative)
+    {
+        for (const char *opt : {"-os", "-j"})
+            if (argParser.is_used(opt))
+            {
+                std::string err = "Option " + std::string(opt) +
+                                  " can only be used in cumulative mode.";
+                CPLError(CE_Failure, CPLE_AppDefined, "%s", err.c_str());
+                exit(2);
+            }
+    }
+
+    if (opts.outputMode == viewshed::OutputMode::Cumulative)
+    {
+        for (const char *opt : {"-ox", "-oy", "-vv", "-iv", "-md"})
+            if (argParser.is_used(opt))
+            {
+                std::string err = "Option " + std::string(opt) +
+                                  " can't be used in cumulative mode.";
+                CPLError(CE_Failure, CPLE_AppDefined, "%s", err.c_str());
+                exit(2);
+            }
+    }
+    else
+    {
+        for (const char *opt : {"-ox", "-oy"})
+            if (!argParser.is_used(opt))
+            {
+                std::string err =
+                    "Option " + std::string(opt) + " is required.";
+                CPLError(CE_Failure, CPLE_AppDefined, "%s", err.c_str());
+                exit(2);
+            }
+    }
+
     // For double values that are out of range for byte raster output,
     // set to zero.  Values less than zero are sentinel as NULL nodata.
-    if (opts.outputMode == Viewshed::OutputMode::Normal &&
+    if (opts.outputMode == viewshed::OutputMode::Normal &&
         opts.nodataVal > std::numeric_limits<uint8_t>::max())
         opts.nodataVal = 0;
+}
+
+// Adjust the coefficient of curvature for non-earth SRS.
+/// \param curveCoeff  Current curve coefficient
+/// \param hSrcDS  Source dataset
+/// \return  Adjusted curve coefficient.
+double adjustCurveCoeff(double curveCoeff, GDALDatasetH hSrcDS)
+{
+    const OGRSpatialReference *poSRS =
+        GDALDataset::FromHandle(hSrcDS)->GetSpatialRef();
+    if (poSRS)
+    {
+        OGRErr eSRSerr;
+        const double dfSemiMajor = poSRS->GetSemiMajor(&eSRSerr);
+        if (eSRSerr != OGRERR_FAILURE &&
+            fabs(dfSemiMajor - SRS_WGS84_SEMIMAJOR) >
+                0.05 * SRS_WGS84_SEMIMAJOR)
+        {
+            curveCoeff = 1.0;
+            CPLDebug("gdal_viewshed",
+                     "Using -cc=1.0 as a non-Earth CRS has been detected");
+        }
+    }
+    return curveCoeff;
+}
+
+}  // unnamed namespace
+}  // namespace gdal
+
+/************************************************************************/
+/*                                main()                                */
+/************************************************************************/
+
+MAIN_START(argc, argv)
+{
+    using namespace gdal;
+
+    EarlySetConfigOptions(argc, argv);
+
+    GDALAllRegister();
+
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
+    CPLStringList aosArgv;
+    aosArgv.Assign(argv, /* bTakeOwnership= */ true);
+    if (argc < 1)
+        std::exit(-argc);
+
+    GDALArgumentParser argParser(aosArgv[0], /* bForBinary=*/true);
+
+    argParser.add_description(
+        _("Calculates a viewshed raster from an input raster DEM."));
+
+    argParser.add_epilog(_("For more details, consult "
+                           "https://gdal.org/programs/gdal_viewshed.html"));
+
+    Options localOpts = parseArgs(argParser, aosArgv);
+    viewshed::Options &opts = localOpts.opts;
+
+    validateArgs(localOpts, argParser);
 
     /* -------------------------------------------------------------------- */
     /*      Open source raster file.                                        */
     /* -------------------------------------------------------------------- */
-    GDALDatasetH hSrcDS = GDALOpen(osSrcFilename.c_str(), GA_ReadOnly);
+    GDALDatasetH hSrcDS =
+        GDALOpen(localOpts.osSrcFilename.c_str(), GA_ReadOnly);
     if (hSrcDS == nullptr)
         exit(2);
 
-    GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, nBandIn);
+    GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, localOpts.nBandIn);
     if (hBand == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Band %d does not exist on dataset.", nBandIn);
+                 "Band %d does not exist on dataset.", localOpts.nBandIn);
         exit(2);
     }
 
     if (!argParser.is_used("-cc"))
-    {
-        const OGRSpatialReference *poSRS =
-            GDALDataset::FromHandle(hSrcDS)->GetSpatialRef();
-        if (poSRS)
-        {
-            OGRErr eSRSerr;
-            const double dfSemiMajor = poSRS->GetSemiMajor(&eSRSerr);
-            if (eSRSerr != OGRERR_FAILURE &&
-                fabs(dfSemiMajor - SRS_WGS84_SEMIMAJOR) >
-                    0.05 * SRS_WGS84_SEMIMAJOR)
-            {
-                opts.curveCoeff = 1.0;
-                CPLDebug("gdal_viewshed",
-                         "Using -cc=1.0 as a non-Earth CRS has been detected");
-            }
-        }
-    }
+        opts.curveCoeff = adjustCurveCoeff(opts.curveCoeff, hSrcDS);
 
     /* -------------------------------------------------------------------- */
     /*      Invoke.                                                         */
     /* -------------------------------------------------------------------- */
-    Viewshed oViewshed(opts);
 
-    bool bSuccess =
-        oViewshed.run(hBand, bQuiet ? GDALDummyProgress : GDALTermProgress);
+    GDALDatasetH hDstDS;
 
-    GDALDatasetH hDstDS = GDALDataset::FromHandle(oViewshed.output().release());
-
-    GDALClose(hSrcDS);
-    if (GDALClose(hDstDS) != CE_None)
-        bSuccess = false;
+    bool bSuccess;
+    if (opts.outputMode == viewshed::OutputMode::Cumulative)
+    {
+        viewshed::Cumulative oViewshed(opts);
+        bSuccess = oViewshed.run(localOpts.osSrcFilename,
+                                 localOpts.bQuiet ? GDALDummyProgress
+                                                  : GDALTermProgress);
+    }
+    else
+    {
+        viewshed::Viewshed oViewshed(opts);
+        bSuccess = oViewshed.run(hBand, localOpts.bQuiet ? GDALDummyProgress
+                                                         : GDALTermProgress);
+        hDstDS = GDALDataset::FromHandle(oViewshed.output().release());
+        GDALClose(hSrcDS);
+        if (GDALClose(hDstDS) != CE_None)
+            bSuccess = false;
+    }
 
     GDALDestroyDriverManager();
     OGRCleanupAll();

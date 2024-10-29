@@ -77,8 +77,8 @@ binaries::
 Coding best practices
 ---------------------
 
-Use existing scripts for style guidelines, generally newer ones are
-will be more pythonic than old.
+Use existing scripts for style guidelines, newer ones are generally
+more pythonic than old ones.
 
 Passes _flake8_ lint test.
 

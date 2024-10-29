@@ -23,9 +23,10 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
 
     if test "${RSYNC_REMOTE:-}" != ""; then
         echo "Downloading cache..."
-        rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/"
+        rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/.cache/"
         echo "Finished"
-
+    fi
+    if [ -n "${WITH_CCACHE:-}" ]; then
         # Little trick to avoid issues with Python bindings
         printf "#!/bin/sh\nccache %s-linux-gnu-gcc \$*" "${GCC_ARCH}" > ccache_gcc.sh
         chmod +x ccache_gcc.sh
@@ -64,6 +65,7 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
     fi
     echo "${GDAL_CMAKE_EXTRA_OPTS}"
     cmake .. \
+        -G Ninja \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DGDAL_FIND_PACKAGE_PROJ_MODE=MODULE \
         -DBUILD_TESTING=OFF \
@@ -76,19 +78,18 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
         -DOpenDrive_DIR=/usr/lib/ \
         -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE \
 
-    make "-j$(nproc)"
-    make install DESTDIR="/build"
+    ninja
+    DESTDIR="/build" ninja install
 
     cd ..
 
     if [ -n "${RSYNC_REMOTE:-}" ]; then
-        ccache -s
-
         echo "Uploading cache..."
-        rsync -ra --delete "$HOME/.cache" "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/"
+        rsync -ra --delete "$HOME/.cache/" "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/"
         echo "Finished"
-
-        rm -rf "$HOME/.cache"
+    fi
+    if [ -n "${WITH_CCACHE:-}" ]; then
+        ccache -s
         unset CC
         unset CXX
     fi

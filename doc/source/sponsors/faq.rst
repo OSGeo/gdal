@@ -38,7 +38,7 @@ various levels start with the `Sustainable GDAL Sponsorship Prospectus`_.
 If you are interested, need help convincing your key decision-makers, or have
 any questions, don't hesitate to contact gdal-sponsors@osgeo.org.
 
-.. _Sustainable GDAL Sponsorship Prospectus: https://gdal.org/sponsors/Sustainable%20GDAL%20Sponsorship%20Prospectus.pdf
+.. _Sustainable GDAL Sponsorship Prospectus: ../_static/Sustainable%20GDAL%20Sponsorship%20Prospectus.pdf
 
 What is NumFOCUS and why is the project using that foundation rather than using OSGeo for this effort?
 ------------------------------------------------------------------------------------------------------

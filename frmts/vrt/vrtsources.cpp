@@ -9,23 +9,7 @@
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_vrt.h"
@@ -114,15 +98,34 @@ VRTSimpleSource::VRTSimpleSource(const VRTSimpleSource *poSrcSource,
       m_dfSrcYOff(poSrcSource->m_dfSrcYOff),
       m_dfSrcXSize(poSrcSource->m_dfSrcXSize),
       m_dfSrcYSize(poSrcSource->m_dfSrcYSize),
-      m_dfDstXOff(poSrcSource->m_dfDstXOff * dfXDstRatio),
-      m_dfDstYOff(poSrcSource->m_dfDstYOff * dfYDstRatio),
-      m_dfDstXSize(poSrcSource->m_dfDstXSize * dfXDstRatio),
-      m_dfDstYSize(poSrcSource->m_dfDstYSize * dfYDstRatio),
       m_nMaxValue(poSrcSource->m_nMaxValue), m_bRelativeToVRTOri(-1),
       m_nExplicitSharedStatus(poSrcSource->m_nExplicitSharedStatus),
       m_osSrcDSName(poSrcSource->m_osSrcDSName),
       m_bDropRefOnSrcBand(poSrcSource->m_bDropRefOnSrcBand)
 {
+    if (!poSrcSource->IsSrcWinSet() && !poSrcSource->IsDstWinSet() &&
+        (dfXDstRatio != 1.0 || dfYDstRatio != 1.0))
+    {
+        auto l_band = GetRasterBand();
+        if (l_band)
+        {
+            m_dfSrcXOff = 0;
+            m_dfSrcYOff = 0;
+            m_dfSrcXSize = l_band->GetXSize();
+            m_dfSrcYSize = l_band->GetYSize();
+            m_dfDstXOff = 0;
+            m_dfDstYOff = 0;
+            m_dfDstXSize = l_band->GetXSize() * dfXDstRatio;
+            m_dfDstYSize = l_band->GetYSize() * dfYDstRatio;
+        }
+    }
+    else if (poSrcSource->IsDstWinSet())
+    {
+        m_dfDstXOff = poSrcSource->m_dfDstXOff * dfXDstRatio;
+        m_dfDstYOff = poSrcSource->m_dfDstYOff * dfYDstRatio;
+        m_dfDstXSize = poSrcSource->m_dfDstXSize * dfXDstRatio;
+        m_dfDstYSize = poSrcSource->m_dfDstYSize * dfYDstRatio;
+    }
 }
 
 /************************************************************************/
@@ -975,8 +978,8 @@ int VRTSimpleSource::GetSrcDstWindow(
     *pdfReqXSize = dfRXSize * dfScaleX;
     *pdfReqYSize = dfRYSize * dfScaleY;
 
-    if (!CPLIsFinite(*pdfReqXOff) || !CPLIsFinite(*pdfReqYOff) ||
-        !CPLIsFinite(*pdfReqXSize) || !CPLIsFinite(*pdfReqYSize) ||
+    if (!std::isfinite(*pdfReqXOff) || !std::isfinite(*pdfReqYOff) ||
+        !std::isfinite(*pdfReqXSize) || !std::isfinite(*pdfReqYSize) ||
         *pdfReqXOff > INT_MAX || *pdfReqYOff > INT_MAX || *pdfReqXSize < 0 ||
         *pdfReqYSize < 0)
     {
@@ -1919,7 +1922,7 @@ CPLErr VRTAveragedSource::RasterIO(GDALDataType /*eVRTBandDataType*/, int nXOff,
 
                     const float fSampledValue =
                         pafSrc[iX + static_cast<size_t>(iY) * nReqXSize];
-                    if (CPLIsNan(fSampledValue))
+                    if (std::isnan(fSampledValue))
                         continue;
 
                     if (m_bNoDataSet &&
@@ -2086,7 +2089,7 @@ CPLXMLNode *VRTNoDataFromMaskSource::SerializeToXML(const char *pszVRTPath)
     if (m_bNoDataSet)
     {
         CPLSetXMLValue(psSrc, "MaskValueThreshold",
-                       CPLSPrintf("%.18g", m_dfMaskValueThreshold));
+                       CPLSPrintf("%.17g", m_dfMaskValueThreshold));
 
         GDALDataType eBandDT = GDT_Unknown;
         double dfNoDataValue = m_dfNoDataValue;
@@ -2112,7 +2115,7 @@ CPLXMLNode *VRTNoDataFromMaskSource::SerializeToXML(const char *pszVRTPath)
     if (m_bHasRemappedValue)
     {
         CPLSetXMLValue(psSrc, "RemappedValue",
-                       CPLSPrintf("%.18g", m_dfRemappedValue));
+                       CPLSPrintf("%.17g", m_dfRemappedValue));
     }
 
     return psSrc;
@@ -2628,7 +2631,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML(const char *pszVRTPath)
             CPLString().Printf("%g", m_adfLUTInputs[0]) ==
                 CPLString().Printf("%g", m_adfLUTInputs[1]))
         {
-            osLUT = CPLString().Printf("%.18g:%g", m_adfLUTInputs[0],
+            osLUT = CPLString().Printf("%.17g:%g", m_adfLUTInputs[0],
                                        m_adfLUTOutputs[0]);
         }
         else
@@ -2647,7 +2650,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML(const char *pszVRTPath)
                 // TODO(schwehr): An explanation of the 18 would be helpful.
                 // Can someone distill the issue down to a quick comment?
                 // https://trac.osgeo.org/gdal/ticket/6422
-                osLUT += CPLString().Printf(",%.18g:%g", m_adfLUTInputs[i],
+                osLUT += CPLString().Printf(",%.17g:%g", m_adfLUTInputs[i],
                                             m_adfLUTOutputs[i]);
             }
             else
@@ -2967,10 +2970,10 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     GByte *const pabyOut = static_cast<GByte *>(pData) +
                            nPixelSpace * nOutXOff +
                            static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff;
+    const auto eSourceType = poSourceBand->GetRasterDataType();
     if (m_nProcessingFlags == PROCESSING_FLAG_NODATA)
     {
         // Optimization if doing only nodata processing
-        const auto eSourceType = poSourceBand->GetRasterDataType();
         if (eSourceType == GDT_Byte)
         {
             if (!GDALIsValueInRange<GByte>(m_dfNoDataValue))
@@ -3024,7 +3027,10 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
     // For Int32, float32 isn't sufficiently precise as working data type
     if (eVRTBandDataType == GDT_CInt32 || eVRTBandDataType == GDT_CFloat64 ||
         eVRTBandDataType == GDT_Int32 || eVRTBandDataType == GDT_UInt32 ||
-        eVRTBandDataType == GDT_Float64)
+        eVRTBandDataType == GDT_Int64 || eVRTBandDataType == GDT_UInt64 ||
+        eVRTBandDataType == GDT_Float64 || eSourceType == GDT_Int32 ||
+        eSourceType == GDT_UInt32 || eSourceType == GDT_Int64 ||
+        eSourceType == GDT_UInt64)
     {
         eErr = RasterIOInternal<double>(
             poSourceBand, eVRTBandDataType, nReqXOff, nReqYOff, nReqXSize,
@@ -3056,6 +3062,52 @@ static inline bool hasZeroByte(uint32_t v)
 {
     // Cf https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord
     return (((v)-0x01010101U) & ~(v)&0x80808080U) != 0;
+}
+
+/************************************************************************/
+/*                                CopyWord()                            */
+/************************************************************************/
+
+template <class SrcType>
+static void CopyWord(const SrcType *pSrcVal, GDALDataType eSrcType,
+                     void *pDstVal, GDALDataType eDstType)
+{
+    switch (eDstType)
+    {
+        case GDT_Byte:
+            GDALCopyWord(*pSrcVal, *static_cast<uint8_t *>(pDstVal));
+            break;
+        case GDT_Int8:
+            GDALCopyWord(*pSrcVal, *static_cast<int8_t *>(pDstVal));
+            break;
+        case GDT_UInt16:
+            GDALCopyWord(*pSrcVal, *static_cast<uint16_t *>(pDstVal));
+            break;
+        case GDT_Int16:
+            GDALCopyWord(*pSrcVal, *static_cast<int16_t *>(pDstVal));
+            break;
+        case GDT_UInt32:
+            GDALCopyWord(*pSrcVal, *static_cast<uint32_t *>(pDstVal));
+            break;
+        case GDT_Int32:
+            GDALCopyWord(*pSrcVal, *static_cast<int32_t *>(pDstVal));
+            break;
+        case GDT_UInt64:
+            GDALCopyWord(*pSrcVal, *static_cast<uint64_t *>(pDstVal));
+            break;
+        case GDT_Int64:
+            GDALCopyWord(*pSrcVal, *static_cast<int64_t *>(pDstVal));
+            break;
+        case GDT_Float32:
+            GDALCopyWord(*pSrcVal, *static_cast<float *>(pDstVal));
+            break;
+        case GDT_Float64:
+            GDALCopyWord(*pSrcVal, *static_cast<double *>(pDstVal));
+            break;
+        default:
+            GDALCopyWords(pSrcVal, eSrcType, 0, pDstVal, eDstType, 0, 1);
+            break;
+    }
 }
 
 /************************************************************************/
@@ -3213,8 +3265,8 @@ CPLErr VRTComplexSource::RasterIOProcessNoData(
             {
                 if (paSrcData[idxBuffer] != nNoDataValue)
                 {
-                    GDALCopyWords(&paSrcData[idxBuffer], eSourceType, 0,
-                                  pDstLocation, eBufType, 0, 1);
+                    CopyWord(&paSrcData[idxBuffer], eSourceType, pDstLocation,
+                             eBufType);
                 }
             }
         }
@@ -3234,8 +3286,8 @@ CPLErr VRTComplexSource::RasterIOProcessNoData(
                 {
                     // Convert first to the VRTRasterBand data type
                     // to get its clamping, before outputting to buffer data type
-                    GDALCopyWords(&paSrcData[idxBuffer], eSourceType, 0,
-                                  abyTemp, eVRTBandDataType, 0, 1);
+                    CopyWord(&paSrcData[idxBuffer], eSourceType, abyTemp,
+                             eVRTBandDataType);
                     GDALCopyWords(abyTemp, eVRTBandDataType, 0, pDstLocation,
                                   eBufType, 0, 1);
                 }
@@ -3276,9 +3328,9 @@ CPLErr VRTComplexSource::RasterIOInternal(
         dfNoDataValue = poSourceBand->GetNoDataValue(&bNoDataSet);
     }
 
-    const bool bNoDataSetIsNan = bNoDataSet && CPLIsNan(dfNoDataValue);
+    const bool bNoDataSetIsNan = bNoDataSet && std::isnan(dfNoDataValue);
     const bool bNoDataSetAndNotNan =
-        bNoDataSet && !CPLIsNan(dfNoDataValue) &&
+        bNoDataSet && !std::isnan(dfNoDataValue) &&
         GDALIsValueInRange<WorkingDT>(dfNoDataValue);
     const auto fWorkingDataTypeNoData = static_cast<WorkingDT>(dfNoDataValue);
 
@@ -3393,6 +3445,12 @@ CPLErr VRTComplexSource::RasterIOInternal(
     /*      Selectively copy into output buffer with nodata masking,        */
     /*      and/or scaling.                                                 */
     /* -------------------------------------------------------------------- */
+
+    const bool bTwoStepDataTypeConversion =
+        CPL_TO_BOOL(
+            GDALDataTypeIsConversionLossy(eWrkDataType, eVRTBandDataType)) &&
+        !CPL_TO_BOOL(GDALDataTypeIsConversionLossy(eVRTBandDataType, eBufType));
+
     size_t idxBuffer = 0;
     for (int iY = 0; iY < nOutYSize; iY++)
     {
@@ -3406,7 +3464,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
             if (pafData && !bIsComplex)
             {
                 WorkingDT fResult = pafData[idxBuffer];
-                if (bNoDataSetIsNan && CPLIsNan(fResult))
+                if (bNoDataSetIsNan && std::isnan(fResult))
                     continue;
                 if (bNoDataSetAndNotNan &&
                     ARE_REAL_EQUAL(fResult, fWorkingDataTypeNoData))
@@ -3529,18 +3587,28 @@ CPLErr VRTComplexSource::RasterIOInternal(
                     255.0f,
                     std::max(0.0f, static_cast<float>(afResult[0]) + 0.5f)));
             }
-            else if (eBufType == eVRTBandDataType)
+            else if (!bTwoStepDataTypeConversion)
             {
-                GDALCopyWords(afResult, eWrkDataType, 0, pDstLocation, eBufType,
-                              0, 1);
+                CopyWord<WorkingDT>(afResult, eWrkDataType, pDstLocation,
+                                    eBufType);
+            }
+            else if (eVRTBandDataType == GDT_Float32 && eBufType == GDT_Float64)
+            {
+                // Particular case of the below 2-step conversion.
+                // Helps a bit for some geolocation based warping with Sentinel3
+                // data where the longitude/latitude arrays are Int32 bands,
+                // rescaled in VRT as Float32 and requested as Float64
+                float fVal;
+                GDALCopyWord(afResult[0], fVal);
+                *reinterpret_cast<double *>(pDstLocation) = fVal;
             }
             else
             {
                 GByte abyTemp[2 * sizeof(double)];
                 // Convert first to the VRTRasterBand data type
                 // to get its clamping, before outputting to buffer data type
-                GDALCopyWords(afResult, eWrkDataType, 0, abyTemp,
-                              eVRTBandDataType, 0, 1);
+                CopyWord<WorkingDT>(afResult, eWrkDataType, abyTemp,
+                                    eVRTBandDataType);
                 GDALCopyWords(abyTemp, eVRTBandDataType, 0, pDstLocation,
                               eBufType, 0, 1);
             }

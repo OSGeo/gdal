@@ -11,23 +11,7 @@
  * Copyright (c) 1999-2005, Daniel Morissette
  * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  **********************************************************************/
 
 #ifndef MITAB_H_INCLUDED_
@@ -344,12 +328,6 @@ class TABFile final : public IMapInfoFile
                           double &dYMax, GBool bForce = TRUE) override;
 
     virtual OGRSpatialReference *GetSpatialRef() override;
-
-    static OGRSpatialReference *
-    GetSpatialRefFromTABProj(const TABProjInfo &sTABProj);
-    static int GetTABProjFromSpatialRef(const OGRSpatialReference *poSpatialRef,
-                                        TABProjInfo &sTABProj,
-                                        int &nParamCount);
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
                                       int &numRegions, int &numTexts,
@@ -2245,55 +2223,5 @@ class TABDebugFeature final : public TABFeature
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 };
-
-/* -------------------------------------------------------------------- */
-/*      Some stuff related to spatial reference system handling.        */
-/*                                                                      */
-/*      In GDAL we make use of the coordsys transformation from         */
-/*      other places (sometimes even from plugins), so we               */
-/*      deliberately export these two functions from the DLL.           */
-/* -------------------------------------------------------------------- */
-
-char CPL_DLL *MITABSpatialRef2CoordSys(const OGRSpatialReference *);
-OGRSpatialReference CPL_DLL *MITABCoordSys2SpatialRef(const char *);
-
-bool MITABExtractCoordSysBounds(const char *pszCoordSys, double &dXMin,
-                                double &dYMin, double &dXMax, double &dYMax);
-int MITABCoordSys2TABProjInfo(const char *pszCoordSys, TABProjInfo *psProj);
-
-typedef struct
-{
-    int nDatumEPSGCode;
-    int nMapInfoDatumID;
-    const char *pszOGCDatumName;
-    int nEllipsoid;
-    double dfShiftX;
-    double dfShiftY;
-    double dfShiftZ;
-    double dfDatumParm0; /* RotX */
-    double dfDatumParm1; /* RotY */
-    double dfDatumParm2; /* RotZ */
-    double dfDatumParm3; /* Scale Factor */
-    double dfDatumParm4; /* Prime Meridian */
-} MapInfoDatumInfo;
-
-typedef struct
-{
-    int nMapInfoId;
-    const char *pszMapinfoName;
-    double dfA;             /* semi major axis in meters */
-    double dfInvFlattening; /* Inverse flattening */
-} MapInfoSpheroidInfo;
-
-/*---------------------------------------------------------------------
- * The following are used for coordsys bounds lookup
- *--------------------------------------------------------------------*/
-
-bool MITABLookupCoordSysBounds(TABProjInfo *psCS, double &dXMin, double &dYMin,
-                               double &dXMax, double &dYMax,
-                               bool bOnlyUserTable = false);
-int MITABLoadCoordSysTable(const char *pszFname);
-void MITABFreeCoordSysTable();
-bool MITABCoordSysTableLoaded();  // TODO(schwehr): Unused?
 
 #endif /* MITAB_H_INCLUDED_ */

@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGRMUTEXEDDATASOURCELAYER_H_INCLUDED
@@ -37,19 +21,19 @@
 #include "ogrmutexedlayer.h"
 #include <map>
 
-/** OGRMutexedDataSource class protects all virtual methods of OGRDataSource
- *  with a mutex.
+/** OGRMutexedDataSource class protects all virtual methods of GDALDataset,
+ *  related to vector layers, with a mutex.
  *  If the passed mutex is NULL, then no locking will be done.
  *
  *  Note that the constructors and destructors are not explicitly protected
  *  by the mutex.
  */
-class CPL_DLL OGRMutexedDataSource : public OGRDataSource
+class CPL_DLL OGRMutexedDataSource : public GDALDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMutexedDataSource)
 
   protected:
-    OGRDataSource *m_poBaseDataSource;
+    GDALDataset *m_poBaseDataSource;
     int m_bHasOwnership;
     CPLMutex *m_hGlobalMutex;
     int m_bWrapLayersInMutexedLayer;
@@ -60,18 +44,16 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
 
   public:
     /* The construction of the object isn't protected by the mutex */
-    OGRMutexedDataSource(OGRDataSource *poBaseDataSource, int bTakeOwnership,
+    OGRMutexedDataSource(GDALDataset *poBaseDataSource, int bTakeOwnership,
                          CPLMutex *hMutexIn, int bWrapLayersInMutexedLayer);
 
     /* The destruction of the object isn't protected by the mutex */
     virtual ~OGRMutexedDataSource() override;
 
-    OGRDataSource *GetBaseDataSource()
+    GDALDataset *GetBaseDataSource()
     {
         return m_poBaseDataSource;
     }
-
-    virtual const char *GetName() override;
 
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;

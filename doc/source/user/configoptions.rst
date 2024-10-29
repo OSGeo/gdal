@@ -222,7 +222,10 @@ Performance and caching
       :program:`gdalwarp`.
       If its value is small (less than 100000), it is assumed to be measured in megabytes,
       otherwise in bytes. Alternatively, the value can be set to "X%" to mean X%
-      of the usable physical RAM. Note that this value is only consulted the first
+      of the usable physical RAM.
+      Since GDAL 3.11, the value of :config:`GDAL_CACHEMAX` may specify the
+      units directly (e.g., "500MB", "2GB").
+      Note that this value is only consulted the first
       time the cache size is requested.  To change this value programmatically
       during operation of the program it is better to use
       :cpp:func:`GDALSetCacheMax` (always in bytes) or or
@@ -318,6 +321,9 @@ Performance and caching
       Set the size of the VSI cache. Be wary of large values for
       ``VSI_CACHE_SIZE`` when opening VRT datasources containing many source
       rasters, as this is a per-file cache.
+      Since GDAL 3.11, the value of ``VSI_CACHE_SIZE`` may be specified using
+      memory units (e.g., "25 MB").
+
 
 Driver management
 ^^^^^^^^^^^^^^^^^
@@ -421,7 +427,7 @@ General options
       option.
 
 -  .. config:: CPL_VSIL_DEFLATE_CHUNK_SIZE
-      :default: 1 M
+      :default: 1M
 
 -  .. config:: GDAL_DISABLE_CPLLOCALEC
       :choices: YES, NO
@@ -610,7 +616,8 @@ Networking options
       :since: 2.3
 
       Size of global least-recently-used (LRU) cache shared among all downloaded
-      content.
+      content. Value is assumed to represent bytes unless memory units are
+      specified (since GDAL 3.11).
 
 -  .. config:: CPL_VSIL_CURL_USE_HEAD
       :choices: YES, NO
@@ -625,6 +632,20 @@ Networking options
 
       Try to query quietly redirected URLs to Amazon S3 signed URLs during their
       validity period, so as to minimize round-trips.
+
+-  .. config:: CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT
+      :choices: YES, NO, IF_SAME_HOST
+      :default: IF_SAME_HOST
+      :since: 3.10
+
+      Determines if the HTTP ``Authorization`` header must be forwarded when
+      redirections are followed:
+
+      - ``NO`` to always disable forwarding of Authorization header
+      - ``YES`` to always enable forwarding of Authorization header (was the
+        default value prior to GDAL 3.10)
+      - ``IF_SAME_HOST`` to enable forwarding of Authorization header only if
+        the redirection is to the same host.
 
 -  .. config:: CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE
       :choices: YES, NO
@@ -643,6 +664,9 @@ Networking options
 -  .. config:: CPL_VSIL_CURL_CHUNK_SIZE
       :choices: <bytes>
       :since: 2.3
+
+      Value is assumed to represent bytes unless memory units are
+      specified (since GDAL 3.11).
 
 -  .. config:: GDAL_INGESTED_BYTES_AT_OPEN
       :since: 2.3
@@ -967,36 +991,41 @@ PROJ options
 
 -  .. config:: CHECK_WITH_INVERT_PROJ
       :since: 1.7.0
+      :default: NO
 
       Used by :source_file:`ogr/ogrct.cpp` and :source_file:`apps/gdalwarp_lib.cpp`.
 
-      This option can be used to control the behavior of gdalwarp when warping global
+      This option can be used to control the behavior of :program:`gdalwarp` when warping global
       datasets or when transforming from/to polar projections, which causes
       coordinate discontinuities. See http://trac.osgeo.org/gdal/ticket/2305.
 
-      The background is that PROJ does not guarantee that converting from src_srs to
-      dst_srs and then from dst_srs to src_srs will yield to the initial coordinates.
+      The background is that PROJ does not guarantee that converting from ``src_srs`` to
+      ``dst_srs`` and then from ``dst_srs`` to ``src_srs`` will yield the initial coordinates.
       This can lead to errors in the computation of the target bounding box of
-      gdalwarp, or to visual artifacts.
+      :program:`gdalwarp`, or to visual artifacts.
 
-      If CHECK_WITH_INVERT_PROJ option is not set, gdalwarp will check that the the
+      If :config:`CHECK_WITH_INVERT_PROJ` option is not set, :program:`gdalwarp` will check that the
       computed coordinates of the edges of the target image are in the validity area
       of the target projection. If they are not, it will retry computing them by
-      setting :config:`CHECK_WITH_INVERT_PROJ=TRUE` that forces ogrct.cpp to check the
-      consistency of each requested projection result with the invert projection.
+      setting :config:`CHECK_WITH_INVERT_PROJ=TRUE` that forces
+      :source_file:`ogr/ogrct.cpp` to check the consistency of each requested
+      projection result with the inverse projection.
 
-      If set to NO, gdalwarp will not attempt to use the invert projection.
+      If set to ``NO``, :program:`gdalwarp` will not attempt to use the inverse projection.
 
 -  .. config:: THRESHOLD
       :since: 1.7.0
+      :default: 0.1 for geographic SRS, 10000 otherwise
 
       Used by :source_file:`ogr/ogrct.cpp`.
 
-      Used in combination with :config:`CHECK_WITH_INVERT_PROJ=TRUE`. Define
-      the acceptable threshold used to check if the roundtrip from src_srs to
-      dst_srs and from dst_srs to srs_srs yield to the initial coordinates. The
-      value must be expressed in the units of the source SRS (typically degrees
-      for a geographic SRS, meters for a projected SRS)
+      Used in combination with :config:`CHECK_WITH_INVERT_PROJ=TRUE`. Defines
+      the acceptable threshold used to check if the round-trip from ``src_srs`` to
+      ``dst_srs`` and from ``dst_srs`` to ``srs_srs`` yields the initial coordinates.
+      The round-trip transformation will be considered successful if the ``x`` and ``y``
+      values are both within :config:`THRESHOLD` of the original values.
+      The value must be expressed in the units of the source SRS (typically degrees
+      for a geographic SRS, meters for a projected SRS).
 
 -  .. config:: OGR_ENABLE_PARTIAL_REPROJECTION
       :since: 1.8.0

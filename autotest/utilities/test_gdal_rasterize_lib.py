@@ -11,23 +11,7 @@
 # Copyright (c) 2015, Even Rouault <even dot rouault at spatialys dot com>
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import collections
@@ -714,12 +698,14 @@ def test_gdal_rasterize_lib_int64_attribute():
 
     noData = -(1 << 63)
     target_ds = gdal.Rasterize(
-        "", vector_ds, format="MEM", attribute="val", width=2, height=2, noData=noData
+        "", vector_ds, format="MEM", attribute="val", width=2, height=3, noData=noData
     )
     assert target_ds is not None
+    assert target_ds.RasterXSize == 2
+    assert target_ds.RasterYSize == 3
     assert target_ds.GetRasterBand(1).DataType == gdal.GDT_Int64
     assert target_ds.GetRasterBand(1).GetNoDataValue() == noData
-    assert struct.unpack("Q" * 4, target_ds.ReadRaster())[0] == val
+    assert struct.unpack("Q", target_ds.ReadRaster(0, 0, 1, 1))[0] == val
 
 
 ###############################################################################
@@ -792,3 +778,38 @@ def test_gdal_rasterize_lib_dict_arguments():
     ind = opt.index("-co")
 
     assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]
+
+
+###############################################################################
+# Test doesn't crash without options
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_rasterize_no_options(tmp_vsimem):
+    """Test doesn't crash without options"""
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        r"""{
+                "type": "FeatureCollection",
+                "name": "test",
+                "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } },
+                "features": [
+                    { "type": "Feature", "properties": { "id": 1 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 0, 0 ], [ 0, 1 ], [ 1, 1 ], [ 1, 0 ], [ 0, 0 ] ] ] } }
+                ]
+            }""",
+    )
+
+    # Open the dataset
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+    assert ds
+
+    # Create a raster to rasterize into.
+    target_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "out.tif", 10, 10, 1, gdal.GDT_Byte
+    )
+
+    assert target_ds
+
+    # Call rasterize
+    ds = gdal.Rasterize(target_ds, ds)

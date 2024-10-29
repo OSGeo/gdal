@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2007-2016, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_api.h"
@@ -254,6 +238,7 @@ class VRTBuilder
     bool bUseSrcMaskBand = true;
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
+    CPLStringList aosCreateOptions{};
 
     /* Internal variables */
     char *pszProjectionRef = nullptr;
@@ -279,6 +264,8 @@ class VRTBuilder
     void CreateVRTSeparate(VRTDatasetH hVRTDS);
     void CreateVRTNonSeparate(VRTDatasetH hVRTDS);
 
+    CPL_DISALLOW_COPY_ASSIGN(VRTBuilder)
+
   public:
     VRTBuilder(bool bStrictIn, const char *pszOutputFilename, int nInputFiles,
                const char *const *ppszInputFilenames, GDALDatasetH *pahSrcDSIn,
@@ -291,7 +278,8 @@ class VRTBuilder
                const char *pszVRTNoData, bool bUseSrcMaskBand,
                bool bNoDataFromMask, double dfMaskValueThreshold,
                const char *pszOutputSRS, const char *pszResampling,
-               const char *const *papszOpenOptionsIn);
+               const char *const *papszOpenOptionsIn,
+               const CPLStringList &aosCreateOptionsIn);
 
     ~VRTBuilder();
 
@@ -313,8 +301,9 @@ VRTBuilder::VRTBuilder(
     const char *pszSrcNoDataIn, const char *pszVRTNoDataIn,
     bool bUseSrcMaskBandIn, bool bNoDataFromMaskIn,
     double dfMaskValueThresholdIn, const char *pszOutputSRSIn,
-    const char *pszResamplingIn, const char *const *papszOpenOptionsIn)
-    : bStrict(bStrictIn)
+    const char *pszResamplingIn, const char *const *papszOpenOptionsIn,
+    const CPLStringList &aosCreateOptionsIn)
+    : bStrict(bStrictIn), aosCreateOptions(aosCreateOptionsIn)
 {
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
@@ -1623,8 +1612,13 @@ GDALDataset *VRTBuilder::Build(GDALProgressFunc pfnProgress,
         return nullptr;
     }
 
-    VRTDatasetH hVRTDS = VRTCreate(nRasterXSize, nRasterYSize);
-    GDALSetDescription(hVRTDS, pszOutputFilename);
+    VRTDatasetH hVRTDS = cpl::down_cast<VRTDataset *>(
+        VRTDataset::Create(pszOutputFilename, nRasterXSize, nRasterYSize, 0,
+                           GDT_Unknown, aosCreateOptions.List()));
+    if (!hVRTDS)
+    {
+        return nullptr;
+    }
 
     if (pszOutputSRS)
     {
@@ -1756,6 +1750,7 @@ struct GDALBuildVRTOptions
     std::vector<int> anSelectedBandList{};
     std::string osResampling{};
     CPLStringList aosOpenOptions{};
+    CPLStringList aosCreateOptions{};
     bool bUseSrcMaskBand = true;
     bool bNoDataFromMask = false;
     double dfMaskValueThreshold = 0;
@@ -1906,7 +1901,7 @@ GDALDatasetH GDALBuildVRT(const char *pszDest, int nSrcCount,
         sOptions.dfMaskValueThreshold,
         sOptions.osOutputSRS.empty() ? nullptr : sOptions.osOutputSRS.c_str(),
         sOptions.osResampling.empty() ? nullptr : sOptions.osResampling.c_str(),
-        sOptions.aosOpenOptions.List());
+        sOptions.aosOpenOptions.List(), sOptions.aosCreateOptions);
 
     return GDALDataset::ToHandle(
         oBuilder.Build(sOptions.pfnProgress, sOptions.pProgressData));
@@ -2155,6 +2150,8 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
         .help(_("Resampling algorithm."));
 
     argParser->add_open_options_argument(&psOptions->aosOpenOptions);
+
+    argParser->add_creation_options_argument(psOptions->aosCreateOptions);
 
     argParser->add_argument("-ignore_srcmaskband")
         .flag()

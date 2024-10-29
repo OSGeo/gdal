@@ -8,23 +8,7 @@
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -34,6 +18,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include "cpl_conv.h"
@@ -398,7 +383,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const float fNoData = static_cast<float>(padfNoData[0]);
             const float *pafData = reinterpret_cast<float *>(*ppImageData);
-            const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(fNoData));
+            const bool bIsNoDataNan = CPL_TO_BOOL(std::isnan(fNoData));
 
             // Nothing to do if value is out of range.
             if (padfNoData[1] != 0.0)
@@ -411,7 +396,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
             for (size_t iOffset = 0; iOffset < nPixels; ++iOffset)
             {
                 float fVal = pafData[iOffset];
-                if ((bIsNoDataNan && CPLIsNan(fVal)) ||
+                if ((bIsNoDataNan && std::isnan(fVal)) ||
                     (!bIsNoDataNan && ARE_REAL_EQUAL(fVal, fNoData)))
                 {
                     bAllValid = FALSE;
@@ -426,7 +411,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const double dfNoData = padfNoData[0];
             const double *padfData = reinterpret_cast<double *>(*ppImageData);
-            const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(dfNoData));
+            const bool bIsNoDataNan = CPL_TO_BOOL(std::isnan(dfNoData));
 
             // Nothing to do if value is out of range.
             if (padfNoData[1] != 0.0)
@@ -439,7 +424,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
             for (size_t iOffset = 0; iOffset < nPixels; ++iOffset)
             {
                 double dfVal = padfData[iOffset];
-                if ((bIsNoDataNan && CPLIsNan(dfVal)) ||
+                if ((bIsNoDataNan && std::isnan(dfVal)) ||
                     (!bIsNoDataNan && ARE_REAL_EQUAL(dfVal, dfNoData)))
                 {
                     bAllValid = FALSE;
@@ -454,7 +439,8 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const int nWordSize = GDALGetDataTypeSizeBytes(eType);
 
-            const bool bIsNoDataRealNan = CPL_TO_BOOL(CPLIsNan(padfNoData[0]));
+            const bool bIsNoDataRealNan =
+                CPL_TO_BOOL(std::isnan(padfNoData[0]));
 
             double *padfWrk =
                 static_cast<double *>(CPLMalloc(nXSize * sizeof(double) * 2));
@@ -467,7 +453,8 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
 
                 for (int iPixel = 0; iPixel < nXSize; ++iPixel)
                 {
-                    if (((bIsNoDataRealNan && CPLIsNan(padfWrk[iPixel * 2])) ||
+                    if (((bIsNoDataRealNan &&
+                          std::isnan(padfWrk[iPixel * 2])) ||
                          (!bIsNoDataRealNan &&
                           ARE_REAL_EQUAL(padfWrk[iPixel * 2], padfNoData[0]))))
                     {
@@ -1165,6 +1152,20 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * will be selected, not just those whose center point falls within the
  * polygon.</li>
  *
+ * <li>XSCALE: Ratio expressing the resampling factor (number of destination
+ * pixels per source pixel) along the target horizontal axis.
+ * The scale is used to determine the number of source pixels along the x-axis
+ * that are considered by the resampling algorithm.
+ * Equals to one for no resampling, below one for downsampling
+ * and above one for upsampling. This is automatically computed, for each
+ * processing chunk, and may thus vary among them, depending on the
+ * shape of output regions vs input regions. Such variations can be undesired
+ * in some situations. If the resampling factor can be considered as constant
+ * over the warped area, setting a constant value can lead to more reproducible
+ * pixel output.</li>
+ *
+ * <li>YSCALE: Same as XSCALE, but along the horizontal axis.</li>
+ *
  * <li>OPTIMIZE_SIZE: This defaults to FALSE, but may be set to TRUE
  * typically when writing to a compressed dataset (GeoTIFF with
  * COMPRESS creation option set for example) for achieving a smaller
@@ -1174,7 +1175,11 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * of the file. However sticking to target block size may cause major
  * processing slowdown for some particular reprojections. Starting
  * with GDAL 3.8, OPTIMIZE_SIZE mode is automatically enabled when it is safe
- * to do so.</li>
+ * to do so.
+ * As this parameter influences the shape of warping chunk, and by default the
+ * XSCALE and YSCALE parameters are computed per warping chunk, this parameter may
+ * influence the pixel output.
+ * </li>
  *
  * <li>NUM_THREADS: (GDAL >= 1.10) Can be set to a numeric value or ALL_CPUS to
  * set the number of threads to use to parallelize the computation part of the
@@ -1222,7 +1227,7 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * is sufficient.  Depending on the transformation in effect, the source
  * window may be a bit too small, or even missing large areas.  Problem
  * situations are those where the transformation is very non-linear or
- * "inside out".  Examples are transforming from WGS84 to Polar Steregraphic
+ * "inside out".  Examples are transforming from WGS84 to Polar Stereographic
  * for areas around the pole, or transformations where some of the image is
  * untransformable.  The following options provide some additional control
  * to deal with errors in computing the source window:
@@ -1534,6 +1539,32 @@ void CPL_STDCALL GDALWarpResolveWorkingDataType(GDALWarpOptions *psOptions)
 
     psOptions->eWorkingDataType = GDT_Byte;
 
+    // If none of the provided input nodata values can be represented in the
+    // data type of the corresponding source band, ignore them.
+    if (psOptions->hSrcDS && psOptions->padfSrcNoDataReal)
+    {
+        int nCountInvalidSrcNoDataReal = 0;
+        for (int iBand = 0; iBand < psOptions->nBandCount; iBand++)
+        {
+            GDALRasterBandH hSrcBand = GDALGetRasterBand(
+                psOptions->hSrcDS, psOptions->panSrcBands[iBand]);
+
+            if (hSrcBand &&
+                !GDALIsValueExactAs(psOptions->padfSrcNoDataReal[iBand],
+                                    GDALGetRasterDataType(hSrcBand)))
+            {
+                nCountInvalidSrcNoDataReal++;
+            }
+        }
+        if (nCountInvalidSrcNoDataReal == psOptions->nBandCount)
+        {
+            CPLFree(psOptions->padfSrcNoDataReal);
+            psOptions->padfSrcNoDataReal = nullptr;
+            CPLFree(psOptions->padfSrcNoDataImag);
+            psOptions->padfSrcNoDataImag = nullptr;
+        }
+    }
+
     for (int iBand = 0; iBand < psOptions->nBandCount; iBand++)
     {
         if (psOptions->hDstDS != nullptr)
@@ -1742,8 +1773,8 @@ CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
         CPLCreateXMLElementAndValue(psTree, "SourceDataset",
                                     GDALGetDescription(psWO->hSrcDS));
 
-        char **papszOpenOptions =
-            (static_cast<GDALDataset *>(psWO->hSrcDS))->GetOpenOptions();
+        CSLConstList papszOpenOptions =
+            GDALDataset::FromHandle(psWO->hSrcDS)->GetOpenOptions();
         GDALSerializeOpenOptionsToXML(psTree, papszOpenOptions);
     }
 
@@ -1802,7 +1833,7 @@ CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
 
         if (psWO->padfSrcNoDataImag != nullptr)
         {
-            if (CPLIsNan(psWO->padfSrcNoDataImag[i]))
+            if (std::isnan(psWO->padfSrcNoDataImag[i]))
                 CPLCreateXMLElementAndValue(psBand, "SrcNoDataImag", "nan");
             else
                 CPLCreateXMLElementAndValue(
@@ -1827,7 +1858,7 @@ CPLXMLNode *CPL_STDCALL GDALSerializeWarpOptions(const GDALWarpOptions *psWO)
 
         if (psWO->padfDstNoDataImag != nullptr)
         {
-            if (CPLIsNan(psWO->padfDstNoDataImag[i]))
+            if (std::isnan(psWO->padfDstNoDataImag[i]))
                 CPLCreateXMLElementAndValue(psBand, "DstNoDataImag", "nan");
             else
                 CPLCreateXMLElementAndValue(

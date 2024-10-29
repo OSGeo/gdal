@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2017 Even Rouault <even dot rouault at spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import stat
@@ -1186,6 +1170,15 @@ def test_vsigs_read_credentials_oauth2_authorized_user_json_file(
             data = gdal.VSIFReadL(1, 4, f).decode("ascii")
             gdal.VSIFCloseL(f)
 
+        assert data == "foo"
+
+        handler = webserver.SequentialHandler()
+        handler.add("GET", "/gs_fake_bucket/resource2", custom_method=method)
+        with webserver.install_http_handler(handler):
+            f = open_for_read("/vsigs/gs_fake_bucket/resource2")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+            gdal.VSIFCloseL(f)
         assert data == "foo"
 
         gdal.Unlink("/vsimem/service_account.json")

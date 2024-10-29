@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2015-2018, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_http.h"
@@ -34,8 +18,7 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 #include "../vrt/gdal_vrt.h"
-
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 
 #include <algorithm>
 
@@ -450,7 +433,7 @@ CPLHTTPResult *PLMosaicDataset::Download(const char *pszURL, int bQuiet404Error)
         vsi_l_offset nDataLength = 0;
         CPLString osURL(pszURL);
         if (osURL.back() == '/')
-            osURL.resize(osURL.size() - 1);
+            osURL.pop_back();
         GByte *pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLength, FALSE);
         if (pabyBuf)
         {
@@ -1329,6 +1312,7 @@ GDALDataset *PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
 
         CreateMosaicCachePathIfNecessary();
 
+        bool bUnlink = false;
         VSILFILE *fp =
             osCachePathRoot.size() ? VSIFOpenL(osTmpFilename, "wb") : nullptr;
         if (fp)
@@ -1349,9 +1333,10 @@ GDALDataset *PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
                 FlushDatasetsCache();
                 nCacheMaxSize = 1;
             }
-            osTmpFilename =
-                CPLSPrintf("/vsimem/single_tile_plmosaic_cache/%s/%d_%d.tif",
-                           osMosaic.c_str(), tile_x, tile_y);
+            bUnlink = true;
+            osTmpFilename = VSIMemGenerateHiddenFilename(
+                CPLSPrintf("single_tile_plmosaic_cache_%s_%d_%d.tif",
+                           osMosaic.c_str(), tile_x, tile_y));
             fp = VSIFOpenL(osTmpFilename, "wb");
             if (fp)
             {
@@ -1362,7 +1347,7 @@ GDALDataset *PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
         CPLHTTPDestroyResult(psResult);
         GDALDataset *poDS = OpenAndInsertNewDataset(osTmpFilename, osTilename);
 
-        if (STARTS_WITH(osTmpFilename, "/vsimem/single_tile_plmosaic_cache/"))
+        if (bUnlink)
             VSIUnlink(osTilename);
 
         return poDS;

@@ -56,7 +56,7 @@ Generate a color relief map:
                  [-alpha] [-exact_color_entry | -nearest_color_entry]
                  [-b <band>] [-of format] [-co <NAME>=<VALUE>]... [-q]
 
-    where color_text_file contains lines of the format "elevation_value red green blue [alpha]". If alpha column is present it can be enabled for use with '-alpha'. 
+    where color_text_file contains lines of the format "elevation_value red green blue [alpha]". If alpha column is present it can be enabled for use with '-alpha'.
 
 Generate a Terrain Ruggedness Index (TRI) map:
 
@@ -413,8 +413,8 @@ See also
 
 Documentation of related GRASS utilities:
 
-https://grass.osgeo.org/grass79/manuals/r.slope.aspect.html
+https://grass.osgeo.org/grass84/manuals/r.slope.aspect.html
 
-https://grass.osgeo.org/grass79/manuals/r.relief.html
+https://grass.osgeo.org/grass84/manuals/r.relief.html
 
-https://grass.osgeo.org/grass79/manuals/r.colors.html
+https://grass.osgeo.org/grass84/manuals/r.colors.html

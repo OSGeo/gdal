@@ -8,23 +8,7 @@
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_odbc.h"
@@ -36,8 +20,7 @@
 /*                         OGRODBCDataSource()                          */
 /************************************************************************/
 
-OGRODBCDataSource::OGRODBCDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr)
+OGRODBCDataSource::OGRODBCDataSource() : papoLayers(nullptr), nLayers(0)
 {
 }
 
@@ -48,8 +31,6 @@ OGRODBCDataSource::OGRODBCDataSource()
 OGRODBCDataSource::~OGRODBCDataSource()
 
 {
-    CPLFree(pszName);
-
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 
@@ -126,8 +107,6 @@ int OGRODBCDataSource::OpenMDB(GDALOpenInfo *poOpenInfo)
     // avoid loss of precision and missing values on Windows (see
     // https://github.com/OSGeo/gdal/issues/3885)
     m_nStatementFlags |= CPLODBCStatement::Flag::RetrieveNumericColumnsAsDouble;
-
-    pszName = CPLStrdup(pszNewName);
 
     // Collate a list of all tables in the data source
     CPLODBCStatement oTableList(&oSession);
@@ -337,8 +316,6 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
         CPLFree(pszSRSTableName);
         return FALSE;
     }
-
-    pszName = CPLStrdup(pszNewName);
 
     /* -------------------------------------------------------------------- */
     /*      If no explicit list of tables was given, check for a list in    */
@@ -576,8 +553,8 @@ OGRLayer *OGRODBCDataSource::ExecuteSQL(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Execute statement.                                              */

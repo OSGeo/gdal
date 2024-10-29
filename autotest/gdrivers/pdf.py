@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2010-2019, Even Rouault <even.rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -374,12 +358,14 @@ def test_pdf_ogcbp(poppler_or_pdfium_or_podofo):
         tst = gdaltest.GDALTest(
             "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP"]
         )
+        gdal.ErrorReset()
         tst.testCreateCopy(
             check_minmax=0,
             check_gt=1,
             check_srs=True,
             check_checksum_not_null=pdf_checksum_available(),
         )
+        assert gdal.GetLastErrorMsg() == ""
 
 
 ###############################################################################
@@ -1007,11 +993,19 @@ def _pdf_update_gcps(poppler_or_pdfium):
     gdaltest.pdf_drv.Delete(out_filename)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_pdf_update_gcps_iso32000(poppler_or_pdfium):
     gdal.SetConfigOption("GDAL_PDF_GEO_ENCODING", None)
     _pdf_update_gcps(poppler_or_pdfium)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_pdf_update_gcps_ogc_bp(poppler_or_pdfium):
     with gdal.config_option("GDAL_PDF_GEO_ENCODING", "OGC_BP"):
         _pdf_update_gcps(poppler_or_pdfium)
@@ -1021,6 +1015,10 @@ def test_pdf_update_gcps_ogc_bp(poppler_or_pdfium):
 # Check SetGCPs() but with GCPs that do *not* resolve to a geotransform
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_pdf_set_5_gcps_ogc_bp(poppler_or_pdfium):
     dpi = 300
     out_filename = "tmp/pdf_set_5_gcps_ogc_bp.pdf"
@@ -1246,6 +1244,10 @@ def test_pdf_set_neatline_ogc_bp(poppler_or_pdfium):
 # Check that we can generate identical file
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_pdf_check_identity_iso32000(poppler_or_pdfium):
     out_filename = "tmp/pdf_check_identity_iso32000.pdf"
 
@@ -1279,6 +1281,10 @@ def test_pdf_check_identity_iso32000(poppler_or_pdfium):
 # Check that we can generate identical file
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_pdf_check_identity_ogc_bp(poppler_or_pdfium):
     out_filename = "tmp/pdf_check_identity_ogc_bp.pdf"
 
@@ -1453,6 +1459,10 @@ if (button == 4) app.launchURL('http://gdal.org/');"""
 # Test CLIPPING_EXTENT, EXTRA_RASTERS, EXTRA_RASTERS_LAYER_NAME, OFF_LAYERS, EXCLUSIVE_LAYERS options
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_pdf_extra_rasters(poppler_or_pdfium):
     subbyte = """<VRTDataset rasterXSize="10" rasterYSize="10">
   <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]</SRS>
@@ -1719,6 +1729,10 @@ def test_pdf_jpeg_direct_copy(poppler_or_pdfium):
 # Test direct copy of source JPEG file within VRT file
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("JPEG")
 def test_pdf_jpeg_in_vrt_direct_copy(poppler_or_pdfium):
 

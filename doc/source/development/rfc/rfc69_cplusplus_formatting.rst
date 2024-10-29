@@ -13,7 +13,7 @@ Contact:    schwehr@google.com / schwehr@gmail.com
 Co-Author:  Alessandro Pasotti
 Contact:    elpaso@itopen.it
 Started:    2017-May-04
-Status:     Adpoted, implemented
+Status:     Adopted, implemented
 =========== ======================================
 
 This RFC is based on `GEOS RFC
@@ -159,11 +159,11 @@ different styles mixed.
 
 To skip the "big reformat" commit from ``git blame``, git offers a mechanism
 to [git_blame_ignore] , a pre-configured ignore file ``.git-blame-ignore-revs``
-will be provided in the source tree with the "big reformat" commit 
+will be provided in the source tree with the "big reformat" commit
 hash in it.
 
-The ignore file can be specified on the command line with 
-``git blame --ignore-revs-file .git-blame-ignore-revs`` or it can be set 
+The ignore file can be specified on the command line with
+``git blame --ignore-revs-file .git-blame-ignore-revs`` or it can be set
 permanently with ``git config blame.ignoreRevsFile .git-blame-ignore-revs``.
 
 The a.m. instructions will be added to the `developers documentation <https://gdal.org/development/dev_practices.html>`__.

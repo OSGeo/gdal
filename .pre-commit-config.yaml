@@ -5,7 +5,8 @@ repos:
         -   id: black
             exclude: >
               (?x)^(
-                swig/python/osgeo/|
+                swig/python/osgeo/__init__.py|
+                swig/python/osgeo/gdalnumeric.py|
                 autotest/ogr/data/
               )
     -   repo: https://github.com/timothycrosley/isort
@@ -14,7 +15,8 @@ repos:
         -   id: isort
             exclude: >
               (?x)^(
-                swig/python/osgeo/|
+                swig/python/osgeo/__init__.py|
+                swig/python/osgeo/gdalnumeric.py|
                 autotest/ogr/data/
               )
     -   repo: https://github.com/pycqa/flake8
@@ -23,7 +25,8 @@ repos:
         -   id: flake8
             exclude: >
               (?x)^(
-                swig/python/osgeo/|
+                swig/python/osgeo/__init__.py|
+                swig/python/osgeo/gdalnumeric.py|
                 examples/|
                 autotest/ogr/data/
               )
@@ -36,7 +39,8 @@ repos:
                 autotest/cpp/data/|
                 autotest/gdrivers/data/|
                 swig/|
-                third_party/|
+                third_party/fast_float/|
+                third_party/LercLib/|
                 autotest/ogr/data/|
                 alg/internal_libqhull/|
                 apps/argparse/|
@@ -53,10 +57,12 @@ repos:
                 frmts/grib/degrib/degrib|
                 frmts/grib/degrib/g2clib|
                 port/utf8.h|
+                ogr/ogrsf_frmts/adbc/ogr_adbc_internal.h|
                 ogr/ogrsf_frmts/cad/libopencad/|
                 ogr/ogrsf_frmts/geojson/libjson/|
                 ogr/ogrsf_frmts/flatgeobuf/flatbuffers/|
                 ogr/ogrsf_frmts/pmtiles/pmtiles/|
+                ogr/ogrsf_frmts/ods/ods_formula_parser.cpp|
                 ogr/ogrsf_frmts/sqlite/sqlite_rtree_bulk_load|
                 ogr/swq_parser.cpp|
                 ogr/swq_parser.hpp

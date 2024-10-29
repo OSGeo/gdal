@@ -11,23 +11,7 @@
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -593,7 +577,7 @@ def test_jpeg_17():
 
     assert not (
         gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == ""
-    )
+    ), "Premature end of file should be a failure by default"
 
     gdal.ErrorReset()
     ds = gdal.Open("data/jpeg/byte_corrupted2.jpg")
@@ -603,7 +587,7 @@ def test_jpeg_17():
 
     assert not (
         gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == ""
-    )
+    ), "Premature end of file should be a failure with GDAL_ERROR_ON_LIBJPEG_WARNING = TRUE"
 
     gdal.ErrorReset()
     ds = gdal.Open("data/jpeg/byte_corrupted2.jpg")
@@ -613,7 +597,35 @@ def test_jpeg_17():
 
     assert not (
         gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == ""
-    )
+    ), "Premature end of file should be a warning with GDAL_ERROR_ON_LIBJPEG_WARNING = FALSE"
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler("CPLQuietErrorHandler"):
+        ds = gdal.Open("data/jpeg/byte_corrupted3.jpg")
+        assert ds.GetRasterBand(1).Checksum() != 0
+
+    assert not (
+        gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == ""
+    ), "Extraneous bytes before marker should be a warning by default"
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler("CPLQuietErrorHandler"):
+        with gdaltest.config_option("GDAL_ERROR_ON_LIBJPEG_WARNING", "TRUE"):
+            ds = gdal.Open("data/jpeg/byte_corrupted3.jpg")
+
+    assert not (
+        gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == ""
+    ), "Extraneous bytes before marker should be a failure with GDAL_ERROR_ON_LIBJPEG_WARNING = TRUE"
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler("CPLQuietErrorHandler"):
+        with gdaltest.config_option("GDAL_ERROR_ON_LIBJPEG_WARNING", "FALSE"):
+            ds = gdal.Open("data/jpeg/byte_corrupted3.jpg")
+            assert ds.GetRasterBand(1).Checksum() != 0
+
+    assert not (
+        gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == ""
+    ), "Extraneous bytes before marker should be a warning with GDAL_ERROR_ON_LIBJPEG_WARNING = FALSE"
 
 
 ###############################################################################
@@ -772,6 +784,10 @@ def test_jpeg_mask_lsb_order_issue_4351():
 # Test correct GCP reading with PAM (#5352)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jpeg_20():
 
     src_ds = gdal.Open("data/rgb_gcp.vrt")

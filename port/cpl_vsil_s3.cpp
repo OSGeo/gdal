@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2018, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_atomic_ops.h"
@@ -167,7 +151,7 @@ void VSIDIRWithMissingDirSynthesis::SynthetizeMissingDirectories(
         }
 
         while (depth <= m_aosSubpathsStack.size())
-            m_aosSubpathsStack.resize(m_aosSubpathsStack.size() - 1);
+            m_aosSubpathsStack.pop_back();
 
         if (!m_aosSubpathsStack.empty() &&
             osCurSubdir.compare(0, nLastSlashPos, m_aosSubpathsStack.back()) !=
@@ -258,7 +242,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                 {
                     std::string osKey = pszKey;
                     if (!osKey.empty() && osKey.back() == '/')
-                        osKey.resize(osKey.size() - 1);
+                        osKey.pop_back();
                     if (osKey.size() > osPrefix.size())
                     {
                         ret = true;
@@ -391,7 +375,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                 {
                     std::string osKey = pszKey;
                     if (!osKey.empty() && osKey.back() == '/')
-                        osKey.resize(osKey.size() - 1);
+                        osKey.pop_back();
                     if (osKey.size() > osPrefix.size())
                     {
                         aoEntries.push_back(
@@ -645,7 +629,8 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     const char *GetDebugKey() const override
     {
@@ -752,7 +737,7 @@ VSIMultipartWriteHandle::VSIMultipartWriteHandle(
       m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename)),
       m_oRetryParameters(m_aosHTTPOptions)
 {
-    // AWS S3, OSS and GCS can use the mulipart upload mechanism, which has
+    // AWS S3, OSS and GCS can use the multipart upload mechanism, which has
     // the advantage of being retryable in case of errors.
     // Swift only supports the "Transfer-Encoding: chunked" PUT mechanism.
     // So two different implementations.
@@ -1202,7 +1187,7 @@ void VSIMultipartWriteHandle::InvalidateParentDirectory()
 
     std::string osFilenameWithoutSlash(m_osFilename);
     if (!osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/')
-        osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() - 1);
+        osFilenameWithoutSlash.pop_back();
     m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
 }
 
@@ -1530,7 +1515,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::AbortPendingUploads(
     std::string osDirnameWithoutPrefix = pszFilename + GetFSPrefix().size();
     if (!osDirnameWithoutPrefix.empty() && osDirnameWithoutPrefix.back() == '/')
     {
-        osDirnameWithoutPrefix.resize(osDirnameWithoutPrefix.size() - 1);
+        osDirnameWithoutPrefix.pop_back();
     }
 
     std::string osBucket(osDirnameWithoutPrefix);
@@ -2120,7 +2105,7 @@ int IVSIS3LikeFSHandler::RmdirRecursiveInternal(const char *pszDirname,
     std::string osDirnameWithoutEndSlash(pszDirname);
     if (!osDirnameWithoutEndSlash.empty() &&
         osDirnameWithoutEndSlash.back() == '/')
-        osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+        osDirnameWithoutEndSlash.pop_back();
 
     CPLStringList aosOptions;
     aosOptions.SetNameValue("CACHE_ENTRIES", "FALSE");
@@ -2641,7 +2626,7 @@ int IVSIS3LikeFSHandler::MkdirInternal(const char *pszDirname, long /*nMode*/,
     if (ret == 0)
     {
         std::string osDirnameWithoutEndSlash(osDirname);
-        osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+        osDirnameWithoutEndSlash.pop_back();
 
         InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash.c_str()));
 
@@ -2708,7 +2693,7 @@ int IVSIS3LikeFSHandler::Rmdir(const char *pszDirname)
     }
 
     std::string osDirnameWithoutEndSlash(osDirname);
-    osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+    osDirnameWithoutEndSlash.pop_back();
     if (osDirnameWithoutEndSlash.find('/', GetFSPrefix().size()) ==
         std::string::npos)
     {
@@ -2752,7 +2737,7 @@ int IVSIS3LikeFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
 
     std::string osFilenameWithoutSlash(osFilename);
     if (osFilenameWithoutSlash.back() == '/')
-        osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() - 1);
+        osFilenameWithoutSlash.pop_back();
 
     // If there's directory content for the directory where this file belongs
     // to, use it to detect if the object does not exist
@@ -2825,22 +2810,22 @@ VSICurlHandle *VSIS3FSHandler::CreateFileHandle(const char *pszFilename)
 /*                          GetURLFromFilename()                         */
 /************************************************************************/
 
-std::string VSIS3FSHandler::GetURLFromFilename(const std::string &osFilename)
+std::string
+VSIS3FSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
-    std::string osFilenameWithoutPrefix =
+    const std::string osFilenameWithoutPrefix =
         osFilename.substr(GetFSPrefix().size());
 
-    VSIS3HandleHelper *poS3HandleHelper = VSIS3HandleHelper::BuildFromURI(
-        osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str(), true);
-    if (poS3HandleHelper == nullptr)
+    auto poS3HandleHelper =
+        std::unique_ptr<VSIS3HandleHelper>(VSIS3HandleHelper::BuildFromURI(
+            osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str(), true));
+    if (!poS3HandleHelper)
     {
-        return "";
+        return std::string();
     }
     std::string osBaseURL(poS3HandleHelper->GetURL());
     if (!osBaseURL.empty() && osBaseURL.back() == '/')
-        osBaseURL.resize(osBaseURL.size() - 1);
-    delete poS3HandleHelper;
-
+        osBaseURL.pop_back();
     return osBaseURL;
 }
 
@@ -3266,7 +3251,7 @@ VSIDIR *IVSIS3LikeFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
     std::string osDirnameWithoutPrefix = pszPath + GetFSPrefix().size();
     if (!osDirnameWithoutPrefix.empty() && osDirnameWithoutPrefix.back() == '/')
     {
-        osDirnameWithoutPrefix.resize(osDirnameWithoutPrefix.size() - 1);
+        osDirnameWithoutPrefix.pop_back();
     }
 
     std::string osBucket(osDirnameWithoutPrefix);
@@ -3961,7 +3946,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     if (osSourceWithoutSlash.back() == '/' ||
         osSourceWithoutSlash.back() == '\\')
     {
-        osSourceWithoutSlash.resize(osSourceWithoutSlash.size() - 1);
+        osSourceWithoutSlash.pop_back();
     }
 
     const CPLHTTPRetryParameters oRetryParameters(
@@ -5026,15 +5011,15 @@ char *IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadStart(
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return nullptr;
-    auto poHandleHelper =
-        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false));
     if (poHandleHelper == nullptr)
         return nullptr;
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
     const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
 
     const std::string osRet = InitiateMultipartUpload(
-        pszFilename, poHandleHelper, oRetryParameters, papszOptions);
+        pszFilename, poHandleHelper.get(), oRetryParameters, papszOptions);
     if (osRet.empty())
         return nullptr;
     return CPLStrdup(osRet.c_str());
@@ -5051,16 +5036,16 @@ char *IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadAddPart(
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return nullptr;
-    auto poHandleHelper =
-        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false));
     if (poHandleHelper == nullptr)
         return nullptr;
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
     const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
 
-    const std::string osRet =
-        UploadPart(pszFilename, nPartNumber, pszUploadId, nFileOffset, pData,
-                   nDataLength, poHandleHelper, oRetryParameters, papszOptions);
+    const std::string osRet = UploadPart(
+        pszFilename, nPartNumber, pszUploadId, nFileOffset, pData, nDataLength,
+        poHandleHelper.get(), oRetryParameters, papszOptions);
     if (osRet.empty())
         return nullptr;
     return CPLStrdup(osRet.c_str());
@@ -5076,8 +5061,8 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadEnd(
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return false;
-    auto poHandleHelper =
-        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false));
     if (poHandleHelper == nullptr)
         return false;
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
@@ -5087,7 +5072,7 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadEnd(
     for (size_t i = 0; i < nPartIdsCount; ++i)
         aosTags.emplace_back(apszPartIds[i]);
     return CompleteMultipart(pszFilename, pszUploadId, aosTags, nTotalSize,
-                             poHandleHelper, oRetryParameters);
+                             poHandleHelper.get(), oRetryParameters);
 }
 
 /************************************************************************/
@@ -5099,13 +5084,13 @@ bool IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadAbort(
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return false;
-    auto poHandleHelper =
-        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false));
     if (poHandleHelper == nullptr)
         return false;
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
     const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
-    return AbortMultipart(pszFilename, pszUploadId, poHandleHelper,
+    return AbortMultipart(pszFilename, pszUploadId, poHandleHelper.get(),
                           oRetryParameters);
 }
 

@@ -9,23 +9,7 @@
  * Copyright (c) 1998, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -223,11 +207,12 @@ int CPL_STDCALL GDALGetCacheMax()
  * Gets the maximum amount of memory available to the GDALRasterBlock
  * caching system for caching GDAL read/write imagery.
  *
- * The first type this function is called, it will read the GDAL_CACHEMAX
+ * The first time this function is called, it will read the GDAL_CACHEMAX
  * configuration option to initialize the maximum cache memory.
  * Starting with GDAL 2.1, the value can be expressed as x% of the usable
- * physical RAM (which may potentially be used by other processes). Otherwise
- * it is expected to be a value in MB.
+ * physical RAM (which may potentially be used by other processes). Starting
+ * with GDAL 3.11, the value can include units of memory. If not units are
+ * provided the value is assumed to be in MB.
  *
  * @return maximum in bytes.
  *
@@ -248,60 +233,29 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
                 CPLTestBool(CPLGetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "NO"));
 
             const char *pszCacheMax = CPLGetConfigOption("GDAL_CACHEMAX", "5%");
-
             GIntBig nNewCacheMax;
-            if (strchr(pszCacheMax, '%') != nullptr)
+            bool bUnitSpecified = false;
+
+            if (CPLParseMemorySize(pszCacheMax, &nNewCacheMax,
+                                   &bUnitSpecified) != CE_None)
             {
-                GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
-                if (nUsablePhysicalRAM > 0)
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Invalid value for GDAL_CACHEMAX. "
+                         "Using default value.");
+                if (CPLParseMemorySize("5%", &nNewCacheMax, &bUnitSpecified) !=
+                    CE_None)
                 {
-                    // For some reason, coverity pretends that this will overflow.
-                    // "Multiply operation overflows on operands
-                    // static_cast<double>( nUsablePhysicalRAM ) and
-                    // CPLAtof(pszCacheMax). Example values for operands: CPLAtof(
-                    // pszCacheMax ) = 2251799813685248,
-                    // static_cast<double>(nUsablePhysicalRAM) =
-                    // -9223372036854775808." coverity[overflow,tainted_data]
-                    double dfCacheMax =
-                        static_cast<double>(nUsablePhysicalRAM) *
-                        CPLAtof(pszCacheMax) / 100.0;
-                    if (dfCacheMax >= 0 && dfCacheMax < 1e15)
-                        nNewCacheMax = static_cast<GIntBig>(dfCacheMax);
-                    else
-                        nNewCacheMax = nCacheMax;
-                }
-                else
-                {
-                    CPLDebug("GDAL", "Cannot determine usable physical RAM.");
+                    // This means that usable physical RAM could not be determined.
                     nNewCacheMax = nCacheMax;
                 }
             }
-            else
+
+            if (!bUnitSpecified && nNewCacheMax < 100000)
             {
-                nNewCacheMax = CPLAtoGIntBig(pszCacheMax);
-                if (nNewCacheMax < 100000)
-                {
-                    if (nNewCacheMax < 0)
-                    {
-                        CPLError(CE_Failure, CPLE_NotSupported,
-                                 "Invalid value for GDAL_CACHEMAX. "
-                                 "Using default value.");
-                        GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
-                        if (nUsablePhysicalRAM)
-                            nNewCacheMax = nUsablePhysicalRAM / 20;
-                        else
-                        {
-                            CPLDebug("GDAL",
-                                     "Cannot determine usable physical RAM.");
-                            nNewCacheMax = nCacheMax;
-                        }
-                    }
-                    else
-                    {
-                        nNewCacheMax *= 1024 * 1024;
-                    }
-                }
+                // Assume MB
+                nNewCacheMax *= (1024 * 1024);
             }
+
             nCacheMax = nNewCacheMax;
             CPLDebug("GDAL", "GDAL_CACHEMAX = " CPL_FRMT_GIB " MB",
                      nCacheMax / (1024 * 1024));

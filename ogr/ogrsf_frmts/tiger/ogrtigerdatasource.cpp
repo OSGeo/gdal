@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam <warmerdam@pobox.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
@@ -234,10 +218,9 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion(TigerVersion nOldVersion,
 /************************************************************************/
 
 OGRTigerDataSource::OGRTigerDataSource()
-    : pszName(nullptr), nLayers(0), papoLayers(nullptr),
-      poSpatialRef(new OGRSpatialReference()), papszOptions(nullptr),
-      pszPath(nullptr), nModules(0), papszModules(nullptr), nVersionCode(0),
-      nVersion(TIGER_Unknown)
+    : nLayers(0), papoLayers(nullptr), poSpatialRef(new OGRSpatialReference()),
+      papszOptions(nullptr), pszPath(nullptr), nModules(0),
+      papszModules(nullptr), nVersionCode(0), nVersion(TIGER_Unknown)
 {
     poSpatialRef->SetWellKnownGeogCS("NAD83");
     poSpatialRef->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -255,7 +238,6 @@ OGRTigerDataSource::~OGRTigerDataSource()
 
     CPLFree(papoLayers);
 
-    CPLFree(pszName);
     CPLFree(pszPath);
 
     CSLDestroy(papszOptions);
@@ -326,8 +308,6 @@ int OGRTigerDataSource::Open(const char *pszFilename, int bTestOpen,
                              char **papszLimitedFileList)
 
 {
-    pszName = CPLStrdup(pszFilename);
-
     /* -------------------------------------------------------------------- */
     /*      Is the given path a directory or a regular file?                */
     /* -------------------------------------------------------------------- */
@@ -743,14 +723,4 @@ char *OGRTigerDataSource::BuildFilename(const char *pszModuleName,
                  pszModuleName, pszExtension);
 
     return pszFilename;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRTigerDataSource::TestCapability(const char *)
-
-{
-    return FALSE;
 }

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_error.h"
@@ -828,8 +812,6 @@ bool OGRWKBIntersectsPessimistic(const GByte *pabyWkb, size_t nWKBSize,
 /*                            epsilonEqual()                            */
 /************************************************************************/
 
-constexpr double EPSILON = 1.0E-5;
-
 static inline bool epsilonEqual(double a, double b, double eps)
 {
     return ::fabs(a - b) < eps;
@@ -864,6 +846,8 @@ static inline double GetY(const GByte *data, uint32_t i, int nDim,
 static bool OGRWKBIsClockwiseRing(const GByte *data, const uint32_t nPoints,
                                   const int nDim, const bool bNeedSwap)
 {
+    constexpr double EPSILON = 1.0E-5;
+
     // WARNING: keep in sync OGRLineString::isClockwise(),
     // OGRCurve::isClockwise() and OGRWKBIsClockwiseRing()
 
@@ -891,7 +875,7 @@ static bool OGRWKBIsClockwiseRing(const GByte *data, const uint32_t nPoints,
             {
                 v = i;
                 vX = x;
-                vY = y;
+                // vY = y;
                 bUseFallback = false;
             }
             else if (x == vX)
@@ -1070,6 +1054,357 @@ void OGRWKBFixupCounterClockWiseExternalRing(GByte *pabyWkb, size_t nWKBSize)
     size_t iOffsetInOut = 0;
     OGRWKBFixupCounterClockWiseExternalRingInternal(
         pabyWkb, nWKBSize, iOffsetInOut, /* nRec = */ 0);
+}
+
+/************************************************************************/
+/*                        OGRWKBPointUpdater()                          */
+/************************************************************************/
+
+OGRWKBPointUpdater::OGRWKBPointUpdater() = default;
+
+/************************************************************************/
+/*              OGRWKBIntersectsPointSequencePessimistic()              */
+/************************************************************************/
+
+static bool OGRWKBUpdatePointsSequence(uint8_t *data, const size_t size,
+                                       OGRWKBPointUpdater &oUpdater,
+                                       const OGRwkbByteOrder eByteOrder,
+                                       const int nDim, const bool bHasZ,
+                                       const bool bHasM, size_t &iOffsetInOut)
+{
+    const uint32_t nPoints =
+        OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+    if (nPoints > (size - iOffsetInOut) / (nDim * sizeof(double)))
+    {
+        return false;
+    }
+    const bool bNeedSwap = OGR_SWAP(eByteOrder);
+    for (uint32_t j = 0; j < nPoints; j++)
+    {
+        void *pdfX = data + iOffsetInOut;
+        void *pdfY = data + iOffsetInOut + sizeof(double);
+        void *pdfZ = bHasZ ? data + iOffsetInOut + 2 * sizeof(double) : nullptr;
+        void *pdfM =
+            bHasM ? data + iOffsetInOut + (bHasZ ? 3 : 2) * sizeof(double)
+                  : nullptr;
+        if (!oUpdater.update(bNeedSwap, pdfX, pdfY, pdfZ, pdfM))
+            return false;
+
+        iOffsetInOut += nDim * sizeof(double);
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                        OGRWKBVisitRingSequence()                     */
+/************************************************************************/
+
+static bool OGRWKBVisitRingSequence(uint8_t *data, const size_t size,
+                                    OGRWKBPointUpdater &oUpdater,
+                                    const OGRwkbByteOrder eByteOrder,
+                                    const int nDim, const bool bHasZ,
+                                    const bool bHasM, size_t &iOffsetInOut)
+{
+    const uint32_t nRings =
+        OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+    if (nRings > (size - iOffsetInOut) / sizeof(uint32_t))
+    {
+        return false;
+    }
+
+    for (uint32_t i = 0; i < nRings; ++i)
+    {
+        if (iOffsetInOut + sizeof(uint32_t) > size)
+        {
+            return false;
+        }
+        if (!OGRWKBUpdatePointsSequence(data, size, oUpdater, eByteOrder, nDim,
+                                        bHasZ, bHasM, iOffsetInOut))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                      OGRWKBUpdatePoints()                             */
+/************************************************************************/
+
+static bool OGRWKBUpdatePoints(uint8_t *data, const size_t size,
+                               OGRWKBPointUpdater &oUpdater,
+                               size_t &iOffsetInOut, const int nRec)
+{
+    if (size - iOffsetInOut < MIN_WKB_SIZE)
+    {
+        return false;
+    }
+    const int nByteOrder = DB2_V72_FIX_BYTE_ORDER(data[iOffsetInOut]);
+    if (!(nByteOrder == wkbXDR || nByteOrder == wkbNDR))
+    {
+        return false;
+    }
+    const OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(nByteOrder);
+
+    OGRwkbGeometryType eGeometryType = wkbUnknown;
+    OGRReadWKBGeometryType(data + iOffsetInOut, wkbVariantIso, &eGeometryType);
+    iOffsetInOut += 5;
+    const auto eFlatType = wkbFlatten(eGeometryType);
+
+    if (eFlatType == wkbGeometryCollection || eFlatType == wkbCompoundCurve ||
+        eFlatType == wkbCurvePolygon || eFlatType == wkbMultiPoint ||
+        eFlatType == wkbMultiLineString || eFlatType == wkbMultiPolygon ||
+        eFlatType == wkbMultiCurve || eFlatType == wkbMultiSurface ||
+        eFlatType == wkbPolyhedralSurface || eFlatType == wkbTIN)
+    {
+        if (nRec == 128)
+            return false;
+
+        const uint32_t nParts =
+            OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+        if (nParts > (size - iOffsetInOut) / MIN_WKB_SIZE)
+        {
+            return false;
+        }
+        for (uint32_t k = 0; k < nParts; k++)
+        {
+            if (!OGRWKBUpdatePoints(data, size, oUpdater, iOffsetInOut,
+                                    nRec + 1))
+                return false;
+        }
+        return true;
+    }
+
+    const bool bHasZ = OGR_GT_HasZ(eGeometryType);
+    const bool bHasM = OGR_GT_HasM(eGeometryType);
+    const int nDim = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
+
+    if (eFlatType == wkbPoint)
+    {
+        if (size - iOffsetInOut < nDim * sizeof(double))
+            return false;
+        void *pdfX = data + iOffsetInOut;
+        void *pdfY = data + iOffsetInOut + sizeof(double);
+        void *pdfZ = bHasZ ? data + iOffsetInOut + 2 * sizeof(double) : nullptr;
+        void *pdfM =
+            bHasM ? data + iOffsetInOut + (bHasZ ? 3 : 2) * sizeof(double)
+                  : nullptr;
+        const bool bNeedSwap = OGR_SWAP(eByteOrder);
+        if (!oUpdater.update(bNeedSwap, pdfX, pdfY, pdfZ, pdfM))
+            return false;
+        iOffsetInOut += nDim * sizeof(double);
+        return true;
+    }
+
+    if (eFlatType == wkbLineString || eFlatType == wkbCircularString)
+    {
+        return OGRWKBUpdatePointsSequence(data, size, oUpdater, eByteOrder,
+                                          nDim, bHasZ, bHasM, iOffsetInOut);
+    }
+
+    if (eFlatType == wkbPolygon || eFlatType == wkbTriangle)
+    {
+        return OGRWKBVisitRingSequence(data, size, oUpdater, eByteOrder, nDim,
+                                       bHasZ, bHasM, iOffsetInOut);
+    }
+
+    CPLDebug("OGR", "Unknown WKB geometry type");
+    return false;
+}
+
+/** Visit all points of a WKB geometry to update them.
+ */
+bool OGRWKBUpdatePoints(GByte *pabyWkb, size_t nWKBSize,
+                        OGRWKBPointUpdater &oUpdater)
+{
+    size_t iOffsetInOut = 0;
+    return OGRWKBUpdatePoints(pabyWkb, nWKBSize, oUpdater, iOffsetInOut,
+                              /* nRec = */ 0);
+}
+
+/************************************************************************/
+/*                    OGRWKBTransformCache::clear()                     */
+/************************************************************************/
+
+#ifdef OGR_WKB_TRANSFORM_ALL_AT_ONCE
+void OGRWKBTransformCache::clear()
+{
+    abNeedSwap.clear();
+    abIsEmpty.clear();
+    apdfX.clear();
+    apdfY.clear();
+    apdfZ.clear();
+    apdfM.clear();
+    adfX.clear();
+    adfY.clear();
+    adfZ.clear();
+    adfM.clear();
+    anErrorCodes.clear();
+}
+#endif
+
+/************************************************************************/
+/*                         OGRWKBTransform()                            */
+/************************************************************************/
+
+/** Visit all points of a WKB geometry to transform them.
+ */
+bool OGRWKBTransform(GByte *pabyWkb, size_t nWKBSize,
+                     OGRCoordinateTransformation *poCT,
+                     [[maybe_unused]] OGRWKBTransformCache &oCache,
+                     OGREnvelope3D &sEnvelope)
+{
+#ifndef OGR_WKB_TRANSFORM_ALL_AT_ONCE
+    struct OGRWKBPointUpdaterReproj final : public OGRWKBPointUpdater
+    {
+        OGRCoordinateTransformation *m_poCT;
+        OGREnvelope3D &m_sEnvelope;
+
+        explicit OGRWKBPointUpdaterReproj(OGRCoordinateTransformation *poCTIn,
+                                          OGREnvelope3D &sEnvelopeIn)
+            : m_poCT(poCTIn), m_sEnvelope(sEnvelopeIn)
+        {
+        }
+
+        bool update(bool bNeedSwap, void *x, void *y, void *z,
+                    void * /* m */) override
+        {
+            double dfX, dfY, dfZ;
+            memcpy(&dfX, x, sizeof(double));
+            memcpy(&dfY, y, sizeof(double));
+            if (bNeedSwap)
+            {
+                CPL_SWAP64PTR(&dfX);
+                CPL_SWAP64PTR(&dfY);
+            }
+            if (!(std::isnan(dfX) && std::isnan(dfY)))
+            {
+                if (z)
+                {
+                    memcpy(&dfZ, z, sizeof(double));
+                    if (bNeedSwap)
+                    {
+                        CPL_SWAP64PTR(&dfZ);
+                    }
+                }
+                else
+                    dfZ = 0;
+                int nErrorCode = 0;
+                m_poCT->TransformWithErrorCodes(1, &dfX, &dfY, &dfZ, nullptr,
+                                                &nErrorCode);
+                if (nErrorCode)
+                    return false;
+                m_sEnvelope.Merge(dfX, dfY, dfZ);
+                if (bNeedSwap)
+                {
+                    CPL_SWAP64PTR(&dfX);
+                    CPL_SWAP64PTR(&dfY);
+                    CPL_SWAP64PTR(&dfZ);
+                }
+                memcpy(x, &dfX, sizeof(double));
+                memcpy(y, &dfY, sizeof(double));
+                if (z)
+                    memcpy(z, &dfZ, sizeof(double));
+            }
+            return true;
+        }
+
+      private:
+        OGRWKBPointUpdaterReproj(const OGRWKBPointUpdaterReproj &) = delete;
+        OGRWKBPointUpdaterReproj &
+        operator=(const OGRWKBPointUpdaterReproj &) = delete;
+    };
+
+    sEnvelope = OGREnvelope3D();
+    OGRWKBPointUpdaterReproj oUpdater(poCT, sEnvelope);
+    return OGRWKBUpdatePoints(pabyWkb, nWKBSize, oUpdater);
+
+#else
+    struct OGRWKBPointUpdaterReproj final : public OGRWKBPointUpdater
+    {
+        OGRWKBTransformCache &m_oCache;
+
+        explicit OGRWKBPointUpdaterReproj(OGRWKBTransformCache &oCacheIn)
+            : m_oCache(oCacheIn)
+        {
+        }
+
+        bool update(bool bNeedSwap, void *x, void *y, void *z,
+                    void * /* m */) override
+        {
+            m_oCache.abNeedSwap.push_back(bNeedSwap);
+            m_oCache.apdfX.push_back(x);
+            m_oCache.apdfY.push_back(y);
+            m_oCache.apdfZ.push_back(z);
+            return true;
+        }
+    };
+
+    oCache.clear();
+    OGRWKBPointUpdaterReproj oUpdater(oCache);
+    if (!OGRWKBUpdatePoints(pabyWkb, nWKBSize, oUpdater))
+        return false;
+
+    oCache.adfX.resize(oCache.apdfX.size());
+    oCache.adfY.resize(oCache.apdfX.size());
+    oCache.adfZ.resize(oCache.apdfX.size());
+
+    for (size_t i = 0; i < oCache.apdfX.size(); ++i)
+    {
+        memcpy(&oCache.adfX[i], oCache.apdfX[i], sizeof(double));
+        memcpy(&oCache.adfY[i], oCache.apdfY[i], sizeof(double));
+        if (oCache.apdfZ[i])
+            memcpy(&oCache.adfZ[i], oCache.apdfZ[i], sizeof(double));
+        if (oCache.abNeedSwap[i])
+        {
+            CPL_SWAP64PTR(&oCache.adfX[i]);
+            CPL_SWAP64PTR(&oCache.adfY[i]);
+            CPL_SWAP64PTR(&oCache.adfZ[i]);
+        }
+        oCache.abIsEmpty.push_back(std::isnan(oCache.adfX[i]) &&
+                                   std::isnan(oCache.adfY[i]));
+    }
+
+    oCache.anErrorCodes.resize(oCache.apdfX.size());
+    poCT->TransformWithErrorCodes(static_cast<int>(oCache.apdfX.size()),
+                                  oCache.adfX.data(), oCache.adfY.data(),
+                                  oCache.adfZ.data(), nullptr,
+                                  oCache.anErrorCodes.data());
+
+    for (size_t i = 0; i < oCache.apdfX.size(); ++i)
+    {
+        if (!oCache.abIsEmpty[i] && oCache.anErrorCodes[i])
+            return false;
+    }
+
+    sEnvelope = OGREnvelope3D();
+    for (size_t i = 0; i < oCache.apdfX.size(); ++i)
+    {
+        if (oCache.abIsEmpty[i])
+        {
+            oCache.adfX[i] = std::numeric_limits<double>::quiet_NaN();
+            oCache.adfY[i] = std::numeric_limits<double>::quiet_NaN();
+            oCache.adfZ[i] = std::numeric_limits<double>::quiet_NaN();
+        }
+        else
+        {
+            sEnvelope.Merge(oCache.adfX[i], oCache.adfY[i], oCache.adfZ[i]);
+        }
+        if (oCache.abNeedSwap[i])
+        {
+            CPL_SWAP64PTR(&oCache.adfX[i]);
+            CPL_SWAP64PTR(&oCache.adfY[i]);
+            CPL_SWAP64PTR(&oCache.adfZ[i]);
+        }
+        memcpy(oCache.apdfX[i], &oCache.adfX[i], sizeof(double));
+        memcpy(oCache.apdfY[i], &oCache.adfY[i], sizeof(double));
+        if (oCache.apdfZ[i])
+            memcpy(oCache.apdfZ[i], &oCache.adfZ[i], sizeof(double));
+    }
+
+    return true;
+#endif
 }
 
 /************************************************************************/

@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -2870,3 +2854,92 @@ def test_ogr_openfilegdb_read_objectid_64bit_sparse_test_ogrsf(ogrsf_path):
 
     success = "INFO" in ret and "ERROR" not in ret
     assert success
+
+
+###############################################################################
+# Test reading http:// resource
+
+
+@pytest.mark.require_curl()
+@pytest.mark.require_driver("HTTP")
+def test_ogr_openfilegdb_read_from_http():
+
+    import webserver
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    response = open("data/filegdb/testopenfilegdb.gdb.zip", "rb").read()
+
+    try:
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/foo",
+            200,
+            {
+                "Content-Disposition": 'attachment; filename="foo.gdb.zip"; size='
+                + str(len(response))
+            },
+            response,
+        )
+        with webserver.install_http_handler(handler):
+            ds = gdal.OpenEx(
+                "http://localhost:%d/foo" % webserver_port,
+                allowed_drivers=["OpenFileGDB", "HTTP"],
+            )
+            assert ds is not None
+            assert ds.GetLayerCount() != 0
+
+        # If we have the GeoJSON driver, there will be one initial GET done by it
+        if ogr.GetDriverByName("GeoJSON"):
+            handler = webserver.SequentialHandler()
+            handler.add(
+                "GET",
+                "/foo",
+                200,
+                {
+                    "Content-Disposition": 'attachment; filename="foo.gdb.zip"; size='
+                    + str(len(response))
+                },
+                response,
+            )
+            handler.add(
+                "GET",
+                "/foo",
+                200,
+                {
+                    "Content-Disposition": 'attachment; filename="foo.gdb.zip"; size='
+                    + str(len(response))
+                },
+                response,
+            )
+            with webserver.install_http_handler(handler):
+                ds = gdal.OpenEx(
+                    "http://localhost:%d/foo" % webserver_port,
+                    allowed_drivers=["GeoJSON", "OpenFileGDB", "HTTP"],
+                )
+                assert ds is not None
+                assert ds.GetLayerCount() != 0
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+
+###############################################################################
+# Test reading a geometry where there is an arc with an interior point, but
+# it is actually flagged as a line
+
+
+def test_ogr_openfilegdb_arc_interior_point_bug_line():
+
+    with ogr.Open("data/filegdb/arc_segment_interior_point_but_line.gdb.zip") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(
+            f,
+            "MULTILINESTRING ((37252520.1717 7431529.9154,38549084.9654 758964.7573))",
+        )

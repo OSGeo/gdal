@@ -7,36 +7,20 @@
  ******************************************************************************
  * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_carto.h"
 #include "ogr_pgdump.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 
 /************************************************************************/
 /*                        OGRCARTODataSource()                        */
 /************************************************************************/
 
 OGRCARTODataSource::OGRCARTODataSource()
-    : pszName(nullptr), pszAccount(nullptr), papoLayers(nullptr), nLayers(0),
-      bReadWrite(false), bBatchInsert(true), bCopyMode(true), bUseHTTPS(false),
+    : pszAccount(nullptr), papoLayers(nullptr), nLayers(0), bReadWrite(false),
+      bBatchInsert(true), bCopyMode(true), bUseHTTPS(false),
       bMustCleanPersistent(false), bHasOGRMetadataFunction(-1),
       nPostGISMajor(2), nPostGISMinor(0)
 {
@@ -62,7 +46,6 @@ OGRCARTODataSource::~OGRCARTODataSource()
         CSLDestroy(papszOptions);
     }
 
-    CPLFree(pszName);
     CPLFree(pszAccount);
 }
 
@@ -96,16 +79,6 @@ OGRLayer *OGRCARTODataSource::GetLayer(int iLayer)
         return nullptr;
     else
         return papoLayers[iLayer];
-}
-
-/************************************************************************/
-/*                          GetLayerByName()                            */
-/************************************************************************/
-
-OGRLayer *OGRCARTODataSource::GetLayerByName(const char *pszLayerName)
-{
-    OGRLayer *poLayer = OGRDataSource::GetLayerByName(pszLayerName);
-    return poLayer;
 }
 
 /************************************************************************/
@@ -144,7 +117,6 @@ int OGRCARTODataSource::Open(const char *pszFilename, char **papszOpenOptionsIn,
     if (bCopyMode)
         bBatchInsert = TRUE;
 
-    pszName = CPLStrdup(pszFilename);
     if (CSLFetchNameValue(papszOpenOptionsIn, "ACCOUNT"))
         pszAccount =
             CPLStrdup(CSLFetchNameValue(papszOpenOptionsIn, "ACCOUNT"));
@@ -888,8 +860,8 @@ OGRLayer *OGRCARTODataSource::ExecuteSQLInternal(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Special case DELLAYER: command.                                 */

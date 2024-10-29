@@ -106,6 +106,14 @@ set(GDAL_PYTHON_CSOURCES
       list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/__init__.py")
   endif()
 
+  if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+      add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_fsspec.py"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/gdal_fsspec.py" "${CMAKE_CURRENT_BINARY_DIR}/osgeo"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/osgeo/gdal_fsspec.py")
+      list(APPEND GDAL_PYTHON_PYSOURCES "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_fsspec.py")
+  endif()
+
   foreach(_file IN ITEMS ${GDAL_PYTHON_CSOURCES})
       add_custom_command(
         OUTPUT ${_file}
@@ -544,6 +552,7 @@ elseif (Python_Development_FOUND)
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal.py
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalconst.py
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalnumeric.py
+            ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_fsspec.py
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gnm.py
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/ogr.py
             ${CMAKE_CURRENT_BINARY_DIR}/osgeo/osr.py
@@ -554,6 +563,7 @@ elseif (Python_Development_FOUND)
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal.py
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalconst.py
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalnumeric.py
+          ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_fsspec.py
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gnm.py
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/ogr.py
           ${CMAKE_CURRENT_BINARY_DIR}/osgeo/osr.py

@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2009, Phil Vachon, <philippe at cowpig.ca>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GDAL_PRIV_TEMPLATES_HPP_INCLUDED
@@ -208,7 +192,7 @@ template <class T> inline bool GDALIsValueExactAs(double dfValue)
 
 template <> inline bool GDALIsValueExactAs<float>(double dfValue)
 {
-    return std::isnan(dfValue) ||
+    return CPLIsNan(dfValue) ||
            (GDALIsValueInRange<float>(dfValue) &&
             static_cast<double>(static_cast<float>(dfValue)) == dfValue);
 }
@@ -216,7 +200,7 @@ template <> inline bool GDALIsValueExactAs<float>(double dfValue)
 #ifdef HAVE__FLOAT16
 template <> inline bool GDALIsValueExactAs<_Float16>(double dfValue)
 {
-    return std::isnan(dfValue) ||
+    return CPLIsNan(dfValue) ||
            (GDALIsValueInRange<_Float16>(dfValue) &&
             static_cast<double>(static_cast<_Float16>(dfValue)) == dfValue);
 }
@@ -391,13 +375,42 @@ template <> struct sGDALCopyWord<double, std::int64_t>
         if (CPLIsNan(dfValueIn))
         {
             nValueOut = 0;
-            return;
         }
-        double dfMaxVal, dfMinVal;
-        GDALGetDataLimits<double, std::int64_t>(dfMaxVal, dfMinVal);
-        double dfValue = dfValueIn >= 0.0 ? dfValueIn + 0.5 : dfValueIn - 0.5;
-        nValueOut = static_cast<std::int64_t>(
-            GDALClampValue(dfValue, dfMaxVal, dfMinVal));
+        else if (dfValueIn >=
+                 static_cast<double>(GDALNumericLimits<std::int64_t>::max()))
+        {
+            nValueOut = GDALNumericLimits<std::int64_t>::max();
+        }
+        else if (dfValueIn <=
+                 static_cast<double>(GDALNumericLimits<std::int64_t>::min()))
+        {
+            nValueOut = GDALNumericLimits<std::int64_t>::min();
+        }
+        else
+        {
+            nValueOut = static_cast<std::int64_t>(
+                dfValueIn > 0.0f ? dfValueIn + 0.5f : dfValueIn - 0.5f);
+        }
+    }
+};
+
+template <> struct sGDALCopyWord<double, std::uint64_t>
+{
+    static inline void f(const double dfValueIn, std::uint64_t &nValueOut)
+    {
+        if (!(dfValueIn > 0))
+        {
+            nValueOut = 0;
+        }
+        else if (dfValueIn >
+                 static_cast<double>(GDALNumericLimits<uint64_t>::max()))
+        {
+            nValueOut = GDALNumericLimits<uint64_t>::max();
+        }
+        else
+        {
+            nValueOut = static_cast<std::uint64_t>(dfValueIn + 0.5);
+        }
     }
 };
 
@@ -441,7 +454,11 @@ template <> struct sGDALCopyWord<float, int>
 {
     static inline void f(const float fValueIn, int &nValueOut)
     {
-        if (fValueIn >= static_cast<float>(GDALNumericLimits<int>::max()))
+        if (CPLIsNan(fValueIn))
+        {
+            nValueOut = 0;
+        }
+        else if (fValueIn >= static_cast<float>(GDALNumericLimits<int>::max()))
         {
             nValueOut = GDALNumericLimits<int>::max();
         }
@@ -464,15 +481,14 @@ template <> struct sGDALCopyWord<float, unsigned int>
 {
     static inline void f(const float fValueIn, unsigned int &nValueOut)
     {
-        if (fValueIn >=
-            static_cast<float>(GDALNumericLimits<unsigned int>::max()))
+        if (!(fValueIn > 0))
+        {
+            nValueOut = 0;
+        }
+        else if (fValueIn >=
+                 static_cast<float>(GDALNumericLimits<unsigned int>::max()))
         {
             nValueOut = GDALNumericLimits<unsigned int>::max();
-        }
-        else if (fValueIn <=
-                 static_cast<float>(GDALNumericLimits<unsigned int>::lowest()))
-        {
-            nValueOut = GDALNumericLimits<unsigned int>::lowest();
         }
         else
         {
@@ -487,8 +503,12 @@ template <> struct sGDALCopyWord<float, std::int64_t>
 {
     static inline void f(const float fValueIn, std::int64_t &nValueOut)
     {
-        if (fValueIn >=
-            static_cast<float>(GDALNumericLimits<std::int64_t>::max()))
+        if (CPLIsNan(fValueIn))
+        {
+            nValueOut = 0;
+        }
+        else if (fValueIn >=
+                 static_cast<float>(GDALNumericLimits<std::int64_t>::max()))
         {
             nValueOut = GDALNumericLimits<std::int64_t>::max();
         }
@@ -511,15 +531,14 @@ template <> struct sGDALCopyWord<float, std::uint64_t>
 {
     static inline void f(const float fValueIn, std::uint64_t &nValueOut)
     {
-        if (fValueIn >=
-            static_cast<float>(GDALNumericLimits<std::uint64_t>::max()))
+        if (!(fValueIn > 0))
+        {
+            nValueOut = 0;
+        }
+        else if (fValueIn >=
+                 static_cast<float>(GDALNumericLimits<std::uint64_t>::max()))
         {
             nValueOut = GDALNumericLimits<std::uint64_t>::max();
-        }
-        else if (fValueIn <=
-                 static_cast<float>(GDALNumericLimits<std::uint64_t>::lowest()))
-        {
-            nValueOut = GDALNumericLimits<std::uint64_t>::lowest();
         }
         else
         {

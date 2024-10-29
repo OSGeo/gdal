@@ -9,23 +9,7 @@
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGRMEM_H_INCLUDED
@@ -177,23 +161,16 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 /*                           OGRMemDataSource                           */
 /************************************************************************/
 
-class OGRMemDataSource CPL_NON_FINAL : public OGRDataSource
+class OGRMemDataSource CPL_NON_FINAL : public GDALDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMemDataSource)
 
     OGRMemLayer **papoLayers;
     int nLayers;
 
-    char *pszName;
-
   public:
     OGRMemDataSource(const char *, char **);
     virtual ~OGRMemDataSource();
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {
@@ -217,24 +194,6 @@ class OGRMemDataSource CPL_NON_FINAL : public OGRDataSource
 
     bool UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                            std::string &failureReason) override;
-};
-
-/************************************************************************/
-/*                             OGRMemDriver                             */
-/************************************************************************/
-
-class OGRMemDriver final : public OGRSFDriver
-{
-  public:
-    virtual ~OGRMemDriver();
-
-    const char *GetName() override;
-    OGRDataSource *Open(const char *, int) override;
-
-    virtual OGRDataSource *CreateDataSource(const char *pszName,
-                                            char ** = nullptr) override;
-
-    int TestCapability(const char *) override;
 };
 
 #endif  // ndef OGRMEM_H_INCLUDED

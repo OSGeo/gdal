@@ -11,23 +11,7 @@
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "nitfdrivercore.h"
@@ -87,7 +71,7 @@ int NITFDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 void NITFDriverSetCommonMetadata(GDALDriver *poDriver)
 {
-    poDriver->SetDescription(DRIVER_NAME);
+    poDriver->SetDescription(NITF_DRIVER_NAME);
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "National Imagery Transmission Format");
@@ -117,22 +101,189 @@ void NITFDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
+/*                     RPFTOCDriverIdentify()                           */
+/************************************************************************/
+
+int RPFTOCDriverIdentify(GDALOpenInfo *poOpenInfo)
+
+{
+    const char *pszFilename = poOpenInfo->pszFilename;
+
+    /* -------------------------------------------------------------------- */
+    /*      Is this a sub-dataset selector? If so, it is obviously RPFTOC.  */
+    /* -------------------------------------------------------------------- */
+
+    if (STARTS_WITH_CI(pszFilename, "NITF_TOC_ENTRY:"))
+        return TRUE;
+
+    /* -------------------------------------------------------------------- */
+    /*      First we check to see if the file has the expected header       */
+    /*      bytes.                                                          */
+    /* -------------------------------------------------------------------- */
+    if (poOpenInfo->nHeaderBytes < 48)
+        return FALSE;
+
+    if (RPFTOCIsNonNITFFileTOC(poOpenInfo, pszFilename))
+        return TRUE;
+
+    if (!STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "NITF") &&
+        !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "NSIF") &&
+        !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "NITF"))
+        return FALSE;
+
+    /* If it is a NITF A.TOC file, it must contain A.TOC in its header */
+    for (int i = 0; i < static_cast<int>(poOpenInfo->nHeaderBytes) -
+                            static_cast<int>(strlen("A.TOC"));
+         i++)
+    {
+        if (STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + i, "A.TOC"))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
+/*                          IsNonNITFFileTOC()                          */
+/************************************************************************/
+
+/* Check whether the file is a TOC file without NITF header */
+int RPFTOCIsNonNITFFileTOC(GDALOpenInfo *poOpenInfo, const char *pszFilename)
+{
+    const char pattern[] = {0,   0,   '0', ' ', ' ', ' ', ' ', ' ',
+                            ' ', ' ', 'A', '.', 'T', 'O', 'C'};
+    if (poOpenInfo)
+    {
+        if (poOpenInfo->nHeaderBytes < 48)
+            return FALSE;
+        return memcmp(pattern, poOpenInfo->pabyHeader, 15) == 0;
+    }
+    else
+    {
+        VSILFILE *fp = VSIFOpenL(pszFilename, "rb");
+        if (fp == nullptr)
+        {
+            return FALSE;
+        }
+
+        char buffer[48];
+        int ret = (VSIFReadL(buffer, 1, 48, fp) == 48) &&
+                  memcmp(pattern, buffer, 15) == 0;
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+        return ret;
+    }
+}
+
+/************************************************************************/
+/*                     RPFTOCDriverSetCommonMetadata()                  */
+/************************************************************************/
+
+void RPFTOCDriverSetCommonMetadata(GDALDriver *poDriver)
+{
+    poDriver->SetDescription(RPFTOC_DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "Raster Product Format TOC format");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/rpftoc.html");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "toc");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+    poDriver->pfnIdentify = RPFTOCDriverIdentify;
+}
+
+/************************************************************************/
+/*                     ECRGTOCDriverIdentify()                          */
+/************************************************************************/
+
+int ECRGTOCDriverIdentify(GDALOpenInfo *poOpenInfo)
+
+{
+    const char *pszFilename = poOpenInfo->pszFilename;
+
+    /* -------------------------------------------------------------------- */
+    /*      Is this a sub-dataset selector? If so, it is obviously ECRGTOC. */
+    /* -------------------------------------------------------------------- */
+    if (STARTS_WITH_CI(pszFilename, "ECRG_TOC_ENTRY:"))
+        return TRUE;
+
+    /* -------------------------------------------------------------------- */
+    /*  First we check to see if the file has the expected header           */
+    /*  bytes.                                                              */
+    /* -------------------------------------------------------------------- */
+    const char *pabyHeader =
+        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+    if (pabyHeader == nullptr)
+        return FALSE;
+
+    if (strstr(pabyHeader, "<Table_of_Contents") != nullptr &&
+        strstr(pabyHeader, "<file_header ") != nullptr)
+        return TRUE;
+
+    if (strstr(pabyHeader, "<!DOCTYPE Table_of_Contents [") != nullptr)
+        return TRUE;
+
+    return FALSE;
+}
+
+/************************************************************************/
+/*                     ECRGTOCDriverSetCommonMetadata()                 */
+/************************************************************************/
+
+void ECRGTOCDriverSetCommonMetadata(GDALDriver *poDriver)
+{
+    poDriver->SetDescription(ECRGTOC_DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "ECRG TOC format");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
+                              "drivers/raster/ecrgtoc.html");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "xml");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+    poDriver->pfnIdentify = ECRGTOCDriverIdentify;
+}
+
+/************************************************************************/
 /*                    DeclareDeferredNITFPlugin()                       */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME
 void DeclareDeferredNITFPlugin()
 {
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    if (GDALGetDriverByName(NITF_DRIVER_NAME) != nullptr)
     {
         return;
     }
-    auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+
+    {
+        auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
 #ifdef PLUGIN_INSTALLATION_MESSAGE
-    poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
-                              PLUGIN_INSTALLATION_MESSAGE);
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
 #endif
-    NITFDriverSetCommonMetadata(poDriver);
-    GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
+        NITFDriverSetCommonMetadata(poDriver);
+        GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
+    }
+
+    {
+        auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
+        RPFTOCDriverSetCommonMetadata(poDriver);
+        GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
+    }
+
+    {
+        auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
+        ECRGTOCDriverSetCommonMetadata(poDriver);
+        GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
+    }
 }
 #endif

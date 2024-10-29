@@ -9,23 +9,7 @@
  * Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -224,8 +208,8 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo *poOpenInfo,
             GDALMultiDomainMetadata oLocalMDMD;
             oLocalMDMD.XMLInit(psXMLNode, FALSE);
             GDALDataset::SetMetadata(oLocalMDMD.GetMetadata());
-            for (const char *pszDomain :
-                 cpl::Iterate(CSLConstList(oLocalMDMD.GetDomainList())))
+            for (const char *pszDomain : cpl::Iterate(
+                     static_cast<CSLConstList>(oLocalMDMD.GetDomainList())))
             {
                 if (!EQUAL(pszDomain, "") &&
                     !EQUAL(pszDomain, "IMAGE_STRUCTURE"))
@@ -368,6 +352,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
         return;
     }
 
+    const std::string osTmpDir = VSIMemGenerateHiddenFilename("gmljp2");
+
     // Find feature collections.
     int nLayersAtCC = 0;
     int nLayersAtGC = 0;
@@ -451,7 +437,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
 
             if (psFC != nullptr)
             {
-                osGMLTmpFile = CPLSPrintf("/vsimem/gmljp2_%p/my.gml", this);
+                osGMLTmpFile =
+                    CPLFormFilename(osTmpDir.c_str(), "my.gml", nullptr);
                 // Create temporary .gml file.
                 CPLSerializeXMLTreeToFile(psFC, osGMLTmpFile);
             }
@@ -486,8 +473,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                                     CPLSPrintf("xml:%s", pszBoxName));
                                 if (papszBoxData != nullptr)
                                 {
-                                    osXSDTmpFile = CPLSPrintf(
-                                        "/vsimem/gmljp2_%p/my.xsd", this);
+                                    osXSDTmpFile = CPLFormFilename(
+                                        osTmpDir.c_str(), "my.xsd", nullptr);
                                     CPL_IGNORE_RET_VAL(
                                         VSIFCloseL(VSIFileFromMemBuffer(
                                             osXSDTmpFile,
@@ -551,7 +538,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                          "No GML driver found to read feature collection");
             }
 
-            VSIRmdirRecursive(CPLSPrintf("/vsimem/gmljp2_%p", this));
+            VSIRmdirRecursive(osTmpDir.c_str());
         }
     }
 
@@ -589,8 +576,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
 
             // Create temporary .kml file.
             CPLXMLNode *const psKML = psGCorGMLJP2FeaturesChildIter->psChild;
-            CPLString osKMLTmpFile(
-                CPLSPrintf("/vsimem/gmljp2_%p_my.kml", this));
+            const CPLString osKMLTmpFile(
+                VSIMemGenerateHiddenFilename("my.kml"));
             CPLSerializeXMLTreeToFile(psKML, osKMLTmpFile);
 
             GDALDatasetUniquePtr poTmpDS(GDALDataset::Open(

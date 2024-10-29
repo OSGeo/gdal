@@ -12,6 +12,7 @@ Free and open source
 - `Bluemapia <https://sourceforge.net/projects/bluemapia/>`_ Multi-Map(Google,Microsoft,Open Street Map, NOAA/BSB Charts,self-calibrated raster) location-based GPS app for Windows Mobile. (GPL v2)
 - `BRL-CAD <https://brlcad.org>`_ An open source solid modeling computer-aided design system.
 - `Demeter <http://demeter.sourceforge.net/>`_ Another OpenGL based terrain engine somewhat similar to VTP.
+- `DuckDB Spatial Extension <https://duckdb.org/docs/extensions/spatial>`_: Spatial extension for DuckDB
 - `EOxServer <http://eoxserver.org>`_  OGC-compliant server for Earth Observation (EO) data supporting WMS and WCS with EO application profiles (EOxServer Open License)
 - `exactextract <https://github.com/isciences/exactextract>`_ Fast and accurate raster/vector zonal statistics (Apache 2.0)
 - `Feature Data Objects (FDO)  <http://fdo.osgeo.org>`_  Open source spatial data access libraries (LGPL)
@@ -117,7 +118,6 @@ Proprietary license / Other
 - `TacitView  <https://www.insitu.com/information-delivery/information-processing/tacitview>`_  An imagery visualization and exploitation package for military intelligence.
 - `TatukGIS  <http://www.tatukgis.com>`_  Desktop GIS mapping and data editing application.
 - `Team Awareness Kit <https://tak.gov>`_  Suite of georeferenced imagery and situational awareness tools developed for military planning and execution, now available for civilian use.
-- `TerraGo Technologies  <http://www.terragotech.com>`_  The GeoPDF file format is used to distribute and collaborate geospatial data and uses GDAL for data import/export.
 - `TerrainView  <http://www.viewtec.net>`_  Interactive real-time 3D GIS Software.
 - `TransCAD GIS  <http://www.caliper.com>`_  Desktop Transportation Analysis Software
 - `TravTime  <https://travtime.software.informer.com/download/>`_  .NET Application for visualizing, processing and analyzing GPS data for travel time, speed, and de

@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef MEMDATASET_H_INCLUDED
@@ -66,8 +50,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     std::vector<gdal::GCP> m_aoGCPs{};
     OGRSpatialReference m_oGCPSRS{};
 
-    int m_nOverviewDSCount;
-    GDALDataset **m_papoOverviewDS;
+    std::vector<std::unique_ptr<GDALDataset>> m_apoOverviewDS{};
 
     struct Private;
     std::unique_ptr<Private> m_poPrivate;
@@ -84,6 +67,12 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
     static GDALDataset *CreateBase(const char *pszFilename, int nXSize,
                                    int nYSize, int nBands, GDALDataType eType,
                                    char **papszParamList);
+
+  protected:
+    bool CanBeCloned(int nScopeFlags, bool bCanShareState) const override;
+
+    std::unique_ptr<GDALDataset> Clone(int nScopeFlags,
+                                       bool bCanShareState) const override;
 
   public:
     MEMDataset();
@@ -141,9 +130,6 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
 class CPL_DLL MEMRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 {
   private:
-    MEMRasterBand(GByte *pabyDataIn, GDALDataType eTypeIn, int nXSizeIn,
-                  int nYSizeIn);
-
     CPL_DISALLOW_COPY_ASSIGN(MEMRasterBand)
 
   protected:
@@ -155,6 +141,9 @@ class CPL_DLL MEMRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     int bOwnData;
 
     bool m_bIsMask = false;
+
+    MEMRasterBand(GByte *pabyDataIn, GDALDataType eTypeIn, int nXSizeIn,
+                  int nYSizeIn, bool bOwnDataIn);
 
   public:
     MEMRasterBand(GDALDataset *poDS, int nBand, GByte *pabyData,

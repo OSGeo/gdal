@@ -183,12 +183,12 @@ RUN mkdir geos \
     && rm -rf geos
 
 # Install pdfium
-RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_9/releases/download/pdfium_6309_v1/install-ubuntu2004-rev6309.tar.gz \
-  && tar -xzf install-ubuntu2004-rev6309.tar.gz \
+RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_10/releases/download/pdfium_6677_v1/install-ubuntu2004-rev6677.tar.gz \
+  && tar -xzf install-ubuntu2004-rev6677.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev6309.tar.gz install
+  && rm -rf install-ubuntu2004-rev6677.tar.gz install
 
 # HANA: client side
 # Install hdbsql tool
@@ -260,7 +260,7 @@ RUN mkdir sqlite \
     && rm -rf sqlite
 
 # Build libOpenDRIVE
-ARG OPENDRIVE_VERSION=0.5.0-gdal
+ARG OPENDRIVE_VERSION=0.6.0-gdal
 RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \

@@ -6,78 +6,12 @@
  ******************************************************************************
  * Copyright (c) 2020, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
-
-#include "include_libheif.h"
-
-#include "heifdrivercore.h"
-
-#include <vector>
+#include "heifdataset.h"
 
 extern "C" void CPL_DLL GDALRegister_HEIF();
-
-// g++ -fPIC -std=c++11 frmts/heif/heifdataset.cpp -Iport -Igcore -Iogr
-// -Iogr/ogrsf_frmts -I$HOME/heif/install-ubuntu-18.04/include
-// -L$HOME/heif/install-ubuntu-18.04/lib -lheif -shared -o gdal_HEIF.so -L.
-// -lgdal
-
-/************************************************************************/
-/*                        GDALHEIFDataset                               */
-/************************************************************************/
-
-class GDALHEIFDataset final : public GDALPamDataset
-{
-    friend class GDALHEIFRasterBand;
-
-    heif_context *m_hCtxt = nullptr;
-    heif_image_handle *m_hImageHandle = nullptr;
-    heif_image *m_hImage = nullptr;
-    bool m_bFailureDecoding = false;
-    std::vector<std::unique_ptr<GDALHEIFDataset>> m_apoOvrDS{};
-    bool m_bIsThumbnail = false;
-
-#ifdef HAS_CUSTOM_FILE_READER
-    heif_reader m_oReader{};
-    VSILFILE *m_fpL = nullptr;
-    vsi_l_offset m_nSize = 0;
-
-    static int64_t GetPositionCbk(void *userdata);
-    static int ReadCbk(void *data, size_t size, void *userdata);
-    static int SeekCbk(int64_t position, void *userdata);
-    static enum heif_reader_grow_status WaitForFileSizeCbk(int64_t target_size,
-                                                           void *userdata);
-#endif
-
-    bool Init(GDALOpenInfo *poOpenInfo);
-    void ReadMetadata();
-    void OpenThumbnails();
-
-  public:
-    GDALHEIFDataset();
-    ~GDALHEIFDataset();
-
-    static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
-};
 
 /************************************************************************/
 /*                       GDALHEIFRasterBand                             */
@@ -139,8 +73,10 @@ GDALHEIFDataset::~GDALHEIFDataset()
     if (m_fpL)
         VSIFCloseL(m_fpL);
 #endif
+#ifndef LIBHEIF_SUPPORTS_TILES
     if (m_hImage)
         heif_image_release(m_hImage);
+#endif
     if (m_hImageHandle)
         heif_image_handle_release(m_hImageHandle);
 }
@@ -164,7 +100,7 @@ int64_t GDALHEIFDataset::GetPositionCbk(void *userdata)
 int GDALHEIFDataset::ReadCbk(void *data, size_t size, void *userdata)
 {
     GDALHEIFDataset *poThis = static_cast<GDALHEIFDataset *>(userdata);
-    return VSIFReadL(data, size, 1, poThis->m_fpL) == 1 ? 0 : -1;
+    return VSIFReadL(data, 1, size, poThis->m_fpL) == size ? 0 : -1;
 }
 
 /************************************************************************/
@@ -301,6 +237,16 @@ bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
         return false;
     }
 
+#ifdef LIBHEIF_SUPPORTS_TILES
+    err = heif_image_handle_get_image_tiling(m_hImageHandle, true, &m_tiling);
+    if (err.code != heif_error_Ok)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                 err.message ? err.message : "Cannot get image tiling");
+        return false;
+    }
+#endif
+
     nRasterXSize = heif_image_handle_get_width(m_hImageHandle);
     nRasterYSize = heif_image_handle_get_height(m_hImageHandle);
     const int l_nBands =
@@ -314,7 +260,18 @@ bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
 
     OpenThumbnails();
 
+    if (poOpenInfo->nHeaderBytes > 12 &&
+        memcmp(poOpenInfo->pabyHeader + 4, "ftypavif", 8) == 0)
+    {
+        poDriver = GetGDALDriverManager()->GetDriverByName("AVIF_HEIF");
+    }
+
     // Initialize any PAM information.
+    if (nSubdatasets > 1)
+    {
+        SetSubdatasetName(CPLSPrintf("%d", iPart + 1));
+        SetPhysicalFilename(osFilename.c_str());
+    }
     SetDescription(poOpenInfo->pszFilename);
     TryLoadXML(poOpenInfo->GetSiblingFiles());
 
@@ -378,8 +335,8 @@ void GDALHEIFDataset::ReadMetadata()
                 }
             }
 
-            CPLString osTempFile;
-            osTempFile.Printf("/vsimem/heif_exif_%p.tif", this);
+            const CPLString osTempFile(
+                VSIMemGenerateHiddenFilename("heif_exif.tif"));
             VSILFILE *fpTemp =
                 VSIFileFromMemBuffer(osTempFile, &data[nTIFFFileOffset],
                                      nCount - nTIFFFileOffset, FALSE);
@@ -493,6 +450,17 @@ void GDALHEIFDataset::OpenThumbnails()
     poOvrDS->m_bIsThumbnail = true;
     poOvrDS->nRasterXSize = heif_image_handle_get_width(hThumbnailHandle);
     poOvrDS->nRasterYSize = heif_image_handle_get_height(hThumbnailHandle);
+#ifdef LIBHEIF_SUPPORTS_TILES
+    auto err = heif_image_handle_get_image_tiling(hThumbnailHandle, true,
+                                                  &poOvrDS->m_tiling);
+    if (err.code != heif_error_Ok)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                 err.message ? err.message : "Cannot get image tiling");
+        heif_image_handle_release(hThumbnailHandle);
+        return;
+    }
+#endif
     for (int i = 0; i < nBands; i++)
     {
         poOvrDS->SetBand(i + 1, new GDALHEIFRasterBand(poOvrDS.get(), i + 1));
@@ -512,6 +480,7 @@ static int HEIFDriverIdentify(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->nHeaderBytes < 12 || poOpenInfo->fpL == nullptr)
         return false;
+
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
     const auto res =
         heif_check_filetype(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes);
@@ -556,13 +525,15 @@ static int HEIFDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Open()                                  */
+/*                            OpenHEIF()                                */
 /************************************************************************/
 
-GDALDataset *GDALHEIFDataset::Open(GDALOpenInfo *poOpenInfo)
+GDALDataset *GDALHEIFDataset::OpenHEIF(GDALOpenInfo *poOpenInfo)
 {
     if (!HEIFDriverIdentify(poOpenInfo))
+    {
         return nullptr;
+    }
     if (poOpenInfo->eAccess == GA_Update)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -576,6 +547,44 @@ GDALDataset *GDALHEIFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     return poDS.release();
 }
+
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)
+
+/************************************************************************/
+/*                     HEIFIdentifyOnlyAVIF()                           */
+/************************************************************************/
+
+static int HEIFIdentifyOnlyAVIF(GDALOpenInfo *poOpenInfo)
+{
+    if (poOpenInfo->nHeaderBytes < 12 || poOpenInfo->fpL == nullptr)
+        return false;
+    if (memcmp(poOpenInfo->pabyHeader + 4, "ftypavif", 8) == 0)
+        return true;
+    return false;
+}
+
+/************************************************************************/
+/*                              OpenAVIF()                              */
+/************************************************************************/
+
+GDALDataset *GDALHEIFDataset::OpenAVIF(GDALOpenInfo *poOpenInfo)
+{
+    if (!HEIFIdentifyOnlyAVIF(poOpenInfo))
+        return nullptr;
+    if (poOpenInfo->eAccess == GA_Update)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Update of existing AVIF file not supported");
+        return nullptr;
+    }
+
+    auto poDS = std::make_unique<GDALHEIFDataset>();
+    if (!poDS->Init(poOpenInfo))
+        return nullptr;
+
+    return poDS.release();
+}
+#endif
 
 /************************************************************************/
 /*                          GDALHEIFRasterBand()                        */
@@ -600,14 +609,97 @@ GDALHEIFRasterBand::GDALHEIFRasterBand(GDALHEIFDataset *poDSIn, int nBandIn)
                                         "IMAGE_STRUCTURE");
     }
 #endif
+
+#ifdef LIBHEIF_SUPPORTS_TILES
+    nBlockXSize = poDSIn->m_tiling.tile_width;
+    nBlockYSize = poDSIn->m_tiling.tile_height;
+#else
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
+#endif
 }
 
 /************************************************************************/
 /*                            IReadBlock()                              */
 /************************************************************************/
+#ifdef LIBHEIF_SUPPORTS_TILES
+CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+                                      void *pImage)
+{
+    GDALHEIFDataset *poGDS = static_cast<GDALHEIFDataset *>(poDS);
+    if (poGDS->m_bFailureDecoding)
+        return CE_Failure;
+    const int nBands = poGDS->GetRasterCount();
+    heif_image *hImage = nullptr;
+    struct heif_decoding_options *decode_options =
+        heif_decoding_options_alloc();
 
+    auto err = heif_image_handle_decode_image_tile(
+        poGDS->m_hImageHandle, &hImage, heif_colorspace_RGB,
+        nBands == 3
+            ? (eDataType == GDT_UInt16 ?
+#if CPL_IS_LSB
+                                       heif_chroma_interleaved_RRGGBB_LE
+#else
+                                       heif_chroma_interleaved_RRGGBB_BE
+#endif
+                                       : heif_chroma_interleaved_RGB)
+            : (eDataType == GDT_UInt16 ?
+#if CPL_IS_LSB
+                                       heif_chroma_interleaved_RRGGBBAA_LE
+#else
+                                       heif_chroma_interleaved_RRGGBBAA_BE
+#endif
+                                       : heif_chroma_interleaved_RGBA),
+        decode_options, nBlockXOff, nBlockYOff);
+
+    if (err.code != heif_error_Ok)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                 err.message ? err.message : "Cannot decode image");
+        poGDS->m_bFailureDecoding = true;
+        heif_decoding_options_free(decode_options);
+        return CE_Failure;
+    }
+    heif_decoding_options_free(decode_options);
+    int nStride = 0;
+    const uint8_t *pSrcData = heif_image_get_plane_readonly(
+        hImage, heif_channel_interleaved, &nStride);
+    if (eDataType == GDT_Byte)
+    {
+        for (int y = 0; y < nBlockYSize; y++)
+        {
+            for (int x = 0; x < nBlockXSize; x++)
+            {
+                const size_t srcIndex = static_cast<size_t>(y) * nStride +
+                                        static_cast<size_t>(x) * nBands +
+                                        nBand - 1;
+                const size_t outIndex =
+                    static_cast<size_t>(y) * nBlockXSize + x;
+                (static_cast<GByte *>(pImage))[outIndex] = pSrcData[srcIndex];
+            }
+        }
+    }
+    else
+    {
+        for (int y = 0; y < nBlockYSize; y++)
+        {
+            for (int x = 0; x < nBlockXSize; x++)
+            {
+                const size_t srcIndex = static_cast<size_t>(y) * (nStride / 2) +
+                                        static_cast<size_t>(x) * nBands +
+                                        nBand - 1;
+                const size_t outIndex =
+                    static_cast<size_t>(y) * nBlockXSize + x;
+                (static_cast<GUInt16 *>(pImage))[outIndex] =
+                    (reinterpret_cast<const GUInt16 *>(pSrcData))[srcIndex];
+            }
+        }
+    }
+    heif_image_release(hImage);
+    return CE_None;
+}
+#else
 CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
 {
     GDALHEIFDataset *poGDS = static_cast<GDALHEIFDataset *>(poDS);
@@ -664,23 +756,24 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
     int nStride = 0;
     const uint8_t *pSrcData = heif_image_get_plane_readonly(
         poGDS->m_hImage, heif_channel_interleaved, &nStride);
-    pSrcData += nBlockYOff * nStride;
+    pSrcData += static_cast<size_t>(nBlockYOff) * nStride;
     if (eDataType == GDT_Byte)
     {
         for (int i = 0; i < nBlockXSize; i++)
             (static_cast<GByte *>(pImage))[i] =
-                pSrcData[nBand - 1 + i * nBands];
+                pSrcData[nBand - 1 + static_cast<size_t>(i) * nBands];
     }
     else
     {
         for (int i = 0; i < nBlockXSize; i++)
             (static_cast<GUInt16 *>(pImage))[i] =
                 (reinterpret_cast<const GUInt16 *>(
-                    pSrcData))[nBand - 1 + i * nBands];
+                    pSrcData))[nBand - 1 + static_cast<size_t>(i) * nBands];
     }
 
     return CE_None;
 }
+#endif
 
 /************************************************************************/
 /*                       GDALRegister_HEIF()                            */
@@ -695,10 +788,124 @@ void GDALRegister_HEIF()
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
-    GDALDriver *poDriver = new GDALDriver();
-    HEIFDriverSetCommonMetadata(poDriver);
+    auto poDM = GetGDALDriverManager();
+    {
+        GDALDriver *poDriver = new GDALDriver();
+        HEIFDriverSetCommonMetadata(poDriver);
 
-    poDriver->pfnOpen = GDALHEIFDataset::Open;
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)
+        if (heif_have_decoder_for_format(heif_compression_AVC))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_AVC", "YES", "HEIF");
+        }
+        if (heif_have_encoder_for_format(heif_compression_AVC))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_AVC_WRITE", "YES", "HEIF");
+        }
+        // If the AVIF dedicated driver is not available, register an AVIF driver,
+        // called AVIF_HEIF, based on libheif, if it has AV1 decoding capabilities.
+        if (heif_have_decoder_for_format(heif_compression_AV1))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_AVIF", "YES", "HEIF");
+            poDriver->SetMetadataItem("SUPPORTS_AV1", "YES", "HEIF");
+        }
+        if (heif_have_encoder_for_format(heif_compression_AV1))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_AV1_WRITE", "YES", "HEIF");
+        }
+        if (heif_have_decoder_for_format(heif_compression_HEVC))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_HEVC", "YES", "HEIF");
+        }
+        if (heif_have_encoder_for_format(heif_compression_HEVC))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_HEVC_WRITE", "YES", "HEIF");
+        }
+        if (heif_have_decoder_for_format(heif_compression_JPEG))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_JPEG", "YES", "HEIF");
+        }
+        if (heif_have_encoder_for_format(heif_compression_JPEG))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_JPEG_WRITE", "YES", "HEIF");
+        }
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 15, 0)
+        if (heif_have_decoder_for_format(heif_compression_JPEG2000))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_JPEG2000", "YES", "HEIF");
+        }
+        if (heif_have_encoder_for_format(heif_compression_JPEG2000))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_JPEG2000_WRITE", "YES", "HEIF");
+        }
+#endif
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 18, 0)
+        if (heif_have_decoder_for_format(heif_compression_HTJ2K))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_HTJ2K", "YES", "HEIF");
+        }
+        if (heif_have_encoder_for_format(heif_compression_HTJ2K))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_HTJ2K_WRITE", "YES", "HEIF");
+        }
+#endif
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 16, 0)
+        if (heif_have_decoder_for_format(heif_compression_uncompressed))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_UNCOMPRESSED", "YES", "HEIF");
+        }
+        if (heif_have_encoder_for_format(heif_compression_uncompressed))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_UNCOMPRESSED_WRITE", "YES",
+                                      "HEIF");
+        }
+#endif
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 15, 0)
+        if (heif_have_decoder_for_format(heif_compression_VVC))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_VVC", "YES", "HEIF");
+        }
+        if (heif_have_encoder_for_format(heif_compression_VVC))
+        {
+            poDriver->SetMetadataItem("SUPPORTS_VVC_WRITE", "YES", "HEIF");
+        }
+#endif
+#else
+        // Anything that old probably supports only HEVC
+        poDriver->SetMetadataItem("SUPPORTS_HEVC", "YES", "HEIF");
+#endif
+#ifdef LIBHEIF_SUPPORTS_TILES
+        poDriver->SetMetadataItem("SUPPORTS_TILES", "YES", "HEIF");
+#endif
+        poDriver->pfnOpen = GDALHEIFDataset::OpenHEIF;
 
-    GetGDALDriverManager()->RegisterDriver(poDriver);
+#ifdef HAS_CUSTOM_FILE_WRITER
+        poDriver->pfnCreateCopy = GDALHEIFDataset::CreateCopy;
+#endif
+        poDM->RegisterDriver(poDriver);
+    }
+
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)
+    // If the AVIF dedicated driver is not available, register an AVIF driver,
+    // called AVIF_HEIF, based on libheif, if it has AV1 decoding capabilities.
+    if (heif_have_decoder_for_format(heif_compression_AV1) &&
+        !poDM->IsKnownDriver("AVIF") && !poDM->IsKnownDriver("AVIF_HEIF"))
+    {
+        GDALDriver *poAVIF_HEIFDriver = new GDALDriver();
+        poAVIF_HEIFDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+        poAVIF_HEIFDriver->SetDescription("AVIF_HEIF");
+        poAVIF_HEIFDriver->SetMetadataItem(
+            GDAL_DMD_LONGNAME, "AV1 Image File Format (using libheif)");
+        poAVIF_HEIFDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/avif");
+        poAVIF_HEIFDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
+                                           "drivers/raster/heif.html");
+        poAVIF_HEIFDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "avif");
+        poAVIF_HEIFDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+
+        poAVIF_HEIFDriver->pfnOpen = GDALHEIFDataset::OpenAVIF;
+        poAVIF_HEIFDriver->pfnIdentify = HEIFIdentifyOnlyAVIF;
+
+        poDM->RegisterDriver(poAVIF_HEIFDriver);
+    }
+#endif
 }

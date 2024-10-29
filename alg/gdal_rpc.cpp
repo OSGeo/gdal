@@ -8,23 +8,7 @@
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -48,6 +32,7 @@
 #include "gdal.h"
 #include "gdal_interpolateatpoint.h"
 #include "gdal_mdreader.h"
+#include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 #if defined(__x86_64) || defined(_M_X64)
 #define USE_SSE2_OPTIM
@@ -57,6 +42,7 @@
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
+#include "gdalresamplingkernels.h"
 
 // #define DEBUG_VERBOSE_EXTRACT_DEM
 
@@ -515,9 +501,9 @@ static void *GDALCreateSimilarRPCTransformer(void *hTransformArg,
 
     char **papszOptions = nullptr;
     papszOptions = CSLSetNameValue(papszOptions, "RPC_HEIGHT",
-                                   CPLSPrintf("%.18g", psInfo->dfHeightOffset));
+                                   CPLSPrintf("%.17g", psInfo->dfHeightOffset));
     papszOptions = CSLSetNameValue(papszOptions, "RPC_HEIGHT_SCALE",
-                                   CPLSPrintf("%.18g", psInfo->dfHeightScale));
+                                   CPLSPrintf("%.17g", psInfo->dfHeightScale));
     if (psInfo->pszDEMPath != nullptr)
     {
         papszOptions =
@@ -528,7 +514,7 @@ static void *GDALCreateSimilarRPCTransformer(void *hTransformArg,
         if (psInfo->bHasDEMMissingValue)
             papszOptions =
                 CSLSetNameValue(papszOptions, "RPC_DEM_MISSING_VALUE",
-                                CPLSPrintf("%.18g", psInfo->dfDEMMissingValue));
+                                CPLSPrintf("%.17g", psInfo->dfDEMMissingValue));
         papszOptions =
             CSLSetNameValue(papszOptions, "RPC_DEM_APPLY_VDATUM_SHIFT",
                             (psInfo->bApplyDEMVDatumShift) ? "TRUE" : "FALSE");
@@ -836,7 +822,7 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
 
     memcpy(psTransform->sTI.abySignature, GDAL_GTI2_SIGNATURE,
            strlen(GDAL_GTI2_SIGNATURE));
-    psTransform->sTI.pszClassName = "GDALRPCTransformer";
+    psTransform->sTI.pszClassName = GDAL_RPC_TRANSFORMER_CLASS_NAME;
     psTransform->sTI.pfnTransform = GDALRPCTransform;
     psTransform->sTI.pfnCleanup = GDALDestroyRPCTransformer;
     psTransform->sTI.pfnSerialize = GDALSerializeRPCTransformer;
@@ -1393,7 +1379,7 @@ static int GDALRPCGetDEMHeight(GDALRPCTransformInfo *psTransform,
     std::unique_ptr<DoublePointsCache> cacheDEM{psTransform->poCacheDEM};
     int res =
         GDALInterpolateAtPoint(psTransform->poDS->GetRasterBand(1), eResample,
-                               cacheDEM, dfXIn, dfYIn, pdfDEMH);
+                               cacheDEM, dfXIn, dfYIn, pdfDEMH, nullptr);
     psTransform->poCacheDEM = cacheDEM.release();
     return res;
 }
@@ -1485,8 +1471,8 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
                     const int dKernIndX = k_j - 1;
                     const int dKernIndY = k_i - 1;
                     const double dfPixelWeight =
-                        BiCubicSplineKernel(dKernIndX - dfDeltaX) *
-                        BiCubicSplineKernel(dKernIndY - dfDeltaY);
+                        CubicSplineKernel(dKernIndX - dfDeltaX) *
+                        CubicSplineKernel(dKernIndY - dfDeltaY);
 
                     // Create a sum of all values
                     // adjusted for the pixel's calculated weight.
@@ -2031,7 +2017,7 @@ CPLXMLNode *GDALSerializeRPCTransformer(void *pTransformArg)
         {
             CPLCreateXMLElementAndValue(
                 psTree, "DEMMissingValue",
-                CPLSPrintf("%.18g", psInfo->dfDEMMissingValue));
+                CPLSPrintf("%.17g", psInfo->dfDEMMissingValue));
         }
 
         CPLCreateXMLElementAndValue(psTree, "DEMApplyVDatumShift",

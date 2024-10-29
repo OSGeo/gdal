@@ -8,23 +8,7 @@
  **********************************************************************
  * Copyright (c) 2015, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_http.h"
@@ -604,7 +588,7 @@ CPLString WMTSDataset::FixCRSName(const char *pszCRS)
     while (osRet.size() && (osRet.back() == ' ' || osRet.back() == '\r' ||
                             osRet.back() == '\n'))
     {
-        osRet.resize(osRet.size() - 1);
+        osRet.pop_back();
     }
     return osRet;
 }
@@ -1226,20 +1210,21 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (STARTS_WITH(osGetCapabilitiesURL, "/vsimem/"))
     {
-        const char *pszHref = CPLGetXMLValue(
-            psXML, "=Capabilities.ServiceMetadataURL.href", nullptr);
-        if (pszHref)
-            osGetCapabilitiesURL = pszHref;
+        osGetCapabilitiesURL = GetOperationKVPURL(psXML, "GetCapabilities");
+        if (osGetCapabilitiesURL.empty())
+        {
+            // (ERO) I'm not even sure this is correct at all...
+            const char *pszHref = CPLGetXMLValue(
+                psXML, "=Capabilities.ServiceMetadataURL.href", nullptr);
+            if (pszHref)
+                osGetCapabilitiesURL = pszHref;
+        }
         else
         {
-            osGetCapabilitiesURL = GetOperationKVPURL(psXML, "GetCapabilities");
-            if (!osGetCapabilitiesURL.empty())
-            {
-                osGetCapabilitiesURL =
-                    CPLURLAddKVP(osGetCapabilitiesURL, "service", "WMTS");
-                osGetCapabilitiesURL = CPLURLAddKVP(
-                    osGetCapabilitiesURL, "request", "GetCapabilities");
-            }
+            osGetCapabilitiesURL =
+                CPLURLAddKVP(osGetCapabilitiesURL, "service", "WMTS");
+            osGetCapabilitiesURL = CPLURLAddKVP(osGetCapabilitiesURL, "request",
+                                                "GetCapabilities");
         }
     }
     CPLString osCapabilitiesFilename(osGetCapabilitiesURL);

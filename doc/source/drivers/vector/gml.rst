@@ -115,6 +115,17 @@ The following configuration options are available:
 
      Equivalent of :oo:`READ_MODE`. See :ref:`gml_performance`.
 
+- .. config:: GML_DOWNLOAD_SCHEMA
+     :choices: YES, NO
+     :since: 3.10
+
+     Equivalent of :oo:`DOWNLOAD_SCHEMA`.
+
+- .. config:: GML_USE_SCHEMA_IMPORT
+     :choices: YES, NO
+
+     Equivalent of :oo:`USE_SCHEMA_IMPORT`.
+
 
 Parsers
 -------
@@ -609,8 +620,8 @@ The following open options are supported:
       :choices: YES, NO
       :default: YES
 
-      Whether to download the
-      remote application schema if needed (only for WFS currently).
+      Whether to download the remote application schema if needed
+      (only if the document looks like a WFS response currently).
 
 -  .. oo:: REGISTRY
       :choices: <filename>
@@ -626,6 +637,12 @@ The following open options are supported:
       Whether to use gml:boundedBy at feature level as feature geometry,
       if there are no other geometry.
 
+-  .. oo:: USE_SCHEMA_IMPORT
+      :choices: YES, NO
+      :default: NO
+
+      Whether to use schema imports in XSD files so that
+      the feature types corresponding to imported schema can be detected.
 
 .. note::
 

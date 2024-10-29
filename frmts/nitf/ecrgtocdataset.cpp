@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 // g++ -g -Wall -fPIC frmts/nitf/ecrgtocdataset.cpp -shared -o gdal_ECRGTOC.so
@@ -52,6 +36,7 @@
 #include "gdal_proxy.h"
 #include "ogr_srs_api.h"
 #include "vrtdataset.h"
+#include "nitfdrivercore.h"
 
 /** Overview of used classes :
    - ECRGTOCDataset : lists the different subdatasets, listed in the .xml,
@@ -128,7 +113,6 @@ class ECRGTOCDataset final : public GDALPamDataset
                               const std::string &osScale,
                               const char *pszFilename);
 
-    static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
 };
 
@@ -970,47 +954,13 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int ECRGTOCDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    const char *pszFilename = poOpenInfo->pszFilename;
-
-    /* -------------------------------------------------------------------- */
-    /*      Is this a sub-dataset selector? If so, it is obviously ECRGTOC. */
-    /* -------------------------------------------------------------------- */
-    if (STARTS_WITH_CI(pszFilename, "ECRG_TOC_ENTRY:"))
-        return TRUE;
-
-    /* -------------------------------------------------------------------- */
-    /*  First we check to see if the file has the expected header           */
-    /*  bytes.                                                              */
-    /* -------------------------------------------------------------------- */
-    const char *pabyHeader =
-        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
-    if (pabyHeader == nullptr)
-        return FALSE;
-
-    if (strstr(pabyHeader, "<Table_of_Contents") != nullptr &&
-        strstr(pabyHeader, "<file_header ") != nullptr)
-        return TRUE;
-
-    if (strstr(pabyHeader, "<!DOCTYPE Table_of_Contents [") != nullptr)
-        return TRUE;
-
-    return FALSE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *ECRGTOCDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    if (!Identify(poOpenInfo))
+    if (!ECRGTOCDriverIdentify(poOpenInfo))
         return nullptr;
 
     const char *pszFilename = poOpenInfo->pszFilename;
@@ -1101,23 +1051,13 @@ GDALDataset *ECRGTOCDataset::Open(GDALOpenInfo *poOpenInfo)
 void GDALRegister_ECRGTOC()
 
 {
-    if (GDALGetDriverByName("ECRGTOC") != nullptr)
+    if (GDALGetDriverByName(ECRGTOC_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
+    ECRGTOCDriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("ECRGTOC");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "ECRG TOC format");
-
-    poDriver->pfnIdentify = ECRGTOCDataset::Identify;
     poDriver->pfnOpen = ECRGTOCDataset::Open;
-
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "drivers/raster/ecrgtoc.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "xml");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

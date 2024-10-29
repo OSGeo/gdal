@@ -8,23 +8,7 @@
  * Copyright (c) 1998, 2002, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gtiffdataset.h"
@@ -704,8 +688,8 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
     {
         // Generate a dummy in-memory TIFF file that has all the needed tags
         // from the original file
-        CPLString osTmpFilename;
-        osTmpFilename.Printf("/vsimem/decompress_%p.tif", psJob);
+        const CPLString osTmpFilename(
+            VSIMemGenerateHiddenFilename("decompress.tif"));
         VSILFILE *fpTmp = VSIFOpenL(osTmpFilename.c_str(), "wb+");
         TIFF *hTIFFTmp =
             VSI_TIFFOpen(osTmpFilename.c_str(),
@@ -3524,9 +3508,8 @@ static bool GTIFFExtendMemoryFile(const CPLString &osTmpFilename,
 
 static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
 {
-    CPLString osTmpFilename;
-    static int nCounter = 0;
-    osTmpFilename.Printf("/vsimem/stream_%d.tif", ++nCounter);
+    const CPLString osTmpFilename(
+        VSIMemGenerateHiddenFilename("GTIFFMakeBufferedStream.tif"));
     VSILFILE *fpTemp = VSIFOpenL(osTmpFilename, "wb+");
     if (fpTemp == nullptr)
         return false;
@@ -3945,6 +3928,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
                          "with the IGNORE_COG_LAYOUT_BREAK open option set "
                          "to YES.",
                          pszFilename);
+                XTIFFClose(l_hTIFF);
                 delete poDS;
                 return nullptr;
             }
@@ -4764,7 +4748,8 @@ void GTiffDataset::LoadICCProfile()
     {
         if (TIFFGetField(m_hTIFF, TIFFTAG_WHITEPOINT, &pWP))
         {
-            if (!TIFFGetFieldDefaulted(m_hTIFF, TIFFTAG_TRANSFERFUNCTION, &pTFR,
+            if (m_nBitsPerSample > 24 ||
+                !TIFFGetFieldDefaulted(m_hTIFF, TIFFTAG_TRANSFERFUNCTION, &pTFR,
                                        &pTFG, &pTFB) ||
                 pTFR == nullptr || pTFG == nullptr || pTFB == nullptr)
             {
@@ -5680,8 +5665,19 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     }
                     else if (EQUAL(pszRole, "colorinterp"))
                     {
-                        poBand->m_eBandInterp =
-                            GDALGetColorInterpretationByName(pszUnescapedValue);
+                        if (EQUAL(pszUnescapedValue, "undefined"))
+                            poBand->m_eBandInterp = GCI_Undefined;
+                        else
+                        {
+                            poBand->m_eBandInterp =
+                                GDALGetColorInterpretationByName(
+                                    pszUnescapedValue);
+                            if (poBand->m_eBandInterp == GCI_Undefined)
+                            {
+                                poBand->m_oGTiffMDMD.SetMetadataItem(
+                                    "COLOR_INTERPRETATION", pszUnescapedValue);
+                            }
+                        }
                     }
                     else
                     {
@@ -5823,6 +5819,10 @@ CSLConstList GTiffDataset::GetSiblingFiles()
     if (m_bHasGotSiblingFiles)
     {
         return oOvManager.GetSiblingFiles();
+    }
+    if (m_poBaseDS)
+    {
+        return m_poBaseDS->GetSiblingFiles();
     }
 
     m_bHasGotSiblingFiles = true;
@@ -6642,6 +6642,18 @@ void GTiffDataset::LoadMetadata()
     if (m_bIMDRPCMetadataLoaded)
         return;
     m_bIMDRPCMetadataLoaded = true;
+
+    if (EQUAL(CPLGetExtension(GetDescription()), "ovr"))
+    {
+        // Do not attempt to retrieve metadata files on .tif.ovr files.
+        // For example the Pleiades metadata reader might wrongly associate a
+        // DIM_xxx.XML file that was meant to be associated with the main
+        // TIFF file. The consequence of that wrong association is that if
+        // one cleans overviews, then the Delete() method would then delete
+        // that DIM_xxx.XML file since it would be reported in the GetFileList()
+        // of the overview dataset.
+        return;
+    }
 
     GDALMDReaderManager mdreadermanager;
     GDALMDReaderBase *mdreader = mdreadermanager.GetReader(

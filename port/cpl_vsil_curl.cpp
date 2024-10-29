@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2018, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -153,31 +137,59 @@ static void VSICURLReadGlobalEnvVariables()
         Initializer()
         {
             constexpr int DOWNLOAD_CHUNK_SIZE_DEFAULT = 16384;
+            const char *pszChunkSize =
+                CPLGetConfigOption("CPL_VSIL_CURL_CHUNK_SIZE", nullptr);
+            GIntBig nChunkSize = DOWNLOAD_CHUNK_SIZE_DEFAULT;
 
-            DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY = atoi(CPLGetConfigOption(
-                "CPL_VSIL_CURL_CHUNK_SIZE",
-                CPLSPrintf("%d", DOWNLOAD_CHUNK_SIZE_DEFAULT)));
+            if (pszChunkSize)
+            {
+                if (CPLParseMemorySize(pszChunkSize, &nChunkSize, nullptr) !=
+                    CE_None)
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Could not parse value for CPL_VSIL_CURL_CHUNK_SIZE. "
+                        "Using default value of %d instead.",
+                        DOWNLOAD_CHUNK_SIZE_DEFAULT);
+                }
+            }
+
             constexpr int MIN_CHUNK_SIZE = 1024;
             constexpr int MAX_CHUNK_SIZE = 10 * 1024 * 1024;
-            if (DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY < MIN_CHUNK_SIZE ||
-                DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY > MAX_CHUNK_SIZE)
+            if (nChunkSize < MIN_CHUNK_SIZE || nChunkSize > MAX_CHUNK_SIZE)
             {
-                DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY =
-                    DOWNLOAD_CHUNK_SIZE_DEFAULT;
+                nChunkSize = DOWNLOAD_CHUNK_SIZE_DEFAULT;
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Invalid value for CPL_VSIL_CURL_CHUNK_SIZE. "
                          "Allowed range is [%d, %d]. "
                          "Using CPL_VSIL_CURL_CHUNK_SIZE=%d instead",
                          MIN_CHUNK_SIZE, MAX_CHUNK_SIZE,
-                         DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY);
+                         DOWNLOAD_CHUNK_SIZE_DEFAULT);
             }
+            DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY =
+                static_cast<int>(nChunkSize);
 
             constexpr int N_MAX_REGIONS_DEFAULT = 1000;
             constexpr int CACHE_SIZE_DEFAULT =
                 N_MAX_REGIONS_DEFAULT * DOWNLOAD_CHUNK_SIZE_DEFAULT;
-            GIntBig nCacheSize = CPLAtoGIntBig(
-                CPLGetConfigOption("CPL_VSIL_CURL_CACHE_SIZE",
-                                   CPLSPrintf("%d", CACHE_SIZE_DEFAULT)));
+
+            const char *pszCacheSize =
+                CPLGetConfigOption("CPL_VSIL_CURL_CACHE_SIZE", nullptr);
+            GIntBig nCacheSize = CACHE_SIZE_DEFAULT;
+
+            if (pszCacheSize)
+            {
+                if (CPLParseMemorySize(pszCacheSize, &nCacheSize, nullptr) !=
+                    CE_None)
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Could not parse value for CPL_VSIL_CURL_CACHE_SIZE. "
+                        "Using default value of " CPL_FRMT_GIB " instead.",
+                        nCacheSize);
+                }
+            }
+
             const auto nMaxRAM = CPLGetUsablePhysicalRAM();
             const auto nMinVal = DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY;
             auto nMaxVal = static_cast<GIntBig>(INT_MAX) *
@@ -634,6 +646,7 @@ void VSICURLInitWriteFuncStruct(cpl::WriteFuncStruct *psStruct, VSILFILE *fp,
     psStruct->nStartOffset = 0;
     psStruct->nEndOffset = 0;
     psStruct->nHTTPCode = 0;
+    psStruct->nFirstHTTPCode = 0;
     psStruct->nContentLength = 0;
     psStruct->bFoundContentRange = false;
     psStruct->bError = false;
@@ -676,7 +689,10 @@ size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                 char *pszSpace = strchr(pszLine, ' ');
                 if (pszSpace)
                 {
-                    psStruct->nHTTPCode = atoi(pszSpace + 1);
+                    const int nHTTPCode = atoi(pszSpace + 1);
+                    if (psStruct->nFirstHTTPCode == 0)
+                        psStruct->nFirstHTTPCode = nHTTPCode;
+                    psStruct->nHTTPCode = nHTTPCode;
                 }
             }
             else if (STARTS_WITH_CI(pszLine, "Content-Length: "))
@@ -831,7 +847,8 @@ static GIntBig VSICurlGetExpiresFromS3LikeSignedURL(const char *pszURL)
 /*                       VSICURLMultiPerform()                          */
 /************************************************************************/
 
-void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle)
+void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle,
+                         std::atomic<bool> *pbInterrupt)
 {
     int repeats = 0;
 
@@ -866,6 +883,9 @@ void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle)
 #endif
 
         CPLMultiPerformWait(hCurlMultiHandle, repeats);
+
+        if (pbInterrupt && *pbInterrupt)
+            break;
     }
     CPLHTTPRestoreSigPipeHandler(old_handler);
 
@@ -1150,7 +1170,7 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
-    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle, &m_bInterrupt);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -1232,14 +1252,22 @@ retry:
         if (!osEffectiveURL.empty() &&
             strstr(osEffectiveURL.c_str(), osURL.c_str()) == nullptr)
         {
-            CPLDebug(poFS->GetDebugKey(), "Effective URL: %s",
-                     osEffectiveURL.c_str());
-
-            if (m_bUseRedirectURLIfNoQueryStringParams &&
-                osEffectiveURL.find('?') == std::string::npos)
+            // Moved permanently ?
+            if (sWriteFuncHeaderData.nFirstHTTPCode == 301 ||
+                (m_bUseRedirectURLIfNoQueryStringParams &&
+                 osEffectiveURL.find('?') == std::string::npos))
             {
+                CPLDebug(poFS->GetDebugKey(),
+                         "Using effective URL %s permanently",
+                         osEffectiveURL.c_str());
                 oFileProp.osRedirectURL = osEffectiveURL;
                 poFS->SetCachedFileProp(m_pszURL, oFileProp);
+            }
+            else
+            {
+                CPLDebug(poFS->GetDebugKey(),
+                         "Using effective URL %s temporarily",
+                         osEffectiveURL.c_str());
             }
 
             // Is this is a redirect to a S3 URL?
@@ -1363,7 +1391,6 @@ retry:
                 }
             }
 
-            if (bGetHeaders)
             {
                 char **papszHeaders =
                     CSLTokenizeString2(sWriteFuncHeaderData.pBuffer, "\r\n", 0);
@@ -1374,7 +1401,17 @@ retry:
                         CPLParseNameValue(papszHeaders[i], &pszKey);
                     if (pszKey && pszValue)
                     {
-                        m_aosHeaders.SetNameValue(pszKey, pszValue);
+                        if (bGetHeaders)
+                        {
+                            m_aosHeaders.SetNameValue(pszKey, pszValue);
+                        }
+                        if (EQUAL(pszKey, "Cache-Control") &&
+                            EQUAL(pszValue, "no-cache") &&
+                            CPLTestBool(CPLGetConfigOption(
+                                "CPL_VSIL_CURL_HONOR_CACHE_CONTROL", "YES")))
+                        {
+                            m_bCached = false;
+                        }
                     }
                     CPLFree(pszKey);
                 }
@@ -1590,7 +1627,9 @@ vsi_l_offset VSICurlHandle::Tell()
 /*                       GetRedirectURLIfValid()                        */
 /************************************************************************/
 
-std::string VSICurlHandle::GetRedirectURLIfValid(bool &bHasExpired) const
+std::string
+VSICurlHandle::GetRedirectURLIfValid(bool &bHasExpired,
+                                     CPLStringList &aosHTTPOptions) const
 {
     bHasExpired = false;
     poFS->GetCachedFileProp(m_pszURL, oFileProp);
@@ -1620,6 +1659,39 @@ std::string VSICurlHandle::GetRedirectURLIfValid(bool &bHasExpired) const
     {
         osURL = oFileProp.osRedirectURL;
         bHasExpired = false;
+    }
+
+    if (m_pszURL != osURL)
+    {
+        const char *pszAuthorizationHeaderAllowed = CPLGetConfigOption(
+            "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT",
+            "IF_SAME_HOST");
+        if (EQUAL(pszAuthorizationHeaderAllowed, "IF_SAME_HOST"))
+        {
+            const auto ExtractServer = [](const std::string &s)
+            {
+                size_t afterHTTPPos = 0;
+                if (STARTS_WITH(s.c_str(), "http://"))
+                    afterHTTPPos = strlen("http://");
+                else if (STARTS_WITH(s.c_str(), "https://"))
+                    afterHTTPPos = strlen("https://");
+                const auto posSlash = s.find('/', afterHTTPPos);
+                if (posSlash != std::string::npos)
+                    return s.substr(afterHTTPPos, posSlash - afterHTTPPos);
+                else
+                    return s.substr(afterHTTPPos);
+            };
+
+            if (ExtractServer(osURL) != ExtractServer(m_pszURL))
+            {
+                aosHTTPOptions.SetNameValue("AUTHORIZATION_HEADER_ALLOWED",
+                                            "NO");
+            }
+        }
+        else if (!CPLTestBool(pszAuthorizationHeaderAllowed))
+        {
+            aosHTTPOptions.SetNameValue("AUTHORIZATION_HEADER_ALLOWED", "NO");
+        }
     }
 
     return osURL;
@@ -1796,7 +1868,9 @@ begin:
     ManagePlanetaryComputerSigning();
 
     bool bHasExpired = false;
-    std::string osURL(GetRedirectURLIfValid(bHasExpired));
+
+    CPLStringList aosHTTPOptions(m_aosHTTPOptions);
+    std::string osURL(GetRedirectURLIfValid(bHasExpired, aosHTTPOptions));
     bool bUsedRedirect = osURL != m_pszURL;
 
     WriteFuncStruct sWriteFuncData;
@@ -1806,7 +1880,7 @@ begin:
 retry:
     CURL *hCurlHandle = curl_easy_init();
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
+        VSICurlSetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
 
     if (!AllowAutomaticRedirection())
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
@@ -1863,7 +1937,7 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
-    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle, &m_bInterrupt);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -1871,9 +1945,12 @@ retry:
 
     NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
 
-    if (sWriteFuncData.bInterrupted)
+    if (sWriteFuncData.bInterrupted || m_bInterrupt)
     {
         bInterrupted = true;
+
+        // Notify that the download of the current region is finished
+        currentDownload.SetData(std::string());
 
         CPLFree(sWriteFuncData.pBuffer);
         CPLFree(sWriteFuncHeaderData.pBuffer);
@@ -2366,7 +2443,9 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
     ManagePlanetaryComputerSigning();
 
     bool bHasExpired = false;
-    std::string osURL(GetRedirectURLIfValid(bHasExpired));
+
+    CPLStringList aosHTTPOptions(m_aosHTTPOptions);
+    std::string osURL(GetRedirectURLIfValid(bHasExpired, aosHTTPOptions));
     if (bHasExpired)
     {
         return VSIVirtualHandle::ReadMultiRange(nRanges, ppData, panOffsets,
@@ -2431,7 +2510,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         // unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_PIPEWAIT, 1);
 
         struct curl_slist *headers = VSICurlSetOptions(
-            hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
+            hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
 
         VSICURLInitWriteFuncStruct(&asWriteFuncData[iRequest], this, pfnReadCbk,
                                    pReadCbkUserData);
@@ -3023,18 +3102,19 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     NetworkStatisticsFile oContextFile(m_osFilename.c_str());
     NetworkStatisticsAction oContextAction("PRead");
 
+    CPLStringList aosHTTPOptions(m_aosHTTPOptions);
     std::string osURL;
     {
         std::lock_guard<std::mutex> oLock(m_oMutex);
         ManagePlanetaryComputerSigning();
         bool bHasExpired;
-        osURL = GetRedirectURLIfValid(bHasExpired);
+        osURL = GetRedirectURLIfValid(bHasExpired, aosHTTPOptions);
     }
 
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
+        VSICurlSetOptions(hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -3092,8 +3172,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     CURLM *hMultiHandle = poFS->GetCurlMultiHandleFor(osURL);
-    curl_multi_add_handle(hMultiHandle, hCurlHandle);
-    VSICURLMultiPerform(hMultiHandle);
+    VSICURLMultiPerform(hMultiHandle, hCurlHandle, &m_bInterrupt);
 
     {
         std::lock_guard<std::mutex> oLock(m_oMutex);
@@ -3116,9 +3195,12 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     if ((response_code != 206 && response_code != 225) ||
         sWriteFuncData.nSize == 0)
     {
-        CPLDebug(poFS->GetDebugKey(),
-                 "Request for %s failed with response_code=%ld", rangeStr,
-                 response_code);
+        if (!m_bInterrupt)
+        {
+            CPLDebug(poFS->GetDebugKey(),
+                     "Request for %s failed with response_code=%ld", rangeStr,
+                     response_code);
+        }
         nRet = static_cast<size_t>(-1);
     }
     else
@@ -3128,7 +3210,6 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
             memcpy(pBuffer, sWriteFuncData.pBuffer, nRet);
     }
 
-    curl_multi_remove_handle(hMultiHandle, hCurlHandle);
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
     curl_easy_cleanup(hCurlHandle);
     CPLFree(sWriteFuncData.pBuffer);
@@ -3193,7 +3274,9 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
     ManagePlanetaryComputerSigning();
 
     bool bHasExpired = false;
-    const std::string l_osURL(GetRedirectURLIfValid(bHasExpired));
+    CPLStringList aosHTTPOptions(m_aosHTTPOptions);
+    const std::string l_osURL(
+        GetRedirectURLIfValid(bHasExpired, aosHTTPOptions));
     if (bHasExpired)
     {
         return;
@@ -3260,7 +3343,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
              static_cast<unsigned>(m_aoAdviseReadRanges.size()));
 #endif
 
-    const auto task = [this](const std::string &osURL)
+    const auto task = [this, aosHTTPOptions](const std::string &osURL)
     {
         CURLM *hMultiHandle = curl_multi_init();
 
@@ -3308,7 +3391,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
             // unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_PIPEWAIT, 1);
 
             struct curl_slist *headers = VSICurlSetOptions(
-                hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
+                hCurlHandle, osURL.c_str(), aosHTTPOptions.List());
 
             VSICURLInitWriteFuncStruct(&asWriteFuncData[i], this, pfnReadCbk,
                                        pReadCbkUserData);
@@ -4762,8 +4845,8 @@ static bool VSICurlParseFullFTPLine(char *pszLine, char *&pszFilename,
 /*                          GetURLFromFilename()                         */
 /************************************************************************/
 
-std::string
-VSICurlFilesystemHandlerBase::GetURLFromFilename(const std::string &osFilename)
+std::string VSICurlFilesystemHandlerBase::GetURLFromFilename(
+    const std::string &osFilename) const
 {
     return VSICurlGetURLFromFilename(osFilename.c_str(), nullptr, nullptr,
                                      nullptr, nullptr, nullptr, nullptr,
@@ -5815,7 +5898,7 @@ void NetworkStatisticsLogger::Stats::AsJSON(CPLJSONObject &oJSON) const
             if (!osName.empty() && osName[0] == '/')
                 osName = osName.substr(1);
             if (!osName.empty() && osName.back() == '/')
-                osName.resize(osName.size() - 1);
+                osName.pop_back();
             oJSON.Add(("handlers/" + osName).c_str(), childJSON);
         }
         else if (kv.first.eType == ContextPathType::FILE)

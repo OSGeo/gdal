@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2019, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_pdf.h"
@@ -121,7 +105,7 @@ void GDALPDFComposerWriter::WritePages()
         GDALPDFDictionaryRW oDict;
         GDALPDFArrayRW *poKids = new GDALPDFArrayRW();
         oDict.Add("Type", GDALPDFObjectRW::CreateName("Pages"))
-            .Add("Count", (int)m_asPageId.size())
+            .Add("Count", static_cast<int>(m_asPageId.size()))
             .Add("Kids", poKids);
 
         for (size_t i = 0; i < m_asPageId.size(); i++)
@@ -648,13 +632,13 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(
     if (psBoundingBox)
     {
         bboxX1 = CPLAtof(
-            CPLGetXMLValue(psBoundingBox, "x1", CPLSPrintf("%.18g", bboxX1)));
+            CPLGetXMLValue(psBoundingBox, "x1", CPLSPrintf("%.17g", bboxX1)));
         bboxY1 = CPLAtof(
-            CPLGetXMLValue(psBoundingBox, "y1", CPLSPrintf("%.18g", bboxY1)));
+            CPLGetXMLValue(psBoundingBox, "y1", CPLSPrintf("%.17g", bboxY1)));
         bboxX2 = CPLAtof(
-            CPLGetXMLValue(psBoundingBox, "x2", CPLSPrintf("%.18g", bboxX2)));
+            CPLGetXMLValue(psBoundingBox, "x2", CPLSPrintf("%.17g", bboxX2)));
         bboxY2 = CPLAtof(
-            CPLGetXMLValue(psBoundingBox, "y2", CPLSPrintf("%.18g", bboxY2)));
+            CPLGetXMLValue(psBoundingBox, "y2", CPLSPrintf("%.17g", bboxY2)));
         if (bboxX2 <= bboxX1 || bboxY2 <= bboxY1)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid BoundingBox");
@@ -1350,9 +1334,9 @@ bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
     double dfX1 = CPLAtof(CPLGetXMLValue(psNode, "x1", "0"));
     double dfY1 = CPLAtof(CPLGetXMLValue(psNode, "y1", "0"));
     double dfX2 = CPLAtof(CPLGetXMLValue(
-        psNode, "x2", CPLSPrintf("%.18g", oPageContext.m_dfWidthInUserUnit)));
+        psNode, "x2", CPLSPrintf("%.17g", oPageContext.m_dfWidthInUserUnit)));
     double dfY2 = CPLAtof(CPLGetXMLValue(
-        psNode, "y2", CPLSPrintf("%.18g", oPageContext.m_dfHeightInUserUnit)));
+        psNode, "y2", CPLSPrintf("%.17g", oPageContext.m_dfHeightInUserUnit)));
     if (dfX2 <= dfX1 || dfY2 <= dfY1)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid x1,y1,x2,y2");
@@ -1498,20 +1482,22 @@ bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
                     /* Re-compute (x,y,width,height) subwindow of current raster
                      * from */
                     /* the extent of the clipped block */
-                    nX = (int)((dfIntersectMinX - dfRasterMinX) /
-                                   adfRasterGT[1] +
-                               0.5);
-                    nY = (int)((dfRasterMaxY - dfIntersectMaxY) /
-                                   (-adfRasterGT[5]) +
-                               0.5);
-                    nReqWidth = (int)((dfIntersectMaxX - dfRasterMinX) /
-                                          adfRasterGT[1] +
-                                      0.5) -
-                                nX;
-                    nReqHeight = (int)((dfRasterMaxY - dfIntersectMinY) /
-                                           (-adfRasterGT[5]) +
-                                       0.5) -
-                                 nY;
+                    nX = static_cast<int>((dfIntersectMinX - dfRasterMinX) /
+                                              adfRasterGT[1] +
+                                          0.5);
+                    nY = static_cast<int>((dfRasterMaxY - dfIntersectMaxY) /
+                                              (-adfRasterGT[5]) +
+                                          0.5);
+                    nReqWidth =
+                        static_cast<int>((dfIntersectMaxX - dfRasterMinX) /
+                                             adfRasterGT[1] +
+                                         0.5) -
+                        nX;
+                    nReqHeight =
+                        static_cast<int>((dfRasterMaxY - dfIntersectMinY) /
+                                             (-adfRasterGT[5]) +
+                                         0.5) -
+                        nY;
 
                     if (nReqWidth > 0 && nReqHeight > 0)
                     {

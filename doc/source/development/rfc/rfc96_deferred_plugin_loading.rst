@@ -377,7 +377,7 @@ done by code external to libgdal core.
 
 However, the candidate implementation hits an issue with the way the GDAL
 CondaForge builds work currently. At time of writing, the GDAL CondaForge
-build recipee does:
+build recipe does:
 
 - a regular GDAL build without Arrow/Parquet dependency (and thus without the
   driver), whose libgdal.so goes in to the libgdal package.
@@ -389,7 +389,7 @@ build recipee does:
   But that modified libgdal.so is discarded currently, and the ogr_Parquet.so
   plugin then depends on a identify method that is not implemented.
 
-The initial idea was that the build recipee would have to be modified to produce
+The initial idea was that the build recipe would have to be modified to produce
 all artifacts (libgdal.so and libparquet.so) at a single time, and dispatch
 them appropriately in libgdal and libgdal-arrow-parquet packages, rather than
 doing two builds. However, CondaForge builds support several libarrow versions,

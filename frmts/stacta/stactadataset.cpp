@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2020, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_json.h"
@@ -489,8 +473,13 @@ CPLErr STACTARawDataset::IRasterIO(
                             return CE_Failure;
                         }
                         VSIFCloseL(fp);
-                        const CPLString osMEMFilename("/vsimem/stacta/" +
-                                                      osURL);
+                        const CPLString osMEMFilename(
+                            VSIMemGenerateHiddenFilename(
+                                std::string("stacta_")
+                                    .append(CPLString(osURL)
+                                                .replaceAll("/", "_")
+                                                .replaceAll("\\", "_"))
+                                    .c_str()));
                         VSIFCloseL(VSIFileFromMemBuffer(osMEMFilename, pabyBuf,
                                                         nSize, TRUE));
                         poTileDS = std::unique_ptr<GDALDataset>(
@@ -1170,10 +1159,10 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                 aosOptions.AddString("-of");
                 aosOptions.AddString("VRT");
                 aosOptions.AddString("-projwin");
-                aosOptions.AddString(CPLSPrintf("%.18g", dfMinX));
-                aosOptions.AddString(CPLSPrintf("%.18g", dfMaxY));
-                aosOptions.AddString(CPLSPrintf("%.18g", dfMaxX));
-                aosOptions.AddString(CPLSPrintf("%.18g", dfMinY));
+                aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
+                aosOptions.AddString(CPLSPrintf("%.17g", dfMaxY));
+                aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
+                aosOptions.AddString(CPLSPrintf("%.17g", dfMinY));
                 auto psOptions =
                     GDALTranslateOptionsNew(aosOptions.List(), nullptr);
                 auto hDS =

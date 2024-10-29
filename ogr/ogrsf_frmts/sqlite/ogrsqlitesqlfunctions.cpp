@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2012-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 /* WARNING: VERY IMPORTANT NOTE: This file MUST not be directly compiled as */
@@ -63,10 +47,10 @@ static void OGR2SQLITE_ogr_version(sqlite3_context *pContext, int argc,
     }
     else
     {
-        sqlite3_result_text(
-            pContext,
-            GDALVersionInfo((const char *)sqlite3_value_text(argv[0])), -1,
-            SQLITE_TRANSIENT);
+        sqlite3_result_text(pContext,
+                            GDALVersionInfo(reinterpret_cast<const char *>(
+                                sqlite3_value_text(argv[0]))),
+                            -1, SQLITE_TRANSIENT);
     }
 }
 
@@ -105,7 +89,7 @@ static void OGR2SQLITE_Transform(sqlite3_context *pContext, int argc,
     int nDstSRSId = sqlite3_value_int(argv[2]);
 
     OGRSQLiteExtensionData *poModule =
-        (OGRSQLiteExtensionData *)sqlite3_user_data(pContext);
+        static_cast<OGRSQLiteExtensionData *>(sqlite3_user_data(pContext));
     OGRCoordinateTransformation *poCT =
         poModule->GetTransform(nSrcSRSId, nDstSRSId);
     if (poCT == nullptr)
@@ -114,17 +98,20 @@ static void OGR2SQLITE_Transform(sqlite3_context *pContext, int argc,
         return;
     }
 
-    GByte *pabySLBLOB = (GByte *)sqlite3_value_blob(argv[0]);
+    const GByte *pabySLBLOB =
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
     int nBLOBLen = sqlite3_value_bytes(argv[0]);
     OGRGeometry *poGeom = nullptr;
+    GByte *pabyOutBlob = nullptr;
+    int nOutBlobLen = 0;
     if (OGRSQLiteLayer::ImportSpatiaLiteGeometry(pabySLBLOB, nBLOBLen,
                                                  &poGeom) == OGRERR_NONE &&
         poGeom->transform(poCT) == OGRERR_NONE &&
         OGRSQLiteLayer::ExportSpatiaLiteGeometry(poGeom, nDstSRSId, wkbNDR,
-                                                 FALSE, FALSE, &pabySLBLOB,
-                                                 &nBLOBLen) == OGRERR_NONE)
+                                                 FALSE, FALSE, &pabyOutBlob,
+                                                 &nOutBlobLen) == OGRERR_NONE)
     {
-        sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);
+        sqlite3_result_blob(pContext, pabyOutBlob, nOutBlobLen, CPLFree);
     }
     else
     {
@@ -162,7 +149,8 @@ static void OGR2SQLITE_ogr_deflate(sqlite3_context *pContext, int argc,
     void *pOut = nullptr;
     if (sqlite3_value_type(argv[0]) == SQLITE_TEXT)
     {
-        const char *pszVal = (const char *)sqlite3_value_text(argv[0]);
+        const char *pszVal =
+            reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
         pOut = CPLZLibDeflate(pszVal, strlen(pszVal) + 1, nLevel, nullptr, 0,
                               &nOutBytes);
     }
@@ -229,7 +217,7 @@ static void OGR2SQLITE_ogr_geocode_set_result(sqlite3_context *pContext,
         sqlite3_result_null(pContext);
     else
     {
-        OGRLayer *poLayer = (OGRLayer *)hLayer;
+        OGRLayer *poLayer = OGRLayer::FromHandle(hLayer);
         OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
         OGRFeature *poFeature = poLayer->GetNextFeature();
         int nIdx;
@@ -284,19 +272,20 @@ static void OGR2SQLITE_ogr_geocode(sqlite3_context *pContext, int argc,
                                    sqlite3_value **argv)
 {
     OGRSQLiteExtensionData *poModule =
-        (OGRSQLiteExtensionData *)sqlite3_user_data(pContext);
+        static_cast<OGRSQLiteExtensionData *>(sqlite3_user_data(pContext));
 
     if (argc < 1 || sqlite3_value_type(argv[0]) != SQLITE_TEXT)
     {
         sqlite3_result_null(pContext);
         return;
     }
-    const char *pszQuery = (const char *)sqlite3_value_text(argv[0]);
+    const char *pszQuery =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
 
     CPLString osField = "geometry";
     if (argc >= 2 && sqlite3_value_type(argv[1]) == SQLITE_TEXT)
     {
-        osField = (const char *)sqlite3_value_text(argv[1]);
+        osField = reinterpret_cast<const char *>(sqlite3_value_text(argv[1]));
     }
 
     char **papszOptions = nullptr;
@@ -305,7 +294,8 @@ static void OGR2SQLITE_ogr_geocode(sqlite3_context *pContext, int argc,
         if (sqlite3_value_type(argv[i]) == SQLITE_TEXT)
         {
             papszOptions = CSLAddString(
-                papszOptions, (const char *)sqlite3_value_text(argv[i]));
+                papszOptions,
+                reinterpret_cast<const char *>(sqlite3_value_text(argv[i])));
         }
     }
 
@@ -353,7 +343,7 @@ static double OGR2SQLITE_GetValAsDouble(sqlite3_value *val, int *pbGotVal)
         case SQLITE_INTEGER:
             if (pbGotVal)
                 *pbGotVal = TRUE;
-            return (double)sqlite3_value_int64(val);
+            return static_cast<double>(sqlite3_value_int64(val));
 
         default:
             if (pbGotVal)
@@ -375,7 +365,8 @@ OGR2SQLITE_GetGeom(sqlite3_context * /*pContext*/, int /* argc */,
         return nullptr;
     }
 
-    GByte *pabySLBLOB = (GByte *)sqlite3_value_blob(argv[0]);
+    const GByte *pabySLBLOB =
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
     int nBLOBLen = sqlite3_value_bytes(argv[0]);
     OGRGeometry *poGeom = nullptr;
     if (OGRSQLiteLayer::ImportSpatiaLiteGeometry(pabySLBLOB, nBLOBLen, &poGeom,
@@ -396,7 +387,7 @@ static void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context *pContext, int argc,
                                            sqlite3_value **argv)
 {
     OGRSQLiteExtensionData *poModule =
-        (OGRSQLiteExtensionData *)sqlite3_user_data(pContext);
+        static_cast<OGRSQLiteExtensionData *>(sqlite3_user_data(pContext));
 
     double dfLon = 0.0;
     double dfLat = 0.0;
@@ -440,7 +431,7 @@ static void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context *pContext, int argc,
     }
 
     const char *pszField =
-        (const char *)sqlite3_value_text(argv[iAfterGeomIdx]);
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[iAfterGeomIdx]));
 
     char **papszOptions = nullptr;
     for (int i = iAfterGeomIdx + 1; i < argc; i++)
@@ -448,7 +439,8 @@ static void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context *pContext, int argc,
         if (sqlite3_value_type(argv[i]) == SQLITE_TEXT)
         {
             papszOptions = CSLAddString(
-                papszOptions, (const char *)sqlite3_value_text(argv[i]));
+                papszOptions,
+                reinterpret_cast<const char *>(sqlite3_value_text(argv[i])));
         }
     }
 
@@ -485,14 +477,15 @@ static void OGR2SQLITE_ogr_datasource_load_layers(sqlite3_context *pContext,
                                                   int argc,
                                                   sqlite3_value **argv)
 {
-    sqlite3 *hDB = (sqlite3 *)sqlite3_user_data(pContext);
+    sqlite3 *hDB = static_cast<sqlite3 *>(sqlite3_user_data(pContext));
 
     if ((argc < 1 || argc > 3) || sqlite3_value_type(argv[0]) != SQLITE_TEXT)
     {
         sqlite3_result_int(pContext, 0);
         return;
     }
-    const char *pszDataSource = (const char *)sqlite3_value_text(argv[0]);
+    const char *pszDataSource =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
 
     int bUpdate = FALSE;
     if (argc >= 2)
@@ -513,11 +506,13 @@ static void OGR2SQLITE_ogr_datasource_load_layers(sqlite3_context *pContext,
             sqlite3_result_int(pContext, 0);
             return;
         }
-        pszPrefix = (const char *)sqlite3_value_text(argv[2]);
+        pszPrefix = reinterpret_cast<const char *>(sqlite3_value_text(argv[2]));
     }
 
-    OGRDataSource *poDS =
-        (OGRDataSource *)OGROpenShared(pszDataSource, bUpdate, nullptr);
+    auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+        pszDataSource,
+        GDAL_OF_VECTOR | (bUpdate ? GDAL_OF_UPDATE : GDAL_OF_READONLY), nullptr,
+        nullptr, nullptr));
     if (poDS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", pszDataSource);
@@ -550,7 +545,6 @@ static void OGR2SQLITE_ogr_datasource_load_layers(sqlite3_context *pContext,
                 osEscapedLayerName.c_str()));
     }
 
-    poDS->Release();
     sqlite3_result_int(pContext, 1);
 }
 
@@ -568,7 +562,8 @@ static void OGR2SQLITE_ogr_GetConfigOption(sqlite3_context *pContext, int argc,
         return;
     }
 
-    const char *pszKey = (const char *)sqlite3_value_text(argv[0]);
+    const char *pszKey =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
     const char *pszVal = CPLGetConfigOption(pszKey, nullptr);
     if (pszVal == nullptr)
         sqlite3_result_null(pContext);
@@ -595,10 +590,12 @@ static void OGR2SQLITE_ogr_SetConfigOption(sqlite3_context *pContext, int argc,
         return;
     }
 
-    const char *pszKey = (const char *)sqlite3_value_text(argv[0]);
-    const char *pszVal = (sqlite3_value_type(argv[1]) == SQLITE_TEXT)
-                             ? (const char *)sqlite3_value_text(argv[1])
-                             : nullptr;
+    const char *pszKey =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
+    const char *pszVal =
+        (sqlite3_value_type(argv[1]) == SQLITE_TEXT)
+            ? reinterpret_cast<const char *>(sqlite3_value_text(argv[1]))
+            : nullptr;
     CPLSetConfigOption(pszKey, pszVal);
     sqlite3_result_null(pContext);
 }
@@ -671,6 +668,52 @@ static void OGR2SQLITE_ST_GeodesicArea(sqlite3_context *pContext, int argc,
     }
 }
 
+/************************************************************************/
+/*                     OGR2SQLITE_ST_GeodesicLength()                   */
+/************************************************************************/
+
+static void OGR2SQLITE_ST_GeodesicLength(sqlite3_context *pContext, int argc,
+                                         sqlite3_value **argv)
+{
+    if (sqlite3_value_int(argv[1]) != 1)
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "ST_Length(geom, use_ellipsoid) is only supported for "
+                 "use_ellipsoid = 1");
+    }
+
+    int nSRSId = -1;
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
+    if (poGeom != nullptr)
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (nSRSId > 0)
+        {
+            if (oSRS.importFromEPSG(nSRSId) != OGRERR_NONE)
+            {
+                sqlite3_result_null(pContext);
+                return;
+            }
+        }
+        else
+        {
+            CPLDebug("OGR_SQLITE",
+                     "Assuming EPSG:4326 for GeodesicLength() computation");
+            oSRS.importFromEPSG(4326);
+        }
+        poGeom->assignSpatialReference(&oSRS);
+        sqlite3_result_double(
+            pContext,
+            OGR_G_GeodesicLength(OGRGeometry::ToHandle(poGeom.get())));
+        poGeom->assignSpatialReference(nullptr);
+    }
+    else
+    {
+        sqlite3_result_null(pContext);
+    }
+}
+
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
 
 /************************************************************************/
@@ -709,7 +752,8 @@ static void OGR2SQLITE_ST_AsBinary(sqlite3_context *pContext, int argc,
             sqlite3_result_null(pContext);
             return;
         }
-        GByte *pabyGeomBLOB = (GByte *)VSI_MALLOC_VERBOSE(nBLOBLen);
+        GByte *pabyGeomBLOB =
+            static_cast<GByte *>(VSI_MALLOC_VERBOSE(nBLOBLen));
         if (pabyGeomBLOB != nullptr)
         {
             if (poGeom->exportToWkb(wkbNDR, pabyGeomBLOB) == OGRERR_NONE)
@@ -774,7 +818,8 @@ static void OGR2SQLITE_ST_GeomFromWKB(sqlite3_context *pContext, int argc,
     if (argc == 2 && sqlite3_value_type(argv[1]) == SQLITE_INTEGER)
         nSRID = sqlite3_value_int(argv[1]);
 
-    GByte *pabySLBLOB = (GByte *)sqlite3_value_blob(argv[0]);
+    const GByte *pabySLBLOB =
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
     int nBLOBLen = sqlite3_value_bytes(argv[0]);
     OGRGeometry *poGeom = nullptr;
 
@@ -927,6 +972,25 @@ static void OGR2SQLITE_ST_Area(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
+/*                      OGR2SQLITE_ST_Length()                          */
+/************************************************************************/
+
+static void OGR2SQLITE_ST_Length(sqlite3_context *pContext, int argc,
+                                 sqlite3_value **argv)
+{
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);
+    if (poGeom != nullptr)
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        sqlite3_result_double(
+            pContext, OGR_G_Length(OGRGeometry::ToHandle(poGeom.get())));
+        CPLPopErrorHandler();
+    }
+    else
+        sqlite3_result_null(pContext);
+}
+
+/************************************************************************/
 /*                     OGR2SQLITE_ST_Buffer()                           */
 /************************************************************************/
 
@@ -1013,8 +1077,10 @@ static void OGRSQLITE_hstore_get_value(sqlite3_context *pContext,
         return;
     }
 
-    const char *pszHStore = (const char *)sqlite3_value_text(argv[0]);
-    const char *pszSearchedKey = (const char *)sqlite3_value_text(argv[1]);
+    const char *pszHStore =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
+    const char *pszSearchedKey =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[1]));
     char *pszValue = OGRHStoreGetValue(pszHStore, pszSearchedKey);
     if (pszValue != nullptr)
         sqlite3_result_text(pContext, pszValue, -1, CPLFree);
@@ -1148,6 +1214,9 @@ static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
 
         REGISTER_ST_op(1, SRID);
         REGISTER_ST_op(1, Area);
+        // length() is a reserved SQLite function
+        sqlite3_create_function(hDB, "ST_Length", 1, UTF8_INNOCUOUS, nullptr,
+                                OGR2SQLITE_ST_Length, nullptr, nullptr);
         REGISTER_ST_op(2, Buffer);
         REGISTER_ST_op(2, MakePoint);
         REGISTER_ST_op(3, MakePoint);
@@ -1162,6 +1231,11 @@ static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
                                 OGR2SQLITE_ST_GeodesicArea, nullptr, nullptr);
         sqlite3_create_function(hDB, "ST_Area", 2, UTF8_INNOCUOUS, nullptr,
                                 OGR2SQLITE_ST_GeodesicArea, nullptr, nullptr);
+
+        // We add a ST_Length() method with 2 arguments even when Spatialite
+        // is there to indicate we want to use the ellipsoid version
+        sqlite3_create_function(hDB, "ST_Length", 2, UTF8_INNOCUOUS, nullptr,
+                                OGR2SQLITE_ST_GeodesicLength, nullptr, nullptr);
 
         static bool gbRegisterMakeValid = [bSpatialiteAvailable, hDB]()
         {
