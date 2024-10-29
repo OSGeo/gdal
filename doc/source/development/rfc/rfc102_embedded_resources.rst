@@ -8,7 +8,7 @@ RFC 102: Embedding resource files into libgdal
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2024-Oct-01
-Status:        Draft
+Status:        Adopted, implemented
 Target:        GDAL 3.11
 ============== =============================================
 
@@ -162,4 +162,4 @@ Related issues and PRs
 Voting history
 --------------
 
-TBD
++1 from PSC members JukkaR, JavierJS, KurtS, HowardB and EvenR
