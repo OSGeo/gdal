@@ -1356,6 +1356,7 @@ IdentificationTolerance
 identificator
 Identificator
 IDisposable
+idofic
 Idrisi
 iDriver
 idx
@@ -1785,6 +1786,7 @@ minY
 MinZ
 Mipmaps
 MiraD
+miramon
 mis
 mitab
 mkdir
@@ -2412,6 +2414,7 @@ Placemark
 plaintext
 Plessis
 plmosaic
+plscenes
 plscenesconf
 pM
 pnBufferSize
@@ -2844,6 +2847,7 @@ RPF
 rpr
 RRaster
 rrd
+rsc
 rsiz
 rst
 rsync
@@ -3145,6 +3149,7 @@ swi
 Swif
 swiftclient
 swq
+sxf
 sym
 symlinked
 syntaxes
@@ -3416,6 +3421,7 @@ vcpkg
 vct
 vcvars
 vdc
+vdv
 vecror
 VectorInfo
 VectorInfoOptions
