@@ -1440,7 +1440,7 @@ def test_ogr_miramon_json_import_not_failing(tmp_vsimem):
     out_filename = str(tmp_vsimem / "out/json_layer_to_mm.pol")
     gdal.VectorTranslate(
         out_filename,
-        "data/miramon/reading_test/LT05_L2SP_038037_20120505_20200820_02_T1_ST_stac_minimal.json",
+        "data/miramon_inputs/LT05_L2SP_038037_20120505_20200820_02_T1_ST_stac_minimal.json",
         format="MiraMonVector",
     )
 
