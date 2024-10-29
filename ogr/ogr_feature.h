@@ -1178,6 +1178,7 @@ class CPL_DLL OGRFeature
 
     OGRErr SetGeometryDirectly(OGRGeometry *);
     OGRErr SetGeometry(const OGRGeometry *);
+    OGRErr SetGeometry(std::unique_ptr<OGRGeometry>);
     OGRGeometry *GetGeometryRef();
     const OGRGeometry *GetGeometryRef() const;
     OGRGeometry *StealGeometry() CPL_WARN_UNUSED_RESULT;
@@ -1209,6 +1210,7 @@ class CPL_DLL OGRFeature
     const OGRGeometry *GetGeomFieldRef(const char *pszFName) const;
     OGRErr SetGeomFieldDirectly(int iField, OGRGeometry *);
     OGRErr SetGeomField(int iField, const OGRGeometry *);
+    OGRErr SetGeomField(int iField, std::unique_ptr<OGRGeometry>);
 
     void Reset();
 

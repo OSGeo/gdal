@@ -433,7 +433,7 @@ OGRFeatureDefnH OGR_F_GetDefnRef(OGRFeatureH hFeat)
 /**
  * \brief Set feature geometry.
  *
- * This method updates the features geometry, and operate exactly as
+ * This method updates the features geometry, and operates the same as
  * SetGeometry(), except that this method assumes ownership of the
  * passed geometry (even in case of failure of that function).
  *
@@ -456,11 +456,12 @@ OGRFeatureDefnH OGR_F_GetDefnRef(OGRFeatureH hFeat)
 OGRErr OGRFeature::SetGeometryDirectly(OGRGeometry *poGeomIn)
 
 {
-    if (GetGeomFieldCount() > 0)
-        return SetGeomFieldDirectly(0, poGeomIn);
+    if (poGeomIn == GetGeometryRef())
+    {
+        return OGRERR_NONE;
+    }
 
-    delete poGeomIn;
-    return OGRERR_FAILURE;
+    return SetGeomField(0, std::unique_ptr<OGRGeometry>(poGeomIn));
 }
 
 /************************************************************************/
@@ -470,7 +471,7 @@ OGRErr OGRFeature::SetGeometryDirectly(OGRGeometry *poGeomIn)
 /**
  * \brief Set feature geometry.
  *
- * This function updates the features geometry, and operate exactly as
+ * This function updates the features geometry, and operates the same as
  * SetGeometry(), except that this function assumes ownership of the
  * passed geometry (even in case of failure of that function).
  *
@@ -506,7 +507,7 @@ OGRErr OGR_F_SetGeometryDirectly(OGRFeatureH hFeat, OGRGeometryH hGeom)
 /**
  * \brief Set feature geometry.
  *
- * This method updates the features geometry, and operate exactly as
+ * This method updates the features geometry, and operates the same as
  * SetGeometryDirectly(), except that this method does not assume ownership
  * of the passed geometry, but instead makes a copy of it.
  *
@@ -542,7 +543,7 @@ OGRErr OGRFeature::SetGeometry(const OGRGeometry *poGeomIn)
 /**
  * \brief Set feature geometry.
  *
- * This function updates the features geometry, and operate exactly as
+ * This function updates the features geometry, and operates the same as
  * SetGeometryDirectly(), except that this function does not assume ownership
  * of the passed geometry, but instead makes a copy of it.
  *
@@ -568,6 +569,37 @@ OGRErr OGR_F_SetGeometry(OGRFeatureH hFeat, OGRGeometryH hGeom)
 
     return OGRFeature::FromHandle(hFeat)->SetGeometry(
         OGRGeometry::FromHandle(hGeom));
+}
+
+/************************************************************************/
+/*                        SetGeometry()                                 */
+/************************************************************************/
+
+/**
+ * \brief Set feature geometry.
+ *
+ * This method is the same as the C function OGR_F_SetGeometryDirectly().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
+ * @param poGeomIn new geometry to apply to feature. Passing NULL value here
+ * is correct and it will result in deallocation of currently assigned geometry
+ * without assigning new one.
+ *
+ * @return OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if
+ * the geometry type is illegal for the OGRFeatureDefn (checking not yet
+ * implemented).
+ *
+ * @since GDAL 3.11
+ */
+
+OGRErr OGRFeature::SetGeometry(std::unique_ptr<OGRGeometry> poGeomIn)
+
+{
+    return SetGeomField(0, std::move(poGeomIn));
 }
 
 /************************************************************************/
@@ -907,7 +939,7 @@ OGRGeometryH OGR_F_GetGeomFieldRef(OGRFeatureH hFeat, int iField)
 /**
  * \brief Set feature geometry of a specified geometry field.
  *
- * This method updates the features geometry, and operate exactly as
+ * This method updates the features geometry, and operates the same as
  * SetGeomField(), except that this method assumes ownership of the
  * passed geometry (even in case of failure of that function).
  *
@@ -926,21 +958,13 @@ OGRGeometryH OGR_F_GetGeomFieldRef(OGRFeatureH hFeat, int iField)
  */
 
 OGRErr OGRFeature::SetGeomFieldDirectly(int iField, OGRGeometry *poGeomIn)
-
 {
-    if (iField < 0 || iField >= GetGeomFieldCount())
+    if (poGeomIn && poGeomIn == GetGeomFieldRef(iField))
     {
-        delete poGeomIn;
-        return OGRERR_FAILURE;
+        return OGRERR_NONE;
     }
 
-    if (papoGeometries[iField] != poGeomIn)
-    {
-        delete papoGeometries[iField];
-        papoGeometries[iField] = poGeomIn;
-    }
-
-    return OGRERR_NONE;
+    return SetGeomField(iField, std::unique_ptr<OGRGeometry>(poGeomIn));
 }
 
 /************************************************************************/
@@ -950,7 +974,7 @@ OGRErr OGRFeature::SetGeomFieldDirectly(int iField, OGRGeometry *poGeomIn)
 /**
  * \brief Set feature geometry of a specified geometry field.
  *
- * This function updates the features geometry, and operate exactly as
+ * This function updates the features geometry, and operates the same as
  * SetGeomField(), except that this function assumes ownership of the
  * passed geometry (even in case of failure of that function).
  *
@@ -985,7 +1009,7 @@ OGRErr OGR_F_SetGeomFieldDirectly(OGRFeatureH hFeat, int iField,
 /**
  * \brief Set feature geometry of a specified geometry field.
  *
- * This method updates the features geometry, and operate exactly as
+ * This method updates the features geometry, and operates the same as
  * SetGeomFieldDirectly(), except that this method does not assume ownership
  * of the passed geometry, but instead makes a copy of it.
  *
@@ -1031,7 +1055,7 @@ OGRErr OGRFeature::SetGeomField(int iField, const OGRGeometry *poGeomIn)
 /**
  * \brief Set feature geometry of a specified geometry field.
  *
- * This function updates the features geometry, and operate exactly as
+ * This function updates the features geometry, and operates the same as
  * SetGeometryDirectly(), except that this function does not assume ownership
  * of the passed geometry, but instead makes a copy of it.
  *
@@ -1053,6 +1077,45 @@ OGRErr OGR_F_SetGeomField(OGRFeatureH hFeat, int iField, OGRGeometryH hGeom)
 
     return OGRFeature::FromHandle(hFeat)->SetGeomField(
         iField, OGRGeometry::FromHandle(hGeom));
+}
+
+/************************************************************************/
+/*                       SetGeomField()                                 */
+/************************************************************************/
+
+/**
+ * \brief Set feature geometry of a specified geometry field.
+ *
+ * This method is the same as the C function OGR_F_SetGeomFieldDirectly().
+ *
+ * @param iField geometry field to set.
+ * @param poGeomIn new geometry to apply to feature. Passing NULL value here
+ * is correct and it will result in deallocation of currently assigned geometry
+ * without assigning new one.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is invalid,
+ * or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for the
+ * OGRFeatureDefn (checking not yet implemented).
+ *
+ * @since GDAL 3.11
+ */
+
+OGRErr OGRFeature::SetGeomField(int iField,
+                                std::unique_ptr<OGRGeometry> poGeomIn)
+
+{
+    if (iField < 0 || iField >= GetGeomFieldCount())
+    {
+        return OGRERR_FAILURE;
+    }
+
+    if (papoGeometries[iField] != poGeomIn.get())
+    {
+        delete papoGeometries[iField];
+        papoGeometries[iField] = poGeomIn.release();
+    }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -6688,7 +6751,7 @@ const char *OGR_F_GetStyleString(OGRFeatureH hFeat)
 /**
  * \brief Set feature style string.
  *
- * This method operate exactly as OGRFeature::SetStyleStringDirectly() except
+ * This method operates the same as OGRFeature::SetStyleStringDirectly() except
  * that it does not assume ownership of the passed string, but instead makes a
  * copy of it.
  *
@@ -6716,7 +6779,7 @@ void OGRFeature::SetStyleString(const char *pszString)
 /**
  * \brief Set feature style string.
  *
- * This method operate exactly as OGR_F_SetStyleStringDirectly() except that it
+ * This method operates the same as OGR_F_SetStyleStringDirectly() except that it
  * does not assume ownership of the passed string, but instead makes a copy of
  * it.
  *
@@ -6741,7 +6804,7 @@ void OGR_F_SetStyleString(OGRFeatureH hFeat, const char *pszStyle)
 /**
  * \brief Set feature style string.
  *
- * This method operate exactly as OGRFeature::SetStyleString() except that it
+ * This method operates the same as OGRFeature::SetStyleString() except that it
  * assumes ownership of the passed string.
  *
  * This method is the same as the C function OGR_F_SetStyleStringDirectly().
@@ -6762,7 +6825,7 @@ void OGRFeature::SetStyleStringDirectly(char *pszString)
 /**
  * \brief Set feature style string.
  *
- * This method operate exactly as OGR_F_SetStyleString() except that it assumes
+ * This method operates the same as OGR_F_SetStyleString() except that it assumes
  * ownership of the passed string.
  *
  * This function is the same as the C++ method
