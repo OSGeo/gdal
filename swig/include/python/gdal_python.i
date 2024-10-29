@@ -3051,6 +3051,7 @@ def VectorTranslateOptions(options=None, format=None,
          coordinateOperation=None,
          SQLStatement=None, SQLDialect=None, where=None, selectFields=None,
          addFields=False,
+         relaxedFieldNameMatch=False,
          forceNullable=False,
          emptyStrAsNull=False,
          spatFilter=None, spatSRS=None,
@@ -3117,6 +3118,8 @@ def VectorTranslateOptions(options=None, format=None,
     addFields:
         whether to add new fields found in source layers (to be used with
         accessMode == 'append' or 'upsert')
+    relaxedFieldNameMatch:
+        Do field name matching between source and existing target layer in a more relaxed way if the target driver has an implementation for it.
     forceNullable:
         whether to drop NOT NULL constraints on newly created fields
     emptyStrAsNull:
@@ -3263,6 +3266,8 @@ def VectorTranslateOptions(options=None, format=None,
                 raise Exception('unhandled accessMode')
         if addFields:
             new_options += ['-addfields']
+        if relaxedFieldNameMatch:
+            new_options += ['-relaxedFieldNameMatch']
         if forceNullable:
             new_options += ['-forceNullable']
         if emptyStrAsNull:
