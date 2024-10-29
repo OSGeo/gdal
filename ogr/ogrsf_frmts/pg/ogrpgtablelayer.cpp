@@ -4034,4 +4034,25 @@ OGRGeometryTypeCounter *OGRPGTableLayer::GetGeometryTypes(
     return pasRet;
 }
 
+/************************************************************************/
+/*                          FindFieldIndex()                            */
+/************************************************************************/
+
+int OGRPGTableLayer::FindFieldIndex(const char *pszFieldName, int bExactMatch)
+{
+    const auto poLayerDefn = GetLayerDefn();
+    int iField = poLayerDefn->GetFieldIndex(pszFieldName);
+
+    if (!bExactMatch && iField < 0 && bLaunderColumnNames)
+    {
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+        char *pszSafeName =
+            OGRPGCommonLaunderName(pszFieldName, "PG", m_bUTF8ToASCII);
+        iField = poLayerDefn->GetFieldIndex(pszSafeName);
+        CPLFree(pszSafeName);
+    }
+
+    return iField;
+}
+
 #undef PQexec

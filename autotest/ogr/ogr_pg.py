@@ -6231,3 +6231,41 @@ def test_ogr_pg_empty_search_path(pg_ds):
 
     finally:
         ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = {old_search_path}")
+
+
+###############################################################################
+# Test appending to a layer where a field name was truncated to 63 characters.
+
+
+@only_without_postgis
+@gdaltest.enable_exceptions()
+def test_ogr_pg_findfield(pg_ds):
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("test_very_long_field_name")
+    src_lyr.CreateField(
+        ogr.FieldDefn(
+            "veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryyyyyyyyyyyyyyyyyyyyyyloooooooooooooong"
+        )
+    )
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField(0, "foo")
+    src_lyr.CreateFeature(f)
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(pg_ds.GetDescription(), src_ds)
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(pg_ds.GetDescription(), src_ds, accessMode="append")
+
+    lyr = pg_ds.GetLayerByName("test_very_long_field_name")
+    assert [f.GetField(0) for f in lyr] == ["foo", None]
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(
+            pg_ds.GetDescription(),
+            src_ds,
+            accessMode="append",
+            relaxedFieldNameMatch=True,
+        )
+    assert [f.GetField(0) for f in lyr] == ["foo", None, "foo"]
