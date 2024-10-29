@@ -2805,6 +2805,7 @@ static void GDALDeregister_GRIB(GDALDriver *)
 {
     if (hGRIBMutex != nullptr)
     {
+        MetanameCleanup();
         CPLDestroyMutex(hGRIBMutex);
         hGRIBMutex = nullptr;
     }

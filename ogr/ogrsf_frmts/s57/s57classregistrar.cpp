@@ -16,8 +16,8 @@
 #include "cpl_string.h"
 #include "s57.h"
 
-#ifdef S57_BUILTIN_CLASSES
-#include "s57tables.h"
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
 #endif
 
 /************************************************************************/
@@ -81,28 +81,46 @@ bool S57ClassRegistrar::FindFile(const char *pszTarget,
 {
     const char *pszFilename = nullptr;
 
+    *pfp = nullptr;
+
     if (pszDirectory == nullptr)
     {
+#if defined(USE_ONLY_EMBEDDED_RESOURCE_FILES)
+        pszFilename = pszTarget;
+#else
         pszFilename = CPLFindFile("s57", pszTarget);
         if (pszFilename == nullptr)
             pszFilename = pszTarget;
+#endif
+        if (EQUAL(pszFilename, pszTarget))
+        {
+#ifdef EMBED_RESOURCE_FILES
+            const char *pszContent = S57GetEmbeddedCSV(pszTarget);
+            if (pszContent)
+            {
+                CPLDebug("S57", "Using embedded %s", pszTarget);
+                *pfp = VSIFileFromMemBuffer(
+                    nullptr,
+                    const_cast<GByte *>(
+                        reinterpret_cast<const GByte *>(pszContent)),
+                    static_cast<int>(strlen(pszContent)),
+                    /* bTakeOwnership = */ false);
+            }
+#endif
+        }
     }
     else
     {
         pszFilename = CPLFormFilename(pszDirectory, pszTarget, nullptr);
     }
 
-    *pfp = VSIFOpenL(pszFilename, "rb");
-
-#ifdef S57_BUILTIN_CLASSES
-    if (*pfp == NULL)
+#ifdef EMBED_RESOURCE_FILES
+    if (!(*pfp))
+#endif
     {
-        if (EQUAL(pszTarget, "s57objectclasses.csv"))
-            papszNextLine = gpapszS57Classes;
-        else
-            papszNextLine = gpapszS57attributes;
+        *pfp = VSIFOpenL(pszFilename, "rb");
     }
-#else
+
     if (*pfp == nullptr)
     {
         if (bReportErr)
@@ -110,7 +128,6 @@ bool S57ClassRegistrar::FindFile(const char *pszTarget,
                      pszFilename);
         return FALSE;
     }
-#endif
 
     return TRUE;
 }

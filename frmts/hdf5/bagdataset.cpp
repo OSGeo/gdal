@@ -30,6 +30,10 @@
 #include "ogrsf_frmts.h"
 #include "rat.h"
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 #include <cassert>
 #include <cmath>
 #include <algorithm>
@@ -5203,16 +5207,35 @@ CPLString BAGCreator::GenerateMetadata(int nXSize, int nYSize,
     }
     else
     {
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+#ifdef EMBED_RESOURCE_FILES
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+#endif
         const char *pszDefaultTemplateFilename =
             CPLFindFile("gdal", "bag_template.xml");
         if (pszDefaultTemplateFilename == nullptr)
+#endif
         {
+#ifdef EMBED_RESOURCE_FILES
+            static const bool bOnce [[maybe_unused]] = []()
+            {
+                CPLDebug("BAG", "Using embedded bag_template.xml");
+                return true;
+            }();
+            psRoot = CPLParseXMLString(BAGGetEmbeddedTemplateFile());
+#else
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot find bag_template.xml and TEMPLATE "
                      "creation option not specified");
             return CPLString();
+#endif
         }
-        psRoot = CPLParseXMLFile(pszDefaultTemplateFilename);
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+        else
+        {
+            psRoot = CPLParseXMLFile(pszDefaultTemplateFilename);
+        }
+#endif
     }
     if (psRoot == nullptr)
         return CPLString();
