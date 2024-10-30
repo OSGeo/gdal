@@ -5672,6 +5672,9 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
     {
         m_nZFlag = wkbHasZ(eGType) ? 1 : 0;
         m_nMFlag = wkbHasM(eGType) ? 1 : 0;
+
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+            poGotSRS;
         OGRGeomFieldDefn oGeomFieldDefn(pszGeomColumnName, eGType);
 
         oGeomFieldDefn.SetSpatialRef(poSRS);
@@ -5685,7 +5688,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
             }
             else
             {
-                auto poGotSRS =
+                poGotSRS =
                     m_poDS->GetSpatialRef(m_iSrs, /* bFallbackToEPSG = */ false,
                                           /* bEmitErrorIfNotFound = */ false);
                 if (poGotSRS)

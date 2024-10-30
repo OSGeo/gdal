@@ -3343,6 +3343,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
              static_cast<unsigned>(m_aoAdviseReadRanges.size()));
 #endif
 
+    // coverity[uninit_member,copy_constructor_call]
     const auto task = [this, aosHTTPOptions](const std::string &osURL)
     {
         CURLM *hMultiHandle = curl_multi_init();
