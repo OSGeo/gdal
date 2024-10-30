@@ -7,7 +7,7 @@ set -eu
 # This is important because they might differ in supporting
 # `_Float16`.
 CC=icx
-CXX=idx
+CXX=icx
 export CC CXX
 
 cmake ${GDAL_SOURCE_DIR:=..} \
