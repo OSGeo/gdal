@@ -491,6 +491,7 @@ man_pages = [
 preamble = r"""
 \ifdefined\DeclareUnicodeCharacter
   \DeclareUnicodeCharacter{2032}{$'$}% prime
+  \DeclareUnicodeCharacter{200B}{{\hskip 0pt}}
 \fi
 """
 
