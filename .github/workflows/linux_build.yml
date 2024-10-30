@@ -67,12 +67,6 @@ jobs:
             build_script: build.sh
             os: ubuntu-22.04
 
-          - name: Alpine, numpy 2
-            id: alpine_numpy2
-            container: alpine_numpy2
-            build_script: build.sh
-            os: ubuntu-22.04
-
           - name: Alpine, clang 32-bit
             id: alpine_32bit
             container: alpine_32bit
