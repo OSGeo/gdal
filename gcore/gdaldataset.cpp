@@ -2765,6 +2765,16 @@ CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
     }
 
+#ifndef HAVE__FLOAT16
+    if (eBufType == GDT_Float16 || eBufType == GDT_CFloat16)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "The types Float16 and CFloat16 are not supported in this "
+                    "build of GDAL");
+        return CE_Failure;
+    }
+#endif
+
     int bStopProcessing = FALSE;
     CPLErr eErr = ValidateRasterIOOrAdviseReadParameters(
         "RasterIO()", &bStopProcessing, nXOff, nYOff, nXSize, nYSize, nBufXSize,

@@ -636,6 +636,11 @@ def Calc(
                 elif not isinstance(myResult, numpy.ndarray):
                     myResult = numpy.ones((nYValid, nXValid)) * myResult
 
+                # Convert float16 to float32 if necessary
+                # (While numpy probably supports float16, GDAL may not)
+                if myResult.dtype == "float16":
+                    myResult = numpy.float32(myResult)
+
                 # write data block to the output file
                 myOutB = myOut.GetRasterBand(bandNo)
                 if gdal_array.BandWriteArray(myOutB, myResult, xoff=myX, yoff=myY) != 0:

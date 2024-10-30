@@ -217,7 +217,8 @@ template <> struct CXXTypeTraits<std::complex<double>>
     }
 };
 
-#if defined(GDAL_ENABLE_FLOAT16) && defined(FLT16_MAX) && defined(FLT16_MIN)
+#if defined HAVE__FLOAT16 ||                                                   \
+    (defined(GDAL_ENABLE_FLOAT16) && defined(FLT16_MAX) && defined(FLT16_MIN))
 template <> struct CXXTypeTraits<_Float16>
 {
     static constexpr GDALDataType gdal_type = GDT_Float16;

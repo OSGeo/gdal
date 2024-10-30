@@ -230,7 +230,6 @@ GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
             {
                 if (GDALIsValueExactAs<float>(dfValue))
                     return GDT_Float32;
-                ;
                 break;
             }
             case GDT_Float64:
@@ -2936,6 +2935,12 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 #endif
 #ifdef CMAKE_UNITY_BUILD
         osBuildInfo += "CMAKE_UNITY_BUILD=YES\n";
+#endif
+
+#ifdef HAVE__FLOAT16
+        osBuildInfo += "FLOAT16_SUPPORTED=YES\n";
+#else
+        osBuildInfo += "FLOAT16_SUPPORTED=NO\n";
 #endif
 
 #undef STRINGIFY_HELPER
