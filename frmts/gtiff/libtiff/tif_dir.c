@@ -806,14 +806,13 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
 
                 if (tv->count == 0)
                 {
-                    status = 0;
-                    TIFFErrorExtR(tif, module,
-                                  "%s: Null count for \"%s\" (type "
-                                  "%d, writecount %d, passcount %d)",
-                                  tif->tif_name, fip->field_name,
-                                  fip->field_type, fip->field_writecount,
-                                  fip->field_passcount);
-                    goto end;
+                    TIFFWarningExtR(tif, module,
+                                    "%s: Null count for \"%s\" (type "
+                                    "%d, writecount %d, passcount %d)",
+                                    tif->tif_name, fip->field_name,
+                                    fip->field_type, fip->field_writecount,
+                                    fip->field_passcount);
+                    break;
                 }
 
                 tv->value = _TIFFCheckMalloc(tif, tv->count, tv_size,
