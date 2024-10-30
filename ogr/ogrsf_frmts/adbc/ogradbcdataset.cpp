@@ -507,7 +507,7 @@ OGRLayer *OGRADBCDataset::GetLayerByName(const char *pszName)
                 auto oRoot = oDoc.GetRoot();
                 if (oRoot.GetType() == CPLJSONObject::Type::Array)
                 {
-                    for (auto oSchema : oRoot.ToArray())
+                    for (const auto &oSchema : oRoot.ToArray())
                     {
                         if (oSchema.GetType() == CPLJSONObject::Type::Object)
                         {
@@ -517,7 +517,7 @@ OGRLayer *OGRADBCDataset::GetLayerByName(const char *pszName)
                                 oSchema.GetArray("db_schema_tables");
                             if (oTables.IsValid())
                             {
-                                for (auto oTable : oTables)
+                                for (const auto &oTable : oTables)
                                 {
                                     if (oTable.GetType() ==
                                         CPLJSONObject::Type::Object)
