@@ -983,6 +983,7 @@ static void GTiffTagExtender(TIFF *tif)
 static std::mutex oDeleteMutex;
 #ifdef HAVE_JXL
 static TIFFCodec *pJXLCodec = nullptr;
+static TIFFCodec *pJXLCodecDNG17 = nullptr;
 #endif
 
 void GTiffOneTimeInit()
@@ -1000,6 +1001,8 @@ void GTiffOneTimeInit()
     if (pJXLCodec == nullptr)
     {
         pJXLCodec = TIFFRegisterCODEC(COMPRESSION_JXL, "JXL", TIFFInitJXL);
+        pJXLCodecDNG17 =
+            TIFFRegisterCODEC(COMPRESSION_JXL_DNG_1_7, "JXL", TIFFInitJXL);
     }
 #endif
 
@@ -1024,6 +1027,9 @@ static void GDALDeregister_GTiff(GDALDriver *)
     if (pJXLCodec)
         TIFFUnRegisterCODEC(pJXLCodec);
     pJXLCodec = nullptr;
+    if (pJXLCodecDNG17)
+        TIFFUnRegisterCODEC(pJXLCodecDNG17);
+    pJXLCodecDNG17 = nullptr;
 #endif
 }
 
@@ -1058,6 +1064,7 @@ static const struct
     {COMPRESSION_LERC, "LERC_ZSTD", true},
     COMPRESSION_ENTRY(WEBP, true),
     COMPRESSION_ENTRY(JXL, true),
+    COMPRESSION_ENTRY(JXL_DNG_1_7, true),
 
     // Compression methods in read-only
     COMPRESSION_ENTRY(OJPEG, false),

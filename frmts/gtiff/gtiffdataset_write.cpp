@@ -5252,10 +5252,10 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     }
 
 #ifdef HAVE_JXL
-    if (l_nCompression == COMPRESSION_JXL)
+    if (l_nCompression == COMPRESSION_JXL && eType != GDT_Float32)
     {
         // Reflects tif_jxl's GetJXLDataType()
-        if (eType != GDT_Byte && eType != GDT_UInt16 && eType != GDT_Float32)
+        if (eType != GDT_Byte && eType != GDT_UInt16)
         {
             ReportError(pszFilename, CE_Failure, CPLE_NotSupported,
                         "Data type %s not supported for JXL compression. Only "
@@ -5271,7 +5271,6 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         } asSupportedDTBitsPerSample[] = {
             {GDT_Byte, 8},
             {GDT_UInt16, 16},
-            {GDT_Float32, 32},
         };
 
         for (const auto &sSupportedDTBitsPerSample : asSupportedDTBitsPerSample)
