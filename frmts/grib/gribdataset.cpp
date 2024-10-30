@@ -27,12 +27,6 @@
 #include <fcntl.h>
 #endif
 
-#ifndef _WIN32
-#include <unistd.h>  // isatty()
-#else
-#include <io.h>  // _isatty()
-#endif
-
 #include <algorithm>
 #include <set>
 #include <string>
@@ -901,11 +895,7 @@ static bool IsGdalinfoInteractive()
 {
     static const bool bIsGdalinfoInteractive = []()
     {
-#ifndef _WIN32
-        if (isatty(static_cast<int>(fileno(stdout))))
-#else
-        if (_isatty(_fileno(stdout)))
-#endif
+        if (CPLIsInteractive(stdout))
         {
             std::string osPath;
             osPath.resize(1024);
@@ -2815,6 +2805,7 @@ static void GDALDeregister_GRIB(GDALDriver *)
 {
     if (hGRIBMutex != nullptr)
     {
+        MetanameCleanup();
         CPLDestroyMutex(hGRIBMutex);
         hGRIBMutex = nullptr;
     }

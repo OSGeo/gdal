@@ -445,6 +445,8 @@ class OGRPGTableLayer final : public OGRPGLayer
                                              GDALProgressFunc pfnProgress,
                                              void *pProgressData) override;
 
+    int FindFieldIndex(const char *pszFieldName, int bExactMatch) override;
+
     // follow methods are not base class overrides
     void SetLaunderFlag(int bFlag)
     {

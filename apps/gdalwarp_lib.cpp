@@ -2552,8 +2552,8 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         {
             CPLString osMsg;
             osMsg.Printf("Processing %s [%d/%d]",
-                         GDALGetDescription(pahSrcDS[iSrc]), iSrc + 1,
-                         nSrcCount);
+                         CPLGetFilename(GDALGetDescription(pahSrcDS[iSrc])),
+                         iSrc + 1, nSrcCount);
             return pfnExternalProgress((iSrc + dfComplete) / nSrcCount,
                                        osMsg.c_str(), pExternalProgressData);
         }

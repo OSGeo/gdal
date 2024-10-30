@@ -36,6 +36,9 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
 #include "gdal_version_full/gdal_version.h"
 #include "gdal.h"
 #include "gdal_mdreader.h"
@@ -2936,6 +2939,12 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 #ifdef CMAKE_UNITY_BUILD
         osBuildInfo += "CMAKE_UNITY_BUILD=YES\n";
 #endif
+#ifdef EMBED_RESOURCE_FILES
+        osBuildInfo += "EMBED_RESOURCE_FILES=YES\n";
+#endif
+#ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
+        osBuildInfo += "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES\n";
+#endif
 
 #ifdef HAVE__FLOAT16
         osBuildInfo += "FLOAT16_SUPPORTED=YES\n";
@@ -2957,6 +2966,9 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
     /* -------------------------------------------------------------------- */
     if (pszRequest != nullptr && EQUAL(pszRequest, "LICENSE"))
     {
+#if defined(EMBED_RESOURCE_FILES) && defined(USE_ONLY_EMBEDDED_RESOURCE_FILES)
+        return GDALGetEmbeddedLicense();
+#else
         char *pszResultLicence =
             reinterpret_cast<char *>(CPLGetTLS(CTLS_VERSIONINFO_LICENCE));
         if (pszResultLicence != nullptr)
@@ -2964,12 +2976,14 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
             return pszResultLicence;
         }
 
-        const char *pszFilename = CPLFindFile("etc", "LICENSE.TXT");
         VSILFILE *fp = nullptr;
-
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+#ifdef EMBED_RESOURCE_FILES
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+#endif
+        const char *pszFilename = CPLFindFile("etc", "LICENSE.TXT");
         if (pszFilename != nullptr)
             fp = VSIFOpenL(pszFilename, "r");
-
         if (fp != nullptr)
         {
             if (VSIFSeekL(fp, 0, SEEK_END) == 0)
@@ -2989,6 +3003,14 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 
             CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         }
+#endif
+
+#ifdef EMBED_RESOURCE_FILES
+        if (!fp)
+        {
+            return GDALGetEmbeddedLicense();
+        }
+#endif
 
         if (!pszResultLicence)
         {
@@ -3000,6 +3022,7 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 
         CPLSetTLS(CTLS_VERSIONINFO_LICENCE, pszResultLicence, TRUE);
         return pszResultLicence;
+#endif
     }
 
     /* -------------------------------------------------------------------- */

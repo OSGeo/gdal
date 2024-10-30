@@ -67,12 +67,6 @@ jobs:
             build_script: build.sh
             os: ubuntu-22.04
 
-          - name: Alpine, numpy 2
-            id: alpine_numpy2
-            container: alpine_numpy2
-            build_script: build.sh
-            os: ubuntu-22.04
-
           - name: Alpine, clang 32-bit
             id: alpine_32bit
             container: alpine_32bit
@@ -264,6 +258,10 @@ jobs:
         # FIXME the default BUILD_CMD here isn't working...we get an error
         # about the quotes not matching.
       - name: Build
+        env:
+          TRAVIS: yes
+          TRAVIS_BRANCH: ${{ matrix.travis_branch }}
+          BUILD_NAME: ${{ matrix.travis_branch }}
         run: |
           if test -f ".github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"; then
             BUILD_CMD="$(pwd)/.github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"
@@ -271,11 +269,20 @@ jobs:
             BUILD_CMD="sh -c 'cmake .. && make -j$(nproc)'"
           fi
 
+          # For cache
+          mkdir -p .gdal
+
           mkdir -p build-${{ matrix.id }}
           docker run --name gdal-build \
             --rm \
+            -e CI \
+            -e GITHUB_WORKFLOW \
+            -e TRAVIS \
+            -e TRAVIS_BRANCH \
+            -e BUILD_NAME \
             -e "GDAL_SOURCE_DIR=$(pwd)" \
             -u $(id -u ${USER}):$(id -g ${USER}) \
+            -v $(pwd)/.gdal:/.gdal:rw \
             -v $(pwd):$(pwd):rw \
             -v ${{ github.workspace }}/.ccache:/.ccache:rw \
             --workdir $(pwd)/build-${{ matrix.id }} \
@@ -322,7 +329,7 @@ jobs:
           fi
 
           # For cache
-          mkdir .gdal
+          mkdir -p .gdal
 
           docker run \
             -e CI \

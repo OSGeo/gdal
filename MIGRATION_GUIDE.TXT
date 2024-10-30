@@ -1,6 +1,13 @@
 MIGRATION GUIDE FROM GDAL 3.9 to GDAL 3.10
 ------------------------------------------
 
+- MEM driver: opening a dataset with the MEM::: syntax is now disabled by
+  default because of security implications. This can be enabled by setting the
+  GDAL_MEM_ENABLE_OPEN build or configuration option. Creation of a 0-band MEM
+  dataset, and using the GDALDataset::AddBand() method with the DATAPOINTER,
+  PIXELOFFSET and LINEOFFSET options is the recommended way. For example, like
+  in https://github.com/OSGeo/gdal/blob/e32a2fde41a555b7948cece9ab9b4e979138e7dd/gcore/rasterio.cpp#L1534-L1576
+
 - The Erdas Imagine (HFA) and Derived drivers are now optional drivers. Users
   building with GDAL_BUILD_OPTIONAL_DRIVERS=OFF may need to explicitly enable
   them with GDAL_ENABLE_DRIVER_HFA=ON and GDAL_ENABLE_DRIVER_DERIVED=ON.

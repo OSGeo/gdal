@@ -30,12 +30,6 @@
 #include "ogr_srs_api.h"
 #include "commonutils.h"
 
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
-
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
@@ -359,7 +353,7 @@ MAIN_START(argc, argv)
     if (!bCoordOnCommandLine)
     {
         // Is it an interactive terminal ?
-        if (isatty(static_cast<int>(fileno(stdin))))
+        if (CPLIsInteractive(stdin))
         {
             if (pszSrcFilename != nullptr)
             {

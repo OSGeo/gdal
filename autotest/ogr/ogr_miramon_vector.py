@@ -1428,3 +1428,47 @@ def test_ogr_miramon_create_field_after_feature(tmp_path):
         match="Cannot create fields to a layer with already existing features in it",
     ):
         create_common_attributes(lyr)
+
+
+###############################################################################
+# test reading mutirecord JSON file. At some point this test failed
+# it's here to check that it's not failing (due to memory problems)
+
+
+def test_ogr_miramon_json_import_not_failing(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out/json_layer_to_mm.pol")
+    gdal.VectorTranslate(
+        out_filename,
+        "data/miramon_inputs/LT05_L2SP_038037_20120505_20200820_02_T1_ST_stac_minimal.json",
+        format="MiraMonVector",
+    )
+
+    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, "Failed to get layer"
+
+    assert lyr.GetFeatureCount() == 1
+    assert lyr.GetGeomType() == ogr.wkbPolygon
+
+    f = lyr.GetNextFeature()
+    assert f is not None, "Failed to get feature"
+    assert f.GetFID() == 0
+
+    assert f.GetField("id") == [
+        "LT05_L2SP_038037_20120505_20200820_02_T1_ST",
+        "",
+        "",
+        "",
+        "",
+        "",
+    ]
+    assert f.GetFieldAsString("datetime") == "(6:2012/05/05 17:54:06.781+00,,,,,)"
+    assert f.GetField("eo:cloud_cover") == [3.0]
+    assert f.GetField("proj:epsg") == [32611]
+    assert f.GetField("proj:shape") == [6951, 7851]
+    assert f.GetField("proj:transform") == [30.0, 0.0, 649485.0, 0.0, -30.0, 3780015.0]
+
+    f = None
+    ds = None

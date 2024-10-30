@@ -5391,10 +5391,31 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             if (iDstField >= 0)
                 anMap[iField] = iDstField;
             else
+            {
+                if (m_bExactFieldNameMatch)
+                {
+                    const int iDstFieldCandidate = poDstLayer->FindFieldIndex(
+                        poSrcFieldDefn->GetNameRef(), false);
+                    if (iDstFieldCandidate >= 0)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Source field '%s' could have been identified "
+                                 "with existing field '%s' of destination "
+                                 "layer '%s' if the -relaxedFieldNameMatch "
+                                 "option had been specified.",
+                                 poSrcFieldDefn->GetNameRef(),
+                                 poDstLayer->GetLayerDefn()
+                                     ->GetFieldDefn(iDstFieldCandidate)
+                                     ->GetNameRef(),
+                                 poDstLayer->GetName());
+                    }
+                }
+
                 CPLDebug(
                     "GDALVectorTranslate",
                     "Skipping field '%s' not found in destination layer '%s'.",
                     poSrcFieldDefn->GetNameRef(), poDstLayer->GetName());
+            }
         }
     }
 

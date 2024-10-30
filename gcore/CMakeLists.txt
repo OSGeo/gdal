@@ -113,6 +113,18 @@ if (HAVE_SSSE3_AT_COMPILE_TIME)
     PROPERTY COMPILE_FLAGS ${GDAL_SSSE3_FLAG})
 endif ()
 
+if (EMBED_RESOURCE_FILES)
+    add_library(gcore_resources OBJECT embedded_resources.c)
+    gdal_standard_includes(gcore_resources)
+    set_property(TARGET gcore_resources PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+    target_compile_definitions(gcore PRIVATE EMBED_RESOURCE_FILES)
+    set_target_properties(gcore_resources PROPERTIES C_STANDARD 23)
+    target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore_resources>)
+endif()
+if (USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    target_compile_definitions(gcore PRIVATE USE_ONLY_EMBEDDED_RESOURCE_FILES)
+endif()
+
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore>)
 
 if (GDAL_USE_JSONC_INTERNAL)

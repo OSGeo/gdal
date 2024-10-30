@@ -18,5 +18,5 @@ endif()
 
 gdal_standard_includes(ogr_FileGDB)
 target_include_directories(ogr_FileGDB PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
-                                               $<TARGET_PROPERTY:ogr_OpenFileGDB,SOURCE_DIR>)
+                                                ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/openfilegdb)
 gdal_target_link_libraries(ogr_FileGDB PRIVATE FILEGDB::FileGDB)

@@ -9785,6 +9785,39 @@ def test_tiff_write_jpegxl_five_bands_lossless(tmp_vsimem):
 
 
 ###############################################################################
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_write_jpegxl_float16(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "test_tiff_write_jpegxl_float16")
+    src_ds = gdal.Open("data/float16.tif")
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        outfilename, src_ds, options=["COMPRESS=JXL", "JXL_LOSSLESS=YES"]
+    )
+    ds = gdal.Open(outfilename)
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "16"
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL")
+@pytest.mark.parametrize("dt,nbits", [(gdal.GDT_Float64, None), (gdal.GDT_Byte, 1)])
+@gdaltest.enable_exceptions()
+def test_tiff_write_jpegxl_errors(tmp_vsimem, dt, nbits):
+
+    outfilename = str(tmp_vsimem / "test_tiff_write_jpegxl_errors")
+    with pytest.raises(Exception):
+        options = {"COMPRESS": "JXL"}
+        if nbits:
+            options["NBITS"] = str(nbits)
+        gdal.GetDriverByName("GTiff").Create(outfilename, 1, 1, 1, dt, options=options)
+
+
+###############################################################################
 # Test creating overviews with NaN nodata
 
 

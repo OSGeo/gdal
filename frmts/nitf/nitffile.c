@@ -19,6 +19,10 @@
 #include "cpl_string.h"
 #include <stdbool.h>
 
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
+
 #ifndef CPL_IGNORE_RET_VAL_INT_defined
 #define CPL_IGNORE_RET_VAL_INT_defined
 
@@ -3283,18 +3287,36 @@ static CPLXMLNode *NITFLoadXMLSpec(NITFFile *psFile)
 
     if (psFile->psNITFSpecNode == NULL)
     {
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+#ifdef EMBED_RESOURCE_FILES
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+#endif
         const char *pszXMLDescFilename = CPLFindFile("gdal", NITF_SPEC_FILE);
+#ifdef EMBED_RESOURCE_FILES
+        CPLPopErrorHandler();
+        CPLErrorReset();
+#endif
         if (pszXMLDescFilename == NULL)
+#endif
         {
+#ifdef EMBED_RESOURCE_FILES
+            CPLDebug("NITF", "Using embedded %s", NITF_SPEC_FILE);
+            psFile->psNITFSpecNode = CPLParseXMLString(NITFGetSpecFile());
+            CPLAssert(psFile->psNITFSpecNode);
+            return psFile->psNITFSpecNode;
+#else
             CPLDebug("NITF", "Cannot find XML file : %s", NITF_SPEC_FILE);
             return NULL;
+#endif
         }
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
         psFile->psNITFSpecNode = CPLParseXMLFile(pszXMLDescFilename);
         if (psFile->psNITFSpecNode == NULL)
         {
             CPLDebug("NITF", "Invalid XML file : %s", pszXMLDescFilename);
             return NULL;
         }
+#endif
     }
 
     return psFile->psNITFSpecNode;

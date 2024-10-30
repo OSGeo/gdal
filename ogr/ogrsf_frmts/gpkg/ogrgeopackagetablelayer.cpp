@@ -5672,6 +5672,9 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
     {
         m_nZFlag = wkbHasZ(eGType) ? 1 : 0;
         m_nMFlag = wkbHasM(eGType) ? 1 : 0;
+
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+            poGotSRS;
         OGRGeomFieldDefn oGeomFieldDefn(pszGeomColumnName, eGType);
 
         oGeomFieldDefn.SetSpatialRef(poSRS);
@@ -5685,7 +5688,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
             }
             else
             {
-                auto poGotSRS =
+                poGotSRS =
                     m_poDS->GetSpatialRef(m_iSrs, /* bFallbackToEPSG = */ false,
                                           /* bEmitErrorIfNotFound = */ false);
                 if (poGotSRS)
@@ -9139,4 +9142,180 @@ OGRErr OGRGeoPackageTableLayer::GetExtent3D(int iGeomField,
     *psExtent3D = sContext.m_oExtent3D;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           Truncate()                                 */
+/************************************************************************/
+
+/** Implements "DELETE FROM {table_name}" in an optimzed way.
+ *
+ * Disable triggers if we detect that the only triggers on the table are ones
+ * under our control (i.e. the ones for the gpkg_ogr_contents table and the
+ * ones updating the RTree)
+ * And even if we cannot disable triggers, truncate the RTree before the main
+ * table, as this dramatically speeds up truncating the main table.
+ */
+OGRErr OGRGeoPackageTableLayer::Truncate()
+{
+    if (!m_poDS->GetUpdate())
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
+                 "Truncate");
+        return OGRERR_FAILURE;
+    }
+
+    ResetReading();
+    SyncToDisk();
+
+    bool bOK = (m_poDS->SoftStartTransaction() == OGRERR_NONE);
+
+    struct ReenableTriggers
+    {
+        sqlite3 *m_hDB = nullptr;
+
+        explicit ReenableTriggers(sqlite3 *hDB) : m_hDB(hDB)
+        {
+        }
+
+        ~ReenableTriggers()
+        {
+            sqlite3_db_config(m_hDB, SQLITE_DBCONFIG_ENABLE_TRIGGER, 1,
+                              nullptr);
+        }
+        CPL_DISALLOW_COPY_ASSIGN(ReenableTriggers)
+    };
+
+    // to keep in top level scope!
+    std::unique_ptr<ReenableTriggers> reenableTriggers;
+
+    // Temporarily disable triggers for greater speed if we detect that the
+    // only triggers on the table are the RTree ones and the ones for the
+    // gpkg_ogr_contents table
+    if (bOK && m_bIsTable)
+    {
+        char *pszSQL = sqlite3_mprintf(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' "
+            "AND tbl_name = '%q' "
+            "AND name NOT IN ('trigger_insert_feature_count_%q',"
+            "'trigger_delete_feature_count_%q') "
+            "AND name NOT LIKE 'rtree_%q_%%'",
+            m_pszTableName, m_pszTableName, m_pszTableName, m_pszTableName);
+        OGRErr eErr = OGRERR_NONE;
+        if (SQLGetInteger(m_poDS->GetDB(), pszSQL, &eErr) == 0 &&
+            eErr == OGRERR_NONE)
+        {
+            int nEnableTriggerOldVal = -1;
+            sqlite3_db_config(m_poDS->GetDB(), SQLITE_DBCONFIG_ENABLE_TRIGGER,
+                              -1, &nEnableTriggerOldVal);
+            if (nEnableTriggerOldVal == 1)
+            {
+                int nNewVal = -1;
+                sqlite3_db_config(m_poDS->GetDB(),
+                                  SQLITE_DBCONFIG_ENABLE_TRIGGER, 0, &nNewVal);
+                if (nNewVal == 0)
+                {
+                    CPLDebugOnly("GPKG",
+                                 "Disabling triggers during truncation of %s",
+                                 m_pszTableName);
+                    reenableTriggers =
+                        std::make_unique<ReenableTriggers>(m_poDS->GetDB());
+                    CPL_IGNORE_RET_VAL(reenableTriggers);  // to please cppcheck
+                }
+            }
+        }
+        sqlite3_free(pszSQL);
+    }
+
+    char *pszErrMsg = nullptr;
+    if (bOK && m_bIsTable && HasSpatialIndex())
+    {
+        // Manually clean the 3 tables that are used by the RTree:
+        // - rtree_{tablename}_{geom}_node: all rows, but nodeno = 1 for which
+        //   we reset the 'data' field to a zero blob of the same size
+        // - rtree_{tablename}_{geom}_parent: all rows
+        // - rtree_{tablename}_{geom}_rowid: all rows
+
+        const char *pszT = m_pszTableName;
+        const char *pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+
+        m_osRTreeName = "rtree_";
+        m_osRTreeName += pszT;
+        m_osRTreeName += "_";
+        m_osRTreeName += pszC;
+
+        {
+            char *pszSQL =
+                sqlite3_mprintf("DELETE FROM \"%w_node\" WHERE nodeno > 1;"
+                                "DELETE FROM \"%w_parent\"; "
+                                "DELETE FROM \"%w_rowid\"",
+                                m_osRTreeName.c_str(), m_osRTreeName.c_str(),
+                                m_osRTreeName.c_str());
+            bOK = sqlite3_exec(m_poDS->hDB, pszSQL, nullptr, nullptr,
+                               &pszErrMsg) == SQLITE_OK;
+            sqlite3_free(pszSQL);
+        }
+
+        if (bOK)
+        {
+            char *pszSQL = sqlite3_mprintf(
+                "SELECT length(data) FROM \"%w_node\" WHERE nodeno = 1",
+                m_osRTreeName.c_str());
+            const int nBlobSize =
+                SQLGetInteger(m_poDS->GetDB(), pszSQL, nullptr);
+            sqlite3_free(pszSQL);
+
+            pszSQL = sqlite3_mprintf(
+                "UPDATE \"%w_node\" SET data = zeroblob(%d) WHERE nodeno = 1",
+                m_osRTreeName.c_str(), nBlobSize);
+            bOK = sqlite3_exec(m_poDS->hDB, pszSQL, nullptr, nullptr,
+                               &pszErrMsg) == SQLITE_OK;
+            sqlite3_free(pszSQL);
+        }
+    }
+
+    if (bOK)
+    {
+        // Truncate main table
+        char *pszSQL = sqlite3_mprintf("DELETE FROM \"%w\"", m_pszTableName);
+        bOK = sqlite3_exec(m_poDS->hDB, pszSQL, nullptr, nullptr, &pszErrMsg) ==
+              SQLITE_OK;
+        sqlite3_free(pszSQL);
+    }
+
+#ifdef ENABLE_GPKG_OGR_CONTENTS
+    // Reset feature count
+    if (bOK && m_poDS->m_bHasGPKGOGRContents)
+    {
+        char *pszSQL =
+            sqlite3_mprintf("UPDATE gpkg_ogr_contents SET feature_count = 0 "
+                            "WHERE lower(table_name) = lower('%q')",
+                            m_pszTableName);
+        bOK = sqlite3_exec(m_poDS->hDB, pszSQL, nullptr, nullptr, &pszErrMsg) ==
+              SQLITE_OK;
+        sqlite3_free(pszSQL);
+    }
+
+    if (bOK)
+    {
+        m_nTotalFeatureCount = 0;
+    }
+#endif
+
+    if (bOK)
+    {
+        m_poDS->SoftCommitTransaction();
+    }
+    else
+    {
+        m_poDS->SoftRollbackTransaction();
+#ifdef ENABLE_GPKG_OGR_CONTENTS
+        DisableFeatureCount();
+#endif
+        CPLError(CE_Failure, CPLE_AppDefined, "Truncate(%s) failed: %s",
+                 m_pszTableName, pszErrMsg ? pszErrMsg : "(unknown reason)");
+    }
+    sqlite3_free(pszErrMsg);
+
+    return bOK ? OGRERR_NONE : OGRERR_FAILURE;
 }
