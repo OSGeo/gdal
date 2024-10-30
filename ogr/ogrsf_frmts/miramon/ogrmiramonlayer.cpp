@@ -2249,9 +2249,19 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         &(hMMFeature.pRecords[nIRecord].pField),
                         &hMMFeature.pRecords[nIRecord].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField,
-                        MM_INC_NUMBER_OF_FIELDS,
+                        (nIRecord == 0)
+                            ? MM_INC_NUMBER_OF_FIELDS
+                            : hMMFeature.pRecords[nIRecord - 1].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
+
+                if (nIRecord > 0)
+                {
+                    // The number of fields of this new record is the same as the
+                    // last one
+                    hMMFeature.pRecords[nIRecord].nNumField =
+                        hMMFeature.pRecords[nIRecord - 1].nNumField;
+                }
 
                 if (phMiraMonLayer->nCharSet != MM_JOC_CARAC_UTF8_DBF)
                 {
@@ -2311,9 +2321,19 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         &(hMMFeature.pRecords[nIRecord].pField),
                         &hMMFeature.pRecords[nIRecord].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField,
-                        MM_INC_NUMBER_OF_FIELDS,
+                        (nIRecord == 0)
+                            ? MM_INC_NUMBER_OF_FIELDS
+                            : hMMFeature.pRecords[nIRecord - 1].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
+
+                if (nIRecord > 0)
+                {
+                    // The number of fields of this new record is the same as the
+                    // last one
+                    hMMFeature.pRecords[nIRecord].nNumField =
+                        hMMFeature.pRecords[nIRecord - 1].nNumField;
+                }
 
                 if (eFSType == OFSTBoolean)
                 {
@@ -2382,9 +2402,19 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         &(hMMFeature.pRecords[nIRecord].pField),
                         &hMMFeature.pRecords[nIRecord].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField,
-                        MM_INC_NUMBER_OF_FIELDS,
+                        (nIRecord == 0)
+                            ? MM_INC_NUMBER_OF_FIELDS
+                            : hMMFeature.pRecords[nIRecord - 1].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
+
+                if (nIRecord > 0)
+                {
+                    // The number of fields of this new record is the same as the
+                    // last one
+                    hMMFeature.pRecords[nIRecord].nNumField =
+                        hMMFeature.pRecords[nIRecord - 1].nNumField;
+                }
 
                 hMMFeature.pRecords[nIRecord].pField[iField].iValue =
                     panValues[nIRecord];
@@ -2425,9 +2455,19 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         &(hMMFeature.pRecords[nIRecord].pField),
                         &hMMFeature.pRecords[nIRecord].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField,
-                        MM_INC_NUMBER_OF_FIELDS,
+                        (nIRecord == 0)
+                            ? MM_INC_NUMBER_OF_FIELDS
+                            : hMMFeature.pRecords[nIRecord - 1].nMaxField,
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
+
+                if (nIRecord > 0)
+                {
+                    // The number of fields of this new record is the same as the
+                    // last one
+                    hMMFeature.pRecords[nIRecord].nNumField =
+                        hMMFeature.pRecords[nIRecord - 1].nNumField;
+                }
 
                 char szChain[MAX_SIZE_OF_FIELD_NUMBER_WITH_MINUS];
                 MM_SprintfDoubleSignifFigures(
