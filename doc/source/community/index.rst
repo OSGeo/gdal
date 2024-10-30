@@ -27,6 +27,7 @@ Code of Conduct
 
    code_of_conduct
 
+.. _mailing_list:
 
 Mailing List
 ------------
