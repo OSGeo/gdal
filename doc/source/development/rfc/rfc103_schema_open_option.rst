@@ -85,7 +85,7 @@ The JSON schema for the OGR_SCHEMA open option will be as follows:
         ],
         "additionalProperties": false
         },
-        "schema_type": {
+        "schemaType": {
         "enum": [
             "Patch",
             "Full"
@@ -99,9 +99,9 @@ The JSON schema for the OGR_SCHEMA open option will be as follows:
             "description": "The name of the layer",
             "type": "string"
             },
-            "schema_type": {
+            "schemaType": {
             "description": "The type of schema operation: patch or full",
-            "$ref": "#/definitions/schema_type"
+            "$ref": "#/definitions/schemaType"
             },
             "fields": {
             "description": "The list of field definitions",
@@ -222,7 +222,7 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
     "layers":[
         {
         "name": "layer1",
-        "schema_type": "Full",
+        "schemaType": "Full",
         "fields": [
             {
             "name": "field1",
@@ -237,7 +237,7 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
         },
         {
         "name": "layer2",
-        "schema_type": "Patch",
+        "schemaType": "Patch",
         "fields": [
           {
             "name": "field1",
