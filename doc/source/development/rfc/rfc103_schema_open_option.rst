@@ -24,7 +24,7 @@ Motivation
 
 Several OGR drivers must guess the attribute data type: CSV, GeoJSON, SQLite,
 the auto-detected types are not always correct and the user has no way to
-override them at opening them.
+override them at opening time.
 
 A secondary goal is to allow users to rename fields at opening time: some drivers
 have limitations regarding field names and have specific laundering rules that
