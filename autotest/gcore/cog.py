@@ -13,6 +13,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import struct
 import sys
 
@@ -1935,3 +1936,29 @@ def test_cog_mask_band_overviews(tmp_vsimem):
     assert ds.GetRasterBand(1).IsMaskBand()
     assert ds.GetRasterBand(1).GetOverview(0).IsMaskBand()
     assert ds.GetRasterBand(1).GetOverview(1).IsMaskBand()
+
+
+###############################################################################
+# Verify that we can generate an output that is byte-identical to the expected golden file.
+
+
+@pytest.mark.parametrize(
+    "src_filename,creation_options",
+    [
+        ("data/cog/byte_little_endian_golden.tif", []),
+        (
+            "data/cog/byte_little_endian_blocksize_16_predictor_standard_golden.tif",
+            ["BLOCKSIZE=16", "PREDICTOR=STANDARD"],
+        ),
+    ],
+)
+def test_cog_write_check_golden_file(tmp_path, src_filename, creation_options):
+
+    out_filename = str(tmp_path / "test.tif")
+    with gdal.config_option("GDAL_TIFF_ENDIANNESS", "LITTLE"):
+        with gdal.Open(src_filename) as src_ds:
+            gdal.GetDriverByName("COG").CreateCopy(
+                out_filename, src_ds, options=creation_options
+            )
+    assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
+    assert open(src_filename, "rb").read() == open(out_filename, "rb").read()
