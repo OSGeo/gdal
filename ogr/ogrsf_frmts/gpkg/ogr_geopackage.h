@@ -961,6 +961,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     virtual CPLString GetSpatialWhere(int iGeomCol,
                                       OGRGeometry *poFilterGeom) override;
 
+    OGRErr Truncate();
+
     bool HasSpatialIndex();
 
     void SetPrecisionFlag(int bFlag)

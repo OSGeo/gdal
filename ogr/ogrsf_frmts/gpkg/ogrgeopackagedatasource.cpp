@@ -7712,6 +7712,25 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
         return nullptr;
     }
 
+    else if (STARTS_WITH_CI(osSQLCommand, "DELETE FROM "))
+    {
+        // Optimize truncation of a table, especially if it has a spatial
+        // index.
+        const CPLStringList aosTokens(SQLTokenize(osSQLCommand));
+        if (aosTokens.size() == 3)
+        {
+            const char *pszTableName = aosTokens[2];
+            OGRGeoPackageTableLayer *poLayer =
+                dynamic_cast<OGRGeoPackageTableLayer *>(
+                    GetLayerByName(SQLUnescape(pszTableName)));
+            if (poLayer)
+            {
+                poLayer->Truncate();
+                return nullptr;
+            }
+        }
+    }
+
     else if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))
         return GDALDataset::ExecuteSQL(osSQLCommand, poSpatialFilter, "SQLITE");
     else if (pszDialect != nullptr && !EQUAL(pszDialect, "") &&
