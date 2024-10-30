@@ -4,5 +4,5 @@ add_gdal_driver(
           ogrpgeoselectlayer.cpp
   BUILTIN)
 gdal_standard_includes(ogr_PGeo)
-target_include_directories(ogr_PGeo PRIVATE $<TARGET_PROPERTY:ogr_OpenFileGDB,SOURCE_DIR>)
+target_include_directories(ogr_PGeo PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/openfilegdb)
 gdal_target_link_libraries(ogr_PGeo PRIVATE ODBC::ODBC)
