@@ -48,6 +48,9 @@ check_type_size("size_t" SIZEOF_SIZE_T)
 # conversions work (there might be linker problems)
 check_cxx_source_compiles(
     "
+      #ifdef GDAL_DISABLE_FLOAT16
+        Explicitly disable _Float16 support
+      #endif
       int main() {
         _Float16 h = 1;
         float f = h;

@@ -2,18 +2,17 @@
 
 set -eu
 
-# Export the compilers as environment variables so that Python's
-# `build_ext` uses these compilers instead of the system compilers.
-# This is important because they might differ in supporting
-# `_Float16`.
-CC=icx
-CXX=icx
-export CC CXX
+# Set C and C++ compiler flags to disable `_Float16`. This is
+# necessary because the system C and C++ compilers don't support it,
+# and Python's `build_ext` will use the system compiler to build GDAL
+# Python extensions.
 
 cmake ${GDAL_SOURCE_DIR:=..} \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=icx \
     -DCMAKE_CXX_COMPILER=icx \
+    -DCMAKE_C_FLAGS=-DGDAL_DISABLE_FLOAT16 \
+    -DCMAKE_CXX_FLAGS=-DGDAL_DISABLE_FLOAT16 \
     -DUSE_CCACHE=ON
 make -j$(nproc)
 
