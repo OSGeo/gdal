@@ -153,6 +153,9 @@ html_theme_options = {
 html_static_path = ["_static"]
 html_extra_path = ["../build/html_extra"]
 
+html_js_files = ["announcement.js"]
+html_css_files = ["announcement.css"]
+
 # If true, links to the reST sources are added to the pages.
 html_show_sourcelink = False
 
