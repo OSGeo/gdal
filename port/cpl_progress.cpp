@@ -297,10 +297,10 @@ int CPL_STDCALL GDALTermProgress(double dfComplete,
         nCharacterCountLastTime += fprintf(stdout, " - done");
         if (nCurTime - nStartTime >= MIN_DELAY_FOR_ETA)
         {
-            const int nEllapsed = static_cast<int>(nCurTime - nStartTime);
-            const int nHours = nEllapsed / 3600;
-            const int nMins = (nEllapsed % 3600) / 60;
-            const int nSecs = nEllapsed % 60;
+            const int nElapsed = static_cast<int>(nCurTime - nStartTime);
+            const int nHours = nElapsed / 3600;
+            const int nMins = (nElapsed % 3600) / 60;
+            const int nSecs = nElapsed % 60;
             nCharacterCountLastTime +=
                 fprintf(stdout, " in %02d:%02d:%02d.", nHours, nMins, nSecs);
             for (int i = nCharacterCountLastTime; i < nCharacterCountMax; ++i)
