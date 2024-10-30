@@ -1,0 +1,72 @@
+{
+    "type": "Feature",
+    "stac_version": "1.0.0",
+    "stac_extensions": [
+        "https://landsat.usgs.gov/stac/landsat-extension/v1.1.1/schema.json",
+        "https://stac-extensions.github.io/view/v1.0.0/schema.json",
+        "https://stac-extensions.github.io/projection/v1.0.0/schema.json",
+        "https://stac-extensions.github.io/file/v1.0.0/schema.json",
+        "https://stac-extensions.github.io/eo/v1.0.0/schema.json",
+        "https://stac-extensions.github.io/alternate-assets/v1.1.0/schema.json",
+        "https://stac-extensions.github.io/storage/v1.0.0/schema.json"
+    ],
+    "id": "LT05_L2SP_038037_20120505_20200820_02_T1_ST",
+    "description": "Landsat Collection 2 Level-2 Surface Temperature Product",
+    "bbox": [
+        -115.36191290268081,
+        32.24471141532095,
+        -112.88724647545278,
+        34.131291778950825
+    ],
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [
+                    -114.94540659929078,
+                    34.131291778950825
+                ],
+                [
+                    -115.36191290268081,
+                    32.54075651753658
+                ],
+                [
+                    -113.33774064709293,
+                    32.24471141532095
+                ],
+                [
+                    -112.88724647545278,
+                    33.830888258627866
+                ],
+                [
+                    -114.94540659929078,
+                    34.131291778950825
+                ]
+            ]
+        ]
+    },
+    "properties": {
+        "datetime": "2012-05-05T17:54:06.781038Z",
+        "eo:cloud_cover": 3.0,
+        "view:sun_azimuth": 120.71516953,
+        "view:sun_elevation": 62.1424525,
+        "platform": "LANDSAT_5",
+        "instruments": [
+            "TM"
+        ],
+        "landsat:correction": "L2SP",
+        "proj:epsg": 32611,
+        "proj:shape": [
+            6951,
+            7851
+        ],
+        "proj:transform": [
+            30.0,
+            0.0,
+            649485.0,
+            0.0,
+            -30.0,
+            3780015.0
+        ]
+    },
+}
