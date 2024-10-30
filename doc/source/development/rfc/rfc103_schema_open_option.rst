@@ -17,153 +17,198 @@ Summary
 This RFC enables users to specify a OGR_SCHEMA open option in the OGR
 drivers that support it.
 
-The new option will be used to override the auto-detected fields types.
+The new option will be used to override the auto-detected fields types and to rename detected fields.
 
 Motivation
 ----------
 
 Several OGR drivers must guess the attribute data type: CSV, GeoJSON, SQLite,
 the auto-detected types are not always correct and the user has no way to
-override them at opening tim.
+override them at opening them.
+
+A secondary goal is to allow users to rename fields at opening time: some drivers
+have limitations regarding field names and have specific laundering rules that
+may yield field names that are not ideal for the user.
 
 For the details please see the discussion attached to the issue: https://github.com/OSGeo/gdal/issues/10943
 
 Implementation
 --------------
 
-A new reserved open option named OGR_SCHEMA will be added to the following drivers:
+A new reserved open option named OGR_SCHEMA will be added to the following drivers,
+choosen because they are the most likely to benefit from the field type override feature:
 
 - CSV
 - GeoJSON
 - SQLite
 - GML
 
+Additional drivers may benefit from the field rename feature while are not usually
+affected by the field type guessing issue and may be added later to the supported drivers.
+
 The option will be used to specify the schema in the form of a JSON document (or a path to a JSON file).
 
 The schema document will allow both "Full" and "Patch" modes.
 "Patch" mode will be the default and will allow partial overrides of the auto-detected fields types
-while "Full" mode will replace all the auto-detected types with the ones specified in the schema.
+and names while "Full" mode will produce a layer with only the fields specified in the schema.
 
-The structure of the JSON document will be similar to the one produced by the `ogrinfo -json` command
-with the notable exception that (for the scope of this RFC) only the information related to the type of
-the fields will be considered.
+The structure of the JSON document has been largely inspired by the one produced by the `ogrinfo -json` command
+with the notable exception that (for the scope of this RFC) only the information related to the type and and
+name of the fields will be considered.
 
 The JSON schema for the OGR_SCHEMA open option will be as follows:
 
 .. code-block:: json
 
     {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "description": "Schema for OGR_SCHEMA open option",
-
-        "oneOf": [
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Schema for OGR_SCHEMA open option",
+    "oneOf": [
+        {
+        "$ref": "#/definitions/dataset"
+        }
+    ],
+    "definitions": {
+        "dataset": {
+        "type": "object",
+        "properties": {
+            "layers": {
+            "type": "array",
+            "description": "The list of layers contained in the schema",
+            "items": {
+                "$ref": "#/definitions/layer"
+            }
+            }
+        },
+        "required": [
+            "layers"
+        ],
+        "additionalProperties": false
+        },
+        "schema_type": {
+        "enum": [
+            "Patch",
+            "Full"
+        ],
+        "default": "Patch"
+        },
+        "layer": {
+        "type": "object",
+        "properties": {
+            "name": {
+            "description": "The name of the layer",
+            "type": "string"
+            },
+            "schema_type": {
+            "description": "The type of schema operation: patch or full",
+            "$ref": "#/definitions/schema_type"
+            },
+            "fields": {
+            "description": "The list of field definitions",
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/field"
+            }
+            }
+        },
+        "required": [
+            "name",
+            "fields"
+        ],
+        "additionalProperties": false
+        },
+        "field": {
+        "description": "The field definition",
+        "additionalProperties": true,
+        "type": "object",
+        "properties": {
+            "name": {
+            "type": "string"
+            }
+        },
+        "anyOf": [
             {
-                "$ref": "#/definitions/dataset"
+            "type": "object",
+            "properties": {
+                "type": {
+                "$ref": "#/definitions/fieldType"
+                },
+                "subType": {
+                "$ref": "#/definitions/fieldSubType"
+                },
+                "width": {
+                "type": "integer"
+                },
+                "precision": {
+                "type": "integer"
+                }
+            },
+            "required": [
+                "type"
+            ]
+            },
+            {
+            "description": "The new name of the field",
+            "newName": {
+                "type": "string"
+            },
+            "required": [
+                "newName"
+            ]
             }
         ],
-
-        "definitions": {
-            "dataset": {
-                "type": "object",
-                "properties": {
-                    "layers": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/layer"
-                        }
-                    }
-                },
-                "required": ["layers"],
-                "additionalProperties": false
-            },
-
-            "schema_type": {
-                "enum": ["Patch", "Full"],
-                "default": "Patch"
-            },
-
-            "layer": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "schema_type": {
-                        "$ref": "#/definitions/schema_type"
-                    },
-                    "fields": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/field"
-                        }
-                    }
-                },
-                "required": ["name", "fields"],
-                "additionalProperties": false
-            },
-
-            "field": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                    "type": {
-                        "$ref": "#/definitions/fieldType"
-                    },
-                    "subType": {
-                        "$ref": "#/definitions/fieldSubType"
-                    },
-                    "width": {
-                        "type": "integer"
-                    },
-                    "precision": {
-                        "type": "integer"
-                    }
-                },
-                "required": ["name", "type"],
-                "additionalProperties": false
-            },
-
-            "fieldType": {
-                "enum": [
-                    "Integer",
-                    "Integer64",
-                    "Real",
-                    "String",
-                    "Binary",
-                    "IntegerList",
-                    "Integer64List",
-                    "RealList",
-                    "StringList",
-                    "Date",
-                    "Time",
-                    "DateTime"
-                ]
-            },
-
-            "fieldSubType": {
-                "enum": ["None", "Boolean", "Int16", "Float32", "JSON", "UUID"]
-            }
+        "required": [
+            "name"
+        ]
+        },
+        "fieldType": {
+        "enum": [
+            "Integer",
+            "Integer64",
+            "Real",
+            "String",
+            "Binary",
+            "IntegerList",
+            "Integer64List",
+            "RealList",
+            "StringList",
+            "Date",
+            "Time",
+            "DateTime"
+        ]
+        },
+        "fieldSubType": {
+        "enum": [
+            "None",
+            "Boolean",
+            "Int16",
+            "Float32",
+            "JSON",
+            "UUID"
+        ]
         }
     }
+    }
 
-Here is an example of a schema document that will be used to override the fields types of a dataset using the default "Patch" mode:
+Here is an example of a schema document that will be used to override the fields type and the name of a dataset using the default "Patch" mode:
 
 .. code-block:: json
 
-    {
-    "fields": [
+   {
+    "layers": [
         {
-        "name": "field1",
-        "type": "String",
-        "subType": "JSON"
-        },
-        {
-        "name": "field2",
-        "type": "Integer",
-        "width":11,
-        "precision":5
+        "name": "layer1",
+        "fields": [
+            {
+            "name": "field1",
+            "type": "String",
+            "subType": "JSON"
+            },
+            {
+            "name": "field2",
+            "newName": "new_field2"
+            }
+        ]
         }
     ]
     }
@@ -181,14 +226,12 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
         "fields": [
             {
             "name": "field1",
-            "type": "string",
+            "type": "String",
             "subType": "JSON"
             },
             {
             "name": "field2",
-            "type": "integer",
-            "width":11,
-            "precision":5
+            "newName": "new_field2"
             }
         ]
         },
@@ -198,14 +241,12 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
         "fields": [
           {
             "name": "field1",
-            "type": "string",
+            "type": "String",
             "subType": "JSON"
           },
           {
             "name": "field2",
-            "type": "integer",
-            "width":11,
-            "precision":5
+            "newName": "new_field2"
           }
         ]
       }
@@ -213,7 +254,7 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
     }
 
 
-The new option will be used by applications such as `ogr2ogr` to override the auto-detected fields types.
+The new option will be used by applications such as `ogr2ogr` to override the auto-detected fields types and to override the auto-detected (and possibly laundered) field names.
 
 A preliminary draft of the implementation can be found at:
 https://github.com/elpaso/gdal/commits/enhancement-gh10943-fields-schema-override/
