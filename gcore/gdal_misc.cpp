@@ -1656,7 +1656,7 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                             CPLHalfToFloat(reinterpret_cast<const GUInt16 *>(
                                 pDataRef)[iOffset]);
                         float fValue;
-                        mempcpy(&fValue, &nValue, sizeof fValue);
+                        memcpy(&fValue, &nValue, sizeof fValue);
                         dfValue = fValue;
                     }
 #endif
@@ -1702,13 +1702,13 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                             CPLHalfToFloat(reinterpret_cast<const GUInt16 *>(
                                 pDataRef)[iOffset * 2]);
                         float fReal;
-                        mempcpy(&fReal, &nReal, sizeof fReal);
+                        memcpy(&fReal, &nReal, sizeof fReal);
                         const double dfReal = fReal;
                         const GUInt32 nImag =
                             CPLHalfToFloat(reinterpret_cast<const GUInt16 *>(
                                 pDataRef)[iOffset * 2 + 1]);
                         float fImag;
-                        mempcpy(&fImag, &nImag, sizeof fImag);
+                        memcpy(&fImag, &nImag, sizeof fImag);
                         const double dfImag = fImag;
 #endif
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
