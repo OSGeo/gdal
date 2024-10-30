@@ -269,6 +269,17 @@ def test_warp_5_downsize():
     assert maxdiff <= 1, "Image too different from reference"
 
 
+def test_warp_lanczos_downsize_50_75():
+
+    ds = gdal.Open("data/utmsmall_lanczos_50_75.vrt")
+    ref_ds = gdal.Open("data/utmsmall_lanczos_50_75.tif")
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+
+    assert maxdiff <= 1, "Image too different from reference"
+
+
 # Downsampling
 
 
