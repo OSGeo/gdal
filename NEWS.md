@@ -553,6 +553,7 @@ MapInfo driver:
 
 Miramon driver:
  * various memory leak fixes on corrupted datasets
+ * fix a case of mutirecord (lists) in some fields (#11148)
 
 OAPIF driver:
  * combine CURL error message and data payload (when it exists) to form error
