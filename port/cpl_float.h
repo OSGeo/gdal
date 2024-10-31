@@ -74,6 +74,7 @@ float CPL_DLL CPLConvertHalfToFloat(GUInt16 nHalf);
 // `_Float16`), then this class is a simple wrapper. Otherwise we
 // store the values in a `GUInt16` as bit pattern.
 
+//! @cond Doxygen_Suppress
 struct GFloat16
 {
 #ifdef HAVE__FLOAT16
@@ -484,6 +485,8 @@ struct GFloat16
         return GFloat16(pow(float(x), n));
     }
 };
+
+//! @endcond
 
 // Define some GDAL wrappers. Their C equivalents are defined in `cpl_port.h`.
 
