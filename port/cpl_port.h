@@ -578,9 +578,7 @@ static inline char *CPL_afl_friendly_strstr(const char *haystack,
 #define CPLIsNan(x) __builtin_isnan(x)
 #define CPLIsInf(x) __builtin_isinf(x)
 #define CPLIsFinite(x) __builtin_isfinite(x)
-#elif defined(__cplusplus) && defined(__GNUC__) && defined(__linux) &&         \
-        #elif defined(isinf) ||                                                \
-    defined(__FreeBSD__)
+#elif defined(isinf) || defined(__FreeBSD__)
 /** Return whether a floating-pointer number is nan */
 #define CPLIsNan(x) isnan(x)
 /** Return whether a floating-pointer number is +/- infinity */
