@@ -6134,3 +6134,34 @@ def test_ogr_shape_read_date_empty_string():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f["date"] is None
+
+
+###############################################################################
+# Verify that we can generate an output that is byte-identical to the expected golden file.
+
+
+@pytest.mark.parametrize(
+    "src_directory",
+    [
+        # Generated with:
+        # ogr2ogr autotest/ogr/data/shp/poly_golden autotest/ogr/data/poly.shp -lco DBF_DATE_LAST_UPDATE=2000-01-01
+        "data/shp/poly_golden",
+    ],
+)
+def test_ogr_shape_write_check_golden_file(tmp_path, src_directory):
+
+    out_directory = str(tmp_path / "test")
+    gdal.VectorTranslate(
+        out_directory,
+        src_directory,
+        format="ESRI Shapefile",
+        layerCreationOptions=["DBF_DATE_LAST_UPDATE=2000-01-01"],
+    )
+    for filename in os.listdir(src_directory):
+        src_filename = os.path.join(src_directory, filename)
+        out_filename = os.path.join(out_directory, filename)
+
+        assert os.stat(src_filename).st_size == os.stat(out_filename).st_size, filename
+        assert (
+            open(src_filename, "rb").read() == open(out_filename, "rb").read()
+        ), filename
