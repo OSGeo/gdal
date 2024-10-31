@@ -16,10 +16,6 @@
 #ifndef META_H
 #define META_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
 #include <time.h>
 /* Include type.h for uChar and sChar */
 #include "type.h"
@@ -30,6 +26,10 @@ extern "C" {
 #ifdef __cplusplus
 #include "cpl_vsi.h"
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 #ifndef GRIB2BIT_ENUM
 #define GRIB2BIT_ENUM
