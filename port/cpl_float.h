@@ -113,12 +113,17 @@ struct GFloat16
     // How we compute on `GFloat16` values
     using compute = float;
 
+  private:
+    static constexpr bool true_value = true;
+
+  public:
     static constexpr unsigned float2unsigned(float f)
     {
         // return __builtin_bit_cast(unsigned, f);
 
         unsigned u{};
-        std::memcpy(&u, &f, 4);
+        if constexpr (true_value)
+            std::memcpy(&u, &f, 4);
         return u;
     }
 
@@ -127,7 +132,8 @@ struct GFloat16
         // return __builtin_bit_cast(float, u);
 
         float f{};
-        std::memcpy(&f, &u, 4);
+        if constexpr (true_value)
+            std::memcpy(&f, &u, 4);
         return f;
     }
 
@@ -264,7 +270,7 @@ struct GFloat16
     // Constructors and conversion operators
 
 #ifdef HAVE__FLOAT16
-    // cppcheck-suppress missingExplicitConstructor
+    /* cppcheck-suppress noExplicitConstructor */
     constexpr GFloat16(_Float16 hfValue) : rValue(hfValue)
     {
     }
@@ -277,7 +283,7 @@ struct GFloat16
 
 #define GDAL_DEFINE_CONVERSION(TYPE)                                           \
                                                                                \
-    /* cppcheck-suppress missingExplicitConstructor */                         \
+    /* cppcheck-suppress noExplicitConstructor */                              \
     constexpr GFloat16(TYPE fValue) : rValue(toRepr(fValue))                   \
     {                                                                          \
     }                                                                          \
@@ -545,6 +551,7 @@ template <typename T> struct GDALNumericLimits : std::numeric_limits<T>
 {
 };
 
+//! @cond Doxygen_Suppress
 template <> struct GDALNumericLimits<GFloat16>
 {
     static constexpr bool has_denorm = true;
@@ -591,6 +598,8 @@ template <> struct GDALNumericLimits<GFloat16>
         return GFloat16(std::numeric_limits<float>::quiet_NaN());
     }
 };
+
+//! @endcond
 
 #endif
 
