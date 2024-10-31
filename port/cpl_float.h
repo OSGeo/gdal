@@ -53,6 +53,7 @@
 #ifdef __cplusplus
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <limits>
 #endif
@@ -70,21 +71,49 @@ GUInt16 CPL_DLL CPLConvertFloatToHalf(float fFloat32);
 float CPL_DLL CPLConvertHalfToFloat(GUInt16 nHalf);
 
 // Define a type `GFloat16`. If the compiler supports it natively (as
-// `_Float16`), then use this type. Otherwise define a new class with
-// basic functionality.
+// `_Float16`), then this class is a simple wrapper. Otherwise we
+// store the values in a `GUInt16` as bit pattern.
 
+struct GFloat16
+{
 #ifdef HAVE__FLOAT16
 
-using GFloat16 = _Float16;
+    // How we represent a `GFloat16` internally
+    using repr = _Float16;
+
+    // How we compute on `GFloat16` values
+    using compute = _Float16;
+
+    static constexpr repr computeToRepr(compute fValue)
+    {
+        return fValue;
+    }
+
+    static constexpr compute reprToCompute(repr xValue)
+    {
+        return xValue;
+    }
+
+    template <typename T> static constexpr repr toRepr(T fValue)
+    {
+        return static_cast<repr>(fValue);
+    }
+
+    template <typename T> static constexpr T fromRepr(repr xValue)
+    {
+        return static_cast<T>(xValue);
+    }
 
 #else
 
-class GFloat16
-{
-    GUInt16 nhfValue;
+    // How we represent a `GFloat16` internally
+    using repr = std::uint16_t;
+
+    // How we compute on `GFloat16` values
+    using compute = float;
 
     // Copied from cpl_float.cpp so that we can inline for performance
-    static constexpr GUInt16 floatToHalf(float fFloat32)
+    static constexpr std::uint16_t computeToRepr(float fFloat32)
     {
         GUInt32 iFloat32 = 0;
         std::memcpy(&iFloat32, &fFloat32, 4);
@@ -139,7 +168,7 @@ class GFloat16
     }
 
     // Copied from cpl_float.cpp so that we can inline for performance
-    static constexpr float halfToFloat(GUInt16 iHalf)
+    static constexpr float reprToCompute(std::uint16_t iHalf)
     {
         GUInt32 iSign = (iHalf >> 15) & 0x00000001;
         int iExponent = (iHalf >> 10) & 0x0000001f;
@@ -193,6 +222,21 @@ class GFloat16
         return fFloat32;
     }
 
+    template <typename T> static constexpr repr toRepr(T fValue)
+    {
+        return computeToRepr(static_cast<compute>(fValue));
+    }
+
+    template <typename T> static constexpr T fromRepr(repr xValue)
+    {
+        return static_cast<T>(reprToCompute(xValue));
+    }
+
+#endif
+
+  private:
+    repr xValue;
+
   public:
     GFloat16() = default;
     GFloat16(const GFloat16 &) = default;
@@ -200,158 +244,129 @@ class GFloat16
     GFloat16 &operator=(const GFloat16 &) = default;
     GFloat16 &operator=(GFloat16 &&) = default;
 
-    constexpr GFloat16(float fValue) : nhfValue(floatToHalf(fValue))
+    // Constructors and conversion operators
+
+#ifdef HAVE__FLOAT16
+    constexpr GFloat16(_Float16 hfValue) : xValue(hfValue)
     {
     }
 
-    constexpr GFloat16(double dfValue) : GFloat16(float(dfValue))
+    constexpr operator _Float16() const
     {
+        return xValue;
+    }
+#endif
+
+#define GDAL_DEFINE_CONVERSION(TYPE)                                           \
+                                                                               \
+    constexpr GFloat16(TYPE fValue) : xValue(toRepr(fValue))                   \
+    {                                                                          \
+    }                                                                          \
+                                                                               \
+    constexpr operator TYPE() const                                            \
+    {                                                                          \
+        return fromRepr<TYPE>(xValue);                                         \
     }
 
-    constexpr GFloat16(int nValue) : GFloat16(float(nValue))
-    {
-    }
+    GDAL_DEFINE_CONVERSION(float)
+    GDAL_DEFINE_CONVERSION(double)
+    GDAL_DEFINE_CONVERSION(char)
+    GDAL_DEFINE_CONVERSION(signed char)
+    GDAL_DEFINE_CONVERSION(short)
+    GDAL_DEFINE_CONVERSION(int)
+    GDAL_DEFINE_CONVERSION(long)
+    GDAL_DEFINE_CONVERSION(long long)
+    GDAL_DEFINE_CONVERSION(unsigned char)
+    GDAL_DEFINE_CONVERSION(unsigned short)
+    GDAL_DEFINE_CONVERSION(unsigned int)
+    GDAL_DEFINE_CONVERSION(unsigned long)
+    GDAL_DEFINE_CONVERSION(unsigned long long)
 
-    constexpr GFloat16(long nValue) : GFloat16(float(nValue))
-    {
-    }
+#undef GDAL_DEFINE_CONVERSION
 
-    constexpr GFloat16(long long nValue) : GFloat16(float(nValue))
-    {
-    }
-
-    constexpr GFloat16(unsigned int nValue) : GFloat16(float(nValue))
-    {
-    }
-
-    constexpr GFloat16(unsigned long nValue) : GFloat16(float(nValue))
-    {
-    }
-
-    constexpr GFloat16(unsigned long long nValue) : GFloat16(float(nValue))
-    {
-    }
-
-    constexpr operator float() const
-    {
-        return halfToFloat(nhfValue);
-    }
-
-    constexpr operator double() const
-    {
-        return static_cast<double>(float(*this));
-    }
-
-    constexpr operator char() const
-    {
-        return static_cast<char>(float(*this));
-    }
-
-    constexpr operator signed char() const
-    {
-        return static_cast<signed char>(float(*this));
-    }
-
-    constexpr operator short() const
-    {
-        return static_cast<short>(float(*this));
-    }
-
-    constexpr operator int() const
-    {
-        return static_cast<int>(float(*this));
-    }
-
-    constexpr operator long() const
-    {
-        return static_cast<long>(float(*this));
-    }
-
-    constexpr operator long long() const
-    {
-        return static_cast<long long>(float(*this));
-    }
-
-    constexpr operator unsigned char() const
-    {
-        return static_cast<unsigned char>(float(*this));
-    }
-
-    constexpr operator unsigned short() const
-    {
-        return static_cast<unsigned short>(float(*this));
-    }
-
-    constexpr operator unsigned int() const
-    {
-        return static_cast<unsigned int>(float(*this));
-    }
-
-    constexpr operator unsigned long() const
-    {
-        return static_cast<unsigned long>(float(*this));
-    }
-
-    constexpr operator unsigned long long() const
-    {
-        return static_cast<unsigned long long>(float(*this));
-    }
+    // Arithmetic operators
 
     friend constexpr GFloat16 operator+(GFloat16 x)
     {
-        return GFloat16(+(float(x)));
+        return +reprToCompute(x);
     }
 
     friend constexpr GFloat16 operator-(GFloat16 x)
     {
-        return GFloat16(-(float(x)));
+        return -reprToCompute(x);
     }
 
-    friend constexpr GFloat16 operator+(GFloat16 x, GFloat16 y)
-    {
-        return GFloat16(float(x) + float(y));
+#define GDAL_DEFINE_ARITHOP(OP)                                                \
+                                                                               \
+    friend constexpr GFloat16 operator OP(GFloat16 x, GFloat16 y)              \
+    {                                                                          \
+        return reprToCompute(x) OP reprToCompute(y);                           \
+    }                                                                          \
+                                                                               \
+    friend constexpr double operator OP(double x, GFloat16 y)                  \
+    {                                                                          \
+        return x OP reprToCompute(y);                                          \
+    }                                                                          \
+                                                                               \
+    friend constexpr float operator OP(float x, GFloat16 y)                    \
+    {                                                                          \
+        return x OP reprToCompute(y);                                          \
+    }                                                                          \
+                                                                               \
+    friend constexpr GFloat16 operator OP(int x, GFloat16 y)                   \
+    {                                                                          \
+        return x OP reprToCompute(y);                                          \
+    }                                                                          \
+                                                                               \
+    friend constexpr double operator OP(GFloat16 x, double y)                  \
+    {                                                                          \
+        return reprToCompute(x) OP y;                                          \
+    }                                                                          \
+                                                                               \
+    friend constexpr float operator OP(GFloat16 x, float y)                    \
+    {                                                                          \
+        return reprToCompute(x) OP y;                                          \
+    }                                                                          \
+                                                                               \
+    friend constexpr GFloat16 operator OP(GFloat16 x, int y)                   \
+    {                                                                          \
+        return reprToCompute(x) OP y;                                          \
     }
 
-    friend constexpr GFloat16 operator-(GFloat16 x, GFloat16 y)
-    {
-        return GFloat16(float(x) - float(y));
-    }
+    GDAL_DEFINE_ARITHOP(+)
+    GDAL_DEFINE_ARITHOP(-)
+    GDAL_DEFINE_ARITHOP(*)
+    GDAL_DEFINE_ARITHOP(/)
 
-    friend constexpr GFloat16 operator*(GFloat16 x, GFloat16 y)
-    {
-        return GFloat16(float(x) * float(y));
-    }
+#undef GDAL_DEFINE_ARITHOP
 
-    friend constexpr GFloat16 operator/(GFloat16 x, GFloat16 y)
-    {
-        return GFloat16(float(x) / float(y));
-    }
+    // Comparison operators
 
 #define GDAL_DEFINE_COMPARISON(OP)                                             \
                                                                                \
     friend constexpr bool operator OP(GFloat16 x, GFloat16 y)                  \
     {                                                                          \
-        return float(x) OP float(y);                                           \
+        return reprToCompute(x) OP reprToCompute(y);                           \
     }                                                                          \
                                                                                \
     friend constexpr bool operator OP(double x, GFloat16 y)                    \
     {                                                                          \
-        return x OP double(y);                                                 \
+        return x OP reprToCompute(y);                                          \
     }                                                                          \
                                                                                \
     friend constexpr bool operator OP(int x, GFloat16 y)                       \
     {                                                                          \
-        return double(x) OP double(y);                                         \
+        return x OP reprToCompute(y);                                          \
     }                                                                          \
                                                                                \
     friend constexpr bool operator OP(GFloat16 x, double y)                    \
     {                                                                          \
-        return double(x) OP y;                                                 \
+        return reprToCompute(x) OP y;                                          \
     }                                                                          \
                                                                                \
     friend constexpr bool operator OP(GFloat16 x, int y)                       \
     {                                                                          \
-        return double(x) OP double(y);                                         \
+        return reprToCompute(x) OP y;                                          \
     }
 
     GDAL_DEFINE_COMPARISON(==)
@@ -362,113 +377,111 @@ class GFloat16
     GDAL_DEFINE_COMPARISON(>=)
 
 #undef GDAL_DEFINE_COMPARISON
+
+    // Standard math functions
+
+    friend constexpr bool isfinite(GFloat16 x)
+    {
+        using std::isfinite;
+        return isfinite(float(x));
+    }
+
+    friend constexpr bool isinf(GFloat16 x)
+    {
+        using std::isinf;
+        return isinf(float(x));
+    }
+
+    friend constexpr bool isnan(GFloat16 x)
+    {
+        using std::isnan;
+        return isnan(float(x));
+    }
+
+    friend constexpr GFloat16 abs(GFloat16 x)
+    {
+        using std::abs;
+        return GFloat16(abs(float(x)));
+    }
+
+    friend constexpr GFloat16 cbrt(GFloat16 x)
+    {
+        using std::cbrt;
+        return GFloat16(cbrt(float(x)));
+    }
+
+    friend constexpr GFloat16 ceil(GFloat16 x)
+    {
+        using std::ceil;
+        return GFloat16(ceil(float(x)));
+    }
+
+    friend constexpr GFloat16 fabs(GFloat16 x)
+    {
+        using std::fabs;
+        return GFloat16(fabs(float(x)));
+    }
+
+    friend constexpr GFloat16 floor(GFloat16 x)
+    {
+        using std::floor;
+        return GFloat16(floor(float(x)));
+    }
+
+    friend constexpr GFloat16 round(GFloat16 x)
+    {
+        using std::round;
+        return GFloat16(round(float(x)));
+    }
+
+    friend constexpr GFloat16 sqrt(GFloat16 x)
+    {
+        using std::sqrt;
+        return GFloat16(sqrt(float(x)));
+    }
+
+    friend constexpr GFloat16 fmax(GFloat16 x, GFloat16 y)
+    {
+        using std::fmax;
+        return GFloat16(fmax(float(x), float(y)));
+    }
+
+    friend constexpr GFloat16 fmin(GFloat16 x, GFloat16 y)
+    {
+        using std::fmin;
+        return GFloat16(fmin(float(x), float(y)));
+    }
+
+    friend constexpr GFloat16 hypot(GFloat16 x, GFloat16 y)
+    {
+        using std::hypot;
+        return GFloat16(hypot(float(x), float(y)));
+    }
+
+    friend constexpr GFloat16 max(GFloat16 x, GFloat16 y)
+    {
+        using std::max;
+        return GFloat16(max(float(x), float(y)));
+    }
+
+    friend constexpr GFloat16 min(GFloat16 x, GFloat16 y)
+    {
+        using std::min;
+        return GFloat16(min(float(x), float(y)));
+    }
+
+    friend constexpr GFloat16 pow(GFloat16 x, GFloat16 y)
+    {
+        using std::pow;
+        return GFloat16(pow(float(x), float(y)));
+    }
+
+    friend constexpr GFloat16 pow(GFloat16 x, int n)
+    {
+        using std::pow;
+        return GFloat16(pow(float(x), n));
+    }
 };
-
-#endif
-
-// Define some standard math functions
-
-constexpr bool isfinite(GFloat16 x)
-{
-    using std::isfinite;
-    return isfinite(float(x));
-}
-
-constexpr bool isinf(GFloat16 x)
-{
-    using std::isinf;
-    return isinf(float(x));
-}
-
-constexpr bool isnan(GFloat16 x)
-{
-    using std::isnan;
-    return isnan(float(x));
-}
-
-constexpr GFloat16 abs(GFloat16 x)
-{
-    using std::abs;
-    return GFloat16(abs(float(x)));
-}
-
-constexpr GFloat16 ceil(GFloat16 x)
-{
-    using std::ceil;
-    return GFloat16(ceil(float(x)));
-}
-
-constexpr GFloat16 fabs(GFloat16 x)
-{
-    using std::fabs;
-    return GFloat16(fabs(float(x)));
-}
-
-constexpr GFloat16 floor(GFloat16 x)
-{
-    using std::floor;
-    return GFloat16(floor(float(x)));
-}
-
-constexpr GFloat16 round(GFloat16 x)
-{
-    using std::round;
-    return GFloat16(round(float(x)));
-}
-
-constexpr GFloat16 sqrt(GFloat16 x)
-{
-    using std::sqrt;
-    return GFloat16(sqrt(float(x)));
-}
-
-constexpr GFloat16 cbrt(GFloat16 x)
-{
-    using std::cbrt;
-    return GFloat16(cbrt(float(x)));
-}
-
-constexpr GFloat16 fmax(GFloat16 x, GFloat16 y)
-{
-    using std::fmax;
-    return GFloat16(fmax(float(x), float(y)));
-}
-
-constexpr GFloat16 fmin(GFloat16 x, GFloat16 y)
-{
-    using std::fmin;
-    return GFloat16(fmin(float(x), float(y)));
-}
-
-constexpr GFloat16 hypot(GFloat16 x, GFloat16 y)
-{
-    using std::hypot;
-    return GFloat16(hypot(float(x), float(y)));
-}
-
-constexpr GFloat16 max(GFloat16 x, GFloat16 y)
-{
-    using std::max;
-    return GFloat16(max(float(x), float(y)));
-}
-
-constexpr GFloat16 min(GFloat16 x, GFloat16 y)
-{
-    using std::min;
-    return GFloat16(min(float(x), float(y)));
-}
-
-constexpr GFloat16 pow(GFloat16 x, GFloat16 y)
-{
-    using std::pow;
-    return GFloat16(pow(float(x), float(y)));
-}
-
-constexpr GFloat16 pow(GFloat16 x, int n)
-{
-    using std::pow;
-    return GFloat16(pow(float(x), n));
-}
 
 // Define some GDAL wrappers. Their C equivalents are defined in `cpl_port.h`.
 
