@@ -254,7 +254,7 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
     }
 
 
-The new option will be used by applications such as `ogr2ogr` to override the auto-detected fields types and to override the auto-detected (and possibly laundered) field names.
+The new option will be used by applications such as `ogr2ogr` (for the ``-mapFieldType`` switch) to override the auto-detected fields types and to override the auto-detected (and possibly laundered) field names.
 
 A preliminary draft of the implementation can be found at:
 https://github.com/elpaso/gdal/commits/enhancement-gh10943-fields-schema-override/
