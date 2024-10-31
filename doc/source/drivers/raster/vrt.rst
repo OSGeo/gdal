@@ -405,6 +405,31 @@ cubicspline,lanczos,average,mode.
       <DstRect xOff="0" yOff="0" xSize="128" ySize="128"/>
     </SimpleSource>
 
+
+Starting with GDAL 3.11, it is also possible to use a in-line VRTDataset as
+the source by using the VRTDataset element instead of SourceFilename.
+
+.. code-block:: xml
+
+    <SimpleSource>
+      <VRTDataset rasterXSize="20" rasterYSize="20">
+        <VRTRasterBand dataType="Byte" band="1">
+          <SimpleSource>
+            <SourceFilename relativeToVRT="1">../byte.tif</SourceFilename>
+            <SourceBand>1</SourceBand>
+            <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+            <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+            <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+          </SimpleSource>
+        </VRTRasterBand>
+      </VRTDataset>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+
+
 ComplexSource
 ~~~~~~~~~~~~~
 

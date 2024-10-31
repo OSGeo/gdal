@@ -449,7 +449,10 @@
     <xs:group name="SimpleSourceElementsGroup">
         <xs:sequence>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
-                <xs:element name="SourceFilename" type="SourceFilenameType"/>
+                <xs:choice minOccurs="0" maxOccurs="1">
+                    <xs:element name="SourceFilename" type="SourceFilenameType"/>
+                    <xs:element name="VRTDataset" type="VRTDatasetType"/> <!-- added in GDAL 3.11 -->
+                </xs:choice>
                 <xs:element name="OpenOptions" type="OpenOptionsType"/>
                 <xs:element name="SourceBand" type="xs:string"/>  <!-- should be refined into xs:nonNegativeInteger or mask,xs:nonNegativeInteger -->
                 <xs:element name="SourceProperties" type="SourcePropertiesType"/>

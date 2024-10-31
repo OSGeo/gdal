@@ -3071,8 +3071,19 @@ std::string VRTDataset::BuildSourceFilename(const char *pszFilename,
             }
             if (!bDone)
             {
+                std::string osVRTPath = pszVRTPath;
+                if (!CPLIsFilenameRelative(pszVRTPath))
+                {
+                    // Simplify path by replacing "foo/a/../b" with "foo/b"
+                    while (STARTS_WITH(pszFilename, "../"))
+                    {
+                        osVRTPath = CPLGetPath(osVRTPath.c_str());
+                        pszFilename += strlen("../");
+                    }
+                }
+
                 osSrcDSName =
-                    CPLProjectRelativeFilename(pszVRTPath, pszFilename);
+                    CPLProjectRelativeFilename(osVRTPath.c_str(), pszFilename);
             }
         }
     }
