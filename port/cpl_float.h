@@ -247,6 +247,7 @@ struct GFloat16
     // Constructors and conversion operators
 
 #ifdef HAVE__FLOAT16
+    // cppcheck-suppress missingExplicitConstructor
     constexpr GFloat16(_Float16 hfValue) : xValue(hfValue)
     {
     }
@@ -259,6 +260,7 @@ struct GFloat16
 
 #define GDAL_DEFINE_CONVERSION(TYPE)                                           \
                                                                                \
+    /* cppcheck-suppress missingExplicitConstructor */                         \
     constexpr GFloat16(TYPE fValue) : xValue(toRepr(fValue))                   \
     {                                                                          \
     }                                                                          \
