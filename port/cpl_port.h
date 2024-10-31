@@ -376,9 +376,6 @@ typedef uintptr_t GUIntptr_t;
 /* -------------------------------------------------------------------- */
 /*! @cond Doxygen_Suppress */
 #ifndef CPLIsEqual
-#ifdef __cplusplus
-#include <cmath>
-#endif
 #define CPLIsEqual(x, y) (fabs((x) - (y)) < 0.0000000000001)
 #endif
 /*! @endcond */
