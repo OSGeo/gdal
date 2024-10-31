@@ -376,6 +376,9 @@ typedef uintptr_t GUIntptr_t;
 /* -------------------------------------------------------------------- */
 /*! @cond Doxygen_Suppress */
 #ifndef CPLIsEqual
+#ifdef __cplusplus
+#include <cmath>
+#endif
 #define CPLIsEqual(x, y) (fabs((x) - (y)) < 0.0000000000001)
 #endif
 /*! @endcond */
@@ -576,14 +579,8 @@ static inline char *CPL_afl_friendly_strstr(const char *haystack,
 #define CPLIsInf(x) __builtin_isinf(x)
 #define CPLIsFinite(x) __builtin_isfinite(x)
 #elif defined(__cplusplus) && defined(__GNUC__) && defined(__linux) &&         \
-    !defined(__ANDROID__) && !defined(CPL_SUPRESS_CPLUSPLUS)
-/* so to not get warning about conversion from double to float with */
-/* gcc -Wfloat-conversion when using isnan()/isinf() macros */
-#define CPLIsNan(f) (sizeof(f) == sizeof(float) ? __isnanf(f) : __isnan(f))
-#define CPLIsInf(f) (sizeof(f) == sizeof(float) ? __isinff(f) : __isinf(f))
-#define CPLIsFinite(f)                                                         \
-    (sizeof(f) == sizeof(float) ? __isfinitef(f) : __isfinite(f))
-#elif defined(isinf) || defined(__FreeBSD__)
+        #elif defined(isinf) ||                                                \
+    defined(__FreeBSD__)
 /** Return whether a floating-pointer number is nan */
 #define CPLIsNan(x) isnan(x)
 /** Return whether a floating-pointer number is +/- infinity */
