@@ -34,7 +34,7 @@
 #ifdef GDAL_ENABLE_FLOAT16
 #if defined(__GNUC__) || defined(__clang__)
 #define __STDC_WANT_IEC_60559_TYPES_EXT__
-#include <float.h>  // Also brings in _Float16
+#include <float.h>  // Also brings in GFloat16
 #endif
 #endif
 
@@ -219,10 +219,10 @@ template <> struct CXXTypeTraits<std::complex<double>>
 
 #if defined HAVE__FLOAT16 ||                                                   \
     (defined(GDAL_ENABLE_FLOAT16) && defined(FLT16_MAX) && defined(FLT16_MIN))
-template <> struct CXXTypeTraits<_Float16>
+template <> struct CXXTypeTraits<GFloat16>
 {
     static constexpr GDALDataType gdal_type = GDT_Float16;
-    static constexpr size_t size = sizeof(_Float16);
+    static constexpr size_t size = sizeof(GFloat16);
     static constexpr OGRFieldType ogr_type = OFTReal;
     static constexpr OGRFieldSubType ogr_subtype = OFSTNone;
 

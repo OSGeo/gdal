@@ -4537,16 +4537,16 @@ inline bool ARE_REAL_EQUAL(double dfVal1, double dfVal2, int ulp = 2)
                GDALNumericLimits<float>::epsilon() * abs(dfVal1 + dfVal2) * ulp;
 }
 
-// The generic function above does not work for _Float16 because
+// The generic function above does not work for GFloat16 because
 // GDALNumericLimits<float>::epsilon() is the wrong choice
 #ifdef HAVE__FLOAT16
-inline bool ARE_REAL_EQUAL(_Float16 hfVal1, _Float16 hfVal2, int ulp = 2)
+inline bool ARE_REAL_EQUAL(GFloat16 hfVal1, GFloat16 hfVal2, int ulp = 2)
 {
     // We need to roll our own `abs` because the C++17 standard
     // library does not provide one
-    auto abs = [](_Float16 x) { return x < 0 ? -x : x; };
+    auto abs = [](GFloat16 x) { return x < 0 ? -x : x; };
     return hfVal1 == hfVal2 || /* Should cover infinity */
-           abs(hfVal1 - hfVal2) < GDALNumericLimits<_Float16>::epsilon() *
+           abs(hfVal1 - hfVal2) < GDALNumericLimits<GFloat16>::epsilon() *
                                       abs(hfVal1 + hfVal2) * ulp;
 }
 #endif

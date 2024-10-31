@@ -422,7 +422,6 @@ TEST_F(test_gdal, GDALAdjustValueToDataType)
                                           &bRounded) == 10000000000.0 &&
                 !bClamped && !bRounded);
 
-#ifdef HAVE__FLOAT16
     EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Float16, 0.0, &bClamped,
                                           &bRounded) == 0.0 &&
                 !bClamped && !bRounded);
@@ -431,7 +430,7 @@ TEST_F(test_gdal, GDALAdjustValueToDataType)
                 !bClamped && !bRounded);
     EXPECT_TRUE(
         GDALAdjustValueToDataType(GDT_Float16, 1.23, &bClamped, &bRounded) ==
-            static_cast<double>(static_cast<_Float16>(1.23f)) &&
+            static_cast<double>(static_cast<GFloat16>(1.23f)) &&
         !bClamped && !bRounded);
     EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Float16, -1e300, &bClamped,
                                           &bRounded) == -65504 &&
@@ -456,7 +455,6 @@ TEST_F(test_gdal, GDALAdjustValueToDataType)
         EXPECT_TRUE(memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped &&
                     !bRounded);
     }
-#endif
 
     EXPECT_TRUE(GDALAdjustValueToDataType(GDT_Float32, 0.0, &bClamped,
                                           &bRounded) == 0.0 &&

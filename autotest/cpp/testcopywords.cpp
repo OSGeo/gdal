@@ -12,6 +12,7 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
+#include "cpl_float.h"
 #include "gdal.h"
 
 #include <cstdint>
@@ -160,12 +161,8 @@ class TestCopyWords : public ::testing::Test
             Test<InType, std::uint64_t, ConstantType>(
                 intype, inval, invali, outtype, outval, outvali, numLine);
         else if (outtype == GDT_Float16)
-#ifdef HAVE__FLOAT16
-            Test<InType, _Float16, ConstantType>(intype, inval, invali, outtype,
+            Test<InType, GFloat16, ConstantType>(intype, inval, invali, outtype,
                                                  outval, outvali, numLine);
-#else
-            CPLAssert(false);
-#endif
         else if (outtype == GDT_Float32)
             Test<InType, float, ConstantType>(intype, inval, invali, outtype,
                                               outval, outvali, numLine);
@@ -179,12 +176,8 @@ class TestCopyWords : public ::testing::Test
             Test<InType, GInt32, ConstantType>(intype, inval, invali, outtype,
                                                outval, outvali, numLine);
         else if (outtype == GDT_CFloat16)
-#ifdef HAVE__FLOAT16
-            Test<InType, _Float16, ConstantType>(intype, inval, invali, outtype,
+            Test<InType, GFloat16, ConstantType>(intype, inval, invali, outtype,
                                                  outval, outvali, numLine);
-#else
-            CPLAssert(false);
-#endif
         else if (outtype == GDT_CFloat32)
             Test<InType, float, ConstantType>(intype, inval, invali, outtype,
                                               outval, outvali, numLine);
@@ -223,12 +216,8 @@ class TestCopyWords : public ::testing::Test
             FromR_2<std::uint64_t, ConstantType>(intype, inval, invali, outtype,
                                                  outval, outvali, numLine);
         else if (intype == GDT_Float16)
-#ifdef HAVE__FLOAT16
-            FromR_2<_Float16, ConstantType>(intype, inval, invali, outtype,
+            FromR_2<GFloat16, ConstantType>(intype, inval, invali, outtype,
                                             outval, outvali, numLine);
-#else
-            CPLAssert(false);
-#endif
         else if (intype == GDT_Float32)
             FromR_2<float, ConstantType>(intype, inval, invali, outtype, outval,
                                          outvali, numLine);
@@ -242,12 +231,8 @@ class TestCopyWords : public ::testing::Test
             FromR_2<GInt32, ConstantType>(intype, inval, invali, outtype,
                                           outval, outvali, numLine);
         else if (intype == GDT_CFloat16)
-#ifdef HAVE__FLOAT16
-            FromR_2<_Float16, ConstantType>(intype, inval, invali, outtype,
+            FromR_2<GFloat16, ConstantType>(intype, inval, invali, outtype,
                                             outval, outvali, numLine);
-#else
-            CPLAssert(false);
-#endif
         else if (intype == GDT_CFloat32)
             FromR_2<float, ConstantType>(intype, inval, invali, outtype, outval,
                                          outvali, numLine);
@@ -282,10 +267,6 @@ TEST_F(TestCopyWords, GDT_Byte)
     for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
          outtype = (GDALDataType)(outtype + 1))
     {
-#ifndef HAVE__FLOAT16
-        if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-            continue;
-#endif
         FROM_R(GDT_Byte, 0, outtype, 0);
         FROM_R(GDT_Byte, 127, outtype, 127);
         if (outtype != GDT_Int8)
@@ -323,25 +304,17 @@ TEST_F(TestCopyWords, GDT_Int8)
     FROM_R(GDT_Int8, -128, GDT_UInt32, 0); /* clamp */
     FROM_R(GDT_Int8, -128, GDT_Int64, -128);
     FROM_R(GDT_Int8, -128, GDT_UInt64, 0); /* clamp */
-#ifdef HAVE__FLOAT16
     FROM_R(GDT_Int8, -128, GDT_Float16, -128);
-#endif
     FROM_R(GDT_Int8, -128, GDT_Float32, -128);
     FROM_R(GDT_Int8, -128, GDT_Float64, -128);
     FROM_R(GDT_Int8, -128, GDT_CInt16, -128);
     FROM_R(GDT_Int8, -128, GDT_CInt32, -128);
-#ifdef HAVE__FLOAT16
     FROM_R(GDT_Int8, -128, GDT_CFloat16, -128);
-#endif
     FROM_R(GDT_Int8, -128, GDT_CFloat32, -128);
     FROM_R(GDT_Int8, -128, GDT_CFloat64, -128);
     for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
          outtype = (GDALDataType)(outtype + 1))
     {
-#ifndef HAVE__FLOAT16
-        if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-            continue;
-#endif
         FROM_R(GDT_Int8, 127, outtype, 127);
     }
 
@@ -380,10 +353,6 @@ TEST_F(TestCopyWords, GDT_Int16)
     for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
          outtype = (GDALDataType)(outtype + 1))
     {
-#ifndef HAVE__FLOAT16
-        if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-            continue;
-#endif
         FROM_R(GDT_Int16, 127, outtype, 127);
     }
 
@@ -408,10 +377,6 @@ TEST_F(TestCopyWords, GDT_UInt16)
     for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
          outtype = (GDALDataType)(outtype + 1))
     {
-#ifndef HAVE__FLOAT16
-        if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-            continue;
-#endif
         FROM_R(GDT_UInt16, 0, outtype, 0);
         FROM_R(GDT_UInt16, 127, outtype, 127);
     }
@@ -450,10 +415,6 @@ TEST_F(TestCopyWords, GDT_Int32)
     for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
          outtype = (GDALDataType)(outtype + 1))
     {
-#ifndef HAVE__FLOAT16
-        if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-            continue;
-#endif
         FROM_R(GDT_Int32, 127, outtype, 127);
     }
 
@@ -478,10 +439,6 @@ TEST_F(TestCopyWords, GDT_UInt32)
     for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
          outtype = (GDALDataType)(outtype + 1))
     {
-#ifndef HAVE__FLOAT16
-        if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-            continue;
-#endif
         FROM_R(GDT_UInt32, 0, outtype, 0);
         FROM_R(GDT_UInt32, 127, outtype, 127);
     }
@@ -520,10 +477,6 @@ TEST_F(TestCopyWords, check_GDT_Int64)
     for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
          outtype = (GDALDataType)(outtype + 1))
     {
-#ifndef HAVE__FLOAT16
-        if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-            continue;
-#endif
         FROM_R(GDT_Int64, 127, outtype, 127);
     }
 
@@ -548,10 +501,6 @@ TEST_F(TestCopyWords, GDT_UInt64)
     for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
          outtype = (GDALDataType)(outtype + 1))
     {
-#ifndef HAVE__FLOAT16
-        if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-            continue;
-#endif
         FROM_R(GDT_UInt64, 0, outtype, 0);
         FROM_R(GDT_UInt64, 127, outtype, 127);
     }
@@ -583,10 +532,6 @@ TEST_F(TestCopyWords, GDT_Float32and64)
         for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
              outtype = (GDALDataType)(outtype + 1))
         {
-#ifndef HAVE__FLOAT16
-            if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-                continue;
-#endif
             if (IS_FLOAT(outtype))
             {
                 FROM_R_F(intype, 127.1, outtype, 127.1);
@@ -812,10 +757,6 @@ TEST_F(TestCopyWords, GDT_CInt16)
     for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
          outtype = (GDALDataType)(outtype + 1))
     {
-#ifndef HAVE__FLOAT16
-        if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-            continue;
-#endif
         FROM_C(GDT_CInt16, 127, 128, outtype, 127, 128);
     }
 
@@ -849,10 +790,6 @@ TEST_F(TestCopyWords, GDT_CInt32)
     for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
          outtype = (GDALDataType)(outtype + 1))
     {
-#ifndef HAVE__FLOAT16
-        if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-            continue;
-#endif
         FROM_C(GDT_CInt32, 127, 128, outtype, 127, 128);
     }
 
@@ -878,10 +815,6 @@ TEST_F(TestCopyWords, GDT_CFloat32and64)
         for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
              outtype = (GDALDataType)(outtype + 1))
         {
-#ifndef HAVE__FLOAT16
-            if (outtype == GDT_Float16 || outtype == GDT_CFloat16)
-                continue;
-#endif
             if (IS_FLOAT(outtype))
             {
                 FROM_C_F(intype, 127.1, 127.9, outtype, 127.1, 127.9);
@@ -1029,11 +962,7 @@ template <class Tin> void CheckPacked(GDALDataType eIn, GDALDataType eOut)
             CheckPacked<Tin, std::int64_t>(eIn, eOut);
             break;
         case GDT_Float16:
-#ifdef HAVE__FLOAT16
-            CheckPacked<Tin, _Float16>(eIn, eOut);
-#else
-            CPLAssert(false);
-#endif
+            CheckPacked<Tin, GFloat16>(eIn, eOut);
             break;
         case GDT_Float32:
             CheckPacked<Tin, float>(eIn, eOut);
@@ -1075,11 +1004,7 @@ static void CheckPacked(GDALDataType eIn, GDALDataType eOut)
             CheckPacked<std::int64_t>(eIn, eOut);
             break;
         case GDT_Float16:
-#ifdef HAVE__FLOAT16
-            CheckPacked<_Float16>(eIn, eOut);
-#else
-            CPLAssert(false);
-#endif
+            CheckPacked<GFloat16>(eIn, eOut);
             break;
         case GDT_Float32:
             CheckPacked<float>(eIn, eOut);
@@ -1113,19 +1038,11 @@ GetGDALDataTypeTupleValues()
     for (GDALDataType eIn = GDT_Byte; eIn < GDT_TypeCount;
          eIn = static_cast<GDALDataType>(eIn + 1))
     {
-#ifndef HAVE__FLOAT16
-        if (eIn == GDT_Float16 || eIn == GDT_CFloat16)
-            continue;
-#endif
         if (GDALDataTypeIsComplex(eIn))
             continue;
         for (GDALDataType eOut = GDT_Byte; eOut < GDT_TypeCount;
              eOut = static_cast<GDALDataType>(eOut + 1))
         {
-#ifndef HAVE__FLOAT16
-            if (eOut == GDT_Float16 || eOut == GDT_CFloat16)
-                continue;
-#endif
             if (GDALDataTypeIsComplex(eOut))
                 continue;
             ret.emplace_back(std::make_tuple(eIn, eOut));

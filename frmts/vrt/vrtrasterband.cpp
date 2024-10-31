@@ -605,18 +605,16 @@ CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
     {
         return "nan";
     }
-#ifdef HAVE__FLOAT16
     else if (eDataType == GDT_Float16 && dfVal == -6.55e4)
     {
-        // To avoid rounding out of the range of _Float16
+        // To avoid rounding out of the range of GFloat16
         return "-6.55e4";
     }
     else if (eDataType == GDT_Float16 && dfVal == 6.55e4)
     {
-        // To avoid rounding out of the range of _Float16
+        // To avoid rounding out of the range of GFloat16
         return "6.55e4";
     }
-#endif
     else if (eDataType == GDT_Float32 &&
              dfVal == -std::numeric_limits<float>::max())
     {

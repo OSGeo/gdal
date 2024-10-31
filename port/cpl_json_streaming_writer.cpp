@@ -17,6 +17,7 @@
 #include <string>
 
 #include "cpl_conv.h"
+#include "cpl_float.h"
 #include "cpl_string.h"
 #include "cpl_json_streaming_writer.h"
 
@@ -222,8 +223,7 @@ void CPLJSonStreamingWriter::Add(std::uint64_t nVal)
     Print(CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));
 }
 
-#ifdef HAVE__FLOAT16
-void CPLJSonStreamingWriter::Add(_Float16 hfVal, int nPrecision)
+void CPLJSonStreamingWriter::Add(GFloat16 hfVal, int nPrecision)
 {
     EmitCommaIfNeeded();
     if (CPLIsNan(hfVal))
@@ -238,10 +238,9 @@ void CPLJSonStreamingWriter::Add(_Float16 hfVal, int nPrecision)
     {
         char szFormatting[10];
         snprintf(szFormatting, sizeof(szFormatting), "%%.%dg", nPrecision);
-        Print(CPLSPrintf(szFormatting, hfVal));
+        Print(CPLSPrintf(szFormatting, float(hfVal)));
     }
 }
-#endif
 
 void CPLJSonStreamingWriter::Add(float fVal, int nPrecision)
 {

@@ -144,12 +144,12 @@ template <> inline bool GDALIsValueInRange<float>(double dfValue)
                                  dfValue <= GDALNumericLimits<float>::max());
 }
 
-#ifdef HAVE__FLOAT16
-template <> inline bool GDALIsValueInRange<_Float16>(double dfValue)
+template <> inline bool GDALIsValueInRange<GFloat16>(double dfValue)
 {
-    return CPLIsInf(dfValue) || (dfValue >= -65504 && dfValue <= 65504);
+    return CPLIsInf(dfValue) ||
+           (dfValue >= -GDALNumericLimits<GFloat16>::max() &&
+            dfValue <= GDALNumericLimits<GFloat16>::max());
 }
-#endif
 
 template <> inline bool GDALIsValueInRange<int64_t>(double dfValue)
 {
@@ -197,14 +197,12 @@ template <> inline bool GDALIsValueExactAs<float>(double dfValue)
             static_cast<double>(static_cast<float>(dfValue)) == dfValue);
 }
 
-#ifdef HAVE__FLOAT16
-template <> inline bool GDALIsValueExactAs<_Float16>(double dfValue)
+template <> inline bool GDALIsValueExactAs<GFloat16>(double dfValue)
 {
     return CPLIsNan(dfValue) ||
-           (GDALIsValueInRange<_Float16>(dfValue) &&
-            static_cast<double>(static_cast<_Float16>(dfValue)) == dfValue);
+           (GDALIsValueInRange<GFloat16>(dfValue) &&
+            static_cast<double>(static_cast<GFloat16>(dfValue)) == dfValue);
 }
-#endif
 
 template <> inline bool GDALIsValueExactAs<double>(double)
 {

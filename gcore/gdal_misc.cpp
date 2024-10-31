@@ -967,7 +967,7 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
             {
 #ifdef HAVE__FLOAT16
                 // Intentionally lose precision.
-                dfValue = static_cast<_Float16>(dfValue);
+                dfValue = static_cast<GFloat16>(dfValue);
 #else
                 float fValue = static_cast<float>(dfValue);
                 GUInt32 nValue;
@@ -1062,7 +1062,7 @@ bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
             return GDALIsValueExactAs<int64_t>(dfValue);
         case GDT_Float16:
 #ifdef HAVE__FLOAT16
-            return GDALIsValueExactAs<_Float16>(dfValue);
+            return GDALIsValueExactAs<GFloat16>(dfValue);
 #else
             return false;
 #endif
@@ -1648,7 +1648,7 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                         break;
                     case GDT_Float16:
 #ifdef HAVE__FLOAT16
-                        dfValue = reinterpret_cast<const _Float16 *>(
+                        dfValue = reinterpret_cast<const GFloat16 *>(
                             pDataRef)[iOffset];
 #else
                     {
@@ -1692,10 +1692,10 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                     {
 #ifdef HAVE__FLOAT16
                         const double dfReal =
-                            reinterpret_cast<const _Float16 *>(
+                            reinterpret_cast<const GFloat16 *>(
                                 pDataRef)[iOffset * 2];
                         const double dfImag =
-                            reinterpret_cast<const _Float16 *>(
+                            reinterpret_cast<const GFloat16 *>(
                                 pDataRef)[iOffset * 2 + 1];
 #else
                         const GUInt32 nReal =
@@ -5615,19 +5615,19 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
 
         if (dfNoDataValue == 65504)
         {
-            // C++17 does not provide `std::nextafter` for `_Float16`
+            // C++17 does not provide `std::nextafter` for `GFloat16`
             dfReplacementVal = 65472;
         }
         else if (dfNoDataValue == -65504)
         {
-            // C++17 does not provide `std::nextafter` for `_Float16`
+            // C++17 does not provide `std::nextafter` for `GFloat16`
             dfReplacementVal = -65472;
         }
         else
         {
 #ifdef HAVE__FLOAT16
             // Intentionally lose precision
-            dfReplacementVal = static_cast<_Float16>(dfNoDataValue);
+            dfReplacementVal = static_cast<GFloat16>(dfNoDataValue);
 #else
             float fReplacementVal = static_cast<float>(dfNoDataValue);
             GUInt32 nReplacementVal;

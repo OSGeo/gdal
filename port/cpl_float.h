@@ -51,6 +51,9 @@
 #include "cpl_port.h"
 
 #ifdef __cplusplus
+#include <algorithm>
+#include <cmath>
+#include <cstring>
 #include <limits>
 #endif
 
@@ -60,6 +63,432 @@ GUInt32 CPL_DLL CPLTripleToFloat(GUInt32 iTriple);
 CPL_C_END
 
 #ifdef __cplusplus
+
+GUInt16 CPL_DLL CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned);
+
+GUInt16 CPL_DLL CPLConvertFloatToHalf(float fFloat32);
+float CPL_DLL CPLConvertHalfToFloat(GUInt16 nHalf);
+
+// Define a type `GFloat16`. If the compiler supports it natively (as
+// `_Float16`), then use this type. Otherwise define a new class with
+// basic functionality.
+
+#ifdef HAVE__FLOAT16
+
+using GFloat16 = _Float16;
+
+#else
+
+class GFloat16
+{
+    GUInt16 nhfValue;
+
+    // Copied from cpl_float.cpp so that we can inline for performance
+    static constexpr GUInt16 floatToHalf(float fFloat32)
+    {
+        GUInt32 iFloat32 = 0;
+        std::memcpy(&iFloat32, &fFloat32, 4);
+
+        GUInt32 iSign = (iFloat32 >> 31) & 0x00000001;
+        GUInt32 iExponent = (iFloat32 >> 23) & 0x000000ff;
+        GUInt32 iMantissa = iFloat32 & 0x007fffff;
+
+        if (iExponent == 255)
+        {
+            if (iMantissa == 0)
+            {
+                // Positive or negative infinity.
+                return static_cast<GUInt16>((iSign << 15) | 0x7C00);
+            }
+            else
+            {
+                // NaN -- preserve sign and significand bits.
+                if (iMantissa >> 13)
+                    return static_cast<GUInt16>((iSign << 15) | 0x7C00 |
+                                                (iMantissa >> 13));
+
+                return static_cast<GUInt16>((iSign << 15) | 0x7E00);
+            }
+        }
+
+        if (iExponent <= 127 - 15)
+        {
+            // Zero, float32 denormalized number or float32 too small normalized
+            // number
+            if (13 + 1 + 127 - 15 - iExponent >= 32)
+                return static_cast<GUInt16>(iSign << 15);
+
+            // Return a denormalized number
+            return static_cast<GUInt16>(
+                (iSign << 15) |
+                ((iMantissa | 0x00800000) >> (13 + 1 + 127 - 15 - iExponent)));
+        }
+        if (iExponent - (127 - 15) >= 31)
+        {
+            return static_cast<GUInt16>((iSign << 15) | 0x7C00);  // Infinity
+        }
+
+        // Normalized number.
+        iExponent = iExponent - (127 - 15);
+        iMantissa = iMantissa >> 13;
+
+        // Assemble sign, exponent and mantissa.
+        // coverity[overflow_sink]
+        return static_cast<GUInt16>((iSign << 15) | (iExponent << 10) |
+                                    iMantissa);
+    }
+
+    // Copied from cpl_float.cpp so that we can inline for performance
+    static constexpr float halfToFloat(GUInt16 iHalf)
+    {
+        GUInt32 iSign = (iHalf >> 15) & 0x00000001;
+        int iExponent = (iHalf >> 10) & 0x0000001f;
+        GUInt32 iMantissa = iHalf & 0x000003ff;
+
+        if (iExponent == 0)
+        {
+            if (iMantissa == 0)
+            {
+                // Plus or minus zero.
+                return iSign << 31;
+            }
+            else
+            {
+                // Denormalized number -- renormalize it.
+                while (!(iMantissa & 0x00000400))
+                {
+                    iMantissa <<= 1;
+                    iExponent -= 1;
+                }
+
+                iExponent += 1;
+                iMantissa &= ~0x00000400U;
+            }
+        }
+        else if (iExponent == 31)
+        {
+            if (iMantissa == 0)
+            {
+                // Positive or negative infinity.
+                return (iSign << 31) | 0x7f800000;
+            }
+            else
+            {
+                // NaN -- preserve sign and significand bits.
+                return (iSign << 31) | 0x7f800000 | (iMantissa << 13);
+            }
+        }
+
+        // Normalized number.
+        iExponent = iExponent + (127 - 15);
+        iMantissa = iMantissa << 13;
+
+        // Assemble sign, exponent and mantissa.
+        /* coverity[overflow_sink] */
+        GUInt32 iFloat32 =
+            (iSign << 31) | (static_cast<GUInt32>(iExponent) << 23) | iMantissa;
+
+        float fFloat32 = 0;
+        std::memcpy(&fFloat32, &iFloat32, 4);
+        return fFloat32;
+    }
+
+  public:
+    GFloat16() = default;
+    GFloat16(const GFloat16 &) = default;
+    GFloat16(GFloat16 &&) = default;
+    GFloat16 &operator=(const GFloat16 &) = default;
+    GFloat16 &operator=(GFloat16 &&) = default;
+
+    constexpr GFloat16(float fValue) : nhfValue(floatToHalf(fValue))
+    {
+    }
+
+    constexpr GFloat16(double dfValue) : GFloat16(float(dfValue))
+    {
+    }
+
+    constexpr GFloat16(int nValue) : GFloat16(float(nValue))
+    {
+    }
+
+    constexpr GFloat16(long nValue) : GFloat16(float(nValue))
+    {
+    }
+
+    constexpr GFloat16(long long nValue) : GFloat16(float(nValue))
+    {
+    }
+
+    constexpr GFloat16(unsigned int nValue) : GFloat16(float(nValue))
+    {
+    }
+
+    constexpr GFloat16(unsigned long nValue) : GFloat16(float(nValue))
+    {
+    }
+
+    constexpr GFloat16(unsigned long long nValue) : GFloat16(float(nValue))
+    {
+    }
+
+    constexpr operator float() const
+    {
+        return halfToFloat(nhfValue);
+    }
+
+    constexpr operator double() const
+    {
+        return static_cast<double>(float(*this));
+    }
+
+    constexpr operator char() const
+    {
+        return static_cast<char>(float(*this));
+    }
+
+    constexpr operator signed char() const
+    {
+        return static_cast<signed char>(float(*this));
+    }
+
+    constexpr operator short() const
+    {
+        return static_cast<short>(float(*this));
+    }
+
+    constexpr operator int() const
+    {
+        return static_cast<int>(float(*this));
+    }
+
+    constexpr operator long() const
+    {
+        return static_cast<long>(float(*this));
+    }
+
+    constexpr operator long long() const
+    {
+        return static_cast<long long>(float(*this));
+    }
+
+    constexpr operator unsigned char() const
+    {
+        return static_cast<unsigned char>(float(*this));
+    }
+
+    constexpr operator unsigned short() const
+    {
+        return static_cast<unsigned short>(float(*this));
+    }
+
+    constexpr operator unsigned int() const
+    {
+        return static_cast<unsigned int>(float(*this));
+    }
+
+    constexpr operator unsigned long() const
+    {
+        return static_cast<unsigned long>(float(*this));
+    }
+
+    constexpr operator unsigned long long() const
+    {
+        return static_cast<unsigned long long>(float(*this));
+    }
+
+    friend constexpr GFloat16 operator+(GFloat16 x)
+    {
+        return GFloat16(+(float(x)));
+    }
+
+    friend constexpr GFloat16 operator-(GFloat16 x)
+    {
+        return GFloat16(-(float(x)));
+    }
+
+    friend constexpr GFloat16 operator+(GFloat16 x, GFloat16 y)
+    {
+        return GFloat16(float(x) + float(y));
+    }
+
+    friend constexpr GFloat16 operator-(GFloat16 x, GFloat16 y)
+    {
+        return GFloat16(float(x) - float(y));
+    }
+
+    friend constexpr GFloat16 operator*(GFloat16 x, GFloat16 y)
+    {
+        return GFloat16(float(x) * float(y));
+    }
+
+    friend constexpr GFloat16 operator/(GFloat16 x, GFloat16 y)
+    {
+        return GFloat16(float(x) / float(y));
+    }
+
+#define GDAL_DEFINE_COMPARISON(OP)                                             \
+                                                                               \
+    friend constexpr bool operator OP(GFloat16 x, GFloat16 y)                  \
+    {                                                                          \
+        return float(x) OP float(y);                                           \
+    }                                                                          \
+                                                                               \
+    friend constexpr bool operator OP(double x, GFloat16 y)                    \
+    {                                                                          \
+        return x OP double(y);                                                 \
+    }                                                                          \
+                                                                               \
+    friend constexpr bool operator OP(int x, GFloat16 y)                       \
+    {                                                                          \
+        return double(x) OP double(y);                                         \
+    }                                                                          \
+                                                                               \
+    friend constexpr bool operator OP(GFloat16 x, double y)                    \
+    {                                                                          \
+        return double(x) OP y;                                                 \
+    }                                                                          \
+                                                                               \
+    friend constexpr bool operator OP(GFloat16 x, int y)                       \
+    {                                                                          \
+        return double(x) OP double(y);                                         \
+    }
+
+    GDAL_DEFINE_COMPARISON(==)
+    GDAL_DEFINE_COMPARISON(!=)
+    GDAL_DEFINE_COMPARISON(<)
+    GDAL_DEFINE_COMPARISON(>)
+    GDAL_DEFINE_COMPARISON(<=)
+    GDAL_DEFINE_COMPARISON(>=)
+
+#undef GDAL_DEFINE_COMPARISON
+};
+
+#endif
+
+// Define some standard math functions
+
+constexpr bool isfinite(GFloat16 x)
+{
+    using std::isfinite;
+    return isfinite(float(x));
+}
+
+constexpr bool isinf(GFloat16 x)
+{
+    using std::isinf;
+    return isinf(float(x));
+}
+
+constexpr bool isnan(GFloat16 x)
+{
+    using std::isnan;
+    return isnan(float(x));
+}
+
+constexpr GFloat16 abs(GFloat16 x)
+{
+    using std::abs;
+    return GFloat16(abs(float(x)));
+}
+
+constexpr GFloat16 ceil(GFloat16 x)
+{
+    using std::ceil;
+    return GFloat16(ceil(float(x)));
+}
+
+constexpr GFloat16 fabs(GFloat16 x)
+{
+    using std::fabs;
+    return GFloat16(fabs(float(x)));
+}
+
+constexpr GFloat16 floor(GFloat16 x)
+{
+    using std::floor;
+    return GFloat16(floor(float(x)));
+}
+
+constexpr GFloat16 round(GFloat16 x)
+{
+    using std::round;
+    return GFloat16(round(float(x)));
+}
+
+constexpr GFloat16 sqrt(GFloat16 x)
+{
+    using std::sqrt;
+    return GFloat16(sqrt(float(x)));
+}
+
+constexpr GFloat16 cbrt(GFloat16 x)
+{
+    using std::cbrt;
+    return GFloat16(cbrt(float(x)));
+}
+
+constexpr GFloat16 fmax(GFloat16 x, GFloat16 y)
+{
+    using std::fmax;
+    return GFloat16(fmax(float(x), float(y)));
+}
+
+constexpr GFloat16 fmin(GFloat16 x, GFloat16 y)
+{
+    using std::fmin;
+    return GFloat16(fmin(float(x), float(y)));
+}
+
+constexpr GFloat16 hypot(GFloat16 x, GFloat16 y)
+{
+    using std::hypot;
+    return GFloat16(hypot(float(x), float(y)));
+}
+
+constexpr GFloat16 max(GFloat16 x, GFloat16 y)
+{
+    using std::max;
+    return GFloat16(max(float(x), float(y)));
+}
+
+constexpr GFloat16 min(GFloat16 x, GFloat16 y)
+{
+    using std::min;
+    return GFloat16(min(float(x), float(y)));
+}
+
+constexpr GFloat16 pow(GFloat16 x, GFloat16 y)
+{
+    using std::pow;
+    return GFloat16(pow(float(x), float(y)));
+}
+
+constexpr GFloat16 pow(GFloat16 x, int n)
+{
+    using std::pow;
+    return GFloat16(pow(float(x), n));
+}
+
+// Define some GDAL wrappers. Their C equivalents are defined in `cpl_port.h`.
+
+template <typename T> constexpr int CPLIsNan(T x)
+{
+    using std::isnan, ::isnan;
+    return isnan(x);
+}
+
+template <typename T> constexpr int CPLIsInf(T x)
+{
+    using std::isinf, ::isinf;
+    return isinf(x);
+}
+
+template <typename T> constexpr int CPLIsFinite(T x)
+{
+    using std::isfinite, ::isfinite;
+    return isfinite(x);
+}
 
 // std::numeric_limits does not work for _Float16, thus we define
 // GDALNumericLimits which does.
@@ -72,8 +501,7 @@ template <typename T> struct GDALNumericLimits : std::numeric_limits<T>
 {
 };
 
-#ifdef HAVE__FLOAT16
-template <> struct GDALNumericLimits<_Float16>
+template <> struct GDALNumericLimits<GFloat16>
 {
     static constexpr bool has_denorm = true;
     static constexpr bool has_infinity = true;
@@ -83,42 +511,43 @@ template <> struct GDALNumericLimits<_Float16>
 
     static constexpr int digits = 11;
 
-    static constexpr _Float16 epsilon()
+    static constexpr GFloat16 epsilon()
     {
-        return static_cast<_Float16>(6.103515625e-5);
+        // return GFloat16FromBits(0x1400);  // 0.000977
+        return GFloat16(0.000977f);
     }
 
-    static constexpr _Float16 min()
+    static constexpr GFloat16 min()
     {
-        return static_cast<_Float16>(6.103515625e-5);
+        // return GFloat16FromBits(0x0001);  // 6.0e-8
+        return GFloat16(6.0e-8f);
     }
 
-    static constexpr _Float16 lowest()
+    static constexpr GFloat16 lowest()
     {
-        return -65504;
+        // return GFloat16FromBits(0xfbff);  // -65504
+        return GFloat16(-65504.0f);
     }
 
-    static constexpr _Float16 max()
+    static constexpr GFloat16 max()
     {
-        return 65504;
+        // return GFloat16FromBits(0x7bff);  // +65504
+        return GFloat16(+65504.0f);
     }
 
-    static constexpr _Float16 infinity()
+    static constexpr GFloat16 infinity()
     {
-        return static_cast<_Float16>(std::numeric_limits<float>::infinity());
+        // return GFloat16FromBits(0x7c00);  // inf
+        return GFloat16(std::numeric_limits<float>::infinity());
     }
 
-    static constexpr _Float16 quiet_NaN()
+    static constexpr GFloat16 quiet_NaN()
     {
-        return static_cast<_Float16>(std::numeric_limits<float>::quiet_NaN());
+        // return GFloat16FromBits(0x7e00);  // nan
+        return GFloat16(std::numeric_limits<float>::quiet_NaN());
     }
 };
-#endif
 
-GUInt16 CPL_DLL CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned);
-
-GUInt16 CPL_DLL CPLConvertFloatToHalf(float fFloat32);
-float CPL_DLL CPLConvertHalfToFloat(GUInt16 nHalf);
 #endif
 
 #endif  // CPL_FLOAT_H_INCLUDED

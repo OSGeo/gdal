@@ -36,13 +36,11 @@ static inline double GetDstValue(double dfVal, double dfDstNoData,
     {
         return dfReplacementDstNodata;
     }
-#ifdef HAVE__FLOAT16
     else if (eIntendedDstDT == GDT_Float16 &&
-             static_cast<_Float16>(dfVal) == static_cast<_Float16>(dfDstNoData))
+             static_cast<GFloat16>(dfVal) == static_cast<GFloat16>(dfDstNoData))
     {
         return dfReplacementDstNodata;
     }
-#endif
     else if (eIntendedDstDT == GDT_Float32 &&
              static_cast<float>(dfVal) == static_cast<float>(dfDstNoData))
     {

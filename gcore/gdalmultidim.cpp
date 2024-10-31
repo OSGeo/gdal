@@ -1681,7 +1681,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
             case GDT_Float16:
 #ifdef HAVE__FLOAT16
                 str = CPLSPrintf("%.5g",
-                                 double(*static_cast<const _Float16 *>(pSrc)));
+                                 double(*static_cast<const GFloat16 *>(pSrc)));
 #else
 
                 str = CPLSPrintf(
@@ -1710,7 +1710,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
             case GDT_CFloat16:
             {
 #ifdef HAVE__FLOAT16
-                const _Float16 *src = static_cast<const _Float16 *>(pSrc);
+                const GFloat16 *src = static_cast<const GFloat16 *>(pSrc);
                 str = CPLSPrintf("%.5g+%.5gj", double(src[0]), double(src[1]));
 #else
                 const GUInt16 *src = static_cast<const GUInt16 *>(pSrc);
@@ -7150,7 +7150,7 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
         case GDT_Float16:
 #ifdef HAVE__FLOAT16
-            ReadInternal<_Float16>(count, bufferStride, bufferDataType,
+            ReadInternal<GFloat16>(count, bufferStride, bufferDataType,
                                    pDstBuffer, pTempBuffer, oTmpBufferDT,
                                    tmpBufferStrideVector);
 #else

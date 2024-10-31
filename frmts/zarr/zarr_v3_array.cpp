@@ -1435,15 +1435,13 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
                 return nullptr;
             }
-#ifdef HAVE__FLOAT16
             else if (oType.GetNumericDataType() == GDT_Float16)
             {
-                const _Float16 hfNoDataValue =
-                    static_cast<_Float16>(dfNoDataValue);
+                const GFloat16 hfNoDataValue =
+                    static_cast<GFloat16>(dfNoDataValue);
                 abyNoData.resize(sizeof(hfNoDataValue));
                 memcpy(&abyNoData[0], &hfNoDataValue, sizeof(hfNoDataValue));
             }
-#endif
             else if (oType.GetNumericDataType() == GDT_Float32)
             {
                 const float fNoDataValue = static_cast<float>(dfNoDataValue);
