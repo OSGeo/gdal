@@ -17,7 +17,6 @@
 
 #include <cstdint>
 #include <iostream>
-#include <limits>
 
 #include "gtest_include.h"
 
@@ -523,6 +522,144 @@ TEST_F(TestCopyWords, GDT_UInt64)
     FROM_R(GDT_UInt64, nVal, GDT_CFloat64, nVal);
 }
 
+TEST_F(TestCopyWords, GDT_Float16only)
+{
+    GDALDataType intype = GDT_Float16;
+    for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
+         outtype = (GDALDataType)(outtype + 1))
+    {
+        if (IS_FLOAT(outtype))
+        {
+            FROM_R_F(intype, 127.1, outtype, 127.1);
+            FROM_R_F(intype, -127.1, outtype, -127.1);
+        }
+        else
+        {
+            FROM_R_F(intype, 125.1, outtype, 125);
+            FROM_R_F(intype, 125.9, outtype, 126);
+
+            FROM_R_F(intype, 0.4, outtype, 0);
+            FROM_R_F(intype, 0.5, outtype,
+                     1); /* We could argue how to do this rounding */
+            FROM_R_F(intype, 0.6, outtype, 1);
+            FROM_R_F(intype, 126.5, outtype,
+                     127); /* We could argue how to do this rounding */
+
+            if (!IS_UNSIGNED(outtype))
+            {
+                FROM_R_F(intype, -125.9, outtype, -126);
+                FROM_R_F(intype, -127.1, outtype, -127);
+
+                FROM_R_F(intype, -0.4, outtype, 0);
+                FROM_R_F(intype, -0.5, outtype,
+                         -1); /* We could argue how to do this rounding */
+                FROM_R_F(intype, -0.6, outtype, -1);
+                FROM_R_F(intype, -127.5, outtype,
+                         -128); /* We could argue how to do this rounding */
+            }
+        }
+    }
+    FROM_R(intype, -30000, GDT_Byte, 0);
+    FROM_R(intype, -32768, GDT_Byte, 0);
+    FROM_R(intype, -1, GDT_Byte, 0);
+    FROM_R(intype, 256, GDT_Byte, 255);
+    FROM_R(intype, 30000, GDT_Byte, 255);
+    FROM_R(intype, -330000, GDT_Int16, -32768);
+    FROM_R(intype, -33000, GDT_Int16, -32768);
+    FROM_R(intype, 33000, GDT_Int16, 32767);
+    FROM_R(intype, -33000, GDT_UInt16, 0);
+    FROM_R(intype, -1, GDT_UInt16, 0);
+    FROM_R(intype, 60000, GDT_UInt16, 60000);
+    FROM_R(intype, -33000, GDT_Int32, -32992);
+    FROM_R(intype, 33000, GDT_Int32, 32992);
+    FROM_R(intype, -1, GDT_UInt32, 0);
+    FROM_R(intype, 60000, GDT_UInt32, 60000U);
+    FROM_R(intype, 33000, GDT_Float32, 32992);
+    FROM_R(intype, -33000, GDT_Float32, -32992);
+    FROM_R(intype, 33000, GDT_Float64, 32992);
+    FROM_R(intype, -33000, GDT_Float64, -32992);
+    FROM_R(intype, -33000, GDT_CInt16, -32768);
+    FROM_R(intype, 33000, GDT_CInt16, 32767);
+    FROM_R(intype, -33000, GDT_CInt32, -32992);
+    FROM_R(intype, 33000, GDT_CInt32, 32992);
+    FROM_R(intype, 33000, GDT_CFloat32, 32992);
+    FROM_R(intype, -33000, GDT_CFloat32, -32992);
+    FROM_R(intype, 33000, GDT_CFloat64, 32992);
+    FROM_R(intype, -33000, GDT_CFloat64, -32992);
+
+    // Float16 to Int64
+    {
+        GFloat16 in_value = GDALNumericLimits<GFloat16>::quiet_NaN();
+        int64_t out_value = 0;
+        GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_Int64, 0, 1);
+        EXPECT_EQ(out_value, 0);
+    }
+
+    {
+        GFloat16 in_value = -GDALNumericLimits<GFloat16>::infinity();
+        int64_t out_value = 0;
+        GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_Int64, 0, 1);
+        EXPECT_EQ(out_value, INT64_MIN);
+    }
+
+    {
+        GFloat16 in_value = -GDALNumericLimits<GFloat16>::max();
+        int64_t out_value = 0;
+        GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_Int64, 0, 1);
+        EXPECT_EQ(out_value, -65504);
+    }
+
+    {
+        GFloat16 in_value = GDALNumericLimits<GFloat16>::max();
+        int64_t out_value = 0;
+        GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_Int64, 0, 1);
+        EXPECT_EQ(out_value, 65504);
+    }
+
+    {
+        GFloat16 in_value = GDALNumericLimits<GFloat16>::infinity();
+        int64_t out_value = 0;
+        GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_Int64, 0, 1);
+        EXPECT_EQ(out_value, INT64_MAX);
+    }
+
+    // Float16 to UInt64
+    {
+        GFloat16 in_value = GDALNumericLimits<GFloat16>::quiet_NaN();
+        uint64_t out_value = 0;
+        GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_UInt64, 0, 1);
+        EXPECT_EQ(out_value, 0);
+    }
+
+    {
+        GFloat16 in_value = -GDALNumericLimits<GFloat16>::infinity();
+        uint64_t out_value = 0;
+        GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_UInt64, 0, 1);
+        EXPECT_EQ(out_value, 0);
+    }
+
+    {
+        GFloat16 in_value = -GDALNumericLimits<GFloat16>::max();
+        uint64_t out_value = 0;
+        GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_UInt64, 0, 1);
+        EXPECT_EQ(out_value, 0);
+    }
+
+    {
+        GFloat16 in_value = GDALNumericLimits<GFloat16>::max();
+        uint64_t out_value = 0;
+        GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_UInt64, 0, 1);
+        EXPECT_EQ(out_value, 65504);
+    }
+
+    {
+        GFloat16 in_value = GDALNumericLimits<GFloat16>::infinity();
+        uint64_t out_value = 0;
+        GDALCopyWords(&in_value, GDT_Float16, 0, &out_value, GDT_UInt64, 0, 1);
+        EXPECT_EQ(out_value, UINT64_MAX);
+    }
+}
+
 TEST_F(TestCopyWords, GDT_Float32and64)
 {
     /* GDT_Float32 and GDT_Float64 */
@@ -597,35 +734,35 @@ TEST_F(TestCopyWords, GDT_Float32and64)
 
     // Float32 to Int64
     {
-        float in_value = std::numeric_limits<float>::quiet_NaN();
+        float in_value = GDALNumericLimits<float>::quiet_NaN();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        float in_value = -std::numeric_limits<float>::infinity();
+        float in_value = -GDALNumericLimits<float>::infinity();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MIN);
     }
 
     {
-        float in_value = -std::numeric_limits<float>::max();
+        float in_value = -GDALNumericLimits<float>::max();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MIN);
     }
 
     {
-        float in_value = std::numeric_limits<float>::max();
+        float in_value = GDALNumericLimits<float>::max();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MAX);
     }
 
     {
-        float in_value = std::numeric_limits<float>::infinity();
+        float in_value = GDALNumericLimits<float>::infinity();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MAX);
@@ -633,35 +770,35 @@ TEST_F(TestCopyWords, GDT_Float32and64)
 
     // Float64 to Int64
     {
-        double in_value = std::numeric_limits<double>::quiet_NaN();
+        double in_value = GDALNumericLimits<double>::quiet_NaN();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        double in_value = -std::numeric_limits<double>::infinity();
+        double in_value = -GDALNumericLimits<double>::infinity();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MIN);
     }
 
     {
-        double in_value = -std::numeric_limits<double>::max();
+        double in_value = -GDALNumericLimits<double>::max();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MIN);
     }
 
     {
-        double in_value = std::numeric_limits<double>::max();
+        double in_value = GDALNumericLimits<double>::max();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MAX);
     }
 
     {
-        double in_value = std::numeric_limits<double>::infinity();
+        double in_value = GDALNumericLimits<double>::infinity();
         int64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_Int64, 0, 1);
         EXPECT_EQ(out_value, INT64_MAX);
@@ -669,35 +806,35 @@ TEST_F(TestCopyWords, GDT_Float32and64)
 
     // Float32 to UInt64
     {
-        float in_value = std::numeric_limits<float>::quiet_NaN();
+        float in_value = GDALNumericLimits<float>::quiet_NaN();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        float in_value = -std::numeric_limits<float>::infinity();
+        float in_value = -GDALNumericLimits<float>::infinity();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        float in_value = -std::numeric_limits<float>::max();
+        float in_value = -GDALNumericLimits<float>::max();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        float in_value = std::numeric_limits<float>::max();
+        float in_value = GDALNumericLimits<float>::max();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, UINT64_MAX);
     }
 
     {
-        float in_value = std::numeric_limits<float>::infinity();
+        float in_value = GDALNumericLimits<float>::infinity();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float32, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, UINT64_MAX);
@@ -705,35 +842,35 @@ TEST_F(TestCopyWords, GDT_Float32and64)
 
     // Float64 to UInt64
     {
-        double in_value = -std::numeric_limits<double>::quiet_NaN();
+        double in_value = -GDALNumericLimits<double>::quiet_NaN();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        double in_value = -std::numeric_limits<double>::infinity();
+        double in_value = -GDALNumericLimits<double>::infinity();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        double in_value = -std::numeric_limits<double>::max();
+        double in_value = -GDALNumericLimits<double>::max();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, 0);
     }
 
     {
-        double in_value = std::numeric_limits<double>::max();
+        double in_value = GDALNumericLimits<double>::max();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, UINT64_MAX);
     }
 
     {
-        double in_value = std::numeric_limits<double>::infinity();
+        double in_value = GDALNumericLimits<double>::infinity();
         uint64_t out_value = 0;
         GDALCopyWords(&in_value, GDT_Float64, 0, &out_value, GDT_UInt64, 0, 1);
         EXPECT_EQ(out_value, UINT64_MAX);
@@ -856,6 +993,49 @@ TEST_F(TestCopyWords, GDT_CFloat32and64)
         FROM_C(intype, CST_5000000000, -CST_5000000000, GDT_CFloat64,
                CST_5000000000, -CST_5000000000);
     }
+}
+
+TEST_F(TestCopyWords, GDT_CFloat16only)
+{
+    GDALDataType intype = GDT_CFloat16;
+    for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
+         outtype = (GDALDataType)(outtype + 1))
+    {
+        if (IS_FLOAT(outtype))
+        {
+            FROM_C_F(intype, 127.1, 127.9, outtype, 127.1, 127.9);
+            FROM_C_F(intype, -127.1, -127.9, outtype, -127.1, -127.9);
+        }
+        else
+        {
+            FROM_C_F(intype, 126.1, 150.9, outtype, 126, 151);
+            FROM_C_F(intype, 126.9, 150.1, outtype, 127, 150);
+            if (!IS_UNSIGNED(outtype))
+            {
+                FROM_C_F(intype, -125.9, -127.1, outtype, -126, -127);
+            }
+        }
+    }
+    FROM_C(intype, -1, 256, GDT_Byte, 0, 0);
+    FROM_C(intype, 256, -1, GDT_Byte, 255, 0);
+    FROM_C(intype, -33000, 33000, GDT_Int16, -32768, 0);
+    FROM_C(intype, 33000, -33000, GDT_Int16, 32767, 0);
+    FROM_C(intype, -1, 66000, GDT_UInt16, 0, 0);
+    FROM_C(intype, 66000, -1, GDT_UInt16, 65535, 0);
+    FROM_C(intype, -33000, -33000, GDT_Int32, -32992, 0);
+    FROM_C(intype, 33000, 33000, GDT_Int32, 32992, 0);
+    FROM_C(intype, -1, 33000, GDT_UInt32, 0, 0);
+    FROM_C(intype, 33000, -1, GDT_UInt32, 32992, 0);
+    FROM_C(intype, 33000, -1, GDT_Float32, 32992, 0);
+    FROM_C(intype, 33000, -1, GDT_Float64, 32992, 0);
+    FROM_C(intype, -33000, -1, GDT_Float32, -32992, 0);
+    FROM_C(intype, -33000, -1, GDT_Float64, -32992, 0);
+    FROM_C(intype, -33000, 33000, GDT_CInt16, -32768, 32767);
+    FROM_C(intype, 33000, -33000, GDT_CInt16, 32767, -32768);
+    FROM_C(intype, -33000, -33000, GDT_CInt32, -32992, -32992);
+    FROM_C(intype, 33000, 33000, GDT_CInt32, 32992, 32992);
+    FROM_C(intype, 33000, -33000, GDT_CFloat32, 32992, -32992);
+    FROM_C(intype, 33000, -33000, GDT_CFloat64, 32992, -32992);
 }
 
 template <class Tin, class Tout>

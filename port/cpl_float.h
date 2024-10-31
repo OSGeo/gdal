@@ -90,9 +90,9 @@ struct GFloat16
         return fValue;
     }
 
-    static constexpr compute reprToCompute(repr xValue)
+    static constexpr compute reprToCompute(repr rValue)
     {
-        return xValue;
+        return rValue;
     }
 
     template <typename T> static constexpr repr toRepr(T fValue)
@@ -100,9 +100,9 @@ struct GFloat16
         return static_cast<repr>(fValue);
     }
 
-    template <typename T> static constexpr T fromRepr(repr xValue)
+    template <typename T> static constexpr T fromRepr(repr rValue)
     {
-        return static_cast<T>(xValue);
+        return static_cast<T>(rValue);
     }
 
 #else
@@ -113,32 +113,46 @@ struct GFloat16
     // How we compute on `GFloat16` values
     using compute = float;
 
+    static constexpr unsigned float2unsigned(float f)
+    {
+        // return __builtin_bit_cast(unsigned, f);
+
+        unsigned u{};
+        std::memcpy(&u, &f, 4);
+        return u;
+    }
+
+    static constexpr float unsigned2float(unsigned u)
+    {
+        // return __builtin_bit_cast(float, u);
+
+        float f{};
+        std::memcpy(&f, &u, 4);
+        return f;
+    }
+
     // Copied from cpl_float.cpp so that we can inline for performance
     static constexpr std::uint16_t computeToRepr(float fFloat32)
     {
-        GUInt32 iFloat32 = 0;
-        std::memcpy(&iFloat32, &fFloat32, 4);
+        std::uint32_t iFloat32 = float2unsigned(fFloat32);
 
-        GUInt32 iSign = (iFloat32 >> 31) & 0x00000001;
-        GUInt32 iExponent = (iFloat32 >> 23) & 0x000000ff;
-        GUInt32 iMantissa = iFloat32 & 0x007fffff;
+        std::uint32_t iSign = (iFloat32 >> 31) & 0x00000001;
+        std::uint32_t iExponent = (iFloat32 >> 23) & 0x000000ff;
+        std::uint32_t iMantissa = iFloat32 & 0x007fffff;
 
         if (iExponent == 255)
         {
             if (iMantissa == 0)
             {
                 // Positive or negative infinity.
-                return static_cast<GUInt16>((iSign << 15) | 0x7C00);
+                return static_cast<std::int16_t>((iSign << 15) | 0x7C00);
             }
-            else
-            {
-                // NaN -- preserve sign and significand bits.
-                if (iMantissa >> 13)
-                    return static_cast<GUInt16>((iSign << 15) | 0x7C00 |
-                                                (iMantissa >> 13));
 
-                return static_cast<GUInt16>((iSign << 15) | 0x7E00);
-            }
+            // NaN -- preserve sign and significand bits.
+            if (iMantissa >> 13)
+                return static_cast<std::int16_t>((iSign << 15) | 0x7C00 |
+                                                 (iMantissa >> 13));
+            return static_cast<std::int16_t>((iSign << 15) | 0x7E00);
         }
 
         if (iExponent <= 127 - 15)
@@ -146,16 +160,18 @@ struct GFloat16
             // Zero, float32 denormalized number or float32 too small normalized
             // number
             if (13 + 1 + 127 - 15 - iExponent >= 32)
-                return static_cast<GUInt16>(iSign << 15);
+                return static_cast<std::int16_t>(iSign << 15);
 
             // Return a denormalized number
-            return static_cast<GUInt16>(
+            return static_cast<std::int16_t>(
                 (iSign << 15) |
                 ((iMantissa | 0x00800000) >> (13 + 1 + 127 - 15 - iExponent)));
         }
+
         if (iExponent - (127 - 15) >= 31)
         {
-            return static_cast<GUInt16>((iSign << 15) | 0x7C00);  // Infinity
+            return static_cast<std::int16_t>((iSign << 15) |
+                                             0x7C00);  // Infinity
         }
 
         // Normalized number.
@@ -164,49 +180,47 @@ struct GFloat16
 
         // Assemble sign, exponent and mantissa.
         // coverity[overflow_sink]
-        return static_cast<GUInt16>((iSign << 15) | (iExponent << 10) |
-                                    iMantissa);
+        return static_cast<std::int16_t>((iSign << 15) | (iExponent << 10) |
+                                         iMantissa);
     }
 
     // Copied from cpl_float.cpp so that we can inline for performance
     static constexpr float reprToCompute(std::uint16_t iHalf)
     {
-        GUInt32 iSign = (iHalf >> 15) & 0x00000001;
+        std::uint32_t iSign = (iHalf >> 15) & 0x00000001;
         int iExponent = (iHalf >> 10) & 0x0000001f;
-        GUInt32 iMantissa = iHalf & 0x000003ff;
+        std::uint32_t iMantissa = iHalf & 0x000003ff;
+
+        if (iExponent == 31)
+        {
+            if (iMantissa == 0)
+            {
+                // Positive or negative infinity.
+                return unsigned2float((iSign << 31) | 0x7f800000);
+            }
+
+            // NaN -- preserve sign and significand bits.
+            return unsigned2float((iSign << 31) | 0x7f800000 |
+                                  (iMantissa << 13));
+        }
 
         if (iExponent == 0)
         {
             if (iMantissa == 0)
             {
                 // Plus or minus zero.
-                return iSign << 31;
+                return unsigned2float(iSign << 31);
             }
-            else
-            {
-                // Denormalized number -- renormalize it.
-                while (!(iMantissa & 0x00000400))
-                {
-                    iMantissa <<= 1;
-                    iExponent -= 1;
-                }
 
-                iExponent += 1;
-                iMantissa &= ~0x00000400U;
-            }
-        }
-        else if (iExponent == 31)
-        {
-            if (iMantissa == 0)
+            // Denormalized number -- renormalize it.
+            while (!(iMantissa & 0x00000400))
             {
-                // Positive or negative infinity.
-                return (iSign << 31) | 0x7f800000;
+                iMantissa <<= 1;
+                iExponent -= 1;
             }
-            else
-            {
-                // NaN -- preserve sign and significand bits.
-                return (iSign << 31) | 0x7f800000 | (iMantissa << 13);
-            }
+
+            iExponent += 1;
+            iMantissa &= ~0x00000400U;
         }
 
         // Normalized number.
@@ -215,12 +229,9 @@ struct GFloat16
 
         // Assemble sign, exponent and mantissa.
         /* coverity[overflow_sink] */
-        GUInt32 iFloat32 =
-            (iSign << 31) | (static_cast<GUInt32>(iExponent) << 23) | iMantissa;
-
-        float fFloat32 = 0;
-        std::memcpy(&fFloat32, &iFloat32, 4);
-        return fFloat32;
+        return unsigned2float((iSign << 31) |
+                              (static_cast<std::uint32_t>(iExponent) << 23) |
+                              iMantissa);
     }
 
     template <typename T> static constexpr repr toRepr(T fValue)
@@ -228,17 +239,22 @@ struct GFloat16
         return computeToRepr(static_cast<compute>(fValue));
     }
 
-    template <typename T> static constexpr T fromRepr(repr xValue)
+    template <typename T> static constexpr T fromRepr(repr rValue)
     {
-        return static_cast<T>(reprToCompute(xValue));
+        return static_cast<T>(reprToCompute(rValue));
     }
 
 #endif
 
   private:
-    repr xValue;
+    repr rValue;
 
   public:
+    constexpr compute get() const
+    {
+        return reprToCompute(rValue);
+    }
+
     GFloat16() = default;
     GFloat16(const GFloat16 &) = default;
     GFloat16(GFloat16 &&) = default;
@@ -249,26 +265,26 @@ struct GFloat16
 
 #ifdef HAVE__FLOAT16
     // cppcheck-suppress missingExplicitConstructor
-    constexpr GFloat16(_Float16 hfValue) : xValue(hfValue)
+    constexpr GFloat16(_Float16 hfValue) : rValue(hfValue)
     {
     }
 
     constexpr operator _Float16() const
     {
-        return xValue;
+        return rValue;
     }
 #endif
 
 #define GDAL_DEFINE_CONVERSION(TYPE)                                           \
                                                                                \
     /* cppcheck-suppress missingExplicitConstructor */                         \
-    constexpr GFloat16(TYPE fValue) : xValue(toRepr(fValue))                   \
+    constexpr GFloat16(TYPE fValue) : rValue(toRepr(fValue))                   \
     {                                                                          \
     }                                                                          \
                                                                                \
     constexpr operator TYPE() const                                            \
     {                                                                          \
-        return fromRepr<TYPE>(xValue);                                         \
+        return fromRepr<TYPE>(rValue);                                         \
     }
 
     GDAL_DEFINE_CONVERSION(float)
@@ -291,49 +307,49 @@ struct GFloat16
 
     friend constexpr GFloat16 operator+(GFloat16 x)
     {
-        return +reprToCompute(x);
+        return +x.get();
     }
 
     friend constexpr GFloat16 operator-(GFloat16 x)
     {
-        return -reprToCompute(x);
+        return -x.get();
     }
 
 #define GDAL_DEFINE_ARITHOP(OP)                                                \
                                                                                \
     friend constexpr GFloat16 operator OP(GFloat16 x, GFloat16 y)              \
     {                                                                          \
-        return reprToCompute(x) OP reprToCompute(y);                           \
+        return x.get() OP y.get();                                             \
     }                                                                          \
                                                                                \
     friend constexpr double operator OP(double x, GFloat16 y)                  \
     {                                                                          \
-        return x OP reprToCompute(y);                                          \
+        return x OP y.get();                                                   \
     }                                                                          \
                                                                                \
     friend constexpr float operator OP(float x, GFloat16 y)                    \
     {                                                                          \
-        return x OP reprToCompute(y);                                          \
+        return x OP y.get();                                                   \
     }                                                                          \
                                                                                \
     friend constexpr GFloat16 operator OP(int x, GFloat16 y)                   \
     {                                                                          \
-        return x OP reprToCompute(y);                                          \
+        return x OP y.get();                                                   \
     }                                                                          \
                                                                                \
     friend constexpr double operator OP(GFloat16 x, double y)                  \
     {                                                                          \
-        return reprToCompute(x) OP y;                                          \
+        return x.get() OP y;                                                   \
     }                                                                          \
                                                                                \
     friend constexpr float operator OP(GFloat16 x, float y)                    \
     {                                                                          \
-        return reprToCompute(x) OP y;                                          \
+        return x.get() OP y;                                                   \
     }                                                                          \
                                                                                \
     friend constexpr GFloat16 operator OP(GFloat16 x, int y)                   \
     {                                                                          \
-        return reprToCompute(x) OP y;                                          \
+        return x.get() OP y;                                                   \
     }
 
     GDAL_DEFINE_ARITHOP(+)
@@ -349,27 +365,37 @@ struct GFloat16
                                                                                \
     friend constexpr bool operator OP(GFloat16 x, GFloat16 y)                  \
     {                                                                          \
-        return reprToCompute(x) OP reprToCompute(y);                           \
+        return x.get() OP y.get();                                             \
+    }                                                                          \
+                                                                               \
+    friend constexpr bool operator OP(float x, GFloat16 y)                     \
+    {                                                                          \
+        return x OP y.get();                                                   \
     }                                                                          \
                                                                                \
     friend constexpr bool operator OP(double x, GFloat16 y)                    \
     {                                                                          \
-        return x OP reprToCompute(y);                                          \
+        return x OP y.get();                                                   \
     }                                                                          \
                                                                                \
     friend constexpr bool operator OP(int x, GFloat16 y)                       \
     {                                                                          \
-        return x OP reprToCompute(y);                                          \
+        return x OP y.get();                                                   \
+    }                                                                          \
+                                                                               \
+    friend constexpr bool operator OP(GFloat16 x, float y)                     \
+    {                                                                          \
+        return x.get() OP y;                                                   \
     }                                                                          \
                                                                                \
     friend constexpr bool operator OP(GFloat16 x, double y)                    \
     {                                                                          \
-        return reprToCompute(x) OP y;                                          \
+        return x.get() OP y;                                                   \
     }                                                                          \
                                                                                \
     friend constexpr bool operator OP(GFloat16 x, int y)                       \
     {                                                                          \
-        return reprToCompute(x) OP y;                                          \
+        return x.get() OP y;                                                   \
     }
 
     GDAL_DEFINE_COMPARISON(==)

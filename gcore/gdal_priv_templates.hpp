@@ -51,7 +51,7 @@ inline void GDALGetDataLimits(Tin &tMaxValue, Tin &tMinValue)
         {
             // Tout is smaller than Tin, so we need to clamp values in input
             // to the range of Tout's min/max values
-            if (GDALNumericLimits<Tin>::is_signed)
+            if constexpr (GDALNumericLimits<Tin>::is_signed)
             {
                 tMinValue = static_cast<Tin>(GDALNumericLimits<Tout>::lowest());
             }
@@ -213,6 +213,8 @@ template <> inline bool GDALIsValueExactAs<double>(double)
 /*                          GDALCopyWord()                              */
 /************************************************************************/
 
+// Integer input and output: clamp the input
+
 template <class Tin, class Tout> struct sGDALCopyWord
 {
     static inline void f(const Tin tValueIn, Tout &tValueOut)
@@ -221,6 +223,16 @@ template <class Tin, class Tout> struct sGDALCopyWord
         GDALGetDataLimits<Tin, Tout>(tMaxVal, tMinVal);
         tValueOut =
             static_cast<Tout>(GDALClampValue(tValueIn, tMaxVal, tMinVal));
+    }
+};
+
+// Integer input and floating point output: simply convert
+
+template <class Tin> struct sGDALCopyWord<Tin, GFloat16>
+{
+    static inline void f(const Tin tValueIn, GFloat16 &hfValueOut)
+    {
+        hfValueOut = static_cast<GFloat16>(tValueIn);
     }
 };
 
@@ -240,11 +252,13 @@ template <class Tin> struct sGDALCopyWord<Tin, double>
     }
 };
 
-template <> struct sGDALCopyWord<double, double>
+// Floating point input and output, converting between indentical types: simply copy
+
+template <> struct sGDALCopyWord<GFloat16, GFloat16>
 {
-    static inline void f(const double dfValueIn, double &dfValueOut)
+    static inline void f(const GFloat16 hfValueIn, GFloat16 &hfValueOut)
     {
-        dfValueOut = dfValueIn;
+        hfValueOut = hfValueIn;
     }
 };
 
@@ -256,11 +270,77 @@ template <> struct sGDALCopyWord<float, float>
     }
 };
 
+template <> struct sGDALCopyWord<double, double>
+{
+    static inline void f(const double dfValueIn, double &dfValueOut)
+    {
+        dfValueOut = dfValueIn;
+    }
+};
+
+// Floating point input and output, converting to a larger type: use implicit conversion
+
+template <> struct sGDALCopyWord<GFloat16, float>
+{
+    static inline void f(const GFloat16 hfValueIn, float &dfValueOut)
+    {
+        dfValueOut = hfValueIn;
+    }
+};
+
+template <> struct sGDALCopyWord<GFloat16, double>
+{
+    static inline void f(const GFloat16 hfValueIn, double &dfValueOut)
+    {
+        dfValueOut = hfValueIn;
+    }
+};
+
 template <> struct sGDALCopyWord<float, double>
 {
     static inline void f(const float fValueIn, double &dfValueOut)
     {
         dfValueOut = fValueIn;
+    }
+};
+
+// Floating point input and out, converting to a smaller type: ensure overflow results in infinity
+
+template <> struct sGDALCopyWord<float, GFloat16>
+{
+    static inline void f(const float fValueIn, GFloat16 &hfValueOut)
+    {
+        if (fValueIn > GDALNumericLimits<GFloat16>::max())
+        {
+            hfValueOut = GDALNumericLimits<GFloat16>::infinity();
+            return;
+        }
+        if (fValueIn < -GDALNumericLimits<GFloat16>::max())
+        {
+            hfValueOut = -GDALNumericLimits<GFloat16>::infinity();
+            return;
+        }
+
+        hfValueOut = static_cast<GFloat16>(fValueIn);
+    }
+};
+
+template <> struct sGDALCopyWord<double, GFloat16>
+{
+    static inline void f(const double dfValueIn, GFloat16 &hfValueOut)
+    {
+        if (dfValueIn > GDALNumericLimits<GFloat16>::max())
+        {
+            hfValueOut = GDALNumericLimits<GFloat16>::infinity();
+            return;
+        }
+        if (dfValueIn < -GDALNumericLimits<GFloat16>::max())
+        {
+            hfValueOut = -GDALNumericLimits<GFloat16>::infinity();
+            return;
+        }
+
+        hfValueOut = static_cast<GFloat16>(dfValueIn);
     }
 };
 
@@ -283,6 +363,24 @@ template <> struct sGDALCopyWord<double, float>
     }
 };
 
+// Floating point input to a small unsigned integer type: nan becomes zero, otherwise round and clamp
+
+template <class Tout> struct sGDALCopyWord<GFloat16, Tout>
+{
+    static inline void f(const GFloat16 hfValueIn, Tout &tValueOut)
+    {
+        if (CPLIsNan(hfValueIn))
+        {
+            tValueOut = 0;
+            return;
+        }
+        GFloat16 hfMaxVal, hfMinVal;
+        GDALGetDataLimits<GFloat16, Tout>(hfMaxVal, hfMinVal);
+        tValueOut = static_cast<Tout>(
+            GDALClampValue(hfValueIn + GFloat16(0.5f), hfMaxVal, hfMinVal));
+    }
+};
+
 template <class Tout> struct sGDALCopyWord<float, Tout>
 {
     static inline void f(const float fValueIn, Tout &tValueOut)
@@ -296,40 +394,6 @@ template <class Tout> struct sGDALCopyWord<float, Tout>
         GDALGetDataLimits<float, Tout>(fMaxVal, fMinVal);
         tValueOut = static_cast<Tout>(
             GDALClampValue(fValueIn + 0.5f, fMaxVal, fMinVal));
-    }
-};
-
-template <> struct sGDALCopyWord<float, short>
-{
-    static inline void f(const float fValueIn, short &nValueOut)
-    {
-        if (CPLIsNan(fValueIn))
-        {
-            nValueOut = 0;
-            return;
-        }
-        float fMaxVal, fMinVal;
-        GDALGetDataLimits<float, short>(fMaxVal, fMinVal);
-        float fValue = fValueIn >= 0.0f ? fValueIn + 0.5f : fValueIn - 0.5f;
-        nValueOut =
-            static_cast<short>(GDALClampValue(fValue, fMaxVal, fMinVal));
-    }
-};
-
-template <> struct sGDALCopyWord<float, signed char>
-{
-    static inline void f(const float fValueIn, signed char &nValueOut)
-    {
-        if (CPLIsNan(fValueIn))
-        {
-            nValueOut = 0;
-            return;
-        }
-        float fMaxVal, fMinVal;
-        GDALGetDataLimits<float, signed char>(fMaxVal, fMinVal);
-        float fValue = fValueIn >= 0.0f ? fValueIn + 0.5f : fValueIn - 0.5f;
-        nValueOut =
-            static_cast<signed char>(GDALClampValue(fValue, fMaxVal, fMinVal));
     }
 };
 
@@ -349,45 +413,64 @@ template <class Tout> struct sGDALCopyWord<double, Tout>
     }
 };
 
-template <> struct sGDALCopyWord<double, int>
-{
-    static inline void f(const double dfValueIn, int &nValueOut)
-    {
-        if (CPLIsNan(dfValueIn))
-        {
-            nValueOut = 0;
-            return;
-        }
-        double dfMaxVal, dfMinVal;
-        GDALGetDataLimits<double, int>(dfMaxVal, dfMinVal);
-        double dfValue = dfValueIn >= 0.0 ? dfValueIn + 0.5 : dfValueIn - 0.5;
-        nValueOut =
-            static_cast<int>(GDALClampValue(dfValue, dfMaxVal, dfMinVal));
-    }
-};
+// Floating point input to a large unsigned integer type: nan becomes zero, otherwise round and clamp.
+// Avoid roundoff while clamping.
 
-template <> struct sGDALCopyWord<double, std::int64_t>
+template <> struct sGDALCopyWord<GFloat16, std::uint64_t>
 {
-    static inline void f(const double dfValueIn, std::int64_t &nValueOut)
+    static inline void f(const GFloat16 hfValueIn, std::uint64_t &nValueOut)
     {
-        if (CPLIsNan(dfValueIn))
+        if (!(hfValueIn > 0))
         {
             nValueOut = 0;
         }
-        else if (dfValueIn >=
-                 static_cast<double>(GDALNumericLimits<std::int64_t>::max()))
+        else if (CPLIsInf(hfValueIn))
         {
-            nValueOut = GDALNumericLimits<std::int64_t>::max();
-        }
-        else if (dfValueIn <=
-                 static_cast<double>(GDALNumericLimits<std::int64_t>::min()))
-        {
-            nValueOut = GDALNumericLimits<std::int64_t>::min();
+            nValueOut = GDALNumericLimits<std::uint64_t>::max();
         }
         else
         {
-            nValueOut = static_cast<std::int64_t>(
-                dfValueIn > 0.0f ? dfValueIn + 0.5f : dfValueIn - 0.5f);
+            nValueOut = static_cast<std::uint64_t>(hfValueIn + GFloat16(0.5f));
+        }
+    }
+};
+
+template <> struct sGDALCopyWord<float, unsigned int>
+{
+    static inline void f(const float fValueIn, unsigned int &nValueOut)
+    {
+        if (!(fValueIn > 0))
+        {
+            nValueOut = 0;
+        }
+        else if (fValueIn >=
+                 static_cast<float>(GDALNumericLimits<unsigned int>::max()))
+        {
+            nValueOut = GDALNumericLimits<unsigned int>::max();
+        }
+        else
+        {
+            nValueOut = static_cast<unsigned int>(fValueIn + 0.5f);
+        }
+    }
+};
+
+template <> struct sGDALCopyWord<float, std::uint64_t>
+{
+    static inline void f(const float fValueIn, std::uint64_t &nValueOut)
+    {
+        if (!(fValueIn > 0))
+        {
+            nValueOut = 0;
+        }
+        else if (fValueIn >=
+                 static_cast<float>(GDALNumericLimits<std::uint64_t>::max()))
+        {
+            nValueOut = GDALNumericLimits<std::uint64_t>::max();
+        }
+        else
+        {
+            nValueOut = static_cast<std::uint64_t>(fValueIn + 0.5f);
         }
     }
 };
@@ -412,20 +495,101 @@ template <> struct sGDALCopyWord<double, std::uint64_t>
     }
 };
 
-template <> struct sGDALCopyWord<double, short>
+// Floating point input to a very large unsigned integer type: nan becomes zero, otherwise round and clamp.
+// Avoid infinity while clamping when the maximum integer is too large for the floating-point type.
+// Avoid roundoff while clamping.
+
+template <> struct sGDALCopyWord<GFloat16, unsigned short>
 {
-    static inline void f(const double dfValueIn, short &nValueOut)
+    static inline void f(const GFloat16 hfValueIn, unsigned short &nValueOut)
     {
-        if (CPLIsNan(dfValueIn))
+        if (!(hfValueIn > 0))
+        {
+            nValueOut = 0;
+        }
+        else if (CPLIsInf(hfValueIn))
+        {
+            nValueOut = GDALNumericLimits<unsigned short>::max();
+        }
+        else
+        {
+            nValueOut = static_cast<unsigned short>(hfValueIn + GFloat16(0.5f));
+        }
+    }
+};
+
+template <> struct sGDALCopyWord<GFloat16, unsigned int>
+{
+    static inline void f(const GFloat16 hfValueIn, unsigned int &nValueOut)
+    {
+        if (!(hfValueIn > 0))
+        {
+            nValueOut = 0;
+        }
+        else if (CPLIsInf(hfValueIn))
+        {
+            nValueOut = GDALNumericLimits<unsigned int>::max();
+        }
+        else
+        {
+            nValueOut = static_cast<unsigned int>(hfValueIn + GFloat16(0.5f));
+        }
+    }
+};
+
+// Floating point input to a small signed integer type: nan becomes zero, otherwise round and clamp.
+// Rounding for signed integers is different than for the unsigned integers above.
+
+template <> struct sGDALCopyWord<GFloat16, signed char>
+{
+    static inline void f(const GFloat16 hfValueIn, signed char &nValueOut)
+    {
+        if (CPLIsNan(hfValueIn))
         {
             nValueOut = 0;
             return;
         }
-        double dfMaxVal, dfMinVal;
-        GDALGetDataLimits<double, short>(dfMaxVal, dfMinVal);
-        double dfValue = dfValueIn > 0.0 ? dfValueIn + 0.5 : dfValueIn - 0.5;
+        GFloat16 hfMaxVal, hfMinVal;
+        GDALGetDataLimits<GFloat16, signed char>(hfMaxVal, hfMinVal);
+        GFloat16 hfValue = hfValueIn >= GFloat16(0.0f)
+                               ? hfValueIn + GFloat16(0.5f)
+                               : hfValueIn - GFloat16(0.5f);
+        nValueOut = static_cast<signed char>(
+            GDALClampValue(hfValue, hfMaxVal, hfMinVal));
+    }
+};
+
+template <> struct sGDALCopyWord<float, signed char>
+{
+    static inline void f(const float fValueIn, signed char &nValueOut)
+    {
+        if (CPLIsNan(fValueIn))
+        {
+            nValueOut = 0;
+            return;
+        }
+        float fMaxVal, fMinVal;
+        GDALGetDataLimits<float, signed char>(fMaxVal, fMinVal);
+        float fValue = fValueIn >= 0.0f ? fValueIn + 0.5f : fValueIn - 0.5f;
         nValueOut =
-            static_cast<short>(GDALClampValue(dfValue, dfMaxVal, dfMinVal));
+            static_cast<signed char>(GDALClampValue(fValue, fMaxVal, fMinVal));
+    }
+};
+
+template <> struct sGDALCopyWord<float, short>
+{
+    static inline void f(const float fValueIn, short &nValueOut)
+    {
+        if (CPLIsNan(fValueIn))
+        {
+            nValueOut = 0;
+            return;
+        }
+        float fMaxVal, fMinVal;
+        GDALGetDataLimits<float, short>(fMaxVal, fMinVal);
+        float fValue = fValueIn >= 0.0f ? fValueIn + 0.5f : fValueIn - 0.5f;
+        nValueOut =
+            static_cast<short>(GDALClampValue(fValue, fMaxVal, fMinVal));
     }
 };
 
@@ -446,8 +610,71 @@ template <> struct sGDALCopyWord<double, signed char>
     }
 };
 
-// Roundoff occurs for Float32 -> int32 for max/min. Overload GDALCopyWord
-// specifically for this case.
+template <> struct sGDALCopyWord<double, short>
+{
+    static inline void f(const double dfValueIn, short &nValueOut)
+    {
+        if (CPLIsNan(dfValueIn))
+        {
+            nValueOut = 0;
+            return;
+        }
+        double dfMaxVal, dfMinVal;
+        GDALGetDataLimits<double, short>(dfMaxVal, dfMinVal);
+        double dfValue = dfValueIn > 0.0 ? dfValueIn + 0.5 : dfValueIn - 0.5;
+        nValueOut =
+            static_cast<short>(GDALClampValue(dfValue, dfMaxVal, dfMinVal));
+    }
+};
+
+template <> struct sGDALCopyWord<double, int>
+{
+    static inline void f(const double dfValueIn, int &nValueOut)
+    {
+        if (CPLIsNan(dfValueIn))
+        {
+            nValueOut = 0;
+            return;
+        }
+        double dfMaxVal, dfMinVal;
+        GDALGetDataLimits<double, int>(dfMaxVal, dfMinVal);
+        double dfValue = dfValueIn >= 0.0 ? dfValueIn + 0.5 : dfValueIn - 0.5;
+        nValueOut =
+            static_cast<int>(GDALClampValue(dfValue, dfMaxVal, dfMinVal));
+    }
+};
+
+// Floating point input to a large signed integer type: nan becomes zero, otherwise round and clamp.
+// Rounding for signed integers is different than for the unsigned integers above.
+// Avoid roundoff while clamping.
+
+template <> struct sGDALCopyWord<GFloat16, short>
+{
+    static inline void f(const GFloat16 hfValueIn, short &nValueOut)
+    {
+        if (CPLIsNan(hfValueIn))
+        {
+            nValueOut = 0;
+        }
+        else if (hfValueIn >=
+                 static_cast<GFloat16>(GDALNumericLimits<short>::max()))
+        {
+            nValueOut = GDALNumericLimits<short>::max();
+        }
+        else if (hfValueIn <=
+                 static_cast<GFloat16>(GDALNumericLimits<short>::lowest()))
+        {
+            nValueOut = GDALNumericLimits<short>::lowest();
+        }
+        else
+        {
+            nValueOut = static_cast<short>(hfValueIn > GFloat16(0.0f)
+                                               ? hfValueIn + GFloat16(0.5f)
+                                               : hfValueIn - GFloat16(0.5f));
+        }
+    }
+};
+
 template <> struct sGDALCopyWord<float, int>
 {
     static inline void f(const float fValueIn, int &nValueOut)
@@ -473,30 +700,6 @@ template <> struct sGDALCopyWord<float, int>
     }
 };
 
-// Roundoff occurs for Float32 -> uint32 for max. Overload GDALCopyWord
-// specifically for this case.
-template <> struct sGDALCopyWord<float, unsigned int>
-{
-    static inline void f(const float fValueIn, unsigned int &nValueOut)
-    {
-        if (!(fValueIn > 0))
-        {
-            nValueOut = 0;
-        }
-        else if (fValueIn >=
-                 static_cast<float>(GDALNumericLimits<unsigned int>::max()))
-        {
-            nValueOut = GDALNumericLimits<unsigned int>::max();
-        }
-        else
-        {
-            nValueOut = static_cast<unsigned int>(fValueIn + 0.5f);
-        }
-    }
-};
-
-// Roundoff occurs for Float32 -> std::int64_t for max/min. Overload
-// GDALCopyWord specifically for this case.
 template <> struct sGDALCopyWord<float, std::int64_t>
 {
     static inline void f(const float fValueIn, std::int64_t &nValueOut)
@@ -523,24 +726,79 @@ template <> struct sGDALCopyWord<float, std::int64_t>
     }
 };
 
-// Roundoff occurs for Float32 -> std::uint64_t for max. Overload GDALCopyWord
-// specifically for this case.
-template <> struct sGDALCopyWord<float, std::uint64_t>
+template <> struct sGDALCopyWord<double, std::int64_t>
 {
-    static inline void f(const float fValueIn, std::uint64_t &nValueOut)
+    static inline void f(const double dfValueIn, std::int64_t &nValueOut)
     {
-        if (!(fValueIn > 0))
+        if (CPLIsNan(dfValueIn))
         {
             nValueOut = 0;
         }
-        else if (fValueIn >=
-                 static_cast<float>(GDALNumericLimits<std::uint64_t>::max()))
+        else if (dfValueIn >=
+                 static_cast<double>(GDALNumericLimits<std::int64_t>::max()))
         {
-            nValueOut = GDALNumericLimits<std::uint64_t>::max();
+            nValueOut = GDALNumericLimits<std::int64_t>::max();
+        }
+        else if (dfValueIn <=
+                 static_cast<double>(GDALNumericLimits<std::int64_t>::min()))
+        {
+            nValueOut = GDALNumericLimits<std::int64_t>::min();
         }
         else
         {
-            nValueOut = static_cast<std::uint64_t>(fValueIn + 0.5f);
+            nValueOut = static_cast<std::int64_t>(
+                dfValueIn > 0.0 ? dfValueIn + 0.5 : dfValueIn - 0.5);
+        }
+    }
+};
+
+// Floating point input to a very large signed integer type: nan becomes zero, otherwise round and clamp.
+// Rounding for signed integers is different than for the unsigned integers above.
+// Avoid infinity while clamping when the maximum integer is too large for the floating-point type.
+// Avoid roundoff while clamping.
+
+template <> struct sGDALCopyWord<GFloat16, int>
+{
+    static inline void f(const GFloat16 hfValueIn, int &nValueOut)
+    {
+        if (CPLIsNan(hfValueIn))
+        {
+            nValueOut = 0;
+        }
+        else if (CPLIsInf(hfValueIn))
+        {
+            nValueOut = hfValueIn > GFloat16(0.0f)
+                            ? GDALNumericLimits<int>::max()
+                            : GDALNumericLimits<int>::lowest();
+        }
+        else
+        {
+            nValueOut = static_cast<int>(hfValueIn > GFloat16(0.0f)
+                                             ? hfValueIn + GFloat16(0.5f)
+                                             : hfValueIn - GFloat16(0.5f));
+        }
+    }
+};
+
+template <> struct sGDALCopyWord<GFloat16, std::int64_t>
+{
+    static inline void f(const GFloat16 hfValueIn, std::int64_t &nValueOut)
+    {
+        if (CPLIsNan(hfValueIn))
+        {
+            nValueOut = 0;
+        }
+        else if (CPLIsInf(hfValueIn))
+        {
+            nValueOut = hfValueIn > GFloat16(0.0f)
+                            ? GDALNumericLimits<std::int64_t>::max()
+                            : GDALNumericLimits<std::int64_t>::lowest();
+        }
+        else
+        {
+            nValueOut = static_cast<std::int64_t>(
+                hfValueIn > GFloat16(0.0f) ? hfValueIn + GFloat16(0.5f)
+                                           : hfValueIn - GFloat16(0.5f));
         }
     }
 };
