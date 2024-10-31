@@ -1777,7 +1777,7 @@ CPLErr GDALPansharpenOperation::PansharpenChunk(
                 pDataBuf, eBufDataType, nValues, nBandValues);
             break;
 
-        case alignas(expression):
+        case GDT_Float16:
             eErr = WeightedBrovey(
                 static_cast<const GFloat16 *>(pPanBuffer),
                 static_cast<const GFloat16 *>(pUpsampledSpectralBuffer),
