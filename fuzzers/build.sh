@@ -89,7 +89,7 @@ if test "${CIFUZZ:-}" = "True"; then
             -L$SRC_DIR/build -lgdal \
             -lproj \
             -Wl,-Bstatic -lzstd -lwebp -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
-            -Wl,-Bdynamic -ldl -lpthread
+            -Wl,-Bdynamic -ldl -lpthread -lgcc
 
   echo "Building ogr_fuzzer"
   $CXX $CXXFLAGS \
