@@ -42,7 +42,8 @@ driver with the following main differences:
 * Contrary to the VRT driver, the GTI driver does not enable to alter
   characteristics of referenced tiles, such as their georeferencing, nodata value,
   etc. If such behavior is desired, the tiles must be for example wrapped
-  individually in a VRT file before being referenced in the GTI index.
+  individually in a VRT file (or `vrt://` connection string) before being referenced 
+  in the GTI index.
 
 Connection strings
 ------------------

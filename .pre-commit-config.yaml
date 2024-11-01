@@ -65,5 +65,6 @@ repos:
                 ogr/ogrsf_frmts/ods/ods_formula_parser.cpp|
                 ogr/ogrsf_frmts/sqlite/sqlite_rtree_bulk_load|
                 ogr/swq_parser.cpp|
-                ogr/swq_parser.hpp
+                ogr/swq_parser.hpp|
+                doc/source/
               )
