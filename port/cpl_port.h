@@ -124,6 +124,13 @@
 #include <strings.h>
 #endif
 
+#ifdef __cplusplus
+extern "C++"
+{
+#include <cmath>
+}
+#endif
+
 /* ==================================================================== */
 /*      Base portability stuff ... this stuff may need to be            */
 /*      modified for new platforms.                                     */

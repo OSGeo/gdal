@@ -31,6 +31,7 @@ function (build_fuzzer)
   if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(${_FUZZ_NAME} PRIVATE wsock32 ws2_32 psapi)
   endif ()
+  target_link_libraries(${_FUZZ_NAME} m)
 endfunction ()
 
 build_fuzzer(NAME filename_fuzzer SOURCES filename_fuzzer.cpp)

@@ -307,6 +307,7 @@ struct GFloat16
         return fromRepr<TYPE>(rValue);                                         \
     }
 
+    /* cppcheck-suppress-begin noExplicitConstructor */
     GDAL_DEFINE_CONVERSION(float)
     GDAL_DEFINE_CONVERSION(double)
     GDAL_DEFINE_CONVERSION(char)
@@ -320,6 +321,7 @@ struct GFloat16
     GDAL_DEFINE_CONVERSION(unsigned int)
     GDAL_DEFINE_CONVERSION(unsigned long)
     GDAL_DEFINE_CONVERSION(unsigned long long)
+    /* cppcheck-suppress-end noExplicitConstructor */
 
 #undef GDAL_DEFINE_CONVERSION
 

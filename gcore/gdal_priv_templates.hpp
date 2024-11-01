@@ -45,6 +45,7 @@ inline void GDALGetDataLimits(Tin &tMaxValue, Tin &tMinValue)
                   GDALNumericLimits<Tout>::is_integer)
     {
         // the minimum value is less than zero
+        /* cppcheck-suppress knownConditionTrueFalse */
         if constexpr (GDALNumericLimits<Tout>::digits <
                           GDALNumericLimits<Tin>::digits ||
                       !GDALNumericLimits<Tin>::is_integer)
