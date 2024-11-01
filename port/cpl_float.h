@@ -284,7 +284,7 @@ struct GFloat16
     // Constructors and conversion operators
 
 #ifdef HAVE__FLOAT16
-    /* cppcheck-suppress noExplicitConstructor */
+    // cppcheck-suppress noExplicitConstructor
     constexpr GFloat16(_Float16 hfValue) : rValue(hfValue)
     {
     }
@@ -295,7 +295,7 @@ struct GFloat16
     }
 #endif
 
-    /* cppcheck-suppress-macro noExplicitConstructor */
+    // cppcheck-suppress-macro noExplicitConstructor
 #define GDAL_DEFINE_CONVERSION(TYPE)                                           \
                                                                                \
     GFloat16(TYPE fValue) : rValue(toRepr(fValue))                             \
@@ -307,7 +307,6 @@ struct GFloat16
         return fromRepr<TYPE>(rValue);                                         \
     }
 
-    /* cppcheck-suppress-begin noExplicitConstructor */
     GDAL_DEFINE_CONVERSION(float)
     GDAL_DEFINE_CONVERSION(double)
     GDAL_DEFINE_CONVERSION(char)
@@ -321,7 +320,6 @@ struct GFloat16
     GDAL_DEFINE_CONVERSION(unsigned int)
     GDAL_DEFINE_CONVERSION(unsigned long)
     GDAL_DEFINE_CONVERSION(unsigned long long)
-    /* cppcheck-suppress-end noExplicitConstructor */
 
 #undef GDAL_DEFINE_CONVERSION
 
