@@ -1,6 +1,14 @@
 MIGRATION GUIDE FROM GDAL 3.9 to GDAL 3.10
 ------------------------------------------
 
+- The OGR SQL parser has been modified to evaluate NULL values in boolean
+  operations similarly to other SQL engines (SQLite, PostgreSQL, etc.). Previously,
+  with a foo=NULL field, expressions ``foo NOT IN ('bar')`` and ``foo NOT LIKE ('bar')``
+  would evaluate as true. Now the result is false (with the NULL state being
+  propagated to it). Concretely, to get the same results as in previous versions,
+  the above expressions must be rewritten as ``foo IS NULL OR foo NOT IN ('bar')``
+  and ``foo IS NULL OR foo NOT LIKE ('bar')``.
+
 - MEM driver: opening a dataset with the MEM::: syntax is now disabled by
   default because of security implications. This can be enabled by setting the
   GDAL_MEM_ENABLE_OPEN build or configuration option. Creation of a 0-band MEM
