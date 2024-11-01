@@ -138,11 +138,10 @@ class PushNotOperationDownToStackFixture
             std::make_tuple("NOT(1 <= 2)", "1 > 2"),
             std::make_tuple("NOT(1 < 2)", "1 >= 2"),
             std::make_tuple("NOT(NOT(1))", "1"),
-            std::make_tuple("NOT(1 AND 2)", "(NOT (1)) OR (NOT (2))"),
-            std::make_tuple("NOT(1 OR 2)", "(NOT (1)) AND (NOT (2))"),
-            std::make_tuple("3 AND NOT(1 OR 2)",
-                            "3 AND ((NOT (1)) AND (NOT (2)))"),
-            std::make_tuple("NOT(NOT(1 = 2) OR 2)", "(1 = 2) AND (NOT (2))"),
+            std::make_tuple("NOT(1 AND 2)", "(NOT 1) OR (NOT 2)"),
+            std::make_tuple("NOT(1 OR 2)", "(NOT 1) AND (NOT 2)"),
+            std::make_tuple("3 AND NOT(1 OR 2)", "3 AND ((NOT 1) AND (NOT 2))"),
+            std::make_tuple("NOT(NOT(1 = 2) OR 2)", "(1 = 2) AND (NOT 2)"),
             std::make_tuple("1", "1"),
         };
     }

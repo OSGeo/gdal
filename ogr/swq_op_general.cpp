@@ -521,6 +521,7 @@ swq_expr_node *SWQGeneralEvaluator(swq_expr_node *node,
         poRet->field_type = node->field_type;
 
         if (node->nOperation != SWQ_ISNULL && node->nOperation != SWQ_OR &&
+            node->nOperation != SWQ_AND && node->nOperation != SWQ_NOT &&
             node->nOperation != SWQ_IN)
         {
             for (int i = 0; i < node->nSubExprCount; i++)
@@ -543,6 +544,8 @@ swq_expr_node *SWQGeneralEvaluator(swq_expr_node *node,
             case SWQ_AND:
                 poRet->int_value = sub_node_values[0]->int_value &&
                                    sub_node_values[1]->int_value;
+                poRet->is_null =
+                    sub_node_values[0]->is_null && sub_node_values[1]->is_null;
                 break;
 
             case SWQ_OR:
@@ -553,7 +556,9 @@ swq_expr_node *SWQGeneralEvaluator(swq_expr_node *node,
                 break;
 
             case SWQ_NOT:
-                poRet->int_value = !sub_node_values[0]->int_value;
+                poRet->int_value = !sub_node_values[0]->int_value &&
+                                   !sub_node_values[0]->is_null;
+                poRet->is_null = sub_node_values[0]->is_null;
                 break;
 
             case SWQ_EQ:
