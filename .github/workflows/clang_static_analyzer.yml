@@ -1,4 +1,4 @@
-name: CLang Static Analyzer
+name: Clang Static Analyzer
 
 on:
     push:

@@ -389,6 +389,8 @@ Zarr driver:
 * SQL SQLite dialect: fix translation of "x IN (NULL)" with "recent"
   (at least > 3.31.1) versions of SQLite3
 * OGRSQL: fix compliance of NOT and IN operators regarding NULL values
+* OGRSQL: SQL expression tree to string: add missing parenthesis that could make
+  further evaluation of operator priority wrong
 * OGRSQL: add SELECT expression [AS] OGR_STYLE HIDDEN to be able to specify
   feature style string without generating a visible column (#10259)
 * OGRSQL: use Kahan-Babuska-Neumaier algorithm for accurate SUM()
