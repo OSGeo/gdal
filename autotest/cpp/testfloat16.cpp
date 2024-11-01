@@ -2,11 +2,11 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Test GDALCopyWords().
- * Author:   Even Rouault, <even dot rouault at spatialys.com>
+ * Purpose:  Test GFloat16.
+ * Author:   Erik Schnetter <eschnetter at perimeterinstitute.ca>
  *
  ******************************************************************************
- * Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2024, Even Rouault <even dot rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
