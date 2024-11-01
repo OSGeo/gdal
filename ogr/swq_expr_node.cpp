@@ -664,6 +664,21 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
         return osExpr;
     }
 
+    const auto AddSubExpr = [this, apszSubExpr, &osExpr](int idx)
+    {
+        if (papoSubExpr[idx]->eNodeType == SNT_COLUMN ||
+            papoSubExpr[idx]->eNodeType == SNT_CONSTANT)
+        {
+            osExpr += apszSubExpr[idx];
+        }
+        else
+        {
+            osExpr += '(';
+            osExpr += apszSubExpr[idx];
+            osExpr += ')';
+        }
+    };
+
     switch (nOperation)
     {
         // Binary infix operators.
@@ -683,63 +698,52 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
         case SWQ_DIVIDE:
         case SWQ_MODULUS:
             CPLAssert(nSubExprCount >= 2);
-            if (papoSubExpr[0]->eNodeType == SNT_COLUMN ||
-                papoSubExpr[0]->eNodeType == SNT_CONSTANT)
-            {
-                osExpr += apszSubExpr[0];
-            }
-            else
-            {
-                osExpr += "(";
-                osExpr += apszSubExpr[0];
-                osExpr += ")";
-            }
+            AddSubExpr(0);
             osExpr += " ";
             osExpr += poOp->pszName;
             osExpr += " ";
-            if (papoSubExpr[1]->eNodeType == SNT_COLUMN ||
-                papoSubExpr[1]->eNodeType == SNT_CONSTANT)
-            {
-                osExpr += apszSubExpr[1];
-            }
-            else
-            {
-                osExpr += "(";
-                osExpr += apszSubExpr[1];
-                osExpr += ")";
-            }
+            AddSubExpr(1);
             if ((nOperation == SWQ_LIKE || nOperation == SWQ_ILIKE) &&
                 nSubExprCount == 3)
-                osExpr += CPLSPrintf(" ESCAPE (%s)", apszSubExpr[2]);
+            {
+                osExpr += " ESCAPE ";
+                AddSubExpr(2);
+            }
             break;
 
         case SWQ_NOT:
             CPLAssert(nSubExprCount == 1);
-            osExpr.Printf("NOT (%s)", apszSubExpr[0]);
+            osExpr = "NOT ";
+            AddSubExpr(0);
             break;
 
         case SWQ_ISNULL:
             CPLAssert(nSubExprCount == 1);
-            osExpr.Printf("%s IS NULL", apszSubExpr[0]);
+            AddSubExpr(0);
+            osExpr += " IS NULL";
             break;
 
         case SWQ_IN:
-            osExpr.Printf("%s IN (", apszSubExpr[0]);
+            AddSubExpr(0);
+            osExpr += " IN(";
             for (int i = 1; i < nSubExprCount; i++)
             {
                 if (i > 1)
                     osExpr += ",";
-                osExpr += "(";
-                osExpr += apszSubExpr[i];
-                osExpr += ")";
+                AddSubExpr(i);
             }
             osExpr += ")";
             break;
 
         case SWQ_BETWEEN:
             CPLAssert(nSubExprCount == 3);
-            osExpr.Printf("%s %s (%s) AND (%s)", apszSubExpr[0], poOp->pszName,
-                          apszSubExpr[1], apszSubExpr[2]);
+            AddSubExpr(0);
+            osExpr += ' ';
+            osExpr += poOp->pszName;
+            osExpr += ' ';
+            AddSubExpr(1);
+            osExpr += " AND ";
+            AddSubExpr(2);
             break;
 
         case SWQ_CAST:
@@ -760,7 +764,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
                     osExpr += apszSubExpr[i] + 1;
                 }
                 else
-                    osExpr += apszSubExpr[i];
+                    AddSubExpr(i);
 
                 if (i == 1 && nSubExprCount > 2)
                     osExpr += "(";
@@ -779,9 +783,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
             {
                 if (i > 0)
                     osExpr += ",";
-                osExpr += "(";
-                osExpr += apszSubExpr[i];
-                osExpr += ")";
+                AddSubExpr(i);
             }
             osExpr += ")";
             break;
