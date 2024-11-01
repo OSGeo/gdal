@@ -57,13 +57,13 @@ TEST(TestFloat16, conversions)
 
     EXPECT_EQ(GFloat16(65504), 65504.0);
     EXPECT_EQ(GFloat16(-65504), -65504.0);
-    EXPECT_EQ(GFloat16(1.0 / 0.0), 1.0 / 0.0);
-    EXPECT_EQ(GFloat16(-1.0 / 0.0), -1.0 / 0.0);
-    // The Windows compiler reports "error C2124: divide or mod by zero"
-    // TODO: Temporarily disabled the code to debug how to avoid this error
-    // #ifndef _MSC_VER
-    //     EXPECT_EQ(GFloat16(0.0), -0.0);
-    // #endif
+    // Work around the Windows compiler reporting "error C2124: divide
+    // or mod by zero". See also
+    // <https://stackoverflow.com/questions/3082508/msvc-erroring-on-a-divide-by-0-that-will-never-happen-fix>.
+    volatile double zero = 0.0;
+    EXPECT_EQ(GFloat16(1.0 / zero), 1.0 / zero);
+    EXPECT_EQ(GFloat16(-1.0 / zero), -1.0 / zero);
+    EXPECT_EQ(GFloat16(0.0), -0.0);
     EXPECT_EQ(GFloat16(-0.0), 0.0);
 }
 
