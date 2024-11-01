@@ -91,8 +91,8 @@ struct GFloat16
 
     // Create a GFloat16 in a constexpr manner. Since we can't convert
     // bits in a constexpr function, we need to take both the bit
-    // patter and a float value as input, and can then choose which of
-    // the two to use.
+    // pattern and a float value as input, and can then choose which
+    // of the two to use.
     constexpr GFloat16(make_from_bits_and_value, CPL_UNUSED std::uint16_t bits,
                        float fValue)
         : rValue(repr(fValue))
@@ -129,8 +129,8 @@ struct GFloat16
 
     // Create a GFloat16 in a constexpr manner. Since we can't convert
     // bits in a constexpr function, we need to take both the bit
-    // patter and a float value as input, and can then choose which of
-    // the two to use.
+    // pattern and a float value as input, and can then choose which
+    // of the two to use.
     constexpr GFloat16(make_from_bits_and_value, std::uint16_t bits,
                        CPL_UNUSED float fValue)
         : rValue(bits)
