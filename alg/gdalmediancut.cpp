@@ -329,7 +329,7 @@ int GDALComputeMedianCutPCTInternal(
     /*      STEP 1: create empty boxes.                                     */
     /* ==================================================================== */
     if (static_cast<GUInt32>(nXSize) >
-        GDALNumericLimits<T>::max() / static_cast<GUInt32>(nYSize))
+        std::numeric_limits<T>::max() / static_cast<GUInt32>(nYSize))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "GDALComputeMedianCutPCTInternal() not called "
@@ -340,7 +340,7 @@ int GDALComputeMedianCutPCTInternal(
     if (nBits == 8 && pabyRedBand != nullptr && pabyGreenBand != nullptr &&
         pabyBlueBand != nullptr &&
         static_cast<GUInt32>(nXSize) <=
-            GDALNumericLimits<T>::max() / static_cast<GUInt32>(nYSize))
+            std::numeric_limits<T>::max() / static_cast<GUInt32>(nYSize))
     {
         nPixels = static_cast<T>(nXSize) * static_cast<T>(nYSize);
     }

@@ -64,7 +64,7 @@ static constexpr const char szPROFILE_GDALGeoTIFF[] = "GDALGeoTIFF";
 // 65535 values in that tag. That could potentially be overcome by changing the tag
 // declaration to using TIFF_VARIABLE2 where the count is a uint32_t.
 constexpr int knMAX_GCP_COUNT =
-    static_cast<int>(GDALNumericLimits<uint16_t>::max() / 6);
+    static_cast<int>(std::numeric_limits<uint16_t>::max() / 6);
 
 enum
 {
@@ -551,7 +551,7 @@ void GTiffDataset::WriteDealWithLercAndNan(T *pBuffer, int nActualBlockWidth,
             ? 0
             :
 #endif
-            GDALNumericLimits<T>::quiet_NaN();
+            std::numeric_limits<T>::quiet_NaN();
 
     const int nBandsPerStrile =
         m_nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;
@@ -1448,7 +1448,7 @@ template <class T> T AdjustValue(T value, uint64_t nRoundUpBitTest);
 template <class T> T AdjustValueInt(T value, uint64_t nRoundUpBitTest)
 {
     if (value >=
-        static_cast<T>(GDALNumericLimits<T>::max() - (nRoundUpBitTest << 1)))
+        static_cast<T>(std::numeric_limits<T>::max() - (nRoundUpBitTest << 1)))
         return static_cast<T>(value - (nRoundUpBitTest << 1));
     return static_cast<T>(value + (nRoundUpBitTest << 1));
 }
@@ -1502,12 +1502,12 @@ uint64_t AdjustValue<uint64_t>(uint64_t value, uint64_t nRoundUpBitTest)
 
 template <> float AdjustValue<float>(float value, uint64_t)
 {
-    return std::nextafter(value, GDALNumericLimits<float>::max());
+    return std::nextafter(value, std::numeric_limits<float>::max());
 }
 
 template <> double AdjustValue<double>(double value, uint64_t)
 {
-    return std::nextafter(value, GDALNumericLimits<double>::max());
+    return std::nextafter(value, std::numeric_limits<double>::max());
 }
 
 template <class Teffective, class T>
@@ -1519,10 +1519,10 @@ T RoundValueDiscardLsbUnsigned(const void *ptr, uint64_t nMask,
                                uint64_t nRoundUpBitTest)
 {
     if ((*reinterpret_cast<const T *>(ptr) & nMask) >
-        static_cast<uint64_t>(GDALNumericLimits<T>::max()) -
+        static_cast<uint64_t>(std::numeric_limits<T>::max()) -
             (nRoundUpBitTest << 1U))
     {
-        return static_cast<T>(GDALNumericLimits<T>::max() & nMask);
+        return static_cast<T>(std::numeric_limits<T>::max() & nMask);
     }
     const uint64_t newval =
         (*reinterpret_cast<const T *>(ptr) & nMask) + (nRoundUpBitTest << 1U);
@@ -1540,8 +1540,8 @@ T RoundValueDiscardLsbSigned(const void *ptr, uint64_t nMask,
     }
     const uint64_t newval =
         (*reinterpret_cast<const T *>(ptr) & nMask) + (nRoundUpBitTest << 1U);
-    if (newval > static_cast<uint64_t>(GDALNumericLimits<T>::max()))
-        return static_cast<T>(GDALNumericLimits<T>::max() & nMask);
+    if (newval > static_cast<uint64_t>(std::numeric_limits<T>::max()))
+        return static_cast<T>(std::numeric_limits<T>::max() & nMask);
     return static_cast<T>(newval);
 }
 

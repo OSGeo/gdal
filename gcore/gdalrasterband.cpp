@@ -2385,7 +2385,7 @@ int64_t GDALRasterBand::GetNoDataValueAsInt64(int *pbSuccess)
     if (pbSuccess != nullptr)
         *pbSuccess = FALSE;
 
-    return GDALNumericLimits<int64_t>::min();
+    return std::numeric_limits<int64_t>::min();
 }
 
 /************************************************************************/
@@ -2407,7 +2407,7 @@ int64_t CPL_STDCALL GDALGetRasterNoDataValueAsInt64(GDALRasterBandH hBand,
 
 {
     VALIDATE_POINTER1(hBand, "GDALGetRasterNoDataValueAsInt64",
-                      GDALNumericLimits<int64_t>::min());
+                      std::numeric_limits<int64_t>::min());
 
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetNoDataValueAsInt64(pbSuccess);
@@ -2446,7 +2446,7 @@ uint64_t GDALRasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
     if (pbSuccess != nullptr)
         *pbSuccess = FALSE;
 
-    return GDALNumericLimits<uint64_t>::max();
+    return std::numeric_limits<uint64_t>::max();
 }
 
 /************************************************************************/
@@ -2468,7 +2468,7 @@ uint64_t CPL_STDCALL GDALGetRasterNoDataValueAsUInt64(GDALRasterBandH hBand,
 
 {
     VALIDATE_POINTER1(hBand, "GDALGetRasterNoDataValueAsUInt64",
-                      GDALNumericLimits<uint64_t>::max());
+                      std::numeric_limits<uint64_t>::max());
 
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetNoDataValueAsUInt64(pbSuccess);
@@ -2807,10 +2807,10 @@ double GDALRasterBand::GetMaximum(int *pbSuccess)
             return 4294967295.0;
 
         case GDT_Int64:
-            return static_cast<double>(GDALNumericLimits<GInt64>::max());
+            return static_cast<double>(std::numeric_limits<GInt64>::max());
 
         case GDT_UInt64:
-            return static_cast<double>(GDALNumericLimits<GUInt64>::max());
+            return static_cast<double>(std::numeric_limits<GUInt64>::max());
 
         case GDT_Float16:
         case GDT_CFloat16:
@@ -2917,7 +2917,7 @@ double GDALRasterBand::GetMinimum(int *pbSuccess)
             return 0;
 
         case GDT_Int64:
-            return static_cast<double>(GDALNumericLimits<GInt64>::lowest());
+            return static_cast<double>(std::numeric_limits<GInt64>::lowest());
 
         case GDT_UInt64:
             return 0;
@@ -5275,8 +5275,8 @@ struct ComputeStatisticsInternalGeneric
                 nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
             }
         }
-        else if (nMin == GDALNumericLimits<T>::lowest() &&
-                 nMax == GDALNumericLimits<T>::max())
+        else if (nMin == std::numeric_limits<T>::lowest() &&
+                 nMax == std::numeric_limits<T>::max())
         {
             if constexpr (COMPUTE_OTHER_STATS)
             {
@@ -5612,7 +5612,7 @@ ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
     // Make sure that sumSquare can fit on uint32
     // * 8 since we can hold 8 sums per vector register
     const int nMaxIterationsPerInnerLoop =
-        8 * ((GDALNumericLimits<GUInt32>::max() / (255 * 255)) & ~31);
+        8 * ((std::numeric_limits<GUInt32>::max() / (255 * 255)) & ~31);
     GPtrDiff_t nOuterLoops = nBlockPixels / nMaxIterationsPerInnerLoop;
     if ((nBlockPixels % nMaxIterationsPerInnerLoop) != 0)
         nOuterLoops++;
@@ -5774,7 +5774,7 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
             // Make sure that sumSquare can fit on uint32
             // * 8 since we can hold 8 sums per vector register
             const int nMaxIterationsPerInnerLoop =
-                8 * ((GDALNumericLimits<GUInt32>::max() / (255 * 255)) & ~31);
+                8 * ((std::numeric_limits<GUInt32>::max() / (255 * 255)) & ~31);
             auto nOuterLoops = nBlockPixels / nMaxIterationsPerInnerLoop;
             if ((nBlockPixels % nMaxIterationsPerInnerLoop) != 0)
                 nOuterLoops++;
@@ -6033,7 +6033,7 @@ struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
             // Make sure that sum can fit on uint32
             // * 8 since we can hold 8 sums per vector register
             const int nMaxIterationsPerInnerLoop =
-                8 * ((GDALNumericLimits<GUInt32>::max() / 65535) & ~15);
+                8 * ((std::numeric_limits<GUInt32>::max() / 65535) & ~15);
             GPtrDiff_t nOuterLoops = nBlockPixels / nMaxIterationsPerInnerLoop;
             if ((nBlockPixels % nMaxIterationsPerInnerLoop) != 0)
                 nOuterLoops++;
@@ -6446,8 +6446,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
     // the difference of the sum of square values with the square of the sum.
     // dfMean and dfM2 are updated at each sample.
     // dfM2 is the sum of square of differences to the current mean.
-    double dfMin = GDALNumericLimits<double>::max();
-    double dfMax = -GDALNumericLimits<double>::max();
+    double dfMin = std::numeric_limits<double>::max();
+    double dfMax = -std::numeric_limits<double>::max();
     double dfMean = 0.0;
     double dfM2 = 0.0;
 
@@ -7316,13 +7316,13 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
                        : 65535;  // used for GByte & GUInt16 cases
     GUInt32 nMax = 0;            // used for GByte & GUInt16 cases
     GInt16 nMinInt16 =
-        GDALNumericLimits<GInt16>::max();  // used for GInt16 case
+        std::numeric_limits<GInt16>::max();  // used for GInt16 case
     GInt16 nMaxInt16 =
-        GDALNumericLimits<GInt16>::lowest();  // used for GInt16 case
+        std::numeric_limits<GInt16>::lowest();  // used for GInt16 case
     double dfMin =
-        GDALNumericLimits<double>::max();  // used for generic code path
+        std::numeric_limits<double>::max();  // used for generic code path
     double dfMax =
-        GDALNumericLimits<double>::lowest();  // used for generic code path
+        std::numeric_limits<double>::lowest();  // used for generic code path
     const bool bUseOptimizedPath =
         !poMaskBand && ((eDataType == GDT_Byte && !bSignedByte) ||
                         eDataType == GDT_Int16 || eDataType == GDT_UInt16);

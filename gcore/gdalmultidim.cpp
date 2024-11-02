@@ -1007,8 +1007,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
 #define setDTMinMax(ctype)                                                     \
     do                                                                         \
     {                                                                          \
-        dfDTMin = static_cast<double>(GDALNumericLimits<ctype>::lowest());     \
-        dfDTMax = static_cast<double>(GDALNumericLimits<ctype>::max());        \
+        dfDTMin = static_cast<double>(std::numeric_limits<ctype>::lowest());   \
+        dfDTMax = static_cast<double>(std::numeric_limits<ctype>::max());      \
     } while (0)
 
                 switch (eAutoScaleType)
@@ -1821,10 +1821,10 @@ bool GDALExtendedDataType::CopyValues(const void *pSrc,
         nDstStrideInElts * static_cast<GPtrDiff_t>(dstType.GetSize());
     if (srcType.GetClass() == GEDTC_NUMERIC &&
         dstType.GetClass() == GEDTC_NUMERIC &&
-        nSrcStrideInBytes >= GDALNumericLimits<int>::min() &&
-        nSrcStrideInBytes <= GDALNumericLimits<int>::max() &&
-        nDstStrideInBytes >= GDALNumericLimits<int>::min() &&
-        nDstStrideInBytes <= GDALNumericLimits<int>::max())
+        nSrcStrideInBytes >= std::numeric_limits<int>::min() &&
+        nSrcStrideInBytes <= std::numeric_limits<int>::max() &&
+        nDstStrideInBytes >= std::numeric_limits<int>::min() &&
+        nDstStrideInBytes <= std::numeric_limits<int>::max())
     {
         GDALCopyWords64(pSrc, srcType.GetNumericDataType(),
                         static_cast<int>(nSrcStrideInBytes), pDst,
@@ -1919,7 +1919,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
                              CPLSM(static_cast<GUInt64>(count[i])))
                                 .v();
                 bOK = static_cast<size_t>(newStride) == newStride &&
-                      newStride < GDALNumericLimits<size_t>::max() / 2;
+                      newStride < std::numeric_limits<size_t>::max() / 2;
             }
             catch (...)
             {
@@ -1989,7 +1989,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
                 bOverflow =
                     arrayStartIdx[i] <
                     (CPLSM(static_cast<GUInt64>(count[i] - 1)) *
-                     CPLSM(arrayStep[i] == GDALNumericLimits<GInt64>::min()
+                     CPLSM(arrayStep[i] == std::numeric_limits<GInt64>::min()
                                ? (static_cast<GUInt64>(1) << 63)
                                : static_cast<GUInt64>(-arrayStep[i])))
                         .v();
@@ -2372,7 +2372,7 @@ GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunkMemory) const
     CPLAssert(blockSize.size() == dims.size());
     size_t nChunkSize = nDTSize;
     bool bOverflow = false;
-    constexpr auto kSIZE_T_MAX = GDALNumericLimits<size_t>::max();
+    constexpr auto kSIZE_T_MAX = std::numeric_limits<size_t>::max();
     // Initialize anChunkSize[i] with blockSize[i] by properly clamping in
     // [1, min(sizet_max, dim_size[i])]
     // Also make sure that the product of all anChunkSize[i]) fits on size_t
@@ -3040,7 +3040,7 @@ bool GDALAbstractMDArray::ProcessPerChunk(const GUInt64 *arrayStartIdx,
             return false;
         }
         if (chunkSize[i] == 0 || chunkSize[i] > nSizeThisDim ||
-            chunkSize[i] > GDALNumericLimits<size_t>::max() / nTotalChunkSize)
+            chunkSize[i] > std::numeric_limits<size_t>::max() / nTotalChunkSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Inconsistent chunkSize[] values");
@@ -3424,7 +3424,7 @@ double GDALAttribute::ReadAsDouble() const
 CPLStringList GDALAttribute::ReadAsStringArray() const
 {
     const auto nElts = GetTotalElementsCount();
-    if (nElts > static_cast<unsigned>(GDALNumericLimits<int>::max() - 1))
+    if (nElts > static_cast<unsigned>(std::numeric_limits<int>::max() - 1))
         return CPLStringList();
     char **papszList = static_cast<char **>(
         VSI_CALLOC_VERBOSE(static_cast<int>(nElts) + 1, sizeof(char *)));
@@ -4062,10 +4062,10 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset *poSrcDS,
         const size_t nMaxChunkSize =
             pszSwathSize
                 ? static_cast<size_t>(
-                      std::min(GIntBig(GDALNumericLimits<size_t>::max() / 2),
+                      std::min(GIntBig(std::numeric_limits<size_t>::max() / 2),
                                CPLAtoGIntBig(pszSwathSize)))
                 : static_cast<size_t>(
-                      std::min(GIntBig(GDALNumericLimits<size_t>::max() / 2),
+                      std::min(GIntBig(std::numeric_limits<size_t>::max() / 2),
                                GDALGetCacheMax64() / 4));
         const auto anChunkSizes(GetProcessingChunkSize(nMaxChunkSize));
         size_t nRealChunkSize = nDTSize;
@@ -4959,7 +4959,7 @@ bool GDALMDArray::ReadUsingContiguousIRead(
                 arrayStartIdx[i] - (count[i] - 1) * (-arrayStep[i]);
         const uint64_t nCount =
             (count[i] - 1) * static_cast<uint64_t>(std::abs(arrayStep[i])) + 1;
-        if (nCount > GDALNumericLimits<size_t>::max() / nMemArraySize)
+        if (nCount > std::numeric_limits<size_t>::max() / nMemArraySize)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Read() failed due to too large memory requirement");
@@ -5392,7 +5392,7 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
             const GUInt64 nDimSize(srcDims[nCurSrcDim]->GetSize());
             range.m_nIncr = EQUAL(pszInc, "") ? 1 : CPLAtoGIntBig(pszInc);
             if (range.m_nIncr == 0 ||
-                range.m_nIncr == GDALNumericLimits<GInt64>::min())
+                range.m_nIncr == std::numeric_limits<GInt64>::min())
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid increment");
                 return nullptr;
@@ -7193,9 +7193,9 @@ template <typename Type> static bool IsValidForDT(double dfVal)
 {
     if (std::isnan(dfVal))
         return false;
-    if (dfVal < static_cast<double>(GDALNumericLimits<Type>::lowest()))
+    if (dfVal < static_cast<double>(std::numeric_limits<Type>::lowest()))
         return false;
-    if (dfVal > static_cast<double>(GDALNumericLimits<Type>::max()))
+    if (dfVal > static_cast<double>(std::numeric_limits<Type>::max()))
         return false;
     return static_cast<double>(static_cast<Type>(dfVal)) == dfVal;
 }
@@ -9762,8 +9762,8 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
     {
         const GDALMDArray *array = nullptr;
         std::shared_ptr<GDALMDArray> poMask{};
-        double dfMin = GDALNumericLimits<double>::max();
-        double dfMax = -GDALNumericLimits<double>::max();
+        double dfMin = std::numeric_limits<double>::max();
+        double dfMax = -std::numeric_limits<double>::max();
         double dfMean = 0.0;
         double dfM2 = 0.0;
         GUInt64 nValidCount = 0;
@@ -9865,10 +9865,10 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
     const size_t nMaxChunkSize =
         pszSwathSize
             ? static_cast<size_t>(
-                  std::min(GIntBig(GDALNumericLimits<size_t>::max() / 2),
+                  std::min(GIntBig(std::numeric_limits<size_t>::max() / 2),
                            CPLAtoGIntBig(pszSwathSize)))
             : static_cast<size_t>(
-                  std::min(GIntBig(GDALNumericLimits<size_t>::max() / 2),
+                  std::min(GIntBig(std::numeric_limits<size_t>::max() / 2),
                            GDALGetCacheMax64() / 4));
     StatsPerChunkType sData;
     sData.array = this;
@@ -10111,7 +10111,7 @@ GDALExtendedDataType GDALExtendedDataType::Create(
 {
     size_t nLastOffset = 0;
     // Some arbitrary threshold to avoid potential integer overflows
-    if (nTotalSize > static_cast<size_t>(GDALNumericLimits<int>::max() / 2))
+    if (nTotalSize > static_cast<size_t>(std::numeric_limits<int>::max() / 2))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid offset/size");
         return GDALExtendedDataType(GDT_Unknown);

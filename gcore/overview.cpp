@@ -223,7 +223,7 @@ namespace
 int BestColorEntry(const std::vector<GDALColorEntry> &entries,
                    const GDALColorEntry &test)
 {
-    int nMinDist = GDALNumericLimits<int>::max();
+    int nMinDist = std::numeric_limits<int>::max();
     size_t bestEntry = 0;
     for (size_t i = 0; i < entries.size(); ++i)
     {
@@ -994,7 +994,7 @@ QuadraticMeanFloatSSE2(int nDstXWidth, int nChunkXSize,
     const auto minus_zero = set1_ps(-0.0f);
     const auto zeroDot25 = set1_ps(0.25f);
     const auto one = set1_ps(1.0f);
-    const auto infv = set1_ps(GDALNumericLimits<float>::infinity());
+    const auto infv = set1_ps(std::numeric_limits<float>::infinity());
 
     for (; iDstPixel < nDstXWidth - (RMS_FLOAT_ELTS - 1);
          iDstPixel += RMS_FLOAT_ELTS)
@@ -2253,7 +2253,7 @@ static CPLErr GDALResampleChunk_ModeT(const GDALOverviewResampleArgs &args,
                     nSrcYOff2 - nSrcYOff > INT_MAX / (nSrcXOff2 - nSrcXOff) ||
                     static_cast<size_t>(nSrcYOff2 - nSrcYOff) *
                             static_cast<size_t>(nSrcXOff2 - nSrcXOff) >
-                        GDALNumericLimits<size_t>::max() / sizeof(float))
+                        std::numeric_limits<size_t>::max() / sizeof(float))
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Too big downsampling factor");
@@ -3140,39 +3140,39 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     constexpr int nWrkDataTypeSize = static_cast<int>(sizeof(Twork));
 
     // TODO: we should have some generic function to do this.
-    Twork fDstMin = -GDALNumericLimits<Twork>::max();
-    Twork fDstMax = GDALNumericLimits<Twork>::max();
+    Twork fDstMin = -std::numeric_limits<Twork>::max();
+    Twork fDstMax = std::numeric_limits<Twork>::max();
     if (dstDataType == GDT_Byte)
     {
-        fDstMin = GDALNumericLimits<GByte>::min();
-        fDstMax = GDALNumericLimits<GByte>::max();
+        fDstMin = std::numeric_limits<GByte>::min();
+        fDstMax = std::numeric_limits<GByte>::max();
     }
     else if (dstDataType == GDT_Int8)
     {
-        fDstMin = GDALNumericLimits<GInt8>::min();
-        fDstMax = GDALNumericLimits<GInt8>::max();
+        fDstMin = std::numeric_limits<GInt8>::min();
+        fDstMax = std::numeric_limits<GInt8>::max();
     }
     else if (dstDataType == GDT_UInt16)
     {
-        fDstMin = GDALNumericLimits<GUInt16>::min();
-        fDstMax = GDALNumericLimits<GUInt16>::max();
+        fDstMin = std::numeric_limits<GUInt16>::min();
+        fDstMax = std::numeric_limits<GUInt16>::max();
     }
     else if (dstDataType == GDT_Int16)
     {
-        fDstMin = GDALNumericLimits<GInt16>::min();
-        fDstMax = GDALNumericLimits<GInt16>::max();
+        fDstMin = std::numeric_limits<GInt16>::min();
+        fDstMax = std::numeric_limits<GInt16>::max();
     }
     else if (dstDataType == GDT_UInt32)
     {
-        fDstMin = static_cast<Twork>(GDALNumericLimits<GUInt32>::min());
-        fDstMax = static_cast<Twork>(GDALNumericLimits<GUInt32>::max());
+        fDstMin = static_cast<Twork>(std::numeric_limits<GUInt32>::min());
+        fDstMax = static_cast<Twork>(std::numeric_limits<GUInt32>::max());
     }
     else if (dstDataType == GDT_Int32)
     {
         // cppcheck-suppress unreadVariable
-        fDstMin = static_cast<Twork>(GDALNumericLimits<GInt32>::min());
+        fDstMin = static_cast<Twork>(std::numeric_limits<GInt32>::min());
         // cppcheck-suppress unreadVariable
-        fDstMax = static_cast<Twork>(GDALNumericLimits<GInt32>::max());
+        fDstMax = static_cast<Twork>(std::numeric_limits<GInt32>::max());
     }
     else if (dstDataType == GDT_UInt64)
     {

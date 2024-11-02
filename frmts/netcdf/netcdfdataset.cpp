@@ -729,8 +729,9 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
                 SetNoDataValueNoUpdate(nNoDataAsUInt64);
             }
             else if (eDataType == GDT_Int64 &&
-                     nNoDataAsUInt64 <= static_cast<uint64_t>(
-                                            GDALNumericLimits<int64_t>::max()))
+                     nNoDataAsUInt64 <=
+                         static_cast<uint64_t>(
+                             std::numeric_limits<int64_t>::max()))
             {
                 SetNoDataValueNoUpdate(static_cast<int64_t>(nNoDataAsUInt64));
             }
@@ -2183,7 +2184,7 @@ void netCDFRasterBand::CheckData(void *pImage, void *pImageNC,
     // If minimum longitude is > 180, subtract 360 from all.
     // If not, disable checking for further calls (check just once).
     // Only check first and last block elements since lon must be monotonic.
-    const bool bIsSigned = GDALNumericLimits<T>::is_signed;
+    const bool bIsSigned = std::numeric_limits<T>::is_signed;
     if (bCheckLongitude && bIsSigned &&
         !CPLIsEqual((double)((T *)pImage)[0], m_dfNoDataValue) &&
         !CPLIsEqual((double)((T *)pImage)[nTmpBlockXSize - 1],
@@ -7513,7 +7514,7 @@ bool netCDFDatasetCreateTempFile(NetCDFFormatEnum eFormat,
                         if (nDimSize != 0)
                         {
                             if (nSize >
-                                GDALNumericLimits<size_t>::max() / nDimSize)
+                                std::numeric_limits<size_t>::max() / nDimSize)
                             {
                                 bFailed = true;
                                 break;
@@ -7541,7 +7542,7 @@ bool netCDFDatasetCreateTempFile(NetCDFFormatEnum eFormat,
                         continue;
                     }
                     if (nTotalVarSize >
-                            GDALNumericLimits<size_t>::max() - nSize ||
+                            std::numeric_limits<size_t>::max() - nSize ||
                         nTotalVarSize + nSize > 100 * 1024 * 1024)
                     {
                         CPLDebug("netCDF",
@@ -7784,7 +7785,7 @@ bool netCDFDatasetCreateTempFile(NetCDFFormatEnum eFormat,
                 {
                     const size_t nDimSize = oMapDimIdToDimLen[aoDimIds[i]];
                     if (nDimSize != 0 &&
-                        nSize > GDALNumericLimits<size_t>::max() / nDimSize)
+                        nSize > std::numeric_limits<size_t>::max() / nDimSize)
                     {
                         nSize = 0;
                     }

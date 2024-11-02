@@ -554,19 +554,11 @@ template <typename T> constexpr int CPLIsFinite(T x)
     return isfinite(x);
 }
 
-// std::numeric_limits does not work for _Float16, thus we define
-// GDALNumericLimits which does.
-//
-// std::numeric_limits<_Float16> does not lead a compile-time error.
-// Instead, it silently returns wrong values (all zeros), at least
-// with GCC on Ubuntu 24.04.
-
-template <typename T> struct GDALNumericLimits : std::numeric_limits<T>
+namespace std
 {
-};
 
 //! @cond Doxygen_Suppress
-template <> struct GDALNumericLimits<GFloat16>
+template <> struct numeric_limits<GFloat16>
 {
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;
@@ -619,6 +611,8 @@ template <> struct GDALNumericLimits<GFloat16>
 };
 
 //! @endcond
+
+}  // namespace std
 
 #endif
 

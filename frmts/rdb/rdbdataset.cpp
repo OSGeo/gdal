@@ -170,22 +170,22 @@ template <typename T> class RDBRasterBandInternal final : public RDBRasterBand
         }
         else
         {
-            if (oPointAttribute.maximumValue < GDALNumericLimits<T>::max())
+            if (oPointAttribute.maximumValue < std::numeric_limits<T>::max())
             {
                 if (pbSuccess != nullptr)
                 {
                     *pbSuccess = TRUE;
                 }
-                return GDALNumericLimits<T>::max();
+                return std::numeric_limits<T>::max();
             }
             else if (oPointAttribute.minimumValue >
-                     GDALNumericLimits<T>::lowest())
+                     std::numeric_limits<T>::lowest())
             {
                 if (pbSuccess != nullptr)
                 {
                     *pbSuccess = TRUE;
                 }
-                return GDALNumericLimits<T>::lowest();
+                return std::numeric_limits<T>::lowest();
             }
             // Another no data value could be any value that is actually not in
             // the data but in the range of specified rdb attribute. However,
