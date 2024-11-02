@@ -430,13 +430,19 @@ static void VSI_TIFFSetOpenOptions(TIFFOpenOptions *opts)
 #if defined(INTERNAL_LIBTIFF) || TIFFLIB_VERSION > 20230908
     // Read-once and stored in static storage otherwise affects
     // autotest/benchmark/test_gtiff.py::test_gtiff_byte
-    static const GIntBig nMemLimit = []()
+    static const GIntBig nMemLimit = []() -> GIntBig
     {
         if (const char *pszLimit =
                 CPLGetConfigOption("GTIFF_MAX_CUMULATED_MEM_USAGE", nullptr))
             return CPLAtoGIntBig(pszLimit);
         else
-            return CPLGetUsablePhysicalRAM() * 9 / 10;
+        {
+            const auto nUsableRAM = CPLGetUsablePhysicalRAM();
+            if (nUsableRAM > 0)
+                return nUsableRAM / 10 * 9;
+            else
+                return 0;
+        }
     }();
     if (nMemLimit > 0 && nMemLimit < std::numeric_limits<tmsize_t>::max())
     {
