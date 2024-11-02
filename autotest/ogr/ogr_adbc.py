@@ -230,6 +230,34 @@ def test_ogr_adbc_duckdb_parquet_with_sql_open_option():
 
 
 ###############################################################################
+
+
+def test_ogr_adbc_duckdb_parquet_with_spatial():
+
+    if not _has_libduckdb():
+        pytest.skip("libduckdb.so missing")
+
+    if gdaltest.is_travis_branch("ubuntu_2404"):
+        # Works locally for me when replicating the Dockerfile ...
+        pytest.skip("fails on ubuntu_2404 for unknown reason")
+
+    with gdal.OpenEx(
+        "data/parquet/poly.parquet",
+        gdal.OF_VECTOR,
+        allowed_drivers=["ADBC"],
+        open_options=[
+            "PRELUDE_STATEMENTS=INSTALL spatial",
+            "PRELUDE_STATEMENTS=LOAD spatial",
+        ],
+    ) as ds:
+        with ds.ExecuteSQL(
+            "SELECT ST_AsText(geometry) FROM read_parquet('data/parquet/poly.parquet')"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f.GetField(0).startswith("POLYGON")
+
+
+###############################################################################
 # Run test_ogrsf on a SQLite3 database
 
 
