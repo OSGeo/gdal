@@ -209,6 +209,7 @@ target_public_header(
   gdalsubdatasetinfo.h
   gdal_typetraits.h
   gdal_adbc.h
+  gdal_minmax_element.hpp
 )
 
 set(GDAL_DATA_FILES
