@@ -78,8 +78,6 @@ if test "${CIFUZZ:-}" = "True"; then
   SRC_DIR=$SRC/gdal
 
   echo "Building gdal_fuzzer"
-  find / -name '*.so' -print0 | xargs -0 -n 1 nm -A 2>/dev/null | grep __extendhfsf2 || true
-  find / -name '*.a' -print0 | xargs -0 -n 1 nm -A 2>/dev/null | grep __extendhfsf2 || true
   $CXX $CXXFLAGS \
             -I$SRC_DIR/port -I$SRC_DIR/build/port \
             -I$SRC_DIR/gcore -I$SRC_DIR/build/gcore \
@@ -105,7 +103,7 @@ if test "${CIFUZZ:-}" = "True"; then
             -L$SRC_DIR/build -lgdal \
             -L$SRC/install/lib -lproj \
             -Wl,-Bstatic -lzstd -lwebp -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
-            -Wl,-Bdynamic -ldl -lpthread
+            -Wl,-Bdynamic -ldl -lpthread -lclang_rt.builtins
 
   echo "Building gdal_fuzzer_seed_corpus.zip"
   cd $(dirname $0)/../autotest/gcore/data
