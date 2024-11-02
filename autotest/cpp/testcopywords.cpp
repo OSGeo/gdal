@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <limits>
 
 #include "gtest_include.h"
 
