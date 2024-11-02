@@ -78,6 +78,8 @@ if test "${CIFUZZ:-}" = "True"; then
   SRC_DIR=$SRC/gdal
 
   echo "Building gdal_fuzzer"
+  find / -name '*.so' -print0 | xargs -0 -n 1 nm -A 2>/dev/null | grep __extendhfsf2 || true
+  find / -name '*.a' -print0 | xargs -0 -n 1 nm -A 2>/dev/null | grep __extendhfsf2 || true
   $CXX $CXXFLAGS \
             -I$SRC_DIR/port -I$SRC_DIR/build/port \
             -I$SRC_DIR/gcore -I$SRC_DIR/build/gcore \
@@ -92,8 +94,6 @@ if test "${CIFUZZ:-}" = "True"; then
             -Wl,-Bdynamic -ldl -lpthread -lgcc
 
   echo "Building ogr_fuzzer"
-  find / -name '*.so' -print0 | xargs -0 -n 1 nm -A 2>/dev/null | grep __extendhfsf2 || true
-  find / -name '*.a' -print0 | xargs -0 -n 1 nm -A 2>/dev/null | grep __extendhfsf2 || true
   $CXX $CXXFLAGS \
             -I$SRC_DIR/port -I$SRC_DIR/build/port \
             -I$SRC_DIR/gcore -I$SRC_DIR/build/gcore \
