@@ -60,6 +60,23 @@ OGRCurveCollection::OGRCurveCollection(const OGRCurveCollection &other)
 }
 
 /************************************************************************/
+/*             OGRCurveCollection( OGRCurveCollection&& )               */
+/************************************************************************/
+
+/**
+ * \brief Move constructor.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRCurveCollection::OGRCurveCollection(OGRCurveCollection &&other)
+    : nCurveCount(other.nCurveCount), papoCurves(other.papoCurves)
+{
+    other.nCurveCount = 0;
+    other.papoCurves = nullptr;
+}
+
+/************************************************************************/
 /*                         ~OGRCurveCollection()                        */
 /************************************************************************/
 
@@ -103,6 +120,27 @@ OGRCurveCollection::operator=(const OGRCurveCollection &other)
                 }
             }
         }
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*                    operator=( OGRCurveCollection&& )                 */
+/************************************************************************/
+
+/**
+ * \brief Move assignment operator.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRCurveCollection &OGRCurveCollection::operator=(OGRCurveCollection &&other)
+{
+    if (this != &other)
+    {
+        empty(nullptr);
+        std::swap(nCurveCount, other.nCurveCount);
+        std::swap(papoCurves, other.papoCurves);
     }
     return *this;
 }
