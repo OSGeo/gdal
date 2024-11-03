@@ -165,6 +165,20 @@ template <> struct CXXTypeTraits<uint64_t>
     }
 };
 
+template <> struct CXXTypeTraits<GFloat16>
+{
+    static constexpr GDALDataType gdal_type = GDT_Float16;
+    static constexpr size_t size = sizeof(GFloat16);
+    static constexpr OGRFieldType ogr_type = OFTReal;
+    // We could introduce OFSTFloat16
+    static constexpr OGRFieldSubType ogr_subtype = OFSTNone;
+
+    static inline GDALExtendedDataType GetExtendedDataType()
+    {
+        return GDALExtendedDataType::Create(GDT_Float16);
+    }
+};
+
 template <> struct CXXTypeTraits<float>
 {
     static constexpr GDALDataType gdal_type = GDT_Float32;
@@ -188,6 +202,19 @@ template <> struct CXXTypeTraits<double>
     static inline GDALExtendedDataType GetExtendedDataType()
     {
         return GDALExtendedDataType::Create(GDT_Float64);
+    }
+};
+
+template <> struct CXXTypeTraits<std::complex<GFloat16>>
+{
+    static constexpr GDALDataType gdal_type = GDT_CFloat16;
+    static constexpr size_t size = sizeof(GFloat16) * 2;
+    static constexpr OGRFieldType ogr_type = OFTMaxType;
+    static constexpr OGRFieldSubType ogr_subtype = OFSTNone;
+
+    static inline GDALExtendedDataType GetExtendedDataType()
+    {
+        return GDALExtendedDataType::Create(GDT_CFloat16);
     }
 };
 
@@ -216,22 +243,6 @@ template <> struct CXXTypeTraits<std::complex<double>>
         return GDALExtendedDataType::Create(GDT_CFloat64);
     }
 };
-
-#if defined HAVE__FLOAT16 ||                                                   \
-    (defined(GDAL_ENABLE_FLOAT16) && defined(FLT16_MAX) && defined(FLT16_MIN))
-template <> struct CXXTypeTraits<GFloat16>
-{
-    static constexpr GDALDataType gdal_type = GDT_Float16;
-    static constexpr size_t size = sizeof(GFloat16);
-    static constexpr OGRFieldType ogr_type = OFTReal;
-    static constexpr OGRFieldSubType ogr_subtype = OFSTNone;
-
-    static inline GDALExtendedDataType GetExtendedDataType()
-    {
-        return GDALExtendedDataType::Create(GDT_Float16);
-    }
-};
-#endif
 
 template <> struct CXXTypeTraits<std::string>
 {

@@ -950,33 +950,28 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
             break;
         case GDT_Float16:
         {
-            if (!CPLIsFinite(dfValue))
+            if (!std::isfinite(dfValue))
                 break;
 
-            if (dfValue < -65504)
+            // TODO: Use ClampAndRound
+            if (dfValue < std::numeric_limits<GFloat16>::lowest())
             {
                 bClamped = TRUE;
-                dfValue = -65504;
+                dfValue = static_cast<double>(
+                    std::numeric_limits<GFloat16>::lowest());
             }
-            else if (dfValue > 65504)
+            else if (dfValue > std::numeric_limits<GFloat16>::max())
             {
                 bClamped = TRUE;
-                dfValue = 65504;
+                dfValue =
+                    static_cast<double>(std::numeric_limits<GFloat16>::max());
             }
             else
             {
-#ifdef HAVE__FLOAT16
                 // Intentionally lose precision.
-                dfValue = static_cast<GFloat16>(dfValue);
-#else
-                float fValue = static_cast<float>(dfValue);
-                GUInt32 nValue;
-                memcpy(&nValue, &fValue, sizeof nValue);
-                bool bHasWarned = true;
-                nValue = CPLHalfToFloat(CPLFloatToHalf(nValue, bHasWarned));
-                memcpy(&fValue, &nValue, sizeof fValue);
-                dfValue = fValue;
-#endif
+                // TODO(schwehr): Is the double cast really necessary?
+                // If so, why?  What will fail?
+                dfValue = static_cast<double>(static_cast<GFloat16>(dfValue));
             }
             break;
         }
@@ -1062,11 +1057,7 @@ bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
         case GDT_Int64:
             return GDALIsValueExactAs<int64_t>(dfValue);
         case GDT_Float16:
-#ifdef HAVE__FLOAT16
             return GDALIsValueExactAs<GFloat16>(dfValue);
-#else
-            return false;
-#endif
         case GDT_Float32:
             return GDALIsValueExactAs<float>(dfValue);
         case GDT_Float64:
@@ -1648,19 +1639,8 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                                 pDataRef)[iOffset]);
                         break;
                     case GDT_Float16:
-#ifdef HAVE__FLOAT16
                         dfValue = reinterpret_cast<const GFloat16 *>(
                             pDataRef)[iOffset];
-#else
-                    {
-                        const GUInt32 nValue =
-                            CPLHalfToFloat(reinterpret_cast<const GUInt16 *>(
-                                pDataRef)[iOffset]);
-                        float fValue;
-                        memcpy(&fValue, &nValue, sizeof fValue);
-                        dfValue = fValue;
-                    }
-#endif
                         break;
                     case GDT_Float32:
                         dfValue =
@@ -1691,27 +1671,12 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                     }
                     case GDT_CFloat16:
                     {
-#ifdef HAVE__FLOAT16
                         const double dfReal =
                             reinterpret_cast<const GFloat16 *>(
                                 pDataRef)[iOffset * 2];
                         const double dfImag =
                             reinterpret_cast<const GFloat16 *>(
                                 pDataRef)[iOffset * 2 + 1];
-#else
-                        const GUInt32 nReal =
-                            CPLHalfToFloat(reinterpret_cast<const GUInt16 *>(
-                                pDataRef)[iOffset * 2]);
-                        float fReal;
-                        memcpy(&fReal, &nReal, sizeof fReal);
-                        const double dfReal = fReal;
-                        const GUInt32 nImag =
-                            CPLHalfToFloat(reinterpret_cast<const GUInt16 *>(
-                                pDataRef)[iOffset * 2 + 1]);
-                        float fImag;
-                        memcpy(&fImag, &nImag, sizeof fImag);
-                        const double dfImag = fImag;
-#endif
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
                         break;
                     }
@@ -2945,12 +2910,6 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 #endif
 #ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
         osBuildInfo += "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES\n";
-#endif
-
-#ifdef HAVE__FLOAT16
-        osBuildInfo += "FLOAT16_SUPPORTED=YES\n";
-#else
-        osBuildInfo += "FLOAT16_SUPPORTED=NO\n";
 #endif
 
 #undef STRINGIFY_HELPER
@@ -5609,37 +5568,27 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
     }
     else if (dt == GDT_Float16)
     {
-        if (GDALClampDoubleValue(dfNoDataValue, -65504, 65504))
+
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 std::numeric_limits<GFloat16>::lowest(),
+                                 std::numeric_limits<GFloat16>::max()))
         {
             return 0;
         }
 
-        if (dfNoDataValue == 65504)
-        {
-            // C++17 does not provide `std::nextafter` for `GFloat16`
-            dfReplacementVal = 65472;
-        }
-        else if (dfNoDataValue == -65504)
-        {
-            // C++17 does not provide `std::nextafter` for `GFloat16`
-            dfReplacementVal = -65472;
-        }
-        else
-        {
-#ifdef HAVE__FLOAT16
-            // Intentionally lose precision
-            dfReplacementVal = static_cast<GFloat16>(dfNoDataValue);
-#else
-            float fReplacementVal = static_cast<float>(dfNoDataValue);
-            GUInt32 nReplacementVal;
-            memcpy(&nReplacementVal, &fReplacementVal, sizeof nReplacementVal);
-            bool bHasWarned = true;
-            nReplacementVal =
-                CPLHalfToFloat(CPLFloatToHalf(nReplacementVal, bHasWarned));
-            memcpy(&fReplacementVal, &nReplacementVal, sizeof fReplacementVal);
-            dfReplacementVal = fReplacementVal;
-#endif
-        }
+        // TODO(Schnetter): Why should we modify the noDataValue?
+        // if (dfNoDataValue == std::numeric_limits<GFloat16>::max())
+        // {
+        //     dfReplacementVal =
+        //         std::nextafter(static_cast<GFloat16>(dfNoDataValue),
+        //                        std::numeric_limits<GFloat16>::lowest());
+        // }
+        // else
+        // {
+        //     dfReplacementVal =
+        //         std::nextafter(static_cast<GFloat16>(dfNoDataValue),
+        //                        std::numeric_limits<GFloat16>::max());
+        // }
     }
     else if (dt == GDT_Float32)
     {

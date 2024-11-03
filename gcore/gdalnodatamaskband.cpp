@@ -188,13 +188,8 @@ bool GDALNoDataMaskBand::IsNoDataInRange(double dfNoDataValue,
 
         case GDT_Float16:
         {
-#ifdef HAVE__FLOAT16
-            return CPLIsNan(dfNoDataValue) || CPLIsInf(dfNoDataValue) ||
+            return isnan(dfNoDataValue) || isinf(dfNoDataValue) ||
                    GDALIsValueInRange<GFloat16>(dfNoDataValue);
-#else
-            return CPLIsNan(dfNoDataValue) || CPLIsInf(dfNoDataValue) ||
-                   (dfNoDataValue >= -65504 && dfNoDataValue <= 65504);
-#endif
         }
 
         case GDT_Float32:

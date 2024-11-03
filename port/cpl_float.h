@@ -70,12 +70,15 @@ GUInt16 CPL_DLL CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned);
 GUInt16 CPL_DLL CPLConvertFloatToHalf(float fFloat32);
 float CPL_DLL CPLConvertHalfToFloat(GUInt16 nHalf);
 
-// Define a type `GFloat16`. If the compiler supports it natively (as
+namespace cpl
+{
+
+// Define a type `CPLFloat16`. If the compiler supports it natively (as
 // `_Float16`), then this class is a simple wrapper. Otherwise we
 // store the values in a `GUInt16` as bit pattern.
 
 //! @cond Doxygen_Suppress
-struct GFloat16
+struct CPLFloat16
 {
     struct make_from_bits_and_value
     {
@@ -83,18 +86,18 @@ struct GFloat16
 
 #ifdef HAVE__FLOAT16
 
-    // How we represent a `GFloat16` internally
+    // How we represent a `CPLFloat16` internally
     using repr = _Float16;
 
-    // How we compute on `GFloat16` values
+    // How we compute on `CPLFloat16` values
     using compute = _Float16;
 
-    // Create a GFloat16 in a constexpr manner. Since we can't convert
+    // Create a CPLFloat16 in a constexpr manner. Since we can't convert
     // bits in a constexpr function, we need to take both the bit
     // pattern and a float value as input, and can then choose which
     // of the two to use.
-    constexpr GFloat16(make_from_bits_and_value, CPL_UNUSED std::uint16_t bits,
-                       float fValue)
+    constexpr CPLFloat16(make_from_bits_and_value,
+                         CPL_UNUSED std::uint16_t bits, float fValue)
         : rValue(repr(fValue))
     {
     }
@@ -121,18 +124,18 @@ struct GFloat16
 
 #else
 
-    // How we represent a `GFloat16` internally
+    // How we represent a `CPLFloat16` internally
     using repr = std::uint16_t;
 
-    // How we compute on `GFloat16` values
+    // How we compute on `CPLFloat16` values
     using compute = float;
 
-    // Create a GFloat16 in a constexpr manner. Since we can't convert
+    // Create a CPLFloat16 in a constexpr manner. Since we can't convert
     // bits in a constexpr function, we need to take both the bit
     // pattern and a float value as input, and can then choose which
     // of the two to use.
-    constexpr GFloat16(make_from_bits_and_value, std::uint16_t bits,
-                       CPL_UNUSED float fValue)
+    constexpr CPLFloat16(make_from_bits_and_value, std::uint16_t bits,
+                         CPL_UNUSED float fValue)
         : rValue(bits)
     {
     }
@@ -275,17 +278,17 @@ struct GFloat16
         return reprToCompute(rValue);
     }
 
-    GFloat16() = default;
-    GFloat16(const GFloat16 &) = default;
-    GFloat16(GFloat16 &&) = default;
-    GFloat16 &operator=(const GFloat16 &) = default;
-    GFloat16 &operator=(GFloat16 &&) = default;
+    CPLFloat16() = default;
+    CPLFloat16(const CPLFloat16 &) = default;
+    CPLFloat16(CPLFloat16 &&) = default;
+    CPLFloat16 &operator=(const CPLFloat16 &) = default;
+    CPLFloat16 &operator=(CPLFloat16 &&) = default;
 
     // Constructors and conversion operators
 
 #ifdef HAVE__FLOAT16
     // cppcheck-suppress noExplicitConstructor
-    constexpr GFloat16(_Float16 hfValue) : rValue(hfValue)
+    constexpr CPLFloat16(_Float16 hfValue) : rValue(hfValue)
     {
     }
 
@@ -298,7 +301,7 @@ struct GFloat16
     // cppcheck-suppress-macro noExplicitConstructor
 #define GDAL_DEFINE_CONVERSION(TYPE)                                           \
                                                                                \
-    GFloat16(TYPE fValue) : rValue(toRepr(fValue))                             \
+    CPLFloat16(TYPE fValue) : rValue(toRepr(fValue))                           \
     {                                                                          \
     }                                                                          \
                                                                                \
@@ -325,49 +328,49 @@ struct GFloat16
 
     // Arithmetic operators
 
-    friend GFloat16 operator+(GFloat16 x)
+    friend CPLFloat16 operator+(CPLFloat16 x)
     {
         return +x.get();
     }
 
-    friend GFloat16 operator-(GFloat16 x)
+    friend CPLFloat16 operator-(CPLFloat16 x)
     {
         return -x.get();
     }
 
 #define GDAL_DEFINE_ARITHOP(OP)                                                \
                                                                                \
-    friend GFloat16 operator OP(GFloat16 x, GFloat16 y)                        \
+    friend CPLFloat16 operator OP(CPLFloat16 x, CPLFloat16 y)                  \
     {                                                                          \
         return x.get() OP y.get();                                             \
     }                                                                          \
                                                                                \
-    friend double operator OP(double x, GFloat16 y)                            \
+    friend double operator OP(double x, CPLFloat16 y)                          \
     {                                                                          \
         return x OP y.get();                                                   \
     }                                                                          \
                                                                                \
-    friend float operator OP(float x, GFloat16 y)                              \
+    friend float operator OP(float x, CPLFloat16 y)                            \
     {                                                                          \
         return x OP y.get();                                                   \
     }                                                                          \
                                                                                \
-    friend GFloat16 operator OP(int x, GFloat16 y)                             \
+    friend CPLFloat16 operator OP(int x, CPLFloat16 y)                         \
     {                                                                          \
         return x OP y.get();                                                   \
     }                                                                          \
                                                                                \
-    friend double operator OP(GFloat16 x, double y)                            \
+    friend double operator OP(CPLFloat16 x, double y)                          \
     {                                                                          \
         return x.get() OP y;                                                   \
     }                                                                          \
                                                                                \
-    friend float operator OP(GFloat16 x, float y)                              \
+    friend float operator OP(CPLFloat16 x, float y)                            \
     {                                                                          \
         return x.get() OP y;                                                   \
     }                                                                          \
                                                                                \
-    friend GFloat16 operator OP(GFloat16 x, int y)                             \
+    friend CPLFloat16 operator OP(CPLFloat16 x, int y)                         \
     {                                                                          \
         return x.get() OP y;                                                   \
     }
@@ -383,37 +386,37 @@ struct GFloat16
 
 #define GDAL_DEFINE_COMPARISON(OP)                                             \
                                                                                \
-    friend bool operator OP(GFloat16 x, GFloat16 y)                            \
+    friend bool operator OP(CPLFloat16 x, CPLFloat16 y)                        \
     {                                                                          \
         return x.get() OP y.get();                                             \
     }                                                                          \
                                                                                \
-    friend bool operator OP(float x, GFloat16 y)                               \
+    friend bool operator OP(float x, CPLFloat16 y)                             \
     {                                                                          \
         return x OP y.get();                                                   \
     }                                                                          \
                                                                                \
-    friend bool operator OP(double x, GFloat16 y)                              \
+    friend bool operator OP(double x, CPLFloat16 y)                            \
     {                                                                          \
         return x OP y.get();                                                   \
     }                                                                          \
                                                                                \
-    friend bool operator OP(int x, GFloat16 y)                                 \
+    friend bool operator OP(int x, CPLFloat16 y)                               \
     {                                                                          \
         return x OP y.get();                                                   \
     }                                                                          \
                                                                                \
-    friend bool operator OP(GFloat16 x, float y)                               \
+    friend bool operator OP(CPLFloat16 x, float y)                             \
     {                                                                          \
         return x.get() OP y;                                                   \
     }                                                                          \
                                                                                \
-    friend bool operator OP(GFloat16 x, double y)                              \
+    friend bool operator OP(CPLFloat16 x, double y)                            \
     {                                                                          \
         return x.get() OP y;                                                   \
     }                                                                          \
                                                                                \
-    friend bool operator OP(GFloat16 x, int y)                                 \
+    friend bool operator OP(CPLFloat16 x, int y)                               \
     {                                                                          \
         return x.get() OP y;                                                   \
     }
@@ -429,128 +432,138 @@ struct GFloat16
 
     // Standard math functions
 
-    friend bool isfinite(GFloat16 x)
+    friend bool isfinite(CPLFloat16 x)
     {
         using std::isfinite;
         return isfinite(float(x));
     }
 
-    friend bool isinf(GFloat16 x)
+    friend bool isinf(CPLFloat16 x)
     {
         using std::isinf;
         return isinf(float(x));
     }
 
-    friend bool isnan(GFloat16 x)
+    friend bool isnan(CPLFloat16 x)
     {
         using std::isnan;
         return isnan(float(x));
     }
 
-    friend GFloat16 abs(GFloat16 x)
+    friend CPLFloat16 abs(CPLFloat16 x)
     {
         using std::abs;
-        return GFloat16(abs(float(x)));
+        return CPLFloat16(abs(float(x)));
     }
 
-    friend GFloat16 cbrt(GFloat16 x)
+    friend CPLFloat16 cbrt(CPLFloat16 x)
     {
         using std::cbrt;
-        return GFloat16(cbrt(float(x)));
+        return CPLFloat16(cbrt(float(x)));
     }
 
-    friend GFloat16 ceil(GFloat16 x)
+    friend CPLFloat16 ceil(CPLFloat16 x)
     {
         using std::ceil;
-        return GFloat16(ceil(float(x)));
+        return CPLFloat16(ceil(float(x)));
     }
 
-    friend GFloat16 fabs(GFloat16 x)
+    friend CPLFloat16 fabs(CPLFloat16 x)
     {
         using std::fabs;
-        return GFloat16(fabs(float(x)));
+        return CPLFloat16(fabs(float(x)));
     }
 
-    friend GFloat16 floor(GFloat16 x)
+    friend CPLFloat16 floor(CPLFloat16 x)
     {
         using std::floor;
-        return GFloat16(floor(float(x)));
+        return CPLFloat16(floor(float(x)));
     }
 
-    friend GFloat16 round(GFloat16 x)
+    friend CPLFloat16 round(CPLFloat16 x)
     {
         using std::round;
-        return GFloat16(round(float(x)));
+        return CPLFloat16(round(float(x)));
     }
 
-    friend GFloat16 sqrt(GFloat16 x)
+    friend CPLFloat16 sqrt(CPLFloat16 x)
     {
         using std::sqrt;
-        return GFloat16(sqrt(float(x)));
+        return CPLFloat16(sqrt(float(x)));
     }
 
-    friend GFloat16 fmax(GFloat16 x, GFloat16 y)
+    friend CPLFloat16 fmax(CPLFloat16 x, CPLFloat16 y)
     {
         using std::fmax;
-        return GFloat16(fmax(float(x), float(y)));
+        return CPLFloat16(fmax(float(x), float(y)));
     }
 
-    friend GFloat16 fmin(GFloat16 x, GFloat16 y)
+    friend CPLFloat16 fmin(CPLFloat16 x, CPLFloat16 y)
     {
         using std::fmin;
-        return GFloat16(fmin(float(x), float(y)));
+        return CPLFloat16(fmin(float(x), float(y)));
     }
 
-    friend GFloat16 hypot(GFloat16 x, GFloat16 y)
+    friend CPLFloat16 hypot(CPLFloat16 x, CPLFloat16 y)
     {
         using std::hypot;
-        return GFloat16(hypot(float(x), float(y)));
+        return CPLFloat16(hypot(float(x), float(y)));
     }
 
-    friend GFloat16 max(GFloat16 x, GFloat16 y)
+    friend CPLFloat16 max(CPLFloat16 x, CPLFloat16 y)
     {
         using std::max;
-        return GFloat16(max(float(x), float(y)));
+        return CPLFloat16(max(float(x), float(y)));
     }
 
-    friend GFloat16 min(GFloat16 x, GFloat16 y)
+    friend CPLFloat16 min(CPLFloat16 x, CPLFloat16 y)
     {
         using std::min;
-        return GFloat16(min(float(x), float(y)));
+        return CPLFloat16(min(float(x), float(y)));
     }
 
-    friend GFloat16 pow(GFloat16 x, GFloat16 y)
+    friend CPLFloat16 pow(CPLFloat16 x, CPLFloat16 y)
     {
         using std::pow;
-        return GFloat16(pow(float(x), float(y)));
+        return CPLFloat16(pow(float(x), float(y)));
     }
 
-    friend GFloat16 pow(GFloat16 x, int n)
+    friend CPLFloat16 pow(CPLFloat16 x, int n)
     {
         using std::pow;
-        return GFloat16(pow(float(x), n));
+        return CPLFloat16(pow(float(x), n));
     }
 };
 
 //! @endcond
+}  // namespace cpl
+
+using GFloat16 = cpl::CPLFloat16;
 
 // Define some GDAL wrappers. Their C equivalents are defined in `cpl_port.h`.
+// (These wrappers are not necessary any mroe in C++, one can always
+// call `isnan` etc directly.)
 
 template <typename T> constexpr int CPLIsNan(T x)
 {
-    using std::isnan, ::isnan;
+    // We need to write `using std::isnan` instead of directly using
+    // `std::isnan` because `std::isnan` only supports the types
+    // `float` and `double`. The `isnan` for `CPLFloat16` is found in
+    // the `cpl` namespace via argument-dependent lookup
+    // <https://en.cppreference.com/w/cpp/language/adl>.
+    using std::isnan;
     return isnan(x);
 }
 
 template <typename T> constexpr int CPLIsInf(T x)
 {
-    using std::isinf, ::isinf;
+    using std::isinf;
     return isinf(x);
 }
 
 template <typename T> constexpr int CPLIsFinite(T x)
 {
-    using std::isfinite, ::isfinite;
+    using std::isfinite;
     return isfinite(x);
 }
 
@@ -558,7 +571,7 @@ namespace std
 {
 
 //! @cond Doxygen_Suppress
-template <> struct numeric_limits<GFloat16>
+template <> struct numeric_limits<cpl::CPLFloat16>
 {
     static constexpr bool is_specialized = true;
     static constexpr bool is_signed = true;
@@ -574,39 +587,40 @@ template <> struct numeric_limits<GFloat16>
     static constexpr int max_digits10 = 5;
     static constexpr int radix = 2;
 
-    static constexpr GFloat16 epsilon()
+    static constexpr cpl::CPLFloat16 epsilon()
     {
-        return GFloat16(GFloat16::make_from_bits_and_value{}, 0x1400,
-                        0.000977f);
+        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
+                               0x1400, 0.000977f);
     }
 
-    static constexpr GFloat16 min()
+    static constexpr cpl::CPLFloat16 min()
     {
-        return GFloat16(GFloat16::make_from_bits_and_value{}, 0x0001, 6.0e-8f);
+        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
+                               0x0001, 6.0e-8f);
     }
 
-    static constexpr GFloat16 lowest()
+    static constexpr cpl::CPLFloat16 lowest()
     {
-        return GFloat16(GFloat16::make_from_bits_and_value{}, 0xfbff,
-                        -65504.0f);
+        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
+                               0xfbff, -65504.0f);
     }
 
-    static constexpr GFloat16 max()
+    static constexpr cpl::CPLFloat16 max()
     {
-        return GFloat16(GFloat16::make_from_bits_and_value{}, 0x7bff,
-                        +65504.0f);
+        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
+                               0x7bff, +65504.0f);
     }
 
-    static constexpr GFloat16 infinity()
+    static constexpr cpl::CPLFloat16 infinity()
     {
-        return GFloat16(GFloat16::make_from_bits_and_value{}, 0x7c00,
-                        std::numeric_limits<float>::infinity());
+        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
+                               0x7c00, std::numeric_limits<float>::infinity());
     }
 
-    static constexpr GFloat16 quiet_NaN()
+    static constexpr cpl::CPLFloat16 quiet_NaN()
     {
-        return GFloat16(GFloat16::make_from_bits_and_value{}, 0x7e00,
-                        std::numeric_limits<float>::quiet_NaN());
+        return cpl::CPLFloat16(cpl::CPLFloat16::make_from_bits_and_value{},
+                               0x7e00, std::numeric_limits<float>::quiet_NaN());
     }
 };
 

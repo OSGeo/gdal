@@ -1679,15 +1679,8 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                                      *static_cast<const std::int64_t *>(pSrc)));
                 break;
             case GDT_Float16:
-#ifdef HAVE__FLOAT16
                 str = CPLSPrintf("%.5g",
                                  double(*static_cast<const GFloat16 *>(pSrc)));
-#else
-
-                str = CPLSPrintf(
-                    "%.5g",
-                    CPLConvertHalfToFloat(*static_cast<const GUInt16 *>(pSrc)));
-#endif
                 break;
             case GDT_Float32:
                 str = CPLSPrintf("%.9g", *static_cast<const float *>(pSrc));
@@ -1709,14 +1702,8 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
             }
             case GDT_CFloat16:
             {
-#ifdef HAVE__FLOAT16
                 const GFloat16 *src = static_cast<const GFloat16 *>(pSrc);
                 str = CPLSPrintf("%.5g+%.5gj", double(src[0]), double(src[1]));
-#else
-                const GUInt16 *src = static_cast<const GUInt16 *>(pSrc);
-                str = CPLSPrintf("%.5g+%.5gj", CPLConvertHalfToFloat(src[0]),
-                                 CPLConvertHalfToFloat(src[1]));
-#endif
                 break;
             }
             case GDT_CFloat32:
@@ -7149,13 +7136,9 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
             break;
 
         case GDT_Float16:
-#ifdef HAVE__FLOAT16
             ReadInternal<GFloat16>(count, bufferStride, bufferDataType,
                                    pDstBuffer, pTempBuffer, oTmpBufferDT,
                                    tmpBufferStrideVector);
-#else
-            CPLAssert(false);
-#endif
             break;
 
         case GDT_Float32:

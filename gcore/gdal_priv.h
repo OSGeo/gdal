@@ -4517,8 +4517,17 @@ GDALDataset *GDALCreateOverviewDataset(GDALDataset *poDS, int nOvrLevel,
 // Behavior is undefined if fVal1 or fVal2 are NaN (should be tested before
 // calling this function)
 
-// The expression `abs(fVal1 + fVal2)` looks strange; is this a bug?
+// TODO: The expression `abs(fVal1 + fVal2)` looks strange; is this a bug?
 // Should this be `abs(fVal1) + abs(fVal2)` instead?
+
+inline bool ARE_REAL_EQUAL(GFloat16 dfVal1, GFloat16 dfVal2, int ulp = 2)
+{
+    using std::abs;
+    return dfVal1 == dfVal2 || /* Should cover infinity */
+           abs(dfVal1 - dfVal2) < std::numeric_limits<GFloat16>::epsilon() *
+                                      abs(dfVal1 + dfVal2) * ulp;
+}
+
 inline bool ARE_REAL_EQUAL(float fVal1, float fVal2, int ulp = 2)
 {
     using std::abs;
@@ -4536,20 +4545,6 @@ inline bool ARE_REAL_EQUAL(double dfVal1, double dfVal2, int ulp = 2)
            abs(dfVal1 - dfVal2) < std::numeric_limits<float>::epsilon() *
                                       abs(dfVal1 + dfVal2) * ulp;
 }
-
-// The generic function above does not work for GFloat16 because
-// std::numeric_limits<float>::epsilon() is the wrong choice
-#ifdef HAVE__FLOAT16
-inline bool ARE_REAL_EQUAL(GFloat16 hfVal1, GFloat16 hfVal2, int ulp = 2)
-{
-    // We need to roll our own `abs` because the C++17 standard
-    // library does not provide one
-    auto abs = [](GFloat16 x) { return x < 0 ? -x : x; };
-    return hfVal1 == hfVal2 || /* Should cover infinity */
-           abs(hfVal1 - hfVal2) < std::numeric_limits<GFloat16>::epsilon() *
-                                      abs(hfVal1 + hfVal2) * ulp;
-}
-#endif
 
 double GDALAdjustNoDataCloseToFloatMax(double dfVal);
 
