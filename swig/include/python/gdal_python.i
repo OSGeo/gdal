@@ -5018,6 +5018,7 @@ class VSIFile(BytesIO):
 
         self._fp = VSIFOpenExL(self._path, self._mode, True)
         if self._fp is None:
+            self._closed = True
             raise OSError(VSIGetLastErrorMsg())
 
         self._closed = False
