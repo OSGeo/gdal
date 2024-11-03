@@ -1334,18 +1334,29 @@ class Image
     /** Final tag processing */
     void finalTagProcessing()
     {
-        if ((m_strileOffsetsTag = tag(TagCode::TileOffsets)) &&
-            (m_strileByteCountsTag = tag(TagCode::TileByteCounts)) &&
-            m_strileOffsetsTag->count == m_strileByteCountsTag->count)
+        m_strileOffsetsTag = tag(TagCode::TileOffsets);
+        if (m_strileOffsetsTag)
         {
-            m_isTiled = true;
-            m_strileCount = m_strileOffsetsTag->count;
+            m_strileByteCountsTag = tag(TagCode::TileByteCounts);
+            if (m_strileByteCountsTag &&
+                m_strileOffsetsTag->count == m_strileByteCountsTag->count)
+            {
+                m_isTiled = true;
+                m_strileCount = m_strileOffsetsTag->count;
+            }
         }
-        else if ((m_strileOffsetsTag = tag(TagCode::StripOffsets)) &&
-                 (m_strileByteCountsTag = tag(TagCode::StripByteCounts)) &&
-                 m_strileOffsetsTag->count == m_strileByteCountsTag->count)
+        else
         {
-            m_strileCount = m_strileOffsetsTag->count;
+            m_strileOffsetsTag = tag(TagCode::StripOffsets);
+            if (m_strileOffsetsTag)
+            {
+                m_strileByteCountsTag = tag(TagCode::StripByteCounts);
+                if (m_strileByteCountsTag &&
+                    m_strileOffsetsTag->count == m_strileByteCountsTag->count)
+                {
+                    m_strileCount = m_strileOffsetsTag->count;
+                }
+            }
         }
     }
 
