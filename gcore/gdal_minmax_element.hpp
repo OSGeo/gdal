@@ -34,6 +34,10 @@
 #endif
 
 #if defined(__x86_64) || defined(_M_X64)
+#define GDAL_MINMAX_ELEMENT_USE_SSE2
+#endif
+
+#ifdef GDAL_MINMAX_ELEMENT_USE_SSE2
 // SSE2 header
 #include <emmintrin.h>
 #endif
@@ -130,10 +134,10 @@ template <class T, bool IS_MAX> size_t extremum_element(const T *v, size_t size)
     return idx_of_extremum;
 }
 
-#if defined(__x86_64) || defined(_M_X64)
+#ifdef GDAL_MINMAX_ELEMENT_USE_SSE2
 
 /************************************************************************/
-/*                    extremum_element_with_nan()                       */
+/*                   extremum_element_with_nan()                        */
 /************************************************************************/
 
 static inline int8_t Shift8(uint8_t x)
@@ -168,6 +172,39 @@ template <class T> static inline auto set1(T x)
         return _mm_set1_epi16(x);
     else if constexpr (std::is_same_v<T, uint32_t>)
         return _mm_set1_epi32(Shift32(x));
+    else if constexpr (std::is_same_v<T, int32_t>)
+        return _mm_set1_epi32(x);
+    else if constexpr (std::is_same_v<T, float>)
+        return _mm_set1_ps(x);
+    else
+        return _mm_set1_pd(x);
+}
+
+// Return a _mm128[i|d] register with all its elements set to x
+template <class T> static inline auto set1_unshifted(T x)
+{
+    if constexpr (std::is_same_v<T, uint8_t>)
+    {
+        int8_t xSigned;
+        memcpy(&xSigned, &x, sizeof(xSigned));
+        return _mm_set1_epi8(xSigned);
+    }
+    else if constexpr (std::is_same_v<T, int8_t>)
+        return _mm_set1_epi8(x);
+    else if constexpr (std::is_same_v<T, uint16_t>)
+    {
+        int16_t xSigned;
+        memcpy(&xSigned, &x, sizeof(xSigned));
+        return _mm_set1_epi16(xSigned);
+    }
+    else if constexpr (std::is_same_v<T, int16_t>)
+        return _mm_set1_epi16(x);
+    else if constexpr (std::is_same_v<T, uint32_t>)
+    {
+        int32_t xSigned;
+        memcpy(&xSigned, &x, sizeof(xSigned));
+        return _mm_set1_epi32(xSigned);
+    }
     else if constexpr (std::is_same_v<T, int32_t>)
         return _mm_set1_epi32(x);
     else if constexpr (std::is_same_v<T, float>)
@@ -253,8 +290,8 @@ static inline __m128i comp(SSE_T x, SSE_T y)
 }
 
 // Using SSE2
-template <class T, bool IS_MAX>
-inline size_t extremum_element_with_nan(const T *v, size_t size)
+template <class T, bool IS_MAX, bool HAS_NODATA>
+inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
 {
     static_assert(std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> ||
                   std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t> ||
@@ -264,7 +301,16 @@ inline size_t extremum_element_with_nan(const T *v, size_t size)
         return 0;
     size_t idx_of_extremum = 0;
     T extremum = v[0];
-    [[maybe_unused]] bool extremum_is_nan = std::isnan(extremum);
+    [[maybe_unused]] bool extremum_is_invalid = false;
+    if constexpr (std::is_floating_point_v<T>)
+    {
+        extremum_is_invalid = std::isnan(extremum);
+    }
+    if constexpr (HAS_NODATA)
+    {
+        if (extremum == noDataValue)
+            extremum_is_invalid = true;
+    }
     size_t i = 1;
 
     constexpr size_t VALS_PER_REG = sizeof(set1(extremum)) / sizeof(extremum);
@@ -274,22 +320,43 @@ inline size_t extremum_element_with_nan(const T *v, size_t size)
     static_assert(LOOP_UNROLLING == 4);
     constexpr size_t VALS_PER_ITER = VALS_PER_REG * LOOP_UNROLLING;
 
-    const auto update =
-        [v, &extremum, &idx_of_extremum, &extremum_is_nan](size_t idx)
+    const auto update = [v, noDataValue, &extremum, &idx_of_extremum,
+                         &extremum_is_invalid](size_t idx)
     {
+        if constexpr (HAS_NODATA)
+        {
+            if (v[idx] == noDataValue)
+                return;
+            if (extremum_is_invalid)
+            {
+                if constexpr (std::is_floating_point_v<T>)
+                {
+                    if (std::isnan(v[idx]))
+                        return;
+                }
+                extremum = v[idx];
+                idx_of_extremum = idx;
+                extremum_is_invalid = false;
+                return;
+            }
+        }
+        else
+        {
+            CPL_IGNORE_RET_VAL(noDataValue);
+        }
         if (compScalar<T, IS_MAX>(v[idx], extremum))
         {
             extremum = v[idx];
             idx_of_extremum = idx;
-            extremum_is_nan = false;
+            extremum_is_invalid = false;
         }
         else if constexpr (std::is_floating_point_v<T>)
         {
-            if (extremum_is_nan && !std::isnan(v[idx]))
+            if (extremum_is_invalid && !std::isnan(v[idx]))
             {
                 extremum = v[idx];
                 idx_of_extremum = idx;
-                extremum_is_nan = false;
+                extremum_is_invalid = false;
             }
         }
     };
@@ -299,6 +366,24 @@ inline size_t extremum_element_with_nan(const T *v, size_t size)
         update(i);
     }
 
+    [[maybe_unused]] auto sse_neutral = set1_unshifted(static_cast<T>(0));
+    [[maybe_unused]] auto sse_nodata = set1_unshifted(noDataValue);
+    if constexpr (HAS_NODATA)
+    {
+        for (; i < size && extremum_is_invalid; ++i)
+        {
+            update(i);
+        }
+        if (!extremum_is_invalid)
+        {
+            for (; i < size && (i % VALS_PER_ITER) != 0; ++i)
+            {
+                update(i);
+            }
+            sse_neutral = set1_unshifted(extremum);
+        }
+    }
+
     auto sse_extremum = set1(extremum);
 
     [[maybe_unused]] size_t hits = 0;
@@ -306,10 +391,103 @@ inline size_t extremum_element_with_nan(const T *v, size_t size)
     for (; i < sse_iter_count; i += VALS_PER_ITER)
     {
         // A bit of loop unrolling to save 3/4 of slow movemask operations.
-        const auto sse_val0 = loadv(v + i + 0 * VALS_PER_REG);
-        const auto sse_val1 = loadv(v + i + 1 * VALS_PER_REG);
-        const auto sse_val2 = loadv(v + i + 2 * VALS_PER_REG);
-        const auto sse_val3 = loadv(v + i + 3 * VALS_PER_REG);
+        auto sse_val0 = loadv(v + i + 0 * VALS_PER_REG);
+        auto sse_val1 = loadv(v + i + 1 * VALS_PER_REG);
+        auto sse_val2 = loadv(v + i + 2 * VALS_PER_REG);
+        auto sse_val3 = loadv(v + i + 3 * VALS_PER_REG);
+
+        if constexpr (HAS_NODATA)
+        {
+            // Replace all components that are at the nodata value by a
+            // neutral value (current minimum)
+            if constexpr (std::is_same_v<T, uint8_t> ||
+                          std::is_same_v<T, int8_t>)
+            {
+                const auto replaceNoDataByNeutral =
+                    [sse_neutral, sse_nodata](auto sse_val)
+                {
+                    const auto eq_nodata = _mm_cmpeq_epi8(sse_val, sse_nodata);
+                    return _mm_or_si128(_mm_and_si128(eq_nodata, sse_neutral),
+                                        _mm_andnot_si128(eq_nodata, sse_val));
+                };
+
+                sse_val0 = replaceNoDataByNeutral(sse_val0);
+                sse_val1 = replaceNoDataByNeutral(sse_val1);
+                sse_val2 = replaceNoDataByNeutral(sse_val2);
+                sse_val3 = replaceNoDataByNeutral(sse_val3);
+            }
+            else if constexpr (std::is_same_v<T, uint16_t> ||
+                               std::is_same_v<T, int16_t>)
+            {
+                const auto replaceNoDataByNeutral =
+                    [sse_neutral, sse_nodata](auto sse_val)
+                {
+                    const auto eq_nodata = _mm_cmpeq_epi16(sse_val, sse_nodata);
+                    return _mm_or_si128(_mm_and_si128(eq_nodata, sse_neutral),
+                                        _mm_andnot_si128(eq_nodata, sse_val));
+                };
+
+                sse_val0 = replaceNoDataByNeutral(sse_val0);
+                sse_val1 = replaceNoDataByNeutral(sse_val1);
+                sse_val2 = replaceNoDataByNeutral(sse_val2);
+                sse_val3 = replaceNoDataByNeutral(sse_val3);
+            }
+            else if constexpr (std::is_same_v<T, uint32_t> ||
+                               std::is_same_v<T, int32_t>)
+            {
+                const auto replaceNoDataByNeutral =
+                    [sse_neutral, sse_nodata](auto sse_val)
+                {
+                    const auto eq_nodata = _mm_cmpeq_epi32(sse_val, sse_nodata);
+                    return _mm_or_si128(_mm_and_si128(eq_nodata, sse_neutral),
+                                        _mm_andnot_si128(eq_nodata, sse_val));
+                };
+
+                sse_val0 = replaceNoDataByNeutral(sse_val0);
+                sse_val1 = replaceNoDataByNeutral(sse_val1);
+                sse_val2 = replaceNoDataByNeutral(sse_val2);
+                sse_val3 = replaceNoDataByNeutral(sse_val3);
+            }
+            else if constexpr (std::is_same_v<T, float>)
+            {
+                const auto replaceNoDataByNeutral =
+                    [sse_neutral, sse_nodata](auto sse_val)
+                {
+                    const auto eq_nodata = _mm_cmpeq_ps(sse_val, sse_nodata);
+                    return _mm_or_ps(_mm_and_ps(eq_nodata, sse_neutral),
+                                     _mm_andnot_ps(eq_nodata, sse_val));
+                };
+
+                sse_val0 = replaceNoDataByNeutral(sse_val0);
+                sse_val1 = replaceNoDataByNeutral(sse_val1);
+                sse_val2 = replaceNoDataByNeutral(sse_val2);
+                sse_val3 = replaceNoDataByNeutral(sse_val3);
+            }
+            else if constexpr (std::is_same_v<T, double>)
+            {
+                const auto replaceNoDataByNeutral =
+                    [sse_neutral, sse_nodata](auto sse_val)
+                {
+                    const auto eq_nodata = _mm_cmpeq_pd(sse_val, sse_nodata);
+                    return _mm_or_pd(_mm_and_pd(eq_nodata, sse_neutral),
+                                     _mm_andnot_pd(eq_nodata, sse_val));
+                };
+
+                sse_val0 = replaceNoDataByNeutral(sse_val0);
+                sse_val1 = replaceNoDataByNeutral(sse_val1);
+                sse_val2 = replaceNoDataByNeutral(sse_val2);
+                sse_val3 = replaceNoDataByNeutral(sse_val3);
+            }
+            else
+            {
+                static_assert(
+                    std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> ||
+                    std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t> ||
+                    std::is_same_v<T, uint32_t> || std::is_same_v<T, int32_t> ||
+                    std::is_same_v<T, float> || std::is_same_v<T, double>);
+            }
+        }
+
         if (_mm_movemask_epi8(_mm_or_si128(
                 _mm_or_si128(comp<T, IS_MAX>(sse_val0, sse_extremum),
                              comp<T, IS_MAX>(sse_val1, sse_extremum)),
@@ -337,6 +515,10 @@ inline size_t extremum_element_with_nan(const T *v, size_t size)
                 update(i + j);
             }
             sse_extremum = set1(extremum);
+            if constexpr (HAS_NODATA)
+            {
+                sse_neutral = set1_unshifted(extremum);
+            }
         }
     }
     for (; i < size; ++i)
@@ -352,9 +534,10 @@ inline size_t extremum_element_with_nan(const T *v, size_t size)
 /*                    extremum_element_with_nan()                       */
 /************************************************************************/
 
-template <class T, bool IS_MAX>
-inline size_t extremum_element_with_nan(const T *v, size_t size)
+template <class T, bool IS_MAX, bool HAS_NODATA>
+inline size_t extremum_element_with_nan(const T *v, size_t size, T /* nodata */)
 {
+    static_assert(!HAS_NODATA);
     if (size == 0)
         return 0;
     size_t idx_of_extremum = 0;
@@ -379,98 +562,217 @@ inline size_t extremum_element_with_nan(const T *v, size_t size)
 /*                         extremum_element()                           */
 /************************************************************************/
 
-#if defined(__x86_64) || defined(_M_X64)
+#ifdef GDAL_MINMAX_ELEMENT_USE_SSE2
+
+template <>
+size_t extremum_element<uint8_t, true>(const uint8_t *v, size_t size,
+                                       uint8_t noDataValue)
+{
+    return extremum_element_with_nan<uint8_t, true, true>(v, size, noDataValue);
+}
+
+template <>
+size_t extremum_element<uint8_t, false>(const uint8_t *v, size_t size,
+                                        uint8_t noDataValue)
+{
+    return extremum_element_with_nan<uint8_t, false, true>(v, size,
+                                                           noDataValue);
+}
 
 template <>
 size_t extremum_element<uint8_t, true>(const uint8_t *v, size_t size)
 {
-    return extremum_element_with_nan<uint8_t, true>(v, size);
+    return extremum_element_with_nan<uint8_t, true, false>(v, size, 0);
 }
 
 template <>
 size_t extremum_element<uint8_t, false>(const uint8_t *v, size_t size)
 {
-    return extremum_element_with_nan<uint8_t, false>(v, size);
+    return extremum_element_with_nan<uint8_t, false, false>(v, size, 0);
+}
+
+template <>
+size_t extremum_element<int8_t, true>(const int8_t *v, size_t size,
+                                      int8_t noDataValue)
+{
+    return extremum_element_with_nan<int8_t, true, true>(v, size, noDataValue);
+}
+
+template <>
+size_t extremum_element<int8_t, false>(const int8_t *v, size_t size,
+                                       int8_t noDataValue)
+{
+    return extremum_element_with_nan<int8_t, false, true>(v, size, noDataValue);
 }
 
 template <> size_t extremum_element<int8_t, true>(const int8_t *v, size_t size)
 {
-    return extremum_element_with_nan<int8_t, true>(v, size);
+    return extremum_element_with_nan<int8_t, true, false>(v, size, 0);
 }
 
 template <> size_t extremum_element<int8_t, false>(const int8_t *v, size_t size)
 {
-    return extremum_element_with_nan<int8_t, false>(v, size);
+    return extremum_element_with_nan<int8_t, false, false>(v, size, 0);
+}
+
+template <>
+size_t extremum_element<uint16_t, true>(const uint16_t *v, size_t size,
+                                        uint16_t noDataValue)
+{
+    return extremum_element_with_nan<uint16_t, true, true>(v, size,
+                                                           noDataValue);
+}
+
+template <>
+size_t extremum_element<uint16_t, false>(const uint16_t *v, size_t size,
+                                         uint16_t noDataValue)
+{
+    return extremum_element_with_nan<uint16_t, false, true>(v, size,
+                                                            noDataValue);
 }
 
 template <>
 size_t extremum_element<uint16_t, true>(const uint16_t *v, size_t size)
 {
-    return extremum_element_with_nan<uint16_t, true>(v, size);
+    return extremum_element_with_nan<uint16_t, true, false>(v, size, 0);
 }
 
 template <>
 size_t extremum_element<uint16_t, false>(const uint16_t *v, size_t size)
 {
-    return extremum_element_with_nan<uint16_t, false>(v, size);
+    return extremum_element_with_nan<uint16_t, false, false>(v, size, 0);
+}
+
+template <>
+size_t extremum_element<int16_t, true>(const int16_t *v, size_t size,
+                                       int16_t noDataValue)
+{
+    return extremum_element_with_nan<int16_t, true, true>(v, size, noDataValue);
+}
+
+template <>
+size_t extremum_element<int16_t, false>(const int16_t *v, size_t size,
+                                        int16_t noDataValue)
+{
+    return extremum_element_with_nan<int16_t, false, true>(v, size,
+                                                           noDataValue);
 }
 
 template <>
 size_t extremum_element<int16_t, true>(const int16_t *v, size_t size)
 {
-    return extremum_element_with_nan<int16_t, true>(v, size);
+    return extremum_element_with_nan<int16_t, true, false>(v, size, 0);
 }
 
 template <>
 size_t extremum_element<int16_t, false>(const int16_t *v, size_t size)
 {
-    return extremum_element_with_nan<int16_t, false>(v, size);
+    return extremum_element_with_nan<int16_t, false, false>(v, size, 0);
+}
+
+template <>
+size_t extremum_element<uint32_t, true>(const uint32_t *v, size_t size,
+                                        uint32_t noDataValue)
+{
+    return extremum_element_with_nan<uint32_t, true, true>(v, size,
+                                                           noDataValue);
+}
+
+template <>
+size_t extremum_element<uint32_t, false>(const uint32_t *v, size_t size,
+                                         uint32_t noDataValue)
+{
+    return extremum_element_with_nan<uint32_t, false, true>(v, size,
+                                                            noDataValue);
 }
 
 template <>
 size_t extremum_element<uint32_t, true>(const uint32_t *v, size_t size)
 {
-    return extremum_element_with_nan<uint32_t, true>(v, size);
+    return extremum_element_with_nan<uint32_t, true, false>(v, size, 0);
 }
 
 template <>
 size_t extremum_element<uint32_t, false>(const uint32_t *v, size_t size)
 {
-    return extremum_element_with_nan<uint32_t, false>(v, size);
+    return extremum_element_with_nan<uint32_t, false, false>(v, size, 0);
+}
+
+template <>
+size_t extremum_element<int32_t, true>(const int32_t *v, size_t size,
+                                       int32_t noDataValue)
+{
+    return extremum_element_with_nan<int32_t, true, true>(v, size, noDataValue);
+}
+
+template <>
+size_t extremum_element<int32_t, false>(const int32_t *v, size_t size,
+                                        int32_t noDataValue)
+{
+    return extremum_element_with_nan<int32_t, false, true>(v, size,
+                                                           noDataValue);
 }
 
 template <>
 size_t extremum_element<int32_t, true>(const int32_t *v, size_t size)
 {
-    return extremum_element_with_nan<int32_t, true>(v, size);
+    return extremum_element_with_nan<int32_t, true, false>(v, size, 0);
 }
 
 template <>
 size_t extremum_element<int32_t, false>(const int32_t *v, size_t size)
 {
-    return extremum_element_with_nan<int32_t, false>(v, size);
+    return extremum_element_with_nan<int32_t, false, false>(v, size, 0);
+}
+
+template <>
+size_t extremum_element<float, true>(const float *v, size_t size,
+                                     float noDataValue)
+{
+    return extremum_element_with_nan<float, true, true>(v, size, noDataValue);
+}
+
+template <>
+size_t extremum_element<float, false>(const float *v, size_t size,
+                                      float noDataValue)
+{
+    return extremum_element_with_nan<float, false, true>(v, size, noDataValue);
+}
+
+template <>
+size_t extremum_element<double, true>(const double *v, size_t size,
+                                      double noDataValue)
+{
+    return extremum_element_with_nan<double, true, true>(v, size, noDataValue);
+}
+
+template <>
+size_t extremum_element<double, false>(const double *v, size_t size,
+                                       double noDataValue)
+{
+    return extremum_element_with_nan<double, false, true>(v, size, noDataValue);
 }
 
 #endif
 
 template <> size_t extremum_element<float, true>(const float *v, size_t size)
 {
-    return extremum_element_with_nan<float, true>(v, size);
+    return extremum_element_with_nan<float, true, false>(v, size, 0);
 }
 
 template <> size_t extremum_element<double, true>(const double *v, size_t size)
 {
-    return extremum_element_with_nan<double, true>(v, size);
+    return extremum_element_with_nan<double, true, false>(v, size, 0);
 }
 
 template <> size_t extremum_element<float, false>(const float *v, size_t size)
 {
-    return extremum_element_with_nan<float, false>(v, size);
+    return extremum_element_with_nan<float, false, false>(v, size, 0);
 }
 
 template <> size_t extremum_element<double, false>(const double *v, size_t size)
 {
-    return extremum_element_with_nan<double, false>(v, size);
+    return extremum_element_with_nan<double, false, false>(v, size, 0);
 }
 
 /************************************************************************/
@@ -481,7 +783,7 @@ template <class T, bool IS_MAX>
 inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
 {
     if (std::isnan(noDataValue))
-        return extremum_element_with_nan<T, IS_MAX>(v, size);
+        return extremum_element_with_nan<T, IS_MAX, false>(v, size, 0);
     if (size == 0)
         return 0;
     size_t idx_of_extremum = 0;
@@ -507,18 +809,13 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
 /*                            extremum_element()                        */
 /************************************************************************/
 
+#if !defined(GDAL_MINMAX_ELEMENT_USE_SSE2)
+
 template <>
 size_t extremum_element<float, true>(const float *v, size_t size,
                                      float noDataValue)
 {
     return extremum_element_with_nan<float, true>(v, size, noDataValue);
-}
-
-template <>
-size_t extremum_element<double, true>(const double *v, size_t size,
-                                      double noDataValue)
-{
-    return extremum_element_with_nan<double, true>(v, size, noDataValue);
 }
 
 template <>
@@ -529,11 +826,20 @@ size_t extremum_element<float, false>(const float *v, size_t size,
 }
 
 template <>
+size_t extremum_element<double, true>(const double *v, size_t size,
+                                      double noDataValue)
+{
+    return extremum_element_with_nan<double, true>(v, size, noDataValue);
+}
+
+template <>
 size_t extremum_element<double, false>(const double *v, size_t size,
                                        double noDataValue)
 {
     return extremum_element_with_nan<double, false>(v, size, noDataValue);
 }
+
+#endif
 
 template <class T, bool IS_MAX>
 inline size_t extremum_element(const T *buffer, size_t size, bool bHasNoData,

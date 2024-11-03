@@ -51,7 +51,7 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, false, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d\n", idx);
+            printf("min at idx %d (optimized)\n", idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -77,7 +77,27 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, true, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d(nodata case)\n", idx);
+            printf("min at idx %d (nodata case, optimized)\n", idx);
+            auto end = std::chrono::steady_clock::now();
+            printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        }
+        {
+            auto start = std::chrono::steady_clock::now();
+            int idx = 0;
+            for (int i = 0; i < N_ITERS; ++i)
+            {
+                idx += static_cast<int>(std::distance(
+                    x.begin(), std::min_element(x.begin(), x.end(),
+                                                [](T x, T y) {
+                                                    return y == 0   ? true
+                                                           : x == 0 ? false
+                                                                    : x < y;
+                                                })));
+            }
+            idx /= N_ITERS;
+            printf("min at idx %d (nodata case, using std::min_element with "
+                   "nodata aware comparison)\n",
+                   idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -99,7 +119,7 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, false, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d\n", idx);
+            printf("min at idx %d (optimized)\n", idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -125,7 +145,27 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, true, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d(nodata case)\n", idx);
+            printf("min at idx %d (nodata case, optimized)\n", idx);
+            auto end = std::chrono::steady_clock::now();
+            printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        }
+        {
+            auto start = std::chrono::steady_clock::now();
+            int idx = 0;
+            for (int i = 0; i < N_ITERS; ++i)
+            {
+                idx += static_cast<int>(std::distance(
+                    x.begin(), std::min_element(x.begin(), x.end(),
+                                                [](T x, T y) {
+                                                    return y == 0   ? true
+                                                           : x == 0 ? false
+                                                                    : x < y;
+                                                })));
+            }
+            idx /= N_ITERS;
+            printf("min at idx %d (nodata case, using std::min_element with "
+                   "nodata aware comparison)\n",
+                   idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -147,7 +187,7 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, false, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d\n", idx);
+            printf("min at idx %d (optimized)\n", idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -173,7 +213,27 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, true, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d(nodata case)\n", idx);
+            printf("min at idx %d (nodata case, optimized)\n", idx);
+            auto end = std::chrono::steady_clock::now();
+            printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        }
+        {
+            auto start = std::chrono::steady_clock::now();
+            int idx = 0;
+            for (int i = 0; i < N_ITERS; ++i)
+            {
+                idx += static_cast<int>(std::distance(
+                    x.begin(), std::min_element(x.begin(), x.end(),
+                                                [](T x, T y) {
+                                                    return y == 0   ? true
+                                                           : x == 0 ? false
+                                                                    : x < y;
+                                                })));
+            }
+            idx /= N_ITERS;
+            printf("min at idx %d (nodata case, using std::min_element with "
+                   "nodata aware comparison)\n",
+                   idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -195,7 +255,7 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, false, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d\n", idx);
+            printf("min at idx %d (optimized)\n", idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -221,7 +281,27 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, true, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d(nodata case)\n", idx);
+            printf("min at idx %d (nodata case, optimized)\n", idx);
+            auto end = std::chrono::steady_clock::now();
+            printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        }
+        {
+            auto start = std::chrono::steady_clock::now();
+            int idx = 0;
+            for (int i = 0; i < N_ITERS; ++i)
+            {
+                idx += static_cast<int>(std::distance(
+                    x.begin(), std::min_element(x.begin(), x.end(),
+                                                [](T x, T y) {
+                                                    return y == 0   ? true
+                                                           : x == 0 ? false
+                                                                    : x < y;
+                                                })));
+            }
+            idx /= N_ITERS;
+            printf("min at idx %d (nodata case, using std::min_element with "
+                   "nodata aware comparison)\n",
+                   idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -243,7 +323,7 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, false, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d\n", idx);
+            printf("min at idx %d (optimized)\n", idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -269,7 +349,27 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, true, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d(nodata case)\n", idx);
+            printf("min at idx %d (nodata case, optimized)\n", idx);
+            auto end = std::chrono::steady_clock::now();
+            printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        }
+        {
+            auto start = std::chrono::steady_clock::now();
+            int idx = 0;
+            for (int i = 0; i < N_ITERS; ++i)
+            {
+                idx += static_cast<int>(std::distance(
+                    x.begin(), std::min_element(x.begin(), x.end(),
+                                                [](T x, T y) {
+                                                    return y == 0   ? true
+                                                           : x == 0 ? false
+                                                                    : x < y;
+                                                })));
+            }
+            idx /= N_ITERS;
+            printf("min at idx %d (nodata case, using std::min_element with "
+                   "nodata aware comparison)\n",
+                   idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -291,7 +391,7 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, false, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d\n", idx);
+            printf("min at idx %d (optimized)\n", idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -317,7 +417,27 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, true, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d(nodata case)\n", idx);
+            printf("min at idx %d (nodata case, optimized)\n", idx);
+            auto end = std::chrono::steady_clock::now();
+            printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        }
+        {
+            auto start = std::chrono::steady_clock::now();
+            int idx = 0;
+            for (int i = 0; i < N_ITERS; ++i)
+            {
+                idx += static_cast<int>(std::distance(
+                    x.begin(), std::min_element(x.begin(), x.end(),
+                                                [](T x, T y) {
+                                                    return y == 0   ? true
+                                                           : x == 0 ? false
+                                                                    : x < y;
+                                                })));
+            }
+            idx /= N_ITERS;
+            printf("min at idx %d (nodata case, using std::min_element with "
+                   "nodata aware comparison)\n",
+                   idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -326,7 +446,7 @@ int main(int /* argc */, char * /* argv */[])
     {
         using T = float;
         constexpr GDALDataType eDT = GDT_Float32;
-        printf("float:\n");
+        printf("float (*with* NaN):\n");
         std::vector<T> x;
         x.resize(SIZE);
         randomFill(x.data(), x.size());
@@ -339,7 +459,7 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, false, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d\n", idx);
+            printf("min at idx %d (optimized)\n", idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -373,7 +493,31 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, true, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d(nodata case)\n", idx);
+            printf("min at idx %d (nodata case, optimized)\n", idx);
+            auto end = std::chrono::steady_clock::now();
+            printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        }
+        {
+            auto start = std::chrono::steady_clock::now();
+            int idx = 0;
+            for (int i = 0; i < N_ITERS; ++i)
+            {
+                idx += static_cast<int>(std::distance(
+                    x.begin(), std::min_element(x.begin(), x.end(),
+                                                [](double x, double y)
+                                                {
+                                                    return std::isnan(y) ? true
+                                                           : std::isnan(x)
+                                                               ? false
+                                                           : y == 0 ? true
+                                                           : x == 0 ? false
+                                                                    : x < y;
+                                                })));
+            }
+            idx /= N_ITERS;
+            printf("min at idx %d (nodata case, using std::min_element with "
+                   "nodata aware and NaN aware comparison)\n",
+                   idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -395,7 +539,7 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, false, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d\n", idx);
+            printf("min at idx %d (optimized)\n", idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -421,7 +565,27 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, true, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d(nodata case)\n", idx);
+            printf("min at idx %d (nodata case, optimized)\n", idx);
+            auto end = std::chrono::steady_clock::now();
+            printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        }
+        {
+            auto start = std::chrono::steady_clock::now();
+            int idx = 0;
+            for (int i = 0; i < N_ITERS; ++i)
+            {
+                idx += static_cast<int>(std::distance(
+                    x.begin(), std::min_element(x.begin(), x.end(),
+                                                [](T x, T y) {
+                                                    return y == 0   ? true
+                                                           : x == 0 ? false
+                                                                    : x < y;
+                                                })));
+            }
+            idx /= N_ITERS;
+            printf("min at idx %d (nodata case, using std::min_element with "
+                   "nodata aware comparison)\n",
+                   idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -430,7 +594,7 @@ int main(int /* argc */, char * /* argv */[])
     {
         using T = double;
         constexpr GDALDataType eDT = GDT_Float64;
-        printf("double:\n");
+        printf("double (*with* NaN):\n");
         std::vector<T> x;
         x.resize(SIZE);
         randomFill(x.data(), x.size());
@@ -443,7 +607,7 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, false, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d\n", idx);
+            printf("min at idx %d (optimized)\n", idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -477,7 +641,31 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, true, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d(nodata case)\n", idx);
+            printf("min at idx %d (nodata case, optimized)\n", idx);
+            auto end = std::chrono::steady_clock::now();
+            printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        }
+        {
+            auto start = std::chrono::steady_clock::now();
+            int idx = 0;
+            for (int i = 0; i < N_ITERS; ++i)
+            {
+                idx += static_cast<int>(std::distance(
+                    x.begin(), std::min_element(x.begin(), x.end(),
+                                                [](double x, double y)
+                                                {
+                                                    return std::isnan(y) ? true
+                                                           : std::isnan(x)
+                                                               ? false
+                                                           : y == 0 ? true
+                                                           : x == 0 ? false
+                                                                    : x < y;
+                                                })));
+            }
+            idx /= N_ITERS;
+            printf("min at idx %d (nodata case, using std::min_element with "
+                   "nodata aware and NaN aware comparison)\n",
+                   idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -499,7 +687,7 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, false, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d\n", idx);
+            printf("min at idx %d (optimized)\n", idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }
@@ -525,7 +713,27 @@ int main(int /* argc */, char * /* argv */[])
                     gdal::min_element(x.data(), x.size(), eDT, true, 0));
             }
             idx /= N_ITERS;
-            printf("min at idx %d(nodata case)\n", idx);
+            printf("min at idx %d (nodata case, optimized)\n", idx);
+            auto end = std::chrono::steady_clock::now();
+            printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
+        }
+        {
+            auto start = std::chrono::steady_clock::now();
+            int idx = 0;
+            for (int i = 0; i < N_ITERS; ++i)
+            {
+                idx += static_cast<int>(std::distance(
+                    x.begin(), std::min_element(x.begin(), x.end(),
+                                                [](T x, T y) {
+                                                    return y == 0   ? true
+                                                           : x == 0 ? false
+                                                                    : x < y;
+                                                })));
+            }
+            idx /= N_ITERS;
+            printf("min at idx %d (nodata case, using std::min_element with "
+                   "nodata aware comparison)\n",
+                   idx);
             auto end = std::chrono::steady_clock::now();
             printf("-> elapsed=%d\n", static_cast<int>((end - start).count()));
         }

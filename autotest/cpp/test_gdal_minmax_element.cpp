@@ -92,6 +92,26 @@ TEST_F(test_gdal_minmax_element, uint8)
         EXPECT_EQ(v[idx_max], max_v);
     }
     {
+        std::vector<T> v(257, static_cast<T>(min_v + 2));
+        v[128] = static_cast<T>(min_v + 1);
+        v[256] = min_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true,
+                                         static_cast<T>(min_v + 1));
+        EXPECT_EQ(v[idx_min], min_v);
+    }
+    {
+        std::vector<T> v(257, 0);
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true, 0);
+        EXPECT_EQ(idx_min, 0);
+    }
+    {
+        std::vector<T> v(257, 0);
+        v[127] = static_cast<T>(min_v + 1);
+        v[255] = min_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true, 0);
+        EXPECT_EQ(v[idx_min], min_v);
+    }
+    {
         std::vector<T> v(259, static_cast<T>((min_v + max_v) / 2));
         v[0] = min_v;
         v[256] = static_cast<T>(max_v - 1);
@@ -156,6 +176,14 @@ TEST_F(test_gdal_minmax_element, uint8)
         auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
         EXPECT_EQ(v[idx_max], max_v);
     }
+    {
+        std::vector<T> v(257, 0);
+        v[65] = static_cast<T>(max_v - 2);
+        v[66] = static_cast<T>(max_v - 1);
+        v[129] = max_v;
+        auto idx_max = gdal::max_element(v.data(), v.size(), eDT, true, 0);
+        EXPECT_EQ(v[idx_max], max_v);
+    }
 }
 
 TEST_F(test_gdal_minmax_element, int8)
@@ -213,6 +241,14 @@ TEST_F(test_gdal_minmax_element, int8)
         EXPECT_EQ(v[idx_min], min_v);
         auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
         EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        std::vector<T> v(257, static_cast<T>(min_v + 2));
+        v[128] = static_cast<T>(min_v + 1);
+        v[256] = min_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true,
+                                         static_cast<T>(min_v + 1));
+        EXPECT_EQ(v[idx_min], min_v);
     }
 }
 
@@ -272,6 +308,14 @@ TEST_F(test_gdal_minmax_element, uint16)
         auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
         EXPECT_EQ(v[idx_max], max_v);
     }
+    {
+        std::vector<T> v(257, static_cast<T>(min_v + 2));
+        v[128] = static_cast<T>(min_v + 1);
+        v[256] = min_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true,
+                                         static_cast<T>(min_v + 1));
+        EXPECT_EQ(v[idx_min], min_v);
+    }
 }
 
 TEST_F(test_gdal_minmax_element, int16)
@@ -329,6 +373,14 @@ TEST_F(test_gdal_minmax_element, int16)
         EXPECT_EQ(v[idx_min], min_v);
         auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
         EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        std::vector<T> v(257, static_cast<T>(min_v + 2));
+        v[128] = static_cast<T>(min_v + 1);
+        v[256] = min_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true,
+                                         static_cast<T>(min_v + 1));
+        EXPECT_EQ(v[idx_min], min_v);
     }
 }
 
@@ -388,6 +440,14 @@ TEST_F(test_gdal_minmax_element, uint32)
         auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
         EXPECT_EQ(v[idx_max], max_v);
     }
+    {
+        std::vector<T> v(257, static_cast<T>(min_v + 2));
+        v[128] = static_cast<T>(min_v + 1);
+        v[256] = min_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true,
+                                         static_cast<T>(min_v + 1));
+        EXPECT_EQ(v[idx_min], min_v);
+    }
 }
 
 TEST_F(test_gdal_minmax_element, int32)
@@ -446,6 +506,14 @@ TEST_F(test_gdal_minmax_element, int32)
         auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
         EXPECT_EQ(v[idx_max], max_v);
     }
+    {
+        std::vector<T> v(257, static_cast<T>(min_v + 2));
+        v[128] = static_cast<T>(min_v + 1);
+        v[256] = min_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true,
+                                         static_cast<T>(min_v + 1));
+        EXPECT_EQ(v[idx_min], min_v);
+    }
 }
 
 TEST_F(test_gdal_minmax_element, uint64)
@@ -503,6 +571,15 @@ TEST_F(test_gdal_minmax_element, uint64)
         EXPECT_EQ(v[idx_min], min_v);
         auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
         EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        std::vector<T> v(257, static_cast<T>(min_v + 2));
+        v[128] = static_cast<T>(min_v + 1);
+        v[256] = min_v;
+        auto idx_min =
+            gdal::min_element(v.data(), v.size(), eDT, true,
+                              static_cast<double>(static_cast<T>(min_v + 1)));
+        EXPECT_EQ(v[idx_min], min_v);
     }
 }
 
@@ -567,6 +644,15 @@ TEST_F(test_gdal_minmax_element, int64)
         EXPECT_EQ(v[idx_min], min_v);
         auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
         EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        std::vector<T> v(257, static_cast<T>(min_v + 2));
+        v[128] = static_cast<T>(min_v + 1);
+        v[256] = min_v;
+        auto idx_min =
+            gdal::min_element(v.data(), v.size(), eDT, true,
+                              static_cast<double>(static_cast<T>(min_v + 1)));
+        EXPECT_EQ(v[idx_min], min_v);
     }
 }
 
@@ -680,6 +766,14 @@ TEST_F(test_gdal_minmax_element, float32)
         auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
         EXPECT_EQ(v[idx_max], max_v);
     }
+    {
+        std::vector<T> v(257, static_cast<T>(min_v + 0.2f));
+        v[128] = static_cast<T>(min_v + 0.1f);
+        v[256] = min_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true,
+                                         static_cast<T>(min_v + 0.1f));
+        EXPECT_EQ(v[idx_min], min_v);
+    }
 }
 
 TEST_F(test_gdal_minmax_element, float64)
@@ -768,6 +862,14 @@ TEST_F(test_gdal_minmax_element, float64)
         EXPECT_EQ(v[idx_min], min_v);
         auto idx_max = gdal::max_element(v.data(), v.size(), eDT, false, 0);
         EXPECT_EQ(v[idx_max], max_v);
+    }
+    {
+        std::vector<T> v(257, static_cast<T>(min_v + 0.2));
+        v[128] = static_cast<T>(min_v + 0.1);
+        v[256] = min_v;
+        auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true,
+                                         static_cast<T>(min_v + 0.1));
+        EXPECT_EQ(v[idx_min], min_v);
     }
 }
 
