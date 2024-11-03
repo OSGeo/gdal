@@ -47,6 +47,7 @@ Python Raster Sample scripts
     - hsv_merge: Merge greyscale image into RGB image as intensity in HSV space.
     - gdal_ls: Display the list of files in a virtual directory, like /vsicurl or /vsizip
     - gdal_cp: Copy a virtual file
+    - gdal_minmax_location: returns the location where min/max values of a raster are hit.
 
 Python Vector Sample scripts
 ------------------------------

@@ -4777,4 +4777,143 @@ TEST_F(test_gdal, ReadRaster)
     }
 }
 
+// Test GDALComputeRasterMinMaxLocation
+TEST_F(test_gdal, GDALComputeRasterMinMaxLocation)
+{
+    GDALDatasetH hDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
+    ASSERT_NE(hDS, nullptr);
+    GDALRasterBandH hBand = GDALGetRasterBand(hDS, 1);
+    {
+        double dfMin = 0;
+        double dfMax = 0;
+        int nMinX = -1;
+        int nMinY = -1;
+        int nMaxX = -1;
+        int nMaxY = -1;
+        EXPECT_EQ(GDALComputeRasterMinMaxLocation(hBand, &dfMin, &dfMax, &nMinX,
+                                                  &nMinY, &nMaxX, &nMaxY),
+                  CE_None);
+        EXPECT_EQ(dfMin, 74.0);
+        EXPECT_EQ(dfMax, 255.0);
+        EXPECT_EQ(nMinX, 9);
+        EXPECT_EQ(nMinY, 17);
+        EXPECT_EQ(nMaxX, 2);
+        EXPECT_EQ(nMaxY, 18);
+        GByte val = 0;
+        EXPECT_EQ(GDALRasterIO(hBand, GF_Read, nMinX, nMinY, 1, 1, &val, 1, 1,
+                               GDT_Byte, 0, 0),
+                  CE_None);
+        EXPECT_EQ(val, 74);
+        EXPECT_EQ(GDALRasterIO(hBand, GF_Read, nMaxX, nMaxY, 1, 1, &val, 1, 1,
+                               GDT_Byte, 0, 0),
+                  CE_None);
+        EXPECT_EQ(val, 255);
+    }
+    {
+        int nMinX = -1;
+        int nMinY = -1;
+        EXPECT_EQ(GDALComputeRasterMinMaxLocation(hBand, nullptr, nullptr,
+                                                  &nMinX, &nMinY, nullptr,
+                                                  nullptr),
+                  CE_None);
+        EXPECT_EQ(nMinX, 9);
+        EXPECT_EQ(nMinY, 17);
+    }
+    {
+        int nMaxX = -1;
+        int nMaxY = -1;
+        EXPECT_EQ(GDALComputeRasterMinMaxLocation(hBand, nullptr, nullptr,
+                                                  nullptr, nullptr, &nMaxX,
+                                                  &nMaxY),
+                  CE_None);
+        EXPECT_EQ(nMaxX, 2);
+        EXPECT_EQ(nMaxY, 18);
+    }
+    {
+        EXPECT_EQ(GDALComputeRasterMinMaxLocation(hBand, nullptr, nullptr,
+                                                  nullptr, nullptr, nullptr,
+                                                  nullptr),
+                  CE_None);
+    }
+    GDALClose(hDS);
+}
+
+// Test GDALComputeRasterMinMaxLocation
+TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_byte_min_max_optim)
+{
+    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
+                                  ->Create("", 1, 4, 1, GDT_Byte, nullptr));
+    std::array<uint8_t, 4> buffer = {
+        1,    //////////////////////////////////////////////////////////
+        0,    //////////////////////////////////////////////////////////
+        255,  //////////////////////////////////////////////////////////
+        1,    //////////////////////////////////////////////////////////
+    };
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    EXPECT_EQ(poDS->GetRasterBand(1)->RasterIO(
+                  GF_Write, 0, 0, 1, 4, buffer.data(), 1, 4, GDT_Byte,
+                  sizeof(uint8_t), 1 * sizeof(uint8_t), &sExtraArg),
+              CE_None);
+
+    double dfMin = 0;
+    double dfMax = 0;
+    int nMinX = -1;
+    int nMinY = -1;
+    int nMaxX = -1;
+    int nMaxY = -1;
+    EXPECT_EQ(poDS->GetRasterBand(1)->ComputeRasterMinMaxLocation(
+                  &dfMin, &dfMax, &nMinX, &nMinY, &nMaxX, &nMaxY),
+              CE_None);
+    EXPECT_EQ(dfMin, 0);
+    EXPECT_EQ(dfMax, 255);
+    EXPECT_EQ(nMinX, 0);
+    EXPECT_EQ(nMinY, 1);
+    EXPECT_EQ(nMaxX, 0);
+    EXPECT_EQ(nMaxY, 2);
+}
+
+// Test GDALComputeRasterMinMaxLocation
+TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_with_mask)
+{
+    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
+                                  ->Create("", 2, 2, 1, GDT_Byte, nullptr));
+    std::array<uint8_t, 6> buffer = {
+        2, 10,  //////////////////////////////////////////////////////////
+        4, 20,  //////////////////////////////////////////////////////////
+    };
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    EXPECT_EQ(poDS->GetRasterBand(1)->RasterIO(
+                  GF_Write, 0, 0, 2, 2, buffer.data(), 2, 2, GDT_Byte,
+                  sizeof(uint8_t), 2 * sizeof(uint8_t), &sExtraArg),
+              CE_None);
+
+    poDS->GetRasterBand(1)->CreateMaskBand(0);
+    std::array<uint8_t, 6> buffer_mask = {
+        0, 255,  //////////////////////////////////////////////////////////
+        255, 0,  //////////////////////////////////////////////////////////
+    };
+    EXPECT_EQ(poDS->GetRasterBand(1)->GetMaskBand()->RasterIO(
+                  GF_Write, 0, 0, 2, 2, buffer_mask.data(), 2, 2, GDT_Byte,
+                  sizeof(uint8_t), 2 * sizeof(uint8_t), &sExtraArg),
+              CE_None);
+
+    double dfMin = 0;
+    double dfMax = 0;
+    int nMinX = -1;
+    int nMinY = -1;
+    int nMaxX = -1;
+    int nMaxY = -1;
+    EXPECT_EQ(poDS->GetRasterBand(1)->ComputeRasterMinMaxLocation(
+                  &dfMin, &dfMax, &nMinX, &nMinY, &nMaxX, &nMaxY),
+              CE_None);
+    EXPECT_EQ(dfMin, 4);
+    EXPECT_EQ(dfMax, 10);
+    EXPECT_EQ(nMinX, 0);
+    EXPECT_EQ(nMinY, 1);
+    EXPECT_EQ(nMaxX, 1);
+    EXPECT_EQ(nMaxY, 0);
+}
+
 }  // namespace

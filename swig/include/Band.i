@@ -669,6 +669,23 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
 %clear (CPLErr);
 #endif
 
+%apply (double *OUTPUT){double *pdfMin, double *pdfMax};
+%apply (int *OUTPUT){int *pnMinX, int *pnMinY};
+%apply (int *OUTPUT){int *pnMaxX, int *pnMaxY};
+#if !defined(SWIGPYTHON)
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
+#endif
+  CPLErr ComputeMinMaxLocation( double *pdfMin, double *pdfMax,
+                                int *pnMinX, int *pnMinY,
+                                int *pnMaxX, int *pnMaxY ) {
+    return GDALComputeRasterMinMaxLocation( self, pdfMin, pdfMax,
+                                            pnMinX, pnMinY,
+                                            pnMaxX, pnMaxY );
+  }
+#if !defined(SWIGPYTHON)
+%clear (CPLErr);
+#endif
+
 %newobject AsMDArray;
   GDALMDArrayHS *AsMDArray()
   {
