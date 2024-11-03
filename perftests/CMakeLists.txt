@@ -25,5 +25,8 @@ gdal_standard_includes(bench_ogr_c_api)
 target_link_libraries(bench_ogr_c_api PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
 
 gdal_test_target(testperf_gdal_minmax_element testperf_gdal_minmax_element.cpp)
+if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
+  target_compile_definitions(testperf_gdal_minmax_element PRIVATE -DUSE_NEON_OPTIMIZATIONS)
+endif()
 add_test(NAME testperf_gdal_minmax_element COMMAND testperf_gdal_minmax_element)
 set_property(TEST testperf_gdal_minmax_element PROPERTY ENVIRONMENT "${TEST_ENV}")

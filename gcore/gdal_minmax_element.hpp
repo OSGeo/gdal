@@ -33,13 +33,17 @@
 #error "Please define the GDAL_MINMAXELT_NS macro to define the namespace"
 #endif
 
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#define GDAL_MINMAX_ELEMENT_USE_SSE2
+#else
 #if defined(__x86_64) || defined(_M_X64)
 #define GDAL_MINMAX_ELEMENT_USE_SSE2
 #endif
-
 #ifdef GDAL_MINMAX_ELEMENT_USE_SSE2
 // SSE2 header
 #include <emmintrin.h>
+#endif
 #endif
 
 #include "gdal_priv_templates.hpp"
