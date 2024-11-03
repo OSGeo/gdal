@@ -88,10 +88,10 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](T x, T y) {
-                                                    return y == 0   ? true
-                                                           : x == 0 ? false
-                                                                    : x < y;
+                                                [](T a, T b) {
+                                                    return b == 0   ? true
+                                                           : a == 0 ? false
+                                                                    : a < b;
                                                 })));
             }
             idx /= N_ITERS;
@@ -156,10 +156,10 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](T x, T y) {
-                                                    return y == 0   ? true
-                                                           : x == 0 ? false
-                                                                    : x < y;
+                                                [](T a, T b) {
+                                                    return b == 0   ? true
+                                                           : a == 0 ? false
+                                                                    : a < b;
                                                 })));
             }
             idx /= N_ITERS;
@@ -224,10 +224,10 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](T x, T y) {
-                                                    return y == 0   ? true
-                                                           : x == 0 ? false
-                                                                    : x < y;
+                                                [](T a, T b) {
+                                                    return b == 0   ? true
+                                                           : a == 0 ? false
+                                                                    : a < b;
                                                 })));
             }
             idx /= N_ITERS;
@@ -292,10 +292,10 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](T x, T y) {
-                                                    return y == 0   ? true
-                                                           : x == 0 ? false
-                                                                    : x < y;
+                                                [](T a, T b) {
+                                                    return b == 0   ? true
+                                                           : a == 0 ? false
+                                                                    : a < b;
                                                 })));
             }
             idx /= N_ITERS;
@@ -360,10 +360,10 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](T x, T y) {
-                                                    return y == 0   ? true
-                                                           : x == 0 ? false
-                                                                    : x < y;
+                                                [](T a, T b) {
+                                                    return b == 0   ? true
+                                                           : a == 0 ? false
+                                                                    : a < b;
                                                 })));
             }
             idx /= N_ITERS;
@@ -428,10 +428,10 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](T x, T y) {
-                                                    return y == 0   ? true
-                                                           : x == 0 ? false
-                                                                    : x < y;
+                                                [](T a, T b) {
+                                                    return b == 0   ? true
+                                                           : a == 0 ? false
+                                                                    : a < b;
                                                 })));
             }
             idx /= N_ITERS;
@@ -470,11 +470,11 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](float x, float y) {
-                                                    return std::isnan(y) ? true
-                                                           : std::isnan(x)
+                                                [](T a, T b) {
+                                                    return std::isnan(b) ? true
+                                                           : std::isnan(a)
                                                                ? false
-                                                               : x < y;
+                                                               : a < b;
                                                 })));
             }
             idx /= N_ITERS;
@@ -504,14 +504,14 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](double x, double y)
+                                                [](T a, T b)
                                                 {
-                                                    return std::isnan(y) ? true
-                                                           : std::isnan(x)
+                                                    return std::isnan(b) ? true
+                                                           : std::isnan(a)
                                                                ? false
-                                                           : y == 0 ? true
-                                                           : x == 0 ? false
-                                                                    : x < y;
+                                                           : b == 0 ? true
+                                                           : a == 0 ? false
+                                                                    : a < b;
                                                 })));
             }
             idx /= N_ITERS;
@@ -576,10 +576,10 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](T x, T y) {
-                                                    return y == 0   ? true
-                                                           : x == 0 ? false
-                                                                    : x < y;
+                                                [](T a, T b) {
+                                                    return b == 0   ? true
+                                                           : a == 0 ? false
+                                                                    : a < b;
                                                 })));
             }
             idx /= N_ITERS;
@@ -618,11 +618,11 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](double x, double y) {
-                                                    return std::isnan(y) ? true
-                                                           : std::isnan(x)
+                                                [](T a, T b) {
+                                                    return std::isnan(b) ? true
+                                                           : std::isnan(a)
                                                                ? false
-                                                               : x < y;
+                                                               : a < b;
                                                 })));
             }
             idx /= N_ITERS;
@@ -652,14 +652,14 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](double x, double y)
+                                                [](T a, T b)
                                                 {
-                                                    return std::isnan(y) ? true
-                                                           : std::isnan(x)
+                                                    return std::isnan(b) ? true
+                                                           : std::isnan(a)
                                                                ? false
-                                                           : y == 0 ? true
-                                                           : x == 0 ? false
-                                                                    : x < y;
+                                                           : b == 0 ? true
+                                                           : a == 0 ? false
+                                                                    : a < b;
                                                 })));
             }
             idx /= N_ITERS;
@@ -724,10 +724,10 @@ int main(int /* argc */, char * /* argv */[])
             {
                 idx += static_cast<int>(std::distance(
                     x.begin(), std::min_element(x.begin(), x.end(),
-                                                [](T x, T y) {
-                                                    return y == 0   ? true
-                                                           : x == 0 ? false
-                                                                    : x < y;
+                                                [](T a, T b) {
+                                                    return b == 0   ? true
+                                                           : a == 0 ? false
+                                                                    : a < b;
                                                 })));
             }
             idx /= N_ITERS;
