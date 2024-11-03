@@ -102,7 +102,7 @@ TEST_F(test_gdal_minmax_element, uint8)
     {
         std::vector<T> v(257, 0);
         auto idx_min = gdal::min_element(v.data(), v.size(), eDT, true, 0);
-        EXPECT_EQ(idx_min, 0);
+        EXPECT_TRUE(idx_min == 0 || idx_min == 256) << idx_min;
     }
     {
         std::vector<T> v(257, 0);

@@ -72,6 +72,7 @@ namespace GDAL_MINMAXELT_NS
 namespace detail
 {
 
+#ifdef GDAL_MINMAX_ELEMENT_USE_SSE2
 /************************************************************************/
 /*                            compScalar()                              */
 /************************************************************************/
@@ -851,6 +852,137 @@ inline size_t extremum_element(const T *buffer, size_t size, bool bHasNoData,
         return extremum_element<T, IS_MAX>(buffer, size);
 }
 
+#else
+
+template <class T, bool IS_MAX>
+inline size_t extremum_element(const T *buffer, size_t size, bool bHasNoData,
+                               T noDataValue)
+{
+    if (bHasNoData)
+    {
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            if (std::isnan(noDataValue))
+            {
+                if constexpr (IS_MAX)
+                {
+                    return std::max_element(buffer, buffer + size,
+                                            [](T a, T b) {
+                                                return std::isnan(b)   ? false
+                                                       : std::isnan(a) ? true
+                                                                       : a < b;
+                                            }) -
+                           buffer;
+                }
+                else
+                {
+                    return std::min_element(buffer, buffer + size,
+                                            [](T a, T b) {
+                                                return std::isnan(b)   ? true
+                                                       : std::isnan(a) ? false
+                                                                       : a < b;
+                                            }) -
+                           buffer;
+                }
+            }
+            else
+            {
+                if constexpr (IS_MAX)
+                {
+                    return std::max_element(buffer, buffer + size,
+                                            [noDataValue](T a, T b)
+                                            {
+                                                return std::isnan(b)   ? false
+                                                       : std::isnan(a) ? true
+                                                       : (b == noDataValue)
+                                                           ? false
+                                                       : (a == noDataValue)
+                                                           ? true
+                                                           : a < b;
+                                            }) -
+                           buffer;
+                }
+                else
+                {
+                    return std::min_element(buffer, buffer + size,
+                                            [noDataValue](T a, T b)
+                                            {
+                                                return std::isnan(b)   ? true
+                                                       : std::isnan(a) ? false
+                                                       : (b == noDataValue)
+                                                           ? true
+                                                       : (a == noDataValue)
+                                                           ? false
+                                                           : a < b;
+                                            }) -
+                           buffer;
+                }
+            }
+        }
+        else
+        {
+            if constexpr (IS_MAX)
+            {
+                return std::max_element(buffer, buffer + size,
+                                        [noDataValue](T a, T b) {
+                                            return (b == noDataValue)   ? false
+                                                   : (a == noDataValue) ? true
+                                                                        : a < b;
+                                        }) -
+                       buffer;
+            }
+            else
+            {
+                return std::min_element(buffer, buffer + size,
+                                        [noDataValue](T a, T b) {
+                                            return (b == noDataValue)   ? true
+                                                   : (a == noDataValue) ? false
+                                                                        : a < b;
+                                        }) -
+                       buffer;
+            }
+        }
+    }
+    else
+    {
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            if constexpr (IS_MAX)
+            {
+                return std::max_element(buffer, buffer + size,
+                                        [](T a, T b) {
+                                            return std::isnan(b)   ? false
+                                                   : std::isnan(a) ? true
+                                                                   : a < b;
+                                        }) -
+                       buffer;
+            }
+            else
+            {
+                return std::min_element(buffer, buffer + size,
+                                        [](T a, T b) {
+                                            return std::isnan(b)   ? true
+                                                   : std::isnan(a) ? false
+                                                                   : a < b;
+                                        }) -
+                       buffer;
+            }
+        }
+        else
+        {
+            if constexpr (IS_MAX)
+            {
+                return std::max_element(buffer, buffer + size) - buffer;
+            }
+            else
+            {
+                return std::min_element(buffer, buffer + size) - buffer;
+            }
+        }
+    }
+}
+#endif
+
 template <bool IS_MAX>
 size_t extremum_element(const void *buffer, size_t nElts, GDALDataType eDT,
                         bool bHasNoData, double dfNoDataValue)
@@ -1149,11 +1281,25 @@ inline std::pair<size_t, size_t> minmax_element(const T *buffer, size_t size,
         //return std::pair(imin - buffer, imax - buffer);
     }
 #else
+
+#if !defined(GDAL_MINMAX_ELEMENT_USE_SSE2)
+    if constexpr (!std::is_floating_point_v<T>)
+    {
+        if (!bHasNoData)
+        {
+            auto [min_iter, max_iter] =
+                std::minmax_element(buffer, buffer + size);
+            return std::pair(min_iter - buffer, max_iter - buffer);
+        }
+    }
+#endif
+
     // Using separately min and max is more efficient than computing them
     // within the same loop
     return std::pair(
         extremum_element<T, false>(buffer, size, bHasNoData, noDataValue),
         extremum_element<T, true>(buffer, size, bHasNoData, noDataValue));
+
 #endif
 }
 #endif
