@@ -7,6 +7,9 @@ export PROJ_NETWORK=ON
 echo 'Running CPP unit tests'
 (cd build && make quicktest)
 
+echo 'Running CPP perftests'
+(cd build && ctest -V -R perf)
+
 echo 'Running Python unit tests'
 # install test dependencies
 sudo -H pip3 install -r autotest/requirements.txt
