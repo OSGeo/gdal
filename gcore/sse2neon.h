@@ -110,9 +110,12 @@
 #warning "GCC versions earlier than 10 are not supported."
 #endif
 
+// Disabled by GDAL to avoid issues with -Werror
+#if 0
 #ifdef __OPTIMIZE__
 #warning \
     "Report any potential compiler optimization issues when using SSE2NEON. See the 'Optimization' section at https://github.com/DLTcollab/sse2neon."
+#endif
 #endif
 
 /* C language does not allow initializing a variable with a function call. */
