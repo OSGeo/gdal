@@ -2862,3 +2862,87 @@ def test_vrt_read_float32_complex_source_from_cfloat32():
 
     ds = gdal.Open("data/vrt/complex_non_zero_real_zero_imag_as_float32.vrt")
     assert struct.unpack("f" * 4, ds.ReadRaster()) == (1, 1, 1, 1)
+
+
+###############################################################################
+# Test arbitrary expression pixel functions
+
+
+def vrt_expression_xml(tmpdir, expression, sources):
+
+    drv = gdal.GetDriverByName("GTiff")
+
+    nx = 1
+    ny = 1
+
+    xml = f"""<VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
+              <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+                 <PixelFunctionType>expression</PixelFunctionType>
+                 <PixelFunctionArguments expression="{expression}" />"""
+
+    for i, source in enumerate(sources):
+        source_name, source_value = source
+
+        src_fname = tmpdir / f"source_{i}.tif"
+
+        with drv.Create(src_fname, 1, 1, 1, gdal.GDT_Float64) as ds:
+            ds.GetRasterBand(1).Fill(source_value)
+
+        xml += f"""<SimpleSource name="{source_name}">
+                     <SourceFilename relativeToVRT="0">{src_fname}</SourceFilename>
+                     <SourceBand>1</SourceBand>
+                   </SimpleSource>"""
+
+    xml += "</VRTRasterBand></VRTDataset>"
+
+    return xml
+
+
+@pytest.mark.parametrize(
+    "expression,sources,result",
+    [
+        pytest.param("A", [("A", 77)], 77, id="identity"),
+        pytest.param(
+            "(NIR-R)/(NIR+R)",
+            [("NIR", 77), ("R", 63)],
+            (77 - 63) / (77 + 63),
+            id="simple expression",
+        ),
+        pytest.param(
+            "if (A > B) 1.5*C ; else A",
+            [("A", 77), ("B", 63), ("C", 18)],
+            27,
+            id="conditional (explicit)",
+        ),
+        pytest.param(
+            "(A > B)*(1.5*C) + (A <= B)*(A)",
+            [("A", 77), ("B", 63), ("C", 18)],
+            27,
+            id="conditional (implicit)",
+        ),
+        pytest.param(
+            "B2 * PopDensity",
+            [("PopDensity", 3), ("", 7)],
+            21,
+            id="implicit source name",
+        ),
+    ],
+)
+def test_vrt_pixelfn_expression(tmp_path, expression, sources, result):
+    pytest.importorskip("numpy")
+
+    xml = vrt_expression_xml(tmp_path, expression, sources)
+
+    with gdal.Open(xml) as ds:
+        assert ds.ReadAsArray()[0][0] == result
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_pixelfn_expression_invalid(tmp_path):
+    pytest.importorskip("numpy")
+
+    xml = vrt_expression_xml(tmp_path, "A*B + C", [("A", 77), ("B", 63)])
+
+    with gdal.Open(xml) as ds:
+        with pytest.raises(Exception, match="failed to parse expression"):
+            ds.ReadAsArray()

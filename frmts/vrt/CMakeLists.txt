@@ -22,6 +22,11 @@ gdal_standard_includes(gdal_vrt)
 target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw
                                             $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 
+target_include_directories(gdal_vrt SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/third_party/exprtk)
+if (MSVC)
+    target_compile_options(gdal_vrt PRIVATE /bigobj)
+endif()
+
 set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalvrt.xsd
 )
