@@ -1231,16 +1231,27 @@ int VSIStatExL(const char *pszFilename, VSIStatBufL *psStatBuf, int nFlags)
  * Implemented currently only for network-like filesystems, or starting
  * with GDAL 3.7 for /vsizip/
  *
+ * Starting with GDAL 3.11, calling it with pszFilename being the root of a
+ * /vsigs/ bucket and pszDomain == nullptr, and when authenticated through
+ * OAuth2, will result in returning the result of a "Buckets: get"
+ * operation (https://cloud.google.com/storage/docs/json_api/v1/buckets/get),
+ * with the keys of the top-level JSON document as keys of the key=value pairs
+ * returned by this function.
+ *
  * @param pszFilename the path of the filesystem object to be queried.
  * UTF-8 encoded.
  * @param pszDomain Metadata domain to query. Depends on the file system.
- * The following are supported:
+ * The following ones are supported:
  * <ul>
  * <li>HEADERS: to get HTTP headers for network-like filesystems (/vsicurl/,
- * /vsis3/, /vsgis/, etc)</li> <li>TAGS: <ul> <li>/vsis3/: to get S3 Object
- * tagging information</li> <li>/vsiaz/: to get blob tags. Refer to
- * https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-tags</li>
- *    </ul>
+ * /vsis3/, /vsgis/, etc)</li>
+ * <li>TAGS:
+ *   <ul>
+ *     <li>/vsis3/: to get S3 Object tagging information</li>
+ *     <li>/vsiaz/: to get blob tags. Refer to
+ *     https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-tags
+ *     </li>
+ *   </ul>
  * </li>
  * <li>STATUS: specific to /vsiadls/: returns all system defined properties for
  * a path (seems in practice to be a subset of HEADERS)</li> <li>ACL: specific
@@ -1248,7 +1259,7 @@ int VSIStatExL(const char *pszFilename, VSIStatBufL *psStatBuf, int nFlags)
  * /vsigs/, a single XML=xml_content string is returned. Refer to
  * https://cloud.google.com/storage/docs/xml-api/get-object-acls
  * </li>
- * <li>METADATA: specific to /vsiaz/: to set blob metadata. Refer to
+ * <li>METADATA: specific to /vsiaz/: to get blob metadata. Refer to
  * https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-metadata.
  * Note: this will be a subset of what pszDomain=HEADERS returns</li>
  * <li>ZIP: specific to /vsizip/: to obtain ZIP specific metadata, in particular
