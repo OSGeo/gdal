@@ -43,6 +43,9 @@
 #ifdef GDAL_MINMAX_ELEMENT_USE_SSE2
 // SSE2 header
 #include <emmintrin.h>
+#ifdef __SSE4_1__
+#include <smmintrin.h>
+#endif
 #endif
 #endif
 
@@ -294,6 +297,35 @@ static inline __m128i comp(SSE_T x, SSE_T y)
     }
 }
 
+template <class T> static inline T blendv(T a, T b, T mask);
+
+template <> __m128i blendv(__m128i a, __m128i b, __m128i mask)
+{
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_epi8(a, b, mask);
+#else
+    return _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, b));
+#endif
+}
+
+template <> __m128 blendv(__m128 a, __m128 b, __m128 mask)
+{
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_ps(a, b, mask);
+#else
+    return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
+#endif
+}
+
+template <> __m128d blendv(__m128d a, __m128d b, __m128d mask)
+{
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_pd(a, b, mask);
+#else
+    return _mm_or_pd(_mm_andnot_pd(mask, a), _mm_and_pd(mask, b));
+#endif
+}
+
 // Using SSE2
 template <class T, bool IS_MAX, bool HAS_NODATA>
 inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
@@ -412,8 +444,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
                     [sse_neutral, sse_nodata](auto sse_val)
                 {
                     const auto eq_nodata = _mm_cmpeq_epi8(sse_val, sse_nodata);
-                    return _mm_or_si128(_mm_and_si128(eq_nodata, sse_neutral),
-                                        _mm_andnot_si128(eq_nodata, sse_val));
+                    return blendv(sse_val, sse_neutral, eq_nodata);
                 };
 
                 sse_val0 = replaceNoDataByNeutral(sse_val0);
@@ -428,8 +459,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
                     [sse_neutral, sse_nodata](auto sse_val)
                 {
                     const auto eq_nodata = _mm_cmpeq_epi16(sse_val, sse_nodata);
-                    return _mm_or_si128(_mm_and_si128(eq_nodata, sse_neutral),
-                                        _mm_andnot_si128(eq_nodata, sse_val));
+                    return blendv(sse_val, sse_neutral, eq_nodata);
                 };
 
                 sse_val0 = replaceNoDataByNeutral(sse_val0);
@@ -444,8 +474,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
                     [sse_neutral, sse_nodata](auto sse_val)
                 {
                     const auto eq_nodata = _mm_cmpeq_epi32(sse_val, sse_nodata);
-                    return _mm_or_si128(_mm_and_si128(eq_nodata, sse_neutral),
-                                        _mm_andnot_si128(eq_nodata, sse_val));
+                    return blendv(sse_val, sse_neutral, eq_nodata);
                 };
 
                 sse_val0 = replaceNoDataByNeutral(sse_val0);
@@ -459,8 +488,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
                     [sse_neutral, sse_nodata](auto sse_val)
                 {
                     const auto eq_nodata = _mm_cmpeq_ps(sse_val, sse_nodata);
-                    return _mm_or_ps(_mm_and_ps(eq_nodata, sse_neutral),
-                                     _mm_andnot_ps(eq_nodata, sse_val));
+                    return blendv(sse_val, sse_neutral, eq_nodata);
                 };
 
                 sse_val0 = replaceNoDataByNeutral(sse_val0);
@@ -474,8 +502,7 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
                     [sse_neutral, sse_nodata](auto sse_val)
                 {
                     const auto eq_nodata = _mm_cmpeq_pd(sse_val, sse_nodata);
-                    return _mm_or_pd(_mm_and_pd(eq_nodata, sse_neutral),
-                                     _mm_andnot_pd(eq_nodata, sse_val));
+                    return blendv(sse_val, sse_neutral, eq_nodata);
                 };
 
                 sse_val0 = replaceNoDataByNeutral(sse_val0);
