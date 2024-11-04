@@ -3,7 +3,6 @@ include(cmake/helpers/GdalCMakeMinimumRequired.cmake)
 cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_MAX})
 
 project(gdal LANGUAGES C CXX)
-include(CTest)
 
 set(GDAL_LIB_TARGET_NAME GDAL)
 
@@ -224,6 +223,10 @@ endif()
 #
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
+option(BUILD_TESTING "Build the testing tree." ON)
+if (BUILD_TESTING)
+  enable_testing()
+endif()
 if (BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/autotest")
   # unit tests
   add_subdirectory(autotest/cpp)
