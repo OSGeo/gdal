@@ -526,9 +526,9 @@ CPLErr ReadLUTs(const char *pszConfigFile, int nBandCount, int nLUTBins,
                 int ***ppapanLUTs, double **ppadfScaleMin,
                 double **ppadfScaleMax)
 {
-    char **papszLines = CSLLoad(pszConfigFile);
+    const CPLStringList aosLines(CSLLoad(pszConfigFile));
 
-    if (CSLCount(papszLines) != nBandCount)
+    if (aosLines.size() != nBandCount)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Did not get %d lines in config file as expected.\n",
@@ -544,10 +544,10 @@ CPLErr ReadLUTs(const char *pszConfigFile, int nBandCount, int nLUTBins,
 
     for (int iBand = 0; iBand < nBandCount; iBand++)
     {
-        char **papszTokens = CSLTokenizeString(papszLines[iBand]);
+        const CPLStringList aosTokens(CSLTokenizeString(aosLines[iBand]));
 
-        if (CSLCount(papszTokens) < (nLUTBins + 3) ||
-            atoi(papszTokens[0]) != iBand + 1)
+        if (aosTokens.size() < (nLUTBins + 3) ||
+            atoi(aosTokens[0]) != iBand + 1)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Line %d seems to be corrupt.\n", iBand + 1);
@@ -556,8 +556,8 @@ CPLErr ReadLUTs(const char *pszConfigFile, int nBandCount, int nLUTBins,
 
         // Process scale min/max
 
-        (*ppadfScaleMin)[iBand] = CPLAtof(papszTokens[1]);
-        (*ppadfScaleMax)[iBand] = CPLAtof(papszTokens[2]);
+        (*ppadfScaleMin)[iBand] = CPLAtof(aosTokens[1]);
+        (*ppadfScaleMax)[iBand] = CPLAtof(aosTokens[2]);
 
         // process lut
 
@@ -565,11 +565,8 @@ CPLErr ReadLUTs(const char *pszConfigFile, int nBandCount, int nLUTBins,
             static_cast<int *>(CPLCalloc(nLUTBins, sizeof(int)));
 
         for (int iLUT = 0; iLUT < nLUTBins; iLUT++)
-            (*ppapanLUTs)[iBand][iLUT] = atoi(papszTokens[iLUT + 3]);
-
-        CSLDestroy(papszTokens);
+            (*ppapanLUTs)[iBand][iLUT] = atoi(aosTokens[iLUT + 3]);
     }
-    CSLDestroy(papszLines);
 
     return CE_None;
 }
