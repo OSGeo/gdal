@@ -643,7 +643,7 @@ CPLErr WriteEnhanced(GDALDatasetH hDataset, int **papanLUTs, int nLUTBins,
                        GDALGetGCPProjection(hDataset));
     }
 
-    poVDS->SetMetadata(static_cast<GDALDataset *>(hDataset)->GetMetadata());
+    poVDS->SetMetadata(GDALDataset::FromHandle(hDataset)->GetMetadata());
 
     for (int iBand = 0; iBand < nBandCount; iBand++)
     {
@@ -651,8 +651,7 @@ CPLErr WriteEnhanced(GDALDatasetH hDataset, int **papanLUTs, int nLUTBins,
         GDALRasterBand *poSrcBand;
         GDALDataType eBandType;
 
-        poSrcBand =
-            static_cast<GDALDataset *>(hDataset)->GetRasterBand(iBand + 1);
+        poSrcBand = GDALDataset::FromHandle(hDataset)->GetRasterBand(iBand + 1);
 
         /* ---------------------------------------------------------------- */
         /*      Select output data type to match source.                    */
