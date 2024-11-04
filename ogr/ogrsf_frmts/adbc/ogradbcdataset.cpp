@@ -341,6 +341,15 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         return false;
     }
 
+    char **papszPreludeStatements = CSLFetchNameValueMultiple(
+        poOpenInfo->papszOpenOptions, "PRELUDE_STATEMENTS");
+    for (const char *pszStatement :
+         cpl::Iterate(CSLConstList(papszPreludeStatements)))
+    {
+        CreateLayer(pszStatement, "temp");
+    }
+    CSLDestroy(papszPreludeStatements);
+
     std::string osLayerName = "RESULTSET";
     std::string osSQL;
     const char *pszSQL = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SQL");

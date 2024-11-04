@@ -74,6 +74,14 @@ The following open options are supported:
       driver specific.
       For example ``ADBC_OPTION_uri=some_value`` to pass the ``uri`` option.
 
+- .. oo:: PRELUDE_STATEMENTS
+      :choices: <string>
+
+      SQL-like statement recognized by the driver that must be executed before
+      discovering layers. Can be repeated multiple times.
+      For example ``PRELUDE_STATEMENTS=INSTALL spatial`` and
+      ``PRELUDE_STATEMENTS=LOAD spatial`` to load DuckDB spatial extension.
+
 "table_list" special layer
 --------------------------
 
