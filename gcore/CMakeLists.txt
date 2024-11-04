@@ -210,6 +210,7 @@ target_public_header(
   gdal_typetraits.h
   gdal_adbc.h
   gdal_minmax_element.hpp
+  gdal_priv_templates.hpp  # Required by gdal_minmax_element.hpp
 )
 
 set(GDAL_DATA_FILES
