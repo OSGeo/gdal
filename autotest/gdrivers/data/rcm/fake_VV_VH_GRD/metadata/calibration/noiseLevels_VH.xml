@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<noiseLevels xmlns="rcmGsProductSchema"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="rcmGsProductSchema ../../support/schemas/rcm_prod_noiseLevels.xsd">
+	<referenceNoiseLevel>
+		<sarCalibrationType>Beta Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-23</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</referenceNoiseLevel>
+	<referenceNoiseLevel>
+		<sarCalibrationType>Sigma Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-23</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</referenceNoiseLevel>
+	<referenceNoiseLevel>
+		<sarCalibrationType>Gamma</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-23</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</referenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-5</beam>
+		<sarCalibrationType>Beta Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-6</beam>
+		<sarCalibrationType>Beta Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-7</beam>
+		<sarCalibrationType>Beta Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-8</beam>
+		<sarCalibrationType>Beta Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-9</beam>
+		<sarCalibrationType>Beta Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-10</beam>
+		<sarCalibrationType>Beta Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-11</beam>
+		<sarCalibrationType>Beta Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-12</beam>
+		<sarCalibrationType>Beta Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-5</beam>
+		<sarCalibrationType>Sigma Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-6</beam>
+		<sarCalibrationType>Sigma Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-7</beam>
+		<sarCalibrationType>Sigma Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-8</beam>
+		<sarCalibrationType>Sigma Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-9</beam>
+		<sarCalibrationType>Sigma Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-10</beam>
+		<sarCalibrationType>Sigma Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-11</beam>
+		<sarCalibrationType>Sigma Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-12</beam>
+		<sarCalibrationType>Sigma Nought</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-5</beam>
+		<sarCalibrationType>Gamma</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-6</beam>
+		<sarCalibrationType>Gamma</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-7</beam>
+		<sarCalibrationType>Gamma</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-8</beam>
+		<sarCalibrationType>Gamma</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-9</beam>
+		<sarCalibrationType>Gamma</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-10</beam>
+		<sarCalibrationType>Gamma</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-11</beam>
+		<sarCalibrationType>Gamma</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<perBeamReferenceNoiseLevel>
+		<beam>SC-12</beam>
+		<sarCalibrationType>Gamma</sarCalibrationType>
+		<pixelFirstNoiseValue>0</pixelFirstNoiseValue>
+		<stepSize>-3</stepSize>
+		<numberOfValues>1</numberOfValues>
+		<noiseLevelValues units="dB">0</noiseLevelValues>
+	</perBeamReferenceNoiseLevel>
+	<azimuthNoiseLevelScaling>
+		<beam>SC-5</beam>
+		<stepSize>1</stepSize>
+		<numberOfNoiseLevelScalingValues>1</numberOfNoiseLevelScalingValues>
+		<noiseLevelScalingValues units="dB">0</noiseLevelScalingValues>
+	</azimuthNoiseLevelScaling>
+	<azimuthNoiseLevelScaling>
+		<beam>SC-6</beam>
+		<stepSize>1</stepSize>
+		<numberOfNoiseLevelScalingValues>1</numberOfNoiseLevelScalingValues>
+		<noiseLevelScalingValues units="dB">0</noiseLevelScalingValues>
+	</azimuthNoiseLevelScaling>
+	<azimuthNoiseLevelScaling>
+		<beam>SC-7</beam>
+		<stepSize>1</stepSize>
+		<numberOfNoiseLevelScalingValues>1</numberOfNoiseLevelScalingValues>
+		<noiseLevelScalingValues units="dB">0</noiseLevelScalingValues>
+	</azimuthNoiseLevelScaling>
+	<azimuthNoiseLevelScaling>
+		<beam>SC-8</beam>
+		<stepSize>1</stepSize>
+		<numberOfNoiseLevelScalingValues>1</numberOfNoiseLevelScalingValues>
+		<noiseLevelScalingValues units="dB">0</noiseLevelScalingValues>
+	</azimuthNoiseLevelScaling>
+	<azimuthNoiseLevelScaling>
+		<beam>SC-9</beam>
+		<stepSize>1</stepSize>
+		<numberOfNoiseLevelScalingValues>1</numberOfNoiseLevelScalingValues>
+		<noiseLevelScalingValues units="dB">0</noiseLevelScalingValues>
+	</azimuthNoiseLevelScaling>
+	<azimuthNoiseLevelScaling>
+		<beam>SC-10</beam>
+		<stepSize>1</stepSize>
+		<numberOfNoiseLevelScalingValues>1</numberOfNoiseLevelScalingValues>
+		<noiseLevelScalingValues units="dB">0</noiseLevelScalingValues>
+	</azimuthNoiseLevelScaling>
+	<azimuthNoiseLevelScaling>
+		<beam>SC-11</beam>
+		<stepSize>1</stepSize>
+		<numberOfNoiseLevelScalingValues>1</numberOfNoiseLevelScalingValues>
+		<noiseLevelScalingValues units="dB">0</noiseLevelScalingValues>
+	</azimuthNoiseLevelScaling>
+	<azimuthNoiseLevelScaling>
+		<beam>SC-12</beam>
+		<stepSize>1</stepSize>
+		<numberOfNoiseLevelScalingValues>1</numberOfNoiseLevelScalingValues>
+		<noiseLevelScalingValues units="dB">0</noiseLevelScalingValues>
+	</azimuthNoiseLevelScaling>
+</noiseLevels>

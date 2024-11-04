@@ -825,6 +825,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_Zarr();
 #endif
 
+#ifdef FRMT_rcm
+    GDALRegister_RCM();
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Register GDAL HTTP last, to let a chance to other drivers       */
 /*      accepting URL to handle them before.                            */

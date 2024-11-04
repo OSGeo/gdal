@@ -231,6 +231,7 @@ void DeclareDeferredBASISU_KTX2Plugin(void);
 void CPL_DLL GDALRegister_NOAA_B(void);
 void CPL_DLL GDALRegister_NSIDCbin(void);
 void CPL_DLL GDALRegister_SNAP_TIFF(void);
+void CPL_DLL GDALRegister_RCM(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
