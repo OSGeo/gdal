@@ -2802,3 +2802,38 @@ def test_vrt_read_multi_threaded_disabled_since_overlapping_sources():
     assert (
         vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == "0"
     )
+
+
+###############################################################################
+# Test reading a VRT with a <VRTDataset> inside a <SimpleSource>
+
+
+def test_vrt_read_nested_VRTDataset():
+
+    ds = gdal.Open("data/vrt/nested_VRTDataset.vrt")
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+# Test updating a VRT with a <VRTDataset> inside a <SimpleSource>
+
+
+def test_vrt_update_nested_VRTDataset(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "byte.tif", open("data/byte.tif", "rb").read())
+    gdal.Mkdir(tmp_vsimem / "vrt", 0o755)
+    vrt_filename = tmp_vsimem / "vrt" / "nested_VRTDataset.vrt"
+    gdal.FileFromMemBuffer(
+        vrt_filename, open("data/vrt/nested_VRTDataset.vrt", "rb").read()
+    )
+
+    with gdal.Open(vrt_filename) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+        assert ds.GetRasterBand(1).GetMinimum() is None
+        vrt_stats = ds.GetRasterBand(1).ComputeStatistics(False)
+        assert vrt_stats[0] == 74
+
+    # Check that statistics have been serialized in the VRT
+    with gdal.Open(vrt_filename) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+        assert ds.GetRasterBand(1).GetMinimum() == 74

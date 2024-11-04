@@ -1335,7 +1335,11 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     // from which the mask band is taken.
     mutable GDALRasterBand *m_poMaskBandMainBand = nullptr;
 
-    CPLStringList m_aosOpenOptions{};
+    CPLStringList m_aosOpenOptionsOri{};  // as read in the original source XML
+    CPLStringList
+        m_aosOpenOptions{};  // same as above, but potentially augmented with ROOT_PATH
+    bool m_bSrcDSNameFromVRT =
+        false;  // whereas content in m_osSrcDSName is a <VRTDataset> XML node
 
     void OpenSource() const;
 
@@ -1406,6 +1410,8 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
         return m_dfDstXOff != UNINIT_WINDOW || m_dfDstYOff != UNINIT_WINDOW ||
                m_dfDstXSize != UNINIT_WINDOW || m_dfDstYSize != UNINIT_WINDOW;
     }
+
+    void AddSourceFilenameNode(const char *pszVRTPath, CPLXMLNode *psSrc);
 
   public:
     VRTSimpleSource();
