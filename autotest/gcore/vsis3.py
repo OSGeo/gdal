@@ -6094,6 +6094,121 @@ source_profile = foo
 
 
 ###############################################################################
+# Read credentials from cached SSO file
+
+
+def test_vsis3_read_credentials_sso(tmp_vsimem, aws_test_config, webserver_port):
+
+    if webserver_port != 8080:
+        pytest.skip("only works for webserver on port 8080")
+
+    options = {
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+        "AWS_PROFILE": "my_profile",
+        "CPL_AWS_SSO_ENDPOINT": "localhost:%d" % webserver_port,
+        "CPL_AWS_ROOT_DIR": str(tmp_vsimem),
+    }
+
+    gdal.VSICurlClearCache()
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "config",
+        """
+[sso-session my-sso]
+sso_start_url = https://example.com
+sso_region = eu-central-1
+sso_registration_scopes = sso:account:access
+
+[profile my_profile]
+sso_session = my-sso
+sso_account_id = my_sso_account_id
+sso_role_name = my_sso_role_name
+region = eu-east-1
+""",
+    )
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "sso" / "cache" / "327c3fda87ce286848a574982ddd0b7c7487f816.json",
+        '{"startUrl": "https://example.com", "region": "us-east-1", "accessToken": "sso-accessToken", "expiresAt": "9999-01-01T00:00:00Z"}',
+    )
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+
+    handler.add(
+        "GET",
+        "/federation/credentials?role_name=my_sso_role_name&account_id=my_sso_account_id",
+        200,
+        {},
+        """{
+  "roleCredentials": {
+    "accessKeyId": "accessKeyId",
+    "secretAccessKey": "secretAccessKey",
+    "sessionToken": "sessionToken",
+    "expiration": 9999999999000
+  }
+}""",
+        expected_headers={
+            "x-amz-sso_bearer_token": "sso-accessToken",
+        },
+    )
+
+    handler.add(
+        "GET",
+        "/s3_fake_bucket/resource",
+        200,
+        {},
+        """foo""",
+        expected_headers={
+            "x-amz-date": "20150101T000000Z",
+            "x-amz-content-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "X-Amz-Security-Token": "sessionToken",
+            "Authorization": "AWS4-HMAC-SHA256 Credential=accessKeyId/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=bfa9fb8c88286e3ef6537303784efe45721ede5e5bf51091565a66cf1ad8084a",
+        },
+    )
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is not None
+        try:
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        finally:
+            gdal.VSIFCloseL(f)
+
+    assert data == "foo"
+
+    handler = webserver.SequentialHandler()
+
+    handler.add(
+        "GET",
+        "/s3_fake_bucket/resource2",
+        200,
+        {},
+        """bar""",
+        expected_headers={
+            "x-amz-date": "20150101T000000Z",
+            "x-amz-content-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "X-Amz-Security-Token": "sessionToken",
+            "Authorization": "AWS4-HMAC-SHA256 Credential=accessKeyId/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=b081c4f3195807de3fc934626f7ef7f3fd8e1143226bcbf2afce478c4bb7d4ff",
+        },
+    )
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource2")
+        assert f is not None
+        try:
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        finally:
+            gdal.VSIFCloseL(f)
+
+    assert data == "bar"
+
+
+###############################################################################
 
 
 def test_vsis3_non_existing_file_GDAL_DISABLE_READDIR_ON_OPEN(

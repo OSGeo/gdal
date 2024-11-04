@@ -192,8 +192,7 @@ static void CPL_SHA1Final(CPL_SHA1Context *ctx, GByte hash[CPL_SHA1_HASH_SIZE])
 /*                              CPL_SHA1()                              */
 /************************************************************************/
 
-static void CPL_SHA1(const void *data, size_t len,
-                     GByte hash[CPL_SHA1_HASH_SIZE])
+void CPL_SHA1(const void *data, size_t len, GByte hash[CPL_SHA1_HASH_SIZE])
 {
     CPL_SHA1Context sSHA1Ctxt;
     CPL_SHA1Init(&sSHA1Ctxt);

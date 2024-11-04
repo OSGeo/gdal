@@ -25,6 +25,8 @@
 
 CPL_C_START
 
+void CPL_SHA1(const void *data, size_t len, GByte hash[CPL_SHA1_HASH_SIZE]);
+
 /* Not CPL_DLL exported */
 void CPL_HMAC_SHA1(const void *pKey, size_t nKeyLen, const void *pabyMessage,
                    size_t nMessageLen, GByte abyDigest[CPL_SHA1_HASH_SIZE]);
