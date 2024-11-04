@@ -42,6 +42,7 @@ repos:
                 autotest/cpp/data/|
                 autotest/gdrivers/data/|
                 swig/|
+                third_party/exprtk/|
                 third_party/fast_float/|
                 third_party/LercLib/|
                 autotest/ogr/data/|
