@@ -297,6 +297,48 @@ static inline __m128i comp(SSE_T x, SSE_T y)
     }
 }
 
+template <class T, class SSE_T> static inline SSE_T compeq(SSE_T a, SSE_T b);
+
+template <> __m128i compeq<uint8_t>(__m128i a, __m128i b)
+{
+    return _mm_cmpeq_epi8(a, b);
+}
+
+template <> __m128i compeq<int8_t>(__m128i a, __m128i b)
+{
+    return _mm_cmpeq_epi8(a, b);
+}
+
+template <> __m128i compeq<uint16_t>(__m128i a, __m128i b)
+{
+    return _mm_cmpeq_epi16(a, b);
+}
+
+template <> __m128i compeq<int16_t>(__m128i a, __m128i b)
+{
+    return _mm_cmpeq_epi16(a, b);
+}
+
+template <> __m128i compeq<uint32_t>(__m128i a, __m128i b)
+{
+    return _mm_cmpeq_epi32(a, b);
+}
+
+template <> __m128i compeq<int32_t>(__m128i a, __m128i b)
+{
+    return _mm_cmpeq_epi32(a, b);
+}
+
+template <> __m128 compeq<float>(__m128 a, __m128 b)
+{
+    return _mm_cmpeq_ps(a, b);
+}
+
+template <> __m128d compeq<double>(__m128d a, __m128d b)
+{
+    return _mm_cmpeq_pd(a, b);
+}
+
 template <class T> static inline T blendv(T a, T b, T mask);
 
 template <> __m128i blendv(__m128i a, __m128i b, __m128i mask)
@@ -437,87 +479,17 @@ inline size_t extremum_element_with_nan(const T *v, size_t size, T noDataValue)
         {
             // Replace all components that are at the nodata value by a
             // neutral value (current minimum)
-            if constexpr (std::is_same_v<T, uint8_t> ||
-                          std::is_same_v<T, int8_t>)
+            const auto replaceNoDataByNeutral =
+                [sse_neutral, sse_nodata](auto sse_val)
             {
-                const auto replaceNoDataByNeutral =
-                    [sse_neutral, sse_nodata](auto sse_val)
-                {
-                    const auto eq_nodata = _mm_cmpeq_epi8(sse_val, sse_nodata);
-                    return blendv(sse_val, sse_neutral, eq_nodata);
-                };
+                const auto eq_nodata = compeq<T>(sse_val, sse_nodata);
+                return blendv(sse_val, sse_neutral, eq_nodata);
+            };
 
-                sse_val0 = replaceNoDataByNeutral(sse_val0);
-                sse_val1 = replaceNoDataByNeutral(sse_val1);
-                sse_val2 = replaceNoDataByNeutral(sse_val2);
-                sse_val3 = replaceNoDataByNeutral(sse_val3);
-            }
-            else if constexpr (std::is_same_v<T, uint16_t> ||
-                               std::is_same_v<T, int16_t>)
-            {
-                const auto replaceNoDataByNeutral =
-                    [sse_neutral, sse_nodata](auto sse_val)
-                {
-                    const auto eq_nodata = _mm_cmpeq_epi16(sse_val, sse_nodata);
-                    return blendv(sse_val, sse_neutral, eq_nodata);
-                };
-
-                sse_val0 = replaceNoDataByNeutral(sse_val0);
-                sse_val1 = replaceNoDataByNeutral(sse_val1);
-                sse_val2 = replaceNoDataByNeutral(sse_val2);
-                sse_val3 = replaceNoDataByNeutral(sse_val3);
-            }
-            else if constexpr (std::is_same_v<T, uint32_t> ||
-                               std::is_same_v<T, int32_t>)
-            {
-                const auto replaceNoDataByNeutral =
-                    [sse_neutral, sse_nodata](auto sse_val)
-                {
-                    const auto eq_nodata = _mm_cmpeq_epi32(sse_val, sse_nodata);
-                    return blendv(sse_val, sse_neutral, eq_nodata);
-                };
-
-                sse_val0 = replaceNoDataByNeutral(sse_val0);
-                sse_val1 = replaceNoDataByNeutral(sse_val1);
-                sse_val2 = replaceNoDataByNeutral(sse_val2);
-                sse_val3 = replaceNoDataByNeutral(sse_val3);
-            }
-            else if constexpr (std::is_same_v<T, float>)
-            {
-                const auto replaceNoDataByNeutral =
-                    [sse_neutral, sse_nodata](auto sse_val)
-                {
-                    const auto eq_nodata = _mm_cmpeq_ps(sse_val, sse_nodata);
-                    return blendv(sse_val, sse_neutral, eq_nodata);
-                };
-
-                sse_val0 = replaceNoDataByNeutral(sse_val0);
-                sse_val1 = replaceNoDataByNeutral(sse_val1);
-                sse_val2 = replaceNoDataByNeutral(sse_val2);
-                sse_val3 = replaceNoDataByNeutral(sse_val3);
-            }
-            else if constexpr (std::is_same_v<T, double>)
-            {
-                const auto replaceNoDataByNeutral =
-                    [sse_neutral, sse_nodata](auto sse_val)
-                {
-                    const auto eq_nodata = _mm_cmpeq_pd(sse_val, sse_nodata);
-                    return blendv(sse_val, sse_neutral, eq_nodata);
-                };
-
-                sse_val0 = replaceNoDataByNeutral(sse_val0);
-                sse_val1 = replaceNoDataByNeutral(sse_val1);
-                sse_val2 = replaceNoDataByNeutral(sse_val2);
-                sse_val3 = replaceNoDataByNeutral(sse_val3);
-            }
-            else
-            {
-                static_assert(
-                    std::is_same_v<T, uint8_t> || std::is_same_v<T, int8_t> ||
-                    std::is_same_v<T, uint16_t> || std::is_same_v<T, int16_t> ||
-                    std::is_same_v<T, uint32_t> || std::is_same_v<T, int32_t> ||
-                    std::is_same_v<T, float> || std::is_same_v<T, double>);
-            }
+            sse_val0 = replaceNoDataByNeutral(sse_val0);
+            sse_val1 = replaceNoDataByNeutral(sse_val1);
+            sse_val2 = replaceNoDataByNeutral(sse_val2);
+            sse_val3 = replaceNoDataByNeutral(sse_val3);
         }
 
         if (_mm_movemask_epi8(_mm_or_si128(
