@@ -9,18 +9,17 @@ Author:        Erik Schnetter
 Contact:       eschnetter @ perimeterinstitute.ca
 Started:       2024-Jun-05
 Status:        Proposed
-Target:        GDAL 3.10
+Target:        GDAL 3.11
 ============== =============================================
 
 Summary
 -------
 
 This RFC adds support for the IEEE 16-bit floating point data type
-(aka ``half``, ``float16``). It adds a new pixel data type
-``GDT_Float16``. Where supported by the compiler, it also ensures a
-the C/C++ type ``_Float16`` is available. Even when the local system
-does not support ``_Float16``, datasets of this type can still be
-accessed by converting from/to ``float``.
+(aka ``half``, ``float16``). It adds new pixel data types
+``GDT_Float16`` and ``GDT_CFloat16``, backed by a new ``GFloat16`` C++
+type. This type will be emulated in software if not available
+natively.
 
 Some drivers, in particular Zarr, will be extended to support this
 type. Drivers that do not support this type will be checked to ensure
@@ -52,31 +51,23 @@ Motivation
 Details
 -------
 
-The type ``_Float16`` is defined in both C and C++, if supported by
-the compiler. This is the type name that C will (most likely) use in
-the future. Modern GCC releases provide this type already. OTher
-compilers might support this type under a different name, and in this
-case, GDAL will define ``_Float16`` as type alias.
-
-The preprocessor symbol ``GDAL_HAVE_GFLOAT16`` indicates whether
-``_Float16`` is available at compile time. This information will also
-be available at run time via ``bool GDALHaveFloat16()``.
+A new type ``GFloat16`` will be defined in C++. This type will be a
+thin wrapper around a native float16 type if one is available, such as
+e.g. ``_Float16`` in modern versions of GCC. Otherwise, a this type
+will be emulated (transparently to the user), and operations will be
+performed as ``float``.
 
 The following pixel data types are added:
 - ``GDT_Float16``  --> ``_Float16``
-- ``GDT_CFloat16`` --> ``std::complex<_Float16`` / ``_Complex _Float16``
-
-These enum values are added independent of the value of whether the
-compiler supports float16.
+- ``GDT_CFloat16`` --> ``std::complex<_Float16``
 
 Some drivers (at least the HDF5, GTiff, and Zarr) already handle
 float16 by exposing it as float32, using software conversion routines.
 float16 is now supported directly, i.e., without converting to
-float32, if the compiler supports float16. Otherwise, the current
-behaviour is retained, which automatically converts float16 to
-float32.
+float32. In other drivers, the current behaviour is retained, which
+automatically converts float16 to float32.
 
-For simplicity there are no new functions handling attributes for
+For simplicity there will be no new functions handling attributes for
 multidimensional datasets. Attributes of type float16 can still be
 read/written as raw values.
 
@@ -88,9 +79,10 @@ It is likely that a large fraction of the code base will be impacted.
 SWIG bindings
 -------------
 
-The SWIG bindings are extended as if the system supported float16
-values to provide a uniform ABI. If the GDAL backend does not support
-float16, as indicated by ``GDALHaveFloat16``, an error is reported.
+The SWIG bindings are extended where possible. Unfortunately, SWIG
+does not support the native float16 Python type, but it does support
+the float16 numpy type. This means that not all SWIG Python wrappers
+can support float16.
 
 Backward compatibility
 ----------------------
@@ -123,12 +115,13 @@ any current features. The risk should be low.
 Documentation
 -------------
 
-To be written.
+Documentation will be added.
 
 Testing
 -------
 
-The C++ test suite will be updated. Tests will be implemented in Python.
+The C++ test suite will be updated. Tests will be implemented in C++
+and Python.
 
 Related issues and PRs
 ----------------------
