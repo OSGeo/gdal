@@ -43,29 +43,6 @@
 #endif
 
 #include "gdal_priv_templates.hpp"
-#if GDAL_VERSION < GDAL_COMPUTE_VERSION(3, 10, 0)
-// For vendoring in other applications
-namespace GDAL_MINMAXELT_NS
-{
-template <class T> inline bool GDALIsValueExactAs(double dfValue)
-{
-    return GDALIsValueInRange<T>(dfValue) &&
-           static_cast<double>(static_cast<T>(dfValue)) == dfValue;
-}
-
-template <> inline bool GDALIsValueExactAs<float>(double dfValue)
-{
-    return std::isnan(dfValue) ||
-           (GDALIsValueInRange<float>(dfValue) &&
-            static_cast<double>(static_cast<float>(dfValue)) == dfValue);
-}
-
-template <> inline bool GDALIsValueExactAs<double>(double)
-{
-    return true;
-}
-}  // namespace GDAL_MINMAXELT_NS
-#endif
 
 namespace GDAL_MINMAXELT_NS
 {
@@ -989,6 +966,7 @@ size_t extremum_element(const void *buffer, size_t nElts, GDALDataType eDT,
 {
     switch (eDT)
     {
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 7, 0)
         case GDT_Int8:
         {
             using T = int8_t;
@@ -997,6 +975,7 @@ size_t extremum_element(const void *buffer, size_t nElts, GDALDataType eDT,
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
         }
+#endif
         case GDT_Byte:
         {
             using T = uint8_t;
@@ -1037,6 +1016,7 @@ size_t extremum_element(const void *buffer, size_t nElts, GDALDataType eDT,
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
         }
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 5, 0)
         case GDT_Int64:
         {
             using T = int64_t;
@@ -1053,6 +1033,7 @@ size_t extremum_element(const void *buffer, size_t nElts, GDALDataType eDT,
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
         }
+#endif
         case GDT_Float32:
         {
             using T = float;
@@ -1330,6 +1311,7 @@ inline std::pair<size_t, size_t> minmax_element(const void *buffer,
 {
     switch (eDT)
     {
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 7, 0)
         case GDT_Int8:
         {
             using T = int8_t;
@@ -1338,6 +1320,7 @@ inline std::pair<size_t, size_t> minmax_element(const void *buffer,
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
         }
+#endif
         case GDT_Byte:
         {
             using T = uint8_t;
@@ -1378,6 +1361,7 @@ inline std::pair<size_t, size_t> minmax_element(const void *buffer,
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
         }
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3, 5, 0)
         case GDT_Int64:
         {
             using T = int64_t;
@@ -1394,6 +1378,7 @@ inline std::pair<size_t, size_t> minmax_element(const void *buffer,
                 static_cast<const T *>(buffer), nElts, bHasNoData,
                 bHasNoData ? static_cast<T>(dfNoDataValue) : 0);
         }
+#endif
         case GDT_Float32:
         {
             using T = float;
