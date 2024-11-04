@@ -142,14 +142,14 @@ struct CPLFloat16
 
     static unsigned float2unsigned(float f)
     {
-        unsigned u{};
+        unsigned u;
         std::memcpy(&u, &f, 4);
         return u;
     }
 
     static float unsigned2float(unsigned u)
     {
-        float f{};
+        float f;
         std::memcpy(&f, &u, 4);
         return f;
     }
