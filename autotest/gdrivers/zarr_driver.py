@@ -43,10 +43,10 @@ _gdal_data_type_to_array_type = {
     gdal.GDT_UInt32: "I",
     gdal.GDT_Int64: "q",
     gdal.GDT_UInt64: "Q",
-    # gdal.GDT_Float16: "e",
+    gdal.GDT_Float16: "e",
     gdal.GDT_Float32: "f",
     gdal.GDT_Float64: "d",
-    # gdal.GDT_CFloat16: "e",
+    gdal.GDT_CFloat16: "e",
     gdal.GDT_CFloat32: "f",
     gdal.GDT_CFloat64: "d",
 }
@@ -90,6 +90,7 @@ _gdal_data_type_to_array_type = {
             (1 << 64) - 1,
         ],  # not really legit to have the fill_value as a str, but libjson-c can't support numeric values in int64::max(), uint64::max() range.
         [">u8", gdal.GDT_UInt64, None, None],
+        # We would like to test these, but SWIG does not support float16 (yet?)
         # ["<f2", gdal.GDT_Float16, None, None],
         # [">f2", gdal.GDT_Float16, None, None],
         # ["<f2", gdal.GDT_Float16, 1.5, 1.5],
@@ -107,7 +108,7 @@ _gdal_data_type_to_array_type = {
         ["<f8", gdal.GDT_Float64, "NaN", float("nan")],
         ["<f8", gdal.GDT_Float64, "Infinity", float("infinity")],
         ["<f8", gdal.GDT_Float64, "-Infinity", float("-infinity")],
-        # TODO: Test reading/writing GDT_CFloat16 via float32 Python data
+        # We would like to test these, but SWIG does not support complex32 (yet?)
         # ["<c4", gdal.GDT_CFloat16, None, None],
         # [">c4", gdal.GDT_CFloat16, None, None],
         ["<c8", gdal.GDT_CFloat32, None, None],
