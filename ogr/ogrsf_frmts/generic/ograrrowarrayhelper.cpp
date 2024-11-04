@@ -32,8 +32,8 @@
         nMemLimit = atoi(pszOGR_ARROW_MEM_LIMIT);
     else
     {
-        const uint64_t nUsableRAM = CPLGetUsablePhysicalRAM();
-        if (nUsableRAM > 0 && nUsableRAM / 4 < nMemLimit)
+        const auto nUsableRAM = CPLGetUsablePhysicalRAM();
+        if (nUsableRAM > 0 && static_cast<uint64_t>(nUsableRAM / 4) < nMemLimit)
             nMemLimit = static_cast<uint32_t>(nUsableRAM / 4);
     }
     return nMemLimit;
