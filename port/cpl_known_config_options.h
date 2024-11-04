@@ -261,6 +261,10 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_ENABLE_TIFF_SPLIT", // from gtiffdataset_read.cpp
    "GDAL_ENABLE_WMS_CACHE", // from gdalwmsdataset.cpp
    "GDAL_ERROR_ON_LIBJPEG_WARNING", // from jpgdataset.cpp
+   "GDAL_EXPRTK_ENABLE_LOOPS", // from vrtexpression_exprtk.cpp
+   "GDAL_EXPRTK_MAX_EXPRESSION_LENGTH", // from vrtexpression_exprtk.cpp
+   "GDAL_EXPRTK_MAX_VECTOR_LENGTH", // from vrtexpression_exprtk.cpp
+   "GDAL_EXPRTK_TIMEOUT_SECONDS", // from vrtexpression_exprtk.cpp
    "GDAL_FILENAME_IS_UTF8", // from cpl_getexecpath.cpp, cpl_odbc.cpp, cpl_vsil_win32.cpp, cpl_vsisimple.cpp, cplgetsymbol.cpp, ecwcreatecopy.cpp, ecwdataset.cpp, gdalpython.cpp, netcdfdataset.cpp, netcdfmultidim.cpp, ogrxlsdatasource.cpp
    "GDAL_FORCE_CACHING", // from gdaldataset.cpp, gdalrasterband.cpp
    "GDAL_GCPS_TO_GEOTRANSFORM_APPROX_OK", // from gdal_misc.cpp

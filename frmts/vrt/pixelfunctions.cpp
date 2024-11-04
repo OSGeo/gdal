@@ -14,6 +14,7 @@
 #include <cmath>
 #include "gdal.h"
 #include "vrtdataset.h"
+#include "vrtexpression.h"
 
 #include <limits>
 
@@ -1614,6 +1615,110 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
                                          nPixelSpace, nLineSpace, papszArgs);
 }
 
+static const char pszExprPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument name='expression' "
+    "             description='Expression to be evaluated' "
+    "             type='string'></Argument>"
+    "   <Argument name='dialect' "
+    "             description='Expression dialect' "
+    "             type='string-select'"
+    "             default='exprtk'>"
+    "       <Value>exprtk</Value>"
+    "       <Value>muparser</Value>"
+    "    </Argument>"
+    "</PixelFunctionArgumentsList>";
+
+static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
+                            int nXSize, int nYSize, GDALDataType eSrcType,
+                            GDALDataType eBufType, int nPixelSpace,
+                            int nLineSpace, CSLConstList papszArgs)
+{
+    /* ---- Init ---- */
+
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "expression cannot by applied to complex data types");
+        return CE_Failure;
+    }
+
+    std::unique_ptr<gdal::MathExpression> poExpression;
+
+    const char *pszExpression = CSLFetchNameValue(papszArgs, "expression");
+
+    const char *pszSourceNames = CSLFetchNameValue(papszArgs, "SOURCE_NAMES");
+    const CPLStringList aosSourceNames(
+        CSLTokenizeString2(pszSourceNames, "|", 0));
+
+    std::vector<double> adfValuesForPixel(nSources);
+
+    const char *pszDialect = CSLFetchNameValue(papszArgs, "dialect");
+    if (!pszDialect)
+    {
+        pszDialect = "muparser";
+    }
+
+    poExpression = gdal::MathExpression::Create(pszExpression, pszDialect);
+
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!poExpression)
+    {
+        return CE_Failure;
+    }
+
+    {
+        int iSource = 0;
+        for (const auto &osName : aosSourceNames)
+        {
+            poExpression->RegisterVariable(osName,
+                                           &adfValuesForPixel[iSource++]);
+        }
+    }
+    CPLString osExpression(pszExpression);
+    if (osExpression.find("BANDS") != std::string::npos)
+    {
+        poExpression->RegisterVector("BANDS", &adfValuesForPixel);
+    }
+
+    double *padfResults =
+        static_cast<double *>(CPLMalloc(nXSize * sizeof(double)));
+
+    /* ---- Set pixels ---- */
+    size_t ii = 0;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+        {
+            for (int iSrc = 0; iSrc < nSources; iSrc++)
+            {
+                // cppcheck-suppress unreadVariable
+                adfValuesForPixel[iSrc] =
+                    GetSrcVal(papoSources[iSrc], eSrcType, ii);
+            }
+
+            if (auto eErr = poExpression->Evaluate(); eErr != CE_None)
+            {
+                return CE_Failure;
+            }
+            else
+            {
+                padfResults[iCol] = poExpression->Results()[0];
+            }
+        }
+
+        GDALCopyWords(padfResults, GDT_Float64, sizeof(double),
+                      static_cast<GByte *>(pData) +
+                          static_cast<GSpacing>(nLineSpace) * iLine,
+                      eBufType, nPixelSpace, nXSize);
+    }
+
+    CPLFree(padfResults);
+
+    /* ---- Return success ---- */
+    return CE_None;
+}  // ExprPixelFunc
+
 /************************************************************************/
 /*                     GDALRegisterDefaultPixelFunc()                   */
 /************************************************************************/
@@ -1735,5 +1840,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszMinMaxFuncMetadataNodata);
     GDALAddDerivedBandPixelFuncWithArgs("max", MaxPixelFunc,
                                         pszMinMaxFuncMetadataNodata);
+    GDALAddDerivedBandPixelFuncWithArgs("expression", ExprPixelFunc,
+                                        pszExprPixelFuncMetadata);
     return CE_None;
 }

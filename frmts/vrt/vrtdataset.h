@@ -190,6 +190,11 @@ class CPL_DLL VRTSource
         return false;
     }
 
+    virtual const CPLString &GetName() const
+    {
+        return m_osName;
+    }
+
     /** Returns a string with the VRTSource class type.
      * This method must be implemented in all subclasses
      */
@@ -199,6 +204,9 @@ class CPL_DLL VRTSource
     {
         return CE_None;
     }
+
+  protected:
+    CPLString m_osName{};
 };
 
 typedef VRTSource *(*VRTSourceParser)(const CPLXMLNode *, const char *,

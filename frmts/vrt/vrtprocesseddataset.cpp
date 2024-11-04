@@ -683,9 +683,11 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         // Should not happen frequently as pixel init functions are expected
         // to validate that they can accept the number of output bands provided
         // to them
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Number of output bands of last step is not consistent with "
-                 "number of VRTProcessedRasterBand's");
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Number of output bands of last step (%d) is not consistent with "
+            "number of VRTProcessedRasterBand's (%d)",
+            nCurrentBandCount, nBands);
         return CE_Failure;
     }
 

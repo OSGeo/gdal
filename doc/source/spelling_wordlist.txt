@@ -1873,6 +1873,7 @@ multithreaded
 multithreading
 Multithreading
 mundialis
+muparser
 Mutatie
 mutex
 Mutex
