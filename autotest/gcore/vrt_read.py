@@ -2926,6 +2926,12 @@ def vrt_expression_xml(tmpdir, expression, sources):
             21,
             id="implicit source name",
         ),
+        pytest.param(
+            "B1 / sum(ALL)",
+            [("", 3), ("", 5), ("", 31)],
+            3 / (3 + 5 + 31),
+            id="use of ALL variable",
+        ),
     ],
 )
 def test_vrt_pixelfn_expression(tmp_path, expression, sources, result):

@@ -1657,6 +1657,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
             oSymbolTable.add_variable(osName, adfValuesForPixel[iSource++]);
         }
     }
+    oSymbolTable.add_vector("ALL", adfValuesForPixel);
 
     exprtk::expression<double> oExpression;
     oExpression.register_symbol_table(oSymbolTable);
