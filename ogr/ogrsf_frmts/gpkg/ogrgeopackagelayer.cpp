@@ -17,6 +17,7 @@
 #include "ogr_p.h"
 #include "ogr_recordbatch.h"
 #include "ograrrowarrayhelper.h"
+#include "ogrlayerarrow.h"
 
 /************************************************************************/
 /*                      OGRGeoPackageLayer()                            */
@@ -550,6 +551,9 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     struct tm brokenDown;
     memset(&brokenDown, 0, sizeof(brokenDown));
 
+    const bool bDateTimeAsString = m_aosArrowArrayStreamOptions.FetchBool(
+        GAS_OPT_DATETIME_AS_STRING, false);
+
     const uint32_t nMemLimit = OGRArrowArrayHelper::GetMemLimit();
     int iFeat = 0;
     while (iFeat < sHelper.m_nMaxBatchSize)
@@ -845,15 +849,23 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
                 case OFTDateTime:
                 {
-                    OGRField ogrField;
-                    if (ParseDateTimeField(hStmt, iRawField, nSqlite3ColType,
-                                           &ogrField, poFieldDefn, nFID))
+                    if (!bDateTimeAsString)
                     {
-                        sHelper.SetDateTime(psArray, iFeat, brokenDown,
-                                            sHelper.m_anTZFlags[iField],
-                                            ogrField);
+                        OGRField ogrField;
+                        if (ParseDateTimeField(hStmt, iRawField,
+                                               nSqlite3ColType, &ogrField,
+                                               poFieldDefn, nFID))
+                        {
+                            sHelper.SetDateTime(psArray, iFeat, brokenDown,
+                                                sHelper.m_anTZFlags[iField],
+                                                ogrField);
+                        }
+                        break;
                     }
-                    break;
+                    else
+                    {
+                        [[fallthrough]];
+                    }
                 }
 
                 case OFTString:

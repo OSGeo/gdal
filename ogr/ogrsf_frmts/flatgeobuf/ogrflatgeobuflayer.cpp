@@ -18,6 +18,7 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 #include "ograrrowarrayhelper.h"
+#include "ogrlayerarrow.h"
 #include "ogr_recordbatch.h"
 
 #include "ogr_flatgeobuf.h"
@@ -1481,6 +1482,8 @@ begin:
     }
 
     const GIntBig nFeatureIdxStart = m_featuresPos;
+    const bool bDateTimeAsString = m_aosArrowArrayStreamOptions.FetchBool(
+        GAS_OPT_DATETIME_AS_STRING, false);
 
     const uint32_t nMemLimit = OGRArrowArrayHelper::GetMemLimit();
     while (iFeat < sHelper.m_nMaxBatchSize)
@@ -1851,6 +1854,58 @@ begin:
                         offset += sizeof(double);
                         break;
 
+                    case ColumnType::DateTime:
+                    {
+                        if (!bDateTimeAsString)
+                        {
+                            if (offset + sizeof(uint32_t) > size)
+                            {
+                                CPLErrorInvalidSize("datetime length ");
+                                goto error;
+                            }
+                            uint32_t len;
+                            memcpy(&len, data + offset, sizeof(int32_t));
+                            CPL_LSBPTR32(&len);
+                            offset += sizeof(uint32_t);
+                            if (len > size - offset || len > 32)
+                            {
+                                CPLErrorInvalidSize("datetime value");
+                                goto error;
+                            }
+                            if (!isIgnored)
+                            {
+                                OGRField ogrField;
+                                if (ParseDateTime(
+                                        reinterpret_cast<const char *>(data +
+                                                                       offset),
+                                        len, &ogrField))
+                                {
+                                    sHelper.SetDateTime(
+                                        psArray, iFeat, brokenDown,
+                                        sHelper.m_anTZFlags[i], ogrField);
+                                }
+                                else
+                                {
+                                    char str[32 + 1];
+                                    memcpy(str, data + offset, len);
+                                    str[len] = '\0';
+                                    if (OGRParseDate(str, &ogrField, 0))
+                                    {
+                                        sHelper.SetDateTime(
+                                            psArray, iFeat, brokenDown,
+                                            sHelper.m_anTZFlags[i], ogrField);
+                                    }
+                                }
+                            }
+                            offset += len;
+                            break;
+                        }
+                        else
+                        {
+                            [[fallthrough]];
+                        }
+                    }
+
                     case ColumnType::String:
                     case ColumnType::Json:
                     case ColumnType::Binary:
@@ -1892,50 +1947,6 @@ begin:
                                 goto error;
                             }
                             memcpy(outPtr, data + offset, len);
-                        }
-                        offset += len;
-                        break;
-                    }
-
-                    case ColumnType::DateTime:
-                    {
-                        if (offset + sizeof(uint32_t) > size)
-                        {
-                            CPLErrorInvalidSize("datetime length ");
-                            goto error;
-                        }
-                        uint32_t len;
-                        memcpy(&len, data + offset, sizeof(int32_t));
-                        CPL_LSBPTR32(&len);
-                        offset += sizeof(uint32_t);
-                        if (len > size - offset || len > 32)
-                        {
-                            CPLErrorInvalidSize("datetime value");
-                            goto error;
-                        }
-                        if (!isIgnored)
-                        {
-                            OGRField ogrField;
-                            if (ParseDateTime(reinterpret_cast<const char *>(
-                                                  data + offset),
-                                              len, &ogrField))
-                            {
-                                sHelper.SetDateTime(psArray, iFeat, brokenDown,
-                                                    sHelper.m_anTZFlags[i],
-                                                    ogrField);
-                            }
-                            else
-                            {
-                                char str[32 + 1];
-                                memcpy(str, data + offset, len);
-                                str[len] = '\0';
-                                if (OGRParseDate(str, &ogrField, 0))
-                                {
-                                    sHelper.SetDateTime(
-                                        psArray, iFeat, brokenDown,
-                                        sHelper.m_anTZFlags[i], ogrField);
-                                }
-                            }
                         }
                         offset += len;
                         break;

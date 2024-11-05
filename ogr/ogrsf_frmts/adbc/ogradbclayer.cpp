@@ -155,8 +155,11 @@ GDALDataset *OGRADBCLayer::GetDataset()
 bool OGRADBCLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
                                   CSLConstList papszOptions)
 {
-    if (m_poFilterGeom || m_poAttrQuery)
+    if (m_poFilterGeom || m_poAttrQuery ||
+        CPLFetchBool(papszOptions, GAS_OPT_DATETIME_AS_STRING, false))
+    {
         return OGRLayer::GetArrowStream(out_stream, papszOptions);
+    }
 
     if (m_stream)
     {

@@ -10831,3 +10831,76 @@ def test_ogr_gpkg_write_check_golden_file(tmp_path, src_filename):
         golden_data[96] = golden_data[97] = golden_data[98] = golden_data[99] = 0
         got_data[96] = got_data[97] = got_data[98] = got_data[99] = 0
         assert got_data == golden_data
+
+
+###############################################################################
+# Test DATETIME_AS_STRING=YES GetArrowStream() option
+
+
+def test_ogr_gpkg_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    filename = str(tmp_vsimem / "datetime_as_string.gpkg")
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    lyr = ds.CreateLayer("test")
+
+    field = ogr.FieldDefn("datetime", ogr.OFTDateTime)
+    lyr.CreateField(field)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.000")
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.000+12:30")
+    lyr.CreateFeature(f)
+
+    # Test DATETIME_AS_STRING=YES
+    stream = lyr.GetArrowStreamAsNumPy(
+        options=["USE_MASKED_ARRAYS=NO", "DATETIME_AS_STRING=YES"]
+    )
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    assert len(batch["datetime"]) == 4
+    assert batch["datetime"][0] == b""
+    assert batch["datetime"][1] == b"2022-05-31T12:34:56.789Z"
+    assert batch["datetime"][2] == b"2022-05-31T12:34:56.000"
+    assert batch["datetime"][3] == b"2022-05-31T12:34:56.000+12:30"
+
+    # Setting a filer tests the use of the less optimized
+    # OGRGeoPackageTableLayer::GetNextArray() implementation
+    lyr.SetAttributeFilter("1 = 1")
+    stream = lyr.GetArrowStreamAsNumPy(
+        options=["USE_MASKED_ARRAYS=NO", "DATETIME_AS_STRING=YES"]
+    )
+    lyr.SetAttributeFilter(None)
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    assert len(batch["datetime"]) == 4
+    assert batch["datetime"][0] == b""
+    assert batch["datetime"][1] == b"2022-05-31T12:34:56.789Z"
+    assert batch["datetime"][2] == b"2022-05-31T12:34:56.000"
+    assert batch["datetime"][3] == b"2022-05-31T12:34:56.000+12:30"
+
+    with ds.ExecuteSQL("SELECT * FROM test") as sql_lyr:
+        stream = sql_lyr.GetArrowStreamAsNumPy(
+            options=["USE_MASKED_ARRAYS=NO", "DATETIME_AS_STRING=YES"]
+        )
+        batches = [batch for batch in stream]
+        assert len(batches) == 1
+        batch = batches[0]
+        assert len(batch["datetime"]) == 4
+        assert batch["datetime"][0] == b""
+        assert batch["datetime"][1] == b"2022-05-31T12:34:56.789Z"
+        assert batch["datetime"][2] == b"2022-05-31T12:34:56.000"
+        assert batch["datetime"][3] == b"2022-05-31T12:34:56.000+12:30"

@@ -980,6 +980,49 @@ def test_ogr_mem_arrow_stream_numpy():
 
 
 ###############################################################################
+# Test DATETIME_AS_STRING=YES GetArrowStream() option
+
+
+def test_ogr_mem_arrow_stream_numpy_datetime_as_string():
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+
+    field = ogr.FieldDefn("datetime", ogr.OFTDateTime)
+    lyr.CreateField(field)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56")
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56+12:30")
+    lyr.CreateFeature(f)
+
+    # Test DATETIME_AS_STRING=YES
+    stream = lyr.GetArrowStreamAsNumPy(
+        options=["USE_MASKED_ARRAYS=NO", "DATETIME_AS_STRING=YES"]
+    )
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    assert len(batch["datetime"]) == 4
+    assert batch["datetime"][0] == b""
+    assert batch["datetime"][1] == b"2022-05-31T12:34:56.789Z"
+    assert batch["datetime"][2] == b"2022-05-31T12:34:56"
+    assert batch["datetime"][3] == b"2022-05-31T12:34:56+12:30"
+
+
+###############################################################################
 
 
 @pytest.mark.parametrize(

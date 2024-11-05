@@ -87,6 +87,7 @@ struct OGRGPKGTableLayerFillArrowArray
     int nCountRows = 0;
     bool bErrorOccurred = false;
     bool bMemoryLimitReached = false;
+    bool bDateTimeAsString = false;
     std::string osErrorMsg{};
     OGRFeatureDefn *poFeatureDefn = nullptr;
     OGRGeoPackageLayer *poLayer = nullptr;
