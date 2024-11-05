@@ -1432,3 +1432,17 @@ import org.gdal.gdalconst.gdalconstConstants;
 %include callback.i
 
 %include typemaps_java.i
+
+
+// Also defined in python/gdal_python.i and csharp/gdal_csharp.i
+
+%rename (GetMemFileBuffer) wrapper_VSIGetMemFileBuffer;
+
+%apply (GByte* outBytes) {GByte*};
+%inline %{
+GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_path, vsi_l_offset *length)
+{
+    return VSIGetMemFileBuffer(utf8_path, length, 0);
+}
+%}
+%clear GByte*;
