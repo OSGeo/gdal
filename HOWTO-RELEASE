@@ -358,3 +358,10 @@ or your message manually approved, with an administrator of the list.
 
 23) For bugfixes releases, forward port to master changes done in
     doc/source/about_no_title.rst, doc/source/download.rst and doc/source/download_past.rst
+
+24) For a feature release, enable a new version in the ReadTheDocs administration panel.
+    a) Go to https://readthedocs.org/projects/gdal/versions/
+    b) In the "Activate a version" tab, enter "release/X.Y" in the text entry and click on the Filter button
+    c) Click on the Activate button
+    d) Go to https://readthedocs.org/projects/gdal/, and in the "Compile a version" drop-down list,
+       select the newt "release-X.Y" label and click on the "Compile a version" button
