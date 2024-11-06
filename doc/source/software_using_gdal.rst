@@ -44,6 +44,7 @@ Free and open source
 - `NextGIS Web  <http://nextgis.com/nextgis-web>`_ Server-side Web GIS and a framework for storage, visualization and permissions management of all kinds
 - `Ogr2 GUI  <https://sourceforge.net/projects/ogr2gui/>`_ Graphical user interface for ogr2ogr
 - `OpenCPN  <http://opencpn.org>`_  A concise ChartPlotter/Navigator. A cross-platform ship-borne GUI application.
+- `OpenDataCube  <https://www.opendatacube.org>`_  FOSS software package that simplifies the management and analysis of large amounts of satellite imagery and other Earth observation data.
 - `OpenEV  <http://openev.sourceforge.net>`_  An OpenGL/GTK/Python based graphical viewer which exclusively uses GDAL for raster access.
 - `OFGT <https://github.com/openforis/geospatial-toolkit>`_  a collection of utilities for multipurpose forest monitoring under the `Open Foris Initiative <http://km.fao.org/OFwiki/index.php/Main_Page>`_ Open Foris Initiative.
 - `OpenFLUID  <https://www.openfluid-project.org>`_  a software platform for spatial modelling of landscapes dynamics
