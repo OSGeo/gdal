@@ -23,6 +23,7 @@ Vector drivers
    :hidden:
 
    adbc
+   aivector
    amigocloud
    arrow
    avcbin
