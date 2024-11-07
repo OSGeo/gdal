@@ -43,7 +43,7 @@ Motivation
 
 - C++23 will introduce native support for ``std::float16_t``. However,
   it will likely be several years until C++23 will be a requirement
-  for GDAL. A shorter-term solution is needed.
+  for GDAL.
 
 - Many other projects and storage libraries support float16. GDAL will
   fall behind if it doesn't.
@@ -52,11 +52,29 @@ Details
 -------
 
 A new type ``GFloat16`` will be defined in C++ in :file:`cpl_float.h`
-which will be an exported header of GDAL. This type will be a thin
-wrapper around a native float16 type if one is available, such as e.g.
-``_Float16`` in modern versions of GCC. Otherwise, a this type will be
-emulated (transparently to the user), and operations will be performed
-as ``float``.
+which will be an exported header of GDAL. This type will work in one
+of these ways:
+
+- if the standard C++ type ``std::float16_t`` is available,
+  ``GFloat16`` will be an alias to this type.
+
+- otherwise, if a fully-functional non-standard type is available,
+  ``GFloat16`` will be an alias to that type.
+
+- otherwise, if a float16-type is available that is not supported by
+  the standard C++ library (such as ``_Float16`` for which e.g.
+  ``std::isnan`` or ``std::numeric_limits`` may not be defined), then
+  ``GFloat16`` will be a thin wrapper around that type, adding support
+  for C++ library functions.
+
+- otherwise, ``GFloat16`` will be a new type that emulates float16
+  behaviour (transparently to the user), and operations will be
+  performed as ``float``.
+
+Experimentation has shown that this is the most convenient way to
+handle lack of support or partial support for a float16 type, both in
+terms of implementation within GDAL and in terms of using GDAL as a
+C++ library.
 
 The following pixel data types are added:
 - ``GDT_Float16``  --> ``GFloat16``
