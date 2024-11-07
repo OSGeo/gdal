@@ -23,7 +23,7 @@ natively.
 
 Some drivers, in particular Zarr, will be extended to support this
 type. Drivers that do not support this type will be checked to ensure
-they report an appropriate errors when necessary.
+they report an appropriate error when necessary.
 
 Motivation
 ----------
