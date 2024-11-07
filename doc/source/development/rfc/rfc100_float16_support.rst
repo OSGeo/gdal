@@ -51,15 +51,16 @@ Motivation
 Details
 -------
 
-A new type ``GFloat16`` will be defined in C++. This type will be a
-thin wrapper around a native float16 type if one is available, such as
-e.g. ``_Float16`` in modern versions of GCC. Otherwise, a this type
-will be emulated (transparently to the user), and operations will be
-performed as ``float``.
+A new type ``GFloat16`` will be defined in C++ in :file:`cpl_float.h`
+which will be an exported header of GDAL. This type will be a thin
+wrapper around a native float16 type if one is available, such as e.g.
+``_Float16`` in modern versions of GCC. Otherwise, a this type will be
+emulated (transparently to the user), and operations will be performed
+as ``float``.
 
 The following pixel data types are added:
-- ``GDT_Float16``  --> ``_Float16``
-- ``GDT_CFloat16`` --> ``std::complex<_Float16``
+- ``GDT_Float16``  --> ``GFloat16``
+- ``GDT_CFloat16`` --> ``std::complex<GFloat16>``
 
 Some drivers (at least the HDF5, GTiff, and Zarr) already handle
 float16 by exposing it as float32, using software conversion routines.
