@@ -4167,6 +4167,7 @@ def test_ogr_parquet_ogr2ogr_reprojection(tmp_vsimem):
     with ogr.Open(outfilename) as ds:
         assert ds.GetLayer(0).GetExtent() == pytest.approx(
             (8.73380363499761, 8.774681944824946, 43.01833481785084, 43.04292637071279)
+        )
 
 
 ###############################################################################

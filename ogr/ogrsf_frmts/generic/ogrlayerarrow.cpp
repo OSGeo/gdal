@@ -32,6 +32,7 @@
 #include <utility>
 #include <set>
 
+constexpr const char *MD_GDAL_OGR_TYPE = "GDAL:OGR:type";
 constexpr const char *MD_GDAL_OGR_ALTERNATIVE_NAME =
     "GDAL:OGR:alternative_name";
 constexpr const char *MD_GDAL_OGR_COMMENT = "GDAL:OGR:comment";
@@ -579,6 +580,13 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
         }
 
         std::vector<std::pair<std::string, std::string>> oMetadata;
+
+        if (eType == OFTDateTime && bDateTimeAsString)
+        {
+            oMetadata.emplace_back(
+                std::pair(MD_GDAL_OGR_TYPE, OGR_GetFieldTypeName(eType)));
+        }
+
         const char *pszAlternativeName = poFieldDefn->GetAlternativeNameRef();
         if (pszAlternativeName && pszAlternativeName[0])
             oMetadata.emplace_back(
@@ -2472,6 +2480,9 @@ const char *OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream *)
  * Starting with GDAL 3.8, the ArrowSchema::metadata field filled by the
  * get_schema() callback may be set with the potential following items:
  * <ul>
+ * <li>"GDAL:OGR:type": value of OGRFieldDefn::GetType(): (added in 3.11)
+ *      Only used for DateTime fields when the DATETIME_AS_STRING=YES option is
+ *      specified.</li>
  * <li>"GDAL:OGR:alternative_name": value of
  *     OGRFieldDefn::GetAlternativeNameRef()</li>
  * <li>"GDAL:OGR:comment": value of OGRFieldDefn::GetComment()</li>
@@ -2674,6 +2685,9 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
  * Starting with GDAL 3.8, the ArrowSchema::metadata field filled by the
  * get_schema() callback may be set with the potential following items:
  * <ul>
+ * <li>"GDAL:OGR:type": value of OGRFieldDefn::GetType(): (added in 3.11)
+ *      Only used for DateTime fields when the DATETIME_AS_STRING=YES option is
+ *      specified.</li>
  * <li>"GDAL:OGR:alternative_name": value of
  *     OGRFieldDefn::GetAlternativeNameRef()</li>
  * <li>"GDAL:OGR:comment": value of OGRFieldDefn::GetComment()</li>
