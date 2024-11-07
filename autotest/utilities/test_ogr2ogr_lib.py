@@ -2958,3 +2958,54 @@ def test_ogr2ogr_lib_explodecollections_empty_geoms(input_wkt, expected_output_w
         out_lyr = out_ds.GetLayer(0)
         f = out_lyr.GetNextFeature()
         assert f.GetGeometryRef().ExportToIsoWkt() == expected_output_wkt
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_arrow_datetime_as_string(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(src_filename) as src_ds:
+        src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+
+        field = ogr.FieldDefn("dt", ogr.OFTDateTime)
+        src_lyr.CreateField(field)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        src_lyr.CreateFeature(f)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56.789Z")
+        src_lyr.CreateFeature(f)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56")
+        src_lyr.CreateFeature(f)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56+12:30")
+        src_lyr.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(
+        {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    ):
+        dst_ds = gdal.VectorTranslate("", src_filename, format="Memory")
+
+    assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+    dst_lyr = dst_ds.GetLayer(0)
+    assert [f.GetField("dt") for f in dst_lyr] == [
+        None,
+        "2022/05/31 12:34:56.789+00",
+        "2022/05/31 12:34:56",
+        "2022/05/31 12:34:56+1230",
+    ]
