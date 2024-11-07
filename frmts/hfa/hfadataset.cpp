@@ -9,23 +9,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -2058,7 +2042,7 @@ void HFARasterBand::ReadHistogramMetadata()
                     static_cast<double>(std::numeric_limits<GUIntBig>::max()) ||
                 dfNumber <
                     static_cast<double>(std::numeric_limits<GUIntBig>::min()) ||
-                CPLIsNan(dfNumber))
+                std::isnan(dfNumber))
             {
                 CPLError(CE_Failure, CPLE_FileIO, "Out of range hist vals.");
                 CPLFree(panHistValues);
@@ -3184,16 +3168,18 @@ CPLErr HFADataset::WriteProjection()
 
         if (nGCS == 4326)
             sDatum.datumname = const_cast<char *>("WGS 84");
-        if (nGCS == 4322)
+        else if (nGCS == 4322)
             sDatum.datumname = const_cast<char *>("WGS 1972");
-        if (nGCS == 4267)
+        else if (nGCS == 4267)
             sDatum.datumname = const_cast<char *>("NAD27");
-        if (nGCS == 4269)
+        else if (nGCS == 4269)
             sDatum.datumname = const_cast<char *>("NAD83");
-        if (nGCS == 4283)
+        else if (nGCS == 4283)
             sDatum.datumname = const_cast<char *>("GDA94");
-        if (nGCS == 6284)
+        else if (nGCS == 4284)
             sDatum.datumname = const_cast<char *>("Pulkovo 1942");
+        else if (nGCS == 4272)
+            sDatum.datumname = const_cast<char *>("Geodetic Datum 1949");
 
         if (poGeogSRS->GetTOWGS84(sDatum.params) == OGRERR_NONE)
         {

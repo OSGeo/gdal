@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GPB_H_INCLUDED
@@ -91,7 +75,7 @@ inline int ReadVarUInt32(const GByte **ppabyData)
         if (!(nByte & 0x80))
         {
             *ppabyData = pabyData + 1;
-            return nVal | ((unsigned)nByte << nShift);
+            return nVal | (static_cast<unsigned>(nByte) << nShift);
         }
         nVal |= (nByte & 0x7f) << nShift;
         pabyData++;
@@ -102,7 +86,7 @@ inline int ReadVarUInt32(const GByte **ppabyData)
             if (!(nByte & 0x80))
             {
                 *ppabyData = pabyData + 1;
-                return nVal | (((unsigned)nByte & 0xf) << nShift);
+                return nVal | ((static_cast<unsigned>(nByte) & 0xf) << nShift);
             }
             *ppabyData = pabyData;
             return nVal;
@@ -120,7 +104,8 @@ inline int ReadVarUInt32(const GByte **ppabyData)
 #define READ_SIZE(pabyData, pabyDataLimit, nSize)                              \
     {                                                                          \
         READ_VARUINT32(pabyData, pabyDataLimit, nSize);                        \
-        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData))     \
+        if (CHECK_OOB &&                                                       \
+            nSize > static_cast<unsigned int>(pabyDataLimit - pabyData))       \
             THROW_GPB_EXCEPTION;                                               \
     }
 
@@ -140,9 +125,9 @@ inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
         if (!(nByte & 0x80))
         {
             *ppabyData = pabyData + 1;
-            return nVal | ((GUIntBig)nByte << nShift);
+            return nVal | (static_cast<GUIntBig>(nByte) << nShift);
         }
-        nVal |= ((GUIntBig)(nByte & 0x7f)) << nShift;
+        nVal |= (static_cast<GUIntBig>(nByte & 0x7f)) << nShift;
         pabyData++;
         nShift += 7;
         if (nShift == 63)
@@ -151,7 +136,7 @@ inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
             if (!(nByte & 0x80))
             {
                 *ppabyData = pabyData + 1;
-                return nVal | (((GUIntBig)nByte & 1) << nShift);
+                return nVal | ((static_cast<GUIntBig>(nByte) & 1) << nShift);
             }
             *ppabyData = pabyData;
             return nVal;
@@ -169,7 +154,8 @@ inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
 #define READ_SIZE64(pabyData, pabyDataLimit, nSize)                            \
     {                                                                          \
         READ_VARUINT64(pabyData, pabyDataLimit, nSize);                        \
-        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData))     \
+        if (CHECK_OOB &&                                                       \
+            nSize > static_cast<unsigned int>(pabyDataLimit - pabyData))       \
             THROW_GPB_EXCEPTION;                                               \
     }
 
@@ -314,7 +300,7 @@ inline void SkipVarInt(const GByte **ppabyData)
     do                                                                         \
     {                                                                          \
         READ_SIZE(pabyData, pabyDataLimit, l_nDataLength);                     \
-        pszTxt = (char *)VSI_MALLOC_VERBOSE(l_nDataLength + 1);                \
+        pszTxt = static_cast<char *>(VSI_MALLOC_VERBOSE(l_nDataLength + 1));   \
         if (pszTxt == nullptr)                                                 \
             THROW_GPB_EXCEPTION;                                               \
         memcpy(pszTxt, pabyData, l_nDataLength);                               \

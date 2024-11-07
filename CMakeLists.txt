@@ -1,8 +1,8 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
-cmake_minimum_required(VERSION 3.16...3.28)
+include(cmake/helpers/GdalCMakeMinimumRequired.cmake)
+cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_MAX})
 
 project(gdal LANGUAGES C CXX)
-include(CTest)
 
 set(GDAL_LIB_TARGET_NAME GDAL)
 
@@ -35,24 +35,8 @@ define_property(
   PROPERTY PLUGIN_OUTPUT_DIR
   BRIEF_DOCS "Plugin modules build directories"
   FULL_DOCS "Plugin modules build directories")
-#
-# check compiler and set preferences.
-if (NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 17)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
 
-if (NOT CMAKE_C_STANDARD)
-    set(CMAKE_C_STANDARD 99)
-    set(CMAKE_C_STANDARD_REQUIRED ON)
-endif()
-
-#
-if (MSVC)
-  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
-  add_definitions(-DNOMINMAX)
-endif ()
-#
+include(GdalCAndCXXStandards)
 include(CheckCompilerMachineOption)
 include(CheckCompilerSIMDFeature)
 include(Ccache)
@@ -239,6 +223,10 @@ endif()
 #
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
+option(BUILD_TESTING "Build the testing tree." ON)
+if (BUILD_TESTING)
+  enable_testing()
+endif()
 if (BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/autotest")
   # unit tests
   add_subdirectory(autotest/cpp)

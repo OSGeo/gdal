@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2020, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_string.h"
@@ -123,30 +107,9 @@ GDALCreateAppOptionsGetParser(GDALCreateOptions *psOptions)
         .store_into(psOptions->nBandCount)
         .help(_("Set the number of bands in the output file."));
 
-    argParser->add_argument("-burn")
-        .metavar("<value>")
-        .nargs(nargs_pattern::at_least_one)
-        .append()
-        .action(
-            [psOptions](const std::string &s)
-            {
-                if (s.find(' ') != std::string::npos)
-                {
-                    const CPLStringList aosTokens(CSLTokenizeString(s.c_str()));
-                    for (int i = 0; i < aosTokens.size(); i++)
-                    {
-                        psOptions->adfBurnValues.push_back(
-                            CPLAtof(aosTokens[i]));
-                    }
-                }
-                else
-                {
-                    psOptions->adfBurnValues.push_back(CPLAtof(s.c_str()));
-                }
-            })
-        .help(
-            _("A fixed value to burn into a band for all objects. A list of "
-              "-burn options can be supplied, one per band being written to."));
+    argParser->add_argument("-burn").metavar("<value>").append().help(
+        _("A fixed value to burn into a band. A list of "
+          "-burn options can be supplied, one per band being written to."));
 
     argParser->add_argument("-a_srs")
         .metavar("<srs_def>")
@@ -253,16 +216,69 @@ MAIN_START(argc, argv)
 
     GDALCreateOptions sOptions;
 
+    CPLStringList aosArgv;
+    for (int iArg = 1; iArg < argc; iArg++)
+    {
+        if (iArg + 1 < argc && EQUAL(argv[iArg], "-burn"))
+        {
+            ++iArg;
+            while (true)
+            {
+                if (strchr(argv[iArg], ' '))
+                {
+                    const CPLStringList aosTokens(
+                        CSLTokenizeString(argv[iArg]));
+                    for (int i = 0; i < aosTokens.size(); i++)
+                    {
+                        char *endptr = nullptr;
+                        sOptions.adfBurnValues.push_back(
+                            CPLStrtodM(aosTokens[i], &endptr));
+                        if (endptr != aosTokens[i] + strlen(aosTokens[i]))
+                        {
+                            fprintf(stderr, "Invalid value for -burn\n");
+                            CSLDestroy(argv);
+                            GDALExit(1);
+                        }
+                    }
+                }
+                else
+                {
+                    char *endptr = nullptr;
+                    sOptions.adfBurnValues.push_back(
+                        CPLStrtodM(argv[iArg], &endptr));
+                    if (endptr != argv[iArg] + strlen(argv[iArg]))
+                    {
+                        fprintf(stderr, "Invalid value for -burn\n");
+                        CSLDestroy(argv);
+                        GDALExit(1);
+                    }
+                }
+                if (iArg + 1 < argc &&
+                    CPLGetValueType(argv[iArg + 1]) != CPL_VALUE_STRING)
+                {
+                    ++iArg;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            aosArgv.AddString(argv[iArg]);
+        }
+    }
+    CSLDestroy(argv);
+
     try
     {
 
         auto argParser = GDALCreateAppOptionsGetParser(&sOptions);
-        argParser->parse_args_without_binary_name(argv + 1);
-        CSLDestroy(argv);
+        argParser->parse_args_without_binary_name(aosArgv.List());
     }
     catch (const std::exception &error)
     {
-        CSLDestroy(argv);
         CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
         GDALExit(1);
     }

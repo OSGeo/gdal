@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2015, Faza Mahamood <fazamhd at gmail dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import collections
@@ -290,6 +274,18 @@ def test_gdal_translate_lib_nodata_int64():
     assert ds.GetRasterBand(1).GetNoDataValue() == noData, "Bad nodata value"
 
     ds = None
+
+
+###############################################################################
+# Test nodata=-inf
+
+
+def test_gdal_translate_lib_nodata_minus_inf():
+
+    ds = gdal.Translate(
+        "", "../gcore/data/float32.tif", format="MEM", noData=float("-inf")
+    )
+    assert ds.GetRasterBand(1).GetNoDataValue() == float("-inf"), "Bad nodata value"
 
 
 ###############################################################################
@@ -585,6 +581,10 @@ def test_gdal_translate_lib_104():
 # Test GCPs propagation in "VRT path"
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_lib_gcp_vrt_path():
 
     src_ds = gdal.Open("../gcore/data/gcps.vrt")
@@ -601,6 +601,10 @@ def test_gdal_translate_lib_gcp_vrt_path():
 # Test RPC propagation in "VRT path"
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_lib_rcp_vrt_path():
 
     src_ds = gdal.Open("../gcore/data/rpc.vrt")
@@ -612,6 +616,10 @@ def test_gdal_translate_lib_rcp_vrt_path():
 # Test GeoLocation propagation in "VRT path"
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_lib_geolocation_vrt_path(tmp_vsimem):
 
     src_ds = gdal.Open("../gcore/data/sstgeo.vrt")
@@ -1143,6 +1151,20 @@ def test_gdal_translate_lib_scale_and_unscale_incompatible():
 
 
 ###############################################################################
+# Test -a_offset -inf (dummy example, but to prove -inf works as a value
+# numeric value)
+
+
+@gdaltest.enable_exceptions()
+def test_gdal_translate_lib_assign_offset():
+
+    out_ds = gdal.Translate(
+        "", gdal.Open("../gcore/data/byte.tif"), options="-f MEM -a_offset -inf"
+    )
+    assert out_ds.GetRasterBand(1).GetOffset() == float("-inf")
+
+
+###############################################################################
 # Test option argument handling
 
 
@@ -1255,11 +1277,15 @@ def test_gdal_translate_ovr_rpc():
     src_rpc = src_ds.GetMetadata("RPC")
     ovr_rpc = ds.GetMetadata("RPC")
     assert ovr_rpc
-    assert float(ovr_rpc["LINE_OFF"]) == pytest.approx(0.5 * float(src_rpc["LINE_OFF"]))
+    assert float(ovr_rpc["LINE_OFF"]) == pytest.approx(
+        0.5 * (float(src_rpc["LINE_OFF"]) + 0.5) - 0.5
+    )
     assert float(ovr_rpc["LINE_SCALE"]) == pytest.approx(
         0.5 * float(src_rpc["LINE_SCALE"])
     )
-    assert float(ovr_rpc["SAMP_OFF"]) == pytest.approx(0.5 * float(src_rpc["SAMP_OFF"]))
+    assert float(ovr_rpc["SAMP_OFF"]) == pytest.approx(
+        0.5 * (float(src_rpc["SAMP_OFF"]) + 0.5) - 0.5
+    )
     assert float(ovr_rpc["SAMP_SCALE"]) == pytest.approx(
         0.5 * float(src_rpc["SAMP_SCALE"])
     )

@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -63,8 +47,12 @@ def ogr_wfs_init():
     if gml_ds is None:
         pytest.skip("cannot read GML files")
 
+    vsimem_hidden_before = gdal.ReadDirRecursive("/vsimem/.#!HIDDEN!#.")
+
     with gdal.config_option("CPL_CURL_ENABLE_VSIMEM", "YES"):
         yield
+
+    assert gdal.ReadDirRecursive("/vsimem/.#!HIDDEN!#.") == vsimem_hidden_before
 
 
 @pytest.fixture(
@@ -499,34 +487,32 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
 # Test reading a local fake WFS server
 
 
-def test_ogr_wfs_fake_wfs_server():
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("using_wfs_prefix", [True, False])
+def test_ogr_wfs_fake_wfs_server(using_wfs_prefix):
 
     (process, port) = webserver.launch(handler=WFSHTTPHandler)
     if port == 0:
         pytest.skip()
 
-    with gdal.config_option("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "NO"):
-        ds = ogr.Open("WFS:http://127.0.0.1:%d/fakewfs" % port)
-    if ds is None:
-        webserver.server_stop(process, port)
-        pytest.fail("did not managed to open WFS datastore")
-
-    lyr = ds.GetLayerByName("rijkswegen")
-    if lyr.GetName() != "rijkswegen":
-        print(lyr.GetName())
-        webserver.server_stop(process, port)
-        pytest.fail("did not get expected layer name")
-
-    sr = lyr.GetSpatialRef()
-    sr2 = osr.SpatialReference()
-    sr2.ImportFromEPSG(28992)
-    if not sr.IsSame(sr2):
-        print(sr)
-        webserver.server_stop(process, port)
-        pytest.fail("did not get expected SRS")
-
-    feat = lyr.GetNextFeature()
     try:
+        with gdal.config_option("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "NO"):
+            if using_wfs_prefix:
+                ds = gdal.OpenEx("WFS:http://127.0.0.1:%d/fakewfs" % port)
+            else:
+                ds = gdal.OpenEx(
+                    "http://127.0.0.1:%d/fakewfs" % port, allowed_drivers=["WFS"]
+                )
+
+        lyr = ds.GetLayerByName("rijkswegen")
+        assert lyr.GetName() == "rijkswegen"
+
+        sr = lyr.GetSpatialRef()
+        sr2 = osr.SpatialReference()
+        sr2.ImportFromEPSG(28992)
+        assert sr.IsSame(sr2), sr
+
+        feat = lyr.GetNextFeature()
         assert feat.GetField("MPLength") == "33513."
         ogrtest.check_feature_geometry(
             feat,

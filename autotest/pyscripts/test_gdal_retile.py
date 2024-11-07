@@ -9,25 +9,10 @@
 ###############################################################################
 # Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
+import glob
 import os
 
 import pytest
@@ -438,3 +423,81 @@ def test_gdal_retile_png(script_path, tmp_path):
         assert ds.GetRasterBand(1).Checksum() == 4672
 
     assert os.path.exists(out_dir / "byte_1_1.png.aux.xml")
+
+
+###############################################################################
+# Test gdal_retile on a input file with a geotransform with rotational terms
+# (unsupported)
+
+
+def test_gdal_retile_rotational_geotransform(script_path, tmp_path):
+
+    src_filename = str(tmp_path / "in.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(src_filename, 2, 2)
+    ds.SetGeoTransform([2, 0.1, 0.001, 49, -0.01, -0.1])
+    ds.Close()
+
+    out_dir = tmp_path / "outretile"
+    out_dir.mkdir()
+
+    _, err = test_py_scripts.run_py_script(
+        script_path,
+        "gdal_retile",
+        "-ps 1 1 -targetDir " + '"' + str(out_dir) + '"' + " " + src_filename,
+        return_stderr=True,
+    )
+    assert "has a geotransform matrix with rotational terms" in err
+    assert len(glob.glob(os.path.join(str(out_dir), "*.tif"))) == 0
+
+
+###############################################################################
+# Test gdal_retile on input files with different projections
+# (unsupported)
+
+
+@pytest.mark.parametrize(
+    "srs1,srs2,expected_err",
+    [
+        (32631, 32632, "has a SRS different from other tiles"),
+        (32631, None, "has no SRS whether other tiles have one"),
+        (None, 32631, "has a SRS whether other tiles do not"),
+    ],
+)
+def test_gdal_retile_different_srs(script_path, tmp_path, srs1, srs2, expected_err):
+
+    src_filename1 = str(tmp_path / "in1.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(src_filename1, 2, 2)
+    ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
+    if srs1:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(srs1)
+        ds.SetSpatialRef(srs)
+    ds.Close()
+
+    src_filename2 = str(tmp_path / "in2.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(src_filename2, 2, 2)
+    ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
+    if srs2:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(srs2)
+        ds.SetSpatialRef(srs)
+    ds.Close()
+
+    out_dir = tmp_path / "outretile"
+    out_dir.mkdir()
+
+    _, err = test_py_scripts.run_py_script(
+        script_path,
+        "gdal_retile",
+        "-ps 1 1 -targetDir "
+        + '"'
+        + str(out_dir)
+        + '"'
+        + " "
+        + src_filename1
+        + " "
+        + src_filename2,
+        return_stderr=True,
+    )
+    assert expected_err in err
+    assert len(glob.glob(os.path.join(str(out_dir), "*.tif"))) == 0

@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2023, Even Rouault <even.rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -192,11 +176,7 @@ class GeoParquetValidator(object):
         if self.local_schema:
             schema_j = json.loads(open(self.local_schema, "rb").read())
         else:
-            # FIXME: Remove that temporary hack once GeoParquet 1.1 schema is released
-            if version == "1.1.0":
-                schema_url = "https://github.com/opengeospatial/geoparquet/releases/download/v1.0.0/schema.json"
-            else:
-                schema_url = f"https://github.com/opengeospatial/geoparquet/releases/download/v{version}/schema.json"
+            schema_url = f"https://github.com/opengeospatial/geoparquet/releases/download/v{version}/schema.json"
 
             if schema_url not in geoparquet_schemas:
                 import urllib
@@ -216,16 +196,6 @@ class GeoParquetValidator(object):
                     )
 
             schema_j = geoparquet_schemas[schema_url]
-
-        # FIXME: Remove that temporary hack once GeoParquet 1.1 schema is released
-        if version == "1.1.0":
-            schema_j["properties"]["version"] = {"const": "1.1.0", "type": "string"}
-            schema_j["properties"]["columns"]["patternProperties"][".+"]["properties"][
-                "encoding"
-            ] = {
-                "type": "string",
-                "pattern": "^(WKB|point|linestring|polygon|multipoint|multilinestring|multipolygon)$",
-            }
 
         try:
             self._validate(schema_j, geo_j)

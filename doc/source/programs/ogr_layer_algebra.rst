@@ -31,7 +31,7 @@ Description
 -----------
 
 The :program:`ogr_layer_algebra` provides a command line utility to perform various vector layer algebraic operations. The utility takes a vector
-input source , a method source and generates the output of the operation in the specified output file
+input source and a method source and generates the output of the operation in the specified output file.
 
 .. note::
 
@@ -79,8 +79,8 @@ input source , a method source and generates the output of the operation in the 
 
 .. option:: -input_ds <path>
 
-    Input data set path for the operation to be performed.
-    For operations involving 2 datasets, this is one of the dataset.
+    Input dataset path for the operation to be performed.
+    For operations involving two datasets, this is one of the datasets.
 
 .. option:: -input_lyr <name>
 
@@ -98,7 +98,7 @@ input source , a method source and generates the output of the operation in the 
 
 .. option:: -output_ds <path>
 
-    Output data set path for writing the result of the operations performed by ogr_layer_algebra
+    Output data set path for writing the result of the operations performed by ``ogr_layer_algebra``.
 
 .. option:: -output_lyr_name <name>
 
@@ -106,11 +106,11 @@ input source , a method source and generates the output of the operation in the 
 
 .. option:: -overwrite
 
-    Indicates whether the ``output_ds`` have to be overwritten with the generated result of ogr_layer_algebra
+    Indicates whether the ``output_ds`` have to be overwritten with the generated result of ``ogr_layer_algebra``.
 
 .. option:: -opt <NAME>=<VALUE>
 
-    Attributes for which the operation has to run on ``input_ds`` and ``method_ds``
+    Attributes for which the operation has to run on ``input_ds`` and ``method_ds``.
 
 .. option:: -f <format_name>
 
@@ -120,21 +120,21 @@ input source , a method source and generates the output of the operation in the 
 
 .. option:: -dsco <NAME>=<VALUE>
 
-    Dataset creation option (format specific)
+    Dataset creation option (format specific).
 
 .. option:: -lco <NAME>=<VALUE>
 
-    Layer creation option (format specific)
+    Layer creation option (format specific).
 
 .. option:: -input_fields {NONE|ALL|<fld1>,<fl2>,...<fldN>}
 
     Comma-delimited list of fields from input layer to copy to the output layer ,
-    if eligible according to the operation
+    if eligible according to the operation.
 
 .. option:: -method_fields {NONE|ALL|<fld1>,<fl2>,...<fldN>}
 
     Comma-delimited list of fields from method layer to copy to the output layer ,
-    if eligible according to the operation
+    if eligible according to the operation.
 
 .. option:: -nlt <geom_type>
 

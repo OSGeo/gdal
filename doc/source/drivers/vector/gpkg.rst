@@ -123,6 +123,10 @@ Spatialite, are also available :
 -  ST_Area(geom *Geometry*, use_ellipsoid *boolean*): (GDAL >= 3.9): compute
    the area in square meters, considering the geometry on the ellipsoid
    (use_ellipsoid must be set to true/1).
+-  ST_Length(geom *Geometry*): (GDAL >= 3.10): compute the area in units of the geometry SRS.
+-  ST_Length(geom *Geometry*, use_ellipsoid *boolean*): (GDAL >= 3.10): compute
+   the area in meters, considering the geometry on the ellipsoid
+   (use_ellipsoid must be set to true/1).
 -  SetSRID(geom *Geometry*, srs_id *Integer*): overrides the geometry' SRS ID,
    without reprojection.
 -  ST_Transform(geom *Geometry*, target_srs_id *Integer*): reproject the geometry
@@ -804,6 +808,18 @@ Examples
       ogrinfo my_spatial.gpkg \
         -sql "SELECT poly.id, other.foo FROM poly JOIN other_schema.other USING (id)" \
         -oo PRELUDE_STATEMENTS="ATTACH DATABASE 'other.gpkg' AS other_schema"
+
+Secure deletion
+---------------
+
+Depending on how SQLite3 is built, `secure deletion <https://www.sqlite.org/pragma.html#pragma_secure_delete>`__
+might or might not be enabled.
+Starting with GDAL 3.10, secure deletion is always enabled, unless
+``SECURE_DELETE`` is specified through the :config:`OGR_SQLITE_PRAGMA`
+configuration option.
+Note that secure deletion does not recover potential lost space, so running
+a `VACUUM <https://sqlite.org/lang_vacuum.html>`__ query is recommended to fully
+optimized a database that has been subject to updates or deletions.
 
 See Also
 --------

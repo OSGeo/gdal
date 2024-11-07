@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -31,6 +15,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <limits>
 #include <new>
 
 #include "ogr_core.h"
@@ -42,12 +27,6 @@
 #include "cpl_vsi.h"
 
 //! @cond Doxygen_Suppress
-
-/************************************************************************/
-/*                         OGRCurveCollection()                         */
-/************************************************************************/
-
-OGRCurveCollection::OGRCurveCollection() = default;
 
 /************************************************************************/
 /*             OGRCurveCollection( const OGRCurveCollection& )          */
@@ -155,6 +134,21 @@ OGRErr OGRCurveCollection::addCurveDirectly(OGRGeometry *poGeom,
 
     if (bNeedRealloc)
     {
+#if SIZEOF_VOIDP < 8
+        if (nCurveCount == std::numeric_limits<int>::max() /
+                               static_cast<int>(sizeof(OGRCurve *)))
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Too many subgeometries");
+            return OGRERR_FAILURE;
+        }
+#else
+        if (nCurveCount == std::numeric_limits<int>::max())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too many subgeometries");
+            return OGRERR_FAILURE;
+        }
+#endif
+
         OGRCurve **papoNewCurves = static_cast<OGRCurve **>(VSI_REALLOC_VERBOSE(
             papoCurves, sizeof(OGRCurve *) * (nCurveCount + 1)));
         if (papoNewCurves == nullptr)
@@ -526,36 +520,39 @@ OGRBoolean OGRCurveCollection::Equals(const OGRCurveCollection *poOCC) const
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRCurveCollection::setCoordinateDimension(OGRGeometry *poGeom,
+bool OGRCurveCollection::setCoordinateDimension(OGRGeometry *poGeom,
                                                 int nNewDimension)
 {
     for (auto &&poSubGeom : *this)
     {
-        poSubGeom->setCoordinateDimension(nNewDimension);
+        if (!poSubGeom->setCoordinateDimension(nNewDimension))
+            return false;
     }
 
-    poGeom->OGRGeometry::setCoordinateDimension(nNewDimension);
+    return poGeom->OGRGeometry::setCoordinateDimension(nNewDimension);
 }
 
-void OGRCurveCollection::set3D(OGRGeometry *poGeom, OGRBoolean bIs3D)
+bool OGRCurveCollection::set3D(OGRGeometry *poGeom, OGRBoolean bIs3D)
 {
     for (auto &&poSubGeom : *this)
     {
-        poSubGeom->set3D(bIs3D);
+        if (!poSubGeom->set3D(bIs3D))
+            return false;
     }
 
-    poGeom->OGRGeometry::set3D(bIs3D);
+    return poGeom->OGRGeometry::set3D(bIs3D);
 }
 
-void OGRCurveCollection::setMeasured(OGRGeometry *poGeom,
+bool OGRCurveCollection::setMeasured(OGRGeometry *poGeom,
                                      OGRBoolean bIsMeasured)
 {
     for (auto &&poSubGeom : *this)
     {
-        poSubGeom->setMeasured(bIsMeasured);
+        if (!poSubGeom->setMeasured(bIsMeasured))
+            return false;
     }
 
-    poGeom->OGRGeometry::setMeasured(bIsMeasured);
+    return poGeom->OGRGeometry::setMeasured(bIsMeasured);
 }
 
 /************************************************************************/
@@ -669,12 +666,14 @@ void OGRCurveCollection::flattenTo2D(OGRGeometry *poGeom)
 /*                              segmentize()                            */
 /************************************************************************/
 
-void OGRCurveCollection::segmentize(double dfMaxLength)
+bool OGRCurveCollection::segmentize(double dfMaxLength)
 {
     for (auto &&poSubGeom : *this)
     {
-        poSubGeom->segmentize(dfMaxLength);
+        if (!poSubGeom->segmentize(dfMaxLength))
+            return false;
     }
+    return true;
 }
 
 /************************************************************************/
@@ -747,6 +746,73 @@ OGRErr OGRCurveCollection::removeCurve(int iIndex, bool bDelete)
     nCurveCount--;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a geometry has empty parts/rings.
+ *
+ * Returns true if removeEmptyParts() will modify the geometry.
+ *
+ * This is different from IsEmpty().
+ *
+ * @since GDAL 3.10
+ */
+bool OGRCurveCollection::hasEmptyParts() const
+{
+    for (int i = 0; i < nCurveCount; ++i)
+    {
+        if (papoCurves[i]->IsEmpty() || papoCurves[i]->hasEmptyParts())
+            return true;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+/**
+ * \brief Remove empty parts/rings from this geometry.
+ *
+ * @since GDAL 3.10
+ */
+void OGRCurveCollection::removeEmptyParts()
+{
+    for (int i = nCurveCount - 1; i >= 0; --i)
+    {
+        papoCurves[i]->removeEmptyParts();
+        if (papoCurves[i]->IsEmpty())
+            removeCurve(i, true);
+    }
+}
+
+/************************************************************************/
+/*                           reversePoints()                            */
+/************************************************************************/
+
+/**
+ * \brief Reverse point order.
+ *
+ * This method updates the points in this curve in place
+ * reversing the point ordering (first for last, etc) and component ordering.
+ *
+ * @since 3.10
+ */
+void OGRCurveCollection::reversePoints()
+
+{
+    for (int i = 0; i < nCurveCount / 2; ++i)
+    {
+        std::swap(papoCurves[i], papoCurves[nCurveCount - 1 - i]);
+    }
+    for (int i = 0; i < nCurveCount; ++i)
+    {
+        papoCurves[i]->reversePoints();
+    }
 }
 
 //! @endcond

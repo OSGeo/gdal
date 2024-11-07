@@ -8,23 +8,7 @@
  * Copyright (c) 2006, Waypoint Information Technology
  * Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include <string>
@@ -34,11 +18,14 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "northwood.h"
+#include "ogrmitabspatialref.h"
 
+#ifndef NO_MITAB_SUPPORT
 #ifdef MSVC
 #include "..\..\ogr\ogrsf_frmts\mitab\mitab.h"
 #else
 #include "../../ogr/ogrsf_frmts/mitab/mitab.h"
+#endif
 #endif
 
 constexpr float NODATA = -1.e37f;
@@ -79,9 +66,11 @@ class NWT_GRDDataset final : public GDALPamDataset
     bool bUpdateHeader;
     mutable OGRSpatialReference *m_poSRS = nullptr;
 
+#ifndef NO_MITAB_SUPPORT
     // Update the header data with latest changes
     int UpdateHeader();
     int WriteTab();
+#endif
 
     NWT_GRDDataset(const NWT_GRDDataset &) = delete;
     NWT_GRDDataset &operator=(const NWT_GRDDataset &) = delete;
@@ -92,6 +81,8 @@ class NWT_GRDDataset final : public GDALPamDataset
 
     static GDALDataset *Open(GDALOpenInfo *);
     static int Identify(GDALOpenInfo *);
+
+#ifndef NO_MITAB_SUPPORT
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
                                char **papszParamList);
@@ -100,13 +91,17 @@ class NWT_GRDDataset final : public GDALPamDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
+#endif
 
     CPLErr GetGeoTransform(double *padfTransform) override;
     CPLErr SetGeoTransform(double *padfTransform) override;
     CPLErr FlushCache(bool bAtClosing) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
+
+#ifndef NO_MITAB_SUPPORT
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
+#endif
 };
 
 /************************************************************************/
@@ -468,7 +463,9 @@ CPLErr NWT_GRDDataset::FlushCache(bool bAtClosing)
     // Ensure the header and TAB file are up to date
     if (bUpdateHeader)
     {
+#ifndef NO_MITAB_SUPPORT
         UpdateHeader();
+#endif
     }
 
     // Call the parent method
@@ -540,9 +537,11 @@ const OGRSpatialReference *NWT_GRDDataset::GetSpatialRef() const
     OGRSpatialReference *poSpatialRef =
         MITABCoordSys2SpatialRef(pGrd->cMICoordSys);
     m_poSRS = poSpatialRef;
+
     return m_poSRS;
 }
 
+#ifndef NO_MITAB_SUPPORT
 /************************************************************************/
 /*                            SetSpatialRef()                           */
 /************************************************************************/
@@ -563,6 +562,7 @@ CPLErr NWT_GRDDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 
     return CE_None;
 }
+#endif
 
 /************************************************************************/
 /*                              Identify()                              */
@@ -671,6 +671,7 @@ GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo *poOpenInfo)
     return poDS;
 }
 
+#ifndef NO_MITAB_SUPPORT
 /************************************************************************/
 /*                                UpdateHeader()                        */
 /************************************************************************/
@@ -1124,6 +1125,7 @@ GDALDataset *NWT_GRDDataset::CreateCopy(const char *pszFilename,
 
     return poDstDS;
 }
+#endif  // NO_MITAB_SUPPORT
 
 /************************************************************************/
 /*                          GDALRegister_GRD()                          */
@@ -1142,7 +1144,6 @@ void GDALRegister_NWT_GRD()
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/nwtgrd.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "grd");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Float32");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
@@ -1151,6 +1152,12 @@ void GDALRegister_NWT_GRD()
         "(RGBZ). Only used in read-only mode' default='4'/>"
         "</OpenOptionList>");
 
+    poDriver->pfnOpen = NWT_GRDDataset::Open;
+    poDriver->pfnIdentify = NWT_GRDDataset::Identify;
+
+#ifndef NO_MITAB_SUPPORT
+
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Float32");
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
         "<CreationOptionList>"
@@ -1172,10 +1179,9 @@ void GDALRegister_NWT_GRD()
         "MapInfo' default='0'/>"
         "</CreationOptionList>");
 
-    poDriver->pfnOpen = NWT_GRDDataset::Open;
-    poDriver->pfnIdentify = NWT_GRDDataset::Identify;
     poDriver->pfnCreate = NWT_GRDDataset::Create;
     poDriver->pfnCreateCopy = NWT_GRDDataset::CreateCopy;
+#endif
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

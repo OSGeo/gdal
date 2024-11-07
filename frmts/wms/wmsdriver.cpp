@@ -9,23 +9,7 @@
  * Copyright (c) 2007, Adam Nowacki
  * Copyright (c) 2009-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_frmts.h"
@@ -66,7 +50,7 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 {
     const char *pszBaseURL = poOpenInfo->pszFilename;
     if (STARTS_WITH_CI(pszBaseURL, "WMS:"))
-        pszBaseURL += 4;
+        pszBaseURL += strlen("WMS:");
 
     const CPLString osLayer = CPLURLGetValue(pszBaseURL, "LAYERS");
     CPLString osVersion = CPLURLGetValue(pszBaseURL, "VERSION");
@@ -118,7 +102,7 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     osBaseURL = CPLURLAddKVP(osBaseURL, "BBOXORDER", nullptr);
 
     if (!osBaseURL.empty() && osBaseURL.back() == '&')
-        osBaseURL.resize(osBaseURL.size() - 1);
+        osBaseURL.pop_back();
 
     if (osVersion.empty())
         osVersion = "1.1.1";
@@ -771,7 +755,11 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     else if (poOpenInfo->nHeaderBytes == 0 &&
              (STARTS_WITH_CI(pszFilename, "WMS:") ||
-              CPLString(pszFilename).ifind("SERVICE=WMS") != std::string::npos))
+              CPLString(pszFilename).ifind("SERVICE=WMS") !=
+                  std::string::npos ||
+              (poOpenInfo->IsSingleAllowedDriver("WMS") &&
+               (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+                STARTS_WITH(poOpenInfo->pszFilename, "https://")))))
     {
         CPLString osLayers = CPLURLGetValue(pszFilename, "LAYERS");
         CPLString osRequest = CPLURLGetValue(pszFilename, "REQUEST");

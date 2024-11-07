@@ -10,23 +10,7 @@
 # Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import ctypes
@@ -156,7 +140,14 @@ def test_mem_2(mem_native_memory):
         for i in range(width * height):
             float_p[i] = 5.0
 
-        dsro = gdal.Open(dsname)
+        with pytest.raises(
+            Exception,
+            match="Opening a MEM dataset with the MEM:::DATAPOINTER= syntax is no longer supported by default for security reasons",
+        ):
+            gdal.Open(dsname)
+
+        with gdal.config_option("GDAL_MEM_ENABLE_OPEN", "YES"):
+            dsro = gdal.Open(dsname)
         if dsro is None:
             free(p)
             pytest.fail("opening MEM dataset failed in read only mode.")
@@ -168,7 +159,8 @@ def test_mem_2(mem_native_memory):
             pytest.fail("checksum failed.")
         dsro = None
 
-        dsup = gdal.Open(dsname, gdal.GA_Update)
+        with gdal.config_option("GDAL_MEM_ENABLE_OPEN", "YES"):
+            dsup = gdal.Open(dsname, gdal.GA_Update)
         if dsup is None:
             free(p)
             pytest.fail("opening MEM dataset failed in update mode.")
@@ -210,9 +202,10 @@ def test_geotransform(ds_definition, expected_sr, mem_native_memory):
     proj_crs = "+proj=laea +lon_0=147 +lat_0=-42"
     ll_crs = """GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0,AUTHORITY[\\"EPSG\\",\\"8901\\"]],UNIT[\\"degree\\",0.0174532925199433,AUTHORITY[\\"EPSG\\",\\"9122\\"]],AXIS[\\"Latitude\\",NORTH],AXIS[\\"Longitude\\",EAST],AUTHORITY[\\"EPSG\\",\\"4326\\"]]"""
 
-    dsro = gdal.Open(
-        ds_definition.format(datapointer=p, proj_crs=proj_crs, ll_crs=ll_crs)
-    )
+    with gdal.config_option("GDAL_MEM_ENABLE_OPEN", "YES"):
+        dsro = gdal.Open(
+            ds_definition.format(datapointer=p, proj_crs=proj_crs, ll_crs=ll_crs)
+        )
     if dsro is None:
         free(p)
         pytest.fail("opening MEM dataset failed in read only mode.")

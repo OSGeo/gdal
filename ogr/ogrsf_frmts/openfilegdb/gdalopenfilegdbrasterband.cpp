@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2023, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -37,6 +21,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <limits>
 #include <new>
 #include <utility>
@@ -719,7 +704,7 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
             if (std::fabs(dfNoData) > std::numeric_limits<float>::max())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid nodata value %.18g for Float32", dfNoData);
+                         "Invalid nodata value %.17g for Float32", dfNoData);
                 return false;
             }
             bHasNoData = true;
@@ -762,7 +747,7 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
                 dfNoData != static_cast<double>(static_cast<int64_t>(dfNoData)))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid nodata value %.18g for %s", dfNoData,
+                         "Invalid nodata value %.17g for %s", dfNoData,
                          GDALGetDataTypeName(eDT));
                 return false;
             }
@@ -905,8 +890,8 @@ void OGROpenFileGDBDataSource::GuessJPEGQuality(int nOverviewCount)
                 }
                 if (nJPEGSize)
                 {
-                    CPLString osTmpFilename;
-                    osTmpFilename.Printf("/vsimem/_openfilegdb/%p.jpg", this);
+                    const CPLString osTmpFilename(
+                        VSIMemGenerateHiddenFilename("openfilegdb.jpg"));
                     VSIFCloseL(VSIFileFromMemBuffer(
                         osTmpFilename.c_str(),
                         const_cast<GByte *>(pabyData + nJPEGOffset), nJPEGSize,
@@ -1550,12 +1535,8 @@ CPLErr GDALOpenFileGDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 return CE_Failure;
             }
 
-            VSILFILE *fp = VSIFOpenL("tmp.jpg", "wb");
-            VSIFWriteL(pabyData + nJPEGOffset, nJPEGSize, 1, fp);
-            VSIFCloseL(fp);
-
-            CPLString osTmpFilename;
-            osTmpFilename.Printf("/vsimem/_openfilegdb/%p.jpg", this);
+            const CPLString osTmpFilename(
+                VSIMemGenerateHiddenFilename("openfilegdb.jpg"));
             VSIFCloseL(VSIFileFromMemBuffer(
                 osTmpFilename.c_str(),
                 const_cast<GByte *>(pabyData + nJPEGOffset), nJPEGSize, false));
@@ -1677,8 +1658,8 @@ CPLErr GDALOpenFileGDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 return CE_Failure;
             }
 
-            CPLString osTmpFilename;
-            osTmpFilename.Printf("/vsimem/_openfilegdb/%p.j2k", this);
+            const CPLString osTmpFilename(
+                VSIMemGenerateHiddenFilename("openfilegdb.j2k"));
             VSIFCloseL(VSIFileFromMemBuffer(
                 osTmpFilename.c_str(),
                 const_cast<GByte *>(pabyData + nJPEGOffset), nJPEGSize, false));
@@ -1904,7 +1885,7 @@ CPLErr GDALOpenFileGDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (int x = 0; x < nBlockXSize; ++x)
             {
-                printf("%.18g ", // ok
+                printf("%.17g ", // ok
                        static_cast<double *>(pImage)[y * nBlockXSize + x]);
             }
             printf("\n"); // ok

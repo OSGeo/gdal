@@ -11,23 +11,7 @@
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import array
@@ -62,11 +46,6 @@ def not_jpeg_9b(jpeg_version):
 def setup_and_cleanup():
 
     yield
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/test_create.ntf")
-    except RuntimeError:
-        pass
 
     try:
         gdal.GetDriverByName("NITF").Delete("tmp/nitf9.ntf")
@@ -249,21 +228,20 @@ def test_nitf_3():
 # Test direction creation of an NITF file.
 
 
-def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=False):
+def nitf_create(
+    filename,
+    creation_options,
+    set_inverted_color_interp=True,
+    createcopy=False,
+    nbands=3,
+):
 
     drv = gdal.GetDriverByName("NITF")
 
-    try:
-        os.remove("tmp/test_create.ntf")
-    except OSError:
-        pass
-
     if createcopy:
-        ds = gdal.GetDriverByName("MEM").Create("", 200, 100, 3, gdal.GDT_Byte)
+        ds = gdal.GetDriverByName("MEM").Create("", 200, 100, nbands, gdal.GDT_Byte)
     else:
-        ds = drv.Create(
-            "tmp/test_create.ntf", 200, 100, 3, gdal.GDT_Byte, creation_options
-        )
+        ds = drv.Create(filename, 200, 100, nbands, gdal.GDT_Byte, creation_options)
     ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
     if set_inverted_color_interp:
@@ -276,23 +254,27 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
         ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
 
     my_list = list(range(200)) + list(range(20, 220)) + list(range(30, 230))
-    try:
-        raw_data = array.array("h", my_list).tobytes()
-    except Exception:
-        # Python 2
-        raw_data = array.array("h", my_list).tostring()
+    if nbands == 4:
+        my_list += list(range(40, 240))
+    raw_data = array.array("h", my_list).tobytes()
 
     for line in range(100):
         ds.WriteRaster(
-            0, line, 200, 1, raw_data, buf_type=gdal.GDT_Int16, band_list=[1, 2, 3]
+            0,
+            line,
+            200,
+            1,
+            raw_data,
+            buf_type=gdal.GDT_Int16,
         )
 
     assert ds.FlushCache() == gdal.CE_None
 
     if createcopy:
-        ds = drv.CreateCopy("tmp/test_create.ntf", ds, options=creation_options)
+        ds = drv.CreateCopy(filename, ds, options=creation_options)
 
     ds = None
+    gdal.Unlink(filename + ".aux.xml")
 
 
 ###############################################################################
@@ -300,11 +282,12 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
 
 
 def nitf_check_created_file(
+    filename,
     checksum1,
     checksum2,
     checksum3,
-    filename="tmp/test_create.ntf",
     set_inverted_color_interp=True,
+    createcopy=False,
 ):
     ds = gdal.Open(filename)
 
@@ -331,6 +314,10 @@ def nitf_check_created_file(
     ), "geotransform differs from expected"
 
     if set_inverted_color_interp:
+
+        if createcopy:
+            assert ds.GetMetadataItem("NITF_IREP") == "MULTI"
+
         assert (
             ds.GetRasterBand(1).GetRasterColorInterpretation() == gdal.GCI_BlueBand
         ), "Got wrong color interpretation."
@@ -343,6 +330,11 @@ def nitf_check_created_file(
             ds.GetRasterBand(3).GetRasterColorInterpretation() == gdal.GCI_RedBand
         ), "Got wrong color interpretation."
 
+        if ds.RasterCount == 4:
+            assert (
+                ds.GetRasterBand(4).GetRasterColorInterpretation() == gdal.GCI_GrayIndex
+            ), "Got wrong color interpretation."
+
     ds = None
 
 
@@ -350,11 +342,29 @@ def nitf_check_created_file(
 # Test direction creation of an non-compressed NITF file.
 
 
-def test_nitf_5():
+@pytest.mark.parametrize("createcopy", [False, True])
+@pytest.mark.parametrize("set_inverted_color_interp", [False, True])
+@pytest.mark.parametrize("nbands", [3, 4])
+def test_nitf_5(tmp_path, createcopy, set_inverted_color_interp, nbands):
 
-    nitf_create(["ICORDS=G"])
+    filename = str(tmp_path / "test.ntf")
 
-    nitf_check_created_file(32498, 42602, 38982)
+    nitf_create(
+        filename,
+        ["ICORDS=G"],
+        set_inverted_color_interp=set_inverted_color_interp,
+        createcopy=createcopy,
+        nbands=nbands,
+    )
+
+    nitf_check_created_file(
+        filename,
+        32498,
+        42602,
+        38982,
+        set_inverted_color_interp=set_inverted_color_interp,
+        createcopy=createcopy,
+    )
 
 
 ###############################################################################
@@ -827,11 +837,13 @@ def test_nitf_26():
 # Test Create() with IC=NC compression, and multi-blocks
 
 
-def test_nitf_27():
+def test_nitf_27(tmp_path):
 
-    nitf_create(["ICORDS=G", "IC=NC", "BLOCKXSIZE=10", "BLOCKYSIZE=10"])
+    filename = str(tmp_path / "test.ntf")
 
-    nitf_check_created_file(32498, 42602, 38982)
+    nitf_create(filename, ["ICORDS=G", "IC=NC", "BLOCKXSIZE=10", "BLOCKYSIZE=10"])
+
+    nitf_check_created_file(filename, 32498, 42602, 38982)
 
 
 ###############################################################################
@@ -839,7 +851,7 @@ def test_nitf_27():
 
 
 @pytest.mark.require_driver("JP2ECW")
-def test_nitf_28_jp2ecw():
+def test_nitf_28_jp2ecw(tmp_path):
 
     import ecw
 
@@ -849,9 +861,17 @@ def test_nitf_28_jp2ecw():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2ECW")
     try:
-        nitf_create(["ICORDS=G", "IC=C8", "TARGET=75"], set_inverted_color_interp=False)
+        filename = str(tmp_path / "test.ntf")
 
-        nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp=False)
+        nitf_create(
+            filename,
+            ["ICORDS=G", "IC=C8", "TARGET=75"],
+            set_inverted_color_interp=False,
+        )
+
+        nitf_check_created_file(
+            filename, 32398, 42502, 38882, set_inverted_color_interp=False
+        )
 
         tmpfilename = "/vsimem/nitf_28_jp2ecw.ntf"
         src_ds = gdal.GetDriverByName("MEM").Create("", 1025, 1025)
@@ -860,10 +880,11 @@ def test_nitf_28_jp2ecw():
         blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
         ds = None
         gdal.Unlink(tmpfilename)
-        assert (blockxsize, blockysize) == (
-            256,
-            256,
-        )  # 256 since this is hardcoded as such in the ECW driver
+        # 256 for ECW < 5.1, 1024 for ECW >= 5.1
+        assert (blockxsize, blockysize) == (256, 256) or (blockxsize, blockysize) == (
+            1024,
+            1024,
+        )
     finally:
         gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -879,10 +900,10 @@ def test_nitf_28_jp2mrsid():
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2MrSID")
 
     nitf_check_created_file(
+        "data/nitf/test_jp2_ecw33.ntf",
         32398,
         42502,
         38882,
-        filename="data/nitf/test_jp2_ecw33.ntf",
         set_inverted_color_interp=False,
     )
 
@@ -900,10 +921,10 @@ def test_nitf_28_jp2kak():
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2KAK")
 
     nitf_check_created_file(
+        "data/nitf/test_jp2_ecw33.ntf",
         32398,
         42502,
         38882,
-        filename="data/nitf/test_jp2_ecw33.ntf",
         set_inverted_color_interp=False,
     )
 
@@ -921,10 +942,10 @@ def test_nitf_28_jp2openjpeg():
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2OpenJPEG")
     try:
         nitf_check_created_file(
+            "data/nitf/test_jp2_ecw33.ntf",
             32398,
             42502,
             38882,
-            filename="data/nitf/test_jp2_ecw33.ntf",
             set_inverted_color_interp=False,
         )
     finally:
@@ -936,19 +957,51 @@ def test_nitf_28_jp2openjpeg():
 
 
 @pytest.mark.require_driver("JP2OpenJPEG")
-def test_nitf_28_jp2openjpeg_bis():
+def test_nitf_28_jp2openjpeg_bis(tmp_path):
 
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2OpenJPEG")
     try:
+        filename = str(tmp_path / "test.ntf")
+
         nitf_create(
+            filename,
             ["ICORDS=G", "IC=C8", "QUALITY=25"],
             set_inverted_color_interp=False,
             createcopy=True,
         )
-        ds = gdal.Open("tmp/test_create.ntf")
+        ds = gdal.Open(filename)
+        size = os.stat(filename).st_size
         assert ds.GetRasterBand(1).Checksum() in (31604, 31741)
         ds = None
+
+        nitf_create(
+            filename,
+            ["ICORDS=G", "IC=C8", "QUALITY=1,25"],
+            set_inverted_color_interp=False,
+            createcopy=True,
+        )
+        ds = gdal.Open(filename)
+        size2 = os.stat(filename).st_size
+        assert ds.GetRasterBand(1).Checksum() in (31604, 31741)
+        ds = None
+
+        assert size2 > size
+
+        # Check that floating-point values in QUALITY are honored
+        nitf_create(
+            filename,
+            ["ICORDS=G", "IC=C8", "QUALITY=1.9,25"],
+            set_inverted_color_interp=False,
+            createcopy=True,
+        )
+        ds = gdal.Open(filename)
+        size3 = os.stat(filename).st_size
+        assert ds.GetRasterBand(1).Checksum() in (31604, 31741)
+        ds = None
+
+        # The fact that size3 > size2 is a bit of a chance here...
+        assert size3 > size2
 
         tmpfilename = "/vsimem/nitf_28_jp2openjpeg_bis.ntf"
         src_ds = gdal.GetDriverByName("MEM").Create("", 1025, 1025)
@@ -966,16 +1019,17 @@ def test_nitf_28_jp2openjpeg_bis():
 # Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
 
 
-def test_nitf_jp2openjpeg_npje_numerically_lossless():
+def test_nitf_jp2openjpeg_npje_numerically_lossless(tmp_vsimem):
     jp2openjpeg_drv = gdal.GetDriverByName("JP2OpenJPEG")
     if jp2openjpeg_drv is None:
         pytest.skip()
 
     src_ds = gdal.Open("../gcore/data/uint16.tif")
     # May throw a warning with openjpeg < 2.5
+    out1_filename = str(tmp_vsimem / "tmp.ntf")
     with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").CreateCopy(
-            "/vsimem/tmp.ntf",
+            out1_filename,
             src_ds,
             strict=False,
             options=[
@@ -986,19 +1040,17 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
             ],
         )
 
-    ds = gdal.Open("/vsimem/tmp.ntf")
+    ds = gdal.Open(out1_filename)
+    assert ds.GetMetadataItem("NITF_ABPP") == "12"
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "12"
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert (
         ds.GetMetadataItem("J2KLRA", "TRE")
         == "0050000102000000.03125000100.06250000200.12500000300.25000000400.50000000500.60000000600.70000000700.80000000800.90000000901.00000001001.10000001101.20000001201.30000001301.50000001401.70000001502.00000001602.30000001703.50000001803.90000001912.000000"
     )
     assert ds.GetMetadataItem("COMRAT", "DEBUG") in (
-        "N141",
-        "N142",
-        "N143",
-        "N147",
-        "N169",
-        "N174",
+        "N145",  # OpenJPEG 2.3.1 and 2.4
+        "N172",  # OpenJPEG 2.5
     )
     assert (
         ds.GetMetadataItem("COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE") == "LOSSLESS"
@@ -1018,7 +1070,7 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
         in structure
     )
     assert (
-        '<Field name="Ssiz0" type="uint8" description="Unsigned 16 bits">15</Field>'
+        '<Field name="Ssiz0" type="uint8" description="Unsigned 12 bits">11</Field>'
         in structure
     )
     assert '<Field name="XTsiz" type="uint32">1024</Field>' in structure
@@ -1051,7 +1103,25 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
         assert '<Marker name="TLM"' in structure
         assert '<Marker name="PLT"' in structure
 
-    gdal.Unlink("/vsimem/tmp.ntf")
+    # Check that NBITS is propagated as ABPP
+    out2_filename = str(tmp_vsimem / "tmp.ntf")
+    with gdal.quiet_errors():
+        gdal.GetDriverByName("NITF").CreateCopy(
+            out2_filename,
+            gdal.Open(out1_filename),
+            strict=False,
+            options=[
+                "IC=C8",
+                "JPEG2000_DRIVER=JP2OpenJPEG",
+                "PROFILE=NPJE_NUMERICALLY_LOSSLESS",
+                "QUALITY=10,100",
+            ],
+        )
+
+    ds = gdal.Open(out2_filename)
+    assert ds.GetMetadataItem("NITF_ABPP") == "12"
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "12"
+    assert ds.GetRasterBand(1).Checksum() == 4672
 
 
 ###############################################################################
@@ -1370,11 +1440,15 @@ def test_nitf_30():
 # Verify we can write a file with a custom TRE and read it back properly.
 
 
-def test_nitf_31():
+def test_nitf_31(tmp_path):
 
-    nitf_create(["TRE=CUSTOM= Test TRE1\\0MORE", "TRE=TOTEST=SecondTRE", "ICORDS=G"])
+    filename = str(tmp_path / "test.ntf")
 
-    ds = gdal.Open("tmp/test_create.ntf")
+    nitf_create(
+        filename, ["TRE=CUSTOM= Test TRE1\\0MORE", "TRE=TOTEST=SecondTRE", "ICORDS=G"]
+    )
+
+    ds = gdal.Open(filename)
 
     md = ds.GetMetadata("TRE")
     assert len(md) == 2, "Did not get expected TRE count"
@@ -1392,27 +1466,31 @@ def test_nitf_31():
     ), "Did not get expected TRE contents"
 
     ds = None
-    return nitf_check_created_file(32498, 42602, 38982)
+    return nitf_check_created_file(filename, 32498, 42602, 38982)
 
 
 ###############################################################################
 # Test Create() with ICORDS=D
 
 
-def test_nitf_32():
+def test_nitf_32(tmp_path):
 
-    nitf_create(["ICORDS=D"])
+    filename = str(tmp_path / "test.ntf")
 
-    return nitf_check_created_file(32498, 42602, 38982)
+    nitf_create(filename, ["ICORDS=D"])
+
+    return nitf_check_created_file(filename, 32498, 42602, 38982)
 
 
 ###############################################################################
 # Test Create() with ICORDS=D and a consistent BLOCKA
 
 
-def test_nitf_33():
+def test_nitf_33(tmp_path):
 
+    filename = str(tmp_path / "test.ntf")
     nitf_create(
+        filename,
         [
             "ICORDS=D",
             "BLOCKA_BLOCK_COUNT=01",
@@ -1422,10 +1500,10 @@ def test_nitf_33():
             "BLOCKA_LRLC_LOC_01=+20.050000+119.950000",
             "BLOCKA_LRFC_LOC_01=+20.050000+100.050000",
             "BLOCKA_FRFC_LOC_01=+29.950000+100.050000",
-        ]
+        ],
     )
 
-    return nitf_check_created_file(32498, 42602, 38982)
+    return nitf_check_created_file(filename, 32498, 42602, 38982)
 
 
 ###############################################################################
@@ -1443,6 +1521,10 @@ def test_nitf_34():
 # Test CreateCopy() writing file with a text segment.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_35():
 
     src_ds = gdal.Open("data/nitf/text_md.vrt")
@@ -1488,8 +1570,7 @@ def test_nitf_36():
         ds.GetRasterBand(1).GetMinimum() is None
     ), "Did not expect to have minimum value at that point."
 
-    (_, _, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
-    assert stddev < 0, "Did not expect to have statistics at that point."
+    assert ds.GetRasterBand(1).GetStatistics(False, False) is None
 
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (_, _, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, True)
@@ -1536,6 +1617,10 @@ def test_nitf_37():
 # Create and read a NITF file with 999 images
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_38():
 
     ds = gdal.Open("data/byte.tif")
@@ -1745,6 +1830,32 @@ def test_nitf_42(not_jpeg_9b):
 
 
 ###############################################################################
+# Check creating a 12-bit JPEG compressed NITF
+
+
+def test_nitf_write_jpeg12(not_jpeg_9b, tmp_path):
+    # Check if JPEG driver supports 12bit JPEG reading/writing
+    jpg_drv = gdal.GetDriverByName("JPEG")
+    md = jpg_drv.GetMetadata()
+    if md[gdal.DMD_CREATIONDATATYPES].find("UInt16") == -1:
+        pytest.skip("12bit jpeg not available")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 10000, 1, 3, gdal.GDT_UInt16)
+    ds.GetRasterBand(1).Fill(4096)
+    ds.GetRasterBand(2).Fill(0)
+    ds.GetRasterBand(3).Fill(4096)
+    out_filename = str(tmp_path / "out.ntf")
+    with gdal.quiet_errors():
+        gdal.GetDriverByName("NITF").CreateCopy(out_filename, ds, options=["IC=C3"])
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+    assert [
+        ds.GetRasterBand(i + 1).GetStatistics(0, 1)[2] for i in range(3)
+    ] == pytest.approx([4095, 0, 4095], abs=1)
+
+
+###############################################################################
 # Test CreateCopy() in IC=C8 with various JPEG2000 drivers
 
 
@@ -1890,6 +2001,10 @@ def test_nitf_check_jpeg2000_overviews(driver_to_test):
 # Check reading of rsets.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_47():
 
     ds = gdal.Open("data/nitf/rset.ntf.r0")
@@ -1909,6 +2024,10 @@ def test_nitf_47():
 # Check building of standard overviews in place of rset overviews.
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_48():
 
     try:
@@ -1950,6 +2069,10 @@ def test_nitf_48():
 # Test TEXT and CGM creation options with CreateCopy() (#3376)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_49():
 
     options = [
@@ -2671,6 +2794,10 @@ def test_nitf_68():
 # Test SetGCPs() support
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_nitf_69():
 
     vrt_txt = """<VRTDataset rasterXSize="20" rasterYSize="20">
@@ -2899,6 +3026,7 @@ def test_nitf_72():
     src_md = src_md_max_precision
     src_ds.SetMetadata(src_md, "RPC")
 
+    gdal.ErrorReset()
     gdal.GetDriverByName("NITF").CreateCopy("/vsimem/nitf_72.ntf", src_ds)
 
     assert gdal.GetLastErrorMsg() == "", "fail: did not expect warning"
@@ -3986,6 +4114,386 @@ def test_nitf_86():
     <field name="RESERVED_LEN" value="00000" />
   </tre>
 </tres>
+"""
+    assert data == expected_data
+
+
+###############################################################################
+# Test parsing CSCSDB DES (STDI-0002-1-v5.0 App M)
+
+
+def test_nitf_CSCSDB(tmp_vsimem):
+    tre_data = "DES=CSCSDB=01U                                                                                                                                                                      008517261ee9-2175-4ff2-86ad-dddda1f8270c001002001824ecf8e-1041-4cce-9edb-bc92d88624ca000020050407132420050407072409.88900000031231+2.50000000000000E+03+0.00000000000000E+00+0.00000000000000E+00+2.50000000000000E+03+0.00000000000000E+00+2.50000000000000E+0300101020050407072409.8890000002451+2.01640000000000E-08+0.00000000000000E+00+2.01640000000000E-080010312005040726649.889000000001.8750000000081+7.22500000000000E-09+0.00000000000000E+00+7.22500000000000E-09100104020050407072409.889000000161+2.01640000000000E-0800105020050407072409.889000000171+1.96000000000000E-0400107000100303+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+00+4.00000000000000E+00+0.00000000000000E+00+4.00000000000000E+000910107010101.0001.0000000.00000000.000000+1.00000000000000E+03020101.0001.0000000.00000000.000000+5.00000000000000E+02030101.0001.0000000.00000000.000000+5.00000000000000E+02040101.0001.0000000.00000000.000000+5.00000000000000E+02050101.0001.0000000.00000000.000000+5.00000000000000E+02060101.0001.0000000.00000000.000000+5.00000000000000E+02070101.0001.0000000.00000000.000000+1.00000000000000E+020000000000"
+
+    filename = str(tmp_vsimem / "test.ntf")
+    ds = gdal.GetDriverByName("NITF").Create(filename, 1, 1, options=[tre_data])
+    ds = None
+
+    ds = gdal.Open(filename)
+    data = ds.GetMetadata("xml:DES")[0]
+    ds = None
+
+    expected_data = """<des_list>
+  <des name="CSCSDB">
+    <field name="DESVER" value="01" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0085" />
+    <field name="DESSHF" value="17261ee9-2175-4ff2-86ad-dddda1f8270c001002001824ecf8e-1041-4cce-9edb-bc92d88624ca0000">
+      <user_defined_fields>
+        <field name="UUID" value="17261ee9-2175-4ff2-86ad-dddda1f8270c" />
+        <field name="NUMAIS" value="001" />
+        <repeated number="1">
+          <group index="0">
+            <field name="AISDLVL" value="002" />
+          </group>
+        </repeated>
+        <field name="NUM_ASSOC_ELEM" value="001" />
+        <repeated name="ASSOC_ELEM" number="1">
+          <group index="0">
+            <field name="ASSOC_ELEM_UUID" value="824ecf8e-1041-4cce-9edb-bc92d88624ca" />
+          </group>
+        </repeated>
+        <field name="RESERVEDSUBH_LEN" value="0000" />
+      </user_defined_fields>
+    </field>
+    <field name="DESDATA" value="MjAwNTA0MDcxMzI0MjAwNTA0MDcwNzI0MDkuODg5MDAwMDAwMzEyMzErMi41MDAwMDAwMDAwMDAwMEUrMDMrMC4wMDAwMDAwMDAwMDAwMEUrMDArMC4wMDAwMDAwMDAwMDAwMEUrMDArMi41MDAwMDAwMDAwMDAwMEUrMDMrMC4wMDAwMDAwMDAwMDAwMEUrMDArMi41MDAwMDAwMDAwMDAwMEUrMDMwMDEwMTAyMDA1MDQwNzA3MjQwOS44ODkwMDAwMDAyNDUxKzIuMDE2NDAwMDAwMDAwMDBFLTA4KzAuMDAwMDAwMDAwMDAwMDBFKzAwKzIuMDE2NDAwMDAwMDAwMDBFLTA4MDAxMDMxMjAwNTA0MDcyNjY0OS44ODkwMDAwMDAwMDEuODc1MDAwMDAwMDA4MSs3LjIyNTAwMDAwMDAwMDAwRS0wOSswLjAwMDAwMDAwMDAwMDAwRSswMCs3LjIyNTAwMDAwMDAwMDAwRS0wOTEwMDEwNDAyMDA1MDQwNzA3MjQwOS44ODkwMDAwMDAxNjErMi4wMTY0MDAwMDAwMDAwMEUtMDgwMDEwNTAyMDA1MDQwNzA3MjQwOS44ODkwMDAwMDAxNzErMS45NjAwMDAwMDAwMDAwMEUtMDQwMDEwNzAwMDEwMDMwMys0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMCswLjAwMDAwMDAwMDAwMDAwRSswMCs0LjAwMDAwMDAwMDAwMDAwRSswMDA5MTAxMDcwMTAxMDEuMDAwMS4wMDAwMDAwLjAwMDAwMDAwLjAwMDAwMCsxLjAwMDAwMDAwMDAwMDAwRSswMzAyMDEwMS4wMDAxLjAwMDAwMDAuMDAwMDAwMDAuMDAwMDAwKzUuMDAwMDAwMDAwMDAwMDBFKzAyMDMwMTAxLjAwMDEuMDAwMDAwMC4wMDAwMDAwMC4wMDAwMDArNS4wMDAwMDAwMDAwMDAwMEUrMDIwNDAxMDEuMDAwMS4wMDAwMDAwLjAwMDAwMDAwLjAwMDAwMCs1LjAwMDAwMDAwMDAwMDAwRSswMjA1MDEwMS4wMDAxLjAwMDAwMDAuMDAwMDAwMDAuMDAwMDAwKzUuMDAwMDAwMDAwMDAwMDBFKzAyMDYwMTAxLjAwMDEuMDAwMDAwMC4wMDAwMDAwMC4wMDAwMDArNS4wMDAwMDAwMDAwMDAwMEUrMDIwNzAxMDEuMDAwMS4wMDAwMDAwLjAwMDAwMDAwLjAwMDAwMCsxLjAwMDAwMDAwMDAwMDAwRSswMjAwMDAwMDAwMDA=">
+      <data_fields>
+        <field name="COV_VERSION_DATE" value="20050407" />
+        <field name="CORE_SETS" value="1" />
+        <repeated name="CORE_SETS" number="1">
+          <group index="0">
+            <field name="REF_FRAME_POSITION" value="3" />
+            <field name="REF_FRAME_ATTITUDE" value="2" />
+            <field name="NUM_GROUPS" value="4" />
+            <repeated name="GROUPS" number="4">
+              <group index="0">
+                <field name="CORR_REF_DATE" value="20050407" />
+                <field name="CORR_REF_TIME" value="072409.889000000" />
+                <field name="NUM_ADJ_PARM" value="3" />
+                <repeated name="ADJ_PARM" number="3">
+                  <group index="0">
+                    <field name="ADJ_PARM_ID" value="1" />
+                  </group>
+                  <group index="1">
+                    <field name="ADJ_PARM_ID" value="2" />
+                  </group>
+                  <group index="2">
+                    <field name="ADJ_PARM_ID" value="3" />
+                  </group>
+                </repeated>
+                <field name="BASIC_SUB_ALLOC" value="1" />
+                <repeated number="6">
+                  <group index="0">
+                    <field name="ERRCOV_C1" value="+2.50000000000000E+03" />
+                  </group>
+                  <group index="1">
+                    <field name="ERRCOV_C1" value="+0.00000000000000E+00" />
+                  </group>
+                  <group index="2">
+                    <field name="ERRCOV_C1" value="+0.00000000000000E+00" />
+                  </group>
+                  <group index="3">
+                    <field name="ERRCOV_C1" value="+2.50000000000000E+03" />
+                  </group>
+                  <group index="4">
+                    <field name="ERRCOV_C1" value="+0.00000000000000E+00" />
+                  </group>
+                  <group index="5">
+                    <field name="ERRCOV_C1" value="+2.50000000000000E+03" />
+                  </group>
+                </repeated>
+                <field name="BASIC_PF_FLAG" value="0" />
+                <field name="BASIC_PL_FLAG" value="0" />
+                <field name="BASIC_SR_FLAG" value="1" />
+                <field name="BASIC_SR_SPDCF" value="01" />
+                <field name="POST_SUB_ALLOC" value="0" />
+              </group>
+              <group index="1">
+                <field name="CORR_REF_DATE" value="20050407" />
+                <field name="CORR_REF_TIME" value="072409.889000000" />
+                <field name="NUM_ADJ_PARM" value="2" />
+                <repeated name="ADJ_PARM" number="2">
+                  <group index="0">
+                    <field name="ADJ_PARM_ID" value="4" />
+                  </group>
+                  <group index="1">
+                    <field name="ADJ_PARM_ID" value="5" />
+                  </group>
+                </repeated>
+                <field name="BASIC_SUB_ALLOC" value="1" />
+                <repeated number="3">
+                  <group index="0">
+                    <field name="ERRCOV_C1" value="+2.01640000000000E-08" />
+                  </group>
+                  <group index="1">
+                    <field name="ERRCOV_C1" value="+0.00000000000000E+00" />
+                  </group>
+                  <group index="2">
+                    <field name="ERRCOV_C1" value="+2.01640000000000E-08" />
+                  </group>
+                </repeated>
+                <field name="BASIC_PF_FLAG" value="0" />
+                <field name="BASIC_PL_FLAG" value="0" />
+                <field name="BASIC_SR_FLAG" value="1" />
+                <field name="BASIC_SR_SPDCF" value="03" />
+                <field name="POST_SUB_ALLOC" value="1" />
+                <field name="POST_START_DATE" value="20050407" />
+                <field name="POST_START_TIME" value="26649.889000000" />
+                <field name="POST_DT" value="001.875000000" />
+                <field name="NUM_POSTS" value="008" />
+                <field name="COMMON_POSTS_COV" value="1" />
+                <repeated number="3">
+                  <group index="0">
+                    <field name="ERRCOV_C2" value="+7.22500000000000E-09" />
+                  </group>
+                  <group index="1">
+                    <field name="ERRCOV_C2" value="+0.00000000000000E+00" />
+                  </group>
+                  <group index="2">
+                    <field name="ERRCOV_C2" value="+7.22500000000000E-09" />
+                  </group>
+                </repeated>
+                <field name="POST_INTERP" value="1" />
+                <field name="POST_PF_FLAG" value="0" />
+                <field name="POST_PL_FLAG" value="0" />
+                <field name="POST_SR_FLAG" value="1" />
+                <field name="POST_SR_SPDCF" value="04" />
+                <field name="POST_CORR" value="0" />
+              </group>
+              <group index="2">
+                <field name="CORR_REF_DATE" value="20050407" />
+                <field name="CORR_REF_TIME" value="072409.889000000" />
+                <field name="NUM_ADJ_PARM" value="1" />
+                <repeated name="ADJ_PARM" number="1">
+                  <group index="0">
+                    <field name="ADJ_PARM_ID" value="6" />
+                  </group>
+                </repeated>
+                <field name="BASIC_SUB_ALLOC" value="1" />
+                <repeated number="1">
+                  <group index="0">
+                    <field name="ERRCOV_C1" value="+2.01640000000000E-08" />
+                  </group>
+                </repeated>
+                <field name="BASIC_PF_FLAG" value="0" />
+                <field name="BASIC_PL_FLAG" value="0" />
+                <field name="BASIC_SR_FLAG" value="1" />
+                <field name="BASIC_SR_SPDCF" value="05" />
+                <field name="POST_SUB_ALLOC" value="0" />
+              </group>
+              <group index="3">
+                <field name="CORR_REF_DATE" value="20050407" />
+                <field name="CORR_REF_TIME" value="072409.889000000" />
+                <field name="NUM_ADJ_PARM" value="1" />
+                <repeated name="ADJ_PARM" number="1">
+                  <group index="0">
+                    <field name="ADJ_PARM_ID" value="7" />
+                  </group>
+                </repeated>
+                <field name="BASIC_SUB_ALLOC" value="1" />
+                <repeated number="1">
+                  <group index="0">
+                    <field name="ERRCOV_C1" value="+1.96000000000000E-04" />
+                  </group>
+                </repeated>
+                <field name="BASIC_PF_FLAG" value="0" />
+                <field name="BASIC_PL_FLAG" value="0" />
+                <field name="BASIC_SR_FLAG" value="1" />
+                <field name="BASIC_SR_SPDCF" value="07" />
+                <field name="POST_SUB_ALLOC" value="0" />
+              </group>
+            </repeated>
+          </group>
+        </repeated>
+        <field name="IO_CAL_AP" value="0" />
+        <field name="TS_CAL_AP" value="0" />
+        <field name="UE_FLAG" value="1" />
+        <field name="LINE_DIMENSION" value="003" />
+        <field name="SAMPLE_DIMENSION" value="03" />
+        <repeated name="LINE" number="3">
+          <group index="0">
+            <repeated name="SAMPLE" number="3">
+              <group index="0">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="1">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="2">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+            </repeated>
+          </group>
+          <group index="1">
+            <repeated name="SAMPLE" number="3">
+              <group index="0">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="1">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="2">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+            </repeated>
+          </group>
+          <group index="2">
+            <repeated name="SAMPLE" number="3">
+              <group index="0">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="1">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+              <group index="2">
+                <field name="URR" value="+4.00000000000000E+00" />
+                <field name="URC" value="+0.00000000000000E+00" />
+                <field name="UCC" value="+4.00000000000000E+00" />
+              </group>
+            </repeated>
+          </group>
+        </repeated>
+        <field name="LINE_SPDCF" value="09" />
+        <field name="SAMPLE_SPDCF" value="10" />
+        <field name="SPDC_FLAG" value="1" />
+        <field name="NUM_SPDCF" value="07" />
+        <repeated name="SPDCF" number="7">
+          <group index="0">
+            <field name="SPDCF_ID" value="01" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+1.00000000000000E+03" />
+              </group>
+            </repeated>
+          </group>
+          <group index="1">
+            <field name="SPDCF_ID" value="02" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+5.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+          <group index="2">
+            <field name="SPDCF_ID" value="03" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+5.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+          <group index="3">
+            <field name="SPDCF_ID" value="04" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+5.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+          <group index="4">
+            <field name="SPDCF_ID" value="05" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+5.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+          <group index="5">
+            <field name="SPDCF_ID" value="06" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+5.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+          <group index="6">
+            <field name="SPDCF_ID" value="07" />
+            <field name="SPDCF_P" value="01" />
+            <repeated name="CONSTITUENT" number="1">
+              <group index="0">
+                <field name="SPDCF_FAM" value="0" />
+                <field name="SPDCF_WEIGHT" value="1.000" />
+                <field name="FP_A" value="1.000000" />
+                <field name="FP_ALPHA" value="0.000000" />
+                <field name="FP_BETA" value="00.000000" />
+                <field name="FP_T" value="+1.00000000000000E+02" />
+              </group>
+            </repeated>
+          </group>
+        </repeated>
+        <field name="DIRECT_COVARIANCE_FLAG" value="0" />
+        <field name="RESERVED_LEN" value="000000000" />
+      </data_fields>
+    </field>
+  </des>
+</des_list>
 """
     assert data == expected_data
 
@@ -5227,7 +5735,8 @@ def test_nitf_invalid_udid():
 def test_nitf_isubcat_populated():
 
     # Check a dataset with IQ complex data.
-    ds = gdal.Open("data/nitf/sar_sicd.ntf")
+    with gdal.config_option("NITF_SAR_AS_COMPLEX_TYPE", "NO"):
+        ds = gdal.Open("data/nitf/sar_sicd.ntf")
     expected = ["I", "Q"]
     for b in range(ds.RasterCount):
         md = ds.GetRasterBand(b + 1).GetMetadata()
@@ -5326,6 +5835,7 @@ def test_nitf_create_three_images_final_uncompressed():
     src_ds_8193.GetRasterBand(1).Fill(2)
 
     # Write first image segment, reserve space for two other ones and a DES
+    gdal.ErrorReset()
     ds = gdal.GetDriverByName("NITF").CreateCopy(
         "/vsimem/out.ntf", src_ds_2049, options=["NUMI=3", "NUMDES=1"]
     )
@@ -5721,6 +6231,57 @@ def test_nitf_metadata_validation_des():
     assert ds is None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test CreateCopy() with IC=C8 compression and NPJE profiles with the JP2OpenJPEG driver
+
+
+def test_nitf_report_ABPP_as_NBITS(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "tmp.ntf")
+    gdal.GetDriverByName("NITF").Create(
+        out_filename, 1, 1, 1, gdal.GDT_UInt16, options=["NBITS=9"]
+    )
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetMetadataItem("NITF_ABPP") == "09"
+    assert ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "9"
+
+
+###############################################################################
+# Test reading SAR products with I,Q bands
+
+
+def test_nitf_readSAR_IQ(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "tmp.ntf")
+    gdal.Translate(
+        out_filename,
+        "data/byte.tif",
+        options="-b 1 -b 1 -outsize 40 20 -co ICAT=SAR -ot Float32 -co ISUBCAT=I,Q -scale_2 0 255 255 0",
+    )
+    gdal.Unlink(out_filename + ".aux.xml")
+
+    ds = gdal.Open(out_filename)
+    assert ds.RasterCount == 1
+    assert ds.RasterXSize == 40
+    assert ds.RasterYSize == 20
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_CFloat32
+    assert ds.GetMetadataItem("NITF_ISUBCAT") is None
+
+    src_ds = gdal.Open("data/byte.tif")
+    ds = gdal.Open("DERIVED_SUBDATASET:REAL:" + out_filename)
+    assert (
+        ds.ReadRaster(0, 0, 40, 20, 20, 20, buf_type=gdal.GDT_Byte)
+        == src_ds.ReadRaster()
+    )
+    ds = gdal.Open("DERIVED_SUBDATASET:IMAG:" + out_filename)
+    mod_src_ds = gdal.Translate("", src_ds, options="-f MEM -scale 0 255 255 0")
+    assert (
+        ds.ReadRaster(0, 0, 40, 20, 20, 20, buf_type=gdal.GDT_Byte)
+        == mod_src_ds.ReadRaster()
+    )
 
 
 ###############################################################################

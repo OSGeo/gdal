@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2015, Faza Mahamood <fazamhd at gmail dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import collections
@@ -520,7 +504,6 @@ def test_ogr2ogr_lib_21():
         gdal.VectorTranslate(ds, src_ds, accessMode="append", selectFields=["foo"])
 
     ds = None
-    f.Destroy()
     src_ds = None
 
 
@@ -1206,12 +1189,58 @@ def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
 
 
 ###############################################################################
-# Test -clipsrc with a clip layer with an invalid polygon
+# Test -clipsrc/-clipdst with a clip layer with an invalid polygon (specified "inline" as WKT)
+
+
+@pytest.mark.require_geos
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("clipSrc", [True, False])
+def test_ogr2ogr_lib_clip_invalid_polygon_inline(tmp_vsimem, clipSrc):
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srcLayer = srcDS.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0.25 0.25)"))
+    srcLayer.CreateFeature(f)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(-0.5 0.5)"))
+    srcLayer.CreateFeature(f)
+
+    # Intersection of above geometry with clipSrc bounding box is a point
+    with pytest.raises(Exception, match="geometry is invalid"):
+        gdal.VectorTranslate(
+            "",
+            srcDS,
+            format="Memory",
+            clipSrc="POLYGON((0 0,1 1,0 1,1 0,0 0))" if clipSrc else None,
+            clipDst="POLYGON((0 0,1 1,0 1,1 0,0 0))" if not clipSrc else None,
+        )
+
+    with gdal.quiet_errors():
+        ds = gdal.VectorTranslate(
+            "",
+            srcDS,
+            format="Memory",
+            makeValid=True,
+            clipSrc="POLYGON((0 0,1 1,0 1,1 0,0 0))" if clipSrc else None,
+            clipDst="POLYGON((0 0,1 1,0 1,1 0,0 0))" if not clipSrc else None,
+        )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    ds = None
+
+
+###############################################################################
+# Test -clipsrc with a clip layer with an invalid polygon (in a dataset)
 
 
 @pytest.mark.require_driver("GPKG")
-@pytest.mark.require_geos(3, 8)
-def test_ogr2ogr_lib_clipsrc_invalid_polygon(tmp_vsimem):
+@pytest.mark.require_geos
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("clipSrc", [True, False])
+def test_ogr2ogr_lib_clip_invalid_polygon(tmp_vsimem, clipSrc):
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
@@ -1235,8 +1264,24 @@ def test_ogr2ogr_lib_clipsrc_invalid_polygon(tmp_vsimem):
     clip_ds = None
 
     # Intersection of above geometry with clipSrc bounding box is a point
+    with pytest.raises(Exception, match=r"cannot load.*clip geometry"):
+        gdal.VectorTranslate(
+            "",
+            srcDS,
+            format="Memory",
+            clipSrc=clip_path if clipSrc else None,
+            clipDst=clip_path if not clipSrc else None,
+        )
+
     with gdal.quiet_errors():
-        ds = gdal.VectorTranslate("", srcDS, format="Memory", clipSrc=clip_path)
+        ds = gdal.VectorTranslate(
+            "",
+            srcDS,
+            format="Memory",
+            makeValid=True,
+            clipSrc=clip_path if clipSrc else None,
+            clipDst=clip_path if not clipSrc else None,
+        )
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
     ds = None
@@ -1247,7 +1292,7 @@ def test_ogr2ogr_lib_clipsrc_invalid_polygon(tmp_vsimem):
 
 
 @pytest.mark.require_driver("GPKG")
-@pytest.mark.require_geos(3, 8)
+@pytest.mark.require_geos
 def test_ogr2ogr_lib_clipsrc_3d_polygon(tmp_vsimem):
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
@@ -1417,7 +1462,7 @@ def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
 
 
 ###############################################################################
-# Test /-clipsrc-clipdst with reprojection
+# Test -clipsrc / -clipdst with reprojection
 
 
 @pytest.mark.require_geos
@@ -1587,6 +1632,13 @@ def test_ogr2ogr_lib_simplify():
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0, 1 0, 10 0)"))
     src_lyr.CreateFeature(f)
+
+    with gdaltest.enable_exceptions(), pytest.raises(
+        Exception, match="Failed to parse"
+    ):
+        gdal.VectorTranslate(
+            "", src_ds, format="Memory", simplifyTolerance="reasonable"
+        )
 
     dst_ds = gdal.VectorTranslate("", src_ds, format="Memory", simplifyTolerance=5)
 
@@ -2121,6 +2173,7 @@ def test_ogr2ogr_lib_reprojection_curve_geometries_forced_geom_type(geometryType
 
 
 @pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("GeoJSON")
 def test_ogr2ogr_lib_reprojection_curve_geometries_output_does_not_support_curve(
     tmp_vsimem,
 ):
@@ -2710,3 +2763,198 @@ def test_ogr2ogr_lib_coordinate_precision_with_geom():
         assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (0 0,10 10)"
     else:
         assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,9 9)"
+
+
+###############################################################################
+
+
+def test_ogr2ogr_lib_not_enough_gcp():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer("test")
+
+    with pytest.raises(
+        Exception, match="Failed to compute GCP transform: Not enough points available"
+    ):
+        gdal.VectorTranslate("", src_ds, options="-f Memory -gcp 0 0 0 0")
+
+
+###############################################################################
+
+
+def test_ogr2ogr_lib_two_gcps():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 3)"))
+    src_lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate(
+        "", src_ds, options="-f Memory -gcp 1 2 200 300 -gcp 3 4 300 400"
+    )
+    out_lyr = out_ds.GetLayer(0)
+    f = out_lyr.GetNextFeature()
+    assert f.GetGeometryRef().GetX(0) == pytest.approx(250)
+    assert f.GetGeometryRef().GetY(0) == pytest.approx(350)
+
+
+###############################################################################
+# Test -skipInvalid
+
+
+@pytest.mark.require_geos
+@gdaltest.enable_exceptions()
+def test_ogr2ogr_lib_skip_invalid(tmp_vsimem):
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srcLayer = srcDS.CreateLayer("test")
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    srcLayer.CreateFeature(f)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON((0 0,1 1,0 1,1 0,0 0))"))
+    srcLayer.CreateFeature(f)
+
+    with gdal.quiet_errors():
+        ds = gdal.VectorTranslate("", srcDS, format="Memory", skipInvalid=True)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    ds = None
+
+
+###############################################################################
+# Test -t_srs in Arrow code path
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("force_reproj_threading", [False, True])
+@pytest.mark.parametrize("source_driver", ["GPKG", "Parquet"])
+def test_ogr2ogr_lib_reproject_arrow(tmp_vsimem, source_driver, force_reproj_threading):
+
+    src_driver = gdal.GetDriverByName(source_driver)
+    if src_driver is None:
+        pytest.skip(f"{source_driver} is not available")
+    src_filename = str(tmp_vsimem / ("in." + source_driver.lower()))
+    with src_driver.Create(src_filename, 0, 0, 0, gdal.GDT_Unknown) as srcDS:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(32631)
+        srcLayer = srcDS.CreateLayer("test", srs=srs)
+        f = ogr.Feature(srcLayer.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(500000 4500000)"))
+        srcLayer.CreateFeature(f)
+        f = ogr.Feature(srcLayer.GetLayerDefn())
+        srcLayer.CreateFeature(f)
+        f = ogr.Feature(srcLayer.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(500000 4000000)"))
+        srcLayer.CreateFeature(f)
+
+    config_options = {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    if force_reproj_threading:
+        config_options["OGR2OGR_MIN_FEATURES_FOR_THREADED_REPROJ"] = "0"
+
+    with gdal.OpenEx(src_filename) as src_ds:
+        for i in range(2):
+
+            got_msg = []
+
+            def my_handler(errorClass, errno, msg):
+                got_msg.append(msg)
+                return
+
+            with gdaltest.error_handler(my_handler), gdaltest.config_options(
+                config_options
+            ):
+                ds = gdal.VectorTranslate(
+                    "", src_ds, format="Memory", dstSRS="EPSG:4326"
+                )
+
+            assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+            lyr = ds.GetLayer(0)
+            assert lyr.GetFeatureCount() == 3
+            f = lyr.GetNextFeature()
+            ogrtest.check_feature_geometry(f, "POINT(3 40.65085651557158)")
+            f = lyr.GetNextFeature()
+            assert f.GetGeometryRef() is None
+            f = lyr.GetNextFeature()
+            ogrtest.check_feature_geometry(f, "POINT(3 36.14471809881776)")
+
+
+###############################################################################
+# Test -t_srs in Arrow code path in a situation where it cannot be triggered
+# currently (source CRS is crossing anti-meridian)
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_geos
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_reproject_arrow_optim_cannot_trigger(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "in.gpkg")
+    with gdal.GetDriverByName("GPKG").Create(
+        src_filename, 0, 0, 0, gdal.GDT_Unknown
+    ) as srcDS:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(32660)
+        srcLayer = srcDS.CreateLayer("test", srs=srs)
+        f = ogr.Feature(srcLayer.GetLayerDefn())
+        f.SetGeometry(
+            ogr.CreateGeometryFromWkt(
+                "LINESTRING(657630.64 4984896.17,815261.43 4990738.26)"
+            )
+        )
+        srcLayer.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    config_options = {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(config_options):
+        ds = gdal.VectorTranslate("", src_filename, format="Memory", dstSRS="EPSG:4326")
+
+    assert "OGR2OGR: Using WriteArrowBatch()" not in got_msg
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString
+    assert f.GetGeometryRef().GetGeometryCount() == 2
+
+
+###############################################################################
+# Test -explodecollections on empty geometries
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "input_wkt,expected_output_wkt",
+    [
+        ("MULTIPOINT EMPTY", "POINT EMPTY"),
+        ("MULTIPOINT Z EMPTY", "POINT Z EMPTY"),
+        ("MULTIPOINT M EMPTY", "POINT M EMPTY"),
+        ("MULTIPOINT ZM EMPTY", "POINT ZM EMPTY"),
+        ("MULTILINESTRING EMPTY", "LINESTRING EMPTY"),
+        ("MULTIPOLYGON EMPTY", "POLYGON EMPTY"),
+        ("MULTICURVE EMPTY", "COMPOUNDCURVE EMPTY"),
+        ("MULTISURFACE EMPTY", "CURVEPOLYGON EMPTY"),
+        ("GEOMETRYCOLLECTION EMPTY", "GEOMETRYCOLLECTION EMPTY"),
+    ],
+)
+def test_ogr2ogr_lib_explodecollections_empty_geoms(input_wkt, expected_output_wkt):
+
+    with gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown) as src_ds:
+        src_lyr = src_ds.CreateLayer("test")
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(input_wkt))
+        src_lyr.CreateFeature(f)
+
+        out_ds = gdal.VectorTranslate(
+            "", src_ds, explodeCollections=True, format="Memory"
+        )
+        out_lyr = out_ds.GetLayer(0)
+        f = out_lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == expected_output_wkt

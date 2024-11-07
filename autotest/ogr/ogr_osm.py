@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2012-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -929,3 +913,28 @@ def test_ogr_osm_tags_json_special_characters():
     assert lyr_defn.GetFieldDefn(other_tags_idx).GetSubType() == ogr.OFSTJSON
     f = lyr.GetNextFeature()
     assert f["other_tags"] == """{"foo":"x'\\\\\\"\\t\\n\\ry"}"""
+
+
+###############################################################################
+# Test that osmconf.ini can be parsed with Python's configparser
+
+
+def test_ogr_osmconf_ini():
+
+    if "EMBED_RESOURCE_FILES=YES" in gdal.VersionInfo(
+        "BUILD_INFO"
+    ) or "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES" in gdal.VersionInfo("BUILD_INFO"):
+        pytest.skip(
+            "Test cannot work with EMBED_RESOURCE_FILES=YES/USE_ONLY_EMBEDDED_RESOURCE_FILES=YES"
+        )
+
+    import configparser
+
+    with ogr.Open("data/osm/test_json.pbf") as ds:
+        with ds.ExecuteSQL("SHOW config_file_path") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            osmconf_ini_filename = f.GetField(0)
+            config = configparser.ConfigParser()
+            config.read_file(open(osmconf_ini_filename))
+            assert "general" in config
+            assert "closed_ways_are_polygons" in config["general"]

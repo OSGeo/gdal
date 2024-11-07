@@ -848,5 +848,19 @@ int
 
 ";
 
+%feature("docstring") StripVertical "
+
+Convert a compound CRS into a horizontal CRS.
+
+See :cpp:func:`OGRSpatialReference::StripVertical`.
+
+.. versionadded:: 3.6
+
+Returns
+-------
+OGRErr:
+    :py:const:`OGRERR_NONE` if the operation succeeds
+";
+
 }
 

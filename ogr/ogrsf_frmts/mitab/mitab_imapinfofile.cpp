@@ -11,23 +11,7 @@
  * Copyright (c) 1999-2008, Daniel Morissette
  * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  **********************************************************************/
 
 #include "cpl_port.h"
@@ -591,6 +575,7 @@ const char *IMapInfoFile::GetCharset() const
 
 // Table is adopted from
 // http://www.i-signum.com/Formation/download/MB_ReferenceGuide.pdf pp. 127-128
+// NOTE: if modifying this table, please keep doc/source/drivers/vector/mapinfo_encodings.csv in sync
 static const char *const apszCharsets[][2] = {
     {"Neutral", ""},                 // No character conversions performed.
     {"ISO8859_1", "ISO-8859-1"},     // ISO 8859-1 (UNIX)
@@ -628,6 +613,7 @@ static const char *const apszCharsets[][2] = {
     {"CodePage869", "CP869"},  // DOS Code Page 869 = Modern Greek
     {"LICS", ""},              // Lotus worksheet release 1,2 character set
     {"LMBCS", ""},             // Lotus worksheet release 3,4 character set
+    {"UTF-8", "UTF-8"},
     {nullptr, nullptr}};
 
 const char *IMapInfoFile::CharsetToEncoding(const char *pszCharset)
@@ -680,6 +666,11 @@ const char *IMapInfoFile::GetEncoding() const
 void IMapInfoFile::SetEncoding(const char *pszEncoding)
 {
     SetCharset(EncodingToCharset(pszEncoding));
+}
+
+void IMapInfoFile::SetStrictLaundering(bool bStrictLaundering)
+{
+    m_bStrictLaundering = bStrictLaundering;
 }
 
 int IMapInfoFile::TestUtf8Capability() const

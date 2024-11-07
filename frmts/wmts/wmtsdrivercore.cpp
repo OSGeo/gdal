@@ -8,23 +8,7 @@
  **********************************************************************
  * Copyright (c) 2015, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "wmtsdrivercore.h"
@@ -42,18 +26,35 @@ int WMTSDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "<GDAL_WMTS"))
         return TRUE;
 
+    const bool bIsSingleDriver = poOpenInfo->IsSingleAllowedDriver("WMTS");
+    if (bIsSingleDriver && (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+                            STARTS_WITH(poOpenInfo->pszFilename, "https://")))
+    {
+        return true;
+    }
+
     if (poOpenInfo->nHeaderBytes == 0)
         return FALSE;
 
-    if (strstr((const char *)poOpenInfo->pabyHeader, "<GDAL_WMTS"))
+    const char *pszHeader =
+        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+    if (strstr(pszHeader, "<GDAL_WMTS") ||
+        ((strstr(pszHeader, "<Capabilities") ||
+          strstr(pszHeader, "<wmts:Capabilities")) &&
+         strstr(pszHeader, "http://www.opengis.net/wmts/1.0")))
+    {
         return TRUE;
+    }
 
-    return (strstr((const char *)poOpenInfo->pabyHeader, "<Capabilities") !=
-                nullptr ||
-            strstr((const char *)poOpenInfo->pabyHeader,
-                   "<wmts:Capabilities") != nullptr) &&
-           strstr((const char *)poOpenInfo->pabyHeader,
-                  "http://www.opengis.net/wmts/1.0") != nullptr;
+    if (bIsSingleDriver)
+    {
+        while (*pszHeader != 0 &&
+               std::isspace(static_cast<unsigned char>(*pszHeader)))
+            ++pszHeader;
+        return *pszHeader == '<';
+    }
+
+    return FALSE;
 }
 
 /************************************************************************/

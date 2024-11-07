@@ -10,23 +10,7 @@
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2017, Alan Thomas <alant@outlook.com.au>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_DXF_H_INCLUDED
@@ -589,14 +573,14 @@ class OGRDXFLayer final : public OGRLayer
     {                                                                          \
         CPLError(CE_Failure, CPLE_AppDefined,                                  \
                  "%s, %d: error at line %d of %s", __FILE__, __LINE__,         \
-                 GetLineNumber(), GetName());                                  \
+                 GetLineNumber(), GetDescription());                           \
     } while (0)
 #define DXF_LAYER_READER_ERROR()                                               \
     do                                                                         \
     {                                                                          \
         CPLError(CE_Failure, CPLE_AppDefined,                                  \
                  "%s, %d: error at line %d of %s", __FILE__, __LINE__,         \
-                 poDS->GetLineNumber(), poDS->GetName());                      \
+                 poDS->GetLineNumber(), poDS->GetDescription());               \
     } while (0)
 
 class OGRDXFReader
@@ -643,11 +627,10 @@ enum OGRDXFFieldModes
 /*                           OGRDXFDataSource                           */
 /************************************************************************/
 
-class OGRDXFDataSource final : public OGRDataSource
+class OGRDXFDataSource final : public GDALDataset
 {
     VSILFILE *fp;
 
-    CPLString osName;
     std::vector<OGRLayer *> apoLayers;
 
     unsigned int iEntitiesOffset;
@@ -675,6 +658,8 @@ class OGRDXFDataSource final : public OGRDataSource
     bool bMergeBlockGeometries;
     bool bTranslateEscapeSequences;
     bool bIncludeRawCodeValues;
+    bool m_bClosedLineAsPolygon = false;
+    double m_dfHatchTolerance = -1.0;
 
     bool b3DExtensibleMode;
     bool bHaveReadSolidData;
@@ -688,12 +673,8 @@ class OGRDXFDataSource final : public OGRDataSource
     OGRDXFDataSource();
     ~OGRDXFDataSource();
 
-    int Open(const char *pszFilename, int bHeaderOnly = FALSE);
-
-    const char *GetName() override
-    {
-        return osName;
-    }
+    int Open(const char *pszFilename, bool bHeaderOnly,
+             CSLConstList papszOptionsIn);
 
     int GetLayerCount() override
     {
@@ -729,6 +710,16 @@ class OGRDXFDataSource final : public OGRDataSource
     bool In3DExtensibleMode() const
     {
         return b3DExtensibleMode;
+    }
+
+    bool ClosedLineAsPolygon() const
+    {
+        return m_bClosedLineAsPolygon;
+    }
+
+    double HatchTolerance() const
+    {
+        return m_dfHatchTolerance;
     }
 
     static void AddStandardFields(OGRFeatureDefn *poDef, const int nFieldModes);
@@ -926,13 +917,12 @@ class OGRDXFBlocksWriterLayer final : public OGRLayer
 /*                           OGRDXFWriterDS                             */
 /************************************************************************/
 
-class OGRDXFWriterDS final : public OGRDataSource
+class OGRDXFWriterDS final : public GDALDataset
 {
     friend class OGRDXFWriterLayer;
 
     int nNextFID;
 
-    CPLString osName;
     OGRDXFWriterLayer *poLayer;
     OGRDXFBlocksWriterLayer *poBlocksLayer;
     VSILFILE *fp;
@@ -964,16 +954,14 @@ class OGRDXFWriterDS final : public OGRDataSource
 
     OGREnvelope oGlobalEnvelope;
 
+    bool m_bHeaderFileIsTemp = false;
+    bool m_bTrailerFileIsTemp = false;
+
   public:
     OGRDXFWriterDS();
     ~OGRDXFWriterDS();
 
     int Open(const char *pszFilename, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return osName;
-    }
 
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;

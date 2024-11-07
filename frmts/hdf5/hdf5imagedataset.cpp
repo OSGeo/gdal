@@ -8,23 +8,7 @@
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "hdf5_api.h"
@@ -1224,34 +1208,53 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         HDF5Dataset::CreateMetadata(poDS->m_hHDF5, poDS->poH5Objects,
                                     H5G_DATASET, false, aosMetadata);
-        if (nBands > 1)
+        if (nBands > 1 && poDS->nRasterXSize != nBands &&
+            poDS->nRasterYSize != nBands)
         {
-            // Logic specific of Planet data cubes with per-band metadata items
-            static const struct
+            // Heuristics to detect non-scalar attributes, that are intended
+            // to be attached to a specific band.
+            const CPLStringList aosMetadataDup(aosMetadata);
+            for (const auto &[pszKey, pszValue] :
+                 cpl::IterateNameValue(aosMetadataDup))
             {
-                const char *pszSrcName;
-                const char *pszDstName;
-            } asItems[] = {
-                {"calibration_coefficients", "calibration_coefficient"},
-                {"center_wavelengths", "center_wavelength"},
-                {"fwhm", "fwhm"},
-                {"bad_band_list", "bad_band"},
-            };
-
-            for (const auto &sItem : asItems)
-            {
-                const char *pszVal =
-                    aosMetadata.FetchNameValue(sItem.pszSrcName);
-                if (pszVal)
+                const hid_t hAttrID = H5Aopen_name(poDS->dataset_id, pszKey);
+                const hid_t hAttrSpace = H5Aget_space(hAttrID);
+                if (H5Sget_simple_extent_ndims(hAttrSpace) == 1 &&
+                    H5Sget_simple_extent_npoints(hAttrSpace) == nBands)
                 {
-                    CPLStringList aosTokens(CSLTokenizeString2(pszVal, " ", 0));
+                    CPLStringList aosTokens(
+                        CSLTokenizeString2(pszValue, " ", 0));
                     if (aosTokens.size() == nBands)
                     {
-                        oMapBandSpecificMetadata[sItem.pszDstName] =
+                        std::string osAttrName(pszKey);
+                        if (osAttrName.size() > strlen("_coefficients") &&
+                            osAttrName.substr(osAttrName.size() -
+                                              strlen("_coefficients")) ==
+                                "_coefficients")
+                        {
+                            osAttrName.pop_back();
+                        }
+                        else if (osAttrName.size() > strlen("_wavelengths") &&
+                                 osAttrName.substr(osAttrName.size() -
+                                                   strlen("_wavelengths")) ==
+                                     "_wavelengths")
+                        {
+                            osAttrName.pop_back();
+                        }
+                        else if (osAttrName.size() > strlen("_list") &&
+                                 osAttrName.substr(osAttrName.size() -
+                                                   strlen("_list")) == "_list")
+                        {
+                            osAttrName.resize(osAttrName.size() -
+                                              strlen("_list"));
+                        }
+                        oMapBandSpecificMetadata[osAttrName] =
                             std::move(aosTokens);
-                        aosMetadata.SetNameValue(sItem.pszSrcName, nullptr);
+                        aosMetadata.SetNameValue(pszKey, nullptr);
                     }
                 }
+                H5Sclose(hAttrSpace);
+                H5Aclose(hAttrID);
             }
         }
     }

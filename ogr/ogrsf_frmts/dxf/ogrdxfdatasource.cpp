@@ -8,23 +8,7 @@
  * Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_dxf.h"
@@ -100,26 +84,42 @@ OGRLayer *OGRDXFDataSource::GetLayer(int iLayer)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRDXFDataSource::Open(const char *pszFilename, int bHeaderOnly)
+int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
+                           CSLConstList papszOptionsIn)
 
 {
     osEncoding = CPL_ENC_ISO8859_1;
 
-    osName = pszFilename;
+    bInlineBlocks = CPLTestBool(
+        CSLFetchNameValueDef(papszOptionsIn, "INLINE_BLOCKS",
+                             CPLGetConfigOption("DXF_INLINE_BLOCKS", "TRUE")));
+    bMergeBlockGeometries = CPLTestBool(CSLFetchNameValueDef(
+        papszOptionsIn, "MERGE_BLOCK_GEOMETRIES",
+        CPLGetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", "TRUE")));
 
-    bInlineBlocks =
-        CPLTestBool(CPLGetConfigOption("DXF_INLINE_BLOCKS", "TRUE"));
-    bMergeBlockGeometries =
-        CPLTestBool(CPLGetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", "TRUE"));
-    bTranslateEscapeSequences = CPLTestBool(
-        CPLGetConfigOption("DXF_TRANSLATE_ESCAPE_SEQUENCES", "TRUE"));
-    bIncludeRawCodeValues =
-        CPLTestBool(CPLGetConfigOption("DXF_INCLUDE_RAW_CODE_VALUES", "FALSE"));
-    b3DExtensibleMode =
-        CPLTestBool(CPLGetConfigOption("DXF_3D_EXTENSIBLE_MODE", "FALSE"));
+    bTranslateEscapeSequences = CPLTestBool(CSLFetchNameValueDef(
+        papszOptionsIn, "TRANSLATE_ESCAPE_SEQUENCES",
+        CPLGetConfigOption("DXF_TRANSLATE_ESCAPE_SEQUENCES", "TRUE")));
 
+    bIncludeRawCodeValues = CPLTestBool(CSLFetchNameValueDef(
+        papszOptionsIn, "INCLUDE_RAW_CODE_VALUES",
+        CPLGetConfigOption("DXF_INCLUDE_RAW_CODE_VALUES", "FALSE")));
+
+    b3DExtensibleMode = CPLTestBool(CSLFetchNameValueDef(
+        papszOptionsIn, "3D_EXTENSIBLE_MODE",
+        CPLGetConfigOption("DXF_3D_EXTENSIBLE_MODE", "FALSE")));
+
+    m_bClosedLineAsPolygon = CPLTestBool(CSLFetchNameValueDef(
+        papszOptionsIn, "CLOSED_LINE_AS_POLYGON",
+        CPLGetConfigOption("DXF_CLOSED_LINE_AS_POLYGON", "FALSE")));
+
+    m_dfHatchTolerance = CPLAtof(
+        CSLFetchNameValueDef(papszOptionsIn, "HATCH_TOLERANCE",
+                             CPLGetConfigOption("DXF_HATCH_TOLERANCE", "-1")));
+
+    // Only for debugging
     if (CPLTestBool(CPLGetConfigOption("DXF_HEADER_ONLY", "FALSE")))
-        bHeaderOnly = TRUE;
+        bHeaderOnly = true;
 
     /* -------------------------------------------------------------------- */
     /*      Open the file.                                                  */
@@ -151,7 +151,9 @@ int OGRDXFDataSource::Open(const char *pszFilename, int bHeaderOnly)
      */
     else if (EQUAL(szLineBuf, "TABLES"))
     {
-        osEncoding = CPLGetConfigOption("DXF_ENCODING", osEncoding);
+        osEncoding = CSLFetchNameValueDef(
+            papszOptionsIn, "ENCODING",
+            CPLGetConfigOption("DXF_ENCODING", osEncoding));
 
         if (!ReadTablesSection())
             return FALSE;

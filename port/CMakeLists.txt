@@ -52,6 +52,7 @@ set(CPL_SOURCES
     cplstring.cpp
     cpl_vsisimple.cpp
     cpl_vsil.cpp
+    cpl_vsi_mem.cpp
     cpl_http.cpp
     cpl_hash_set.cpp
     cplkeywordparser.cpp
@@ -94,6 +95,7 @@ set(CPL_SOURCES
     cpl_swift.cpp
     cpl_vsil_adls.cpp
     cpl_vsil_az.cpp
+    cpl_vsil_chunked_write_handle.cpp
     cpl_vsil_uploadonclose.cpp
     cpl_vsil_gs.cpp
     cpl_vsil_webhdfs.cpp
@@ -127,19 +129,6 @@ target_compile_definitions(cpl PRIVATE INST_DATA="${INST_DATA_PATH}")
 
 if(CMAKE_INSTALL_FULL_SYSCONFDIR)
     target_compile_definitions(cpl PRIVATE SYSCONFDIR="${CMAKE_INSTALL_FULL_SYSCONFDIR}")
-endif()
-
-# To enable conditional use of std::shared_mutex in cpl_vsi_mem.cpp
-add_library(cpl_vsi_mem OBJECT cpl_vsi_mem.cpp)
-target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:cpl_vsi_mem>)
-target_compile_options(cpl_vsi_mem PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
-set_property(TARGET cpl_vsi_mem PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
-target_include_directories(cpl_vsi_mem PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-std=c++17" COMPILER_SUPPORTS_CXX17)
-if(COMPILER_SUPPORTS_CXX17)
-    target_compile_features(cpl_vsi_mem PRIVATE cxx_std_17)
 endif()
 
 if (WIN32)
@@ -385,3 +374,25 @@ if (NOT CMAKE_CROSSCOMPILING AND BUILD_VSIPRELOAD AND "${CMAKE_SYSTEM}" MATCHES 
     endforeach()
   endif ()
 endif ()
+
+if (GDAL_USE_ICONV)
+    # Utility to generate cpl_character_sets.h and .c
+    add_executable(character_set_conv_table_generator EXCLUDE_FROM_ALL character_set_conv_table_generator.c)
+
+      if (NOT Iconv_IS_BUILT_IN)
+        if (APPLE)
+          # linkage against OSX's system iconv is going to require LIBICONV_PLUG to be defined, but other self-built
+          # situations like CondaForge or Homebrew might not need this
+          if (HAVE_ICONV_CLOSE)
+            target_compile_definitions(character_set_conv_table_generator PRIVATE -DLIBICONV_PLUG)
+          endif (HAVE_ICONV_CLOSE)
+        endif (APPLE)
+        target_link_libraries(character_set_conv_table_generator PRIVATE Iconv::Iconv)
+      endif ()
+
+    # Custom target that must be manually invoked if character_set_conv_table_generator.c is modified
+    add_custom_target(generate_cpl_character_sets
+                      COMMAND $<TARGET_FILE:character_set_conv_table_generator>
+                      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                      DEPENDS character_set_conv_table_generator)
+endif()

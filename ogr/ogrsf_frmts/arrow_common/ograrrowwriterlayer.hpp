@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGARROWWRITERLAYER_HPP_INCLUDED
@@ -153,6 +137,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
     {
         const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
         std::shared_ptr<arrow::DataType> dt;
+        const auto eDT = poFieldDefn->GetType();
         const auto eSubDT = poFieldDefn->GetSubType();
         const auto &osDomainName = poFieldDefn->GetDomainName();
         const OGRFieldDomain *poFieldDomain = nullptr;
@@ -172,7 +157,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 poFieldDomain = oIter->second.get();
             }
         }
-        switch (poFieldDefn->GetType())
+        switch (eDT)
         {
             case OFTInteger:
                 if (eSubDT == OFSTBoolean)
@@ -199,7 +184,19 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             {
                 const int nPrecision = poFieldDefn->GetPrecision();
                 if (nWidth != 0 && nPrecision != 0)
-                    dt = arrow::decimal(nWidth, nPrecision);
+                {
+                    // Since arrow 18.0, we could use arrow::smallest_decimal()
+                    // to return the smallest representation (i.e. possibly
+                    // decimal32 and decimal64). But for now keep decimal128
+                    // as the minimum for backwards compatibility.
+                    // GetValueDecimal() and other functions in
+                    // ogrlayerarrow.cpp would have to be adapted for decimal32
+                    // and decimal64 compatibility.
+                    if (nWidth > 38)
+                        dt = arrow::decimal256(nWidth, nPrecision);
+                    else
+                        dt = arrow::decimal128(nWidth, nPrecision);
+                }
                 else if (eSubDT == OFSTFloat32)
                     dt = arrow::float32();
                 else
@@ -209,7 +206,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
 
             case OFTString:
             case OFTWideString:
-                if (eSubDT != OFSTNone || nWidth > 0)
+                if ((eSubDT != OFSTNone && eSubDT != OFSTJSON) || nWidth > 0)
                     bNeedGDALSchema = true;
                 dt = arrow::utf8();
                 break;
@@ -265,9 +262,18 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
             }
         }
-        fields.emplace_back(arrow::field(poFieldDefn->GetNameRef(),
-                                         std::move(dt),
-                                         poFieldDefn->IsNullable()));
+
+        auto field = arrow::field(poFieldDefn->GetNameRef(), std::move(dt),
+                                  poFieldDefn->IsNullable());
+        if (eDT == OFTString && eSubDT == OFSTJSON)
+        {
+            auto kvMetadata = std::make_shared<arrow::KeyValueMetadata>();
+            kvMetadata->Append(ARROW_EXTENSION_NAME_KEY,
+                               EXTENSION_NAME_ARROW_JSON);
+            field = field->WithMetadata(kvMetadata);
+        }
+
+        fields.emplace_back(std::move(field));
         if (poFieldDefn->GetAlternativeNameRef()[0])
             bNeedGDALSchema = true;
         if (!poFieldDefn->GetComment().empty())
@@ -284,19 +290,16 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
         const bool pointFieldNullable = GetDriverUCName() == "PARQUET";
 
         // Fixed Size List GeoArrow encoding
-        std::shared_ptr<arrow::Field> pointField;
-        if (nDim == 2)
-            pointField =
-                arrow::field("xy", arrow::float64(), pointFieldNullable);
-        else if (nDim == 3 && OGR_GT_HasZ(eGType))
-            pointField =
-                arrow::field("xyz", arrow::float64(), pointFieldNullable);
-        else if (nDim == 3 && OGR_GT_HasM(eGType))
-            pointField =
-                arrow::field("xym", arrow::float64(), pointFieldNullable);
-        else
-            pointField =
-                arrow::field("xyzm", arrow::float64(), pointFieldNullable);
+        const auto getFixedSizeListOfPoint =
+            [nDim, eGType, pointFieldNullable]()
+        {
+            return arrow::fixed_size_list(
+                arrow::field(nDim == 2   ? "xy"
+                             : nDim == 3 ? (OGR_GT_HasZ(eGType) ? "xyz" : "xym")
+                                         : "xyzm",
+                             arrow::float64(), pointFieldNullable),
+                nDim);
+        };
 
         // Struct GeoArrow encoding
         auto xField(arrow::field("x", arrow::float64(), false));
@@ -311,6 +314,30 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             pointFields.emplace_back(
                 arrow::field("m", arrow::float64(), false));
         auto pointStructType(arrow::struct_(std::move(pointFields)));
+
+        const auto getListOfVertices = [&getFixedSizeListOfPoint]()
+        {
+            return arrow::list(std::make_shared<arrow::Field>(
+                "vertices", getFixedSizeListOfPoint()));
+        };
+
+        const auto getListOfRings = [&getListOfVertices]()
+        {
+            return arrow::list(
+                std::make_shared<arrow::Field>("rings", getListOfVertices()));
+        };
+
+        const auto getListOfVerticesStruct = [&pointStructType]()
+        {
+            return arrow::list(
+                std::make_shared<arrow::Field>("vertices", pointStructType));
+        };
+
+        const auto getListOfRingsStruct = [&getListOfVerticesStruct]()
+        {
+            return arrow::list(std::make_shared<arrow::Field>(
+                "rings", getListOfVerticesStruct()));
+        };
 
         std::shared_ptr<arrow::DataType> dt;
         switch (m_aeGeomEncoding[i])
@@ -329,30 +356,30 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_POINT:
-                dt = arrow::fixed_size_list(pointField, nDim);
+                dt = getFixedSizeListOfPoint();
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_LINESTRING:
-                dt = arrow::list(arrow::fixed_size_list(pointField, nDim));
+                dt = getListOfVertices();
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_POLYGON:
-                dt = arrow::list(
-                    arrow::list(arrow::fixed_size_list(pointField, nDim)));
+                dt = getListOfRings();
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOINT:
-                dt = arrow::list(arrow::fixed_size_list(pointField, nDim));
+                dt = arrow::list(std::make_shared<arrow::Field>(
+                    "points", getFixedSizeListOfPoint()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTILINESTRING:
-                dt = arrow::list(
-                    arrow::list(arrow::fixed_size_list(pointField, nDim)));
+                dt = arrow::list(std::make_shared<arrow::Field>(
+                    "linestrings", getListOfVertices()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOLYGON:
-                dt = arrow::list(arrow::list(
-                    arrow::list(arrow::fixed_size_list(pointField, nDim))));
+                dt = arrow::list(std::make_shared<arrow::Field>(
+                    "polygons", getListOfRings()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT:
@@ -360,23 +387,26 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_LINESTRING:
-                dt = arrow::list(pointStructType);
+                dt = getListOfVerticesStruct();
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_POLYGON:
-                dt = arrow::list(arrow::list(pointStructType));
+                dt = getListOfRingsStruct();
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOINT:
-                dt = arrow::list(pointStructType);
+                dt = arrow::list(
+                    std::make_shared<arrow::Field>("points", pointStructType));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTILINESTRING:
-                dt = arrow::list(arrow::list(pointStructType));
+                dt = arrow::list(std::make_shared<arrow::Field>(
+                    "linestrings", getListOfVerticesStruct()));
                 break;
 
             case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOLYGON:
-                dt = arrow::list(arrow::list(arrow::list(pointStructType)));
+                dt = arrow::list(std::make_shared<arrow::Field>(
+                    "polygons", getListOfRingsStruct()));
                 break;
         }
 
@@ -389,7 +419,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                                   ? field->metadata()->Copy()
                                   : std::make_shared<arrow::KeyValueMetadata>();
             kvMetadata->Append(
-                "ARROW:extension:name",
+                ARROW_EXTENSION_NAME_KEY,
                 GetGeomEncodingAsString(m_aeGeomEncoding[i], false));
             field = field->WithMetadata(kvMetadata);
         }
@@ -2295,8 +2325,8 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     std::map<std::string, int> oMapSchemaChildrenNameToIdx;
     for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
     {
-        if (oMapSchemaChildrenNameToIdx.find(schema->children[i]->name) !=
-            oMapSchemaChildrenNameToIdx.end())
+        if (cpl::contains(oMapSchemaChildrenNameToIdx,
+                          schema->children[i]->name))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Several fields with same name '%s' found",
@@ -2309,7 +2339,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         {
             const auto oMetadata =
                 OGRParseArrowMetadata(schema->children[i]->metadata);
-            auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
+            const auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
             if (oIter != oMetadata.end() &&
                 (oIter->second == EXTENSION_NAME_OGC_WKB ||
                  oIter->second == EXTENSION_NAME_GEOARROW_WKB))
@@ -2565,8 +2595,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
 
     for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
     {
-        if (oSetReferencedFieldsInArraySchema.find(i) ==
-            oSetReferencedFieldsInArraySchema.end())
+        if (!cpl::contains(oSetReferencedFieldsInArraySchema, i))
         {
             if (m_osFIDColumn.empty() &&
                 strcmp(schema->children[i]->name, pszFIDName) == 0)
@@ -2832,7 +2861,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         std::vector<std::shared_ptr<arrow::Array>> apoArrays;
         for (int i = 0; i < m_poSchema->num_fields(); ++i)
         {
-            auto oIter =
+            const auto oIter =
                 oMapGeomFieldNameToArray.find(m_poSchema->field(i)->name());
             if (oIter != oMapGeomFieldNameToArray.end())
                 apoArrays.emplace_back(oIter->second);

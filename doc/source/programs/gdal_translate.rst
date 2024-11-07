@@ -32,8 +32,8 @@ Synopsis
        [-a_gt <gt0> <gt1> <gt2> <gt3> <gt4> <gt5>]
        [-a_scale <value>] [-a_offset <value>]
        [-nogcp] [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...
-       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
-       |-colorinterp {red|green|blue|alpha|gray|undefined},...]
+       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...}]
+       |-colorinterp {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...},...]
        [-mo <META-TAG>=<VALUE>]... [-dmo "DOMAIN:META-TAG=VALUE"]... [-q] [-sds]
        [-co <NAME>=<VALUE>]... [-stats] [-norat] [-noxmp]
        [-oo <NAME>=<VALUE>]...
@@ -156,22 +156,34 @@ resampling, and rescaling pixels in the process.
     formats that support serializing statistics computations (GeoTIFF, VRT...)
     Note that the values specified after :option:`-scale` are only used to compute a scale and
     offset to apply to the input raster values. In particular, ``src_min`` and
-    ``src_max`` are not used to clip input values.
+    ``src_max`` are not used to clip input values unless :option:`-exponent`
+    is also specified.
+    Instead of being clipped, source values that are outside the range of ``src_min`` and ``src_max`` will be scaled to values outside the range of ``dst_min`` and ``dst_max``. 
+    If clipping without exponential scaling is desired,
+    ``-exponent 1`` can be used.
     :option:`-scale` can be repeated several times (if specified only once,
     it also applies to all bands of the output dataset), so as to specify per
-    band parameters. It is also possible to use the "-scale_bn" syntax where bn
-    is a band number (e.g. "-scale_2" for the 2nd band of the output dataset)
+    band parameters. It is also possible to use the ``-scale_bn`` syntax where bn
+    is a band number (e.g. ``-scale_2`` for the 2nd band of the output dataset)
     to specify the parameters of one or several specific bands.
 
 .. option:: -exponent <exp_val>
 
-    To apply non-linear scaling with a power function. exp_val is the exponent
+    Apply non-linear scaling with a power function. ``exp_val`` is the exponent
     of the power function (must be positive). This option must be used with the
-    -scale option. If specified only once, -exponent applies to all bands of
+    :option:`-scale` option. If specified only once, :option:`-exponent` applies
+    to all bands of
     the output image. It can be repeated several times so as to specify per
-    band parameters. It is also possible to use the "-exponent_bn" syntax where
-    bn is a band number (e.g. "-exponent_2" for the 2nd band of the output
+    band parameters. It is also possible to use the ``-exponent_bn`` syntax where
+    bn is a band number (e.g. ``-exponent_2`` for the 2nd band of the output
     dataset) to specify the parameters of one or several specific bands.
+
+    The scaled value ``Dst`` is calculated from the source value ``Src`` with the following
+    formula:
+
+    .. math::
+        {Dst} = \left( {Dst}_{max} - {Dst}_{min} \right) \times \operatorname{max} \left( 0, \operatorname{min} \left( 1, \left( \frac{{Src} - {Src}_{min}}{{Src}_{max}-{Src}_{min}} \right)^{exp\_val} \right) \right) + {Dst}_{min}
+
 
 .. option:: -unscale
 
@@ -289,14 +301,14 @@ resampling, and rescaling pixels in the process.
     nodata value, this does not cause pixel values that are equal to that nodata
     value to be changed to the value specified with this option.
 
-.. option:: -colorinterp_X <red|green|blue|alpha|gray|undefined>
+.. option:: -colorinterp_X <red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...>
 
     Override the color interpretation of band X (where X is a valid band number,
     starting at 1)
 
     .. versionadded:: 2.3
 
-.. option:: -colorinterp {red|green|blue|alpha|gray|undefined},...
+.. option:: -colorinterp {red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|swir|mwir|lwir|...},...
 
     Override the color interpretation of all specified bands. For
     example -colorinterp red,green,blue,alpha for a 4 band output dataset.

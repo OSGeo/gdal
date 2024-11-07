@@ -9,23 +9,7 @@
  * Copyright (c) 1998, 2002 Frank Warmerdam
  * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GDAL_H_INCLUDED
@@ -100,6 +84,7 @@ GDALDataType CPL_DLL CPL_STDCALL GDALFindDataTypeForValue(double dValue,
                                                           int bComplex);
 double CPL_DLL GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
                                          int *pbClamped, int *pbRounded);
+bool CPL_DLL GDALIsValueExactAs(double dfValue, GDALDataType eDT);
 GDALDataType CPL_DLL CPL_STDCALL GDALGetNonComplexDataType(GDALDataType);
 int CPL_DLL CPL_STDCALL GDALDataTypeIsConversionLossy(GDALDataType eTypeFrom,
                                                       GDALDataType eTypeTo);
@@ -222,27 +207,127 @@ typedef struct
         (s).bFloatingPointWindowValidity = FALSE;                              \
     } while (0)
 
-/*! Types of color interpretation for raster bands. */
+/** Value indicating the start of the range for color interpretations belonging
+ * to the InfraRed (IR) domain. All constants of the GDALColorInterp enumeration
+ * in the IR domain are in the [GCI_IR_Start, GCI_IR_End] range.
+ *
+ * @since 3.10
+ */
+#define GCI_IR_Start 20
+
+/** Value indicating the end of the range for color interpretations belonging
+ * to the InfraRed (IR) domain. All constants of the GDALColorInterp enumeration
+ * in the IR domain are in the [GCI_IR_Start, GCI_IR_End] range.
+ *
+ * @since 3.10
+ */
+#define GCI_IR_End 29
+
+/** Value indicating the start of the range for color interpretations belonging
+ * to the Synthetic Aperture Radar (SAR) domain.
+ * All constants of the GDALColorInterp enumeration
+ * in the SAR domain are in the [GCI_SAR_Start, GCI_SAR_End] range.
+ *
+ * @since 3.10
+ */
+#define GCI_SAR_Start 30
+
+/** Value indicating the end of the range for color interpretations belonging
+ * to the Synthetic Aperture Radar (SAR) domain.
+ * All constants of the GDALColorInterp enumeration
+ * in the SAR domain are in the [GCI_SAR_Start, GCI_SAR_End] range.
+ *
+ * @since 3.10
+ */
+#define GCI_SAR_End 39
+
+/** Types of color interpretation for raster bands.
+ *
+ * For spectral bands, the wavelength ranges are indicative only, and may vary
+ * depending on sensors. The CENTRAL_WAVELENGTH_UM and FWHM_UM metadata
+ * items in the IMAGERY metadata domain of the raster band, when present, will
+ * give more accurate characteristics.
+ *
+ * Values belonging to the IR domain are in the [GCI_IR_Start, GCI_IR_End] range.
+ * Values belonging to the SAR domain are in the [GCI_SAR_Start, GCI_SAR_End] range.
+ *
+ * Values between GCI_PanBand to GCI_SAR_Reserved_2 have been added in GDAL 3.10.
+ */
 typedef enum
 {
     /*! Undefined */ GCI_Undefined = 0,
     /*! Greyscale */ GCI_GrayIndex = 1,
     /*! Paletted (see associated color table) */ GCI_PaletteIndex = 2,
-    /*! Red band of RGBA image */ GCI_RedBand = 3,
-    /*! Green band of RGBA image */ GCI_GreenBand = 4,
-    /*! Blue band of RGBA image */ GCI_BlueBand = 5,
+    /*! Red band of RGBA image, or red spectral band [0.62 - 0.69 um]*/
+    GCI_RedBand = 3,
+    /*! Green band of RGBA image, or green spectral band [0.51 - 0.60 um]*/
+    GCI_GreenBand = 4,
+    /*! Blue band of RGBA image, or blue spectral band [0.45 - 0.53 um] */
+    GCI_BlueBand = 5,
     /*! Alpha (0=transparent, 255=opaque) */ GCI_AlphaBand = 6,
     /*! Hue band of HLS image */ GCI_HueBand = 7,
     /*! Saturation band of HLS image */ GCI_SaturationBand = 8,
     /*! Lightness band of HLS image */ GCI_LightnessBand = 9,
     /*! Cyan band of CMYK image */ GCI_CyanBand = 10,
     /*! Magenta band of CMYK image */ GCI_MagentaBand = 11,
-    /*! Yellow band of CMYK image */ GCI_YellowBand = 12,
+    /*! Yellow band of CMYK image, or yellow spectral band [0.58 - 0.62 um] */
+    GCI_YellowBand = 12,
     /*! Black band of CMYK image */ GCI_BlackBand = 13,
     /*! Y Luminance */ GCI_YCbCr_YBand = 14,
     /*! Cb Chroma */ GCI_YCbCr_CbBand = 15,
     /*! Cr Chroma */ GCI_YCbCr_CrBand = 16,
-    /*! Max current value (equals to GCI_YCbCr_CrBand currently) */ GCI_Max = 16
+
+    /* GDAL 3.10 addition: begin */
+    /*! Panchromatic band [0.40 - 1.00 um] */ GCI_PanBand = 17,
+    /*! Coastal band [0.40 - 0.45 um] */ GCI_CoastalBand = 18,
+    /*! Red-edge band [0.69 - 0.79 um] */ GCI_RedEdgeBand = 19,
+
+    /*! Near-InfraRed (NIR) band [0.75 - 1.40 um] */ GCI_NIRBand =
+        GCI_IR_Start + 0,
+    /*! Short-Wavelength InfraRed (SWIR) band [1.40 - 3.00 um] */ GCI_SWIRBand =
+        GCI_IR_Start + 1,
+    /*! Mid-Wavelength InfraRed (MWIR) band [3.00 - 8.00 um] */ GCI_MWIRBand =
+        GCI_IR_Start + 2,
+    /*! Long-Wavelength InfraRed (LWIR) band [8.00 - 15 um] */ GCI_LWIRBand =
+        GCI_IR_Start + 3,
+    /*! Thermal InfraRed (TIR) band (MWIR or LWIR) [3 - 15 um] */ GCI_TIRBand =
+        GCI_IR_Start + 4,
+    /*! Other infrared band [0.75 - 1000 um] */ GCI_OtherIRBand =
+        GCI_IR_Start + 5,
+    /*! Reserved value. Do not set it ! */
+    GCI_IR_Reserved_1 = GCI_IR_Start + 6,
+    /*! Reserved value. Do not set it ! */
+    GCI_IR_Reserved_2 = GCI_IR_Start + 7,
+    /*! Reserved value. Do not set it ! */
+    GCI_IR_Reserved_3 = GCI_IR_Start + 8,
+    /*! Reserved value. Do not set it ! */
+    GCI_IR_Reserved_4 = GCI_IR_Start + 9,
+
+    /*! Synthetic Aperture Radar (SAR) Ka band [0.8 - 1.1 cm / 27 - 40 GHz] */
+    GCI_SAR_Ka_Band = GCI_SAR_Start + 0,
+    /*! Synthetic Aperture Radar (SAR) K band [1.1 - 1.7 cm / 18 - 27 GHz] */
+    GCI_SAR_K_Band = GCI_SAR_Start + 1,
+    /*! Synthetic Aperture Radar (SAR) Ku band [1.7 - 2.4 cm / 12 - 18 GHz] */
+    GCI_SAR_Ku_Band = GCI_SAR_Start + 2,
+    /*! Synthetic Aperture Radar (SAR) X band [2.4 - 3.8 cm / 8 - 12 GHz] */
+    GCI_SAR_X_Band = GCI_SAR_Start + 3,
+    /*! Synthetic Aperture Radar (SAR) C band [3.8 - 7.5 cm / 4 - 8 GHz] */
+    GCI_SAR_C_Band = GCI_SAR_Start + 4,
+    /*! Synthetic Aperture Radar (SAR) S band [7.5 - 15 cm / 2 - 4 GHz] */
+    GCI_SAR_S_Band = GCI_SAR_Start + 5,
+    /*! Synthetic Aperture Radar (SAR) L band [15 - 30 cm / 1 - 2 GHz] */
+    GCI_SAR_L_Band = GCI_SAR_Start + 6,
+    /*! Synthetic Aperture Radar (SAR) P band [30 - 100 cm / 0.3 - 1 GHz] */
+    GCI_SAR_P_Band = GCI_SAR_Start + 7,
+    /*! Reserved value. Do not set it ! */
+    GCI_SAR_Reserved_1 = GCI_SAR_Start + 8,
+    /*! Reserved value. Do not set it ! */
+    GCI_SAR_Reserved_2 = GCI_SAR_Start + 9,
+
+    /* GDAL 3.10 addition: end */
+
+    /*! Max current value (equals to GCI_SAR_Reserved_2 currently) */ GCI_Max =
+        GCI_SAR_Reserved_2
 } GDALColorInterp;
 
 const char CPL_DLL *GDALGetColorInterpretationName(GDALColorInterp);
@@ -502,7 +587,7 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DCAP_CREATE "DCAP_CREATE"
 
-/** Capability set by a driver that implements the CreateMultidimensional() API.
+/** Capability set by a driver that implements the CreateMultiDimensional() API.
  *
  * @since GDAL 3.1
  */
@@ -1030,6 +1115,14 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared(const char *, GDALAccess)
 #define GDAL_OF_FROM_GDALOPEN 0x400
 #endif
 
+/** Open in thread-safe mode. Not compatible with
+ * GDAL_OF_VECTOR, GDAL_OF_MULTIDIM_RASTER or GDAL_OF_UPDATE
+ *
+ * Used by GDALOpenEx().
+ * @since GDAL 3.10
+ */
+#define GDAL_OF_THREAD_SAFE 0x800
+
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenEx(
     const char *pszFilename, unsigned int nOpenFlags,
     const char *const *papszAllowedDrivers, const char *const *papszOpenOptions,
@@ -1139,6 +1232,11 @@ int CPL_DLL CPL_STDCALL GDALGetRasterXSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterYSize(GDALDatasetH);
 int CPL_DLL CPL_STDCALL GDALGetRasterCount(GDALDatasetH);
 GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetRasterBand(GDALDatasetH, int);
+
+bool CPL_DLL GDALDatasetIsThreadSafe(GDALDatasetH, int nScopeFlags,
+                                     CSLConstList papszOptions);
+GDALDatasetH CPL_DLL GDALGetThreadSafeDataset(GDALDatasetH, int nScopeFlags,
+                                              CSLConstList papszOptions);
 
 CPLErr CPL_DLL CPL_STDCALL GDALAddBand(GDALDatasetH hDS, GDALDataType eType,
                                        CSLConstList papszOptions);
@@ -1637,6 +1735,12 @@ CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFunc(
 CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFuncWithArgs(
     const char *pszName, GDALDerivedPixelFuncWithArgs pfnPixelFunc,
     const char *pszMetadata);
+
+CPLErr CPL_DLL GDALRasterInterpolateAtPoint(GDALRasterBandH hBand,
+                                            double dfPixel, double dfLine,
+                                            GDALRIOResampleAlg eInterpolation,
+                                            double *pdfRealValue,
+                                            double *pdfImagValue);
 
 /** Generic pointer for the working structure of VRTProcessedDataset
  * function. */
@@ -2488,6 +2592,12 @@ GDALMDArrayH CPL_DLL GDALMDArrayGetGridded(
 GDALMDArrayH CPL_DLL *
 GDALMDArrayGetCoordinateVariables(GDALMDArrayH hArray,
                                   size_t *pnCount) CPL_WARN_UNUSED_RESULT;
+
+GDALMDArrayH CPL_DLL *
+GDALMDArrayGetMeshGrid(const GDALMDArrayH *pahInputArrays,
+                       size_t nCountInputArrays, size_t *pnCountOutputArrays,
+                       CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+
 void CPL_DLL GDALReleaseArrays(GDALMDArrayH *arrays, size_t nCount);
 int CPL_DLL GDALMDArrayCache(GDALMDArrayH hArray, CSLConstList papszOptions);
 bool CPL_DLL GDALMDArrayRename(GDALMDArrayH hArray, const char *pszNewName);

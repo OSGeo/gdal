@@ -9,23 +9,7 @@
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 #ifndef GEO_NORMALIZE_H_INCLUDED
@@ -121,9 +105,15 @@ typedef struct {
     int		nParms;
 
     /** Projection parameter value.  The identify of this parameter
-        is established from the corresponding entry in ProjParmId.  The
-        value will be measured in meters, or decimal degrees if it is a
-        linear or angular measure. */
+        is established from the corresponding entry in ProjParmId.
+        In GeoTIFF keys, the values of the projection parameters are expressed
+        in the units of ProjLinearUnitsGeoKey (for linear measures) or
+        GeogAngularUnitsGeoKey (for angular measures).
+        However, the value returned in ProjParam[] will be normalized to meters
+        or decimal degrees.
+        Note: until libgeotiff 1.7.3, the conversion to degrees for angular
+        measures was *not* done when ProjCoordTransGeoKey is present.
+     */
     double	ProjParm[MAX_GTIF_PROJPARMS];
 
     /** Projection parameter identifier.  For example ProjFalseEastingGeoKey.

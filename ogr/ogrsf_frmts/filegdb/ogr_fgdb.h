@@ -9,23 +9,7 @@
  * Copyright (c) 2009, Ragi Yaser Burhum
  * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_FGDB_H_INCLUDED
@@ -317,7 +301,7 @@ class FGdbResultLayer final : public FGdbBaseLayer
 class FGdbDatabaseConnection;
 class OGRFileGDBGroup;
 
-class FGdbDataSource final : public OGRDataSource
+class FGdbDataSource final : public GDALDataset
 {
     CPLString m_osFSName;
     CPLString m_osPublicName;
@@ -335,11 +319,6 @@ class FGdbDataSource final : public OGRDataSource
     virtual ~FGdbDataSource();
 
     int Open(const char *pszFSName, int bUpdate, const char *pszPublicName);
-
-    const char *GetName() override
-    {
-        return m_osPublicName.c_str();
-    }
 
     const char *GetFSName()
     {
@@ -510,11 +489,11 @@ class FGdbDatabaseConnection
 class FGdbTransactionManager final : public IOGRTransactionBehaviour
 {
   public:
-    virtual OGRErr StartTransaction(OGRDataSource *&poDSInOut,
+    virtual OGRErr StartTransaction(GDALDataset *&poDSInOut,
                                     int &bOutHasReopenedDS) override;
-    virtual OGRErr CommitTransaction(OGRDataSource *&poDSInOut,
+    virtual OGRErr CommitTransaction(GDALDataset *&poDSInOut,
                                      int &bOutHasReopenedDS) override;
-    virtual OGRErr RollbackTransaction(OGRDataSource *&poDSInOut,
+    virtual OGRErr RollbackTransaction(GDALDataset *&poDSInOut,
                                        int &bOutHasReopenedDS) override;
 };
 

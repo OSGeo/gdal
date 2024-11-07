@@ -8,23 +8,7 @@
  * Copyright (c) 2001, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 // ncsjpcbuffer.h needs the min and max macros.
@@ -40,6 +24,9 @@
 
 #include "ecwdrivercore.h"
 
+#include <algorithm>
+#include <cmath>
+
 #undef NOISY_DEBUG
 
 static CPLMutex *hECWDatasetMutex = nullptr;
@@ -47,7 +34,7 @@ static int bNCSInitialized = FALSE;
 
 void ECWInitialize(void);
 
-#define BLOCK_SIZE 256
+constexpr int DEFAULT_BLOCK_SIZE = 256;
 
 GDALDataset *ECWDatasetOpenJPEG2000(GDALOpenInfo *poOpenInfo);
 
@@ -85,8 +72,39 @@ ECWRasterBand::ECWRasterBand(ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
     nRasterXSize = poDS->GetRasterXSize() / (1 << (iOverview + 1));
     nRasterYSize = poDS->GetRasterYSize() / (1 << (iOverview + 1));
 
-    nBlockXSize = BLOCK_SIZE;
-    nBlockYSize = BLOCK_SIZE;
+#if ECWSDK_VERSION >= 51
+    if (poDSIn->bIsJPEG2000 && poDSIn->poFileView)
+    {
+        UINT32 nTileWidth = 0;
+        poDSIn->poFileView->GetParameter(
+            const_cast<char *>("JPC:DECOMPRESS:TILESIZE:X"), &nTileWidth);
+        if (nTileWidth <= static_cast<UINT32>(INT_MAX))
+        {
+            nBlockXSize = static_cast<int>(nTileWidth);
+        }
+        nBlockXSize = MIN(nBlockXSize, nRasterXSize);
+
+        UINT32 nTileHeight = 0;
+        poDSIn->poFileView->GetParameter(
+            const_cast<char *>("JPC:DECOMPRESS:TILESIZE:Y"), &nTileHeight);
+        if (nTileHeight <= static_cast<UINT32>(INT_MAX))
+        {
+            nBlockYSize = static_cast<int>(nTileHeight);
+        }
+        nBlockYSize = MIN(nBlockYSize, nRasterYSize);
+    }
+#endif
+
+    // Slightly arbitrary value. Too large values would defeat the purpose
+    // of the block concept.
+    constexpr int LIMIT_FOR_BLOCK_SIZE = 2048;
+    if (nBlockXSize <= 0 || nBlockYSize <= 0 ||
+        nBlockXSize > LIMIT_FOR_BLOCK_SIZE ||
+        nBlockYSize > LIMIT_FOR_BLOCK_SIZE)
+    {
+        nBlockXSize = DEFAULT_BLOCK_SIZE;
+        nBlockYSize = DEFAULT_BLOCK_SIZE;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Work out band color interpretation.                             */
@@ -2848,10 +2866,11 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
 /*      There are issues at least in the 5.x series.                    */
 /* -------------------------------------------------------------------- */
 #if ECWSDK_VERSION >= 40
+    constexpr const char *szDETECT_BUG_FILENAME =
+        "__detect_ecw_uint32_bug__.j2k";
     if (bIsJPEG2000 && poDS->eNCSRequestDataType == NCSCT_UINT32 &&
         CPLTestBool(CPLGetConfigOption("ECW_CHECK_CORRECT_DECODING", "TRUE")) &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename,
-                        "/vsimem/detect_ecw_uint32_bug"))
+        strstr(poOpenInfo->pszFilename, szDETECT_BUG_FILENAME) == nullptr)
     {
         static bool bUINT32_Ok = false;
         {
@@ -2876,7 +2895,7 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
                     0xDF, 0xFF, 0x7F, 0x5F, 0xFF, 0xD9};
 
                 const std::string osTmpFilename =
-                    CPLSPrintf("/vsimem/detect_ecw_uint32_bug_%p.j2k", poDS);
+                    VSIMemGenerateHiddenFilename(szDETECT_BUG_FILENAME);
                 VSIFCloseL(VSIFileFromMemBuffer(
                     osTmpFilename.c_str(),
                     const_cast<GByte *>(abyTestUInt32ImageData),
@@ -3185,7 +3204,7 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
     /*      Initialize any PAM information.                                 */
     /* -------------------------------------------------------------------- */
     poDS->SetDescription(osFilename);
-    poDS->TryLoadXML();
+    poDS->TryLoadXML(poOpenInfo->GetSiblingFiles());
 
     /* -------------------------------------------------------------------- */
     /*      Vector layers                                                   */

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2018, Oslandia <infos at oslandia dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 #ifndef MARCHING_SQUARE_UTILITY_H
 #define MARCHING_SQUARE_UTILITY_H
@@ -36,14 +20,14 @@ namespace marching_squares
 
 // This is used to determine the maximum level value for polygons,
 // the one that spans all the remaining plane
-const double Inf = std::numeric_limits<double>::max();
+constexpr double Inf = std::numeric_limits<double>::infinity();
 
-const double NaN = std::numeric_limits<double>::quiet_NaN();
+constexpr double NaN = std::numeric_limits<double>::quiet_NaN();
 
 #define debug(format, ...) CPLDebug("MarchingSquare", format, ##__VA_ARGS__)
 
 // Perturb a value if it is too close to a level value
-inline double fudge(double level, double value)
+inline double fudge(double value, double minLevel, double level)
 {
     // FIXME
     // This is too "hard coded". The perturbation to apply really depend on
@@ -55,6 +39,11 @@ inline double fudge(double level, double value)
     // are within a user-provided minimum distance.
 
     const double absTol = 1e-6;
+    // Do not fudge the level that would correspond to the absolute minimum
+    // level of the raster, so it gets included.
+    // Cf scenario of https://github.com/OSGeo/gdal/issues/10167
+    if (level == minLevel)
+        return value;
     return std::abs(level - value) < absTol ? value + absTol : value;
 }
 

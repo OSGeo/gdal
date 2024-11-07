@@ -1,6 +1,7 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 add_library(
   gcore OBJECT
+  gdal_adbc.cpp
   gdalopeninfo.cpp
   gdaldriver.cpp
   gdaldrivermanager.cpp
@@ -40,12 +41,14 @@ add_library(
   gdalrelationship.cpp
   gdalsubdatasetinfo.cpp
   gdalorienteddataset.cpp
+  gdalthreadsafedataset.cpp
   overview.cpp
   rasterio.cpp
   rawdataset.cpp
   gdalmultidim.cpp
   gdalmultidim_gridded.cpp
   gdalmultidim_gltorthorectification.cpp
+  gdalmultidim_meshgrid.cpp
   gdalmultidim_subsetdimension.cpp
   gdalmultidim_rat.cpp
   gdalpython.cpp
@@ -67,10 +70,14 @@ add_dependencies(gcore generate_gdal_version_h)
 target_compile_options(gcore PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 target_include_directories(
   gcore
-  PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR> $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>
-          $<TARGET_PROPERTY:gdal_GTIFF,SOURCE_DIR> $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>
+  PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR> $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>
           $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR>)
 set_property(TARGET gcore PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+
+if (GDAL_ENABLE_DRIVER_GTIFF)
+  target_include_directories(gcore PRIVATE $<TARGET_PROPERTY:gdal_GTIFF,SOURCE_DIR>)
+  target_compile_definitions(gcore PRIVATE -DHAVE_TIFF)
+endif()
 
 if (NOT DEFINED GDAL_RESOURCE_PATH)
   message(FATAL_ERROR "GDAL_RESOURCE_PATH not set")
@@ -106,6 +113,18 @@ if (HAVE_SSSE3_AT_COMPILE_TIME)
     PROPERTY COMPILE_FLAGS ${GDAL_SSSE3_FLAG})
 endif ()
 
+if (EMBED_RESOURCE_FILES)
+    add_library(gcore_resources OBJECT embedded_resources.c)
+    gdal_standard_includes(gcore_resources)
+    set_property(TARGET gcore_resources PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+    target_compile_definitions(gcore PRIVATE EMBED_RESOURCE_FILES)
+    set_target_properties(gcore_resources PROPERTIES C_STANDARD 23)
+    target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore_resources>)
+endif()
+if (USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    target_compile_definitions(gcore PRIVATE USE_ONLY_EMBEDDED_RESOURCE_FILES)
+endif()
+
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore>)
 
 if (GDAL_USE_JSONC_INTERNAL)
@@ -115,6 +134,14 @@ endif ()
 if (ENABLE_PAM)
   target_compile_definitions(gcore PRIVATE -DPAM_ENABLED)
 endif ()
+
+if (NOT GDAL_ENABLE_DRIVER_DERIVED)
+  target_compile_definitions(gcore PRIVATE -DWITHOUT_DERIVED)
+endif ()
+
+if (NOT GDAL_ENABLE_DRIVER_HFA OR GDAL_ENABLE_DRIVER_HFA_PLUGIN)
+  target_compile_definitions(gcore PRIVATE -DNO_HFA_SUPPORT)
+endif()
 
 add_subdirectory(mdreader)
 
@@ -180,6 +207,8 @@ target_public_header(
   gdalgeorefpamdataset.h
   gdal_mdreader.h
   gdalsubdatasetinfo.h
+  gdal_typetraits.h
+  gdal_adbc.h
 )
 
 set(GDAL_DATA_FILES

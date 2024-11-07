@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2020, Even Rouault <even.rouault@spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import copy
@@ -398,3 +382,47 @@ def test_stacta_with_raster_extension_errors():
     with gdaltest.tempfile("/vsimem/test.json", json.dumps(j)):
         with gdal.quiet_errors():
             assert gdal.Open("/vsimem/test.json") is not None
+
+
+###############################################################################
+# Test force opening a STACTA file
+
+
+def test_stacta_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.foo")
+
+    with open("data/stacta/test.json", "rb") as fsrc:
+        with gdaltest.vsi_open(filename, "wb") as fdest:
+            fdest.write(fsrc.read(1))
+            fdest.write(b" " * (1000 * 1000))
+            fdest.write(fsrc.read())
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    with gdaltest.vsi_open(tmp_vsimem / "WorldCRS84Quad/0/0/0.tif", "wb") as fdest:
+        fdest.write(open("data/stacta/WorldCRS84Quad/0/0/0.tif", "rb").read())
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["STACTA"])
+    assert ds.GetDriver().GetDescription() == "STACTA"
+
+
+###############################################################################
+# Test force opening a URL as STACTA
+
+
+def test_stacta_force_opening_url():
+
+    drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["STACTA"])
+    assert drv.GetDescription() == "STACTA"
+
+
+###############################################################################
+# Test force opening, but provided file is still not recognized (for good reasons)
+
+
+def test_stacta_force_opening_no_match():
+
+    drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["STACTA"])
+    assert drv is None

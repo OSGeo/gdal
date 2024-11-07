@@ -8,23 +8,7 @@
  * Copyright (c) 2006, Frank Warmerdam
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -43,6 +27,7 @@
 #include "cpl_http.h"
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
+#include "cpl_vsi_virtual.h"
 #include "cpl_vsil_curl_class.h"
 
 // gcc or clang complains about C-style cast in #define like
@@ -59,7 +44,6 @@
 #ifdef HAVE_OPENSSL_CRYPTO
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include <openssl/engine.h>
 #include <openssl/x509v3.h>
 
 #if defined(_WIN32)
@@ -555,13 +539,40 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] = {
 char **CPLHTTPGetOptionsFromEnv(const char *pszFilename)
 {
     CPLStringList aosOptions;
+    std::string osNonStreamingFilename;
+    if (pszFilename && STARTS_WITH(pszFilename, "/vsi"))
+    {
+        VSIFilesystemHandler *poFSHandler =
+            VSIFileManager::GetHandler(pszFilename);
+        osNonStreamingFilename =
+            poFSHandler->GetNonStreamingFilename(pszFilename);
+        if (osNonStreamingFilename == pszFilename)
+        {
+            osNonStreamingFilename.clear();
+        }
+        else
+        {
+            // CPLDebug("HTTP", "Non-streaming filename for %s: %s", pszFilename, osNonStreamingFilename.c_str());
+        }
+    }
     for (const auto &sTuple : asAssocEnvVarOptionName)
     {
-        const char *pszVal =
-            pszFilename ? VSIGetPathSpecificOption(pszFilename,
-                                                   sTuple.pszEnvVar, nullptr)
-                        : CPLGetConfigOption(sTuple.pszEnvVar, nullptr);
-        if (pszVal != nullptr)
+        const char *pszVal = nullptr;
+        if (pszFilename)
+        {
+            pszVal = VSIGetPathSpecificOption(pszFilename, sTuple.pszEnvVar,
+                                              nullptr);
+            if (!pszVal && !osNonStreamingFilename.empty())
+            {
+                pszVal = VSIGetPathSpecificOption(
+                    osNonStreamingFilename.c_str(), sTuple.pszEnvVar, nullptr);
+            }
+        }
+        if (!pszVal)
+        {
+            pszVal = CPLGetConfigOption(sTuple.pszEnvVar, nullptr);
+        }
+        if (pszVal)
         {
             aosOptions.AddNameValue(sTuple.pszOptionName, pszVal);
         }
@@ -1151,12 +1162,15 @@ int CPLHTTPPopFetchCallback(void)
  *     and use the first one found as the CAINFO value (GDAL >= 2.1.3). The
  *     GDAL_CURL_CA_BUNDLE environment variable may also be used to set the
  *     CAINFO value in GDAL >= 3.2.</li>
- * <li>HTTP_VERSION=1.0/1.1/2/2TLS (GDAL >= 2.3). Specify HTTP version to use.
+ * <li>HTTP_VERSION=1.0/1.1/2/2TLS (GDAL >= 2.3)/2PRIOR_KNOWLEDGE (GDAL >= 3.10).
+ *     Specify HTTP version to use.
  *     Will default to 1.1 generally (except on some controlled environments,
  *     like Google Compute Engine VMs, where 2TLS will be the default).
  *     Support for HTTP/2 requires curl 7.33 or later, built against nghttp2.
  *     "2TLS" means that HTTP/2 will be attempted for HTTPS connections only.
  *     Whereas "2" means that HTTP/2 will be attempted for HTTP or HTTPS.
+ *     "2PRIOR_KNOWLEDGE" means that the server will be assumed to support
+ *     HTTP/2.
  *     Corresponding configuration option: GDAL_HTTP_VERSION.
  * </li>
  * <li>SSL_VERIFYSTATUS=YES/NO (GDAL >= 2.3, and curl >= 7.41): determines
@@ -2080,7 +2094,7 @@ static int CPLHTTPCurlDebugFunction(CURL *handle, curl_infotype type,
     {
         std::string osMsg(data, size);
         if (!osMsg.empty() && osMsg.back() == '\n')
-            osMsg.resize(osMsg.size() - 1);
+            osMsg.pop_back();
         CPLDebug(pszDebugKey, "%s", osMsg.c_str());
     }
     return 0;
@@ -2135,6 +2149,17 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
             // Try HTTP/2 both for HTTP and HTTPS. With fallback to HTTP/1.1
             unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
                                        CURL_HTTP_VERSION_2_0);
+        }
+    }
+    else if (pszHttpVersion && strcmp(pszHttpVersion, "2PRIOR_KNOWLEDGE") == 0)
+    {
+        if (bSupportHTTP2)
+        {
+            // Assume HTTP/2 is supported by the server. The cURL docs indicate
+            // that it makes no difference for HTTPS, but it does seem to work
+            // in practice.
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                                       CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE);
         }
     }
     else if (pszHttpVersion == nullptr || strcmp(pszHttpVersion, "2TLS") == 0)
@@ -2196,14 +2221,22 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                                    CURLAUTH_ANYSAFE);
     else if (EQUAL(pszHttpAuth, "BEARER"))
     {
-        const char *pszBearer = CSLFetchNameValue(papszOptions, "HTTP_BEARER");
-        if (pszBearer == nullptr)
-            pszBearer = CPLGetConfigOption("GDAL_HTTP_BEARER", nullptr);
-        if (pszBearer != nullptr)
-            unchecked_curl_easy_setopt(http_handle, CURLOPT_XOAUTH2_BEARER,
-                                       pszBearer);
-        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH,
-                                   CURLAUTH_BEARER);
+        const char *pszAuthorizationHeaderAllowed = CSLFetchNameValueDef(
+            papszOptions, "AUTHORIZATION_HEADER_ALLOWED", "YES");
+        const bool bAuthorizationHeaderAllowed =
+            CPLTestBool(pszAuthorizationHeaderAllowed);
+        if (bAuthorizationHeaderAllowed)
+        {
+            const char *pszBearer =
+                CSLFetchNameValue(papszOptions, "HTTP_BEARER");
+            if (pszBearer == nullptr)
+                pszBearer = CPLGetConfigOption("GDAL_HTTP_BEARER", nullptr);
+            if (pszBearer != nullptr)
+                unchecked_curl_easy_setopt(http_handle, CURLOPT_XOAUTH2_BEARER,
+                                           pszBearer);
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH,
+                                       CURLAUTH_BEARER);
+        }
     }
     else if (EQUAL(pszHttpAuth, "NEGOTIATE"))
         unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH,
@@ -2324,6 +2357,15 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                                1L);
 
     unchecked_curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1);
+    const char *pszUnrestrictedAuth = CPLGetConfigOption(
+        "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT",
+        "IF_SAME_HOST");
+    if (!EQUAL(pszUnrestrictedAuth, "IF_SAME_HOST") &&
+        CPLTestBool(pszUnrestrictedAuth))
+    {
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_UNRESTRICTED_AUTH, 1);
+    }
+
     unchecked_curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10);
     unchecked_curl_easy_setopt(http_handle, CURLOPT_POSTREDIR,
                                CURL_REDIR_POST_ALL);
@@ -2623,6 +2665,11 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
         }
         if (!bHeadersDone)
         {
+            const char *pszAuthorizationHeaderAllowed = CSLFetchNameValueDef(
+                papszOptions, "AUTHORIZATION_HEADER_ALLOWED", "YES");
+            const bool bAuthorizationHeaderAllowed =
+                CPLTestBool(pszAuthorizationHeaderAllowed);
+
             // We accept both raw headers with \r\n as a separator, or as
             // a comma separated list of foo: bar values.
             const CPLStringList aosTokens(
@@ -2631,7 +2678,11 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                     : CSLTokenizeString2(pszHeaders, ",", CSLT_HONOURSTRINGS));
             for (int i = 0; i < aosTokens.size(); ++i)
             {
-                headers = curl_slist_append(headers, aosTokens[i]);
+                if (bAuthorizationHeaderAllowed ||
+                    !STARTS_WITH_CI(aosTokens[i], "Authorization:"))
+                {
+                    headers = curl_slist_append(headers, aosTokens[i]);
+                }
             }
         }
     }

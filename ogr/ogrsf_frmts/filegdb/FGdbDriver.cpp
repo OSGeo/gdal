@@ -10,23 +10,7 @@
  * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_fgdb.h"
@@ -172,7 +156,7 @@ static GDALDataset *OGRFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        OGRMutexedDataSource *poMutexedDS =
+        auto poMutexedDS =
             new OGRMutexedDataSource(pDS, TRUE, FGdbDriver::hMutex, TRUE);
         if (bUpdate)
             return OGRCreateEmulatedTransactionDataSourceWrapper(
@@ -263,15 +247,16 @@ OGRFileGDBDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 /*                           StartTransaction()                         */
 /************************************************************************/
 
-OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
+OGRErr FGdbTransactionManager::StartTransaction(GDALDataset *&poDSInOut,
                                                 int &bOutHasReopenedDS)
 {
     CPLMutexHolderOptionalLockD(FGdbDriver::hMutex);
 
     bOutHasReopenedDS = FALSE;
 
-    OGRMutexedDataSource *poMutexedDS = (OGRMutexedDataSource *)poDSInOut;
-    FGdbDataSource *poDS = (FGdbDataSource *)poMutexedDS->GetBaseDataSource();
+    auto poMutexedDS = (OGRMutexedDataSource *)poDSInOut;
+    FGdbDataSource *poDS =
+        cpl::down_cast<FGdbDataSource *>(poMutexedDS->GetBaseDataSource());
     if (!poDS->GetUpdate())
         return OGRERR_FAILURE;
     FGdbDatabaseConnection *pConnection = poDS->GetConnection();
@@ -291,10 +276,10 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
 
     bOutHasReopenedDS = TRUE;
 
-    CPLString osName(poMutexedDS->GetName());
+    CPLString osName(poMutexedDS->GetDescription());
     CPLString osNameOri(osName);
     if (osName.back() == '/' || osName.back() == '\\')
-        osName.resize(osName.size() - 1);
+        osName.pop_back();
 
 #ifndef _WIN32
     int bPerLayerCopyingForTransaction =
@@ -431,7 +416,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
 /*                           CommitTransaction()                        */
 /************************************************************************/
 
-OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
+OGRErr FGdbTransactionManager::CommitTransaction(GDALDataset *&poDSInOut,
                                                  int &bOutHasReopenedDS)
 {
     CPLMutexHolderOptionalLockD(FGdbDriver::hMutex);
@@ -449,10 +434,10 @@ OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
 
     bOutHasReopenedDS = TRUE;
 
-    CPLString osName(poMutexedDS->GetName());
+    CPLString osName(poMutexedDS->GetDescription());
     CPLString osNameOri(osName);
     if (osName.back() == '/' || osName.back() == '\\')
-        osName.resize(osName.size() - 1);
+        osName.pop_back();
 
 #ifndef _WIN32
     int bPerLayerCopyingForTransaction =
@@ -675,7 +660,7 @@ OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
 /*                           RollbackTransaction()                      */
 /************************************************************************/
 
-OGRErr FGdbTransactionManager::RollbackTransaction(OGRDataSource *&poDSInOut,
+OGRErr FGdbTransactionManager::RollbackTransaction(GDALDataset *&poDSInOut,
                                                    int &bOutHasReopenedDS)
 {
     CPLMutexHolderOptionalLockD(FGdbDriver::hMutex);
@@ -693,10 +678,10 @@ OGRErr FGdbTransactionManager::RollbackTransaction(OGRDataSource *&poDSInOut,
 
     bOutHasReopenedDS = TRUE;
 
-    CPLString osName(poMutexedDS->GetName());
+    CPLString osName(poMutexedDS->GetDescription());
     CPLString osNameOri(osName);
     if (osName.back() == '/' || osName.back() == '\\')
-        osName.resize(osName.size() - 1);
+        osName.pop_back();
 
     // int bPerLayerCopyingForTransaction =
     // poDS->HasPerLayerCopyingForTransaction();

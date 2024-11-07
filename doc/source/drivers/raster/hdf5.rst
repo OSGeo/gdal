@@ -49,6 +49,12 @@ like this:
 | *subdataset* is the dataset name of the array to use (for internal use
   in GDAL).
 
+Starting with GDAL 3.10, specifying the ``-if HDF5`` option to command line utilities
+accepting it, or ``HDF5`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+filename, when it is not using subdataset syntax (it can typically be used to
+force open a netCDF file that would be nominally recognized by the netCDF driver).
+
 On the second step you should provide this name for **gdalinfo** or
 **gdal_translate** for actual reading of the data.
 

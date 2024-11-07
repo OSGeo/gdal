@@ -8,23 +8,7 @@
  * Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_gml.h"
@@ -44,7 +28,7 @@ OGRGMLLayer::OGRGMLLayer(const char *pszName, bool bWriterIn,
     : poFeatureDefn(new OGRFeatureDefn(
           pszName + (STARTS_WITH_CI(pszName, "ogr:") ? 4 : 0))),
       iNextGMLId(0), bInvalidFIDFound(false), pszFIDPrefix(nullptr),
-      bWriter(bWriterIn), bSameSRS(false), poDS(poDSIn),
+      bWriter(bWriterIn), poDS(poDSIn),
       poFClass(!bWriter ? poDS->GetReader()->GetClass(pszName) : nullptr),
       // Reader's should get the corresponding GMLFeatureClass and cache it.
       hCacheSRS(GML_BuildOGRGeometryFromList_CreateCache()),
@@ -708,33 +692,6 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
         poDS->PrintLine(fp, "<gml:featureMember>");
     }
 
-    if (iNextGMLId == 0)
-    {
-        bSameSRS = true;
-        for (int iGeomField = 1;
-             iGeomField < poFeatureDefn->GetGeomFieldCount(); iGeomField++)
-        {
-            OGRGeomFieldDefn *poFieldDefn0 = poFeatureDefn->GetGeomFieldDefn(0);
-            OGRGeomFieldDefn *poFieldDefn =
-                poFeatureDefn->GetGeomFieldDefn(iGeomField);
-            const OGRSpatialReference *poSRS0 = poFieldDefn0->GetSpatialRef();
-            const OGRSpatialReference *poSRS = poFieldDefn->GetSpatialRef();
-            if (poSRS0 != nullptr && poSRS == nullptr)
-            {
-                bSameSRS = false;
-            }
-            else if (poSRS0 == nullptr && poSRS != nullptr)
-            {
-                bSameSRS = false;
-            }
-            else if (poSRS0 != nullptr && poSRS != nullptr && poSRS0 != poSRS &&
-                     !poSRS0->IsSame(poSRS))
-            {
-                bSameSRS = false;
-            }
-        }
-    }
-
     if (poFeature->GetFID() == OGRNullFID)
         poFeature->SetFID(iNextGMLId++);
 
@@ -794,7 +751,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
             const int nCoordDimension = poGeom->getCoordinateDimension();
 
             poGeom->getEnvelope(&sGeomBounds);
-            if (bSameSRS)
+            if (poDS->HasWriteGlobalSRS())
                 poDS->GrowExtents(&sGeomBounds, nCoordDimension);
 
             if (poGeom->getSpatialReference() == nullptr &&
@@ -1246,7 +1203,8 @@ OGRErr OGRGMLLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
     /*      Enforce XML naming semantics on element name.                   */
     /* -------------------------------------------------------------------- */
     OGRGeomFieldDefn oCleanCopy(poField);
-    auto poSRSOri = poField->GetSpatialRef();
+    const auto poSRSOri = poField->GetSpatialRef();
+    poDS->DeclareNewWriteSRS(poSRSOri);
     if (poSRSOri)
     {
         auto poSRS = poSRSOri->Clone();

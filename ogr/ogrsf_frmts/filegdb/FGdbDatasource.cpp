@@ -10,23 +10,7 @@
  * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_fgdb.h"
@@ -117,9 +101,9 @@ OGRLayer *OGRFileGDBGroup::OpenVectorLayer(const std::string &osName,
 FGdbDataSource::FGdbDataSource(bool bUseDriverMutex,
                                FGdbDatabaseConnection *pConnection,
                                bool bUseOpenFileGDB)
-    : OGRDataSource(), m_bUseDriverMutex(bUseDriverMutex),
-      m_pConnection(pConnection), m_pGeodatabase(nullptr), m_bUpdate(false),
-      m_poOpenFileGDBDrv(nullptr), m_bUseOpenFileGDB(bUseOpenFileGDB)
+    : m_bUseDriverMutex(bUseDriverMutex), m_pConnection(pConnection),
+      m_pGeodatabase(nullptr), m_bUpdate(false), m_poOpenFileGDBDrv(nullptr),
+      m_bUseOpenFileGDB(bUseOpenFileGDB)
 {
     bPerLayerCopyingForTransaction = -1;
     SetDescription(pConnection->m_osName.c_str());
@@ -822,8 +806,8 @@ OGRLayer *FGdbDataSource::ExecuteSQL(const char *pszSQLCommand,
     /*      Use generic implementation for recognized dialects              */
     /* -------------------------------------------------------------------- */
     if (IsGenericSQLDialect(pszDialect))
-        return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                         pszDialect);
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Special case GetLayerDefinition                                 */
@@ -888,8 +872,8 @@ OGRLayer *FGdbDataSource::ExecuteSQL(const char *pszSQLCommand,
                          "So for now, we use default OGR SQL engine. "
                          "Explicitly specify -dialect FileGDB\n"
                          "to use the SQL engine from the FileGDB SDK API");
-        OGRLayer *poLayer = OGRDataSource::ExecuteSQL(
-            pszSQLCommand, poSpatialFilter, pszDialect);
+        OGRLayer *poLayer =
+            GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
         if (poLayer)
             m_oSetSelectLayers.insert(poLayer);
         return poLayer;

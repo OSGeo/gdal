@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2020, SAP SE
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGRHANAUTILS_H_INCLUDED
@@ -41,6 +25,63 @@ namespace OGRHANA
 {
 
 constexpr const char *ARRAY_VALUES_DELIMITER = "^%^";
+
+class HanaVersion
+{
+
+  public:
+    explicit HanaVersion(unsigned int major, unsigned int minor,
+                         unsigned int patch)
+        : components_{major, minor, patch}
+    {
+    }
+
+    HanaVersion() : components_{0, 0, 0}
+    {
+    }
+
+    unsigned int major() const
+    {
+        return components_[0];
+    }
+
+    unsigned int minor() const
+    {
+        return components_[1];
+    }
+
+    unsigned int patch() const
+    {
+        return components_[2];
+    }
+
+    bool operator<=(const HanaVersion &other)
+    {
+        for (size_t i = 0; i < 3; ++i)
+            if (components_[i] != other.components_[i])
+                return components_[i] < other.components_[i];
+        return true;
+    }
+
+    bool operator>=(const HanaVersion &other)
+    {
+        return !(*this <= other) || (*this == other);
+    }
+
+    bool operator==(const HanaVersion &other)
+    {
+        for (size_t i = 0; i < 3; ++i)
+            if (components_[i] != other.components_[i])
+                return false;
+        return true;
+    }
+
+  public:
+    static HanaVersion fromString(const char *str);
+
+  private:
+    unsigned int components_[3];
+};
 
 const char *SkipLeadingSpaces(const char *value);
 CPLString JoinStrings(const std::vector<CPLString> &strs, const char *delimiter,

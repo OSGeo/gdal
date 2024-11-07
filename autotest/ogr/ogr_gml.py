@@ -11,23 +11,7 @@
 # Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -2559,6 +2543,25 @@ def test_ogr_gml_64(parser):
 
 
 ###############################################################################
+# Test we don't spend too much time parsing documents featuring the billion
+# laugh attack
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("parser", ("XERCES", "EXPAT"))
+def test_ogr_gml_billion_laugh(parser):
+
+    with gdal.config_option("GML_PARSER", parser), pytest.raises(
+        Exception, match="File probably corrupted"
+    ):
+        with gdal.OpenEx("data/gml/billionlaugh.gml") as ds:
+            assert ds.GetDriver().GetDescription() == "GML"
+            for lyr in ds:
+                for f in lyr:
+                    pass
+
+
+###############################################################################
 # Test SRSDIMENSION_LOC=GEOMETRY option (#5606)
 
 
@@ -4356,3 +4359,288 @@ def test_ogr_gml_geom_link_to_immediate_child():
         "data/gml/link_to_immediate_child.gml", open_options=["WRITE_GFS=NO"]
     )
     assert ds
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/10332
+
+
+@pytest.mark.parametrize("use_create_geom_field", [False, True])
+@pytest.mark.parametrize("has_srs", [False, True])
+def test_ogr_gml_ogr2ogr_from_layer_with_name_geom_field(
+    tmp_vsimem, use_create_geom_field, has_srs
+):
+
+    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    if has_srs:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    else:
+        srs = None
+    if use_create_geom_field:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        my_geom_field = ogr.GeomFieldDefn("my_geom", ogr.wkbUnknown)
+        my_geom_field.SetSpatialRef(srs)
+        lyr.CreateGeomField(my_geom_field)
+    else:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbUnknown, srs=srs)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(2 49)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(3 50)"))
+    lyr.CreateFeature(f)
+
+    out_filename = str(tmp_vsimem / "out.gml")
+    gdal.VectorTranslate(out_filename, ds, format="GML")
+
+    f = gdal.VSIFOpenL(out_filename, "rb")
+    assert f
+    try:
+        data = gdal.VSIFReadL(1, 10000, f)
+    finally:
+        gdal.VSIFCloseL(f)
+
+    if has_srs:
+        assert (
+            b'<gml:boundedBy><gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326"><gml:lowerCorner>49 2</gml:lowerCorner><gml:upperCorner>50 3</gml:upperCorner></gml:Envelope></gml:boundedBy>'
+            in data
+        )
+    else:
+        assert (
+            b"<gml:boundedBy><gml:Envelope><gml:lowerCorner>2 49</gml:lowerCorner><gml:upperCorner>3 50</gml:upperCorner></gml:Envelope></gml:boundedBy>"
+            in data
+        )
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("first_layer_has_srs", [False, True])
+def test_ogr_gml_ogr2ogr_from_layers_with_inconsistent_srs(
+    tmp_vsimem, first_layer_has_srs
+):
+
+    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    lyr = ds.CreateLayer(
+        "test", geom_type=ogr.wkbUnknown, srs=(srs if first_layer_has_srs else None)
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(2 49)"))
+    lyr.CreateFeature(f)
+
+    lyr = ds.CreateLayer(
+        "test2", geom_type=ogr.wkbUnknown, srs=(None if first_layer_has_srs else srs)
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(3 50)"))
+    lyr.CreateFeature(f)
+
+    out_filename = str(tmp_vsimem / "out.gml")
+    gdal.VectorTranslate(out_filename, ds, format="GML")
+
+    f = gdal.VSIFOpenL(out_filename, "rb")
+    assert f
+    try:
+        data = gdal.VSIFReadL(1, 10000, f)
+    finally:
+        gdal.VSIFCloseL(f)
+
+    assert b"<gml:boundedBy><gml:Null /></gml:boundedBy>" in data
+
+
+####################################################################################
+# Test if gml can access and use imported schemas along with included schemas
+# Open option is set to NO to disable the functionality
+
+
+def test_ogr_gml_USE_SCHEMA_IMPORT_NO(tmp_path):
+
+    # copy schema files and gml
+    shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/ft2_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.gml", tmp_path)
+
+    ds = gdal.OpenEx(
+        tmp_path / "minimal_example.gml", open_options=["USE_SCHEMA_IMPORT=NO"]
+    )
+    layer_count = ds.GetLayerCount()
+    assert (
+        layer_count != 2
+    ), f"Expected number of layers as '1' without open option set, but got {layer_count} "
+
+
+###############################################################################
+# Test if gml can access and use imported schemas along with included schemas
+# Open option is set to YES to enable the functionality
+
+
+def test_ogr_gml_USE_SCHEMA_IMPORT_YES(tmp_path):
+
+    # copy schema files and gml
+    shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/ft2_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.gml", tmp_path)
+
+    ds = gdal.OpenEx(
+        tmp_path / "minimal_example.gml", open_options=["USE_SCHEMA_IMPORT=YES"]
+    )
+
+    layer_count = ds.GetLayerCount()
+    assert (
+        layer_count == 2
+    ), f"Expected number of layers as '2' with open option set, but got {layer_count} "
+
+
+###############################################################################
+# Test if gml can access and use imported schemas along with included schemas
+# Config option is set to YES to enable the functionality
+
+
+def test_ogr_gml_GML_USE_SCHEMA_IMPORT_YES(tmp_path):
+
+    # copy schema files and gml
+    shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/ft2_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.gml", tmp_path)
+
+    with gdal.config_option("GML_USE_SCHEMA_IMPORT", "YES"):
+        ds = ogr.Open(tmp_path / "minimal_example.gml")
+
+    layer_count = ds.GetLayerCount()
+    assert (
+        layer_count == 2
+    ), f"Expected number of layers as '2' with config option set, but got {layer_count} "
+
+
+###############################################################################
+# Test if gml can access and use imported schemas along with included schemas
+# Config option is set to NO to disable the functionality
+
+
+def test_ogr_gml_GML_USE_SCHEMA_IMPORT_NO(tmp_path):
+
+    # copy schema files and gml
+    shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/ft2_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.gml", tmp_path)
+
+    with gdal.config_option("GML_USE_SCHEMA_IMPORT", "NO"):
+        ds = ogr.Open(tmp_path / "minimal_example.gml")
+
+    layer_count = ds.GetLayerCount()
+    assert (
+        layer_count == 1
+    ), f"Expected number of layers as '1' without config option set, but got {layer_count} "
+
+
+########################################################################################################
+# Test if gml can access and use imported schemas along with included schemas with some features testing
+# Open option is set to TRUE to enable the functionality
+
+
+def test_ogr_gml_get_layers_by_name_from_imported_schema(tmp_path):
+
+    # copy schema files and gml
+    shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/ft2_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.gml", tmp_path)
+
+    ds = gdal.OpenEx(
+        tmp_path / "minimal_example.gml", open_options=["USE_SCHEMA_IMPORT=YES"]
+    )
+    layer_count = ds.GetLayerCount()
+    assert layer_count == 2, f"Expected number of layers as '2', but got {layer_count} "
+
+    # layer sanier
+    lyr = ds.GetLayerByName("sanier")
+    feat = lyr.GetNextFeature()
+    assert lyr is not None, "cannot find sanier"
+
+    arokstatus = feat.GetFieldAsString("arokstatus")
+    assert (
+        arokstatus == "Rechtsbestand"
+    ), f"Expected 'arokstatus' to be 'Rechtsbestand', but got {arokstatus}"
+
+    # layer entwick
+    lyr = ds.GetLayerByName("entwick")
+    feat = lyr.GetNextFeature()
+    assert lyr is not None, "cannot find entwick"
+
+    shape_len = feat.GetFieldAsDouble("SHAPE_Leng")
+    assert (
+        shape_len == 8266.565325510000000
+    ), f"Expected 'shape_len' to be '8266.565325510000000', but got {shape_len}"
+
+
+#######################################################################################################
+# Test if gml can access and use imported schemas along with included schemas with some features testing
+# Open option is set to TRUE to enable the functionality
+
+
+def test_ogr_gml_get_layers_by_name_from_imported_schema_more_tests(tmp_path):
+
+    # copy schema files and gml
+    shutil.copy("data/gml/min_example/ft1_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/ft2_schema.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.xsd", tmp_path)
+    shutil.copy("data/gml/min_example/minimal_example.gml", tmp_path)
+
+    ds = gdal.OpenEx(
+        tmp_path / "minimal_example.gml", open_options=["USE_SCHEMA_IMPORT=YES"]
+    )
+
+    layer_count = ds.GetLayerCount()
+    assert layer_count == 2, f"Expected number of layers as '2', but got {layer_count} "
+
+    # layer entwick
+    lyr = ds.GetLayerByName("entwick")
+    feat = lyr.GetNextFeature()
+    shape_len = feat.GetFieldAsDouble("SHAPE_Leng")
+    assert (
+        shape_len == 8266.565325510000000
+    ), f"Expected 'shape_len' to be '8266.565325510000000', but got {shape_len}"
+
+    oa_nr = feat.GetFieldAsDouble("oa_nr")
+    assert isinstance(
+        oa_nr, float
+    ), f"Expected 'oa_nr' to be of type 'float', but got {type(oa_nr).__name__}"
+    assert oa_nr == 430070, f"Expected oa_nr to be '430070', but got {oa_nr}"
+
+    # layer sanier
+    lyr = ds.GetLayerByName("sanier")
+    feat = lyr.GetNextFeature()
+    oa_nr = feat.GetFieldAsString("oa_nr")
+    assert isinstance(
+        oa_nr, str
+    ), f"Expected 'oa_nr' to be of type 'str', but got {type(oa_nr).__name__}"
+    assert oa_nr == "430050", f"Expected oa_nr to be '430050', but got {oa_nr}"
+
+    dat_erst = feat.GetFieldAsDateTime("dat_erst")
+    assert isinstance(
+        dat_erst, list
+    ), f"Expected 'dat_erst' to be of type 'list', but got {type(dat_erst)}"
+
+
+###############################################################################
+# Test force opening a GML file
+
+
+def test_ogr_gml_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gml")
+    gdal.FileFromMemBuffer(filename, open("data/nas/empty_nas.xml", "rb").read())
+
+    # Would be opened by NAS driver if not forced
+    with gdal.config_option("NAS_GFS_TEMPLATE", ""):
+        ds = gdal.OpenEx(filename, allowed_drivers=["GML"])
+        assert ds.GetDriver().GetDescription() == "GML"

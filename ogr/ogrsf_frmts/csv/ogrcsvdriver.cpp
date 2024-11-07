@@ -8,23 +8,7 @@
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -56,6 +40,9 @@ static int OGRCSVDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->fpL != nullptr)
     {
+        if (poOpenInfo->IsSingleAllowedDriver("CSV"))
+            return TRUE;
+
         const CPLString osBaseFilename =
             CPLGetFilename(poOpenInfo->pszFilename);
         const CPLString osExt =
@@ -114,6 +101,9 @@ static int OGRCSVDriverIdentify(GDALOpenInfo *poOpenInfo)
     }
     else if (poOpenInfo->bIsDirectory)
     {
+        if (poOpenInfo->IsSingleAllowedDriver("CSV"))
+            return TRUE;
+
         return -1;  // Unsure.
     }
 
@@ -160,14 +150,17 @@ static GDALDataset *OGRCSVDriverOpen(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    OGRCSVDataSource *poDS = new OGRCSVDataSource();
+    auto poDSUniquePtr = std::make_unique<OGRCSVDataSource>();
 
-    if (!poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update,
-                    FALSE, poOpenInfo->papszOpenOptions))
+    if (!poDSUniquePtr->Open(poOpenInfo->pszFilename,
+                             poOpenInfo->eAccess == GA_Update, false,
+                             poOpenInfo->papszOpenOptions,
+                             poOpenInfo->IsSingleAllowedDriver("CSV")))
     {
-        delete poDS;
-        poDS = nullptr;
+        poDSUniquePtr.reset();
     }
+
+    auto poDS = poDSUniquePtr.release();
 
     if (poOpenInfo->eAccess == GA_Update && poDS != nullptr)
     {
@@ -238,15 +231,16 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     }
 
     // Force it to open as a datasource.
-    OGRCSVDataSource *poDS = new OGRCSVDataSource();
+    auto poDS = std::make_unique<OGRCSVDataSource>();
 
     if (EQUAL(CPLGetExtension(pszName), "csv"))
     {
         poDS->CreateForSingleFile(osDirName, pszName);
     }
-    else if (!poDS->Open(osDirName, TRUE, TRUE))
+    else if (!poDS->Open(osDirName, /* bUpdate = */ true,
+                         /* bForceAccept = */ true, nullptr,
+                         /* bSingleDriver = */ true))
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -254,7 +248,7 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     if (pszGeometry != nullptr && EQUAL(pszGeometry, "AS_WKT"))
         poDS->EnableGeometryFields();
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

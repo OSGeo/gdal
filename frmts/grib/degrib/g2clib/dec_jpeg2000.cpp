@@ -52,8 +52,8 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
 
 {
     // create "memory file" from buffer
-    CPLString osFileName;
-    osFileName.Printf( "/vsimem/work_grib_%p.jpc", injpc );
+    const CPLString osFileName(
+        VSIMemGenerateHiddenFilename("temp_grib.jpc"));
 
     VSIFCloseL( VSIFileFromMemBuffer(
                     osFileName, (unsigned char*)injpc, bufsize,

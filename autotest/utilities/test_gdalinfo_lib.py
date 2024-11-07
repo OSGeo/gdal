@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2015, Faza Mahamood <fazamhd at gmail dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 
@@ -156,7 +140,7 @@ def test_gdalinfo_lib_6():
 
     ret = gdal.Info("../gcore/data/byte.tif", options="-json")
     assert ret["driverShortName"] == "GTiff", "wrong value for driverShortName."
-    assert type(ret) == dict
+    assert isinstance(ret, dict)
 
 
 ###############################################################################
@@ -170,7 +154,7 @@ def test_gdalinfo_lib_7():
         options="-json".encode("ascii").decode("ascii"),
     )
     assert ret["driverShortName"] == "GTiff", "wrong value for driverShortName."
-    assert type(ret) == dict
+    assert isinstance(ret, dict)
 
 
 ###############################################################################
@@ -181,7 +165,7 @@ def test_gdalinfo_lib_8():
 
     ret = gdal.Info("../gcore/data/byte.tif", options=["-json"])
     assert ret["driverShortName"] == "GTiff", "wrong value for driverShortName."
-    assert type(ret) == dict
+    assert isinstance(ret, dict)
 
 
 ###############################################################################
@@ -201,17 +185,18 @@ def test_gdalinfo_lib_nodatavalues():
 ###############################################################################
 
 
-def test_gdalinfo_lib_coordinate_epoch():
+@pytest.mark.parametrize("epoch", ["2021.0", "2021.3"])
+def test_gdalinfo_lib_coordinate_epoch(epoch):
 
     ds = gdal.Translate(
-        "", "../gcore/data/byte.tif", options='-of MEM -a_coord_epoch 2021.3"'
+        "", "../gcore/data/byte.tif", options=f'-of MEM -a_coord_epoch {epoch}"'
     )
     ret = gdal.Info(ds)
-    assert "Coordinate epoch: 2021.3" in ret
+    assert f"Coordinate epoch: {epoch}" in ret
 
     ret = gdal.Info(ds, format="json")
     assert "coordinateEpoch" in ret
-    assert ret["coordinateEpoch"] == 2021.3
+    assert ret["coordinateEpoch"] == float(epoch)
 
 
 ###############################################################################
@@ -308,3 +293,46 @@ def test_gdalinfo_lib_json_engineering_crs():
     assert "coordinateSystem" in ret
     assert "cornerCoordinates" in ret
     assert "wgs84Extent" not in ret
+
+
+###############################################################################
+# Test -nonodata
+
+
+def test_gdalinfo_lib_nonodata(tmp_path):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds.GetRasterBand(1).SetNoDataValue(1)
+
+    ret = gdal.Info(ds, format="json")
+    assert "noDataValue" in ret["bands"][0]
+
+    ret = gdal.Info(ds, format="json", showNodata=False)
+    assert "noDataValue" not in ret["bands"][0]
+
+
+###############################################################################
+# Test -nomask
+
+
+def test_gdalinfo_lib_nomask(tmp_path):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
+
+    ret = gdal.Info(ds, format="json")
+    assert "mask" in ret["bands"][0]
+
+    ret = gdal.Info(ds, format="json", showMask=False)
+    assert "mask" not in ret["bands"][0]
+
+
+###############################################################################
+
+
+def test_gdalinfo_lib_json_stac_common_name():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_PanBand)
+    ret = gdal.Info(ds, options="-json")
+    assert ret["stac"]["eo:bands"][0]["common_name"] == "pan"

@@ -8,23 +8,7 @@
  * Copyright (c) 1998, Frank Warmerdam
  * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_config.h"
@@ -78,13 +62,19 @@
 #include <xlocale.h>  // for LC_NUMERIC_MASK on MacOS
 #endif
 
+#ifdef _WIN32
+#include <io.h>  // _isatty
+#else
+#include <unistd.h>  // isatty
+#endif
+
 #ifdef DEBUG_CONFIG_OPTIONS
 #include <set>
 #endif
 #include <string>
 
 #if __cplusplus >= 202002L
-#include <type_traits>  // For std::endian
+#include <bit>  // For std::endian
 #endif
 
 #include "cpl_config.h"
@@ -2529,7 +2519,7 @@ const char *CPLDecToDMS(double dfAngle, const char *pszAxis, int nPrecision)
 {
     VALIDATE_POINTER1(pszAxis, "CPLDecToDMS", "");
 
-    if (CPLIsNan(dfAngle))
+    if (std::isnan(dfAngle))
         return "Invalid angle";
 
     const double dfEpsilon = (0.5 / 3600.0) * pow(0.1, nPrecision);
@@ -3509,3 +3499,24 @@ CPLConfigOptionSetter::~CPLConfigOptionSetter()
 }
 
 //! @endcond
+
+/************************************************************************/
+/*                          CPLIsInteractive()                          */
+/************************************************************************/
+
+/** Returns whether the provided file refers to a terminal.
+ *
+ * This function is a wrapper of the ``isatty()`` POSIX function.
+ *
+ * @param f File to test. Typically stdin, stdout or stderr
+ * @return true if it is an open file referring to a terminal.
+ * @since GDAL 3.11
+ */
+bool CPLIsInteractive(FILE *f)
+{
+#ifndef _WIN32
+    return isatty(static_cast<int>(fileno(f)));
+#else
+    return _isatty(_fileno(f));
+#endif
+}

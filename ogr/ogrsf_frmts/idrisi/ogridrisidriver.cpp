@@ -8,59 +8,21 @@
  ******************************************************************************
  * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_idrisi.h"
 #include "ogrsf_frmts.h"
 
-// g++ ogr/ogrsf_frmts/idrisi/*.cpp -Wall -g -fPIC -shared -o ogr_Idrisi.so
-// -Iport -Igcore -Iogr -Iogr/ogrsf_frmts/idrisi -Iogr/ogrsf_frmts
-// -Ifrmts/idrisi
-
-/************************************************************************/
-/*                       ~OGRIdrisiDriver()                         */
-/************************************************************************/
-
-OGRIdrisiDriver::~OGRIdrisiDriver()
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRIdrisiDriver::GetName()
-
-{
-    return "Idrisi";
-}
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRIdrisiDriver::Open(const char *pszFilename, int bUpdate)
+static GDALDataset *OGRIdrisiOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if (bUpdate)
+    if (poOpenInfo->eAccess == GA_Update)
     {
         return nullptr;
     }
@@ -68,31 +30,21 @@ OGRDataSource *OGRIdrisiDriver::Open(const char *pszFilename, int bUpdate)
     // --------------------------------------------------------------------
     //      Does this appear to be a .vct file?
     // --------------------------------------------------------------------
-    if (!EQUAL(CPLGetExtension(pszFilename), "vct"))
+    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "vct"))
         return nullptr;
 
-    OGRIdrisiDataSource *poDS = new OGRIdrisiDataSource();
+    auto poDS = std::make_unique<OGRIdrisiDataSource>();
 
-    if (!poDS->Open(pszFilename))
+    if (!poDS->Open(poOpenInfo->pszFilename))
     {
-        delete poDS;
-        poDS = nullptr;
+        return nullptr;
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRIdrisiDriver::TestCapability(const char * /* pszCap */)
-{
-    return FALSE;
-}
-
-/************************************************************************/
-/*                        RegisterOGRIdrisi()                       */
+/*                        RegisterOGRIdrisi()                           */
 /************************************************************************/
 
 void RegisterOGRIdrisi()
@@ -101,9 +53,12 @@ void RegisterOGRIdrisi()
     if (GDALGetDriverByName("Idrisi") != nullptr)
         return;
 
-    OGRSFDriver *poDriver = new OGRIdrisiDriver;
+    GDALDriver *poDriver = new GDALDriver();
+    poDriver->SetDescription("Idrisi");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Idrisi Vector (.vct)");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "vct");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->pfnOpen = OGRIdrisiOpen;
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

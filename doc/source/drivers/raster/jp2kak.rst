@@ -234,19 +234,20 @@ The following creation options are tightly tied to the Kakadu SDK, and are
 considered to be for advanced use only. Consult the Kakadu SDK documentation to
 better understand their meaning.
 
--  **Corder**: Defaults to "PRCL".
--  **Cprecincts**: Defaults to
+-  **Corder**: Progression order. Defaults to "PRCL".
+-  **Cprecincts**: Precincts settings. Defaults to
    "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}".
--  **ORGgen_plt**: Defaults to "yes".
--  **ORGgen_tlm**: Kakadu SDK defaults used.
+-  **ORGgen_plt**: Whether to generate PLT markers (Paquet Length). Defaults to "yes".
+-  **ORGgen_tlm**: Whether to generate TLM markers (Tile Length). Kakadu SDK defaults used.
 -  **ORGtparts**: Kakadu SDK defaults used.
 -  **Cmodes**: Kakadu SDK defaults used.
--  **Clevels**: Kakadu SDK defaults used.
+-  **Clevels**: Quality levels. Kakadu SDK defaults used.
+-  **Cycc** =YES/NO: Whether to use YCbCr (lossy compression) or YUV (lossless compression) color space when encoding RGB images. Default to YES starting with GDAL 3.10 (was hardcoded to NO in previous versions)
 -  **Rshift**: Kakadu SDK defaults used.
 -  **Rlevels**: Kakadu SDK defaults used.
 -  **Rweight**: Kakadu SDK defaults used.
 -  **Qguard**: Kakadu SDK defaults used.
--  **Creversible**: If not set and QUALITY >= 99.5, set to "yes", otherwise to "false".
+-  **Creversible** = YES/NO: If not set and QUALITY >= 99.5, set to "yes", otherwise to "false".
 -  **Sprofile**: Kakadu SDK defaults used.
 -  **RATE**: Kakadu SDK defaults used.
    One or more bit-rates, expressed in terms of the ratio between the total number of compressed bits
@@ -283,6 +284,31 @@ unistd.h in kdu_arch.cpp. This means that \_SC_NPROCESSORS_ONLN and
 \_SC_NPROCESSORS_CONF are not defined and kdu_get_num_processors will
 always return 0. Therefore the jp2kak driver might not default to
 creating worker threads.
+
+Standalone plugin compilation
+-----------------------------
+
+.. versionadded:: 3.10
+
+While this driver may be built as part of a whole GDAL build, either in libgdal
+itself, or as a plugin, it is also possible to only build this driver as a plugin,
+against an already built libgdal.
+
+The version of the GDAL sources used to build the driver must match the version
+of the libgdal it is built against.
+
+For example, from a "build_jp2kak" directory under the root of the GDAL source tree:
+
+::
+
+    cmake -S ../frmts/jp2kak -DCMAKE_PREFIX_PATH=/path/to/GDAL_installation_prefix -DKDU_ROOT=/path/to/kakadu_root
+    cmake --build .
+
+
+Note that such a plugin, when used against a libgdal not aware of it, will be
+systematically loaded at GDAL driver initialization time, and will not benefit from
+`deferred plugin loading capabilities <rfc-96>`. For that, libgdal itself must be built with the
+CMake variable GDAL_REGISTER_DRIVER_JP2KAK_FOR_LATER_PLUGIN=ON set.
 
 See Also
 --------

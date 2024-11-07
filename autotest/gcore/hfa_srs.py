@@ -9,29 +9,15 @@
 ###############################################################################
 # Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import gdaltest
 import pytest
 
 from osgeo import gdal, osr
+
+pytestmark = pytest.mark.require_driver("HFA")
 
 ###############################################################################
 # Write a HFA/Imagine and read it back to check its SRS
@@ -250,7 +236,8 @@ def test_hfa_srs_NAD83_CORS96_UTM():
 
     ds = gdal.Open("/vsimem/TestHFASRS.img")
     srs_got = ds.GetSpatialRef()
-    assert srs_got.GetAuthorityName(None) is None
+    assert srs_got.GetAuthorityName(None) == "ESRI"
+    assert srs_got.GetAuthorityCode(None) == "102411"
     assert srs_got.IsSame(sr), srs_got.ExportToWkt()
     ds = None
 
@@ -286,3 +273,25 @@ def test_hfa_srs_DISABLEPESTRING():
     ds = None
 
     gdal.Unlink(filename)
+
+
+# Not sure about the minimum PROJ version, but 6.3 doesn't work
+@pytest.mark.require_proj(8, 0)
+def test_hfa_srs_EPSG_2193(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.img")
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(2193)
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    ds = gdal.GetDriverByName("HFA").Create(filename, 1, 1)
+    ds.SetSpatialRef(sr)
+    ds = None
+
+    ds = gdal.Open(filename)
+    srs_got = ds.GetSpatialRef()
+    assert srs_got.GetAuthorityName(None) == "EPSG"
+    assert srs_got.GetAuthorityCode(None) == "2193"
+    assert srs_got.GetDataAxisToSRSAxisMapping() == [2, 1]
+    assert srs_got.IsSame(sr)
+    ds = None

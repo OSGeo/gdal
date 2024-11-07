@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2000, Daniel Morissette
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrogdi.h"
@@ -39,7 +23,6 @@
 OGROGDIDataSource::OGROGDIDataSource()
     : m_papoLayers(nullptr), m_nLayers(0), m_nClientID(-1),
       m_poSpatialRef(nullptr), m_poCurrentLayer(nullptr),
-      m_pszFullName(nullptr),
       m_bLaunderLayerNames(
           CPLTestBool(CPLGetConfigOption("OGR_OGDI_LAUNDER_LAYER_NAMES", "NO")))
 {
@@ -58,8 +41,6 @@ OGROGDIDataSource::OGROGDIDataSource()
 OGROGDIDataSource::~OGROGDIDataSource()
 
 {
-    CPLFree(m_pszFullName);
-
     for (int i = 0; i < m_nLayers; i++)
         delete m_papoLayers[i];
     CPLFree(m_papoLayers);
@@ -136,8 +117,6 @@ int OGROGDIDataSource::Open(const char *pszNewName)
         return FALSE;
     }
 
-    m_pszFullName = CPLStrdup(pszNewName);
-
     /* -------------------------------------------------------------------- */
     /*      Capture some information from the file.                         */
     /* -------------------------------------------------------------------- */
@@ -208,7 +187,7 @@ int OGROGDIDataSource::Open(const char *pszNewName)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid or unsupported family name (%s) in URL %s\n",
-                     pszFamily, m_pszFullName);
+                     pszFamily, pszNewName);
             CPLFree(pszWorkingName);
             return FALSE;
         }
@@ -271,16 +250,6 @@ void OGROGDIDataSource::IAddLayer(const char *pszLayerName, ecs_Family eFamily)
         m_papoLayers, (m_nLayers + 1) * sizeof(OGROGDILayer *));
 
     m_papoLayers[m_nLayers++] = new OGROGDILayer(this, pszLayerName, eFamily);
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGROGDIDataSource::TestCapability(CPL_UNUSED const char *pszCap)
-
-{
-    return FALSE;
 }
 
 /************************************************************************/

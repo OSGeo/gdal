@@ -10,23 +10,7 @@
  * Copyright (c) 2011, Ben Ahmed Daho Ali
  * Copyright (c) 2013, NextGIS
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_SXF_H_INCLUDED
@@ -123,14 +107,12 @@ class OGRSXFLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                        OGRSXFDataSource                       */
+/*                           OGRSXFDataSource                           */
 /************************************************************************/
 
-class OGRSXFDataSource final : public OGRDataSource
+class OGRSXFDataSource final : public GDALDataset
 {
     SXFPassport oSXFPassport;
-
-    CPLString pszName{};
 
     std::vector<std::unique_ptr<OGRSXFLayer>> m_apoLayers{};
 
@@ -155,11 +137,6 @@ class OGRSXFDataSource final : public OGRDataSource
     int Open(const char *pszFilename, bool bUpdate,
              const char *const *papszOpenOpts = nullptr);
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
-
     virtual int GetLayerCount() override
     {
         return static_cast<int>(m_apoLayers.size());
@@ -169,20 +146,6 @@ class OGRSXFDataSource final : public OGRDataSource
 
     virtual int TestCapability(const char *) override;
     void CloseFile();
-};
-
-/************************************************************************/
-/*                         OGRSXFDriver                          */
-/************************************************************************/
-
-class OGRSXFDriver final : public GDALDriver
-{
-  public:
-    ~OGRSXFDriver();
-
-    static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
-    static CPLErr DeleteDataSource(const char *pszName);
 };
 
 #endif

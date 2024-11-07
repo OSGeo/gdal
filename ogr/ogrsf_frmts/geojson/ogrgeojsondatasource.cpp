@@ -8,23 +8,7 @@
  * Copyright (c) 2007, Mateusz Loskot
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -51,6 +35,7 @@
 #include "ogr_feature.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
+#include "ogrlibjsonutils.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonutils.h"
 #include "ogrgeojsonwriter.h"
@@ -195,8 +180,9 @@ int OGRGeoJSONDataSource::Open(GDALOpenInfo *poOpenInfo,
         bool bEmitError = true;
         if (eGeoJSONSourceService == nSrcType)
         {
-            const CPLString osTmpFilename = CPLSPrintf(
-                "/vsimem/%p/%s", this, CPLGetFilename(poOpenInfo->pszFilename));
+            const CPLString osTmpFilename =
+                VSIMemGenerateHiddenFilename(CPLSPrintf(
+                    "geojson_%s", CPLGetFilename(poOpenInfo->pszFilename)));
             VSIFCloseL(VSIFileFromMemBuffer(osTmpFilename, (GByte *)pszGeoData_,
                                             nGeoDataLen_, TRUE));
             pszGeoData_ = nullptr;
@@ -215,15 +201,6 @@ int OGRGeoJSONDataSource::Open(GDALOpenInfo *poOpenInfo,
     }
 
     return TRUE;
-}
-
-/************************************************************************/
-/*                           GetName()                                  */
-/************************************************************************/
-
-const char *OGRGeoJSONDataSource::GetName()
-{
-    return pszName_ ? pszName_ : "";
 }
 
 /************************************************************************/
@@ -814,9 +791,11 @@ int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
     char *pszStoredContent = OGRGeoJSONDriverStealStoredContent(pszSource);
     if (pszStoredContent != nullptr)
     {
-        if ((osJSonFlavor_ == "ESRIJSON" &&
-             ESRIJSONIsObject(pszStoredContent)) ||
-            (osJSonFlavor_ == "TopoJSON" && TopoJSONIsObject(pszStoredContent)))
+        if (!EQUAL(pszStoredContent, INVALID_CONTENT_FOR_JSON_LIKE) &&
+            ((osJSonFlavor_ == "ESRIJSON" &&
+              ESRIJSONIsObject(pszStoredContent, poOpenInfo)) ||
+             (osJSonFlavor_ == "TopoJSON" &&
+              TopoJSONIsObject(pszStoredContent, poOpenInfo))))
         {
             pszGeoData_ = pszStoredContent;
             nGeoDataLen_ = strlen(pszGeoData_);
@@ -882,15 +861,21 @@ int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
     if (EQUAL(pszSource, poOpenInfo->pszFilename) && osJSonFlavor_ == "GeoJSON")
     {
-        if (!GeoJSONIsObject(pszGeoData_, poOpenInfo->papszAllowedDrivers))
+        if (!GeoJSONIsObject(pszGeoData_, poOpenInfo))
         {
-            if (ESRIJSONIsObject(pszGeoData_) ||
-                TopoJSONIsObject(pszGeoData_) ||
-                GeoJSONSeqIsObject(pszGeoData_) || JSONFGIsObject(pszGeoData_))
+            if (ESRIJSONIsObject(pszGeoData_, poOpenInfo) ||
+                TopoJSONIsObject(pszGeoData_, poOpenInfo) ||
+                GeoJSONSeqIsObject(pszGeoData_, poOpenInfo) ||
+                JSONFGIsObject(pszGeoData_, poOpenInfo))
             {
                 OGRGeoJSONDriverStoreContent(pszSource, pszGeoData_);
                 pszGeoData_ = nullptr;
                 nGeoDataLen_ = 0;
+            }
+            else
+            {
+                OGRGeoJSONDriverStoreContent(
+                    pszSource, CPLStrdup(INVALID_CONTENT_FOR_JSON_LIKE));
             }
             return false;
         }
@@ -1003,7 +988,7 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo *poOpenInfo,
         oOpenInfo.fpL = nullptr;
     }
 
-    if (!GeoJSONIsObject(pszGeoData_, poOpenInfo->papszAllowedDrivers))
+    if (!GeoJSONIsObject(pszGeoData_, poOpenInfo))
     {
         CPLDebug(pszJSonFlavor, "No valid %s data found in source '%s'",
                  pszJSonFlavor, pszName_);

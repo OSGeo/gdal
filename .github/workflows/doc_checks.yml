@@ -1,0 +1,94 @@
+name: Docs
+
+on:
+    push:
+        branches-ignore:
+            - 'backport**'
+            - 'dependabot**'
+    pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: Documentation checks
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    container: ghcr.io/osgeo/proj-docs
+
+    steps:
+    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+    - name: Setup environment
+      shell: bash -l {0}
+      run: |
+          apt update
+          apt install -y libproj-dev swig
+          python3 -m pip install -r doc/requirements.txt
+          python3 -m pip install numpy setuptools
+          pushd .
+          mkdir build
+          cd build
+          export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DBUILD_APPS=OFF \
+            -DBUILD_TESTING=OFF \
+            -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
+            -DOGR_BUILD_OPTIONAL_DRIVERS=OFF
+          cmake --build . -j$(nproc)
+          cmake --install .
+          # With the new ghcr.io/osgeo/proj-docs image based on Ubuntu 24.04
+          # a venv is activated. The above does not install the
+          # Python bindings into it (and the ones in the system are not found
+          # without overriding PYTHONPATH), so do it through pip install
+          cd swig/python
+          python3 setup.py sdist
+          cp dist/* /tmp/gdal.tar.gz
+          python3 -m pip install /tmp/gdal.tar.gz
+          ldconfig
+          popd
+
+    - name: Update components
+      shell: bash -l {0}
+      run: |
+          pip install -U "sphinx-rtd-theme>=3.0.0" "sphinxcontrib-spelling>=8.0.0"
+
+    - name: Print versions
+      shell: bash -l {0}
+      run: |
+          python3 --version
+          sphinx-build --version
+          python3 -m pip list --not-required --format=columns
+    - name: Lint .rst files
+      shell: bash -l {0}
+      run: |
+        if find . -name '*.rst' | xargs grep -P '\t'; then echo 'Tabs are bad, please use four spaces in .rst files.'; false; fi
+        if find . -name '*.rst' | xargs grep "\.\.versionadded"; then echo 'Wrong annotation. Should be .. versionadded'; false; fi
+        if find . -name '*.rst' | xargs grep "\.\.note"; then echo 'Wrong annotation. Should be .. note'; false; fi
+        if find . -name '*.rst' | xargs grep "\.\.warning"; then echo 'Wrong annotation. Should be .. warning'; false; fi
+        if find . -name '*.rst' | xargs grep "\.\.codeblock"; then echo 'Wrong annotation. Should be .. codeblock'; false; fi
+      working-directory: ./doc
+    - name: Doxygen
+      shell: bash -l {0}
+      run: |
+        mkdir -p doc/build
+        doxygen Doxyfile
+    - name: Generated RST files
+      shell: bash -l {0}
+      run: |
+        make generated_rst_files
+      working-directory: ./doc
+    - name: Spelling
+      shell: bash -l {0}
+      run: |
+        sed -i '/html_extra_path/d' source/conf.py # avoid WARNING: html_extra_path entry '../build/html_extra' is placed inside outdir
+        make spelling
+      working-directory: ./doc

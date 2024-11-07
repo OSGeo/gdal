@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2016, Even Rouault, <even.rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import glob
@@ -77,6 +61,10 @@ mrf_tests = (
     ("../../gcore/data/uint32.tif", 4672, [4672], ["COMPRESS=LERC"]),
     ("../../gcore/data/uint32.tif", 4672, [4672], ["COMPRESS=QB3"]),
     ("../../gcore/data/uint32.tif", 4672, [4672], ["COMPRESS=LERC", "OPTIONS=V1:YES"]),
+    ("../../gcore/data/int64.tif", 4672, [4672], ["COMPRESS=DEFLATE"]),
+    ("../../gcore/data/int64.tif", 4672, [4672], ["COMPRESS=ZSTD"]),
+    ("../../gcore/data/int64.tif", 4672, [4672], ["COMPRESS=TIF"]),
+    ("../../gcore/data/int64.tif", 4672, [4672], ["COMPRESS=QB3"]),
     ("float32.tif", 4672, [4672], ["COMPRESS=DEFLATE"]),
     ("float32.tif", 4672, [4672], ["COMPRESS=ZSTD"]),
     ("float32.tif", 4672, [4672], ["COMPRESS=TIF"]),
@@ -199,6 +187,10 @@ def cleanup(base="/vsimem/out."):
         gdal.Unlink(base + ext)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_mrf_zen_test():
 
     expectedCS = 770
@@ -227,6 +219,30 @@ def test_mrf_zen_test():
         assert cs == expectedCS, (interleave, expectedCS, cs)
         for f in glob.glob("tmp/masked.*"):
             gdal.Unlink(f)
+
+
+def test_mrf_in_tar(tmp_path):
+    import tarfile
+
+    files = tuple("plain." + ext for ext in ("mrf", "idx", "pzp", "mrf.aux.xml"))
+    gdal.Translate(
+        tmp_path / "plain.mrf",
+        "data/byte.tif",
+        format="MRF",
+        creationOptions=["COMPRESS=DEFLATE"],
+    )
+    tarname = tmp_path / "plain.mrf.tar"
+    # the .mrf has to be the first file in the tar, with no path
+    with tarfile.TarFile(tarname, "w", format=tarfile.GNU_FORMAT) as tar:
+        for fn in files:
+            tar.add(tmp_path / fn, arcname=fn)
+    for fn in files:
+        gdal.Unlink(tmp_path / fn)
+    ds = gdal.Open(tarname)
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    assert cs == 4672
+    gdal.Unlink(tarname)
 
 
 def test_mrf_overview_nnb_fact_2():

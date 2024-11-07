@@ -98,8 +98,9 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define CPLFree_function(a) CPLFree((a))
 #define form_filename_function(a, b) CPLFormFilename((a), (b), "")
 #define MM_CPLGetBasename(a) CPLGetBasename((a))
-#define MM_IsNANDouble(x) CPLIsNan((x))
-#define MM_IsDoubleInfinite(x) CPLIsInf((x))
+    bool
+    MM_IsNANDouble(double x);
+bool MM_IsDoubleInfinite(double x);
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -111,8 +112,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define MMCPLWarning CPLError
 #define MMCPLDebug CPLDebugOnly
 #else
-    void
-    MMCPLError(int code, const char *fmt, ...);
+void MMCPLError(int code, const char *fmt, ...);
 void MMCPLWarning(int code, const char *fmt, ...);
 void MMCPLDebug(int code, const char *fmt, ...);
 #endif

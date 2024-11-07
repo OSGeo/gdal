@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_geopackage.h"
@@ -33,7 +17,10 @@
 #include "cpl_error.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
+#include <set>
+#include <utility>
 
 #if !defined(DEBUG_VERBOSE) && defined(DEBUG_VERBOSE_GPKG)
 #define DEBUG_VERBOSE
@@ -240,8 +227,8 @@ GDALColorTable *GDALGPKGMBTilesLikeRasterBand::GetColorTable()
                     const int nBytes = sqlite3_column_bytes(hStmt, 0);
                     GByte *pabyRawData = reinterpret_cast<GByte *>(
                         const_cast<void *>(sqlite3_column_blob(hStmt, 0)));
-                    CPLString osMemFileName;
-                    osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
+                    const CPLString osMemFileName(
+                        VSIMemGenerateHiddenFilename("gpkg_read_tile"));
                     VSILFILE *fp = VSIFileFromMemBuffer(
                         osMemFileName.c_str(), pabyRawData, nBytes, FALSE);
                     VSIFCloseL(fp);
@@ -912,8 +899,8 @@ GByte *GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol,
             (m_eDT == GDT_Byte) ? 0 : sqlite3_column_int64(hStmt, 1);
         GByte *pabyRawData = static_cast<GByte *>(
             const_cast<void *>(sqlite3_column_blob(hStmt, 0)));
-        CPLString osMemFileName;
-        osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
+        const CPLString osMemFileName(
+            VSIMemGenerateHiddenFilename("gpkg_read_tile"));
         VSILFILE *fp = VSIFileFromMemBuffer(osMemFileName.c_str(), pabyRawData,
                                             nBytes, FALSE);
         VSIFCloseL(fp);
@@ -1227,6 +1214,145 @@ retry:
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                       IGetDataCoverageStatus()                       */
+/************************************************************************/
+
+int GDALGPKGMBTilesLikeRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff,
+                                                          int nXSize,
+                                                          int nYSize,
+                                                          int nMaskFlagStop,
+                                                          double *pdfDataPct)
+{
+    if (eAccess == GA_Update)
+        FlushCache(false);
+
+    const int iColMin = nXOff / nBlockXSize + m_poTPD->m_nShiftXTiles;
+    const int iColMax = (nXOff + nXSize - 1) / nBlockXSize +
+                        m_poTPD->m_nShiftXTiles +
+                        (m_poTPD->m_nShiftXPixelsMod ? 1 : 0);
+    const int iRowMin = nYOff / nBlockYSize + m_poTPD->m_nShiftYTiles;
+    const int iRowMax = (nYOff + nYSize - 1) / nBlockYSize +
+                        m_poTPD->m_nShiftYTiles +
+                        (m_poTPD->m_nShiftYPixelsMod ? 1 : 0);
+
+    int iDBRowMin = m_poTPD->GetRowFromIntoTopConvention(iRowMin);
+    int iDBRowMax = m_poTPD->GetRowFromIntoTopConvention(iRowMax);
+    if (iDBRowMin > iDBRowMax)
+        std::swap(iDBRowMin, iDBRowMax);
+
+    char *pszSQL = sqlite3_mprintf(
+        "SELECT tile_row, tile_column FROM \"%w\" "
+        "WHERE zoom_level = %d AND "
+        "(tile_row BETWEEN %d AND %d) AND "
+        "(tile_column BETWEEN %d AND %d)"
+        "%s",
+        m_poTPD->m_osRasterTable.c_str(), m_poTPD->m_nZoomLevel, iDBRowMin,
+        iDBRowMax, iColMin, iColMax,
+        !m_poTPD->m_osWHERE.empty()
+            ? CPLSPrintf(" AND (%s)", m_poTPD->m_osWHERE.c_str())
+            : "");
+
+#ifdef DEBUG_VERBOSE
+    CPLDebug("GPKG", "%s", pszSQL);
+#endif
+
+    sqlite3_stmt *hStmt = nullptr;
+    int rc = sqlite3_prepare_v2(m_poTPD->IGetDB(), pszSQL, -1, &hStmt, nullptr);
+    if (rc != SQLITE_OK)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "failed to prepare SQL %s: %s",
+                 pszSQL, sqlite3_errmsg(m_poTPD->IGetDB()));
+        sqlite3_free(pszSQL);
+        return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+               GDAL_DATA_COVERAGE_STATUS_DATA;
+    }
+    sqlite3_free(pszSQL);
+    rc = sqlite3_step(hStmt);
+    std::set<std::pair<int, int>> oSetTiles;  // (row, col)
+    while (rc == SQLITE_ROW)
+    {
+        oSetTiles.insert(std::pair(
+            m_poTPD->GetRowFromIntoTopConvention(sqlite3_column_int(hStmt, 0)),
+            sqlite3_column_int(hStmt, 1)));
+        rc = sqlite3_step(hStmt);
+    }
+    sqlite3_finalize(hStmt);
+    if (rc != SQLITE_DONE)
+    {
+        return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+               GDAL_DATA_COVERAGE_STATUS_DATA;
+    }
+    if (oSetTiles.empty())
+    {
+        if (pdfDataPct)
+            *pdfDataPct = 0.0;
+        return GDAL_DATA_COVERAGE_STATUS_EMPTY;
+    }
+
+    if (m_poTPD->m_nShiftXPixelsMod == 0 && m_poTPD->m_nShiftYPixelsMod == 0 &&
+        oSetTiles.size() == static_cast<size_t>(iRowMax - iRowMin + 1) *
+                                (iColMax - iColMin + 1))
+    {
+        if (pdfDataPct)
+            *pdfDataPct = 100.0;
+        return GDAL_DATA_COVERAGE_STATUS_DATA;
+    }
+
+    if (m_poTPD->m_nShiftXPixelsMod == 0 && m_poTPD->m_nShiftYPixelsMod == 0)
+    {
+        int nStatus = 0;
+        GIntBig nPixelsData = 0;
+        for (int iY = iRowMin; iY <= iRowMax; ++iY)
+        {
+            for (int iX = iColMin; iX <= iColMax; ++iX)
+            {
+                // coverity[swapped_arguments]
+                if (oSetTiles.find(std::pair(iY, iX)) == oSetTiles.end())
+                {
+                    nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
+                }
+                else
+                {
+                    const int iXGDAL = iX - m_poTPD->m_nShiftXTiles;
+                    const int iYGDAL = iY - m_poTPD->m_nShiftYTiles;
+                    const int nXBlockRight =
+                        (iXGDAL * nBlockXSize > INT_MAX - nBlockXSize)
+                            ? INT_MAX
+                            : (iXGDAL + 1) * nBlockXSize;
+                    const int nYBlockBottom =
+                        (iYGDAL * nBlockYSize > INT_MAX - nBlockYSize)
+                            ? INT_MAX
+                            : (iYGDAL + 1) * nBlockYSize;
+
+                    nPixelsData += (static_cast<GIntBig>(std::min(
+                                        nXBlockRight, nXOff + nXSize)) -
+                                    std::max(iXGDAL * nBlockXSize, nXOff)) *
+                                   (std::min(nYBlockBottom, nYOff + nYSize) -
+                                    std::max(iYGDAL * nBlockYSize, nYOff));
+                    nStatus |= GDAL_DATA_COVERAGE_STATUS_DATA;
+                }
+                if (nMaskFlagStop != 0 && (nMaskFlagStop & nStatus) != 0)
+                {
+                    if (pdfDataPct)
+                        *pdfDataPct = -1.0;
+                    return nStatus;
+                }
+            }
+        }
+
+        if (pdfDataPct)
+        {
+            *pdfDataPct =
+                100.0 * nPixelsData / (static_cast<GIntBig>(nXSize) * nYSize);
+        }
+        return nStatus;
+    }
+
+    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+           GDAL_DATA_COVERAGE_STATUS_DATA;
 }
 
 /************************************************************************/
@@ -1611,7 +1737,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
 
     int bHasNoData = FALSE;
     double dfNoDataValue = IGetRasterBand(1)->GetNoDataValue(&bHasNoData);
-    const bool bHasNanNoData = bHasNoData && CPLIsNan(dfNoDataValue);
+    const bool bHasNanNoData = bHasNoData && std::isnan(dfNoDataValue);
 
     bool bAllOpaque = true;
     // Detect fully transparent tiles, but only if all bands are dirty (that is
@@ -1643,6 +1769,29 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         else
             bAllOpaque = false;
     }
+    else if (bAllDirty && m_eDT == GDT_Byte && m_poCT == nullptr &&
+             (!bHasNoData || dfNoDataValue == 0.0))
+    {
+        bool bAllEmpty = true;
+        const auto nPixels =
+            static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize * nBands;
+        for (GPtrDiff_t i = 0; i < nPixels; i++)
+        {
+            if (m_pabyCachedTiles[i] != 0)
+            {
+                bAllEmpty = false;
+                break;
+            }
+        }
+        if (bAllEmpty)
+        {
+            // If tile is fully transparent, don't serialize it and remove it if
+            // it exists
+            DeleteTile(nRow, nCol);
+
+            return CE_None;
+        }
+    }
     else if (bAllDirty && m_eDT == GDT_Float32)
     {
         const float *pSrc = reinterpret_cast<float *>(m_pabyCachedTiles);
@@ -1654,7 +1803,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             const float fVal = pSrc[i];
             if (bHasNanNoData)
             {
-                if (CPLIsNan(fVal))
+                if (std::isnan(fVal))
                     continue;
             }
             else if (fVal == fNoDataValueOrZero)
@@ -1682,8 +1831,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                  nRow, nCol, m_nZoomLevel);
     }
 
-    CPLString osMemFileName;
-    osMemFileName.Printf("/vsimem/gpkg_write_tile_%p", this);
+    const CPLString osMemFileName(
+        VSIMemGenerateHiddenFilename("gpkg_write_tile"));
     const char *pszDriverName = "PNG";
     bool bTileDriverSupports1Band = false;
     bool bTileDriverSupports2Bands = false;
@@ -1862,7 +2011,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                     const float fVal = pSrc[i];
                     if (bHasNanNoData)
                     {
-                        if (CPLIsNan(fVal))
+                        if (std::isnan(fVal))
                             continue;
                     }
                     else if (bHasNoData &&
@@ -1870,7 +2019,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                     {
                         continue;
                     }
-                    if (CPLIsInf(fVal))
+                    if (std::isinf(fVal))
                         continue;
 
                     if (nValidPixels == 0)
@@ -1928,7 +2077,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                     const float fVal = pSrc[i];
                     if (bHasNanNoData)
                     {
-                        if (CPLIsNan(fVal))
+                        if (std::isnan(fVal))
                         {
                             pTempTileBuffer[i] = m_usGPKGNull;
                             continue;
@@ -1943,7 +2092,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                         }
                     }
                     double dfVal =
-                        CPLIsFinite(fVal)
+                        std::isfinite(fVal)
                             ? ((fVal - m_dfOffset) / m_dfScale - dfTileOffset) /
                                   dfTileScale
                         : (fVal > 0) ? 65535
@@ -1977,7 +2126,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 const float fVal = pSrc[i];
                 if (bHasNanNoData)
                 {
-                    if (CPLIsNan(fVal))
+                    if (std::isnan(fVal))
                         continue;
                 }
                 else if (bHasNoData &&
@@ -2307,7 +2456,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                         "INSERT INTO gpkg_2d_gridded_tile_ancillary "
                         "(tpudt_name, tpudt_id, scale, offset, min, max, "
                         "mean, std_dev) VALUES "
-                        "('%q', ?, %.18g, %.18g, ?, ?, ?, ?)",
+                        "('%q', ?, %.17g, %.17g, ?, ?, ?, ?)",
                         m_osRasterTable.c_str(), dfTileScale, dfTileOffset);
 #ifdef DEBUG_VERBOSE
                     CPLDebug("GPKG", "%s", pszSQL);
@@ -2562,8 +2711,8 @@ GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartialFlush)
                         GByte *pabyRawData =
                             const_cast<GByte *>(static_cast<const GByte *>(
                                 sqlite3_column_blob(hNewStmt, 0)));
-                        CPLString osMemFileName;
-                        osMemFileName.Printf("/vsimem/gpkg_read_tile_%p", this);
+                        const CPLString osMemFileName(
+                            VSIMemGenerateHiddenFilename("gpkg_read_tile"));
                         VSILFILE *fp = VSIFileFromMemBuffer(
                             osMemFileName.c_str(), pabyRawData, nBytes, FALSE);
                         VSIFCloseL(fp);
@@ -3549,7 +3698,7 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue(double dfNoDataValue)
               static_cast<int>(dfNoDataValue) == dfNoDataValue))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Invalid nodata value for a Byte band: %.18g",
+                     "Invalid nodata value for a Byte band: %.17g",
                      dfNoDataValue);
             return CE_Failure;
         }
@@ -3576,7 +3725,7 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue(double dfNoDataValue)
         return CE_None;
     }
 
-    if (CPLIsNan(dfNoDataValue))
+    if (std::isnan(dfNoDataValue))
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "A NaN nodata value cannot be recorded in "

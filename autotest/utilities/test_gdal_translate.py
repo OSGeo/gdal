@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -420,6 +404,10 @@ def test_gdal_translate_15(gdal_translate_path, tmp_path):
 # Test -of VRT which is a special case
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_16(gdal_translate_path, tmp_path):
 
     dst_vrt = str(tmp_path / "test16.vrt")
@@ -440,6 +428,10 @@ def test_gdal_translate_16(gdal_translate_path, tmp_path):
 # Test -expand option to VRT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("GIF")
 def test_gdal_translate_17(gdal_translate_path, tmp_path):
 
@@ -483,6 +475,10 @@ def test_gdal_translate_17(gdal_translate_path, tmp_path):
 # Test translation of a VRT made of VRT
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("BMP")
 def test_gdal_translate_18(gdal_translate_path, tmp_path):
 
@@ -569,6 +565,7 @@ def test_gdal_translate_20(gdal_translate_path, tmp_path):
 # in that case, they must be copied
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_21(gdal_translate_path, tmp_path):
 
     dst_img = str(tmp_path / "test_gdal_translate_21.img")
@@ -591,9 +588,10 @@ def test_gdal_translate_21(gdal_translate_path, tmp_path):
 
 ###############################################################################
 # Test that statistics are copied only when appropriate (#3889)
-# in that case, they must *NOT* be copied
+# in this case, they must *NOT* be copied
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_22(gdal_translate_path, tmp_path):
 
     dst_img = str(tmp_path / "test_gdal_translate_22.img")
@@ -606,13 +604,11 @@ def test_gdal_translate_22(gdal_translate_path, tmp_path):
     md = ds.GetRasterBand(1).GetMetadata()
     ds = None
 
-    assert (
-        "STATISTICS_MINIMUM" not in md
-    ), "did not expected a STATISTICS_MINIMUM value."
+    assert "STATISTICS_MINIMUM" not in md, "did not expect a STATISTICS_MINIMUM value."
 
     assert (
         "STATISTICS_HISTOBINVALUES" not in md
-    ), "did not expected a STATISTICS_HISTOBINVALUES value."
+    ), "did not expect a STATISTICS_HISTOBINVALUES value."
 
 
 ###############################################################################
@@ -662,6 +658,7 @@ def test_gdal_translate_24(gdal_translate_path, tmp_path):
 # Test -norat
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_25(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "test_gdal_translate_25.tif")
@@ -781,6 +778,10 @@ def test_gdal_translate_28(gdal_translate_path, tmp_path):
 # Test -r
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_29(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "test_gdal_translate_29.tif")
@@ -872,16 +873,32 @@ def test_gdal_translate_32(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "out.tif")
 
+    src_ds = gdal.Open("../gcore/data/byte_rpc.tif")
+    src_md = src_ds.GetMetadata("RPC")
+    srcxoff = 1
+    srcyoff = 2
+    srcwidth = 13
+    srcheight = 14
+    widthratio = 200
+    heightratio = 300
     gdaltest.runexternal(
-        f"{gdal_translate_path} ../gcore/data/byte_rpc.tif {dst_tif} -srcwin 1 2 13 14 -outsize 150% 300%"
+        f"{gdal_translate_path} ../gcore/data/byte_rpc.tif {dst_tif} -srcwin {srcxoff} {srcyoff} {srcwidth} {srcheight} -outsize {widthratio}% {heightratio}%"
     )
+    widthratio /= 100.0
+    heightratio /= 100.0
     ds = gdal.Open(dst_tif)
     md = ds.GetMetadata("RPC")
-    assert (
-        float(md["LINE_OFF"]) == pytest.approx(47496, abs=1e-5)
-        and float(md["LINE_SCALE"]) == pytest.approx(47502, abs=1e-5)
-        and float(md["SAMP_OFF"]) == pytest.approx(19676.6923076923, abs=1e-5)
-        and float(md["SAMP_SCALE"]) == pytest.approx(19678.1538461538, abs=1e-5)
+    assert float(md["LINE_OFF"]) == pytest.approx(
+        (float(src_md["LINE_OFF"]) - srcyoff + 0.5) * heightratio - 0.5, abs=1e-5
+    )
+    assert float(md["LINE_SCALE"]) == pytest.approx(
+        float(src_md["LINE_SCALE"]) * heightratio, abs=1e-5
+    )
+    assert float(md["SAMP_OFF"]) == pytest.approx(
+        (float(src_md["SAMP_OFF"]) - srcxoff + 0.5) * widthratio - 0.5, abs=1e-5
+    )
+    assert float(md["SAMP_SCALE"]) == pytest.approx(
+        float(src_md["SAMP_SCALE"]) * widthratio, abs=1e-5
     )
 
 
@@ -946,6 +963,10 @@ def test_gdal_translate_33ter(gdal_translate_path, tmp_path):
 # Test NBITS is preserved
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_translate_34(gdal_translate_path, tmp_path):
 
     dst_vrt = str(tmp_path / "test_gdal_translate_34.vrt")
@@ -991,6 +1012,7 @@ def test_gdal_translate_35(gdal_translate_path, tmp_vsimem):
 # Test RAT is copied from hfa to gtiff - continuous/athematic
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_36(gdal_translate_path, tmp_path):
 
     dst_tif = str(tmp_path / "test_gdal_translate_36.tif")
@@ -1016,6 +1038,7 @@ def test_gdal_translate_36(gdal_translate_path, tmp_path):
 # Test RAT is copied from hfa to gtiff - thematic
 
 
+@pytest.mark.require_driver("HFA")
 def test_gdal_translate_37(gdal_translate_path, tmp_path):
 
     dst1_tif = str(tmp_path / "test_gdal_translate_37.tif")
@@ -1112,3 +1135,19 @@ def test_gdal_translate_scale_and_unscale_incompatible(gdal_translate_path, tmp_
         + f" -a_scale 0.0001 -a_offset 0.1 -unscale ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
     )
     assert "-a_scale/-a_offset are not applied by -unscale" in err
+
+
+###############################################################################
+# Test that invalid values of -scale are detected
+
+
+def test_gdal_translate_scale_invalid(gdal_translate_path, tmp_path):
+
+    outfile = tmp_path / "out.tif"
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_translate_path} -scale 0 255 6 -badarg ../gcore/data/byte.tif {outfile}"
+    )
+
+    assert "must be numeric" in err
+    assert not outfile.exists()

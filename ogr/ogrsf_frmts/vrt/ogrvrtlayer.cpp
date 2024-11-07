@@ -8,29 +8,14 @@
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
 #include "ogr_vrt.h"
 
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -51,8 +36,8 @@
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 #include "ogrpgeogeometry.h"
-#include "ogrsf_frmts/ogrsf_frmts.h"
-#include "ogrsf_frmts/vrt/ogr_vrt.h"
+#include "ogrsf_frmts.h"
+#include "ogrvrtgeometrytypes.h"
 
 #define UNSUPPORTED_OP_READ_ONLY                                               \
     "%s : unsupported operation on a read-only datasource."
@@ -667,8 +652,9 @@ try_again:
             // Is it a VRT datasource?
             if (poSrcDS != nullptr && poSrcDS->GetDriver() == poDS->GetDriver())
             {
-                OGRVRTDataSource *poVRTSrcDS = (OGRVRTDataSource *)poSrcDS;
-                poVRTSrcDS->AddForbiddenNames(poDS->GetName());
+                OGRVRTDataSource *poVRTSrcDS =
+                    cpl::down_cast<OGRVRTDataSource *>(poSrcDS);
+                poVRTSrcDS->AddForbiddenNames(poDS->GetDescription());
             }
         }
     }
@@ -1247,13 +1233,13 @@ bool OGRVRTLayer::ResetSourceReading()
                     m_poFilterGeom->getEnvelope(&sEnvelope);
                 }
 
-                if (!CPLIsInf(sEnvelope.MinX))
+                if (!std::isinf(sEnvelope.MinX))
                     osFilter +=
                         CPLSPrintf("\"%s\" > %.15g", pszXField, sEnvelope.MinX);
                 else if (sEnvelope.MinX > 0)
                     osFilter += "0 = 1";
 
-                if (!CPLIsInf(sEnvelope.MaxX))
+                if (!std::isinf(sEnvelope.MaxX))
                 {
                     if (!osFilter.empty())
                         osFilter += " AND ";
@@ -1267,7 +1253,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     osFilter += "0 = 1";
                 }
 
-                if (!CPLIsInf(sEnvelope.MinY))
+                if (!std::isinf(sEnvelope.MinY))
                 {
                     if (!osFilter.empty())
                         osFilter += " AND ";
@@ -1281,7 +1267,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     osFilter += "0 = 1";
                 }
 
-                if (!CPLIsInf(sEnvelope.MaxY))
+                if (!std::isinf(sEnvelope.MaxY))
                 {
                     if (!osFilter.empty())
                         osFilter += " AND ";
@@ -1367,10 +1353,12 @@ bool OGRVRTLayer::ResetSourceReading()
                 {
                     OGREnvelope sEnvelope;
                     m_poFilterGeom->getEnvelope(&sEnvelope);
-                    if (CPLIsInf(sEnvelope.MinX) && CPLIsInf(sEnvelope.MinY) &&
-                        CPLIsInf(sEnvelope.MaxX) && CPLIsInf(sEnvelope.MaxY) &&
-                        sEnvelope.MinX < 0 && sEnvelope.MinY < 0 &&
-                        sEnvelope.MaxX > 0 && sEnvelope.MaxY > 0)
+                    if (std::isinf(sEnvelope.MinX) &&
+                        std::isinf(sEnvelope.MinY) &&
+                        std::isinf(sEnvelope.MaxX) &&
+                        std::isinf(sEnvelope.MaxY) && sEnvelope.MinX < 0 &&
+                        sEnvelope.MinY < 0 && sEnvelope.MaxX > 0 &&
+                        sEnvelope.MaxY > 0)
                     {
                         poSpatialGeom = poSrcRegion;
                         bDoIntersection = false;

@@ -58,6 +58,8 @@ This tutorial will cover the .vrt file format (suitable for users editing
 .vrt files), and how .vrt files may be created and manipulated programmatically
 for developers.
 
+.. _raster_vrt_creation_options:
+
 Creation options
 ----------------
 
@@ -403,6 +405,31 @@ cubicspline,lanczos,average,mode.
       <DstRect xOff="0" yOff="0" xSize="128" ySize="128"/>
     </SimpleSource>
 
+
+Starting with GDAL 3.11, it is also possible to use a in-line VRTDataset as
+the source by using the VRTDataset element instead of SourceFilename.
+
+.. code-block:: xml
+
+    <SimpleSource>
+      <VRTDataset rasterXSize="20" rasterYSize="20">
+        <VRTRasterBand dataType="Byte" band="1">
+          <SimpleSource>
+            <SourceFilename relativeToVRT="1">../byte.tif</SourceFilename>
+            <SourceBand>1</SourceBand>
+            <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+            <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+            <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+          </SimpleSource>
+        </VRTRasterBand>
+      </VRTDataset>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+
+
 ComplexSource
 ~~~~~~~~~~~~~
 
@@ -424,8 +451,9 @@ the following form:
 
 The intermediary values are calculated using a linear interpolation
 between the bounding destination values of the corresponding range.
-Source values should be monotonically non-decreasing. Clamping is performed for
-input pixel values outside of the range specified by the LUT. That is, if an
+Source values should be listed in a monotonically non-decreasing order.
+If there is a Not-A-Number (NaN) source value, it should be the first one.
+Clamping is performed for input pixel values outside of the range specified by the LUT. That is, if an
 input pixel value is lower than the minimum source value, then the destination
 value corresponding to that minimum source value is used as the output pixel value.
 And similarly for an input pixel value that is greater than the maximum source value.
@@ -1361,7 +1389,7 @@ set to VRTDerivedRasterBand) are :
 
 - **PixelFunctionCode** (required if PixelFunctionType is of the form "function_name", ignored otherwise). The in-lined code of a Python module, that must be at least have a function whose name is given by PixelFunctionType.
 
-- **BufferRadius** (optional, defaults to 0): Amount of extra pixels, with respect to the original RasterIO() request to satisfy, that are fetched at the left, right, bottom and top of the input and output buffers passed to the pixel function. Note that the values of the output buffer in this buffer zone willbe ignored.
+- **BufferRadius** (optional, defaults to 0): Amount of extra pixels, with respect to the original RasterIO() request to satisfy, that are fetched at the left, right, bottom and top of the input and output buffers passed to the pixel function. Note that the values of the output buffer in this buffer zone will be ignored.
 
 - **SkipNonContributingSources** (optional, added in GDAL 3.7, defaults to false) = true/false: Whether sources that do not intersect the VRTRasterBand RasterIO() requested region should be omitted. By default, data for all sources, including ones that do not intersect it, are passed to the pixel function. By setting this parameter to false, only sources that intersect the requested region will be passed.
 
@@ -1533,6 +1561,8 @@ to make sure the modules are accessible through the python path. Note that
 contrary to the Python interactive interpreter, the current path is not
 automatically added when used from GDAL. So you may need to define the
 **PYTHONPATH** environment variable if you get ModuleNotFoundError exceptions.
+
+.. _raster_vrt_security_implications:
 
 Security implications
 *********************
@@ -2095,6 +2125,38 @@ Starting with GDAL 3.6, the ComputeStatistics() implementation can benefit from
 multi-threading if the sources are not overlapping and belong to different
 datasets. This can be enabled by setting the :config:`GDAL_NUM_THREADS`
 configuration option to an integer or ``ALL_CPUS``.
+
+Starting with GDAL 3.10, the :oo:`NUM_THREADS` open option can
+be set to control specifically the multi-threading of VRT datasets.
+It defaults to ``ALL_CPUS``, and when set, overrides :config:`GDAL_NUM_THREADS`
+or :config:`VRT_NUM_THREADS`. It applies to
+ComputeStatistics() and band-level and dataset-level RasterIO().
+For band-level RasterIO(), multi-threading is only available if more than 1
+million pixels are requested and if the VRT is made of only non-overlapping
+SimpleSource or ComplexSource belonging to different datasets.
+For dataset-level RasterIO(), multi-threading is only available if more than 1
+million pixels are requested and if the VRT is made of only non-overlapping
+SimpleSource belonging to different datasets.
+
+-  .. oo:: NUM_THREADS
+      :choices: integer, ALL_CPUS
+      :default: ALL_CPUS
+
+      Determines the number of threads used when an operation reads from
+      multiple sources.
+
+This can also be specified globally with the :config:`VRT_NUM_THREADS`
+configuration option.
+
+-  .. config:: VRT_NUM_THREADS
+      :choices: integer, ALL_CPUS
+      :default: ALL_CPUS
+
+      Determines the number of threads used when an operation reads from
+      multiple sources.
+
+Note that the number of threads actually used is also limited by the
+:config:`GDAL_MAX_DATASET_POOL_SIZE` configuration option.
 
 Multi-threading issues
 ----------------------

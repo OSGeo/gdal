@@ -8,23 +8,7 @@
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrsf_frmts.h"
@@ -38,6 +22,7 @@
 
 #include "cpl_time.h"
 #include <cassert>
+#include <cmath>
 #include <limits>
 #include <set>
 
@@ -348,8 +333,8 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent,
         else if (!bExtentSet)
         {
             poGeom->getEnvelope(psExtent);
-            if (!(CPLIsNan(psExtent->MinX) || CPLIsNan(psExtent->MinY) ||
-                  CPLIsNan(psExtent->MaxX) || CPLIsNan(psExtent->MaxY)))
+            if (!(std::isnan(psExtent->MinX) || std::isnan(psExtent->MinY) ||
+                  std::isnan(psExtent->MaxX) || std::isnan(psExtent->MaxY)))
             {
                 bExtentSet = true;
             }
@@ -1942,9 +1927,11 @@ void OGR_L_ResetReading(OGRLayerH hLayer)
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-OGRErr OGRLayer::InitializeIndexSupport(const char *pszFilename)
+OGRErr
+OGRLayer::InitializeIndexSupport([[maybe_unused]] const char *pszFilename)
 
 {
+#ifdef HAVE_MITAB
     OGRErr eErr;
 
     if (m_poAttrIndex != nullptr)
@@ -1960,6 +1947,9 @@ OGRErr OGRLayer::InitializeIndexSupport(const char *pszFilename)
     }
 
     return eErr;
+#else
+    return OGRERR_FAILURE;
+#endif
 }
 
 //! @endcond
@@ -2551,7 +2541,9 @@ static OGRGeometry *set_filter_from(OGRLayer *pLayer,
 static OGRGeometry *promote_to_multi(OGRGeometry *poGeom)
 {
     OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
-    if (eType == wkbPolygon)
+    if (eType == wkbPoint)
+        return OGRGeometryFactory::forceToMultiPoint(poGeom);
+    else if (eType == wkbPolygon)
         return OGRGeometryFactory::forceToMultiPolygon(poGeom);
     else if (eType == wkbLineString)
         return OGRGeometryFactory::forceToMultiLineString(poGeom);
@@ -2587,23 +2579,32 @@ static OGRGeometry *promote_to_multi(OGRGeometry *poGeom)
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
+ * </li>
  * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
  *     with features of this layer.
+ * </li>
  * <li>PRETEST_CONTAINMENT=YES/NO. Set to YES to pretest the
  *     containment of features of method layer within the features of
  *     this layer. This will speed up the method significantly in some
  *     cases. Requires that the prepared geometries are in effect.
+ * </li>
  * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
  *     result features with lower dimension geometry that would
- *     otherwise be added to the result layer. The default is to add
- *     but only if the result layer has an unknown geometry type.
+ *     otherwise be added to the result layer. The default is YES, to add
+ *     features with lower dimension geometry, but only if the result layer
+ *     has an unknown geometry type.
+ * </li>
  * </ul>
  *
  * This method is the same as the C function OGR_L_Intersection().
@@ -2645,22 +2646,22 @@ OGRErr OGRLayer::Intersection(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
     double progress_max = static_cast<double>(GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures =
+    const bool bSkipFailures =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CPLTestBool(
+    const bool bPromoteToMulti = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
-    int bUsePreparedGeometries = CPLTestBool(
+    const bool bUsePreparedGeometries = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "USE_PREPARED_GEOMETRIES", "YES"));
-    if (bUsePreparedGeometries)
-        bUsePreparedGeometries = OGRHasPreparedGeometrySupport();
-    int bPretestContainment = CPLTestBool(
+    const bool bPretestContainment = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PRETEST_CONTAINMENT", "NO"));
-    int bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(
+    bool bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(
         papszOptions, "KEEP_LOWER_DIMENSION_GEOMETRIES", "YES"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRLayer::Intersection() requires GEOS support");
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
@@ -2687,7 +2688,7 @@ OGRErr OGRLayer::Intersection(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         {
             CPLDebug("OGR", "Resetting KEEP_LOWER_DIMENSION_GEOMETRIES to NO "
                             "since the result layer does not allow it.");
-            bKeepLowerDimGeom = FALSE;
+            bKeepLowerDimGeom = false;
         }
     }
 
@@ -2900,23 +2901,32 @@ done:
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
  *     with features of this layer.
+ * </li>
  * <li>PRETEST_CONTAINMENT=YES/NO. Set to YES to pretest the
  *     containment of features of method layer within the features of
  *     this layer. This will speed up the method significantly in some
  *     cases. Requires that the prepared geometries are in effect.
+ * </li>
  * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
  *     result features with lower dimension geometry that would
- *     otherwise be added to the result layer. The default is to add
- *     but only if the result layer has an unknown geometry type.
+ *     otherwise be added to the result layer. The default is YES, to add
+ *     features with lower dimension geometry, but only if the result layer
+ *     has an unknown geometry type.
+ * </li>
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Intersection().
@@ -2992,19 +3002,27 @@ OGRErr OGR_L_Intersection(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
  *     with features of this layer.
+ * </li>
  * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
  *     result features with lower dimension geometry that would
- *     otherwise be added to the result layer. The default is to add
- *     but only if the result layer has an unknown geometry type.
+ *     otherwise be added to the result layer. The default is YES, to add
+ *     features with lower dimension geometry, but only if the result layer
+ *     has an unknown geometry type.
+ * </li>
  * </ul>
  *
  * This method is the same as the C function OGR_L_Union().
@@ -3047,20 +3065,20 @@ OGRErr OGRLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         static_cast<double>(pLayerMethod->GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures =
+    const bool bSkipFailures =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CPLTestBool(
+    const bool bPromoteToMulti = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
-    int bUsePreparedGeometries = CPLTestBool(
+    const bool bUsePreparedGeometries = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "USE_PREPARED_GEOMETRIES", "YES"));
-    if (bUsePreparedGeometries)
-        bUsePreparedGeometries = OGRHasPreparedGeometrySupport();
-    int bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(
+    bool bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(
         papszOptions, "KEEP_LOWER_DIMENSION_GEOMETRIES", "YES"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRLayer::Union() requires GEOS support");
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
@@ -3438,19 +3456,27 @@ done:
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
  *     with features of this layer.
+ * </li>
  * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
  *     result features with lower dimension geometry that would
- *     otherwise be added to the result layer. The default is to add
- *     but only if the result layer has an unknown geometry type.
+ *     otherwise be added to the result layer. The default is YES, to add
+ *     features with lower dimension geometry, but only if the result layer
+ *     has an unknown geometry type.
+ * </li>
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Union().
@@ -3524,12 +3550,16 @@ OGRErr OGR_L_Union(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
+ * </li>
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * </ul>
  *
  * This method is the same as the C function OGR_L_SymDifference().
@@ -3572,14 +3602,16 @@ OGRErr OGRLayer::SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         static_cast<double>(pLayerMethod->GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures =
+    const bool bSkipFailures =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CPLTestBool(
+    const bool bPromoteToMulti = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRLayer::SymDifference() requires GEOS support");
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
@@ -3852,12 +3884,17 @@ done:
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::SymDifference().
@@ -3932,19 +3969,27 @@ OGRErr OGR_L_SymDifference(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
  *     with features of this layer.
+ * </li>
  * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
  *     result features with lower dimension geometry that would
- *     otherwise be added to the result layer. The default is to add
- *     but only if the result layer has an unknown geometry type.
+ *     otherwise be added to the result layer. The default is YES, to add
+ *     features with lower dimension geometry, but only if the result layer
+ *     has an unknown geometry type.
+ * </li>
  * </ul>
  *
  * This method is the same as the C function OGR_L_Identity().
@@ -3984,20 +4029,20 @@ OGRErr OGRLayer::Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
     double progress_max = static_cast<double>(GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures =
+    const bool bSkipFailures =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CPLTestBool(
+    const bool bPromoteToMulti = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
-    int bUsePreparedGeometries = CPLTestBool(
+    const bool bUsePreparedGeometries = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "USE_PREPARED_GEOMETRIES", "YES"));
-    if (bUsePreparedGeometries)
-        bUsePreparedGeometries = OGRHasPreparedGeometrySupport();
-    int bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(
+    bool bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(
         papszOptions, "KEEP_LOWER_DIMENSION_GEOMETRIES", "YES"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRLayer::Identity() requires GEOS support");
         return OGRERR_UNSUPPORTED_OPERATION;
     }
     if (bKeepLowerDimGeom)
@@ -4258,19 +4303,27 @@ done:
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * <li>USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
  *     geometries to pretest intersection of features of method layer
  *     with features of this layer.
+ * </li>
  * <li>KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip
  *     result features with lower dimension geometry that would
- *     otherwise be added to the result layer. The default is to add
- *     but only if the result layer has an unknown geometry type.
+ *     otherwise be added to the result layer. The default is YES, to add
+ *     features with lower dimension geometry, but only if the result layer
+ *     has an unknown geometry type.
+ * </li>
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Identity().
@@ -4344,12 +4397,17 @@ OGRErr OGR_L_Identity(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * </ul>
  *
  * This method is the same as the C function OGR_L_Update().
@@ -4391,14 +4449,16 @@ OGRErr OGRLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         static_cast<double>(pLayerMethod->GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures =
+    const bool bSkipFailures =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CPLTestBool(
+    const bool bPromoteToMulti = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRLayer::Update() requires GEOS support");
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
@@ -4609,12 +4669,17 @@ done:
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Update().
@@ -4681,12 +4746,17 @@ OGRErr OGR_L_Update(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * </ul>
  *
  * This method is the same as the C function OGR_L_Clip().
@@ -4724,14 +4794,16 @@ OGRErr OGRLayer::Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
     double progress_max = static_cast<double>(GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures =
+    const bool bSkipFailures =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CPLTestBool(
+    const bool bPromoteToMulti = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRLayer::Clip() requires GEOS support");
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
@@ -4906,12 +4978,17 @@ done:
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Clip().
@@ -4978,12 +5055,17 @@ OGRErr OGR_L_Clip(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * </ul>
  *
  * This method is the same as the C function OGR_L_Erase().
@@ -5021,14 +5103,16 @@ OGRErr OGRLayer::Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
     double progress_max = static_cast<double>(GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;
-    int bSkipFailures =
+    const bool bSkipFailures =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
-    int bPromoteToMulti = CPLTestBool(
+    const bool bPromoteToMulti = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRLayer::Erase() requires GEOS support");
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
@@ -5182,12 +5266,17 @@ done:
  * <ul>
  * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
  *     feature could not be inserted or a GEOS call failed.
- * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
- *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </li>
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
+ *     into MultiPolygons, LineStrings to MultiLineStrings or
+ *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
+ * </li>
  * <li>METHOD_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the method layer.
+ * </li>
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Erase().
@@ -5563,7 +5652,7 @@ OGRLayer::GetSupportedSRSList(CPL_UNUSED int iGeomField)
  * @param hLayer Layer.
  * @param iGeomField Geometry field index.
  * @param[out] pnCount Number of values in returned array. Must not be null.
- * @return list of supported SRS, to be freeds with OSRFreeSRSArray(), or
+ * @return list of supported SRS, to be freed with OSRFreeSRSArray(), or
  * nullptr
  * @since GDAL 3.7
  */
@@ -5607,9 +5696,10 @@ OGRSpatialReferenceH *OGR_L_GetSupportedSRSList(OGRLayerH hLayer,
  * <ul>
  * <li>the SRS in which geometries of returned features are expressed,</li>
  * <li>the SRS in which geometries of passed features (CreateFeature(),
- * SetFeature()) are expressed,</li> <li>the SRS returned by GetSpatialRef() and
- * GetGeomFieldDefn()->GetSpatialRef(),</li> <li>the SRS used to interpret
- * SetSpatialFilter() values.</li>
+ * SetFeature()) are expressed,</li>
+ * <li>the SRS returned by GetSpatialRef() and
+ * GetGeomFieldDefn()->GetSpatialRef(),</li>
+ * <li>the SRS used to interpret SetSpatialFilter() values.</li>
  * </ul>
  * This also resets feature reading and the spatial filter.
  * Note however that this does not modify the storage SRS of the features of
@@ -5642,9 +5732,10 @@ OGRErr OGRLayer::SetActiveSRS(CPL_UNUSED int iGeomField,
  * <ul>
  * <li>the SRS in which geometries of returned features are expressed,</li>
  * <li>the SRS in which geometries of passed features (CreateFeature(),
- * SetFeature()) are expressed,</li> <li>the SRS returned by GetSpatialRef() and
- * GetGeomFieldDefn()->GetSpatialRef(),</li> <li>the SRS used to interpret
- * SetSpatialFilter() values.</li>
+ * SetFeature()) are expressed,</li>
+ * <li>the SRS returned by GetSpatialRef() and
+ * GetGeomFieldDefn()->GetSpatialRef(),</li>
+ * <li>the SRS used to interpret SetSpatialFilter() values.</li>
  * </ul>
  * This also resets feature reading and the spatial filter.
  * Note however that this does not modify the storage SRS of the features of

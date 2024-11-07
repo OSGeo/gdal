@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_ODS_H_INCLUDED
@@ -54,6 +38,9 @@ class OGRODSLayer final : public OGRMemLayer
     bool bUpdated;
     bool bHasHeaderLine;
     OGRFeatureQuery *m_poAttrQueryODS;
+
+    GIntBig TranslateFIDFromMemLayer(GIntBig nFID) const;
+    GIntBig TranslateFIDToMemLayer(GIntBig nFID) const;
 
   public:
     OGRODSLayer(OGRODSDataSource *poDSIn, const char *pszName,
@@ -91,6 +78,11 @@ class OGRODSLayer final : public OGRMemLayer
     virtual OGRFeature *GetNextFeature() override;
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                          const int *panUpdatedFieldsIdx,
+                          int nUpdatedGeomFieldsCount,
+                          const int *panUpdatedGeomFieldsIdx,
+                          bool bUpdateStyleString) override;
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
 
     virtual GIntBig GetFeatureCount(int) override;
@@ -111,11 +103,7 @@ class OGRODSLayer final : public OGRMemLayer
         return OGRMemLayer::ISetFeature(poFeature);
     }
 
-    OGRErr ICreateFeature(OGRFeature *poFeature) override
-    {
-        SetUpdated();
-        return OGRMemLayer::ICreateFeature(poFeature);
-    }
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override

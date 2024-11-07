@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -66,6 +50,15 @@ def test_basic_test_1():
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
     pytest.fail("did not get expected error message, got %s" % gdal.GetLastErrorMsg())
+
+
+def test_basic_test_invalid_open_flag():
+    with pytest.raises(Exception, match="invalid value for GDALAccess"):
+        gdal.Open("data/byte.tif", "invalid")
+
+    assert gdal.OF_RASTER not in (gdal.GA_ReadOnly, gdal.GA_Update)
+    with pytest.raises(Exception, match="invalid value for GDALAccess"):
+        gdal.Open("data/byte.tif", gdal.OF_RASTER)
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
@@ -183,17 +176,20 @@ def test_basic_test_8():
         license_text.startswith("GDAL/OGR is released under the MIT license")
         or "GDAL/OGR Licensing" in license_text
     )
+    if "EMBED_RESOURCE_FILES=YES" in gdal.VersionInfo("BUILD_INFO"):
+        assert len(license_text) > 1000
 
-    # Use a subprocess to avoid the cached license text
-    env = os.environ.copy()
-    env["GDAL_DATA"] = "tmp"
-    with open("tmp/LICENSE.TXT", "wt") as f:
-        f.write("fake_license")
-    license_text = subprocess.check_output(
-        [sys.executable, "basic_test_subprocess.py"], env=env
-    ).decode("utf-8")
-    os.unlink("tmp/LICENSE.TXT")
-    assert license_text.startswith("fake_license")
+    if "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES" not in gdal.VersionInfo("BUILD_INFO"):
+        # Use a subprocess to avoid the cached license text
+        env = os.environ.copy()
+        env["GDAL_DATA"] = "tmp"
+        with open("tmp/LICENSE.TXT", "wt") as f:
+            f.write("fake_license")
+        license_text = subprocess.check_output(
+            [sys.executable, "basic_test_subprocess.py"], env=env
+        ).decode("utf-8")
+        os.unlink("tmp/LICENSE.TXT")
+        assert license_text.startswith("fake_license")
 
 
 ###############################################################################
@@ -981,3 +977,13 @@ def test_band_getitem():
 
     with pytest.raises(IndexError):
         ds[5]
+
+
+def test_colorinterp():
+
+    d = {}
+    for c in range(gdal.GCI_Max + 1):
+        name = gdal.GetColorInterpretationName(c)
+        assert name not in d
+        d[name] = c
+        assert gdal.GetColorInterpretationByName(name) == c

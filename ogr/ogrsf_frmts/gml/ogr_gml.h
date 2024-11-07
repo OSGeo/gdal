@@ -10,23 +10,7 @@
  * Copyright (c) 2002, Frank Warmerdam
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_GML_H_INCLUDED
@@ -61,7 +45,6 @@ class OGRGMLLayer final : public OGRLayer
     char *pszFIDPrefix;
 
     bool bWriter;
-    bool bSameSRS;
 
     OGRGMLDataSource *poDS;
 
@@ -72,6 +55,8 @@ class OGRGMLLayer final : public OGRLayer
     bool bUseOldFIDFormat;
 
     bool bFaceHoleNegative;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGMLLayer)
 
   public:
     OGRGMLLayer(const char *pszName, bool bWriter, OGRGMLDataSource *poDS);
@@ -111,12 +96,10 @@ class OGRGMLLayer final : public OGRLayer
 /*                           OGRGMLDataSource                           */
 /************************************************************************/
 
-class OGRGMLDataSource final : public OGRDataSource
+class OGRGMLDataSource final : public GDALDataset
 {
     OGRLayer **papoLayers;
     int nLayers;
-
-    char *pszName;
 
     OGRGMLLayer *TranslateGMLSchema(GMLFeatureClass *);
 
@@ -126,7 +109,7 @@ class OGRGMLDataSource final : public OGRDataSource
     VSILFILE *fpOutput;
     bool bFpOutputIsNonSeekable;
     bool bFpOutputSingleFile;
-    OGREnvelope3D sBoundingRect;
+    OGREnvelope3D sBoundingRect{};
     bool bBBOX3D;
     int nBoundedByLocation;
 
@@ -137,12 +120,19 @@ class OGRGMLDataSource final : public OGRDataSource
     OGRGMLSRSNameFormat eSRSNameFormat;
     bool bWriteSpaceIndentation;
 
-    OGRSpatialReference *poWriteGlobalSRS;
-    bool bWriteGlobalSRS;
+    //! Whether all geometry fields of all layers have the same SRS (or no SRS at all)
+    bool m_bWriteGlobalSRS = true;
+
+    //! The global SRS (may be null), that is valid only if m_bWriteGlobalSRS == true
+    std::unique_ptr<OGRSpatialReference> m_poWriteGlobalSRS{};
+
+    //! Whether at least one geometry field has been created
+    bool m_bWriteGlobalSRSInit = false;
 
     // input related parameters.
-    CPLString osFilename;
-    CPLString osXSDFilename;
+    CPLString osFilename{};
+    CPLString osXSDFilename{};
+    bool m_bUnlinkXSDFilename = false;
 
     IGMLReader *poReader;
     bool bOutIsTempFile;
@@ -179,17 +169,14 @@ class OGRGMLDataSource final : public OGRDataSource
 
     void WriteTopElements();
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRGMLDataSource)
+
   public:
     OGRGMLDataSource();
     virtual ~OGRGMLDataSource();
 
     bool Open(GDALOpenInfo *poOpenInfo);
     bool Create(const char *pszFile, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return pszName;
-    }
 
     int GetLayerCount() override
     {
@@ -299,6 +286,13 @@ class OGRGMLDataSource final : public OGRDataSource
     bool WriteFeatureBoundedBy() const;
     const char *GetSRSDimensionLoc() const;
     bool GMLFeatureCollection() const;
+
+    void DeclareNewWriteSRS(const OGRSpatialReference *poSRS);
+
+    bool HasWriteGlobalSRS() const
+    {
+        return m_bWriteGlobalSRS;
+    }
 
     virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                                  OGRGeometry *poSpatialFilter,

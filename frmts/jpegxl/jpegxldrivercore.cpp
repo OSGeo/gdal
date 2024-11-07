@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2023, Even Rouault, <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "jpegxldrivercore.h"
@@ -112,13 +96,13 @@ void JPEGXLDriverSetCommonMetadata(GDALDriver *poDriver)
         "1(fast)-9(slow)' default='5'/>"
         "   <Option name='DISTANCE' type='float' description='Distance level "
         "for lossy compression (0=mathematically lossless, 1.0=visually "
-        "lossless, usual range [0.5,3])' default='1.0' min='0.1' max='15.0'/>"
+        "lossless, usual range [0.5,3])' default='1.0' min='0.01' max='25.0'/>"
 #ifdef HAVE_JxlEncoderSetExtraChannelDistance
         "  <Option name='ALPHA_DISTANCE' type='float' "
         "description='Distance level for alpha channel "
         "(-1=same as non-alpha channels, "
         "0=mathematically lossless, 1.0=visually lossless, "
-        "usual range [0.5,3])' default='-1' min='-1' max='15.0'/>"
+        "usual range [0.5,3])' default='-1' min='-1' max='25.0'/>"
 #endif
         "   <Option name='QUALITY' type='float' description='Alternative "
         "setting to DISTANCE to specify lossy compression, roughly matching "

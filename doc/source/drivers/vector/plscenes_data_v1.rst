@@ -133,7 +133,7 @@ The following configuration options are available:
 Attributes
 ----------
 
-The layer field definition is built from the "plscensconf.json" file in
+The layer field definition is built from the "plscenesconf.json" file in
 the GDAL configuration. The links to downloadable products are in
 *asset_XXXXX_location* attributes where XXXXX is the asset category id,
 when they are active. Otherwise they should be activated by sending a

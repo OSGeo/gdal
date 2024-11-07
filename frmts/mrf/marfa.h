@@ -292,6 +292,7 @@ ILOrder OrderToken(const char *, ILOrder def = IL_ERR_ORD);
 CPLString getFname(CPLXMLNode *, const char *, const CPLString &, const char *);
 CPLString getFname(const CPLString &, const char *);
 double getXMLNum(CPLXMLNode *, const char *, double);
+// Offset of index, pos is in pages
 GIntBig IdxOffset(const ILSize &, const ILImage &);
 double logbase(double val, double base);
 int IsPower(double value, double base);
@@ -343,9 +344,6 @@ typedef struct
     VSILFILE *FP;
     GDALRWFlag acc;
 } VF;
-
-// Offset of index, pos is in pages
-GIntBig IdxOffset(const ILSize &pos, const ILImage &img);
 
 enum
 {
@@ -556,6 +554,7 @@ class MRFDataset final : public GDALPamDataset
 
     // MRF file name
     CPLString fname;
+    CPLString publicname;
 
     // The source to be cached in this MRF
     CPLString source;
@@ -966,11 +965,11 @@ class LERC_Band final : public MRFRasterBand
   protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
-    double precision;
+    double precision = 0;
     // L1 or L2
-    int version;
+    int version = 0;
     // L2 version
-    int l2ver;
+    int l2ver = 0;
     // Build a MRF header for a single LERC tile
     static CPLXMLNode *GetMRFConfig(GDALOpenInfo *poOpenInfo);
 

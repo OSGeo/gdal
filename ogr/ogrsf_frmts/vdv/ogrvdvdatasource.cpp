@@ -7,29 +7,17 @@
  ******************************************************************************
  * Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_vdv.h"
 #include "cpl_conv.h"
 #include "cpl_time.h"
 #include <map>
+
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
 
 #ifndef STARTS_WITH_CI
 #define STARTS_WITH(a, b) (strncmp(a, b, strlen(b)) == 0)
@@ -1048,7 +1036,7 @@ OGRFeature *OGRVDVLayer::GetNextFeature()
                     osToken = papszTokens[i];
                 // Strip trailing spaces
                 while (!osToken.empty() && osToken.back() == ' ')
-                    osToken.resize(osToken.size() - 1);
+                    osToken.pop_back();
                 OGRFieldType eFieldType =
                     m_poFeatureDefn->GetFieldDefn(i)->GetType();
                 if (m_bRecodeFromLatin1 && eFieldType == OFTString)
@@ -1718,14 +1706,34 @@ static bool OGRVDVWriteHeader(VSILFILE *fpL, CSLConstList papszOptions)
 
 static bool OGRVDVLoadVDV452Tables(OGRVDV452Tables &oTables)
 {
+    CPLXMLNode *psRoot = nullptr;
+#if defined(USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    const char *pszXMLDescFilename = nullptr;
+#else
     const char *pszXMLDescFilename = CPLFindFile("gdal", "vdv452.xml");
-    if (pszXMLDescFilename == nullptr)
+#endif
+    if (pszXMLDescFilename == nullptr ||
+        EQUAL(pszXMLDescFilename, "vdv452.xml"))
     {
+#ifdef EMBED_RESOURCE_FILES
+        static const bool bOnce [[maybe_unused]] = []()
+        {
+            CPLDebug("VDV", "Using embedded vdv452.xml");
+            return true;
+        }();
+        psRoot = CPLParseXMLString(VDVGet452XML());
+#else
         CPLDebug("VDV", "Cannot find XML file : %s", "vdv452.xml");
         return false;
+#endif
     }
 
-    CPLXMLNode *psRoot = CPLParseXMLFile(pszXMLDescFilename);
+#ifdef EMBED_RESOURCE_FILES
+    if (!psRoot)
+#endif
+    {
+        psRoot = CPLParseXMLFile(pszXMLDescFilename);
+    }
     if (psRoot == nullptr)
     {
         return false;

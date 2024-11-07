@@ -9,23 +9,7 @@
  ******************************************************************************
  * Copyright (c) 2016, Even Rouault, <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_gmlas.h"
@@ -33,6 +17,10 @@
 #include "cpl_minixml.h"
 
 #include <algorithm>
+
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
 
 /************************************************************************/
 /*                        GetBaseCacheDirectory()                       */
@@ -212,6 +200,40 @@ static void ParseNamespaces(CPLXMLNode *psContainerNode,
 }
 
 /************************************************************************/
+/*                           GetDefaultConfFile()                       */
+/************************************************************************/
+
+/* static */
+std::string GMLASConfiguration::GetDefaultConfFile(bool &bUnlinkAfterUse)
+{
+    bUnlinkAfterUse = false;
+#if !defined(USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    const char *pszConfigFile = CPLFindFile("gdal", szDEFAULT_CONF_FILENAME);
+    if (pszConfigFile)
+        return pszConfigFile;
+#endif
+#ifdef EMBED_RESOURCE_FILES
+    static const bool bOnce [[maybe_unused]] = []()
+    {
+        CPLDebug("GMLAS", "Using embedded %s", szDEFAULT_CONF_FILENAME);
+        return true;
+    }();
+    bUnlinkAfterUse = true;
+    const std::string osTmpFilename =
+        VSIMemGenerateHiddenFilename(szDEFAULT_CONF_FILENAME);
+    VSIFCloseL(VSIFileFromMemBuffer(
+        osTmpFilename.c_str(),
+        const_cast<GByte *>(
+            reinterpret_cast<const GByte *>(GMLASConfXMLGetFileContent())),
+        static_cast<int>(strlen(GMLASConfXMLGetFileContent())),
+        /* bTakeOwnership = */ false));
+    return osTmpFilename;
+#else
+    return std::string();
+#endif
+}
+
+/************************************************************************/
 /*                                 Load()                               */
 /************************************************************************/
 
@@ -232,8 +254,35 @@ bool GMLASConfiguration::Load(const char *pszFilename)
     // Validate the configuration file
     if (CPLTestBool(CPLGetConfigOption("GDAL_XML_VALIDATION", "YES")))
     {
+#ifdef EMBED_RESOURCE_FILES
+        std::string osTmpFilename;
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+#endif
+#ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
+        const char *pszXSD = nullptr;
+#else
         const char *pszXSD = CPLFindFile("gdal", "gmlasconf.xsd");
-        if (pszXSD != nullptr)
+#endif
+#ifdef EMBED_RESOURCE_FILES
+        if (!pszXSD)
+        {
+            static const bool bOnce [[maybe_unused]] = []()
+            {
+                CPLDebug("GMLAS", "Using embedded gmlasconf.xsd");
+                return true;
+            }();
+            osTmpFilename = VSIMemGenerateHiddenFilename("gmlasconf.xsd");
+            pszXSD = osTmpFilename.c_str();
+            VSIFCloseL(VSIFileFromMemBuffer(
+                osTmpFilename.c_str(),
+                const_cast<GByte *>(reinterpret_cast<const GByte *>(
+                    GMLASConfXSDGetFileContent())),
+                static_cast<int>(strlen(GMLASConfXSDGetFileContent())),
+                /* bTakeOwnership = */ false));
+        }
+#else
+        if (pszXSD)
+#endif
         {
             std::vector<CPLString> aosErrors;
             const CPLErr eErrClass = CPLGetLastErrorType();
@@ -257,6 +306,11 @@ bool GMLASConfiguration::Load(const char *pszFilename)
                 CPLErrorSetState(eErrClass, nErrNum, osErrMsg);
             }
         }
+
+#ifdef EMBED_RESOURCE_FILES
+        if (!osTmpFilename.empty())
+            VSIUnlink(osTmpFilename.c_str());
+#endif
     }
 
     m_bAllowRemoteSchemaDownload =

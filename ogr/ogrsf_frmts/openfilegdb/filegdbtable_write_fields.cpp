@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -151,7 +135,7 @@ bool FileGDBTable::CreateField(std::unique_ptr<FileGDBField> &&psField)
             m_nNullableFieldsSizeInBytes =
                 BIT_ARRAY_SIZE_IN_BYTES(m_nCountNullableFields);
         }
-        m_apoFields.resize(m_apoFields.size() - 1);
+        m_apoFields.pop_back();
         m_bDirtyFieldDescriptors = true;
         return false;
     }
@@ -170,7 +154,7 @@ bool FileGDBTable::RewriteTableToAddLastAddedField()
     {
         nOldCountNullableFields--;
     }
-    const int nOldNullableFieldsSizeInBytes =
+    const unsigned nOldNullableFieldsSizeInBytes =
         BIT_ARRAY_SIZE_IN_BYTES(nOldCountNullableFields);
     int nExtraBytes = 0;
     if (nOldNullableFieldsSizeInBytes != m_nNullableFieldsSizeInBytes)
@@ -320,7 +304,7 @@ bool FileGDBTable::RewriteTableToAddLastAddedField()
                     return false;
 
                 // Write updated feature data
-                if (nOldNullableFieldsSizeInBytes > 0)
+                if (nOldNullableFieldsSizeInBytes != 0)
                 {
                     if (VSIFWriteL(m_abyBuffer.data(),
                                    nOldNullableFieldsSizeInBytes, 1,
@@ -336,7 +320,7 @@ bool FileGDBTable::RewriteTableToAddLastAddedField()
                                    oWholeFileRewriter.m_fpTable) != 1)
                         return false;
                 }
-                if (nFeatureSize - nOldNullableFieldsSizeInBytes > 0)
+                if (nFeatureSize > nOldNullableFieldsSizeInBytes)
                 {
                     if (VSIFWriteL(m_abyBuffer.data() +
                                        nOldNullableFieldsSizeInBytes,

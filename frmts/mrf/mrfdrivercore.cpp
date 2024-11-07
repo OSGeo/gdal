@@ -97,6 +97,14 @@ int MRFDriverIdentify(GDALOpenInfo *poOpenInfo)
         return TRUE;
 #endif
 
+    // accept a tar file if the first file has no folder look like an MRF
+    if (poOpenInfo->eAccess == GA_ReadOnly && fn.size() > 600 &&
+        (fn[262] == 0 || fn[262] == 32) && STARTS_WITH(fn + 257, "ustar") &&
+        strlen(CPLGetPath(fn)) == 0 && STARTS_WITH(fn + 512, "<MRF_META>"))
+    {
+        return TRUE;
+    }
+
     return FALSE;
 }
 
@@ -123,8 +131,9 @@ void MRFDriverSetCommonMetadata(GDALDriver *poDriver)
         "</OpenOptionList>");
 
     // These will need to be revisited, do we support complex data types too?
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Int16 Int32 UInt32 Float32 Float64");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONDATATYPES,
+        "Byte Int8 Int16 UInt16 Int32 UInt32 Int64 UInt64 Float32 Float64");
 
     poDriver->pfnIdentify = MRFDriverIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdalcachedpixelaccessor.h"
@@ -53,13 +37,14 @@ class GDALGeoLocDatasetAccessors
     bool LoadGeoloc(bool bIsRegularGrid);
 
   public:
-    static constexpr int TILE_SIZE = 1024;
+    static constexpr int TILE_SIZE = 256;
+    static constexpr int TILE_COUNT = 64;
 
-    GDALCachedPixelAccessor<double, TILE_SIZE> geolocXAccessor;
-    GDALCachedPixelAccessor<double, TILE_SIZE> geolocYAccessor;
-    GDALCachedPixelAccessor<float, TILE_SIZE> backMapXAccessor;
-    GDALCachedPixelAccessor<float, TILE_SIZE> backMapYAccessor;
-    GDALCachedPixelAccessor<float, TILE_SIZE> backMapWeightAccessor;
+    GDALCachedPixelAccessor<double, TILE_SIZE, TILE_COUNT> geolocXAccessor;
+    GDALCachedPixelAccessor<double, TILE_SIZE, TILE_COUNT> geolocYAccessor;
+    GDALCachedPixelAccessor<float, TILE_SIZE, TILE_COUNT> backMapXAccessor;
+    GDALCachedPixelAccessor<float, TILE_SIZE, TILE_COUNT> backMapYAccessor;
+    GDALCachedPixelAccessor<float, TILE_SIZE, TILE_COUNT> backMapWeightAccessor;
 
     explicit GDALGeoLocDatasetAccessors(GDALGeoLocTransformInfo *psTransform)
         : m_psTransform(psTransform), geolocXAccessor(nullptr),
@@ -117,10 +102,14 @@ bool GDALGeoLocDatasetAccessors::AllocateBackMap()
     if (poDriver == nullptr)
         return false;
 
+    // CPLResetExtension / CPLGenerateTempFilename generate short-lived strings,
+    // so store them in a long-lived std::string
+    const std::string osBackmapTmpFilename =
+        CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif");
     m_poBackmapTmpDataset = poDriver->Create(
-        CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif"),
-        m_psTransform->nBackMapWidth, m_psTransform->nBackMapHeight, 2,
-        GDT_Float32, m_aosGTiffCreationOptions.List());
+        osBackmapTmpFilename.c_str(), m_psTransform->nBackMapWidth,
+        m_psTransform->nBackMapHeight, 2, GDT_Float32,
+        m_aosGTiffCreationOptions.List());
     if (m_poBackmapTmpDataset == nullptr)
     {
         return false;
@@ -133,10 +122,14 @@ bool GDALGeoLocDatasetAccessors::AllocateBackMap()
     backMapXAccessor.SetBand(poBandX);
     backMapYAccessor.SetBand(poBandY);
 
+    // CPLResetExtension / CPLGenerateTempFilename generate short-lived strings,
+    // so store them in a long-lived std::string
+    const std::string osBackmapWeightsTmpFilename =
+        CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif");
     m_poBackmapWeightsTmpDataset = poDriver->Create(
-        CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif"),
-        m_psTransform->nBackMapWidth, m_psTransform->nBackMapHeight, 1,
-        GDT_Float32, m_aosGTiffCreationOptions.List());
+        osBackmapWeightsTmpFilename.c_str(), m_psTransform->nBackMapWidth,
+        m_psTransform->nBackMapHeight, 1, GDT_Float32,
+        m_aosGTiffCreationOptions.List());
     if (m_poBackmapWeightsTmpDataset == nullptr)
     {
         return false;
@@ -214,9 +207,13 @@ bool GDALGeoLocDatasetAccessors::LoadGeoloc(bool bIsRegularGrid)
         if (poDriver == nullptr)
             return false;
 
-        m_poGeolocTmpDataset = poDriver->Create(
-            CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif"), nXSize,
-            nYSize, 2, GDT_Float64, m_aosGTiffCreationOptions.List());
+        // CPLResetExtension / CPLGenerateTempFilename generate short-lived
+        // strings, so store them in a long-lived std::string
+        const std::string osGeolocTmpFilename =
+            CPLResetExtension(CPLGenerateTempFilename(nullptr), "tif");
+        m_poGeolocTmpDataset =
+            poDriver->Create(osGeolocTmpFilename.c_str(), nXSize, nYSize, 2,
+                             GDT_Float64, m_aosGTiffCreationOptions.List());
         if (m_poGeolocTmpDataset == nullptr)
         {
             return false;

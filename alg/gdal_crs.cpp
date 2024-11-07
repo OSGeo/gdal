@@ -220,6 +220,22 @@ static void *GDALCreateGCPTransformerEx(int nGCPCount,
     psInfo->nRefCount = 1;
 
     psInfo->asGCPs = gdal::GCP::fromC(pasGCPList, nGCPCount);
+    if (nGCPCount == 2 && nReqOrder == 1 &&
+        psInfo->asGCPs[0].X() != psInfo->asGCPs[1].X() &&
+        psInfo->asGCPs[0].Y() != psInfo->asGCPs[1].Y())
+    {
+        // Assumes that the 2 GCPs form opposite corners of a rectangle,
+        // and synthetize a 3rd corner
+        gdal::GCP newGCP;
+        newGCP.X() = psInfo->asGCPs[1].X();
+        newGCP.Y() = psInfo->asGCPs[0].Y();
+        newGCP.Pixel() = psInfo->asGCPs[1].Pixel();
+        newGCP.Line() = psInfo->asGCPs[0].Line();
+        psInfo->asGCPs.emplace_back(std::move(newGCP));
+
+        nGCPCount = 3;
+        pasGCPList = gdal::GCP::c_ptr(psInfo->asGCPs);
+    }
 
     memcpy(psInfo->sTI.abySignature, GDAL_GTI2_SIGNATURE,
            strlen(GDAL_GTI2_SIGNATURE));

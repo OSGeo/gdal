@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_string.h"
@@ -723,13 +707,14 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
     nCommentLineCount = 0;
 
     CPLString osFilename(poOpenInfo->pszFilename);
-    if (EQUAL(CPLGetExtension(osFilename), "GRA"))
+    if (EQUAL(CPLGetExtension(osFilename), "GRA") &&
+        !poOpenInfo->IsSingleAllowedDriver("XYZ"))
     {
         // IGNFHeightASCIIGRID .GRA
         return FALSE;
     }
 
-    GDALOpenInfo *poOpenInfoToDelete = nullptr;
+    std::unique_ptr<GDALOpenInfo> poOpenInfoToDelete;  // keep in this scope
     /*  GZipped .xyz files are common, so automagically open them */
     /*  if the /vsigzip/ has not been explicitly passed */
     if (strlen(poOpenInfo->pszFilename) > 6 &&
@@ -739,13 +724,13 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
     {
         osFilename = "/vsigzip/";
         osFilename += poOpenInfo->pszFilename;
-        poOpenInfo = poOpenInfoToDelete = new GDALOpenInfo(
+        poOpenInfoToDelete = std::make_unique<GDALOpenInfo>(
             osFilename.c_str(), GA_ReadOnly, poOpenInfo->GetSiblingFiles());
+        poOpenInfo = poOpenInfoToDelete.get();
     }
 
     if (poOpenInfo->nHeaderBytes == 0)
     {
-        delete poOpenInfoToDelete;
         return FALSE;
     }
 
@@ -755,10 +740,10 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
     const char *pszData =
         reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
 
-    if (poOpenInfo->nHeaderBytes >= 4 && STARTS_WITH(pszData, "DSAA"))
+    if (poOpenInfo->nHeaderBytes >= 4 && STARTS_WITH(pszData, "DSAA") &&
+        !poOpenInfo->IsSingleAllowedDriver("XYZ"))
     {
         // Do not match GSAG datasets
-        delete poOpenInfoToDelete;
         return FALSE;
     }
 
@@ -806,7 +791,6 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
             bHasHeaderLine = TRUE;
         else
         {
-            delete poOpenInfoToDelete;
             return FALSE;
         }
     }
@@ -814,6 +798,31 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
     nXIndex = -1;
     nYIndex = -1;
     nZIndex = -1;
+    const char *pszColumnOrder = CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "COLUMN_ORDER", "AUTO");
+    if (EQUAL(pszColumnOrder, "XYZ"))
+    {
+        nXIndex = 0;
+        nYIndex = 1;
+        nZIndex = 2;
+        return TRUE;
+    }
+    else if (EQUAL(pszColumnOrder, "YXZ"))
+    {
+        nXIndex = 1;
+        nYIndex = 0;
+        nZIndex = 2;
+        return TRUE;
+    }
+    else if (!EQUAL(pszColumnOrder, "AUTO"))
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Option COLUMN_ORDER can only be XYZ, YXZ and AUTO."
+                 "%s is not valid",
+                 pszColumnOrder);
+        return FALSE;
+    }
+
     if (bHasHeaderLine)
     {
         CPLString osHeaderLine;
@@ -837,7 +846,6 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
         CSLDestroy(papszTokens);
         if (nXIndex >= 0 && nYIndex >= 0 && nZIndex >= 0)
         {
-            delete poOpenInfoToDelete;
             return TRUE;
         }
     }
@@ -878,12 +886,10 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
         }
         else
         {
-            delete poOpenInfoToDelete;
             return FALSE;
         }
     }
 
-    delete poOpenInfoToDelete;
     return bHasFoundNewLine && nMaxCols >= 3;
 }
 
@@ -960,15 +966,14 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
             nYIndex = 1;
             nZIndex = 2;
         }
-        nMinTokens = 1 + std::max(std::max(nXIndex, nYIndex), nZIndex);
     }
-    else
+    else if (nXIndex < 0 || nYIndex < 0 || nZIndex < 0)
     {
         nXIndex = 0;
         nYIndex = 1;
         nZIndex = 2;
-        nMinTokens = 3;
     }
+    nMinTokens = 1 + std::max(std::max(nXIndex, nYIndex), nZIndex);
 
     /* -------------------------------------------------------------------- */
     /*      Parse data lines                                                */
@@ -1656,9 +1661,9 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     char szFormat[50] = {'\0'};
     if (eReqDT == GDT_Int32)
-        strcpy(szFormat, "%.18g%c%.18g%c%d\n");
+        strcpy(szFormat, "%.17g%c%.17g%c%d\n");
     else
-        strcpy(szFormat, "%.18g%c%.18g%c%.18g\n");
+        strcpy(szFormat, "%.17g%c%.17g%c%.17g\n");
     const char *pszDecimalPrecision =
         CSLFetchNameValue(papszOptions, "DECIMAL_PRECISION");
     const char *pszSignificantDigits =
@@ -1821,6 +1826,17 @@ void GDALRegister_XYZ()
         "   <Option name='DECIMAL_PRECISION' type='int' description='Number of "
         "decimal places when writing floating-point numbers (%f format).'/>\n"
         "</CreationOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "   <Option name='COLUMN_ORDER' type='string-select' default='AUTO' "
+        "description='Specifies the order of the columns. It overrides the "
+        "header.'>"
+        "       <Value>AUTO</Value>"
+        "       <Value>XYZ</Value>"
+        "       <Value>YXZ</Value>"
+        "   </Option>"
+        "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 

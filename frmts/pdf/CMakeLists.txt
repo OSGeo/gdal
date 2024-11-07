@@ -19,6 +19,7 @@ add_gdal_driver(
           pdfwritabledataset.cpp
           pdfcreatefromcomposition.cpp
   CORE_SOURCES pdfdrivercore.cpp
+  STRONG_CXX_WFLAGS
   PLUGIN_CAPABLE
   NO_SHARED_SYMBOL_WITH_CORE)
 
@@ -34,13 +35,15 @@ if(TARGET gdal_PDF_core)
     endif ()
 endif()
 
-set(GDAL_DATA_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/pdfcomposition.xsd
-)
-set_property(
-  TARGET ${GDAL_LIB_TARGET_NAME}
-  APPEND
-  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+if (NOT USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    set(GDAL_DATA_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/data/pdfcomposition.xsd
+    )
+    set_property(
+      TARGET ${GDAL_LIB_TARGET_NAME}
+      APPEND
+      PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+endif()
 
 if(NOT TARGET gdal_PDF)
     return()
@@ -49,6 +52,13 @@ endif()
 gdal_standard_includes(gdal_PDF)
 target_include_directories(gdal_PDF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem
                                             ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem)
+
+if (EMBED_RESOURCE_FILES)
+    add_driver_embedded_resources(gdal_PDF GDAL_ENABLE_DRIVER_PDF_PLUGIN embedded_resources.c)
+endif()
+if (USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    target_compile_definitions(gdal_PDF PRIVATE USE_ONLY_EMBEDDED_RESOURCE_FILES)
+endif()
 
 if (GDAL_USE_POPPLER)
   gdal_target_link_libraries(gdal_PDF PRIVATE Poppler::Poppler)
@@ -76,7 +86,13 @@ if (GDAL_USE_PDFIUM)
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_PDFIUM)
   gdal_target_link_libraries(gdal_PDF PRIVATE PDFIUM::PDFIUM)
   if (UNIX)
+    find_package(JPEG REQUIRED)
+    find_package(PNG REQUIRED)
+    find_package(OpenJPEG REQUIRED)
     find_library(LCMS2_LIBRARY NAMES lcms2)
+    if(NOT LCMS2_LIBRARY)
+      message(FATAL_ERROR "LCMS2 library not found. Please install liblcms2-dev.")
+    endif()
 
     # Rather hacky... Related how we build pdfium in https://github.com/rouault/pdfium_build_gdal_3_4
     gdal_target_link_libraries(

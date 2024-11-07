@@ -9,23 +9,7 @@
  * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2015, Faza Mahamood
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -1826,10 +1810,24 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
 
             const double df2 = adfSrcWinOri[2];
             const double df3 = adfSrcWinOri[3];
-            dfSAMP_OFF *= nOXSize / df2;
-            dfLINE_OFF *= nOYSize / df3;
-            dfSAMP_SCALE *= nOXSize / df2;
-            dfLINE_SCALE *= nOYSize / df3;
+            const double dfXRatio = nOXSize / df2;
+            const double dfYRatio = nOYSize / df3;
+
+            // For line offset and pixel offset, we need to convert from RPC
+            // pixel center registration convention to GDAL pixel top-left corner
+            // registration convention by adding an initial 0.5 shift, and un-apply
+            // it after scaling.
+
+            dfSAMP_OFF += 0.5;
+            dfSAMP_OFF *= dfXRatio;
+            dfSAMP_OFF -= 0.5;
+
+            dfLINE_OFF += 0.5;
+            dfLINE_OFF *= dfYRatio;
+            dfLINE_OFF -= 0.5;
+
+            dfSAMP_SCALE *= dfXRatio;
+            dfLINE_SCALE *= dfYRatio;
 
             CPLString osField;
             osField.Printf("%.15g", dfLINE_OFF);
@@ -2385,12 +2383,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 {
                     const double dfNoData =
                         CPLAtof(psOptions->osNoData.c_str());
-                    if (dfNoData >= static_cast<double>(
-                                        std::numeric_limits<int64_t>::min()) &&
-                        dfNoData <= static_cast<double>(
-                                        std::numeric_limits<int64_t>::max()) &&
-                        dfNoData ==
-                            static_cast<double>(static_cast<int64_t>(dfNoData)))
+                    if (GDALIsValueExactAs<int64_t>(dfNoData))
                     {
                         poVRTBand->SetNoDataValueAsInt64(
                             static_cast<int64_t>(dfNoData));
@@ -2428,12 +2421,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 {
                     const double dfNoData =
                         CPLAtof(psOptions->osNoData.c_str());
-                    if (dfNoData >= static_cast<double>(
-                                        std::numeric_limits<uint64_t>::min()) &&
-                        dfNoData <= static_cast<double>(
-                                        std::numeric_limits<uint64_t>::max()) &&
-                        dfNoData == static_cast<double>(
-                                        static_cast<uint64_t>(dfNoData)))
+                    if (GDALIsValueExactAs<uint64_t>(dfNoData))
                     {
                         poVRTBand->SetNoDataValueAsUInt64(
                             static_cast<uint64_t>(dfNoData));
@@ -2554,7 +2542,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /*      Write to the output file using CopyCreate().                    */
     /* -------------------------------------------------------------------- */
     if (EQUAL(psOptions->osFormat.c_str(), "VRT") &&
-        psOptions->aosCreateOptions.empty())
+        (psOptions->aosCreateOptions.empty() ||
+         (psOptions->aosCreateOptions.size() == 2 &&
+          psOptions->aosCreateOptions.FetchNameValue("BLOCKXSIZE") &&
+          psOptions->aosCreateOptions.FetchNameValue("BLOCKYSIZE"))))
     {
         poVDS->SetDescription(pszDest);
         hOutDS = GDALDataset::ToHandle(poVDS);
@@ -2730,18 +2721,11 @@ static void CopyBandInfo(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
 
 static int GetColorInterp(const char *pszStr)
 {
-    if (EQUAL(pszStr, "red"))
-        return GCI_RedBand;
-    if (EQUAL(pszStr, "green"))
-        return GCI_GreenBand;
-    if (EQUAL(pszStr, "blue"))
-        return GCI_BlueBand;
-    if (EQUAL(pszStr, "alpha"))
-        return GCI_AlphaBand;
-    if (EQUAL(pszStr, "gray") || EQUAL(pszStr, "grey"))
-        return GCI_GrayIndex;
     if (EQUAL(pszStr, "undefined"))
         return GCI_Undefined;
+    const int eInterp = GDALGetColorInterpretationByName(pszStr);
+    if (eInterp != GCI_Undefined)
+        return eInterp;
     CPLError(CE_Warning, CPLE_NotSupported,
              "Unsupported color interpretation: %s", pszStr);
     return -1;
@@ -3039,19 +3023,6 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
 
     argParser->add_argument("-a_nodata")
         .metavar("<value>|none")
-        .action(
-            [psOptions](const std::string &s)
-            {
-                if (EQUAL(s.c_str(), "none"))
-                {
-                    psOptions->bUnsetNoData = true;
-                }
-                else
-                {
-                    psOptions->bSetNoData = true;
-                    psOptions->osNoData = s;
-                }
-            })
         .help(_("Assign a specified nodata value to output bands."));
 
     argParser->add_argument("-a_gt")
@@ -3084,7 +3055,8 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
             _("Add the indicated ground control point to the output dataset."));
 
     argParser->add_argument("-colorinterp")
-        .metavar("{red|green|blue|alpha|gray|undefined},...")
+        .metavar("{red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|"
+                 "swir|mwir|lwir|...},...")
         .action(
             [psOptions](const std::string &s)
             {
@@ -3099,7 +3071,8 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
 
     argParser->add_argument("-colorinterp_X")
         .append()
-        .metavar("{red|green|blue|alpha|gray|undefined}")
+        .metavar("{red|green|blue|alpha|gray|undefined|pan|coastal|rededge|nir|"
+                 "swir|mwir|lwir|...}")
         .help(_("Override the color interpretation of band X."));
 
     {
@@ -3303,6 +3276,12 @@ GDALTranslateOptionsNew(char **papszArgv,
             psOptions->asScaleParams[nIndex].bHaveScaleSrc = false;
             if (i < argc - 2 && ArgIsNumeric(papszArgv[i + 1]))
             {
+                if (!ArgIsNumeric(papszArgv[i + 2]))
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Value of -scale must be numeric");
+                    return nullptr;
+                }
                 psOptions->asScaleParams[nIndex].bHaveScaleSrc = true;
                 psOptions->asScaleParams[nIndex].dfScaleSrcMin =
                     CPLAtofM(papszArgv[i + 1]);
@@ -3314,6 +3293,12 @@ GDALTranslateOptionsNew(char **papszArgv,
                 psOptions->asScaleParams[nIndex].bHaveScaleSrc &&
                 ArgIsNumeric(papszArgv[i + 1]))
             {
+                if (!ArgIsNumeric(papszArgv[i + 2]))
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Value of -scale must be numeric");
+                    return nullptr;
+                }
                 psOptions->asScaleParams[nIndex].dfScaleDstMin =
                     CPLAtofM(papszArgv[i + 1]);
                 psOptions->asScaleParams[nIndex].dfScaleDstMax =
@@ -3388,6 +3373,23 @@ GDALTranslateOptionsNew(char **papszArgv,
             }
             ++i;
             psOptions->anColorInterp[nIndex] = GetColorInterp(papszArgv[i]);
+        }
+
+        // argparser will be confused if the value of a string argument
+        // starts with a negative sign.
+        else if (EQUAL(papszArgv[i], "-a_nodata") && papszArgv[i + 1])
+        {
+            ++i;
+            const std::string s = papszArgv[i];
+            if (EQUAL(s.c_str(), "none"))
+            {
+                psOptions->bUnsetNoData = true;
+            }
+            else
+            {
+                psOptions->bSetNoData = true;
+                psOptions->osNoData = s;
+            }
         }
 
         else

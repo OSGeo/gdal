@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2019, Even Rouault <even.rouault@spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import array
@@ -1250,6 +1234,15 @@ def test_netcdf_multidim_create_nc4():
         assert var
         assert var.Read() == ["", "0123456789"]
 
+        var = rg.CreateMDArray(
+            "my_var_string_array_zero_dim", [], gdal.ExtendedDataType.CreateString()
+        )
+        assert var
+        assert var.Write(["foo"]) == gdal.CE_None
+        var = rg.OpenMDArray("my_var_string_array_zero_dim")
+        assert var
+        assert var.Read() == ["foo"]
+
     f()
 
     def f2():
@@ -1519,6 +1512,10 @@ def test_netcdf_multidim_create_dim_zero():
     gdal.Unlink(tmpfilename2)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_netcdf_multidim_dims_with_same_name_different_size():
 
     src_ds = gdal.OpenEx(
@@ -2087,6 +2084,9 @@ def test_netcdf_multidim_getcoordinatevariables():
 
 def test_netcdf_multidim_getresampled_with_geoloc():
 
+    if os.path.exists("data/netcdf/sentinel5p_fake.nc.aux.xml"):
+        os.unlink("data/netcdf/sentinel5p_fake.nc.aux.xml")
+
     ds = gdal.OpenEx("data/netcdf/sentinel5p_fake.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
@@ -2108,6 +2108,8 @@ def test_netcdf_multidim_getresampled_with_geoloc():
     with gdaltest.config_option("GDAL_NETCDF_BOTTOMUP", "NO"):
         warped_ds = gdal.Warp("", "data/netcdf/sentinel5p_fake.nc", format="MEM")
     assert warped_ds.ReadRaster() == resampled_ar.Read()
+
+    assert not os.path.exists("data/netcdf/sentinel5p_fake.nc.aux.xml")
 
 
 def test_netcdf_multidim_cache():
@@ -3566,6 +3568,9 @@ def test_netcdf_multidim_compute_statistics_update_metadata():
 
 def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A():
 
+    if os.path.exists("data/netcdf/fake_EMIT_L2A.nc.aux.xml"):
+        os.unlink("data/netcdf/fake_EMIT_L2A.nc.aux.xml")
+
     ds = gdal.OpenEx("data/netcdf/fake_EMIT_L2A.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
@@ -3761,6 +3766,90 @@ def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A():
         20.0,
     )
 
+    assert not os.path.exists("data/netcdf/fake_EMIT_L2A.nc.aux.xml")
+
+
+def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A_with_good_wavelengths():
+
+    ds = gdal.OpenEx(
+        "data/netcdf/fake_EMIT_L2A_with_good_wavelengths.nc", gdal.OF_MULTIDIM_RASTER
+    )
+    rg = ds.GetRootGroup()
+
+    ar = rg.OpenMDArray("reflectance")
+
+    # Use glt_x and glt_y arrays, and good_wavelengths variable
+    resampled_ar = ar.GetResampled(
+        [None, None, None], gdal.GRIORA_NearestNeighbour, None
+    )
+    assert resampled_ar is not None
+
+    # Read one band that is valid according to good_wavelengths variable
+    assert struct.unpack(
+        "f" * (3 * 3), resampled_ar.Read(array_start_idx=[0, 0, 1], count=[3, 3, 1])
+    ) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+    )
+
+    # Read one band that is invalid according to good_wavelengths variable
+    assert struct.unpack(
+        "f" * (3 * 3), resampled_ar.Read(array_start_idx=[0, 0, 0], count=[3, 3, 1])
+    ) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        30.0,
+        40.0,
+        -9999.0,
+        10.0,
+        20.0,
+    )
+
+    # Read all bands
+    assert struct.unpack("f" * (3 * 3 * 2), resampled_ar.Read()) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        30.0,
+        -9999.0,
+        40.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        10.0,
+        -9999.0,
+        20.0,
+        -9999.0,
+    )
+
+    # Test *not* using good_wavelengths variable
+    resampled_ar = ar.GetResampled(
+        [None, None, None],
+        gdal.GRIORA_NearestNeighbour,
+        None,
+        ["USE_GOOD_WAVELENGTHS=NO"],
+    )
+    assert resampled_ar is not None
+
+    # Read one band that is valid according to good_wavelengths variable
+    assert struct.unpack(
+        "f" * (3 * 3), resampled_ar.Read(array_start_idx=[0, 0, 1], count=[3, 3, 1])
+    ) == (-9999.0, -9999.0, -9999.0, -9999.0, -30.0, -40.0, -9999.0, -10.0, -20.0)
+
 
 def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2B_MIN():
 
@@ -3897,12 +3986,7 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
 
         view = ar.GetView("[0:10,...]")
         classic_ds = view.AsClassicDataset(1, 0)
-        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) == [
-            0.0,
-            0.0,
-            0.0,
-            -1.0,
-        ]
+        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) is None
         classic_ds.GetRasterBand(1).ComputeStatistics(False)
 
         view = ar.GetView("[10:20,...]")
@@ -3919,9 +4003,17 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
         rg_subset = rg.SubsetDimensionFromSelection("/x=440750")
         rg_subset.OpenMDArray("Band1").GetStatistics(False, force=True)
 
+    def test3():
+        ds = gdal.Open(filename)
+        ds.SetMetadataItem("foo", "bar")
+
     def reopen():
 
+        ds = gdal.Open(filename)
+        assert ds.GetMetadataItem("foo") == "bar"
+
         aux_xml = open(filename + ".aux.xml", "rb").read().decode("UTF-8")
+        assert '<MDI key="foo">bar</MDI>' in aux_xml
         assert (
             '<DerivedDataset name="AsClassicDataset(1,0) view of Sliced view of /Band1 ([0:10,...])">'
             in aux_xml
@@ -3953,12 +4045,7 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
         )
 
         classic_ds = ar.AsClassicDataset(1, 0)
-        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) == [
-            0.0,
-            0.0,
-            0.0,
-            -1.0,
-        ]
+        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) is None
 
         rg_subset = rg.SubsetDimensionFromSelection("/x=440750")
 
@@ -3972,6 +4059,7 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
 
     test()
     test2()
+    test3()
     reopen()
 
 
@@ -4002,3 +4090,70 @@ def test_netcdf_multidim_as_classic_dataset_overview(tmp_path):
 
     test()
     test2()
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_chunk_cache_options():
+
+    ds = gdal.OpenEx("data/netcdf/nc4_vars.nc", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+
+    var = rg.OpenMDArray(
+        "Band1",
+        [
+            "RAW_DATA_CHUNK_CACHE_SIZE=2000000",
+            "CHUNK_SLOTS=1000",
+            "PREEMPTION=0.9",
+            "INCLUDE_CHUNK_CACHE_PARAMETERS_IN_STRUCTURAL_INFO=YES",
+        ],
+    )
+    assert var.GetStructuralInfo() == {
+        "RAW_DATA_CHUNK_CACHE_SIZE": "2000000",
+        "CHUNK_SLOTS": "1000",
+        "PREEMPTION": "0.900000",
+    }
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_as_classic_dataset_metadata():
+    def set_metadata():
+        ds = gdal.OpenEx(
+            "data/netcdf/fake_EMIT_L2A_with_good_wavelengths.nc",
+            gdal.OF_MULTIDIM_RASTER,
+        )
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("reflectance")
+        resampled_ar = ar.GetResampled(
+            [None, None, None], gdal.GRIORA_NearestNeighbour, None
+        )
+        assert resampled_ar is not None
+        classic_ds = ar.AsClassicDataset(1, 0)
+        classic_ds.SetMetadataItem("foo", "bar")
+
+    def check_metadata():
+        ds = gdal.OpenEx(
+            "data/netcdf/fake_EMIT_L2A_with_good_wavelengths.nc",
+            gdal.OF_MULTIDIM_RASTER,
+        )
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("reflectance")
+        resampled_ar = ar.GetResampled(
+            [None, None, None], gdal.GRIORA_NearestNeighbour, None
+        )
+        assert resampled_ar is not None
+        classic_ds = ar.AsClassicDataset(1, 0)
+        assert classic_ds.GetMetadataItem("foo") == "bar"
+
+    pam_filename = "data/netcdf/fake_EMIT_L2A_with_good_wavelengths.nc.aux.xml"
+    if os.path.exists(pam_filename):
+        os.unlink(pam_filename)
+
+    set_metadata()
+    check_metadata()
+
+    assert os.path.exists(pam_filename)
+    os.unlink(pam_filename)

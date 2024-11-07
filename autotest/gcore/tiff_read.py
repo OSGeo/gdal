@@ -40,6 +40,8 @@ import webserver
 
 from osgeo import gdal, osr
 
+pytestmark = pytest.mark.require_driver("HFA")
+
 init_list = [
     ("byte.tif", 1, 4672),
     ("uint16_sgilog.tif", 1, 4672),
@@ -774,6 +776,7 @@ def test_tiff_read_stats_from_pam(tmp_path):
 # Test extracting georeferencing from a .TAB file
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_tiff_read_from_tab(tmp_path):
 
     ds = gdal.GetDriverByName("GTiff").Create(tmp_path / "tiff_read_from_tab.tif", 1, 1)
@@ -2822,6 +2825,7 @@ def test_tiff_read_one_strip_no_bytecount():
 # Test GDAL_GEOREF_SOURCES
 
 
+@pytest.mark.require_driver("MapInfo File")
 @pytest.mark.parametrize(
     "config_option_value,copy_pam,copy_worldfile,copy_tabfile,expected_srs,expected_gt",
     [
@@ -3027,6 +3031,7 @@ def test_tiff_read_nogeoref(
 # Test GDAL_GEOREF_SOURCES
 
 
+@pytest.mark.require_driver("MapInfo File")
 @pytest.mark.parametrize(
     "config_option_value,copy_pam,copy_worldfile,copy_tabfile,expected_srs,expected_gt",
     [
@@ -5189,6 +5194,10 @@ def test_tiff_read_webp_lossless_rgba_alpha_fully_opaque():
 # Test complex scenario of https://github.com/OSGeo/gdal/issues/9563
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_jpeg_cached_multi_range_issue_9563(tmp_vsimem):
 
@@ -5220,3 +5229,132 @@ def test_tiff_read_jpeg_cached_multi_range_issue_9563(tmp_vsimem):
     out = str(tmp_vsimem / "out.tif")
     with gdal.config_option("GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE", "YES"):
         gdal.Translate(out, vrt, options="-tr 0.000071806 0.000071806 -f COG")
+
+
+###############################################################################
+# Test reading a raster with missing ExtraSamples tag in a multithreaded way
+
+
+def test_tiff_read_missing_extrasamples_multi_threaded():
+
+    with gdal.quiet_errors():
+        ds = gdal.Open("data/gtiff/missing_extrasamples.tif")
+    gdal.ErrorReset()
+    with gdal.config_option("GDAL_NUM_THREADS", "2"):
+        ds.ReadRaster()
+    assert gdal.GetLastErrorMsg() == ""
+
+
+###############################################################################
+# Test that we honor GDAL_DISABLE_READDIR_ON_OPEN when working on a dataset opened with OVERVIEW_LEVEL open option
+
+
+@pytest.mark.require_curl()
+def test_tiff_read_overview_level_open_option_honor_GDAL_DISABLE_READDIR_ON_OPEN_EMPTY_DIR(
+    tmp_path,
+):
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    try:
+        tmp_filename = str(tmp_path / "test.tif")
+        ds = gdal.Translate(tmp_filename, "data/byte.tif")
+        ds.BuildOverviews("NEAR", [2])
+        ds.Close()
+
+        filesize = gdal.VSIStatL(tmp_filename).size
+        handler = webserver.SequentialHandler()
+        handler.add("HEAD", "/test.tif", 200, {"Content-Length": "%d" % filesize})
+
+        def method(request):
+            # sys.stderr.write('%s\n' % str(request.headers))
+
+            if request.headers["Range"].startswith("bytes="):
+                rng = request.headers["Range"][len("bytes=") :]
+                assert len(rng.split("-")) == 2
+                start = int(rng.split("-")[0])
+                end = int(rng.split("-")[1])
+
+                request.protocol_version = "HTTP/1.1"
+                request.send_response(206)
+                request.send_header("Content-type", "application/octet-stream")
+                request.send_header(
+                    "Content-Range", "bytes %d-%d/%d" % (start, end, filesize)
+                )
+                request.send_header("Content-Length", end - start + 1)
+                request.send_header("Connection", "close")
+                request.end_headers()
+                with open(tmp_filename, "rb") as f:
+                    f.seek(start, 0)
+                    request.wfile.write(f.read(end - start + 1))
+
+        for i in range(2):
+            handler.add("GET", "/test.tif", custom_method=method)
+
+        with gdaltest.config_options(
+            {
+                "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+            }
+        ):
+            with webserver.install_http_handler(handler):
+                ds = gdal.OpenEx(
+                    "/vsicurl/http://127.0.0.1:%d/test.tif" % webserver_port,
+                    open_options=["OVERVIEW_LEVEL=0"],
+                )
+
+                msgs = []
+
+                def error_handler(type, code, msg):
+                    msgs.append(msg)
+
+                with gdaltest.error_handler(error_handler):
+                    gdal.Translate("", ds, format="MEM")
+                assert len(msgs) == 0
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
+
+
+###############################################################################
+# Test reading a unrecognized value in the special COLORINTERP item in
+# GDAL_METADATA
+
+
+def test_tiff_read_unrecognized_color_interpretation():
+
+    ds = gdal.Open("data/gtiff/unknown_colorinterp.tif")
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_Undefined
+    assert ds.GetRasterBand(1).GetMetadataItem("COLOR_INTERPRETATION") == "XXXX"
+
+
+###############################################################################
+# Check that cleaning overviews on a DIMAP2 GeoTIFF file with external overviews
+# does not cause the DIMAP XML file to be cleaned
+
+
+def test_tiff_read_ovr_dimap_pleiades(tmp_path):
+
+    shutil.copytree("../gdrivers/data/dimap2/bundle", tmp_path / "bundle")
+    filename = str(tmp_path / "bundle" / "IMG_foo_R1C1.TIF")
+    ds = gdal.Open(filename)
+    ds.BuildOverviews("NEAR", [2])
+    ds = None
+    ds = gdal.Open(filename + ".ovr")
+    assert ds.GetFileList() == [filename + ".ovr"]
+    ds = None
+    ds = gdal.Open(filename)
+    ds.BuildOverviews("", [])
+    ds = None
+    # Check that cleaning overviews did not suppress the DIMAP XML file
+    assert os.path.exists(tmp_path / "bundle" / "DIM_foo.XML")

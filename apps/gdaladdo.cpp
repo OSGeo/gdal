@@ -8,23 +8,7 @@
  * Copyright (c) 2000, Frank Warmerdam
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_string.h"
@@ -311,6 +295,17 @@ static bool PartialRefreshFromSourceTimestamp(
             }
         }
     }
+#ifdef GTI_DRIVER_DISABLED_OR_PLUGIN
+    else if (poDS->GetDriver() &&
+             EQUAL(poDS->GetDriver()->GetDescription(), "GTI"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "--partial-refresh-from-source-timestamp only works on a GTI "
+                 "dataset if the GTI driver is not built as a plugin, "
+                 "but in core library");
+        return false;
+    }
+#else
     else if (auto poGTIDS = GDALDatasetCastToGTIDataset(poDS))
     {
         regions = GTIGetSourcesMoreRecentThan(poGTIDS, sStatVRTOvr.st_mtime);
@@ -320,6 +315,7 @@ static bool PartialRefreshFromSourceTimestamp(
                 static_cast<double>(region.nDstXSize) * region.nDstYSize;
         }
     }
+#endif
     else
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -597,8 +593,8 @@ MAIN_START(nArgc, papszArgv)
     std::string osResampling;
     argParser.add_argument("-r")
         .store_into(osResampling)
-        .metavar("nearest|average|rms|gauss|cubic|cubicspline|lanczos|average_"
-                 "magphase|mode")
+        .metavar("nearest|average|rms|gauss|bilinear|cubic|cubicspline|lanczos|"
+                 "average_magphase|mode")
         .help(_("Select a resampling algorithm."));
 
     bool bReadOnly = false;

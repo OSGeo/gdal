@@ -1,3 +1,14 @@
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/helpers/GdalCMakeMinimumRequired.cmake")
+cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_MAX})
+
+if(NOT DEFINED PROJECT_SOURCE_DIR)
+    # Standalone plugin building
+    project(ogr_OCI)
+    include("${PROJECT_SOURCE_DIR}/../../../cmake/helpers/SetupStandalonePlugin.cmake" )
+    include(CheckDependentLibrariesOracle)
+    standalone_driver_finalize(OGR_ENABLE_DRIVER_OCI)
+endif()
+
 set(SOURCE
     oci_utils.cpp
     ocitest.cpp

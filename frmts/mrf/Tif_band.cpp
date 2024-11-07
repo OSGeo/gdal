@@ -51,9 +51,7 @@
 #include "marfa.h"
 NAMESPACE_MRF_START
 
-// Returns a string in /vsimem/ + prefix + count that doesn't exist when this
-// function gets called It is not thread safe, open the result as soon as
-// possible
+// Returns a unique filename
 static CPLString uniq_memfname(const char *prefix)
 {
     // Define MRF_LOCAL_TMP to use local files instead of RAM
@@ -61,14 +59,7 @@ static CPLString uniq_memfname(const char *prefix)
 #if defined(MRF_LOCAL_TMP)
     return CPLGenerateTempFilename(prefix);
 #else
-    CPLString fname;
-    VSIStatBufL statb;
-    static unsigned int cnt = 0;
-    do
-    {
-        fname.Printf("/vsimem/%s_%08x", prefix, cnt++);
-    } while (!VSIStatL(fname, &statb));
-    return fname;
+    return VSIMemGenerateHiddenFilename(prefix);
 #endif
 }
 
@@ -242,6 +233,8 @@ TIF_Band::TIF_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
     // ZLEVEL 8, which is fine.
     if (q > 2)
         q -= 2;
+    if (q == 0)  // TIF does not accept ZLEVEL of zero
+        q = 6;
     papszOptions = CSLAddNameValue(papszOptions, "ZLEVEL", CPLOPrintf("%d", q));
 }
 

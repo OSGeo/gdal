@@ -8,23 +8,7 @@
  * Copyright (c) 2004, Frank Warmerdam
  * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -480,8 +464,10 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char *pszGeomCol,
                 {
                     int nGeomType = atoi(papszRow[1]);
 
-                    if (nGeomType >= 0 && nGeomType <= 7) /* XY */
-                        eGeomType = (OGRwkbGeometryType)nGeomType;
+                    if (nGeomType >= static_cast<int>(wkbPoint) &&
+                        nGeomType <=
+                            static_cast<int>(wkbGeometryCollection)) /* XY */
+                        eGeomType = static_cast<OGRwkbGeometryType>(nGeomType);
                     else if (nGeomType >= 1000 && nGeomType <= 1007) /* XYZ */
                         eGeomType = wkbSetZ(wkbFlatten(nGeomType));
                     else if (nGeomType >= 2000 && nGeomType <= 2007) /* XYM */
@@ -507,7 +493,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char *pszGeomCol,
             }
             else
             {
-                eGeomType = (OGRwkbGeometryType)atoi(papszRow[1]);
+                eGeomType = static_cast<OGRwkbGeometryType>(atoi(papszRow[1]));
                 if (atoi(papszRow[2]) > 2)
                     eGeomType = wkbSetZ(eGeomType);
                 eGeomFormat = GetGeomFormat(papszRow[3]);
@@ -578,20 +564,30 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char *pszGeomCol,
         {
             const std::set<std::string> uniqueFieldsUC(
                 SQLGetUniqueFieldUCConstraints(hDB, m_pszTableName));
+
+            const int nFieldCount = m_poFeatureDefn->GetFieldCount();
+            std::map<std::string, int> oMapNametoIdx;
+            for (int i = 0; i < nFieldCount; ++i)
+                oMapNametoIdx[m_poFeatureDefn->GetFieldDefnUnsafe(i)
+                                  ->GetNameRef()] = i;
+
             for (int i = 0; i < nRowCount; i++)
             {
                 const char *pszName = papszResult[(i + 1) * 6 + 1];
+                if (!pszName)
+                    continue;  // should normally never happen
                 const char *pszNotNull = papszResult[(i + 1) * 6 + 3];
                 const char *pszDefault = papszResult[(i + 1) * 6 + 4];
-                const int idx = pszName != nullptr
-                                    ? m_poFeatureDefn->GetFieldIndex(pszName)
-                                    : -1;
+                int idx = -1;
+                const auto oIter = oMapNametoIdx.find(pszName);
+                if (oIter != oMapNametoIdx.end())
+                    idx = oIter->second;
                 if (pszDefault != nullptr)
                 {
                     if (idx >= 0)
                     {
                         OGRFieldDefn *poFieldDefn =
-                            m_poFeatureDefn->GetFieldDefn(idx);
+                            m_poFeatureDefn->GetFieldDefnUnsafe(idx);
                         if (poFieldDefn->GetType() == OFTString &&
                             !EQUAL(pszDefault, "NULL") &&
                             !STARTS_WITH_CI(pszDefault, "CURRENT_") &&
@@ -626,11 +622,11 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char *pszGeomCol,
                             poFieldDefn->SetDefault(pszDefault);
                     }
                 }
-                if (pszName != nullptr && pszNotNull != nullptr &&
-                    EQUAL(pszNotNull, "1"))
+                if (pszNotNull != nullptr && EQUAL(pszNotNull, "1"))
                 {
                     if (idx >= 0)
-                        m_poFeatureDefn->GetFieldDefn(idx)->SetNullable(0);
+                        m_poFeatureDefn->GetFieldDefnUnsafe(idx)->SetNullable(
+                            0);
                     else
                     {
                         const int geomFieldIdx =
@@ -644,7 +640,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char *pszGeomCol,
                     uniqueFieldsUC.find(CPLString(pszName).toupper()) !=
                         uniqueFieldsUC.end())
                 {
-                    m_poFeatureDefn->GetFieldDefn(idx)->SetUnique(TRUE);
+                    m_poFeatureDefn->GetFieldDefnUnsafe(idx)->SetUnique(TRUE);
                 }
             }
         }
@@ -786,8 +782,8 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
     int nRawColumns = sqlite3_column_count(hColStmt);
 
     CPLFree(m_panFieldOrdinals);
-    m_panFieldOrdinals =
-        (int *)CPLMalloc(sizeof(int) * m_poFeatureDefn->GetFieldCount());
+    m_panFieldOrdinals = static_cast<int *>(
+        CPLMalloc(sizeof(int) * m_poFeatureDefn->GetFieldCount()));
     int nCountFieldOrdinals = 0;
     int nCountGeomFieldOrdinals = 0;
     m_iFIDCol = -1;
@@ -1827,7 +1823,8 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn(
                 "geometry_type, coord_dimension, srid) VALUES "
                 "('%s','%s','%s', %d, %d, %d)",
                 m_pszEscapedTableName, SQLEscapeLiteral(pszGeomCol).c_str(),
-                pszGeomFormat, (int)wkbFlatten(eType), nCoordDim, nSRSId);
+                pszGeomFormat, static_cast<int>(wkbFlatten(eType)), nCoordDim,
+                nSRSId);
         }
         else
         {
@@ -1837,7 +1834,7 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn(
                 "geometry_type, coord_dimension) VALUES "
                 "('%s','%s','%s', %d, %d)",
                 m_pszEscapedTableName, SQLEscapeLiteral(pszGeomCol).c_str(),
-                pszGeomFormat, (int)wkbFlatten(eType), nCoordDim);
+                pszGeomFormat, static_cast<int>(wkbFlatten(eType)), nCoordDim);
         }
     }
 
@@ -1878,8 +1875,8 @@ void OGRSQLiteTableLayer::InitFieldListForRecrerate(
     }
 
     nBufLenOut = nFieldListLen;
-    pszFieldListForSelect = (char *)CPLCalloc(1, nFieldListLen);
-    pszNewFieldList = (char *)CPLCalloc(1, nFieldListLen);
+    pszFieldListForSelect = static_cast<char *>(CPLCalloc(1, nFieldListLen));
+    pszNewFieldList = static_cast<char *>(CPLCalloc(1, nFieldListLen));
 
     /* -------------------------------------------------------------------- */
     /*      Build list of old fields, and the list of new fields.           */
@@ -2597,7 +2594,8 @@ OGRErr OGRSQLiteTableLayer::BindValues(OGRFeature *poFeature,
                              "Too large geometry");
                     return OGRERR_FAILURE;
                 }
-                GByte *pabyWKB = (GByte *)VSI_MALLOC_VERBOSE(nWKBLen);
+                GByte *pabyWKB =
+                    static_cast<GByte *>(VSI_MALLOC_VERBOSE(nWKBLen));
                 if (pabyWKB)
                 {
                     poGeom->exportToWkb(wkbNDR, pabyWKB);
@@ -2662,26 +2660,29 @@ OGRErr OGRSQLiteTableLayer::BindValues(OGRFeature *poFeature,
         }
         else
         {
-            OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
+            const OGRFieldDefn *poFieldDefn =
+                m_poFeatureDefn->GetFieldDefnUnsafe(iField);
             switch (poFieldDefn->GetType())
             {
                 case OFTInteger:
                 {
-                    int nFieldVal = poFeature->GetFieldAsInteger(iField);
+                    int nFieldVal = poFeature->GetFieldAsIntegerUnsafe(iField);
                     rc = sqlite3_bind_int(m_hStmtIn, nBindField++, nFieldVal);
                     break;
                 }
 
                 case OFTInteger64:
                 {
-                    GIntBig nFieldVal = poFeature->GetFieldAsInteger64(iField);
+                    GIntBig nFieldVal =
+                        poFeature->GetFieldAsInteger64Unsafe(iField);
                     rc = sqlite3_bind_int64(m_hStmtIn, nBindField++, nFieldVal);
                     break;
                 }
 
                 case OFTReal:
                 {
-                    double dfFieldVal = poFeature->GetFieldAsDouble(iField);
+                    double dfFieldVal =
+                        poFeature->GetFieldAsDoubleUnsafe(iField);
                     rc = sqlite3_bind_double(m_hStmtIn, nBindField++,
                                              dfFieldVal);
                     break;
@@ -2745,7 +2746,7 @@ OGRErr OGRSQLiteTableLayer::BindValues(OGRFeature *poFeature,
                                  nHour, nMinute, fSecond);
                     else
                         snprintf(szBuffer, sizeof(szBuffer), "%02d:%02d:%02d",
-                                 nHour, nMinute, (int)fSecond);
+                                 nHour, nMinute, static_cast<int>(fSecond));
                     rc = sqlite3_bind_text(m_hStmtIn, nBindField++, szBuffer,
                                            -1, SQLITE_TRANSIENT);
                     break;

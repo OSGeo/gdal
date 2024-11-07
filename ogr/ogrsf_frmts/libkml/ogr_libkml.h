@@ -8,23 +8,7 @@
  * Copyright (c) 2010, Brian Case
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 #ifndef HAVE_OGR_LIBKML_H
@@ -33,6 +17,7 @@
 #include "ogrsf_frmts.h"
 
 #include "libkml_headers.h"
+#include "fieldconfig.h"
 
 #include <map>
 
@@ -47,18 +32,20 @@ CPLString OGRLIBKMLGetSanitizedNCName(const char *pszName);
 class OGRLIBKMLLayer final : public OGRLayer,
                              public OGRGetNextFeatureThroughRaw<OGRLIBKMLLayer>
 {
-    int bUpdate;
+    int bUpdate = false;
 
-    int nFeatures;
-    int iFeature;
-    long nFID;
+    int nFeatures = 0;
+    int iFeature = 0;
+    GIntBig nFID = 1;
     const char *m_pszName;
     const char *m_pszFileName;
+    std::string m_osSanitizedNCName;
 
     kmldom::ContainerPtr m_poKmlLayer;
     kmldom::ElementPtr m_poKmlLayerRoot;
     kmldom::UpdatePtr m_poKmlUpdate;
 
+    fieldconfig m_oFieldConfig;
     OGRLIBKMLDataSource *m_poOgrDS;
     OGRFeatureDefn *m_poOgrFeatureDefn;
     kmldom::SchemaPtr m_poKmlSchema;
@@ -84,6 +71,11 @@ class OGRLIBKMLLayer final : public OGRLayer,
 
     bool m_bUpdateIsFolder;
 
+    bool m_bAllReadAtLeastOnce = false;
+    std::map<GIntBig, std::string> m_oMapOGRIdToKmlId{};
+    std::map<std::string, GIntBig> m_oMapKmlIdToOGRId{};
+
+    void ScanAllFeatures();
     OGRFeature *GetNextRawFeature();
 
   public:
@@ -161,6 +153,11 @@ class OGRLIBKMLLayer final : public OGRLayer,
         return m_pszFileName;
     }
 
+    const fieldconfig &GetFieldConfig() const
+    {
+        return m_oFieldConfig;
+    }
+
     void SetLookAt(const char *pszLookatLongitude,
                    const char *pszLookatLatitude, const char *pszLookatAltitude,
                    const char *pszLookatHeading, const char *pszLookatTilt,
@@ -205,9 +202,8 @@ class OGRLIBKMLLayer final : public OGRLayer,
   datasource class
 ******************************************************************************/
 
-class OGRLIBKMLDataSource final : public OGRDataSource
+class OGRLIBKMLDataSource final : public GDALDataset
 {
-    char *m_pszName;
     bool m_bIssuedCTError = false;
 
     /***** layers *****/
@@ -251,11 +247,6 @@ class OGRLIBKMLDataSource final : public OGRDataSource
   public:
     explicit OGRLIBKMLDataSource(kmldom::KmlFactory *poKmlFactory);
     ~OGRLIBKMLDataSource();
-
-    const char *GetName() override
-    {
-        return m_pszName;
-    }
 
     int GetLayerCount() override
     {

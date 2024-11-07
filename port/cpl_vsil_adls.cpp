@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2020, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -94,7 +78,7 @@ static std::string RemoveTrailingSlash(const std::string &osFilename)
 {
     std::string osWithoutSlash(osFilename);
     if (!osWithoutSlash.empty() && osWithoutSlash.back() == '/')
-        osWithoutSlash.resize(osWithoutSlash.size() - 1);
+        osWithoutSlash.pop_back();
     return osWithoutSlash;
 }
 
@@ -159,13 +143,14 @@ struct VSIDIRADLS : public VSIDIR
 /*                       VSIADLSFSHandler                              */
 /************************************************************************/
 
-class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
+class VSIADLSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIADLSFSHandler)
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     char **GetFileList(const char *pszFilename, int nMaxFiles,
                        bool *pbGotFileList) override;
@@ -243,10 +228,6 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                     CSLConstList papszOptions);
 
     // Multipart upload (mapping of S3 interface)
-    bool SupportsParallelMultipartUpload() const override
-    {
-        return true;
-    }
 
     std::string
     InitiateMultipartUpload(const std::string &osFilename,
@@ -292,6 +273,44 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                    const CPLHTTPRetryParameters & /*oRetryParameters*/) override
     {
         return true;
+    }
+
+    bool MultipartUploadAbort(const char *, const char *, CSLConstList) override
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "MultipartUploadAbort() not supported by this file system");
+        return false;
+    }
+
+    bool SupportsMultipartAbort() const override
+    {
+        return false;
+    }
+
+    //! Maximum number of parts for multipart upload
+    // No limit imposed by the API. Arbitrary one here
+    int GetMaximumPartCount() override
+    {
+        return INT_MAX;
+    }
+
+    //! Minimum size of a part for multipart upload (except last one), in MiB.
+    int GetMinimumPartSizeInMiB() override
+    {
+        return 0;
+    }
+
+    //! Maximum size of a part for multipart upload, in MiB.
+    // No limit imposed by the API. Arbitrary one here
+    int GetMaximumPartSizeInMiB() override
+    {
+#if SIZEOF_VOIDP == 8
+        return 4000;
+#else
+        // Cannot be larger than 4GiB, otherwise integer overflow would occur
+        // 1 GiB is the maximum reasonable value on a 32-bit machine
+        return 1024;
+#endif
     }
 
     IVSIS3LikeHandleHelper *CreateHandleHelper(const char *pszURI,
@@ -1234,18 +1253,17 @@ void VSIADLSFSHandler::ClearCache()
 /*                          GetURLFromFilename()                        */
 /************************************************************************/
 
-std::string VSIADLSFSHandler::GetURLFromFilename(const std::string &osFilename)
+std::string
+VSIADLSFSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
-    std::string osFilenameWithoutPrefix =
+    const std::string osFilenameWithoutPrefix =
         osFilename.substr(GetFSPrefix().size());
-    VSIAzureBlobHandleHelper *poHandleHelper =
+    auto poHandleHelper = std::unique_ptr<VSIAzureBlobHandleHelper>(
         VSIAzureBlobHandleHelper::BuildFromURI(osFilenameWithoutPrefix.c_str(),
-                                               GetFSPrefix().c_str());
-    if (poHandleHelper == nullptr)
+                                               GetFSPrefix().c_str()));
+    if (!poHandleHelper)
         return std::string();
-    std::string osURL(poHandleHelper->GetURLNoKVP());
-    delete poHandleHelper;
-    return osURL;
+    return poHandleHelper->GetURLNoKVP();
 }
 
 /************************************************************************/
@@ -1857,10 +1875,12 @@ bool VSIADLSFSHandler::UploadFile(
         poHandleHelper->ResetQueryParameters();
         if (event == Event::CREATE_FILE)
         {
+            // Cf https://learn.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/create?view=rest-storageservices-datalakestoragegen2-2019-12-12
             poHandleHelper->AddQueryParameter("resource", "file");
         }
         else if (event == Event::APPEND_DATA)
         {
+            // Cf https://learn.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update?view=rest-storageservices-datalakestoragegen2-2019-12-12
             poHandleHelper->AddQueryParameter("action", "append");
             poHandleHelper->AddQueryParameter(
                 "position",
@@ -1868,6 +1888,7 @@ bool VSIADLSFSHandler::UploadFile(
         }
         else
         {
+            // Cf https://learn.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/update?view=rest-storageservices-datalakestoragegen2-2019-12-12
             poHandleHelper->AddQueryParameter("action", "flush");
             poHandleHelper->AddQueryParameter("close", "true");
             poHandleHelper->AddQueryParameter(

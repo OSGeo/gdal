@@ -9,23 +9,7 @@
  * Copyright (c) 2006, Frank Warmerdam
  * Copyright (c) 2009, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef CPL_HTTP_H_INCLUDED
@@ -277,9 +261,43 @@ class GOA2Manager
         return m_osClientEmail;
     }
 
+    /** Returns a key that can be used to uniquely identify the instance
+     * parameters (excluding bearer)
+     */
+    std::string GetKey() const
+    {
+        std::string osKey(std::to_string(static_cast<int>(m_eMethod))
+                              .append(",client-id=")
+                              .append(m_osClientId)
+                              .append(",client-secret=")
+                              .append(m_osClientSecret)
+                              .append(",refresh-token=")
+                              .append(m_osRefreshToken)
+                              .append(",private-key=")
+                              .append(m_osPrivateKey)
+                              .append(",client-email=")
+                              .append(m_osClientEmail)
+                              .append(",scope=")
+                              .append(m_osScope));
+        osKey.append(",additional-claims=");
+        for (const auto *pszOption : m_aosAdditionalClaims)
+        {
+            osKey.append(pszOption);
+            osKey.append("+");
+        }
+        osKey.append(",options=");
+        for (const auto *pszOption : m_aosOptions)
+        {
+            osKey.append(pszOption);
+            osKey.append("+");
+        }
+        return osKey;
+    }
+
   private:
     mutable CPLString m_osCurrentBearer{};
     mutable time_t m_nExpirationTime = 0;
+
     AuthMethod m_eMethod = NONE;
 
     // for ACCESS_TOKEN_FROM_REFRESH

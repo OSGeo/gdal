@@ -43,6 +43,12 @@ CPLErr QB3_Band::Compress(buf_mgr &dst, buf_mgr &src)
         case (GDT_UInt32):
             pQB3 = CREATE_QB3(QB3_U32);
             break;
+        case (GDT_Int64):
+            pQB3 = CREATE_QB3(QB3_I64);
+            break;
+        case (GDT_UInt64):
+            pQB3 = CREATE_QB3(QB3_U64);
+            break;
         default:
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "MRF:QB3 Data type not supported");
@@ -77,6 +83,12 @@ CPLErr QB3_Band::Compress(buf_mgr &dst, buf_mgr &src)
 
         // Quality of 90 and above trigger the better encoding
         qb3_set_encoder_mode(pQB3, (img.quality > 90) ? QB3M_BEST : QB3M_BASE);
+
+#if defined(QB3_HAS_FTL)
+        // Quality below 5 triggers the faster encoding, when available
+        if (img.quality < 5)
+            qb3_set_encoder_mode(pQB3, QB3M_FTL);
+#endif
 
         dst.size = qb3_encode(pQB3, src.buffer, dst.buffer);
         if (0 == dst.size)
@@ -174,7 +186,8 @@ QB3_Band::QB3_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
 
     if (image.dt != GDT_Byte && image.dt != GDT_Int16 &&
         image.dt != GDT_UInt16 && image.dt != GDT_Int32 &&
-        image.dt != GDT_UInt32)
+        image.dt != GDT_UInt32 && image.dt != GDT_Int64 &&
+        image.dt != GDT_UInt64)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Data type not supported by QB3 compression");

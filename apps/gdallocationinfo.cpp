@@ -8,43 +8,23 @@
  * Copyright (c) 2010, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "gdal_version.h"
 #include "gdal.h"
+#include "gdal_priv.h"
 #include "commonutils.h"
 #include "ogr_spatialref.h"
 #include "gdalargumentparser.h"
 
+#include <cmath>
 #include <limits>
 #include <vector>
 
 #include <cctype>
-
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
 
 /************************************************************************/
 /*                             GetSRSAsWKT                              */
@@ -136,6 +116,12 @@ MAIN_START(argc, argv)
         .store_into(nOverview)
         .help(_("Query the (overview_level)th overview (overview_level=1 is "
                 "the 1st overview)."));
+
+    std::string osResampling;
+    argParser.add_argument("-r")
+        .store_into(osResampling)
+        .metavar("nearest|bilinear|cubic|cubicspline")
+        .help(_("Select an interpolation algorithm."));
 
     {
         auto &group = argParser.add_mutually_exclusive_group();
@@ -245,6 +231,18 @@ MAIN_START(argc, argv)
         exit(1);
     }
 
+    const GDALRIOResampleAlg eInterpolation =
+        osResampling.empty() ? GRIORA_NearestNeighbour
+                             : GDALRasterIOGetResampleAlg(osResampling.c_str());
+    if (eInterpolation != GRIORA_NearestNeighbour &&
+        eInterpolation != GRIORA_Bilinear && eInterpolation != GRIORA_Cubic &&
+        eInterpolation != GRIORA_CubicSpline)
+    {
+        fprintf(stderr, "-r can only be used with values nearest, bilinear, "
+                        "cubic and cubicspline\n");
+        exit(1);
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Open source file.                                               */
     /* -------------------------------------------------------------------- */
@@ -261,8 +259,10 @@ MAIN_START(argc, argv)
     OGRCoordinateTransformationH hCT = nullptr;
     if (!osSourceSRS.empty() && !EQUAL(osSourceSRS.c_str(), "-geoloc"))
     {
-
-        hSrcSRS = OSRNewSpatialReference(osSourceSRS.c_str());
+        hSrcSRS = OSRNewSpatialReference(nullptr);
+        OGRErr err = OSRSetFromUserInput(hSrcSRS, osSourceSRS.c_str());
+        if (err != OGRERR_NONE)
+            exit(1);
         OSRSetAxisMappingStrategy(hSrcSRS, OAMS_TRADITIONAL_GIS_ORDER);
         auto hTrgSRS = GDALGetSpatialRef(hSrcDS);
         if (!hTrgSRS)
@@ -294,13 +294,12 @@ MAIN_START(argc, argv)
     if (std::isnan(dfGeoX))
     {
         // Is it an interactive terminal ?
-        if (isatty(static_cast<int>(fileno(stdin))))
+        if (CPLIsInteractive(stdin))
         {
             if (!osSourceSRS.empty())
             {
-                fprintf(
-                    stderr,
-                    "Enter X Y values separated by space, and press Return.\n");
+                fprintf(stderr, "Enter X Y values separated by space, and "
+                                "press Return.\n");
             }
             else
             {
@@ -350,6 +349,9 @@ MAIN_START(argc, argv)
     while (inputAvailable)
     {
         int iPixel, iLine;
+        double dfPixel{0}, dfLine{0};
+        const double dfXIn = dfGeoX;
+        const double dfYIn = dfGeoY;
 
         if (hCT)
         {
@@ -375,30 +377,31 @@ MAIN_START(argc, argv)
                 exit(1);
             }
 
-            iPixel = static_cast<int>(floor(adfInvGeoTransform[0] +
-                                            adfInvGeoTransform[1] * dfGeoX +
-                                            adfInvGeoTransform[2] * dfGeoY));
-            iLine = static_cast<int>(floor(adfInvGeoTransform[3] +
-                                           adfInvGeoTransform[4] * dfGeoX +
-                                           adfInvGeoTransform[5] * dfGeoY));
+            dfPixel = adfInvGeoTransform[0] + adfInvGeoTransform[1] * dfGeoX +
+                      adfInvGeoTransform[2] * dfGeoY;
+            dfLine = adfInvGeoTransform[3] + adfInvGeoTransform[4] * dfGeoX +
+                     adfInvGeoTransform[5] * dfGeoY;
         }
         else
         {
-            iPixel = static_cast<int>(floor(dfGeoX));
-            iLine = static_cast<int>(floor(dfGeoY));
+            dfPixel = dfGeoX;
+            dfLine = dfGeoY;
         }
+        iPixel = static_cast<int>(floor(dfPixel));
+        iLine = static_cast<int>(floor(dfLine));
 
         /* --------------------------------------------------------------------
          */
         /*      Prepare report. */
         /* --------------------------------------------------------------------
          */
-        CPLString osLine;
+        CPLString osXmlLine;
 
         if (bAsXML)
         {
-            osLine.Printf("<Report pixel=\"%d\" line=\"%d\">", iPixel, iLine);
-            osXML += osLine;
+            osXmlLine.Printf("<Report pixel=\"%d\" line=\"%d\">", iPixel,
+                             iLine);
+            osXML += osXmlLine;
             if (!osExtraContent.empty())
             {
                 char *pszEscaped =
@@ -411,7 +414,18 @@ MAIN_START(argc, argv)
         else if (!bQuiet)
         {
             printf("Report:\n");
-            printf("  Location: (%dP,%dL)\n", iPixel, iLine);
+            CPLString osPixel, osLine;
+            if (eInterpolation == GRIORA_NearestNeighbour)
+            {
+                osPixel.Printf("%d", iPixel);
+                osLine.Printf("%d", iLine);
+            }
+            else
+            {
+                osPixel.Printf("%.15g", dfPixel);
+                osLine.Printf("%.15g", dfLine);
+            }
+            printf("  Location: (%sP,%sL)\n", osPixel.c_str(), osLine.c_str());
             if (!osExtraContent.empty())
             {
                 printf("  Extra input: %s\n", osExtraContent.c_str());
@@ -419,7 +433,7 @@ MAIN_START(argc, argv)
         }
         else if (bEcho)
         {
-            printf("%d%s%d%s", iPixel, osFieldSep.c_str(), iLine,
+            printf("%.15g%s%.15g%s", dfXIn, osFieldSep.c_str(), dfYIn,
                    osFieldSep.c_str());
         }
 
@@ -432,7 +446,12 @@ MAIN_START(argc, argv)
                 osXML += "<Alert>Location is off this file! No further details "
                          "to report.</Alert>";
             else if (bValOnly)
-                printf("\n");
+            {
+                for (int i = 1; i < static_cast<int>(anBandList.size()); i++)
+                {
+                    printf("%s", osFieldSep.c_str());
+                }
+            }
             else if (!bQuiet)
                 printf("\nLocation is off this file! No further details to "
                        "report.\n");
@@ -453,6 +472,9 @@ MAIN_START(argc, argv)
             int iPixelToQuery = iPixel;
             int iLineToQuery = iLine;
 
+            double dfPixelToQuery = dfPixel;
+            double dfLineToQuery = dfLine;
+
             if (nOverview >= 0 && hBand != nullptr)
             {
                 GDALRasterBandH hOvrBand = GDALGetOverview(hBand, nOverview);
@@ -470,6 +492,10 @@ MAIN_START(argc, argv)
                         iPixelToQuery = nOvrXSize - 1;
                     if (iLineToQuery >= nOvrYSize)
                         iLineToQuery = nOvrYSize - 1;
+                    dfPixelToQuery =
+                        dfPixel / GDALGetRasterXSize(hSrcDS) * nOvrXSize;
+                    dfLineToQuery =
+                        dfLine / GDALGetRasterYSize(hSrcDS) * nOvrYSize;
                 }
                 else
                 {
@@ -485,8 +511,8 @@ MAIN_START(argc, argv)
 
             if (bAsXML)
             {
-                osLine.Printf("<BandReport band=\"%d\">", anBandList[i]);
-                osXML += osLine;
+                osXmlLine.Printf("<BandReport band=\"%d\">", anBandList[i]);
+                osXML += osXmlLine;
             }
             else if (!bQuiet)
             {
@@ -550,10 +576,12 @@ MAIN_START(argc, argv)
             const bool bIsComplex = CPL_TO_BOOL(
                 GDALDataTypeIsComplex(GDALGetRasterDataType(hBand)));
 
-            if (GDALRasterIO(hBand, GF_Read, iPixelToQuery, iLineToQuery, 1, 1,
-                             adfPixel, 1, 1,
-                             bIsComplex ? GDT_CFloat64 : GDT_Float64, 0,
-                             0) == CE_None)
+            CPLErr err;
+            err = GDALRasterInterpolateAtPoint(hBand, dfPixelToQuery,
+                                               dfLineToQuery, eInterpolation,
+                                               &adfPixel[0], &adfPixel[1]);
+
+            if (err == CE_None)
             {
                 CPLString osValue;
 

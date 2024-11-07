@@ -83,6 +83,7 @@ Examples:
     /vsizip/my.zip/my.tif  (relative path to the .zip)
     /vsizip//home/even/my.zip/subdir/my.tif  (absolute path to the .zip)
     /vsizip/c:\users\even\my.zip\subdir\my.tif
+    /vsizip/{/vsizip/my.zip/subdir/subzip.zip}/subdir_in_subzip/my.shp  (alternate syntax for a nested .zip)
 
 .kmz, .ods and .xlsx extensions are also detected as valid extensions for zip-compatible archives.
 
@@ -200,7 +201,7 @@ Examples:
     /vsitar//home/even/my.tar/subdir/my.tif # (absolute path to the .tar)
     /vsitar/c:\users\even\my.tar\subdir\my.tif
 
-Starting with GDAL 2.2, an alternate syntax is available so as to enable chaining and not being dependent on .tar extension, e.g.: :file:`/vsitar/{/path/to/the/archive}/path/inside/the/tar/file`. Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
+Starting with GDAL 2.2, an alternate syntax is available so as to enable chaining and not being dependent on .tar extension, e.g.: ``/vsitar/{/path/to/the/archive}/path/inside/the/tar/file``. Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
 
 .. _vsi7z:
 
@@ -227,7 +228,7 @@ Default extensions recognized by this virtual file system are:
 ``mpkx`` and ``ppkx`` (Esri ArcGIS Pro Project Package).
 
 An alternate syntax is available so as to enable chaining and not being
-dependent on those extensions, e.g.: :file:`/vsi7z/{/path/to/the/archive}/path/inside/the/archive`.
+dependent on those extensions, e.g.: ``/vsi7z/{/path/to/the/archive}/path/inside/the/archive``.
 Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
 
 Note that random seeking within a large compressed file will be inefficient when
@@ -257,7 +258,7 @@ is the relative path to the file inside the archive.`
 The default extension recognized by this virtual file system is: ``rar``
 
 An alternate syntax is available so as to enable chaining and not being
-dependent on those extensions, e.g.: :file:`/vsirar/{/path/to/the/archive}/path/inside/the/archive`.
+dependent on those extensions, e.g.: ``/vsirar/{/path/to/the/archive}/path/inside/the/archive``.
 Note that :file:`/path/to/the/archive` may also itself use this alternate syntax.
 
 Note that random seeking within a large compressed file will be inefficient when
@@ -411,6 +412,11 @@ Starting with GDAL 2.3, additional HTTP headers can be sent by setting the :conf
 As an alternative, starting with GDAL 3.6, the
 :config:`GDAL_HTTP_HEADERS` configuration option can also be
 used to specify headers. :config:`CPL_CURL_VERBOSE=YES` allows one to see them and more, when combined with ``--debug``.
+
+Starting with GDAL 3.10, the ``Authorization`` header is no longer automatically
+forwarded when redirections are followed.
+That behavior can be configured by setting the
+:config:`CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT` configuration option.
 
 Starting with GDAL 2.3, the :config:`GDAL_HTTP_MAX_RETRY` (number of attempts) and :config:`GDAL_HTTP_RETRY_DELAY` (in seconds) configuration option can be set, so that request retries are done in case of HTTP errors 429, 502, 503 or 504.
 

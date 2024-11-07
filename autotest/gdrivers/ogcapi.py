@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2023, Alessandro Pasotti <elpaso at itopen dot it>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -211,6 +195,7 @@ def init():
 
 
 @pytest.mark.parametrize("remove_type_application_json", [False, True])
+@pytest.mark.require_driver("OAPIF")
 def test_ogr_ogcapi_features(remove_type_application_json):
 
     global global_remove_type_application_json
@@ -242,9 +227,6 @@ def test_ogr_ogcapi_features(remove_type_application_json):
         assert lyr is not None
 
         feat = lyr.GetNextFeature()
-        fdef = feat.GetDefnRef()
-        assert fdef.GetFieldDefn(0).GetName() == "feature::id"
-        assert fdef.GetFieldDefn(3).GetName() == "name"
 
         ogrtest.check_feature_geometry(
             feat,
@@ -346,19 +328,19 @@ def test_ogr_ogcapi_raster(api, collection, tmp_path):
     )
 
     assert ds is not None
+    if (api, collection) == ("COVERAGE", "SRTM"):
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
 
     options = gdal.TranslateOptions(
         gdal.ParseCommandLine(
             f"-outsize 100 100 -oo API={api} -projwin -9.5377 53.5421 -9.0557 53.2953"
         )
     )
-    out_path = str(tmp_path / "lough_corrib.png")
+    out_path = str(tmp_path / "out.tif")
 
     gdal.Translate(out_path, ds, options=options)
 
-    control_image_path = os.path.join(
-        BASE_TEST_DATA_PATH, f"expected_map_lough_corrib_{api}.png"
-    )
+    control_image_path = os.path.join(BASE_TEST_DATA_PATH, f"expected_{api}.tif")
 
     # When recording also regenerate control images
     if RECORD:
@@ -385,7 +367,10 @@ def test_ogr_ogcapi_raster(api, collection, tmp_path):
 )
 def test_ogc_api_wrong_collection(api, of_type):
 
-    with pytest.raises(Exception, match="Invalid data collection"):
+    with pytest.raises(
+        Exception,
+        match=r"HTTP error code : 400, <h1>GNOSIS Map Server \(OGCAPI\) - 400 Bad Request</h1><h3>Invalid data collection</h3>",
+    ):
         gdal.OpenEx(
             f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/NOT_EXISTS",
             of_type,
@@ -455,7 +440,7 @@ def test_ogc_api_raster_tiles():
 def test_ogc_api_raster_tiles_format(image_format, raster_count, statistics):
 
     ds = gdal.OpenEx(
-        f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/blueMarble",
+        f"http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/blueMarble",
         gdal.OF_RASTER,
         open_options=[
             "API=TILES",
@@ -463,6 +448,7 @@ def test_ogc_api_raster_tiles_format(image_format, raster_count, statistics):
             "TILEMATRIXSET=WorldMercatorWGS84Quad",
             f"IMAGE_FORMAT={image_format}",
         ],
+        allowed_drivers=["OGCAPI"],
     )
 
     assert ds is not None

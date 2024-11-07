@@ -9,23 +9,7 @@
  ******************************************************************************
  * Copyright (c) 2016, Even Rouault, <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_gmlas.h"
@@ -221,9 +205,8 @@ void OGRGMLASLayer::ProcessDataRecordOfDataArrayCreateFields(
         if (psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "field") == 0)
         {
-            CPLString osName = CPLGetXMLValue(psIter, "name", "");
-            osName.tolower();
-            OGRFieldDefn oFieldDefn(osName, OFTString);
+            const char *pszName = CPLGetXMLValue(psIter, "name", "");
+            OGRFieldDefn oFieldDefn(CPLString(pszName).tolower(), OFTString);
             OGRFieldType eType;
             OGRFieldSubType eSubType;
             CPLXMLNode *psNode = GetSWEChildAndType(psIter, eType, eSubType);
@@ -273,8 +256,8 @@ void OGRGMLASLayer::ProcessDataRecordCreateFields(
         if (psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "field") == 0)
         {
-            CPLString osName = CPLGetXMLValue(psIter, "name", "");
-            osName = osName.tolower();
+            const char *pszName = CPLGetXMLValue(psIter, "name", "");
+            CPLString osName = CPLString(pszName).tolower();
             OGRFieldDefn oFieldDefn(osName, OFTString);
             OGRFieldType eType;
             OGRFieldSubType eSubType;
@@ -332,8 +315,9 @@ void OGRGMLASLayer::ProcessDataRecordCreateFields(
                     if (psIter2->eType == CXT_Element &&
                         strcmp(psIter2->pszValue, "value") != 0)
                     {
-                        CPLString osName2(osName + "_" + psIter2->pszValue);
-                        osName2.tolower();
+                        const CPLString osName2 =
+                            CPLString(osName + "_" + psIter2->pszValue)
+                                .tolower();
                         for (CPLXMLNode *psIter3 = psIter2->psChild;
                              psIter3 != nullptr; psIter3 = psIter3->psNext)
                         {
@@ -343,9 +327,10 @@ void OGRGMLASLayer::ProcessDataRecordCreateFields(
                                 const char *pszColon = strchr(pszValue, ':');
                                 if (pszColon)
                                     pszValue = pszColon + 1;
-                                CPLString osName3(osName2 + "_" + pszValue);
-                                osName3.tolower();
-                                OGRFieldDefn oFieldDefn2(osName3, OFTString);
+                                OGRFieldDefn oFieldDefn2(
+                                    CPLString(osName2 + "_" + pszValue)
+                                        .tolower(),
+                                    OFTString);
                                 m_poFeatureDefn->AddFieldDefn(&oFieldDefn2);
                             }
                             else if (psIter3->eType == CXT_Text)
@@ -413,8 +398,8 @@ void OGRGMLASLayer::ProcessDataRecordFillFeature(CPLXMLNode *psDataRecord,
         if (psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "field") == 0)
         {
-            CPLString osName = CPLGetXMLValue(psIter, "name", "");
-            osName = osName.tolower();
+            const char *pszName = CPLGetXMLValue(psIter, "name", "");
+            CPLString osName = CPLString(pszName).tolower();
             OGRFieldDefn oFieldDefn(osName, OFTString);
             OGRFieldType eType;
             OGRFieldSubType eSubType;
@@ -432,8 +417,8 @@ void OGRGMLASLayer::ProcessDataRecordFillFeature(CPLXMLNode *psDataRecord,
             {
                 if (psIter2->eType == CXT_Element)
                 {
-                    CPLString osName2(osName + "_" + psIter2->pszValue);
-                    osName2.tolower();
+                    const CPLString osName2 =
+                        CPLString(osName + "_" + psIter2->pszValue).tolower();
                     for (CPLXMLNode *psIter3 = psIter2->psChild;
                          psIter3 != nullptr; psIter3 = psIter3->psNext)
                     {
@@ -443,10 +428,10 @@ void OGRGMLASLayer::ProcessDataRecordFillFeature(CPLXMLNode *psDataRecord,
                             const char *pszColon = strchr(pszValue, ':');
                             if (pszColon)
                                 pszValue = pszColon + 1;
-                            CPLString osName3(osName2 + "_" + pszValue);
-                            osName3.tolower();
-                            SetSWEValue(poFeature, osName3,
-                                        psIter3->psChild->pszValue);
+                            SetSWEValue(
+                                poFeature,
+                                CPLString(osName2 + "_" + pszValue).tolower(),
+                                psIter3->psChild->pszValue);
                         }
                         else if (psIter3->eType == CXT_Text)
                         {
@@ -1128,7 +1113,7 @@ void OGRGMLASLayer::InsertNewField(int nInsertPos,
         if (strcmp(poFeature->GetFieldAsString(szLAYER_NAME), GetName()) == 0)
         {
             int nFieldIndex = poFeature->GetFieldAsInteger(szFIELD_INDEX);
-            if (nFieldIndex >= nInsertPos)
+            if (nFieldIndex >= nInsertPos && nFieldIndex < INT_MAX)
             {
                 poFeature->SetField(szFIELD_INDEX, nFieldIndex + 1);
                 CPL_IGNORE_RET_VAL(

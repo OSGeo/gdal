@@ -8,23 +8,7 @@
  **********************************************************************
  * Copyright (c) 2015, Even Rouault, <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef CPL_WORKER_THREAD_POOL_H_INCLUDED_
@@ -34,8 +18,10 @@
 #include "cpl_list.h"
 
 #include <condition_variable>
+#include <functional>
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <vector>
 
 /**
@@ -46,7 +32,6 @@
  */
 
 #ifndef DOXYGEN_SKIP
-struct CPLWorkerThreadJob;
 class CPLWorkerThreadPool;
 
 struct CPLWorkerThread
@@ -73,6 +58,8 @@ typedef enum
 #endif  // ndef DOXYGEN_SKIP
 
 class CPLJobQueue;
+/// Unique pointer to a job queue.
+using CPLJobQueuePtr = std::unique_ptr<CPLJobQueue>;
 
 /** Pool of worker threads */
 class CPL_DLL CPLWorkerThreadPool
@@ -80,10 +67,10 @@ class CPL_DLL CPLWorkerThreadPool
     CPL_DISALLOW_COPY_ASSIGN(CPLWorkerThreadPool)
 
     std::vector<std::unique_ptr<CPLWorkerThread>> aWT{};
-    std::mutex m_mutex{};
+    mutable std::mutex m_mutex{};
     std::condition_variable m_cv{};
     volatile CPLWorkerThreadState eState = CPLWTS_OK;
-    CPLList *psJobQueue = nullptr;
+    std::queue<std::function<void()>> jobQueue;
     int nPendingJobs = 0;
 
     CPLList *psWaitingWorkerThreadsList = nullptr;
@@ -94,28 +81,27 @@ class CPL_DLL CPLWorkerThreadPool
     static void WorkerThreadFunction(void *user_data);
 
     void DeclareJobFinished();
-    CPLWorkerThreadJob *GetNextJob(CPLWorkerThread *psWorkerThread);
+    std::function<void()> GetNextJob(CPLWorkerThread *psWorkerThread);
 
   public:
     CPLWorkerThreadPool();
+    explicit CPLWorkerThreadPool(int nThreads);
     ~CPLWorkerThreadPool();
 
     bool Setup(int nThreads, CPLThreadFunc pfnInitFunc, void **pasInitData);
     bool Setup(int nThreads, CPLThreadFunc pfnInitFunc, void **pasInitData,
                bool bWaitallStarted);
 
-    std::unique_ptr<CPLJobQueue> CreateJobQueue();
+    CPLJobQueuePtr CreateJobQueue();
 
+    bool SubmitJob(std::function<void()> task);
     bool SubmitJob(CPLThreadFunc pfnFunc, void *pData);
     bool SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void *> &apData);
     void WaitCompletion(int nMaxRemainingJobs = 0);
     void WaitEvent();
 
     /** Return the number of threads setup */
-    int GetThreadCount() const
-    {
-        return m_nMaxThreads;
-    }
+    int GetThreadCount() const;
 };
 
 /** Job queue */
@@ -127,7 +113,6 @@ class CPL_DLL CPLJobQueue
     std::condition_variable m_cv{};
     int m_nPendingJobs = 0;
 
-    static void JobQueueFunction(void *);
     void DeclareJobFinished();
 
     //! @cond Doxygen_Suppress
@@ -146,7 +131,9 @@ class CPL_DLL CPLJobQueue
     }
 
     bool SubmitJob(CPLThreadFunc pfnFunc, void *pData);
+    bool SubmitJob(std::function<void()> task);
     void WaitCompletion(int nMaxRemainingJobs = 0);
+    bool WaitEvent();
 };
 
 #endif  // CPL_WORKER_THREAD_POOL_H_INCLUDED_

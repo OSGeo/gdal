@@ -10,23 +10,7 @@
 # Copyright (c) 2012, Ari Jolma <ari.jolma@aalto.fi>
 # Copyright (c) 2012-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 
@@ -259,6 +243,31 @@ def test_algebra_intersection_3(D1, D2, C):
     assert err == 0, "got non-zero result code " + str(err) + " from Layer.Intersection"
 
     assert is_same(D1, C), "D1 != C"
+
+
+def test_algebra_intersection_multipoint():
+
+    driver = ogr.GetDriverByName("MEMORY")
+    ds = driver.CreateDataSource("ds")
+    layer1 = ds.CreateLayer("layer1")
+    layer2 = ds.CreateLayer("layer2")
+
+    g1 = "LINESTRING (0 0, 1 1)"
+    geom1 = ogr.CreateGeometryFromWkt(g1)
+    feat1 = ogr.Feature(layer1.GetLayerDefn())
+    feat1.SetGeometry(geom1)
+    layer1.CreateFeature(feat1)
+
+    g2 = "LINESTRING (0 1, 1 0)"
+    geom2 = ogr.CreateGeometryFromWkt(g2)
+    feat2 = ogr.Feature(layer2.GetLayerDefn())
+    feat2.SetGeometry(geom2)
+    layer2.CreateFeature(feat2)
+
+    layer3 = ds.CreateLayer("layer3")
+    layer1.Intersection(layer2, layer3, ["PROMOTE_TO_MULTI=YES"])
+    f = layer3.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((0.5 0.5))"
 
 
 def test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():

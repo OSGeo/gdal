@@ -9,23 +9,7 @@
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef DOXYGEN_SKIP
@@ -147,7 +131,8 @@ bool swq_expr_node::operator==(const swq_expr_node &other) const
         nOperation != other.nOperation || field_index != other.field_index ||
         table_index != other.table_index ||
         nSubExprCount != other.nSubExprCount || is_null != other.is_null ||
-        int_value != other.int_value || float_value != other.float_value)
+        int_value != other.int_value || float_value != other.float_value ||
+        bHidden != other.bHidden)
     {
         return false;
     }
@@ -234,6 +219,7 @@ swq_expr_node &swq_expr_node::operator=(const swq_expr_node &other)
             geometry_value = other.geometry_value->clone();
         if (other.string_value)
             string_value = CPLStrdup(other.string_value);
+        bHidden = other.bHidden;
     }
     return *this;
 }
@@ -269,6 +255,7 @@ swq_expr_node &swq_expr_node::operator=(swq_expr_node &&other)
         float_value = other.float_value;
         std::swap(geometry_value, other.geometry_value);
         std::swap(string_value, other.string_value);
+        bHidden = other.bHidden;
     }
     return *this;
 }
@@ -677,6 +664,21 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
         return osExpr;
     }
 
+    const auto AddSubExpr = [this, apszSubExpr, &osExpr](int idx)
+    {
+        if (papoSubExpr[idx]->eNodeType == SNT_COLUMN ||
+            papoSubExpr[idx]->eNodeType == SNT_CONSTANT)
+        {
+            osExpr += apszSubExpr[idx];
+        }
+        else
+        {
+            osExpr += '(';
+            osExpr += apszSubExpr[idx];
+            osExpr += ')';
+        }
+    };
+
     switch (nOperation)
     {
         // Binary infix operators.
@@ -696,63 +698,52 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
         case SWQ_DIVIDE:
         case SWQ_MODULUS:
             CPLAssert(nSubExprCount >= 2);
-            if (papoSubExpr[0]->eNodeType == SNT_COLUMN ||
-                papoSubExpr[0]->eNodeType == SNT_CONSTANT)
-            {
-                osExpr += apszSubExpr[0];
-            }
-            else
-            {
-                osExpr += "(";
-                osExpr += apszSubExpr[0];
-                osExpr += ")";
-            }
+            AddSubExpr(0);
             osExpr += " ";
             osExpr += poOp->pszName;
             osExpr += " ";
-            if (papoSubExpr[1]->eNodeType == SNT_COLUMN ||
-                papoSubExpr[1]->eNodeType == SNT_CONSTANT)
-            {
-                osExpr += apszSubExpr[1];
-            }
-            else
-            {
-                osExpr += "(";
-                osExpr += apszSubExpr[1];
-                osExpr += ")";
-            }
+            AddSubExpr(1);
             if ((nOperation == SWQ_LIKE || nOperation == SWQ_ILIKE) &&
                 nSubExprCount == 3)
-                osExpr += CPLSPrintf(" ESCAPE (%s)", apszSubExpr[2]);
+            {
+                osExpr += " ESCAPE ";
+                AddSubExpr(2);
+            }
             break;
 
         case SWQ_NOT:
             CPLAssert(nSubExprCount == 1);
-            osExpr.Printf("NOT (%s)", apszSubExpr[0]);
+            osExpr = "NOT ";
+            AddSubExpr(0);
             break;
 
         case SWQ_ISNULL:
             CPLAssert(nSubExprCount == 1);
-            osExpr.Printf("%s IS NULL", apszSubExpr[0]);
+            AddSubExpr(0);
+            osExpr += " IS NULL";
             break;
 
         case SWQ_IN:
-            osExpr.Printf("%s IN (", apszSubExpr[0]);
+            AddSubExpr(0);
+            osExpr += " IN(";
             for (int i = 1; i < nSubExprCount; i++)
             {
                 if (i > 1)
                     osExpr += ",";
-                osExpr += "(";
-                osExpr += apszSubExpr[i];
-                osExpr += ")";
+                AddSubExpr(i);
             }
             osExpr += ")";
             break;
 
         case SWQ_BETWEEN:
             CPLAssert(nSubExprCount == 3);
-            osExpr.Printf("%s %s (%s) AND (%s)", apszSubExpr[0], poOp->pszName,
-                          apszSubExpr[1], apszSubExpr[2]);
+            AddSubExpr(0);
+            osExpr += ' ';
+            osExpr += poOp->pszName;
+            osExpr += ' ';
+            AddSubExpr(1);
+            osExpr += " AND ";
+            AddSubExpr(2);
             break;
 
         case SWQ_CAST:
@@ -773,7 +764,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
                     osExpr += apszSubExpr[i] + 1;
                 }
                 else
-                    osExpr += apszSubExpr[i];
+                    AddSubExpr(i);
 
                 if (i == 1 && nSubExprCount > 2)
                     osExpr += "(";
@@ -792,9 +783,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
             {
                 if (i > 0)
                     osExpr += ",";
-                osExpr += "(";
-                osExpr += apszSubExpr[i];
-                osExpr += ")";
+                AddSubExpr(i);
             }
             osExpr += ")";
             break;

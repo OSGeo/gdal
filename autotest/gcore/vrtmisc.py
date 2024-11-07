@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -36,9 +20,15 @@ import sys
 import tempfile
 from pathlib import Path
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, osr
+
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 
 ###############################################################################
 # Test linear scaling
@@ -688,6 +678,26 @@ def test_vrtmisc_blocksize_gdal_translate_direct():
 # Test setting block size through creation options
 
 
+def test_vrtmisc_blocksize_gdalbuildvrt():
+    filename = "/vsimem/test_vrtmisc_blocksize_gdalbuildvrt.vrt"
+    vrt_ds = gdal.BuildVRT(
+        filename, ["data/byte.tif"], creationOptions=["BLOCKXSIZE=32", "BLOCKYSIZE=48"]
+    )
+    vrt_ds = None
+
+    vrt_ds = gdal.Open(filename)
+    blockxsize, blockysize = vrt_ds.GetRasterBand(1).GetBlockSize()
+    assert blockxsize == 32
+    assert blockysize == 48
+    vrt_ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test setting block size through creation options
+
+
 def test_vrtmisc_blocksize_gdal_translate_indirect():
     filename = "/vsimem/test_vrtmisc_blocksize_gdal_translate_indirect.vrt"
     vrt_ds = gdal.Translate(
@@ -965,7 +975,7 @@ def test_vrtmisc_nodata_float32():
 
     # Check that this is still the case after above serialization to .vrt
     # and re-opening. That is check that we serialize the rounded value with
-    # full double precision (%.18g)
+    # full double precision (%.17g)
     ds = gdal.Open(vrt_filename)
     nodata_vrt = ds.GetRasterBand(1).GetNoDataValue()
     assert nodata_vrt == struct.unpack("f", struct.pack("f", nodata))[0]

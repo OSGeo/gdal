@@ -23,7 +23,7 @@ well as selected other header metadata.
 
 Starting with GDAL 2.2, a mask band is attached to each source band. The
 value of this mask band is 0 when the pixel value is the NULL value or
-one of the low/high on-intstrument/processed saturation value, or 255
+one of the low/high on-instrument/processed saturation value, or 255
 when the pixel value is valid.
 
 Implementation of this driver was supported by the United States
@@ -318,7 +318,7 @@ Python :
    from osgeo import gdal
 
    src_ds = gdal.Open('in.lbl')
-   # Load source label as JSON 
+   # Load source label as JSON
    label = json.loads( src_ds.GetMetadata_List('json:ISIS3')[0] )
    # Update parameter
    label["IsisCube"]["Mapping"]["TargetName"] = "Moon"

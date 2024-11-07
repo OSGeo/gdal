@@ -11,23 +11,7 @@
 # Copyright (c) 2015, Faza Mahamood <fazamhd at gmail dot com>
 # Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import collections
@@ -451,6 +435,19 @@ def test_gdalwarp_lib_19(testgdalwarp_gcp_tif):
 
 
 ###############################################################################
+# Test invalid value of -et
+
+
+def test_gdalwarp_lib_invalid_et(testgdalwarp_gcp_tif):
+
+    with gdaltest.enable_exceptions():
+        with pytest.raises(Exception, match="Failed to parse"):
+            gdal.Warp(
+                "", "../gcore/data/byte.tif", format="MEM", errorThreshold="minimal"
+            )
+
+
+###############################################################################
 # Test cutline from OGR datasource.
 
 
@@ -795,6 +792,7 @@ def test_gdalwarp_lib_45():
 
 
 @pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_46(tmp_vsimem):
 
     ds = gdal.Warp(
@@ -891,6 +889,7 @@ def test_gdalwarp_lib_46(tmp_vsimem):
 # Test -crop_to_cutline -tr X Y -wo CUTLINE_ALL_TOUCHED=YES (fixes for #1360)
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_cutline_all_touched_single_pixel(tmp_vsimem):
 
     cutlineDSName = (
@@ -941,6 +940,7 @@ def test_gdalwarp_lib_cutline_all_touched_single_pixel(tmp_vsimem):
 
 
 @pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_crop_to_cutline_slightly_shifted_wrt_pixel_boundaries(tmp_vsimem):
 
     cutlineDSName = (
@@ -1473,10 +1473,39 @@ def test_gdalwarp_lib_127():
     assert ds.GetRasterBand(1).Checksum() == 4672, "bad checksum"
 
 
+@pytest.mark.parametrize("srcNodata", [float("-inf"), -1])
+def test_gdalwarp_lib_srcnodata(srcNodata):
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/byte.tif",
+        format="MEM",
+        srcNodata=srcNodata,
+        outputType=gdal.GDT_Float32,
+    )
+    assert ds.GetRasterBand(1).GetNoDataValue() == srcNodata, "bad nodata value"
+    assert ds.GetRasterBand(1).Checksum() == 4672, "bad checksum"
+
+
+@pytest.mark.parametrize("dstNodata", [float("-inf"), -1])
+def test_gdalwarp_lib_dstnodata(dstNodata):
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/byte.tif",
+        format="MEM",
+        dstNodata=dstNodata,
+        outputType=gdal.GDT_Float32,
+    )
+    assert ds.GetRasterBand(1).GetNoDataValue() == dstNodata, "bad nodata value"
+    assert ds.GetRasterBand(1).Checksum() == 4672, "bad checksum"
+
+
 ###############################################################################
 # Test automatic densification of cutline (#6375)
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_128(tmp_vsimem):
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1177, 4719)
@@ -1571,7 +1600,12 @@ def test_gdalwarp_lib_128(tmp_vsimem):
 # to an invalid geometry (#6375)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_geos
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_129(tmp_vsimem):
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1000, 2000)
@@ -1802,7 +1836,10 @@ def test_gdalwarp_lib_134(tmp_vsimem):
         "",
         src_ds,
         format="MEM",
-        transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM", "DST_METHOD=NO_GEOTRANSFORM"],
+        transformerOptions={
+            "SRC_METHOD": "NO_GEOTRANSFORM",
+            "DST_METHOD": "NO_GEOTRANSFORM",
+        },
         outputBounds=[1, 2, 4, 6],
     )
     assert ds is not None
@@ -2041,6 +2078,10 @@ def test_gdalwarp_lib_135h(gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx):
     assert data == pytest.approx(115 / (1200.0 / 3937)), "Bad value"
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @pytest.mark.require_driver("GTX")
 def test_gdalwarp_lib_135i(
     gdalwarp_135_src_ds, gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx, tmp_path
@@ -3030,6 +3071,7 @@ def test_gdalwarp_lib_scale_offset():
 # Test cutline with zero-width sliver
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_cutline_zero_width_sliver(tmp_vsimem):
 
     # Geometry valid in EPSG:4326, but that has a zero-width sliver
@@ -3051,6 +3093,7 @@ def test_gdalwarp_lib_cutline_zero_width_sliver(tmp_vsimem):
 # Test cutline with zero-width sliver
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_cutline_zero_width_sliver_remove_empty_polygon(tmp_vsimem):
 
     geojson = {
@@ -3092,6 +3135,7 @@ def test_gdalwarp_lib_cutline_zero_width_sliver_remove_empty_polygon(tmp_vsimem)
 # Test cutline with zero-width sliver
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_cutline_zero_width_sliver_remove_empty_inner_ring(tmp_vsimem):
 
     geojson = {
@@ -3296,6 +3340,10 @@ def test_gdalwarp_lib_src_nodata_with_dstalpha():
 # Test warping from a dataset with points outside of Earth (fixes #4934)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalwarp_lib_src_points_outside_of_earth():
     class MyHandler:
         def __init__(self):
@@ -3885,6 +3933,7 @@ def test_gdalwarp_lib_working_data_type_with_source_dataset_of_different_types()
 
 
 @pytest.mark.require_geos
+@pytest.mark.require_driver("GeoJSON")
 def test_gdalwarp_lib_cutline_crossing_antimeridian_in_EPSG_32601_and_raster_in_EPSG_4326(
     tmp_vsimem,
 ):
@@ -4039,11 +4088,12 @@ def test_gdalwarp_lib_ortho_to_long_lat():
 ###############################################################################
 # Test warping to a projection that has no inverse
 # Note: this test will break if PROJ get support for inverse isea !
+# Note: disabled since it will actually break with PROJ 9.5 which implements
 
 
 @pytest.mark.require_proj(8, 0, 0)
 @gdaltest.enable_exceptions()
-def test_gdalwarp_lib_to_projection_without_inverse_method():
+def DISABLED_test_gdalwarp_lib_to_projection_without_inverse_method():
 
     with pytest.raises(Exception, match="No inverse operation"):
         gdal.Warp(
@@ -4073,7 +4123,7 @@ def test_gdalwarp_lib_to_projection_without_inverse_method():
 def test_gdalwarp_lib_no_crash_on_none_dst():
 
     ds1 = gdal.Open("../gcore/data/byte.tif")
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception):
         gdal.Warp(None, ds1)
 
 
@@ -4230,3 +4280,143 @@ def test_gdalwarp_lib_minus_180_plus_180_to_span_over_180(tmp_vsimem, extra_colu
     ) == src_ds.GetRasterBand(1).ReadRaster(
         0, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
     )
+
+
+###############################################################################
+# Test bugfix for https://lists.osgeo.org/pipermail/gdal-dev/2024-September/059512.html
+
+
+@pytest.mark.parametrize("with_tap", [True, False])
+def test_gdalwarp_lib_blank_edge_one_by_one(with_tap):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([6.8688, 0.0009, 0, 51.3747, 0, -0.0009])
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_ds.SetSpatialRef(srs)
+    options = "-f MEM -tr 1000 1000 -t_srs EPSG:32631"
+    if with_tap:
+        options += " -tap"
+    out_ds = gdal.Warp("", src_ds, options=options)
+    assert out_ds.RasterXSize == 1
+    assert out_ds.RasterYSize == 1
+    gt = out_ds.GetGeoTransform()
+    if with_tap:
+        assert gt == pytest.approx((769000.0, 1000.0, 0.0, 5699000.0, 0.0, -1000.0))
+    else:
+        assert gt == pytest.approx(
+            (769234.6506516202, 1000.0, 0.0, 5698603.782217737, 0.0, -1000.0)
+        )
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/10892
+
+
+def test_gdalwarp_lib_average_ten_ten_to_one_one():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_ds.SetSpatialRef(srs)
+    src_ds.GetRasterBand(1).Fill(1)
+    out_ds = gdal.Warp(
+        "", src_ds, width=1, height=1, resampleAlg=gdal.GRIORA_Average, format="MEM"
+    )
+    assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (1, 1)
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/10975
+
+
+def test_gdalwarp_lib_src_is_geog_arc_second():
+
+    out_ds = gdal.Warp(
+        "",
+        "data/geog_arc_second.tif",
+        options="-f MEM -srcnodata 0 -te -81.5 28.5 -81.0 29.0 -t_srs EPSG:4326",
+    )
+    assert out_ds.RasterXSize == 5464
+    assert out_ds.RasterYSize == 5464
+    assert out_ds.GetRasterBand(1).Checksum() == 31856
+
+
+###############################################################################
+# Test GWKCubicResampleNoMasks4MultiBandT<Byte>()
+
+
+def test_gdalwarp_lib_cubic_multiband_byte_4sample_optim():
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+
+    # RGB only
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-f MEM -tr 0.9 0.9 -te -10 40.1 8.9 59 -r cubic",
+    )
+    assert out_ds.RasterXSize == 21
+    assert out_ds.RasterYSize == 21
+    assert [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+        4785,
+        4689,
+        5007,
+    ]
+
+    # With dest alpha
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-f MEM -tr 0.9 0.9 -te -10 40.1 8.9 59 -r cubic -dstalpha",
+    )
+    assert out_ds.RasterXSize == 21
+    assert out_ds.RasterYSize == 21
+    assert [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+        4785,
+        4689,
+        5007,
+    ]
+    assert out_ds.GetRasterBand(4).ComputeRasterMinMax() == (255, 255)
+
+    # Test edge effects
+    # (slightly change the target resolution so that the nearest approximation
+    # doesn't kick in)
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-f MEM -r cubic -tr 0.9000001 0.9000001 -wo XSCALE=1 -wo YSCALE=1",
+    )
+    assert out_ds.RasterXSize == 400
+    assert out_ds.RasterYSize == 200
+    assert out_ds.ReadRaster() == src_ds.ReadRaster()
+
+
+###############################################################################
+# Test GWKCubicResampleNoMasks4MultiBandT<GUInt16>()
+
+
+def test_gdalwarp_lib_cubic_multiband_uint16_4sample_optim():
+
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    src_ds = gdal.Translate(
+        "", src_ds, options="-f MEM -ot UInt16 -scale 0 255 0 65535"
+    )
+
+    # RGB only
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-f MEM -tr 0.9 0.9 -te -10 40.1 8.9 59 -r cubic",
+    )
+    out_ds = gdal.Translate("", out_ds, options="-f MEM -ot Byte -scale 0 65535 0 255")
+    assert out_ds.RasterXSize == 21
+    assert out_ds.RasterYSize == 21
+    assert [out_ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
+        4785,
+        4689,
+        5007,
+    ]

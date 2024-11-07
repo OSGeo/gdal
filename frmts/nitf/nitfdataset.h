@@ -12,23 +12,7 @@
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef NITF_DATASET_H_INCLUDED
@@ -38,6 +22,8 @@
 #include "nitflib.h"
 #include "ogr_spatialref.h"
 #include "gdal_proxy.h"
+
+#include <array>
 #include <map>
 
 CPLErr NITFSetColorInterpretation(NITFImage *psImage, int nBand,
@@ -68,6 +54,7 @@ class NITFDataset final : public GDALPamDataset
 {
     friend class NITFRasterBand;
     friend class NITFWrapperRasterBand;
+    friend class NITFComplexRasterBand;
 
     NITFFile *psFile;
     NITFImage *psImage;
@@ -78,6 +65,7 @@ class NITFDataset final : public GDALPamDataset
     int m_nIMIndex = 0;
     int m_nImageCount = 0;
     vsi_l_offset m_nICOffset = 0;
+    bool m_bHasComplexRasterBand = false;
 
     GDALDataset *poJPEGDataset;
 
@@ -198,7 +186,7 @@ class NITFDataset final : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class NITFRasterBand final : public GDALPamRasterBand
+class NITFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 {
     friend class NITFDataset;
 
@@ -373,6 +361,33 @@ class NITFWrapperRasterBand final : public NITFProxyPamRasterBand
 
     /* Specific method */
     void SetColorTableFromNITFBandInfo();
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                        NITFComplexRasterBand                         */
+/* ==================================================================== */
+/************************************************************************/
+
+/* This class is used to wrap 2 bands (I and Q) as a complex raster band */
+class NITFComplexRasterBand final : public NITFRasterBand
+{
+    std::unique_ptr<NITFDataset> poIntermediateDS{};
+    std::array<int, 2> anBandMap = {0, 0};
+    GDALDataType underlyingDataType = GDT_Unknown;
+    int complexDataTypeSize = 0;
+    int underlyingDataTypeSize = 0;
+
+  private:
+    CPLErr IBlockIO(int nBlockXOff, int nBlockYOff, void *pImage,
+                    GDALRWFlag rwFlag);
+
+  public:
+    NITFComplexRasterBand(NITFDataset *poDSIn, GDALRasterBand *poBandI,
+                          GDALRasterBand *poBandQ, int nIBand, int nQBand);
+
+    CPLErr IReadBlock(int, int, void *) override;
+    CPLErr IWriteBlock(int, int, void *) override;
 };
 
 #endif /* NITF_DATASET_H_INCLUDED */

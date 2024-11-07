@@ -8,23 +8,7 @@
  * Copyright (c) 1998, 2002, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef GTIFFDATASET_H_INCLUDED
@@ -53,9 +37,6 @@ enum class GTiffProfile : GByte
 
 // This must be a #define, since it is used in a XSTRINGIFY() macro
 #define DEFAULT_WEBP_LEVEL 75
-
-constexpr const char *const szJPEGGTiffDatasetTmpPrefix =
-    "/vsimem/gtiffdataset_jpg_tmp_";
 
 class GTiffBitmapBand;
 class GTiffDataset;
@@ -155,7 +136,7 @@ class GTiffDataset final : public GDALPamDataset
         m_poMaskExtOvrDS{};  // Used with MASK_OVERVIEW_DATASET open option
     GTiffJPEGOverviewDS **m_papoJPEGOverviewDS = nullptr;
     std::vector<gdal::GCP> m_aoGCPs{};
-    GDALColorTable *m_poColorTable = nullptr;
+    std::unique_ptr<GDALColorTable> m_poColorTable{};
     char **m_papszMetadataFiles = nullptr;
     GByte *m_pabyBlockBuf = nullptr;
     char **m_papszCreationOptions = nullptr;
@@ -204,6 +185,16 @@ class GTiffDataset final : public GDALPamDataset
     int m_nLastWrittenBlockId = -1;  // used for m_bStreamingOut
     int m_nRefBaseMapping = 0;
     int m_nDisableMultiThreadedRead = 0;
+
+  public:
+    static constexpr int DEFAULT_COLOR_TABLE_MULTIPLIER_257 = 257;
+
+  private:
+    //! Multiplication factor to go from GDAL [0,255] color table range to
+    // TIFF [0,65535] color map one.
+    // 0 is not a valid value, and means not specified by user through the
+    // COLOR_TABLE_MULTIPLIER open / creation option.
+    int m_nColorTableMultiplier = 0;
 
     GTIFFKeysFlavorEnum m_eGeoTIFFKeysFlavor = GEOTIFF_KEYS_STANDARD;
     GeoTIFFVersionEnum m_eGeoTIFFVersion = GEOTIFF_VERSION_AUTO;
@@ -423,7 +414,7 @@ class GTiffDataset final : public GDALPamDataset
 
     void LoadGeoreferencingAndPamIfNeeded();
 
-    char **GetSiblingFiles();
+    CSLConstList GetSiblingFiles();
 
     void IdentifyAuthorizedGeoreferencingSources();
 
@@ -550,8 +541,8 @@ class GTiffDataset final : public GDALPamDataset
     static TIFF *CreateLL(const char *pszFilename, int nXSize, int nYSize,
                           int nBands, GDALDataType eType,
                           double dfExtraSpaceForOverviews,
-                          char **papszParamList, VSILFILE **pfpL,
-                          CPLString &osTmpFilename);
+                          int nColorTableMultiplier, char **papszParamList,
+                          VSILFILE **pfpL, CPLString &osTmpFilename);
 
     CPLErr WriteEncodedTileOrStrip(uint32_t tile_or_strip, void *data,
                                    int bPreserveDataBuffer);
@@ -560,6 +551,9 @@ class GTiffDataset final : public GDALPamDataset
                                char **papszParamList, uint32_t nBitsPerSample);
 
     static const GTIFFTag *GetTIFFTags();
+
+    static unsigned short ClampCTEntry(int iColor, int iComp, int nCTEntryVal,
+                                       int nMultFactor);
 };
 
 GTIFFKeysFlavorEnum GetGTIFFKeysFlavor(CSLConstList papszOptions);

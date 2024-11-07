@@ -9,23 +9,7 @@
  * Copyright (c) 2000, Frank Warmerdam
  * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -46,6 +30,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gtiff.h"
+#include "gtiffdataset.h"
 #include "tiff.h"
 #include "tiffvers.h"
 #include "tifvsi.h"
@@ -188,8 +173,11 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize,
     }
 
     TIFFWriteDirectory(hTIFF);
-    TIFFSetDirectory(hTIFF,
-                     static_cast<tdir_t>(TIFFNumberOfDirectories(hTIFF) - 1));
+    const tdir_t nNumberOfDirs = TIFFNumberOfDirectories(hTIFF);
+    if (nNumberOfDirs > 0)  // always true, but to please Coverity
+    {
+        TIFFSetDirectory(hTIFF, static_cast<tdir_t>(nNumberOfDirs - 1));
+    }
 
     const toff_t nOffset = TIFFCurrentDirOffset(hTIFF);
 
@@ -203,7 +191,8 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize,
 /************************************************************************/
 
 void GTIFFBuildOverviewMetadata(const char *pszResampling,
-                                GDALDataset *poBaseDS, CPLString &osMetadata)
+                                GDALDataset *poBaseDS, bool bIsForMaskBand,
+                                CPLString &osMetadata)
 
 {
     osMetadata = "<GDALMetadata>";
@@ -216,7 +205,11 @@ void GTIFFBuildOverviewMetadata(const char *pszResampling,
         osMetadata += "</Item>";
     }
 
-    if (poBaseDS->GetMetadataItem("INTERNAL_MASK_FLAGS_1"))
+    if (bIsForMaskBand)
+    {
+        osMetadata += "<Item name=\"INTERNAL_MASK_FLAGS_1\">2</Item>";
+    }
+    else if (poBaseDS->GetMetadataItem("INTERNAL_MASK_FLAGS_1"))
     {
         for (int iBand = 0; iBand < 200; iBand++)
         {
@@ -561,8 +554,19 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
               papoBandList[0]->GetRasterDataType() == GDT_UInt16) &&
              !STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2"))
     {
+        // Would also apply to other lossy compression scheme, but for JPEG,
+        // this at least avoids a later cryptic error message from libtiff:
+        // "JPEGSetupEncode:PhotometricInterpretation 3 not allowed for JPEG"
+        if (nCompression == COMPRESSION_JPEG)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create JPEG compressed overviews on a raster "
+                     "with a color table");
+            return CE_Failure;
+        }
+
         nPhotometric = PHOTOMETRIC_PALETTE;
-        // Should set the colormap up at this point too!
+        // Color map is set up after
     }
     else if (nBands >= 3 &&
              papoBandList[0]->GetColorInterpretation() == GCI_RedBand &&
@@ -749,17 +753,28 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         panBlue = static_cast<unsigned short *>(
             CPLCalloc(nColorCount, sizeof(unsigned short)));
 
+        const int nColorTableMultiplier = std::max(
+            1,
+            std::min(
+                257,
+                atoi(CSLFetchNameValueDef(
+                    papszOptions, "COLOR_TABLE_MULTIPLIER",
+                    CPLSPrintf(
+                        "%d",
+                        GTiffDataset::DEFAULT_COLOR_TABLE_MULTIPLIER_257)))));
+
         for (int iColor = 0; iColor < nColorCount; iColor++)
         {
             GDALColorEntry sRGB = {0, 0, 0, 0};
 
             if (poCT->GetColorEntryAsRGB(iColor, &sRGB))
             {
-                // TODO(schwehr): Check for underflow.
-                // Going from signed short to unsigned short.
-                panRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
-                panGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
-                panBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
+                panRed[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 1, sRGB.c1, nColorTableMultiplier);
+                panGreen[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 2, sRGB.c2, nColorTableMultiplier);
+                panBlue[iColor] = GTiffDataset::ClampCTEntry(
+                    iColor, 3, sRGB.c3, nColorTableMultiplier);
             }
         }
     }
@@ -771,7 +786,10 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
     GDALDataset *poBaseDS = papoBandList[0]->GetDataset();
     if (poBaseDS)
     {
-        GTIFFBuildOverviewMetadata(pszResampling, poBaseDS, osMetadata);
+        const bool bIsForMaskBand =
+            nBands == 1 && papoBandList[0]->IsMaskBand();
+        GTIFFBuildOverviewMetadata(pszResampling, poBaseDS, bIsForMaskBand,
+                                   osMetadata);
     }
 
     if (poBaseDS != nullptr && poBaseDS->GetRasterCount() == nBands)

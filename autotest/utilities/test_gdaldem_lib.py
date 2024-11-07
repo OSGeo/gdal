@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2015, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import collections
@@ -469,7 +453,7 @@ def test_gdaldem_lib_color_relief():
         colorFilename="data/color_file.txt",
         colorSelection="exact_color_entry",
     )
-    assert ds.GetRasterBand(1).Checksum() == 0
+    assert ds.GetRasterBand(1).Checksum() == 8073
 
     ds = gdal.DEMProcessing(
         "",
@@ -524,6 +508,90 @@ def test_gdaldem_lib_color_relief_nodata_value(tmp_vsimem):
     assert ds.GetRasterBand(1).Checksum() != 0
 
     gdal.Unlink(colorFilename)
+
+
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
+@pytest.mark.parametrize(
+    "colorSelection",
+    ["nearest_color_entry", "exact_color_entry", "linear_interpolation"],
+)
+@pytest.mark.parametrize("format", ["MEM", "VRT"])
+def test_gdaldem_lib_color_relief_synthetic(tmp_path, colorSelection, format):
+
+    src_filename = "" if format == "MEM" else str(tmp_path / "in.tif")
+    src_ds = gdal.GetDriverByName("MEM" if format == "MEM" else "GTiff").Create(
+        src_filename, 4, 1
+    )
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\x01\x02\x03")
+    if format != "MEM":
+        src_ds.Close()
+        src_ds = gdal.Open(src_filename)
+    colorFilename = tmp_path / "color_file.txt"
+    with open(colorFilename, "wb") as f:
+        f.write(b"""0 0 0 0\n1 10 11 12\n2 20 21 22\n3 30 31 32\n""")
+
+    out_filename = "" if format == "MEM" else str(tmp_path / "out.vrt")
+    ds = gdal.DEMProcessing(
+        out_filename,
+        src_ds,
+        "color-relief",
+        format=format,
+        colorFilename=colorFilename,
+        colorSelection=colorSelection,
+    )
+    if format != "MEM":
+        ds.Close()
+        ds = gdal.Open(out_filename)
+    assert struct.unpack("B" * 4, ds.GetRasterBand(1).ReadRaster()) == (0, 10, 20, 30)
+    assert struct.unpack("B" * 4, ds.GetRasterBand(2).ReadRaster()) == (0, 11, 21, 31)
+    assert struct.unpack("B" * 4, ds.GetRasterBand(3).ReadRaster()) == (0, 12, 22, 32)
+
+
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
+@pytest.mark.parametrize(
+    "colorSelection",
+    ["nearest_color_entry", "exact_color_entry", "linear_interpolation"],
+)
+@pytest.mark.parametrize("format", ["MEM", "VRT"])
+def test_gdaldem_lib_color_relief_synthetic_nodata_255(
+    tmp_path, colorSelection, format
+):
+
+    src_filename = "" if format == "MEM" else str(tmp_path / "in.tif")
+    src_ds = gdal.GetDriverByName("MEM" if format == "MEM" else "GTiff").Create(
+        src_filename, 4, 1
+    )
+    src_ds.GetRasterBand(1).SetNoDataValue(255)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\x01\x02\xFF")
+    if format != "MEM":
+        src_ds.Close()
+        src_ds = gdal.Open(src_filename)
+    colorFilename = tmp_path / "color_file.txt"
+    with open(colorFilename, "wb") as f:
+        f.write(b"""0 0 1 2\n1 10 11 12\n2 20 21 22\n255 255 255 255\n""")
+
+    out_filename = "" if format == "MEM" else str(tmp_path / "out.vrt")
+    ds = gdal.DEMProcessing(
+        out_filename,
+        src_ds,
+        "color-relief",
+        format=format,
+        colorFilename=colorFilename,
+        colorSelection=colorSelection,
+    )
+    if format != "MEM":
+        ds.Close()
+        ds = gdal.Open(out_filename)
+    assert struct.unpack("B" * 4, ds.GetRasterBand(1).ReadRaster()) == (0, 10, 20, 255)
+    assert struct.unpack("B" * 4, ds.GetRasterBand(2).ReadRaster()) == (1, 11, 21, 255)
+    assert struct.unpack("B" * 4, ds.GetRasterBand(3).ReadRaster()) == (2, 12, 22, 255)
 
 
 ###############################################################################

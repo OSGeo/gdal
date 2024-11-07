@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2018, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -81,7 +65,8 @@ class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBaseWritable
     char **GetFileList(const char *pszFilename, int nMaxFiles,
                        bool *pbGotFileList) override;
 
-    std::string GetURLFromFilename(const std::string &osFilename) override;
+    std::string
+    GetURLFromFilename(const std::string &osFilename) const override;
 
     VSIVirtualHandleUniquePtr
     CreateWriteHandle(const char *pszFilename,
@@ -283,7 +268,7 @@ void VSIWebHDFSWriteHandle::InvalidateParentDirectory()
 
     std::string osFilenameWithoutSlash(m_osFilename);
     if (!osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/')
-        osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() - 1);
+        osFilenameWithoutSlash.pop_back();
     m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
 }
 
@@ -564,11 +549,11 @@ VSICurlHandle *VSIWebHDFSFSHandler::CreateFileHandle(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                          GetURLFromFilename()                         */
+/*                          GetURLFromFilename()                        */
 /************************************************************************/
 
 std::string
-VSIWebHDFSFSHandler::GetURLFromFilename(const std::string &osFilename)
+VSIWebHDFSFSHandler::GetURLFromFilename(const std::string &osFilename) const
 {
     return osFilename.substr(GetFSPrefix().size());
 }
@@ -753,7 +738,7 @@ int VSIWebHDFSFSHandler::Unlink(const char *pszFilename)
         std::string osFilenameWithoutSlash(pszFilename);
         if (!osFilenameWithoutSlash.empty() &&
             osFilenameWithoutSlash.back() == '/')
-            osFilenameWithoutSlash.resize(osFilenameWithoutSlash.size() - 1);
+            osFilenameWithoutSlash.pop_back();
 
         InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
     }
@@ -794,7 +779,7 @@ int VSIWebHDFSFSHandler::Mkdir(const char *pszDirname, long nMode)
     if (!osDirnameWithoutEndSlash.empty() &&
         osDirnameWithoutEndSlash.back() == '/')
     {
-        osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+        osDirnameWithoutEndSlash.pop_back();
     }
 
     if (osDirnameWithoutEndSlash.find("/webhdfs/v1") ==

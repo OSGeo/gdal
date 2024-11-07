@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -32,44 +16,7 @@
 #include "cpl_minixml.h"
 #include "cpl_http.h"
 #include "parsexsd.h"
-
-/************************************************************************/
-/*                      OGRWFSRecursiveUnlink()                         */
-/************************************************************************/
-
-void OGRWFSRecursiveUnlink(const char *pszName)
-
-{
-    char **papszFileList = VSIReadDir(pszName);
-
-    for (int i = 0; papszFileList != nullptr && papszFileList[i] != nullptr;
-         i++)
-    {
-        VSIStatBufL sStatBuf;
-
-        if (EQUAL(papszFileList[i], ".") || EQUAL(papszFileList[i], ".."))
-            continue;
-
-        CPLString osFullFilename =
-            CPLFormFilename(pszName, papszFileList[i], nullptr);
-
-        if (VSIStatL(osFullFilename, &sStatBuf) == 0)
-        {
-            if (VSI_ISREG(sStatBuf.st_mode))
-            {
-                VSIUnlink(osFullFilename);
-            }
-            else if (VSI_ISDIR(sStatBuf.st_mode))
-            {
-                OGRWFSRecursiveUnlink(osFullFilename);
-            }
-        }
-    }
-
-    CSLDestroy(papszFileList);
-
-    VSIRmdir(pszName);
-}
+#include "ogrwfsfilter.h"
 
 /************************************************************************/
 /*                            OGRWFSLayer()                             */
@@ -93,6 +40,9 @@ OGRWFSLayer::OGRWFSLayer(OGRWFSDataSource *poDSIn, OGRSpatialReference *poSRSIn,
       nPagingStartIndex(0), nFeatureRead(0), pszRequiredOutputFormat(nullptr)
 {
     SetDescription(pszName);
+
+    // If changing that, change in the GML driver too
+    m_osTmpDir = VSIMemGenerateHiddenFilename("_ogr_wfs_");
 }
 
 /************************************************************************/
@@ -114,9 +64,9 @@ OGRWFSLayer *OGRWFSLayer::Clone()
         pszRequiredOutputFormat ? CPLStrdup(pszRequiredOutputFormat) : nullptr;
 
     /* Copy existing schema file if already found */
-    CPLString osSrcFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
+    CPLString osSrcFileName = CPLSPrintf("%s/file.xsd", m_osTmpDir.c_str());
     CPLString osTargetFileName =
-        CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", poDupLayer);
+        CPLSPrintf("%s/file.xsd", poDupLayer->m_osTmpDir.c_str());
     CPL_IGNORE_RET_VAL(CPLCopyFile(osTargetFileName, osSrcFileName));
 
     return poDupLayer;
@@ -148,8 +98,7 @@ OGRWFSLayer::~OGRWFSLayer()
 
     delete poFetchedFilterGeom;
 
-    CPLString osTmpDirName = CPLSPrintf("/vsimem/tempwfs_%p", this);
-    OGRWFSRecursiveUnlink(osTmpDirName);
+    VSIRmdirRecursive(m_osTmpDir.c_str());
 
     CPLFree(pszRequiredOutputFormat);
 }
@@ -312,12 +261,14 @@ OGRFeatureDefn *OGRWFSLayer::ParseSchema(const CPLXMLNode *psSchema)
 
     CPLString osTmpFileName;
 
-    osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
+    osTmpFileName = CPLSPrintf("%s/file.xsd", m_osTmpDir.c_str());
     CPLSerializeXMLTreeToFile(psSchema, osTmpFileName);
 
     std::vector<GMLFeatureClass *> aosClasses;
     bool bFullyUnderstood = false;
-    bool bHaveSchema = GMLParseXSD(osTmpFileName, aosClasses, bFullyUnderstood);
+    bool bUseSchemaImports = false;
+    bool bHaveSchema = GMLParseXSD(osTmpFileName, bUseSchemaImports, aosClasses,
+                                   bFullyUnderstood);
 
     if (bHaveSchema && aosClasses.size() == 1)
     {
@@ -801,8 +752,7 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         /* Try streaming when the output format is GML and that we have a .xsd
          */
         /* that we are able to understand */
-        CPLString osXSDFileName =
-            CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
+        CPLString osXSDFileName = CPLSPrintf("%s/file.xsd", m_osTmpDir.c_str());
         VSIStatBufL sBuf;
         GDALDriver *poDriver = nullptr;
         if ((osOutputFormat.empty() ||
@@ -920,8 +870,7 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     if (psResult->pszContentType)
         pszContentType = psResult->pszContentType;
 
-    const std::string osTmpDirName = CPLSPrintf("/vsimem/tempwfs_%p", this);
-    VSIMkdir(osTmpDirName.c_str(), 0);
+    VSIMkdir(m_osTmpDir.c_str(), 0);
 
     GByte *pabyData = psResult->pabyData;
     int nDataLen = psResult->nDataLen;
@@ -932,11 +881,11 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         CPLHTTPParseMultipartMime(psResult))
     {
         bIsMultiPart = true;
-        OGRWFSRecursiveUnlink(osTmpDirName.c_str());
-        VSIMkdir(osTmpDirName.c_str(), 0);
+        VSIRmdirRecursive(m_osTmpDir.c_str());
+        VSIMkdir(m_osTmpDir.c_str(), 0);
         for (int i = 0; i < psResult->nMimePartCount; i++)
         {
-            CPLString osTmpFileName = osTmpDirName + "/";
+            CPLString osTmpFileName = m_osTmpDir + "/";
             pszAttachmentFilename = OGRWFSFetchContentDispositionFilename(
                 psResult->pasMimePart[i].papszHeaders);
 
@@ -1036,31 +985,31 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     if (!bIsMultiPart)
     {
         if (bJSON)
-            osTmpFileName = osTmpDirName + "/file.geojson";
+            osTmpFileName = m_osTmpDir + "/file.geojson";
         else if (bZIP)
-            osTmpFileName = osTmpDirName + "/file.zip";
+            osTmpFileName = m_osTmpDir + "/file.zip";
         else if (bCSV)
-            osTmpFileName = osTmpDirName + "/file.csv";
+            osTmpFileName = m_osTmpDir + "/file.csv";
         else if (bKML)
-            osTmpFileName = osTmpDirName + "/file.kml";
+            osTmpFileName = m_osTmpDir + "/file.kml";
         else if (bKMZ)
-            osTmpFileName = osTmpDirName + "/file.kmz";
+            osTmpFileName = m_osTmpDir + "/file.kmz";
         else if (bFlatGeobuf)
-            osTmpFileName = osTmpDirName + "/file.fgb";
+            osTmpFileName = m_osTmpDir + "/file.fgb";
         /* GML is a special case. It needs the .xsd file that has been saved */
         /* as file.xsd, so we cannot used the attachment filename */
         else if (pszAttachmentFilename &&
                  !EQUAL(CPLGetExtension(pszAttachmentFilename), "GML"))
         {
-            osTmpFileName = osTmpDirName + "/";
+            osTmpFileName = m_osTmpDir + "/";
             osTmpFileName += pszAttachmentFilename;
         }
         else
         {
-            osTmpFileName = osTmpDirName + "/file.gfs";
+            osTmpFileName = m_osTmpDir + "/file.gfs";
             VSIUnlink(osTmpFileName);
 
-            osTmpFileName = osTmpDirName + "/file.gml";
+            osTmpFileName = m_osTmpDir + "/file.gml";
         }
 
         VSILFILE *fp =
@@ -1081,7 +1030,7 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     {
         pabyData = nullptr;
         nDataLen = 0;
-        osTmpFileName = osTmpDirName;
+        osTmpFileName = m_osTmpDir;
     }
 
     CPLHTTPDestroyResult(psResult);
@@ -1618,8 +1567,8 @@ GIntBig OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
     if (psResult->pszContentType != nullptr &&
         strstr(psResult->pszContentType, "application/zip") != nullptr)
     {
-        CPLString osTmpFileName;
-        osTmpFileName.Printf("/vsimem/wfstemphits_%p.zip", this);
+        const CPLString osTmpFileName(
+            VSIMemGenerateHiddenFilename("wfstemphits.zip"));
         VSILFILE *fp = VSIFileFromMemBuffer(osTmpFileName, psResult->pabyData,
                                             psResult->nDataLen, FALSE);
         VSIFCloseL(fp);

@@ -8,23 +8,7 @@
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -203,16 +187,34 @@ char *swq_select::Unparse()
         }
         else
         {
-            if (def->col_func == SWQCF_AVG)
-                osSelect += "AVG(";
-            else if (def->col_func == SWQCF_MIN)
-                osSelect += "MIN(";
-            else if (def->col_func == SWQCF_MAX)
-                osSelect += "MAX(";
-            else if (def->col_func == SWQCF_COUNT)
-                osSelect += "COUNT(";
-            else if (def->col_func == SWQCF_SUM)
-                osSelect += "SUM(";
+            switch (def->col_func)
+            {
+                case SWQCF_NONE:
+                    break;
+                case SWQCF_AVG:
+                    osSelect += "AVG(";
+                    break;
+                case SWQCF_MIN:
+                    osSelect += "MIN(";
+                    break;
+                case SWQCF_MAX:
+                    osSelect += "MAX(";
+                    break;
+                case SWQCF_COUNT:
+                    osSelect += "COUNT(";
+                    break;
+                case SWQCF_SUM:
+                    osSelect += "SUM(";
+                    break;
+                case SWQCF_STDDEV_POP:
+                    osSelect += "STDDEV_POP(";
+                    break;
+                case SWQCF_STDDEV_SAMP:
+                    osSelect += "STDDEV_SAMP(";
+                    break;
+                case SWQCF_CUSTOM:
+                    break;
+            }
 
             if (def->distinct_flag && def->col_func == SWQCF_COUNT)
                 osSelect += "DISTINCT ";
@@ -322,7 +324,7 @@ char *swq_select::Unparse()
 /************************************************************************/
 
 int swq_select::PushField(swq_expr_node *poExpr, const char *pszAlias,
-                          int distinct_flag)
+                          bool distinct_flag, bool bHidden)
 
 {
     if (query_mode == SWQM_DISTINCT_LIST && distinct_flag)
@@ -368,8 +370,8 @@ int swq_select::PushField(swq_expr_node *poExpr, const char *pszAlias,
     }
     else if (poExpr->eNodeType == SNT_OPERATION &&
              (poExpr->nOperation == SWQ_CAST ||
-              (poExpr->nOperation >= SWQ_AVG &&
-               poExpr->nOperation <= SWQ_SUM)) &&
+              (poExpr->nOperation >= SWQ_AGGREGATE_BEGIN &&
+               poExpr->nOperation <= SWQ_AGGREGATE_END)) &&
              poExpr->nSubExprCount >= 1 &&
              poExpr->papoSubExpr[0]->eNodeType == SNT_COLUMN)
     {
@@ -401,6 +403,26 @@ int swq_select::PushField(swq_expr_node *poExpr, const char *pszAlias,
             "%s_%s", op->pszName, poExpr->papoSubExpr[0]->string_value));
     }
 
+    if (bHidden)
+    {
+        const char *pszDstFieldName =
+            col_def->field_alias ? col_def->field_alias : col_def->field_name;
+        if (!EQUAL(pszDstFieldName, "OGR_STYLE"))
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "HIDDEN keyword only supported on a column named OGR_STYLE");
+            CPLFree(col_def->table_name);
+            col_def->table_name = nullptr;
+            CPLFree(col_def->field_name);
+            col_def->field_name = nullptr;
+            CPLFree(col_def->field_alias);
+            col_def->field_alias = nullptr;
+            column_defs.pop_back();
+            return FALSE;
+        }
+    }
+
     col_def->table_index = -1;
     col_def->field_index = -1;
     col_def->field_type = SWQ_OTHER;
@@ -409,6 +431,7 @@ int swq_select::PushField(swq_expr_node *poExpr, const char *pszAlias,
     col_def->target_subtype = OFSTNone;
     col_def->col_func = SWQCF_NONE;
     col_def->distinct_flag = distinct_flag;
+    col_def->bHidden = bHidden;
 
     /* -------------------------------------------------------------------- */
     /*      Do we have a CAST operator in play?                             */
@@ -552,8 +575,8 @@ int swq_select::PushField(swq_expr_node *poExpr, const char *pszAlias,
     /*      Do we have a special column function in play?                   */
     /* -------------------------------------------------------------------- */
     if (poExpr->eNodeType == SNT_OPERATION &&
-        static_cast<swq_op>(poExpr->nOperation) >= SWQ_AVG &&
-        static_cast<swq_op>(poExpr->nOperation) <= SWQ_SUM)
+        static_cast<swq_op>(poExpr->nOperation) >= SWQ_AGGREGATE_BEGIN &&
+        static_cast<swq_op>(poExpr->nOperation) <= SWQ_AGGREGATE_END)
     {
         if (poExpr->nSubExprCount != 1)
         {
@@ -994,11 +1017,11 @@ CPLErr swq_select::parse(swq_field_list *field_list,
         }
 
         // Identify column function if present.
-        if (((def->col_func == SWQCF_MIN || def->col_func == SWQCF_MAX ||
-              def->col_func == SWQCF_AVG || def->col_func == SWQCF_SUM) &&
-             def->field_type == SWQ_GEOMETRY) ||
-            ((def->col_func == SWQCF_AVG || def->col_func == SWQCF_SUM) &&
-             def->field_type == SWQ_STRING))
+        if (def->col_func != SWQCF_NONE && def->col_func != SWQCF_CUSTOM &&
+            def->col_func != SWQCF_COUNT &&
+            (def->field_type == SWQ_GEOMETRY ||
+             (def->field_type == SWQ_STRING && def->col_func != SWQCF_MIN &&
+              def->col_func != SWQCF_MAX)))
         {
             // Possibly this is already enforced by the checker?
             const swq_operation *op = swq_op_registrar::GetOperator(
@@ -1044,9 +1067,17 @@ CPLErr swq_select::parse(swq_field_list *field_list,
             }
         }
 
-        if (def->col_func == SWQCF_MIN || def->col_func == SWQCF_MAX ||
-            def->col_func == SWQCF_AVG || def->col_func == SWQCF_SUM ||
-            def->col_func == SWQCF_COUNT)
+        if (def->col_func == SWQCF_NONE)
+        {
+            if (query_mode == SWQM_DISTINCT_LIST)
+            {
+                def->distinct_flag = TRUE;
+                this_indicator = SWQM_DISTINCT_LIST;
+            }
+            else
+                this_indicator = SWQM_RECORDSET;
+        }
+        else if (def->col_func != SWQCF_CUSTOM)
         {
             this_indicator = SWQM_SUMMARY_RECORD;
             if (def->col_func == SWQCF_COUNT && def->distinct_flag &&
@@ -1056,16 +1087,6 @@ CPLErr swq_select::parse(swq_field_list *field_list,
                          "SELECT COUNT DISTINCT on a geometry not supported.");
                 return CE_Failure;
             }
-        }
-        else if (def->col_func == SWQCF_NONE)
-        {
-            if (query_mode == SWQM_DISTINCT_LIST)
-            {
-                def->distinct_flag = TRUE;
-                this_indicator = SWQM_DISTINCT_LIST;
-            }
-            else
-                this_indicator = SWQM_RECORDSET;
         }
 
         if (this_indicator != query_mode && this_indicator != -1 &&
@@ -1161,7 +1182,7 @@ CPLErr swq_select::parse(swq_field_list *field_list,
 bool swq_select::IsFieldExcluded(int src_index, const char *pszTableName,
                                  const char *pszFieldName)
 {
-    auto list_it = m_exclude_fields.find(src_index);
+    const auto list_it = m_exclude_fields.find(src_index);
 
     if (list_it == m_exclude_fields.end())
     {

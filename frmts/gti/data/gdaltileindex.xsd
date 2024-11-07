@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  GDAL/OGR
+ * Purpose:  XML Schema for GDAL GTI files.
+ * Author:   Even Rouault, <even dot rouault at spatialys dot com>
+ *
+ **********************************************************************
+ * Copyright (c) 2023, Even Rouault
+ *
+ * SPDX-License-Identifier: MIT
+ ****************************************************************************/
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="1.0">
+    <xs:element name="GDALTileIndexDataset">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:choice minOccurs="0" maxOccurs="unbounded">
+                    <!-- IndexDataset is required for a standalone XML GTI -->
+                    <!-- It is ignored if the XML document is embedded in the xml:GTI metadata domain of a vector layer -->
+                    <xs:element name="IndexDataset" type="xs:string"/>
+
+                    <xs:element name="IndexLayer" type="xs:string"/>
+                    <xs:element name="Filter" type="xs:string"/>
+
+                    <xs:element name="LocationField" type="xs:string" default="location"/>
+                    <xs:element name="SortField" type="xs:string"/>
+                    <xs:element name="SortFieldAsc" type="OGRBooleanType" default="true"/>
+
+                    <xs:element name="SRS" type="SRSType"/>
+
+                    <xs:element name="Resampling" type="xs:string"/>
+
+                    <xs:element name="BlockXSize" type="nonNegativeInteger32" default="256"/>
+                    <xs:element name="BlockYSize" type="nonNegativeInteger32" default="256"/>
+
+                    <xs:element name="GeoTransform" type="xs:string"/>
+                    <xs:element name="XSize" type="nonNegativeInteger32"/>
+                    <xs:element name="YSize" type="nonNegativeInteger32"/>
+
+                    <!-- None or both of the 2 following elements should be specified -->
+                    <xs:element name="ResX" type="xs:double"/>
+                    <xs:element name="ResY" type="xs:double"/>
+
+                    <!-- None or all of the 4 following elements should be specified -->
+                    <xs:element name="MinX" type="xs:double"/>
+                    <xs:element name="MinY" type="xs:double"/>
+                    <xs:element name="MaxX" type="xs:double"/>
+                    <xs:element name="MaxY" type="xs:double"/>
+
+                    <xs:element name="Metadata" type="MetadataType"/> <!-- may be repeated -->
+
+                    <!-- BandCount is generally only defined if no Band elements are defined -->
+                    <xs:element name="BandCount" type="xs:nonNegativeInteger"/>
+                    <xs:element name="DataType" type="DataTypeType"/>  <!-- single value that applies to all bands -->
+                    <xs:element name="NoDataValue" type="DoubleOrNanType"/>  <!-- single value that applies to all bands -->
+
+                    <xs:element name="MaskBand" type="OGRBooleanType"/>
+
+                    <xs:element name="Band" type="BandType"/> <!-- may be repeated -->
+                    <xs:element name="Overview" type="OverviewType"/>  <!-- may be repeated -->
+                </xs:choice>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="BandType">
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="Description" type="xs:string"/>
+                <xs:element name="ColorInterp" type="ColorInterpType"/>
+                <xs:element name="NoDataValue" type="DoubleOrNanType"/>
+                <xs:element name="Offset" type="xs:double"/>
+                <xs:element name="Scale" type="xs:double"/>
+                <xs:element name="UnitType" type="xs:string"/>
+                <xs:element name="Metadata" type="MetadataType"/>
+                <xs:element name="CategoryNames" type="CategoryNamesType"/>
+                <xs:element name="ColorTable" type="ColorTableType"/>
+                <xs:element name="GDALRasterAttributeTable" type="GDALRasterAttributeTableType"/>
+            </xs:choice>
+        </xs:sequence>
+        <xs:attribute name="dataType" type="DataTypeType"/>
+        <xs:attribute name="band" type="xs:unsignedInt"/>
+    </xs:complexType>
+
+    <xs:complexType name="OverviewType">
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="Dataset" type="xs:string"/>
+                <xs:element name="Layer" type="xs:string"/>
+                <xs:element name="Factor" type="xs:double"/>
+                <xs:element name="OpenOptions" type="OpenOptionsType"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="OpenOptionsType">
+        <xs:sequence>
+            <xs:element name="OOI" type="OOIType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="OOIType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="key" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="MetadataType">
+        <xs:sequence>
+            <!--<xs:choice>-->
+                <!--<xs:element name="MDI" type="MDIType" minOccurs="0" maxOccurs="unbounded"/>-->
+                <xs:any processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+            <!--</xs:choice>-->
+        </xs:sequence>
+        <xs:attribute name="domain" type="xs:string"/>
+        <xs:attribute name="format" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:simpleType name="nonNegativeInteger32">
+        <xs:restriction base="xs:nonNegativeInteger">
+            <xs:maxInclusive value="2147483647"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="DataTypeType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Byte"/>
+            <xs:enumeration value="UInt16"/>
+            <xs:enumeration value="Int16"/>
+            <xs:enumeration value="UInt32"/>
+            <xs:enumeration value="Int32"/>
+            <xs:enumeration value="UInt64"/>
+            <xs:enumeration value="Int64"/>
+            <xs:enumeration value="Float32"/>
+            <xs:enumeration value="Float64"/>
+            <xs:enumeration value="CInt16"/>
+            <xs:enumeration value="CInt32"/>
+            <xs:enumeration value="CFloat32"/>
+            <xs:enumeration value="CFloat64"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="ColorInterpType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Gray"/>
+            <xs:enumeration value="Palette"/>
+            <xs:enumeration value="Red"/>
+            <xs:enumeration value="Green"/>
+            <xs:enumeration value="Blue"/>
+            <xs:enumeration value="Alpha"/>
+            <xs:enumeration value="Hue"/>
+            <xs:enumeration value="Saturation"/>
+            <xs:enumeration value="Lightness"/>
+            <xs:enumeration value="Cyan"/>
+            <xs:enumeration value="Magenta"/>
+            <xs:enumeration value="Yellow"/>
+            <xs:enumeration value="Black"/>
+            <xs:enumeration value="YCbCr_Y"/>
+            <xs:enumeration value="YCbCr_Cb"/>
+            <xs:enumeration value="YCbCr_Cr"/>
+            <xs:enumeration value="Undefined"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="SRSType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="dataAxisToSRSAxisMapping" type="xs:string"/>
+                <xs:attribute name="coordinateEpoch" type="xs:float"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:simpleType name="DoubleOrNanType">
+        <xs:union memberTypes="xs:double NANType" />
+    </xs:simpleType>
+
+    <xs:simpleType name="NANType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="nan"/>
+            <xs:enumeration value="NAN"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="OGRBooleanType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="1"/>
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="ON"/>
+            <xs:enumeration value="OFF"/>
+            <xs:enumeration value="on"/>
+            <xs:enumeration value="off"/>
+            <xs:enumeration value="YES"/>
+            <xs:enumeration value="NO"/>
+            <xs:enumeration value="yes"/>
+            <xs:enumeration value="no"/>
+            <xs:enumeration value="TRUE"/>
+            <xs:enumeration value="FALSE"/>
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+            <xs:enumeration value="True"/>
+            <xs:enumeration value="False"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="CategoryNamesType">
+        <xs:sequence minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="Category" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ColorTableType">
+        <xs:sequence minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="Entry" type="ColorTableEntryType"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ColorTableEntryType">
+        <xs:attribute name="c1" type="xs:unsignedInt" use="required"/>
+        <xs:attribute name="c2" type="xs:unsignedInt" use="required" />
+        <xs:attribute name="c3" type="xs:unsignedInt" use="required" />
+        <xs:attribute name="c4" type="xs:unsignedInt" />
+    </xs:complexType>
+
+    <xs:complexType name="GDALRasterAttributeTableType">
+        <xs:sequence>
+            <xs:element name="FieldDefn" type="FieldDefnType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="Row" type="RowType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FieldDefnType">
+        <xs:sequence>
+            <xs:element name="Name" type="xs:string"/>
+            <xs:element name="Type" type="xs:unsignedInt"/>
+            <xs:element name="Usage" type="xs:unsignedInt"/>
+        </xs:sequence>
+        <xs:attribute name="index" type="xs:unsignedInt" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="RowType">
+        <xs:sequence>
+            <xs:element name="F" type="xs:anyType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="index" type="xs:unsignedInt" use="required"/>
+    </xs:complexType>
+
+</xs:schema>

@@ -22,6 +22,10 @@ All GDAL OGR command line programs support the following common options.
     The format should be the short name reported in the :option:`--formats`
     list, such as GML.
 
+.. option:: --formats
+
+    List all drivers. Can be combined with ``-json`` switch of :program:`ogrinfo` of since GDAL 3.10
+
 .. option:: --optfile <filename>
 
     Read the named file and substitute the contents into the command line

@@ -702,7 +702,14 @@ public:
   template <typename T, typename std::enable_if<std::is_integral<T>::value>::type * = nullptr>
   auto &store_into(T &var) {
     if (m_default_value.has_value()) {
-      var = std::any_cast<T>(m_default_value);
+      try
+      {
+        var = std::any_cast<T>(m_default_value);
+      }
+      catch (...)
+      {
+        var = static_cast<T>(std::any_cast<int>(m_default_value));
+      }
     }
     action([&var](const auto &s) {
       var = details::parse_number<T, details::radix_10>()(s);
@@ -712,7 +719,14 @@ public:
 
   auto &store_into(double &var) {
     if (m_default_value.has_value()) {
-      var = std::any_cast<double>(m_default_value);
+      try
+      {
+        var = std::any_cast<double>(m_default_value);
+      }
+      catch (...)
+      {
+        var = std::any_cast<int>(m_default_value);
+      }
     }
     action([&var](const auto &s) {
       var = details::parse_number<double, details::chars_format::general>()(s);
@@ -1397,6 +1411,10 @@ private:
    *    '+' '-'
    */
   static bool is_decimal_literal(std::string_view s) {
+    if (s == "inf") {
+      return true;
+    }
+
     auto is_digit = [](auto c) constexpr {
       switch (c) {
       case '0':
@@ -2027,8 +2045,10 @@ public:
         }
 
         stream << std::setw(2) << " ";
-        stream << std::setw(static_cast<int>(longest_arg_length - 2))
-               << command;
+        if (longest_arg_length >= 2) {
+          stream << std::setw(static_cast<int>(longest_arg_length - 2))
+                 << command;
+        }
         stream << " " << subparser->get().m_description << "\n";
       }
     }

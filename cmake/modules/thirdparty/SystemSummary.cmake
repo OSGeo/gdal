@@ -23,8 +23,8 @@ macro(gather_flags with_linker result)
     # add the main flags without a config
     list(APPEND ${result} CMAKE_C_FLAGS)
     list(APPEND ${result} CMAKE_CXX_FLAGS)
-    list(APPEND ${result} CMAKE_CXX11_STANDARD_COMPILE_OPTION)
-    list(APPEND ${result} CMAKE_CXX11_EXTENSION_COMPILE_OPTION)
+    list(APPEND ${result} CMAKE_CXX17_STANDARD_COMPILE_OPTION)
+    list(APPEND ${result} CMAKE_CXX17_EXTENSION_COMPILE_OPTION)
 
     if(${with_linker})
         list(APPEND ${result} CMAKE_EXE_LINKER_FLAGS)

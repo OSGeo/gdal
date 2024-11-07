@@ -6,23 +6,7 @@
  **********************************************************************
  * Copyright (c) 2017, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_google_cloud.h"
@@ -31,15 +15,65 @@
 #include "cpl_sha256.h"
 #include "cpl_time.h"
 #include "cpl_http.h"
-#include "cpl_multiproc.h"
+#include "cpl_mem_cache.h"
 #include "cpl_aws.h"
 #include "cpl_json.h"
 
+#include <mutex>
+#include <utility>
+
 #ifdef HAVE_CURL
 
-static CPLMutex *hMutex = nullptr;
 static bool bFirstTimeForDebugMessage = true;
-static GOA2Manager oStaticManager;
+
+struct GOA2ManagerCache
+{
+    struct ManagerWithMutex
+    {
+        std::mutex oMutex{};
+        GOA2Manager oManager{};
+
+        explicit ManagerWithMutex(const GOA2Manager &oManagerIn)
+            : oManager(oManagerIn)
+        {
+        }
+    };
+
+    std::mutex oMutexGOA2ManagerCache{};
+    lru11::Cache<std::string, std::shared_ptr<ManagerWithMutex>>
+        oGOA2ManagerCache{};
+
+    std::string GetBearer(const GOA2Manager &oManager)
+    {
+        const std::string osKey(oManager.GetKey());
+        std::shared_ptr<ManagerWithMutex> poSharedManager;
+        {
+            std::lock_guard oLock(oMutexGOA2ManagerCache);
+            if (!oGOA2ManagerCache.tryGet(osKey, poSharedManager))
+            {
+                poSharedManager = std::make_shared<ManagerWithMutex>(oManager);
+                oGOA2ManagerCache.insert(osKey, poSharedManager);
+            }
+        }
+        {
+            std::lock_guard oLock(poSharedManager->oMutex);
+            const char *pszBearer = poSharedManager->oManager.GetBearer();
+            return std::string(pszBearer ? pszBearer : "");
+        }
+    }
+
+    void clear()
+    {
+        std::lock_guard oLock(oMutexGOA2ManagerCache);
+        oGOA2ManagerCache.clear();
+    }
+
+    static GOA2ManagerCache &GetSingleton()
+    {
+        static GOA2ManagerCache goGOA2ManagerCache;
+        return goGOA2ManagerCache;
+    }
+};
 
 /************************************************************************/
 /*                    CPLIsMachineForSureGCEInstance()                  */
@@ -66,26 +100,19 @@ bool CPLIsMachineForSureGCEInstance()
     bool bIsGCEInstance = false;
     if (CPLTestBool(CPLGetConfigOption("CPL_GCE_CHECK_LOCAL_FILES", "YES")))
     {
-        static bool bIsGCEInstanceStatic = false;
-        static bool bDone = false;
+        static bool bIsGCEInstanceStatic = []()
         {
-            CPLMutexHolder oHolder(&hMutex);
-            if (!bDone)
+            bool bIsGCE = false;
+            VSILFILE *fp = VSIFOpenL("/sys/class/dmi/id/product_name", "rb");
+            if (fp)
             {
-                bDone = true;
-
-                VSILFILE *fp =
-                    VSIFOpenL("/sys/class/dmi/id/product_name", "rb");
-                if (fp)
-                {
-                    const char *pszLine = CPLReadLineL(fp);
-                    bIsGCEInstanceStatic =
-                        pszLine &&
-                        STARTS_WITH_CI(pszLine, "Google Compute Engine");
-                    VSIFCloseL(fp);
-                }
+                const char *pszLine = CPLReadLineL(fp);
+                bIsGCE =
+                    pszLine && STARTS_WITH_CI(pszLine, "Google Compute Engine");
+                VSIFCloseL(fp);
             }
-        }
+            return bIsGCE;
+        }();
         bIsGCEInstance = bIsGCEInstanceStatic;
     }
     return bIsGCEInstance;
@@ -423,14 +450,6 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
         osPathForOption.c_str(), "GS_OAUTH2_REFRESH_TOKEN", ""));
     if (!osRefreshToken.empty())
     {
-        if (oStaticManager.GetAuthMethod() ==
-            GOA2Manager::ACCESS_TOKEN_FROM_REFRESH)
-        {
-            CPLMutexHolder oHolder(&hMutex);
-            oManager = oStaticManager;
-            return true;
-        }
-
         std::string osClientId = VSIGetPathSpecificOption(
             osPathForOption.c_str(), "GS_OAUTH2_CLIENT_ID", "");
         std::string osClientSecret = VSIGetPathSpecificOption(
@@ -587,14 +606,6 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
     {
         if (!osOAuth2RefreshToken.empty())
         {
-            if (oStaticManager.GetAuthMethod() ==
-                GOA2Manager::ACCESS_TOKEN_FROM_REFRESH)
-            {
-                CPLMutexHolder oHolder(&hMutex);
-                oManager = oStaticManager;
-                return true;
-            }
-
             std::string osClientId =
                 CPLGetConfigOption("GS_OAUTH2_CLIENT_ID", "");
             std::string osClientSecret =
@@ -652,6 +663,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
                 CPLDebug("GS", "%s", osMsg.c_str());
             }
             bFirstTimeForDebugMessage = false;
+
             return oManager.SetAuthFromRefreshToken(
                 osOAuth2RefreshToken.c_str(), osClientId.c_str(),
                 osClientSecret.c_str(), nullptr);
@@ -670,27 +682,17 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
         }
     }
 
-    if (oStaticManager.GetAuthMethod() == GOA2Manager::GCE)
-    {
-        CPLMutexHolder oHolder(&hMutex);
-        oManager = oStaticManager;
-        return true;
-    }
     // Some Travis-CI workers are GCE machines, and for some tests, we don't
     // want this code path to be taken. And on AppVeyor/Window, we would also
     // attempt a network access
-    else if (!CPLTestBool(CPLGetConfigOption("CPL_GCE_SKIP", "NO")) &&
-             CPLIsMachinePotentiallyGCEInstance())
+    if (!CPLTestBool(CPLGetConfigOption("CPL_GCE_SKIP", "NO")) &&
+        CPLIsMachinePotentiallyGCEInstance())
     {
         oManager.SetAuthFromGCE(nullptr);
-        if (oManager.GetBearer() != nullptr)
+
+        if (!GOA2ManagerCache::GetSingleton().GetBearer(oManager).empty())
         {
             CPLDebug("GS", "Using GCE inherited permissions");
-
-            {
-                CPLMutexHolder oHolder(&hMutex);
-                oStaticManager = oManager;
-            }
 
             bFirstTimeForDebugMessage = false;
             return true;
@@ -793,18 +795,14 @@ VSIGSHandleHelper::GetCurlHeaders(const std::string &osVerb,
 
     if (m_oManager.GetAuthMethod() != GOA2Manager::NONE)
     {
-        const char *pszBearer = m_oManager.GetBearer();
-        if (pszBearer == nullptr)
+        const std::string osBearer =
+            GOA2ManagerCache::GetSingleton().GetBearer(m_oManager);
+        if (osBearer.empty())
             return nullptr;
-
-        {
-            CPLMutexHolder oHolder(&hMutex);
-            oStaticManager = m_oManager;
-        }
 
         struct curl_slist *headers = nullptr;
         headers = curl_slist_append(
-            headers, CPLSPrintf("Authorization: Bearer %s", pszBearer));
+            headers, CPLSPrintf("Authorization: Bearer %s", osBearer.c_str()));
 
         if (!m_osUserProject.empty())
         {
@@ -833,25 +831,12 @@ VSIGSHandleHelper::GetCurlHeaders(const std::string &osVerb,
 }
 
 /************************************************************************/
-/*                          CleanMutex()                                */
-/************************************************************************/
-
-void VSIGSHandleHelper::CleanMutex()
-{
-    if (hMutex != nullptr)
-        CPLDestroyMutex(hMutex);
-    hMutex = nullptr;
-}
-
-/************************************************************************/
 /*                          ClearCache()                                */
 /************************************************************************/
 
 void VSIGSHandleHelper::ClearCache()
 {
-    CPLMutexHolder oHolder(&hMutex);
-
-    oStaticManager = GOA2Manager();
+    GOA2ManagerCache::GetSingleton().clear();
     bFirstTimeForDebugMessage = true;
 }
 

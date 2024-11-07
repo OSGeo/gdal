@@ -8,23 +8,7 @@
  * Copyright (c) 1998, 2002, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"  // Must be first.
@@ -40,6 +24,7 @@
 #include "tif_jxl.h"
 #include "xtiffio.h"
 #include <cctype>
+#include <cmath>
 
 // Needed to expose WEBP_LOSSLESS option
 #ifdef WEBP_SUPPORT
@@ -580,10 +565,10 @@ char **GTiffDatasetReadRPCTag(TIFF *hTIFF)
 CPLString GTiffFormatGDALNoDataTagValue(double dfNoData)
 {
     CPLString osVal;
-    if (CPLIsNan(dfNoData))
+    if (std::isnan(dfNoData))
         osVal = "nan";
     else
-        osVal.Printf("%.18g", dfNoData);
+        osVal.Printf("%.17g", dfNoData);
     return osVal;
 }
 
@@ -700,8 +685,8 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     if (!TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &(l_nBitsPerSample)))
         l_nBitsPerSample = 1;
 
-    CPLString osTmpFilenameIn;
-    osTmpFilenameIn.Printf("%s%p", szJPEGGTiffDatasetTmpPrefix, hTIFF);
+    const CPLString osTmpFilenameIn(
+        VSIMemGenerateHiddenFilename("gtiffdataset_jpg_tmp"));
     VSILFILE *fpTmp = nullptr;
     CPLString osTmp;
     char **papszLocalParameters = nullptr;
@@ -722,12 +707,14 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
                                            CPLSPrintf("%u", l_nBitsPerSample));
     papszLocalParameters = CSLSetNameValue(papszLocalParameters,
                                            "JPEGTABLESMODE", pszJPEGTablesMode);
+    papszLocalParameters =
+        CSLSetNameValue(papszLocalParameters, "WRITE_JPEGTABLE_TAG", "NO");
 
     TIFF *hTIFFTmp =
         GTiffDataset::CreateLL(osTmpFilenameIn, nInMemImageWidth,
                                nInMemImageHeight, (nBands <= 4) ? nBands : 1,
                                (l_nBitsPerSample <= 8) ? GDT_Byte : GDT_UInt16,
-                               0.0, papszLocalParameters, &fpTmp, osTmp);
+                               0.0, 0, papszLocalParameters, &fpTmp, osTmp);
     CSLDestroy(papszLocalParameters);
     if (hTIFFTmp)
     {
@@ -996,6 +983,7 @@ static void GTiffTagExtender(TIFF *tif)
 static std::mutex oDeleteMutex;
 #ifdef HAVE_JXL
 static TIFFCodec *pJXLCodec = nullptr;
+static TIFFCodec *pJXLCodecDNG17 = nullptr;
 #endif
 
 void GTiffOneTimeInit()
@@ -1013,6 +1001,8 @@ void GTiffOneTimeInit()
     if (pJXLCodec == nullptr)
     {
         pJXLCodec = TIFFRegisterCODEC(COMPRESSION_JXL, "JXL", TIFFInitJXL);
+        pJXLCodecDNG17 =
+            TIFFRegisterCODEC(COMPRESSION_JXL_DNG_1_7, "JXL", TIFFInitJXL);
     }
 #endif
 
@@ -1037,6 +1027,9 @@ static void GDALDeregister_GTiff(GDALDriver *)
     if (pJXLCodec)
         TIFFUnRegisterCODEC(pJXLCodec);
     pJXLCodec = nullptr;
+    if (pJXLCodecDNG17)
+        TIFFUnRegisterCODEC(pJXLCodecDNG17);
+    pJXLCodecDNG17 = nullptr;
 #endif
 }
 
@@ -1071,6 +1064,7 @@ static const struct
     {COMPRESSION_LERC, "LERC_ZSTD", true},
     COMPRESSION_ENTRY(WEBP, true),
     COMPRESSION_ENTRY(JXL, true),
+    COMPRESSION_ENTRY(JXL_DNG_1_7, true),
 
     // Compression methods in read-only
     COMPRESSION_ENTRY(OJPEG, false),
@@ -1425,13 +1419,13 @@ void GDALRegister_GTiff()
         "1(fast)-9(slow)' default='5'/>"
         "   <Option name='JXL_DISTANCE' type='float' description='Distance "
         "level for lossy compression (0=mathematically lossless, 1.0=visually "
-        "lossless, usual range [0.5,3])' default='1.0' min='0.1' max='15.0'/>";
+        "lossless, usual range [0.5,3])' default='1.0' min='0.01' max='25.0'/>";
 #ifdef HAVE_JxlEncoderSetExtraChannelDistance
     osOptions += "   <Option name='JXL_ALPHA_DISTANCE' type='float' "
                  "description='Distance level for alpha channel "
                  "(-1=same as non-alpha channels, "
                  "0=mathematically lossless, 1.0=visually lossless, "
-                 "usual range [0.5,3])' default='-1' min='-1' max='15.0'/>";
+                 "usual range [0.5,3])' default='-1' min='-1' max='25.0'/>";
 #endif
 #endif
     osOptions +=
@@ -1541,6 +1535,14 @@ void GDALRegister_GTiff()
         "       <Value>1.1</Value>"
         "   </Option>"
 #endif
+        "   <Option name='COLOR_TABLE_MULTIPLIER' type='string-select' "
+        "description='Multiplication factor to apply to go from GDAL color "
+        "table to TIFF color table' "
+        "default='257'>"
+        "       <Value>1</Value>"
+        "       <Value>256</Value>"
+        "       <Value>257</Value>"
+        "   </Option>"
         "</CreationOptionList>";
 
     /* -------------------------------------------------------------------- */
@@ -1578,6 +1580,15 @@ void GDALRegister_GTiff()
         "   <Option name='IGNORE_COG_LAYOUT_BREAK' type='boolean' "
         "description='Allow update mode on files with COG structure' "
         "default='FALSE'/>"
+        "   <Option name='COLOR_TABLE_MULTIPLIER' type='string-select' "
+        "description='Multiplication factor to apply to go from GDAL color "
+        "table to TIFF color table' "
+        "default='AUTO'>"
+        "       <Value>AUTO</Value>"
+        "       <Value>1</Value>"
+        "       <Value>256</Value>"
+        "       <Value>257</Value>"
+        "   </Option>"
         "</OpenOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

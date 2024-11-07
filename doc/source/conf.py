@@ -43,9 +43,10 @@ else:
     doc_version = open(version_file).read().strip()
     gdal_version = gdal.__version__
     gdal_version_stripped = gdal_version
-    pos_dev = gdal_version_stripped.find("dev")
-    if pos_dev > 0:
-        gdal_version_stripped = gdal_version_stripped[0:pos_dev]
+    for suffix in ["dev", "beta"]:
+        pos_suffix = gdal_version_stripped.find(suffix)
+        if pos_suffix > 0:
+            gdal_version_stripped = gdal_version_stripped[0:pos_suffix]
 
     if doc_version.strip() != gdal_version_stripped:
         logger.warn(
@@ -66,11 +67,11 @@ author = "Frank Warmerdam, Even Rouault, and others"
 extensions = [
     "breathe",
     "configoptions",
-    "redirects",
     "driverproperties",
     "source_file",
     "sphinx.ext.napoleon",
     "sphinxcontrib.jquery",
+    "sphinxcontrib.spelling",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -93,6 +94,24 @@ smartquotes = False
 # This avoids the need to add an explicit ..include directive to every file.
 rst_prolog = open(os.path.join(os.path.dirname(__file__), "substitutions.rst")).read()
 
+# Add a substitution with links to download the docs in PDF or ZIP format.
+# If building with ReadTheDocs, the link will be to the version that is being built.
+# Otherwise it will be to the latest version.
+doc_version_known = "READTHEDOCS_VERSION" in os.environ
+offline_doc_version = os.environ.get("READTHEDOCS_VERSION", "latest")
+pdf_url = f"/_/downloads/en/{offline_doc_version}/pdf/"
+zip_url = f"/_/downloads/en/{offline_doc_version}/htmlzip/"
+if doc_version_known:
+    offline_download_text = "This documentation is also "
+    url_root = ""
+else:
+    offline_download_text = "Documentation for the latest version of GDAL is "
+    url_root = "https://gdal.org"
+offline_download_text += f"available as a `PDF <{url_root}{pdf_url}>`__ or a `ZIP of individual HTML pages <{url_root}{zip_url}>`__ for offline browsing."
+rst_prolog += f"""
+.. |offline-download| replace:: {offline_download_text}
+"""
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -106,14 +125,15 @@ html_context = {
     "theme_vcs_pageview_mode": "edit",
     "github_user": "OSGeo",
     "github_repo": "gdal",
-    "github_version": "master/doc/source/",
+    "github_version": "master",
+    "conf_py_path": "/doc/source/",
 }
 
 html_theme_options = {
     "canonical_url": "https://gdal.org/",  # Trailing slash needed to have correct <link rel="canonical" href="..."/> URLs
     "analytics_id": "",  #  Provided by Google in your dashboard
     "logo_only": True,
-    "display_version": True,
+    "version_selector": True,
     "prev_next_buttons_location": "both",
     "style_external_links": False,
     #'vcs_pageview_mode': '',
@@ -124,12 +144,17 @@ html_theme_options = {
     #'navigation_depth': 4,
     "includehidden": True,
     "titles_only": False,
+    "flyout_display": "attached",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ['_static']
+html_static_path = ["_static"]
+html_extra_path = ["../build/html_extra"]
+
+html_js_files = ["announcement.js"]
+html_css_files = ["announcement.css"]
 
 # If true, links to the reST sources are added to the pages.
 html_show_sourcelink = False
@@ -469,6 +494,7 @@ man_pages = [
 preamble = r"""
 \ifdefined\DeclareUnicodeCharacter
   \DeclareUnicodeCharacter{2032}{$'$}% prime
+  \DeclareUnicodeCharacter{200B}{{\hskip 0pt}}
 \fi
 """
 
@@ -516,7 +542,11 @@ latex_logo = "../images/gdalicon_big.png"
 # -- Breathe -------------------------------------------------
 
 # Setup the breathe extension
-breathe_projects = {"api": "../build/xml"}
+
+build_dir = os.environ.get("BUILDDIR", "../build")
+if build_dir == "build":
+    build_dir = "../build"
+breathe_projects = {"api": os.path.join(build_dir, "xml")}
 breathe_default_project = "api"
 
 # Tell sphinx what the primary language being documented is.
@@ -527,9 +557,23 @@ primary_domain = "cpp"
 source_file_root = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 source_file_url_template = "https://github.com/OSGeo/gdal/blob/master/{}"
 
+# -- ReadTheDocs configuration ----------------------------------
+
+# see https://about.readthedocs.com/blog/2024/07/addons-by-default/
+
+# Define the canonical URL if you are using a custom domain on Read the Docs
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
+
+# Tell Jinja2 templates the build is running on Read the Docs
+if os.environ.get("READTHEDOCS", "") == "True":
+    html_context["READTHEDOCS"] = True
+
 # -- GDAL Config option listing ------------------------------------------
 options_since_ignore_before = "3.0"
 
-# -- Redirects --------------------------------------------------
+# -- Spelling --------------------------------------------------
 
-enable_redirects = False
+# Avoid running git
+spelling_ignore_contributor_names = False
+
+spelling_word_list_filename = ["spelling_wordlist.txt"]

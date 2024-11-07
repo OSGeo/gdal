@@ -11,23 +11,7 @@
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -1732,7 +1716,8 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
     tests += [["data/byte.tif", ["JPEG2000_DRIVER=DERIVED"]]]  # Read-only driver
     tests += [["../gcore/data/cfloat32.tif", []]]  # complex data type
     tests += [["data/aaigrid/float64.asc", []]]  # no projection
-    tests += [["data/test_nosrs.vrt", []]]  # no geotransform
+    if gdaltest.vrt_has_open_support():
+        tests += [["data/test_nosrs.vrt", []]]  # no geotransform
     tests += [["data/envi/rotation.img", []]]  # geotransform with rotation terms
     gdal.GetDriverByName("GTiff").Create(
         "/vsimem/huge.tif", 65535, 65535, 1, options=["SPARSE_OK=YES"]
@@ -2252,6 +2237,48 @@ def test_grib_grib2_sidecar():
             ) == ds_idx.GetRasterBand(i).GetMetadataItem(key)
 
 
+def test_grib_grib2_sidecar_vsisubfile():
+
+    ds = gdal.Open("/vsisubfile/0_5359,data/grib/gfs.t06z.pgrb2.10p0.f010.grib2")
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).GetDescription() == "REFD:1 hybrid level:10 hour fcst"
+
+    ds_ref = gdal.OpenEx(
+        "/vsisubfile/0_5359,data/grib/gfs.t06z.pgrb2.10p0.f010.grib2",
+        open_options=["USE_IDX=NO"],
+    )
+    assert ds_ref.RasterCount == 1
+    assert ds_ref.GetRasterBand(1).GetDescription() == '1[-] HYBL="Hybrid level"'
+    assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum()
+
+    size = 16077 - 5359
+    ds = gdal.Open(f"/vsisubfile/5359_{size},data/grib/gfs.t06z.pgrb2.10p0.f010.grib2")
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).GetDescription() == "REFD:2 hybrid level:10 hour fcst"
+    assert ds.GetRasterBand(2).GetDescription() == "REFC:entire atmosphere:10 hour fcst"
+
+    ds_ref = gdal.OpenEx(
+        f"/vsisubfile/5359_{size},data/grib/gfs.t06z.pgrb2.10p0.f010.grib2",
+        open_options=["USE_IDX=NO"],
+    )
+    assert ds_ref.RasterCount == 2
+    assert ds_ref.GetRasterBand(1).GetDescription() == '2[-] HYBL="Hybrid level"'
+    assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum()
+    assert ds.GetRasterBand(2).Checksum() == ds_ref.GetRasterBand(2).Checksum()
+
+    ds = gdal.Open("/vsisubfile/16077_-1,data/grib/gfs.t06z.pgrb2.10p0.f010.grib2")
+    assert ds.RasterCount == 3
+    assert ds.GetRasterBand(1).GetDescription() == "VIS:surface:10 hour fcst"
+    assert (
+        ds.GetRasterBand(2).GetDescription()
+        == "UGRD:planetary boundary layer:10 hour fcst"
+    )
+    assert (
+        ds.GetRasterBand(3).GetDescription()
+        == "VGRD:planetary boundary layer:10 hour fcst"
+    )
+
+
 # Test reading a (broken) mix of GRIBv2/GRIBv1 bands
 
 
@@ -2377,3 +2404,10 @@ def test_grib_grib2_template_5_42_CCDS_aes_decompression():
         assert ds.GetRasterBand(1).Checksum() == 41970
     else:
         assert ds.GetRasterBand(1).Checksum() == -1
+
+
+# https://github.com/OSGeo/gdal/issues/10655
+def test_grib_grib2_minx_180():
+    ds = gdal.Open("data/grib/minx_180.grib2")
+    gt = ds.GetGeoTransform()
+    assert gt == pytest.approx((-180.0625, 0.125, 0.0, 90.0625, 0.0, -0.125), rel=1e-6)

@@ -9,23 +9,7 @@
  * Copyright (c) 2016, Avyav Kumar Singh <avyavkumar at gmail dot com>
  * Copyright (c) 2016, Even Rouault <even.roauult at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogr_geometry.h"
@@ -35,16 +19,6 @@
 #include "ogr_libs.h"
 
 #include <new>
-
-/************************************************************************/
-/*                         OGRPolyhedralSurface()                       */
-/************************************************************************/
-
-/**
- * \brief Create an empty PolyhedralSurface
- */
-
-OGRPolyhedralSurface::OGRPolyhedralSurface() = default;
 
 /************************************************************************/
 /*         OGRPolyhedralSurface( const OGRPolyhedralSurface& )          */
@@ -57,17 +31,6 @@ OGRPolyhedralSurface::OGRPolyhedralSurface() = default;
 
 OGRPolyhedralSurface::OGRPolyhedralSurface(const OGRPolyhedralSurface &) =
     default;
-
-/************************************************************************/
-/*                        ~OGRPolyhedralSurface()                       */
-/************************************************************************/
-
-/**
- * \brief Destructor
- *
- */
-
-OGRPolyhedralSurface::~OGRPolyhedralSurface() = default;
 
 /************************************************************************/
 /*                 operator=( const OGRPolyhedralSurface&)              */
@@ -683,6 +646,35 @@ double OGRPolyhedralSurface::get_GeodesicArea(const OGRSpatialReference *) const
 }
 
 /************************************************************************/
+/*                            get_Length()                              */
+/************************************************************************/
+
+double OGRPolyhedralSurface::get_Length() const
+{
+    if (IsEmpty())
+        return 0;
+
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "get_Length() not implemented for PolyhedralSurface");
+    return 0;
+}
+
+/************************************************************************/
+/*                        get_GeodesicLength()                          */
+/************************************************************************/
+
+double
+OGRPolyhedralSurface::get_GeodesicLength(const OGRSpatialReference *) const
+{
+    if (IsEmpty())
+        return 0;
+
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "get_GeodesicLength() not implemented for PolyhedralSurface");
+    return -1;
+}
+
+/************************************************************************/
 /*                           PointOnSurface()                           */
 /************************************************************************/
 
@@ -918,11 +910,9 @@ OGRBoolean OGRPolyhedralSurface::IsEmpty() const
  * \brief Set the type as 3D geometry
  */
 
-void OGRPolyhedralSurface::set3D(OGRBoolean bIs3D)
+bool OGRPolyhedralSurface::set3D(OGRBoolean bIs3D)
 {
-    oMP.set3D(bIs3D);
-
-    OGRGeometry::set3D(bIs3D);
+    return oMP.set3D(bIs3D) && OGRGeometry::set3D(bIs3D);
 }
 
 /************************************************************************/
@@ -933,11 +923,10 @@ void OGRPolyhedralSurface::set3D(OGRBoolean bIs3D)
  * \brief Set the type as Measured
  */
 
-void OGRPolyhedralSurface::setMeasured(OGRBoolean bIsMeasured)
+bool OGRPolyhedralSurface::setMeasured(OGRBoolean bIsMeasured)
 {
-    oMP.setMeasured(bIsMeasured);
-
-    OGRGeometry::setMeasured(bIsMeasured);
+    return oMP.setMeasured(bIsMeasured) &&
+           OGRGeometry::setMeasured(bIsMeasured);
 }
 
 /************************************************************************/
@@ -952,13 +941,13 @@ void OGRPolyhedralSurface::setMeasured(OGRBoolean bIsMeasured)
  * This will also remove the M dimension if present before this call.
  *
  * @param nNewDimension New coordinate dimension value, either 2 or 3.
+ * @return (since 3.10) true in case of success, false in case of memory allocation error
  */
 
-void OGRPolyhedralSurface::setCoordinateDimension(int nNewDimension)
+bool OGRPolyhedralSurface::setCoordinateDimension(int nNewDimension)
 {
-    oMP.setCoordinateDimension(nNewDimension);
-
-    OGRGeometry::setCoordinateDimension(nNewDimension);
+    return oMP.setCoordinateDimension(nNewDimension) &&
+           OGRGeometry::setCoordinateDimension(nNewDimension);
 }
 
 /************************************************************************/
@@ -1007,6 +996,24 @@ OGRBoolean OGRPolyhedralSurface::hasCurveGeometry(int) const
 OGRErr OGRPolyhedralSurface::removeGeometry(int iGeom, int bDelete)
 {
     return oMP.removeGeometry(iGeom, bDelete);
+}
+
+/************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+bool OGRPolyhedralSurface::hasEmptyParts() const
+{
+    return oMP.hasEmptyParts();
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+void OGRPolyhedralSurface::removeEmptyParts()
+{
+    oMP.removeEmptyParts();
 }
 
 /************************************************************************/

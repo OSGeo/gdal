@@ -7,23 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2023, Even Rouault <even.rouault at spatialys.com>
 /*
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_unit_test.h"
@@ -523,5 +507,355 @@ INSTANTIATE_TEST_SUITE_P(
     [](const ::testing::TestParamInfo<
         OGRWKBIntersectsPessimisticFixture::ParamType> &l_info)
     { return std::get<6>(l_info.param); });
+
+class OGRWKBTransformFixture
+    : public test_ogr_wkb,
+      public ::testing::WithParamInterface<
+          std::tuple<const char *, OGRwkbByteOrder, const char *, const char *>>
+{
+  public:
+    static std::vector<
+        std::tuple<const char *, OGRwkbByteOrder, const char *, const char *>>
+    GetTupleValues()
+    {
+        return {
+            std::make_tuple("POINT EMPTY", wkbNDR, "POINT EMPTY",
+                            "POINT_EMPTY_NDR"),
+            std::make_tuple("POINT EMPTY", wkbXDR, "POINT EMPTY",
+                            "POINT_EMPTY_XDR"),
+            std::make_tuple("POINT (1 2)", wkbNDR, "POINT (2 4)", "POINT_NDR"),
+            std::make_tuple("POINT (1 2)", wkbXDR, "POINT (2 4)", "POINT_XDR"),
+            std::make_tuple("POINT Z EMPTY", wkbNDR, "POINT Z EMPTY",
+                            "POINT_Z_EMPTY_NDR"),
+            std::make_tuple("POINT Z EMPTY", wkbXDR, "POINT Z EMPTY",
+                            "POINT_Z_EMPTY_XDR"),
+            std::make_tuple("POINT Z (1 2 3)", wkbNDR, "POINT Z (2 4 6)",
+                            "POINT_Z_NDR"),
+            std::make_tuple("POINT Z (1 2 3)", wkbXDR, "POINT Z (2 4 6)",
+                            "POINT_Z_XDR"),
+            std::make_tuple("POINT M EMPTY", wkbNDR, "POINT M EMPTY",
+                            "POINT_M_EMPTY_NDR"),
+            std::make_tuple("POINT M EMPTY", wkbXDR, "POINT M EMPTY",
+                            "POINT_M_EMPTY_XDR"),
+            std::make_tuple("POINT M (1 2 -10)", wkbNDR, "POINT M (2 4 -10)",
+                            "POINT_M_NDR"),
+            std::make_tuple("POINT M (1 2 -10)", wkbXDR, "POINT M (2 4 -10)",
+                            "POINT_M_XDR"),
+            std::make_tuple("POINT ZM EMPTY", wkbNDR, "POINT ZM EMPTY",
+                            "POINT_ZM_EMPTY_NDR"),
+            std::make_tuple("POINT ZM EMPTY", wkbXDR, "POINT ZM EMPTY",
+                            "POINT_ZM_EMPTY_XDR"),
+            std::make_tuple("POINT ZM (1 2 3 10)", wkbNDR,
+                            "POINT ZM (2 4 6 10)", "POINT_ZM_NDR"),
+            std::make_tuple("POINT ZM (1 2 3 10)", wkbXDR,
+                            "POINT ZM (2 4 6 10)", "POINT_ZM_XDR"),
+
+            std::make_tuple("LINESTRING EMPTY", wkbNDR, "LINESTRING EMPTY",
+                            "LINESTRING_EMPTY"),
+            std::make_tuple("LINESTRING (1 2,11 12)", wkbNDR,
+                            "LINESTRING (2 4,12 14)", "LINESTRING_NDR"),
+            std::make_tuple("LINESTRING (1 2,11 12)", wkbXDR,
+                            "LINESTRING (2 4,12 14)", "LINESTRING_XDR"),
+            std::make_tuple("LINESTRING Z EMPTY", wkbNDR, "LINESTRING Z EMPTY",
+                            "LINESTRING_Z_EMPTY"),
+            std::make_tuple("LINESTRING Z (1 2 3,11 12 13)", wkbNDR,
+                            "LINESTRING Z (2 4 6,12 14 16)",
+                            "LINESTRING_Z_NDR"),
+            std::make_tuple("LINESTRING Z (1 2 3,11 12 13)", wkbXDR,
+                            "LINESTRING Z (2 4 6,12 14 16)",
+                            "LINESTRING_Z_XDR"),
+            std::make_tuple("LINESTRING M EMPTY", wkbNDR, "LINESTRING M EMPTY",
+                            "LINESTRING_M_EMPTY"),
+            std::make_tuple("LINESTRING M (1 2 -10,11 12 -20)", wkbNDR,
+                            "LINESTRING M (2 4 -10,12 14 -20)",
+                            "LINESTRING_M_NDR"),
+            std::make_tuple("LINESTRING M (1 2 -10,11 12 -20)", wkbXDR,
+                            "LINESTRING M (2 4 -10,12 14 -20)",
+                            "LINESTRING_M_XDR"),
+            std::make_tuple("LINESTRING ZM EMPTY", wkbNDR,
+                            "LINESTRING ZM EMPTY", "LINESTRING_ZM_EMPTY"),
+            std::make_tuple("LINESTRING ZM (1 2 3 -10,11 12 13 -20)", wkbNDR,
+                            "LINESTRING ZM (2 4 6 -10,12 14 16 -20)",
+                            "LINESTRING_ZM_NDR"),
+            std::make_tuple("LINESTRING ZM (1 2 3 -10,11 12 13 -20)", wkbXDR,
+                            "LINESTRING ZM (2 4 6 -10,12 14 16 -20)",
+                            "LINESTRING_ZM_XDR"),
+
+            // I know the polygon is invalid, but this is enough for our purposes
+            std::make_tuple("POLYGON EMPTY", wkbNDR, "POLYGON EMPTY",
+                            "POLYGON_EMPTY"),
+            std::make_tuple("POLYGON ((1 2,11 12))", wkbNDR,
+                            "POLYGON ((2 4,12 14))", "POLYGON_NDR"),
+            std::make_tuple("POLYGON ((1 2,11 12))", wkbXDR,
+                            "POLYGON ((2 4,12 14))", "POLYGON_XDR"),
+            std::make_tuple("POLYGON ((1 2,11 12),(21 22,31 32))", wkbNDR,
+                            "POLYGON ((2 4,12 14),(22 24,32 34))",
+                            "POLYGON_TWO_RINGS"),
+            std::make_tuple("POLYGON Z EMPTY", wkbNDR, "POLYGON Z EMPTY",
+                            "POLYGON_Z_EMPTY"),
+            std::make_tuple("POLYGON Z ((1 2 3,11 12 13))", wkbNDR,
+                            "POLYGON Z ((2 4 6,12 14 16))", "POLYGON_Z_NDR"),
+            std::make_tuple("POLYGON Z ((1 2 3,11 12 13))", wkbXDR,
+                            "POLYGON Z ((2 4 6,12 14 16))", "POLYGON_Z_XDR"),
+            std::make_tuple("POLYGON M EMPTY", wkbNDR, "POLYGON M EMPTY",
+                            "POLYGON_M_EMPTY"),
+            std::make_tuple("POLYGON M ((1 2 -10,11 12 -20))", wkbNDR,
+                            "POLYGON M ((2 4 -10,12 14 -20))", "POLYGON_M_NDR"),
+            std::make_tuple("POLYGON M ((1 2 -10,11 12 -20))", wkbXDR,
+                            "POLYGON M ((2 4 -10,12 14 -20))", "POLYGON_M_XDR"),
+            std::make_tuple("POLYGON ZM EMPTY", wkbNDR, "POLYGON ZM EMPTY",
+                            "POLYGON_ZM_EMPTY"),
+            std::make_tuple("POLYGON ZM ((1 2 3 -10,11 12 13 -20))", wkbNDR,
+                            "POLYGON ZM ((2 4 6 -10,12 14 16 -20))",
+                            "POLYGON_ZM_NDR"),
+            std::make_tuple("POLYGON ZM ((1 2 3 -10,11 12 13 -20))", wkbXDR,
+                            "POLYGON ZM ((2 4 6 -10,12 14 16 -20))",
+                            "POLYGON_ZM_XDR"),
+
+            std::make_tuple("MULTIPOINT EMPTY", wkbNDR, "MULTIPOINT EMPTY",
+                            "MULTIPOINT_EMPTY_NDR"),
+            std::make_tuple("MULTIPOINT ((1 2),(11 12))", wkbNDR,
+                            "MULTIPOINT ((2 4),(12 14))", "MULTIPOINT_NDR"),
+            std::make_tuple("MULTIPOINT Z ((1 2 3),(11 12 13))", wkbXDR,
+                            "MULTIPOINT Z ((2 4 6),(12 14 16))",
+                            "MULTIPOINT_Z_XDR"),
+
+            std::make_tuple("MULTILINESTRING ((1 2,11 12))", wkbNDR,
+                            "MULTILINESTRING ((2 4,12 14))",
+                            "MULTILINESTRING_NDR"),
+
+            std::make_tuple("MULTIPOLYGON (((1 2,11 12)))", wkbNDR,
+                            "MULTIPOLYGON (((2 4,12 14)))", "MULTIPOLYGON_NDR"),
+
+            std::make_tuple("GEOMETRYCOLLECTION (POLYGON ((1 2,11 12)))",
+                            wkbNDR,
+                            "GEOMETRYCOLLECTION (POLYGON ((2 4,12 14)))",
+                            "GEOMETRYCOLLECTION_NDR"),
+
+            std::make_tuple("CIRCULARSTRING (1 2,11 12,21 22)", wkbNDR,
+                            "CIRCULARSTRING (2 4,12 14,22 24)",
+                            "CIRCULARSTRING_NDR"),
+
+            std::make_tuple("COMPOUNDCURVE ((1 2,11 12))", wkbNDR,
+                            "COMPOUNDCURVE ((2 4,12 14))", "COMPOUNDCURVE_NDR"),
+
+            std::make_tuple("CURVEPOLYGON ((1 2,11 12,21 22,1 2))", wkbNDR,
+                            "CURVEPOLYGON ((2 4,12 14,22 24,2 4))",
+                            "CURVEPOLYGON_NDR"),
+
+            std::make_tuple("MULTICURVE ((1 2,11 12))", wkbNDR,
+                            "MULTICURVE ((2 4,12 14))", "MULTICURVE_NDR"),
+
+            std::make_tuple("MULTISURFACE (((1 2,11 12)))", wkbNDR,
+                            "MULTISURFACE (((2 4,12 14)))", "MULTISURFACE_NDR"),
+
+            std::make_tuple("TRIANGLE ((1 2,11 12,21 22,1 2))", wkbNDR,
+                            "TRIANGLE ((2 4,12 14,22 24,2 4))", "TRIANGLE_NDR"),
+
+            std::make_tuple("POLYHEDRALSURFACE (((1 2,11 12,21 22,1 2)))",
+                            wkbNDR,
+                            "POLYHEDRALSURFACE (((2 4,12 14,22 24,2 4)))",
+                            "POLYHEDRALSURFACE_NDR"),
+
+            std::make_tuple("TIN (((1 2,11 12,21 22,1 2)))", wkbNDR,
+                            "TIN (((2 4,12 14,22 24,2 4)))", "TIN_NDR"),
+        };
+    }
+};
+
+struct MyCT final : public OGRCoordinateTransformation
+{
+    const bool m_bSuccess;
+
+    explicit MyCT(bool bSuccess = true) : m_bSuccess(bSuccess)
+    {
+    }
+
+    const OGRSpatialReference *GetSourceCS() const override
+    {
+        return nullptr;
+    }
+
+    const OGRSpatialReference *GetTargetCS() const override
+    {
+        return nullptr;
+    }
+
+    int Transform(size_t nCount, double *x, double *y, double *z, double *,
+                  int *pabSuccess) override
+    {
+        for (size_t i = 0; i < nCount; ++i)
+        {
+            x[i] += 1;
+            y[i] += 2;
+            if (z)
+                z[i] += 3;
+            if (pabSuccess)
+                pabSuccess[i] = m_bSuccess;
+        }
+        return true;
+    }
+
+    OGRCoordinateTransformation *Clone() const override
+    {
+        return new MyCT();
+    }
+
+    OGRCoordinateTransformation *GetInverse() const override
+    {
+        return nullptr;
+    }  // unused
+};
+
+TEST_P(OGRWKBTransformFixture, test)
+{
+    const char *pszInput = std::get<0>(GetParam());
+    OGRwkbByteOrder eByteOrder = std::get<1>(GetParam());
+    const char *pszOutput = std::get<2>(GetParam());
+
+    MyCT oCT;
+    oCT.GetSourceCS();        // just for code coverage purpose
+    oCT.GetTargetCS();        // just for code coverage purpose
+    delete oCT.Clone();       // just for code coverage purpose
+    delete oCT.GetInverse();  // just for code coverage purpose
+
+    OGRGeometry *poGeom = nullptr;
+    EXPECT_EQ(OGRGeometryFactory::createFromWkt(pszInput, nullptr, &poGeom),
+              OGRERR_NONE);
+    ASSERT_TRUE(poGeom != nullptr);
+    std::vector<GByte> abyWkb(poGeom->WkbSize());
+    poGeom->exportToWkb(eByteOrder, abyWkb.data(), wkbVariantIso);
+    delete poGeom;
+
+    OGRWKBTransformCache oCache;
+    OGREnvelope3D sEnv;
+    EXPECT_TRUE(
+        OGRWKBTransform(abyWkb.data(), abyWkb.size(), &oCT, oCache, sEnv));
+    const auto abyWkbOri = abyWkb;
+
+    poGeom = nullptr;
+    OGRGeometryFactory::createFromWkb(abyWkb.data(), nullptr, &poGeom,
+                                      abyWkb.size());
+    ASSERT_TRUE(poGeom != nullptr);
+    char *pszWKT = nullptr;
+    poGeom->exportToWkt(&pszWKT, wkbVariantIso);
+    delete poGeom;
+    EXPECT_STREQ(pszWKT, pszOutput);
+    CPLFree(pszWKT);
+
+    {
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+
+        // Truncated geometry
+        for (size_t i = 0; i < abyWkb.size(); ++i)
+        {
+            abyWkb = abyWkbOri;
+            EXPECT_FALSE(OGRWKBTransform(abyWkb.data(), i, &oCT, oCache, sEnv));
+        }
+
+        // Check altering all bytes
+        for (size_t i = 0; i < abyWkb.size(); ++i)
+        {
+            abyWkb = abyWkbOri;
+            abyWkb[i] = 0xff;
+            CPL_IGNORE_RET_VAL(OGRWKBTransform(abyWkb.data(), abyWkb.size(),
+                                               &oCT, oCache, sEnv));
+        }
+
+        if (abyWkb.size() > 9)
+        {
+            abyWkb = abyWkbOri;
+            if (!STARTS_WITH(pszInput, "POINT"))
+            {
+                // Corrupt number of sub-geometries
+                abyWkb[5] = 0xff;
+                abyWkb[6] = 0xff;
+                abyWkb[7] = 0xff;
+                abyWkb[8] = 0xff;
+                EXPECT_FALSE(OGRWKBTransform(abyWkb.data(), abyWkb.size(), &oCT,
+                                             oCache, sEnv));
+            }
+        }
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    test_ogr_wkb, OGRWKBTransformFixture,
+    ::testing::ValuesIn(OGRWKBTransformFixture::GetTupleValues()),
+    [](const ::testing::TestParamInfo<OGRWKBTransformFixture::ParamType>
+           &l_info) { return std::get<3>(l_info.param); });
+
+TEST_F(test_ogr_wkb, OGRWKBTransformFixture_rec_collection)
+{
+    std::vector<GByte> abyWkb;
+    constexpr int BEYOND_ALLOWED_RECURSION_LEVEL = 128;
+    for (int i = 0; i < BEYOND_ALLOWED_RECURSION_LEVEL; ++i)
+    {
+        abyWkb.push_back(wkbNDR);
+        abyWkb.push_back(wkbGeometryCollection);
+        abyWkb.push_back(0);
+        abyWkb.push_back(0);
+        abyWkb.push_back(0);
+        abyWkb.push_back(1);
+        abyWkb.push_back(0);
+        abyWkb.push_back(0);
+        abyWkb.push_back(0);
+    }
+    {
+        abyWkb.push_back(wkbNDR);
+        abyWkb.push_back(wkbGeometryCollection);
+        abyWkb.push_back(0);
+        abyWkb.push_back(0);
+        abyWkb.push_back(0);
+        abyWkb.push_back(0);
+        abyWkb.push_back(0);
+        abyWkb.push_back(0);
+        abyWkb.push_back(0);
+    }
+
+    MyCT oCT;
+    OGRWKBTransformCache oCache;
+    OGREnvelope3D sEnv;
+    EXPECT_FALSE(
+        OGRWKBTransform(abyWkb.data(), abyWkb.size(), &oCT, oCache, sEnv));
+}
+
+TEST_F(test_ogr_wkb, OGRWKBTransformFixture_ct_failure)
+{
+    MyCT oCT(/* bSuccess = */ false);
+    OGRWKBTransformCache oCache;
+    OGREnvelope3D sEnv;
+    {
+        OGRPoint p(1, 2);
+        std::vector<GByte> abyWkb(p.WkbSize());
+        static_cast<OGRGeometry &>(p).exportToWkb(wkbNDR, abyWkb.data(),
+                                                  wkbVariantIso);
+
+        EXPECT_FALSE(
+            OGRWKBTransform(abyWkb.data(), abyWkb.size(), &oCT, oCache, sEnv));
+    }
+    {
+        OGRLineString ls;
+        ls.addPoint(1, 2);
+        std::vector<GByte> abyWkb(ls.WkbSize());
+        static_cast<OGRGeometry &>(ls).exportToWkb(wkbNDR, abyWkb.data(),
+                                                   wkbVariantIso);
+
+        EXPECT_FALSE(
+            OGRWKBTransform(abyWkb.data(), abyWkb.size(), &oCT, oCache, sEnv));
+    }
+    {
+        OGRPolygon p;
+        auto poLR = std::make_unique<OGRLinearRing>();
+        poLR->addPoint(1, 2);
+        p.addRing(std::move(poLR));
+        std::vector<GByte> abyWkb(p.WkbSize());
+        static_cast<OGRGeometry &>(p).exportToWkb(wkbNDR, abyWkb.data(),
+                                                  wkbVariantIso);
+
+        EXPECT_FALSE(
+            OGRWKBTransform(abyWkb.data(), abyWkb.size(), &oCT, oCache, sEnv));
+    }
+}
 
 }  // namespace

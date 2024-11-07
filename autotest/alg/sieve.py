@@ -10,23 +10,7 @@
 # Copyright (c) 2008, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 
@@ -328,3 +312,31 @@ cellsize     60.000000000000
     if cs != cs_expected:
         print("Got: ", cs)
         pytest.fail("got wrong checksum")
+
+
+###############################################################################
+# Test source bands with all masked pixels
+
+
+def test_sieve_all_masked():
+
+    drv = gdal.GetDriverByName("MEM")
+    src_ds = drv.Create("", 10, 10, gdal.GDT_Byte)
+    src_band = src_ds.GetRasterBand(1)
+    src_band.Fill(1)
+
+    mask_ds = drv.Create("", 10, 10, gdal.GDT_Byte)
+    mask_band = mask_ds.GetRasterBand(1)
+
+    dst_ds = drv.Create("", 10, 10, gdal.GDT_Byte)
+    dst_band = dst_ds.GetRasterBand(1)
+
+    expected_cs = src_band.Checksum()
+
+    gdal.SieveFilter(src_band, mask_band, dst_band, 4, 4)
+
+    assert dst_band.Checksum() == expected_cs
+
+    gdal.SieveFilter(src_band, mask_band, src_band, 4, 4)
+
+    assert src_band.Checksum() == expected_cs

@@ -32,7 +32,7 @@ means we should convert user's input from the local encoding to UTF-8
 during interactive sessions. The opposite should be done for GDAL
 output. For example, when user passes a filename as a command-line
 parameter to GDAL utilities, that filename should be immediately
-converted to UTF-8 and only afetrwards passed to functions like
+converted to UTF-8 and only afterwards passed to functions like
 GDALOpen() or OGROpen(). All functions, which take character strings as
 parameters, assume UTF-8 (with except of several ones, which will do the
 conversion between different encodings, see Implementation). The same is

@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef NETCDFDATASET_H_INCLUDED_
@@ -144,9 +128,9 @@ static const int NCDF_DEFLATE_LEVEL = 1; /* best time/size ratio */
         if (NCDF_ERR_status_ != NC_NOERR)                                      \
         {                                                                      \
             CPLError(CE_Failure, CPLE_AppDefined,                              \
-                     "netcdf error #%d : %s .\nat (%s,%s,%d)\n", status,       \
-                     nc_strerror(NCDF_ERR_status_), __FILE__, __FUNCTION__,    \
-                     __LINE__);                                                \
+                     "netcdf error #%d : %s .\nat (%s,%s,%d)\n",               \
+                     NCDF_ERR_status_, nc_strerror(NCDF_ERR_status_),          \
+                     __FILE__, __FUNCTION__, __LINE__);                        \
         }                                                                      \
     } while (0)
 
@@ -180,6 +164,28 @@ static const int NCDF_DEFLATE_LEVEL = 1; /* best time/size ratio */
 
 /* Some additional metadata */
 #define OGR_SG_ORIGINAL_LAYERNAME "ogr_layer_name"
+
+/*
+ * Starting `c26f7ea`, netcdf-c exposes the `NC_FillValue`[1] macro instead of
+ * `_FillValue` to avoid collisions with C++ standard library[2]. However, the
+ * previous macro, `_FillValue`, was fully removed causing netcdf-c consumers,
+ * including GDAL, fail to build.
+ *
+ * It's unlikely that this naming change will be backported to the previous
+ * netcdf-c releases, so we have to account for both macros variants. We do so
+ * by introducing our own macro, `NCDF_FillValue`, and using that in places
+ * where `_FillValue` was previously used. If `NC_FillValue` is defined by
+ * `netcdf.h`, `NCDF_FillValue` expands to it and, if it's not, to `_FillValue`.
+ *
+ * References:
+ * 1. https://github.com/Unidata/netcdf-c/commit/c26f7eabf4a1cd25353f22734f439505fe636a45
+ * 2. https://github.com/Unidata/netcdf-c/issues/2858
+ */
+#if defined(NC_FillValue)
+#define NCDF_FillValue NC_FillValue
+#elif defined(_FillValue)
+#define NCDF_FillValue _FillValue
+#endif
 
 /* -------------------------------------------------------------------- */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
@@ -336,6 +342,7 @@ class netCDFDataset final : public GDALPamDataset
     friend class netCDFRasterBand;  // TMP
     friend class netCDFLayer;
     friend class netCDFVariable;
+    friend class nccfdriver::netCDFVID;
 
     typedef enum
     {
@@ -543,8 +550,6 @@ class netCDFDataset final : public GDALPamDataset
     void SetSpatialRefNoUpdate(const OGRSpatialReference *);
 
   protected:
-    CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
-
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;

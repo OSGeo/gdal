@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2020, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -55,14 +39,14 @@ def gdal_create_path():
 ###############################################################################
 
 
-@pytest.mark.parametrize("burn", ("-burn 1 2", '-burn "1 2"', "-burn 1 -burn 2"))
+@pytest.mark.parametrize("burn", ("-burn 1.1 2", '-burn "1 2"', "-burn 1 -burn 2"))
 def test_gdal_create_pdf_tif(gdal_create_path, tmp_path, burn):
 
     output_tif = str(tmp_path / "tmp.tif")
 
     (_, err) = gdaltest.runexternal_out_and_err(
         gdal_create_path
-        + f" {output_tif} -bands 3 -outsize 1 2 -a_srs EPSG:4326 -a_ullr 2 50 3 49 -a_nodata 5 {burn} -ot UInt16 -co COMPRESS=DEFLATE -mo FOO=BAR"
+        + f" -bands 3 -outsize 1 2 -a_srs EPSG:4326 -a_ullr 2 50 3 49 -a_nodata 5 {burn} -ot UInt16 -co COMPRESS=DEFLATE -mo FOO=BAR  {output_tif}"
     )
     assert err is None or err == "", "got error/warning"
 
@@ -222,6 +206,10 @@ def test_gdal_create_input_file_overrrides(gdal_create_path, tmp_path):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdal_create_input_file_gcps(gdal_create_path, tmp_path):
 
     output_tif = str(tmp_path / "tmp.tif")

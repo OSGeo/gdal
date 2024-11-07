@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_WFS_H_INCLUDED
@@ -36,19 +20,11 @@
 
 #include "cpl_minixml.h"
 #include "ogrsf_frmts.h"
-#include "gmlreader.h"
+#include "gmlfeature.h"
 #include "cpl_http.h"
 #include "ogr_swq.h"
 
 const CPLXMLNode *WFSFindNode(const CPLXMLNode *psXML, const char *pszRootName);
-void OGRWFSRecursiveUnlink(const char *pszName);
-CPLString
-WFS_TurnSQLFilterToOGCFilter(const swq_expr_node *poExpr, OGRDataSource *poDS,
-                             OGRFeatureDefn *poFDefn, int nVersion,
-                             int bPropertyIsNotEqualToSupported,
-                             int bUseFeatureId, int bGmlObjectIdNeedsGMLPrefix,
-                             const char *pszNSPrefix, int *pbOutNeedsNullCheck);
-swq_custom_func_registrar *WFSGetCustomFuncRegistrar();
 
 const char *FindSubStringInsensitive(const char *pszStr, const char *pszSubStr);
 
@@ -144,6 +120,8 @@ class OGRWFSLayer final : public OGRLayer
 
     std::vector<std::string> m_aosSupportedCRSList{};
     OGRLayer::GetSupportedSRSListRetType m_apoSupportedCRSList{};
+
+    std::string m_osTmpDir{};
 
   public:
     OGRWFSLayer(OGRWFSDataSource *poDS, OGRSpatialReference *poSRS,
@@ -257,6 +235,11 @@ class OGRWFSLayer final : public OGRLayer
 
     OGRErr SetActiveSRS(int iGeomField,
                         const OGRSpatialReference *poSRS) override;
+
+    const std::string &GetTmpDir() const
+    {
+        return m_osTmpDir;
+    }
 };
 
 /************************************************************************/
@@ -289,6 +272,8 @@ class OGRWFSJoinLayer final : public OGRLayer
     std::vector<CPLString> aoSrcGeomFieldNames;
 
     CPLString osFeatureTypes;
+
+    std::string m_osTmpDir{};
 
     OGRWFSJoinLayer(OGRWFSDataSource *poDS, const swq_select *psSelectInfo,
                     const CPLString &osGlobalFilter);
@@ -324,9 +309,8 @@ class OGRWFSJoinLayer final : public OGRLayer
 /*                           OGRWFSDataSource                           */
 /************************************************************************/
 
-class OGRWFSDataSource final : public OGRDataSource
+class OGRWFSDataSource final : public GDALDataset
 {
-    char *pszName;
     bool bRewriteFile;
     CPLXMLNode *psFileXML;
 
@@ -374,7 +358,7 @@ class OGRWFSDataSource final : public OGRDataSource
 
     CPLString osLayerMetadataCSV;
     CPLString osLayerMetadataTmpFileName;
-    OGRDataSource *poLayerMetadataDS;
+    GDALDataset *poLayerMetadataDS;
     OGRLayer *poLayerMetadataLayer;
 
     CPLString osGetCapabilities;
@@ -399,12 +383,8 @@ class OGRWFSDataSource final : public OGRDataSource
     OGRWFSDataSource();
     virtual ~OGRWFSDataSource();
 
-    int Open(const char *pszFilename, int bUpdate, char **papszOpenOptions);
-
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
+    int Open(const char *pszFilename, int bUpdate,
+             CSLConstList papszOpenOptions);
 
     virtual int GetLayerCount() override
     {
@@ -413,8 +393,6 @@ class OGRWFSDataSource final : public OGRDataSource
 
     virtual OGRLayer *GetLayer(int) override;
     virtual OGRLayer *GetLayerByName(const char *pszLayerName) override;
-
-    virtual int TestCapability(const char *) override;
 
     virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                                  OGRGeometry *poSpatialFilter,

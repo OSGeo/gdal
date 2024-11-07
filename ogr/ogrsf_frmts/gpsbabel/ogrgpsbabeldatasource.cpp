@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
@@ -50,7 +34,6 @@ OGRGPSBabelDataSource::OGRGPSBabelDataSource()
 OGRGPSBabelDataSource::~OGRGPSBabelDataSource()
 
 {
-    CPLFree(pszName);
     CPLFree(pszGPSBabelDriverName);
     CPLFree(pszFilename);
 
@@ -175,8 +158,6 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
         }
     }
 
-    pszName = CPLStrdup(pszDatasourceName);
-
     bool bExplicitFeatures = false;
     bool bWaypoints = true;
     bool bTracks = true;
@@ -261,7 +242,7 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
     if (pszOptionUseTempFile && CPLTestBool(pszOptionUseTempFile))
         osTmpFileName = CPLGenerateTempFilename(nullptr);
     else
-        osTmpFileName.Printf("/vsimem/ogrgpsbabeldatasource_%p", this);
+        osTmpFileName = VSIMemGenerateHiddenFilename("gpsbabel");
 
     bool bRet = false;
     if (IsSpecialFile(pszFilename))
@@ -379,15 +360,6 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
     }
 
     return nLayers > 0;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRGPSBabelDataSource::TestCapability(const char * /* pszCap */)
-{
-    return FALSE;
 }
 
 /************************************************************************/

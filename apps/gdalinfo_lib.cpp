@@ -9,23 +9,7 @@
  * Copyright (c) 2007-2015, Even Rouault <even.rouault at spatialys.com>
  * Copyright (c) 2015, Faza Mahamood
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -58,7 +42,8 @@
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 #include "ogr_spatialref.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
+#include "ogrgeojsongeometry.h"
 #include "ogrgeojsonwriter.h"
 
 using std::vector;
@@ -105,6 +90,12 @@ struct GDALInfoOptions
     /*! force computation of the checksum for each band in the dataset */
     bool bComputeChecksum = false;
 
+    /*! allow or suppress printing of nodata value */
+    bool bShowNodata = true;
+
+    /*! allow or suppress printing of mask information */
+    bool bShowMask = true;
+
     /*! allow or suppress ground control points list printing. It may be useful
         for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
         which contain thousands of them. */
@@ -129,7 +120,7 @@ struct GDALInfoOptions
     /*! report metadata for the specified domains. "all" can be used to report
         metadata in all domains.
         */
-    CPLStringList aosExtraMDDomains;
+    CPLStringList aosExtraMDDomains{};
 
     /*! WKT format used for SRS */
     std::string osWKTFormat = "WKT2";
@@ -261,6 +252,8 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
         .store_into(psOptions->bReportHistograms)
         .help(_("Report histogram information for all bands."));
 
+    argParser->add_usage_newline();
+
     argParser->add_inverted_logic_flag(
         "-nogcp", &psOptions->bShowGCPs,
         _("Suppress ground control points list printing."));
@@ -277,6 +270,15 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
 
     argParser->add_inverted_logic_flag("-nofl", &psOptions->bShowFileList,
                                        _("Suppress display of the file list."));
+
+    argParser->add_inverted_logic_flag(
+        "-nonodata", &psOptions->bShowNodata,
+        _("Suppress nodata printing (implies -nomask)."));
+
+    argParser->add_inverted_logic_flag("-nomask", &psOptions->bShowMask,
+                                       _("Suppress mask printing."));
+
+    argParser->add_usage_newline();
 
     argParser->add_argument("-checksum")
         .flag()
@@ -639,10 +641,12 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             {
                 std::string osCoordinateEpoch =
                     CPLSPrintf("%f", dfCoordinateEpoch);
-                if (osCoordinateEpoch.find('.') != std::string::npos)
+                const size_t nDotPos = osCoordinateEpoch.find('.');
+                if (nDotPos != std::string::npos)
                 {
-                    while (osCoordinateEpoch.back() == '0')
-                        osCoordinateEpoch.resize(osCoordinateEpoch.size() - 1);
+                    while (osCoordinateEpoch.size() > nDotPos + 2 &&
+                           osCoordinateEpoch.back() == '0')
+                        osCoordinateEpoch.pop_back();
                 }
                 Concat(osStr, psOptions->bStdoutOutput,
                        "Coordinate epoch: %s\n", osCoordinateEpoch.c_str());
@@ -1109,25 +1113,21 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             json_object_object_add(poStacEOBand, "name", poBandName);
         }
 
-        if (GDALGetDescription(hBand) != nullptr &&
-            strlen(GDALGetDescription(hBand)) > 0)
+        const char *pszBandDesc = GDALGetDescription(hBand);
+        if (pszBandDesc != nullptr && strlen(pszBandDesc) > 0)
         {
             if (bJson)
             {
-                json_object *poBandDescription =
-                    json_object_new_string(GDALGetDescription(hBand));
                 json_object_object_add(poBand, "description",
-                                       poBandDescription);
+                                       json_object_new_string(pszBandDesc));
 
-                json_object *poStacBandDescription =
-                    json_object_new_string(GDALGetDescription(hBand));
                 json_object_object_add(poStacEOBand, "description",
-                                       poStacBandDescription);
+                                       json_object_new_string(pszBandDesc));
             }
             else
             {
                 Concat(osStr, psOptions->bStdoutOutput, "  Description = %s\n",
-                       GDALGetDescription(hBand));
+                       pszBandDesc);
             }
         }
         else
@@ -1139,6 +1139,17 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                         GDALGetRasterColorInterpretation(hBand)));
                 json_object_object_add(poStacEOBand, "description",
                                        poColorInterp);
+            }
+        }
+
+        if (bJson)
+        {
+            const char *pszCommonName = GDALGetSTACCommonNameFromColorInterp(
+                GDALGetRasterColorInterpretation(hBand));
+            if (pszCommonName)
+            {
+                json_object_object_add(poStacEOBand, "common_name",
+                                       json_object_new_string(pszCommonName));
             }
         }
 
@@ -1358,7 +1369,11 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
         }
 
         int bGotNodata = FALSE;
-        if (eDT == GDT_Int64)
+        if (!psOptions->bShowNodata)
+        {
+            // nothing to do
+        }
+        else if (eDT == GDT_Int64)
         {
             const auto nNoData =
                 GDALGetRasterNoDataValueAsInt64(hBand, &bGotNodata);
@@ -1474,7 +1489,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                     json_object_object_add(poBand, "noDataValue",
                                            poNoDataValue);
                 }
-                else if (CPLIsNan(dfNoData))
+                else if (std::isnan(dfNoData))
                 {
                     Concat(osStr, psOptions->bStdoutOutput,
                            "  NoData Value=nan\n");
@@ -1594,7 +1609,8 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             Concat(osStr, psOptions->bStdoutOutput, "  Overviews: arbitrary\n");
         }
 
-        const int nMaskFlags = GDALGetMaskFlags(hBand);
+        const int nMaskFlags =
+            psOptions->bShowMask ? GDALGetMaskFlags(hBand) : GMF_ALL_VALID;
         if ((nMaskFlags & (GMF_NODATA | GMF_ALL_VALID)) == 0 ||
             nMaskFlags == (GMF_NODATA | GMF_PER_DATASET))
         {
@@ -2245,6 +2261,9 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
         GDALInfoPrintMetadata(psOptions, hObject, "RPC", "RPC Metadata",
                               pszIndent, bJson, poMetadata, osStr);
     }
+
+    GDALInfoPrintMetadata(psOptions, hObject, "IMAGERY", "Imagery", pszIndent,
+                          bJson, poMetadata, osStr);
 }
 
 /************************************************************************/
@@ -2304,6 +2323,9 @@ GDALInfoOptionsNew(char **papszArgv,
         CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
         return nullptr;
     }
+
+    if (!psOptions->bShowNodata)
+        psOptions->bShowMask = false;
 
     return psOptions.release();
 }

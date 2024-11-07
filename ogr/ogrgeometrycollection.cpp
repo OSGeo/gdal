@@ -8,23 +8,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -32,6 +16,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <limits>
 #include <new>
 
 #include "cpl_conv.h"
@@ -42,16 +27,6 @@
 #include "ogr_core.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
-
-/************************************************************************/
-/*                       OGRGeometryCollection()                        */
-/************************************************************************/
-
-/**
- * \brief Create an empty geometry collection.
- */
-
-OGRGeometryCollection::OGRGeometryCollection() = default;
 
 /************************************************************************/
 /*         OGRGeometryCollection( const OGRGeometryCollection& )        */
@@ -71,7 +46,7 @@ OGRGeometryCollection::OGRGeometryCollection(const OGRGeometryCollection &other)
 {
     // Do not use addGeometry() as it is virtual.
     papoGeoms = static_cast<OGRGeometry **>(
-        VSI_CALLOC_VERBOSE(sizeof(void *), other.nGeomCount));
+        VSI_CALLOC_VERBOSE(sizeof(OGRGeometry *), other.nGeomCount));
     if (papoGeoms)
     {
         nGeomCount = other.nGeomCount;
@@ -110,13 +85,28 @@ OGRGeometryCollection::operator=(const OGRGeometryCollection &other)
 {
     if (this != &other)
     {
-        empty();
-
         OGRGeometry::operator=(other);
 
-        for (int i = 0; i < other.nGeomCount; i++)
+        for (const auto *poOtherSubGeom : other)
         {
-            addGeometry(other.papoGeoms[i]);
+            if (!isCompatibleSubType(poOtherSubGeom->getGeometryType()))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Illegal use of OGRGeometryCollection::operator=(): "
+                         "trying to assign an incompatible sub-geometry");
+                return *this;
+            }
+        }
+
+        papoGeoms = static_cast<OGRGeometry **>(
+            VSI_CALLOC_VERBOSE(sizeof(OGRGeometry *), other.nGeomCount));
+        if (papoGeoms)
+        {
+            nGeomCount = other.nGeomCount;
+            for (int i = 0; i < other.nGeomCount; i++)
+            {
+                papoGeoms[i] = other.papoGeoms[i]->clone();
+            }
         }
     }
     return *this;
@@ -131,7 +121,7 @@ void OGRGeometryCollection::empty()
 {
     if (papoGeoms != nullptr)
     {
-        for (auto &&poSubGeom : *this)
+        for (auto &poSubGeom : *this)
         {
             delete poSubGeom;
         }
@@ -179,7 +169,7 @@ int OGRGeometryCollection::getDimension() const
     int nDimension = 0;
     // FIXME? Not sure if it is really appropriate to take the max in case
     // of geometries of different dimension.
-    for (auto &&poSubGeom : *this)
+    for (const auto &poSubGeom : *this)
     {
         int nSubGeomDimension = poSubGeom->getDimension();
         if (nSubGeomDimension > nDimension)
@@ -199,7 +189,7 @@ int OGRGeometryCollection::getDimension() const
 void OGRGeometryCollection::flattenTo2D()
 
 {
-    for (auto &&poSubGeom : *this)
+    for (auto &poSubGeom : *this)
     {
         poSubGeom->flattenTo2D();
     }
@@ -361,10 +351,26 @@ OGRErr OGRGeometryCollection::addGeometryDirectly(OGRGeometry *poNewGeom)
     if (!isCompatibleSubType(poNewGeom->getGeometryType()))
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
+#if SIZEOF_VOIDP < 8
+    if (nGeomCount == std::numeric_limits<int>::max() /
+                          static_cast<int>(sizeof(OGRGeometry *)))
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Too many subgeometries");
+        return OGRERR_FAILURE;
+    }
+#else
+    if (nGeomCount == std::numeric_limits<int>::max())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too many subgeometries");
+        return OGRERR_FAILURE;
+    }
+#endif
+
     HomogenizeDimensionalityWith(poNewGeom);
 
-    OGRGeometry **papoNewGeoms = static_cast<OGRGeometry **>(
-        VSI_REALLOC_VERBOSE(papoGeoms, sizeof(void *) * (nGeomCount + 1)));
+    OGRGeometry **papoNewGeoms =
+        static_cast<OGRGeometry **>(VSI_REALLOC_VERBOSE(
+            papoGeoms, sizeof(OGRGeometry *) * (nGeomCount + 1)));
     if (papoNewGeoms == nullptr)
         return OGRERR_FAILURE;
 
@@ -422,7 +428,8 @@ OGRErr OGRGeometryCollection::addGeometry(std::unique_ptr<OGRGeometry> geom)
  *
  * @param bDelete if TRUE the geometry will be deallocated, otherwise it will
  * not.  The default is TRUE as the container is considered to own the
- * geometries in it.
+ * geometries in it. Note: using stealGeometry() might be a better alternative
+ * to using bDelete = false.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
  * out of range.
@@ -446,11 +453,68 @@ OGRErr OGRGeometryCollection::removeGeometry(int iGeom, int bDelete)
         delete papoGeoms[iGeom];
 
     memmove(papoGeoms + iGeom, papoGeoms + iGeom + 1,
-            sizeof(void *) * (nGeomCount - iGeom - 1));
+            sizeof(OGRGeometry *) * (nGeomCount - iGeom - 1));
 
     nGeomCount--;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           stealGeometry()                            */
+/************************************************************************/
+
+/**
+ * \brief Remove a geometry from the container and return it to the caller
+ *
+ * Removing a geometry will cause the geometry count to drop by one, and all
+ * "higher" geometries will shuffle down one in index.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param iGeom the index of the geometry to delete.
+ *
+ * @return the sub-geometry, or nullptr in case of error.
+ * @since 3.10
+ */
+
+std::unique_ptr<OGRGeometry> OGRGeometryCollection::stealGeometry(int iGeom)
+{
+    if (iGeom < 0 || iGeom >= nGeomCount)
+        return nullptr;
+
+    auto poSubGeom = std::unique_ptr<OGRGeometry>(papoGeoms[iGeom]);
+    papoGeoms[iGeom] = nullptr;
+    removeGeometry(iGeom);
+    return poSubGeom;
+}
+
+/************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+bool OGRGeometryCollection::hasEmptyParts() const
+{
+    for (const auto &poSubGeom : *this)
+    {
+        if (poSubGeom->IsEmpty() || poSubGeom->hasEmptyParts())
+            return true;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+void OGRGeometryCollection::removeEmptyParts()
+{
+    for (int i = nGeomCount - 1; i >= 0; --i)
+    {
+        papoGeoms[i]->removeEmptyParts();
+        if (papoGeoms[i]->IsEmpty())
+            removeGeometry(i, true);
+    }
 }
 
 /************************************************************************/
@@ -508,7 +572,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal(
 
     // coverity[tainted_data]
     papoGeoms = static_cast<OGRGeometry **>(
-        VSI_CALLOC_VERBOSE(sizeof(void *), nGeomCount));
+        VSI_CALLOC_VERBOSE(sizeof(OGRGeometry *), nGeomCount));
     if (nGeomCount != 0 && papoGeoms == nullptr)
     {
         nGeomCount = 0;
@@ -858,11 +922,10 @@ std::string OGRGeometryCollection::exportToWktInternal(
 
     try
     {
-        for (int i = 0; i < nGeomCount; ++i)
+        for (const auto &poSubGeom : *this)
         {
-            OGRGeometry *geom = papoGeoms[i];
             OGRErr subgeomErr = OGRERR_NONE;
-            std::string tempWkt = geom->exportToWkt(opts, &subgeomErr);
+            std::string tempWkt = poSubGeom->exportToWkt(opts, &subgeomErr);
             if (subgeomErr != OGRERR_NONE)
             {
                 if (err)
@@ -948,7 +1011,7 @@ void OGRGeometryCollection::getEnvelope(OGREnvelope3D *psEnvelope) const
     bool bExtentSet = false;
 
     *psEnvelope = OGREnvelope3D();
-    for (auto &&poSubGeom : *this)
+    for (const auto &poSubGeom : *this)
     {
         if (!poSubGeom->IsEmpty())
         {
@@ -1009,7 +1072,7 @@ OGRErr OGRGeometryCollection::transform(OGRCoordinateTransformation *poCT)
 
 {
     int iGeom = 0;
-    for (auto &&poSubGeom : *this)
+    for (auto &poSubGeom : *this)
     {
         const OGRErr eErr = poSubGeom->transform(poCT);
         if (eErr != OGRERR_NONE)
@@ -1041,7 +1104,7 @@ OGRErr OGRGeometryCollection::transform(OGRCoordinateTransformation *poCT)
 void OGRGeometryCollection::closeRings()
 
 {
-    for (auto &&poSubGeom : *this)
+    for (auto &poSubGeom : *this)
     {
         if (OGR_GT_IsSubClassOf(wkbFlatten(poSubGeom->getGeometryType()),
                                 wkbCurvePolygon))
@@ -1056,35 +1119,38 @@ void OGRGeometryCollection::closeRings()
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-void OGRGeometryCollection::setCoordinateDimension(int nNewDimension)
+bool OGRGeometryCollection::setCoordinateDimension(int nNewDimension)
 
 {
-    for (auto &&poSubGeom : *this)
+    for (auto &poSubGeom : *this)
     {
-        poSubGeom->setCoordinateDimension(nNewDimension);
+        if (!poSubGeom->setCoordinateDimension(nNewDimension))
+            return false;
     }
 
-    OGRGeometry::setCoordinateDimension(nNewDimension);
+    return OGRGeometry::setCoordinateDimension(nNewDimension);
 }
 
-void OGRGeometryCollection::set3D(OGRBoolean bIs3D)
+bool OGRGeometryCollection::set3D(OGRBoolean bIs3D)
 {
-    for (auto &&poSubGeom : *this)
+    for (auto &poSubGeom : *this)
     {
-        poSubGeom->set3D(bIs3D);
+        if (!poSubGeom->set3D(bIs3D))
+            return false;
     }
 
-    OGRGeometry::set3D(bIs3D);
+    return OGRGeometry::set3D(bIs3D);
 }
 
-void OGRGeometryCollection::setMeasured(OGRBoolean bIsMeasured)
+bool OGRGeometryCollection::setMeasured(OGRBoolean bIsMeasured)
 {
-    for (auto &&poSubGeom : *this)
+    for (auto &poSubGeom : *this)
     {
-        poSubGeom->setMeasured(bIsMeasured);
+        if (!poSubGeom->setMeasured(bIsMeasured))
+            return false;
     }
 
-    OGRGeometry::setMeasured(bIsMeasured);
+    return OGRGeometry::setMeasured(bIsMeasured);
 }
 
 /************************************************************************/
@@ -1106,7 +1172,7 @@ void OGRGeometryCollection::setMeasured(OGRBoolean bIsMeasured)
 double OGRGeometryCollection::get_Length() const
 {
     double dfLength = 0.0;
-    for (auto &&poSubGeom : *this)
+    for (const auto &poSubGeom : *this)
     {
         const OGRwkbGeometryType eType =
             wkbFlatten(poSubGeom->getGeometryType());
@@ -1115,8 +1181,12 @@ double OGRGeometryCollection::get_Length() const
             const OGRCurve *poCurve = poSubGeom->toCurve();
             dfLength += poCurve->get_Length();
         }
-        else if (OGR_GT_IsSubClassOf(eType, wkbMultiCurve) ||
-                 eType == wkbGeometryCollection)
+        else if (OGR_GT_IsSurface(eType))
+        {
+            const OGRSurface *poSurface = poSubGeom->toSurface();
+            dfLength += poSurface->get_Length();
+        }
+        else if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
         {
             const OGRGeometryCollection *poColl =
                 poSubGeom->toGeometryCollection();
@@ -1146,7 +1216,7 @@ double OGRGeometryCollection::get_Length() const
 double OGRGeometryCollection::get_Area() const
 {
     double dfArea = 0.0;
-    for (auto &&poSubGeom : *this)
+    for (const auto &poSubGeom : *this)
     {
         OGRwkbGeometryType eType = wkbFlatten(poSubGeom->getGeometryType());
         if (OGR_GT_IsSurface(eType))
@@ -1180,6 +1250,9 @@ double OGRGeometryCollection::get_Area() const
  * The returned area will always be in square meters, and assumes that
  * polygon edges describe geodesic lines on the ellipsoid.
  *
+ * <a href="https://geographiclib.sourceforge.io/html/python/geodesics.html">Geodesics</a>
+ * follow the shortest route on the surface of the ellipsoid.
+ *
  * If the geometry' SRS is not a geographic one, geometries are reprojected to
  * the underlying geographic SRS of the geometry' SRS.
  * OGRSpatialReference::GetDataAxisToSRSAxisMapping() is honored.
@@ -1202,11 +1275,8 @@ double OGRGeometryCollection::get_Area() const
 double OGRGeometryCollection::get_GeodesicArea(
     const OGRSpatialReference *poSRSOverride) const
 {
-    if (!poSRSOverride)
-        poSRSOverride = getSpatialReference();
-
     double dfArea = 0.0;
-    for (auto &&poSubGeom : *this)
+    for (const auto &poSubGeom : *this)
     {
         OGRwkbGeometryType eType = wkbFlatten(poSubGeom->getGeometryType());
         if (OGR_GT_IsSurface(eType))
@@ -1226,8 +1296,7 @@ double OGRGeometryCollection::get_GeodesicArea(
                 return dfLocalArea;
             dfArea += dfLocalArea;
         }
-        else if (OGR_GT_IsSubClassOf(eType, wkbMultiSurface) ||
-                 eType == wkbGeometryCollection)
+        else if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
         {
             const double dfLocalArea =
                 poSubGeom->toGeometryCollection()->get_GeodesicArea(
@@ -1242,12 +1311,88 @@ double OGRGeometryCollection::get_GeodesicArea(
 }
 
 /************************************************************************/
+/*                        get_GeodesicLength()                          */
+/************************************************************************/
+
+/**
+ * \brief Get the length of the collection,where curve edges are geodesic lines
+ * on the underlying ellipsoid of the SRS attached to the geometry.
+ *
+ * The returned length will always be in meters.
+ *
+ * <a href="https://geographiclib.sourceforge.io/html/python/geodesics.html">Geodesics</a>
+ * follow the shortest route on the surface of the ellipsoid.
+ *
+ * If the geometry' SRS is not a geographic one, geometries are reprojected to
+ * the underlying geographic SRS of the geometry' SRS.
+ * OGRSpatialReference::GetDataAxisToSRSAxisMapping() is honored.
+ *
+ * Note that geometries with circular arcs will be linearized in their original
+ * coordinate space first, so the resulting geodesic length will be an
+ * approximation.
+ *
+ * The length is computed as the sum of the lengths of all members
+ * in this collection.
+ *
+ * @note No warning will be issued if a member of the collection does not
+ *       support the get_GeodesicLength method.
+ *
+ * @param poSRSOverride If not null, overrides OGRGeometry::getSpatialReference()
+ * @return the length of the geometry in meters, or a negative value in case
+ * of error.
+ *
+ * @see get_Length() for an alternative method returning areas computed in
+ * 2D Cartesian space.
+ *
+ * @since GDAL 3.10
+ */
+double OGRGeometryCollection::get_GeodesicLength(
+    const OGRSpatialReference *poSRSOverride) const
+{
+    double dfLength = 0.0;
+    for (const auto &poSubGeom : *this)
+    {
+        const OGRwkbGeometryType eType =
+            wkbFlatten(poSubGeom->getGeometryType());
+        if (OGR_GT_IsSurface(eType))
+        {
+            const OGRSurface *poSurface = poSubGeom->toSurface();
+            const double dfLocalLength =
+                poSurface->get_GeodesicLength(poSRSOverride);
+            if (dfLocalLength < 0)
+                return dfLocalLength;
+            dfLength += dfLocalLength;
+        }
+        else if (OGR_GT_IsCurve(eType))
+        {
+            const OGRCurve *poCurve = poSubGeom->toCurve();
+            const double dfLocalLength =
+                poCurve->get_GeodesicLength(poSRSOverride);
+            if (dfLocalLength < 0)
+                return dfLocalLength;
+            dfLength += dfLocalLength;
+        }
+        else if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
+        {
+            const double dfLocalLength =
+                poSubGeom->toGeometryCollection()->get_GeodesicLength(
+                    poSRSOverride);
+            if (dfLocalLength < 0)
+                return dfLocalLength;
+            dfLength += dfLocalLength;
+        }
+    }
+
+    return dfLength;
+}
+
+/************************************************************************/
 /*                               IsEmpty()                              */
 /************************************************************************/
 
 OGRBoolean OGRGeometryCollection::IsEmpty() const
 {
-    for (auto &&poSubGeom : *this)
+    for (const auto &poSubGeom : *this)
     {
         if (poSubGeom->IsEmpty() == FALSE)
             return FALSE;
@@ -1263,7 +1408,7 @@ void OGRGeometryCollection::assignSpatialReference(
     const OGRSpatialReference *poSR)
 {
     OGRGeometry::assignSpatialReference(poSR);
-    for (auto &&poSubGeom : *this)
+    for (auto &poSubGeom : *this)
     {
         poSubGeom->assignSpatialReference(poSR);
     }
@@ -1273,12 +1418,14 @@ void OGRGeometryCollection::assignSpatialReference(
 /*              OGRGeometryCollection::segmentize()                     */
 /************************************************************************/
 
-void OGRGeometryCollection::segmentize(double dfMaxLength)
+bool OGRGeometryCollection::segmentize(double dfMaxLength)
 {
-    for (auto &&poSubGeom : *this)
+    for (auto &poSubGeom : *this)
     {
-        poSubGeom->segmentize(dfMaxLength);
+        if (!poSubGeom->segmentize(dfMaxLength))
+            return false;
     }
+    return true;
 }
 
 /************************************************************************/
@@ -1287,7 +1434,7 @@ void OGRGeometryCollection::segmentize(double dfMaxLength)
 
 void OGRGeometryCollection::swapXY()
 {
-    for (auto &&poSubGeom : *this)
+    for (auto &poSubGeom : *this)
     {
         poSubGeom->swapXY();
     }
@@ -1317,9 +1464,9 @@ OGRBoolean OGRGeometryCollection::isCompatibleSubType(
 
 OGRBoolean OGRGeometryCollection::hasCurveGeometry(int bLookForNonLinear) const
 {
-    for (int iGeom = 0; iGeom < nGeomCount; iGeom++)
+    for (const auto &poSubGeom : *this)
     {
-        if (papoGeoms[iGeom]->hasCurveGeometry(bLookForNonLinear))
+        if (poSubGeom->hasCurveGeometry(bLookForNonLinear))
             return TRUE;
     }
     return FALSE;
@@ -1333,19 +1480,20 @@ OGRGeometry *
 OGRGeometryCollection::getLinearGeometry(double dfMaxAngleStepSizeDegrees,
                                          const char *const *papszOptions) const
 {
-    OGRGeometryCollection *poGC =
+    auto poGC = std::unique_ptr<OGRGeometryCollection>(
         OGRGeometryFactory::createGeometry(OGR_GT_GetLinear(getGeometryType()))
-            ->toGeometryCollection();
-    if (poGC == nullptr)
+            ->toGeometryCollection());
+    if (!poGC)
         return nullptr;
     poGC->assignSpatialReference(getSpatialReference());
-    for (int iGeom = 0; iGeom < nGeomCount; iGeom++)
+    for (const auto &poSubGeom : *this)
     {
-        OGRGeometry *poSubGeom = papoGeoms[iGeom]->getLinearGeometry(
+        OGRGeometry *poSubGeomNew = poSubGeom->getLinearGeometry(
             dfMaxAngleStepSizeDegrees, papszOptions);
-        poGC->addGeometryDirectly(poSubGeom);
+        if (poGC->addGeometryDirectly(poSubGeomNew) != OGRERR_NONE)
+            return nullptr;
     }
-    return poGC;
+    return poGC.release();
 }
 
 /************************************************************************/
@@ -1355,27 +1503,26 @@ OGRGeometryCollection::getLinearGeometry(double dfMaxAngleStepSizeDegrees,
 OGRGeometry *
 OGRGeometryCollection::getCurveGeometry(const char *const *papszOptions) const
 {
-    OGRGeometryCollection *poGC =
+    auto poGC = std::unique_ptr<OGRGeometryCollection>(
         OGRGeometryFactory::createGeometry(OGR_GT_GetCurve(getGeometryType()))
-            ->toGeometryCollection();
-    if (poGC == nullptr)
+            ->toGeometryCollection());
+    if (!poGC)
         return nullptr;
     poGC->assignSpatialReference(getSpatialReference());
     bool bHasCurveGeometry = false;
-    for (int iGeom = 0; iGeom < nGeomCount; iGeom++)
+    for (const auto &poSubGeom : *this)
     {
-        OGRGeometry *poSubGeom =
-            papoGeoms[iGeom]->getCurveGeometry(papszOptions);
-        if (poSubGeom->hasCurveGeometry())
+        OGRGeometry *poSubGeomNew = poSubGeom->getCurveGeometry(papszOptions);
+        if (poSubGeomNew->hasCurveGeometry())
             bHasCurveGeometry = true;
-        poGC->addGeometryDirectly(poSubGeom);
+        if (poGC->addGeometryDirectly(poSubGeomNew) != OGRERR_NONE)
+            return nullptr;
     }
     if (!bHasCurveGeometry)
     {
-        delete poGC;
         return clone();
     }
-    return poGC;
+    return poGC.release();
 }
 
 /************************************************************************/

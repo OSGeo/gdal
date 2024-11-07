@@ -1,7 +1,7 @@
 .. _python_osgeo:
 
-Miscellaneous Python API
-========================
+GDAL Python submodules
+======================
 
 
 Submodules
@@ -12,6 +12,7 @@ Submodules
 
    osgeo.gdal
    osgeo.gdal_array
+   osgeo.gdal_fsspec
    osgeo.gdalconst
    osgeo.gnm
    osgeo.ogr

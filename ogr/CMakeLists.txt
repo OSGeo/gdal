@@ -61,7 +61,16 @@ add_library(
   ogr_xerces.cpp
   ogr_geo_utils.cpp
   ogr_proj_p.cpp
-  ogr_wkb.cpp)
+  ogr_wkb.cpp
+  ogrvrtgeometrytypes.cpp
+  ogr2kmlgeometry.cpp
+  ogrlibjsonutils.cpp
+  ogrgeojsongeometry.cpp
+  ogrgeojsonwriter.cpp
+  ogresrijsongeometry.cpp
+  ogrmitabspatialref.cpp
+  mitab_bounds.cpp
+)
 add_dependencies(ogr generate_gdal_version_h)
 
 set(GDAL_DATA_FILES
@@ -84,7 +93,7 @@ set_property(
 include(GdalStandardIncludes)
 gdal_standard_includes(ogr)
 target_compile_options(ogr PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
-target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR> $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
+target_include_directories(ogr PRIVATE $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 set_property(TARGET ogr PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:ogr>)
 
@@ -95,8 +104,6 @@ endif ()
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(ogr libjson)
 endif ()
-
-target_compile_definitions(ogr PRIVATE HAVE_MITAB)
 
 gdal_target_link_libraries(ogr PRIVATE PROJ::proj)
 
@@ -180,7 +187,7 @@ add_custom_target(check_swq_parser_md5 ALL
                   COMMAND ${CMAKE_COMMAND}
                       "-DIN_FILE=swq_parser.y"
                       "-DTARGET=generate_swq_parser"
-                      "-DEXPECTED_MD5SUM=f7faffefe55128fc8951556909523ef7"
+                      "-DEXPECTED_MD5SUM=47b674ecca1fc71a50bc81d7d0bfa29d   "
                       "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
                       -P "${PROJECT_SOURCE_DIR}/cmake/helpers/check_md5sum.cmake"
                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"

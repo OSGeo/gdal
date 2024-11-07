@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -37,6 +21,11 @@ import gdaltest
 import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 
 ###############################################################################
 # Verify reading from simple existing warp definition.
@@ -100,6 +89,12 @@ def test_vrtwarp_4():
     tmp_ds.BuildOverviews("NONE", overviewlist=[2, 4])
     tmp_ds.GetRasterBand(1).GetOverview(0).Fill(127)
     cs_ov0 = tmp_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    data_ov0 = tmp_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
+    data_ov0_subsampled = (
+        tmp_ds.GetRasterBand(1)
+        .GetOverview(0)
+        .ReadRaster(0, 0, 10, 10, 9, 9, resample_alg=gdal.GRIORA_Bilinear)
+    )
     tmp_ds.GetRasterBand(1).GetOverview(1).Fill(255)
     cs_ov1 = tmp_ds.GetRasterBand(1).GetOverview(1).Checksum()
 
@@ -109,6 +104,8 @@ def test_vrtwarp_4():
     for i in range(3):
         assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 2
         assert vrtwarp_ds.GetRasterBand(1).Checksum() == cs_main, i
+        assert vrtwarp_ds.GetRasterBand(1).GetOverview(-1) is None
+        assert vrtwarp_ds.GetRasterBand(1).GetOverview(2) is None
         assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == cs_ov0
         assert vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() == cs_ov1
         if i == 0:
@@ -136,6 +133,13 @@ def test_vrtwarp_4():
     assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 3
     assert vrtwarp_ds.GetRasterBand(1).Checksum() == cs_main
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == cs_ov0
+    assert vrtwarp_ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, 10, 10) == data_ov0
+    assert (
+        vrtwarp_ds.GetRasterBand(1).ReadRaster(
+            0, 0, 20, 20, 9, 9, resample_alg=gdal.GRIORA_Bilinear
+        )
+        == data_ov0_subsampled
+    )
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(1).Checksum() == cs_ov1
     assert vrtwarp_ds.GetRasterBand(1).GetOverview(2).Checksum() == expected_cs_ov2
     vrtwarp_ds = None
@@ -714,8 +718,15 @@ def test_vrtwarp_irasterio_optim_three_band():
     assert warped_vrt_ds.ReadRaster(buf_type=gdal.GDT_UInt16) == expected_data
 
     with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
-        expected_data = warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=20)
-    assert warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=20) == expected_data
+        expected_data = warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=40)
+    assert warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=40) == expected_data
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster(1, 2, 3, 4, buf_xsize=20, buf_ysize=40)
+    assert (
+        warped_vrt_ds.ReadRaster(1, 2, 3, 4, buf_xsize=20, buf_ysize=40)
+        == expected_data
+    )
 
 
 ###############################################################################
@@ -732,3 +743,31 @@ def test_vrtwarp_irasterio_optim_window_splitting():
     with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
         expected_data = warped_vrt_ds.ReadRaster()
     assert warped_vrt_ds.ReadRaster() == expected_data
+
+
+###############################################################################
+# Test gdal.AutoCreateWarpedVRT() on a Int16 band with nodata = 32767
+
+
+def test_vrtwarp_autocreatewarpedvrt_int16_nodata_32767():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Int16)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.GetRasterBand(1).SetNoDataValue(32767)
+    vrt_ds = gdal.AutoCreateWarpedVRT(ds)
+    assert vrt_ds.GetRasterBand(1).DataType == gdal.GDT_Int16
+    assert vrt_ds.GetRasterBand(1).GetNoDataValue() == 32767
+
+
+###############################################################################
+# Test gdal.AutoCreateWarpedVRT() on a source nodata value that does not fit
+# the source band type
+
+
+def test_vrtwarp_autocreatewarpedvrt_invalid_nodata():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Byte)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.GetRasterBand(1).SetNoDataValue(-9999)
+    vrt_ds = gdal.AutoCreateWarpedVRT(ds)
+    assert vrt_ds.GetRasterBand(1).DataType == gdal.GDT_Byte

@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -127,6 +111,10 @@ def test_kmlsuperoverlay_3():
 # Test overviews
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_kmlsuperoverlay_4():
 
     vrt_xml = """<VRTDataset rasterXSize="800" rasterYSize="400">
@@ -231,6 +219,10 @@ def test_kmlsuperoverlay_4():
 # Test that a raster which crosses the anti-meridian will be able to be displayed correctly (#4528)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_kmlsuperoverlay_5():
 
     from xml.etree import ElementTree
@@ -380,10 +372,28 @@ def test_kmlsuperoverlay_single_overlay_document_pct():
 
 
 ###############################################################################
+# Test raster KML with gx:LatLonQuad
+
+
+def test_kmlsuperoverlay_gx_latlonquad():
+
+    ds = gdal.Open("data/kml/small_world_latlonquad.kml")
+    assert ds.GetProjectionRef().find("WGS_1984") >= 0
+    got_gt = ds.GetGeoTransform()
+    ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]
+    for i in range(6):
+        assert got_gt[i] == pytest.approx(ref_gt[i], abs=1e-6)
+
+
+###############################################################################
 # Test that a raster with lots of blank space doesn't have unnecessary child
 # KML/PNG files in transparent areas
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_kmlsuperoverlay_8():
 
     # a large raster with actual data on each end and blank space in between

@@ -6,23 +6,7 @@
  * ****************************************************************************
  * Copyright (c) 2024, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_version_full/gdal_version.h"
@@ -50,10 +34,10 @@ GDALArgumentParser::GDALArgumentParser(const std::string &program_name,
         add_argument("-h", "--help")
             .flag()
             .action(
-                [this, program_name](const auto &)
+                [this](const auto &)
                 {
                     std::cout << usage() << std::endl << std::endl;
-                    std::cout << _("Note: ") << program_name
+                    std::cout << _("Note: ") << m_program_name
                               << _(" --long-usage for full help.") << std::endl;
                     std::exit(0);
                 })
@@ -77,11 +61,11 @@ GDALArgumentParser::GDALArgumentParser(const std::string &program_name,
             .flag()
             .hidden()
             .action(
-                [program_name](const auto &)
+                [this](const auto &)
                 {
                     printf("%s was compiled against GDAL %s and "
                            "is running against GDAL %s\n",
-                           program_name.c_str(), GDAL_RELEASE_NAME,
+                           m_program_name.c_str(), GDAL_RELEASE_NAME,
                            GDALVersionInfo("RELEASE_NAME"));
                     std::exit(0);
                 })

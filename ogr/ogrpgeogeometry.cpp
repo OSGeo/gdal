@@ -10,23 +10,7 @@
  * Copyright (c) 2011, Paul Ramsey <pramsey at cleverelephant.ca>
  * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 // PGeo == ESRI Personal GeoDatabase.
@@ -385,12 +369,15 @@ OGRGeometry *OGRCreateFromMultiPatch(int nParts, const GInt32 *panPartStart,
             padfX[nPartStart] == padfX[nPartStart + 3] &&
             padfY[nPartStart] == padfY[nPartStart + 3] &&
             padfZ[nPartStart] == padfZ[nPartStart + 3] &&
-            !CPLIsNan(padfX[nPartStart]) && !CPLIsNan(padfX[nPartStart + 1]) &&
-            !CPLIsNan(padfX[nPartStart + 2]) && !CPLIsNan(padfY[nPartStart]) &&
-            !CPLIsNan(padfY[nPartStart + 1]) &&
-            !CPLIsNan(padfY[nPartStart + 2]) && !CPLIsNan(padfZ[nPartStart]) &&
-            !CPLIsNan(padfZ[nPartStart + 1]) &&
-            !CPLIsNan(padfZ[nPartStart + 2]))
+            !std::isnan(padfX[nPartStart]) &&
+            !std::isnan(padfX[nPartStart + 1]) &&
+            !std::isnan(padfX[nPartStart + 2]) &&
+            !std::isnan(padfY[nPartStart]) &&
+            !std::isnan(padfY[nPartStart + 1]) &&
+            !std::isnan(padfY[nPartStart + 2]) &&
+            !std::isnan(padfZ[nPartStart]) &&
+            !std::isnan(padfZ[nPartStart + 1]) &&
+            !std::isnan(padfZ[nPartStart + 2]))
         {
             bool bDuplicate = false;
             if (iPart > 0)
@@ -1004,7 +991,7 @@ id,WKT
                 assert(poRing);
                 // Outer ring must be clockwise.
                 if (!poRing->isClockwise())
-                    poRing->reverseWindingOrder();
+                    poRing->reversePoints();
             }
             else
             {
@@ -1012,7 +999,7 @@ id,WKT
                 assert(poRing);
                 // Inner rings should be anti-clockwise.
                 if (poRing->isClockwise())
-                    poRing->reverseWindingOrder();
+                    poRing->reversePoints();
             }
 
             int nRingNumPoints = poRing->getNumPoints();
@@ -1260,7 +1247,7 @@ id,WKT
                     assert(poRing != nullptr);
                     // Outer ring must be clockwise.
                     if (!poRing->isClockwise())
-                        poRing->reverseWindingOrder();
+                        poRing->reversePoints();
                 }
                 else
                 {
@@ -1268,7 +1255,7 @@ id,WKT
                     assert(poRing != nullptr);
                     // Inner rings should be anti-clockwise.
                     if (poRing->isClockwise())
-                        poRing->reverseWindingOrder();
+                        poRing->reversePoints();
                 }
 
                 int nRingNumPoints = poRing->getNumPoints();
@@ -2448,7 +2435,8 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
                     if (nBits & EXT_SHAPE_ARC_IP)
                         CPLDebug("OGR", "  DefinedIP");
 #endif
-                    if ((nBits & EXT_SHAPE_ARC_IP) != 0)
+                    if ((nBits & EXT_SHAPE_ARC_IP) != 0 &&
+                        (nBits & EXT_SHAPE_ARC_LINE) == 0)
                     {
                         pasCurves[iCurve].eType = CURVE_ARC_INTERIOR_POINT;
                         pasCurves[iCurve].u.ArcByIntermediatePoint.dfX = dfVal1;

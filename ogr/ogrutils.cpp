@@ -9,23 +9,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -151,7 +135,7 @@ std::string intelliround(std::string &s)
     if (s[i - 2] == '0' && s[i - 3] == '0' && s[i - 4] == '0' &&
         s[i - 5] == '0' && s[i - 6] == '0')
     {
-        s.resize(s.size() - 1);
+        s.pop_back();
     }
     // I don't understand this case exactly.  It's like saying if the
     // value is large enough and there are sufficient sig digits before
@@ -2329,4 +2313,26 @@ int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,
     }
 
     return nSize;
+}
+
+int OGR_GET_MS(float fSec)
+{
+    if (std::isnan(fSec))
+        return 0;
+    if (fSec >= 999)
+        return 999;
+    if (fSec <= 0)
+        return 0;
+    const float fValue = (fSec - static_cast<int>(fSec)) * 1000 + 0.5f;
+    return static_cast<int>(fValue);
+}
+
+/************************************************************************/
+/*                    OGRDuplicateCharacter()                           */
+/************************************************************************/
+
+std::string OGRDuplicateCharacter(const std::string &osStr, char ch)
+{
+    char aszReplacement[] = {ch, ch, 0};
+    return CPLString(osStr).replaceAll(ch, aszReplacement);
 }

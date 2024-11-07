@@ -20,7 +20,7 @@ Synopsis
                  [-3d] [-inodata] [-snodata <n>] [-f <formatname>] [-i <interval>]
                  [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
                  [-off <offset>] [-fl <level> <level>...] [-e <exp_base>]
-                 [-nln <outlayername>] [-q] [-p]
+                 [-nln <outlayername>] [-q] [-p] [-gt <n>|unlimited]
                  <src_filename> <dst_filename>
 
 Description
@@ -93,20 +93,19 @@ be on the right, i.e. a line string goes clockwise around a top.
 
 .. option:: -i <interval>
 
-    Elevation interval between contours. Ignored if -fl is used.
+    Elevation interval between contours.
     Must specify either -i or -fl or -e.
 
 .. option:: -off <offset>
 
-    Offset from zero relative to which to interpret intervals. Ignored if -fl is used.
+    Offset from zero relative to which to interpret intervals.
 
-    For example, `-i 100` requests contours at ...-100, 0, 100... 
+    For example, `-i 100` requests contours at ...-100, 0, 100...
     Further adding `-off 25` makes that request instead ...-75, 25, 125...
 
 .. option:: -fl <level>
 
     Name one or more "fixed levels" to extract.
-    Must specify either -i or -fl or -e.
 
 .. option:: -e <base>
 
@@ -124,6 +123,15 @@ be on the right, i.e. a line string goes clockwise around a top.
     Generate contour polygons rather than contour lines.
 
     .. versionadded:: 2.4.0
+
+.. option:: -gt <n>
+
+    Group n features per transaction (default 100 000). Increase the value for
+    better performance when writing into DBMS drivers that have transaction
+    support. ``n`` can be set to unlimited to load the data into a single
+    transaction. If set to 0, no explicit transaction is done.
+
+    .. versionadded:: 3.10
 
 .. option:: -q
 

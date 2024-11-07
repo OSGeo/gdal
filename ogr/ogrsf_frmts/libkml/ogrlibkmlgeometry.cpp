@@ -8,23 +8,7 @@
  * Copyright (c) 2010, Brian Case
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 #include "libkml_headers.h"
@@ -50,6 +34,51 @@ using kmldom::OuterBoundaryIsPtr;
 using kmldom::PointPtr;
 using kmldom::PolygonPtr;
 
+static bool NormalizeLongLat(double &x, double &y)
+{
+    if (x >= -180 && x <= 180)
+    {
+        // nominal
+    }
+    else if (x > 180 && x <= 180 + 360)
+        x -= 360;
+    else if (x < -180 && x >= -180 - 360)
+        x += 360;
+    else
+    {
+        const bool bStrictCompliance =
+            CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE"));
+        CPLError(bStrictCompliance ? CE_Failure : CE_Warning, CPLE_AppDefined,
+                 "Invalid longitude %g", x);
+        if (bStrictCompliance)
+            return false;
+    }
+
+    constexpr double EPSILON = 1e-8;
+    if (y >= -90 && y <= 90)
+    {
+        // nominal
+    }
+    else if (y > 90 && y < 90 + EPSILON)
+    {
+        y = 90;
+    }
+    else if (y < -90 && y > -90 - EPSILON)
+    {
+        y = -90;
+    }
+    else
+    {
+        const bool bStrictCompliance =
+            CPLTestBool(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE"));
+        CPLError(bStrictCompliance ? CE_Failure : CE_Warning, CPLE_AppDefined,
+                 "Invalid latitude %g", y);
+        if (bStrictCompliance)
+            return false;
+    }
+    return true;
+}
+
 /******************************************************************************
  Function to write out a ogr geometry to kml.
 
@@ -70,10 +99,6 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
         return nullptr;
     }
 
-    /***** ogr geom vars *****/
-    OGRPoint *poOgrPoint = nullptr;
-    OGRLineString *poOgrLineString = nullptr;
-
     /***** libkml geom vars *****/
     CoordinatesPtr coordinates = nullptr;
 
@@ -88,7 +113,7 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
     {
         case wkbPoint:
         {
-            poOgrPoint = (OGRPoint *)poOgrGeom;
+            const OGRPoint *poOgrPoint = poOgrGeom->toPoint();
             PointPtr poKmlPoint = nullptr;
             if (poOgrPoint->getCoordinateDimension() == 0)
             {
@@ -98,10 +123,10 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
             else
             {
                 double x = poOgrPoint->getX();
-                const double y = poOgrPoint->getY();
+                double y = poOgrPoint->getY();
 
-                if (x > 180)
-                    x -= 360;
+                if (!NormalizeLongLat(x, y))
+                    return nullptr;
 
                 coordinates = poKmlFactory->CreateCoordinates();
                 coordinates->add_latlng(y, x);
@@ -114,14 +139,14 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
         }
         case wkbPoint25D:
         {
-            poOgrPoint = (OGRPoint *)poOgrGeom;
+            const OGRPoint *poOgrPoint = poOgrGeom->toPoint();
 
             double x = poOgrPoint->getX();
-            const double y = poOgrPoint->getY();
+            double y = poOgrPoint->getY();
             const double z = poOgrPoint->getZ();
 
-            if (x > 180)
-                x -= 360;
+            if (!NormalizeLongLat(x, y))
+                return nullptr;
 
             coordinates = poKmlFactory->CreateCoordinates();
             coordinates->add_latlngalt(y, x, z);
@@ -132,11 +157,12 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
             break;
         }
         case wkbLineString:
-            poOgrLineString = (OGRLineString *)poOgrGeom;
+        {
+            OGRLineString *poOgrLineString = poOgrGeom->toLineString();
 
             if (extra >= 0)
             {
-                ((OGRLinearRing *)poOgrGeom)->closeRings();
+                poOgrGeom->toLinearRing()->closeRings();
             }
 
             numpoints = poOgrLineString->getNumPoints();
@@ -163,21 +189,20 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
 
             coordinates = poKmlFactory->CreateCoordinates();
 
-            poOgrPoint = new OGRPoint();
+            OGRPoint point;
 
             for (int i = 0; i < numpoints; i++)
             {
-                poOgrLineString->getPoint(i, poOgrPoint);
+                poOgrLineString->getPoint(i, &point);
 
-                double x = poOgrPoint->getX();
-                const double y = poOgrPoint->getY();
+                double x = point.getX();
+                double y = point.getY();
 
-                if (x > 180)
-                    x -= 360;
+                if (!NormalizeLongLat(x, y))
+                    return nullptr;
 
                 coordinates->add_latlng(y, x);
             }
-            delete poOgrPoint;
 
             /***** Check if its a wkbLinearRing *****/
             if (extra < 0)
@@ -190,7 +215,7 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
                 break;
             }
             [[fallthrough]];
-
+        }
             /***** fallthrough *****/
 
         case wkbLinearRing:  // This case is for readability only.
@@ -217,11 +242,11 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
         }
         case wkbLineString25D:
         {
-            poOgrLineString = (OGRLineString *)poOgrGeom;
+            const OGRLineString *poOgrLineString = poOgrGeom->toLineString();
 
             if (extra >= 0)
             {
-                ((OGRLinearRing *)poOgrGeom)->closeRings();
+                poOgrGeom->toLinearRing()->closeRings();
             }
 
             numpoints = poOgrLineString->getNumPoints();
@@ -247,22 +272,21 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
             }
 
             coordinates = poKmlFactory->CreateCoordinates();
-            poOgrPoint = new OGRPoint();
+            OGRPoint point;
 
             for (int i = 0; i < numpoints; i++)
             {
-                poOgrLineString->getPoint(i, poOgrPoint);
+                poOgrLineString->getPoint(i, &point);
 
-                double x = poOgrPoint->getX();
-                const double y = poOgrPoint->getY();
-                const double z = poOgrPoint->getZ();
+                double x = point.getX();
+                double y = point.getY();
+                const double z = point.getZ();
 
-                if (x > 180)
-                    x -= 360;
+                if (!NormalizeLongLat(x, y))
+                    return nullptr;
 
                 coordinates->add_latlngalt(y, x, z);
             }
-            delete poOgrPoint;
 
             /***** Check if its a wkbLinearRing *****/
             if (extra < 0)
@@ -300,22 +324,30 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
         }
         case wkbPolygon:
         {
-            CPLErrorReset();
             if (CPLTestBool(
                     CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) &&
-                OGRGeometryFactory::haveGEOS() &&
-                (!poOgrGeom->IsValid() || CPLGetLastErrorType() != CE_None))
+                OGRGeometryFactory::haveGEOS())
             {
-                CPLError(CE_Failure, CPLE_NotSupported, "Invalid polygon");
-                return nullptr;
+                bool bError;
+                {
+                    CPLErrorStateBackuper oErrorStateBackuper;
+                    bError = !poOgrGeom->IsValid();
+                }
+                if (bError)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported, "Invalid polygon");
+                    return nullptr;
+                }
             }
 
             PolygonPtr poKmlPolygon = poKmlFactory->CreatePolygon();
             poKmlGeometry = poKmlPolygon;
 
-            OGRPolygon *poOgrPolygon = (OGRPolygon *)poOgrGeom;
+            OGRPolygon *poOgrPolygon = poOgrGeom->toPolygon();
             ElementPtr poKmlTmpGeometry =
                 geom2kml(poOgrPolygon->getExteriorRing(), 0, poKmlFactory);
+            if (!poKmlTmpGeometry)
+                return nullptr;
             poKmlPolygon->set_outerboundaryis(
                 AsOuterBoundaryIs(poKmlTmpGeometry));
 
@@ -324,6 +356,8 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
             {
                 poKmlTmpGeometry = geom2kml(poOgrPolygon->getInteriorRing(i),
                                             i + 1, poKmlFactory);
+                if (!poKmlTmpGeometry)
+                    return nullptr;
                 poKmlPolygon->add_innerboundaryis(
                     AsInnerBoundaryIs(poKmlTmpGeometry));
             }
@@ -332,22 +366,30 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
         }
         case wkbPolygon25D:
         {
-            CPLErrorReset();
             if (CPLTestBool(
                     CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) &&
-                OGRGeometryFactory::haveGEOS() &&
-                (!poOgrGeom->IsValid() || CPLGetLastErrorType() != CE_None))
+                OGRGeometryFactory::haveGEOS())
             {
-                CPLError(CE_Failure, CPLE_NotSupported, "Invalid polygon");
-                return nullptr;
+                bool bError;
+                {
+                    CPLErrorStateBackuper oErrorStateBackuper;
+                    bError = !poOgrGeom->IsValid();
+                }
+                if (bError)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported, "Invalid polygon");
+                    return nullptr;
+                }
             }
 
             PolygonPtr poKmlPolygon = poKmlFactory->CreatePolygon();
             poKmlGeometry = poKmlPolygon;
 
-            OGRPolygon *poOgrPolygon = (OGRPolygon *)poOgrGeom;
+            OGRPolygon *poOgrPolygon = poOgrGeom->toPolygon();
             ElementPtr poKmlTmpGeometry =
                 geom2kml(poOgrPolygon->getExteriorRing(), 0, poKmlFactory);
+            if (!poKmlTmpGeometry)
+                return nullptr;
             poKmlPolygon->set_outerboundaryis(
                 AsOuterBoundaryIs(poKmlTmpGeometry));
 
@@ -356,6 +398,8 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
             {
                 poKmlTmpGeometry = geom2kml(poOgrPolygon->getInteriorRing(i),
                                             i + 1, poKmlFactory);
+                if (!poKmlTmpGeometry)
+                    return nullptr;
                 poKmlPolygon->add_innerboundaryis(
                     AsInnerBoundaryIs(poKmlTmpGeometry));
             }
@@ -372,7 +416,7 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
         case wkbGeometryCollection25D:
         {
             OGRGeometryCollection *poOgrMultiGeom =
-                (OGRGeometryCollection *)poOgrGeom;
+                poOgrGeom->toGeometryCollection();
 
             const int nGeom = poOgrMultiGeom->getNumGeometries();
 
@@ -383,6 +427,8 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
                          "Turning multiple geometry into single geometry");
                 poKmlGeometry = geom2kml(poOgrMultiGeom->getGeometryRef(0), -1,
                                          poKmlFactory);
+                if (!poKmlGeometry)
+                    return nullptr;
             }
             else
             {
@@ -401,6 +447,8 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
                 {
                     ElementPtr poKmlTmpGeometry = geom2kml(
                         poOgrMultiGeom->getGeometryRef(i), -1, poKmlFactory);
+                    if (!poKmlTmpGeometry)
+                        return nullptr;
                     poKmlMultiGeometry->add_geometry(
                         AsGeometry(std::move(poKmlTmpGeometry)));
                 }

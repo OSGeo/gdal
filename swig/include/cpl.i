@@ -9,23 +9,7 @@
  ******************************************************************************
  * Copyright (c) 2005, Kevin Ruland
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 %include constraints.i
@@ -519,7 +503,7 @@ char** wrapper_GetConfigOptions() {
 
     papszOpts = CSLMerge(papszOpts, papszTLOpts);
 
-    CPLFree(papszTLOpts);
+    CSLDestroy(papszTLOpts);
 
     return papszOpts;
 };
@@ -758,6 +742,14 @@ void CopyFileRestartable(const char* pszSource,
 
 }
 
+%rename (MoveFile) wrapper_MoveFile;
+%inline {
+int wrapper_MoveFile(const char* pszSource, const char* pszTarget)
+{
+    return CPLMoveFile(pszTarget, pszSource);
+}
+}
+
 %clear (const char* pszSource);
 %clear (const char* pszTarget);
 
@@ -989,3 +981,83 @@ int CPLGetNumCPUs();
 
 %rename (GetUsablePhysicalRAM) CPLGetUsablePhysicalRAM;
 GIntBig CPLGetUsablePhysicalRAM();
+
+#if defined(SWIGPYTHON)
+
+%apply Pointer NONNULL {const char *pszFilename};
+%apply Pointer NONNULL {const char *pszUploadId};
+
+%inline {
+void MultipartUploadGetCapabilities(
+    const char *pszFilename, int* pnRetCode, int *pbNonSequentialUploadSupported,
+    int *pbParallelUploadSupported, int *pbSupportsAbort, size_t *pnMinPartSize,
+    size_t *pnMaxPartSize, int *pnMaxPartCount)
+{
+    *pnRetCode = VSIMultipartUploadGetCapabilities(pszFilename,
+                        pbNonSequentialUploadSupported,
+                        pbParallelUploadSupported,
+                        pbSupportsAbort,
+                        pnMinPartSize,
+                        pnMaxPartSize,
+                        pnMaxPartCount);
+}
+}
+
+%inline {
+retStringAndCPLFree* MultipartUploadStart(const char *pszFilename, char** options = NULL)
+{
+    return VSIMultipartUploadStart(pszFilename, options);
+}
+}
+
+%apply (size_t nLen, char *pBuf ) { (size_t nDataLength, const char *pData)};
+
+%inline {
+retStringAndCPLFree* MultipartUploadAddPart(const char *pszFilename,
+                             const char *pszUploadId,
+                             int nPartNumber,
+                             GUIntBig nFileOffset,
+                             size_t nDataLength, const char *pData,
+                             char** options = NULL)
+{
+    return VSIMultipartUploadAddPart(pszFilename, pszUploadId,
+                                     nPartNumber, nFileOffset,
+                                     pData, nDataLength,
+                                     options);
+}
+}
+
+%apply (char **dict) { char ** partIds };
+
+%inline {
+bool MultipartUploadEnd(const char *pszFilename,
+                        const char *pszUploadId,
+                        char** partIds,
+                        GUIntBig nTotalSize,
+                        char** options = NULL)
+
+{
+    return VSIMultipartUploadEnd(pszFilename, pszUploadId,
+                                 CSLCount(partIds), partIds,
+                                 nTotalSize,
+                                 options);
+}
+}
+
+%clear (char ** partIds);
+
+%inline {
+bool MultipartUploadAbort(const char *pszFilename,
+                          const char *pszUploadId,
+                          char** options = NULL)
+{
+    return VSIMultipartUploadAbort(pszFilename, pszUploadId, options);
+}
+}
+
+%clear const char *pszFilename;
+%clear const char *pszUploadId;
+%clear (size_t nDataLength, const void *pData);
+
+#endif
+

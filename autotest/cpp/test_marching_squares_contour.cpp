@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2018, Hugo Mercier, <hugo dot mercier at oslandia dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_unit_test.h"
@@ -34,6 +18,8 @@
 #include "marching_squares/level_generator.h"
 #include "marching_squares/segment_merger.h"
 #include "marching_squares/contour_generator.h"
+
+#include <limits>
 
 #include "gtest_include.h"
 
@@ -179,7 +165,8 @@ TEST_F(test_ms_contour, dummy)
     std::vector<double> data = {2.0};
     TestRingAppender w;
     {
-        IntervalLevelRangeIterator levels(0.0, 10.0);
+        IntervalLevelRangeIterator levels(
+            0.0, 10.0, -std::numeric_limits<double>::infinity());
         SegmentMerger<TestRingAppender, IntervalLevelRangeIterator> writer(
             w, levels, /* polygonize */ true);
         ContourGenerator<decltype(writer), IntervalLevelRangeIterator> cg(
@@ -207,7 +194,8 @@ TEST_F(test_ms_contour, two_pixels)
     TestRingAppender w;
 
     {
-        IntervalLevelRangeIterator levels(8.0, 10.0);
+        IntervalLevelRangeIterator levels(
+            8.0, 10.0, -std::numeric_limits<double>::infinity());
         SegmentMerger<TestRingAppender, IntervalLevelRangeIterator> writer(
             w, levels, /* polygonize */ true);
         ContourGenerator<decltype(writer), IntervalLevelRangeIterator> cg(
@@ -319,7 +307,8 @@ TEST_F(test_ms_contour, four_pixels)
     TestRingAppender w;
 
     {
-        IntervalLevelRangeIterator levels(8.0, 10.0);
+        IntervalLevelRangeIterator levels(
+            8.0, 10.0, -std::numeric_limits<double>::infinity());
         SegmentMerger<TestRingAppender, IntervalLevelRangeIterator> writer(
             w, levels, /* polygonize */ true);
         ContourGenerator<decltype(writer), IntervalLevelRangeIterator> cg(
@@ -440,7 +429,8 @@ TEST_F(test_ms_contour, saddle_point)
     TestRingAppender w;
 
     {
-        IntervalLevelRangeIterator levels(8.0, 10.0);
+        IntervalLevelRangeIterator levels(
+            8.0, 10.0, -std::numeric_limits<double>::infinity());
         SegmentMerger<TestRingAppender, IntervalLevelRangeIterator> writer(
             w, levels, /* polygonize */ true);
         ContourGenerator<decltype(writer), IntervalLevelRangeIterator> cg(

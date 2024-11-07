@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2015, Even Rouault <even dot rouault @ spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import glob
@@ -43,10 +27,15 @@ import test_py_scripts  # noqa  # pylint: disable=E0401
 from osgeo import gdal, osr  # noqa
 from osgeo_utils.gdalcompare import compare_db
 
-pytestmark = pytest.mark.skipif(
-    test_py_scripts.get_py_script("gdal2tiles") is None,
-    reason="gdal2tiles not available",
-)
+pytestmark = [
+    pytest.mark.skipif(
+        test_py_scripts.get_py_script("gdal2tiles") is None,
+        reason="gdal2tiles not available",
+    ),
+    pytest.mark.skipif(
+        not gdaltest.vrt_has_open_support(), reason="VRT driver open missing"
+    ),
+]
 
 
 @pytest.fixture()
@@ -643,7 +632,7 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
     input_tif = str(tmp_path / "test_gdal2tiles_nodata_values_pct_threshold.tif")
     output_folder = str(tmp_path / "test_gdal2tiles_nodata_values_pct_threshold")
 
-    src_ds = gdal.GetDriverByName("GTiff").Create(input_tif, 256, 256, 1, gdal.GDT_Byte)
+    src_ds = gdal.GetDriverByName("GTiff").Create(input_tif, 256, 256, 3, gdal.GDT_Byte)
     src_ds.GetRasterBand(1).SetNoDataValue(20)
     src_ds.GetRasterBand(1).WriteRaster(
         0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
@@ -665,7 +654,7 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
     )
 
     ds = gdal.Open(f"{output_folder}/0/0/0.png")
-    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1)) == (
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (
         round((10 + 30 + 40) / 3),
         255,
     )
@@ -677,7 +666,7 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
     )
 
     ds = gdal.Open(f"{output_folder}/0/0/0.png")
-    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1)) == (
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (
         round((10 + 30 + 40) / 3),
         255,
     )
@@ -689,7 +678,7 @@ def test_gdal2tiles_nodata_values_pct_threshold(script_path, tmp_path):
     )
 
     ds = gdal.Open(f"{output_folder}/0/0/0.png")
-    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1)) == (0, 0)
+    assert struct.unpack("B" * 2, ds.ReadRaster(0, 0, 1, 1, band_list=[1, 4])) == (0, 0)
 
 
 @pytest.mark.require_driver("JPEG")

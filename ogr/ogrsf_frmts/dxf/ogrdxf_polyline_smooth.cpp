@@ -9,23 +9,7 @@
  ******************************************************************************
  * Copyright (c) 2010 Daylon Graphics Ltd.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "stdlib.h"
@@ -63,7 +47,7 @@ static double GetOGRangle(double angle)
 /*                DXFSmoothPolyline::Tessellate()                        */
 /************************************************************************/
 
-OGRGeometry *DXFSmoothPolyline::Tessellate() const
+OGRGeometry *DXFSmoothPolyline::Tessellate(bool bAsPolygon) const
 {
     assert(!m_vertices.empty());
 
@@ -84,7 +68,8 @@ OGRGeometry *DXFSmoothPolyline::Tessellate() const
     /*      Otherwise, presume a line string                                */
     /* -------------------------------------------------------------------- */
 
-    OGRLineString *poLS = new OGRLineString;
+    OGRLinearRing *poLR = m_bClosed && bAsPolygon ? new OGRLinearRing : nullptr;
+    OGRLineString *poLS = poLR ? poLR : new OGRLineString;
 
     m_blinestringstarted = false;
 
@@ -126,28 +111,14 @@ OGRGeometry *DXFSmoothPolyline::Tessellate() const
     if (m_dim == 2)
         poLS->flattenTo2D();
 
-/* -------------------------------------------------------------------- */
-/*      If polyline is closed, convert linestring to a linear ring      */
-/*                                                                      */
-/*      Actually, on review I'm not convinced this is a good idea.      */
-/*      Note that most (all) "filled polygons" are expressed with       */
-/*      hatches which are now handled fairly well and they tend to      */
-/*      echo linear polylines.                                          */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    if (m_bClosed)
+    if (poLR)
     {
-        OGRLinearRing *poLR = new OGRLinearRing();
-        poLR->addSubLineString(poLS, 0);
-        delete poLS;
-
         // Wrap as polygon.
         OGRPolygon *poPoly = new OGRPolygon();
         poPoly->addRingDirectly(poLR);
 
         return poPoly;
     }
-#endif
 
     return poLS;
 }
@@ -251,16 +222,22 @@ void DXFSmoothPolyline::EmitArc(const DXFSmoothPolylineVertex &start,
 
     if (fabs(ogrArcEndAngle - ogrArcStartAngle) <= 361.0)
     {
-        OGRLineString *poArcpoLS =
+        auto poArc = std::unique_ptr<OGRLineString>(
             OGRGeometryFactory::approximateArcAngles(
                 ogrArcCenter.x, ogrArcCenter.y, dfZ, ogrArcRadius, ogrArcRadius,
                 ogrArcRotation, ogrArcStartAngle, ogrArcEndAngle, 0.0,
                 m_bUseMaxGapWhenTessellatingArcs)
-                ->toLineString();
+                ->toLineString());
 
-        poLS->addSubLineString(poArcpoLS);
+        // Make sure extremities exactly match input start and end point.
+        // This is in particular important if the polyline is closed.
+        if (poArc->getNumPoints() >= 2)
+        {
+            poArc->setPoint(0, start.x, start.y);
+            poArc->setPoint(poArc->getNumPoints() - 1, end.x, end.y);
+        }
 
-        delete poArcpoLS;
+        poLS->addSubLineString(poArc.get());
     }
     else
     {

@@ -8,23 +8,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
 /*
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_unit_test.h"
@@ -238,6 +222,34 @@ TEST_F(test_gdal_gtiff, raster_min_max)
     EXPECT_EQ(expect[1], minmax[1]);
 
     GDALClose(ds);
+}
+
+// Test setting a nodata value with SetNoDataValue(double) on a int64 dataset
+TEST_F(test_gdal_gtiff, set_nodata_value_on_int64)
+{
+    std::string osTmpFile = "/vsimem/temp.tif";
+    auto poDS =
+        std::unique_ptr<GDALDataset>(GDALDriver::FromHandle(drv_)->Create(
+            osTmpFile.c_str(), 1, 1, 1, GDT_Int64, nullptr));
+    EXPECT_EQ(poDS->GetRasterBand(1)->SetNoDataValue(1), CE_None);
+    {
+        int bGotNoData = false;
+        EXPECT_EQ(poDS->GetRasterBand(1)->GetNoDataValue(&bGotNoData), 1.0);
+        EXPECT_TRUE(bGotNoData);
+    }
+    {
+        int bGotNoData = false;
+        EXPECT_EQ(poDS->GetRasterBand(1)->GetNoDataValueAsInt64(&bGotNoData),
+                  1.0);
+        EXPECT_TRUE(bGotNoData);
+    }
+    int64_t nVal = 0;
+    EXPECT_EQ(poDS->GetRasterBand(1)->RasterIO(GF_Read, 0, 0, 1, 1, &nVal, 1, 1,
+                                               GDT_Int64, 0, 0, nullptr),
+              CE_None);
+    EXPECT_EQ(nVal, 1);
+    poDS.reset();
+    VSIUnlink(osTmpFile.c_str());
 }
 
 }  // namespace

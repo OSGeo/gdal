@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_GPSBABEL_H_INCLUDED
@@ -38,12 +22,11 @@
 /*                        OGRGPSBabelDataSource                         */
 /************************************************************************/
 
-class OGRGPSBabelDataSource final : public OGRDataSource
+class OGRGPSBabelDataSource final : public GDALDataset
 {
     int nLayers = 0;
     std::array<OGRLayer *, 5> apoLayers{
         {nullptr, nullptr, nullptr, nullptr, nullptr}};
-    char *pszName = nullptr;
     char *pszGPSBabelDriverName = nullptr;
     char *pszFilename = nullptr;
     CPLString osTmpFileName{};
@@ -55,19 +38,12 @@ class OGRGPSBabelDataSource final : public OGRDataSource
 
     virtual int CloseDependentDatasets() override;
 
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
-
     virtual int GetLayerCount() override
     {
         return nLayers;
     }
 
     virtual OGRLayer *GetLayer(int) override;
-
-    virtual int TestCapability(const char *) override;
 
     int Open(const char *pszFilename, const char *pszGPSBabelDriverNameIn,
              char **papszOpenOptions);
@@ -80,9 +56,8 @@ class OGRGPSBabelDataSource final : public OGRDataSource
 /*                   OGRGPSBabelWriteDataSource                         */
 /************************************************************************/
 
-class OGRGPSBabelWriteDataSource final : public OGRDataSource
+class OGRGPSBabelWriteDataSource final : public GDALDataset
 {
-    char *pszName;
     char *pszGPSBabelDriverName;
     char *pszFilename;
     CPLString osTmpFileName;
@@ -93,11 +68,6 @@ class OGRGPSBabelWriteDataSource final : public OGRDataSource
   public:
     OGRGPSBabelWriteDataSource();
     virtual ~OGRGPSBabelWriteDataSource();
-
-    virtual const char *GetName() override
-    {
-        return pszName;
-    }
 
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;

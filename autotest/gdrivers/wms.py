@@ -11,23 +11,7 @@
 # Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import base64
@@ -37,6 +21,7 @@ from time import sleep
 
 import gdaltest
 import pytest
+import webserver
 
 from osgeo import gdal
 
@@ -567,6 +552,10 @@ def test_wms_12():
 # Test reading WMS through VRT (test effect of r21866)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 @gdaltest.disable_exceptions()
 def test_wms_13():
 
@@ -1162,3 +1151,40 @@ def test_wms_cache_path():
 
     with pytest.raises(Exception):
         gdal.Open("<GDAL_WMS><Service/><Cache/></GDAL_WMS>")
+
+
+# Launch a single webserver in a module-scoped fixture.
+@pytest.fixture(scope="module")
+def webserver_launch():
+
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
+
+    yield process, port
+
+    webserver.server_stop(process, port)
+
+
+@pytest.fixture(scope="function")
+def webserver_port(webserver_launch):
+
+    webserver_process, webserver_port = webserver_launch
+
+    if webserver_port == 0:
+        pytest.skip()
+    yield webserver_port
+
+
+@pytest.mark.require_curl
+@gdaltest.enable_exceptions()
+def test_wms_force_opening_url(tmp_vsimem, webserver_port):
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities",
+        200,
+        {"Content-type": "application/xml"},
+        open("data/wms/demo_mapserver_org.xml", "rb").read(),
+    )
+    with webserver.install_http_handler(handler):
+        gdal.OpenEx(f"http://localhost:{webserver_port}", allowed_drivers=["WMS"])

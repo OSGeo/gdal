@@ -11,23 +11,7 @@
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -593,7 +577,7 @@ def test_jpeg_17():
 
     assert not (
         gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == ""
-    )
+    ), "Premature end of file should be a failure by default"
 
     gdal.ErrorReset()
     ds = gdal.Open("data/jpeg/byte_corrupted2.jpg")
@@ -603,7 +587,7 @@ def test_jpeg_17():
 
     assert not (
         gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == ""
-    )
+    ), "Premature end of file should be a failure with GDAL_ERROR_ON_LIBJPEG_WARNING = TRUE"
 
     gdal.ErrorReset()
     ds = gdal.Open("data/jpeg/byte_corrupted2.jpg")
@@ -613,7 +597,35 @@ def test_jpeg_17():
 
     assert not (
         gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == ""
-    )
+    ), "Premature end of file should be a warning with GDAL_ERROR_ON_LIBJPEG_WARNING = FALSE"
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler("CPLQuietErrorHandler"):
+        ds = gdal.Open("data/jpeg/byte_corrupted3.jpg")
+        assert ds.GetRasterBand(1).Checksum() != 0
+
+    assert not (
+        gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == ""
+    ), "Extraneous bytes before marker should be a warning by default"
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler("CPLQuietErrorHandler"):
+        with gdaltest.config_option("GDAL_ERROR_ON_LIBJPEG_WARNING", "TRUE"):
+            ds = gdal.Open("data/jpeg/byte_corrupted3.jpg")
+
+    assert not (
+        gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == ""
+    ), "Extraneous bytes before marker should be a failure with GDAL_ERROR_ON_LIBJPEG_WARNING = TRUE"
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler("CPLQuietErrorHandler"):
+        with gdaltest.config_option("GDAL_ERROR_ON_LIBJPEG_WARNING", "FALSE"):
+            ds = gdal.Open("data/jpeg/byte_corrupted3.jpg")
+            assert ds.GetRasterBand(1).Checksum() != 0
+
+    assert not (
+        gdal.GetLastErrorType() != gdal.CE_Warning or gdal.GetLastErrorMsg() == ""
+    ), "Extraneous bytes before marker should be a warning with GDAL_ERROR_ON_LIBJPEG_WARNING = FALSE"
 
 
 ###############################################################################
@@ -772,6 +784,10 @@ def test_jpeg_mask_lsb_order_issue_4351():
 # Test correct GCP reading with PAM (#5352)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jpeg_20():
 
     src_ds = gdal.Open("data/rgb_gcp.vrt")
@@ -1105,7 +1121,7 @@ def test_jpeg_28():
         "EXIF_XResolution": "(96)",
         "EXIF_TransferFunction": "0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
         "EXIF_ExifVersion": "0123",
-        "EXIF_DateTime": "dt                 ",
+        "EXIF_DateTime": "dt",
         "EXIF_FlashpixVersion": "ABCD",
         "EXIF_ComponentsConfiguration": "0x1f 0x00 0x00 0x00",
         "EXIF_Make": "make",
@@ -1585,6 +1601,65 @@ def test_jpeg_copy_mdd():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+def test_jpeg_read_DNG_tags():
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif DNG_CameraSerialNumber_and_DNG_UniqueCameraModel.jpg
+    # exiftool "-CameraSerialNumber=SerialNumber" "-UniqueCameraModel=CameraModel" DNG_CameraSerialNumber_and_DNG_UniqueCameraModel.jpg
+    ds = gdal.Open("data/jpeg/DNG_CameraSerialNumber_and_DNG_UniqueCameraModel.jpg")
+    assert ds.GetMetadataItem("DNG_CameraSerialNumber") == "SerialNumber"
+    assert ds.GetMetadataItem("DNG_UniqueCameraModel") == "CameraModel"
+
+
+###############################################################################
+
+
+def test_jpeg_read_DNG_tags_same_value_ax_EXIF():
+    """Check that DNG tags are not emitted when they have a corresponding EXIF
+    tag at the same value."""
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif DNG_and_EXIF_same_values.jpg
+    # exiftool"-exif:SerialNumber=SerialNumber" "-CameraSerialNumber=SerialNumber" "-UniqueCameraModel=CameraModel" "-Model=CameraModel" DNG_and_EXIF_same_values.jpg
+    ds = gdal.Open("data/jpeg/DNG_and_EXIF_same_values.jpg")
+    assert ds.GetMetadataItem("DNG_CameraSerialNumber") is None
+    assert ds.GetMetadataItem("DNG_UniqueCameraModel") is None
+    assert ds.GetMetadataItem("EXIF_BodySerialNumber") == "SerialNumber"
+    assert ds.GetMetadataItem("EXIF_Model") == "CameraModel"
+
+
+###############################################################################
+
+
+def test_jpeg_read_pix4d_xmp_crs_vertcs_orthometric():
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif pix4d_xmp_crs_vertcs_orthometric.jpg
+    # exiftool "-xmp<=pix4d_xmp_crs_vertcs_orthometric.xml"  pix4d_xmp_crs_vertcs_orthometric.jpg
+    # where pix4d_xmp_crs_vertcs_orthometric.xml is the XMP content
+    ds = gdal.Open("data/jpeg/pix4d_xmp_crs_vertcs_orthometric.jpg")
+    srs = ds.GetSpatialRef()
+    assert srs.GetAuthorityCode("GEOGCS") == "6318"
+    assert srs.GetAuthorityCode("VERT_CS") == "6360"
+
+
+###############################################################################
+
+
+def test_jpeg_read_pix4d_xmp_crs_vertcs_ellipsoidal():
+
+    # File generated with:
+    # gdal_translate autotest/gcore/data/byte.tif pix4d_xmp_crs_vertcs_ellipsoidal.jpg
+    # exiftool "-xmp<=pix4d_xmp_crs_vertcs_ellipsoidal.xml"  pix4d_xmp_crs_vertcs_ellipsoidal.jpg
+    # where pix4d_xmp_crs_vertcs_ellipsoidal.xml is the XMP content
+    ds = gdal.Open("data/jpeg/pix4d_xmp_crs_vertcs_ellipsoidal.jpg")
+    srs = ds.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == "6319"
 
 
 ###############################################################################

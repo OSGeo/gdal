@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2009-2019, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import contextlib
@@ -102,6 +86,10 @@ def test_ogr_esrijson_read_point():
     assert rc
 
     layer_defn = lyr.GetLayerDefn()
+
+    fld_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("objectid"))
+    assert fld_defn.GetAlternativeName() == "Object ID"
+
     fld_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("fooDate"))
     assert fld_defn.GetType() == ogr.OFTDateTime
     assert fld_defn.GetWidth() == 0
@@ -704,3 +692,34 @@ def test_ogr_esrijson_read_CadastralSpecialServices():
     f = lyr.GetNextFeature()
     assert f["landdescription"] == "WA330160N0260E0SN070"
     assert f.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon
+
+
+###############################################################################
+# Test force opening a ESRIJSON file
+
+
+def test_ogr_esrijson_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.json")
+
+    with open("data/esrijson/esripoint.json", "rb") as fsrc:
+        with gdaltest.vsi_open(filename, "wb") as fdest:
+            fdest.write(fsrc.read(1))
+            fdest.write(b" " * (1000 * 1000))
+            fdest.write(fsrc.read())
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["ESRIJSON"])
+    assert ds.GetDriver().GetDescription() == "ESRIJSON"
+
+
+###############################################################################
+# Test force opening a URL as ESRIJSON
+
+
+def test_ogr_esrijson_force_opening_url():
+
+    drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["ESRIJSON"])
+    assert drv.GetDescription() == "ESRIJSON"

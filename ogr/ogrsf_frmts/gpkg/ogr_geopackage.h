@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2013, Paul Ramsey <pramsey@boundlessgeo.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_GEOPACKAGE_H_INCLUDED
@@ -37,6 +21,7 @@
 #include "cpl_threadsafe_queue.hpp"
 #include "ograrrowarrayhelper.h"
 #include "ogr_p.h"
+#include "ogr_wkb.h"
 
 #include <condition_variable>
 #include <limits>
@@ -185,6 +170,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     int m_nLastCachedCTSrcSRId = -1;
     int m_nLastCachedCTDstSRId = -1;
     std::unique_ptr<OGRCoordinateTransformation> m_poLastCachedCT{};
+    OGRWKBTransformCache m_oWKBTransformCache{};
+    std::vector<GByte> m_abyWKBTransformCache{};
 
     int m_nOverviewCount = 0;
     GDALGeoPackageDataset **m_papoOverviewDS = nullptr;
@@ -275,6 +262,10 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     OGRErr DeleteLayerCommon(const char *pszLayerName);
     OGRErr DeleteRasterLayer(const char *pszLayerName);
     bool DeleteVectorOrRasterLayer(const char *pszLayerName);
+    bool RenameVectorOrRasterLayer(const char *pszLayerName,
+                                   const char *pszNewName);
+    bool RenameRasterLayer(const char *pszLayerName,
+                           const char *pszNewLayerName);
 
     bool ConvertGpkgSpatialRefSysToExtensionWkt2(bool bForceEpoch);
     void DetectSpatialRefSysColumns();
@@ -381,8 +372,9 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
     int GetSrsId(const OGRSpatialReference *poSRS);
     const char *GetSrsName(const OGRSpatialReference &oSRS);
-    OGRSpatialReference *GetSpatialRef(int iSrsId, bool bFallbackToEPSG = false,
-                                       bool bEmitErrorIfNotFound = true);
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+    GetSpatialRef(int iSrsId, bool bFallbackToEPSG = false,
+                  bool bEmitErrorIfNotFound = true);
     OGRErr CreateExtensionsTableIfNecessary();
     bool HasExtensionsTable();
 
@@ -477,6 +469,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool OpenOrCreateDB(int flags);
     void InstallSQLFunctions();
     bool HasGDALAspatialExtension();
+    std::string CreateRasterTriggersSQL(const std::string &osTableName);
 };
 
 /************************************************************************/
@@ -967,6 +960,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     virtual bool HasFastSpatialFilter(int iGeomCol) override;
     virtual CPLString GetSpatialWhere(int iGeomCol,
                                       OGRGeometry *poFilterGeom) override;
+
+    OGRErr Truncate();
 
     bool HasSpatialIndex();
 

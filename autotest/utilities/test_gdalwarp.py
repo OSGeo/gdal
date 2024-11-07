@@ -10,26 +10,11 @@
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
+import shutil
 import stat
 
 import gdaltest
@@ -382,6 +367,10 @@ def test_gdalwarp_14(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 # Test -of VRT which is a special case
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalwarp_16(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 
     dst_vrt = str(tmp_path / "testgdalwarp16.vrt")
@@ -425,12 +414,13 @@ def test_gdalwarp_18(gdalwarp_path, tmp_path):
     dst_tif = str(tmp_path / "testgdalwarp18.tif")
 
     (_, ret_stderr) = gdaltest.runexternal_out_and_err(
-        f"{gdalwarp_path} -wm 20 -multi ../gcore/data/byte.tif {dst_tif}"
+        f"{gdalwarp_path} -wm 20MB -multi ../gcore/data/byte.tif {dst_tif}"
     )
 
     # This error will be returned if GDAL is not compiled with thread support
     if ret_stderr.find("CPLCreateThread() failed in ChunkAndWarpMulti()") != -1:
         pytest.skip("GDAL not compiled with thread support")
+    assert not ret_stderr
 
     ds = gdal.Open(dst_tif)
     assert ds is not None
@@ -462,6 +452,10 @@ def test_gdalwarp_19(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 # Test -of VRT -et 0 which is a special case
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalwarp_20(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 
     dst_vrt = str(tmp_path / "testgdalwarp20.vrt")
@@ -1046,9 +1040,14 @@ def test_gdalwarp_39(gdalwarp_path, tmp_path):
 # Test -ovr
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalwarp_40(gdalwarp_path, tmp_path):
 
     src_tif = str(tmp_path / "test_gdalwarp_40_src.tif")
+    src_tif_copy = str(tmp_path / "test_gdalwarp_40_src_copy.tif")
     dst_tif = str(tmp_path / "test_gdalwarp_40.tif")
     dst_vrt = str(tmp_path / "test_gdalwarp_40.vrt")
 
@@ -1060,7 +1059,10 @@ def test_gdalwarp_40(gdalwarp_path, tmp_path):
     cs_ov0 = out_ds.GetRasterBand(1).GetOverview(0).Checksum()
     out_ds.GetRasterBand(1).GetOverview(1).Fill(255)
     cs_ov1 = out_ds.GetRasterBand(1).GetOverview(1).Checksum()
+
     out_ds = None
+
+    shutil.copy(src_tif, src_tif_copy)
 
     # Should select main resolution
     gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite")
@@ -1113,6 +1115,27 @@ def test_gdalwarp_40(gdalwarp_path, tmp_path):
     assert ds.GetRasterBand(1).Checksum() == cs_ov0
     ds = None
 
+    # Should select overview 0
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ovr 0")
+
+    ds = gdal.Open(dst_tif)
+    assert ds.GetRasterBand(1).Checksum() == cs_ov0
+    ds = None
+
+    # Should select overview 0 (no overwrite)
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -ovr 0")
+
+    # Repeat with no output file and no overwrite (takes a different code path)
+    os.unlink(dst_tif)
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -ovr 0")
+
+    # Should not crash (actually it never did)
+    os.unlink(dst_tif)
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {src_tif_copy} {dst_tif} -ovr 0")
+    ds = gdal.Open(dst_tif)
+    assert ds.GetRasterBand(1).Checksum() == cs_ov0
+    ds = None
+
     # Should select overview 0 through VRT
     gdaltest.runexternal(
         f"{gdalwarp_path} {src_tif} {dst_vrt} -overwrite -ts 10 10 -of VRT"
@@ -1136,6 +1159,25 @@ def test_gdalwarp_40(gdalwarp_path, tmp_path):
     )
     ds = gdal.Open(dst_tif)
     expected_cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    # Test that tiny variations in -te that result in a target resampling factor
+    # very close to the one of overview 0 lead to overview 0 been selected
+
+    gdaltest.runexternal(
+        f"{gdalwarp_path} {src_tif} {dst_vrt} -overwrite -ts 10 10 -te 440721 3750120 441920 3751320 -of VRT"
+    )
+
+    ds = gdal.Open(dst_vrt)
+    assert ds.GetRasterBand(1).Checksum() == cs_ov0
+    ds = None
+
+    gdaltest.runexternal(
+        f"{gdalwarp_path} {src_tif} {dst_vrt} -overwrite -ts 10 10 -te 440719 3750120 441920 3751320 -of VRT"
+    )
+
+    ds = gdal.Open(dst_vrt)
+    assert ds.GetRasterBand(1).Checksum() == cs_ov0
     ds = None
 
     # Should select overview 0 too
@@ -1546,3 +1588,22 @@ def test_gdalwarp_if_option(gdalwarp_path, tmp_vsimem):
         f"{gdalwarp_path} -if HFA ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
     )
     assert err is not None
+
+
+###############################################################################
+# Test invalid -wm
+
+
+def test_gdalwarp_invalid_wm(gdalwarp_path, tmp_vsimem):
+
+    ret, err = gdaltest.runexternal_out_and_err(
+        f"{gdalwarp_path} ../gcore/data/byte.tif {tmp_vsimem}/out.tif -wm maximum"
+    )
+    assert "non-numeric" in err
+    assert "Failed to parse value of -wm" in err
+
+    ret, err = gdaltest.runexternal_out_and_err(
+        f"{gdalwarp_path} ../gcore/data/byte.tif {tmp_vsimem}/out.tif -wm 200%"
+    )
+    assert "Memory percentage" in err
+    assert "Failed to parse value of -wm" in err

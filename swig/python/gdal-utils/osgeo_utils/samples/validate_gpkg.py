@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2017, Even Rouault <even.rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import datetime
@@ -186,12 +170,26 @@ class GPKGChecker(object):
                     ("Wrong notnull for %s of %s. " + "Expected %s, got %s")
                     % (name, table_name, expected_notnull, notnull),
                 )
-                self._assert(
-                    default == expected_default,
-                    req,
-                    ("Wrong default for %s of %s. " + "Expected %s, got %s")
-                    % (name, table_name, expected_default, default),
-                )
+                # GeoPackage ETS suite accepts CURRENT_TIMESTAMP instead of 'now'
+                # Spatialite at time of writing uses CURRENT_TIMESTAMP.
+                # https://github.com/opengeospatial/ets-gpkg12/blob/04b4a0b8c7d90755b016182e2992684f198da1ba/src/main/java/org/opengis/cite/gpkg12/TableVerifier.java#L173
+                if (
+                    default != expected_default
+                    and expected_default == "strftime('%Y-%m-%dT%H:%M:%fZ','now')"
+                    and default.lower().replace(" ", "")
+                    in (
+                        "strftime('%Y-%m-%dT%H:%M:%fZ','now')".lower(),
+                        "strftime('%Y-%m-%dT%H:%M:%fZ',CURRENT_TIMESTAMP)".lower(),
+                    )
+                ):
+                    pass
+                else:
+                    self._assert(
+                        default == expected_default,
+                        req,
+                        ("Wrong default for %s of %s. " + "Expected %s, got %s")
+                        % (name, table_name, expected_default, default),
+                    )
                 self._assert(
                     pk == expected_pk,
                     req,

@@ -13,23 +13,7 @@
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2014, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  **********************************************************************/
 
 #include "cpl_port.h"
@@ -998,7 +982,8 @@ int MIFFile::WriteMIFHeader()
         if (strlen(GetEncoding()) > 0)
             osFieldName.Recode(CPL_ENC_UTF8, GetEncoding());
 
-        char *pszCleanName = TABCleanFieldName(osFieldName);
+        char *pszCleanName =
+            TABCleanFieldName(osFieldName, GetEncoding(), m_bStrictLaundering);
         osFieldName = pszCleanName;
         CPLFree(pszCleanName);
 
@@ -1946,7 +1931,20 @@ int MIFFile::SetCharset(const char *pszCharset)
     {
         m_poMIFFile->SetEncoding(CharsetToEncoding(pszCharset));
     }
+    if (EQUAL(pszCharset, "UTF-8"))
+    {
+        m_nVersion = std::max(m_nVersion, 1520);
+    }
     return 0;
+}
+
+void MIFFile::SetStrictLaundering(bool bStrictLaundering)
+{
+    IMapInfoFile::SetStrictLaundering(bStrictLaundering);
+    if (!bStrictLaundering)
+    {
+        m_nVersion = std::max(m_nVersion, 1520);
+    }
 }
 
 /************************************************************************/

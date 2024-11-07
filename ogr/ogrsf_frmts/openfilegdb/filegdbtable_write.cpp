@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -34,6 +18,7 @@
 
 #include <algorithm>
 #include <cinttypes>
+#include <cmath>
 #include <cwchar>
 #include <errno.h>
 #include <limits.h>
@@ -52,6 +37,7 @@
 #include "cpl_time.h"
 #include "cpl_vsi.h"
 #include "filegdbtable_priv.h"
+#include "gdal_priv_templates.hpp"
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_geometry.h"
@@ -379,24 +365,15 @@ bool FileGDBTable::Sync(VSILFILE *fpTable, VSILFILE *fpTableX)
 /************************************************************************/
 
 #define CHECK_CAN_BE_ENCODED_ON_VARUINT(v, msg)                                \
-    if (!((v) >= 0 &&                                                          \
-          (v) <= static_cast<double>(std::numeric_limits<uint64_t>::max())))   \
+    if (!GDALIsValueInRange<uint64_t>(v))                                      \
     {                                                                          \
         CPLError(CE_Failure, CPLE_AppDefined, msg);                            \
         return false;                                                          \
     }
 
 #define CHECK_CAN_BE_ENCODED_ON_VARINT(v, oldV, msg)                           \
-    if (!((v) >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&   \
-          (v) <= static_cast<double>(std::numeric_limits<int64_t>::max())))    \
-    {                                                                          \
-        CPLError(CE_Failure, CPLE_AppDefined, msg);                            \
-        return false;                                                          \
-    }                                                                          \
-    if (!(((v) - (oldV)) >=                                                    \
-              static_cast<double>(std::numeric_limits<int64_t>::min()) &&      \
-          ((v) - (oldV)) <=                                                    \
-              static_cast<double>(std::numeric_limits<int64_t>::max())))       \
+    if (!GDALIsValueInRange<int64_t>(v) ||                                     \
+        !GDALIsValueInRange<int64_t>((v) - (oldV)))                            \
     {                                                                          \
         CPLError(CE_Failure, CPLE_AppDefined, msg);                            \
         return false;                                                          \

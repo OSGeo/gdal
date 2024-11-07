@@ -25,8 +25,42 @@
 #include "cpl_port.h"
 #include "cpl_csv.h"
 
+#include <cmath>
+
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#include <map>
+#include <mutex>
+static std::mutex goMutex;
+static std::map<std::string, std::string>* pgoMapResourceFiles = nullptr;
+#endif
+
+void MetanameCleanup(void)
+{
+#ifdef EMBED_RESOURCE_FILES
+    std::lock_guard oGuard(goMutex);
+    if( pgoMapResourceFiles )
+    {
+        for( const auto& oIter: *pgoMapResourceFiles )
+        {
+            VSIUnlink(oIter.second.c_str());
+        }
+        delete pgoMapResourceFiles;
+    }
+    pgoMapResourceFiles = nullptr;
+#endif
+}
+
 static const char* GetGRIB2_CSVFilename(const char* pszFilename)
 {
+#ifdef EMBED_RESOURCE_FILES
+    std::lock_guard oGuard(goMutex);
+    if( !pgoMapResourceFiles )
+        pgoMapResourceFiles = new std::map<std::string, std::string>();
+    const auto oIter = pgoMapResourceFiles->find(pszFilename);
+    if( oIter != pgoMapResourceFiles->end() )
+        return oIter->second.c_str();
+#endif
     const char* pszGribTableDirectory = CPLGetConfigOption("GRIB_RESOURCE_DIR", nullptr);
     if( pszGribTableDirectory )
     {
@@ -36,11 +70,35 @@ static const char* GetGRIB2_CSVFilename(const char* pszFilename)
             return pszFullFilename;
         return nullptr;
     }
-    const char* pszRet = CSVFilename(pszFilename);
+    const char* pszRet = nullptr;
+    CPL_IGNORE_RET_VAL(pszRet);
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+    pszRet = CSVFilename(pszFilename);
     // CSVFilename() returns the same content as pszFilename if it does not
     // find the file.
     if( pszRet && strcmp(pszRet, pszFilename) == 0 )
-        return nullptr;
+#endif
+    {
+#ifdef EMBED_RESOURCE_FILES
+        const char* pszFileContent = GRIBGetCSVFileContent(pszFilename);
+        if( pszFileContent )
+        {
+            const std::string osTmpFilename = VSIMemGenerateHiddenFilename(pszFilename);
+            VSIFCloseL(VSIFileFromMemBuffer(
+                osTmpFilename.c_str(),
+                const_cast<GByte *>(
+                    reinterpret_cast<const GByte *>(pszFileContent)),
+                static_cast<int>(strlen(pszFileContent)),
+                /* bTakeOwnership = */ false));
+            (*pgoMapResourceFiles)[pszFilename] = osTmpFilename;
+            pszRet = (*pgoMapResourceFiles)[pszFilename].c_str();
+        }
+        else
+#endif
+        {
+            return nullptr;
+        }
+    }
     return pszRet;
 }
 
@@ -427,7 +485,7 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
       if (upperProb > tmp ||
           tmp > std::numeric_limits<int>::max() ||
           tmp < std::numeric_limits<int>::min() ||
-          CPLIsNan(tmp) ) {
+          std::isnan(tmp) ) {
          // TODO(schwehr): What is the correct response?
          errSprintf ("ERROR: upperProb out of range.  Setting to 0.\n");
          upperProb = 0.0;

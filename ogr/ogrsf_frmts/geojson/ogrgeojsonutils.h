@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2007, Mateusz Loskot
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 #ifndef OGR_GEOJSONUTILS_H_INCLUDED
 #define OGR_GEOJSONUTILS_H_INCLUDED
@@ -59,19 +43,11 @@ GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo);
 /*                           GeoJSONIsObject                            */
 /************************************************************************/
 
-bool GeoJSONIsObject(const char *pszText, CSLConstList papszAllowedDrivers);
-bool GeoJSONSeqIsObject(const char *pszText);
-bool ESRIJSONIsObject(const char *pszText);
-bool TopoJSONIsObject(const char *pszText);
-bool JSONFGIsObject(const char *pszText);
-
-/************************************************************************/
-/*                           GeoJSONPropertyToFieldType                 */
-/************************************************************************/
-
-OGRFieldType CPL_DLL GeoJSONPropertyToFieldType(json_object *poObject,
-                                                OGRFieldSubType &eSubType,
-                                                bool bArrayAsString = false);
+bool GeoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
+bool GeoJSONSeqIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
+bool ESRIJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
+bool TopoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
+bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
 
 /************************************************************************/
 /*                      GeoJSONStringPropertyToFieldType                */
@@ -79,11 +55,5 @@ OGRFieldType CPL_DLL GeoJSONPropertyToFieldType(json_object *poObject,
 
 OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
                                               int &nTZFlag);
-
-/************************************************************************/
-/*                           OGRGeoJSONGetGeometryName                  */
-/************************************************************************/
-
-const char *OGRGeoJSONGetGeometryName(OGRGeometry const *poGeometry);
 
 #endif  // OGR_GEOJSONUTILS_H_INCLUDED

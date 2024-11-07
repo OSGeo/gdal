@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import array
@@ -52,7 +36,9 @@ def check_no_file_leaks():
     yield
 
     diff = len(gdaltest.get_opened_files()) - num_files
-    assert diff == 0, "Leak of file handles: %d leaked" % diff
+    # For some weird reason, we sometimes get less files opened than at the
+    # start. Cf https://github.com/OSGeo/gdal/actions/runs/11349015748/job/31564138716?pr=10896
+    assert diff <= 0, "Leak of file handles: %d leaked" % diff
 
 
 ###############################################################################
@@ -1305,6 +1291,8 @@ def test_hdf5_band_specific_attribute():
         ds.attrs["fwhm"] = [0.01, 0.02]
         ds.attrs["fwhm_units"] = "Micrometers"
         ds.attrs["bad_band_list"] = [0, 1]
+        ds.attrs["center_wavelengths"] = [300, 400]
+        ds.attrs["my_coefficients"] = [1, 2]
         f.close()
 
     ds = gdal.Open("data/hdf5/fwhm.h5")
@@ -1315,11 +1303,15 @@ def test_hdf5_band_specific_attribute():
         "fwhm": "0.01",
         "fwhm_units": "Micrometers",
         "bad_band": "0",
+        "center_wavelength": "300",
+        "my_coefficient": "1",
     }
     assert ds.GetRasterBand(2).GetMetadata_Dict() == {
         "fwhm": "0.02",
         "fwhm_units": "Micrometers",
         "bad_band": "1",
+        "center_wavelength": "400",
+        "my_coefficient": "2",
     }
     ds = None
 
@@ -1602,3 +1594,28 @@ def test_hdf5_read_netcdf_nodata_scale_offset():
     assert band.GetNoDataValue() == pytest.approx(9.96921e36, rel=1e-7)
     assert band.GetOffset() == 1.5
     assert band.GetScale() == 0.01
+
+
+###############################################################################
+# Test force opening a netCDF file with HDF5 driver
+
+
+def test_hdf5_force_opening_netcdf_file():
+
+    ds = gdal.OpenEx("data/netcdf/trmm-nc4.nc", allowed_drivers=["HDF5"])
+    assert ds.GetDriver().GetDescription() == "HDF5Image"
+
+    ds = gdal.OpenEx(
+        "data/netcdf/byte_hdf5_starting_at_offset_1024.nc", allowed_drivers=["HDF5"]
+    )
+    assert ds.GetDriver().GetDescription() == "HDF5Image"
+
+
+###############################################################################
+# Test force opening, but provided file is still not recognized (for good reasons)
+
+
+def test_hdf5_force_opening_no_match():
+
+    drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["HDF5"])
+    assert drv is None

@@ -8,23 +8,7 @@
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "vrtdataset.h"
@@ -137,9 +121,9 @@ void VRTDriver::AddSourceParser(const char *pszElementName,
 /*                            ParseSource()                             */
 /************************************************************************/
 
-VRTSource *
-VRTDriver::ParseSource(const CPLXMLNode *psSrc, const char *pszVRTPath,
-                       std::map<CPLString, GDALDataset *> &oMapSharedSources)
+VRTSource *VRTDriver::ParseSource(const CPLXMLNode *psSrc,
+                                  const char *pszVRTPath,
+                                  VRTMapSharedResources &oMapSharedSources)
 
 {
 
@@ -542,10 +526,12 @@ void GDALRegister_VRT()
         "   <Option name='BLOCKYSIZE' type='int' description='Block height'/>\n"
         "</CreationOptionList>\n");
 
-    poDriver->pfnOpen = VRTDataset::Open;
     poDriver->pfnCreateCopy = VRTCreateCopy;
     poDriver->pfnCreate = VRTDataset::Create;
     poDriver->pfnCreateMultiDimensional = VRTDataset::CreateMultiDimensional;
+
+#ifndef NO_OPEN
+    poDriver->pfnOpen = VRTDataset::Open;
     poDriver->pfnIdentify = VRTDataset::Identify;
     poDriver->pfnDelete = VRTDataset::Delete;
 
@@ -557,7 +543,11 @@ void GDALRegister_VRT()
         "relative paths inside the VRT. Mainly useful for inlined VRT, or "
         "in-memory "
         "VRT, where their own directory does not make sense'/>"
+        "<Option name='NUM_THREADS' type='string' description="
+        "'Number of worker threads for reading. Can be set to ALL_CPUS' "
+        "default='ALL_CPUS'/>"
         "</OpenOptionList>");
+#endif
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");

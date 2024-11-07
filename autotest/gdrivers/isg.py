@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2019, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import gdaltest
@@ -122,4 +106,18 @@ def test_isg_header_larger_than_1024bytes():
     with gdal.quiet_errors():
         ds = gdal.Open("data/isg/header_larger_than_1024bytes.isg")
     expected_gt = [12.99375, 0.0125, 0.0, 47.00416666666666, 0.0, -0.008333333333333333]
+    assert ds.GetGeoTransform() == pytest.approx(expected_gt, rel=1e-8)
+
+
+###############################################################################
+# Test if we can read dms angles
+
+
+def test_isg_dms():
+
+    gdal.ErrorReset()
+    # Header of https://www.gsi.go.jp/butsuri/data/GSIGEO2024beta.zip
+    ds = gdal.Open("data/isg/header_dms.isg")
+    assert gdal.GetLastErrorMsg() == ""
+    expected_gt = [119.9875, 0.025, 0.0, 50.0083333333, 0.0, -0.01666666666]
     assert ds.GetGeoTransform() == pytest.approx(expected_gt, rel=1e-8)

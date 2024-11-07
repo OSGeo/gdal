@@ -88,8 +88,9 @@ In SQLite, the LIKE operator is case insensitive, unless ``PRAGMA case_sensitive
 has been issued.
 
 Starting with GDAL 3.9, GDAL installs a custom LIKE comparison, such that UTF-8
-characters are taken into account by ``LIKE`` and ``ILIKE`` operators.
-For ILIKE case insensitive comparisons, this is restricted to the
+characters are taken into account by ``LIKE`` operator.
+
+For case insensitive comparisons, this is restricted to the
 `ASCII <https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)>`__,
 `Latin-1 Supplement <https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)>`__,
 `Latin Extended-A <https://en.wikipedia.org/wiki/Latin_Extended-A>`__,
@@ -119,16 +120,14 @@ between double quotes, the internal double quotes must be escaped with \\
 Geometry field
 ++++++++++++++
 
-The ``GEOMETRY`` special field represents the geometry of the feature
-returned by OGRFeature::GetGeometryRef(). It can be explicitly specified
-in the result column list of a SELECT, and is automatically selected if the
-* wildcard is used.
+Geometry fields can be explicitly specified in the result column list of a SELECT,
+or automatically selected if the * wildcard is used.
 
 For OGR layers that have a non-empty geometry column name (generally for RDBMS datasources),
 as returned by OGRLayer::GetGeometryColumn(), the name of the geometry special field
-in the SQL statement will be the name of the geometry column of the underlying OGR layer.
+in the SQL statement must be the name of the geometry column of the underlying OGR layer.
 If the name of the geometry column in the source layer is empty, like with shapefiles etc.,
-the name to use in the SQL statement is always "geometry". Here we'll use it case-insensitively
+the name to use in the SQL statement must be "geometry". Here we'll use it case-insensitively
 (as all field names are in a SELECT statement):
 
 .. code-block::
@@ -168,14 +167,6 @@ so use the name ``rowid``.
 Starting with GDAL 3.8, if the layer has a named FID column
 (:cpp:func:`OGRLayer::GetFIDColumn` != ""), this name may also be used.
 
-The field wildcard expansions will not include the feature id, but it may be
-explicitly included using a syntax like:
-
-.. code-block::
-
-    SELECT ROWID, * FROM nation
-
-
 The field wildcard expansions will not include
 the feature id, but it may be explicitly included using a syntax like:
 
@@ -200,6 +191,25 @@ For example we can select the annotation features as:
 .. code-block::
 
     SELECT * FROM nation WHERE OGR_STYLE LIKE 'LABEL%'
+
+Statistics functions
+++++++++++++++++++++
+
+In addition to standard COUNT(), SUM(), AVG(), MIN(), MAX(), the following
+aggregate functions are available:
+
+- ``STDDEV_POP(numeric_value)``: (GDAL >= 3.10) numerical population standard deviation.
+- ``STDDEV_SAMP(numeric_value)``: (GDAL >= 3.10) numerical `sample standard deviation <https://en.wikipedia.org/wiki/Standard_deviation#Sample_standard_deviation>`__
+
+Ordered-set aggregate functions
++++++++++++++++++++++++++++++++
+
+The following aggregate functions are available. Note that they require to allocate an amount of memory proportional to the number of selected rows (for ``MEDIAN``, ``PERCENTILE`` and ``PERCENTILE_CONT``) or to the number of values (for ``MODE``).
+
+- ``MEDIAN(numeric_value)``: (GDAL >= 3.10) (continuous) median (equivalent to ``PERCENTILE(numeric_value, 50)``). NULL values are ignored.
+- ``PERCENTILE(numeric_value, percentage)``: (GDAL >= 3.10) (continuous) percentile, with percentage between 0 and 100 (equivalent to ``PERCENTILE_CONT(numeric_value, percentage / 100)``). NULL values are ignored.
+- ``PERCENTILE_CONT(numeric_value, fraction)``: (GDAL >= 3.10) (continuous) percentile, with fraction between 0 and 1. NULL values are ignored.
+- ``MODE(value)``: (GDAL >= 3.10): mode, i.e. most frequent input value (strings and numeric values are supported), arbitrarily choosing the first one if there are multiple equally-frequent results. NULL values are ignored.
 
 Spatialite SQL functions
 ++++++++++++++++++++++++
@@ -306,7 +316,7 @@ The ``gdal_get_pixel_value()`` function (added in GDAL 3.7) can be used to extra
 of a pixel in a GDAL dataset. It requires the configuration option OGR_SQLITE_ALLOW_EXTERNAL_ACCESS
 to be set to YES (for security reasons).
 
-It takes 5 arguments:
+It takes 5 or 6 arguments:
 
 * a string with the dataset name
 * a band number (numbering starting at 1)
@@ -315,11 +325,13 @@ It takes 5 arguments:
   pixel space
 * georeferenced X value or column number
 * georeferenced Y value or line number
+* resampling method among ``nearest`` (default), ``bilinear``, ``cubic``, ``cubicspline``. Optional, added in GDAL 3.10
 
 .. code-block::
 
     SELECT gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'georef', 440720, 3751320)
     SELECT gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', 0, 0)
+    SELECT gdal_get_pixel_value('../gcore/data/byte.tif', 1, 'pixel', 0.5, 0.5, 'bilinear')  -- GDAL >= 3.10
 
 
 OGR geocoding functions

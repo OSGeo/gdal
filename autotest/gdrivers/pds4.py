@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2017, Hobu Inc
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import contextlib
@@ -1800,3 +1784,24 @@ def test_pds4_oblique_cylindrical_write():
     check_pds4_oblique_cylindrical(filename)
 
     gdal.GetDriverByName("PDS4").Delete(filename)
+
+
+###############################################################################
+
+
+def test_pds4_read_right_to_left(tmp_path):
+
+    numpy = pytest.importorskip("numpy")
+    pytest.importorskip("osgeo.gdal_array")
+
+    tmp_filename = str(tmp_path / "tmp.xml")
+    ref_ds = gdal.Open("data/byte.tif")
+    gdal.Translate(tmp_filename, ref_ds, format="PDS4")
+    xml_content = open(tmp_filename, "rt").read()
+    # Generate a fake Right to Left oriented image
+    open(tmp_filename, "wt").write(
+        xml_content.replace("Left to Right", "Right to Left")
+    )
+    ds = gdal.Open(tmp_filename)
+    # Test that we flip the image along the horizontal axis
+    assert numpy.all(ds.ReadAsArray()[::, ::-1] == ref_ds.ReadAsArray())

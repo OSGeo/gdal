@@ -10,23 +10,7 @@
  * Copyright (c) 1998, Frank Warmerdam
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef CPL_VSI_H_INCLUDED
@@ -465,6 +449,29 @@ int CPL_DLL VSISync(const char *pszSource, const char *pszTarget,
                     const char *const *papszOptions,
                     GDALProgressFunc pProgressFunc, void *pProgressData,
                     char ***ppapszOutputs);
+
+int CPL_DLL VSIMultipartUploadGetCapabilities(
+    const char *pszFilename, int *pbNonSequentialUploadSupported,
+    int *pbParallelUploadSupported, int *pbAbortSupported,
+    size_t *pnMinPartSize, size_t *pnMaxPartSize, int *pnMaxPartCount);
+
+char CPL_DLL *VSIMultipartUploadStart(const char *pszFilename,
+                                      CSLConstList papszOptions);
+char CPL_DLL *VSIMultipartUploadAddPart(const char *pszFilename,
+                                        const char *pszUploadId,
+                                        int nPartNumber,
+                                        vsi_l_offset nFileOffset,
+                                        const void *pData, size_t nDataLength,
+                                        CSLConstList papszOptions);
+int CPL_DLL VSIMultipartUploadEnd(const char *pszFilename,
+                                  const char *pszUploadId, size_t nPartIdsCount,
+                                  const char *const *apszPartIds,
+                                  vsi_l_offset nTotalSize,
+                                  CSLConstList papszOptions);
+int CPL_DLL VSIMultipartUploadAbort(const char *pszFilename,
+                                    const char *pszUploadId,
+                                    CSLConstList papszOptions);
+
 int CPL_DLL VSIAbortPendingUploads(const char *pszFilename);
 
 char CPL_DLL *VSIStrerror(int);
@@ -523,6 +530,8 @@ VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
 GByte CPL_DLL *VSIGetMemFileBuffer(const char *pszFilename,
                                    vsi_l_offset *pnDataLength,
                                    int bUnlinkAndSeize);
+
+const char CPL_DLL *VSIMemGenerateHiddenFilename(const char *pszFilename);
 
 /** Callback used by VSIStdoutSetRedirection() */
 typedef size_t (*VSIWriteFunction)(const void *ptr, size_t size, size_t nmemb,

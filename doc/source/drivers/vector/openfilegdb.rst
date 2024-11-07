@@ -68,6 +68,7 @@ Geodatabases created with ArcGIS 10 or above)
 The "CREATE INDEX idx_name ON layer_name(field_name)" SQL request can be
 used to create an attribute index. idx_name must have 16 characters or less,
 start with a letter and contain only alphanumeric characters or underscore.
+Multiple column indices are not supported.
 
 The "RECOMPUTE EXTENT ON layer_name" SQL request can be used to trigger
 an update of the layer extent in layer metadata. This is useful when updating
@@ -310,26 +311,35 @@ On layer creation, the XORIGIN, YORIGIN, ZORIGIN, MORIGIN, XYSCALE, ZSCALE,
 ZORIGIN, XYTOLERANCE, ZTOLERANCE, MTOLERANCE layer creation options will be
 used in priority over the settings of :cpp:class:`OGRGeomCoordinatePrecision`.
 
-Comparison with the FileGDB driver
-----------------------------------
-
-(Comparison done with a FileGDB driver using FileGDB API SDK 1.4)
-
-Advantages of the OpenFileGDB driver:
+Advantages of the OpenFileGDB driver, compared to the FileGDB driver
+--------------------------------------------------------------------
 
 -  Can read ArcGIS 9.X Geodatabases, and not only 10 or above.
+
 -  Can open layers with any spatial reference system.
+
 -  Thread-safe (i.e. datasources can be processed in parallel).
+
 -  Uses the VSI Virtual File API, enabling the user to read a
    Geodatabase in a ZIP file or stored on a HTTP server.
+
 -  Faster on databases with a big number of fields.
+
 -  Does not depend on a third-party library.
+
 -  Robust against corrupted Geodatabase files.
 
-Drawbacks of the OpenFileGDB driver:
+Limitations
+-----------
 
--  Cannot read data from compressed data in CDF format (Compressed Data
-   Format).
+-  Reading data compressed in SDC format (Smart Data Compression) or in
+   CDF format (Compressed Data Format) is not supported. For CDF,
+   the :ref:`FileGDB driver <vector.filegdb>` can be used.
+
+-  Support for tables with 64-bit OBJECTIDs (which require GDAL >= 3.10), where
+   OBJECTIDs are sparse, is read-only and incomplete.
+   The driver will emit a warning if such situation occurs, and will attribute
+   non-faithful OBJECTIDs.
 
 Examples
 --------

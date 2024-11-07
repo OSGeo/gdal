@@ -7,28 +7,13 @@
  ******************************************************************************
  * Copyright (c) 2015, European Union (European Environment Agency)
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
 #include "gdaljp2metadata.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #if HAVE_FCNTL_H
@@ -250,8 +235,7 @@ static void DumpGeoTIFFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         static_cast<GDALDriver *>(GDALGetDriverByName("VRT"));
     if (pabyBoxData && poVRTDriver)
     {
-        CPLString osTmpFilename(
-            CPLSPrintf("/vsimem/tmp_%p.tif", oBox.GetFILE()));
+        const CPLString osTmpFilename(VSIMemGenerateHiddenFilename("tmp.tif"));
         CPL_IGNORE_RET_VAL(VSIFCloseL(VSIFileFromMemBuffer(
             osTmpFilename, pabyBoxData, nBoxDataLength, FALSE)));
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -266,15 +250,12 @@ static void DumpGeoTIFFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         }
         if (poDS)
         {
-            CPLString osTmpVRTFilename(
-                CPLSPrintf("/vsimem/tmp_%p.vrt", oBox.GetFILE()));
+            const CPLString osTmpVRTFilename(
+                CPLResetExtension(osTmpFilename.c_str(), "vrt"));
             GDALDataset *poVRTDS = poVRTDriver->CreateCopy(
                 osTmpVRTFilename, poDS, FALSE, nullptr, nullptr, nullptr);
             GDALClose(poVRTDS);
-            GByte *pabyXML =
-                VSIGetMemFileBuffer(osTmpVRTFilename, nullptr, FALSE);
-            CPLXMLNode *psXMLVRT =
-                CPLParseXMLString(reinterpret_cast<const char *>(pabyXML));
+            CPLXMLNode *psXMLVRT = CPLParseXMLFile(osTmpVRTFilename.c_str());
             if (psXMLVRT)
             {
                 ++psDumpContext->nCurLineCount;
@@ -2177,7 +2158,8 @@ static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
                     CPLXMLNode *psBinaryContent =
                         CPLCreateXMLNode(nullptr, CXT_Element, "BinaryContent");
                     GByte *pabyBoxData = oBox.ReadBoxData();
-                    int nBoxLength = static_cast<int>(nBoxDataLength);
+                    const int nBoxLength = static_cast<int>(
+                        std::min<GIntBig>(nBoxDataLength, INT_MAX / 2 - 1));
                     char *pszBinaryContent =
                         static_cast<char *>(VSIMalloc(2 * nBoxLength + 1));
                     if (pabyBoxData && pszBinaryContent)

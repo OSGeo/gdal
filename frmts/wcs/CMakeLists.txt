@@ -20,4 +20,4 @@ if(NOT TARGET gdal_WCS)
 endif()
 
 gdal_standard_includes(gdal_WCS)
-target_include_directories(gdal_WCS PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/gml)
+target_include_directories(gdal_WCS PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/gmlutils)

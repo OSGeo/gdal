@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -389,6 +373,10 @@ def test_jp2openjpeg_12():
 # Check that PAM overrides internal GCPs (#5279)
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jp2openjpeg_13():
 
     # Create a dataset with GCPs
@@ -1446,6 +1434,10 @@ def test_jp2openjpeg_32():
 # Test crazy tile size
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jp2openjpeg_33():
 
     src_ds = gdal.Open(
@@ -2744,10 +2736,10 @@ def test_jp2openjpeg_45():
     )
     del out_ds
 
-    dircontent = gdal.ReadDir("/vsimem/")
+    dircontent = gdal.ReadDir("/vsimem/.#!HIDDEN!#.")
     if dircontent:
         for filename in dircontent:
-            assert not filename.startswith("gmljp2")
+            assert "gmljp2" not in filename
 
     ds = ogr.Open("/vsimem/jp2openjpeg_45.jp2")
     assert ds.GetLayerCount() == 1
@@ -3818,6 +3810,10 @@ def test_jp2openjpeg_mosaic():
 
 
 @pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_jp2openjpeg_vrt_protocol():
 
     (webserver_process, webserver_port) = webserver.launch(

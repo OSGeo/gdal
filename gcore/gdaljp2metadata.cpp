@@ -11,23 +11,7 @@
  * Copyright (c) 2010-2015, Even Rouault <even dot rouault at spatialys dot com>
  * Copyright (c) 2015, European Union Satellite Centre
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -52,12 +36,14 @@
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "gdaljp2metadatagenerator.h"
+#ifdef HAVE_TIFF
 #include "gt_wkt_srs_for_gdal.h"
+#endif
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
-#include "ogrgeojsonreader.h"
+#include "ogrlibjsonutils.h"
 
 /*! @cond Doxygen_Suppress */
 
@@ -185,10 +171,8 @@ int GDALJP2Metadata::ReadAndParse(VSILFILE *fpLL, int nGEOJP2Index,
         aoSetPriorities.insert(nGMLJP2Index);
     if (nMSIGIndex >= 0)
         aoSetPriorities.insert(nMSIGIndex);
-    std::set<int>::iterator oIter = aoSetPriorities.begin();
-    for (; oIter != aoSetPriorities.end(); ++oIter)
+    for (const int nIndex : aoSetPriorities)
     {
-        int nIndex = *oIter;
         if ((nIndex == nGEOJP2Index && ParseJP2GeoTIFF()) ||
             (nIndex == nGMLJP2Index && ParseGMLCoverageDesc()) ||
             (nIndex == nMSIGIndex && ParseMSIG()))
@@ -582,6 +566,7 @@ int GDALJP2Metadata::ReadBoxes(VSILFILE *fpVSIL)
 int GDALJP2Metadata::ParseJP2GeoTIFF()
 
 {
+#ifdef HAVE_TIFF
     if (!CPLTestBool(CPLGetConfigOption("GDAL_USE_GEOJP2", "TRUE")))
         return FALSE;
 
@@ -693,6 +678,9 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
     }
 
     return iBestIndex >= 0;
+#else
+    return false;
+#endif
 }
 
 /************************************************************************/
@@ -1225,6 +1213,7 @@ void GDALJP2Metadata::SetRPCMD(char **papszRPCMDIn)
 GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
 
 {
+#ifdef HAVE_TIFF
     /* -------------------------------------------------------------------- */
     /*      Prepare the memory buffer containing the degenerate GeoTIFF     */
     /*      file.                                                           */
@@ -1250,6 +1239,9 @@ GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
     CPLFree(pabyGTBuf);
 
     return poBox;
+#else
+    return nullptr;
+#endif
 }
 
 /************************************************************************/
@@ -2595,6 +2587,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
         "</gmljp2:GMLJP2CoverageCollection>\n",
         osRootGMLId.c_str(), osGridCoverage.c_str());
 
+    const std::string osTmpDir = VSIMemGenerateHiddenFilename("gmljp2");
+
     /* -------------------------------------------------------------------- */
     /*      Process metadata, annotations and features collections.         */
     /* -------------------------------------------------------------------- */
@@ -2758,7 +2752,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                     if (hSrcDS)
                     {
                         CPLString osTmpFile =
-                            CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.gml", this, i,
+                            CPLSPrintf("%s/%d/%s.gml", osTmpDir.c_str(), i,
                                        CPLGetBasename(aoGMLFiles[i].osFile));
                         char **papszOptions = nullptr;
                         papszOptions =
@@ -2866,7 +2860,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                     !aoGMLFiles[i].osRemoteResource.empty())
                 {
                     osTmpFile =
-                        CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.gml", this, i,
+                        CPLSPrintf("%s/%d/%s.gml", osTmpDir.c_str(), i,
                                    CPLGetBasename(aoGMLFiles[i].osFile));
 
                     GMLJP2V2BoxDesc oDesc;
@@ -3046,7 +3040,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                 if (hSrcDS)
                 {
                     CPLString osTmpFile =
-                        CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.kml", this, i,
+                        CPLSPrintf("%s/%d/%s.kml", osTmpDir.c_str(), i,
                                    CPLGetBasename(aoAnnotations[i].osFile));
                     char **papszOptions = nullptr;
                     if (aoAnnotations.size() > 1)
@@ -3262,7 +3256,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
     for (auto &poGMLBox : apoGMLBoxes)
         delete poGMLBox;
 
-    VSIRmdirRecursive(CPLSPrintf("/vsimem/gmljp2_%p", this));
+    VSIRmdirRecursive(osTmpDir.c_str());
 
     return poGMLData;
 }

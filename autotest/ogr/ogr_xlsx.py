@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -187,6 +171,28 @@ def test_ogr_xlsx_4():
     )
 
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+
+
+###############################################################################
+# Run test_ogrsf
+
+
+def test_ogr_xlsx_test_ogrsf_update(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    filename = str(tmp_path / "out.xlsx")
+    gdal.VectorTranslate(filename, "data/poly.shp", format="XLSX")
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" {filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
 
 
 ###############################################################################
@@ -628,3 +634,31 @@ def test_ogr_xlsx_write_sheet_without_row():
     assert ds.GetLayer(2).GetFeatureCount() == 1
     ds = None
     gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test reading a XLSX file with XML element prefixes
+
+
+def test_ogr_xlsx_read_xml_prefix():
+
+    ds = ogr.Open("data/xlsx/with_xml_prefix.xlsx")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "Col1"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "Col2"
+    f = lyr.GetNextFeature()
+    assert f["Col1"] == "foo"
+    assert f["Col2"] == "bar"
+
+
+###############################################################################
+# Test reading a XLSX file with <row> without "r" attribute
+
+
+def test_ogr_xlsx_read_row_without_r_attribute():
+
+    ds = ogr.Open("data/xlsx/row_without_r_attribute.xlsx")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["ID"] == 1
+    assert f["NAME"] == "TEST123"

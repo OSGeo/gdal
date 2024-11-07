@@ -9,23 +9,7 @@
  * Copyright (c) 2007, Geoconcept and IGN
  * Copyright (c) 2008, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
@@ -38,7 +22,7 @@
 /************************************************************************/
 
 OGRGeoconceptDataSource::OGRGeoconceptDataSource()
-    : _papoLayers(nullptr), _nLayers(0), _pszGCT(nullptr), _pszName(nullptr),
+    : _papoLayers(nullptr), _nLayers(0), _pszGCT(nullptr),
       _pszDirectory(nullptr), _pszExt(nullptr), _papszOptions(nullptr),
       _bSingleNewFile(false), _bUpdate(false), _hGXT(nullptr)
 {
@@ -57,7 +41,6 @@ OGRGeoconceptDataSource::~OGRGeoconceptDataSource()
     }
     CPLFree(_papoLayers);
     CPLFree(_pszGCT);
-    CPLFree(_pszName);
     CPLFree(_pszDirectory);
     CPLFree(_pszExt);
     CSLDestroy(_papszOptions);
@@ -106,11 +89,12 @@ int OGRGeoconceptDataSource::Open(const char *pszName, bool bTestOpen,
         return FALSE;
     }
 
+    SetDescription(pszName);
+
     if (VSI_ISREG(sStat.st_mode))
     {
         _bSingleNewFile = false;
         _bUpdate = bUpdate;
-        _pszName = CPLStrdup(pszName);
         if (!LoadFile(_bUpdate ? "a+t" : "rt"))
         {
             CPLDebug("GEOCONCEPT",
@@ -136,15 +120,16 @@ int OGRGeoconceptDataSource::LoadFile(const char *pszMode)
 {
     if (_pszExt == nullptr)
     {
-        const char *pszExtension = CPLGetExtension(_pszName);
+        const char *pszExtension = CPLGetExtension(GetDescription());
         _pszExt = CPLStrdup(pszExtension);
     }
     CPLStrlwr(_pszExt);
 
     if (!_pszDirectory)
-        _pszDirectory = CPLStrdup(CPLGetPath(_pszName));
+        _pszDirectory = CPLStrdup(CPLGetPath(GetDescription()));
 
-    if ((_hGXT = Open_GCIO(_pszName, _pszExt, pszMode, _pszGCT)) == nullptr)
+    if ((_hGXT = Open_GCIO(GetDescription(), _pszExt, pszMode, _pszGCT)) ==
+        nullptr)
     {
         return FALSE;
     }
@@ -215,7 +200,6 @@ int OGRGeoconceptDataSource::LoadFile(const char *pszMode)
 int OGRGeoconceptDataSource::Create(const char *pszName, char **papszOptions)
 
 {
-    CPLFree(_pszName);
     _papszOptions = CSLDuplicate(papszOptions);
 
     const char *pszConf = CSLFetchNameValue(papszOptions, "CONFIG");
@@ -259,14 +243,13 @@ int OGRGeoconceptDataSource::Create(const char *pszName, char **papszOptions)
             pszbName = CPLStrdup(CPLGetBasename(pszNameDup));
             CPLFree(pszNameDup);
         }
-        _pszName = CPLStrdup(
-            (char *)CPLFormFilename(_pszDirectory, pszbName, nullptr));
+        SetDescription(CPLFormFilename(_pszDirectory, pszbName, nullptr));
         CPLFree(pszbName);
     }
     else
     {
         _pszDirectory = CPLStrdup(CPLGetPath(pszName));
-        _pszName = CPLStrdup(pszName);
+        SetDescription(pszName);
     }
 
     /* -------------------------------------------------------------------- */

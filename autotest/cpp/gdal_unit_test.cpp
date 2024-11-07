@@ -7,23 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
 /*
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifdef _MSC_VER
@@ -106,25 +90,35 @@ CheckEqualGeometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance)
     {
         std::unique_ptr<OGRGeometry> lhs_normalized_cpp;
         std::unique_ptr<OGRGeometry> rhs_normalized_cpp;
-        if (EQUAL(OGR_G_GetGeometryName(lhs), "LINEARRING"))
+        OGRGeometryH lhs_normalized;
+        OGRGeometryH rhs_normalized;
+        if (OGRGeometryFactory::haveGEOS())
         {
-            // Normalize() doesn't work with LinearRing
-            OGRLineString lhs_as_ls(
-                *OGRGeometry::FromHandle(lhs)->toLineString());
-            lhs_normalized_cpp.reset(lhs_as_ls.Normalize());
-            OGRLineString rhs_as_ls(
-                *OGRGeometry::FromHandle(rhs)->toLineString());
-            rhs_normalized_cpp.reset(rhs_as_ls.Normalize());
+            if (EQUAL(OGR_G_GetGeometryName(lhs), "LINEARRING"))
+            {
+                // Normalize() doesn't work with LinearRing
+                OGRLineString lhs_as_ls(
+                    *OGRGeometry::FromHandle(lhs)->toLineString());
+                lhs_normalized_cpp.reset(lhs_as_ls.Normalize());
+                OGRLineString rhs_as_ls(
+                    *OGRGeometry::FromHandle(rhs)->toLineString());
+                rhs_normalized_cpp.reset(rhs_as_ls.Normalize());
+            }
+            else
+            {
+                lhs_normalized_cpp.reset(
+                    OGRGeometry::FromHandle(OGR_G_Normalize(lhs)));
+                rhs_normalized_cpp.reset(
+                    OGRGeometry::FromHandle(OGR_G_Normalize(rhs)));
+            }
+            lhs_normalized = OGRGeometry::ToHandle(lhs_normalized_cpp.get());
+            rhs_normalized = OGRGeometry::ToHandle(rhs_normalized_cpp.get());
         }
         else
         {
-            lhs_normalized_cpp.reset(
-                OGRGeometry::FromHandle(OGR_G_Normalize(lhs)));
-            rhs_normalized_cpp.reset(
-                OGRGeometry::FromHandle(OGR_G_Normalize(rhs)));
+            lhs_normalized = lhs;
+            rhs_normalized = rhs;
         }
-        auto lhs_normalized = OGRGeometry::ToHandle(lhs_normalized_cpp.get());
-        auto rhs_normalized = OGRGeometry::ToHandle(rhs_normalized_cpp.get());
 
         // Test geometry points
         const std::size_t csize = 3;

@@ -1331,11 +1331,13 @@ def test_ogr_vrt_29(tmp_path):
     sr.ImportFromEPSG(4326)
     lyr = ds.CreateLayer("ogr_vrt_29", srs=sr)
     lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
 
     for i in range(5):
         for j in range(5):
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField(0, i * 5 + j)
+            feat["str"] = f"{j}-{i}"
             feat.SetGeometry(
                 ogr.CreateGeometryFromWkt("POINT(%f %f)" % (2 + i / 5.0, 49 + j / 5.0))
             )
@@ -1483,11 +1485,15 @@ def test_ogr_vrt_29(tmp_path):
         ), "did not get expected extent"
 
     feat = lyr.GetNextFeature()
+    assert feat["id"] == 0
+    assert feat["str"] == "0-0"
     ogrtest.check_feature_geometry(
         feat, "POINT(426857.987717275274917 5427937.523466162383556)"
     )
 
     feat = lyr.GetNextFeature()
+    assert feat["id"] == 1
+    assert feat["str"] == "1-0"
 
     feat.SetGeometry(None)
     assert lyr.SetFeature(feat) == 0

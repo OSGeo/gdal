@@ -9,23 +9,7 @@
  ******************************************************************************
  * Copyright (c) 2005, Kevin Ruland
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 #ifdef SWIGPYTHON
@@ -101,9 +85,34 @@
 %constant GCI_MagentaBand   = GCI_MagentaBand;
 %constant GCI_YellowBand    = GCI_YellowBand;
 %constant GCI_BlackBand     = GCI_BlackBand;
-%constant GCI_YCbCr_YBand     = GCI_YCbCr_YBand;
-%constant GCI_YCbCr_CrBand     = GCI_YCbCr_CrBand;
-%constant GCI_YCbCr_CbBand     = GCI_YCbCr_CbBand;
+%constant GCI_YCbCr_YBand   = GCI_YCbCr_YBand;
+%constant GCI_YCbCr_CrBand  = GCI_YCbCr_CrBand;
+%constant GCI_YCbCr_CbBand  = GCI_YCbCr_CbBand;
+%constant GCI_PanBand       = GCI_PanBand;
+%constant GCI_CoastalBand   = GCI_CoastalBand;
+%constant GCI_RedEdgeBand   = GCI_RedEdgeBand;
+
+%constant GCI_IR_Start      = GCI_IR_Start;  // just a marker, not an enumeration value
+%constant GCI_NIRBand       = GCI_NIRBand;
+%constant GCI_SWIRBand      = GCI_SWIRBand;
+%constant GCI_MWIRBand      = GCI_MWIRBand;
+%constant GCI_LWIRBand      = GCI_LWIRBand;
+%constant GCI_TIRBand       = GCI_TIRBand;
+%constant GCI_OtherIRBand   = GCI_OtherIRBand;
+%constant GCI_IR_End        = GCI_IR_End;  // just a marker, not an enumeration value
+
+%constant GCI_SAR_Start     = GCI_SAR_Start;  // just a marker, not an enumeration value
+%constant GCI_SAR_Ka_Band   = GCI_SAR_Ka_Band;
+%constant GCI_SAR_K_Band    = GCI_SAR_K_Band;
+%constant GCI_SAR_Ku_Band   = GCI_SAR_Ku_Band;
+%constant GCI_SAR_X_Band    = GCI_SAR_X_Band;
+%constant GCI_SAR_C_Band    = GCI_SAR_C_Band;
+%constant GCI_SAR_S_Band    = GCI_SAR_S_Band;
+%constant GCI_SAR_L_Band    = GCI_SAR_L_Band;
+%constant GCI_SAR_P_Band    = GCI_SAR_P_Band;
+%constant GCI_SAR_End       = GCI_SAR_End;  // just a marker, not an enumeration value
+
+%constant GCI_Max           = GCI_Max;
 
 // GDALResampleAlg
 
@@ -172,6 +181,7 @@
 %constant OF_UPDATE = GDAL_OF_UPDATE;
 %constant OF_SHARED = GDAL_OF_SHARED;
 %constant OF_VERBOSE_ERROR = GDAL_OF_VERBOSE_ERROR;
+%constant OF_THREAD_SAFE = GDAL_OF_THREAD_SAFE;
 
 #if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 

@@ -10,23 +10,7 @@
  * Copyright (c) 2002, Frank Warmerdam
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "nitflib.h"
@@ -34,6 +18,10 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include <stdbool.h>
+
+#ifdef EMBED_RESOURCE_FILES
+#include "embedded_resources.h"
+#endif
 
 #ifndef CPL_IGNORE_RET_VAL_INT_defined
 #define CPL_IGNORE_RET_VAL_INT_defined
@@ -1056,7 +1044,12 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         PLACE(nCur + 349, PVTYPE, pszPVType);
         PLACE(nCur + 352, IREP, pszIREP);
         OVR(8, nCur + 360, ICAT, "VIS");
-        OVR(2, nCur + 368, ABPP, CPLSPrintf("%02d", nBitsPerSample));
+        {
+            const char *pszParamValue = CSLFetchNameValue(papszOptions, "ABPP");
+            PLACE(nCur + 368, ABPP,
+                  CPLSPrintf("%02d", pszParamValue ? atoi(pszParamValue)
+                                                   : nBitsPerSample));
+        }
         OVR(1, nCur + 370, PJUST, "R");
         OVR(1, nCur + 371, ICORDS, " ");
 
@@ -2472,6 +2465,9 @@ static const char *NITFFindValRecursive(char **papszMD, int nMDSize,
             pszLastUnderscore = strrchr(pszMDPrefixShortened, '_');
         }
         CPLFree(pszMDPrefixShortened);
+
+        if (!pszCondVal)
+            pszCondVal = NITFFindValFromEnd(papszMD, nMDSize, pszVar, NULL);
     }
     CPLFree(pszMDItemName);
 
@@ -3291,18 +3287,36 @@ static CPLXMLNode *NITFLoadXMLSpec(NITFFile *psFile)
 
     if (psFile->psNITFSpecNode == NULL)
     {
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
+#ifdef EMBED_RESOURCE_FILES
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+#endif
         const char *pszXMLDescFilename = CPLFindFile("gdal", NITF_SPEC_FILE);
+#ifdef EMBED_RESOURCE_FILES
+        CPLPopErrorHandler();
+        CPLErrorReset();
+#endif
         if (pszXMLDescFilename == NULL)
+#endif
         {
+#ifdef EMBED_RESOURCE_FILES
+            CPLDebug("NITF", "Using embedded %s", NITF_SPEC_FILE);
+            psFile->psNITFSpecNode = CPLParseXMLString(NITFGetSpecFile());
+            CPLAssert(psFile->psNITFSpecNode);
+            return psFile->psNITFSpecNode;
+#else
             CPLDebug("NITF", "Cannot find XML file : %s", NITF_SPEC_FILE);
             return NULL;
+#endif
         }
+#ifndef USE_ONLY_EMBEDDED_RESOURCE_FILES
         psFile->psNITFSpecNode = CPLParseXMLFile(pszXMLDescFilename);
         if (psFile->psNITFSpecNode == NULL)
         {
             CPLDebug("NITF", "Invalid XML file : %s", pszXMLDescFilename);
             return NULL;
         }
+#endif
     }
 
     return psFile->psNITFSpecNode;

@@ -9,23 +9,7 @@
  * Copyright (c) 2004, Andrey Kiselev <dron@ak4719.spb.edu>
  * Copyright (c) 2008-2009, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -732,9 +716,14 @@ OGRErr OGRSpatialReference::importFromUSGS(long iProjSys, long iZone,
         }
         else if (iDatum < NUMBER_OF_USGS_ELLIPSOIDS && aoEllipsUSGS[iDatum])
         {
-            if (OSRGetEllipsoidInfo(aoEllipsUSGS[iDatum], &pszName,
-                                    &dfSemiMajor,
-                                    &dfInvFlattening) == OGRERR_NONE)
+            if (aoEllipsUSGS[iDatum] == 7030)  // WGS 84 ellipsoid
+            {
+                // Assume a WGS 84 datum
+                SetWellKnownGeogCS("WGS84");
+            }
+            else if (OSRGetEllipsoidInfo(aoEllipsUSGS[iDatum], &pszName,
+                                         &dfSemiMajor,
+                                         &dfInvFlattening) == OGRERR_NONE)
             {
                 SetGeogCS(
                     CPLString().Printf(
@@ -771,6 +760,18 @@ OGRErr OGRSpatialReference::importFromUSGS(long iProjSys, long iZone,
     /* -------------------------------------------------------------------- */
     if (IsLocal() || IsProjected())
         SetLinearUnits(SRS_UL_METER, 1.0);
+
+    if (iDatum >= 0 && iDatum < NUMBER_OF_USGS_ELLIPSOIDS &&
+        aoEllipsUSGS[iDatum] == 7030)
+    {
+        if (AutoIdentifyEPSG() == OGRERR_NONE)
+        {
+            const char *pszAuthName = GetAuthorityName(nullptr);
+            const char *pszAuthCode = GetAuthorityCode(nullptr);
+            if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "EPSG"))
+                CPL_IGNORE_RET_VAL(importFromEPSG(atoi(pszAuthCode)));
+        }
+    }
 
     return OGRERR_NONE;
 }

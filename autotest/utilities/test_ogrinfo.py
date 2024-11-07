@@ -10,25 +10,10 @@
 ###############################################################################
 # Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
 import os
 import pathlib
 import stat
@@ -325,6 +310,25 @@ def test_ogrinfo_19(ogrinfo_path):
 
 
 ###############################################################################
+# Test --formats -json
+
+
+@pytest.mark.require_driver("ESRI Shapefile")
+def test_ogrinfo_formats_json(ogrinfo_path):
+
+    ret = json.loads(
+        gdaltest.runexternal(ogrinfo_path + " --formats -json", check_memleak=False)
+    )
+    assert {
+        "short_name": "ESRI Shapefile",
+        "long_name": "ESRI Shapefile",
+        "scopes": ["vector"],
+        "capabilities": ["open", "create", "virtual_io"],
+        "file_extensions": ["shp", "dbf", "shz", "shp.zip"],
+    } in ret
+
+
+###############################################################################
 # Test --help-general
 
 
@@ -521,6 +525,7 @@ OGRFeature(test_ogrinfo_23):2
 # Test metadata
 
 
+@pytest.mark.require_driver("OGR_VRT")
 def test_ogrinfo_24(ogrinfo_path, tmp_path):
 
     vrt_fname = str(tmp_path / "test_ogrinfo_24.vrt")

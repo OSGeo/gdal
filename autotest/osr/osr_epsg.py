@@ -11,23 +11,7 @@
 # Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 
@@ -124,6 +108,8 @@ def test_osr_epsg_6():
         (5042, False),  # WGS 84 / UPS South (E,N)
         (3031, False),  # WGS 84 / Antarctic Polar Stereographic
         (5482, True),  # RSRGD2000 / RSPS2000
+        (3903, True),  # ETRS89 / TM35FIN(N,E) + N2000 height
+        (5698, False),  # RGF93 v1 / Lambert-93 + NGF-IGN69 height
     ],
 )
 def test_osr_epsg_treats_as_northing_easting(epsg_code, is_northing_easting):
@@ -390,6 +376,45 @@ def test_osr_epsg_13():
     matches = sr.FindMatches()
     assert len(matches) == 1 and matches[0][1] == 25
     assert matches[0][0].IsSame(sr) != 1
+
+
+###############################################################################
+# Test FindMatches() when input SRS doesn't have expected axis order
+
+# Not sure about the minimum PROJ version, but 6.3 doesn't work
+@pytest.mark.require_proj(8, 0)
+def test_osr_epsg_find_matches_wrong_axis_order():
+
+    sr = osr.SpatialReference()
+    # NZTM2000 with implicit axis (thus east, north)
+    sr.SetFromUserInput(
+        """PROJCS["NZGD2000 / New Zealand Transverse Mercator 2000",
+    GEOGCS["NZGD2000",
+        DATUM["New_Zealand_Geodetic_Datum_2000",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            AUTHORITY["EPSG","6167"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4167"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",173],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",1600000],
+    PARAMETER["false_northing",10000000],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["X",EAST],
+    AXIS["Y",NORTH]]
+"""
+    )
+    matches = sr.FindMatches()
+    assert len(matches) == 1 and matches[0][1] == 90
+    assert matches[0][0].GetAuthorityCode(None) == "2193"
+    assert matches[0][0].GetDataAxisToSRSAxisMapping() == [2, 1]
 
 
 ###############################################################################

@@ -21,3 +21,4 @@ GDAL
     community/index
     sponsors/index
     contributing/index
+    thanks

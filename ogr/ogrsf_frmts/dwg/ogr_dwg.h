@@ -8,23 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2011,  Frank Warmerdam
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_DWG_H_INCLUDED
@@ -168,9 +152,8 @@ class OGRDWGLayer final : public OGRLayer
 /*                           OGRDWGDataSource                           */
 /************************************************************************/
 
-class OGRDWGDataSource final : public OGRDataSource
+class OGRDWGDataSource final : public GDALDataset
 {
-    CPLString m_osName;
     std::vector<OGRLayer *> apoLayers;
 
     std::set<CPLString> attributeFields;
@@ -189,6 +172,8 @@ class OGRDWGDataSource final : public OGRDataSource
     int bAttributes;
     int bAllAttributes;
 
+    bool m_bClosedLineAsPolygon = false;
+
     OGRDWGServices *poServices;
     OdDbDatabasePtr poDb;
 
@@ -204,19 +189,12 @@ class OGRDWGDataSource final : public OGRDataSource
     int Open(OGRDWGServices *poServices, const char *pszFilename,
              int bHeaderOnly = FALSE);
 
-    const char *GetName() override
-    {
-        return m_osName;
-    }
-
     int GetLayerCount() override
     {
         return static_cast<int>(apoLayers.size());
     }
 
     OGRLayer *GetLayer(int) override;
-
-    int TestCapability(const char *) override;
 
     // The following is only used by OGRDWGLayer
 
@@ -233,6 +211,11 @@ class OGRDWGDataSource final : public OGRDataSource
     int AllAttributes()
     {
         return bAllAttributes;
+    }
+
+    bool ClosedLineAsPolygon() const
+    {
+        return m_bClosedLineAsPolygon;
     }
 
     void AddStandardFields(OGRFeatureDefn *poDef);

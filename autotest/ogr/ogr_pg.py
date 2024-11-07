@@ -247,17 +247,21 @@ def pg_version(pg_autotest_ds):
         feat = sql_lyr.GetNextFeature()
         v = feat.GetFieldAsString("version")
 
-    pos = v.find(" ")  # "PostgreSQL 12.0beta1" or "PostgreSQL 12.2 ...."
+    # return of version() is something like "PostgreSQL 12.0[rcX|betaX] ...otherstuff..."
+
+    tokens = v.split(" ")
+    assert len(tokens) >= 2
+    # First token is "PostgreSQL" (or some enterprise DB alternative name)
+    v = tokens[1]
+    pos = v.find("beta")
     if pos > 0:
-        v = v[pos + 1 :]
-        pos = v.find("beta")
-        if pos > 0:
-            v = v[0:pos]
-        pos = v.find(" ")
+        v = v[0:pos]
+    else:
+        pos = v.find("rc")
         if pos > 0:
             v = v[0:pos]
 
-        return tuple([int(x) for x in v.split(".")])
+    return tuple([int(x) for x in v.split(".")])
 
 
 @pytest.fixture(scope="module")
@@ -681,9 +685,6 @@ def test_ogr_pg_4(pg_ds):
 
         ogrtest.check_feature_geometry(feat_read, geom)
 
-        feat_read.Destroy()
-
-    dst_feat.Destroy()
     pg_lyr.ResetReading()  # to close implicit transaction
 
 
@@ -915,7 +916,6 @@ def test_ogr_pg_10(pg_ds):
     pg_lyr.SetAttributeFilter(None)
 
     fid = feat.GetFID()
-    feat.Destroy()
 
     assert pg_lyr.DeleteFeature(fid) == 0, "DeleteFeature() method failed."
 
@@ -1173,7 +1173,6 @@ def test_ogr_pg_20(pg_ds):
         geom = feat.GetGeometryRef()
         assert geom is not None, "did not get geometry, expected %s" % geoms[1]
         wkt = geom.ExportToIsoWkt()
-        feat.Destroy()
         feat = None
 
         assert wkt == geoms[1], "WKT do not match: expected %s, got %s" % (
@@ -1195,23 +1194,17 @@ def test_ogr_pg_21(pg_ds):
     layer = pg_ds.ExecuteSQL("SELECT wkb_geometry FROM testgeom")
     assert layer is not None, "did not get testgeom layer"
 
-    feat = layer.GetNextFeature()
-    while feat is not None:
+    for feat in layer:
         geom = feat.GetGeometryRef()
         if (
             ogr.GT_HasZ(geom.GetGeometryType()) == 0
             or ogr.GT_HasM(geom.GetGeometryType()) == 0
         ):
-            feat.Destroy()
             feat = None
             pg_ds.ReleaseResultSet(layer)
             layer = None
             pytest.fail("expected feature with type >3000")
 
-        feat.Destroy()
-        feat = layer.GetNextFeature()
-
-    feat = None
     pg_ds.ReleaseResultSet(layer)
     layer = None
 
@@ -1259,7 +1252,6 @@ def test_ogr_pg_21_subgeoms(pg_ds):
                 ), "did not get the expected subgeometry, expected %s" % (
                     subgeom_TIN[j]
                 )
-        feat.Destroy()
         feat = None
 
 
@@ -1772,7 +1764,6 @@ def test_ogr_pg_33(pg_ds):
     # eacute in UTF8 : 0xc3 0xa9
     dst_feat.SetField("SHORTNAME", "\xc3\xa9")
     pg_lyr.CreateFeature(dst_feat)
-    dst_feat.Destroy()
 
 
 ###############################################################################
@@ -2412,7 +2403,6 @@ def test_ogr_pg_47(pg_ds, pg_postgis_version, pg_postgis_schema):
     )
     field_defn = ogr.FieldDefn("test_string", ogr.OFTString)
     lyr.CreateField(field_defn)
-    field_defn.Destroy()
 
     feature_defn = lyr.GetLayerDefn()
 
@@ -4859,6 +4849,13 @@ def test_ogr_pg_84(pg_ds):
 def test_ogr_pg_metadata(pg_ds, run_number):
 
     pg_ds = reconnect(pg_ds, update=1)
+
+    if run_number == 1:
+        pg_ds.ExecuteSQL(
+            "DROP EVENT TRIGGER IF EXISTS ogr_system_tables_event_trigger_for_metadata"
+        )
+        pg_ds.ExecuteSQL("DROP SCHEMA ogr_system_tables CASCADE")
+
     pg_ds.StartTransaction()
     lyr = pg_ds.CreateLayer(
         "test_ogr_pg_metadata", geom_type=ogr.wkbPoint, options=["OVERWRITE=YES"]
@@ -4913,7 +4910,6 @@ def test_ogr_pg_metadata_restricted_user(pg_ds):
     pg_ds = reconnect(pg_ds, update=1)
 
     try:
-
         pg_ds.ExecuteSQL("CREATE ROLE test_ogr_pg_metadata_restricted_user")
         with pg_ds.ExecuteSQL("SELECT current_schema()") as lyr:
             f = lyr.GetNextFeature()
@@ -4933,6 +4929,7 @@ def test_ogr_pg_metadata_restricted_user(pg_ds):
         )
 
         pg_ds = reconnect(pg_ds, update=1)
+        pg_ds.ExecuteSQL("DROP SCHEMA ogr_system_tables CASCADE")
         pg_ds.ExecuteSQL("SET ROLE test_ogr_pg_metadata_restricted_user")
 
         lyr = pg_ds.CreateLayer(
@@ -4943,9 +4940,12 @@ def test_ogr_pg_metadata_restricted_user(pg_ds):
         with gdal.quiet_errors():
             lyr.SetMetadata({"foo": "bar"})
 
-        gdal.ErrorReset()
-        pg_ds = reconnect(pg_ds, update=1)
-        assert gdal.GetLastErrorMsg() == ""
+            gdal.ErrorReset()
+            pg_ds = reconnect(pg_ds, update=1)
+        assert (
+            gdal.GetLastErrorMsg()
+            == "User lacks super user privilege to be able to create event trigger ogr_system_tables_event_trigger_for_metadata"
+        )
 
     finally:
         pg_ds = reconnect(pg_ds, update=1)
@@ -5901,7 +5901,8 @@ def test_ogr_pg_field_comment(pg_ds):
 def test_ogr_pg_long_identifiers(pg_ds):
 
     long_name = "test_" + ("X" * 64) + "_long_name"
-    short_name = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    short_name = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_3ba7c630"
+    assert len(short_name) == 63
     with gdal.quiet_errors():
         lyr = pg_ds.CreateLayer(long_name)
     assert lyr.GetName() == short_name
@@ -5909,11 +5910,54 @@ def test_ogr_pg_long_identifiers(pg_ds):
     assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     assert lyr.SyncToDisk() == ogr.OGRERR_NONE
 
+    long_name2 = "test_" + ("X" * 64) + "_long_name2"
+    short_name2 = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_bb4afe1c"
+    assert len(short_name2) == 63
+    with gdal.quiet_errors():
+        lyr = pg_ds.CreateLayer(long_name2)
+    assert lyr.GetName() == short_name2
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
+    long_name3 = "test_" + ("X" * (64 - len("test_")))
+    assert len(long_name3) == 64
+    short_name3 = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_b7ebb17c"
+    assert len(short_name3) == 63
+    with gdal.quiet_errors():
+        lyr = pg_ds.CreateLayer(long_name3)
+    assert lyr.GetName() == short_name3
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
+    long_name4 = "test_" + ("X" * (63 - len("test_")))
+    assert len(long_name4) == 63
+    short_name4 = "test_" + ("x" * (63 - len("test_")))
+    with gdal.quiet_errors():
+        lyr = pg_ds.CreateLayer(long_name4)
+    assert lyr.GetName() == short_name4
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
     pg_ds = reconnect(pg_ds, update=1)
 
-    got_lyr = pg_ds.GetLayerByName(long_name)
+    got_lyr = pg_ds.GetLayerByName(short_name)
     assert got_lyr
     assert got_lyr.GetName() == short_name
+
+    got_lyr = pg_ds.GetLayerByName(short_name2)
+    assert got_lyr
+    assert got_lyr.GetName() == short_name2
+
+    got_lyr = pg_ds.GetLayerByName(short_name3)
+    assert got_lyr
+    assert got_lyr.GetName() == short_name3
+
+    got_lyr = pg_ds.GetLayerByName(short_name4)
+    assert got_lyr
+    assert got_lyr.GetName() == short_name4
 
 
 ###############################################################################
@@ -6067,3 +6111,161 @@ def test_ogr_pg_no_postgis_GEOMETRY_NAME(pg_ds):
             gdal.GetLastErrorMsg()
             == "GEOMETRY_NAME=foo ignored, and set instead to 'wkb_geometry' as it is the only geometry column name recognized for non-PostGIS enabled databases."
         )
+
+
+###############################################################################
+# Test ignored conflicts
+
+
+@only_without_postgis
+def test_ogr_pg_skip_conflicts(pg_ds):
+    pg_ds.ExecuteSQL(
+        "CREATE TABLE test_ogr_skip_conflicts(id SERIAL PRIMARY KEY, gml_id character(16), beginnt character(20), UNIQUE(gml_id, beginnt))"
+    )
+
+    with gdal.config_option("OGR_PG_SKIP_CONFLICTS", "YES"):
+        # OGR_PG_SKIP_CONFLICTS and OGR_PG_RETRIEVE_FID cannot be used at the same time
+        with gdal.config_option("OGR_PG_RETRIEVE_FID", "YES"):
+            pg_ds = reconnect(pg_ds, update=1)
+            lyr = pg_ds.GetLayerByName("test_ogr_skip_conflicts")
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat["gml_id"] = "DERPLP0300000cG3"
+            feat["beginnt"] = "2020-07-10T04:48:14Z"
+            with gdal.quiet_errors():
+                assert lyr.CreateFeature(feat) != ogr.OGRERR_NONE
+
+    with gdal.config_option("OGR_PG_RETRIEVE_FID", "NO"):
+        pg_ds = reconnect(pg_ds, update=1)
+        lyr = pg_ds.GetLayerByName("test_ogr_skip_conflicts")
+
+        assert lyr.GetFeatureCount() == 0
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat["gml_id"] = "DERPLP0300000cG3"
+        feat["beginnt"] = "2020-07-10T04:48:14Z"
+        assert lyr.CreateFeature(feat) == ogr.OGRERR_NONE
+        assert lyr.GetFeatureCount() == 1
+
+        # Insert w/o OGR_PG_SKIP_CONFLICTS=YES succeeds, but doesn't add a feature
+        with gdal.config_option("OGR_PG_SKIP_CONFLICTS", "YES"):
+            pg_ds = reconnect(pg_ds, update=1)
+            lyr = pg_ds.GetLayerByName("test_ogr_skip_conflicts")
+
+            assert lyr.GetFeatureCount() == 1
+
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat["gml_id"] = "DERPLP0300000cG3"
+            feat["beginnt"] = "2020-07-10T04:48:14Z"
+            assert lyr.CreateFeature(feat) == ogr.OGRERR_NONE
+            assert lyr.GetFeatureCount() == 1
+
+        # Other feature succeeds and increments the feature count
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat["gml_id"] = "DERPLP0300000cG4"
+        feat["beginnt"] = "2020-07-10T04:48:14Z"
+        assert lyr.CreateFeature(feat) == ogr.OGRERR_NONE
+        assert lyr.GetFeatureCount() == 2
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/10311
+
+
+@only_without_postgis
+@gdaltest.enable_exceptions()
+def test_ogr_pg_ogr2ogr_with_multiple_dotted_table_name(pg_ds):
+
+    tmp_schema = "tmp_schema_issue_10311"
+    pg_ds.ExecuteSQL(f'CREATE SCHEMA "{tmp_schema}"')
+    try:
+        src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+        lyr = src_ds.CreateLayer(tmp_schema + ".table1", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        lyr.CreateFeature(f)
+        lyr = src_ds.CreateLayer(tmp_schema + ".table2", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("str"))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        lyr.CreateFeature(f)
+
+        gdal.VectorTranslate(pg_ds.GetDescription(), src_ds)
+
+        pg_ds = reconnect(pg_ds)
+        lyr = pg_ds.GetLayerByName(tmp_schema + ".table1")
+        assert lyr.GetFeatureCount() == 1
+        lyr = pg_ds.GetLayerByName(tmp_schema + ".table2")
+        assert lyr.GetFeatureCount() == 1
+
+    finally:
+        pg_ds.ExecuteSQL(f'DROP SCHEMA "{tmp_schema}" CASCADE')
+
+
+###############################################################################
+# Test scenario of https://lists.osgeo.org/pipermail/gdal-dev/2024-October/059608.html
+
+
+@only_without_postgis
+@gdaltest.enable_exceptions()
+def test_ogr_pg_empty_search_path(pg_ds):
+
+    with pg_ds.ExecuteSQL("SHOW search_path") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        old_search_path = f.GetField(0)
+        old_search_path = old_search_path.replace(
+            "test_ogr_pg_empty_search_path_no_postgis, ", ""
+        )
+
+    with pg_ds.ExecuteSQL("SELECT CURRENT_USER") as lyr:
+        f = lyr.GetNextFeature()
+        current_user = f.GetField(0)
+    pg_ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = ''")
+    try:
+        ds = reconnect(pg_ds, update=1)
+
+        with ds.ExecuteSQL("SHOW search_path") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            new_search_path = f.GetField(0)
+            assert new_search_path == "test_ogr_pg_empty_search_path_no_postgis, public"
+
+    finally:
+        ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = {old_search_path}")
+
+
+###############################################################################
+# Test appending to a layer where a field name was truncated to 63 characters.
+
+
+@only_without_postgis
+@gdaltest.enable_exceptions()
+def test_ogr_pg_findfield(pg_ds):
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("test_very_long_field_name")
+    src_lyr.CreateField(
+        ogr.FieldDefn(
+            "veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryyyyyyyyyyyyyyyyyyyyyyloooooooooooooong"
+        )
+    )
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField(0, "foo")
+    src_lyr.CreateFeature(f)
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(pg_ds.GetDescription(), src_ds)
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(pg_ds.GetDescription(), src_ds, accessMode="append")
+
+    lyr = pg_ds.GetLayerByName("test_very_long_field_name")
+    assert [f.GetField(0) for f in lyr] == ["foo", None]
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(
+            pg_ds.GetDescription(),
+            src_ds,
+            accessMode="append",
+            relaxedFieldNameMatch=True,
+        )
+    assert [f.GetField(0) for f in lyr] == ["foo", None, "foo"]

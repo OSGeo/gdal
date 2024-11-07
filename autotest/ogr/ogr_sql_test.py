@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import math
 import os
 import shutil
 
@@ -101,7 +102,9 @@ def test_ogr_sql_execute_sql(tmp_path, use_gdal):
     with pytest.raises(Exception):
         lyr.GetName()
 
-    assert get_lyr().GetFeatureCount() == 10
+    # This leaks memory
+    if not gdaltest.is_travis_branch("sanitize"):
+        assert get_lyr().GetFeatureCount() == 10
 
     # Check that we can actually remove the files (i.e. references on dataset have been dropped)
     os.unlink(tmp_path / "test_ogr_sql_execute_sql.shp")
@@ -254,12 +257,14 @@ def test_ogr_sql_4(data_ds):
 def test_ogr_sql_5(data_ds):
 
     with data_ds.ExecuteSQL(
-        "select max(eas_id), min(eas_id), avg(eas_id), sum(eas_id), count(eas_id) from idlink"
+        "select max(eas_id), min(eas_id), avg(eas_id), STDDEV_POP(eas_id), STDDEV_SAMP(eas_id), sum(eas_id), count(eas_id) from idlink"
     ) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat["max_eas_id"] == 179
         assert feat["min_eas_id"] == 158
         assert feat["avg_eas_id"] == pytest.approx(168.142857142857, abs=1e-12)
+        assert feat["STDDEV_POP_eas_id"] == pytest.approx(5.9384599116647205, rel=1e-15)
+        assert feat["STDDEV_SAMP_eas_id"] == pytest.approx(6.414269805898183, rel=1e-15)
         assert feat["count_eas_id"] == 7
         assert feat["sum_eas_id"] == 1177
 
@@ -416,6 +421,7 @@ def test_ogr_sql_13(data_ds):
 # Verify selection of, and on ogr_style and ogr_geom_wkt.
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_14():
 
     expect = [
@@ -449,6 +455,7 @@ def test_ogr_sql_15(data_ds):
 ###############################################################################
 
 
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_16():
 
     expect = [2]
@@ -462,6 +469,7 @@ def test_ogr_sql_16():
 ###############################################################################
 # Test the RFC 21 CAST operator.
 #
+@pytest.mark.require_driver("MapInfo File")
 def test_ogr_sql_17():
 
     expect = ["1", "2"]
@@ -714,6 +722,8 @@ def ds_for_invalid_statements():
         "SELECT 1 - FROM my_layer",
         "SELECT 1 * FROM my_layer",
         "SELECT 1 % FROM my_layer",
+        "SELECT x.",
+        "SELECT x AS",
         "SELECT *",
         "SELECT * FROM",
         "SELECT * FROM foo",
@@ -788,10 +798,15 @@ def ds_for_invalid_statements():
         "SELECT MAX(foo) FROM my_layer",
         "SELECT SUM(foo) FROM my_layer",
         "SELECT AVG(foo) FROM my_layer",
+        "SELECT STDDEV_POP(foo) FROM my_layer",
+        "SELECT STDDEV_SAMP(foo) FROM my_layer",
         "SELECT SUM(strfield) FROM my_layer",
         "SELECT AVG(strfield) FROM my_layer",
         "SELECT AVG(intfield, intfield) FROM my_layer",
+        "SELECT STDDEV_POP(strfield) FROM my_layer",
+        "SELECT STDDEV_SAMP(strfield) FROM my_layer",
         "SELECT * FROM my_layer WHERE AVG(intfield) = 1",
+        "SELECT * FROM my_layer WHERE STDDEV_POP(intfield) = 1",
         "SELECT * FROM 'foo' foo",
         "SELECT * FROM my_layer WHERE strfield =",
         "SELECT * FROM my_layer WHERE strfield = foo",
@@ -1100,10 +1115,11 @@ def test_ogr_sql_count_and_null():
             assert feat.GetFieldAsInteger(2) == 4, fieldname
 
     with ds.ExecuteSQL(
-        "select avg(intfield) from layer where intfield is null"
+        "select avg(intfield), STDDEV_POP(intfield) from layer where intfield is null"
     ) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat.IsFieldSetAndNotNull(0) == 0
+        assert feat.IsFieldSetAndNotNull(1) == 0
 
     # Fix crash when first values is null (#4509)
     with ds.ExecuteSQL("select distinct strfield_first_null from layer") as sql_lyr:
@@ -1195,11 +1211,11 @@ def test_ogr_sql_42(data_ds):
 
 def test_ogr_sql_43(data_ds):
 
-    sql = "SELECT '\"' as a, '\\'' as b, '''' as c FROM poly"
+    sql = "SELECT '\"' as a, '\\' as b, '''' as c FROM poly"
     with data_ds.ExecuteSQL(sql) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat["a"] == '"'
-        assert feat["b"] == "'"
+        assert feat["b"] == "\\"
         assert feat["c"] == "'"
 
 
@@ -1274,6 +1290,7 @@ def test_ogr_sql_hstore_get_value_valid(data_ds, sql, expected):
 # Test 64 bit GetFeatureCount()
 
 
+@pytest.mark.require_driver("OGR_VRT")
 def test_ogr_sql_45():
 
     ds = ogr.Open(
@@ -1935,6 +1952,13 @@ def get_available_dialects():
         ("(NOT intfield = 0) AND NOT (intfield IS NULL)", 1),
         ("NOT (intfield = 0 OR intfield IS NOT NULL)", 0),
         ("(NOT intfield = 0) AND NOT (intfield IS NOT NULL)", 0),
+        ("intfield <> 0 AND intfield <> 2", 1),
+        ("intfield IS NOT NULL AND intfield NOT IN (2)", 1),
+        ("NOT(intfield NOT IN (1) AND NULL NOT IN (1))", 1),
+        ("NOT(intfield IS NOT NULL AND intfield NOT IN (2))", 1),
+        ("NOT(NOT(intfield IS NOT NULL AND intfield NOT IN (2)))", 1),
+        ("NOT (intfield = 0 AND intfield = 0)", 1),
+        ("(intfield NOT IN (1) AND NULL NOT IN (1)) IS NULL", 1),
         # realfield
         ("1 + realfield >= 0", 1),
         ("realfield = 0", 0),
@@ -1999,3 +2023,135 @@ def test_ogr_sql_on_null(where, feature_count, dialect, ds_for_test_ogr_sql_on_n
             "select * from layer where " + where, dialect=dialect
         ) as sql_lyr:
             assert sql_lyr.GetFeatureCount() == feature_count
+
+
+def test_ogr_sql_ogr_style_hidden():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("test_ogr_sql_ogr_style_hidden")
+    lyr = ds.CreateLayer("layer")
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat["intfield"] = 1
+    feat["strfield"] = "my_style"
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+
+    with ds.ExecuteSQL(
+        "SELECT 'BRUSH(fc:#01234567)' AS OGR_STYLE HIDDEN FROM layer"
+    ) as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldCount() == 0
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() == "BRUSH(fc:#01234567)"
+
+    with ds.ExecuteSQL("SELECT strfield OGR_STYLE HIDDEN FROM layer") as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldCount() == 0
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() == "my_style"
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+
+    with ds.ExecuteSQL(
+        "SELECT CAST(strfield AS CHARACTER(255)) AS OGR_STYLE HIDDEN FROM layer"
+    ) as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldCount() == 0
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() == "my_style"
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+
+    with ds.ExecuteSQL("SELECT strfield OGR_STYLE HIDDEN, * FROM layer") as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldCount() == 2
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() == "my_style"
+        assert f["intfield"] == 1
+        assert f["strfield"] == "my_style"
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+        assert not f.IsFieldSet("intfield")
+        assert not f.IsFieldSet("strfield")
+
+    with pytest.raises(
+        Exception, match="HIDDEN keyword only supported on a column named OGR_STYLE"
+    ):
+        with ds.ExecuteSQL(
+            "SELECT 'foo' AS not_OGR_STYLE HIDDEN FROM layer"
+        ) as sql_lyr:
+            pass
+
+    with ds.ExecuteSQL("SELECT 123 AS OGR_STYLE HIDDEN FROM layer") as sql_lyr:
+        gdal.ErrorReset()
+        with gdal.quiet_errors():
+            f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+
+    with ds.ExecuteSQL("SELECT intfield AS OGR_STYLE HIDDEN FROM layer") as sql_lyr:
+        gdal.ErrorReset()
+        with gdal.quiet_errors():
+            f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+
+    with ds.ExecuteSQL(
+        'SELECT "_ogr_geometry_" AS OGR_STYLE HIDDEN FROM layer'
+    ) as sql_lyr:
+        gdal.ErrorReset()
+        with gdal.quiet_errors():
+            f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+
+
+def test_ogr_sql_identifier_hidden():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("test_ogr_sql_ogr_style_hidden")
+    lyr = ds.CreateLayer("hidden")
+    lyr.CreateField(ogr.FieldDefn("hidden", ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat["hidden"] = "val"
+    lyr.CreateFeature(feat)
+
+    with ds.ExecuteSQL("SELECT hidden FROM hidden") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["hidden"] == "val"
+
+    with ds.ExecuteSQL("SELECT hidden hidden FROM hidden hidden") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["hidden"] == "val"
+
+    with ds.ExecuteSQL("SELECT hidden AS hidden FROM hidden AS hidden") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["hidden"] == "val"
+
+    with ds.ExecuteSQL("SELECT 'foo' AS hidden FROM hidden") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["hidden"] == "foo"
+
+
+@pytest.mark.parametrize(
+    "input,expected_output",
+    [
+        [(1, 1e100, 1, -1e100), 2],
+        [(float("inf"), 1), float("inf")],
+        [(1, float("-inf")), float("-inf")],
+        [(1, float("nan")), float("nan")],
+        [(float("inf"), float("-inf")), float("nan")],
+    ],
+)
+def test_ogr_sql_kahan_babuska_eumaier_summation(input, expected_output):
+    """Test accurate SUM() implementation using Kahan-Babuska-Neumaier algorithm"""
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("v", ogr.OFTReal))
+    for v in input:
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat["v"] = v
+        lyr.CreateFeature(feat)
+
+    with ds.ExecuteSQL("SELECT SUM(v) FROM test") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        if math.isnan(expected_output):
+            assert math.isnan(f["SUM_v"])
+        else:
+            assert f["SUM_v"] == expected_output

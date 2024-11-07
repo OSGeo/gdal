@@ -9,29 +9,14 @@
  * Copyright (c) 2007, Frank Warmerdam
  * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
 #include "gdal_priv.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <utility>
 
@@ -146,7 +131,8 @@ static GDALDataType GetWorkDataType(GDALDataType eDataType)
             eWrkDT = eDataType;
             break;
 
-        default:
+        case GDT_Unknown:
+        case GDT_TypeCount:
             CPLAssert(false);
             eWrkDT = GDT_Float64;
             break;
@@ -200,7 +186,7 @@ bool GDALNoDataMaskBand::IsNoDataInRange(double dfNoDataValue,
 
         case GDT_Float32:
         {
-            return CPLIsNan(dfNoDataValue) || CPLIsInf(dfNoDataValue) ||
+            return std::isnan(dfNoDataValue) || std::isinf(dfNoDataValue) ||
                    GDALIsValueInRange<float>(dfNoDataValue);
         }
 
@@ -417,7 +403,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             return eErr;
         }
 
-        const bool bIsNoDataNan = CPLIsNan(m_dfNoDataValue) != 0;
+        const bool bIsNoDataNan = std::isnan(m_dfNoDataValue) != 0;
         GByte *pabyDest = static_cast<GByte *>(pData);
 
         /* --------------------------------------------------------------------
@@ -475,7 +461,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     for (int iX = 0; iX < nBufXSize; iX++)
                     {
                         const float fVal = pafSrc[i];
-                        if (bIsNoDataNan && CPLIsNan(fVal))
+                        if (bIsNoDataNan && std::isnan(fVal))
                             *pabyLineDest = 0;
                         else if (ARE_REAL_EQUAL(fVal, fNoData))
                             *pabyLineDest = 0;
@@ -499,7 +485,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     for (int iX = 0; iX < nBufXSize; iX++)
                     {
                         const double dfVal = padfSrc[i];
-                        if (bIsNoDataNan && CPLIsNan(dfVal))
+                        if (bIsNoDataNan && std::isnan(dfVal))
                             *pabyLineDest = 0;
                         else if (ARE_REAL_EQUAL(dfVal, m_dfNoDataValue))
                             *pabyLineDest = 0;

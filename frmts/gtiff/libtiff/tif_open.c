@@ -109,6 +109,15 @@ void TIFFOpenOptionsSetMaxCumulatedMemAlloc(TIFFOpenOptions *opts,
     opts->max_cumulated_mem_alloc = max_cumulated_mem_alloc;
 }
 
+/** Whether a warning should be emitted when encoutering a unknown tag.
+ * Default is FALSE since libtiff 4.7.1
+ */
+void TIFFOpenOptionsSetWarnAboutUnknownTags(TIFFOpenOptions *opts,
+                                            int warn_about_unknown_tags)
+{
+    opts->warn_about_unknown_tags = warn_about_unknown_tags;
+}
+
 void TIFFOpenOptionsSetErrorHandlerExtR(TIFFOpenOptions *opts,
                                         TIFFErrorHandlerExtR handler,
                                         void *errorhandler_user_data)
@@ -366,6 +375,7 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
     strcpy(tif->tif_name, name);
     tif->tif_mode = m & ~(O_CREAT | O_TRUNC);
     tif->tif_curdir = TIFF_NON_EXISTENT_DIR_NUMBER; /* non-existent directory */
+    tif->tif_curdircount = TIFF_NON_EXISTENT_DIR_NUMBER;
     tif->tif_curoff = 0;
     tif->tif_curstrip = (uint32_t)-1; /* invalid strip */
     tif->tif_row = (uint32_t)-1;      /* read/write pre-increment */
@@ -385,6 +395,7 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
         tif->tif_warnhandler_user_data = opts->warnhandler_user_data;
         tif->tif_max_single_mem_alloc = opts->max_single_mem_alloc;
         tif->tif_max_cumulated_mem_alloc = opts->max_cumulated_mem_alloc;
+        tif->tif_warn_about_unknown_tags = opts->warn_about_unknown_tags;
     }
 
     if (!readproc || !writeproc || !seekproc || !closeproc || !sizeproc)
@@ -607,6 +618,9 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
         tif->tif_diroff = 0;
         tif->tif_lastdiroff = 0;
         tif->tif_setdirectory_force_absolute = FALSE;
+        /* tif_curdircount = 0 means 'empty file opened for writing, but no IFD
+         * written yet' */
+        tif->tif_curdircount = 0;
         return (tif);
     }
 
@@ -737,9 +751,17 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
              * example, it may be broken) and want to proceed to other
              * directories. I this case we use the TIFF_HEADERONLY flag to open
              * file and return immediately after reading TIFF header.
+             * However, the pointer to TIFFSetField() and TIFFGetField()
+             * (i.e. tif->tif_tagmethods.vsetfield and
+             * tif->tif_tagmethods.vgetfield) need to be initialized, which is
+             * done in TIFFDefaultDirectory().
              */
             if (tif->tif_flags & TIFF_HEADERONLY)
+            {
+                if (!TIFFDefaultDirectory(tif))
+                    goto bad;
                 return (tif);
+            }
 
             /*
              * Setup initial directory.

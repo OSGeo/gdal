@@ -9,23 +9,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef OGR_P_H_INCLUDED
@@ -200,12 +184,10 @@ OGRErr CPL_DLL OGRCheckPermutation(const int *panPermutation, int nSize);
 
 /* GML related */
 
-OGRGeometry *GML2OGRGeometry_XMLNode(const CPLXMLNode *psNode,
-                                     int nPseudoBoolGetSecondaryGeometryOption,
-                                     int nRecLevel = 0, int nSRSDimension = 0,
-                                     bool bIgnoreGSG = false,
-                                     bool bOrientation = true,
-                                     bool bFaceHoleNegative = false);
+OGRGeometry CPL_DLL *GML2OGRGeometry_XMLNode(
+    const CPLXMLNode *psNode, int nPseudoBoolGetSecondaryGeometryOption,
+    int nRecLevel = 0, int nSRSDimension = 0, bool bIgnoreGSG = false,
+    bool bOrientation = true, bool bFaceHoleNegative = false);
 
 /************************************************************************/
 /*                        PostGIS EWKB encoding                         */
@@ -276,7 +258,8 @@ inline uint64_t OGRRoundValueIEEE754(uint64_t nVal, int nBitsPrecision)
         return nVal;
     if (nNullifiedBits >= MANTISSA_SIZE)
         nNullifiedBits = MANTISSA_SIZE;
-    nVal &= std::numeric_limits<uint64_t>::max() << nNullifiedBits;
+    nVal >>= nNullifiedBits;
+    nVal <<= nNullifiedBits;
     return nVal;
 }
 
@@ -337,5 +320,14 @@ inline void OGRRoundCoordinatesIEEE754(int nBitsPrecision, GByte *pabyBase,
         }
     }
 }
+
+/* -------------------------------------------------------------------- */
+/*      helper functions for string escaping.                           */
+/* -------------------------------------------------------------------- */
+
+/** Replace all occurrences of ch by it repeated twice.
+ * Typically used for SQL string literal or identifier escaping.
+ */
+std::string CPL_DLL OGRDuplicateCharacter(const std::string &osStr, char ch);
 
 #endif /* ndef OGR_P_H_INCLUDED */

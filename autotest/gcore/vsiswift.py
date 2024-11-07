@@ -9,23 +9,7 @@
 ###############################################################################
 # Copyright (c) 2018 Even Rouault <even dot rouault at spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -797,6 +781,56 @@ def test_vsiswift_fake_write(server):
                 gdal.VSIFCloseL(f)
                 pytest.fail(ret)
             gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test write
+
+
+def test_vsiswift_fake_write_zero_file(server):
+
+    gdal.VSICurlClearCache()
+
+    with gdal.config_options(
+        {
+            "SWIFT_AUTH_TOKEN": "my_auth_token",
+            "SWIFT_AUTH_V1_URL": "",
+            "SWIFT_KEY": "",
+            "SWIFT_STORAGE_URL": f"http://127.0.0.1:{server.port}/v1/AUTH_something",
+            "SWIFT_USER": "",
+        }
+    ):
+
+        # Test creation of BlockBob
+        f = gdal.VSIFOpenL("/vsiswift/test_copy/file.bin", "wb")
+        assert f is not None
+
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+            h = request.headers
+            if (
+                "x-auth-token" not in h
+                or h["x-auth-token"] != "my_auth_token"
+                or "Content-Length" not in h
+                or h["Content-Length"] != "0"
+            ):
+                sys.stderr.write("Bad headers: %s\n" % str(h))
+                request.send_response(403)
+                return
+
+            request.protocol_version = "HTTP/1.1"
+            request.wfile.write("HTTP/1.1 100 Continue\r\n\r\n".encode("ascii"))
+
+            request.send_response(200)
+            request.send_header("Content-Length", 0)
+            request.end_headers()
+
+        handler.add(
+            "PUT", "/v1/AUTH_something/test_copy/file.bin", custom_method=method
+        )
+        with webserver.install_http_handler(handler):
+            assert gdal.VSIFCloseL(f) == 0
 
 
 ###############################################################################

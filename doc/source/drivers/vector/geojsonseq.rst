@@ -46,7 +46,11 @@ The driver accepts three types of sources of data:
 -  Text passed directly as filename, and encoded as GeoJSON sequences
 
 The URL/filename/text might be prefixed with GeoJSONSeq: to avoid any
-ambiguity with other drivers.
+ambiguity with other drivers. Alternatively, starting
+with GDAL 3.10, specifying the ``-if GeoJSONSeq`` option to command line utilities
+accepting it, or ``GeoJSONSeq`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+URL/filename/text.
 
 Configuration options
 ---------------------
@@ -115,6 +119,14 @@ The following layer creation options are supported:
       Whether to try to interpret string fields as JSON arrays or objects
       if they start and end with brackets and braces, even if they do
       not have their subtype set to JSON.
+
+-  .. lco:: WRITE_BBOX
+      :choices: YES, NO
+      :default: NO
+      :since: 3.10
+
+      Set to YES to write a bbox property with the bounding box of the
+      geometry at the feature level.
 
 Geometry coordinate precision
 -----------------------------

@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrsf_frmts.h"
@@ -70,7 +54,9 @@ static int OGRFeatherDriverIsArrowIPCStreamBasic(GDALOpenInfo *poOpenInfo)
                 1024 * 1024 -
                     (CONTINUATION_SIZE + METADATA_SIZE_SIZE + PADDING_MAX_SIZE))
             {
-                return false;
+                if (poOpenInfo->IsSingleAllowedDriver("ARROW"))
+                    return true;
+                return GDAL_IDENTIFY_UNKNOWN;
             }
             const int nSizeToRead = CONTINUATION_SIZE + METADATA_SIZE_SIZE +
                                     nMetadataSize + PADDING_MAX_SIZE;
@@ -79,6 +65,8 @@ static int OGRFeatherDriverIsArrowIPCStreamBasic(GDALOpenInfo *poOpenInfo)
                 return false;
             }
 
+            if (poOpenInfo->IsSingleAllowedDriver("ARROW"))
+                return true;
             return GDAL_IDENTIFY_UNKNOWN;
         }
 
@@ -89,6 +77,8 @@ static int OGRFeatherDriverIsArrowIPCStreamBasic(GDALOpenInfo *poOpenInfo)
             nFileSize - (CONTINUATION_SIZE + METADATA_SIZE_SIZE))
             return false;
 
+        if (poOpenInfo->IsSingleAllowedDriver("ARROW"))
+            return true;
         return GDAL_IDENTIFY_UNKNOWN;
     }
     return false;
@@ -141,6 +131,13 @@ bool OGRFeatherDriverIsArrowFileFormat(GDALOpenInfo *poOpenInfo)
 
 int OGRFeatherDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
+    if (STARTS_WITH(poOpenInfo->pszFilename, "gdalvsi://"))
+    {
+        GDALOpenInfo oOpenInfo(poOpenInfo->pszFilename + strlen("gdalvsi://"),
+                               poOpenInfo->nOpenFlags);
+        return OGRFeatherDriverIdentify(&oOpenInfo);
+    }
+
     int ret = OGRFeatherDriverIsArrowIPCStreamBasic(poOpenInfo);
     if (ret == GDAL_IDENTIFY_TRUE || ret == GDAL_IDENTIFY_UNKNOWN)
         return ret;

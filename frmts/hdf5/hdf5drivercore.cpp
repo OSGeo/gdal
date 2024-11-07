@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2023, Even Rouault, <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "hdf5drivercore.h"
@@ -59,17 +43,12 @@ int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
             GDALGetDriverByName("netCDF") != nullptr)
         {
             const char *const apszAllowedDriver[] = {"netCDF", nullptr};
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            GDALDatasetH hDS = GDALOpenEx(
-                poOpenInfo->pszFilename,
-                GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VECTOR,
-                apszAllowedDriver, nullptr, nullptr);
-            CPLPopErrorHandler();
-            if (hDS)
-            {
-                GDALClose(hDS);
-                return true;
-            }
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+            return std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                       poOpenInfo->pszFilename,
+                       GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER |
+                           GDAL_OF_VECTOR,
+                       apszAllowedDriver, nullptr, nullptr)) != nullptr;
         }
         return false;
     };
@@ -78,6 +57,11 @@ int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
         (poOpenInfo->nHeaderBytes > 512 + 8 &&
          memcmp(poOpenInfo->pabyHeader + 512, achSignature, 8) == 0))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("HDF5"))
+        {
+            return TRUE;
+        }
+
         // The tests to avoid opening KEA and BAG drivers are not
         // necessary when drivers are built in the core lib, as they
         // are registered after HDF5, but in the case of plugins, we
@@ -113,7 +97,8 @@ int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
     // The HDF5 signature can be at offsets 512, 1024, 2048, etc.
     if (poOpenInfo->fpL != nullptr &&
         (EQUAL(osExt, "h5") || EQUAL(osExt, "hdf5") || EQUAL(osExt, "nc") ||
-         EQUAL(osExt, "cdf") || EQUAL(osExt, "nc4")))
+         EQUAL(osExt, "cdf") || EQUAL(osExt, "nc4") ||
+         poOpenInfo->IsSingleAllowedDriver("HDF5")))
     {
         vsi_l_offset nOffset = 512;
         for (int i = 0; i < 64; i++)
@@ -126,6 +111,10 @@ int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
             }
             if (memcmp(abyBuf, achSignature, 8) == 0)
             {
+                if (poOpenInfo->IsSingleAllowedDriver("HDF5"))
+                {
+                    return TRUE;
+                }
                 // Avoid opening NC files if the netCDF driver is available and
                 // they are recognized by it.
                 if (IsRecognizedByNetCDFDriver())
@@ -247,15 +236,25 @@ static GDALSubdatasetInfo *HDF5DriverGetSubdatasetInfo(const char *pszFileName)
 /*                         IdentifySxx()                                */
 /************************************************************************/
 
-static bool IdentifySxx(GDALOpenInfo *poOpenInfo, const char *pszConfigOption,
+static bool IdentifySxx(GDALOpenInfo *poOpenInfo, const char *pszDriverName,
+                        const char *pszConfigOption,
                         const char *pszMainGroupName)
 {
+    if (STARTS_WITH(poOpenInfo->pszFilename, pszDriverName) &&
+        poOpenInfo->pszFilename[strlen(pszDriverName)] == ':')
+        return TRUE;
+
     // Is it an HDF5 file?
     static const char achSignature[] = "\211HDF\r\n\032\n";
 
     if (poOpenInfo->pabyHeader == nullptr ||
         memcmp(poOpenInfo->pabyHeader, achSignature, 8) != 0)
         return FALSE;
+
+    if (poOpenInfo->IsSingleAllowedDriver(pszDriverName))
+    {
+        return TRUE;
+    }
 
     // GDAL_Sxxx_IDENTIFY can be set to NO only for tests, to test that
     // HDF5Dataset::Open() can redirect to Sxxx if the below logic fails
@@ -303,10 +302,8 @@ static bool IdentifySxx(GDALOpenInfo *poOpenInfo, const char *pszConfigOption,
 int S102DatasetIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (STARTS_WITH(poOpenInfo->pszFilename, "S102:"))
-        return TRUE;
-
-    return IdentifySxx(poOpenInfo, "GDAL_S102_IDENTIFY", "BathymetryCoverage");
+    return IdentifySxx(poOpenInfo, "S102", "GDAL_S102_IDENTIFY",
+                       "BathymetryCoverage");
 }
 
 /************************************************************************/
@@ -316,10 +313,7 @@ int S102DatasetIdentify(GDALOpenInfo *poOpenInfo)
 int S104DatasetIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (STARTS_WITH(poOpenInfo->pszFilename, "S104:"))
-        return TRUE;
-
-    return IdentifySxx(poOpenInfo, "GDAL_S104_IDENTIFY", "WaterLevel");
+    return IdentifySxx(poOpenInfo, "S104", "GDAL_S104_IDENTIFY", "WaterLevel");
 }
 
 /************************************************************************/
@@ -329,10 +323,8 @@ int S104DatasetIdentify(GDALOpenInfo *poOpenInfo)
 int S111DatasetIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (STARTS_WITH(poOpenInfo->pszFilename, "S111:"))
-        return TRUE;
-
-    return IdentifySxx(poOpenInfo, "GDAL_S111_IDENTIFY", "SurfaceCurrent");
+    return IdentifySxx(poOpenInfo, "S111", "GDAL_S111_IDENTIFY",
+                       "SurfaceCurrent");
 }
 
 /************************************************************************/
@@ -354,7 +346,13 @@ int BAGDatasetIdentify(GDALOpenInfo *poOpenInfo)
 
     // Does it have the extension .bag?
     if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "bag"))
+    {
+        if (poOpenInfo->IsSingleAllowedDriver("BAG"))
+        {
+            return TRUE;
+        }
         return FALSE;
+    }
 
     return TRUE;
 }

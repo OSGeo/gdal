@@ -7,23 +7,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2023, Even Rouault <even.rouault at spatialys.com>
 /*
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_unit_test.h"
@@ -154,11 +138,10 @@ class PushNotOperationDownToStackFixture
             std::make_tuple("NOT(1 <= 2)", "1 > 2"),
             std::make_tuple("NOT(1 < 2)", "1 >= 2"),
             std::make_tuple("NOT(NOT(1))", "1"),
-            std::make_tuple("NOT(1 AND 2)", "(NOT (1)) OR (NOT (2))"),
-            std::make_tuple("NOT(1 OR 2)", "(NOT (1)) AND (NOT (2))"),
-            std::make_tuple("3 AND NOT(1 OR 2)",
-                            "3 AND ((NOT (1)) AND (NOT (2)))"),
-            std::make_tuple("NOT(NOT(1 = 2) OR 2)", "(1 = 2) AND (NOT (2))"),
+            std::make_tuple("NOT(1 AND 2)", "(NOT 1) OR (NOT 2)"),
+            std::make_tuple("NOT(1 OR 2)", "(NOT 1) AND (NOT 2)"),
+            std::make_tuple("3 AND NOT(1 OR 2)", "3 AND ((NOT 1) AND (NOT 2))"),
+            std::make_tuple("NOT(NOT(1 = 2) OR 2)", "(1 = 2) AND (NOT 2)"),
             std::make_tuple("1", "1"),
         };
     }
@@ -216,7 +199,8 @@ TEST_F(test_ogr_swq, select_unparse)
         swq_select select;
         const char *pszSQL =
             "SELECT DISTINCT a, \"a b\" AS renamed, AVG(x.a) AS avg, MIN(a), "
-            "MAX(\"a b\"), SUM(a), AVG(a), COUNT(a), COUNT(DISTINCT a) "
+            "MAX(\"a b\"), SUM(a), AVG(a), COUNT(a), COUNT(DISTINCT a), "
+            "STDDEV_POP(a), STDDEV_SAMP(a) "
             "FROM 'foo'.\"FOO BAR\" AS x "
             "JOIN 'bar'.BAR AS y ON FOO.x = BAR.y "
             "WHERE 1 ORDER BY a, \"a b\" DESC "

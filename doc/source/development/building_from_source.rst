@@ -4,6 +4,29 @@
 Building GDAL from source
 ================================================================================
 
+.. _build_requirements:
+
+Build requirements
+--------------------------------------------------------------------------------
+
+The minimum requirements to build GDAL are:
+
+- CMake >= 3.16, and an associated build system (make, ninja, Visual Studio, etc.)
+- C99 compiler
+- C++17 compiler since GDAL 3.9 (C++11 in previous versions)
+- PROJ >= 6.3.1
+
+Additional requirements to run the GDAL test suite are:
+
+- SWIG >= 4, for building bindings to other programming languages
+- Python >= 3.8
+- Python packages listed in `autotest/requirements.txt`
+
+A number of optional libraries are also strongly recommended for most builds:
+SQLite3, expat, libcurl, zlib, libtiff, libgeotiff, libpng, libjpeg, etc.
+Consult :ref:`raster_drivers` and :ref:`vector_drivers` pages for information
+on dependencies of optional drivers.
+
 CMake (GDAL versions >= 3.5.0)
 --------------------------------------------------------------------------------
 
@@ -200,6 +223,36 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
     variable, and assumes that the
     `CMAKE_SKIP_INSTALL_RPATH <https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_RPATH.html>`__
     variable is not set.
+
+Resource files embedding
+++++++++++++++++++++++++
+
+Starting with GDAL 3.11, if a C23-compatible compiler is used, such as
+clang >= 19 or GCC >= 15, it is possible to embed resource files inside
+the GDAL library, without relying on resource files to be available on the file
+system (such resource files are located through an hard-coded
+path at build time in ``${CMAKE_INSTALL_PREFIX}/share/gdal``, or at run-time
+through the :config:`GDAL_DATA` configuration option).
+
+The following CMake options control that behavior:
+
+.. option:: EMBED_RESOURCE_FILES=ON/OFF
+
+    .. versionadded:: 3.11
+
+    Default is OFF for shared library builds (BUILD_SHARED_LIBS=ON), and ON
+    for static library builds (BUILD_SHARED_LIBS=OFF).
+    When ON, resource files needed by GDAL will be embedded into the GDAL library
+    and/or relevant plugins.
+
+.. option:: USE_ONLY_EMBEDDED_RESOURCE_FILES=ON/OFF
+
+    .. versionadded:: 3.11
+
+    Even if EMBED_RESOURCE_FILES=ON, GDAL will still try to locate resource
+    files on the file system by default , and fallback to the embedded version if
+    not found. By setting USE_ONLY_EMBEDDED_RESOURCE_FILES=ON, no attempt
+    at locating resource files on the file system is made. Default is OFF.
 
 CMake package dependent options
 +++++++++++++++++++++++++++++++
@@ -1134,6 +1187,20 @@ It is used by the internal libtiff library or the :ref:`raster.zarr` driver.
     Control whether to use LibLZMA. Defaults to ON when LibLZMA is found.
 
 
+libOpenDRIVE
+************
+
+`libOpenDRIVE <https://github.com/pageldev/libOpenDRIVE>`_ in version >= 0.6.0 is required for the :ref:`vector.xodr` driver.
+
+.. option:: OpenDrive_DIR
+
+    Path to libOpenDRIVE CMake configuration directory ``<installDir>/cmake/``. The :file:`cmake/` path is usually automatically created when installing libOpenDRIVE and contains the necessary configuration files for inclusion into other project builds.
+
+.. option:: GDAL_USE_OPENDRIVE=ON/OFF
+
+    Control whether to use libOpenDRIVE. Defaults to ON when libOpenDRIVE is found.
+
+
 LibQB3
 ******
 
@@ -1143,7 +1210,6 @@ by the :ref:`raster.marfa` driver.
 .. option:: GDAL_USE_LIBQB3=ON/OFF
 
     Control whether to use LibQB3. Defaults to ON when LibQB3 is found.
-
 
 
 LibXml2
@@ -1164,7 +1230,6 @@ capabilities in GMLJP2v2 generation.
 .. option:: GDAL_USE_LIBXML2=ON/OFF
 
     Control whether to use LibXml2. Defaults to ON when LibXml2 is found.
-
 
 
 LURATECH
@@ -1546,7 +1611,7 @@ The Oracle Instant Client SDK (closed source/proprietary) is required for the
 
 .. option:: Oracle_ROOT
 
-    Path to the root directory of the Oracle Instant Client SDK
+    Path to the root directory of the Oracle Instant Client SDK.
 
 .. option:: GDAL_USE_ORACLE=ON/OFF
 
@@ -1581,7 +1646,7 @@ Regular Expressions support. It is used for the REGEXP operator in drivers using
 
 .. option:: PCRE2_LIBRARY
 
-    Path to a shared or static library file with "pcre2-8" in its name
+    Path to a shared or static library file with "pcre2-8" in its name.
 
 .. option:: GDAL_USE_PCRE2=ON/OFF
 
@@ -2485,7 +2550,7 @@ How do I get PROJ ?
 
 PROJ is the only required build-time dependency of GDAL that is not vendorized
 in the GDAL source code tree. Consequently, the PROJ header and library must be available
-when configuring GDAL's CMake. Consult `PROJ installation <https://proj.org/install.html>`.
+when configuring GDAL's CMake. Consult `PROJ installation <https://proj.org/install.html>`__.
 
 Conflicting PROJ libraries
 **************************
@@ -2511,5 +2576,5 @@ crashes will occur at runtime (often at process termination with a
 Autoconf/nmake (GDAL versions < 3.5.0)
 --------------------------------------------------------------------------------
 
-See https://trac.osgeo.org/gdal/wiki/BuildHints for hints for GDAL < 3.5
+See http://web.archive.org/https://trac.osgeo.org/gdal/wiki/BuildHints for hints for GDAL < 3.5
 autoconf and nmake build systems.

@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import struct
@@ -557,3 +541,119 @@ def test_xyz_looks_like_missing_lines():
             9,
             10,
         )
+
+
+###############################################################################
+
+
+def yxzContent():
+    content = """0 0 65
+0 1 66
+1 0 67
+1 1 68
+2 0 69
+2 1 70
+"""
+    return content
+
+
+###############################################################################
+# Test with open option COLUMN_ORDER. Basic case with YXZ
+
+
+def test_xyz_column_order_basic_yxz():
+
+    content = yxzContent()
+
+    gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
+    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=YXZ"])
+    assert ds.RasterXSize == 2 and ds.RasterYSize == 3
+    buf = ds.ReadRaster(0, 2, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (69, 70)
+    buf = ds.ReadRaster(0, 1, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (67, 68)
+    buf = ds.ReadRaster(0, 0, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (65, 66)
+    buf = ds.ReadRaster(0, 2, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (69, 70)
+    ds = None
+    gdal.Unlink("/vsimem/grid.xyz")
+
+
+###############################################################################
+# Test with open option COLUMN_ORDER. Overrides header
+
+
+def test_xyz_column_order_overrides_header():
+
+    content = (
+        """x y z
+"""
+        + yxzContent()
+    )
+
+    gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
+    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=YXZ"])
+    assert ds.RasterXSize == 2 and ds.RasterYSize == 3
+    buf = ds.ReadRaster(0, 2, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (69, 70)
+    ds = None
+    gdal.Unlink("/vsimem/grid.xyz")
+
+
+###############################################################################
+# Test with open option COLUMN_ORDER. Auto
+
+
+def test_xyz_column_order_auto():
+
+    content = (
+        """y x z
+"""
+        + yxzContent()
+    )
+
+    gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
+    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=AUTO"])
+    assert ds.RasterXSize == 2 and ds.RasterYSize == 3
+    buf = ds.ReadRaster(0, 2, 2, 1)
+    assert struct.unpack("B" * 2, buf) == (69, 70)
+    ds = None
+    gdal.Unlink("/vsimem/grid.xyz")
+
+
+###############################################################################
+# Test with open option COLUMN_ORDER. wrong option
+
+
+def test_xyz_column_order_wrong_option():
+
+    content = (
+        """y x z
+"""
+        + yxzContent()
+    )
+
+    gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
+    with pytest.raises(Exception):
+        gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=WRONG"])
+    gdal.Unlink("/vsimem/grid.xyz")
+
+
+###############################################################################
+# Test with open option COLUMN_ORDER. XYZ
+
+
+def test_xyz_column_order_xyz():
+
+    content = (
+        """y x z
+"""
+        + yxzContent()
+    )
+
+    gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
+    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=XYZ"])
+    assert ds.RasterXSize == 3 and ds.RasterYSize == 2
+    ds = None
+    gdal.Unlink("/vsimem/grid.xyz")

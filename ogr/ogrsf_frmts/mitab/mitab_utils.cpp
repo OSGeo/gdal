@@ -9,23 +9,7 @@
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  **********************************************************************/
 
 #include "cpl_port.h"
@@ -455,53 +439,75 @@ char *TABEscapeString(char *pszString)
  *
  * The returned string should be freed by the caller.
  **********************************************************************/
-char *TABCleanFieldName(const char *pszSrcName)
+char *TABCleanFieldName(const char *pszSrcName, const char *pszEncoding,
+                        bool bStrictLaundering)
 {
     char *pszNewName = CPLStrdup(pszSrcName);
-    if (strlen(pszNewName) > 31)
-    {
-        pszNewName[31] = '\0';
-        CPLError(CE_Warning,
-                 static_cast<CPLErrorNum>(TAB_WarningInvalidFieldName),
-                 "Field name '%s' is longer than the max of 31 characters. "
-                 "'%s' will be used instead.",
-                 pszSrcName, pszNewName);
-    }
-
-    // According to the MapInfo User's Guide (p. 240, v5.5).
-    // New Table Command:
-    //  Name:
-    // Displays the field name in the name box. You can also enter new field
-    // names here. Defaults are Field1, Field2, etc. A field name can contain
-    // up to 31 alphanumeric characters. Use letters, numbers, and the
-    // underscore. Do not use spaces; instead, use the underscore character
-    // (_) to separate words in a field name. Use upper and lower case for
-    // legibility, but MapInfo is not case-sensitive.
-    //
-    // It was also verified that extended chars with accents are also
-    // accepted.
     int numInvalidChars = 0;
-    for (int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++)
+
+    if (bStrictLaundering)
     {
-        if (pszSrcName[i] == '#')
+        if (strlen(pszNewName) > 31)
         {
-            if (i == 0)
+            pszNewName[31] = '\0';
+            CPLError(CE_Warning,
+                     static_cast<CPLErrorNum>(TAB_WarningInvalidFieldName),
+                     "Field name '%s' is longer than the max of 31 characters. "
+                     "'%s' will be used instead.",
+                     pszSrcName, pszNewName);
+        }
+
+        // According to the MapInfo User's Guide (p. 240, v5.5).
+        // New Table Command:
+        //  Name:
+        // Displays the field name in the name box. You can also enter new field
+        // names here. Defaults are Field1, Field2, etc. A field name can contain
+        // up to 31 alphanumeric characters. Use letters, numbers, and the
+        // underscore. Do not use spaces; instead, use the underscore character
+        // (_) to separate words in a field name. Use upper and lower case for
+        // legibility, but MapInfo is not case-sensitive.
+        //
+        // It was also verified that extended chars with accents are also
+        // accepted.
+        bool bNeutralCharset =
+            (pszEncoding == nullptr || strlen(pszEncoding) == 0);
+        for (int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++)
+        {
+            if (pszSrcName[i] == '#')
+            {
+                if (i == 0)
+                {
+                    pszNewName[i] = '_';
+                    numInvalidChars++;
+                }
+            }
+            else if (!(pszSrcName[i] == '_' ||
+                       (i != 0 && pszSrcName[i] >= '0' &&
+                        pszSrcName[i] <= '9') ||
+                       (!bNeutralCharset ||
+                        ((pszSrcName[i] >= 'a' && pszSrcName[i] <= 'z') ||
+                         (pszSrcName[i] >= 'A' && pszSrcName[i] <= 'Z') ||
+                         static_cast<GByte>(pszSrcName[i]) >= 192))))
             {
                 pszNewName[i] = '_';
                 numInvalidChars++;
             }
         }
-        else if (!(pszSrcName[i] == '_' ||
-                   (i != 0 && pszSrcName[i] >= '0' && pszSrcName[i] <= '9') ||
-                   (pszSrcName[i] >= 'a' && pszSrcName[i] <= 'z') ||
-                   (pszSrcName[i] >= 'A' && pszSrcName[i] <= 'Z') ||
-                   static_cast<GByte>(pszSrcName[i]) >= 192))
+    }
+    else
+    {
+        // There is a note at mapinfo-pro-v2021-user-guide.pdf
+        // (p. 1425, Columns section: "Field names cannot have spaces".
+        // There seem to be no other constraints.
+        for (int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++)
         {
-            pszNewName[i] = '_';
-            numInvalidChars++;
+            if (pszSrcName[i] == ' ')
+            {
+                pszNewName[i] = '_';
+                numInvalidChars++;
+            }
         }
     }
-
     if (numInvalidChars > 0)
     {
         CPLError(CE_Warning,
@@ -512,68 +518,6 @@ char *TABCleanFieldName(const char *pszSrcName)
     }
 
     return pszNewName;
-}
-
-/**********************************************************************
- * MapInfo Units string to numeric ID conversion
- **********************************************************************/
-typedef struct
-{
-    int nUnitId;
-    const char *pszAbbrev;
-} MapInfoUnitsInfo;
-
-static const MapInfoUnitsInfo gasUnitsList[] = {
-    {0, "mi"},        {1, "km"},          {2, "in"},  {3, "ft"},
-    {4, "yd"},        {5, "mm"},          {6, "cm"},  {7, "m"},
-    {8, "survey ft"}, {8, "survey foot"},  // alternate
-    {13, nullptr},    {9, "nmi"},         {30, "li"}, {31, "ch"},
-    {32, "rd"},       {-1, nullptr}};
-
-/**********************************************************************
- *                       TABUnitIdToString()
- *
- * Return the MIF units name for specified units id.
- * Return "" if no match found.
- *
- * The returned string should not be freed by the caller.
- **********************************************************************/
-const char *TABUnitIdToString(int nId)
-{
-    const MapInfoUnitsInfo *psList = gasUnitsList;
-
-    while (psList->nUnitId != -1)
-    {
-        if (psList->nUnitId == nId)
-            return psList->pszAbbrev;
-        psList++;
-    }
-
-    return "";
-}
-
-/**********************************************************************
- *                       TABUnitIdFromString()
- *
- * Return the units ID for specified MIF units name
- *
- * Returns -1 if no match found.
- **********************************************************************/
-int TABUnitIdFromString(const char *pszName)
-{
-    if (pszName == nullptr)
-        return 13;
-
-    const MapInfoUnitsInfo *psList = gasUnitsList;
-
-    while (psList->nUnitId != -1)
-    {
-        if (psList->pszAbbrev != nullptr && EQUAL(psList->pszAbbrev, pszName))
-            return psList->nUnitId;
-        psList++;
-    }
-
-    return -1;
 }
 
 /**********************************************************************

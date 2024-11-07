@@ -12,23 +12,7 @@
 # Copyright (c) 2010-2011, Even Rouault <even dot rouault at spatialys.com>
 # Copyright (c) 1998, Frank Warmerdam
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 # ***************************************************************************/
 
 import math
@@ -402,9 +386,8 @@ def main(argv=None):
             print(line)
 
         stats = hBand.GetStatistics(bApproxStats, bStats)
-        # Dirty hack to recognize if stats are valid. If invalid, the returned
-        # stddev is negative
-        if stats[3] >= 0.0:
+        # Before GDAL 3.10, a negative value for stddev indicated an error
+        if stats is not None and stats[3] >= 0.0:
             print(
                 "  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f"
                 % (stats[0], stats[1], stats[2], stats[3])

@@ -10,23 +10,7 @@
  * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2015, Faza Mahamood
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -1120,6 +1104,8 @@ static bool CanUseBuildVRT(int nSrcCount, GDALDatasetH *pahSrcDS)
     return bCanUseBuildVRT;
 }
 
+#ifdef HAVE_TIFF
+
 /************************************************************************/
 /*                      DealWithCOGOptions()                            */
 /************************************************************************/
@@ -1175,8 +1161,8 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
 
     GDALWarpAppOptions oClonedOptions(*psOptions);
     oClonedOptions.bQuiet = true;
-    CPLString osTmpFilename;
-    osTmpFilename.Printf("/vsimem/gdalwarp/%p.tif", &oClonedOptions);
+    const CPLString osTmpFilename(
+        VSIMemGenerateHiddenFilename("gdalwarp_tmp.tif"));
     CPLStringList aosTmpGTiffCreateOptions;
     aosTmpGTiffCreateOptions.SetNameValue("SPARSE_OK", "YES");
     aosTmpGTiffCreateOptions.SetNameValue("TILED", "YES");
@@ -1223,6 +1209,8 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
     VSIUnlink(osTmpFilename);
     return bRet;
 }
+
+#endif
 
 /************************************************************************/
 /*                      GDALWarpIndirect()                              */
@@ -1289,11 +1277,14 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
         if ((nBands == 1 ||
              (nBands > 1 && GDALGetRasterColorInterpretation(GDALGetRasterBand(
                                 pahSrcDS[0], nBands)) != GCI_AlphaBand)) &&
-            (psOptions->bEnableDstAlpha ||
-             (EQUAL(psOptions->osFormat.c_str(), "COG") &&
-              COGHasWarpingOptions(aosCreateOptions.List()) &&
-              CPLTestBool(
-                  aosCreateOptions.FetchNameValueDef("ADD_ALPHA", "YES")))))
+            (psOptions->bEnableDstAlpha
+#ifdef HAVE_TIFF
+             || (EQUAL(psOptions->osFormat.c_str(), "COG") &&
+                 COGHasWarpingOptions(aosCreateOptions.List()) &&
+                 CPLTestBool(
+                     aosCreateOptions.FetchNameValueDef("ADD_ALPHA", "YES")))
+#endif
+                 ))
         {
             aosArgv.AddString("-addalpha");
         }
@@ -1309,6 +1300,7 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
     double dfStartPctCreateCopy = 0.0;
     if (hTmpDS == nullptr)
     {
+#ifdef HAVE_TIFF
         // Special processing for COG output. As some of its options do
         // on-the-fly reprojection, take them into account now, and remove them
         // from the COG creation stage.
@@ -1318,6 +1310,7 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
         {
             return nullptr;
         }
+#endif
 
         // Materialize a temporary GeoTIFF with the result of the warp
         psOptions->osFormat = "GTiff";
@@ -1987,7 +1980,7 @@ static void SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
         {
             if (!psOptions->bQuiet)
             {
-                if (CPLIsNan(dfReal))
+                if (std::isnan(dfReal))
                     printf("Using internal nodata values (e.g. nan) for image "
                            "%s.\n",
                            GDALGetDescription(hSrcDS));
@@ -2559,8 +2552,8 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         {
             CPLString osMsg;
             osMsg.Printf("Processing %s [%d/%d]",
-                         GDALGetDescription(pahSrcDS[iSrc]), iSrc + 1,
-                         nSrcCount);
+                         CPLGetFilename(GDALGetDescription(pahSrcDS[iSrc])),
+                         iSrc + 1, nSrcCount);
             return pfnExternalProgress((iSrc + dfComplete) / nSrcCount,
                                        osMsg.c_str(), pExternalProgressData);
         }
@@ -2817,8 +2810,17 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
 
             if (dfTargetRatio > 1.0)
             {
-                int iOvr = -1;
-                for (; iOvr < nOvCount - 1; iOvr++)
+                // Note: keep this logic for overview selection in sync between
+                // gdalwarp_lib.cpp and rasterio.cpp
+                const char *pszOversampligThreshold = CPLGetConfigOption(
+                    "GDALWARP_OVERSAMPLING_THRESHOLD", nullptr);
+                const double dfOversamplingThreshold =
+                    pszOversampligThreshold ? CPLAtof(pszOversampligThreshold)
+                                            : 1.0;
+
+                int iBestOvr = -1;
+                double dfBestRatio = 0;
+                for (int iOvr = -1; iOvr < nOvCount; iOvr++)
                 {
                     const double dfOvrRatio =
                         iOvr < 0
@@ -2827,18 +2829,27 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                                   poSrcDS->GetRasterBand(1)
                                       ->GetOverview(iOvr)
                                       ->GetXSize();
-                    const double dfNextOvrRatio =
-                        static_cast<double>(poSrcDS->GetRasterXSize()) /
-                        poSrcDS->GetRasterBand(1)
-                            ->GetOverview(iOvr + 1)
-                            ->GetXSize();
-                    if (dfOvrRatio < dfTargetRatio &&
-                        dfNextOvrRatio > dfTargetRatio)
+
+                    // Is it nearly the requested factor and better (lower) than
+                    // the current best factor?
+                    // Use an epsilon because of numerical instability.
+                    constexpr double EPSILON = 1e-1;
+                    if (dfOvrRatio >=
+                            dfTargetRatio * dfOversamplingThreshold + EPSILON ||
+                        dfOvrRatio <= dfBestRatio)
+                    {
+                        continue;
+                    }
+
+                    iBestOvr = iOvr;
+                    dfBestRatio = dfOvrRatio;
+                    if (std::abs(dfTargetRatio - dfOvrRatio) < EPSILON)
+                    {
                         break;
-                    if (fabs(dfOvrRatio - dfTargetRatio) < 1e-1)
-                        break;
+                    }
                 }
-                iOvr += (psOptions->nOvLevel - OVR_LEVEL_AUTO);
+                const int iOvr =
+                    iBestOvr + (psOptions->nOvLevel - OVR_LEVEL_AUTO);
                 if (iOvr >= 0)
                 {
                     CPLDebug("WARP", "Selecting overview level %d for %s", iOvr,
@@ -3416,7 +3427,7 @@ static CPLErr LoadCutline(const std::string &osCutlineDSNameOrWKT,
         OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
 
         if (eType == wkbPolygon)
-            poMultiPolygon->addGeometryDirectly(poGeom.release());
+            poMultiPolygon->addGeometry(std::move(poGeom));
         else if (eType == wkbMultiPolygon)
         {
             for (const auto *poSubGeom : poGeom->toMultiPolygon())
@@ -3678,6 +3689,18 @@ static GDALDatasetH GDALWarpCreateOutput(
             if (hCT != nullptr)
                 GDALDestroyColorTable(hCT);
             return nullptr;
+        }
+
+        // Examine desired overview level and retrieve the corresponding dataset
+        // if it exists.
+        std::unique_ptr<GDALDataset> oDstDSOverview;
+        if (psOptions->nOvLevel >= 0)
+        {
+            oDstDSOverview.reset(GDALCreateOverviewDataset(
+                GDALDataset::FromHandle(hSrcDS), psOptions->nOvLevel,
+                /* bThisLevelOnly = */ true));
+            if (oDstDSOverview)
+                hSrcDS = oDstDSOverview.get();
         }
 
         /* --------------------------------------------------------------------
@@ -4110,6 +4133,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             {
                 nOptions |= GDAL_SWO_FORCE_SQUARE_PIXEL;
             }
+
             if (GDALSuggestedWarpOutput2(hSrcDS, psInfo->pfnTransform,
                                          hTransformArg, adfThisGeoTransform,
                                          &nThisPixels, &nThisLines, adfExtent,
@@ -4415,10 +4439,14 @@ static GDALDatasetH GDALWarpCreateOutput(
             nPixels = static_cast<int>((psOptions->dfMaxX - psOptions->dfMinX +
                                         (psOptions->dfXRes / 2.0)) /
                                        psOptions->dfXRes);
+            if (nPixels == 0)
+                nPixels = 1;
             nLines = static_cast<int>(
                 (std::fabs(psOptions->dfMaxY - psOptions->dfMinY) +
                  (psOptions->dfYRes / 2.0)) /
                 psOptions->dfYRes);
+            if (nLines == 0)
+                nLines = 1;
             adfDstGeoTransform[0] = psOptions->dfMinX;
             adfDstGeoTransform[3] = psOptions->dfMaxY;
             adfDstGeoTransform[1] = psOptions->dfXRes;
@@ -4432,7 +4460,7 @@ static GDALDatasetH GDALWarpCreateOutput(
         {
             // Try to detect if the edge of the raster would be blank
             // Cf https://github.com/OSGeo/gdal/issues/7905
-            while (true)
+            while (nPixels > 1 || nLines > 1)
             {
                 UpdateGeoTransformandAndPixelLines();
 
@@ -4534,18 +4562,30 @@ static GDALDatasetH GDALWarpCreateOutput(
 
                 if (bTopBlankLine)
                 {
+                    if (psOptions->dfMaxY - psOptions->dfMinY <=
+                        2 * psOptions->dfYRes)
+                        break;
                     psOptions->dfMaxY -= psOptions->dfYRes;
                 }
                 if (bBottomBlankLine)
                 {
+                    if (psOptions->dfMaxY - psOptions->dfMinY <=
+                        2 * psOptions->dfYRes)
+                        break;
                     psOptions->dfMinY += psOptions->dfYRes;
                 }
                 if (bLeftBlankCol)
                 {
+                    if (psOptions->dfMaxX - psOptions->dfMinX <=
+                        2 * psOptions->dfXRes)
+                        break;
                     psOptions->dfMinX += psOptions->dfXRes;
                 }
                 if (bRightBlankCol)
                 {
+                    if (psOptions->dfMaxX - psOptions->dfMinX <=
+                        2 * psOptions->dfXRes)
+                        break;
                     psOptions->dfMaxX -= psOptions->dfXRes;
                 }
             }
@@ -4839,6 +4879,8 @@ static GDALDatasetH GDALWarpCreateOutput(
 
 class CutlineTransformer : public OGRCoordinateTransformation
 {
+    CPL_DISALLOW_COPY_ASSIGN(CutlineTransformer)
+
   public:
     void *hSrcImageTransformer = nullptr;
 
@@ -5359,7 +5401,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
     {
         const double dfCutlineBlendDist = CPLAtof(CSLFetchNameValueDef(
             *ppapszWarpOptions, "CUTLINE_BLEND_DIST", "0"));
-        OGRLinearRing *poRing = new OGRLinearRing();
+        auto poRing = std::make_unique<OGRLinearRing>();
         poRing->addPoint(-dfCutlineBlendDist, -dfCutlineBlendDist);
         poRing->addPoint(-dfCutlineBlendDist,
                          dfCutlineBlendDist + poSrcDS->GetRasterYSize());
@@ -5369,7 +5411,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
                          -dfCutlineBlendDist);
         poRing->addPoint(-dfCutlineBlendDist, -dfCutlineBlendDist);
         OGRPolygon oSrcDSFootprint;
-        oSrcDSFootprint.addRingDirectly(poRing);
+        oSrcDSFootprint.addRing(std::move(poRing));
         OGREnvelope sSrcDSEnvelope;
         oSrcDSFootprint.getEnvelope(&sSrcDSEnvelope);
         OGREnvelope sCutlineEnvelope;
@@ -5711,10 +5753,10 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
 
     argParser->add_argument("-et")
         .metavar("<err_threshold>")
+        .store_into(psOptions->dfErrorThreshold)
         .action(
-            [psOptions](const std::string &s)
+            [psOptions](const std::string &)
             {
-                psOptions->dfErrorThreshold = CPLAtofM(s.c_str());
                 psOptions->aosWarpOptions.AddString(CPLSPrintf(
                     "ERROR_THRESHOLD=%.16g", psOptions->dfErrorThreshold));
             })
@@ -5725,21 +5767,31 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
         .action(
             [psOptions](const std::string &s)
             {
-                if (CPLAtofM(s.c_str()) < 10000)
-                    psOptions->dfWarpMemoryLimit =
-                        CPLAtofM(s.c_str()) * 1024 * 1024;
+                bool bUnitSpecified = false;
+                GIntBig nBytes;
+                if (CPLParseMemorySize(s.c_str(), &nBytes, &bUnitSpecified) ==
+                    CE_None)
+                {
+                    if (!bUnitSpecified && nBytes < 10000)
+                    {
+                        nBytes *= (1024 * 1024);
+                    }
+                    psOptions->dfWarpMemoryLimit = static_cast<double>(nBytes);
+                }
                 else
-                    psOptions->dfWarpMemoryLimit = CPLAtofM(s.c_str());
+                {
+                    throw std::invalid_argument("Failed to parse value of -wm");
+                }
             })
         .help(_("Set max warp memory."));
 
     argParser->add_argument("-srcnodata")
-        .metavar("<value>[ <value>...]")
+        .metavar("\"<value>[ <value>]...\"")
         .store_into(psOptions->osSrcNodata)
         .help(_("Nodata masking values for input bands."));
 
     argParser->add_argument("-dstnodata")
-        .metavar("<value>[ <value>...]")
+        .metavar("\"<value>[ <value>]...\"")
         .store_into(psOptions->osDstNodata)
         .help(_("Nodata masking values for output bands."));
 
@@ -6112,6 +6164,20 @@ GDALWarpAppOptionsNew(char **papszArgv,
                 return nullptr;
             }
             psOptions->bCreateOutput = true;
+        }
+        // argparser will be confused if the value of a string argument
+        // starts with a negative sign.
+        else if (EQUAL(papszArgv[i], "-srcnodata") && i + 1 < nArgc)
+        {
+            ++i;
+            psOptions->osSrcNodata = papszArgv[i];
+        }
+        // argparser will be confused if the value of a string argument
+        // starts with a negative sign.
+        else if (EQUAL(papszArgv[i], "-dstnodata") && i + 1 < nArgc)
+        {
+            ++i;
+            psOptions->osDstNodata = papszArgv[i];
         }
         else
         {

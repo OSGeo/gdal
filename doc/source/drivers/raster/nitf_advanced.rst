@@ -10,6 +10,8 @@ a number of advanced, and somewhat esoteric options not suitable for the
 information is collected here, and is primarily aimed at developers and
 advanced users.
 
+.. _raster.nitf_advanced_cgm:
+
 CGM Segments
 ------------
 
@@ -80,6 +82,8 @@ In this case opening "multi_image_jpeg_2.0.ntf" directly will give
 access to "NITF_IM:0:multi_image_jpeg_2.0.ntf". To open the others use
 the corresponding subdataset names. The Subdataset mechanism is generic
 GDAL concept discussed in the :ref:`raster_data_model` document.
+
+.. _raster.nitf_advanced_text:
 
 Text Segments
 -------------
@@ -303,6 +307,8 @@ metadata in base64 encoded format. Something like:
 Note that the ascii encoded numeric values prefixing the base64 encoded
 header is the length (decoded) in bytes, followed by one space.
 
+.. _raster.nitf_advanced_write_multiple_image_segments:
+
 Writing multiple Image Segments
 -------------------------------
 
@@ -332,3 +338,11 @@ Example:
     gdal_translate first_image.tif  dest.tif -co NUMI=3 -co NUMDES=1
     gdal_translate second_image.tif dest.tif -co APPEND_SUBDATASET=YES -co IC=C3 -co IDLVL=2
     gdal_translate third_image.tif  dest.tif -co APPEND_SUBDATASET=YES -co IC=C8 -co IDLVL=3 -co "DES=DES1={des_content}"
+
+Reading SAR products
+--------------------
+
+Starting with GDAL 3.11, NITF products whose ``ICAT`` field is set to ``SAR``
+and which have bands with ``I`` (in-phase) and ``Q`` (quadrature) ``ISUBCAT``
+values will be represented as a single-band of complex type where in-phase is
+the real part and quadrature the imaginary part.

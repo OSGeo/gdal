@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2023, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -471,6 +455,32 @@ def test_jsonfg_read_two_features_types():
     f = lyr.GetNextFeature()
     assert f.GetField("bar") == "baz"
     assert f.GetFID() == 1
+
+
+###############################################################################
+# Test reading file with a single Feature larger than 6000 bytes
+
+
+def test_jsonfg_read_single_feature_large(tmp_vsimem):
+
+    tmp_file = str(tmp_vsimem / "test.json")
+    content = """{
+      "type": "Feature",
+      "conformsTo" : [ "[ogc-json-fg-1-0.1:core]" ],
+      %s
+      "id": 1,
+      "geometry": { "type": "Point", "coordinates": [2, 49] },
+      "properties": { "foo": 1 },
+      "place": null,
+      "time": null
+    }""" % (
+        " " * 100000
+    )
+
+    gdal.FileFromMemBuffer(tmp_file, content)
+
+    ds = gdal.OpenEx(tmp_file)
+    assert ds.GetDriver().GetDescription() == "JSONFG"
 
 
 ###############################################################################
@@ -924,7 +934,7 @@ def test_jsonfg_write_several_layers():
         [["GEOMETRYCOLLECTION (POINT (1 2))"], ogr.wkbGeometryCollection],
         [["GEOMETRYCOLLECTION Z (POINT Z (1 2 3))"], ogr.wkbGeometryCollection25D],
         [["POINT (1 2)", "LINESTRING (1 2,3 4)"], ogr.wkbUnknown],
-        [["POLYHEDRALSURFACE EMPTY"], ogr.wkbPolyhedralSurface],
+        [["POLYHEDRALSURFACE Z EMPTY"], ogr.wkbPolyhedralSurfaceZ],
         [
             [
                 "POLYHEDRALSURFACE Z (((0 0 0,0 1 0,1 1 0,0 0 0)),((0 0 0,1 0 0,0 0 1,0 0 0)),((0 0 0,0 1 0,0 0 1,0 0 0)),((0 1 0,1 0 0,0 0 1,0 1 0)))"
@@ -1292,3 +1302,27 @@ def test_ogr_jsonfg_geom_coord_precision(tmp_vsimem, single_layer):
     prec = geom_fld.GetCoordinatePrecision()
     assert prec.GetXYResolution() == 1e-2
     assert prec.GetZResolution() == 1e-3
+
+
+###############################################################################
+# Test force opening a GeoJSON file with JSONFG
+
+
+def test_ogr_jsonfg_force_opening():
+
+    if ogr.GetDriverByName("GeoJSON"):
+        ds = gdal.OpenEx("data/geojson/featuretype.json")
+        assert ds.GetDriver().GetDescription() == "GeoJSON"
+
+    ds = gdal.OpenEx("data/geojson/featuretype.json", allowed_drivers=["JSONFG"])
+    assert ds.GetDriver().GetDescription() == "JSONFG"
+
+
+###############################################################################
+# Test force opening a URL as JSONFG
+
+
+def test_ogr_jsonfg_force_opening_url():
+
+    drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["JSONFG"])
+    assert drv.GetDescription() == "JSONFG"

@@ -8,23 +8,7 @@
  * Copyright (c) 2017-2019, Even Rouault, <even dot rouault at spatialys dot
  *com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_conv.h"
@@ -378,7 +362,7 @@ static bool LoadPythonAPI()
                                                         "-c", pszPrintVersion,
                                                         nullptr};
                         const CPLString osTmpFilename(
-                            "/vsimem/LoadPythonAPI/out.txt");
+                            VSIMemGenerateHiddenFilename("out.txt"));
                         VSILFILE *fout = VSIFOpenL(osTmpFilename, "wb+");
                         if (CPLSpawn(apszArgv, nullptr, fout, FALSE) == 0)
                         {
@@ -428,10 +412,10 @@ static bool LoadPythonAPI()
         const char *const apszPythonSO[] = {
             "libpython3.8." SO_EXT,  "libpython3.9." SO_EXT,
             "libpython3.10." SO_EXT, "libpython3.11." SO_EXT,
-            "libpython3.12." SO_EXT, "libpython3.7m." SO_EXT,
-            "libpython3.6m." SO_EXT, "libpython3.5m." SO_EXT,
-            "libpython3.4m." SO_EXT, "libpython3.3." SO_EXT,
-            "libpython3.2." SO_EXT};
+            "libpython3.12." SO_EXT, "libpython3.13." SO_EXT,
+            "libpython3.7m." SO_EXT, "libpython3.6m." SO_EXT,
+            "libpython3.5m." SO_EXT, "libpython3.4m." SO_EXT,
+            "libpython3.3." SO_EXT,  "libpython3.2." SO_EXT};
         for (size_t i = 0;
              libHandle == nullptr && i < CPL_ARRAYSIZE(apszPythonSO); ++i)
         {
@@ -623,9 +607,9 @@ static bool LoadPythonAPI()
     if (libHandle == nullptr)
     {
         const char *const apszPythonSO[] = {
-            "python38.dll",  "python39.dll", "python310.dll", "python311.dll",
-            "python312.dll", "python37.dll", "python36.dll",  "python35.dll",
-            "python34.dll",  "python33.dll", "python32.dll"};
+            "python38.dll",  "python39.dll",  "python310.dll", "python311.dll",
+            "python312.dll", "python313.dll", "python37.dll",  "python36.dll",
+            "python35.dll",  "python34.dll",  "python33.dll",  "python32.dll"};
         UINT uOldErrorMode;
         uOldErrorMode =
             SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);

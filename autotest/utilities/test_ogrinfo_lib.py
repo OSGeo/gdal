@@ -8,23 +8,7 @@
 ###############################################################################
 # Copyright (c) 2022, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -33,7 +17,7 @@ import pathlib
 import gdaltest
 import pytest
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 ###############################################################################
 # Simple test
@@ -317,6 +301,7 @@ def test_ogrinfo_lib_json_relationships():
 # Test json output with OFSTJSON field
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_OFSTJSON():
 
     ds = gdal.OpenEx(
@@ -375,6 +360,7 @@ def test_ogrinfo_lib_json_OFSTJSON():
 # Test json output with -fields=NO
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_fields_NO():
 
     ds = gdal.OpenEx(
@@ -398,6 +384,7 @@ def test_ogrinfo_lib_json_fields_NO():
 # Test json output with -geom=NO
 
 
+@pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_geom_NO():
 
     ds = gdal.OpenEx(
@@ -637,3 +624,24 @@ def test_ogrinfo_lib_layers():
 
     with pytest.raises(Exception, match="Couldn't fetch requested layer"):
         gdal.VectorInfo(ds, format="json", layers=["invalid"])
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("epoch", ["2021.0", "2021.3"])
+def test_ogrinfo_lib_coordinate_epoch(epoch):
+
+    ds = gdal.GetDriverByName("Memory").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(float(epoch))
+    ds.CreateLayer("foo", srs=srs)
+
+    ret = gdal.VectorInfo(ds)
+    assert f"Coordinate epoch: {epoch}" in ret
+
+    j = gdal.VectorInfo(ds, format="json")
+    crs = j["layers"][0]["geometryFields"][0]["coordinateSystem"]
+    assert "coordinateEpoch" in crs
+    assert crs["coordinateEpoch"] == float(epoch)

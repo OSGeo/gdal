@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022, Planet Labs
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_pam.h"
@@ -68,6 +52,9 @@ static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
             CPL_LSBUINT32PTR(poOpenInfo->pabyHeader + CONTINUATION_SIZE);
         if (strcmp(poOpenInfo->pszFilename, "/vsistdin/") == 0)
         {
+            if (poOpenInfo->IsSingleAllowedDriver("ARROW"))
+                return true;
+
             // Padding after metadata and before body is not necessarily present
             // but the body must be at least 4 bytes
             constexpr int PADDING_MAX_SIZE = 4;
@@ -87,12 +74,12 @@ static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
             }
 
             const std::string osTmpFilename(
-                CPLSPrintf("/vsimem/_arrow/%p", poOpenInfo));
+                VSIMemGenerateHiddenFilename("arrow"));
             auto fp = VSIVirtualHandleUniquePtr(VSIFileFromMemBuffer(
                 osTmpFilename.c_str(), poOpenInfo->pabyHeader, nSizeToRead,
                 false));
-            auto infile =
-                std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
+            auto infile = std::make_shared<OGRArrowRandomAccessFile>(
+                osTmpFilename.c_str(), std::move(fp));
             auto options = arrow::ipc::IpcReadOptions::Defaults();
             auto result =
                 arrow::ipc::RecordBatchStreamReader::Open(infile, options);
@@ -110,8 +97,8 @@ static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
             return false;
 
         // Do not give ownership of poOpenInfo->fpL to infile
-        auto infile =
-            std::make_shared<OGRArrowRandomAccessFile>(poOpenInfo->fpL, false);
+        auto infile = std::make_shared<OGRArrowRandomAccessFile>(
+            poOpenInfo->pszFilename, poOpenInfo->fpL, false);
         auto options = arrow::ipc::IpcReadOptions::Defaults();
         auto result =
             arrow::ipc::RecordBatchStreamReader::Open(infile, options);
@@ -132,8 +119,19 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    const bool bIsStreamingFormat = IsArrowIPCStream(poOpenInfo);
-    if (!bIsStreamingFormat && !OGRFeatherDriverIsArrowFileFormat(poOpenInfo))
+    GDALOpenInfo *poOpenInfoForIdentify = poOpenInfo;
+    std::unique_ptr<GDALOpenInfo> poOpenInfoTmp;
+    if (STARTS_WITH(poOpenInfo->pszFilename, "gdalvsi://"))
+    {
+        poOpenInfoTmp = std::make_unique<GDALOpenInfo>(poOpenInfo->pszFilename +
+                                                           strlen("gdalvsi://"),
+                                                       poOpenInfo->nOpenFlags);
+        poOpenInfoForIdentify = poOpenInfoTmp.get();
+    }
+
+    const bool bIsStreamingFormat = IsArrowIPCStream(poOpenInfoForIdentify);
+    if (!bIsStreamingFormat &&
+        !OGRFeatherDriverIsArrowFileFormat(poOpenInfoForIdentify))
     {
         return nullptr;
     }
@@ -151,22 +149,46 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
                      osFilename.c_str());
             return nullptr;
         }
-        infile = std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
+        infile = std::make_shared<OGRArrowRandomAccessFile>(osFilename.c_str(),
+                                                            std::move(fp));
     }
     else if (STARTS_WITH(poOpenInfo->pszFilename, "/vsi") ||
              CPLTestBool(CPLGetConfigOption("OGR_ARROW_USE_VSI", "NO")))
     {
         VSIVirtualHandleUniquePtr fp(poOpenInfo->fpL);
         poOpenInfo->fpL = nullptr;
-        infile = std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
+        infile = std::make_shared<OGRArrowRandomAccessFile>(
+            poOpenInfo->pszFilename, std::move(fp));
     }
     else
     {
-        auto result = arrow::io::ReadableFile::Open(poOpenInfo->pszFilename);
+        // FileSystemFromUriOrPath() doesn't like relative paths
+        // so transform them to absolute.
+        std::string osPath(poOpenInfo->pszFilename);
+        if (CPLIsFilenameRelative(osPath.c_str()))
+        {
+            char *pszCurDir = CPLGetCurrentDir();
+            if (pszCurDir == nullptr)
+                return nullptr;
+            osPath = CPLFormFilename(pszCurDir, osPath.c_str(), nullptr);
+            CPLFree(pszCurDir);
+        }
+
+        std::string osFSPath;
+        auto poFS =
+            arrow::fs::FileSystemFromUriOrPath(osPath.c_str(), &osFSPath);
+        if (!poFS.ok())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "arrow::fs::FileSystemFromUriOrPath failed with %s",
+                     poFS.status().message().c_str());
+            return nullptr;
+        }
+        auto result = (*poFS)->OpenInputFile(osFSPath);
         if (!result.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "ReadableFile::Open() failed with %s",
+                     "OpenInputFile() failed with %s",
                      result.status().message().c_str());
             return nullptr;
         }
@@ -428,5 +450,23 @@ void RegisterOGRArrow()
     poDriver->pfnOpen = OGRFeatherDriverOpen;
     poDriver->pfnCreate = OGRFeatherDriverCreate;
 
+    poDriver->SetMetadataItem("ARROW_VERSION", ARROW_VERSION_STRING);
+
     GetGDALDriverManager()->RegisterDriver(poDriver.release());
+
+#if ARROW_VERSION_MAJOR >= 16
+    // Mostly for tests
+    const char *pszPath =
+        CPLGetConfigOption("OGR_ARROW_LOAD_FILE_SYSTEM_FACTORIES", nullptr);
+    if (pszPath)
+    {
+        auto result = arrow::fs::LoadFileSystemFactories(pszPath);
+        if (!result.ok())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "arrow::fs::LoadFileSystemFactories() failed with %s",
+                     result.message().c_str());
+        }
+    }
+#endif
 }

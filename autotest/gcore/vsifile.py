@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import os
@@ -148,6 +132,28 @@ def vsifile_generic(filename, options=[]):
         if fp:
             gdal.VSIFCloseL(fp)
 
+    gdal.Unlink(filename)
+
+    if not filename.startswith("/vsicrypt/"):
+        assert gdal.RmdirRecursive(filename + "/i_dont_exist") == -1
+
+        subdir = filename + "/subdir"
+        assert gdal.MkdirRecursive(subdir + "/subsubdir", 0o755) == 0
+
+        assert gdal.VSIStatL(subdir) is not None
+        assert gdal.VSIStatL(subdir + "/subsubdir") is not None
+
+        if not filename.startswith("/vsimem/"):
+            assert gdal.Rmdir(subdir) == -1
+            assert gdal.VSIStatL(subdir) is not None
+
+        # Safety belt...
+        assert filename.startswith("tmp/") or filename.startswith("/vsimem/")
+        assert gdal.RmdirRecursive(filename) == 0
+
+        assert gdal.VSIStatL(subdir) is None
+        assert gdal.VSIStatL(subdir + "/subsubdir") is None
+
 
 ###############################################################################
 # Test /vsimem
@@ -231,16 +237,16 @@ def test_vsifile_4():
 # Test vsicache
 
 
-@pytest.mark.parametrize("cache_size", ("0", "65536", None))
-def test_vsifile_5(cache_size):
+@pytest.mark.parametrize("cache_size", ("0", "64kb", None))
+def test_vsifile_5(tmp_path, cache_size):
 
-    fp = gdal.VSIFOpenL("tmp/vsifile_5.bin", "wb")
+    fp = gdal.VSIFOpenL(tmp_path / "vsifile_5.bin", "wb")
     ref_data = "".join(["%08X" % i for i in range(5 * 32768)])
     gdal.VSIFWriteL(ref_data, 1, len(ref_data), fp)
     gdal.VSIFCloseL(fp)
 
     with gdal.config_options({"VSI_CACHE": "YES", "VSI_CACHE_SIZE": cache_size}):
-        fp = gdal.VSIFOpenL("tmp/vsifile_5.bin", "rb")
+        fp = gdal.VSIFOpenL(tmp_path / "vsifile_5.bin", "rb")
 
         gdal.VSIFSeekL(fp, 50000, 0)
         if gdal.VSIFTellL(fp) != 50000:
@@ -270,8 +276,6 @@ def test_vsifile_5(cache_size):
             pytest.fail()
 
         gdal.VSIFCloseL(fp)
-
-    gdal.Unlink("tmp/vsifile_5.bin")
 
 
 ###############################################################################
@@ -680,6 +684,15 @@ def test_vsifile_14():
 
 
 ###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/10821
+
+
+def test_vsifile_vsitar_of_vsitar():
+
+    gdal.Open("/vsitar/{/vsitar/data/tar_of_tar_gzip.tar}/byte_tif.tar.gz/byte.tif")
+
+
+###############################################################################
 # Test issue with Error() not detecting end of corrupted gzip stream (#6944)
 
 
@@ -774,12 +787,8 @@ def test_vsifile_19():
 
 def test_vsifile_20():
 
-    try:
+    with pytest.raises(Exception):
         gdal.VSIFReadL(1, 1, None)
-    except ValueError:
-        return
-
-    pytest.fail()
 
 
 ###############################################################################
@@ -1689,3 +1698,72 @@ def test_vsifile_class_append(tmp_vsimem):
         f.write("def")
     with gdaltest.vsi_open(fname) as f:
         assert f.read() == "abcdef"
+
+
+def test_vsifile_stat_directory_trailing_slash():
+
+    res = gdal.VSIStatL("data/")
+    assert res
+    assert res.IsDirectory()
+
+
+###############################################################################
+# Test VSIMultipartUploadXXXX(), unsupported on regular file systems
+
+
+def test_vsifile_MultipartUpload():
+
+    with gdal.ExceptionMgr(useExceptions=False):
+        with gdal.quiet_errors():
+            assert gdal.MultipartUploadGetCapabilities("foo") is None
+    with gdal.ExceptionMgr(useExceptions=True):
+        with pytest.raises(Exception):
+            gdal.MultipartUploadGetCapabilities(None)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadGetCapabilities\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadGetCapabilities("foo")
+
+        with pytest.raises(Exception):
+            gdal.MultipartUploadStart(None)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadStart\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadStart("foo")
+
+        with pytest.raises(Exception):
+            gdal.MultipartUploadAddPart(None, "", 1, 0, b"")
+        with pytest.raises(Exception):
+            gdal.MultipartUploadAddPart("", None, 1, 0, b"")
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadAddPart\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadAddPart("", "", 1, 0, b"")
+
+        with pytest.raises(Exception):
+            gdal.MultipartUploadEnd(None, "", [], 0)
+        with pytest.raises(Exception):
+            gdal.MultipartUploadEnd("", None, [], 0)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadEnd\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadEnd("", "", [], 0)
+
+        with pytest.raises(Exception):
+            gdal.MultipartUploadAbort(None, "")
+        with pytest.raises(Exception):
+            gdal.MultipartUploadAbort("", None)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadAbort\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadAbort("", "")

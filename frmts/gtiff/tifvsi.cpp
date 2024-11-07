@@ -10,23 +10,7 @@
  * Copyright (c) 2005, Frank Warmerdam, warmerdam@pobox.com
  * Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 // TIFF Library UNIX-specific Routines.
@@ -446,13 +430,19 @@ static void VSI_TIFFSetOpenOptions(TIFFOpenOptions *opts)
 #if defined(INTERNAL_LIBTIFF) || TIFFLIB_VERSION > 20230908
     // Read-once and stored in static storage otherwise affects
     // autotest/benchmark/test_gtiff.py::test_gtiff_byte
-    static const GIntBig nMemLimit = []()
+    static const GIntBig nMemLimit = []() -> GIntBig
     {
         if (const char *pszLimit =
                 CPLGetConfigOption("GTIFF_MAX_CUMULATED_MEM_USAGE", nullptr))
             return CPLAtoGIntBig(pszLimit);
         else
-            return CPLGetUsablePhysicalRAM() * 9 / 10;
+        {
+            const auto nUsableRAM = CPLGetUsablePhysicalRAM();
+            if (nUsableRAM > 0)
+                return nUsableRAM / 10 * 9;
+            else
+                return 0;
+        }
     }();
     if (nMemLimit > 0 && nMemLimit < std::numeric_limits<tmsize_t>::max())
     {

@@ -37,6 +37,7 @@ RUN apt-get update -y \
     libfreexl-dev \
     libfyba-dev \
     libgeos-dev \
+    libgeotiff-dev \
     libgif-dev \
     libhdf4-alt-dev \
     libhdf5-serial-dev \
@@ -75,7 +76,7 @@ RUN apt-get update -y \
     numactl \
     ocl-icd-opencl-dev \
     opencl-c-headers \
-    openjdk-8-jdk \
+    openjdk-8-jdk-headless \
     pkg-config \
     python3-dev \
     python3-numpy \
@@ -182,12 +183,12 @@ RUN mkdir geos \
     && rm -rf geos
 
 # Install pdfium
-RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_9/releases/download/pdfium_6309_v1/install-ubuntu2004-rev6309.tar.gz \
-  && tar -xzf install-ubuntu2004-rev6309.tar.gz \
+RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_10/releases/download/pdfium_6677_v1/install-ubuntu2004-rev6677.tar.gz \
+  && tar -xzf install-ubuntu2004-rev6677.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev6309.tar.gz install
+  && rm -rf install-ubuntu2004-rev6677.tar.gz install
 
 # HANA: client side
 # Install hdbsql tool
@@ -258,8 +259,22 @@ RUN mkdir sqlite \
     && cd .. \
     && rm -rf sqlite
 
+# Build libOpenDRIVE
+ARG OPENDRIVE_VERSION=0.6.0-gdal
+RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
+    wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
+    && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
+    && rm -f ${OPENDRIVE_VERSION}.tar.gz \
+    && cd libOpenDRIVE-${OPENDRIVE_VERSION} \
+    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr/ \
+    && make -j$(nproc) \
+    && make install \
+    && cd .. \
+    && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
+    ); fi
+
 RUN ldconfig
 
 COPY requirements.txt /tmp/
 RUN python3 -m pip install -U -r /tmp/requirements.txt
-RUN python3 -m pip install cfchecker

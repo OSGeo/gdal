@@ -9,23 +9,7 @@
  * Copyright (c) 2007, ITC
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ******************************************************************************
  *
  */
@@ -44,6 +28,7 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#include <time.h>
 
 #include <algorithm>
 #include <memory>
@@ -114,8 +99,7 @@ class GRIBDataset final : public GDALPamDataset
   private:
     void SetGribMetaData(grib_MetaData *meta);
     static GDALDataset *OpenMultiDim(GDALOpenInfo *);
-    static std::unique_ptr<gdal::grib::InventoryWrapper>
-    Inventory(VSILFILE *, GDALOpenInfo *);
+    std::unique_ptr<gdal::grib::InventoryWrapper> Inventory(GDALOpenInfo *);
 
     VSILFILE *fp;
     // Calculate and store once as GetGeoTransform may be called multiple times.
@@ -135,6 +119,14 @@ class GRIBDataset final : public GDALPamDataset
     std::shared_ptr<OGRSpatialReference> m_poSRS{};
     std::unique_ptr<OGRSpatialReference> m_poLL{};
     std::unique_ptr<OGRCoordinateTransformation> m_poCT{};
+
+#ifdef BUILD_APPS
+    bool m_bSideCarIdxUsed = false;
+    bool m_bWarnedGdalinfoNomd = false;
+    time_t m_nFirstMetadataQueriedTimeStamp = 0;
+    bool m_bWarnedGdalinfoNonodata = false;
+    time_t m_nFirstNodataQueriedTimeStamp = 0;
+#endif
 };
 
 /************************************************************************/

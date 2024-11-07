@@ -1591,7 +1591,7 @@ def test_ogr_geojson_46(tmp_vsimem):
 
 
 ###############################################################################
-# Test update support
+# Test SetFeature() support
 
 
 @gdaltest.disable_exceptions()
@@ -1764,7 +1764,7 @@ def test_ogr_geojson_47(tmp_vsimem):
 
 
 ###############################################################################
-# Test update support with file that has a single feature not in a FeatureCollection
+# Test SetFeature() support with file that has a single feature not in a FeatureCollection
 
 
 def test_ogr_geojson_48(tmp_vsimem):
@@ -1800,6 +1800,46 @@ def test_ogr_geojson_48(tmp_vsimem):
         and "FeatureCollection" not in data
         and '"myprop": "another_value"' in data
     )
+
+
+###############################################################################
+# Test UpdateFeature() support
+
+
+@pytest.mark.parametrize("check_after_update_before_reopen", [True, False])
+@pytest.mark.parametrize("sync_to_disk_after_update", [True, False])
+def test_ogr_geojson_update_feature(
+    tmp_vsimem, check_after_update_before_reopen, sync_to_disk_after_update
+):
+
+    filename = str(tmp_vsimem / "test.json")
+
+    with ogr.GetDriverByName("GeoJSON").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("int64list", ogr.OFTInteger64List))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["int64list"] = [123456790123, -123456790123]
+        lyr.CreateFeature(f)
+
+    with ogr.Open(filename, update=1) as ds:
+        lyr = ds.GetLayer(0)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(0)
+        f["int64list"] = [-123456790123, 123456790123]
+        lyr.UpdateFeature(f, [0], [], False)
+
+        if sync_to_disk_after_update:
+            lyr.SyncToDisk()
+
+        if check_after_update_before_reopen:
+            lyr.ResetReading()
+            f = lyr.GetNextFeature()
+            assert f["int64list"] == [-123456790123, 123456790123]
+
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["int64list"] == [-123456790123, 123456790123]
 
 
 ###############################################################################
@@ -2631,15 +2671,32 @@ def test_ogr_geojson_57(tmp_vsimem):
 
     got = read_file(tmp_vsimem / "out.json")
     gdal.Unlink(tmp_vsimem / "out.json")
-    expected = """{
-"type": "FeatureCollection",
-"bbox": [ 45.0000000, 64.3861643, 135.0000000, 90.0000000 ],
-"features": [
-{ "type": "Feature", "properties": { }, "bbox": [ 45.0, 64.3861643, 135.0, 90.0 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ 135.0, 64.3861643 ], [ 135.0, 90.0 ], [ 45.0, 90.0 ], [ 45.0, 64.3861643 ], [ 135.0, 64.3861643 ] ] ] } }
-]
-}
-"""
-    assert json.loads(got) == json.loads(expected)
+    expected = {
+        "type": "FeatureCollection",
+        "bbox": [45.0, 64.3861643, 135.0, 90.0],
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {},
+                "bbox": [45.0, 64.3861643, 135.0, 90.0],
+                "geometry": {
+                    "type": "MultiPolygon",
+                    "coordinates": [
+                        [
+                            [
+                                [135.0, 64.3861643],
+                                [135.0, 90.0],
+                                [45.0, 90.0],
+                                [45.0, 64.3861643],
+                                [135.0, 64.3861643],
+                            ]
+                        ]
+                    ],
+                },
+            }
+        ],
+    }
+    assert json.loads(got) == expected
 
     # Polar case: slice of spherical cap crossing the antimeridian
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
@@ -4079,7 +4136,7 @@ def test_ogr_geojson_write_rfc7946_from_3D_crs(tmp_vsimem):
     ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(filename)
     lyr = ds.CreateLayer("out", srs=srs_4326_5773, options=["RFC7946=YES"])
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(%.18g %.18g %.18g)" % (lon, lat, z)))
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(%.17g %.17g %.17g)" % (lon, lat, z)))
     lyr.CreateFeature(f)
     ds = None
 
@@ -4281,6 +4338,28 @@ def test_ogr_geojson_test_ogrsf():
 
 
 ###############################################################################
+# Run test_ogrsf
+
+
+def test_ogr_geojson_test_ogrsf_update(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    filename = str(tmp_path / "out.json")
+    gdal.VectorTranslate(filename, "data/poly.shp", format="GeoJSON")
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" {filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+
+
+###############################################################################
 # Test fix for https://github.com/OSGeo/gdal/issues/7313
 
 
@@ -4437,6 +4516,7 @@ def test_ogr_geojson_write_geometry_validity_fixing_rfc7946(tmp_vsimem):
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().IsValid()
+    assert "((6.3889058 51.3181847," in f.GetGeometryRef().ExportToWkt()
 
 
 ###############################################################################
@@ -4525,7 +4605,7 @@ def test_ogr_geojson_arrow_stream_pyarrow_mixed_timezone(tmp_vsimem):
 
 
 def test_ogr_geojson_arrow_stream_pyarrow_utc_plus_five(tmp_vsimem):
-    pytest.importorskip("pyarrow")
+    # pytest.importorskip("pyarrow")
 
     filename = str(
         tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_utc_plus_five.geojson"
@@ -4541,22 +4621,37 @@ def test_ogr_geojson_arrow_stream_pyarrow_utc_plus_five(tmp_vsimem):
     lyr.CreateFeature(f)
     ds = None
 
+    try:
+        import pyarrow  # NOQA
+
+        has_pyarrow = True
+    except ImportError:
+        has_pyarrow = False
+    if has_pyarrow:
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        stream = lyr.GetArrowStreamAsPyArrow()
+        assert stream.schema.field("datetime").type.tz == "+05:00"
+        values = []
+        for batch in stream:
+            for x in batch.field("datetime"):
+                values.append(x.value)
+        assert values == [1653982496789, 1653986096789]
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_lyr = mem_ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
-    stream = lyr.GetArrowStreamAsPyArrow()
-    assert stream.schema.field("datetime").type.tz == "+05:00"
-    values = []
-    for batch in stream:
-        for x in batch.field("datetime"):
-            values.append(x.value)
-    assert values == [1654000496789, 1654004096789]
+    mem_lyr.WriteArrow(lyr)
+
+    f = mem_lyr.GetNextFeature()
+    assert f["datetime"] == "2022/05/31 12:34:56.789+05"
 
 
 ###############################################################################
 
 
 def test_ogr_geojson_arrow_stream_pyarrow_utc_minus_five(tmp_vsimem):
-    pytest.importorskip("pyarrow")
 
     filename = str(
         tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_utc_minus_five.geojson"
@@ -4572,22 +4667,37 @@ def test_ogr_geojson_arrow_stream_pyarrow_utc_minus_five(tmp_vsimem):
     lyr.CreateFeature(f)
     ds = None
 
+    try:
+        import pyarrow  # NOQA
+
+        has_pyarrow = True
+    except ImportError:
+        has_pyarrow = False
+    if has_pyarrow:
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        stream = lyr.GetArrowStreamAsPyArrow()
+        assert stream.schema.field("datetime").type.tz == "-05:00"
+        values = []
+        for batch in stream:
+            for x in batch.field("datetime"):
+                values.append(x.value)
+        assert values == [1654018496789, 1654022096789]
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_lyr = mem_ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
-    stream = lyr.GetArrowStreamAsPyArrow()
-    assert stream.schema.field("datetime").type.tz == "-05:00"
-    values = []
-    for batch in stream:
-        for x in batch.field("datetime"):
-            values.append(x.value)
-    assert values == [1654000496789, 1654004096789]
+    mem_lyr.WriteArrow(lyr)
+
+    f = mem_lyr.GetNextFeature()
+    assert f["datetime"] == "2022/05/31 12:34:56.789-05"
 
 
 ###############################################################################
 
 
 def test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone(tmp_vsimem):
-    pytest.importorskip("pyarrow")
 
     filename = str(
         tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone.geojson"
@@ -4603,15 +4713,33 @@ def test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone(tmp_vsimem):
     lyr.CreateFeature(f)
     ds = None
 
+    try:
+        import pyarrow  # NOQA
+
+        has_pyarrow = True
+    except ImportError:
+        has_pyarrow = False
+    if has_pyarrow:
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        stream = lyr.GetArrowStreamAsPyArrow()
+        assert stream.schema.field("datetime").type.tz is None
+        values = []
+        for batch in stream:
+            for x in batch.field("datetime"):
+                values.append(x.value)
+        assert values == [1654000496789, 1654004096789]
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_lyr = mem_ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
-    stream = lyr.GetArrowStreamAsPyArrow()
-    assert stream.schema.field("datetime").type.tz is None
-    values = []
-    for batch in stream:
-        for x in batch.field("datetime"):
-            values.append(x.value)
-    assert values == [1654000496789, 1654004096789]
+    mem_lyr.WriteArrow(lyr)
+
+    f = mem_lyr.GetNextFeature()
+    # We have lost the timezone info here, as there's no way in Arrow to
+    # have a mixed of with and without timezone in a single column
+    assert f["datetime"] == "2022/05/31 12:34:56.789"
 
 
 ###############################################################################
@@ -5201,3 +5329,52 @@ def test_ogr_geojson_identify_jsonfg_with_geojson():
             "data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON", "JSONFG"]
         )
         assert drv.GetDescription() == "JSONFG"
+
+
+###############################################################################
+# Test opening a file that has a "type: "Topology" feature property
+
+
+def test_ogr_geojson_feature_with_type_Topology_property():
+
+    ds = gdal.OpenEx("data/geojson/feature_with_type_Topology_property.json")
+    assert ds.GetDriver().GetDescription() == "GeoJSON"
+
+
+###############################################################################
+# Test force opening a GeoJSON file
+
+
+def test_ogr_geojson_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.json")
+
+    with gdaltest.vsi_open(filename, "wb") as f:
+        f.write(
+            b"{"
+            + b" " * (1000 * 1000)
+            + b' "type": "FeatureCollection", "features":[]}'
+        )
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["GeoJSON"])
+    assert ds.GetDriver().GetDescription() == "GeoJSON"
+
+    drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["GeoJSON"])
+    assert drv.GetDescription() == "GeoJSON"
+
+
+###############################################################################
+# Test force opening a STACTA file with GeoJSON
+
+
+def test_ogr_geojson_force_opening_stacta():
+
+    if gdal.GetDriverByName("STACTA"):
+        ds = gdal.OpenEx("../gdrivers/data/stacta/test.json")
+        assert ds.GetDriver().GetDescription() == "STACTA"
+
+    ds = gdal.OpenEx("../gdrivers/data/stacta/test.json", allowed_drivers=["GeoJSON"])
+    assert ds.GetDriver().GetDescription() == "GeoJSON"

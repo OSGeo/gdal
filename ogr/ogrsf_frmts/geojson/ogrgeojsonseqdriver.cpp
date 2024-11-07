@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2018, Even Rouault <even.rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -32,8 +16,10 @@
 #include "cpl_vsi_error.h"
 
 #include "ogr_geojson.h"
+#include "ogrlibjsonutils.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonwriter.h"
+#include "ogrgeojsongeometry.h"
 
 #include <algorithm>
 #include <memory>
@@ -349,6 +335,8 @@ OGRGeoJSONSeqLayer::OGRGeoJSONSeqLayer(
         OGRSpatialReference::GetWGS84SRS());
     m_poCT = std::move(poCT);
 
+    m_oWriteOptions.bWriteBBOX =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"));
     m_oWriteOptions.SetRFC7946Settings();
     m_oWriteOptions.SetIDOptions(papszOptions);
 
@@ -573,7 +561,7 @@ json_object *OGRGeoJSONSeqLayer::GetNextObject(bool bLooseIdentification)
                (m_osFeatureBuffer.back() == '\r' ||
                 m_osFeatureBuffer.back() == '\n'))
         {
-            m_osFeatureBuffer.resize(m_osFeatureBuffer.size() - 1);
+            m_osFeatureBuffer.pop_back();
         }
         if (!m_osFeatureBuffer.empty())
         {
@@ -816,7 +804,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
         if (poOpenInfo->eAccess == GA_Update)
             return false;
 
-        m_osTmpFile = CPLSPrintf("/vsimem/geojsonseq/%p", this);
+        m_osTmpFile = VSIMemGenerateHiddenFilename("geojsonseq");
         m_fp = VSIFileFromMemBuffer(
             m_osTmpFile.c_str(),
             reinterpret_cast<GByte *>(CPLStrdup(poOpenInfo->pszFilename)),
@@ -831,7 +819,8 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
             OGRGeoJSONDriverStealStoredContent(pszUnprefixedFilename);
         if (pszStoredContent)
         {
-            if (!GeoJSONSeqIsObject(pszStoredContent))
+            if (EQUAL(pszStoredContent, INVALID_CONTENT_FOR_JSON_LIKE) ||
+                !GeoJSONSeqIsObject(pszStoredContent, poOpenInfo))
             {
                 OGRGeoJSONDriverStoreContent(poOpenInfo->pszFilename,
                                              pszStoredContent);
@@ -839,7 +828,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
             }
             else
             {
-                m_osTmpFile = CPLSPrintf("/vsimem/geojsonseq/%p", this);
+                m_osTmpFile = VSIMemGenerateHiddenFilename("geojsonseq");
                 m_fp = VSIFileFromMemBuffer(
                     m_osTmpFile.c_str(),
                     reinterpret_cast<GByte *>(pszStoredContent),
@@ -870,7 +859,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
                 return false;
             }
 
-            m_osTmpFile = CPLSPrintf("/vsimem/geojsonseq/%p", this);
+            m_osTmpFile = VSIMemGenerateHiddenFilename("geojsonseq");
             m_fp = VSIFileFromMemBuffer(m_osTmpFile.c_str(), pResult->pabyData,
                                         pResult->nDataLen, true);
             pResult->pabyData = nullptr;
@@ -953,10 +942,14 @@ static int OGRGeoJSONSeqDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
     nSrcType = GeoJSONSeqGetSourceType(poOpenInfo);
     if (nSrcType == eGeoJSONSourceUnknown)
         return FALSE;
-    if (nSrcType == eGeoJSONSourceService &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename, "GeoJSONSeq:"))
+    if (nSrcType == eGeoJSONSourceService)
     {
-        return -1;
+        if (poOpenInfo->IsSingleAllowedDriver("GeoJSONSeq"))
+            return TRUE;
+        if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "GeoJSONSeq:"))
+        {
+            return -1;
+        }
     }
     return TRUE;
 }
@@ -1052,6 +1045,9 @@ void RegisterOGRGeoJSONSeq()
         "    <Value>String</Value>"
         "    <Value>Integer</Value>"
         "  </Option>"
+        "  <Option name='WRITE_BBOX' type='boolean' description='whether to "
+        "write a bbox property with the bounding box of each geometry' "
+        "default='NO'/>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

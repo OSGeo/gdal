@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2022-2023, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "ogrsf_frmts.h"
@@ -270,25 +254,29 @@ inline void UnsetBit(uint8_t *pabyData, size_t nIdx)
 /*                          DefaultReleaseSchema()                      */
 /************************************************************************/
 
-static void OGRLayerDefaultReleaseSchema(struct ArrowSchema *schema)
+static void OGRLayerReleaseSchema(struct ArrowSchema *schema,
+                                  bool bFullFreeFormat)
 {
     CPLAssert(schema->release != nullptr);
-    if (STARTS_WITH(schema->format, "w:") ||
+    if (bFullFreeFormat || STARTS_WITH(schema->format, "w:") ||
         STARTS_WITH(schema->format, "tsm:"))
     {
         CPLFree(const_cast<char *>(schema->format));
     }
     CPLFree(const_cast<char *>(schema->name));
     CPLFree(const_cast<char *>(schema->metadata));
-    for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
+    if (schema->children)
     {
-        if (schema->children[i]->release)
+        for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
         {
-            schema->children[i]->release(schema->children[i]);
-            CPLFree(schema->children[i]);
+            if (schema->children[i] && schema->children[i]->release)
+            {
+                schema->children[i]->release(schema->children[i]);
+                CPLFree(schema->children[i]);
+            }
         }
+        CPLFree(schema->children);
     }
-    CPLFree(schema->children);
     if (schema->dictionary)
     {
         if (schema->dictionary->release)
@@ -298,6 +286,16 @@ static void OGRLayerDefaultReleaseSchema(struct ArrowSchema *schema)
         }
     }
     schema->release = nullptr;
+}
+
+static void OGRLayerPartialReleaseSchema(struct ArrowSchema *schema)
+{
+    OGRLayerReleaseSchema(schema, /* bFullFreeFormat = */ false);
+}
+
+static void OGRLayerFullReleaseSchema(struct ArrowSchema *schema)
+{
+    OGRLayerReleaseSchema(schema, /* bFullFreeFormat = */ true);
 }
 
 /** Release a ArrowSchema.
@@ -311,7 +309,7 @@ static void OGRLayerDefaultReleaseSchema(struct ArrowSchema *schema)
 
 void OGRLayer::ReleaseSchema(struct ArrowSchema *schema)
 {
-    OGRLayerDefaultReleaseSchema(schema);
+    OGRLayerPartialReleaseSchema(schema);
 }
 
 /************************************************************************/
@@ -355,7 +353,7 @@ static void AddDictToSchema(struct ArrowSchema *psChild,
     auto psChildDict = static_cast<struct ArrowSchema *>(
         CPLCalloc(1, sizeof(struct ArrowSchema)));
     psChild->dictionary = psChildDict;
-    psChildDict->release = OGRLayerDefaultReleaseSchema;
+    psChildDict->release = OGRLayerPartialReleaseSchema;
     psChildDict->name = CPLStrdup(poCodedDomain->GetName().c_str());
     psChildDict->format = "u";
     if (nCountNull)
@@ -419,9 +417,10 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
         psChild->name = CPLStrdup(poFieldDefn->GetNameRef());
         if (poFieldDefn->IsNullable())
             psChild->flags = ARROW_FLAG_NULLABLE;
+        const auto eType = poFieldDefn->GetType();
         const auto eSubType = poFieldDefn->GetSubType();
         const char *item_format = nullptr;
-        switch (poFieldDefn->GetType())
+        switch (eType)
         {
             case OFTInteger:
             {
@@ -585,15 +584,18 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
         if (!osComment.empty())
             oMetadata.emplace_back(std::pair(MD_GDAL_OGR_COMMENT, osComment));
 
-        if (poFieldDefn->GetSubType() != OFSTNone &&
-            poFieldDefn->GetSubType() != OFSTBoolean &&
-            poFieldDefn->GetSubType() != OFSTFloat32)
+        if (eType == OFTString && eSubType == OFSTJSON)
         {
             oMetadata.emplace_back(
-                std::pair(MD_GDAL_OGR_SUBTYPE,
-                          OGR_GetFieldSubTypeName(poFieldDefn->GetSubType())));
+                std::pair(ARROW_EXTENSION_NAME_KEY, EXTENSION_NAME_ARROW_JSON));
         }
-        if (poFieldDefn->GetType() == OFTString && poFieldDefn->GetWidth() > 0)
+        else if (eSubType != OFSTNone && eSubType != OFSTBoolean &&
+                 eSubType != OFSTFloat32)
+        {
+            oMetadata.emplace_back(std::pair(
+                MD_GDAL_OGR_SUBTYPE, OGR_GetFieldSubTypeName(eSubType)));
+        }
+        if (eType == OFTString && poFieldDefn->GetWidth() > 0)
         {
             oMetadata.emplace_back(std::pair(
                 MD_GDAL_OGR_WIDTH, CPLSPrintf("%d", poFieldDefn->GetWidth())));
@@ -1778,17 +1780,8 @@ FillDateTimeArray(struct ArrowArray *psChild,
             auto nVal =
                 CPLYMDHMSToUnixTime(&brokenDown) * 1000 +
                 (static_cast<int>(psRawField->Date.Second * 1000 + 0.5) % 1000);
-            if (nFieldTZFlag > OGR_TZFLAG_MIXED_TZ &&
+            if (nFieldTZFlag >= OGR_TZFLAG_MIXED_TZ &&
                 psRawField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
-            {
-                // Convert for psRawField->Date.TZFlag to nFieldTZFlag
-                const int TZOffset =
-                    (psRawField->Date.TZFlag - nFieldTZFlag) * 15;
-                const int TZOffsetMS = TZOffset * 60 * 1000;
-                nVal -= TZOffsetMS;
-            }
-            else if (nFieldTZFlag == OGR_TZFLAG_MIXED_TZ &&
-                     psRawField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
             {
                 // Convert for psRawField->Date.TZFlag to UTC
                 const int TZOffset =
@@ -5461,6 +5454,103 @@ bool OGRCloneArrowArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
+/*                     OGRCloneArrowMetadata()                          */
+/************************************************************************/
+
+static void *OGRCloneArrowMetadata(const void *pMetadata)
+{
+    if (!pMetadata)
+        return nullptr;
+    std::vector<GByte> abyOut;
+    const GByte *pabyMetadata = static_cast<const GByte *>(pMetadata);
+    int32_t nKVP;
+    abyOut.insert(abyOut.end(), pabyMetadata, pabyMetadata + sizeof(int32_t));
+    memcpy(&nKVP, pabyMetadata, sizeof(int32_t));
+    pabyMetadata += sizeof(int32_t);
+    for (int i = 0; i < nKVP; ++i)
+    {
+        int32_t nSizeKey;
+        abyOut.insert(abyOut.end(), pabyMetadata,
+                      pabyMetadata + sizeof(int32_t));
+        memcpy(&nSizeKey, pabyMetadata, sizeof(int32_t));
+        pabyMetadata += sizeof(int32_t);
+        abyOut.insert(abyOut.end(), pabyMetadata, pabyMetadata + nSizeKey);
+        pabyMetadata += nSizeKey;
+
+        int32_t nSizeValue;
+        abyOut.insert(abyOut.end(), pabyMetadata,
+                      pabyMetadata + sizeof(int32_t));
+        memcpy(&nSizeValue, pabyMetadata, sizeof(int32_t));
+        pabyMetadata += sizeof(int32_t);
+        abyOut.insert(abyOut.end(), pabyMetadata, pabyMetadata + nSizeValue);
+        pabyMetadata += nSizeValue;
+    }
+
+    GByte *pabyOut = static_cast<GByte *>(VSI_MALLOC_VERBOSE(abyOut.size()));
+    if (pabyOut)
+        memcpy(pabyOut, abyOut.data(), abyOut.size());
+    return pabyOut;
+}
+
+/************************************************************************/
+/*                          OGRCloneArrowSchema()                       */
+/************************************************************************/
+
+/** Full/deep copy of a schema.
+ *
+ * In case of failure, out_schema will be let in a released state.
+ *
+ * @param schema Schema to clone. Must *NOT* be NULL.
+ * @param out_schema Output schema.  Must *NOT* be NULL (but its content may be random)
+ * @return true if success.
+ */
+bool OGRCloneArrowSchema(const struct ArrowSchema *schema,
+                         struct ArrowSchema *out_schema)
+{
+    memset(out_schema, 0, sizeof(*out_schema));
+    out_schema->release = OGRLayerFullReleaseSchema;
+    out_schema->format = CPLStrdup(schema->format);
+    out_schema->name = CPLStrdup(schema->name);
+    out_schema->metadata = static_cast<const char *>(
+        const_cast<const void *>(OGRCloneArrowMetadata(schema->metadata)));
+    out_schema->flags = schema->flags;
+    if (schema->n_children)
+    {
+        out_schema->children =
+            static_cast<struct ArrowSchema **>(VSI_CALLOC_VERBOSE(
+                static_cast<int>(schema->n_children), sizeof(ArrowSchema *)));
+        if (!out_schema->children)
+        {
+            out_schema->release(out_schema);
+            return false;
+        }
+        out_schema->n_children = schema->n_children;
+        for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
+        {
+            out_schema->children[i] = static_cast<struct ArrowSchema *>(
+                CPLMalloc(sizeof(ArrowSchema)));
+            if (!OGRCloneArrowSchema(schema->children[i],
+                                     out_schema->children[i]))
+            {
+                out_schema->release(out_schema);
+                return false;
+            }
+        }
+    }
+    if (schema->dictionary)
+    {
+        out_schema->dictionary =
+            static_cast<struct ArrowSchema *>(CPLMalloc(sizeof(ArrowSchema)));
+        if (!OGRCloneArrowSchema(schema->dictionary, out_schema->dictionary))
+        {
+            out_schema->release(out_schema);
+            return false;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                  OGRLayer::IsArrowSchemaSupported()                  */
 /************************************************************************/
 
@@ -5862,10 +5952,13 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
     if (poDS)
     {
         auto poDriver = poDS->GetDriver();
-        const char *pszMetadataItem =
-            poDriver->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES);
-        if (pszMetadataItem)
-            aosNativeTypes = CSLTokenizeString2(pszMetadataItem, " ", 0);
+        if (poDriver)
+        {
+            const char *pszMetadataItem =
+                poDriver->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES);
+            if (pszMetadataItem)
+                aosNativeTypes = CSLTokenizeString2(pszMetadataItem, " ", 0);
+        }
     }
 
     if (schema->dictionary &&
@@ -7374,10 +7467,13 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
     if (poDS)
     {
         auto poDriver = poDS->GetDriver();
-        const char *pszMetadataItem =
-            poDriver->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES);
-        if (pszMetadataItem)
-            aosNativeTypes = CSLTokenizeString2(pszMetadataItem, " ", 0);
+        if (poDriver)
+        {
+            const char *pszMetadataItem =
+                poDriver->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES);
+            if (pszMetadataItem)
+                aosNativeTypes = CSLTokenizeString2(pszMetadataItem, " ", 0);
+        }
     }
 
     std::vector<FieldInfo> asFieldInfo;
@@ -7579,6 +7675,22 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                         oLayerDefnTmp.GetFieldDefnUnsafe(i)->GetType();
                     const auto eDstType =
                         poLayerDefn->GetFieldDefnUnsafe(i)->GetType();
+
+                    const auto IsDoubleCastToInt64EqualTInt64 =
+                        [](double dfVal, int64_t nOtherVal)
+                    {
+                        // Values in the range [INT64_MAX - 1023, INT64_MAX - 1]
+                        // get converted to a double that once cast to int64_t
+                        // is INT64_MAX + 1, hence the strict < comparison
+                        return dfVal >=
+                                   static_cast<double>(
+                                       std::numeric_limits<int64_t>::min()) &&
+                               dfVal <
+                                   static_cast<double>(
+                                       std::numeric_limits<int64_t>::max()) &&
+                               static_cast<int64_t>(dfVal) == nOtherVal;
+                    };
+
                     if (eSrcType == OFTInteger64 && eDstType == OFTInteger &&
                         oFeatureTarget.GetFieldAsIntegerUnsafe(i) !=
                             oFeature.GetFieldAsInteger64Unsafe(i))
@@ -7599,9 +7711,9 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                         bLossyConversion = true;
                     }
                     else if (eSrcType == OFTInteger64 && eDstType == OFTReal &&
-                             static_cast<GIntBig>(
-                                 oFeatureTarget.GetFieldAsDoubleUnsafe(i)) !=
-                                 oFeature.GetFieldAsInteger64Unsafe(i))
+                             !IsDoubleCastToInt64EqualTInt64(
+                                 oFeatureTarget.GetFieldAsDoubleUnsafe(i),
+                                 oFeature.GetFieldAsInteger64Unsafe(i)))
                     {
                         bLossyConversion = true;
                     }

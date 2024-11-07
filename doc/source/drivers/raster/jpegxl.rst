@@ -97,6 +97,8 @@ The following creation options are available:
       If set to NO, or in AUTO mode if the source dataset does not use JPEG
       compression, the regular conversion code path is taken, resulting in a
       lossless or lossy copy depending on the LOSSLESS setting.
+      AUTO mode defaults to NO, if EFFORT, DISTANCE, ALPHA_DISTANCE or QUALITY
+      options are used.
 
 -  .. co:: EFFORT
       :choices: 1-9
@@ -106,7 +108,7 @@ The following creation options are available:
       The higher, the smaller file and slower compression time.
 
 -  .. co:: DISTANCE
-      :choices: 0.1-15
+      :choices: 0.01-25
       :default: 1.0
 
       Distance level for lossy JPEG-XL compression.
@@ -118,7 +120,7 @@ The following creation options are available:
       The recommended range is [0.5,3].
 
 -  .. co:: ALPHA_DISTANCE
-      :choices: -1, 0, 0.1-15
+      :choices: -1, 0, 0.01-25
       :default: -1.0
       :since: 3.7
 

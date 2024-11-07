@@ -7,23 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2019, Even Rouault <even dot rouault at spatialys dot com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "cpl_port.h"
@@ -267,13 +251,13 @@ static bool COGGetWarpingCharacteristics(
                 aosOptions.AddString("VRT");
                 aosOptions.AddString("-projwin");
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0]));
-                aosOptions.AddString(CPLSPrintf("%.18g", maxLat));
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0]));
+                aosOptions.AddString(CPLSPrintf("%.17g", maxLat));
                 aosOptions.AddString(
-                    CPLSPrintf("%.18g", adfSrcGeoTransform[0] +
+                    CPLSPrintf("%.17g", adfSrcGeoTransform[0] +
                                             poSrcDS->GetRasterXSize() *
                                                 adfSrcGeoTransform[1]));
-                aosOptions.AddString(CPLSPrintf("%.18g", minLat));
+                aosOptions.AddString(CPLSPrintf("%.17g", minLat));
                 auto psOptions =
                     GDALTranslateOptionsNew(aosOptions.List(), nullptr);
                 poTmpDS.reset(GDALDataset::FromHandle(GDALTranslate(
@@ -615,10 +599,10 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     papszArg = CSLAddString(papszArg, "-t_srs");
     papszArg = CSLAddString(papszArg, osTargetSRS);
     papszArg = CSLAddString(papszArg, "-te");
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMinX));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMinY));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMaxX));
-    papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfMaxY));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMinX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMinY));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMaxX));
+    papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfMaxY));
     papszArg = CSLAddString(papszArg, "-ts");
     papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nXSize));
     papszArg = CSLAddString(papszArg, CPLSPrintf("%d", nYSize));
@@ -632,8 +616,8 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     {
         // Try to produce exactly square pixels
         papszArg = CSLAddString(papszArg, "-tr");
-        papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfRes));
-        papszArg = CSLAddString(papszArg, CPLSPrintf("%.18g", dfRes));
+        papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfRes));
+        papszArg = CSLAddString(papszArg, CPLSPrintf("%.17g", dfRes));
     }
     else
     {
@@ -737,19 +721,25 @@ GDALCOGCreator::~GDALCOGCreator()
     // may reference the later
     m_poRGBMaskDS.reset();
 
-    if (m_poReprojectedDS)
+    // Config option just for testing purposes
+    const bool bDeleteTempFiles =
+        CPLTestBool(CPLGetConfigOption("COG_DELETE_TEMP_FILES", "YES"));
+    if (bDeleteTempFiles)
     {
-        CPLString osProjectedDSName(m_poReprojectedDS->GetDescription());
-        m_poReprojectedDS.reset();
-        VSIUnlink(osProjectedDSName);
-    }
-    if (!m_osTmpOverviewFilename.empty())
-    {
-        VSIUnlink(m_osTmpOverviewFilename);
-    }
-    if (!m_osTmpMskOverviewFilename.empty())
-    {
-        VSIUnlink(m_osTmpMskOverviewFilename);
+        if (m_poReprojectedDS)
+        {
+            CPLString osProjectedDSName(m_poReprojectedDS->GetDescription());
+            m_poReprojectedDS.reset();
+            VSIUnlink(osProjectedDSName);
+        }
+        if (!m_osTmpOverviewFilename.empty())
+        {
+            VSIUnlink(m_osTmpOverviewFilename);
+        }
+        if (!m_osTmpMskOverviewFilename.empty())
+        {
+            VSIUnlink(m_osTmpMskOverviewFilename);
+        }
     }
 }
 
@@ -1515,13 +1505,13 @@ void GDALCOGDriver::InitializeCreationOptionList()
         "1(fast)-9(slow)' default='5'/>"
         "   <Option name='JXL_DISTANCE' type='float' description='Distance "
         "level for lossy compression (0=mathematically lossless, 1.0=visually "
-        "lossless, usual range [0.5,3])' default='1.0' min='0.1' max='15.0'/>";
+        "lossless, usual range [0.5,3])' default='1.0' min='0.01' max='25.0'/>";
 #ifdef HAVE_JxlEncoderSetExtraChannelDistance
     osOptions += "   <Option name='JXL_ALPHA_DISTANCE' type='float' "
                  "description='Distance level for alpha channel "
                  "(-1=same as non-alpha channels, "
                  "0=mathematically lossless, 1.0=visually lossless, "
-                 "usual range [0.5,3])' default='-1' min='-1' max='15.0'/>";
+                 "usual range [0.5,3])' default='-1' min='-1' max='25.0'/>";
 #endif
 #endif
     osOptions +=

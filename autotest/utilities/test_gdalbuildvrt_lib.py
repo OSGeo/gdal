@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2016, Even Rouault <even dot rouault @ spatialys dot com>
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import pathlib
@@ -97,6 +81,10 @@ def test_gdalbuildvrt_lib_2():
 # Test creating overviews
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalbuildvrt_lib_ovr(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "my.vrt"
@@ -280,15 +268,15 @@ def test_gdalbuildvrt_lib_separate_nodata_2(tmp_vsimem):
     src2_ds.GetRasterBand(1).SetNoDataValue(2)
 
     gdal.BuildVRT(
-        tmp_vsimem / "out.vrt", [src1_ds, src2_ds], separate=True, srcNodata="3 4"
+        tmp_vsimem / "out.vrt", [src1_ds, src2_ds], separate=True, srcNodata="-3 4"
     )
 
     f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
 
-    assert b"<NoDataValue>3</NoDataValue>" in data
-    assert b"<NODATA>3</NODATA>" in data
+    assert b"<NoDataValue>-3</NoDataValue>" in data
+    assert b"<NODATA>-3</NODATA>" in data
     assert b"<NoDataValue>4</NoDataValue>" in data
     assert b"<NODATA>4</NODATA>" in data
 
@@ -309,14 +297,14 @@ def test_gdalbuildvrt_lib_separate_nodata_3(tmp_vsimem):
         [src1_ds, src2_ds],
         separate=True,
         srcNodata="3 4",
-        VRTNodata="5 6",
+        VRTNodata="-5 6",
     )
 
     f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
 
-    assert b"<NoDataValue>5</NoDataValue>" in data
+    assert b"<NoDataValue>-5</NoDataValue>" in data
     assert b"<NODATA>3</NODATA>" in data
     assert b"<NoDataValue>6</NoDataValue>" in data
     assert b"<NODATA>4</NODATA>" in data
@@ -668,6 +656,12 @@ def test_gdalbuildvrt_lib_strict_mode():
 
 
 ###############################################################################
+
+
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalbuildvrt_lib_te_touching_on_edge(tmp_vsimem):
 
     tmp_filename = tmp_vsimem / "test_gdalbuildvrt_lib_te_touching_on_edge.vrt"
@@ -794,6 +788,10 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgba(tmp_vsimem):
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not gdaltest.vrt_has_open_support(),
+    reason="VRT driver open missing",
+)
 def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
 
     # UInt16, VRTNodata=0

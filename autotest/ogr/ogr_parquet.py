@@ -10,23 +10,7 @@
 ###############################################################################
 # Copyright (c) 2022, Planet Labs
 #
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+# SPDX-License-Identifier: MIT
 ###############################################################################
 
 import json
@@ -41,7 +25,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("Parquet")
 
-PARQUET_JSON_SCHEMA = "data/parquet/schema.json"
+GEOPARQUET_1_1_0_JSON_SCHEMA = "data/parquet/schema_1_1_0.json"
 
 
 ###############################################################################
@@ -81,7 +65,7 @@ def _validate(filename, check_data=False):
     import validate_geoparquet
 
     ret = validate_geoparquet.check(
-        filename, check_data=check_data, local_schema=PARQUET_JSON_SCHEMA
+        filename, check_data=check_data, local_schema=GEOPARQUET_1_1_0_JSON_SCHEMA
     )
     assert not ret
 
@@ -682,7 +666,7 @@ def test_ogr_parquet_write_from_another_dataset(use_vsi, row_group_size, fid):
         j = json.loads(geo)
         assert j is not None
         assert "version" in j
-        assert j["version"] == "1.0.0"
+        assert j["version"] == "1.1.0"
         assert "primary_column" in j
         assert j["primary_column"] == "geometry"
         assert "columns" in j
@@ -3317,13 +3301,22 @@ def test_ogr_parquet_bbox_double():
 
 
 @pytest.mark.require_geos
-def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata():
+@pytest.mark.parametrize("use_dataset", [True, False])
+def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata(use_dataset):
 
-    ds = ogr.Open("data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet")
+    if use_dataset and not _has_arrow_dataset():
+        pytest.skip("Test requires build with ArrowDataset")
+
+    prefix = "PARQUET:" if use_dataset else ""
+
+    ds = ogr.Open(
+        prefix + "data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet"
+    )
     lyr = ds.GetLayer(0)
     assert lyr.GetGeometryColumn() == "geometry"
     assert lyr.GetLayerDefn().GetFieldIndex("bbox.xmin") < 0
-    assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
+    if not use_dataset:
+        assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
     minx, maxx, miny, maxy = lyr.GetExtent()
     assert (minx, miny, maxx, maxy) == pytest.approx(
         (478315.53125, 4762880.5, 481645.3125, 4765610.5)
@@ -3337,14 +3330,16 @@ def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata():
         maxy - (maxy - miny) / 2,
     ):
         f = lyr.GetNextFeature()
-        assert f.GetFID() == 8
+        if not use_dataset:
+            assert f.GetFID() == 8
         assert lyr.GetNextFeature() is None
 
     ds = None
 
     with gdaltest.config_option("OGR_PARQUET_USE_BBOX", "NO"):
         ds = ogr.Open(
-            "data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet"
+            prefix
+            + "data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet"
         )
         lyr = ds.GetLayer(0)
         assert lyr.GetGeometryColumn() == "geometry"
@@ -3859,6 +3854,8 @@ def test_ogr_parquet_geoarrow(
     lyr = ds.GetLayer(0)
     lyr.SetIgnoredFields(["foo"])
     check(lyr)
+    lyr.SetSpatialFilter(geom)
+    assert lyr.GetFeatureCount() == (3 if geom.GetGeometryCount() > 1 else 2)
 
     ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
@@ -4045,6 +4042,30 @@ def test_ogr_parquet_read_arrow_json_extension():
 
 
 ###############################################################################
+# Test writing a file with the arrow.json extension
+
+
+def test_ogr_parquet_writing_arrow_json_extension(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "out.parquet")
+    with ogr.GetDriverByName("Parquet").CreateDataSource(outfilename) as ds:
+        lyr = ds.CreateLayer("test")
+        fld_defn = ogr.FieldDefn("extension_json")
+        fld_defn.SetSubType(ogr.OFSTJSON)
+        lyr.CreateField(fld_defn)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["extension_json"] = '{"foo":"bar"}'
+        lyr.CreateFeature(f)
+
+    with gdal.config_option("OGR_PARQUET_READ_GDAL_SCHEMA", "NO"):
+        ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
+    f = lyr.GetNextFeature()
+    assert f["extension_json"] == '{"foo":"bar"}'
+
+
+###############################################################################
 # Test ignored fields with arrow::dataset and bounding box column
 
 
@@ -4073,3 +4094,59 @@ def test_ogr_parquet_ignored_fields_bounding_box_column_arrow_dataset(tmp_path):
     lyr.SetSpatialFilterRect(0, 0, 0, 0)
     lyr.ResetReading()
     assert lyr.GetNextFeature() is None
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_vsi_arrow_file_system():
+
+    version = int(
+        ogr.GetDriverByName("ARROW").GetMetadataItem("ARROW_VERSION").split(".")[0]
+    )
+    if version < 16:
+        pytest.skip("requires Arrow >= 16.0.0")
+
+    ds = ogr.Open("PARQUET:gdalvsi://data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() > 0
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("ARROW")
+@pytest.mark.parametrize(
+    "src_filename,expected_error_msg",
+    [
+        ("data/arrow/stringview.feather", "StringView not supported"),
+        ("data/arrow/binaryview.feather", "BinaryView not supported"),
+    ],
+)
+def test_ogr_parquet_IsArrowSchemaSupported_arrow_15_types(
+    src_filename, expected_error_msg, tmp_vsimem
+):
+
+    version = int(
+        ogr.GetDriverByName("ARROW").GetMetadataItem("ARROW_VERSION").split(".")[0]
+    )
+    if version < 15:
+        pytest.skip("requires Arrow >= 15.0.0")
+
+    src_ds = ogr.Open(src_filename)
+    src_lyr = src_ds.GetLayer(0)
+
+    outfilename = str(tmp_vsimem / "test.parquet")
+    with ogr.GetDriverByName("Parquet").CreateDataSource(outfilename) as dst_ds:
+        dst_lyr = dst_ds.CreateLayer(
+            "test", srs=src_lyr.GetSpatialRef(), geom_type=ogr.wkbPoint, options=[]
+        )
+
+        stream = src_lyr.GetArrowStream()
+        schema = stream.GetSchema()
+
+        success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
+        assert not success
+        assert error_msg == expected_error_msg

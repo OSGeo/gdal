@@ -71,6 +71,10 @@ target pixel in the resulting raster nor will it overwrite a valid pixel value.
     If not specified the aggregate extents of all input files will be
     used.
 
+.. option:: -q, -quiet
+
+    Suppress progress messages.
+
 .. option:: -v
 
     Generate verbose output of mosaicing operations as they are done.

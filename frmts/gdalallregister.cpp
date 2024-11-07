@@ -8,23 +8,7 @@
  * Copyright (c) 1998, Frank Warmerdam
  * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #include "gdal_priv.h"
@@ -185,6 +169,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_HANA_DRIVER)
     DeclareDeferredOGRHANAPlugin();
 #endif
+#if defined(DEFERRED_AVIF_DRIVER)
+    DeclareDeferredAVIFPlugin();
+#endif
 #if defined(DEFERRED_HEIF_DRIVER)
     DeclareDeferredHEIFPlugin();
 #endif
@@ -314,6 +301,12 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_ZARR_DRIVER)
     DeclareDeferredZarrPlugin();
 #endif
+#if defined(DEFERRED_XODR_DRIVER)
+    DeclareDeferredOGRXODRPlugin();
+#endif
+#if defined(DEFERRED_ADBC_DRIVER)
+    DeclareDeferredOGRADBCPlugin();
+#endif
 
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
     poDriverManager->AutoLoadDrivers();
@@ -323,8 +316,18 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_vrt
     GDALRegister_VRT();
-    GDALRegister_GTI();
+#endif
+
+#ifdef FRMT_derived
     GDALRegister_Derived();
+#endif
+
+#ifdef FRMT_gti
+    GDALRegister_GTI();
+#endif
+
+#ifdef FRMT_snap_tiff
+    GDALRegister_SNAP_TIFF();
 #endif
 
 #ifdef FRMT_gtiff
@@ -762,6 +765,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_EXR();
 #endif
 
+#ifdef FRMT_avif
+    GDALRegister_AVIF();
+#endif
+
 #ifdef FRMT_heif
     GDALRegister_HEIF();
 #endif
@@ -816,6 +823,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_zarr
     GDALRegister_Zarr();
+#endif
+
+#ifdef FRMT_rcm
+    GDALRegister_RCM();
 #endif
 
 /* -------------------------------------------------------------------- */

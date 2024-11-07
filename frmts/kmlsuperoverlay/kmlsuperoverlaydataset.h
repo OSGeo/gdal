@@ -9,28 +9,13 @@
  * Copyright (c) 2010, SPADAC Inc. <harsh.govind@spadac.com>
  * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
 #ifndef KMLSUPEROVERLAYDATASET_H_INCLUDED
 #define KMLSUPEROVERLAYDATASET_H_INCLUDED
 
+#include <array>
 #include <map>
 
 #include "cpl_minixml.h"
@@ -48,10 +33,16 @@ class LinkedDataset;
 class LinkedDataset
 {
   public:
-    KmlSuperOverlayReadDataset *poDS;
-    LinkedDataset *psPrev;
-    LinkedDataset *psNext;
-    CPLString osSubFilename;
+    KmlSuperOverlayReadDataset *poDS = nullptr;
+    LinkedDataset *psPrev = nullptr;
+    LinkedDataset *psNext = nullptr;
+    CPLString osSubFilename{};
+
+    LinkedDataset() = default;
+
+  private:
+    LinkedDataset(const LinkedDataset &) = delete;
+    LinkedDataset &operator=(const LinkedDataset &) = delete;
 };
 
 class KmlSuperOverlayReadDataset final : public GDALDataset
@@ -59,22 +50,25 @@ class KmlSuperOverlayReadDataset final : public GDALDataset
     friend class KmlSuperOverlayRasterBand;
 
     OGRSpatialReference m_oSRS{};
-    int nFactor;
-    CPLString osFilename;
-    CPLXMLNode *psRoot;
-    CPLXMLNode *psDocument;
-    GDALDataset *poDSIcon;
-    double adfGeoTransform[6];
+    int nFactor = 1;
+    CPLString osFilename{};
+    CPLXMLNode *psRoot = nullptr;
+    CPLXMLNode *psDocument = nullptr;
+    std::unique_ptr<GDALDataset> poDSIcon{};
+    std::array<double, 6> adfGeoTransform = {0, 0, 0, 0, 0, 0};
 
-    int nOverviewCount;
-    KmlSuperOverlayReadDataset **papoOverviewDS;
-    int bIsOvr;
+    std::vector<std::unique_ptr<KmlSuperOverlayReadDataset>> m_apoOverviewDS{};
+    bool bIsOvr = false;
 
-    KmlSuperOverlayReadDataset *poParent;
+    KmlSuperOverlayReadDataset *poParent = nullptr;
 
-    std::map<CPLString, LinkedDataset *> oMapChildren;
-    LinkedDataset *psFirstLink;
-    LinkedDataset *psLastLink;
+    std::map<CPLString, LinkedDataset *> oMapChildren{};
+    LinkedDataset *psFirstLink = nullptr;
+    LinkedDataset *psLastLink = nullptr;
+
+    KmlSuperOverlayReadDataset(const KmlSuperOverlayReadDataset &) = delete;
+    KmlSuperOverlayReadDataset &
+    operator=(const KmlSuperOverlayReadDataset &) = delete;
 
   protected:
     virtual int CloseDependentDatasets() override;
