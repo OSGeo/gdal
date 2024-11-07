@@ -1,3 +1,12 @@
+MIGRATION GUIDE FROM GDAL 3.10 to GDAL 3.11
+-------------------------------------------
+
+- GDAL drivers may now return raster bands with the new data types
+  GDT_Float16 or GDT_CFloat16. Code that use the GDAL API must be
+  ready to react to the new data type, possibly by doing RasterIO()
+  requests with eBufType==GDT_Float32, if they can't deal natively
+  with Float16 values.
+
 MIGRATION GUIDE FROM GDAL 3.9 to GDAL 3.10
 ------------------------------------------
 
