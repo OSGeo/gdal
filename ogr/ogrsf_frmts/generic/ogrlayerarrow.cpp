@@ -6160,7 +6160,23 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
             const auto oMetadata = OGRParseArrowMetadata(schema->metadata);
             for (const auto &oIter : oMetadata)
             {
-                if (oIter.first == MD_GDAL_OGR_ALTERNATIVE_NAME)
+                if (oIter.first == MD_GDAL_OGR_TYPE)
+                {
+                    const auto &osType = oIter.second;
+                    for (auto eType = OFTInteger; eType <= OFTMaxType;)
+                    {
+                        if (OGRFieldDefn::GetFieldTypeName(eType) == osType)
+                        {
+                            oFieldDefn.SetType(eType);
+                            break;
+                        }
+                        if (eType == OFTMaxType)
+                            break;
+                        else
+                            eType = static_cast<OGRFieldType>(eType + 1);
+                    }
+                }
+                else if (oIter.first == MD_GDAL_OGR_ALTERNATIVE_NAME)
                     oFieldDefn.SetAlternativeName(oIter.second.c_str());
                 else if (oIter.first == MD_GDAL_OGR_COMMENT)
                     oFieldDefn.SetComment(oIter.second);
@@ -6611,6 +6627,13 @@ static bool BuildOGRFieldInfo(
                              sType.eType == OFTInteger)
                     {
                         // Non-lossy
+                        bFallbackTypesUsed = true;
+                        bTypeOK = true;
+                        break;
+                    }
+                    else if (eOGRType == OFTDateTime &&
+                             sType.eType == OFTString)
+                    {
                         bFallbackTypesUsed = true;
                         bTypeOK = true;
                         break;
