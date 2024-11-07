@@ -19,7 +19,8 @@
 // https://github.com/apache/arrow/blob/main/cpp/src/arrow/c/abi.h WARNING: DO
 // NOT MODIFY the content as it would break interoperability !
 
-#pragma once
+#ifndef OGR_RECORDBATCH_H_INCLUDED
+#define OGR_RECORDBATCH_H_INCLUDED
 
 /*! @cond Doxygen_Suppress */
 
@@ -123,3 +124,5 @@ extern "C"
 #endif
 
 /*! @endcond */
+
+#endif  // OGR_RECORDBATCH_H_INCLUDED
