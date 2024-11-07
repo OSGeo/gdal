@@ -590,11 +590,18 @@ static void CPLvDebug(const char *pszCategory,
     /* -------------------------------------------------------------------- */
     /*      Does this message pass our current criteria?                    */
     /* -------------------------------------------------------------------- */
-    if (pszDebug == nullptr)
-        return;
-
-    if (!EQUAL(pszDebug, "ON") && !EQUAL(pszDebug, ""))
+    if (pszDebug == nullptr || EQUAL(pszDebug, "NO") ||
+        EQUAL(pszDebug, "OFF") || EQUAL(pszDebug, "FALSE") ||
+        EQUAL(pszDebug, "0"))
     {
+        return;
+    }
+
+    if (!EQUAL(pszDebug, "ON") && !EQUAL(pszDebug, "YES") &&
+        !EQUAL(pszDebug, "TRUE") && !EQUAL(pszDebug, "1") &&
+        !EQUAL(pszDebug, ""))
+    {
+        // check if value of CPL_DEBUG contains the category
         const size_t nLen = strlen(pszCategory);
 
         size_t i = 0;
@@ -623,7 +630,7 @@ static void CPLvDebug(const char *pszCategory,
 
     pszMessage[0] = '\0';
 #ifdef TIMESTAMP_DEBUG
-    if (CPLGetConfigOption("CPL_TIMESTAMP", nullptr) != nullptr)
+    if (CPLTestBool(CPLGetConfigOption("CPL_TIMESTAMP", "NO")))
     {
         static struct CPLTimeVal tvStart;
         static const auto unused = CPLGettimeofday(&tvStart, nullptr);

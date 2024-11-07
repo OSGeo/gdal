@@ -13,6 +13,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import datetime
 import os
 import shutil
 
@@ -719,6 +720,70 @@ def test_misc_13():
     with gdal.quiet_errors():
         out_ds = gdal.GetDriverByName("GTiff").CreateCopy("/vsimem/out.tif", ds)
     assert out_ds is None
+
+
+###############################################################################
+# Test parsing of CPL_DEBUG and CPL_TIMESTAMP
+
+
+@pytest.fixture
+def debug_output():
+
+    messages = []
+
+    def handle(ecls, ecode, emsg):
+        messages.append(emsg)
+
+    def log_message(category, message):
+        messages.clear()
+        gdal.Debug(category, message)
+        return messages[0] if messages else None
+
+    log_message.handle = handle
+
+    with gdaltest.error_handler(handle):
+        yield log_message
+
+
+@pytest.mark.parametrize(
+    "booleans",
+    [("YES", "NO"), ("TRUE", "FALSE"), ("ON", "OFF"), ("1", "0")],
+    ids="_".join,
+)
+def test_misc_cpl_debug(debug_output, booleans):
+
+    on, off = booleans
+
+    assert debug_output("GDAL", "msg") is None
+
+    with gdal.config_option("CPL_DEBUG", off):
+        assert debug_output("GDAL", "msg") is None
+
+    with gdal.config_option("CPL_DEBUG", on):
+        assert debug_output("GDAL", "message") == "GDAL: message"
+
+        with gdal.config_option("CPL_TIMESTAMP", off):
+            assert debug_output("GDAL", "message") == "GDAL: message"
+
+        with gdal.config_option("CPL_TIMESTAMP", on):
+            output = debug_output("GDAL", "message")
+            assert str(datetime.datetime.now().year) in output
+            assert output.endswith("GDAL: message")
+
+
+def test_misc_cpl_debug_filtering(debug_output):
+
+    with gdal.config_option("CPL_DEBUG", "GDAL"):
+        assert debug_output("GDAL", "msg") == "GDAL: msg"
+        assert debug_output("GDAL_WARP", "msg") is None
+        assert debug_output("", "msg") == ": msg"
+
+    with gdal.config_option("CPL_DEBUG", "GDAL_WARP_TRANSLATE_ETC"):
+        assert debug_output("GDAL", "msg") == "GDAL: msg"
+        assert debug_output("TRANSLATE", "msg") == "TRANSLATE: msg"
+
+    with gdal.config_option("CPL_DEBUG", ""):
+        assert debug_output("GDAL", "msg") == "GDAL: msg"
 
 
 ###############################################################################
