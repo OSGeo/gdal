@@ -2881,7 +2881,11 @@ def vrt_expression_xml(tmpdir, expression, sources):
                  <PixelFunctionArguments expression="{expression}" />"""
 
     for i, source in enumerate(sources):
-        source_name, source_value = source
+        if type(source) is tuple:
+            source_name, source_value = source
+        else:
+            source_name = ""
+            source_value = source
 
         src_fname = tmpdir / f"source_{i}.tif"
 
@@ -2932,6 +2936,43 @@ def vrt_expression_xml(tmpdir, expression, sources):
             3 / (3 + 5 + 31),
             id="use of ALL variable",
         ),
+        pytest.param(
+            "B1 / sum(B2, B3) ",
+            [("", 3), ("", 5), ("", 31)],
+            3 / (5 + 31),
+            id="aggregate specified inputs",
+        ),
+        pytest.param(
+            "var q[2] := {B2, B3}; B1 * q",
+            [("", 3), ("", 5), ("", 31)],
+            15,  # First value in returned vector. This behavior doesn't seem desirable
+            # but I haven't figured out how to detect a vector return.
+            id="return vector",
+        ),
+        pytest.param(
+            "B1 + B2 + B3",
+            (5, 9, float("nan")),
+            float("nan"),
+            id="nan propagated via arithmetic",
+        ),
+        pytest.param(
+            "if (B3) B1 ; else B2",
+            (5, 9, float("nan")),
+            5,
+            id="nan = truth in conditional?",
+        ),
+        pytest.param(
+            "if (B3 > 0) B1 ; else B2",
+            (5, 9, float("nan")),
+            9,
+            id="nan comparison is false in conditional",
+        ),
+        pytest.param(
+            "if (B1 > 5) B1",
+            (1,),
+            float("nan"),
+            id="expression returns nodata",
+        ),
     ],
 )
 def test_vrt_pixelfn_expression(tmp_path, expression, sources, result):
@@ -2940,15 +2981,26 @@ def test_vrt_pixelfn_expression(tmp_path, expression, sources, result):
     xml = vrt_expression_xml(tmp_path, expression, sources)
 
     with gdal.Open(xml) as ds:
-        assert ds.ReadAsArray()[0][0] == result
+        assert pytest.approx(ds.ReadAsArray()[0][0], nan_ok=True) == result
 
 
 @gdaltest.enable_exceptions()
-def test_vrt_pixelfn_expression_invalid(tmp_path):
+@pytest.mark.parametrize(
+    "expression,sources,exception",
+    [
+        pytest.param(
+            "A*B + C",
+            [("A", 77), ("B", 63)],
+            "failed to parse expression",
+            id="undefined variable",
+        ),
+    ],
+)
+def test_vrt_pixelfn_expression_invalid(tmp_path, expression, sources, exception):
     pytest.importorskip("numpy")
 
-    xml = vrt_expression_xml(tmp_path, "A*B + C", [("A", 77), ("B", 63)])
+    xml = vrt_expression_xml(tmp_path, expression, sources)
 
     with gdal.Open(xml) as ds:
-        with pytest.raises(Exception, match="failed to parse expression"):
+        with pytest.raises(Exception, match=exception):
             ds.ReadAsArray()
