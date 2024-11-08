@@ -1669,6 +1669,9 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         return CE_Failure;
     }
 
+    double *padfResults =
+        static_cast<double *>(CPLMalloc(nXSize * sizeof(double)));
+
     /* ---- Set pixels ---- */
     size_t ii = 0;
     for (int iLine = 0; iLine < nYSize; ++iLine)
@@ -1682,15 +1685,16 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                     GetSrcVal(papoSources[iSrc], eSrcType, ii);
             }
 
-            double dfPixVal = oExpression.value();
-
-            GDALCopyWords(&dfPixVal, GDT_Float64, 0,
-                          static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
-                              iCol * nPixelSpace,
-                          eBufType, nPixelSpace, 1);
+            padfResults[iCol] = oExpression.value();
         }
+
+        GDALCopyWords(padfResults, GDT_Float64, sizeof(double),
+                      static_cast<GByte *>(pData) +
+                          static_cast<GSpacing>(nLineSpace) * iLine,
+                      eBufType, nPixelSpace, nXSize);
     }
+
+    CPLFree(padfResults);
 
     /* ---- Return success ---- */
     return CE_None;
