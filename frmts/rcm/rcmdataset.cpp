@@ -457,7 +457,8 @@ void RCMCalibRasterBand::ReadLUT()
     }
 
     /* Get the Pixel Per range */
-    if (this->stepSize == INT_MIN || this->numberOfValues == INT_MIN ||
+    if (this->stepSize == 0 || this->stepSize == INT_MIN ||
+        this->numberOfValues == INT_MIN ||
         abs(this->stepSize) > INT_MAX / abs(this->numberOfValues))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -588,29 +589,35 @@ void RCMCalibRasterBand::ReadNoiseLevels()
                     atoi(CPLGetXMLValue(psNumberOfValues, "", "0"));
                 const char *noiseLevelValues =
                     CPLGetXMLValue(psNoiseLevelValues, "", "");
-                char **papszNoiseLevelList = CSLTokenizeString2(
-                    noiseLevelValues, " ", CSLT_HONOURSTRINGS);
-                /* Get the Pixel Per range */
-                this->m_nTableNoiseLevelsSize =
-                    abs(this->stepSizeNoiseLevels) *
-                    abs(this->numberOfValuesNoiseLevels);
-
-                if ((EQUAL(calibType, "Beta Nought") &&
-                     this->m_eCalib == Beta0) ||
-                    (EQUAL(calibType, "Sigma Nought") &&
-                     this->m_eCalib == Sigma0) ||
-                    (EQUAL(calibType, "Gamma") && this->m_eCalib == Gamma))
+                if (this->stepSizeNoiseLevels > 0 &&
+                    this->numberOfValuesNoiseLevels != INT_MIN &&
+                    abs(this->numberOfValuesNoiseLevels) <
+                        INT_MAX / this->stepSizeNoiseLevels)
                 {
-                    /* Allocate the right Noise Levels size according to the
-                     * product range pixel */
-                    this->m_nfTableNoiseLevels = InterpolateValues(
-                        papszNoiseLevelList, this->m_nTableNoiseLevelsSize,
-                        this->stepSizeNoiseLevels,
-                        this->numberOfValuesNoiseLevels,
-                        this->pixelFirstLutValueNoiseLevels);
-                }
+                    char **papszNoiseLevelList = CSLTokenizeString2(
+                        noiseLevelValues, " ", CSLT_HONOURSTRINGS);
+                    /* Get the Pixel Per range */
+                    this->m_nTableNoiseLevelsSize =
+                        abs(this->stepSizeNoiseLevels) *
+                        abs(this->numberOfValuesNoiseLevels);
 
-                CSLDestroy(papszNoiseLevelList);
+                    if ((EQUAL(calibType, "Beta Nought") &&
+                         this->m_eCalib == Beta0) ||
+                        (EQUAL(calibType, "Sigma Nought") &&
+                         this->m_eCalib == Sigma0) ||
+                        (EQUAL(calibType, "Gamma") && this->m_eCalib == Gamma))
+                    {
+                        /* Allocate the right Noise Levels size according to the
+                         * product range pixel */
+                        this->m_nfTableNoiseLevels = InterpolateValues(
+                            papszNoiseLevelList, this->m_nTableNoiseLevelsSize,
+                            this->stepSizeNoiseLevels,
+                            this->numberOfValuesNoiseLevels,
+                            this->pixelFirstLutValueNoiseLevels);
+                    }
+
+                    CSLDestroy(papszNoiseLevelList);
+                }
 
                 if (this->m_nfTableNoiseLevels != nullptr)
                 {
@@ -1582,47 +1589,52 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 CPLGetXMLValue(psIncidenceAngle.get(),
                                "=incidenceAngles.pixelFirstAnglesValue", "0"));
 
-            int stepSize = atoi(CPLGetXMLValue(
+            const int stepSize = atoi(CPLGetXMLValue(
                 psIncidenceAngle.get(), "=incidenceAngles.stepSize", "0"));
-
-            int numberOfValues =
+            const int numberOfValues =
                 atoi(CPLGetXMLValue(psIncidenceAngle.get(),
                                     "=incidenceAngles.numberOfValues", "0"));
 
-            /* Get the Pixel Per range */
-            int tableSize = abs(stepSize) * abs(numberOfValues);
-
-            CPLString angles;
-            // Loop through all nodes with spaces
-            CPLXMLNode *psNextNode =
-                CPLGetXMLNode(psIncidenceAngle.get(), "=incidenceAngles");
-
-            CPLXMLNode *psNodeInc;
-            for (psNodeInc = psNextNode->psChild; psNodeInc != nullptr;
-                 psNodeInc = psNodeInc->psNext)
+            if (!(stepSize == 0 || stepSize == INT_MIN ||
+                  numberOfValues == INT_MIN ||
+                  abs(numberOfValues) > INT_MAX / abs(stepSize)))
             {
-                if (EQUAL(psNodeInc->pszValue, "angles"))
+                /* Get the Pixel Per range */
+                const int tableSize = abs(stepSize) * abs(numberOfValues);
+
+                CPLString angles;
+                // Loop through all nodes with spaces
+                CPLXMLNode *psNextNode =
+                    CPLGetXMLNode(psIncidenceAngle.get(), "=incidenceAngles");
+
+                CPLXMLNode *psNodeInc;
+                for (psNodeInc = psNextNode->psChild; psNodeInc != nullptr;
+                     psNodeInc = psNodeInc->psNext)
                 {
-                    if (angles.length() > 0)
+                    if (EQUAL(psNodeInc->pszValue, "angles"))
                     {
-                        angles.append(" "); /* separator */
+                        if (angles.length() > 0)
+                        {
+                            angles.append(" "); /* separator */
+                        }
+                        const char *valAngle =
+                            CPLGetXMLValue(psNodeInc, "", "");
+                        angles.append(valAngle);
                     }
-                    const char *valAngle = CPLGetXMLValue(psNodeInc, "", "");
-                    angles.append(valAngle);
                 }
+
+                char **papszAngleList =
+                    CSLTokenizeString2(angles, " ", CSLT_HONOURSTRINGS);
+
+                /* Allocate the right LUT size according to the product range pixel
+                 */
+                poDS->m_IncidenceAngleTableSize = tableSize;
+                poDS->m_nfIncidenceAngleTable =
+                    InterpolateValues(papszAngleList, tableSize, stepSize,
+                                      numberOfValues, pixelFirstLutValue);
+
+                CSLDestroy(papszAngleList);
             }
-
-            char **papszAngleList =
-                CSLTokenizeString2(angles, " ", CSLT_HONOURSTRINGS);
-
-            /* Allocate the right LUT size according to the product range pixel
-             */
-            poDS->m_IncidenceAngleTableSize = tableSize;
-            poDS->m_nfIncidenceAngleTable =
-                InterpolateValues(papszAngleList, tableSize, stepSize,
-                                  numberOfValues, pixelFirstLutValue);
-
-            CSLDestroy(papszAngleList);
         }
     }
 
@@ -1961,6 +1973,12 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 default:
                     /* we should bomb gracefully... */
                     pszLUT = pszSigma0LUT;
+            }
+            if (!pszLUT)
+            {
+                CPLFree(pszFullname);
+                CPLError(CE_Failure, CPLE_AppDefined, "LUT missing.");
+                return nullptr;
             }
 
             // The variable 'osNoiseLevelsValues' is always the same for a ban
@@ -2310,7 +2328,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
 
             if (bUseProjInfo)
             {
-                poDS->m_oSRS = oPrj;
+                poDS->m_oSRS = std::move(oPrj);
             }
             else
             {
@@ -2320,7 +2338,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        poDS->m_oGCPSRS = oLL;
+        poDS->m_oGCPSRS = std::move(oLL);
     }
 
     /* -------------------------------------------------------------------- */
@@ -2448,33 +2466,25 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         case Sigma0:
         {
             osSubdatasetName = szSIGMA0;
-            CPLString pszDescriptionSigma =
-                FormatCalibration(szSIGMA0, osMDFilename.c_str());
-            osDescription = pszDescriptionSigma;
+            osDescription = FormatCalibration(szSIGMA0, osMDFilename.c_str());
         }
         break;
         case Beta0:
         {
             osSubdatasetName = szBETA0;
-            CPLString pszDescriptionBeta =
-                FormatCalibration(szBETA0, osMDFilename.c_str());
-            osDescription = pszDescriptionBeta;
+            osDescription = FormatCalibration(szBETA0, osMDFilename.c_str());
         }
         break;
         case Gamma:
         {
             osSubdatasetName = szGAMMA;
-            CPLString pszDescriptionGamma =
-                FormatCalibration(szGAMMA, osMDFilename.c_str());
-            osDescription = pszDescriptionGamma;
+            osDescription = FormatCalibration(szGAMMA, osMDFilename.c_str());
         }
         break;
         case Uncalib:
         {
             osSubdatasetName = szUNCALIB;
-            CPLString pszDescriptionUncalib =
-                FormatCalibration(szUNCALIB, osMDFilename.c_str());
-            osDescription = pszDescriptionUncalib;
+            osDescription = FormatCalibration(szUNCALIB, osMDFilename.c_str());
         }
         break;
         default:
