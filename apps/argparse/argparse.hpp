@@ -2086,7 +2086,7 @@ public:
     std::stringstream stream;
 
     std::string curline("Usage: ");
-    curline += this->m_program_name;
+    curline += this->m_parser_path;
     const bool multiline_usage =
         this->m_usage_max_line_width < std::numeric_limits<std::size_t>::max();
     const size_t indent_size = curline.size();
