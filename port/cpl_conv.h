@@ -36,6 +36,8 @@ CPL_C_START
 void CPL_DLL CPLVerifyConfiguration(void);
 /*! @endcond */
 
+bool CPL_DLL CPLIsDebugEnabled(void);
+
 const char CPL_DLL *CPL_STDCALL CPLGetConfigOption(const char *, const char *)
     CPL_WARN_UNUSED_RESULT;
 const char CPL_DLL *CPL_STDCALL CPLGetThreadLocalConfigOption(

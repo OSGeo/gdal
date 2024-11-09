@@ -1904,6 +1904,26 @@ static void NotifyOtherComponentsConfigOptionChanged(const char *pszKey,
 }
 
 /************************************************************************/
+/*                       CPLIsDebugEnabled()                            */
+/************************************************************************/
+
+static int gnDebug = -1;
+
+/** Returns whether CPL_DEBUG is enabled.
+ *
+ * @since 3.11
+ */
+bool CPLIsDebugEnabled()
+{
+    if (gnDebug < 0)
+    {
+        gnDebug = CPLTestBool(CPLGetConfigOption("CPL_DEBUG", "OFF"));
+    }
+
+    return gnDebug != 0;
+}
+
+/************************************************************************/
 /*                         CPLSetConfigOption()                         */
 /************************************************************************/
 
@@ -1944,6 +1964,9 @@ void CPL_STDCALL CPLSetConfigOption(const char *pszKey, const char *pszValue)
 #ifdef OGRAPISPY_ENABLED
     OGRAPISPYCPLSetConfigOption(pszKey, pszValue);
 #endif
+
+    if (EQUAL(pszKey, "CPL_DEBUG") && pszValue)
+        gnDebug = CPLTestBool(pszValue);
 
     g_papszConfigOptions = const_cast<volatile char **>(CSLSetNameValue(
         const_cast<char **>(g_papszConfigOptions), pszKey, pszValue));
@@ -2004,6 +2027,9 @@ void CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
         CPLGetTLSEx(CTLS_CONFIGOPTIONS, &bMemoryError));
     if (bMemoryError)
         return;
+
+    if (EQUAL(pszKey, "CPL_DEBUG") && pszValue)
+        gnDebug = CPLTestBool(pszValue);
 
     papszTLConfigOptions =
         CSLSetNameValue(papszTLConfigOptions, pszKey, pszValue);
