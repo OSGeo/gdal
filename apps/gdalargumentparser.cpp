@@ -37,7 +37,7 @@ GDALArgumentParser::GDALArgumentParser(const std::string &program_name,
                 [this](const auto &)
                 {
                     std::cout << usage() << std::endl << std::endl;
-                    std::cout << _("Note: ") << m_program_name
+                    std::cout << _("Note: ") << m_parser_path
                               << _(" --long-usage for full help.") << std::endl;
                     std::exit(0);
                 })
