@@ -11901,3 +11901,30 @@ def test_tiff_write_band_IMAGERY(tmp_vsimem):
         )
     with gdal.Open(filename2) as ds:
         assert ds.GetRasterBand(1).GetMetadata_Dict("IMAGERY") == {"foo": "bar"}
+
+
+###############################################################################
+# Verify that we can generate an output that is byte-identical to the expected golden file.
+
+
+@pytest.mark.parametrize(
+    "src_filename,creation_options",
+    [
+        ("data/gtiff/byte_little_endian_golden.tif", []),
+        ("data/gtiff/uint16_little_endian_golden.tif", []),
+        ("data/gtiff/float32_little_endian_golden.tif", []),
+        (
+            "data/gtiff/byte_little_endian_tiled_lzw_golden.tif",
+            ["TILED=YES", "BLOCKXSIZE=16", "BLOCKYSIZE=16", "COMPRESS=LZW"],
+        ),
+    ],
+)
+def test_tiff_write_check_golden_file(tmp_path, src_filename, creation_options):
+
+    out_filename = str(tmp_path / "test.tif")
+    with gdal.Open(src_filename) as src_ds:
+        gdal.GetDriverByName("GTiff").CreateCopy(
+            out_filename, src_ds, options=["ENDIANNESS=LITTLE"] + creation_options
+        )
+    assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
+    assert open(src_filename, "rb").read() == open(out_filename, "rb").read()

@@ -3920,3 +3920,29 @@ def test_jp2openjpeg_unsupported_srs_for_gmljp2(tmp_vsimem):
     assert ds.GetSpatialRef().IsSame(ref_srs)
     # Check that we do *not* have a GMLJP2 box
     assert "xml:gml.root-instance" not in ds.GetMetadataDomainList()
+
+
+###############################################################################
+# Verify that we can generate an output that is byte-identical to the expected golden file.
+# (might be risky depending on libopenjp2...)
+
+
+@pytest.mark.parametrize(
+    "src_filename,creation_options",
+    [
+        # Created with gdal_translate autotest/gcore/data/byte.tif autotest/gdrivers/data/jpeg2000/byte_lossless_openjp2_golden.jp2 -of jp2openjpeg -co QUALITY=100 -co REVERSIBLE=YES -co COMMENT=
+        (
+            "data/jpeg2000/byte_lossless_openjp2_golden.jp2",
+            ["QUALITY=100", "REVERSIBLE=YES", "COMMENT="],
+        ),
+    ],
+)
+def test_jp2openjpeg_write_check_golden_file(tmp_path, src_filename, creation_options):
+
+    out_filename = str(tmp_path / "test.jp2")
+    with gdal.Open(src_filename) as src_ds:
+        gdal.GetDriverByName("JP2OpenJPEG").CreateCopy(
+            out_filename, src_ds, options=creation_options
+        )
+    assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
+    assert open(src_filename, "rb").read() == open(out_filename, "rb").read()
