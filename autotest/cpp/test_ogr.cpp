@@ -4295,9 +4295,8 @@ TEST_F(test_ogr, OGRCurve_reversePoints)
 TEST_F(test_ogr, transformWithOptions)
 {
     // Projected CRS to national geographic CRS (not including poles or antimeridian)
-    OGRGeometry *poGeom = nullptr;
-    OGRGeometryFactory::createFromWkt(
-        "LINESTRING(700000 6600000, 700001 6600001)", nullptr, &poGeom);
+    auto [poGeom, err] = OGRGeometryFactory::createFromWkt(
+        "LINESTRING(700000 6600000, 700001 6600001)");
     ASSERT_NE(poGeom, nullptr);
 
     OGRSpatialReference oEPSG_2154;
@@ -4308,12 +4307,12 @@ TEST_F(test_ogr, transformWithOptions)
     auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
         OGRCreateCoordinateTransformation(&oEPSG_2154, &oEPSG_4171));
     OGRGeometryFactory::TransformWithOptionsCache oCache;
-    poGeom = OGRGeometryFactory::transformWithOptions(poGeom, poCT.get(),
-                                                      nullptr, oCache);
-    EXPECT_NEAR(poGeom->toLineString()->getX(0), 3, 1e-8);
-    EXPECT_NEAR(poGeom->toLineString()->getY(0), 46.5, 1e-8);
-
-    delete poGeom;
+    auto poNewGeom =
+        std::unique_ptr<OGRGeometry>(OGRGeometryFactory::transformWithOptions(
+            poGeom.get(), poCT.get(), nullptr, oCache));
+    ASSERT_NE(poNewGeom, nullptr);
+    EXPECT_NEAR(poNewGeom->toLineString()->getX(0), 3, 1e-8);
+    EXPECT_NEAR(poNewGeom->toLineString()->getY(0), 46.5, 1e-8);
 }
 
 #ifdef HAVE_GEOS
@@ -4322,10 +4321,8 @@ TEST_F(test_ogr, transformWithOptions)
 TEST_F(test_ogr, transformWithOptions_GEOS)
 {
     // Projected CRS to national geographic CRS including antimeridian
-    OGRGeometry *poGeom = nullptr;
-    OGRGeometryFactory::createFromWkt(
-        "LINESTRING(657630.64 4984896.17,815261.43 4990738.26)", nullptr,
-        &poGeom);
+    auto [poGeom, err] = OGRGeometryFactory::createFromWkt(
+        "LINESTRING(657630.64 4984896.17,815261.43 4990738.26)");
     ASSERT_NE(poGeom, nullptr);
 
     OGRSpatialReference oEPSG_6329;
@@ -4336,12 +4333,14 @@ TEST_F(test_ogr, transformWithOptions_GEOS)
     auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
         OGRCreateCoordinateTransformation(&oEPSG_6329, &oEPSG_6318));
     OGRGeometryFactory::TransformWithOptionsCache oCache;
-    poGeom = OGRGeometryFactory::transformWithOptions(poGeom, poCT.get(),
-                                                      nullptr, oCache);
-    EXPECT_EQ(poGeom->getGeometryType(), wkbMultiLineString);
-    if (poGeom->getGeometryType() == wkbMultiLineString)
+    auto poNewGeom =
+        std::unique_ptr<OGRGeometry>(OGRGeometryFactory::transformWithOptions(
+            poGeom.get(), poCT.get(), nullptr, oCache));
+    ASSERT_NE(poNewGeom, nullptr);
+    EXPECT_EQ(poNewGeom->getGeometryType(), wkbMultiLineString);
+    if (poNewGeom->getGeometryType() == wkbMultiLineString)
     {
-        const auto poMLS = poGeom->toMultiLineString();
+        const auto poMLS = poNewGeom->toMultiLineString();
         EXPECT_EQ(poMLS->getNumGeometries(), 2);
         if (poMLS->getNumGeometries() == 2)
         {
@@ -4356,8 +4355,6 @@ TEST_F(test_ogr, transformWithOptions_GEOS)
             }
         }
     }
-
-    delete poGeom;
 }
 #endif
 
