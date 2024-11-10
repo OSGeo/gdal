@@ -301,38 +301,16 @@ RCMRasterBand::~RCMRasterBand()
 CPLErr RCMRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    int nRequestYSize;
-    int nRequestXSize;
+    int nRequestXSize = 0;
+    int nRequestYSize = 0;
+    GetActualBlockSize(nBlockXOff, nBlockYOff, &nRequestXSize, &nRequestYSize);
 
-    /* -------------------------------------------------------------------- */
-    /*      If the last strip is partial, we need to avoid                  */
-    /*      over-requesting.  We also need to initialize the extra part     */
-    /*      of the block to zero.                                           */
-    /* -------------------------------------------------------------------- */
-    if ((nBlockYOff + 1) * nBlockYSize > nRasterYSize)
+    // Zero initial partial right-most and bottom-most blocks
+    if (nRequestXSize < nBlockXSize || nRequestYSize < nBlockYSize)
     {
-        nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
         memset(pImage, 0,
-               GDALGetDataTypeSizeBytes(eDataType) * nBlockXSize * nBlockYSize);
-    }
-    else
-    {
-        nRequestYSize = nBlockYSize;
-    }
-
-    /*-------------------------------------------------------------------- */
-    /*      If the input imagery is tiled, also need to avoid over-        */
-    /*      requesting in the X-direction.                                 */
-    /* ------------------------------------------------------------------- */
-    if ((nBlockXOff + 1) * nBlockXSize > nRasterXSize)
-    {
-        nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
-        memset(pImage, 0,
-               GDALGetDataTypeSizeBytes(eDataType) * nBlockXSize * nBlockYSize);
-    }
-    else
-    {
-        nRequestXSize = nBlockXSize;
+               static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
+                   nBlockXSize * nBlockYSize);
     }
 
     int dataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
@@ -355,14 +333,16 @@ CPLErr RCMRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                 GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
                 nRequestXSize, nRequestYSize, pImage, nRequestXSize,
                 nRequestYSize, bandFileType, 2, nullptr, dataTypeSize,
-                dataTypeSize * nBlockXSize, bandFileSize, nullptr);
+                static_cast<GSpacing>(dataTypeSize) * nBlockXSize, bandFileSize,
+                nullptr);
     }
     else if (twoBandComplex && this->isNITF)
     {
         return poBand->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
             nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
-            eDataType, 0, dataTypeSize * nBlockXSize, nullptr);
+            eDataType, 0, static_cast<GSpacing>(dataTypeSize) * nBlockXSize,
+            nullptr);
     }
 
     if (poRCMDataset->IsComplexData())
@@ -377,7 +357,8 @@ CPLErr RCMRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                 GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
                 nRequestXSize, nRequestYSize, pImage, nRequestXSize,
                 nRequestYSize, bandFileType, 2, nullptr, dataTypeSize,
-                nBlockXSize * dataTypeSize, bandFileSize, nullptr);
+                static_cast<GSpacing>(dataTypeSize) * nBlockXSize, bandFileSize,
+                nullptr);
     }
 
     // case: band file == this band
@@ -388,7 +369,8 @@ CPLErr RCMRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         return poBand->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
             nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
-            eDataType, 0, dataTypeSize * nBlockXSize, nullptr);
+            eDataType, 0, static_cast<GSpacing>(dataTypeSize) * nBlockXSize,
+            nullptr);
     }
     else
     {
@@ -484,8 +466,7 @@ void RCMCalibRasterBand::ReadLUT()
 
     const size_t nLen =
         this->m_nTableSize * max_space_for_string;  // 32 max + space
-    char *lut_gains = static_cast<char *>(CPLMalloc(nLen));
-    memset(lut_gains, 0, nLen);
+    char *lut_gains = static_cast<char *>(CPLCalloc(1, nLen));
 
     for (int i = 0; i < this->m_nTableSize; i++)
     {
@@ -680,53 +661,32 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                       void *pImage)
 {
     CPLErr eErr;
-    int nRequestYSize;
-    int nRequestXSize;
+    int nRequestXSize = 0;
+    int nRequestYSize = 0;
+    GetActualBlockSize(nBlockXOff, nBlockYOff, &nRequestXSize, &nRequestYSize);
 
-    /* -------------------------------------------------------------------- */
-    /*      If the last strip is partial, we need to avoid                  */
-    /*      over-requesting.  We also need to initialize the extra part     */
-    /*      of the block to zero.                                           */
-    /* -------------------------------------------------------------------- */
-    if ((nBlockYOff + 1) * nBlockYSize > nRasterYSize)
+    // Zero initial partial right-most and bottom-most blocks
+    if (nRequestXSize < nBlockXSize || nRequestYSize < nBlockYSize)
     {
-        nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
         memset(pImage, 0,
-               GDALGetDataTypeSizeBytes(eDataType) * nBlockXSize * nBlockYSize);
-    }
-    else
-    {
-        nRequestYSize = nBlockYSize;
-    }
-
-    /*-------------------------------------------------------------------- */
-    /*      If the input imagery is tiled, also need to avoid over-        */
-    /*      requesting in the X-direction.                                 */
-    /* ------------------------------------------------------------------- */
-    if ((nBlockXOff + 1) * nBlockXSize > nRasterXSize)
-    {
-        nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
-        memset(pImage, 0,
-               GDALGetDataTypeSizeBytes(eDataType) * nBlockXSize * nBlockYSize);
-    }
-    else
-    {
-        nRequestXSize = nBlockXSize;
+               static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
+                   nBlockXSize * nBlockYSize);
     }
 
     if (this->m_eOriginalType == GDT_CInt16)
     {
-        GInt16 *pnImageTmp;
         /* read in complex values */
-        pnImageTmp = static_cast<GInt16 *>(
-            CPLMalloc(nBlockXSize * nBlockYSize *
-                      GDALGetDataTypeSizeBytes(m_eOriginalType)));
+        GInt16 *panImageTmp = static_cast<GInt16 *>(
+            VSI_MALLOC3_VERBOSE(nBlockXSize, nBlockYSize,
+                                GDALGetDataTypeSizeBytes(m_eOriginalType)));
+        if (!panImageTmp)
+            return CE_Failure;
 
         if (m_poBandDataset->GetRasterCount() == 2)
         {
             eErr = m_poBandDataset->RasterIO(
                 GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-                nRequestXSize, nRequestYSize, pnImageTmp, nRequestXSize,
+                nRequestXSize, nRequestYSize, panImageTmp, nRequestXSize,
                 nRequestYSize, this->m_eOriginalType, 2, nullptr, 4,
                 nBlockXSize * 4, 4, nullptr);
 
@@ -735,7 +695,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 nBlockXOff * nBlockXSize,
                 nBlockYOff * nBlockYSize,
                 nRequestXSize, nRequestYSize,
-                pnImageTmp, nRequestXSize, nRequestYSize,
+                panImageTmp, nRequestXSize, nRequestYSize,
                 GDT_Int32,
                 2, nullptr, 4, nBlockXSize * 4, 2, nullptr);
             */
@@ -744,7 +704,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             eErr = m_poBandDataset->RasterIO(
                 GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-                nRequestXSize, nRequestYSize, pnImageTmp, nRequestXSize,
+                nRequestXSize, nRequestYSize, panImageTmp, nRequestXSize,
                 nRequestYSize, this->m_eOriginalType, 1, nullptr, 4,
                 nBlockXSize * 4, 0, nullptr);
 
@@ -754,7 +714,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                     nBlockXOff * nBlockXSize,
                     nBlockYOff * nBlockYSize,
                     nRequestXSize, nRequestYSize,
-                    pnImageTmp, nRequestXSize, nRequestYSize,
+                    panImageTmp, nRequestXSize, nRequestYSize,
                     GDT_UInt32,
                     1, nullptr, 4, nBlockXSize * 4, 0, nullptr);
             */
@@ -778,8 +738,8 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 const int nTruePixOff = (i * nBlockXSize) + j;
 
                 // Formula for Complex Q+J
-                const float real = static_cast<float>(pnImageTmp[nPixOff]);
-                const float img = static_cast<float>(pnImageTmp[nPixOff + 1]);
+                const float real = static_cast<float>(panImageTmp[nPixOff]);
+                const float img = static_cast<float>(panImageTmp[nPixOff + 1]);
                 const float digitalValue = (real * real) + (img * img);
                 const float lutValue =
                     static_cast<float>(m_nfTable[nBlockXOff * nBlockXSize + j]);
@@ -789,7 +749,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             }
         }
 
-        CPLFree(pnImageTmp);
+        CPLFree(panImageTmp);
     }
 
     // If the underlying file is NITF CFloat32
@@ -797,25 +757,26 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
              this->m_eOriginalType == GDT_CFloat64)
     {
         /* read in complex values */
-        float *pnImageTmp;
-
         const int dataTypeSize =
             GDALGetDataTypeSizeBytes(this->m_eOriginalType);
         const GDALDataType bandFileType = this->m_eOriginalType;
-        const int bandFileSize = GDALGetDataTypeSizeBytes(bandFileType);
+        const int bandFileDataTypeSize = GDALGetDataTypeSizeBytes(bandFileType);
 
         /* read the original image complex values in a temporary image space */
-        pnImageTmp = static_cast<float *>(
-            CPLMalloc(2 * nBlockXSize * nBlockYSize * bandFileSize));
+        float *pafImageTmp = static_cast<float *>(VSI_MALLOC3_VERBOSE(
+            nBlockXSize, nBlockYSize, 2 * bandFileDataTypeSize));
+        if (!pafImageTmp)
+            return CE_Failure;
 
         eErr =
             // I and Q from each band are pixel-interleaved into this complex
             // band
             m_poBandDataset->RasterIO(
                 GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-                nRequestXSize, nRequestYSize, pnImageTmp, nRequestXSize,
+                nRequestXSize, nRequestYSize, pafImageTmp, nRequestXSize,
                 nRequestYSize, bandFileType, 2, nullptr, dataTypeSize,
-                nBlockXSize * dataTypeSize, bandFileSize, nullptr);
+                static_cast<GSpacing>(dataTypeSize) * nBlockXSize,
+                bandFileDataTypeSize, nullptr);
 
         /* calibrate the complex values */
         for (int i = 0; i < nRequestYSize; i++)
@@ -827,8 +788,8 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 const int nTruePixOff = (i * nBlockXSize) + j;
 
                 // Formula for Complex Q+J
-                const float real = static_cast<float>(pnImageTmp[nPixOff]);
-                const float img = static_cast<float>(pnImageTmp[nPixOff + 1]);
+                const float real = pafImageTmp[nPixOff];
+                const float img = pafImageTmp[nPixOff + 1];
                 const float digitalValue = (real * real) + (img * img);
                 const float lutValue =
                     static_cast<float>(m_nfTable[nBlockXOff * nBlockXSize + j]);
@@ -838,7 +799,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             }
         }
 
-        CPLFree(pnImageTmp);
+        CPLFree(pafImageTmp);
     }
 
     else if (this->m_eOriginalType == GDT_Float32)
@@ -907,13 +868,14 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
     else if (this->m_eOriginalType == GDT_UInt16)
     {
-        GUInt16 *pnImageTmp;
         /* read in detected values */
-        pnImageTmp = static_cast<GUInt16 *>(CPLMalloc(
-            nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(GDT_UInt16)));
+        GUInt16 *panImageTmp = static_cast<GUInt16 *>(VSI_MALLOC3_VERBOSE(
+            nBlockXSize, nBlockYSize, GDALGetDataTypeSizeBytes(GDT_UInt16)));
+        if (!panImageTmp)
+            return CE_Failure;
         eErr = m_poBandDataset->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-            nRequestXSize, nRequestYSize, pnImageTmp, nRequestXSize,
+            nRequestXSize, nRequestYSize, panImageTmp, nRequestXSize,
             nRequestYSize, GDT_UInt16, 1, nullptr, 2, nBlockXSize * 2, 0,
             nullptr);
 
@@ -925,7 +887,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 const int nPixOff = (i * nBlockXSize) + j;
 
                 const float digitalValue =
-                    static_cast<float>(pnImageTmp[nPixOff]);
+                    static_cast<float>(panImageTmp[nPixOff]);
                 const float A =
                     static_cast<float>(m_nfTable[nBlockXOff * nBlockXSize + j]);
                 reinterpret_cast<float *>(pImage)[nPixOff] =
@@ -934,16 +896,18 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                     A;
             }
         }
-        CPLFree(pnImageTmp);
+        CPLFree(panImageTmp);
     } /* Ticket #2104: Support for ScanSAR products */
 
     else if (this->m_eOriginalType == GDT_Byte)
     {
-        GByte *pnImageTmp;
-        pnImageTmp = static_cast<GByte *>(CPLMalloc(nBlockXSize * nBlockYSize));
+        GByte *pabyImageTmp =
+            static_cast<GByte *>(VSI_MALLOC2_VERBOSE(nBlockXSize, nBlockYSize));
+        if (!pabyImageTmp)
+            return CE_Failure;
         eErr = m_poBandDataset->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-            nRequestXSize, nRequestYSize, pnImageTmp, nRequestXSize,
+            nRequestXSize, nRequestYSize, pabyImageTmp, nRequestXSize,
             nRequestYSize, GDT_Byte, 1, nullptr, 1, nBlockXSize, 0, nullptr);
 
         /* iterate over detected values */
@@ -954,7 +918,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 const int nPixOff = (i * nBlockXSize) + j;
 
                 const float digitalValue =
-                    static_cast<float>(pnImageTmp[nPixOff]);
+                    static_cast<float>(pabyImageTmp[nPixOff]);
                 const float A =
                     static_cast<float>(m_nfTable[nBlockXOff * nBlockXSize + j]);
                 reinterpret_cast<float *>(pImage)[nPixOff] =
@@ -963,7 +927,7 @@ CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                     A;
             }
         }
-        CPLFree(pnImageTmp);
+        CPLFree(pabyImageTmp);
     }
     else
     {
@@ -1220,14 +1184,8 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
         psSceneAttributes, "imageAttributes.samplesPerLine", "-1"));
     poDS->nRasterYSize = atoi(
         CPLGetXMLValue(psSceneAttributes, "imageAttributes.numLines", "-1"));
-    if (poDS->nRasterXSize <= 1 || poDS->nRasterYSize <= 1)
+    if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
-        CPLError(
-            CE_Failure, CPLE_OpenFailed,
-            "ERROR: Non-sane raster dimensions provided in product.xml. If "
-            "this is "
-            "a valid RCM scene, please contact your data provider for "
-            "a corrected dataset.");
         return nullptr;
     }
 
