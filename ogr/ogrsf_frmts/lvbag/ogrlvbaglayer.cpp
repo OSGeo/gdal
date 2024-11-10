@@ -638,7 +638,7 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
                     poGeom->flattenTo2D();
 
 #ifdef HAVE_GEOS
-                if (!poGeom->IsValid() && bFixInvalidData)
+                if (bFixInvalidData && !poGeom->IsValid())
                 {
                     std::unique_ptr<OGRGeometry> poSubGeom =
                         std::unique_ptr<OGRGeometry>{poGeom->MakeValid()};
