@@ -12,12 +12,18 @@
 
 #include "cpl_port.h"
 
-#if defined(HAVE_SSSE3_AT_COMPILE_TIME) &&                                     \
-    (defined(__x86_64) || defined(_M_X64))
+#if (defined(HAVE_SSSE3_AT_COMPILE_TIME) &&                                    \
+     (defined(__x86_64) || defined(_M_X64))) ||                                \
+    defined(USE_NEON_OPTIMIZATIONS)
 
 #include "rasterio_ssse3.h"
 
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#else
 #include <tmmintrin.h>
+#endif
+
 #include "gdal_priv_templates.hpp"
 
 void GDALUnrolledCopy_GByte_3_1_SSSE3(GByte *CPL_RESTRICT pDest,

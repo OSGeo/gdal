@@ -23,12 +23,17 @@
 #if (defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2)) &&             \
     !defined(USE_SSE2_EMULATION)
 
+#include <string.h>
+
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#else
 /* Requires SSE2 */
 #include <emmintrin.h>
-#include <string.h>
 
 #ifdef __SSE4_1__
 #include <smmintrin.h>
+#endif
 #endif
 
 #include "gdal_priv_templates.hpp"

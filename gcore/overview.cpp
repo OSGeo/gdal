@@ -36,9 +36,15 @@
 #include "gdal_thread_pool.h"
 #include "gdalwarper.h"
 
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#define USE_SSE2
+
+#include "gdalsse_priv.h"
+
 // Restrict to 64bit processors because they are guaranteed to have SSE2,
 // or if __AVX2__ is defined.
-#if defined(__x86_64) || defined(_M_X64) || defined(__AVX2__)
+#elif defined(__x86_64) || defined(_M_X64) || defined(__AVX2__)
 #define USE_SSE2
 
 #include "gdalsse_priv.h"
@@ -335,7 +341,7 @@ inline GUInt16 ComputeIntegerRMS_4values<GUInt16, double>(double sumSquares)
 /*                   QuadraticMeanByteSSE2OrAVX2()                      */
 /************************************************************************/
 
-#ifdef __SSE4_1__
+#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
 #define sse2_packus_epi32 _mm_packus_epi32
 #else
 inline __m128i sse2_packus_epi32(__m128i a, __m128i b)
@@ -350,7 +356,7 @@ inline __m128i sse2_packus_epi32(__m128i a, __m128i b)
 }
 #endif
 
-#ifdef __SSSE3__
+#if defined(__SSSE3__) || defined(USE_NEON_OPTIMIZATIONS)
 #define sse2_hadd_epi16 _mm_hadd_epi16
 #else
 inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)

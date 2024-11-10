@@ -16,7 +16,7 @@
 #include "cpl_port.h"
 
 #if defined(HAVE_SSSE3_AT_COMPILE_TIME) &&                                     \
-    (defined(__x86_64) || defined(_M_X64))
+    (defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS))
 
 void GDALUnrolledCopy_GByte_3_1_SSSE3(GByte *CPL_RESTRICT pDest,
                                       const GByte *CPL_RESTRICT pSrc,
