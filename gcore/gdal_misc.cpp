@@ -3484,6 +3484,64 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
     /* ==================================================================== */
     /*      Loop over all arguments.                                        */
     /* ==================================================================== */
+
+    // Start with --debug, so that "my_command --config UNKNOWN_CONFIG_OPTION --debug on"
+    // detects and warns about a unknown config option.
+    for (iArg = 1; iArg < nArgc; iArg++)
+    {
+        if (EQUAL(papszArgv[iArg], "--config") && iArg + 2 < nArgc &&
+            EQUAL(papszArgv[iArg + 1], "CPL_DEBUG"))
+        {
+            if (iArg + 1 >= nArgc)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "--config option given without a key=value argument.");
+                return -1;
+            }
+
+            const char *pszArg = papszArgv[iArg + 1];
+            if (strchr(pszArg, '=') != nullptr)
+            {
+                char *pszKey = nullptr;
+                const char *pszValue = CPLParseNameValue(pszArg, &pszKey);
+                if (pszKey && !EQUAL(pszKey, "CPL_DEBUG") && pszValue)
+                {
+                    CPLSetConfigOption(pszKey, pszValue);
+                }
+                CPLFree(pszKey);
+                ++iArg;
+            }
+            else
+            {
+                if (iArg + 2 >= nArgc)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "--config option given without a key and value "
+                             "argument.");
+                    return -1;
+                }
+
+                if (!EQUAL(papszArgv[iArg + 1], "CPL_DEBUG"))
+                    CPLSetConfigOption(papszArgv[iArg + 1],
+                                       papszArgv[iArg + 2]);
+
+                iArg += 2;
+            }
+        }
+        else if (EQUAL(papszArgv[iArg], "--debug"))
+        {
+            if (iArg + 1 >= nArgc)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "--debug option given without debug level.");
+                return -1;
+            }
+
+            CPLSetConfigOption("CPL_DEBUG", papszArgv[iArg + 1]);
+            iArg += 1;
+        }
+    }
+
     for (iArg = 1; iArg < nArgc; iArg++)
     {
         /* --------------------------------------------------------------------
@@ -3538,7 +3596,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             {
                 char *pszKey = nullptr;
                 const char *pszValue = CPLParseNameValue(pszArg, &pszKey);
-                if (pszKey && pszValue)
+                if (pszKey && !EQUAL(pszKey, "CPL_DEBUG") && pszValue)
                 {
                     CPLSetConfigOption(pszKey, pszValue);
                 }
@@ -3555,7 +3613,9 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                     return -1;
                 }
 
-                CPLSetConfigOption(papszArgv[iArg + 1], papszArgv[iArg + 2]);
+                if (!EQUAL(papszArgv[iArg + 1], "CPL_DEBUG"))
+                    CPLSetConfigOption(papszArgv[iArg + 1],
+                                       papszArgv[iArg + 2]);
 
                 iArg += 2;
             }
@@ -3631,7 +3691,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 return -1;
             }
 
-            CPLSetConfigOption("CPL_DEBUG", papszArgv[iArg + 1]);
             iArg += 1;
         }
 
