@@ -46,7 +46,9 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
     cd build
     # GDAL_USE_TIFF_INTERNAL=ON to use JXL
     export GDAL_CMAKE_EXTRA_OPTS=""
-    if test "${GCC_ARCH}" != "x86_64"; then
+    if test "${GCC_ARCH}" = "x86_64"; then
+        export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DENABLE_IPO=ON"
+    else
         export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DPDFIUM_INCLUDE_DIR="
     fi
     export JAVA_ARCH=""
