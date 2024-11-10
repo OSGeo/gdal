@@ -609,7 +609,7 @@ static inline void GDALCopyXMMToInt64(const __m128i xmm, void *pDest)
 #include <tmmintrin.h>
 #endif
 
-#if __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__)
 #include <smmintrin.h>
 #endif
 
@@ -627,7 +627,7 @@ inline void GDALCopy4Words(const float *pValueIn, GByte *const pValueOut)
 
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
 
-#if __SSSE3__
+#if defined(__SSSE3__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_shuffle_epi8(
         xmm_i, _mm_cvtsi32_si128(0 | (4 << 8) | (8 << 16) | (12 << 24)));
 #else
@@ -671,7 +671,7 @@ inline void GDALCopy4Words(const float *pValueIn, GUInt16 *const pValueOut)
 
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
 
-#if __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_packus_epi32(xmm_i, xmm_i);  // Pack int32 to uint16
 #else
     // Translate to int16 range because _mm_packus_epi32 is SSE4.1 only
@@ -742,7 +742,7 @@ inline void GDALCopy8Words(const float *pValueIn, GUInt16 *const pValueOut)
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
     __m128i xmm1_i = _mm_cvttps_epi32(xmm1);
 
-#if __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_packus_epi32(xmm_i, xmm1_i);  // Pack int32 to uint16
 #else
     // Translate to int16 range because _mm_packus_epi32 is SSE4.1 only
