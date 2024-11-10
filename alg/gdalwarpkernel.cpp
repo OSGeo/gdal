@@ -2995,7 +2995,7 @@ static CPL_INLINE __m128 XMMLoad4Values(const GByte *ptr)
     __m128i xmm_i = _mm_cvtsi32_si128(i);
     // Zero extend 4 packed unsigned 8-bit integers in a to packed
     // 32-bit integers.
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_cvtepu8_epi32(xmm_i);
 #else
     xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
@@ -3011,7 +3011,7 @@ static CPL_INLINE __m128 XMMLoad4Values(const GUInt16 *ptr)
     __m128i xmm_i = _mm_cvtsi64_si128(i);
     // Zero extend 4 packed unsigned 16-bit integers in a to packed
     // 32-bit integers.
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_cvtepu16_epi32(xmm_i);
 #else
     xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
