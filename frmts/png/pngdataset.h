@@ -49,7 +49,10 @@
 #pragma warning(disable : 4611)
 #endif
 
-#if defined(__SSE2__) || defined(_M_X64) ||                                    \
+#ifdef USE_NEON_OPTIMIZATIONS
+#define HAVE_SSE2
+#include "include_sse2neon.h"
+#elif defined(__SSE2__) || defined(_M_X64) ||                                  \
     (defined(_M_IX86_FP) && _M_IX86_FP >= 2)
 #define HAVE_SSE2
 #include <emmintrin.h>
