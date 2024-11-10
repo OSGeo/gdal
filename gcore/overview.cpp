@@ -341,7 +341,7 @@ inline GUInt16 ComputeIntegerRMS_4values<GUInt16, double>(double sumSquares)
 /*                   QuadraticMeanByteSSE2OrAVX2()                      */
 /************************************************************************/
 
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
 #define sse2_packus_epi32 _mm_packus_epi32
 #else
 inline __m128i sse2_packus_epi32(__m128i a, __m128i b)
