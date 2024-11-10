@@ -79,7 +79,10 @@ static double *InterpolateValues(CSLConstList papszList, int tableSize,
                                  int pixelFirstLutValue)
 {
     /* Allocate the right LUT size according to the product range pixel */
-    double *table = static_cast<double *>(CPLCalloc(sizeof(double), tableSize));
+    double *table =
+        static_cast<double *>(VSI_CALLOC_VERBOSE(sizeof(double), tableSize));
+    if (!table)
+        return nullptr;
 
     if (stepSize <= 0)
     {
@@ -459,14 +462,26 @@ void RCMCalibRasterBand::ReadLUT()
         return;
     }
 
+    // Avoid excessive memory allocation
+    if (this->m_nTableSize > 1000 * 1000)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Too many elements in LUT: %d",
+                 this->m_nTableSize);
+        return;
+    }
+
     /* Allocate the right LUT size according to the product range pixel */
     this->m_nfTable =
         InterpolateValues(aosLUTList.List(), this->m_nTableSize, this->stepSize,
                           this->numberOfValues, this->pixelFirstLutValue);
+    if (!this->m_nfTable)
+        return;
 
-    const size_t nLen =
-        this->m_nTableSize * max_space_for_string;  // 32 max + space
-    char *lut_gains = static_cast<char *>(CPLCalloc(1, nLen));
+    // 32 max + space
+    char *lut_gains = static_cast<char *>(
+        VSI_CALLOC_VERBOSE(this->m_nTableSize, max_space_for_string));
+    if (!lut_gains)
+        return;
 
     for (int i = 0; i < this->m_nTableSize; i++)
     {
