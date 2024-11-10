@@ -34,10 +34,18 @@
 #include "gdal_mdreader.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
-#if defined(__x86_64) || defined(_M_X64)
-#define USE_SSE2_OPTIM
-#include "gdalsse_priv.h"
+
+#ifdef USE_NEON_OPTIMIZATIONS
+#define USE_SSE2
+#elif defined(__x86_64) || defined(_M_X64)
+#define USE_SSE2
 #endif
+
+#ifdef USE_SSE2
+#include "gdalsse_priv.h"
+#define USE_SSE2_OPTIM
+#endif
+
 #include "ogr_api.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"

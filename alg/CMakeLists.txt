@@ -95,6 +95,11 @@ elseif (GDAL_USE_QHULL)
   gdal_target_link_libraries(alg PRIVATE ${QHULL_LIBRARY})
 endif ()
 
+if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
+  target_compile_definitions(alg PRIVATE -DHAVE_SSE_AT_COMPILE_TIME -DUSE_NEON_OPTIMIZATIONS)
+  target_sources(alg PRIVATE gdalgridsse.cpp)
+endif()
+
 if (HAVE_SSE_AT_COMPILE_TIME)
   target_sources(alg PRIVATE gdalgridsse.cpp)
   target_compile_definitions(alg PRIVATE -DHAVE_SSE_AT_COMPILE_TIME)
