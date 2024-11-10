@@ -153,6 +153,11 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     && if test "x${GDAL_BUILD_IS_RELEASE:-}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
+    && if test "${GCC_ARCH}" = "x86_64"; then \
+        export GDAL_CMAKE_EXTRA_OPTS="-DENABLE_IPO=ON"; \
+    else \
+        export GDAL_CMAKE_EXTRA_OPTS=""; \
+    fi \
     && mkdir gdal \
     && wget -q https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
@@ -183,7 +188,7 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
         -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
         -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX-/usr/local}/lib/libinternalproj.so" \
         -DGDAL_USE_TIFF_INTERNAL=ON \
-        -DGDAL_USE_GEOTIFF_INTERNAL=ON \
+        -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS} \
         -DBUILD_TESTING=OFF \
     && ninja \
     && DESTDIR="/build" ninja install \
