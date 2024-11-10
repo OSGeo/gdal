@@ -2872,9 +2872,12 @@ def test_ogr_mem_arrow_json():
     lyr.CreateField(field_def)
 
     stream = lyr.GetArrowStreamAsPyArrow()
-    md = stream.schema["field_json"].metadata
-    assert b"ARROW:extension:name" in md
-    assert md[b"ARROW:extension:name"] == b"arrow.json"
+    field_schema = stream.schema["field_json"]
+    # Since pyarrow 18, the field type is extension<arrow.json>
+    if str(field_schema.type) != "extension<arrow.json>":
+        md = field_schema.metadata
+        assert b"ARROW:extension:name" in md
+        assert md[b"ARROW:extension:name"] == b"arrow.json"
 
 
 ###############################################################################
