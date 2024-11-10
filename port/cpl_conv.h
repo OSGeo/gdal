@@ -47,6 +47,8 @@ CPLGetGlobalConfigOption(const char *, const char *) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL CPLSetConfigOption(const char *, const char *);
 void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
                                                        const char *pszValue);
+void CPL_DLL CPLDeclareKnownConfigOption(const char *pszKey,
+                                         const char *pszDefinition);
 
 /** Callback for CPLSubscribeToSetConfigOption() */
 typedef void (*CPLSetConfigOptionSubscriber)(const char *pszKey,
