@@ -38,6 +38,7 @@
 #include "gdal_rat.h"
 #include "gdal_priv_templates.hpp"
 #include "gdal_interpolateatpoint.h"
+#include "gdal_minmax_element.hpp"
 
 /************************************************************************/
 /*                           GDALRasterBand()                           */
@@ -7413,6 +7414,288 @@ CPLErr CPL_STDCALL GDALComputeRasterMinMax(GDALRasterBandH hBand, int bApproxOK,
 
     GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->ComputeRasterMinMax(bApproxOK, adfMinMax);
+}
+
+/************************************************************************/
+/*                    ComputeRasterMinMaxLocation()                     */
+/************************************************************************/
+
+/**
+ * \brief Compute the min/max values for a band, and their location.
+ *
+ * Pixels whose value matches the nodata value or are masked by the mask
+ * band are ignored.
+ *
+ * If the minimum or maximum value is hit in several locations, it is not
+ * specified which one will be returned.
+ *
+ * @param[out] pdfMin Pointer to the minimum value.
+ * @param[out] pdfMax Pointer to the maximum value.
+ * @param[out] pnMinX Pointer to the column where the minimum value is hit.
+ * @param[out] pnMinY Pointer to the line where the minimum value is hit.
+ * @param[out] pnMaxX Pointer to the column where the maximum value is hit.
+ * @param[out] pnMaxY Pointer to the line where the maximum value is hit.
+ *
+ * @return CE_None in case of success, CE_Warning if there are no valid values,
+ *         CE_Failure in case of error.
+ *
+ * @since GDAL 3.11
+ */
+
+CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
+                                                   double *pdfMax, int *pnMinX,
+                                                   int *pnMinY, int *pnMaxX,
+                                                   int *pnMaxY)
+{
+    int nMinX = -1;
+    int nMinY = -1;
+    int nMaxX = -1;
+    int nMaxY = -1;
+    double dfMin = std::numeric_limits<double>::infinity();
+    double dfMax = -std::numeric_limits<double>::infinity();
+    if (pdfMin)
+        *pdfMin = dfMin;
+    if (pdfMax)
+        *pdfMax = dfMax;
+    if (pnMinX)
+        *pnMinX = nMinX;
+    if (pnMinY)
+        *pnMinY = nMinY;
+    if (pnMaxX)
+        *pnMaxX = nMaxX;
+    if (pnMaxY)
+        *pnMaxY = nMaxY;
+
+    if (GDALDataTypeIsComplex(eDataType))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Complex data type not supported");
+        return CE_Failure;
+    }
+
+    int bGotNoDataValue = FALSE;
+    const double dfNoDataValue = GetNoDataValue(&bGotNoDataValue);
+    bGotNoDataValue = bGotNoDataValue && !std::isnan(dfNoDataValue);
+    bool bGotFloatNoDataValue = false;
+    float fNoDataValue = 0.0f;
+    ComputeFloatNoDataValue(eDataType, dfNoDataValue, bGotNoDataValue,
+                            fNoDataValue, bGotFloatNoDataValue);
+
+    GDALRasterBand *poMaskBand = nullptr;
+    if (!bGotNoDataValue)
+    {
+        const int l_nMaskFlags = GetMaskFlags();
+        if (l_nMaskFlags != GMF_ALL_VALID && l_nMaskFlags != GMF_NODATA &&
+            GetColorInterpretation() != GCI_AlphaBand)
+        {
+            poMaskBand = GetMaskBand();
+        }
+    }
+
+    bool bSignedByte = false;
+    if (eDataType == GDT_Byte)
+    {
+        EnablePixelTypeSignedByteWarning(false);
+        const char *pszPixelType =
+            GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        EnablePixelTypeSignedByteWarning(true);
+        bSignedByte =
+            pszPixelType != nullptr && EQUAL(pszPixelType, "SIGNEDBYTE");
+    }
+
+    GByte *pabyMaskData = nullptr;
+    if (poMaskBand)
+    {
+        pabyMaskData =
+            static_cast<GByte *>(VSI_MALLOC2_VERBOSE(nBlockXSize, nBlockYSize));
+        if (!pabyMaskData)
+        {
+            return CE_Failure;
+        }
+    }
+
+    if (!InitBlockInfo())
+        return CE_Failure;
+
+    const GIntBig nTotalBlocks =
+        static_cast<GIntBig>(nBlocksPerRow) * nBlocksPerColumn;
+    bool bNeedsMin = pdfMin || pnMinX || pnMinY;
+    bool bNeedsMax = pdfMax || pnMaxX || pnMaxY;
+    for (GIntBig iBlock = 0; iBlock < nTotalBlocks; ++iBlock)
+    {
+        const int iYBlock = static_cast<int>(iBlock / nBlocksPerRow);
+        const int iXBlock = static_cast<int>(iBlock % nBlocksPerRow);
+
+        GDALRasterBlock *poBlock = GetLockedBlockRef(iXBlock, iYBlock);
+        if (poBlock == nullptr)
+        {
+            CPLFree(pabyMaskData);
+            return CE_Failure;
+        }
+
+        void *const pData = poBlock->GetDataRef();
+
+        int nXCheck = 0, nYCheck = 0;
+        GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
+
+        if (poMaskBand &&
+            poMaskBand->RasterIO(GF_Read, iXBlock * nBlockXSize,
+                                 iYBlock * nBlockYSize, nXCheck, nYCheck,
+                                 pabyMaskData, nXCheck, nYCheck, GDT_Byte, 0,
+                                 nBlockXSize, nullptr) != CE_None)
+        {
+            poBlock->DropLock();
+            CPLFree(pabyMaskData);
+            return CE_Failure;
+        }
+
+        if (poMaskBand || nYCheck < nBlockYSize || nXCheck < nBlockXSize)
+        {
+            for (int iY = 0; iY < nYCheck; ++iY)
+            {
+                for (int iX = 0; iX < nXCheck; ++iX)
+                {
+                    const GPtrDiff_t iOffset =
+                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                    if (pabyMaskData && pabyMaskData[iOffset] == 0)
+                        continue;
+                    bool bValid = true;
+                    double dfValue = GetPixelValue(
+                        eDataType, bSignedByte, pData, iOffset, bGotNoDataValue,
+                        dfNoDataValue, bGotFloatNoDataValue, fNoDataValue,
+                        bValid);
+                    if (!bValid)
+                        continue;
+                    if (dfValue < dfMin)
+                    {
+                        dfMin = dfValue;
+                        nMinX = iXBlock * nBlockXSize + iX;
+                        nMinY = iYBlock * nBlockYSize + iY;
+                    }
+                    if (dfValue > dfMax)
+                    {
+                        dfMax = dfValue;
+                        nMaxX = iXBlock * nBlockXSize + iX;
+                        nMaxY = iYBlock * nBlockYSize + iY;
+                    }
+                }
+            }
+        }
+        else
+        {
+            size_t pos_min = 0;
+            size_t pos_max = 0;
+            const auto eEffectiveDT = bSignedByte ? GDT_Int8 : eDataType;
+            if (bNeedsMin && bNeedsMax)
+            {
+                std::tie(pos_min, pos_max) = gdal::minmax_element(
+                    pData, static_cast<size_t>(nBlockXSize) * nBlockYSize,
+                    eEffectiveDT, bGotNoDataValue, dfNoDataValue);
+            }
+            else if (bNeedsMin)
+            {
+                pos_min = gdal::min_element(
+                    pData, static_cast<size_t>(nBlockXSize) * nBlockYSize,
+                    eEffectiveDT, bGotNoDataValue, dfNoDataValue);
+            }
+            else if (bNeedsMax)
+            {
+                pos_max = gdal::max_element(
+                    pData, static_cast<size_t>(nBlockXSize) * nBlockYSize,
+                    eEffectiveDT, bGotNoDataValue, dfNoDataValue);
+            }
+
+            if (bNeedsMin)
+            {
+                const int nMinXBlock = static_cast<int>(pos_min % nBlockXSize);
+                const int nMinYBlock = static_cast<int>(pos_min / nBlockXSize);
+                bool bValid = true;
+                const double dfMinValueBlock = GetPixelValue(
+                    eDataType, bSignedByte, pData, pos_min, bGotNoDataValue,
+                    dfNoDataValue, bGotFloatNoDataValue, fNoDataValue, bValid);
+                if (bValid && dfMinValueBlock < dfMin)
+                {
+                    dfMin = dfMinValueBlock;
+                    nMinX = iXBlock * nBlockXSize + nMinXBlock;
+                    nMinY = iYBlock * nBlockYSize + nMinYBlock;
+                }
+            }
+
+            if (bNeedsMax)
+            {
+                const int nMaxXBlock = static_cast<int>(pos_max % nBlockXSize);
+                const int nMaxYBlock = static_cast<int>(pos_max / nBlockXSize);
+                bool bValid = true;
+                const double dfMaxValueBlock = GetPixelValue(
+                    eDataType, bSignedByte, pData, pos_max, bGotNoDataValue,
+                    dfNoDataValue, bGotFloatNoDataValue, fNoDataValue, bValid);
+                if (bValid && dfMaxValueBlock > dfMax)
+                {
+                    dfMax = dfMaxValueBlock;
+                    nMaxX = iXBlock * nBlockXSize + nMaxXBlock;
+                    nMaxY = iYBlock * nBlockYSize + nMaxYBlock;
+                }
+            }
+        }
+
+        poBlock->DropLock();
+
+        if (eDataType == GDT_Byte)
+        {
+            if (bNeedsMin && dfMin == 0)
+            {
+                bNeedsMin = false;
+            }
+            if (bNeedsMax && dfMax == 255)
+            {
+                bNeedsMax = false;
+            }
+            if (!bNeedsMin && !bNeedsMax)
+            {
+                break;
+            }
+        }
+    }
+
+    CPLFree(pabyMaskData);
+
+    if (pdfMin)
+        *pdfMin = dfMin;
+    if (pdfMax)
+        *pdfMax = dfMax;
+    if (pnMinX)
+        *pnMinX = nMinX;
+    if (pnMinY)
+        *pnMinY = nMinY;
+    if (pnMaxX)
+        *pnMaxX = nMaxX;
+    if (pnMaxY)
+        *pnMaxY = nMaxY;
+    return ((bNeedsMin && nMinX < 0) || (bNeedsMax && nMaxX < 0)) ? CE_Warning
+                                                                  : CE_None;
+}
+
+/************************************************************************/
+/*                    GDALComputeRasterMinMaxLocation()                 */
+/************************************************************************/
+
+/**
+ * \brief Compute the min/max values for a band, and their location.
+ *
+ * @see GDALRasterBand::ComputeRasterMinMax()
+ * @since GDAL 3.11
+ */
+
+CPLErr GDALComputeRasterMinMaxLocation(GDALRasterBandH hBand, double *pdfMin,
+                                       double *pdfMax, int *pnMinX, int *pnMinY,
+                                       int *pnMaxX, int *pnMaxY)
+
+{
+    VALIDATE_POINTER1(hBand, "GDALComputeRasterMinMaxLocation", CE_Failure);
+
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return poBand->ComputeRasterMinMaxLocation(pdfMin, pdfMax, pnMinX, pnMinY,
+                                               pnMaxX, pnMaxY);
 }
 
 /************************************************************************/

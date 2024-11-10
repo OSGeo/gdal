@@ -4997,6 +4997,50 @@ def InterpolateAtPoint(self, *args, **kwargs):
         return ret[1]
 %}
 
+%feature("shadow") ComputeMinMaxLocation %{
+def ComputeMinMaxLocation(self, *args, **kwargs):
+    """Compute the min/max values for a band, and their location.
+
+       Pixels whose value matches the nodata value or are masked by the mask
+       band are ignored.
+
+       If the minimum or maximum value is hit in several locations, it is not
+       specified which one will be returned.
+
+       This is a mapping of :cpp:func:`GDALRasterBand::ComputeRasterMinMaxLocation`.
+
+       Parameters
+       ----------
+       None
+
+       Returns
+       -------
+       a named tuple (min, max, minX, minY, maxX, maxY) or or ``None``
+       in case of error or no valid pixel.
+    """
+
+    ret = $action(self, *args, **kwargs)
+    if ret[0] != CE_None:
+        return None
+
+    import collections
+    tuple = collections.namedtuple('ComputeMinMaxLocationResult',
+            ['min',
+             'max',
+             'minX',
+             'minY',
+             'maxX',
+             'maxY',
+             ])
+    tuple.min = ret[1]
+    tuple.max = ret[2]
+    tuple.minX = ret[3]
+    tuple.minY = ret[4]
+    tuple.maxX = ret[5]
+    tuple.maxY = ret[6]
+    return tuple
+%}
+
 %pythoncode %{
 
 # VSIFile: Copyright (c) 2024, Dan Baston <dbaston at gmail.com>
