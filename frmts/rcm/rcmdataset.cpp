@@ -1988,10 +1988,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 // If Complex, always 32 bits
                 RCMCalibRasterBand *poBand = new RCMCalibRasterBand(
                     poDS.get(), pszPole, GDT_Float32, poBandFile.release(),
-                    eCalib, CPLFormFilename(osPath, pszLUT, nullptr),
-                    CPLFormFilename(osPath, osNoiseLevelsValues.c_str(),
-                                    nullptr),
-                    eDataType);
+                    eCalib, pszLUT, osNoiseLevelsValues.c_str(), eDataType);
                 poDS->SetBand(poDS->GetRasterCount() + 1, poBand);
             }
             else
@@ -1999,10 +1996,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 // Whatever the datatype was previoulsy set
                 RCMCalibRasterBand *poBand = new RCMCalibRasterBand(
                     poDS.get(), pszPole, eDataType, poBandFile.release(),
-                    eCalib, CPLFormFilename(osPath, pszLUT, nullptr),
-                    CPLFormFilename(osPath, osNoiseLevelsValues.c_str(),
-                                    nullptr),
-                    eDataType);
+                    eCalib, pszLUT, osNoiseLevelsValues.c_str(), eDataType);
                 poDS->SetBand(poDS->GetRasterCount() + 1, poBand);
             }
         }
