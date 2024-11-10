@@ -37,7 +37,11 @@
 #include "gdal_thread_pool.h"
 #include "gdal_utils.h"
 
-#if defined(__SSE2__) || defined(_M_X64)
+#ifdef USE_NEON_OPTIMIZATIONS
+#define USE_SSE2_OPTIM
+#define USE_SSE41_OPTIM
+#include "include_sse2neon.h"
+#elif defined(__SSE2__) || defined(_M_X64)
 #define USE_SSE2_OPTIM
 #include <emmintrin.h>
 // MSVC doesn't define __SSE4_1__, but if -arch:AVX2 is enabled, we do have SSE4.1
