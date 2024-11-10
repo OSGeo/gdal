@@ -368,6 +368,60 @@ TEST_F(test_ogr, OGRCurvePolygon_copy_constructor_illegal_use)
     EXPECT_TRUE(poly.IsEmpty());
 }
 
+template <class T> void testMove()
+{
+    auto poSRS = new OGRSpatialReference();
+    {
+        auto poOrigin = std::unique_ptr<T>(make<T>());
+        ASSERT_TRUE(nullptr != poOrigin);
+        poOrigin->assignSpatialReference(poSRS);
+
+        T valueCopy(*poOrigin);
+        const int refCountBefore = poSRS->GetReferenceCount();
+        T fromMoved(std::move(*poOrigin));
+        EXPECT_EQ(poSRS->GetReferenceCount(), refCountBefore);
+
+        ASSERT_TRUE(CPL_TO_BOOL(fromMoved.Equals(&valueCopy)))
+            << valueCopy.getGeometryName()
+            << ": move constructor changed a value";
+        EXPECT_EQ(fromMoved.getSpatialReference(), poSRS);
+
+        T valueCopy2(valueCopy);
+        EXPECT_EQ(valueCopy.getSpatialReference(), poSRS);
+        T value3;
+        const int refCountBefore2 = poSRS->GetReferenceCount();
+        value3 = std::move(valueCopy);
+        EXPECT_EQ(poSRS->GetReferenceCount(), refCountBefore2);
+
+        ASSERT_TRUE(CPL_TO_BOOL(value3.Equals(&valueCopy2)))
+            << valueCopy2.getGeometryName()
+            << ": move assignment operator changed a value";
+        EXPECT_EQ(value3.getSpatialReference(), poSRS);
+    }
+    EXPECT_EQ(poSRS->GetReferenceCount(), 1);
+    poSRS->Release();
+}
+
+TEST_F(test_ogr, geometry_move)
+{
+    testMove<OGRPoint>();
+    testMove<OGRLineString>();
+    testMove<OGRLinearRing>();
+    testMove<OGRCircularString>();
+    testMove<OGRCompoundCurve>();
+    testMove<OGRCurvePolygon>();
+    testMove<OGRPolygon>();
+    testMove<OGRGeometryCollection>();
+    testMove<OGRMultiSurface>();
+    testMove<OGRMultiPolygon>();
+    testMove<OGRMultiPoint>();
+    testMove<OGRMultiCurve>();
+    testMove<OGRMultiLineString>();
+    testMove<OGRTriangle>();
+    testMove<OGRPolyhedralSurface>();
+    testMove<OGRTriangulatedSurface>();
+}
+
 TEST_F(test_ogr, geometry_get_point)
 {
     {

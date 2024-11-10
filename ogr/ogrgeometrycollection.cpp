@@ -58,6 +58,27 @@ OGRGeometryCollection::OGRGeometryCollection(const OGRGeometryCollection &other)
 }
 
 /************************************************************************/
+/*            OGRGeometryCollection( OGRGeometryCollection&& )          */
+/************************************************************************/
+
+/**
+ * \brief Move constructor.
+ *
+ * @since GDAL 3.11
+ */
+
+// cppcheck-suppress-begin accessMoved
+OGRGeometryCollection::OGRGeometryCollection(OGRGeometryCollection &&other)
+    : OGRGeometry(std::move(other)), nGeomCount(other.nGeomCount),
+      papoGeoms(other.papoGeoms)
+{
+    other.nGeomCount = 0;
+    other.papoGeoms = nullptr;
+}
+
+// cppcheck-suppress-end accessMoved
+
+/************************************************************************/
 /*                       ~OGRGeometryCollection()                       */
 /************************************************************************/
 
@@ -108,6 +129,30 @@ OGRGeometryCollection::operator=(const OGRGeometryCollection &other)
                 papoGeoms[i] = other.papoGeoms[i]->clone();
             }
         }
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*                  operator=( OGRGeometryCollection&&)                 */
+/************************************************************************/
+
+/**
+ * \brief Move assignment operator.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRGeometryCollection &
+OGRGeometryCollection::operator=(OGRGeometryCollection &&other)
+{
+    if (this != &other)
+    {
+        empty();
+
+        OGRGeometry::operator=(std::move(other));
+        std::swap(nGeomCount, other.nGeomCount);
+        std::swap(papoGeoms, other.papoGeoms);
     }
     return *this;
 }
