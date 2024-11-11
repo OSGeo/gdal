@@ -2837,3 +2837,29 @@ def test_vrt_update_nested_VRTDataset(tmp_vsimem):
     with gdal.Open(vrt_filename) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
         assert ds.GetRasterBand(1).GetMinimum() == 74
+
+
+###############################################################################
+# Test reading a VRT with a ComplexSource of type CFloat32
+
+
+def test_vrt_read_cfloat32_complex_source_as_float32():
+
+    ds = gdal.Open("data/vrt/complex_non_zero_real_zero_imag.vrt")
+    assert struct.unpack("f" * 8, ds.ReadRaster()) == (1, 0, 1, 0, 1, 0, 1, 0)
+    assert struct.unpack("f" * 4, ds.ReadRaster(buf_type=gdal.GDT_Float32)) == (
+        1,
+        1,
+        1,
+        1,
+    )
+
+
+###############################################################################
+# Test reading a VRT with a ComplexSource of type Float32 (from a underlying CFloat32 source)
+
+
+def test_vrt_read_float32_complex_source_from_cfloat32():
+
+    ds = gdal.Open("data/vrt/complex_non_zero_real_zero_imag_as_float32.vrt")
+    assert struct.unpack("f" * 4, ds.ReadRaster()) == (1, 1, 1, 1)
