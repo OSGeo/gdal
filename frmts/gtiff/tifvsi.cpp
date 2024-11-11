@@ -439,7 +439,10 @@ static void VSI_TIFFSetOpenOptions(TIFFOpenOptions *opts)
         {
             const auto nUsableRAM = CPLGetUsablePhysicalRAM();
             if (nUsableRAM > 0)
+            {
+                // coverity[return_overflow]
                 return nUsableRAM / 10 * 9;
+            }
             else
                 return 0;
         }

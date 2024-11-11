@@ -756,7 +756,7 @@ int OGRCurve::isClockwise() const
     for (int i = 1; i < nPointCount - 1; i++)
     {
         ++oIter;
-        OGRPoint oPointCur = *oIter;
+        const OGRPoint oPointCur = *oIter;
         if (bNextPointIsNextSel)
         {
             oPointNextSel = oPointCur;

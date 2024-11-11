@@ -2010,7 +2010,7 @@ OGRGeometry *OGRGeometryFactory::organizePolygons(OGRGeometry **papoPolygons,
                                 // If it is outside, then i cannot be inside j.
                                 break;
                             }
-                            previousPoint = point;
+                            previousPoint = std::move(point);
                         }
                         if (!b_i_inside_j && k == nPoints && nPoints > 2)
                         {

@@ -69,6 +69,7 @@ void testSpatialReferenceLeakOnCopy(OGRSpatialReference *poSRS)
         ASSERT_GT(nCurCount, nLastCount);
         nLastCount = nCurCount;
 
+        // coverity[copy_assignment_call]
         value3 = value;
         ASSERT_EQ(nLastCount, poSRS->GetReferenceCount());
     }
@@ -327,6 +328,7 @@ TEST_F(test_ogr, OGRGeometryCollection_copy_constructor_illegal_use)
     CPLErrorReset();
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+        // coverity[copy_assignment_call]
         *mp_as_gc = gc;
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
@@ -360,6 +362,7 @@ TEST_F(test_ogr, OGRCurvePolygon_copy_constructor_illegal_use)
     CPLErrorReset();
     {
         CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+        // coverity[copy_assignment_call]
         *poly_as_cp = cp;
     }
     EXPECT_STREQ(CPLGetLastErrorMsg(),
