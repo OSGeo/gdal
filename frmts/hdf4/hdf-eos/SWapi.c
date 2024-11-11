@@ -3286,10 +3286,14 @@ SWinqattrs(int32 swathID, char *attrnames, int32 * strbufsize)
     return (nattr);
 }
 
-#define REMQUOTE \
-\
-memmove(utlstr, utlstr + 1, strlen(utlstr) - 2); \
-utlstr[strlen(utlstr) - 2] = 0;
+#define REMQUOTE(x) do { \
+    char* l_x = x; \
+    const size_t l_x_len = strlen(l_x); \
+    if (l_x_len >= 2 && l_x[0] == '"' && l_x[l_x_len - 1] == '"') {\
+        memmove(l_x, l_x + 1, l_x_len - 2); \
+        l_x[l_x_len - 2] = 0; \
+    } \
+  } while(0)
 
 
 /*----------------------------------------------------------------------------|
@@ -3408,7 +3412,7 @@ SWinqdims(int32 swathID, char *dimnames, int32 dims[])
 
 			/* Strip off double quotes */
 			/* ----------------------- */
-			REMQUOTE
+			REMQUOTE(utlstr);
 
 			/* If not first name then add comma delimiter */
 			    if (nDim > 0)
@@ -3556,8 +3560,8 @@ SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
 		    {
 			/* Get Geo Dim, remove quotes, add "/" */
 			EHgetmetavalue(metaptrs, "GeoDimension", utlstr);
-			REMQUOTE
-			    strcat(utlstr, "/");
+			REMQUOTE(utlstr);
+			strcat(utlstr, "/");
 
 			/* If not first map then add comma delimiter. */
 			if (nMap > 0)
@@ -3570,7 +3574,7 @@ SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
 
 			/* Get Data Dim, remove quotes */
 			EHgetmetavalue(metaptrs, "DataDimension", utlstr);
-			REMQUOTE
+			REMQUOTE(utlstr);
 
 			/* Add to map list */
 			    strcat(dimmaps, utlstr);
@@ -3722,8 +3726,8 @@ SWinqidxmaps(int32 swathID, char *idxmaps, int32 idxsizes[])
 		    {
 			/* Get Geo Dim, remove quotes, add "/" */
 			EHgetmetavalue(metaptrs, "GeoDimension", utlstr);
-			REMQUOTE
-			    strcat(utlstr, "/");
+			REMQUOTE(utlstr);
+			strcat(utlstr, "/");
 
 			/* If not first map then add comma delimiter. */
 			if (nMap > 0)
@@ -3747,7 +3751,7 @@ SWinqidxmaps(int32 swathID, char *idxmaps, int32 idxsizes[])
 
 			/* Get Data Dim, remove quotes */
 			EHgetmetavalue(metaptrs, "DataDimension", utlstr);
-			REMQUOTE
+			REMQUOTE(utlstr);
 
 			/* Add to map list */
 			    strcat(idxmaps, utlstr);
@@ -3935,7 +3939,7 @@ SWinqfields(int32 swathID, const char *fieldtype, char *fieldlist, int32 rank[],
 
 			/* Strip off double quotes */
 			/* ----------------------- */
-			REMQUOTE
+			REMQUOTE(utlstr);
 
 
 			/* Add to fieldlist */
