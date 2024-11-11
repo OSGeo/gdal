@@ -882,6 +882,7 @@ netCDFGroup::CreateDimension(const std::string &osName,
 static int CreateOrGetComplexDataType(int gid, GDALDataType eDT)
 {
     const char *pszName = "";
+    CPL_IGNORE_RET_VAL(pszName);  // Make CSA happy
     int nSubTypeId = NC_NAT;
     switch (eDT)
     {

@@ -154,6 +154,7 @@ static void OGRLIBKMLPreProcessInput(std::string &oKml)
     {
         const char *pszStartTag = "<MultiPolygon>";
         const char *pszEndTag = "";
+        CPL_IGNORE_RET_VAL(pszEndTag);  // Make CSA happy
         auto nNewPos = oKml.find(pszStartTag, nPos);
         if (nNewPos != std::string::npos)
         {

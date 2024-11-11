@@ -929,6 +929,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
     {
         GMLPropertyDefn *poPDefn = GetProperty(iProperty);
         const char *pszTypeName = "Unknown";
+        CPL_IGNORE_RET_VAL(pszTypeName);  // Make CSA happy
 
         CPLXMLNode *psPDefnNode =
             CPLCreateXMLNode(nullptr, CXT_Element, "PropertyDefn");

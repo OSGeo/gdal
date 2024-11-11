@@ -304,7 +304,10 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
         else
         {
             OGRPolygon **tabPolygons = new OGRPolygon *[psShape->nParts];
-            for (int iRing = 0; iRing < psShape->nParts; iRing++)
+            tabPolygons[0] = new OGRPolygon();
+            auto poExteriorRing = CreateLinearRing(psShape, 0, bHasZ, bHasM);
+            tabPolygons[0]->addRingDirectly(poExteriorRing);
+            for (int iRing = 1; iRing < psShape->nParts; iRing++)
             {
                 tabPolygons[iRing] = new OGRPolygon();
                 tabPolygons[iRing]->addRingDirectly(
@@ -332,8 +335,7 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                     // Only inner rings
                     OGREnvelope sFirstEnvelope;
                     OGREnvelope sCurEnvelope;
-                    auto poExteriorRing = tabPolygons[0]->getExteriorRing();
-                    tabPolygons[0]->getEnvelope(&sFirstEnvelope);
+                    poExteriorRing->getEnvelope(&sFirstEnvelope);
                     for (int iRing = 1; iRing < psShape->nParts; iRing++)
                     {
                         tabPolygons[iRing]->getEnvelope(&sCurEnvelope);

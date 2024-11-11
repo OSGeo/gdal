@@ -303,31 +303,26 @@ int VSIArchiveFilesystemHandler::FindFileInArchive(
 /*                           CompactFilename()                          */
 /************************************************************************/
 
-static CPLString CompactFilename(const char *pszArchiveInFileNameIn)
+static std::string CompactFilename(const char *pszArchiveInFileNameIn)
 {
-    char *pszArchiveInFileName = CPLStrdup(pszArchiveInFileNameIn);
+    std::string osRet(pszArchiveInFileNameIn);
 
     // Replace a/../b by b and foo/a/../b by foo/b.
     while (true)
     {
-        char *pszPrevDir = strstr(pszArchiveInFileName, "/../");
-        if (pszPrevDir == nullptr || pszPrevDir == pszArchiveInFileName)
+        size_t nSlashDotDot = osRet.find("/../");
+        if (nSlashDotDot == std::string::npos || nSlashDotDot == 0)
             break;
-
-        char *pszPrevSlash = pszPrevDir - 1;
-        while (pszPrevSlash != pszArchiveInFileName && *pszPrevSlash != '/')
-            pszPrevSlash--;
-        if (pszPrevSlash == pszArchiveInFileName)
-            memmove(pszArchiveInFileName, pszPrevDir + 4,
-                    strlen(pszPrevDir + 4) + 1);
+        size_t nPos = nSlashDotDot - 1;
+        while (nPos > 0 && osRet[nPos] != '/')
+            --nPos;
+        if (nPos == 0)
+            osRet = osRet.substr(nSlashDotDot + strlen("/../"));
         else
-            memmove(pszPrevSlash + 1, pszPrevDir + 4,
-                    strlen(pszPrevDir + 4) + 1);
+            osRet = osRet.substr(0, nPos + 1) +
+                    osRet.substr(nSlashDotDot + strlen("/../"));
     }
-
-    CPLString osFileInArchive = pszArchiveInFileName;
-    CPLFree(pszArchiveInFileName);
-    return osFileInArchive;
+    return osRet;
 }
 
 /************************************************************************/

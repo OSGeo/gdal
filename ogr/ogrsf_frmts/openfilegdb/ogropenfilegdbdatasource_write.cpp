@@ -1793,6 +1793,7 @@ bool OGROpenFileGDBDataSource::UpdateFieldDomain(
                 asFields[iDefinition].String = CPLStrdup(osXML.c_str());
 
                 const char *pszNewTypeUUID = "";
+                CPL_IGNORE_RET_VAL(pszNewTypeUUID);  // Make CSA happy
                 switch (domain->GetDomainType())
                 {
                     case OFDT_CODED:
