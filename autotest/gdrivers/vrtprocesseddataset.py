@@ -1199,6 +1199,102 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
 
 
 ###############################################################################
+# Test expressions
+
+
+@pytest.mark.parametrize(
+    "expression,src,expected,error",
+    [
+        pytest.param(
+            "return [ALL_BANDS[1], ALL_BANDS[2]]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[3, 4]], [[5, 6]]]),
+            None,
+            id="multiple bands in, multiple bands out (1)",
+        ),
+        pytest.param(
+            "return [ALL_BANDS]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            None,
+            id="multiple bands in, multiple bands out (2)",
+        ),
+        pytest.param(
+            "B1",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            None,
+            id="multiple bands in, single band out (1)",
+        ),
+        pytest.param(
+            "ALL_BANDS[0]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            None,
+            id="multiple bands in, single band out (2)",
+        ),
+        pytest.param(
+            "return [B1];",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            None,
+            id="multiple bands in, single band out (3)",
+        ),
+        pytest.param(
+            "return [B1, B2]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            "returned 2 values but 1 output band",
+            id="return wrong number of bands",
+        ),
+        pytest.param(
+            "return [ALL_BANDS, B2]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            "must return a vector or a list of scalars",
+            id="return wrong number of bands",
+        ),
+    ],
+)
+def test_vrtprocesseddataset_expression(tmp_vsimem, expression, src, expected, error):
+
+    src_filename = tmp_vsimem / "src.tif"
+    with gdal.GetDriverByName("GTiff").Create(src_filename, 2, 1, 3) as src_ds:
+        src_ds.WriteArray(src)
+        src_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
+
+    expected_output_bands = 1 if len(expected.shape) == 2 else expected.shape[0]
+
+    output_band_xml = "".join(
+        f"""<VRTRasterBand band="{i+1}" dataType="Float32" subClass="VRTProcessedRasterBand"/>"""
+        for i in range(expected_output_bands)
+    )
+
+    ds = gdal.Open(
+        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    <Input>
+        <SourceFilename>{src_filename}</SourceFilename>
+    </Input>
+    <ProcessingSteps>
+        <Step>
+            <Algorithm>Expression</Algorithm>
+            <Argument name="expression">{expression}</Argument>
+        </Step>
+    </ProcessingSteps>
+        {output_band_xml}
+    </VRTDataset>
+        """
+    )
+
+    if error:
+        with pytest.raises(Exception, match=error):
+            result = ds.ReadAsArray()
+    else:
+        result = ds.ReadAsArray()
+        np.testing.assert_equal(result, expected)
+
+
+###############################################################################
 # Test that serialization (for example due to statistics computation) properly
 # works
 
