@@ -2802,3 +2802,29 @@ def test_vrt_read_multi_threaded_disabled_since_overlapping_sources():
     assert (
         vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == "0"
     )
+
+
+###############################################################################
+# Test reading a VRT with a ComplexSource of type CFloat32
+
+
+def test_vrt_read_cfloat32_complex_source_as_float32():
+
+    ds = gdal.Open("data/vrt/complex_non_zero_real_zero_imag.vrt")
+    assert struct.unpack("f" * 8, ds.ReadRaster()) == (1, 0, 1, 0, 1, 0, 1, 0)
+    assert struct.unpack("f" * 4, ds.ReadRaster(buf_type=gdal.GDT_Float32)) == (
+        1,
+        1,
+        1,
+        1,
+    )
+
+
+###############################################################################
+# Test reading a VRT with a ComplexSource of type Float32 (from a underlying CFloat32 source)
+
+
+def test_vrt_read_float32_complex_source_from_cfloat32():
+
+    ds = gdal.Open("data/vrt/complex_non_zero_real_zero_imag_as_float32.vrt")
+    assert struct.unpack("f" * 4, ds.ReadRaster()) == (1, 1, 1, 1)
