@@ -232,7 +232,7 @@ But you can do something like this instead:
 
     from osgeo import gdal
 
-    class GdalErrorHandler(object):
+    class GdalErrorHandler:
         def __init__(self):
             self.err_level = gdal.CE_None
             self.err_no = 0

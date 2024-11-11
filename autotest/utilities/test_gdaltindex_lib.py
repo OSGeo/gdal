@@ -92,7 +92,7 @@ def test_gdaltindex_lib_basic(four_tile_index):
 
 
 def test_gdaltindex_lib_already_existing_rasters(four_tiles, four_tile_index, tmp_path):
-    class GdalErrorHandler(object):
+    class GdalErrorHandler:
         def __init__(self):
             self.warnings = []
 
@@ -147,7 +147,7 @@ def test_gdaltindex_skipDifferentProjection(tmp_path, four_tile_index):
     ds.SetGeoTransform([47, 0.1, 0, 2, 0, -0.1])
     ds = None
 
-    class GdalErrorHandler(object):
+    class GdalErrorHandler:
         def __init__(self):
             self.warning = None
 

@@ -293,7 +293,7 @@ static void popErrorHandler()
 }
 
 %pythoncode %{
-  class ExceptionMgr(object):
+  class ExceptionMgr:
       """
       Context manager to manage Python Exception state
       for GDAL/OGR/OSR/GNM.

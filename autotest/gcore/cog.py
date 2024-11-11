@@ -559,7 +559,7 @@ def test_cog_byte_to_web_mercator():
     filename2 = directory + "/cog2.tif"
     src_ds = gdal.Open(filename)
 
-    class my_error_handler(object):
+    class my_error_handler:
         def __init__(self):
             self.debug_msg_list = []
             self.other_msg_list = []

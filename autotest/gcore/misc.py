@@ -254,7 +254,7 @@ def test_misc_5():
 
 
 ###############################################################################
-class misc_6_interrupt_callback_class(object):
+class misc_6_interrupt_callback_class:
     def __init__(self):
         pass
 

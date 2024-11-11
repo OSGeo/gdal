@@ -420,7 +420,7 @@ def parse_jp2file(inpath, xml_tree, out_f):
 # Wrapper class for GDAL VSI*L API with class Python file interface
 
 
-class VSILFile(object):
+class VSILFile:
     def __init__(self, filename, access):
         self.f = gdal.VSIFOpenL(filename, access)
 

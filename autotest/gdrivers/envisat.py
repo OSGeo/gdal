@@ -60,7 +60,7 @@ def _get_mds_num(filename):
 #
 
 
-class EnvisatTestBase(object):
+class EnvisatTestBase:
     # Just a base class
 
     def download_file(self):

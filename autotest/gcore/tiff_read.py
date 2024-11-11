@@ -3266,7 +3266,7 @@ def test_tiff_read_gcp_internal_and_auxxml(
 # Test reading .tif + .aux
 
 
-class myHandlerClass(object):
+class myHandlerClass:
     def __init__(self):
         self.msg = None
 
