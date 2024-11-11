@@ -7473,6 +7473,9 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
         return CE_Failure;
     }
 
+    if (!InitBlockInfo())
+        return CE_Failure;
+
     int bGotNoDataValue = FALSE;
     const double dfNoDataValue = GetNoDataValue(&bGotNoDataValue);
     bGotNoDataValue = bGotNoDataValue && !std::isnan(dfNoDataValue);
@@ -7513,9 +7516,6 @@ CPLErr GDALRasterBand::ComputeRasterMinMaxLocation(double *pdfMin,
             return CE_Failure;
         }
     }
-
-    if (!InitBlockInfo())
-        return CE_Failure;
 
     const GIntBig nTotalBlocks =
         static_cast<GIntBig>(nBlocksPerRow) * nBlocksPerColumn;
