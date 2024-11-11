@@ -604,7 +604,7 @@ def test_gdalbuildvrt_lib_bandList_subset_of_bands_from_multiple_band_source():
 
 ###############################################################################
 def test_gdalbuildvrt_lib_warnings_and_custom_error_handler():
-    class GdalErrorHandler(object):
+    class GdalErrorHandler:
         def __init__(self):
             self.got_failure = False
             self.got_warning = False

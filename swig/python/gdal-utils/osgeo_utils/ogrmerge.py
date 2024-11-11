@@ -97,7 +97,7 @@ def _Esc(x):
     return gdal.EscapeString(x, gdal.CPLES_XML).decode("UTF-8")
 
 
-class XMLWriter(object):
+class XMLWriter:
     def __init__(self, f):
         self.f = f
         self.inc = 0

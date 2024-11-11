@@ -65,7 +65,7 @@ class GPKGCheckException(Exception):
     pass
 
 
-class GPKGChecker(object):
+class GPKGChecker:
 
     BASE_GEOM_TYPES = (
         "GEOMETRY",

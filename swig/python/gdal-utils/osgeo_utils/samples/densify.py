@@ -29,7 +29,7 @@ def Usage():
     return 2
 
 
-class Translator(object):
+class Translator:
     def construct_parser(self):
         from optparse import OptionGroup, OptionParser
 

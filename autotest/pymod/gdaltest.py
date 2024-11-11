@@ -74,7 +74,7 @@ def testCreateCopyInterruptCallback(pct, message, user_data):
 ###############################################################################
 
 
-class GDALTest(object):
+class GDALTest:
     def __init__(
         self,
         drivername,

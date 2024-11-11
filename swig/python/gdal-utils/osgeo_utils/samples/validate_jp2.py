@@ -191,7 +191,7 @@ def get_gmljp2(filename):
     return mdd[0]
 
 
-class ErrorReport(object):
+class ErrorReport:
     def __init__(self, collect_internally=False):
         self.error_count = 0
         self.warning_count = 0
