@@ -3188,7 +3188,10 @@ namespace exprtk
                }
             }
 
-            return (g.token_list_.size() - stride_ + 1);
+            // This return value appears to be unused and may cause undefined
+            // behavior when stride_ > (g.token_list_.size() + 1)
+            // return (g.token_list_.size() - stride_ + 1);
+            return 0;
          }
 
          virtual bool operator() (const token&)
