@@ -13,8 +13,7 @@
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "vrtdataset.h"
-
-#include <exprtk.hpp>
+#include "vrtexpression.h"
 
 #include <algorithm>
 #include <functional>
@@ -1476,118 +1475,63 @@ static CPLErr TrimmingProcess(
 /*                    ExpressionInit()                                  */
 /************************************************************************/
 
+namespace
+{
+
 class ExpressionData
 {
   public:
     ExpressionData(int nInBands, std::string_view osExpression)
-        : m_osExpression(osExpression), m_adfValuesForPixel(nInBands)
+        : m_adfValuesForPixel(nInBands), m_oEvaluator(osExpression)
     {
-        m_oSymbolTable.add_vector("ALL_BANDS", m_adfValuesForPixel);
-        m_oSymbolTable.add_vector("OUTPUT_BANDS", m_adfResults);
-    }
-
-    void set_variable_band(const char *pszVariable, int nBand)
-    {
-        m_oSymbolTable.add_variable(pszVariable, m_adfValuesForPixel[nBand]);
-    }
-
-    bool compile()
-    {
-        m_oExpression.register_symbol_table(m_oSymbolTable);
-        bool bSuccess = m_oParser.compile(m_osExpression, m_oExpression);
-
-        if (!bSuccess)
+        for (int i = 0; i < nInBands; i++)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to parse expression.");
-
-            for (size_t i = 0; i < m_oParser.error_count(); i++)
-            {
-                const auto &oError = m_oParser.get_error(i);
-
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Position: %02d "
-                         "Type: [%s] "
-                         "Message: %s\n",
-                         static_cast<int>(oError.token.position),
-                         exprtk::parser_error::to_str(oError.mode).c_str(),
-                         oError.diagnostic.c_str());
-            }
+            std::string osVar = "B" + std::to_string(i + 1);
+            m_oEvaluator.RegisterVariable(osVar, &m_adfValuesForPixel[i]);
         }
-
-        return bSuccess;
+        m_oEvaluator.RegisterVector("ALL_BANDS", &m_adfValuesForPixel);
     }
 
-    const std::vector<double> *evaluate(const double *padfValues)
+    CPLErr Compile()
     {
-        std::copy(padfValues, padfValues + m_adfValuesForPixel.size(),
+        return m_oEvaluator.Compile();
+    }
+
+    CPLErr Evaluate(const double *padfInputs, size_t nExpectedOutBands)
+    {
+        std::copy(padfInputs, padfInputs + m_adfValuesForPixel.size(),
                   m_adfValuesForPixel.begin());
 
-        m_adfResults.clear();
-        double value = m_oExpression.value();  // force evaluation
-
-        const auto &results = m_oExpression.results();
-
-        // We follow a different method to get the result depending on
-        // how the expression was formed. If a "return" statement was
-        // used, the result will be accessible via the "result" object.
-        // If no "return" statement was used, the result is accessible
-        // from the "value" variable (and must not be a vector.)
-        if (results.count() == 0)
+        if (auto eErr = m_oEvaluator.Evaluate(); eErr != CE_None)
         {
-            m_adfResults.resize(1);
-            m_adfResults[0] = value;
-        }
-        else if (results.count() == 1)
-        {
-
-            if (results[0].type == exprtk::type_store<double>::e_scalar)
-            {
-                m_adfResults.resize(1);
-                results.get_scalar(0, m_adfResults[0]);
-            }
-            else if (results[0].type == exprtk::type_store<double>::e_vector)
-            {
-                results.get_vector(0, m_adfResults);
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Expression returned an unexpected type.");
-                return nullptr;
-            }
-        }
-        else
-        {
-            m_adfResults.resize(results.count());
-            for (size_t i = 0; i < results.count(); i++)
-            {
-                if (results[i].type != exprtk::type_store<double>::e_scalar)
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Expression must return a vector or a list of "
-                             "scalars.");
-                    return nullptr;
-                }
-                else
-                {
-                    results.get_scalar(i, m_adfResults[i]);
-                }
-            }
+            return eErr;
         }
 
-        return &m_adfResults;
+        if (const auto &adfResults = m_oEvaluator.Results();
+            adfResults.size() != static_cast<std::size_t>(nExpectedOutBands))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Expression returned %d values but "
+                     "%d output bands were expected.",
+                     static_cast<int>(adfResults.size()),
+                     static_cast<int>(nExpectedOutBands));
+            return CE_Failure;
+        }
+
+        return CE_None;
+    }
+
+    const std::vector<double> &Results() const
+    {
+        return m_oEvaluator.Results();
     }
 
   private:
-    std::string m_osExpression{};
     std::vector<double> m_adfValuesForPixel;
-    std::vector<double> m_adfResults{};
-
-    exprtk::expression<double> m_oExpression{};
-    exprtk::parser<double> m_oParser{};
-    exprtk::symbol_table<double> m_oSymbolTable{};
+    GDALExpressionEvaluator m_oEvaluator;
 };
+
+}  // namespace
 
 static CPLErr ExpressionInit(const char * /*pszFuncName*/, void * /*pUserData*/,
                              CSLConstList papszFunctionArgs, int nInBands,
@@ -1607,15 +1551,9 @@ static CPLErr ExpressionInit(const char * /*pszFuncName*/, void * /*pUserData*/,
 
     auto data = std::make_unique<ExpressionData>(nInBands, pszExpression);
 
-    for (int i = 0; i < nInBands; i++)
+    if (auto eErr = data->Compile(); eErr != CE_None)
     {
-        std::string osVar = "B" + std::to_string(i + 1);
-        data->set_variable_band(osVar.c_str(), i);
-    }
-
-    if (!data->compile())
-    {
-        return CE_Failure;
+        return eErr;
     }
 
     *ppWorkingData = data.release();
@@ -1657,27 +1595,15 @@ static CPLErr ExpressionProcess(
 
     for (size_t i = 0; i < nElts; i++)
     {
-        const auto *padfResults = expr->evaluate(padfSrc);
-
-        if (!padfResults)
+        if (auto eErr = expr->Evaluate(padfSrc, nOutBands); eErr != CE_None)
         {
-            return CE_Failure;
+            return eErr;
         }
 
-        if (padfResults->size() != static_cast<std::size_t>(nOutBands))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Expression returned %d values but "
-                     "%d output bands were expected.",
-                     static_cast<int>(padfResults->size()), nOutBands);
-            return CE_Failure;
-        }
+        const auto &adfResults = expr->Results();
+        std::copy(adfResults.begin(), adfResults.end(), padfDst);
 
-        for (int iDstBand = 0; iDstBand < nOutBands; iDstBand++)
-        {
-            *padfDst++ = (*padfResults)[iDstBand];
-        }
-
+        padfDst += nOutBands;
         padfSrc += nInBands;
     }
 

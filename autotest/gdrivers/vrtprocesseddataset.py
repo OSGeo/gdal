@@ -1220,6 +1220,23 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             id="multiple bands in, multiple bands out (2)",
         ),
         pytest.param(
+            """
+             var chunk[10];
+             var out[5];
+             for (var i := 0; i < out[]; i += 1) {
+                for (var j := 0; j < chunk[]; j += 1) {
+                    chunk[j] := ALL_BANDS[i * chunk[] + j];
+                };
+                out[i] := avg(chunk);
+             };
+             return [out];
+             """,
+            np.arange(100).reshape(50, 1, 2),
+            np.array([[[9, 10]], [[29, 30]], [[49, 50]], [[69, 70]], [[89, 90]]]),
+            None,
+            id="procedural",
+        ),
+        pytest.param(
             "B1",
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[1, 2]]),
@@ -1259,11 +1276,15 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
 def test_vrtprocesseddataset_expression(tmp_vsimem, expression, src, expected, error):
 
     src_filename = tmp_vsimem / "src.tif"
-    with gdal.GetDriverByName("GTiff").Create(src_filename, 2, 1, 3) as src_ds:
+
+    num_input_bands = 1 if len(src.shape) == 2 else src.shape[0]
+    expected_output_bands = 1 if len(expected.shape) == 2 else expected.shape[0]
+
+    with gdal.GetDriverByName("GTiff").Create(
+        src_filename, 2, 1, num_input_bands
+    ) as src_ds:
         src_ds.WriteArray(src)
         src_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
-
-    expected_output_bands = 1 if len(expected.shape) == 2 else expected.shape[0]
 
     output_band_xml = "".join(
         f"""<VRTRasterBand band="{i+1}" dataType="Float32" subClass="VRTProcessedRasterBand"/>"""
@@ -1278,7 +1299,7 @@ def test_vrtprocesseddataset_expression(tmp_vsimem, expression, src, expected, e
     <ProcessingSteps>
         <Step>
             <Algorithm>Expression</Algorithm>
-            <Argument name="expression">{expression}</Argument>
+            <Argument name="expression">{expression.replace('<', '&lt;').replace('>', '&gt;')}</Argument>
         </Step>
     </ProcessingSteps>
         {output_band_xml}

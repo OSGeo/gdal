@@ -5,6 +5,8 @@ add_gdal_driver(
           vrtdataset.h
           vrtderivedrasterband.cpp
           vrtdriver.cpp
+          vrtexpression.h
+          vrtexpression.cpp
           vrtfilters.cpp
           vrtrasterband.cpp
           vrtrawrasterband.cpp
@@ -26,6 +28,7 @@ target_include_directories(gdal_vrt SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/third_p
 if (MSVC)
     target_compile_options(gdal_vrt PRIVATE /bigobj)
 endif()
+
 
 set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalvrt.xsd
@@ -49,3 +52,4 @@ set_property(SOURCE vrtwarped.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 if (NOT GDAL_ENABLE_DRIVER_VRT)
     target_compile_definitions(gdal_vrt PRIVATE -DNO_OPEN)
 endif()
+
