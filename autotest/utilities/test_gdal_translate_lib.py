@@ -638,7 +638,12 @@ def test_gdal_translate_lib_colorinterp():
     src_ds = gdal.Open("../gcore/data/rgbsmall.tif")
 
     # Less bands specified than available
-    ds = gdal.Translate("", src_ds, options="-f MEM -colorinterp blue,gray")
+    ds = gdal.Translate(
+        "",
+        src_ds,
+        format="MEM",
+        colorInterpretation=[gdal.GCI_BlueBand, gdal.GCI_GrayIndex],
+    )
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_BlueBand
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GrayIndex
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
@@ -646,7 +651,10 @@ def test_gdal_translate_lib_colorinterp():
     # More bands specified than available and a unknown color interpretation
     with gdal.quiet_errors():
         ds = gdal.Translate(
-            "", src_ds, options="-f MEM -colorinterp alpha,red,undefined,foo"
+            "",
+            src_ds,
+            format="MEM",
+            colorInterpretation=["alpha", "red", "undefined", "foo"],
         )
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_AlphaBand
     assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_RedBand
