@@ -21,6 +21,28 @@
 #define exprtk_disable_string_capabilities
 #include <exprtk.hpp>
 
+#include <cstdint>
+#include <sstream>
+
+struct vector_access_check final : public exprtk::vector_access_runtime_check
+{
+    bool handle_runtime_violation(violation_context &context) override
+    {
+        auto nElements = (static_cast<std::uint8_t *>(context.end_ptr) -
+                          static_cast<std::uint8_t *>(context.base_ptr)) /
+                         context.type_size;
+        auto nIndexAccessed = (static_cast<std::uint8_t *>(context.access_ptr) -
+                               static_cast<std::uint8_t *>(context.base_ptr)) /
+                              context.type_size;
+
+        std::ostringstream oss;
+        oss << "Attempted to access index " << nIndexAccessed
+            << " in a vector of " << nElements
+            << " elements when evaluating VRT expression.";
+        throw std::runtime_error(oss.str());
+    }
+};
+
 class GDALExpressionEvaluator::Impl
 {
   public:
@@ -32,8 +54,14 @@ class GDALExpressionEvaluator::Impl
     std::vector<std::pair<std::string, double *>> m_aoVariables{};
     std::vector<std::pair<std::string, std::vector<double> *>> m_aoVectors{};
     std::vector<double> m_adfResults{};
+    vector_access_check m_oVectorAccessCheck{};
 
     bool m_bIsCompiled{false};
+
+    Impl()
+    {
+        m_oParser.register_vector_access_runtime_check(m_oVectorAccessCheck);
+    }
 
     CPLErr compile()
     {
@@ -120,7 +148,16 @@ CPLErr GDALExpressionEvaluator::Evaluate()
     }
 
     m_pImpl->m_adfResults.clear();
-    double value = m_pImpl->m_oExpression.value();  // force evaluation
+    double value;
+    try
+    {
+        value = m_pImpl->m_oExpression.value();  // force evaluation
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return CE_Failure;
+    }
 
     const auto &results = m_pImpl->m_oExpression.results();
 

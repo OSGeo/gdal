@@ -1271,6 +1271,19 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             "must return a vector or a list of scalars",
             id="return wrong number of bands",
         ),
+        pytest.param(
+            """
+             var out[3];
+             for (var i := 0; i < 100; i += 1) {
+                out[i] := i;
+             }
+             return [out];
+             """,
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[1, 1]], [[2, 2]], [[3, 3]]]),
+            "Attempted to access index 3",
+            id="out of bounds vector access",
+        ),
     ],
 )
 def test_vrtprocesseddataset_expression(tmp_vsimem, expression, src, expected, error):
