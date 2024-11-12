@@ -10,6 +10,7 @@ Python API
        :maxdepth: 2
 
        python_bindings
+       python_examples
        osgeo
        raster_api
        vector_api

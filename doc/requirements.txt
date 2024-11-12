@@ -11,3 +11,4 @@ recommonmark
 sphinx-markdown-tables
 sphinxcontrib-spelling
 sphinxcontrib-jquery
+myst_nb
