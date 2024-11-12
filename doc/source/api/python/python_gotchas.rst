@@ -1,7 +1,7 @@
 .. _python_gotchas:
 
 ================================================================================
-Python Gotchas in the GDAL and OGR Python Bindings
+Gotchas in the GDAL and OGR Python Bindings
 ================================================================================
 
 This page lists aspects of GDAL's and OGR's Python bindings that may catch Python programmers by surprise.

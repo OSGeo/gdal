@@ -1,7 +1,7 @@
 .. _python_samples:
 
 ================================================================================
-Python Sample scripts
+Sample scripts
 ================================================================================
 
 The following are sample scripts intended to give an idea how to use the

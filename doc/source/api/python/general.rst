@@ -5,8 +5,8 @@
 
 .. _python_general:
 
-Python General API
-==================
+General API
+===========
 
 Configuration Management
 ------------------------
