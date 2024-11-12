@@ -2143,9 +2143,6 @@ class TileDetail:
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
 
-    def __unicode__(self):
-        return "TileDetail %s\n%s\n%s\n" % (self.tx, self.ty, self.tz)
-
     def __str__(self):
         return "TileDetail %s\n%s\n%s\n" % (self.tx, self.ty, self.tz)
 
