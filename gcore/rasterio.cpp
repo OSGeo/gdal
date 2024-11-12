@@ -3360,8 +3360,8 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
     assert(nSrcDataTypeSize != 0);
     assert(nDstDataTypeSize != 0);
     if (!(eSrcType == eDstType && nSrcPixelStride == nDstPixelStride) &&
-        ((reinterpret_cast<GPtrDiff_t>(pSrcData) % nSrcDataTypeSize) != 0 ||
-         (reinterpret_cast<GPtrDiff_t>(pDstData) % nDstDataTypeSize) != 0 ||
+        ((reinterpret_cast<uintptr_t>(pSrcData) % nSrcDataTypeSize) != 0 ||
+         (reinterpret_cast<uintptr_t>(pDstData) % nDstDataTypeSize) != 0 ||
          (nSrcPixelStride % nSrcDataTypeSize) != 0 ||
          (nDstPixelStride % nDstDataTypeSize) != 0))
     {
@@ -3377,14 +3377,22 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
         }
         else
         {
-#define ALIGN_PTR(ptr, align)                                                  \
-    ((ptr) + ((align) - (reinterpret_cast<size_t>(ptr) % (align))) % (align))
+            const auto getAlignedPtr = [](GByte *ptr, int align)
+            {
+                return ptr +
+                       ((align - (reinterpret_cast<uintptr_t>(ptr) % align)) %
+                        align);
+            };
+
             // The largest we need is for CFloat64 (16 bytes), so 32 bytes to
             // be sure to get correctly aligned pointer.
-            GByte abySrcBuffer[32];
-            GByte abyDstBuffer[32];
-            GByte *pabySrcBuffer = ALIGN_PTR(abySrcBuffer, nSrcDataTypeSize);
-            GByte *pabyDstBuffer = ALIGN_PTR(abyDstBuffer, nDstDataTypeSize);
+            constexpr size_t SIZEOF_CFLOAT64 = 2 * sizeof(double);
+            GByte abySrcBuffer[2 * SIZEOF_CFLOAT64];
+            GByte abyDstBuffer[2 * SIZEOF_CFLOAT64];
+            GByte *pabySrcBuffer =
+                getAlignedPtr(abySrcBuffer, nSrcDataTypeSize);
+            GByte *pabyDstBuffer =
+                getAlignedPtr(abyDstBuffer, nDstDataTypeSize);
             for (decltype(nWordCount) i = 0; i < nWordCount; i++)
             {
                 memcpy(pabySrcBuffer,
