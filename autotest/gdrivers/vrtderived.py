@@ -1066,6 +1066,8 @@ def vrt_expression_xml(tmpdir, expression, sources):
     nx = 1
     ny = 1
 
+    expression = expression.replace("<", "&lt;").replace(">", "&gt;")
+
     xml = f"""<VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
               <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
                  <PixelFunctionType>expression</PixelFunctionType>
@@ -1182,7 +1184,7 @@ def test_vrt_pixelfn_expression(tmp_path, expression, sources, result):
         pytest.param(
             "A*B + C",
             [("A", 77), ("B", 63)],
-            "failed to parse expression",
+            "Failed to parse expression",
             id="undefined variable",
         ),
     ],

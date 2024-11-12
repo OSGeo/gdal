@@ -14,13 +14,8 @@
 #include <cmath>
 #include "gdal.h"
 #include "vrtdataset.h"
+#include "vrtexpression.h"
 
-#define exprtk_disable_caseinsensitivity
-#define exprtk_disable_rtl_io
-#define exprtk_disable_rtl_io_file
-#define exprtk_disable_rtl_vecops
-#define exprtk_disable_string_capabilities
-#include <exprtk.hpp>
 #include <limits>
 
 template <typename T>
@@ -1649,25 +1644,15 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
 
     std::vector<double> adfValuesForPixel(nSources);
 
-    exprtk::symbol_table<double> oSymbolTable;
+    GDALExpressionEvaluator oEvaluator(pszExpression);
     {
         int iSource = 0;
         for (const auto &osName : aosSourceNames)
         {
-            oSymbolTable.add_variable(osName, adfValuesForPixel[iSource++]);
+            oEvaluator.RegisterVariable(osName, &adfValuesForPixel[iSource++]);
         }
     }
-    oSymbolTable.add_vector("ALL", adfValuesForPixel);
-
-    exprtk::expression<double> oExpression;
-    oExpression.register_symbol_table(oSymbolTable);
-
-    exprtk::parser<double> oParser;
-    if (!oParser.compile(pszExpression, oExpression))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "failed to parse expression");
-        return CE_Failure;
-    }
+    oEvaluator.RegisterVector("ALL", &adfValuesForPixel);
 
     double *padfResults =
         static_cast<double *>(CPLMalloc(nXSize * sizeof(double)));
@@ -1685,7 +1670,14 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                     GetSrcVal(papoSources[iSrc], eSrcType, ii);
             }
 
-            padfResults[iCol] = oExpression.value();
+            if (auto eErr = oEvaluator.Evaluate(); eErr != CE_None)
+            {
+                return CE_Failure;
+            }
+            else
+            {
+                padfResults[iCol] = oEvaluator.Results()[0];
+            }
         }
 
         GDALCopyWords(padfResults, GDT_Float64, sizeof(double),
