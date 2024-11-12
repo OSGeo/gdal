@@ -2507,6 +2507,7 @@ def TranslateOptions(options=None, format=None,
               noData=None, rgbExpand=None,
               stats = False, rat = True, xmp = True, resampleAlg=None,
               overviewLevel = 'AUTO',
+              colorInterpretation=None,
               callback=None, callback_data=None,
               domainMetadataOptions = None):
     """Create a TranslateOptions() object that can be passed to gdal.Translate()
@@ -2577,6 +2578,8 @@ def TranslateOptions(options=None, format=None,
         resampling mode
     overviewLevel:
         To specify which overview level of source files must be used
+    colorInterpretation:
+        Band color interpretation, as a single value or a list, of the following values ("red", "green", "blue", "alpha", "grey", "undefined", etc.) or their GCI_xxxx symbolic names
     callback:
         callback method
     callback_data:
@@ -2694,6 +2697,13 @@ def TranslateOptions(options=None, format=None,
                 overviewLevel = str(overviewLevel)
         else:
             overviewLevel = None
+        if colorInterpretation is not None:
+            def colorInterpAsString(x):
+                return GetColorInterpretationName(x) if isinstance(x, int) else x
+            if isinstance(colorInterpretation, list):
+                new_options += ['-colorinterp', ','.join([colorInterpAsString(x) for x in colorInterpretation])]
+            else:
+                new_options += ['-colorinterp', colorInterpAsString(colorInterpretation)]
 
         if overviewLevel is not None and overviewLevel != 'AUTO':
             new_options += ['-ovr', overviewLevel]
@@ -4541,7 +4551,7 @@ def TileIndexOptions(options=None,
     outputBounds:
         output bounds as [minx, miny, maxx, maxy]
     colorInterpretation:
-        tile color interpretation, as a single value or a list, of the following values: "red", "green", "blue", "alpha", "grey", "undefined"
+        Tile color interpretation, as a single value or a list, of the following values ("red", "green", "blue", "alpha", "grey", "undefined", etc.) or their GCI_xxxx symbolic names
     noData:
         tile nodata value, as a single value or a list
     bandCount:
@@ -4614,10 +4624,12 @@ def TileIndexOptions(options=None,
         if outputBounds is not None:
             new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if colorInterpretation is not None:
-            if isinstance(noData, list):
-                new_options += ['-colorinterp', ','.join(colorInterpretation)]
+            def colorInterpAsString(x):
+                return GetColorInterpretationName(x) if isinstance(x, int) else x
+            if isinstance(colorInterpretation, list):
+                new_options += ['-colorinterp', ','.join([colorInterpAsString(x) for x in colorInterpretation])]
             else:
-                new_options += ['-colorinterp', colorInterpretation]
+                new_options += ['-colorinterp', colorInterpAsString(colorInterpretation)]
         if noData is not None:
             if isinstance(noData, list):
                 new_options += ['-nodata', ','.join([_strHighPrec(x) for x in noData])]
