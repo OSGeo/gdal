@@ -12,6 +12,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 #include "vrtexpression.h"
 
 #define exprtk_disable_caseinsensitivity
@@ -60,7 +61,29 @@ class GDALExpressionEvaluator::Impl
 
     Impl()
     {
+        using settings_t = std::decay_t<decltype(m_oParser.settings())>;
+
         m_oParser.register_vector_access_runtime_check(m_oVectorAccessCheck);
+
+        int nMaxVectorSize = std::atoi(
+            CPLGetConfigOption("GDAL_EXPRTK_MAX_VECTOR_SIZE", "100000"));
+
+        if (nMaxVectorSize > 0)
+        {
+            m_oParser.settings().set_max_local_vector_size(nMaxVectorSize);
+        }
+
+        bool bEnableLoops =
+            CPLTestBool(CPLGetConfigOption("GDAL_EXPRTK_ENABLE_LOOPS", "YES"));
+        if (!bEnableLoops)
+        {
+            m_oParser.settings().disable_control_structure(
+                settings_t::e_ctrl_for_loop);
+            m_oParser.settings().disable_control_structure(
+                settings_t::e_ctrl_while_loop);
+            m_oParser.settings().disable_control_structure(
+                settings_t::e_ctrl_repeat_loop);
+        }
     }
 
     CPLErr compile()

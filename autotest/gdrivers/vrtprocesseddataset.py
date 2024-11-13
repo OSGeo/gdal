@@ -1203,13 +1203,14 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
 
 
 @pytest.mark.parametrize(
-    "expression,src,expected,error",
+    "expression,src,expected,error,env",
     [
         pytest.param(
             "return [ALL_BANDS[1], ALL_BANDS[2]]",
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[[3, 4]], [[5, 6]]]),
             None,
+            {},
             id="multiple bands in, multiple bands out (1)",
         ),
         pytest.param(
@@ -1217,6 +1218,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             None,
+            {},
             id="multiple bands in, multiple bands out (2)",
         ),
         pytest.param(
@@ -1234,6 +1236,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             np.arange(100).reshape(50, 1, 2),
             np.array([[[9, 10]], [[29, 30]], [[49, 50]], [[69, 70]], [[89, 90]]]),
             None,
+            {},
             id="procedural",
         ),
         pytest.param(
@@ -1241,6 +1244,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[1, 2]]),
             None,
+            {},
             id="multiple bands in, single band out (1)",
         ),
         pytest.param(
@@ -1248,6 +1252,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[1, 2]]),
             None,
+            {},
             id="multiple bands in, single band out (2)",
         ),
         pytest.param(
@@ -1255,6 +1260,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[1, 2]]),
             None,
+            {},
             id="multiple bands in, single band out (3)",
         ),
         pytest.param(
@@ -1262,6 +1268,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[1, 2]]),
             "returned 2 values but 1 output band",
+            {},
             id="return wrong number of bands",
         ),
         pytest.param(
@@ -1269,6 +1276,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[1, 2]]),
             "must return a vector or a list of scalars",
+            {},
             id="return wrong number of bands",
         ),
         pytest.param(
@@ -1282,11 +1290,39 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[[1, 1]], [[2, 2]], [[3, 3]]]),
             "Attempted to access index 3",
+            {},
             id="out of bounds vector access",
+        ),
+        pytest.param(
+            """
+             var out[5];
+             return [out];
+             """,
+            np.array([[[1, 2]]]),
+            np.array([[[1, 1]]]),
+            "Failed to parse expression",
+            {"GDAL_EXPRTK_MAX_VECTOR_SIZE": "4"},
+            id="vector too large",
+        ),
+        pytest.param(
+            """
+             var out[3];
+             for (var i := 0; i < out[]; i += 1) {
+                out[i] := i;
+             }
+             return [out];
+             """,
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[1, 1]], [[2, 2]], [[3, 3]]]),
+            "Failed to parse expression",
+            {"GDAL_EXPRTK_ENABLE_LOOPS": "NO"},
+            id="loops disabled",
         ),
     ],
 )
-def test_vrtprocesseddataset_expression(tmp_vsimem, expression, src, expected, error):
+def test_vrtprocesseddataset_expression(
+    tmp_vsimem, expression, src, expected, env, error
+):
 
     src_filename = tmp_vsimem / "src.tif"
 
@@ -1304,28 +1340,29 @@ def test_vrtprocesseddataset_expression(tmp_vsimem, expression, src, expected, e
         for i in range(expected_output_bands)
     )
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
-    <Input>
-        <SourceFilename>{src_filename}</SourceFilename>
-    </Input>
-    <ProcessingSteps>
-        <Step>
-            <Algorithm>Expression</Algorithm>
-            <Argument name="expression">{expression.replace('<', '&lt;').replace('>', '&gt;')}</Argument>
-        </Step>
-    </ProcessingSteps>
-        {output_band_xml}
-    </VRTDataset>
-        """
-    )
+    vrt_xml = f"""<VRTDataset subclass='VRTProcessedDataset'>
+            <Input>
+                <SourceFilename>{src_filename}</SourceFilename>
+            </Input>
+            <ProcessingSteps>
+                <Step>
+                    <Algorithm>Expression</Algorithm>
+                    <Argument name="expression">{expression.replace('<', '&lt;').replace('>', '&gt;')}</Argument>
+                </Step>
+            </ProcessingSteps>
+                {output_band_xml}
+            </VRTDataset>
+                """
 
-    if error:
-        with pytest.raises(Exception, match=error):
+    with gdal.config_options(env):
+        if error:
+            with pytest.raises(Exception, match=error):
+                ds = gdal.Open(vrt_xml)
+                result = ds.ReadAsArray()
+        else:
+            ds = gdal.Open(vrt_xml)
             result = ds.ReadAsArray()
-    else:
-        result = ds.ReadAsArray()
-        np.testing.assert_equal(result, expected)
+            np.testing.assert_equal(result, expected)
 
 
 ###############################################################################
