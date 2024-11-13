@@ -61,7 +61,12 @@ You can use GDAL/OGR on all modern flavors of Unix: Linux, FreeBSD, Mac OS X; al
 Is there a graphical user interface to GDAL/OGR?
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
-See :ref:`software_using_gdal`:
+Plenty! Among the available options, `QGIS <https://qgis.org>`__ is an excellent
+free and open source application with a rich graphical user interface. It
+allows users to display most GDAL raster and vector supported formats and
+provides access to most GDAL utilities through its Processing toolbox.
+
+You can also consult the :ref:`list of software using GDAL <software_using_gdal>`.
 
 .. toctree::
    :hidden:
