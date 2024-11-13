@@ -1088,3 +1088,13 @@ def test_vrt_read_netcdf():
             xml_data = xml.read()
             # print(xml_data)
             assert 'NETCDF:"alldatatypes.nc":ubyte_var' in xml_data
+
+
+###############################################################################
+
+
+def test_vrtmisc_add_band_gdt_unknown():
+    vrt_ds = gdal.GetDriverByName("VRT").Create("", 1, 1, 0)
+    options = ["subClass=VRTSourcedRasterBand", "blockXSize=32", "blockYSize=48"]
+    with pytest.raises(Exception, match="Illegal GDT_Unknown/GDT_TypeCount argument"):
+        vrt_ds.AddBand(gdal.GDT_Unknown, options)

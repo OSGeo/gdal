@@ -3357,8 +3357,13 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
     // On platforms where alignment matters, be careful
     const int nSrcDataTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
     const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(eDstType);
-    assert(nSrcDataTypeSize != 0);
-    assert(nDstDataTypeSize != 0);
+    if (CPL_UNLIKELY(nSrcDataTypeSize == 0 || nDstDataTypeSize == 0))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "GDALCopyWords64(): unsupported GDT_Unknown/GDT_TypeCount "
+                 "argument");
+        return;
+    }
     if (!(eSrcType == eDstType && nSrcPixelStride == nDstPixelStride) &&
         ((reinterpret_cast<uintptr_t>(pSrcData) % nSrcDataTypeSize) != 0 ||
          (reinterpret_cast<uintptr_t>(pDstData) % nDstDataTypeSize) != 0 ||
