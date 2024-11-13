@@ -9516,7 +9516,7 @@ int OSRIsDynamic(OGRSpatialReferenceH hSRS)
  * \brief Check if a CRS has at least an associated point motion operation.
  *
  * Some CRS are not formally declared as dynamic, but may behave as such
- * in practice due to the prsence of point motion operation, to perform
+ * in practice due to the presence of point motion operation, to perform
  * coordinate epoch changes within the CRS. Typically NAD83(CSRS)v7
  *
  * @return true if the CRS has at least an associated point motion operation.
@@ -9552,7 +9552,7 @@ bool OGRSpatialReference::HasPointMotionOperation() const
  * \brief Check if a CRS has at least an associated point motion operation.
  *
  * Some CRS are not formally declared as dynamic, but may behave as such
- * in practice due to the prsence of point motion operation, to perform
+ * in practice due to the presence of point motion operation, to perform
  * coordinate epoch changes within the CRS. Typically NAD83(CSRS)v7
  *
  * This function is the same as OGRSpatialReference::HasPointMotionOperation().
