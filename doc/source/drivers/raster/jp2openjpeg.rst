@@ -94,7 +94,11 @@ The following open options are available:
       (OpenJPEG >= 2.5) Whether strict/pedantic
       decoding mode should be enabled.
       This can be set to NO to allow decoding (some) broken files, typically
-      truncated single-tiled files.
+      truncated single-tiled files. Starting with GDAL 3.11 and OpenJPEG 2.5.3,
+      the default STRICT=YES mode also disables the "TPSOT fixing logic" introduced
+      in https://github.com/uclouvain/openjpeg/pull/514 that is needed to read
+      some broken files, but may hurt performance when reading conformant remote
+      files.
 
 -  .. oo:: 1BIT_ALPHA_PROMOTION
       :choices: YES, NO
@@ -118,16 +122,6 @@ The following open options are available:
       this option can be useful when doing whole image decompression and
       the image is single-tiled. Note however that the tile size must not
       exceed 2 GB since that's the limit supported by GDAL.
-
--  .. oo:: TPSOT_COMPLIANT
-      :choices: YES, NO
-      :default: YES
-      :since: 3.11
-
-      (OpenJPEG >= 2.5.3) Assume that a multi-tilepart file is compliant with
-      respect to the TPSOT value. Turn that setting to NO only if you may deal
-      with non-compliant files such as the ones of https://github.com/uclouvain/openjpeg/pull/514 .
-      Default behavior prior to OpenJPEG 2.5.3 was equivalent to NO.
 
 Creation Options
 ----------------

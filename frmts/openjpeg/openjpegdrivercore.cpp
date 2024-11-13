@@ -101,9 +101,6 @@ void OPENJPEGDriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Whether to always use the JPEG-2000 block size as "
         "the "
         "GDAL block size' default='NO'/>"
-        "   <Option name='TPSOT_COMPLIANT' type='boolean' "
-        "description='Assume that a multi-tilepart file is compliant with "
-        "respect to the TPSOT value' default='YES'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(

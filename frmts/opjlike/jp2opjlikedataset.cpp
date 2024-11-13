@@ -1302,15 +1302,12 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
     auto eCodecFormat = (nCodeStreamStart == 0) ? CODEC::cvtenum(JP2_CODEC_J2K)
                                                 : CODEC::cvtenum(JP2_CODEC_JP2);
 
-    const bool bTPSOTCompliant =
-        CPLFetchBool(poOpenInfo->papszOpenOptions, "TPSOT_COMPLIANT", true);
-
     uint32_t nTileW = 0, nTileH = 0;
     int numResolutions = 0;
     CODEC localctx;
     localctx.open(poOpenInfo->fpL, nCodeStreamStart);
     if (!localctx.setUpDecompress(numThreads, nCodeStreamLength, &nTileW,
-                                  &nTileH, &numResolutions, bTPSOTCompliant))
+                                  &nTileH, &numResolutions))
         return nullptr;
 
     GDALDataType eDataType = GDT_Byte;
@@ -1384,7 +1381,6 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
     poDS->bIs420 = bIs420;
     poDS->bSingleTiled = (poDS->nRasterXSize == (int)nTileW &&
                           poDS->nRasterYSize == (int)nTileH);
-    poDS->m_bTPSOTCompliant = bTPSOTCompliant;
     poDS->m_nX0 = localctx.psImage->x0;
     poDS->m_nY0 = localctx.psImage->y0;
     poDS->m_nTileWidth = nTileW;
@@ -1752,7 +1748,6 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
         poODS->iLevel = poDS->nOverviewCount + 1;
         poODS->bSingleTiled = poDS->bSingleTiled;
         poODS->bUseSetDecodeArea = poDS->bUseSetDecodeArea;
-        poODS->m_bTPSOTCompliant = poDS->m_bTPSOTCompliant;
         poODS->nRedIndex = poDS->nRedIndex;
         poODS->nGreenIndex = poDS->nGreenIndex;
         poODS->nBlueIndex = poDS->nBlueIndex;

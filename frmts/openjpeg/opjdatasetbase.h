@@ -261,10 +261,9 @@ struct OPJCodecWrapper
         return osComment + opj_version();
     }
 
-    void updateStrict(CPL_UNUSED bool strict)
+    void updateStrict(bool strict)
     {
-        // prevent linter from treating this as potential static method
-        (void)this;
+        this->m_bStrict = strict;
 #if IS_OPENJPEG_OR_LATER(2, 5, 0)
         if (!strict)
             opj_decoder_set_strict_mode(pCodec, false);
@@ -313,8 +312,7 @@ struct OPJCodecWrapper
 
     bool setUpDecompress(CPL_UNUSED int numThreads,
                          vsi_l_offset nCodeStreamLength, uint32_t *nTileW,
-                         uint32_t *nTileH, int *numResolutions,
-                         [[maybe_unused]] bool bTPSOTCompliant)
+                         uint32_t *nTileH, int *numResolutions)
     {
 
         OPJCodecWrapper codec;
@@ -331,7 +329,7 @@ struct OPJCodecWrapper
         opj_set_default_decoder_parameters(&decompressParams);
 
 #ifdef OPJ_DPARAMETERS_DISABLE_TPSOT_FIX
-        if (bTPSOTCompliant)
+        if (m_bStrict)
         {
             decompressParams.flags |= OPJ_DPARAMETERS_DISABLE_TPSOT_FIX;
         }
@@ -750,6 +748,7 @@ struct OPJCodecWrapper
     jp2_image *psImage;
     jp2_image_comp_param *pasBandParams;
     JP2File *psJP2File;
+    bool m_bStrict = true;
 };
 
 /************************************************************************/
@@ -830,7 +829,7 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
             opj_set_default_decoder_parameters(&parameters);
 
 #ifdef OPJ_DPARAMETERS_DISABLE_TPSOT_FIX
-            if (m_bTPSOTCompliant)
+            if (m_bStrict)
             {
                 parameters.flags |= OPJ_DPARAMETERS_DISABLE_TPSOT_FIX;
             }
