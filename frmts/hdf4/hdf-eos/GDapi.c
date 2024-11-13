@@ -4355,10 +4355,14 @@ GDinqattrs(int32 gridID, char *attrnames, int32 * strbufsize)
 
 
 
-#define REMQUOTE \
-\
-memmove(utlstr, utlstr + 1, strlen(utlstr) - 2); \
-utlstr[strlen(utlstr) - 2] = 0;
+#define REMQUOTE(x) do { \
+    char* l_x = x; \
+    const size_t l_x_len = strlen(l_x); \
+    if (l_x_len >= 2 && l_x[0] == '"' && l_x[l_x_len - 1] == '"') {\
+        memmove(l_x, l_x + 1, l_x_len - 2); \
+        l_x[l_x_len - 2] = 0; \
+    } \
+  } while(0)
 
 
 /*----------------------------------------------------------------------------|
@@ -4648,7 +4652,7 @@ GDinqfields(int32 gridID, char *fieldlist, int32 rank[],
 
 			/* Strip off double quotes */
 			/* ----------------------- */
-			REMQUOTE
+			REMQUOTE(utlstr);
 
 
 			/* Add to fieldlist */
