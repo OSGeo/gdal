@@ -7948,8 +7948,7 @@ OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRGeometry *poGeom)
 #ifdef HAVE_SFCGAL
 
     sfcgal_init();
-#if SFCGAL_VERSION_MAJOR >= 1 && SFCGAL_VERSION_MINOR >= 5 &&                  \
-    SFCGAL_VERSION_PATCH >= 2
+#if SFCGAL_VERSION >= SFCGAL_MAKE_VERSION(1, 5, 2)
 
     // Handle special cases - LinearRing, CircularString, CompoundCurve, CurvePolygon
 
@@ -8155,8 +8154,8 @@ OGRGeometry *OGRGeometry::SFCGALexportToOGR(
     sfcgal_init();
     char *pabySFCGAL = nullptr;
     size_t nLength = 0;
-#if SFCGAL_VERSION_MAJOR >= 1 && SFCGAL_VERSION_MINOR >= 5 &&                  \
-    SFCGAL_VERSION_PATCH >= 2
+#if SFCGAL_VERSION >= SFCGAL_MAKE_VERSION(1, 5, 2)
+
     sfcgal_geometry_as_wkb(geometry, &pabySFCGAL, &nLength);
 
     if (pabySFCGAL == nullptr || nLength == 0)
