@@ -7950,109 +7950,59 @@ OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRGeometry *poGeom)
     sfcgal_init();
 #if SFCGAL_VERSION >= SFCGAL_MAKE_VERSION(1, 5, 2)
 
-    // Handle special cases - LinearRing, CircularString, CompoundCurve, CurvePolygon
-
-    if (EQUAL(poGeom->getGeometryName(), "LINEARRING"))
+    const auto exportToSFCGALViaWKB =
+        [](const OGRGeometry *geom) -> sfcgal_geometry_t *
     {
-        // Convert to LineString and export to WKB
-        std::unique_ptr<OGRLineString> poLS(
-            OGRCurve::CastToLineString(poGeom->clone()->toCurve()));
-        size_t nSize = poLS->WkbSize();
+        if (!geom)
+            return nullptr;
+
+        // Get WKB size and allocate buffer
+        size_t nSize = geom->WkbSize();
         unsigned char *pabyWkb = static_cast<unsigned char *>(CPLMalloc(nSize));
 
-        // Create export options and set byte order
+        // Set export options with NDR byte order
         OGRwkbExportOptions oOptions;
         oOptions.eByteOrder = wkbNDR;
 
-        if (poLS->exportToWkb(pabyWkb, &oOptions) == OGRERR_NONE)
+        // Export to WKB
+        sfcgal_geometry_t *sfcgalGeom = nullptr;
+        if (geom->exportToWkb(pabyWkb, &oOptions) == OGRERR_NONE)
         {
-            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkb(
+            sfcgalGeom = sfcgal_io_read_wkb(
                 reinterpret_cast<const char *>(pabyWkb), nSize);
-            CPLFree(pabyWkb);
-            return _geometry;
         }
-        else
-        {
-            CPLFree(pabyWkb);
-            return nullptr;
-        }
+
+        CPLFree(pabyWkb);
+        return sfcgalGeom;
+    };
+
+    // Handle special cases
+    if (EQUAL(poGeom->getGeometryName(), "LINEARRING"))
+    {
+        std::unique_ptr<OGRLineString> poLS(
+            OGRCurve::CastToLineString(poGeom->clone()->toCurve()));
+        return exportToSFCGALViaWKB(poLS.get());
     }
     else if (EQUAL(poGeom->getGeometryName(), "CIRCULARSTRING") ||
              EQUAL(poGeom->getGeometryName(), "COMPOUNDCURVE"))
     {
-        // Convert to LineString and export to WKB
         std::unique_ptr<OGRLineString> poLS(
             OGRGeometryFactory::forceToLineString(poGeom->clone())
                 ->toLineString());
-        size_t nSize = poLS->WkbSize();
-        unsigned char *pabyWkb = static_cast<unsigned char *>(CPLMalloc(nSize));
-
-        // Create export options and set byte order
-        OGRwkbExportOptions oOptions;
-        oOptions.eByteOrder = wkbNDR;
-
-        if (poLS->exportToWkb(pabyWkb, &oOptions) == OGRERR_NONE)
-        {
-            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkb(
-                reinterpret_cast<const char *>(pabyWkb), nSize);
-            CPLFree(pabyWkb);
-            return _geometry;
-        }
-        else
-        {
-            CPLFree(pabyWkb);
-            return nullptr;
-        }
+        return exportToSFCGALViaWKB(poLS.get());
     }
     else if (EQUAL(poGeom->getGeometryName(), "CURVEPOLYGON"))
     {
-        // Convert to Polygon and export to WKB
         std::unique_ptr<OGRPolygon> poPolygon(
             OGRGeometryFactory::forceToPolygon(
                 poGeom->clone()->toCurvePolygon())
                 ->toPolygon());
-        size_t nSize = poPolygon->WkbSize();
-        unsigned char *pabyWkb = static_cast<unsigned char *>(CPLMalloc(nSize));
-
-        // Create export options and set byte order
-        OGRwkbExportOptions oOptions;
-        oOptions.eByteOrder = wkbNDR;
-
-        if (poPolygon->exportToWkb(pabyWkb, &oOptions) == OGRERR_NONE)
-        {
-            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkb(
-                reinterpret_cast<const char *>(pabyWkb), nSize);
-            CPLFree(pabyWkb);
-            return _geometry;
-        }
-        else
-        {
-            CPLFree(pabyWkb);
-            return nullptr;
-        }
+        return exportToSFCGALViaWKB(poPolygon.get());
     }
     else
     {
-        // Export the geometry directly to WKB
-        size_t nSize = poGeom->WkbSize();
-        unsigned char *pabyWkb = static_cast<unsigned char *>(CPLMalloc(nSize));
-
-        // Create export options and set byte order
-        OGRwkbExportOptions oOptions;
-        oOptions.eByteOrder = wkbNDR;
-
-        if (poGeom->exportToWkb(pabyWkb, &oOptions) == OGRERR_NONE)
-        {
-            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkb(
-                reinterpret_cast<const char *>(pabyWkb), nSize);
-            CPLFree(pabyWkb);
-            return _geometry;
-        }
-        else
-        {
-            CPLFree(pabyWkb);
-            return nullptr;
-        }
+        // Default case - direct export
+        return exportToSFCGALViaWKB(poGeom);
     }
 #else
     char *buffer = nullptr;
