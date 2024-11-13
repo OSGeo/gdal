@@ -275,6 +275,11 @@ static std::unique_ptr<GDALArgumentParser> GDALTileIndexAppOptionsGetParser(
         .scan<'g', double>()
         .help(_("Set target extent in SRS unit."));
 
+    argParser->add_argument("-ot")
+        .metavar("<datatype>")
+        .store_into(psOptions->osDataType)
+        .help(_("Output data type."));
+
     argParser->add_argument("-bandcount")
         .metavar("<val>")
         .store_into(psOptions->osBandCount)
