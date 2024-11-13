@@ -157,8 +157,7 @@ RUN python3 -m pip install -U --break-system-packages -r /tmp/requirements.txt
 
 # cfchecker requires udunits2
 RUN apt-get install -y --allow-unauthenticated libudunits2-0 libudunits2-data
-# cfchecker currently broken because of https://github.com/cedadev/cf-checker/issues/113
-# RUN python3 -m pip install --break-system-packages cfchecker
+RUN python3 -m pip install --break-system-packages cfchecker
 
 RUN python3 -m pip install --break-system-packages fsspec
 
