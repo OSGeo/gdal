@@ -4454,6 +4454,41 @@ TEST_F(test_gdal, gdal_gcp_class)
     }
 }
 
+TEST_F(test_gdal, RasterIO_gdt_unknown)
+{
+    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
+                                  ->Create("", 1, 1, 1, GDT_Float64, nullptr));
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    GByte b = 0;
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    EXPECT_EQ(poDS->RasterIO(GF_Read, 0, 0, 1, 1, &b, 1, 1, GDT_Unknown, 1,
+                             nullptr, 0, 0, 0, &sExtraArg),
+              CE_Failure);
+    EXPECT_EQ(poDS->RasterIO(GF_Read, 0, 0, 1, 1, &b, 1, 1, GDT_TypeCount, 1,
+                             nullptr, 0, 0, 0, &sExtraArg),
+              CE_Failure);
+    EXPECT_EQ(poDS->GetRasterBand(1)->RasterIO(GF_Read, 0, 0, 1, 1, &b, 1, 1,
+                                               GDT_Unknown, 0, 0, &sExtraArg),
+              CE_Failure);
+    EXPECT_EQ(poDS->GetRasterBand(1)->RasterIO(GF_Read, 0, 0, 1, 1, &b, 1, 1,
+                                               GDT_TypeCount, 0, 0, &sExtraArg),
+              CE_Failure);
+}
+
+TEST_F(test_gdal, CopyWords_gdt_unknown)
+{
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    GByte b = 0;
+    GByte b2 = 0;
+    CPLErrorReset();
+    GDALCopyWords(&b, GDT_Byte, 0, &b2, GDT_Unknown, 0, 1);
+    EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    CPLErrorReset();
+    GDALCopyWords(&b, GDT_Unknown, 0, &b2, GDT_Byte, 0, 1);
+    EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+}
+
 // Test GDALRasterBand::ReadRaster
 TEST_F(test_gdal, ReadRaster)
 {

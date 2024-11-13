@@ -10043,7 +10043,8 @@ GDALExtendedDataType::operator=(GDALExtendedDataType &&other)
  *
  * This is the same as the C function GDALExtendedDataTypeCreate()
  *
- * @param eType Numeric data type.
+ * @param eType Numeric data type. Must be different from GDT_Unknown and
+ * GDT_TypeCount
  */
 GDALExtendedDataType GDALExtendedDataType::Create(GDALDataType eType)
 {
@@ -10471,12 +10472,19 @@ void GDALDimension::ParentDeleted()
  *
  * The returned handle should be freed with GDALExtendedDataTypeRelease().
  *
- * @param eType Numeric data type.
+ * @param eType Numeric data type. Must be different from GDT_Unknown and
+ * GDT_TypeCount
  *
  * @return a new GDALExtendedDataTypeH handle, or nullptr.
  */
 GDALExtendedDataTypeH GDALExtendedDataTypeCreate(GDALDataType eType)
 {
+    if (CPL_UNLIKELY(eType == GDT_Unknown || eType == GDT_TypeCount))
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Illegal GDT_Unknown/GDT_TypeCount argument");
+        return nullptr;
+    }
     return new GDALExtendedDataTypeHS(
         new GDALExtendedDataType(GDALExtendedDataType::Create(eType)));
 }
