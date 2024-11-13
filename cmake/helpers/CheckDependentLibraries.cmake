@@ -489,7 +489,6 @@ option(GDAL_USE_PUBLICDECOMPWT
 
 # proprietary libraries KAKADU
 include(CheckDependentLibrariesKakadu)
-gdal_check_package(LURATECH "Enable JP2Lura driver" CAN_DISABLE)
 
 include(CheckDependentLibrariesArrowParquet)
 

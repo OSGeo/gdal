@@ -22,7 +22,7 @@ from osgeo import gdal
 
 def have_jpeg2000_capable_driver():
     # JP2MrSID doesn't manage to open data/jpeg2000/IMG_md_ple_R1C1.jp2
-    for drv_name in ["JP2KAK", "JP2LURA", "JP2ECW", "JP2OpenJPEG"]:
+    for drv_name in ["JP2KAK", "JP2ECW", "JP2OpenJPEG"]:
         if gdal.GetDriverByName(drv_name):
             return True
     return False

@@ -1232,27 +1232,6 @@ capabilities in GMLJP2v2 generation.
     Control whether to use LibXml2. Defaults to ON when LibXml2 is found.
 
 
-LURATECH
-********
-
-The Luratech JPEG2000 SDK (closed source/proprietary) is required for the
-:ref:`raster.jp2lura` driver.
-
-LURATECH_ROOT or CMAKE_PREFIX_PATH should point to the directory of the SDK.
-
-.. option:: LURATECH_INCLUDE_DIR
-
-    Path to the include directory with the ``lwf_jp2.h`` header file.
-
-.. option:: LURATECH_LIBRARY
-
-    Path to library file lib_lwf_jp2.a / lwf_jp2.lib
-
-.. option:: GDAL_USE_LURATECH=ON/OFF
-
-    Control whether to use LURATECH. Defaults to ON when LURATECH is found.
-
-
 LZ4
 ***
 
