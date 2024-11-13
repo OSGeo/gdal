@@ -119,6 +119,16 @@ The following open options are available:
       the image is single-tiled. Note however that the tile size must not
       exceed 2 GB since that's the limit supported by GDAL.
 
+-  .. oo:: TPSOT_COMPLIANT
+      :choices: YES, NO
+      :default: YES
+      :since: 3.11
+
+      (OpenJPEG >= 2.5.3) Assume that a multi-tilepart file is compliant with
+      respect to the TPSOT value. Turn that setting to NO only if you may deal
+      with non-compliant files such as the ones of https://github.com/uclouvain/openjpeg/pull/514 .
+      Default behavior prior to OpenJPEG 2.5.3 was equivalent to NO.
+
 Creation Options
 ----------------
 

@@ -313,7 +313,8 @@ struct OPJCodecWrapper
 
     bool setUpDecompress(CPL_UNUSED int numThreads,
                          vsi_l_offset nCodeStreamLength, uint32_t *nTileW,
-                         uint32_t *nTileH, int *numResolutions)
+                         uint32_t *nTileH, int *numResolutions,
+                         [[maybe_unused]] bool bTPSOTCompliant)
     {
 
         OPJCodecWrapper codec;
@@ -328,6 +329,14 @@ struct OPJCodecWrapper
 
         opj_dparameters_t decompressParams;
         opj_set_default_decoder_parameters(&decompressParams);
+
+#ifdef OPJ_DPARAMETERS_DISABLE_TPSOT_FIX
+        if (bTPSOTCompliant)
+        {
+            decompressParams.flags |= OPJ_DPARAMETERS_DISABLE_TPSOT_FIX;
+        }
+#endif
+
         if (!opj_setup_decoder(pCodec, &decompressParams))
         {
             opj_destroy_codec(pCodec);
@@ -819,6 +828,14 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
 
             opj_dparameters_t parameters;
             opj_set_default_decoder_parameters(&parameters);
+
+#ifdef OPJ_DPARAMETERS_DISABLE_TPSOT_FIX
+            if (m_bTPSOTCompliant)
+            {
+                parameters.flags |= OPJ_DPARAMETERS_DISABLE_TPSOT_FIX;
+            }
+#endif
+
             if (!opj_setup_decoder(codec->pCodec, &parameters))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,

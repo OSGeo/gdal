@@ -97,6 +97,7 @@ struct JP2DatasetBase
     int nThreads = -1;
     bool bUseSetDecodeArea = false;
     bool bSingleTiled = false;
+    bool m_bTPSOTCompliant = true;
     int m_nBlocksToLoad = 0;
     int m_nX0 = 0;
     int m_nY0 = 0;
