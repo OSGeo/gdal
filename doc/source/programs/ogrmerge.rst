@@ -170,7 +170,7 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
 
     Only used with :option:`-single`. If specified, the schema of the target layer
     will be extended with a new field 'name', whose content is
-    determined by -src_layer_field_content.
+    determined by -src_layer_field_content. See :example:`src-layer-field-name`.
 
 .. option:: -src_layer_field_content <layer_name_template>
 
@@ -183,22 +183,29 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
 Examples
 --------
 
-Create a VRT with a layer for each input shapefiles
+.. example::
+   :title: Creating a VRT with a layer for each input shapefile
 
-.. code-block::
+   .. code-block:: bash
 
-    ogrmerge -f VRT -o merged.vrt *.shp
+       ogrmerge -f VRT -o merged.vrt *.shp
 
-Same, but creates a GeoPackage file
 
-.. code-block::
+.. example::
+   :title: Creating a GeoPackage with a layer for each input shapefile
 
-    ogrmerge -f GPKG -o merged.gpkg *.shp
+   .. code-block:: bash
 
-Concatenate the content of france.shp and germany.shp in merged.shp,
-and adds a 'country' field to each feature whose value is 'france' or
-'germany' depending where it comes from.
+       ogrmerge -f GPKG -o merged.gpkg *.shp
 
-.. code-block::
+.. example::
+   :title: Adding a field to indicate the source layer
+   :id: src-layer-field-name
 
-    ogrmerge -single -o merged.shp france.shp germany.shp -src_layer_field_name country
+   Concatenate the content of :file:`france.shp` and :file:`germany.shp` in :file:`merged.shp`,
+   and add a 'country' field to each feature whose value is 'france' or
+   'germany' depending where it comes from:
+
+   .. code-block:: bash
+
+       ogrmerge -single -o merged.shp france.shp germany.shp -src_layer_field_name country

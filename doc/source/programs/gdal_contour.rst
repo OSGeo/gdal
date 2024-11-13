@@ -142,13 +142,16 @@ C API
 
 Functionality of this utility can be done from C with :cpp:func:`GDALContourGenerate`.
 
-Example
--------
+Examples
+--------
 
-This would create 10-meter contours from the DEM data in :file:`dem.tif` and
-produce a shapefile in :file:`contour.shp|shx|dbf` with the contour elevations
-in the ``elev`` attribute.
+.. example::
+   :title: Creating contours from a DEM
 
-.. code-block::
+   .. code-block::
 
-    gdal_contour -a elev dem.tif contour.shp -i 10.0
+       gdal_contour -a elev dem.tif contour.shp -i 10.0
+
+   This would create 10-meter contours from the DEM data in :file:`dem.tif` and
+   produce a shapefile in :file:`contour.shp|shx|dbf` with the contour elevations
+   in the ``elev`` attribute.

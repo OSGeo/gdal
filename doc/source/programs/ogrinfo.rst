@@ -251,27 +251,29 @@ This utility is also callable from C with :cpp:func:`GDALVectorInfo`.
 Examples
 --------
 
-Example of reporting the names of the layers in a NTF file:
+.. example::
+   :title: Reporting the names of the layers in a NTF file
 
-.. code-block::
+   .. code-block:: console
 
-    ogrinfo wrk/SHETLAND_ISLANDS.NTF
+       $ ogrinfo wrk/SHETLAND_ISLANDS.NTF
 
-    INFO: Open of `wrk/SHETLAND_ISLANDS.NTF'
-    using driver `UK .NTF' successful.
-    1: BL2000_LINK (Line String)
-    2: BL2000_POLY (None)
-    3: BL2000_COLLECTIONS (None)
-    4: FEATURE_CLASSES (None)
+       INFO: Open of `wrk/SHETLAND_ISLANDS.NTF'
+       using driver `UK .NTF' successful.
+       1: BL2000_LINK (Line String)
+       2: BL2000_POLY (None)
+       3: BL2000_COLLECTIONS (None)
+       4: FEATURE_CLASSES (None)
 
-Example of retrieving a summary (``-so``) of a layer without showing details about every single feature:
+.. example::
+   :title: Retrieving a summary (``-so``) of a layer without showing details about every feature
 
-.. code-block::
+   .. code-block:: console
 
-    ogrinfo \
-      -so \
-      natural_earth_vector.gpkg \
-      ne_10m_admin_0_antarctic_claim_limit_lines
+      $ ogrinfo \
+        -so \
+        natural_earth_vector.gpkg \
+        ne_10m_admin_0_antarctic_claim_limit_lines
 
       INFO: Open of `natural_earth_vector.gpkg'
            using driver `GPKG' successful.
@@ -297,244 +299,250 @@ Example of retrieving a summary (``-so``) of a layer without showing details abo
       scalerank: Integer (0.0)
       featurecla: String (50.0)
 
-Example of retrieving information on a file in JSON format without showing details about every single feature:
+.. example::
+   :title: Retrieving information on a file in JSON format without showing details about every feature
 
-.. code-block::
+   .. code-block::
 
-    ogrinfo -json poly.shp
-
-
-.. code-block:: json
-
-    {
-      "description":"autotest/ogr/data/poly.shp",
-      "driverShortName":"ESRI Shapefile",
-      "driverLongName":"ESRI Shapefile",
-      "layers":[
-        {
-          "name":"poly",
-          "metadata":{
-            "":{
-              "DBF_DATE_LAST_UPDATE":"2018-08-02"
-            },
-            "SHAPEFILE":{
-              "SOURCE_ENCODING":""
-            }
-          },
-          "geometryFields":[
-            {
-              "name":"",
-              "type":"Polygon",
-              "nullable":true,
-              "extent":[
-                478315.53125,
-                4762880.5,
-                481645.3125,
-                4765610.5
-              ],
-              "coordinateSystem":{
-                "wkt":"PROJCRS[\"OSGB36 / British National Grid\",BASEGEOGCRS[\"OSGB36\",DATUM...",
-                "projjson":{
-                  "$schema":"https://proj.org/schemas/v0.6/projjson.schema.json",
-                  "type":"ProjectedCRS",
-                  "name":"OSGB36 / British National Grid",
-                  "base_crs":{
-                    "name":"OSGB36",
-                    "datum":{
-                      "type":"GeodeticReferenceFrame",
-                      "name":"Ordnance Survey of Great Britain 1936",
-                      "ellipsoid":{
-                        "name":"Airy 1830",
-                        "semi_major_axis":6377563.396,
-                        "inverse_flattening":299.3249646
-                      }
-                    },
-                    "coordinate_system":{
-                      "subtype":"ellipsoidal",
-                      "axis":[
-                        {
-                          "name":"Geodetic latitude",
-                          "abbreviation":"Lat",
-                          "direction":"north",
-                          "unit":"degree"
-                        },
-                        {
-                          "name":"Geodetic longitude",
-                          "abbreviation":"Lon",
-                          "direction":"east",
-                          "unit":"degree"
-                        }
-                      ]
-                    },
-                    "id":{
-                      "authority":"EPSG",
-                      "code":4277
-                    }
-                  },
-                  "conversion":{
-                    "name":"British National Grid",
-                    "method":{
-                      "name":"Transverse Mercator",
-                      "id":{
-                        "authority":"EPSG",
-                        "code":9807
-                      }
-                    },
-                    "parameters":[
-                      {
-                        "name":"Latitude of natural origin",
-                        "value":49,
-                        "unit":"degree",
-                        "id":{
-                          "authority":"EPSG",
-                          "code":8801
-                        }
-                      },
-                      {
-                        "name":"Longitude of natural origin",
-                        "value":-2,
-                        "unit":"degree",
-                        "id":{
-                          "authority":"EPSG",
-                          "code":8802
-                        }
-                      },
-                      {
-                        "name":"Scale factor at natural origin",
-                        "value":0.9996012717,
-                        "unit":"unity",
-                        "id":{
-                          "authority":"EPSG",
-                          "code":8805
-                        }
-                      },
-                      {
-                        "name":"False easting",
-                        "value":400000,
-                        "unit":"metre",
-                        "id":{
-                          "authority":"EPSG",
-                          "code":8806
-                        }
-                      },
-                      {
-                        "name":"False northing",
-                        "value":-100000,
-                        "unit":"metre",
-                        "id":{
-                          "authority":"EPSG",
-                          "code":8807
-                        }
-                      }
-                    ]
-                  },
-                  "coordinate_system":{
-                    "subtype":"Cartesian",
-                    "axis":[
-                      {
-                        "name":"Easting",
-                        "abbreviation":"E",
-                        "direction":"east",
-                        "unit":"metre"
-                      },
-                      {
-                        "name":"Northing",
-                        "abbreviation":"N",
-                        "direction":"north",
-                        "unit":"metre"
-                      }
-                    ]
-                  },
-                  "scope":"Engineering survey, topographic mapping.",
-                  "area":"United Kingdom (UK) - offshore to boundary of UKCS within 49°45...",
-                  "bbox":{
-                    "south_latitude":49.75,
-                    "west_longitude":-9,
-                    "north_latitude":61.01,
-                    "east_longitude":2.01
-                  },
-                  "id":{
-                    "authority":"EPSG",
-                    "code":27700
-                  }
-                },
-                "dataAxisToSRSAxisMapping":[
-                  1,
-                  2
-                ]
-              }
-            }
-          ],
-          "featureCount":10,
-          "fields":[
-            {
-              "name":"AREA",
-              "type":"Real",
-              "width":12,
-              "precision":3,
-              "nullable":true,
-              "uniqueConstraint":false
-            },
-            {
-              "name":"EAS_ID",
-              "type":"Integer64",
-              "width":11,
-              "nullable":true,
-              "uniqueConstraint":false
-            },
-            {
-              "name":"PRFEDEA",
-              "type":"String",
-              "width":16,
-              "nullable":true,
-              "uniqueConstraint":false
-            }
-          ]
-        }
-      ],
-      "metadata":{
-      },
-      "domains":{
-      },
-      "relationships":{
-      }
-    }
+       ogrinfo -json poly.shp
 
 
-Example of using -q and an attribute query, to restrict the output to
-certain features in a layer:
+   .. code-block:: json
 
-.. code-block:: bash
+       {
+         "description":"autotest/ogr/data/poly.shp",
+         "driverShortName":"ESRI Shapefile",
+         "driverLongName":"ESRI Shapefile",
+         "layers":[
+           {
+             "name":"poly",
+             "metadata":{
+               "":{
+                 "DBF_DATE_LAST_UPDATE":"2018-08-02"
+               },
+               "SHAPEFILE":{
+                 "SOURCE_ENCODING":""
+               }
+             },
+             "geometryFields":[
+               {
+                 "name":"",
+                 "type":"Polygon",
+                 "nullable":true,
+                 "extent":[
+                   478315.53125,
+                   4762880.5,
+                   481645.3125,
+                   4765610.5
+                 ],
+                 "coordinateSystem":{
+                   "wkt":"PROJCRS[\"OSGB36 / British National Grid\",BASEGEOGCRS[\"OSGB36\",DATUM...",
+                   "projjson":{
+                     "$schema":"https://proj.org/schemas/v0.6/projjson.schema.json",
+                     "type":"ProjectedCRS",
+                     "name":"OSGB36 / British National Grid",
+                     "base_crs":{
+                       "name":"OSGB36",
+                       "datum":{
+                         "type":"GeodeticReferenceFrame",
+                         "name":"Ordnance Survey of Great Britain 1936",
+                         "ellipsoid":{
+                           "name":"Airy 1830",
+                           "semi_major_axis":6377563.396,
+                           "inverse_flattening":299.3249646
+                         }
+                       },
+                       "coordinate_system":{
+                         "subtype":"ellipsoidal",
+                         "axis":[
+                           {
+                             "name":"Geodetic latitude",
+                             "abbreviation":"Lat",
+                             "direction":"north",
+                             "unit":"degree"
+                           },
+                           {
+                             "name":"Geodetic longitude",
+                             "abbreviation":"Lon",
+                             "direction":"east",
+                             "unit":"degree"
+                           }
+                         ]
+                       },
+                       "id":{
+                         "authority":"EPSG",
+                         "code":4277
+                       }
+                     },
+                     "conversion":{
+                       "name":"British National Grid",
+                       "method":{
+                         "name":"Transverse Mercator",
+                         "id":{
+                           "authority":"EPSG",
+                           "code":9807
+                         }
+                       },
+                       "parameters":[
+                         {
+                           "name":"Latitude of natural origin",
+                           "value":49,
+                           "unit":"degree",
+                           "id":{
+                             "authority":"EPSG",
+                             "code":8801
+                           }
+                         },
+                         {
+                           "name":"Longitude of natural origin",
+                           "value":-2,
+                           "unit":"degree",
+                           "id":{
+                             "authority":"EPSG",
+                             "code":8802
+                           }
+                         },
+                         {
+                           "name":"Scale factor at natural origin",
+                           "value":0.9996012717,
+                           "unit":"unity",
+                           "id":{
+                             "authority":"EPSG",
+                             "code":8805
+                           }
+                         },
+                         {
+                           "name":"False easting",
+                           "value":400000,
+                           "unit":"metre",
+                           "id":{
+                             "authority":"EPSG",
+                             "code":8806
+                           }
+                         },
+                         {
+                           "name":"False northing",
+                           "value":-100000,
+                           "unit":"metre",
+                           "id":{
+                             "authority":"EPSG",
+                             "code":8807
+                           }
+                         }
+                       ]
+                     },
+                     "coordinate_system":{
+                       "subtype":"Cartesian",
+                       "axis":[
+                         {
+                           "name":"Easting",
+                           "abbreviation":"E",
+                           "direction":"east",
+                           "unit":"metre"
+                         },
+                         {
+                           "name":"Northing",
+                           "abbreviation":"N",
+                           "direction":"north",
+                           "unit":"metre"
+                         }
+                       ]
+                     },
+                     "scope":"Engineering survey, topographic mapping.",
+                     "area":"United Kingdom (UK) - offshore to boundary of UKCS within 49°45...",
+                     "bbox":{
+                       "south_latitude":49.75,
+                       "west_longitude":-9,
+                       "north_latitude":61.01,
+                       "east_longitude":2.01
+                     },
+                     "id":{
+                       "authority":"EPSG",
+                       "code":27700
+                     }
+                   },
+                   "dataAxisToSRSAxisMapping":[
+                     1,
+                     2
+                   ]
+                 }
+               }
+             ],
+             "featureCount":10,
+             "fields":[
+               {
+                 "name":"AREA",
+                 "type":"Real",
+                 "width":12,
+                 "precision":3,
+                 "nullable":true,
+                 "uniqueConstraint":false
+               },
+               {
+                 "name":"EAS_ID",
+                 "type":"Integer64",
+                 "width":11,
+                 "nullable":true,
+                 "uniqueConstraint":false
+               },
+               {
+                 "name":"PRFEDEA",
+                 "type":"String",
+                 "width":16,
+                 "nullable":true,
+                 "uniqueConstraint":false
+               }
+             ]
+           }
+         ],
+         "metadata":{
+         },
+         "domains":{
+         },
+         "relationships":{
+         }
+       }
 
-    ogrinfo -q -ro \
-      -where 'GLOBAL_LINK_ID=185878' \
-      wrk/SHETLAND_ISLANDS.NTF BL2000_LINK
 
-    Layer name: BL2000_LINK
-    OGRFeature(BL2000_LINK):2
-      LINE_ID (Integer) = 2
-      GEOM_ID (Integer) = 2
-      FEAT_CODE (String) = (null)
-      GLOBAL_LINK_ID (Integer) = 185878
-      TILE_REF (String) = SHETLAND I
-      LINESTRING (419832.100 1069046.300,419820.100 1069043.800,...
+.. example::
+   :title: Using :option:`-q` and an attribute query to restrict the output to certain features in a layer
 
-Example of updating a value of an attribute in a shapefile with SQL by using the SQLite dialect:
+   .. code-block:: console
 
-.. code-block:: bash
+       $ ogrinfo -q -ro \
+           -where 'GLOBAL_LINK_ID=185878' \
+           wrk/SHETLAND_ISLANDS.NTF BL2000_LINK
 
-   ogrinfo test.shp -dialect sqlite -sql "update test set attr='bar' where attr='foo'"
+       Layer name: BL2000_LINK
+       OGRFeature(BL2000_LINK):2
+         LINE_ID (Integer) = 2
+         GEOM_ID (Integer) = 2
+         FEAT_CODE (String) = (null)
+         GLOBAL_LINK_ID (Integer) = 185878
+         TILE_REF (String) = SHETLAND I
+         LINESTRING (419832.100 1069046.300,419820.100 1069043.800,...
 
-Adding a column to an input file:
+.. example::
+   :title: Updating a value of an attribute in a shapefile with SQL by using the SQLite dialect
 
-.. code-block:: bash
+   .. code-block:: bash
 
-   ogrinfo input.shp -sql "ALTER TABLE input ADD fieldX float"
+      ogrinfo test.shp -dialect sqlite -sql "update test set attr='bar' where attr='foo'"
 
-Sometimes there is no input file involved in a calculation. In such cases one may
-use the ``:memory:`` input file which is a in-memory empty SQLite file (and the SQLite SQL dialect will be implicitly used).
+.. example::
+   :title: Adding a column to an input file
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    ogrinfo :memory: -sql "SELECT ST_Buffer(ST_GeomFromText('POINT(0 0)'), 1)"
+      ogrinfo input.shp -sql "ALTER TABLE input ADD fieldX float"
+
+.. example::
+   :title: Performing a SQL query without an input file
+
+   Sometimes there is no input file involved in a calculation. In such cases one may
+   use the ``:memory:`` input file which is a in-memory empty SQLite file (and the SQLite SQL dialect will be implicitly used).
+
+   .. code-block:: bash
+
+       ogrinfo :memory: -sql "SELECT ST_Buffer(ST_GeomFromText('POINT(0 0)'), 1)"
 

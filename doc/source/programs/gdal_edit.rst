@@ -210,10 +210,18 @@ The :option:`-unsetstats` and either :option:`-stats` or :option:`-approx_stats`
 Example
 -------
 
-.. code-block::
+.. example::
+   :title: Override the spatial bounds of a dataset and assign metadata values
 
-    gdal_edit -mo DATUM=WGS84 -mo PROJ=GEODETIC -a_ullr 7 47 8 46 test.ecw
+   .. code-block:: bash
 
-.. code-block::
+       gdal_edit -mo DATUM=WGS84 -mo PROJ=GEODETIC -a_ullr 7 47 8 46 test.ecw
 
-    gdal_edit -scale 1e3 1e4 -offset 0 10 twoBand.tif
+.. example::
+   :title: Assign scale and offset values to dataset
+
+   .. code-block:: bash
+
+       gdal_edit -scale 1e3 1e4 -offset 0 10 twoBand.tif
+
+   The values in the GeoTIFF are not changed.

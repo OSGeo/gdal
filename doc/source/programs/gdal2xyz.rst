@@ -99,15 +99,17 @@ The :program:`gdal2xyz` utility can be used to translate a raster file into xyz 
 Examples
 --------
 
-::
+.. example::
 
-    gdal2xyz -b 1 -b 2 -dstnodata 0 input.tif output.txt
+   .. code-block:: bash
+
+       gdal2xyz -b 1 -b 2 -dstnodata 0 input.tif output.txt
 
 
-To create a text file in `xyz` format from the input file `input.tif`.
-The first columns, x and y, are the coordinates of the centers of each cell.
-The remaining columns represent the first and second bands.
-We also replace the dataset nodata values with zeros.
+   To create a text file in `xyz` format from the input file `input.tif`.
+   The first columns, x and y, are the coordinates of the centers of each cell.
+   The remaining columns represent the first and second bands.
+   We also replace the dataset nodata values with zeros.
 
 
 Caveats
