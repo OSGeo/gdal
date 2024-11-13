@@ -443,3 +443,19 @@ def test_gdaltindex_lib_fetch_md(tmp_path, four_tiles):
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f["foo_field"] == "bar"
+
+
+###############################################################################
+# Test -ot
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdaltindex_lib_ot(tmp_path, four_tiles):
+
+    index_filename = str(tmp_path / "test_gdaltindex_lib_ot.gpkg")
+
+    gdal.TileIndex(index_filename, four_tiles[0], options="-ot UInt16")
+
+    ds = ogr.Open(index_filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetMetadataItem("DATA_TYPE") == "UInt16"
