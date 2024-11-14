@@ -623,12 +623,26 @@ def test_ogr_gpkg_6(gpkg_ds, tmp_path):
 
 
 def test_ogr_gpkg_7(gpkg_ds):
+    def get_feature_count_from_gpkg_contents():
+        with gpkg_ds.ExecuteSQL(
+            'SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = "field_test_layer"',
+            dialect="DEBUG",
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            ret = f.GetField(0)
+        return ret
 
     lyr = gpkg_ds.CreateLayer("field_test_layer", geom_type=ogr.wkbPoint)
     field_defn = ogr.FieldDefn("dummy", ogr.OFTString)
     lyr.CreateField(field_defn)
 
+    gpkg_ds.SyncToDisk()
+
+    assert get_feature_count_from_gpkg_contents() == 0
+
     gpkg_ds = gdaltest.reopen(gpkg_ds, update=1)
+
+    assert get_feature_count_from_gpkg_contents() == 0
 
     lyr = gpkg_ds.GetLayerByName("field_test_layer")
     geom = ogr.CreateGeometryFromWkt("POINT(10 10)")
@@ -641,6 +655,9 @@ def test_ogr_gpkg_7(gpkg_ds):
     ), "lyr.TestCapability(ogr.OLCSequentialWrite) != 1"
 
     assert lyr.CreateFeature(feat) == 0, "cannot create feature"
+
+    # None is expected here since CreateFeature() has temporarily disabled triggers
+    assert get_feature_count_from_gpkg_contents() is None
 
     # Read back what we just inserted
     lyr.ResetReading()
@@ -690,23 +707,9 @@ def test_ogr_gpkg_7(gpkg_ds):
 
     assert lyr.GetFeatureCount() == 2
 
-    def get_feature_count_from_gpkg_contents():
-        with gpkg_ds.ExecuteSQL(
-            'SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = "field_test_layer"',
-            dialect="DEBUG",
-        ) as sql_lyr:
-            f = sql_lyr.GetNextFeature()
-            ret = f.GetField(0)
-        return ret
-
-    assert get_feature_count_from_gpkg_contents() == 2
-
     assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
 
     assert lyr.GetFeatureCount() == 3
-
-    # 2 is expected here since CreateFeature() has temporarily disable triggers
-    assert get_feature_count_from_gpkg_contents() == 2
 
     # Test upserting an existing feature
     feat.SetField("dummy", "updated")
@@ -714,9 +717,6 @@ def test_ogr_gpkg_7(gpkg_ds):
     assert lyr.UpsertFeature(feat) == ogr.OGRERR_NONE, "cannot upsert existing feature"
 
     assert feat.GetFID() == fid
-
-    # UpsertFeature() has serialized value 3 and re-enables triggers
-    assert get_feature_count_from_gpkg_contents() == 3
 
     upserted_feat = lyr.GetFeature(feat.GetFID())
     assert (
@@ -5526,7 +5526,7 @@ def test_ogr_gpkg_test_ogrsf(gpkg_ds):
     dbname = gpkg_ds.GetDescription()
 
     # Do integrity check first
-    gpkg_ds = ogr.Open(dbname)
+    gpkg_ds = gdaltest.reopen(gpkg_ds)
     with gpkg_ds.ExecuteSQL("PRAGMA integrity_check") as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat.GetField(0) == "ok", "integrity check failed"

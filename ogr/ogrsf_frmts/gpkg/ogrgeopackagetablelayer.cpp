@@ -6034,7 +6034,7 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
 
         pszSQL = sqlite3_mprintf(
             "INSERT INTO gpkg_ogr_contents (table_name, feature_count) "
-            "VALUES ('%q', NULL)",
+            "VALUES ('%q', 0)",
             pszLayerName);
         err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
