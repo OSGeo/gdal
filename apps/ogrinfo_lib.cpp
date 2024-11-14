@@ -2423,6 +2423,12 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
             })
         .help(_("Format/driver name(s) to try when opening the input file."));
 
+    argParser->add_argument("-stdout")
+        .flag()
+        .store_into(psOptions->bStdoutOutput)
+        .hidden()
+        .help(_("Directly output on stdout (format=text mode only)"));
+
     auto &argFilename = argParser->add_argument("filename")
                             .action(
                                 [psOptionsForBinary](const std::string &s)

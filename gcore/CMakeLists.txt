@@ -2,6 +2,8 @@
 add_library(
   gcore OBJECT
   gdal_adbc.cpp
+  gdalalgorithm.cpp
+  gdalalgorithmregistry.cpp
   gdalopeninfo.cpp
   gdaldriver.cpp
   gdaldrivermanager.cpp
@@ -199,6 +201,7 @@ target_public_header(
   HEADERS
   ${CMAKE_CURRENT_BINARY_DIR}/gdal_version_full/gdal_version.h
   gdal.h
+  gdalalgorithm.h
   gdaljp2metadata.h
   gdaljp2abstractdataset.h
   gdal_frmts.h

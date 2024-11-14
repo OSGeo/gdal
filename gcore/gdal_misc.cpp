@@ -3786,7 +3786,8 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             bool bJSON = false;
             for (int i = 1; i < nArgc; i++)
             {
-                if (strcmp(papszArgv[i], "-json") == 0)
+                if (strcmp(papszArgv[i], "-json") == 0 ||
+                    strcmp(papszArgv[i], "--json") == 0)
                 {
                     bJSON = true;
                     break;

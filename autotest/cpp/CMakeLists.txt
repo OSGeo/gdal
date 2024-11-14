@@ -75,6 +75,7 @@ add_executable(
   test_cpl.cpp
   test_gdal.cpp
   test_gdal_aaigrid.cpp
+  test_gdal_algorithm.cpp
   test_gdal_dted.cpp
   test_gdal_gtiff.cpp
   test_gdal_minmax_element.cpp
