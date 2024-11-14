@@ -118,7 +118,7 @@ template <typename T, std::size_t N> class VectorX
     }
 
     /** Apply the unary operator to all the elements
-     * @param op unary opeartor to apply to every element
+     * @param op unary operator to apply to every element
      * @return a new object with the computed values
      */
     template <class UnaryOp> self_type apply(UnaryOp op) const

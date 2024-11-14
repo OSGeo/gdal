@@ -134,7 +134,7 @@ AUTHORIZED_LIST="$AUTHORIZED_LIST,oTe"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,ADJ_PARM,NUM_ADJ_PARM,ADJ_PARM_ID,UE_FLAG"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,ReenableTriggers,reenableTriggers"
 
-python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES,./autotest/*,./build*/*" \
+python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES,./autotest/*,./build*/*,./doc/myvenv/*" \
     -x scripts/typos_allowlist.txt --words-white-list=$AUTHORIZED_LIST \
     -D ./fix_typos/gdal_dict.txt .
 # port ogr frmts cmake alg gnm apps swig doc
