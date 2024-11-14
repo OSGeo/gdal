@@ -1177,26 +1177,45 @@ def test_vrt_pixelfn_expression(tmp_path, expression, sources, result):
         assert pytest.approx(ds.ReadAsArray()[0][0], nan_ok=True) == result
 
 
-@gdaltest.enable_exceptions()
 @pytest.mark.parametrize(
     "expression,sources,exception",
     [
         pytest.param(
             "A*B + C",
             [("A", 77), ("B", 63)],
-            "Failed to parse expression",
+            "Undefined symbol",
             id="undefined variable",
+        ),
+        pytest.param(
+            "(".join(["asin", "sin", "acos", "cos"] * 100) + "(X" + 100 * 4 * ")",
+            [("X", 0.5)],
+            "exceeds maximum allowed stack depth",
+            id="expression is too complex",
+        ),
+        pytest.param(
+            " ".join(["sin(x) + cos(x)"] * 10000),
+            [("x", 0.5)],
+            "exceeds maximum of 100000 set by GDAL_EXPRTK_MAX_EXPRESSION_LENGTH",
+            id="expression is too long",
         ),
     ],
 )
 def test_vrt_pixelfn_expression_invalid(tmp_path, expression, sources, exception):
     pytest.importorskip("numpy")
 
+    messages = []
+
+    def handle(ecls, ecode, emsg):
+        messages.append(emsg)
+
     xml = vrt_expression_xml(tmp_path, expression, sources)
 
-    with gdal.Open(xml) as ds:
-        with pytest.raises(Exception, match=exception):
-            ds.ReadAsArray()
+    with gdaltest.error_handler(handle):
+        ds = gdal.Open(xml)
+        if ds:
+            assert ds.ReadAsArray() is None
+
+    assert exception in "".join(messages)
 
 
 ###############################################################################

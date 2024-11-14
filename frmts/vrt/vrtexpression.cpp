@@ -65,12 +65,12 @@ class GDALExpressionEvaluator::Impl
 
         m_oParser.register_vector_access_runtime_check(m_oVectorAccessCheck);
 
-        int nMaxVectorSize = std::atoi(
-            CPLGetConfigOption("GDAL_EXPRTK_MAX_VECTOR_SIZE", "100000"));
+        int nMaxVectorLength = std::atoi(
+            CPLGetConfigOption("GDAL_EXPRTK_MAX_VECTOR_LENGTH", "100000"));
 
-        if (nMaxVectorSize > 0)
+        if (nMaxVectorLength > 0)
         {
-            m_oParser.settings().set_max_local_vector_size(nMaxVectorSize);
+            m_oParser.settings().set_max_local_vector_size(nMaxVectorLength);
         }
 
         bool bEnableLoops =
@@ -88,6 +88,19 @@ class GDALExpressionEvaluator::Impl
 
     CPLErr compile()
     {
+        int nMaxExpressionLength = std::atoi(
+            CPLGetConfigOption("GDAL_EXPRTK_MAX_EXPRESSION_LENGTH", "100000"));
+        if (m_osExpression.size() >
+            static_cast<std::size_t>(nMaxExpressionLength))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Expression length of %d exceeds maximum of %d set by "
+                     "GDAL_EXPRTK_MAX_EXPRESSION_LENGTH",
+                     static_cast<int>(m_osExpression.size()),
+                     nMaxExpressionLength);
+            return CE_Failure;
+        }
+
         for (const auto &[osVariable, pdfValueLoc] : m_aoVariables)
         {
             m_oSymbolTable.add_variable(osVariable, *pdfValueLoc);

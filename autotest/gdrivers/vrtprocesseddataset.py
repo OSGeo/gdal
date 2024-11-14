@@ -1223,8 +1223,14 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
         ),
         pytest.param(
             """
-             var chunk[10];
-             var out[5];
+             // Reduce every 10 bands of input into a single
+             // band of output, using avg()
+             const var chunksize := 10;
+             const var outsize := ALL_BANDS[] / chunksize;
+
+             var chunk[chunksize];
+             var out[outsize];
+
              for (var i := 0; i < out[]; i += 1) {
                 for (var j := 0; j < chunk[]; j += 1) {
                     chunk[j] := ALL_BANDS[i * chunk[] + j];
@@ -1301,7 +1307,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             np.array([[[1, 2]]]),
             np.array([[[1, 1]]]),
             "Failed to parse expression",
-            {"GDAL_EXPRTK_MAX_VECTOR_SIZE": "4"},
+            {"GDAL_EXPRTK_MAX_VECTOR_LENGTH": "4"},
             id="vector too large",
         ),
         pytest.param(
