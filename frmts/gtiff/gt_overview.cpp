@@ -1041,7 +1041,7 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         if (const char *pszJXLLossLess =
                 GetOptionValue("JXL_LOSSLESS", "JXL_LOSSLESS_OVERVIEW"))
         {
-            const double bJXLLossless = CPLTestBool(pszJXLLossLess);
+            const bool bJXLLossless = CPLTestBool(pszJXLLossLess);
             TIFFSetField(hTIFF, TIFFTAG_JXL_LOSSYNESS,
                          bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
             GTIFFSetJXLLossless(GDALDataset::ToHandle(hODS), bJXLLossless);
