@@ -6005,6 +6005,21 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
                                                GDALProgressFunc pfnProgress,
                                                void *pProgressData)
 {
+    const int nBands = poSrcDS->GetRasterCount();
+    if (nBands == 0)
+    {
+        GDALDataset *poDS = nullptr;
+        GDALDriver *poThisDriver =
+            GDALDriver::FromHandle(GDALGetDriverByName("GPKG"));
+        if (poThisDriver != nullptr)
+        {
+            poDS = poThisDriver->DefaultCreateCopy(pszFilename, poSrcDS,
+                                                   bStrict, papszOptions,
+                                                   pfnProgress, pProgressData);
+        }
+        return poDS;
+    }
+
     const char *pszTilingScheme =
         CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM");
 
@@ -6018,7 +6033,6 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
         apszUpdatedOptions.SetNameValue("RASTER_TABLE", osBasename);
     }
 
-    const int nBands = poSrcDS->GetRasterCount();
     if (nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -6045,7 +6059,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
 
         GDALGeoPackageDataset *poDS = nullptr;
         GDALDriver *poThisDriver =
-            reinterpret_cast<GDALDriver *>(GDALGetDriverByName("GPKG"));
+            GDALDriver::FromHandle(GDALGetDriverByName("GPKG"));
         if (poThisDriver != nullptr)
         {
             apszUpdatedOptions.SetNameValue("SKIP_HOLES", "YES");
