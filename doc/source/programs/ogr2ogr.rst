@@ -153,7 +153,7 @@ output coordinate system or even reprojecting the features during translation.
     Display progress on terminal. Only works if input layers have the "fast
     feature count" capability.
 
-.. option:: -sql <sql_statement>
+.. option:: -sql <sql_statement>|@<filename>
 
     SQL statement to execute. The resulting table/layer will be saved to the
     output. Starting with GDAL 2.1, the ``@filename`` syntax can be used to
