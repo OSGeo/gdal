@@ -159,7 +159,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM" OR CMAKE_CXX_COMPILER_ID STREQUAL
   check_cxx_compiler_flag(-fno-finite-math-only HAVE_FLAG_NO_FINITE_MATH_ONLY)
   if (HAVE_FLAG_NO_FINITE_MATH_ONLY)
     # Intel CXX compiler based on clang defaults to -ffinite-math-only, which breaks std::isinf(), std::isnan(), etc.
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-finite-math-only")
+    add_compile_options("-fno-finite-math-only")
   endif ()
 
   set(TEST_LINK_STDCPP_SOURCE_CODE
