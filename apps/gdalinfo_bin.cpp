@@ -76,6 +76,11 @@ MAIN_START(argc, argv)
 
     GDALInfoOptionsForBinary sOptionsForBinary;
 
+    if (CSLFindString(argv, "-stdout") < 0)
+    {
+        argv = CSLAddString(argv, "-stdout");
+    }
+
     std::unique_ptr<GDALInfoOptions, decltype(&GDALInfoOptionsFree)> psOptions{
         GDALInfoOptionsNew(argv + 1, &sOptionsForBinary), GDALInfoOptionsFree};
     CSLDestroy(argv);
