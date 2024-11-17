@@ -4907,9 +4907,11 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     std::map<int, TargetLayerInfo::ResolvedInfo> oMapResolved;
 
     /* Determine if NUMERIC field width narrowing is allowed */
+    auto poSrcDriver = m_poSrcDS->GetDriver();
     const char *pszSrcWidthIncludesDecimalSeparator{
-        m_poSrcDS->GetDriver()->GetMetadataItem(
-            "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR")};
+        poSrcDriver ? poSrcDriver->GetMetadataItem(
+                          "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_DECIMAL_SEPARATOR")
+                    : nullptr};
     const bool bSrcWidthIncludesDecimalSeparator{
         pszSrcWidthIncludesDecimalSeparator &&
         EQUAL(pszSrcWidthIncludesDecimalSeparator, "YES")};
@@ -4920,8 +4922,9 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         pszDstWidthIncludesDecimalSeparator &&
         EQUAL(pszDstWidthIncludesDecimalSeparator, "YES")};
     const char *pszSrcWidthIncludesMinusSign{
-        m_poSrcDS->GetDriver()->GetMetadataItem(
-            "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN")};
+        poSrcDriver ? poSrcDriver->GetMetadataItem(
+                          "DMD_NUMERIC_FIELD_WIDTH_INCLUDES_SIGN")
+                    : nullptr};
     const bool bSrcWidthIncludesMinusSign{
         pszSrcWidthIncludesMinusSign &&
         EQUAL(pszSrcWidthIncludesMinusSign, "YES")};
