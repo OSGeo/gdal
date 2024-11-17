@@ -587,7 +587,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
     if (nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unsupported number of bands: only 1 (Gray), 2 (Graph+Alpha) "
+                 "Unsupported number of bands: only 1 (Gray), 2 (Gray+Alpha), "
                  "3 (RGB) or 4 (RGBA) bands are supported");
         return nullptr;
     }
