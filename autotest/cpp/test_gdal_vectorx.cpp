@@ -119,7 +119,7 @@ TEST_F(test_vectorx, array)
 
 TEST_F(test_vectorx, fill)
 {
-    const auto a = gdal::Vector3d().fill(42.0);
+    const gdal::Vector3d a = gdal::Vector3d().fill(42.0);
     EXPECT_EQ(3, a.size());
     EXPECT_EQ(42.0, a[0]);
     EXPECT_EQ(42.0, a[1]);
@@ -128,7 +128,7 @@ TEST_F(test_vectorx, fill)
 
 TEST_F(test_vectorx, fill_nan)
 {
-    const auto a =
+    const gdal::Vector3d a =
         gdal::Vector3d().fill(std::numeric_limits<double>::quiet_NaN());
     EXPECT_EQ(3, a.size());
     EXPECT_TRUE(std::isnan(a[0]));

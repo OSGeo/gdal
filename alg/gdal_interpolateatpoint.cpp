@@ -377,14 +377,14 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
     else
     {
         const gdal::Vector2i d = inLoc.cast<int>();
-        T dfOut{};
-        if (!GDALInterpExtractValuesWindow(pBand, cache, d, {1, 1}, &dfOut) ||
-            (bGotNoDataValue && areEqualReal(dfNoDataValue, dfOut)))
+        T adfOut[1] = {};
+        if (!GDALInterpExtractValuesWindow(pBand, cache, d, {1, 1}, adfOut) ||
+            (bGotNoDataValue && areEqualReal(dfNoDataValue, adfOut[0])))
         {
             return FALSE;
         }
 
-        out = dfOut;
+        out = adfOut[0];
 
         return TRUE;
     }
