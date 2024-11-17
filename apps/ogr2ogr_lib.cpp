@@ -5935,10 +5935,42 @@ bool LayerTranslator::TranslateArrow(
         const auto nArrayLength = array.length;
 
         // Coordinate reprojection
-        const void *backupGeomArrayBuffers2 = nullptr;
         if (m_bTransform)
         {
+            struct GeomArrayReleaser
+            {
+                const void *origin_buffers_2 = nullptr;
+                void (*origin_release)(struct ArrowArray *) = nullptr;
+                void *origin_private_data = nullptr;
+
+                static void init(struct ArrowArray *psGeomArray)
+                {
+                    GeomArrayReleaser *releaser = new GeomArrayReleaser();
+                    CPLAssert(psGeomArray->n_buffers >= 3);
+                    releaser->origin_buffers_2 = psGeomArray->buffers[2];
+                    releaser->origin_private_data = psGeomArray->private_data;
+                    releaser->origin_release = psGeomArray->release;
+                    psGeomArray->release = GeomArrayReleaser::release;
+                    psGeomArray->private_data = releaser;
+                }
+
+                static void release(struct ArrowArray *psGeomArray)
+                {
+                    GeomArrayReleaser *releaser =
+                        static_cast<GeomArrayReleaser *>(
+                            psGeomArray->private_data);
+                    psGeomArray->buffers[2] = releaser->origin_buffers_2;
+                    psGeomArray->private_data = releaser->origin_private_data;
+                    psGeomArray->release = releaser->origin_release;
+                    if (psGeomArray->release)
+                        psGeomArray->release(psGeomArray);
+                    delete releaser;
+                }
+            };
+
             auto *psGeomArray = array.children[iArrowGeomFieldIndex];
+            GeomArrayReleaser::init(psGeomArray);
+
             GByte *pabyWKB = static_cast<GByte *>(
                 const_cast<void *>(psGeomArray->buffers[2]));
             const uint32_t *panOffsets =
@@ -5958,7 +5990,6 @@ bool LayerTranslator::TranslateArrow(
                 break;
             }
             memcpy(abyModifiedWKB.data(), pabyWKB, panOffsets[nArrayLength]);
-            backupGeomArrayBuffers2 = psGeomArray->buffers[2];
             psGeomArray->buffers[2] = abyModifiedWKB.data();
 
             std::atomic<bool> atomicRet{true};
@@ -6030,7 +6061,6 @@ bool LayerTranslator::TranslateArrow(
             bRet = atomicRet;
             if (!bRet)
             {
-                psGeomArray->buffers[2] = backupGeomArrayBuffers2;
                 if (array.release)
                     array.release(&array);
                 break;
@@ -6041,23 +6071,15 @@ bool LayerTranslator::TranslateArrow(
         const bool bWriteOK = psInfo->m_poDstLayer->WriteArrowBatch(
             &schema, &array, aosOptionsWriteArrowBatch.List());
 
-        if (backupGeomArrayBuffers2)
-        {
-            auto *psGeomArray = array.children[iArrowGeomFieldIndex];
-            psGeomArray->buffers[2] = backupGeomArrayBuffers2;
-        }
+        if (array.release)
+            array.release(&array);
 
         if (!bWriteOK)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "WriteArrowBatch() failed");
-            if (array.release)
-                array.release(&array);
             bRet = false;
             break;
         }
-
-        if (array.release)
-            array.release(&array);
 
         /* Report progress */
         if (pfnProgress)
