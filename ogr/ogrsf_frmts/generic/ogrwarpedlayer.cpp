@@ -543,6 +543,9 @@ int OGRWarpedLayer::TestCapability(const char *pszCapability)
 
     int bVal = m_poDecoratedLayer->TestCapability(pszCapability);
 
+    if (EQUAL(pszCapability, OLCFastGetArrowStream))
+        return false;
+
     if (EQUAL(pszCapability, OLCFastSpatialFilter) ||
         EQUAL(pszCapability, OLCRandomWrite) ||
         EQUAL(pszCapability, OLCSequentialWrite))
@@ -570,6 +573,16 @@ void OGRWarpedLayer::SetExtent(double dfXMin, double dfYMin, double dfXMax,
     sStaticEnvelope.MinY = dfYMin;
     sStaticEnvelope.MaxX = dfXMax;
     sStaticEnvelope.MaxY = dfYMax;
+}
+
+/************************************************************************/
+/*                            GetArrowStream()                          */
+/************************************************************************/
+
+bool OGRWarpedLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
+                                    CSLConstList papszOptions)
+{
+    return OGRLayer::GetArrowStream(out_stream, papszOptions);
 }
 
 #endif /* #ifndef DOXYGEN_SKIP */

@@ -3361,3 +3361,29 @@ def test_ogr_vrt_geom_coordinate_precision():
     assert prec.GetXYResolution() == 1e-5
     assert prec.GetZResolution() == 1e-3
     assert prec.GetMResolution() == 1e-2
+
+
+###############################################################################
+# Test OGRWarpedLayer and GetArrowStream
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr_vrt_warped_arrow(tmp_vsimem):
+
+    src_ds = ogr.Open(
+        """<OGRVRTDataSource>
+        <OGRVRTWarpedLayer>
+            <OGRVRTLayer name="foo">
+                <SrcDataSource>data/gpkg/2d_envelope.gpkg</SrcDataSource>
+            </OGRVRTLayer>
+            <TargetSRS>EPSG:32631</TargetSRS>
+        </OGRVRTWarpedLayer>
+    </OGRVRTDataSource>"""
+    )
+    out_filename = str(tmp_vsimem / "out.gpkg")
+    with gdal.config_option("OGR2OGR_USE_ARROW_API", "YES"):
+        gdal.VectorTranslate(out_filename, src_ds)
+    ds = ogr.Open(out_filename)
+    assert ds.GetLayer(0).GetExtent() == pytest.approx(
+        (166021.443080541, 500000, 0.0, 331593.179548329)
+    )

@@ -85,6 +85,9 @@ class CPL_DLL OGRWarpedLayer : public OGRLayerDecorator
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
 
     virtual int TestCapability(const char *) override;
+
+    virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
+                                CSLConstList papszOptions = nullptr) override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */
