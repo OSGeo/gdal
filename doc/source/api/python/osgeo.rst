@@ -1,7 +1,7 @@
 .. _python_osgeo:
 
-GDAL Python submodules
-======================
+Submodules
+==========
 
 
 Submodules

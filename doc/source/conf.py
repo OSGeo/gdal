@@ -72,6 +72,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinxcontrib.jquery",
     "sphinxcontrib.spelling",
+    "myst_nb",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -84,6 +85,7 @@ exclude_patterns = [
     "substitutions.rst",
     "programs/options/*.rst",
     "api/python/modules.rst",
+    "gdal_rtd/README.md",
 ]
 
 # Prevents double hyphen (--) to be replaced by Unicode long dash character
@@ -111,6 +113,12 @@ offline_download_text += f"available as a `PDF <{url_root}{pdf_url}>`__ or a `ZI
 rst_prolog += f"""
 .. |offline-download| replace:: {offline_download_text}
 """
+
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".ipynb": "myst-nb",
+    ".myst": "myst-nb",
+}
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -577,3 +585,10 @@ options_since_ignore_before = "3.0"
 spelling_ignore_contributor_names = False
 
 spelling_word_list_filename = ["spelling_wordlist.txt"]
+
+# -- myst-nb --------------------------------------------------
+
+# Sets `text/plain` as the highest priority for `spelling` output.
+nb_mime_priority_overrides = [
+    ("spelling", "text/plain", 0),
+]
