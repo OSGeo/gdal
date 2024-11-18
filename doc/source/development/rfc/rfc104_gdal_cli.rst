@@ -9,14 +9,24 @@ Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2024-Nov-06
 Status:        Draft
-Target:        Presumably GDAL 3.11 for initial version, perhaps with only a subset
+Target:        GDAL 3.11 for initial version (full scope will likely take more development cycles)
 ============== =============================================
 
 Summary
 -------
 
-This RFC introduces a single "gdal" front-end command line interface, with
-consistent naming of options.
+This RFC introduces a single :program:`gdal` front-end command line interface
+(CLI), that exposes sub-commands, adopts a consistent naming of options,
+introduces new capabilities (pipelines) and a concept of algorithms that can be
+run through the CLI or that can be automatically discovered and
+invoked programmatically.
+
+This RFC gives the general principles and how they will be implemented on a
+subset of the envisioned commands. The initial candidate implementation will
+definitely not cover the full spectrum. Given that its size is already 7,900 new
+lines of code at time of writing, we need to limit its scope for reasonable
+reviewability. Extra functionality will be added progressively after RFC adoption
+and initial implementation.
 
 Motivation
 ----------
@@ -28,25 +38,474 @@ The GDAL User Survey of October-November 2024 shows that a significant proportio
 of GDAL users do so through the command line interface, and they suffer from
 inconsistencies, hence it is legitimate to enhance their experience.
 
-This RFC adds a new single "gdal" front-end command line interface,
-whose sub-commands will match the functionality of existing utilities and re-use
-the underlying implementations.
+This RFC adds a new single :program:`gdal` front-end CLI whose sub-commands will
+match the functionality of existing utilities and re-use
+the battle-tested underlying implementations as much as possible.
 
 The existing utilities will remain for backwards compatible reasons.
 This RFC takes inspiration from `PDAL applications <https://pdal.io/en/2.8.1/apps/index.html>`__
 and `rasterio 'rio' utilities <https://rasterio.readthedocs.io/en/stable/api/rasterio.html>`__.
 
-Details
--------
+Examples
+--------
+
+Before going to the theory and details, let's have a look at the following examples
+which reflect the state of the candidate implementation.
+
+Short usage help message of "gdal"
+++++++++++++++++++++++++++++++++++
+
+  .. code-block:: shell
+
+    $ gdal
+    ERROR 1: gdal: Missing subcommand name.
+    Usage: gdal <subcommand>
+    where <subcommand> is one of:
+      - convert:  Convert a dataset (shortcut for 'gdal raster convert' or 'gdal vector convert'). (alias: c)
+      - info:     Return information on a dataset (shortcut for 'gdal raster info' or 'gdal vector info'). (alias: i)
+      - pipeline: Execute a pipeline (shortcut for 'gdal vector pipeline').
+      - raster:   Raster commands. (alias: r, rast)
+      - vector:   Vector commands. (alias: v, vect)
+
+    'gdal <FILENAME>' can also be used as a shortcut for 'gdal info <FILENAME>'.
+    And 'gdal read <FILENAME> ! ...' as a shortcut for 'gdal pipeline <FILENAME> ! ...'.
+
+    For more details, consult https://gdal.org/programs/index.html
+
+
+Short usage help message of "gdal raster info"
+++++++++++++++++++++++++++++++++++++++++++++++
+
+  .. code-block:: shell
+
+    $ gdal raster info
+    ERROR 1: info: Positional arguments starting at 'INPUT' have not been specified.
+    Usage: gdal raster info [OPTIONS] <INPUT>
+    Try 'gdal raster info --help' for help.
+
+
+Detailed usage help message of "gdal raster info"
++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  .. code-block:: shell
+
+    $ gdal raster info --help
+    Usage: gdal raster info [OPTIONS] <INPUT>
+
+    Return information on a raster dataset.
+
+    Positional arguments:
+      -i, --input <INPUT>                                  Input raster dataset [required]
+
+    Common Options:
+      -h, --help                                           Display help message and exit
+      --json-usage                                         Display usage as JSON document and exit
+
+    Options:
+      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format. OUTPUT-FORMAT=json|text (default: json)
+      --mm, --min-max                                      Compute minimum and maximum value
+      --stats                                              Retrieve or compute statistics, using all pixels
+                                                           Mutually exclusive with --approx-stats
+      --approx-stats                                       Retrieve or compute statistics, using a subset of pixels
+                                                           Mutually exclusive with --stats
+      --hist                                               Retrieve or compute histogram
+
+    Advanced Options:
+      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
+      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
+      --no-gcp                                             Suppress ground control points list printing
+      --no-md                                              Suppress metadata printing
+      --no-ct                                              Suppress color table printing
+      --no-fl                                              Suppress file list printing
+      --checksum                                           Compute pixel checksum
+      --list-mdd                                           List all metadata domains available for the dataset
+      --mdd <MDD>                                          Report metadata for the specified domain. 'all' can be used to report metadata in all domains
+
+    Esoteric Options:
+      --no-nodata                                          Suppress retrieving nodata value
+      --no-mask                                            Suppress mask band information
+      --subdataset <SUBDATASET>                            Use subdataset of specified index (starting at 1), instead of the source dataset itself
+
+
+A few invocations of "gdal raster info [OPTIONS] <FILENAME>"
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  .. code-block:: shell
+
+    $ gdal raster info byte.tif
+    [ ... JSON output stripped ... ]
+
+    $ gdal raster info -i byte.tif
+    [ ... JSON output stripped ... ]
+
+    $ gdal raster info --input byte.tif
+    [ ... JSON output stripped ... ]
+
+    $ gdal raster info --input=byte.tif
+    [ ... JSON output stripped ... ]
+
+    $ gdal raster info byte.tif --stats --format=text
+    [ ... text output stripped ... ]
+
+
+Using just ``gdal info <FILENAME>``
+
+  .. code-block:: shell
+
+    $ gdal raster byte.tif
+    [ ... JSON output stripped ... ]
+
+
+And cherry-on-the-cake ``gdal <FILENAME>``
+
+  .. code-block:: shell
+
+    $ gdal byte.tif
+    [ ... JSON output stripped ... ]
+
+
+"gdal [info] <FILENAME>" on dataset with mixed raster and vector content
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  .. code-block:: shell
+
+    $ gdal info mixed.gpkg
+    ERROR 1: 'mixed.gpkg' has both raster and vector content. Please use 'gdal raster info' or 'gdal vector info'.
+
+    $ gdal mixed.gpkg
+    ERROR 1: 'mixed.gpkg' has both raster and vector content. Please use 'gdal raster info' or 'gdal vector info'.
+
+
+A few invocations of "gdal raster convert"
+++++++++++++++++++++++++++++++++++++++++++
+
+  .. code-block:: shell
+
+    $ gdal raster convert byte.tif out.tif
+
+    $ gdal raster convert byte.tif out.tif --co=TILED=YES,COMPRESS=LZW
+    ERROR 1: File 'out.tif' already exists. Specify the --overwrite option to overwrite it.
+
+    $ gdal raster convert --input=byte.tif --output=out.tif --co=TILED=YES,COMPRESS=LZW --overwrite
+
+    $ gdal raster convert -i byte.tif -o out.tif --co=TILED=YES,COMPRESS=LZW --overwrite --progress
+    0...10...20...30...40...50...60...70...80...90...100 - done.
+
+
+"raster" has a declared short alias of "r" and "convert" of "c", so you can also do:
+
+  .. code-block:: shell
+
+    $ gdal r c byte.tif out.tif --overwrite
+
+
+And similarly to "gdal info" resolving automatically to "gdal raster info" or "gdal vector info"
+based on dataset content, "gdal convert" will also detect which subcommand must be used:
+
+  .. code-block:: shell
+
+    $ gdal c byte.tif out.tif --overwrite
+
+
+But:
+
+  .. code-block:: shell
+
+    $ gdal c mixed.gpkg out.tif --overwrite
+    ERROR 1: 'mixed.gpkg' has both raster and vector content. Please use 'gdal raster convert' or 'gdal vector convert'.
+
+
+A few invocations of "gdal vector convert"
+++++++++++++++++++++++++++++++++++++++++++
+
+  .. code-block:: shell
+
+    $ gdal vector convert poly.gpkg poly.parquet
+
+    $ gdal vector convert poly.gpkg poly.parquet --lco COMPRESSION=SNAPPY
+    ERROR 1: File 'poly.parquet' already exists. Specify the --overwrite option to overwrite it.
+
+    $ gdal vector convert multilayer.gpkg output.gpkg -l my_input_layer --output-layer=new_layer --update --progress
+    0...10...20...30...40...50...60...70...80...90...100 - done.
+
+    $ gdal c poly.gpkg poly.parquet --overwrite
+
+
+JSON-formatted detailed usage of "gdal vector convert"
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+This mode is rather aimed at application developers that would want to dynamically
+generate graphical user interfaces for GDAL algorithms.
+
+  .. code-block:: shell
+
+    $ gdal vector convert --json-usage
+
+
+  .. code-block:: json
+
+    {
+      "name":"convert",
+      "full_path":[
+        "vector",
+        "convert"
+      ],
+      "description":"Convert a vector dataset.",
+      "sub_algorithms":[
+      ],
+      "input_arguments":[
+        {
+          "name":"output-format",
+          "type":"string",
+          "description":"Output format",
+          "min_count":0,
+          "max_count":1,
+          "category":"Base",
+          "metadata":{
+            "required_capabilities":[
+              "DCAP_VECTOR",
+              "DCAP_CREATE"
+            ]
+          }
+        },
+        {
+          "name":"open-option",
+          "type":"string_list",
+          "description":"Open options",
+          "min_count":0,
+          "max_count":2147483647,
+          "category":"Advanced"
+        },
+        {
+          "name":"input-format",
+          "type":"string_list",
+          "description":"Input formats",
+          "min_count":0,
+          "max_count":2147483647,
+          "category":"Advanced",
+          "metadata":{
+            "required_capabilities":[
+              "DCAP_VECTOR"
+            ]
+          }
+        },
+        {
+          "name":"input",
+          "type":"dataset",
+          "description":"Input vector dataset",
+          "min_count":1,
+          "max_count":1,
+          "category":"Base",
+          "dataset_type":[
+            "vector"
+          ],
+          "input_flags":[
+            "name",
+            "dataset"
+          ]
+        },
+        {
+          "name":"creation-option",
+          "type":"string_list",
+          "description":"Creation option",
+          "min_count":0,
+          "max_count":2147483647,
+          "category":"Base"
+        },
+        {
+          "name":"layer-creation-option",
+          "type":"string_list",
+          "description":"Layer creation option",
+          "min_count":0,
+          "max_count":2147483647,
+          "category":"Base"
+        },
+        {
+          "name":"overwrite",
+          "type":"boolean",
+          "description":"Whether overwriting existing output is allowed",
+          "default":false,
+          "min_count":0,
+          "max_count":1,
+          "category":"Base"
+        },
+        {
+          "name":"update",
+          "type":"boolean",
+          "description":"Whether updating existing dataset is allowed",
+          "default":false,
+          "min_count":0,
+          "max_count":1,
+          "category":"Base"
+        },
+        {
+          "name":"overwrite-layer",
+          "type":"boolean",
+          "description":"Whether overwriting existing layer is allowed",
+          "default":false,
+          "min_count":0,
+          "max_count":1,
+          "category":"Base"
+        },
+        {
+          "name":"append",
+          "type":"boolean",
+          "description":"Whether appending to existing layer is allowed",
+          "default":false,
+          "min_count":0,
+          "max_count":1,
+          "category":"Base"
+        },
+        {
+          "name":"input-layer",
+          "type":"string_list",
+          "description":"Input layer name(s)",
+          "min_count":0,
+          "max_count":2147483647,
+          "category":"Base"
+        },
+        {
+          "name":"output-layer",
+          "type":"string",
+          "description":"Output layer name",
+          "min_count":0,
+          "max_count":1,
+          "category":"Base"
+        }
+      ],
+      "output_arguments":[
+      ],
+      "input_output_arguments":[
+        {
+          "name":"output",
+          "type":"dataset",
+          "description":"Output vector dataset",
+          "min_count":1,
+          "max_count":1,
+          "category":"Base",
+          "dataset_type":[
+            "vector"
+          ],
+          "input_flags":[
+            "name",
+            "dataset"
+          ],
+          "output_flags":[
+            "dataset"
+          ]
+        }
+      ]
+    }
+
+.. _rfc104_gdal_vector_pipeline_examples:
+
+A few invocations of "gdal vector pipeline"
++++++++++++++++++++++++++++++++++++++++++++
+
+  .. code-block:: shell
+
+     # The use of the '!' as a step separator is to prevent Unix or Windows shells from
+     # trying to use other processes for the "reproject" or "write" steps.
+     # Below is a single-process pipeline.
+     $ gdal vector pipeline read poly.gpkg ! reproject --dst-crs=EPSG:4326 ! write out.parquet --overwrite
+
+     # Alternative without the "vector" and "pipeline" subcommands, and with --progress
+     $ gdal read poly.gpkg ! reproject --dst-crs=EPSG:4326 ! write out.parquet --overwrite  --progress
+
+     # Alternative using an explicit --pipeline switch, and given the quoting, we can use the '|' character
+     $ gdal vector pipeline --pipeline="read poly.gpkg | reproject --dst-crs=EPSG:4326 | write out.parquet --overwrite"
+
+     # Works also as a quoted positional argument, and without the "vector" subcommand
+     $ gdal pipeline --progress "read poly.gpkg | reproject --dst-crs=EPSG:4326 | write out.parquet --overwrite"
+
+
+Detailed usage help message of "gdal vector pipeline"
++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  .. code-block:: shell
+
+    $ gdal vector pipeline --help
+    Usage: gdal vector pipeline [OPTIONS] <PIPELINE>
+
+    Process a vector dataset.
+
+    Positional arguments:
+
+    Common Options:
+      -h, --help    Display help message and exit
+      --json-usage  Display usage as JSON document and exit
+      --progress    Display progress bar
+
+    <PIPELINE> is of the form: read [READ-OPTIONS] ( ! <STEP-NAME> [STEP-OPTIONS] )* ! write [WRITE-OPTIONS]
+
+    Example: 'gdal vector pipeline --progress ! read in.gpkg ! \
+                   reproject --dst-crs=EPSG:32632 ! write out.gpkg --overwrite'
+
+    Potential steps are:
+
+    * read [OPTIONS] <INPUT>
+    ------------------------
+
+    Read a vector dataset.
+
+    Positional arguments:
+      -i, --input <INPUT>                                  Input vector dataset [required]
+
+    Options:
+      -l, --layer, --input-layer <INPUT-LAYER>             Input layer name(s) [may be repeated]
+
+    Advanced Options:
+      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
+      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
+
+    * filter [OPTIONS]
+    ------------------
+
+    Filter.
+
+    Options:
+      --bbox <BBOX>                                        Bounding box as xmin,ymin,xmax,ymax [may be repeated]
+
+    * reproject [OPTIONS]
+    ---------------------
+
+    Reproject.
+
+    Options:
+      -s, --src-crs <SRC-CRS>                              Source CRS
+      -d, --dst-crs <DST-CRS>                              Destination CRS [required]
+
+    * write [OPTIONS] <OUTPUT>
+    --------------------------
+
+    Write a vector dataset.
+
+    Positional arguments:
+      -o, --output <OUTPUT>                                Output vector dataset [required]
+
+    Options:
+      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
+      --co, --creation-option <KEY=VALUE>                  Creation option [may be repeated]
+      --lco, --layer-creation-option <KEY=VALUE>           Layer creation option [may be repeated]
+      --overwrite                                          Whether overwriting existing output is allowed
+      --update                                             Whether updating existing dataset is allowed
+      --overwrite-layer                                    Whether overwriting existing layer is allowed
+      --append                                             Whether appending to existing layer is allowed
+      -l, --output-layer <OUTPUT-LAYER>                    Output layer name
+
+
+CLI specification
+-----------------
 
 Subcommand syntax
 +++++++++++++++++
 
 .. code-block:: shell
 
-        gdal <subcommand> [<options>]... [<positional arguments>]...
+        gdal <subcommand> [<subsubcommand>]... [<options>]... [<positional arguments>]...
 
-where subcommand is something like ``info``, ``convert``, etc.
+where subcommand is something like ``raster``, ``vector``, etc. with potential
+sub-subcommand like ``info``, ``convert``, etc.
 
 Option naming conventions
 +++++++++++++++++++++++++
@@ -61,22 +520,24 @@ Option naming conventions
   When a single value is expected, it must be separated with a space or equal sign:
   ``--long-name <value>`` or ``--long-name=<value>``.
 
-  When several values are expected, only space can be used:
-  ``--bbox <xmin> <ymin> <xmax> <ymax>``
   In the rest of the document, we will use the version with a space separator,
   but equal sign is also accepted.
 
-Repeated values
-+++++++++++++++
+Repeated values / multi-valued options
+++++++++++++++++++++++++++++++++++++++
 
 Existing GDAL command line utilities have an inconsistent strategy regarding
 how to specify repeated values (band indices, nodata values, etc.), sometimes
 with the switch being repeated many times, sometimes with a single switch but
 the values being grouped together and separated with spaces or commas.
 
-For the sake of being friendly with the argument parser we use, we will
-standardize on repeating the switch as many times as there are values:
-``-z <val1> -z <val2>`` or ``--long-name <value1> --long-name <value2>``.
+With this RFC, when several values are expected (or allowed), they must be
+separated with a ``,`` (comma): ``--bbox <xmin>,<ymin>,<xmax>,<ymax>``
+
+An alternative when passing several values is also to repeat the option as
+many times as needed: ``--co KEY1=VALUE1 --co KEY2=VALUE2`` and
+``--co KEY1=VALUE1,KEY2=VALUE2``.
+
 
 Specification of input and output files/datasets
 +++++++++++++++++++++++++++++++++++++++++++++++++
@@ -101,21 +562,13 @@ Reserved switches
 The following switches are reserved. Meaning that if a subcommand uses them,
 it must be with their below semantics and syntax.
 
-* ``-h``, ``--help``: display short help synopsis
-
-* ``--long-usage``: display long help synopsis
-
-* ``--version``: GDAL version
-
-* ``-q``, ``--quiet``: ask for quiet mode (i.e. not stdout messages, no progress bar)
-
-* ``-v``, ``--verbose``: turn on CPL_DEBUG=ON
-
-* ``--debug on|off|<domain>``: turn on debugging
+* ``-h``, ``--help``: display detailed help synopsis
 
 * ``-i <name>``, ``--input <name>``: specify input file/dataset
 
 * ``-o <name>``, ``--output <name>``: specify output file/dataset
+
+* ``--overwrite``: whether overwriting the output file is allowed. Defaults to no, that is execution will fail if the output file already exists.
 
 * ``-f <format>``, ``--of <format>``: output format. Value is a (not always so)
   "short" driver name: ``GTiff``, ``COG``, ``GPKG``, ``ESRI Shapefile``.
@@ -136,24 +589,22 @@ it must be with their below semantics and syntax.
 
 * ``--ot {Byte|UInt16|...}``: output data type (for raster output)
 
-* ``--bbox <xmin> <ymin> <xmax> <ymax>``: as used by ``gdal info vector``,
-  ``gdal convert vector``, ``gdal convert raster``
+* ``--bbox <xmin>,<ymin>,<xmax>,<ymax>``: as used by ``gdal vector info``,
+  ``gdal vector convert``, ``gdal raster convert``
 
-* ``--src-crs <crs_spec>``: TODO: crs or srs... ? Or accept both, with one officially documented and the other one as a hidden option (our argparse framework allows us to that).  Also note the difference of terminology between ``--input`` and ``--src``? Should that be ``--input-crs`` ?
+* ``--src-crs <crs_spec>``: Override source CRS specification. Accept ``--s_srs`` as hidden alias for old CLI compatibility.
 
-* ``--dst-crs <crs_spec>``: TODO: crs or srs... ? Should that be ``--output-crs`` ?
+* ``--dst-crs <crs_spec>``: Define target CRS specification. Accept ``--t_srs`` as hidden alias for old CLI compatibility.
 
-* ``--override-crs <crs_spec>``: TODO: crs or srs... ?
+* ``--override-crs <crs_spec>``: Override CRS without reprojection. Accept ``--a_srs`` as hidden alias for old CLI compatibility.
 
 gdal info
 +++++++++
 
 This subcommand will merge together :ref:`gdalinfo`, :ref:`ogrinfo` and :ref:`gdalmdiminfo`.
 It will :cpp:func:`GDALDataset::Open` the specified dataset in raster and vector mode.
-If the dataset is only a raster one, it will automatically resolve as the sub-subcommand "gdal info raster".
-If the dataset is only a vector one, it will automatically resolve as the sub-subcommand as "gdal info vector".
-
-TODO: check that this pipe dream can be actually implemented!!!
+If the dataset is only a raster one, it will automatically resolve as the sub-subcommand "gdal raster info".
+If the dataset is only a vector one, it will automatically resolve as the sub-subcommand as "gdal vector info".
 
 In this automated mode, no switch besides open options can be specified, given that we don't know yet in which mode to open.
 
@@ -167,18 +618,21 @@ Example:
 
         gdal info my.gpkg
 
-gdal info raster
+The main :program:`gdal` utility will also accept ``gdal [OPTIONS] <FILENAME>``
+as a shortcut for ``gdal info [OPTIONS] <FILENAME>``.
+
+gdal raster info
 ++++++++++++++++
 
 Equivalent of existing :ref:`gdalinfo`
 
-Synopsis: ``gdal info raster [-i <filename>] [other options] <filename>``
+Synopsis: ``gdal raster info [-i <filename>] [other options] <filename>``
 
 Example:
 
   .. code-block:: shell
 
-        gdal info raster my.gpkg
+        gdal raster info my.gpkg
 
 Switches:
 
@@ -212,18 +666,18 @@ Switches:
 
 * ``--subdataset <num>``
 
-gdal info vector
+gdal vector info
 ++++++++++++++++
 
 Equivalent of existing :ref:`ogrinfo`
 
-Synopsis: ``gdal info vector [-i <filename>] [other options] <filename> [<layername>]...``
+Synopsis: ``gdal vector info [-i <filename>] [other options] <filename> [<layername>]...``
 
 Example:
 
   .. code-block:: shell
 
-        gdal info vector my.gpkg
+        gdal vector info my.gpkg
 
 Switches:
 
@@ -241,43 +695,135 @@ Switches:
 
 * ``--dialect <dialectname>``
 
-* ``--bbox <xmin> <ymin> <xmax> <ymax>``
+* ``--bbox <xmin>,<ymin>,<xmax>,<ymax>``
 
-TODO
 
-gdal info multidim
-+++++++++++++++++++
+gdal multidim info
+++++++++++++++++++
 
 Equivalent of existing :ref:`gdalmdiminfo`
 
-* ``-f json``, ``--of json``: output format. Only JSON, as there is currently no text based format.
+Details will be fleshed out in the pull request implementing it.
 
-TODO
-
-
-gdal convert raster
+gdal raster convert
 +++++++++++++++++++
 
 Equivalent of existing :ref:`gdal_translate`
 
-TODO
+Initial options below. More to be added.
 
-gdal convert vector
+.. code-block::
+
+    Positional arguments:
+      -i, --input <INPUT>                                  Input raster dataset [required]
+      -o, --output <OUTPUT>                                Output raster dataset (created by algorithm) [required]
+
+    Common Options:
+      -h, --help                                           Display help message and exit
+      --json-usage                                         Display usage as JSON document and exit
+      --progress                                           Display progress bar
+
+    Options:
+      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
+      --co, --creation-option <KEY=VALUE>                  Creation option [may be repeated]
+      --overwrite                                          Whether overwriting existing output is allowed
+                                                           Mutually exclusive with --append
+      --append                                             Append as a subdataset to existing output
+                                                           Mutually exclusive with --overwrite
+
+    Advanced Options:
+      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
+      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
+
+
+gdal vector convert
 +++++++++++++++++++
 
 Equivalent of existing :ref:`ogr2ogr`
 
-TODO
+Initial options below. More to be added, but presumably not all existing options
+of ``ogr2ogr``.
 
-gdal convert multidim
+.. code-block::
+
+    Positional arguments:
+      -i, --input <INPUT>                                  Input vector dataset [required]
+      -o, --output <OUTPUT>                                Output vector dataset [required]
+
+    Common Options:
+      -h, --help                                           Display help message and exit
+      --json-usage                                         Display usage as JSON document and exit
+      --progress                                           Display progress bar
+
+    Options:
+      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
+      --co, --creation-option <KEY=VALUE>                  Creation option [may be repeated]
+      --lco, --layer-creation-option <KEY=VALUE>           Layer creation option [may be repeated]
+      --overwrite                                          Whether overwriting existing output is allowed
+      --update                                             Whether updating existing dataset is allowed
+      --overwrite-layer                                    Whether overwriting existing layer is allowed
+      --append                                             Whether appending to existing layer is allowed
+      -l, --layer, --input-layer <INPUT-LAYER>             Input layer name(s) [may be repeated]
+      --output-layer <OUTPUT-LAYER>                        Output layer name
+
+    Advanced Options:
+      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
+      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
+
+
+gdal vector pipeline
+++++++++++++++++++++
+
+"Equivalent" of existing :ref:`ogr2ogr`
+
+Refer to above :ref:`examples <rfc104_gdal_vector_pipeline_examples>`.
+
+A pipeline is the succession of several processing steps. One issue with ``ogr2ogr``
+is that it offers tons of different processings that can be combined together,
+but it is not always obvious to know in which order they are applied. In some
+cases, we had to duplicate options, like ``-clipsrc`` and ``-clipdst`` to offer
+a way of clipping geometries before or after reprojection. It can be more natural
+to explicitly specified in which order operations should be conducted, like
+
+- read the input dataset
+- filter on a bounding box (in the CRS of the input layer)
+- reproject to some other CRS
+- clip geometries to a rectangle (in the new CRS)
+- ... some other operation ...
+- write to final file.
+
+Available steps currently are:
+
+- "read": required to be first. Possibility to select all, one or a subset of input layers
+- "filter": filtering by bounding box, or where clause
+- "reproject"
+- "write": required to be last
+
+More steps to be added in follow-up pull requests.
+
+There might be a loss of efficiency in having separate steps that iterate over
+(on-the-fly / streamed) features returned by the previous step(s) and generating
+new (on-the-fly / streamed) ones. In the most simple cases, we might be able to
+"compile" steps into GDALVectorTranslate() single invocation. That might be done
+in follow-up pull requests to the initial candidate implementation of this RFC.
+
+Further enhancements might support non-linear pipelines (that is forming a
+directed acyclic graph), and strategies to multi-thread some processing (for example,
+a reprojection step could acquire N batches of X features from its source layer,
+and then reproject each batch in a dedicated thread. But at the expense of a greater
+usage of RAM to be able to store N * X features at once.)
+
+gdal multidim convert
 +++++++++++++++++++++
 
 Equivalent of existing :ref:`gdalmdimtranslate`
 
-TODO
+Details will be fleshed out in the pull request implementing it.
 
-gdal warp
-+++++++++
+gdal warp ?
++++++++++++
+
+Equivalent, or subset, of existing :ref:`gdalwarp`
 
 .. note::
 
@@ -285,128 +831,273 @@ gdal warp
     gdal_translate and gdalwarp functionality merged together. This RFC does not
     attempt at addressing that. Or should it... ? That'd be a huge topic
 
-TODO: warp is also a bit of a misnomer as gdalwarp can mosaic.
+Note that warp is also a bit of a misnomer as gdalwarp can mosaic.
 
-Equivalent of existing :ref:`gdalwarp`
+Details will be fleshed out in the pull request implementing it.
 
-TODO
-
-gdal contour
-++++++++++++
+gdal raster contour
++++++++++++++++++++
 
 Equivalent of existing :ref:`gdal_contour`
 
-TODO
+Details will be fleshed out in the pull request implementing it.
 
-gdal rasterize
-++++++++++++++
+
+gdal vector rasterize
++++++++++++++++++++++
 
 Equivalent of existing :ref:`gdal_rasterize`
 
-TODO
+Details will be fleshed out in the pull request implementing it.
 
-gdal create
-+++++++++++
 
-(or ``gdal create raster`` in case we'd have a vector creation one one day?
+gdal raster create
+++++++++++++++++++
 
-TODO
+Details will be fleshed out in the pull request implementing it.
 
-gdal footprint
-++++++++++++++
+gdal raster footprint
++++++++++++++++++++++
 
 Equivalent of existing :ref:`gdal_footprint`
 
-TODO
-
-gdal viewshed
-+++++++++++++
-
-Equivalent of existing :ref:`gdal_viewshed`
-
-TODO
+Details will be fleshed out in the pull request implementing it.
 
 gdal dem
 ++++++++
 
 Equivalent of existing :ref:`gdaldem`
 
-TODO
+Including ``viewhsed`` (equivalent of existing :ref:`gdal_viewshed`) as a subcommand,
+along side with the current modes of gdaldem: ``hillshade``, ``slope``, etc.
+
+Details will be fleshed out in the pull request implementing it.
 
 gdal grid
 +++++++++
 
 Equivalent of existing :ref:`gdal_grid`
 
-TODO
+grid is a vector to raster operation: should it be a top-level operation, or
+a sub-subcommand of the ``raster`` or ``vector`` ones ?
 
-gdal build-vrt raster
+Details will be fleshed out in the pull request implementing it.
+
+gdal raster mosaic
+++++++++++++++++++
+
+Equivalent of existing :ref:`gdalbuildvrt` and  :ref:`gdal_translate`.
+
+Details will be fleshed out in the pull request implementing it.
+
+gdal raster tileindex
 +++++++++++++++++++++
-
-(TODO: with a dash or not ?)
-
-TODO: or ``gdal virtual raster`` ?
-
-TODO: do we want the raster qualifier as there is a VRT mode in the Python ogrmerge, and so we might want to have a gdal build-vrt vector some day ?
-
-Equivalent of existing :ref:`gdalbuildvrt`
-
-TODO
-
-gdal tile-index raster
-++++++++++++++++++++++
-
-(TODO: or tindex?)
 
 Equivalent of existing :ref:`gdaltindex`
 
-TODO
+Details will be fleshed out in the pull request implementing it.
 
-gdal tile-index vector
-++++++++++++++++++++++
-
-(TODO: or tindex?)
+gdal vector tileindex
++++++++++++++++++++++
 
 Equivalent of existing :ref:`ogrtindex`
 
-TODO
+Details will be fleshed out in the pull request implementing it.
 
-gdal clean-border
-+++++++++++++++++
-
-(TODO: with a dash or not ?)
+gdal raster cleanborder
+++++++++++++++++++++++++
 
 Equivalent of existing :ref:`nearblack`
 
-TODO
+Details will be fleshed out in the pull request implementing it.
 
 Implementation details
 ----------------------
 
-The new ``gdal`` program will map on code of the C API entry points of
-existing utilities: :cpp:func:`GDALInfo`, :cpp:func:`GDALVectorInfo`, etc.
-No substantial changes in them will be done through this RFC.
+New C++ classes: GDALAlgorithm and related classes
+++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Sub commands are an existing capability of the p-ranav/argparser framework
-we use since GDAL 3.9: https://github.com/p-ranav/argparse?tab=readme-ov-file#subcommands
+GDALAlgorithm
+*************
 
-TODO: check that sub-sub-commands are handled!
+A new abstract C++ class, ``GDALAlgorithm``, is added. A GDALAlgorithm can be:
 
-Open questions
---------------
+- either a leaf, which performs some processing. e.g. ``convert`` in ``gdal raster convert``
 
-* How to deal with the raster and vector sides when there is ambiguity?
+- or a node that lists several available sub-algorithms. e.g. the top-level
+  ``gdal`` command, its ``raster`` or ``vector`` subcommands, or their ``info``
+  or ``convert`` sub-subcommands).
 
-  - "gdal info raster" and "gdal info vector"
-  - or "gdal raster info" and "gdal vector info"
-  - or "gdal info" and "ogr info" ... ? (but in that logic how to classify contour, rasterize, polygonize that mix both sides?)
+A GDALAlgorithm has the following main methods:
 
-* Should we try to port all esoteric existing flags and behaviours? Or just port
-  the most useful subset, and defer to existing legacy CLI utilities for the
-  esoteric ones. But what to do if we ever drop them someday?
+- ``bool ParseCommandLineArguments(const std::vector<std::string>& args)``:
+  args is the list of arguments after the command name. So in
+  ``gdal raster info --format=text byte.tif``, args should be set to
+  ``["--format=txt", "byte.tif"]``.
 
-* How to deal with that programmatically... ? Should be have a GDALCommand() C
-  API ?
+  This parsing is done "at hand", that is not using the ``p-ranav/argparser``
+  framework we have used in GDAL 3.9 and 3.10 development cycles to renovate
+  our existing CLI utilities. I have come to this conclusion because some of
+  the behavior I needed to implement would have been to complicate to integrate
+  within argparser, some behavior being very GDAL specific (dealing with dataset
+  objects, various syntaxic sugar), with a very low chance of being candidates
+  for argparser upstream inclusion (or accepted by upstream).
+  Extending argparser was felt more difficult to actually re-implement the
+  functionality we needed.
+
+- ``bool ValidateArguments()``: checks that all required arguments are set,
+  that no mutually exclusive arguments are set, and other consistency checks.
+  This method is called both by ``ParseCommandLineArguments`` and ``Run``.
+  It is mostly of use for non-CLI usages where users directly instantiate a
+  GDALAlgorithm instance and manually set their arguments without using
+  ``ParseCommandLineArguments``.
+
+- ``bool Run(GDALProgressFunc pfnProgress, void* pUserData)``: actually run the
+  algorithm. If invoked on a node, it forwards execution down to the actual
+  leaf. ``Run()`` is non-virtual: implementations need to implement ``RunImpl()``
+  which is invoked by ``Run()``
+
+- ``bool Close()``: close datasets and get back potential error status resulting
+  from that. This is for example used by the :file:`gdal.cpp` main binary to
+  determine the process status code, if an error would occur during flushing
+  to disk of the output dataset after successful ``Run()`` execution.
+
+Non-CLI users can invoke the following methods:
+
+- ``std::vector<std::unique_ptr<GDALAlgorithmArg>> &GetArgs()``: returns the
+  list of potential arguments. They are initially in a un-set state (with a
+  default value) and can be set by calling the ``GDALAlgorithm::Set()`` methods
+
+- ``GDALAlgorithmArg *GetArg(const std::string &osName)``: return an available
+  argument from its name.
+
+.. note::
+
+    This draws loose inspiration from PDAL Kernel and Stage concepts, or
+    QGIS processing algorithms.
+
+GDALAlgorithmArg
+****************
+
+Models an argument of an algorithm.
+
+An argument has the following properties:
+
+- a (long) name (long meaning 2 letters or more)
+
+- an optional one-letter CLI short name
+
+- a description to display in help messages
+
+- a list of advertized optional alternate of long names
+
+- a list of hidden optional alternate of long names (for backward compatibility, dealing with common typos/variations like "srs" vs "crs")
+
+- a type among: boolean, string, integer, real, dataset, list of string, list of integer, list of real, list of dataset.
+
+- a category for usage presentation: Common, Basic, Advanced, Esoteric, or a custom name
+
+- if it has a role as an input argument: 99% of arguments are input arguments.
+
+- if it has a role as an output argument: this is for example the case for algorithms whose output is a dataset.
+  The "output" dataset is typically both an input and output argument.
+  The ``std::string GDALArgDatasetValue::name`` member is an input value of an algorithm.
+  The ``GDALDataset* GDALArgDatasetValue::poDS`` member is an output value of an algorithm, that
+  can be used in non-CLI contexts
+
+- an optional name for the mutually exclusion group to which it belongs
+
+- a minimum number of occurrences for its values: 0 (optional), 1 (requires), 2 or more (multi valued)
+
+- a maximum number of occurrences for its values: only allowed to be greater than 1 for list-types of arguments
+
+- a pointer to a variable of the type consistent with its type (``bool*``,
+  ``std::string*``, ``int*``, ``double*``, ``GDALArgDatasetValue``,
+  ``std::vector<std::string>*``, ``std::vector<int>*``, ``std::vector<double>*``,
+  ``std::vector<GDALArgDatasetValue>*``). The value pointed by this pointer is
+  modified by the ``Set()`` methods.
+
+- an optional declared default value (if no declared default value, nor explicitly set value, the initial state of the variable pointed by the above mentioned pointer will be the value, that is a kind of implicit default value)
+
+- whether it has been explicitly set.
+
+- ``key: list of string`` free metadata. For example the ``format`` argument
+  uses the ``required_capabilities`` key and ``DCAP_RASTER``, ``DCAP_VECTOR``,
+  ``DCAP_CREATE``, etc. as values to declare the expected capability of the
+  specified input/output format.
+
+- a list of action callbacks that are triggered by the ``Set`` method.
+
+- a list of validation callbacks that are triggered by the ``Set`` method.
+  Each callback may return false to mean that the new value is invalid.
+
+GDALArgDatasetValue
+*******************
+
+This class models an argument that holds a GDALDataset. It stores a dataset
+name or a ``GDALDataset*`` pointer itself (with information if its ownership
+is transferred to the GDALArgDatasetValue instance).
+This is done this way to be compatible both of CLI usage where only dataset names
+are specified, or programmatic usages where passing dataset names or passing/getting
+``GDALDataset*`` pointers might be preferred. That later mode is also used by
+``gdal vector pipeline`` to bind together the output of a step to the input of
+the following step.
+
+``GDALArgDatasetValue`` has also ``inputFlags`` and ``outputFlags`` properties
+to indicate if it supports specifying only the dataset name, only the dataset object,
+or both when it is used as an input, or if it generates the dataset name,
+the dataset object or both when it is used as an output.
+
+The GDALAlgorithm class itself has logic, triggered during the validation phase,
+to open the ``GDALDataset*`` from its name for input arguments, taking into
+account potential open options and allowed input formats.
+It has also very specific logic to realize that if both the ``input`` and
+``output`` arguments point to the same dataset name, a single ``GDALDataset*``
+instance must be set onto both for drivers that require it (typically SQLite
+based ones).
+
+GDALAlgorithmRegistry
+*********************
+
+Instances of this class store a list of C++ types implementing GDALAlgorithm.
+
+It is used by GDALAlgorithm itself for nodes to reference their potential children.
+
+It is extended by a GDALGlobalAlgorithmRegistry to offer a singleton that lists all
+top-level nodes (``raster``, ``vector``, etc.). Potentially code external to GDAL
+could register a new command available for use by :program:`gdal` in a GDAL plugin.
+
+It is also used by the ``GDALVectorPipelineAlgorithm`` to list its potential steps.
+
+C API
++++++
+
+Details will be fleshed out in further developments of the candidate implementation.
+
+This will at least includes:
+
+- a ``GDALAlgorithmH`` opaque handle to ``GDALAlgorithm``
+
+- Mapping main public methods of ``GDALAlgorithm`` as C functions, in
+  particular a ``bool GDALAlgorithmRun(GDALAlgorithmH, GDALProgressFunc, void* pProgressData)``
+
+- Mapping access to setting argument values.
+
+- Mapping access to the GDALGlobalAlgorithmRegistry.
+
+SWIG API
+++++++++
+
+Part of this C API will be made available in particular for the Python bindings,
+at least, for the sake of our Python autotest suite, as most of the testing
+will be done through that way.
+
+``gdal`` binary
++++++++++++++++
+
+gdal.cpp is a ~ 50 line of code launcher script that queries the ``gdal`` main
+algorithm, passes it to it the command line arguments and execute the
+``GDALAlgorithm::Run`` method.
 
 Out of scope
 ------------
@@ -420,31 +1111,43 @@ Out of scope
 Backward compatibility
 ----------------------
 
-Fully backwards compatible. Existing utilities will remain for now, and if they
-are decided to be retired, that will likely go through a multi-year deprecation
-period.
+Fully backwards compatible. Existing utilities will remain for now, and if the
+project decides to retire them in the future, that will likely go through a
+multi-year deprecation period. Such decision will be made later, depending on
+the maturity of the new unified CLI approach, and its adoption status by the
+community.
+
+Before GDAL 3.11 release, we'll need to decide if we advertise the already
+implemented commands as stable or experimental. My feeling is that it might be
+prudent to label them as experimental for now, but release them as part of
+3.11.0 to get broader feedback from users, before stabilizing command and option
+names.
 
 Testing
 -------
 
-Presumably 33% of the whole coding effort
+Testing of the parsing logic of GDALAlgorithm, setting argument values will
+be done in C++ in :file:`autotest/cpp/test_gdal_algorithm.cpp`.
+Testing of the commands and subcommands of ``gdal`` will be done in Python
+in :file:`autotest/utilities`.
 
 Documentation
 -------------
 
-Presumably 33% of the whole coding effort
+The new ``gdal`` utility and its commands will be documented in https://gdal.org/programs
 
-Team
-----
+Staffing
+--------
 
-Probably a team effort, at least if we want to have a significant subset
-ready for 3.11. Otherwise might take several release cycles. At the very least
+The candidate implementation will be done by Even Rouault. Full scope will
+likely require a team effort, at least if we want to have a significant subset
+ready for 3.11. Otherwise it might take several release cycles. At the very least
 we'll need double checking of all naming to avoid adding new inconsistencies!
 
 Related issues and PRs
 ----------------------
 
-TODO
+* Candidate implementation: https://github.com/OSGeo/gdal/compare/master...rouault:gdal:rfc104?expand=1
 
 Voting history
 --------------
@@ -456,9 +1159,17 @@ TBD
 .. below is an allow-list for spelling checker.
 
 .. spelling:word-list::
+    acyclic
+    CLI
     Subcommand
     subcommand
+    subcommands
     multidim
-    tindex
+    tileindex
+    cleanborder
     ranav
     argparser
+    GDALAlgorithm
+    GDALAlgorithmArg
+    GDALArgDatasetValue
+    reviewability
