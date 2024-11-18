@@ -463,7 +463,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath(OGRGeometryCollection *poGC,
             else
                 break;
 
-            std::vector<double> adfKnots(1, 0.0);
+            std::vector<double> adfKnots(FORTRAN_INDEXING, 0.0);
 
             nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
             if (nCode != 40)
@@ -475,8 +475,8 @@ OGRErr OGRDXFLayer::CollectBoundaryPath(OGRGeometryCollection *poGC,
                 nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
             }
 
-            std::vector<double> adfControlPoints(1, 0.0);
-            std::vector<double> adfWeights(1, 0.0);
+            std::vector<double> adfControlPoints(FORTRAN_INDEXING, 0.0);
+            std::vector<double> adfWeights(FORTRAN_INDEXING, 0.0);
 
             if (nCode != 10)
                 break;
@@ -516,9 +516,10 @@ OGRErr OGRDXFLayer::CollectBoundaryPath(OGRGeometryCollection *poGC,
             if (nCode > 0)
                 poDS->UnreadValue();
 
-            auto poLS = InsertSplineWithChecks(nDegree, adfControlPoints,
-                                               nControlPoints, adfKnots, nKnots,
-                                               adfWeights);
+            auto poLS =
+                InsertSplineWithChecks(nDegree, adfControlPoints,
+                                       /* bHaZ = */ false, nControlPoints,
+                                       adfKnots, nKnots, adfWeights);
 
             if (!poLS)
             {
