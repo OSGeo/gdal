@@ -510,10 +510,12 @@ class OGRDXFLayer final : public OGRLayer
     OGRDXFFeature *TranslateMLEADER();
     OGRDXFFeature *TranslateASMEntity();
 
+    static constexpr int FORTRAN_INDEXING = 1;
+
     bool GenerateINSERTFeatures();
     std::unique_ptr<OGRLineString>
     InsertSplineWithChecks(const int nDegree,
-                           std::vector<double> &adfControlPoints,
+                           std::vector<double> &adfControlPoints, bool bHasZ,
                            int nControlPoints, std::vector<double> &adfKnots,
                            int nKnots, std::vector<double> &adfWeights);
     static OGRGeometry *SimplifyBlockGeometry(OGRGeometryCollection *);
