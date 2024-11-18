@@ -4150,3 +4150,21 @@ def test_ogr_parquet_IsArrowSchemaSupported_arrow_15_types(
         success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
         assert not success
         assert error_msg == expected_error_msg
+
+
+###############################################################################
+
+
+def test_ogr_parquet_ogr2ogr_reprojection(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "test.parquet")
+    gdal.VectorTranslate(
+        outfilename,
+        "data/parquet/poly.parquet",
+        srcSRS="EPSG:32632",
+        dstSRS="EPSG:4326",
+    )
+    with ogr.Open(outfilename) as ds:
+        assert ds.GetLayer(0).GetExtent() == pytest.approx(
+            (8.73380363499761, 8.774681944824946, 43.01833481785084, 43.04292637071279)
+        )
