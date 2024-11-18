@@ -585,3 +585,10 @@ options_since_ignore_before = "3.0"
 spelling_ignore_contributor_names = False
 
 spelling_word_list_filename = ["spelling_wordlist.txt"]
+
+# -- myst-nb --------------------------------------------------
+
+# Sets `text/plain` as the highest priority for `spelling` output.
+nb_mime_priority_overrides = [
+    ("spelling", "text/plain", 0),
+]
