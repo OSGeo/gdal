@@ -1324,11 +1324,26 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             {"GDAL_EXPRTK_ENABLE_LOOPS": "NO"},
             id="loops disabled",
         ),
+        pytest.param(
+            """
+             for (var i := 0; i < 20000; i += 1) {
+                sleep(0.2/20000); // we only check runtime every 10,000 iterations
+             }
+             return [B1];
+             """,
+            np.array([[[1, 2]]]),
+            np.array([[1, 2]]),
+            "time exceeded maximum",
+            {"GDAL_EXPRTK_TIMEOUT_SECONDS": "0.1"},
+            id="loop evaluation timeout",
+        ),
     ],
 )
 def test_vrtprocesseddataset_expression(
-    tmp_vsimem, expression, src, expected, env, error
+    request, tmp_vsimem, expression, src, expected, env, error
 ):
+    if "timeout" in request.node.name and "debug" not in gdal.VersionInfo(""):
+        pytest.skip("Timeout tests only work on debug builds")
 
     src_filename = tmp_vsimem / "src.tif"
 

@@ -22,8 +22,10 @@
 #define exprtk_disable_string_capabilities
 #include <exprtk.hpp>
 
+#include <chrono>
 #include <cstdint>
 #include <sstream>
+#include <thread>
 
 struct vector_access_check final : public exprtk::vector_access_runtime_check
 {
@@ -44,6 +46,66 @@ struct vector_access_check final : public exprtk::vector_access_runtime_check
     }
 };
 
+struct loop_timeout_check final : public exprtk::loop_runtime_check
+{
+    using time_point_t = std::chrono::time_point<std::chrono::steady_clock>;
+
+    loop_timeout_check() : exprtk::loop_runtime_check()
+    {
+        double dfMaxLoopIterationSeconds =
+            CPLAtofM(CPLGetConfigOption("GDAL_EXPRTK_TIMEOUT_SECONDS", "1"));
+        max_duration = std::chrono::microseconds(
+            static_cast<size_t>(dfMaxLoopIterationSeconds * 1e6));
+    }
+
+    void start_timer()
+    {
+        timeout_t = std::chrono::steady_clock::now() + max_duration;
+    }
+
+    bool check() override
+    {
+
+        if (++iterations >= max_iters_per_check)
+        {
+            if (std::chrono::steady_clock::now() > timeout_t)
+            {
+                return false;
+            }
+
+            iterations = 0;
+        }
+
+        return true;
+    }
+
+    void handle_runtime_violation(const violation_context &context) override
+    {
+        std::ostringstream oss;
+
+        if (context.violation == violation_type::e_iteration_count)
+        {
+            oss << "Exceeded maximium of " << max_loop_iterations
+                << " loop iterations.";
+        }
+        else if (context.violation == violation_type::e_timeout)
+        {
+            oss << "Expression evaluation time exceeded maximum of "
+                << static_cast<double>(max_duration.count() / 1e6)
+                << " seconds. You can increase this threshold by setting the "
+                << "GDAL_EXPRTK_TIMEOUT_SECONDS configuration "
+                << "option.";
+        }
+
+        throw std::runtime_error(oss.str());
+    }
+
+    static constexpr size_t max_iters_per_check = 10000;
+    size_t iterations = 0;
+    time_point_t timeout_t{};
+    std::chrono::microseconds max_duration{};
+};
+
 class GDALExpressionEvaluator::Impl
 {
   public:
@@ -56,14 +118,24 @@ class GDALExpressionEvaluator::Impl
     std::vector<std::pair<std::string, std::vector<double> *>> m_aoVectors{};
     std::vector<double> m_adfResults{};
     vector_access_check m_oVectorAccessCheck{};
+    loop_timeout_check m_oLoopRuntimeCheck{};
 
     bool m_bIsCompiled{false};
 
-    Impl()
+    explicit Impl()
     {
         using settings_t = std::decay_t<decltype(m_oParser.settings())>;
 
+        m_oLoopRuntimeCheck.loop_set = loop_timeout_check::e_all_loops;
+        m_oLoopRuntimeCheck.max_loop_iterations = std::numeric_limits<
+            decltype(m_oLoopRuntimeCheck.max_loop_iterations)>::max();
         m_oParser.register_vector_access_runtime_check(m_oVectorAccessCheck);
+        m_oParser.register_loop_runtime_check(m_oLoopRuntimeCheck);
+
+#ifndef NDEBUG
+        // Only used for automated testing of GDAL_EXPRTK_TIMEOUT_SECONDS
+        m_oSymbolTable.add_function("sleep", sleep);
+#endif
 
         int nMaxVectorLength = std::atoi(
             CPLGetConfigOption("GDAL_EXPRTK_MAX_VECTOR_LENGTH", "100000"));
@@ -138,6 +210,104 @@ class GDALExpressionEvaluator::Impl
 
         return CE_None;
     }
+
+    CPLErr evaluate()
+    {
+        if (!m_bIsCompiled)
+        {
+            auto eErr = compile();
+            if (eErr != CE_None)
+            {
+                return eErr;
+            }
+        }
+
+        m_adfResults.clear();
+        double value;
+        try
+        {
+            value = m_oExpression.value();  // force evaluation
+        }
+        catch (const std::exception &e)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+            return CE_Failure;
+        }
+
+        m_oLoopRuntimeCheck.start_timer();
+        const auto &results = m_oExpression.results();
+
+        // We follow a different method to get the result depending on
+        // how the expression was formed. If a "return" statement was
+        // used, the result will be accessible via the "result" object.
+        // If no "return" statement was used, the result is accessible
+        // from the "value" variable (and must not be a vector.)
+        if (results.count() == 0)
+        {
+            m_adfResults.resize(1);
+            m_adfResults[0] = value;
+        }
+        else if (results.count() == 1)
+        {
+
+            if (results[0].type == exprtk::type_store<double>::e_scalar)
+            {
+                m_adfResults.resize(1);
+                results.get_scalar(0, m_adfResults[0]);
+            }
+            else if (results[0].type == exprtk::type_store<double>::e_vector)
+            {
+                results.get_vector(0, m_adfResults);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Expression returned an unexpected type.");
+                return CE_Failure;
+            }
+        }
+        else
+        {
+            m_adfResults.resize(results.count());
+            for (size_t i = 0; i < results.count(); i++)
+            {
+                if (results[i].type != exprtk::type_store<double>::e_scalar)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Expression must return a vector or a list of "
+                             "scalars.");
+                    return CE_Failure;
+                }
+                else
+                {
+                    results.get_scalar(i, m_adfResults[i]);
+                }
+            }
+        }
+
+        return CE_None;
+    }
+
+  private:
+#ifndef NDEBUG
+    struct sleep_fn : public exprtk::ifunction<double>
+    {
+        sleep_fn() : exprtk::ifunction<double>(1)
+        {
+        }
+
+        using exprtk::ifunction<double>::operator();
+
+        double operator()(const double &seconds) override
+        {
+            std::this_thread::sleep_for(
+                std::chrono::microseconds(static_cast<int>(seconds * 1e6)));
+            return 0;
+        }
+    };
+
+    sleep_fn sleep{};
+#endif
 };
 
 GDALExpressionEvaluator::GDALExpressionEvaluator(std::string_view osExpression)
@@ -174,76 +344,5 @@ const std::vector<double> &GDALExpressionEvaluator::Results() const
 
 CPLErr GDALExpressionEvaluator::Evaluate()
 {
-    if (!m_pImpl->m_bIsCompiled)
-    {
-        auto eErr = m_pImpl->compile();
-        if (eErr != CE_None)
-        {
-            return eErr;
-        }
-    }
-
-    m_pImpl->m_adfResults.clear();
-    double value;
-    try
-    {
-        value = m_pImpl->m_oExpression.value();  // force evaluation
-    }
-    catch (const std::exception &e)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
-        return CE_Failure;
-    }
-
-    const auto &results = m_pImpl->m_oExpression.results();
-
-    // We follow a different method to get the result depending on
-    // how the expression was formed. If a "return" statement was
-    // used, the result will be accessible via the "result" object.
-    // If no "return" statement was used, the result is accessible
-    // from the "value" variable (and must not be a vector.)
-    if (results.count() == 0)
-    {
-        m_pImpl->m_adfResults.resize(1);
-        m_pImpl->m_adfResults[0] = value;
-    }
-    else if (results.count() == 1)
-    {
-
-        if (results[0].type == exprtk::type_store<double>::e_scalar)
-        {
-            m_pImpl->m_adfResults.resize(1);
-            results.get_scalar(0, m_pImpl->m_adfResults[0]);
-        }
-        else if (results[0].type == exprtk::type_store<double>::e_vector)
-        {
-            results.get_vector(0, m_pImpl->m_adfResults);
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Expression returned an unexpected type.");
-            return CE_Failure;
-        }
-    }
-    else
-    {
-        m_pImpl->m_adfResults.resize(results.count());
-        for (size_t i = 0; i < results.count(); i++)
-        {
-            if (results[i].type != exprtk::type_store<double>::e_scalar)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Expression must return a vector or a list of "
-                         "scalars.");
-                return CE_Failure;
-            }
-            else
-            {
-                results.get_scalar(i, m_pImpl->m_adfResults[i]);
-            }
-        }
-    }
-
-    return CE_None;
+    return m_pImpl->evaluate();
 }
