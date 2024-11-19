@@ -23,7 +23,7 @@ invoked programmatically.
 
 This RFC gives the general principles and how they will be implemented on a
 subset of the envisioned commands. The initial candidate implementation will
-definitely not cover the full spectrum. Given that its size is already 7,900 new
+definitely not cover the full spectrum. Given that its size is already 10,000 new
 lines of code at time of writing, we need to limit its scope for reasonable
 reviewability. Extra functionality will be added progressively after RFC adoption
 and initial implementation.
@@ -1070,24 +1070,238 @@ It is also used by the ``GDALVectorPipelineAlgorithm`` to list its potential ste
 C API
 +++++
 
-Details will be fleshed out in further developments of the candidate implementation.
+The C API will map most of the functionality of ``GDALAlgorithm``,
+``GDALAlgorithmArg``, ``GDALArgDatasetValue`` and ``GDALAlgorithmRegistry``.
 
-This will at least includes:
+Below is an extract of the beginning of https://github.com/rouault/gdal/blob/rfc104/gcore/gdalalgorithm.h
 
-- a ``GDALAlgorithmH`` opaque handle to ``GDALAlgorithm``
+.. code-block:: c
 
-- Mapping main public methods of ``GDALAlgorithm`` as C functions, in
-  particular a ``bool GDALAlgorithmRun(GDALAlgorithmH, GDALProgressFunc, void* pProgressData)``
+    /** Type of an argument */
+    typedef enum GDALAlgorithmArgType
+    {
+        /** Boolean type. Value is a bool. */
+        GAAT_BOOLEAN,
+        /** Single-value string type. Value is a std::string */
+        GAAT_STRING,
+        /** Single-value integer type. Value is a int */
+        GAAT_INTEGER,
+        /** Single-value real type. Value is a double */
+        GAAT_REAL,
+        /** Dataset type. Value is a GDALArgDatasetValue */
+        GAAT_DATASET,
+        /** Multi-value string type. Value is a std::vector<std::string> */
+        GAAT_STRING_LIST,
+        /** Multi-value integer type. Value is a std::vector<int> */
+        GAAT_INTEGER_LIST,
+        /** Multi-value real type. Value is a std::vector<double> */
+        GAAT_REAL_LIST,
+        /** Multi-value dataset type. Value is a std::vector<GDALArgDatasetValue> */
+        GAAT_DATASET_LIST,
+    } GDALAlgorithmArgType;
 
-- Mapping access to setting argument values.
+    /** Return whether the argument type is a list / multi-valued one. */
+    bool CPL_DLL GDALAlgorithmArgTypeIsList(GDALAlgorithmArgType type);
 
-- Mapping access to the GDALGlobalAlgorithmRegistry.
+    /** Return the string representation of the argument type */
+    const char CPL_DLL *GDALAlgorithmArgTypeName(GDALAlgorithmArgType type);
+
+    /** Opaque C type for GDALArgDatasetValue */
+    typedef struct GDALArgDatasetValueHS *GDALArgDatasetValueH;
+
+    /** Opaque C type for GDALAlgorithmArg */
+    typedef struct GDALAlgorithmArgHS *GDALAlgorithmArgH;
+
+    /** Opaque C type for GDALAlgorithm */
+    typedef struct GDALAlgorithmHS *GDALAlgorithmH;
+
+    /** Opaque C type for GDALAlgorithmRegistry */
+    typedef struct GDALAlgorithmRegistryHS *GDALAlgorithmRegistryH;
+
+    /************************************************************************/
+    /*                  GDALAlgorithmRegistryH API                          */
+    /************************************************************************/
+
+    GDALAlgorithmRegistryH CPL_DLL GDALGetGlobalAlgorithmRegistry(void);
+
+    void CPL_DLL GDALAlgorithmRegistryRelease(GDALAlgorithmRegistryH);
+
+    char CPL_DLL **GDALAlgorithmRegistryGetAlgNames(GDALAlgorithmRegistryH);
+
+    GDALAlgorithmH CPL_DLL GDALAlgorithmRegistryInstantiateAlg(
+        GDALAlgorithmRegistryH, const char *pszAlgName);
+
+    /************************************************************************/
+    /*                        GDALAlgorithmH API                            */
+    /************************************************************************/
+
+    void CPL_DLL GDALAlgorithmRelease(GDALAlgorithmH);
+
+    const char CPL_DLL *GDALAlgorithmGetName(GDALAlgorithmH);
+
+    const char CPL_DLL *GDALAlgorithmGetDescription(GDALAlgorithmH);
+
+    const char CPL_DLL *GDALAlgorithmGetLongDescription(GDALAlgorithmH);
+
+    const char CPL_DLL *GDALAlgorithmGetHelpFullURL(GDALAlgorithmH);
+
+    bool CPL_DLL GDALAlgorithmHasSubAlgorithms(GDALAlgorithmH);
+
+    char CPL_DLL **GDALAlgorithmGetSubAlgorithmNames(GDALAlgorithmH);
+
+    GDALAlgorithmH CPL_DLL
+    GDALAlgorithmInstantiateSubAlgorithm(GDALAlgorithmH, const char *pszSubAlgName);
+
+    bool CPL_DLL GDALAlgorithmParseCommandLineArguments(GDALAlgorithmH,
+                                                        CSLConstList papszArgs);
+
+    GDALAlgorithmH CPL_DLL GDALAlgorithmGetActualAlgorithm(GDALAlgorithmH);
+
+    bool CPL_DLL GDALAlgorithmRun(GDALAlgorithmH, GDALProgressFunc pfnProgress,
+                                  void *pProgressData);
+
+    bool CPL_DLL GDALAlgorithmFinalize(GDALAlgorithmH);
+
+    char CPL_DLL *GDALAlgorithmGetUsageAsJSON(GDALAlgorithmH);
+
+    char CPL_DLL **GDALAlgorithmGetArgNames(GDALAlgorithmH);
+
+    GDALAlgorithmArgH CPL_DLL GDALAlgorithmGetArg(GDALAlgorithmH,
+                                                  const char *pszArgName);
+
+    /************************************************************************/
+    /*                      GDALAlgorithmArgH API                           */
+    /************************************************************************/
+
+    void CPL_DLL GDALAlgorithmArgRelease(GDALAlgorithmArgH);
+
+    const char CPL_DLL *GDALAlgorithmArgGetName(GDALAlgorithmArgH);
+
+    GDALAlgorithmArgType CPL_DLL GDALAlgorithmArgGetType(GDALAlgorithmArgH);
+
+    const char CPL_DLL *GDALAlgorithmArgGetDescription(GDALAlgorithmArgH);
+
+    const char CPL_DLL *GDALAlgorithmArgGetShortName(GDALAlgorithmArgH);
+
+    char CPL_DLL **GDALAlgorithmArgGetAliases(GDALAlgorithmArgH);
+
+    const char CPL_DLL *GDALAlgorithmArgGetMetaVar(GDALAlgorithmArgH);
+
+    const char CPL_DLL *GDALAlgorithmArgGetCategory(GDALAlgorithmArgH);
+
+    bool CPL_DLL GDALAlgorithmArgIsPositional(GDALAlgorithmArgH);
+
+    bool CPL_DLL GDALAlgorithmArgIsRequired(GDALAlgorithmArgH);
+
+    int CPL_DLL GDALAlgorithmArgGetMinCount(GDALAlgorithmArgH);
+
+    int CPL_DLL GDALAlgorithmArgGetMaxCount(GDALAlgorithmArgH);
+
+    bool CPL_DLL GDALAlgorithmArgGetPackedValuesAllowed(GDALAlgorithmArgH);
+
+    bool CPL_DLL GDALAlgorithmArgGetRepeatedArgAllowed(GDALAlgorithmArgH);
+
+    char CPL_DLL **GDALAlgorithmArgGetChoices(GDALAlgorithmArgH);
+
+    bool CPL_DLL GDALAlgorithmArgIsExplicitlySet(GDALAlgorithmArgH);
+
+    bool CPL_DLL GDALAlgorithmArgHasDefaultValue(GDALAlgorithmArgH);
+
+    bool CPL_DLL GDALAlgorithmArgIsHiddenForCLI(GDALAlgorithmArgH);
+
+    bool CPL_DLL GDALAlgorithmArgIsOnlyForCLI(GDALAlgorithmArgH);
+
+    bool CPL_DLL GDALAlgorithmArgIsInput(GDALAlgorithmArgH);
+
+    bool CPL_DLL GDALAlgorithmArgIsOutput(GDALAlgorithmArgH);
+
+    const char CPL_DLL *GDALAlgorithmArgGetMutualExclusionGroup(GDALAlgorithmArgH);
+
+    bool CPL_DLL GDALAlgorithmArgGetAsBoolean(GDALAlgorithmArgH);
+
+    const char CPL_DLL *GDALAlgorithmArgGetAsString(GDALAlgorithmArgH);
+
+    GDALArgDatasetValueH
+        CPL_DLL GDALAlgorithmArgGetAsDatasetValue(GDALAlgorithmArgH);
+
+    int CPL_DLL GDALAlgorithmArgGetAsInteger(GDALAlgorithmArgH);
+
+    double CPL_DLL GDALAlgorithmArgGetAsDouble(GDALAlgorithmArgH);
+
+    char CPL_DLL **GDALAlgorithmArgGetAsStringList(GDALAlgorithmArgH);
+
+    const int CPL_DLL *GDALAlgorithmArgGetAsIntegerList(GDALAlgorithmArgH,
+                                                        size_t *pnCount);
+
+    const double CPL_DLL *GDALAlgorithmArgGetAsDoubleList(GDALAlgorithmArgH,
+                                                          size_t *pnCount);
+
+    bool CPL_DLL GDALAlgorithmArgSetAsBoolean(GDALAlgorithmArgH, bool);
+
+    bool CPL_DLL GDALAlgorithmArgSetAsString(GDALAlgorithmArgH, const char *);
+
+    bool CPL_DLL GDALAlgorithmArgSetAsDatasetValue(GDALAlgorithmArgH hArg,
+                                                   GDALArgDatasetValueH value);
+
+    bool CPL_DLL GDALAlgorithmArgSetDataset(GDALAlgorithmArgH hArg, GDALDatasetH);
+
+    bool CPL_DLL GDALAlgorithmArgSetAsInteger(GDALAlgorithmArgH, int);
+
+    bool CPL_DLL GDALAlgorithmArgSetAsDouble(GDALAlgorithmArgH, double);
+
+    bool CPL_DLL GDALAlgorithmArgSetAsStringList(GDALAlgorithmArgH, CSLConstList);
+
+    bool CPL_DLL GDALAlgorithmArgSetAsIntegerList(GDALAlgorithmArgH, size_t nCount,
+                                                  const int *pnValues);
+
+    bool CPL_DLL GDALAlgorithmArgSetAsDoubleList(GDALAlgorithmArgH, size_t nCount,
+                                                 const double *pnValues);
+
+    /************************************************************************/
+    /*                    GDALArgDatasetValueH API                          */
+    /************************************************************************/
+
+    GDALArgDatasetValueH CPL_DLL GDALArgDatasetValueCreate(void);
+
+    void CPL_DLL GDALArgDatasetValueRelease(GDALArgDatasetValueH);
+
+    const char CPL_DLL *GDALArgDatasetValueGetName(GDALArgDatasetValueH);
+
+    GDALDatasetH CPL_DLL GDALArgDatasetValueGetDatasetRef(GDALArgDatasetValueH);
+
+    GDALDatasetH
+        CPL_DLL GDALArgDatasetValueGetDatasetIncreaseRefCount(GDALArgDatasetValueH);
+
+    /** Bit indicating that the name component of GDALArgDatasetValue is accepted. */
+    #define GADV_NAME (1 << 0)
+    /** Bit indicating that the dataset component of GDALArgDatasetValue is accepted. */
+    #define GADV_OBJECT (1 << 1)
+
+    /** Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR and
+     * GDAL_OF_MULTIDIM_RASTER.
+     */
+    typedef int GDALArgDatasetValueType;
+
+    GDALArgDatasetValueType
+        CPL_DLL GDALArgDatasetValueGetType(GDALArgDatasetValueH);
+
+    int CPL_DLL GDALArgDatasetValueGetInputFlags(GDALArgDatasetValueH);
+
+    int CPL_DLL GDALArgDatasetValueGetOutputFlags(GDALArgDatasetValueH);
+
+    void CPL_DLL GDALArgDatasetValueSetName(GDALArgDatasetValueH, const char *);
+
+    void CPL_DLL GDALArgDatasetValueSetDataset(GDALArgDatasetValueH, GDALDatasetH);
 
 SWIG API
 ++++++++
 
-Part of this C API will be made available in particular for the Python bindings,
-at least, for the sake of our Python autotest suite, as most of the testing
+All the above C API will be directly mapped to equivalent SWIG classes and methods.
+
+It will be available in a new `swig/include/Algorithm.i <https://github.com/rouault/gdal/blob/rfc104/swig/include/Algorithm.i>`__
+file.`
+
+It will be used by our Python autotest suite, as most of the testing
 will be done through that way.
 
 ``gdal`` binary
@@ -1145,7 +1359,7 @@ we'll need double checking of all naming to avoid adding new inconsistencies!
 Related issues and PRs
 ----------------------
 
-* Candidate implementation: https://github.com/OSGeo/gdal/compare/master...rouault:gdal:rfc104?expand=1
+* Candidate implementation: https://github.com/OSGeo/gdal/pull/11303
 
 Voting history
 --------------
