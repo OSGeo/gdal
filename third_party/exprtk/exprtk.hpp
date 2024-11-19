@@ -7377,21 +7377,25 @@ namespace exprtk
          {
             assert(loop_runtime_check_);
 
-            if (
-                 (++iteration_count_ <= max_loop_iterations_) &&
-                 loop_runtime_check_->check()
-               )
-            {
-               return true;
+            if (++iteration_count_ > max_loop_iterations_) {
+                loop_runtime_check::violation_context ctxt;
+                ctxt.loop      = loop_type_;
+                ctxt.violation = loop_runtime_check::e_iteration_count;
+
+                loop_runtime_check_->handle_runtime_violation(ctxt);
+
+                return false;
+            } else if (!loop_runtime_check_->check()) {
+                loop_runtime_check::violation_context ctxt;
+                ctxt.loop      = loop_type_;
+                ctxt.violation = loop_runtime_check::e_timeout;
+
+                loop_runtime_check_->handle_runtime_violation(ctxt);
+
+                return false;
             }
 
-            loop_runtime_check::violation_context ctxt;
-            ctxt.loop      = loop_type_;
-            ctxt.violation = loop_runtime_check::e_iteration_count;
-
-            loop_runtime_check_->handle_runtime_violation(ctxt);
-
-            return false;
+            return true;
          }
 
          bool valid() const
