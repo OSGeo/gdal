@@ -61,11 +61,11 @@ Short usage help message of "gdal"
     ERROR 1: gdal: Missing subcommand name.
     Usage: gdal <subcommand>
     where <subcommand> is one of:
-      - convert:  Convert a dataset (shortcut for 'gdal raster convert' or 'gdal vector convert'). (alias: c)
-      - info:     Return information on a dataset (shortcut for 'gdal raster info' or 'gdal vector info'). (alias: i)
+      - convert:  Convert a dataset (shortcut for 'gdal raster convert' or 'gdal vector convert').
+      - info:     Return information on a dataset (shortcut for 'gdal raster info' or 'gdal vector info').
       - pipeline: Execute a pipeline (shortcut for 'gdal vector pipeline').
-      - raster:   Raster commands. (alias: r, rast)
-      - vector:   Vector commands. (alias: v, vect)
+      - raster:   Raster commands.
+      - vector:   Vector commands.
 
     'gdal <FILENAME>' can also be used as a shortcut for 'gdal info <FILENAME>'.
     And 'gdal read <FILENAME> ! ...' as a shortcut for 'gdal pipeline <FILENAME> ! ...'.
@@ -192,26 +192,19 @@ A few invocations of "gdal raster convert"
     0...10...20...30...40...50...60...70...80...90...100 - done.
 
 
-"raster" has a declared short alias of "r" and "convert" of "c", so you can also do:
-
-  .. code-block:: shell
-
-    $ gdal r c byte.tif out.tif --overwrite
-
-
-And similarly to "gdal info" resolving automatically to "gdal raster info" or "gdal vector info"
+Similarly to "gdal info" resolving automatically to "gdal raster info" or "gdal vector info"
 based on dataset content, "gdal convert" will also detect which subcommand must be used:
 
   .. code-block:: shell
 
-    $ gdal c byte.tif out.tif --overwrite
+    $ gdal convert byte.tif out.tif --overwrite
 
 
 But:
 
   .. code-block:: shell
 
-    $ gdal c mixed.gpkg out.tif --overwrite
+    $ gdal convert mixed.gpkg out.tif --overwrite
     ERROR 1: 'mixed.gpkg' has both raster and vector content. Please use 'gdal raster convert' or 'gdal vector convert'.
 
 
@@ -228,7 +221,7 @@ A few invocations of "gdal vector convert"
     $ gdal vector convert multilayer.gpkg output.gpkg -l my_input_layer --output-layer=new_layer --update --progress
     0...10...20...30...40...50...60...70...80...90...100 - done.
 
-    $ gdal c poly.gpkg poly.parquet --overwrite
+    $ gdal convert poly.gpkg poly.parquet --overwrite
 
 
 JSON-formatted detailed usage of "gdal vector convert"
@@ -464,7 +457,7 @@ Detailed usage help message of "gdal vector pipeline"
     Filter.
 
     Options:
-      --bbox <BBOX>                                        Bounding box as xmin,ymin,xmax,ymax [may be repeated]
+      --bbox <BBOX>                                        Bounding box as xmin,ymin,xmax,ymax
 
     * reproject [OPTIONS]
     ---------------------
@@ -531,13 +524,18 @@ how to specify repeated values (band indices, nodata values, etc.), sometimes
 with the switch being repeated many times, sometimes with a single switch but
 the values being grouped together and separated with spaces or commas.
 
-With this RFC, when several values are expected (or allowed), they must be
-separated with a ``,`` (comma): ``--bbox <xmin>,<ymin>,<xmax>,<ymax>``
+With this RFC, for arguments of list types, 2 variants will be supported:
 
-An alternative when passing several values is also to repeat the option as
-many times as needed: ``--co KEY1=VALUE1 --co KEY2=VALUE2`` and
-``--co KEY1=VALUE1,KEY2=VALUE2``.
+- values passed at the same time (packed values), separated by a ``,`` (comma):
+  ``--co KEY1=VALUE1,KEY2=VALUE2``
 
+- or values are passed one by one with the option being repeated:
+  ``--co KEY1=VALUE1 --co KEY2=VALUE2``
+
+In some cases, in particular when a fixed number of values is expected, or
+if the order of values in the list matters, like a bounding-box argument,
+the argument can be declared to accept packed values only, like in
+``--bbox <xmin>,<ymin>,<xmax>,<ymax>``
 
 Specification of input and output files/datasets
 +++++++++++++++++++++++++++++++++++++++++++++++++
