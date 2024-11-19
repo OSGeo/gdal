@@ -7,6 +7,7 @@ repos:
               (?x)^(
                 swig/python/osgeo/__init__.py|
                 swig/python/osgeo/gdalnumeric.py|
+                doc/source/_extensions/sphinxcontrib_programoutput_gdal.py|
                 autotest/ogr/data/
               )
     -   repo: https://github.com/timothycrosley/isort
@@ -17,6 +18,7 @@ repos:
               (?x)^(
                 swig/python/osgeo/__init__.py|
                 swig/python/osgeo/gdalnumeric.py|
+                doc/source/_extensions/sphinxcontrib_programoutput_gdal.py|
                 autotest/ogr/data/
               )
     -   repo: https://github.com/pycqa/flake8
@@ -27,6 +29,7 @@ repos:
               (?x)^(
                 swig/python/osgeo/__init__.py|
                 swig/python/osgeo/gdalnumeric.py|
+                doc/source/_extensions/sphinxcontrib_programoutput_gdal.py|
                 examples/|
                 autotest/ogr/data/
               )
