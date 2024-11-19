@@ -71,6 +71,7 @@ extensions = [
     "source_file",
     "sphinx.ext.napoleon",
     "sphinxcontrib.jquery",
+    "sphinxcontrib_programoutput_gdal",
     "sphinxcontrib.spelling",
     "myst_nb",
 ]
