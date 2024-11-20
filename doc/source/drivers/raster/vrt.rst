@@ -1630,7 +1630,7 @@ Given the following :file:`mandelbrot.py` file :
         #print('Using numba')
         g_max_iterations = 100
     except Exception:
-        class jit(object):
+        class jit:
             def __init__(self, nopython = True, nogil = True):
                 pass
 

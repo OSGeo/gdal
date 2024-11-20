@@ -19,7 +19,7 @@ from osgeo import ogr, osr
 
 
 #############################################################################
-class Module(object):
+class Module:
     def __init__(self):
         self.lines = {}
         self.poly_line_links = {}

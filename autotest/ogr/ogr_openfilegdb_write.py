@@ -13,6 +13,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import struct
 import sys
 
@@ -4571,3 +4572,32 @@ def test_ogr_openfilegdb_write_OGRUnsetMarker(tmp_vsimem):
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f["i32"] == -21121
+
+
+###############################################################################
+# Verify that we can generate an output that is byte-identical to the expected golden file.
+
+
+@pytest.mark.parametrize(
+    "src_directory",
+    [
+        # Generated with:
+        # ogr2ogr autotest/ogr/data/openfilegdb/polygon_golden.gdb '{"type":"Feature","properties":{"foo":"bar"},"geometry":{"type":"Polygon","coordinates":[[[0,0],[0,1],[1,0],[0,0]]]}}' --config OPENFILEGDB_CREATOR GDAL --config OPENFILEGDB_REPRODUCIBLE_UUID YES -f openfilegdb
+        "data/openfilegdb/polygon_golden.gdb",
+    ],
+)
+def test_ogr_openfilegdb_write_check_golden_file(tmp_path, src_directory):
+
+    out_directory = str(tmp_path / "test.gdb")
+    with gdaltest.config_options(
+        {"OPENFILEGDB_CREATOR": "GDAL", "OPENFILEGDB_REPRODUCIBLE_UUID": "YES"}
+    ):
+        gdal.VectorTranslate(out_directory, src_directory, format="OpenFileGDB")
+    for filename in os.listdir(src_directory):
+        src_filename = os.path.join(src_directory, filename)
+        out_filename = os.path.join(out_directory, filename)
+
+        assert os.stat(src_filename).st_size == os.stat(out_filename).st_size, filename
+        assert (
+            open(src_filename, "rb").read() == open(out_filename, "rb").read()
+        ), filename

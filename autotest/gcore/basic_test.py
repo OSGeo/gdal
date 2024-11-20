@@ -222,7 +222,7 @@ def test_basic_test_9():
 # Test gdal.PushErrorHandler() with a Python error handler as a method (#5186)
 
 
-class my_python_error_handler_class(object):
+class my_python_error_handler_class:
     def __init__(self):
         self.eErrClass = None
         self.err_no = None
@@ -987,3 +987,22 @@ def test_colorinterp():
         assert name not in d
         d[name] = c
         assert gdal.GetColorInterpretationByName(name) == c
+
+
+def test_ComputeMinMaxLocation():
+
+    ds = gdal.Open("data/byte.tif")
+    ret = ds.GetRasterBand(1).ComputeMinMaxLocation()
+    assert (
+        ret.min == 74
+        and ret.max == 255
+        and ret.minX == 9
+        and ret.minY == 17
+        and ret.maxX == 2
+        and ret.maxY == 18
+    )
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Float64)
+    ds.GetRasterBand(1).Fill(float("nan"))
+    ret = ds.GetRasterBand(1).ComputeMinMaxLocation()
+    assert ret is None

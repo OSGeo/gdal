@@ -1825,6 +1825,10 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
     if (poDS == nullptr)
         return nullptr;
 
+    const GDALVectorInfoOptions sDefaultOptions;
+    if (!psOptions)
+        psOptions = &sDefaultOptions;
+
     GDALDriver *poDriver = poDS->GetDriver();
 
     CPLString osRet;

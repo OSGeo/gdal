@@ -2040,12 +2040,14 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
     int nCode;
     auto poFeature = std::make_unique<OGRDXFFeature>(poFeatureDefn);
 
-    std::vector<double> adfControlPoints(1, 0.0);
-    std::vector<double> adfKnots(1, 0.0);
-    std::vector<double> adfWeights(1, 0.0);
+    std::vector<double> adfControlPoints(FORTRAN_INDEXING, 0.0);
+    std::vector<double> adfKnots(FORTRAN_INDEXING, 0.0);
+    std::vector<double> adfWeights(FORTRAN_INDEXING, 0.0);
     int nDegree = -1;
     int nControlPoints = -1;
     int nKnots = -1;
+    bool bInsertNullZ = false;
+    bool bHasZ = false;
 
     /* -------------------------------------------------------------------- */
     /*      Process values.                                                 */
@@ -2056,12 +2058,23 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
         switch (nCode)
         {
             case 10:
+                if (bInsertNullZ)
+                {
+                    adfControlPoints.push_back(0.0);
+                    bInsertNullZ = false;
+                }
                 adfControlPoints.push_back(CPLAtof(szLineBuf));
                 break;
 
             case 20:
                 adfControlPoints.push_back(CPLAtof(szLineBuf));
-                adfControlPoints.push_back(0.0);
+                bInsertNullZ = true;
+                break;
+
+            case 30:
+                adfControlPoints.push_back(CPLAtof(szLineBuf));
+                bHasZ = true;
+                bInsertNullZ = false;
                 break;
 
             case 40:
@@ -2136,12 +2149,25 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
     if (nCode == 0)
         poDS->UnreadValue();
 
+    if (bInsertNullZ)
+    {
+        adfControlPoints.push_back(0.0);
+    }
+
+    if (static_cast<int>(adfControlPoints.size() % 3) != FORTRAN_INDEXING)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid number of values for spline control points");
+        DXF_LAYER_READER_ERROR();
+        return nullptr;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Use the helper function to check the input data and insert      */
     /*      the spline.                                                     */
     /* -------------------------------------------------------------------- */
     auto poLS =
-        InsertSplineWithChecks(nDegree, adfControlPoints, nControlPoints,
+        InsertSplineWithChecks(nDegree, adfControlPoints, bHasZ, nControlPoints,
                                adfKnots, nKnots, adfWeights);
 
     if (!poLS)
@@ -2165,7 +2191,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
 /************************************************************************/
 
 std::unique_ptr<OGRLineString> OGRDXFLayer::InsertSplineWithChecks(
-    const int nDegree, std::vector<double> &adfControlPoints,
+    const int nDegree, std::vector<double> &adfControlPoints, bool bHasZ,
     int nControlPoints, std::vector<double> &adfKnots, int nKnots,
     std::vector<double> &adfWeights)
 {
@@ -2178,11 +2204,13 @@ std::unique_ptr<OGRLineString> OGRDXFLayer::InsertSplineWithChecks(
     if (bResult == true)
     {
         // Check whether nctrlpts value matches number of vertices read
-        int nCheck = (static_cast<int>(adfControlPoints.size()) - 1) / 3;
+        int nCheck =
+            (static_cast<int>(adfControlPoints.size()) - FORTRAN_INDEXING) / 3;
 
         if (nControlPoints == -1)
             nControlPoints =
-                (static_cast<int>(adfControlPoints.size()) - 1) / 3;
+                (static_cast<int>(adfControlPoints.size()) - FORTRAN_INDEXING) /
+                3;
 
         // min( num(ctrlpts) ) = order
         bResult = (nControlPoints >= nOrder && nControlPoints == nCheck);
@@ -2191,7 +2219,7 @@ std::unique_ptr<OGRLineString> OGRDXFLayer::InsertSplineWithChecks(
     bool bCalculateKnots = false;
     if (bResult == true)
     {
-        int nCheck = static_cast<int>(adfKnots.size()) - 1;
+        int nCheck = static_cast<int>(adfKnots.size()) - FORTRAN_INDEXING;
 
         // Recalculate knots when:
         // - no knots data present, nknots is -1 and ncheck is 0
@@ -2203,13 +2231,13 @@ std::unique_ptr<OGRLineString> OGRDXFLayer::InsertSplineWithChecks(
             for (int i = 0; i < (nControlPoints + nOrder); i++)
                 adfKnots.push_back(0.0);
 
-            nCheck = static_cast<int>(adfKnots.size()) - 1;
+            nCheck = static_cast<int>(adfKnots.size()) - FORTRAN_INDEXING;
         }
         // Adjust nknots value when:
         // - nknots value not present, knot vertices present
         //   nknots is -1, ncheck is (nctrlpts + order)
         if (nKnots == -1)
-            nKnots = static_cast<int>(adfKnots.size()) - 1;
+            nKnots = static_cast<int>(adfKnots.size()) - FORTRAN_INDEXING;
 
         // num(knots) = num(ctrlpts) + order
         bResult = (nKnots == (nControlPoints + nOrder) && nKnots == nCheck);
@@ -2217,14 +2245,14 @@ std::unique_ptr<OGRLineString> OGRDXFLayer::InsertSplineWithChecks(
 
     if (bResult == true)
     {
-        int nWeights = static_cast<int>(adfWeights.size()) - 1;
+        int nWeights = static_cast<int>(adfWeights.size()) - FORTRAN_INDEXING;
 
         if (nWeights == 0)
         {
             for (int i = 0; i < nControlPoints; i++)
                 adfWeights.push_back(1.0);
 
-            nWeights = static_cast<int>(adfWeights.size()) - 1;
+            nWeights = static_cast<int>(adfWeights.size()) - FORTRAN_INDEXING;
         }
 
         // num(weights) = num(ctrlpts)
@@ -2238,11 +2266,7 @@ std::unique_ptr<OGRLineString> OGRDXFLayer::InsertSplineWithChecks(
     /*      Interpolate spline                                              */
     /* -------------------------------------------------------------------- */
     int p1 = nControlPoints * 8;
-    std::vector<double> p;
-
-    p.push_back(0.0);
-    for (int i = 0; i < 3 * p1; i++)
-        p.push_back(0.0);
+    std::vector<double> p(3 * p1 + FORTRAN_INDEXING);
 
     rbspline2(nControlPoints, nOrder, p1, &(adfControlPoints[0]),
               &(adfWeights[0]), bCalculateKnots, &(adfKnots[0]), &(p[0]));
@@ -2253,8 +2277,19 @@ std::unique_ptr<OGRLineString> OGRDXFLayer::InsertSplineWithChecks(
     auto poLS = std::make_unique<OGRLineString>();
 
     poLS->setNumPoints(p1);
-    for (int i = 0; i < p1; i++)
-        poLS->setPoint(i, p[i * 3 + 1], p[i * 3 + 2]);
+    if (bHasZ)
+    {
+        for (int i = 0; i < p1; i++)
+            poLS->setPoint(i, p[i * 3 + FORTRAN_INDEXING],
+                           p[i * 3 + FORTRAN_INDEXING + 1],
+                           p[i * 3 + FORTRAN_INDEXING + 2]);
+    }
+    else
+    {
+        for (int i = 0; i < p1; i++)
+            poLS->setPoint(i, p[i * 3 + FORTRAN_INDEXING],
+                           p[i * 3 + FORTRAN_INDEXING + 1]);
+    }
 
     return poLS;
 }

@@ -2165,6 +2165,13 @@ CPLErr VRTWarpedDataset::IRasterIO(
 CPLErr VRTWarpedDataset::AddBand(GDALDataType eType, char ** /* papszOptions */)
 
 {
+    if (eType == GDT_Unknown || eType == GDT_TypeCount)
+    {
+        ReportError(CE_Failure, CPLE_IllegalArg,
+                    "Illegal GDT_Unknown/GDT_TypeCount argument");
+        return CE_Failure;
+    }
+
     SetBand(GetRasterCount() + 1,
             new VRTWarpedRasterBand(this, GetRasterCount() + 1, eType));
 

@@ -407,3 +407,44 @@ Use ``describe`` to document create parameters::
   .. describe:: WORLDFILE=YES
 
      Force the generation of an associated ESRI world file (with the extension .wld).
+
+MyST-NB - Executable notebooks
+##############################
+
+Quoting `MyST-NB documentation <https://myst-nb.readthedocs.io/en/latest/index.html>`__,
+"MyST-NB is a module within the Executable Books Project, an international
+collaboration to build open source tools that facilitate publishing computational
+narratives using the Jupyter ecosystem. It is also a core component of Jupyter Book."
+
+The documentation is written in a special markdown dialect, MyST Markdown,
+that can include code cells:
+
+.. code-block:: markdown
+
+    ```{code-cell}
+    :tags: [hide-output]
+
+    from osgeo import gdal
+    import pprint
+
+    gdal.UseExceptions()
+
+    with gdal.Open("data/byte.tif") as ds:
+        info = gdal.Info(ds, format='json')
+        del info["stac"]  # to avoid cluttering below output
+        pprint.pprint(info, indent=2, width=100)
+    ```
+
+See :file:`doc/source/api/python/python_examples.myst` for an example.
+
+Consult how to author `text-based notebooks <https://myst-nb.readthedocs.io/en/latest/authoring/text-notebooks.html>`__
+for more details.`
+
+Building full GDAL documentation, even in incremental mode, is rather slow.
+It is possible to partly render to HTML a MyST file with:
+
+.. code-block:: shell
+
+    $ mystnb-docutils-html5 --nb-read-as-md=true source/api/python/python_examples.myst > out.html
+
+You will get some warnings, but executable run will be executed and rendered.

@@ -110,6 +110,22 @@ OGRGeometry::OGRGeometry(const OGRGeometry &other)
 }
 
 /************************************************************************/
+/*                   OGRGeometry( OGRGeometry&& )                       */
+/************************************************************************/
+
+/**
+ * \brief Move constructor.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRGeometry::OGRGeometry(OGRGeometry &&other)
+    : poSRS(other.poSRS), flags(other.flags)
+{
+    other.poSRS = nullptr;
+}
+
+/************************************************************************/
 /*                            ~OGRGeometry()                            */
 /************************************************************************/
 
@@ -139,6 +155,27 @@ OGRGeometry &OGRGeometry::operator=(const OGRGeometry &other)
     {
         empty();
         assignSpatialReference(other.getSpatialReference());
+        flags = other.flags;
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*                    operator=( OGRGeometry&&)                         */
+/************************************************************************/
+
+/**
+ * \brief Move assignment operator.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRGeometry &OGRGeometry::operator=(OGRGeometry &&other)
+{
+    if (this != &other)
+    {
+        poSRS = other.poSRS;
+        other.poSRS = nullptr;
         flags = other.flags;
     }
     return *this;

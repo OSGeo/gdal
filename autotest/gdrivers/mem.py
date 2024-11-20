@@ -67,8 +67,7 @@ def test_mem_1():
     #######################################################
     # Setup dataset
     drv = gdal.GetDriverByName("MEM")
-    gdaltest.mem_ds = drv.Create("mem_1.mem", 50, 3)
-    ds = gdaltest.mem_ds
+    ds = drv.Create("mem_1.mem", 50, 3)
 
     assert ds.GetProjection() == "", "projection wrong"
 
@@ -777,8 +776,16 @@ def test_mem_alpha_ismaskband():
 
 
 ###############################################################################
-# cleanup
+# Check robustness to GDT_Unknown
 
 
-def test_mem_cleanup():
-    gdaltest.mem_ds = None
+def test_mem_gdt_unknown():
+
+    with pytest.raises(Exception, match="Illegal GDT_Unknown/GDT_TypeCount argument"):
+        gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Unknown)
+
+    with gdal.GetDriverByName("MEM").Create("", 1, 1, 0, gdal.GDT_Unknown) as ds:
+        with pytest.raises(
+            Exception, match="Illegal GDT_Unknown/GDT_TypeCount argument"
+        ):
+            ds.AddBand(gdal.GDT_Unknown)

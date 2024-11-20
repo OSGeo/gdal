@@ -1682,8 +1682,6 @@ LSB
 lsbf
 Lucena
 Luminance
-Luratech
-Lurawave
 luts
 lvbag
 lwf

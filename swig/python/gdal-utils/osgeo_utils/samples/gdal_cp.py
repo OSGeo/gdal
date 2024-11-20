@@ -33,7 +33,7 @@ def Usage():
     return 2
 
 
-class ScaledProgress(object):
+class ScaledProgress:
     def __init__(self, dfMin, dfMax, UnderlyingProgress):
         self.dfMin = dfMin
         self.dfMax = dfMax

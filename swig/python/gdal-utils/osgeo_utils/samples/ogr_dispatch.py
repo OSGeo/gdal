@@ -83,7 +83,7 @@ def wkbFlatten(x):
 ###############################################################
 
 
-class Options(object):
+class Options:
     def __init__(self):
         self.lco = []
         self.dispatch_fields = []

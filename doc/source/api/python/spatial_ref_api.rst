@@ -5,8 +5,8 @@
 
 .. _python_spatial_ref_api:
 
-Python Spatial Reference System API
-===================================
+Spatial Reference System API
+============================
 
 This page contains classes, methods and functions that relate to spatial reference systems:
 

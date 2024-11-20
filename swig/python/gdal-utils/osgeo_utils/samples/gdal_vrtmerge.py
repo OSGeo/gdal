@@ -54,7 +54,7 @@ def names_to_fileinfos(names):
 # *****************************************************************************
 
 
-class file_info(object):
+class file_info:
     """A class holding information about a GDAL file."""
 
     def __init__(self):

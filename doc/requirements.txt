@@ -1,13 +1,16 @@
 # This file may be used to create an environment using:
 # $ pip install --upgrade -r <this file>
+breathe
 fsspec
 numpy
 sphinx
-breathe
 sphinx_bootstrap_theme
-sphinxcontrib-bibtex
-sphinx_rtd_theme
-recommonmark
 sphinx-markdown-tables
-sphinxcontrib-spelling
+sphinx_rtd_theme
+sphinxcontrib-bibtex
 sphinxcontrib-jquery
+# We use a slightly forked version
+# sphinxcontrib-programoutput
+sphinxcontrib-spelling
+myst_nb
+recommonmark

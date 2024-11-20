@@ -581,14 +581,14 @@ bool CPLJobQueue::SubmitJob(std::function<void()> task)
         m_nPendingJobs++;
     }
 
-    // cppcheck-suppress knownConditionTrueFalse
     // coverity[uninit_member,copy_constructor_call]
-    return m_poPool->SubmitJob(
-        [this, task]
-        {
-            task();
-            DeclareJobFinished();
-        });
+    const auto lambda = [this, task]
+    {
+        task();
+        DeclareJobFinished();
+    };
+    // cppcheck-suppress knownConditionTrueFalse
+    return m_poPool->SubmitJob(lambda);
 }
 
 /************************************************************************/

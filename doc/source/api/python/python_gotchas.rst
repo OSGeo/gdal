@@ -1,7 +1,7 @@
 .. _python_gotchas:
 
 ================================================================================
-Python Gotchas in the GDAL and OGR Python Bindings
+Gotchas in the GDAL and OGR Python Bindings
 ================================================================================
 
 This page lists aspects of GDAL's and OGR's Python bindings that may catch Python programmers by surprise.
@@ -232,7 +232,7 @@ But you can do something like this instead:
 
     from osgeo import gdal
 
-    class GdalErrorHandler(object):
+    class GdalErrorHandler:
         def __init__(self):
             self.err_level = gdal.CE_None
             self.err_no = 0

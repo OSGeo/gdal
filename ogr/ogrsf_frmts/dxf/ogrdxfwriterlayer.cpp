@@ -169,8 +169,8 @@ OGRErr OGRDXFWriterLayer::WriteCore(OGRFeature *poFeature)
     /*      Also, for reasons I don't understand these ids seem to have     */
     /*      to start somewhere around 0x50 hex (80 decimal).                */
     /* -------------------------------------------------------------------- */
-    long nGotFID = -1;
-    poDS->WriteEntityID(fp, nGotFID, (int)poFeature->GetFID());
+    unsigned int nGotFID = 0;
+    poDS->WriteEntityID(fp, nGotFID, poFeature->GetFID());
     poFeature->SetFID(nGotFID);
 
     WriteValue(100, "AcDbEntity");

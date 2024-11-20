@@ -17,6 +17,8 @@
 
 #include "gdalresamplingkernels.h"
 
+#include "gdal_vectorx.h"
+
 #include <algorithm>
 #include <complex>
 
@@ -36,10 +38,15 @@ template <> bool areEqualReal(double dfNoDataValue, std::complex<double> dfOut)
 template <typename T>
 bool GDALInterpExtractValuesWindow(GDALRasterBand *pBand,
                                    std::unique_ptr<DoublePointsCache> &cache,
-                                   int nX, int nY, int nWidth, int nHeight,
-                                   T *padfOut)
+                                   gdal::Vector2i point,
+                                   gdal::Vector2i dimensions, T *padfOut)
 {
     constexpr int BLOCK_SIZE = 64;
+
+    const int nX = point.x();
+    const int nY = point.y();
+    const int nWidth = dimensions.x();
+    const int nHeight = dimensions.y();
 
     // Request the DEM by blocks of BLOCK_SIZE * BLOCK_SIZE and put them
     // in cache
@@ -153,29 +160,32 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
                                 std::unique_ptr<DoublePointsCache> &cache,
                                 const double dfXIn, const double dfYIn, T &out)
 {
-    const int nRasterXSize = pBand->GetXSize();
-    const int nRasterYSize = pBand->GetYSize();
+    const gdal::Vector2i rasterSize{pBand->GetXSize(), pBand->GetYSize()};
+    const gdal::Vector2d inLoc{dfXIn, dfYIn};
+
     int bGotNoDataValue = FALSE;
     const double dfNoDataValue = pBand->GetNoDataValue(&bGotNoDataValue);
 
-    if (dfXIn < 0 || dfXIn > nRasterXSize || dfYIn < 0 || dfYIn > nRasterYSize)
+    if (inLoc.x() < 0 || inLoc.x() > rasterSize.x() || inLoc.y() < 0 ||
+        inLoc.y() > rasterSize.y())
     {
         return FALSE;
     }
 
     // Downgrade the interpolation algorithm if the image is too small
-    if ((nRasterXSize < 4 || nRasterYSize < 4) &&
+    if ((rasterSize.x() < 4 || rasterSize.y() < 4) &&
         (eResampleAlg == GRIORA_CubicSpline || eResampleAlg == GRIORA_Cubic))
     {
         eResampleAlg = GRIORA_Bilinear;
     }
-    if ((nRasterXSize < 2 || nRasterYSize < 2) &&
+    if ((rasterSize.x() < 2 || rasterSize.y() < 2) &&
         eResampleAlg == GRIORA_Bilinear)
     {
         eResampleAlg = GRIORA_NearestNeighbour;
     }
 
-    auto outOfBorderCorrection = [](int dNew, int nRasterSize, int nKernelsize)
+    auto outOfBorderCorrectionSimple =
+        [](int dNew, int nRasterSize, int nKernelsize)
     {
         int dOutOfBorder = 0;
         if (dNew < 0)
@@ -189,7 +199,17 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
         return dOutOfBorder;
     };
 
-    auto dragReadDataInBorder =
+    auto outOfBorderCorrection =
+        [&outOfBorderCorrectionSimple,
+         &rasterSize](gdal::Vector2i input, int nKernelsize) -> gdal::Vector2i
+    {
+        return {
+            outOfBorderCorrectionSimple(input.x(), rasterSize.x(), nKernelsize),
+            outOfBorderCorrectionSimple(input.y(), rasterSize.y(),
+                                        nKernelsize)};
+    };
+
+    auto dragReadDataInBorderSimple =
         [](T *adfElevData, int dOutOfBorder, int nKernelSize, bool bIsX)
     {
         while (dOutOfBorder < 0)
@@ -222,9 +242,18 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
             dOutOfBorder--;
         }
     };
+    auto dragReadDataInBorder = [&dragReadDataInBorderSimple](
+                                    T *adfElevData, gdal::Vector2i dOutOfBorder,
+                                    int nKernelSize) -> void
+    {
+        dragReadDataInBorderSimple(adfElevData, dOutOfBorder.x(), nKernelSize,
+                                   true);
+        dragReadDataInBorderSimple(adfElevData, dOutOfBorder.y(), nKernelSize,
+                                   false);
+    };
 
-    auto applyBilinearKernel = [&](double dfDeltaX, double dfDeltaY,
-                                   T *adfValues, T &pdfRes) -> bool
+    auto applyBilinearKernel = [&](gdal::Vector2d dfDelta, T *adfValues,
+                                   T &pdfRes) -> bool
     {
         if (bGotNoDataValue)
         {
@@ -240,18 +269,19 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
                 return FALSE;
             }
         }
-        const double dfDeltaX1 = 1.0 - dfDeltaX;
-        const double dfDeltaY1 = 1.0 - dfDeltaY;
+        const gdal::Vector2d dfDelta1 = 1.0 - dfDelta;
 
-        const T dfXZ1 = adfValues[0] * dfDeltaX1 + adfValues[1] * dfDeltaX;
-        const T dfXZ2 = adfValues[2] * dfDeltaX1 + adfValues[3] * dfDeltaX;
-        const T dfYZ = dfXZ1 * dfDeltaY1 + dfXZ2 * dfDeltaY;
+        const T dfXZ1 =
+            adfValues[0] * dfDelta1.x() + adfValues[1] * dfDelta.x();
+        const T dfXZ2 =
+            adfValues[2] * dfDelta1.x() + adfValues[3] * dfDelta.x();
+        const T dfYZ = dfXZ1 * dfDelta1.y() + dfXZ2 * dfDelta.y();
 
         pdfRes = dfYZ;
         return TRUE;
     };
 
-    auto apply4x4Kernel = [&](double dfDeltaX, double dfDeltaY, T *adfValues,
+    auto apply4x4Kernel = [&](gdal::Vector2d dfDelta, T *adfValues,
                               T &pdfRes) -> bool
     {
         T dfSumH = 0.0;
@@ -264,14 +294,13 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
                 // Calculate the weight for the specified pixel according
                 // to the bicubic b-spline kernel we're using for
                 // interpolation.
-                const int dKernIndX = k_j - 1;
-                const int dKernIndY = k_i - 1;
+                const gdal::Vector2i dKernInd = {k_j - 1, k_i - 1};
+                const gdal::Vector2d fPoint = dKernInd.cast<double>() - dfDelta;
                 const double dfPixelWeight =
                     eResampleAlg == GDALRIOResampleAlg::GRIORA_CubicSpline
-                        ? CubicSplineKernel(dKernIndX - dfDeltaX) *
-                              CubicSplineKernel(dKernIndY - dfDeltaY)
-                        : CubicKernel(dKernIndX - dfDeltaX) *
-                              CubicKernel(dKernIndY - dfDeltaY);
+                        ? CubicSplineKernel(fPoint.x()) *
+                              CubicSplineKernel(fPoint.y())
+                        : CubicKernel(fPoint.x()) * CubicKernel(fPoint.y());
 
                 // Create a sum of all values
                 // adjusted for the pixel's calculated weight.
@@ -298,32 +327,24 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
     {
         // Convert from upper left corner of pixel coordinates to center of
         // pixel coordinates:
-        const double dfX = dfXIn - 0.5;
-        const double dfY = dfYIn - 0.5;
-        const int dX = static_cast<int>(std::floor(dfX));
-        const int dY = static_cast<int>(std::floor(dfY));
-        const double dfDeltaX = dfX - dX;
-        const double dfDeltaY = dfY - dY;
-
-        const int dXNew = dX - 1;
-        const int dYNew = dY - 1;
+        const gdal::Vector2d df = inLoc - 0.5;
+        const gdal::Vector2i d = df.floor().template cast<int>();
+        const gdal::Vector2d delta = df - d.cast<double>();
+        const gdal::Vector2i dNew = d - 1;
         const int nKernelSize = 4;
-        const int dXOutOfBorder =
-            outOfBorderCorrection(dXNew, nRasterXSize, nKernelSize);
-        const int dYOutOfBorder =
-            outOfBorderCorrection(dYNew, nRasterYSize, nKernelSize);
+        const gdal::Vector2i dOutOfBorder =
+            outOfBorderCorrection(dNew, nKernelSize);
 
         // CubicSpline interpolation.
         T adfReadData[16] = {0.0};
-        if (!GDALInterpExtractValuesWindow(pBand, cache, dXNew - dXOutOfBorder,
-                                           dYNew - dYOutOfBorder, nKernelSize,
-                                           nKernelSize, adfReadData))
+        if (!GDALInterpExtractValuesWindow(pBand, cache, dNew - dOutOfBorder,
+                                           {nKernelSize, nKernelSize},
+                                           adfReadData))
         {
             return FALSE;
         }
-        dragReadDataInBorder(adfReadData, dXOutOfBorder, nKernelSize, true);
-        dragReadDataInBorder(adfReadData, dYOutOfBorder, nKernelSize, false);
-        if (!apply4x4Kernel(dfDeltaX, dfDeltaY, adfReadData, out))
+        dragReadDataInBorder(adfReadData, dOutOfBorder, nKernelSize);
+        if (!apply4x4Kernel(delta, adfReadData, out))
             return FALSE;
 
         return TRUE;
@@ -332,47 +353,38 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
     {
         // Convert from upper left corner of pixel coordinates to center of
         // pixel coordinates:
-        const double dfX = dfXIn - 0.5;
-        const double dfY = dfYIn - 0.5;
-        const int dX = static_cast<int>(std::floor(dfX));
-        const int dY = static_cast<int>(std::floor(dfY));
-        const double dfDeltaX = dfX - dX;
-        const double dfDeltaY = dfY - dY;
-
+        const gdal::Vector2d df = inLoc - 0.5;
+        const gdal::Vector2i d = df.floor().template cast<int>();
+        const gdal::Vector2d delta = df - d.cast<double>();
         const int nKernelSize = 2;
-        const int dXOutOfBorder =
-            outOfBorderCorrection(dX, nRasterXSize, nKernelSize);
-        const int dYOutOfBorder =
-            outOfBorderCorrection(dY, nRasterYSize, nKernelSize);
+        const gdal::Vector2i dOutOfBorder =
+            outOfBorderCorrection(d, nKernelSize);
 
         // Bilinear interpolation.
         T adfReadData[4] = {0.0};
-        if (!GDALInterpExtractValuesWindow(pBand, cache, dX - dXOutOfBorder,
-                                           dY - dYOutOfBorder, nKernelSize,
-                                           nKernelSize, adfReadData))
+        if (!GDALInterpExtractValuesWindow(pBand, cache, d - dOutOfBorder,
+                                           {nKernelSize, nKernelSize},
+                                           adfReadData))
         {
             return FALSE;
         }
-        dragReadDataInBorder(adfReadData, dXOutOfBorder, nKernelSize, true);
-        dragReadDataInBorder(adfReadData, dYOutOfBorder, nKernelSize, false);
-        if (!applyBilinearKernel(dfDeltaX, dfDeltaY, adfReadData, out))
+        dragReadDataInBorder(adfReadData, dOutOfBorder, nKernelSize);
+        if (!applyBilinearKernel(delta, adfReadData, out))
             return FALSE;
 
         return TRUE;
     }
     else
     {
-        const int dX = static_cast<int>(dfXIn);
-        const int dY = static_cast<int>(dfYIn);
-        T dfOut{};
-        if (!GDALInterpExtractValuesWindow(pBand, cache, dX, dY, 1, 1,
-                                           &dfOut) ||
-            (bGotNoDataValue && areEqualReal(dfNoDataValue, dfOut)))
+        const gdal::Vector2i d = inLoc.cast<int>();
+        T adfOut[1] = {};
+        if (!GDALInterpExtractValuesWindow(pBand, cache, d, {1, 1}, adfOut) ||
+            (bGotNoDataValue && areEqualReal(dfNoDataValue, adfOut[0])))
         {
             return FALSE;
         }
 
-        out = dfOut;
+        out = adfOut[0];
 
         return TRUE;
     }

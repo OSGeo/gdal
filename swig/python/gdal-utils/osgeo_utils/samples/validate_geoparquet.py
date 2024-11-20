@@ -40,7 +40,7 @@ map_ogr_geom_type_to_geoparquet = {
 map_remote_resources = {}
 
 
-class GeoParquetValidator(object):
+class GeoParquetValidator:
     def __init__(self, filename, check_data=False, local_schema=None):
         self.filename = filename
         self.check_data = check_data

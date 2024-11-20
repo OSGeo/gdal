@@ -893,7 +893,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     # Test temporary redirect
     handler = webserver.SequentialHandler()
 
-    class HandlerClass(object):
+    class HandlerClass:
         def __init__(self, response_value):
             self.old_authorization = None
             self.response_value = response_value
@@ -1484,7 +1484,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     # Test temporary redirect
     handler = webserver.SequentialHandler()
 
-    class HandlerClass(object):
+    class HandlerClass:
         def __init__(self, response_value):
             self.old_authorization = None
             self.response_value = response_value

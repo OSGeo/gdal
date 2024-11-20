@@ -22,14 +22,6 @@ import pytest
 
 from osgeo import gdal
 
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
-
 ###############################################################################
 # Test writing a 1x1 buffer to a 10x6 raster and read it back
 
@@ -217,6 +209,7 @@ def test_rasterio_4():
 # Test error cases of ReadRaster()
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_5():
 
     ds = gdal.Open("data/byte.tif")
@@ -284,6 +277,7 @@ def test_rasterio_5():
 # Test error cases of WriteRaster()
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_6():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
@@ -757,6 +751,7 @@ def test_rasterio_overview_subpixel_resampling():
 # Test error when getting a block
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_10():
     ds = gdal.Open("data/byte_truncated.tif")
 
@@ -1431,6 +1426,7 @@ def test_rasterio_dataset_readarray_cint16():
     assert got[1] == numpy.array([[3 + 4j]])
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_rasterband_write_on_readonly():
 
     ds = gdal.Open("data/byte.tif")
@@ -1440,6 +1436,7 @@ def test_rasterio_rasterband_write_on_readonly():
     assert err != 0
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_dataset_write_on_readonly():
 
     ds = gdal.Open("data/byte.tif")
@@ -3012,6 +3009,7 @@ def test_rasterio_writeraster_from_memoryview():
 # Test ReadRaster() in an existing buffer
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_readraster_in_existing_buffer():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1)
@@ -3048,6 +3046,7 @@ def test_rasterio_readraster_in_existing_buffer():
 # Test ReadBlock() in an existing buffer
 
 
+@gdaltest.disable_exceptions()
 def test_rasterio_readblock_in_existing_buffer():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1)
@@ -3074,6 +3073,7 @@ def test_rasterio_readblock_in_existing_buffer():
 # Test ReadRaster() in an existing buffer and alignment issues
 
 
+@gdaltest.disable_exceptions()
 @pytest.mark.parametrize(
     "datatype",
     [
@@ -3390,3 +3390,18 @@ def test_rasterio_overview_selection():
         assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 29, 29)[0] == 2
         assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 25, 25)[0] == 3
         assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 24, 24)[0] == 3
+
+
+###############################################################################
+# Check robustness to GDT_Unknown
+
+
+def test_rasterio_gdt_unknown():
+
+    with gdal.GetDriverByName("MEM").Create("", 1, 1) as ds:
+        # Caught at the SWIG level
+        with pytest.raises(Exception, match="Illegal value for data type"):
+            ds.ReadRaster(buf_type=gdal.GDT_Unknown)
+        # Caught at the SWIG level
+        with pytest.raises(Exception, match="Illegal value for data type"):
+            ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Unknown)

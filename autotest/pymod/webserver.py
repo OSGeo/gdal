@@ -39,7 +39,7 @@ def install_http_handler(handler_instance):
         custom_handler = None
 
 
-class RequestResponse(object):
+class RequestResponse:
     def __init__(
         self,
         method,
@@ -76,7 +76,7 @@ class RequestResponse(object):
         )
 
 
-class FileHandler(object):
+class FileHandler:
     """
     Handler that serves files from a dictionary and/or a fallback VSI location.
     """
@@ -197,7 +197,7 @@ class FileHandler(object):
         self.send_response(request, filedata)
 
 
-class BaseMockedHttpHandler(object):
+class BaseMockedHttpHandler:
     @staticmethod
     def _process_req_resp(req_resp, request):
         if req_resp.custom_method:

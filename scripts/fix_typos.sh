@@ -77,6 +77,7 @@ EXCLUDED_FILES="$EXCLUDED_FILES,./cmake/modules/CMakeCheckCompilerFlagCommonPatt
 EXCLUDED_FILES="$EXCLUDED_FILES,./cmake/modules/Copyright.txt"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/sqlite_rtree_bulk_load/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,ogr_adbc_internal.h"
+EXCLUDED_FILES="$EXCLUDED_FILES,sse2neon.h"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/spelling_wordlist.txt"
 AUTHORIZED_LIST="poSession,FIDN,TRAFIC,HTINK,repID,oCurr,INTREST,oPosition"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,CPL_SUPRESS_CPLUSPLUS,SRP_NAM,ADRG_NAM,'SRP_NAM,AuxilaryTarget"
@@ -133,7 +134,7 @@ AUTHORIZED_LIST="$AUTHORIZED_LIST,oTe"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,ADJ_PARM,NUM_ADJ_PARM,ADJ_PARM_ID,UE_FLAG"
 AUTHORIZED_LIST="$AUTHORIZED_LIST,ReenableTriggers,reenableTriggers"
 
-python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES,./autotest/*,./build*/*" \
+python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES,./autotest/*,./build*/*,./doc/myvenv/*" \
     -x scripts/typos_allowlist.txt --words-white-list=$AUTHORIZED_LIST \
     -D ./fix_typos/gdal_dict.txt .
 # port ogr frmts cmake alg gnm apps swig doc

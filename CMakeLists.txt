@@ -94,6 +94,16 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(x86|AMD64)")
     endif ()
   endif ()
 
+else()
+
+  # Check ability to use Arm Neon optimizations
+  include(CheckCXXSourceCompiles)
+  include(CMakePushCheckState)
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/gcore")
+  check_cxx_source_compiles("#include \"include_sse2neon.h\"\nint main() { return 0; }" SSE2NEON_COMPILES)
+  cmake_pop_check_state()
+
 endif ()
 #
 option(CLANG_TIDY_ENABLED "Run clang-tidy with the compiler." OFF)

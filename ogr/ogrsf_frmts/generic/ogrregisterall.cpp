@@ -273,4 +273,9 @@ void OGRRegisterAllInternal()
     RegisterOGRAVCE00();
 #endif
 
+    // Last but not the least
+#ifdef AIVECTOR_ENABLED
+    RegisterOGRAIVector();
+#endif
+
 } /* OGRRegisterAll */

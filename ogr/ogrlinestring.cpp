@@ -61,6 +61,31 @@ OGRSimpleCurve::OGRSimpleCurve(const OGRSimpleCurve &other)
 }
 
 /************************************************************************/
+/*                OGRSimpleCurve( OGRSimpleCurve&& )                    */
+/************************************************************************/
+
+/**
+ * \brief Move constructor.
+ *
+ * @since GDAL 3.11
+ */
+
+// cppcheck-suppress-begin accessMoved
+OGRSimpleCurve::OGRSimpleCurve(OGRSimpleCurve &&other)
+    : OGRCurve(std::move(other)), nPointCount(other.nPointCount),
+      m_nPointCapacity(other.m_nPointCapacity), paoPoints(other.paoPoints),
+      padfZ(other.padfZ), padfM(other.padfM)
+{
+    other.nPointCount = 0;
+    other.m_nPointCapacity = 0;
+    other.paoPoints = nullptr;
+    other.padfZ = nullptr;
+    other.padfM = nullptr;
+}
+
+// cppcheck-suppress-end accessMoved
+
+/************************************************************************/
 /*                          ~OGRSimpleCurve()                           */
 /************************************************************************/
 
@@ -73,7 +98,7 @@ OGRSimpleCurve::~OGRSimpleCurve()
 }
 
 /************************************************************************/
-/*                       operator=( const OGRPoint& )                   */
+/*                 operator=(const OGRSimpleCurve &other)               */
 /************************************************************************/
 
 /**
@@ -94,6 +119,43 @@ OGRSimpleCurve &OGRSimpleCurve::operator=(const OGRSimpleCurve &other)
 
     setPoints(other.nPointCount, other.paoPoints, other.padfZ, other.padfM);
     flags = other.flags;
+
+    return *this;
+}
+
+/************************************************************************/
+/*                     operator=(OGRSimpleCurve &&other)                */
+/************************************************************************/
+
+/**
+ * \brief Move assignment operator.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRSimpleCurve &OGRSimpleCurve::operator=(OGRSimpleCurve &&other)
+{
+    if (this != &other)
+    {
+        // cppcheck-suppress-begin accessMoved
+        OGRCurve::operator=(std::move(other));
+
+        nPointCount = other.nPointCount;
+        m_nPointCapacity = other.m_nPointCapacity;
+        CPLFree(paoPoints);
+        paoPoints = other.paoPoints;
+        CPLFree(padfZ);
+        padfZ = other.padfZ;
+        CPLFree(padfM);
+        padfM = other.padfM;
+        flags = other.flags;
+        other.nPointCount = 0;
+        other.m_nPointCapacity = 0;
+        other.paoPoints = nullptr;
+        other.padfZ = nullptr;
+        other.padfM = nullptr;
+        // cppcheck-suppress-end accessMoved
+    }
 
     return *this;
 }
@@ -2807,6 +2869,18 @@ OGRPointIterator *OGRSimpleCurve::getPointIterator() const
 OGRLineString::OGRLineString(const OGRLineString &) = default;
 
 /************************************************************************/
+/*                  OGRLineString( OGRLineString&& )                    */
+/************************************************************************/
+
+/**
+ * \brief Move constructor.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRLineString::OGRLineString(OGRLineString &&) = default;
+
+/************************************************************************/
 /*                    operator=( const OGRLineString& )                 */
 /************************************************************************/
 
@@ -2824,6 +2898,25 @@ OGRLineString &OGRLineString::operator=(const OGRLineString &other)
     if (this != &other)
     {
         OGRSimpleCurve::operator=(other);
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*                    operator=( OGRLineString&& )                      */
+/************************************************************************/
+
+/**
+ * \brief Move assignment operator.
+ *
+ * @since GDAL 3.11
+ */
+
+OGRLineString &OGRLineString::operator=(OGRLineString &&other)
+{
+    if (this != &other)
+    {
+        OGRSimpleCurve::operator=(std::move(other));
     }
     return *this;
 }

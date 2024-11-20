@@ -1369,7 +1369,7 @@ static void InterpolateSpline(OGRLineString *const poLine,
 
         aoDataPoints.push_back(
             DXFTriple(oPoint.getX(), oPoint.getY(), oPoint.getZ()));
-        oPrevPoint = oPoint;
+        oPrevPoint = std::move(oPoint);
     }
     nDataPoints = static_cast<int>(aoDataPoints.size());
     if (nDataPoints < 2)

@@ -3068,8 +3068,7 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
         }
     }
 
-    const bool bIsComplex =
-        CPL_TO_BOOL(GDALDataTypeIsComplex(eVRTBandDataType));
+    const bool bIsComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eBufType));
     CPLErr eErr;
     // For Int32, float32 isn't sufficiently precise as working data type
     if (eVRTBandDataType == GDT_CInt32 || eVRTBandDataType == GDT_CFloat64 ||

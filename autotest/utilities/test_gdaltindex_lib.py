@@ -92,7 +92,7 @@ def test_gdaltindex_lib_basic(four_tile_index):
 
 
 def test_gdaltindex_lib_already_existing_rasters(four_tiles, four_tile_index, tmp_path):
-    class GdalErrorHandler(object):
+    class GdalErrorHandler:
         def __init__(self):
             self.warnings = []
 
@@ -147,7 +147,7 @@ def test_gdaltindex_skipDifferentProjection(tmp_path, four_tile_index):
     ds.SetGeoTransform([47, 0.1, 0, 2, 0, -0.1])
     ds = None
 
-    class GdalErrorHandler(object):
+    class GdalErrorHandler:
         def __init__(self):
             self.warning = None
 
@@ -443,3 +443,19 @@ def test_gdaltindex_lib_fetch_md(tmp_path, four_tiles):
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f["foo_field"] == "bar"
+
+
+###############################################################################
+# Test -ot
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdaltindex_lib_ot(tmp_path, four_tiles):
+
+    index_filename = str(tmp_path / "test_gdaltindex_lib_ot.gpkg")
+
+    gdal.TileIndex(index_filename, four_tiles[0], options="-ot UInt16")
+
+    ds = ogr.Open(index_filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetMetadataItem("DATA_TYPE") == "UInt16"

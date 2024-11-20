@@ -104,7 +104,10 @@ if (NOT GDAL_AUTOLOAD_PLUGINS)
     PROPERTY COMPILE_DEFINITIONS GDAL_NO_AUTOLOAD)
 endif ()
 
-if (HAVE_SSSE3_AT_COMPILE_TIME)
+if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
+  target_compile_definitions(gcore PRIVATE -DHAVE_SSSE3_AT_COMPILE_TIME -DUSE_NEON_OPTIMIZATIONS)
+  target_sources(gcore PRIVATE rasterio_ssse3.cpp)
+elseif (HAVE_SSSE3_AT_COMPILE_TIME)
   target_compile_definitions(gcore PRIVATE -DHAVE_SSSE3_AT_COMPILE_TIME)
   target_sources(gcore PRIVATE rasterio_ssse3.cpp)
   set_property(
@@ -209,6 +212,8 @@ target_public_header(
   gdalsubdatasetinfo.h
   gdal_typetraits.h
   gdal_adbc.h
+  gdal_minmax_element.hpp
+  gdal_priv_templates.hpp  # Required by gdal_minmax_element.hpp
 )
 
 set(GDAL_DATA_FILES

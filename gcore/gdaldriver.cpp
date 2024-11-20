@@ -195,8 +195,8 @@ GDALDataset *GDALDriver::Create(const char *pszFilename, int nXSize, int nYSize,
     /*      Does this format support creation.                              */
     /* -------------------------------------------------------------------- */
     pfnCreate = GetCreateCallback();
-    if (pfnCreate == nullptr && pfnCreateEx == nullptr &&
-        pfnCreateVectorOnly == nullptr)
+    if (CPL_UNLIKELY(pfnCreate == nullptr && pfnCreateEx == nullptr &&
+                     pfnCreateVectorOnly == nullptr))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GDALDriver::Create() ... no create method implemented"
@@ -207,7 +207,7 @@ GDALDataset *GDALDriver::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Do some rudimentary argument checking.                          */
     /* -------------------------------------------------------------------- */
-    if (nBands < 0)
+    if (CPL_UNLIKELY(nBands < 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create dataset with %d bands is illegal,"
@@ -216,14 +216,22 @@ GDALDataset *GDALDriver::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    if (GetMetadataItem(GDAL_DCAP_RASTER) != nullptr &&
-        GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr &&
-        (nXSize < 1 || nYSize < 1))
+    if (CPL_UNLIKELY(GetMetadataItem(GDAL_DCAP_RASTER) != nullptr &&
+                     GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr &&
+                     (nXSize < 1 || nYSize < 1)))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to create %dx%d dataset is illegal,"
                  "sizes must be larger than zero.",
                  nXSize, nYSize);
+        return nullptr;
+    }
+
+    if (CPL_UNLIKELY(nBands != 0 &&
+                     (eType == GDT_Unknown || eType == GDT_TypeCount)))
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Illegal GDT_Unknown/GDT_TypeCount argument");
         return nullptr;
     }
 

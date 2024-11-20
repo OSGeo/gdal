@@ -20,8 +20,6 @@
 # SPDX-License-Identifier: MIT
 # ******************************************************************************
 
-from __future__ import division
-
 import contextlib
 import glob
 import json
@@ -129,7 +127,7 @@ class UnsupportedTileMatrixSet(Exception):
     pass
 
 
-class TileMatrixSet(object):
+class TileMatrixSet:
     def __init__(self) -> None:
         self.identifier = None
         self.srs = None
@@ -328,7 +326,7 @@ Class is available under the open-source GDAL license (www.gdal.org).
 MAXZOOMLEVEL = 32
 
 
-class GlobalMercator(object):
+class GlobalMercator:
     r"""
     TMS Global Mercator Profile
     ---------------------------
@@ -547,7 +545,7 @@ class GlobalMercator(object):
         return quadKey
 
 
-class GlobalGeodetic(object):
+class GlobalGeodetic:
     r"""
     TMS Global Geodetic Profile
     ---------------------------
@@ -644,7 +642,7 @@ class GlobalGeodetic(object):
         return (b[1], b[0], b[3], b[2])
 
 
-class Zoomify(object):
+class Zoomify:
     """
     Tiles compatible with the Zoomify viewer
     ----------------------------------------
@@ -2126,7 +2124,7 @@ def options_post_processing(
     return options
 
 
-class TileDetail(object):
+class TileDetail:
     tx = 0
     ty = 0
     tz = 0
@@ -2145,9 +2143,6 @@ class TileDetail(object):
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
 
-    def __unicode__(self):
-        return "TileDetail %s\n%s\n%s\n" % (self.tx, self.ty, self.tz)
-
     def __str__(self):
         return "TileDetail %s\n%s\n%s\n" % (self.tx, self.ty, self.tz)
 
@@ -2155,7 +2150,7 @@ class TileDetail(object):
         return "TileDetail %s\n%s\n%s\n" % (self.tx, self.ty, self.tz)
 
 
-class TileJobInfo(object):
+class TileJobInfo:
     """
     Plain object to hold tile job configuration for a dataset
     """
@@ -2196,7 +2191,7 @@ class Gdal2TilesError(Exception):
     pass
 
 
-class GDAL2Tiles(object):
+class GDAL2Tiles:
     def __init__(self, input_file: str, output_folder: str, options: Options) -> None:
         """Constructor function - initialization"""
         self.out_drv = None
@@ -4463,7 +4458,7 @@ def worker_tile_details(
     return tile_job_info, tile_details
 
 
-class ProgressBar(object):
+class ProgressBar:
     def __init__(self, total_items: int, progress_cbk=gdal.TermProgress_nocb) -> None:
         self.total_items = total_items
         self.nb_items_done = 0
@@ -4632,7 +4627,7 @@ def multi_threaded_tiling(
     shutil.rmtree(os.path.dirname(conf.src_file))
 
 
-class DividedCache(object):
+class DividedCache:
     def __init__(self, nb_processes):
         self.nb_processes = nb_processes
 

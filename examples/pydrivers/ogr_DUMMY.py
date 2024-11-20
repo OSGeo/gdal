@@ -24,13 +24,13 @@ try:
     from gdal_python_driver import BaseDataset, BaseDriver, BaseLayer
 except ImportError:
     # To be able to run in standalone mode
-    class BaseDriver(object):
+    class BaseDriver:
         pass
 
-    class BaseDataset(object):
+    class BaseDataset:
         pass
 
-    class BaseLayer(object):
+    class BaseLayer:
         pass
 
 

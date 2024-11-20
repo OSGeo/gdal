@@ -1299,6 +1299,8 @@ bool OGROpenFileGDBDataSource::Create(const char *pszName)
         return false;
     }
 
+    CPL_IGNORE_RET_VAL(OFGDBGenerateUUID(/* bInit = */ true));
+
     m_osDirName = pszName;
     eAccess = GA_Update;
 
