@@ -454,9 +454,6 @@ target_include_directories(
 if (MSVC)
   target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE gcore/Version.rc)
   source_group("Resource Files" FILES gcore/Version.rc)
-  if (CMAKE_CL_64)
-    set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
-  endif ()
 endif ()
 
 get_property(_plugins GLOBAL PROPERTY PLUGIN_MODULES)
