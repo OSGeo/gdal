@@ -975,8 +975,8 @@ class OGRDXFWriterDS final : public GDALDataset
                            CSLConstList papszOptions) override;
 
     bool CheckEntityID(const char *pszEntityID);
-    bool WriteEntityID(VSILFILE *fp, long &nAssignedFID,
-                       long nPreferredFID = OGRNullFID);
+    bool WriteEntityID(VSILFILE *fp, unsigned int &nAssignedFID,
+                       GIntBig nPreferredFID = OGRNullFID);
 
     void UpdateExtent(OGREnvelope *psEnvelope);
 };
