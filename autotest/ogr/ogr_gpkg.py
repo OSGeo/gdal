@@ -10626,6 +10626,21 @@ def test_ogr_gpkg_ST_Length_on_ellipsoid(tmp_vsimem):
 
 
 ###############################################################################
+# Test that CreateCopy() works on a vector dataset
+# Test fix for https://github.com/OSGeo/gdal/issues/11282
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.usefixtures("tpoly")
+def test_ogr_gpkg_CreateCopy(gpkg_ds, tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "test_ogr_gpkg_CreateCopy.gpkg"
+
+    out_ds = gdal.GetDriverByName("GPKG").CreateCopy(tmpfilename, gpkg_ds)
+    assert out_ds.GetLayerCount() == 1
+
+
+###############################################################################
 # Test LAUNDER=YES layer creation option
 
 
