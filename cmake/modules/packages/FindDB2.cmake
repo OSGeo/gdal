@@ -46,7 +46,7 @@ if(UNIX)
         endforeach(db2_libdir)
     endforeach(db2_install_path)
 elseif(WIN32)
-    if (CMAKE_CL_64) # 64-bit build, DB2 64-bit installed
+    if (CMAKE_SIZEOF_VOID_P EQUAL "8") # 64-bit build, DB2 64-bit installed
         set(DB2_FIND_INCLUDE_PATHS $ENV{ProgramW6432}/IBM/SQLLIB/include)
         set(DB2_FIND_LIB_PATHS     $ENV{ProgramW6432}/IBM/SQLLIB/lib)
     else() # 32-bit build, DB2 64-bit or DB2 32-bit installed
