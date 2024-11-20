@@ -196,6 +196,10 @@ if (MINGW AND BUILD_SHARED_LIBS)
     set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES SUFFIX "-${GDAL_SOVERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif ()
 
+# Some of the types in our public headers are dependent on whether GDAL_DEBUG
+# is defined or not
+target_compile_definitions(${GDAL_LIB_TARGET_NAME} PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+
 # Install properties
 if (GDAL_ENABLE_MACOSX_FRAMEWORK)
   set(FRAMEWORK_VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR})
