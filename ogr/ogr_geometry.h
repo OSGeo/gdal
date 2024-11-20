@@ -35,7 +35,7 @@
 /*! @cond Doxygen_Suppress */
 #ifndef DEFINEH_OGRGeometryH
 #define DEFINEH_OGRGeometryH
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRGeometryHS *OGRGeometryH;
 #else
 typedef void *OGRGeometryH;

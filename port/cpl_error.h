@@ -179,7 +179,7 @@ void CPL_DLL CPLDebugProgress(const char *, CPL_FORMAT_STRING(const char *),
                               ...) CPL_PRINT_FUNC_FORMAT(2, 3);
 #endif
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 /** Same as CPLDebug(), but expands to nothing for non-DEBUG builds.
  * @since GDAL 3.1
  */
