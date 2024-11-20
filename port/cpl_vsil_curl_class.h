@@ -80,6 +80,7 @@ class FileProp
     std::string osRedirectURL{};
     bool bHasComputedFileSize = false;
     bool bIsDirectory = false;
+    bool bIsAzureFolder = false;
     int nMode = 0;  // st_mode member of struct stat
     bool bS3LikeRedirect = false;
     std::string ETag{};

@@ -1348,49 +1348,6 @@ retry:
         if (sWriteFuncHeaderData.pBuffer != nullptr &&
             (response_code == 200 || response_code == 206))
         {
-            const char *pzETag =
-                strstr(sWriteFuncHeaderData.pBuffer, "ETag: \"");
-            if (pzETag)
-            {
-                pzETag += strlen("ETag: \"");
-                const char *pszEndOfETag = strchr(pzETag, '"');
-                if (pszEndOfETag)
-                {
-                    oFileProp.ETag.assign(pzETag, pszEndOfETag - pzETag);
-                }
-            }
-
-            // Azure Data Lake Storage
-            const char *pszPermissions =
-                strstr(sWriteFuncHeaderData.pBuffer, "x-ms-permissions: ");
-            if (pszPermissions)
-            {
-                pszPermissions += strlen("x-ms-permissions: ");
-                const char *pszEOL = strstr(pszPermissions, "\r\n");
-                if (pszEOL)
-                {
-                    bool bIsDir =
-                        strstr(sWriteFuncHeaderData.pBuffer,
-                               "x-ms-resource-type: directory\r\n") != nullptr;
-                    bool bIsFile =
-                        strstr(sWriteFuncHeaderData.pBuffer,
-                               "x-ms-resource-type: file\r\n") != nullptr;
-                    if (bIsDir || bIsFile)
-                    {
-                        oFileProp.bIsDirectory = bIsDir;
-                        std::string osPermissions;
-                        osPermissions.assign(pszPermissions,
-                                             pszEOL - pszPermissions);
-                        if (bIsDir)
-                            oFileProp.nMode = S_IFDIR;
-                        else
-                            oFileProp.nMode = S_IFREG;
-                        oFileProp.nMode |=
-                            VSICurlParseUnixPermissions(osPermissions.c_str());
-                    }
-                }
-            }
-
             {
                 char **papszHeaders =
                     CSLTokenizeString2(sWriteFuncHeaderData.pBuffer, "\r\n", 0);
@@ -1411,6 +1368,44 @@ retry:
                                 "CPL_VSIL_CURL_HONOR_CACHE_CONTROL", "YES")))
                         {
                             m_bCached = false;
+                        }
+
+                        else if (EQUAL(pszKey, "ETag"))
+                        {
+                            std::string osValue(pszValue);
+                            if (osValue.size() >= 2 && osValue.front() == '"' &&
+                                osValue.back() == '"')
+                                osValue = osValue.substr(1, osValue.size() - 2);
+                            oFileProp.ETag = osValue;
+                        }
+
+                        // Azure Data Lake Storage
+                        else if (EQUAL(pszKey, "x-ms-resource-type"))
+                        {
+                            if (EQUAL(pszValue, "file"))
+                            {
+                                oFileProp.nMode |= S_IFREG;
+                            }
+                            else if (EQUAL(pszValue, "directory"))
+                            {
+                                oFileProp.bIsDirectory = true;
+                                oFileProp.nMode |= S_IFDIR;
+                            }
+                        }
+                        else if (EQUAL(pszKey, "x-ms-permissions"))
+                        {
+                            oFileProp.nMode |=
+                                VSICurlParseUnixPermissions(pszValue);
+                        }
+
+                        // https://overturemapswestus2.blob.core.windows.net/release/2024-11-13.0/theme%3Ddivisions/type%3Ddivision_area
+                        // returns a x-ms-meta-hdi_isfolder: true header
+                        else if (EQUAL(pszKey, "x-ms-meta-hdi_isfolder") &&
+                                 EQUAL(pszValue, "true"))
+                        {
+                            oFileProp.bIsAzureFolder = true;
+                            oFileProp.bIsDirectory = true;
+                            oFileProp.nMode |= S_IFDIR;
                         }
                     }
                     CPLFree(pszKey);
@@ -4892,6 +4887,37 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
     }
     if (!bListDir)
         return nullptr;
+
+    // Deal with publicly visible Azure directories.
+    if (STARTS_WITH(osURL.c_str(), "https://"))
+    {
+        const char *pszBlobCore =
+            strstr(osURL.c_str(), ".blob.core.windows.net/");
+        if (pszBlobCore)
+        {
+            FileProp cachedFileProp;
+            GetCachedFileProp(osURL.c_str(), cachedFileProp);
+            if (cachedFileProp.bIsAzureFolder)
+            {
+                const char *pszURLWithoutHTTPS =
+                    osURL.c_str() + strlen("https://");
+                const std::string osStorageAccount(
+                    pszURLWithoutHTTPS, pszBlobCore - pszURLWithoutHTTPS);
+                CPLConfigOptionSetter oSetter1("AZURE_NO_SIGN_REQUEST", "YES",
+                                               false);
+                CPLConfigOptionSetter oSetter2("AZURE_STORAGE_ACCOUNT",
+                                               osStorageAccount.c_str(), false);
+                const std::string osVSIAZ(std::string("/vsiaz/").append(
+                    pszBlobCore + strlen(".blob.core.windows.net/")));
+                char **papszFileList = VSIReadDirEx(osVSIAZ.c_str(), nMaxFiles);
+                if (papszFileList)
+                {
+                    *pbGotFileList = true;
+                    return papszFileList;
+                }
+            }
+        }
+    }
 
     // HACK (optimization in fact) for MBTiles driver.
     if (strstr(pszDirname, ".tiles.mapbox.com") != nullptr)
