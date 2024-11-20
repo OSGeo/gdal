@@ -892,36 +892,97 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
 
     const OGRFeatureDefn *poLayerDefn = m_poLayer->GetLayerDefn();
 
-    // Is this a https://stac-utils.github.io/stac-geoparquet/latest/spec/stac-geoparquet-spec ?
-    const bool bIsStacGeoParquet =
-        poLayerDefn->GetFieldIndex("assets.image.href") >= 0;
-
-    const char *pszLocationFieldName = GetOption(MD_LOCATION_FIELD);
-    if (!pszLocationFieldName)
+    std::string osLocationFieldName;
     {
-        if (bIsStacGeoParquet)
+        const char *pszLocationFieldName = GetOption(MD_LOCATION_FIELD);
+        if (pszLocationFieldName)
         {
-            pszLocationFieldName = "assets.image.href";
+            osLocationFieldName = pszLocationFieldName;
         }
         else
         {
-            constexpr const char *DEFAULT_LOCATION_FIELD_NAME = "location";
-            pszLocationFieldName = DEFAULT_LOCATION_FIELD_NAME;
+            // Is this a https://stac-utils.github.io/stac-geoparquet/latest/spec/stac-geoparquet-spec ?
+            if (poLayerDefn->GetFieldIndex("assets.data.href") >= 0)
+            {
+                osLocationFieldName = "assets.data.href";
+                CPLDebug("GTI", "Using %s as location field",
+                         osLocationFieldName.c_str());
+            }
+            else if (poLayerDefn->GetFieldIndex("assets.image.href") >= 0)
+            {
+                osLocationFieldName = "assets.image.href";
+                CPLDebug("GTI", "Using %s as location field",
+                         osLocationFieldName.c_str());
+            }
+            else if (poLayerDefn->GetFieldIndex("stac_version") >= 0)
+            {
+                const int nFieldCount = poLayerDefn->GetFieldCount();
+                // Look for "assets.xxxxx.href" fields
+                int nAssetCount = 0;
+                for (int i = 0; i < nFieldCount; ++i)
+                {
+                    const auto poFDefn = poLayerDefn->GetFieldDefn(i);
+                    const char *pszFieldName = poFDefn->GetNameRef();
+                    if (STARTS_WITH(pszFieldName, "assets.") &&
+                        EQUAL(pszFieldName + strlen(pszFieldName) -
+                                  strlen(".href"),
+                              ".href") &&
+                        // Assets with "metadata" in them are very much likely
+                        // not rasters... We could potentially confirm that by
+                        // inspecting the value of the assets.XXX.type or
+                        // assets.XXX.roles fields of one feature
+                        !strstr(pszFieldName, "metadata"))
+                    {
+                        ++nAssetCount;
+                        if (!osLocationFieldName.empty())
+                        {
+                            osLocationFieldName += ", ";
+                        }
+                        osLocationFieldName += pszFieldName;
+                    }
+                }
+                if (nAssetCount > 1)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Several potential STAC assets. Please select one "
+                             "among %s with the LOCATION_FIELD open option",
+                             osLocationFieldName.c_str());
+                    return false;
+                }
+                else if (nAssetCount == 0)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "File has stac_version property but lacks assets");
+                    return false;
+                }
+            }
+            else
+            {
+                constexpr const char *DEFAULT_LOCATION_FIELD_NAME = "location";
+                osLocationFieldName = DEFAULT_LOCATION_FIELD_NAME;
+            }
         }
     }
 
-    m_nLocationFieldIndex = poLayerDefn->GetFieldIndex(pszLocationFieldName);
+    const bool bIsStacGeoParquet =
+        STARTS_WITH(osLocationFieldName.c_str(), "assets.") &&
+        EQUAL(osLocationFieldName.c_str() + osLocationFieldName.size() -
+                  strlen(".href"),
+              ".href");
+
+    m_nLocationFieldIndex =
+        poLayerDefn->GetFieldIndex(osLocationFieldName.c_str());
     if (m_nLocationFieldIndex < 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find field %s",
-                 pszLocationFieldName);
+                 osLocationFieldName.c_str());
         return false;
     }
     if (poLayerDefn->GetFieldDefn(m_nLocationFieldIndex)->GetType() !=
         OFTString)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Field %s is not of type string",
-                 pszLocationFieldName);
+                 osLocationFieldName.c_str());
         return false;
     }
 
