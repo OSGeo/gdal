@@ -141,6 +141,7 @@ class CPL_DLL OGRFieldDefn
 
     void SetType(OGRFieldType eTypeIn);
     static const char *GetFieldTypeName(OGRFieldType);
+    static OGRFieldType GetFieldTypeByName(const char *);
 
     OGRFieldSubType GetSubType() const
     {
@@ -149,6 +150,7 @@ class CPL_DLL OGRFieldDefn
 
     void SetSubType(OGRFieldSubType eSubTypeIn);
     static const char *GetFieldSubTypeName(OGRFieldSubType);
+    static OGRFieldSubType GetFieldSubTypeByName(const char *);
 
     OGRJustification GetJustify() const
     {
