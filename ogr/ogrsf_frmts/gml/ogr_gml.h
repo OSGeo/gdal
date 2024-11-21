@@ -169,8 +169,8 @@ class OGRGMLDataSource final : public GDALDataset
 
     void WriteTopElements();
 
-    // Analyze the SCHEMA open options and apply changes to the GML reader, return false in case of a critical error
-    bool DealWithSchemaOpenOption(const GDALOpenInfo *poOpenInfo);
+    // Analyze the OGR_SCHEMA open options and apply changes to the GML reader, return false in case of a critical error
+    bool DealWithOgrSchemaOpenOption(const GDALOpenInfo *poOpenInfo);
 
     CPL_DISALLOW_COPY_ASSIGN(OGRGMLDataSource)
 

@@ -33,6 +33,7 @@
 #include "gmlregistry.h"
 #include "gmlutils.h"
 #include "ogr_p.h"
+#include "ogr_schema_override.h"
 #include "parsexsd.h"
 #include "../mem/ogr_mem.h"
 
@@ -1305,10 +1306,12 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         eReadMode = SEQUENTIAL_LAYERS;
     }
 
-    if (!DealWithSchemaOpenOption(poOpenInfo))
+    if (!DealWithOgrSchemaOpenOption(poOpenInfo))
     {
         return false;
     }
+
+    // TODO: should we overwrite the saved schema if OGR_SCHEMA open options was set?
 
     // Save the schema file if possible.  Don't make a fuss if we
     // can't.  It could be read-only directory or something.
@@ -1760,7 +1763,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
     for (int iField = 0; iField < poClass->GetPropertyCount(); iField++)
     {
         GMLPropertyDefn *poProperty = poClass->GetProperty(iField);
-        OGRFieldSubType eSubType = OFSTNone;
+        OGRFieldSubType eSubType = poProperty->GetSubType();
         const OGRFieldType eFType =
             GML_GetOGRFieldType(poProperty->GetType(), eSubType);
         OGRFieldDefn oField(poProperty->GetName(), eFType);
@@ -2010,199 +2013,117 @@ void OGRGMLDataSource::WriteTopElements()
 }
 
 /************************************************************************/
-/*                           DealWithSchemaOpenOption()                              */
+/*                 DealWithOgrSchemaOpenOption()                        */
 /************************************************************************/
 
-bool OGRGMLDataSource::DealWithSchemaOpenOption(const GDALOpenInfo *poOpenInfo)
+bool OGRGMLDataSource::DealWithOgrSchemaOpenOption(
+    const GDALOpenInfo *poOpenInfo)
 {
 
     std::string osFieldsSchemaOverrideParam =
-        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "SCHEMA", "");
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "OGR_SCHEMA", "");
 
     if (!osFieldsSchemaOverrideParam.empty())
     {
 
-        std::string osFieldsSchemaOverride;
-        bool bFieldsSchemaOverrideIsFilePath{false};
-
-        // Try to load the content of the file
-        GByte *pabyRet = nullptr;
-        if (VSIIngestFile(nullptr, osFieldsSchemaOverrideParam.c_str(),
-                          &pabyRet, nullptr, -1) == TRUE)
+        OGRSchemaOverride osSchemaOverride;
+        if (!osSchemaOverride.LoadFromJSON(osFieldsSchemaOverrideParam) ||
+            !osSchemaOverride.IsValid())
         {
-            bFieldsSchemaOverrideIsFilePath = true;
-            osFieldsSchemaOverride =
-                std::string(reinterpret_cast<char *>(pabyRet));
-            VSIFree(pabyRet);
+            return false;
         }
 
-        if (!bFieldsSchemaOverrideIsFilePath)
+        const auto oLayerOverrides = osSchemaOverride.GetLayerOverrides();
+        for (const auto &oLayer : oLayerOverrides)
         {
-            osFieldsSchemaOverride = osFieldsSchemaOverrideParam;
-        }
+            const auto oLayerName = oLayer.first;
+            const auto oLayerFieldOverride = oLayer.second;
+            const bool bIsFullOverride{oLayerFieldOverride.IsFullOverride()};
+            std::vector<GMLPropertyDefn *> aoProperties;
 
-        // Override field types with the ones specified in the schema.
-        if (!osFieldsSchemaOverride.empty())
-        {
-            const int layerCount{poReader->GetClassCount()};
-            std::vector<std::string> aosLayerNames;
-            for (int i = 0; i < layerCount; ++i)
+            CPLDebug("GML", "Applying schema override for layer %s",
+                     oLayerName.c_str());
+
+            // Fail if the layer name does not exist
+            const auto oClass = poReader->GetClass(oLayerName.c_str());
+            if (oClass == nullptr)
             {
-                aosLayerNames.push_back(poReader->GetClass(i)->GetName());
-            }
-
-            // Parse the schema to get the field types for each layer and field
-            // name.
-            // NOTE: this will be moved to CPL or other utility class in the future.
-
-            const auto parseFields = [](const CPLJSONArray &oFields)
-                -> std::map<std::string, OGRFieldType>
-            {
-                std::map<std::string, OGRFieldType> oMapFieldTypes;
-                for (const auto &oField : oFields)
-                {
-                    const auto oName = oField.GetString("name");
-                    const auto oType =
-                        CPLString(oField.GetString("type")).tolower();
-                    if (!oName.empty() && !oType.empty())
-                    {
-                        OGRFieldType eType = OFTString;
-                        if (oType == "string")
-                        {
-                            eType = OFTString;
-                        }
-                        else if (oType == "integer")
-                        {
-                            eType = OFTInteger;
-                        }
-                        else if (oType == "real")
-                        {
-                            eType = OFTReal;
-                        }
-                        else if (oType == "date")
-                        {
-                            eType = OFTDate;
-                        }
-                        else if (oType == "datetime")
-                        {
-                            eType = OFTDateTime;
-                        }
-                        else if (oType == "time")
-                        {
-                            eType = OFTTime;
-                        }
-                        // TODO: other supported?
-                        else
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Unsupported field type: %s for field %s",
-                                     oType.c_str(), oName.c_str());
-                            continue;
-                        }
-
-                        oMapFieldTypes[oName] = eType;
-                    }
-                }
-                return oMapFieldTypes;
-            };
-
-            std::map<std::string, std::map<std::string, OGRFieldType>>
-                oMapLayerFieldTypes;
-            CPLJSONDocument oSchemaDoc;
-            if (oSchemaDoc.LoadMemory(osFieldsSchemaOverride))
-            {
-                // If there is just a single layer, there is a chance that the schema
-                // contains only a "fields" object
-                const auto oFields = oSchemaDoc.GetRoot().GetArray("fields");
-                if (oFields.Size() > 0 && layerCount == 1)
-                {
-                    // Parse fields
-                    oMapLayerFieldTypes[aosLayerNames[0]] =
-                        parseFields(oFields);
-                }
-                else  // Full schema
-                {
-                    const auto aoLayers =
-                        oSchemaDoc.GetRoot().GetArray("layers");
-                    // Loop through layer names and get the field type for each field.
-                    for (const auto &oLayer : aoLayers)
-                    {
-                        if (oLayer.IsValid())
-                        {
-                            const auto oLayerFields = oLayer.GetArray("fields");
-                            const auto oLayerName = oLayer.GetString("name");
-                            if (oLayerFields.Size() > 0 && !oLayerName.empty())
-                            {
-                                // Parse fields
-                                oMapLayerFieldTypes[oLayerName] =
-                                    parseFields(oLayerFields);
-                            }
-                        }
-                    }
-                }
-
-                // Apply overrides
-                for (const auto &oLayer : oMapLayerFieldTypes)
-                {
-                    const auto oLayerName = oLayer.first;
-                    const auto oLayerFields = oLayer.second;
-                    CPLDebug("GML", "Applying schema override for layer %s",
-                             oLayerName.c_str());
-
-                    // Warn if the layer name does not exist
-                    if (std::find(aosLayerNames.begin(), aosLayerNames.end(),
-                                  oLayerName) == aosLayerNames.end())
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Layer %s not found", oLayerName.c_str());
-                        continue;
-                    }
-
-                    const auto oClass = poReader->GetClass(oLayerName.c_str());
-                    if (oClass == nullptr)
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Layer %s not found", oLayerName.c_str());
-                        continue;
-                    }
-
-                    // Store actual field names
-                    std::vector<std::string> oFieldNames;
-
-                    for (int j = 0; j < oClass->GetPropertyCount(); ++j)
-                    {
-                        oFieldNames.push_back(
-                            oClass->GetProperty(j)->GetName());
-                    }
-
-                    for (const auto &oField : oLayerFields)
-                    {
-                        const auto oProperty =
-                            oClass->GetProperty(oField.first.c_str());
-                        if (oProperty == nullptr)
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Field %s not found in layer %s",
-                                     oField.first.c_str(), oLayerName.c_str());
-                            continue;
-                        }
-
-                        // Map OGRFieldType to GMLPropertyType
-                        const GMLPropertyType type{
-                            GML_FromOGRFieldType(oField.second)};
-
-                        if (type != GMLPT_Untyped)
-                        {
-                            oProperty->SetType(type);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "SCHEMA info is invalid JSON");
+                CPLError(CE_Failure, CPLE_AppDefined, "Layer %s not found",
+                         oLayerName.c_str());
                 return false;
+            }
+
+            const auto oLayerFields = oLayerFieldOverride.GetFieldOverrides();
+            for (const auto &oFieldOverrideIt : oLayerFields)
+            {
+                const auto oProperty =
+                    oClass->GetProperty(oFieldOverrideIt.first.c_str());
+                if (oProperty == nullptr)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Field %s not found in layer %s",
+                             oFieldOverrideIt.first.c_str(),
+                             oLayerName.c_str());
+                    return false;
+                }
+
+                const auto oFieldOverride = oFieldOverrideIt.second;
+                if (oFieldOverride.GetFieldType().has_value())
+                {
+                    oProperty->SetType(GML_FromOGRFieldType(
+                        oFieldOverride.GetFieldType().value()));
+                }
+
+                if (oFieldOverride.GetFieldSubType().has_value())
+                {
+                    oProperty->SetSubType(
+                        oFieldOverride.GetFieldSubType().value());
+                }
+
+                if (oFieldOverride.GetFieldName().has_value())
+                {
+                    oProperty->SetName(
+                        oFieldOverride.GetFieldName().value().c_str());
+                }
+
+                if (oFieldOverride.GetFieldWidth().has_value())
+                {
+                    oProperty->SetWidth(oFieldOverride.GetFieldWidth().value());
+                }
+
+                if (oFieldOverride.GetFieldPrecision().has_value())
+                {
+                    oProperty->SetPrecision(
+                        oFieldOverride.GetFieldPrecision().value());
+                }
+
+                if (bIsFullOverride)
+                {
+                    aoProperties.push_back(oProperty);
+                }
+            }
+
+            // Remove fields not in the override
+            if (bIsFullOverride &&
+                aoProperties.size() !=
+                    static_cast<size_t>(oClass->GetPropertyCount()))
+            {
+                for (int j = 0; j < oClass->GetPropertyCount(); ++j)
+                {
+                    const auto oProperty = oClass->GetProperty(j);
+                    if (std::find(aoProperties.begin(), aoProperties.end(),
+                                  oProperty) == aoProperties.end())
+                    {
+                        delete (oProperty);
+                    }
+                }
+
+                oClass->StealProperties();
+
+                for (const auto &oProperty : aoProperties)
+                {
+                    oClass->AddProperty(oProperty);
+                }
             }
         }
     }
