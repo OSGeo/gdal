@@ -13,21 +13,9 @@ class ExampleRole(SphinxRole):
                 reftype="example",
                 refdomain="std",
                 reftarget=self.text,
+                refdoc=self.env.docname,
             )
         ], []
-
-    def run_bad(self):
-        # ref_node = pending_xref(reftarget=self.text)
-
-        if hasattr(self.env, "gdal_examples"):
-            examples = self.env.gdal_examples.get(self.env.docname, {})
-        else:
-            examples = {}
-
-        ref_node = nodes.reference("", "", refid=self.text)
-        ref_node.append(nodes.Text(f"Example {examples.get(self.text)}"))
-
-        return [ref_node], []
 
 
 class ExampleDirective(SphinxDirective):
@@ -83,7 +71,7 @@ def link_example_refs(app, env, node, contnode):
     example_name = node["reftarget"]
 
     if hasattr(env, "gdal_examples"):
-        examples = env.gdal_examples.get(env.docname, {})
+        examples = env.gdal_examples.get(node["refdoc"], {})
     else:
         examples = {}
 
