@@ -68,6 +68,7 @@ extensions = [
     "breathe",
     "configoptions",
     "driverproperties",
+    "cli_example",
     "source_file",
     "sphinx.ext.napoleon",
     "sphinxcontrib.jquery",
