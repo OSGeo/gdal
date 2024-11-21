@@ -1301,10 +1301,11 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     bool bHasMaskBand = false;
+    std::unique_ptr<GDALColorTable> poSingleColorTable;
     if ((!pszBandCount && apoXMLNodeBands.empty()) ||
         (!(pszResX && pszResY) && nCountXSizeYSizeGT == 0))
     {
-        CPLDebug("VRT", "Inspecting one feature due to missing metadata items");
+        CPLDebug("GTI", "Inspecting one feature due to missing metadata items");
         m_bScannedOneFeatureAtOpening = true;
 
         if (!poFeature)
@@ -1348,6 +1349,17 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             const double dfNoData = poTileBand->GetNoDataValue(&bHasNoData);
             aNoData.emplace_back(CPL_TO_BOOL(bHasNoData), dfNoData);
             aeColorInterp.push_back(poTileBand->GetColorInterpretation());
+            if (nTileBandCount == 1)
+            {
+                if (auto poCT = poTileBand->GetColorTable())
+                {
+                    // We assume that this will apply to all tiles...
+                    // TODO: detect if that it is really the case, and warn
+                    // if not, or do approximate palette matching like
+                    // done in GDALRasterBand::GetIndexColorTranslationTo()
+                    poSingleColorTable.reset(poCT->Clone());
+                }
+            }
 
             if (poTileBand->GetMaskFlags() == GMF_PER_DATASET)
                 bHasMaskBand = true;
@@ -2041,6 +2053,10 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
     }
+
+    if (nBandCount == 1 && poFirstBand && poSingleColorTable &&
+        !poFirstBand->m_poColorTable)
+        poFirstBand->m_poColorTable = std::move(poSingleColorTable);
 
     const char *pszMaskBand = GetOption(MD_MASK_BAND);
     if (pszMaskBand)
