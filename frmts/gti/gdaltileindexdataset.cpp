@@ -4693,6 +4693,7 @@ void GDALRegister_GTI()
         "  <Option name='SORT_FIELD' type='string'/>"
         "  <Option name='SORT_FIELD_ASC' type='boolean'/>"
         "  <Option name='FILTER' type='string'/>"
+        "  <Option name='SRS' type='string'/>"
         "  <Option name='RESX' type='float'/>"
         "  <Option name='RESY' type='float'/>"
         "  <Option name='MINX' type='float'/>"
