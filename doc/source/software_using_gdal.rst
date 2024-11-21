@@ -21,6 +21,7 @@ Free and open source
 - `GdalToTiles  <http://www.codeplex.com/gdal2tilescsharp>`_  C# Program (open source) for making image tiles for Google Earth with KML Superoverlay.
 - `GeoDa  <http://geodacenter.github.io/index.html>`_  Introduction to Spatial Data Analysis (spatial autocorrelation and spatial regression) (GPL)
 - `GeoDjango  <https://docs.djangoproject.com/en/dev/ref/contrib/gis/>`_  A framework for building geographic web applications.
+- `geofileops <https://geofileops.readthedocs.io/en/stable/>`_  Python toolbox to process large vector files faster.
 - `GeoKettle  <https://live.osgeo.org/archive/10.0/en/overview/geokettle_overview.html>`_  An open source spatial ETL (Extract, Transform and Load) tool (LGPL)
 - `GeoNotebook  <https://github.com/OpenGeoscience/geonotebook>`_  a Jupyter notebook extension for geospatial visualization and analysis. (Apache 2.0)
 - `GeoServer  <http://geoserver.org>`_  a open source software server written in Java that allows users to share and edit geospatial data.
