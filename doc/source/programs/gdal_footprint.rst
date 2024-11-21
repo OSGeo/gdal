@@ -219,9 +219,12 @@ This utility is also callable from C with :cpp:func:`GDALFootprint`.
 Examples
 --------
 
-- Compute the footprint of a GeoTIFF file as a GeoJSON file using WGS 84
-  longitude, latitude coordinates
+.. example::
+   :title: Compute the footprint of a GeoTIFF file as a GeoJSON file
 
-    ::
+   .. code-block:: bash
 
-        gdal_footprint -t_srs EPSG:4326 input.tif output.geojson
+      gdal_footprint -t_srs EPSG:4326 input.tif output.geojson
+
+   The footprint will be written using WGS84 longitude, latitude coordinates,
+   regardless of the spatial reference system used by the input raster.

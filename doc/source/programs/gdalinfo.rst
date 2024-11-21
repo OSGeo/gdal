@@ -181,16 +181,22 @@ This utility is also callable from C with :cpp:func:`GDALInfo`.
 
 .. versionadded:: 2.1
 
-Example
--------
+Examples
+--------
 
-.. command-output:: gdalinfo utmsmall.tif
-   :cwd: ../../../autotest/gcore/data
+.. example::
+   :title: Default output format
 
-For corner coordinates formatted as decimal degree instead of the above degree, minute, second, inspect the ``wgs84Extent`` member of gdalinfo -json:
+   .. command-output:: gdalinfo utmsmall.tif
+      :cwd: ../../../autotest/gcore/data
 
-Example of JSON output with ``gdalinfo -json utmsmall.tif``:
+.. example::
+   :title: JSON output
 
-.. program-output:: gdalinfo -json utmsmall.tif
-   :cwd: ../../../autotest/gcore/data
-   :language: json
+   For corner coordinates formatted as decimal degree instead of the above degree, minute, second, inspect the ``wgs84Extent`` member of ``gdalinfo -json``:
+
+   Example of JSON output with ``gdalinfo -json utmsmall.tif``:
+
+   .. program-output:: gdalinfo -json utmsmall.tif
+      :cwd: ../../../autotest/gcore/data
+      :language: json

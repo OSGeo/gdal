@@ -25,7 +25,7 @@ Synopsis
 Description
 -----------
 
-This utility will automatically mosaic a set of images.  All the images must
+This utility will automatically mosaic a set of images. All the images must
 be in the same coordinate system and have a matching number of bands, but
 they may be overlapping, and at different resolutions. In areas of overlap,
 the last image will be copied over earlier ones. Nodata/transparency values
@@ -112,68 +112,67 @@ target pixel in the resulting raster nor will it overwrite a valid pixel value.
 Examples
 --------
 
-Creating an image with the pixels in all bands initialized to 255
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. example::
+   :title: Creating an image with the pixels in all bands initialized to 255
 
-::
+   .. code-block:: bash
 
-    gdal_merge -init 255 -o out.tif in1.tif in2.tif
-
-
-Creating an RGB image that shows blue in pixels with no data
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The first two bands will be initialized to 0 and the third band will be
-initialized to 255.
-
-::
-
-    gdal_merge -init "0 0 255" -o out.tif in1.tif in2.tif
+      gdal_merge -init 255 -o out.tif in1.tif in2.tif
 
 
-Passing a large list of files to :program:`gdal_merge`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. example::
+   :title: Creating an RGB image that shows blue in pixels with no data
 
-A large list of files can be passed to :program:`gdal_merge` by
-listing them in a text file using:
+   .. code-block:: bash
 
-.. code-block:: bash
+      gdal_merge -init "0 0 255" -o out.tif in1.tif in2.tif
 
-   ls -1 *.tif > tiff_list.txt
-
-on Linux, or
-
-.. code-block:: doscon
-
-   dir /b /s *.tif > tiff_list.txt
-
-on Windows. The text file can then be passed to :program:`gdal_merge`
-using `--optfile`:
-
-::
-
-   gdal_merge -o mosaic.tif --optfile tiff_list.txt
-
-Creating an RGB image by merging 3 different greyscale bands
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Conduct "merging by stacking" with the :option:`-separate` flag. Given three
-greyscale files that cover the same area, you can run:
-
-.. code-block:: bash
-
-   gdal_merge -separate 1.tif 2.tif 3.tif -o rgb.tif
-
-This maps :file:`1.tif` to red, :file:`2.tif` to green and :file:`3.tif` to blue.
-
-Specifying overlap precedence
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The last image in the input line comes out on top of the finished image stack.
-You might also need to use :option:`-n` to note which value should not be
-copied into the destination image if it is not already defined as nodata.
+   The first two bands will be initialized to 0 and the third band will be
+   initialized to 255.
 
 
-.. code-block:: bash
+.. example::
+   :title: Passing a large list of files to :program:`gdal_merge`
 
-   gdal_merge -o merge.tif -n 0 image1.tif image2.tif image3.tif image4.tif
+   .. code-block:: bash
+
+      ls -1 *.tif > tiff_list.txt
+
+   A large list of files can be passed to :program:`gdal_merge` by
+   listing them in a text file using the command above on Linux, or:
+
+   .. code-block:: doscon
+
+      dir /b /s *.tif > tiff_list.txt
+
+   on Windows. The text file can then be passed to :program:`gdal_merge`
+   using `--optfile`:
+
+   .. code-block:: bash
+
+      gdal_merge -o mosaic.tif --optfile tiff_list.txt
+
+
+.. example::
+   :title: Creating an RGB image by merging 3 different greyscale bands
+
+   Conduct "merging by stacking" with the :option:`-separate` flag. Given three
+   greyscale files that cover the same area, you can run:
+
+   .. code-block:: bash
+
+      gdal_merge -separate 1.tif 2.tif 3.tif -o rgb.tif
+
+   This maps :file:`1.tif` to red, :file:`2.tif` to green and :file:`3.tif` to blue.
+
+
+.. example::
+   :title: Specifying overlap precedence
+
+   The last image in the input line comes out on top of the finished image stack.
+   You might also need to use :option:`-n` to note which value should not be
+   copied into the destination image if it is not already defined as nodata.
+
+   .. code-block:: bash
+
+      gdal_merge -o merge.tif -n 0 image1.tif image2.tif image3.tif image4.tif

@@ -158,7 +158,7 @@ resampling, and rescaling pixels in the process.
     offset to apply to the input raster values. In particular, ``src_min`` and
     ``src_max`` are not used to clip input values unless :option:`-exponent`
     is also specified.
-    Instead of being clipped, source values that are outside the range of ``src_min`` and ``src_max`` will be scaled to values outside the range of ``dst_min`` and ``dst_max``. 
+    Instead of being clipped, source values that are outside the range of ``src_min`` and ``src_max`` will be scaled to values outside the range of ``dst_min`` and ``dst_max``.
     If clipping without exponential scaling is desired,
     ``-exponent 1`` can be used.
     :option:`-scale` can be repeated several times (if specified only once,
@@ -446,28 +446,34 @@ This utility is also callable from C with :cpp:func:`GDALTranslate`.
 Examples
 --------
 
-::
+.. example::
+   :title: Creating a tiled GeoTIFF
 
-    gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
+   .. code-block:: bash
 
-
-To create a JPEG-compressed TIFF with internal mask from a RGBA dataset
-
-::
-
-    gdal_translate rgba.tif withmask.tif -b 1 -b 2 -b 3 -mask 4 -co COMPRESS=JPEG \
-      -co PHOTOMETRIC=YCBCR --config GDAL_TIFF_INTERNAL_MASK YES
+      gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
 
 
-To create a RGBA dataset from a RGB dataset with a mask
+.. example::
+   :title: Creating a JPEG-compressed TIFF with internal mask from a RGBA dataset
 
-::
+   .. code-block:: bash
 
-    gdal_translate withmask.tif rgba.tif -b 1 -b 2 -b 3 -b mask
+      gdal_translate rgba.tif withmask.tif -b 1 -b 2 -b 3 -mask 4 -co COMPRESS=JPEG \
+        -co PHOTOMETRIC=YCBCR --config GDAL_TIFF_INTERNAL_MASK YES
 
 
-Subsetting using :option:`-projwin` and :option:`-outsize`:
+.. example::
+   :title: Creating a RGBA dataset from a RGB dataset with a mask
 
-.. code-block:: bash
+   .. code-block:: bash
 
-   gdal_translate -projwin -20037500 10037500 0 0 -outsize 100 100 frmt_wms_googlemaps_tms.xml junk.png
+       gdal_translate withmask.tif rgba.tif -b 1 -b 2 -b 3 -b mask
+
+
+.. example::
+   :title: Subsetting using :option:`-projwin` and :option:`-outsize`
+
+   .. code-block:: bash
+
+      gdal_translate -projwin -20037500 10037500 0 0 -outsize 100 100 frmt_wms_googlemaps_tms.xml junk.png

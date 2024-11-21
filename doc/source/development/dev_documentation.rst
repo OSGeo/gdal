@@ -341,6 +341,46 @@ To reference a method or function::
   :cpp:func:`MyClass::MyMethod`
   :cpp:func:`MyFunction`
 
+
+Command-line program usage
+--------------------------
+
+To document a command-line tool, use the ``example`` directive.
+An example may have a title as well as an id that can be used to generate
+a cross-reference from the same document.
+
+.. code-block:: rst
+
+    .. example::
+       :title: Listing files
+       :id: basic-ls
+
+       Files can be listed as follows:
+
+       .. code-block:: bash
+
+          ls
+
+    The ``ls`` command is demonstrated in :example:`basic-ls`.
+
+If output of the command is to be included in the listing, the code language
+should be set to ``console``:
+
+.. code-block:: rst
+
+   .. code-block:: console
+
+   $ gdalinfo --version
+   GDAL 3.4.1, released 2021/12/27
+
+To run the command and collect its output when the documentation is built, use the ``command-output`` directive.
+
+.. code-block:: rst
+
+   .. command-output:: ogrinfo poly.shp
+      :cwd: ../../../autotest/ogr/data
+
+
 .. _config_option_syntax:
 
 Define and reference configuration options
