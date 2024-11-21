@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /en/stable/
+Disallow: /en/
+Sitemap: https://gdal.org/sitemap.xml
