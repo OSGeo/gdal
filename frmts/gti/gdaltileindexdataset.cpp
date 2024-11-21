@@ -1847,8 +1847,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     std::vector<std::string> aosDescriptions;
     if (bIsStacGeoParquet && poFeature)
     {
-        const int nEOBandsIdx =
-            poLayerDefn->GetFieldIndex("assets.image.eo:bands");
+        const int nEOBandsIdx = poLayerDefn->GetFieldIndex(
+            CPLSPrintf("assets.%s.eo:bands", osAssetName.c_str()));
         if (nEOBandsIdx >= 0 &&
             poLayerDefn->GetFieldDefn(nEOBandsIdx)->GetSubType() == OFSTJSON &&
             poFeature->IsFieldSet(nEOBandsIdx))
@@ -1863,23 +1863,17 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     int i = 0;
                     aosDescriptions.resize(nBandCount);
-                    static const std::map<std::string, GDALColorInterp>
-                        oMapCommonName = {
-                            {"red", GCI_RedBand},
-                            {"green", GCI_GreenBand},
-                            {"blue", GCI_BlueBand},
-                            {"alpha", GCI_AlphaBand},
-                        };
                     for (const auto &oObj : oArray)
                     {
                         if (oObj.GetType() == CPLJSONObject::Type::Object)
                         {
                             const auto osCommonName =
                                 oObj.GetString("common_name");
-                            const auto oIter =
-                                oMapCommonName.find(osCommonName);
-                            if (oIter != oMapCommonName.end())
-                                aeColorInterp[i] = oIter->second;
+                            const auto eInterp =
+                                GDALGetColorInterpFromSTACCommonName(
+                                    osCommonName.c_str());
+                            if (eInterp != GCI_Undefined)
+                                aeColorInterp[i] = eInterp;
 
                             const auto osName = oObj.GetString("name");
                             aosDescriptions[i] = osName;
