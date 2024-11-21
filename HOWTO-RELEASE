@@ -152,6 +152,11 @@ Process :
 
 15) Once the vote has positively completed,
 
+15.0) For a new feature release, update the STABLE_BRANCH repository variable
+
+    Go to https://github.com/OSGeo/GDAL/settings/variables/actions/STABLE_BRANCH
+    and update the value to be release/x.y
+
 15.1) Tag the release as final:
 
     git checkout v3.1.0RC1
