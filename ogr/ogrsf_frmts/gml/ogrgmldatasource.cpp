@@ -2026,6 +2026,13 @@ bool OGRGMLDataSource::DealWithOgrSchemaOpenOption(
     if (!osFieldsSchemaOverrideParam.empty())
     {
 
+        if (poOpenInfo->eAccess == GA_Update)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "OGR_SCHEMA open option not supported in update mode");
+            return false;
+        }
+
         OGRSchemaOverride osSchemaOverride;
         if (!osSchemaOverride.LoadFromJSON(osFieldsSchemaOverrideParam) ||
             !osSchemaOverride.IsValid())
