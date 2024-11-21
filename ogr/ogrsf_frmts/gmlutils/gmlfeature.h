@@ -63,6 +63,7 @@ class CPL_DLL GMLPropertyDefn
 {
     char *m_pszName = nullptr;
     GMLPropertyType m_eType = GMLPT_Untyped;
+    OGRFieldSubType m_eSubType = OFSTNone;
     int m_nWidth = 0;
     int m_nPrecision = 0;
     char *m_pszSrcElement = nullptr;
@@ -84,6 +85,12 @@ class CPL_DLL GMLPropertyDefn
         return m_pszName;
     }
 
+    void SetName(const char *pszName)
+    {
+        CPLFree(m_pszName);
+        m_pszName = CPLStrdup(pszName);
+    }
+
     GMLPropertyType GetType() const
     {
         return m_eType;
@@ -92,6 +99,16 @@ class CPL_DLL GMLPropertyDefn
     void SetType(GMLPropertyType eType)
     {
         m_eType = eType;
+    }
+
+    OGRFieldSubType GetSubType() const
+    {
+        return m_eSubType;
+    }
+
+    void SetSubType(OGRFieldSubType eSubType)
+    {
+        m_eSubType = eSubType;
     }
 
     void SetWidth(int nWidth)

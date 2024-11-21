@@ -1076,7 +1076,6 @@ OGRFieldType GML_GetOGRFieldType(GMLPropertyType eType,
                                  OGRFieldSubType &eSubType)
 {
     OGRFieldType eFType = OFTString;
-    eSubType = OFSTNone;
     if (eType == GMLPT_Untyped)
         eFType = OFTString;
     else if (eType == GMLPT_String)
