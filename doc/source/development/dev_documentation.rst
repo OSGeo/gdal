@@ -353,7 +353,7 @@ a cross-reference from the same document.
 
     .. example::
        :title: Listing files
-       :id: `basic-ls`
+       :id: basic-ls
 
        Files can be listed as follows:
 
