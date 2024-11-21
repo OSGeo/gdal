@@ -22,12 +22,12 @@ Free and open source
 - `GeoDa  <http://geodacenter.github.io/index.html>`_  Introduction to Spatial Data Analysis (spatial autocorrelation and spatial regression) (GPL)
 - `GeoDjango  <https://docs.djangoproject.com/en/dev/ref/contrib/gis/>`_  A framework for building geographic web applications.
 - `geofileops <https://geofileops.readthedocs.io/en/stable/>`_  Python toolbox to process large vector files faster.
-- `GeoKettle  <https://live.osgeo.org/archive/10.0/en/overview/geokettle_overview.html>`_  An open source spatial ETL (Extract, Transform and Load) tool (LGPL)
+- `GeoKettle  <https://live.osgeo.org/archive/10.5/en/overview/geokettle_overview.html>`_  An open source spatial ETL (Extract, Transform and Load) tool (LGPL)
 - `GeoNotebook  <https://github.com/OpenGeoscience/geonotebook>`_  a Jupyter notebook extension for geospatial visualization and analysis. (Apache 2.0)
-- `GeoServer  <http://geoserver.org>`_  a open source software server written in Java that allows users to share and edit geospatial data.
+- `GeoServer  <https://geoserver.org>`_  a open source software server written in Java that allows users to share and edit geospatial data.
 - `GMT (Generic Mapping Tools)  <http://gmt.soest.hawaii.edu>`_  an open source collection of tools for processing and displaying xy and xyz datasets.
-- `GRASS GIS  <http://grass.osgeo.org>`_  A raster/vector open source GIS that uses GDAL for raster/vector import and export (via r.in.gdal/r.out.gdal)
-- `gstat  <http://www.gstat.org>`_  a geostatistical modelling package.
+- `GRASS GIS  <https://grass.osgeo.org/>`_  A raster/vector open source GIS that uses GDAL for raster/vector import and export (via r.in.gdal/r.out.gdal)
+- `gstat  <https://www.gstat.org>`_  a geostatistical modelling package.
 - `GuidosToolbox  <https://forest.jrc.ec.europa.eu/en/activities/lpa/gtb/>`_  A multi-platform desktop application for generic image object analysis.
 - `gvSIG  <http://www.gvsig.com>`_  Desktop GIS Client.
 - `ILWIS  <http://www.itc.nl/ilwis>`_  Remote Sensing and GIS Desktop Package.
@@ -36,7 +36,7 @@ Free and open source
 - `Loader  <https://github.com/AstunTechnology/Loader>`_  A simple loader for geographic data in GML and KML that needs some preparation before loading via ogr2ogr.
 - `MapGuide  <http://mapguide.osgeo.org>`_  Open source web mapping server.
 - `Mapnik  <http://mapnik.org>`_  C++/ Python mapping toolkit
-- `MapServer  <http://mapserver.org/index.html>`_  A popular web mapping application with GDAL support.
+- `MapServer  <https://mapserver.org/>`_  A popular web mapping application with GDAL support.
 - `MapWindow  <http://www.mapwindow.org>`_  open source ActiveX control with GIS functionality.
 - `MultiSpec <https://github.com/larrybiehl/MultiSpec>`_ Application for interactively analyzing multispectral/hyperspectral image data.
 - `NASA Ames Stereo Pipeline  <https://github.com/NeoGeographyToolkit/StereoPipeline>`_  Software for creating terrain models and ortho images from planetary stereo images. (Apache 2.0)
@@ -52,17 +52,17 @@ Free and open source
 - `OpenSceneGraph  <http://www.openscenegraph.org>`_  3D rendering engine with `osgdem <http://www.openscenegraph.org/projects/osg/wiki/Support/UserGuides/osgdem>`_ and `osgEarth <http://wush.net/trac/osgearth/wiki/Downloads>`_ plugins.
 - `Opticks  <http://opticks.org>`_  an open source remote sensing application and development framework, with a GDAL plugin.
 - `Orfeo Toolbox (OTB)  <http://www.orfeo-toolbox.org>`_  a general remote sensing image processing library.
-- `OSSIM  <http://www.ossim.org>`_  Another geospatial viewing and analysis environment which uses GDAL as one of several plugins.
+- `OSSIM  <https://github.com/ossimlabs/ossim>`_  Another geospatial viewing and analysis environment which uses GDAL as one of several plugins.
 - `PDAL  <https://pdal.io>`_  Point Cloud Data Abstraction Library
 - `pktools  <http://pktools.nongnu.org/html/index.html>`_  open source (GPLv3) tools written in C++ for remote sensing image processing
 - `PNMapcalc  <http://pawel.netzel.pl/index.php?id=software#a_mapcalc>`_  A raster map calculator with C-like scripting language.
 - `PostGIS  <http://www.postgis.net>`_ spatial database extender for PostgreSQL: The raster loader and many of the raster SQL functions rely on GDAL.
 - `PostgreSQL OGR Foreign Data Wrapper <https://github.com/pramsey/pgsql-ogr-fdw>`_ Expose OGR layer as PostgreSQL foreign tables.
-- `QGIS <http://www.qgis.org>`_ A cross platform desktop GIS.
-- `R <http://www.r-project.org>`_ A free software environment for statistical computing and graphics, with bindings to GDAL via the rgdal package.
+- `QGIS <https://www.qgis.org>`_ A cross platform desktop GIS.
+- `R <https://www.r-project.org>`_ A free software environment for statistical computing and graphics, with bindings to GDAL via the rgdal package.
 - `Rasterio  <https://rasterio.readthedocs.io>`_  Python library and command line utilities to read and write GDAL rasters.
 - `Rasterix  <https://github.com/mogasw/rasterix/>`_  A cross platform open source utility to process raster data based on Qt and GDAL.
-- `SAGA GIS  <http://www.saga-gis.org/en/index.html>`_ A free geographic information system (GIS), with a special 'Application Programming Interface' (API) for geographic data processing.
+- `SAGA GIS  <https://saga-gis.sourceforge.io/en/index.html>`_ A free geographic information system (GIS), with a special 'Application Programming Interface' (API) for geographic data processing.
 - `SNAP  <http://step.esa.int/main/toolboxes/snap>`_  Sentinel Application Platform for Earth Observation processing and analysis.
 - `StarSpan  <https://github.com/Ecotrust/starspan>`_  raster/vector analysis.
 - `t-rex  <http://t-rex.tileserver.ch>`_  Vector tile server written in Rust.
@@ -77,45 +77,42 @@ Proprietary license / Other
 - `Cadcorp SIS: <http://www.cadcorp.com>`_ A Windows GIS with a GDAL and OGR plugins.
 - `Carmenta Engine  <http://www.carmenta.com>`_ (previously known as SpatialAce): A GIS Rapid Application Development environment
 - `CARTO <http://www.carto.com>`_ A cloud mapping platform to analyze and visualize geospatial data.
-- `Cartographica <http://www.macgis.com>`_ Macintosh GIS package.
 - `CatchmentSIM <https://csse.com.au/index.php/products/catchmentsim>`_  A Windows terrain analysis model for hydrologic applications.
 - `Daylon Leveller <https://www.daylongraphics.com/products/leveller.php>`_ A terrain/heightfield/bumpmap modeler
 - `Eonfusion <http://www.eonfusion.com>`_  Analysis and visualization of time-varying spatial datasets integrated via true data fusion.
-- `ERDAS ER Viewer  <https://www.hexagongeospatial.com/products/power-portfolio/other-producer-products/erdas-er-viewer>`_ Image viewer for very large JPEG 2000 and ECW files.
-- `ESRI ArcGIS 9.2+ <http://www.esri.com>`_  A popular GIS platform.
+- `ERDAS ER Viewer  <https://hexagon.com/products/other-geospatial-products>`_ Image viewer for very large JPEG 2000 and ECW files.
+- `ESRI ArcGIS Pro <http://www.esri.com>`_  A popular GIS platform.
 - `Eternix Blaze <http://www.eternix.co.il>`_ Advanced geo-spatial visualization application and SDK.
 - `FalconView  <http://www.falconview.org>`_  Windows-based GIS platform with roots in military mission planning, now available as a free GIS visualization and analysis package.
 - `flighttrack  <http://flighttrack.sourceforge.net>`_  GPS track viewing and downloading software for Mac.
 - `FME  <http://www.safe.com>`_  A GIS translator package includes a GDAL plugin.
-- `GenGIS  <http://kiwi.cs.dal.ca/GenGIS>`_  Software for geospatial analysis of genetic data.
+- `GenGIS  <hhttps://beikolab.cs.dal.ca/gengis/Main_Page>`_  Software for geospatial analysis of genetic data.
 - `Geographic Imager  <https://www.avenza.com/geographic-imager>`_  DEM / aerial / satellite image processing GIS plug-in for Adobe Photoshop, by Avenza Systems.
-- `GeoDMS  <http://www.objectvision.hosting.it-rex.nl/geodms>`_  A framework for building spatial calculation models.
+- `GeoDMS  <https://geodms.nl/>`_  A framework for building spatial calculation models.
 - `GeoFusion  <http://www.geofusion.com>`_  3D visualization.
-- `GeoView Pro  <https://apps.apple.com/lu/app/geoview-pro/id590559352?l=fr>`_  IOS mobile mapping application.
 - `Geoweb3d  <http://www.geoweb3d.com>`_  A 3D virtual globe that provides on-the-fly, game-quality visualization of GIS data.
 - `Google Earth  <http://earth.google.com>`_  A 3D world viewer.
-- `GPSeismic  <http://www.gpseismic.com>`_  A suite of applications for seismic survey.
-- `HydroDaVE Explorer  <http://www.hydrodave.com>`_  A web-enabled client that provides users an easy to use, secure, and reliable data management platform to efficiently manage, access, and analyze environmental data.
+- `HydroDaVE Explorer  <https://hydrodave-explorer.software.informer.com/>`_  A web-enabled client that provides users an easy to use, secure, and reliable data management platform to efficiently manage, access, and analyze environmental data.
 - `IDRISI  <http://www.idrisi.com>`_  A GIS and Image Processing Windows Desktop application. Uses GDAL to import/export/warp raster data.
 - `Infraworks  <https://www.autodesk.com/products/infraworks/overview>`_  a BIM software for infrastructure project design, part of the Autodesk suite.
 - `iShare  <https://www.astuntechnology.com/cloud-products/ishare/>`_  Web data integration and publishing platform by Astun Technology.
 - `Makai Voyager  <http://voyager.makai.com>`_  An advanced 3D/4D geospatial visualization platform.
-- `MapInfo Professional  <http://www.mapinfo.com/product/mapinfo-professional>`_  Desktop GIS and mapping application
+- `MapInfo Professional  <https://www.precisely.com/product/mapinfo-professional>`_  Desktop GIS and mapping application
 - `MapTiler  <http://www.maptiler.com>`_  Generator of tiles for interactive maps and overlays made from raster images and geodata.
-- `Maptitude Mapping Software <http://www.caliper.com/maptitude/mappingsoftware.htm>`_  Desktop GIS and business mapping application
+- `Maptitude Mapping Software <https://www.caliper.com/maptitude/mapping-software.htm>`_  Desktop GIS and business mapping application
 - `MicroImages TNT <http://www.microimages.com>`_  advanced software for geospatial analysis (Windows, Linux, Mac OS X and UNIX)
-- `Micromine  <http://www.micromine.com>`_  A mining software solution that uses GDAL for reading/writing various geospatial file formats.
+- `Micromine  <https://www.micromine.com>`_  A mining software solution that uses GDAL for reading/writing various geospatial file formats.
 - `Mirone  <http://joa-quim.pt/mirone/main.html>`_  Matlab based package for geospatial, oceanographic and geophysical analysis of grids
-- `Mygeodata Converter  <http://mygeodata.eu/apps/converter/index_EN.html>`_  Online converter of GDAL raster and OGR vector formats
+- `MyGeodata Cloud  <https://mygeodata.cloud/>`_  Online converter of GDAL raster and OGR vector formats
 - `OPALS  <https://opals.geo.tuwien.ac.at/html/stable/index.html>`_ Orientation and Processing of Airborne Laser Scanning Data
 - `Procura  <http://www.michellcomputing.co.uk/procura.html>`_ Landholding inspection system developed for the UK Homes and Communities Agency. GDAL is used for checking out background mapping.
 - `ScanMagic  <https://www.scanex.ru/en/software/vizualizatsiya-i-katalogizatsiya/scan-magic/>`_ Win32 application for visualization, analysis and processing of remote sensing data.
-- `Scalable Algorithmics (SCALGO)  <http://scalgo.com>`_  Software for efficiently constructing and performing computations on very large raster and TIN terrain models.
-- `Scenomics  <http://www.scenomics.com>`_  Software for building terrain databases uses GDAL for projection and data import/export.
-- `scenProc  <http://www.scenerydesign.org/scenproc>`_ scenProc: A tool to create scenery for Microsoft Flight Simulator and Lockheed Martin Prepar3D by processing G
-- `SeaView  <https://www.seaviewgis.com>`_  A 3D GIS package for geophysical and hydrographical data (side scan sonar, subbottom profiler, magnetometer, multibeam, etc.
+- `Scalable Algorithmics (SCALGO)  <https://scalgo.com>`_  Software for efficiently constructing and performing computations on very large raster and TIN terrain models.
+- `Scenomics  <https://www.scenomics.com>`_  Software for building terrain databases uses GDAL for projection and data import/export.
+- `scenProc  <http://www.scenerydesign.org/scenproc/>`_ scenProc: A tool to create scenery for Microsoft Flight Simulator and Lockheed Martin Prepar3D by processing G
+- `SeaView  <https://www.mogasw.com/>`_  A 3D GIS package for geophysical and hydrographical data (side scan sonar, subbottom profiler, magnetometer, multibeam, etc.
 - `SkylineGlobe  <http://www.skylineglobe.com>`_  The Skyline suite of interactive applications allows you to build, view, query and analyze customized, virtual 3D landscapes.
-- `SpacEyes3D  <http://www.spaceyes.com>`_  3D visualization software for cartographic data.
+- `SpacEyes3D  <https://spaceyes.com/>`_  3D visualization software for cartographic data.
 - `Spatial Manager  <http://www.spatialmanager.com>`_  A product suite designed designed to manage spatial data in a simple, fast and inexpensive way. Uses GDAL to import/export data.
 - `TacitView  <https://www.insitu.com/information-delivery/information-processing/tacitview>`_  An imagery visualization and exploitation package for military intelligence.
 - `TatukGIS  <http://www.tatukgis.com>`_  Desktop GIS mapping and data editing application.
