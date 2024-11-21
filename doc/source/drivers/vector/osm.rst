@@ -10,11 +10,11 @@ OSM - OpenStreetMap XML and PBF
 This driver reads OpenStreetMap files, in .osm (XML based) and .pbf
 (optimized binary) formats.
 
-Ths driver reconstructs point, line and polygon geometries from the OpenStreetMap
+The driver reconstructs point, line and polygon geometries from the OpenStreetMap
 base objects, which are nodes, ways and relations. Such operation can be very
 slow for large files. Consequently, except for small extracts of the
 OSM database (that is .pbf files of a few megabytes at most), using this driver
-for interactive reading is not appropriate. It is better used to import a OSM file
+for interactive reading is not appropriate. It is better used to import an OSM file
 into a proper GIS format such as GeoPackage.
 Even if the driver can theoretically deal with arbitrarily large OSM files,
 it is not recommended to use it to import the whole planet.
