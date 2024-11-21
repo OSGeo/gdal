@@ -644,6 +644,14 @@ The following open options are supported:
       Whether to use schema imports in XSD files so that
       the feature types corresponding to imported schema can be detected.
 
+-  .. oo:: OGR_SCHEMA
+      :choices: <filename>|<json string>
+      :since: 3.9.4
+
+      Secifies the schema to use for creating the layer. The schema can be
+      specified as a filename or as a JSON string.
+      This option is only available when opening a GML file for reading.
+
 .. note::
 
   When changing the value of most of the above options, it is recommended to
