@@ -1845,6 +1845,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     std::vector<std::string> aosDescriptions;
+    std::vector<double> adfCenterWavelength;
+    std::vector<double> adfFullWidthHalfMax;
     if (bIsStacGeoParquet && poFeature)
     {
         const int nEOBandsIdx = poLayerDefn->GetFieldIndex(
@@ -1863,6 +1865,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     int i = 0;
                     aosDescriptions.resize(nBandCount);
+                    adfCenterWavelength.resize(nBandCount);
+                    adfFullWidthHalfMax.resize(nBandCount);
                     for (const auto &oObj : oArray)
                     {
                         if (oObj.GetType() == CPLJSONObject::Type::Object)
@@ -1890,6 +1894,11 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                                         .append(osDescription)
                                         .append(")");
                             }
+
+                            adfCenterWavelength[i] =
+                                oObj.GetDouble("center_wavelength");
+                            adfFullWidthHalfMax[i] =
+                                oObj.GetDouble("full_width_half_max");
                         }
                         ++i;
                     }
@@ -2045,6 +2054,21 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                     std::make_unique<GDALDefaultRasterAttributeTable>();
                 poBand->m_poRAT->XMLInit(psRAT, "");
             }
+        }
+
+        if (static_cast<int>(adfCenterWavelength.size()) == nBandCount &&
+            adfCenterWavelength[i] != 0)
+        {
+            poBand->GDALRasterBand::SetMetadataItem(
+                "CENTRAL_WAVELENGTH_UM",
+                CPLSPrintf("%g", adfCenterWavelength[i]), "IMAGERY");
+        }
+
+        if (static_cast<int>(adfFullWidthHalfMax.size()) == nBandCount &&
+            adfFullWidthHalfMax[i] != 0)
+        {
+            poBand->GDALRasterBand::SetMetadataItem(
+                "FWHM_UM", CPLSPrintf("%g", adfFullWidthHalfMax[i]), "IMAGERY");
         }
     }
 
