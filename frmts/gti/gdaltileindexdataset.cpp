@@ -1847,6 +1847,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     std::vector<std::string> aosDescriptions;
     std::vector<double> adfCenterWavelength;
     std::vector<double> adfFullWidthHalfMax;
+    std::vector<double> adfScale;
+    std::vector<double> adfOffset;
     if (bIsStacGeoParquet && poFeature)
     {
         const int nEOBandsIdx = poLayerDefn->GetFieldIndex(
@@ -1899,6 +1901,43 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                                 oObj.GetDouble("center_wavelength");
                             adfFullWidthHalfMax[i] =
                                 oObj.GetDouble("full_width_half_max");
+                        }
+                        ++i;
+                    }
+                }
+            }
+        }
+
+        const int nRasterBandsIdx = poLayerDefn->GetFieldIndex(
+            CPLSPrintf("assets.%s.raster:bands", osAssetName.c_str()));
+        if (nRasterBandsIdx >= 0 &&
+            poLayerDefn->GetFieldDefn(nRasterBandsIdx)->GetSubType() ==
+                OFSTJSON &&
+            poFeature->IsFieldSet(nRasterBandsIdx))
+        {
+            const char *pszStr = poFeature->GetFieldAsString(nRasterBandsIdx);
+            CPLJSONDocument oDoc;
+            if (oDoc.LoadMemory(pszStr) &&
+                oDoc.GetRoot().GetType() == CPLJSONObject::Type::Array)
+            {
+                const auto oArray = oDoc.GetRoot().ToArray();
+                if (oArray.Size() == nBandCount)
+                {
+                    int i = 0;
+                    adfScale.resize(nBandCount,
+                                    std::numeric_limits<double>::quiet_NaN());
+                    adfOffset.resize(nBandCount,
+                                     std::numeric_limits<double>::quiet_NaN());
+                    for (const auto &oObj : oArray)
+                    {
+                        if (oObj.GetType() == CPLJSONObject::Type::Object)
+                        {
+                            adfScale[i] = oObj.GetDouble(
+                                "scale",
+                                std::numeric_limits<double>::quiet_NaN());
+                            adfOffset[i] = oObj.GetDouble(
+                                "offset",
+                                std::numeric_limits<double>::quiet_NaN());
                         }
                         ++i;
                     }
@@ -1984,6 +2023,11 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
+        if (static_cast<int>(adfScale.size()) == nBandCount &&
+            !std::isnan(adfScale[i]))
+        {
+            poBand->m_dfScale = adfScale[i];
+        }
         if (const char *pszScale =
                 GetOption(CPLSPrintf("BAND_%d_%s", i + 1, MD_BAND_SCALE)))
         {
@@ -1999,6 +2043,11 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
+        if (static_cast<int>(adfOffset.size()) == nBandCount &&
+            !std::isnan(adfOffset[i]))
+        {
+            poBand->m_dfOffset = adfOffset[i];
+        }
         if (const char *pszOffset =
                 GetOption(CPLSPrintf("BAND_%d_%s", i + 1, MD_BAND_OFFSET)))
         {
