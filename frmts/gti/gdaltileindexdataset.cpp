@@ -964,12 +964,6 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    const bool bIsStacGeoParquet =
-        STARTS_WITH(osLocationFieldName.c_str(), "assets.") &&
-        EQUAL(osLocationFieldName.c_str() + osLocationFieldName.size() -
-                  strlen(".href"),
-              ".href");
-
     m_nLocationFieldIndex =
         poLayerDefn->GetFieldIndex(osLocationFieldName.c_str());
     if (m_nLocationFieldIndex < 0)
@@ -1157,14 +1151,36 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     std::string osResX, osResY, osMinX, osMinY, osMaxX, osMaxY;
     int iProjEPSG = -1;
     int iProjTransform = -1;
+
+    const bool bIsStacGeoParquet =
+        STARTS_WITH(osLocationFieldName.c_str(), "assets.") &&
+        EQUAL(osLocationFieldName.c_str() + osLocationFieldName.size() -
+                  strlen(".href"),
+              ".href");
+    std::string osAssetName;
+    if (bIsStacGeoParquet)
+    {
+        osAssetName = osLocationFieldName.substr(
+            strlen("assets."),
+            osLocationFieldName.size() - strlen("assets.") - strlen(".href"));
+    }
     if (bIsStacGeoParquet && !pszSRS && !pszResX && !pszResY && !pszMinX &&
         !pszMinY && !pszMaxX && !pszMaxY &&
-        (iProjEPSG = poLayerDefn->GetFieldIndex("proj:epsg")) >= 0 &&
-        (iProjTransform = poLayerDefn->GetFieldIndex("proj:transform")) >= 0)
+        ((iProjEPSG = poLayerDefn->GetFieldIndex(
+              CPLSPrintf("assets.%s.proj:epsg", osAssetName.c_str()))) >= 0 ||
+         (iProjEPSG = poLayerDefn->GetFieldIndex("proj:epsg")) >= 0) &&
+        ((iProjTransform = poLayerDefn->GetFieldIndex(CPLSPrintf(
+              "assets.%s.proj:transform", osAssetName.c_str()))) >= 0 ||
+         (iProjTransform = poLayerDefn->GetFieldIndex("proj:transform")) >= 0))
     {
         poFeature.reset(m_poLayer->GetNextFeature());
+        const auto poProjTransformField =
+            poLayerDefn->GetFieldDefn(iProjTransform);
         if (poFeature && poFeature->IsFieldSet(iProjEPSG) &&
-            poFeature->IsFieldSet(iProjTransform))
+            poFeature->IsFieldSet(iProjTransform) &&
+            (poProjTransformField->GetType() == OFTRealList ||
+             poProjTransformField->GetType() == OFTIntegerList ||
+             poProjTransformField->GetType() == OFTInteger64List))
         {
             const int nEPSGCode = poFeature->GetFieldAsInteger(iProjEPSG);
             OGRSpatialReference oSTACSRS;
@@ -1173,17 +1189,47 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                 oSTACSRS.importFromEPSG(nEPSGCode) == OGRERR_NONE)
             {
                 int nTransformCount = 0;
-                const auto padfFeatureTransform =
-                    poFeature->GetFieldAsDoubleList(iProjTransform,
-                                                    &nTransformCount);
+                double adfGeoTransform[6] = {0, 0, 0, 0, 0, 0};
+                if (poProjTransformField->GetType() == OFTRealList)
+                {
+                    const auto padfFeatureTransform =
+                        poFeature->GetFieldAsDoubleList(iProjTransform,
+                                                        &nTransformCount);
+                    if (nTransformCount >= 6)
+                        memcpy(adfGeoTransform, padfFeatureTransform,
+                               6 * sizeof(double));
+                }
+                else if (poProjTransformField->GetType() == OFTInteger64List)
+                {
+                    const auto paFeatureTransform =
+                        poFeature->GetFieldAsInteger64List(iProjTransform,
+                                                           &nTransformCount);
+                    if (nTransformCount >= 6)
+                    {
+                        for (int i = 0; i < 6; ++i)
+                            adfGeoTransform[i] =
+                                static_cast<double>(paFeatureTransform[i]);
+                    }
+                }
+                else if (poProjTransformField->GetType() == OFTIntegerList)
+                {
+                    const auto paFeatureTransform =
+                        poFeature->GetFieldAsIntegerList(iProjTransform,
+                                                         &nTransformCount);
+                    if (nTransformCount >= 6)
+                    {
+                        for (int i = 0; i < 6; ++i)
+                            adfGeoTransform[i] = paFeatureTransform[i];
+                    }
+                }
                 OGREnvelope sEnvelope;
                 if (nTransformCount >= 6 && m_poLayer->GetSpatialRef() &&
                     m_poLayer->GetExtent(&sEnvelope, /* bForce = */ true) ==
                         OGRERR_NONE)
                 {
-                    const double dfResX = padfFeatureTransform[0];
+                    const double dfResX = adfGeoTransform[0];
                     osResX = CPLSPrintf("%.17g", dfResX);
-                    const double dfResY = std::fabs(padfFeatureTransform[4]);
+                    const double dfResY = std::fabs(adfGeoTransform[4]);
                     osResY = CPLSPrintf("%.17g", dfResY);
 
                     auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
@@ -1203,9 +1249,9 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                     {
                         constexpr double EPSILON = 1e-3;
                         const bool bTileAlignedOnRes =
-                            (fmod(std::fabs(padfFeatureTransform[3]), dfResX) <=
+                            (fmod(std::fabs(adfGeoTransform[3]), dfResX) <=
                                  EPSILON * dfResX &&
-                             fmod(std::fabs(padfFeatureTransform[5]), dfResY) <=
+                             fmod(std::fabs(adfGeoTransform[5]), dfResY) <=
                                  EPSILON * dfResY);
 
                         osMinX = CPLSPrintf(
