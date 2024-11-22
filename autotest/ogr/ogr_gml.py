@@ -4772,6 +4772,16 @@ def test_ogr_gml_force_opening(tmp_vsimem):
             ["fid", "dbl", "new_str"],
             "",
         ),
+        # Test width and precision override
+        (
+            [
+                r'OGR_SCHEMA={"layers": [{"name": "test_point", "fields": [{ "name": "int", "width": 7, "precision": 3 }]}]}'
+            ],
+            True,
+            [ogr.OFTString, ogr.OFTReal, ogr.OFTInteger, ogr.OFTString],
+            [],
+            "",
+        ),
     ],
 )
 def test_ogr_gml_type_override(
@@ -4858,6 +4868,11 @@ def test_ogr_gml_type_override(
                     except TypeError:
                         expected_str_type = expected_field_types[i]
                         assert feat.GetFieldDefnRef(i).GetType() == expected_str_type
+
+                # Test width and precision override
+                if len(open_options) > 0 and "precision" in open_options[0]:
+                    assert feat.GetFieldDefnRef(2).GetWidth() == 7
+                    assert feat.GetFieldDefnRef(2).GetPrecision() == 3
 
                 if expected_warning:
                     assert (

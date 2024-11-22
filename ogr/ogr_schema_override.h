@@ -49,6 +49,16 @@ class OGRFieldDefnOverride
         m_eSubType = eSubType;
     }
 
+    void SetFieldWidth(int nWidth)
+    {
+        m_nWidth = nWidth;
+    }
+
+    void SetFieldPrecision(int nPrecision)
+    {
+        m_nPrecision = nPrecision;
+    }
+
     std::optional<std::string> GetFieldName() const
     {
         return m_osName;
@@ -78,7 +88,8 @@ class OGRFieldDefnOverride
     bool IsValid() const
     {
         return m_osName.has_value() || m_eType.has_value() ||
-               m_eSubType.has_value();
+               m_eSubType.has_value() || m_nWidth.has_value() ||
+               m_nPrecision.has_value();
     }
 
   private:
@@ -236,6 +247,12 @@ class OGRSchemaOverride
                                 const auto osNewName =
                                     CPLString(oField.GetString("newName"))
                                         .tolower();
+                                const auto nWidth = oField.GetInteger(
+                                    "width",
+                                    std::numeric_limits<int>::quiet_NaN());
+                                const auto nPrecision = oField.GetInteger(
+                                    "precision",
+                                    std::numeric_limits<int>::quiet_NaN());
 
                                 if (!osNewName.empty())
                                 {
@@ -277,6 +294,17 @@ class OGRSchemaOverride
                                         return false;
                                     }
                                     oFieldOverride.SetFieldSubType(eSubType);
+                                }
+
+                                if (!std::isnan(nWidth))
+                                {
+                                    oFieldOverride.SetFieldWidth(nWidth);
+                                }
+
+                                if (!std::isnan(nPrecision))
+                                {
+                                    oFieldOverride.SetFieldPrecision(
+                                        nPrecision);
                                 }
 
                                 if (bSchemaFullOverride ||
