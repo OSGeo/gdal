@@ -617,6 +617,17 @@ Configuration Options
       geotransform has been found, and that geotransform is within the bounds
       -180,360 -90,90, if YES assume OGC:CRS84.
 
+-  .. config:: GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES
+      :choices: YES, NO
+      :default: NO
+      :since: 3.10.1
+
+      For a netCDF dataset stored on a remote file system (``/vsicurl/``, ``/vsis3/``),
+      getting the content of the ``NETCDF_DIM_{dim_name}_VALUES`` metadata item
+      can be a slow operation when the dimension is unlimited. It is thus disabled
+      by default for such remote files. By setting this configuration option to YES,
+      you force GDAL to get the content of such metadata items.
+
 VSI Virtual File System API support
 -----------------------------------
 
