@@ -214,3 +214,5 @@ bool OGRFieldDefnOverride::IsValid() const
            m_eSubType.has_value() || m_nWidth.has_value() ||
            m_nPrecision.has_value();
 }
+
+//! @endcond
