@@ -108,11 +108,6 @@ class OGRLayerSchemaOverride
     {
     }
 
-    OGRLayerSchemaOverride(const std::string &osLayerName)
-        : m_osLayerName(osLayerName), m_moFieldOverrides()
-    {
-    }
-
     void SetLayerName(const std::string &osLayerName)
     {
         m_osLayerName = osLayerName;
@@ -221,7 +216,8 @@ class OGRSchemaOverride
                         // Default schemaType is "Patch"
                         const auto bSchemaFullOverride =
                             CPLString(osSchemaType).tolower() == "full";
-                        OGRLayerSchemaOverride oLayerOverride(osLayerName);
+                        OGRLayerSchemaOverride oLayerOverride;
+                        oLayerOverride.SetLayerName(osLayerName);
                         oLayerOverride.SetFullOverride(bSchemaFullOverride);
 
                         if (oLayerFields.Size() > 0 && !osLayerName.empty())
