@@ -126,11 +126,12 @@ enum class AWSCredentialsSource
     WEB_IDENTITY,  // credentials from Web Identity Token
                    // See
     // https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
-    ASSUMED_ROLE  // credentials from an STS assumed role
-                  // See
+    ASSUMED_ROLE,  // credentials from an STS assumed role
+    // See
     // https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html
     // and
     // https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_request.html
+    SSO,  // credentials from Single-Sign On
 };
 
 class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
@@ -157,6 +158,11 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
         std::string &osAccessKeyId, std::string &osSessionToken,
         std::string &osRegion);
 
+    static bool GetOrRefreshTemporaryCredentialsForSSO(
+        bool bForceRefresh, std::string &osSecretAccessKey,
+        std::string &osAccessKeyId, std::string &osSessionToken,
+        std::string &osRegion);
+
     static bool GetConfigurationFromAssumeRoleWithWebIdentity(
         bool bForceRefresh, const std::string &osPathForOption,
         const std::string &osRoleArnIn,
@@ -177,7 +183,8 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
         std::string &osCredentials, std::string &osRoleArn,
         std::string &osSourceProfile, std::string &osExternalId,
         std::string &osMFASerial, std::string &osRoleSessionName,
-        std::string &osWebIdentityTokenFile);
+        std::string &osWebIdentityTokenFile, std::string &osSSOStartURL,
+        std::string &osSSOAccountID, std::string &osSSORoleName);
 
     static bool GetConfiguration(const std::string &osPathForOption,
                                  CSLConstList papszOptions,

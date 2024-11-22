@@ -629,8 +629,9 @@ Since GDAL 3.1, the :cpp:func:`VSIRmdirRecursive` operation is supported (using 
 
 The :config:`CPL_VSIS3_CREATE_DIR_OBJECT` configuration option can be set to NO to prevent the :cpp:func:`VSIMkdir` operation from creating an empty object with the name of the directory terminated with a slash directory. By default GDAL creates such object, so that empty directories can be modeled, but this may cause compatibility problems with applications that do not expect such empty objects.
 
-
 Starting with GDAL 3.5, profiles that use IAM role assumption (see https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html) are handled. The ``role_arn`` and ``source_profile`` keywords are required in such profiles. The optional ``external_id``, ``mfa_serial`` and ``role_session_name`` can be specified. ``credential_source`` is not supported currently.
+
+Support for AWS Single-Sign On (AWS IAM Identity Center) parameters in ``~/.aws/config`` and cached SSO files in ``~/.aws/sso/cache`` is implemented since GDAL 3.10.1.
 
 .. _vsis3_imds:
 
