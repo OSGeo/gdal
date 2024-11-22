@@ -649,8 +649,8 @@ The following open options are supported:
       :since: 3.9.4
 
       Partially or totally overrides the auto-detected schema to use for creating the layer.
-      The schema can be specified as a filename or as a JSON string.
-      This option is only available when opening a GML file for reading.
+      The overrides are defined as a JSON list of field definitions.
+      This can be a filename or a JSON string or a URL.
 
 .. note::
 
