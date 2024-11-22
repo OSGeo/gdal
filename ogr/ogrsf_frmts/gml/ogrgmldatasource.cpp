@@ -2073,16 +2073,19 @@ bool OGRGMLDataSource::DealWithOgrSchemaOpenOption(
                 }
 
                 const auto oFieldOverride = oFieldOverrideIt.second;
-                if (oFieldOverride.GetFieldType().has_value())
-                {
-                    oProperty->SetType(GML_FromOGRFieldType(
-                        oFieldOverride.GetFieldType().value()));
-                }
+
+                const OGRFieldSubType eSubType =
+                    oFieldOverride.GetFieldSubType().value_or(OFSTNone);
 
                 if (oFieldOverride.GetFieldSubType().has_value())
                 {
-                    oProperty->SetSubType(
-                        oFieldOverride.GetFieldSubType().value());
+                    oProperty->SetSubType(eSubType);
+                }
+
+                if (oFieldOverride.GetFieldType().has_value())
+                {
+                    oProperty->SetType(GML_FromOGRFieldType(
+                        oFieldOverride.GetFieldType().value(), eSubType));
                 }
 
                 if (oFieldOverride.GetFieldName().has_value())

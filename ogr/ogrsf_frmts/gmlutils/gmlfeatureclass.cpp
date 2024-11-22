@@ -1129,7 +1129,8 @@ OGRFieldType GML_GetOGRFieldType(GMLPropertyType eType,
 /*                       GML_FromOGRFieldType()                          */
 /************************************************************************/
 
-GMLPropertyType GML_FromOGRFieldType(OGRFieldType eType)
+GMLPropertyType GML_FromOGRFieldType(OGRFieldType eType,
+                                     OGRFieldSubType eSubType)
 {
     GMLPropertyType type{GMLPT_Untyped};
     switch (eType)
@@ -1138,8 +1139,15 @@ GMLPropertyType GML_FromOGRFieldType(OGRFieldType eType)
             type = GMLPT_String;
             break;
         case OFTInteger:
-            type = GMLPT_Integer;
+        {
+            if (eSubType == OFSTBoolean)
+                type = GMLPT_Boolean;
+            else if (eSubType == OFSTInt16)
+                type = GMLPT_Short;
+            else
+                type = GMLPT_Integer;
             break;
+        }
         case OFTReal:
             type = GMLPT_Real;
             break;

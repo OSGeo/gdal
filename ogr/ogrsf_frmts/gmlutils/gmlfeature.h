@@ -479,6 +479,7 @@ OGRFieldType CPL_DLL GML_GetOGRFieldType(GMLPropertyType eType,
                                          OGRFieldSubType &eSubType);
 
 //! Map OGRFieldType to GMLPropertyType
-GMLPropertyType CPL_DLL GML_FromOGRFieldType(OGRFieldType eType);
+GMLPropertyType CPL_DLL GML_FromOGRFieldType(OGRFieldType eType,
+                                             OGRFieldSubType eSubType);
 
 #endif

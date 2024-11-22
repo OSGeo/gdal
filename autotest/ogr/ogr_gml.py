@@ -4782,6 +4782,21 @@ def test_ogr_gml_force_opening(tmp_vsimem):
             [],
             "",
         ),
+        # Test boolean and short integer subtype
+        (
+            [
+                r'OGR_SCHEMA={"layers": [{"name": "test_point", "fields": [{ "name": "int", "subType": "Boolean" }, { "name": "dbl", "type": "Integer", "subType": "Int16" }]}]}'
+            ],
+            True,
+            [
+                ogr.OFTString,
+                (ogr.OFTInteger, ogr.OFSTInt16),
+                (ogr.OFTInteger, ogr.OFSTBoolean),
+                ogr.OFTString,
+            ],
+            ["fid", "dbl", "int", "str"],
+            "",
+        ),
     ],
 )
 def test_ogr_gml_type_override(
@@ -4858,16 +4873,12 @@ def test_ogr_gml_type_override(
                 # Check field types fid, dbl, int, str
                 for i in range(len(expected_field_names)):
                     try:
-                        expected_str_type, expected_str_subtype = expected_field_types[
-                            i
-                        ]
-                        assert feat.GetFieldDefnRef(i).GetType() == expected_str_type
-                        assert (
-                            feat.GetFieldDefnRef(i).GetSubType() == expected_str_subtype
-                        )
+                        expected_type, expected_subtype = expected_field_types[i]
+                        assert feat.GetFieldDefnRef(i).GetType() == expected_type
+                        assert feat.GetFieldDefnRef(i).GetSubType() == expected_subtype
                     except TypeError:
-                        expected_str_type = expected_field_types[i]
-                        assert feat.GetFieldDefnRef(i).GetType() == expected_str_type
+                        expected_type = expected_field_types[i]
+                        assert feat.GetFieldDefnRef(i).GetType() == expected_type
 
                 # Test width and precision override
                 if len(open_options) > 0 and "precision" in open_options[0]:
