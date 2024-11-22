@@ -19,6 +19,7 @@
 #include <string>
 #include <map>
 #include <cmath>
+#include <limits>
 #include <optional>
 #include <ogr_api.h>
 #include <ogr_feature.h>
