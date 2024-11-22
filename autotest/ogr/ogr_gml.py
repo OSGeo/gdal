@@ -4821,6 +4821,7 @@ def test_ogr_gml_type_override(
                 tmp_path / "test_point.gml",
                 gdal.OF_VECTOR | gdal.OF_READONLY,
                 open_options=open_options,
+                allowed_drivers=["GML"],
             )
             assert (
                 gdal.GetLastErrorMsg().find(expected_warning) != -1
@@ -4832,6 +4833,7 @@ def test_ogr_gml_type_override(
                 tmp_path / "test_point.gml",
                 gdal.OF_VECTOR | gdal.OF_READONLY,
                 open_options=open_options,
+                allowed_drivers=["GML"],
             ) as gml_ds:
 
                 assert gml_ds.GetLayerCount() == 1, "wrong number of layers"

@@ -1311,8 +1311,6 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         return false;
     }
 
-    // TODO: should we overwrite the saved schema if OGR_SCHEMA open options was set?
-
     // Save the schema file if possible.  Don't make a fuss if we
     // can't.  It could be read-only directory or something.
     const char *pszWriteGFS =
@@ -2026,10 +2024,11 @@ bool OGRGMLDataSource::DealWithOgrSchemaOpenOption(
     if (!osFieldsSchemaOverrideParam.empty())
     {
 
+        // GML driver does not support update at the moment so this will never happen
         if (poOpenInfo->eAccess == GA_Update)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "OGR_SCHEMA open option not supported in update mode");
+                     "OGR_SCHEMA open option is not supported in update mode.");
             return false;
         }
 

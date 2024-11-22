@@ -648,8 +648,8 @@ The following open options are supported:
       :choices: <filename>|<json string>
       :since: 3.9.4
 
-      Secifies the schema to use for creating the layer. The schema can be
-      specified as a filename or as a JSON string.
+      Patially or totally overrides the auto-detected schema to use for creating the layer.
+      The schema can be specified as a filename or as a JSON string.
       This option is only available when opening a GML file for reading.
 
 .. note::
