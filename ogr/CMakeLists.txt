@@ -56,6 +56,7 @@ add_library(
   ogr_expat.cpp
   ogrpgeogeometry.cpp
   ogr_geocoding.cpp
+  ogr_schema_override.cpp
   ogrgeomfielddefn.cpp
   ograpispy.cpp
   ogr_xerces.cpp
