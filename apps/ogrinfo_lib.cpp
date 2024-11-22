@@ -156,6 +156,7 @@ static void ReportFieldDomain(CPLString &osRet, CPLJSONObject &oDomains,
                    osDesc.c_str());
     }
     const char *pszType = "";
+    CPL_IGNORE_RET_VAL(pszType);  // Make CSA happy
     switch (poDomain->GetDomainType())
     {
         case OFDT_CODED:
@@ -197,6 +198,7 @@ static void ReportFieldDomain(CPLString &osRet, CPLJSONObject &oDomains,
     }
 
     const char *pszSplitPolicy = "";
+    CPL_IGNORE_RET_VAL(pszSplitPolicy);  // Make CSA happy
     switch (poDomain->GetSplitPolicy())
     {
         case OFDSP_DEFAULT_VALUE:
@@ -220,6 +222,7 @@ static void ReportFieldDomain(CPLString &osRet, CPLJSONObject &oDomains,
     }
 
     const char *pszMergePolicy = "";
+    CPL_IGNORE_RET_VAL(pszMergePolicy);  // Make CSA happy
     switch (poDomain->GetMergePolicy())
     {
         case OFDMP_DEFAULT_VALUE:
@@ -467,6 +470,7 @@ static void ReportRelationships(CPLString &osRet, CPLJSONObject &oRoot,
             continue;
 
         const char *pszType = "";
+        CPL_IGNORE_RET_VAL(pszType);  // Make CSA happy
         switch (poRelationship->GetType())
         {
             case GRT_COMPOSITE:
@@ -481,6 +485,7 @@ static void ReportRelationships(CPLString &osRet, CPLJSONObject &oRoot,
         }
 
         const char *pszCardinality = "";
+        CPL_IGNORE_RET_VAL(pszCardinality);  // Make CSA happy
         switch (poRelationship->GetCardinality())
         {
             case GRC_ONE_TO_ONE:

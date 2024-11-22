@@ -1365,6 +1365,7 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /*      Work out some values we will write.                             */
     /* -------------------------------------------------------------------- */
     const char *pszCellType = "Unsigned8BitInteger";
+    CPL_IGNORE_RET_VAL(pszCellType);  // Make CSA happy
 
     if (eType == GDT_Byte)
         pszCellType = "Unsigned8BitInteger";

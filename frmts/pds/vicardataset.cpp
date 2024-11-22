@@ -1653,6 +1653,7 @@ void VICARDataset::BuildLabel()
 
     const auto eType = GetRasterBand(1)->GetRasterDataType();
     const char *pszFormat = "";
+    CPL_IGNORE_RET_VAL(pszFormat);  // Make CSA happy
     switch (eType)
     {
         case GDT_Byte:

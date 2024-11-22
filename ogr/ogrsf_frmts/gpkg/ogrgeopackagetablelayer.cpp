@@ -343,6 +343,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                 default:
                 {
                     const char *pszVal = "";
+                    CPL_IGNORE_RET_VAL(pszVal);  // Make CSA happy
                     int nValLengthBytes = -1;
                     sqlite3_destructor_type destructorType = SQLITE_TRANSIENT;
                     if (eType == OFTDate)

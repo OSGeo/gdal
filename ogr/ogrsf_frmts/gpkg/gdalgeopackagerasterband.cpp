@@ -1834,6 +1834,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
     const CPLString osMemFileName(
         VSIMemGenerateHiddenFilename("gpkg_write_tile"));
     const char *pszDriverName = "PNG";
+    CPL_IGNORE_RET_VAL(pszDriverName);  // Make CSA happy
     bool bTileDriverSupports1Band = false;
     bool bTileDriverSupports2Bands = false;
     bool bTileDriverSupports4Bands = false;
