@@ -42,6 +42,7 @@ add_library(
   gdalsubdatasetinfo.cpp
   gdalorienteddataset.cpp
   gdalthreadsafedataset.cpp
+  geoheif.cpp
   overview.cpp
   rasterio.cpp
   rawdataset.cpp
@@ -214,6 +215,7 @@ target_public_header(
   gdal_adbc.h
   gdal_minmax_element.hpp
   gdal_priv_templates.hpp  # Required by gdal_minmax_element.hpp
+  geoheif.h
 )
 
 set(GDAL_DATA_FILES

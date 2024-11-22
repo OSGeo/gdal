@@ -25,6 +25,10 @@
 #define HAS_CUSTOM_FILE_WRITER
 #endif
 
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+#include "libheif/heif_properties.h"
+#endif
+
 #include <iostream>
 
 #endif
