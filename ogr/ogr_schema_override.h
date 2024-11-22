@@ -242,12 +242,10 @@ class OGRSchemaOverride
                                 const auto osNewName =
                                     CPLString(oField.GetString("newName"))
                                         .tolower();
-                                const auto nWidth = oField.GetInteger(
-                                    "width",
-                                    std::numeric_limits<int>::quiet_NaN());
-                                const auto nPrecision = oField.GetInteger(
-                                    "precision",
-                                    std::numeric_limits<int>::quiet_NaN());
+                                const auto nWidth =
+                                    oField.GetInteger("width", 0);
+                                const auto nPrecision =
+                                    oField.GetInteger("precision", 0);
 
                                 if (!osNewName.empty())
                                 {
@@ -291,7 +289,7 @@ class OGRSchemaOverride
                                     oFieldOverride.SetFieldSubType(eSubType);
                                 }
 
-                                if (!std::isnan(nWidth))
+                                if (nWidth != 0)
                                 {
                                     oFieldOverride.SetFieldWidth(nWidth);
                                 }
