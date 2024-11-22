@@ -216,7 +216,6 @@ set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalinfo_output.schema.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalmdiminfo_output.schema.json
     ${CMAKE_CURRENT_SOURCE_DIR}/data/ogrinfo_output.schema.json
-    ${CMAKE_CURRENT_SOURCE_DIR}/data/ogr_fields_override.schema.json
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}
