@@ -16,6 +16,7 @@
 #include "cpl_aws.h"
 #include "cpl_json.h"
 #include "cpl_vsi_error.h"
+#include "cpl_sha1.h"
 #include "cpl_sha256.h"
 #include "cpl_time.h"
 #include "cpl_minixml.h"
@@ -55,6 +56,11 @@ static std::string gosSourceProfileSessionToken;
 // The below variables are used for web identity settings in aws/config
 static std::string gosRoleArnWebIdentity;
 static std::string gosWebIdentityTokenFile;
+
+// The below variables are used for SSO authentication
+static std::string gosSSOStartURL;
+static std::string gosSSOAccountID;
+static std::string gosSSORoleName;
 
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */
@@ -1125,6 +1131,40 @@ static bool ReadAWSCredentials(const std::string &osProfile,
 }
 
 /************************************************************************/
+/*                         GetDirSeparator()                            */
+/************************************************************************/
+
+static const char *GetDirSeparator()
+{
+#ifdef _WIN32
+    static const char SEP_STRING[] = "\\";
+#else
+    static const char SEP_STRING[] = "/";
+#endif
+    return SEP_STRING;
+}
+
+/************************************************************************/
+/*                          GetAWSRootDirectory()                       */
+/************************************************************************/
+
+static std::string GetAWSRootDirectory()
+{
+    const char *pszAWSRootDir = CPLGetConfigOption("CPL_AWS_ROOT_DIR", nullptr);
+    if (pszAWSRootDir)
+        return pszAWSRootDir;
+#ifdef _WIN32
+    const char *pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
+#else
+    const char *pszHome = CPLGetConfigOption("HOME", nullptr);
+#endif
+
+    return std::string(pszHome ? pszHome : "")
+        .append(GetDirSeparator())
+        .append(".aws");
+}
+
+/************************************************************************/
 /*                GetConfigurationFromAWSConfigFiles()                  */
 /************************************************************************/
 
@@ -1135,7 +1175,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     std::string &osCredentials, std::string &osRoleArn,
     std::string &osSourceProfile, std::string &osExternalId,
     std::string &osMFASerial, std::string &osRoleSessionName,
-    std::string &osWebIdentityTokenFile)
+    std::string &osWebIdentityTokenFile, std::string &osSSOStartURL,
+    std::string &osSSOAccountID, std::string &osSSORoleName)
 {
     // See http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
     // If AWS_DEFAULT_PROFILE is set (obsolete, no longer documented), use it in
@@ -1151,16 +1192,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     }
     const std::string osProfile(pszProfile[0] != '\0' ? pszProfile : "default");
 
-#ifdef _WIN32
-    const char *pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
-    constexpr char SEP_STRING[] = "\\";
-#else
-    const char *pszHome = CPLGetConfigOption("HOME", nullptr);
-    constexpr char SEP_STRING[] = "/";
-#endif
-
-    const std::string osDotAws(
-        std::string(pszHome ? pszHome : "").append(SEP_STRING).append(".aws"));
+    const std::string osDotAws(GetAWSRootDirectory());
 
     // Read first ~/.aws/credential file
 
@@ -1175,7 +1207,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     else
     {
         osCredentials = osDotAws;
-        osCredentials += SEP_STRING;
+        osCredentials += GetDirSeparator();
         osCredentials += "credentials";
     }
 
@@ -1186,24 +1218,59 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     const char *pszAWSConfigFileEnv = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "AWS_CONFIG_FILE", nullptr);
     std::string osConfig;
-    if (pszAWSConfigFileEnv)
+    if (pszAWSConfigFileEnv && pszAWSConfigFileEnv[0])
     {
         osConfig = pszAWSConfigFileEnv;
     }
     else
     {
         osConfig = osDotAws;
-        osConfig += SEP_STRING;
+        osConfig += GetDirSeparator();
         osConfig += "config";
     }
+
     VSILFILE *fp = VSIFOpenL(osConfig.c_str(), "rb");
     if (fp != nullptr)
     {
+        // Start by reading sso-session's
         const char *pszLine;
+        std::map<std::string, std::map<std::string, std::string>>
+            oMapSSOSessions;
+        std::string osSSOSession;
+        while ((pszLine = CPLReadLineL(fp)) != nullptr)
+        {
+            if (STARTS_WITH(pszLine, "[sso-session ") &&
+                pszLine[strlen(pszLine) - 1] == ']')
+            {
+                osSSOSession = pszLine + strlen("[sso-session ");
+                osSSOSession.pop_back();
+            }
+            else if (pszLine[0] == '[')
+            {
+                osSSOSession.clear();
+            }
+            else if (!osSSOSession.empty())
+            {
+                char *pszKey = nullptr;
+                const char *pszValue = CPLParseNameValue(pszLine, &pszKey);
+                if (pszKey && pszValue)
+                {
+                    // CPLDebugOnly("S3", "oMapSSOSessions[%s][%s] = %s",
+                    //              osSSOSession.c_str(), pszKey, pszValue);
+                    oMapSSOSessions[osSSOSession][pszKey] = pszValue;
+                }
+                CPLFree(pszKey);
+            }
+        }
+        osSSOSession.clear();
+
         bool bInProfile = false;
         const std::string osBracketedProfile("[" + osProfile + "]");
         const std::string osBracketedProfileProfile("[profile " + osProfile +
                                                     "]");
+
+        VSIFSeekL(fp, 0, SEEK_SET);
+
         while ((pszLine = CPLReadLineL(fp)) != nullptr)
         {
             if (pszLine[0] == '[')
@@ -1270,11 +1337,33 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                     {
                         osWebIdentityTokenFile = pszValue;
                     }
+                    else if (strcmp(pszKey, "sso_session") == 0)
+                    {
+                        osSSOSession = pszValue;
+                    }
+                    else if (strcmp(pszKey, "sso_start_url") == 0)
+                    {
+                        osSSOStartURL = pszValue;
+                    }
+                    else if (strcmp(pszKey, "sso_account_id") == 0)
+                    {
+                        osSSOAccountID = pszValue;
+                    }
+                    else if (strcmp(pszKey, "sso_role_name") == 0)
+                    {
+                        osSSORoleName = pszValue;
+                    }
                 }
                 CPLFree(pszKey);
             }
         }
         VSIFCloseL(fp);
+
+        if (!osSSOSession.empty())
+        {
+            if (osSSOStartURL.empty())
+                osSSOStartURL = oMapSSOSessions[osSSOSession]["sso_start_url"];
+        }
     }
     else if (pszAWSConfigFileEnv != nullptr)
     {
@@ -1289,7 +1378,9 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     return (!osAccessKeyId.empty() && !osSecretAccessKey.empty()) ||
            (!osRoleArn.empty() && !osSourceProfile.empty()) ||
            (pszProfileOri != nullptr && !osRoleArn.empty() &&
-            !osWebIdentityTokenFile.empty());
+            !osWebIdentityTokenFile.empty()) ||
+           (!osSSOStartURL.empty() && !osSSOAccountID.empty() &&
+            !osSSORoleName.empty());
 }
 
 /************************************************************************/
@@ -1405,6 +1496,116 @@ static bool GetTemporaryCredentialsForRole(
 }
 
 /************************************************************************/
+/*                     GetTemporaryCredentialsForSSO()                  */
+/************************************************************************/
+
+// Issue a GetRoleCredentials request
+static bool GetTemporaryCredentialsForSSO(const std::string &osSSOStartURL,
+                                          const std::string &osSSOAccountID,
+                                          const std::string &osSSORoleName,
+                                          std::string &osTempSecretAccessKey,
+                                          std::string &osTempAccessKeyId,
+                                          std::string &osTempSessionToken,
+                                          std::string &osExpirationEpochInMS)
+{
+    std::string osSSOFilename = GetAWSRootDirectory();
+    osSSOFilename += GetDirSeparator();
+    osSSOFilename += "sso";
+    osSSOFilename += GetDirSeparator();
+    osSSOFilename += "cache";
+    osSSOFilename += GetDirSeparator();
+
+    GByte hash[CPL_SHA1_HASH_SIZE];
+    CPL_SHA1(osSSOStartURL.data(), osSSOStartURL.size(), hash);
+    osSSOFilename += CPLGetLowerCaseHex(hash, sizeof(hash));
+    osSSOFilename += ".json";
+
+    CPLJSONDocument oDoc;
+    if (!oDoc.Load(osSSOFilename))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find file %s",
+                 osSSOFilename.c_str());
+        return false;
+    }
+
+    const auto oRoot = oDoc.GetRoot();
+    const auto osGotStartURL = oRoot.GetString("startUrl");
+    if (osGotStartURL != osSSOStartURL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "startUrl in %s = '%s', but expected '%s'.",
+                 osSSOFilename.c_str(), osGotStartURL.c_str(),
+                 osSSOStartURL.c_str());
+        return false;
+    }
+    const std::string osAccessToken = oRoot.GetString("accessToken");
+    if (osAccessToken.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing accessToken in %s",
+                 osSSOFilename.c_str());
+        return false;
+    }
+
+    const std::string osExpiresAt = oRoot.GetString("expiresAt");
+    if (!osExpiresAt.empty())
+    {
+        GIntBig nExpirationUnix = 0;
+        if (Iso8601ToUnixTime(osExpiresAt.c_str(), &nExpirationUnix) &&
+            time(nullptr) > nExpirationUnix)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "accessToken in %s is no longer valid since %s. You may "
+                     "need to sign again using aws cli",
+                     osSSOFilename.c_str(), osExpiresAt.c_str());
+            return false;
+        }
+    }
+
+    std::string osResourceAndQueryString = "/federation/credentials?role_name=";
+    osResourceAndQueryString += osSSORoleName;
+    osResourceAndQueryString += "&account_id=";
+    osResourceAndQueryString += osSSOAccountID;
+
+    CPLStringList aosOptions;
+    std::string headers;
+    headers += "x-amz-sso_bearer_token: " + osAccessToken;
+    aosOptions.AddNameValue("HEADERS", headers.c_str());
+
+    const bool bUseHTTPS = CPLTestBool(CPLGetConfigOption("AWS_HTTPS", "YES"));
+    const std::string osHost(CPLGetConfigOption(
+        "CPL_AWS_SSO_ENDPOINT", "portal.sso.us-east-1.amazonaws.com"));
+
+    const std::string osURL = (bUseHTTPS ? "https://" : "http://") + osHost +
+                              osResourceAndQueryString;
+    CPLHTTPResult *psResult = CPLHTTPFetch(osURL.c_str(), aosOptions.List());
+    bool bRet = false;
+    if (psResult)
+    {
+        if (psResult->nStatus == 0 && psResult->pabyData != nullptr &&
+            oDoc.LoadMemory(reinterpret_cast<char *>(psResult->pabyData)))
+        {
+            auto oRoleCredentials = oDoc.GetRoot().GetObj("roleCredentials");
+            osTempAccessKeyId = oRoleCredentials.GetString("accessKeyId");
+            osTempSecretAccessKey =
+                oRoleCredentials.GetString("secretAccessKey");
+            osTempSessionToken = oRoleCredentials.GetString("sessionToken");
+            osExpirationEpochInMS = oRoleCredentials.GetString("expiration");
+            bRet =
+                !osTempAccessKeyId.empty() && !osTempSecretAccessKey.empty() &&
+                !osTempSessionToken.empty() && !osExpirationEpochInMS.empty();
+        }
+        CPLHTTPDestroyResult(psResult);
+    }
+    if (!bRet)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Did not manage to get temporary credentials for SSO "
+                 "authentication");
+    }
+    return bRet;
+}
+
+/************************************************************************/
 /*               GetOrRefreshTemporaryCredentialsForRole()              */
 /************************************************************************/
 
@@ -1447,23 +1648,77 @@ bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForRole(
         }
     }
 
-    std::string osExpiration;
-    gosGlobalSecretAccessKey.clear();
-    gosGlobalAccessKeyId.clear();
-    gosGlobalSessionToken.clear();
-    if (GetTemporaryCredentialsForRole(
-            gosRoleArn, gosExternalId, gosMFASerial, gosRoleSessionName,
-            gosSourceProfileSecretAccessKey, gosSourceProfileAccessKeyId,
-            gosSourceProfileSessionToken, gosGlobalSecretAccessKey,
-            gosGlobalAccessKeyId, gosGlobalSessionToken, osExpiration))
+    if (!gosRoleArn.empty())
     {
-        Iso8601ToUnixTime(osExpiration.c_str(), &gnGlobalExpiration);
-        osAccessKeyId = gosGlobalAccessKeyId;
-        osSecretAccessKey = gosGlobalSecretAccessKey;
-        osSessionToken = gosGlobalSessionToken;
-        osRegion = gosRegion;
-        return true;
+        std::string osExpiration;
+        gosGlobalSecretAccessKey.clear();
+        gosGlobalAccessKeyId.clear();
+        gosGlobalSessionToken.clear();
+        if (GetTemporaryCredentialsForRole(
+                gosRoleArn, gosExternalId, gosMFASerial, gosRoleSessionName,
+                gosSourceProfileSecretAccessKey, gosSourceProfileAccessKeyId,
+                gosSourceProfileSessionToken, gosGlobalSecretAccessKey,
+                gosGlobalAccessKeyId, gosGlobalSessionToken, osExpiration))
+        {
+            Iso8601ToUnixTime(osExpiration.c_str(), &gnGlobalExpiration);
+            osAccessKeyId = gosGlobalAccessKeyId;
+            osSecretAccessKey = gosGlobalSecretAccessKey;
+            osSessionToken = gosGlobalSessionToken;
+            osRegion = gosRegion;
+            return true;
+        }
     }
+
+    return false;
+}
+
+/************************************************************************/
+/*               GetOrRefreshTemporaryCredentialsForSSO()               */
+/************************************************************************/
+
+bool VSIS3HandleHelper::GetOrRefreshTemporaryCredentialsForSSO(
+    bool bForceRefresh, std::string &osSecretAccessKey,
+    std::string &osAccessKeyId, std::string &osSessionToken,
+    std::string &osRegion)
+{
+    CPLMutexHolder oHolder(&ghMutex);
+    if (!bForceRefresh)
+    {
+        time_t nCurTime;
+        time(&nCurTime);
+        // Try to reuse credentials if they are still valid, but
+        // keep one minute of margin...
+        if (!gosGlobalAccessKeyId.empty() && nCurTime < gnGlobalExpiration - 60)
+        {
+            osAccessKeyId = gosGlobalAccessKeyId;
+            osSecretAccessKey = gosGlobalSecretAccessKey;
+            osSessionToken = gosGlobalSessionToken;
+            osRegion = gosRegion;
+            return true;
+        }
+    }
+
+    if (!gosSSOStartURL.empty())
+    {
+        std::string osExpirationEpochInMS;
+        gosGlobalSecretAccessKey.clear();
+        gosGlobalAccessKeyId.clear();
+        gosGlobalSessionToken.clear();
+        if (GetTemporaryCredentialsForSSO(
+                gosSSOStartURL, gosSSOAccountID, gosSSORoleName,
+                gosGlobalSecretAccessKey, gosGlobalAccessKeyId,
+                gosGlobalSessionToken, osExpirationEpochInMS))
+        {
+            gnGlobalExpiration =
+                CPLAtoGIntBig(osExpirationEpochInMS.c_str()) / 1000;
+            osAccessKeyId = gosGlobalAccessKeyId;
+            osSecretAccessKey = gosGlobalSecretAccessKey;
+            osSessionToken = gosGlobalSessionToken;
+            osRegion = gosRegion;
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -1521,15 +1776,24 @@ bool VSIS3HandleHelper::GetConfiguration(
 
     // Next try to see if we have a current assumed role
     bool bAssumedRole = false;
+    bool bSSO = false;
     {
         CPLMutexHolder oHolder(&ghMutex);
         bAssumedRole = !gosRoleArn.empty();
+        bSSO = !gosSSOStartURL.empty();
     }
     if (bAssumedRole && GetOrRefreshTemporaryCredentialsForRole(
                             /* bForceRefresh = */ false, osSecretAccessKey,
                             osAccessKeyId, osSessionToken, osRegion))
     {
         eCredentialsSource = AWSCredentialsSource::ASSUMED_ROLE;
+        return true;
+    }
+    else if (bSSO && GetOrRefreshTemporaryCredentialsForSSO(
+                         /* bForceRefresh = */ false, osSecretAccessKey,
+                         osAccessKeyId, osSessionToken, osRegion))
+    {
+        eCredentialsSource = AWSCredentialsSource::SSO;
         return true;
     }
 
@@ -1541,13 +1805,17 @@ bool VSIS3HandleHelper::GetConfiguration(
     std::string osMFASerial;
     std::string osRoleSessionName;
     std::string osWebIdentityTokenFile;
+    std::string osSSOStartURL;
+    std::string osSSOAccountID;
+    std::string osSSORoleName;
     // coverity[tainted_data]
     if (GetConfigurationFromAWSConfigFiles(
             osPathForOption,
             /* pszProfile = */ nullptr, osSecretAccessKey, osAccessKeyId,
             osSessionToken, osRegion, osCredentials, osRoleArn, osSourceProfile,
             osExternalId, osMFASerial, osRoleSessionName,
-            osWebIdentityTokenFile))
+            osWebIdentityTokenFile, osSSOStartURL, osSSOAccountID,
+            osSSORoleName))
     {
         if (osSecretAccessKey.empty() && !osRoleArn.empty())
         {
@@ -1565,12 +1833,16 @@ bool VSIS3HandleHelper::GetConfiguration(
                 std::string osExternalIdSP;
                 std::string osMFASerialSP;
                 std::string osRoleSessionNameSP;
+                std::string osSSOStartURLSP;
+                std::string osSSOAccountIDSP;
+                std::string osSSORoleNameSP;
                 if (GetConfigurationFromAWSConfigFiles(
                         osPathForOption, osSourceProfile.c_str(),
                         osSecretAccessKeySP, osAccessKeyIdSP, osSessionTokenSP,
                         osRegionSP, osCredentialsSP, osRoleArnSP,
                         osSourceProfileSP, osExternalIdSP, osMFASerialSP,
-                        osRoleSessionNameSP, osWebIdentityTokenFile))
+                        osRoleSessionNameSP, osWebIdentityTokenFile,
+                        osSSOStartURLSP, osSSOAccountIDSP, osSSORoleNameSP))
                 {
                     if (GetConfigurationFromAssumeRoleWithWebIdentity(
                             /* bForceRefresh = */ false, osPathForOption,
@@ -1635,6 +1907,41 @@ bool VSIS3HandleHelper::GetConfiguration(
                 osAccessKeyId = std::move(osTempAccessKeyId);
                 osSessionToken = std::move(osTempSessionToken);
                 eCredentialsSource = AWSCredentialsSource::ASSUMED_ROLE;
+                return true;
+            }
+            return false;
+        }
+
+        if (!osSSOStartURL.empty())
+        {
+            std::string osTempSecretAccessKey;
+            std::string osTempAccessKeyId;
+            std::string osTempSessionToken;
+            std::string osExpirationEpochInMS;
+            if (GetTemporaryCredentialsForSSO(
+                    osSSOStartURL, osSSOAccountID, osSSORoleName,
+                    osTempSecretAccessKey, osTempAccessKeyId,
+                    osTempSessionToken, osExpirationEpochInMS))
+            {
+                CPLDebug("S3", "Using SSO %s", osSSOStartURL.c_str());
+                {
+                    // Store global variables to be able to reuse the
+                    // temporary credentials
+                    CPLMutexHolder oHolder(&ghMutex);
+                    gnGlobalExpiration =
+                        CPLAtoGIntBig(osExpirationEpochInMS.c_str()) / 1000;
+                    gosSSOStartURL = std::move(osSSOStartURL);
+                    gosSSOAccountID = std::move(osSSOAccountID);
+                    gosSSORoleName = std::move(osSSORoleName);
+                    gosGlobalAccessKeyId = osTempAccessKeyId;
+                    gosGlobalSecretAccessKey = osTempSecretAccessKey;
+                    gosGlobalSessionToken = osTempSessionToken;
+                    gosRegion = osRegion;
+                }
+                osSecretAccessKey = std::move(osTempSecretAccessKey);
+                osAccessKeyId = std::move(osTempAccessKeyId);
+                osSessionToken = std::move(osTempSessionToken);
+                eCredentialsSource = AWSCredentialsSource::SSO;
                 return true;
             }
             return false;
@@ -1707,6 +2014,9 @@ void VSIS3HandleHelper::ClearCache()
     gosRegion.clear();
     gosRoleArnWebIdentity.clear();
     gosWebIdentityTokenFile.clear();
+    gosSSOStartURL.clear();
+    gosSSOAccountID.clear();
+    gosSSORoleName.clear();
 }
 
 /************************************************************************/
@@ -1877,6 +2187,19 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string &osPathForOption,
                 bForceRefresh, osPathForOption.c_str(), std::string(),
                 std::string(), osSecretAccessKey, osAccessKeyId,
                 osSessionToken))
+        {
+            m_osSecretAccessKey = std::move(osSecretAccessKey);
+            m_osAccessKeyId = std::move(osAccessKeyId);
+            m_osSessionToken = std::move(osSessionToken);
+        }
+    }
+    else if (m_eCredentialsSource == AWSCredentialsSource::SSO)
+    {
+        std::string osSecretAccessKey, osAccessKeyId, osSessionToken;
+        std::string osRegion;
+        if (GetOrRefreshTemporaryCredentialsForSSO(
+                bForceRefresh, osSecretAccessKey, osAccessKeyId, osSessionToken,
+                osRegion))
         {
             m_osSecretAccessKey = std::move(osSecretAccessKey);
             m_osAccessKeyId = std::move(osAccessKeyId);
