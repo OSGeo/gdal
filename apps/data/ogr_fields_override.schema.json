@@ -7,6 +7,12 @@
     }
   ],
   "definitions": {
+    "schemaType": {
+      "enum": [
+        "Patch",
+        "Full"
+      ]
+    },
     "dataset": {
       "type": "object",
       "properties": {
