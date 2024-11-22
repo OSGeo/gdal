@@ -646,11 +646,11 @@ The following open options are supported:
 
 -  .. oo:: OGR_SCHEMA
       :choices: <filename>|<json string>
-      :since: 3.9.4
+      :since: 3.11.0
 
       Partially or totally overrides the auto-detected schema to use for creating the layer.
       The overrides are defined as a JSON list of field definitions.
-      This can be a filename or a JSON string or a URL.
+      This can be a filename or a JSON string or a URL conformant with the `ogr_fields_override.schema.json schema <https://raw.githubusercontent.com/OSGeo/gdal/refs/heads/master/ogr/data/ogr_fields_override.schema.json>`__
 
 .. note::
 

@@ -870,7 +870,7 @@ const char *OGRFieldDefn::GetFieldTypeName(OGRFieldType eType)
  * \brief Fetch field type by name.
  * @param pszName the name of the field type.
  * @return the field type or OFTString if there is no match with known type names.
- * @since GDAL 3.9.4
+ * @since GDAL 3.11.0
  */
 OGRFieldType OGRFieldDefn::GetFieldTypeByName(const char *pszName)
 {
@@ -898,10 +898,6 @@ OGRFieldType OGRFieldDefn::GetFieldTypeByName(const char *pszName)
         return OFTTime;
     if (EQUAL(pszName, "datetime"))
         return OFTDateTime;
-    if (EQUAL(pszName, "widestring"))
-        return OFTWideString;
-    if (EQUAL(pszName, "widestringlist"))
-        return OFTWideStringList;
 
     return OFTString;
 }
@@ -993,7 +989,7 @@ const char *OGRFieldDefn::GetFieldSubTypeName(OGRFieldSubType eSubType)
  * \brief Fetch field subtype by name.
  * @param pszName the name of the field subtype.
  * @return the field subtype.
- * @since GDAL 3.9.4
+ * @since GDAL 3.11.0
  */
 OGRFieldSubType OGRFieldDefn::GetFieldSubTypeByName(const char *pszName)
 {
@@ -1022,7 +1018,7 @@ OGRFieldSubType OGRFieldDefn::GetFieldSubTypeByName(const char *pszName)
  *
  * @param pszName the name of the field subtype.
  * @return the field subtype.
- * @since GDAL 3.9.4
+ * @since GDAL 3.11.0
  */
 OGRFieldSubType OGR_GetFieldSubTypeByName(const char *pszName)
 {

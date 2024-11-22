@@ -28,7 +28,6 @@
 #include "cpl_http.h"
 #include "cpl_string.h"
 #include "cpl_vsi_error.h"
-#include "cpl_json.h"
 #include "gmlreaderp.h"
 #include "gmlregistry.h"
 #include "gmlutils.h"

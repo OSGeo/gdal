@@ -1,6 +1,4 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  OGR_SCHEMA open options handling
  * Purpose:  Class for representing a layer schema override.
  * Author:   Alessandro Pasotti, elpaso@itopen.it
@@ -298,7 +296,7 @@ class OGRSchemaOverride
                                     oFieldOverride.SetFieldWidth(nWidth);
                                 }
 
-                                if (!std::isnan(nPrecision))
+                                if (nPrecision != 0)
                                 {
                                     oFieldOverride.SetFieldPrecision(
                                         nPrecision);
