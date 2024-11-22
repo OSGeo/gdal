@@ -4874,6 +4874,17 @@ def test_ogr_gml_type_override(
                     assert feat.GetFieldDefnRef(2).GetWidth() == 7
                     assert feat.GetFieldDefnRef(2).GetPrecision() == 3
 
+                # Check feature content
+                assert feat.GetFieldAsString("fid") == "F0"
+                assert feat.GetFieldAsDouble("dbl") == 1.0
+                if len(expected_field_names) > 0:
+                    if "int" in expected_field_names:
+                        assert feat.GetFieldAsInteger("int") == 1
+                    if "str" in expected_field_names:
+                        assert feat.GetFieldAsString("str") == "1"
+                    if "new_str" in expected_field_names:
+                        assert feat.GetFieldAsString("new_str") == "1"
+
                 if expected_warning:
                     assert (
                         gdal.GetLastErrorMsg().find(expected_warning) != -1
