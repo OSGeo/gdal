@@ -110,7 +110,7 @@ void GeoHEIF::extractSRS(const uint8_t *payload, size_t length) const
     // TODO: more sophisticated length checks
     if (length < 12)
     {
-        CPLDebug("GeoHEIF", "Infeasible length CRS payload %ld", length);
+        CPLDebug("GeoHEIF", "Infeasible length CRS payload %zu", length);
         return;
     }
     std::string crsEncoding(payload + 4, payload + 8);
