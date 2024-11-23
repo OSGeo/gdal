@@ -44,7 +44,7 @@ class GDALHEIFDataset final : public GDALPamDataset
 #endif
 
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
-    GeoHEIF geoHEIF{};
+    gdal::GeoHEIF geoHEIF{};
 #endif
 
 #ifdef HAS_CUSTOM_FILE_READER

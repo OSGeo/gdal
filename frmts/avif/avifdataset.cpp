@@ -56,7 +56,7 @@ class GDALAVIFDataset final : public GDALPamDataset
     void extractModelTransformation(const uint8_t *payload,
                                     size_t length) const;
     void extractUserDescription(const uint8_t *payload, size_t length);
-    GeoHEIF geoHEIF{};
+    gdal::GeoHEIF geoHEIF{};
 #endif
 
   public:
@@ -434,6 +434,10 @@ void GDALAVIFDataset::extractUserDescription(const uint8_t *payload,
             GDALDataset::SetMetadataItem("TAGS", tags.c_str(), domain.c_str());
         }
     }
+    else
+    {
+        CPLDebug("AVIF", "Unsupported udes version %d", payload[0]);
+    }
 }
 
 int GDALAVIFDataset::GetGCPCount()
@@ -701,7 +705,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
     if (nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unsupported number of bands: only 1 (Gray), 2 (Gray+Alpha) "
+                 "Unsupported number of bands: only 1 (Gray), 2 (Gray+Alpha), "
                  "3 (RGB) or 4 (RGBA) bands are supported");
         return nullptr;
     }

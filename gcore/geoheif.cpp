@@ -1,8 +1,19 @@
-/******************************************************************************
- * Project:  GeoHEIF support class
+/**********************************************************************
+ *
+ * Name:     geoheif.cpp
+ * Project:  GDAL
+ * Purpose:  OGC GeoHEIF shared implementation.
+ * Author:   Brad Hards <bradh@silvereye.tech>
+ *
+ **********************************************************************
+ * Copyright (c) 2024, Brad Hards
+ *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 #include "geoheif.h"
+
+namespace gdal
+{
 
 //! @cond Doxygen_Suppress
 
@@ -27,15 +38,8 @@ bool GeoHEIF::has_GCPs() const
 static double to_double(const uint8_t *data, uint32_t index)
 {
     uint64_t v = 0;
-    v |= (static_cast<uint64_t>(data[index + 0])) << 56;
-    v |= (static_cast<uint64_t>(data[index + 1])) << 48;
-    v |= (static_cast<uint64_t>(data[index + 2])) << 40;
-    v |= (static_cast<uint64_t>(data[index + 3])) << 32;
-    v |= (static_cast<uint64_t>(data[index + 4])) << 24;
-    v |= (static_cast<uint64_t>(data[index + 5])) << 16;
-    v |= (static_cast<uint64_t>(data[index + 6])) << 8;
-    v |= (static_cast<uint64_t>(data[index + 7])) << 0;
-
+    memcpy(&v, data + index, sizeof(v));
+    CPL_MSBPTR64(&v);
     double d = 0;
     memcpy(&d, &v, sizeof(d));
     return d;
@@ -44,10 +48,8 @@ static double to_double(const uint8_t *data, uint32_t index)
 static double int_as_double(const uint8_t *data, uint32_t index)
 {
     uint32_t v = 0;
-    v |= (static_cast<uint64_t>(data[index + 0])) << 24;
-    v |= (static_cast<uint64_t>(data[index + 1])) << 16;
-    v |= (static_cast<uint64_t>(data[index + 2])) << 8;
-    v |= (static_cast<uint64_t>(data[index + 3])) << 0;
+    memcpy(&v, data + index, sizeof(uint32_t));
+    CPL_MSBPTR32(&v);
     return static_cast<double>(v);
 }
 
@@ -78,6 +80,10 @@ void GeoHEIF::setModelTransformation(const uint8_t *payload, size_t length)
             modelTransform[3] = to_double(payload, index);
         }
     }
+    else
+    {
+        CPLDebug("GeoHEIF", "Unsupported mtxf version %d", payload[0]);
+    }
 }
 
 CPLErr GeoHEIF::GetGeoTransform(double *padfTransform) const
@@ -102,8 +108,9 @@ const OGRSpatialReference *GeoHEIF::GetSpatialRef() const
 void GeoHEIF::extractSRS(const uint8_t *payload, size_t length) const
 {
     // TODO: more sophisticated length checks
-    if (length < 6)
+    if (length < 12)
     {
+        CPLDebug("GeoHEIF", "Infeasible length CRS payload %ld", length);
         return;
     }
     std::string crsEncoding(payload + 4, payload + 8);
@@ -120,10 +127,17 @@ void GeoHEIF::extractSRS(const uint8_t *payload, size_t length) const
     {
         if ((crs.at(0) != '[') || (crs.at(crs.length() - 1) != ']'))
         {
+            CPLDebug("GeoHEIF", "CRS CURIE is not a safe CURIE");
             return;
         }
         std::string curie = crs.substr(1, crs.length() - 2);
         size_t seperatorPos = curie.find(':');
+        if (seperatorPos == std::string::npos)
+        {
+            CPLDebug("GeoHEIF",
+                     "CRS CURIE does not contain required separator");
+            return;
+        }
         std::string authority = curie.substr(0, seperatorPos);
         std::string code = curie.substr(seperatorPos + 1);
         std::string osURL("http://www.opengis.net/def/crs/");
@@ -134,46 +148,59 @@ void GeoHEIF::extractSRS(const uint8_t *payload, size_t length) const
     }
     else
     {
+        CPLDebug("GeoHEIF", "CRS encoding is not supported");
         return;
     }
 }
 
 void GeoHEIF::addGCPs(const uint8_t *data, size_t length)
 {
+    constexpr size_t MIN_VALID_SIZE = sizeof(uint32_t) + sizeof(uint16_t) +
+                                      2 * sizeof(uint32_t) + 2 * sizeof(double);
+    if (length < MIN_VALID_SIZE)
+    {
+        CPLDebug("GeoHEIF", "GCP data length is too short");
+        return;
+    }
     if (data[0] == 0x00)
     {
         uint32_t index = 0;
         bool is_3D = (data[index + 3] == 0x00);
-        index += 4;
+        if (is_3D)
+        {
+            if (length < MIN_VALID_SIZE + sizeof(double))
+            {
+                CPLDebug("GeoHEIF", "GCP data length is too short for 3D");
+                return;
+            }
+        }
+        index += sizeof(uint32_t);
         uint16_t count = (data[index] << 8) + (data[index + 1]);
-        index += 2;
+        index += sizeof(uint16_t);
         for (uint16_t j = 0; (j < count) && (index < length); j++)
         {
-            GDAL_GCP gcp;
-            char szID[32];
-            snprintf(szID, sizeof(szID), "%d", j);
-            gcp.pszId = CPLStrdup(szID);
-            gcp.pszInfo = CPLStrdup("");
-            gcp.dfGCPPixel = int_as_double(data, index);
-            index += 4;
-            gcp.dfGCPLine = int_as_double(data, index);
-            index += 4;
-            gcp.dfGCPX = to_double(data, index);
-            index += 8;
-            gcp.dfGCPY = to_double(data, index);
-            index += 8;
+            double dfGCPPixel = int_as_double(data, index);
+            index += sizeof(uint32_t);
+            double dfGCPLine = int_as_double(data, index);
+            index += sizeof(uint32_t);
+            double dfGCPX = to_double(data, index);
+            index += sizeof(double);
+            double dfGCPY = to_double(data, index);
+            index += sizeof(double);
+            double dfGCPZ = 0.0;
             if (is_3D)
             {
-                gcp.dfGCPZ = to_double(data, index);
-                index += 8;
+                dfGCPZ = to_double(data, index);
+                index += sizeof(double);
             }
-            else
-            {
-                gcp.dfGCPZ = 0.0;
-            }
+            gcps.emplace_back("", "", dfGCPPixel, dfGCPLine, dfGCPX, dfGCPY,
+                              dfGCPZ);
             haveGCPs = true;
-            gcps.push_back(gcp);
         }
+    }
+    else
+    {
+        CPLDebug("GeoHEIF", "Unsupported tiep version %d", data[0]);
     }
 }
 
@@ -184,12 +211,14 @@ int GeoHEIF::GetGCPCount() const
 
 const GDAL_GCP *GeoHEIF::GetGCPs()
 {
-    return gcps.data();
+    return gdal::GCP::c_ptr(gcps);
 }
 
 const OGRSpatialReference *GeoHEIF::GetGCPSpatialRef() const
 {
     return this->GetSpatialRef();
 }
+
+}  // namespace gdal
 
 //! @endcond

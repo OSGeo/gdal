@@ -13,6 +13,9 @@
 
 //! @cond Doxygen_Suppress
 
+namespace gdal
+{
+
 /*
  * GeoHEIF support implementation.
  * 
@@ -30,7 +33,7 @@ class CPL_DLL GeoHEIF final
     mutable OGRSpatialReference m_oSRS{};
     double modelTransform[6] = {0.0};
     bool haveGCPs = false;
-    std::vector<GDAL_GCP> gcps;
+    std::vector<gdal::GCP> gcps;
 
   public:
     GeoHEIF();
@@ -49,5 +52,7 @@ class CPL_DLL GeoHEIF final
 };
 
 //! @endcond
+
+}  // namespace gdal
 
 #endif /* GEOHEIF_H_INCLUDED_ */

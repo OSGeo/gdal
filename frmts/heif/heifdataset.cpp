@@ -413,7 +413,7 @@ void GDALHEIFDataset::ReadMetadata()
 
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
 /************************************************************************/
-/*                         ReadUserDescription()                             */
+/*                      ReadUserDescription()                           */
 /************************************************************************/
 void GDALHEIFDataset::ReadUserDescription()
 {
@@ -824,12 +824,13 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
 
 CPLErr GDALHEIFDataset::GetGeoTransform(double *padfTransform)
 {
-    heif_property_id prop_ids[10];
+    constexpr int MAX_PROPERTIES_REQUIRED = 10;
+    heif_property_id prop_ids[MAX_PROPERTIES_REQUIRED];
     heif_item_id item_id = heif_image_handle_get_item_id(m_hImageHandle);
     int num_props = heif_item_get_properties_of_type(
         m_hCtxt, item_id,
         (heif_item_property_type)heif_fourcc('m', 't', 'x', 'f'), &prop_ids[0],
-        10);
+        MAX_PROPERTIES_REQUIRED);
 
     for (int i = 0; i < num_props; i++)
     {
@@ -859,12 +860,13 @@ const OGRSpatialReference *GDALHEIFDataset::GetSpatialRef() const
     if (geoHEIF.has_SRS())
         return geoHEIF.GetSpatialRef();
 
-    heif_property_id prop_ids[10];
+    constexpr int MAX_PROPERTIES_REQUIRED = 10;
+    heif_property_id prop_ids[MAX_PROPERTIES_REQUIRED];
     heif_item_id item_id = heif_image_handle_get_item_id(m_hImageHandle);
     int num_props = heif_item_get_properties_of_type(
         m_hCtxt, item_id,
         (heif_item_property_type)heif_fourcc('m', 'c', 'r', 's'), &prop_ids[0],
-        10);
+        MAX_PROPERTIES_REQUIRED);
 
     for (int i = 0; i < num_props; i++)
     {
@@ -899,12 +901,13 @@ int GDALHEIFDataset::GetGCPCount()
         return geoHEIF.GetGCPCount();
     }
     // Get the GCPs if we can
-    heif_property_id prop_ids[10];
+    constexpr int MAX_PROPERTIES_REQUIRED = 10;
+    heif_property_id prop_ids[MAX_PROPERTIES_REQUIRED];
     heif_item_id item_id = heif_image_handle_get_item_id(m_hImageHandle);
     int num_props = heif_item_get_properties_of_type(
         m_hCtxt, item_id,
         (heif_item_property_type)heif_fourcc('t', 'i', 'e', 'p'), &prop_ids[0],
-        10);
+        MAX_PROPERTIES_REQUIRED);
     for (int i = 0; i < num_props; i++)
     {
         size_t size;
@@ -959,6 +962,10 @@ void GDALHEIFDataset::ExtractUserDescription(const uint8_t *payload,
         {
             GDALDataset::SetMetadataItem("TAGS", tags.c_str(), domain.c_str());
         }
+    }
+    else
+    {
+        CPLDebug("HEIF", "Unsupported udes version %d", payload[0]);
     }
 }
 #endif
