@@ -100,7 +100,7 @@ CPLErr GeoHEIF::GetGeoTransform(double *padfTransform) const
 /************************************************************************/
 const OGRSpatialReference *GeoHEIF::GetSpatialRef() const
 {
-    return &m_oSRS;
+    return !m_oSRS.IsEmpty() ? &m_oSRS : nullptr;
 }
 
 void GeoHEIF::extractSRS(const uint8_t *payload, size_t length) const
