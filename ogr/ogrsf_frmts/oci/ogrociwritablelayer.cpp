@@ -291,7 +291,20 @@ OGRErr OGROCIWritableLayer::CreateField(const OGRFieldDefn *poFieldIn,
     }
     else if (oField.GetType() == OFTDateTime)
     {
-        snprintf(szFieldType, sizeof(szFieldType), "TIMESTAMP(3)");
+        const char *pszTIMESTAMP_WITH_TIME_ZONE =
+            CSLFetchNameValue(papszOptions, "TIMESTAMP_WITH_TIME_ZONE");
+        if ((!pszTIMESTAMP_WITH_TIME_ZONE &&
+             oField.GetTZFlag() >= OGR_TZFLAG_MIXED_TZ) ||
+            (pszTIMESTAMP_WITH_TIME_ZONE &&
+             CPLTestBool(pszTIMESTAMP_WITH_TIME_ZONE)))
+        {
+            setFieldIndexWithTimeStampWithTZ.insert(
+                poFeatureDefn->GetFieldCount());
+            snprintf(szFieldType, sizeof(szFieldType),
+                     "TIMESTAMP(3) WITH TIME ZONE");
+        }
+        else
+            snprintf(szFieldType, sizeof(szFieldType), "TIMESTAMP(3)");
     }
     else if (bApproxOK)
     {

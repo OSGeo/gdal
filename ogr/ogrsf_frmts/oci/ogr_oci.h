@@ -19,6 +19,7 @@
 #include "cpl_error.h"
 
 #include <map>
+#include <set>
 
 /* -------------------------------------------------------------------- */
 /*      Low level Oracle spatial declarations.                          */
@@ -245,6 +246,8 @@ class OGROCILayer CPL_NON_FINAL : public OGRLayer
 
     char *pszFIDName;
     int iFIDColumn;
+
+    std::set<int> setFieldIndexWithTimeStampWithTZ{};
 
     OGRGeometry *TranslateGeometry();
     OGRGeometry *TranslateGeometryElement(int *piElement, int nGType,
