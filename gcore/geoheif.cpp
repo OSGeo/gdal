@@ -37,11 +37,9 @@ bool GeoHEIF::has_GCPs() const
 
 static double to_double(const uint8_t *data, uint32_t index)
 {
-    uint64_t v = 0;
-    memcpy(&v, data + index, sizeof(v));
-    CPL_MSBPTR64(&v);
     double d = 0;
-    memcpy(&d, &v, sizeof(d));
+    memcpy(&d, data + index, sizeof(d));
+    CPL_MSBPTR64(&d);
     return d;
 }
 
