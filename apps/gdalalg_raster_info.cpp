@@ -93,7 +93,7 @@ GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool openForMixedRasterVector)
 
 bool GDALRasterInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
-    CPLAssert(m_dataset.GetDataset());
+    CPLAssert(m_dataset.GetDatasetRef());
 
     CPLStringList aosOptions;
     if (m_format == "json")
@@ -128,7 +128,7 @@ bool GDALRasterInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
         aosOptions.AddString(m_mdd.c_str());
     }
 
-    GDALDatasetH hDS = GDALDataset::ToHandle(m_dataset.GetDataset());
+    GDALDatasetH hDS = GDALDataset::ToHandle(m_dataset.GetDatasetRef());
     std::unique_ptr<GDALDataset> poSubDataset;
 
     if (m_subDS > 0)

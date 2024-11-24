@@ -192,11 +192,7 @@ bool CPL_DLL GDALAlgorithmArgSetAsString(GDALAlgorithmArgH, const char *);
 bool CPL_DLL GDALAlgorithmArgSetAsDatasetValue(GDALAlgorithmArgH hArg,
                                                GDALArgDatasetValueH value);
 
-bool CPL_DLL GDALAlgorithmArgSetDatasetWithoutOwnership(GDALAlgorithmArgH hArg,
-                                                        GDALDatasetH);
-
-bool CPL_DLL GDALAlgorithmArgSetDatasetWithOwnership(GDALAlgorithmArgH hArg,
-                                                     GDALDatasetH);
+bool CPL_DLL GDALAlgorithmArgSetDataset(GDALAlgorithmArgH hArg, GDALDatasetH);
 
 bool CPL_DLL GDALAlgorithmArgSetAsInteger(GDALAlgorithmArgH, int);
 
@@ -220,9 +216,10 @@ void CPL_DLL GDALArgDatasetValueRelease(GDALArgDatasetValueH);
 
 const char CPL_DLL *GDALArgDatasetValueGetName(GDALArgDatasetValueH);
 
-GDALDatasetH CPL_DLL GDALArgDatasetValueGetDataset(GDALArgDatasetValueH);
+GDALDatasetH CPL_DLL GDALArgDatasetValueGetDatasetRef(GDALArgDatasetValueH);
 
-bool CPL_DLL GDALArgDatasetValueIsDatasetOwned(GDALArgDatasetValueH hValue);
+GDALDatasetH
+    CPL_DLL GDALArgDatasetValueGetDatasetIncreaseRefCount(GDALArgDatasetValueH);
 
 /** Bit indicating that the name component of GDALArgDatasetValue is accepted. */
 #define GADV_NAME (1 << 0)
@@ -243,11 +240,7 @@ int CPL_DLL GDALArgDatasetValueGetOutputFlags(GDALArgDatasetValueH);
 
 void CPL_DLL GDALArgDatasetValueSetName(GDALArgDatasetValueH, const char *);
 
-void CPL_DLL GDALArgDatasetValueSetDatasetWithoutOwnership(GDALArgDatasetValueH,
-                                                           GDALDatasetH);
-
-void CPL_DLL GDALArgDatasetValueSetDatasetWithOwnership(GDALArgDatasetValueH,
-                                                        GDALDatasetH);
+void CPL_DLL GDALArgDatasetValueSetDataset(GDALArgDatasetValueH, GDALDatasetH);
 
 CPL_C_END
 
@@ -328,61 +321,55 @@ class CPL_DLL GDALArgDatasetValue final
     {
     }
 
-    /** Constructor by dataset instance. */
-    explicit GDALArgDatasetValue(GDALDataset *poDS, bool owned);
-
-    /** Constructor by dataset instance. */
-    explicit GDALArgDatasetValue(std::unique_ptr<GDALDataset> poDS);
+    /** Constructor by dataset instance, increasing its reference counter */
+    explicit GDALArgDatasetValue(GDALDataset *poDS);
 
     /** Move constructor */
     GDALArgDatasetValue(GDALArgDatasetValue &&other);
 
-    /** Destructor. Free m_poDS if m_owned is true. */
+    /** Destructor. Decrease m_poDS reference count, and destroy it if no
+     * longer referenced. */
     ~GDALArgDatasetValue();
 
-    /** Close the dataset if it is owned and return an error if an error
-     * occurred during dataset closing */
+    /** Dereference the dataset object and close it if no longer referenced.
+     * Return an error if an error occurred during dataset closing. */
     bool Close();
 
     /** Move-assignment operator */
     GDALArgDatasetValue &operator=(GDALArgDatasetValue &&other);
 
-    /** Get GDALDataset* instance (may be null) */
-    GDALDataset *GetDataset()
-    {
-        return m_poDS;
-    }
-
-    /** Get GDALDataset* instance (may be null) */
-    const GDALDataset *GetDataset() const
-    {
-        return m_poDS;
-    }
-
-    /** Returns whether the dataset object referenced in this object is owned
-     * by this object (and thus released by it when it is destroyed).
+    /** Get the GDALDataset* instance (may be null), and increase its reference
+     * count if not null. Once done with the dataset, the caller should call
+     * GDALDataset::Release().
      */
-    bool IsOwned() const
+    GDALDataset *GetDatasetIncreaseRefCount();
+
+    /** Get a GDALDataset* instance (may be null). This does not modify the
+     * reference counter, hence the lifetime of the returned object is not
+     * guaranteed to exceed the one of this instance.
+     */
+    GDALDataset *GetDatasetRef()
     {
-        return m_owned;
+        return m_poDS;
     }
 
-    /** Borrow the GDALDataset* instance (may be null), with its ownership
-     * status.*/
-    GDALDataset *BorrowDataset(bool &owned)
+    /** Borrow the GDALDataset* instance (may be null), leaving its reference
+     * counter unchanged.
+     */
+    GDALDataset *BorrowDataset()
     {
-        owned = m_owned;
-        m_owned = false;
         GDALDataset *ret = m_poDS;
         m_poDS = nullptr;
         return ret;
     }
 
-    /** Borrow the GDALDataset* instance from another GDALArgDatasetValue */
+    /** Borrow the GDALDataset* instance from another GDALArgDatasetValue,
+     * leaving its reference counter unchange.
+     */
     void BorrowDatasetFrom(GDALArgDatasetValue &other)
     {
         Close();
-        m_poDS = other.BorrowDataset(m_owned);
+        m_poDS = other.BorrowDataset();
         m_name = other.m_name;
     }
 
@@ -430,21 +417,17 @@ class CPL_DLL GDALArgDatasetValue final
     /** Set dataset name */
     void Set(const std::string &name);
 
-    /** Transfer dataset to this instance. */
+    /** Transfer dataset to this instance (does not affect is reference
+     * counter). */
     void Set(std::unique_ptr<GDALDataset> poDS);
 
-    /** Set dataset object. */
-    void Set(GDALDataset *poDS, bool owned);
+    /** Set dataset object, increasing its reference counter. */
+    void Set(GDALDataset *poDS);
 
-    /** Set from other value, referencing other.m_poDS. */
-    void SetFrom(const GDALArgDatasetValue &other)
-    {
-        Close();
-        m_name = other.m_name;
-        m_nameSet = other.m_nameSet;
-        m_poDS = other.m_poDS;
-        m_owned = false;
-    }
+    /** Set from other value, increasing the reference counter of the
+     * GDALDataset object.
+     */
+    void SetFrom(const GDALArgDatasetValue &other);
 
     /** Set which components among name and dataset are accepted as
      * input, when this argument serves as an input.
@@ -496,12 +479,8 @@ class CPL_DLL GDALArgDatasetValue final
     /** The owner argument (may be nullptr for freestanding objects) */
     GDALAlgorithmArg *m_ownerArg = nullptr;
 
-    /** Dataset object. Owned by this instance if m_owned is true. */
+    /** Dataset object. */
     GDALDataset *m_poDS = nullptr;
-
-    /** Whether m_poDS should be destroyed at destruction of this
-     * GDALArgDatasetValue instance. */
-    bool m_owned = false;
 
     /** Dataset name */
     std::string m_name{};
@@ -1286,12 +1265,13 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     /** Set the value for a GAAT_REAL argument */
     bool Set(double value);
 
-    /** Set the value for a GAAT_DATASET argument.
+    /** Set the value for a GAAT_DATASET argument, increasing ds' reference
+     * counter if ds is not null.
      * It cannot be called several times for a given argument.
      * Validation checks and other actions are run.
      * Return true if success.
      */
-    bool Set(GDALDataset *ds, bool owned);
+    bool Set(GDALDataset *ds);
 
     /** Set the value for a GAAT_DATASET argument.
      * It cannot be called several times for a given argument.

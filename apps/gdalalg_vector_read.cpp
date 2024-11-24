@@ -67,17 +67,17 @@ class GDALVectorReadAlgorithmDataset final : public GDALDataset
 
 bool GDALVectorReadAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
-    CPLAssert(m_inputDataset.GetDataset());
+    CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());
-    CPLAssert(!m_outputDataset.GetDataset());
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     if (m_inputLayerNames.empty())
     {
-        m_outputDataset.Set(m_inputDataset.GetDataset(), false);
+        m_outputDataset.Set(m_inputDataset.GetDatasetRef());
     }
     else
     {
-        auto poSrcDS = m_inputDataset.GetDataset();
+        auto poSrcDS = m_inputDataset.GetDatasetRef();
         auto poOutDS = std::make_unique<GDALVectorReadAlgorithmDataset>();
         poOutDS->SetDescription(poSrcDS->GetDescription());
         for (const auto &srcLayerName : m_inputLayerNames)

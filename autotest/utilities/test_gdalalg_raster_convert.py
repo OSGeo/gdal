@@ -83,7 +83,7 @@ def test_gdalalg_raster_convert_append(tmp_vsimem):
 def test_gdalalg_raster_convert_error_output_already_set():
     convert = get_convert_alg()
     ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
-    convert.GetArg("output").Get().SetDatasetWithoutOwnership(ds)
+    convert.GetArg("output").Get().SetDataset(ds)
     assert convert.ParseCommandLineArguments(["data/utmsmall.tif"])
     with pytest.raises(
         Exception,

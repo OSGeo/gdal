@@ -58,7 +58,7 @@ def test_gdalalg_raster_info_mm_checksum():
 def test_gdalalg_raster_info_stats():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
-    info.GetArg("input").SetDatasetWithoutOwnership(ds)
+    info.GetArg("input").SetDataset(ds)
     assert info.ParseRunAndFinalize(["--stats"])
     output_string = info.GetArg("output-string").Get()
     j = json.loads(output_string)
@@ -68,7 +68,7 @@ def test_gdalalg_raster_info_stats():
 def test_gdalalg_raster_info_approx_stats():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
-    info.GetArg("input").SetDatasetWithoutOwnership(ds)
+    info.GetArg("input").SetDataset(ds)
     assert info.ParseRunAndFinalize(["--approx-stats"])
     output_string = info.GetArg("output-string").Get()
     j = json.loads(output_string)
@@ -78,7 +78,7 @@ def test_gdalalg_raster_info_approx_stats():
 def test_gdalalg_raster_info_hist():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
-    info.GetArg("input").SetDatasetWithoutOwnership(ds)
+    info.GetArg("input").SetDataset(ds)
     assert info.ParseRunAndFinalize(["--hist"])
     output_string = info.GetArg("output-string").Get()
     j = json.loads(output_string)
@@ -88,7 +88,7 @@ def test_gdalalg_raster_info_hist():
 def test_gdalalg_raster_info_no_options():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
-    info.GetArg("input").SetDatasetWithoutOwnership(ds)
+    info.GetArg("input").SetDataset(ds)
     assert info.ParseRunAndFinalize(
         ["--no-gcp", "--no-md", "--no-ct", "--no-fl", "--no-nodata", "--no-mask"]
     )
@@ -98,7 +98,7 @@ def test_gdalalg_raster_info_list_mdd():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
     ds.SetMetadataItem("foo", "bar", "MY_DOMAIN")
-    info.GetArg("input").SetDatasetWithoutOwnership(ds)
+    info.GetArg("input").SetDataset(ds)
     assert info.ParseRunAndFinalize(["--list-mdd"])
     output_string = info.GetArg("output-string").Get()
     j = json.loads(output_string)
@@ -109,7 +109,7 @@ def test_gdalalg_raster_info_mdd_all():
     info = get_info_alg()
     ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM")
     ds.SetMetadataItem("foo", "bar", "MY_DOMAIN")
-    info.GetArg("input").SetDatasetWithoutOwnership(ds)
+    info.GetArg("input").SetDataset(ds)
     assert info.ParseRunAndFinalize(["--mdd=all"])
     output_string = info.GetArg("output-string").Get()
     j = json.loads(output_string)
@@ -149,7 +149,7 @@ def test_gdalalg_raster_info_list_subdataset_error_cannot_open_subdataset():
     ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     ds.SetMetadataItem("SUBDATASET_1_DESC", "desc", "SUBDATASETS")
     ds.SetMetadataItem("SUBDATASET_1_NAME", "i_do_not_exist", "SUBDATASETS")
-    info.GetArg("input").SetDatasetWithoutOwnership(ds)
+    info.GetArg("input").SetDataset(ds)
     with pytest.raises(
         Exception,
         match="i_do_not_exist",

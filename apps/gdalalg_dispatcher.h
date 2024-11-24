@@ -88,7 +88,7 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
 
     if (ok)
     {
-        auto poDS = m_rasterDispatcher->GetDataset();
+        auto poDS = m_rasterDispatcher->GetDatasetRef();
         // cppcheck-suppress knownConditionTrueFalse
         if (poDS &&
             (poDS->GetRasterCount() > 0 || poDS->GetMetadata("SUBDATASETS")))
@@ -117,11 +117,11 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
         return false;
     }
 
-    auto poDSFromRaster = m_rasterDispatcher->GetDataset();
+    auto poDSFromRaster = m_rasterDispatcher->GetDatasetRef();
     // cppcheck-suppress knownConditionTrueFalse
     if (poDSFromRaster)
     {
-        m_vectorDispatcher->SetDataset(poDSFromRaster, false);
+        m_vectorDispatcher->SetDataset(poDSFromRaster);
     }
 
     std::vector<std::string> argsWithoutInput;
@@ -185,7 +185,9 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
                         return false;
                     }
                     m_rasterDispatcher = std::make_unique<RasterDispatcher>();
-                    m_rasterDispatcher->SetDataset(poDS.release(), true);
+                    auto poDSRaw = poDS.get();
+                    m_rasterDispatcher->SetDataset(poDS.release());
+                    poDSRaw->Release();
                     m_selectedSubAlg = m_rasterDispatcher.get();
                     std::vector<std::string> callPath(m_callPath);
                     callPath.push_back("raster");
@@ -197,7 +199,9 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
                 else if (poDS->GetLayerCount() != 0)
                 {
                     m_vectorDispatcher = std::make_unique<VectorDispatcher>();
-                    m_vectorDispatcher->SetDataset(poDS.release(), true);
+                    auto poDSRaw = poDS.get();
+                    m_vectorDispatcher->SetDataset(poDS.release());
+                    poDSRaw->Release();
                     m_selectedSubAlg = m_vectorDispatcher.get();
                     std::vector<std::string> callPath(m_callPath);
                     callPath.push_back("vector");

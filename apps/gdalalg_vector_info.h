@@ -36,12 +36,12 @@ class GDALVectorInfoAlgorithm final : public GDALAlgorithm
 
     GDALVectorInfoAlgorithm();
 
-    void SetDataset(GDALDataset *poDS, bool owned)
+    void SetDataset(GDALDataset *poDS)
     {
         auto arg = GetArg(GDAL_ARG_NAME_INPUT);
         if (arg)
         {
-            arg->Set(poDS, owned);
+            arg->Set(poDS);
             arg->SetSkipIfAlreadySet();
         }
     }

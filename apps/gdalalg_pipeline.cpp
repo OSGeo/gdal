@@ -44,13 +44,13 @@ class GDALDummyRasterPipelineAlgorithm final : public GDALAlgorithm
     }
 
     /* cppcheck-suppress functionStatic */
-    GDALDataset *GetDataset()
+    GDALDataset *GetDatasetRef()
     {
         return nullptr;
     }
 
     /* cppcheck-suppress functionStatic */
-    void SetDataset(GDALDataset *, bool)
+    void SetDataset(GDALDataset *)
     {
     }
 

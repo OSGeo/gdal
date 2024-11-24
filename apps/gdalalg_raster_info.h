@@ -36,16 +36,19 @@ class GDALRasterInfoAlgorithm final : public GDALAlgorithm
 
     explicit GDALRasterInfoAlgorithm(bool openForMixedRasterVector = false);
 
-    GDALDataset *GetDataset()
+    GDALDataset *GetDatasetRef()
     {
-        return m_dataset.GetDataset();
+        return m_dataset.GetDatasetRef();
     }
 
-    void SetDataset(GDALDataset *poDS, bool owned)
+    void SetDataset(GDALDataset *poDS)
     {
         auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        arg->Set(poDS, owned);
-        arg->SetSkipIfAlreadySet();
+        if (arg)
+        {
+            arg->Set(poDS);
+            arg->SetSkipIfAlreadySet();
+        }
     }
 
   private:

@@ -95,7 +95,7 @@ class GDALVectorPipelineAlgorithm final : public GDALVectorPipelineStepAlgorithm
     std::string GetUsageAsJSON() const override;
 
     /* cppcheck-suppress functionStatic */
-    void SetDataset(GDALDataset *, bool)
+    void SetDataset(GDALDataset *)
     {
     }
 

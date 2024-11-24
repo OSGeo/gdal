@@ -249,7 +249,7 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         {
             CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
             CPLErrorReset();
-            arg.Set(static_cast<GDALDataset *>(nullptr), false);
+            arg.Set(static_cast<GDALDataset *>(nullptr));
             EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
             EXPECT_STREQ(arg.Get<std::string>().c_str(), "foo");
         }
@@ -310,25 +310,19 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         GDALArgDatasetValue val;
         auto arg = GDALAlgorithmArg(
             GDALAlgorithmArgDecl("", 0, "", GAAT_DATASET), &val);
-
-        arg.Set(poMEMDS.get(), false);
-        EXPECT_EQ(val.GetDataset(), poMEMDS.get());
-        EXPECT_FALSE(val.IsOwned());
         auto poMEMDSRaw = poMEMDS.get();
 
-        arg.Set(poMEMDS.release(), true);
-        EXPECT_EQ(val.GetDataset(), poMEMDSRaw);
-        EXPECT_TRUE(val.IsOwned());
+        arg.Set(poMEMDS.release());
+        EXPECT_EQ(val.GetDatasetRef(), poMEMDSRaw);
 
-        bool isOwned = false;
-        poMEMDS.reset(val.BorrowDataset(isOwned));
-        EXPECT_TRUE(isOwned);
+        poMEMDS.reset(val.BorrowDataset());
         EXPECT_EQ(poMEMDS.get(), poMEMDSRaw);
-        EXPECT_EQ(val.GetDataset(), nullptr);
+        EXPECT_EQ(val.GetDatasetRef(), nullptr);
 
         EXPECT_TRUE(arg.Set(std::move(poMEMDS)));
-        EXPECT_EQ(val.GetDataset(), poMEMDSRaw);
-        EXPECT_TRUE(val.IsOwned());
+        EXPECT_EQ(val.GetDatasetRef(), poMEMDSRaw);
+
+        poMEMDSRaw->ReleaseRef();
 
         arg.SetDatasetName("foo");
         EXPECT_STREQ(val.GetName().c_str(), "foo");
@@ -349,13 +343,7 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
         {
             CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
             CPLErrorReset();
-            arg.Set(static_cast<GDALDataset *>(nullptr), false);
-            EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
-        }
-        {
-            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-            CPLErrorReset();
-            arg.Set(std::unique_ptr<GDALDataset>(nullptr));
+            arg.Set(static_cast<GDALDataset *>(nullptr));
             EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         }
     }
@@ -662,42 +650,24 @@ TEST_F(test_gdal_algorithm, GDALArgDatasetValue)
         auto poDS = std::unique_ptr<GDALDataset>(
             GetGDALDriverManager()->GetDriverByName("MEM")->Create(
                 "", 1, 1, 1, GDT_Byte, nullptr));
-        GDALArgDatasetValue value(poDS.release(), true);
-        EXPECT_NE(value.GetDataset(), nullptr);
-        EXPECT_TRUE(value.IsOwned());
-    }
-    {
-        auto poDS = std::unique_ptr<GDALDataset>(
-            GetGDALDriverManager()->GetDriverByName("MEM")->Create(
-                "", 1, 1, 1, GDT_Byte, nullptr));
-        GDALArgDatasetValue value(poDS.get(), false);
-        EXPECT_EQ(value.GetDataset(), poDS.get());
-        EXPECT_FALSE(value.IsOwned());
-        EXPECT_STREQ(value.GetName().c_str(), poDS->GetDescription());
+        auto poDSRaw = poDS.get();
+        GDALArgDatasetValue value(poDS.release());
+        EXPECT_EQ(value.GetDatasetRef(), poDSRaw);
+        EXPECT_STREQ(value.GetName().c_str(), poDSRaw->GetDescription());
 
         GDALArgDatasetValue value2;
         value2 = std::move(value);
-        EXPECT_STREQ(value2.GetName().c_str(), poDS->GetDescription());
+        EXPECT_STREQ(value2.GetName().c_str(), poDSRaw->GetDescription());
+
+        poDSRaw->ReleaseRef();
     }
     {
-        auto poDS = std::unique_ptr<GDALDataset>(
-            GetGDALDriverManager()->GetDriverByName("MEM")->Create(
-                "", 1, 1, 1, GDT_Byte, nullptr));
         GDALArgDatasetValue value("foo");
         EXPECT_STREQ(value.GetName().c_str(), "foo");
 
         GDALArgDatasetValue value2;
         value2 = std::move(value);
         EXPECT_STREQ(value2.GetName().c_str(), "foo");
-    }
-    {
-        auto poDS = std::unique_ptr<GDALDataset>(
-            GetGDALDriverManager()->GetDriverByName("MEM")->Create(
-                "", 1, 1, 1, GDT_Byte, nullptr));
-        auto poDSRaw = poDS.get();
-        GDALArgDatasetValue value(std::move(poDS));
-        EXPECT_EQ(value.GetDataset(), poDSRaw);
-        EXPECT_TRUE(value.IsOwned());
     }
 }
 
@@ -977,7 +947,7 @@ TEST_F(test_gdal_algorithm, dataset)
         MyAlgorithm alg;
         EXPECT_TRUE(alg.ParseCommandLineArguments(
             {"--val=" GCORE_DATA_DIR "byte.tif"}));
-        EXPECT_NE(alg.m_val.GetDataset(), nullptr);
+        EXPECT_NE(alg.m_val.GetDatasetRef(), nullptr);
     }
 
     {
@@ -986,8 +956,9 @@ TEST_F(test_gdal_algorithm, dataset)
             GetGDALDriverManager()->GetDriverByName("MEM")->Create(
                 "", 1, 1, 1, GDT_Byte, nullptr));
         auto poDSRaw = poDS.get();
-        alg.GetArg("val")->Set(poDS.release(), true);
-        EXPECT_EQ(alg.m_val.GetDataset(), poDSRaw);
+        alg.GetArg("val")->Set(poDS.release());
+        EXPECT_EQ(alg.m_val.GetDatasetRef(), poDSRaw);
+        poDSRaw->ReleaseRef();
     }
 
     {
@@ -1053,8 +1024,8 @@ TEST_F(test_gdal_algorithm, input_update)
             EXPECT_TRUE(!alg.GetUsageAsJSON().empty());
             EXPECT_TRUE(
                 alg.ParseCommandLineArguments({"--update", osTmpFilename}));
-            ASSERT_NE(alg.m_input.GetDataset(), nullptr);
-            EXPECT_EQ(alg.m_input.GetDataset()->GetAccess(), GA_Update);
+            ASSERT_NE(alg.m_input.GetDatasetRef(), nullptr);
+            EXPECT_EQ(alg.m_input.GetDatasetRef()->GetAccess(), GA_Update);
 
             alg.Finalize();
 
@@ -1099,10 +1070,11 @@ TEST_F(test_gdal_algorithm, same_input_output_dataset_sqlite)
             MyAlgorithm alg;
             EXPECT_TRUE(alg.ParseCommandLineArguments(
                 {"--update", osTmpFilename, osTmpFilename}));
-            ASSERT_NE(alg.m_input.GetDataset(), nullptr);
-            EXPECT_NE(alg.m_output.GetDataset(), nullptr);
-            EXPECT_EQ(alg.m_input.GetDataset(), alg.m_output.GetDataset());
-            EXPECT_EQ(alg.m_input.GetDataset()->GetAccess(), GA_Update);
+            ASSERT_NE(alg.m_input.GetDatasetRef(), nullptr);
+            EXPECT_NE(alg.m_output.GetDatasetRef(), nullptr);
+            EXPECT_EQ(alg.m_input.GetDatasetRef(),
+                      alg.m_output.GetDatasetRef());
+            EXPECT_EQ(alg.m_input.GetDatasetRef()->GetAccess(), GA_Update);
 
             alg.Finalize();
 
@@ -1415,7 +1387,7 @@ TEST_F(test_gdal_algorithm, vector_dataset)
         EXPECT_TRUE(alg.ParseCommandLineArguments(
             {"--val=" GCORE_DATA_DIR "byte.tif"}));
         ASSERT_EQ(alg.m_val.size(), 1U);
-        EXPECT_NE(alg.m_val[0].GetDataset(), nullptr);
+        EXPECT_NE(alg.m_val[0].GetDatasetRef(), nullptr);
     }
 
     {
@@ -1425,7 +1397,7 @@ TEST_F(test_gdal_algorithm, vector_dataset)
         EXPECT_FALSE(alg.ParseCommandLineArguments({"--val=non_existing.tif"}));
         EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         ASSERT_EQ(alg.m_val.size(), 1U);
-        EXPECT_EQ(alg.m_val[0].GetDataset(), nullptr);
+        EXPECT_EQ(alg.m_val[0].GetDatasetRef(), nullptr);
     }
 
     {
@@ -1506,8 +1478,8 @@ TEST_F(test_gdal_algorithm, vector_input)
                 {"--update", "--oo=LIST_ALL_TABLES=YES", "--if=GPKG",
                  osTmpFilename}));
             ASSERT_EQ(alg.m_input.size(), 1U);
-            ASSERT_NE(alg.m_input[0].GetDataset(), nullptr);
-            EXPECT_EQ(alg.m_input[0].GetDataset()->GetAccess(), GA_Update);
+            ASSERT_NE(alg.m_input[0].GetDatasetRef(), nullptr);
+            EXPECT_EQ(alg.m_input[0].GetDatasetRef()->GetAccess(), GA_Update);
 
             alg.Finalize();
 
@@ -2995,8 +2967,7 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
             auto poDS = std::unique_ptr<GDALDataset>(
                 GetGDALDriverManager()->GetDriverByName("MEM")->Create(
                     "", 1, 1, 1, GDT_Byte, nullptr));
-            GDALArgDatasetValueSetDatasetWithoutOwnership(hVal, poDS.get());
-            GDALArgDatasetValueSetDatasetWithOwnership(hVal, poDS.release());
+            GDALArgDatasetValueSetDataset(hVal, poDS.release());
         }
 
         GDALAlgorithmArgSetAsDatasetValue(hArg, hVal);
@@ -3004,27 +2975,32 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
 
         hVal = GDALAlgorithmArgGetAsDatasetValue(hArg);
         ASSERT_NE(hVal, nullptr);
-        EXPECT_NE(GDALArgDatasetValueGetDataset(hVal), nullptr);
+        auto hDS = GDALArgDatasetValueGetDatasetRef(hVal);
+        EXPECT_NE(hDS, nullptr);
+        {
+            auto hDS2 = GDALArgDatasetValueGetDatasetIncreaseRefCount(hVal);
+            EXPECT_EQ(hDS2, hDS);
+            GDALReleaseDataset(hDS2);
+        }
         GDALArgDatasetValueRelease(hVal);
 
-        GDALAlgorithmArgSetDatasetWithoutOwnership(hArg, nullptr);
+        GDALAlgorithmArgSetDataset(hArg, nullptr);
 
         hVal = GDALAlgorithmArgGetAsDatasetValue(hArg);
         ASSERT_NE(hVal, nullptr);
-        EXPECT_EQ(GDALArgDatasetValueGetDataset(hVal), nullptr);
+        EXPECT_EQ(GDALArgDatasetValueGetDatasetRef(hVal), nullptr);
         GDALArgDatasetValueRelease(hVal);
 
         {
             auto poDS = std::unique_ptr<GDALDataset>(
                 GetGDALDriverManager()->GetDriverByName("MEM")->Create(
                     "", 1, 1, 1, GDT_Byte, nullptr));
-            GDALAlgorithmArgSetDatasetWithoutOwnership(hArg, poDS.get());
-            GDALAlgorithmArgSetDatasetWithOwnership(hArg, poDS.release());
+            GDALAlgorithmArgSetDataset(hArg, poDS.release());
         }
 
         hVal = GDALAlgorithmArgGetAsDatasetValue(hArg);
         ASSERT_NE(hVal, nullptr);
-        EXPECT_NE(GDALArgDatasetValueGetDataset(hVal), nullptr);
+        EXPECT_NE(GDALArgDatasetValueGetDatasetRef(hVal), nullptr);
         GDALArgDatasetValueRelease(hVal);
 
         GDALAlgorithmArgRelease(hArg);

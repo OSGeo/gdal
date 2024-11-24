@@ -35,15 +35,15 @@ class GDALRasterConvertAlgorithm final : public GDALAlgorithm
 
     explicit GDALRasterConvertAlgorithm(bool openForMixedRasterVector = false);
 
-    GDALDataset *GetDataset()
+    GDALDataset *GetDatasetRef()
     {
-        return m_inputDataset.GetDataset();
+        return m_inputDataset.GetDatasetRef();
     }
 
-    void SetDataset(GDALDataset *poDS, bool owned)
+    void SetDataset(GDALDataset *poDS)
     {
         auto arg = GetArg(GDAL_ARG_NAME_INPUT);
-        arg->Set(poDS, owned);
+        arg->Set(poDS);
         arg->SetSkipIfAlreadySet();
     }
 

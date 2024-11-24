@@ -76,7 +76,7 @@ def test_gdalalg_info_invalid_arg():
 def test_gdalalg_info_run_cannot_be_run():
     info = get_info_alg()
     ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
-    info.GetArg("input").SetDatasetWithoutOwnership(ds)
+    info.GetArg("input").SetDataset(ds)
     with pytest.raises(Exception, match="method should not be called directly"):
         info.Run()
 

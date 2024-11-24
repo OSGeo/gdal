@@ -58,8 +58,8 @@ GDALRasterConvertAlgorithm::GDALRasterConvertAlgorithm(
 bool GDALRasterConvertAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                          void *pProgressData)
 {
-    CPLAssert(m_inputDataset.GetDataset());
-    if (m_outputDataset.GetDataset())
+    CPLAssert(m_inputDataset.GetDatasetRef());
+    if (m_outputDataset.GetDatasetRef())
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "gdal raster convert does not support outputting to an "
@@ -94,7 +94,7 @@ bool GDALRasterConvertAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
         GDALTranslate(m_outputDataset.GetName().c_str(),
-                      GDALDataset::ToHandle(m_inputDataset.GetDataset()),
+                      GDALDataset::ToHandle(m_inputDataset.GetDatasetRef()),
                       psOptions, nullptr)));
     GDALTranslateOptionsFree(psOptions);
     if (!poOutDS)

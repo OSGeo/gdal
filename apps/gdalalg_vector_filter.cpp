@@ -56,9 +56,9 @@ GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm()
 
 bool GDALVectorFilterAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
-    CPLAssert(m_inputDataset.GetDataset());
+    CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());
-    CPLAssert(!m_outputDataset.GetDataset());
+    CPLAssert(!m_outputDataset.GetDatasetRef());
 
     bool ret = true;
     if (m_bbox.size() == 4)
@@ -67,7 +67,7 @@ bool GDALVectorFilterAlgorithm::RunImpl(GDALProgressFunc, void *)
         const double ymin = m_bbox[1];
         const double xmax = m_bbox[2];
         const double ymax = m_bbox[3];
-        auto poSrcDS = m_inputDataset.GetDataset();
+        auto poSrcDS = m_inputDataset.GetDatasetRef();
         const int nLayerCount = poSrcDS->GetLayerCount();
         for (int i = 0; i < nLayerCount; ++i)
         {
@@ -78,7 +78,7 @@ bool GDALVectorFilterAlgorithm::RunImpl(GDALProgressFunc, void *)
         }
     }
 
-    m_outputDataset.Set(m_inputDataset.GetDataset(), false);
+    m_outputDataset.Set(m_inputDataset.GetDatasetRef());
 
     return true;
 }

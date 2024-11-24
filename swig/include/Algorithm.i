@@ -223,12 +223,8 @@ public:
     return GDALAlgorithmArgSetAsDoubleList(self, nList, pList);
   }
 
-  void SetDatasetWithoutOwnership(GDALDatasetShadow* ds) {
-    GDALAlgorithmArgSetDatasetWithoutOwnership(self, ds);
-  }
-
-  void SetDatasetWithOwnership(GDALDatasetShadow* ds) {
-    GDALAlgorithmArgSetDatasetWithOwnership(self, ds);
+  void SetDataset(GDALDatasetShadow* ds) {
+    GDALAlgorithmArgSetDataset(self, ds);
   }
 }
 };
@@ -385,12 +381,9 @@ public:
     return GDALArgDatasetValueGetName(self);
   }
 
+%newobject GetDataset;
   GDALDatasetShadow* GetDataset() {
-    return GDALArgDatasetValueGetDataset(self);
-  }
-
-  bool IsDatasetOwned() {
-    return GDALArgDatasetValueIsDatasetOwned(self);
+    return GDALArgDatasetValueGetDatasetIncreaseRefCount(self);
   }
 
   int GetInputFlags() {
@@ -405,12 +398,8 @@ public:
     GDALArgDatasetValueSetName(self, name);
   }
 
-  void SetDatasetWithoutOwnership(GDALDatasetShadow* ds) {
-    GDALArgDatasetValueSetDatasetWithoutOwnership(self, ds);
-  }
-
-  void SetDatasetWithOwnership(GDALDatasetShadow* ds) {
-    GDALArgDatasetValueSetDatasetWithOwnership(self, ds);
+  void SetDataset(GDALDatasetShadow* ds) {
+    GDALArgDatasetValueSetDataset(self, ds);
   }
 }
 };

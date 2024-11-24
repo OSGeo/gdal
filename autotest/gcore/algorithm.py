@@ -163,22 +163,14 @@ def test_algorithm_dataset_value(tmp_path):
 
     in_ds = input_arg_value.GetDataset()
     assert in_ds is not None
-    assert input_arg_value.IsDatasetOwned()
 
     out_ds = output_arg_value.GetDataset()
     assert out_ds is not None
-    assert output_arg_value.IsDatasetOwned()
     assert out_ds.GetRasterBand(1).Checksum() == 4672
 
-    output_arg_value.SetDatasetWithoutOwnership(None)
-    output_arg_value.SetDatasetWithOwnership(None)
+    output_arg_value.SetDataset(None)
     with pytest.raises(
         Exception,
         match="Dataset object 'output' is created by algorithm and cannot be set as an input",
     ):
-        output_arg.SetDatasetWithoutOwnership(None)
-    with pytest.raises(
-        Exception,
-        match="Dataset object 'output' is created by algorithm and cannot be set as an input",
-    ):
-        output_arg.SetDatasetWithOwnership(None)
+        output_arg.SetDataset(None)

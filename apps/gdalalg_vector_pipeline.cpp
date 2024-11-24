@@ -397,7 +397,7 @@ bool GDALVectorPipelineAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         auto &step = m_steps[i];
         if (i > 0)
         {
-            if (step->m_inputDataset.GetDataset())
+            if (step->m_inputDataset.GetDatasetRef())
             {
                 // Shouldn't happen
                 ReportError(CE_Failure, CPLE_AppDefined,
@@ -405,9 +405,9 @@ bool GDALVectorPipelineAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                             static_cast<int>(i), step->GetName().c_str());
                 return false;
             }
-            step->m_inputDataset.Set(poCurDS, false);
+            step->m_inputDataset.Set(poCurDS);
         }
-        if (i + 1 < m_steps.size() && step->m_outputDataset.GetDataset())
+        if (i + 1 < m_steps.size() && step->m_outputDataset.GetDatasetRef())
         {
             // Shouldn't happen
             ReportError(CE_Failure, CPLE_AppDefined,
@@ -420,7 +420,7 @@ bool GDALVectorPipelineAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         {
             return false;
         }
-        poCurDS = step->m_outputDataset.GetDataset();
+        poCurDS = step->m_outputDataset.GetDatasetRef();
         if (!poCurDS)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
@@ -430,9 +430,9 @@ bool GDALVectorPipelineAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         }
     }
 
-    if (!m_outputDataset.GetDataset())
+    if (!m_outputDataset.GetDatasetRef())
     {
-        m_outputDataset.Set(poCurDS, false);
+        m_outputDataset.Set(poCurDS);
     }
 
     return true;

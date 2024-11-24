@@ -69,7 +69,7 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm()
 
 bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
-    CPLAssert(m_dataset.GetDataset());
+    CPLAssert(m_dataset.GetDatasetRef());
 
     CPLStringList aosOptions;
     if (m_format == "json")
@@ -113,8 +113,8 @@ bool GDALVectorInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
     GDALVectorInfoOptions *psInfo =
         GDALVectorInfoOptionsNew(aosOptions.List(), nullptr);
-    char *ret =
-        GDALVectorInfo(GDALDataset::ToHandle(m_dataset.GetDataset()), psInfo);
+    char *ret = GDALVectorInfo(GDALDataset::ToHandle(m_dataset.GetDatasetRef()),
+                               psInfo);
     GDALVectorInfoOptionsFree(psInfo);
     if (!ret)
         return false;

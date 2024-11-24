@@ -295,7 +295,7 @@ bool GDALAlgorithmArg::Set(double value)
     return SetInternal(value);
 }
 
-bool GDALAlgorithmArg::Set(GDALDataset *ds, bool owned)
+bool GDALAlgorithmArg::Set(GDALDataset *ds)
 {
     if (m_decl.GetType() != GAAT_DATASET)
     {
@@ -316,7 +316,7 @@ bool GDALAlgorithmArg::Set(GDALDataset *ds, bool owned)
         return false;
     }
     m_explicitlySet = true;
-    val.Set(ds, owned);
+    val.Set(ds);
     return RunAllActions();
 }
 
@@ -566,20 +566,12 @@ GDALInConstructionAlgorithmArg &GDALInConstructionAlgorithmArg::SetPositional()
 /*              GDALArgDatasetValue::GDALArgDatasetValue()              */
 /************************************************************************/
 
-GDALArgDatasetValue::GDALArgDatasetValue(GDALDataset *poDS, bool owned)
-    : m_poDS(poDS), m_owned(owned),
-      m_name(m_poDS ? m_poDS->GetDescription() : std::string()), m_nameSet(true)
+GDALArgDatasetValue::GDALArgDatasetValue(GDALDataset *poDS)
+    : m_poDS(poDS), m_name(m_poDS ? m_poDS->GetDescription() : std::string()),
+      m_nameSet(true)
 {
-}
-
-/************************************************************************/
-/*              GDALArgDatasetValue::GDALArgDatasetValue()              */
-/************************************************************************/
-
-GDALArgDatasetValue::GDALArgDatasetValue(std::unique_ptr<GDALDataset> poDS)
-    : m_poDS(poDS.release()), m_owned(true),
-      m_name(m_poDS ? m_poDS->GetDescription() : std::string()), m_nameSet(true)
-{
+    if (m_poDS)
+        m_poDS->Reference();
 }
 
 /************************************************************************/
@@ -603,7 +595,6 @@ void GDALArgDatasetValue::Set(std::unique_ptr<GDALDataset> poDS)
 {
     Close();
     m_poDS = poDS.release();
-    m_owned = true;
     m_name = m_poDS ? m_poDS->GetDescription() : std::string();
     m_nameSet = true;
     if (m_ownerArg)
@@ -614,15 +605,30 @@ void GDALArgDatasetValue::Set(std::unique_ptr<GDALDataset> poDS)
 /*              GDALArgDatasetValue::Set()                              */
 /************************************************************************/
 
-void GDALArgDatasetValue::Set(GDALDataset *poDS, bool owned)
+void GDALArgDatasetValue::Set(GDALDataset *poDS)
 {
     Close();
     m_poDS = poDS;
-    m_owned = owned;
+    if (m_poDS)
+        m_poDS->Reference();
     m_name = m_poDS ? m_poDS->GetDescription() : std::string();
     m_nameSet = true;
     if (m_ownerArg)
         m_ownerArg->NotifyValueSet();
+}
+
+/************************************************************************/
+/*                   GDALArgDatasetValue::SetFrom()                     */
+/************************************************************************/
+
+void GDALArgDatasetValue::SetFrom(const GDALArgDatasetValue &other)
+{
+    Close();
+    m_name = other.m_name;
+    m_nameSet = other.m_nameSet;
+    m_poDS = other.m_poDS;
+    if (m_poDS)
+        m_poDS->Reference();
 }
 
 /************************************************************************/
@@ -641,7 +647,7 @@ GDALArgDatasetValue::~GDALArgDatasetValue()
 bool GDALArgDatasetValue::Close()
 {
     bool ret = true;
-    if (m_owned && m_poDS)
+    if (m_poDS && m_poDS->Dereference() == 0)
     {
         ret = m_poDS->Close() == CE_None;
         delete m_poDS;
@@ -658,17 +664,26 @@ GDALArgDatasetValue &GDALArgDatasetValue::operator=(GDALArgDatasetValue &&other)
 {
     Close();
     m_poDS = other.m_poDS;
-    m_owned = other.m_owned;
     m_name = other.m_name;
     m_nameSet = other.m_nameSet;
     m_type = other.m_type;
     m_inputFlags = other.m_inputFlags;
     m_outputFlags = other.m_outputFlags;
     other.m_poDS = nullptr;
-    other.m_owned = false;
     other.m_name.clear();
     other.m_nameSet = false;
     return *this;
+}
+
+/************************************************************************/
+/*                   GDALArgDatasetValue::GetDataset()                  */
+/************************************************************************/
+
+GDALDataset *GDALArgDatasetValue::GetDatasetIncreaseRefCount()
+{
+    if (m_poDS)
+        m_poDS->Reference();
+    return m_poDS;
 }
 
 /************************************************************************/
@@ -676,12 +691,11 @@ GDALArgDatasetValue &GDALArgDatasetValue::operator=(GDALArgDatasetValue &&other)
 /************************************************************************/
 
 GDALArgDatasetValue::GDALArgDatasetValue(GDALArgDatasetValue &&other)
-    : m_poDS(other.m_poDS), m_owned(other.m_owned), m_name(other.m_name),
-      m_nameSet(other.m_nameSet), m_type(other.m_type),
-      m_inputFlags(other.m_inputFlags), m_outputFlags(other.m_outputFlags)
+    : m_poDS(other.m_poDS), m_name(other.m_name), m_nameSet(other.m_nameSet),
+      m_type(other.m_type), m_inputFlags(other.m_inputFlags),
+      m_outputFlags(other.m_outputFlags)
 {
     other.m_poDS = nullptr;
-    other.m_owned = false;
     other.m_name.clear();
 }
 
@@ -1334,14 +1348,14 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
          overwriteArg->GetType() == GAAT_BOOLEAN && overwriteArg->Get<bool>());
     auto outputArg = algForOutput->GetArg(GDAL_ARG_NAME_OUTPUT);
     auto &val = arg->Get<GDALArgDatasetValue>();
-    if (!val.GetDataset() && !val.IsNameSet())
+    if (!val.GetDatasetRef() && !val.IsNameSet())
     {
         ReportError(CE_Failure, CPLE_AppDefined,
                     "Argument '%s' has no dataset object or dataset name.",
                     arg->GetName().c_str());
         ret = false;
     }
-    else if (!val.GetDataset() &&
+    else if (!val.GetDatasetRef() &&
              (!arg->IsOutput() || (arg == outputArg && update && !overwrite)))
     {
         int flags = val.GetType();
@@ -1353,7 +1367,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             outputArg && outputArg->GetType() == GAAT_DATASET)
         {
             auto &outputVal = outputArg->Get<GDALArgDatasetValue>();
-            if (!outputVal.GetDataset() &&
+            if (!outputVal.GetDatasetRef() &&
                 outputVal.GetName() == val.GetName() &&
                 (outputVal.GetInputFlags() & GADV_OBJECT) != 0)
             {
@@ -1382,9 +1396,9 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                     CPLStringList(ifArg->Get<std::vector<std::string>>());
         }
 
-        auto poDS = std::unique_ptr<GDALDataset>(
+        auto poDS =
             GDALDataset::Open(val.GetName().c_str(), flags,
-                              aosAllowedDrivers.List(), aosOpenOptions.List()));
+                              aosAllowedDrivers.List(), aosOpenOptions.List());
         if (poDS)
         {
             if (assignToOutputArg)
@@ -1401,11 +1415,11 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                                  EQUAL(poDriver->GetDescription(), "SQLite") ||
                                  EQUAL(poDriver->GetDescription(), "GPKG")))
                 {
-                    outputArg->Get<GDALArgDatasetValue>().Set(poDS.get(),
-                                                              false);
+                    outputArg->Get<GDALArgDatasetValue>().Set(poDS);
                 }
             }
-            val.Set(std::move(poDS));
+            val.Set(poDS);
+            poDS->ReleaseRef();
         }
         else
         {
@@ -1528,7 +1542,7 @@ bool GDALAlgorithm::ValidateArguments()
             auto &listVal = arg->Get<std::vector<GDALArgDatasetValue>>();
             for (auto &val : listVal)
             {
-                if (!val.GetDataset() && val.GetName().empty())
+                if (!val.GetDatasetRef() && val.GetName().empty())
                 {
                     ReportError(
                         CE_Failure, CPLE_AppDefined,
@@ -1536,7 +1550,7 @@ bool GDALAlgorithm::ValidateArguments()
                         arg->GetName().c_str());
                     ret = false;
                 }
-                else if (!val.GetDataset())
+                else if (!val.GetDatasetRef())
                 {
                     int flags = val.GetType() | GDAL_OF_VERBOSE_ERROR;
 
@@ -2110,10 +2124,10 @@ bool GDALAlgorithm::Run(GDALProgressFunc pfnProgress, void *pProgressData)
 
 bool GDALAlgorithm::Finalize()
 {
-    if (m_selectedSubAlg)
-        return m_selectedSubAlg->Finalize();
-
     bool ret = true;
+    if (m_selectedSubAlg)
+        ret = m_selectedSubAlg->Finalize();
+
     for (auto &arg : m_args)
     {
         if (arg->GetType() == GAAT_DATASET)
@@ -3686,10 +3700,10 @@ bool GDALAlgorithmArgSetAsDatasetValue(GDALAlgorithmArgH hArg,
 }
 
 /************************************************************************/
-/*              GDALAlgorithmArgSetDatasetWithoutOwnership()            */
+/*                     GDALAlgorithmArgSetDataset()                     */
 /************************************************************************/
 
-/** Set dataset object, but without transferring ownership to hArg.
+/** Set dataset object, increasing its reference counter.
  *
  * @param hArg Handle to an argument. Must NOT be null.
  * @param hDS Dataset object. May be null.
@@ -3697,30 +3711,10 @@ bool GDALAlgorithmArgSetAsDatasetValue(GDALAlgorithmArgH hArg,
  * @since 3.11
  */
 
-bool GDALAlgorithmArgSetDatasetWithoutOwnership(GDALAlgorithmArgH hArg,
-                                                GDALDatasetH hDS)
+bool GDALAlgorithmArgSetDataset(GDALAlgorithmArgH hArg, GDALDatasetH hDS)
 {
     VALIDATE_POINTER1(hArg, __func__, false);
-    return hArg->ptr->Set(GDALDataset::FromHandle(hDS), false);
-}
-
-/************************************************************************/
-/*                GDALAlgorithmArgSetDatasetWithOwnership()             */
-/************************************************************************/
-
-/** Set dataset object, and transfer its ownership to hArg.
- *
- * @param hArg Handle to an argument. Must NOT be null.
- * @param hDS Dataset object. May be null.
- * @return true if success.
- * @since 3.11
- */
-
-bool GDALAlgorithmArgSetDatasetWithOwnership(GDALAlgorithmArgH hArg,
-                                             GDALDatasetH hDS)
-{
-    VALIDATE_POINTER1(hArg, __func__, false);
-    return hArg->ptr->Set(GDALDataset::FromHandle(hDS), false);
+    return hArg->ptr->Set(GDALDataset::FromHandle(hDS));
 }
 
 /************************************************************************/
@@ -3834,34 +3828,39 @@ const char *GDALArgDatasetValueGetName(GDALArgDatasetValueH hValue)
 }
 
 /************************************************************************/
-/*                   GDALArgDatasetValueGetDataset()                    */
+/*               GDALArgDatasetValueGetDatasetRef()                     */
 /************************************************************************/
 
-/** Return the dataset component of the GDALArgDatasetValue
+/** Return the dataset component of the GDALArgDatasetValue.
+ *
+ * This does not modify the reference counter, hence the lifetime of the
+ * returned object is not guaranteed to exceed the one of hValue.
  *
  * @param hValue Handle to a GDALArgDatasetValue. Must NOT be null.
  * @since 3.11
  */
-GDALDatasetH GDALArgDatasetValueGetDataset(GDALArgDatasetValueH hValue)
+GDALDatasetH GDALArgDatasetValueGetDatasetRef(GDALArgDatasetValueH hValue)
 {
     VALIDATE_POINTER1(hValue, __func__, nullptr);
-    return GDALDataset::ToHandle(hValue->ptr->GetDataset());
+    return GDALDataset::ToHandle(hValue->ptr->GetDatasetRef());
 }
 
 /************************************************************************/
-/*                    GDALArgDatasetValueIsDatasetOwned()               */
+/*               GDALArgDatasetValueGetDatasetIncreaseRefCount()        */
 /************************************************************************/
 
-/** Returns whether the dataset object referenced in this object is owned
- * by this object (and thus released by it when it is destroyed).
+/** Return the dataset component of the GDALArgDatasetValue, and increase its
+ * reference count if not null. Once done with the dataset, the caller should
+ * call GDALReleaseDataset().
  *
  * @param hValue Handle to a GDALArgDatasetValue. Must NOT be null.
  * @since 3.11
  */
-bool GDALArgDatasetValueIsDatasetOwned(GDALArgDatasetValueH hValue)
+GDALDatasetH
+GDALArgDatasetValueGetDatasetIncreaseRefCount(GDALArgDatasetValueH hValue)
 {
-    VALIDATE_POINTER1(hValue, __func__, false);
-    return hValue->ptr->IsOwned();
+    VALIDATE_POINTER1(hValue, __func__, nullptr);
+    return GDALDataset::ToHandle(hValue->ptr->GetDatasetIncreaseRefCount());
 }
 
 /************************************************************************/
@@ -3950,37 +3949,19 @@ void GDALArgDatasetValueSetName(GDALArgDatasetValueH hValue,
 }
 
 /************************************************************************/
-/*             GDALArgDatasetValueSetDatasetWithoutOwnership()          */
+/*                  GDALArgDatasetValueSetDataset()                     */
 /************************************************************************/
 
-/** Set dataset object, but without transferring ownership to hValue.
+/** Set dataset object, increasing its reference counter.
  *
  * @param hValue Handle to a GDALArgDatasetValue. Must NOT be null.
  * @param hDS Dataset object. May be null.
  * @since 3.11
  */
 
-void GDALArgDatasetValueSetDatasetWithoutOwnership(GDALArgDatasetValueH hValue,
-                                                   GDALDatasetH hDS)
+void GDALArgDatasetValueSetDataset(GDALArgDatasetValueH hValue,
+                                   GDALDatasetH hDS)
 {
     VALIDATE_POINTER0(hValue, __func__);
-    hValue->ptr->Set(GDALDataset::FromHandle(hDS), false);
-}
-
-/************************************************************************/
-/*               GDALArgDatasetValueSetDatasetWithOwnership()           */
-/************************************************************************/
-
-/** Set dataset object, and transfer its ownership to hValue.
- *
- * @param hValue Handle to a GDALArgDatasetValue. Must NOT be null.
- * @param hDS Dataset object. May be null.
- * @since 3.11
- */
-
-void GDALArgDatasetValueSetDatasetWithOwnership(GDALArgDatasetValueH hValue,
-                                                GDALDatasetH hDS)
-{
-    VALIDATE_POINTER0(hValue, __func__);
-    hValue->ptr->Set(GDALDataset::FromHandle(hDS), true);
+    hValue->ptr->Set(GDALDataset::FromHandle(hDS));
 }
