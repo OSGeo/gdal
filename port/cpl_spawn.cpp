@@ -458,7 +458,7 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void *data, int length)
     {
         while (true)
         {
-            const auto n = read(fin, pabyData, nRemain);
+            const ssize_t n = read(fin, pabyData, nRemain);
             if (n < 0)
             {
                 if (errno == EINTR)
@@ -499,7 +499,7 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void *data, int length)
     {
         while (true)
         {
-            const auto n = write(fout, pabyData, nRemain);
+            const ssize_t n = write(fout, pabyData, nRemain);
             if (n < 0)
             {
                 if (errno == EINTR)

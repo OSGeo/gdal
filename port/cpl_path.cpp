@@ -606,6 +606,7 @@ const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
     if (nLenPath >= static_cast<size_t>(CPL_PATH_BUF_SIZE))
         return CPLStaticBufferTooSmall(pszStaticResult);
 
+    // coverity[overrun-buffer-arg]
     memcpy(pszStaticResult, pszPath, nLenPath);
     pszStaticResult[nLenPath] = 0;
 
