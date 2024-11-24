@@ -52,7 +52,7 @@ except ImportError:
     # 'antialias' resampling is not available
     numpy_available = False
 
-__version__ = "$Id$"
+__version__ = gdal.__version__
 
 resampling_list = (
     "average",
