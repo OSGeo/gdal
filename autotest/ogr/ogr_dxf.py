@@ -438,7 +438,7 @@ def test_ogr_dxf_12(tmp_path):
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(10 12, 60 65)"))
     dst_feat.SetFID(0)
     lyr.CreateFeature(dst_feat)
-    # 80 is the minimum handle value we set in case of inapproriate or unsed
+    # 80 is the minimum handle value we set in case of inapproriate or unset
     # initial FID value
     assert dst_feat.GetFID() >= 80
     dst_feat = None

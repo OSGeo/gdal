@@ -10138,7 +10138,7 @@ def test_ogr_gpkg_arrow_stream_huge_array(tmp_vsimem, too_big_field):
             expected_fids = [i + 1 for i in range(50)]
             if "CI" in os.environ and got_fids != expected_fids:
                 pytest.xfail(
-                    f"Random failure on CI occured in test_ogr_gpkg_arrow_stream_huge_array[{too_big_field}]. Expected {expected_fids}, got {got_fids}"
+                    f"Random failure on CI occurred in test_ogr_gpkg_arrow_stream_huge_array[{too_big_field}]. Expected {expected_fids}, got {got_fids}"
                 )
             assert got_fids == expected_fids
             assert batch_count == (25 if too_big_field == "geometry" else 21), lyr_name
