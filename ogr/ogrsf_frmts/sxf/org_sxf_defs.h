@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SXF Translator
  * Purpose:  Include file defining Records Structures for file reading and

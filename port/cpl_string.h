@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_string.h
  * Project:  CPL - Common Portability Library

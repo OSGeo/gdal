@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CSV Translator
  * Purpose:  Definition of classes for OGR .csv driver.

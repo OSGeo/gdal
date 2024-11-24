@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     geoconcept.c
  * Project:  OpenGIS Simple Features Reference Implementation

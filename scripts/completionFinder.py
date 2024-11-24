@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
-#
 # Project:  GDAL/OGR Utilities
 # Purpose:  Bash completion script generation
 # Author:   Guillaume Pasero <guillaume dot pasero at c dash s dot fr>

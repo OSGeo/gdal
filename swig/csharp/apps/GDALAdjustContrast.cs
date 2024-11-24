@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     GDALAdjustContrast.cs
  * Project:  GDAL CSharp Interface

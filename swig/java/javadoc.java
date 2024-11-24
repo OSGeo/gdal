@@ -1,5 +1,4 @@
 /* ***************************************************************************
-* $Id$
 *
 * Project:  GDAL/OGR Java bindings
 * Purpose:  Documentation for the Java bindings

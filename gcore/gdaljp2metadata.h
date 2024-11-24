@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  JP2 Box Reader (and GMLJP2 Interpreter)

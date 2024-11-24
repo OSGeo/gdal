@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  OGR Python samples
 # Purpose:  Apply a transformation to all OGR geometries.

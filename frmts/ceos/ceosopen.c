@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CEOS Translator
  * Purpose:  Implementation of non-GDAL dependent CEOS support.

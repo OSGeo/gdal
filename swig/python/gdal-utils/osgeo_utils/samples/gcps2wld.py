@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # ******************************************************************************
-#  $Id$
 #
 #  Name:     gcps2wld
 #  Project:  GDAL Python Interface

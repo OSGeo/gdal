@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library

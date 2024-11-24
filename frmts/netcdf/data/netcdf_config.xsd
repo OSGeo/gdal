@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 <!--
 /******************************************************************************
- * $Id$
- *
  * Project:  netCDF driver
  * Purpose:  Schema of netCDF writer configuration files
  * Author:   Even Rouault, <even dot rouault at spatialys dot com>

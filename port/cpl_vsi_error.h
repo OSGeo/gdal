@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VSI Virtual File System
  * Purpose:  Implement an error system for reporting file system errors.

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 1 Reader
  * Purpose:  Private Declarations for Reader code.

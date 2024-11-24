@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize a few common PCS values

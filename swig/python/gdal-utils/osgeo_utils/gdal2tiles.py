@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ******************************************************************************
-#  $Id$
 #
 # Project:  Google Summer of Code 2007, 2008 (http://code.google.com/soc/)
 # Support:  BRGM (http://www.brgm.fr)

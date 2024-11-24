@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL Python samples
 # Purpose:  Script to write out ASCII GRD rasters (used in Golden Software

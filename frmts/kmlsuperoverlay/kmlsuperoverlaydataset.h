@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KmlSuperOverlay
  * Purpose:  Implements write support for KML superoverlay - KMZ.

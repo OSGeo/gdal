@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NITF Read/Write Library
  * Purpose:  Module responsible for implementation of most NITFImage

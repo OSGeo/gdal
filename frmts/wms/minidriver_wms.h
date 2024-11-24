@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS

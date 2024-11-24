@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Microstation DGN Access Library
  * Purpose:  Temporary low level DGN dumper application.

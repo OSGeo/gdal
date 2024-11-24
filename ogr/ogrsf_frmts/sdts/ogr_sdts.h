@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  STS Translator
  * Purpose:  Definition of classes finding SDTS support into OGRDriver

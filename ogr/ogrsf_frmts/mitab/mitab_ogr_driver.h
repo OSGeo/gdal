@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     mitab_ogr_drive.h
  * Project:  Mid/mif tab ogr support

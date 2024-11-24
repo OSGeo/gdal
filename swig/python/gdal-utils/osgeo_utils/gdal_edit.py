@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 #  Project:  GDAL samples
 #  Purpose:  Edit in place various information of an existing GDAL dataset

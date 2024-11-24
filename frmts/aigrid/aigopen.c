@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Arc/Info Binary Grid Translator
  * Purpose:  Grid file access cover API for non-GDAL use.

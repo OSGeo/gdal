@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     OGRLayerAlg.cs
  * Project:  GDAL CSharp Interface

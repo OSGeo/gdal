@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_aws.h
  * Project:  CPL - Common Portability Library

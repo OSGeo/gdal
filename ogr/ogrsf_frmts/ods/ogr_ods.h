@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ODS Translator
  * Purpose:  Definition of classes for OGR OpenOfficeSpreadsheet .ods driver.

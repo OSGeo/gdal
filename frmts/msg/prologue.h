@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Purpose:  Interface of Prologue class. Parse the prologue of one repeat
  *           cycle and keep the interesting info.

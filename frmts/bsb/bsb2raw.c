@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  BSB Reader
  * Purpose:  Test program for dumping BSB to PPM raster format.

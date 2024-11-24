@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  keaband.h
  *
  *  Created by Pete Bunting on 01/08/2012.

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ASI CEOS Translator
  * Purpose:  Link list function replacements.

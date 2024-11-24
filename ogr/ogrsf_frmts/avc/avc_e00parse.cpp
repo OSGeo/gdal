@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     avc_e00parse.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library

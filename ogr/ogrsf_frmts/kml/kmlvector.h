@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KML Driver
  * Purpose:  Specialization of the kml class, only for vectors in kml files.

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL algorithms
  * Purpose:  Test Delaunay triangulation

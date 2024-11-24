@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     typemaps_python.i
  * Project:  GDAL Python Interface

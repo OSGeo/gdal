@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Common Portability Library
  * Purpose:  Functions for reading and scanning CSV (comma separated,

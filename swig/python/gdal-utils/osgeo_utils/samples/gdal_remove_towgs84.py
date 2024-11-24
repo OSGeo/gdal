@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 #  Project:  GDAL samples
 #  Purpose:  Remove TOWGS84[] clause from dataset SRS definitions

@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     avc_e00read.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL algorithms
  * Purpose:  Tests for the marching squares algorithm

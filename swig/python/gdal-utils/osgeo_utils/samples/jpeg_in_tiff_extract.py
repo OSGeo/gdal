@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR samples
 # Purpose:  Extract a JPEG file from a JPEG-in-TIFF tile/strip

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Idrisi Translator
  * Purpose:  Definition of classes for OGR Idrisi driver.

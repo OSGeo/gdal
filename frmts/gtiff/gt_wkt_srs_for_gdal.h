@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoTIFF Driver
  * Purpose:  Read/Write in-memory GeoTIFF file
