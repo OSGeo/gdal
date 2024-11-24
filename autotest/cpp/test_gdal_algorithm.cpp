@@ -2792,6 +2792,17 @@ TEST_F(test_gdal_algorithm, GDALGlobalAlgorithmRegistry)
     }
 }
 
+TEST_F(test_gdal_algorithm, vector_pipeline_GetUsageForCLI)
+{
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+    auto vector = singleton.Instantiate("vector");
+    ASSERT_NE(vector, nullptr);
+    auto pipeline = vector->InstantiateSubAlgorithm("pipeline");
+    ASSERT_NE(pipeline, nullptr);
+    pipeline->GetUsageForCLI(false);
+    pipeline->GetUsageForCLI(true);
+}
+
 TEST_F(test_gdal_algorithm, registry_c_api)
 {
     auto reg = GDALGetGlobalAlgorithmRegistry();
