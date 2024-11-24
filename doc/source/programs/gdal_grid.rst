@@ -518,7 +518,7 @@ Examples
    Values to interpolate will be read from Z value of geometry record.
 
 .. example::
-   :title: Read values ot interpolate from an attribute field
+   :title: Read values to interpolate from an attribute field
 
    .. code-block:: bash
 
