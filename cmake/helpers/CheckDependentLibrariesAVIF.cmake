@@ -4,7 +4,7 @@ gdal_check_package(AVIF "AVIF" CAN_DISABLE)
 # Check if libavif supports opaque properties
 include(CheckCXXSourceCompiles)
 cmake_push_check_state(RESET)
-set(CMAKE_REQUIRED_INCLUDES ${AVIF_INCLUDE_DIR})
+set(CMAKE_REQUIRED_INCLUDES "${AVIF_INCLUDE_DIRS}")
 check_cxx_source_compiles(
     "
     #include <avif/avif.h>
