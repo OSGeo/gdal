@@ -2124,7 +2124,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
     {
         unchecked_curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
 
-        if (CPLGetConfigOption("CPL_DEBUG", nullptr) != nullptr)
+        if (CPLIsDebugEnabled())
         {
             unchecked_curl_easy_setopt(http_handle, CURLOPT_DEBUGFUNCTION,
                                        CPLHTTPCurlDebugFunction);

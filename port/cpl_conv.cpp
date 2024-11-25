@@ -55,6 +55,9 @@
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#include <mutex>
+#include <set>
+
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -68,9 +71,6 @@
 #include <unistd.h>  // isatty
 #endif
 
-#ifdef DEBUG_CONFIG_OPTIONS
-#include <set>
-#endif
 #include <string>
 
 #if __cplusplus >= 202002L
@@ -82,6 +82,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "cpl_vsil_curl_priv.h"
+#include "cpl_known_config_options.h"
 
 #ifdef DEBUG
 #define OGRAPISPY_ENABLED
@@ -1904,6 +1905,102 @@ static void NotifyOtherComponentsConfigOptionChanged(const char *pszKey,
 }
 
 /************************************************************************/
+/*                       CPLIsDebugEnabled()                            */
+/************************************************************************/
+
+static int gnDebug = -1;
+
+/** Returns whether CPL_DEBUG is enabled.
+ *
+ * @since 3.11
+ */
+bool CPLIsDebugEnabled()
+{
+    if (gnDebug < 0)
+    {
+        // Check that apszKnownConfigOptions is correctly sorted with
+        // STRCASECMP() criterion.
+        for (size_t i = 1; i < CPL_ARRAYSIZE(apszKnownConfigOptions); ++i)
+        {
+            if (STRCASECMP(apszKnownConfigOptions[i - 1],
+                           apszKnownConfigOptions[i]) >= 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "ERROR: apszKnownConfigOptions[] isn't correctly "
+                         "sorted: %s >= %s",
+                         apszKnownConfigOptions[i - 1],
+                         apszKnownConfigOptions[i]);
+            }
+        }
+        gnDebug = CPLTestBool(CPLGetConfigOption("CPL_DEBUG", "OFF"));
+    }
+
+    return gnDebug != 0;
+}
+
+/************************************************************************/
+/*                       CPLDeclareKnownConfigOption()                  */
+/************************************************************************/
+
+static std::mutex goMutexDeclaredKnownConfigOptions;
+static std::set<CPLString> goSetKnownConfigOptions;
+
+/** Declare that the specified configuration option is known.
+ *
+ * This is useful to avoid a warning to be emitted on unknown configuration
+ * options when CPL_DEBUG is enabled.
+ *
+ * @param pszKey Name of the configuration option to declare.
+ * @param pszDefinition Unused for now. Must be set to nullptr.
+ * @since 3.11
+ */
+void CPLDeclareKnownConfigOption(const char *pszKey,
+                                 [[maybe_unused]] const char *pszDefinition)
+{
+    std::lock_guard oLock(goMutexDeclaredKnownConfigOptions);
+    goSetKnownConfigOptions.insert(CPLString(pszKey).toupper());
+}
+
+/************************************************************************/
+/*           CPLSetConfigOptionDetectUnknownConfigOption()              */
+/************************************************************************/
+
+static void CPLSetConfigOptionDetectUnknownConfigOption(const char *pszKey,
+                                                        const char *pszValue)
+{
+    if (EQUAL(pszKey, "CPL_DEBUG"))
+    {
+        gnDebug = pszValue ? CPLTestBool(pszValue) : false;
+    }
+    else if (CPLIsDebugEnabled())
+    {
+        if (!std::binary_search(std::begin(apszKnownConfigOptions),
+                                std::end(apszKnownConfigOptions), pszKey,
+                                [](const char *a, const char *b)
+                                { return STRCASECMP(a, b) < 0; }))
+        {
+            bool bFound;
+            {
+                std::lock_guard oLock(goMutexDeclaredKnownConfigOptions);
+                bFound = cpl::contains(goSetKnownConfigOptions,
+                                       CPLString(pszKey).toupper());
+            }
+            if (!bFound)
+            {
+                const char *pszOldValue = CPLGetConfigOption(pszKey, nullptr);
+                if (!((!pszValue && !pszOldValue) ||
+                      (pszValue && pszOldValue &&
+                       EQUAL(pszValue, pszOldValue))))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Unknown configuration option '%s'.", pszKey);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                         CPLSetConfigOption()                         */
 /************************************************************************/
 
@@ -1921,12 +2018,17 @@ static void NotifyOtherComponentsConfigOptionChanged(const char *pszKey,
  * value provided during the last call will be used.
  *
  * Options can also be passed on the command line of most GDAL utilities
- * with the with '--config KEY VALUE'. For example,
- * ogrinfo --config CPL_DEBUG ON ~/data/test/point.shp
+ * with '--config KEY VALUE' (or '--config KEY=VALUE' since GDAL 3.10).
+ * For example, ogrinfo --config CPL_DEBUG ON ~/data/test/point.shp
  *
  * This function can also be used to clear a setting by passing NULL as the
  * value (note: passing NULL will not unset an existing environment variable;
  * it will just unset a value previously set by CPLSetConfigOption()).
+ *
+ * Starting with GDAL 3.11, if CPL_DEBUG is enabled prior to this call, and
+ * CPLSetConfigOption() is called with a key that is neither a known
+ * configuration option of GDAL itself, or one that has been declared with
+ * CPLDeclareKnownConfigOption(), a warning will be emitted.
  *
  * @param pszKey the key of the option
  * @param pszValue the value of the option, or NULL to clear a setting.
@@ -1944,6 +2046,8 @@ void CPL_STDCALL CPLSetConfigOption(const char *pszKey, const char *pszValue)
 #ifdef OGRAPISPY_ENABLED
     OGRAPISPYCPLSetConfigOption(pszKey, pszValue);
 #endif
+
+    CPLSetConfigOptionDetectUnknownConfigOption(pszKey, pszValue);
 
     g_papszConfigOptions = const_cast<volatile char **>(CSLSetNameValue(
         const_cast<char **>(g_papszConfigOptions), pszKey, pszValue));
@@ -2004,6 +2108,8 @@ void CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
         CPLGetTLSEx(CTLS_CONFIGOPTIONS, &bMemoryError));
     if (bMemoryError)
         return;
+
+    CPLSetConfigOptionDetectUnknownConfigOption(pszKey, pszValue);
 
     papszTLConfigOptions =
         CSLSetNameValue(papszTLConfigOptions, pszKey, pszValue);

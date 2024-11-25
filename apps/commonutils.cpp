@@ -60,18 +60,82 @@ void EarlySetConfigOptions(int argc, char **argv)
     // OGRRegisterAll(), but we can't call GDALGeneralCmdLineProcessor() or
     // OGRGeneralCmdLineProcessor(), because it needs the drivers to be
     // registered for the --format or --formats options.
+
+    // Start with --debug, so that "my_command --config UNKNOWN_CONFIG_OPTION --debug on"
+    // detects and warns about a unknown config option.
     for (int i = 1; i < argc; i++)
     {
-        if (EQUAL(argv[i], "--config") && i + 2 < argc)
+        if (EQUAL(argv[i], "--config") && i + 1 < argc)
         {
-            CPLSetConfigOption(argv[i + 1], argv[i + 2]);
+            const char *pszArg = argv[i + 1];
+            if (strchr(pszArg, '=') != nullptr)
+            {
+                char *pszKey = nullptr;
+                const char *pszValue = CPLParseNameValue(pszArg, &pszKey);
+                if (pszKey && EQUAL(pszKey, "CPL_DEBUG") && pszValue)
+                {
+                    CPLSetConfigOption(pszKey, pszValue);
+                }
+                CPLFree(pszKey);
+                ++i;
+            }
+            else
+            {
+                if (i + 2 >= argc)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "--config option given without a key and value "
+                             "argument.");
+                    return;
+                }
 
-            i += 2;
+                if (EQUAL(argv[i + 1], "CPL_DEBUG"))
+                {
+                    CPLSetConfigOption(argv[i + 1], argv[i + 2]);
+                }
+
+                i += 2;
+            }
         }
         else if (EQUAL(argv[i], "--debug") && i + 1 < argc)
         {
             CPLSetConfigOption("CPL_DEBUG", argv[i + 1]);
             i += 1;
+        }
+    }
+    for (int i = 1; i < argc; i++)
+    {
+        if (EQUAL(argv[i], "--config") && i + 1 < argc)
+        {
+            const char *pszArg = argv[i + 1];
+            if (strchr(pszArg, '=') != nullptr)
+            {
+                char *pszKey = nullptr;
+                const char *pszValue = CPLParseNameValue(pszArg, &pszKey);
+                if (pszKey && !EQUAL(pszKey, "CPL_DEBUG") && pszValue)
+                {
+                    CPLSetConfigOption(pszKey, pszValue);
+                }
+                CPLFree(pszKey);
+                ++i;
+            }
+            else
+            {
+                if (i + 2 >= argc)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "--config option given without a key and value "
+                             "argument.");
+                    return;
+                }
+
+                if (!EQUAL(argv[i + 1], "CPL_DEBUG"))
+                {
+                    CPLSetConfigOption(argv[i + 1], argv[i + 2]);
+                }
+
+                i += 2;
+            }
         }
     }
 }
