@@ -29,6 +29,24 @@
 #endif
 
 /************************************************************************/
+/*  GDALVectorPipelineStepAlgorithm::GDALVectorPipelineStepAlgorithm()  */
+/************************************************************************/
+
+GDALVectorPipelineStepAlgorithm::GDALVectorPipelineStepAlgorithm(
+    const std::string &name, const std::string &description,
+    const std::string &helpURL, bool standaloneStep)
+    : GDALAlgorithm(name, description, helpURL),
+      m_standaloneStep(standaloneStep)
+{
+    if (m_standaloneStep)
+    {
+        AddInputArgs(false);
+        AddProgressArg();
+        AddOutputArgs(false, false);
+    }
+}
+
+/************************************************************************/
 /*             GDALVectorPipelineStepAlgorithm::AddInputArgs()          */
 /************************************************************************/
 
@@ -82,11 +100,68 @@ void GDALVectorPipelineStepAlgorithm::AddOutputArgs(
 }
 
 /************************************************************************/
+/*            GDALVectorPipelineStepAlgorithm::RunImpl()                */
+/************************************************************************/
+
+bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                              void *pProgressData)
+{
+    if (m_standaloneStep)
+    {
+        GDALVectorReadAlgorithm readAlg;
+        for (auto &arg : readAlg.GetArgs())
+        {
+            auto stepArg = GetArg(arg->GetName());
+            if (stepArg && stepArg->IsExplicitlySet())
+            {
+                arg->SetSkipIfAlreadySet(true);
+                arg->SetFrom(*stepArg);
+            }
+        }
+
+        GDALVectorWriteAlgorithm writeAlg;
+        for (auto &arg : writeAlg.GetArgs())
+        {
+            auto stepArg = GetArg(arg->GetName());
+            if (stepArg && stepArg->IsExplicitlySet())
+            {
+                arg->SetSkipIfAlreadySet(true);
+                arg->SetFrom(*stepArg);
+            }
+        }
+
+        bool ret = false;
+        if (readAlg.Run())
+        {
+            m_inputDataset.Set(readAlg.m_outputDataset.GetDatasetRef());
+            m_outputDataset.Set(nullptr);
+            if (RunStep(nullptr, nullptr))
+            {
+                writeAlg.m_inputDataset.Set(m_outputDataset.GetDatasetRef());
+                if (writeAlg.Run(pfnProgress, pProgressData))
+                {
+                    m_outputDataset.Set(
+                        writeAlg.m_outputDataset.GetDatasetRef());
+                    ret = true;
+                }
+            }
+        }
+
+        return ret;
+    }
+    else
+    {
+        return RunStep(pfnProgress, pProgressData);
+    }
+}
+
+/************************************************************************/
 /*        GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()    */
 /************************************************************************/
 
 GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL)
+    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      /*standaloneStep=*/false)
 {
     AddInputArgs(/* hiddenForCLI = */ true);
     AddProgressArg();
@@ -369,10 +444,10 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
 }
 
 /************************************************************************/
-/*               GDALVectorPipelineAlgorithm::RunImpl()                 */
+/*               GDALVectorPipelineAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALVectorPipelineAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+bool GDALVectorPipelineAlgorithm::RunStep(GDALProgressFunc pfnProgress,
                                           void *pProgressData)
 {
     if (m_steps.empty())

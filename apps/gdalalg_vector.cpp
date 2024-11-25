@@ -15,6 +15,8 @@
 #include "gdalalg_vector_info.h"
 #include "gdalalg_vector_convert.h"
 #include "gdalalg_vector_pipeline.h"
+#include "gdalalg_vector_filter.h"
+#include "gdalalg_vector_reproject.h"
 
 /************************************************************************/
 /*                         GDALVectorAlgorithm                          */
@@ -37,6 +39,8 @@ class GDALVectorAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALVectorInfoAlgorithm>();
         RegisterSubAlgorithm<GDALVectorConvertAlgorithm>();
         RegisterSubAlgorithm<GDALVectorPipelineAlgorithm>();
+        RegisterSubAlgorithm<GDALVectorFilterAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALVectorReprojectAlgorithmStandalone>();
     }
 
   private:

@@ -26,7 +26,8 @@
 /************************************************************************/
 
 GDALVectorReadAlgorithm::GDALVectorReadAlgorithm()
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL)
+    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      /* standaloneStep =*/false)
 {
     AddInputArgs(/* hiddenForCLI = */ false);
 }
@@ -62,10 +63,10 @@ class GDALVectorReadAlgorithmDataset final : public GDALDataset
 }  // namespace
 
 /************************************************************************/
-/*                  GDALVectorReadAlgorithm::RunImpl()                  */
+/*                  GDALVectorReadAlgorithm::RunStep()                  */
 /************************************************************************/
 
-bool GDALVectorReadAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALVectorReadAlgorithm::RunStep(GDALProgressFunc, void *)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());

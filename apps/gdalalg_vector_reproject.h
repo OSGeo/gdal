@@ -21,12 +21,12 @@
 /*                    GDALVectorReprojectAlgorithm                      */
 /************************************************************************/
 
-class GDALVectorReprojectAlgorithm final
+class GDALVectorReprojectAlgorithm /* non final */
     : public GDALVectorPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "reproject";
-    static constexpr const char *DESCRIPTION = "Reproject.";
+    static constexpr const char *DESCRIPTION = "Reproject a vector dataset.";
     static constexpr const char *HELP_URL = "";  // TODO
 
     static std::vector<std::string> GetAliases()
@@ -34,13 +34,27 @@ class GDALVectorReprojectAlgorithm final
         return {};
     }
 
-    GDALVectorReprojectAlgorithm();
+    explicit GDALVectorReprojectAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     std::string m_srsCrs{};
     std::string m_dstCrs{};
+};
+
+/************************************************************************/
+/*                 GDALVectorReprojectAlgorithmStandalone               */
+/************************************************************************/
+
+class GDALVectorReprojectAlgorithmStandalone final
+    : public GDALVectorReprojectAlgorithm
+{
+  public:
+    GDALVectorReprojectAlgorithmStandalone()
+        : GDALVectorReprojectAlgorithm(/* standaloneStep = */ true)
+    {
+    }
 };
 
 //! @endcond

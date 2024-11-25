@@ -27,8 +27,9 @@
 /*      GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm()    */
 /************************************************************************/
 
-GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm()
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm(bool standaloneStep)
+    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      standaloneStep)
 {
     AddArg("src-crs", 's', _("Source CRS"), &m_srsCrs).AddHiddenAlias("s_srs");
     AddArg("dst-crs", 'd', _("Destination CRS"), &m_dstCrs)
@@ -68,10 +69,10 @@ class GDALVectorReprojectAlgorithmDataset final : public GDALDataset
 }  // namespace
 
 /************************************************************************/
-/*            GDALVectorReprojectAlgorithm::RunImpl()                   */
+/*            GDALVectorReprojectAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALVectorReprojectAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALVectorReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());

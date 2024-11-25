@@ -21,11 +21,12 @@
 /*                    GDALVectorFilterAlgorithm                         */
 /************************************************************************/
 
-class GDALVectorFilterAlgorithm final : public GDALVectorPipelineStepAlgorithm
+class GDALVectorFilterAlgorithm /* non final */
+    : public GDALVectorPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "filter";
-    static constexpr const char *DESCRIPTION = "Filter.";
+    static constexpr const char *DESCRIPTION = "Filter a vector dataset.";
     static constexpr const char *HELP_URL = "";  // TODO
 
     static std::vector<std::string> GetAliases()
@@ -33,12 +34,26 @@ class GDALVectorFilterAlgorithm final : public GDALVectorPipelineStepAlgorithm
         return {};
     }
 
-    GDALVectorFilterAlgorithm();
+    explicit GDALVectorFilterAlgorithm(bool standaloneStep = false);
 
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     std::vector<double> m_bbox{};
+};
+
+/************************************************************************/
+/*                 GDALVectorFilterAlgorithmStandalone                  */
+/************************************************************************/
+
+class GDALVectorFilterAlgorithmStandalone final
+    : public GDALVectorFilterAlgorithm
+{
+  public:
+    GDALVectorFilterAlgorithmStandalone()
+        : GDALVectorFilterAlgorithm(/* standaloneStep = */ true)
+    {
+    }
 };
 
 //! @endcond

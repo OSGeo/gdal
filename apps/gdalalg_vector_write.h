@@ -36,7 +36,7 @@ class GDALVectorWriteAlgorithm final : public GDALVectorPipelineStepAlgorithm
     GDALVectorWriteAlgorithm();
 
   private:
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 };
 
 //! @endcond

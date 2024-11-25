@@ -26,15 +26,17 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
   protected:
     GDALVectorPipelineStepAlgorithm(const std::string &name,
                                     const std::string &description,
-                                    const std::string &helpURL)
-        : GDALAlgorithm(name, description, helpURL)
-    {
-    }
+                                    const std::string &helpURL,
+                                    bool standaloneStep);
 
     friend class GDALVectorPipelineAlgorithm;
 
+    virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
+
     void AddInputArgs(bool hiddenForCLI);
     void AddOutputArgs(bool hiddenForCLI, bool shortNameOutputLayerAllowed);
+
+    bool m_standaloneStep = false;
 
     // Input arguments
     GDALArgDatasetValue m_inputDataset{};
@@ -52,6 +54,9 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     bool m_overwriteLayer = false;
     bool m_appendLayer = false;
     std::string m_outputLayerName{};
+
+  private:
+    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 };
 
 /************************************************************************/
@@ -102,7 +107,7 @@ class GDALVectorPipelineAlgorithm final : public GDALVectorPipelineStepAlgorithm
   private:
     std::string m_pipeline{};
 
-    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
+    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     std::unique_ptr<GDALVectorPipelineStepAlgorithm>
     GetStepAlg(const std::string &name) const;

@@ -25,8 +25,9 @@
 /*         GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm()       */
 /************************************************************************/
 
-GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm()
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm(bool standaloneStep)
+    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      standaloneStep)
 {
     auto &arg =
         AddArg("bbox", 0, _("Bounding box as xmin,ymin,xmax,ymax"), &m_bbox)
@@ -51,10 +52,10 @@ GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm()
 }
 
 /************************************************************************/
-/*               GDALVectorFilterAlgorithm::RunImpl()                   */
+/*               GDALVectorFilterAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALVectorFilterAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALVectorFilterAlgorithm::RunStep(GDALProgressFunc, void *)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());

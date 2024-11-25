@@ -27,17 +27,18 @@
 /************************************************************************/
 
 GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL)
+    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                      /* standaloneStep =*/false)
 {
     AddOutputArgs(/* hiddenForCLI = */ false,
                   /* shortNameOutputLayerAllowed=*/true);
 }
 
 /************************************************************************/
-/*                  GDALVectorWriteAlgorithm::RunImpl()                 */
+/*                  GDALVectorWriteAlgorithm::RunStep()                 */
 /************************************************************************/
 
-bool GDALVectorWriteAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+bool GDALVectorWriteAlgorithm::RunStep(GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 {
     CPLAssert(m_inputDataset.GetDatasetRef());
