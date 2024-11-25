@@ -14,7 +14,12 @@
 #include "gdalgrid_priv.h"
 
 #ifdef HAVE_SSE_AT_COMPILE_TIME
+
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#else
 #include <xmmintrin.h>
+#endif
 
 /************************************************************************/
 /*         GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE()     */
@@ -44,7 +49,7 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
     __m128 xmm_denominator = _mm_setzero_ps();
     int mask = 0;
 
-#if defined(__x86_64) || defined(_M_X64)
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
     // This would also work in 32bit mode, but there are only 8 XMM registers
     // whereas we have 16 for 64bit.
     const size_t LOOP_SIZE = 8;

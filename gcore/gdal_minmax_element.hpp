@@ -43,7 +43,7 @@
 #ifdef GDAL_MINMAX_ELEMENT_USE_SSE2
 // SSE2 header
 #include <emmintrin.h>
-#ifdef __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__)
 #include <smmintrin.h>
 #endif
 #endif
@@ -320,7 +320,7 @@ template <class T> static inline T blendv(T a, T b, T mask);
 
 template <> __m128i blendv(__m128i a, __m128i b, __m128i mask)
 {
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     return _mm_blendv_epi8(a, b, mask);
 #else
     return _mm_or_si128(_mm_andnot_si128(mask, a), _mm_and_si128(mask, b));
@@ -329,7 +329,7 @@ template <> __m128i blendv(__m128i a, __m128i b, __m128i mask)
 
 template <> __m128 blendv(__m128 a, __m128 b, __m128 mask)
 {
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     return _mm_blendv_ps(a, b, mask);
 #else
     return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
@@ -338,7 +338,7 @@ template <> __m128 blendv(__m128 a, __m128 b, __m128 mask)
 
 template <> __m128d blendv(__m128d a, __m128d b, __m128d mask)
 {
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     return _mm_blendv_pd(a, b, mask);
 #else
     return _mm_or_pd(_mm_andnot_pd(mask, a), _mm_and_pd(mask, b));

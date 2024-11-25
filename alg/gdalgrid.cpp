@@ -2842,9 +2842,11 @@ GDALGridContext *GDALGridContextCreate(GDALGridAlgorithm eAlgorithm,
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 
                     if (pafXAligned == nullptr &&
-                        CPLTestBool(
-                            CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
-                        CPLHaveRuntimeSSE())
+                        CPLTestBool(CPLGetConfigOption("GDAL_USE_SSE", "YES"))
+#if !defined(USE_NEON_OPTIMIZATIONS)
+                        && CPLHaveRuntimeSSE()
+#endif
+                    )
                     {
                         pafXAligned = static_cast<float *>(
                             VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) *
