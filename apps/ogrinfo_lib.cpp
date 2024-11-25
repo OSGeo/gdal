@@ -2589,7 +2589,7 @@ GDALVectorInfoOptionsNew(char **papszArgv,
                 GDALRemoveBOM(pabyRet);
                 char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
                 psOptions->osSQLStatement =
-                    GDALRemoveSQLComments(pszSQLStatement);
+                    CPLRemoveSQLComments(pszSQLStatement);
                 VSIFree(pabyRet);
             }
             else

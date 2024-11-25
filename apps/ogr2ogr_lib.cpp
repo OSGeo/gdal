@@ -7176,7 +7176,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
                     GDALRemoveBOM(pabyRet);
                     char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
                     psOptions->osSQLStatement =
-                        GDALRemoveSQLComments(pszSQLStatement);
+                        CPLRemoveSQLComments(pszSQLStatement);
                     VSIFree(pszSQLStatement);
                 }
                 else
