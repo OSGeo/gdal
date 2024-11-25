@@ -2039,5 +2039,7 @@ void GDALRegister_EXR()
     poDriver->pfnCreateCopy = GDALEXRDataset::CreateCopy;
     poDriver->pfnCreate = GDALEXRDataset::Create;
 
+    poDriver->SetMetadataItem("OPENEXR_VERSION", OPENEXR_VERSION_STRING, "EXR");
+
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }
