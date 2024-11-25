@@ -625,26 +625,6 @@ jobs:
         rm -rf /opt/homebrew/lib/node_modules # conflicts with node@18 from brew
         brew update
         brew outdated
-        # Attempt at fixing:
-        # => Pouring pkgconf--2.3.0_1.arm64_sonoma.bottle.tar.gz
-        # Error: The `brew link` step did not complete successfully
-        # The formula built, but is not symlinked into /opt/homebrew
-        # Could not symlink bin/pkg-config
-        # Target /opt/homebrew/bin/pkg-config
-        # is a symlink belonging to pkg-config@0.29.2. You can unlink it:
-        # brew unlink pkg-config@0.29.2
-        #
-        # To force the link and overwrite all conflicting files:
-        #   brew link --overwrite pkgconf
-        #
-        # To list all files that would be deleted:
-        #   brew link --overwrite pkgconf --dry-run
-        #
-        # Possible conflicting files are:
-        # /opt/homebrew/bin/pkg-config -> /opt/homebrew/Cellar/pkg-config@0.29.2/0.29.2_3/bin/pkg-config
-        # /opt/homebrew/share/aclocal/pkg.m4 -> /opt/homebrew/Cellar/pkg-config@0.29.2/0.29.2_3/share/aclocal/pkg.m4
-        # /opt/homebrew/share/man/man1/pkg-config.1 -> /opt/homebrew/Cellar/pkg-config@0.29.2/0.29.2_3/share/man/man1/pkg-config.1
-        rm -f /opt/homebrew/bin/pkg-config /opt/homebrew/share/aclocal/pkg.m4 /opt/homebrew/share/man/man1/pkg-config.1
         brew install --overwrite python@3.11 python@3.12
         brew install postgresql || brew link postgresql
         brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif libarchive libkml boost
