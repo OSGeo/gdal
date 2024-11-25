@@ -46,7 +46,9 @@ static int32 *EHXsdTable = NULL;
 #define MAX_RETRIES 10
 
 /* Function Prototypes */
+#if defined(HDFEOS_GD_WRITE_SUPPORT) || defined(HDFEOS_SW_WRITE_SUPPORT)
 static intn EHmetalist(const char *, char *);
+#endif
 static intn EHreset_maxopenfiles(intn);
 static intn EHget_maxopenfiles(intn *, intn *);
 static intn EHget_numfiles(void);
@@ -580,7 +582,7 @@ EHidinfo(int32 fid, int32 * HDFfid, int32 * sdInterfaceID)
 }
 
 
-
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -623,7 +625,7 @@ EHfilename(int32 fid, char *filename)
 
     return (status);
 }
-
+#endif
 
 
 
@@ -1396,6 +1398,7 @@ EHrevflds(const char *dimlist, char *revdimlist)
 }
 
 
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -1511,10 +1514,11 @@ EHcntGROUP(char *metabuf[])
 
     return (count);
 }
+#endif
 
 
 
-
+#if defined(HDFEOS_GD_WRITE_SUPPORT) || defined(HDFEOS_SW_WRITE_SUPPORT)
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -1632,11 +1636,11 @@ EHmetalist(const char *instring, char *outstring)
 
     return (status);
 }
+#endif
 
 
 
-
-
+#if defined(HDFEOS_GD_WRITE_SUPPORT) || defined(HDFEOS_SW_WRITE_SUPPORT)
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -2391,6 +2395,7 @@ EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode
 
     return (status);
 }
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -2681,7 +2686,7 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
 
 
 
-
+#if defined(HDFEOS_GD_WRITE_SUPPORT) || defined(HDFEOS_SW_WRITE_SUPPORT)
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -2909,12 +2914,12 @@ EHfillfld(int32 sdid, int32 rank, CPL_UNUSED int32 truerank, int32 size, int32 o
 
     return (status);
 }
+#endif
 
 
 
 
-
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -3058,7 +3063,7 @@ EHbisect(float64(*func) (float64[]), float64 funcParms[], int32 nParms,
 
     return (status);
 }
-
+#endif
 
 
 

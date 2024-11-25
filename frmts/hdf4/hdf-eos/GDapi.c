@@ -102,9 +102,11 @@ extern  void inv_init(int32, int32, float64 *, int32, const char *, const char *
 #define	GDIDOFFSET 4194304
 #define SQUARE(x)       ((x) * (x))   /* x**2 */
 
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
 static int32 GDXSDcomb[512*5];
-static char  GDXSDname[HDFE_NAMBUFSIZE];
 static char  GDXSDdims[HDFE_DIMBUFSIZE];
+static char  GDXSDname[HDFE_NAMBUFSIZE];
+#endif
 
 
 #define NGRID 200
@@ -231,16 +233,21 @@ static intn GDll2ij(int32, int32, float64 [], int32, int32, int32, float64[],
                     float64[], float64[]);
 static intn  GDgetdefaults(int32, int32, float64[], int32,
                            float64[], float64[]);
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 static intn GDtangentpnts(int32, float64[], float64[], float64[], float64[],
                           float64 [], int32 *);
+#endif
 static intn GDwrrdtile(int32, const char *, const char *, int32 [], VOIDP);
+#ifdef UNUSED_BY_GDAL
 static intn GDll2mm_cea(int32,int32, int32, float64[], int32, int32,
                         float64[], float64[], int32, float64[],float64[],
                         float64[], float64[], float64 *, float64 *);
-
+#endif
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 static intn GDmm2ll_cea(int32, int32, int32, float64[],	int32, int32,
                         float64[], float64[], int32, float64[], float64[],
                         float64[], float64[]);
+#endif
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
@@ -287,7 +294,7 @@ GDopen(const char *filename, intn l_access)
 }
 
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -550,7 +557,7 @@ GDcreate(int32 fid, const char *gridname, int32 xdimsize, int32 ydimsize,
     }
     return (gridID);
 }
-
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -909,7 +916,7 @@ GDchkgdid(int32 gridID, const char *routname,
 
 }
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -1558,7 +1565,7 @@ GDdefpixreg(int32 gridID, int32 pixregcode)
     return (status);
 
 }
-
+#endif
 
 
 
@@ -2771,7 +2778,7 @@ GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
 
 
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -3571,7 +3578,7 @@ GDwritefieldmeta(int32 gridID, const char *fieldname, const char *dimlist,
     }
     return (status);
 }
-
+#endif
 
 
 
@@ -4078,7 +4085,7 @@ GDwrrdfield(int32 gridID, const char *fieldname, const char *code,
     return (status);
 }
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -4122,7 +4129,7 @@ GDwritefield(int32 gridID, const char *fieldname,
 			 data);
     return (status);
 }
-
+#endif
 
 
 
@@ -4241,7 +4248,7 @@ GDwrrdattr(int32 gridID, const char *attrname, int32 numbertype, int32 count,
 }
 
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -4285,7 +4292,7 @@ GDwriteattr(int32 gridID, const char *attrname, int32 numbertype, int32 count,
 
     return (status);
 }
-
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -5068,6 +5075,7 @@ GDinqgrid(const char *filename, char *gridlist, int32 * strbufsize)
 }
 
 
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -5153,7 +5161,7 @@ GDsetfillvalue(int32 gridID, const char *fieldname, VOIDP fillval)
     }
     return (status);
 }
-
+#endif
 
 
 
@@ -5272,13 +5280,18 @@ GDdetach(int32 gridID)
 
 {
     intn            i;		/* Loop index */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     intn            j;		/* Loop index */
+#endif
     intn            k;		/* Loop index */
     intn            status = 0;	/* routine return status variable */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     intn            statusFill = 0;	/* return status from GDgetfillvalue */
+#endif
 
-    int32          *namelen;	/* Pointer to name string length array */
-    int32          *dimlen;	/* Pointer to dim string length array */
+    int32          *namelen = NULL;	/* Pointer to name string length array */
+    int32          *dimlen = NULL;	/* Pointer to dim string length array */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     int32           slen1[3];	/* String length array 1 */
     int32           slen2[3];	/* String length array 2 */
     int32           nflds;	/* Number of fields */
@@ -5287,29 +5300,39 @@ GDdetach(int32 gridID)
     int32           sdid;	/* SDS ID */
     int32           vgid;	/* Vgroup ID */
     int32           dims[3];	/* Dimension array */
-    int32          *offset;	/* Pointer to merged field offset array */
-    int32          *indvdims;	/* Pointer to merged field size array */
+#endif
+    int32          *offset = NULL;	/* Pointer to merged field offset array */
+    int32          *indvdims = NULL;	/* Pointer to merged field size array */
     int32           sdInterfaceID;	/* SDS interface ID */
     int32           gID;	/* Grid ID - offset */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     int32           nflds0;	/* Number of fields */
-    int32          *namelen0;	/* Pointer to name string length array */
+#endif
+    int32          *namelen0 = NULL;	/* Pointer to name string length array */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     int32           rank;	/* Rank of merged field */
     int32           truerank;	/* True rank of merged field */
+#endif
     int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
     int32           dum;	/* Dummy variable */
 
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     char           *nambuf;	/* Pointer to name buffer */
-    char          **nameptr;	/* Pointer to name string pointer array */
-    char          **dimptr;	/* Pointer to dim string pointer array */
-    char          **nameptr0;	/* Pointer to name string pointer array */
+#endif
+    char          **nameptr = NULL;	/* Pointer to name string pointer array */
+    char          **dimptr = NULL;	/* Pointer to dim string pointer array */
+    char          **nameptr0 = NULL;	/* Pointer to name string pointer array */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     char           *ptr1[3];	/* String pointer array */
     char           *ptr2[3];	/* String pointer array */
     char            dimbuf1[128];	/* Dimension buffer 1 */
     char            dimbuf2[128];	/* Dimension buffer 2 */
+#endif
     char            gridname[VGNAMELENMAX + 1];	/* Grid name */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     char           *utlbuf;	/* Utility buffer */
     char            fillval[32];/* Fill value buffer */
-
+#endif
 
 
     status = GDchkgdid(gridID, "GDdetach", &dum, &sdInterfaceID, &dum);
@@ -5325,9 +5348,13 @@ GDdetach(int32 gridID)
 
 	/* SDS combined fields */
 	/* ------------------- */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
 	if (strlen(GDXSDname) == 0)
+#endif
 	{
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
 	    nflds = 0;
+#endif
 
 	    /* Allocate "dummy" arrays so free() doesn't bomb later */
 	    /* ---------------------------------------------------- */
@@ -5408,6 +5435,7 @@ GDdetach(int32 gridID)
 		return(-1);
 	    }
 	}
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
 	else
 	{
 	    /*
@@ -5506,7 +5534,6 @@ GDdetach(int32 gridID)
 	    nflds = EHparsestr(GDXSDname, ',', nameptr, namelen);
 	    nflds = EHparsestr(GDXSDdims, ';', dimptr, dimlen);
 	}
-
 
 	for (i = 0; i < nflds; i++)
 	{
@@ -5764,7 +5791,7 @@ GDdetach(int32 gridID)
 	    strcat(GDXSDname, ",");
 	    strcat(GDXSDdims, ";");
 	}
-
+#endif
 
 
 	/* Free up a bunch of dynamically allocated arrays */
@@ -6676,7 +6703,7 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 
 
 
-
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -6934,9 +6961,10 @@ GDrs2ll(int32 projcode, float64 projparm[],
 
     return (status);
 }
+#endif
 
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -7121,7 +7149,6 @@ homDyDtheta(float64 parms[])
 
     return (tnTheta * snLamda + tnTheta1);
 }
-
 
 
 
@@ -8332,11 +8359,11 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
     free(gridname);
     return (regionID);
 }
+#endif
 
 
 
-
-
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -8966,6 +8993,7 @@ GDdupregion(int32 oldregionID)
     }
     return (newregionID);
 }
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -9046,7 +9074,7 @@ for (j=0; j<8; j++) \
 } \
 
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 int32
 GDdefvrtregion(int32 gridID, int32 regionID, const char *vertObj, float64 range[])
 {
@@ -9374,7 +9402,7 @@ GDdeftimeperiod(int32 gridID, int32 periodID, float64 starttime,
 
     return (periodID);
 }
-
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -9844,6 +9872,7 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
 }
 
 
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -10271,6 +10300,8 @@ GDinterpolate(int32 gridID, int32 nValues, float64 lonVal[], float64 latVal[],
     }
 
 }
+#endif
+
 /***********************************************
 GDwrrdtile --
      This function is the underlying function below GDwritetile and
@@ -10393,7 +10424,6 @@ GDwrrdtile(int32 gridID, const char *fieldname, const char *code, int32 start[],
     return (status);
 }
 
-
 /***********************************************
 GDtileinfo --
      This function queries the field to determine if it is tiled.  If it is
@@ -10496,6 +10526,7 @@ Alexis Zubrow
 
 ********************************************************/
 
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 intn
 GDwritetile(int32 gridID, const char *fieldname, int32 tilecoords[],
 	    VOIDP tileData)
@@ -10507,6 +10538,8 @@ GDwritetile(int32 gridID, const char *fieldname, int32 tilecoords[],
 
     return (status);
 }
+#endif
+
 /***********************************************
 GDreadtile --
      This function reads one tile from a particular field.
@@ -10528,6 +10561,8 @@ GDreadtile(int32 gridID, const char *fieldname, int32 tilecoords[],
 
     return (status);
 }
+
+#ifdef UNUSED_BY_GDAL
 /***********************************************
 GDsettilecache --
      This function sets the cache size for a tiled field.
@@ -10600,7 +10635,10 @@ GDsettilecache(int32 gridID, const char *fieldname, int32 maxcache, CPL_UNUSED i
 
     return (status);
 }
+#endif
 
+
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -10753,7 +10791,9 @@ GDsettilecomp(int32 gridID, const char *fieldname, int32 tilerank, int32*
     }
     return (status);
 }
+#endif
 
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -10884,8 +10924,10 @@ static intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
       }
     return (0);
 }
+#endif
 
 
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -10975,6 +11017,7 @@ static intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
       }
     return(status);
 }
+#endif
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
