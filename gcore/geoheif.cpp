@@ -130,15 +130,15 @@ void GeoHEIF::extractSRS(const uint8_t *payload, size_t length) const
             return;
         }
         std::string curie = crs.substr(1, crs.length() - 2);
-        size_t seperatorPos = curie.find(':');
-        if (seperatorPos == std::string::npos)
+        size_t separatorPos = curie.find(':');
+        if (separatorPos == std::string::npos)
         {
             CPLDebug("GeoHEIF",
                      "CRS CURIE does not contain required separator");
             return;
         }
-        std::string authority = curie.substr(0, seperatorPos);
-        std::string code = curie.substr(seperatorPos + 1);
+        std::string authority = curie.substr(0, separatorPos);
+        std::string code = curie.substr(separatorPos + 1);
         std::string osURL("http://www.opengis.net/def/crs/");
         osURL.append(authority);
         osURL += "/0/";
