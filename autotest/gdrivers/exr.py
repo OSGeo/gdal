@@ -20,6 +20,15 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("EXR")
 
 
+def exr_is_gte(x, y):
+    drv = gdal.GetDriverByName("EXR")
+    if drv is None:
+        return False
+    return [
+        int(i) for i in drv.GetMetadataItem("OPENEXR_VERSION", "EXR").split(".")[0:2]
+    ] >= [x, y]
+
+
 def test_exr_byte_createcopy():
     tst = gdaltest.GDALTest("EXR", "byte.tif", 1, 4672)
     tst.testCreateCopy(vsimem=1)
@@ -114,6 +123,7 @@ def test_exr_compression_create():
     gdal.Unlink(tmpfilename)
 
 
+@pytest.mark.skipif(exr_is_gte(3, 3), reason="test crashes with OpenEXR 3.3.2")
 def test_exr_compression_dwa_compression_level():
     src_ds = gdal.Open("data/small_world.tif")
     tmpfilename = "/vsimem/temp.exr"
@@ -157,6 +167,7 @@ def test_exr_tiling_custom_tile_size():
     gdal.Unlink(tmpfilename)
 
 
+@pytest.mark.skipif(exr_is_gte(3, 3), reason="test crashes with OpenEXR 3.3.2")
 def test_exr_rgb_byte_tiled():
     src_ds = gdal.Open("data/small_world.tif")
     tmpfilename = "/vsimem/temp.exr"
@@ -170,6 +181,7 @@ def test_exr_rgb_byte_tiled():
     gdal.Unlink(tmpfilename)
 
 
+@pytest.mark.skipif(exr_is_gte(3, 3), reason="test crashes with OpenEXR 3.3.2")
 def test_exr_rgb_byte_strip_no_auto_rescale():
     src_ds = gdal.Open("data/small_world.tif")
     tmpfilename = "/vsimem/temp.exr"
@@ -183,6 +195,7 @@ def test_exr_rgb_byte_strip_no_auto_rescale():
     gdal.Unlink(tmpfilename)
 
 
+@pytest.mark.skipif(exr_is_gte(3, 3), reason="test crashes with OpenEXR 3.3.2")
 def test_exr_overviews():
     src_ds = gdal.Open("data/small_world.tif")
     tmpfilename = "/vsimem/temp.exr"
