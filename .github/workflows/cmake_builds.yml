@@ -625,6 +625,9 @@ jobs:
         rm -rf /opt/homebrew/lib/node_modules # conflicts with node@18 from brew
         brew update
         brew outdated
+        mv /opt/homebrew/bin/pkg-config /opt/homebrew/bin/pkg-config.old
+        mv /opt/homebrew/share/aclocal/pkg.m4 /opt/homebrew/share/aclocal/pkg.m4.old
+        mv /opt/homebrew/share/man/man1/pkg-config.1 /opt/homebrew/share/man/man1/pkg-config.1.old
         brew install --overwrite python@3.11 python@3.12
         brew install postgresql || brew link postgresql
         brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif libarchive libkml boost
@@ -634,6 +637,9 @@ jobs:
         brew uninstall --ignore-dependencies gdal
         # Workaround for https://github.com/Homebrew/homebrew-core/pull/170959#issuecomment-2379606442
         sed -i .bak 's/hdf5_hl;hdf5;/hdf5_hl-shared;hdf5-shared;/g' "$(brew --prefix netcdf)/lib/cmake/netCDF/netCDFTargets.cmake"
+        mv /opt/homebrew/bin/pkg-config.old /opt/homebrew/bin/pkg-config
+        mv /opt/homebrew/share/aclocal/pkg.m4.old /opt/homebrew/share/aclocal/pkg.m4
+        mv /opt/homebrew/share/man/man1/pkg-config.1.old /opt/homebrew/share/man/man1/pkg-config.1
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
