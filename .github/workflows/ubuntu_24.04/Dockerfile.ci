@@ -31,7 +31,6 @@ RUN apt-get update && \
     libgif-dev \
     libhdf4-alt-dev \
     libhdf5-serial-dev \
-    libheif-dev \
     libjpeg-dev \
     libjxl-dev \
     libkml-dev \
@@ -73,13 +72,23 @@ RUN apt-get update && \
     wget \
     zip
 
-# temporary libavif build
+# libavif development build
 RUN apt-get install -y --allow-unauthenticated libaom-dev libyuv-dev
 RUN git clone --depth 1 https://github.com/AOMediaCodec/libavif.git libavif-git && \
     cd libavif-git && \
     mkdir build && \
     cd build && \
     cmake -DAVIF_CODEC_AOM=SYSTEM .. && \
+    make -j$(nproc) && \
+    make install
+
+# libheif development build
+RUN apt-get install -y --allow-unauthenticated libaom-dev libbrotli-dev libde265-dev libx265-dev
+RUN git clone --depth 1 https://github.com/strukturag/libheif.git libheif-git && \
+    cd libheif-git && \
+    mkdir build && \
+    cd build && \
+    cmake --preset=develop .. && \
     make -j$(nproc) && \
     make install
 
