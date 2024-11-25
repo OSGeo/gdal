@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <cinttypes>
 #include <vector>
+#include <iostream>
+#include <geoheif.h>
 
 constexpr const char *DEFAULT_QUALITY_STR = "60";
 constexpr const char *DEFAULT_QUALITY_ALPHA_STR = "100";
@@ -40,12 +42,22 @@ class GDALAVIFDataset final : public GDALPamDataset
     bool m_bDecodedOK = false;
     int m_iPart = 0;
     avifRGBImage m_rgb{};  // memset()' to 0 in constructor
-
     bool Init(GDALOpenInfo *poOpenInfo);
     bool Decode();
 
     GDALAVIFDataset(const GDALAVIFDataset &) = delete;
     GDALAVIFDataset &operator=(const GDALAVIFDataset &) = delete;
+
+#ifdef AVIF_HAS_OPAQUE_PROPERTIES
+  protected:
+    void processProperties();
+    void getSRS() const;
+    void extractSRS(const uint8_t *payload, size_t length) const;
+    void extractModelTransformation(const uint8_t *payload,
+                                    size_t length) const;
+    void extractUserDescription(const uint8_t *payload, size_t length);
+    gdal::GeoHEIF geoHEIF{};
+#endif
 
   public:
     GDALAVIFDataset()
@@ -66,6 +78,14 @@ class GDALAVIFDataset final : public GDALPamDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
+
+#ifdef AVIF_HAS_OPAQUE_PROPERTIES
+    const OGRSpatialReference *GetSpatialRef() const override;
+    virtual CPLErr GetGeoTransform(double *) override;
+    int GetGCPCount() override;
+    const GDAL_GCP *GetGCPs() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
+#endif
 };
 
 /************************************************************************/
@@ -342,6 +362,100 @@ GDALAVIFIO::GDALAVIFIO(VSIVirtualHandleUniquePtr fpIn) : fp(std::move(fpIn))
     return AVIF_RESULT_OK;
 }
 
+#ifdef AVIF_HAS_OPAQUE_PROPERTIES
+/************************************************************************/
+/*                          GetSpatialRef()                             */
+/************************************************************************/
+const OGRSpatialReference *GDALAVIFDataset::GetSpatialRef() const
+{
+    return geoHEIF.GetSpatialRef();
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+CPLErr GDALAVIFDataset::GetGeoTransform(double *padfTransform)
+{
+    return geoHEIF.GetGeoTransform(padfTransform);
+}
+
+void GDALAVIFDataset::processProperties()
+{
+    for (size_t i = 0; i < m_decoder->image->numProperties; i++)
+    {
+        avifImageItemProperty *prop = &(m_decoder->image->properties[i]);
+        if (!memcmp(prop->boxtype, "mcrs", 4))
+        {
+            geoHEIF.extractSRS(prop->boxPayload.data, prop->boxPayload.size);
+        }
+        else if (!memcmp(prop->boxtype, "mtxf", 4))
+        {
+            geoHEIF.setModelTransformation(prop->boxPayload.data,
+                                           prop->boxPayload.size);
+        }
+        else if (!memcmp(prop->boxtype, "tiep", 4))
+        {
+            geoHEIF.addGCPs(prop->boxPayload.data, prop->boxPayload.size);
+        }
+        else if (!memcmp(prop->boxtype, "udes", 4))
+        {
+            extractUserDescription(prop->boxPayload.data,
+                                   prop->boxPayload.size);
+        }
+    }
+}
+
+void GDALAVIFDataset::extractUserDescription(const uint8_t *payload,
+                                             size_t length)
+{
+    // Match version
+    if (payload[0] == 0x00)
+    {
+        std::stringstream ss(std::string(payload + 4, payload + length));
+        std::string lang;
+        std::getline(ss, lang, '\0');
+        std::string name;
+        std::getline(ss, name, '\0');
+        std::string description;
+        std::getline(ss, description, '\0');
+        std::string tags;
+        std::getline(ss, tags, '\0');
+        std::string domain = "DESCRIPTION";
+        if (!lang.empty())
+        {
+            domain += "_";
+            domain += lang;
+        }
+        GDALDataset::SetMetadataItem("NAME", name.c_str(), domain.c_str());
+        GDALDataset::SetMetadataItem("DESCRIPTION", description.c_str(),
+                                     domain.c_str());
+        if (!tags.empty())
+        {
+            GDALDataset::SetMetadataItem("TAGS", tags.c_str(), domain.c_str());
+        }
+    }
+    else
+    {
+        CPLDebug("AVIF", "Unsupported udes version %d", payload[0]);
+    }
+}
+
+int GDALAVIFDataset::GetGCPCount()
+{
+    return geoHEIF.GetGCPCount();
+}
+
+const GDAL_GCP *GDALAVIFDataset::GetGCPs()
+{
+    return geoHEIF.GetGCPs();
+}
+
+const OGRSpatialReference *GDALAVIFDataset::GetGCPSpatialRef() const
+{
+    return this->GetSpatialRef();
+}
+#endif
+
 /************************************************************************/
 /*                              Init()                                  */
 /************************************************************************/
@@ -417,6 +531,10 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
                            this, i + 1, eDataType,
                            static_cast<int>(m_decoder->image->depth)));
     }
+
+#ifdef AVIF_HAS_OPAQUE_PROPERTIES
+    processProperties();
+#endif
 
     if (m_iPart == 0)
     {
@@ -1158,6 +1276,10 @@ void GDALRegister_AVIF()
     poDriver->pfnOpen = GDALAVIFDataset::Open;
     if (bMayHaveWriteSupport)
         poDriver->pfnCreateCopy = GDALAVIFDataset::CreateCopy;
+
+#ifdef AVIF_HAS_OPAQUE_PROPERTIES
+    poDriver->SetMetadataItem("SUPPORTS_GEOHEIF", "YES", "AVIF");
+#endif
 
     poDM->RegisterDriver(poDriver.release());
 }

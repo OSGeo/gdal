@@ -38,6 +38,11 @@ def _has_tiling_support():
     return drv and drv.GetMetadataItem("SUPPORTS_TILES", "HEIF")
 
 
+def _has_avif_decoding_support():
+    drv = gdal.GetDriverByName("HEIF")
+    return drv and drv.GetMetadataItem("SUPPORTS_AVIF", "HEIF")
+
+
 def _has_hevc_decoding_support():
     drv = gdal.GetDriverByName("HEIF")
     return drv and drv.GetMetadataItem("SUPPORTS_HEVC", "HEIF")
@@ -55,6 +60,11 @@ def _has_read_write_support_for(format):
         and drv.GetMetadataItem("SUPPORTS_" + format, "HEIF")
         and drv.GetMetadataItem("SUPPORTS_" + format + "_WRITE", "HEIF")
     )
+
+
+def _has_geoheif_support():
+    drv = gdal.GetDriverByName("HEIF")
+    return drv and drv.GetMetadataItem("SUPPORTS_GEOHEIF", "HEIF")
 
 
 @pytest.mark.parametrize("endianness", ["big_endian", "little_endian"])
@@ -617,3 +627,96 @@ def test_heif_create_copy_defaults(tmp_path):
     result_ds = gdal.Open(tempfile)
 
     assert result_ds
+
+
+@pytest.mark.skipif(
+    not _has_geoheif_support(),
+    reason="this libheif does not support opaque properties like geoheif",
+)
+def test_heif_geoheif_wkt2():
+    ds = gdal.Open("data/heif/geo_wkt2.heif")
+    assert ds
+    assert ds.RasterCount == 3
+    assert ds.RasterXSize == 256
+    assert ds.RasterYSize == 64
+    assert ds.GetMetadataItem("NAME", "DESCRIPTION_en-AU") == "Copyright Statement"
+    assert (
+        ds.GetMetadataItem("DESCRIPTION", "DESCRIPTION_en-AU")
+        == 'CCBY "Jacobs Group (Australia) Pty Ltd and Australian Capital Territory"'
+    )
+    assert ds.GetMetadataItem("TAGS", "DESCRIPTION_en-AU") == "copyright"
+    assert ds.GetGeoTransform() is not None
+    assert ds.GetGeoTransform() == pytest.approx(
+        [691051.2, 0.1, 0.0, 6090000.0, 0.0, -0.1]
+    )
+    assert ds.GetGCPCount() == 1
+    gcp = ds.GetGCPs()[0]
+    assert (
+        gcp.GCPPixel == pytest.approx(0, abs=1e-5)
+        and gcp.GCPLine == pytest.approx(0, abs=1e-5)
+        and gcp.GCPX == pytest.approx(691051.2, abs=1e-5)
+        and gcp.GCPY == pytest.approx(6090000.0, abs=1e-5)
+        and gcp.GCPZ == pytest.approx(0, abs=1e-5)
+    )
+
+
+@pytest.mark.skipif(
+    not _has_geoheif_support(),
+    reason="this libheif does not support opaque properties like geoheif",
+)
+def test_heif_geoheif_uri():
+    ds = gdal.Open("data/heif/geo_crsu.heif")
+    assert ds
+    assert ds.RasterCount == 3
+    assert ds.RasterXSize == 256
+    assert ds.RasterYSize == 64
+    assert ds.GetMetadataItem("NAME", "DESCRIPTION_en-AU") == "Copyright Statement"
+    assert (
+        ds.GetMetadataItem("DESCRIPTION", "DESCRIPTION_en-AU")
+        == 'CCBY "Jacobs Group (Australia) Pty Ltd and Australian Capital Territory"'
+    )
+    assert ds.GetMetadataItem("TAGS", "DESCRIPTION_en-AU") == "copyright"
+    assert ds.GetGeoTransform() is not None
+    assert ds.GetGeoTransform() == pytest.approx(
+        [691051.2, 0.1, 0.0, 6090000.0, 0.0, -0.1]
+    )
+    assert ds.GetGCPCount() == 1
+    gcp = ds.GetGCPs()[0]
+    assert (
+        gcp.GCPPixel == pytest.approx(0, abs=1e-5)
+        and gcp.GCPLine == pytest.approx(0, abs=1e-5)
+        and gcp.GCPX == pytest.approx(691051.2, abs=1e-5)
+        and gcp.GCPY == pytest.approx(6090000.0, abs=1e-5)
+        and gcp.GCPZ == pytest.approx(0, abs=1e-5)
+    )
+
+
+@pytest.mark.skipif(
+    not _has_geoheif_support(),
+    reason="this libheif does not support opaque properties like geoheif",
+)
+def test_heif_geoheif_curie():
+    ds = gdal.Open("data/heif/geo_curi.heif")
+    assert ds
+    assert ds.RasterCount == 3
+    assert ds.RasterXSize == 256
+    assert ds.RasterYSize == 64
+    assert ds.GetMetadataItem("NAME", "DESCRIPTION_en-AU") == "Copyright Statement"
+    assert (
+        ds.GetMetadataItem("DESCRIPTION", "DESCRIPTION_en-AU")
+        == 'CCBY "Jacobs Group (Australia) Pty Ltd and Australian Capital Territory"'
+    )
+    assert ds.GetMetadataItem("TAGS", "DESCRIPTION_en-AU") == "copyright"
+    assert ds.GetGeoTransform() is not None
+    assert ds.GetGeoTransform() == pytest.approx(
+        [691051.2, 0.1, 0.0, 6090000.0, 0.0, -0.1]
+    )
+    assert ds.GetGCPCount() == 1
+    gcp = ds.GetGCPs()[0]
+    assert (
+        gcp.GCPPixel == pytest.approx(0, abs=1e-5)
+        and gcp.GCPLine == pytest.approx(0, abs=1e-5)
+        and gcp.GCPX == pytest.approx(691051.2, abs=1e-5)
+        and gcp.GCPY == pytest.approx(6090000.0, abs=1e-5)
+        and gcp.GCPZ == pytest.approx(0, abs=1e-5)
+    )

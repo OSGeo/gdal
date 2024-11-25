@@ -46,6 +46,16 @@ Driver capabilities
 
 .. supports_createcopy::
 
+.. supports_georeferencing::
+
+Georeferencing
+--------------
+
+HEIF provides experimental read-only support for GeoHEIF internal referencing,
+based on the draft OGC 24-038 design. There is no support for writing
+at this time.
+
+This requires at least libheif 1.19.0.
 
 Built hints on Windows
 ----------------------

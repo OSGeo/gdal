@@ -16,7 +16,6 @@ RUN apt-get update && \
     g++ \
     git \
     gpsbabel \
-    libavif-dev \
     libblosc-dev \
     libboost-dev \
     libcairo2-dev \
@@ -73,7 +72,17 @@ RUN apt-get update && \
     wget \
     zip
 
-# temporary libheif build
+# libavif development build
+RUN apt-get install -y --allow-unauthenticated libaom-dev libyuv-dev
+RUN git clone --depth 1 https://github.com/AOMediaCodec/libavif.git libavif-git && \
+    cd libavif-git && \
+    mkdir build && \
+    cd build && \
+    cmake -DAVIF_CODEC_AOM=SYSTEM .. && \
+    make -j$(nproc) && \
+    make install
+
+# libheif development build
 RUN apt-get install -y --allow-unauthenticated libaom-dev libbrotli-dev libde265-dev libx265-dev
 RUN git clone --depth 1 https://github.com/strukturag/libheif.git libheif-git && \
     cd libheif-git && \

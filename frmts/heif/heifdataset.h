@@ -20,6 +20,7 @@
 #include "heifdrivercore.h"
 
 #include <vector>
+#include <geoheif.h>
 
 /************************************************************************/
 /*                        GDALHEIFDataset                               */
@@ -42,6 +43,10 @@ class GDALHEIFDataset final : public GDALPamDataset
     heif_image_tiling m_tiling;
 #endif
 
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+    gdal::GeoHEIF geoHEIF{};
+#endif
+
 #ifdef HAS_CUSTOM_FILE_READER
     heif_reader m_oReader{};
     VSILFILE *m_fpL = nullptr;
@@ -57,6 +62,7 @@ class GDALHEIFDataset final : public GDALPamDataset
     bool Init(GDALOpenInfo *poOpenInfo);
     void ReadMetadata();
     void OpenThumbnails();
+    void ExtractUserDescription(const uint8_t *payload, size_t length);
 
 #ifdef HAS_CUSTOM_FILE_WRITER
     static heif_error VFS_WriterCallback(struct heif_context *ctx,
@@ -71,6 +77,15 @@ class GDALHEIFDataset final : public GDALPamDataset
     static GDALDataset *OpenHEIF(GDALOpenInfo *poOpenInfo);
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)
     static GDALDataset *OpenAVIF(GDALOpenInfo *poOpenInfo);
+#endif
+
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+    void ReadUserDescription();
+    const OGRSpatialReference *GetSpatialRef() const override;
+    CPLErr GetGeoTransform(double *) override;
+    int GetGCPCount() override;
+    const GDAL_GCP *GetGCPs() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
 #endif
 
 #ifdef HAS_CUSTOM_FILE_WRITER
