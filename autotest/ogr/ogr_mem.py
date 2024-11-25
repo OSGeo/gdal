@@ -980,6 +980,101 @@ def test_ogr_mem_arrow_stream_numpy():
 
 
 ###############################################################################
+# Test DATETIME_AS_STRING=YES GetArrowStream() option
+
+
+def test_ogr_mem_arrow_stream_numpy_datetime_as_string():
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+
+    field = ogr.FieldDefn("datetime", ogr.OFTDateTime)
+    lyr.CreateField(field)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56")
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56+12:30")
+    lyr.CreateFeature(f)
+
+    # Test DATETIME_AS_STRING=YES
+    stream = lyr.GetArrowStreamAsNumPy(
+        options=["USE_MASKED_ARRAYS=NO", "DATETIME_AS_STRING=YES"]
+    )
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    assert len(batch["datetime"]) == 4
+    assert batch["datetime"][0] == b""
+    assert batch["datetime"][1] == b"2022-05-31T12:34:56.789Z"
+    assert batch["datetime"][2] == b"2022-05-31T12:34:56"
+    assert batch["datetime"][3] == b"2022-05-31T12:34:56+12:30"
+
+
+###############################################################################
+# Test CreateFieldFromArrowSchema() when there is a GDAL:OGR:type=DateTime
+# Arrow schema metadata.
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_arrow_write_with_datetime_as_string():
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("src_lyr", geom_type=ogr.wkbNone)
+
+    field = ogr.FieldDefn("dt", ogr.OFTDateTime)
+    src_lyr.CreateField(field)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField("dt", "2022-05-31T12:34:56.789Z")
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField("dt", "2022-05-31T12:34:56")
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField("dt", "2022-05-31T12:34:56+12:30")
+    src_lyr.CreateFeature(f)
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    dst_lyr = ds.CreateLayer("dst_lyr")
+
+    stream = src_lyr.GetArrowStream(["DATETIME_AS_STRING=YES"])
+    schema = stream.GetSchema()
+
+    for i in range(schema.GetChildrenCount()):
+        dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        dst_lyr.WriteArrowBatch(schema, array)
+
+    assert [f.GetField("dt") for f in dst_lyr] == [
+        None,
+        "2022/05/31 12:34:56.789+00",
+        "2022/05/31 12:34:56",
+        "2022/05/31 12:34:56+1230",
+    ]
+
+
+###############################################################################
 
 
 @pytest.mark.parametrize(

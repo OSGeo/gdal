@@ -327,6 +327,36 @@ def test_ogr_adbc_test_ogrsf_parquet_filename_with_glob():
 
 
 ###############################################################################
+# Test DATETIME_AS_STRING=YES GetArrowStream() option
+
+
+def test_ogr_adbc_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    if not _has_libduckdb():
+        pytest.skip("libduckdb.so missing")
+
+    with gdal.OpenEx(
+        "data/parquet/test.parquet", gdal.OF_VECTOR, allowed_drivers=["ADBC"]
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        stream = lyr.GetArrowStreamAsNumPy(
+            options=["USE_MASKED_ARRAYS=NO", "DATETIME_AS_STRING=YES"]
+        )
+        batches = [batch for batch in stream]
+        batch = batches[0]
+        # Should be "2019-01-01T14:00:00.500-02:15" but DuckDB returns in UTC
+        # On my machine, for some reason it returns without the Z, whereas on
+        # the ubuntu_2404 it returns with the Z... despite both using libduckdb 1.1.3
+        # at time of writing...
+        assert batch["timestamp_ms_gmt_minus_0215"][0] in (
+            b"2019-01-01T16:15:00.500",
+            b"2019-01-01T16:15:00.500Z",
+        )
+
+
+###############################################################################
 # Run test_ogrsf on a DuckDB dataset
 
 

@@ -16,6 +16,7 @@
 #include "ogrsf_frmts.h"
 #include "../../ogr/ogrsf_frmts/osm/gpb.h"
 #include "ogr_recordbatch.h"
+#include "ogrlayerarrow.h"
 
 #include <string>
 #include <algorithm>
@@ -4496,6 +4497,45 @@ TEST_F(test_ogr, OGRFeature_SetGeomField)
     }
 
     poFeatureDefn->Release();
+}
+
+TEST_F(test_ogr, GetArrowStream_DateTime_As_String)
+{
+    auto poDS = std::unique_ptr<GDALDataset>(
+        GetGDALDriverManager()->GetDriverByName("Memory")->Create(
+            "", 0, 0, 0, GDT_Unknown, nullptr));
+    auto poLayer = poDS->CreateLayer("test", nullptr, wkbNone);
+    OGRFieldDefn oFieldDefn("dt", OFTDateTime);
+    poLayer->CreateField(&oFieldDefn);
+    struct ArrowArrayStream stream;
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("INCLUDE_FID", "NO");
+    aosOptions.SetNameValue("DATETIME_AS_STRING", "YES");
+    ASSERT_TRUE(poLayer->GetArrowStream(&stream, aosOptions.List()));
+    struct ArrowSchema schema;
+    memset(&schema, 0, sizeof(schema));
+    EXPECT_EQ(stream.get_schema(&stream, &schema), 0);
+    EXPECT_TRUE(schema.n_children == 1 &&
+                strcmp(schema.children[0]->format, "u") == 0)
+        << schema.n_children;
+    if (schema.n_children == 1 && strcmp(schema.children[0]->format, "u") == 0)
+    {
+        EXPECT_TRUE(schema.children[0]->metadata != nullptr);
+        if (schema.children[0]->metadata)
+        {
+            auto oMapKeyValue =
+                OGRParseArrowMetadata(schema.children[0]->metadata);
+            EXPECT_EQ(oMapKeyValue.size(), 1);
+            if (oMapKeyValue.size() == 1)
+            {
+                EXPECT_STREQ(oMapKeyValue.begin()->first.c_str(),
+                             "GDAL:OGR:type");
+                EXPECT_STREQ(oMapKeyValue.begin()->second.c_str(), "DateTime");
+            }
+        }
+    }
+    schema.release(&schema);
+    stream.release(&stream);
 }
 
 }  // namespace

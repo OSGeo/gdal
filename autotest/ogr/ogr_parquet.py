@@ -4168,3 +4168,25 @@ def test_ogr_parquet_ogr2ogr_reprojection(tmp_vsimem):
         assert ds.GetLayer(0).GetExtent() == pytest.approx(
             (8.73380363499761, 8.774681944824946, 43.01833481785084, 43.04292637071279)
         )
+
+
+###############################################################################
+# Test DATETIME_AS_STRING=YES GetArrowStream() option
+
+
+def test_ogr_parquet_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    with gdal.OpenEx(
+        "data/parquet/test.parquet", gdal.OF_VECTOR, allowed_drivers=["Parquet"]
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        stream = lyr.GetArrowStreamAsNumPy(
+            options=["USE_MASKED_ARRAYS=NO", "DATETIME_AS_STRING=YES"]
+        )
+        batches = [batch for batch in stream]
+        batch = batches[0]
+        assert (
+            batch["timestamp_ms_gmt_minus_0215"][0] == b"2019-01-01T14:00:00.500-02:15"
+        )

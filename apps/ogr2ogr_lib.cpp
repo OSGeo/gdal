@@ -3997,7 +3997,8 @@ static int GetArrowGeomFieldIndex(const struct ArrowSchema *psLayerSchema,
 /************************************************************************/
 
 static CPLStringList
-BuildGetArrowStreamOptions(const GDALVectorTranslateOptions *psOptions,
+BuildGetArrowStreamOptions(OGRLayer *poSrcLayer, OGRLayer *poDstLayer,
+                           const GDALVectorTranslateOptions *psOptions,
                            bool bPreserveFID)
 {
     CPLStringList aosOptionsGetArrowStream;
@@ -4021,6 +4022,31 @@ BuildGetArrowStreamOptions(const GDALVectorTranslateOptions *psOptions,
             "MAX_FEATURES_IN_BATCH",
             CPLSPrintf("%d", psOptions->nGroupTransactions));
     }
+
+    auto poSrcDS = poSrcLayer->GetDataset();
+    auto poDstDS = poDstLayer->GetDataset();
+    if (poSrcDS && poDstDS)
+    {
+        auto poSrcDriver = poSrcDS->GetDriver();
+        auto poDstDriver = poDstDS->GetDriver();
+
+        const auto IsArrowNativeDriver = [](GDALDriver *poDriver)
+        {
+            return EQUAL(poDriver->GetDescription(), "ARROW") ||
+                   EQUAL(poDriver->GetDescription(), "PARQUET") ||
+                   EQUAL(poDriver->GetDescription(), "ADBC");
+        };
+
+        if (poSrcDriver && poDstDriver && !IsArrowNativeDriver(poSrcDriver) &&
+            !IsArrowNativeDriver(poDstDriver))
+        {
+            // For non-Arrow-native drivers, request DateTime as string, to
+            // allow mix of timezones
+            aosOptionsGetArrowStream.SetNameValue(GAS_OPT_DATETIME_AS_STRING,
+                                                  "YES");
+        }
+    }
+
     return aosOptionsGetArrowStream;
 }
 
@@ -4085,8 +4111,8 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
             }
         }
 
-        const CPLStringList aosGetArrowStreamOptions(
-            BuildGetArrowStreamOptions(psOptions, bPreserveFID));
+        const CPLStringList aosGetArrowStreamOptions(BuildGetArrowStreamOptions(
+            poSrcLayer, poDstLayer, psOptions, bPreserveFID));
         if (poSrcLayer->GetArrowStream(streamSrc.get(),
                                        aosGetArrowStreamOptions.List()))
         {
