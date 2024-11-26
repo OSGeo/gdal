@@ -503,6 +503,7 @@ CPLWorkerThreadPool::GetNextJob(CPLWorkerThread *psWorkerThread)
         std::unique_lock<std::mutex> oGuardThisThread(psWorkerThread->m_mutex);
         // coverity[uninit_use_in_call]
         oGuard.unlock();
+        // coverity[wait_not_in_locked_loop]
         psWorkerThread->m_cv.wait(oGuardThisThread);
     }
 }

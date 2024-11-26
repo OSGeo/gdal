@@ -930,21 +930,21 @@ def test_ogr_geom_segmentize_issue_1341():
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0,10 0)")
     geom.Segmentize(0.399999999999)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
     geom.Segmentize(0.399999999999)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0,10 0)")
     geom.Segmentize(0.4)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
     geom.Segmentize(0.4)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
 
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0,10 0)")
     geom.Segmentize(0.400000000001)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
     geom.Segmentize(0.400000000001)
-    assert geom.ExportToWkt() == expected_geom
+    ogrtest.check_feature_geometry(geom, expected_geom)
 
 
 ###############################################################################
