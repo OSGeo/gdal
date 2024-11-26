@@ -1,7 +1,5 @@
 #!/bin/sh
 #
-# $Id$
-#
 # mkgdaldist.sh - prepares GDAL source distribution package
 
 set -eu

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JML .jml Translator
  * Purpose:  Definition of classes for OGR JML driver.

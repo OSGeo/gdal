@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PDS Translator
  * Purpose:  Definition of classes for OGR .pdstable driver.

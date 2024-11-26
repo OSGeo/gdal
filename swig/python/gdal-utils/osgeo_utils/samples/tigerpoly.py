@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  OGR Python samples
 # Purpose:  Assemble TIGER Polygons.

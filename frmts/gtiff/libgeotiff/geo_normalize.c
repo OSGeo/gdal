@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.

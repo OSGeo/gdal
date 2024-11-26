@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     SubdatasetInfo.i
  * Project:  GDAL Python Interface

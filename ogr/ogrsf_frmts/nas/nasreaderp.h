@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NAS Reader
  * Purpose:  Private Declarations for OGR NAS Reader code.

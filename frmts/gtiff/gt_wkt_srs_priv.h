@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoTIFF Driver
  * Purpose:  Internal methods of gt_wkt_srs.cpp shared with gt_citation.cpp

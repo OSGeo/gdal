@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     ogr_csharp_extend.i
  * Project:  GDAL CSharp Interface

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Helper functions for testing CLI utilities

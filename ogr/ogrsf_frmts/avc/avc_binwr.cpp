@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Name:     avc_binwr.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library
  * Language: ANSI C
@@ -891,7 +890,6 @@ int AVCBinWriteCnt(AVCBinFile *psFile, AVCCnt *psCnt)
  **********************************************************************/
 static int _AVCBinWriteLab(AVCRawBinFile *psFile, AVCLab *psLab, int nPrecision)
 {
-
     AVCRawBinWriteInt32(psFile, psLab->nValue);
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -965,7 +963,6 @@ int AVCBinWriteLab(AVCBinFile *psFile, AVCLab *psLab)
  **********************************************************************/
 static int _AVCBinWriteTol(AVCRawBinFile *psFile, AVCTol *psTol, int nPrecision)
 {
-
     AVCRawBinWriteInt32(psFile, psTol->nIndex);
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -1306,7 +1303,6 @@ int AVCBinWriteTxt(AVCBinFile *psFile, AVCTxt *psTxt)
 static int _AVCBinWriteRxp(AVCRawBinFile *psFile, AVCRxp *psRxp,
                            CPL_UNUSED int nPrecision)
 {
-
     AVCRawBinWriteInt32(psFile, psRxp->n1);
     if (CPLGetLastErrorNo() != 0)
         return -1;

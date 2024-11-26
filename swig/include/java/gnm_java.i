@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GNM Core SWIG Interface declarations.
  * Purpose:  GNM declarations.

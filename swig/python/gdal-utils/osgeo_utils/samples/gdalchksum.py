@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # ******************************************************************************
-#  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Application to checksum a GDAL image file.

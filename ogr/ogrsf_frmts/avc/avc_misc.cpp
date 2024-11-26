@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     avc_misc.c
  * Project:  Arc/Info vector coverage (AVC)  BIN<->E00 conversion library

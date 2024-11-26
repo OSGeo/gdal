@@ -1,6 +1,4 @@
 # ******************************************************************************
-#  $Id$
-#
 #  Project:  GDAL ECW Driver
 #  Purpose:  Script to lookup ECW (GDT) coordinate systems and translate
 #            into OGC WKT for storage in $GDAL_HOME/data/ecw_cs.wkt.

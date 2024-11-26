@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR Core SWIG Interface declarations.
  * Purpose:  OGR declarations.

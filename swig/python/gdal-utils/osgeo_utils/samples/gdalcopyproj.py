@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # ******************************************************************************
-#  $Id$
 #
 #  Name:     gdalcopyproj.py
 #  Project:  GDAL Python Interface

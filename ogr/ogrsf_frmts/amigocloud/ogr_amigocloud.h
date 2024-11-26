@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  AMIGOCLOUD Translator
  * Purpose:  Definition of classes for OGR AmigoCloud driver.

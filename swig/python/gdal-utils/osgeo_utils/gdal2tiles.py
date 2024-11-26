@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ******************************************************************************
-#  $Id$
 #
 # Project:  Google Summer of Code 2007, 2008 (http://code.google.com/soc/)
 # Support:  BRGM (http://www.brgm.fr)
@@ -53,7 +52,7 @@ except ImportError:
     # 'antialias' resampling is not available
     numpy_available = False
 
-__version__ = "$Id$"
+__version__ = gdal.__version__
 
 resampling_list = (
     "average",

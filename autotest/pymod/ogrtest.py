@@ -1,5 +1,4 @@
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Support functions for OGR tests.

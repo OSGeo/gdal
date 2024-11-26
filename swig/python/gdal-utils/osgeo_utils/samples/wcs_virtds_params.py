@@ -2,7 +2,6 @@
 #
 # -*- coding: utf-8 -*-
 # ******************************************************************************
-#  $Id$
 #
 #  Name:     wcs_virtds_params.py
 #  Project:  GDAL Python Interface

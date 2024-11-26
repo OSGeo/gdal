@@ -1,4 +1,3 @@
-/* $Id$ */
 
 /* The MIT License
 

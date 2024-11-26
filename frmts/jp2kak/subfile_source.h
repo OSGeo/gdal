@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JPEG-2000
  * Purpose:  Implements read-only virtual io on a subregion of a file.

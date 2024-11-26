@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  BSB Reader
  * Purpose:  non-GDAL BSB API Declarations

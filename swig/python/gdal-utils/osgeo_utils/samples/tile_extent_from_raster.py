@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ******************************************************************************
-#  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Generate the extent of each raster tile in a overview as a vector layer

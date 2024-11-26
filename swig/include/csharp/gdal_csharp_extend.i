@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     gdal_csharp_extend.i
  * Project:  GDAL CSharp Interface

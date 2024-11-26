@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 #  Project:  GDAL samples
 #  Purpose:  Create a virtual directory

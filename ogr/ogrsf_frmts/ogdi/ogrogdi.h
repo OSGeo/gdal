@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGDI Bridge
  * Purpose:  Private definitions within the OGDI driver to implement

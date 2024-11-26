@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-# $Id$
 #
 # Project:  OGR Python samples
 # Purpose:  Extract SOUNDGings from an S-57 dataset, and write them to

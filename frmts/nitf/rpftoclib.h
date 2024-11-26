@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  RPF A.TOC read Library
  * Purpose:  Main GDAL independent include file for RPF TOC support.

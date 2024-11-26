@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CEOS Translator
  * Purpose:  Public (C callable) interface for CEOS and related formats such

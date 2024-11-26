@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GRIB Driver
  * Purpose:  GDALDataset driver for GRIB translator for read support

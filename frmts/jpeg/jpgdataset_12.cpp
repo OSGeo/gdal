@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JPEG JFIF Driver
  * Purpose:  Implement GDAL JPEG Support based on IJG libjpeg.

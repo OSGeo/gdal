@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  National Resources Canada - Vertical Datum Transformation
 # Purpose:  Test read/write functionality for BYN driver.

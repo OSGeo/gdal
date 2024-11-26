@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     GDALTestMultiDim.java
  * Project:  GDAL Java Interface

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     GDALTestIO.java
  * Project:  GDAL Java Interface

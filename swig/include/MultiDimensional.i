@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     MultiDimensional.i
  * Purpose:  GDAL Core SWIG Interface declarations.

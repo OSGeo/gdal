@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     gdaltransformer.java
  * Project:  GDAL Java Interface
