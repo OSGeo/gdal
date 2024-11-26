@@ -4100,6 +4100,7 @@ def test_ogr_parquet_ignored_fields_bounding_box_column_arrow_dataset(tmp_path):
 
 
 @gdaltest.enable_exceptions()
+@pytest.mark.require_driver("ARROW")
 def test_ogr_parquet_vsi_arrow_file_system():
 
     version = int(
