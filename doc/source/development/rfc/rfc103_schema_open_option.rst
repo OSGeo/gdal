@@ -36,7 +36,7 @@ Implementation
 --------------
 
 A new reserved open option named OGR_SCHEMA will be added to the following drivers,
-choosen because they are the most likely to benefit from the field type override feature:
+chosen because they are the most likely to benefit from the field type override feature:
 
 - CSV
 - GeoJSON
