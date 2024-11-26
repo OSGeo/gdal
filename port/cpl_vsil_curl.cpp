@@ -1373,7 +1373,7 @@ retry:
                             if (osValue.size() >= 2 && osValue.front() == '"' &&
                                 osValue.back() == '"')
                                 osValue = osValue.substr(1, osValue.size() - 2);
-                            oFileProp.ETag = osValue;
+                            oFileProp.ETag = std::move(osValue);
                         }
 
                         // Azure Data Lake Storage
