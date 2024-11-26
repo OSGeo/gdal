@@ -232,10 +232,6 @@ A preliminary draft of the implementation can be found at:
 https://github.com/OSGeo/gdal/pull/11071
 
 
-To advertise the new feature, the following metadata items will be used:
-`GDAL_DMD_OGR_SCHEMA_OPEN_OPTION_FLAGS=OverrideType OverrideName`
-
-
 
 Errors and warnings
 -------------------
