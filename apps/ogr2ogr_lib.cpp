@@ -4651,6 +4651,8 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             oCoordPrec.dfMResolution = psOptions->dfMRes;
         }
 
+        auto poSrcDriver = m_poSrcDS->GetDriver();
+
         // Force FID column as 64 bit if the source feature has a 64 bit FID,
         // the target driver supports 64 bit FID and the user didn't set it
         // manually.
@@ -4693,9 +4695,8 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         }
         // Detect scenario of converting from GPX to a format like GPKG
         // Cf https://github.com/OSGeo/gdal/issues/9225
-        else if (!bPreserveFID && !m_bUnsetFid && !bAppend &&
-                 m_poSrcDS->GetDriver() &&
-                 EQUAL(m_poSrcDS->GetDriver()->GetDescription(), "GPX") &&
+        else if (!bPreserveFID && !m_bUnsetFid && !bAppend && poSrcDriver &&
+                 EQUAL(poSrcDriver->GetDescription(), "GPX") &&
                  pszDestCreationOptions &&
                  (strstr(pszDestCreationOptions, "='FID'") != nullptr ||
                   strstr(pszDestCreationOptions, "=\"FID\"") != nullptr) &&
@@ -4785,6 +4786,23 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 CPLDebug("GDALVectorTranslate",
                          "Setting CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES");
             }
+        }
+
+        // Use case of https://github.com/OSGeo/gdal/issues/11057#issuecomment-2495479779
+        // Conversion from GPKG to OCI.
+        // OCI distinguishes between TIMESTAMP and TIMESTAMP WITH TIME ZONE
+        // GeoPackage is supposed to have DateTime in UTC, so we set
+        // TIMESTAMP_WITH_TIME_ZONE=YES
+        if (poSrcDriver && pszDestCreationOptions &&
+            strstr(pszDestCreationOptions, "TIMESTAMP_WITH_TIME_ZONE") &&
+            CSLFetchNameValue(m_papszLCO, "TIMESTAMP_WITH_TIME_ZONE") ==
+                nullptr &&
+            EQUAL(poSrcDriver->GetDescription(), "GPKG"))
+        {
+            papszLCOTemp = CSLSetNameValue(papszLCOTemp,
+                                           "TIMESTAMP_WITH_TIME_ZONE", "YES");
+            CPLDebug("GDALVectorTranslate",
+                     "Setting TIMESTAMP_WITH_TIME_ZONE=YES");
         }
 
         OGRGeomFieldDefn oGeomFieldDefn(
@@ -4982,7 +5000,9 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 
     bool bError = false;
     OGRArrowArrayStream streamSrc;
+
     const bool bUseWriteArrowBatch =
+        !EQUAL(m_poDstDS->GetDriver()->GetDescription(), "OCI") &&
         CanUseWriteArrowBatch(poSrcLayer, poDstLayer, bJustCreatedLayer,
                               psOptions, bPreserveFID, bError, streamSrc);
     if (bError)
