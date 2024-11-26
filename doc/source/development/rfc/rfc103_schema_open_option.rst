@@ -61,7 +61,7 @@ The JSON schema for the OGR_SCHEMA open option will be as follows:
 .. code-block:: json
 
     {
-    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "description": "Schema for OGR_SCHEMA open option",
     "oneOf": [
         {
@@ -69,6 +69,12 @@ The JSON schema for the OGR_SCHEMA open option will be as follows:
         }
     ],
     "definitions": {
+        "schemaType": {
+        "enum": [
+            "Patch",
+            "Full"
+        ]
+        },
         "dataset": {
         "type": "object",
         "properties": {
@@ -84,13 +90,6 @@ The JSON schema for the OGR_SCHEMA open option will be as follows:
             "layers"
         ],
         "additionalProperties": false
-        },
-        "schemaType": {
-        "enum": [
-            "Patch",
-            "Full"
-        ],
-        "default": "Patch"
         },
         "layer": {
         "type": "object",
@@ -142,10 +141,7 @@ The JSON schema for the OGR_SCHEMA open option will be as follows:
                 "precision": {
                 "type": "integer"
                 }
-            },
-            "required": [
-                "type"
-            ]
+            }
             },
             {
             "description": "The new name of the field",
@@ -194,30 +190,6 @@ Here is an example of a schema document that will be used to override the fields
 
 .. code-block:: json
 
-   {
-    "layers": [
-        {
-        "name": "layer1",
-        "fields": [
-            {
-            "name": "field1",
-            "type": "String",
-            "subType": "JSON"
-            },
-            {
-            "name": "field2",
-            "newName": "new_field2"
-            }
-        ]
-        }
-    ]
-    }
-
-
-In case of multi-layered datasets, the schema will be specified as a list of layers, each with its own fields definition and Patch/Full mode:
-
-.. code-block:: json
-
     {
     "layers":[
         {
@@ -257,7 +229,7 @@ In case of multi-layered datasets, the schema will be specified as a list of lay
 The new option will be used by applications such as `ogr2ogr` (for the ``-mapFieldType`` switch) to override the auto-detected fields types and to override the auto-detected (and possibly laundered) field names.
 
 A preliminary draft of the implementation can be found at:
-https://github.com/elpaso/gdal/commits/enhancement-gh10943-fields-schema-override/
+https://github.com/OSGeo/gdal/pull/11071
 
 
 To advertise the new feature, the following metadata items will be used:
