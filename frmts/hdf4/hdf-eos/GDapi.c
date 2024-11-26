@@ -602,10 +602,6 @@ GDchkgdid(int32 gridID, const char *routname,
 	/* Compute "reduced" ID */
 	/* -------------------- */
 	gID = gridID % idOffset;
-	if (gID >= NGRID)
-	{
-	   return -1;
-	}
 
 	/* Check for active grid ID */
 	/* ------------------------ */
@@ -3117,6 +3113,7 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
 	if (!metabuf || metaptrs[0] == NULL)
     {
         free(metabuf);
+        free(utlstr);
         return -1;
     }
 

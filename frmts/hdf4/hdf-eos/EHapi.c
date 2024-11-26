@@ -1611,7 +1611,10 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
 	metaptr = strstr(metaptr, utlstr);
 
 	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "\t\tEND_GROUP=", groupname);
-	endptr = strstr(metaptr, utlstr);
+	if (metaptr)
+	    endptr = strstr(metaptr, utlstr);
+	else
+	    endptr = NULL;
     } else
     {
 	/* If groupname == NULL then find end of structure in metadata */
