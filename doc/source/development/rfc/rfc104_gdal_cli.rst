@@ -208,6 +208,22 @@ But:
     ERROR 1: 'mixed.gpkg' has both raster and vector content. Please use 'gdal raster convert' or 'gdal vector convert'.
 
 
+Help message of "gdal vector"
+++++++++++++++++++++++++++++++++++++++++++++++
+
+  .. code-block:: shell
+
+    $ gdal vector
+    ERROR 1: vector: Missing subcommand name.
+    Usage: gdal vector <SUBCOMMAND>
+    where <SUBCOMMAND> is one of:
+      - convert:   Convert a vector dataset.
+      - filter:    Filter a vector dataset.
+      - info:      Return information on a vector dataset.
+      - pipeline:  Process a vector dataset.
+      - reproject: Reproject a vector dataset.
+
+
 A few invocations of "gdal vector convert"
 ++++++++++++++++++++++++++++++++++++++++++
 
@@ -485,6 +501,44 @@ Detailed usage help message of "gdal vector pipeline"
       --overwrite-layer                                    Whether overwriting existing layer is allowed
       --append                                             Whether appending to existing layer is allowed
       -l, --output-layer <OUTPUT-LAYER>                    Output layer name
+
+
+The filter and reproject steps can also be used as direct "gdal vector" standalone
+subcommands, in which case they are augmented with the options of the 'read' and
+'write' steps:
+
+  .. code-block:: shell
+
+    $ gdal vector reproject --help
+    Usage: gdal vector reproject [OPTIONS] <INPUT> <OUTPUT>
+
+    Reproject a vector dataset.
+
+    Positional arguments:
+      -i, --input <INPUT>                                  Input vector dataset [required]
+      -o, --output <OUTPUT>                                Output vector dataset [required]
+
+    Common Options:
+      -h, --help                                           Display help message and exit
+      --json-usage                                         Display usage as JSON document and exit
+      --progress                                           Display progress bar
+
+    Options:
+      -l, --layer, --input-layer <INPUT-LAYER>             Input layer name(s) [may be repeated]
+      -f, --of, --format, --output-format <OUTPUT-FORMAT>  Output format
+      --co, --creation-option <KEY>=<VALUE>                Creation option [may be repeated]
+      --lco, --layer-creation-option <KEY>=<VALUE>         Layer creation option [may be repeated]
+      --overwrite                                          Whether overwriting existing output is allowed
+      --update                                             Whether to open existing dataset in update mode
+      --overwrite-layer                                    Whether overwriting existing layer is allowed
+      --append                                             Whether appending to existing layer is allowed
+      --output-layer <OUTPUT-LAYER>                        Output layer name
+      -s, --src-crs <SRC-CRS>                              Source CRS
+      -d, --dst-crs <DST-CRS>                              Destination CRS [required]
+
+    Advanced Options:
+      --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
+      --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
 
 
 CLI specification
