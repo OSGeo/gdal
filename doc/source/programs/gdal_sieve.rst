@@ -36,4 +36,4 @@ Additional details on the algorithm are available in the :cpp:func:`GDALSieveFil
 
 .. note::
 
-    gdal_retile is a Python utility, and is only available if GDAL Python bindings are available.
+    gdal_sieve is a Python utility, and is only available if GDAL Python bindings are available.
