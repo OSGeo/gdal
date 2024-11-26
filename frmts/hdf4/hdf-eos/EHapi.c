@@ -9,9 +9,9 @@
 /*
 Copyright (C) 1996 Hughes and Applied Research Corporation
 
-Permission to use, modify, and distribute this software and its documentation 
-for any purpose without fee is hereby granted, provided that the above 
-copyright notice appear in all copies and that both that copyright notice and 
+Permission to use, modify, and distribute this software and its documentation
+for any purpose without fee is hereby granted, provided that the above
+copyright notice appear in all copies and that both that copyright notice and
 this permission notice appear in supporting documentation.
 */
 
@@ -29,10 +29,10 @@ static int32 *EHXfidTable = NULL;
 static int32 *EHXsdTable = NULL;
 
 /* define a macro for the string size of the utility strings and some dimension
-   list strings. The value in previous versions of this code may not be 
-   enough in some cases. The length now is 512 which seems to be more than 
+   list strings. The value in previous versions of this code may not be
+   enough in some cases. The length now is 512 which seems to be more than
    enough to hold larger strings. */
-   
+
 #define UTLSTR_MAX_SIZE 512
 #define UTLSTRSIZE  32000
 
@@ -45,7 +45,9 @@ static int32 *EHXsdTable = NULL;
 #define MAX_RETRIES 10
 
 /* Function Prototypes */
+#if defined(HDFEOS_GD_WRITE_SUPPORT) || defined(HDFEOS_SW_WRITE_SUPPORT)
 static intn EHmetalist(const char *, char *);
+#endif
 static intn EHreset_maxopenfiles(intn);
 static intn EHget_maxopenfiles(intn *, intn *);
 static intn EHget_numfiles(void);
@@ -197,7 +199,7 @@ EHopen(const char *filename, intn access)
 		    /* ------------------------- */
 		    metabuf = (char *) calloc(32000, 1);
 		    if(metabuf == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"EHopen", __FILE__, __LINE__);
 			return(-1);
 		    }
@@ -236,7 +238,7 @@ EHopen(const char *filename, intn access)
 		/* Get HDF file ID */
 		/* --------------- */
 #ifndef _PGS_OLDNFS
-/* The following loop around the function Hopen is intended to deal with the NFS cache 
+/* The following loop around the function Hopen is intended to deal with the NFS cache
    problem when opening file fails with errno = 150 or 151. When NFS cache is updated,
    this part of change is no longer necessary.              10/18/1999   */
                 retryCount = 0;
@@ -270,7 +272,7 @@ EHopen(const char *filename, intn access)
                     {
                        /* Set HDFEOS version number in file */
                        /* --------------------------------- */
-		      
+
 		      attrIndex = SDfindattr(sdInterfaceID, "HDFEOSVersion");
 		      if (attrIndex == -1)
 			{
@@ -293,7 +295,7 @@ EHopen(const char *filename, intn access)
 		       {
 			  metabuf = (char *) calloc(32000, 1);
 			  if(metabuf == NULL)
-			  { 
+			  {
 			      HEpush(DFE_NOSPACE,"EHopen", __FILE__, __LINE__);
 			      return(-1);
 			  }
@@ -343,7 +345,7 @@ EHopen(const char *filename, intn access)
 		/* Get HDF file ID */
 		/* --------------- */
 #ifndef _PGS_OLDNFS
-/* The following loop around the function Hopen is intended to deal with the NFS cache 
+/* The following loop around the function Hopen is intended to deal with the NFS cache
    problem when opening file fails with errno = 150 or 151. When NFS cache is updated,
    this part of change is no longer necessary.              10/18/1999   */
                 retryCount = 0;
@@ -370,10 +372,7 @@ EHopen(const char *filename, intn access)
 		    fid = -1;
 		    status = -1;
 		    HEpush(DFE_FNF, "EHopen", __FILE__, __LINE__);
-		    strcpy(errbuf, "\"");
-		    strcat(errbuf, filename);
-		    strcat(errbuf, "\" (opened for READONLY access)");
-		    strcat(errbuf, " does not exist.");
+            snprintf(errbuf, sizeof(errbuf), "\"%s\" (opened for READONLY access) does not exist.", filename);
 		    HEreport("%s\n", errbuf);
 		} else
 		{
@@ -385,7 +384,7 @@ EHopen(const char *filename, intn access)
                         /* ------------------------- */
                         if (sdInterfaceID != -1)
                         {
- 
+
 		           /* Set open access to read-only */
 		           /* ---------------------------- */
 		           acs = 0;
@@ -582,7 +581,7 @@ EHidinfo(int32 fid, int32 * HDFfid, int32 * sdInterfaceID)
 }
 
 
-
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -625,7 +624,7 @@ EHfilename(int32 fid, char *filename)
 
     return (status);
 }
-
+#endif
 
 
 
@@ -1011,13 +1010,13 @@ EHstrwithin(const char *target, const char *search, const char delim)
     /* ----------------------------------------- */
     ptr = (char **) calloc(nentries, sizeof(char *));
     if(ptr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHstrwithin", __FILE__, __LINE__);
 	return(-1);
     }
     slen = (int32 *) calloc(nentries, sizeof(int32));
     if(slen == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHstrwithin", __FILE__, __LINE__);
 	free(ptr);
 	return(-1);
@@ -1199,13 +1198,13 @@ EHgetid(int32 fid, int32 vgid, const char *objectname, intn code,
 	/* ---------------------------------- */
 	tags = (int32 *) malloc(sizeof(int32) * nObjects);
 	if(tags == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHgetid", __FILE__, __LINE__);
 	    return(-1);
 	}
 	refs = (int32 *) malloc(sizeof(int32) * nObjects);
 	if(refs == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHgetid", __FILE__, __LINE__);
 	    free(tags);
 	    return(-1);
@@ -1331,7 +1330,7 @@ EHrevflds(const char *dimlist, char *revdimlist)
     /* ------------------------------ */
     tempdimlist = (char *) malloc(strlen(dimlist) + 1);
     if(tempdimlist == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHrevflds", __FILE__, __LINE__);
 	return(-1);
     }
@@ -1347,14 +1346,14 @@ EHrevflds(const char *dimlist, char *revdimlist)
     /* ----------------------------------------- */
     ptr = (char **) calloc(nentries, sizeof(char *));
     if(ptr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHrevflds", __FILE__, __LINE__);
 	free(tempdimlist);
 	return(-1);
     }
     slen = (int32 *) calloc(nentries, sizeof(int32));
     if(slen == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHrevflds", __FILE__, __LINE__);
 	free(ptr);
 	free(tempdimlist);
@@ -1398,6 +1397,7 @@ EHrevflds(const char *dimlist, char *revdimlist)
 }
 
 
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -1513,10 +1513,11 @@ EHcntGROUP(char *metabuf[])
 
     return (count);
 }
+#endif
 
 
 
-
+#if defined(HDFEOS_GD_WRITE_SUPPORT) || defined(HDFEOS_SW_WRITE_SUPPORT)
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -1566,13 +1567,13 @@ EHmetalist(const char *instring, char *outstring)
     /* ----------------------------------------- */
     ptr = (char **) calloc(nentries, sizeof(char *));
     if(ptr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHmetalist", __FILE__, __LINE__);
 	return(-1);
     }
     slen = (int32 *) calloc(nentries, sizeof(int32));
     if(slen == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHmetalist", __FILE__, __LINE__);
 	free(ptr);
 	return(-1);
@@ -1634,11 +1635,11 @@ EHmetalist(const char *instring, char *outstring)
 
     return (status);
 }
+#endif
 
 
 
-
-
+#if defined(HDFEOS_GD_WRITE_SUPPORT) || defined(HDFEOS_SW_WRITE_SUPPORT)
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -1698,7 +1699,7 @@ EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode
     char           *metaptr;	/* Metadata pointer */
     char           *prevmetaptr;/* Previous position of metadata pointer */
     char           *ptr[8];	/* String pointer array (for dim map parsing) */
-    char            type[32];	/* Number type descriptor string */
+    char            type[32] = {0};	/* Number type descriptor string */
     char           *metaArr[2];	/* Array of metadata positions */
     char           *colon;	/* Colon position */
     char           *colon2;	/* 2nd colon position */
@@ -1711,14 +1712,14 @@ EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode
     /* ---------------------------------- */
     utlstr = (char *) calloc(UTLSTRSIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHinsertmeta", __FILE__, __LINE__);
 	return(-1);
     }
 
     utlstr2 = (char *) calloc(UTLSTRSIZE, sizeof(char));
     if(utlstr2 == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHinsertmeta", __FILE__, __LINE__);
 	free(utlstr);
 	return(-1);
@@ -1751,7 +1752,7 @@ EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode
     /* ----------------------------------------------------- */
     metabuf = (char *) calloc(32000 * nmeta, 1);
     if(metabuf == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHinsertmeta", __FILE__, __LINE__);
 	free(utlstr);
 	free(utlstr2);
@@ -2004,8 +2005,13 @@ EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode
 	/* Find colon (parse off field name) */
 	/* --------------------------------- */
 	colon = strchr(metastr, ':');
+	if (colon == NULL)
+	{
+		free(utlstr);
+		free(utlstr2);
+		return -1;
+	}
 	*colon = 0;
-
 
 	/* Search for next colon (compression and/or tiling parameters) */
 	/* ------------------------------------------------------------ */
@@ -2066,8 +2072,13 @@ EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode
 	/* Find colon (parse off field name) */
 	/* --------------------------------- */
 	colon = strchr(metastr, ':');
+	if (colon == NULL)
+	{
+		free(utlstr);
+		free(utlstr2);
+		return -1;
+	}
 	*colon = 0;
-
 
 	/* Search for next colon (compression and/or tiling parameters) */
 	/* ------------------------------------------------------------ */
@@ -2128,13 +2139,17 @@ EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode
 	/* Find colon (parse off merged fieldname) */
 	/* --------------------------------------- */
 	colon = strchr(metastr, ':');
-
+	if (colon == NULL)
+	{
+		free(utlstr);
+		free(utlstr2);
+		return -1;
+	}
+	*colon = 0;
 
 	/* Make metadata string list from field list */
 	/* ----------------------------------------- */
 	EHmetalist(colon + 1, utlstr2);
-	*colon = 0;
-
 
 	/* Build metadata entry string */
 	/* --------------------------- */
@@ -2182,8 +2197,13 @@ EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode
 	/* Find colon (parse off point field name) */
 	/* --------------------------------------- */
 	colon = strchr(metastr, ':');
+	if (colon == NULL)
+	{
+		free(utlstr);
+		free(utlstr2);
+		return -1;
+	}
 	*colon = 0;
-
 
 	/* Find beginning and ending of metadata section */
 	/* --------------------------------------------- */
@@ -2237,14 +2257,24 @@ EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode
 	/* Find colon (parse off parent/child level names from link field) */
 	/* --------------------------------------------------------------- */
 	colon = strchr(metastr, ':');
+	if (colon == NULL)
+	{
+		free(utlstr);
+		free(utlstr2);
+		return -1;
+	}
 	*colon = 0;
-
 
 	/* Find slash (divide parent and child levels) */
 	/* ------------------------------------------- */
 	slash = strchr(metastr, '/');
+	if (slash == NULL)
+	{
+		free(utlstr);
+		free(utlstr2);
+		return -1;
+	}
 	*slash = 0;
-
 
 	/* Build metadata entry string */
 	/* --------------------------- */
@@ -2314,7 +2344,7 @@ EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode
 	/* ------------------------------------------------------ */
 	metabuf = (char *) realloc((void *) metabuf, 32000 * (nmeta + 1));
 	if(metabuf == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHinsertmeta", __FILE__, __LINE__);
 	    free(utlstr);
 	    free(utlstr2);
@@ -2364,6 +2394,7 @@ EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode
 
     return (status);
 }
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -2433,6 +2464,11 @@ EHgetmetavalue(char *metaptrs[], const char *parameter, char *retstr)
 	/* Find newline "\n" character */
 	/* --------------------------- */
 	newline = strchr(metaptrs[0], '\n');
+	if (newline == NULL)
+	{
+		retstr[0] = 0;
+		return -1;
+	}
 
 	/* Copy from "=" to "\n" (exclusive) into return string */
 	/* ---------------------------------------------------- */
@@ -2510,9 +2546,9 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
      /* ---------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE,sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
         HEpush(DFE_NOSPACE,"EHEHmetagroup", __FILE__, __LINE__);
-	
+
         return( NULL);
     }
     /* Determine number of structural metadata "sections" */
@@ -2541,14 +2577,14 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
     /* Allocate space for metadata (in units of 32000 bytes) */
     /* ----------------------------------------------------- */
     metabuf = (char *) calloc(32000 * nmeta, 1);
-    
+
     if(metabuf == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"EHmetagroup", __FILE__, __LINE__);
 	free(utlstr);
 	return(metabuf);
     }
-    
+
 
     /* Read structural metadata */
     /* ------------------------ */
@@ -2649,7 +2685,7 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
 
 
 
-
+#if defined(HDFEOS_GD_WRITE_SUPPORT) || defined(HDFEOS_SW_WRITE_SUPPORT)
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -2729,11 +2765,11 @@ EHfillfld(int32 sdid, int32 rank, CPL_UNUSED int32 truerank, int32 size, int32 o
 	/* -------------------- */
 	fillbuf = (char *) malloc(totN * size);
 	if(fillbuf == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHfillfld", __FILE__, __LINE__);
 	    return(-1);
 	}
-	
+
 
 	/* Fill buffer with fill value */
 	/* --------------------------- */
@@ -2769,7 +2805,7 @@ EHfillfld(int32 sdid, int32 rank, CPL_UNUSED int32 truerank, int32 size, int32 o
 	/* -------------------- */
 	fillbuf = (char *) malloc(planeN * size * n);
 	if(fillbuf == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHfillfld", __FILE__, __LINE__);
 	    return(-1);
 	}
@@ -2824,7 +2860,7 @@ EHfillfld(int32 sdid, int32 rank, CPL_UNUSED int32 truerank, int32 size, int32 o
 	/* -------------------- */
 	fillbuf = (char *) malloc(dims[rank - 1] * size * n);
 	if(fillbuf == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHfillfld", __FILE__, __LINE__);
 	    return(-1);
 	}
@@ -2877,12 +2913,12 @@ EHfillfld(int32 sdid, int32 rank, CPL_UNUSED int32 truerank, int32 size, int32 o
 
     return (status);
 }
+#endif
 
 
 
 
-
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -2934,7 +2970,7 @@ EHbisect(float64(*func) (float64[]), float64 funcParms[], int32 nParms,
     /* -------------------------------------- */
     parms = (float64 *) calloc(nParms + 1, sizeof(float64));
     if(parms == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE, "EHbisect", __FILE__, __LINE__);
 	return(-1);
     }
@@ -3026,7 +3062,7 @@ EHbisect(float64(*func) (float64[]), float64 funcParms[], int32 nParms,
 
     return (status);
 }
-
+#endif
 
 
 
@@ -3271,13 +3307,13 @@ EHattrcat(int32 fid, int32 attrVgrpID, char *attrnames, int32 * strbufsize)
 	/* ------------------------------------------- */
 	tags = (int32 *) malloc(sizeof(int32) * nObjects);
 	if(tags == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHattrcat", __FILE__, __LINE__);
 	    return(-1);
 	}
 	refs = (int32 *) malloc(sizeof(int32) * nObjects);
 	if(refs == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"EHattrcat", __FILE__, __LINE__);
 	    free(tags);
 	    return(-1);

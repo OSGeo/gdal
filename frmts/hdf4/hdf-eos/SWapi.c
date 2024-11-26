@@ -9,9 +9,9 @@
 /*
 Copyright (C) 1996 Hughes and Applied Research Corporation
 
-Permission to use, modify, and distribute this software and its documentation 
-for any purpose without fee is hereby granted, provided that the above 
-copyright notice appear in all copies and that both that copyright notice and 
+Permission to use, modify, and distribute this software and its documentation
+for any purpose without fee is hereby granted, provided that the above
+copyright notice appear in all copies and that both that copyright notice and
 this permission notice appear in supporting documentation.
 */
 /*****************************************************************************
@@ -29,47 +29,47 @@ Aug 31, 1999  Abe Taaheri    Changed memory allocation for utility strings to
 June 05, 2003 Abe Taaheri / Bruce Beaumont
 
                             Changed MAXNREGIONS to 1024 to support MOPITT data
-			    Supplied cast for compcode in call to 
+			    Supplied cast for compcode in call to
 			      SDsetcompress to avoid compiler error
-			    Removed declaration for unused variable rstatus 
+			    Removed declaration for unused variable rstatus
 			      in SWwrrdfield
-			    Removed initialization code for unused variables 
+			    Removed initialization code for unused variables
 			      in SWwrrdfield
-			    Removed declaration for unused variable tmpVal 
+			    Removed declaration for unused variable tmpVal
 			      in SWdefboxregion
 			    Added code in SWdefboxregion to check for l_index k
-			      exceeding NSWATHREGN to avoid overwriting 
+			      exceeding NSWATHREGN to avoid overwriting
 			      memory
-			    Removed declaration for unused variable retchar 
+			    Removed declaration for unused variable retchar
 			      in SWregionl_index
-			    Removed initialization code for unused variables 
+			    Removed initialization code for unused variables
 			      in SWregionl_index
 			    Removed declarations for unused variables tstatus,
 			      nfields, nflgs, and swathname in SWextractregion
-			    Removed initialization code for unused variables 
+			    Removed initialization code for unused variables
 			      in SWextractregion
-			    Removed declaration for unused variable 
+			    Removed declaration for unused variable
 			      land_status in SWscan2longlat
-			    Removed initialization code for unused variables 
+			    Removed initialization code for unused variables
 			      in SWscan2longlat
-			    Added clear (0) of timeflag in SWextractperiod if 
+			    Added clear (0) of timeflag in SWextractperiod if
 			      return status from SWextractregion is non-zero
 			    Removed declarations for unused variables tstatus,
-			      scandim, ndfields, ndflds, and swathname in 
+			      scandim, ndfields, ndflds, and swathname in
 			      SWregioninfo
-			    Removed initialization code for unused variables 
+			    Removed initialization code for unused variables
 			      in SWregioninfo
-			    Added clear (0) of timeflag in SWperiodinfo if 
+			    Added clear (0) of timeflag in SWperiodinfo if
 			      return status from SWregioninfo is non-zero
-			    Removed declarations for unused variables size, 
-			      nfields, nflds, nswath, idxsz, cornerlon, and 
+			    Removed declarations for unused variables size,
+			      nfields, nflds, nswath, idxsz, cornerlon, and
 			      cornerlat in SWdefscanregion
-			    Removed initialization code for unused variables 
+			    Removed initialization code for unused variables
 			      in SWdefscanregion
-			    Removed declarations for unused variables dims2, 
-			      rank, nt, swathname, dimlist, and buffer in 
+			    Removed declarations for unused variables dims2,
+			      rank, nt, swathname, dimlist, and buffer in
 			      SWupdateidxmap
-			    Removed declaration for unused variable statmeta 
+			    Removed declaration for unused variable statmeta
 			      in SWgeomapinfo
 ******************************************************************************/
 
@@ -87,15 +87,21 @@ June 05, 2003 Abe Taaheri / Bruce Beaumont
 
 
 static int32 SWX1dcomb[512*3];
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 static int32 SWXSDcomb[512*5];
+#endif
 static char  SWXSDname[HDFE_NAMBUFSIZE];
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 static char  SWXSDdims[HDFE_DIMBUFSIZE];
+#endif
 
+#ifdef UNUSED_BY_GDAL
 /* This flag was added to allow the Time field to have different Dimensions
 ** than Longitude and Latitude and still be used for subsetting
 ** 23 June,1997  DaW
 */
 static intn  timeflag = 0;
+#endif
 
 
 /* Added for routine that converts scanline to Lat/long
@@ -106,7 +112,7 @@ static intn  timeflag = 0;
 
 #define NSWATH 200
 /* Swath Structure External Arrays */
-struct swathStructure 
+struct swathStructure
 {
     int32 active;
     int32 IDTable;
@@ -144,31 +150,34 @@ struct swathRegion
 static struct swathRegion *SWXRegion[NSWATHREGN];
 
 /* define a macro for the string size of the utility strings. The value
-   of 80 in previous version of this code was resulting in core dump (Array 
-   Bounds Write and Array Bounds Read problem in SWfinfo function and the 
-   functions called from there) for 7-8 dimensional fields where the 
-   string length for "DimList" can exceed 80 characters, including " and 
-   commas in the string. The length now is 512 which seems to be more 
+   of 80 in previous version of this code was resulting in core dump (Array
+   Bounds Write and Array Bounds Read problem in SWfinfo function and the
+   functions called from there) for 7-8 dimensional fields where the
+   string length for "DimList" can exceed 80 characters, including " and
+   commas in the string. The length now is 512 which seems to be more
    than enough to avoid the problem mentioned above. */
-   
+
 #define UTLSTR_MAX_SIZE 512
 
 /* Swath Prototypes (internal routines) */
 static intn SWchkswid(int32, const char *, int32 *, int32 *, int32 *);
 static int32 SWfinfo(int32, const char *, const char *, int32 *,
                      int32 [], int32 *, char *);
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 static intn SWdefinefield(int32, const char *, const char *, const char *, int32, int32);
+#endif
 static intn SWwrrdattr(int32, const char *, int32, int32, const char *, VOIDP);
 static intn SW1dfldsrch(int32, int32, const char *, const char *, int32 *,
                         int32 *, int32 *);
-static intn SWSDfldsrch(int32, int32, const char *, int32 *, int32 *, 
+static intn SWSDfldsrch(int32, int32, const char *, int32 *, int32 *,
                         int32 *, int32 *, int32 [], int32 *);
 static intn SWwrrdfield(int32, const char *, const char *,
                         int32 [], int32 [], int32 [], VOIDP);
 static int32 SWinqfields(int32, const char *, char *, int32 [], int32 []);
+#ifdef UNUSED_BY_GDAL
 static intn SWscan2longlat(int32, const char *, VOIDP, int32 [], int32 [],
                            int32 *, int32, int32);
-
+#endif
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
@@ -212,6 +221,7 @@ SWopen(const char *filename, intn i_access)
     return (fid);
 }
 
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -454,7 +464,7 @@ SWcreate(int32 fid, const char *swathname)
     }
     return (swathID);
 }
-
+#endif
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
@@ -575,13 +585,13 @@ SWattach(int32 fid, const char *swathname)
 		    /* ------------------------------------------------- */
 		    tags = (int32 *) malloc(sizeof(int32) * 3);
 		    if(tags == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
 			return(-1);
 		    }
 		    refs = (int32 *) malloc(sizeof(int32) * 3);
 		    if(refs == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
 			free(tags);
 			return(-1);
@@ -636,13 +646,13 @@ SWattach(int32 fid, const char *swathname)
 			/* ------------------------------------------------ */
 			tags = (int32 *) malloc(sizeof(int32) * nObjects);
 			if(tags == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
 			    return(-1);
 			}
 			refs = (int32 *) malloc(sizeof(int32) * nObjects);
 			if(refs == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
 			    free(tags);
 			    return(-1);
@@ -661,7 +671,7 @@ SWattach(int32 fid, const char *swathname)
 			}
 			SWXSwath[i].sdsID = (int32 *) calloc(nSDS, 4);
 			if(SWXSwath[i].sdsID == NULL && nSDS != 0)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
 			    free(tags);
 			    free(refs);
@@ -702,13 +712,13 @@ SWattach(int32 fid, const char *swathname)
 			/* ----------------------------------------- */
 			tags = (int32 *) malloc(sizeof(int32) * nObjects);
 			if(tags == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
 			    return(-1);
 			}
 			refs = (int32 *) malloc(sizeof(int32) * nObjects);
 			if(refs == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
 			    free(tags);
 			    return(-1);
@@ -730,7 +740,7 @@ SWattach(int32 fid, const char *swathname)
 			    realloc((void *) SWXSwath[i].sdsID,
 				    (SWXSwath[i].nSDS + nSDS) * 4);
 			if(SWXSwath[i].sdsID == NULL && nSDS != 0)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
 			    return(-1);
 			}
@@ -842,9 +852,14 @@ SWchkswid(int32 swathID, const char *routname,
     }
     else
     {
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    return -1;
+	}
 	/* Check for active swath ID */
 	/* ------------------------- */
-	if (SWXSwath[swathID % idOffset].active == 0)
+	if (SWXSwath[sID].active == 0)
 	{
 	    status = -1;
 	    HEpush(DFE_GENAPP, "SWchkswid", __FILE__, __LINE__);
@@ -855,9 +870,9 @@ SWchkswid(int32 swathID, const char *routname,
 
 	    /* Get file & SDS ids and Swath Vgroup */
 	    /* ----------------------------------- */
-	    status = EHchkfid(SWXSwath[swathID % idOffset].fid, " ", fid,
+	    status = EHchkfid(SWXSwath[sID].fid, " ", fid,
 			      sdInterfaceID, &l_access);
-	    *swVgrpID = SWXSwath[swathID % idOffset].IDTable;
+	    *swVgrpID = SWXSwath[sID].IDTable;
 	}
     }
     return (status);
@@ -868,7 +883,7 @@ SWchkswid(int32 swathID, const char *routname,
 
 
 
-
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -933,13 +948,19 @@ SWdefdim(int32 swathID, char *dimname, int32 dim)
     /* -------------------------------------- */
     if (status == 0)
     {
-	Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    return -1;
+	}
+	Vgetname(SWXSwath[sID].IDTable, swathname);
+	int32 dimArray[1] = { dim };
 	status = EHinsertmeta(sdInterfaceID, swathname, "s", 0L,
-			      dimname, &dim);
+			      dimname, dimArray);
     }
     return (status);
 }
-
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -996,7 +1017,7 @@ SWdiminfo(int32 swathID, const char *dimname)
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWdiminfo", __FILE__, __LINE__);
 	return(-1);
     }
@@ -1009,7 +1030,13 @@ SWdiminfo(int32 swathID, const char *dimname)
     if (status == 0)
     {
 	/* Get swath name */
-	Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    free(utlstr);
+	    return -1;
+	}
+	Vgetname(SWXSwath[sID].IDTable, swathname);
 
 	/* Get pointers to "Dimension" section within SM */
 	metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -1019,7 +1046,7 @@ SWdiminfo(int32 swathID, const char *dimname)
 	{
 	    free(utlstr);
 	    return(-1);
-	}  
+	}
 
 	/* Search for dimension name (surrounded by quotes) */
 	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", dimname, "\"\n");
@@ -1116,7 +1143,7 @@ SWmapinfo(int32 swathID, const char *geodim, const char *datadim, int32 * offset
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWmapinfo", __FILE__, __LINE__);
 	return(-1);
     }
@@ -1130,7 +1157,13 @@ SWmapinfo(int32 swathID, const char *geodim, const char *datadim, int32 * offset
     if (status == 0)
     {
 	/* Get swath name */
-	Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    free(utlstr);
+	    return -1;
+	}
+	Vgetname(SWXSwath[sID].IDTable, swathname);
 
 	/* Get pointers to "DimensionMap" section within SM */
 	metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -1249,7 +1282,12 @@ SWidxmapinfo(int32 swathID, const char *geodim, const char *datadim, int32 l_ind
     {
 	/* Find Index Mapping Vdata with Swath Attributes Vgroup */
 	snprintf(utlbuf, sizeof(utlbuf), "%s%s%s%s", "INDXMAP:", geodim, "/", datadim);
-	vgid = SWXSwath[swathID % idOffset].VIDTable[2];
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    return -1;
+	}
+	vgid = SWXSwath[sID].VIDTable[2];
 	vdataID = EHgetid(fid, vgid, utlbuf, 1, "r");
 
 	/* If found then get geodim size & read l_index mapping values */
@@ -1330,7 +1368,7 @@ SWcompinfo(int32 swathID, const char *fieldname, int32 * compcode, intn compparm
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWcompinfo", __FILE__, __LINE__);
 	return(-1);
     }
@@ -1342,7 +1380,13 @@ SWcompinfo(int32 swathID, const char *fieldname, int32 * compcode, intn compparm
     if (status == 0)
     {
 	/* Get swath name */
-	Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    free(utlstr);
+	    return -1;
+	}
+	Vgetname(SWXSwath[sID].IDTable, swathname);
 
 	/* Get pointers to "DataField" section within SM */
 	metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -1464,7 +1508,7 @@ SWcompinfo(int32 swathID, const char *fieldname, int32 * compcode, intn compparm
 	free(metabuf);
     }
     free(utlstr);
-    
+
     return (status);
 }
 
@@ -1538,7 +1582,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWfinfo", __FILE__, __LINE__);
 	return(-1);
     }
@@ -1552,14 +1596,20 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
     status = SWchkswid(swathID, "SWfinfo", &fid, &sdInterfaceID, &dum);
 
     /* Get swath name */
-    Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+    int sID = swathID % idOffset;
+    if (sID >= NSWATH)
+    {
+        free(utlstr);
+        return -1;
+    }
+    Vgetname(SWXSwath[sID].IDTable, swathname);
 
     /* Get pointers to appropriate "Field" section within SM */
     if (strcmp(fieldtype, "Geolocation Fields") == 0)
     {
 	metabuf = EHmetagroup(sdInterfaceID, swathname, "s",
 				       "GeoField", metaptrs);
-	
+
 	if(metabuf == NULL)
 	{
 	    free(utlstr);
@@ -1672,7 +1722,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 		    fsize = VSsizeof(vdataID, (char *)fieldname);
 		    buf = (uint8 *) calloc(fsize, 1);
 		    if(buf == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"SWfinfo", __FILE__, __LINE__);
 			free(utlstr);
 			return(-1);
@@ -1717,7 +1767,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 	status = -1;
     }
     free(utlstr);
-     
+
     return (status);
 }
 
@@ -1799,7 +1849,7 @@ SWfieldinfo(int32 swathID, const char *fieldname, int32 * rank, int32 dims[],
 
 
 
-
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -1886,7 +1936,12 @@ SWdefdimmap(int32 swathID, const char *geodim, const char *datadim, int32 offset
 	    metadata[0] = offset;
 	    metadata[1] = increment;
 
-	    Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	    int sID = swathID % idOffset;
+	    if (sID >= NSWATH)
+	    {
+	        return -1;
+	    }
+	    Vgetname(SWXSwath[sID].IDTable, swathname);
 	    status = EHinsertmeta(sdInterfaceID, swathname, "s", 1L,
 				  mapname, metadata);
 
@@ -1959,7 +2014,7 @@ SWdefidxmap(int32 swathID, const char *geodim, const char *datadim, int32 l_inde
 
 	/* Geo Dimension Search */
 	/* -------------------- */
-       
+
 	gsize = SWdiminfo(swathID, geodim);
 
 	if (gsize == -1)
@@ -1988,10 +2043,15 @@ SWdefidxmap(int32 swathID, const char *geodim, const char *datadim, int32 l_inde
 	{
 	    /* Get attribute Vgroup ID and allocate data buffer */
 	    /* ------------------------------------------------ */
-	    attrVgrpID = SWXSwath[swathID % idOffset].VIDTable[2];
+	    int sID = swathID % idOffset;
+	    if (sID >= NSWATH)
+	    {
+	        return -1;
+	    }
+	    attrVgrpID = SWXSwath[sID].VIDTable[2];
 	    buf = (uint8 *) calloc(4 * gsize, 1);
 	    if(buf == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdefidxmap", __FILE__, __LINE__);
 		return(-1);
 	    }
@@ -2021,9 +2081,10 @@ SWdefidxmap(int32 swathID, const char *geodim, const char *datadim, int32 l_inde
 
 	    /* Write to Structural Metadata */
 	    snprintf(mapname, sizeof(mapname), "%s%s%s", geodim, "/", datadim);
-	    Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	    Vgetname(SWXSwath[sID].IDTable, swathname);
+		int32 dumArray[1] = { dum };
 	    status = EHinsertmeta(sdInterfaceID, swathname, "s", 2L,
-				  mapname, &dum);
+				  mapname, dumArray);
 
 	}
     }
@@ -2079,6 +2140,10 @@ SWdefcomp(int32 swathID, int32 compcode, intn compparm[])
     if (status == 0)
     {
 	sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    return -1;
+	}
 
 	/* Set compression code in compression external array */
 	SWXSwath[sID].compcode = compcode;
@@ -2219,12 +2284,16 @@ SWdefinefield(int32 swathID, const char *fieldtype, const char *fieldname, const
     {
 	/* Remove offset from swath ID & get swathname */
 	sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    return -1;
+	}
 	Vgetname(swVgrpID, swathname);
 
 	/* Allocate space for dimbuf, copy dimlist into it, & append comma */
 	dimbuf = (char *) calloc(strlen(dimlist) + 64, 1);
 	if(dimbuf == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"SWdefinefield", __FILE__, __LINE__);
 	    return(-1);
 	}
@@ -2244,7 +2313,7 @@ SWdefinefield(int32 swathID, const char *fieldtype, const char *fieldname, const
 	    /* Copy dimension list entry to dimcheck */
 	    dimcheck = (char *) calloc(comma - dimbuf + 1, 1);
 	    if(dimcheck == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdefinefield", __FILE__, __LINE__);
 		free(dimbuf);
 		return(-1);
@@ -2324,7 +2393,7 @@ SWdefinefield(int32 swathID, const char *fieldtype, const char *fieldname, const
 	{
 /* ((intn) strlen(fieldname) > MAX_NC_NAME - 7)
 ** this was changed because HDF4.1r3 made a change in the
-** hlimits.h file.  We have notified NCSA and asked to have 
+** hlimits.h file.  We have notified NCSA and asked to have
 ** it made the same as in previous versions of HDF
 ** see ncr 26314.  DaW  Apr 2000
 */
@@ -2472,7 +2541,7 @@ SWdefinefield(int32 swathID, const char *fieldtype, const char *fieldname, const
 			 */
 			oneDbuf = (uint8 *) calloc(recSize, 1);
 			if(oneDbuf == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWdefinefield", __FILE__, __LINE__);
 			    return(-1);
 			}
@@ -2488,7 +2557,7 @@ SWdefinefield(int32 swathID, const char *fieldtype, const char *fieldname, const
 			 */
 			oneDbuf = (uint8 *) calloc(recSize, dims[0]);
 			if(oneDbuf == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWdefinefield", __FILE__, __LINE__);
 			    return(-1);
 			}
@@ -2684,7 +2753,7 @@ SWdefinefield(int32 swathID, const char *fieldtype, const char *fieldname, const
 			    realloc((void *) SWXSwath[sID].sdsID,
 				    (SWXSwath[sID].nSDS + 1) * 4);
 			if(SWXSwath[sID].sdsID == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWdefinefield", __FILE__, __LINE__);
 			    return(-1);
 			}
@@ -2694,7 +2763,7 @@ SWdefinefield(int32 swathID, const char *fieldtype, const char *fieldname, const
 		    {
 			SWXSwath[sID].sdsID = (int32 *) calloc(1, 4);
 			if(SWXSwath[sID].sdsID == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWdefinefield", __FILE__, __LINE__);
 			    return(-1);
 			}
@@ -2779,7 +2848,6 @@ SWdefinefield(int32 swathID, const char *fieldtype, const char *fieldname, const
 
     return (status);
 }
-
 
 
 
@@ -2934,9 +3002,15 @@ SWwritegeometa(int32 swathID, const char *fieldname, const char *dimlist,
 	/* ------------------------------ */
 	snprintf(utlbuf, sizeof(utlbuf), "%s%s%s", fieldname, ":", dimlist);
 
-	Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    return -1;
+	}
+	Vgetname(SWXSwath[sID].IDTable, swathname);
+	int32 numbertypeArray[1] = { numbertype };
 	status = EHinsertmeta(sdInterfaceID, swathname, "s", 3L,
-			      utlbuf, &numbertype);
+			      utlbuf, numbertypeArray);
     }
 
     return (status);
@@ -2999,12 +3073,19 @@ SWwritedatameta(int32 swathID, const char *fieldname, const char *dimlist,
 	/* ------------------------------ */
 	snprintf(utlbuf, sizeof(utlbuf), "%s%s%s", fieldname, ":", dimlist);
 
-	Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    return -1;
+	}
+	Vgetname(SWXSwath[sID].IDTable, swathname);
+	int32 numbertypeArray[1] = { numbertype };
 	status = EHinsertmeta(sdInterfaceID, swathname, "s", 4L,
-			      utlbuf, &numbertype);
+			      utlbuf, numbertypeArray);
     }
     return (status);
 }
+#endif
 
 
 
@@ -3060,7 +3141,12 @@ SWwrrdattr(int32 swathID, const char *attrname, int32 numbertype, int32 count,
     {
 	/* Get attribute Vgroup ID and call EHattr to perform I/O */
 	/* ------------------------------------------------------ */
-	attrVgrpID = SWXSwath[swathID % idOffset].VIDTable[2];
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    return -1;
+	}
+	attrVgrpID = SWXSwath[sID].VIDTable[2];
 	status = EHattr(fid, attrVgrpID, attrname, numbertype, count,
 			wrcode, datbuf);
     }
@@ -3068,7 +3154,7 @@ SWwrrdattr(int32 swathID, const char *attrname, int32 numbertype, int32 count,
 }
 
 
-
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -3112,7 +3198,7 @@ SWwriteattr(int32 swathID, const char *attrname, int32 numbertype, int32 count,
 
     return (status);
 }
-
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -3212,7 +3298,12 @@ SWattrinfo(int32 swathID, const char *attrname, int32 * numbertype, int32 * coun
     {
 	/* Get attribute Vgroup ID and call EHattrinfo */
 	/* ------------------------------------------- */
-	attrVgrpID = SWXSwath[swathID % idOffset].VIDTable[2];
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    return -1;
+	}
+	attrVgrpID = SWXSwath[sID].VIDTable[2];
 
 	status = EHattrinfo(fid, attrVgrpID, attrname, numbertype,
 			    count);
@@ -3277,7 +3368,12 @@ SWinqattrs(int32 swathID, char *attrnames, int32 * strbufsize)
     {
 	/* Get attribute Vgroup ID and call EHattrcat */
 	/* ------------------------------------------ */
-	attrVgrpID = SWXSwath[swathID % idOffset].VIDTable[2];
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    return -1;
+	}
+	attrVgrpID = SWXSwath[sID].VIDTable[2];
 
 	nattr = EHattrcat(fid, attrVgrpID, attrnames, strbufsize);
     }
@@ -3348,7 +3444,7 @@ SWinqdims(int32 swathID, char *dimnames, int32 dims[])
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWinqdims", __FILE__, __LINE__);
 	return(-1);
     }
@@ -3363,7 +3459,13 @@ SWinqdims(int32 swathID, char *dimnames, int32 dims[])
 	if (dimnames != NULL || dims != NULL)
 	{
 	    /* Get swath name */
-	    Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	    int sID = swathID % idOffset;
+	    if (sID >= NSWATH)
+	    {
+	        free(utlstr);
+	        return -1;
+	    }
+	    Vgetname(SWXSwath[sID].IDTable, swathname);
 
 	    /* Get pointers to "Dimension" section within SM */
 	    metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -3513,7 +3615,7 @@ SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWinqmaps", __FILE__, __LINE__);
 	return(-1);
     }
@@ -3528,7 +3630,13 @@ SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
 	{
 
 	    /* Get swath name */
-	    Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	    int sID = swathID % idOffset;
+	    if (sID >= NSWATH)
+	    {
+	        free(utlstr);
+	        return -1;
+	    }
+	    Vgetname(SWXSwath[sID].IDTable, swathname);
 
 	    /* Get pointers to "DimensionMap" section within SM */
 	    metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -3679,7 +3787,7 @@ SWinqidxmaps(int32 swathID, char *idxmaps, int32 idxsizes[])
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWinqidxmaps", __FILE__, __LINE__);
 	return(-1);
     }
@@ -3694,7 +3802,13 @@ SWinqidxmaps(int32 swathID, char *idxmaps, int32 idxsizes[])
 	if (idxmaps != NULL || idxsizes != NULL)
 	{
 	    /* Get swath name */
-	    Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	    int sID = swathID % idOffset;
+	    if (sID >= NSWATH)
+	    {
+	        free(utlstr);
+	        return -1;
+	    }
+	    Vgetname(SWXSwath[sID].IDTable, swathname);
 
 	    /* Get pointers to "IndexDimensionMap" section within SM */
 	    metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -3743,7 +3857,7 @@ SWinqidxmaps(int32 swathID, char *idxmaps, int32 idxsizes[])
 			{
 			    /* Parse off geo dimension and find its size */
 			    slash = strchr(utlstr, '/');
-			    *slash = 0;
+			    if (slash) *slash = 0;
 			    idxsizes[nMap] = SWdiminfo(swathID, utlstr);
 			}
 
@@ -3843,14 +3957,14 @@ SWinqfields(int32 swathID, const char *fieldtype, char *fieldlist, int32 rank[],
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWinqfields", __FILE__, __LINE__);
 	return(-1);
     }
 
     utlstr2 = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr2 == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWinqfields", __FILE__, __LINE__);
 	free(utlstr);
 	return(-1);
@@ -3867,7 +3981,14 @@ SWinqfields(int32 swathID, const char *fieldtype, char *fieldlist, int32 rank[],
 	if (fieldlist != NULL || rank != NULL || numbertype != NULL)
 	{
 	    /* Get swath name */
-	    Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	    int sID = swathID % idOffset;
+	    if (sID >= NSWATH)
+	    {
+	        free(utlstr);
+	        free(utlstr2);
+	        return -1;
+	    }
+	    Vgetname(SWXSwath[sID].IDTable, swathname);
 
 	    /* Get pointers to "GeoField" or "DataField" section within SM */
 	    if (strcmp(fieldtype, "Geolocation Fields") == 0)
@@ -4152,7 +4273,7 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWnemtries", __FILE__, __LINE__);
 	return(-1);
     }
@@ -4163,7 +4284,13 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
     if (status == 0)
     {
 	/* Get swath name */
-	Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    free(utlstr);
+	    return -1;
+	}
+	Vgetname(SWXSwath[sID].IDTable, swathname);
 
 	/* Zero out string buffer size */
 	*strbufsize = 0;
@@ -4419,7 +4546,10 @@ SW1dfldsrch(int32 fid, int32 swathID, const char *fieldname, const char *i_acces
     /* Compute "reduced" swath ID */
     /* -------------------------- */
     sID = swathID % idOffset;
-
+    if (sID >= NSWATH)
+    {
+        return -1;
+    }
 
     /* Get Geolocation Vgroup id and 1D field name Vdata id */
     /* ---------------------------------------------------- */
@@ -4519,7 +4649,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWSDfldsrch", __FILE__, __LINE__);
 	return(-1);
     }
@@ -4531,7 +4661,10 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
     /* Compute "reduced" swath ID */
     /* -------------------------- */
     sID = swathID % idOffset;
-
+    if (sID >= NSWATH)
+    {
+        return -1;
+    }
 
     /* Loop through all SDSs in swath */
     /* ------------------------------ */
@@ -4981,7 +5114,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 		    fldsize = VSsizeof(vdataID, (char *)fieldname);
 		    fillbuf = (uint8 *) calloc(fldsize, 1);
 		    if(fillbuf == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"SWwrrdfield", __FILE__, __LINE__);
 			return(-1);
 		    }
@@ -4991,8 +5124,9 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 		    VSQueryvsize(vdataID, &recsize);
 		    buf = (uint8 *) calloc(recsize, count[0] * incr[0]);
 		    if(buf == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"SWwrrdfield", __FILE__, __LINE__);
+			free(fillbuf);
 			return(-1);
 		    }
 
@@ -5095,7 +5229,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 		    fldsize = VSsizeof(vdataID, (char *)fieldname);
 		    buf = (uint8 *) calloc(fldsize, count[0] * incr[0]);
 		    if(buf == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"SWwrrdfield", __FILE__, __LINE__);
 			return(-1);
 		    }
@@ -5137,7 +5271,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 }
 
 
-
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -5181,7 +5315,7 @@ SWwritefield(int32 swathID, const char *fieldname,
 			 data);
     return (status);
 }
-
+#endif
 
 
 
@@ -5233,7 +5367,7 @@ SWreadfield(int32 swathID, const char *fieldname,
 
 
 
-
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -5288,7 +5422,7 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
     intn            i;		/* Loop index */
     intn            j = 0;		/* Loop index */
     intn            k;		/* Loop index */
-    
+
     intn            status;	/* routine return status variable */
     intn            statLon;	/* Status from SWfieldinfo for longitude */
     intn            statLat;	/* Status from SWfieldinfo for latitude */
@@ -5299,8 +5433,8 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 
     uint8           found = 0;	/* Found flag */
     uint8          *flag;	/* Pointer to track flag array */
-    intn           validReg = -1; /* -1 is invalid validReg */ 
-    
+    intn           validReg = -1; /* -1 is invalid validReg */
+
     int32           fid;	/* HDF-EOS file ID */
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           swVgrpID;	/* Swath Vgroup ID */
@@ -5329,7 +5463,7 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
     char            dimlist[256];	/* Dimension list (geolocation
 					 * fields) */
     char            latName[17];/* Latitude field name */
-    
+
 
     /* Check for valid swath ID */
     /* ------------------------ */
@@ -5370,9 +5504,9 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 				    dimlist);
 	    if (statCoLat != 0)
 	    {
-	      /* Check again for Geodeticlatitude */            
-	      statGeodeticLat = SWfieldinfo(swathID, 
-					    "GeodeticLatitude", &rank, 
+	      /* Check again for Geodeticlatitude */
+	      statGeodeticLat = SWfieldinfo(swathID,
+					    "GeodeticLatitude", &rank,
 					    dims, &nt, dimlist);
 	      if (statGeodeticLat != 0)
 		{
@@ -5463,14 +5597,14 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 	    /* --------------------------------------------------- */
 	    lonArr = (char *) calloc(nElem, sizeof(float64));
 	    if(lonArr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdefboxregion", __FILE__, __LINE__);
 		return(-1);
 	    }
 
 	    latArr = (char *) calloc(nElem, sizeof(float64));
 	    if(latArr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdefboxregion", __FILE__, __LINE__);
 		free(lonArr);
 		return(-1);
@@ -5481,7 +5615,7 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 	    /* ------------------------------------- */
 	    flag = (uint8 *) calloc(edge[0] + 1, 1);
 	    if(flag == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdefboxregion", __FILE__, __LINE__);
 		free(lonArr);
 		free(latArr);
@@ -5514,7 +5648,7 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 		    temp64 = (float64) temp32;
 		    memcpy(latArr + 8 * i, &temp64, 8);
 		}
-	    }   
+	    }
 
 
 	    /* Set boundary flag */
@@ -5535,7 +5669,7 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 	    /* ------------------ */
 
 	    for (i = 0; i < edge[0]; i++)
-	    {   
+	    {
 		/* For each value from Cross Track ... */
 		/* ----------------------------------- */
 		for (j = 0; j < edge[1]; j++)
@@ -5610,16 +5744,18 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 		/* ----------------------------------------------- */
 		lonArr = (char *) calloc(dims[1], sizeof(float64));
 		if(lonArr == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWdefboxregion", __FILE__, __LINE__);
+		    free(flag);
 		    return(-1);
 		}
 
 		latArr = (char *) calloc(dims[1], sizeof(float64));
 		if(latArr == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWdefboxregion", __FILE__, __LINE__);
 		    free(lonArr);
+		    free(flag);
 		    return(-1);
 		}
 
@@ -5629,13 +5765,13 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 		anyStart[1] = 0;
 		anyEdge[0] = 1;
 		anyEdge[1] = dims[1];
-	
-               
+
+
 		/* For each track starting from 0 */
 		/* ------------------------------ */
-		for (i = 0; i < edge[0]; i++)    
+		for (i = 0; i < edge[0]; i++)
 		{
-               
+
 		    /* If cross track not in region (with MIDPOINT search ... */
 		    /* ------------------------------------------------------ */
 		    if (flag[i] == 0)
@@ -5754,8 +5890,11 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 			SWXRegion[k] = (struct swathRegion *)
 			    calloc(1, sizeof(struct swathRegion));
 			if(SWXRegion[k] == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWdefboxregion", __FILE__, __LINE__);
+			    free(lonArr);
+			    free(latArr);
+			    free(flag);
 			    return(-1);
 			}
 
@@ -5785,9 +5924,11 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 		if (k >= NSWATHREGN)
 		  {
 		    HEpush(DFE_GENAPP, "SWdefboxregion", __FILE__, __LINE__);
-		    HEreport(
-			     "regionID exceeded NSWATHREGN.\n");
-                    return (-1);
+		    HEreport("regionID exceeded NSWATHREGN.\n");
+		    free(lonArr);
+		    free(latArr);
+		    free(flag);
+		    return (-1);
 		  }
 
 		/* Find start and stop of regions */
@@ -5815,10 +5956,10 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 			/* Increment (multiple) region counter */
 			/* ----------------------------------- */
 			j = ++SWXRegion[k]->nRegions;
-			
+
 			/* if SWXRegion[k]->nRegions greater than MAXNREGIONS */
 			/* free allocated memory and return FAIL */
-			
+
 			if ((SWXRegion[k]->nRegions) > MAXNREGIONS)
 			{
 			    HEpush(DFE_GENAPP, "SWdefboxregion", __FILE__, __LINE__);
@@ -5828,10 +5969,10 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 			    free(flag);
 			    return(-1);
 			}
-			
+
 			SWXRegion[k]->StartRegion[j - 1] = i;
 		    }
-		    
+
 		    /* End of region */
 		    /* ------------- */
 		    if (flag[i] == 255)
@@ -5854,12 +5995,13 @@ SWdefboxregion(int32 swathID, float64 cornerlon[], float64 cornerlat[],
     {
 	return (-1);
     }
-    
+
 }
+#endif
 
 
 
-
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -5919,8 +6061,8 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 
     uint8           found = 0;	/* Found flag */
     uint8          *flag;	/* Pointer to track flag array */
-    intn           validReg = -1; /* -1 is invalid validReg */ 
-    
+    intn           validReg = -1; /* -1 is invalid validReg */
+
     int32           fid;	/* HDF-EOS file ID */
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           swVgrpID;	/* Swath Vgroup ID */
@@ -5990,9 +6132,9 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 				    dimlist);
 	    if (statCoLat != 0)
 	    {
-	      /* Check again for Geodeticlatitude */            
-	      statGeodeticLat = SWfieldinfo(swathID, 
-					    "GeodeticLatitude", &rank, 
+	      /* Check again for Geodeticlatitude */
+	      statGeodeticLat = SWfieldinfo(swathID,
+					    "GeodeticLatitude", &rank,
 					    dims, &nt, dimlist);
 	      if (statGeodeticLat != 0)
 	        {
@@ -6088,14 +6230,14 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 	    /* --------------------------------------------------- */
 	    lonArr = (char *) calloc(nElem, sizeof(float64));
 	    if(lonArr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
 		return(-1);
 	    }
-	    
+
 	    latArr = (char *) calloc(nElem, sizeof(float64));
 	    if(latArr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
 		free(lonArr);
 		return(-1);
@@ -6106,7 +6248,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 	    /* ------------------------------------- */
 	    flag = (uint8 *) calloc(edge[0] + 1, 1);
 	    if(flag == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
 		free(lonArr);
 		free(latArr);
@@ -6234,13 +6376,13 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 		/* ----------------------------------------------- */
 		lonArr = (char *) calloc(dims[1], sizeof(float64));
 		if(lonArr == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
 		    return(-1);
 		}
 		latArr = (char *) calloc(dims[1], sizeof(float64));
 		if(latArr == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
 		    free(lonArr);
 		    return(-1);
@@ -6381,8 +6523,11 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 			SWXRegion[k] = (struct swathRegion *)
 			    calloc(1, sizeof(struct swathRegion));
 			if(SWXRegion[k] == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"SWregionl_index", __FILE__, __LINE__);
+			    free(lonArr);
+			    free(latArr);
+			    free(flag);
 			    return(-1);
 			}
 
@@ -6456,7 +6601,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 			    /* Increment (multiple) region counter */
 			    /* ----------------------------------- */
 			    j = ++SWXRegion[k]->nRegions;
-			    
+
                             if (mapstatus == 2)
                             {
                                l = i;
@@ -6477,7 +6622,7 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
 			    validReg = 0;
 			}
 		    }
-		    
+
 		}
 
 	    }
@@ -6494,11 +6639,11 @@ SWregionindex(int32 swathID, float64 cornerlon[], float64 cornerlat[],
     {
 	return (-1);
     }
-    
+
 }
+#endif
 
-
-
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -6613,7 +6758,7 @@ SWdeftimeperiod(int32 swathID, float64 starttime, float64 stoptime,
 		/* ---------------------------- */
 		time64 = (float64 *) calloc(edge[0], 8);
 		if(time64 == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWdeftimeperiod", __FILE__, __LINE__);
 		    return(-1);
 		}
@@ -6638,7 +6783,7 @@ SWdeftimeperiod(int32 swathID, float64 starttime, float64 stoptime,
 		/* ---------------------------- */
 		time64 = (float64 *) calloc(edge[0] * 2, 8);
 		if(time64 == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWdeftimeperiod", __FILE__, __LINE__);
 		    return(-1);
 		}
@@ -6690,7 +6835,7 @@ SWdeftimeperiod(int32 swathID, float64 starttime, float64 stoptime,
                                     SWXRegion[k] = (struct swathRegion *)
                                         calloc(1, sizeof(struct swathRegion));
                                     if(SWXRegion[k] == NULL)
-                                    { 
+                                    {
                                         HEpush(DFE_NOSPACE,"SWdeftimeperiod", __FILE__, __LINE__);
                                         return(-1);
                                     }
@@ -6742,45 +6887,47 @@ SWdeftimeperiod(int32 swathID, float64 starttime, float64 stoptime,
                 }
 
 
-
-                /* Clear found flag */
-                /* ---------------- */
-                found = 0;
-
-
-                /* For each track (from bottom) ... */
-                /* -------------------------------- */
-                for (i = edge[0] - 1; i >= 0; i--)
+                if (periodID >= 0)
                 {
-                    /* For each value from Cross Track ... */
-                    /* ----------------------------------- */
-                    for (j = 0; j < edge[1]; j++)
+                    /* Clear found flag */
+                    /* ---------------- */
+                    found = 0;
+
+
+                    /* For each track (from bottom) ... */
+                    /* -------------------------------- */
+                    for (i = edge[0] - 1; i >= 0; i--)
                     {
-
-                        /* Get time test value */
-                        /* ------------------- */
-                        time64Test = time64[i * edge[1] + j];
-
-
-                        /* If within time period ... */
-                        /* ------------------------- */
-                        if (time64Test >= starttime &&
-                            time64Test <= stoptime)
+                        /* For each value from Cross Track ... */
+                        /* ----------------------------------- */
+                        for (j = 0; j < edge[1]; j++)
                         {
-                            /* Set found flag */
-                            /* -------------- */
-                            found = 1;
 
-                            /* Set start of region to first track found */
-                            /* ---------------------------------------- */
-                            SWXRegion[k]->StopRegion[0] = i;
+                            /* Get time test value */
+                            /* ------------------- */
+                            time64Test = time64[i * edge[1] + j];
 
-                            break;	/* Break from "j" loop */
+
+                            /* If within time period ... */
+                            /* ------------------------- */
+                            if (time64Test >= starttime &&
+                                time64Test <= stoptime)
+                            {
+                                /* Set found flag */
+                                /* -------------- */
+                                found = 1;
+
+                                /* Set start of region to first track found */
+                                /* ---------------------------------------- */
+                                SWXRegion[periodID]->StopRegion[0] = i;
+
+                                break;	/* Break from "j" loop */
+                            }
                         }
-                    }
-                    if (found == 1)
-                    {
-                        break;	/* Break from "i" loop */
+                        if (found == 1)
+                        {
+                            break;	/* Break from "i" loop */
+                        }
                     }
                 }
 
@@ -6791,7 +6938,9 @@ SWdeftimeperiod(int32 swathID, float64 starttime, float64 stoptime,
 
     return (periodID);
 }
+#endif
 
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -7058,7 +7207,7 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
 	{
 	    /* If non-vertical subset regions defined ... */
 	    /* ------------------------------------------ */
-	    if (SWXRegion[regionID]->nRegions > 0)    
+	    if (SWXRegion[regionID]->nRegions > 0)
 	    {
 
 		/* Get geolocation dimension name */
@@ -7077,7 +7226,7 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
                    status = SWfieldinfo(SWXRegion[regionID]->swathID,
                                         "Time", &dum,
                                         dumdims, &dum, tgeodim);
-                   
+
                    if (strcmp(geodim, tgeodim) != 0)
                    {
                       strcpy(geodim, tgeodim);
@@ -7182,6 +7331,10 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
 		    /* Get size of geo dim & allocate space of l_index mapping */
 		    /* ----------------------------------------------------- */
 		    dum = SWdiminfo(swathID, geodim);
+            if( dum < 0 )
+            {
+                return -1;
+            }
 
                     /* For Landsat files, the l_index mapping has two values   */
                     /* for each point, a left and right point.  So for a 37  */
@@ -7191,14 +7344,14 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
                     /* dimension.                                            */
                     /* ----------------------------------------------------- */
                     if(land_status == 0)
-                       if(strcmp(fieldname, "Latitude") == 0 || 
+                       if(strcmp(fieldname, "Latitude") == 0 ||
                           strcmp(fieldname, "Longitude") == 0)
                        {
                           dum = dum * 2;
                        }
 		    idxmap = (int32 *) calloc(dum, sizeof(int32));
 		    if(idxmap == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"SWextractregion", __FILE__, __LINE__);
 			return(-1);
 		    }
@@ -7269,7 +7422,7 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
                            if (SWXRegion[regionID]->scanflag == 1)
                            {
                               start[l_index] = SWXRegion[regionID]->StartRegion[k]/incr;
-                              if(SWXRegion[regionID]->band8flag == 2 || 
+                              if(SWXRegion[regionID]->band8flag == 2 ||
                                  SWXRegion[regionID]->band8flag == 3)
                               {
                                  start[l_index] = (SWXRegion[regionID]->StartRegion[k]+detect_cnt)/incr;
@@ -7451,7 +7604,7 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
                                        if(idxmap[j] == 0  || idxmap[j+1] == 0)
                                           l = scene_cnt;
                                     }
- 
+
                                  }
                            }
 
@@ -7530,11 +7683,11 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
                         }
                         else
                         {
-                           if (SWXRegion[regionID]->scanflag == 1 && 
+                           if (SWXRegion[regionID]->scanflag == 1 &&
                                strcmp(fieldname,dfieldlist) == 0)
                            {
                               start[l_index] = SWXRegion[regionID]->StartRegion[k];
-                              edge[l_index] = SWXRegion[regionID]->StopRegion[k] - 
+                              edge[l_index] = SWXRegion[regionID]->StopRegion[k] -
                                              SWXRegion[regionID]->StartRegion[k] + 1;
                               if(SWXRegion[regionID]->band8flag == 2 ||
 				 SWXRegion[regionID]->band8flag == 3 )
@@ -7561,15 +7714,15 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
 					     buffer);
                         if (SWXRegion[regionID]->scanflag == 1)
                         {
-                           
+
                            if (strcmp(fieldname,"Longitude") == 0)
                            {
-                              status = SWscan2longlat(swathID, fieldname, buffer, start, 
+                              status = SWscan2longlat(swathID, fieldname, buffer, start,
                                               edge, idxmap, startscanline, stopscanline);
                            }
                            if (strcmp(fieldname,"Latitude") == 0)
                            {
-                              status = SWscan2longlat(swathID, fieldname, buffer, start, 
+                              status = SWscan2longlat(swathID, fieldname, buffer, start,
                                               edge, idxmap, startscanline, stopscanline);
                            }
                         }
@@ -7585,11 +7738,11 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
 		{
 		    /* Mapping not found */
 		    /* ----------------- */
-		    status = -1; 
+		    status = -1;
 		    HEpush(DFE_GENAPP, "SWextractregion", __FILE__, __LINE__);
 		    HEreport("Mapping Not Defined for \"%s\" Dimension.\n",
 			     geodim);
-		}                                           
+		}
 	    }
 	    else
 	    {
@@ -7613,6 +7766,7 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
 
     return (status);
 }
+
 
 
 /*----------------------------------------------------------------------------|
@@ -7651,7 +7805,7 @@ SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 static intn
-SWscan2longlat(int32 swathID, const char *fieldname, VOIDP buffer, int32 start[], 
+SWscan2longlat(int32 swathID, const char *fieldname, VOIDP buffer, int32 start[],
 int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
 {
 
@@ -7862,14 +8016,14 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
    y_p1 = (float)(RADOE * sin((p1_long*deg2rad)) * sin((p1_lat*deg2rad)));
    z_p1 = (float)(RADOE * cos((p1_lat*deg2rad)));
 
-   
+
    x_p2 = (float)(RADOE * cos((p2_long*deg2rad)) * sin((p2_lat*deg2rad)));
    y_p2 = (float)(RADOE * sin((p2_long*deg2rad)) * sin((p2_lat*deg2rad)));
    z_p2 = (float)(RADOE * cos((p2_lat*deg2rad)));
 
    x_pi = x_p1 + (x_p2 - x_p1)*(scanline_pi-scanline_p1)/(scanline_p2-scanline_p1);
    y_pi = y_p1 + (y_p2 - y_p1)*(scanline_pi-scanline_p1)/(scanline_p2-scanline_p1);
-   z_pi = z_p1 + (z_p2 - z_p1)*(scanline_pi-scanline_p1)/(scanline_p2-scanline_p1); 
+   z_pi = z_p1 + (z_p2 - z_p1)*(scanline_pi-scanline_p1)/(scanline_p2-scanline_p1);
 
    if (fieldflag == 1)
    {
@@ -7968,6 +8122,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
 }
 
 
+
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -8017,13 +8172,13 @@ SWextractperiod(int32 swathID, int32 periodID, const char *fieldname,
     if (status != 0) timeflag = 0; /*clear timeflag if SWextractregion failed*/
     return (status);
 }
+#endif
 
 
 
 
 
-
-
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -8070,7 +8225,7 @@ SWdupregion(int32 oldregionID)
 	    SWXRegion[i] = (struct swathRegion *)
 		calloc(1, sizeof(struct swathRegion));
 	    if(SWXRegion[i] == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdupregion", __FILE__, __LINE__);
 		return(-1);
 	    }
@@ -8090,8 +8245,10 @@ SWdupregion(int32 oldregionID)
 
     return (newregionID);
 }
+#endif
 
 
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -8142,7 +8299,7 @@ SWregioninfo(int32 swathID, int32 regionID, const char *fieldname,
     intn            long_status = 3;	/* routine return status variable for longitude */
     intn            land_status = 3;    /* Used for L7 float scene sub.      */
     intn            statMap = -1;   /* Status from SWmapinfo  */
-    
+
     uint8           found = 0;	/* Found flag */
     uint8           detect_cnt = 0;	/* Used for L7 float scene sub.      */
 
@@ -8291,7 +8448,7 @@ SWregioninfo(int32 swathID, int32 regionID, const char *fieldname,
                status = SWfieldinfo(SWXRegion[regionID]->swathID,
                                     "Time", &dum,
                                     dumdims, &dum, tgeodim);
-               
+
                if (strcmp(geodim, tgeodim) != 0)
                {
                   strcpy(geodim, tgeodim);
@@ -8380,9 +8537,11 @@ SWregioninfo(int32 swathID, int32 regionID, const char *fieldname,
 		/* Get size of geo dim & allocate space of l_index mapping */
 		/* ----------------------------------------------------- */
 		dum = SWdiminfo(swathID, geodim);
+		if (dum < 0)
+            return -1;
 		idxmap = (int32 *) calloc(dum, sizeof(int32));
 		if(idxmap == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWregioninfo", __FILE__, __LINE__);
 		    return(-1);
 		}
@@ -8666,7 +8825,7 @@ SWregioninfo(int32 swathID, int32 regionID, const char *fieldname,
 	    {
 		/* Mapping not found */
 		/* ----------------- */
-	        status = -1;  
+	        status = -1;
 		HEpush(DFE_GENAPP, "SWregioninfo",
 		       __FILE__, __LINE__);
 		HEreport(
@@ -8755,9 +8914,9 @@ SWregioninfo(int32 swathID, int32 regionID, const char *fieldname,
 
     return (status);
 }
+#endif
 
-
-
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -8857,6 +9016,7 @@ SWperiodinfo(int32 swathID, int32 periodID, const char *fieldname,
 
 #define SETSWTHREG \
 \
+regionID = 0; \
 for (k = 0; k < NSWATHREGN; k++) \
 { \
     if (SWXRegion[k] == 0) \
@@ -8984,7 +9144,7 @@ SWdefvrtregion(int32 swathID, int32 regionID, const char *vertObj, float64 range
 		    SWXRegion[regionID]->DimNamePtr[j] =
 			(char *) malloc(slen + 1);
 		    if(SWXRegion[regionID]->DimNamePtr[j] == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"SWdefvrtregion", __FILE__, __LINE__);
 			return(-1);
 		    }
@@ -9061,7 +9221,7 @@ SWdefvrtregion(int32 swathID, int32 regionID, const char *vertObj, float64 range
 		/* --------------------------------- */
 		vertArr = (char *) calloc(dims[0], size);
 		if(vertArr == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWdefvrtregion", __FILE__, __LINE__);
 		    return(-1);
 		}
@@ -9374,9 +9534,10 @@ SWdefvrtregion(int32 swathID, int32 regionID, const char *vertObj, float64 range
 
     return (regionID);
 }
+#endif
 
 
-
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -9750,7 +9911,7 @@ SWsetfillvalue(int32 swathID, const char *fieldname, VOIDP fillval)
     }
     return (status);
 }
-
+#endif
 
 
 
@@ -9858,16 +10019,21 @@ SWdetach(int32 swathID)
 
 {
     intn            i;		/* Loop index */
+#ifdef HDFEOS_SW_WRITE_SUPPORT
     intn            j;		/* Loop index */
+#endif
     intn            k;		/* Loop index */
     intn            status = 0;	/* routine return status variable */
+#ifdef HDFEOS_SW_WRITE_SUPPORT
     intn            statusFill = 0;	/* return status from SWgetfillvalue */
+#endif
 
     uint8          *buf;	/* Buffer for blank (initial) 1D records */
 
     int32           vdataID;	/* Vdata ID */
-    int32          *namelen;	/* Pointer to name string length array */
-    int32          *dimlen;	/* Pointer to dim string length array */
+    int32          *namelen = NULL;	/* Pointer to name string length array */
+    int32          *dimlen = NULL;	/* Pointer to dim string length array */
+#ifdef HDFEOS_SW_WRITE_SUPPORT
     int32           slen1[3];	/* String length array 1 */
     int32           slen2[3];	/* String length array 2 */
     int32           nflds;	/* Number of fields */
@@ -9875,29 +10041,38 @@ SWdetach(int32 swathID)
     int32           cmbfldcnt;	/* Number of fields combined */
     int32           sdid;	/* SDS ID */
     int32           vgid;	/* Vgroup ID */
+#endif
     int32           dims[3];	/* Dimension array */
-    int32          *offset;	/* Pointer to merged field offset array */
-    int32          *indvdims;	/* Pointer to merged field size array */
+    int32          *offset = NULL;	/* Pointer to merged field offset array */
+    int32          *indvdims = NULL;	/* Pointer to merged field size array */
     int32           sdInterfaceID;	/* SDS interface ID */
     int32           sID;	/* Swath ID - offset */
+#ifdef HDFEOS_SW_WRITE_SUPPORT
     int32           nflds0;	/* Number of fields */
-    int32          *namelen0;	/* Pointer to name string length array */
+#endif
+    int32          *namelen0 = NULL;	/* Pointer to name string length array */
+#ifdef HDFEOS_SW_WRITE_SUPPORT
     int32           rank;	/* Rank of merged field */
     int32           truerank;	/* True rank of merged field */
+#endif
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
     int32           dum;	/* Dummy variable */
 
-    char           *nambuf;	/* Pointer to name buffer */
-    char          **nameptr;	/* Pointer to name string pointer array */
-    char          **dimptr;	/* Pointer to dim string pointer array */
-    char          **nameptr0;	/* Pointer to name string pointer array */
+    char           *nambuf = NULL;	/* Pointer to name buffer */
+    char          **nameptr = NULL;	/* Pointer to name string pointer array */
+    char          **dimptr = NULL;	/* Pointer to dim string pointer array */
+    char          **nameptr0 = NULL;	/* Pointer to name string pointer array */
+#ifdef HDFEOS_SW_WRITE_SUPPORT
     char           *ptr1[3];	/* String pointer array */
     char           *ptr2[3];	/* String pointer array */
     char            dimbuf1[128];	/* Dimension buffer 1 */
     char            dimbuf2[128];	/* Dimension buffer 2 */
+#endif
     char            swathname[VGNAMELENMAX + 1];	/* Swath name */
+#ifdef HDFEOS_SW_WRITE_SUPPORT
     char           *utlbuf;	/* Utility buffer */
     char            fillval[32];/* Fill value buffer */
+#endif
 
     /* Check for proper swath ID and get SD interface ID */
     /* ------------------------------------------------- */
@@ -9908,6 +10083,10 @@ SWdetach(int32 swathID)
 	/* Subtract off swath ID offset and get swath name */
 	/* ----------------------------------------------- */
 	sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    return -1;
+	}
 	Vgetname(SWXSwath[sID].IDTable, swathname);
 
 
@@ -9932,7 +10111,7 @@ SWdetach(int32 swathID)
 		/* ---------------------------- */
 		nambuf = (char *) calloc(VSNAMELENMAX + 1, 1);
 		if(nambuf == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		    return(-1);
 		}
@@ -9947,7 +10126,7 @@ SWdetach(int32 swathID)
 		/* --------------------- */
 		buf = (uint8 *) calloc(VSsizeof(vdataID, nambuf), dims[0]);
 		if(buf == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		    free(nambuf);
 		    return(-1);
@@ -9969,26 +10148,28 @@ SWdetach(int32 swathID)
 	/* ------------------- */
 	if (strlen(SWXSDname) == 0)
 	{
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 	    nflds = 0;
+#endif
 
 	    /* Allocate "dummy" arrays so free() doesn't bomb later */
 	    /* ---------------------------------------------------- */
 	    nameptr = (char **) calloc(1, sizeof(char *));
 	    if(nameptr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		return(-1);
 	    }
 	    namelen = (int32 *) calloc(1, sizeof(int32));
 	    if(namelen == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		return(-1);
 	    }
 	    nameptr0 = (char **) calloc(1, sizeof(char *));
 	    if(nameptr0 == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -9996,7 +10177,7 @@ SWdetach(int32 swathID)
 	    }
 	    namelen0 = (int32 *) calloc(1, sizeof(int32));
 	    if(namelen0 == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -10005,7 +10186,7 @@ SWdetach(int32 swathID)
 	    }
 	    dimptr = (char **) calloc(1, sizeof(char *));
 	    if(dimptr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -10015,7 +10196,7 @@ SWdetach(int32 swathID)
 	    }
 	    dimlen = (int32 *) calloc(1, sizeof(int32));
 	    if(dimlen == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -10026,7 +10207,7 @@ SWdetach(int32 swathID)
 	    }
 	    offset = (int32 *) calloc(1, sizeof(int32));
 	    if(offset == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -10038,7 +10219,7 @@ SWdetach(int32 swathID)
 	    }
 	    indvdims = (int32 *) calloc(1, sizeof(int32));
 	    if(indvdims == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -10047,9 +10228,10 @@ SWdetach(int32 swathID)
 		free(dimptr);
 		free(dimlen);
 		free(offset);
-		return(-1);		    
+		return(-1);
 	    }
 	}
+#if defined(HDFEOS_SW_WRITE_SUPPORT)
 	else
 	{
 	    /*
@@ -10069,20 +10251,20 @@ SWdetach(int32 swathID)
 	    /* ----------------------------------------- */
 	    nameptr = (char **) calloc(nflds, sizeof(char *));
 	    if(nameptr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		return(-1);
 	    }
 	    namelen = (int32 *) calloc(nflds, sizeof(int32));
 	    if(namelen == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		return(-1);
 	    }
 	    nameptr0 = (char **) calloc(nflds, sizeof(char *));
 	    if(nameptr0 == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -10090,7 +10272,7 @@ SWdetach(int32 swathID)
 	    }
 	    namelen0 = (int32 *) calloc(nflds, sizeof(int32));
 	    if(namelen0 == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -10099,7 +10281,7 @@ SWdetach(int32 swathID)
 	    }
 	    dimptr = (char **) calloc(nflds, sizeof(char *));
 	    if(dimptr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -10109,7 +10291,7 @@ SWdetach(int32 swathID)
 	    }
 	    dimlen = (int32 *) calloc(nflds, sizeof(int32));
 	    if(dimlen == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -10120,7 +10302,7 @@ SWdetach(int32 swathID)
 	    }
 	    offset = (int32 *) calloc(nflds, sizeof(int32));
 	    if(offset == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -10132,7 +10314,7 @@ SWdetach(int32 swathID)
 	    }
 	    indvdims = (int32 *) calloc(nflds, sizeof(int32));
 	    if(indvdims == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -10141,7 +10323,7 @@ SWdetach(int32 swathID)
 		free(dimptr);
 		free(dimlen);
 		free(offset);
-		return(-1);		    
+		return(-1);
 	    }
 
 
@@ -10150,7 +10332,6 @@ SWdetach(int32 swathID)
 	    nflds = EHparsestr(SWXSDname, ',', nameptr, namelen);
 	    nflds = EHparsestr(SWXSDdims, ';', dimptr, dimlen);
 	}
-
 
 	/* Loop through all the fields */
 	/* --------------------------- */
@@ -10163,15 +10344,31 @@ SWdetach(int32 swathID)
 	    {
 		nambuf = (char *) calloc(strlen(SWXSDname) + 1, 1);
 		if(nambuf == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
+		    free(nameptr);
+		    free(namelen);
+		    free(nameptr0);
+		    free(namelen0);
+		    free(dimptr);
+		    free(dimlen);
+		    free(offset);
+		    free(indvdims);
 		    return(-1);
 		}
 		utlbuf = (char *) calloc(2 * strlen(SWXSDname) + 7, 1);
 		if(utlbuf == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
 		    free(nambuf);
+		    free(nameptr);
+		    free(namelen);
+		    free(nameptr0);
+		    free(namelen0);
+		    free(dimptr);
+		    free(dimlen);
+		    free(offset);
+		    free(indvdims);
 		    return(-1);
 		}
 		/* Zero out dimbuf1 */
@@ -10434,6 +10631,7 @@ SWdetach(int32 swathID)
 		free(utlbuf);
 	    }
 	}
+#endif
 
 
 
@@ -10452,7 +10650,7 @@ SWdetach(int32 swathID)
 		i++;
 	}
 
-
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 	/* "Contract" SDcomb array */
 	/* ----------------------- */
 	for (i = 0; i < nflds; i++)
@@ -10494,7 +10692,7 @@ SWdetach(int32 swathID)
 	    strcat(SWXSDname, ",");
 	    strcat(SWXSDdims, ";");
 	}
-
+#endif
 
 
 	/* Free up a bunch of dynamically allocated arrays */
@@ -10604,6 +10802,7 @@ SWclose(int32 fid)
     return (status);
 }
 
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -10636,16 +10835,16 @@ SWupdatescene(int32 swathID, int32 regionID)
 {
     intn            k;          /* Loop index */
     int32           status;     /* routine return status variable */
- 
+
     int32           fid;        /* HDF-EOS file ID */
     int32           sdInterfaceID;      /* HDF SDS interface ID */
     int32           swVgrpID;   /* Swath Vgroup ID */
- 
+
     int32           startReg;   /* Indexed start region */
     int32           stopReg;    /* Indexed stop region */
-    int32           l_index[MAXNREGIONS]; /* to store indices when stop and 
+    int32           l_index[MAXNREGIONS]; /* to store indices when stop and
 					   start are different */
-					   
+
     int32           ind;        /* l_index */
     int32           tempnRegions; /* temp number of regions */
 
@@ -10655,8 +10854,8 @@ SWupdatescene(int32 swathID, int32 regionID)
     /* ------------------------ */
     status = SWchkswid(swathID, "SWupdatescene", &fid, &sdInterfaceID,
                        &swVgrpID);
- 
- 
+
+
     /* Check for valid region ID */
     /* ------------------------- */
     if (status == 0)
@@ -10668,7 +10867,7 @@ SWupdatescene(int32 swathID, int32 regionID)
             HEreport("Invalid Region id: %d.\n", regionID);
         }
     }
- 
+
     /* Check for active region ID */
     /* -------------------------- */
     if (status == 0)
@@ -10680,12 +10879,12 @@ SWupdatescene(int32 swathID, int32 regionID)
             HEreport("Inactive Region ID: %d.\n", regionID);
         }
     }
-  
+
     if (status == 0)
     {
 	tempnRegions = SWXRegion[regionID]->nRegions;
 	ind =0;
-	
+
 	for (k = 0; k < SWXRegion[regionID]->nRegions; k++)
         {
            startReg = SWXRegion[regionID]->StartRegion[k];
@@ -10695,10 +10894,10 @@ SWupdatescene(int32 swathID, int32 regionID)
 	       /* reduce number of regions by 1, if tempnRegions is 0 issue
 		  error and break from loop*/
 	       tempnRegions -= 1;
-	       
+
 	       if(tempnRegions == 0)
 	       {
-		   /* first free allocated memory for SWXRegion[regionID] 
+		   /* first free allocated memory for SWXRegion[regionID]
 		      in the function SWdefboxregion and make regionID
 		      inactive */
 		   free(SWXRegion[regionID]);
@@ -10725,7 +10924,7 @@ SWupdatescene(int32 swathID, int32 regionID)
 	{
 	    SWXRegion[regionID]->nRegions = tempnRegions;
 	}
-	/* keep starts and stops that are different in the structure  */   
+	/* keep starts and stops that are different in the structure  */
 	for (k = 0; k < SWXRegion[regionID]->nRegions; k++)
 	{
 	    SWXRegion[regionID]->StartRegion[k] =
@@ -10733,38 +10932,40 @@ SWupdatescene(int32 swathID, int32 regionID)
 	    SWXRegion[regionID]->StopRegion[k] =
 	      SWXRegion[regionID]->StopRegion[l_index[k]];
 	}
-	
+
     }
 
-    
+
     if (status == 0)
     {
- 
+
         for (k = 0; k < SWXRegion[regionID]->nRegions; k++)
         {
- 
+
            startReg = SWXRegion[regionID]->StartRegion[k];
            stopReg = SWXRegion[regionID]->StopRegion[k];
- 
+
            if(startReg % 2 == 1) {
- 
+
               SWXRegion[regionID]->StartRegion[k] = ++startReg;
- 
+
            }
            if(stopReg % 2 == 0) {
- 
-              SWXRegion[regionID]->StopRegion[k] = --stopReg;
- 
-           }
- 
-        }
- 
-    }
-    
-    return(status);
- 
-}
 
+              SWXRegion[regionID]->StopRegion[k] = --stopReg;
+
+           }
+
+        }
+
+    }
+
+    return(status);
+
+}
+#endif
+
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -10806,14 +11007,14 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
     intn            k;          /* Loop index */
     int32           status;     /* routine return status variable */
     int32           land_status = 3;     /* routine return status variable */
- 
+
     int32           fid;        /* HDF-EOS file ID */
     int32           sdInterfaceID;      /* HDF SDS interface ID */
     int32           swVgrpID;   /* Swath Vgroup ID */
 
     int32           numtype = 0; /* Used for L7 float scene sub. */
     int32           count = 0;   /* Used for L7 float scene sub. */
- 
+
     int32           startReg = 0;   /* Indexed start region */
     int32           stopReg = 0;    /* Indexed stop region */
     int32           nout=-1;       /* Number of elements in output l_index array */
@@ -10824,13 +11025,13 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
     intn	    ngtflag = 0;
     int32           *buffer1 = (int32 *)NULL;
     int32           *buffer2 = (int32 *)NULL;
- 
+
     /* Check for valid swath ID */
     /* ------------------------ */
     status = SWchkswid(swathID, "SWupdateidxmap", &fid, &sdInterfaceID,
                        &swVgrpID);
- 
- 
+
+
     /* Check for valid region ID */
     /* ------------------------- */
     if (status == 0)
@@ -10842,7 +11043,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
             HEreport("Invalid Region id: %d.\n", regionID);
         }
     }
- 
+
     /* Check for active region ID */
     /* -------------------------- */
     if (status == 0)
@@ -10854,20 +11055,20 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
             HEreport("Inactive Region ID: %d.\n", regionID);
         }
     }
- 
+
     if (status == 0)
     {
 	/* Loop through all regions */
 	/* ------------------------ */
 	for (k = 0; k < SWXRegion[regionID]->nRegions; k++)
 	{
-	    
+
 	    /* fix overlap l_index mapping problem for Landsat 7 */
-	    
+
 	    startReg = SWXRegion[regionID]->StartRegion[k];
 	    stopReg = SWXRegion[regionID]->StopRegion[k];
-	    
-	    
+
+
             if(SWXRegion[regionID]->scanflag == 1)
             {
                indicies[0] = -1;
@@ -10884,16 +11085,16 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
                   land_status = SWreadattr(swathID, "detector_count", &detect_cnt);
                }
 
-	      
+
 	      /* calculate the offsets first */
 	      buffer1 = (int32 *)calloc(74, sizeof(int32));
 	      buffer2 = (int32 *)calloc(74, sizeof(int32));
-	      
+
 	      status = SWidxmapinfo(swathID,"GeoTrack",
 				    "ScanLineTrack", (int32*)buffer1);
 	      status = SWidxmapinfo(swathID,"UpperTrack",
 				    "ScanLineTrack", (int32*)buffer2);
-	      
+
 	      indexoffset = buffer2[0] - buffer1[0];
 	      free(buffer1);
 	      free(buffer2);
@@ -10972,11 +11173,11 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
                   {
                      for(i=0; i<scene_cnt; i++)
                      {
-		      if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) && 
+		      if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) &&
 			  startReg <= (l_indexin[j+1] + indexoffset - detect_cnt) )
                            if(indicies[0] == -1)
                               indicies[0] = j;
-		      if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) && 
+		      if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) &&
 			  stopReg <= (l_indexin[j+1] + indexoffset - detect_cnt ) )
                            indicies[1] = j + 1;
                         j = j + 2;
@@ -10992,7 +11193,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
                      if(SWXRegion[regionID]->band8flag == 2 ||
                         SWXRegion[regionID]->band8flag == 3)
                      {
-		       
+
                         if(startReg >= (l_indexin[j - 1] + indexoffset - detect_cnt))
                         {
                            indicies[0] = -1;
@@ -11007,11 +11208,11 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
                            j = 0;
                            for(i=0; i<scene_cnt; i++)
                            {
-			     if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) && 
+			     if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) &&
 				 startReg <= (l_indexin[j+1] + indexoffset - detect_cnt) )
 			       if(indicies[0] == -1)
 				 indicies[0] = j;
-			     if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) && 
+			     if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) &&
 				 stopReg <= (l_indexin[j+1] + indexoffset - detect_cnt ) )
 			       indicies[1] = j + 1;
                               j = j + 2;
@@ -11025,11 +11226,11 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
                            j = 0;
                            for(i=0; i<scene_cnt; i++)
                            {
-			     if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) && 
+			     if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) &&
 				 startReg <= (l_indexin[j+1] + indexoffset - detect_cnt) )
 			       if(indicies[0] == -1)
 				 indicies[0] = j;
-		      
+
 			     j = j + 2;
 			     if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
 			       i = scene_cnt;
@@ -11044,7 +11245,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
                         j = 0;
                         for(i=0; i<scene_cnt; i++)
                         {
-			  if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) && 
+			  if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) &&
 			      stopReg <= (l_indexin[j+1] + indexoffset - detect_cnt ) )
 			    indicies[1] = j;
 			  j = j + 2;
@@ -11145,14 +11346,14 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
                            j = 0;
                            for(i=0;i<scene_cnt;i++)
                            {
-		      if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) && 
+		      if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) &&
 			  stopReg <= (l_indexin[j+1] + indexoffset - detect_cnt ) )
 			         indicies[1] = j;
 			      j = j + 2;
                               if(l_indexin[j] == 0 || l_indexin[j+1] == 0)
                                  i = scene_cnt;
                            }
-                        }	
+                        }
                      }
 
                      if(startReg > (l_indexin[j - 1] + indexoffset - detect_cnt ))
@@ -11169,11 +11370,11 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
                         j = 0;
                         for(i=0; i<scene_cnt; i++)
                         {
-		      if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) && 
+		      if( startReg >= (l_indexin[j] + indexoffset - detect_cnt) &&
 			  startReg <= (l_indexin[j+1] + indexoffset - detect_cnt) )
                               if(indicies[0] == -1)
                                  indicies[0] = j;
-		      if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) && 
+		      if( stopReg >= (l_indexin[j] + indexoffset - detect_cnt ) &&
 			  stopReg <= (l_indexin[j+1] + indexoffset - detect_cnt ) )
                               indicies[1] = j + 1;
                            j = j + 2;
@@ -11198,7 +11399,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
 	       {
 		  startReg++;
 	       }
-	    
+
 	       /* If end of region is even then decrement */
 	       /* --------------------------------------- */
 	       if (stopReg % 2 == 0)
@@ -11210,9 +11411,9 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
                indicies[1]=stopReg;
 	   }
         }
-	
+
 	if (l_indexout != NULL)
-	{ 
+	{
            if(SWXRegion[regionID]->scanflag == 1)
            {
               nout = (indicies[1] - indicies[0] + 1);
@@ -11240,19 +11441,19 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
            nout = indicies[1] - indicies[0] + 1;
 	}
      }
-   
-    
+
+
     if(status == -1)
-    {  
+    {
 	return(status);
     }
     else
     {
         return(nout);
     }
-    
-}
 
+}
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -11292,7 +11493,7 @@ SWgeomapinfo(int32 swathID, const char *geodim)
 
 {
     intn            status;	/* routine return status variable */
-    
+
     int32           fid;	/* HDF-EOS file ID */
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           swVgrpID;	/* Swath root Vgroup ID */
@@ -11305,19 +11506,19 @@ SWgeomapinfo(int32 swathID, const char *geodim)
     char            swathname[80];	/* Swath Name */
     char           *utlstrr;	 /* Utility string */
     char           *utlstri;	 /* Utility string */
-   
-    
+
+
     /* Allocate space for utility string */
     /* --------------------------------- */
     utlstrr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstrr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWgeomapinfo", __FILE__, __LINE__);
 	return(-1);
     }
     utlstri = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstri == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"SWgeomapinfo", __FILE__, __LINE__);
 	free(utlstrr);
 	return(-1);
@@ -11329,7 +11530,14 @@ SWgeomapinfo(int32 swathID, const char *geodim)
     if (status == 0)
     {
 	/* Get swath name */
-	Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
+	int sID = swathID % idOffset;
+	if (sID >= NSWATH)
+	{
+	    free(utlstrr);
+	    free(utlstri);
+	    return -1;
+	}
+	Vgetname(SWXSwath[sID].IDTable, swathname);
 
 	/* Get pointers to "DimensionMap" section within SM */
 	metabufr = EHmetagroup(sdInterfaceID, swathname, "s",
@@ -11345,7 +11553,7 @@ SWgeomapinfo(int32 swathID, const char *geodim)
 	snprintf(utlstrr, UTLSTR_MAX_SIZE, "%s%s%s", "\t\t\t\tGeoDimension=\"", geodim,
 		"\"\n\t\t\t\tDataDimension=");
 	metaptrsr[0] = strstr(metaptrsr[0], utlstrr);
-	
+
 	/* Get pointers to "IndexDimensionMap" section within SM */
 	metabufi = EHmetagroup(sdInterfaceID, swathname, "s",
 				       "IndexDimensionMap", metaptrsi);
@@ -11366,12 +11574,12 @@ SWgeomapinfo(int32 swathID, const char *geodim)
         */
 	if (metaptrsr[0] < metaptrsr[1] && metaptrsr[0] != NULL)
 	{
-	    status = status + 1;	    
+	    status = status + 1;
         }
 
         if (metaptrsi[0] < metaptrsi[1] && metaptrsi[0] != NULL)
         {
-           status = status + 2;	    
+           status = status + 2;
         }
 
 	free(metabufr);
