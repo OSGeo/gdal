@@ -47,9 +47,9 @@
   otherwise a handle to a GDALDataset.  This GDALDataset should be
   closed by deleting the object when it is no longer needed.
 
-  <b>Example:</b>
+  Example:
 
-  <pre>
+  \code{.cpp}
     OGRDataSourceH	hDS;
     OGRSFDriverH        *pahDriver;
 
@@ -62,7 +62,7 @@
     ... use the data source ...
 
     OGRReleaseDataSource( hDS );
-  </pre>
+  \endcode
 
 */
 
@@ -99,9 +99,9 @@
   otherwise a handle to a GDALDataset.  This GDALDataset should be
   closed by deleting the object when it is no longer needed.
 
-  <b>Example:</b>
+  Example:
 
-  <pre>
+  \code{.cpp}
     OGRDataSourceH  hDS;
     OGRSFDriverH        *pahDriver;
 
@@ -114,7 +114,7 @@
     ... use the data source ...
 
     OGRReleaseDataSource( hDS );
-  </pre>
+  \endcode
 
 */
 

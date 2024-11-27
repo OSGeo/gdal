@@ -110,13 +110,13 @@ static int CPLFindFilenameStart(const char *pszFilename, size_t nStart = 0)
  * filename.  If there is no path in the passed filename an empty string
  * will be returned (not NULL).
  *
- * <pre>
+ * \code{.cpp}
  * CPLGetPath( "abc/def.xyz" ) == "abc"
  * CPLGetPath( "/abc/def/" ) == "/abc/def"
  * CPLGetPath( "/" ) == "/"
  * CPLGetPath( "/abc/def" ) == "/abc"
  * CPLGetPath( "abc" ) == ""
- * </pre>
+ * \endcode
  *
  * @param pszFilename the filename potentially including a path.
  *
@@ -179,13 +179,13 @@ const char *CPLGetPath(const char *pszFilename)
  * filename.  If there is no path in the passed filename the dot will be
  * returned.  It is the only difference from CPLGetPath().
  *
- * <pre>
+ * \code{.cpp}
  * CPLGetDirname( "abc/def.xyz" ) == "abc"
  * CPLGetDirname( "/abc/def/" ) == "/abc/def"
  * CPLGetDirname( "/" ) == "/"
  * CPLGetDirname( "/abc/def" ) == "/abc"
  * CPLGetDirname( "abc" ) == "."
- * </pre>
+ * \endcode
  *
  * @param pszFilename the filename potentially including a path.
  *
@@ -248,11 +248,11 @@ const char *CPLGetDirname(const char *pszFilename)
  * filename.  If there is no filename (passed value ends in trailing directory
  * separator) an empty string is returned.
  *
- * <pre>
+ * \code{.cpp}
  * CPLGetFilename( "abc/def.xyz" ) == "def.xyz"
  * CPLGetFilename( "/abc/def/" ) == ""
  * CPLGetFilename( "abc/def" ) == "def"
- * </pre>
+ * \endcode
  *
  * @param pszFullFilename the full filename potentially including a path.
  *
@@ -279,11 +279,11 @@ const char *CPLGetFilename(const char *pszFullFilename)
  * name.  If there is no basename (passed value ends in trailing directory
  * separator, or filename starts with a dot) an empty string is returned.
  *
- * <pre>
+ * \code{.cpp}
  * CPLGetBasename( "abc/def.xyz" ) == "def"
  * CPLGetBasename( "abc/def" ) == "def"
  * CPLGetBasename( "abc/def/" ) == ""
- * </pre>
+ * \endcode
  *
  * @param pszFullFilename the full filename potentially including a path.
  *
@@ -334,10 +334,10 @@ const char *CPLGetBasename(const char *pszFullFilename)
  * name.  If there is no extension (the filename has no dot) an empty string
  * is returned.  The returned extension will not include the period.
  *
- * <pre>
+ * \code{.cpp}
  * CPLGetExtension( "abc/def.xyz" ) == "xyz"
  * CPLGetExtension( "abc/def" ) == ""
- * </pre>
+ * \endcode
  *
  * @param pszFullFilename the full filename potentially including a path.
  *
@@ -504,12 +504,12 @@ const char *CPLResetExtension(const char *pszPath, const char *pszExt)
  * The path, and extension are optional.  The basename may in fact contain
  * an extension if desired.
  *
- * <pre>
+ * \code{.cpp}
  * CPLFormFilename("abc/xyz", "def", ".dat" ) == "abc/xyz/def.dat"
  * CPLFormFilename(NULL,"def", NULL ) == "def"
  * CPLFormFilename(NULL, "abc/def.dat", NULL ) == "abc/def.dat"
  * CPLFormFilename("/abc/xyz/", "def.dat", NULL ) == "/abc/xyz/def.dat"
- * </pre>
+ * \endcode
  *
  * @param pszPath directory path to the directory containing the file.  This
  * may be relative or absolute, and may have a trailing path separator or
@@ -733,13 +733,13 @@ const char *CPLFormCIFilename(const char *pszPath, const char *pszBasename,
  * absolute, rather than relative, then it will be returned unaltered.
  *
  * Examples:
- * <pre>
+ * \code{.cpp}
  * CPLProjectRelativeFilename("abc/def", "tmp/abc.gif") == "abc/def/tmp/abc.gif"
  * CPLProjectRelativeFilename("abc/def", "/tmp/abc.gif") == "/tmp/abc.gif"
  * CPLProjectRelativeFilename("/xy", "abc.gif") == "/xy/abc.gif"
  * CPLProjectRelativeFilename("/abc/def", "../abc.gif") == "/abc/def/../abc.gif"
  * CPLProjectRelativeFilename("C:\WIN", "abc.gif") == "C:\WIN\abc.gif"
- * </pre>
+ * \endcode
  *
  * @param pszProjectDir the directory relative to which the secondary files
  * path should be interpreted.
@@ -924,13 +924,13 @@ const char *CPLExtractRelativePath(const char *pszBaseDir,
  * trailing slash removed. If there is no path in the passed filename
  * an empty string will be returned (not NULL).
  *
- * <pre>
+ * \code{.cpp}
  * CPLCleanTrailingSlash( "abc/def/" ) == "abc/def"
  * CPLCleanTrailingSlash( "abc/def" ) == "abc/def"
  * CPLCleanTrailingSlash( "c:\\abc\\def\\" ) == "c:\\abc\\def"
  * CPLCleanTrailingSlash( "c:\\abc\\def" ) == "c:\\abc\\def"
  * CPLCleanTrailingSlash( "abc" ) == "abc"
- * </pre>
+ * \endcode
  *
  * @param pszPath the path to be cleaned up
  *
