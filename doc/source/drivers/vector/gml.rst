@@ -649,8 +649,10 @@ The following open options are supported:
       :since: 3.11.0
 
       Partially or totally overrides the auto-detected schema to use for creating the layer.
+      The overrides are applied to the schema detected from the GML file or the `.xsd` or the `.gfs`` file if present.
       The overrides are defined as a JSON list of field definitions.
-      This can be a filename or a JSON string or a URL conformant with the `ogr_fields_override.schema.json schema <https://raw.githubusercontent.com/OSGeo/gdal/refs/heads/master/ogr/data/ogr_fields_override.schema.json>`__
+      This can be a filename, a URL or JSON string conformant with the `ogr_fields_override.schema.json schema <https://raw.githubusercontent.com/OSGeo/gdal/refs/heads/master/ogr/data/ogr_fields_override.schema.json>`_
+
 
 .. note::
 
