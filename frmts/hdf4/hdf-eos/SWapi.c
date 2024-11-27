@@ -854,10 +854,6 @@ SWchkswid(int32 swathID, const char *routname,
     else
     {
 	int sID = swathID % idOffset;
-	if (sID >= NSWATH)
-	{
-	    return -1;
-	}
 	/* Check for active swath ID */
 	/* ------------------------- */
 	if (SWXSwath[sID].active == 0)
@@ -4664,6 +4660,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
     sID = swathID % idOffset;
     if (sID >= NSWATH)
     {
+        free(utlstr);
         return -1;
     }
 
