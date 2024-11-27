@@ -38,6 +38,7 @@ Free and open source
 - `Mapnik  <http://mapnik.org>`_  C++/ Python mapping toolkit
 - `MapServer  <https://mapserver.org/>`_  A popular web mapping application with GDAL support.
 - `MapWindow  <http://www.mapwindow.org>`_  open source ActiveX control with GIS functionality.
+- `Mergin Maps <https://merginmaps.com/>`_ Field data collection app built on top of QGIS with cloud sync.
 - `MultiSpec <https://github.com/larrybiehl/MultiSpec>`_ Application for interactively analyzing multispectral/hyperspectral image data.
 - `NASA Ames Stereo Pipeline  <https://github.com/NeoGeographyToolkit/StereoPipeline>`_  Software for creating terrain models and ortho images from planetary stereo images. (Apache 2.0)
 - `NASA WorldWind  <https://worldwind.arc.nasa.gov/>`_   Multiplatform virtual globe library to quickly and easily create interactive visualizations of 3D globes, map and geographical information.
