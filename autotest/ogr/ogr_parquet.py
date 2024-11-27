@@ -3356,6 +3356,27 @@ def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata(use_dataset):
 
 
 @gdaltest.enable_exceptions()
+@pytest.mark.require_curl
+def test_ogr_parquet_overture_from_azure():
+
+    if not _has_arrow_dataset():
+        pytest.skip("Test requires build with ArrowDataset")
+
+    url = "https://overturemapswestus2.blob.core.windows.net/release?comp=list&delimiter=%2F&prefix=2024-11-13.0%2Ftheme%3Ddivisions%2Ftype%3Ddivision_area%2F&restype=container"
+    if gdaltest.gdalurlopen(url, timeout=5) is None:
+        pytest.skip(reason=f"{url} is down")
+
+    with ogr.Open(
+        "PARQUET:/vsicurl/https://overturemapswestus2.blob.core.windows.net/release/2024-11-13.0/theme=divisions/type=division_area"
+    ) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() > 0
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
 def test_ogr_parquet_write_arrow(tmp_vsimem):
 
     src_ds = ogr.Open("data/parquet/test.parquet")
