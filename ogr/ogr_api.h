@@ -43,7 +43,7 @@ bool CPL_DLL OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch);
 /*! @cond Doxygen_Suppress */
 #define DEFINEH_OGRGeometryH
 /*! @endcond */
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRGeometryHS *OGRGeometryH;
 #else
 /** Opaque type for a geometry */
@@ -57,7 +57,7 @@ typedef void *OGRGeometryH;
 /*! @endcond */
 
 #ifndef DOXYGEN_XML
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRSpatialReferenceHS *OGRSpatialReferenceH;
 typedef struct OGRCoordinateTransformationHS *OGRCoordinateTransformationH;
 #else
@@ -396,7 +396,7 @@ int CPL_DLL OGRPreparedGeometryContains(OGRPreparedGeometryH hPreparedGeom,
 /*! @cond Doxygen_Suppress */
 #define DEFINE_OGRFeatureH
 /*! @endcond */
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRFieldDefnHS *OGRFieldDefnH;
 typedef struct OGRFeatureDefnHS *OGRFeatureDefnH;
 typedef struct OGRFeatureHS *OGRFeatureH;
@@ -667,7 +667,7 @@ const char CPL_DLL *OGR_GlobFldDomain_GetGlob(OGRFieldDomainH);
 /*      ogrsf_frmts.h                                                   */
 /* -------------------------------------------------------------------- */
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRLayerHS *OGRLayerH;
 typedef struct OGRDataSourceHS *OGRDataSourceH;
 typedef struct OGRDriverHS *OGRSFDriverH;
@@ -949,7 +949,7 @@ void CPL_DLL OGRCleanupAll(void);
 /*      ogrsf_featurestyle.h                                            */
 /* -------------------------------------------------------------------- */
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRStyleMgrHS *OGRStyleMgrH;
 typedef struct OGRStyleToolHS *OGRStyleToolH;
 #else
