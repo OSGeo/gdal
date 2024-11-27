@@ -358,6 +358,11 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
         }
 
         osNextMarker = CPLGetXMLValue(psEnumerationResults, "NextMarker", "");
+        // For some containers, a list blob request can return a response
+        // with no blobs, but with a non-empty NextMarker, and the following
+        // request using that marker will return blobs...
+        if (!osNextMarker.empty())
+            bOK = true;
     }
     CPLDestroyXMLNode(psTree);
 
@@ -460,7 +465,8 @@ bool VSIDIRAz::IssueListDir()
 
 const VSIDIREntry *VSIDIRAz::NextDirEntry()
 {
-    while (true)
+    constexpr int ARBITRARY_LIMIT = 10;
+    for (int i = 0; i < ARBITRARY_LIMIT; ++i)
     {
         if (nPos < static_cast<int>(aoEntries.size()))
         {
@@ -477,6 +483,11 @@ const VSIDIREntry *VSIDIRAz::NextDirEntry()
             return nullptr;
         }
     }
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "More than %d consecutive List Blob "
+             "requests returning no blobs",
+             ARBITRARY_LIMIT);
+    return nullptr;
 }
 
 /************************************************************************/
