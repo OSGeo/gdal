@@ -1484,7 +1484,7 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
     int32           metalen;	/* Length of structural metadata */
 
     char           *metabuf;	/* Pointer (handle) to structural metadata */
-    char           *endptr;	/* Pointer to end of metadata section */
+    char           *endptr = NULL;	/* Pointer to end of metadata section */
     char           *metaptr;	/* Metadata pointer */
     char           *prevmetaptr;/* Previous position of metadata pointer */
     char           *utlstr;     /* Utility string */
@@ -1605,7 +1605,7 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
     }
     /* Find group within structure */
     /* --------------------------- */
-    if (groupname != NULL)
+    if (metaptr && groupname != NULL)
     {
 	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s", "GROUP=", groupname);
 	metaptr = strstr(metaptr, utlstr);
@@ -1615,7 +1615,7 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
 	    endptr = strstr(metaptr, utlstr);
 	else
 	    endptr = NULL;
-    } else
+    } else if (metaptr)
     {
 	/* If groupname == NULL then find end of structure in metadata */
 	/* ----------------------------------------------------------- */
