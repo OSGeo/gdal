@@ -65,6 +65,17 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
       export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DFileGDB_ROOT:PATH=/usr/local/FileGDB_API -DFileGDB_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libFileGDBAPI.so"
       export LD_LIBRARY_PATH=/usr/local/FileGDB_API/lib:${LD_LIBRARY_PATH:-}
     fi
+    if test "$(uname -p)" = "x86_64"; then
+      if echo "$WITH_ORACLE" | grep -Eiq "^(y(es)?|1|true)$" ; then
+        export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DOracle_ROOT=/opt/instantclient_19_23"
+      fi
+      if echo "$WITH_ECW" | grep -Eiq "^(y(es)?|1|true)$" ; then
+        export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DECW_ROOT=/opt/libecwj2-3.3"
+      fi
+      if echo "$WITH_MRSID" | grep -Eiq "^(y(es)?|1|true)$" ; then
+        export GDAL_CMAKE_EXTRA_OPTS="${GDAL_CMAKE_EXTRA_OPTS} -DMRSID_ROOT=/opt/Raster_DSDK"
+      fi
+    fi
     echo "${GDAL_CMAKE_EXTRA_OPTS}"
     cmake .. \
         -G Ninja \
