@@ -1135,13 +1135,13 @@ class CPL_DLL OGRFeature
      * (dereference) more than one iterator step at a time, since you will get
      * a reference to the same object (FieldValue) at each iteration step.
      *
-     * <pre>
+     * \code{.cpp}
      * for( auto&& oField: poFeature )
      * {
      *      std::cout << oField.GetIndex() << "," << oField.GetName()<< ": " <<
      * oField.GetAsString() << std::endl;
      * }
-     * </pre>
+     * \endcode
      *
      * @since GDAL 2.3
      */

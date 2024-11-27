@@ -726,7 +726,7 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature(OGRLayerH) CPL_WARN_UNUSED_RESULT;
 /** Conveniency macro to iterate over features of a layer.
  *
  * Typical usage is:
- * <pre>
+ * \code{.cpp}
  * OGR_FOR_EACH_FEATURE_BEGIN(hFeat, hLayer)
  * {
  *      // Do something, including continue, break;
@@ -734,14 +734,14 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature(OGRLayerH) CPL_WARN_UNUSED_RESULT;
  *      // outside of the loop, in which case use OGR_F_Destroy(hFeat))
  * }
  * OGR_FOR_EACH_FEATURE_END(hFeat)
- * </pre>
+ * \endcode
  *
  * In C++, you might want to use instead range-based loop:
- * <pre>
+ * \code{.cpp}
  * for( auto&& poFeature: poLayer )
  * {
  * }
- * </pre>
+ * \endcode
  *
  * @param hFeat variable name for OGRFeatureH. The variable will be declared
  *              inside the macro body.
