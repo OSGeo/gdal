@@ -6289,7 +6289,7 @@ void VSINetworkStatsReset(void)
  * the CPL_VSIL_SHOW_NETWORK_STATS configuration option is set to YES.
  *
  * Example of output:
- * <pre>
+ * \code{.js}
  * {
  *   "methods":{
  *     "GET":{
@@ -6359,8 +6359,7 @@ void VSINetworkStatsReset(void)
  *     }
  *   }
  * }
-
- * </pre>
+ * \endcode
  *
  * @param papszOptions Unused.
  * @return a JSON serialized string to free with VSIFree(), or nullptr
