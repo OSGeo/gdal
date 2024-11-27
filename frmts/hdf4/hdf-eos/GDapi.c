@@ -10,9 +10,9 @@
 /*
 Copyright (C) 1996 Hughes and Applied Research Corporation
 
-Permission to use, modify, and distribute this software and its documentation 
-for any purpose without fee is hereby granted, provided that the above 
-copyright notice appear in all copies and that both that copyright notice and 
+Permission to use, modify, and distribute this software and its documentation
+for any purpose without fee is hereby granted, provided that the above
+copyright notice appear in all copies and that both that copyright notice and
 this permission notice appear in supporting documentation.
 */
 /*****************************************************************************
@@ -35,53 +35,53 @@ Jan  15, 2003   Abe Taaheri  Modified for generalization of EASE Grid.
 Jun  05, 2003 Bruce Beaumont / Abe Taaheri
 
                              Fixed SQUARE definition.
-                             Added static projection number/name translation 
+                             Added static projection number/name translation
                              Added projection table lookup in GDdefproj.
                              Removed projection table from GDdefproj
                              Added projection table lookup in GDprojinfo
                              Removed projection table from GDprojinfo
                              Added cast for compcode in call to SDsetcompress
                                 in GDdeffield to avoid compiler errors
-                             Removed declaration for unused variable endptr 
+                             Removed declaration for unused variable endptr
                                 in GDSDfldsrch
                              Removed initialization code for unused variables
                                 in GDSDfldsrch
-                             Removed declarations for unused variables 
-                                BCEA_scale, r0, s0, xMtr0, xMtr1, yMtr0, 
+                             Removed declarations for unused variables
+                                BCEA_scale, r0, s0, xMtr0, xMtr1, yMtr0,
                                 and yMtr1 in GDll2ij
                              Removed initialization code for unused variables
                                 in GDll2ij
-                             Added code in GEO projection handling to allow 
+                             Added code in GEO projection handling to allow
                                 map to span dateline in GDll2ij
-                             Changed "for each point" loop in GDll2ij to 
-                                return -2147483648.0 for xVal and yVal if 
-                                for_trans returned an error instead of 
+                             Changed "for each point" loop in GDll2ij to
+                                return -2147483648.0 for xVal and yVal if
+                                for_trans returned an error instead of
                                 returning an error to the caller
                                 (Note: MAXLONG is defined as 2147483647.0 in
                                  function cproj.c of GCTP)
-                             Added code in GDij2ll to use for_trans to 
-                                translate the BCEA corner points from packed 
+                             Added code in GDij2ll to use for_trans to
+                                translate the BCEA corner points from packed
                                 degrees to meters
-                             Removed declarations for unused variables 
-                                BCEA_scale, r0, s0, xMtr, yMtr, epsilon, 
-                                beta, qp_cea, kz_cea, eccen, eccen_sq, 
-                                phi1, sinphi1, cosphi1, lon, lat, xcor, 
+                             Removed declarations for unused variables
+                                BCEA_scale, r0, s0, xMtr, yMtr, epsilon,
+                                beta, qp_cea, kz_cea, eccen, eccen_sq,
+                                phi1, sinphi1, cosphi1, lon, lat, xcor,
                                 ycor, and nlatlon from GDij2ll
                              Removed initialization code for unused variables
                                 in GDij2ll
-                             Added declarations for xMtr0, yMtr0, xMtr1, and 
+                             Added declarations for xMtr0, yMtr0, xMtr1, and
                                 yMtr1 in GDij2ll
                              Added special-case code for BCEA
-                             Changed "for each point" loop in GDij2ll to 
-                                return PGSd_GCT_IN_ERROR (1.0e51) for 
-                                longitude and latitude values if inv_trans 
-                                returned an error instead of return an error 
+                             Changed "for each point" loop in GDij2ll to
+                                return PGSd_GCT_IN_ERROR (1.0e51) for
+                                longitude and latitude values if inv_trans
+                                returned an error instead of return an error
                                 to the caller
-                             Removed declaration for unused variable ii in 
+                             Removed declaration for unused variable ii in
                                 GDgetpixvalues
-                             Removed declaration for unused variable 
+                             Removed declaration for unused variable
                                 numTileDims in GDtileinfo
-                             Added error message and error return at the 
+                             Added error message and error return at the
                                 end of GDll2mm_cea
                              Added return statement to GDll2mm_cea
 ******************************************************************************/
@@ -102,14 +102,16 @@ extern  void inv_init(int32, int32, float64 *, int32, const char *, const char *
 #define	GDIDOFFSET 4194304
 #define SQUARE(x)       ((x) * (x))   /* x**2 */
 
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
 static int32 GDXSDcomb[512*5];
-static char  GDXSDname[HDFE_NAMBUFSIZE];
 static char  GDXSDdims[HDFE_DIMBUFSIZE];
+static char  GDXSDname[HDFE_NAMBUFSIZE];
+#endif
 
 
 #define NGRID 200
 /* Grid Structure External Arrays */
-struct gridStructure 
+struct gridStructure
 {
     int32 active;
     int32 IDTable;
@@ -147,10 +149,10 @@ struct gridRegion
 static struct gridRegion *GDXRegion[NGRIDREGN];
 
 /* define a macro for the string size of the utility strings and some dimension
-   list strings. The value of 80 in the previous version of this code 
-   may not be enough in some cases. The length now is 512 which seems to 
+   list strings. The value of 80 in the previous version of this code
+   may not be enough in some cases. The length now is 512 which seems to
    be more than enough to hold larger strings. */
-   
+
 #define UTLSTR_MAX_SIZE 512
 
 /* Static projection table */
@@ -221,7 +223,7 @@ static const char * const pixregNames[] = {
 
 /* Grid Function Prototypes (internal routines) */
 static intn GDchkgdid(int32, const char *, int32 *, int32 *, int32 *);
-static intn GDSDfldsrch(int32, int32, const char *, int32 *, int32 *, 
+static intn GDSDfldsrch(int32, int32, const char *, int32 *, int32 *,
                         int32 *, int32 *, int32 [], int32 *);
 static intn GDwrrdfield(int32, const char *, const char *,
                         int32 [], int32 [], int32 [], VOIDP datbuf);
@@ -231,16 +233,21 @@ static intn GDll2ij(int32, int32, float64 [], int32, int32, int32, float64[],
                     float64[], float64[]);
 static intn  GDgetdefaults(int32, int32, float64[], int32,
                            float64[], float64[]);
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 static intn GDtangentpnts(int32, float64[], float64[], float64[], float64[],
                           float64 [], int32 *);
+#endif
 static intn GDwrrdtile(int32, const char *, const char *, int32 [], VOIDP);
+#ifdef UNUSED_BY_GDAL
 static intn GDll2mm_cea(int32,int32, int32, float64[], int32, int32,
                         float64[], float64[], int32, float64[],float64[],
                         float64[], float64[], float64 *, float64 *);
-
+#endif
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 static intn GDmm2ll_cea(int32, int32, int32, float64[],	int32, int32,
                         float64[], float64[], int32, float64[], float64[],
                         float64[], float64[]);
+#endif
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
@@ -287,7 +294,7 @@ GDopen(const char *filename, intn l_access)
 }
 
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -471,7 +478,7 @@ GDcreate(int32 fid, const char *gridname, int32 xdimsize, int32 ydimsize,
 			"\t\tYDim=", (int)ydimsize, "\n");
 
 
-		snprintf(footer, sizeof(footer), 
+		snprintf(footer, sizeof(footer),
 			"%s%s%s%s%s%s%s%d%s",
 			"\t\tGROUP=Dimension\n",
 			"\t\tEND_GROUP=Dimension\n",
@@ -550,7 +557,7 @@ GDcreate(int32 fid, const char *gridname, int32 xdimsize, int32 ydimsize,
     }
     return (gridID);
 }
-
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -673,13 +680,13 @@ GDattach(int32 fid, const char *gridname)
 		    /* ----------------------------------------------------- */
 		    tags = (int32 *) malloc(sizeof(int32) * 2);
 		    if(tags == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"GDattach", __FILE__, __LINE__);
 			return(-1);
 		    }
 		    refs = (int32 *) malloc(sizeof(int32) * 2);
 		    if(refs == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"GDattach", __FILE__, __LINE__);
 			free(tags);
 			return(-1);
@@ -730,13 +737,13 @@ GDattach(int32 fid, const char *gridname)
 			/* ----------------------------------------- */
 			tags = (int32 *) malloc(sizeof(int32) * nObjects);
 			if(tags == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"GDattach", __FILE__, __LINE__);
 			    return(-1);
 			}
 			refs = (int32 *) malloc(sizeof(int32) * nObjects);
 			if(refs == NULL)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"GDattach", __FILE__, __LINE__);
 			    free(tags);
 			    return(-1);
@@ -755,7 +762,7 @@ GDattach(int32 fid, const char *gridname)
 			}
 			GDXGrid[i].sdsID = (int32 *) calloc(nSDS, 4);
 			if(GDXGrid[i].sdsID == NULL && nSDS != 0)
-			{ 
+			{
 			    HEpush(DFE_NOSPACE,"GDattach", __FILE__, __LINE__);
 			    free(tags);
 			    free(refs);
@@ -883,7 +890,6 @@ GDchkgdid(int32 gridID, const char *routname,
 	/* -------------------- */
 	gID = gridID % idOffset;
 
-
 	/* Check for active grid ID */
 	/* ------------------------ */
 	if (GDXGrid[gID].active == 0)
@@ -906,7 +912,7 @@ GDchkgdid(int32 gridID, const char *routname,
 
 }
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -971,11 +977,17 @@ GDdefdim(int32 gridID, const char *dimname, int32 dim)
     /* -------------------------------------- */
     if (status == 0)
     {
-	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+		return -1;
+	}
+	Vgetname(GDXGrid[gID].IDTable, gridname);
         /* The cast to char* is somehow nasty since EHinsertmeta can modify */
         /* dimname, but not in this case since we call with metacode = 0 */
+	int32 dimArray[1] = { dim };
 	status = EHinsertmeta(sdInterfaceID, gridname, "g", 0L,
-			      (char*) dimname, &dim);
+			      (char*) dimname, dimArray);
     }
     return (status);
 
@@ -1052,26 +1064,27 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 
 	    for (i = 0; i < 13; i++)
 	    {
+        char utlbufSmall[32];
 		/* If projparm[i] = 0 ... */
 		if (projparm[i] == 0.0)
 		{
-		    strcpy(utlbuf, "0,");
+		    strcpy(utlbufSmall, "0,");
 		}
 		else
 		{
 		    /* if projparm[i] is integer ... */
 		    if ((int32) projparm[i] == projparm[i])
 		    {
-			snprintf(utlbuf, sizeof(utlbuf), "%d%s",
+			snprintf(utlbufSmall, sizeof(utlbufSmall), "%d%s",
 				(int) projparm[i], ",");
 		    }
 		    /* else projparm[i] is non-zero floating point ... */
 		    else
 		    {
-			CPLsnprintf(utlbuf, sizeof(utlbuf), "%f%s",	projparm[i], ",");
+			CPLsnprintf(utlbufSmall, sizeof(utlbufSmall), "%f%s",	projparm[i], ",");
 		    }
 		}
-		strcat(projparmbuf, utlbuf);
+		strcat(projparmbuf, utlbufSmall);
 	    }
 	    slen = (int)strlen(projparmbuf);
 
@@ -1116,7 +1129,12 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 
 	/* Insert in structural metadata */
 	/* ----------------------------- */
-	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	    return -1;
+	}
+	Vgetname(GDXGrid[gID].IDTable, gridname);
 	status = EHinsertmeta(sdInterfaceID, gridname, "g", 101L,
 			      utlbuf, NULL);
     }
@@ -1186,7 +1204,12 @@ GDblkSOMoffset(int32 gridID, float32 offset[], int32 count, const char *code)
 	/* If SOM projection with projparm[11] non-zero ... */
 	if (projcode == GCTP_SOM && projparm[11] != 0)
 	{
-	    Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+		int gID = gridID % idOffset;
+		if (gID >= NGRID)
+		{
+			return -1;
+		}
+	    Vgetname(GDXGrid[gID].IDTable, gridname);
 	    snprintf(utlbuf, sizeof(utlbuf),"%s%s", "_BLKSOM:", gridname);
 
 	    /* Write offset values as attribute */
@@ -1252,7 +1275,10 @@ GDdefcomp(int32 gridID, int32 compcode, intn compparm[])
     if (status == 0)
     {
 	gID = gridID % idOffset;
-
+	if (gID >= NGRID)
+	{
+		return -1;
+	}
 	/* Set compression code in compression external array */
 	GDXGrid[gID].compcode = compcode;
 
@@ -1334,6 +1360,8 @@ GDdeftile(int32 gridID, int32 tilecode, int32 tilerank, int32 tiledims[])
     if (status == 0)
     {
 	gID = gridID % idOffset;
+	if (gID >= NGRID)
+		return -1;
 
 	for (i = 0; i < 8; i++)
 	{
@@ -1431,12 +1459,17 @@ GDdeforigin(int32 gridID, int32 origincode)
     {
 	/* If proper origin code then write to structural metadata */
 	/* ------------------------------------------------------- */
-	if (origincode >= 0 && origincode < (int32)sizeof(originNames))
+	if (origincode >= 0 && origincode < (int32)(sizeof(originNames) / sizeof(originNames[0])))
 	{
+	    int gID = gridID % idOffset;
+	    if (gID >= NGRID)
+	    {
+	        return -1;
+	    }
 	    snprintf(utlbuf, sizeof(utlbuf),"%s%s%s",
 		    "\t\tGridOrigin=", originNames[origincode], "\n");
 
-	    Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	    Vgetname(GDXGrid[gID].IDTable, gridname);
 	    status = EHinsertmeta(sdInterfaceID, gridname, "g", 101L,
 				  utlbuf, NULL);
 	}
@@ -1503,12 +1536,17 @@ GDdefpixreg(int32 gridID, int32 pixregcode)
     {
 	/* If proper pix reg code then write to structural metadata */
 	/* -------------------------------------------------------- */
-	if (pixregcode >= 0 && pixregcode < (int32)sizeof(pixregNames))
+	if (pixregcode >= 0 && pixregcode < (int32)(sizeof(pixregNames) / sizeof(pixregNames[0])))
 	{
+		int gID = gridID % idOffset;
+		if (gID >= NGRID)
+		{
+			return -1;
+		}
 	    snprintf(utlbuf, sizeof(utlbuf),"%s%s%s",
 		    "\t\tPixelRegistration=", pixregNames[pixregcode], "\n");
 
-	    Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	    Vgetname(GDXGrid[gID].IDTable, gridname);
 	    status = EHinsertmeta(sdInterfaceID, gridname, "g", 101L,
 				  utlbuf, NULL);
 	}
@@ -1523,7 +1561,7 @@ GDdefpixreg(int32 gridID, int32 pixregcode)
     return (status);
 
 }
-
+#endif
 
 
 
@@ -1581,7 +1619,7 @@ GDdiminfo(int32 gridID, const char *dimname)
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDdiminfo", __FILE__, __LINE__);
 	return(-1);
     }
@@ -1599,7 +1637,13 @@ GDdiminfo(int32 gridID, const char *dimname)
     {
 	/* Get grid name */
 	/* ------------- */
-	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	   free(utlstr);
+	   return -1;
+	}
+	Vgetname(GDXGrid[gID].IDTable, gridname);
 
 
 	/* Get pointers to "Dimension" section within SM */
@@ -1611,7 +1655,7 @@ GDdiminfo(int32 gridID, const char *dimname)
 	{
 	    free(utlstr);
 	    return(-1);
-	} 
+	}
 
 	/* Search for dimension name (surrounded by quotes) */
 	/* ------------------------------------------------ */
@@ -1711,7 +1755,7 @@ GDgridinfo(int32 gridID, int32 * xdimsize, int32 * ydimsize,
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDgridinfo", __FILE__, __LINE__);
 	return(-1);
     }
@@ -1723,7 +1767,13 @@ GDgridinfo(int32 gridID, int32 * xdimsize, int32 * ydimsize,
     {
 	/* Get grid name */
 	/* ------------- */
-	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	   free(utlstr);
+	   return -1;
+	}
+	Vgetname(GDXGrid[gID].IDTable, gridname);
 
 
 	/* Get pointers to grid structure section within SM */
@@ -1735,7 +1785,7 @@ GDgridinfo(int32 gridID, int32 * xdimsize, int32 * ydimsize,
 	{
 	    free(utlstr);
 	    return(-1);
-	}  
+	}
 
 
 	/* Get xdimsize if requested */
@@ -1904,7 +1954,7 @@ GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDprojinfo", __FILE__, __LINE__);
 	return(-1);
     }
@@ -1917,7 +1967,14 @@ GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
     {
 	/* Get grid name */
 	/* ------------- */
-	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	   free(utlstr);
+	   return -1;
+	}
+
+	Vgetname(GDXGrid[gID].IDTable, gridname);
 
 
 	/* Get pointers to grid structure section within SM */
@@ -1929,7 +1986,7 @@ GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
 	{
 	    free(utlstr);
 	    return(-1);
-	}  
+	}
 
 
 	/* Get projcode if requested */
@@ -1969,7 +2026,7 @@ GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
 
 	/* Get zonecode if requested */
 	/* ------------------------- */
-	if (zonecode != NULL)
+	if (projcode && zonecode != NULL)
 	{
 	    *zonecode = -1;
 
@@ -1996,7 +2053,7 @@ GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
 
 	/* Get projection parameters if requested */
 	/* -------------------------------------- */
-	if (projparm != NULL)
+	if (projcode && projparm != NULL)
 	{
 
 	    /*
@@ -2052,7 +2109,7 @@ GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
 
 	/* Get spherecode if requested */
 	/* --------------------------- */
-	if (spherecode != NULL)
+	if (projcode && spherecode != NULL)
 	{
 	    *spherecode = 0;
 
@@ -2127,7 +2184,7 @@ GDorigininfo(int32 gridID, int32 * origincode)
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDorigininfo", __FILE__, __LINE__);
 	return(-1);
     }
@@ -2150,7 +2207,14 @@ GDorigininfo(int32 gridID, int32 * origincode)
 
 	/* Get grid name */
 	/* ------------- */
-	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	   free(utlstr);
+	   return -1;
+	}
+
+	Vgetname(GDXGrid[gID].IDTable, gridname);
 
 
 	/* Get pointers to grid structure section within SM */
@@ -2162,7 +2226,7 @@ GDorigininfo(int32 gridID, int32 * origincode)
 	{
 	    free(utlstr);
 	    return(-1);
-	}  
+	}
 
 
 	statmeta = EHgetmetavalue(metaptrs, "GridOrigin", utlstr);
@@ -2173,7 +2237,7 @@ GDorigininfo(int32 gridID, int32 * origincode)
 	     * If "GridOrigin" string found in metadata then convert to
 	     * numeric origin code (fixed added: Jan 97)
 	     */
-	    for (i = 0; i < (intn)sizeof(originNames); i++)
+	    for (i = 0; i < (intn)(sizeof(originNames) / sizeof(originNames[0])); i++)
 	    {
 		if (strcmp(utlstr, originNames[i]) == 0)
 		{
@@ -2249,7 +2313,7 @@ GDpixreginfo(int32 gridID, int32 * pixregcode)
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDpixreginfo", __FILE__, __LINE__);
 	return(-1);
     }
@@ -2266,7 +2330,14 @@ GDpixreginfo(int32 gridID, int32 * pixregcode)
 	*pixregcode = 0;
 
 	/* Get grid name */
-	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	   free(utlstr);
+	   return -1;
+	}
+
+	Vgetname(GDXGrid[gID].IDTable, gridname);
 
 	/* Get pointers to grid structure section within SM */
 	metabuf = (char *) EHmetagroup(sdInterfaceID, gridname, "g",
@@ -2276,7 +2347,7 @@ GDpixreginfo(int32 gridID, int32 * pixregcode)
 	{
 	    free(utlstr);
 	    return(-1);
-	}  
+	}
 
 
 	statmeta = EHgetmetavalue(metaptrs, "PixelRegistration", utlstr);
@@ -2288,7 +2359,7 @@ GDpixreginfo(int32 gridID, int32 * pixregcode)
 	     * to numeric origin code (fixed added: Jan 97)
 	     */
 
-	    for (i = 0; i < (intn)sizeof(pixregNames); i++)
+	    for (i = 0; i < (intn)(sizeof(pixregNames) / sizeof(pixregNames[0])); i++)
 	    {
 		if (strcmp(utlstr, pixregNames[i]) == 0)
 		{
@@ -2358,7 +2429,7 @@ GDcompinfo(int32 gridID, const char *fieldname, int32 * compcode, intn compparm[
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDcompinfo", __FILE__, __LINE__);
 	return(-1);
     }
@@ -2369,7 +2440,13 @@ GDcompinfo(int32 gridID, const char *fieldname, int32 * compcode, intn compparm[
     if (status == 0)
     {
 	/* Get grid name */
-	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+		free(utlstr);
+		return -1;
+	}
+	Vgetname(GDXGrid[gID].IDTable, gridname);
 
 	/* Get pointers to "DataField" section within SM */
 	metabuf = (char *) EHmetagroup(sdInterfaceID, gridname, "g",
@@ -2378,7 +2455,7 @@ GDcompinfo(int32 gridID, const char *fieldname, int32 * compcode, intn compparm[
 	{
 	    free(utlstr);
 	    return(-1);
-	}  
+	}
 
 
 	/* Search for field */
@@ -2407,7 +2484,7 @@ GDcompinfo(int32 gridID, const char *fieldname, int32 * compcode, intn compparm[
 		if (statmeta == 0)
 		{
 		    /* Loop through compression types until match */
-		    for (i = 0; i < (intn)sizeof(HDFcomp); i++)
+		    for (i = 0; i < (intn)(sizeof(HDFcomp) / sizeof(HDFcomp[0])); i++)
 		    {
 			if (strcmp(utlstr, HDFcomp[i]) == 0)
 			{
@@ -2556,7 +2633,7 @@ GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDfieldinfo", __FILE__, __LINE__);
 	return(-1);
     }
@@ -2567,8 +2644,13 @@ GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
 
     if (status == 0)
     {
-
-	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	    free(utlstr);
+	    return -1;
+    }
+	Vgetname(GDXGrid[gID].IDTable, gridname);
 
 	metabuf = (char *) EHmetagroup(sdInterfaceID, gridname, "g",
 				       "DataField", metaptrs);
@@ -2576,7 +2658,7 @@ GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
 	{
 	    free(utlstr);
 	    return(-1);
-	}  
+	}
 
 
 	/* Search for field */
@@ -2692,7 +2774,7 @@ GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
 
 
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -2819,6 +2901,10 @@ GDdeffield(int32 gridID, const char *fieldname, const char *dimlist,
     {
 	/* Remove offset from grid ID & get gridname */
 	gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	    return -1;
+	}
 	Vgetname(GDXGrid[gID].IDTable, gridname);
 
 
@@ -2826,13 +2912,13 @@ GDdeffield(int32 gridID, const char *fieldname, const char *dimlist,
 	/* ---------------------------------------------------------------- */
 	dimbuf = (char *) calloc(strlen(dimlist) + 64, 1);
 	if(dimbuf == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"GDdeffield", __FILE__, __LINE__);
 	    return(-1);
 	}
 	dimlist0 = (char *) calloc(strlen(dimlist) + 64, 1);
 	if(dimlist0 == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"GDdeffield", __FILE__, __LINE__);
 	    free(dimbuf);
 	    return(-1);
@@ -2897,7 +2983,7 @@ GDdeffield(int32 gridID, const char *fieldname, const char *dimlist,
 	    /* ------------------------------------- */
 	    dimcheck = (char *) calloc(comma - dimbuf + 1, 1);
 	    if(dimcheck == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdeffield", __FILE__, __LINE__);
 		free(dimbuf);
 		free(dimlist0);
@@ -2954,12 +3040,13 @@ GDdeffield(int32 gridID, const char *fieldname, const char *dimlist,
 		foundAllDim = 0;
 		if (first == 1)
 		{
-		    strcpy(utlbuf, dimcheck);
+		    snprintf(utlbuf, sizeof(utlbuf), "%s", dimcheck);
 		}
 		else
 		{
-		    strcat(utlbuf, ",");
-		    strcat(utlbuf, dimcheck);
+		    char utlbufTmp[sizeof(utlbuf)];
+		    strcpy(utlbufTmp, utlbuf);
+		    CPLsnprintf(utlbuf, sizeof(utlbuf), "%s,%s", utlbufTmp, dimcheck);
 		}
 		first = 0;
 	    }
@@ -2981,7 +3068,7 @@ GDdeffield(int32 gridID, const char *fieldname, const char *dimlist,
 	{
 /* if ((intn) strlen(fieldname) > MAX_NC_NAME - 7)
 ** this was changed because HDF4.1r3 made a change in the
-** hlimits.h file.  We have notified NCSA and asked to have 
+** hlimits.h file.  We have notified NCSA and asked to have
 ** it made the same as in previous versions of HDF
 ** see ncr 26314.  DaW  Apr 2000
 */
@@ -3299,7 +3386,7 @@ GDdeffield(int32 gridID, const char *fieldname, const char *dimlist,
 			realloc((void *) GDXGrid[gID].sdsID,
 				(GDXGrid[gID].nSDS + 1) * 4);
 		    if(GDXGrid[gID].sdsID == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"GDdeffield", __FILE__, __LINE__);
 			free(dimlist0);
 			return(-1);
@@ -3311,7 +3398,7 @@ GDdeffield(int32 gridID, const char *fieldname, const char *dimlist,
 		    /* -------------------- */
 		    GDXGrid[gID].sdsID = (int32 *) calloc(1, 4);
 		    if(GDXGrid[gID].sdsID == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"GDdeffield", __FILE__, __LINE__);
 			free(dimlist0);
 			return(-1);
@@ -3474,13 +3561,20 @@ GDwritefieldmeta(int32 gridID, const char *fieldname, const char *dimlist,
     {
 	snprintf(utlbuf, sizeof(utlbuf), "%s%s%s", fieldname, ":", dimlist);
 
-	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	   return -1;
+	}
+
+	Vgetname(GDXGrid[gID].IDTable, gridname);
+	int32 numbertypeArray[1] = { numbertype };
 	status = EHinsertmeta(sdInterfaceID, gridname, "g", 4L,
-			      utlbuf, &numbertype);
+			      utlbuf, numbertypeArray);
     }
     return (status);
 }
-
+#endif
 
 
 
@@ -3548,7 +3642,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDSDfldsrch", __FILE__, __LINE__);
 	return(-1);
     }
@@ -3560,7 +3654,11 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
     /* Compute "reduced" grid ID */
     /* ------------------------- */
     gID = gridID % idOffset;
-
+    if (gID >= NGRID)
+    {
+        free(utlstr);
+        return -1;
+    }
 
     /* Loop through all SDSs in grid */
     /* ----------------------------- */
@@ -3594,7 +3692,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 		{
 		    free(utlstr);
 		    return(-1);
-		}  
+		}
 
 #ifdef broken_logic
 		/* Initialize metaptr to beg. of section */
@@ -3983,7 +4081,7 @@ GDwrrdfield(int32 gridID, const char *fieldname, const char *code,
     return (status);
 }
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -4027,7 +4125,7 @@ GDwritefield(int32 gridID, const char *fieldname,
 			 data);
     return (status);
 }
-
+#endif
 
 
 
@@ -4133,7 +4231,12 @@ GDwrrdattr(int32 gridID, const char *attrname, int32 numbertype, int32 count,
     {
 	/* Perform Attribute I/O */
 	/* --------------------- */
-	attrVgrpID = GDXGrid[gridID % idOffset].VIDTable[1];
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+		return -1;
+	}
+	attrVgrpID = GDXGrid[gID].VIDTable[1];
 	status = EHattr(fid, attrVgrpID, attrname, numbertype, count,
 			wrcode, datbuf);
     }
@@ -4141,7 +4244,7 @@ GDwrrdattr(int32 gridID, const char *attrname, int32 numbertype, int32 count,
 }
 
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -4185,7 +4288,7 @@ GDwriteattr(int32 gridID, const char *attrname, int32 numbertype, int32 count,
 
     return (status);
 }
-
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -4279,7 +4382,12 @@ GDattrinfo(int32 gridID, const char *attrname, int32 * numbertype, int32 * count
 
     status = GDchkgdid(gridID, "GDattrinfo", &fid, &dum, &dum);
 
-    attrVgrpID = GDXGrid[gridID % idOffset].VIDTable[1];
+    int gID = gridID % idOffset;
+    if (gID >= NGRID)
+    {
+        return -1;
+    }
+    attrVgrpID = GDXGrid[gID].VIDTable[1];
 
     status = EHattrinfo(fid, attrVgrpID, attrname, numbertype,
 			count);
@@ -4343,7 +4451,12 @@ GDinqattrs(int32 gridID, char *attrnames, int32 * strbufsize)
 
     if (status == 0)
     {
-	attrVgrpID = GDXGrid[gridID % idOffset].VIDTable[1];
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	    return -1;
+    }
+	attrVgrpID = GDXGrid[gID].VIDTable[1];
 	nattr = EHattrcat(fid, attrVgrpID, attrnames, strbufsize);
     }
 
@@ -4420,7 +4533,7 @@ GDinqdims(int32 gridID, char *dimnames, int32 dims[])
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDinqdims", __FILE__, __LINE__);
 	return(-1);
     }
@@ -4436,7 +4549,13 @@ GDinqdims(int32 gridID, char *dimnames, int32 dims[])
 	{
 	    /* Get grid name */
 	    /* ------------- */
-	    Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	    int gID = gridID % idOffset;
+	    if (gID >= NGRID)
+	    {
+	       free(utlstr);
+	       return -1;
+	    }
+	    Vgetname(GDXGrid[gID].IDTable, gridname);
 
 
 	    /* Get pointers to "Dimension" section within SM */
@@ -4447,8 +4566,8 @@ GDinqdims(int32 gridID, char *dimnames, int32 dims[])
 	    {
 		free(utlstr);
 		return(-1);
-	    }  
-	    
+	    }
+
 
 	    /* If dimension names are requested then "clear" name buffer */
 	    /* --------------------------------------------------------- */
@@ -4576,7 +4695,7 @@ GDinqfields(int32 gridID, char *fieldlist, int32 rank[],
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDinqfields", __FILE__, __LINE__);
 	return(-1);
     }
@@ -4592,7 +4711,13 @@ GDinqfields(int32 gridID, char *fieldlist, int32 rank[],
 	{
 	    /* Get grid name */
 	    /* ------------- */
-	    Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	    int gID = gridID % idOffset;
+	    if (gID >= NGRID)
+	    {
+	       free(utlstr);
+	       return -1;
+	    }
+	    Vgetname(GDXGrid[gID].IDTable, gridname);
 
 
 	    /* Get pointers to "DataField" section within SM */
@@ -4603,7 +4728,7 @@ GDinqfields(int32 gridID, char *fieldlist, int32 rank[],
 	    {
 		free(utlstr);
 		return(-1);
-	    }  
+	    }
 
 
 	    /* If field names are desired then "clear" name buffer */
@@ -4757,16 +4882,18 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
     int32           nVal = 0;	/* Number of strings to search for */
 
     char           *metabuf = NULL;	/* Pointer to structural metadata (SM) */
-    char           *metaptrs[2];/* Pointers to begin and end of SM section */
+    char           *metaptrs[2] = {NULL, NULL};/* Pointers to begin and end of SM section */
     char            gridname[80];	/* Grid Name */
     char           *utlstr;/* Utility string */
     char            valName[2][32];	/* Strings to search for */
+
+    memset(valName, 0, sizeof(valName));
 
     /* Allocate space for utility string */
     /* --------------------------------- */
     utlstr = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(utlstr == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDnentries", __FILE__, __LINE__);
 	return(-1);
     }
@@ -4775,7 +4902,14 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
     if (status == 0)
     {
 	/* Get grid name */
-	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+	int gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	   free(utlstr);
+	   return -1;
+	}
+
+	Vgetname(GDXGrid[gID].IDTable, gridname);
 
 	/* Zero out string buffer size */
 	*strbufsize = 0;
@@ -4795,8 +4929,8 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
 		{
 		    free(utlstr);
 		    return(-1);
-		}  
-		
+		}
+
 		nVal = 1;
 		strcpy(&valName[0][0], "DimensionName");
 	    }
@@ -4810,7 +4944,7 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
 		{
 		    free(utlstr);
 		    return(-1);
-		}  
+		}
 
 		nVal = 1;
 		strcpy(&valName[0][0], "DataFieldName");
@@ -4818,6 +4952,12 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
 	    break;
 	}
 
+	if (!metabuf || metaptrs[0] == NULL)
+    {
+        free(metabuf);
+        free(utlstr);
+        return -1;
+    }
 
 	/*
 	 * Check for presence of 'GROUP="' string If found then old metadata,
@@ -4932,6 +5072,7 @@ GDinqgrid(const char *filename, char *gridlist, int32 * strbufsize)
 }
 
 
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -5017,7 +5158,7 @@ GDsetfillvalue(int32 gridID, const char *fieldname, VOIDP fillval)
     }
     return (status);
 }
-
+#endif
 
 
 
@@ -5136,13 +5277,18 @@ GDdetach(int32 gridID)
 
 {
     intn            i;		/* Loop index */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     intn            j;		/* Loop index */
+#endif
     intn            k;		/* Loop index */
     intn            status = 0;	/* routine return status variable */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     intn            statusFill = 0;	/* return status from GDgetfillvalue */
+#endif
 
-    int32          *namelen;	/* Pointer to name string length array */
-    int32          *dimlen;	/* Pointer to dim string length array */
+    int32          *namelen = NULL;	/* Pointer to name string length array */
+    int32          *dimlen = NULL;	/* Pointer to dim string length array */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     int32           slen1[3];	/* String length array 1 */
     int32           slen2[3];	/* String length array 2 */
     int32           nflds;	/* Number of fields */
@@ -5151,29 +5297,39 @@ GDdetach(int32 gridID)
     int32           sdid;	/* SDS ID */
     int32           vgid;	/* Vgroup ID */
     int32           dims[3];	/* Dimension array */
-    int32          *offset;	/* Pointer to merged field offset array */
-    int32          *indvdims;	/* Pointer to merged field size array */
+#endif
+    int32          *offset = NULL;	/* Pointer to merged field offset array */
+    int32          *indvdims = NULL;	/* Pointer to merged field size array */
     int32           sdInterfaceID;	/* SDS interface ID */
     int32           gID;	/* Grid ID - offset */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     int32           nflds0;	/* Number of fields */
-    int32          *namelen0;	/* Pointer to name string length array */
+#endif
+    int32          *namelen0 = NULL;	/* Pointer to name string length array */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     int32           rank;	/* Rank of merged field */
     int32           truerank;	/* True rank of merged field */
+#endif
     int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
     int32           dum;	/* Dummy variable */
 
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     char           *nambuf;	/* Pointer to name buffer */
-    char          **nameptr;	/* Pointer to name string pointer array */
-    char          **dimptr;	/* Pointer to dim string pointer array */
-    char          **nameptr0;	/* Pointer to name string pointer array */
+#endif
+    char          **nameptr = NULL;	/* Pointer to name string pointer array */
+    char          **dimptr = NULL;	/* Pointer to dim string pointer array */
+    char          **nameptr0 = NULL;	/* Pointer to name string pointer array */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     char           *ptr1[3];	/* String pointer array */
     char           *ptr2[3];	/* String pointer array */
     char            dimbuf1[128];	/* Dimension buffer 1 */
     char            dimbuf2[128];	/* Dimension buffer 2 */
+#endif
     char            gridname[VGNAMELENMAX + 1];	/* Grid name */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
     char           *utlbuf;	/* Utility buffer */
     char            fillval[32];/* Fill value buffer */
-
+#endif
 
 
     status = GDchkgdid(gridID, "GDdetach", &dum, &sdInterfaceID, &dum);
@@ -5181,32 +5337,40 @@ GDdetach(int32 gridID)
     if (status == 0)
     {
 	gID = gridID % idOffset;
+	if (gID >= NGRID)
+	{
+	   return -1;
+	}
 	Vgetname(GDXGrid[gID].IDTable, gridname);
 
 	/* SDS combined fields */
 	/* ------------------- */
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
 	if (strlen(GDXSDname) == 0)
+#endif
 	{
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
 	    nflds = 0;
+#endif
 
 	    /* Allocate "dummy" arrays so free() doesn't bomb later */
 	    /* ---------------------------------------------------- */
 	    nameptr = (char **) calloc(1, sizeof(char *));
 	    if(nameptr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		return(-1);
 	    }
 	    namelen = (int32 *) calloc(1, sizeof(int32));
 	    if(namelen == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		return(-1);
 	    }
 	    nameptr0 = (char **) calloc(1, sizeof(char *));
 	    if(nameptr0 == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5214,7 +5378,7 @@ GDdetach(int32 gridID)
 	    }
 	    namelen0 = (int32 *) calloc(1, sizeof(int32));
 	    if(namelen0 == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5223,7 +5387,7 @@ GDdetach(int32 gridID)
 	    }
 	    dimptr = (char **) calloc(1, sizeof(char *));
 	    if(dimptr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5233,7 +5397,7 @@ GDdetach(int32 gridID)
 	    }
 	    dimlen = (int32 *) calloc(1, sizeof(int32));
 	    if(dimlen == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5244,7 +5408,7 @@ GDdetach(int32 gridID)
 	    }
 	    offset = (int32 *) calloc(1, sizeof(int32));
 	    if(offset == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5256,7 +5420,7 @@ GDdetach(int32 gridID)
 	    }
 	    indvdims = (int32 *) calloc(1, sizeof(int32));
 	    if(indvdims == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5268,6 +5432,7 @@ GDdetach(int32 gridID)
 		return(-1);
 	    }
 	}
+#if defined(HDFEOS_GD_WRITE_SUPPORT)
 	else
 	{
 	    /*
@@ -5286,20 +5451,20 @@ GDdetach(int32 gridID)
 	    /* ----------------------------------------- */
 	    nameptr = (char **) calloc(nflds, sizeof(char *));
 	    if(nameptr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		return(-1);
 	    }
 	    namelen = (int32 *) calloc(nflds, sizeof(int32));
 	    if(namelen == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		return(-1);
 	    }
 	    nameptr0 = (char **) calloc(nflds, sizeof(char *));
 	    if(nameptr0 == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5307,7 +5472,7 @@ GDdetach(int32 gridID)
 	    }
 	    namelen0 = (int32 *) calloc(nflds, sizeof(int32));
 	    if(namelen0 == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5316,7 +5481,7 @@ GDdetach(int32 gridID)
 	    }
 	    dimptr = (char **) calloc(nflds, sizeof(char *));
 	    if(dimptr == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5326,7 +5491,7 @@ GDdetach(int32 gridID)
 	    }
 	    dimlen = (int32 *) calloc(nflds, sizeof(int32));
 	    if(dimlen == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5337,7 +5502,7 @@ GDdetach(int32 gridID)
 	    }
 	    offset = (int32 *) calloc(nflds, sizeof(int32));
 	    if(offset == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5349,7 +5514,7 @@ GDdetach(int32 gridID)
 	    }
 	    indvdims = (int32 *) calloc(nflds, sizeof(int32));
 	    if(indvdims == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		free(nameptr);
 		free(namelen);
@@ -5367,7 +5532,6 @@ GDdetach(int32 gridID)
 	    nflds = EHparsestr(GDXSDdims, ';', dimptr, dimlen);
 	}
 
-
 	for (i = 0; i < nflds; i++)
 	{
 	    if (GDXSDcomb[5 * i] != 0 &&
@@ -5375,7 +5539,7 @@ GDdetach(int32 gridID)
 	    {
 		nambuf = (char *) calloc(strlen(GDXSDname) + 1, 1);
 		if(nambuf == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		    free(nameptr);
 		    free(namelen);
@@ -5384,11 +5548,12 @@ GDdetach(int32 gridID)
 		    free(dimptr);
 		    free(dimlen);
 		    free(offset);
+		    free(indvdims);
 		    return(-1);
 		}
 		utlbuf = (char *) calloc(strlen(GDXSDname) * 2 + 7, 1);
 		if(utlbuf == NULL)
-		{ 
+		{
 		    HEpush(DFE_NOSPACE,"GDdetach", __FILE__, __LINE__);
 		    free(nambuf);
 		    free(nameptr);
@@ -5398,6 +5563,7 @@ GDdetach(int32 gridID)
 		    free(dimptr);
 		    free(dimlen);
 		    free(offset);
+		    free(indvdims);
 		    return(-1);
 		}
 
@@ -5622,7 +5788,7 @@ GDdetach(int32 gridID)
 	    strcat(GDXSDname, ",");
 	    strcat(GDXSDdims, ";");
 	}
-
+#endif
 
 
 	/* Free up a bunch of dynamically allocated arrays */
@@ -5783,7 +5949,7 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
 
     float64         lon, lat, plat, x, y;
     float64         plon, tlon, llon, rlon, pplon, LLon, LLat, RLon, RLat;
-    
+
 
     /* invoke GCTP initialization routine */
     /* ---------------------------------- */
@@ -5823,7 +5989,7 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
       LLat = EHconvAng(EASE_GRID_DEFAULT_UPLEFT_LAT, HDFE_DEG_RAD);
       RLon = EHconvAng(EASE_GRID_DEFAULT_LOWRGT_LON, HDFE_DEG_RAD);
       RLat = EHconvAng(EASE_GRID_DEFAULT_LOWRGT_LAT, HDFE_DEG_RAD);
- 
+
       errorcode = for_trans[projcode] (LLon, LLat, &x, &y);
       if (errorcode != 0)
       {
@@ -5834,7 +6000,7 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
       }
         upleftpt[0] = x;
         upleftpt[1] = y;
- 
+
       errorcode = for_trans[projcode] (RLon, RLat, &x, &y);
       if (errorcode != 0)
       {
@@ -5845,10 +6011,10 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
       }
       lowrightpt[0] = x;
       lowrightpt[1] = y;
- 
+
     }
- 
-    
+
+
     /* Compute Default Boundary Points for Polar Sterographic */
     /* ------------------------------------------------------ */
     if (projcode == GCTP_PS &&
@@ -5907,7 +6073,7 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
 	}
 
 	upleftpt[0] = x;
-	
+
 	errorcode = for_trans[projcode] (rlon, 0.0, &x, &y);
 	if (errorcode != 0)
 	{
@@ -5918,7 +6084,7 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
 	}
 
 	lowrightpt[0] = x;
-	
+
 	/*
 	 * Compute the upperleft and lowright y values based on the south or
 	 * north polar projection
@@ -5936,7 +6102,7 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
 	    }
 
 	    upleftpt[1] = y;
-	    
+
 	    errorcode = for_trans[projcode] (tlon, 0.0, &x, &y);
 	    if (errorcode != 0)
 	    {
@@ -5947,7 +6113,7 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
 	    }
 
 	    lowrightpt[1] = y;
-	    
+
 	}
 	else
 	{
@@ -5961,7 +6127,7 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
 	    }
 
 	    upleftpt[1] = y;
-	    
+
 	    errorcode = for_trans[projcode] (plon, 0.0, &x, &y);
 	    if (errorcode != 0)
 	    {
@@ -5972,7 +6138,7 @@ GDgetdefaults(int32 projcode, int32 zonecode, float64 projparm[],
 	    }
 
 	    lowrightpt[1] = y;
-	  
+
 	}
     }
 
@@ -6394,8 +6560,8 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 	       of r_major and r_minor) using GCTP */
 	    /* ----------------------------------------- */
 	    errorcode = for_trans[projcode] (lonrad0, latrad0, &xMtr0, &yMtr0);
-	    
-	    
+
+
 	    /* Report error if any */
 	    /* ------------------- */
 	    if (errorcode != 0)
@@ -6410,8 +6576,8 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 	       of r_major and r_minor) using GCTP */
 	    /* ----------------------------------------- */
 	    errorcode = for_trans[projcode] (lonrad, latrad, &xMtr1, &yMtr1);
-	    
-	    
+
+
 	    /* Report error if any */
 	    /* ------------------- */
 	    if (errorcode != 0)
@@ -6478,7 +6644,7 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 		/* ----------------------------------------- */
 		errorcode = for_trans[projcode] (lonrad, latrad, &xMtr, &yMtr);
 
-		
+
 		/* Report error if any */
 		/* ------------------- */
 		if (errorcode != 0)
@@ -6494,13 +6660,13 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 		else {
 		  /* if projection is BCEA normalize x and y by cell size and
 		     measure it from the upperleft corner of the grid */
-		  
+
 		  /* Compute scaled distance to point from origin */
 		  /* -------------------------------------------- */
 		  if(  projcode == GCTP_BCEA)
 		    {
 		      xVal = (xMtr - xMtr0) / scaleX;
-		      yVal = (yMtr - yMtr0) / scaleY; 
+		      yVal = (yMtr - yMtr0) / scaleY;
 		    }
 		  else
 		    {
@@ -6534,7 +6700,7 @@ GDll2ij(int32 projcode, int32 zonecode, float64 projparm[],
 
 
 
-
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -6602,9 +6768,9 @@ GDrs2ll(int32 projcode, float64 projparm[],
     float64         eccen, eccen_sq;
     float64         phi1, sinphi1, cosphi1;
     float64         scaleX, scaleY;
-    
+
     int32           zonecode=0;
-    
+
     int32           spherecode=0;
     float64         lon[2],lat[2];
     float64         xcor[2], ycor[2];
@@ -6621,7 +6787,7 @@ GDrs2ll(int32 projcode, float64 projparm[],
 	  }
 	else
 	  {
-	    qp_cea = 
+	    qp_cea =
 	      (1.0 - eccen_sq)*((1.0/(1.0 - eccen_sq))-(1.0/(2.0*eccen))*
 				log((1.0 - eccen)/(1.0 + eccen)));
 	  }
@@ -6630,7 +6796,7 @@ GDrs2ll(int32 projcode, float64 projparm[],
 	sinphi1 = sin(phi1);
 	kz_cea = cosphi1/(sqrt(1.0 - (eccen_sq*sinphi1*sinphi1)));
     }
-    
+
 
 
 
@@ -6690,10 +6856,10 @@ GDrs2ll(int32 projcode, float64 projparm[],
     /* ------------------------------------------------------ */
     if (projcode == GCTP_BCEA)
     {
-	
+
 	inv_init(projcode, 0, projparm, 0, NULL, NULL,
 		 &errorcode, inv_trans);
-	
+
 	/* Report error if any */
 	/* ------------------- */
 	if (errorcode != 0)
@@ -6708,7 +6874,7 @@ GDrs2ll(int32 projcode, float64 projparm[],
 	    /* ------------------ */
 	  for (i = 0; i < npnts; i++)
 	    {
-	      /* Convert from EASE grid's (r,s) to lon/lat (radians) 
+	      /* Convert from EASE grid's (r,s) to lon/lat (radians)
 		 using GCTP */
 	      /* --------------------------------------------------- */
 	      nlatlon = 2;
@@ -6716,32 +6882,32 @@ GDrs2ll(int32 projcode, float64 projparm[],
 	      lon[1] = lowright[0];
 	      lat[0] = upleft[1];
 	      lat[1] = lowright[1];
-	      status = 
+	      status =
 		GDll2mm_cea(projcode,zonecode,spherecode,projparm,
 			    xdimsize, ydimsize,
 			    upleft, lowright, nlatlon,
 			    lon, lat,
 			    xcor, ycor, &scaleX, &scaleY);
-	      
+
 	      if (status == -1)
 		{
 		  HEpush(DFE_GENAPP, "GDrs2ll", __FILE__, __LINE__);
 		  return (status);
 		}
-	      
+
 	      xMtr = (r[i]/ scaleX + pixadjX - 0.5)* scaleX;
 	      yMtr = - (s[i]/fabs(scaleY) + pixadjY - 0.5)* fabs(scaleY);
 
-	      
-	      /* allow .5 cell tolerance in arcsin function 
+
+	      /* allow .5 cell tolerance in arcsin function
 		 (used in bceainv function) so that grid
 		 coordinates which are less than .5 cells
-		 above 90.00N or below 90.00S are given lat of 90.00 
+		 above 90.00N or below 90.00S are given lat of 90.00
 	      */
 
 	      epsilon = 1 + 0.5 * (fabs(scaleY)/projparm[0]);
 	      beta = 2.0 * (yMtr - projparm[7]) * kz_cea/(projparm[0] * qp_cea);
-	      
+
 	      if( fabs (beta) > epsilon)
 		{
 		  status = -1;
@@ -6768,7 +6934,7 @@ GDrs2ll(int32 projcode, float64 projparm[],
 		  errorcode = inv_trans[projcode] (xMtr, yMtr,
 						   &lonrad, &latrad);
 		}
-	      
+
 	      /* Report error if any */
 	      /* ------------------- */
 	      if (errorcode != 0)
@@ -6778,7 +6944,7 @@ GDrs2ll(int32 projcode, float64 projparm[],
 		  HEreport("GCTP Error: %d\n", errorcode);
 		  return (status);
 		}
-	      
+
 	      /* Convert from radians to decimal degrees */
 	      /* --------------------------------------- */
 	      longitude[i] = EHconvAng(lonrad, HDFE_RAD_DEG);
@@ -6789,12 +6955,13 @@ GDrs2ll(int32 projcode, float64 projparm[],
 
 
 
-    
+
     return (status);
 }
+#endif
 
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -6982,7 +7149,6 @@ homDyDtheta(float64 parms[])
 
 
 
-
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -7063,13 +7229,13 @@ GDtangentpnts(int32 projcode, float64 projparm[], float64 cornerlon[],
     {
       case GCTP_MERCAT:
 	{
-	    /* No need for tangent points, since MERCAT projection 
+	    /* No need for tangent points, since MERCAT projection
 	       is rectangular */
 	}
 	break;
       case GCTP_BCEA:
 	{
-	    /* No need for tangent points, since BCEA projection 
+	    /* No need for tangent points, since BCEA projection
 	       is rectangular */
 	}
 	break;
@@ -7664,13 +7830,13 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
 
     utlbuf = (char *)calloc(128, sizeof(char));
     if(utlbuf == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDdefboxregion", __FILE__, __LINE__);
 	return(-1);
     }
     gridname = (char *)calloc(128, sizeof(char));
     if(gridname == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDdefboxregion", __FILE__, __LINE__);
 	free(utlbuf);
 	return(-1);
@@ -7688,8 +7854,8 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
 	/* ------------- */
 	status = GDgridinfo(gridID, &xdimsize, &ydimsize,
 			    upleftpt, lowrightpt);
-	
-	
+
+
 	/* If error then bail */
 	/* ------------------ */
 	if (status != 0)
@@ -7760,11 +7926,19 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
 	/* ------------------------------------------------- */
 	status = GDtangentpnts(projcode, projparm, cornerlon, cornerlat,
 			       longitude, latitude, &npnts);
- 
+
         /* If SOM projection with projparm[11] non-zero ... */
         if (projcode == GCTP_SOM && projparm[11] != 0)
         {
-            Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+            int gID = gridID % idOffset;
+            if (gID >= NGRID)
+            {
+               free(utlbuf);
+               free(gridname);
+               return -1;
+            }
+
+            Vgetname(GDXGrid[gID].IDTable, gridname);
             snprintf(utlbuf, 128, "%s%s", "_BLKSOM:", gridname);
 	    status = GDreadattr(gridID, utlbuf, offset);
 
@@ -7828,7 +8002,7 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
 
 	        /* Check whether subset region is outside grid region */
 	        /* -------------------------------------------------- */
-	        if (minCol >= xdimsize || minRow >= ydimsize || 
+	        if (minCol >= xdimsize || minRow >= ydimsize ||
 		    maxCol < 0 || maxRow < 0)
 	        {
                    if ( blockindexstart == -1 && (projparm[11]) == j)
@@ -7944,7 +8118,7 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
 		    GDXRegion[i] = (struct gridRegion *)
 			calloc(1, sizeof(struct gridRegion));
 		    if(GDXRegion[i] == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"GDdefboxregion", __FILE__, __LINE__);
 			free(utlbuf);
 			free(gridname);
@@ -8037,7 +8211,7 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
 		      lon[1] = lowrightpt[0];
 		      lat[0] = upleftpt[1];
 		      lat[1] = lowrightpt[1];
-		      status = 
+		      status =
 			GDll2mm_cea(projcode,zonecode,spherecode,projparm,
 				    xdimsize, ydimsize,
 				    upleftpt, lowrightpt,nlatlon,
@@ -8045,8 +8219,8 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
 				    xcor, ycor, &xscale, &yscale);
 		      upleftpt_m[0] = xcor[0];
 		      upleftpt_m[1] = ycor[0];
-		      
-		      
+
+
 		      if (status == -1)
 			{
 			  HEpush(DFE_GENAPP, "GDdefboxregion", __FILE__, __LINE__);
@@ -8077,7 +8251,7 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
 			status = GDmm2ll_cea(projcode, zonecode, spherecode,
 					     projparm, xdimsize, ydimsize,
 					     upleftpt, lowrightpt, npnts,
-					     xmtr,  ymtr, 
+					     xmtr,  ymtr,
 					     longitude, latitude);
 			if (status == -1)
 			  {
@@ -8117,17 +8291,17 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
                        }
                        else
                        {
-                          GDXRegion[i]->upleftpt[0] = 
+                          GDXRegion[i]->upleftpt[0] =
 			    (lowrightpt[0] - upleftpt[0])*
 			    (offset[blockindexstart-1]/xdimsize) + upleftpt[0];
-                          GDXRegion[i]->upleftpt[1] = 
+                          GDXRegion[i]->upleftpt[1] =
 			    (lowrightpt[1] - upleftpt[1])*
 			    (blockindexstart+1-1) + upleftpt[1];
 
-                          GDXRegion[i]->lowrightpt[0] = 
+                          GDXRegion[i]->lowrightpt[0] =
 			    (lowrightpt[0] - upleftpt[0])*
 			    (offset[blockindexstart-1]/xdimsize) + lowrightpt[0];
-                          GDXRegion[i]->lowrightpt[1] = 
+                          GDXRegion[i]->lowrightpt[1] =
 			    (lowrightpt[1] - upleftpt[1])*
 			    (blockindexstart+1-1) + lowrightpt[1];
 
@@ -8173,20 +8347,20 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
 		    regionID = i;
 		    break;
 		}
-	    
+
 	}
       }
-	    
+
     }
     free(utlbuf);
     free(gridname);
     return (regionID);
 }
+#endif
 
 
 
-
-
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -8771,7 +8945,7 @@ GDdupregion(int32 oldregionID)
 	    GDXRegion[i] = (struct gridRegion *)
 		calloc(1, sizeof(struct gridRegion));
 	    if(GDXRegion[i] == NULL)
-	    { 
+	    {
 		HEpush(DFE_NOSPACE,"GDdupregion", __FILE__, __LINE__);
 		return(-1);
 	    }
@@ -8779,7 +8953,7 @@ GDdupregion(int32 oldregionID)
 
 	    /* Copy old region structure data to new region */
 	    /* -------------------------------------------- */
-	                
+
             GDXRegion[i]->fid = GDXRegion[oldregionID]->fid;
             GDXRegion[i]->gridID = GDXRegion[oldregionID]->gridID;
             GDXRegion[i]->xStart = GDXRegion[oldregionID]->xStart;
@@ -8795,7 +8969,7 @@ GDdupregion(int32 oldregionID)
                 GDXRegion[i]->StartVertical[j] = GDXRegion[oldregionID]->StartVertical[j];
                 GDXRegion[i]->StopVertical[j] = GDXRegion[oldregionID]->StopVertical[j];
             }
-	    
+
             for (j=0; j<8; j++)
             {
                 if(GDXRegion[oldregionID]->DimNamePtr[j] != NULL)
@@ -8805,7 +8979,7 @@ GDdupregion(int32 oldregionID)
                     strcpy(GDXRegion[i]->DimNamePtr[j],GDXRegion[oldregionID]->DimNamePtr[j]);
 		}
             }
-            
+
 
 	    /* Define new region ID */
 	    /* -------------------- */
@@ -8816,6 +8990,7 @@ GDdupregion(int32 oldregionID)
     }
     return (newregionID);
 }
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -8853,6 +9028,7 @@ GDdupregion(int32 oldregionID)
 -----------------------------------------------------------------------------*/
 #define SETGRIDREG \
 \
+regionID = 0; \
 status = GDgridinfo(gridID, &xdimsize, &ydimsize, upleftpt, lowrightpt); \
 for (k = 0; k < NGRIDREGN; k++) \
 { \
@@ -8895,7 +9071,7 @@ for (j=0; j<8; j++) \
 } \
 
 
-
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 int32
 GDdefvrtregion(int32 gridID, int32 regionID, const char *vertObj, float64 range[])
 {
@@ -8922,7 +9098,7 @@ GDdefvrtregion(int32 gridID, int32 regionID, const char *vertObj, float64 range[
     /* --------------------------------- */
     dimlist = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(dimlist == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDdefvrtregion", __FILE__, __LINE__);
 	return(-1);
     }
@@ -8952,7 +9128,7 @@ GDdefvrtregion(int32 gridID, int32 regionID, const char *vertObj, float64 range[
 		    GDXRegion[regionID]->DimNamePtr[j] =
 			(char *) malloc(slen + 1);
 		    if(GDXRegion[regionID]->DimNamePtr[j] == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"GDdefvrtregion", __FILE__, __LINE__);
 			free(dimlist);
 			return(-1);
@@ -8987,7 +9163,7 @@ GDdefvrtregion(int32 gridID, int32 regionID, const char *vertObj, float64 range[
 		    size = DFKNTsize(nt);
 		    vertArr = (char *) calloc(dims[0], size);
 		    if(vertArr == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"GDdefvrtregion", __FILE__, __LINE__);
 			free(dimlist);
 			return(-1);
@@ -9223,7 +9399,7 @@ GDdeftimeperiod(int32 gridID, int32 periodID, float64 starttime,
 
     return (periodID);
 }
-
+#endif
 
 
 /*----------------------------------------------------------------------------|
@@ -9320,13 +9496,13 @@ GDgetpixels(int32 gridID, int32 nLonLat, float64 lonVal[], float64 latVal[],
 	/* ---------------------------------- */
 	xVal = (float64 *) calloc(nLonLat, sizeof(float64));
 	if(xVal == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"GDgetpixels", __FILE__, __LINE__);
 	    return(-1);
 	}
 	yVal = (float64 *) calloc(nLonLat, sizeof(float64));
 	if(yVal == NULL)
-	{ 
+	{
 	    HEpush(DFE_NOSPACE,"GDgetpixels", __FILE__, __LINE__);
 	    free(xVal);
 	    return(-1);
@@ -9496,7 +9672,7 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
     /* --------------------------------- */
     dimlist = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(dimlist == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDgetpixvalues", __FILE__, __LINE__);
 	return(-1);
     }
@@ -9619,9 +9795,9 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
 
 			/* Set I/O offset and count Section */
 			/* ---------------------- */
-			
+
 			/*
-			 * start and edge != NULL, set I/O offset and count to 
+			 * start and edge != NULL, set I/O offset and count to
 			 * user values, adjusting the
 			 * 0th field with the merged field offset (if any)
 			 */
@@ -9649,12 +9825,12 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
 			    offset[0] = mrgOffset;
 			    count[0] = 1;
 			}
-			
-			
-			
+
+
+
 			/* Set I/O stride Section */
 			/* ---------------------- */
-			
+
 			/* In original code stride entered as NULL.
 			   Abe Taaheri June 12, 1998 */
 			/*
@@ -9664,7 +9840,7 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
 			{
 			    incr[j] = 1;
 			}
-			
+
 
 			/* Read into data buffer */
 			/* --------------------- */
@@ -9693,6 +9869,7 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
 }
 
 
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -9784,7 +9961,7 @@ GDinterpolate(int32 gridID, int32 nValues, float64 lonVal[], float64 latVal[],
     /* --------------------------------- */
     dimlist = (char *) calloc(UTLSTR_MAX_SIZE, sizeof(char));
     if(dimlist == NULL)
-    { 
+    {
 	HEpush(DFE_NOSPACE,"GDinterpolate", __FILE__, __LINE__);
 	return(-1);
     }
@@ -9963,7 +10140,7 @@ GDinterpolate(int32 gridID, int32 nValues, float64 lonVal[], float64 latVal[],
 		    /* -------------------------------- */
 		    pixVal = (char *) malloc(4 * size);
 		    if(pixVal == NULL)
-		    { 
+		    {
 			HEpush(DFE_NOSPACE,"GDinterpolate", __FILE__, __LINE__);
 			free(dimlist);
 			return(-1);
@@ -10120,6 +10297,8 @@ GDinterpolate(int32 gridID, int32 nValues, float64 lonVal[], float64 latVal[],
     }
 
 }
+#endif
+
 /***********************************************
 GDwrrdtile --
      This function is the underlying function below GDwritetile and
@@ -10242,7 +10421,6 @@ GDwrrdtile(int32 gridID, const char *fieldname, const char *code, int32 start[],
     return (status);
 }
 
-
 /***********************************************
 GDtileinfo --
      This function queries the field to determine if it is tiled.  If it is
@@ -10345,6 +10523,7 @@ Alexis Zubrow
 
 ********************************************************/
 
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 intn
 GDwritetile(int32 gridID, const char *fieldname, int32 tilecoords[],
 	    VOIDP tileData)
@@ -10356,6 +10535,8 @@ GDwritetile(int32 gridID, const char *fieldname, int32 tilecoords[],
 
     return (status);
 }
+#endif
+
 /***********************************************
 GDreadtile --
      This function reads one tile from a particular field.
@@ -10377,6 +10558,8 @@ GDreadtile(int32 gridID, const char *fieldname, int32 tilecoords[],
 
     return (status);
 }
+
+#ifdef UNUSED_BY_GDAL
 /***********************************************
 GDsettilecache --
      This function sets the cache size for a tiled field.
@@ -10449,7 +10632,10 @@ GDsettilecache(int32 gridID, const char *fieldname, int32 maxcache, CPL_UNUSED i
 
     return (status);
 }
+#endif
 
+
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -10501,7 +10687,7 @@ GDsettilecomp(int32 gridID, const char *fieldname, int32 tilerank, int32*
                tiledims, int32 compcode, intn* compparm)
 {
     intn            status;     /* routine return status variable */
- 
+
     int32           fid;        /* HDF-EOS file ID */
     int32           sdInterfaceID;      /* HDF SDS interface ID */
     int32           gdVgrpID;   /* Grid root Vgroup ID */
@@ -10514,18 +10700,18 @@ GDsettilecomp(int32 gridID, const char *fieldname, int32 tilerank, int32*
     comp_info       c_info;     /* Compression parameter structure */
     HDF_CHUNK_DEF   chunkDef;   /* Tiling structure */
     int32           chunkFlag;  /* Chunking (Tiling) flag */
- 
+
     c_info.nbit.nt = 0;
- 
+
     /* Check for valid grid ID and get SDS interface ID */
     status = GDchkgdid(gridID, "GDsetfillvalue",
                        &fid, &sdInterfaceID, &gdVgrpID);
- 
+
     if (status == 0)
     {
         /* Get field info */
         status = GDfieldinfo(gridID, fieldname, &dum, dims, &nt, NULL);
- 
+
         if (status == 0)
         {
             /* Get SDS ID and solo flag */
@@ -10539,8 +10725,8 @@ GDsettilecomp(int32 gridID, const char *fieldname, int32 tilerank, int32*
             }
             /* Tiling with Compression */
             /* ----------------------- */
- 
- 
+
+
             /* Setup Compression */
             /* ----------------- */
             if (compcode == HDFE_COMP_NBIT)
@@ -10559,19 +10745,19 @@ GDsettilecomp(int32 gridID, const char *fieldname, int32 tilerank, int32*
               {
                 c_info.deflate.level = compparm[0];
               }
- 
+
             /* Setup chunk lengths */
             /* ------------------- */
             for (i = 0; i < tilerank; i++)
               {
                 chunkDef.comp.chunk_lengths[i] = tiledims[i];
               }
- 
+
             /* Setup chunk flag & chunk compression type */
             /* ----------------------------------------- */
             chunkFlag = HDF_CHUNK | HDF_COMP;
             chunkDef.comp.comp_type = compcode;
- 
+
             /* Setup chunk compression parameters */
             /* ---------------------------------- */
             if (compcode == HDFE_COMP_SKPHUFF)
@@ -10602,7 +10788,9 @@ GDsettilecomp(int32 gridID, const char *fieldname, int32 tilerank, int32*
     }
     return (status);
 }
+#endif
 
+#ifdef UNUSED_BY_GDAL
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -10673,22 +10861,22 @@ static intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
 		 &errorcode, for_trans);
 	/* Convert upleft and lowright X coords from DMS to radians */
 	/* -------------------------------------------------------- */
-	
+
 	lonrad0 = EHconvAng(upleftpt[0], HDFE_DMS_RAD);
 	lonrad = EHconvAng(lowrightpt[0], HDFE_DMS_RAD);
-	
+
 	/* Convert upleft and lowright Y coords from DMS to radians */
 	/* -------------------------------------------------------- */
 	latrad0 = EHconvAng(upleftpt[1], HDFE_DMS_RAD);
 	latrad = EHconvAng(lowrightpt[1], HDFE_DMS_RAD);
-	
+
 	/* Convert from lon/lat to meters(or whatever unit is, i.e unit
 	   of r_major and r_minor) using GCTP */
 	/* ----------------------------------------- */
 	errorcode = for_trans[projcode] (lonrad0, latrad0, &xMtr0, &yMtr0);
 	x[0] = xMtr0;
 	y[0] = yMtr0;
-	
+
 	/* Report error if any */
 	/* ------------------- */
 	if (errorcode != 0)
@@ -10698,14 +10886,14 @@ static intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
 	    HEreport("GCTP Error: %d\n", errorcode);
 	    return (status);
 	  }
-	
+
 	/* Convert from lon/lat to meters(or whatever unit is, i.e unit
 	   of r_major and r_minor) using GCTP */
 	/* ----------------------------------------- */
 	errorcode = for_trans[projcode] (lonrad, latrad, &xMtr1, &yMtr1);
 	x[1] = xMtr1;
 	y[1] = yMtr1;
-	
+
 	/* Report error if any */
 	/* ------------------- */
 	if (errorcode != 0)
@@ -10715,11 +10903,11 @@ static intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
 	    HEreport("GCTP Error: %d\n", errorcode);
 	    return (status);
 	  }
-	
+
 	/* Compute x scale factor */
 	/* ---------------------- */
 	*scaleX = (xMtr1 - xMtr0) / xdimsize;
-	
+
 	/* Compute y scale factor */
 	/* ---------------------- */
 	*scaleY = (yMtr1 - yMtr0) / ydimsize;
@@ -10733,8 +10921,10 @@ static intn GDll2mm_cea(int32 projcode,int32 zonecode, int32 spherecode,
       }
     return (0);
 }
+#endif
 
 
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
 |                                                                             |
@@ -10777,7 +10967,7 @@ static intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
 		 float64 projparm[],
 		 CPL_UNUSED int32 xdimsize, CPL_UNUSED int32 ydimsize,
 		 CPL_UNUSED float64 upleftpt[], CPL_UNUSED float64 lowrightpt[], int32 npnts,
-		 float64 x[], float64 y[], 
+		 float64 x[], float64 y[],
 		 float64 longitude[], float64 latitude[])
 {
     intn            status = 0;	/* routine return status variable */
@@ -10797,13 +10987,13 @@ static intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
       {
 	inv_init(projcode, zonecode, projparm, spherecode, NULL, NULL,
 		 &errorcode, inv_trans);
-	
+
 	/* Convert from meters(or whatever unit is, i.e unit
 	   of r_major and r_minor) to lat/lon using GCTP */
 	/* ----------------------------------------- */
 	for(i=0; i<npnts; i++)
 	  {
-	    errorcode = 
+	    errorcode =
 	      inv_trans[projcode] (x[i], y[i],&longitude[i], &latitude[i]);
 	    /* Report error if any */
 	    /* ------------------- */
@@ -10824,6 +11014,7 @@ static intn GDmm2ll_cea(int32 projcode,int32 zonecode, int32 spherecode,
       }
     return(status);
 }
+#endif
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |

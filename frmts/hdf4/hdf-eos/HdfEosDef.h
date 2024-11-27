@@ -10,9 +10,9 @@
 /*
 Copyright (C) 1996 Hughes and Applied Research Corporation
 
-Permission to use, modify, and distribute this software and its documentation 
-for any purpose without fee is hereby granted, provided that the above 
-copyright notice appear in all copies and that both that copyright notice and 
+Permission to use, modify, and distribute this software and its documentation
+for any purpose without fee is hereby granted, provided that the above
+copyright notice appear in all copies and that both that copyright notice and
 this permission notice appear in supporting documentation.
 */
 
@@ -81,9 +81,9 @@ this permission notice appear in supporting documentation.
 
 /* Compression Modes */
 #define HDFE_COMP_NONE     0
-#define HDFE_COMP_RLE      1    
+#define HDFE_COMP_RLE      1
 #define HDFE_COMP_NBIT     2
-#define HDFE_COMP_SKPHUFF  3    
+#define HDFE_COMP_SKPHUFF  3
 #define HDFE_COMP_DEFLATE  4
 
 
@@ -130,15 +130,20 @@ extern "C" {
 
 /* Swath Prototype */
 int32 SWopen(const char *, intn);
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 int32 SWcreate(int32, const char *);
+#endif
 int32 SWattach(int32, const char *);
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 intn SWdefdim(int32, char *, int32);
 intn SWdefcomp(int32, int32, intn []);
+#endif
 int32 SWdiminfo(int32, const char *);
 intn SWmapinfo(int32, const char *, const char *, int32 *, int32 *);
 int32 SWidxmapinfo(int32, const char *, const char *, int32 []);
 intn SWfieldinfo(int32, const char *, int32 *, int32 [], int32 *, char *);
 intn SWcompinfo(int32, const char *, int32 *, intn []);
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 intn SWdefdimmap(int32, const char *, const char *, int32, int32);
 intn SWdefidxmap(int32, const char *, const char *, int32 []);
 intn SWdefgeofield(int32, const char *, const char *, int32, int32);
@@ -146,6 +151,7 @@ intn SWdefdatafield(int32, const char *, const char *, int32, int32);
 intn SWwritegeometa(int32, const char *, const char *, int32);
 intn SWwritedatameta(int32, const char *, const char *, int32);
 intn SWwriteattr(int32, const char *, int32, int32, VOIDP);
+#endif
 intn SWreadattr(int32, const char *, VOIDP);
 intn SWattrinfo(int32, const char *, int32 *, int32 *);
 int32 SWinqdims(int32, char *, int32 []);
@@ -156,31 +162,50 @@ int32 SWinqdatafields(int32, char *, int32 [],int32 []);
 int32 SWinqattrs(int32, char *, int32 *);
 int32 SWnentries(int32, int32, int32 *);
 int32 SWinqswath(const char *, char *, int32 *);
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 intn SWwritefield(int32, const char *, int32 [], int32 [], int32 [], VOIDP);
+#endif
 intn SWreadfield(int32, const char *, int32 [], int32 [], int32 [], VOIDP);
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 int32 SWdefboxregion(int32, float64 [], float64 [], int32);
 int32 SWdefscanregion(int32, const char *, float64 [], int32);
+#endif
+#ifdef UNUSED_BY_GDAL
 int32 SWregionindex(int32, float64 [], float64 [], int32, char *, int32 []);
 intn SWextractregion(int32, int32, const char *, int32, VOIDP);
 intn SWregioninfo(int32, int32, const char *, int32 *, int32 *, int32 [], int32 *);
 int32 SWdupregion(int32);
+#endif
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 int32 SWdeftimeperiod(int32, float64, float64, int32);
+#endif
+#ifdef UNUSED_BY_GDAL
 intn SWextractperiod(int32, int32, const char *, int32, VOIDP);
 intn SWperiodinfo(int32, int32, const char *, int32 *, int32 *, int32 [], int32 *);
 int32 SWdefvrtregion(int32, int32, const char *, float64 []);
+#endif
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 intn SWsetfillvalue(int32, const char *, VOIDP);
+#endif
 intn SWgetfillvalue(int32, const char *, VOIDP);
 intn SWdetach(int32);
 intn SWclose(int32);
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 int32 SWupdateidxmap(int32, int32, int32 [], int32 [], int32 []);
+#endif
 intn SWgeomapinfo(int32, const char *);
+#ifdef HDFEOS_SW_WRITE_SUPPORT
 intn SWupdatescene(int32, int32);
+#endif
 intn SWsdid(int32, const char *, int32 *);
 
 /* Grid Prototypes */
 int32 GDopen(const char *, intn);
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 int32 GDcreate(int32, const char *, int32, int32, float64 [], float64 []);
+#endif
 int32 GDattach(int32, const char *);
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 intn GDdefdim(int32, const char *, int32);
 intn GDdefproj(int32, int32, int32, int32, float64 []);
 intn GDblkSOMoffset(int32, float32 [], int32, const char *);
@@ -189,6 +214,7 @@ intn GDdeftile(int32, int32, int32, int32 []);
 intn GDsettilecomp(int32, const char *, int32, int32 *, int32, intn *);
 intn GDdeforigin(int32, int32);
 intn GDdefpixreg(int32, int32);
+#endif
 int32 GDdiminfo(int32, const char *);
 intn GDgridinfo(int32, int32 *, int32 *, float64 [], float64 []);
 intn GDprojinfo(int32, int32 *, int32 *, int32 *, float64 []);
@@ -197,15 +223,23 @@ intn GDpixreginfo(int32, int32 *);
 intn GDcompinfo(int32, const char *, int32 *, intn []);
 intn GDfieldinfo(int32, const char *, int32 *, int32 [], int32 *, char *);
 intn GDtileinfo(int32, const char *, int32 *, int32 *, int32 []);
+#ifdef UNUSED_BY_GDAL
 intn GDsettilecache(int32, const char *, int32, int32);
+#endif
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 intn GDwritetile(int32, const char *, int32 [], VOIDP);
+#endif
 intn GDreadtile(int32, const char *, int32 [],  VOIDP);
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 intn GDdeffield(int32, const char *, const char *, int32, int32);
 intn GDwritefieldmeta(int32, const char *, const char *, int32);
 intn GDwritefield(int32, const char *,
 	     int32 [], int32 [], int32 [], VOIDP);
+#endif
 intn GDreadfield(int32, const char *, int32 [], int32 [], int32 [], VOIDP);
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 intn GDwriteattr(int32, const char *, int32 , int32, VOIDP);
+#endif
 intn GDreadattr(int32, const char *, VOIDP);
 intn GDattrinfo(int32, const char *, int32 *, int32 *);
 int32 GDinqdims(int32, char *, int32 []);
@@ -213,26 +247,37 @@ int32 GDinqfields(int32, char *, int32 [], int32 []);
 int32 GDinqattrs(int32, char *, int32 *);
 int32 GDnentries(int32, int32, int32 *);
 int32 GDinqgrid(const char *, char *, int32 *);
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 int32 GDdefboxregion(int32, float64 [], float64 []);
 int32 GDdefvrtregion(int32, int32, const char *, float64 []);
 int32 GDdeftimeperiod(int32, int32, float64, float64);
+#endif
+#ifdef UNUSED_BY_GDAL
 intn GDextractregion(int32, int32, const char *, VOIDP);
 intn GDregioninfo(int32, int32, const char *, int32 *, int32 *, int32 [], int32 *,
                    float64 [], float64 []);
 int32 GDdupregion(int32);
+#endif
 intn GDgetpixels(int32, int32, float64 [], float64 [], int32 [], int32 []);
 int32 GDgetpixvalues(int32, int32, int32 [], int32 [], const char *, VOIDP);
+#ifdef UNUSED_BY_GDAL
 int32 GDinterpolate(int32, int32, float64 [], float64 [], const char *, float64 []);
+#endif
+#ifdef HDFEOS_GD_WRITE_SUPPORT
 intn GDsetfillvalue(int32, const char *, VOIDP);
+#endif
 intn GDgetfillvalue(int32, const char *, VOIDP);
 intn GDdetach(int32);
 intn GDclose(int32);
+#ifdef UNUSED_BY_GDAL
 intn GDrs2ll(int32, float64 [], int32, int32,
 	     float64 [], float64 [],
 	     int32, float64 [], float64 [],
 	     float64 [], float64 [], int32, int32);
+#endif
 intn GDsdid(int32, const char *, int32 *);
 
+#ifdef UNUSED_BY_GDAL
 /* Point Prototypes */
 int32 PTopen(const char *, intn);
 int32 PTcreate(int32, const char *);
@@ -268,7 +313,7 @@ intn PTextractregion(int32, int32 regionID, int32, const char *, VOIDP);
 intn PTextractperiod(int32, int32 periodID, int32, const char *, VOIDP);
 intn PTdetach(int32);
 intn PTclose(int32);
-
+#endif
 
 
 /* EH Utility Prototypes */
@@ -284,21 +329,29 @@ intn EHchkfid(int32, const char *, int32 *, int32 *, uint8 *);
 intn EHidinfo(int32, int32 *, int32 *);
 int32 EHgetid(int32, int32, const char *, intn, const char *);
 intn EHrevflds(const char *, char *);
+#if defined(HDFEOS_GD_WRITE_SUPPORT) || defined(HDFEOS_SW_WRITE_SUPPORT)
 intn EHinsertmeta(int32, const char *, const char *, int32, char *, int32 []);
+#endif
 intn EHgetmetavalue(char *[], const char *, char *);
 char * EHmetagroup(int32, const char *, const char *, const char *, char *[]);
+#if defined(HDFEOS_GD_WRITE_SUPPORT) || defined(HDFEOS_SW_WRITE_SUPPORT)
 intn EHfillfld(int32, int32, int32, int32, int32, int32 [], VOIDP);
+#endif
 intn EHattr(int32, int32, const char *, int32, int32, const char *, VOIDP);
 intn EHattrinfo(int32, int32, const char *, int32 *, int32 *);
 int32 EHattrcat(int32, int32, char *, int32 *);
+#ifdef UNUSED_BY_GDAL
 intn EHfilename(int32, char *);
 int32 EHcntOBJECT(char *[]);
 int32 EHcntGROUP(char *[]);
-/* 9/3/97 Abe changed the first argument from 
+#endif
+/* 9/3/97 Abe changed the first argument from
    float64 (float64 []) to float64 (*) (float64 [])  for SunOS
    float64 () (float64 []) to float64 (*) (float64 [])  for all other OSs */
-intn EHbisect(float64 (*) (float64 []), float64 [], int32, float64, float64, 
+#ifdef HDFEOS_GD_WRITE_SUPPORT
+intn EHbisect(float64 (*) (float64 []), float64 [], int32, float64, float64,
 	      float64, float64 *);
+#endif
 int32 EHinquire(const char *, const char *, char *, int32 *);
 intn EHclose(int32);
 
