@@ -948,7 +948,7 @@ def test_tiff_write_20():
 
 
 ###############################################################################
-# Test RGBA images with TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_ASSOCALPHA
+# Test RGBA images with TIFFTAG_EXTRASAMPLES=EXTRASAMPLE_UNASSOCALPHA
 
 
 def test_tiff_write_21():
@@ -11927,3 +11927,30 @@ def test_tiff_write_check_golden_file(tmp_path, src_filename, creation_options):
         )
     assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
     assert open(src_filename, "rb").read() == open(out_filename, "rb").read()
+
+
+###############################################################################
+# Test preserving ALPHA=PREMULTIPLIED on copy
+
+
+def test_tiff_write_preserve_ALPHA_PREMULTIPLIED_on_copy(tmp_path):
+
+    src_filename = str(tmp_path / "src.tif")
+    out_filename = str(tmp_path / "out.tif")
+    gdal.GetDriverByName("GTiff").Create(
+        src_filename, 1, 1, 4, options=["ALPHA=PREMULTIPLIED", "PROFILE=BASELINE"]
+    )
+    assert gdal.VSIStatL(src_filename + ".aux.xml") is None
+    with gdal.Open(src_filename) as src_ds:
+        assert (
+            src_ds.GetRasterBand(4).GetMetadataItem("ALPHA", "IMAGE_STRUCTURE")
+            == "PREMULTIPLIED"
+        )
+        gdal.GetDriverByName("GTiff").CreateCopy(
+            out_filename, src_ds, options=["PROFILE=BASELINE"]
+        )
+        with gdal.Open(out_filename) as out_ds:
+            assert (
+                out_ds.GetRasterBand(4).GetMetadataItem("ALPHA", "IMAGE_STRUCTURE")
+                == "PREMULTIPLIED"
+            )
