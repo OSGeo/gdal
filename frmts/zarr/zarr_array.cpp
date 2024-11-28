@@ -2724,6 +2724,7 @@ void ZarrArray::ParseSpecialAttributes(
             if (item.IsValid())
             {
                 poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if (poSRS->SetFromUserInput(
                         item.ToString().c_str(),
                         OGRSpatialReference::
@@ -2748,6 +2749,7 @@ void ZarrArray::ParseSpecialAttributes(
             if (gridMappingArray)
             {
                 poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 CPLStringList aosKeyValues;
                 for (const auto &poAttr : gridMappingArray->GetAttributes())
                 {
@@ -2798,10 +2800,12 @@ void ZarrArray::ParseSpecialAttributes(
         }
         if (iDimX > 0 && iDimY > 0)
         {
-            if (poSRS->GetDataAxisToSRSAxisMapping() == std::vector<int>{2, 1})
+            const auto &oMapping = poSRS->GetDataAxisToSRSAxisMapping();
+            if (oMapping == std::vector<int>{2, 1} ||
+                oMapping == std::vector<int>{2, 1, 3})
                 poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
-            else if (poSRS->GetDataAxisToSRSAxisMapping() ==
-                     std::vector<int>{1, 2})
+            else if (oMapping == std::vector<int>{1, 2} ||
+                     oMapping == std::vector<int>{1, 2, 3})
                 poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
         }
 
