@@ -16,6 +16,14 @@ export PYTHONMALLOC=malloc
 gdalinfo autotest/gcore/data/byte.tif
 python3 -c "from osgeo import gdal; print('yes')"
 
+# Check fix for https://github.com/rasterio/rasterio/issues/3250
+mv ${GDAL_DRIVER_PATH}/gdal_PDF.so ${GDAL_DRIVER_PATH}/gdal_PDF.so.disabled
+echo "from osgeo import gdal" > register_many_times.py
+echo "for i in range(1000):" >> register_many_times.py
+echo "   gdal.AllRegister()" >> register_many_times.py
+python3 register_many_times.py
+mv ${GDAL_DRIVER_PATH}/gdal_PDF.so.disabled ${GDAL_DRIVER_PATH}/gdal_PDF.so
+
 cd autotest
 
 # Run each module in its own pytest process.
