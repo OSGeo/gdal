@@ -675,7 +675,10 @@ static void VSICheckMarkerEnd(char *ptr, size_t nEnd)
 /*                             VSIRealloc()                             */
 /************************************************************************/
 
-/** Analog of realloc(). Use VSIFree() to free */
+/** Analog of realloc(). Use VSIFree() to free.
+ *
+ * If the pointer is NULL, VSIRealloc is equivalent to VSIMalloc.
+ */
 void *VSIRealloc(void *pData, size_t nNewSize)
 
 {
@@ -824,7 +827,11 @@ void *VSIRealloc(void *pData, size_t nNewSize)
 /************************************************************************/
 
 /** Analog of free() for data allocated with VSIMalloc(), VSICalloc(),
- * VSIRealloc() */
+ * VSIRealloc().
+ *
+ * It is not an error to call VSIFree with a NULL pointer, and it will
+ * have no effect.
+ */
 void VSIFree(void *pData)
 
 {
