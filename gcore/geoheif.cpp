@@ -86,12 +86,27 @@ void GeoHEIF::setModelTransformation(const uint8_t *payload, size_t length)
 
 CPLErr GeoHEIF::GetGeoTransform(double *padfTransform) const
 {
-    padfTransform[1] = modelTransform[1];
-    padfTransform[2] = modelTransform[2];
-    padfTransform[0] = modelTransform[0];
-    padfTransform[4] = modelTransform[4];
-    padfTransform[5] = modelTransform[5];
-    padfTransform[3] = modelTransform[3];
+    std::vector<int> axes =
+        has_SRS() ? m_oSRS.GetDataAxisToSRSAxisMapping() : std::vector<int>();
+
+    if (axes.size() && axes[0] != 1)
+    {
+        padfTransform[1] = modelTransform[4];
+        padfTransform[2] = modelTransform[5];
+        padfTransform[0] = modelTransform[3];
+        padfTransform[4] = modelTransform[1];
+        padfTransform[5] = modelTransform[2];
+        padfTransform[3] = modelTransform[0];
+    }
+    else
+    {
+        padfTransform[1] = modelTransform[1];
+        padfTransform[2] = modelTransform[2];
+        padfTransform[0] = modelTransform[0];
+        padfTransform[4] = modelTransform[4];
+        padfTransform[5] = modelTransform[5];
+        padfTransform[3] = modelTransform[3];
+    }
     return CE_None;
 }
 
@@ -152,6 +167,7 @@ void GeoHEIF::extractSRS(const uint8_t *payload, size_t length) const
         CPLDebug("GeoHEIF", "CRS encoding is not supported");
         return;
     }
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 }
 
 void GeoHEIF::addGCPs(const uint8_t *data, size_t length)
