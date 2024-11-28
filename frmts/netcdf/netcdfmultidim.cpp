@@ -2646,8 +2646,9 @@ std::shared_ptr<OGRSpatialReference> netCDFVariable::GetSpatialRef() const
         m_poSRS.reset(poSRS->Clone());
         if (iDimX > 0 && iDimY > 0)
         {
-            if (m_poSRS->GetDataAxisToSRSAxisMapping() ==
-                std::vector<int>{2, 1})
+            const auto &oMapping = m_poSRS->GetDataAxisToSRSAxisMapping();
+            if (oMapping == std::vector<int>{2, 1} ||
+                oMapping == std::vector<int>{2, 1, 3})
                 m_poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
             else
                 m_poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
