@@ -1137,6 +1137,33 @@ def test_zarr_read_classic_2d():
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
 
+def test_zarr_read_classic_2d_authority_compliant_crs_with_latlon_order():
+
+    try:
+        src_ds = gdal.Open("data/small_world_400pct_1band.vrt")
+        src_srs = src_ds.GetSpatialRef()
+        assert src_srs is not None
+        assert src_srs.GetAuthorityCode(None) == "4326"
+
+        filename = "/vsimem/test.zarr"
+        gdal.GetDriverByName("ZARR").CreateCopy(filename, src_ds, strict=False)
+        ds = gdal.Open(filename)
+
+        assert ds is not None
+        srs = ds.GetSpatialRef()
+        assert srs is not None
+        assert srs.GetAuthorityCode(None) == "4326"
+        # 1. Axis order of CRS is lat/lon because axis mapping strategy is authority compliant
+        # 2. CreateCopy() creates axis order with lat/lon order
+        # 3. This would lead to axis order mapping of [1, 2], but the 2D API swaps
+        #    the axis order again
+        # Therefore, we expect this:
+        assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+        ds = None
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
 def test_zarr_read_classic_2d_with_unrelated_auxiliary_1D_arrays():
 
     try:
