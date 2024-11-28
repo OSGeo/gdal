@@ -1380,6 +1380,9 @@ GDALDriver *GDALPluginDriverProxy::GetRealDriver()
     }
     else
     {
+#ifdef GDAL_NO_AUTOLOAD
+        return nullptr;
+#else
         CPLString osFuncName;
         if (STARTS_WITH(m_osPluginFileName.c_str(), "gdal_"))
         {
@@ -1443,6 +1446,7 @@ GDALDriver *GDALPluginDriverProxy::GetRealDriver()
                 poDriverManager->m_oMapRealDrivers.erase(oIter);
             }
         }
+#endif  // GDAL_NO_AUTOLOAD
     }
 
     if (m_poRealDriver)
