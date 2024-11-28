@@ -2798,11 +2798,13 @@ void ZarrArray::ParseSpecialAttributes(
         }
         if (iDimX > 0 && iDimY > 0)
         {
-            if (poSRS->GetDataAxisToSRSAxisMapping() == std::vector<int>{2, 1})
-                poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
-            else if (poSRS->GetDataAxisToSRSAxisMapping() ==
-                     std::vector<int>{1, 2})
-                poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
+            const bool bIsSRSNorthingEastingOrdered =
+                poSRS->EPSGTreatsAsLatLong() ||
+                poSRS->EPSGTreatsAsNorthingEasting();
+            if (bIsSRSNorthingEastingOrdered &&
+                poSRS->GetAxisMappingStrategy() == OAMS_AUTHORITY_COMPLIANT)
+                std::swap(iDimX, iDimY);
+            poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
         }
 
         SetSRS(poSRS);
