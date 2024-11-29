@@ -7173,14 +7173,16 @@ char *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
     // When converting to hex, each byte takes 2 hex characters.  In addition
     // we add in 8 characters to represent the SRID integer in hex, and
     // one for a null terminator.
-
-    const size_t nTextSize = nWkbSize * 2 + 8 + 1;
-    if (nTextSize > static_cast<size_t>(std::numeric_limits<int>::max()))
+    // The limit of INT_MAX = 2 GB is a bit artificial, but at time of writing
+    // (2024), PostgreSQL by default cannot handle objects larger than 1 GB:
+    // https://github.com/postgres/postgres/blob/5d39becf8ba0080c98fee4b63575552f6800b012/src/include/utils/memutils.h#L40
+    if (nWkbSize >
+        static_cast<size_t>(std::numeric_limits<int>::max() - 8 - 1) / 2)
     {
-        // FIXME: artificial limitation
         CPLFree(pabyWKB);
         return CPLStrdup("");
     }
+    const size_t nTextSize = nWkbSize * 2 + 8 + 1;
     char *pszTextBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(nTextSize));
     if (pszTextBuf == nullptr)
     {
@@ -7230,10 +7232,14 @@ char *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
     // Copy the rest of the data over - subtract
     // 5 since we already copied 5 bytes above.
     pszHex = CPLBinaryToHex(static_cast<int>(nWkbSize - 5), pabyWKB + 5);
+    CPLFree(pabyWKB);
+    if (!pszHex || pszHex[0] == 0)
+    {
+        CPLFree(pszTextBuf);
+        return pszHex;
+    }
     strcpy(pszTextBufCurrent, pszHex);
     CPLFree(pszHex);
-
-    CPLFree(pabyWKB);
 
     return pszTextBuf;
 }
