@@ -811,27 +811,9 @@ int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
     /*      Fetch the GeoJSON result.                                        */
     /* -------------------------------------------------------------------- */
-    char *papsOptions[] = {
-        const_cast<char *>("HEADERS=Accept: text/plain, application/json"),
-        nullptr};
-
-    CPLHTTPResult *pResult = CPLHTTPFetch(pszSource, papsOptions);
-
-    /* -------------------------------------------------------------------- */
-    /*      Try to handle CURL/HTTP errors.                                 */
-    /* -------------------------------------------------------------------- */
-    if (nullptr == pResult || 0 == pResult->nDataLen ||
-        0 != CPLGetLastErrorNo())
+    CPLHTTPResult *pResult = GeoJSONHTTPFetchWithContentTypeHeader(pszSource);
+    if (!pResult)
     {
-        CPLHTTPDestroyResult(pResult);
-        return FALSE;
-    }
-
-    if (0 != pResult->nStatus)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Curl reports error: %d: %s",
-                 pResult->nStatus, pResult->pszErrBuf);
-        CPLHTTPDestroyResult(pResult);
         return FALSE;
     }
 

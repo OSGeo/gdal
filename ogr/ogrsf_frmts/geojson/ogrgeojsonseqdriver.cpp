@@ -837,26 +837,11 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
         }
         else
         {
-            const char *const papsOptions[] = {
-                "HEADERS=Accept: text/plain, application/json", nullptr};
-
             CPLHTTPResult *pResult =
-                CPLHTTPFetch(pszUnprefixedFilename, papsOptions);
-
-            if (nullptr == pResult || 0 == pResult->nDataLen ||
-                0 != CPLGetLastErrorNo())
+                GeoJSONHTTPFetchWithContentTypeHeader(pszUnprefixedFilename);
+            if (!pResult)
             {
-                CPLHTTPDestroyResult(pResult);
-                return false;
-            }
-
-            if (0 != pResult->nStatus)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Curl reports error: %d: %s", pResult->nStatus,
-                         pResult->pszErrBuf);
-                CPLHTTPDestroyResult(pResult);
-                return false;
+                return FALSE;
             }
 
             m_osTmpFile = VSIMemGenerateHiddenFilename("geojsonseq");
