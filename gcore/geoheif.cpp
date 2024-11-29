@@ -124,12 +124,12 @@ void GeoHEIF::extractSRS(const uint8_t *payload, size_t length) const
     }
     else if (crsEncoding == "curi")
     {
-        if ((crs.at(0) != '[') || (crs.at(crs.length() - 1) != ']'))
+        if ((crs.at(0) != '[') || (crs.at(crs.length() - 2) != ']'))
         {
             CPLDebug("GeoHEIF", "CRS CURIE is not a safe CURIE");
             return;
         }
-        std::string curie = crs.substr(1, crs.length() - 2);
+        std::string curie = crs.substr(1, crs.length() - 3);
         size_t separatorPos = curie.find(':');
         if (separatorPos == std::string::npos)
         {

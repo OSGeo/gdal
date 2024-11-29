@@ -282,6 +282,9 @@ def test_avif_geoheif_wkt2():
     assert ds.GetGeoTransform() == pytest.approx(
         [691000.0, 0.1, 0.0, 6090000.0, 0.0, -0.1]
     )
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetSpatialRef().GetAuthorityName(None) == "EPSG"
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "28355"
     assert ds.GetGCPCount() == 1
     gcp = ds.GetGCPs()[0]
     assert (
@@ -313,6 +316,10 @@ def test_avif_geoheif_uri():
     assert ds.GetGeoTransform() == pytest.approx(
         [691051.2, 0.1, 0.0, 6090000.0, 0.0, -0.1]
     )
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetSpatialRef().GetAuthorityName(None) == "EPSG"
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "32755"
+
     assert ds.GetGCPCount() == 1
     gcp = ds.GetGCPs()[0]
     assert (
@@ -340,6 +347,10 @@ def test_avif_geoheif_curie():
         == 'CCBY "Jacobs Group (Australia) Pty Ltd and Australian Capital Territory"'
     )
     assert ds.GetMetadataItem("TAGS", "DESCRIPTION_en-AU") == "copyright"
+    assert ds.GetSpatialRef() is not None
+    assert ds.GetSpatialRef().GetAuthorityName(None) == "EPSG"
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "32755"
+
     assert ds.GetGeoTransform() is not None
     assert ds.GetGeoTransform() == pytest.approx(
         [691051.2, 0.1, 0.0, 6090000.0, 0.0, -0.1]

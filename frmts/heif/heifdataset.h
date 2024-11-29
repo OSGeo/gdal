@@ -44,6 +44,7 @@ class GDALHEIFDataset final : public GDALPamDataset
 #endif
 
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+    void processProperties();
     gdal::GeoHEIF geoHEIF{};
 #endif
 
@@ -62,7 +63,6 @@ class GDALHEIFDataset final : public GDALPamDataset
     bool Init(GDALOpenInfo *poOpenInfo);
     void ReadMetadata();
     void OpenThumbnails();
-    void ExtractUserDescription(const uint8_t *payload, size_t length);
 
 #ifdef HAS_CUSTOM_FILE_WRITER
     static heif_error VFS_WriterCallback(struct heif_context *ctx,
