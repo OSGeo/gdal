@@ -184,7 +184,16 @@ void OGRGeometryCollection::empty()
 OGRGeometryCollection *OGRGeometryCollection::clone() const
 
 {
-    return new (std::nothrow) OGRGeometryCollection(*this);
+    auto ret = new (std::nothrow) OGRGeometryCollection(*this);
+    if (ret)
+    {
+        if (ret->WkbSize() != WkbSize())
+        {
+            delete ret;
+            ret = nullptr;
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/

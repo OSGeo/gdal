@@ -3072,7 +3072,16 @@ OGRLinearRing *OGRLineString::CastToLinearRing(OGRLineString *poLS)
 
 OGRLineString *OGRLineString::clone() const
 {
-    return new (std::nothrow) OGRLineString(*this);
+    auto ret = new (std::nothrow) OGRLineString(*this);
+    if (ret)
+    {
+        if (ret->getNumPoints() != getNumPoints())
+        {
+            delete ret;
+            ret = nullptr;
+        }
+    }
+    return ret;
 }
 
 //! @cond Doxygen_Suppress

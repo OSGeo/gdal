@@ -68,7 +68,16 @@ OGRCompoundCurve &OGRCompoundCurve::operator=(const OGRCompoundCurve &other)
 OGRCompoundCurve *OGRCompoundCurve::clone() const
 
 {
-    return new (std::nothrow) OGRCompoundCurve(*this);
+    auto ret = new (std::nothrow) OGRCompoundCurve(*this);
+    if (ret)
+    {
+        if (ret->WkbSize() != WkbSize())
+        {
+            delete ret;
+            ret = nullptr;
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/

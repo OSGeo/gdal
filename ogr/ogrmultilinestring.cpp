@@ -65,7 +65,16 @@ OGRMultiLineString::operator=(const OGRMultiLineString &other)
 OGRMultiLineString *OGRMultiLineString::clone() const
 
 {
-    return new (std::nothrow) OGRMultiLineString(*this);
+    auto ret = new (std::nothrow) OGRMultiLineString(*this);
+    if (ret)
+    {
+        if (ret->WkbSize() != WkbSize())
+        {
+            delete ret;
+            ret = nullptr;
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/
