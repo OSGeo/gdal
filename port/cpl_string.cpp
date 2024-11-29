@@ -2785,12 +2785,19 @@ char *CPLUnescapeString(const char *pszInput, int *pnLength, int nScheme)
 char *CPLBinaryToHex(int nBytes, const GByte *pabyData)
 
 {
-    char *pszHex = static_cast<char *>(CPLMalloc(nBytes * 2 + 1));
+    CPLAssert(nBytes >= 0);
+    char *pszHex = static_cast<char *>(
+        VSI_MALLOC_VERBOSE(static_cast<size_t>(nBytes) * 2 + 1));
+    if (!pszHex)
+    {
+        pszHex = CPLStrdup("");
+        return pszHex;
+    }
     pszHex[nBytes * 2] = '\0';
 
     constexpr char achHex[] = "0123456789ABCDEF";
 
-    for (int i = 0; i < nBytes; ++i)
+    for (size_t i = 0; i < static_cast<size_t>(nBytes); ++i)
     {
         const int nLow = pabyData[i] & 0x0f;
         const int nHigh = (pabyData[i] & 0xf0) >> 4;
