@@ -1942,8 +1942,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
         else
             osCommand += ", ";
 
-        osCommand =
-            osCommand +
+        osCommand +=
             OGRPGEscapeColumnName(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
     }
 
@@ -1956,7 +1955,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
     bNeedComma = FALSE;
     for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
     {
-        OGRPGGeomFieldDefn *poGeomFieldDefn =
+        const OGRPGGeomFieldDefn *poGeomFieldDefn =
             poFeatureDefn->GetGeomFieldDefn(i);
         OGRGeometry *poGeom = poFeature->GetGeomFieldRef(i);
         if (poGeom == nullptr)
@@ -1982,10 +1981,27 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
             char *pszHexEWKB = OGRGeometryToHexEWKB(
                 poGeom, nSRSId, poDS->sPostGISVersion.nMajor,
                 poDS->sPostGISVersion.nMinor);
+            if (!pszHexEWKB || pszHexEWKB[0] == 0)
+            {
+                return OGRERR_FAILURE;
+            }
+            osCommand += '\'';
+            try
+            {
+                osCommand += pszHexEWKB;
+            }
+            catch (const std::bad_alloc &)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Out of memory: too large geometry");
+                CPLFree(pszHexEWKB);
+                return OGRERR_FAILURE;
+            }
+            osCommand += "'::";
             if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY)
-                osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
+                osCommand += "GEOGRAPHY";
             else
-                osCommand += CPLString().Printf("'%s'::GEOMETRY", pszHexEWKB);
+                osCommand += "GEOMETRY";
             CPLFree(pszHexEWKB);
         }
         else if (!bWkbAsOid)
@@ -1994,15 +2010,24 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
                 GeometryToBYTEA(poGeom, poDS->sPostGISVersion.nMajor,
                                 poDS->sPostGISVersion.nMinor);
 
-            if (pszBytea != nullptr)
+            if (!pszBytea)
             {
-                osCommand += "E'";
-                osCommand += pszBytea;
-                osCommand += '\'';
-                CPLFree(pszBytea);
+                return OGRERR_FAILURE;
             }
-            else
-                osCommand += "''";
+            osCommand += "E'";
+            try
+            {
+                osCommand += pszBytea;
+            }
+            catch (const std::bad_alloc &)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Out of memory: too large geometry");
+                CPLFree(pszBytea);
+                return OGRERR_FAILURE;
+            }
+            osCommand += '\'';
+            CPLFree(pszBytea);
         }
         else if (poGeomFieldDefn->ePostgisType ==
                  GEOM_TYPE_WKB /* && bWkbAsOid */)
@@ -2083,7 +2108,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "INSERT command for new feature failed.\n%s\nCommand: %s",
-                 PQerrorMessage(hPGConn), osCommand.c_str());
+                 PQerrorMessage(hPGConn), osCommand.substr(0, 1024).c_str());
 
         if (!bHasWarnedAlreadySetFID && poFeature->GetFID() != OGRNullFID &&
             pszFIDColumn != nullptr)
@@ -2125,7 +2150,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
     /* First process geometry */
     for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
     {
-        OGRPGGeomFieldDefn *poGeomFieldDefn =
+        const OGRPGGeomFieldDefn *poGeomFieldDefn =
             poFeatureDefn->GetGeomFieldDefn(i);
         OGRGeometry *poGeom = poFeature->GetGeomFieldRef(i);
 
@@ -2147,6 +2172,10 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
                 pszGeom = OGRGeometryToHexEWKB(poGeom, poGeomFieldDefn->nSRSId,
                                                poDS->sPostGISVersion.nMajor,
                                                poDS->sPostGISVersion.nMinor);
+            if (!pszGeom || pszGeom[0] == 0)
+            {
+                return OGRERR_FAILURE;
+            }
         }
 
         if (!osCommand.empty())
@@ -2154,7 +2183,17 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
 
         if (pszGeom)
         {
-            osCommand += pszGeom;
+            try
+            {
+                osCommand += pszGeom;
+            }
+            catch (const std::bad_alloc &)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Out of memory: too large geometry");
+                CPLFree(pszGeom);
+                return OGRERR_FAILURE;
+            }
             CPLFree(pszGeom);
         }
         else
