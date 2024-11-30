@@ -124,7 +124,9 @@ void GeoHEIF::extractSRS(const uint8_t *payload, size_t length) const
     }
     else if (crsEncoding == "curi")
     {
-        if ((crs.at(0) != '[') || (crs.at(crs.length() - 2) != ']'))
+        // null terminated string in the form "[EPSG:4326]"
+        if ((crs.at(0) != '[') || (crs.at(crs.length() - 2) != ']') ||
+            (crs.at(crs.length() - 1) != '\0'))
         {
             CPLDebug("GeoHEIF", "CRS CURIE is not a safe CURIE");
             return;
