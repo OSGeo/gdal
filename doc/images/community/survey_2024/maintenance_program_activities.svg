@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' class='svglite' width='504.00pt' height='360.00pt' viewBox='0 0 504.00 360.00'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: none;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='360.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+</g>
+<defs>
+  <clipPath id='cpMTQ2LjI4fDQ5OC41MnwzNy42OXwzMjcuOTc='>
+    <rect x='146.28' y='37.69' width='352.24' height='290.27' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMTQ2LjI4fDQ5OC41MnwzNy42OXwzMjcuOTc=)'>
+<polyline points='198.21,327.97 198.21,37.69 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='270.05,327.97 270.05,37.69 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='341.88,327.97 341.88,37.69 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='413.72,327.97 413.72,37.69 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='485.56,327.97 485.56,37.69 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='146.28,71.19 498.52,71.19 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='146.28,238.65 498.52,238.65 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='146.28,182.83 498.52,182.83 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='146.28,294.47 498.52,294.47 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='146.28,127.01 498.52,127.01 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='162.29,327.97 162.29,37.69 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='234.13,327.97 234.13,37.69 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='305.97,327.97 305.97,37.69 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='377.80,327.97 377.80,37.69 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='449.64,327.97 449.64,37.69 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<rect x='162.29' y='213.53' width='299.89' height='50.24' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='162.29' y='157.71' width='296.50' height='50.24' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='162.29' y='269.35' width='320.22' height='50.24' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='162.29' y='101.89' width='128.77' height='50.24' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='162.29' y='46.07' width='121.99' height='50.24' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+<text x='141.35' y='74.39' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>VSI enhancements</text>
+<text x='141.35' y='241.86' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>Python bindings improvements</text>
+<text x='141.35' y='186.04' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>Documentation improvements</text>
+<text x='141.35' y='292.93' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>Dependency enhancements</text>
+<text x='141.35' y='302.43' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>(PROJ, GEOS, libgeotiff, libtiff)</text>
+<text x='141.35' y='125.46' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>Build system refactor</text>
+<text x='141.35' y='134.97' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>(CMake, plugin loading, etc.</text>
+<polyline points='143.54,71.19 146.28,71.19 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='143.54,238.65 146.28,238.65 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='143.54,182.83 146.28,182.83 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='143.54,294.47 146.28,294.47 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='143.54,127.01 146.28,127.01 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='162.29,330.71 162.29,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='234.13,330.71 234.13,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='305.97,330.71 305.97,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='377.80,330.71 377.80,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='449.64,330.71 449.64,327.97 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<text x='162.29' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>0</text>
+<text x='234.13' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>10</text>
+<text x='305.97' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>20</text>
+<text x='377.80' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>30</text>
+<text x='449.64' y='339.31' text-anchor='middle' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;'>40</text>
+<text x='322.40' y='352.10' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;'>Percent of responses</text>
+<text transform='translate(13.50,182.83) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;'>Activity</text>
+<text x='146.28' y='15.10' style='font-size: 13.20px; font-family: Arial;'>Which maintenance program-funded activity </text>
+<text x='146.28' y='29.35' style='font-size: 13.20px; font-family: Arial;'>improved your usability of GDAL?</text>
+</g>
+</svg>
