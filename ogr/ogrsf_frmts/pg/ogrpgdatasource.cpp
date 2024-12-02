@@ -649,12 +649,16 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
          osSearchPath.find(osPostgisSchema) == std::string::npos))
     {
         std::string osNewSearchPath;
-        if (osActiveSchema != "public")
+        if (!osActiveSchema.empty() && osActiveSchema != "public")
         {
             osNewSearchPath +=
                 OGRPGEscapeString(hPGConn, osActiveSchema.c_str());
         }
-        if (!osSearchPath.empty() && osSearchPath != "\"\"")
+        // SHOW search_path reports "", but SET search_path doesn't accept it!
+        // It must be transformed to ''
+        if (STARTS_WITH(osSearchPath.c_str(), "\"\""))
+            osSearchPath = "''" + osSearchPath.substr(2);
+        if (!osSearchPath.empty())
         {
             if (!osNewSearchPath.empty())
                 osNewSearchPath += ',';
@@ -668,34 +672,38 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
             osNewSearchPath +=
                 OGRPGEscapeString(hPGConn, osPostgisSchema.c_str());
         }
-        CPLDebug("PG", "Modifying search_path from %s to %s",
-                 osSearchPath.c_str(), osNewSearchPath.c_str());
-
-        std::string osCommand = "SET search_path=" + osNewSearchPath;
-        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-
-        if (!hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK)
+        if (osNewSearchPath != osSearchPath)
         {
-            OGRPGClearResult(hResult);
-            CPLDebug("PG", "Command \"%s\" failed. Trying without 'public'.",
-                     osCommand.c_str());
-            osCommand = CPLSPrintf(
-                "SET search_path=%s",
-                OGRPGEscapeString(hPGConn, osActiveSchema.c_str()).c_str());
-            PGresult *hResult2 = OGRPG_PQexec(hPGConn, osCommand.c_str());
+            CPLDebug("PG", "Modifying search_path from %s to %s",
+                     osSearchPath.c_str(), osNewSearchPath.c_str());
 
-            if (!hResult2 || PQresultStatus(hResult2) != PGRES_COMMAND_OK)
+            std::string osCommand = "SET search_path=" + osNewSearchPath;
+            PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+
+            if (!hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK)
             {
-                OGRPGClearResult(hResult2);
+                OGRPGClearResult(hResult);
+                CPLDebug("PG",
+                         "Command \"%s\" failed. Trying without 'public'.",
+                         osCommand.c_str());
+                osCommand = CPLSPrintf(
+                    "SET search_path=%s",
+                    OGRPGEscapeString(hPGConn, osActiveSchema.c_str()).c_str());
+                PGresult *hResult2 = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
-                CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                         PQerrorMessage(hPGConn));
+                if (!hResult2 || PQresultStatus(hResult2) != PGRES_COMMAND_OK)
+                {
+                    OGRPGClearResult(hResult2);
 
-                return FALSE;
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                             PQerrorMessage(hPGConn));
+
+                    return FALSE;
+                }
             }
-        }
 
-        OGRPGClearResult(hResult);
+            OGRPGClearResult(hResult);
+        }
     }
 
     /* -------------------------------------------------------------------- */
