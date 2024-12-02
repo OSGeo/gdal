@@ -1652,7 +1652,7 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
             oEvaluator.RegisterVariable(osName, &adfValuesForPixel[iSource++]);
         }
     }
-    oEvaluator.RegisterVector("ALL", &adfValuesForPixel);
+    oEvaluator.RegisterVector("BANDS", &adfValuesForPixel);
 
     double *padfResults =
         static_cast<double *>(CPLMalloc(nXSize * sizeof(double)));

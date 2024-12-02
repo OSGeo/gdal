@@ -1206,7 +1206,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
     "expression,src,expected,error,env",
     [
         pytest.param(
-            "return [ALL_BANDS[1], ALL_BANDS[2]]",
+            "return [BANDS[1], BANDS[2]]",
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[[3, 4]], [[5, 6]]]),
             None,
@@ -1214,7 +1214,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             id="multiple bands in, multiple bands out (1)",
         ),
         pytest.param(
-            "return [ALL_BANDS]",
+            "return [BANDS]",
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             None,
@@ -1226,14 +1226,14 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
              // Reduce every 10 bands of input into a single
              // band of output, using avg()
              const var chunksize := 10;
-             const var outsize := ALL_BANDS[] / chunksize;
+             const var outsize := BANDS[] / chunksize;
 
              var chunk[chunksize];
              var out[outsize];
 
              for (var i := 0; i < out[]; i += 1) {
                 for (var j := 0; j < chunk[]; j += 1) {
-                    chunk[j] := ALL_BANDS[i * chunk[] + j];
+                    chunk[j] := BANDS[i * chunk[] + j];
                 };
                 out[i] := avg(chunk);
              };
@@ -1254,7 +1254,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             id="multiple bands in, single band out (1)",
         ),
         pytest.param(
-            "ALL_BANDS[0]",
+            "BANDS[0]",
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[1, 2]]),
             None,
@@ -1278,7 +1278,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             id="return wrong number of bands",
         ),
         pytest.param(
-            "return [ALL_BANDS, B2]",
+            "return [BANDS, B2]",
             np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
             np.array([[1, 2]]),
             "must return a vector or a list of scalars",
