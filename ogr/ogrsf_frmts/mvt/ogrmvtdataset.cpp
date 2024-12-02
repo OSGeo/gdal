@@ -3301,6 +3301,8 @@ class OGRMVTWriterDataset final : public GDALDataset
     CPLString m_osType{"overlay"};
     sqlite3 *m_hDBMBTILES = nullptr;
     OGREnvelope m_oEnvelope;
+    bool m_bMaxTileSizeOptSpecified = false;
+    bool m_bMaxFeaturesOptSpecified = false;
     unsigned m_nMaxTileSize = 500000;
     unsigned m_nMaxFeatures = 200000;
     std::map<std::string, std::string> m_oMapLayerNameToDesc;
@@ -4972,11 +4974,28 @@ std::string OGRMVTWriterDataset::EncodeTile(
     const double dfCompressionRatio =
         static_cast<double>(nSizeAfter) / nSizeBefore;
 
+    const bool bTooManyFeatures = nFeaturesInTile >= m_nMaxFeatures;
+    if (bTooManyFeatures && !m_bMaxFeaturesOptSpecified)
+    {
+        m_bMaxFeaturesOptSpecified = true;
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "At least one tile exceeded the default maximum number of "
+                 "features per tile (%u) and was truncated to satisfy it.",
+                 m_nMaxFeatures);
+    }
+
     // If the tile size is above the allowed values or there are too many
     // features, then sort by descending area / length until we get to the
     // limit.
     bool bTooBigTile = oTileBuffer.size() > m_nMaxTileSize;
-    const bool bTooManyFeatures = nFeaturesInTile >= m_nMaxFeatures;
+    if (bTooBigTile && !m_bMaxTileSizeOptSpecified)
+    {
+        m_bMaxTileSizeOptSpecified = true;
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "At least one tile exceeded the default maximum tile size of "
+                 "%u bytes and was encoded at lower resolution",
+                 m_nMaxTileSize);
+    }
 
     GUInt32 nExtent = m_nExtent;
     while (bTooBigTile && !bTooManyFeatures && nExtent >= 256)
@@ -6087,14 +6106,32 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
     poDS->m_nBuffer = static_cast<unsigned>(atoi(CSLFetchNameValueDef(
         papszOptions, "BUFFER", CPLSPrintf("%u", 5 * poDS->m_nExtent / 256))));
 
-    poDS->m_nMaxTileSize =
-        std::max(100U, static_cast<unsigned>(atoi(CSLFetchNameValueDef(
-                           papszOptions, "MAX_SIZE",
-                           CPLSPrintf("%u", poDS->m_nMaxTileSize)))));
-    poDS->m_nMaxFeatures =
-        std::max(1U, static_cast<unsigned>(atoi(CSLFetchNameValueDef(
-                         papszOptions, "MAX_FEATURES",
-                         CPLSPrintf("%u", poDS->m_nMaxFeatures)))));
+    {
+        const char *pszMaxSize = CSLFetchNameValue(papszOptions, "MAX_SIZE");
+        poDS->m_bMaxTileSizeOptSpecified = pszMaxSize != nullptr;
+        // This is used by unit tests
+        pszMaxSize = CSLFetchNameValueDef(papszOptions, "@MAX_SIZE_FOR_TEST",
+                                          pszMaxSize);
+        if (pszMaxSize)
+        {
+            poDS->m_nMaxTileSize =
+                std::max(100U, static_cast<unsigned>(atoi(pszMaxSize)));
+        }
+    }
+
+    {
+        const char *pszMaxFeatures =
+            CSLFetchNameValue(papszOptions, "MAX_FEATURES");
+        poDS->m_bMaxFeaturesOptSpecified = pszMaxFeatures != nullptr;
+        pszMaxFeatures = CSLFetchNameValueDef(
+            // This is used by unit tests
+            papszOptions, "@MAX_FEATURES_FOR_TEST", pszMaxFeatures);
+        if (pszMaxFeatures)
+        {
+            poDS->m_nMaxFeatures =
+                std::max(1U, static_cast<unsigned>(atoi(pszMaxFeatures)));
+        }
+    }
 
     poDS->m_osName =
         CSLFetchNameValueDef(papszOptions, "NAME", CPLGetBasename(pszFilename));
