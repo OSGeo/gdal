@@ -2895,7 +2895,7 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
 
     char **argNames = GDALAlgorithmGetArgNames(hAlg.get());
     ASSERT_NE(argNames, nullptr);
-    EXPECT_EQ(CSLCount(argNames), 10);
+    EXPECT_EQ(CSLCount(argNames), 12);
     CSLDestroy(argNames);
 
     EXPECT_EQ(GDALAlgorithmGetArg(hAlg.get(), "non_existing"), nullptr);

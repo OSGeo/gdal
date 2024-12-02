@@ -715,11 +715,18 @@ GDALAlgorithm::GDALAlgorithm(const std::string &name,
         .SetOnlyForCLI()
         .SetCategory(GAAC_COMMON)
         .AddAction([this]() { m_specialActionRequested = true; });
+    AddArg("version", 0, _("Display GDAL version and exit"), &m_dummyBoolean)
+        .SetOnlyForCLI()
+        .SetCategory(GAAC_COMMON);
     AddArg("json-usage", 0, _("Display usage as JSON document and exit"),
            &m_JSONUsageRequested)
         .SetOnlyForCLI()
         .SetCategory(GAAC_COMMON)
         .AddAction([this]() { m_specialActionRequested = true; });
+    AddArg("drivers", 0, _("Display driver list as JSON document and exit"),
+           &m_dummyBoolean)
+        .SetOnlyForCLI()
+        .SetCategory(GAAC_COMMON);
 }
 
 /************************************************************************/
@@ -2222,18 +2229,27 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
     osRet += osPath;
 
     bool hasNonPositionals = false;
+    for (const auto &arg : m_args)
+    {
+        if (!arg->IsHiddenForCLI() && !arg->IsPositional())
+            hasNonPositionals = true;
+    }
 
     if (HasSubAlgorithms())
     {
         if (m_callPath.size() == 1)
         {
-            osRet += " <COMMAND>\n";
-            osRet += "where <COMMAND> is one of:\n";
+            osRet += " <COMMAND>";
+            if (hasNonPositionals)
+                osRet += " [OPTIONS]";
+            osRet += "\nwhere <COMMAND> is one of:\n";
         }
         else
         {
-            osRet += " <SUBCOMMAND>\n";
-            osRet += "where <SUBCOMMAND> is one of:\n";
+            osRet += " <SUBCOMMAND>";
+            if (hasNonPositionals)
+                osRet += " [OPTIONS]";
+            osRet += "\nwhere <SUBCOMMAND> is one of:\n";
         }
         size_t maxNameLen = 0;
         for (const auto &subAlgName : GetSubAlgorithmNames())
@@ -2271,15 +2287,16 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
             }
             osRet += '\n';
         }
+
+        if (shortUsage && hasNonPositionals)
+        {
+            osRet += "\nTry '";
+            osRet += osPath;
+            osRet += " --help' for help.\n";
+        }
     }
     else
     {
-        for (const auto &arg : m_args)
-        {
-            if (!arg->IsHiddenForCLI() && !arg->IsPositional())
-                hasNonPositionals = true;
-        }
-
         if (!m_args.empty())
         {
             if (hasNonPositionals)
@@ -2313,7 +2330,7 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
         osRet += '\n';
     }
 
-    if (!m_args.empty())
+    if (!m_args.empty() && !shortUsage)
     {
         std::vector<std::pair<GDALAlgorithmArg *, std::string>> options;
         size_t maxOptLen;

@@ -2092,6 +2092,7 @@ class CPL_DLL GDALAlgorithmRegistry
     bool m_specialActionRequested = false;
     bool m_helpRequested = false;
     bool m_JSONUsageRequested = false;
+    bool m_dummyBoolean = false;  // Used for --version
     std::vector<std::unique_ptr<GDALAlgorithmArg>> m_args{};
     std::map<std::string, GDALAlgorithmArg *> m_mapLongNameToArg{};
     std::map<std::string, GDALAlgorithmArg *> m_mapShortNameToArg{};
