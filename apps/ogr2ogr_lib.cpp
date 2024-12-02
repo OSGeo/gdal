@@ -2218,6 +2218,88 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
 }
 
 /************************************************************************/
+/*                           CopyRelationships()                        */
+/************************************************************************/
+
+static void CopyRelationships(GDALDataset *poODS, GDALDataset *poDS)
+{
+    if (!poODS->GetDriver()->GetMetadataItem(GDAL_DCAP_CREATE_RELATIONSHIP))
+        return;
+
+    const auto aosRelationshipNames = poDS->GetRelationshipNames();
+    if (aosRelationshipNames.empty())
+        return;
+
+    // Collect target layer names
+    std::set<std::string> oSetDestLayerNames;
+    for (const auto &poLayer : poDS->GetLayers())
+    {
+        oSetDestLayerNames.insert(poLayer->GetName());
+    }
+
+    // Iterate over all source relationships
+    for (const auto &osRelationshipName : aosRelationshipNames)
+    {
+        const auto poSrcRelationship =
+            poDS->GetRelationship(osRelationshipName);
+        if (!poSrcRelationship)
+            continue;
+
+        // Skip existing relationship of the same name
+        if (poODS->GetRelationship(osRelationshipName))
+            continue;
+
+        bool canAdd = true;
+        const auto &osLeftTableName = poSrcRelationship->GetLeftTableName();
+        if (!osLeftTableName.empty() &&
+            !cpl::contains(oSetDestLayerNames, osLeftTableName))
+        {
+            CPLDebug("GDALVectorTranslate",
+                     "Skipping relationship %s because its left table (%s) "
+                     "does not exist in target dataset",
+                     osRelationshipName.c_str(), osLeftTableName.c_str());
+            canAdd = false;
+        }
+
+        const auto &osRightTableName = poSrcRelationship->GetRightTableName();
+        if (!osRightTableName.empty() &&
+            !cpl::contains(oSetDestLayerNames, osRightTableName))
+        {
+            CPLDebug("GDALVectorTranslate",
+                     "Skipping relationship %s because its right table (%s) "
+                     "does not exist in target dataset",
+                     osRelationshipName.c_str(), osRightTableName.c_str());
+            canAdd = false;
+        }
+
+        const auto &osMappingTableName =
+            poSrcRelationship->GetMappingTableName();
+        if (!osMappingTableName.empty() &&
+            !cpl::contains(oSetDestLayerNames, osMappingTableName))
+        {
+            CPLDebug("GDALVectorTranslate",
+                     "Skipping relationship %s because its mapping table (%s) "
+                     "does not exist in target dataset",
+                     osRelationshipName.c_str(), osMappingTableName.c_str());
+            canAdd = false;
+        }
+
+        if (canAdd)
+        {
+            std::string osFailureReason;
+            if (!poODS->AddRelationship(
+                    std::make_unique<GDALRelationship>(*poSrcRelationship),
+                    osFailureReason))
+            {
+                CPLDebug("GDALVectorTranslate",
+                         "Cannot add relationship %s: %s",
+                         osRelationshipName.c_str(), osFailureReason.c_str());
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                           GDALVectorTranslate()                      */
 /************************************************************************/
 /**
@@ -3590,6 +3672,9 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 GDALDestroyScaledProgress(pProgressArg);
         }
     }
+
+    CopyRelationships(poODS, poDS);
+
     /* -------------------------------------------------------------------- */
     /*      Process DS style table                                          */
     /* -------------------------------------------------------------------- */
