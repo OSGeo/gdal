@@ -284,7 +284,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_HTTP_COOKIEJAR", // from cpl_http.cpp
    "GDAL_HTTP_ENABLE_ADVISE_READ", // from cpl_vsil_curl.cpp
    "GDAL_HTTP_HEADER_FILE", // from cpl_google_cloud.cpp, cpl_http.cpp
-   "GDAL_HTTP_HEADERS", // from cpl_google_cloud.cpp, cpl_http.cpp
+   "GDAL_HTTP_HEADERS", // from cpl_google_cloud.cpp, cpl_http.cpp, ogrgeojsonutils.cpp
    "GDAL_HTTP_KEYPASSWD", // from cpl_http.cpp
    "GDAL_HTTP_LOW_SPEED_LIMIT", // from cpl_http.cpp
    "GDAL_HTTP_LOW_SPEED_TIME", // from cpl_http.cpp
