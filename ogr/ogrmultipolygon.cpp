@@ -62,7 +62,16 @@ OGRMultiPolygon &OGRMultiPolygon::operator=(const OGRMultiPolygon &other)
 OGRMultiPolygon *OGRMultiPolygon::clone() const
 
 {
-    return new (std::nothrow) OGRMultiPolygon(*this);
+    auto ret = new (std::nothrow) OGRMultiPolygon(*this);
+    if (ret)
+    {
+        if (ret->WkbSize() != WkbSize())
+        {
+            delete ret;
+            ret = nullptr;
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/
