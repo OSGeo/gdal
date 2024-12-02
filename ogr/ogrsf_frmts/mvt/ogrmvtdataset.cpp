@@ -6109,6 +6109,7 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
     {
         const char *pszMaxSize = CSLFetchNameValue(papszOptions, "MAX_SIZE");
         poDS->m_bMaxTileSizeOptSpecified = pszMaxSize != nullptr;
+        // This is used by unit tests
         pszMaxSize = CSLFetchNameValueDef(papszOptions, "@MAX_SIZE_FOR_TEST",
                                           pszMaxSize);
         if (pszMaxSize)
@@ -6123,6 +6124,7 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
             CSLFetchNameValue(papszOptions, "MAX_FEATURES");
         poDS->m_bMaxFeaturesOptSpecified = pszMaxFeatures != nullptr;
         pszMaxFeatures = CSLFetchNameValueDef(
+            // This is used by unit tests
             papszOptions, "@MAX_FEATURES_FOR_TEST", pszMaxFeatures);
         if (pszMaxFeatures)
         {
