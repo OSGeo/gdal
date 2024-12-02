@@ -140,6 +140,13 @@ jobs:
             build_script: build.sh
             os: ubuntu-22.04
 
+          - name: Ubuntu 24.04, s390x
+            id: s390x
+            container: s390x
+            build_script: build.sh
+            test_script: test.sh
+            os: ubuntu-22.04
+
     name: ${{ matrix.name }}
 
     runs-on: ${{ matrix.os }}
@@ -182,6 +189,11 @@ jobs:
       - name: Login to GHCR
         if: env.CONTAINER_REGISTRY == 'ghcr.io'
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
+      - name: Enable Docker qemu
+        shell: bash -l {0}
+        run: |
+          docker run --rm --privileged linuxkit/binfmt:v0.8
 
         # Pull build environment in forks or pull requests, unless [skip cache] is included in the commit message
       - name: Pull build environment
