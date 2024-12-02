@@ -56,6 +56,11 @@ target_compile_options(alg PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_
                                    ${WFLAG_EFFCXX}>)
 target_compile_options(alg PRIVATE $<$<COMPILE_LANGUAGE:C>:${GDAL_C_WARNING_FLAGS}>)
 
+target_compile_definitions(alg PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+if (USE_PRECOMPILED_HEADERS)
+    target_precompile_headers(alg REUSE_FROM gdal_priv_header)
+endif()
+
 target_include_directories(
   alg PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/marching_squares>
               $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>)
@@ -101,8 +106,12 @@ if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
 endif()
 
 if (HAVE_SSE_AT_COMPILE_TIME)
-  target_sources(alg PRIVATE gdalgridsse.cpp)
-  target_compile_definitions(alg PRIVATE -DHAVE_SSE_AT_COMPILE_TIME)
+  add_library(alg_gdalgridsse OBJECT gdalgridsse.cpp)
+  add_dependencies(alg_gdalgridsse generate_gdal_version_h)
+  target_compile_definitions(alg_gdalgridsse PRIVATE -DHAVE_SSE_AT_COMPILE_TIME)
+  gdal_standard_includes(alg_gdalgridsse)
+  set_property(TARGET alg_gdalgridsse PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:alg_gdalgridsse>)
   if (NOT "${GDAL_SSE_FLAG}" STREQUAL "")
     set_property(
       SOURCE gdalgridsse.cpp
@@ -111,8 +120,12 @@ if (HAVE_SSE_AT_COMPILE_TIME)
   endif ()
 endif ()
 if (HAVE_AVX_AT_COMPILE_TIME)
-  target_sources(alg PRIVATE gdalgridavx.cpp)
-  target_compile_definitions(alg PRIVATE -DHAVE_AVX_AT_COMPILE_TIME)
+  add_library(alg_gdalgridavx OBJECT gdalgridavx.cpp)
+  add_dependencies(alg_gdalgridavx generate_gdal_version_h)
+  target_compile_definitions(alg_gdalgridavx PRIVATE -DHAVE_AVX_AT_COMPILE_TIME)
+  gdal_standard_includes(alg_gdalgridavx)
+  set_property(TARGET alg_gdalgridavx PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:alg_gdalgridavx>)
   if (NOT "${GDAL_AVX_FLAG}" STREQUAL "")
     set_property(
       SOURCE gdalgridavx.cpp

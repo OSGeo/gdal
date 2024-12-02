@@ -224,6 +224,17 @@ All cached entries can be viewed using ``cmake -LAH`` from a build directory.
     `CMAKE_SKIP_INSTALL_RPATH <https://cmake.org/cmake/help/latest/variable/CMAKE_SKIP_INSTALL_RPATH.html>`__
     variable is not set.
 
+.. option:: USE_CCACHE=ON
+
+    Whether cached build using `ccache <https://ccache.dev/>`__ should be enabled.
+    This defaults to ON when :program:`ccache` is found.
+
+.. option:: USE_PRECOMPILED_HEADER=OFF
+
+    Whether builds with precompiled headers should be enabled. This may speed
+    up the build process. This is still a bit experimental, so it is disabled by
+    default. It also cannot be enabled when using the Visual Studio C++ compiler.
+
 Resource files embedding
 ++++++++++++++++++++++++
 

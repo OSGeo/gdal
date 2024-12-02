@@ -121,7 +121,7 @@ function(_set_driver_core_sources _KEY _DRIVER_TARGET)
 endfunction()
 
 function(add_gdal_driver)
-    set(_options BUILTIN PLUGIN_CAPABLE NO_DEPS STRONG_CXX_WFLAGS CXX_WFLAGS_EFFCXX NO_CXX_WFLAGS NO_SHARED_SYMBOL_WITH_CORE)
+    set(_options BUILTIN PLUGIN_CAPABLE NO_DEPS STRONG_CXX_WFLAGS CXX_WFLAGS_EFFCXX NO_CXX_WFLAGS NO_SHARED_SYMBOL_WITH_CORE SKIP_GDAL_PRIV_HEADER)
     set(_oneValueArgs TARGET DESCRIPTION DEF PLUGIN_CAPABLE_IF DRIVER_NAME_OPTION)
     set(_multiValueArgs SOURCES CORE_SOURCES)
     cmake_parse_arguments(_DRIVER "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
@@ -323,6 +323,13 @@ function(add_gdal_driver)
             endif ()
         endif ()
     endif ()
+
+    target_compile_definitions(${_DRIVER_TARGET} PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+
+    if (USE_PRECOMPILED_HEADERS AND NOT _DRIVER_SKIP_GDAL_PRIV_HEADER)
+        target_precompile_headers(${_DRIVER_TARGET} REUSE_FROM gdal_priv_header)
+    endif()
+
     if (_DRIVER_CXX_WFLAGS_EFFCXX)
         target_compile_options(${_DRIVER_TARGET} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_FLAGS} ${WFLAG_EFFCXX}>)
     elseif (_DRIVER_STRONG_CXX_WFLAGS)

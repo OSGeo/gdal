@@ -374,6 +374,23 @@ if(OGR_ENABLE_DRIVER_TAB AND
     option(OGR_ENABLE_DRIVER_TAB_PLUGIN "Set ON to build OGR MapInfo TAB and MIF/MID driver as plugin" ON)
 endif()
 
+# Precompiled header
+if (USE_PRECOMPILED_HEADERS)
+  include(GdalStandardIncludes)
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/gcore/empty_c.c" "")
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/gcore/empty.cpp" "")
+  add_library(gdal_priv_header OBJECT "${CMAKE_CURRENT_BINARY_DIR}/gcore/empty_c.c" "${CMAKE_CURRENT_BINARY_DIR}/gcore/empty.cpp")
+  gdal_standard_includes(gdal_priv_header)
+  add_dependencies(gdal_priv_header generate_gdal_version_h)
+  target_compile_options(gdal_priv_header PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX}> $<$<COMPILE_LANGUAGE:C>:${GDAL_C_WARNING_FLAGS}>)
+  target_compile_definitions(gdal_priv_header PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+  set_property(TARGET gdal_priv_header PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+  target_precompile_headers(gdal_priv_header PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/gcore/gdal_priv.h>
+    $<$<COMPILE_LANGUAGE:C>:${CMAKE_CURRENT_SOURCE_DIR}/port/cpl_port.h>
+  )
+endif()
+
 # Core components
 add_subdirectory(alg)
 add_subdirectory(ogr)

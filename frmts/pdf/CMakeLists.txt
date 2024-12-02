@@ -20,6 +20,7 @@ add_gdal_driver(
           pdfcreatefromcomposition.cpp
   CORE_SOURCES pdfdrivercore.cpp
   STRONG_CXX_WFLAGS
+  SKIP_GDAL_PRIV_HEADER
   PLUGIN_CAPABLE
   NO_SHARED_SYMBOL_WITH_CORE)
 
