@@ -11932,7 +11932,8 @@ OGRErr OGRSpatialReference::importFromEPSGA(int nCode)
     CPLString osCode;
     osCode.Printf("%d", nCode);
     PJ *obj;
-    if (nCode <= 100000)
+    constexpr int FIRST_NON_DEPRECATED_ESRI_CODE = 53001;
+    if (nCode < FIRST_NON_DEPRECATED_ESRI_CODE)
     {
         obj = proj_create_from_database(d->getPROJContext(), "EPSG",
                                         osCode.c_str(), PJ_CATEGORY_CRS, true,
