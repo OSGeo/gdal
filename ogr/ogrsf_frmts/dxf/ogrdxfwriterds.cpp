@@ -16,6 +16,7 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <limits>
 
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
@@ -680,7 +681,7 @@ bool OGRDXFWriterDS::WriteNewLayerDefinitions(VSILFILE *fpOut)
             }
             else if (anDefaultLayerCode[i] == 5)
             {
-                long nIgnored;
+                unsigned int nIgnored;
                 if (!WriteEntityID(fpOut, nIgnored))
                     return false;
             }
@@ -723,7 +724,7 @@ bool OGRDXFWriterDS::WriteNewLineTypeRecords(VSILFILE *fpIn)
     for (const auto &oPair : oNewLineTypes)
     {
         bRet &= WriteValue(fpIn, 0, "LTYPE");
-        long nIgnored;
+        unsigned int nIgnored;
         bRet &= WriteEntityID(fpIn, nIgnored);
         bRet &= WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
         bRet &= WriteValue(fpIn, 100, "AcDbLinetypeTableRecord");
@@ -764,7 +765,7 @@ bool OGRDXFWriterDS::WriteNewTextStyleRecords(VSILFILE *fpIn)
     for (auto &oPair : oNewTextStyles)
     {
         bRet &= WriteValue(fpIn, 0, "STYLE");
-        long nIgnored;
+        unsigned int nIgnored;
         bRet &= WriteEntityID(fpIn, nIgnored);
         bRet &= WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
         bRet &= WriteValue(fpIn, 100, "AcDbTextStyleTableRecord");
@@ -839,7 +840,7 @@ bool OGRDXFWriterDS::WriteNewBlockRecords(VSILFILE *fpIn)
         /* --------------------------------------------------------------------
          */
         bRet &= WriteValue(fpIn, 0, "BLOCK_RECORD");
-        long nIgnored;
+        unsigned int nIgnored;
         bRet &= WriteEntityID(fpIn, nIgnored);
         bRet &= WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
         bRet &= WriteValue(fpIn, 100, "AcDbBlockTableRecord");
@@ -888,7 +889,7 @@ bool OGRDXFWriterDS::WriteNewBlockDefinitions(VSILFILE *fpIn)
                  poThisBlockFeat->GetFieldAsString("Block"));
 
         bRet &= WriteValue(fpIn, 0, "BLOCK");
-        long nIgnored;
+        unsigned int nIgnored;
         bRet &= WriteEntityID(fpIn, nIgnored);
         bRet &= WriteValue(fpIn, 100, "AcDbEntity");
         if (strlen(poThisBlockFeat->GetFieldAsString("Layer")) > 0)
@@ -1027,22 +1028,26 @@ bool OGRDXFWriterDS::CheckEntityID(const char *pszEntityID)
 /*                           WriteEntityID()                            */
 /************************************************************************/
 
-bool OGRDXFWriterDS::WriteEntityID(VSILFILE *fpIn, long &nAssignedFID,
-                                   long nPreferredFID)
+bool OGRDXFWriterDS::WriteEntityID(VSILFILE *fpIn, unsigned int &nAssignedFID,
+                                   GIntBig nPreferredFID)
 
 {
     CPLString osEntityID;
 
-    if (nPreferredFID != OGRNullFID)
+    // From https://github.com/OSGeo/gdal/issues/11299 it seems that 0 is an
+    // invalid handle value.
+    if (nPreferredFID > 0 &&
+        nPreferredFID <=
+            static_cast<GIntBig>(std::numeric_limits<unsigned int>::max()))
     {
 
-        osEntityID.Printf("%X", (unsigned int)nPreferredFID);
+        osEntityID.Printf("%X", static_cast<unsigned int>(nPreferredFID));
         if (!CheckEntityID(osEntityID))
         {
             aosUsedEntities.insert(osEntityID);
             if (!WriteValue(fpIn, 5, osEntityID))
                 return false;
-            nAssignedFID = nPreferredFID;
+            nAssignedFID = static_cast<unsigned int>(nPreferredFID);
             return true;
         }
     }
