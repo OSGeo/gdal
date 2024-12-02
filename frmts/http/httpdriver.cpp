@@ -11,6 +11,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_error_internal.h"
 #include "cpl_string.h"
 #include "cpl_http.h"
 #include "gdal_frmts.h"
@@ -133,11 +134,27 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
     /*      Try opening this result as a gdaldataset.                       */
     /* -------------------------------------------------------------------- */
     /* suppress errors as not all drivers support /vsimem */
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    GDALDataset *poDS = (GDALDataset *)GDALOpenEx(
-        osResultFilename, poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
-        poOpenInfo->papszAllowedDrivers, poOpenInfo->papszOpenOptions, nullptr);
-    CPLPopErrorHandler();
+
+    GDALDataset *poDS;
+    std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors;
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLInstallErrorHandlerAccumulator(aoErrors);
+        poDS = GDALDataset::Open(osResultFilename,
+                                 poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
+                                 poOpenInfo->papszAllowedDrivers,
+                                 poOpenInfo->papszOpenOptions, nullptr);
+        CPLUninstallErrorHandlerAccumulator();
+    }
+
+    // Re-emit silenced errors if open was successful
+    if (poDS)
+    {
+        for (const auto &oError : aoErrors)
+        {
+            CPLError(oError.type, oError.no, "%s", oError.msg.c_str());
+        }
+    }
 
     // The JP2OpenJPEG driver may need to reopen the file, hence this special
     // behavior
@@ -171,10 +188,10 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            poDS = (GDALDataset *)GDALOpenEx(
-                osTempFilename, poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
-                poOpenInfo->papszAllowedDrivers, poOpenInfo->papszOpenOptions,
-                nullptr);
+            poDS = GDALDataset::Open(osTempFilename,
+                                     poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
+                                     poOpenInfo->papszAllowedDrivers,
+                                     poOpenInfo->papszOpenOptions, nullptr);
             if (VSIUnlink(osTempFilename) != 0 && poDS != nullptr)
                 poDS->MarkSuppressOnClose(); /* VSIUnlink() may not work on
                                                 windows */
