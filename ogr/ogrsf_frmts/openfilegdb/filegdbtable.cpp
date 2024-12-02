@@ -2545,21 +2545,21 @@ int FileGDBTable::GetIndexCount()
     GUInt32 i;
     for (i = 0; i < nIndexCount; i++)
     {
-        returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
                                     sizeof(GUInt32),
                                 VSIFree(pabyIdx));
-        const GUInt32 nIdxNameCarCount = GetUInt32(pabyCur, 0);
+        const GUInt32 nIdxNameCharCount = GetUInt32(pabyCur, 0);
         pabyCur += sizeof(GUInt32);
-        returnErrorAndCleanupIf(nIdxNameCarCount > 1024, VSIFree(pabyIdx));
-        returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
-                                    2 * nIdxNameCarCount,
+        returnErrorAndCleanupIf(nIdxNameCharCount > 1024, VSIFree(pabyIdx));
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
+                                    2 * nIdxNameCharCount,
                                 VSIFree(pabyIdx));
         const std::string osIndexName(
-            ReadUTF16String(pabyCur, nIdxNameCarCount));
-        pabyCur += 2 * nIdxNameCarCount;
+            ReadUTF16String(pabyCur, nIdxNameCharCount));
+        pabyCur += 2 * nIdxNameCharCount;
 
         // 4 "magic fields"
-        returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
                                     sizeof(GUInt16) + sizeof(GUInt32) +
                                         sizeof(GUInt16) + sizeof(GUInt32),
                                 VSIFree(pabyIdx));
@@ -2583,16 +2583,16 @@ int FileGDBTable::GetIndexCount()
             // Skip magic fields
             pabyCur += sizeof(GUInt16);
 
-            const GUInt32 nColNameCarCount = nMagic2;
+            const GUInt32 nColNameCharCount = nMagic2;
             pabyCur += sizeof(GUInt32);
-            returnErrorAndCleanupIf(nColNameCarCount > 1024, VSIFree(pabyIdx));
-            returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
-                                        2 * nColNameCarCount,
+            returnErrorAndCleanupIf(nColNameCharCount > 1024, VSIFree(pabyIdx));
+            returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
+                                        2 * nColNameCharCount,
                                     VSIFree(pabyIdx));
-            pabyCur += 2 * nColNameCarCount;
+            pabyCur += 2 * nColNameCharCount;
 
             // Skip magic field
-            returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
+            returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
                                         sizeof(GUInt16),
                                     VSIFree(pabyIdx));
             pabyCur += sizeof(GUInt16);
@@ -2604,21 +2604,21 @@ int FileGDBTable::GetIndexCount()
         pabyCur += sizeof(GUInt16) + sizeof(GUInt32) + sizeof(GUInt16) +
                    sizeof(GUInt32);
 
-        returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
                                     sizeof(GUInt32),
                                 VSIFree(pabyIdx));
-        const GUInt32 nColNameCarCount = GetUInt32(pabyCur, 0);
+        const GUInt32 nColNameCharCount = GetUInt32(pabyCur, 0);
         pabyCur += sizeof(GUInt32);
-        returnErrorAndCleanupIf(nColNameCarCount > 1024, VSIFree(pabyIdx));
-        returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
-                                    2 * nColNameCarCount,
+        returnErrorAndCleanupIf(nColNameCharCount > 1024, VSIFree(pabyIdx));
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
+                                    2 * nColNameCharCount,
                                 VSIFree(pabyIdx));
         const std::string osExpression(
-            ReadUTF16String(pabyCur, nColNameCarCount));
-        pabyCur += 2 * nColNameCarCount;
+            ReadUTF16String(pabyCur, nColNameCharCount));
+        pabyCur += 2 * nColNameCharCount;
 
         // Skip magic field
-        returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
+        returnErrorAndCleanupIf(static_cast<size_t>(pabyEnd - pabyCur) <
                                     sizeof(GUInt16),
                                 VSIFree(pabyIdx));
         pabyCur += sizeof(GUInt16);
@@ -3284,16 +3284,16 @@ bool FileGDBOGRGeometryConverterImpl::ReadPartDefs(
         nCurves = 0;
         return true;
     }
-    returnErrorIf(nPoints > static_cast<GUInt32>(pabyEnd - pabyCur));
+    returnErrorIf(nPoints > static_cast<size_t>(pabyEnd - pabyCur));
     if (bIsMultiPatch)
         returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd));
     returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nParts));
-    returnErrorIf(nParts > static_cast<GUInt32>(pabyEnd - pabyCur));
+    returnErrorIf(nParts > static_cast<size_t>(pabyEnd - pabyCur));
     returnErrorIf(nParts > static_cast<GUInt32>(INT_MAX) / sizeof(GUInt32));
     if (bHasCurveDesc)
     {
         returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nCurves));
-        returnErrorIf(nCurves > static_cast<GUInt32>(pabyEnd - pabyCur));
+        returnErrorIf(nCurves > static_cast<size_t>(pabyEnd - pabyCur));
     }
     else
         nCurves = 0;
@@ -3314,7 +3314,7 @@ bool FileGDBOGRGeometryConverterImpl::ReadPartDefs(
     {
         GUInt32 nTmp;
         returnErrorIf(!ReadVarUInt32(pabyCur, pabyEnd, nTmp));
-        returnErrorIf(nTmp > static_cast<GUInt32>(pabyEnd - pabyCur));
+        returnErrorIf(nTmp > static_cast<size_t>(pabyEnd - pabyCur));
         panPointCount[i] = nTmp;
         nSumNPartsM1 += nTmp;
     }
