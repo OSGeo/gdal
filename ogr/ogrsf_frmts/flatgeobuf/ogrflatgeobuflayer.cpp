@@ -26,6 +26,7 @@
 #include "geometrywriter.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <new>
 #include <stdexcept>
@@ -70,7 +71,9 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
     m_hasM = m_poHeader->has_m();
     m_hasT = m_poHeader->has_t();
     const auto envelope = m_poHeader->envelope();
-    if (envelope && envelope->size() == 4)
+    if (envelope && envelope->size() == 4 && std::isfinite((*envelope)[0]) &&
+        std::isfinite((*envelope)[1]) && std::isfinite((*envelope)[2]) &&
+        std::isfinite((*envelope)[3]))
     {
         m_sExtent.MinX = (*envelope)[0];
         m_sExtent.MinY = (*envelope)[1];
@@ -535,8 +538,7 @@ bool OGRFlatGeobufLayer::CreateFinalFile()
     // no spatial index requested, we are (almost) done
     if (!m_bCreateSpatialIndexAtClose)
     {
-        if (m_poFpWrite == nullptr || m_featuresCount == 0 ||
-            !SupportsSeekWhileWriting(m_osFilename))
+        if (m_poFpWrite == nullptr || !SupportsSeekWhileWriting(m_osFilename))
         {
             return true;
         }
@@ -545,14 +547,24 @@ bool OGRFlatGeobufLayer::CreateFinalFile()
         VSIFSeekL(m_poFpWrite, 0, SEEK_SET);
         m_writeOffset = 0;
         std::vector<double> extentVector;
-        extentVector.push_back(m_sExtent.MinX);
-        extentVector.push_back(m_sExtent.MinY);
-        extentVector.push_back(m_sExtent.MaxX);
-        extentVector.push_back(m_sExtent.MaxY);
+        if (!m_sExtent.IsInit())
+        {
+            extentVector.resize(4, std::numeric_limits<double>::quiet_NaN());
+        }
+        else
+        {
+            extentVector.push_back(m_sExtent.MinX);
+            extentVector.push_back(m_sExtent.MinY);
+            extentVector.push_back(m_sExtent.MaxX);
+            extentVector.push_back(m_sExtent.MaxY);
+        }
         writeHeader(m_poFpWrite, m_featuresCount, &extentVector);
         // Sanity check to verify that the dummy header and the real header
         // have the same size.
-        CPLAssert(m_writeOffset == m_offsetAfterHeader);
+        if (m_featuresCount)
+        {
+            CPLAssert(m_writeOffset == m_offsetAfterHeader);
+        }
         CPL_IGNORE_RET_VAL(m_writeOffset);  // otherwise checkers might tell the
                                             // member is not used
         return true;
