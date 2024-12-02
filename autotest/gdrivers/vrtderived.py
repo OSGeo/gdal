@@ -1124,10 +1124,10 @@ def vrt_expression_xml(tmpdir, expression, sources):
             id="implicit source name",
         ),
         pytest.param(
-            "B1 / sum(ALL)",
+            "B1 / sum(BANDS)",
             [("", 3), ("", 5), ("", 31)],
             3 / (3 + 5 + 31),
-            id="use of ALL variable",
+            id="use of BANDS variable",
         ),
         pytest.param(
             "B1 / sum(B2, B3) ",

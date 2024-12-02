@@ -1489,7 +1489,7 @@ class ExpressionData
             std::string osVar = "B" + std::to_string(i + 1);
             m_oEvaluator.RegisterVariable(osVar, &m_adfValuesForPixel[i]);
         }
-        m_oEvaluator.RegisterVector("ALL_BANDS", &m_adfValuesForPixel);
+        m_oEvaluator.RegisterVector("BANDS", &m_adfValuesForPixel);
     }
 
     CPLErr Compile()
