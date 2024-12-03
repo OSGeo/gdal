@@ -24,6 +24,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <limits>
 #include <sstream>
 #include <thread>
 
