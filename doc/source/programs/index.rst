@@ -10,6 +10,17 @@ Programs
 Starting with GDAL 3.11, parts of the GDAL utilities are available from a new
 single :program:`gdal` program that accepts commands and subcommands.
 
+.. warning::
+
+    The :program:`gdal` command is provisionally provided as an alternative
+    interface to GDAL and OGR command line utilities. The project reserves the
+    right to modify, rename, reorganize, and change the behavior of the utility
+    until it is officially frozen via PSC vote in a future major GDAL release.
+    The utility needs time to mature, benefit from incremental feedback, and
+    explore enhancements without carrying the burden of full backward compatibility.
+    Your usage of it should have no expectation of compatibility until that time.
+
+
 .. toctree::
    :maxdepth: 1
    :hidden:
