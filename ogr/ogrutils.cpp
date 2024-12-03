@@ -54,11 +54,11 @@ namespace
 {
 
 // Remove trailing zeros except the last one.
-std::string removeTrailingZeros(std::string s)
+void removeTrailingZeros(std::string &s)
 {
     auto pos = s.find('.');
     if (pos == std::string::npos)
-        return s;
+        return;
 
     // Remove zeros at the end.  We know this won't be npos because we
     // have a decimal point.
@@ -68,11 +68,10 @@ std::string removeTrailingZeros(std::string s)
     // Make sure there is one 0 after the decimal point.
     if (s.back() == '.')
         s += '0';
-    return s;
 }
 
 // Round a string representing a number by 1 in the least significant digit.
-std::string roundup(std::string s)
+void roundup(std::string &s)
 {
     // Remove a negative sign if it exists to make processing
     // more straigtforward.
@@ -103,37 +102,51 @@ std::string roundup(std::string s)
     }
     if (negative)
         s = '-' + s;
-    return s;
 }
 
 // This attempts to eliminate what is likely binary -> decimal representation
 // error or the result of low-order rounding with calculations.  The result
 // may be more visually pleasing and takes up fewer places.
-std::string intelliround(std::string &s)
+void intelliround(std::string &s)
 {
-    // If there is no decimal point, just return.
-    auto dotPos = s.find(".");
-    if (dotPos == std::string::npos)
-        return s;
+    const size_t len = s.size();
 
-    // Don't mess with exponential formatting.
-    if (s.find_first_of("eE") != std::string::npos)
-        return s;
-    size_t iDotPos = static_cast<size_t>(dotPos);
+    // If we don't have ten characters (a bit arbitrary), don't do anything.
+    constexpr size_t MIN_THRESHOLD_FOR_INELLIROUND = 10;
+    if (len <= MIN_THRESHOLD_FOR_INELLIROUND)
+        return;
+
+    // If there is no decimal point, just return.
+    size_t iDotPos = std::string::npos;
+    size_t i = 0;
+    for (; i < len; ++i)
+    {
+        if (s[i] == '.')
+        {
+            iDotPos = i;
+            break;
+        }
+    }
+    if (iDotPos == std::string::npos)
+        return;
+    for (; i < len; ++i)
+    {
+        if (s[i] == 'e' || s[i] == 'E')
+        {
+            // Don't mess with exponential formatting.
+            return;
+        }
+    }
+
     size_t nCountBeforeDot = iDotPos - 1;
     if (s[0] == '-')
         nCountBeforeDot--;
-    size_t i = s.size();
-
-    // If we don't have ten characters, don't do anything.
-    if (i <= 10)
-        return s;
 
     /* -------------------------------------------------------------------- */
     /*      Trim trailing 00000x's as they are likely roundoff error.       */
     /* -------------------------------------------------------------------- */
-    if (s[i - 2] == '0' && s[i - 3] == '0' && s[i - 4] == '0' &&
-        s[i - 5] == '0' && s[i - 6] == '0')
+    if (s[len - 2] == '0' && s[len - 3] == '0' && s[len - 4] == '0' &&
+        s[len - 5] == '0' && s[len - 6] == '0')
     {
         s.pop_back();
     }
@@ -145,35 +158,34 @@ std::string intelliround(std::string &s)
     // be generalized?
     // The value "12345.000000011" invokes this case, if anyone
     // is interested.
-    else if (iDotPos < i - 8 && (nCountBeforeDot >= 4 || s[i - 3] == '0') &&
-             (nCountBeforeDot >= 5 || s[i - 4] == '0') &&
-             (nCountBeforeDot >= 6 || s[i - 5] == '0') &&
-             (nCountBeforeDot >= 7 || s[i - 6] == '0') &&
-             (nCountBeforeDot >= 8 || s[i - 7] == '0') && s[i - 8] == '0' &&
-             s[i - 9] == '0')
+    else if (iDotPos < len - 8 && (nCountBeforeDot >= 4 || s[len - 3] == '0') &&
+             (nCountBeforeDot >= 5 || s[len - 4] == '0') &&
+             (nCountBeforeDot >= 6 || s[len - 5] == '0') &&
+             (nCountBeforeDot >= 7 || s[len - 6] == '0') &&
+             (nCountBeforeDot >= 8 || s[len - 7] == '0') && s[len - 8] == '0' &&
+             s[len - 9] == '0')
     {
         s.resize(s.size() - 8);
     }
     /* -------------------------------------------------------------------- */
     /*      Trim trailing 99999x's as they are likely roundoff error.       */
     /* -------------------------------------------------------------------- */
-    else if (s[i - 2] == '9' && s[i - 3] == '9' && s[i - 4] == '9' &&
-             s[i - 5] == '9' && s[i - 6] == '9')
+    else if (s[len - 2] == '9' && s[len - 3] == '9' && s[len - 4] == '9' &&
+             s[len - 5] == '9' && s[len - 6] == '9')
     {
-        s.resize(i - 6);
-        s = roundup(s);
+        s.resize(len - 6);
+        roundup(s);
     }
-    else if (iDotPos < i - 9 && (nCountBeforeDot >= 4 || s[i - 3] == '9') &&
-             (nCountBeforeDot >= 5 || s[i - 4] == '9') &&
-             (nCountBeforeDot >= 6 || s[i - 5] == '9') &&
-             (nCountBeforeDot >= 7 || s[i - 6] == '9') &&
-             (nCountBeforeDot >= 8 || s[i - 7] == '9') && s[i - 8] == '9' &&
-             s[i - 9] == '9')
+    else if (iDotPos < len - 9 && (nCountBeforeDot >= 4 || s[len - 3] == '9') &&
+             (nCountBeforeDot >= 5 || s[len - 4] == '9') &&
+             (nCountBeforeDot >= 6 || s[len - 5] == '9') &&
+             (nCountBeforeDot >= 7 || s[len - 6] == '9') &&
+             (nCountBeforeDot >= 8 || s[len - 7] == '9') && s[len - 8] == '9' &&
+             s[len - 9] == '9')
     {
-        s.resize(i - 9);
-        s = roundup(s);
+        s.resize(len - 9);
+        roundup(s);
     }
-    return s;
 }
 
 }  // unnamed namespace
@@ -186,11 +198,7 @@ void OGRFormatDouble(char *pszBuffer, int nBufferLen, double dfVal,
                      char chDecimalSep, int nPrecision,
                      char chConversionSpecifier)
 {
-    OGRWktOptions opts;
-
-    opts.xyPrecision = nPrecision;
-    opts.zPrecision = nPrecision;
-    opts.mPrecision = nPrecision;
+    OGRWktOptions opts(nPrecision, OGRWktOptions::getDefaultRound());
     opts.format = (chConversionSpecifier == 'g' || chConversionSpecifier == 'G')
                       ? OGRWktFormat::G
                       : OGRWktFormat::F;
@@ -223,8 +231,10 @@ std::string OGRFormatDouble(double val, const OGRWktOptions &opts, int nDimIdx)
     if (std::isnan(val))
         return "nan";
 
+    static thread_local std::locale classic_locale = []()
+    { return std::locale::classic(); }();
     std::ostringstream oss;
-    oss.imbue(std::locale::classic());  // Make sure we output decimal points.
+    oss.imbue(classic_locale);  // Make sure we output decimal points.
     bool l_round(opts.round);
     if (opts.format == OGRWktFormat::F ||
         (opts.format == OGRWktFormat::Default && fabs(val) < 1))
@@ -243,8 +253,9 @@ std::string OGRFormatDouble(double val, const OGRWktOptions &opts, int nDimIdx)
     std::string sval = oss.str();
 
     if (l_round)
-        sval = intelliround(sval);
-    return removeTrailingZeros(std::move(sval));
+        intelliround(sval);
+    removeTrailingZeros(sval);
+    return sval;
 }
 
 /************************************************************************/
