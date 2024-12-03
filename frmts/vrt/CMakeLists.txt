@@ -26,7 +26,9 @@ target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw
 
 target_include_directories(gdal_vrt SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/third_party/exprtk)
 if (MSVC)
-    target_compile_options(gdal_vrt PRIVATE /bigobj)
+    set_source_files_properties(vrtexpression.cpp PROPERTIES COMPILE_FLAGS "/bigobj")
+elseif(MINGW)
+    set_source_files_properties(vrtexpression.cpp PROPERTIES COMPILE_FLAGS "-Wa,-mbig-obj")
 endif()
 
 

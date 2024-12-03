@@ -20,7 +20,17 @@
 #define exprtk_disable_rtl_io_file
 #define exprtk_disable_rtl_vecops
 #define exprtk_disable_string_capabilities
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+
 #include <exprtk.hpp>
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 #include <chrono>
 #include <cstdint>
