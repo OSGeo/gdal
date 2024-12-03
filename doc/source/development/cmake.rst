@@ -10,7 +10,7 @@ The recommended way to use the GDAL library 3.5 or higher in a CMake project is 
 link to the imported library target ``GDAL::GDAL`` provided by
 the CMake configuration which comes with the library. Typical usage is:
 
-.. code::
+.. code:: cmake
 
     find_package(GDAL CONFIG REQUIRED)
 
@@ -26,10 +26,26 @@ the cache variable or environment variable ``CMAKE_PREFIX_PATH``. In
 particular, CMake will consult (and set) the cache variable
 ``GDAL_DIR``.
 
+If a specific minor version is required, you can search for this via:
+
+.. code:: cmake
+
+    find_package(GDAL 3.10 CONFIG REQUIRED)
+
+If more than one minor version is to be supported at the same time,
+``${GDAL_VERSION}`` itself must be evaluated.
+
+.. code:: cmake
+
+    find_package(GDAL CONFIG REQUIRED)
+    if(GDAL_VERSION VERSION_LESS "3.7" OR GDAL_VERSION VERSION_GREATER "3.9")
+      message(FATAL_ERROR "Required at least GDAL version 3.7 - 3.9, but found ${GDAL_VERSION}.")
+    endif()
+
 Before GDAL 3.5, it is recommended to use `find module supplied with CMake <https://cmake.org/cmake/help/latest/module/FindGDAL.html>`__.
 This also creates the ``GDAL::GDAL`` target. It requires CMake version 3.14.
 
-.. code::
+.. code:: cmake
 
     cmake_minimum_required(VERSION 3.14)
 
