@@ -4733,13 +4733,62 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
                                         std::string &osGeolocYNameOut)
 {
     bool bAddGeoloc = false;
-    char *pszTemp = nullptr;
+    char *pszCoordinates = nullptr;
 
-    if (NCDFGetAttr(nGroupId, nVarId, "coordinates", &pszTemp) == CE_None)
+    // If there is no explicit "coordinates" attribute, check if there are
+    // "lon" and "lat" 2D variables whose dimensions are the last
+    // 2 ones of the variable of interest.
+    if (NCDFGetAttr(nGroupId, nVarId, "coordinates", &pszCoordinates) !=
+        CE_None)
+    {
+        CPLFree(pszCoordinates);
+        pszCoordinates = nullptr;
+
+        int nVarDims = 0;
+        NCDF_ERR(nc_inq_varndims(nGroupId, nVarId, &nVarDims));
+        if (nVarDims >= 2)
+        {
+            std::vector<int> anVarDimIds(nVarDims);
+            NCDF_ERR(nc_inq_vardimid(nGroupId, nVarId, anVarDimIds.data()));
+
+            int nLongitudeId = 0;
+            int nLatitudeId = 0;
+            if (nc_inq_varid(nGroupId, "lon", &nLongitudeId) == NC_NOERR &&
+                nc_inq_varid(nGroupId, "lat", &nLatitudeId) == NC_NOERR)
+            {
+                int nDimsLongitude = 0;
+                NCDF_ERR(
+                    nc_inq_varndims(nGroupId, nLongitudeId, &nDimsLongitude));
+                int nDimsLatitude = 0;
+                NCDF_ERR(
+                    nc_inq_varndims(nGroupId, nLatitudeId, &nDimsLatitude));
+                if (nDimsLongitude == 2 && nDimsLatitude == 2)
+                {
+                    std::vector<int> anDimLongitudeIds(2);
+                    NCDF_ERR(nc_inq_vardimid(nGroupId, nLongitudeId,
+                                             anDimLongitudeIds.data()));
+                    std::vector<int> anDimLatitudeIds(2);
+                    NCDF_ERR(nc_inq_vardimid(nGroupId, nLatitudeId,
+                                             anDimLatitudeIds.data()));
+                    if (anDimLongitudeIds == anDimLatitudeIds &&
+                        anVarDimIds[anVarDimIds.size() - 2] ==
+                            anDimLongitudeIds[0] &&
+                        anVarDimIds[anVarDimIds.size() - 1] ==
+                            anDimLongitudeIds[1])
+                    {
+                        pszCoordinates = CPLStrdup("lon lat");
+                    }
+                }
+            }
+        }
+    }
+
+    if (pszCoordinates)
     {
         // Get X and Y geolocation names from coordinates attribute.
-        char **papszTokens = NCDFTokenizeCoordinatesAttribute(pszTemp);
-        if (CSLCount(papszTokens) >= 2)
+        const CPLStringList aosCoordinates(
+            NCDFTokenizeCoordinatesAttribute(pszCoordinates));
+        if (aosCoordinates.size() >= 2)
         {
             char szGeolocXName[NC_MAX_NAME + 1];
             char szGeolocYName[NC_MAX_NAME + 1];
@@ -4747,32 +4796,32 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
             szGeolocYName[0] = '\0';
 
             // Test that each variable is longitude/latitude.
-            for (int i = 0; i < CSLCount(papszTokens); i++)
+            for (int i = 0; i < aosCoordinates.size(); i++)
             {
-                if (NCDFIsVarLongitude(nGroupId, -1, papszTokens[i]))
+                if (NCDFIsVarLongitude(nGroupId, -1, aosCoordinates[i]))
                 {
                     int nOtherGroupId = -1;
                     int nOtherVarId = -1;
                     // Check that the variable actually exists
                     // Needed on Sentinel-3 products
-                    if (NCDFResolveVar(nGroupId, papszTokens[i], &nOtherGroupId,
-                                       &nOtherVarId) == CE_None)
+                    if (NCDFResolveVar(nGroupId, aosCoordinates[i],
+                                       &nOtherGroupId, &nOtherVarId) == CE_None)
                     {
                         snprintf(szGeolocXName, sizeof(szGeolocXName), "%s",
-                                 papszTokens[i]);
+                                 aosCoordinates[i]);
                     }
                 }
-                else if (NCDFIsVarLatitude(nGroupId, -1, papszTokens[i]))
+                else if (NCDFIsVarLatitude(nGroupId, -1, aosCoordinates[i]))
                 {
                     int nOtherGroupId = -1;
                     int nOtherVarId = -1;
                     // Check that the variable actually exists
                     // Needed on Sentinel-3 products
-                    if (NCDFResolveVar(nGroupId, papszTokens[i], &nOtherGroupId,
-                                       &nOtherVarId) == CE_None)
+                    if (NCDFResolveVar(nGroupId, aosCoordinates[i],
+                                       &nOtherGroupId, &nOtherVarId) == CE_None)
                     {
                         snprintf(szGeolocYName, sizeof(szGeolocYName), "%s",
-                                 papszTokens[i]);
+                                 aosCoordinates[i]);
                     }
                 }
             }
@@ -4840,7 +4889,7 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
                              "cannot resolve location of "
                              "lat/lon variables specified by the coordinates "
                              "attribute [%s]",
-                             pszTemp);
+                             pszCoordinates);
                 }
                 CPLFree(pszGeolocXFullName);
                 CPLFree(pszGeolocYFullName);
@@ -4848,7 +4897,8 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
             else
             {
                 CPLDebug("GDAL_netCDF",
-                         "coordinates attribute [%s] is unsupported", pszTemp);
+                         "coordinates attribute [%s] is unsupported",
+                         pszCoordinates);
             }
         }
         else
@@ -4856,10 +4906,8 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
             CPLDebug("GDAL_netCDF",
                      "coordinates attribute [%s] with %d element(s) is "
                      "unsupported",
-                     pszTemp, CSLCount(papszTokens));
+                     pszCoordinates, aosCoordinates.size());
         }
-        if (papszTokens)
-            CSLDestroy(papszTokens);
     }
 
     else
@@ -4870,7 +4918,7 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
             bAddGeoloc = ProcessNASAEMITGeoLocation(nGroupId, nVarId);
     }
 
-    CPLFree(pszTemp);
+    CPLFree(pszCoordinates);
 
     return bAddGeoloc;
 }
