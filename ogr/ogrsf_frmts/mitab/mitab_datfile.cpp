@@ -207,6 +207,12 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
             m_poHeaderBlock->GotoByteInFile((i + 1) * 32);
             m_poHeaderBlock->ReadBytes(
                 11, reinterpret_cast<GByte *>(m_pasFieldDef[i].szName));
+            constexpr char HEADER_RECORD_TERMINATOR = 0x0D;
+            if (m_pasFieldDef[i].szName[0] == HEADER_RECORD_TERMINATOR)
+            {
+                m_numFields = i;
+                break;
+            }
             m_pasFieldDef[i].szName[10] = '\0';
             m_pasFieldDef[i].cType =
                 static_cast<char>(m_poHeaderBlock->ReadByte());

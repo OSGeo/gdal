@@ -2996,3 +2996,17 @@ def test_ogr_mitab_alter_field_defn_to_string(tmp_vsimem):
     assert fld_defn.GetWidth() == 254
     f = lyr.GetNextFeature()
     assert f["str_field"] == "1234"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mitab_read_dbf_with_delete_column():
+
+    with ogr.Open("data/mitab/tab_with_dbf_with_delete_column.tab") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetFieldCount() == 2
+        f = lyr.GetNextFeature()
+        assert f["id"] == 1
+        assert f["str"] == "foo"
