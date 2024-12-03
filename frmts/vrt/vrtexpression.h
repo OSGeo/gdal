@@ -17,6 +17,9 @@
 #include <string_view>
 #include <vector>
 
+/**
+ * Class to support evaluation of an expression using the exprtk library.
+ */
 class GDALExpressionEvaluator
 {
   public:
