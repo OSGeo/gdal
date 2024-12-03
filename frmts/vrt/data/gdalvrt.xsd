@@ -52,6 +52,11 @@
                         <xs:documentation>Allowed only if subClass="VRTProcessedDataset"</xs:documentation>
                     </xs:annotation>
                 </xs:element>
+                <xs:element name="OutputBands" type="OutputBandsType">
+                    <xs:annotation>
+                        <xs:documentation>Allowed only if subClass="VRTProcessedDataset"</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
                 <xs:element name="ProcessingSteps" type="ProcessingStepsType">
                     <xs:annotation>
                         <xs:documentation>Allowed only if subClass="VRTProcessedDataset"</xs:documentation>
@@ -193,6 +198,26 @@
                 <xs:element name="VRTDataset" type="VRTDatasetType"/>
             </xs:choice>
         </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="OutputBandsType">
+        <xs:sequence/>
+        <xs:attribute name="count" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>FROM_SOURCE, FROM_LAST_STEP or positive integer value.
+                If not specified, FROM_SOURCE is the default if there are no VRTRasterBand elements.
+                Otherwise, if there are VRTRasterBand elements, they are used.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="dataType" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>FROM_SOURCE, FROM_LAST_STEP or one of the allowed values of DataTypeType.
+                If not specified, FROM_SOURCE is the default if there are no VRTRasterBand elements.
+                Otherwise, if there are VRTRasterBand elements, they are used.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="ProcessingStepsType">
