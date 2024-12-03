@@ -311,6 +311,14 @@ class GDALExpressionEvaluator::Impl
 #endif
 };
 
+/**
+ * Define an expression to be evaluated using the exprtk library.
+ *
+ * @param osExpression the expression to evaluate. Refer to exprtk library documentation
+ *                     for details of the allowable syntax.
+ *
+ * @since 3.11
+ */
 GDALExpressionEvaluator::GDALExpressionEvaluator(std::string_view osExpression)
     : m_pImpl(std::make_unique<Impl>())
 {
@@ -321,28 +329,77 @@ GDALExpressionEvaluator::~GDALExpressionEvaluator()
 {
 }
 
+/**
+ * Register a variable to be used in the expression.
+ *
+ * The value of the variable may be changed during repeated evaluations of
+ * the expression, but its location in memory may not.
+ *
+ * @param osVariable The name of the variable
+ * @param pdfValue The location of the variable's value
+ *
+ * @since 3.11
+ */
 void GDALExpressionEvaluator::RegisterVariable(std::string_view osVariable,
                                                double *pdfValue)
 {
     m_pImpl->m_aoVariables.emplace_back(osVariable, pdfValue);
 }
 
+/**
+ * Register a vector to be used in the expression.
+ *
+ * The values and size of the vector may be changed during repeated evaluations
+ * of the expression, but its location in memory may not.
+ *
+ * @param osVariable The name of the vector
+ * @param padfValue The location of the vector
+ *
+ * @since 3.11
+ */
 void GDALExpressionEvaluator::RegisterVector(std::string_view osVariable,
                                              std::vector<double> *padfValue)
 {
     m_pImpl->m_aoVectors.emplace_back(osVariable, padfValue);
 }
 
+/**
+ * Compile the expression.
+ *
+ * If not called explicitly, the expression will be compiled the first time
+ * the expression is evaluated.
+ *
+ * @return CE_None if the expression can be successfully parsed and all
+ *                 symbols have been registered, CE_Failure otherwise.
+ *
+ * @since 3.11
+ */
 CPLErr GDALExpressionEvaluator::Compile()
 {
     return m_pImpl->compile();
 }
 
+/**
+ * Access the results from the last time the expression was evaluated.
+ *
+ * The returned vector is reused on subsequent evaluations of the expression.
+ *
+ * @return a reference to the vector in which results are stored.
+ *
+ * @since 3.11
+ */
 const std::vector<double> &GDALExpressionEvaluator::Results() const
 {
     return m_pImpl->m_adfResults;
 }
 
+/**
+ * @brief GDALExpressionEvaluator::Evaluate
+ *
+ * @return CE_None if the expression was successfully evaluated, CE_Failure otherwise.
+ *
+ * @since 3.11
+ */
 CPLErr GDALExpressionEvaluator::Evaluate()
 {
     return m_pImpl->evaluate();
