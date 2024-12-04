@@ -864,6 +864,63 @@ const char *OGRFieldDefn::GetFieldTypeName(OGRFieldType eType)
 }
 
 /************************************************************************/
+/*                          GetFieldTypeByName()                        */
+/************************************************************************/
+/**
+ * \brief Fetch field type by name.
+ * @param pszName the name of the field type.
+ * @return the field type or OFTString if there is no match with known type names.
+ * @since GDAL 3.11.0
+ */
+OGRFieldType OGRFieldDefn::GetFieldTypeByName(const char *pszName)
+{
+    if (EQUAL(pszName, "integer"))
+        return OFTInteger;
+    if (EQUAL(pszName, "integer64"))
+        return OFTInteger64;
+    if (EQUAL(pszName, "real"))
+        return OFTReal;
+    if (EQUAL(pszName, "string"))
+        return OFTString;
+    if (EQUAL(pszName, "integerlist"))
+        return OFTIntegerList;
+    if (EQUAL(pszName, "integer64list"))
+        return OFTInteger64List;
+    if (EQUAL(pszName, "reallist"))
+        return OFTRealList;
+    if (EQUAL(pszName, "stringlist"))
+        return OFTStringList;
+    if (EQUAL(pszName, "binary"))
+        return OFTBinary;
+    if (EQUAL(pszName, "date"))
+        return OFTDate;
+    if (EQUAL(pszName, "time"))
+        return OFTTime;
+    if (EQUAL(pszName, "datetime"))
+        return OFTDateTime;
+
+    return OFTString;
+}
+
+/************************************************************************/
+/*                       OGR_GetFieldTypeByName()                       */
+/************************************************************************/
+/**
+ * \brief Fetch field type by name.
+ *
+ * This function is the same as the CPP method
+ * OGRFieldDefn::GetFieldTypeByName().
+ *
+ * @param pszName the name of the field type.
+ * @return the field type or OFTString if there is no match with known type names.
+ * @since GDAL 3.9.4
+ */
+OGRFieldType OGR_GetFieldTypeByName(const char *pszName)
+{
+    return OGRFieldDefn::GetFieldTypeByName(pszName);
+}
+
+/************************************************************************/
 /*                        OGR_GetFieldTypeName()                        */
 /************************************************************************/
 /**
@@ -923,6 +980,49 @@ const char *OGRFieldDefn::GetFieldSubTypeName(OGRFieldSubType eSubType)
             return "UUID";
     }
     return "None";
+}
+
+/************************************************************************/
+/*                        GetFieldSubTypeByName()                       */
+/************************************************************************/
+/**
+ * \brief Fetch field subtype by name.
+ * @param pszName the name of the field subtype.
+ * @return the field subtype.
+ * @since GDAL 3.11.0
+ */
+OGRFieldSubType OGRFieldDefn::GetFieldSubTypeByName(const char *pszName)
+{
+    if (EQUAL(pszName, "boolean"))
+        return OFSTBoolean;
+    if (EQUAL(pszName, "int16"))
+        return OFSTInt16;
+    if (EQUAL(pszName, "float32"))
+        return OFSTFloat32;
+    if (EQUAL(pszName, "json"))
+        return OFSTJSON;
+    if (EQUAL(pszName, "uuid"))
+        return OFSTUUID;
+
+    return OFSTNone;
+}
+
+/************************************************************************/
+/*                       OGR_GetFieldSubTypeByName()                    */
+/************************************************************************/
+/**
+ * \brief Fetch field subtype by name.
+ *
+ * This function is the same as the CPP method
+ * OGRFieldDefn::GetFieldSubTypeByName().
+ *
+ * @param pszName the name of the field subtype.
+ * @return the field subtype.
+ * @since GDAL 3.11.0
+ */
+OGRFieldSubType OGR_GetFieldSubTypeByName(const char *pszName)
+{
+    return OGRFieldDefn::GetFieldSubTypeByName(pszName);
 }
 
 /************************************************************************/

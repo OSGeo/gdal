@@ -56,6 +56,7 @@ add_library(
   ogr_expat.cpp
   ogrpgeogeometry.cpp
   ogr_geocoding.cpp
+  ogr_schema_override.cpp
   ogrgeomfielddefn.cpp
   ograpispy.cpp
   ogr_xerces.cpp
@@ -84,6 +85,7 @@ set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/pci_datum.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/data/pci_ellips.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/data/stateplane.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ogr_fields_override.schema.json
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}

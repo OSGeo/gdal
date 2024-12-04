@@ -456,7 +456,9 @@ const char CPL_DLL *OGR_Fld_GetComment(OGRFieldDefnH hDefn);
 void CPL_DLL OGR_Fld_SetComment(OGRFieldDefnH hDefn, const char *);
 
 const char CPL_DLL *OGR_GetFieldTypeName(OGRFieldType);
+OGRFieldType CPL_DLL OGR_GetFieldTypeByName(const char *);
 const char CPL_DLL *OGR_GetFieldSubTypeName(OGRFieldSubType);
+OGRFieldSubType CPL_DLL OGR_GetFieldSubTypeByName(const char *);
 int CPL_DLL OGR_AreTypeSubTypeCompatible(OGRFieldType eType,
                                          OGRFieldSubType eSubType);
 

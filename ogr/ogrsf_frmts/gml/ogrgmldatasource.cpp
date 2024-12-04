@@ -32,6 +32,7 @@
 #include "gmlregistry.h"
 #include "gmlutils.h"
 #include "ogr_p.h"
+#include "ogr_schema_override.h"
 #include "parsexsd.h"
 #include "../mem/ogr_mem.h"
 
@@ -1304,6 +1305,11 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         eReadMode = SEQUENTIAL_LAYERS;
     }
 
+    if (!DealWithOgrSchemaOpenOption(poOpenInfo))
+    {
+        return false;
+    }
+
     // Save the schema file if possible.  Don't make a fuss if we
     // can't.  It could be read-only directory or something.
     const char *pszWriteGFS =
@@ -1754,7 +1760,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
     for (int iField = 0; iField < poClass->GetPropertyCount(); iField++)
     {
         GMLPropertyDefn *poProperty = poClass->GetProperty(iField);
-        OGRFieldSubType eSubType = OFSTNone;
+        OGRFieldSubType eSubType = poProperty->GetSubType();
         const OGRFieldType eFType =
             GML_GetOGRFieldType(poProperty->GetType(), eSubType);
         OGRFieldDefn oField(poProperty->GetName(), eFType);
@@ -2001,6 +2007,135 @@ void OGRGMLDataSource::WriteTopElements()
                                     "gml:null></gml:boundedBy>");
         }
     }
+}
+
+/************************************************************************/
+/*                 DealWithOgrSchemaOpenOption()                        */
+/************************************************************************/
+
+bool OGRGMLDataSource::DealWithOgrSchemaOpenOption(
+    const GDALOpenInfo *poOpenInfo)
+{
+
+    std::string osFieldsSchemaOverrideParam =
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "OGR_SCHEMA", "");
+
+    if (!osFieldsSchemaOverrideParam.empty())
+    {
+
+        // GML driver does not support update at the moment so this will never happen
+        if (poOpenInfo->eAccess == GA_Update)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "OGR_SCHEMA open option is not supported in update mode.");
+            return false;
+        }
+
+        OGRSchemaOverride osSchemaOverride;
+        if (!osSchemaOverride.LoadFromJSON(osFieldsSchemaOverrideParam) ||
+            !osSchemaOverride.IsValid())
+        {
+            return false;
+        }
+
+        const auto oLayerOverrides = osSchemaOverride.GetLayerOverrides();
+        for (const auto &oLayer : oLayerOverrides)
+        {
+            const auto oLayerName = oLayer.first;
+            const auto oLayerFieldOverride = oLayer.second;
+            const bool bIsFullOverride{oLayerFieldOverride.IsFullOverride()};
+            std::vector<GMLPropertyDefn *> aoProperties;
+
+            CPLDebug("GML", "Applying schema override for layer %s",
+                     oLayerName.c_str());
+
+            // Fail if the layer name does not exist
+            const auto oClass = poReader->GetClass(oLayerName.c_str());
+            if (oClass == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Layer %s not found",
+                         oLayerName.c_str());
+                return false;
+            }
+
+            const auto oLayerFields = oLayerFieldOverride.GetFieldOverrides();
+            for (const auto &oFieldOverrideIt : oLayerFields)
+            {
+                const auto oProperty =
+                    oClass->GetProperty(oFieldOverrideIt.first.c_str());
+                if (oProperty == nullptr)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Field %s not found in layer %s",
+                             oFieldOverrideIt.first.c_str(),
+                             oLayerName.c_str());
+                    return false;
+                }
+
+                const auto oFieldOverride = oFieldOverrideIt.second;
+
+                const OGRFieldSubType eSubType =
+                    oFieldOverride.GetFieldSubType().value_or(OFSTNone);
+
+                if (oFieldOverride.GetFieldSubType().has_value())
+                {
+                    oProperty->SetSubType(eSubType);
+                }
+
+                if (oFieldOverride.GetFieldType().has_value())
+                {
+                    oProperty->SetType(GML_FromOGRFieldType(
+                        oFieldOverride.GetFieldType().value(), eSubType));
+                }
+
+                if (oFieldOverride.GetFieldName().has_value())
+                {
+                    oProperty->SetName(
+                        oFieldOverride.GetFieldName().value().c_str());
+                }
+
+                if (oFieldOverride.GetFieldWidth().has_value())
+                {
+                    oProperty->SetWidth(oFieldOverride.GetFieldWidth().value());
+                }
+
+                if (oFieldOverride.GetFieldPrecision().has_value())
+                {
+                    oProperty->SetPrecision(
+                        oFieldOverride.GetFieldPrecision().value());
+                }
+
+                if (bIsFullOverride)
+                {
+                    aoProperties.push_back(oProperty);
+                }
+            }
+
+            // Remove fields not in the override
+            if (bIsFullOverride &&
+                aoProperties.size() !=
+                    static_cast<size_t>(oClass->GetPropertyCount()))
+            {
+                for (int j = 0; j < oClass->GetPropertyCount(); ++j)
+                {
+                    const auto oProperty = oClass->GetProperty(j);
+                    if (std::find(aoProperties.begin(), aoProperties.end(),
+                                  oProperty) == aoProperties.end())
+                    {
+                        delete (oProperty);
+                    }
+                }
+
+                oClass->StealProperties();
+
+                for (const auto &oProperty : aoProperties)
+                {
+                    oClass->AddProperty(oProperty);
+                }
+            }
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
