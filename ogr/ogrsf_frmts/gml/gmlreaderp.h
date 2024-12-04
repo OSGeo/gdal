@@ -167,6 +167,7 @@ class GMLHandler
     OGRErr endElementCityGMLGenericAttr();
 
     OGRErr startElementGeometry(const char *pszName, int nLenName, void *attr);
+    void ParseAIXMElevationProperties(const CPLXMLNode *);
     CPLXMLNode *ParseAIXMElevationPoint(CPLXMLNode *);
     OGRErr endElementGeometry();
     OGRErr dataHandlerGeometry(const char *data, int nLen);

@@ -3912,6 +3912,58 @@ def test_ogr_gml_aixm_elevated_surface(tmp_path):
 
 
 ###############################################################################
+# Read AIXM ElevatedCurve
+
+
+def test_ogr_gml_aixm_elevated_curve(tmp_path):
+
+    shutil.copy("data/gml/aixm_ElevatedCurve.xml", tmp_path)
+
+    ds = ogr.Open(tmp_path / "aixm_ElevatedCurve.xml")
+    lyr = ds.GetLayer("GuidanceLine")
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    assert got_wkt == "LINESTRING (2 49,3 50)"
+
+    lyr = ds.GetLayer("VerticalStructure")
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    assert got_wkt == "LINESTRING (2 45,3 46)"
+    assert feat["elevation"] == 75
+    assert feat["elevation_uom"] == "M"
+    assert feat["verticalDatum"] == "EGM_96"
+    assert feat["verticalAccuracy"] == 30
+    assert feat["verticalAccuracy_uom"] == "M"
+
+
+###############################################################################
+# Read AIXM VerticalStructure mixing ElevatedPoint and ElevatedCurve
+
+
+def test_ogr_gml_aixm_vertical_structure_mix_point_and_line(tmp_path):
+
+    shutil.copy("data/gml/aixm_VerticalStructure_mix_point_and_line.xml", tmp_path)
+
+    ds = ogr.Open(tmp_path / "aixm_VerticalStructure_mix_point_and_line.xml")
+    lyr = ds.GetLayer("VerticalStructure")
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    assert got_wkt == "POINT (2 49)"
+    assert feat["elevation"] == 10
+    assert feat["elevation_uom"] == "M"
+    assert feat["verticalAccuracy"] == 0.1
+
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    got_wkt = geom.ExportToWkt()
+    assert got_wkt == "LINESTRING (2 45,3 46)"
+    assert feat["elevation"] == 0
+
+
+###############################################################################
 # Test support for XML comment srsName="" in .xsd
 
 
