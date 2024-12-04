@@ -272,6 +272,10 @@ public:
     }
   }
 
+#ifdef SWIGJAVA
+  %rename (CloseInternal) Close;
+  %javamethodmodifiers Close() "private";
+#endif
   CPLErr Close() {
      return GDALClose(self);
   }
