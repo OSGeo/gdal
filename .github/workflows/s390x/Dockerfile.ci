@@ -80,4 +80,4 @@ RUN apt-get update && \
     zip
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install -U --break-system-packages -r /tmp/requirements.txt
+RUN PIP_CMD="python3 -m pip" $PIP_CMD install -U --break-system-packages -r /tmp/requirements.txt
