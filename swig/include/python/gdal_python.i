@@ -1623,13 +1623,29 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         self._child_references.add(val)
 %}
 
-%feature("pythonprepend") Close %{
-    self._invalidate_children()
-%}
+%feature("shadow") Close %{
+    def Close(self, *args):
+        r"""
+        Close(Dataset self) -> CPLErr
 
-%feature("pythonappend") Close %{
-    self.thisown = 0
-    self.this = None
+        Closes opened dataset and releases allocated resources.
+
+        This method can be used to force the dataset to close
+        when one more references to the dataset are still
+        reachable. If :py:meth:`Close` is never called, the dataset will
+        be closed automatically during garbage collection.
+
+        In most cases, it is preferable to open or create a dataset
+        using a context manager instead of calling :py:meth:`Close`
+        directly.
+        """
+
+        self._invalidate_children()
+        try:
+            return _gdal.Dataset_Close(self, *args)
+        finally:
+            self.thisown = 0
+            self.this = None
 %}
 
 %feature("shadow") ExecuteSQL %{
