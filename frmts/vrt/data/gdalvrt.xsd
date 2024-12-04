@@ -636,34 +636,40 @@
     </xs:complexType>
 
     <xs:complexType name="ArrayType">
-        <xs:sequence>
-            <xs:element name="DataType" type="xs:string" minOccurs="1" maxOccurs="1"/>
-            <xs:sequence>
-                    <xs:choice minOccurs="0" maxOccurs="unbounded">
-                        <xs:element name="Dimension" type="DimensionType"/>
-                        <xs:element name="DimensionRef" type="DimensionRefType"/>
-                    </xs:choice>
-                </xs:sequence>
-            <xs:element name="SRS" type="SRSType" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="Unit" type="xs:string" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="NoDataValue" type="DoubleOrNanType" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="Offset" type="xs:double" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="Scale" type="xs:double" minOccurs="0" maxOccurs="1"/>
-            <xs:choice>
-                <xs:element name="RegularlySpacedValues" type="RegularlySpacedValuesType" minOccurs="0" maxOccurs="1"/>
+        <xs:complexContent>
+            <xs:extension base="AbstractArrayType">
                 <xs:sequence>
-                    <xs:choice minOccurs="0" maxOccurs="unbounded">
-                        <xs:element name="ConstantValue" type="ConstantValueType"/>
-                        <xs:element name="InlineValues" type="InlineValuesType"/>
-                        <xs:element name="InlineValuesWithValueElement" type="InlineValuesWithValueElementType"/>
-                        <xs:element name="Source" type="SourceType"/>
+                    <xs:element name="DataType" type="xs:string" minOccurs="1" maxOccurs="1"/>
+                    <xs:sequence>
+                            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                                <xs:element name="Dimension" type="DimensionType"/>
+                                <xs:element name="DimensionRef" type="DimensionRefType"/>
+                            </xs:choice>
+                        </xs:sequence>
+                    <xs:element name="SRS" type="SRSType" minOccurs="0" maxOccurs="1"/>
+                    <xs:element name="Unit" type="xs:string" minOccurs="0" maxOccurs="1"/>
+                    <xs:element name="NoDataValue" type="DoubleOrNanType" minOccurs="0" maxOccurs="1"/>
+                    <xs:element name="Offset" type="xs:double" minOccurs="0" maxOccurs="1"/>
+                    <xs:element name="Scale" type="xs:double" minOccurs="0" maxOccurs="1"/>
+                    <xs:choice>
+                        <xs:element name="RegularlySpacedValues" type="RegularlySpacedValuesType" minOccurs="0" maxOccurs="1"/>
+                        <xs:sequence>
+                            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                                <xs:element name="ConstantValue" type="ConstantValueType"/>
+                                <xs:element name="InlineValues" type="InlineValuesType"/>
+                                <xs:element name="InlineValuesWithValueElement" type="InlineValuesWithValueElementType"/>
+                                <xs:element name="Source" type="SourceType"/>
+                            </xs:choice>
+                        </xs:sequence>
                     </xs:choice>
+                    <xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
                 </xs:sequence>
-            </xs:choice>
-            <xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
-        <xs:attribute name="name" type="xs:string" use="required"/>
+                <xs:attribute name="name" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
+
+    <xs:element name="Array" substitutionGroup="AbstractArray" type="ArrayType"/>
 
     <xs:complexType name="RegularlySpacedValuesType">
         <xs:attribute name="start" type="xs:double" use="required"/>
