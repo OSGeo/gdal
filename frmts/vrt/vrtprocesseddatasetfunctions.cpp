@@ -1482,19 +1482,19 @@ class ExpressionData
 {
   public:
     ExpressionData(int nInBands, std::string_view osExpression)
-        : m_adfValuesForPixel(nInBands), m_oEvaluator(osExpression)
+        : m_adfValuesForPixel(nInBands), m_oExpression(osExpression)
     {
         for (int i = 0; i < nInBands; i++)
         {
             std::string osVar = "B" + std::to_string(i + 1);
-            m_oEvaluator.RegisterVariable(osVar, &m_adfValuesForPixel[i]);
+            m_oExpression.RegisterVariable(osVar, &m_adfValuesForPixel[i]);
         }
-        m_oEvaluator.RegisterVector("BANDS", &m_adfValuesForPixel);
+        m_oExpression.RegisterVector("BANDS", &m_adfValuesForPixel);
     }
 
     CPLErr Compile()
     {
-        return m_oEvaluator.Compile();
+        return m_oExpression.Compile();
     }
 
     CPLErr Evaluate(const double *padfInputs, size_t nExpectedOutBands)
@@ -1502,12 +1502,12 @@ class ExpressionData
         std::copy(padfInputs, padfInputs + m_adfValuesForPixel.size(),
                   m_adfValuesForPixel.begin());
 
-        if (auto eErr = m_oEvaluator.Evaluate(); eErr != CE_None)
+        if (auto eErr = m_oExpression.Evaluate(); eErr != CE_None)
         {
             return eErr;
         }
 
-        if (const auto &adfResults = m_oEvaluator.Results();
+        if (const auto &adfResults = m_oExpression.Results();
             adfResults.size() != static_cast<std::size_t>(nExpectedOutBands))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1523,12 +1523,12 @@ class ExpressionData
 
     const std::vector<double> &Results() const
     {
-        return m_oEvaluator.Results();
+        return m_oExpression.Results();
     }
 
   private:
     std::vector<double> m_adfValuesForPixel;
-    GDALExpressionEvaluator m_oEvaluator;
+    gdal::ExprtkExpression m_oExpression;
 };
 
 }  // namespace
