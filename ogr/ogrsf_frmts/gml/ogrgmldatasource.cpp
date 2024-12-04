@@ -2715,7 +2715,7 @@ void OGRGMLDataSource::InsertHeader()
                      strcmp(poFieldDefn->GetNameRef(), "fid") == 0)
                 continue;
 
-            const auto AddComment = [fpSchema, poFieldDefn]()
+            const auto AddComment = [this, fpSchema, poFieldDefn]()
             {
                 if (!poFieldDefn->GetComment().empty())
                 {
@@ -2966,12 +2966,17 @@ void OGRGMLDataSource::PrintLine(VSILFILE *fp, const char *fmt, ...)
     va_end(args);
 
 #ifdef _WIN32
-    const char *pszEOL = "\r\n";
+    constexpr const char *pszEOL = "\r\n";
 #else
-    const char *pszEOL = "\n";
+    constexpr const char *pszEOL = "\n";
 #endif
 
-    VSIFPrintfL(fp, "%s%s", osWork.c_str(), pszEOL);
+    if (VSIFWriteL(osWork.data(), osWork.size(), 1, fp) != 1 ||
+        VSIFWriteL(pszEOL, strlen(pszEOL), 1, fp) != 1)
+    {
+        ReportError(CE_Failure, CPLE_FileIO, "Could not write line %s",
+                    osWork.c_str());
+    }
 }
 
 /************************************************************************/

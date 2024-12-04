@@ -205,8 +205,8 @@ class OGRGMLDataSource final : public GDALDataset
         return bExposeGMLId || bExposeFid;
     }
 
-    static void PrintLine(VSILFILE *fp, const char *fmt, ...)
-        CPL_PRINT_FUNC_FORMAT(2, 3);
+    void PrintLine(VSILFILE *fp, const char *fmt, ...)
+        CPL_PRINT_FUNC_FORMAT(3, 4);
 
     bool IsGML3Output() const
     {
