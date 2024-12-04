@@ -14,7 +14,7 @@ RUN wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/bb99984f-37
 # cpython-38-x86_64-linux-gnu.so: undefined symbol: __intel_sse2_strcpy
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install -U -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U -r /tmp/requirements.txt
 
 # Intel uses a script to set numerous environment variables.
 # Sourcing a script in the Dockerfile does not persist the variables

@@ -178,7 +178,7 @@ jobs:
         run: |
             sudo apt install python3-pip wget
             # ruamel.yaml.clib 0.2.9 throws a 'TypeError: a string or stream input is required' when running cffconvert --validate
-            sudo pip3 install cffconvert "ruamel.yaml.clib<0.2.9"
+            PYTHON_CMD=python3 && sudo $PYTHON_CMD -m pip install cffconvert "ruamel.yaml.clib<0.2.9"
 
       - name: Validate citation file
         run: |
@@ -199,8 +199,8 @@ jobs:
         python-version: 3.8
     - name: Install lint tool
       run: |
-        python -m pip install --upgrade pip
-        pip install cmake-format pyyaml
+        PYTHON_CMD=python3 && $PYTHON_CMD -m pip --upgrade pip
+        PYTHON_CMD=python3 && $PYTHON_CMD -m pip install cmake-format pyyaml
     - name: Check cmakelist
       run: find . -name CMakeLists.txt |xargs cmake-format --check
 

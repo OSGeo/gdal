@@ -30,8 +30,8 @@ jobs:
       run: |
           apt update
           apt install -y libproj-dev swig
-          python3 -m pip install -r doc/requirements.txt
-          python3 -m pip install numpy setuptools
+          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r doc/requirements.txt
+          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install numpy setuptools
           pushd .
           mkdir build
           cd build
@@ -52,21 +52,21 @@ jobs:
           cd swig/python
           python3 setup.py sdist
           cp dist/* /tmp/gdal.tar.gz
-          python3 -m pip install /tmp/gdal.tar.gz
+          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install /tmp/gdal.tar.gz
           ldconfig
           popd
 
     - name: Update components
       shell: bash -l {0}
       run: |
-          pip install -U "sphinx-rtd-theme>=3.0.0" "sphinxcontrib-spelling>=8.0.0"
+          PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U "sphinx-rtd-theme>=3.0.0" "sphinxcontrib-spelling>=8.0.0"
 
     - name: Print versions
       shell: bash -l {0}
       run: |
           python3 --version
           sphinx-build --version
-          python3 -m pip list --not-required --format=columns
+          PYTHON_CMD=python3 && $PYTHON_CMD -m pip list --not-required --format=columns
     - name: Lint .rst files
       shell: bash -l {0}
       run: |
