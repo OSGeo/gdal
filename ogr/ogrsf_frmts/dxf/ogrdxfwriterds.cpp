@@ -270,6 +270,11 @@ int OGRDXFWriterDS::Open(const char *pszFilename, char **papszOptions)
     if (CSLFetchNameValue(papszOptions, "FIRST_ENTITY") != nullptr)
         nNextFID = atoi(CSLFetchNameValue(papszOptions, "FIRST_ENTITY"));
 
+    m_osINSUNITS =
+        CSLFetchNameValueDef(papszOptions, "INSUNITS", m_osINSUNITS.c_str());
+    m_osMEASUREMENT = CSLFetchNameValueDef(papszOptions, "MEASUREMENT",
+                                           m_osMEASUREMENT.c_str());
+
     /* -------------------------------------------------------------------- */
     /*      Prescan the header and trailer for entity codes.                */
     /* -------------------------------------------------------------------- */
@@ -317,12 +322,17 @@ int OGRDXFWriterDS::Open(const char *pszFilename, char **papszOptions)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *
-OGRDXFWriterDS::ICreateLayer(const char *pszName,
-                             const OGRGeomFieldDefn * /*poGeomFieldDefn*/,
-                             CSLConstList /*papszOptions*/)
+OGRLayer *OGRDXFWriterDS::ICreateLayer(const char *pszName,
+                                       const OGRGeomFieldDefn *poGeomFieldDefn,
+                                       CSLConstList /*papszOptions*/)
 
 {
+    if (poGeomFieldDefn)
+    {
+        const auto poSRS = poGeomFieldDefn->GetSpatialRef();
+        if (poSRS)
+            m_oSRS = *poSRS;
+    }
     if (EQUAL(pszName, "blocks") && poBlocksLayer == nullptr)
     {
         poBlocksLayer = new OGRDXFBlocksWriterLayer(this);
@@ -522,6 +532,135 @@ bool OGRDXFWriterDS::TransferUpdateHeader(VSILFILE *fpOut)
                 if (nCode == 20)
                 {
                     if (!WriteValue(fpOut, nCode, oGlobalEnvelope.MaxY))
+                        return false;
+
+                    continue;
+                }
+            }
+        }
+
+        // Patch INSUNITS
+        if (nCode == 9 && EQUAL(szLineBuf, "$INSUNITS") &&
+            m_osINSUNITS != "HEADER_VALUE")
+        {
+            if (!WriteValue(fpOut, nCode, szLineBuf))
+                return false;
+            nCode = oHeaderDS.ReadValue(szLineBuf, sizeof(szLineBuf));
+            if (nCode == 70)
+            {
+                int nVal = -1;
+                if (m_osINSUNITS == "AUTO" && m_oSRS.IsProjected())
+                {
+                    const char *pszUnits = nullptr;
+                    const double dfUnits = m_oSRS.GetLinearUnits(&pszUnits);
+                    const auto IsAlmostEqual = [](double x, double y)
+                    { return std::fabs(x - y) <= 1e-10; };
+                    if (IsAlmostEqual(dfUnits, 1)) /* METERS */
+                    {
+                        nVal = 6;
+                    }
+                    else if (IsAlmostEqual(dfUnits, CPLAtof(SRS_UL_FOOT_CONV)))
+                    {
+                        nVal = 2;
+                    }
+                    else if (IsAlmostEqual(dfUnits,
+                                           CPLAtof(SRS_UL_US_FOOT_CONV)))
+                    {
+                        nVal = 21;
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Could not translate CRS unit %s to "
+                                 "$INSUNIT. Using default value from "
+                                 "template header file",
+                                 pszUnits);
+                    }
+                }
+                else if (m_osINSUNITS != "AUTO")
+                {
+                    static const struct
+                    {
+                        const char *pszValue;
+                        int nValue;
+                    } INSUNITSMap[] = {
+                        {"UNITLESS", 0},
+                        {"INCHES", 1},
+                        {"FEET", 2},
+                        {"MILLIMETERS", 4},
+                        {"CENTIMETERS", 5},
+                        {"METERS", 6},
+                        {"US_SURVEY_FEET", 21},
+                    };
+
+                    for (const auto &sTuple : INSUNITSMap)
+                    {
+                        if (m_osINSUNITS == sTuple.pszValue ||
+                            m_osINSUNITS == CPLSPrintf("%d", sTuple.nValue))
+                        {
+                            nVal = sTuple.nValue;
+                            break;
+                        }
+                    }
+                    if (nVal < 0)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Could not translate $INSUNITS=%s. "
+                                 "Using default value from template header "
+                                 "file",
+                                 m_osINSUNITS.c_str());
+                    }
+                }
+
+                if (nVal >= 0)
+                {
+                    if (!WriteValue(fpOut, nCode, CPLSPrintf("%d", nVal)))
+                        return false;
+
+                    continue;
+                }
+            }
+        }
+
+        // Patch MEASUREMENT
+        if (nCode == 9 && EQUAL(szLineBuf, "$MEASUREMENT") &&
+            m_osMEASUREMENT != "HEADER_VALUE")
+        {
+            if (!WriteValue(fpOut, nCode, szLineBuf))
+                return false;
+            nCode = oHeaderDS.ReadValue(szLineBuf, sizeof(szLineBuf));
+            if (nCode == 70)
+            {
+                int nVal = -1;
+
+                static const struct
+                {
+                    const char *pszValue;
+                    int nValue;
+                } MEASUREMENTMap[] = {
+                    {"IMPERIAL", 0},
+                    {"METRIC", 1},
+                };
+
+                for (const auto &sTuple : MEASUREMENTMap)
+                {
+                    if (m_osMEASUREMENT == sTuple.pszValue ||
+                        m_osMEASUREMENT == CPLSPrintf("%d", sTuple.nValue))
+                    {
+                        nVal = sTuple.nValue;
+                        break;
+                    }
+                }
+                if (nVal < 0)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Could not translate $MEASUREMENT=%s. "
+                             "Using default value from template header file",
+                             m_osMEASUREMENT.c_str());
+                }
+                else
+                {
+                    if (!WriteValue(fpOut, nCode, CPLSPrintf("%d", nVal)))
                         return false;
 
                     continue;
