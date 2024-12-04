@@ -23,7 +23,7 @@
 #include <cpl_json.h>
 
 /** Class that holds the schema override options for a single field */
-class OGRFieldDefnOverride
+class CPL_DLL OGRFieldDefnOverride
 {
   public:
     OGRFieldDefnOverride()
@@ -93,7 +93,7 @@ class OGRFieldDefnOverride
 };
 
 /** Class that holds the schema override options for a single layer */
-class OGRLayerSchemaOverride
+class CPL_DLL OGRLayerSchemaOverride
 {
   public:
     OGRLayerSchemaOverride() : m_osLayerName(), m_moFieldOverrides()
@@ -140,7 +140,7 @@ class OGRLayerSchemaOverride
 };
 
 /** Class that holds the schema override options for a datasource */
-class OGRSchemaOverride
+class CPL_DLL OGRSchemaOverride
 {
   public:
     OGRSchemaOverride() : m_moLayerOverrides()
