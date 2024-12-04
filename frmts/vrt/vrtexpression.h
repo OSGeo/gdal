@@ -17,15 +17,18 @@
 #include <string_view>
 #include <vector>
 
+namespace gdal
+{
+
 /**
  * Class to support evaluation of an expression using the exprtk library.
  */
-class GDALExpressionEvaluator
+class ExprtkExpression
 {
   public:
-    explicit GDALExpressionEvaluator(std::string_view osExpression);
+    explicit ExprtkExpression(std::string_view osExpression);
 
-    ~GDALExpressionEvaluator();
+    ~ExprtkExpression();
 
     void RegisterVariable(std::string_view osVariable, double *pdfLocation);
 
@@ -43,3 +46,5 @@ class GDALExpressionEvaluator
 
     std::unique_ptr<Impl> m_pImpl;
 };
+
+}  // namespace gdal

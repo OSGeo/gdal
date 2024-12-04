@@ -38,6 +38,9 @@
 #include <sstream>
 #include <thread>
 
+namespace gdal
+{
+
 struct vector_access_check final : public exprtk::vector_access_runtime_check
 {
     bool handle_runtime_violation(violation_context &context) override
@@ -117,7 +120,7 @@ struct loop_timeout_check final : public exprtk::loop_runtime_check
     std::chrono::microseconds max_duration{};
 };
 
-class GDALExpressionEvaluator::Impl
+class ExprtkExpression::Impl
 {
   public:
     exprtk::expression<double> m_oExpression{};
@@ -329,13 +332,13 @@ class GDALExpressionEvaluator::Impl
  *
  * @since 3.11
  */
-GDALExpressionEvaluator::GDALExpressionEvaluator(std::string_view osExpression)
+ExprtkExpression::ExprtkExpression(std::string_view osExpression)
     : m_pImpl(std::make_unique<Impl>())
 {
     m_pImpl->m_osExpression = osExpression;
 }
 
-GDALExpressionEvaluator::~GDALExpressionEvaluator()
+ExprtkExpression::~ExprtkExpression()
 {
 }
 
@@ -350,8 +353,8 @@ GDALExpressionEvaluator::~GDALExpressionEvaluator()
  *
  * @since 3.11
  */
-void GDALExpressionEvaluator::RegisterVariable(std::string_view osVariable,
-                                               double *pdfValue)
+void ExprtkExpression::RegisterVariable(std::string_view osVariable,
+                                        double *pdfValue)
 {
     m_pImpl->m_aoVariables.emplace_back(osVariable, pdfValue);
 }
@@ -367,8 +370,8 @@ void GDALExpressionEvaluator::RegisterVariable(std::string_view osVariable,
  *
  * @since 3.11
  */
-void GDALExpressionEvaluator::RegisterVector(std::string_view osVariable,
-                                             std::vector<double> *padfValue)
+void ExprtkExpression::RegisterVector(std::string_view osVariable,
+                                      std::vector<double> *padfValue)
 {
     m_pImpl->m_aoVectors.emplace_back(osVariable, padfValue);
 }
@@ -384,7 +387,7 @@ void GDALExpressionEvaluator::RegisterVector(std::string_view osVariable,
  *
  * @since 3.11
  */
-CPLErr GDALExpressionEvaluator::Compile()
+CPLErr ExprtkExpression::Compile()
 {
     return m_pImpl->compile();
 }
@@ -398,7 +401,7 @@ CPLErr GDALExpressionEvaluator::Compile()
  *
  * @since 3.11
  */
-const std::vector<double> &GDALExpressionEvaluator::Results() const
+const std::vector<double> &ExprtkExpression::Results() const
 {
     return m_pImpl->m_adfResults;
 }
@@ -410,7 +413,9 @@ const std::vector<double> &GDALExpressionEvaluator::Results() const
  *
  * @since 3.11
  */
-CPLErr GDALExpressionEvaluator::Evaluate()
+CPLErr ExprtkExpression::Evaluate()
 {
     return m_pImpl->evaluate();
 }
+
+}  // namespace gdal

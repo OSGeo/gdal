@@ -1644,15 +1644,15 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
 
     std::vector<double> adfValuesForPixel(nSources);
 
-    GDALExpressionEvaluator oEvaluator(pszExpression);
+    gdal::ExprtkExpression oExpression(pszExpression);
     {
         int iSource = 0;
         for (const auto &osName : aosSourceNames)
         {
-            oEvaluator.RegisterVariable(osName, &adfValuesForPixel[iSource++]);
+            oExpression.RegisterVariable(osName, &adfValuesForPixel[iSource++]);
         }
     }
-    oEvaluator.RegisterVector("BANDS", &adfValuesForPixel);
+    oExpression.RegisterVector("BANDS", &adfValuesForPixel);
 
     double *padfResults =
         static_cast<double *>(CPLMalloc(nXSize * sizeof(double)));
@@ -1670,13 +1670,13 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                     GetSrcVal(papoSources[iSrc], eSrcType, ii);
             }
 
-            if (auto eErr = oEvaluator.Evaluate(); eErr != CE_None)
+            if (auto eErr = oExpression.Evaluate(); eErr != CE_None)
             {
                 return CE_Failure;
             }
             else
             {
-                padfResults[iCol] = oEvaluator.Results()[0];
+                padfResults[iCol] = oExpression.Results()[0];
             }
         }
 
