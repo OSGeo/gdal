@@ -108,6 +108,7 @@ class OGRGMLDataSource final : public GDALDataset
     VSILFILE *fpOutput;
     bool bFpOutputIsNonSeekable;
     bool bFpOutputSingleFile;
+    bool m_bWriteError = false;
     OGREnvelope3D sBoundingRect{};
     bool bBBOX3D;
     int nBoundedByLocation;
@@ -178,6 +179,7 @@ class OGRGMLDataSource final : public GDALDataset
     virtual ~OGRGMLDataSource();
 
     bool Open(GDALOpenInfo *poOpenInfo);
+    CPLErr Close() override;
     bool Create(const char *pszFile, char **papszOptions);
 
     int GetLayerCount() override
@@ -224,6 +226,12 @@ class OGRGMLDataSource final : public GDALDataset
     bool IsGML32Output() const
     {
         return bIsOutputGML32;
+    }
+
+    /** Returns whether a writing error has occured */
+    inline bool HasWriteError() const
+    {
+        return m_bWriteError;
     }
 
     OGRGMLSRSNameFormat GetSRSNameFormat() const

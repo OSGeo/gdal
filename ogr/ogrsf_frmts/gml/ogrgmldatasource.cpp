@@ -81,182 +81,212 @@ OGRGMLDataSource::OGRGMLDataSource()
 }
 
 /************************************************************************/
-/*                        ~OGRGMLDataSource()                         */
+/*                          ~OGRGMLDataSource()                         */
 /************************************************************************/
 
 OGRGMLDataSource::~OGRGMLDataSource()
 {
-    if (fpOutput != nullptr)
+    OGRGMLDataSource::Close();
+}
+
+/************************************************************************/
+/*                                 Close()                              */
+/************************************************************************/
+
+CPLErr OGRGMLDataSource::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (nLayers == 0)
-            WriteTopElements();
-
-        const char *pszPrefix = GetAppPrefix();
-        if (GMLFeatureCollection())
-            PrintLine(fpOutput, "</gml:FeatureCollection>");
-        else if (RemoveAppPrefix())
-            PrintLine(fpOutput, "</FeatureCollection>");
-        else
-            PrintLine(fpOutput, "</%s:FeatureCollection>", pszPrefix);
-
-        if (bFpOutputIsNonSeekable)
+        if (fpOutput && !m_bWriteError)
         {
-            VSIFCloseL(fpOutput);
-            fpOutput = nullptr;
-        }
+            if (nLayers == 0)
+                WriteTopElements();
 
-        InsertHeader();
+            const char *pszPrefix = GetAppPrefix();
+            if (GMLFeatureCollection())
+                PrintLine(fpOutput, "</gml:FeatureCollection>");
+            else if (RemoveAppPrefix())
+                PrintLine(fpOutput, "</FeatureCollection>");
+            else
+                PrintLine(fpOutput, "</%s:FeatureCollection>", pszPrefix);
 
-        if (!bFpOutputIsNonSeekable && nBoundedByLocation != -1 &&
-            VSIFSeekL(fpOutput, nBoundedByLocation, SEEK_SET) == 0)
-        {
-            if (m_bWriteGlobalSRS && sBoundingRect.IsInit() && IsGML3Output())
+            if (bFpOutputIsNonSeekable)
             {
-                bool bCoordSwap = false;
-                char *pszSRSName =
-                    m_poWriteGlobalSRS
-                        ? GML_GetSRSName(m_poWriteGlobalSRS.get(),
-                                         eSRSNameFormat, &bCoordSwap)
-                        : CPLStrdup("");
-                char szLowerCorner[75] = {};
-                char szUpperCorner[75] = {};
+                VSIFCloseL(fpOutput);
+                fpOutput = nullptr;
+            }
 
-                OGRWktOptions coordOpts;
+            InsertHeader();
 
-                if (OGRGMLDataSource::GetLayerCount() == 1)
+            if (!bFpOutputIsNonSeekable && nBoundedByLocation != -1 &&
+                VSIFSeekL(fpOutput, nBoundedByLocation, SEEK_SET) == 0)
+            {
+                if (m_bWriteGlobalSRS && sBoundingRect.IsInit() &&
+                    IsGML3Output())
                 {
-                    OGRLayer *poLayer = OGRGMLDataSource::GetLayer(0);
-                    if (poLayer->GetLayerDefn()->GetGeomFieldCount() == 1)
+                    bool bCoordSwap = false;
+                    char *pszSRSName =
+                        m_poWriteGlobalSRS
+                            ? GML_GetSRSName(m_poWriteGlobalSRS.get(),
+                                             eSRSNameFormat, &bCoordSwap)
+                            : CPLStrdup("");
+                    char szLowerCorner[75] = {};
+                    char szUpperCorner[75] = {};
+
+                    OGRWktOptions coordOpts;
+
+                    if (OGRGMLDataSource::GetLayerCount() == 1)
                     {
-                        const auto &oCoordPrec = poLayer->GetLayerDefn()
-                                                     ->GetGeomFieldDefn(0)
-                                                     ->GetCoordinatePrecision();
-                        if (oCoordPrec.dfXYResolution !=
-                            OGRGeomCoordinatePrecision::UNKNOWN)
+                        OGRLayer *poLayer = OGRGMLDataSource::GetLayer(0);
+                        if (poLayer->GetLayerDefn()->GetGeomFieldCount() == 1)
                         {
-                            coordOpts.format = OGRWktFormat::F;
-                            coordOpts.xyPrecision = OGRGeomCoordinatePrecision::
-                                ResolutionToPrecision(
-                                    oCoordPrec.dfXYResolution);
-                        }
-                        if (oCoordPrec.dfZResolution !=
-                            OGRGeomCoordinatePrecision::UNKNOWN)
-                        {
-                            coordOpts.format = OGRWktFormat::F;
-                            coordOpts.zPrecision = OGRGeomCoordinatePrecision::
-                                ResolutionToPrecision(oCoordPrec.dfZResolution);
+                            const auto &oCoordPrec =
+                                poLayer->GetLayerDefn()
+                                    ->GetGeomFieldDefn(0)
+                                    ->GetCoordinatePrecision();
+                            if (oCoordPrec.dfXYResolution !=
+                                OGRGeomCoordinatePrecision::UNKNOWN)
+                            {
+                                coordOpts.format = OGRWktFormat::F;
+                                coordOpts.xyPrecision =
+                                    OGRGeomCoordinatePrecision::
+                                        ResolutionToPrecision(
+                                            oCoordPrec.dfXYResolution);
+                            }
+                            if (oCoordPrec.dfZResolution !=
+                                OGRGeomCoordinatePrecision::UNKNOWN)
+                            {
+                                coordOpts.format = OGRWktFormat::F;
+                                coordOpts.zPrecision =
+                                    OGRGeomCoordinatePrecision::
+                                        ResolutionToPrecision(
+                                            oCoordPrec.dfZResolution);
+                            }
                         }
                     }
+
+                    std::string wkt;
+                    if (bCoordSwap)
+                    {
+                        wkt = OGRMakeWktCoordinate(
+                            sBoundingRect.MinY, sBoundingRect.MinX,
+                            sBoundingRect.MinZ, bBBOX3D ? 3 : 2, coordOpts);
+                        memcpy(szLowerCorner, wkt.data(), wkt.size() + 1);
+
+                        wkt = OGRMakeWktCoordinate(
+                            sBoundingRect.MaxY, sBoundingRect.MaxX,
+                            sBoundingRect.MaxZ, bBBOX3D ? 3 : 2, coordOpts);
+                        memcpy(szUpperCorner, wkt.data(), wkt.size() + 1);
+                    }
+                    else
+                    {
+                        wkt = OGRMakeWktCoordinate(
+                            sBoundingRect.MinX, sBoundingRect.MinY,
+                            sBoundingRect.MinZ, bBBOX3D ? 3 : 2, coordOpts);
+                        memcpy(szLowerCorner, wkt.data(), wkt.size() + 1);
+
+                        wkt = OGRMakeWktCoordinate(
+                            sBoundingRect.MaxX, sBoundingRect.MaxY,
+                            sBoundingRect.MaxZ, (bBBOX3D) ? 3 : 2, coordOpts);
+                        memcpy(szUpperCorner, wkt.data(), wkt.size() + 1);
+                    }
+                    if (bWriteSpaceIndentation)
+                        VSIFPrintfL(fpOutput, "  ");
+                    PrintLine(
+                        fpOutput,
+                        "<gml:boundedBy><gml:Envelope%s%s><gml:lowerCorner>%s"
+                        "</gml:lowerCorner><gml:upperCorner>%s</"
+                        "gml:upperCorner>"
+                        "</gml:Envelope></gml:boundedBy>",
+                        bBBOX3D ? " srsDimension=\"3\"" : "", pszSRSName,
+                        szLowerCorner, szUpperCorner);
+                    CPLFree(pszSRSName);
                 }
-
-                std::string wkt;
-                if (bCoordSwap)
+                else if (m_bWriteGlobalSRS && sBoundingRect.IsInit())
                 {
-                    wkt = OGRMakeWktCoordinate(
-                        sBoundingRect.MinY, sBoundingRect.MinX,
-                        sBoundingRect.MinZ, bBBOX3D ? 3 : 2, coordOpts);
-                    memcpy(szLowerCorner, wkt.data(), wkt.size() + 1);
-
-                    wkt = OGRMakeWktCoordinate(
-                        sBoundingRect.MaxY, sBoundingRect.MaxX,
-                        sBoundingRect.MaxZ, bBBOX3D ? 3 : 2, coordOpts);
-                    memcpy(szUpperCorner, wkt.data(), wkt.size() + 1);
+                    if (bWriteSpaceIndentation)
+                        VSIFPrintfL(fpOutput, "  ");
+                    PrintLine(fpOutput, "<gml:boundedBy>");
+                    if (bWriteSpaceIndentation)
+                        VSIFPrintfL(fpOutput, "    ");
+                    PrintLine(fpOutput, "<gml:Box>");
+                    if (bWriteSpaceIndentation)
+                        VSIFPrintfL(fpOutput, "      ");
+                    VSIFPrintfL(fpOutput,
+                                "<gml:coord><gml:X>%.16g</gml:X>"
+                                "<gml:Y>%.16g</gml:Y>",
+                                sBoundingRect.MinX, sBoundingRect.MinY);
+                    if (bBBOX3D)
+                        VSIFPrintfL(fpOutput, "<gml:Z>%.16g</gml:Z>",
+                                    sBoundingRect.MinZ);
+                    PrintLine(fpOutput, "</gml:coord>");
+                    if (bWriteSpaceIndentation)
+                        VSIFPrintfL(fpOutput, "      ");
+                    VSIFPrintfL(fpOutput,
+                                "<gml:coord><gml:X>%.16g</gml:X>"
+                                "<gml:Y>%.16g</gml:Y>",
+                                sBoundingRect.MaxX, sBoundingRect.MaxY);
+                    if (bBBOX3D)
+                        VSIFPrintfL(fpOutput, "<gml:Z>%.16g</gml:Z>",
+                                    sBoundingRect.MaxZ);
+                    PrintLine(fpOutput, "</gml:coord>");
+                    if (bWriteSpaceIndentation)
+                        VSIFPrintfL(fpOutput, "    ");
+                    PrintLine(fpOutput, "</gml:Box>");
+                    if (bWriteSpaceIndentation)
+                        VSIFPrintfL(fpOutput, "  ");
+                    PrintLine(fpOutput, "</gml:boundedBy>");
                 }
                 else
                 {
-                    wkt = OGRMakeWktCoordinate(
-                        sBoundingRect.MinX, sBoundingRect.MinY,
-                        sBoundingRect.MinZ, bBBOX3D ? 3 : 2, coordOpts);
-                    memcpy(szLowerCorner, wkt.data(), wkt.size() + 1);
-
-                    wkt = OGRMakeWktCoordinate(
-                        sBoundingRect.MaxX, sBoundingRect.MaxY,
-                        sBoundingRect.MaxZ, (bBBOX3D) ? 3 : 2, coordOpts);
-                    memcpy(szUpperCorner, wkt.data(), wkt.size() + 1);
+                    if (bWriteSpaceIndentation)
+                        VSIFPrintfL(fpOutput, "  ");
+                    if (IsGML3Output())
+                        PrintLine(
+                            fpOutput,
+                            "<gml:boundedBy><gml:Null /></gml:boundedBy>");
+                    else
+                        PrintLine(fpOutput, "<gml:boundedBy><gml:null>missing"
+                                            "</gml:null></gml:boundedBy>");
                 }
-                if (bWriteSpaceIndentation)
-                    VSIFPrintfL(fpOutput, "  ");
-                PrintLine(
-                    fpOutput,
-                    "<gml:boundedBy><gml:Envelope%s%s><gml:lowerCorner>%s"
-                    "</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner>"
-                    "</gml:Envelope></gml:boundedBy>",
-                    bBBOX3D ? " srsDimension=\"3\"" : "", pszSRSName,
-                    szLowerCorner, szUpperCorner);
-                CPLFree(pszSRSName);
-            }
-            else if (m_bWriteGlobalSRS && sBoundingRect.IsInit())
-            {
-                if (bWriteSpaceIndentation)
-                    VSIFPrintfL(fpOutput, "  ");
-                PrintLine(fpOutput, "<gml:boundedBy>");
-                if (bWriteSpaceIndentation)
-                    VSIFPrintfL(fpOutput, "    ");
-                PrintLine(fpOutput, "<gml:Box>");
-                if (bWriteSpaceIndentation)
-                    VSIFPrintfL(fpOutput, "      ");
-                VSIFPrintfL(fpOutput,
-                            "<gml:coord><gml:X>%.16g</gml:X>"
-                            "<gml:Y>%.16g</gml:Y>",
-                            sBoundingRect.MinX, sBoundingRect.MinY);
-                if (bBBOX3D)
-                    VSIFPrintfL(fpOutput, "<gml:Z>%.16g</gml:Z>",
-                                sBoundingRect.MinZ);
-                PrintLine(fpOutput, "</gml:coord>");
-                if (bWriteSpaceIndentation)
-                    VSIFPrintfL(fpOutput, "      ");
-                VSIFPrintfL(fpOutput,
-                            "<gml:coord><gml:X>%.16g</gml:X>"
-                            "<gml:Y>%.16g</gml:Y>",
-                            sBoundingRect.MaxX, sBoundingRect.MaxY);
-                if (bBBOX3D)
-                    VSIFPrintfL(fpOutput, "<gml:Z>%.16g</gml:Z>",
-                                sBoundingRect.MaxZ);
-                PrintLine(fpOutput, "</gml:coord>");
-                if (bWriteSpaceIndentation)
-                    VSIFPrintfL(fpOutput, "    ");
-                PrintLine(fpOutput, "</gml:Box>");
-                if (bWriteSpaceIndentation)
-                    VSIFPrintfL(fpOutput, "  ");
-                PrintLine(fpOutput, "</gml:boundedBy>");
-            }
-            else
-            {
-                if (bWriteSpaceIndentation)
-                    VSIFPrintfL(fpOutput, "  ");
-                if (IsGML3Output())
-                    PrintLine(fpOutput,
-                              "<gml:boundedBy><gml:Null /></gml:boundedBy>");
-                else
-                    PrintLine(fpOutput, "<gml:boundedBy><gml:null>missing"
-                                        "</gml:null></gml:boundedBy>");
             }
         }
 
         if (fpOutput)
             VSIFCloseL(fpOutput);
+        fpOutput = nullptr;
+
+        CSLDestroy(papszCreateOptions);
+        papszCreateOptions = nullptr;
+
+        for (int i = 0; i < nLayers; i++)
+            delete papoLayers[i];
+        CPLFree(papoLayers);
+        papoLayers = nullptr;
+        nLayers = 0;
+
+        if (poReader)
+        {
+            if (bOutIsTempFile)
+                VSIUnlink(poReader->GetSourceFileName());
+            delete poReader;
+            poReader = nullptr;
+        }
+
+        delete poStoredGMLFeature;
+        poStoredGMLFeature = nullptr;
+
+        if (m_bUnlinkXSDFilename)
+        {
+            VSIUnlink(osXSDFilename);
+            m_bUnlinkXSDFilename = false;
+        }
+
+        if (m_bWriteError)
+            eErr = CE_Failure;
     }
-
-    CSLDestroy(papszCreateOptions);
-
-    for (int i = 0; i < nLayers; i++)
-        delete papoLayers[i];
-
-    CPLFree(papoLayers);
-
-    if (poReader)
-    {
-        if (bOutIsTempFile)
-            VSIUnlink(poReader->GetSourceFileName());
-        delete poReader;
-    }
-
-    delete poStoredGMLFeature;
-
-    if (m_bUnlinkXSDFilename)
-    {
-        VSIUnlink(osXSDFilename);
-    }
+    return eErr;
 }
 
 /************************************************************************/
@@ -3109,6 +3139,7 @@ void OGRGMLDataSource::PrintLine(VSILFILE *fp, const char *fmt, ...)
     if (VSIFWriteL(osWork.data(), osWork.size(), 1, fp) != 1 ||
         VSIFWriteL(pszEOL, strlen(pszEOL), 1, fp) != 1)
     {
+        m_bWriteError = true;
         ReportError(CE_Failure, CPLE_FileIO, "Could not write line %s",
                     osWork.c_str());
     }

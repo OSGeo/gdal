@@ -4951,3 +4951,28 @@ def test_ogr_gml_type_override(
                     assert (
                         gdal.GetLastErrorMsg().find(expected_warning) != -1
                     ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"
+
+
+###############################################################################
+# Test a write error
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gml_write_error(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gml||maxlength=200")
+    ds = ogr.GetDriverByName("GML").CreateDataSource(
+        filename, options=["XSISCHEMA=OFF"]
+    )
+    with pytest.raises(Exception, match="Could not write line"):
+        ds.Close()
+
+    filename = str(tmp_vsimem / "test.gml||maxlength=600")
+    ds = ogr.GetDriverByName("GML").CreateDataSource(
+        filename, options=["XSISCHEMA=OFF"]
+    )
+    lyr = ds.CreateLayer("test")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    with pytest.raises(Exception, match="Could not write line"):
+        lyr.CreateFeature(f)
+    ds.Close()

@@ -669,7 +669,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
     const bool bRemoveAppPrefix = poDS->RemoveAppPrefix();
     const bool bGMLFeatureCollection = poDS->GMLFeatureCollection();
 
-    if (!bWriter)
+    if (!bWriter || poDS->HasWriteError())
         return OGRERR_FAILURE;
 
     poFeature->FillUnsetWithDefault(TRUE, nullptr);
@@ -1091,7 +1091,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
         poDS->PrintLine(fp, "</gml:featureMember>");
     }
 
-    return OGRERR_NONE;
+    return !poDS->HasWriteError() ? OGRERR_NONE : OGRERR_FAILURE;
 }
 
 /************************************************************************/
