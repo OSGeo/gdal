@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<message:AIXMBasicMessage xmlns:message="http://www.aixm.aero/schema/5.1.1/message" xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:aixm="http://www.aixm.aero/schema/5.1.1" xmlns:gsr="http://www.isotc211.org/2005/gsr" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.aixm.aero/schema/5.1.1/message http://www.aixm.aero/schema/5.1.1/message/AIXM_BasicMessage.xsd" gml:id="M0000001">
+
+    <message:hasMember>
+        <aixm:GuidanceLine gml:id="uuid.foo">
+            <gml:identifier codeSpace="urn:uuid:">foo</gml:identifier>
+            <aixm:timeSlice>
+                <aixm:GuidanceLineTimeSlice gml:id="GLN_EADD_TWY_foo">
+                    <gml:validTime>
+                        <gml:TimePeriod gml:id="vtt">
+                            <gml:beginPosition>2000-01-01T00:00:00Z</gml:beginPosition>
+                            <gml:endPosition indeterminatePosition="unknown"/>
+                        </gml:TimePeriod>
+                    </gml:validTime>
+                    <aixm:interpretation>BASELINE</aixm:interpretation>
+                    <aixm:sequenceNumber>1</aixm:sequenceNumber>
+                    <aixm:featureLifetime>
+                        <gml:TimePeriod gml:id="ltt">
+                            <gml:beginPosition>2000-01-01T00:00:00Z</gml:beginPosition>
+                            <gml:endPosition indeterminatePosition="unknown"/>
+                        </gml:TimePeriod>
+                    </aixm:featureLifetime>
+                    <aixm:designator>DESIGNATOR</aixm:designator>
+                    <aixm:type>TWY</aixm:type>
+                    <aixm:extent>
+                        <aixm:ElevatedCurve srsName="urn:ogc:def:crs:EPSG::4326" gml:id="ID-foo">
+                            <gml:segments>
+                                <gml:Geodesic>
+                                    <gml:posList>49 2 50 3
+                                    </gml:posList>
+                                </gml:Geodesic>
+                            </gml:segments>
+                        </aixm:ElevatedCurve>
+                    </aixm:extent>
+                </aixm:GuidanceLineTimeSlice>
+            </aixm:timeSlice>
+        </aixm:GuidanceLine>
+    </message:hasMember>
+
+    <message:hasMember>
+        <aixm:VerticalStructure gml:id="uuid.bar">
+            <gml:identifier codeSpace="urn:uuid:">bar</gml:identifier>
+            <aixm:timeSlice>
+                <aixm:VerticalStructureTimeSlice gml:id="VSTS">
+                    <gml:validTime>
+                        <gml:TimePeriod gml:id="vtt2">
+                            <gml:beginPosition>2000-01-01T00:00:00Z</gml:beginPosition>
+                            <gml:endPosition indeterminatePosition="unknown"/>
+                        </gml:TimePeriod>
+                    </gml:validTime>
+                    <aixm:interpretation>BASELINE</aixm:interpretation>
+                    <aixm:sequenceNumber>1</aixm:sequenceNumber>
+                    <aixm:correctionNumber>0</aixm:correctionNumber>
+                    <aixm:featureLifetime>
+                        <gml:TimePeriod gml:id="ftp2">
+                            <gml:beginPosition>2000-01-01T00:00:00Z</gml:beginPosition>
+                            <gml:endPosition indeterminatePosition="unknown"/>
+                        </gml:TimePeriod>
+                    </aixm:featureLifetime>
+                    <aixm:name>NAME</aixm:name>
+                    <aixm:type>WINDMILL_FARMS</aixm:type>
+                    <aixm:lighted>YES</aixm:lighted>
+                    <aixm:group>YES</aixm:group>
+                    <aixm:length xsi:nil="true" nilReason="inapplicable"/>
+                    <aixm:width xsi:nil="true" nilReason="inapplicable"/>
+                    <aixm:radius xsi:nil="true" nilReason="inapplicable"/>
+                    <aixm:part>
+                        <aixm:VerticalStructurePart gml:id="vsp">
+                            <aixm:verticalExtent uom="M">75</aixm:verticalExtent>
+                            <aixm:verticalExtentAccuracy uom="M">30</aixm:verticalExtentAccuracy>
+                            <aixm:type>WINDMILL_FARMS</aixm:type>
+                            <aixm:markingFirstColour>GREEN</aixm:markingFirstColour>
+                            <aixm:horizontalProjection_linearExtent>
+                                <aixm:ElevatedCurve srsName="urn:ogc:def:crs:EPSG::4326" gml:id="crv12456">
+                                    <gml:segments>
+                                        <gml:GeodesicString>
+                                            <gml:posList>45 2 46 3</gml:posList>
+                                        </gml:GeodesicString>
+                                    </gml:segments>
+                                    <aixm:horizontalAccuracy uom="M">50</aixm:horizontalAccuracy>
+                                    <aixm:elevation uom="M">75</aixm:elevation>
+                                    <aixm:verticalDatum>EGM_96</aixm:verticalDatum>
+                                    <aixm:verticalAccuracy uom="M">30</aixm:verticalAccuracy>
+                                </aixm:ElevatedCurve>
+                            </aixm:horizontalProjection_linearExtent>
+                            <aixm:lighting>
+                                <aixm:LightElement gml:id="le">
+                                    <aixm:colour>RED</aixm:colour>
+                                    <aixm:intensityLevel xsi:nil="true" nilReason="unknown"/>
+                                    <aixm:intensity xsi:nil="true" nilReason="unknown"/>
+                                    <aixm:type>OTHER:FLASHING</aixm:type>
+                                </aixm:LightElement>
+                            </aixm:lighting>
+                        </aixm:VerticalStructurePart>
+                    </aixm:part>
+                    <aixm:annotation>
+                        <aixm:Note gml:id="n000s0">
+                            <aixm:propertyName>markingICAOStandard</aixm:propertyName>
+                            <aixm:purpose>REMARK</aixm:purpose>
+                            <aixm:translatedNote>
+                                <aixm:LinguisticNote gml:id="ln00ss00">
+                                    <aixm:note>marked=YES</aixm:note>
+                                </aixm:LinguisticNote>
+                            </aixm:translatedNote>
+                        </aixm:Note>
+                    </aixm:annotation>
+                </aixm:VerticalStructureTimeSlice>
+            </aixm:timeSlice>
+        </aixm:VerticalStructure>
+    </message:hasMember>
+</message:AIXMBasicMessage>
+
+

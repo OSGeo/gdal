@@ -1567,6 +1567,7 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
     /* -------------------------------------------------------------------- */
     if (EQUAL(pszBaseGeometry, "LineString") ||
         EQUAL(pszBaseGeometry, "LineStringSegment") ||
+        EQUAL(pszBaseGeometry, "Geodesic") ||
         EQUAL(pszBaseGeometry, "GeodesicString"))
     {
         auto poLine = std::make_unique<OGRLineString>();
@@ -2527,7 +2528,8 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
     /* -------------------------------------------------------------------- */
     /*      Curve                                                           */
     /* -------------------------------------------------------------------- */
-    if (EQUAL(pszBaseGeometry, "Curve"))
+    if (EQUAL(pszBaseGeometry, "Curve") ||
+        EQUAL(pszBaseGeometry, "ElevatedCurve") /* AIXM */)
     {
         const CPLXMLNode *psChild = FindBareXMLChild(psNode, "segments");
         if (psChild == nullptr)
