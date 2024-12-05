@@ -2925,6 +2925,46 @@ def test_ogr2ogr_lib_reproject_arrow_optim_cannot_trigger(tmp_vsimem):
 
 
 ###############################################################################
+# Test -ct in Arrow code path
+# Cf https://github.com/OSGeo/gdal/issues/11438
+
+
+@gdaltest.enable_exceptions()
+def test_ogr2ogr_lib_reproject_arrow_optim_ct(tmp_vsimem):
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32632)
+    srcLayer = srcDS.CreateLayer("test", srs=srs)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    srcLayer.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    config_options = {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(config_options):
+        ds = gdal.VectorTranslate(
+            "",
+            srcDS,
+            format="Memory",
+            reproject=True,
+            coordinateOperation="+proj=affine +s11=-1",
+        )
+
+    assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32632"
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (-1 2)"
+
+
+###############################################################################
 # Test -explodecollections on empty geometries
 
 

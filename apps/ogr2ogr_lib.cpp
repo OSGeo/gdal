@@ -4099,12 +4099,11 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
             {
                 return false;
             }
-            auto poSrcSRS = m_poUserSourceSRS ? m_poUserSourceSRS
-                                              : poSrcLayer->GetLayerDefn()
-                                                    ->GetGeomFieldDefn(0)
-                                                    ->GetSpatialRef();
-            if (!poSrcSRS ||
-                !OGRGeometryFactory::isTransformWithOptionsRegularTransform(
+            const auto poSrcSRS = m_poUserSourceSRS ? m_poUserSourceSRS
+                                                    : poSrcLayer->GetLayerDefn()
+                                                          ->GetGeomFieldDefn(0)
+                                                          ->GetSpatialRef();
+            if (!OGRGeometryFactory::isTransformWithOptionsRegularTransform(
                     poSrcSRS, m_poOutputSRS, nullptr))
             {
                 return false;
