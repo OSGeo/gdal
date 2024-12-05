@@ -21,6 +21,10 @@ cmake ${GDAL_SOURCE_DIR:=..} \
   -DIconv_INCLUDE_DIR=/usr/include/gnu-libiconv \
   -DIconv_LIBRARY=/usr/lib/libiconv.so \
   -DADD_EXTERNAL_DEFERRED_PLUGIN_FOO=/tmp/foo.cpp \
+  -DGDAL_ENABLE_PLUGINS=ON \
+  -DGDAL_ENABLE_PLUGINS_NO_DEPS=ON \
+  -DOGR_ENABLE_DRIVER_TAB_PLUGIN=OFF \
+  -DOGR_ENABLE_DRIVER_GEOJSON_PLUGIN=OFF \
   -DCMAKE_CXX_STANDARD=23 \
   -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS="-Werror" -DWERROR_DEV_FLAG="-Werror=dev"
 make -j$(nproc)
