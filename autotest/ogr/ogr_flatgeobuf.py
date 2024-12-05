@@ -1612,3 +1612,41 @@ def test_ogr_flatgeobuf_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
         assert batch["datetime"][1] == b"2022-05-31T12:34:56.789Z"
         assert batch["datetime"][2] == b"2022-05-31T12:34:56"
         assert batch["datetime"][3] == b"2022-05-31T12:34:56+12:30"
+
+
+def test_ogr_flatgeobuf_write_empty_geometries_no_spatial_index(tmp_vsimem):
+    # Verify empty geom handling without spatial index
+    out_filename = str(tmp_vsimem / "out.fgb")
+    with ogr.GetDriverByName("FlatGeobuf").CreateDataSource(out_filename) as ds:
+        lyr = ds.CreateLayer(
+            "test", geom_type=ogr.wkbPolygon, options=["SPATIAL_INDEX=NO"]
+        )
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON EMPTY"))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+
+    with gdal.OpenEx(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        g = f.GetGeometryRef()
+        assert g is None
+
+
+def test_ogr_flatgeobuf_write_empty_file_no_spatial_index(tmp_vsimem):
+    # Verify empty geom handling without spatial index
+    out_filename = str(tmp_vsimem / "out.fgb")
+    with ogr.GetDriverByName("FlatGeobuf").CreateDataSource(out_filename) as ds:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(32631)
+        ds.CreateLayer(
+            "test", geom_type=ogr.wkbPolygon, srs=srs, options=["SPATIAL_INDEX=NO"]
+        )
+
+    with gdal.OpenEx(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 0
+        assert lyr.GetExtent(can_return_null=True) is None
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
