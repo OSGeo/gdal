@@ -31,6 +31,8 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_raster
    gdal_raster_info
    gdal_raster_convert
+   gdal_raster_pipeline
+   gdal_raster_reproject
    gdal_vector
    gdal_vector_info
    gdal_vector_convert
@@ -44,6 +46,8 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_raster_command`: Entry point for raster commands
     - :ref:`gdal_raster_info_subcommand`: Get information on a raster dataset
     - :ref:`gdal_raster_convert_subcommand`: Convert a raster dataset
+    - :ref:`gdal_raster_pipeline_subcommand`: Process a raster dataset
+    - :ref:`gdal_raster_reproject_subcommand`: Reproject a raster dataset
     - :ref:`gdal_vector_command`: Entry point for vector commands
     - :ref:`gdal_vector_info_subcommand`: Get information on a vector dataset
     - :ref:`gdal_vector_convert_subcommand`: Convert a vector dataset

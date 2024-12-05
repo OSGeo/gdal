@@ -2803,6 +2803,17 @@ TEST_F(test_gdal_algorithm, vector_pipeline_GetUsageForCLI)
     pipeline->GetUsageForCLI(true);
 }
 
+TEST_F(test_gdal_algorithm, raster_pipeline_GetUsageForCLI)
+{
+    auto &singleton = GDALGlobalAlgorithmRegistry::GetSingleton();
+    auto raster = singleton.Instantiate("raster");
+    ASSERT_NE(raster, nullptr);
+    auto pipeline = raster->InstantiateSubAlgorithm("pipeline");
+    ASSERT_NE(pipeline, nullptr);
+    pipeline->GetUsageForCLI(false);
+    pipeline->GetUsageForCLI(true);
+}
+
 TEST_F(test_gdal_algorithm, registry_c_api)
 {
     auto reg = GDALGetGlobalAlgorithmRegistry();

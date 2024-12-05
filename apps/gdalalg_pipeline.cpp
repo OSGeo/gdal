@@ -12,67 +12,24 @@
 
 #include "cpl_error.h"
 #include "gdalalgorithm.h"
-//#include "gdalalg_raster_pipeline.h"
+#include "gdalalg_raster_pipeline.h"
 #include "gdalalg_vector_pipeline.h"
 #include "gdalalg_dispatcher.h"
 #include "gdal_priv.h"
-
-/************************************************************************/
-/*                  GDALDummyRasterPipelineAlgorithm                    */
-/************************************************************************/
-
-class GDALDummyRasterPipelineAlgorithm final : public GDALAlgorithm
-{
-  public:
-    static constexpr const char *NAME = "pipeline";
-    static constexpr const char *DESCRIPTION = "Dummy raster pipeline.";
-    static constexpr const char *HELP_URL = "";
-
-    static std::vector<std::string> GetAliases()
-    {
-        return {};
-    }
-
-    explicit GDALDummyRasterPipelineAlgorithm(bool = false)
-        : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
-    {
-    }
-
-    bool ParseCommandLineArguments(const std::vector<std::string> &) override
-    {
-        return false;
-    }
-
-    /* cppcheck-suppress functionStatic */
-    GDALDataset *GetDatasetRef()
-    {
-        return nullptr;
-    }
-
-    /* cppcheck-suppress functionStatic */
-    void SetDataset(GDALDataset *)
-    {
-    }
-
-  private:
-    bool RunImpl(GDALProgressFunc, void *) override
-    {
-        return false;
-    }
-};
 
 /************************************************************************/
 /*                       GDALPipelineAlgorithm                          */
 /************************************************************************/
 
 class GDALPipelineAlgorithm final
-    : public GDALDispatcherAlgorithm<GDALDummyRasterPipelineAlgorithm,
+    : public GDALDispatcherAlgorithm<GDALRasterPipelineAlgorithm,
                                      GDALVectorPipelineAlgorithm>
 {
   public:
     static constexpr const char *NAME = "pipeline";
     static constexpr const char *DESCRIPTION =
-        "Execute a pipeline (shortcut for 'gdal vector pipeline').";
+        "Execute a pipeline (shortcut for 'gdal raster pipeline' or 'gdal "
+        "vector pipeline').";
     static constexpr const char *HELP_URL = "";  // TODO
 
     static std::vector<std::string> GetAliases()
@@ -94,7 +51,7 @@ class GDALPipelineAlgorithm final
     }
 
   private:
-    std::unique_ptr<GDALDummyRasterPipelineAlgorithm> m_rasterPipeline{};
+    std::unique_ptr<GDALRasterPipelineAlgorithm> m_rasterPipeline{};
     std::unique_ptr<GDALVectorPipelineAlgorithm> m_vectorPipeline{};
 
     std::string m_format{};
