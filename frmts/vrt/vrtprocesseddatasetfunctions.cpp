@@ -1507,15 +1507,19 @@ class ExpressionData
             return eErr;
         }
 
-        if (const auto &adfResults = m_oExpression.Results();
-            adfResults.size() != static_cast<std::size_t>(nExpectedOutBands))
+        if (nExpectedOutBands > 0)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Expression returned %d values but "
-                     "%d output bands were expected.",
-                     static_cast<int>(adfResults.size()),
-                     static_cast<int>(nExpectedOutBands));
-            return CE_Failure;
+            if (const auto &adfResults = m_oExpression.Results();
+                adfResults.size() !=
+                static_cast<std::size_t>(nExpectedOutBands))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Expression returned %d values but "
+                         "%d output bands were expected.",
+                         static_cast<int>(adfResults.size()),
+                         static_cast<int>(nExpectedOutBands));
+                return CE_Failure;
+            }
         }
 
         return CE_None;
@@ -1536,7 +1540,7 @@ class ExpressionData
 static CPLErr ExpressionInit(const char * /*pszFuncName*/, void * /*pUserData*/,
                              CSLConstList papszFunctionArgs, int nInBands,
                              GDALDataType eInDT, double * /* padfInNoData */,
-                             int * /*pnOutBands */, GDALDataType *peOutDT,
+                             int *pnOutBands, GDALDataType *peOutDT,
                              double ** /* ppadfOutNoData */,
                              const char * /* pszVRTPath */,
                              VRTPDWorkingDataPtr *ppWorkingData)
@@ -1554,6 +1558,17 @@ static CPLErr ExpressionInit(const char * /*pszFuncName*/, void * /*pUserData*/,
     if (auto eErr = data->Compile(); eErr != CE_None)
     {
         return eErr;
+    }
+
+    if (*pnOutBands == 0)
+    {
+        std::vector<double> aDummyValues(nInBands);
+        if (auto eErr = data->Evaluate(aDummyValues.data(), 0); eErr != CE_None)
+        {
+            return eErr;
+        }
+
+        *pnOutBands = static_cast<int>(data->Results().size());
     }
 
     *ppWorkingData = data.release();
