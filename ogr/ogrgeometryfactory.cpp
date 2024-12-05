@@ -3886,7 +3886,8 @@ bool OGRGeometryFactory::isTransformWithOptionsRegularTransform(
         return false;
 
 #ifdef HAVE_GEOS
-    if (poSourceCRS->IsProjected() && poTargetCRS->IsGeographic() &&
+    if (poSourceCRS && poTargetCRS && poSourceCRS->IsProjected() &&
+        poTargetCRS->IsGeographic() &&
         poTargetCRS->GetAxisMappingStrategy() == OAMS_TRADITIONAL_GIS_ORDER &&
         // check that angular units is degree
         std::fabs(poTargetCRS->GetAngularUnits(nullptr) -
