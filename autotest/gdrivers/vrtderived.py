@@ -1096,43 +1096,49 @@ def vrt_expression_xml(tmpdir, expression, sources):
 
 
 @pytest.mark.parametrize(
-    "expression,sources,result",
+    "expression,sources,result,dialects",
     [
-        pytest.param("A", [("A", 77)], 77, id="identity"),
+        pytest.param("A", [("A", 77)], 77, None, id="identity"),
         pytest.param(
             "(NIR-R)/(NIR+R)",
             [("NIR", 77), ("R", 63)],
             (77 - 63) / (77 + 63),
+            None,
             id="simple expression",
         ),
         pytest.param(
             "if (A > B) 1.5*C ; else A",
             [("A", 77), ("B", 63), ("C", 18)],
             27,
+            ["exprtk"],
             id="conditional (explicit)",
         ),
         pytest.param(
             "(A > B)*(1.5*C) + (A <= B)*(A)",
             [("A", 77), ("B", 63), ("C", 18)],
             27,
+            None,
             id="conditional (implicit)",
         ),
         pytest.param(
             "B2 * PopDensity",
             [("PopDensity", 3), ("", 7)],
             21,
+            None,
             id="implicit source name",
         ),
         pytest.param(
             "B1 / sum(BANDS)",
             [("", 3), ("", 5), ("", 31)],
             3 / (3 + 5 + 31),
+            ["exprtk"],
             id="use of BANDS variable",
         ),
         pytest.param(
             "B1 / sum(B2, B3) ",
             [("", 3), ("", 5), ("", 31)],
             3 / (5 + 31),
+            None,
             id="aggregate specified inputs",
         ),
         pytest.param(
@@ -1140,36 +1146,47 @@ def vrt_expression_xml(tmpdir, expression, sources):
             [("", 3), ("", 5), ("", 31)],
             15,  # First value in returned vector. This behavior doesn't seem desirable
             # but I haven't figured out how to detect a vector return.
+            ["exprtk"],
             id="return vector",
         ),
         pytest.param(
             "B1 + B2 + B3",
             (5, 9, float("nan")),
             float("nan"),
+            None,
             id="nan propagated via arithmetic",
         ),
         pytest.param(
             "if (B3) B1 ; else B2",
             (5, 9, float("nan")),
             5,
+            ["exprtk"],
             id="nan = truth in conditional?",
         ),
         pytest.param(
             "if (B3 > 0) B1 ; else B2",
             (5, 9, float("nan")),
             9,
+            ["exprtk"],
             id="nan comparison is false in conditional",
         ),
         pytest.param(
             "if (B1 > 5) B1",
             (1,),
             float("nan"),
+            ["exprtk"],
             id="expression returns nodata",
         ),
     ],
 )
-def test_vrt_pixelfn_expression(tmp_path, expression, sources, result):
+@pytest.mark.parametrize("dialect", ("exprtk", "muparser"))
+def test_vrt_pixelfn_expression(
+    tmp_path, expression, sources, result, dialect, dialects
+):
     pytest.importorskip("numpy")
+
+    if dialects and dialect not in dialects:
+        pytest.skip(f"Expression not supported for dialect {dialect}")
 
     xml = vrt_expression_xml(tmp_path, expression, sources)
 

@@ -1620,6 +1620,13 @@ static const char pszExprPixelFuncMetadata[] =
     "   <Argument name='expression' "
     "             description='Expression to be evaluated' "
     "             type='string'></Argument>"
+    "   <Argument name='dialect' "
+    "             description='Expression dialect' "
+    "             type='string-select'"
+    "             default='exprtk'>"
+    "       <Value>exprtk</Value>"
+    "       <Value>muparser</Value>"
+    "    /Argument>"
     "</PixelFunctionArgumentsList>";
 
 static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
@@ -1636,6 +1643,8 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
         return CE_Failure;
     }
 
+    std::unique_ptr<gdal::MathExpression> poExpression;
+
     const char *pszExpression = CSLFetchNameValue(papszArgs, "expression");
 
     const char *pszSourceNames = CSLFetchNameValue(papszArgs, "SOURCE_NAMES");
@@ -1644,15 +1653,40 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
 
     std::vector<double> adfValuesForPixel(nSources);
 
-    gdal::ExprtkExpression oExpression(pszExpression);
+    const char *pszDialect = CSLFetchNameValue(papszArgs, "dialect");
+    if (pszDialect)
+    {
+        if (EQUAL(pszDialect, "muparser"))
+        {
+            poExpression =
+                std::make_unique<gdal::MuParserExpression>(pszExpression);
+        }
+        else if (EQUAL(pszDialect, "exprtk"))
+        {
+            poExpression =
+                std::make_unique<gdal::ExprtkExpression>(pszExpression);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "unknown expression dialect: %s", pszDialect);
+            return CE_Failure;
+        }
+    }
+    else
+    {
+        poExpression = std::make_unique<gdal::ExprtkExpression>(pszExpression);
+    }
+
     {
         int iSource = 0;
         for (const auto &osName : aosSourceNames)
         {
-            oExpression.RegisterVariable(osName, &adfValuesForPixel[iSource++]);
+            poExpression->RegisterVariable(osName,
+                                           &adfValuesForPixel[iSource++]);
         }
     }
-    oExpression.RegisterVector("BANDS", &adfValuesForPixel);
+    poExpression->RegisterVector("BANDS", &adfValuesForPixel);
 
     double *padfResults =
         static_cast<double *>(CPLMalloc(nXSize * sizeof(double)));
@@ -1670,13 +1704,13 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
                     GetSrcVal(papoSources[iSrc], eSrcType, ii);
             }
 
-            if (auto eErr = oExpression.Evaluate(); eErr != CE_None)
+            if (auto eErr = poExpression->Evaluate(); eErr != CE_None)
             {
                 return CE_Failure;
             }
             else
             {
-                padfResults[iCol] = oExpression.Results()[0];
+                padfResults[iCol] = poExpression->Results()[0];
             }
         }
 

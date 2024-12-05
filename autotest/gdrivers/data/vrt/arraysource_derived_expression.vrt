@@ -1,7 +1,7 @@
 <VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
     <PixelFunctionType>expression</PixelFunctionType>
-    <PixelFunctionArguments expression="B1 + 5"/>
+    <PixelFunctionArguments expression="B1 + 5" dialect="muparser"/>
     <ArraySource>
         <Array name="test">
             <DataType>Float64</DataType>

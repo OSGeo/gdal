@@ -1,3 +1,4 @@
+
 add_gdal_driver(
   TARGET gdal_vrt
   BUILTIN
@@ -7,6 +8,7 @@ add_gdal_driver(
           vrtdriver.cpp
           vrtexpression.h
           vrtexpression.cpp
+          vrtexpression_muparser.cpp
           vrtfilters.cpp
           vrtrasterband.cpp
           vrtrawrasterband.cpp
@@ -31,6 +33,18 @@ elseif(MINGW)
     set_source_files_properties(vrtexpression.cpp PROPERTIES COMPILE_FLAGS "-Wa,-mbig-obj")
 endif()
 
+add_library(muparser OBJECT
+    ${PROJECT_SOURCE_DIR}/third_party/muparser/src/muParser.cpp
+    ${PROJECT_SOURCE_DIR}/third_party/muparser/src/muParserBase.cpp
+    ${PROJECT_SOURCE_DIR}/third_party/muparser/src/muParserBytecode.cpp
+    ${PROJECT_SOURCE_DIR}/third_party/muparser/src/muParserCallback.cpp
+    ${PROJECT_SOURCE_DIR}/third_party/muparser/src/muParserError.cpp
+    ${PROJECT_SOURCE_DIR}/third_party/muparser/src/muParserTokenReader.cpp
+)
+set_property(TARGET muparser PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+target_include_directories(muparser SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/third_party/muparser/include)
+target_include_directories(gdal_vrt SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/third_party/muparser/include)
+target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:muparser>)
 
 set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalvrt.xsd
