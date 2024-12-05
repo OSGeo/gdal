@@ -186,7 +186,7 @@ VRTRasterBand
 The attributes for VRTRasterBand are:
 
 - **dataType** (optional): type of the pixel data associated with this band (use
-  names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64).
+  names Byte, Int8, UInt16, Int16, UInt32, Int32, UInt64, Int64, Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64).
   If not specified, defaults to 1
 
 - **band** (optional): band number this element represents (1 based).

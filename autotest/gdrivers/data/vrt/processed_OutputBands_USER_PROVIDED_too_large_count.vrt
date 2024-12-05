@@ -1,0 +1,12 @@
+<VRTDataset subClass="VRTProcessedDataset">
+  <Input>
+    <SourceFilename relativeToVRT="1">../byte.tif</SourceFilename>
+  </Input>
+  <OutputBands count="100000000" dataType="Float32"/>
+  <ProcessingSteps>
+    <Step name="Affine combination of band values">
+      <Algorithm>BandAffineCombination</Algorithm>
+      <Argument name="coefficients_1">10,1</Argument>
+    </Step>
+  </ProcessingSteps>
+</VRTDataset>
