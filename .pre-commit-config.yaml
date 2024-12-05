@@ -44,6 +44,7 @@ repos:
                 swig/|
                 third_party/exprtk/|
                 third_party/fast_float/|
+                third_party/muparser/|
                 third_party/LercLib/|
                 autotest/ogr/data/|
                 alg/internal_libqhull/|
