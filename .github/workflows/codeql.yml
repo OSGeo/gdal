@@ -94,7 +94,7 @@ jobs:
             unixodbc-dev
 
     - name: Install latest ninja
-      run: pip install ninja
+      run: PYTHON_CMD=python3 && $PYTHON_CMD -m pip install ninja
 
     - name: Configure
       if: matrix.language == 'c-cpp'

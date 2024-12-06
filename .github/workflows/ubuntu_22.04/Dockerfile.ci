@@ -137,5 +137,5 @@ RUN curl -L -O https://download.oracle.com/otn_software/linux/instantclient/1990
     && apt-get install -y libaio1
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install -U -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U -r /tmp/requirements.txt
 

@@ -74,4 +74,4 @@ RUN apk add \
     zstd-dev
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install --break-system-packages -U -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages -U -r /tmp/requirements.txt
