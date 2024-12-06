@@ -7,7 +7,6 @@ add_library(
   gdaldrivermanager.cpp
   gdaldataset.cpp
   gdalrasterband.cpp
-  gdal_misc.cpp
   gdalrasterblock.cpp
   gdalcolortable.cpp
   gdalmajorobject.cpp
@@ -58,15 +57,19 @@ add_library(
   gdal_thread_pool.cpp
   nasakeywordhandler.cpp)
 
-get_property(IS_UNITY_BUILD TARGET gcore PROPERTY UNITY_BUILD)
-if(IS_UNITY_BUILD)
-  set_property(
-    SOURCE gdal_misc.cpp
-    APPEND
-    PROPERTY COMPILE_DEFINITIONS CMAKE_UNITY_BUILD)
-endif()
+add_library(gcore_gdal_misc OBJECT gdal_misc.cpp)
+gdal_standard_includes(gcore_gdal_misc)
+add_dependencies(gcore_gdal_misc generate_gdal_version_h)
+set_property(TARGET gcore_gdal_misc PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore_gdal_misc>)
+target_link_libraries(gcore_gdal_misc PRIVATE PROJ::proj)
+target_link_libraries(gcore PRIVATE PROJ::proj)
 
 gdal_standard_includes(gcore)
+target_compile_definitions(gcore PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
+if (USE_PRECOMPILED_HEADERS)
+    target_precompile_headers(gcore REUSE_FROM gdal_priv_header)
+endif()
 add_dependencies(gcore generate_gdal_version_h)
 target_compile_options(gcore PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 target_include_directories(
@@ -109,8 +112,12 @@ if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
   target_compile_definitions(gcore PRIVATE -DHAVE_SSSE3_AT_COMPILE_TIME -DUSE_NEON_OPTIMIZATIONS)
   target_sources(gcore PRIVATE rasterio_ssse3.cpp)
 elseif (HAVE_SSSE3_AT_COMPILE_TIME)
-  target_compile_definitions(gcore PRIVATE -DHAVE_SSSE3_AT_COMPILE_TIME)
-  target_sources(gcore PRIVATE rasterio_ssse3.cpp)
+  add_library(gcore_rasterio_ssse3 OBJECT rasterio_ssse3.cpp)
+  add_dependencies(gcore_rasterio_ssse3 generate_gdal_version_h)
+  target_compile_definitions(gcore_rasterio_ssse3 PRIVATE -DHAVE_SSSE3_AT_COMPILE_TIME)
+  gdal_standard_includes(gcore_rasterio_ssse3)
+  set_property(TARGET gcore_rasterio_ssse3 PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+  target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore_rasterio_ssse3>)
   set_property(
     SOURCE rasterio_ssse3.cpp
     APPEND
@@ -122,11 +129,13 @@ if (EMBED_RESOURCE_FILES)
     gdal_standard_includes(gcore_resources)
     set_property(TARGET gcore_resources PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
     target_compile_definitions(gcore PRIVATE EMBED_RESOURCE_FILES)
+    target_compile_definitions(gcore_gdal_misc PRIVATE EMBED_RESOURCE_FILES)
     set_target_properties(gcore_resources PROPERTIES C_STANDARD 23)
     target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore_resources>)
 endif()
 if (USE_ONLY_EMBEDDED_RESOURCE_FILES)
     target_compile_definitions(gcore PRIVATE USE_ONLY_EMBEDDED_RESOURCE_FILES)
+    target_compile_definitions(gcore_gdal_misc PRIVATE USE_ONLY_EMBEDDED_RESOURCE_FILES)
 endif()
 
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:gcore>)
@@ -183,8 +192,6 @@ if (GDAL_USE_CURL)
   target_compile_definitions(gcore PRIVATE -DHAVE_CURL)
   gdal_target_link_libraries(gcore PRIVATE CURL::libcurl)
 endif ()
-
-gdal_target_link_libraries(gcore PRIVATE PROJ::proj)
 
 # Windows(Mingw/MSVC) link libraries
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")

@@ -28,4 +28,4 @@ add_gdal_driver(
           mitab_geometry.cpp
           mitab_tabseamless.cpp)
 gdal_standard_includes(ogr_TAB)
-target_compile_definitions(ogr_TAB PRIVATE -DOGR -DMITAB_USE_OFTDATETIME)
+target_compile_definitions(ogr_TAB PRIVATE -DMITAB_USE_OFTDATETIME)
