@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:24.04@sha256:6e75a10070b0fcb0bead763c5118a369bc7cc30dfc1b0749c491bbb21f15c3c7
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TARGET_ARCH=s390x

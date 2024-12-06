@@ -2,7 +2,7 @@
 # so any change in dependencies locations might have to be reflected in
 # coverity_scan/build/sh as well
 
-FROM ubuntu:20.04
+FROM ubuntu:20.04@sha256:8e5c4f0285ecbb4ead070431d29b576a530d3166df73ec44affc1cd27555141b
 
 ENV DEBIAN_FRONTEND=noninteractive
 
