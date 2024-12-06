@@ -541,6 +541,13 @@ GDALRasterBlock::GDALRasterBlock(GDALRasterBand *poBandIn, int nXOffIn,
       nXOff(nXOffIn), nYOff(nYOffIn), nXSize(0), nYSize(0), pData(nullptr),
       poBand(poBandIn), poNext(nullptr), poPrevious(nullptr), bMustDetach(true)
 {
+    if (!hRBLock)
+    {
+        // Needed for scenarios where GDALAllRegister() is called after
+        // GDALDestroyDriverManager()
+        INITIALIZE_LOCK;
+    }
+
     CPLAssert(poBandIn != nullptr);
     poBand->GetBlockSize(&nXSize, &nYSize);
 }
