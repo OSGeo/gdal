@@ -563,6 +563,17 @@ import org.gdal.gdalconst.gdalconstConstants;
   }
 %}
 
+%extend GDALDatasetShadow {
+%proxycode %{
+  public int Close() {
+    int ret = gdalJNI.Dataset_CloseInternal(swigCPtr, this);
+    swigCPtr = 0;
+    swigCMemOwn = false;
+    return ret;
+  }
+%}
+}
+
 %typemap(javacode) GDALDatasetShadow %{
 
   // Preferred name to match C++ API

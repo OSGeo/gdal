@@ -215,6 +215,9 @@ public class GDALTestIO implements Runnable
             if (data1[i] != data2[i])
                 throw new RuntimeException("int64 write and read values are not the same "+data1[i]+" "+data2[i]);
         }
+
+        dataset.Close();
+        dataset.Close();
     }
 
     private static void testGetMemFileBuffer()
