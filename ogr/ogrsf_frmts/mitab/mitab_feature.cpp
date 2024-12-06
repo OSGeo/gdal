@@ -451,7 +451,7 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
             default:
                 // Other type???  Impossible!
                 CPLError(CE_Failure, CPLE_AssertionFailed,
-                         "Unsupported field type!");
+                         "Unsupported field type for field %d!", iField);
         }
     }
 
