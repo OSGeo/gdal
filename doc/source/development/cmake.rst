@@ -26,21 +26,30 @@ the cache variable or environment variable ``CMAKE_PREFIX_PATH``. In
 particular, CMake will consult (and set) the cache variable
 ``GDAL_DIR``.
 
-If a specific minor version is required, you can search for this via:
+If a specific minor version is at least required, you can search for this via:
 
 .. code:: cmake
 
-    find_package(GDAL 3.10 CONFIG REQUIRED)
+    find_package(GDAL 3.11 CONFIG REQUIRED)
 
-If more than one minor version is to be supported at the same time,
-``${GDAL_VERSION}`` itself must be evaluated.
+If only a single minor version should be accepted, you need to pass a version
+range to ``find_package`` (requires CMake 3.19):
 
 .. code:: cmake
 
-    find_package(GDAL CONFIG REQUIRED)
-    if(GDAL_VERSION VERSION_LESS "3.7" OR GDAL_VERSION VERSION_GREATER "3.9")
-      message(FATAL_ERROR "Required at least GDAL version 3.7 - 3.9, but found ${GDAL_VERSION}.")
-    endif()
+    find_package(GDAL 3.11.0...3.11.9 CONFIG REQUIRED)
+
+.. versionchanged:: 3.11
+   Until GDAL 3.10, GDAL has specified the same minor version as compatibility.
+   If you want older GDAL versions to be accepted, the version number must be
+   checked manually.
+
+   .. code:: cmake
+
+       find_package(GDAL CONFIG REQUIRED)
+       if(GDAL_VERSION VERSION_LESS "3.7" OR GDAL_VERSION VERSION_GREATER "3.11")
+         message(FATAL_ERROR "Required at least GDAL version 3.7 - 3.11, but found ${GDAL_VERSION}.")
+       endif()
 
 Before GDAL 3.5, it is recommended to use `find module supplied with CMake <https://cmake.org/cmake/help/latest/module/FindGDAL.html>`__.
 This also creates the ``GDAL::GDAL`` target. It requires CMake version 3.14.
