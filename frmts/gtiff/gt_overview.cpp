@@ -368,6 +368,13 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
                 nBandFormat = SAMPLEFORMAT_INT;
                 break;
 
+            case GDT_Float16:
+                // Convert Float16 to float.
+                // TODO: At some point we should support Float16.
+                nBandBits = 32;
+                nBandFormat = SAMPLEFORMAT_IEEEFP;
+                break;
+
             case GDT_Float32:
                 nBandBits = 32;
                 nBandFormat = SAMPLEFORMAT_IEEEFP;
@@ -386,6 +393,13 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
             case GDT_CInt32:
                 nBandBits = 64;
                 nBandFormat = SAMPLEFORMAT_COMPLEXINT;
+                break;
+
+            case GDT_CFloat16:
+                // Convert Float16 to float.
+                // TODO: At some point we should support Float16.
+                nBandBits = 64;
+                nBandFormat = SAMPLEFORMAT_COMPLEXIEEEFP;
                 break;
 
             case GDT_CFloat32:

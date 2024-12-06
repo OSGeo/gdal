@@ -32,6 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_cpu_features.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
@@ -328,7 +329,6 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             else
             {
                 // Type to type conversion.
-
                 if (eRWFlag == GF_Read)
                     GDALCopyWords(
                         pabySrcBlock + nSrcByteOffset, eDataType, nBandDataSize,
@@ -712,7 +712,6 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 {
                     /* type to type conversion ... ouch, this is expensive way
                     of handling single words */
-
                     GDALCopyWords(static_cast<GByte *>(pData) + iBufOffset,
                                   eBufType, 0, pabyDstBlock + iDstOffset,
                                   eDataType, 0, 1);
@@ -2821,6 +2820,11 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
                            static_cast<std::int64_t *>(pDstData),
                            nDstPixelStride, nWordCount);
             break;
+        case GDT_Float16:
+            GDALCopyWordsT(pSrcData, nSrcPixelStride,
+                           static_cast<GFloat16 *>(pDstData), nDstPixelStride,
+                           nWordCount);
+            break;
         case GDT_Float32:
             GDALCopyWordsT(pSrcData, nSrcPixelStride,
                            static_cast<float *>(pDstData), nDstPixelStride,
@@ -2858,6 +2862,21 @@ inline void GDALCopyWordsFromT(const T *const CPL_RESTRICT pSrcData,
             {
                 GDALCopyWordsComplexOutT(pSrcData, nSrcPixelStride,
                                          static_cast<int *>(pDstData),
+                                         nDstPixelStride, nWordCount);
+            }
+            break;
+        case GDT_CFloat16:
+            if (bInComplex)
+            {
+                GDALCopyWordsComplexT(pSrcData, nSrcPixelStride,
+                                      static_cast<GFloat16 *>(pDstData),
+                                      nDstPixelStride, nWordCount);
+            }
+            else  // input is not complex, so we need to promote to a complex
+                  // buffer
+            {
+                GDALCopyWordsComplexOutT(pSrcData, nSrcPixelStride,
+                                         static_cast<GFloat16 *>(pDstData),
                                          nDstPixelStride, nWordCount);
             }
             break;
@@ -3000,6 +3019,7 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
             CASE_DUPLICATE_SIMPLE(GDT_Int32, GInt32)
             CASE_DUPLICATE_SIMPLE(GDT_UInt64, std::uint64_t)
             CASE_DUPLICATE_SIMPLE(GDT_Int64, std::int64_t)
+            CASE_DUPLICATE_SIMPLE(GDT_Float16, GFloat16)
             CASE_DUPLICATE_SIMPLE(GDT_Float32, float)
             CASE_DUPLICATE_SIMPLE(GDT_Float64, double)
 
@@ -3020,6 +3040,7 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
 
             CASE_DUPLICATE_COMPLEX(GDT_CInt16, GInt16)
             CASE_DUPLICATE_COMPLEX(GDT_CInt32, GInt32)
+            CASE_DUPLICATE_COMPLEX(GDT_CFloat16, GFloat16)
             CASE_DUPLICATE_COMPLEX(GDT_CFloat32, float)
             CASE_DUPLICATE_COMPLEX(GDT_CFloat64, double)
 
@@ -3515,6 +3536,11 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
                 static_cast<const std::int64_t *>(pSrcData), nSrcPixelStride,
                 false, pDstData, eDstType, nDstPixelStride, nWordCount);
             break;
+        case GDT_Float16:
+            GDALCopyWordsFromT<GFloat16>(
+                static_cast<const GFloat16 *>(pSrcData), nSrcPixelStride, false,
+                pDstData, eDstType, nDstPixelStride, nWordCount);
+            break;
         case GDT_Float32:
             GDALCopyWordsFromT<float>(static_cast<const float *>(pSrcData),
                                       nSrcPixelStride, false, pDstData,
@@ -3534,6 +3560,11 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
             GDALCopyWordsFromT<int>(static_cast<const int *>(pSrcData),
                                     nSrcPixelStride, true, pDstData, eDstType,
                                     nDstPixelStride, nWordCount);
+            break;
+        case GDT_CFloat16:
+            GDALCopyWordsFromT<GFloat16>(
+                static_cast<const GFloat16 *>(pSrcData), nSrcPixelStride, true,
+                pDstData, eDstType, nDstPixelStride, nWordCount);
             break;
         case GDT_CFloat32:
             GDALCopyWordsFromT<float>(static_cast<const float *>(pSrcData),

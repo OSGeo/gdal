@@ -1496,7 +1496,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                           ZarrArray::IRead()                         */
+/*                           ZarrArray::IWrite()                        */
 /************************************************************************/
 
 bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,

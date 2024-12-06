@@ -19,6 +19,8 @@
 #include <cmath>
 #include <sstream>
 
+#include "cpl_float.h"
+
 namespace rdb
 {
 void RDBOverview::addRDBNode(RDBNode &oRDBNode, double dfXMin, double dfYMin,

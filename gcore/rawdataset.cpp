@@ -458,6 +458,11 @@ void RawRasterBand::DoByteSwap(void *pBuffer, size_t nValues, int nByteSkip,
                             nValues, nByteSkip);
         }
     }
+    else if (eDataType == GDT_Float16 || eDataType == GDT_CFloat16)
+    {
+        // No VAX support for GFloat16
+        std::abort();
+    }
     else if (eDataType == GDT_Float32 || eDataType == GDT_CFloat32)
     {
         GByte *pPtr = static_cast<GByte *>(pBuffer);

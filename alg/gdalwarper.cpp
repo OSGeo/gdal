@@ -23,6 +23,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_mask.h"
 #include "cpl_minixml.h"
 #include "cpl_progress.h"

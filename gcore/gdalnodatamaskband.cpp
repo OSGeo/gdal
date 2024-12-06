@@ -116,6 +116,8 @@ static GDALDataType GetWorkDataType(GDALDataType eDataType)
             eWrkDT = GDT_Int32;
             break;
 
+        case GDT_Float16:
+        case GDT_CFloat16:
         case GDT_Float32:
         case GDT_CFloat32:
             eWrkDT = GDT_Float32;
@@ -182,6 +184,12 @@ bool GDALNoDataMaskBand::IsNoDataInRange(double dfNoDataValue,
         case GDT_Int64:
         {
             return GDALIsValueInRange<int64_t>(dfNoDataValue);
+        }
+
+        case GDT_Float16:
+        {
+            return isnan(dfNoDataValue) || isinf(dfNoDataValue) ||
+                   GDALIsValueInRange<GFloat16>(dfNoDataValue);
         }
 
         case GDT_Float32:

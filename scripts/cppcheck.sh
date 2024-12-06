@@ -376,7 +376,7 @@ if grep "noConstructor" ${LOG_FILE} ; then
     ret_code=1
 fi
 
-if grep "noExplicitConstructor" ${LOG_FILE} ; then
+if grep "noExplicitConstructor" ${LOG_FILE} | grep -v -e port/cpl_float.h ; then
     echo "noExplicitConstructor check failed"
     ret_code=1
 fi
@@ -413,7 +413,7 @@ if grep "functionStatic" ${LOG_FILE} | grep -v -e OGRSQLiteDataSource::OpenRaste
     ret_code=1
 fi
 
-if grep "knownConditionTrueFalse" ${LOG_FILE} ; then
+if grep "knownConditionTrueFalse" ${LOG_FILE} | grep -v -e gcore/gdal_priv_templates.hpp ; then
     echo "knownConditionTrueFalse check failed"
     ret_code=1
 fi

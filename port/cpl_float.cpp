@@ -46,6 +46,8 @@
 #include "cpl_float.h"
 #include "cpl_error.h"
 
+#include <cstring>
+
 /************************************************************************/
 /*                           HalfToFloat()                              */
 /*                                                                      */
@@ -287,4 +289,20 @@ GUInt16 CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned)
 
     // coverity[overflow_sink]
     return static_cast<GUInt16>((iSign << 15) | (iExponent << 10) | iMantissa);
+}
+
+GUInt16 CPLConvertFloatToHalf(float fFloat32)
+{
+    GUInt32 nFloat32;
+    std::memcpy(&nFloat32, &fFloat32, sizeof nFloat32);
+    bool bHasWarned = true;
+    return CPLFloatToHalf(nFloat32, bHasWarned);
+}
+
+float CPLConvertHalfToFloat(GUInt16 nHalf)
+{
+    GUInt32 nFloat32 = CPLHalfToFloat(nHalf);
+    float fFloat32;
+    std::memcpy(&fFloat32, &nFloat32, sizeof fFloat32);
+    return fFloat32;
 }

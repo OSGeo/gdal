@@ -55,10 +55,12 @@ DefaultNDVLookup = {
     gdal.GDT_Int32: -2147483647,
     gdal.GDT_UInt64: None,
     gdal.GDT_Int64: None,
+    gdal.GDT_Float16: 65504.0,
     gdal.GDT_Float32: 3.402823466e38,
     gdal.GDT_Float64: 1.7976931348623158e308,
     gdal.GDT_CInt16: None,
     gdal.GDT_CInt32: None,
+    gdal.GDT_CFloat16: None,
     gdal.GDT_CFloat32: None,
     gdal.GDT_CFloat64: None,
 }
@@ -633,6 +635,11 @@ def Calc(
                     myResult = ((1 * (myNDVs == 0)) * myResult) + (myOutNDV * myNDVs)
                 elif not isinstance(myResult, numpy.ndarray):
                     myResult = numpy.ones((nYValid, nXValid)) * myResult
+
+                # Convert float16 to float32 if necessary
+                # (While numpy probably supports float16, GDAL may not)
+                if myResult.dtype == "float16":
+                    myResult = numpy.float32(myResult)
 
                 # write data block to the output file
                 myOutB = myOut.GetRasterBand(bandNo)

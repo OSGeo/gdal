@@ -66,6 +66,8 @@ def ParseType(typ):
         return gdal.GDT_Int32
     if typ == "UInt32":
         return gdal.GDT_UInt32
+    if typ == "Float16":
+        return gdal.GDT_Float16
     if typ == "Float32":
         return gdal.GDT_Float32
     if typ == "Float64":
@@ -74,6 +76,8 @@ def ParseType(typ):
         return gdal.GDT_CInt16
     if typ == "CInt32":
         return gdal.GDT_CInt32
+    if typ == "CFloat16":
+        return gdal.GDT_CFloat16
     if typ == "CFloat32":
         return gdal.GDT_CFloat32
     if typ == "CFloat64":
