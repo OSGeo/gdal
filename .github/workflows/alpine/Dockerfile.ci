@@ -1,4 +1,4 @@
-FROM alpine:edge
+FROM alpine:edge@sha256:732b6226a359f67fad4e38b34dd374bd62a6d282e20c493a38cc7d3a653f86ca
 
 RUN apk add \
     apache-arrow-dev \

@@ -1,4 +1,4 @@
-FROM fedora:rawhide
+FROM fedora:rawhide@sha256:19fcecbd14f2c1e887cbeb974295f5fc0e7b81e2df133e4f1b47a6f65cd11737
 
 # FIXME: Exclude update of dnf&rpm themselves as this results in a no longer working dnf
 # cf https://github.com/OSGeo/gdal/actions/runs/9448190401/job/26021669415?pr=10173
