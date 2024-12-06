@@ -3048,3 +3048,76 @@ def test_ogr2ogr_lib_arrow_datetime_as_string(tmp_vsimem):
         "2022/05/31 12:34:56",
         "2022/05/31 12:34:56+1230",
     ]
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_transfer_gpkg_relationships(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "relationships.gpkg")
+    gdal.VectorTranslate(out_filename, "../ogr/data/gpkg/relation_mapping_table.gpkg")
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() == ["a_b_attributes"]
+        relationship = ds.GetRelationship("a_b_attributes")
+        assert relationship.GetLeftTableName() == "a"
+        assert relationship.GetRightTableName() == "b"
+        assert relationship.GetMappingTableName() == "my_mapping_table"
+
+    gdal.VectorTranslate(
+        out_filename,
+        "../ogr/data/gpkg/relation_mapping_table.gpkg",
+        layers=["a", "my_mapping_table"],
+    )
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() is None
+
+    gdal.VectorTranslate(
+        out_filename,
+        "../ogr/data/gpkg/relation_mapping_table.gpkg",
+        layers=["b", "my_mapping_table"],
+    )
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() is None
+
+    gdal.VectorTranslate(
+        out_filename, "../ogr/data/gpkg/relation_mapping_table.gpkg", layers=["a", "b"]
+    )
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() is None
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("OpenFileGDB")
+def test_ogr2ogr_lib_transfer_filegdb_relationships(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "relationships.gdb")
+    gdal.VectorTranslate(
+        out_filename, "../ogr/data/filegdb/relationships.gdb", format="OpenFileGDB"
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert set(ds.GetRelationshipNames()) == set(
+            [
+                "composite_many_to_many",
+                "composite_one_to_one",
+                "points__ATTACHREL",
+                "simple_attributed",
+                "simple_backward_message_direction",
+                "simple_both_message_direction",
+                "simple_forward_message_direction",
+                "simple_many_to_many",
+                "simple_one_to_many",
+                "simple_relationship_one_to_one",
+            ]
+        )
+        relationship = ds.GetRelationship("composite_many_to_many")
+        assert relationship.GetLeftTableName() == "table6"
+        assert relationship.GetRightTableName() == "table7"
+        assert relationship.GetMappingTableName() == "composite_many_to_many"
