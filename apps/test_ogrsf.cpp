@@ -4057,14 +4057,16 @@ static int64_t CountFeaturesUsingArrowStream(OGRLayer *poLayer,
         if (nExpectedFID >= 0 && !bExpectedFIDFound)
         {
             bOK = false;
-            printf("ERROR: expected to find feature of id %" PRId64
+            printf("ERROR: CountFeaturesUsingArrowStream() :"
+                   "expected to find feature of id %" PRId64
                    ", but did not get it\n",
                    nExpectedFID);
         }
         if (nUnexpectedFID >= 0 && bUnexpectedFIDFound)
         {
             bOK = false;
-            printf("ERROR: expected *not* to find feature of id %" PRId64
+            printf("ERROR: CountFeaturesUsingArrowStream(): "
+                   "expected *not* to find feature of id %" PRId64
                    ", but did get it\n",
                    nUnexpectedFID);
         }
