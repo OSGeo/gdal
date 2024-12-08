@@ -19,6 +19,7 @@
 #include <algorithm>
 
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                         GDALDummyProgress()                          */
@@ -276,6 +277,34 @@ int CPL_STDCALL GDALTermProgress(double dfComplete,
             fprintf(stdout, "\b");
         nLastTick = -1;
         nCharacterCountLastTime = 0;
+
+#ifdef _WIN32
+        constexpr const char *WINDOWS_TERMINAL_ENV_VAR = "WT_SESSION";
+        constexpr const char *CONEMU_ENV_VAR = "ConEmuANSI";
+#endif
+        static const bool bAllowOSC94 = CPLTestBool(CPLGetConfigOption(
+            "GDAL_TERM_PROGRESS_OSC_9_4",
+#ifdef _WIN32
+            // Detect if we are running under Windows Terminal
+            (CPLGetConfigOption(WINDOWS_TERMINAL_ENV_VAR, nullptr) != nullptr ||
+             // or ConEmu
+             CPLGetConfigOption(CONEMU_ENV_VAR, nullptr) != nullptr)
+                ? "YES"
+                : "NO"
+#else
+            "YES"
+#endif
+            ));
+        if (bAllowOSC94)
+        {
+            // Implement OSC 9;4 progress reporting protocol
+            // https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC
+            if (nThisTick == MAX_TICKS)
+                fprintf(stdout, "\x1b]9;4;0;100\x07");
+            else
+                fprintf(stdout, "\x1b]9;4;1;%d\x07",
+                        (nThisTick * 100) / MAX_TICKS);
+        }
     }
 
     while (nThisTick > nLastTick)
