@@ -5323,15 +5323,23 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                 else
 #endif
                 {
+                    const int nBITSHint = (l_nBitsPerSample < 8)    ? 8
+                                          : (l_nBitsPerSample < 16) ? 16
+                                          : (l_nBitsPerSample < 32) ? 32
+                                                                    : 64;
                     ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
 #ifdef HAVE_PREDICTOR_2_FOR_64BIT
                                 "PREDICTOR=2 is only supported with 8/16/32/64 "
-                                "bit samples."
+                                "bit samples. You can specify the NBITS=%d "
+                                "creation option to promote to the closest "
+                                "supported bits per sample value.",
 #else
                                 "PREDICTOR=2 is only supported with 8/16/32 "
-                                "bit samples."
+                                "bit samples. You can specify the NBITS=%d "
+                                "creation option to promote to the closest "
+                                "supported bits per sample value.",
 #endif
-                    );
+                                nBITSHint);
                 }
                 return nullptr;
             }
