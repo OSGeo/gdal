@@ -4714,16 +4714,18 @@ static GDALDatasetH GDALWarpCreateOutput(
             aosCreateOptions.SetNameValue("PHOTOMETRIC", "RGB");
 
             // Preserve potential ALPHA=PREMULTIPLIED from source alpha band
-            const char *pszAlpha;
             if (aosCreateOptions.FetchNameValue("ALPHA") == nullptr &&
                 apeColorInterpretations.size() == 4 &&
                 apeColorInterpretations[3] == GCI_AlphaBand &&
-                GDALGetRasterCount(pahSrcDS[0]) == 4 &&
-                (pszAlpha =
-                     GDALGetMetadataItem(GDALGetRasterBand(pahSrcDS[0], 4),
-                                         "ALPHA", "IMAGE_STRUCTURE")))
+                GDALGetRasterCount(pahSrcDS[0]) == 4)
             {
-                aosCreateOptions.SetNameValue("ALPHA", pszAlpha);
+                const char *pszAlpha =
+                    GDALGetMetadataItem(GDALGetRasterBand(pahSrcDS[0], 4),
+                                        "ALPHA", "IMAGE_STRUCTURE");
+                if (pszAlpha)
+                {
+                    aosCreateOptions.SetNameValue("ALPHA", pszAlpha);
+                }
             }
         }
 
