@@ -68,14 +68,14 @@ bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON)
                             }
                             OGRFieldDefnOverride oFieldOverride;
 
-                            const auto oType =
-                                CPLString(oField.GetString("type")).tolower();
-                            const auto oSubType =
+                            const CPLString oType(
+                                CPLString(oField.GetString("type")).tolower());
+                            const CPLString oSubType(
                                 CPLString(oField.GetString("subType"))
-                                    .tolower();
-                            const auto osNewName =
+                                    .tolower());
+                            const CPLString osNewName(
                                 CPLString(oField.GetString("newName"))
-                                    .tolower();
+                                    .tolower());
                             const auto nWidth = oField.GetInteger("width", 0);
                             const auto nPrecision =
                                 oField.GetInteger("precision", 0);
