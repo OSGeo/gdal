@@ -349,6 +349,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
                     osCommand += "'";
                     if (!pszHex || pszHex[0] == 0)
                     {
+                        CPLFree(pszHex);
                         return false;
                     }
                     try
@@ -488,6 +489,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
                 osCommand += "\t";
             if (!pszGeom || pszGeom[0] == 0)
             {
+                CPLFree(pszGeom);
                 return false;
             }
             try

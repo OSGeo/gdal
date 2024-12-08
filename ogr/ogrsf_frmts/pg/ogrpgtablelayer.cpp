@@ -1983,6 +1983,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
                 poDS->sPostGISVersion.nMinor);
             if (!pszHexEWKB || pszHexEWKB[0] == 0)
             {
+                CPLFree(pszHexEWKB);
                 return OGRERR_FAILURE;
             }
             osCommand += '\'';
@@ -2174,6 +2175,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
                                                poDS->sPostGISVersion.nMinor);
             if (!pszGeom || pszGeom[0] == 0)
             {
+                CPLFree(pszGeom);
                 return OGRERR_FAILURE;
             }
         }
