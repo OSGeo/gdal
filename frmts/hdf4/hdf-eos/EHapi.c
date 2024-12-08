@@ -1591,7 +1591,8 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
     }
     /* Do string search */
     /* ---------------- */
-    metaptr = strstr(metaptr, utlstr);
+    if (metaptr)
+        metaptr = strstr(metaptr, utlstr);
 
 
     /*
