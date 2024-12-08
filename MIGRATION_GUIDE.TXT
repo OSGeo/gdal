@@ -1,3 +1,9 @@
+MIGRATION GUIDE FROM GDAL 3.10 to GDAL 3.11
+------------------------------------------
+
+- If only a specific GDAL Minor version is to be supported, this must now be
+  specified in the find_package call in CMake via a version range specification.
+
 MIGRATION GUIDE FROM GDAL 3.9 to GDAL 3.10
 ------------------------------------------
 
