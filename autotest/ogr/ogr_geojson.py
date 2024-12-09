@@ -40,6 +40,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("GeoJSON")
 
+
 ###############################################################################
 # Test utilities
 
@@ -5502,3 +5503,274 @@ def test_ogr_geojson_force_opening_stacta():
 
     ds = gdal.OpenEx("../gdrivers/data/stacta/test.json", allowed_drivers=["GeoJSON"])
     assert ds.GetDriver().GetDescription() == "GeoJSON"
+
+
+######################################################################
+# Test schema override open option with GeoJSON driver
+#
+@pytest.mark.parametrize(
+    "open_options, expected_field_types, expected_field_names, expected_warning",
+    [
+        (
+            [],
+            [
+                ogr.OFTString,
+                ogr.OFTInteger,
+                ogr.OFTReal,
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                (ogr.OFTString, ogr.OFSTNone),  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Override string field with integer
+        (
+            [
+                r'OGR_SCHEMA={"layers": [{"name": "test_point", "fields": [{ "name": "str", "type": "Integer" }]}]}'
+            ],
+            [
+                ogr.OFTInteger,  # <-- overridden
+                ogr.OFTInteger,
+                ogr.OFTReal,
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                ogr.OFTString,  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Override full schema and JSON/UUID subtype
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "schemaType": "Full", "fields": [{ "name": "json_str", "subType": "JSON", "new_name": "json_str" }, {"name": "uuid_str", "subType": "UUID" }]}]}'
+            ],
+            [
+                (ogr.OFTString, ogr.OFSTJSON),  # json subType
+                (ogr.OFTString, ogr.OFSTUUID),  # uuid subType
+            ],
+            ["json_str"],
+            None,
+        ),
+        # Test width and precision override
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "real", "width": 7, "precision": 3 }]}]}'
+            ],
+            [
+                ogr.OFTString,
+                ogr.OFTInteger,
+                ogr.OFTReal,
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                (ogr.OFTString, ogr.OFSTNone),  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Test boolean and short integer subtype
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "int", "subType": "Boolean" }, { "name": "real", "type": "Integer", "subType": "Int16" }]}]}'
+            ],
+            [
+                ogr.OFTString,
+                (ogr.OFTInteger, ogr.OFSTBoolean),  # bool overridden subType
+                (ogr.OFTInteger, ogr.OFSTInt16),  # int16 overridden subType
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                ogr.OFTString,  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Test real and int str override
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "int_str", "type": "Integer" }, { "name": "real_str", "type": "Real" }]}]}'
+            ],
+            [
+                ogr.OFTString,
+                ogr.OFTInteger,
+                ogr.OFTReal,
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTInteger,  # int string
+                ogr.OFTReal,  # real string
+                ogr.OFTString,  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Test invalid schema
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "str", "type": "xxxxx" }]}]}'
+            ],
+            [],
+            [],
+            "Unsupported field type: xxxxx for field str",
+        ),
+        # Test invalid field name
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "xxxxx", "type": "String", "new_name": "new_str" }]}]}'
+            ],
+            [],
+            [],
+            "Field xxxxx not found",
+        ),
+        # Test invalid layer name
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "xxxxx", "fields": [{ "name": "str", "type": "String" }]}]}'
+            ],
+            [],
+            [],
+            "Layer xxxxx not found",
+        ),
+    ],
+)
+def test_ogr_geojson_schema_override(
+    tmp_path, open_options, expected_field_types, expected_field_names, expected_warning
+):
+
+    json_data = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "str": "1",
+                    "int": 2,
+                    "real": 3.4,
+                    "bool": 1,
+                    "int_str": "2",
+                    "real_str": "3.4",
+                    "json_str": '{"foo": 1}',
+                    "uuid_str": "123e4567-e89b-12d3-a456-426614174000",
+                },
+                "geometry": {"type": "Point", "coordinates": [1, 2]},
+            }
+        ],
+    }
+
+    json_file = tmp_path / "test_point.json"
+    with open(json_file, "w") as f:
+        json.dump(json_data, f)
+
+    gdal.ErrorReset()
+
+    try:
+        schema = open_options[0].split("=")[1]
+        open_options = open_options[1:]
+    except IndexError:
+        schema = None
+
+    with gdal.quiet_errors():
+
+        if schema:
+            open_options.append("OGR_SCHEMA=" + schema)
+        else:
+            open_options = []
+
+        # Validate the JSON schema
+        if not expected_warning and schema:
+            schema = json.loads(schema)
+            gdaltest.validate_json(schema, "ogr_fields_override.schema.json")
+
+        # Check error if expected_field_types is empty
+        if not expected_field_types:
+            with gdaltest.disable_exceptions():
+                ds = gdal.OpenEx(
+                    tmp_path / "test_point.json",
+                    gdal.OF_VECTOR | gdal.OF_READONLY,
+                    open_options=open_options,
+                    allowed_drivers=["GeoJSON"],
+                )
+                assert (
+                    gdal.GetLastErrorMsg().find(expected_warning) != -1
+                ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"
+                assert ds is None
+        else:
+
+            ds = gdal.OpenEx(
+                tmp_path / "test_point.json",
+                gdal.OF_VECTOR | gdal.OF_READONLY,
+                open_options=open_options,
+                allowed_drivers=["GeoJSON"],
+            )
+
+            assert ds is not None
+
+            lyr = ds.GetLayer(0)
+
+            assert lyr.GetFeatureCount() == 1
+
+            lyr_defn = lyr.GetLayerDefn()
+
+            assert lyr_defn.GetFieldCount() == len(expected_field_types)
+
+            if len(expected_field_names) == 0:
+                expected_field_names = [
+                    "str",
+                    "int",
+                    "real",
+                    "bool",
+                    "int_str",
+                    "real_str",
+                    "json_str",
+                    "uuid_str",
+                ]
+
+            feat = lyr.GetNextFeature()
+
+            # Check field types
+            for i in range(len(expected_field_names)):
+                try:
+                    expected_type, expected_subtype = expected_field_types[i]
+                    assert feat.GetFieldDefnRef(i).GetType() == expected_type
+                    assert feat.GetFieldDefnRef(i).GetSubType() == expected_subtype
+                except TypeError:
+                    expected_type = expected_field_types[i]
+                    assert feat.GetFieldDefnRef(i).GetType() == expected_type
+                assert feat.GetFieldDefnRef(i).GetName() == expected_field_names[i]
+
+            # Test width and precision override
+            if len(open_options) > 0 and "precision" in open_options[0]:
+                assert feat.GetFieldDefnRef(2).GetWidth() == 7
+                assert feat.GetFieldDefnRef(2).GetPrecision() == 3
+
+            # Check feature content
+            if len(expected_field_names) > 0:
+                if "int" in expected_field_names:
+                    int_sub_type = feat.GetFieldDefnRef("int").GetSubType()
+                    assert (
+                        feat.GetFieldAsInteger("int") == 1
+                        if int_sub_type == ogr.OFSTBoolean
+                        else 2
+                    )
+                if "str" in expected_field_names:
+                    assert feat.GetFieldAsString("str") == "1"
+                if "new_str" in expected_field_names:
+                    assert feat.GetFieldAsString("new_str") == "1"
+                if "real_str" in expected_field_names:
+                    assert feat.GetFieldAsDouble("real_str") == 3.4
+                if "int_str" in expected_field_names:
+                    assert feat.GetFieldAsInteger("int_str") == 2
+            else:
+                assert feat.GetFieldAsInteger("int") == 2
+                assert feat.GetFieldAsString("str") == "1"
+
+            if expected_warning:
+                assert (
+                    gdal.GetLastErrorMsg().find(expected_warning) != -1
+                ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"

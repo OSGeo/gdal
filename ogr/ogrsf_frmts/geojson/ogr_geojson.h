@@ -291,6 +291,9 @@ class OGRGeoJSONDataSource final : public GDALDataset
 
     CPLErr Close() override;
 
+    // Analyze the OGR_SCHEMA open options and apply changes to the feature definition, return false in case of a critical error
+    bool DealWithOgrSchemaOpenOption(const GDALOpenInfo *poOpenInfo);
+
     static const size_t SPACE_FOR_BBOX = 130;
 
   private:
