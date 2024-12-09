@@ -2302,7 +2302,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
         auto &group = argParser->add_mutually_exclusive_group();
         group.add_argument("-so", "-summary")
             .store_into(psOptions->bSummaryParser)
-            .help(_("Summary only: Show only summary information like "
+            .help(_("Summary only: show only summary information like "
                     "projection, schema, feature count and extents."));
 
         group.add_argument("-features")
