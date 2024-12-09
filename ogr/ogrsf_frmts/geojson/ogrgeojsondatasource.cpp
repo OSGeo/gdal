@@ -117,11 +117,11 @@ bool OGRGeoJSONDataSource::DealWithOgrSchemaOpenOption(
             return false;
         }
 
-        const auto oLayerOverrides = osSchemaOverride.GetLayerOverrides();
+        const auto &oLayerOverrides = osSchemaOverride.GetLayerOverrides();
         for (const auto &oLayer : oLayerOverrides)
         {
-            const auto oLayerName = oLayer.first;
-            const auto oLayerFieldOverride = oLayer.second;
+            const auto &oLayerName = oLayer.first;
+            const auto &oLayerFieldOverride = oLayer.second;
             const bool bIsFullOverride{oLayerFieldOverride.IsFullOverride()};
             auto oFieldOverrides = oLayerFieldOverride.GetFieldOverrides();
             std::vector<OGRFieldDefn *> aoFields;
