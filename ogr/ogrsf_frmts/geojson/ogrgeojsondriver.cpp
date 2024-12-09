@@ -709,6 +709,11 @@ void RegisterOGRGeoJSON()
         "  <Option name='DATE_AS_STRING' type='boolean' description='Whether "
         "to expose date/time/date-time content using dedicated OGR "
         "date/time/date-time types or as a OGR String' default='NO'/>"
+        "  <Option name='OGR_SCHEMA' type='string' description='"
+        "Partially or totally overrides the auto-detected schema to use for "
+        "creating the layer. "
+        "The overrides are defined as a JSON list of field definitions. "
+        "This can be a filename or a JSON string or a URL.'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
