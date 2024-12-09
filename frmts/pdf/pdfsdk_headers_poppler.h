@@ -19,6 +19,11 @@
 
 #ifdef HAVE_POPPLER
 
+// The "#define private public" hacks we do below do not play well with the
+// sstream header.
+// Cf https://github.com/conda-forge/gdal-feedstock/pull/1019#issuecomment-2528710051
+#include <sstream>
+
 /* Horrible hack because there's a conflict between struct FlateDecode of */
 /* include/poppler/Stream.h and the FlateDecode() function of */
 /* pdfium/core/include/fpdfapi/fpdf_parser.h. */
