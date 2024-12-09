@@ -342,6 +342,7 @@ jobs:
 
           # For cache
           mkdir -p .gdal
+          mkdir -p .duckdb
 
           docker run \
             -e CI \
@@ -355,6 +356,7 @@ jobs:
             --add-host=host.docker.internal:host-gateway \
             --rm \
             -v $(pwd)/.gdal:/.gdal \
+            -v $(pwd)/.duckdb:/.duckdb \
             -v $(pwd):$(pwd) \
             --workdir $(pwd)/build-${{ matrix.id }} \
             ${CONTAINER_NAME_FULL} \

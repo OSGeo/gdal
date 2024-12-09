@@ -651,6 +651,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "ODS_RESOLVE_FORMULAS", // from ogrodsdatasource.cpp
    "OGR2OGR_MIN_FEATURES_FOR_THREADED_REPROJ", // from ogr2ogr_lib.cpp
    "OGR2OGR_USE_ARROW_API", // from ogr2ogr_lib.cpp
+   "OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", // from ogradbcdataset.cpp
    "OGR_API_SPY_FILE", // from ograpispy.cpp
    "OGR_API_SPY_SNAPSHOT_PATH", // from ograpispy.cpp
    "OGR_APPLY_GEOM_SET_PRECISION", // from ogr2ogr_lib.cpp, ogrlayer.cpp
