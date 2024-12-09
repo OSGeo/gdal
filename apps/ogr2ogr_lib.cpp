@@ -453,6 +453,12 @@ struct GDALVectorTranslateOptions
 
     /*! Whether to unset geometry coordinate precision */
     bool bUnsetCoordPrecision = false;
+
+    /*! set to true to prevent overwriting existing dataset */
+    bool bNoOverwrite = false;
+
+    /*! set to true to prevent if called from "gdal vector convert" */
+    bool bInvokedFromGdalVectorConvert = false;
 };
 
 struct TargetLayerInfo
@@ -2596,7 +2602,17 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             bError = strcmp(psOptions->osNewLayerName.c_str(),
                             psOptions->aosLayers[0]) == 0;
         else if (psOptions->osSQLStatement.empty())
-            bError = true;
+        {
+            if (psOptions->aosLayers.empty() && poDS->GetLayerCount() == 1)
+            {
+                bError = strcmp(psOptions->osNewLayerName.c_str(),
+                                poDS->GetLayer(0)->GetName()) == 0;
+            }
+            else
+            {
+                bError = true;
+            }
+        }
         if (bError)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
@@ -2688,6 +2704,27 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     if (!bUpdate)
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
+
+        if (psOptions->bNoOverwrite && !EQUAL(pszDest, ""))
+        {
+            VSIStatBufL sStat;
+            if (VSIStatL(pszDest, &sStat) == 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "File '%s' already exists. Specify the --overwrite "
+                         "option to overwrite it.",
+                         pszDest);
+                return nullptr;
+            }
+            else if (std::unique_ptr<GDALDataset>(GDALDataset::Open(pszDest)))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Dataset '%s' already exists. Specify the --overwrite "
+                         "option to overwrite it.",
+                         pszDest);
+                return nullptr;
+            }
+        }
 
         if (psOptions->osFormat.empty())
         {
@@ -4998,10 +5035,20 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     /* -------------------------------------------------------------------- */
     else if (!bAppend && !m_bNewDataSource)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Layer %s already exists, and -append not specified.\n"
-                 "        Consider using -append, or -overwrite.",
-                 pszNewLayerName);
+        if (psOptions->bInvokedFromGdalVectorConvert)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Layer %s already exists, and --append not specified. "
+                     "Consider using --append, or --overwrite-layer.",
+                     pszNewLayerName);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Layer %s already exists, and -append not specified.\n"
+                     "        Consider using -append, or -overwrite.",
+                     pszNewLayerName);
+        }
         return nullptr;
     }
     else
@@ -7280,7 +7327,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
                     GDALRemoveBOM(pabyRet);
                     char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
                     psOptions->osSQLStatement =
-                        GDALRemoveSQLComments(pszSQLStatement);
+                        CPLRemoveSQLComments(pszSQLStatement);
                     VSIFree(pszSQLStatement);
                 }
                 else
@@ -8038,6 +8085,16 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
                 { psOptions->bCopyMD = false; })
         .help(_("Disable copying of metadata from source dataset and layers "
                 "into target dataset and layers."));
+
+    // Undocumented option used by gdal vector convert
+    argParser->add_argument("--no-overwrite")
+        .store_into(psOptions->bNoOverwrite)
+        .hidden();
+
+    // Undocumented option used by gdal vector convert
+    argParser->add_argument("--invoked-from-gdal-vector-convert")
+        .store_into(psOptions->bInvokedFromGdalVectorConvert)
+        .hidden();
 
     if (psOptionsForBinary)
     {

@@ -12,6 +12,7 @@
 #
 import datetime
 import os
+import shutil
 import sys
 
 sys.path.insert(0, os.path.abspath("_extensions"))
@@ -185,6 +186,92 @@ author_evenr = "Even Rouault <even.rouault@spatialys.com>"
 author_tamass = "Tamas Szekeres <szekerest@gmail.com>"
 
 man_pages = [
+    # New gdal commands and subcommands
+    (
+        "programs/gdal",
+        "gdal",
+        "Main gdal entry point",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_info",
+        "gdal-info",
+        "Get information on a dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_convert",
+        "gdal-convert",
+        "Convert a dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster",
+        "gdal-raster",
+        "Entry point for raster commands",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_info",
+        "gdal-raster-info",
+        "Get information on a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_convert",
+        "gdal-raster-convert",
+        "Convert a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_pipeline",
+        "gdal-raster-pipeline",
+        "Process a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_raster_reproject",
+        "gdal-raster-reproject",
+        "Reproect a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector",
+        "gdal-vector",
+        "Entry point for vector commands",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_info",
+        "gdal-vector-info",
+        "Get information on a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_convert",
+        "gdal-vector-convert",
+        "Convert a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    (
+        "programs/gdal_vector_pipeline",
+        "gdal-vector-pipeline",
+        "Process a vector dataset",
+        [author_evenr],
+        1,
+    ),
+    # Traditional utilities
     (
         "programs/gdalinfo",
         "gdalinfo",
@@ -593,3 +680,24 @@ spelling_word_list_filename = ["spelling_wordlist.txt"]
 nb_mime_priority_overrides = [
     ("spelling", "text/plain", 0),
 ]
+
+# -- copy data files -----------------------------------------------------
+
+data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+os.makedirs(data_dir, exist_ok=True)
+data_dir_with_stats = os.path.join(data_dir, "with_stats")
+os.makedirs(data_dir_with_stats, exist_ok=True)
+
+target_filename = os.path.join(data_dir, "utmsmall.tif")
+shutil.copy(
+    os.path.join(os.path.dirname(__file__), "../../autotest/gcore/data/utmsmall.tif"),
+    target_filename,
+)
+if os.path.exists(target_filename + ".aux.xml"):
+    os.unlink(target_filename + ".aux.xml")
+
+target_filename = os.path.join(data_dir_with_stats, "utmsmall.tif")
+shutil.copy(
+    os.path.join(os.path.dirname(__file__), "../../autotest/gcore/data/utmsmall.tif"),
+    target_filename,
+)

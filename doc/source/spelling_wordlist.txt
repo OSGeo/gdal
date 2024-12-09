@@ -3075,6 +3075,8 @@ subclassed
 Subclassed
 subclasses
 Subclasses
+subcommand
+subcommands
 subdataset
 Subdataset
 subdatasets
