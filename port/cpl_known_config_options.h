@@ -378,6 +378,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_STACTA_SKIP_MISSING_METATILE", // from stactadataset.cpp
    "GDAL_SWATH_SIZE", // from gdalmultidim.cpp, rasterio.cpp
    "GDAL_TEMP_DRIVER_NAME", // from nearblack_lib_floodfill.cpp
+   "GDAL_TERM_PROGRESS_OSC_9_4", // from cpl_progress.cpp
    "GDAL_TIFF_DEFLATE_SUBCODEC", // from gtiffdataset.cpp
    "GDAL_TIFF_ENDIANNESS", // from gtiffdataset_write.cpp
    "GDAL_TIFF_INTERNAL_MASK", // from gtiffdataset_write.cpp
