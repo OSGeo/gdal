@@ -1746,6 +1746,35 @@ def test_ogr_shape_44():
 
 
 ###############################################################################
+# Test /vsicurl?url=
+
+
+@pytest.mark.require_curl()
+def test_ogr_shape_vsicurl_url():
+
+    conn = gdaltest.gdalurlopen(
+        "https://raw.githubusercontent.com/OSGeo/gdal/release/3.10/autotest/ogr/data/poly.shp"
+    )
+    if conn is None:
+        pytest.skip("cannot open URL")
+    conn.close()
+
+    ds = ogr.Open(
+        "/vsicurl?url=https%3A%2F%2Fraw.githubusercontent.com%2FOSGeo%2Fgdal%2Frelease%2F3.10%2Fautotest%2Fogr%2Fdata%2Fpoly.shp"
+    )
+    assert ds is not None
+
+    lyr = ds.GetLayer(0)
+
+    srs = lyr.GetSpatialRef()
+    wkt = srs.ExportToWkt()
+    assert wkt.find("OSGB") != -1, "did not get expected SRS"
+
+    f = lyr.GetNextFeature()
+    assert f is not None, "did not get expected feature"
+
+
+###############################################################################
 # Test ignored fields works ok on a shapefile.
 
 
