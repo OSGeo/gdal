@@ -185,12 +185,14 @@ endif ()
 if (GDAL_USE_GEOS)
   target_compile_definitions(gcore PRIVATE -DHAVE_GEOS)
   gdal_target_link_libraries(gcore PRIVATE ${GEOS_TARGET})
+  target_compile_definitions(gcore_gdal_misc PRIVATE -DHAVE_GEOS)
+  gdal_target_link_libraries(gcore_gdal_misc PRIVATE ${GEOS_TARGET})
 endif ()
 
 if (GDAL_USE_CURL)
   # Just for gdal_misc.cpp in fact
-  target_compile_definitions(gcore PRIVATE -DHAVE_CURL)
-  gdal_target_link_libraries(gcore PRIVATE CURL::libcurl)
+  target_compile_definitions(gcore_gdal_misc PRIVATE -DHAVE_CURL)
+  gdal_target_link_libraries(gcore_gdal_misc PRIVATE CURL::libcurl)
 endif ()
 
 # Windows(Mingw/MSVC) link libraries
