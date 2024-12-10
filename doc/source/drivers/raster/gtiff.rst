@@ -246,6 +246,13 @@ GDALGeoTIFF. Note that all bands must use the same nodata value. When
 BASELINE or GeoTIFF profile are used, the nodata value is stored into a
 PAM .aux.xml file.
 
+Raster Attribute Table
+----------------------
+
+Starting with GDAL 3.11, Raster attribute tables stored in auxiliary
+.tif.vat.dbf files, as written by ArcGIS, can be read as GDAL Raster Attribute
+Table.
+
 Sparse files
 ------------
 
@@ -487,7 +494,7 @@ This driver supports the following creation options:
       * ``JXL`` is for JPEG-XL, and is only available when using internal libtiff and building GDAL against
         https://github.com/libjxl/libjxl . It is recommended to use JXL compression with the ``TILED=YES`` creation
         option and block size of 256x256, 512x512, or 1024x1024 pixels. Supported data types are ``Byte``,
-        ``UInt16`` and ``Float32`` only. For GDAL < 3.6.0, JXL compression may only be used alongside 
+        ``UInt16`` and ``Float32`` only. For GDAL < 3.6.0, JXL compression may only be used alongside
         ``INTERLEAVE=PIXEL`` (the default) on datasets with 4 bands or less.
 
       * ``NONE`` is the default.
