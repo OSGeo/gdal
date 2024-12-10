@@ -102,7 +102,6 @@ bool OGRGeoJSONDataSource::DealWithOgrSchemaOpenOption(
     if (!osFieldsSchemaOverrideParam.empty())
     {
 
-        // GML driver does not support update at the moment so this will never happen
         if (poOpenInfo->eAccess == GA_Update)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
