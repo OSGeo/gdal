@@ -94,7 +94,11 @@ CPLErr GDALMultiDomainMetadata::SetMetadata(CSLConstList papszMetadata,
     // we want to mark name/value pair domains as being sorted for fast
     // access.
     if (!STARTS_WITH_CI(pszDomain, "xml:") &&
-        !STARTS_WITH_CI(pszDomain, "json:") && !EQUAL(pszDomain, "SUBDATASETS"))
+        !STARTS_WITH_CI(pszDomain, "json:") &&
+        !EQUAL(pszDomain, "SUBDATASETS")
+        // The IMD metadata domain should not be sorted, as order matters
+        // when writing it back. Cf https://github.com/OSGeo/gdal/issues/11470
+        && !EQUAL(pszDomain, "IMD"))
     {
         oMDList.Sort();
     }
