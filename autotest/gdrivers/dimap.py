@@ -247,3 +247,63 @@ def test_dimap_2_vhr2020_ms_fs():
         0, 0, 1663, 1366, 100, 100
     ) + ned_ds.ReadRaster(0, 0, 1663, 1366, 100, 100)
     assert ds.GetRasterBand(1).ReadRaster() == rgb_ds.GetRasterBand(1).ReadRaster()
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    assert md == {
+        "RADIANCE_BIAS": "25.8609873087",
+        "RADIANCE_CALIBRATION_DATE": "2020-02-05T09:56:28.208790Z",
+        "RADIANCE_GAIN": "0.00270666432682",
+        "RADIANCE_MEASURE_DESC": "Reflectance (RHO) to TOA Radiance (L). Formulae "
+        "L=RHO/GAIN+BIAS",
+        "RADIANCE_MEASURE_UNCERTAINTY": "0",
+        "RADIANCE_MEASURE_UNIT": "watt/m2/steradian/micrometer",
+        "SOLAR_IRRADIANCE_BIAS": "0",
+        "SOLAR_IRRADIANCE_CALIBRATION_DATE": "2019-05-20T09:07:00Z",
+        "SOLAR_IRRADIANCE_GAIN": "0",
+        "SOLAR_IRRADIANCE_MEASURE_DESC": "Solar irradiance value of raw radiometric "
+        "Band",
+        "SOLAR_IRRADIANCE_MEASURE_UNCERTAINTY": "0",
+        "SOLAR_IRRADIANCE_MEASURE_UNIT": "watt/m2/micron",
+        "SOLAR_IRRADIANCE_VALUE": "1553.1",
+        "SPECTRAL_RANGE_BIAS": "0",
+        "SPECTRAL_RANGE_CALIBRATION_DATE": "2019-05-20T09:07:00Z",
+        "SPECTRAL_RANGE_FWHM_MAX": "690",
+        "SPECTRAL_RANGE_FWHM_MIN": "619",
+        "SPECTRAL_RANGE_GAIN": "0",
+        "SPECTRAL_RANGE_MEASURE_DESC": "Spectral Range values of raw radiometric Band",
+        "SPECTRAL_RANGE_MEASURE_UNCERTAINTY": "0",
+        "SPECTRAL_RANGE_MEASURE_UNIT": "nanometer",
+    }
+
+    md = ds.GetRasterBand(1).GetMetadata("IMAGERY")
+    assert md == {"CENTRAL_WAVELENGTH_UM": "0.655", "FWHM_UM": "0.071"}
+
+    md = ds.GetRasterBand(2).GetMetadata()
+    assert md == {
+        "RADIANCE_BIAS": "50.2160963834",
+        "RADIANCE_CALIBRATION_DATE": "2020-02-05T09:56:28.208790Z",
+        "RADIANCE_GAIN": "0.00259610396266",
+        "RADIANCE_MEASURE_DESC": "Reflectance (RHO) to TOA Radiance (L). Formulae "
+        "L=RHO/GAIN+BIAS",
+        "RADIANCE_MEASURE_UNCERTAINTY": "0",
+        "RADIANCE_MEASURE_UNIT": "watt/m2/steradian/micrometer",
+        "SOLAR_IRRADIANCE_BIAS": "0",
+        "SOLAR_IRRADIANCE_CALIBRATION_DATE": "2019-05-20T09:07:00Z",
+        "SOLAR_IRRADIANCE_GAIN": "0",
+        "SOLAR_IRRADIANCE_MEASURE_DESC": "Solar irradiance value of raw radiometric "
+        "Band",
+        "SOLAR_IRRADIANCE_MEASURE_UNCERTAINTY": "0",
+        "SOLAR_IRRADIANCE_MEASURE_UNIT": "watt/m2/micron",
+        "SOLAR_IRRADIANCE_VALUE": "1817.5",
+        "SPECTRAL_RANGE_BIAS": "0",
+        "SPECTRAL_RANGE_CALIBRATION_DATE": "2019-05-20T09:07:00Z",
+        "SPECTRAL_RANGE_FWHM_MAX": "0.591",
+        "SPECTRAL_RANGE_FWHM_MIN": "0.533",
+        "SPECTRAL_RANGE_GAIN": "0",
+        "SPECTRAL_RANGE_MEASURE_DESC": "Spectral Range values of raw radiometric Band",
+        "SPECTRAL_RANGE_MEASURE_UNCERTAINTY": "0",
+        "SPECTRAL_RANGE_MEASURE_UNIT": "micrometer",
+    }
+
+    md = ds.GetRasterBand(2).GetMetadata("IMAGERY")
+    assert md == {"CENTRAL_WAVELENGTH_UM": "0.562", "FWHM_UM": "0.058"}
