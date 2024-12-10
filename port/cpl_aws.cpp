@@ -1741,8 +1741,10 @@ bool VSIS3HandleHelper::GetConfiguration(
         VSIGetPathSpecificOption(osPathForOption.c_str(), "AWS_REGION",
                                  "us-east-1"));
 
-    if (CPLTestBool(VSIGetPathSpecificOption(osPathForOption.c_str(),
-                                             "AWS_NO_SIGN_REQUEST", "NO")))
+    if (CPLTestBool(VSIGetPathSpecificOption(
+            osPathForOption.c_str(), "AWS_NO_CREDENTIALS",
+            VSIGetPathSpecificOption(osPathForOption.c_str(),
+                                     "AWS_NO_SIGN_REQUEST", "NO"))))
     {
         osSecretAccessKey.clear();
         osAccessKeyId.clear();
@@ -1974,8 +1976,9 @@ bool VSIS3HandleHelper::GetConfiguration(
     }
 
     VSIError(VSIE_AWSInvalidCredentials,
-             "AWS_SECRET_ACCESS_KEY and AWS_NO_SIGN_REQUEST configuration "
-             "options not defined, and %s not filled",
+             "AWS_SECRET_ACCESS_KEY configuration option not defined,"
+             "AWS_NO_CREDENTIALS configuration options not defined, "
+             "and %s not filled",
              osCredentials.c_str());
     return false;
 }

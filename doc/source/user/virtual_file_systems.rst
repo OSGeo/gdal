@@ -382,7 +382,7 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 - retry_delay=number_in_seconds: default to 30. Setting this option overrides the behavior of the :config:`GDAL_HTTP_RETRY_DELAY` configuration option.
 - retry_codes=``ALL`` or comma-separated list of HTTP error codes. Setting this option overrides the behavior of the :config:`GDAL_HTTP_RETRY_CODES` configuration option. (GDAL >= 3.10)
 - list_dir=yes/no: whether an attempt to read the file list of the directory where the file is located should be done. Default to YES.
-- empty_dir=yes/no: whether to disable directory listing and disable logic in drivers to probe for individual side-car files. Default to NO. 
+- empty_dir=yes/no: whether to disable directory listing and disable logic in drivers to probe for individual side-car files. Default to NO.
 - useragent=value: HTTP UserAgent header
 - referer=value: HTTP Referer header
 - cookie=value: HTTP Cookie header
@@ -483,6 +483,12 @@ Recognized filenames are of the form :file:`/vsis3/bucket/key`, where ``bucket``
 The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 The following configuration options are specific to the /vsis3/ handler:
+
+-  .. config:: AWS_NO_CREDENTIALS
+      :choices: YES, NO
+      :since: 3.11
+
+      Determines whether to disable request signing (synonymous of AWS_NO_SIGN_REQUEST)
 
 -  .. config:: AWS_NO_SIGN_REQUEST
       :choices: YES, NO
@@ -699,6 +705,12 @@ The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 The following configuration options are specific to the /vsigs/ handler:
 
+- .. config:: GS_NO_CREDENTIALS
+     :choices: YES, NO
+     :since: 3.11
+
+     If ``YES``, request signing is disabled. (synonymous of GS_NO_SIGN_REQUEST)
+
 - .. config:: GS_NO_SIGN_REQUEST
      :choices: YES, NO
      :since: 3.4
@@ -812,6 +824,12 @@ Recognized filenames are of the form :file:`/vsiaz/container/key`, where ``conta
 The generalities of :ref:`/vsicurl/ <vsicurl>` apply.
 
 The following configuration options are specific to the /vsiaz/ handler:
+
+-  .. config:: AZURE_NO_CREDENTIALS
+     :choices: YES, NO
+     :since: 3.11
+
+     Controls whether requests are signed. (synonymous of AZURE_NO_SIGN_REQUEST)
 
 - .. config:: AZURE_NO_SIGN_REQUEST
      :choices: YES, NO

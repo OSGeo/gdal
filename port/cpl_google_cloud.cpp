@@ -170,7 +170,7 @@ GetGSHeaders(const std::string &osPathForOption, const std::string &osVerb,
 {
     if (osSecretAccessKey.empty())
     {
-        // GS_NO_SIGN_REQUEST=YES case
+        // GS_NO_CREDENTIALS / GS_NO_SIGN_REQUEST=YES case
         return nullptr;
     }
 
@@ -356,8 +356,10 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
     osAccessKeyId.clear();
     bUseAuthenticationHeader = false;
 
-    if (CPLTestBool(VSIGetPathSpecificOption(osPathForOption.c_str(),
-                                             "GS_NO_SIGN_REQUEST", "NO")))
+    if (CPLTestBool(VSIGetPathSpecificOption(
+            osPathForOption.c_str(), "GS_NO_CREDENTIALS",
+            VSIGetPathSpecificOption(osPathForOption.c_str(),
+                                     "GS_NO_SIGN_REQUEST", "NO"))))
     {
         return true;
     }
@@ -710,7 +712,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
                  "GS_OAUTH2_REFRESH_TOKEN or "
                  "GOOGLE_APPLICATION_CREDENTIALS or "
                  "GS_OAUTH2_PRIVATE_KEY+GS_OAUTH2_CLIENT_EMAIL and %s, "
-                 "or GS_NO_SIGN_REQUEST=YES configuration options not defined",
+                 "or GS_NO_CREDENTIALS=YES configuration options not defined",
                  osCredentials.c_str());
 
     CPLDebug("GS", "%s", osMsg.c_str());

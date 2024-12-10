@@ -668,7 +668,9 @@ static bool GetConfigurationFromCLIConfigFile(
 
     if (osStorageKey.empty() && osSAS.empty())
     {
-        if (CPLTestBool(CPLGetConfigOption("AZURE_NO_SIGN_REQUEST", "NO")))
+        if (CPLTestBool(CPLGetConfigOption(
+                "AZURE_NO_CREDENTIALS",
+                CPLGetConfigOption("AZURE_NO_SIGN_REQUEST", "NO"))))
         {
             return true;
         }
@@ -687,6 +689,18 @@ static bool GetConfigurationFromCLIConfigFile(
     }
 
     return true;
+}
+
+/************************************************************************/
+/*                      DoesNotRequireCredentials()                     */
+/************************************************************************/
+
+static bool DoesNotRequireCredentials(const std::string &osPathForOption)
+{
+    return CPLTestBool(VSIGetPathSpecificOption(
+        osPathForOption.c_str(), "AZURE_NO_CREDENTIALS",
+        VSIGetPathSpecificOption(osPathForOption.c_str(),
+                                 "AZURE_NO_SIGN_REQUEST", "NO")));
 }
 
 /************************************************************************/
@@ -751,9 +765,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
                                        ""));  // AZURE_SAS for GDAL < 3.5
                 if (osSAS.empty())
                 {
-                    if (CPLTestBool(VSIGetPathSpecificOption(
-                            osPathForOption.c_str(), "AZURE_NO_SIGN_REQUEST",
-                            "NO")))
+                    if (DoesNotRequireCredentials(osPathForOption))
                     {
                         return true;
                     }
@@ -768,7 +780,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
 
                     const char *pszMsg =
                         "AZURE_STORAGE_ACCESS_KEY or AZURE_STORAGE_SAS_TOKEN "
-                        "or AZURE_NO_SIGN_REQUEST configuration option "
+                        "or AZURE_NO_CREDENTIALS configuration option "
                         "not defined";
                     CPLDebug("AZURE", "%s", pszMsg);
                     VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
@@ -790,7 +802,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
     const char *pszMsg =
         "Missing AZURE_STORAGE_ACCOUNT+"
         "(AZURE_STORAGE_ACCESS_KEY or AZURE_STORAGE_SAS_TOKEN or "
-        "AZURE_NO_SIGN_REQUEST) or "
+        "AZURE_NO_CREDENTIALS) or "
         "AZURE_STORAGE_CONNECTION_STRING "
         "configuration options or Azure CLI configuration file";
     CPLDebug("AZURE", "%s", pszMsg);
@@ -839,8 +851,7 @@ VSIAzureBlobHandleHelper *VSIAzureBlobHandleHelper::BuildFromURI(
         return nullptr;
     }
 
-    if (CPLTestBool(VSIGetPathSpecificOption(osPathForOption.c_str(),
-                                             "AZURE_NO_SIGN_REQUEST", "NO")))
+    if (DoesNotRequireCredentials(osPathForOption))
     {
         osStorageKey.clear();
         osSAS.clear();

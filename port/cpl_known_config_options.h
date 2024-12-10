@@ -22,6 +22,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "AWS_DEFAULT_REGION", // from cpl_aws.cpp
    "AWS_HTTPS", // from cpl_aws.cpp
    "AWS_MAX_KEYS", // from cpl_vsil_s3.cpp
+   "AWS_NO_CREDENTIALS", // from cpl_aws.cpp
    "AWS_NO_SIGN_REQUEST", // from cpl_aws.cpp
    "AWS_PROFILE", // from cpl_aws.cpp
    "AWS_REGION", // from cpl_aws.cpp
@@ -45,6 +46,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "AZURE_IMDS_MSI_RES_ID", // from cpl_azure.cpp
    "AZURE_IMDS_OBJECT_ID", // from cpl_azure.cpp
    "AZURE_MAX_RESULTS", // from cpl_vsil_adls.cpp, cpl_vsil_az.cpp
+   "AZURE_NO_CREDENTIALS", // from cpl_azure.cpp
    "AZURE_NO_SIGN_REQUEST", // from cpl_azure.cpp
    "AZURE_SAS", // from cpl_azure.cpp, cpl_vsil_az.cpp
    "AZURE_STORAGE_ACCESS_KEY", // from cpl_azure.cpp
@@ -474,6 +476,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GRIB_USE_DEFAULT_SPHEROID", // from gribdataset.cpp
    "GRIB_WRITE_BITMAP_TEST", // from gribcreatecopy.cpp
    "GS_ACCESS_KEY_ID", // from cpl_google_cloud.cpp
+   "GS_NO_CREDENTIALS", // from cpl_google_cloud.cpp
    "GS_NO_SIGN_REQUEST", // from cpl_google_cloud.cpp
    "GS_OAUTH2_CLIENT_EMAIL", // from cpl_google_cloud.cpp
    "GS_OAUTH2_CLIENT_ID", // from cpl_google_cloud.cpp
