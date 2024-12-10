@@ -2127,6 +2127,10 @@ def test_tiff_read_md1():
         md["ACQUISITIONDATETIME"] == "2010-04-01 12:00:00"
     ), "bad value for IMAGERY[ACQUISITIONDATETIME]"
 
+    # Check that IMD metadata domain is not sorted (https://github.com/OSGeo/gdal/issues/11470)
+    md = ds.GetMetadata_List("IMD")
+    assert md[0] == 'version="24.06"'
+
     ds = None
 
     assert not os.path.exists("data/md_dg.tif.aux.xml")
