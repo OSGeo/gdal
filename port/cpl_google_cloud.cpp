@@ -706,12 +706,18 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
     }
 
     CPLString osMsg;
-    osMsg.Printf("GS_SECRET_ACCESS_KEY+GS_ACCESS_KEY_ID, "
-                 "GS_OAUTH2_REFRESH_TOKEN or "
-                 "GOOGLE_APPLICATION_CREDENTIALS or "
-                 "GS_OAUTH2_PRIVATE_KEY+GS_OAUTH2_CLIENT_EMAIL and %s, "
-                 "or GS_NO_SIGN_REQUEST=YES configuration options not defined",
-                 osCredentials.c_str());
+    osMsg.Printf(
+        "No valid GCS credentials found. "
+        "For authenticated requests, you need to set "
+        "GS_SECRET_ACCESS_KEY, GS_ACCESS_KEY_ID, GS_OAUTH2_REFRESH_TOKEN, "
+        "GOOGLE_APPLICATION_CREDENTIALS, or other configuration "
+        "options, or create a %s file. Consult "
+        "https://gdal.org/en/stable/user/"
+        "virtual_file_systems.html#vsigs-google-cloud-storage-files "
+        "for more details. "
+        "For unauthenticated requests on public resources, set the "
+        "GS_NO_SIGN_REQUEST configuration option to YES.",
+        osCredentials.c_str());
 
     CPLDebug("GS", "%s", osMsg.c_str());
     VSIError(VSIE_AWSInvalidCredentials, "%s", osMsg.c_str());
