@@ -21,6 +21,7 @@
 #include "cpl_string.h"
 
 #include <algorithm>
+#include <cassert>
 
 //! @cond Doxygen_Suppress
 
@@ -553,6 +554,7 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
     for (const std::string &name : m_stepRegistry.GetNames())
     {
         auto alg = GetStepAlg(name);
+        assert(alg);
         auto [options, maxOptLen] = alg->GetArgNamesForCLI();
         stepUsageOptions.maxOptLen =
             std::max(stepUsageOptions.maxOptLen, maxOptLen);
@@ -562,6 +564,7 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
         const auto name = GDALVectorReadAlgorithm::NAME;
         ret += '\n';
         auto alg = GetStepAlg(name);
+        assert(alg);
         alg->SetCallPath({name});
         ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
     }
@@ -572,6 +575,7 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
         {
             ret += '\n';
             auto alg = GetStepAlg(name);
+            assert(alg);
             alg->SetCallPath({name});
             ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
         }
@@ -580,6 +584,7 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
         const auto name = GDALVectorWriteAlgorithm::NAME;
         ret += '\n';
         auto alg = GetStepAlg(name);
+        assert(alg);
         alg->SetCallPath({name});
         ret += alg->GetUsageForCLI(shortUsage, stepUsageOptions);
     }

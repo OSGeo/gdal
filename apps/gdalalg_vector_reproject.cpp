@@ -108,11 +108,11 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
 
     const int nLayerCount = poSrcDS->GetLayerCount();
     bool ret = true;
-    for (int i = 0; i < nLayerCount; ++i)
+    for (int i = 0; ret && i < nLayerCount; ++i)
     {
         auto poSrcLayer = poSrcDS->GetLayer(i);
-        ret = ret && (poSrcLayer != nullptr);
-        if (poSrcLayer)
+        ret = (poSrcLayer != nullptr);
+        if (ret)
         {
             OGRSpatialReference *poSrcLayerCRS;
             if (poSrcCRS)
@@ -130,8 +130,8 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
                 OGRCreateCoordinateTransformation(poSrcLayerCRS, &oDstCRS));
             auto poReversedCT = std::unique_ptr<OGRCoordinateTransformation>(
                 OGRCreateCoordinateTransformation(&oDstCRS, poSrcLayerCRS));
-            ret = ret && (poCT != nullptr) && (poReversedCT != nullptr);
-            if (poCT && poReversedCT)
+            ret = (poCT != nullptr) && (poReversedCT != nullptr);
+            if (ret)
             {
                 reprojectedDataset->AddLayer(std::make_unique<OGRWarpedLayer>(
                     poSrcLayer, /* iGeomField = */ 0,
@@ -141,7 +141,8 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
         }
     }
 
-    m_outputDataset.Set(std::move(reprojectedDataset));
+    if (ret)
+        m_outputDataset.Set(std::move(reprojectedDataset));
 
     return ret;
 }

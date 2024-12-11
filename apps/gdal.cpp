@@ -43,11 +43,11 @@ MAIN_START(argc, argv)
     std::vector<std::string> args;
     for (int i = 1; i < argc; ++i)
         args.push_back(argv[i]);
+    CSLDestroy(argv);
 
     if (!alg->ParseCommandLineArguments(args))
     {
         fprintf(stderr, "%s", alg->GetUsageForCLI(true).c_str());
-        CSLDestroy(argv);
         return 1;
     }
 
@@ -76,8 +76,6 @@ MAIN_START(argc, argv)
     {
         ret = 1;
     }
-
-    CSLDestroy(argv);
 
     return ret;
 }

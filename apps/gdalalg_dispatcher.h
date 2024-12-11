@@ -69,16 +69,24 @@ template <class RasterDispatcher, class VectorDispatcher>
 bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
     ParseCommandLineArguments(const std::vector<std::string> &args)
 {
+    // We first try to process with the raster specific algorithm (that has
+    // been instantiated in a special way to accept both raster and vector
+    // input datasets). If the raster specific algorithm can parse successfully
+    // the arguments *and* the dataset is a raster one, then continue processing
+    // with it. Otherwise try with the vector specific algorithm.
+
     bool ok;
+    if (args.size() > 1)
     {
-        std::unique_ptr<CPLErrorStateBackuper> oErrorHandler;
-        if (args.size() > 1)
-        {
-            oErrorHandler =
-                std::make_unique<CPLErrorStateBackuper>(CPLQuietErrorHandler);
-        }
+        // Silence errors as it might be rather for the vector algorithm
+        CPLErrorStateBackuper oErrorHandler(CPLQuietErrorHandler);
         ok = m_rasterDispatcher->ParseCommandLineArguments(args);
-        CPL_IGNORE_RET_VAL(oErrorHandler);
+    }
+    else
+    {
+        // If there's just a single argument, we don't need to silence errors
+        // as this will trigger a legitimate error message about the subcommand.
+        ok = m_rasterDispatcher->ParseCommandLineArguments(args);
     }
 
     if (m_rasterDispatcher->PropagateSpecialActionTo(this))

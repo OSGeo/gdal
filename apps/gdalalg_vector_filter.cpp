@@ -79,9 +79,12 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALProgressFunc, void *)
         }
     }
 
-    m_outputDataset.Set(m_inputDataset.GetDatasetRef());
+    if (ret)
+    {
+        m_outputDataset.Set(m_inputDataset.GetDatasetRef());
+    }
 
-    return true;
+    return ret;
 }
 
 //! @endcond

@@ -3186,6 +3186,8 @@ std::string CPLRemoveSQLComments(const std::string &osInput)
             {
                 if (pszLine[i] == chQuote)
                 {
+                    // Deal with escaped quote character which is repeated,
+                    // so 'foo''bar' or "foo""bar"
                     if (pszLine[i + 1] == chQuote)
                     {
                         i++;

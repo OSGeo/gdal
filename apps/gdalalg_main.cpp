@@ -45,6 +45,8 @@ GDALMainAlgorithm::GDALMainAlgorithm()
 bool GDALMainAlgorithm::ParseCommandLineArguments(
     const std::vector<std::string> &args)
 {
+    // Detect shortest form of pipeline:
+    // "gdal read in.tif ! .... ! write out.tif"
     if (args.size() >= 2 && args[0] == "read")
     {
         m_subAlg =
@@ -67,8 +69,18 @@ bool GDALMainAlgorithm::ParseCommandLineArguments(
                 return false;
             }
         }
+
+        return GDALAlgorithm::ParseCommandLineArguments(args);
     }
-    else if (!(args.size() >= 1 && InstantiateSubAlgorithm(args[0])))
+    // Generic case: "gdal {subcommand} arguments"
+    // where subcommand is a known subcommand
+    else if (args.size() >= 1 && InstantiateSubAlgorithm(args[0]))
+    {
+        return GDALAlgorithm::ParseCommandLineArguments(args);
+    }
+    // Otherwise check if that is the shortest form of "gdal read mydataset"
+    // where "read" is omitted: "gdal in.tif"
+    else
     {
         VSIStatBufL sStat;
         for (const auto &arg : args)
@@ -100,9 +112,9 @@ bool GDALMainAlgorithm::ParseCommandLineArguments(
                 }
             }
         }
-    }
 
-    return GDALAlgorithm::ParseCommandLineArguments(args);
+        return GDALAlgorithm::ParseCommandLineArguments(args);
+    }
 }
 
 /************************************************************************/
