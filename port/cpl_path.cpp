@@ -128,6 +128,10 @@ static int CPLFindFilenameStart(const char *pszFilename, size_t nStart = 0)
 const char *CPLGetPath(const char *pszFilename)
 
 {
+    char *pszStaticResult = CPLGetStaticResult();
+    if (pszStaticResult == nullptr)
+        return CPLStaticBufferTooSmall(pszStaticResult);
+
     size_t nSuffixPos = 0;
     if (STARTS_WITH(pszFilename, "/vsicurl/http"))
     {
@@ -135,11 +139,41 @@ const char *CPLGetPath(const char *pszFilename)
         if (pszQuestionMark)
             nSuffixPos = static_cast<size_t>(pszQuestionMark - pszFilename);
     }
+    else if (STARTS_WITH(pszFilename, "/vsicurl?") &&
+             strstr(pszFilename, "url="))
+    {
+        std::string osRet;
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(pszFilename + strlen("/vsicurl?"), "&", 0));
+        for (int i = 0; i < aosTokens.size(); i++)
+        {
+            if (osRet.empty())
+                osRet = "/vsicurl?";
+            else
+                osRet += '&';
+            if (STARTS_WITH(aosTokens[i], "url=") &&
+                !STARTS_WITH(aosTokens[i], "url=/vsicurl"))
+            {
+                char *pszUnescaped =
+                    CPLUnescapeString(aosTokens[i], nullptr, CPLES_URL);
+                char *pszPath = CPLEscapeString(
+                    CPLGetPath(pszUnescaped + strlen("url=")), -1, CPLES_URL);
+                osRet += "url=";
+                osRet += pszPath;
+                CPLFree(pszPath);
+                CPLFree(pszUnescaped);
+            }
+            else
+            {
+                osRet += aosTokens[i];
+            }
+        }
+        CPLStrlcpy(pszStaticResult, osRet.c_str(), CPL_PATH_BUF_SIZE);
+        return pszStaticResult;
+    }
 
     const int iFileStart = CPLFindFilenameStart(pszFilename, nSuffixPos);
-    char *pszStaticResult = CPLGetStaticResult();
-
-    if (pszStaticResult == nullptr || iFileStart >= CPL_PATH_BUF_SIZE)
+    if (iFileStart >= CPL_PATH_BUF_SIZE)
         return CPLStaticBufferTooSmall(pszStaticResult);
 
     CPLAssert(!(pszFilename >= pszStaticResult &&
@@ -197,6 +231,10 @@ const char *CPLGetPath(const char *pszFilename)
 const char *CPLGetDirname(const char *pszFilename)
 
 {
+    char *pszStaticResult = CPLGetStaticResult();
+    if (pszStaticResult == nullptr)
+        return CPLStaticBufferTooSmall(pszStaticResult);
+
     size_t nSuffixPos = 0;
     if (STARTS_WITH(pszFilename, "/vsicurl/http"))
     {
@@ -204,11 +242,42 @@ const char *CPLGetDirname(const char *pszFilename)
         if (pszQuestionMark)
             nSuffixPos = static_cast<size_t>(pszQuestionMark - pszFilename);
     }
+    else if (STARTS_WITH(pszFilename, "/vsicurl?") &&
+             strstr(pszFilename, "url="))
+    {
+        std::string osRet;
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(pszFilename + strlen("/vsicurl?"), "&", 0));
+        for (int i = 0; i < aosTokens.size(); i++)
+        {
+            if (osRet.empty())
+                osRet = "/vsicurl?";
+            else
+                osRet += '&';
+            if (STARTS_WITH(aosTokens[i], "url=") &&
+                !STARTS_WITH(aosTokens[i], "url=/vsicurl"))
+            {
+                char *pszUnescaped =
+                    CPLUnescapeString(aosTokens[i], nullptr, CPLES_URL);
+                char *pszPath = CPLEscapeString(
+                    CPLGetDirname(pszUnescaped + strlen("url=")), -1,
+                    CPLES_URL);
+                osRet += "url=";
+                osRet += pszPath;
+                CPLFree(pszPath);
+                CPLFree(pszUnescaped);
+            }
+            else
+            {
+                osRet += aosTokens[i];
+            }
+        }
+        CPLStrlcpy(pszStaticResult, osRet.c_str(), CPL_PATH_BUF_SIZE);
+        return pszStaticResult;
+    }
 
     const int iFileStart = CPLFindFilenameStart(pszFilename, nSuffixPos);
-    char *pszStaticResult = CPLGetStaticResult();
-
-    if (pszStaticResult == nullptr || iFileStart >= CPL_PATH_BUF_SIZE)
+    if (iFileStart >= CPL_PATH_BUF_SIZE)
         return CPLStaticBufferTooSmall(pszStaticResult);
 
     CPLAssert(!(pszFilename >= pszStaticResult &&
