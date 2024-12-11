@@ -3316,7 +3316,7 @@ def test_ogr_csv_schema_override(
         # Validate the JSON schema
         if not expected_warning and schema:
             schema = json.loads(schema)
-            #################gdaltest.validate_json(schema, "ogr_fields_override.schema.json")
+            gdaltest.validate_json(schema, "ogr_fields_override.schema.json")
 
         # Check error if expected_field_types is empty
         if not expected_field_types:
