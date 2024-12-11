@@ -104,14 +104,14 @@ RUN if test "$(uname -m)" = "x86_64"; then ( \
     ); fi
 
 # Build hdf4
-ARG HDF4_VERSION=4.2.16
+ARG HDF4_VERSION=4.3.0
 RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
-    apk add --no-cache byacc flex portablexdr-dev \
+    apk add --no-cache byacc flex libtirpc-dev \
     && mkdir hdf4 \
-    && curl -L -fsS https://support.hdfgroup.org/ftp/HDF/releases/HDF${HDF4_VERSION}/src/hdf-${HDF4_VERSION}.tar.gz \
-        | tar xz -C hdf4 --strip-components=2 \
+    && curl -L -fsS https://github.com/HDFGroup/hdf4/archive/refs/tags/hdf${HDF4_VERSION}.tar.gz \
+        | tar xz -C hdf4 --strip-components=1 \
     && cd hdf4 \
-    && LDFLAGS=-lportablexdr ./configure --prefix=/usr --enable-shared --disable-static \
+    && LDFLAGS=-ltirpc ./configure --prefix=/usr --enable-shared --disable-static \
         --with-szlib=/usr --disable-fortran --disable-netcdf \
     && make -j$(nproc) \
     && make install \
@@ -120,7 +120,7 @@ RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf hdf4 \
-    && apk del byacc flex portablexdr-dev \
+    && apk del byacc flex libtirpc-dev \
     ); fi
 
 # Build libOpenDRIVE
@@ -245,8 +245,8 @@ RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
     && if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then \
-        apk add --no-cache portablexdr-dev \
-        && export LDFLAGS="-lportablexdr ${LDFLAGS}"; \
+        apk add --no-cache libtirpc-dev \
+        && export LDFLAGS="-ltirpc ${LDFLAGS}"; \
     fi \
     && mkdir gdal \
     && curl -L -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
@@ -372,7 +372,7 @@ RUN apk add --no-cache \
         openjpeg \
         pcre2 \
         poppler \
-        portablexdr \
+        libtirpc \
         proj \
         python3 \
         py3-numpy \
