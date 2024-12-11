@@ -281,7 +281,8 @@ static void ParseGeoParquetColumn(
         geomColBBOX.osYMax = std::string(osPrefix)
                                  .append(OGRDuplicateCharacter(osYMax, '"'))
                                  .append("\"");
-        oMapGeomColumnToCoveringBBOXColumn[oColumn.GetName()] = geomColBBOX;
+        oMapGeomColumnToCoveringBBOXColumn[oColumn.GetName()] =
+            std::move(geomColBBOX);
         oSetCoveringBBoxColumn.insert(osBBOXColumn);
     }
 }
@@ -404,7 +405,7 @@ void OGRADBCLayer::BuildLayerDefn(bool bInternalUse)
             // CPLDebug("ADBC", "%s -> %s", m_osBaseStatement.c_str(), osNewStatement.c_str());
             if (ReplaceStatement(osNewStatement.c_str()))
             {
-                m_osModifiedBaseStatement = osNewStatement;
+                m_osModifiedBaseStatement = std::move(osNewStatement);
             }
             else
             {
