@@ -426,6 +426,15 @@ void RegisterOGRCSV()
         "  <Option name='MAX_LINE_SIZE' type='int' description='Maximum number "
         "of bytes for a line (-1=unlimited)' default='" STRINGIFY(
             OGR_CSV_DEFAULT_MAX_LINE_SIZE) "'/>"
+                                           "  <Option name='OGR_SCHEMA' "
+                                           "type='string' description='"
+                                           "Partially or totally overrides the "
+                                           "auto-detected schema to use for "
+                                           "creating the layer. "
+                                           "The overrides are defined as a "
+                                           "JSON list of field definitions. "
+                                           "This can be a filename or a JSON "
+                                           "string or a URL.'/>"
                                            "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

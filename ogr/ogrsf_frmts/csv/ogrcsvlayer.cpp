@@ -1359,6 +1359,23 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
 
     for (int iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++)
     {
+
+        // Skip deleted fields if OGR_SCHEMA with schemaType=Full was specified and fields were removed
+        if (OGRCSVDataSource *poCsvDs = static_cast<OGRCSVDataSource *>(m_poDS))
+        {
+            if (!poCsvDs->DeletedFieldIndexes().empty())
+            {
+                const auto &deletedFieldIndexes =
+                    poCsvDs->DeletedFieldIndexes();
+                if (std::find(deletedFieldIndexes.cbegin(),
+                              deletedFieldIndexes.cend(),
+                              iAttr) != deletedFieldIndexes.cend())
+                {
+                    continue;
+                }
+            }
+        }
+
         if ((iAttr == iLongitudeField || iAttr == iLatitudeField ||
              iAttr == iZField) &&
             !bKeepGeomColumns)
@@ -1455,6 +1472,8 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 }
                 else if (!bWarningBadTypeOrWidth)
                 {
+                    // Set to TRUE because it's different than 0 but emit a warning
+                    poFeature->SetField(iOGRField, 1);
                     bWarningBadTypeOrWidth = true;
                     CPLError(
                         CE_Warning, CPLE_AppDefined,
