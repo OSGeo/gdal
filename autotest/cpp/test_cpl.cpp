@@ -1059,6 +1059,12 @@ TEST_F(test_cpl, CPLGetPath)
     EXPECT_STREQ(CPLGetPath("/foo/bar"), "/foo");
     EXPECT_STREQ(CPLGetPath("/vsicurl/http://example.com/foo/bar?suffix"),
                  "/vsicurl/http://example.com/foo?suffix");
+    EXPECT_STREQ(
+        CPLGetPath(
+            "/vsicurl?foo=bar&url=https%3A%2F%2Fraw.githubusercontent.com%"
+            "2FOSGeo%2Fgdal%2Fmaster%2Fautotest%2Fogr%2Fdata%2Fpoly.shp"),
+        "/vsicurl?foo=bar&url=https%3A%2F%2Fraw.githubusercontent.com%2FOSGeo%"
+        "2Fgdal%2Fmaster%2Fautotest%2Fogr%2Fdata");
 }
 
 TEST_F(test_cpl, CPLGetDirname)
@@ -1067,6 +1073,12 @@ TEST_F(test_cpl, CPLGetDirname)
     EXPECT_STREQ(CPLGetDirname("/foo/bar"), "/foo");
     EXPECT_STREQ(CPLGetDirname("/vsicurl/http://example.com/foo/bar?suffix"),
                  "/vsicurl/http://example.com/foo?suffix");
+    EXPECT_STREQ(
+        CPLGetDirname(
+            "/vsicurl?foo=bar&url=https%3A%2F%2Fraw.githubusercontent.com%"
+            "2FOSGeo%2Fgdal%2Fmaster%2Fautotest%2Fogr%2Fdata%2Fpoly.shp"),
+        "/vsicurl?foo=bar&url=https%3A%2F%2Fraw.githubusercontent.com%2FOSGeo%"
+        "2Fgdal%2Fmaster%2Fautotest%2Fogr%2Fdata");
 }
 
 TEST_F(test_cpl, VSIGetDiskFreeSpace)
