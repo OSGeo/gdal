@@ -700,6 +700,40 @@ GDALArgDatasetValue::GDALArgDatasetValue(GDALArgDatasetValue &&other)
 }
 
 /************************************************************************/
+/*              GDALInConstructionAlgorithmArg::SetIsCRSArg()           */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALInConstructionAlgorithmArg::SetIsCRSArg(bool noneAllowed)
+{
+    if (GetType() != GAAT_STRING)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "SetIsCRSArg() can only be called on a String argument");
+        return *this;
+    }
+    return AddValidationAction(
+        [this, noneAllowed]()
+        {
+            const std::string &osVal =
+                static_cast<const GDALInConstructionAlgorithmArg *>(this)
+                    ->Get<std::string>();
+            if (!noneAllowed || (osVal != "none" && osVal != "null"))
+            {
+                OGRSpatialReference oSRS;
+                if (oSRS.SetFromUserInput(osVal.c_str()) != OGRERR_NONE)
+                {
+                    m_owner->ReportError(CE_Failure, CPLE_AppDefined,
+                                         "Invalid value for '%s' argument",
+                                         GetName().c_str());
+                    return false;
+                }
+            }
+            return true;
+        });
+}
+
+/************************************************************************/
 /*                     GDALAlgorithm::GDALAlgorithm()                  */
 /************************************************************************/
 

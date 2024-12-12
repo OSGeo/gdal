@@ -49,6 +49,19 @@ Potential steps are:
       --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
       --oo, --open-option <KEY=VALUE>                      Open options [may be repeated]
 
+* edit [OPTIONS]
+
+.. code-block::
+
+    Edit a raster dataset.
+
+    Options:
+      --crs <CRS>                                          Override CRS (without reprojection)
+      --extent <EXTENT>                                    Extent as xmin,ymin,xmax,ymax
+      --metadata <KEY>=<VALUE>                             Add/update dataset metadata item [may be repeated]
+      --unset-metadata <KEY>                               Remove dataset metadata item [may be repeated]
+
+Details for options can be found in :ref:`gdal_raster_edit_subcommand`.
 
 * reproject [OPTIONS]
 
@@ -64,6 +77,7 @@ Potential steps are:
       --extent <xmin>,<ymin>,<xmax>,<ymax>                 Target extent (in destination CRS units)
       --target-aligned-pixels                              Round target extent to target resolution
 
+Details for options can be found in :ref:`gdal_raster_reproject_subcommand`.
 
 * write [OPTIONS] <OUTPUT>
 
@@ -91,8 +105,8 @@ Examples
 --------
 
 .. example::
-   :title: Reproject a GeoTIFF file to CRS EPSG:32632 ("WGS 84 / UTM zone 32N")
+   :title: Reproject a GeoTIFF file to CRS EPSG:32632 ("WGS 84 / UTM zone 32N") and adding a metadata item
 
    .. code-block:: bash
 
-        $ gdal raster pipeline --progress ! read in.tif ! reproject --dst-crs=EPSG:32632 ! write out.tif --overwrite
+        $ gdal raster pipeline --progress ! read in.tif ! reproject --dst-crs=EPSG:32632 ! edit --metadata AUTHOR=EvenR ! write out.tif --overwrite
