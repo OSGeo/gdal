@@ -451,6 +451,10 @@ def test_tiledb_write_create_group(tmp_path):
     assert ds.RasterYSize == 2
 
 
+@pytest.mark.skipif(
+    gdaltest.is_travis_branch("build-windows-conda"),
+    reason="Fails with tiledb 2.27. Seehttps://github.com/OSGeo/gdal/issues/11485",
+)
 def test_tiledb_write_overviews(tmp_path):
 
     # This dataset name must be kept short, otherwise strange I/O errors will
