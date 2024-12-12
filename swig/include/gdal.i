@@ -611,6 +611,8 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //************************************************************************
 %include "Operations.i"
 
+%include "Algorithm.i"
+
 %apply (double argin[ANY]) {(double padfGeoTransform[6])};
 %apply (double *OUTPUT) {(double *pdfGeoX)};
 %apply (double *OUTPUT) {(double *pdfGeoY)};

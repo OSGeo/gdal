@@ -3168,3 +3168,58 @@ int CPLTolower(int c)
 {
     return (c >= 'A' && c <= 'Z') ? (c - 'A' + 'a') : c;
 }
+
+/************************************************************************/
+/*                      CPLRemoveSQLComments()                          */
+/************************************************************************/
+
+/** Remove SQL comments from a string
+ *
+ * @param osInput Input string.
+ * @since GDAL 3.11
+ */
+std::string CPLRemoveSQLComments(const std::string &osInput)
+{
+    const CPLStringList aosLines(
+        CSLTokenizeStringComplex(osInput.c_str(), "\r\n", FALSE, FALSE));
+    std::string osSQL;
+    for (const char *pszLine : aosLines)
+    {
+        char chQuote = 0;
+        int i = 0;
+        for (; pszLine[i] != '\0'; ++i)
+        {
+            if (chQuote)
+            {
+                if (pszLine[i] == chQuote)
+                {
+                    // Deal with escaped quote character which is repeated,
+                    // so 'foo''bar' or "foo""bar"
+                    if (pszLine[i + 1] == chQuote)
+                    {
+                        i++;
+                    }
+                    else
+                    {
+                        chQuote = 0;
+                    }
+                }
+            }
+            else if (pszLine[i] == '\'' || pszLine[i] == '"')
+            {
+                chQuote = pszLine[i];
+            }
+            else if (pszLine[i] == '-' && pszLine[i + 1] == '-')
+            {
+                break;
+            }
+        }
+        if (i > 0)
+        {
+            if (!osSQL.empty())
+                osSQL += ' ';
+            osSQL.append(pszLine, i);
+        }
+    }
+    return osSQL;
+}

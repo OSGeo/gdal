@@ -5167,3 +5167,53 @@ class VSIFile(BytesIO):
     def tell(self):
         return VSIFTellL(self._fp)
 %}
+
+/* -------------------------------------------------------------------- */
+/* GDALAlgorithmArgHS                                                   */
+/* -------------------------------------------------------------------- */
+
+%extend GDALAlgorithmArgHS {
+%pythoncode %{
+
+    def Get(self):
+        type = self.GetType()
+        if type == GAAT_BOOLEAN:
+            return self.GetAsBoolean()
+        if type == GAAT_STRING:
+            return self.GetAsString()
+        if type == GAAT_INTEGER:
+            return self.GetAsInteger()
+        if type == GAAT_REAL:
+            return self.GetAsDouble()
+        if type == GAAT_DATASET:
+            return self.GetAsDatasetValue()
+        if type == GAAT_STRING_LIST:
+            return self.GetAsStringList()
+        if type == GAAT_INTEGER_LIST:
+            return self.GetAsIntegerList()
+        if type == GAAT_REAL_LIST:
+            return self.GetAsDoubleList()
+        raise Exception("Unhandled algorithm argument data type")
+
+    def Set(self, value):
+        type = self.GetType()
+        if type == GAAT_BOOLEAN:
+            return self.SetAsBoolean(value)
+        if type == GAAT_STRING:
+            return self.SetAsString(value)
+        if type == GAAT_INTEGER:
+            return self.SetAsInteger(value)
+        if type == GAAT_REAL:
+            return self.SetAsDouble(value)
+        if type == GAAT_DATASET:
+            return self.SetAsDatasetValue(value)
+        if type == GAAT_STRING_LIST:
+            return self.SetAsStringList(value)
+        if type == GAAT_INTEGER_LIST:
+            return self.SetAsIntegerList(value)
+        if type == GAAT_REAL_LIST:
+            return self.SetAsDoubleList(value)
+        raise Exception("Unhandled algorithm argument data type")
+
+%}
+}

@@ -30,6 +30,7 @@
 #include "gdalwarper.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
+#include "gdalalgorithm.h"
 %}
 
 // GDALDataType
@@ -486,6 +487,17 @@
 %constant GRT_COMPOSITE = GRT_COMPOSITE;
 %constant GRT_ASSOCIATION = GRT_ASSOCIATION;
 %constant GRT_AGGREGATION = GRT_AGGREGATION;
+
+// GDALAlgorithmArgType
+%constant GAAT_BOOLEAN      = GAAT_BOOLEAN;
+%constant GAAT_STRING       = GAAT_STRING;
+%constant GAAT_INTEGER      = GAAT_INTEGER;
+%constant GAAT_REAL         = GAAT_REAL;
+%constant GAAT_DATASET      = GAAT_DATASET;
+%constant GAAT_STRING_LIST  = GAAT_STRING_LIST;
+%constant GAAT_INTEGER_LIST = GAAT_INTEGER_LIST;
+%constant GAAT_REAL_LIST    = GAAT_REAL_LIST;
+%constant GAAT_DATASET_LIST = GAAT_DATASET_LIST;
 
 #ifdef SWIGPYTHON
 %thread;

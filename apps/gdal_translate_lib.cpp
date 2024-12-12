@@ -301,6 +301,9 @@ struct GDALTranslateOptions
     /*! overview level of source file to be used */
     int nOvLevel = OVR_LEVEL_AUTO;
 
+    /*! set to true to prevent overwriting existing dataset */
+    bool bNoOverwrite = false;
+
     GDALTranslateOptions() = default;
     ~GDALTranslateOptions();
     GDALTranslateOptions *Clone() const;
@@ -1104,6 +1107,29 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             // Prevent GDALDriver::CreateCopy() from doing that again.
             psOptions->aosCreateOptions.SetNameValue(
                 "@QUIET_DELETE_ON_CREATE_COPY", "NO");
+        }
+
+        if (psOptions->bNoOverwrite && !EQUAL(pszDest, ""))
+        {
+            VSIStatBufL sStat;
+            if (VSIStatL(pszDest, &sStat) == 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "File '%s' already exists. Specify the --overwrite "
+                         "option to overwrite it.",
+                         pszDest);
+                GDALTranslateOptionsFree(psOptions);
+                return nullptr;
+            }
+            else if (std::unique_ptr<GDALDataset>(GDALDataset::Open(pszDest)))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Dataset '%s' already exists. Specify the --overwrite "
+                         "option to overwrite it.",
+                         pszDest);
+                GDALTranslateOptionsFree(psOptions);
+                return nullptr;
+            }
         }
 
         GDALDriver::FromHandle(hDriver)->QuietDeleteForCreateCopy(pszDest,
@@ -3126,6 +3152,11 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
     argParser->add_argument("-limit_outsize")
         .hidden()
         .store_into(psOptions->nLimitOutSize);
+
+    // Undocumented option used by gdal raster convert
+    argParser->add_argument("--no-overwrite")
+        .store_into(psOptions->bNoOverwrite)
+        .hidden();
 
     if (psOptionsForBinary)
     {

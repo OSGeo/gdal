@@ -3778,15 +3778,17 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         /*      --formats */
         /* --------------------------------------------------------------------
          */
-        else if (EQUAL(papszArgv[iArg], "--formats"))
+        else if (EQUAL(papszArgv[iArg], "--formats") ||
+                 EQUAL(papszArgv[iArg], "--drivers"))
         {
             if (nOptions == 0)
                 nOptions = GDAL_OF_RASTER;
 
-            bool bJSON = false;
+            bool bJSON = EQUAL(papszArgv[iArg], "--drivers");
             for (int i = 1; i < nArgc; i++)
             {
-                if (strcmp(papszArgv[i], "-json") == 0)
+                if (strcmp(papszArgv[i], "-json") == 0 ||
+                    strcmp(papszArgv[i], "--json") == 0)
                 {
                     bJSON = true;
                     break;
