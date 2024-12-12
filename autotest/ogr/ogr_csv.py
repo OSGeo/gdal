@@ -3402,6 +3402,66 @@ def test_ogr_csv_schema_override(
                 ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"
 
 
+def test_ogr_schema_override_wkt(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.csv")
+    with gdaltest.vsi_open(filename, "wb") as fdest:
+        fdest.write(b"id,WKT,foo\n")
+        fdest.write(b'1,"POINT (1 2)",bar\n')
+
+    with gdal.quiet_errors():
+
+        ds = gdal.OpenEx(filename)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["WKT"] == "POINT (1 2)"
+        assert f["foo"] == "bar"
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+        ds = gdal.OpenEx(
+            filename,
+            open_options=[
+                r'OGR_SCHEMA={"layers": [{"name": "test", "fields": [{ "name": "WKT", "type": "Integer" }]}]}'
+            ],
+        )
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["WKT"] == None
+        assert f["foo"] == "bar"
+        assert (
+            gdal.GetLastErrorMsg().find(
+                "Invalid value type found in record 1 for field WKT"
+            )
+            != -1
+        )
+
+        ds = gdal.OpenEx(
+            filename,
+            open_options=[
+                r'OGR_SCHEMA={"layers": [{"name": "test", "schemaType": "Full", "fields": [{ "name": "foo" }]}]}'
+            ],
+        )
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        try:
+            assert f["WKT"] == None
+        except KeyError as ex:
+            assert str(ex).find("Illegal field requested in GetField()") != -1
+        assert f["foo"] == "bar"
+
+        ds = gdal.OpenEx(
+            filename,
+            open_options=[
+                r'OGR_SCHEMA={"layers": [{"name": "test", "schemaType": "Full", "fields": [{ "name": "foo" }, { "name": "WKT" }]}]}'
+            ],
+        )
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["WKT"] == "POINT (1 2)"
+        assert f["foo"] == "bar"
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+
 ###############################################################################
 
 
