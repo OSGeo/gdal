@@ -8,7 +8,7 @@ RFC 104: Adding a "gdal" front-end command line interface
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2024-Nov-06
-Status:        Draft
+Status:        Adopted, implemented in 3.11
 Target:        GDAL 3.11 for initial version (full scope will likely take more development cycles)
 ============== =============================================
 
@@ -1418,7 +1418,7 @@ Related issues and PRs
 Voting history
 --------------
 
-TBD
++1 from PSC members JukkaR, DanielM, JavierJS, HowardB and EvenR
 
 
 
