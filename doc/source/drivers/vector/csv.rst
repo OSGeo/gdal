@@ -420,6 +420,7 @@ The following open options are supported:
       Partially or totally overrides the auto-detected schema to use for creating the layer.
       The overrides are defined as a JSON list of field definitions.
       This can be a filename, a URL or JSON string conformant with the `ogr_fields_override.schema.json schema <https://raw.githubusercontent.com/OSGeo/gdal/refs/heads/master/ogr/data/ogr_fields_override.schema.json>`_
+      This option takes precedence over any other option and over the .csvt file.
 
 
 Creation Issues
