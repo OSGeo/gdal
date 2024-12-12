@@ -17,6 +17,7 @@ add_library(
   gdaljp2box.cpp
   gdalmultidomainmetadata.cpp
   gdal_rat.cpp
+  gdal_rat_vat_dbf.cpp
   gdalpamproxydb.cpp
   gdalallvalidmaskband.cpp
   gdalnodatamaskband.cpp
