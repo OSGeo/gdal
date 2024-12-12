@@ -435,8 +435,6 @@ jobs:
             sqlite tiledb zstd cryptopp cgal doxygen librttopo openssl liblzma-devel \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc libarchive \
             libarrow pyarrow libaec libheif libavif cmake fsspec
-        # HACK due to an ongoing transition
-        cp $CONDA/envs/gdalenv/Library/bin/minizip.dll $CONDA/envs/gdalenv/Library/bin/libminizip.dll
     - name: Check CMake version
       shell: bash -l {0}
       run: |
