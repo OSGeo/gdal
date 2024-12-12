@@ -1973,10 +1973,20 @@ bool VSIS3HandleHelper::GetConfiguration(
         return true;
     }
 
-    VSIError(VSIE_AWSInvalidCredentials,
-             "AWS_SECRET_ACCESS_KEY and AWS_NO_SIGN_REQUEST configuration "
-             "options not defined, and %s not filled",
-             osCredentials.c_str());
+    CPLString osMsg;
+    osMsg.Printf(
+        "No valid AWS credentials found. "
+        "For authenticated requests, you need to set "
+        "AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID or other configuration "
+        "options, or create a %s file. Consult "
+        "https://gdal.org/en/stable/user/"
+        "virtual_file_systems.html#vsis3-aws-s3-files for more details. "
+        "For unauthenticated requests on public resources, set the "
+        "AWS_NO_SIGN_REQUEST configuration option to YES.",
+        osCredentials.c_str());
+    CPLDebug("GS", "%s", osMsg.c_str());
+    VSIError(VSIE_AWSInvalidCredentials, "%s", osMsg.c_str());
+
     return false;
 }
 
