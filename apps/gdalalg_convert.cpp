@@ -30,7 +30,7 @@ class GDALConvertAlgorithm
     static constexpr const char *DESCRIPTION =
         "Convert a dataset (shortcut for 'gdal raster convert' or "
         "'gdal vector convert').";
-    static constexpr const char *HELP_URL = "";  // TODO
+    static constexpr const char *HELP_URL = "/programs/gdal_convert.html";
 
     static std::vector<std::string> GetAliases()
     {

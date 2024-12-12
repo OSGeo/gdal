@@ -26,7 +26,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
   public:
     static constexpr const char *NAME = "raster";
     static constexpr const char *DESCRIPTION = "Raster commands.";
-    static constexpr const char *HELP_URL = "";  // TODO
+    static constexpr const char *HELP_URL = "/programs/gdal_raster.html";
 
     static std::vector<std::string> GetAliases()
     {

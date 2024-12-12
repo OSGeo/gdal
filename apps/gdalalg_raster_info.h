@@ -27,7 +27,7 @@ class GDALRasterInfoAlgorithm final : public GDALAlgorithm
     static constexpr const char *NAME = "info";
     static constexpr const char *DESCRIPTION =
         "Return information on a raster dataset.";
-    static constexpr const char *HELP_URL = "";  // TODO
+    static constexpr const char *HELP_URL = "/programs/gdal_raster_info.html";
 
     static std::vector<std::string> GetAliases()
     {

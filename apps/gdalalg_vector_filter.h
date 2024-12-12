@@ -27,7 +27,8 @@ class GDALVectorFilterAlgorithm /* non final */
   public:
     static constexpr const char *NAME = "filter";
     static constexpr const char *DESCRIPTION = "Filter a vector dataset.";
-    static constexpr const char *HELP_URL = "";  // TODO
+    static constexpr const char *HELP_URL =
+        "/programs/gdal_vector_pipeline.html";
 
     static std::vector<std::string> GetAliases()
     {

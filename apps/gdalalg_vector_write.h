@@ -26,7 +26,8 @@ class GDALVectorWriteAlgorithm final : public GDALVectorPipelineStepAlgorithm
   public:
     static constexpr const char *NAME = "write";
     static constexpr const char *DESCRIPTION = "Write a vector dataset.";
-    static constexpr const char *HELP_URL = "";  // TODO
+    static constexpr const char *HELP_URL =
+        "/programs/gdal_vector_pipeline.html";
 
     static std::vector<std::string> GetAliases()
     {

@@ -30,7 +30,7 @@ class GDALPipelineAlgorithm final
     static constexpr const char *DESCRIPTION =
         "Execute a pipeline (shortcut for 'gdal raster pipeline' or 'gdal "
         "vector pipeline').";
-    static constexpr const char *HELP_URL = "";  // TODO
+    static constexpr const char *HELP_URL = "/programs/gdal_pipeline.html";
 
     static std::vector<std::string> GetAliases()
     {

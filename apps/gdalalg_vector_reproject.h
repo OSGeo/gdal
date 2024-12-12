@@ -27,7 +27,8 @@ class GDALVectorReprojectAlgorithm /* non final */
   public:
     static constexpr const char *NAME = "reproject";
     static constexpr const char *DESCRIPTION = "Reproject a vector dataset.";
-    static constexpr const char *HELP_URL = "";  // TODO
+    static constexpr const char *HELP_URL =
+        "/programs/gdal_vector_pipeline.html";
 
     static std::vector<std::string> GetAliases()
     {

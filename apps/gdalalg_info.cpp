@@ -30,7 +30,7 @@ class GDALInfoAlgorithm final
     static constexpr const char *DESCRIPTION =
         "Return information on a dataset (shortcut for 'gdal raster info' or "
         "'gdal vector info').";
-    static constexpr const char *HELP_URL = "";  // TODO
+    static constexpr const char *HELP_URL = "/programs/gdal_info.html";
 
     static std::vector<std::string> GetAliases()
     {
