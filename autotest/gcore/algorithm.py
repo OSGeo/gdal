@@ -37,7 +37,7 @@ def test_algorithm(tmp_path):
     assert alg.GetName() == "raster"
     assert alg.GetDescription() == "Raster commands."
     assert alg.GetLongDescription() == ""
-    assert alg.GetHelpFullURL() == ""
+    assert alg.GetHelpFullURL() == "https://gdal.org/programs/gdal_raster.html"
 
     assert alg.HasSubAlgorithms()
 
