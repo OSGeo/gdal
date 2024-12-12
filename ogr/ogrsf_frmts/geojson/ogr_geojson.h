@@ -48,6 +48,16 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     static const char *const DefaultName;
     static const OGRwkbGeometryType DefaultGeometryType;
 
+    static const char *GetValidLayerName(const char *pszName)
+    {
+        if (pszName == nullptr || pszName[0] == 0)
+        {
+            // Can happen for example if reading from /vsistdin/
+            pszName = OGRGeoJSONLayer::DefaultName;
+        }
+        return pszName;
+    }
+
     OGRGeoJSONLayer(const char *pszName, OGRSpatialReference *poSRS,
                     OGRwkbGeometryType eGType, OGRGeoJSONDataSource *poDS,
                     OGRGeoJSONReader *poReader);

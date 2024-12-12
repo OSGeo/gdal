@@ -2915,6 +2915,16 @@ def test_ogr_geojson_58(tmp_vsimem):
 
 
 ###############################################################################
+# Test using the name member of FeatureCollection
+
+
+def test_ogr_geojson_empty_name():
+
+    with ogr.Open('{ "type": "FeatureCollection", "name": "", "features": []}') as ds:
+        assert ds.GetLayer(0).GetName() == "OGRGeoJSON"
+
+
+###############################################################################
 # Test using the description member of FeatureCollection
 
 
