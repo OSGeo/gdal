@@ -26,6 +26,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import json
 import math
 import pathlib
 import sys
@@ -3180,6 +3181,285 @@ def test_ogr_csv_invalid_wkt(tmp_vsimem):
     f = lyr.GetNextFeature()
     assert gdal.GetLastErrorMsg() == ""
     assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+
+###############################################################################
+# Test schema override open option with GeoJSON driver
+#
+@pytest.mark.parametrize(
+    "open_options, expected_field_types, expected_field_names, expected_warning",
+    [
+        (
+            [],
+            [
+                ogr.OFTString,
+                ogr.OFTInteger,
+                ogr.OFTReal,
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                (ogr.OFTString, ogr.OFSTNone),  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Override string field with integer
+        (
+            [
+                r'OGR_SCHEMA={"layers": [{"name": "test_point", "fields": [{ "name": "str", "type": "Integer" }]}]}'
+            ],
+            [
+                ogr.OFTInteger,  # <-- overridden
+                ogr.OFTInteger,
+                ogr.OFTReal,
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                ogr.OFTString,  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Override full schema and JSON subtype
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "schemaType": "Full", "fields": [{ "name": "json_str", "subType": "JSON", "new_name": "json_str" }]}]}'
+            ],
+            [
+                (ogr.OFTString, ogr.OFSTJSON),  # json subType
+            ],
+            ["json_str"],
+            None,
+        ),
+        # Test width and precision override
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "real", "width": 7, "precision": 3 }]}]}'
+            ],
+            [
+                ogr.OFTString,
+                ogr.OFTInteger,
+                ogr.OFTReal,
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                (ogr.OFTString, ogr.OFSTNone),  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Test boolean and short integer subtype
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "int", "subType": "Boolean" }, { "name": "real", "type": "Integer", "subType": "Int16" }]}]}'
+            ],
+            [
+                ogr.OFTString,
+                (ogr.OFTInteger, ogr.OFSTBoolean),  # bool overridden subType
+                (ogr.OFTInteger, ogr.OFSTInt16),  # int16 overridden subType
+                ogr.OFTInteger,  # bool subType
+                ogr.OFTString,  # int string
+                ogr.OFTString,  # real string
+                ogr.OFTString,  # json subType
+                ogr.OFTString,  # uuid subType
+            ],
+            [],
+            None,
+        ),
+        # Test invalid schema
+        (
+            [
+                r'OGR_SCHEMA={ "layers": [{"name": "test_point", "fields": [{ "name": "str", "type": "xxxxx" }]}]}'
+            ],
+            [],
+            [],
+            "Unsupported field type: xxxxx for field str",
+        ),
+    ],
+)
+def test_ogr_csv_schema_override(
+    tmp_path, open_options, expected_field_types, expected_field_names, expected_warning
+):
+
+    csv_data = """str,int,real,bool,int_str,real_str,json_str,uuid_str
+"1",2,3.4,1,"2","3.4","{""a"": 1}","12345678-1234-5678-1234-567812345678"
+"""
+
+    csvt_data = r"String,Integer,Real,Integer,String,String,String,String"
+
+    csv_file = tmp_path / "test_point.csv"
+    with open(csv_file, "w") as f:
+        f.write(csv_data)
+
+    csvt_file = tmp_path / "test_point.csvt"
+    with open(csvt_file, "w") as f:
+        f.write(csvt_data)
+
+    gdal.ErrorReset()
+
+    try:
+        schema = open_options[0].split("=")[1]
+        open_options = open_options[1:]
+    except IndexError:
+        schema = None
+
+    with gdal.quiet_errors():
+
+        if schema:
+            open_options.append("OGR_SCHEMA=" + schema)
+        else:
+            open_options = []
+
+        # Validate the JSON schema
+        if not expected_warning and schema:
+            schema = json.loads(schema)
+            gdaltest.validate_json(schema, "ogr_fields_override.schema.json")
+
+        # Check error if expected_field_types is empty
+        if not expected_field_types:
+            ds = gdal.OpenEx(
+                tmp_path / "test_point.csv",
+                gdal.OF_VECTOR | gdal.OF_READONLY,
+                open_options=open_options,
+                allowed_drivers=["CSV"],
+            )
+            assert (
+                gdal.GetLastErrorMsg().find(expected_warning) != -1
+            ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"
+            assert ds is None
+        else:
+
+            ds = gdal.OpenEx(
+                tmp_path / "test_point.csv",
+                gdal.OF_VECTOR | gdal.OF_READONLY,
+                open_options=open_options,
+                allowed_drivers=["CSV"],
+            )
+
+            assert ds is not None
+
+            lyr = ds.GetLayer(0)
+
+            assert lyr.GetFeatureCount() == 1
+
+            lyr_defn = lyr.GetLayerDefn()
+
+            assert lyr_defn.GetFieldCount() == len(expected_field_types)
+
+            if len(expected_field_names) == 0:
+                expected_field_names = [
+                    "str",
+                    "int",
+                    "real",
+                    "bool",
+                    "int_str",
+                    "real_str",
+                    "json_str",
+                    "uuid_str",
+                ]
+
+            feat = lyr.GetNextFeature()
+
+            # Check field types
+            for i in range(len(expected_field_names)):
+                try:
+                    expected_type, expected_subtype = expected_field_types[i]
+                    assert feat.GetFieldDefnRef(i).GetType() == expected_type
+                    assert feat.GetFieldDefnRef(i).GetSubType() == expected_subtype
+                except TypeError:
+                    expected_type = expected_field_types[i]
+                    assert feat.GetFieldDefnRef(i).GetType() == expected_type
+                assert feat.GetFieldDefnRef(i).GetName() == expected_field_names[i]
+
+            # Test width and precision override
+            if len(open_options) > 0 and "precision" in open_options[0]:
+                assert feat.GetFieldDefnRef(2).GetWidth() == 7
+                assert feat.GetFieldDefnRef(2).GetPrecision() == 3
+
+            # Check feature content
+            if len(expected_field_names) > 0:
+                if "int" in expected_field_names:
+                    int_sub_type = feat.GetFieldDefnRef("int").GetSubType()
+                    assert (
+                        feat.GetFieldAsInteger("int") == 1
+                        if int_sub_type == ogr.OFSTBoolean
+                        else 2
+                    )
+                if "str" in expected_field_names:
+                    assert feat.GetFieldAsString("str") == "1"
+                if "new_str" in expected_field_names:
+                    assert feat.GetFieldAsString("new_str") == "1"
+            else:
+                assert feat.GetFieldAsInteger("int") == 2
+                assert feat.GetFieldAsString("str") == "1"
+
+            if expected_warning:
+                assert (
+                    gdal.GetLastErrorMsg().find(expected_warning) != -1
+                ), f"Warning {expected_warning} not found, got {gdal.GetLastErrorMsg()} instead"
+
+
+def test_ogr_schema_override_wkt(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.csv")
+    with gdaltest.vsi_open(filename, "wb") as fdest:
+        fdest.write(b"id,WKT,foo\n")
+        fdest.write(b'1,"POINT (1 2)",bar\n')
+
+    with gdal.quiet_errors():
+
+        ds = gdal.OpenEx(filename)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["WKT"] == "POINT (1 2)"
+        assert f["foo"] == "bar"
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+        ds = gdal.OpenEx(
+            filename,
+            open_options=[
+                r'OGR_SCHEMA={"layers": [{"name": "test", "fields": [{ "name": "WKT", "type": "Integer" }]}]}'
+            ],
+        )
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["WKT"] == None
+        assert f["foo"] == "bar"
+        assert (
+            gdal.GetLastErrorMsg().find(
+                "Invalid value type found in record 1 for field WKT"
+            )
+            != -1
+        )
+
+        ds = gdal.OpenEx(
+            filename,
+            open_options=[
+                r'OGR_SCHEMA={"layers": [{"name": "test", "schemaType": "Full", "fields": [{ "name": "foo" }]}]}'
+            ],
+        )
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        try:
+            assert f["WKT"] == None
+        except KeyError as ex:
+            assert str(ex).find("Illegal field requested in GetField()") != -1
+        assert f["foo"] == "bar"
+
+        ds = gdal.OpenEx(
+            filename,
+            open_options=[
+                r'OGR_SCHEMA={"layers": [{"name": "test", "schemaType": "Full", "fields": [{ "name": "foo" }, { "name": "WKT" }]}]}'
+            ],
+        )
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["WKT"] == "POINT (1 2)"
+        assert f["foo"] == "bar"
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
 
 
 ###############################################################################
