@@ -349,81 +349,6 @@ def test_pdf_iso32000_dpi_300(poppler_or_pdfium):
 
 
 ###############################################################################
-# Test write support with OGC_BP geo encoding
-
-
-def test_pdf_ogcbp(poppler_or_pdfium_or_podofo):
-    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE"):
-        tst = gdaltest.GDALTest(
-            "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP"]
-        )
-        gdal.ErrorReset()
-        tst.testCreateCopy(
-            check_minmax=0,
-            check_gt=1,
-            check_srs=True,
-            check_checksum_not_null=pdf_checksum_available(),
-        )
-        assert gdal.GetLastErrorMsg() == ""
-
-
-###############################################################################
-# Test write support with OGC_BP geo encoding, with DPI=300
-
-
-def test_pdf_ogcbp_dpi_300(poppler_or_pdfium):
-    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE"):
-        tst = gdaltest.GDALTest(
-            "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP", "DPI=300"]
-        )
-        tst.testCreateCopy(
-            check_minmax=0,
-            check_gt=1,
-            check_srs=True,
-            check_checksum_not_null=pdf_checksum_available(),
-        )
-
-
-def test_pdf_ogcbp_lcc(poppler_or_pdfium):
-    wkt = """PROJCS["NAD83 / Utah North",
-    GEOGCS["NAD83",
-        DATUM["North_American_Datum_1983",
-            SPHEROID["GRS 1980",6378137,298.257222101,
-                AUTHORITY["EPSG","7019"]],
-            TOWGS84[0,0,0,0,0,0,0]],
-        PRIMEM["Greenwich",0],
-        UNIT["degree",0.0174532925199433]],
-    PROJECTION["Lambert_Conformal_Conic_2SP"],
-    PARAMETER["standard_parallel_1",41.78333333333333],
-    PARAMETER["standard_parallel_2",40.71666666666667],
-    PARAMETER["latitude_of_origin",40.33333333333334],
-    PARAMETER["central_meridian",-111.5],
-    PARAMETER["false_easting",500000],
-    PARAMETER["false_northing",1000000],
-    UNIT["metre",1]]]"""
-
-    src_ds = gdal.GetDriverByName("GTiff").Create("tmp/temp.tif", 1, 1)
-    src_ds.SetProjection(wkt)
-    src_ds.SetGeoTransform([500000, 1, 0, 1000000, 0, -1])
-
-    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE"):
-        out_ds = gdaltest.pdf_drv.CreateCopy("tmp/pdf_ogcbp_lcc.pdf", src_ds)
-        out_wkt = out_ds.GetProjectionRef()
-        out_ds = None
-
-    src_ds = None
-
-    gdal.Unlink("tmp/temp.tif")
-    gdal.GetDriverByName("PDF").Delete("tmp/pdf_ogcbp_lcc.pdf")
-
-    sr1 = osr.SpatialReference(wkt)
-    sr2 = osr.SpatialReference(out_wkt)
-    if sr1.IsSame(sr2) == 0:
-        print(sr2.ExportToPrettyWkt())
-        pytest.fail("wrong wkt")
-
-
-###############################################################################
 # Test no compression
 
 
@@ -1001,138 +926,6 @@ def test_pdf_update_gcps_iso32000(poppler_or_pdfium):
     _pdf_update_gcps(poppler_or_pdfium)
 
 
-@pytest.mark.skipif(
-    not gdaltest.vrt_has_open_support(),
-    reason="VRT driver open missing",
-)
-def test_pdf_update_gcps_ogc_bp(poppler_or_pdfium):
-    with gdal.config_option("GDAL_PDF_GEO_ENCODING", "OGC_BP"):
-        _pdf_update_gcps(poppler_or_pdfium)
-
-
-###############################################################################
-# Check SetGCPs() but with GCPs that do *not* resolve to a geotransform
-
-
-@pytest.mark.skipif(
-    not gdaltest.vrt_has_open_support(),
-    reason="VRT driver open missing",
-)
-def test_pdf_set_5_gcps_ogc_bp(poppler_or_pdfium):
-    dpi = 300
-    out_filename = "tmp/pdf_set_5_gcps_ogc_bp.pdf"
-
-    src_ds = gdal.Open("data/byte.tif")
-    src_wkt = src_ds.GetProjectionRef()
-    src_gt = src_ds.GetGeoTransform()
-    src_ds = None
-
-    gcp = [
-        [2.0, 8.0, 0, 0],
-        [2.0, 10.0, 0, 0],
-        [2.0, 18.0, 0, 0],
-        [16.0, 18.0, 0, 0],
-        [16.0, 8.0, 0, 0],
-    ]
-
-    for i, _ in enumerate(gcp):
-        gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
-        gcp[i][3] = src_gt[3] + gcp[i][0] * src_gt[4] + gcp[i][1] * src_gt[5]
-
-    # That way, GCPs will not resolve to a geotransform
-    gcp[1][2] -= 100
-
-    vrt_txt = """<VRTDataset rasterXSize="20" rasterYSize="20">
-<GCPList Projection='%s'>
-    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
-    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
-    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
-    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
-    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
-</GCPList>
-<VRTRasterBand dataType="Byte" band="1">
-    <SimpleSource>
-    <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
-    <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
-    <SourceBand>1</SourceBand>
-    </SimpleSource>
-</VRTRasterBand>
-</VRTDataset>""" % (
-        src_wkt,
-        gcp[0][0],
-        gcp[0][1],
-        gcp[0][2],
-        gcp[0][3],
-        gcp[1][0],
-        gcp[1][1],
-        gcp[1][2],
-        gcp[1][3],
-        gcp[2][0],
-        gcp[2][1],
-        gcp[2][2],
-        gcp[2][3],
-        gcp[3][0],
-        gcp[3][1],
-        gcp[3][2],
-        gcp[3][3],
-        gcp[4][0],
-        gcp[4][1],
-        gcp[4][2],
-        gcp[4][3],
-    )
-    vrt_ds = gdal.Open(vrt_txt)
-    vrt_gcps = vrt_ds.GetGCPs()
-
-    # Create PDF
-    ds = gdaltest.pdf_drv.CreateCopy(
-        out_filename, vrt_ds, options=["GEO_ENCODING=OGC_BP", "DPI=%d" % dpi]
-    )
-    ds = None
-
-    vrt_ds = None
-
-    # Check
-    ds = gdal.Open(out_filename)
-    got_gt = ds.GetGeoTransform()
-    got_wkt = ds.GetProjectionRef()
-    got_gcp_count = ds.GetGCPCount()
-    got_gcps = ds.GetGCPs()
-    got_gcp_wkt = ds.GetGCPProjection()
-    got_neatline = ds.GetMetadataItem("NEATLINE")
-    ds = None
-
-    assert got_wkt == "", "did not expect non null GetProjectionRef"
-
-    assert got_gcp_wkt != "", "did not expect null GetGCPProjection"
-
-    expected_gt = [0, 1, 0, 0, 0, 1]
-    for i in range(6):
-        assert got_gt[i] == pytest.approx(
-            expected_gt[i], abs=1e-8
-        ), "did not get expected gt"
-
-    assert got_gcp_count == len(gcp), "did not get expected GCP count"
-
-    for i in range(got_gcp_count):
-        assert (
-            got_gcps[i].GCPX == pytest.approx(vrt_gcps[i].GCPX, abs=1e-5)
-            and got_gcps[i].GCPY == pytest.approx(vrt_gcps[i].GCPY, abs=1e-5)
-            and got_gcps[i].GCPPixel == pytest.approx(vrt_gcps[i].GCPPixel, abs=1e-5)
-            and got_gcps[i].GCPLine == pytest.approx(vrt_gcps[i].GCPLine, abs=1e-5)
-        ), ("did not get expected GCP (%d)" % i)
-
-    got_geom = ogr.CreateGeometryFromWkt(got_neatline)
-    # Not sure this is really what we want, but without any geotransform, we cannot
-    # find projected coordinates
-    expected_geom = ogr.CreateGeometryFromWkt(
-        "POLYGON ((2 8,2 10,2 18,16 18,16 8,2 8))"
-    )
-
-    ogrtest.check_feature_geometry(got_geom, expected_geom)
-
-    gdaltest.pdf_drv.Delete(out_filename)
-
-
 ###############################################################################
 # Check NEATLINE support
 
@@ -1235,10 +1028,6 @@ def test_pdf_set_neatline_iso32000(poppler_or_pdfium):
     return _pdf_set_neatline(poppler_or_pdfium, "ISO32000")
 
 
-def test_pdf_set_neatline_ogc_bp(poppler_or_pdfium):
-    return _pdf_set_neatline(poppler_or_pdfium, "OGC_BP")
-
-
 ###############################################################################
 # Check that we can generate identical file
 
@@ -1262,46 +1051,6 @@ def test_pdf_check_identity_iso32000(poppler_or_pdfium):
     f.close()
 
     f = open("data/pdf/test_iso32000_libpng_1_6_40.pdf", "rb")
-    data_ref2 = f.read()
-    f.close()
-
-    f = open(out_filename, "rb")
-    data_got = f.read()
-    f.close()
-
-    assert (
-        data_got == data_ref or data_got == data_ref2
-    ), "content does not match reference content"
-
-    gdaltest.pdf_drv.Delete(out_filename)
-
-
-###############################################################################
-# Check that we can generate identical file
-
-
-@pytest.mark.skipif(
-    not gdaltest.vrt_has_open_support(),
-    reason="VRT driver open missing",
-)
-def test_pdf_check_identity_ogc_bp(poppler_or_pdfium):
-    out_filename = "tmp/pdf_check_identity_ogc_bp.pdf"
-
-    src_ds = gdal.Open("data/pdf/test_pdf.vrt")
-    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "NO"):
-        out_ds = gdaltest.pdf_drv.CreateCopy(
-            out_filename,
-            src_ds,
-            options=["GEO_ENCODING=OGC_BP", "STREAM_COMPRESS=NONE"],
-        )
-        del out_ds
-    src_ds = None
-
-    f = open("data/pdf/test_ogc_bp.pdf", "rb")
-    data_ref = f.read()
-    f.close()
-
-    f = open("data/pdf/test_ogc_bp_libpng_1_6_40.pdf", "rb")
     data_ref2 = f.read()
     f.close()
 
@@ -2093,7 +1842,7 @@ if (button == 4) app.launchURL('http://gdal.org/');</Javascript>
         <Width>20</Width>
         <Height>10</Height>
 
-        <Georeferencing ISO32000ExtensionFormat="true" OGCBestPracticeFormat="true">
+        <Georeferencing ISO32000ExtensionFormat="true">
             <SRS dataAxisToSRSAxisMapping="2,1">EPSG:4326</SRS>
             <BoundingBox x1="1" y1="1" x2="19" y2="9"/>
             <BoundingPolygon>POLYGON((1 1,19 1,19 9,1 9,1 1))</BoundingPolygon>
