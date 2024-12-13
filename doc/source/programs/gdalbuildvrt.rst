@@ -109,6 +109,9 @@ changed in later versions.
 
     Set georeferenced extents of VRT file. The values must be expressed in georeferenced units.
     If not specified, the extent of the VRT is the minimum bounding box of the set of source rasters.
+    Pixels within the extent of the VRT but not covered by a source raster will be read as valid
+    pixels with a value of zero unless a NODATA value is specified using :option:`-vrtnodata`
+    or an alpha mask band is added with :option:`-addalpha`.
 
 .. option:: -addalpha
 
