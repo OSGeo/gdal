@@ -36,40 +36,41 @@ Synopsis
 Description
 -----------
 
-This program builds a VRT (Virtual Dataset) that is a mosaic of the list of
+This program builds a :ref:`VRT (Virtual Dataset) <raster.vrt>` that is a mosaic of a list of
 input GDAL datasets. The list of input GDAL datasets can be specified at the end
-of the command line, or put in a text file (one filename per line) for very long lists,
-or it can be a MapServer tileindex (see :ref:`gdaltindex` utility). In the later case, all
+of the command line, put in a text file (one filename per line) for very long lists,
+or it can be a MapServer tileindex (see the :ref:`gdaltindex` utility). If using a tile index, all
 entries in the tile index will be added to the VRT.
 
 .. note::
 
-    Starting with GDAL 3.9, for virtual mosaic with a very large number of source rasters
-    (typically hundreds of thousands of source rasters, or more), it is advised to use the
-    :ref:`gdaltindex` utility to generate a tile index compatible of the
+    Starting with GDAL 3.9, for virtual mosaics with a very large number of source rasters
+    (hundreds of thousands of source rasters, or more), it is advised to use the
+    :ref:`gdaltindex` utility to generate a tile index compatible with the
     :ref:`GTI <raster.gti>` driver.
 
-With -separate, each files goes into a separate band in the VRT dataset. Otherwise,
-the files are considered as source rasters of a larger mosaic and the VRT file has as many bands as one
-of the input files.
+.. program:: gdalbuildvrt
+
+With :option:`-separate`, each input goes into a separate band in the VRT dataset. Otherwise,
+the files are considered as source rasters of a larger mosaic and the VRT file has the same number of
+bands as the input files.
 
 If one GDAL dataset is made of several subdatasets and has 0 raster bands,
 all the subdatasets will be added to the VRT rather than the dataset itself.
 
-gdalbuildvrt does some amount of checks to assure that all files that will be put
-in the resulting VRT have similar characteristics : number of bands, projection, color
-interpretation... If not, files that do not match the common characteristics will be skipped.
-(This is only true in the default mode, and not when using the -separate option)
+:program:`gdalbuildvrt` does some checks to ensure that all files that will be put
+in the resulting VRT have similar characteristics: number of bands, projection, color
+interpretation, etc. If not, files that do not match the common characteristics will be skipped
+unless :option:`-strict` is used.
+(This is only true in the default mode, and not when using the :option:`-separate` option)
 
-If there is some amount of spatial overlapping between files, the order of files
-appearing in the list of source matter: files that are listed at the end are the ones
+If the inputs spatially overlap, the order of the input list is used to determine priority.
+Files that are listed at the end are the ones
 from which the content will be fetched. Note that nodata will be taken into account
-to potentially fetch data from less priority datasets, but currently, alpha channel
+to potentially fetch data from lower-priority datasets, but currently, alpha channel
 is not taken into account to do alpha compositing (so a source with alpha=0
-appearing on top of another source will override is content). This might be
+appearing on top of another source will override its content). This might be
 changed in later versions.
-
-.. program:: gdalbuildvrt
 
 .. include:: options/help_and_help_general.rst
 
@@ -80,7 +81,7 @@ changed in later versions.
 
 .. option:: -resolution {highest|lowest|average|user}
 
-    In case the resolution of all input files is not the same, the -resolution flag
+    In case the resolution of all input files is not the same, the :option:`-resolution` flag
     enables the user to control the way the output resolution is computed.
 
     `highest` will pick the smallest values of pixel dimensions within the set of source rasters.
@@ -94,7 +95,7 @@ changed in later versions.
 .. option:: -tr <xres> <yres>
 
     Set target resolution. The values must be expressed in georeferenced units.
-    Both must be positive values. Specifying those values is of course incompatible with
+    Both must be positive values. Specifying these values is of course incompatible with
     highest|lowest|average values for :option:`-resolution` option.
 
 
@@ -109,6 +110,9 @@ changed in later versions.
 
     Set georeferenced extents of VRT file. The values must be expressed in georeferenced units.
     If not specified, the extent of the VRT is the minimum bounding box of the set of source rasters.
+    Pixels within the extent of the VRT but not covered by a source raster will be read as valid
+    pixels with a value of zero unless a NODATA value is specified using :option:`-vrtnodata`
+    or an alpha mask band is added with :option:`-addalpha`.
 
 .. option:: -addalpha
 
@@ -132,19 +136,19 @@ changed in later versions.
     more than one value is supplied all values should be quoted to keep them
     together as a single operating system argument. If the option is not specified, the
     intrinsic nodata settings on the source datasets will be used (if they exist). The value set by this option
-    is written in the NODATA element of each ComplexSource element. Use a value of
-    `None` to ignore intrinsic nodata settings on the source datasets.
+    is written in the NODATA element of each ``ComplexSource`` element. Use a value of
+    ``None`` to ignore intrinsic nodata settings on the source datasets.
 
 .. option:: -ignore_srcmaskband
 
     .. versionadded:: 3.3
 
     Starting with GDAL 3.3, if a source has a mask band (internal/external mask
-    band, or alpha band), a <ComplexSource> element is created by default with
-    a <UseMaskBand>true</UseMaskBand> child element, to instruct the VRT driver
+    band, or alpha band), a ``<ComplexSource>`` element is created by default with
+    a ``<UseMaskBand>true</UseMaskBand>`` child element, to instruct the VRT driver
     to use the mask band of the source to mask pixels being composited. This is
     a generalization of the NODATA element.
-    When specifying the -ignore_srcmaskband option, the mask band of sources will
+    When specifying the :option:`-ignore_srcmaskband` option, the mask band of sources will
     not be taken into account, and in case of overlapping between sources, the
     last one will override previous ones in areas of overlap.
 
@@ -152,7 +156,7 @@ changed in later versions.
 
     .. versionadded:: 3.9
 
-    Insert a <NoDataFromMaskSource> source, which replaces the value of the source
+    Insert a ``<NoDataFromMaskSource>`` source, which replaces the value of the source
     with the value of :option:`-vrtnodata` (or 0 if not specified) when the value
     of the mask band of the source is less or equal to the threshold.
     This is typically used to transform a R,G,B,A image into a R,G,B one with a NoData value.
@@ -160,22 +164,22 @@ changed in later versions.
 .. option:: -b <band>
 
     Select an input <band> to be processed. Bands are numbered from 1.
-    If input bands not set all bands will be added to vrt.
+    If input bands not set all bands will be added to the VRT.
     Multiple :option:`-b` switches may be used to select a set of input bands.
 
 .. option:: -sd <n>
 
     If the input dataset contains several subdatasets, use a subdataset with the
-    specified number (starting from 1). This is an alternative of giving the full subdataset
+    specified number (starting from 1). This is an alternative to giving the full subdataset
     name as an input to the utility.
 
 .. option:: -vrtnodata "<value>[ <value>]..."
 
     Set nodata values at the VRT band level (different values can be supplied for each band).  If more
-    than one value is supplied all values should be quoted to keep them together
+    than one value is supplied, all values should be quoted to keep them together
     as a single operating system argument (:example:`vrtnodata`). If the option is not specified,
     intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
-    is written in the NoDataValue element of each VRTRasterBand element. Use a value of
+    is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
     `None` to ignore intrinsic nodata settings on the source datasets.
 
 .. option:: -separate
@@ -191,8 +195,8 @@ changed in later versions.
 
 .. option:: -allow_projection_difference
 
-    When this option is specified, the utility will accept to make a VRT even if the input datasets have
-    not the same projection. Note: this does not mean that they will be reprojected. Their projection will
+    When this option is specified, the utility will create a VRT even if the input datasets do not have
+    the same projection. Note: this does not mean that they will be reprojected. Their projection will
     just be ignored.
 
 .. option:: -a_srs <srs_def>
@@ -206,7 +210,7 @@ changed in later versions.
 
 .. option:: -oo <NAME>=<VALUE>
 
-    Dataset open option (format specific)
+    Dataset open option (format-specific)
 
     .. versionadded:: 2.2
 
@@ -218,11 +222,11 @@ changed in later versions.
 
 .. option:: -input_file_list <filename>
 
-    To specify a text file with an input filename on each line. See :example:`filelist`.
+    Specify a text file with an input filename on each line. See :example:`filelist`.
 
 .. option:: -q
 
-    To disable the progress bar on the console
+    Disable the progress bar on the console
 
 .. option:: -overwrite
 
@@ -230,7 +234,7 @@ changed in later versions.
 
 .. option:: -strict
 
-    Turn warnings as failures. This is mutually exclusive with -non_strict, the latter which is the default.
+    Turn warnings as failures. This is mutually exclusive with :option:`-non_strict`, the latter which is the default.
 
     .. versionadded:: 3.4.2
 
