@@ -27,10 +27,10 @@ index ddc8ae6..0e6c07e 100644
        -DBUILD_JAVA_BINDINGS:BOOL=OFF \
        -DBUILD_CSHARP_BINDINGS:BOOL=OFF \
 diff --git a/recipe/meta.yaml b/recipe/meta.yaml
-index f1d0c48..39ddb31 100644
+index f1d0c48..68e2ca4 100644
 --- a/recipe/meta.yaml
 +++ b/recipe/meta.yaml
-@@ -678,6 +678,52 @@ outputs:
+@@ -678,6 +678,53 @@ outputs:
        license: MIT
        license_file: LICENSE.TXT
  
@@ -63,6 +63,7 @@ index f1d0c48..39ddb31 100644
 +        # GH992 attempt to workaround dep solver picking wrong libxml2
 +        - icu  # [not win]
 +        - libkml-devel
++        - liblzma-devel
 +        - expat
 +        - libadbc-driver-manager
 +        # dep solver issue
