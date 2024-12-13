@@ -28,3 +28,6 @@ COPY requirements.txt /tmp/
 # One of the dependencies of jsonschema 4.18 is rpds_py which requires a Rust compiler
 RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install "jsonschema<4.18"
 RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r /tmp/requirements.txt
+
+# Workaround https://bugzilla.redhat.com/show_bug.cgi?id=2332307
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --force-reinstall numpy
