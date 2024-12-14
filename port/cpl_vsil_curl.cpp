@@ -6295,6 +6295,13 @@ void VSICurlClearCache(void)
  * mechanisms can prevent opening new files, or give an outdated version of
  * them.
  *
+ * The filename prefix must start with the name of a known virtual file system
+ * (such as "/vsicurl/", "/vsis3/")
+ *
+ * VSICurlPartialClearCache("/vsis3/b") will clear all cached state for any file
+ * or directory starting with that prefix, so potentially "/vsis3/bucket",
+ * "/vsis3/basket/" or "/vsis3/basket/object".
+ *
  * @param pszFilenamePrefix Filename prefix
  * @since GDAL 2.4.0
  */
