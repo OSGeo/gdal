@@ -317,6 +317,10 @@ OGRGeometry *GML_BuildOGRGeometryFromList(
             poGeom->swapXY();
         }
     }
+    else if (eSwapCoordinates == GML_SWAP_YES)
+    {
+        poGeom->swapXY();
+    }
 
     return poGeom;
 }
