@@ -3560,6 +3560,55 @@ def test_ogr_gml_78(tmp_vsimem):
 
 
 ###############################################################################
+# Test effect of SWAP_COORDINATES when there is no SRS
+# (https://github.com/OSGeo/gdal/issues/11491)
+
+
+def test_ogr_gml_SWAP_COORDINATES_no_srs(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test_ogr_gml_SWAP_COORDINATES_no_srs.xml",
+        """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <ogr:featureMember>
+    <ogr:point gml:id="point.0">
+      <ogr:geometryProperty><gml:Point><gml:pos>2 49</gml:pos></gml:Point></ogr:geometryProperty>
+      <ogr:id>1</ogr:id>
+    </ogr:point>
+  </ogr:featureMember>
+</ogr:FeatureCollection>
+""",
+    )
+
+    ds = ogr.Open(tmp_vsimem / "test_ogr_gml_SWAP_COORDINATES_no_srs.xml")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
+    ds = None
+
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test_ogr_gml_SWAP_COORDINATES_no_srs.xml",
+        open_options=["SWAP_COORDINATES=YES"],
+    )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (49 2)"
+    ds = None
+
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test_ogr_gml_SWAP_COORDINATES_no_srs.xml",
+        open_options=["SWAP_COORDINATES=NO"],
+    )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
+    ds = None
+
+
+###############################################################################
 # Test SRSNAME_FORMAT
 
 
