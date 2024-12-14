@@ -80,7 +80,6 @@ jobs:
         run: |
           git clone https://github.com/danmar/cppcheck
           cd cppcheck
-          git checkout 690aab586136cf596b84ef04a61337813609d716  # FIXME: Workaround https://github.com/danmar/cppcheck/pull/6906#issuecomment-2539097133
           mkdir build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Release
