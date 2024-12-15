@@ -149,7 +149,7 @@ endif()
 ### Try unixODBC or iODBC in include/lib filesystems ##########################
 if (UNIX AND NOT ODBC_CONFIG)
   # List names of both ODBC libraries, unixODBC and iODBC
-  set(_odbc_lib_names odbc;iodbc;unixodbc;)
+  set(_odbc_lib_names odbc;iodbc;unixodbc)
 endif()
 
 ### Find include directories ##################################################
@@ -165,6 +165,7 @@ endif()
 
   find_library(ODBC_LIBRARY
     NAMES ${_odbc_lib_names}
+    NAMES_PER_DIR
     PATHS ${_odbc_lib_paths}
     PATH_SUFFIXES odbc)
 

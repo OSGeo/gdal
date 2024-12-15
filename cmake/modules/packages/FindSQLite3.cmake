@@ -58,6 +58,7 @@ else()
             HINTS ${PC_SQLITE3_INCLUDE_DIRS})
   find_library(SQLite3_LIBRARY
                NAMES sqlite3 sqlite3_i
+               NAMES_PER_DIR
                HINTS ${PC_SQLITE3_LIBRARY_DIRS})
 endif()
 
