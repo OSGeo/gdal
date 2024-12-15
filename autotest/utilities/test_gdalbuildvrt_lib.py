@@ -900,3 +900,26 @@ def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
     assert struct.unpack(
         "f" * 3, vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Float32)
     ) == pytest.approx((1.0, 1.001, 2.0))
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "dtype,nodata",
+    [
+        (gdal.GDT_Byte, float("nan")),
+        (gdal.GDT_UInt16, -1),
+    ],
+)
+def test_gdalbuildvrt_lib_nodata_invalid(tmp_vsimem, dtype, nodata):
+
+    drv = gdal.GetDriverByName("GTiff")
+    with drv.Create(tmp_vsimem / "in.tif", 1, 1, eType=dtype) as ds:
+        ds.GetRasterBand(1).Fill(1)
+        ds.SetGeoTransform((0, 1, 0, 1, 0, -1))
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "cannot represent the specified NoData value"
+    ):
+        gdal.BuildVRT("", [tmp_vsimem / "in.tif"], VRTNodata=nodata)
