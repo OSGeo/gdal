@@ -177,7 +177,6 @@ endif()
 function(__postgresql_find_library _name)
   find_library(${_name}
    NAMES ${ARGN}
-   NAMES_PER_DIR
    PATHS
      ${PostgreSQL_ROOT_DIRECTORIES}
    PATH_SUFFIXES
