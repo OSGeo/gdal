@@ -24,7 +24,7 @@ find_path(OGDI_INCLUDE_DIR ecs.h
           PATH_SUFFIXES ogdi)
 mark_as_advanced(OGDI_INCLUDE_DIR)
 
-find_library(OGDI_LIBRARY NAMES ogdi libogdi)
+find_library(OGDI_LIBRARY NAMES ogdi libogdi NAMES_PER_DIR)
 mark_as_advanced(OGDI_LIBRARY)
 
 if(OGDI_INCLUDE_DIR AND OGDI_LIBRARY)

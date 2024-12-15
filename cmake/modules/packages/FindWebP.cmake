@@ -14,7 +14,7 @@ endif()
 
 find_path(WEBP_INCLUDE_DIR webp/encode.h HINTS ${PC_WEBP_INCLUDE_DIRS})
 
-find_library(WEBP_LIBRARY NAMES webp libwebp HINTS ${PC_WEBP_LIBRARY_DIRS})
+find_library(WEBP_LIBRARY NAMES webp libwebp NAMES_PER_DIR HINTS ${PC_WEBP_LIBRARY_DIRS})
 
 mark_as_advanced(WEBP_INCLUDE_DIR WEBP_LIBRARY)
 

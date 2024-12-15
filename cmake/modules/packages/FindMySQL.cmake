@@ -23,7 +23,7 @@ if( MYSQL_INCLUDE_DIR AND EXISTS "${MYSQL_INCLUDE_DIR}/mysql_version.h" )
             "${MYSQL_VERSION_H}" )
 endif()
 
-find_library(MYSQL_LIBRARY NAMES mysqlclient mysqlclient_r)
+find_library(MYSQL_LIBRARY NAMES mysqlclient mysqlclient_r NAMES_PER_DIR)
 
 if( NOT CMAKE_C_COMPILER_LOADED )
     message(AUTHOR_WARNING "C language not enabled: Skipping detection of extra link libraries.")
