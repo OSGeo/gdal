@@ -1406,32 +1406,35 @@ GIntBig CPLGetPhysicalRAM(void)
         // which seems to be necessary for some container solutions
         // Cf https://lists.osgeo.org/pipermail/gdal-dev/2023-January/056784.html
         FILE *f = fopen("/proc/meminfo", "rb");
-        char szLine[256];
-        while (fgets(szLine, sizeof(szLine), f))
+        if (f)
         {
-            // Find line like "MemTotal:       32525176 kB"
-            if (strncmp(szLine, "MemTotal:", strlen("MemTotal:")) == 0)
+            char szLine[256];
+            while (fgets(szLine, sizeof(szLine), f))
             {
-                char *pszVal = szLine + strlen("MemTotal:");
-                pszVal += strspn(pszVal, " ");
-                char *pszEnd = strstr(pszVal, " kB");
-                if (pszEnd)
+                // Find line like "MemTotal:       32525176 kB"
+                if (strncmp(szLine, "MemTotal:", strlen("MemTotal:")) == 0)
                 {
-                    *pszEnd = 0;
-                    if (CPLGetValueType(pszVal) == CPL_VALUE_INTEGER)
+                    char *pszVal = szLine + strlen("MemTotal:");
+                    pszVal += strspn(pszVal, " ");
+                    char *pszEnd = strstr(pszVal, " kB");
+                    if (pszEnd)
                     {
-                        const GUIntBig nLimit =
-                            CPLScanUIntBig(pszVal,
-                                           static_cast<int>(strlen(pszVal))) *
-                            1024;
-                        nVal = static_cast<GIntBig>(
-                            std::min(static_cast<GUIntBig>(nVal), nLimit));
+                        *pszEnd = 0;
+                        if (CPLGetValueType(pszVal) == CPL_VALUE_INTEGER)
+                        {
+                            const GUIntBig nLimit =
+                                CPLScanUIntBig(
+                                    pszVal, static_cast<int>(strlen(pszVal))) *
+                                1024;
+                            nVal = static_cast<GIntBig>(
+                                std::min(static_cast<GUIntBig>(nVal), nLimit));
+                        }
                     }
+                    break;
                 }
-                break;
             }
+            fclose(f);
         }
-        fclose(f);
     }
 
     char szGroupName[256];
@@ -1439,34 +1442,37 @@ GIntBig CPLGetPhysicalRAM(void)
     szGroupName[0] = 0;
     {
         FILE *f = fopen("/proc/self/cgroup", "rb");
-        char szLine[256];
-        // Find line like "6:memory:/user.slice/user-1000.slice/user@1000.service"
-        // and store "/user.slice/user-1000.slice/user@1000.service" in
-        // szMemoryPath for cgroup V1 or single line "0::/...." for cgroup V2.
-        while (fgets(szLine, sizeof(szLine), f))
+        if (f)
         {
-            const char *pszMemory = strstr(szLine, ":memory:");
-            if (pszMemory)
+            char szLine[256];
+            // Find line like "6:memory:/user.slice/user-1000.slice/user@1000.service"
+            // and store "/user.slice/user-1000.slice/user@1000.service" in
+            // szMemoryPath for cgroup V1 or single line "0::/...." for cgroup V2.
+            while (fgets(szLine, sizeof(szLine), f))
             {
-                bFromMemory = true;
-                snprintf(szGroupName, sizeof(szGroupName), "%s",
-                         pszMemory + strlen(":memory:"));
-                char *pszEOL = strchr(szGroupName, '\n');
-                if (pszEOL)
-                    *pszEOL = '\0';
-                break;
+                const char *pszMemory = strstr(szLine, ":memory:");
+                if (pszMemory)
+                {
+                    bFromMemory = true;
+                    snprintf(szGroupName, sizeof(szGroupName), "%s",
+                             pszMemory + strlen(":memory:"));
+                    char *pszEOL = strchr(szGroupName, '\n');
+                    if (pszEOL)
+                        *pszEOL = '\0';
+                    break;
+                }
+                if (strncmp(szLine, "0::", strlen("0::")) == 0)
+                {
+                    snprintf(szGroupName, sizeof(szGroupName), "%s",
+                             szLine + strlen("0::"));
+                    char *pszEOL = strchr(szGroupName, '\n');
+                    if (pszEOL)
+                        *pszEOL = '\0';
+                    break;
+                }
             }
-            if (strncmp(szLine, "0::", strlen("0::")) == 0)
-            {
-                snprintf(szGroupName, sizeof(szGroupName), "%s",
-                         szLine + strlen("0::"));
-                char *pszEOL = strchr(szGroupName, '\n');
-                if (pszEOL)
-                    *pszEOL = '\0';
-                break;
-            }
+            fclose(f);
         }
-        fclose(f);
     }
     if (szGroupName[0])
     {

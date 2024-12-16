@@ -692,6 +692,11 @@ extern unzFile ZEXPORT cpl_unzOpen2(const char *path,
     us.current_file_ok = 0;
 
     s = static_cast<unz_s *>(ALLOC(sizeof(unz_s)));
+    if (!s)
+    {
+        ZCLOSE(us.z_filefunc, us.filestream);
+        return nullptr;
+    }
     *s = us;
     cpl_unzGoToFirstFile(reinterpret_cast<unzFile>(s));
     return reinterpret_cast<unzFile>(s);
