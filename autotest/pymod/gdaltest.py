@@ -2095,3 +2095,31 @@ def vsi_open(path, mode="r"):
 def vrt_has_open_support():
     drv = gdal.GetDriverByName("VRT")
     return drv is not None and drv.GetMetadataItem(gdal.DMD_OPENOPTIONLIST) is not None
+
+
+###############################################################################
+# Check that an error or warning is raised
+
+
+@contextlib.contextmanager
+def error_raised(type, match=""):
+
+    err_levels = {
+        gdal.CE_Debug: "CE_Debug",
+        gdal.CE_Failure: "CE_Failure",
+        gdal.CE_Fatal: "CE_Fatal",
+        gdal.CE_None: "CE_None",
+        gdal.CE_Warning: "CE_Warning",
+    }
+
+    errors = []
+
+    def handler(lvl, no, msg):
+        errors.append({"level": lvl, "number": no, "message": msg})
+
+    with error_handler(handler):
+        yield
+
+    assert any(
+        [err["level"] == type and match in err["message"] for err in errors]
+    ), f'Did not receive an error of type {err_levels[type]} matching "{match}"'
