@@ -18,6 +18,7 @@
 
 CPL_C_START
 void CPL_DLL GDALRegister_GTiff(void);
+void CPL_DLL GDALRegister_LIBERTIFF(void);
 void CPL_DLL GDALRegister_GXF(void);
 void CPL_DLL GDALRegister_HFA(void);
 void CPL_DLL GDALRegister_AAIGrid(void);
