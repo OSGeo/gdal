@@ -834,6 +834,11 @@ int GRIB1_RefTime (VSILFILE *fp, uInt4 gribLen, double *refTime)
       return -1;
    }
    pds = (uChar *) malloc (sectLen * sizeof (uChar));
+   if(!pds)
+   {
+       errSprintf("Out of memory");
+       return -1;
+   }
    *pds = *temp;
    pds[1] = temp[1];
    pds[2] = temp[2];
