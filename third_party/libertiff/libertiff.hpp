@@ -14,6 +14,7 @@
 #include <bit>  // std::endian
 #endif
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstring>
@@ -378,8 +379,8 @@ typedef uint16_t TagCodeType;
 /** TIFF tag codes */
 namespace TagCode
 {
-constexpr TagCodeType NewSubfileType = 254;
-constexpr TagCodeType SubfileType = 255;
+constexpr TagCodeType SubFileType = 254;
+constexpr TagCodeType OldSubFileType = 255;
 
 // Base line and extended TIFF tags
 constexpr TagCodeType ImageWidth = 256;
@@ -387,23 +388,33 @@ constexpr TagCodeType ImageLength = 257;
 constexpr TagCodeType BitsPerSample = 258;
 constexpr TagCodeType Compression = 259;
 constexpr TagCodeType PhotometricInterpretation = 262;
+constexpr TagCodeType DocumentName = 269;
 constexpr TagCodeType ImageDescription = 270;
 constexpr TagCodeType StripOffsets = 273;
 constexpr TagCodeType SamplesPerPixel = 277;
 constexpr TagCodeType RowsPerStrip = 278;
 constexpr TagCodeType StripByteCounts = 279;
 constexpr TagCodeType PlanarConfiguration = 284;
+constexpr TagCodeType Software = 305;
+constexpr TagCodeType DateTime = 306;
 constexpr TagCodeType Predictor = 317;
+constexpr TagCodeType ColorMap = 320;
 constexpr TagCodeType TileWidth = 322;
 constexpr TagCodeType TileLength = 323;
 constexpr TagCodeType TileOffsets = 324;
 constexpr TagCodeType TileByteCounts = 325;
+constexpr TagCodeType ExtraSamples = 338;
 constexpr TagCodeType SampleFormat = 339;
+constexpr TagCodeType JPEGTables = 347;
+
+constexpr TagCodeType Copyright = 33432;
 
 // GeoTIFF tags
 constexpr TagCodeType GeoTIFFPixelScale = 33550;
 constexpr TagCodeType GeoTIFFTiePoints = 33922;
+constexpr TagCodeType GeoTIFFGeoTransMatrix = 34264;
 constexpr TagCodeType GeoTIFFGeoKeyDirectory = 34735;
+constexpr TagCodeType GeoTIFFDoubleParams = 34736;
 constexpr TagCodeType GeoTIFFAsciiParams = 34737;
 
 // GDAL tags
@@ -413,7 +424,19 @@ constexpr TagCodeType GDAL_NODATA = 42113;
 // GeoTIFF related
 constexpr TagCodeType RPCCoefficients = 50844;
 
+// LERC compression related
+constexpr TagCodeType LERCParameters =
+    50674; /* Stores LERC version and additional compression method */
+
 }  // namespace TagCode
+
+/** Binary or'ed value of SubFileType flags */
+namespace SubFileTypeFlags
+{
+constexpr uint32_t ReducedImage = 0x1; /* reduced resolution version */
+constexpr uint32_t Page = 0x2;         /* one page of many */
+constexpr uint32_t Mask = 0x4;         /* transparency mask */
+}  // namespace SubFileTypeFlags
 
 #define LIBERTIFF_CASE_TAGCODE_STR(x)                                          \
     case TagCode::x:                                                           \
@@ -423,32 +446,42 @@ inline const char *tagCodeName(TagCodeType tagCode)
 {
     switch (tagCode)
     {
-        LIBERTIFF_CASE_TAGCODE_STR(NewSubfileType);
-        LIBERTIFF_CASE_TAGCODE_STR(SubfileType);
+        LIBERTIFF_CASE_TAGCODE_STR(SubFileType);
+        LIBERTIFF_CASE_TAGCODE_STR(OldSubFileType);
         LIBERTIFF_CASE_TAGCODE_STR(ImageWidth);
         LIBERTIFF_CASE_TAGCODE_STR(ImageLength);
         LIBERTIFF_CASE_TAGCODE_STR(BitsPerSample);
         LIBERTIFF_CASE_TAGCODE_STR(Compression);
         LIBERTIFF_CASE_TAGCODE_STR(PhotometricInterpretation);
+        LIBERTIFF_CASE_TAGCODE_STR(DocumentName);
         LIBERTIFF_CASE_TAGCODE_STR(ImageDescription);
         LIBERTIFF_CASE_TAGCODE_STR(StripOffsets);
         LIBERTIFF_CASE_TAGCODE_STR(SamplesPerPixel);
         LIBERTIFF_CASE_TAGCODE_STR(RowsPerStrip);
         LIBERTIFF_CASE_TAGCODE_STR(StripByteCounts);
         LIBERTIFF_CASE_TAGCODE_STR(PlanarConfiguration);
+        LIBERTIFF_CASE_TAGCODE_STR(Software);
+        LIBERTIFF_CASE_TAGCODE_STR(DateTime);
         LIBERTIFF_CASE_TAGCODE_STR(Predictor);
+        LIBERTIFF_CASE_TAGCODE_STR(ColorMap);
         LIBERTIFF_CASE_TAGCODE_STR(TileWidth);
         LIBERTIFF_CASE_TAGCODE_STR(TileLength);
         LIBERTIFF_CASE_TAGCODE_STR(TileOffsets);
         LIBERTIFF_CASE_TAGCODE_STR(TileByteCounts);
+        LIBERTIFF_CASE_TAGCODE_STR(ExtraSamples);
         LIBERTIFF_CASE_TAGCODE_STR(SampleFormat);
+        LIBERTIFF_CASE_TAGCODE_STR(Copyright);
+        LIBERTIFF_CASE_TAGCODE_STR(JPEGTables);
         LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFPixelScale);
         LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFTiePoints);
+        LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFGeoTransMatrix);
         LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFGeoKeyDirectory);
+        LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFDoubleParams);
         LIBERTIFF_CASE_TAGCODE_STR(GeoTIFFAsciiParams);
         LIBERTIFF_CASE_TAGCODE_STR(GDAL_METADATA);
         LIBERTIFF_CASE_TAGCODE_STR(GDAL_NODATA);
         LIBERTIFF_CASE_TAGCODE_STR(RPCCoefficients);
+        LIBERTIFF_CASE_TAGCODE_STR(LERCParameters);
         default:
             break;
     }
@@ -606,7 +639,23 @@ constexpr CompressionType CCITT_FAX4 = 4;
 constexpr CompressionType LZW = 5;
 constexpr CompressionType OldJPEG = 6;
 constexpr CompressionType JPEG = 7;
-constexpr CompressionType Deflate = 8;
+constexpr CompressionType Deflate =
+    8; /* Deflate compression, as recognized by Adobe */
+constexpr CompressionType PackBits = 32773;
+constexpr CompressionType LegacyDeflate =
+    32946;                              /* Deflate compression, legacy tag */
+constexpr CompressionType JBIG = 34661; /* ISO JBIG */
+constexpr CompressionType LERC =
+    34887; /* ESRI Lerc codec: https://github.com/Esri/lerc */
+constexpr CompressionType LZMA = 34925; /* LZMA2 */
+constexpr CompressionType ZSTD =
+    50000; /* ZSTD: WARNING not registered in Adobe-maintained registry */
+constexpr CompressionType WEBP =
+    50001; /* WEBP: WARNING not registered in Adobe-maintained registry */
+constexpr CompressionType JXL =
+    50002; /* JPEGXL: WARNING not registered in Adobe-maintained registry */
+constexpr CompressionType JXL_DNG_1_7 =
+    52546; /* JPEGXL from DNG 1.7 specification */
 }  // namespace Compression
 
 #define LIBERTIFF_CASE_COMPRESSION_STR(x)                                      \
@@ -625,6 +674,15 @@ inline const char *compressionName(CompressionType compression)
         LIBERTIFF_CASE_COMPRESSION_STR(OldJPEG);
         LIBERTIFF_CASE_COMPRESSION_STR(JPEG);
         LIBERTIFF_CASE_COMPRESSION_STR(Deflate);
+        LIBERTIFF_CASE_COMPRESSION_STR(PackBits);
+        LIBERTIFF_CASE_COMPRESSION_STR(LegacyDeflate);
+        LIBERTIFF_CASE_COMPRESSION_STR(JBIG);
+        LIBERTIFF_CASE_COMPRESSION_STR(LERC);
+        LIBERTIFF_CASE_COMPRESSION_STR(LZMA);
+        LIBERTIFF_CASE_COMPRESSION_STR(ZSTD);
+        LIBERTIFF_CASE_COMPRESSION_STR(WEBP);
+        LIBERTIFF_CASE_COMPRESSION_STR(JXL);
+        LIBERTIFF_CASE_COMPRESSION_STR(JXL_DNG_1_7);
         default:
             break;
     }
@@ -668,6 +726,17 @@ inline const char *sampleFormatName(SampleFormatType sampleFormat)
 }
 
 #undef LIBERTIFF_CASE_SAMPLE_FORMAT_STR
+
+/** Type of a ExtraSamples value */
+typedef uint32_t ExtraSamplesType;
+
+/** Values of the ExtraSamples tag */
+namespace ExtraSamples
+{
+constexpr ExtraSamplesType Unspecified = 0;
+constexpr ExtraSamplesType AssociatedAlpha = 1;   /* premultiplied */
+constexpr ExtraSamplesType UnAssociatedAlpha = 2; /* unpremultiplied */
+}  // namespace ExtraSamples
 
 /** Content of a tag entry in a Image File Directory (IFD) */
 struct TagEntry
@@ -893,6 +962,12 @@ class Image
         return m_nextImageOffset;
     }
 
+    /** Return value of SubFileType tag */
+    inline uint32_t subFileType() const
+    {
+        return m_subFileType;
+    }
+
     /** Return width of the image in pixels */
     inline uint32_t width() const
     {
@@ -951,6 +1026,12 @@ class Image
     inline uint32_t rowsPerStrip() const
     {
         return m_rowsPerStrip;
+    }
+
+    /** Return the sanitized number of rows per strip */
+    inline uint32_t rowsPerStripSanitized() const
+    {
+        return std::min(m_rowsPerStrip, m_height);
     }
 
     /** Return the number of strips/tiles.
@@ -1234,6 +1315,7 @@ class Image
     std::set<uint64_t> m_alreadyVisitedImageOffsets{};
     uint64_t m_offset = 0;
     uint64_t m_nextImageOffset = 0;
+    uint32_t m_subFileType = 0;
     uint32_t m_width = 0;
     uint32_t m_height = 0;
     uint32_t m_bitsPerSample = 0;
@@ -1268,6 +1350,10 @@ class Image
         {
             switch (entry.tag)
             {
+                case TagCode::SubFileType:
+                    m_subFileType = singleValue;
+                    break;
+
                 case TagCode::ImageWidth:
                     m_width = singleValue;
                     break;

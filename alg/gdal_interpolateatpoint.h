@@ -28,17 +28,18 @@
 using DoublePointsCache =
     lru11::Cache<uint64_t, std::shared_ptr<std::vector<double>>>;
 
-class GDALDoublePointsCache
+class CPL_DLL GDALDoublePointsCache
 {
   public:
     std::unique_ptr<DoublePointsCache> cache{};
 };
 
-bool GDALInterpolateAtPoint(GDALRasterBand *pBand,
-                            GDALRIOResampleAlg eResampleAlg,
-                            std::unique_ptr<DoublePointsCache> &cache,
-                            const double dfXIn, const double dfYIn,
-                            double *pdfOutputReal, double *pdfOutputImag);
+bool CPL_DLL GDALInterpolateAtPoint(GDALRasterBand *pBand,
+                                    GDALRIOResampleAlg eResampleAlg,
+                                    std::unique_ptr<DoublePointsCache> &cache,
+                                    const double dfXIn, const double dfYIn,
+                                    double *pdfOutputReal,
+                                    double *pdfOutputImag);
 
 /*! @endcond */
 

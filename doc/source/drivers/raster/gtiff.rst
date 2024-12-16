@@ -25,6 +25,9 @@ file, such as YCbCr color model files, are automatically translated into
 RGBA (red, green, blue, alpha) form, and treated as four eight bit
 bands.
 
+For an alternative which offers thread-safe read-only capabilities, consult
+:ref:`raster.libertiff`.
+
 Driver capabilities
 -------------------
 

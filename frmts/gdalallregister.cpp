@@ -332,6 +332,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_COG();
 #endif
 
+#ifdef FRMT_libertiff
+    GDALRegister_LIBERTIFF();
+#endif
+
 #ifdef FRMT_nitf
     GDALRegister_NITF();
     GDALRegister_RPFTOC();
