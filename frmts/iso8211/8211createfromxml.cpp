@@ -262,7 +262,7 @@ int main(int nArgc, char *papszArgv[])
                     {
                         pszValue += 2;
                         int nDataLen = (int)strlen(pszValue) / 2;
-                        char *pabyData = (char *)malloc(nDataLen);
+                        char *pabyData = (char *)CPLMalloc(nDataLen);
                         for (int i = 0; i < nDataLen; i++)
                         {
                             char c;
@@ -281,7 +281,7 @@ int main(int nArgc, char *papszArgv[])
                         }
                         poRec->SetFieldRaw(poField, nFieldOcc,
                                            (const char *)pabyData, nDataLen);
-                        free(pabyData);
+                        CPLFree(pabyData);
                     }
                     else
                     {
@@ -330,7 +330,8 @@ int main(int nArgc, char *papszArgv[])
                                     pszSubfieldValue += 2;
                                     int nDataLen =
                                         (int)strlen(pszSubfieldValue) / 2;
-                                    char *pabyData = (char *)malloc(nDataLen);
+                                    char *pabyData =
+                                        (char *)CPLMalloc(nDataLen);
                                     for (int i = 0; i < nDataLen; i++)
                                     {
                                         int nHigh;
@@ -351,7 +352,7 @@ int main(int nArgc, char *papszArgv[])
                                         pszFieldName, nFieldOcc,
                                         pszSubfieldName, nOcc, pabyData,
                                         nDataLen);
-                                    free(pabyData);
+                                    CPLFree(pabyData);
                                 }
                             }
                             psSubfieldIter = psSubfieldIter->psNext;
