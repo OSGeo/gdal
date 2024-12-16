@@ -3921,9 +3921,31 @@ bool OGRGeometryFactory::isTransformWithOptionsRegularTransform(
 /************************************************************************/
 
 /** Transform a geometry.
+ *
+ * This is an enhanced version of OGRGeometry::Transform().
+ *
+ * When reprojecting geometries from a Polar Stereographic projection or a
+ * projection naturally crossing the antimeridian (like UTM Zone 60) to a
+ * geographic CRS, it will cut geometries along the antimeridian. So a
+ * LineString might be returned as a MultiLineString.
+ *
+ * The WRAPDATELINE=YES option might be specified for circumstances to correct
+ * geometries that incorrectly go from a longitude on a side of the antimeridian
+ * to the other side, like a LINESTRING(-179 0,179 0) will be transformed to
+ * a MULTILINESTRING ((-179 0,-180 0),(180 0,179 0)). For that use case, hCT
+ * might be NULL.
+ *
+ * Supported options in papszOptions are:
+ * <ul>
+ * <li>WRAPDATELINE=YES</li>
+ * <li>DATELINEOFFSET=longitude_gap_in_degree. Defaults to 10.</li>
+ * </ul>
+ *
+ * This is the same as the C function OGR_GeomTransformer_Transform().
+ *
  * @param poSrcGeom source geometry
  * @param poCT coordinate transformation object, or NULL.
- * @param papszOptions options. Including WRAPDATELINE=YES and DATELINEOFFSET=.
+ * @param papszOptions NULL terminated list of options, or NULL.
  * @param cache Cache. May increase performance if persisted between invocations
  * @return (new) transformed geometry.
  */
@@ -4112,14 +4134,16 @@ struct OGRGeomTransformer
  * a MULTILINESTRING ((-179 0,-180 0),(180 0,179 0)). For that use case, hCT
  * might be NULL.
  *
+ * Supported options in papszOptions are:
+ * <ul>
+ * <li>WRAPDATELINE=YES</li>
+ * <li>DATELINEOFFSET=longitude_gap_in_degree. Defaults to 10.</li>
+ * </ul>
+ *
+ * This is the same as the C++ method OGRGeometryFactory::transformWithOptions().
+
  * @param hCT Coordinate transformation object (will be cloned) or NULL.
  * @param papszOptions NULL terminated list of options, or NULL.
- *                     Supported options are:
- *                     <ul>
- *                         <li>WRAPDATELINE=YES</li>
- *                         <li>DATELINEOFFSET=longitude_gap_in_degree. Defaults
- * to 10.</li>
- *                     </ul>
  * @return transformer object to free with OGR_GeomTransformer_Destroy()
  * @since GDAL 3.1
  */
