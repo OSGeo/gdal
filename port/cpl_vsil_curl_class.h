@@ -406,6 +406,8 @@ class VSICurlHandle : public VSIVirtualHandle
     mutable std::string m_osPlanetaryComputerCollection{};
     void ManagePlanetaryComputerSigning() const;
 
+    void UpdateQueryString() const;
+
     int ReadMultiRangeSingleGet(int nRanges, void **ppData,
                                 const vsi_l_offset *panOffsets,
                                 const size_t *panSizes);

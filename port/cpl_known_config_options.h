@@ -1031,6 +1031,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "VSICURL_PC_SAS_SIGN_HREF_URL", // from cpl_vsil_curl.cpp
    "VSICURL_PC_SAS_TOKEN_URL", // from cpl_vsil_curl.cpp
    "VSICURL_PC_URL_SIGNING", // from cpl_vsil_curl.cpp
+   "VSICURL_QUERY_STRING", // from cpl_vsil_curl.cpp
    "VSIS3_COPYFILE_USE_STREAMING_SOURCE", // from cpl_vsil_s3.cpp
    "VSIS3_SIMULATE_THREADING", // from cpl_vsil_s3.cpp
    "VSIS3_SYNC_MULTITHREADING", // from cpl_vsil_s3.cpp
