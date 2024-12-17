@@ -1682,7 +1682,7 @@ static void CPLAccessConfigOption(const char *pszKey, bool bGet)
  *     options (may be NULL)
  * @return the value associated to the key, or the default value if not found
  *
- * @see CPLSetConfigOption(), http://trac.osgeo.org/gdal/wiki/ConfigOptions
+ * @see CPLSetConfigOption(), https://gdal.org/user/configoptions.html
  */
 const char *CPL_STDCALL CPLGetConfigOption(const char *pszKey,
                                            const char *pszDefault)
@@ -2033,7 +2033,7 @@ static void CPLSetConfigOptionDetectUnknownConfigOption(const char *pszKey,
  * @param pszKey the key of the option
  * @param pszValue the value of the option, or NULL to clear a setting.
  *
- * @see http://trac.osgeo.org/gdal/wiki/ConfigOptions
+ * @see https://gdal.org/user/configoptions.html
  */
 void CPL_STDCALL CPLSetConfigOption(const char *pszKey, const char *pszValue)
 
