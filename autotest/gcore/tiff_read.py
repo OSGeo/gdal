@@ -72,6 +72,7 @@ init_list = [
     ("empty1bit.tif", 1, 0),
     ("gtiff/int64_full_range.tif", 1, 65535),
     ("gtiff/uint64_full_range.tif", 1, 1),
+    ("gtiff/float32_lzw_predictor_3_big_endian.tif", 1, 4672),
 ]
 
 
