@@ -3903,6 +3903,35 @@ def test_ogr_geom_sfcgal():
     g1.Distance(g2)
 
 
+def test_ogr_geom_sfcgal_distance3D():
+
+    if not ogrtest.have_sfcgal():
+        pytest.skip("SFCGAL is not available")
+
+    point1 = ogr.CreateGeometryFromWkt("POINT (1.0 1.0 1.0)")
+    point2 = ogr.CreateGeometryFromWkt("POINT (4.0 1.0 5.0)")
+
+    assert point1.Distance3D(point2) == 5.0
+
+
+def test_ogr_geom_sfcgal_intersection3D():
+
+    if not ogrtest.have_sfcgal():
+        pytest.skip("SFCGAL is not available")
+
+    phsurface = ogr.CreateGeometryFromWkt("POLYHEDRALSURFACE Z (((0 0 0,0 0 2,0 2 2,0 2 0,0 0 0)),\
+((0 0 0,0 2 0,2 2 0,2 0 0,0 0 0)),\
+((0 0 0,2 0 0,2 0 2,0 0 2,0 0 0)),\
+((2 2 0,2 2 2,2 0 2,2 0 0,2 2 0)),\
+((0 2 0,0 2 2,2 2 2,2 2 0,0 2 0)),\
+((0 0 2,2 0 2,2 2 2,0 2 2,0 0 2)))")
+
+    line = ogr.CreateGeometryFromWkt("LINESTRING Z (-1 1 1, 3 1 1)")
+
+    result = phsurface.Intersection(line)
+
+    assert result.ExportToWkt() == "MULTIPOINT (0 1 1,2 1 1)"
+
 ###############################################################################
 
 
