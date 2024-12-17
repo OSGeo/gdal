@@ -88,7 +88,7 @@ by `GISInternals`_ and `OSGeo4W`_ and through the `NuGet`_ and :ref:`vcpkg` pack
 Linux
 ................................................................................
 
-Packages are available for `Debian`_, `Alpine_`, `Fedora_`, and other distributions.
+Packages are available for `Debian`_, `Alpine`_, `Fedora`_, and other distributions.
 
 .. _`Debian`: https://tracker.debian.org/pkg/gdal
 .. _`Alpine`: https://pkgs.alpinelinux.org/package/edge/community/x86/gdal
