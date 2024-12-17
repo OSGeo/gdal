@@ -317,6 +317,11 @@ void RegisterOGRSQLite()
         "description='Whether to promote 1-bit monochrome raster as 8-bit, so "
         "as to have higher quality overviews' default='YES'/>"
 #endif
+        "  <Option name='OGR_SCHEMA' type='string' description='"
+        "Partially or totally overrides the auto-detected schema to use for "
+        "creating the layer. "
+        "The overrides are defined as a JSON list of field definitions. "
+        "This can be a filename or a JSON string or a URL.'/>"
         "</OpenOptionList>");
 
     CPLString osCreationOptions(

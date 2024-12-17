@@ -148,6 +148,8 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
 
     OGRErr DoTransactionCommand(const char *pszCommand);
 
+    bool DealWithOgrSchemaOpenOption(CSLConstList papszOpenOptionsIn);
+
     CPL_DISALLOW_COPY_ASSIGN(OGRSQLiteBaseDataSource)
 
   public:
