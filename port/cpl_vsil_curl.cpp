@@ -948,9 +948,6 @@ namespace cpl
 
 void VSICurlHandle::ManagePlanetaryComputerSigning() const
 {
-    if (!m_bPlanetaryComputerURLSigning)
-        return;
-
     // Take global lock
     static std::mutex goMutex;
     std::lock_guard<std::mutex> oLock(goMutex);
@@ -1067,6 +1064,43 @@ void VSICurlHandle::ManagePlanetaryComputerSigning() const
 }
 
 /************************************************************************/
+/*                        UpdateQueryString()                           */
+/************************************************************************/
+
+void VSICurlHandle::UpdateQueryString() const
+{
+    if (m_bPlanetaryComputerURLSigning)
+    {
+        ManagePlanetaryComputerSigning();
+    }
+    else
+    {
+        const char *pszQueryString = VSIGetPathSpecificOption(
+            m_osFilename.c_str(), "VSICURL_QUERY_STRING", nullptr);
+        if (pszQueryString)
+        {
+            if (m_osFilename.back() == '?')
+            {
+                if (pszQueryString[0] == '?')
+                    m_osQueryString = pszQueryString + 1;
+                else
+                    m_osQueryString = pszQueryString;
+            }
+            else
+            {
+                if (pszQueryString[0] == '?')
+                    m_osQueryString = pszQueryString;
+                else
+                {
+                    m_osQueryString = "?";
+                    m_osQueryString.append(pszQueryString);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                     GetFileSizeOrHeaders()                           */
 /************************************************************************/
 
@@ -1084,7 +1118,7 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders(bool bSetError,
 
     CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
 
-    ManagePlanetaryComputerSigning();
+    UpdateQueryString();
 
     std::string osURL(m_pszURL + m_osQueryString);
     bool bRetryWithGet = false;
@@ -1857,7 +1891,7 @@ std::string VSICurlHandle::DownloadRegion(const vsi_l_offset startOffset,
 begin:
     CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
 
-    ManagePlanetaryComputerSigning();
+    UpdateQueryString();
 
     bool bHasExpired = false;
 
@@ -2432,7 +2466,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
                                                 panSizes);
     }
 
-    ManagePlanetaryComputerSigning();
+    UpdateQueryString();
 
     bool bHasExpired = false;
 
@@ -3098,7 +3132,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     std::string osURL;
     {
         std::lock_guard<std::mutex> oLock(m_oMutex);
-        ManagePlanetaryComputerSigning();
+        UpdateQueryString();
         bool bHasExpired;
         osURL = GetRedirectURLIfValid(bHasExpired, aosHTTPOptions);
     }
@@ -3263,7 +3297,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
         nMaxSize += panSizes[i];
     }
 
-    ManagePlanetaryComputerSigning();
+    UpdateQueryString();
 
     bool bHasExpired = false;
     CPLStringList aosHTTPOptions(m_aosHTTPOptions);
