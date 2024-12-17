@@ -123,6 +123,9 @@ endif ()
 if (GDAL_USE_SFCGAL)
   target_compile_definitions(ogr PRIVATE -DHAVE_SFCGAL=1)
   gdal_target_link_libraries(ogr PRIVATE SFCGAL::SFCGAL)
+  string(REGEX REPLACE "^([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" SFCGAL_VERSION_MAJOR "${SFCGAL_VERSION_STRING}")
+  string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\.[0-9]+" "\\1" SFCGAL_VERSION_MINOR "${SFCGAL_VERSION_STRING}")
+  string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" SFCGAL_VERSION_PATCH "${SFCGAL_VERSION_STRING}")
   # work around for SFCGAL 1.3.7 on Ubuntu 20.04/Debian
   if (SFCGAL_VERSION_STRING VERSION_EQUAL "1.3.7")
     if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -135,6 +138,11 @@ if (GDAL_USE_SFCGAL)
     endif ()
   endif ()
 endif ()
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/ogr_sfcgal.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/ogr_sfcgal.h
+)
+target_include_directories(ogr PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
   target_compile_definitions(ogr PRIVATE -DHAVE_ZLIB_H -DHAVE_ZLIB)
