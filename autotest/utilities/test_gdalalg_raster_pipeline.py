@@ -372,7 +372,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_src_crs(tmp_vsimem):
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="reproject: Invalid value for '--src-crs'",
+        match="reproject: Invalid value for 'src-crs' argument",
     ):
         pipeline.ParseRunAndFinalize(
             [
@@ -396,7 +396,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_dst_crs(tmp_vsimem):
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="reproject: Invalid value for '--dst-crs'",
+        match="reproject: Invalid value for 'dst-crs' argument",
     ):
         pipeline.ParseRunAndFinalize(
             [

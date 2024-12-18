@@ -230,6 +230,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_raster_edit",
+        "gdal-raster-edit",
+        "Edit in place a raster dataset",
+        [author_evenr],
+        1,
+    ),
+    (
         "programs/gdal_raster_pipeline",
         "gdal-raster-pipeline",
         "Process a raster dataset",
@@ -239,7 +246,7 @@ man_pages = [
     (
         "programs/gdal_raster_reproject",
         "gdal-raster-reproject",
-        "Reproect a raster dataset",
+        "Reproject a raster dataset",
         [author_evenr],
         1,
     ),

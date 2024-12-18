@@ -73,7 +73,7 @@ class GDALRasterPipelineAlgorithm final : public GDALRasterPipelineStepAlgorithm
     static constexpr const char *NAME = "pipeline";
     static constexpr const char *DESCRIPTION = "Process a raster dataset.";
     static constexpr const char *HELP_URL =
-        "https://gdal.org/en/stable/programs/gdal_raster_pipeline.html";
+        "/programs/gdal_raster_pipeline.html";
 
     static std::vector<std::string> GetAliases()
     {

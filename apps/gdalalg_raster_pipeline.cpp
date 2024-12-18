@@ -12,6 +12,7 @@
 
 #include "gdalalg_raster_pipeline.h"
 #include "gdalalg_raster_read.h"
+#include "gdalalg_raster_edit.h"
 #include "gdalalg_raster_reproject.h"
 #include "gdalalg_raster_write.h"
 
@@ -159,6 +160,7 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
 
     m_stepRegistry.Register<GDALRasterReadAlgorithm>();
     m_stepRegistry.Register<GDALRasterWriteAlgorithm>();
+    m_stepRegistry.Register<GDALRasterEditAlgorithm>();
     m_stepRegistry.Register<GDALRasterReprojectAlgorithm>();
 }
 

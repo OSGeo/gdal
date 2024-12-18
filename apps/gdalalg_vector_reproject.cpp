@@ -31,8 +31,11 @@ GDALVectorReprojectAlgorithm::GDALVectorReprojectAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
-    AddArg("src-crs", 's', _("Source CRS"), &m_srsCrs).AddHiddenAlias("s_srs");
+    AddArg("src-crs", 's', _("Source CRS"), &m_srsCrs)
+        .SetIsCRSArg()
+        .AddHiddenAlias("s_srs");
     AddArg("dst-crs", 'd', _("Destination CRS"), &m_dstCrs)
+        .SetIsCRSArg()
         .SetRequired()
         .AddHiddenAlias("t_srs");
 }
@@ -82,22 +85,12 @@ bool GDALVectorReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
     if (!m_srsCrs.empty())
     {
         poSrcCRS = std::make_unique<OGRSpatialReference>();
-        if (poSrcCRS->SetFromUserInput(m_srsCrs.c_str()) != OGRERR_NONE)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Invalid value for '--src-crs'");
-            return false;
-        }
+        poSrcCRS->SetFromUserInput(m_srsCrs.c_str());
         poSrcCRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
     OGRSpatialReference oDstCRS;
-    if (oDstCRS.SetFromUserInput(m_dstCrs.c_str()) != OGRERR_NONE)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Invalid value for '--dst-crs'");
-        return false;
-    }
+    oDstCRS.SetFromUserInput(m_dstCrs.c_str());
     oDstCRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     auto poSrcDS = m_inputDataset.GetDatasetRef();

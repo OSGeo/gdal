@@ -29,8 +29,11 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
     : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
-    AddArg("src-crs", 's', _("Source CRS"), &m_srsCrs).AddHiddenAlias("s_srs");
+    AddArg("src-crs", 's', _("Source CRS"), &m_srsCrs)
+        .SetIsCRSArg()
+        .AddHiddenAlias("s_srs");
     AddArg("dst-crs", 'd', _("Destination CRS"), &m_dstCrs)
+        .SetIsCRSArg()
         .AddHiddenAlias("t_srs");
     AddArg("resampling", 'r', _("Resampling method"), &m_resampling)
         .SetChoices("near", "bilinear", "cubic", "cubicspline", "lanczos",
@@ -97,28 +100,6 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
     CPLAssert(m_inputDataset.GetDatasetRef());
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
-
-    if (!m_srsCrs.empty())
-    {
-        OGRSpatialReference oSRS;
-        if (oSRS.SetFromUserInput(m_srsCrs.c_str()) != OGRERR_NONE)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Invalid value for '--src-crs'");
-            return false;
-        }
-    }
-
-    if (!m_dstCrs.empty())
-    {
-        OGRSpatialReference oSRS;
-        if (oSRS.SetFromUserInput(m_dstCrs.c_str()) != OGRERR_NONE)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Invalid value for '--dst-crs'");
-            return false;
-        }
-    }
 
     CPLStringList aosOptions;
     aosOptions.AddString("-of");
