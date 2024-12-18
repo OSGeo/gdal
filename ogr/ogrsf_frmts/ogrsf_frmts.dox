@@ -2514,6 +2514,10 @@ used by a layer directly.
 This method should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
 
+If a OGRFieldDefn* object corresponding to the deleted field has been retrieved
+from the layer definition before the call to DeleteField(), it must no longer be
+used after the call to DeleteField(), which will have destroyed it.
+
 Not all drivers support this method. You can query a layer to check if it supports it
 with the OLCDeleteField capability. Some drivers may only support this method while
 there are still no features in the layer. When it is supported, the existing features of the
@@ -2541,6 +2545,10 @@ used by a layer directly.
 
 This function should not be called while there are feature objects in existence that
 were obtained or created with the previous layer definition.
+
+If a OGRFieldDefnH object corresponding to the deleted field has been retrieved
+from the layer definition before the call to DeleteField(), it must no longer be
+used after the call to DeleteField(), which will have destroyed it.
 
 Not all drivers support this function. You can query a layer to check if it supports it
 with the OLCDeleteField capability. Some drivers may only support this method while
