@@ -7,7 +7,7 @@ RFC 103 add a OGR_SCHEMA open option to selected OGR drivers
 =============== =============================================
 Author:         Alessandro Pasotti
 Contact:        elpaso at itopen.it
-Status:         Draft
+Status:         Implemented
 Created:        2024-10-22
 =============== =============================================
 
@@ -228,10 +228,6 @@ Here is an example of a schema document that will be used to override the fields
 
 The new option will be used by applications such as `ogr2ogr` (for the ``-mapFieldType`` switch) to override the auto-detected fields types and to override the auto-detected (and possibly laundered) field names.
 
-A preliminary draft of the implementation can be found at:
-https://github.com/OSGeo/gdal/pull/11071
-
-
 
 Errors and warnings
 -------------------
@@ -241,3 +237,19 @@ Errors and warnings
 - If the schema is a valid JSON document but does not validates against the JSON schema, a critical error will be raised.
 
 - If the schema contains a field that is not present in the dataset, a critical error will be raised.
+
+
+Related issues and PRs
+----------------------
+
+- Candidate implementation (GML): https://github.com/OSGeo/gdal/pull/11334
+
+- PRs for the other drivers:
+    - CSV: htpps://github.com/OSGeo/gdal/pull/11479
+    - GeoJSON: htpps://github.com/OSGeo/gdal/pull/11464
+    - SQLite: htpps://github.com/OSGeo/gdal/pull/11499
+
+Voting history
+--------------
+
++1 from PSC members JukkaR, JavierJS, HowardB and EvenR
