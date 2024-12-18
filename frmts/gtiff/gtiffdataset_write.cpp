@@ -5297,9 +5297,22 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         nPredictor = atoi(pszValue);
     }
 
-    // Do early checks as libtiff will only error out when starting to write.
     if (nPredictor != PREDICTOR_NONE &&
-        CPLTestBool(CPLGetConfigOption("GDAL_GTIFF_PREDICTOR_CHECKS", "YES")))
+        l_nCompression != COMPRESSION_ADOBE_DEFLATE &&
+        l_nCompression != COMPRESSION_LZW &&
+        l_nCompression != COMPRESSION_LZMA &&
+        l_nCompression != COMPRESSION_ZSTD)
+    {
+        ReportError(pszFilename, CE_Warning, CPLE_NotSupported,
+                    "PREDICTOR option is ignored for COMPRESS=%s. "
+                    "Only valid for DEFLATE, LZW, LZMA or ZSTD",
+                    CSLFetchNameValueDef(papszParamList, "COMPRESS", "NONE"));
+    }
+
+    // Do early checks as libtiff will only error out when starting to write.
+    else if (nPredictor != PREDICTOR_NONE &&
+             CPLTestBool(
+                 CPLGetConfigOption("GDAL_GTIFF_PREDICTOR_CHECKS", "YES")))
     {
 #if (TIFFLIB_VERSION > 20210416) || defined(INTERNAL_LIBTIFF)
 #define HAVE_PREDICTOR_2_FOR_64BIT
