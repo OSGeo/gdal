@@ -245,18 +245,11 @@ Related issues and PRs
 - Candidate implementation (GML): https://github.com/OSGeo/gdal/pull/11334
 
 - PRs for the other drivers:
-    - htpps://github.com/OSGeo/gdal/pull/11479: CSV
-    - htpps://github.com/OSGeo/gdal/pull/11464: GeoJSON
-    - htpps://github.com/OSGeo/gdal/pull/11499: SQLite
+    - https://github.com/OSGeo/gdal/pull/11479: CSV
+    - https://github.com/OSGeo/gdal/pull/11464: GeoJSON
+    - https://github.com/OSGeo/gdal/pull/11499: SQLite
 
 Voting history
 --------------
 
 +1 from PSC members JukkaR, JavierJS, HowardB and EvenR
-
-.. below is an allow-list for spelling checker.
-
-.. spelling:word-list::
-    CSV
-    GeoJSON
-    SQLite
