@@ -1150,10 +1150,14 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    // Take into STAC GeoParquet proj:epsg and proj:transform fields
+    // Take into STAC GeoParquet proj:code / proj:epsg / proj:wkt2 / proj:projjson
+    // and proj:transform fields
     std::unique_ptr<OGRFeature> poFeature;
     std::string osResX, osResY, osMinX, osMinY, osMaxX, osMaxY;
+    int iProjCode = -1;
     int iProjEPSG = -1;
+    int iProjWKT2 = -1;
+    int iProjPROJSON = -1;
     int iProjTransform = -1;
 
     const bool bIsStacGeoParquet =
@@ -1168,29 +1172,61 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             strlen("assets."),
             osLocationFieldName.size() - strlen("assets.") - strlen(".href"));
     }
+
+    const auto GetAssetFieldIndex =
+        [poLayerDefn, &osAssetName](const char *pszFieldName)
+    {
+        const int idx = poLayerDefn->GetFieldIndex(
+            CPLSPrintf("assets.%s.%s", osAssetName.c_str(), pszFieldName));
+        if (idx >= 0)
+            return idx;
+        return poLayerDefn->GetFieldIndex(pszFieldName);
+    };
+
     if (bIsStacGeoParquet && !pszSRS && !pszResX && !pszResY && !pszMinX &&
         !pszMinY && !pszMaxX && !pszMaxY &&
-        ((iProjEPSG = poLayerDefn->GetFieldIndex(
-              CPLSPrintf("assets.%s.proj:epsg", osAssetName.c_str()))) >= 0 ||
-         (iProjEPSG = poLayerDefn->GetFieldIndex("proj:epsg")) >= 0) &&
-        ((iProjTransform = poLayerDefn->GetFieldIndex(CPLSPrintf(
-              "assets.%s.proj:transform", osAssetName.c_str()))) >= 0 ||
-         (iProjTransform = poLayerDefn->GetFieldIndex("proj:transform")) >= 0))
+        ((iProjCode = GetAssetFieldIndex("proj:code")) >= 0 ||
+         (iProjEPSG = GetAssetFieldIndex("proj:epsg")) >= 0 ||
+         (iProjWKT2 = GetAssetFieldIndex("proj:wkt2")) >= 0 ||
+         (iProjPROJSON = GetAssetFieldIndex("proj:projjson")) >= 0) &&
+        ((iProjTransform = GetAssetFieldIndex("proj:transform")) >= 0))
     {
         poFeature.reset(m_poLayer->GetNextFeature());
         const auto poProjTransformField =
             poLayerDefn->GetFieldDefn(iProjTransform);
-        if (poFeature && poFeature->IsFieldSet(iProjEPSG) &&
+        if (poFeature &&
+            ((iProjCode >= 0 && poFeature->IsFieldSet(iProjCode)) ||
+             (iProjEPSG >= 0 && poFeature->IsFieldSet(iProjEPSG)) ||
+             (iProjWKT2 >= 0 && poFeature->IsFieldSet(iProjWKT2)) ||
+             (iProjPROJSON >= 0 && poFeature->IsFieldSet(iProjPROJSON))) &&
             poFeature->IsFieldSet(iProjTransform) &&
             (poProjTransformField->GetType() == OFTRealList ||
              poProjTransformField->GetType() == OFTIntegerList ||
              poProjTransformField->GetType() == OFTInteger64List))
         {
-            const int nEPSGCode = poFeature->GetFieldAsInteger(iProjEPSG);
             OGRSpatialReference oSTACSRS;
             oSTACSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            if (nEPSGCode > 0 &&
-                oSTACSRS.importFromEPSG(nEPSGCode) == OGRERR_NONE)
+
+            if (iProjCode >= 0 && poFeature->IsFieldSet(iProjCode))
+                oSTACSRS.SetFromUserInput(
+                    poFeature->GetFieldAsString(iProjCode),
+                    OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
+
+            else if (iProjEPSG >= 0 && poFeature->IsFieldSet(iProjEPSG))
+                oSTACSRS.importFromEPSG(
+                    poFeature->GetFieldAsInteger(iProjEPSG));
+
+            else if (iProjWKT2 >= 0 && poFeature->IsFieldSet(iProjWKT2))
+                oSTACSRS.SetFromUserInput(
+                    poFeature->GetFieldAsString(iProjWKT2),
+                    OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
+
+            else if (iProjPROJSON >= 0 && poFeature->IsFieldSet(iProjPROJSON))
+                oSTACSRS.SetFromUserInput(
+                    poFeature->GetFieldAsString(iProjPROJSON),
+                    OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
+
+            if (!oSTACSRS.IsEmpty())
             {
                 int nTransformCount = 0;
                 double adfGeoTransform[6] = {0, 0, 0, 0, 0, 0};
