@@ -7,7 +7,7 @@ driver. Anyone is welcome to contribute code that addresses these issues.
 ## Reader
 
 * The following DXF entities are not supported at all: MESH, MPOLYGON, RAY,
-TABLE, TOLERANCE, WIPEOUT, XLINE.
+TABLE, TOLERANCE, XLINE.
 
 ### 3DFACE
 
@@ -49,6 +49,12 @@ such as different colors or linetypes for the different elements of the line.
 
 * 3D (z-coordinate) and OCS (extrusion) support is missing. This entity is
 very complex and adding 3D/OCS support would take a long time.
+
+### WIPEOUT
+
+* A light WIPEOUT support has been added since version 3.11 and later.
+The driver can read the outline of each WIPEOUT and avoid skipping objects.
+Any embedded image is not read.
 
 ### Text entities
 
