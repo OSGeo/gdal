@@ -1609,3 +1609,27 @@ def test_vsicurl_VSICURL_QUERY_STRING(server, filename, query_string):
             assert statres.size == 3
         finally:
             gdal.SetPathSpecificOption(full_filename, "VSICURL_QUERY_STRING", None)
+
+
+###############################################################################
+# Test /vsicurl?header.foo=bar&
+
+
+@gdaltest.enable_exceptions()
+def test_vsicurl_header_option(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/test_vsicurl_header_option.bin",
+        200,
+        {"Content-Length": "3"},
+        expected_headers={"foo": "bar", "Accept": "application/json"},
+    )
+
+    with webserver.install_http_handler(handler):
+        full_filename = f"/vsicurl?header.foo=bar&header.Accept=application%2Fjson&url=http%3A%2F%2Flocalhost%3A{server.port}%2Ftest_vsicurl_header_option.bin"
+        statres = gdal.VSIStatL(full_filename)
+        assert statres.size == 3
