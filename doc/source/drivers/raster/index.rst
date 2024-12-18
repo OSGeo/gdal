@@ -109,6 +109,7 @@ Raster drivers
    l1b
    lcp
    leveller
+   libertiff
    loslas
    map
    marfa
