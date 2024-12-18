@@ -1719,6 +1719,92 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn(
             }
         }
 
+        // Whether/how we should deal with foreign members
+        if (eForeignMemberProcessing_ == ForeignMemberProcessing::AUTO)
+        {
+            if (CPL_json_object_object_get(poObj, "stac_version"))
+                eForeignMemberProcessing_ = ForeignMemberProcessing::STAC;
+            else
+                eForeignMemberProcessing_ = ForeignMemberProcessing::NONE;
+        }
+        if (eForeignMemberProcessing_ != ForeignMemberProcessing::NONE)
+        {
+            it.key = nullptr;
+            it.val = nullptr;
+            it.entry = nullptr;
+            json_object_object_foreachC(poObj, it)
+            {
+                if (eForeignMemberProcessing_ ==
+                        ForeignMemberProcessing::STAC &&
+                    strcmp(it.key, "assets") == 0 &&
+                    json_object_get_type(it.val) == json_type_object)
+                {
+                    json_object_iter it2;
+                    it2.key = nullptr;
+                    it2.val = nullptr;
+                    it2.entry = nullptr;
+                    json_object_object_foreachC(it.val, it2)
+                    {
+                        if (json_object_get_type(it2.val) == json_type_object)
+                        {
+                            json_object_iter it3;
+                            it3.key = nullptr;
+                            it3.val = nullptr;
+                            it3.entry = nullptr;
+                            json_object_object_foreachC(it2.val, it3)
+                            {
+                                anCurFieldIndices.clear();
+                                OGRGeoJSONReaderAddOrUpdateField(
+                                    anCurFieldIndices, oMapFieldNameToIdx,
+                                    apoFieldDefn,
+                                    std::string("assets.")
+                                        .append(it2.key)
+                                        .append(".")
+                                        .append(it3.key)
+                                        .c_str(),
+                                    it3.val, bFlattenNestedAttributes_,
+                                    chNestedAttributeSeparator_,
+                                    bArrayAsString_, bDateAsString_,
+                                    aoSetUndeterminedTypeFields_);
+                                for (int idx : anCurFieldIndices)
+                                {
+                                    dag.addNode(
+                                        idx, apoFieldDefn[idx]->GetNameRef());
+                                    if (nPrevFieldIdx != -1)
+                                    {
+                                        dag.addEdge(nPrevFieldIdx, idx);
+                                    }
+                                    nPrevFieldIdx = idx;
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (strcmp(it.key, "type") != 0 &&
+                         strcmp(it.key, "id") != 0 &&
+                         strcmp(it.key, "geometry") != 0 &&
+                         strcmp(it.key, "bbox") != 0 &&
+                         strcmp(it.key, "properties") != 0)
+                {
+                    anCurFieldIndices.clear();
+                    OGRGeoJSONReaderAddOrUpdateField(
+                        anCurFieldIndices, oMapFieldNameToIdx, apoFieldDefn,
+                        it.key, it.val, bFlattenNestedAttributes_,
+                        chNestedAttributeSeparator_, bArrayAsString_,
+                        bDateAsString_, aoSetUndeterminedTypeFields_);
+                    for (int idx : anCurFieldIndices)
+                    {
+                        dag.addNode(idx, apoFieldDefn[idx]->GetNameRef());
+                        if (nPrevFieldIdx != -1)
+                        {
+                            dag.addEdge(nPrevFieldIdx, idx);
+                        }
+                        nPrevFieldIdx = idx;
+                    }
+                }
+            }
+        }
+
         bSuccess = true;  // SUCCESS
     }
     else if (nullptr != poObjPropsEntry &&
@@ -2123,6 +2209,85 @@ OGRFeature *OGRGeoJSONBaseReader::ReadFeature(OGRLayer *poLayer,
                 OGRGeoJSONReaderSetField(poLayer, poFeature, nField, it.key,
                                          it.val, bFlattenNestedAttributes_,
                                          chNestedAttributeSeparator_);
+            }
+        }
+    }
+
+    // Whether/how we should deal with foreign members
+    if (!bAttributesSkip_ &&
+        eForeignMemberProcessing_ != ForeignMemberProcessing::NONE)
+    {
+        json_object_iter it;
+        it.key = nullptr;
+        it.val = nullptr;
+        it.entry = nullptr;
+        json_object_object_foreachC(poObj, it)
+        {
+            if (eForeignMemberProcessing_ == ForeignMemberProcessing::STAC &&
+                strcmp(it.key, "assets") == 0 &&
+                json_object_get_type(it.val) == json_type_object)
+            {
+                json_object_iter it2;
+                it2.key = nullptr;
+                it2.val = nullptr;
+                it2.entry = nullptr;
+                json_object_object_foreachC(it.val, it2)
+                {
+                    if (json_object_get_type(it2.val) == json_type_object)
+                    {
+                        json_object_iter it3;
+                        it3.key = nullptr;
+                        it3.val = nullptr;
+                        it3.entry = nullptr;
+                        json_object_object_foreachC(it2.val, it3)
+                        {
+                            const std::string osFieldName =
+                                std::string("assets.")
+                                    .append(it2.key)
+                                    .append(".")
+                                    .append(it3.key)
+                                    .c_str();
+                            const int nField =
+                                poFDefn->GetFieldIndexCaseSensitive(
+                                    osFieldName.c_str());
+                            if (nField < 0 && !(bFlattenNestedAttributes_ &&
+                                                it3.val != nullptr &&
+                                                json_object_get_type(it3.val) ==
+                                                    json_type_object))
+                            {
+                                CPLDebug("GeoJSON", "Cannot find field %s",
+                                         osFieldName.c_str());
+                            }
+                            else
+                            {
+                                OGRGeoJSONReaderSetField(
+                                    poLayer, poFeature, nField,
+                                    osFieldName.c_str(), it3.val,
+                                    bFlattenNestedAttributes_,
+                                    chNestedAttributeSeparator_);
+                            }
+                        }
+                    }
+                }
+            }
+            else if (strcmp(it.key, "type") != 0 && strcmp(it.key, "id") != 0 &&
+                     strcmp(it.key, "geometry") != 0 &&
+                     strcmp(it.key, "bbox") != 0 &&
+                     strcmp(it.key, "properties") != 0)
+            {
+                const int nField = poFDefn->GetFieldIndexCaseSensitive(it.key);
+                if (nField < 0 &&
+                    !(bFlattenNestedAttributes_ && it.val != nullptr &&
+                      json_object_get_type(it.val) == json_type_object))
+                {
+                    CPLDebug("GeoJSON", "Cannot find field %s", it.key);
+                }
+                else
+                {
+                    OGRGeoJSONReaderSetField(poLayer, poFeature, nField, it.key,
+                                             it.val, bFlattenNestedAttributes_,
+                                             chNestedAttributeSeparator_);
+                }
             }
         }
     }
