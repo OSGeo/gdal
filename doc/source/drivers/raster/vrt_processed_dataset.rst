@@ -9,8 +9,9 @@ VRT processed dataset
 A VRT processed dataset is a specific variant of the :ref:`raster.vrt` format,
 to apply chained processing steps that may apply to several bands at the same time.
 
-The following built-in algorithms are introduced, and may typically be applied
-in the following order:
+The following built-in algorithms are available:
+
+- Expression: evaluate an specified expression using the `exprtk library <https://www.partow.net/programming/exprtk/index.html>`__. Band values can be accessed through the ``BANDS`` vector (0-indexed) or by the variables ``B1``, ``B2``, etc.
 
 - LocalScaleOffset: apply per-pixel gain and offset coming (typically subsampled)
   from auxiliary datasets. Can be used for dehazing processing.
