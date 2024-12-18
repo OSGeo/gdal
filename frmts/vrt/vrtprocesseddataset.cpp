@@ -335,18 +335,80 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
             static_cast<double>(poParentDS->GetRasterYSize()) / nRasterYSize;
     }
 
-    // Create bands automatically from source dataset if not explicitly defined
-    // in VRT.
-    if (!CPLGetXMLNode(psTree, "VRTRasterBand"))
+    const CPLXMLNode *psOutputBands = CPLGetXMLNode(psTree, "OutputBands");
+    if (psOutputBands)
     {
-        for (int i = 0; i < m_poSrcDS->GetRasterCount(); ++i)
+        if (const char *pszCount =
+                CPLGetXMLValue(psOutputBands, "count", nullptr))
         {
-            const auto poSrcBand = m_poSrcDS->GetRasterBand(i + 1);
-            auto poBand = new VRTProcessedRasterBand(
-                this, i + 1, poSrcBand->GetRasterDataType());
-            poBand->CopyCommonInfoFrom(poSrcBand);
-            SetBand(i + 1, poBand);
+            if (EQUAL(pszCount, "FROM_LAST_STEP"))
+            {
+                m_outputBandCountProvenance = ValueProvenance::FROM_LAST_STEP;
+            }
+            else if (!EQUAL(pszCount, "FROM_SOURCE"))
+            {
+                if (CPLGetValueType(pszCount) == CPL_VALUE_INTEGER)
+                {
+                    m_outputBandCountProvenance =
+                        ValueProvenance::USER_PROVIDED;
+                    m_outputBandCountValue = atoi(pszCount);
+                    if (!GDALCheckBandCount(m_outputBandCountValue,
+                                            /* bIsZeroAllowed = */ false))
+                    {
+                        // Error emitted by above function
+                        return CE_Failure;
+                    }
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid value for OutputBands.count");
+                    return CE_Failure;
+                }
+            }
         }
+
+        if (const char *pszType =
+                CPLGetXMLValue(psOutputBands, "dataType", nullptr))
+        {
+            if (EQUAL(pszType, "FROM_LAST_STEP"))
+            {
+                m_outputBandDataTypeProvenance =
+                    ValueProvenance::FROM_LAST_STEP;
+            }
+            else if (!EQUAL(pszType, "FROM_SOURCE"))
+            {
+                m_outputBandDataTypeProvenance = ValueProvenance::USER_PROVIDED;
+                m_outputBandDataTypeValue = GDALGetDataTypeByName(pszType);
+                if (m_outputBandDataTypeValue == GDT_Unknown)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid value for OutputBands.dataType");
+                    return CE_Failure;
+                }
+            }
+        }
+    }
+    else if (CPLGetXMLNode(psTree, "VRTRasterBand"))
+    {
+        m_outputBandCountProvenance = ValueProvenance::FROM_VRTRASTERBAND;
+        m_outputBandDataTypeProvenance = ValueProvenance::FROM_VRTRASTERBAND;
+    }
+
+    int nOutputBandCount = 0;
+    switch (m_outputBandCountProvenance)
+    {
+        case ValueProvenance::USER_PROVIDED:
+            nOutputBandCount = m_outputBandCountValue;
+            break;
+        case ValueProvenance::FROM_SOURCE:
+            nOutputBandCount = m_poSrcDS->GetRasterCount();
+            break;
+        case ValueProvenance::FROM_VRTRASTERBAND:
+            nOutputBandCount = nBands;
+            break;
+        case ValueProvenance::FROM_LAST_STEP:
+            break;
     }
 
     const CPLXMLNode *psProcessingSteps =
@@ -410,14 +472,39 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
             {
                 // Initialize adfOutNoData with nodata value of *output* bands
                 // for final step
-                for (int i = 1; i <= nBands; ++i)
+                if (m_outputBandCountProvenance ==
+                    ValueProvenance::FROM_VRTRASTERBAND)
                 {
-                    int bHasVal = FALSE;
-                    const double dfVal =
-                        GetRasterBand(i)->GetNoDataValue(&bHasVal);
-                    adfOutNoData.emplace_back(
-                        bHasVal ? dfVal
-                                : std::numeric_limits<double>::quiet_NaN());
+                    for (int i = 1; i <= nBands; ++i)
+                    {
+                        int bHasVal = FALSE;
+                        const double dfVal =
+                            GetRasterBand(i)->GetNoDataValue(&bHasVal);
+                        adfOutNoData.emplace_back(
+                            bHasVal ? dfVal
+                                    : std::numeric_limits<double>::quiet_NaN());
+                    }
+                }
+                else if (m_outputBandCountProvenance ==
+                         ValueProvenance::FROM_SOURCE)
+                {
+                    for (int i = 1; i <= m_poSrcDS->GetRasterCount(); ++i)
+                    {
+                        int bHasVal = FALSE;
+                        const double dfVal =
+                            m_poSrcDS->GetRasterBand(i)->GetNoDataValue(
+                                &bHasVal);
+                        adfOutNoData.emplace_back(
+                            bHasVal ? dfVal
+                                    : std::numeric_limits<double>::quiet_NaN());
+                    }
+                }
+                else if (m_outputBandCountProvenance ==
+                         ValueProvenance::USER_PROVIDED)
+                {
+                    adfOutNoData.resize(
+                        m_outputBandCountValue,
+                        std::numeric_limits<double>::quiet_NaN());
                 }
             }
             if (!ParseStep(psStep, bIsFinalStep, eCurrentDT, nCurrentBandCount,
@@ -434,12 +521,71 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         return CE_Failure;
     }
 
-    if (nCurrentBandCount != nBands)
+    if (m_outputBandCountProvenance == ValueProvenance::FROM_LAST_STEP)
     {
+        nOutputBandCount = nCurrentBandCount;
+    }
+    else if (nOutputBandCount != nCurrentBandCount)
+    {
+        // Should not happen frequently as pixel init functions are expected
+        // to validate that they can accept the number of output bands provided
+        // to them
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Number of output bands of last step is not consistent with "
                  "number of VRTProcessedRasterBand's");
         return CE_Failure;
+    }
+
+    if (m_outputBandDataTypeProvenance == ValueProvenance::FROM_LAST_STEP)
+    {
+        m_outputBandDataTypeValue = eCurrentDT;
+    }
+
+    if (nBands != 0 &&
+        (nBands != nOutputBandCount ||
+         (m_outputBandDataTypeProvenance == ValueProvenance::FROM_LAST_STEP &&
+          m_outputBandDataTypeValue != papoBands[0]->GetRasterDataType())))
+    {
+        for (int i = 0; i < nBands; ++i)
+            delete papoBands[i];
+        CPLFree(papoBands);
+        papoBands = nullptr;
+        nBands = 0;
+    }
+
+    const auto GetOutputBandType = [this, eCurrentDT](GDALDataType eSourceDT)
+    {
+        if (m_outputBandDataTypeProvenance == ValueProvenance::FROM_LAST_STEP)
+            return eCurrentDT;
+        else if (m_outputBandDataTypeProvenance ==
+                 ValueProvenance::USER_PROVIDED)
+            return m_outputBandDataTypeValue;
+        else
+            return eSourceDT;
+    };
+
+    if (m_outputBandCountProvenance == ValueProvenance::FROM_SOURCE)
+    {
+        for (int i = 0; i < m_poSrcDS->GetRasterCount(); ++i)
+        {
+            const auto poSrcBand = m_poSrcDS->GetRasterBand(i + 1);
+            const GDALDataType eOutputBandType =
+                GetOutputBandType(poSrcBand->GetRasterDataType());
+            auto poBand =
+                new VRTProcessedRasterBand(this, i + 1, eOutputBandType);
+            poBand->CopyCommonInfoFrom(poSrcBand);
+            SetBand(i + 1, poBand);
+        }
+    }
+    else if (m_outputBandCountProvenance != ValueProvenance::FROM_VRTRASTERBAND)
+    {
+        const GDALDataType eOutputBandType = GetOutputBandType(eInDT);
+        for (int i = 0; i < nOutputBandCount; ++i)
+        {
+            auto poBand =
+                new VRTProcessedRasterBand(this, i + 1, eOutputBandType);
+            SetBand(i + 1, poBand);
+        }
     }
 
     if (nBands > 1)
@@ -722,13 +868,13 @@ bool VRTProcessedDataset::ParseStep(const CPLXMLNode *psStep, bool bIsFinalStep,
     if (oFunc.pfnInit)
     {
         double *padfOutNoData = nullptr;
-        if (bIsFinalStep)
+        if (bIsFinalStep && !adfOutNoData.empty())
         {
-            oStep.nOutBands = nBands;
-            padfOutNoData =
-                static_cast<double *>(CPLMalloc(nBands * sizeof(double)));
-            CPLAssert(adfOutNoData.size() == static_cast<size_t>(nBands));
-            memcpy(padfOutNoData, adfOutNoData.data(), nBands * sizeof(double));
+            oStep.nOutBands = static_cast<int>(adfOutNoData.size());
+            padfOutNoData = static_cast<double *>(
+                CPLMalloc(adfOutNoData.size() * sizeof(double)));
+            memcpy(padfOutNoData, adfOutNoData.data(),
+                   adfOutNoData.size() * sizeof(double));
         }
         else
         {
@@ -754,8 +900,8 @@ bool VRTProcessedDataset::ParseStep(const CPLXMLNode *psStep, bool bIsFinalStep,
 
         if (padfOutNoData)
         {
-            adfOutNoData =
-                std::vector<double>(padfOutNoData, padfOutNoData + nBands);
+            adfOutNoData = std::vector<double>(padfOutNoData,
+                                               padfOutNoData + oStep.nOutBands);
         }
         else
         {

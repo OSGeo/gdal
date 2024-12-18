@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     OGRFeatureEdit.cs
  * Project:  GDAL CSharp Interface

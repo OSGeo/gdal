@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  librarified ogr2ogr testing
@@ -2926,6 +2925,46 @@ def test_ogr2ogr_lib_reproject_arrow_optim_cannot_trigger(tmp_vsimem):
 
 
 ###############################################################################
+# Test -ct in Arrow code path
+# Cf https://github.com/OSGeo/gdal/issues/11438
+
+
+@gdaltest.enable_exceptions()
+def test_ogr2ogr_lib_reproject_arrow_optim_ct(tmp_vsimem):
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32632)
+    srcLayer = srcDS.CreateLayer("test", srs=srs)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    srcLayer.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    config_options = {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(config_options):
+        ds = gdal.VectorTranslate(
+            "",
+            srcDS,
+            format="Memory",
+            reproject=True,
+            coordinateOperation="+proj=affine +s11=-1",
+        )
+
+    assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32632"
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (-1 2)"
+
+
+###############################################################################
 # Test -explodecollections on empty geometries
 
 
@@ -2958,3 +2997,127 @@ def test_ogr2ogr_lib_explodecollections_empty_geoms(input_wkt, expected_output_w
         out_lyr = out_ds.GetLayer(0)
         f = out_lyr.GetNextFeature()
         assert f.GetGeometryRef().ExportToIsoWkt() == expected_output_wkt
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_arrow_datetime_as_string(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.gpkg")
+    with ogr.GetDriverByName("GPKG").CreateDataSource(src_filename) as src_ds:
+        src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+
+        field = ogr.FieldDefn("dt", ogr.OFTDateTime)
+        src_lyr.CreateField(field)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        src_lyr.CreateFeature(f)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56.789Z")
+        src_lyr.CreateFeature(f)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56")
+        src_lyr.CreateFeature(f)
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetField("dt", "2022-05-31T12:34:56+12:30")
+        src_lyr.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(
+        {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    ):
+        dst_ds = gdal.VectorTranslate("", src_filename, format="Memory")
+
+    assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+    dst_lyr = dst_ds.GetLayer(0)
+    assert [f.GetField("dt") for f in dst_lyr] == [
+        None,
+        "2022/05/31 12:34:56.789+00",
+        "2022/05/31 12:34:56",
+        "2022/05/31 12:34:56+1230",
+    ]
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_transfer_gpkg_relationships(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "relationships.gpkg")
+    gdal.VectorTranslate(out_filename, "../ogr/data/gpkg/relation_mapping_table.gpkg")
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() == ["a_b_attributes"]
+        relationship = ds.GetRelationship("a_b_attributes")
+        assert relationship.GetLeftTableName() == "a"
+        assert relationship.GetRightTableName() == "b"
+        assert relationship.GetMappingTableName() == "my_mapping_table"
+
+    gdal.VectorTranslate(
+        out_filename,
+        "../ogr/data/gpkg/relation_mapping_table.gpkg",
+        layers=["a", "my_mapping_table"],
+    )
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() is None
+
+    gdal.VectorTranslate(
+        out_filename,
+        "../ogr/data/gpkg/relation_mapping_table.gpkg",
+        layers=["b", "my_mapping_table"],
+    )
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() is None
+
+    gdal.VectorTranslate(
+        out_filename, "../ogr/data/gpkg/relation_mapping_table.gpkg", layers=["a", "b"]
+    )
+    with gdal.OpenEx(out_filename) as ds:
+        assert ds.GetRelationshipNames() is None
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("OpenFileGDB")
+def test_ogr2ogr_lib_transfer_filegdb_relationships(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "relationships.gdb")
+    gdal.VectorTranslate(
+        out_filename, "../ogr/data/filegdb/relationships.gdb", format="OpenFileGDB"
+    )
+
+    with gdal.OpenEx(out_filename) as ds:
+        assert set(ds.GetRelationshipNames()) == set(
+            [
+                "composite_many_to_many",
+                "composite_one_to_one",
+                "points__ATTACHREL",
+                "simple_attributed",
+                "simple_backward_message_direction",
+                "simple_both_message_direction",
+                "simple_forward_message_direction",
+                "simple_many_to_many",
+                "simple_one_to_many",
+                "simple_relationship_one_to_one",
+            ]
+        )
+        relationship = ds.GetRelationship("composite_many_to_many")
+        assert relationship.GetLeftTableName() == "table6"
+        assert relationship.GetRightTableName() == "table7"
+        assert relationship.GetMappingTableName() == "composite_many_to_many"

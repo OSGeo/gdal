@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic read support for a all datatypes from a TIFF file.
@@ -73,6 +72,7 @@ init_list = [
     ("empty1bit.tif", 1, 0),
     ("gtiff/int64_full_range.tif", 1, 65535),
     ("gtiff/uint64_full_range.tif", 1, 1),
+    ("gtiff/float32_lzw_predictor_3_big_endian.tif", 1, 4672),
 ]
 
 
@@ -2127,6 +2127,10 @@ def test_tiff_read_md1():
     assert (
         md["ACQUISITIONDATETIME"] == "2010-04-01 12:00:00"
     ), "bad value for IMAGERY[ACQUISITIONDATETIME]"
+
+    # Check that IMD metadata domain is not sorted (https://github.com/OSGeo/gdal/issues/11470)
+    md = ds.GetMetadata_List("IMD")
+    assert md[0] == 'version="24.06"'
 
     ds = None
 
@@ -5358,3 +5362,108 @@ def test_tiff_read_ovr_dimap_pleiades(tmp_path):
     ds = None
     # Check that cleaning overviews did not suppress the DIMAP XML file
     assert os.path.exists(tmp_path / "bundle" / "DIM_foo.XML")
+
+
+###############################################################################
+# Test reading ArcGIS .tif.vat.dbf auxiliary file
+
+
+@pytest.mark.parametrize("GDAL_DISABLE_READDIR_ON_OPEN", ["NO", "YES", "EMPTY_DIR"])
+def test_tiff_read_vat_dbf(GDAL_DISABLE_READDIR_ON_OPEN):
+
+    with gdal.config_option(
+        "GDAL_DISABLE_READDIR_ON_OPEN", GDAL_DISABLE_READDIR_ON_OPEN
+    ):
+        with gdal.Open("data/gtiff/testrat.tif") as ds:
+            band = ds.GetRasterBand(1)
+            rat = band.GetDefaultRAT()
+
+            if GDAL_DISABLE_READDIR_ON_OPEN == "EMPTY_DIR":
+                assert rat is None
+                return
+
+            assert rat
+            assert rat.GetColumnCount() == 9
+            assert rat.GetRowCount() == 2
+            assert [rat.GetNameOfCol(i) for i in range(9)] == [
+                "VALUE",
+                "COUNT",
+                "CLASS",
+                "Red",
+                "Green",
+                "Blue",
+                "OtherInt",
+                "OtherReal",
+                "OtherStr",
+            ]
+            assert [rat.GetUsageOfCol(i) for i in range(9)] == [
+                gdal.GFU_MinMax,
+                gdal.GFU_PixelCount,
+                gdal.GFU_Name,
+                gdal.GFU_Red,
+                gdal.GFU_Green,
+                gdal.GFU_Blue,
+                gdal.GFU_Generic,
+                gdal.GFU_Generic,
+                gdal.GFU_Generic,
+            ]
+            assert [rat.GetTypeOfCol(i) for i in range(9)] == [
+                gdal.GFT_Integer,
+                gdal.GFT_Integer,
+                gdal.GFT_String,
+                gdal.GFT_Integer,
+                gdal.GFT_Integer,
+                gdal.GFT_Integer,
+                gdal.GFT_Integer,
+                gdal.GFT_Real,
+                gdal.GFT_String,
+            ]
+            assert rat.GetValueAsInt(0, 0) == 1
+            assert rat.GetValueAsInt(0, 1) == 10
+            assert rat.GetValueAsString(0, 2) == "my class"
+            assert rat.GetValueAsInt(0, 3) == 26
+            assert rat.GetValueAsInt(0, 4) == 51
+            assert rat.GetValueAsInt(0, 5) == 128
+            assert rat.GetValueAsInt(0, 6) == 2
+            assert rat.GetValueAsDouble(0, 7) == 2.5
+            assert rat.GetValueAsString(0, 8) == "foo"
+
+            assert rat.GetValueAsInt(1, 0) == 2
+            assert rat.GetValueAsString(1, 2) == "my class2"
+            assert rat.GetValueAsString(1, 8) == "foo2"
+
+            rat = band.GetDefaultRAT()
+            assert rat
+            assert rat.GetColumnCount() == 9
+
+
+###############################################################################
+# Test reading absent ArcGIS .tif.vat.dbf auxiliary file
+
+
+@pytest.mark.parametrize("GDAL_DISABLE_READDIR_ON_OPEN", ["NO", "YES", "EMPTY_DIR"])
+def test_tiff_read_no_vat_dbf(GDAL_DISABLE_READDIR_ON_OPEN):
+
+    with gdal.config_option(
+        "GDAL_DISABLE_READDIR_ON_OPEN", GDAL_DISABLE_READDIR_ON_OPEN
+    ):
+        with gdal.Open("data/byte.tif") as ds:
+            band = ds.GetRasterBand(1)
+            assert band.GetDefaultRAT() is None
+
+
+###############################################################################
+# Test reading corrupted ArcGIS .tif.vat.dbf auxiliary file
+
+
+def test_tiff_read_corrupted_vat_dbf(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.tif")
+    gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    vat_dbf_filename = filename + ".vat.dbf"
+    gdal.FileFromMemBuffer(vat_dbf_filename, "")
+
+    with gdal.Open(filename) as ds:
+        band = ds.GetRasterBand(1)
+        with pytest.raises(Exception):
+            band.GetDefaultRAT()

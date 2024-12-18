@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # ******************************************************************************
-#  $Id$
 #
 #  Project:  GDAL
 #  Purpose:  Densifies linestrings by a tolerance.

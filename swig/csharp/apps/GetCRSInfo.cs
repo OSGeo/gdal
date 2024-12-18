@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     GetCRSInfo.cs
  * Project:  GDAL CSharp Interface

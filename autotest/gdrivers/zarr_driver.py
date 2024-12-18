@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test Zarr driver
@@ -819,15 +818,21 @@ def test_zarr_read_crs(crs_member):
         assert rg
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
         srs = ar.GetSpatialRef()
-        if (
-            not (osr.GetPROJVersionMajor() > 6 or osr.GetPROJVersionMinor() >= 2)
-            and crs_member == "projjson"
-        ):
-            assert srs is None
-        else:
-            assert srs is not None
-            assert srs.GetAuthorityCode(None) == "4326"
-            assert len(ar.GetAttributes()) == 0
+        assert srs is not None
+        assert srs.GetAuthorityCode(None) == "4326"
+        # Mapping is 1, 2 since the slowest varying axis in multidim
+        # mode is the lines, which matches latitude as the first axis of the CRS.
+        assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
+        assert len(ar.GetAttributes()) == 0
+
+        # Open as classic CRS
+        ds = gdal.Open("/vsimem/test.zarr")
+        srs = ds.GetSpatialRef()
+        assert srs.GetAuthorityCode(None) == "4326"
+        # Inverted mapping in classic raster mode compared to multidim mode,
+        # because the first "axis" in our data model is columns.
+        assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
@@ -3470,7 +3475,8 @@ def test_zarr_pam_spatial_ref():
             assert ar
             crs = osr.SpatialReference()
             crs.ImportFromEPSG(4326)
-            crs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+            # lat first
+            crs.SetDataAxisToSRSAxisMapping([1, 2])
             crs.SetCoordinateEpoch(2021.2)
             assert ar.SetSpatialRef(crs) == gdal.CE_None
 
@@ -3497,7 +3503,7 @@ def test_zarr_pam_spatial_ref():
             crs = ar.GetSpatialRef()
             assert crs is not None
             assert crs.GetAuthorityCode(None) == "4326"
-            assert crs.GetDataAxisToSRSAxisMapping() == [2, 1]
+            assert crs.GetDataAxisToSRSAxisMapping() == [1, 2]
             assert crs.GetCoordinateEpoch() == 2021.2
 
         check_crs()
@@ -3506,6 +3512,8 @@ def test_zarr_pam_spatial_ref():
             ds = gdal.Open("/vsimem/test.zarr")
             crs = ds.GetSpatialRef()
             assert crs is not None
+            assert crs.GetAuthorityCode(None) == "4326"
+            assert crs.GetDataAxisToSRSAxisMapping() == [2, 1]
 
         check_crs_classic_dataset()
 
@@ -5506,10 +5514,9 @@ def test_zarr_read_cf1():
 
     ds = gdal.Open("data/zarr/byte_cf1.zarr")
     assert ds
-    assert (
-        ds.GetSpatialRef().ExportToProj4()
-        == "+proj=utm +zone=11 +ellps=clrk66 +units=m +no_defs"
-    )
+    srs = ds.GetSpatialRef()
+    assert srs.ExportToProj4() == "+proj=utm +zone=11 +ellps=clrk66 +units=m +no_defs"
+    assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
 
 
 ###############################################################################
@@ -5524,6 +5531,40 @@ def test_zarr_read_cf1_zarrv3():
         ds.GetSpatialRef().ExportToProj4()
         == "+proj=utm +zone=11 +ellps=clrk66 +units=m +no_defs"
     )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_proj(9)
+def test_zarr_write_WGS84_and_EGM96_height(tmp_vsimem):
+
+    tmp_filename = str(tmp_vsimem / "out.zarr")
+    with gdal.GetDriverByName("Zarr").Create(tmp_filename, 1, 1) as ds:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(9707)
+        ds.SetSpatialRef(srs)
+    with gdal.Open(tmp_filename) as ds:
+        srs = ds.GetSpatialRef()
+        assert srs.GetAuthorityCode(None) == "9707"
+        assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_write_UTM31N_and_EGM96_height(tmp_vsimem):
+
+    tmp_filename = str(tmp_vsimem / "out.zarr")
+    with gdal.GetDriverByName("Zarr").Create(tmp_filename, 1, 1) as ds:
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput("EPSG:32631+5773")
+        ds.SetSpatialRef(srs)
+    with gdal.Open(tmp_filename) as ds:
+        srs = ds.GetSpatialRef()
+        assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
 
 
 ###############################################################################

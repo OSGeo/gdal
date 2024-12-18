@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DWG Translator
  * Purpose:  Definition of classes for OGR .dwg driver.

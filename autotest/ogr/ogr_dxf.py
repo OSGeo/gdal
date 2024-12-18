@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR DXF driver functionality.
@@ -18,7 +17,7 @@ import gdaltest
 import ogrtest
 import pytest
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 
 ###############################################################################
@@ -438,7 +437,7 @@ def test_ogr_dxf_12(tmp_path):
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(10 12, 60 65)"))
     dst_feat.SetFID(0)
     lyr.CreateFeature(dst_feat)
-    # 80 is the minimum handle value we set in case of inapproriate or unsed
+    # 80 is the minimum handle value we set in case of inapproriate or unset
     # initial FID value
     assert dst_feat.GetFID() >= 80
     dst_feat = None
@@ -4021,3 +4020,107 @@ def test_ogr_dxf_read_closed_polyline_with_bulge():
     f = lyr.GetNextFeature()
     g = f.GetGeometryRef()
     assert g.GetGeometryType() == ogr.wkbPolygon
+
+
+###############################################################################
+
+
+def test_ogr_dxf_write_INSUNITS(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "out.dxf")
+
+    with ogr.GetDriverByName("DXF").CreateDataSource(
+        filename, options=["INSUNITS=METERS"]
+    ) as ds:
+        pass
+    with ogr.Open(filename) as ds:
+        assert ds.GetMetadataItem("$INSUNITS", "DXF_HEADER_VARIABLES") == "6"
+
+    with ogr.GetDriverByName("DXF").CreateDataSource(
+        filename, options=["INSUNITS=21"]
+    ) as ds:
+        pass
+    with ogr.Open(filename) as ds:
+        assert ds.GetMetadataItem("$INSUNITS", "DXF_HEADER_VARIABLES") == "21"
+
+    with gdal.quiet_errors():
+        with gdal.GetDriverByName("DXF").Create(
+            filename, 0, 0, 0, gdal.GDT_Unknown, options=["INSUNITS=INVALID"]
+        ) as ds:
+            pass
+    with ogr.Open(filename) as ds:
+        assert ds.GetMetadataItem("$INSUNITS", "DXF_HEADER_VARIABLES") == "     1"
+
+    with ogr.GetDriverByName("DXF").CreateDataSource(filename) as ds:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(32631)
+        ds.CreateLayer("test", srs=srs)
+    with ogr.Open(filename) as ds:
+        assert ds.GetMetadataItem("$INSUNITS", "DXF_HEADER_VARIABLES") == "6"
+
+    with ogr.GetDriverByName("DXF").CreateDataSource(filename) as ds:
+        srs = osr.SpatialReference()
+        srs.ImportFromProj4("+proj=merc +units=ft")
+        ds.CreateLayer("test", srs=srs)
+    with ogr.Open(filename) as ds:
+        assert ds.GetMetadataItem("$INSUNITS", "DXF_HEADER_VARIABLES") == "2"
+
+    with ogr.GetDriverByName("DXF").CreateDataSource(filename) as ds:
+        srs = osr.SpatialReference()
+        srs.ImportFromProj4("+proj=merc +units=us-ft")
+        ds.CreateLayer("test", srs=srs)
+    with ogr.Open(filename) as ds:
+        assert ds.GetMetadataItem("$INSUNITS", "DXF_HEADER_VARIABLES") == "21"
+
+    # No CRS
+    with ogr.GetDriverByName("DXF").CreateDataSource(filename) as ds:
+        pass
+    with ogr.Open(filename) as ds:
+        assert ds.GetMetadataItem("$INSUNITS", "DXF_HEADER_VARIABLES") == "     1"
+
+    # Not a projected CRS
+    with ogr.GetDriverByName("DXF").CreateDataSource(filename) as ds:
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        ds.CreateLayer("test", srs=srs)
+    with ogr.Open(filename) as ds:
+        assert ds.GetMetadataItem("$INSUNITS", "DXF_HEADER_VARIABLES") == "     1"
+
+    # Unknown linear units
+    with gdal.quiet_errors():
+        with ogr.GetDriverByName("DXF").CreateDataSource(filename) as ds:
+            srs = osr.SpatialReference()
+            srs.ImportFromProj4("+proj=merc +to_meter=2")
+            ds.CreateLayer("test", srs=srs)
+        with ogr.Open(filename) as ds:
+            assert ds.GetMetadataItem("$INSUNITS", "DXF_HEADER_VARIABLES") == "     1"
+
+
+###############################################################################
+
+
+def test_ogr_dxf_write_MEASUREMENT(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "out.dxf")
+
+    with ogr.GetDriverByName("DXF").CreateDataSource(
+        filename, options=["MEASUREMENT=METRIC"]
+    ) as ds:
+        pass
+    with ogr.Open(filename) as ds:
+        assert ds.GetMetadataItem("$MEASUREMENT", "DXF_HEADER_VARIABLES") == "1"
+
+    with ogr.GetDriverByName("DXF").CreateDataSource(
+        filename, options=["MEASUREMENT=1"]
+    ) as ds:
+        pass
+    with ogr.Open(filename) as ds:
+        assert ds.GetMetadataItem("$MEASUREMENT", "DXF_HEADER_VARIABLES") == "1"
+
+    with gdal.quiet_errors():
+        with ogr.GetDriverByName("DXF").CreateDataSource(
+            filename, options=["MEASUREMENT=INVALID"]
+        ) as ds:
+            pass
+    with ogr.Open(filename) as ds:
+        assert ds.GetMetadataItem("$MEASUREMENT", "DXF_HEADER_VARIABLES") == "     0"

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Definition of classes for OGR GeoPackage driver.
@@ -87,6 +86,7 @@ struct OGRGPKGTableLayerFillArrowArray
     int nCountRows = 0;
     bool bErrorOccurred = false;
     bool bMemoryLimitReached = false;
+    bool bDateTimeAsString = false;
     std::string osErrorMsg{};
     OGRFeatureDefn *poFeatureDefn = nullptr;
     OGRGeoPackageLayer *poLayer = nullptr;

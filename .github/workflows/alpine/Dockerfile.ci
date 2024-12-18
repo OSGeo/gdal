@@ -1,4 +1,4 @@
-FROM alpine:edge
+FROM alpine:edge@sha256:732b6226a359f67fad4e38b34dd374bd62a6d282e20c493a38cc7d3a653f86ca
 
 RUN apk add \
     apache-arrow-dev \
@@ -72,7 +72,7 @@ RUN apk add \
     zstd-dev
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install --break-system-packages -U -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages -U -r /tmp/requirements.txt
 
 RUN apk add git autoconf automake libtool bison && \
     git clone --branch "${SWIG_GIT_TAG:-master}" --depth 1 https://github.com/swig/swig.git swig-git && \

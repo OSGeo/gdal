@@ -39,6 +39,12 @@ define_property(
 include(GdalCAndCXXStandards)
 include(CheckCompilerMachineOption)
 include(CheckCompilerSIMDFeature)
+
+option(USE_PRECOMPILED_HEADERS "Use precompiled headers (does not work with MSVC)" OFF)
+if (USE_PRECOMPILED_HEADERS AND MSVC)
+  message(FATAL_ERROR "USE_PRECOMPILED_HEADERS=ON does not currently work with Visual Studio C++ compiler")
+endif()
+
 include(Ccache)
 
 #
@@ -230,13 +236,16 @@ if (BUILD_PYTHON_BINDINGS)
     endif()
 endif()
 
-#
-include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
-
 option(BUILD_TESTING "Build the testing tree." ON)
+# Make sure enable_testing() is defined before including gdal.cmake for
+# Java and CSharp tests
 if (BUILD_TESTING)
   enable_testing()
 endif()
+
+#
+include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
+
 if (BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/autotest")
   # unit tests
   add_subdirectory(autotest/cpp)

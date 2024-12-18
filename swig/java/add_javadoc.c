@@ -1,7 +1,5 @@
 
 /******************************************************************************
-* $Id$
-*
 * Project:  GDAL/OGR Java bindings
 * Purpose:  Add javadoc located in a special file into generated SWIG Java files
 * Author:   Even Rouault <even dot rouault at spatialys.com>

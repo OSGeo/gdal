@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Test fix for https://github.com/OSGeo/gdal/issues/1488 (concurrency

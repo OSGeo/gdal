@@ -24,7 +24,7 @@ pytestmark = pytest.mark.require_driver("ESRIC")
 @pytest.fixture()
 def esric_ds():
 
-    ds = gdal.Open("data/esric/Layers/conf.xml")
+    ds = gdal.Open("/vsitar/data/esric/Layers.tar/Layers/conf.xml")
     assert ds is not None, "open failed"
 
     return ds

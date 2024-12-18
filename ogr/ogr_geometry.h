@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Classes for manipulating simple features that is not specific
@@ -36,7 +35,7 @@
 /*! @cond Doxygen_Suppress */
 #ifndef DEFINEH_OGRGeometryH
 #define DEFINEH_OGRGeometryH
-#ifdef DEBUG
+#if defined(DEBUG) || defined(GDAL_DEBUG)
 typedef struct OGRGeometryHS *OGRGeometryH;
 #else
 typedef void *OGRGeometryH;
@@ -65,22 +64,31 @@ struct CPL_DLL OGRWktOptions
     /// Precision of output for M coordinates.  Interpretation depends on \c format.
     int mPrecision;
     /// Whether GDAL-special rounding should be applied.
-    bool round = getDefaultRound();
+    bool round;
     /// Formatting type.
     OGRWktFormat format = OGRWktFormat::Default;
 
     /// Constructor.
     OGRWktOptions()
         : xyPrecision(getDefaultPrecision()), zPrecision(xyPrecision),
-          mPrecision(zPrecision)
+          mPrecision(zPrecision), round(getDefaultRound())
+    {
+    }
+
+    /// Constructor.
+    OGRWktOptions(int xyPrecisionIn, bool roundIn)
+        : xyPrecision(xyPrecisionIn), zPrecision(xyPrecision),
+          mPrecision(zPrecision), round(roundIn)
     {
     }
 
     /// Copy constructor
     OGRWktOptions(const OGRWktOptions &) = default;
 
-  private:
+    /// Return default precision
     static int getDefaultPrecision();
+
+    /// Return default rounding mode.
     static bool getDefaultRound();
 };
 

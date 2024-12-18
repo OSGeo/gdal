@@ -20,6 +20,7 @@
 #include "heifdrivercore.h"
 
 #include <vector>
+#include <geoheif.h>
 
 /************************************************************************/
 /*                        GDALHEIFDataset                               */
@@ -40,6 +41,11 @@ class GDALHEIFDataset final : public GDALPamDataset
 
 #ifdef LIBHEIF_SUPPORTS_TILES
     heif_image_tiling m_tiling;
+#endif
+
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+    void processProperties();
+    gdal::GeoHEIF geoHEIF{};
 #endif
 
 #ifdef HAS_CUSTOM_FILE_READER
@@ -71,6 +77,15 @@ class GDALHEIFDataset final : public GDALPamDataset
     static GDALDataset *OpenHEIF(GDALOpenInfo *poOpenInfo);
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 12, 0)
     static GDALDataset *OpenAVIF(GDALOpenInfo *poOpenInfo);
+#endif
+
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 19, 0)
+    void ReadUserDescription();
+    const OGRSpatialReference *GetSpatialRef() const override;
+    CPLErr GetGeoTransform(double *) override;
+    int GetGCPCount() override;
+    const GDAL_GCP *GetGCPs() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
 #endif
 
 #ifdef HAS_CUSTOM_FILE_WRITER

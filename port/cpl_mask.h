@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_mask.h
  * Project:  CPL - Common Portability Library

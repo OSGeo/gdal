@@ -648,11 +648,57 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 
         snprintf(szValue, sizeof(szValue), "%d",
                  static_cast<int>(GetTypeOfCol(iCol)));
-        CPLCreateXMLElementAndValue(psCol, "Type", szValue);
+        CPLXMLNode *psType =
+            CPLCreateXMLElementAndValue(psCol, "Type", szValue);
+        const char *pszTypeStr = "String";
+        switch (GetTypeOfCol(iCol))
+        {
+            case GFT_Integer:
+                pszTypeStr = "Integer";
+                break;
+            case GFT_Real:
+                pszTypeStr = "Real";
+                break;
+            case GFT_String:
+                break;
+        }
+        CPLAddXMLAttributeAndValue(psType, "typeAsString", pszTypeStr);
 
         snprintf(szValue, sizeof(szValue), "%d",
                  static_cast<int>(GetUsageOfCol(iCol)));
-        CPLCreateXMLElementAndValue(psCol, "Usage", szValue);
+        CPLXMLNode *psUsage =
+            CPLCreateXMLElementAndValue(psCol, "Usage", szValue);
+        const char *pszUsageStr = "";
+
+#define USAGE_STR(x)                                                           \
+    case GFU_##x:                                                              \
+        pszUsageStr = #x;                                                      \
+        break
+        switch (GetUsageOfCol(iCol))
+        {
+            USAGE_STR(Generic);
+            USAGE_STR(PixelCount);
+            USAGE_STR(Name);
+            USAGE_STR(Min);
+            USAGE_STR(Max);
+            USAGE_STR(MinMax);
+            USAGE_STR(Red);
+            USAGE_STR(Green);
+            USAGE_STR(Blue);
+            USAGE_STR(Alpha);
+            USAGE_STR(RedMin);
+            USAGE_STR(GreenMin);
+            USAGE_STR(BlueMin);
+            USAGE_STR(AlphaMin);
+            USAGE_STR(RedMax);
+            USAGE_STR(GreenMax);
+            USAGE_STR(BlueMax);
+            USAGE_STR(AlphaMax);
+            case GFU_MaxCount:
+                break;
+        }
+#undef USAGE_STR
+        CPLAddXMLAttributeAndValue(psUsage, "usageAsString", pszUsageStr);
     }
 
     /* -------------------------------------------------------------------- */

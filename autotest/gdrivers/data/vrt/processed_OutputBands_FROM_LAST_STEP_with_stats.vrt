@@ -1,0 +1,31 @@
+<VRTDataset subClass="VRTProcessedDataset">
+  <Input>
+    <SourceFilename relativeToVRT="1">../byte.tif</SourceFilename>
+  </Input>
+  <OutputBands count="FROM_LAST_STEP" dataType="FROM_LAST_STEP"/>
+  <ProcessingSteps>
+    <Step name="Affine combination of band values">
+      <Algorithm>BandAffineCombination</Algorithm>
+      <Argument name="coefficients_1">10,1</Argument>
+      <Argument name="coefficients_2">20,1</Argument>
+    </Step>
+  </ProcessingSteps>
+  <VRTRasterBand dataType="Float64" band="1" subClass="VRTProcessedRasterBand">
+    <Metadata>
+      <MDI key="STATISTICS_MINIMUM">84</MDI>
+      <MDI key="STATISTICS_MAXIMUM">265</MDI>
+      <MDI key="STATISTICS_MEAN">136.765</MDI>
+      <MDI key="STATISTICS_STDDEV">22.928470838676</MDI>
+      <MDI key="STATISTICS_VALID_PERCENT">100</MDI>
+    </Metadata>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Float64" band="2" subClass="VRTProcessedRasterBand">
+    <Metadata>
+      <MDI key="STATISTICS_MINIMUM">94</MDI>
+      <MDI key="STATISTICS_MAXIMUM">275</MDI>
+      <MDI key="STATISTICS_MEAN">146.765</MDI>
+      <MDI key="STATISTICS_STDDEV">22.928470838676</MDI>
+      <MDI key="STATISTICS_VALID_PERCENT">100</MDI>
+    </Metadata>
+  </VRTRasterBand>
+</VRTDataset>

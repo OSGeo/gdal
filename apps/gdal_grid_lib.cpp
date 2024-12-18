@@ -193,6 +193,7 @@ static void PrintAlgorithmAndOptions(GDALGridAlgorithm eAlgorithm,
         case GGA_MetricAverageDistancePts:
         {
             const char *pszAlgName = "";
+            CPL_IGNORE_RET_VAL(pszAlgName);  // Make CSA happy
             switch (eAlgorithm)
             {
                 case GGA_MetricMinimum:

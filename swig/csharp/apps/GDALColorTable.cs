@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     GDALColorTable.cs
  * Project:  GDAL CSharp Interface

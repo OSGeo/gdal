@@ -12,9 +12,10 @@ size_t CsfAttributeSize(
 	 CSF_ATTR_ID id)    /* identification of attribute */
 {
 	ATTR_CNTRL_BLOCK b;
-        memset(&b, 0, sizeof(b));
+	int i;
+	memset(&b, 0, sizeof(b));
 
-	if (CsfGetAttrBlock(m, id, &b) != 0)
-		return b.attrs[CsfGetAttrIndex(id, &b)].attrSize;
-        return 0;
+	if (CsfGetAttrBlockAndIdx(m, id, &b, &i) != 0)
+		return b.attrs[i].attrSize;
+	return 0;
 }

@@ -133,7 +133,7 @@ class Option:
                 logger = logging.getLogger(__name__)
                 logger.warning(
                     f"Option {self.option_name} :since: should be a sequence of integers and periods (got {self.since_ver})",
-                    location=self.env.docname,
+                    location=app.env.docname,
                 )
 
         if caveats:

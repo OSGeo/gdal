@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test PostGIS driver functionality.
@@ -6204,6 +6203,7 @@ def test_ogr_pg_ogr2ogr_with_multiple_dotted_table_name(pg_ds):
 
 ###############################################################################
 # Test scenario of https://lists.osgeo.org/pipermail/gdal-dev/2024-October/059608.html
+# and bugfix of https://github.com/OSGeo/gdal/issues/11386
 
 
 @only_without_postgis
@@ -6220,6 +6220,7 @@ def test_ogr_pg_empty_search_path(pg_ds):
     with pg_ds.ExecuteSQL("SELECT CURRENT_USER") as lyr:
         f = lyr.GetNextFeature()
         current_user = f.GetField(0)
+
     pg_ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = ''")
     try:
         ds = reconnect(pg_ds, update=1)
@@ -6227,7 +6228,25 @@ def test_ogr_pg_empty_search_path(pg_ds):
         with ds.ExecuteSQL("SHOW search_path") as sql_lyr:
             f = sql_lyr.GetNextFeature()
             new_search_path = f.GetField(0)
-            assert new_search_path == "test_ogr_pg_empty_search_path_no_postgis, public"
+            assert (
+                new_search_path
+                == 'test_ogr_pg_empty_search_path_no_postgis, "", public'
+            )
+
+    finally:
+        ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = {old_search_path}")
+
+    pg_ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = '', '$user'")
+    try:
+        ds = reconnect(pg_ds, update=1)
+
+        with ds.ExecuteSQL("SHOW search_path") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            new_search_path = f.GetField(0)
+            assert (
+                new_search_path
+                == 'test_ogr_pg_empty_search_path_no_postgis, "", "$user", public'
+            )
 
     finally:
         ds.ExecuteSQL(f"ALTER ROLE {current_user} SET search_path = {old_search_path}")

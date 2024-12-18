@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     typemaps_java.i
  * Project:  GDAL SWIG Interface
@@ -399,6 +398,45 @@ SafeNewStringUTF8(JNIEnv *jenv, const char* pszInput)
 %typemap(jstype) (const char *pszHex, int *pnBytes) "String"
 %typemap(javain) (const char *pszHex, int *pnBytes) "$javainput"
 %typemap(javaout) (const char *pszHex, int *pnBytes) {
+    return $jnicall;
+  }
+
+
+/***************************************************************
+ * Typemaps for  (const char *utf8_path, vsi_l_offset *length)
+ ***************************************************************/
+
+%typemap(in) (const char *utf8_path, vsi_l_offset *length) (vsi_l_offset length)
+{
+    /* %typemap(in) (const char *utf8_path, vsi_l_offset *length) */
+    if ($input)
+    {
+        $1 = (char *)jenv->GetStringUTFChars($input, 0);
+    }
+    else
+    {
+        SWIG_JavaException(jenv, SWIG_ValueError, "Received a NULL pointer."); return $null;
+    }
+    $2 = &length;
+}
+
+%typemap(argout) (const char *utf8_path, vsi_l_offset *length)
+{
+    /* %typemap(argout) (const char *utf8_path, vsi_l_offset *length) */
+    if ($input)
+    {
+        jenv->ReleaseStringUTFChars($input, (char*)$1);
+    }
+    $result = jenv->NewByteArray((jsize)length$argnum);
+    jenv->SetByteArrayRegion($result, (jsize)0, (jsize)length$argnum, (jbyte*)result);
+    // Do not free result, as it is owned by the /vsimem/ file
+}
+
+%typemap(jni) (const char *utf8_path, vsi_l_offset *length) "jstring"
+%typemap(jtype) (const char *utf8_path, vsi_l_offset *length) "String"
+%typemap(jstype) (const char *utf8_path, vsi_l_offset *length) "String"
+%typemap(javain) (const char *utf8_path, vsi_l_offset *length) "$javainput"
+%typemap(javaout) (const char *utf8_path, vsi_l_offset *length) {
     return $jnicall;
   }
 

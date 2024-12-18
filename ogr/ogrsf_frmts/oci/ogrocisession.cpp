@@ -496,11 +496,16 @@ CPLErr OGROCISession::GetParamInfo(OCIParam *hParamDesc,
             poOGRDefn->SetType(OFTDate);
             break;
         case SQLT_TIMESTAMP:
+        case SQLT_TIME:
+            poOGRDefn->SetType(OFTDateTime);
+            break;
         case SQLT_TIMESTAMP_TZ:
         case SQLT_TIMESTAMP_LTZ:
-        case SQLT_TIME:
         case SQLT_TIME_TZ:
             poOGRDefn->SetType(OFTDateTime);
+            // Indicates that there's timezones. They might not actually be
+            // mixed !
+            poOGRDefn->SetTZFlag(OGR_TZFLAG_MIXED_TZ);
             break;
 
         case SQLT_RID:

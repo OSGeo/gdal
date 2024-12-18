@@ -77,9 +77,11 @@ if(HDF4_INCLUDE_DIR)
         endif()
         find_library(HDF4_${tgt}_LIBRARY_DEBUG
                      NAMES ${_names_debug}
+                     NAMES_PER_DIR
                      PATHS ${HDF4_PATHS}/lib)
         find_library(HDF4_${tgt}_LIBRARY_RELEASE
                      NAMES ${_names_release}
+                     NAMES_PER_DIR
                      PATHS ${HDF4_PATHS}/lib)
         select_library_configurations(HDF4_${tgt})
         mark_as_advanced(HDF4_${tgt}_LIBRARY HDF4_${tgt}_LIBRARY_RELEASE HDF4_${tgt}_LIBRARY_DEBUG )

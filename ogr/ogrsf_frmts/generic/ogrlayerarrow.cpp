@@ -24,12 +24,15 @@
 #include "cpl_float.h"
 #include "cpl_json.h"
 #include "cpl_time.h"
+
+#include <algorithm>
 #include <cassert>
 #include <cinttypes>
 #include <limits>
 #include <utility>
 #include <set>
 
+constexpr const char *MD_GDAL_OGR_TYPE = "GDAL:OGR:type";
 constexpr const char *MD_GDAL_OGR_ALTERNATIVE_NAME =
     "GDAL:OGR:alternative_name";
 constexpr const char *MD_GDAL_OGR_COMMENT = "GDAL:OGR:comment";
@@ -376,6 +379,8 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
 {
     const bool bIncludeFID = CPLTestBool(
         m_aosArrowArrayStreamOptions.FetchNameValueDef("INCLUDE_FID", "YES"));
+    const bool bDateTimeAsString = m_aosArrowArrayStreamOptions.FetchBool(
+        GAS_OPT_DATETIME_AS_STRING, false);
     memset(out_schema, 0, sizeof(*out_schema));
     out_schema->format = "+s";
     out_schema->name = CPLStrdup("");
@@ -523,7 +528,11 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
                 const char *pszPrefix = "tsm:";
                 const char *pszTZOverride =
                     m_aosArrowArrayStreamOptions.FetchNameValue("TIMEZONE");
-                if (pszTZOverride && EQUAL(pszTZOverride, "unknown"))
+                if (bDateTimeAsString)
+                {
+                    psChild->format = "u";
+                }
+                else if (pszTZOverride && EQUAL(pszTZOverride, "unknown"))
                 {
                     psChild->format = CPLStrdup(pszPrefix);
                 }
@@ -571,6 +580,13 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
         }
 
         std::vector<std::pair<std::string, std::string>> oMetadata;
+
+        if (eType == OFTDateTime && bDateTimeAsString)
+        {
+            oMetadata.emplace_back(
+                std::pair(MD_GDAL_OGR_TYPE, OGR_GetFieldTypeName(eType)));
+        }
+
         const char *pszAlternativeName = poFieldDefn->GetAlternativeNameRef();
         if (pszAlternativeName && pszAlternativeName[0])
             oMetadata.emplace_back(
@@ -1813,6 +1829,99 @@ FillDateTimeArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
+/*                   FillDateTimeArrayAsString()                        */
+/************************************************************************/
+
+static size_t
+FillDateTimeArrayAsString(struct ArrowArray *psChild,
+                          std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                          const size_t nFeatureCountLimit,
+                          const bool bIsNullable, const int i,
+                          const size_t nMemLimit)
+{
+    psChild->n_buffers = 3;
+    psChild->buffers = static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
+    uint8_t *pabyValidity = nullptr;
+    using T = uint32_t;
+    T *panOffsets = static_cast<T *>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + nFeatureCountLimit)));
+    if (panOffsets == nullptr)
+        return 0;
+    psChild->buffers[1] = panOffsets;
+
+    size_t nOffset = 0;
+    size_t nFeatCount = 0;
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat, ++nFeatCount)
+    {
+        panOffsets[iFeat] = static_cast<T>(nOffset);
+        const auto psRawField = apoFeatures[iFeat]->GetRawFieldRef(i);
+        if (IsValidField(psRawField))
+        {
+            size_t nLen = strlen("YYYY-MM-DDTHH:MM:SS");
+            if (fmodf(psRawField->Date.Second, 1.0f) != 0)
+                nLen += strlen(".sss");
+            if (psRawField->Date.TZFlag == OGR_TZFLAG_UTC)
+                nLen += 1;  // 'Z'
+            else if (psRawField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
+                nLen += strlen("+hh:mm");
+            if (nLen > nMemLimit - nOffset)
+            {
+                if (nFeatCount == 0)
+                    return 0;
+                break;
+            }
+            nOffset += static_cast<T>(nLen);
+        }
+        else if (bIsNullable)
+        {
+            ++psChild->null_count;
+            if (pabyValidity == nullptr)
+            {
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
+                    return 0;
+            }
+            UnsetBit(pabyValidity, iFeat);
+        }
+    }
+    panOffsets[nFeatCount] = static_cast<T>(nOffset);
+
+    char *pachValues =
+        static_cast<char *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset + 1));
+    if (pachValues == nullptr)
+        return 0;
+    psChild->buffers[2] = pachValues;
+
+    nOffset = 0;
+    char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+    OGRISO8601Format sFormat;
+    sFormat.ePrecision = OGRISO8601Precision::AUTO;
+    for (size_t iFeat = 0; iFeat < nFeatCount; ++iFeat)
+    {
+        const int nLen =
+            static_cast<int>(panOffsets[iFeat + 1] - panOffsets[iFeat]);
+        if (nLen)
+        {
+            const auto psRawField = apoFeatures[iFeat]->GetRawFieldRef(i);
+            int nBufSize = OGRGetISO8601DateTime(psRawField, sFormat, szBuffer);
+            if (nBufSize)
+            {
+                memcpy(pachValues + nOffset, szBuffer,
+                       std::min(nLen, nBufSize));
+            }
+            if (nBufSize < nLen)
+            {
+                memset(pachValues + nOffset + nBufSize, 0, nLen - nBufSize);
+            }
+            nOffset += nLen;
+        }
+    }
+
+    return nFeatCount;
+}
+
+/************************************************************************/
 /*                          GetNextArrowArray()                         */
 /************************************************************************/
 
@@ -1832,6 +1941,8 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
     const bool bIncludeFID = CPLTestBool(
         m_aosArrowArrayStreamOptions.FetchNameValueDef("INCLUDE_FID", "YES"));
+    const bool bDateTimeAsString = m_aosArrowArrayStreamOptions.FetchBool(
+        GAS_OPT_DATETIME_AS_STRING, false);
     int nMaxBatchSize = atoi(m_aosArrowArrayStreamOptions.FetchNameValueDef(
         "MAX_FEATURES_IN_BATCH", "65536"));
     if (nMaxBatchSize <= 0)
@@ -2179,10 +2290,25 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
             case OFTDateTime:
             {
-                if (!FillDateTimeArray(psChild, oFeatureQueue, nFeatureCount,
-                                       bIsNullable, i,
-                                       poFieldDefn->GetTZFlag()))
-                    goto error;
+                if (bDateTimeAsString)
+                {
+                    const size_t nThisFeatureCount = FillDateTimeArrayAsString(
+                        psChild, oFeatureQueue, nFeatureCount, bIsNullable, i,
+                        nMemLimit);
+                    if (nThisFeatureCount == 0)
+                    {
+                        goto error_max_mem;
+                    }
+                    if (nThisFeatureCount < nFeatureCount)
+                        nFeatureCount = nThisFeatureCount;
+                }
+                else
+                {
+                    if (!FillDateTimeArray(psChild, oFeatureQueue,
+                                           nFeatureCount, bIsNullable, i,
+                                           poFieldDefn->GetTZFlag()))
+                        goto error;
+                }
                 break;
             }
         }
@@ -2354,6 +2480,9 @@ const char *OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream *)
  * Starting with GDAL 3.8, the ArrowSchema::metadata field filled by the
  * get_schema() callback may be set with the potential following items:
  * <ul>
+ * <li>"GDAL:OGR:type": value of OGRFieldDefn::GetType(): (added in 3.11)
+ *      Only used for DateTime fields when the DATETIME_AS_STRING=YES option is
+ *      specified.</li>
  * <li>"GDAL:OGR:alternative_name": value of
  *     OGRFieldDefn::GetAlternativeNameRef()</li>
  * <li>"GDAL:OGR:comment": value of OGRFieldDefn::GetComment()</li>
@@ -2419,6 +2548,15 @@ From OGR using the Arrow C Stream data interface</a> tutorial.
  *     to UTC of a OGRField::Date is only done if both the timezone indicated by
  *     OGRField::Date::TZFlag and the one at the OGRFieldDefn level (or set by
  *     this TIMEZONE option) are not unknown.</li>
+ * <li>DATETIME_AS_STRING=YES/NO. Defaults to NO. Added in GDAL 3.11.
+ *     Whether DateTime fields should be returned as a (normally ISO-8601
+ *     formatted) string by drivers. The aim is to be able to handle mixed
+ *     timezones (or timezone naive values) in the same column.
+ *     All drivers must honour that option, and potentially fallback to the
+ *     OGRLayer generic implementation if they cannot (which is the case for the
+ *     Arrow, Parquet and ADBC drivers).
+ *     When DATETIME_AS_STRING=YES, the TIMEZONE option is ignored.
+ * </li>
  * <li>GEOMETRY_METADATA_ENCODING=OGC/GEOARROW (GDAL >= 3.8).
  *     The default is OGC, which will lead to setting
  *     the Arrow geometry column metadata to ARROW:extension:name=ogc.wkb.
@@ -2547,6 +2685,9 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
  * Starting with GDAL 3.8, the ArrowSchema::metadata field filled by the
  * get_schema() callback may be set with the potential following items:
  * <ul>
+ * <li>"GDAL:OGR:type": value of OGRFieldDefn::GetType(): (added in 3.11)
+ *      Only used for DateTime fields when the DATETIME_AS_STRING=YES option is
+ *      specified.</li>
  * <li>"GDAL:OGR:alternative_name": value of
  *     OGRFieldDefn::GetAlternativeNameRef()</li>
  * <li>"GDAL:OGR:comment": value of OGRFieldDefn::GetComment()</li>
@@ -2613,6 +2754,15 @@ YES.</li>
  *     to UTC of a OGRField::Date is only done if both the timezone indicated by
  *     OGRField::Date::TZFlag and the one at the OGRFieldDefn level (or set by
  *     this TIMEZONE option) are not unknown.</li>
+ * <li>DATETIME_AS_STRING=YES/NO. Defaults to NO. Added in GDAL 3.11.
+ *     Whether DateTime fields should be returned as a (normally ISO-8601
+ *     formatted) string by drivers. The aim is to be able to handle mixed
+ *     timezones (or timezone naive values) in the same column.
+ *     All drivers must honour that option, and potentially fallback to the
+ *     OGRLayer generic implementation if they cannot (which is the case for the
+ *     Arrow, Parquet and ADBC drivers).
+ *     When DATETIME_AS_STRING=YES, the TIMEZONE option is ignored.
+ * </li>
  * <li>GEOMETRY_METADATA_ENCODING=OGC/GEOARROW (GDAL >= 3.8).
  *     The default is OGC, which will lead to setting
  *     the Arrow geometry column metadata to ARROW:extension:name=ogc.wkb.
@@ -6010,7 +6160,23 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
             const auto oMetadata = OGRParseArrowMetadata(schema->metadata);
             for (const auto &oIter : oMetadata)
             {
-                if (oIter.first == MD_GDAL_OGR_ALTERNATIVE_NAME)
+                if (oIter.first == MD_GDAL_OGR_TYPE)
+                {
+                    const auto &osType = oIter.second;
+                    for (auto eType = OFTInteger; eType <= OFTMaxType;)
+                    {
+                        if (OGRFieldDefn::GetFieldTypeName(eType) == osType)
+                        {
+                            oFieldDefn.SetType(eType);
+                            break;
+                        }
+                        if (eType == OFTMaxType)
+                            break;
+                        else
+                            eType = static_cast<OGRFieldType>(eType + 1);
+                    }
+                }
+                else if (oIter.first == MD_GDAL_OGR_ALTERNATIVE_NAME)
                     oFieldDefn.SetAlternativeName(oIter.second.c_str());
                 else if (oIter.first == MD_GDAL_OGR_COMMENT)
                     oFieldDefn.SetComment(oIter.second);
@@ -6461,6 +6627,13 @@ static bool BuildOGRFieldInfo(
                              sType.eType == OFTInteger)
                     {
                         // Non-lossy
+                        bFallbackTypesUsed = true;
+                        bTypeOK = true;
+                        break;
+                    }
+                    else if (eOGRType == OFTDateTime &&
+                             sType.eType == OFTString)
+                    {
                         bFallbackTypesUsed = true;
                         bTypeOK = true;
                         break;

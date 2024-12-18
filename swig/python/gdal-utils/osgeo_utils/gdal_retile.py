@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 ###############################################################################
-#  $Id$
 #
 # Purpose:  Module for retiling (merging) tiles and building tiled pyramids
 # Author:   Christian Meuller, christian.mueller@nvoe.at

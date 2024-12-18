@@ -70,10 +70,10 @@ is the GDAL VRT format.  In the following example a VRT was created in a
 text editor with a small 4 color palette with the RGBA colors 238/238/238/255,
 237/237/237/255, 236/236/236/255 and 229/229/229/255.
 
-::
+.. code-block:: console
 
-    rgb2pct -pct palette.vrt rgb.tif pseudo-colored.tif
-    more < palette.vrt
+    $ rgb2pct -pct palette.vrt rgb.tif pseudo-colored.tif
+    $ more < palette.vrt
     <VRTDataset rasterXSize="226" rasterYSize="271">
         <VRTRasterBand dataType="Byte" band="1">
             <ColorInterp>Palette</ColorInterp>

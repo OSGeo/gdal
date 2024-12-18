@@ -45,13 +45,16 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
-#if defined(__x86_64) || defined(_M_X64)
+#ifdef USE_NEON_OPTIMIZATIONS
 #define USE_SSE2
+#include "include_sse2neon.h"
+#elif defined(__x86_64) || defined(_M_X64)
+#define USE_SSE2
+#include <emmintrin.h>
 #endif
 
 #ifdef USE_SSE2
 
-#include <emmintrin.h>
 #define CAST_PCT(x) reinterpret_cast<GByte *>(x)
 #define ALIGN_INT_ARRAY_ON_16_BYTE(x)                                          \
     (((reinterpret_cast<GUIntptr_t>(x) % 16) != 0)                             \

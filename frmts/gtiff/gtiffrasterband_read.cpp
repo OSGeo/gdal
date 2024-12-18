@@ -34,8 +34,39 @@
 GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
 
 {
+    if (m_poRAT)
+        return m_poRAT.get();
+
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
-    return GDALPamRasterBand::GetDefaultRAT();
+    auto poRAT = GDALPamRasterBand::GetDefaultRAT();
+    if (poRAT)
+        return poRAT;
+
+    if (!GDALCanFileAcceptSidecarFile(m_poGDS->m_pszFilename))
+        return nullptr;
+    const std::string osVATDBF =
+        std::string(m_poGDS->m_pszFilename) + ".vat.dbf";
+    CSLConstList papszSiblingFiles = m_poGDS->GetSiblingFiles();
+    if (papszSiblingFiles &&
+        // cppcheck-suppress knownConditionTrueFalse
+        GDALCanReliablyUseSiblingFileList(osVATDBF.c_str()))
+    {
+        int iSibling =
+            CSLFindString(papszSiblingFiles, CPLGetFilename(osVATDBF.c_str()));
+        if (iSibling >= 0)
+        {
+            CPLString osFilename = m_poGDS->m_pszFilename;
+            osFilename.resize(strlen(m_poGDS->m_pszFilename) -
+                              strlen(CPLGetFilename(m_poGDS->m_pszFilename)));
+            osFilename += papszSiblingFiles[iSibling];
+            m_poRAT = GDALLoadVATDBF(osFilename.c_str());
+        }
+        return m_poRAT.get();
+    }
+    VSIStatBufL sStatBuf;
+    if (VSIStatL(osVATDBF.c_str(), &sStatBuf) == 0)
+        m_poRAT = GDALLoadVATDBF(osVATDBF.c_str());
+    return m_poRAT.get();
 }
 
 /************************************************************************/

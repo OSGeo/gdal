@@ -1059,6 +1059,12 @@ TEST_F(test_cpl, CPLGetPath)
     EXPECT_STREQ(CPLGetPath("/foo/bar"), "/foo");
     EXPECT_STREQ(CPLGetPath("/vsicurl/http://example.com/foo/bar?suffix"),
                  "/vsicurl/http://example.com/foo?suffix");
+    EXPECT_STREQ(
+        CPLGetPath(
+            "/vsicurl?foo=bar&url=https%3A%2F%2Fraw.githubusercontent.com%"
+            "2FOSGeo%2Fgdal%2Fmaster%2Fautotest%2Fogr%2Fdata%2Fpoly.shp"),
+        "/vsicurl?foo=bar&url=https%3A%2F%2Fraw.githubusercontent.com%2FOSGeo%"
+        "2Fgdal%2Fmaster%2Fautotest%2Fogr%2Fdata");
 }
 
 TEST_F(test_cpl, CPLGetDirname)
@@ -1067,6 +1073,12 @@ TEST_F(test_cpl, CPLGetDirname)
     EXPECT_STREQ(CPLGetDirname("/foo/bar"), "/foo");
     EXPECT_STREQ(CPLGetDirname("/vsicurl/http://example.com/foo/bar?suffix"),
                  "/vsicurl/http://example.com/foo?suffix");
+    EXPECT_STREQ(
+        CPLGetDirname(
+            "/vsicurl?foo=bar&url=https%3A%2F%2Fraw.githubusercontent.com%"
+            "2FOSGeo%2Fgdal%2Fmaster%2Fautotest%2Fogr%2Fdata%2Fpoly.shp"),
+        "/vsicurl?foo=bar&url=https%3A%2F%2Fraw.githubusercontent.com%2FOSGeo%"
+        "2Fgdal%2Fmaster%2Fautotest%2Fogr%2Fdata");
 }
 
 TEST_F(test_cpl, VSIGetDiskFreeSpace)
@@ -1293,16 +1305,26 @@ TEST_F(test_cpl, CPLExpandTilde)
     CPLSetConfigOption("HOME", nullptr);
 }
 
-TEST_F(test_cpl, CPLString_constructors)
+TEST_F(test_cpl, CPLDeclareKnownConfigOption)
 {
-    // CPLString(std::string) constructor
-    ASSERT_STREQ(CPLString(std::string("abc")).c_str(), "abc");
+    CPLConfigOptionSetter oDebugSetter("CPL_DEBUG", "ON", false);
+    {
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        CPLConfigOptionSetter oDeclaredConfigOptionSetter("UNDECLARED_OPTION",
+                                                          "FOO", false);
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "Unknown configuration option 'UNDECLARED_OPTION'.");
+    }
+    {
+        CPLDeclareKnownConfigOption("DECLARED_OPTION", nullptr);
 
-    // CPLString(const char*) constructor
-    ASSERT_STREQ(CPLString("abc").c_str(), "abc");
-
-    // CPLString(const char*, n) constructor
-    ASSERT_STREQ(CPLString("abc", 1).c_str(), "a");
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        CPLConfigOptionSetter oDeclaredConfigOptionSetter("DECLARED_OPTION",
+                                                          "FOO", false);
+        EXPECT_STREQ(CPLGetLastErrorMsg(), "");
+    }
 }
 
 TEST_F(test_cpl, CPLErrorSetState)

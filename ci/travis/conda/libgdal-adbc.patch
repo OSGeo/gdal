@@ -27,13 +27,13 @@ index ddc8ae6..0e6c07e 100644
        -DBUILD_JAVA_BINDINGS:BOOL=OFF \
        -DBUILD_CSHARP_BINDINGS:BOOL=OFF \
 diff --git a/recipe/meta.yaml b/recipe/meta.yaml
-index e2b6865..28dab04 100644
+index f1d0c48..68e2ca4 100644
 --- a/recipe/meta.yaml
 +++ b/recipe/meta.yaml
-@@ -625,6 +625,48 @@ outputs:
+@@ -678,6 +678,53 @@ outputs:
        license: MIT
        license_file: LICENSE.TXT
-
+ 
 +  - name: libgdal-adbc
 +    script: build_plugin.sh  # [unix]
 +    script: build_plugin.bat  # [win]
@@ -43,6 +43,8 @@ index e2b6865..28dab04 100644
 +      ignore_run_exports_from:
 +        - expat
 +        - icu
++        - liblzma
++        - lz4-c
 +      script_env:
 +        - GDAL_PLUGIN_NAME=ADBC
 +        - GDAL_PLUGIN_TYPE=ogr
@@ -61,8 +63,11 @@ index e2b6865..28dab04 100644
 +        # GH992 attempt to workaround dep solver picking wrong libxml2
 +        - icu  # [not win]
 +        - libkml-devel
++        - liblzma-devel
 +        - expat
 +        - libadbc-driver-manager
++        # dep solver issue
++        - lz4-c
 +      run:
 +        - libgdal-core >={{ ".".join(version.split(".")[:2]) }}
 +    test:

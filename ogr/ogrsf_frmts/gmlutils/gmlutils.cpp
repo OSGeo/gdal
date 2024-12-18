@@ -209,8 +209,20 @@ OGRGeometry *GML_BuildOGRGeometryFromList(
 {
     OGRGeometry *poGeom = nullptr;
     OGRGeometryCollection *poCollection = nullptr;
+#ifndef WITHOUT_CPLDEBUG
+    static const bool bDebugGML =
+        EQUAL(CPLGetConfigOption("CPL_DEBUG", ""), "GML");
+#endif
     for (int i = 0; papsGeometry[i] != nullptr; i++)
     {
+#ifndef WITHOUT_CPLDEBUG
+        if (bDebugGML)
+        {
+            char *pszXML = CPLSerializeXMLTree(papsGeometry[i]);
+            CPLDebug("GML", "Parsing: %s", pszXML);
+            CPLFree(pszXML);
+        }
+#endif
         OGRGeometry *poSubGeom = GML2OGRGeometry_XMLNode(
             papsGeometry[i], nPseudoBoolGetSecondaryGeometryOption, 0, 0, false,
             true, bFaceHoleNegative);
@@ -304,6 +316,10 @@ OGRGeometry *GML_BuildOGRGeometryFromList(
         {
             poGeom->swapXY();
         }
+    }
+    else if (eSwapCoordinates == GML_SWAP_YES)
+    {
+        poGeom->swapXY();
     }
 
     return poGeom;

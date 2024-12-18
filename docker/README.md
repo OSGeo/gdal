@@ -10,6 +10,7 @@ best of our knowledge and not guaranteed. Users should check by themselves.
 # Alpine based
 
 Alpine version:
+* 3.21 for GDAL 3.11
 * 3.20 for GDAL 3.10
 * 3.19 for GDAL 3.9
 * 3.18 for GDAL 3.8
@@ -151,3 +152,13 @@ Override the image and repository of the final image by setting the environment 
 **Example**
 
 `TARGET_IMAGE="YOU_DOCKER_USERNAME/gdal" alpine-small/build.sh --release --gdal v3.2.0 --proj master`
+
+## Drivers based on proprietary software development kits
+
+For the `ubuntu-full` amd64 image,
+
+* The OCI and GeoRaster based drivers can be enabled by passing ``--with-oracle`` to util.sh
+* The ECW and JP2ECW drivers can be enabled by passing ``--with-ecw`` to util.sh
+* The MrSID driver can be enabled by passing ``--with-mrsid`` to util.sh
+
+Note: those are not enabled in the official images provided by the project.

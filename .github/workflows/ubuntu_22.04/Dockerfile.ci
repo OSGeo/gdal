@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04@sha256:3d1556a8a18cf5307b121e0a98e93f1ddf1f3f8e092f1fddfd941254785b95d7
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -137,5 +137,5 @@ RUN curl -L -O https://download.oracle.com/otn_software/linux/instantclient/1990
     && apt-get install -y libaio1
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install -U -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U -r /tmp/requirements.txt
 

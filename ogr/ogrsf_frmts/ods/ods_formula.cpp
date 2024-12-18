@@ -27,8 +27,6 @@ int ods_formulalex(ods_formula_node **ppNode,
 #include "ods_formula_parser.cpp"
 } /* end of anonymous namespace */
 
-#define YYSTYPE ods_formula_node *
-
 static const SingleOpStruct apsSingleOp[] = {
     {"ABS", ODS_ABS, fabs},   {"SQRT", ODS_SQRT, sqrt},
     {"COS", ODS_COS, cos},    {"SIN", ODS_SIN, sin},

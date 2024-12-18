@@ -453,6 +453,12 @@ struct GDALVectorTranslateOptions
 
     /*! Whether to unset geometry coordinate precision */
     bool bUnsetCoordPrecision = false;
+
+    /*! set to true to prevent overwriting existing dataset */
+    bool bNoOverwrite = false;
+
+    /*! set to true to prevent if called from "gdal vector convert" */
+    bool bInvokedFromGdalVectorConvert = false;
 };
 
 struct TargetLayerInfo
@@ -2218,6 +2224,88 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
 }
 
 /************************************************************************/
+/*                           CopyRelationships()                        */
+/************************************************************************/
+
+static void CopyRelationships(GDALDataset *poODS, GDALDataset *poDS)
+{
+    if (!poODS->GetDriver()->GetMetadataItem(GDAL_DCAP_CREATE_RELATIONSHIP))
+        return;
+
+    const auto aosRelationshipNames = poDS->GetRelationshipNames();
+    if (aosRelationshipNames.empty())
+        return;
+
+    // Collect target layer names
+    std::set<std::string> oSetDestLayerNames;
+    for (const auto &poLayer : poDS->GetLayers())
+    {
+        oSetDestLayerNames.insert(poLayer->GetName());
+    }
+
+    // Iterate over all source relationships
+    for (const auto &osRelationshipName : aosRelationshipNames)
+    {
+        const auto poSrcRelationship =
+            poDS->GetRelationship(osRelationshipName);
+        if (!poSrcRelationship)
+            continue;
+
+        // Skip existing relationship of the same name
+        if (poODS->GetRelationship(osRelationshipName))
+            continue;
+
+        bool canAdd = true;
+        const auto &osLeftTableName = poSrcRelationship->GetLeftTableName();
+        if (!osLeftTableName.empty() &&
+            !cpl::contains(oSetDestLayerNames, osLeftTableName))
+        {
+            CPLDebug("GDALVectorTranslate",
+                     "Skipping relationship %s because its left table (%s) "
+                     "does not exist in target dataset",
+                     osRelationshipName.c_str(), osLeftTableName.c_str());
+            canAdd = false;
+        }
+
+        const auto &osRightTableName = poSrcRelationship->GetRightTableName();
+        if (!osRightTableName.empty() &&
+            !cpl::contains(oSetDestLayerNames, osRightTableName))
+        {
+            CPLDebug("GDALVectorTranslate",
+                     "Skipping relationship %s because its right table (%s) "
+                     "does not exist in target dataset",
+                     osRelationshipName.c_str(), osRightTableName.c_str());
+            canAdd = false;
+        }
+
+        const auto &osMappingTableName =
+            poSrcRelationship->GetMappingTableName();
+        if (!osMappingTableName.empty() &&
+            !cpl::contains(oSetDestLayerNames, osMappingTableName))
+        {
+            CPLDebug("GDALVectorTranslate",
+                     "Skipping relationship %s because its mapping table (%s) "
+                     "does not exist in target dataset",
+                     osRelationshipName.c_str(), osMappingTableName.c_str());
+            canAdd = false;
+        }
+
+        if (canAdd)
+        {
+            std::string osFailureReason;
+            if (!poODS->AddRelationship(
+                    std::make_unique<GDALRelationship>(*poSrcRelationship),
+                    osFailureReason))
+            {
+                CPLDebug("GDALVectorTranslate",
+                         "Cannot add relationship %s: %s",
+                         osRelationshipName.c_str(), osFailureReason.c_str());
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                           GDALVectorTranslate()                      */
 /************************************************************************/
 /**
@@ -2514,7 +2602,17 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             bError = strcmp(psOptions->osNewLayerName.c_str(),
                             psOptions->aosLayers[0]) == 0;
         else if (psOptions->osSQLStatement.empty())
-            bError = true;
+        {
+            if (psOptions->aosLayers.empty() && poDS->GetLayerCount() == 1)
+            {
+                bError = strcmp(psOptions->osNewLayerName.c_str(),
+                                poDS->GetLayer(0)->GetName()) == 0;
+            }
+            else
+            {
+                bError = true;
+            }
+        }
         if (bError)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
@@ -2606,6 +2704,27 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     if (!bUpdate)
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
+
+        if (psOptions->bNoOverwrite && !EQUAL(pszDest, ""))
+        {
+            VSIStatBufL sStat;
+            if (VSIStatL(pszDest, &sStat) == 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "File '%s' already exists. Specify the --overwrite "
+                         "option to overwrite it.",
+                         pszDest);
+                return nullptr;
+            }
+            else if (std::unique_ptr<GDALDataset>(GDALDataset::Open(pszDest)))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Dataset '%s' already exists. Specify the --overwrite "
+                         "option to overwrite it.",
+                         pszDest);
+                return nullptr;
+            }
+        }
 
         if (psOptions->osFormat.empty())
         {
@@ -3590,6 +3709,9 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 GDALDestroyScaledProgress(pProgressArg);
         }
     }
+
+    CopyRelationships(poODS, poDS);
+
     /* -------------------------------------------------------------------- */
     /*      Process DS style table                                          */
     /* -------------------------------------------------------------------- */
@@ -3997,7 +4119,8 @@ static int GetArrowGeomFieldIndex(const struct ArrowSchema *psLayerSchema,
 /************************************************************************/
 
 static CPLStringList
-BuildGetArrowStreamOptions(const GDALVectorTranslateOptions *psOptions,
+BuildGetArrowStreamOptions(OGRLayer *poSrcLayer, OGRLayer *poDstLayer,
+                           const GDALVectorTranslateOptions *psOptions,
                            bool bPreserveFID)
 {
     CPLStringList aosOptionsGetArrowStream;
@@ -4021,6 +4144,31 @@ BuildGetArrowStreamOptions(const GDALVectorTranslateOptions *psOptions,
             "MAX_FEATURES_IN_BATCH",
             CPLSPrintf("%d", psOptions->nGroupTransactions));
     }
+
+    auto poSrcDS = poSrcLayer->GetDataset();
+    auto poDstDS = poDstLayer->GetDataset();
+    if (poSrcDS && poDstDS)
+    {
+        auto poSrcDriver = poSrcDS->GetDriver();
+        auto poDstDriver = poDstDS->GetDriver();
+
+        const auto IsArrowNativeDriver = [](GDALDriver *poDriver)
+        {
+            return EQUAL(poDriver->GetDescription(), "ARROW") ||
+                   EQUAL(poDriver->GetDescription(), "PARQUET") ||
+                   EQUAL(poDriver->GetDescription(), "ADBC");
+        };
+
+        if (poSrcDriver && poDstDriver && !IsArrowNativeDriver(poSrcDriver) &&
+            !IsArrowNativeDriver(poDstDriver))
+        {
+            // For non-Arrow-native drivers, request DateTime as string, to
+            // allow mix of timezones
+            aosOptionsGetArrowStream.SetNameValue(GAS_OPT_DATETIME_AS_STRING,
+                                                  "YES");
+        }
+    }
+
     return aosOptionsGetArrowStream;
 }
 
@@ -4073,20 +4221,19 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
             {
                 return false;
             }
-            auto poSrcSRS = m_poUserSourceSRS ? m_poUserSourceSRS
-                                              : poSrcLayer->GetLayerDefn()
-                                                    ->GetGeomFieldDefn(0)
-                                                    ->GetSpatialRef();
-            if (!poSrcSRS ||
-                !OGRGeometryFactory::isTransformWithOptionsRegularTransform(
+            const auto poSrcSRS = m_poUserSourceSRS ? m_poUserSourceSRS
+                                                    : poSrcLayer->GetLayerDefn()
+                                                          ->GetGeomFieldDefn(0)
+                                                          ->GetSpatialRef();
+            if (!OGRGeometryFactory::isTransformWithOptionsRegularTransform(
                     poSrcSRS, m_poOutputSRS, nullptr))
             {
                 return false;
             }
         }
 
-        const CPLStringList aosGetArrowStreamOptions(
-            BuildGetArrowStreamOptions(psOptions, bPreserveFID));
+        const CPLStringList aosGetArrowStreamOptions(BuildGetArrowStreamOptions(
+            poSrcLayer, poDstLayer, psOptions, bPreserveFID));
         if (poSrcLayer->GetArrowStream(streamSrc.get(),
                                        aosGetArrowStreamOptions.List()))
         {
@@ -4625,6 +4772,8 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             oCoordPrec.dfMResolution = psOptions->dfMRes;
         }
 
+        auto poSrcDriver = m_poSrcDS->GetDriver();
+
         // Force FID column as 64 bit if the source feature has a 64 bit FID,
         // the target driver supports 64 bit FID and the user didn't set it
         // manually.
@@ -4667,9 +4816,8 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         }
         // Detect scenario of converting from GPX to a format like GPKG
         // Cf https://github.com/OSGeo/gdal/issues/9225
-        else if (!bPreserveFID && !m_bUnsetFid && !bAppend &&
-                 m_poSrcDS->GetDriver() &&
-                 EQUAL(m_poSrcDS->GetDriver()->GetDescription(), "GPX") &&
+        else if (!bPreserveFID && !m_bUnsetFid && !bAppend && poSrcDriver &&
+                 EQUAL(poSrcDriver->GetDescription(), "GPX") &&
                  pszDestCreationOptions &&
                  (strstr(pszDestCreationOptions, "='FID'") != nullptr ||
                   strstr(pszDestCreationOptions, "=\"FID\"") != nullptr) &&
@@ -4759,6 +4907,23 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 CPLDebug("GDALVectorTranslate",
                          "Setting CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES");
             }
+        }
+
+        // Use case of https://github.com/OSGeo/gdal/issues/11057#issuecomment-2495479779
+        // Conversion from GPKG to OCI.
+        // OCI distinguishes between TIMESTAMP and TIMESTAMP WITH TIME ZONE
+        // GeoPackage is supposed to have DateTime in UTC, so we set
+        // TIMESTAMP_WITH_TIME_ZONE=YES
+        if (poSrcDriver && pszDestCreationOptions &&
+            strstr(pszDestCreationOptions, "TIMESTAMP_WITH_TIME_ZONE") &&
+            CSLFetchNameValue(m_papszLCO, "TIMESTAMP_WITH_TIME_ZONE") ==
+                nullptr &&
+            EQUAL(poSrcDriver->GetDescription(), "GPKG"))
+        {
+            papszLCOTemp = CSLSetNameValue(papszLCOTemp,
+                                           "TIMESTAMP_WITH_TIME_ZONE", "YES");
+            CPLDebug("GDALVectorTranslate",
+                     "Setting TIMESTAMP_WITH_TIME_ZONE=YES");
         }
 
         OGRGeomFieldDefn oGeomFieldDefn(
@@ -4870,10 +5035,20 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     /* -------------------------------------------------------------------- */
     else if (!bAppend && !m_bNewDataSource)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Layer %s already exists, and -append not specified.\n"
-                 "        Consider using -append, or -overwrite.",
-                 pszNewLayerName);
+        if (psOptions->bInvokedFromGdalVectorConvert)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Layer %s already exists, and --append not specified. "
+                     "Consider using --append, or --overwrite-layer.",
+                     pszNewLayerName);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Layer %s already exists, and -append not specified.\n"
+                     "        Consider using -append, or -overwrite.",
+                     pszNewLayerName);
+        }
         return nullptr;
     }
     else
@@ -4956,7 +5131,9 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 
     bool bError = false;
     OGRArrowArrayStream streamSrc;
+
     const bool bUseWriteArrowBatch =
+        !EQUAL(m_poDstDS->GetDriver()->GetDescription(), "OCI") &&
         CanUseWriteArrowBatch(poSrcLayer, poDstLayer, bJustCreatedLayer,
                               psOptions, bPreserveFID, bError, streamSrc);
     if (bError)
@@ -7150,7 +7327,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
                     GDALRemoveBOM(pabyRet);
                     char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
                     psOptions->osSQLStatement =
-                        GDALRemoveSQLComments(pszSQLStatement);
+                        CPLRemoveSQLComments(pszSQLStatement);
                     VSIFree(pszSQLStatement);
                 }
                 else
@@ -7908,6 +8085,16 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
                 { psOptions->bCopyMD = false; })
         .help(_("Disable copying of metadata from source dataset and layers "
                 "into target dataset and layers."));
+
+    // Undocumented option used by gdal vector convert
+    argParser->add_argument("--no-overwrite")
+        .store_into(psOptions->bNoOverwrite)
+        .hidden();
+
+    // Undocumented option used by gdal vector convert
+    argParser->add_argument("--invoked-from-gdal-vector-convert")
+        .store_into(psOptions->bInvokedFromGdalVectorConvert)
+        .hidden();
 
     if (psOptionsForBinary)
     {

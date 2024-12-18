@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  COG driver testing
@@ -1962,3 +1961,32 @@ def test_cog_write_check_golden_file(tmp_path, src_filename, creation_options):
             )
     assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
     assert open(src_filename, "rb").read() == open(out_filename, "rb").read()
+
+
+###############################################################################
+
+
+def test_cog_preserve_ALPHA_PREMULTIPLIED_on_copy(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        src_filename, 1, 1, 4, options=["ALPHA=PREMULTIPLIED", "PROFILE=BASELINE"]
+    )
+    src_ds.SetGeoTransform([500000, 1, 0, 4500000, 0, -1])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetProjection(srs.ExportToWkt())
+
+    out_filename = str(tmp_vsimem / "out.tif")
+    gdal.GetDriverByName("COG").CreateCopy(
+        out_filename,
+        src_ds,
+        options=[
+            "TILING_SCHEME=GoogleMapsCompatible",
+        ],
+    )
+    with gdal.Open(out_filename) as ds:
+        assert (
+            ds.GetRasterBand(4).GetMetadataItem("ALPHA", "IMAGE_STRUCTURE")
+            == "PREMULTIPLIED"
+        )

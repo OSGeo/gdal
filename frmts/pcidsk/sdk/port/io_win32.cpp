@@ -42,6 +42,8 @@ class Win32IOInterface : public IOInterfaces
     virtual int     Flush( void *io_handle ) const override;
     virtual int     Close( void *io_handle ) const override;
 
+    // Dummy implementation for now
+    // cppcheck-suppress functionStatic
     const char     *LastError() const;
 };
 

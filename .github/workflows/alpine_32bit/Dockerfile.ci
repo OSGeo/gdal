@@ -1,4 +1,4 @@
-FROM i386/alpine:edge
+FROM i386/alpine:edge@sha256:42dc76bd326908c901e0a5b6ce58ec3a54126958f4c27f788798fac2b406f76a
 
 RUN apk add \
     apache-arrow-dev \
@@ -74,4 +74,4 @@ RUN apk add \
     zstd-dev
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install --break-system-packages -U -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages -U -r /tmp/requirements.txt

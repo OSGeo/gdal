@@ -2756,15 +2756,17 @@ bool OGRSimpleCurve::segmentize(double dfMaxLength)
                 sqrt(dfSquareDist / dfSquareMaxLength) - REL_EPSILON_ROUND);
             const int nIntermediatePoints =
                 DoubleToIntClamp(dfIntermediatePoints);
+            const double dfRatioX =
+                dfX / (static_cast<double>(nIntermediatePoints) + 1);
+            const double dfRatioY =
+                dfY / (static_cast<double>(nIntermediatePoints) + 1);
 
             for (int j = 1; j <= nIntermediatePoints; j++)
             {
                 // coverity[overflow_const]
                 const int newI = nNewPointCount + j - 1;
-                paoNewPoints[newI].x =
-                    paoPoints[i].x + j * dfX / (nIntermediatePoints + 1);
-                paoNewPoints[newI].y =
-                    paoPoints[i].y + j * dfY / (nIntermediatePoints + 1);
+                paoNewPoints[newI].x = paoPoints[i].x + j * dfRatioX;
+                paoNewPoints[newI].y = paoPoints[i].y + j * dfRatioY;
                 if (padfZ != nullptr)
                 {
                     // No interpolation.
@@ -3070,7 +3072,16 @@ OGRLinearRing *OGRLineString::CastToLinearRing(OGRLineString *poLS)
 
 OGRLineString *OGRLineString::clone() const
 {
-    return new (std::nothrow) OGRLineString(*this);
+    auto ret = new (std::nothrow) OGRLineString(*this);
+    if (ret)
+    {
+        if (ret->getNumPoints() != getNumPoints())
+        {
+            delete ret;
+            ret = nullptr;
+        }
+    }
+    return ret;
 }
 
 //! @cond Doxygen_Suppress

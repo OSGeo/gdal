@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_string.h
  * Project:  CPL - Common Portability Library
@@ -269,6 +268,15 @@ int CPL_DLL CPLStrlenUTF8(const char *pszUTF8Str);
 int CPL_DLL CPLCanRecode(const char *pszTestStr, const char *pszSrcEncoding,
                          const char *pszDstEncoding) CPL_WARN_UNUSED_RESULT;
 CPL_C_END
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+extern "C++"
+{
+    std::string CPL_DLL CPLRemoveSQLComments(const std::string &osInput);
+}
+
+#endif
 
 /************************************************************************/
 /*                              CPLString                               */

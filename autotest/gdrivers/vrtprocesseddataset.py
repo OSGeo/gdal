@@ -1239,3 +1239,87 @@ def test_vrtprocesseddataset_serialize(tmp_vsimem):
             11.5,
             0.5,
         ]
+
+
+###############################################################################
+# Test OutputBands
+
+
+def test_vrtprocesseddataset_OutputBands():
+
+    with gdal.Open("data/vrt/processed_OutputBands_FROM_LAST_STEP.vrt") as ds:
+        assert ds.RasterCount == 2
+        assert (ds.GetRasterBand(1).GetMinimum(), ds.GetRasterBand(1).GetMaximum()) == (
+            None,
+            None,
+        )
+        assert (ds.GetRasterBand(2).GetMinimum(), ds.GetRasterBand(2).GetMaximum()) == (
+            None,
+            None,
+        )
+        assert ds.GetRasterBand(1).ComputeRasterMinMax() == (84, 265)
+        assert ds.GetRasterBand(2).ComputeRasterMinMax() == (94, 275)
+
+    with gdal.Open(
+        "data/vrt/processed_OutputBands_FROM_LAST_STEP_with_stats.vrt"
+    ) as ds:
+        assert ds.RasterCount == 2
+        assert (ds.GetRasterBand(1).GetMinimum(), ds.GetRasterBand(1).GetMaximum()) == (
+            84,
+            265,
+        )
+        assert (ds.GetRasterBand(2).GetMinimum(), ds.GetRasterBand(2).GetMaximum()) == (
+            94,
+            275,
+        )
+
+    with gdal.Open(
+        "data/vrt/processed_OutputBands_FROM_LAST_STEP_with_stats_missing_band.vrt"
+    ) as ds:
+        assert ds.RasterCount == 2
+        assert (ds.GetRasterBand(1).GetMinimum(), ds.GetRasterBand(1).GetMaximum()) == (
+            None,
+            None,
+        )
+        assert (ds.GetRasterBand(2).GetMinimum(), ds.GetRasterBand(2).GetMaximum()) == (
+            None,
+            None,
+        )
+        assert ds.GetRasterBand(1).ComputeRasterMinMax() == (84, 265)
+        assert ds.GetRasterBand(2).ComputeRasterMinMax() == (94, 275)
+
+    with pytest.raises(Exception, match="Argument coefficients_2 is missing"):
+        gdal.Open("data/vrt/processed_OutputBands_FROM_LAST_STEP_with_stats_error.vrt")
+
+    with gdal.Open("data/vrt/processed_OutputBands_FROM_SOURCE.vrt") as ds:
+        assert ds.RasterCount == 1
+        assert ds.GetRasterBand(1).ComputeRasterMinMax() == (84, 255)
+
+    with pytest.raises(
+        Exception,
+        match="Final step expect 1 bands, but only 2 coefficient_XX are provided",
+    ):
+        gdal.Open("data/vrt/processed_OutputBands_FROM_SOURCE_wrong_band_count.vrt")
+
+    with gdal.Open("data/vrt/processed_OutputBands_USER_PROVIDED.vrt") as ds:
+        assert ds.RasterCount == 1
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+        assert ds.GetRasterBand(1).ComputeRasterMinMax() == (84, 265)
+
+    with pytest.raises(
+        Exception,
+        match="Invalid band count",
+    ):
+        gdal.Open("data/vrt/processed_OutputBands_USER_PROVIDED_too_large_count.vrt")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value for OutputBands.count",
+    ):
+        gdal.Open("data/vrt/processed_OutputBands_USER_PROVIDED_non_numeric_count.vrt")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value for OutputBands.dataType",
+    ):
+        gdal.Open("data/vrt/processed_OutputBands_USER_PROVIDED_invalid_type.vrt")

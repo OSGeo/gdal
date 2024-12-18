@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Convenience functions declarations.
@@ -36,6 +35,8 @@ CPL_C_START
 void CPL_DLL CPLVerifyConfiguration(void);
 /*! @endcond */
 
+bool CPL_DLL CPLIsDebugEnabled(void);
+
 const char CPL_DLL *CPL_STDCALL CPLGetConfigOption(const char *, const char *)
     CPL_WARN_UNUSED_RESULT;
 const char CPL_DLL *CPL_STDCALL CPLGetThreadLocalConfigOption(
@@ -45,6 +46,8 @@ CPLGetGlobalConfigOption(const char *, const char *) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL CPLSetConfigOption(const char *, const char *);
 void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
                                                        const char *pszValue);
+void CPL_DLL CPLDeclareKnownConfigOption(const char *pszKey,
+                                         const char *pszDefinition);
 
 /** Callback for CPLSubscribeToSetConfigOption() */
 typedef void (*CPLSetConfigOptionSubscriber)(const char *pszKey,

@@ -534,6 +534,18 @@ of an individual source pixel is determined by the product of the weights
 determined for its row and column; the diagonal Cartesian distance is not
 calculated.
 
+Multiple input files
+--------------------
+
+When multiple inputs are provided to :program:`gdalwarp`, they are processed
+independently in the order they are listed. This may introduce edge effects
+near the boundaries of the input files, because output pixel values will be
+derived from the final input only. To avoid this, non-overlapping input
+files may first be combined into a :ref:`VRT file <raster.vrt>` (e.g., using
+:ref:`gdalbuildvrt`). This will allow :program:`gdalwarp` to use pixels
+from all inputs when calculating output pixel values.
+
+
 Writing to an existing file
 ---------------------------
 

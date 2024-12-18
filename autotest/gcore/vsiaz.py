@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test /vsiaz
@@ -379,6 +378,109 @@ def test_vsiaz_fake_readdir():
     assert dir_contents == ["mycontainer1", "mycontainer2"]
 
     assert gdal.VSIStatL("/vsiaz/mycontainer1", gdal.VSI_STAT_CACHE_ONLY) is not None
+
+
+###############################################################################
+# Test ReadDir() when first response has no blobs but a non-empty NextMarker
+
+
+def test_vsiaz_fake_readdir_no_blobs_in_first_request():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&prefix=a_dir%20with_space%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>a_dir with_space/</Prefix>
+                        <Blobs/>
+                        <NextMarker>bla</NextMarker>
+                    </EnumerationResults>
+                """,
+    )
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&marker=bla&prefix=a_dir%20with_space%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>a_dir with_space/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>a_dir with_space/resource4.bin</Name>
+                            <Properties>
+                              <Last-Modified>16 Oct 2016 12:34:56</Last-Modified>
+                              <Content-Length>456789</Content-Length>
+                            </Properties>
+                          </Blob>
+                          <BlobPrefix>
+                            <Name>a_dir with_space/subdir/</Name>
+                          </BlobPrefix>
+                        </Blobs>
+                    </EnumerationResults>
+                """,
+    )
+
+    with webserver.install_http_handler(handler):
+        dir_contents = gdal.ReadDir("/vsiaz/az_fake_bucket2/a_dir with_space")
+    assert dir_contents == ["resource4.bin", "subdir"]
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_vsiaz_fake_readdir_protection_again_infinite_looping():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&prefix=a_dir%20with_space%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>a_dir with_space/</Prefix>
+                        <Blobs/>
+                        <NextMarker>bla0</NextMarker>
+                    </EnumerationResults>
+                """,
+    )
+    for i in range(10):
+        handler.add(
+            "GET",
+            f"/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&marker=bla{i}&prefix=a_dir%20with_space%2F&restype=container",
+            200,
+            {"Content-type": "application/xml"},
+            f"""<?xml version="1.0" encoding="UTF-8"?>
+                        <EnumerationResults>
+                            <Prefix>a_dir with_space/</Prefix>
+                            <Blobs/>
+                            <NextMarker>bla{i+1}</NextMarker>
+                        </EnumerationResults>
+                    """,
+        )
+
+    with webserver.install_http_handler(handler):
+        with pytest.raises(
+            Exception,
+            match="More than 10 consecutive List Blob requests returning no blobs",
+        ):
+            gdal.ReadDir("/vsiaz/az_fake_bucket2/a_dir with_space")
 
 
 ###############################################################################

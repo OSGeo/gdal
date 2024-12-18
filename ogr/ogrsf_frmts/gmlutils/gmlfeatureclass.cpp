@@ -929,6 +929,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
     {
         GMLPropertyDefn *poPDefn = GetProperty(iProperty);
         const char *pszTypeName = "Unknown";
+        CPL_IGNORE_RET_VAL(pszTypeName);  // Make CSA happy
 
         CPLXMLNode *psPDefnNode =
             CPLCreateXMLNode(nullptr, CXT_Element, "PropertyDefn");
@@ -1075,7 +1076,6 @@ OGRFieldType GML_GetOGRFieldType(GMLPropertyType eType,
                                  OGRFieldSubType &eSubType)
 {
     OGRFieldType eFType = OFTString;
-    eSubType = OFSTNone;
     if (eType == GMLPT_Untyped)
         eFType = OFTString;
     else if (eType == GMLPT_String)
@@ -1123,4 +1123,46 @@ OGRFieldType GML_GetOGRFieldType(GMLPropertyType eType,
     else if (eType == GMLPT_FeaturePropertyList)
         eFType = OFTStringList;
     return eFType;
+}
+
+/************************************************************************/
+/*                       GML_FromOGRFieldType()                          */
+/************************************************************************/
+
+GMLPropertyType GML_FromOGRFieldType(OGRFieldType eType,
+                                     OGRFieldSubType eSubType)
+{
+    GMLPropertyType type{GMLPT_Untyped};
+    switch (eType)
+    {
+        case OFTString:
+            type = GMLPT_String;
+            break;
+        case OFTInteger:
+        {
+            if (eSubType == OFSTBoolean)
+                type = GMLPT_Boolean;
+            else if (eSubType == OFSTInt16)
+                type = GMLPT_Short;
+            else
+                type = GMLPT_Integer;
+            break;
+        }
+        case OFTReal:
+            type = GMLPT_Real;
+            break;
+        case OFTDate:
+            type = GMLPT_Date;
+            break;
+        case OFTDateTime:
+            type = GMLPT_DateTime;
+            break;
+        case OFTTime:
+            type = GMLPT_Time;
+            break;
+        default:
+            type = GMLPT_Untyped;
+            break;
+    }
+    return type;
 }

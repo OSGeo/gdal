@@ -5323,15 +5323,23 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                 else
 #endif
                 {
+                    const int nBITSHint = (l_nBitsPerSample < 8)    ? 8
+                                          : (l_nBitsPerSample < 16) ? 16
+                                          : (l_nBitsPerSample < 32) ? 32
+                                                                    : 64;
                     ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
 #ifdef HAVE_PREDICTOR_2_FOR_64BIT
                                 "PREDICTOR=2 is only supported with 8/16/32/64 "
-                                "bit samples."
+                                "bit samples. You can specify the NBITS=%d "
+                                "creation option to promote to the closest "
+                                "supported bits per sample value.",
 #else
                                 "PREDICTOR=2 is only supported with 8/16/32 "
-                                "bit samples."
+                                "bit samples. You can specify the NBITS=%d "
+                                "creation option to promote to the closest "
+                                "supported bits per sample value.",
 #endif
-                    );
+                                nBITSHint);
                 }
                 return nullptr;
             }
@@ -7055,10 +7063,10 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             CPLMalloc(nExtraSamples * sizeof(uint16_t)));
         memcpy(pasNewExtraSamples, extraSamples,
                nExtraSamples * sizeof(uint16_t));
-        uint16_t nAlpha = GTiffGetAlphaValue(
-            CPLGetConfigOption("GTIFF_ALPHA",
-                               CSLFetchNameValue(papszOptions, "ALPHA")),
-            DEFAULT_ALPHA_TYPE);
+        const char *pszAlpha = CPLGetConfigOption(
+            "GTIFF_ALPHA", CSLFetchNameValue(papszOptions, "ALPHA"));
+        const uint16_t nAlpha =
+            GTiffGetAlphaValue(pszAlpha, DEFAULT_ALPHA_TYPE);
         const int nBaseSamples = l_nBands - nExtraSamples;
         for (int iExtraBand = nBaseSamples + 1; iExtraBand <= l_nBands;
              iExtraBand++)
@@ -7067,6 +7075,16 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                 GCI_AlphaBand)
             {
                 pasNewExtraSamples[iExtraBand - nBaseSamples - 1] = nAlpha;
+                if (!pszAlpha)
+                {
+                    // Use the ALPHA metadata item from the source band, when
+                    // present, if no explicit ALPHA creation option
+                    pasNewExtraSamples[iExtraBand - nBaseSamples - 1] =
+                        GTiffGetAlphaValue(
+                            poSrcDS->GetRasterBand(iExtraBand)
+                                ->GetMetadataItem("ALPHA", "IMAGE_STRUCTURE"),
+                            nAlpha);
+                }
             }
         }
         TIFFSetField(l_hTIFF, TIFFTAG_EXTRASAMPLES, nExtraSamples,

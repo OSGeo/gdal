@@ -13,6 +13,7 @@
 
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
+#include "ogrlayerarrow.h"
 #include "ogrsqliteutility.h"
 #include "cpl_md5.h"
 #include "cpl_time.h"
@@ -343,6 +344,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                 default:
                 {
                     const char *pszVal = "";
+                    CPL_IGNORE_RET_VAL(pszVal);  // Make CSA happy
                     int nValLengthBytes = -1;
                     sqlite3_destructor_type destructorType = SQLITE_TRANSIENT;
                     if (eType == OFTDate)
@@ -6034,7 +6036,7 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
 
         pszSQL = sqlite3_mprintf(
             "INSERT INTO gpkg_ogr_contents (table_name, feature_count) "
-            "VALUES ('%q', NULL)",
+            "VALUES ('%q', 0)",
             pszLayerName);
         err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
@@ -7820,6 +7822,7 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
     const auto nMemLimit = psFillArrowArray->nMemLimit;
     const int SQLITE_MAX_FUNCTION_ARG =
         sqlite3_limit(psFillArrowArray->hDB, SQLITE_LIMIT_FUNCTION_ARG, -1);
+    const bool bDateTimeAsString = psFillArrowArray->bDateTimeAsString;
 begin:
     int iFeat;
     OGRArrowArrayHelper *psHelper;
@@ -8171,18 +8174,25 @@ begin:
 
             case OFTDateTime:
             {
-                OGRField ogrField;
-                const auto pszTxt = reinterpret_cast<const char *>(
-                    sqlite3_value_text(argv[iCol]));
-                if (pszTxt != nullptr &&
-                    psFillArrowArray->poLayer->ParseDateTimeField(
-                        pszTxt, &ogrField, poFieldDefn, nFID))
+                if (!bDateTimeAsString)
                 {
-                    psHelper->SetDateTime(
-                        psArray, iFeat, psFillArrowArray->brokenDown,
-                        psHelper->m_anTZFlags[iField], ogrField);
+                    OGRField ogrField;
+                    const auto pszTxt = reinterpret_cast<const char *>(
+                        sqlite3_value_text(argv[iCol]));
+                    if (pszTxt != nullptr &&
+                        psFillArrowArray->poLayer->ParseDateTimeField(
+                            pszTxt, &ogrField, poFieldDefn, nFID))
+                    {
+                        psHelper->SetDateTime(
+                            psArray, iFeat, psFillArrowArray->brokenDown,
+                            psHelper->m_anTZFlags[iField], ogrField);
+                    }
+                    break;
                 }
-                break;
+                else
+                {
+                    [[fallthrough]];
+                }
             }
 
             case OFTString:
@@ -8337,6 +8347,9 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
         m_poFillArrowArray->psHelper = std::move(psHelper);
         m_poFillArrowArray->nCountRows = 0;
         m_poFillArrowArray->bErrorOccurred = false;
+        m_poFillArrowArray->bDateTimeAsString =
+            m_aosArrowArrayStreamOptions.FetchBool(GAS_OPT_DATETIME_AS_STRING,
+                                                   false);
         m_poFillArrowArray->poFeatureDefn = m_poFeatureDefn;
         m_poFillArrowArray->poLayer = this;
         m_poFillArrowArray->hDB = m_poDS->GetDB();
@@ -8888,6 +8901,8 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     sFillArrowArray.nCountRows = 0;
     sFillArrowArray.bMemoryLimitReached = false;
     sFillArrowArray.bErrorOccurred = false;
+    sFillArrowArray.bDateTimeAsString = m_aosArrowArrayStreamOptions.FetchBool(
+        GAS_OPT_DATETIME_AS_STRING, false);
     sFillArrowArray.poFeatureDefn = m_poFeatureDefn;
     sFillArrowArray.poLayer = this;
     sFillArrowArray.hDB = m_poDS->GetDB();

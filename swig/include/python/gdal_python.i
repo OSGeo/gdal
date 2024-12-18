@@ -1,5 +1,4 @@
 /*
- * $Id$
  *
  * python specific code for gdal bindings.
  */
@@ -1624,13 +1623,29 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         self._child_references.add(val)
 %}
 
-%feature("pythonprepend") Close %{
-    self._invalidate_children()
-%}
+%feature("shadow") Close %{
+    def Close(self, *args):
+        r"""
+        Close(Dataset self) -> CPLErr
 
-%feature("pythonappend") Close %{
-    self.thisown = 0
-    self.this = None
+        Closes opened dataset and releases allocated resources.
+
+        This method can be used to force the dataset to close
+        when one more references to the dataset are still
+        reachable. If :py:meth:`Close` is never called, the dataset will
+        be closed automatically during garbage collection.
+
+        In most cases, it is preferable to open or create a dataset
+        using a context manager instead of calling :py:meth:`Close`
+        directly.
+        """
+
+        self._invalidate_children()
+        try:
+            return _gdal.Dataset_Close(self, *args)
+        finally:
+            self.thisown = 0
+            self.this = None
 %}
 
 %feature("shadow") ExecuteSQL %{
@@ -5152,3 +5167,53 @@ class VSIFile(BytesIO):
     def tell(self):
         return VSIFTellL(self._fp)
 %}
+
+/* -------------------------------------------------------------------- */
+/* GDALAlgorithmArgHS                                                   */
+/* -------------------------------------------------------------------- */
+
+%extend GDALAlgorithmArgHS {
+%pythoncode %{
+
+    def Get(self):
+        type = self.GetType()
+        if type == GAAT_BOOLEAN:
+            return self.GetAsBoolean()
+        if type == GAAT_STRING:
+            return self.GetAsString()
+        if type == GAAT_INTEGER:
+            return self.GetAsInteger()
+        if type == GAAT_REAL:
+            return self.GetAsDouble()
+        if type == GAAT_DATASET:
+            return self.GetAsDatasetValue()
+        if type == GAAT_STRING_LIST:
+            return self.GetAsStringList()
+        if type == GAAT_INTEGER_LIST:
+            return self.GetAsIntegerList()
+        if type == GAAT_REAL_LIST:
+            return self.GetAsDoubleList()
+        raise Exception("Unhandled algorithm argument data type")
+
+    def Set(self, value):
+        type = self.GetType()
+        if type == GAAT_BOOLEAN:
+            return self.SetAsBoolean(value)
+        if type == GAAT_STRING:
+            return self.SetAsString(value)
+        if type == GAAT_INTEGER:
+            return self.SetAsInteger(value)
+        if type == GAAT_REAL:
+            return self.SetAsDouble(value)
+        if type == GAAT_DATASET:
+            return self.SetAsDatasetValue(value)
+        if type == GAAT_STRING_LIST:
+            return self.SetAsStringList(value)
+        if type == GAAT_INTEGER_LIST:
+            return self.SetAsIntegerList(value)
+        if type == GAAT_REAL_LIST:
+            return self.SetAsDoubleList(value)
+        raise Exception("Unhandled algorithm argument data type")
+
+%}
+}

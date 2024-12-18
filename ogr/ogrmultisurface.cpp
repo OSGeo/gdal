@@ -65,7 +65,16 @@ OGRMultiSurface &OGRMultiSurface::operator=(const OGRMultiSurface &other)
 OGRMultiSurface *OGRMultiSurface::clone() const
 
 {
-    return new (std::nothrow) OGRMultiSurface(*this);
+    auto ret = new (std::nothrow) OGRMultiSurface(*this);
+    if (ret)
+    {
+        if (ret->WkbSize() != WkbSize())
+        {
+            delete ret;
+            ret = nullptr;
+        }
+    }
+    return ret;
 }
 
 /************************************************************************/

@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test GDALTileIndexDataset support.
@@ -2985,3 +2984,37 @@ def test_gti_stac_geoparquet():
         "Blue",
         "NIR (near-infrared)",
     ]
+
+
+###############################################################################
+
+
+@pytest.mark.require_curl()
+@pytest.mark.require_driver("GeoJSON")
+def test_gti_stac_geoparquet_sentinel2():
+
+    url = "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/12/S/VD/2023/12/S2A_T12SVD_20231213T181818_L2A/B07.tif"
+
+    conn = gdaltest.gdalurlopen(url, timeout=4)
+    if conn is None:
+        pytest.skip("cannot open URL")
+
+    ds = gdal.Open("GTI:data/gti/sentinel2_stac_geoparquet.geojson")
+    assert ds.RasterXSize == 5556
+    assert ds.RasterYSize == 5540
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "32612"
+    assert ds.GetGeoTransform() == pytest.approx(
+        (398760.0, 20.0, 0.0, 3900560.0, 0.0, -20.0), rel=1e-5
+    )
+    assert ds.RasterCount == 1
+    band = ds.GetRasterBand(1)
+    assert band.DataType == gdal.GDT_UInt16
+    assert band.GetNoDataValue() == 0
+    assert band.GetColorInterpretation() == gdal.GCI_RedEdgeBand
+    assert band.GetDescription() == "B07"
+    assert band.GetOffset() == -0.1
+    assert band.GetScale() == 0.0001
+    assert band.GetMetadata_Dict("IMAGERY") == {
+        "CENTRAL_WAVELENGTH_UM": "0.783",
+        "FWHM_UM": "0.028",
+    }

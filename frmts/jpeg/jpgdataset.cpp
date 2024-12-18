@@ -3331,29 +3331,27 @@ void JPGDatasetCommon::CheckForMask()
 
     GByte abyEOD[2] = {0, 0};
 
-    if (nImageSize < nFileSize / 2 || nImageSize > nFileSize - 4)
-        goto end;
-
-    // If that seems okay, seek back, and verify that just preceding
-    // the bitmask is an apparent end-of-jpeg-data marker.
-    VSIFSeekL(m_fpImage, nImageSize - 2, SEEK_SET);
-    VSIFReadL(abyEOD, 2, 1, m_fpImage);
-    if (abyEOD[0] != 0xff || abyEOD[1] != 0xd9)
-        goto end;
-
-    // We seem to have a mask.  Read it in.
-    nCMaskSize = static_cast<int>(nFileSize - nImageSize - 4);
-    pabyCMask = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nCMaskSize));
-    if (pabyCMask == nullptr)
+    if (nImageSize >= 2 && nImageSize >= nFileSize / 2 &&
+        nImageSize <= nFileSize - 4)
     {
-        goto end;
+        // If that seems okay, seek back, and verify that just preceding
+        // the bitmask is an apparent end-of-jpeg-data marker.
+        VSIFSeekL(m_fpImage, nImageSize - 2, SEEK_SET);
+        VSIFReadL(abyEOD, 2, 1, m_fpImage);
+        if (abyEOD[0] == 0xff && abyEOD[1] == 0xd9)
+        {
+            // We seem to have a mask.  Read it in.
+            nCMaskSize = static_cast<int>(nFileSize - nImageSize - 4);
+            pabyCMask = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nCMaskSize));
+            if (pabyCMask)
+            {
+                VSIFReadL(pabyCMask, nCMaskSize, 1, m_fpImage);
+
+                CPLDebug("JPEG", "Got %d byte compressed bitmask.", nCMaskSize);
+            }
+        }
     }
-    VSIFReadL(pabyCMask, nCMaskSize, 1, m_fpImage);
 
-    CPLDebug("JPEG", "Got %d byte compressed bitmask.", nCMaskSize);
-
-    // TODO(schwehr): Refactor to not use goto.
-end:
     VSIFSeekL(m_fpImage, nCurOffset, SEEK_SET);
 }
 

@@ -160,12 +160,14 @@ Also some information is written to the stdout.
 
     The input end linear distance
 
-Example
--------
+Examples
+--------
 
-This example would create a shapefile (:file:`parts.shp`) containing
-a data needed for linear referencing (1 km parts):
+.. example::
 
-.. code-block::
+   This example would create a shapefile (:file:`parts.shp`) containing
+   a data needed for linear referencing (1 km parts):
 
-    ogrlineref -create -l roads.shp -p references.shp -pm dist -o parts.shp -s 1000 -progress
+   .. code-block:: bash
+
+       ogrlineref -create -l roads.shp -p references.shp -pm dist -o parts.shp -s 1000 -progress

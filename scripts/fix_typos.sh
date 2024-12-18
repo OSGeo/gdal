@@ -1,8 +1,6 @@
 #!/bin/sh
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
-#
 #  Project:  GDAL
 #  Purpose:  (Interactive) script to identify and fix typos
 #  Author:   Even Rouault <even.rouault at spatialys.com>

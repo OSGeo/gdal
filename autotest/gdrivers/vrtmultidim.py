@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test multidimensional support in VRT driver
@@ -1419,6 +1418,12 @@ def test_vrtmultidim_arraysource_array():
 
     ds = gdal.Open("data/vrt/arraysource_array.vrt")
     assert ds.GetRasterBand(1).Checksum() == 4855
+
+
+def test_vrtmultidim_arraysource_array_constant():
+
+    ds = gdal.Open("data/vrt/arraysource_array_constant.vrt")
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (10, 10)
 
 
 @pytest.mark.require_driver("netCDF")

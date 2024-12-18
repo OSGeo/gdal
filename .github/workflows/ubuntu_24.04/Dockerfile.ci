@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:24.04@sha256:6e75a10070b0fcb0bead763c5118a369bc7cc30dfc1b0749c491bbb21f15c3c7
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -16,7 +16,6 @@ RUN apt-get update && \
     g++ \
     git \
     gpsbabel \
-    libavif-dev \
     libblosc-dev \
     libboost-dev \
     libcairo2-dev \
@@ -73,7 +72,17 @@ RUN apt-get update && \
     wget \
     zip
 
-# temporary libheif build
+# libavif development build
+RUN apt-get install -y --allow-unauthenticated libaom-dev libyuv-dev
+RUN git clone --depth 1 https://github.com/AOMediaCodec/libavif.git libavif-git && \
+    cd libavif-git && \
+    mkdir build && \
+    cd build && \
+    cmake -DAVIF_CODEC_AOM=SYSTEM .. && \
+    make -j$(nproc) && \
+    make install
+
+# libheif development build
 RUN apt-get install -y --allow-unauthenticated libaom-dev libbrotli-dev libde265-dev libx265-dev
 RUN git clone --depth 1 https://github.com/strukturag/libheif.git libheif-git && \
     cd libheif-git && \
@@ -153,13 +162,13 @@ RUN curl -L -O https://download.oracle.com/otn_software/linux/instantclient/1990
 RUN ln -s /usr/lib/x86_64-linux-gnu/ogdi/4.1/libvrf.so /usr/lib/x86_64-linux-gnu
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install -U --break-system-packages -r /tmp/requirements.txt
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -U --break-system-packages -r /tmp/requirements.txt
 
 # cfchecker requires udunits2
 RUN apt-get install -y --allow-unauthenticated libudunits2-0 libudunits2-data
-RUN python3 -m pip install --break-system-packages cfchecker
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages cfchecker
 
-RUN python3 -m pip install --break-system-packages fsspec
+RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages fsspec
 
 # Manually install ADBC packages from Ubuntu 22.04 as there are no 24.04 packages at time of writing.
 RUN curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/ubuntu/pool/jammy/main/a/apache-arrow-adbc/libadbc-driver-manager102_14-1_amd64.deb \

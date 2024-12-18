@@ -1620,8 +1620,9 @@ int DIMAPDataset::ReadImageInformation2()
                 {
                     if (psTag->eType == CXT_Element &&
                         psTag->psChild != nullptr &&
-                        psTag->psChild->eType == CXT_Text &&
-                        psTag->pszValue != nullptr)
+                        psTag->pszValue != nullptr &&
+                        (psTag->psChild->eType == CXT_Text ||
+                         EQUAL(psTag->pszValue, "FWHM")))
                     {
                         if (EQUAL(psTag->pszValue, "BAND_ID"))
                         {
@@ -1659,15 +1660,58 @@ int DIMAPDataset::ReadImageInformation2()
                             CPLString osMDName = osName;
                             osMDName += psTag->pszValue;
 
-                            GetRasterBand(nBandIndex)
-                                ->SetMetadataItem(osMDName,
-                                                  psTag->psChild->pszValue);
+                            auto poBand = GetRasterBand(nBandIndex);
+                            if (EQUAL(psTag->pszValue, "FWHM"))
+                            {
+                                if (const char *pszMIN =
+                                        CPLGetXMLValue(psTag, "MIN", nullptr))
+                                    poBand->SetMetadataItem(
+                                        (osMDName + "_MIN").c_str(), pszMIN);
+                                if (const char *pszMAX =
+                                        CPLGetXMLValue(psTag, "MAX", nullptr))
+                                    poBand->SetMetadataItem(
+                                        (osMDName + "_MAX").c_str(), pszMAX);
+                            }
+                            else
+                            {
+                                poBand->SetMetadataItem(
+                                    osMDName, psTag->psChild->pszValue);
+                            }
                         }
                     }
                     psTag = psTag->psNext;
                 }
             }
             psSpectralBandInfoNode = psSpectralBandInfoNode->psNext;
+        }
+    }
+
+    // Fill raster band IMAGERY metadata domain from FWHM metadata.
+    for (int i = 1; i <= nBands; ++i)
+    {
+        auto poBand = GetRasterBand(i);
+        const char *SPECTRAL_RANGE_MEASURE_UNIT =
+            poBand->GetMetadataItem("SPECTRAL_RANGE_MEASURE_UNIT");
+        const char *SPECTRAL_RANGE_FWHM_MIN =
+            poBand->GetMetadataItem("SPECTRAL_RANGE_FWHM_MIN");
+        const char *SPECTRAL_RANGE_FWHM_MAX =
+            poBand->GetMetadataItem("SPECTRAL_RANGE_FWHM_MAX");
+        if (SPECTRAL_RANGE_MEASURE_UNIT && SPECTRAL_RANGE_FWHM_MIN &&
+            SPECTRAL_RANGE_FWHM_MAX &&
+            (EQUAL(SPECTRAL_RANGE_MEASURE_UNIT, "nanometer") ||
+             EQUAL(SPECTRAL_RANGE_MEASURE_UNIT, "micrometer")))
+        {
+            const double dfFactorToMicrometer =
+                EQUAL(SPECTRAL_RANGE_MEASURE_UNIT, "nanometer") ? 1e-3 : 1.0;
+            const double dfMin =
+                CPLAtof(SPECTRAL_RANGE_FWHM_MIN) * dfFactorToMicrometer;
+            const double dfMax =
+                CPLAtof(SPECTRAL_RANGE_FWHM_MAX) * dfFactorToMicrometer;
+            poBand->SetMetadataItem("CENTRAL_WAVELENGTH_UM",
+                                    CPLSPrintf("%.3f", (dfMin + dfMax) / 2),
+                                    "IMAGERY");
+            poBand->SetMetadataItem(
+                "FWHM_UM", CPLSPrintf("%.3f", dfMax - dfMin), "IMAGERY");
         }
     }
 

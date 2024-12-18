@@ -10,7 +10,7 @@ export CPLUS_INCLUDE_PATH=/usr/include/gdal
 export C_INCLUDE_PATH=/usr/include/gdal
 
 # Install python GDAL bindings
-pip install gdal
+PYTHON_CMD=python3 && $PYTHON_CMD -m pip install gdal
 # note: this could be `sudo apt-get install python3-gdal` instead but
 # pip method is preferred, better tested
 
@@ -18,14 +18,14 @@ pip install gdal
 # (assumes git clone etc. are already done)
 cd swig/python/gdal-utils
 python setup.py bdist_wheel
-pip install dist/gdal_utils-*.whl
+PYTHON_CMD=python3 && $PYTHON_CMD -m pip install dist/gdal_utils-*.whl
 
 # ensure gdal source code tree installed gdal binaries are the same version
 git checkout v`gdal-config --version`
 
 # Test the scripts using autotest suite
 cd ../../../autotest/
-pip install -r requirements.txt
+PYTHON_CMD=python3 && $PYTHON_CMD -m pip install -r requirements.txt
 pytest pyscripts/
 
 # Todo: verify the console_scripts also work

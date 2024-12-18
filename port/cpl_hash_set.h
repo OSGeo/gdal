@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_hash_set.h
  * Project:  CPL - Common Portability Library

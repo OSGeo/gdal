@@ -29,6 +29,9 @@ usage()
     echo "--docker-cache/--no-docker-cache: instruct Docker to build with/without using its cache. Defaults to no cache for release builds."
     echo "--no-rsync-daemon: do not use the rsync daemon to save build cache in home directory."
     echo "--with-debug-symbols/--without-debug-symbols. Whether to include debug symbols. Only applies to ubuntu-full, default is to include for non-release builds."
+    echo "--with-oracle: Whether to include Oracle Instant Client proprietary SDK"
+    echo "--with-ecw: Whether to include ECW proprietary SDK"
+    echo "--with-mrsid: Whether to include MrSID proprietary SDK"
     exit 1
 }
 
@@ -126,6 +129,21 @@ do
             shift
         ;;
 
+        --with-oracle)
+            WITH_ORACLE=yes
+            shift
+        ;;
+
+        --with-ecw)
+            WITH_ECW=yes
+            shift
+        ;;
+
+        --with-mrsid)
+            WITH_MRSID=yes
+            shift
+        ;;
+
         # Unknown option
         *)
             echo "Unrecognized option: $1"
@@ -220,6 +238,22 @@ BUILD_ARGS=(
     "--build-arg" "WITH_DEBUG_SYMBOLS=${WITH_DEBUG_SYMBOLS}" \
 )
 [ -z "${DOCKER_CACHE_PARAM}" ] || BUILD_ARGS+=("${DOCKER_CACHE_PARAM}")
+
+if test "${WITH_ORACLE}" != ""; then
+      BUILD_ARGS+=("--build-arg" "WITH_ORACLE=${WITH_ORACLE}")
+fi
+
+if test "${WITH_ECW}" != ""; then
+      BUILD_ARGS+=("--build-arg" "WITH_ECW=${WITH_ECW}")
+fi
+
+if test "${WITH_MRSID}" != ""; then
+      BUILD_ARGS+=("--build-arg" "WITH_MRSID=${WITH_MRSID}")
+fi
+
+if test "${WITH_PROJ_GRIDS}" != ""; then
+  BUILD_ARGS+=("--build-arg" "$WITH_PROJ_GRIDS=${WITH_PROJ_GRIDS}")
+fi
 
 if test "${RELEASE}" = "yes"; then
     BUILD_ARGS+=("--build-arg" "GDAL_BUILD_IS_RELEASE=YES")

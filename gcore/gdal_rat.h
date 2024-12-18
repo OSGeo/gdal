@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  GDALRasterAttributeTable class declarations.
@@ -386,5 +385,8 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
 
     void RemoveStatistics() override;
 };
+
+std::unique_ptr<GDALRasterAttributeTable>
+    CPL_DLL GDALLoadVATDBF(const char *pszFilename);
 
 #endif /* ndef GDAL_RAT_H_INCLUDED */

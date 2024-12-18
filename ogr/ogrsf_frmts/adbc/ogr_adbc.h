@@ -87,9 +87,24 @@ class OGRADBCDataset;
 class OGRADBCLayer final : public OGRLayer,
                            public OGRGetNextFeatureThroughRaw<OGRADBCLayer>
 {
+  public:
+    //! Describe the bbox column of a geometry column
+    struct GeomColBBOX
+    {
+        std::string osXMin{};  // empty if no bbox column
+        std::string osYMin{};
+        std::string osXMax{};
+        std::string osYMax{};
+    };
+
+  private:
     friend class OGRADBCDataset;
 
     OGRADBCDataset *m_poDS = nullptr;
+    const std::string m_osBaseStatement{};    // as provided by user
+    std::string m_osModifiedBaseStatement{};  // above tuned to use ST_AsWKB()
+    std::string m_osModifiedSelect{};         // SELECT part of above
+    std::string m_osAttributeFilter{};
     std::unique_ptr<AdbcStatement> m_statement{};
     std::unique_ptr<OGRArrowArrayToOGRFeatureAdapterLayer> m_poAdapterLayer{};
     std::unique_ptr<OGRArrowArrayStream> m_stream{};
@@ -103,17 +118,27 @@ class OGRADBCLayer final : public OGRLayer,
     GIntBig m_nFeatureID = 0;
     bool m_bIsParquetLayer = false;
 
+    std::vector<GeomColBBOX>
+        m_geomColBBOX{};                     // same size as GetGeomFieldCount()
+    std::vector<OGREnvelope3D> m_extents{};  // same size as GetGeomFieldCount()
+
     OGRFeature *GetNextRawFeature();
     bool GetArrowStreamInternal(struct ArrowArrayStream *out_stream);
     GIntBig GetFeatureCountParquet();
+
+    void BuildLayerDefn(bool bInternalUse);
+    bool ReplaceStatement(const char *pszNewStatement);
+    bool UpdateStatement();
+    std::string GetCurrentStatement() const;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRADBCLayer)
 
   public:
     OGRADBCLayer(OGRADBCDataset *poDS, const char *pszName,
+                 const char *pszStatement,
                  std::unique_ptr<AdbcStatement> poStatement,
                  std::unique_ptr<OGRArrowArrayStream> poStream,
-                 ArrowSchema *schema);
+                 ArrowSchema *schema, bool bInternalUse);
     ~OGRADBCLayer() override;
 
     OGRFeatureDefn *GetLayerDefn() override
@@ -128,6 +153,20 @@ class OGRADBCLayer final : public OGRLayer,
     bool GetArrowStream(struct ArrowArrayStream *out_stream,
                         CSLConstList papszOptions = nullptr) override;
     GIntBig GetFeatureCount(int bForce) override;
+
+    void SetSpatialFilter(OGRGeometry *poGeom) override
+    {
+        SetSpatialFilter(0, poGeom);
+    }
+
+    OGRErr SetAttributeFilter(const char *pszFilter) override;
+    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+
+    OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                     int bForce = TRUE) override;
+    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                       int bForce = TRUE) override;
 };
 
 /************************************************************************/
@@ -143,6 +182,8 @@ class OGRADBCDataset final : public GDALDataset
     std::unique_ptr<AdbcConnection> m_connection{};
     std::vector<std::unique_ptr<OGRLayer>> m_apoLayers{};
     std::string m_osParquetFilename{};
+    bool m_bIsDuckDB = false;
+    bool m_bSpatialLoaded = false;
 
   public:
     OGRADBCDataset() = default;
@@ -164,7 +205,13 @@ class OGRADBCDataset final : public GDALDataset
     OGRLayer *GetLayerByName(const char *pszName) override;
 
     std::unique_ptr<OGRADBCLayer> CreateLayer(const char *pszStatement,
-                                              const char *pszLayerName);
+                                              const char *pszLayerName,
+                                              bool bInternalUse);
+
+    std::unique_ptr<OGRADBCLayer> CreateInternalLayer(const char *pszStatement)
+    {
+        return CreateLayer(pszStatement, "temp", true);
+    }
 
     OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;

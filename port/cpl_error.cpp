@@ -1263,9 +1263,9 @@ CPLSetErrorHandlerEx(CPLErrorHandler pfnErrorHandlerNew, void *pUserData)
  * Allow the library's user to specify an error handler function.
  * A valid error handler is a C function with the following prototype:
  *
- * <pre>
+ * \code{.cpp}
  *     void MyErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
- * </pre>
+ * \endcode
  *
  * Pass NULL to come back to the default behavior.  The default behavior
  * (CPLDefaultErrorHandler()) is to write the message to stderr.

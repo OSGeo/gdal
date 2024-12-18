@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     test_ogrfielddomains.java
  * Project:  GDAL SWIG Interface

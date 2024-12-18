@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 /******************************************************************************
- * $Id$
- *
  * Project:  GDAL/OGR
  * Purpose:  XML Schema for gmlasconf.xml
  * Author:   Even Rouault, <even dot rouault at spatialys dot com>

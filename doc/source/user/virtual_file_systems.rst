@@ -382,6 +382,7 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 - retry_delay=number_in_seconds: default to 30. Setting this option overrides the behavior of the :config:`GDAL_HTTP_RETRY_DELAY` configuration option.
 - retry_codes=``ALL`` or comma-separated list of HTTP error codes. Setting this option overrides the behavior of the :config:`GDAL_HTTP_RETRY_CODES` configuration option. (GDAL >= 3.10)
 - list_dir=yes/no: whether an attempt to read the file list of the directory where the file is located should be done. Default to YES.
+- empty_dir=yes/no: whether to disable directory listing and disable logic in drivers to probe for individual side-car files. Default to NO.
 - useragent=value: HTTP UserAgent header
 - referer=value: HTTP Referer header
 - cookie=value: HTTP Cookie header
@@ -417,6 +418,11 @@ Starting with GDAL 3.10, the ``Authorization`` header is no longer automatically
 forwarded when redirections are followed.
 That behavior can be configured by setting the
 :config:`CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT` configuration option.
+
+Starting with GDAL 3.11, a query string can be appended to a given /vsicurl/ filename by taking its value from the
+``VSICURL_QUERY_STRING`` path-specific option set with :cpp:func:`VSISetPathSpecificOption`.
+This can for example be used when managing Shared Access Signatures (SAS) on application side, and not
+wanting to include the signature as part of the filename propagated through GDAL.
 
 Starting with GDAL 2.3, the :config:`GDAL_HTTP_MAX_RETRY` (number of attempts) and :config:`GDAL_HTTP_RETRY_DELAY` (in seconds) configuration option can be set, so that request retries are done in case of HTTP errors 429, 502, 503 or 504.
 
@@ -629,8 +635,9 @@ Since GDAL 3.1, the :cpp:func:`VSIRmdirRecursive` operation is supported (using 
 
 The :config:`CPL_VSIS3_CREATE_DIR_OBJECT` configuration option can be set to NO to prevent the :cpp:func:`VSIMkdir` operation from creating an empty object with the name of the directory terminated with a slash directory. By default GDAL creates such object, so that empty directories can be modeled, but this may cause compatibility problems with applications that do not expect such empty objects.
 
-
 Starting with GDAL 3.5, profiles that use IAM role assumption (see https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html) are handled. The ``role_arn`` and ``source_profile`` keywords are required in such profiles. The optional ``external_id``, ``mfa_serial`` and ``role_session_name`` can be specified. ``credential_source`` is not supported currently.
+
+Support for AWS Single-Sign On (AWS IAM Identity Center) parameters in ``~/.aws/config`` and cached SSO files in ``~/.aws/sso/cache`` is implemented since GDAL 3.10.1.
 
 .. _vsis3_imds:
 

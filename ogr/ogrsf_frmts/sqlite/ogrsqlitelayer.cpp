@@ -900,11 +900,18 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                 {
                     const GIntBig nVal =
                         sqlite3_column_int64(m_hStmt, iRawField);
-                    if (nVal >= INT_MIN && nVal <= INT_MAX)
-                        poFeature->SetFieldSameTypeUnsafe(
-                            iField, static_cast<int>(nVal));
+                    if (poFieldDefn->GetSubType() == OFSTBoolean)
+                    {
+                        poFeature->SetField(iField, nVal != 0);
+                    }
                     else
-                        poFeature->SetField(iField, nVal);
+                    {
+                        if (nVal >= INT_MIN && nVal <= INT_MAX)
+                            poFeature->SetFieldSameTypeUnsafe(
+                                iField, static_cast<int>(nVal));
+                        else
+                            poFeature->SetField(iField, nVal);
+                    }
                 }
                 break;
             }

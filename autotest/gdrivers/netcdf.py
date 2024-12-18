@@ -1,7 +1,6 @@
 #!/usr/bin/env pytest
 # -*- coding: utf-8 -*-
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test NetCDF driver support.
@@ -6616,3 +6615,22 @@ def test_netcdf_write_check_golden_file(
         )
     assert os.stat(golden_file).st_size == os.stat(out_filename).st_size
     assert open(golden_file, "rb").read() == open(out_filename, "rb").read()
+
+
+###############################################################################
+# Test we identify a geolocation array for a variable that lacks a
+# "coordinates" attribute, but that has side "lon" and "lat" 2D variables
+# whose dimensions are the same as the last 2 ones of the variable of interest
+
+
+def test_netcdf_var_with_geoloc_array_but_no_coordinates_attr():
+
+    ds = gdal.Open(
+        "NETCDF:data/netcdf/var_with_geoloc_array_but_no_coordinates_attr.nc:NO2"
+    )
+    got_md = ds.GetMetadata("GEOLOCATION")
+    assert got_md
+    assert (
+        got_md["X_DATASET"]
+        == 'NETCDF:"data/netcdf/var_with_geoloc_array_but_no_coordinates_attr.nc":lon'
+    )

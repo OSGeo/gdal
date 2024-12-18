@@ -419,6 +419,7 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
     if (STARTS_WITH_CI(pszName, "GeoJSON:"))
         pszName += strlen("GeoJSON:");
     pszName = CPLGetBasename(pszName);
+    pszName = OGRGeoJSONLayer::GetValidLayerName(pszName);
 
     OGRGeoJSONLayer *poLayer = new OGRGeoJSONLayer(
         pszName, nullptr, OGRGeoJSONLayer::DefaultGeometryType, poDS, this);
@@ -930,9 +931,8 @@ void OGRGeoJSONReader::ReadLayer(OGRGeoJSONDataSource *poDS,
                 pszName = CPLGetBasename(pszDesc);
             }
         }
-        if (pszName == nullptr)
-            pszName = OGRGeoJSONLayer::DefaultName;
     }
+    pszName = OGRGeoJSONLayer::GetValidLayerName(pszName);
 
     OGRGeoJSONLayer *poLayer = new OGRGeoJSONLayer(
         pszName, nullptr, OGRGeoJSONLayer::DefaultGeometryType, poDS, nullptr);

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Definition of classes for OGR .dxf driver.
@@ -959,6 +958,9 @@ class OGRDXFWriterDS final : public GDALDataset
 
     bool m_bHeaderFileIsTemp = false;
     bool m_bTrailerFileIsTemp = false;
+    OGRSpatialReference m_oSRS{};
+    std::string m_osINSUNITS = "AUTO";
+    std::string m_osMEASUREMENT = "HEADER_VALUE";
 
   public:
     OGRDXFWriterDS();

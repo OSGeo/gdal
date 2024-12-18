@@ -347,8 +347,22 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
                         OGRGeometryToHexEWKB(poGeom, poGFldDefn->m_nSRSId,
                                              m_nPostGISMajor, m_nPostGISMinor);
                     osCommand += "'";
-                    if (pszHex)
+                    if (!pszHex || pszHex[0] == 0)
+                    {
+                        CPLFree(pszHex);
+                        return false;
+                    }
+                    try
+                    {
                         osCommand += pszHex;
+                    }
+                    catch (const std::bad_alloc &)
+                    {
+                        CPLError(CE_Failure, CPLE_OutOfMemory,
+                                 "Out of memory: too large geometry");
+                        CPLFree(pszHex);
+                        return false;
+                    }
                     osCommand += "'";
                     CPLFree(pszHex);
                 }
@@ -356,20 +370,31 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
                 {
                     poGeom->exportToWkt(&pszWKT, wkbVariantIso);
 
-                    if (pszWKT != nullptr)
+                    if (!pszWKT)
                     {
-                        osCommand += CPLString().Printf(
-                            "GeomFromEWKT('SRID=%d;%s'::TEXT) ",
-                            poGFldDefn->m_nSRSId, pszWKT);
-                        CPLFree(pszWKT);
+                        return false;
                     }
-                    else
-                        osCommand += "''";
+                    try
+                    {
+                        osCommand += CPLSPrintf("GeomFromEWKT('SRID=%d;",
+                                                poGFldDefn->m_nSRSId);
+                        osCommand += pszWKT;
+                        osCommand += "'::TEXT) ";
+                    }
+                    catch (const std::bad_alloc &)
+                    {
+                        CPLError(CE_Failure, CPLE_OutOfMemory,
+                                 "Out of memory: too large geometry");
+                        CPLFree(pszWKT);
+                        return false;
+                    }
+                    CPLFree(pszWKT);
                 }
 
                 bNeedComma = true;
             }
         }
+        return true;
     };
 
     /* Set the FID */
@@ -382,7 +407,10 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
     }
 
     if (m_bGeomColumnPositionImmediate)
-        AddGeomFieldsValue();
+    {
+        if (!AddGeomFieldsValue())
+            return OGRERR_FAILURE;
+    }
 
     for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++)
     {
@@ -401,7 +429,10 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
     }
 
     if (!m_bGeomColumnPositionImmediate)
-        AddGeomFieldsValue();
+    {
+        if (!AddGeomFieldsValue())
+            return OGRERR_FAILURE;
+    }
 
     osCommand += ")";
 
@@ -440,7 +471,8 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
                 poGeometry /* && (bHasWkb || bHasPostGISGeometry || bHasPostGISGeography) */)
             {
                 OGRPGDumpGeomFieldDefn *poGFldDefn =
-                    (OGRPGDumpGeomFieldDefn *)poFeature->GetGeomFieldDefnRef(i);
+                    cpl::down_cast<OGRPGDumpGeomFieldDefn *>(
+                        poFeature->GetGeomFieldDefnRef(i));
 
                 poGeometry->closeRings();
                 poGeometry->set3D(poGFldDefn->m_nGeometryTypeFlags &
@@ -455,20 +487,32 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
 
             if (!osCommand.empty())
                 osCommand += "\t";
-            if (pszGeom)
+            if (!pszGeom || pszGeom[0] == 0)
+            {
+                CPLFree(pszGeom);
+                return false;
+            }
+            try
             {
                 osCommand += pszGeom;
-                CPLFree(pszGeom);
             }
-            else
+            catch (const std::bad_alloc &)
             {
-                osCommand += "\\N";
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Out of memory: too large geometry");
+                CPLFree(pszGeom);
+                return false;
             }
+            CPLFree(pszGeom);
         }
+        return true;
     };
 
     if (m_bGeomColumnPositionImmediate)
-        AddGeomFieldsValue();
+    {
+        if (!AddGeomFieldsValue())
+            return OGRERR_FAILURE;
+    }
 
     OGRPGCommonAppendCopyRegularFields(
         osCommand, poFeature, m_pszFIDColumn,
@@ -476,7 +520,10 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
         OGRPGDumpEscapeStringWithUserData, nullptr);
 
     if (!m_bGeomColumnPositionImmediate)
-        AddGeomFieldsValue();
+    {
+        if (!AddGeomFieldsValue())
+            return OGRERR_FAILURE;
+    }
 
     /* ------------------------------------------------------------ */
     /*      Execute the copy.                                       */

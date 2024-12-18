@@ -1597,6 +1597,11 @@ DIR CPL_DLL *opendir(const char *name)
         {
             VSIDIRPreload *mydir =
                 static_cast<VSIDIRPreload *>(malloc(sizeof(VSIDIRPreload)));
+            if (!mydir)
+            {
+                CSLDestroy(papszDir);
+                return nullptr;
+            }
             mydir->pszDirname = CPLStrdup(name);
             mydir->papszDir = papszDir;
             mydir->nIter = 0;

@@ -4712,6 +4712,21 @@ static GDALDatasetH GDALWarpCreateOutput(
             aosCreateOptions.FetchNameValue("PHOTOMETRIC") == nullptr)
         {
             aosCreateOptions.SetNameValue("PHOTOMETRIC", "RGB");
+
+            // Preserve potential ALPHA=PREMULTIPLIED from source alpha band
+            if (aosCreateOptions.FetchNameValue("ALPHA") == nullptr &&
+                apeColorInterpretations.size() == 4 &&
+                apeColorInterpretations[3] == GCI_AlphaBand &&
+                GDALGetRasterCount(pahSrcDS[0]) == 4)
+            {
+                const char *pszAlpha =
+                    GDALGetMetadataItem(GDALGetRasterBand(pahSrcDS[0], 4),
+                                        "ALPHA", "IMAGE_STRUCTURE");
+                if (pszAlpha)
+                {
+                    aosCreateOptions.SetNameValue("ALPHA", pszAlpha);
+                }
+            }
         }
 
         /* The GTiff driver now supports writing band color interpretation */

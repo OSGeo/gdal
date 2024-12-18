@@ -6,6 +6,25 @@ add_library(
   commonutils.h
   gdal_utils.h
   gdalargumentparser.cpp
+  gdalalg_convert.cpp
+  gdalalg_info.cpp
+  gdalalg_main.cpp
+  gdalalg_pipeline.cpp
+  gdalalg_raster.cpp
+  gdalalg_raster_info.cpp
+  gdalalg_raster_convert.cpp
+  gdalalg_raster_pipeline.cpp
+  gdalalg_raster_read.cpp
+  gdalalg_raster_reproject.cpp
+  gdalalg_raster_write.cpp
+  gdalalg_vector.cpp
+  gdalalg_vector_info.cpp
+  gdalalg_vector_convert.cpp
+  gdalalg_vector_pipeline.cpp
+  gdalalg_vector_read.cpp
+  gdalalg_vector_filter.cpp
+  gdalalg_vector_reproject.cpp
+  gdalalg_vector_write.cpp
   gdalinfo_lib.cpp
   gdalbuildvrt_lib.cpp
   gdal_grid_lib.cpp
@@ -49,6 +68,7 @@ target_public_header(TARGET ${GDAL_LIB_TARGET_NAME} HEADERS gdal_utils.h)
 
 if (BUILD_APPS)
   # Default Apps
+  add_executable(gdal gdal_utils_priv.h gdal.cpp)
   add_executable(gdalinfo gdal_utils_priv.h gdalinfo_bin.cpp)
   add_executable(gdalbuildvrt gdal_utils_priv.h gdalbuildvrt_bin.cpp)
   add_executable(gdaladdo gdal_utils_priv.h gdaladdo.cpp)
@@ -89,6 +109,7 @@ if (BUILD_APPS)
   add_dependencies(utils_common generate_gdal_version_h)
 
   set(APPS_TARGETS
+      gdal
       gdalinfo
       gdalbuildvrt
       gdaladdo

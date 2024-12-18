@@ -1,6 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test basic read support for a all datatypes from a HDF file.
@@ -365,26 +364,26 @@ def test_hdf4_read_online_8():
 
     # 5 MB
     gdaltest.download_or_skip(
-        "https://e4ftl01.cr.usgs.gov/MOLT/MOD13Q1.006/2006.06.10/MOD13Q1.A2006161.h34v09.006.2015161173716.hdf",
-        "MOD13Q1.A2006161.h34v09.006.2015161173716.hdf",
+        "https://e4ftl01.cr.usgs.gov/MOLT/MOD13Q1.061/2006.06.10/MOD13Q1.A2006161.h34v09.061.2020265043931.hdf",
+        "MOD13Q1.A2006161.h34v09.061.2020265043931.hdf",
     )
 
     tst = gdaltest.GDALTest(
         "HDF4Image",
-        "HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h34v09.006.2015161173716.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI",
+        "HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h34v09.061.2020265043931.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI",
         1,
-        44174,
+        45111,
         filename_absolute=1,
     )
 
     tst.testOpen()
 
     ds = gdal.Open(
-        "HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h34v09.006.2015161173716.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI"
+        "HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h34v09.061.2020265043931.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI"
     )
 
     cs = ds.GetRasterBand(1).Checksum()
-    assert cs == 44174, "did not get expected checksum"
+    assert cs == 45111, "did not get expected checksum"
 
     if "GetBlockSize" in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Spheroid classes
  * Purpose:  Provide spheroid lookup table base classes.

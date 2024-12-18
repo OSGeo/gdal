@@ -160,7 +160,7 @@ the health of the project:
 
     .. container:: horizontal-logo
 
-        `T-Kartor USA <https://www.t-kartorusa.com/>`__
+        `T-Kartor <https://www.t-kartor.com/>`__
 
     .. container:: horizontal-logo
 

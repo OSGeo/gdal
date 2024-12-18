@@ -188,12 +188,6 @@ static const char *pszCREATE_GPKG_GEOMETRY_COLUMNS =
     "(srs_id)"
     ")";
 
-/* Only recent versions of SQLite will let us muck with application_id */
-/* via a PRAGMA statement, so we have to write directly into the */
-/* file header here. */
-/* We do this at the *end* of initialization so that there is */
-/* data to write down to a file, and we will have a writable file */
-/* once we close the SQLite connection */
 OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
 {
     CPLAssert(hDB != nullptr);
@@ -1679,8 +1673,10 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                      "is_in_gpkg_contents, 'table' AS object_type "
                      "FROM gpkgext_relations WHERE "
                      "lower(mapping_table_name) NOT IN (SELECT "
-                     "lower(table_name) FROM "
-                     "gpkg_contents)";
+                     "lower(table_name) FROM gpkg_contents) AND "
+                     "EXISTS (SELECT 1 FROM sqlite_master WHERE "
+                     "type IN ('table', 'view') AND "
+                     "lower(name) = lower(mapping_table_name))";
         }
         if (EQUAL(pszListAllTables, "YES") ||
             (!bHasASpatialOrAttributes && EQUAL(pszListAllTables, "AUTO")))
@@ -2185,7 +2181,9 @@ void GDALGeoPackageDataset::LoadRelationshipsUsingRelatedTablesExtension() const
             const int nMappingTableCount = SQLGetInteger(hDB, pszSQL, nullptr);
             sqlite3_free(pszSQL);
 
-            if (nMappingTableCount < 1)
+            if (nMappingTableCount < 1 &&
+                !const_cast<GDALGeoPackageDataset *>(this)->GetLayerByName(
+                    pszMappingTableName))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Relationship mapping table %s does not exist",

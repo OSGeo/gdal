@@ -1793,6 +1793,7 @@ bool OGROpenFileGDBDataSource::UpdateFieldDomain(
                 asFields[iDefinition].String = CPLStrdup(osXML.c_str());
 
                 const char *pszNewTypeUUID = "";
+                CPL_IGNORE_RET_VAL(pszNewTypeUUID);  // Make CSA happy
                 switch (domain->GetDomainType())
                 {
                     case OFDT_CODED:
@@ -1880,6 +1881,9 @@ bool OGROpenFileGDBDataSource::AddRelationship(
     std::unique_ptr<GDALRelationship> &&relationship,
     std::string &failureReason)
 {
+    if (FlushCache(false) != CE_None)
+        return false;
+
     const std::string relationshipName(relationship->GetName());
     if (eAccess != GA_Update)
     {

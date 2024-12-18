@@ -52,9 +52,17 @@
 #include "ogr_geos.h"
 #endif
 
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#define USE_SSE2
+
+#include "gdalsse_priv.h"
+
 // We restrict to 64bit processors because they are guaranteed to have SSE2.
 // Could possibly be used too on 32bit, but we would need to check at runtime.
-#if defined(__x86_64) || defined(_M_X64)
+#elif defined(__x86_64) || defined(_M_X64)
+#define USE_SSE2
+
 #include "gdalsse_priv.h"
 
 #if __SSE4_1__
@@ -2971,7 +2979,7 @@ static bool GWKCubicResample4Sample(const GDALWarpKernel *poWK, int iBand,
     return true;
 }
 
-#if defined(__x86_64) || defined(_M_X64)
+#ifdef USE_SSE2
 
 /************************************************************************/
 /*                           XMMLoad4Values()                           */
@@ -2987,7 +2995,7 @@ static CPL_INLINE __m128 XMMLoad4Values(const GByte *ptr)
     __m128i xmm_i = _mm_cvtsi32_si128(i);
     // Zero extend 4 packed unsigned 8-bit integers in a to packed
     // 32-bit integers.
-#if __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_cvtepu8_epi32(xmm_i);
 #else
     xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
@@ -3003,7 +3011,7 @@ static CPL_INLINE __m128 XMMLoad4Values(const GUInt16 *ptr)
     __m128i xmm_i = _mm_cvtsi64_si128(i);
     // Zero extend 4 packed unsigned 16-bit integers in a to packed
     // 32-bit integers.
-#if __SSE4_1__
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_cvtepu16_epi32(xmm_i);
 #else
     xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
@@ -3017,7 +3025,7 @@ static CPL_INLINE __m128 XMMLoad4Values(const GUInt16 *ptr)
 /*  Return the sum of the 4 floating points of the register.            */
 /************************************************************************/
 
-#if __SSE3__
+#if defined(__SSE3__) || defined(USE_NEON_OPTIMIZATIONS)
 static CPL_INLINE float XMMHorizontalAdd(__m128 v)
 {
     __m128 shuf = _mm_movehdup_ps(v);   // (v3   , v3   , v1   , v1)
@@ -3037,7 +3045,7 @@ static CPL_INLINE float XMMHorizontalAdd(__m128 v)
 }
 #endif
 
-#endif  // (defined(__x86_64) || defined(_M_X64))
+#endif  // define USE_SSE2
 
 /************************************************************************/
 /*            GWKCubicResampleSrcMaskIsDensity4SampleRealT()            */
@@ -3067,7 +3075,7 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
                                           pdfDensity, pdfReal, adfImagIgnored);
     }
 
-#if defined(USE_SSE_CUBIC_IMPL) && (defined(__x86_64) || defined(_M_X64))
+#if defined(USE_SSE_CUBIC_IMPL) && defined(USE_SSE2)
     const float fDeltaX = static_cast<float>(dfSrcX) - 0.5f - iSrcX;
     const float fDeltaY = static_cast<float>(dfSrcY) - 0.5f - iSrcY;
 
@@ -3137,7 +3145,7 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
     if (fabs(*pdfReal - static_cast<int>(*pdfReal) - 0.5) > .007)
         return true;
 
-#endif  // defined(USE_SSE_CUBIC_IMPL) && (defined(__x86_64) || defined(_M_X64))
+#endif  // defined(USE_SSE_CUBIC_IMPL) && defined(USE_SSE2)
 
     const double dfDeltaX = dfSrcX - 0.5 - iSrcX;
     const double dfDeltaY = dfSrcY - 0.5 - iSrcY;
@@ -3154,7 +3162,7 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
     for (GPtrDiff_t i = -1; i < 3; i++)
     {
         const GPtrDiff_t iOffset = iSrcOffset + i * poWK->nSrcXSize - 1;
-#if !(defined(USE_SSE_CUBIC_IMPL) && (defined(__x86_64) || defined(_M_X64)))
+#if !(defined(USE_SSE_CUBIC_IMPL) && defined(USE_SSE2))
         if (poWK->pafUnifiedSrcDensity[iOffset + 0] < SRC_DENSITY_THRESHOLD ||
             poWK->pafUnifiedSrcDensity[iOffset + 1] < SRC_DENSITY_THRESHOLD ||
             poWK->pafUnifiedSrcDensity[iOffset + 2] < SRC_DENSITY_THRESHOLD ||
@@ -4167,7 +4175,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
             reinterpret_cast<const GByte *>(poWK->papabySrcImage[iBand]);
         pSrc += iSrcOffset + static_cast<GPtrDiff_t>(jMin) * nSrcXSize;
 
-#if defined(__x86_64) || defined(_M_X64)
+#if defined(USE_SSE2)
         if (iMax - iMin + 1 == 6)
         {
             // This is just an optimized version of the general case in
@@ -4530,7 +4538,7 @@ GWKResampleNoMasksT(const GDALWarpKernel *poWK, int iBand, double dfSrcX,
 
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
-#if defined(__x86_64) || defined(_M_X64)
+#if defined(USE_SSE2)
 
 /************************************************************************/
 /*                    GWKResampleNoMasks_SSE2_T()                       */
@@ -4800,7 +4808,7 @@ bool GWKResampleNoMasksT<double>(const GDALWarpKernel *poWK, int iBand,
 
 #endif /* INSTANTIATE_FLOAT64_SSE2_IMPL */
 
-#endif /* defined(__x86_64) || defined(_M_X64) */
+#endif /* defined(USE_SSE2) */
 
 /************************************************************************/
 /*                     GWKRoundSourceCoordinates()                      */
@@ -6120,7 +6128,7 @@ static CPLErr GWKRealCase(GDALWarpKernel *poWK)
 
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
 /* and enough SSE registries */
-#if defined(__x86_64) || defined(_M_X64)
+#if defined(USE_SSE2)
 
 static inline float Convolute4x4(const __m128 row0, const __m128 row1,
                                  const __m128 row2, const __m128 row3,
@@ -6247,7 +6255,7 @@ static void GWKCubicResampleNoMasks4MultiBandT(const GDALWarpKernel *poWK,
         poWK->pafDstDensity[iDstOffset] = 1.0f;
 }
 
-#endif  // defined(__x86_64) || defined(_M_X64)
+#endif  // defined(USE_SSE2)
 
 /************************************************************************/
 /*                GWKResampleNoMasksOrDstDensityOnlyThreadInternal()    */
@@ -6353,7 +6361,7 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal(void *pData)
             const GPtrDiff_t iDstOffset =
                 iDstX + static_cast<GPtrDiff_t>(iDstY) * nDstXSize;
 
-#if defined(__x86_64) || defined(_M_X64)
+#if defined(USE_SSE2)
             if constexpr (bUse4SamplesFormula && eResample == GRA_Cubic &&
                           (std::is_same<T, GByte>::value ||
                            std::is_same<T, GUInt16>::value))
@@ -6367,7 +6375,7 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal(void *pData)
                     continue;
                 }
             }
-#endif  // defined(__x86_64) || defined(_M_X64)
+#endif  // defined(USE_SSE2)
 
             [[maybe_unused]] double dfInvWeights = 0;
             for (int iBand = 0; iBand < poWK->nBands; iBand++)
