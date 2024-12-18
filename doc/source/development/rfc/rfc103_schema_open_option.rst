@@ -245,9 +245,9 @@ Related issues and PRs
 - Candidate implementation (GML): https://github.com/OSGeo/gdal/pull/11334
 
 - PRs for the other drivers:
-    - CSV: htpps://github.com/OSGeo/gdal/pull/11479
-    - GeoJSON: htpps://github.com/OSGeo/gdal/pull/11464
-    - SQLite: htpps://github.com/OSGeo/gdal/pull/11499
+    - htpps://github.com/OSGeo/gdal/pull/11479: CSV
+    - htpps://github.com/OSGeo/gdal/pull/11464: GeoJSON
+    - htpps://github.com/OSGeo/gdal/pull/11499: SQLite
 
 Voting history
 --------------
