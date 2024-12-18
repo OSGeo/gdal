@@ -253,3 +253,10 @@ Voting history
 --------------
 
 +1 from PSC members JukkaR, JavierJS, HowardB and EvenR
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    CSV
+    GeoJSON
+    SQLite
