@@ -60,6 +60,20 @@ class OGRGeoJSONBaseReader
     void SetArrayAsString(bool bArrayAsString);
     void SetDateAsString(bool bDateAsString);
 
+    enum class ForeignMemberProcessing
+    {
+        AUTO,
+        ALL,
+        NONE,
+        STAC,
+    };
+
+    void
+    SetForeignMemberProcessing(ForeignMemberProcessing eForeignMemberProcessing)
+    {
+        eForeignMemberProcessing_ = eForeignMemberProcessing;
+    }
+
     bool GenerateFeatureDefn(
         std::map<std::string, int> &oMapFieldNameToIdx,
         std::vector<std::unique_ptr<OGRFieldDefn>> &apoFieldDefn,
@@ -84,6 +98,8 @@ class OGRGeoJSONBaseReader
     bool bStoreNativeData_ = false;
     bool bArrayAsString_ = false;
     bool bDateAsString_ = false;
+    ForeignMemberProcessing eForeignMemberProcessing_ =
+        ForeignMemberProcessing::AUTO;
 
   private:
     std::set<int> aoSetUndeterminedTypeFields_;
