@@ -199,6 +199,15 @@ The following open options are supported:
 -  .. oo:: TABLES
 
       Restricted set of tables to list (comma separated).
+      Each table name can be qualified by its schema, like ``schema_name.table_name``.
+      For tables with multiple geometry columns, the ``table_name(geometry_column)``
+      syntax can be used.
+
+      Starting with GDAL 3.11, if the table name itself contains an open parenthesis ``(``,
+      or a backslash character ``\``, they must be escaped with a preceding backslash
+      character. e.g. ``table_name \(with parenthesis)``.
+      If that table name contains a comma, the table name must be quoted with
+      double quotes. e.g. ``first_table,"second table, with comma"``.
 
 -  .. oo:: LIST_ALL_TABLES
       :choices: YES, NO

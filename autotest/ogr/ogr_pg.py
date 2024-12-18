@@ -1622,6 +1622,47 @@ def test_ogr_pg_31(pg_ds):
 
 
 ###############################################################################
+# Test the TABLES open option
+
+
+def test_ogr_pg_tables_open_option(pg_ds):
+
+    pg_ds.CreateLayer(
+        "test (with parenthesis and \\)",
+        geom_type=ogr.wkbPoint,
+    )
+    pg_ds.CreateLayer(
+        "test with, comma",
+        geom_type=ogr.wkbPoint,
+    )
+    pg_ds.FlushCache()
+
+    with gdal.OpenEx(
+        pg_ds.GetDescription(),
+        gdal.OF_VECTOR,
+        open_options=["TABLES=test \\(with parenthesis and \\\\)"],
+    ) as ds:
+        assert ds.GetLayerCount() == 1
+        assert ds.GetLayer(0).GetName() == "test (with parenthesis and \\)"
+
+    with gdal.OpenEx(
+        pg_ds.GetDescription(),
+        gdal.OF_VECTOR,
+        open_options=["TABLES=test \\(with parenthesis and \\\\)(geometry)"],
+    ) as ds:
+        assert ds.GetLayerCount() == 1
+        assert ds.GetLayer(0).GetName() == "test (with parenthesis and \\)"
+
+    with gdal.OpenEx(
+        pg_ds.GetDescription(),
+        gdal.OF_VECTOR,
+        open_options=['TABLES="test with, comma"'],
+    ) as ds:
+        assert ds.GetLayerCount() == 1
+        assert ds.GetLayer(0).GetName() == "test with, comma"
+
+
+###############################################################################
 # Test approximate srtext (#2123, #3508)
 
 
