@@ -2157,6 +2157,14 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                 CSLConstList papszVectorTranslateArguments,
                                 char ***ppapszFailureReasons);
 
+    /**
+     * \brief Returns TRUE if the given open option is supported by the driver.
+     * @param pszOpenOptionName name of the open option to be checked
+     * @return TRUE if the driver supports the open option
+     * @since GDAL 3.11
+     */
+    bool HasOpenOption(const char *pszOpenOptionName) const;
+
     GDALDataset *
     VectorTranslateFrom(const char *pszDestName, GDALDataset *poSourceDS,
                         CSLConstList papszVectorTranslateArguments,
