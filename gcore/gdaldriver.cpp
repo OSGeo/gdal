@@ -1478,6 +1478,23 @@ bool GDALDriver::CanVectorTranslateFrom(
     return bRet;
 }
 
+bool GDALDriver::HasOpenOption(const char *pszOpenOptionName) const
+{
+    if (pszOpenOptionName == nullptr)
+        return false;
+
+    auto pszOOMd{const_cast<GDALDriver *>(this)->GetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST)};
+    if (pszOOMd == nullptr)
+        return false;
+
+    // Const cast is safe here since we are only reading the metadata
+    const std::string osOpenOptions{pszOOMd};
+    const std::string osKey =
+        "<Option name='" + std::string(pszOpenOptionName) + "'";
+    return osOpenOptions.find(osKey) != std::string::npos;
+}
+
 /************************************************************************/
 /*                         VectorTranslateFrom()                        */
 /************************************************************************/
@@ -1983,6 +2000,23 @@ CPLErr CPL_STDCALL GDALCopyDatasetFiles(GDALDriverH hDriver,
     }
 
     return GDALDriver::FromHandle(hDriver)->CopyFiles(pszNewName, pszOldName);
+}
+
+/************************************************************************/
+/*                       GDALDriverHasOpenOption()                      */
+/************************************************************************/
+
+/**
+ * \brief Returns TRUE if the given open option is supported by the driver.
+ * @param hDriver the handle of the driver
+ * @param pszOpenOptionName name of the open option to be checked
+ * @return TRUE if the driver supports the open option
+ * @since GDAL 3.11
+ */
+bool GDALDriverHasOpenOption(GDALDriverH hDriver, const char *pszOpenOptionName)
+{
+    VALIDATE_POINTER1(hDriver, "GDALDriverHasOpenOption", false);
+    return GDALDriver::FromHandle(hDriver)->HasOpenOption(pszOpenOptionName);
 }
 
 /************************************************************************/
