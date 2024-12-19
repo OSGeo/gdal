@@ -1031,6 +1031,24 @@ def test_misc_general_cmd_line_processor(tmp_path):
 
 
 ###############################################################################
+# Test GDALDriverHasOpenOption()
+
+
+@pytest.mark.require_driver("GTiff")
+@pytest.mark.parametrize(
+    "driver_name,open_option,expected",
+    [
+        ("GTiff", "XXXX", False),
+        ("GTiff", "GEOTIFF_KEYS_FLAVOR", True),
+    ],
+)
+def test_misc_gdal_driver_has_open_option(driver_name, open_option, expected):
+    driver = gdal.GetDriverByName(driver_name)
+    assert driver is not None
+    assert driver.HasOpenOption(open_option) == expected
+
+
+###############################################################################
 
 
 def test_misc_cleanup():
