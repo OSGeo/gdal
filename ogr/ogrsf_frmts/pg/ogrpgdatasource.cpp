@@ -920,60 +920,109 @@ void OGRPGDataSource::LoadTables()
 
     if (pszForcedTables)
     {
-        char **papszTableList = CSLTokenizeString2(pszForcedTables, ",", 0);
+        const CPLStringList aosTableList(
+            CSLTokenizeString2(pszForcedTables, ",", CSLT_HONOURSTRINGS));
 
-        for (int i = 0; i < CSLCount(papszTableList); i++)
+        for (const char *pszTable : aosTableList)
         {
             // Get schema and table name
-            char **papszQualifiedParts =
-                CSLTokenizeString2(papszTableList[i], ".", 0);
-            int nParts = CSLCount(papszQualifiedParts);
+            const CPLStringList aosQualifiedParts(
+                CSLTokenizeString2(pszTable, ".", CSLT_HONOURSTRINGS));
+            const int nParts = aosQualifiedParts.size();
 
             if (nParts == 1 || nParts == 2)
             {
                 /* Find the geometry column name if specified */
-                char *pszGeomColumnName = nullptr;
-                char *pos = strchr(
-                    papszQualifiedParts[CSLCount(papszQualifiedParts) - 1],
-                    '(');
-                if (pos != nullptr)
+                std::string osTableName;
+                std::string osGeomColumnName;
+                const char *pszTablePart = aosQualifiedParts[nParts - 1];
+                int j = 0;
+                for (; pszTablePart[j]; ++j)
                 {
-                    *pos = '\0';
-                    pszGeomColumnName = pos + 1;
-                    int len = static_cast<int>(strlen(pszGeomColumnName));
-                    if (len > 0)
-                        pszGeomColumnName[len - 1] = '\0';
+                    if (pszTablePart[j] == '\\')
+                    {
+                        if (pszTablePart[j + 1] == '\\' ||
+                            pszTablePart[j + 1] == '(')
+                        {
+                            ++j;
+                            osTableName += pszTablePart[j];
+                        }
+                        else
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Unexpected character after backslash at "
+                                     "offset %d of %s",
+                                     j, pszTablePart);
+                        }
+                    }
+                    else if (pszTablePart[j] == '(')
+                    {
+                        // Now parse the geometry column name
+                        break;
+                    }
+                    else
+                    {
+                        osTableName += pszTablePart[j];
+                    }
+                }
+
+                if (pszTablePart[j] == '(')
+                {
+                    // Now parse the geometry column name
+                    ++j;
+                    for (; pszTablePart[j]; ++j)
+                    {
+                        if (pszTablePart[j] == '\\')
+                        {
+                            if (pszTablePart[j + 1] == '\\' ||
+                                pszTablePart[j + 1] == '(')
+                            {
+                                ++j;
+                                osGeomColumnName += pszTablePart[j];
+                            }
+                            else
+                            {
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "Unexpected character after backslash "
+                                         "at offset %d of %s",
+                                         j, pszTablePart);
+                            }
+                        }
+                        else
+                        {
+                            osGeomColumnName += pszTablePart[j];
+                        }
+                    }
+                    if (!osGeomColumnName.empty() &&
+                        osGeomColumnName.back() == ')')
+                        osGeomColumnName.pop_back();
                 }
 
                 papsTables = static_cast<PGTableEntry **>(CPLRealloc(
                     papsTables, sizeof(PGTableEntry *) * (nTableCount + 1)));
                 papsTables[nTableCount] = static_cast<PGTableEntry *>(
                     CPLCalloc(1, sizeof(PGTableEntry)));
-                if (pszGeomColumnName)
+                if (!osGeomColumnName.empty())
                     OGRPGTableEntryAddGeomColumn(papsTables[nTableCount],
-                                                 pszGeomColumnName);
+                                                 osGeomColumnName.c_str());
 
                 if (nParts == 2)
                 {
                     papsTables[nTableCount]->pszSchemaName =
-                        CPLStrdup(papszQualifiedParts[0]);
+                        CPLStrdup(aosQualifiedParts[0]);
                     papsTables[nTableCount]->pszTableName =
-                        CPLStrdup(papszQualifiedParts[1]);
+                        CPLStrdup(osTableName.c_str());
                 }
                 else
                 {
                     papsTables[nTableCount]->pszSchemaName =
                         CPLStrdup(osActiveSchema.c_str());
                     papsTables[nTableCount]->pszTableName =
-                        CPLStrdup(papszQualifiedParts[0]);
+                        CPLStrdup(osTableName.c_str());
                 }
                 nTableCount++;
             }
-
-            CSLDestroy(papszQualifiedParts);
         }
-
-        CSLDestroy(papszTableList);
     }
 
     /* -------------------------------------------------------------------- */
