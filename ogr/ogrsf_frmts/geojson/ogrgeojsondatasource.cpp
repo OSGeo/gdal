@@ -1225,6 +1225,29 @@ void OGRGeoJSONDataSource::SetOptionsOnReader(GDALOpenInfo *poOpenInfo,
     poReader->SetDateAsString(CPLTestBool(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "DATE_AS_STRING",
         CPLGetConfigOption("OGR_GEOJSON_DATE_AS_STRING", "NO"))));
+
+    const char *pszForeignMembers = CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "FOREIGN_MEMBERS", "AUTO");
+    if (EQUAL(pszForeignMembers, "AUTO"))
+    {
+        poReader->SetForeignMemberProcessing(
+            OGRGeoJSONBaseReader::ForeignMemberProcessing::AUTO);
+    }
+    else if (EQUAL(pszForeignMembers, "ALL"))
+    {
+        poReader->SetForeignMemberProcessing(
+            OGRGeoJSONBaseReader::ForeignMemberProcessing::ALL);
+    }
+    else if (EQUAL(pszForeignMembers, "NONE"))
+    {
+        poReader->SetForeignMemberProcessing(
+            OGRGeoJSONBaseReader::ForeignMemberProcessing::NONE);
+    }
+    else if (EQUAL(pszForeignMembers, "STAC"))
+    {
+        poReader->SetForeignMemberProcessing(
+            OGRGeoJSONBaseReader::ForeignMemberProcessing::STAC);
+    }
 }
 
 /************************************************************************/
