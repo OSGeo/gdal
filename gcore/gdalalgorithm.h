@@ -449,7 +449,7 @@ class CPL_DLL GDALArgDatasetValue final
 
     /** Get which type of dataset is allowed / generated.
      * Binary-or combination of GDAL_OF_RASTER, GDAL_OF_VECTOR and
-     * GDAL_OF_MULTIDIM_RASTER.
+     * GDAL_OF_MULTIDIM_RASTER, possibly combined with GDAL_OF_UPDATE.
      */
     GDALArgDatasetValueType GetType() const
     {
@@ -1583,6 +1583,13 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
         return *this;
     }
 
+    /** Register an action to validate that the argument value is a valid
+     * CRS definition.
+     * @param noneAllowed Set to true to mean that "null" or "none" are allowed
+     * to mean to unset CRS.
+     */
+    GDALInConstructionAlgorithmArg &SetIsCRSArg(bool noneAllowed = false);
+
   private:
     GDALAlgorithm *const m_owner;
 
@@ -2060,6 +2067,9 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Add --progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
 
+    /** Validation function to use for key=value type of arguments. */
+    bool ValidateKeyValue(const GDALAlgorithmArg &arg) const;
+
     //! @cond Doxygen_Suppress
     void AddAliasFor(GDALInConstructionAlgorithmArg *arg,
                      const std::string &alias);
@@ -2112,7 +2122,6 @@ class CPL_DLL GDALAlgorithmRegistry
             &inConstructionValues);
 
     bool ValidateFormat(const GDALAlgorithmArg &arg) const;
-    bool ValidateKeyValue(const GDALAlgorithmArg &arg) const;
 
     virtual bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 

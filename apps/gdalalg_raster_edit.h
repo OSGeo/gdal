@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "reproject" step of "raster pipeline"
+ * Purpose:  "edit" step of "raster pipeline"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -10,58 +10,56 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_RASTER_REPROJECT_INCLUDED
-#define GDALALG_RASTER_REPROJECT_INCLUDED
+#ifndef GDALALG_RASTER_EDIT_INCLUDED
+#define GDALALG_RASTER_EDIT_INCLUDED
 
 #include "gdalalg_raster_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALRasterReprojectAlgorithm                      */
+/*                       GDALRasterEditAlgorithm                        */
 /************************************************************************/
 
-class GDALRasterReprojectAlgorithm /* non final */
+class GDALRasterEditAlgorithm /* non final */
     : public GDALRasterPipelineStepAlgorithm
 {
   public:
-    static constexpr const char *NAME = "reproject";
-    static constexpr const char *DESCRIPTION = "Reproject a raster dataset.";
-    static constexpr const char *HELP_URL =
-        "/programs/gdal_raster_reproject.html";
+    static constexpr const char *NAME = "edit";
+    static constexpr const char *DESCRIPTION = "Edit a raster dataset.";
+    static constexpr const char *HELP_URL = "/programs/gdal_raster_edit.html";
 
     static std::vector<std::string> GetAliases()
     {
         return {};
     }
 
-    explicit GDALRasterReprojectAlgorithm(bool standaloneStep = false);
+    explicit GDALRasterEditAlgorithm(bool standaloneStep = false);
 
   private:
+    bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
     bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    std::string m_srsCrs{};
-    std::string m_dstCrs{};
-    std::string m_resampling{};
-    std::vector<double> m_resolution{};
+    GDALArgDatasetValue m_dataset{};  // standalone mode only
+    std::string m_overrideCrs{};
     std::vector<double> m_extent{};
-    bool m_targetAlignedPixels = false;
+    std::vector<std::string> m_metadata{};
+    std::vector<std::string> m_unsetMetadata{};
 };
 
 /************************************************************************/
-/*                 GDALRasterReprojectAlgorithmStandalone               */
+/*                     GDALRasterEditAlgorithmStandalone                */
 /************************************************************************/
 
-class GDALRasterReprojectAlgorithmStandalone final
-    : public GDALRasterReprojectAlgorithm
+class GDALRasterEditAlgorithmStandalone final : public GDALRasterEditAlgorithm
 {
   public:
-    GDALRasterReprojectAlgorithmStandalone()
-        : GDALRasterReprojectAlgorithm(/* standaloneStep = */ true)
+    GDALRasterEditAlgorithmStandalone()
+        : GDALRasterEditAlgorithm(/* standaloneStep = */ true)
     {
     }
 };
 
 //! @endcond
 
-#endif /* GDALALG_RASTER_REPROJECT_INCLUDED */
+#endif /* GDALALG_RASTER_EDIT_INCLUDED */
