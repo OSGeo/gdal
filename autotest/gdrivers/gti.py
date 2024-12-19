@@ -2991,7 +2991,16 @@ def test_gti_stac_geoparquet():
 
 @pytest.mark.require_curl()
 @pytest.mark.require_driver("GeoJSON")
-def test_gti_stac_geoparquet_sentinel2():
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "sentinel2_stac_geoparquet_proj_code.geojson",
+        "sentinel2_stac_geoparquet_proj_epsg.geojson",
+        "sentinel2_stac_geoparquet_proj_wkt2.geojson",
+        "sentinel2_stac_geoparquet_proj_projjson.geojson",
+    ],
+)
+def test_gti_stac_geoparquet_sentinel2(filename):
 
     url = "https://e84-earth-search-sentinel-data.s3.us-west-2.amazonaws.com/sentinel-2-c1-l2a/12/S/VD/2023/12/S2A_T12SVD_20231213T181818_L2A/B07.tif"
 
@@ -2999,7 +3008,7 @@ def test_gti_stac_geoparquet_sentinel2():
     if conn is None:
         pytest.skip("cannot open URL")
 
-    ds = gdal.Open("GTI:data/gti/sentinel2_stac_geoparquet.geojson")
+    ds = gdal.Open(f"GTI:data/gti/{filename}")
     assert ds.RasterXSize == 5556
     assert ds.RasterYSize == 5540
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "32612"

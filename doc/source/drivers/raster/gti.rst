@@ -81,7 +81,7 @@ STAC GeoParquet support
 
 The driver can support `STAC GeoParquet catalogs <https://stac-utils.github.io/stac-geoparquet/latest/spec/stac-geoparquet-spec>`_,
 provided GDAL is built with :ref:`vector.parquet` support.
-It can make use of fields ``proj:epsg`` and ``proj:transform`` from the
+It can make use of fields (``proj:code``, ``proj:epsg``, ``proj:wkt2``, or ``proj:projson``) and ``proj:transform`` from the
 `Projection Extension Specification <https://github.com/stac-extensions/projection/>`_,
 to correctly infer the appropriate projection and resolution.
 
