@@ -1489,7 +1489,7 @@ bool GDALDriver::HasOpenOption(const char *pszOpenOptionName) const
         return false;
 
     // Const cast is safe here since we are only reading the metadata
-    const auto oXml{CPLParseXMLString(pszOOMd)};
+    const CPLXMLTreeCloser oXml{CPLParseXMLString(pszOOMd)};
     for (CPLXMLNode *option = oXml->psChild; option != nullptr;
          option = option->psNext)
     {
