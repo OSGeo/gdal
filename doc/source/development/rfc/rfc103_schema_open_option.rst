@@ -226,7 +226,9 @@ Here is an example of a schema document that will be used to override the fields
     }
 
 
-The new option will be used by applications such as `ogr2ogr` (for the ``-mapFieldType`` switch) to override the auto-detected fields types and to override the auto-detected (and possibly laundered) field names.
+The new open option will be useful for applications such as `ogr2ogr` (as a more powerful alternative to the ``-mapFieldType`` switch) to override the auto-detected fields types and to override the auto-detected (and possibly laundered) field names.
+
+A note will be added to the application documentation to explain the new option.
 
 
 Errors and warnings
