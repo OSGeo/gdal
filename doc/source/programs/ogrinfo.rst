@@ -168,9 +168,7 @@ edit data.
     value is ``YES``. (WKT and ``ISO_WKT`` are available starting with GDAL 2.1,
     which also changes the default to ISO_WKT)
 
-.. option:: -oo <NAME>=<VALUE>
-
-    Dataset open option (format-specific)
+.. include:: options/oo_vector.rst
 
 .. option:: -nomd
 
