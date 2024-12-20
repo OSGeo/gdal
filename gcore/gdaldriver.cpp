@@ -1489,10 +1489,15 @@ bool GDALDriver::HasOpenOption(const char *pszOpenOptionName) const
         return false;
 
     // Const cast is safe here since we are only reading the metadata
-    const std::string osOpenOptions{pszOOMd};
-    const std::string osKey =
-        "<Option name='" + std::string(pszOpenOptionName) + "'";
-    return osOpenOptions.find(osKey) != std::string::npos;
+    const auto oXml{CPLParseXMLString(pszOOMd)};
+    for (CPLXMLNode *option = oXml->psChild; option != nullptr;
+         option = option->psNext)
+    {
+        if (EQUAL(CPLGetXMLValue(CPLGetXMLNode(option, "name"), nullptr, ""),
+                  pszOpenOptionName))
+            return true;
+    }
+    return false;
 }
 
 /************************************************************************/
