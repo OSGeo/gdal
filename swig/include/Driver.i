@@ -109,6 +109,10 @@ public:
     return GDALCopyDatasetFiles( self, newName, oldName );
   }
 
+  bool HasOpenOption( const char *openOptionName ) {
+    return GDALDriverHasOpenOption( self, openOptionName );
+  }
+
 #ifdef SWIGPYTHON
   bool TestCapability(const char* cap) {
     // TODO: should this also check DCAP entries in driver metadata?

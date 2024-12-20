@@ -1152,6 +1152,9 @@ char CPL_DLL **GDALGetOutputDriversForDatasetName(const char *pszDestFilename,
                                                   bool bSingleMatch,
                                                   bool bEmitWarning);
 
+bool CPL_DLL GDALDriverHasOpenOption(GDALDriverH,
+                                     const char *pszOpenOptionName);
+
 /* The following are deprecated */
 const char CPL_DLL *CPL_STDCALL GDALGetDriverShortName(GDALDriverH);
 const char CPL_DLL *CPL_STDCALL GDALGetDriverLongName(GDALDriverH);
