@@ -372,9 +372,7 @@ output coordinate system or even reprojecting the features during translation.
 
     Limit the number of features per layer.
 
-.. option:: -oo <NAME>=<VALUE>
-
-    Input dataset open option (format specific).
+.. include:: options/oo_vector.rst
 
 .. option:: -doo <NAME>=<VALUE>
 
@@ -496,7 +494,10 @@ output coordinate system or even reprojecting the features during translation.
     avoid typing a long SQL query. Note that this does not influence the field
     types used by the source driver, and is only an afterwards conversion.
     Also note that this option is without effects on fields whose presence and
-    type is hard-coded in the output driver (e.g KML, GPX)
+    type is hard-coded in the output driver (e.g KML, GPX).
+    For an alternative way to manipulate field types earlier in the process while they
+    are read from the input dataset see :option:`-oo` ``OGR_SCHEMA`` (only available
+    for a limited set of formats).
 
 .. option:: -mapFieldType {<srctype>|All=<dsttype>[,<srctype2>=<dsttype2>]...}
 
@@ -511,7 +512,10 @@ output coordinate system or even reprojecting the features during translation.
     Note that this does not influence the field types used by the source
     driver, and is only an afterwards conversion.
     Also note that this option is without effects on fields whose presence and
-    type is hard-coded in the output driver (e.g KML, GPX)
+    type is hard-coded in the output driver (e.g KML, GPX).
+    For an alternative way to manipulate field types earlier in the process while they
+    are read from the input dataset see :option:`-oo` ``OGR_SCHEMA`` (only available
+    for a limited set of formats).
 
 .. option:: -dateTimeTo {UTC|UTC(+|-)<HH>|UTC(+|-)<HH>:<MM>}
 
