@@ -2219,7 +2219,7 @@ void OGRGeoPackageTableLayer::CheckGeometryType(const OGRFeature *poFeature)
 static bool CheckFIDAndFIDColumnConsistency(const OGRFeature *poFeature,
                                             int iFIDAsRegularColumnIndex)
 {
-    bool ok = false;
+    bool ok = true;
     if (!poFeature->IsFieldSetAndNotNull(iFIDAsRegularColumnIndex))
     {
         // nothing to do
@@ -2233,21 +2233,26 @@ static bool CheckFIDAndFIDColumnConsistency(const OGRFeature *poFeature,
         if (GDALIsValueInRange<int64_t>(dfFID))
         {
             const auto nFID = static_cast<GIntBig>(dfFID);
-            if (nFID == poFeature->GetFID())
+            if (nFID != poFeature->GetFID())
             {
-                ok = true;
+                ok = false;
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Inconsistent values of FID (" CPL_FRMT_GIB
+                         ") and field of same name (%g)",
+                         poFeature->GetFID(),
+                         poFeature->GetFieldAsDouble(iFIDAsRegularColumnIndex));
             }
         }
     }
-    else if (poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) ==
+    else if (poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) !=
              poFeature->GetFID())
     {
-        ok = true;
-    }
-    if (!ok)
-    {
+        ok = false;
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Inconsistent values of FID and field of same name");
+                 "Inconsistent values of FID (" CPL_FRMT_GIB
+                 ") and field of same name (" CPL_FRMT_GIB ")",
+                 poFeature->GetFID(),
+                 poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex));
     }
     return ok;
 }
