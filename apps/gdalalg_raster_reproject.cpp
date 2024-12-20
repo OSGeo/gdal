@@ -62,28 +62,7 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
             return true;
         });
 
-    auto &extentArg =
-        AddArg("extent", 0, _("Target extent (in destination CRS units)"),
-               &m_extent)
-            .SetMinCount(4)
-            .SetMaxCount(4)
-            .SetRepeatedArgAllowed(false)
-            .SetDisplayHintAboutRepetition(false)
-            .SetMetaVar("<xmin>,<ymin>,<xmax>,<ymax>");
-    extentArg.AddValidationAction(
-        [&extentArg]()
-        {
-            const auto &val = extentArg.Get<std::vector<double>>();
-            CPLAssert(val.size() == 4);
-            if (!(val[0] <= val[2]) || !(val[1] <= val[3]))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Value of 'extent' should be xmin,ymin,xmax,ymax with "
-                         "xmin <= xmax and ymin <= ymax");
-                return false;
-            }
-            return true;
-        });
+    AddBBOXArg(&m_bbox, _("Target bounding box (in destination CRS units)"));
 
     AddArg("target-aligned-pixels", 0,
            _("Round target extent to target resolution"),
@@ -125,13 +104,13 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALProgressFunc, void *)
         aosOptions.AddString(CPLSPrintf("%.17g", m_resolution[0]));
         aosOptions.AddString(CPLSPrintf("%.17g", m_resolution[1]));
     }
-    if (!m_extent.empty())
+    if (!m_bbox.empty())
     {
         aosOptions.AddString("-te");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_extent[0]));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_extent[1]));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_extent[2]));
-        aosOptions.AddString(CPLSPrintf("%.17g", m_extent[3]));
+        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[0]));
+        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[1]));
+        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[2]));
+        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[3]));
     }
     if (m_targetAlignedPixels)
     {

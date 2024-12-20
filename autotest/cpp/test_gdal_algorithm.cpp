@@ -3106,7 +3106,7 @@ TEST_F(test_gdal_algorithm, raster_edit_failures_dataset_0_0)
     ASSERT_NE(datasetArg, nullptr);
     datasetArg->Get<GDALArgDatasetValue>().Set(std::make_unique<MyDataset>());
 
-    auto extentArg = edit->GetArg("extent");
+    auto extentArg = edit->GetArg("bbox");
     ASSERT_NE(extentArg, nullptr);
     extentArg->Set(std::vector<double>{2, 49, 3, 50});
 
@@ -3219,7 +3219,7 @@ TEST_F(test_gdal_algorithm, raster_edit_failures_set_geo_transform)
     ASSERT_NE(datasetArg, nullptr);
     datasetArg->Get<GDALArgDatasetValue>().Set(std::make_unique<MyDataset>());
 
-    auto extentArg = edit->GetArg("extent");
+    auto extentArg = edit->GetArg("bbox");
     ASSERT_NE(extentArg, nullptr);
     extentArg->Set(std::vector<double>{2, 49, 3, 50});
 

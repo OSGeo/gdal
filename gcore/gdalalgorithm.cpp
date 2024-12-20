@@ -2124,6 +2124,39 @@ GDALAlgorithm::AddLayerCreationOptionsArg(std::vector<std::string> *pValue)
 }
 
 /************************************************************************/
+/*                        GDALAlgorithm::AddBBOXArg()                   */
+/************************************************************************/
+
+/** Add bbox=xmin,ymin,xmax,ymax argument. */
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddBBOXArg(std::vector<double> *pValue, const char *helpMessage)
+{
+    auto &arg = AddArg("bbox", 0,
+                       helpMessage ? helpMessage
+                                   : _("Bounding box as xmin,ymin,xmax,ymax"),
+                       pValue)
+                    .SetRepeatedArgAllowed(false)
+                    .SetMinCount(4)
+                    .SetMaxCount(4)
+                    .SetDisplayHintAboutRepetition(false);
+    arg.AddValidationAction(
+        [&arg]()
+        {
+            const auto &val = arg.Get<std::vector<double>>();
+            CPLAssert(val.size() == 4);
+            if (!(val[0] <= val[2]) || !(val[1] <= val[3]))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Value of 'bbox' should be xmin,ymin,xmax,ymax with "
+                         "xmin <= xmax and ymin <= ymax");
+                return false;
+            }
+            return true;
+        });
+    return arg;
+}
+
+/************************************************************************/
 /*                  GDALAlgorithm::AddProgressArg()                     */
 /************************************************************************/
 

@@ -458,14 +458,14 @@ def test_gdalalg_raster_pipeline_reproject_no_args(tmp_vsimem):
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
-def test_gdalalg_raster_pipeline_reproject_invalid_extent(tmp_vsimem):
+def test_gdalalg_raster_pipeline_reproject_invalid_bbox(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")
 
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="Value of 'extent' should be xmin,ymin,xmax,ymax with xmin <= xmax and ymin <= ymax",
+        match="Value of 'bbox' should be xmin,ymin,xmax,ymax with xmin <= xmax and ymin <= ymax",
     ):
         pipeline.ParseRunAndFinalize(
             [
@@ -473,7 +473,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_extent(tmp_vsimem):
                 "../gcore/data/byte.tif",
                 "!",
                 "reproject",
-                "--extent=3,4,2,1",
+                "--bbox=3,4,2,1",
                 "!",
                 "write",
                 out_filename,
@@ -481,7 +481,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_extent(tmp_vsimem):
         )
 
 
-def test_gdalalg_raster_pipeline_reproject_extent_arg(tmp_vsimem):
+def test_gdalalg_raster_pipeline_reproject_bbox_arg(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")
 
@@ -494,7 +494,7 @@ def test_gdalalg_raster_pipeline_reproject_extent_arg(tmp_vsimem):
             "reproject",
             "--src-crs=EPSG:32611",
             "--dst-crs=EPSG:4326",
-            "--extent=-117.641,33.89,-117.628,33.9005",
+            "--bbox=-117.641,33.89,-117.628,33.9005",
             "!",
             "write",
             "--overwrite",

@@ -2064,6 +2064,10 @@ class CPL_DLL GDALAlgorithmRegistry
     GDALInConstructionAlgorithmArg &
     AddLayerNameArg(std::vector<std::string> *pValue);
 
+    /** Add bbox=xmin,ymin,xmax,ymax argument. */
+    GDALInConstructionAlgorithmArg &
+    AddBBOXArg(std::vector<double> *pValue, const char *helpMessage = nullptr);
+
     /** Add --progress argument. */
     GDALInConstructionAlgorithmArg &AddProgressArg();
 

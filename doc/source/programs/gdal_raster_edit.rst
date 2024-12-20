@@ -32,7 +32,7 @@ Synopsis
 
     Options:
       --crs <CRS>               Override CRS (without reprojection)
-      --extent <EXTENT>         Extent as xmin,ymin,xmax,ymax
+      --bbox <EXTENT>           Bounding box as xmin,ymin,xmax,ymax
       --metadata <KEY>=<VALUE>  Add/update dataset metadata item [may be repeated]
       --unset-metadata <KEY>    Remove dataset metadata item [may be repeated]
 
@@ -61,9 +61,11 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
 
     Note that the spatial extent is also left unchanged.
 
-.. option:: --extent <xmin>,<ymin>,<xmax>,ymax>
+.. option:: --bbox <xmin>,<ymin>,<xmax>,ymax>
 
-    Override the spatial extent, without reprojecting or subsetting.
+    Override the spatial bounding box, in CRS units, without reprojecting or subsetting.
+    'x' is longitude values for geographic CRS and easting for projected CRS.
+    'y' is latitude values for geographic CRS and northing for projected CRS.
 
 .. option:: --metadata <KEY>=<VALUE>
 
@@ -85,11 +87,11 @@ Examples
         $ gdal raster edit --crs=EPSG:32632 my.tif
 
 .. example::
-   :title: Override (without reprojecting or subsetting) the extent of a dataset
+   :title: Override (without reprojecting or subsetting) the bounding box of a dataset
 
    .. code-block:: bash
 
-        $ gdal raster edit --extent=2,49,3,50 my.tif
+        $ gdal raster edit --bbox=2,49,3,50 my.tif
 
 .. example::
    :title: Add a metadata item

@@ -44,29 +44,7 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
         .AddHiddenAlias("a_srs")
         .SetIsCRSArg(/*noneAllowed=*/true);
 
-    {
-        auto &arg =
-            AddArg("extent", 0, _("Extent as xmin,ymin,xmax,ymax"), &m_extent)
-                .SetRepeatedArgAllowed(false)
-                .SetMinCount(4)
-                .SetMaxCount(4)
-                .SetDisplayHintAboutRepetition(false);
-        arg.AddValidationAction(
-            [&arg]()
-            {
-                const auto &val = arg.Get<std::vector<double>>();
-                CPLAssert(val.size() == 4);
-                if (!(val[0] <= val[2]) || !(val[1] <= val[3]))
-                {
-                    CPLError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Value of 'extent' should be xmin,ymin,xmax,ymax with "
-                        "xmin <= xmax and ymin <= ymax");
-                    return false;
-                }
-                return true;
-            });
-    }
+    AddBBOXArg(&m_bbox);
 
     {
         auto &arg = AddArg("metadata", 0, _("Add/update dataset metadata item"),
@@ -122,7 +100,7 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
         }
 
-        if (!m_extent.empty())
+        if (!m_bbox.empty())
         {
             if (poDS->GetRasterXSize() == 0 || poDS->GetRasterYSize() == 0)
             {
@@ -132,12 +110,12 @@ bool GDALRasterEditAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 return false;
             }
             double adfGT[6];
-            adfGT[0] = m_extent[0];
-            adfGT[1] = (m_extent[2] - m_extent[0]) / poDS->GetRasterXSize();
+            adfGT[0] = m_bbox[0];
+            adfGT[1] = (m_bbox[2] - m_bbox[0]) / poDS->GetRasterXSize();
             adfGT[2] = 0;
-            adfGT[3] = m_extent[3];
+            adfGT[3] = m_bbox[3];
             adfGT[4] = 0;
-            adfGT[5] = -(m_extent[3] - m_extent[1]) / poDS->GetRasterYSize();
+            adfGT[5] = -(m_bbox[3] - m_bbox[1]) / poDS->GetRasterYSize();
             if (poDS->SetGeoTransform(adfGT) != CE_None)
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
@@ -193,15 +171,13 @@ bool GDALRasterEditAlgorithm::RunStep(GDALProgressFunc, void *)
         aosOptions.AddString("-a_srs");
         aosOptions.AddString(m_overrideCrs.c_str());
     }
-    if (!m_extent.empty())
+    if (!m_bbox.empty())
     {
         aosOptions.AddString("-a_ullr");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_extent[0]));  // upper-left X
-        aosOptions.AddString(CPLSPrintf("%.17g", m_extent[3]));  // upper-left Y
-        aosOptions.AddString(
-            CPLSPrintf("%.17g", m_extent[2]));  // lower-right X
-        aosOptions.AddString(
-            CPLSPrintf("%.17g", m_extent[1]));  // lower-right Y
+        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[0]));  // upper-left X
+        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[3]));  // upper-left Y
+        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[2]));  // lower-right X
+        aosOptions.AddString(CPLSPrintf("%.17g", m_bbox[1]));  // lower-right Y
     }
 
     for (const auto &val : m_metadata)

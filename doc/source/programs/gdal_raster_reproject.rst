@@ -40,7 +40,7 @@ Synopsis
       -d, --dst-crs <DST-CRS>                              Destination CRS
       -r, --resampling <RESAMPLING>                        Resampling method. RESAMPLING=near|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum
       --resolution <xres>,<yres>                           Target resolution (in destination CRS units)
-      --extent <xmin>,<ymin>,<xmax>,<ymax>                 Target extent (in destination CRS units)
+      --bbox <xmin>,<ymin>,<xmax>,<ymax>                   Target bounding box (in destination CRS units)
       --target-aligned-pixels                              Round target extent to target resolution
 
     Advanced Options:
