@@ -5159,6 +5159,11 @@ def test_ogr_gpkg_creation_fid(tmp_vsimem):
     assert lyr.SetFeature(f) == ogr.OGRERR_NONE
     f = None
 
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(14)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert f.GetFID() == 14
+
     lyr = ds.CreateLayer("fid_integer64")
     assert lyr.CreateField(ogr.FieldDefn("fid", ogr.OFTInteger64)) == ogr.OGRERR_NONE
 
