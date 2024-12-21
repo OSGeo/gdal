@@ -44,7 +44,7 @@ class GDALRasterReprojectAlgorithm /* non final */
     std::string m_dstCrs{};
     std::string m_resampling{};
     std::vector<double> m_resolution{};
-    std::vector<double> m_extent{};
+    std::vector<double> m_bbox{};
     bool m_targetAlignedPixels = false;
 };
 

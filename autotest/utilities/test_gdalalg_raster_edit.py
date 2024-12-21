@@ -69,7 +69,7 @@ def test_gdalalg_raster_edit_crs_none(tmp_vsimem):
         assert ds.GetSpatialRef() is None
 
 
-def test_gdalalg_raster_edit_extent(tmp_vsimem):
+def test_gdalalg_raster_edit_bbox(tmp_vsimem):
 
     tmp_filename = str(tmp_vsimem / "tmp.tif")
     gdal.FileFromMemBuffer(tmp_filename, open("../gcore/data/byte.tif", "rb").read())
@@ -77,7 +77,7 @@ def test_gdalalg_raster_edit_extent(tmp_vsimem):
     pipeline = get_edit_alg()
     assert pipeline.ParseRunAndFinalize(
         [
-            "--extent=1,2,10,200",
+            "--bbox=1,2,10,200",
             tmp_filename,
         ]
     )
@@ -86,7 +86,7 @@ def test_gdalalg_raster_edit_extent(tmp_vsimem):
         assert ds.GetGeoTransform() == pytest.approx((1.0, 0.45, 0.0, 200.0, 0.0, -9.9))
 
 
-def test_gdalalg_raster_edit_extent_invalid(tmp_vsimem):
+def test_gdalalg_raster_edit_bbox_invalid(tmp_vsimem):
 
     tmp_filename = str(tmp_vsimem / "tmp.tif")
     gdal.FileFromMemBuffer(tmp_filename, open("../gcore/data/byte.tif", "rb").read())
@@ -94,11 +94,11 @@ def test_gdalalg_raster_edit_extent_invalid(tmp_vsimem):
     pipeline = get_edit_alg()
     with pytest.raises(
         Exception,
-        match="Value of 'extent' should be xmin,ymin,xmax,ymax with xmin <= xmax and ymin <= ymax",
+        match="Value of 'bbox' should be xmin,ymin,xmax,ymax with xmin <= xmax and ymin <= ymax",
     ):
         pipeline.ParseRunAndFinalize(
             [
-                "--extent=1,200,10,2",
+                "--bbox=1,200,10,2",
                 tmp_filename,
             ]
         )
@@ -189,7 +189,7 @@ def test_gdalalg_raster_pipeline_edit_crs_none(tmp_vsimem):
         assert ds.GetSpatialRef() is None
 
 
-def test_gdalalg_raster_pipeline_edit_extent(tmp_vsimem):
+def test_gdalalg_raster_pipeline_edit_bbox(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.tif")
 
@@ -200,7 +200,7 @@ def test_gdalalg_raster_pipeline_edit_extent(tmp_vsimem):
             "../gcore/data/byte.tif",
             "!",
             "edit",
-            "--extent=1,2,10,200",
+            "--bbox=1,2,10,200",
             "!",
             "write",
             "--overwrite",

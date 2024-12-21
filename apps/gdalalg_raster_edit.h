@@ -42,7 +42,7 @@ class GDALRasterEditAlgorithm /* non final */
 
     GDALArgDatasetValue m_dataset{};  // standalone mode only
     std::string m_overrideCrs{};
-    std::vector<double> m_extent{};
+    std::vector<double> m_bbox{};
     std::vector<std::string> m_metadata{};
     std::vector<std::string> m_unsetMetadata{};
 };
