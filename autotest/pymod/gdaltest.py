@@ -218,6 +218,14 @@ class GDALTest:
                             drv_name.lower() == "biggif"
                             and self.drivername.lower() == "gif"
                         )
+                        or (
+                            drv_name.lower() == "gtiff"
+                            and self.drivername.lower() == "libertiff"
+                        )
+                        or (
+                            drv_name.lower() == "libertiff"
+                            and self.drivername.lower() == "gtiff"
+                        )
                     ):
                         drivers += [drv_name]
                 other_ds = None

@@ -56,6 +56,33 @@ CPLErr GDALAllValidMaskBand::IReadBlock(int /* nXBlockOff */,
 }
 
 /************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr GDALAllValidMaskBand::IRasterIO(GDALRWFlag eRWFlag, int, int, int, int,
+                                       void *pData, int nBufXSize,
+                                       int nBufYSize, GDALDataType eBufType,
+                                       GSpacing nPixelSpace,
+                                       GSpacing nLineSpace,
+                                       GDALRasterIOExtraArg *)
+{
+    if (eRWFlag != GF_Read)
+    {
+        return CE_Failure;
+    }
+
+    GByte *pabyData = static_cast<GByte *>(pData);
+    GByte byVal = 255;
+    for (int iY = 0; iY < nBufYSize; ++iY)
+    {
+        GDALCopyWords64(&byVal, GDT_Byte, 0, pabyData + iY * nLineSpace,
+                        eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                            GetMaskBand()                             */
 /************************************************************************/
 

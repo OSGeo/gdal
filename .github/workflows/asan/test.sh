@@ -17,12 +17,16 @@ gdalinfo autotest/gcore/data/byte.tif
 python3 -c "from osgeo import gdal; print('yes')"
 
 # Check fix for https://github.com/rasterio/rasterio/issues/3250
+unset LD_PRELOAD
 mv ${GDAL_DRIVER_PATH}/gdal_PDF.so ${GDAL_DRIVER_PATH}/gdal_PDF.so.disabled
 echo "from osgeo import gdal" > register_many_times.py
 echo "for i in range(1000):" >> register_many_times.py
 echo "   gdal.AllRegister()" >> register_many_times.py
+export LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)
 python3 register_many_times.py
+unset LD_PRELOAD
 mv ${GDAL_DRIVER_PATH}/gdal_PDF.so.disabled ${GDAL_DRIVER_PATH}/gdal_PDF.so
+export LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)
 
 cd autotest
 
