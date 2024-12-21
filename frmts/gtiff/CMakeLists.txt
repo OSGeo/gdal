@@ -39,6 +39,10 @@ add_gdal_driver(
   BUILTIN STRONG_CXX_WFLAGS)
 gdal_standard_includes(gdal_GTIFF)
 
+target_include_directories(gdal_GTIFF PRIVATE
+    ${GDAL_RASTER_FORMAT_SOURCE_DIR}/tiff_common
+)
+
 if (GDAL_ENABLE_DRIVER_JPEG)
   target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_LIBJPEG)
   target_include_directories(gdal_GTIFF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/jpeg)
