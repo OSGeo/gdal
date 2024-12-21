@@ -10,6 +10,8 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "tiff_common.h"
+
 // Use code from internal libtiff for LZW, PackBits and LERC codecs
 #define TIFFInitLZW LIBERTIFF_TIFFInitLZW
 #define TIFFInitPackBits LIBERTIFF_TIFFInitPackBits
@@ -116,49 +118,11 @@ extern "C"
         return 0;
     }
 
-    /************************************************************************/
-    /*                       PrepareTIFFErrorFormat()                       */
-    /*                                                                      */
-    /*      sometimes the "module" has stuff in it that has special         */
-    /*      meaning in a printf() style format, so we try to escape it.     */
-    /*      For now we hope the only thing we have to escape is %'s.        */
-    /************************************************************************/
-
-    static char *PrepareTIFFErrorFormat(const char *module, const char *fmt)
-
-    {
-        const size_t nModuleSize = strlen(module);
-        const size_t nModFmtSize = nModuleSize * 2 + strlen(fmt) + 2;
-        char *pszModFmt = static_cast<char *>(CPLMalloc(nModFmtSize));
-
-        size_t iOut = 0;  // Used after for.
-
-        for (size_t iIn = 0; iIn < nModuleSize; ++iIn)
-        {
-            if (module[iIn] == '%')
-            {
-                CPLAssert(iOut < nModFmtSize - 2);
-                pszModFmt[iOut++] = '%';
-                pszModFmt[iOut++] = '%';
-            }
-            else
-            {
-                CPLAssert(iOut < nModFmtSize - 1);
-                pszModFmt[iOut++] = module[iIn];
-            }
-        }
-        CPLAssert(iOut < nModFmtSize);
-        pszModFmt[iOut] = '\0';
-        strcat(pszModFmt, ":");
-        strcat(pszModFmt, fmt);
-
-        return pszModFmt;
-    }
-
     void LIBERTIFF_TIFFWarningExtR(TIFF *, const char *pszModule,
                                    const char *fmt, ...)
     {
-        char *pszModFmt = PrepareTIFFErrorFormat(pszModule, fmt);
+        char *pszModFmt =
+            gdal::tiff_common::PrepareTIFFErrorFormat(pszModule, fmt);
         va_list ap;
         va_start(ap, fmt);
         CPLErrorV(CE_Warning, CPLE_AppDefined, pszModFmt, ap);
@@ -169,7 +133,8 @@ extern "C"
     void LIBERTIFF_TIFFErrorExtR(TIFF *, const char *pszModule, const char *fmt,
                                  ...)
     {
-        char *pszModFmt = PrepareTIFFErrorFormat(pszModule, fmt);
+        char *pszModFmt =
+            gdal::tiff_common::PrepareTIFFErrorFormat(pszModule, fmt);
         va_list ap;
         va_start(ap, fmt);
         CPLErrorV(CE_Failure, CPLE_AppDefined, pszModFmt, ap);
