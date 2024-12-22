@@ -126,6 +126,8 @@ class OGRVRTLayer final : public OGRLayer
 
     bool bError;
 
+    bool m_bEmptyResultSet = false;
+
     bool ParseGeometryField(CPLXMLNode *psNode, CPLXMLNode *psNodeParent,
                             OGRVRTGeomFieldProps *poProps);
 
