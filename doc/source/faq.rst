@@ -92,6 +92,15 @@ How do I add support for a new format?
 
 To some extent this is now covered by the :ref:`raster_driver_tut` and :ref:`vector_driver_tut`
 
+What about file formats for 3D models?
+++++++++++++++++++++++++++++++++++++++
+
+While some vector drivers in GDAL support 3D geometries (e.g. reading CityGML or
+AIXM through the GML driver, or 3D geometries in GeoPackage), 3-dimensional scenes or
+models formats (such as glTF, OBJ, 3DS, etc.) are out-of-scope for GDAL.
+Users may consider a library such as `ASSIMP (Open-Asset-Importer-Library) <https://github.com/assimp/assimp>`__
+for such formats.
+
 Is GDAL thread-safe ?
 +++++++++++++++++++++
 
@@ -108,3 +117,9 @@ How do I cite GDAL ?
 See `CITATION`_
 
 .. _`CITATION`: https://github.com/OSGeo/gdal/blob/master/CITATION
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    glTF
