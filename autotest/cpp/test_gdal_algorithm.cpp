@@ -501,7 +501,7 @@ TEST_F(test_gdal_algorithm, wrong_long_name_dash)
     };
 
     MyAlgorithm alg;
-    alg.Run();
+    CPL_IGNORE_RET_VAL(alg.Run());
 }
 
 TEST_F(test_gdal_algorithm, wrong_long_name_contains_equal)
