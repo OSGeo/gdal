@@ -247,10 +247,10 @@ layer name, and may have the following subelements:
 
 
 - **SrcRegion** (optional) : This element is used to
-  define an initial spatial filter for the source features. This spatial
+  define an initial spatial filter for the source features, such that only features intersecting ``SrcRegion`` will be returned in the VRT layer. This spatial
   filter will be combined with any spatial filter explicitly set on the
   VRT layer with the SetSpatialFilter() method. The value of the element
-  must be a valid WKT string defining a polygon. An optional **clip**
+  must be a valid WKT string defining a geometry in the spatial reference system of the source layer. An optional **clip**
   attribute can be set to "TRUE" to clip the geometries to the source
   region, otherwise the source geometries are not modified.
 
