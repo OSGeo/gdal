@@ -1393,7 +1393,7 @@ MAIN_START(argc, argv)
 
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
 
-    if (argc < 2)
+    if (argc < 1)
     {
         try
         {
@@ -1406,7 +1406,6 @@ MAIN_START(argc, argv)
             CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
                      err.what());
         }
-        CSLDestroy(argv);
         exit(1);
     }
 
