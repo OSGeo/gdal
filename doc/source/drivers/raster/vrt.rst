@@ -1037,91 +1037,69 @@ should be specified with the above :cpp:func:`GDALRasterBand::SetMetadataItem` e
 
 .. _vrt_derived_bands:
 
-Using Derived Bands (with pixel functions in C/C++)
----------------------------------------------------
+Derived Bands (pixel functions)
+-------------------------------
 
-A specialized type of band is a 'derived' band which derives its pixel
-information from its source bands.  With this type of band you must also
-specify a pixel function, which has the responsibility of generating the
-output raster.  Pixel functions are created by an application and then
-registered with GDAL using a unique key.
-
+A "derived" band is a specialized type of band that derives its pixel
+values from its source bands using a "pixel function" at the time
+that values are read from the raster.
 Using derived bands you can create VRT datasets that manipulate bands on
-the fly without having to create new band files on disk.  For example, you
-might want to generate a band using four source bands from a nine band input
+the fly without having to create new band files on disk.
+GDAL provides a number of
+:ref:`built-in pixel functions <builtin_pixel_functions>`;
+additional pixel functions can be defined in :ref:`C++ <cpp_pixel_functions>`
+or :ref:`Python <python_pixel_functions>` and registered with GDAL using
+a unique key.
+
+.. example::
+   :title: Calculating a derived band
+   :id: vrt-derived-1
+
+For example, you
+might want to generate a band using four source bands from a nine-band input
 dataset (x0, x3, x4, and x8) and some constant y:
 
 .. code-block:: c
 
   band_value = sqrt((x3*x3+x4*x4)/(x0*x8)) + y;
 
-You could write the pixel function to compute this value and then register
-it with GDAL with the name "MyFirstFunction".  Then, the following VRT XML
-could be used to display this derived band:
-
+This can be accomplished using the built-in "expression" pixel function.
+The following VRT XML can be used:
 
 .. code-block:: xml
 
     <VRTDataset rasterXSize="1000" rasterYSize="1000">
         <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
             <Description>Magnitude</Description>
-            <PixelFunctionType>MyFirstFunction</PixelFunctionType>
-            <PixelFunctionArguments y="4" />
-            <SimpleSource>
+            <PixelFunctionType>expression</PixelFunctionType>
+            <PixelFunctionArguments expression="sqrt((x3*x3+x4*x4)/(x0*x8)) + 4" />
+            <SimpleSource name="x0">
                 <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
                 <SourceBand>1</SourceBand>
-                <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
-                <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
             </SimpleSource>
-            <SimpleSource>
+            <SimpleSource name="x3">
                 <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
                 <SourceBand>4</SourceBand>
-                <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
-                <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
             </SimpleSource>
-            <SimpleSource>
+            <SimpleSource name="x4">
                 <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
                 <SourceBand>5</SourceBand>
-                <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
-                <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
             </SimpleSource>
-            <SimpleSource>
+            <SimpleSource name="x8">
                 <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
                 <SourceBand>9</SourceBand>
-                <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
-                <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
             </SimpleSource>
         </VRTRasterBand>
     </VRTDataset>
 
-.. note::
+.. seealso::
+   :ref:`VRT processed datasets <vrt_processed_dataset>`, which provide a means of calculating multiple bands at once.
 
-    PixelFunctionArguments can only be used with C++ pixel functions in GDAL versions 3.4 and greater.
 
+.. _builtin_pixel_functions:
 
-In addition to the subclass specification (VRTDerivedRasterBand) and
-the PixelFunctionType value, there is another new parameter that can come
-in handy: SourceTransferType.  Typically the source rasters are obtained
-using the data type of the derived band.  There might be times,
-however, when you want the pixel function to have access to
-higher resolution source data than the data type being generated.
-For example, you might have a derived band of type "Float", which takes
-a single source of type "CFloat32" or "CFloat64", and returns the imaginary
-portion.  To accomplish this, set the SourceTransferType to "CFloat64".
-Otherwise the source would be converted to "Float" prior to
-calling the pixel function, and the imaginary portion would be lost.
-
-.. code-block:: xml
-
-    <VRTDataset rasterXSize="1000" rasterYSize="1000">
-        <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
-            <Description>Magnitude</Description>
-            <PixelFunctionType>MyFirstFunction</PixelFunctionType>
-            <SourceTransferType>CFloat64</SourceTransferType>
-            ...
-
-Default Pixel Functions
-+++++++++++++++++++++++
+Built-in Pixel Functions
+++++++++++++++++++++++++
 
 GDAL provides a set of default pixel functions that can be used without writing new code:
 
@@ -1166,14 +1144,17 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 2
      - -
      - divide one raster band by another (``b1 / b2``)
-   * - **norm_diff**
-     - 2
-     - -
-     - computes the normalized difference between two raster bands: ``(b1 - b2)/(b1 + b2)``
    * - **exp**
      - 1
      - ``base`` (optional), ``fact`` (optional)
      - computes the exponential of each element in the input band ``x`` (of real values): ``e ^ x``. The function also accepts two optional parameters: ``base`` and ``fact`` that allow to compute the generalized formula: ``base ^ ( fact * x )``. Note: this function is the recommended one to perform conversion form logarithmic scale (dB): `` 10. ^ (x / 20.)``, in this case ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
+   * - **expression**
+     - 1
+     - ``expression``
+     - evaluate an specified expression using the `exprtk library <https://www.partow.net/programming/exprtk/index.html>`__. Band values can be accessed:
+         * through the variables ``B1``, ``B2``, etc.
+         * by giving a name to a source band (e.g., ``<SimpleSource name="NIR">``)
+         * through the ``BANDS`` vector (0-indexed)
    * - **imag**
      - 1
      - -
@@ -1214,6 +1195,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - >= 2
      - ``k`` (optional)
      - multiply 2 or more raster bands. If the optional ``k`` parameter is provided then the result is multiplied by the scalar ``k``.
+   * - **norm_diff**
+     - 2
+     - -
+     - computes the normalized difference between two raster bands: ``(b1 - b2)/(b1 + b2)``
    * - **phase**
      - 1
      - -
@@ -1230,14 +1215,6 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 1
      - -
      - extract real part from a single raster band (just a copy if the input is non-complex)
-   * - **sqrt**
-     - 1
-     - -
-     - perform the square root of a single raster band (real only)
-   * - **sum**
-     - >= 2
-     - ``k`` (optional)
-     - sum 2 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result
    * - **replace_nodata**
      - = 1
      - ``to`` (optional)
@@ -1246,10 +1223,51 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - = 1
      - -
      - perform scaling according to the ``offset`` and ``scale`` values of the raster band
+   * - **sqrt**
+     - 1
+     - -
+     - perform the square root of a single raster band (real only)
+   * - **sum**
+     - >= 2
+     - ``k`` (optional)
+     - sum 2 or more raster bands. If the optional ``k`` parameter is provided then it is added to each element of the result
 
-Writing Pixel Functions
-+++++++++++++++++++++++
+.. example::
+   :title: VRT expression with a simple condition
 
+   This example uses a simple ``if`` block to calculate the derived band
+   value depending on the value of an input band. Note the use of ``&gt;``
+   to escape the ``>`` character in the XML attribute. Using the same
+   VRT as :example:`vrt-derived-1`, the following expression can be
+   used:
+
+   .. code-block:: xml
+
+      <PixelFunctionType>expression</PixelFunctionType>
+      <PixelFunctionArguments expression="if (B1 &gt; 1) 1.5*B3 ; else B1" />
+
+.. example::
+   :title: VRT expression using all bands
+
+   The ``BANDS`` variable provides access to all of the input bands, either
+   individually (``BANDS[0]`` for the first band) or collectively. Here,
+   we concisely evaluate the value of a band relative to the sum of other
+   bands. Using the same VRT as :example:`vrt-derived-1`:
+
+   .. code-block:: xml
+
+      <PixelFunctionType>expression</PixelFunctionType>
+      <PixelFunctionArguments expression="B1 / sum(BANDS)" />
+
+
+.. _cpp_pixel_functions:
+
+Writing Pixel Functions in C/C++
+++++++++++++++++++++++++++++++++
+
+If the built-in pixel functions are not suitable, a custom function can be written in C or C++. In this case, the
+You could write the pixel function to compute this value and then
+register it with GDAL with a name such as "MyFirstFunction".
 To register this function with GDAL (prior to accessing any VRT datasets
 with derived bands that use this function), an application calls
 :cpp:func:`GDALAddDerivedBandPixelFuncWithArgs` with a key and a :cpp:type:`GDALDerivedPixelFuncWithArgs`:
@@ -1372,13 +1390,44 @@ The following is an implementation of the pixel function:
         return CE_None;
     }
 
-Using Derived Bands (with pixel functions in Python)
-----------------------------------------------------
+Setting the working data type
+*****************************
 
-Starting with GDAL 2.2, in addition to pixel functions written in C/C++ as
+In addition to the subclass specification (VRTDerivedRasterBand) and
+the PixelFunctionType value, there is another new parameter that can come
+in handy: SourceTransferType.  Typically the source rasters are obtained
+using the data type of the derived band.  There might be times,
+however, when you want the pixel function to have access to
+higher resolution source data than the data type being generated.
+For example, you might have a derived band of type "Float", which takes
+a single source of type "CFloat32" or "CFloat64", and returns the imaginary
+portion.  To accomplish this, set the SourceTransferType to "CFloat64".
+Otherwise the source would be converted to "Float" prior to
+calling the pixel function, and the imaginary portion would be lost.
+
+.. code-block:: xml
+
+    <VRTDataset rasterXSize="1000" rasterYSize="1000">
+        <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+            <Description>Magnitude</Description>
+            <PixelFunctionType>MyFirstFunction</PixelFunctionType>
+            <SourceTransferType>CFloat64</SourceTransferType>
+            ...
+
+.. _python_pixel_functions:
+
+Writing Pixel Functions in Python
++++++++++++++++++++++++++++++++++
+
+In addition to pixel functions written in C/C++ as
 documented in the :ref:`vrt_derived_bands` section, it is possible to use
 pixel functions written in Python. Both `CPython <https://www.python.org/>`_
 and `NumPy <http://www.numpy.org/>`_ are requirements at run-time.
+
+.. note::
+
+   Python pixel functions are not enabled by default; see :ref:`raster_vrt_security_implications`.
+
 
 The subelements for VRTRasterBand (whose subclass specification must be
 set to VRTDerivedRasterBand) are :
@@ -1415,157 +1464,156 @@ returned by the pixel function is ignored.
     If wanting to fill ``out_ar`` from another array, use the ``out_ar[:] = ...``
     syntax.
 
-Examples
-++++++++
+Python pixel function examples
+++++++++++++++++++++++++++++++
 
-VRT that multiplies the values of the source file by a factor of 1.5
-********************************************************************
+.. example::
+   :title: VRT that multiplies the values of the source file by a factor of 1.5
 
-.. code-block:: xml
+    .. code-block:: xml
 
-    <VRTDataset rasterXSize="20" rasterYSize="20">
-        <SRS>EPSG:26711</SRS>
-        <GeoTransform>440720,60,0,3751320,0,-60</GeoTransform>
-        <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
-            <PixelFunctionType>multiply</PixelFunctionType>
-            <PixelFunctionLanguage>Python</PixelFunctionLanguage>
-            <PixelFunctionArguments factor="1.5"/>
-            <PixelFunctionCode><![CDATA[
-                import numpy as np
-                def multiply(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
-                                raster_ysize, buf_radius, gt, **kwargs):
-                    factor = float(kwargs['factor'])
-                    out_ar[:] = np.round_(np.clip(in_ar[0] * factor,0,255))
-                ]]>
-            </PixelFunctionCode>
-            <SimpleSource>
-                <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
-            </SimpleSource>
-        </VRTRasterBand>
-    </VRTDataset>
+        <VRTDataset rasterXSize="20" rasterYSize="20">
+            <SRS>EPSG:26711</SRS>
+            <GeoTransform>440720,60,0,3751320,0,-60</GeoTransform>
+            <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+                <PixelFunctionType>multiply</PixelFunctionType>
+                <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+                <PixelFunctionArguments factor="1.5"/>
+                <PixelFunctionCode><![CDATA[
+                    import numpy as np
+                    def multiply(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                                    raster_ysize, buf_radius, gt, **kwargs):
+                        factor = float(kwargs['factor'])
+                        out_ar[:] = np.round_(np.clip(in_ar[0] * factor,0,255))
+                    ]]>
+                </PixelFunctionCode>
+                <SimpleSource>
+                    <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+                </SimpleSource>
+            </VRTRasterBand>
+        </VRTDataset>
 
-VRT that adds 2 (or more) rasters
-*********************************
+.. example::
+   :title: VRT that adds 2 (or more) rasters
 
-.. code-block:: xml
+   .. code-block:: xml
 
-    <VRTDataset rasterXSize="20" rasterYSize="20">
-        <SRS>EPSG:26711</SRS>
-        <GeoTransform>440720,60,0,3751320,0,-60</GeoTransform>
-        <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
-            <PixelFunctionType>add</PixelFunctionType>
-            <PixelFunctionLanguage>Python</PixelFunctionLanguage>
-            <PixelFunctionCode><![CDATA[
-                import numpy as np
-                def add(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
-                                raster_ysize, buf_radius, gt, **kwargs):
-                    np.round_(np.clip(np.sum(in_ar, axis = 0, dtype = 'uint16'),0,255),
-                            out = out_ar)
-                ]]>
-            </PixelFunctionCode>
-            <SimpleSource>
-                <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
-            </SimpleSource>
-            <SimpleSource>
-                <SourceFilename relativeToVRT="1">byte2.tif</SourceFilename>
-            </SimpleSource>
-        </VRTRasterBand>
-    </VRTDataset>
+       <VRTDataset rasterXSize="20" rasterYSize="20">
+           <SRS>EPSG:26711</SRS>
+           <GeoTransform>440720,60,0,3751320,0,-60</GeoTransform>
+           <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+               <PixelFunctionType>add</PixelFunctionType>
+               <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+               <PixelFunctionCode><![CDATA[
+                   import numpy as np
+                   def add(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                                   raster_ysize, buf_radius, gt, **kwargs):
+                       np.round_(np.clip(np.sum(in_ar, axis = 0, dtype = 'uint16'),0,255),
+                               out = out_ar)
+                   ]]>
+               </PixelFunctionCode>
+               <SimpleSource>
+                   <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+               </SimpleSource>
+               <SimpleSource>
+                   <SourceFilename relativeToVRT="1">byte2.tif</SourceFilename>
+               </SimpleSource>
+           </VRTRasterBand>
+       </VRTDataset>
 
-VRT that computes hillshading using an external library
-*******************************************************
+.. example::
+   :title: VRT that computes hillshading using an external library
 
-.. code-block:: xml
+   .. code-block:: xml
 
-    <VRTDataset rasterXSize="121" rasterYSize="121">
-        <SRS>EPSG:4326</SRS>
-        <GeoTransform>-80.004166666666663,0.008333333333333,0,
-        44.004166666666663,0,-0.008333333333333</GeoTransform>
-        <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
-            <ColorInterp>Gray</ColorInterp>
-            <SimpleSource>
-                <SourceFilename relativeToVRT="1">n43.dt0</SourceFilename>
-            </SimpleSource>
-            <PixelFunctionLanguage>Python</PixelFunctionLanguage>
-            <PixelFunctionType>hillshading.hillshade</PixelFunctionType>
-            <PixelFunctionArguments scale="111120" z_factor="30" />
-            <BufferRadius>1</BufferRadius>
-            <SourceTransferType>Int16</SourceTransferType>
-        </VRTRasterBand>
-    </VRTDataset>
+       <VRTDataset rasterXSize="121" rasterYSize="121">
+           <SRS>EPSG:4326</SRS>
+           <GeoTransform>-80.004166666666663,0.008333333333333,0,
+           44.004166666666663,0,-0.008333333333333</GeoTransform>
+           <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+               <ColorInterp>Gray</ColorInterp>
+               <SimpleSource>
+                   <SourceFilename relativeToVRT="1">n43.dt0</SourceFilename>
+               </SimpleSource>
+               <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+               <PixelFunctionType>hillshading.hillshade</PixelFunctionType>
+               <PixelFunctionArguments scale="111120" z_factor="30" />
+               <BufferRadius>1</BufferRadius>
+               <SourceTransferType>Int16</SourceTransferType>
+           </VRTRasterBand>
+       </VRTDataset>
 
-with hillshading.py:
+   with :file:`hillshading.py`:
 
-.. code-block:: python
+   .. code-block:: python
 
-    # Licence: MIT
-    # Copyright 2016, Even Rouault
-    import math
+       # Licence: MIT
+       # Copyright 2016, Even Rouault
+       import math
 
-    def hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
-                            raster_ysize, radius, gt, z, scale):
-        ovr_scale_x = float(out_ar.shape[1] - 2 * radius) / xsize
-        ovr_scale_y = float(out_ar.shape[0] - 2 * radius) / ysize
-        ewres = gt[1] / ovr_scale_x
-        nsres = gt[5] / ovr_scale_y
-        inv_nsres = 1.0 / nsres
-        inv_ewres = 1.0 / ewres
+       def hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                               raster_ysize, radius, gt, z, scale):
+           ovr_scale_x = float(out_ar.shape[1] - 2 * radius) / xsize
+           ovr_scale_y = float(out_ar.shape[0] - 2 * radius) / ysize
+           ewres = gt[1] / ovr_scale_x
+           nsres = gt[5] / ovr_scale_y
+           inv_nsres = 1.0 / nsres
+           inv_ewres = 1.0 / ewres
 
-        az = 315
-        alt = 45
-        degreesToRadians = math.pi / 180
+           az = 315
+           alt = 45
+           degreesToRadians = math.pi / 180
 
-        sin_alt = math.sin(alt * degreesToRadians)
-        azRadians = az * degreesToRadians
-        z_scale_factor = z / (8 * scale)
-        cos_alt_mul_z_scale_factor = \
-                math.cos(alt * degreesToRadians) * z_scale_factor
-        cos_az_mul_cos_alt_mul_z_scale_factor_mul_254 = \
-                    254 * math.cos(azRadians) * cos_alt_mul_z_scale_factor
-        sin_az_mul_cos_alt_mul_z_scale_factor_mul_254 = \
-                    254 * math.sin(azRadians) * cos_alt_mul_z_scale_factor
-        square_z_scale_factor = z_scale_factor * z_scale_factor
-        sin_alt_mul_254 = 254.0 * sin_alt
+           sin_alt = math.sin(alt * degreesToRadians)
+           azRadians = az * degreesToRadians
+           z_scale_factor = z / (8 * scale)
+           cos_alt_mul_z_scale_factor = \
+                   math.cos(alt * degreesToRadians) * z_scale_factor
+           cos_az_mul_cos_alt_mul_z_scale_factor_mul_254 = \
+                       254 * math.cos(azRadians) * cos_alt_mul_z_scale_factor
+           sin_az_mul_cos_alt_mul_z_scale_factor_mul_254 = \
+                       254 * math.sin(azRadians) * cos_alt_mul_z_scale_factor
+           square_z_scale_factor = z_scale_factor * z_scale_factor
+           sin_alt_mul_254 = 254.0 * sin_alt
 
-        for j in range(radius, out_ar.shape[0]-radius):
-            win_line = in_ar[0][j-radius:j+radius+1,:]
-            for i in range(radius, out_ar.shape[1]-radius):
-                win = win_line[:,i-radius:i+radius+1].tolist()
-                x = inv_ewres * ((win[0][0] + win[1][0] + win[1][0] + win[2][0])-\
-                                (win[0][2] + win[1][2] + win[1][2] + win[2][2]))
-                y = inv_nsres * ((win[2][0] + win[2][1] + win[2][1] + win[2][2])-\
-                                (win[0][0] + win[0][1] + win[0][1] + win[0][2]))
-                xx_plus_yy = x * x + y * y
-                cang_mul_254 = (sin_alt_mul_254 - \
-                    (y * cos_az_mul_cos_alt_mul_z_scale_factor_mul_254 - \
-                        x * sin_az_mul_cos_alt_mul_z_scale_factor_mul_254)) / \
-                    math.sqrt(1 + square_z_scale_factor * xx_plus_yy)
-                if cang_mul_254 < 0:
-                    out_ar[j,i] = 1
-                else:
-                    out_ar[j,i] = 1 + round(cang_mul_254)
+           for j in range(radius, out_ar.shape[0]-radius):
+               win_line = in_ar[0][j-radius:j+radius+1,:]
+               for i in range(radius, out_ar.shape[1]-radius):
+                   win = win_line[:,i-radius:i+radius+1].tolist()
+                   x = inv_ewres * ((win[0][0] + win[1][0] + win[1][0] + win[2][0])-\
+                                   (win[0][2] + win[1][2] + win[1][2] + win[2][2]))
+                   y = inv_nsres * ((win[2][0] + win[2][1] + win[2][1] + win[2][2])-\
+                                   (win[0][0] + win[0][1] + win[0][1] + win[0][2]))
+                   xx_plus_yy = x * x + y * y
+                   cang_mul_254 = (sin_alt_mul_254 - \
+                       (y * cos_az_mul_cos_alt_mul_z_scale_factor_mul_254 - \
+                           x * sin_az_mul_cos_alt_mul_z_scale_factor_mul_254)) / \
+                       math.sqrt(1 + square_z_scale_factor * xx_plus_yy)
+                   if cang_mul_254 < 0:
+                       out_ar[j,i] = 1
+                   else:
+                       out_ar[j,i] = 1 + round(cang_mul_254)
 
-    def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
-                raster_ysize, radius, gt, **kwargs):
-        z = float(kwargs['z_factor'])
-        scale= float(kwargs['scale'])
-        hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
-                    raster_ysize, radius, gt, z, scale)
+       def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                   raster_ysize, radius, gt, **kwargs):
+           z = float(kwargs['z_factor'])
+           scale= float(kwargs['scale'])
+           hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                       raster_ysize, radius, gt, z, scale)
 
-Python module path
-++++++++++++++++++
+.. note::
 
-When importing modules from inline Python code or when relying on out-of-line
-code (PixelFunctionType of the form "module_name.function_name"), you need
-to make sure the modules are accessible through the python path. Note that
-contrary to the Python interactive interpreter, the current path is not
-automatically added when used from GDAL. So you may need to define the
-**PYTHONPATH** environment variable if you get ModuleNotFoundError exceptions.
+   When importing modules from inline Python code or when relying on out-of-line
+   code (PixelFunctionType of the form "module_name.function_name"), you need
+   to make sure the modules are accessible through the python path. Note that
+   contrary to the Python interactive interpreter, the current path is not
+   automatically added when used from GDAL. So you may need to define the
+   **PYTHONPATH** environment variable if you get ModuleNotFoundError exceptions.
 
 .. _raster_vrt_security_implications:
 
 Security implications
-*********************
++++++++++++++++++++++
 
 The ability to run Python code potentially opens the door to many potential
 vulnerabilities if the user of GDAL may process untrusted datasets. To avoid

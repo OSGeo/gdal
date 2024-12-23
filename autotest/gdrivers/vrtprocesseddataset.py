@@ -1199,6 +1199,194 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
 
 
 ###############################################################################
+# Test expressions
+
+
+@pytest.mark.parametrize(
+    "expression,src,expected,error,env",
+    [
+        pytest.param(
+            "return [BANDS[1], BANDS[2]]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[3, 4]], [[5, 6]]]),
+            None,
+            {},
+            id="multiple bands in, multiple bands out (1)",
+        ),
+        pytest.param(
+            "return [BANDS]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            None,
+            {},
+            id="multiple bands in, multiple bands out (2)",
+        ),
+        pytest.param(
+            """
+             // Reduce every 10 bands of input into a single
+             // band of output, using avg()
+             const var chunksize := 10;
+             const var outsize := BANDS[] / chunksize;
+
+             var chunk[chunksize];
+             var out[outsize];
+
+             for (var i := 0; i < out[]; i += 1) {
+                for (var j := 0; j < chunk[]; j += 1) {
+                    chunk[j] := BANDS[i * chunk[] + j];
+                };
+                out[i] := avg(chunk);
+             };
+             return [out];
+             """,
+            np.arange(100).reshape(50, 1, 2),
+            np.array([[[9, 10]], [[29, 30]], [[49, 50]], [[69, 70]], [[89, 90]]]),
+            None,
+            {},
+            id="procedural",
+        ),
+        pytest.param(
+            "B1",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            None,
+            {},
+            id="multiple bands in, single band out (1)",
+        ),
+        pytest.param(
+            "BANDS[0]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            None,
+            {},
+            id="multiple bands in, single band out (2)",
+        ),
+        pytest.param(
+            "return [B1];",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            None,
+            {},
+            id="multiple bands in, single band out (3)",
+        ),
+        pytest.param(
+            "return [B1, B2]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            "returned 2 values but 1 output band",
+            {},
+            id="return wrong number of bands",
+        ),
+        pytest.param(
+            "return [BANDS, B2]",
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[1, 2]]),
+            "must return a vector or a list of scalars",
+            {},
+            id="return wrong number of bands",
+        ),
+        pytest.param(
+            """
+             var out[3];
+             for (var i := 0; i < 100; i += 1) {
+                out[i] := i;
+             }
+             return [out];
+             """,
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[1, 1]], [[2, 2]], [[3, 3]]]),
+            "Attempted to access index 3",
+            {},
+            id="out of bounds vector access",
+        ),
+        pytest.param(
+            """
+             var out[5];
+             return [out];
+             """,
+            np.array([[[1, 2]]]),
+            np.array([[[1, 1]]]),
+            "Failed to parse expression",
+            {"GDAL_EXPRTK_MAX_VECTOR_LENGTH": "4"},
+            id="vector too large",
+        ),
+        pytest.param(
+            """
+             var out[3];
+             for (var i := 0; i < out[]; i += 1) {
+                out[i] := i;
+             }
+             return [out];
+             """,
+            np.array([[[1, 2]], [[3, 4]], [[5, 6]]]),
+            np.array([[[1, 1]], [[2, 2]], [[3, 3]]]),
+            "Failed to parse expression",
+            {"GDAL_EXPRTK_ENABLE_LOOPS": "NO"},
+            id="loops disabled",
+        ),
+        pytest.param(
+            """
+             for (var i := 0; i < 20000; i += 1) {
+                sleep(0.2/20000); // we only check runtime every 10,000 iterations
+             }
+             return [B1];
+             """,
+            np.array([[[1, 2]]]),
+            np.array([[1, 2]]),
+            "time exceeded maximum",
+            {"GDAL_EXPRTK_TIMEOUT_SECONDS": "0.1"},
+            id="loop evaluation timeout",
+        ),
+    ],
+)
+def test_vrtprocesseddataset_expression(
+    request, tmp_vsimem, expression, src, expected, env, error
+):
+    if "timeout" in request.node.name and "debug" not in gdal.VersionInfo(""):
+        pytest.skip("Timeout tests only work on debug builds")
+
+    src_filename = tmp_vsimem / "src.tif"
+
+    num_input_bands = 1 if len(src.shape) == 2 else src.shape[0]
+    expected_output_bands = 1 if len(expected.shape) == 2 else expected.shape[0]
+
+    with gdal.GetDriverByName("GTiff").Create(
+        src_filename, 2, 1, num_input_bands
+    ) as src_ds:
+        src_ds.WriteArray(src)
+        src_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
+
+    output_band_xml = "".join(
+        f"""<VRTRasterBand band="{i+1}" dataType="Float32" subClass="VRTProcessedRasterBand"/>"""
+        for i in range(expected_output_bands)
+    )
+
+    vrt_xml = f"""<VRTDataset subclass='VRTProcessedDataset'>
+            <Input>
+                <SourceFilename>{src_filename}</SourceFilename>
+            </Input>
+            <ProcessingSteps>
+                <Step>
+                    <Algorithm>Expression</Algorithm>
+                    <Argument name="expression">{expression.replace('<', '&lt;').replace('>', '&gt;')}</Argument>
+                </Step>
+            </ProcessingSteps>
+                {output_band_xml}
+            </VRTDataset>
+                """
+
+    with gdal.config_options(env):
+        if error:
+            with pytest.raises(Exception, match=error):
+                ds = gdal.Open(vrt_xml)
+                result = ds.ReadAsArray()
+        else:
+            ds = gdal.Open(vrt_xml)
+            result = ds.ReadAsArray()
+            np.testing.assert_equal(result, expected)
+
+
+###############################################################################
 # Test that serialization (for example due to statistics computation) properly
 # works
 
