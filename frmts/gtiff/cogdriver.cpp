@@ -763,6 +763,21 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         return nullptr;
     }
 
+    const CPLString osCompress = CSLFetchNameValueDef(
+        papszOptions, "COMPRESS", gbHasLZW ? "LZW" : "NONE");
+
+    const char *pszInterleave =
+        CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "PIXEL");
+    if (EQUAL(osCompress, "WEBP"))
+    {
+        if (!EQUAL(pszInterleave, "PIXEL"))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "COMPRESS=WEBP only supported for INTERLEAVE=PIXEL");
+            return nullptr;
+        }
+    }
+
     CPLConfigOptionSetter oSetterReportDirtyBlockFlushing(
         "GDAL_REPORT_DIRTY_BLOCK_FLUSHING", "NO", true);
 
@@ -877,9 +892,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         }
     }
 
-    CPLString osCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS",
-                                                gbHasLZW ? "LZW" : "NONE");
-    if (EQUAL(osCompress, "JPEG") &&
+    if (EQUAL(osCompress, "JPEG") && EQUAL(pszInterleave, "PIXEL") &&
         (poCurDS->GetRasterCount() == 2 || poCurDS->GetRasterCount() == 4) &&
         poCurDS->GetRasterBand(poCurDS->GetRasterCount())
                 ->GetColorInterpretation() == GCI_AlphaBand)
@@ -1198,7 +1211,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     if (EQUAL(osCompress, "JPEG"))
     {
         aosOptions.SetNameValue("JPEG_QUALITY", pszQuality);
-        if (nBands == 3)
+        if (nBands == 3 && EQUAL(pszInterleave, "PIXEL"))
             aosOptions.SetNameValue("PHOTOMETRIC", "YCBCR");
     }
     else if (EQUAL(osCompress, "WEBP"))
@@ -1316,7 +1329,8 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     }
 
     std::unique_ptr<CPLConfigOptionSetter> poPhotometricSetter;
-    if (nBands == 3 && EQUAL(pszOverviewCompress, "JPEG"))
+    if (nBands == 3 && EQUAL(pszOverviewCompress, "JPEG") &&
+        EQUAL(pszInterleave, "PIXEL"))
     {
         poPhotometricSetter.reset(
             new CPLConfigOptionSetter("PHOTOMETRIC_OVERVIEW", "YCBCR", true));
@@ -1346,6 +1360,8 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
          papszSrcMDDIter && *papszSrcMDDIter; ++papszSrcMDDIter)
         aosOptions.AddNameValue("SRC_MDD", *papszSrcMDDIter);
     CSLDestroy(papszSrcMDD);
+
+    aosOptions.SetNameValue("INTERLEAVE", pszInterleave);
 
     CPLDebug("COG", "Generating final product: start");
     auto poRet =
@@ -1525,6 +1541,11 @@ void GDALCOGDriver::InitializeCreationOptionList()
         "(16)'/>"
         "   <Option name='BLOCKSIZE' type='int' "
         "description='Tile size in pixels' min='128' default='512'/>"
+        "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
+        "       <Value>BAND</Value>"
+        "       <Value>PIXEL</Value>"
+        "       <Value>TILE</Value>"
+        "   </Option>"
         "   <Option name='BIGTIFF' type='string-select' description='"
         "Force creation of BigTIFF file'>"
         "     <Value>YES</Value>"

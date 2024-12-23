@@ -99,7 +99,7 @@ GTiffDataset::GTiffDataset()
       m_bLeaderSizeAsUInt4(false), m_bTrailerRepeatedLast4BytesRepeated(false),
       m_bMaskInterleavedWithImagery(false), m_bKnownIncompatibleEdition(false),
       m_bWriteKnownIncompatibleEdition(false), m_bHasUsedReadEncodedAPI(false),
-      m_bWriteCOGLayout(false)
+      m_bWriteCOGLayout(false), m_bTileInterleave(false)
 {
     // CPLDebug("GDAL", "sizeof(GTiffDataset) = %d bytes", static_cast<int>(
     //     sizeof(GTiffDataset)));
@@ -483,8 +483,8 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         const int nBlockY2 = (nYOff + nYSize - 1) / m_nBlockYSize;
         const int nXBlocks = nBlockX2 - nBlockX1 + 1;
         const int nYBlocks = nBlockY2 - nBlockY1 + 1;
-        const int nBlocks =
-            nXBlocks * nYBlocks *
+        const size_t nBlocks =
+            static_cast<size_t>(nXBlocks) * nYBlocks *
             (m_nPlanarConfig == PLANARCONFIG_CONTIG ? 1 : nBandCount);
         if (nBlocks > 1)
         {
@@ -497,13 +497,23 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     const auto eDataType = poFirstBand->GetRasterDataType();
 
     if (eAccess == GA_ReadOnly && eRWFlag == GF_Read &&
-        (nBands == 1 || m_nPlanarConfig == PLANARCONFIG_CONTIG) &&
         HasOptimizedReadMultiRange() &&
         !(bCanUseMultiThreadedRead &&
           VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF))->HasPRead()))
     {
-        pBufferedData = poFirstBand->CacheMultiRange(
-            nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, psExtraArg);
+        if (nBands == 1 || m_nPlanarConfig == PLANARCONFIG_CONTIG)
+        {
+            const int nBandOne = 1;
+            pBufferedData =
+                CacheMultiRange(nXOff, nYOff, nXSize, nYSize, nBufXSize,
+                                nBufYSize, &nBandOne, 1, psExtraArg);
+        }
+        else
+        {
+            pBufferedData =
+                CacheMultiRange(nXOff, nYOff, nXSize, nYSize, nBufXSize,
+                                nBufYSize, panBandMap, nBandCount, psExtraArg);
+        }
     }
     else if (bCanUseMultiThreadedRead)
     {
@@ -1004,6 +1014,7 @@ void GTiffDataset::SetStructuralMDFromParent(GTiffDataset *poParentDS)
         poParentDS->m_bTrailerRepeatedLast4BytesRepeated;
     m_bMaskInterleavedWithImagery = poParentDS->m_bMaskInterleavedWithImagery;
     m_bWriteEmptyTiles = poParentDS->m_bWriteEmptyTiles;
+    m_bTileInterleave = poParentDS->m_bTileInterleave;
 }
 
 /************************************************************************/

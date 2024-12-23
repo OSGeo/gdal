@@ -130,6 +130,7 @@ schema_creationoptionslist_xml = etree.XML(
         <xs:extension base="xs:string">
           <xs:attribute type="xs:string" name="alias" use="optional"/>
           <xs:attribute type="xs:string" name="aliasOf" use="optional"/>
+          <xs:attribute type="xs:string" name="remark" use="optional"/>
         </xs:extension>
       </xs:simpleContent>
     </xs:complexType>
