@@ -218,8 +218,28 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     const bool bIsSQLite3 =
         (pszADBCDriverName && EQUAL(pszADBCDriverName, "adbc_driver_sqlite")) ||
         OGRADBCDriverIsSQLite3(poOpenInfo);
-    const bool bIsParquet = OGRADBCDriverIsParquet(poOpenInfo) ||
-                            EQUAL(CPLGetExtension(pszFilename), "parquet");
+    bool bIsParquet = OGRADBCDriverIsParquet(poOpenInfo) ||
+                      EQUAL(CPLGetExtension(pszFilename), "parquet");
+    const char *pszSQL = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SQL");
+    if (!bIsParquet && pszSQL)
+    {
+        CPLString osSQL(pszSQL);
+        auto iPos = osSQL.find("FROM '");
+        if (iPos != std::string::npos)
+        {
+            iPos += strlen("FROM '");
+            const auto iPos2 = osSQL.find("'", iPos);
+            if (iPos2 != std::string::npos)
+            {
+                const std::string osFilename = osSQL.substr(iPos, iPos2 - iPos);
+                if (EQUAL(CPLGetExtension(osFilename.c_str()), "parquet"))
+                {
+                    m_osParquetFilename = osFilename;
+                    bIsParquet = true;
+                }
+            }
+        }
+    }
     const bool bIsPostgreSQL = STARTS_WITH(pszFilename, "postgresql://");
 
     if (!pszADBCDriverName)
@@ -376,14 +396,15 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
 
     std::string osLayerName = "RESULTSET";
     std::string osSQL;
-    const char *pszSQL = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SQL");
     bool bIsParquetLayer = false;
     if (bIsParquet)
     {
-        m_osParquetFilename = pszFilename;
-        osLayerName = CPLGetBasename(pszFilename);
+        if (m_osParquetFilename.empty())
+            m_osParquetFilename = pszFilename;
+        osLayerName = CPLGetBasename(m_osParquetFilename.c_str());
         if (osLayerName == "*")
-            osLayerName = CPLGetBasename(CPLGetDirname(pszFilename));
+            osLayerName =
+                CPLGetBasename(CPLGetDirname(m_osParquetFilename.c_str()));
         if (!pszSQL)
         {
             osSQL =

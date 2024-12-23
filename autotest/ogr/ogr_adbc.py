@@ -307,6 +307,29 @@ def test_ogr_adbc_duckdb_parquet_with_spatial(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL)
 
 
 @pytest.mark.parametrize("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", ["ON", "OFF"])
+def test_ogr_adbc_duckdb_parquet_with_spatial_and_SQL_open_optoin(
+    OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL,
+):
+
+    if not _has_libduckdb():
+        pytest.skip("libduckdb.so missing")
+
+    with gdal.config_option(
+        "OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL
+    ):
+        open_options = ["SQL=SELECT * FROM 'data/parquet/poly.parquet' LIMIT 1"]
+        if OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL == "ON":
+            open_options += ["PRELUDE_STATEMENTS=INSTALL spatial"]
+        with gdal.OpenEx("ADBC:", gdal.OF_VECTOR, open_options=open_options) as ds:
+            lyr = ds.GetLayer(0)
+            assert lyr.GetGeomType() == ogr.wkbPolygon
+            assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", ["ON", "OFF"])
 def test_ogr_adbc_duckdb_with_spatial_index(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
 
     if not _has_libduckdb():
