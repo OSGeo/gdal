@@ -315,19 +315,21 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         else
         {
             bCanUseMultiThreadedRead = false;
-            GTiffRasterBand *poBandForCache = this;
+            GTiffDataset *poDSForCache = m_poGDS;
+            int nBandForCache = nBand;
             if (!m_poGDS->m_bStreamingIn && m_poGDS->m_bBlockOrderRowMajor &&
                 m_poGDS->m_bLeaderSizeAsUInt4 &&
                 m_poGDS->m_bMaskInterleavedWithImagery &&
                 m_poGDS->m_poImageryDS)
             {
-                poBandForCache = cpl::down_cast<GTiffRasterBand *>(
-                    m_poGDS->m_poImageryDS->GetRasterBand(1));
+                poDSForCache = m_poGDS->m_poImageryDS;
+                nBandForCache = 1;
             }
-            bufferedDataFreer.Init(poBandForCache->CacheMultiRange(
-                                       nXOff, nYOff, nXSize, nYSize, nBufXSize,
-                                       nBufYSize, psExtraArg),
-                                   poBandForCache->m_poGDS->m_hTIFF);
+            bufferedDataFreer.Init(
+                poDSForCache->CacheMultiRange(nXOff, nYOff, nXSize, nYSize,
+                                              nBufXSize, nBufYSize,
+                                              &nBandForCache, 1, psExtraArg),
+                poDSForCache->m_hTIFF);
         }
     }
 
@@ -379,7 +381,8 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
              !m_poGDS->m_bLoadedBlockDirty &&
              (m_poGDS->nBands == 1 ||
               m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE) &&
-             (nXOff % nBlockXSize) == 0 && (nYOff % nBlockYSize) == 0 &&
+             !m_poGDS->m_bLeaderSizeAsUInt4 && (nXOff % nBlockXSize) == 0 &&
+             (nYOff % nBlockYSize) == 0 &&
              (nXOff + nXSize == nRasterXSize || (nXSize % nBlockXSize) == 0) &&
              (nYOff + nYSize == nRasterYSize || (nYSize % nBlockYSize) == 0))
     {

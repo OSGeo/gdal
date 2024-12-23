@@ -55,10 +55,6 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
                                              GIntBig *pnLineSpace,
                                              char **papszOptions);
 
-    void *CacheMultiRange(int nXOff, int nYOff, int nXSize, int nYSize,
-                          int nBufXSize, int nBufYSize,
-                          GDALRasterIOExtraArg *psExtraArg);
-
   protected:
     GTiffDataset *m_poGDS = nullptr;
     GDALMultiDomainMetadata m_oGTiffMDMD{};
