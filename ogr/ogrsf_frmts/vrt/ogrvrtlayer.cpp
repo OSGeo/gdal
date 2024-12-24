@@ -461,9 +461,10 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
     }
 
     // Do we have a SrcRegion?
-    const char *pszSrcRegion = CPLGetXMLValue(psNode, "SrcRegion", nullptr);
-    if (pszSrcRegion == nullptr && poProps == apoGeomFieldProps[0])
-        pszSrcRegion = CPLGetXMLValue(psNodeParent, "SrcRegion", nullptr);
+    const CPLXMLNode *psSrcRegionNode = CPLGetXMLNode(psNode, "SrcRegion");
+    if (psSrcRegionNode == nullptr && poProps == apoGeomFieldProps[0])
+        psSrcRegionNode = CPLGetXMLNode(psNodeParent, "SrcRegion");
+    const char *pszSrcRegion = CPLGetXMLValue(psSrcRegionNode, "", nullptr);
     if (pszSrcRegion != nullptr)
     {
         OGRGeometryFactory::createFromWkt(pszSrcRegion, nullptr,
@@ -478,7 +479,7 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
         }
 
         poProps->bSrcClip =
-            CPLTestBool(CPLGetXMLValue(psNode, "SrcRegion.clip", "FALSE"));
+            CPLTestBool(CPLGetXMLValue(psSrcRegionNode, "clip", "FALSE"));
     }
 
     // Set Extent if provided.
