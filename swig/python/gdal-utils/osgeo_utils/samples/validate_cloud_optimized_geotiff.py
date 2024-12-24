@@ -162,7 +162,7 @@ def validate(ds, check_tiled=True, full_check=False):
             raise ValidateCloudOptimizedGeoTIFFException(
                 "Invalid file : %s" % gdal.GetLastErrorMsg()
             )
-        if ds.GetDriver().ShortName != "GTiff":
+        if ds.GetDriver().ShortName not in ("GTiff", "LIBERTIFF"):
             raise ValidateCloudOptimizedGeoTIFFException("The file is not a GeoTIFF")
 
     details = {}

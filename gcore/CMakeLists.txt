@@ -58,7 +58,9 @@ add_library(
   gdalpythondriverloader.cpp
   tilematrixset.cpp
   gdal_thread_pool.cpp
-  nasakeywordhandler.cpp)
+  nasakeywordhandler.cpp
+  tiff_common.cpp
+)
 
 add_library(gcore_gdal_misc OBJECT gdal_misc.cpp)
 gdal_standard_includes(gcore_gdal_misc)

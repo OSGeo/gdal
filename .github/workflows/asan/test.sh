@@ -4,8 +4,8 @@ set -ex
 
 . ../scripts/setdevenv.sh
 
-export LD_LIBRARY_PATH=/usr/lib/llvm-14/lib/clang/14.0.0/lib/linux:${LD_LIBRARY_PATH}
-export PATH=/usr/lib/llvm-14/bin:${PATH}
+export LD_LIBRARY_PATH=/usr/lib/llvm-18/lib/clang/18.0.0/lib/linux:${LD_LIBRARY_PATH}
+export PATH=/usr/lib/llvm-18/bin:${PATH}
 export SKIP_MEM_INTENSIVE_TEST=YES
 export SKIP_VIRTUALMEM=YES
 export LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)

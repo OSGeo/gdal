@@ -15,6 +15,8 @@
 
 #include "gtiff.h"
 
+#include "tiff_common.h"
+
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "gdal.h"
@@ -494,68 +496,7 @@ char **GTiffDatasetReadRPCTag(TIFF *hTIFF)
         nCount != 92)
         return nullptr;
 
-    CPLStringList asMD;
-    asMD.SetNameValue(RPC_ERR_BIAS, CPLOPrintf("%.15g", padfRPCTag[0]));
-    asMD.SetNameValue(RPC_ERR_RAND, CPLOPrintf("%.15g", padfRPCTag[1]));
-    asMD.SetNameValue(RPC_LINE_OFF, CPLOPrintf("%.15g", padfRPCTag[2]));
-    asMD.SetNameValue(RPC_SAMP_OFF, CPLOPrintf("%.15g", padfRPCTag[3]));
-    asMD.SetNameValue(RPC_LAT_OFF, CPLOPrintf("%.15g", padfRPCTag[4]));
-    asMD.SetNameValue(RPC_LONG_OFF, CPLOPrintf("%.15g", padfRPCTag[5]));
-    asMD.SetNameValue(RPC_HEIGHT_OFF, CPLOPrintf("%.15g", padfRPCTag[6]));
-    asMD.SetNameValue(RPC_LINE_SCALE, CPLOPrintf("%.15g", padfRPCTag[7]));
-    asMD.SetNameValue(RPC_SAMP_SCALE, CPLOPrintf("%.15g", padfRPCTag[8]));
-    asMD.SetNameValue(RPC_LAT_SCALE, CPLOPrintf("%.15g", padfRPCTag[9]));
-    asMD.SetNameValue(RPC_LONG_SCALE, CPLOPrintf("%.15g", padfRPCTag[10]));
-    asMD.SetNameValue(RPC_HEIGHT_SCALE, CPLOPrintf("%.15g", padfRPCTag[11]));
-
-    CPLString osField;
-    CPLString osMultiField;
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[12 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_LINE_NUM_COEFF, osMultiField);
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[32 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_LINE_DEN_COEFF, osMultiField);
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[52 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_SAMP_NUM_COEFF, osMultiField);
-
-    for (int i = 0; i < 20; ++i)
-    {
-        osField.Printf("%.15g", padfRPCTag[72 + i]);
-        if (i > 0)
-            osMultiField += " ";
-        else
-            osMultiField = "";
-        osMultiField += osField;
-    }
-    asMD.SetNameValue(RPC_SAMP_DEN_COEFF, osMultiField);
-
-    return asMD.StealList();
+    return gdal::tiff_common::TIFFRPCTagToRPCMetadata(padfRPCTag).StealList();
 }
 
 /************************************************************************/
@@ -761,45 +702,6 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     VSIUnlink(osTmpFilenameIn);
 }
 
-/************************************************************************/
-/*                       PrepareTIFFErrorFormat()                       */
-/*                                                                      */
-/*      sometimes the "module" has stuff in it that has special         */
-/*      meaning in a printf() style format, so we try to escape it.     */
-/*      For now we hope the only thing we have to escape is %'s.        */
-/************************************************************************/
-
-static char *PrepareTIFFErrorFormat(const char *module, const char *fmt)
-
-{
-    const size_t nModuleSize = strlen(module);
-    const size_t nModFmtSize = nModuleSize * 2 + strlen(fmt) + 2;
-    char *pszModFmt = static_cast<char *>(CPLMalloc(nModFmtSize));
-
-    size_t iOut = 0;  // Used after for.
-
-    for (size_t iIn = 0; iIn < nModuleSize; ++iIn)
-    {
-        if (module[iIn] == '%')
-        {
-            CPLAssert(iOut < nModFmtSize - 2);
-            pszModFmt[iOut++] = '%';
-            pszModFmt[iOut++] = '%';
-        }
-        else
-        {
-            CPLAssert(iOut < nModFmtSize - 1);
-            pszModFmt[iOut++] = module[iIn];
-        }
-    }
-    CPLAssert(iOut < nModFmtSize);
-    pszModFmt[iOut] = '\0';
-    strcat(pszModFmt, ":");
-    strcat(pszModFmt, fmt);
-
-    return pszModFmt;
-}
-
 #if !defined(SUPPORTS_LIBTIFF_OPEN_OPTIONS)
 
 /************************************************************************/
@@ -817,7 +719,7 @@ static void GTiffWarningHandler(const char *module, const char *fmt, va_list ap)
     if (strstr(fmt, "nknown field") != nullptr)
         return;
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     if (strstr(fmt, "does not end in null byte") != nullptr)
     {
         CPLString osMsg;
@@ -854,7 +756,7 @@ static void GTiffErrorHandler(const char *module, const char *fmt, va_list ap)
                   "Use BIGTIFF=YES creation option.";
     }
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     CPLErrorV(CE_Failure, CPLE_AppDefined, pszModFmt, ap);
     CPLFree(pszModFmt);
     return;
@@ -886,7 +788,7 @@ int GTiffWarningHandlerExt(TIFF *tif, void *user_data, const char *module,
     if (strstr(fmt, "nknown field") != nullptr)
         return 1;
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     if (strstr(fmt, "does not end in null byte") != nullptr)
     {
         CPLString osMsg;
@@ -932,7 +834,7 @@ int GTiffErrorHandlerExt(TIFF *tif, void *user_data, const char *module,
                   "Use BIGTIFF=YES creation option.";
     }
 
-    char *pszModFmt = PrepareTIFFErrorFormat(module, fmt);
+    char *pszModFmt = gdal::tiff_common::PrepareTIFFErrorFormat(module, fmt);
     CPLErrorV(CE_Failure, CPLE_AppDefined, pszModFmt, ap);
     CPLFree(pszModFmt);
     return 1;

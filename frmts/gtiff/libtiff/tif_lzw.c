@@ -168,7 +168,6 @@ static int LZWDecode(TIFF *tif, uint8_t *op0, tmsize_t occ0, uint16_t s);
 #ifdef LZW_COMPAT
 static int LZWDecodeCompat(TIFF *tif, uint8_t *op0, tmsize_t occ0, uint16_t s);
 #endif
-static void cl_hash(LZWCodecState *);
 
 /*
  * LZW Decoder.
@@ -1017,6 +1016,10 @@ static int LZWDecodeCompat(TIFF *tif, uint8_t *op0, tmsize_t occ0, uint16_t s)
 }
 #endif /* LZW_COMPAT */
 
+#ifndef LZW_READ_ONLY
+
+static void cl_hash(LZWCodecState *);
+
 /*
  * LZW Encoding.
  */
@@ -1373,11 +1376,13 @@ static void cl_hash(LZWCodecState *sp)
         hp->hash = -1;
 }
 
+#endif
+
 static void LZWCleanup(TIFF *tif)
 {
     (void)TIFFPredictorCleanup(tif);
 
-    assert(tif->tif_data != 0);
+    assert(tif->tif_data != NULL);
 
     if (LZWDecoderState(tif)->dec_codetab)
         _TIFFfreeExt(tif, LZWDecoderState(tif)->dec_codetab);
@@ -1416,12 +1421,14 @@ int TIFFInitLZW(TIFF *tif, int scheme)
     tif->tif_decoderow = LZWDecode;
     tif->tif_decodestrip = LZWDecode;
     tif->tif_decodetile = LZWDecode;
+#ifndef LZW_READ_ONLY
     tif->tif_setupencode = LZWSetupEncode;
     tif->tif_preencode = LZWPreEncode;
     tif->tif_postencode = LZWPostEncode;
     tif->tif_encoderow = LZWEncode;
     tif->tif_encodestrip = LZWEncode;
     tif->tif_encodetile = LZWEncode;
+#endif
     tif->tif_cleanup = LZWCleanup;
     /*
      * Setup predictor setup.
