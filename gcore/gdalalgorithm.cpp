@@ -2611,6 +2611,16 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
         osRet += '\n';
     }
 
+    if (!m_callPath.empty() && m_callPath[0] == "gdal")
+    {
+        osRet += "\nWARNING: the gdal command is provisionally provided as an "
+                 "alternative interface to GDAL and OGR command line "
+                 "utilities.\nThe project reserves the right to modify, "
+                 "rename, reorganize, and change the behavior of the utility\n"
+                 "until it is officially frozen in a future feature release of "
+                 "GDAL.\n";
+    }
+
     return osRet;
 }
 
