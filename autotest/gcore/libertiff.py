@@ -24,8 +24,10 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("LIBERTIFF")
 
 
-def libertiff_open(filename):
-    return gdal.OpenEx(filename, allowed_drivers=["LIBERTIFF"])
+def libertiff_open(filename, open_options=[]):
+    return gdal.OpenEx(
+        filename, allowed_drivers=["LIBERTIFF"], open_options=open_options
+    )
 
 
 def test_libertiff_basic():
@@ -337,7 +339,8 @@ def test_libertiff_check_byte(filename_middle):
         "int16_bigendian_lzw_predictor_2",
     ],
 )
-def test_libertiff_check_rgbsmall(filename_middle):
+@pytest.mark.parametrize("NUM_THREADS", [None, "2", "ALL_CPUS"])
+def test_libertiff_check_rgbsmall(filename_middle, NUM_THREADS):
     if "JPEG" in filename_middle and gdal.GetDriverByName("JPEG") is None:
         pytest.skip("JPEG driver missing")
     if "JXL" in filename_middle and gdal.GetDriverByName("JPEGXL") is None:
@@ -369,7 +372,10 @@ def test_libertiff_check_rgbsmall(filename_middle):
     ):
         pytest.skip("ZSTD support missing")
 
-    ds = libertiff_open(f"data/gtiff/rgbsmall_{filename_middle}.tif")
+    ds = libertiff_open(
+        f"data/gtiff/rgbsmall_{filename_middle}.tif",
+        open_options=([] if NUM_THREADS is None else ["NUM_THREADS=" + NUM_THREADS]),
+    )
     if "JPEG" in filename_middle:
         assert ds.GetRasterBand(1).Checksum() > 0
         if gdal.GetDriverByName("GTiff"):
@@ -848,3 +854,8 @@ def test_libertiff_read_geomatrix():
 
     ds = libertiff_open("data/geomatrix.tif")
     assert ds.GetGeoTransform() == (1841001.75, 1.5, -5.0, 1144003.25, -5.0, -1.5)
+
+
+def test_libertiff_num_threads_saturated():
+
+    libertiff_open("data/byte.tif", open_options=["NUM_THREADS=10000"])

@@ -14,9 +14,12 @@
 #include "cpl_mem_cache.h"
 #include "cpl_minixml.h"
 #include "cpl_vsi_virtual.h"
+#include "cpl_multiproc.h"           // CPLGetNumCPUs()
+#include "cpl_worker_thread_pool.h"  // CPLJobQueue, CPLWorkerThreadPool
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <limits>
 #include <map>
 #include <mutex>
@@ -25,6 +28,7 @@
 #include "gdal_pam.h"
 #include "gdal_mdreader.h"
 #include "gdal_interpolateatpoint.h"
+#include "gdal_thread_pool.h"
 #include "memdataset.h"
 
 #define LIBERTIFF_NS GDALLibertiffDataset
@@ -175,6 +179,7 @@ class LIBERTIFFDataset final : public GDALPamDataset
     int m_lercVersion = LERC_VERSION_2_4;
     int m_lercAdditionalCompression = LERC_ADD_COMPRESSION_NONE;
     std::vector<uint16_t> m_extraSamples{};
+    CPLWorkerThreadPool *m_poThreadPool = nullptr;
 
     struct ThreadLocalState
     {
@@ -867,45 +872,86 @@ CPLErr LIBERTIFFDataset::IRasterIO(
     const int iYBlockMax = DIV_ROUND_UP(nYOff + nBufYSize, nBlockYSize);
     const int iXBlockMax = DIV_ROUND_UP(nXOff + nBufXSize, nBlockXSize);
 
-    // Could be parallelized
-    for (int iYBlock = iYBlockMin, iY = 0; iYBlock < iYBlockMax;
+    CPLJobQueuePtr poQueue;
+    const bool bIsSeparate = m_image->planarConfiguration() ==
+                             LIBERTIFF_NS::PlanarConfiguration::Separate;
+    if (m_poThreadPool &&
+        (iYBlockMax - iYBlockMin > 1 || iXBlockMax - iXBlockMin > 1 ||
+         (bIsSeparate && nBandCount > 1)))
+    {
+        poQueue = m_poThreadPool->CreateJobQueue();
+    }
+    std::atomic<bool> bSuccess(true);
+
+    for (int iYBlock = iYBlockMin, iY = 0; iYBlock < iYBlockMax && bSuccess;
          ++iYBlock, ++iY)
     {
-        for (int iXBlock = iXBlockMin, iX = 0; iXBlock < iXBlockMax;
+        for (int iXBlock = iXBlockMin, iX = 0; iXBlock < iXBlockMax && bSuccess;
              ++iXBlock, ++iX)
         {
-            if (m_image->planarConfiguration() ==
-                LIBERTIFF_NS::PlanarConfiguration::Separate)
+            if (bIsSeparate)
             {
                 for (int iBand = 0; iBand < nBandCount; ++iBand)
                 {
-                    int anBand[] = {panBandMap[iBand]};
-                    if (!ReadBlock(static_cast<GByte *>(pData) +
-                                       iY * nLineSpace * nBlockYSize +
-                                       iX * nPixelSpace * nBlockXSize +
-                                       iBand * nBandSpace,
-                                   iXBlock, iYBlock, 1, anBand, eBufType,
-                                   nPixelSpace, nLineSpace, nBandSpace))
+                    const auto lambda = [this, &bSuccess, iBand, panBandMap,
+                                         pData, iY, nLineSpace, nBlockYSize, iX,
+                                         nPixelSpace, nBlockXSize, nBandSpace,
+                                         iXBlock, iYBlock, eBufType]()
                     {
-                        return CE_Failure;
+                        int anBand[] = {panBandMap[iBand]};
+                        if (!ReadBlock(static_cast<GByte *>(pData) +
+                                           iY * nLineSpace * nBlockYSize +
+                                           iX * nPixelSpace * nBlockXSize +
+                                           iBand * nBandSpace,
+                                       iXBlock, iYBlock, 1, anBand, eBufType,
+                                       nPixelSpace, nLineSpace, nBandSpace))
+                        {
+                            bSuccess = false;
+                        }
+                    };
+                    if (poQueue)
+                    {
+                        poQueue->SubmitJob(lambda);
+                    }
+                    else
+                    {
+                        lambda();
                     }
                 }
             }
             else
             {
-                if (!ReadBlock(static_cast<GByte *>(pData) +
-                                   iY * nLineSpace * nBlockYSize +
-                                   iX * nPixelSpace * nBlockXSize,
-                               iXBlock, iYBlock, nBandCount, panBandMap,
-                               eBufType, nPixelSpace, nLineSpace, nBandSpace))
+                const auto lambda = [this, &bSuccess, nBandCount, panBandMap,
+                                     pData, iY, nLineSpace, nBlockYSize, iX,
+                                     nPixelSpace, nBlockXSize, nBandSpace,
+                                     iXBlock, iYBlock, eBufType]()
                 {
-                    return CE_Failure;
+                    if (!ReadBlock(static_cast<GByte *>(pData) +
+                                       iY * nLineSpace * nBlockYSize +
+                                       iX * nPixelSpace * nBlockXSize,
+                                   iXBlock, iYBlock, nBandCount, panBandMap,
+                                   eBufType, nPixelSpace, nLineSpace,
+                                   nBandSpace))
+                    {
+                        bSuccess = false;
+                    }
+                };
+                if (poQueue)
+                {
+                    poQueue->SubmitJob(lambda);
+                }
+                else
+                {
+                    lambda();
                 }
             }
         }
     }
 
-    return CE_None;
+    if (poQueue)
+        poQueue->WaitCompletion();
+
+    return bSuccess ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -2862,6 +2908,22 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
         poOpenInfo->fpL = nullptr;
     }
 
+    const char *pszValue =
+        CSLFetchNameValue(poOpenInfo->papszOpenOptions, "NUM_THREADS");
+    if (pszValue == nullptr)
+        pszValue = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+    if (pszValue)
+    {
+        int nThreads =
+            EQUAL(pszValue, "ALL_CPUS") ? CPLGetNumCPUs() : atoi(pszValue);
+        if (nThreads > 1024)
+            nThreads = 1024;  // to please Coverity
+        if (nThreads > 1)
+        {
+            m_poThreadPool = GDALGetGlobalThreadPool(nThreads);
+        }
+    }
+
     return true;
 }
 
@@ -3220,6 +3282,13 @@ void GDALRegister_LIBERTIFF()
 
     poDriver->pfnIdentify = LIBERTIFFDataset::Identify;
     poDriver->pfnOpen = LIBERTIFFDataset::OpenStatic;
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "   <Option name='NUM_THREADS' type='string' description='Number of "
+        "worker threads for compression. Can be set to ALL_CPUS' default='1'/>"
+        "</OpenOptionList>");
 
     if (CPLGetDecompressor("lzma"))
     {

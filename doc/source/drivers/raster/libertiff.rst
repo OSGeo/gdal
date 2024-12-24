@@ -34,3 +34,17 @@ Driver capabilities
 .. supports_georeferencing::
 
 .. supports_virtualio::
+
+Open options
+------------
+
+|about-open-options|
+This driver supports the following open options:
+
+.. oo:: NUM_THREADS
+   :choices: <number_of_threads>, ALL_CPUS
+
+   This option also enables multi-threaded decoding
+   when RasterIO() requests intersect several tiles/strips.
+   The :config:`GDAL_NUM_THREADS` configuration option can also
+   be used as an alternative to setting the open option.
