@@ -301,7 +301,7 @@ void OGRADBCLayer::BuildLayerDefn(bool bInternalUse)
     std::map<std::string, OGREnvelope3D> oMapExtent;
     std::map<std::string, GeomColBBOX> oMapGeomColumnToCoveringBBOXColumn;
     if (!bInternalUse && STARTS_WITH_CI(m_osBaseStatement.c_str(), "SELECT ") &&
-        (m_poDS->m_bIsDuckDB ||
+        (m_poDS->m_bIsDuckDBDriver ||
          (!m_poDS->m_osParquetFilename.empty() &&
           CPLString(m_osBaseStatement)
                   .ifind(std::string(" FROM '").append(OGRDuplicateCharacter(
@@ -356,9 +356,9 @@ void OGRADBCLayer::BuildLayerDefn(bool bInternalUse)
             std::string("DESCRIBE ").append(m_osBaseStatement).c_str());
         std::string osNewStatement;
         bool bNewStatement = false;
-        if (poDescribeLayer &&
-            // cppcheck-suppress knownConditionTrueFalse
-            (m_poDS->m_bIsDuckDB || !oMapGeomColumnsFromGeoParquet.empty()))
+        if (poDescribeLayer && (m_poDS->m_bIsDuckDBDriver ||
+                                // cppcheck-suppress knownConditionTrueFalse
+                                !oMapGeomColumnsFromGeoParquet.empty()))
         {
             for (auto &&f : *poDescribeLayer)
             {
@@ -804,7 +804,7 @@ int OGRADBCLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCFastSpatialFilter) && m_iGeomFieldFilter >= 0 &&
              m_iGeomFieldFilter < GetLayerDefn()->GetGeomFieldCount())
     {
-        if (m_poDS->m_bSpatialLoaded && m_poDS->m_bIsDuckDB)
+        if (m_poDS->m_bSpatialLoaded && m_poDS->m_bIsDuckDBDataset)
         {
             const char *pszGeomColName =
                 m_poAdapterLayer->m_poLayerDefn

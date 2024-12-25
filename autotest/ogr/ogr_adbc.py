@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import shutil
+
 import gdaltest
 import pytest
 
@@ -345,6 +347,28 @@ def test_ogr_adbc_duckdb_with_spatial_index(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL):
         ) as sql_lyr:
             spatial_loaded = sql_lyr.GetNextFeature() is not None
         assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == spatial_loaded
+
+
+###############################################################################
+
+
+def test_ogr_adbc_duckdb_sql(tmp_path):
+
+    if not _has_libduckdb():
+        pytest.skip("libduckdb.so missing")
+
+    tmp_filename = str(tmp_path / "test.parquet")
+    shutil.copy("data/parquet/poly.parquet", tmp_filename)
+    ds = gdal.OpenEx(
+        "ADBC:",
+        open_options=[
+            "ADBC_DRIVER=libduckdb",
+            f"SQL=SELECT * FROM read_parquet('{tmp_path}/*', hive_partitioning=1)",
+        ],
+    )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
 
 
 ###############################################################################

@@ -182,7 +182,8 @@ class OGRADBCDataset final : public GDALDataset
     std::unique_ptr<AdbcConnection> m_connection{};
     std::vector<std::unique_ptr<OGRLayer>> m_apoLayers{};
     std::string m_osParquetFilename{};
-    bool m_bIsDuckDB = false;
+    bool m_bIsDuckDBDataset = false;
+    bool m_bIsDuckDBDriver = false;
     bool m_bSpatialLoaded = false;
 
   public:
