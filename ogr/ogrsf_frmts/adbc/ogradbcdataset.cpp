@@ -214,7 +214,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     }
     const char *pszADBCDriverName =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "ADBC_DRIVER");
-    m_bIsDuckDB = OGRADBCDriverIsDuckDB(poOpenInfo);
+    m_bIsDuckDBDataset = OGRADBCDriverIsDuckDB(poOpenInfo);
     const bool bIsSQLite3 =
         (pszADBCDriverName && EQUAL(pszADBCDriverName, "adbc_driver_sqlite")) ||
         OGRADBCDriverIsSQLite3(poOpenInfo);
@@ -244,7 +244,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
 
     if (!pszADBCDriverName)
     {
-        if (m_bIsDuckDB || bIsParquet)
+        if (m_bIsDuckDBDataset || bIsParquet)
         {
             pszADBCDriverName =
 #ifdef _WIN32
@@ -270,9 +270,12 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         }
     }
 
+    m_bIsDuckDBDriver =
+        m_bIsDuckDBDataset || bIsParquet ||
+        (pszADBCDriverName && strstr(pszADBCDriverName, "duckdb"));
+
     // Load the driver
-    if (pszADBCDriverName &&
-        (m_bIsDuckDB || bIsParquet || strstr(pszADBCDriverName, "duckdb")))
+    if (m_bIsDuckDBDriver)
     {
         if (OGRADBCLoadDriver(pszADBCDriverName, "duckdb_adbc_init", &m_driver,
                               error) != ADBC_STATUS_OK)
@@ -302,8 +305,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     }
 
     // Set options
-    if (pszADBCDriverName &&
-        (m_bIsDuckDB || bIsParquet || strstr(pszADBCDriverName, "duckdb")))
+    if (m_bIsDuckDBDriver)
     {
         if (ADBC_CALL(DatabaseSetOption, &m_database, "path",
                       bIsParquet ? ":memory:" : pszFilename,
@@ -372,9 +374,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         CreateInternalLayer(pszStatement);
     }
     CSLDestroy(papszPreludeStatements);
-    if ((bIsParquet || m_bIsDuckDB) &&
-        CPLTestBool(
-            CPLGetConfigOption("OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", "ON")))
+    if (m_bIsDuckDBDriver && CPLTestBool(CPLGetConfigOption(
+                                 "OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", "ON")))
     {
         auto poTmpLayer =
             CreateInternalLayer("SELECT 1 FROM duckdb_extensions() WHERE "
@@ -420,7 +421,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
         if (pszSQL[0])
         {
             std::unique_ptr<OGRADBCLayer> poLayer;
-            if ((bIsParquet || m_bIsDuckDB) && m_bSpatialLoaded)
+            if ((bIsParquet || m_bIsDuckDBDataset) && m_bSpatialLoaded)
             {
                 std::string osErrorMsg;
                 {
@@ -498,7 +499,7 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
             m_apoLayers.emplace_back(std::move(poLayer));
         }
     }
-    else if (m_bIsDuckDB || bIsSQLite3)
+    else if (m_bIsDuckDBDataset || bIsSQLite3)
     {
         auto poLayerList = CreateInternalLayer(
             "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')");
