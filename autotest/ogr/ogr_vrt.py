@@ -3387,3 +3387,35 @@ def test_ogr_vrt_warped_arrow(tmp_vsimem):
     assert ds.GetLayer(0).GetExtent() == pytest.approx(
         (166021.443080541, 500000, 0.0, 331593.179548329)
     )
+
+
+###############################################################################
+# Test SetSpatialFilter() on a point and SrcRegion not being a polygon
+
+
+@pytest.mark.require_geos
+def test_ogr_vrt_srcregion_and_point_filter():
+
+    src_ds = ogr.Open(
+        """<OGRVRTDataSource>
+            <OGRVRTLayer name="poly">
+                <SrcDataSource>data/poly.shp</SrcDataSource>
+                <SrcRegion>MULTIPOLYGON(((478315 4762880,478315 4765610,481645 4765610,481645 4762880,478315 4762880)))</SrcRegion>
+            </OGRVRTLayer>
+    </OGRVRTDataSource>"""
+    )
+    lyr = src_ds.GetLayer(0)
+
+    lyr.SetSpatialFilter(ogr.CreateGeometryFromWkt("POINT(479751 4764703)"))
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is not None
+    assert lyr.GetNextFeature() is None
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetSpatialFilter(ogr.CreateGeometryFromWkt("POINT(-479751 -4764703)"))
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilter(None)
+    assert lyr.GetFeatureCount() == 10
