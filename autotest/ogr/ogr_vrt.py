@@ -626,6 +626,35 @@ def test_ogr_vrt_16(tmp_path):
 
 
 ###############################################################################
+# Test SrcRegion.clip
+
+
+@pytest.mark.require_driver("CSV")
+@pytest.mark.require_geos
+def test_ogr_vrt_SrcRegion_clip(tmp_path):
+
+    f = open(tmp_path / "test.csv", "wb")
+    f.write("wkt_geom,val1,val2\n".encode("ascii"))
+    f.write('"LINESTRING (-1 0.5,1.5 0.5)",,\n'.encode("ascii"))
+    f.close()
+
+    vrt_xml = f"""
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">{tmp_path}/test.csv</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <GeometryField encoding="WKT" field="wkt_geom"/>
+        <SrcRegion clip="true">POLYGON((0 0,0 1,1 1,1 0,0 0))</SrcRegion>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+    vrt_ds = ogr.Open(vrt_xml)
+    vrt_lyr = vrt_ds.GetLayerByName("test")
+    feat = vrt_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    assert geom.ExportToWkt() == "LINESTRING (0.0 0.5,1.0 0.5)"
+
+
+###############################################################################
 # Test explicit field definitions.
 
 
