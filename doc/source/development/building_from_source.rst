@@ -108,6 +108,12 @@ for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" 
 
 Refer to :ref:`using_gdal_in_cmake` for how to use GDAL in a CMake project.
 
+To uninstall GDAL, from the build directory (be careful: this does not restore the files that pre-existed to the last installation, but just removes the last installed files!)
+
+.. code-block:: bash
+
+    cmake --build . --target uninstall
+
 Building on Windows
 +++++++++++++++++++
 
