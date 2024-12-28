@@ -471,3 +471,13 @@ def test_png_copy_mdd():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Read test of 16-bit interlaced
+
+
+def test_png_read_interlace_16_bit():
+
+    ds = gdal.Open("data/png/uint16_interlaced.png")
+    assert ds.GetRasterBand(1).Checksum() == 4672
