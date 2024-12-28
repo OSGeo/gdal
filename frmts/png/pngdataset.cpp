@@ -1405,6 +1405,21 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
 
     bool bRet = safe_png_read_image(hPNG, png_rows, sSetJmpContext);
 
+    // Do swap on LSB machines. 16-bit PNG data is stored in MSB format.
+#ifdef CPL_LSB
+    if (bRet && nBitDepth == 16)
+    {
+        for (int i = 0; i < GetRasterYSize(); i++)
+        {
+            if (i >= nBufferStartLine && i < nBufferStartLine + nBufferLines)
+            {
+                GDALSwapWords(png_rows[i], 2,
+                              GetRasterXSize() * GetRasterCount(), 2);
+            }
+        }
+    }
+#endif
+
     CPLFree(png_rows);
     CPLFree(dummy_row);
     if (!bRet)
