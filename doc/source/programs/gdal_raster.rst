@@ -19,6 +19,7 @@ Synopsis
 
     Usage: gdal raster <SUBCOMMAND>
     where <SUBCOMMAND> is one of:
+      - buildvrt:  Build a virtual dataset (VRT).
       - convert: Convert a raster dataset.
       - info:    Return information on a raster dataset.
       - pipeline:  Process a raster dataset.
@@ -27,6 +28,7 @@ Synopsis
 Available sub-commands
 ----------------------
 
+- :ref:`gdal_raster_buildvrt_subcommand`
 - :ref:`gdal_raster_info_subcommand`
 - :ref:`gdal_raster_convert_subcommand`
 - :ref:`gdal_raster_pipeline_subcommand`

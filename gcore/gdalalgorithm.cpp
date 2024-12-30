@@ -1396,7 +1396,7 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
                     arg->GetName().c_str());
         ret = false;
     }
-    else if (!val.GetDatasetRef() &&
+    else if (!val.GetDatasetRef() && arg->AutoOpenDataset() &&
              (!arg->IsOutput() || (arg == outputArg && update && !overwrite)))
     {
         int flags = val.GetType();
@@ -1578,7 +1578,8 @@ bool GDALAlgorithm::ValidateArguments()
             }
         }
 
-        if (arg->IsExplicitlySet() && arg->GetType() == GAAT_DATASET_LIST)
+        if (arg->IsExplicitlySet() && arg->GetType() == GAAT_DATASET_LIST &&
+            arg->AutoOpenDataset())
         {
             auto &listVal = arg->Get<std::vector<GDALArgDatasetValue>>();
             for (auto &val : listVal)
@@ -3811,7 +3812,7 @@ bool GDALAlgorithmArgSetDataset(GDALAlgorithmArgH hArg, GDALDatasetH hDS)
  * Validation checks and other actions are run.
  *
  * @param hArg Handle to an argument. Must NOT be null.
- * @param value value (may be null)
+ * @param value value as a NULL terminated list (may be null)
  * @return true if success.
  * @since 3.11
  */
@@ -3865,6 +3866,54 @@ bool GDALAlgorithmArgSetAsDoubleList(GDALAlgorithmArgH hArg, size_t nCount,
 {
     VALIDATE_POINTER1(hArg, __func__, false);
     return hArg->ptr->Set(std::vector<double>(pnValues, pnValues + nCount));
+}
+
+/************************************************************************/
+/*                     GDALAlgorithmArgSetDatasets()                    */
+/************************************************************************/
+
+/** Set dataset objects to a GAAT_DATASET_LIST argument, increasing their reference counter.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @param nCount Number of values in pnValues.
+ * @param pahDS Pointer to an array of dataset of size nCount.
+ * @return true if success.
+ * @since 3.11
+ */
+
+bool GDALAlgorithmArgSetDatasets(GDALAlgorithmArgH hArg, size_t nCount,
+                                 GDALDatasetH *pahDS)
+{
+    VALIDATE_POINTER1(hArg, __func__, false);
+    std::vector<GDALArgDatasetValue> values;
+    for (size_t i = 0; i < nCount; ++i)
+    {
+        values.emplace_back(GDALDataset::FromHandle(pahDS[i]));
+    }
+    return hArg->ptr->Set(std::move(values));
+}
+
+/************************************************************************/
+/*                    GDALAlgorithmArgSetDatasetNames()                 */
+/************************************************************************/
+
+/** Set dataset names to a GAAT_DATASET_LIST argument.
+ *
+ * @param hArg Handle to an argument. Must NOT be null.
+ * @param names Dataset names as a NULL terminated list (may be null)
+ * @return true if success.
+ * @since 3.11
+ */
+
+bool GDALAlgorithmArgSetDatasetNames(GDALAlgorithmArgH hArg, CSLConstList names)
+{
+    VALIDATE_POINTER1(hArg, __func__, false);
+    std::vector<GDALArgDatasetValue> values;
+    for (size_t i = 0; names[i]; ++i)
+    {
+        values.emplace_back(names[i]);
+    }
+    return hArg->ptr->Set(std::move(values));
 }
 
 /************************************************************************/
