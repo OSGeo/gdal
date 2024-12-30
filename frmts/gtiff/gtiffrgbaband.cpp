@@ -66,13 +66,14 @@ CPLErr GTiffRGBABand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         for (int iBand = 0; iBand < m_poGDS->m_nSamplesPerPixel; iBand++)
         {
             int nBlockIdBand = nBlockId + iBand * m_poGDS->m_nBlocksPerBand;
-            if (!m_poGDS->IsBlockAvailable(nBlockIdBand))
+            if (!m_poGDS->IsBlockAvailable(nBlockIdBand, nullptr, nullptr,
+                                           nullptr))
                 return CE_Failure;
         }
     }
     else
     {
-        if (!m_poGDS->IsBlockAvailable(nBlockId))
+        if (!m_poGDS->IsBlockAvailable(nBlockId, nullptr, nullptr, nullptr))
             return CE_Failure;
     }
 

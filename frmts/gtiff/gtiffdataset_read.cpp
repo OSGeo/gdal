@@ -142,7 +142,7 @@ CPLStringList GTiffDataset::GetCompressionFormats(int nXOff, int nYOff,
 
         vsi_l_offset nOffset = 0;
         vsi_l_offset nSize = 0;
-        if (IsBlockAvailable(nBlockId, &nOffset, &nSize) &&
+        if (IsBlockAvailable(nBlockId, &nOffset, &nSize, nullptr) &&
             nSize <
                 static_cast<vsi_l_offset>(std::numeric_limits<tmsize_t>::max()))
         {
@@ -222,7 +222,7 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
 
             vsi_l_offset nOffset = 0;
             vsi_l_offset nSize = 0;
-            if (IsBlockAvailable(nBlockId, &nOffset, &nSize) &&
+            if (IsBlockAvailable(nBlockId, &nOffset, &nSize, nullptr) &&
                 nSize < static_cast<vsi_l_offset>(
                             std::numeric_limits<tmsize_t>::max()))
             {
@@ -1305,6 +1305,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                     nBlockId +=
                         asJobs[iJob].iSrcBandIdxSeparate * m_nBlocksPerBand;
 
+                bool bErrorInIsBlockAvailable = false;
                 if (!sContext.bHasPRead)
                 {
                     // Taking the mutex here is only needed when bHasPRead ==
@@ -1314,13 +1315,22 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                     std::lock_guard<std::recursive_mutex> oLock(
                         sContext.oMutex);
 
-                    IsBlockAvailable(nBlockId, &asJobs[iJob].nOffset,
-                                     &asJobs[iJob].nSize);
+                    CPL_IGNORE_RET_VAL(IsBlockAvailable(
+                        nBlockId, &asJobs[iJob].nOffset, &asJobs[iJob].nSize,
+                        &bErrorInIsBlockAvailable));
                 }
                 else
                 {
-                    IsBlockAvailable(nBlockId, &asJobs[iJob].nOffset,
-                                     &asJobs[iJob].nSize);
+                    CPL_IGNORE_RET_VAL(IsBlockAvailable(
+                        nBlockId, &asJobs[iJob].nOffset, &asJobs[iJob].nSize,
+                        &bErrorInIsBlockAvailable));
+                }
+                if (bErrorInIsBlockAvailable)
+                {
+                    std::lock_guard<std::recursive_mutex> oLock(
+                        sContext.oMutex);
+                    sContext.bSuccess = false;
+                    return CE_Failure;
                 }
 
                 // Sanity check on block size
@@ -1344,7 +1354,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                         std::lock_guard<std::recursive_mutex> oLock(
                             sContext.oMutex);
                         sContext.bSuccess = false;
-                        break;
+                        return CE_Failure;
                     }
                 }
 
@@ -6383,7 +6393,7 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
             {
                 vsi_l_offset nOffset = 0;
                 vsi_l_offset nSize = 0;
-                IsBlockAvailable(0, &nOffset, &nSize);
+                IsBlockAvailable(0, &nOffset, &nSize, nullptr);
                 if (nSize > 0)
                 {
                     const std::string osSubfile(

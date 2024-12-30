@@ -326,9 +326,8 @@ class GTiffDataset final : public GDALPamDataset
 
     int GetJPEGOverviewCount();
 
-    bool IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset = nullptr,
-                          vsi_l_offset *pnSize = nullptr,
-                          bool *pbErrOccurred = nullptr);
+    bool IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset,
+                          vsi_l_offset *pnSize, bool *pbErrOccurred);
 
     void ApplyPamInfo();
     void PushMetadataToPam();

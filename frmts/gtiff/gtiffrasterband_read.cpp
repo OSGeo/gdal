@@ -952,8 +952,8 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                 }
                 else
                 {
-                    CPL_IGNORE_RET_VAL(
-                        m_poGDS->IsBlockAvailable(nBlockId, &nOffset, &nSize));
+                    CPL_IGNORE_RET_VAL(m_poGDS->IsBlockAvailable(
+                        nBlockId, &nOffset, &nSize, nullptr));
                 }
                 if (nSize)
                 {
@@ -1098,8 +1098,12 @@ int GTiffRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
             vsi_l_offset nOffset = 0;
             vsi_l_offset nLength = 0;
             bool bHasData = false;
-            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset, &nLength))
+            bool bError = false;
+            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset, &nLength,
+                                           &bError))
             {
+                if (bError)
+                    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
                 nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
             }
             else
@@ -1553,7 +1557,8 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
             }
 
             vsi_l_offset nOffset = 0;
-            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset))
+            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset, nullptr,
+                                           nullptr))
             {
                 return nullptr;
             }
@@ -1574,7 +1579,8 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
             }
 
             vsi_l_offset nByteCount = 0;
-            if (!m_poGDS->IsBlockAvailable(nBlockId, nullptr, &nByteCount))
+            if (!m_poGDS->IsBlockAvailable(nBlockId, nullptr, &nByteCount,
+                                           nullptr))
             {
                 return nullptr;
             }
