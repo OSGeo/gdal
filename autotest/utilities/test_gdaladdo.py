@@ -455,3 +455,33 @@ def test_gdaladdo_partial_refresh_from_source_timestamp_gti(gdaladdo_path, tmp_p
             ovr_data_refreshed[idx] = ovr_data_ori[idx]
     assert ovr_data_refreshed == ovr_data_ori
     ds = None
+
+
+###############################################################################
+#
+
+
+def test_gdaladdo_illegal_factor(gdaladdo_path, tmp_path):
+
+    shutil.copyfile("../gcore/data/byte.tif", f"{tmp_path}/byte.tif")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdaladdo_path} -r average {tmp_path}/byte.tif invalid"
+    )
+    assert "Value 'invalid' is not a positive integer subsampling factor" in err
+    with gdal.Open(f"{tmp_path}/byte.tif") as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 0
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdaladdo_path} -r average {tmp_path}/byte.tif 0"
+    )
+    assert "Value '0' is not a positive integer subsampling factor" in err
+    with gdal.Open(f"{tmp_path}/byte.tif") as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 0
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdaladdo_path} -r average {tmp_path}/byte.tif -1"
+    )
+    assert "Value '-1' is not a positive integer subsampling factor" in err
+    with gdal.Open(f"{tmp_path}/byte.tif") as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 0
