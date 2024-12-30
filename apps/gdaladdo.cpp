@@ -692,7 +692,23 @@ MAIN_START(nArgc, papszArgv)
     {
         for (const auto &level : *levels)
         {
+            if (CPLGetValueType(level.c_str()) != CPL_VALUE_INTEGER)
+            {
+                CPLError(
+                    CE_Failure, CPLE_IllegalArg,
+                    "Value '%s' is not a positive integer subsampling factor",
+                    level.c_str());
+                std::exit(1);
+            }
             anLevels.push_back(atoi(level.c_str()));
+            if (anLevels.back() <= 0)
+            {
+                CPLError(
+                    CE_Failure, CPLE_IllegalArg,
+                    "Value '%s' is not a positive integer subsampling factor",
+                    level.c_str());
+                std::exit(1);
+            }
             if (anLevels.back() == 1)
             {
                 printf(
