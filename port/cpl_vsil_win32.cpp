@@ -871,7 +871,6 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
                                     VSIStatBufL *pStatBuf, int nFlags)
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -936,7 +935,6 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
         return nResult;
     }
     else
-#endif
     {
         (void)nFlags;
         return (VSI_STAT64(pszFilename, pStatBuf));
@@ -951,7 +949,6 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
 int VSIWin32FilesystemHandler::Unlink(const char *pszFilename)
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -962,7 +959,6 @@ int VSIWin32FilesystemHandler::Unlink(const char *pszFilename)
         return nResult;
     }
     else
-#endif
     {
         return unlink(pszFilename);
     }
@@ -975,7 +971,6 @@ int VSIWin32FilesystemHandler::Unlink(const char *pszFilename)
 int VSIWin32FilesystemHandler::Rename(const char *oldpath, const char *newpath)
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszOldPath =
@@ -989,7 +984,6 @@ int VSIWin32FilesystemHandler::Rename(const char *oldpath, const char *newpath)
         return nResult;
     }
     else
-#endif
     {
         return rename(oldpath, newpath);
     }
@@ -999,11 +993,9 @@ int VSIWin32FilesystemHandler::Rename(const char *oldpath, const char *newpath)
 /*                               Mkdir()                                */
 /************************************************************************/
 
-int VSIWin32FilesystemHandler::Mkdir(const char *pszPathname, long nMode)
+int VSIWin32FilesystemHandler::Mkdir(const char *pszPathname, long /* nMode */)
 
 {
-    (void)nMode;
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -1014,7 +1006,6 @@ int VSIWin32FilesystemHandler::Mkdir(const char *pszPathname, long nMode)
         return nResult;
     }
     else
-#endif
     {
         return mkdir(pszPathname);
     }
@@ -1027,7 +1018,6 @@ int VSIWin32FilesystemHandler::Mkdir(const char *pszPathname, long nMode)
 int VSIWin32FilesystemHandler::Rmdir(const char *pszPathname)
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -1038,7 +1028,6 @@ int VSIWin32FilesystemHandler::Rmdir(const char *pszPathname)
         return nResult;
     }
     else
-#endif
     {
         return rmdir(pszPathname);
     }
@@ -1051,7 +1040,6 @@ int VSIWin32FilesystemHandler::Rmdir(const char *pszPathname)
 char **VSIWin32FilesystemHandler::ReadDirEx(const char *pszPath, int nMaxFiles)
 
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         struct _wfinddata_t c_file;
@@ -1091,7 +1079,6 @@ char **VSIWin32FilesystemHandler::ReadDirEx(const char *pszPath, int nMaxFiles)
         return oDir.StealList();
     }
     else
-#endif
     {
         struct _finddata_t c_file;
         intptr_t hFile;
@@ -1192,7 +1179,6 @@ bool VSIWin32FilesystemHandler::IsLocal(const char *pszPath)
 std::string VSIWin32FilesystemHandler::GetCanonicalFilename(
     const std::string &osFilename) const
 {
-#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -1208,7 +1194,6 @@ std::string VSIWin32FilesystemHandler::GetCanonicalFilename(
         return osRet;
     }
     else
-#endif
     {
         char longPath[MAX_PATH];
         DWORD result = GetLongPathNameA(osFilename.c_str(), longPath, MAX_PATH);
