@@ -1071,9 +1071,17 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
 
                 VSILFILE *fp = VSI_TIFFGetVSILFile(th);
 
-                if (VSIFReadMultiRangeL(static_cast<int>(anSizes.size()),
+                // An error in VSIFReadMultiRangeL() will not be criticial,
+                // as this method is an optimization, and if it fails,
+                // tile-by-tile data acquisition will be done, so we can
+                // temporary turn failures into warnings.
+                CPLTurnFailureIntoWarning(true);
+                const bool ok =
+                    VSIFReadMultiRangeL(static_cast<int>(anSizes.size()),
                                         &apData[0], &anOffsets[0], &anSizes[0],
-                                        fp) == 0)
+                                        fp) == 0;
+                CPLTurnFailureIntoWarning(false);
+                if (ok)
                 {
                     if (!oMapStrileToOffsetByteCount.empty() &&
                         !FillCacheStrileToOffsetByteCount(anOffsets, anSizes,
@@ -1092,6 +1100,11 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                     VSI_TIFFSetCachedRanges(
                         th, static_cast<int>(anSizes.size()), &apData[0],
                         &anOffsets[0], &anSizes[0]);
+                }
+                else
+                {
+                    CPLFree(pBufferedData);
+                    pBufferedData = nullptr;
                 }
             }
         }
