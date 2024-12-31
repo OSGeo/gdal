@@ -598,13 +598,17 @@ _gdaltindex()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --long-usage --help-general -overwrite -recursive -filename_filter -min_pixel_size -max_pixel_size -of -tileindex -write_absolute_path -skip_different_projection -t_srs -src_srs_name -src_srs_format -lyr_name -lco -gti_filename -tr -te -bandcount -nodata -colorinterp -mask -mo -fetch_md --quiet --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general -overwrite -recursive -filename_filter -min_pixel_size -max_pixel_size -of -tileindex -write_absolute_path -skip_different_projection -t_srs -src_srs_name -src_srs_format -lyr_name -lco -gti_filename -tr -te -ot -bandcount -nodata -colorinterp -mask -mo -fetch_md --quiet --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
   esac
   tool=${COMP_WORDS[0]}
   case "$prev" in
+    -ot)
+      key_list="Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
     -of)
       key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
