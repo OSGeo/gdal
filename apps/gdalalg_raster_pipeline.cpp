@@ -65,7 +65,8 @@ void GDALRasterPipelineStepAlgorithm::AddInputArgs(
                        openForMixedRasterVector
                            ? (GDAL_OF_RASTER | GDAL_OF_VECTOR)
                            : GDAL_OF_RASTER,
-                       /* positionalAndRequired = */ !hiddenForCLI);
+                       /* positionalAndRequired = */ !hiddenForCLI)
+        .SetHiddenForCLI(hiddenForCLI);
 }
 
 /************************************************************************/
