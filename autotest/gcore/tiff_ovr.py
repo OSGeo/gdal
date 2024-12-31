@@ -2950,3 +2950,38 @@ def test_tiff_ovr_JXL_ALPHA_DISTANCE_OVERVIEW(tmp_vsimem):
     assert ds.GetRasterBand(4).Checksum() != cs4
     del ds
     gdal.Unlink(tmpfilename + ".ovr")
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/11555
+
+
+def test_tiff_ovr_internal_mask_issue_11555(tmp_vsimem):
+
+    if "debug build" in gdal.VersionInfo("--version") and "CI" in os.environ:
+        pytest.skip("test skipped on CI for debug builds (to keep things fast)")
+
+    tmpfilename = str(tmp_vsimem / "test.tif")
+    gdal.FileFromMemBuffer(tmpfilename, open("data/test_11555.tif", "rb").read())
+
+    ds = gdal.Open(tmpfilename, gdal.GA_Update)
+    ds.BuildOverviews("bilinear", [2])
+    del ds
+
+    ds = gdal.Open(tmpfilename)
+
+    # Check that we have non-zero data when mask = 255
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 5270, 1, 1) == b"\x7F"
+    assert ds.GetRasterBand(2).GetOverview(0).ReadRaster(0, 5270, 1, 1) == b"\x7F"
+    assert (
+        ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster(0, 5270, 1, 1)
+        == b"\xFF"
+    )
+
+    # Check that we have zero data when mask = 0
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 5271, 1, 1) == b"\x00"
+    assert ds.GetRasterBand(2).GetOverview(0).ReadRaster(0, 5271, 1, 1) == b"\x00"
+    assert (
+        ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster(0, 5271, 1, 1)
+        == b"\x00"
+    )
