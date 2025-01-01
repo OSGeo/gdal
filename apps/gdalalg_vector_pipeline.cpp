@@ -17,7 +17,6 @@
 #include "gdalalg_vector_write.h"
 
 #include "cpl_conv.h"
-#include "cpl_json.h"
 #include "cpl_string.h"
 
 #include <algorithm>
@@ -161,8 +160,9 @@ bool GDALVectorPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 /************************************************************************/
 
 GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      /*standaloneStep=*/false)
+    : GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm>(
+          NAME, DESCRIPTION, HELP_URL,
+          /*standaloneStep=*/false)
 {
     AddInputArgs(/* hiddenForCLI = */ true);
     AddProgressArg();
@@ -176,18 +176,6 @@ GDALVectorPipelineAlgorithm::GDALVectorPipelineAlgorithm()
     m_stepRegistry.Register<GDALVectorWriteAlgorithm>();
     m_stepRegistry.Register<GDALVectorReprojectAlgorithm>();
     m_stepRegistry.Register<GDALVectorFilterAlgorithm>();
-}
-
-/************************************************************************/
-/*              GDALVectorPipelineAlgorithm::GetStepAlg()               */
-/************************************************************************/
-
-std::unique_ptr<GDALVectorPipelineStepAlgorithm>
-GDALVectorPipelineAlgorithm::GetStepAlg(const std::string &name) const
-{
-    auto alg = m_stepRegistry.Instantiate(name);
-    return std::unique_ptr<GDALVectorPipelineStepAlgorithm>(
-        cpl::down_cast<GDALVectorPipelineStepAlgorithm *>(alg.release()));
 }
 
 /************************************************************************/
@@ -445,90 +433,6 @@ bool GDALVectorPipelineAlgorithm::ParseCommandLineArguments(
 }
 
 /************************************************************************/
-/*               GDALVectorPipelineAlgorithm::RunStep()                 */
-/************************************************************************/
-
-bool GDALVectorPipelineAlgorithm::RunStep(GDALProgressFunc pfnProgress,
-                                          void *pProgressData)
-{
-    if (m_steps.empty())
-    {
-        // If invoked programmatically, not from the command line.
-
-        if (m_pipeline.empty())
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "'pipeline' argument not set");
-            return false;
-        }
-
-        const CPLStringList aosTokens(CSLTokenizeString(m_pipeline.c_str()));
-        if (!ParseCommandLineArguments(aosTokens))
-            return false;
-    }
-
-    GDALDataset *poCurDS = nullptr;
-    for (size_t i = 0; i < m_steps.size(); ++i)
-    {
-        auto &step = m_steps[i];
-        if (i > 0)
-        {
-            if (step->m_inputDataset.GetDatasetRef())
-            {
-                // Shouldn't happen
-                ReportError(CE_Failure, CPLE_AppDefined,
-                            "Step nr %d (%s) has already an input dataset",
-                            static_cast<int>(i), step->GetName().c_str());
-                return false;
-            }
-            step->m_inputDataset.Set(poCurDS);
-        }
-        if (i + 1 < m_steps.size() && step->m_outputDataset.GetDatasetRef())
-        {
-            // Shouldn't happen
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Step nr %d (%s) has already an output dataset",
-                        static_cast<int>(i), step->GetName().c_str());
-            return false;
-        }
-        if (!step->Run(i < m_steps.size() - 1 ? nullptr : pfnProgress,
-                       i < m_steps.size() - 1 ? nullptr : pProgressData))
-        {
-            return false;
-        }
-        poCurDS = step->m_outputDataset.GetDatasetRef();
-        if (!poCurDS)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Step nr %d (%s) failed to produce an output dataset",
-                        static_cast<int>(i), step->GetName().c_str());
-            return false;
-        }
-    }
-
-    if (!m_outputDataset.GetDatasetRef())
-    {
-        m_outputDataset.Set(poCurDS);
-    }
-
-    return true;
-}
-
-/************************************************************************/
-/*                     GDALAlgorithm::Finalize()                        */
-/************************************************************************/
-
-bool GDALVectorPipelineAlgorithm::Finalize()
-{
-    bool ret = GDALAlgorithm::Finalize();
-    for (auto &step : m_steps)
-    {
-        ret = step->Finalize() && ret;
-    }
-    return ret;
-}
-
-/************************************************************************/
 /*            GDALVectorPipelineAlgorithm::GetUsageForCLI()             */
 /************************************************************************/
 
@@ -590,28 +494,6 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
     }
 
     return ret;
-}
-
-/************************************************************************/
-/*             GDALVectorPipelineAlgorithm::GetUsageAsJSON()            */
-/************************************************************************/
-
-std::string GDALVectorPipelineAlgorithm::GetUsageAsJSON() const
-{
-    CPLJSONDocument oDoc;
-    oDoc.LoadMemory(GDALAlgorithm::GetUsageAsJSON());
-
-    CPLJSONArray jPipelineSteps;
-    for (const std::string &name : m_stepRegistry.GetNames())
-    {
-        auto alg = GetStepAlg(name);
-        CPLJSONDocument oStepDoc;
-        oStepDoc.LoadMemory(alg->GetUsageAsJSON());
-        jPipelineSteps.Add(oStepDoc.GetRoot());
-    }
-    oDoc.GetRoot().Add("pipeline_algorithms", jPipelineSteps);
-
-    return oDoc.SaveAsString();
 }
 
 //! @endcond

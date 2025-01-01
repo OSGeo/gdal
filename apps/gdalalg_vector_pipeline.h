@@ -14,6 +14,7 @@
 #define GDALALG_VECTOR_PIPELINE_INCLUDED
 
 #include "gdalalgorithm.h"
+#include "gdalalg_abstract_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -30,6 +31,7 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
                                     bool standaloneStep);
 
     friend class GDALVectorPipelineAlgorithm;
+    friend class GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm>;
 
     virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 
@@ -69,7 +71,8 @@ class GDALVectorPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 // "gdal vector pipeline ! read poly.gpkg ! reproject--dst-crs=EPSG:32632 ! write out.gpkg --overwrite"
 #define GDAL_PIPELINE_PROJ_NOSTALGIA
 
-class GDALVectorPipelineAlgorithm final : public GDALVectorPipelineStepAlgorithm
+class GDALVectorPipelineAlgorithm final
+    : public GDALAbstractPipelineAlgorithm<GDALVectorPipelineStepAlgorithm>
 {
   public:
     static constexpr const char *NAME = "pipeline";
@@ -93,28 +96,14 @@ class GDALVectorPipelineAlgorithm final : public GDALVectorPipelineStepAlgorithm
     bool
     ParseCommandLineArguments(const std::vector<std::string> &args) override;
 
-    bool Finalize() override;
-
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
 
-    std::string GetUsageAsJSON() const override;
-
-    /* cppcheck-suppress functionStatic */
-    void SetDataset(GDALDataset *)
+  protected:
+    GDALArgDatasetValue &GetOutputDataset() override
     {
+        return m_outputDataset;
     }
-
-  private:
-    std::string m_pipeline{};
-
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
-
-    std::unique_ptr<GDALVectorPipelineStepAlgorithm>
-    GetStepAlg(const std::string &name) const;
-
-    GDALAlgorithmRegistry m_stepRegistry{};
-    std::vector<std::unique_ptr<GDALVectorPipelineStepAlgorithm>> m_steps{};
 };
 
 //! @endcond
