@@ -1545,7 +1545,7 @@ void GDALCOGDriver::InitializeCreationOptionList()
         "   </Option>"
         "  <Option name='OVERVIEW_COUNT' type='int' min='0' "
         "description='Number of overviews'/>"
-        "  <Option name='TILING_SCHEME' type='string' description='"
+        "  <Option name='TILING_SCHEME' type='string-select' description='"
         "Which tiling scheme to use pre-defined value or custom inline/outline "
         "JSON definition' default='CUSTOM'>"
         "    <Value>CUSTOM</Value>";
