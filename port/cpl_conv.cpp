@@ -1962,6 +1962,26 @@ void CPLDeclareKnownConfigOption(const char *pszKey,
 }
 
 /************************************************************************/
+/*                       CPLGetKnownConfigOptions()                     */
+/************************************************************************/
+
+/** Return the list of known configuration options.
+ *
+ * Must be freed with CSLDestroy().
+ * @since 3.11
+ */
+char **CPLGetKnownConfigOptions()
+{
+    std::lock_guard oLock(goMutexDeclaredKnownConfigOptions);
+    CPLStringList aosList;
+    for (const char *pszKey : apszKnownConfigOptions)
+        aosList.AddString(pszKey);
+    for (const auto &osKey : goSetKnownConfigOptions)
+        aosList.AddString(osKey);
+    return aosList.StealList();
+}
+
+/************************************************************************/
 /*           CPLSetConfigOptionDetectUnknownConfigOption()              */
 /************************************************************************/
 
