@@ -110,10 +110,10 @@ namespace mu
 	{
 		AddValIdent(IsVal);
 
-		InitCharSets();
-		InitFun();
-		InitConst();
-		InitOprt();
+        Parser::InitCharSets();
+        Parser::InitFun();
+        Parser::InitConst();
+        Parser::InitOprt();
 	}
 
 	//---------------------------------------------------------------------------
