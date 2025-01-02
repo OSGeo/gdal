@@ -44,7 +44,8 @@ class GDALArgumentParser(argparse.ArgumentParser):
             else:
                 if formatter_class is None:
                     formatter_class = argparse.RawDescriptionHelpFormatter
-                description = f'{title}\n{"-"*(2+len(title))}\n{description}'
+                number_dashes = 2 + len(title)
+                description = f'{title}\n{"-" * number_dashes}\n{description}'
 
         if formatter_class is None:
             formatter_class = argparse.HelpFormatter
@@ -227,7 +228,7 @@ class GDALScript(ABC):
             prog = os.path.basename(sys.argv[0])
         example_list = []
         for idx, (title, args) in enumerate(self.examples):
-            example_list.append(f"example #{idx+1}: {title}\n{prog} {args}")
+            example_list.append(f"example #{idx + 1}: {title}\n{prog} {args}")
         epilog = "\n\n".join(example_list)
         if self.epilog:
             epilog = epilog + "\n\n" + self.epilog

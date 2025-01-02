@@ -195,7 +195,7 @@ def check_feature_geometry(
 
             assert actual_pt == pytest.approx(
                 expected_pt, abs=max_error
-            ), f"Error in vertex {i+1}/{count} exceeds tolerance. {context_msg}\n  Expected: {_root_expected.ExportToWkt()}\n  Actual: {_root_actual.ExportToWkt()}"
+            ), f"Error in vertex {i + 1}/{count} exceeds tolerance. {context_msg}\n  Expected: {_root_expected.ExportToWkt()}\n  Actual: {_root_actual.ExportToWkt()}"
 
 
 ###############################################################################

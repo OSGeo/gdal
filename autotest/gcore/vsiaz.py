@@ -470,7 +470,7 @@ def test_vsiaz_fake_readdir_protection_again_infinite_looping():
                         <EnumerationResults>
                             <Prefix>a_dir with_space/</Prefix>
                             <Blobs/>
-                            <NextMarker>bla{i+1}</NextMarker>
+                            <NextMarker>bla{i + 1}</NextMarker>
                         </EnumerationResults>
                     """,
         )
