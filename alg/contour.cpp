@@ -141,8 +141,11 @@ struct PolygonContourWriter
             currentGeometry_->addGeometryDirectly(currentPart_);
         }
 
-        OGRPolygonContourWriter(previousLevel_, currentLevel_,
-                                *currentGeometry_, poInfo_);
+        if (currentGeometry_->getNumGeometries() > 0)
+        {
+            OGRPolygonContourWriter(previousLevel_, currentLevel_,
+                                    *currentGeometry_, poInfo_);
+        }
 
         currentGeometry_.reset(nullptr);
         currentPart_ = nullptr;
@@ -607,7 +610,19 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
         fixedLevels.resize(aosLevels.size());
         for (size_t i = 0; i < fixedLevels.size(); i++)
         {
-            fixedLevels[i] = CPLAtof(aosLevels[i]);
+            // Handle min/max values
+            if (EQUAL(aosLevels[i], "MIN"))
+            {
+                fixedLevels[i] = std::numeric_limits<double>::lowest();
+            }
+            else if (EQUAL(aosLevels[i], "MAX"))
+            {
+                fixedLevels[i] = std::numeric_limits<double>::max();
+            }
+            else
+            {
+                fixedLevels[i] = CPLAtof(aosLevels[i]);
+            }
             if (i > 0 && !(fixedLevels[i] >= fixedLevels[i - 1]))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -712,6 +727,19 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
 
     bool ok = true;
 
+    // Replace fixed levels min/max values with raster min/max values
+    if (!fixedLevels.empty())
+    {
+        if (fixedLevels[0] == std::numeric_limits<double>::lowest())
+        {
+            fixedLevels[0] = dfMinimum;
+        }
+        if (fixedLevels.back() == std::numeric_limits<double>::max())
+        {
+            fixedLevels.back() = dfMaximum;
+        }
+    }
+
     try
     {
         if (polygonize)
@@ -719,6 +747,7 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
 
             if (!fixedLevels.empty())
             {
+
                 // If the minimum raster value is larger than the first requested
                 // level, select the requested level that is just below the
                 // minimum raster value
@@ -781,6 +810,8 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
                 }
                 // Append minimum value to fixed levels
                 fixedLevels.push_back(dfMinimum);
+                // Append maximum value to fixed levels
+                fixedLevels.push_back(dfMaximum);
             }
             else if (contourInterval != 0)
             {
@@ -798,6 +829,8 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
                 }
                 // Append minimum value to fixed levels
                 fixedLevels.push_back(dfMinimum);
+                // Append maximum value to fixed levels
+                fixedLevels.push_back(dfMaximum);
             }
 
             if (!fixedLevels.empty())
@@ -814,6 +847,11 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
                     -std::numeric_limits<double>::infinity(), dfMaximum);
                 SegmentMerger<RingAppender, FixedLevelRangeIterator> writer(
                     appender, levels, /* polygonize */ true);
+                std::vector<int> aoiSkipLevels;
+                // Skip first and last levels (min/max) in polygonal case
+                aoiSkipLevels.push_back(0);
+                aoiSkipLevels.push_back(static_cast<int>(levels.levelsCount()));
+                writer.setSkipLevels(aoiSkipLevels);
                 ContourGeneratorFromRaster<decltype(writer),
                                            FixedLevelRangeIterator>
                     cg(hBand, useNoData, noDataValue, writer, levels);
