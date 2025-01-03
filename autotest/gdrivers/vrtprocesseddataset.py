@@ -590,6 +590,88 @@ def test_vrtprocesseddataset_lut_errors(tmp_vsimem):
 
 
 ###############################################################################
+# Test nominal case of BandScaleOffset algorithm
+
+
+@pytest.mark.parametrize(
+    "dtype",
+    (
+        gdal.GDT_Byte,
+        gdal.GDT_Int8,
+        gdal.GDT_UInt16,
+        gdal.GDT_Int16,
+        gdal.GDT_UInt32,
+        gdal.GDT_Int32,
+        gdal.GDT_UInt64,
+        gdal.GDT_Int64,
+        gdal.GDT_Float32,
+        gdal.GDT_Float64,
+    ),
+    ids=gdal.GetDataTypeName,
+)
+def test_vrtprocesseddataset_bandscaleoffset_nominal(tmp_vsimem, dtype):
+
+    src_filename = tmp_vsimem / "src.tif"
+
+    nx = 2
+    ny = 3
+    nz = 2
+
+    if type == gdal.GDT_Float32:
+        nodata = float("nan")
+    else:
+        nodata = 7
+
+    data = np.arange(nx * ny * nz).reshape(nz, ny, nx)
+    data[1, 2, 1] = nodata
+
+    offsets = [i + 2 for i in range(nz)]
+    scales = [(i + 1) / 4 for i in range(nz)]
+
+    with gdal.GetDriverByName("GTiff").Create(
+        src_filename, nx, ny, nz, eType=dtype
+    ) as src_ds:
+        src_ds.WriteArray(data)
+        for i in range(src_ds.RasterCount):
+            bnd = src_ds.GetRasterBand(i + 1)
+            bnd.SetOffset(offsets[i])
+            bnd.SetScale(scales[i])
+            bnd.SetNoDataValue(nodata)
+
+    ds = gdal.Open(
+        f"""
+    <VRTDataset subclass='VRTProcessedDataset'>
+    <Input>
+        <SourceFilename>{src_filename}</SourceFilename>
+    </Input>
+    <ProcessingSteps>
+        <Step>
+            <Algorithm>BandScaleOffset</Algorithm>
+        </Step>
+    </ProcessingSteps>
+    <OutputBands count="FROM_SOURCE" dataType="Float64"/>
+    </VRTDataset>"""
+    )
+
+    for i in range(ds.RasterCount):
+        bnd = ds.GetRasterBand(i + 1)
+        assert bnd.GetScale() in (None, 1)
+        assert bnd.GetOffset() in (None, 0)
+
+    result = np.ma.stack(
+        [ds.GetRasterBand(i + 1).ReadAsMaskedArray() for i in range(ds.RasterCount)]
+    )
+
+    expected = np.ma.masked_array(
+        np.stack([data[i, :, :] * scales[i] + offsets[i] for i in range(nz)]),
+        data == nodata,
+    )
+
+    np.testing.assert_array_equal(result.mask, expected.mask)
+    np.testing.assert_array_equal(result, expected)
+
+
+###############################################################################
 # Test nominal case of LocalScaleOffset algorithm
 
 

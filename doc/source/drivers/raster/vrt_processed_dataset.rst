@@ -12,6 +12,9 @@ to apply chained processing steps that may apply to several bands at the same ti
 The following built-in algorithms are introduced, and may typically be applied
 in the following order:
 
+- BandScaleOffset (since GDAL 3.11): apply per-band scale and offset values from
+  :cpp:func:`GDALRasterBand::GetScale` and :cpp:func:`GDALRasterBand::GetOffset`.
+
 - LocalScaleOffset: apply per-pixel gain and offset coming (typically subsampled)
   from auxiliary datasets. Can be used for dehazing processing.
 
