@@ -297,6 +297,7 @@ TABFeature *IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
          *------------------------------------------------------------*/
         case wkbPolygon:
         case wkbMultiPolygon:
+        {
             poTABFeature = new TABRegion(poFeature->GetDefnRef());
             if (poFeature->GetStyleString())
             {
@@ -308,11 +309,13 @@ TABFeature *IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
                     poFeature->GetStyleString());
             }
             break;
+        }
         /*-------------------------------------------------------------
          * LINE/PLINE/MULTIPLINE
          *------------------------------------------------------------*/
         case wkbLineString:
         case wkbMultiLineString:
+        {
             poTABFeature = new TABPolyline(poFeature->GetDefnRef());
             if (poFeature->GetStyleString())
             {
@@ -322,6 +325,7 @@ TABFeature *IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
                     poFeature->GetStyleString());
             }
             break;
+        }
         /*-------------------------------------------------------------
          * Collection types that are not directly supported... convert
          * to multiple features in output file through recursive calls.
@@ -332,7 +336,7 @@ TABFeature *IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
             OGRErr eStatus = OGRERR_NONE;
             assert(poGeom);  // for clang static analyzer
             OGRGeometryCollection *poColl = poGeom->toGeometryCollection();
-            OGRFeature *poTmpFeature = poFeature->Clone();
+            auto poTmpFeature = std::unique_ptr<OGRFeature>(poFeature->Clone());
 
             for (int i = 0; eStatus == OGRERR_NONE && poColl != nullptr &&
                             i < poColl->getNumGeometries();
@@ -340,30 +344,33 @@ TABFeature *IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
             {
                 poTmpFeature->SetFID(OGRNullFID);
                 poTmpFeature->SetGeometry(poColl->getGeometryRef(i));
-                eStatus = ICreateFeature(poTmpFeature);
+                eStatus = ICreateFeature(poTmpFeature.get());
             }
-            delete poTmpFeature;
-            return nullptr;
+            break;
         }
-        break;
+
         /*-------------------------------------------------------------
          * Unsupported type.... convert to MapInfo geometry NONE
          *------------------------------------------------------------*/
-        case wkbUnknown:
         default:
+        {
             poTABFeature = new TABFeature(poFeature->GetDefnRef());
             break;
+        }
     }
 
-    if (poGeom != nullptr)
-        poTABFeature->SetGeometryDirectly(poGeom->clone());
-
-    for (int i = 0; i < poFeature->GetDefnRef()->GetFieldCount(); i++)
+    if (poTABFeature)
     {
-        poTABFeature->SetField(i, poFeature->GetRawFieldRef(i));
-    }
+        if (poGeom != nullptr)
+            poTABFeature->SetGeometryDirectly(poGeom->clone());
 
-    poTABFeature->SetFID(poFeature->GetFID());
+        for (int i = 0; i < poFeature->GetDefnRef()->GetFieldCount(); i++)
+        {
+            poTABFeature->SetField(i, poFeature->GetRawFieldRef(i));
+        }
+
+        poTABFeature->SetFID(poFeature->GetFID());
+    }
 
     return poTABFeature;
 }
