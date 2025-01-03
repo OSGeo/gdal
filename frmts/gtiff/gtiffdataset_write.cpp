@@ -2709,7 +2709,10 @@ bool GTiffDataset::GetOverviewParameters(
     /* -------------------------------------------------------------------- */
     /*      Determine photometric tag                                       */
     /* -------------------------------------------------------------------- */
-    nPhotometric = m_nPhotometric;
+    if (m_nPhotometric == PHOTOMETRIC_YCBCR && nCompression != COMPRESSION_JPEG)
+        nPhotometric = PHOTOMETRIC_RGB;
+    else
+        nPhotometric = m_nPhotometric;
     const char *pszPhotometric =
         GetOptionValue("PHOTOMETRIC", "PHOTOMETRIC_OVERVIEW", &pszOptionKey);
     if (!GTIFFUpdatePhotometric(pszPhotometric, pszOptionKey, nCompression,
