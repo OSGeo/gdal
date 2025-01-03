@@ -5673,3 +5673,117 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
                         ppDestBuffer[iComp], eDestDT, nDestDTSize, nIters);
     }
 }
+
+/************************************************************************/
+/*                        GDALTranspose2D()                             */
+/************************************************************************/
+
+template <class DST, bool DST_IS_COMPLEX>
+static void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, DST *pDst,
+                            size_t nSrcWidth, size_t nSrcHeight)
+{
+#define GDALTranspose2D_internal(SRC_TYPE_CST, SRC_TYPE)                       \
+    case SRC_TYPE_CST:                                                         \
+        if constexpr (DST_IS_COMPLEX)                                          \
+        {                                                                      \
+            GDALTranspose2DSingleToComplex(                                    \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            GDALTranspose2DSingleToSingle(static_cast<const SRC_TYPE *>(pSrc), \
+                                          pDst, nSrcWidth, nSrcHeight);        \
+        }                                                                      \
+        break
+
+#define GDALTranspose2DComplex_internal(SRC_TYPE_CST, SRC_TYPE)                \
+    case SRC_TYPE_CST:                                                         \
+        if constexpr (DST_IS_COMPLEX)                                          \
+        {                                                                      \
+            GDALTranspose2DComplexToComplex(                                   \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            GDALTranspose2DComplexToSingle(                                    \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+        break
+
+    switch (eSrcType)
+    {
+        GDALTranspose2D_internal(GDT_Byte, uint8_t);
+        GDALTranspose2D_internal(GDT_Int8, int8_t);
+        GDALTranspose2D_internal(GDT_UInt16, uint16_t);
+        GDALTranspose2D_internal(GDT_Int16, int16_t);
+        GDALTranspose2D_internal(GDT_UInt32, uint32_t);
+        GDALTranspose2D_internal(GDT_Int32, int32_t);
+        GDALTranspose2D_internal(GDT_UInt64, uint64_t);
+        GDALTranspose2D_internal(GDT_Int64, int64_t);
+        GDALTranspose2D_internal(GDT_Float32, float);
+        GDALTranspose2D_internal(GDT_Float64, double);
+        GDALTranspose2DComplex_internal(GDT_CInt16, int16_t);
+        GDALTranspose2DComplex_internal(GDT_CInt32, int32_t);
+        GDALTranspose2DComplex_internal(GDT_CFloat32, float);
+        GDALTranspose2DComplex_internal(GDT_CFloat64, double);
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            break;
+    }
+
+#undef GDALTranspose2D_internal
+#undef GDALTranspose2DComplex_internal
+}
+
+/************************************************************************/
+/*                        GDALTranspose2D()                             */
+/************************************************************************/
+
+/**
+ * Transpose a 2D array in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of width = nSrcWidth and height = nSrcHeight.
+ * @param eSrcType Data type of pSrc.
+ * @param pDst Destination transposed array of width = nSrcHeight and height = nSrcWidth.
+ * @param eDstType Data type of pDst.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ * @since GDAL 3.11
+ */
+
+void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, void *pDst,
+                     GDALDataType eDstType, size_t nSrcWidth, size_t nSrcHeight)
+{
+#define GDALTranspose2D_internal(DST_TYPE_CST, DST_TYPE, DST_IS_COMPLEX)       \
+    case DST_TYPE_CST:                                                         \
+        GDALTranspose2D<DST_TYPE, DST_IS_COMPLEX>(                             \
+            pSrc, eSrcType, static_cast<DST_TYPE *>(pDst), nSrcWidth,          \
+            nSrcHeight);                                                       \
+        break
+
+    switch (eDstType)
+    {
+        GDALTranspose2D_internal(GDT_Byte, uint8_t, false);
+        GDALTranspose2D_internal(GDT_Int8, int8_t, false);
+        GDALTranspose2D_internal(GDT_UInt16, uint16_t, false);
+        GDALTranspose2D_internal(GDT_Int16, int16_t, false);
+        GDALTranspose2D_internal(GDT_UInt32, uint32_t, false);
+        GDALTranspose2D_internal(GDT_Int32, int32_t, false);
+        GDALTranspose2D_internal(GDT_UInt64, uint64_t, false);
+        GDALTranspose2D_internal(GDT_Int64, int64_t, false);
+        GDALTranspose2D_internal(GDT_Float32, float, false);
+        GDALTranspose2D_internal(GDT_Float64, double, false);
+        GDALTranspose2D_internal(GDT_CInt16, int16_t, true);
+        GDALTranspose2D_internal(GDT_CInt32, int32_t, true);
+        GDALTranspose2D_internal(GDT_CFloat32, float, true);
+        GDALTranspose2D_internal(GDT_CFloat64, double, true);
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            break;
+    }
+
+#undef GDALTranspose2D_internal
+}
