@@ -48,6 +48,7 @@ void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
                                                        const char *pszValue);
 void CPL_DLL CPLDeclareKnownConfigOption(const char *pszKey,
                                          const char *pszDefinition);
+char CPL_DLL **CPLGetKnownConfigOptions(void);
 
 /** Callback for CPLSubscribeToSetConfigOption() */
 typedef void (*CPLSetConfigOptionSubscriber)(const char *pszKey,

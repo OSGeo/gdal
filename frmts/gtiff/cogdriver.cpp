@@ -1481,10 +1481,12 @@ void GDALCOGDriver::InitializeCreationOptionList()
         osOptions += "   <Option name='QUALITY' type='int' "
                      "description='" +
                      osJPEG_WEBP +
-                     " quality 1-100' default='75'/>"
+                     " quality 1-100' min='1' max='100' default='75'/>"
                      "   <Option name='OVERVIEW_QUALITY' type='int' "
                      "description='Overview " +
-                     osJPEG_WEBP + " quality 1-100' default='75'/>";
+                     osJPEG_WEBP +
+                     " quality 1-100' min='1' max='100' "
+                     "default='75'/>";
     }
     if (bHasLERC)
     {
@@ -1502,7 +1504,7 @@ void GDALCOGDriver::InitializeCreationOptionList()
         "   <Option name='JXL_LOSSLESS' type='boolean' description='Whether "
         "JPEGXL compression should be lossless' default='YES'/>"
         "   <Option name='JXL_EFFORT' type='int' description='Level of effort "
-        "1(fast)-9(slow)' default='5'/>"
+        "1(fast)-9(slow)' min='1' max='9' default='5'/>"
         "   <Option name='JXL_DISTANCE' type='float' description='Distance "
         "level for lossy compression (0=mathematically lossless, 1.0=visually "
         "lossless, usual range [0.5,3])' default='1.0' min='0.01' max='25.0'/>";
@@ -1545,7 +1547,7 @@ void GDALCOGDriver::InitializeCreationOptionList()
         "   </Option>"
         "  <Option name='OVERVIEW_COUNT' type='int' min='0' "
         "description='Number of overviews'/>"
-        "  <Option name='TILING_SCHEME' type='string' description='"
+        "  <Option name='TILING_SCHEME' type='string-select' description='"
         "Which tiling scheme to use pre-defined value or custom inline/outline "
         "JSON definition' default='CUSTOM'>"
         "    <Value>CUSTOM</Value>";
