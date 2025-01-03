@@ -66,10 +66,10 @@ class GDALMDArrayUnscaled final : public GDALPamMDArray
         m_abyRawNoData.resize(m_dt.GetSize());
         const auto eNonComplexDT =
             GDALGetNonComplexDataType(m_dt.GetNumericDataType());
-        GDALCopyWords(&dfOverriddenDstNodata, GDT_Float64, 0,
-                      m_abyRawNoData.data(), eNonComplexDT,
-                      GDALGetDataTypeSizeBytes(eNonComplexDT),
-                      GDALDataTypeIsComplex(m_dt.GetNumericDataType()) ? 2 : 1);
+        GDALCopyWords64(
+            &dfOverriddenDstNodata, GDT_Float64, 0, m_abyRawNoData.data(),
+            eNonComplexDT, GDALGetDataTypeSizeBytes(eNonComplexDT),
+            GDALDataTypeIsComplex(m_dt.GetNumericDataType()) ? 2 : 1);
     }
 
     bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -1623,8 +1623,8 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
     if (srcType.GetClass() == GEDTC_NUMERIC &&
         dstType.GetClass() == GEDTC_NUMERIC)
     {
-        GDALCopyWords(pSrc, srcType.GetNumericDataType(), 0, pDst,
-                      dstType.GetNumericDataType(), 0, 1);
+        GDALCopyWords64(pSrc, srcType.GetNumericDataType(), 0, pDst,
+                        dstType.GetNumericDataType(), 0, 1);
         return true;
     }
     if (srcType.GetClass() == GEDTC_STRING &&
@@ -1733,8 +1733,8 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
         {
             // FIXME GDT_UInt64
             const double dfVal = srcStrPtr == nullptr ? 0 : CPLAtof(srcStrPtr);
-            GDALCopyWords(&dfVal, GDT_Float64, 0, pDst,
-                          dstType.GetNumericDataType(), 0, 1);
+            GDALCopyWords64(&dfVal, GDT_Float64, 0, pDst,
+                            dstType.GetNumericDataType(), 0, 1);
         }
         return true;
     }
@@ -2621,8 +2621,8 @@ double GDALMDArray::GetNoDataValueAsDouble(bool *pbHasNoData) const
     const bool ok = pNoData != nullptr && eDT.GetClass() == GEDTC_NUMERIC;
     if (ok)
     {
-        GDALCopyWords(pNoData, eDT.GetNumericDataType(), 0, &dfNoData,
-                      GDT_Float64, 0, 1);
+        GDALCopyWords64(pNoData, eDT.GetNumericDataType(), 0, &dfNoData,
+                        GDT_Float64, 0, 1);
     }
     if (pbHasNoData)
         *pbHasNoData = ok;
@@ -2652,8 +2652,8 @@ int64_t GDALMDArray::GetNoDataValueAsInt64(bool *pbHasNoData) const
     const bool ok = pNoData != nullptr && eDT.GetClass() == GEDTC_NUMERIC;
     if (ok)
     {
-        GDALCopyWords(pNoData, eDT.GetNumericDataType(), 0, &nNoData, GDT_Int64,
-                      0, 1);
+        GDALCopyWords64(pNoData, eDT.GetNumericDataType(), 0, &nNoData,
+                        GDT_Int64, 0, 1);
     }
     if (pbHasNoData)
         *pbHasNoData = ok;
@@ -2683,8 +2683,8 @@ uint64_t GDALMDArray::GetNoDataValueAsUInt64(bool *pbHasNoData) const
     const bool ok = pNoData != nullptr && eDT.GetClass() == GEDTC_NUMERIC;
     if (ok)
     {
-        GDALCopyWords(pNoData, eDT.GetNumericDataType(), 0, &nNoData,
-                      GDT_UInt64, 0, 1);
+        GDALCopyWords64(pNoData, eDT.GetNumericDataType(), 0, &nNoData,
+                        GDT_UInt64, 0, 1);
     }
     if (pbHasNoData)
         *pbHasNoData = ok;
@@ -6387,8 +6387,8 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
     double dfNoData = 0;
     if (m_bHasNoData)
     {
-        GDALCopyWords(m_abyRawNoData.data(), m_dt.GetNumericDataType(), 0,
-                      &dfNoData, GDT_Float64, 0, 1);
+        GDALCopyWords64(m_abyRawNoData.data(), m_dt.GetNumericDataType(), 0,
+                        &dfNoData, GDT_Float64, 0, 1);
     }
 
     double adfSrcNoData[2] = {0, 0};
@@ -6552,10 +6552,10 @@ lbl_next_depth:
         // Remaining elements
         for (size_t i = 1; i < nElts; ++i)
         {
-            GDALCopyWords(static_cast<GByte *>(pTempBuffer) + i * nDTSize,
-                          eNumericDT, 0,
-                          static_cast<GByte *>(pTempBuffer) + i * nParentDTSize,
-                          eParentNumericDT, 0, 1);
+            GDALCopyWords64(
+                static_cast<GByte *>(pTempBuffer) + i * nDTSize, eNumericDT, 0,
+                static_cast<GByte *>(pTempBuffer) + i * nParentDTSize,
+                eParentNumericDT, 0, 1);
         }
     }
 

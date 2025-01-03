@@ -9301,8 +9301,8 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
             if (bHasNoData)
             {
                 m_pabyNoData.resize(m_dt.GetSize());
-                GDALCopyWords(&nNoData, GDT_Int64, 0, &m_pabyNoData[0],
-                              m_dt.GetNumericDataType(), 0, 1);
+                GDALCopyWords64(&nNoData, GDT_Int64, 0, &m_pabyNoData[0],
+                                m_dt.GetNumericDataType(), 0, 1);
             }
         }
         else if (m_poBand->GetRasterDataType() == GDT_UInt64)
@@ -9311,8 +9311,8 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
             if (bHasNoData)
             {
                 m_pabyNoData.resize(m_dt.GetSize());
-                GDALCopyWords(&nNoData, GDT_UInt64, 0, &m_pabyNoData[0],
-                              m_dt.GetNumericDataType(), 0, 1);
+                GDALCopyWords64(&nNoData, GDT_UInt64, 0, &m_pabyNoData[0],
+                                m_dt.GetNumericDataType(), 0, 1);
             }
         }
         else
@@ -9321,8 +9321,8 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
             if (bHasNoData)
             {
                 m_pabyNoData.resize(m_dt.GetSize());
-                GDALCopyWords(&dfNoData, GDT_Float64, 0, &m_pabyNoData[0],
-                              m_dt.GetNumericDataType(), 0, 1);
+                GDALCopyWords64(&dfNoData, GDT_Float64, 0, &m_pabyNoData[0],
+                                m_dt.GetNumericDataType(), 0, 1);
             }
         }
 
