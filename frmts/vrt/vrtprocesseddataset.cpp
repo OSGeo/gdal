@@ -301,12 +301,29 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
 
     const auto poSrcFirstBand = m_poSrcDS->GetRasterBand(1);
     poSrcFirstBand->GetBlockSize(&m_nBlockXSize, &m_nBlockYSize);
+    bool bUserBlockSize = false;
     if (const char *pszBlockXSize =
             CPLGetXMLValue(psTree, "BlockXSize", nullptr))
+    {
+        bUserBlockSize = true;
         m_nBlockXSize = atoi(pszBlockXSize);
+        if (m_nBlockXSize <= 1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid BlockXSize");
+            return CE_Failure;
+        }
+    }
     if (const char *pszBlockYSize =
             CPLGetXMLValue(psTree, "BlockYSize", nullptr))
+    {
+        bUserBlockSize = true;
         m_nBlockYSize = atoi(pszBlockYSize);
+        if (m_nBlockYSize <= 1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid BlockYSize");
+            return CE_Failure;
+        }
+    }
 
     // Initialize all the general VRT stuff.
     if (VRTDataset::XMLInit(psTree, pszVRTPathIn) != CE_None)
@@ -519,6 +536,66 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "At least one step should be defined");
         return CE_Failure;
+    }
+
+    // Use only up to 40% of RAM to acquire source bands and generate the output
+    // buffer.
+    const auto nMaxMemAllowed = CPLGetUsablePhysicalRAM() / 10 * 4;
+    if (nMaxMemAllowed > 0)
+    {
+        int nLargestInDTSizeTimesBand = 1;
+        int nLargestOutDTSizeTimesBand = 1;
+        for (const auto &oStep : m_aoSteps)
+        {
+            const int nInDTSizeTimesBand =
+                GDALGetDataTypeSizeBytes(oStep.eInDT) * oStep.nInBands;
+            nLargestInDTSizeTimesBand =
+                std::max(nLargestInDTSizeTimesBand, nInDTSizeTimesBand);
+            const int nOutDTSizeTimesBand =
+                GDALGetDataTypeSizeBytes(oStep.eOutDT) * oStep.nOutBands;
+            nLargestOutDTSizeTimesBand =
+                std::max(nLargestOutDTSizeTimesBand, nOutDTSizeTimesBand);
+        }
+
+        const int nPerPixelSize =
+            nLargestInDTSizeTimesBand + nLargestOutDTSizeTimesBand;
+
+        bool bBlockSizeModified = false;
+        while ((m_nBlockXSize >= 2 || m_nBlockYSize >= 2) &&
+               static_cast<GIntBig>(m_nBlockXSize) * m_nBlockYSize >
+                   nMaxMemAllowed / nPerPixelSize)
+        {
+            if ((m_nBlockXSize == nRasterXSize ||
+                 m_nBlockYSize >= m_nBlockXSize) &&
+                m_nBlockYSize >= 2)
+            {
+                m_nBlockYSize /= 2;
+            }
+            else
+            {
+                m_nBlockXSize /= 2;
+            }
+            bBlockSizeModified = true;
+        }
+        if (bBlockSizeModified)
+        {
+            if (bUserBlockSize)
+            {
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Reducing block size to %d x %d to avoid consuming too "
+                    "much RAM",
+                    m_nBlockXSize, m_nBlockYSize);
+            }
+            else
+            {
+                CPLDebug(
+                    "VRT",
+                    "Reducing block size to %d x %d to avoid consuming too "
+                    "much RAM",
+                    m_nBlockXSize, m_nBlockYSize);
+            }
+        }
     }
 
     if (m_outputBandCountProvenance == ValueProvenance::FROM_LAST_STEP)
