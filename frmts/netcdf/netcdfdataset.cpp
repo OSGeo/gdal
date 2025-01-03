@@ -8616,7 +8616,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 if (NCDFIsVarVerticalCoord(cdfid, -1, szDimName3) == false)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "dimension #%d (%s) is not a Time dimension.",
+                             "dimension #%d (%s) is not a Vertical dimension.",
                              nd - 3, szDimName3);
                 }
                 if (NCDFIsVarTimeCoord(cdfid, -1, szDimName4) == false)
