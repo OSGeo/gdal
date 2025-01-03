@@ -1387,19 +1387,19 @@ static CPLString GetFilterForJoin(swq_expr_node *poExpr, OGRFeature *poSrcFeat,
                 const OGRField *psSrcField =
                     poSrcFeat->GetRawFieldRef(poExpr->field_index);
 
+                CPLString osRet;
                 switch (ePrimaryFieldType)
                 {
                     case OFTInteger:
-                        return CPLString().Printf("%d", psSrcField->Integer);
+                        osRet.Printf("%d", psSrcField->Integer);
                         break;
 
                     case OFTInteger64:
-                        return CPLString().Printf(CPL_FRMT_GIB,
-                                                  psSrcField->Integer64);
+                        osRet.Printf(CPL_FRMT_GIB, psSrcField->Integer64);
                         break;
 
                     case OFTReal:
-                        return CPLString().Printf("%.17g", psSrcField->Real);
+                        osRet.Printf("%.17g", psSrcField->Real);
                         break;
 
                     case OFTString:
@@ -1408,18 +1408,19 @@ static CPLString GetFilterForJoin(swq_expr_node *poExpr, OGRFeature *poSrcFeat,
                             psSrcField->String,
                             static_cast<int>(strlen(psSrcField->String)),
                             CPLES_SQL);
-                        CPLString osRes = "'";
-                        osRes += pszEscaped;
-                        osRes += "'";
+                        osRet = "'";
+                        osRet += pszEscaped;
+                        osRet += "'";
                         CPLFree(pszEscaped);
-                        return osRes;
+                        break;
                     }
-                    break;
 
                     default:
                         CPLAssert(false);
-                        return "";
+                        break;
                 }
+
+                return osRet;
             }
         }
 
