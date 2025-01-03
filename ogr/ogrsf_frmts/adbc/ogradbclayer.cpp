@@ -339,8 +339,8 @@ void OGRADBCLayer::BuildLayerDefn(bool bInternalUse)
         CPLJSONDocument oDoc;
         if (!osGeoParquetMD.empty() && oDoc.LoadMemory(osGeoParquetMD))
         {
-            const auto oColums = oDoc.GetRoot().GetObj("columns");
-            for (const auto &oColumn : oColums.GetChildren())
+            const auto oColumns = oDoc.GetRoot().GetObj("columns");
+            for (const auto &oColumn : oColumns.GetChildren())
             {
                 if (oColumn.GetString("encoding") == "WKB")
                 {
