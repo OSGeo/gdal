@@ -1437,9 +1437,14 @@ def test_ogr_miramon_create_field_after_feature(tmp_path):
 def test_ogr_miramon_json_import_not_failing(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out/json_layer_to_mm.pol")
+    src_ds = gdal.OpenEx(
+        "data/miramon_inputs/LT05_L2SP_038037_20120505_20200820_02_T1_ST_stac_minimal.json",
+        gdal.OF_VECTOR,
+        open_options=["FOREIGN_MEMBERS=NONE"],
+    )
     gdal.VectorTranslate(
         out_filename,
-        "data/miramon_inputs/LT05_L2SP_038037_20120505_20200820_02_T1_ST_stac_minimal.json",
+        src_ds,
         format="MiraMonVector",
     )
 

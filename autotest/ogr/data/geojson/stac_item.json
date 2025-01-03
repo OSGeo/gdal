@@ -1,0 +1,109 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "stac_extensions": [
+    "https://stac-extensions.github.io/projection/v1.0.0/schema.json",
+  ],
+  "id": "my_id",
+  "description": "Landsat Collection 2 Level-2 Surface Reflectance Product",
+  "bbox": [
+    -155.80483200278817,
+    17.736060531368373,
+    -153.68026753986817,
+    19.82593799656933
+  ],
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -155.41188228421524,
+          19.82593799656933
+        ],
+        [
+          -155.80483200278817,
+          18.09429339392015
+        ],
+        [
+          -154.0866457786547,
+          17.736060531368373
+        ],
+        [
+          -153.68026753986817,
+          19.470851166420736
+        ],
+        [
+          -155.41188228421524,
+          19.82593799656933
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "datetime": "2024-12-16T20:42:39.252121Z",
+    "eo:cloud_cover": 58.93,
+    "view:sun_azimuth": 150.92260609,
+    "view:sun_elevation": 42.2078599,
+    "platform": "LANDSAT_9",
+    "instruments": [
+      "OLI",
+      "TIRS"
+    ],
+    "view:off_nadir": 0,
+    "landsat:cloud_cover_land": 43.14,
+    "landsat:wrs_type": "2",
+    "landsat:wrs_path": "062",
+    "landsat:wrs_row": "047",
+    "landsat:scene_id": "LC90620472024351LGN00",
+    "landsat:collection_category": "A1",
+    "landsat:collection_number": "02",
+    "landsat:correction": "L2SP",
+    "accuracy:geometric_x_bias": 0,
+    "accuracy:geometric_y_bias": 0,
+    "accuracy:geometric_x_stddev": 5.048,
+    "accuracy:geometric_y_stddev": 4.77,
+    "accuracy:geometric_rmse": 6.946,
+    "proj:epsg": null,
+    "proj:shape": [
+      7701,
+      7571
+    ],
+    "proj:transform": [
+      30,
+      0,
+      124185,
+      0,
+      -30,
+      1862415
+    ],
+    "proj:wkt2": "PROJCS[\"AEA WGS84\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Albers_Conic_Equal_Area\"],PARAMETER[\"latitude_of_center\",3],PARAMETER[\"longitude_of_center\",-157],PARAMETER[\"standard_parallel_1\",8],PARAMETER[\"standard_parallel_2\",18],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+    "card4l:specification": "SR",
+    "card4l:specification_version": "5.0",
+    "created": "2024-12-17T13:13:26.984Z",
+    "updated": "2024-12-18T04:59:46.657Z"
+  },
+  "assets": {
+    "thumbnail": {
+      "title": "Thumbnail image",
+      "type": "image/jpeg",
+      "roles": [
+        "thumbnail"
+      ],
+      "href": "https://exmaple.com/thumb_small.jpeg",
+      "alternate": {
+        "s3": {
+          "storage:platform": "AWS",
+          "storage:requester_pays": true,
+          "href": "s3://example/thumb_small.jpeg"
+        }
+      }
+    }
+  },
+  "links": [
+    {
+      "rel": "self",
+      "href": "https://example.com/items/my_id"
+    }
+  ],
+  "collection": "landsat-c2l2alb-sr"
+}
