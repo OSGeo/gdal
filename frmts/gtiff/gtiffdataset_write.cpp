@@ -397,7 +397,7 @@ CPLErr GTiffDataset::FillEmptyTiles()
                 }
 
                 vsi_l_offset nOffset = 0;
-                if (!IsBlockAvailable(iBlock, &nOffset, &nRawSize))
+                if (!IsBlockAvailable(iBlock, &nOffset, &nRawSize, nullptr))
                     break;
 
                 // When using compression, get back the compressed block
@@ -614,7 +614,7 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
     /* -------------------------------------------------------------------- */
     if (!m_bWriteEmptyTiles && IsFirstPixelEqualToNoData(pabyData))
     {
-        if (!IsBlockAvailable(tile))
+        if (!IsBlockAvailable(tile, nullptr, nullptr, nullptr))
         {
             const int nComponents =
                 m_nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;
@@ -800,7 +800,7 @@ bool GTiffDataset::WriteEncodedStrip(uint32_t strip, GByte *pabyData,
     /* -------------------------------------------------------------------- */
     if (!m_bWriteEmptyTiles && IsFirstPixelEqualToNoData(pabyData))
     {
-        if (!IsBlockAvailable(strip))
+        if (!IsBlockAvailable(strip, nullptr, nullptr, nullptr))
         {
             const int nComponents =
                 m_nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;

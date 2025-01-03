@@ -983,8 +983,8 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                 }
                 else
                 {
-                    CPL_IGNORE_RET_VAL(
-                        m_poGDS->IsBlockAvailable(nBlockId, &nOffset, &nSize));
+                    CPL_IGNORE_RET_VAL(m_poGDS->IsBlockAvailable(
+                        nBlockId, &nOffset, &nSize, nullptr));
                 }
                 if (nSize)
                 {
@@ -1071,9 +1071,17 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
 
                 VSILFILE *fp = VSI_TIFFGetVSILFile(th);
 
-                if (VSIFReadMultiRangeL(static_cast<int>(anSizes.size()),
+                // An error in VSIFReadMultiRangeL() will not be criticial,
+                // as this method is an optimization, and if it fails,
+                // tile-by-tile data acquisition will be done, so we can
+                // temporary turn failures into warnings.
+                CPLTurnFailureIntoWarning(true);
+                const bool ok =
+                    VSIFReadMultiRangeL(static_cast<int>(anSizes.size()),
                                         &apData[0], &anOffsets[0], &anSizes[0],
-                                        fp) == 0)
+                                        fp) == 0;
+                CPLTurnFailureIntoWarning(false);
+                if (ok)
                 {
                     if (!oMapStrileToOffsetByteCount.empty() &&
                         !FillCacheStrileToOffsetByteCount(anOffsets, anSizes,
@@ -1092,6 +1100,11 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                     VSI_TIFFSetCachedRanges(
                         th, static_cast<int>(anSizes.size()), &apData[0],
                         &anOffsets[0], &anSizes[0]);
+                }
+                else
+                {
+                    CPLFree(pBufferedData);
+                    pBufferedData = nullptr;
                 }
             }
         }
@@ -1129,8 +1142,12 @@ int GTiffRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
             vsi_l_offset nOffset = 0;
             vsi_l_offset nLength = 0;
             bool bHasData = false;
-            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset, &nLength))
+            bool bError = false;
+            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset, &nLength,
+                                           &bError))
             {
+                if (bError)
+                    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
                 nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
             }
             else
@@ -1584,7 +1601,8 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
             }
 
             vsi_l_offset nOffset = 0;
-            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset))
+            if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset, nullptr,
+                                           nullptr))
             {
                 return nullptr;
             }
@@ -1605,7 +1623,8 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
             }
 
             vsi_l_offset nByteCount = 0;
-            if (!m_poGDS->IsBlockAvailable(nBlockId, nullptr, &nByteCount))
+            if (!m_poGDS->IsBlockAvailable(nBlockId, nullptr, &nByteCount,
+                                           nullptr))
             {
                 return nullptr;
             }
