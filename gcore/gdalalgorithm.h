@@ -194,6 +194,12 @@ bool CPL_DLL GDALAlgorithmArgSetAsDatasetValue(GDALAlgorithmArgH hArg,
 
 bool CPL_DLL GDALAlgorithmArgSetDataset(GDALAlgorithmArgH hArg, GDALDatasetH);
 
+bool CPL_DLL GDALAlgorithmArgSetDatasets(GDALAlgorithmArgH hArg, size_t nCount,
+                                         GDALDatasetH *);
+
+bool CPL_DLL GDALAlgorithmArgSetDatasetNames(GDALAlgorithmArgH hArg,
+                                             CSLConstList);
+
 bool CPL_DLL GDALAlgorithmArgSetAsInteger(GDALAlgorithmArgH, int);
 
 bool CPL_DLL GDALAlgorithmArgSetAsDouble(GDALAlgorithmArgH, double);
@@ -305,10 +311,7 @@ class GDALAlgorithmArg;
 
 /** Value for an argument that points to a GDALDataset.
  *
- * This is the value of arguments of type GAAT_DATASET, GAAT_RASTER_DATASET,
- * GAAT_VECTOR_DATASET, GAAT_MULTIDIM_DATASET, GAAT_DATASET_LIST,
- * GAAT_RASTER_DATASET_LIST, GAAT_VECTOR_DATASET_LIST,
- * GAAT_MULTIDIM_DATASET_LIST
+ * This is the value of arguments of type GAAT_DATASET or GAAT_DATASET_LIST.
  */
 class CPL_DLL GDALArgDatasetValue final
 {
@@ -741,6 +744,15 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
+    /** Sets whether the dataset should be opened automatically by
+     * GDALAlgorithm. Only applies to GAAT_DATASET and GAAT_DATASET_LIST.
+     */
+    GDALAlgorithmArgDecl &SetAutoOpenDataset(bool autoOpen)
+    {
+        m_autoOpenDataset = autoOpen;
+        return *this;
+    }
+
     /** Return the (long) name */
     inline const std::string &GetName() const
     {
@@ -921,6 +933,14 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return m_removeSQLComments;
     }
 
+    /** Returns whether the dataset should be opened automatically by
+     * GDALAlgorithm. Only applies to GAAT_DATASET and GAAT_DATASET_LIST.
+     */
+    bool AutoOpenDataset() const
+    {
+        return m_autoOpenDataset;
+    }
+
     /** Get user-defined metadata. */
     inline const std::map<std::string, std::vector<std::string>>
     GetMetadata() const
@@ -944,14 +964,11 @@ class CPL_DLL GDALAlgorithmArgDecl final
      * - int for GAAT_INTEGER
      * - double for GAAT_REAL
      * - std::string for GAAT_STRING
-     * - GDALArgDatasetValue for GAAT_DATASET, GAAT_RASTER_DATASET,
-     *   GAAT_VECTOR_DATASET, GAAT_MULTIDIM_DATASET
+     * - GDALArgDatasetValue for GAAT_DATASET
      * - std::vector<int> for GAAT_INTEGER_LIST
      * - std::vector<double for GAAT_REAL_LIST
      * - std::vector<std::string> for GAAT_STRING_LIST
-     * - std::vector<GDALArgDatasetValue> for GAAT_DATASET_LIST,
-     *   GAAT_RASTER_DATASET_LIST, GAAT_VECTOR_DATASET_LIST,
-     *   GAAT_MULTIDIM_DATASET_LIST
+     * - std::vector<GDALArgDatasetValue> for GAAT_DATASET_LIST
      */
     template <class T> inline const T &GetDefault() const
     {
@@ -980,6 +997,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     bool m_displayHintAboutRepetition = true;
     bool m_readFromFileAtSyntaxAllowed = false;
     bool m_removeSQLComments = false;
+    bool m_autoOpenDataset = true;
     std::map<std::string, std::vector<std::string>> m_metadata{};
     std::vector<std::string> m_aliases{};
     std::vector<std::string> m_hiddenAliases{};
@@ -1183,6 +1201,12 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         return m_decl.GetDefault<T>();
     }
 
+    /** Alias for GDALAlgorithmArgDecl::AutoOpenDataset() */
+    inline bool AutoOpenDataset() const
+    {
+        return m_decl.AutoOpenDataset();
+    }
+
     /** Return the value of the argument, which is by decreasing order of priority:
      * - the value set through Set().
      * - the default value set through SetDefault().
@@ -1193,14 +1217,11 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
      * - int for GAAT_INTEGER
      * - double for GAAT_REAL
      * - std::string for GAAT_STRING
-     * - GDALArgDatasetValue for GAAT_DATASET, GAAT_RASTER_DATASET,
-     *   GAAT_VECTOR_DATASET, GAAT_MULTIDIM_DATASET
+     * - GDALArgDatasetValue for GAAT_DATASET
      * - std::vector<int> for GAAT_INTEGER_LIST
      * - std::vector<double for GAAT_REAL_LIST
      * - std::vector<std::string> for GAAT_STRING_LIST
-     * - std::vector<GDALArgDatasetValue> for GAAT_DATASET_LIST,
-     *   GAAT_RASTER_DATASET_LIST, GAAT_VECTOR_DATASET_LIST,
-     *   GAAT_MULTIDIM_DATASET_LIST
+     * - std::vector<GDALArgDatasetValue> for GAAT_DATASET_LIST
      */
     template <class T> inline T &Get()
     {
@@ -1217,14 +1238,11 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
      * - int for GAAT_INTEGER
      * - double for GAAT_REAL
      * - std::string for GAAT_STRING
-     * - GDALArgDatasetValue for GAAT_DATASET, GAAT_RASTER_DATASET,
-     *   GAAT_VECTOR_DATASET, GAAT_MULTIDIM_DATASET
+     * - GDALArgDatasetValue for GAAT_DATASET
      * - std::vector<int> for GAAT_INTEGER_LIST
      * - std::vector<double for GAAT_REAL_LIST
      * - std::vector<std::string> for GAAT_STRING_LIST
-     * - std::vector<GDALArgDatasetValue> for GAAT_DATASET_LIST,
-     *   GAAT_RASTER_DATASET_LIST, GAAT_VECTOR_DATASET_LIST,
-     *   GAAT_MULTIDIM_DATASET_LIST
+     * - std::vector<GDALArgDatasetValue> for GAAT_DATASET_LIST
      */
     template <class T> inline const T &Get() const
     {
@@ -1316,8 +1334,7 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
      */
     bool Set(const std::vector<double> &value);
 
-    /** Set the value for a GAAT_DATASET_LIST, GAAT_RASTER_DATASET_LIST,
-     * GAAT_VECTOR_DATASET_LIST or GAAT_MULTIDIM_DATASET_LIST argument.
+    /** Set the value for a GAAT_DATASET_LIST argument.
      * It cannot be called several times for a given argument.
      * Validation checks and other actions are run.
      * Return true if success.
@@ -1545,6 +1562,13 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     GDALInConstructionAlgorithmArg &SetRemoveSQLCommentsEnabled()
     {
         m_decl.SetRemoveSQLCommentsEnabled();
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetAutoOpenDataset() */
+    GDALInConstructionAlgorithmArg &SetAutoOpenDataset(bool autoOpen)
+    {
+        m_decl.SetAutoOpenDataset(autoOpen);
         return *this;
     }
 

@@ -380,6 +380,8 @@ char CPL_DLL **VSIReadDir(const char *);
 char CPL_DLL **VSIReadDirRecursive(const char *pszPath);
 char CPL_DLL **VSIReadDirEx(const char *pszPath, int nMaxFiles);
 char CPL_DLL **VSISiblingFiles(const char *pszPath);
+char CPL_DLL **VSIGlob(const char *pszPattern, const char *const *papszOptions,
+                       GDALProgressFunc pProgressFunc, void *pProgressData);
 
 const char CPL_DLL *VSIGetDirectorySeparator(const char *pszPath);
 
