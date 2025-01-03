@@ -2104,7 +2104,8 @@ CPLErr GDALSetGCPs2(GDALDatasetH hDS, int nGCPCount, const GDAL_GCP *pasGCPList,
  * "BILINEAR", "CUBIC", "CUBICSPLINE", "GAUSS", "LANCZOS", "MODE", "NEAREST",
  * or "NONE" controlling the downsampling method applied.
  * @param nOverviews number of overviews to build, or 0 to clean overviews.
- * @param panOverviewList the list of overview decimation factors to build, or
+ * @param panOverviewList the list of overview decimation factors (positive
+ *                        integers, normally larger or equal to 2) to build, or
  *                        NULL if nOverviews == 0.
  * @param nListBands number of bands to build overviews for in panBandList.
  * Build for all bands if this is 0.
@@ -2150,6 +2151,18 @@ CPLErr GDALDataset::BuildOverviews(const char *pszResampling, int nOverviews,
 
     if (pfnProgress == nullptr)
         pfnProgress = GDALDummyProgress;
+
+    for (int i = 0; i < nOverviews; ++i)
+    {
+        if (panOverviewList[i] <= 0)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "panOverviewList[%d] = %d is invalid. It must be a "
+                     "positive value",
+                     i, panOverviewList[i]);
+            return CE_Failure;
+        }
+    }
 
     // At time of writing, all overview generation options are actually
     // expected to be passed as configuration options.

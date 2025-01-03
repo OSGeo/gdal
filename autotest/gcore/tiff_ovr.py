@@ -166,6 +166,24 @@ def test_tiff_ovr_3(mfloat32_tif, both_endian):
 
 
 ###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_invalid_ovr_factor(tmp_path):
+    tif_fname = str(tmp_path / "byte.tif")
+
+    shutil.copyfile("data/byte.tif", tif_fname)
+
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
+    with pytest.raises(
+        Exception,
+        match=r"panOverviewList\[1\] = 0 is invalid\. It must be a positive value",
+    ):
+        ds.BuildOverviews(overviewlist=[2, 0])
+
+
+###############################################################################
 # Test generation
 
 
