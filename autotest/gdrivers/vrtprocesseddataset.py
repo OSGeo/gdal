@@ -10,6 +10,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import math
+
 import gdaltest
 import pytest
 
@@ -1369,6 +1371,7 @@ def test_vrtprocesseddataset_expression(
                 <Step>
                     <Algorithm>Expression</Algorithm>
                     <Argument name="expression">{expression.replace('<', '&lt;').replace('>', '&gt;')}</Argument>
+                    <Argument name="dialect">exprtk</Argument>
                 </Step>
             </ProcessingSteps>
                 {output_band_xml}
@@ -1384,6 +1387,57 @@ def test_vrtprocesseddataset_expression(
             ds = gdal.Open(vrt_xml)
             result = ds.ReadAsArray()
             np.testing.assert_equal(result, expected)
+
+
+@pytest.mark.parametrize(
+    "batch_size",
+    (
+        pytest.param(13, id="batch size greater than input"),
+        pytest.param(1, id="batch size=1"),
+        pytest.param(3, id="input bands are multiple of batch size"),
+        pytest.param(5, id="input bands are not a multiple of batch size"),
+    ),
+)
+def test_vrtprocesseddataset_expression_batchsize(tmp_vsimem, batch_size):
+
+    src_filename = tmp_vsimem / "in.tif"
+
+    inputs = np.arange(12)
+    inputs = inputs.reshape(inputs.size, 1, 1)
+
+    with gdal.GetDriverByName("GTiff").Create(
+        src_filename,
+        1,
+        1,
+        bands=inputs.size,
+    ) as src_ds:
+        src_ds.WriteArray(inputs)
+        src_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
+
+    num_chunks = math.ceil(inputs.size / batch_size)
+    chunks = [np.arange(batch_size) + r * batch_size for r in range(num_chunks)]
+    expected = np.array([inputs[chunk[chunk < inputs.size]].sum() for chunk in chunks])
+
+    vrt_xml = f"""<VRTDataset subclass='VRTProcessedDataset'>
+            <Input>
+                <SourceFilename>{src_filename}</SourceFilename>
+            </Input>
+            <ProcessingSteps>
+                <Step>
+                    <Algorithm>Expression</Algorithm>
+                    <Argument name="expression">sum(BANDS)</Argument>
+                    <Argument name="dialect">muparser</Argument>
+                    <Argument name="batch_size">{batch_size}</Argument>
+                </Step>
+            </ProcessingSteps>
+            <OutputBands count="FROM_LAST_STEP" dataType="Float32" />
+            </VRTDataset>
+                """
+
+    with gdal.Open(vrt_xml) as ds:
+        actual = ds.ReadAsArray().flatten()
+
+    np.testing.assert_equal(actual, expected)
 
 
 ###############################################################################

@@ -37,12 +37,14 @@ class MuParserExpression::Impl
     {
         try
         {
+            CPLString tmpExpression(m_osExpression);
+
             for (const auto &[osVec, osElems] : m_oVectors)
             {
-                m_osExpression.replaceAll(osVec, osElems);
+                tmpExpression.replaceAll(osVec, osElems);
             }
 
-            m_oParser.SetExpr(m_osExpression);
+            m_oParser.SetExpr(tmpExpression);
         }
         catch (const mu::Parser::exception_type &e)
         {
