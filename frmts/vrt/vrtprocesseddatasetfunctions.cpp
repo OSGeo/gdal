@@ -13,10 +13,13 @@
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "vrtdataset.h"
+#include "vrtexpression.h"
 
 #include <algorithm>
+#include <functional>
 #include <limits>
 #include <map>
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -1469,6 +1472,259 @@ static CPLErr TrimmingProcess(
 }
 
 /************************************************************************/
+/*                    ExpressionInit()                                  */
+/************************************************************************/
+
+namespace
+{
+
+class ExpressionData
+{
+  public:
+    ExpressionData(int nInBands, int nBatchSize, std::string_view osExpression,
+                   std::string_view osDialect)
+        : m_nInBands(nInBands), m_nNominalBatchSize(nBatchSize),
+          m_nCurrentBatchSize(nBatchSize), m_adfValuesForPixel{},
+          m_adfResults{}, m_osExpression(osExpression),
+          m_osDialect(osDialect), m_poExpression{}
+    {
+    }
+
+    static std::unique_ptr<gdal::MathExpression>
+    CreateExpression(std::string_view osExpression, const char *pszDialect)
+    {
+        if (EQUAL(pszDialect, "exprtk"))
+        {
+            return std::make_unique<gdal::ExprtkExpression>(osExpression);
+        }
+        else if (EQUAL(pszDialect, "muparser"))
+        {
+            return std::make_unique<gdal::MuParserExpression>(osExpression);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Unknown expression dialect: %s", pszDialect);
+            return nullptr;
+        }
+    }
+
+    CPLErr Compile()
+    {
+        m_poExpression = CreateExpression(m_osExpression, m_osDialect.c_str());
+        if (m_poExpression == nullptr)
+        {
+            return CE_Failure;
+        }
+
+        m_adfValuesForPixel.resize(m_nCurrentBatchSize);
+
+        for (int i = 0; i < m_nCurrentBatchSize; i++)
+        {
+            std::string osVar = "B" + std::to_string(i + 1);
+            m_poExpression->RegisterVariable(osVar, &m_adfValuesForPixel[i]);
+        }
+
+        // TODO only register "BANDS" if it is used
+        m_poExpression->RegisterVector("BANDS", &m_adfValuesForPixel);
+
+        return m_poExpression->Compile();
+    }
+
+    CPLErr Evaluate(const double *padfInputs, size_t nExpectedOutBands)
+    {
+        m_adfResults.clear();
+
+        for (int iBatch = 0; iBatch < BatchCount(); iBatch++)
+        {
+            const auto nBandsRemaining =
+                static_cast<int>(m_nInBands - (m_nNominalBatchSize * iBatch));
+            const auto nBatchSize =
+                std::min(m_nNominalBatchSize, nBandsRemaining);
+
+            // FIXME this is overly general - we really should have a maximum
+            // of two possible batch sizes. If we have two batch sizes, we should
+            // keep two expression objects around to avoid reparsing the expression
+            // every time the batch size changes (every pixel)
+            if (m_nCurrentBatchSize != nBatchSize)
+            {
+                m_nCurrentBatchSize = nBatchSize;
+                if (auto eErr = Compile(); eErr != CE_None)
+                {
+                    return eErr;
+                }
+            }
+
+            std::copy(padfInputs + iBatch * (m_nNominalBatchSize),
+                      padfInputs + (iBatch + 1) * m_nNominalBatchSize,
+                      m_adfValuesForPixel.begin());
+
+            if (auto eErr = m_poExpression->Evaluate(); eErr != CE_None)
+            {
+                return eErr;
+            }
+
+            const auto &adfResults = m_poExpression->Results();
+            if (BatchCount() > 1)
+            {
+                std::copy(adfResults.begin(), adfResults.end(),
+                          std::back_inserter(m_adfResults));
+            }
+        }
+
+        if (nExpectedOutBands > 0)
+        {
+            if (Results().size() != static_cast<std::size_t>(nExpectedOutBands))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Expression returned %d values but "
+                         "%d output bands were expected.",
+                         static_cast<int>(Results().size()),
+                         static_cast<int>(nExpectedOutBands));
+                return CE_Failure;
+            }
+        }
+
+        return CE_None;
+    }
+
+    const std::vector<double> &Results() const
+    {
+        if (BatchCount() == 1)
+        {
+            return m_poExpression->Results();
+        }
+        else
+        {
+            return m_adfResults;
+        }
+    }
+
+  private:
+    int BatchCount() const
+    {
+        return (m_nInBands + m_nNominalBatchSize - 1) / m_nNominalBatchSize;
+    }
+
+    int m_nInBands;
+    int m_nNominalBatchSize;
+    int m_nCurrentBatchSize;
+    std::vector<double> m_adfValuesForPixel;
+    std::vector<double> m_adfResults;
+    std::string m_osExpression;
+    std::string m_osDialect;
+    std::unique_ptr<gdal::MathExpression> m_poExpression;
+};
+
+}  // namespace
+
+static CPLErr ExpressionInit(const char * /*pszFuncName*/, void * /*pUserData*/,
+                             CSLConstList papszFunctionArgs, int nInBands,
+                             GDALDataType eInDT, double * /* padfInNoData */,
+                             int *pnOutBands, GDALDataType *peOutDT,
+                             double ** /* ppadfOutNoData */,
+                             const char * /* pszVRTPath */,
+                             VRTPDWorkingDataPtr *ppWorkingData)
+{
+    CPLAssert(eInDT == GDT_Float64);
+
+    *peOutDT = eInDT;
+    *ppWorkingData = nullptr;
+
+    const char *pszBatchSize =
+        CSLFetchNameValue(papszFunctionArgs, "batch_size");
+    auto nBatchSize = nInBands;
+
+    if (pszBatchSize != nullptr)
+    {
+        nBatchSize = std::min(nInBands, std::atoi(pszBatchSize));
+    }
+
+    if (nBatchSize < 1)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "batch_size must be at least 1");
+        return CE_Failure;
+    }
+
+    const char *pszDialect = CSLFetchNameValue(papszFunctionArgs, "dialect");
+
+    const char *pszExpression =
+        CSLFetchNameValue(papszFunctionArgs, "expression");
+
+    auto data = std::make_unique<ExpressionData>(nInBands, nBatchSize,
+                                                 pszExpression, pszDialect);
+
+    if (auto eErr = data->Compile(); eErr != CE_None)
+    {
+        return eErr;
+    }
+
+    if (*pnOutBands == 0)
+    {
+        std::vector<double> aDummyValues(nInBands);
+        if (auto eErr = data->Evaluate(aDummyValues.data(), 0); eErr != CE_None)
+        {
+            return eErr;
+        }
+
+        *pnOutBands = static_cast<int>(data->Results().size());
+    }
+
+    *ppWorkingData = data.release();
+
+    return CE_None;
+}
+
+static void ExpressionFree(const char * /* pszFuncName */,
+                           void * /* pUserData */,
+                           VRTPDWorkingDataPtr pWorkingData)
+{
+    ExpressionData *data = static_cast<ExpressionData *>(pWorkingData);
+    delete data;
+}
+
+static CPLErr ExpressionProcess(
+    const char * /* pszFuncName */, void * /* pUserData */,
+    VRTPDWorkingDataPtr pWorkingData, CSLConstList /* papszFunctionArgs */,
+    int nBufXSize, int nBufYSize, const void *pInBuffer,
+    size_t /* nInBufferSize */, GDALDataType eInDT, int nInBands,
+    const double *CPL_RESTRICT /* padfInNoData */, void *pOutBuffer,
+    size_t /* nOutBufferSize */, GDALDataType eOutDT, int nOutBands,
+    const double *CPL_RESTRICT /* padfOutNoData */, double /* dfSrcXOff */,
+    double /* dfSrcYOff */, double /* dfSrcXSize */, double /* dfSrcYSize */,
+    const double /* adfSrcGT */[], const char * /* pszVRTPath "*/,
+    CSLConstList /* papszExtra */)
+{
+    ExpressionData *expr = static_cast<ExpressionData *>(pWorkingData);
+
+    const size_t nElts = static_cast<size_t>(nBufXSize) * nBufYSize;
+
+    CPL_IGNORE_RET_VAL(eInDT);
+    CPLAssert(eInDT == GDT_Float64);
+    const double *CPL_RESTRICT padfSrc = static_cast<const double *>(pInBuffer);
+
+    CPLAssert(eOutDT == GDT_Float64);
+    CPL_IGNORE_RET_VAL(eOutDT);
+    double *CPL_RESTRICT padfDst = static_cast<double *>(pOutBuffer);
+
+    for (size_t i = 0; i < nElts; i++)
+    {
+        if (auto eErr = expr->Evaluate(padfSrc, nOutBands); eErr != CE_None)
+        {
+            return eErr;
+        }
+
+        const auto &adfResults = expr->Results();
+        std::copy(adfResults.begin(), adfResults.end(), padfDst);
+
+        padfDst += nOutBands;
+        padfSrc += nInBands;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*              GDALVRTRegisterDefaultProcessedDatasetFuncs()           */
 /************************************************************************/
 
@@ -1573,4 +1829,17 @@ void GDALVRTRegisterDefaultProcessedDatasetFuncs()
         "</ProcessedDatasetFunctionArgumentsList>",
         GDT_Float64, nullptr, 0, nullptr, 0, TrimmingInit, TrimmingFree,
         TrimmingProcess, nullptr);
+
+    GDALVRTRegisterProcessedDatasetFunc(
+        "Expression", nullptr,
+        "<ProcessedDatasetFunctionArgumentsList>"
+        "    <Argument name='expression' description='the expression to "
+        "evaluate' type='string' required='true' />"
+        "    <Argument name='dialect' description='expression dialect' "
+        "type='string' />"
+        "    <Argument name='batch_size' description='batch size' "
+        "type='integer' />"
+        "</ProcessedDatasetFunctionArgumentsList>",
+        GDT_Float64, nullptr, 0, nullptr, 0, ExpressionInit, ExpressionFree,
+        ExpressionProcess, nullptr);
 }
