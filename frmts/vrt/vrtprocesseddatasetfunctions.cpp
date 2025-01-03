@@ -12,6 +12,7 @@
 
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_typetraits.h"
 #include "vrtdataset.h"
 
 #include <algorithm>
@@ -599,6 +600,193 @@ LUTProcess(const char * /*pszFuncName*/, void * /*pUserData*/,
             ++padfSrc;
             ++padfDst;
         }
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                        BandScaleOffsetData                           */
+/************************************************************************/
+
+constexpr std::array<GDALDataType, 10> BandScaleOffsetSupportedTypes{
+    GDT_Byte,  GDT_Int8,   GDT_UInt16, GDT_Int16,   GDT_UInt32,
+    GDT_Int32, GDT_UInt64, GDT_Int64,  GDT_Float32, GDT_Float64};
+
+namespace
+{
+struct BandScaleOffsetData
+{
+    BandScaleOffsetData(int nInBands, const double *padfNoData,
+                        CSLConstList papszFunctionArgs)
+        : m_adfInNoData(padfNoData, padfNoData + nInBands),
+          m_adfOffsets(nInBands), m_adfScales(nInBands)
+    {
+        for (const auto &[pszKey, pszValue] :
+             cpl::IterateNameValue(papszFunctionArgs))
+        {
+            if (EQUALN(pszKey, "scale_", 6))
+            {
+                int i = std::atoi(pszKey + 6);
+                m_adfScales[i - 1] = CPLAtof(pszValue);
+            }
+            else if (EQUALN(pszKey, "offset_", 7))
+            {
+                int i = std::atoi(pszKey + 7);
+                m_adfOffsets[i - 1] = CPLAtof(pszValue);
+            }
+        }
+    }
+
+    template <typename T>
+    void applyScaleOffset(size_t nElts, const void *pInBuffer,
+                          void *pOutBuffer) const
+    {
+        constexpr double nan = std::numeric_limits<double>::quiet_NaN();
+
+        const T *CPL_RESTRICT paSrc = static_cast<const T *>(pInBuffer);
+        double *CPL_RESTRICT padfDst = static_cast<double *>(pOutBuffer);
+
+        for (std::size_t iElt = 0; iElt < nElts; ++iElt)
+        {
+            for (size_t iBand = 0; iBand < m_adfOffsets.size(); iBand++)
+            {
+
+                double dfSrc = static_cast<double>(*paSrc++);
+                *padfDst++ =
+                    (dfSrc == m_adfInNoData[iBand])
+                        ? nan
+                        : (dfSrc * m_adfScales[iBand] + m_adfOffsets[iBand]);
+            }
+        }
+    }
+
+    std::vector<double> m_adfInNoData;
+    std::vector<double> m_adfOffsets;
+    std::vector<double> m_adfScales;
+};
+}  // namespace
+
+static CPLErr
+BandScaleOffsetInit(const char * /*pszFuncName*/, void * /*pUserData*/,
+                    CSLConstList papszFunctionArgs, int nInBands,
+                    GDALDataType /* eInDT */, double *padfInNoData,
+                    int *pnOutBands, GDALDataType *peOutDT,
+                    double **ppadfOutNoData, const char * /* pszVRTPath */,
+                    VRTPDWorkingDataPtr *ppWorkingData)
+{
+    const bool bIsFinalStep = *pnOutBands != 0;
+    *peOutDT = GDT_Float64;
+    *ppWorkingData = nullptr;
+
+    if (!bIsFinalStep)
+    {
+        *pnOutBands = nInBands;
+    }
+
+    auto data = std::make_unique<BandScaleOffsetData>(nInBands, padfInNoData,
+                                                      papszFunctionArgs);
+
+    // Input NoData value is meaningless after scaling, so we set the output NoData value to NaN.
+    for (int i = 0; i < *pnOutBands; i++)
+    {
+        (*ppadfOutNoData)[i] = std::numeric_limits<double>::quiet_NaN();
+    }
+
+    *ppWorkingData = data.release();
+
+    return CE_None;
+}
+
+static void BandScaleOffsetFree(const char * /*pszFuncName*/,
+                                void * /*pUserData*/,
+                                VRTPDWorkingDataPtr pWorkingData)
+{
+    BandScaleOffsetData *data =
+        static_cast<BandScaleOffsetData *>(pWorkingData);
+    delete data;
+}
+
+static CPLErr BandScaleOffsetProcess(
+    const char * /*pszFuncName*/, void * /*pUserData*/,
+    VRTPDWorkingDataPtr pWorkingData, CSLConstList /* papszFunctionArgs*/,
+    int nBufXSize, int nBufYSize, const void *pInBuffer,
+    size_t /* nInBufferSize */, GDALDataType eInDT, int nInBands,
+    const double *CPL_RESTRICT /* padfInNoData */, void *pOutBuffer,
+    size_t /* nOutBufferSize */, GDALDataType eOutDT, int nOutBands,
+    const double *CPL_RESTRICT /* padfOutNoData */, double /* dfSrcXOff */,
+    double /* dfSrcYOff */, double /* dfSrcXSize */, double /* dfSrcYSize */,
+    const double /* adfSrcGT */[], const char * /* pszVRTPath */,
+    CSLConstList /*papszExtra*/)
+{
+    CPL_IGNORE_RET_VAL(nInBands);
+    CPL_IGNORE_RET_VAL(nOutBands);
+    CPLAssert(nInBands == nOutBands);
+    CPL_IGNORE_RET_VAL(eOutDT);
+    CPLAssert(eOutDT = GDT_Float64);
+
+    const size_t nElts = static_cast<size_t>(nBufXSize) * nBufYSize;
+
+    BandScaleOffsetData *data =
+        static_cast<BandScaleOffsetData *>(pWorkingData);
+
+    switch (eInDT)
+    {
+        case GDT_Byte:
+            data->template applyScaleOffset<
+                typename gdal::GDALDataTypeTraits<GDT_Byte>::type>(
+                nElts, pInBuffer, pOutBuffer);
+            break;
+        case GDT_Int8:
+            data->template applyScaleOffset<
+                typename gdal::GDALDataTypeTraits<GDT_Int8>::type>(
+                nElts, pInBuffer, pOutBuffer);
+            break;
+        case GDT_UInt16:
+            data->template applyScaleOffset<
+                typename gdal::GDALDataTypeTraits<GDT_UInt16>::type>(
+                nElts, pInBuffer, pOutBuffer);
+            break;
+        case GDT_Int16:
+            data->template applyScaleOffset<
+                typename gdal::GDALDataTypeTraits<GDT_Int16>::type>(
+                nElts, pInBuffer, pOutBuffer);
+            break;
+        case GDT_UInt32:
+            data->template applyScaleOffset<
+                typename gdal::GDALDataTypeTraits<GDT_UInt32>::type>(
+                nElts, pInBuffer, pOutBuffer);
+            break;
+        case GDT_Int32:
+            data->template applyScaleOffset<
+                typename gdal::GDALDataTypeTraits<GDT_Int32>::type>(
+                nElts, pInBuffer, pOutBuffer);
+            break;
+        case GDT_UInt64:
+            data->template applyScaleOffset<
+                typename gdal::GDALDataTypeTraits<GDT_UInt64>::type>(
+                nElts, pInBuffer, pOutBuffer);
+            break;
+        case GDT_Int64:
+            data->template applyScaleOffset<
+                typename gdal::GDALDataTypeTraits<GDT_Int64>::type>(
+                nElts, pInBuffer, pOutBuffer);
+            break;
+        case GDT_Float32:
+            data->template applyScaleOffset<
+                typename gdal::GDALDataTypeTraits<GDT_Float32>::type>(
+                nElts, pInBuffer, pOutBuffer);
+            break;
+        case GDT_Float64:
+            data->template applyScaleOffset<
+                typename gdal::GDALDataTypeTraits<GDT_Float64>::type>(
+                nElts, pInBuffer, pOutBuffer);
+            break;
+        default:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Data type is not handled by BandScaleOffsetData");
+            return CE_Failure;
+            break;
     }
 
     return CE_None;
@@ -1487,7 +1675,7 @@ void GDALVRTRegisterDefaultProcessedDatasetFuncs()
         "description='value to substitute to a valid computed value that "
         "would be nodata' type='double'/>"
         "   <Argument name='dst_intended_datatype' type='string' "
-        "description='Intented datatype of output (which might be "
+        "description='Intended datatype of output (which might be "
         "different than the working data type)'/>"
         "   <Argument name='coefficients_{band}' "
         "description='Comma-separated coefficients for combining bands. "
@@ -1513,6 +1701,16 @@ void GDALVRTRegisterDefaultProcessedDatasetFuncs()
         "</ProcessedDatasetFunctionArgumentsList>",
         GDT_Float64, nullptr, 0, nullptr, 0, LUTInit, LUTFree, LUTProcess,
         nullptr);
+
+    GDALVRTRegisterProcessedDatasetFunc(
+        "BandScaleOffset", nullptr,
+        "<ProcessedDatasetFunctionArgumentsList>"
+        "   <Argument name='scale_{band}' type='builtin' />"
+        "   <Argument name='offset_{band}' type='builtin' />"
+        "</ProcessedDatasetFunctionArgumentsList>",
+        GDT_Unknown, BandScaleOffsetSupportedTypes.data(),
+        BandScaleOffsetSupportedTypes.size(), nullptr, 0, BandScaleOffsetInit,
+        BandScaleOffsetFree, BandScaleOffsetProcess, nullptr);
 
     GDALVRTRegisterProcessedDatasetFunc(
         "LocalScaleOffset", nullptr,
