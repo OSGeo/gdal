@@ -93,7 +93,14 @@ jobs:
           cd build
           cmake ..
 
-      - name: Run cppcheck test
+      - name: Run cppcheck test (on push events)
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          cd build
+          ../scripts/cppcheck.sh
+
+      - name: Run cppcheck test, but ignore failures (on pull request)
+        if: ${{ github.event_name == 'pull_request' }}
         run: |
           cd build
           # Do not fail the job. This is just used as a tool to monitor how we are regarding recent cppcheck
