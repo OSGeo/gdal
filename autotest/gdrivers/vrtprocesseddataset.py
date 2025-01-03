@@ -123,10 +123,13 @@ def test_vrtprocesseddataset_errors(tmp_vsimem):
 # Test nominal cases of BandAffineCombination algorithm
 
 
-def test_vrtprocesseddataset_affine_combination_nominal(tmp_vsimem):
+@pytest.mark.parametrize("INTERLEAVE", ["PIXEL", "BAND"])
+def test_vrtprocesseddataset_affine_combination_nominal(tmp_vsimem, INTERLEAVE):
 
     src_filename = str(tmp_vsimem / "src.tif")
-    src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 2, 1, 3)
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        src_filename, 2, 1, 3, options=["INTERLEAVE=" + INTERLEAVE]
+    )
     src_ds.GetRasterBand(1).WriteArray(np.array([[1, 3]]))
     src_ds.GetRasterBand(2).WriteArray(np.array([[2, 6]]))
     src_ds.GetRasterBand(3).WriteArray(np.array([[3, 3]]))
