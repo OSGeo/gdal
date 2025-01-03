@@ -161,8 +161,8 @@ static bool DownsamplingIntegerXFactor(
         else
         {
             // Type to type conversion ...
-            GDALCopyWords(pabySrcData, eDataType, nIncSrcOffset, pabyDstData,
-                          eBufType, nPixelSpace, std::max(1, nIters));
+            GDALCopyWords64(pabySrcData, eDataType, nIncSrcOffset, pabyDstData,
+                            eBufType, nPixelSpace, std::max(1, nIters));
             if (nIters > 1)
             {
                 pabySrcData +=
@@ -330,18 +330,18 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 // Type to type conversion.
 
                 if (eRWFlag == GF_Read)
-                    GDALCopyWords(
+                    GDALCopyWords64(
                         pabySrcBlock + nSrcByteOffset, eDataType, nBandDataSize,
                         static_cast<GByte *>(pData) +
                             static_cast<GPtrDiff_t>(iBufYOff) * nLineSpace,
                         eBufType, static_cast<int>(nPixelSpace), nBufXSize);
                 else
-                    GDALCopyWords(static_cast<GByte *>(pData) +
-                                      static_cast<GPtrDiff_t>(iBufYOff) *
-                                          nLineSpace,
-                                  eBufType, static_cast<int>(nPixelSpace),
-                                  pabySrcBlock + nSrcByteOffset, eDataType,
-                                  nBandDataSize, nBufXSize);
+                    GDALCopyWords64(static_cast<GByte *>(pData) +
+                                        static_cast<GPtrDiff_t>(iBufYOff) *
+                                            nLineSpace,
+                                    eBufType, static_cast<int>(nPixelSpace),
+                                    pabySrcBlock + nSrcByteOffset, eDataType,
+                                    nBandDataSize, nBufXSize);
             }
 
             if (psExtraArg->pfnProgress != nullptr &&
@@ -527,7 +527,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     {
                         /* type to type conversion */
                         if (eRWFlag == GF_Read)
-                            GDALCopyWords(
+                            GDALCopyWords64(
                                 pabySrcBlock + iSrcOffset, eDataType,
                                 nBandDataSize,
                                 static_cast<GByte *>(pData) + iBufOffset +
@@ -535,7 +535,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 eBufType, static_cast<int>(nPixelSpace),
                                 nXSpan);
                         else
-                            GDALCopyWords(
+                            GDALCopyWords64(
                                 static_cast<GByte *>(pData) + iBufOffset +
                                     static_cast<GPtrDiff_t>(k) * nLineSpace,
                                 eBufType, static_cast<int>(nPixelSpace),
@@ -713,9 +713,9 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     /* type to type conversion ... ouch, this is expensive way
                     of handling single words */
 
-                    GDALCopyWords(static_cast<GByte *>(pData) + iBufOffset,
-                                  eBufType, 0, pabyDstBlock + iDstOffset,
-                                  eDataType, 0, 1);
+                    GDALCopyWords64(static_cast<GByte *>(pData) + iBufOffset,
+                                    eBufType, 0, pabyDstBlock + iDstOffset,
+                                    eDataType, 0, 1);
                 }
             }
 
@@ -925,9 +925,10 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                         // Type to type conversion ...
                         GPtrDiff_t iSrcOffset =
                             (nDiffX + iSrcOffsetCst) * nBandDataSize;
-                        GDALCopyWords(pabySrcBlock + iSrcOffset, eDataType, 0,
-                                      static_cast<GByte *>(pData) + iBufOffset,
-                                      eBufType, 0, 1);
+                        GDALCopyWords64(pabySrcBlock + iSrcOffset, eDataType, 0,
+                                        static_cast<GByte *>(pData) +
+                                            iBufOffset,
+                                        eBufType, 0, 1);
                     }
 
                     iBufOffset += static_cast<int>(nPixelSpace);
@@ -1393,12 +1394,13 @@ CPLErr GDALRasterBand::RasterIOResampled(
                         {
                             for (int j = 0; j < nDstYCount; j++)
                             {
-                                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
-                                              static_cast<GByte *>(pDataMem) +
-                                                  nLSMem * (j + nDstYOff) +
-                                                  nDstXOff * nPSMem,
-                                              eDTMem, static_cast<int>(nPSMem),
-                                              nDstXCount);
+                                GDALCopyWords64(&dfNoDataValue, GDT_Float64, 0,
+                                                static_cast<GByte *>(pDataMem) +
+                                                    nLSMem * (j + nDstYOff) +
+                                                    nDstXOff * nPSMem,
+                                                eDTMem,
+                                                static_cast<int>(nPSMem),
+                                                nDstXCount);
                             }
                             bSkipResample = true;
                         }
@@ -1856,7 +1858,7 @@ CPLErr GDALDataset::RasterIOResampled(
                             {
                                 for (int j = 0; j < nDstYCount; j++)
                                 {
-                                    GDALCopyWords(
+                                    GDALCopyWords64(
                                         abyZero, GDT_Byte, 0,
                                         static_cast<GByte *>(pData) +
                                             iBand * nBandSpace +
@@ -2955,7 +2957,7 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
      */
     // Let the general translation case do the necessary conversions
     // on the first destination element.
-    GDALCopyWords(pSrcData, eSrcType, 0, pDstData, eDstType, 0, 1);
+    GDALCopyWords64(pSrcData, eSrcType, 0, pDstData, eDstType, 0, 1);
 
     // Now copy the first element to the nWordCount - 1 following destination
     // elements.
@@ -4313,15 +4315,15 @@ CPLErr GDALDataset::BlockBasedRasterIO(
                        of handling single words */
 
                     if (eRWFlag == GF_Read)
-                        GDALCopyWords(pabySrcBlock + iSrcOffset, eDataType, 0,
-                                      static_cast<GByte *>(pData) +
-                                          iBandBufOffset,
-                                      eBufType, 0, 1);
+                        GDALCopyWords64(pabySrcBlock + iSrcOffset, eDataType, 0,
+                                        static_cast<GByte *>(pData) +
+                                            iBandBufOffset,
+                                        eBufType, 0, 1);
                     else
-                        GDALCopyWords(static_cast<const GByte *>(pData) +
-                                          iBandBufOffset,
-                                      eBufType, 0, pabySrcBlock + iSrcOffset,
-                                      eDataType, 0, 1);
+                        GDALCopyWords64(static_cast<const GByte *>(pData) +
+                                            iBandBufOffset,
+                                        eBufType, 0, pabySrcBlock + iSrcOffset,
+                                        eDataType, 0, 1);
                 }
             }
 

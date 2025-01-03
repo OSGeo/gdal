@@ -3706,11 +3706,11 @@ static CPLErr GDALResampleChunk_ConvolutionT(
 
         if (pafWrkScanline)
         {
-            GDALCopyWords(pafWrkScanline, eWrkDataType, nWrkDataTypeSize,
-                          static_cast<GByte *>(pDstBuffer) +
-                              static_cast<size_t>(iDstLine - nDstYOff) *
-                                  nDstXSize * nDstDataTypeSize,
-                          dstDataType, nDstDataTypeSize, nDstXSize);
+            GDALCopyWords64(pafWrkScanline, eWrkDataType, nWrkDataTypeSize,
+                            static_cast<GByte *>(pDstBuffer) +
+                                static_cast<size_t>(iDstLine - nDstYOff) *
+                                    nDstXSize * nDstDataTypeSize,
+                            dstDataType, nDstDataTypeSize, nDstXSize);
         }
     }
 
