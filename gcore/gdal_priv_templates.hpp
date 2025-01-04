@@ -6,6 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009, Phil Vachon, <philippe at cowpig.ca>
+ * Copyright (c) 2025, Even Rouault, <even.rouault at spatialys.com>
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
@@ -15,9 +16,11 @@
 
 #include "cpl_port.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <type_traits>
 
 /************************************************************************/
 /*                        GDALGetDataLimits()                           */
@@ -221,22 +224,6 @@ template <class Tin> struct sGDALCopyWord<Tin, double>
     static inline void f(const Tin tValueIn, double &dfValueOut)
     {
         dfValueOut = static_cast<double>(tValueIn);
-    }
-};
-
-template <> struct sGDALCopyWord<double, double>
-{
-    static inline void f(const double dfValueIn, double &dfValueOut)
-    {
-        dfValueOut = dfValueIn;
-    }
-};
-
-template <> struct sGDALCopyWord<float, float>
-{
-    static inline void f(const float fValueIn, float &fValueOut)
-    {
-        fValueOut = fValueIn;
     }
 };
 
@@ -542,7 +529,10 @@ template <> struct sGDALCopyWord<float, std::uint64_t>
 template <class Tin, class Tout>
 inline void GDALCopyWord(const Tin tValueIn, Tout &tValueOut)
 {
-    sGDALCopyWord<Tin, Tout>::f(tValueIn, tValueOut);
+    if constexpr (std::is_same<Tin, Tout>::value)
+        tValueOut = tValueIn;
+    else
+        sGDALCopyWord<Tin, Tout>::f(tValueIn, tValueOut);
 }
 
 /************************************************************************/
@@ -787,5 +777,156 @@ inline void GDALCopy4Words(const double *pValueIn, float *const pValueOut)
 #endif
 
 #endif  //  defined(__x86_64) || defined(_M_X64)
+
+/************************************************************************/
+/*                    GDALTranspose2DSingleToSingle()                   */
+/************************************************************************/
+/**
+ * Transpose a 2D array of non-complex values, in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+
+template <class DST, class SRC>
+void GDALTranspose2DSingleToSingle(const SRC *CPL_RESTRICT pSrc,
+                                   DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                   size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[l + k * nSrcWidth],
+                                 pDst[k + l * nSrcHeight]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                   GDALTranspose2DComplexToComplex()                  */
+/************************************************************************/
+/**
+ * Transpose a 2D array of complex values into an array of complex values,
+ * in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+template <class DST, class SRC>
+void GDALTranspose2DComplexToComplex(const SRC *CPL_RESTRICT pSrc,
+                                     DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                     size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[2 * (l + k * nSrcWidth) + 0],
+                                 pDst[2 * (k + l * nSrcHeight) + 0]);
+                    GDALCopyWord(pSrc[2 * (l + k * nSrcWidth) + 1],
+                                 pDst[2 * (k + l * nSrcHeight) + 1]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                   GDALTranspose2DComplexToSingle()                  */
+/************************************************************************/
+/**
+ * Transpose a 2D array of complex values into an array of non-complex values,
+ * in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+template <class DST, class SRC>
+void GDALTranspose2DComplexToSingle(const SRC *CPL_RESTRICT pSrc,
+                                    DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                    size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[2 * (l + k * nSrcWidth) + 0],
+                                 pDst[k + l * nSrcHeight]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                   GDALTranspose2DSingleToComplex()                  */
+/************************************************************************/
+/**
+ * Transpose a 2D array of non-complex values into an array of complex values,
+ * in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of height = nSrcHeight and width = nSrcWidth.
+ * @param pDst Destination transposed array of height = nSrcWidth and width = nSrcHeight.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ */
+template <class DST, class SRC>
+void GDALTranspose2DSingleToComplex(const SRC *CPL_RESTRICT pSrc,
+                                    DST *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                    size_t nSrcHeight)
+{
+    constexpr size_t blocksize = 32;
+    for (size_t i = 0; i < nSrcHeight; i += blocksize)
+    {
+        const size_t max_k = std::min(i + blocksize, nSrcHeight);
+        for (size_t j = 0; j < nSrcWidth; j += blocksize)
+        {
+            // transpose the block beginning at [i,j]
+            const size_t max_l = std::min(j + blocksize, nSrcWidth);
+            for (size_t k = i; k < max_k; ++k)
+            {
+                for (size_t l = j; l < max_l; ++l)
+                {
+                    GDALCopyWord(pSrc[l + k * nSrcWidth],
+                                 pDst[2 * (k + l * nSrcHeight) + 0]);
+                    pDst[2 * (k + l * nSrcHeight) + 1] = 0;
+                }
+            }
+        }
+    }
+}
 
 #endif  // GDAL_PRIV_TEMPLATES_HPP_INCLUDED

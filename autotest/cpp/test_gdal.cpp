@@ -4951,4 +4951,42 @@ TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_with_mask)
     EXPECT_EQ(nMaxY, 0);
 }
 
+TEST_F(test_gdal, GDALTranspose2D)
+{
+    constexpr int COUNT = 6;
+    const GByte abyData[] = {1, 2, 3, 4, 5, 6};
+    GByte abySrcData[COUNT * 2 * sizeof(double)];
+    GByte abyDstData[COUNT * 2 * sizeof(double)];
+    GByte abyDstAsByteData[COUNT * 2 * sizeof(double)];
+    for (int eSrcDTInt = GDT_Byte; eSrcDTInt < GDT_TypeCount; ++eSrcDTInt)
+    {
+        const auto eSrcDT = static_cast<GDALDataType>(eSrcDTInt);
+        GDALCopyWords(abyData, GDT_Byte, 1, abySrcData, eSrcDT,
+                      GDALGetDataTypeSizeBytes(eSrcDT), COUNT);
+        for (int eDstDTInt = GDT_Byte; eDstDTInt < GDT_TypeCount; ++eDstDTInt)
+        {
+            const auto eDstDT = static_cast<GDALDataType>(eDstDTInt);
+            memset(abyDstData, 0, sizeof(abyDstData));
+            GDALTranspose2D(abySrcData, eSrcDT, abyDstData, eDstDT, 3, 2);
+
+            memset(abyDstAsByteData, 0, sizeof(abyDstAsByteData));
+            GDALCopyWords(abyDstData, eDstDT, GDALGetDataTypeSizeBytes(eDstDT),
+                          abyDstAsByteData, GDT_Byte, 1, COUNT);
+
+            EXPECT_EQ(abyDstAsByteData[0], 1)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[1], 4)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[2], 2)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[3], 5)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[4], 3)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+            EXPECT_EQ(abyDstAsByteData[5], 6)
+                << "eSrcDT=" << eSrcDT << ", eDstDT=" << eDstDT;
+        }
+    }
+}
+
 }  // namespace

@@ -4682,33 +4682,6 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                          Transpose2D()                               */
-/************************************************************************/
-
-template <class T>
-static void Transpose2D(T *dst, const T *src, size_t src_height,
-                        size_t src_width)
-{
-    constexpr size_t blocksize = 32;
-    for (size_t i = 0; i < src_height; i += blocksize)
-    {
-        for (size_t j = 0; j < src_width; j += blocksize)
-        {
-            // transpose the block beginning at [i,j]
-            const size_t max_k = std::min(i + blocksize, src_height);
-            for (size_t k = i; k < max_k; ++k)
-            {
-                const size_t max_l = std::min(j + blocksize, src_width);
-                for (size_t l = j; l < max_l; ++l)
-                {
-                    dst[k + l * src_height] = src[l + k * src_width];
-                }
-            }
-        }
-    }
-}
-
-/************************************************************************/
 /*                      TransposeLast2Dims()                            */
 /************************************************************************/
 
@@ -4727,38 +4700,10 @@ static bool TransposeLast2Dims(void *pDstBuffer,
     GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);
     for (size_t i = 0; i < nEltsNonLast2Dims; ++i)
     {
-        if (nDTSize == 1)
-        {
-            Transpose2D(
-                static_cast<uint8_t *>(pTempBufferForLast2DimsTranspose),
-                reinterpret_cast<const uint8_t *>(pabyDstBuffer),
-                count[nDims - 2], count[nDims - 1]);
-        }
-        else if (nDTSize == 2)
-        {
-            Transpose2D(
-                static_cast<uint16_t *>(pTempBufferForLast2DimsTranspose),
-                reinterpret_cast<const uint16_t *>(pabyDstBuffer),
-                count[nDims - 2], count[nDims - 1]);
-        }
-        else if (nDTSize == 4)
-        {
-            Transpose2D(
-                static_cast<uint32_t *>(pTempBufferForLast2DimsTranspose),
-                reinterpret_cast<const uint32_t *>(pabyDstBuffer),
-                count[nDims - 2], count[nDims - 1]);
-        }
-        else if (nDTSize == 8)
-        {
-            Transpose2D(
-                static_cast<uint64_t *>(pTempBufferForLast2DimsTranspose),
-                reinterpret_cast<const uint64_t *>(pabyDstBuffer),
-                count[nDims - 2], count[nDims - 1]);
-        }
-        else
-        {
-            CPLAssert(false);
-        }
+        GDALTranspose2D(pabyDstBuffer, eDT.GetNumericDataType(),
+                        pTempBufferForLast2DimsTranspose,
+                        eDT.GetNumericDataType(), count[nDims - 1],
+                        count[nDims - 2]);
         memcpy(pabyDstBuffer, pTempBufferForLast2DimsTranspose,
                nDTSize * nEltsLast2Dims);
         pabyDstBuffer += nDTSize * nEltsLast2Dims;

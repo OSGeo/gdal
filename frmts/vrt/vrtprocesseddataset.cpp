@@ -1040,32 +1040,91 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
 
     CPLAssert(!m_aoSteps.empty());
 
+    const size_t nPixelCount = static_cast<size_t>(nBufXSize) * nBufYSize;
+
     const int nFirstBandCount = m_aoSteps.front().nInBands;
     CPLAssert(nFirstBandCount == m_poSrcDS->GetRasterCount());
     const GDALDataType eFirstDT = m_aoSteps.front().eInDT;
     const int nFirstDTSize = GDALGetDataTypeSizeBytes(eFirstDT);
     auto &abyInput = m_abyInput;
     auto &abyOutput = m_abyOutput;
-    try
-    {
-        abyInput.resize(static_cast<size_t>(nBufXSize) * nBufYSize *
-                        nFirstBandCount * nFirstDTSize);
-    }
-    catch (const std::bad_alloc &)
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Out of memory allocating working buffer");
-        return false;
-    }
 
-    if (m_poSrcDS->RasterIO(
-            GF_Read, nXOff, nYOff, nBufXSize, nBufYSize, abyInput.data(),
-            nBufXSize, nBufYSize, eFirstDT, nFirstBandCount, nullptr,
-            static_cast<GSpacing>(nFirstDTSize) * nFirstBandCount,
-            static_cast<GSpacing>(nFirstDTSize) * nFirstBandCount * nBufXSize,
-            nFirstDTSize, nullptr) != CE_None)
+    const char *pszInterleave =
+        m_poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+    if (nFirstBandCount > 1 && (!pszInterleave || EQUAL(pszInterleave, "BAND")))
     {
-        return false;
+        // If there are several bands and the source dataset organization
+        // is apparently band interleaved, then first acquire data in
+        // a BSQ organization in the abyInput array use in the native
+        // data type.
+        // And then transpose it and convert it to the expected data type
+        // of the first step.
+        const auto eSrcDT = m_poSrcDS->GetRasterBand(1)->GetRasterDataType();
+        try
+        {
+            abyInput.resize(nPixelCount * nFirstBandCount *
+                            GDALGetDataTypeSizeBytes(eSrcDT));
+        }
+        catch (const std::bad_alloc &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating working buffer");
+            return false;
+        }
+
+        try
+        {
+            abyOutput.resize(nPixelCount * nFirstBandCount * nFirstDTSize);
+        }
+        catch (const std::bad_alloc &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating working buffer");
+            return false;
+        }
+
+        CPLDebugOnly("VRT", "ProcessRegion(): start RasterIO()");
+        if (m_poSrcDS->RasterIO(GF_Read, nXOff, nYOff, nBufXSize, nBufYSize,
+                                abyInput.data(), nBufXSize, nBufYSize, eSrcDT,
+                                nFirstBandCount, nullptr, 0, 0, 0,
+                                nullptr) != CE_None)
+        {
+            return false;
+        }
+        CPLDebugOnly("VRT", "ProcessRegion(): end RasterIO()");
+
+        CPLDebugOnly("VRT", "ProcessRegion(): start GDALTranspose2D()");
+        GDALTranspose2D(abyInput.data(), eSrcDT, abyOutput.data(), eFirstDT,
+                        static_cast<size_t>(nBufXSize) * nBufYSize,
+                        nFirstBandCount);
+        CPLDebugOnly("VRT", "ProcessRegion(): end GDALTranspose2D()");
+
+        // Swap arrays
+        std::swap(abyInput, abyOutput);
+    }
+    else
+    {
+        try
+        {
+            abyInput.resize(nPixelCount * nFirstBandCount * nFirstDTSize);
+        }
+        catch (const std::bad_alloc &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory allocating working buffer");
+            return false;
+        }
+
+        if (m_poSrcDS->RasterIO(
+                GF_Read, nXOff, nYOff, nBufXSize, nBufYSize, abyInput.data(),
+                nBufXSize, nBufYSize, eFirstDT, nFirstBandCount, nullptr,
+                static_cast<GSpacing>(nFirstDTSize) * nFirstBandCount,
+                static_cast<GSpacing>(nFirstDTSize) * nFirstBandCount *
+                    nBufXSize,
+                nFirstDTSize, nullptr) != CE_None)
+        {
+            return false;
+        }
     }
 
     const double dfSrcXOff = nXOff;
@@ -1096,8 +1155,7 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
         {
             try
             {
-                abyOutput.resize(static_cast<size_t>(nBufXSize) * nBufYSize *
-                                 oStep.nInBands *
+                abyOutput.resize(nPixelCount * oStep.nInBands *
                                  GDALGetDataTypeSizeBytes(oStep.eInDT));
             }
             catch (const std::bad_alloc &)
@@ -1110,16 +1168,14 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
             GDALCopyWords64(abyInput.data(), eLastDT,
                             GDALGetDataTypeSizeBytes(eLastDT), abyOutput.data(),
                             oStep.eInDT, GDALGetDataTypeSizeBytes(oStep.eInDT),
-                            static_cast<size_t>(nBufXSize) * nBufYSize *
-                                oStep.nInBands);
+                            nPixelCount * oStep.nInBands);
 
             std::swap(abyInput, abyOutput);
         }
 
         try
         {
-            abyOutput.resize(static_cast<size_t>(nBufXSize) * nBufYSize *
-                             oStep.nOutBands *
+            abyOutput.resize(nPixelCount * oStep.nOutBands *
                              GDALGetDataTypeSizeBytes(oStep.eOutDT));
         }
         catch (const std::bad_alloc &)

@@ -1941,6 +1941,10 @@ void CPL_DLL GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
                               int nComponents, void **ppDestBuffer,
                               GDALDataType eDestDT, size_t nIters);
 
+void CPL_DLL GDALTranspose2D(const void *pSrc, GDALDataType eSrcType,
+                             void *pDst, GDALDataType eDstType,
+                             size_t nSrcWidth, size_t nSrcHeight);
+
 double CPL_DLL GDALGetNoDataReplacementValue(GDALDataType, double);
 
 int CPL_DLL CPL_STDCALL GDALLoadWorldFile(const char *, double *);
