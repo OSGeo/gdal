@@ -1943,9 +1943,12 @@ OGRErr OGRPGLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
 OGRErr OGRPGLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
                                int bForce)
 {
+    auto poLayerDefn = GetLayerDefn();
+
     // If the geometry field is not 3D go for 2D
-    if (GetLayerDefn()->GetGeomFieldCount() > iGeomField &&
-        !OGR_GT_HasZ(GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType()))
+    if (poLayerDefn->GetGeomFieldCount() > iGeomField &&
+        !OGR_GT_HasZ(CPLAssertNotNull(poLayerDefn->GetGeomFieldDefn(iGeomField))
+                         ->GetType()))
     {
         const OGRErr retVal{GetExtent(iGeomField, psExtent3D, bForce)};
         psExtent3D->MinZ = std::numeric_limits<double>::infinity();
@@ -1955,8 +1958,8 @@ OGRErr OGRPGLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
 
     CPLString osCommand;
 
-    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
-        CPLAssertNotNull(GetLayerDefn()->GetGeomFieldDefn(iGeomField))
+    if (iGeomField < 0 || iGeomField >= poLayerDefn->GetGeomFieldCount() ||
+        CPLAssertNotNull(poLayerDefn->GetGeomFieldDefn(iGeomField))
                 ->GetType() == wkbNone)
     {
         if (iGeomField != 0)
@@ -1968,7 +1971,7 @@ OGRErr OGRPGLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
     }
 
     OGRPGGeomFieldDefn *poGeomFieldDefn =
-        poFeatureDefn->GetGeomFieldDefn(iGeomField);
+        poLayerDefn->GetGeomFieldDefn(iGeomField);
 
     if (TestCapability(OLCFastGetExtent3D))
     {
