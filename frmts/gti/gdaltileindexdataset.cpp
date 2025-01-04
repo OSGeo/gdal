@@ -4122,6 +4122,7 @@ void GDALTileIndexDataset::InitBuffer(void *pData, int nBufXSize, int nBufYSize,
             nBandNr == 0
                 ? m_poMaskBand.get()
                 : cpl::down_cast<GDALTileIndexBand *>(papoBands[nBandNr - 1]);
+        CPLAssert(poVRTBand);
         const double dfNoData = poVRTBand->m_dfNoDataValue;
         if (dfNoData == 0.0)
         {
