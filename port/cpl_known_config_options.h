@@ -348,12 +348,19 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_PAM_ENABLED", // from gdalpamdataset.cpp
    "GDAL_PAM_MODE", // from gdalpamdataset.cpp
    "GDAL_PAM_PROXY_DIR", // from gdalpamproxydb.cpp
+   "GDAL_PDF_BANDS", // from pdfdrivercore.cpp
+   "GDAL_PDF_DPI", // from pdfdrivercore.cpp
    "GDAL_PDF_GEO_ENCODING", // from pdfcreatecopy.cpp, pdfdataset.cpp
    "GDAL_PDF_LAUNDER_LAYER_NAMES", // from pdfdataset.cpp
+   "GDAL_PDF_LAYERS", // from pdfdrivercore.cpp
+   "GDAL_PDF_LAYERS_OFF", // from pdfdrivercore.cpp
+   "GDAL_PDF_LIB", // from pdfdrivercore.cpp
    "GDAL_PDF_LIMIT_PAGE_COUNT", // from pdfdataset.cpp
+   "GDAL_PDF_NEATLINE", // from pdfdrivercore.cpp
    "GDAL_PDF_OGC_BP_READ_WKT", // from pdfdataset.cpp
    "GDAL_PDF_OGC_BP_WRITE_WKT", // from pdfcreatecopy.cpp, pdfcreatefromcomposition.cpp
    "GDAL_PDF_PRINT_COMMANDS", // from pdfdataset.cpp
+   "GDAL_PDF_RENDERING_OPTIONS", // from pdfdrivercore.cpp
    "GDAL_PDF_USE_SPAWN", // from pdfdataset.cpp
    "GDAL_PDF_WRITE_ESRI_CODE_AS_EPSG", // from pdfcreatecopy.cpp
    "GDAL_PDF_WRITE_GEOREF_ON_IMAGE", // from pdfcreatecopy.cpp
@@ -899,6 +906,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "PDF_DUMP_STREAM", // from pdfdataset.cpp
    "PDF_REPORT_GCPS", // from pdfdataset.cpp
    "PDF_USE_CTM", // from pdfdataset.cpp
+   "PDF_USER_PWD", // from pdfdrivercore.cpp
    "PDS4_ENDIANNESS", // from pds4vector.cpp
    "PDS4_FORCE_MASK", // from pds4dataset.cpp
    "PDS4_SIGNEDNESS", // from pds4vector.cpp

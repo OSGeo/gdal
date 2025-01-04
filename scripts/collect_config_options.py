@@ -131,6 +131,16 @@ def collect_config_options(filename):
                 else:
                     options[option].add(os.path.basename(filename))
 
+        pos = l.find("alt_config_option='")
+        if pos >= 0:
+            pos_start = pos + len("alt_config_option='")
+            pos_end = l.find("'", pos_start)
+            option = l[pos_start:pos_end]
+            if option not in options:
+                options[option] = set([os.path.basename(filename)])
+            else:
+                options[option].add(os.path.basename(filename))
+
 
 def explore(dirname):
     for filename in glob.glob(dirname + "/*"):
