@@ -1326,3 +1326,193 @@ def test_vrtprocesseddataset_OutputBands():
         match="Invalid value for OutputBands.dataType",
     ):
         gdal.Open("data/vrt/processed_OutputBands_USER_PROVIDED_invalid_type.vrt")
+
+
+###############################################################################
+# Test VRTProcessedDataset::RasterIO()
+
+
+def test_vrtprocesseddataset_RasterIO(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 2, 3, 4)
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 2], [3, 4], [5, 6]]))
+    src_ds.GetRasterBand(2).WriteArray(np.array([[7, 8], [9, 10], [11, 12]]))
+    src_ds.GetRasterBand(3).WriteArray(np.array([[13, 14], [15, 16], [17, 18]]))
+    src_ds.GetRasterBand(4).WriteArray(np.array([[19, 20], [21, 22], [23, 24]]))
+    src_ds.BuildOverviews("NEAR", [2])
+    src_ds = None
+
+    vrt_content = f"""<VRTDataset subclass='VRTProcessedDataset'>
+    <Input>
+        <SourceFilename>{src_filename}</SourceFilename>
+    </Input>
+    <ProcessingSteps>
+        <Step name="Affine combination of band values">
+            <Algorithm>BandAffineCombination</Algorithm>
+            <Argument name="coefficients_1">0,0,1,0,0</Argument>
+            <Argument name="coefficients_2">0,0,0,1,0</Argument>
+            <Argument name="coefficients_3">0,0,0,0,1</Argument>
+            <Argument name="coefficients_4">0,1,0,0,0</Argument>
+        </Step>
+    </ProcessingSteps>
+    </VRTDataset>
+        """
+
+    ds = gdal.Open(vrt_content)
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 3
+    assert ds.RasterCount == 4
+
+    # Optimized code path with INTERLEAVE=BAND
+    np.testing.assert_equal(
+        ds.ReadAsArray(),
+        np.array(
+            [
+                [[7, 8], [9, 10], [11, 12]],
+                [[13, 14], [15, 16], [17, 18]],
+                [[19, 20], [21, 22], [23, 24]],
+                [[1, 2], [3, 4], [5, 6]],
+            ]
+        ),
+    )
+
+    # Optimized code path with INTERLEAVE=BAND but buf_type != native type
+    np.testing.assert_equal(
+        ds.ReadAsArray(buf_type=gdal.GDT_Int16),
+        np.array(
+            [
+                [[7, 8], [9, 10], [11, 12]],
+                [[13, 14], [15, 16], [17, 18]],
+                [[19, 20], [21, 22], [23, 24]],
+                [[1, 2], [3, 4], [5, 6]],
+            ]
+        ),
+    )
+
+    # Optimized code path with INTERLEAVE=BAND
+    np.testing.assert_equal(
+        ds.ReadAsArray(1, 2, 1, 1),
+        np.array([[[12]], [[18]], [[24]], [[6]]]),
+    )
+
+    # Optimized code path with INTERLEAVE=PIXEL
+    np.testing.assert_equal(
+        ds.ReadAsArray(interleave="PIXEL"),
+        np.array(
+            [
+                [[7, 13, 19, 1], [8, 14, 20, 2]],
+                [[9, 15, 21, 3], [10, 16, 22, 4]],
+                [[11, 17, 23, 5], [12, 18, 24, 6]],
+            ]
+        ),
+    )
+
+    # Optimized code path with INTERLEAVE=PIXEL but buf_type != native type
+    np.testing.assert_equal(
+        ds.ReadAsArray(interleave="PIXEL", buf_type=gdal.GDT_Int16),
+        np.array(
+            [
+                [[7, 13, 19, 1], [8, 14, 20, 2]],
+                [[9, 15, 21, 3], [10, 16, 22, 4]],
+                [[11, 17, 23, 5], [12, 18, 24, 6]],
+            ]
+        ),
+    )
+
+    # Optimized code path with INTERLEAVE=PIXEL
+    np.testing.assert_equal(
+        ds.ReadAsArray(1, 2, 1, 1, interleave="PIXEL"),
+        np.array([[[12, 18, 24, 6]]]),
+    )
+
+    # Not optimized INTERLEAVE=BAND because not enough bands
+    np.testing.assert_equal(
+        ds.ReadAsArray(band_list=[1, 2, 3]),
+        np.array(
+            [
+                [[7, 8], [9, 10], [11, 12]],
+                [[13, 14], [15, 16], [17, 18]],
+                [[19, 20], [21, 22], [23, 24]],
+            ]
+        ),
+    )
+
+    # Not optimized INTERLEAVE=BAND because of out-of-order band list
+    np.testing.assert_equal(
+        ds.ReadAsArray(band_list=[4, 1, 2, 3]),
+        np.array(
+            [
+                [[1, 2], [3, 4], [5, 6]],
+                [[7, 8], [9, 10], [11, 12]],
+                [[13, 14], [15, 16], [17, 18]],
+                [[19, 20], [21, 22], [23, 24]],
+            ]
+        ),
+    )
+
+    # Not optimized INTERLEAVE=PIXEL because of out-of-order band list
+    np.testing.assert_equal(
+        ds.ReadAsArray(interleave="PIXEL", band_list=[4, 1, 2, 3]),
+        np.array(
+            [
+                [[1, 7, 13, 19], [2, 8, 14, 20]],
+                [[3, 9, 15, 21], [4, 10, 16, 22]],
+                [[5, 11, 17, 23], [6, 12, 18, 24]],
+            ]
+        ),
+    )
+
+    # Optimized code path with overviews
+    assert ds.GetRasterBand(1).GetOverview(0).XSize == 1
+    assert ds.GetRasterBand(1).GetOverview(0).YSize == 2
+    np.testing.assert_equal(
+        ds.ReadAsArray(buf_xsize=1, buf_ysize=2),
+        np.array([[[7], [11]], [[13], [17]], [[19], [23]], [[1], [5]]]),
+    )
+
+    # Non-optimized code path with overviews
+    np.testing.assert_equal(
+        ds.ReadAsArray(buf_xsize=1, buf_ysize=1),
+        np.array([[[11]], [[17]], [[23]], [[5]]]),
+    )
+
+    # Test buffer splitting
+    with gdal.config_option("VRT_PROCESSED_DATASET_ALLOWED_RAM_USAGE", "96"):
+        ds = gdal.Open(vrt_content)
+
+    # Optimized code path with INTERLEAVE=BAND
+    np.testing.assert_equal(
+        ds.ReadAsArray(),
+        np.array(
+            [
+                [[7, 8], [9, 10], [11, 12]],
+                [[13, 14], [15, 16], [17, 18]],
+                [[19, 20], [21, 22], [23, 24]],
+                [[1, 2], [3, 4], [5, 6]],
+            ]
+        ),
+    )
+
+    # I/O error
+    gdal.GetDriverByName("GTiff").Create(
+        src_filename, 1024, 1024, 4, options=["TILED=YES"]
+    )
+    f = gdal.VSIFOpenL(src_filename, "rb+")
+    gdal.VSIFTruncateL(f, 4096)
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.Open(vrt_content)
+
+    # Error in INTERLEAVE=BAND optimized code path
+    with pytest.raises(Exception):
+        ds.ReadAsArray()
+
+    # Error in INTERLEAVE=PIXEL optimized code path
+    with pytest.raises(Exception):
+        ds.ReadAsArray(interleave="PIXEL")
+
+    with gdal.config_option("VRT_PROCESSED_DATASET_ALLOWED_RAM_USAGE", "96"):
+        ds = gdal.Open(vrt_content)
+        with pytest.raises(Exception):
+            ds.ReadAsArray()

@@ -665,6 +665,15 @@ class VRTProcessedDataset final : public VRTDataset
 #pragma GCC diagnostic pop
 #endif
 
+  protected:
+    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                             int nXSize, int nYSize, void *pData, int nBufXSize,
+                             int nBufYSize, GDALDataType eBufType,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GSpacing nBandSpace,
+                             GDALRasterIOExtraArg *psExtraArg) override;
+
   private:
     friend class VRTProcessedRasterBand;
 
@@ -754,6 +763,12 @@ class VRTProcessedDataset final : public VRTDataset
 
     //! Value of OutputBands.dataType attribute if m_outputBandDataTypeProvenance = USER_PROVIDED
     GDALDataType m_outputBandDataTypeValue = GDT_Unknown;
+
+    //! Number of temporary bytes we need per output pixel.
+    int m_nWorkingBytesPerPixel = 1;
+
+    //! Value of CPLGetUsablePhysicalRAM() / 10 * 4
+    GIntBig m_nAllowedRAMUsage = 0;
 
     CPLErr Init(const CPLXMLNode *, const char *,
                 const VRTProcessedDataset *poParentDS,

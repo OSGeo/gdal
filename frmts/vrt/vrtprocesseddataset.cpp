@@ -593,6 +593,31 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
 
     m_oXMLTree.reset(CPLCloneXMLTree(psTree));
 
+    int nLargestInDTSizeTimesBand = 1;
+    int nLargestOutDTSizeTimesBand = 1;
+    for (const auto &oStep : m_aoSteps)
+    {
+        const int nInDTSizeTimesBand =
+            GDALGetDataTypeSizeBytes(oStep.eInDT) * oStep.nInBands;
+        nLargestInDTSizeTimesBand =
+            std::max(nLargestInDTSizeTimesBand, nInDTSizeTimesBand);
+        const int nOutDTSizeTimesBand =
+            GDALGetDataTypeSizeBytes(oStep.eOutDT) * oStep.nOutBands;
+        nLargestOutDTSizeTimesBand =
+            std::max(nLargestOutDTSizeTimesBand, nOutDTSizeTimesBand);
+    }
+    m_nWorkingBytesPerPixel =
+        nLargestInDTSizeTimesBand + nLargestOutDTSizeTimesBand;
+
+    m_nAllowedRAMUsage = CPLGetUsablePhysicalRAM() / 10 * 4;
+    // Only for tests now
+    const char *pszMAX_RAM = "VRT_PROCESSED_DATASET_ALLOWED_RAM_USAGE";
+    if (const char *pszVal = CPLGetConfigOption(pszMAX_RAM, nullptr))
+    {
+        CPL_IGNORE_RET_VAL(
+            CPLParseMemorySize(pszVal, &m_nAllowedRAMUsage, nullptr));
+    }
+
     return CE_None;
 }
 
@@ -1301,20 +1326,171 @@ CPLErr VRTProcessedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
         for (int iY = 0; iY < nBufYSize; ++iY)
         {
-            GDALCopyWords(poVRTDS->m_abyInput.data() +
-                              (iDstBand + static_cast<size_t>(iY) * nBufXSize *
-                                              nOutBands) *
-                                  nLastDTSize,
-                          eLastDT, nLastDTSize * nOutBands,
-                          pDst +
-                              static_cast<size_t>(iY) * nBlockXSize * nDTSize,
-                          eDataType, nDTSize, nBufXSize);
+            GDALCopyWords64(poVRTDS->m_abyInput.data() +
+                                (iDstBand + static_cast<size_t>(iY) *
+                                                nBufXSize * nOutBands) *
+                                    nLastDTSize,
+                            eLastDT, nLastDTSize * nOutBands,
+                            pDst +
+                                static_cast<size_t>(iY) * nBlockXSize * nDTSize,
+                            eDataType, nDTSize, nBufXSize);
         }
         if (poBlock)
             poBlock->DropLock();
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                VRTProcessedDataset::IRasterIO()                      */
+/************************************************************************/
+
+CPLErr VRTProcessedDataset::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    int nBandCount, BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+    GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
+{
+    // Try to pass the request to the most appropriate overview dataset.
+    if (nBufXSize < nXSize && nBufYSize < nYSize)
+    {
+        int bTried = FALSE;
+        const CPLErr eErr = TryOverviewRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace,
+            nBandSpace, psExtraArg, &bTried);
+        if (bTried)
+            return eErr;
+    }
+
+    // Optimize reading of all bands at nominal resolution for BIP-like or
+    // BSQ-like buffer spacing.
+    if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
+        nBandCount == nBands)
+    {
+        const auto IsSequentialBandMap = [panBandMap, nBandCount]()
+        {
+            for (int i = 0; i < nBandCount; ++i)
+            {
+                if (panBandMap[i] != i + 1)
+                {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
+        const bool bIsBIPLike =
+            nBandSpace == nBufTypeSize && nPixelSpace == nBandSpace * nBands &&
+            nLineSpace >= nPixelSpace * nBufXSize && IsSequentialBandMap();
+        const bool bIsBSQLike = nPixelSpace == nBufTypeSize &&
+                                nLineSpace >= nPixelSpace * nBufXSize &&
+                                nBandSpace >= nLineSpace * nBufYSize &&
+                                IsSequentialBandMap();
+        if (bIsBIPLike || bIsBSQLike)
+        {
+            GByte *pabyData = static_cast<GByte *>(pData);
+            // If acquiring the region of interest in a single time is going
+            // to consume too much RAM, split in halves.
+            if (m_nAllowedRAMUsage > 0 &&
+                static_cast<GIntBig>(nBufXSize) * nBufYSize >
+                    m_nAllowedRAMUsage / m_nWorkingBytesPerPixel)
+            {
+                if ((nBufXSize == nRasterXSize || nBufYSize >= nBufXSize) &&
+                    nBufYSize >= 2)
+                {
+                    GDALRasterIOExtraArg sArg;
+                    INIT_RASTERIO_EXTRA_ARG(sArg);
+                    const int nHalfHeight = nBufYSize / 2;
+                    if (IRasterIO(eRWFlag, nXOff, nYOff, nBufXSize, nHalfHeight,
+                                  pabyData, nBufXSize, nHalfHeight, eBufType,
+                                  nBandCount, panBandMap, nPixelSpace,
+                                  nLineSpace, nBandSpace, &sArg) == CE_None &&
+                        IRasterIO(eRWFlag, nXOff, nYOff + nHalfHeight,
+                                  nBufXSize, nBufYSize - nHalfHeight,
+                                  pabyData + nHalfHeight * nLineSpace,
+                                  nBufXSize, nBufYSize - nHalfHeight, eBufType,
+                                  nBandCount, panBandMap, nPixelSpace,
+                                  nLineSpace, nBandSpace, &sArg) == CE_None)
+                    {
+                        return CE_None;
+                    }
+                    else
+                    {
+                        return CE_Failure;
+                    }
+                }
+                else if (nBufXSize >= 2)
+                {
+                    GDALRasterIOExtraArg sArg;
+                    INIT_RASTERIO_EXTRA_ARG(sArg);
+                    const int nHalfWidth = nBufXSize / 2;
+                    if (IRasterIO(eRWFlag, nXOff, nYOff, nHalfWidth, nBufYSize,
+                                  pabyData, nHalfWidth, nBufYSize, eBufType,
+                                  nBandCount, panBandMap, nPixelSpace,
+                                  nLineSpace, nBandSpace, &sArg) == CE_None &&
+                        IRasterIO(eRWFlag, nXOff + nHalfWidth, nYOff,
+                                  nBufXSize - nHalfWidth, nBufYSize,
+                                  pabyData + nHalfWidth * nPixelSpace,
+                                  nBufXSize - nHalfWidth, nBufYSize, eBufType,
+                                  nBandCount, panBandMap, nPixelSpace,
+                                  nLineSpace, nBandSpace, &sArg) == CE_None)
+                    {
+                        return CE_None;
+                    }
+                    else
+                    {
+                        return CE_Failure;
+                    }
+                }
+            }
+
+            if (!ProcessRegion(nXOff, nYOff, nBufXSize, nBufYSize))
+            {
+                return CE_Failure;
+            }
+            const auto eLastDT = m_aoSteps.back().eOutDT;
+            const int nLastDTSize = GDALGetDataTypeSizeBytes(eLastDT);
+            if (bIsBIPLike)
+            {
+                for (int iY = 0; iY < nBufYSize; ++iY)
+                {
+                    GDALCopyWords64(
+                        m_abyInput.data() + static_cast<size_t>(iY) * nBands *
+                                                nBufXSize * nLastDTSize,
+                        eLastDT, nLastDTSize, pabyData + iY * nLineSpace,
+                        eBufType, GDALGetDataTypeSizeBytes(eBufType),
+                        static_cast<size_t>(nBufXSize) * nBands);
+                }
+            }
+            else
+            {
+                CPLAssert(bIsBSQLike);
+                for (int iBand = 0; iBand < nBands; ++iBand)
+                {
+                    for (int iY = 0; iY < nBufYSize; ++iY)
+                    {
+                        GDALCopyWords64(
+                            m_abyInput.data() +
+                                (static_cast<size_t>(iY) * nBands * nBufXSize +
+                                 iBand) *
+                                    nLastDTSize,
+                            eLastDT, nLastDTSize * nBands,
+                            pabyData + iBand * nBandSpace + iY * nLineSpace,
+                            eBufType, nBufTypeSize, nBufXSize);
+                    }
+                }
+            }
+            return CE_None;
+        }
+    }
+
+    return VRTDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
+                                 nBufXSize, nBufYSize, eBufType, nBandCount,
+                                 panBandMap, nPixelSpace, nLineSpace,
+                                 nBandSpace, psExtraArg);
 }
 
 /*! @endcond */
