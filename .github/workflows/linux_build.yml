@@ -134,7 +134,7 @@ jobs:
             test_script: test.sh
             os: ubuntu-22.04
 
-          - name: Ubuntu 20.04, Intel compiler
+          - name: Ubuntu 22.04, Intel compiler
             id: icc
             container: icc
             build_script: build.sh
