@@ -5586,7 +5586,7 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
 {
     if (eSourceDT == eDestDT)
     {
-        if (eSourceDT == GDT_Byte)
+        if (eSourceDT == GDT_Byte || eSourceDT == GDT_Int8)
         {
             if (nComponents == 3)
             {
