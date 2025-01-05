@@ -1677,6 +1677,33 @@ def test_tiff_ovr_43(tmp_path, both_endian):
 
 
 ###############################################################################
+# Test that we do not propagate PHOTOMETRIC=YCBCR on overviews when
+# COMPRESS_OVERVIEW != JPEG
+
+
+@pytest.mark.require_creation_option("GTiff", "JPEG")
+@gdaltest.enable_exceptions()
+def test_tiff_ovr_do_not_propagate_photometric_ycbcr_if_ovr_if_not_jpeg(tmp_path):
+
+    tif_fname = str(tmp_path / "test.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tif_fname, 8, 8, 3, options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR"]
+    )
+    ds.GetRasterBand(1).Fill(255)
+    ds.GetRasterBand(2).Fill(255)
+    ds.GetRasterBand(3).Fill(255)
+    ds = None
+
+    with gdal.Open(tif_fname, gdal.GA_Update) as ds:
+        with gdal.config_option("COMPRESS_OVERVIEW", "DEFLATE"):
+            ds.BuildOverviews("NEAR", [2])
+
+    with gdal.Open(tif_fname) as ds:
+        assert ds.GetRasterBand(1).GetOverview(0).ComputeRasterMinMax() == (255, 255)
+
+
+###############################################################################
 # Test that we can change overview block size through GDAL_TIFF_OVR_BLOCKSIZE configuration
 # option
 
