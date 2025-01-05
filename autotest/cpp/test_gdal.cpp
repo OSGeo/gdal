@@ -5039,7 +5039,21 @@ TEST_F(test_gdal, GDALTranspose2D_Byte_optims)
         }
     }
 
-    // SSSE3 optim H = 3
+    // SSSE3 optim H = 3 with W < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 3;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 3 with W >= 16
     {
         constexpr int W = 19;
         constexpr int H = 3;

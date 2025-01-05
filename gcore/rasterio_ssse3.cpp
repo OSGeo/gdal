@@ -273,8 +273,146 @@ void GDALDeinterleave4UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
 #endif
 
 /************************************************************************/
+/*                               loadu()                                */
+/************************************************************************/
+
+inline __m128i loadu(const uint8_t *pSrc, size_t i, size_t srcStride)
+{
+    return _mm_loadu_si128(
+        reinterpret_cast<const __m128i *>(pSrc + i * srcStride));
+}
+
+/************************************************************************/
+/*                               storeu()                               */
+/************************************************************************/
+
+inline void storeu(uint8_t *pDst, size_t i, size_t dstStride, __m128i reg)
+{
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(pDst + i * dstStride), reg);
+}
+
+/************************************************************************/
 /*                      GDALInterleave3Byte_SSSE3()                     */
 /************************************************************************/
+
+#if (!defined(__GNUC__) || defined(__INTEL_CLANG_COMPILER))
+
+inline __m128i GDAL_mm_or_3_si128(__m128i r0, __m128i r1, __m128i r2)
+{
+    return _mm_or_si128(_mm_or_si128(r0, r1), r2);
+}
+
+// ICC autovectorizer doesn't do a good job at generating good SSE code,
+// at least with icx 2024.0.2.20231213, but it nicely unrolls the below loop.
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
+                          uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+    size_t i = 0;
+    constexpr size_t VALS_PER_ITER = 16;
+
+    if (nIters >= VALS_PER_ITER)
+    {
+        // clang-format off
+        constexpr char X = -1;
+        // How to dispatch 16 values of row=0 onto 3x16 bytes
+        const __m128i xmm_shuffle00 = _mm_setr_epi8(0, X, X,
+                                                    1, X, X,
+                                                    2, X, X,
+                                                    3, X, X,
+                                                    4, X, X,
+                                                    5);
+        const __m128i xmm_shuffle01 = _mm_setr_epi8(   X, X,
+                                                    6, X, X,
+                                                    7, X, X,
+                                                    8, X, X,
+                                                    9, X, X,
+                                                    10,X);
+        const __m128i xmm_shuffle02 = _mm_setr_epi8(       X,
+                                                    11, X, X,
+                                                    12, X, X,
+                                                    13, X, X,
+                                                    14, X, X,
+                                                    15, X, X);
+
+        // How to dispatch 16 values of row=1 onto 3x16 bytes
+        const __m128i xmm_shuffle10 = _mm_setr_epi8(X, 0, X,
+                                                    X, 1, X,
+                                                    X, 2, X,
+                                                    X, 3, X,
+                                                    X, 4, X,
+                                                    X);
+        const __m128i xmm_shuffle11 = _mm_setr_epi8(   5, X,
+                                                    X, 6, X,
+                                                    X, 7, X,
+                                                    X, 8, X,
+                                                    X, 9, X,
+                                                    X,10);
+        const __m128i xmm_shuffle12 = _mm_setr_epi8(       X,
+                                                    X, 11, X,
+                                                    X, 12, X,
+                                                    X, 13, X,
+                                                    X, 14, X,
+                                                    X, 15, X);
+
+        // How to dispatch 16 values of row=2 onto 3x16 bytes
+        const __m128i xmm_shuffle20 = _mm_setr_epi8(X, X, 0,
+                                                    X, X, 1,
+                                                    X, X, 2,
+                                                    X, X, 3,
+                                                    X, X, 4,
+                                                    X);
+        const __m128i xmm_shuffle21 = _mm_setr_epi8(   X, 5,
+                                                    X, X, 6,
+                                                    X, X, 7,
+                                                    X, X, 8,
+                                                    X, X, 9,
+                                                    X, X);
+        const __m128i xmm_shuffle22 = _mm_setr_epi8(      10,
+                                                    X, X, 11,
+                                                    X, X, 12,
+                                                    X, X, 13,
+                                                    X, X, 14,
+                                                    X, X, 15);
+        // clang-format on
+
+        for (; i + VALS_PER_ITER <= nIters; i += VALS_PER_ITER)
+        {
+#define LOAD(x) __m128i xmm##x = loadu(pSrc + i, x, nIters)
+            LOAD(0);
+            LOAD(1);
+            LOAD(2);
+
+#define SHUFFLE(x, y) _mm_shuffle_epi8(xmm##y, xmm_shuffle##y##x)
+#define COMBINE_3(x)                                                           \
+    GDAL_mm_or_3_si128(SHUFFLE(x, 0), SHUFFLE(x, 1), SHUFFLE(x, 2))
+
+#define STORE(x)                                                               \
+    storeu(pDst, 3 * (i / VALS_PER_ITER) + x, VALS_PER_ITER, COMBINE_3(x))
+            STORE(0);
+            STORE(1);
+            STORE(2);
+#undef LOAD
+#undef COMBINE_3
+#undef SHUFFLE
+#undef STORE
+        }
+    }
+
+    for (; i < nIters; ++i)
+    {
+#define INTERLEAVE(x) pDst[3 * i + x] = pSrc[i + x * nIters]
+        INTERLEAVE(0);
+        INTERLEAVE(1);
+        INTERLEAVE(2);
+#undef INTERLEAVE
+    }
+}
+
+#else
 
 #if defined(__GNUC__) && !defined(__clang__)
 __attribute__((optimize("tree-vectorize")))
@@ -297,20 +435,11 @@ GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
     }
 }
 
+#endif
+
 /************************************************************************/
 /*                      GDALInterleave5Byte_SSSE3()                     */
 /************************************************************************/
-
-inline __m128i loadu(const uint8_t *pSrc, size_t i, size_t srcStride)
-{
-    return _mm_loadu_si128(
-        reinterpret_cast<const __m128i *>(pSrc + i * srcStride));
-}
-
-inline void storeu(uint8_t *pDst, size_t i, size_t dstStride, __m128i reg)
-{
-    _mm_storeu_si128(reinterpret_cast<__m128i *>(pDst + i * dstStride), reg);
-}
 
 inline __m128i GDAL_mm_or_5_si128(__m128i r0, __m128i r1, __m128i r2,
                                   __m128i r3, __m128i r4)
