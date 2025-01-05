@@ -4989,4 +4989,97 @@ TEST_F(test_gdal, GDALTranspose2D)
     }
 }
 
+TEST_F(test_gdal, GDALTranspose2D_Byte_optims)
+{
+    std::vector<GByte> in;
+    for (int i = 0; i < 19 * 17; ++i)
+        in.push_back(static_cast<GByte>(i % 256));
+
+    std::vector<GByte> out(in.size());
+
+    // SSSE3 optim (16x16) blocks
+    {
+        constexpr int W = 19;
+        constexpr int H = 17;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 2
+    {
+        constexpr int W = 19;
+        constexpr int H = 2;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 3
+    {
+        constexpr int W = 19;
+        constexpr int H = 3;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 4
+    {
+        constexpr int W = 19;
+        constexpr int H = 4;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 5 with W < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 5;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // SSSE3 optim H = 5 with W >= 16
+    {
+        constexpr int W = 19;
+        constexpr int H = 5;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+}
+
 }  // namespace

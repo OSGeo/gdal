@@ -5739,6 +5739,56 @@ static void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, DST *pDst,
 }
 
 /************************************************************************/
+/*                      GDALInterleave2Byte()                           */
+/************************************************************************/
+
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+#if defined(__clang__)
+#pragma clang loop vectorize(enable)
+#endif
+    for (size_t i = 0; i < nIters; ++i)
+    {
+        pDst[2 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[2 * i + 1] = pSrc[i + 1 * nIters];
+    }
+}
+
+/************************************************************************/
+/*                      GDALInterleave4Byte()                           */
+/************************************************************************/
+
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+#if defined(__clang__)
+#pragma clang loop vectorize(enable)
+#endif
+    for (size_t i = 0; i < nIters; ++i)
+    {
+        pDst[4 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[4 * i + 1] = pSrc[i + 1 * nIters];
+        pDst[4 * i + 2] = pSrc[i + 2 * nIters];
+        pDst[4 * i + 3] = pSrc[i + 3 * nIters];
+    }
+}
+
+/************************************************************************/
 /*                        GDALTranspose2D()                             */
 /************************************************************************/
 
@@ -5757,6 +5807,39 @@ static void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, DST *pDst,
 void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, void *pDst,
                      GDALDataType eDstType, size_t nSrcWidth, size_t nSrcHeight)
 {
+    if (eSrcType == eDstType && (eSrcType == GDT_Byte || eSrcType == GDT_Int8))
+    {
+        if (nSrcHeight == 2)
+        {
+            GDALInterleave2Byte(static_cast<const uint8_t *>(pSrc),
+                                static_cast<uint8_t *>(pDst), nSrcWidth);
+            return;
+        }
+        if (nSrcHeight == 4)
+        {
+            GDALInterleave4Byte(static_cast<const uint8_t *>(pSrc),
+                                static_cast<uint8_t *>(pDst), nSrcWidth);
+            return;
+        }
+#if (defined(HAVE_SSSE3_AT_COMPILE_TIME) &&                                    \
+     (defined(__x86_64) || defined(_M_X64)))
+        if (CPLHaveRuntimeSSSE3())
+        {
+            GDALTranspose2D_Byte_SSSE3(static_cast<const uint8_t *>(pSrc),
+                                       static_cast<uint8_t *>(pDst), nSrcWidth,
+                                       nSrcHeight);
+            return;
+        }
+#elif defined(USE_NEON_OPTIMIZATIONS)
+        {
+            GDALTranspose2D_Byte_SSSE3(static_cast<const uint8_t *>(pSrc),
+                                       static_cast<uint8_t *>(pDst), nSrcWidth,
+                                       nSrcHeight);
+            return;
+        }
+#endif
+    }
+
 #define GDALTranspose2D_internal(DST_TYPE_CST, DST_TYPE, DST_IS_COMPLEX)       \
     case DST_TYPE_CST:                                                         \
         GDALTranspose2D<DST_TYPE, DST_IS_COMPLEX>(                             \

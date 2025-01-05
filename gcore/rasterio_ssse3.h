@@ -54,6 +54,10 @@ void GDALDeinterleave4UInt16_SSSE3(const GUInt16 *CPL_RESTRICT panSrc,
                                    size_t nIters);
 #endif
 
+void GDALTranspose2D_Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
+                                uint8_t *CPL_RESTRICT pDst, size_t nSrcWidth,
+                                size_t nSrcHeight);
+
 #endif
 
 #endif /* RASTERIO_SSSE3_H_INCLUDED */
