@@ -778,7 +778,8 @@ class VRTProcessedDataset final : public VRTDataset
                    GDALDataType &eCurrentDT, int &nCurrentBandCount,
                    std::vector<double> &adfInNoData,
                    std::vector<double> &adfOutNoData);
-    bool ProcessRegion(int nXOff, int nYOff, int nBufXSize, int nBufYSize);
+    bool ProcessRegion(int nXOff, int nYOff, int nBufXSize, int nBufYSize,
+                       GDALProgressFunc pfnProgress, void *pProgressData);
 };
 
 /************************************************************************/

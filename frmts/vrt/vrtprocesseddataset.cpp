@@ -1060,7 +1060,9 @@ void VRTProcessedDataset::GetBlockSize(int *pnBlockXSize,
  * The output is stored in m_abyInput in a pixel-interleaved way.
  */
 bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
-                                        int nBufYSize)
+                                        int nBufYSize,
+                                        GDALProgressFunc pfnProgress,
+                                        void *pProgressData)
 {
 
     CPLAssert(!m_aoSteps.empty());
@@ -1108,15 +1110,24 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
             return false;
         }
 
+        GDALRasterIOExtraArg sArg;
+        INIT_RASTERIO_EXTRA_ARG(sArg);
+        sArg.pfnProgress = GDALScaledProgress;
+        sArg.pProgressData =
+            GDALCreateScaledProgress(0, 0.5, pfnProgress, pProgressData);
+        if (sArg.pProgressData == nullptr)
+            sArg.pfnProgress = nullptr;
+
         CPLDebugOnly("VRT", "ProcessRegion(): start RasterIO()");
-        if (m_poSrcDS->RasterIO(GF_Read, nXOff, nYOff, nBufXSize, nBufYSize,
+        const bool bOK =
+            m_poSrcDS->RasterIO(GF_Read, nXOff, nYOff, nBufXSize, nBufYSize,
                                 abyInput.data(), nBufXSize, nBufYSize, eSrcDT,
                                 nFirstBandCount, nullptr, 0, 0, 0,
-                                nullptr) != CE_None)
-        {
-            return false;
-        }
+                                &sArg) == CE_None;
         CPLDebugOnly("VRT", "ProcessRegion(): end RasterIO()");
+        GDALDestroyScaledProgress(sArg.pProgressData);
+        if (!bOK)
+            return false;
 
         CPLDebugOnly("VRT", "ProcessRegion(): start GDALTranspose2D()");
         GDALTranspose2D(abyInput.data(), eSrcDT, abyOutput.data(), eFirstDT,
@@ -1140,16 +1151,26 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
             return false;
         }
 
-        if (m_poSrcDS->RasterIO(
+        GDALRasterIOExtraArg sArg;
+        INIT_RASTERIO_EXTRA_ARG(sArg);
+        sArg.pfnProgress = GDALScaledProgress;
+        sArg.pProgressData =
+            GDALCreateScaledProgress(0, 0.5, pfnProgress, pProgressData);
+        if (sArg.pProgressData == nullptr)
+            sArg.pfnProgress = nullptr;
+
+        const bool bOK =
+            m_poSrcDS->RasterIO(
                 GF_Read, nXOff, nYOff, nBufXSize, nBufYSize, abyInput.data(),
                 nBufXSize, nBufYSize, eFirstDT, nFirstBandCount, nullptr,
                 static_cast<GSpacing>(nFirstDTSize) * nFirstBandCount,
                 static_cast<GSpacing>(nFirstDTSize) * nFirstBandCount *
                     nBufXSize,
-                nFirstDTSize, nullptr) != CE_None)
-        {
+                nFirstDTSize, &sArg) == CE_None;
+
+        GDALDestroyScaledProgress(sArg.pProgressData);
+        if (!bOK)
             return false;
-        }
     }
 
     const double dfSrcXOff = nXOff;
@@ -1170,6 +1191,8 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
 
     GDALDataType eLastDT = eFirstDT;
     const auto &oMapFunctions = GetGlobalMapProcessedDatasetFunc();
+
+    int iStep = 0;
     for (const auto &oStep : m_aoSteps)
     {
         const auto oIterFunc = oMapFunctions.find(oStep.osAlgorithm);
@@ -1226,6 +1249,12 @@ bool VRTProcessedDataset::ProcessRegion(int nXOff, int nYOff, int nBufXSize,
 
         std::swap(abyInput, abyOutput);
         eLastDT = oStep.eOutDT;
+
+        ++iStep;
+        if (pfnProgress &&
+            !pfnProgress(0.5 + 0.5 * iStep / static_cast<int>(m_aoSteps.size()),
+                         "", pProgressData))
+            return false;
     }
 
     return true;
@@ -1289,7 +1318,8 @@ CPLErr VRTProcessedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
     const int nXPixelOff = nBlockXOff * nBlockXSize;
     const int nYPixelOff = nBlockYOff * nBlockYSize;
-    if (!poVRTDS->ProcessRegion(nXPixelOff, nYPixelOff, nBufXSize, nBufYSize))
+    if (!poVRTDS->ProcessRegion(nXPixelOff, nYPixelOff, nBufXSize, nBufYSize,
+                                nullptr, nullptr))
     {
         return CE_Failure;
     }
@@ -1404,50 +1434,82 @@ CPLErr VRTProcessedDataset::IRasterIO(
                     GDALRasterIOExtraArg sArg;
                     INIT_RASTERIO_EXTRA_ARG(sArg);
                     const int nHalfHeight = nBufYSize / 2;
-                    if (IRasterIO(eRWFlag, nXOff, nYOff, nBufXSize, nHalfHeight,
+
+                    sArg.pfnProgress = GDALScaledProgress;
+                    sArg.pProgressData = GDALCreateScaledProgress(
+                        0, 0.5, psExtraArg->pfnProgress,
+                        psExtraArg->pProgressData);
+                    if (sArg.pProgressData == nullptr)
+                        sArg.pfnProgress = nullptr;
+                    bool bOK =
+                        IRasterIO(eRWFlag, nXOff, nYOff, nBufXSize, nHalfHeight,
                                   pabyData, nBufXSize, nHalfHeight, eBufType,
                                   nBandCount, panBandMap, nPixelSpace,
-                                  nLineSpace, nBandSpace, &sArg) == CE_None &&
-                        IRasterIO(eRWFlag, nXOff, nYOff + nHalfHeight,
-                                  nBufXSize, nBufYSize - nHalfHeight,
-                                  pabyData + nHalfHeight * nLineSpace,
-                                  nBufXSize, nBufYSize - nHalfHeight, eBufType,
-                                  nBandCount, panBandMap, nPixelSpace,
-                                  nLineSpace, nBandSpace, &sArg) == CE_None)
+                                  nLineSpace, nBandSpace, &sArg) == CE_None;
+                    GDALDestroyScaledProgress(sArg.pProgressData);
+
+                    if (bOK)
                     {
-                        return CE_None;
+                        sArg.pfnProgress = GDALScaledProgress;
+                        sArg.pProgressData = GDALCreateScaledProgress(
+                            0.5, 1, psExtraArg->pfnProgress,
+                            psExtraArg->pProgressData);
+                        if (sArg.pProgressData == nullptr)
+                            sArg.pfnProgress = nullptr;
+                        bOK = IRasterIO(eRWFlag, nXOff, nYOff + nHalfHeight,
+                                        nBufXSize, nBufYSize - nHalfHeight,
+                                        pabyData + nHalfHeight * nLineSpace,
+                                        nBufXSize, nBufYSize - nHalfHeight,
+                                        eBufType, nBandCount, panBandMap,
+                                        nPixelSpace, nLineSpace, nBandSpace,
+                                        &sArg) == CE_None;
+                        GDALDestroyScaledProgress(sArg.pProgressData);
                     }
-                    else
-                    {
-                        return CE_Failure;
-                    }
+                    return bOK ? CE_None : CE_Failure;
                 }
                 else if (nBufXSize >= 2)
                 {
                     GDALRasterIOExtraArg sArg;
                     INIT_RASTERIO_EXTRA_ARG(sArg);
                     const int nHalfWidth = nBufXSize / 2;
-                    if (IRasterIO(eRWFlag, nXOff, nYOff, nHalfWidth, nBufYSize,
+
+                    sArg.pfnProgress = GDALScaledProgress;
+                    sArg.pProgressData = GDALCreateScaledProgress(
+                        0, 0.5, psExtraArg->pfnProgress,
+                        psExtraArg->pProgressData);
+                    if (sArg.pProgressData == nullptr)
+                        sArg.pfnProgress = nullptr;
+                    bool bOK =
+                        IRasterIO(eRWFlag, nXOff, nYOff, nHalfWidth, nBufYSize,
                                   pabyData, nHalfWidth, nBufYSize, eBufType,
                                   nBandCount, panBandMap, nPixelSpace,
-                                  nLineSpace, nBandSpace, &sArg) == CE_None &&
-                        IRasterIO(eRWFlag, nXOff + nHalfWidth, nYOff,
-                                  nBufXSize - nHalfWidth, nBufYSize,
-                                  pabyData + nHalfWidth * nPixelSpace,
-                                  nBufXSize - nHalfWidth, nBufYSize, eBufType,
-                                  nBandCount, panBandMap, nPixelSpace,
-                                  nLineSpace, nBandSpace, &sArg) == CE_None)
+                                  nLineSpace, nBandSpace, &sArg) == CE_None;
+                    GDALDestroyScaledProgress(sArg.pProgressData);
+
+                    if (bOK)
                     {
-                        return CE_None;
+                        sArg.pfnProgress = GDALScaledProgress;
+                        sArg.pProgressData = GDALCreateScaledProgress(
+                            0.5, 1, psExtraArg->pfnProgress,
+                            psExtraArg->pProgressData);
+                        if (sArg.pProgressData == nullptr)
+                            sArg.pfnProgress = nullptr;
+                        bOK = IRasterIO(eRWFlag, nXOff + nHalfWidth, nYOff,
+                                        nBufXSize - nHalfWidth, nBufYSize,
+                                        pabyData + nHalfWidth * nPixelSpace,
+                                        nBufXSize - nHalfWidth, nBufYSize,
+                                        eBufType, nBandCount, panBandMap,
+                                        nPixelSpace, nLineSpace, nBandSpace,
+                                        &sArg) == CE_None;
+                        GDALDestroyScaledProgress(sArg.pProgressData);
                     }
-                    else
-                    {
-                        return CE_Failure;
-                    }
+                    return bOK ? CE_None : CE_Failure;
                 }
             }
 
-            if (!ProcessRegion(nXOff, nYOff, nBufXSize, nBufYSize))
+            if (!ProcessRegion(nXOff, nYOff, nBufXSize, nBufYSize,
+                               psExtraArg->pfnProgress,
+                               psExtraArg->pProgressData))
             {
                 return CE_Failure;
             }
