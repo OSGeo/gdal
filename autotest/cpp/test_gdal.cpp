@@ -5011,7 +5011,21 @@ TEST_F(test_gdal, GDALTranspose2D_Byte_optims)
         }
     }
 
-    // Optim H = 2
+    // Optim H = 2 with W < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 2;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 2 with W >= 16
     {
         constexpr int W = 19;
         constexpr int H = 2;
@@ -5039,7 +5053,21 @@ TEST_F(test_gdal, GDALTranspose2D_Byte_optims)
         }
     }
 
-    // Optim H = 4
+    // Optim H = 4 with H < 16
+    {
+        constexpr int W = 15;
+        constexpr int H = 4;
+        GDALTranspose2D(in.data(), GDT_Byte, out.data(), GDT_Byte, W, H);
+        for (int y = 0; y < H; ++y)
+        {
+            for (int x = 0; x < W; ++x)
+            {
+                EXPECT_EQ(out[x * H + y], in[y * W + x]);
+            }
+        }
+    }
+
+    // Optim H = 4 with H >= 16
     {
         constexpr int W = 19;
         constexpr int H = 4;

@@ -286,7 +286,7 @@ static void
 GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
                           uint8_t *CPL_RESTRICT pDst, size_t nIters)
 {
-#if defined(__clang__)
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
 #pragma clang loop vectorize(enable)
 #endif
     for (size_t i = 0; i < nIters; ++i)

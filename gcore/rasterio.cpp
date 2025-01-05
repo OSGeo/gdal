@@ -5746,6 +5746,44 @@ static void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, DST *pDst,
 /*                      GDALInterleave2Byte()                           */
 /************************************************************************/
 
+#if defined(HAVE_SSE2) &&                                                      \
+    (!defined(__GNUC__) || defined(__INTEL_CLANG_COMPILER))
+
+// ICC autovectorizer doesn't do a good job at generating good SSE code,
+// at least with icx 2024.0.2.20231213, but it nicely unrolls the below loop.
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+    size_t i = 0;
+    constexpr size_t VALS_PER_ITER = 16;
+    for (i = 0; i + VALS_PER_ITER <= nIters; i += VALS_PER_ITER)
+    {
+        __m128i xmm0 =
+            _mm_loadu_si128(reinterpret_cast<__m128i const *>(pSrc + i));
+        __m128i xmm1 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + nIters));
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(pDst + 2 * i),
+                         _mm_unpacklo_epi8(xmm0, xmm1));
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 2 * i + VALS_PER_ITER),
+            _mm_unpackhi_epi8(xmm0, xmm1));
+    }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
+    for (; i < nIters; ++i)
+    {
+        pDst[2 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[2 * i + 1] = pSrc[i + 1 * nIters];
+    }
+}
+
+#else
+
 #if defined(__GNUC__) && !defined(__clang__)
 __attribute__((optimize("tree-vectorize")))
 #endif
@@ -5756,7 +5794,7 @@ static void
 GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
                     uint8_t *CPL_RESTRICT pDst, size_t nIters)
 {
-#if defined(__clang__)
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
 #pragma clang loop vectorize(enable)
 #endif
     for (size_t i = 0; i < nIters; ++i)
@@ -5766,9 +5804,80 @@ GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
     }
 }
 
+#endif
+
 /************************************************************************/
 /*                      GDALInterleave4Byte()                           */
 /************************************************************************/
+
+#if defined(HAVE_SSE2) &&                                                      \
+    (!defined(__GNUC__) || defined(__INTEL_CLANG_COMPILER))
+
+// ICC autovectorizer doesn't do a good job at generating good SSE code,
+// at least with icx 2024.0.2.20231213, but it nicely unrolls the below loop.
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+    size_t i = 0;
+    constexpr size_t VALS_PER_ITER = 16;
+    for (i = 0; i + VALS_PER_ITER <= nIters; i += VALS_PER_ITER)
+    {
+        __m128i xmm0 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 0 * nIters));
+        __m128i xmm1 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 1 * nIters));
+        __m128i xmm2 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 2 * nIters));
+        __m128i xmm3 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 3 * nIters));
+        auto tmp0 = _mm_unpacklo_epi8(
+            xmm0,
+            xmm1);  // (xmm0_0, xmm1_0, xmm0_1, xmm1_1, xmm0_2, xmm1_2, ...)
+        auto tmp1 = _mm_unpackhi_epi8(
+            xmm0,
+            xmm1);  // (xmm0_8, xmm1_8, xmm0_9, xmm1_9, xmm0_10, xmm1_10, ...)
+        auto tmp2 = _mm_unpacklo_epi8(
+            xmm2,
+            xmm3);  // (xmm2_0, xmm3_0, xmm2_1, xmm3_1, xmm2_2, xmm3_2, ...)
+        auto tmp3 = _mm_unpackhi_epi8(
+            xmm2,
+            xmm3);  // (xmm2_8, xmm3_8, xmm2_9, xmm3_9, xmm2_10, xmm3_10, ...)
+        auto tmp2_0 = _mm_unpacklo_epi16(
+            tmp0,
+            tmp2);  // (xmm0_0, xmm1_0, xmm2_0, xmm3_0, xmm0_1, xmm1_1, xmm2_1, xmm3_1, ...)
+        auto tmp2_1 = _mm_unpackhi_epi16(tmp0, tmp2);
+        auto tmp2_2 = _mm_unpacklo_epi16(tmp1, tmp3);
+        auto tmp2_3 = _mm_unpackhi_epi16(tmp1, tmp3);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 0 * VALS_PER_ITER),
+            tmp2_0);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 1 * VALS_PER_ITER),
+            tmp2_1);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 2 * VALS_PER_ITER),
+            tmp2_2);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 3 * VALS_PER_ITER),
+            tmp2_3);
+    }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
+    for (; i < nIters; ++i)
+    {
+        pDst[4 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[4 * i + 1] = pSrc[i + 1 * nIters];
+        pDst[4 * i + 2] = pSrc[i + 2 * nIters];
+        pDst[4 * i + 3] = pSrc[i + 3 * nIters];
+    }
+}
+
+#else
 
 #if defined(__GNUC__) && !defined(__clang__)
 __attribute__((optimize("tree-vectorize")))
@@ -5780,7 +5889,7 @@ static void
 GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
                     uint8_t *CPL_RESTRICT pDst, size_t nIters)
 {
-#if defined(__clang__)
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
 #pragma clang loop vectorize(enable)
 #endif
     for (size_t i = 0; i < nIters; ++i)
@@ -5791,6 +5900,8 @@ GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
         pDst[4 * i + 3] = pSrc[i + 3 * nIters];
     }
 }
+
+#endif
 
 /************************************************************************/
 /*                        GDALTranspose2D()                             */
