@@ -467,6 +467,12 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
     if (!CPLTestBool(CSLFetchNameValueDef(papszOptions, "STATISTICS", "YES")))
         m_oWriterPropertiesBuilder.disable_statistics();
 
+#if PARQUET_VERSION_MAJOR >= 12
+    // Undocumented option. Not clear it is useful to disable it.
+    if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "PAGE_INDEX", "YES")))
+        m_oWriterPropertiesBuilder.enable_write_page_index();
+#endif
+
     if (m_eGeomEncoding == OGRArrowGeomEncoding::WKB && eGType != wkbNone)
     {
         m_oWriterPropertiesBuilder.disable_statistics(
