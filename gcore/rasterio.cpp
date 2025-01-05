@@ -5682,8 +5682,9 @@ template <class DST, bool DST_IS_COMPLEX>
 static void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, DST *pDst,
                             size_t nSrcWidth, size_t nSrcHeight)
 {
-#define GDALTranspose2D_internal(SRC_TYPE_CST, SRC_TYPE)                       \
-    case SRC_TYPE_CST:                                                         \
+#define CALL_GDALTranspose2D_internal(SRC_TYPE)                                \
+    do                                                                         \
+    {                                                                          \
         if constexpr (DST_IS_COMPLEX)                                          \
         {                                                                      \
             GDALTranspose2DSingleToComplex(                                    \
@@ -5695,10 +5696,11 @@ static void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, DST *pDst,
             GDALTranspose2DSingleToSingle(static_cast<const SRC_TYPE *>(pSrc), \
                                           pDst, nSrcWidth, nSrcHeight);        \
         }                                                                      \
-        break
+    } while (0)
 
-#define GDALTranspose2DComplex_internal(SRC_TYPE_CST, SRC_TYPE)                \
-    case SRC_TYPE_CST:                                                         \
+#define CALL_GDALTranspose2DComplex_internal(SRC_TYPE)                         \
+    do                                                                         \
+    {                                                                          \
         if constexpr (DST_IS_COMPLEX)                                          \
         {                                                                      \
             GDALTranspose2DComplexToComplex(                                   \
@@ -5711,31 +5713,33 @@ static void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, DST *pDst,
                 static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
                 nSrcHeight);                                                   \
         }                                                                      \
-        break
+    } while (0)
 
+    // clang-format off
     switch (eSrcType)
     {
-        GDALTranspose2D_internal(GDT_Byte, uint8_t);
-        GDALTranspose2D_internal(GDT_Int8, int8_t);
-        GDALTranspose2D_internal(GDT_UInt16, uint16_t);
-        GDALTranspose2D_internal(GDT_Int16, int16_t);
-        GDALTranspose2D_internal(GDT_UInt32, uint32_t);
-        GDALTranspose2D_internal(GDT_Int32, int32_t);
-        GDALTranspose2D_internal(GDT_UInt64, uint64_t);
-        GDALTranspose2D_internal(GDT_Int64, int64_t);
-        GDALTranspose2D_internal(GDT_Float32, float);
-        GDALTranspose2D_internal(GDT_Float64, double);
-        GDALTranspose2DComplex_internal(GDT_CInt16, int16_t);
-        GDALTranspose2DComplex_internal(GDT_CInt32, int32_t);
-        GDALTranspose2DComplex_internal(GDT_CFloat32, float);
-        GDALTranspose2DComplex_internal(GDT_CFloat64, double);
+        case GDT_Byte:     CALL_GDALTranspose2D_internal(uint8_t); break;
+        case GDT_Int8:     CALL_GDALTranspose2D_internal(int8_t); break;
+        case GDT_UInt16:   CALL_GDALTranspose2D_internal(uint16_t); break;
+        case GDT_Int16:    CALL_GDALTranspose2D_internal(int16_t); break;
+        case GDT_UInt32:   CALL_GDALTranspose2D_internal(uint32_t); break;
+        case GDT_Int32:    CALL_GDALTranspose2D_internal(int32_t); break;
+        case GDT_UInt64:   CALL_GDALTranspose2D_internal(uint64_t); break;
+        case GDT_Int64:    CALL_GDALTranspose2D_internal(int64_t); break;
+        case GDT_Float32:  CALL_GDALTranspose2D_internal(float); break;
+        case GDT_Float64:  CALL_GDALTranspose2D_internal(double); break;
+        case GDT_CInt16:   CALL_GDALTranspose2DComplex_internal(int16_t); break;
+        case GDT_CInt32:   CALL_GDALTranspose2DComplex_internal(int32_t); break;
+        case GDT_CFloat32: CALL_GDALTranspose2DComplex_internal(float); break;
+        case GDT_CFloat64: CALL_GDALTranspose2DComplex_internal(double); break;
         case GDT_Unknown:
         case GDT_TypeCount:
             break;
     }
+        // clang-format on
 
-#undef GDALTranspose2D_internal
-#undef GDALTranspose2DComplex_internal
+#undef CALL_GDALTranspose2D_internal
+#undef CALL_GDALTranspose2DComplex_internal
 }
 
 /************************************************************************/
@@ -5840,33 +5844,32 @@ void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, void *pDst,
 #endif
     }
 
-#define GDALTranspose2D_internal(DST_TYPE_CST, DST_TYPE, DST_IS_COMPLEX)       \
-    case DST_TYPE_CST:                                                         \
-        GDALTranspose2D<DST_TYPE, DST_IS_COMPLEX>(                             \
-            pSrc, eSrcType, static_cast<DST_TYPE *>(pDst), nSrcWidth,          \
-            nSrcHeight);                                                       \
-        break
+#define CALL_GDALTranspose2D_internal(DST_TYPE, DST_IS_COMPLEX)                \
+    GDALTranspose2D<DST_TYPE, DST_IS_COMPLEX>(                                 \
+        pSrc, eSrcType, static_cast<DST_TYPE *>(pDst), nSrcWidth, nSrcHeight)
 
+    // clang-format off
     switch (eDstType)
     {
-        GDALTranspose2D_internal(GDT_Byte, uint8_t, false);
-        GDALTranspose2D_internal(GDT_Int8, int8_t, false);
-        GDALTranspose2D_internal(GDT_UInt16, uint16_t, false);
-        GDALTranspose2D_internal(GDT_Int16, int16_t, false);
-        GDALTranspose2D_internal(GDT_UInt32, uint32_t, false);
-        GDALTranspose2D_internal(GDT_Int32, int32_t, false);
-        GDALTranspose2D_internal(GDT_UInt64, uint64_t, false);
-        GDALTranspose2D_internal(GDT_Int64, int64_t, false);
-        GDALTranspose2D_internal(GDT_Float32, float, false);
-        GDALTranspose2D_internal(GDT_Float64, double, false);
-        GDALTranspose2D_internal(GDT_CInt16, int16_t, true);
-        GDALTranspose2D_internal(GDT_CInt32, int32_t, true);
-        GDALTranspose2D_internal(GDT_CFloat32, float, true);
-        GDALTranspose2D_internal(GDT_CFloat64, double, true);
+        case GDT_Byte:     CALL_GDALTranspose2D_internal(uint8_t, false); break;
+        case GDT_Int8:     CALL_GDALTranspose2D_internal(int8_t, false); break;
+        case GDT_UInt16:   CALL_GDALTranspose2D_internal(uint16_t, false); break;
+        case GDT_Int16:    CALL_GDALTranspose2D_internal(int16_t, false); break;
+        case GDT_UInt32:   CALL_GDALTranspose2D_internal(uint32_t, false); break;
+        case GDT_Int32:    CALL_GDALTranspose2D_internal(int32_t, false); break;
+        case GDT_UInt64:   CALL_GDALTranspose2D_internal(uint64_t, false); break;
+        case GDT_Int64:    CALL_GDALTranspose2D_internal(int64_t, false); break;
+        case GDT_Float32:  CALL_GDALTranspose2D_internal(float, false); break;
+        case GDT_Float64:  CALL_GDALTranspose2D_internal(double, false); break;
+        case GDT_CInt16:   CALL_GDALTranspose2D_internal(int16_t, true); break;
+        case GDT_CInt32:   CALL_GDALTranspose2D_internal(int32_t, true); break;
+        case GDT_CFloat32: CALL_GDALTranspose2D_internal(float, true); break;
+        case GDT_CFloat64: CALL_GDALTranspose2D_internal(double, true); break;
         case GDT_Unknown:
         case GDT_TypeCount:
             break;
     }
+        // clang-format on
 
-#undef GDALTranspose2D_internal
+#undef CALL_GDALTranspose2D_internal
 }
