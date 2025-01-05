@@ -2160,6 +2160,7 @@ CPLErr GDALDataset::BuildOverviews(const char *pszResampling, int nOverviews,
                      "panOverviewList[%d] = %d is invalid. It must be a "
                      "positive value",
                      i, panOverviewList[i]);
+            CPLFree(panAllBandList);
             return CE_Failure;
         }
     }
