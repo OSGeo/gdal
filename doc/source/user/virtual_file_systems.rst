@@ -387,6 +387,7 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 - referer=value: HTTP Referer header
 - cookie=value: HTTP Cookie header
 - header_file=value: Filename that contains one or several "Header: Value" lines
+- header.<key>=<value>: HTTP request header of name <key> and value <value>. (GDAL >= 3.11). e.g. ``header.Accept=application%2Fjson``
 - unsafessl=yes/no
 - low_speed_time=value
 - low_speed_limit=value
