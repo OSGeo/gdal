@@ -567,7 +567,8 @@ bool VRTProcessedDataset::ParseStep(const CPLXMLNode *psStep, bool bIsFinalStep,
         for (int i = 1; i <= m_poSrcDS->GetRasterCount(); ++i)
         {
             int bHasVal = false;
-            const double dfVal = GetRasterBand(i)->GetOffset(&bHasVal);
+            const double dfVal =
+                m_poSrcDS->GetRasterBand(i)->GetOffset(&bHasVal);
             oStep.aosArguments.AddNameValue(
                 CPLSPrintf("offset_%d", i),
                 CPLSPrintf("%.17g", bHasVal ? dfVal : 0.0));
@@ -580,7 +581,8 @@ bool VRTProcessedDataset::ParseStep(const CPLXMLNode *psStep, bool bIsFinalStep,
         for (int i = 1; i <= m_poSrcDS->GetRasterCount(); ++i)
         {
             int bHasVal = false;
-            const double dfVal = GetRasterBand(i)->GetScale(&bHasVal);
+            const double dfVal =
+                m_poSrcDS->GetRasterBand(i)->GetScale(&bHasVal);
             oStep.aosArguments.AddNameValue(
                 CPLSPrintf("scale_%d", i),
                 CPLSPrintf("%.17g", bHasVal ? dfVal : 1.0));
