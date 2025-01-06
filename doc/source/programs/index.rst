@@ -29,6 +29,7 @@ single :program:`gdal` program that accepts commands and subcommands.
    gdal_info
    gdal_convert
    gdal_raster
+   gdal_raster_buildvrt
    gdal_raster_info
    gdal_raster_convert
    gdal_raster_edit
@@ -45,6 +46,7 @@ single :program:`gdal` program that accepts commands and subcommands.
     - :ref:`gdal_info_command`: Get information on a dataset
     - :ref:`gdal_convert_command`: Convert a dataset
     - :ref:`gdal_raster_command`: Entry point for raster commands
+    - :ref:`gdal_raster_buildvrt_subcommand`: buildvrt:  Build a virtual dataset (VRT)
     - :ref:`gdal_raster_info_subcommand`: Get information on a raster dataset
     - :ref:`gdal_raster_convert_subcommand`: Convert a raster dataset
     - :ref:`gdal_raster_edit_subcommand`: Edit in place a raster dataset

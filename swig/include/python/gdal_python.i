@@ -5206,13 +5206,23 @@ class VSIFile(BytesIO):
         if type == GAAT_REAL:
             return self.SetAsDouble(value)
         if type == GAAT_DATASET:
-            return self.SetAsDatasetValue(value)
+            if isinstance(value, str):
+                return self.GetAsDatasetValue().SetName(value)
+            elif isinstance(value, Dataset):
+                return self.GetAsDatasetValue().SetDataset(value)
+            else:
+                return self.SetAsDatasetValue(value)
         if type == GAAT_STRING_LIST:
             return self.SetAsStringList(value)
         if type == GAAT_INTEGER_LIST:
             return self.SetAsIntegerList(value)
         if type == GAAT_REAL_LIST:
             return self.SetAsDoubleList(value)
+        if type == GAAT_DATASET_LIST:
+            if isinstance(value[0], str):
+                return self.SetDatasetNames(value)
+            elif isinstance(value[0], Dataset):
+                return self.SetDatasets(value)
         raise Exception("Unhandled algorithm argument data type")
 
 %}

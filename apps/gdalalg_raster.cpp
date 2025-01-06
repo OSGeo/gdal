@@ -12,6 +12,7 @@
 
 #include "gdalalgorithm.h"
 
+#include "gdalalg_raster_buildvrt.h"
 #include "gdalalg_raster_info.h"
 #include "gdalalg_raster_convert.h"
 #include "gdalalg_raster_edit.h"
@@ -41,6 +42,7 @@ class GDALRasterAlgorithm final : public GDALAlgorithm
         RegisterSubAlgorithm<GDALRasterEditAlgorithmStandalone>();
         RegisterSubAlgorithm<GDALRasterPipelineAlgorithm>();
         RegisterSubAlgorithm<GDALRasterReprojectAlgorithmStandalone>();
+        RegisterSubAlgorithm<GDALRasterBuildVRTAlgorithm>();
     }
 
   private:

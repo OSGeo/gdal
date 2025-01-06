@@ -5615,4 +5615,148 @@ TEST_F(test_cpl, VSIMemGenerateHiddenFilename)
         EXPECT_TRUE(ENDS_WITH(pszFilename, "/foo.bar"));
     }
 }
+
+TEST_F(test_cpl, VSIGlob)
+{
+    GByte abyDummyData[1] = {0};
+    const std::string osFilenameRadix = VSIMemGenerateHiddenFilename("");
+    const std::string osFilename = osFilenameRadix + "trick";
+    VSIFCloseL(VSIFileFromMemBuffer(osFilename.c_str(), abyDummyData,
+                                    sizeof(abyDummyData), false));
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(osFilename.c_str(), nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(osFilename.substr(0, osFilename.size() - 1).c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("?rick").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("?rack").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*ick").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*").c_str(), nullptr,
+                    nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*ack").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*ic*").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*ac*").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    {
+        CPLStringList aosRes(VSIGlob(
+            std::string(osFilenameRadix).append("[st][!s]ic[j-l]").c_str(),
+            nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("[!s]rick").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("[").c_str(), nullptr,
+                    nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    const std::string osFilenameWithSpecialChars = osFilenameRadix + "[!-]";
+    VSIFCloseL(VSIFileFromMemBuffer(osFilenameWithSpecialChars.c_str(),
+                                    abyDummyData, sizeof(abyDummyData), false));
+
+    {
+        CPLStringList aosRes(VSIGlob(
+            std::string(osFilenameRadix).append("[[][!]a-][-][]]").c_str(),
+            nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilenameWithSpecialChars.c_str());
+    }
+
+    const std::string osFilename2 = osFilenameRadix + "truck/track";
+    VSIFCloseL(VSIFileFromMemBuffer(osFilename2.c_str(), abyDummyData,
+                                    sizeof(abyDummyData), false));
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*uc*/track").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename2.c_str());
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("*uc*/truck").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 0);
+    }
+
+    {
+        CPLStringList aosRes(
+            VSIGlob(std::string(osFilenameRadix).append("**/track").c_str(),
+                    nullptr, nullptr, nullptr));
+        ASSERT_EQ(aosRes.size(), 1);
+        EXPECT_STREQ(aosRes[0], osFilename2.c_str());
+    }
+
+    VSIUnlink(osFilename.c_str());
+    VSIUnlink(osFilenameWithSpecialChars.c_str());
+    VSIUnlink(osFilename2.c_str());
+    VSIUnlink(osFilenameRadix.c_str());
+}
+
 }  // namespace

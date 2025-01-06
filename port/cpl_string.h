@@ -489,6 +489,18 @@ extern "C++"
         CPLStringList &AddString(const char *pszNewString);
         CPLStringList &AddStringDirectly(char *pszNewString);
 
+        /** Add a string to the list */
+        void push_back(const char *pszNewString)
+        {
+            AddString(pszNewString);
+        }
+
+        /** Add a string to the list */
+        void push_back(const std::string &osStr)
+        {
+            AddString(osStr.c_str());
+        }
+
         CPLStringList &InsertString(int nInsertAtLineNo, const char *pszNewLine)
         {
             return InsertStringDirectly(nInsertAtLineNo, CPLStrdup(pszNewLine));
