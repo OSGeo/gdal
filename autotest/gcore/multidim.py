@@ -798,6 +798,136 @@ def test_multidim_asclassicsubdataset_band_metadata():
 
 
 @gdaltest.enable_exceptions()
+def test_multidim_asclassicsubdataset_band_imagery_metadata():
+
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds")
+    rg = mem_ds.GetRootGroup()
+
+    dimOther = rg.CreateDimension("other", None, None, 2)
+
+    other = rg.CreateMDArray(
+        "other", [dimOther], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    other.Write(array.array("d", [10.5, 20]))
+
+    fwhm = rg.CreateMDArray(
+        "fwhm", [dimOther], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    fwhm.Write(array.array("d", [3.5, 4.5]))
+
+    string_attr = other.CreateAttribute(
+        "string_attr", [], gdal.ExtendedDataType.CreateString()
+    )
+    assert string_attr.Write("nm") == gdal.CE_None
+
+    dimX = rg.CreateDimension("X", None, None, 2)
+    X = rg.CreateMDArray("X", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    X.Write(array.array("d", [10, 20]))
+    dimX.SetIndexingVariable(X)
+    dimY = rg.CreateDimension("Y", None, None, 2)
+
+    ar = rg.CreateMDArray(
+        "ar", [dimOther, dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+
+    with pytest.raises(
+        Exception,
+        match="Root group should be provided when BAND_IMAGERY_METADATA is set",
+    ):
+        ar.AsClassicDataset(2, 1, None, ["BAND_IMAGERY_METADATA={}"])
+
+    with pytest.raises(
+        Exception, match="Invalid JSON content for BAND_IMAGERY_METADATA"
+    ):
+        ar.AsClassicDataset(2, 1, rg, ["BAND_IMAGERY_METADATA=invalid"])
+
+    with pytest.raises(
+        Exception, match="Value of BAND_IMAGERY_METADATA should be an object"
+    ):
+        ar.AsClassicDataset(2, 1, rg, ["BAND_IMAGERY_METADATA=false"])
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {}}
+    with pytest.raises(
+        Exception,
+        match=r'BAND_IMAGERY_METADATA\["CENTRAL_WAVELENGTH_UM"\]\["array"\] is missing',
+    ):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"array": "/i/do/not/exist"}}
+    with pytest.raises(Exception, match="Array /i/do/not/exist cannot be found"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"array": "/ar"}}
+    with pytest.raises(Exception, match="Array /ar is not a 1D array"):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"array": "/X"}}
+    with pytest.raises(
+        Exception,
+        match='Dimension "X" of array "/X" is not a non-X/Y dimension of array "ar"',
+    ):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"array": "/other", "unit": "${invalid"}}
+    with pytest.raises(
+        Exception,
+        match=r'Value of BAND_IMAGERY_METADATA\["CENTRAL_WAVELENGTH_UM"\]\["unit"\] = \${invalid is invalid',
+    ):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"array": "/other", "unit": "${invalid}"}}
+    with pytest.raises(
+        Exception,
+        match=r'Value of BAND_IMAGERY_METADATA\["CENTRAL_WAVELENGTH_UM"\]\["unit"\] = \${invalid} is invalid: invalid is not an attribute of \/other',
+    ):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = {"CENTRAL_WAVELENGTH_UM": {"array": "/other", "unit": "unhandled"}}
+    with pytest.raises(
+        Exception,
+        match=r'Unhandled value for BAND_IMAGERY_METADATA\["CENTRAL_WAVELENGTH_UM"\]\["unit"\] = unhandled',
+    ):
+        ds = ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = {"ignored": {}}
+    with gdal.quiet_errors():
+        ar.AsClassicDataset(
+            2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+        )
+
+    band_metadata = {
+        "CENTRAL_WAVELENGTH_UM": {"array": "/other", "unit": "${string_attr}"},
+        "FWHM_UM": {"array": "/fwhm"},
+    }
+    ds = ar.AsClassicDataset(
+        2, 1, rg, ["BAND_IMAGERY_METADATA=" + json.dumps(band_metadata)]
+    )
+    assert ds.GetRasterBand(1).GetMetadata("IMAGERY") == {
+        "CENTRAL_WAVELENGTH_UM": "0.0105",
+        "FWHM_UM": "3.5",
+    }
+    assert ds.GetRasterBand(2).GetMetadata("IMAGERY") == {
+        "CENTRAL_WAVELENGTH_UM": "0.02",
+        "FWHM_UM": "4.5",
+    }
+
+
+@gdaltest.enable_exceptions()
 def test_multidim_SubsetDimensionFromSelection():
 
     drv = gdal.GetDriverByName("MEM")
