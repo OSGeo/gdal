@@ -146,7 +146,7 @@ char **VSISiblingFiles(const char *pszFilename)
 /** Return the directory separator for the specified path.
  *
  * Default is forward slash. The only exception currently is the Windows
- * file system which returns anti-slash, unless the specified path is of the
+ * file system which returns backslash, unless the specified path is of the
  * form "{drive_letter}:/{rest_of_the_path}".
  *
  * @since 3.9

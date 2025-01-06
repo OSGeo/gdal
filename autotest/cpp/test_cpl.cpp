@@ -1048,6 +1048,21 @@ TEST_F(test_cpl, CPLFormFilename)
     EXPECT_TRUE(
         EQUAL(CPLFormFilename("\\\\$\\c:", "..", nullptr), "\\\\$\\c:/..") ||
         EQUAL(CPLFormFilename("\\\\$\\c:", "..", nullptr), "\\\\$\\c:\\.."));
+    EXPECT_STREQ(CPLFormFilename("/a", "../", nullptr), "/");
+    EXPECT_STREQ(CPLFormFilename("/a/", "../", nullptr), "/");
+    EXPECT_STREQ(CPLFormFilename("/a", "../b", nullptr), "/b");
+    EXPECT_STREQ(CPLFormFilename("/a/", "../b", nullptr), "/b");
+    EXPECT_STREQ(CPLFormFilename("/a", "../b/c", nullptr), "/b/c");
+    EXPECT_STREQ(CPLFormFilename("/a/", "../b/c/d", nullptr), "/b/c/d");
+    EXPECT_STREQ(CPLFormFilename("/a/b", "../../c", nullptr), "/c");
+    EXPECT_STREQ(CPLFormFilename("/a/b/", "../../c/d", nullptr), "/c/d");
+    EXPECT_STREQ(CPLFormFilename("/a/b", "../..", nullptr), "/");
+    EXPECT_STREQ(CPLFormFilename("/a/b", "../../", nullptr), "/");
+    EXPECT_STREQ(CPLFormFilename("/a/b/c", "../../d", nullptr), "/a/d");
+    EXPECT_STREQ(CPLFormFilename("/a/b/c/", "../../d", nullptr), "/a/d");
+    // we could also just error out, but at least this preserves the original
+    // semantics
+    EXPECT_STREQ(CPLFormFilename("/a", "../../b", nullptr), "/a/../../b");
     EXPECT_STREQ(
         CPLFormFilename("/vsicurl/http://example.com?foo", "bar", nullptr),
         "/vsicurl/http://example.com/bar?foo");
