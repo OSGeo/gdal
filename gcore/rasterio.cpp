@@ -5588,7 +5588,7 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
 {
     if (eSourceDT == eDestDT)
     {
-        if (eSourceDT == GDT_Byte)
+        if (eSourceDT == GDT_Byte || eSourceDT == GDT_Int8)
         {
             if (nComponents == 3)
             {
@@ -5674,4 +5674,315 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
                         eSourceDT, nComponents * nSourceDTSize,
                         ppDestBuffer[iComp], eDestDT, nDestDTSize, nIters);
     }
+}
+
+/************************************************************************/
+/*                        GDALTranspose2D()                             */
+/************************************************************************/
+
+template <class DST, bool DST_IS_COMPLEX>
+static void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, DST *pDst,
+                            size_t nSrcWidth, size_t nSrcHeight)
+{
+#define CALL_GDALTranspose2D_internal(SRC_TYPE)                                \
+    do                                                                         \
+    {                                                                          \
+        if constexpr (DST_IS_COMPLEX)                                          \
+        {                                                                      \
+            GDALTranspose2DSingleToComplex(                                    \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            GDALTranspose2DSingleToSingle(static_cast<const SRC_TYPE *>(pSrc), \
+                                          pDst, nSrcWidth, nSrcHeight);        \
+        }                                                                      \
+    } while (0)
+
+#define CALL_GDALTranspose2DComplex_internal(SRC_TYPE)                         \
+    do                                                                         \
+    {                                                                          \
+        if constexpr (DST_IS_COMPLEX)                                          \
+        {                                                                      \
+            GDALTranspose2DComplexToComplex(                                   \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            GDALTranspose2DComplexToSingle(                                    \
+                static_cast<const SRC_TYPE *>(pSrc), pDst, nSrcWidth,          \
+                nSrcHeight);                                                   \
+        }                                                                      \
+    } while (0)
+
+    // clang-format off
+    switch (eSrcType)
+    {
+        case GDT_Byte:     CALL_GDALTranspose2D_internal(uint8_t); break;
+        case GDT_Int8:     CALL_GDALTranspose2D_internal(int8_t); break;
+        case GDT_UInt16:   CALL_GDALTranspose2D_internal(uint16_t); break;
+        case GDT_Int16:    CALL_GDALTranspose2D_internal(int16_t); break;
+        case GDT_UInt32:   CALL_GDALTranspose2D_internal(uint32_t); break;
+        case GDT_Int32:    CALL_GDALTranspose2D_internal(int32_t); break;
+        case GDT_UInt64:   CALL_GDALTranspose2D_internal(uint64_t); break;
+        case GDT_Int64:    CALL_GDALTranspose2D_internal(int64_t); break;
+        case GDT_Float32:  CALL_GDALTranspose2D_internal(float); break;
+        case GDT_Float64:  CALL_GDALTranspose2D_internal(double); break;
+        case GDT_CInt16:   CALL_GDALTranspose2DComplex_internal(int16_t); break;
+        case GDT_CInt32:   CALL_GDALTranspose2DComplex_internal(int32_t); break;
+        case GDT_CFloat32: CALL_GDALTranspose2DComplex_internal(float); break;
+        case GDT_CFloat64: CALL_GDALTranspose2DComplex_internal(double); break;
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            break;
+    }
+        // clang-format on
+
+#undef CALL_GDALTranspose2D_internal
+#undef CALL_GDALTranspose2DComplex_internal
+}
+
+/************************************************************************/
+/*                      GDALInterleave2Byte()                           */
+/************************************************************************/
+
+#if defined(HAVE_SSE2) &&                                                      \
+    (!defined(__GNUC__) || defined(__INTEL_CLANG_COMPILER))
+
+// ICC autovectorizer doesn't do a good job at generating good SSE code,
+// at least with icx 2024.0.2.20231213, but it nicely unrolls the below loop.
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+    size_t i = 0;
+    constexpr size_t VALS_PER_ITER = 16;
+    for (i = 0; i + VALS_PER_ITER <= nIters; i += VALS_PER_ITER)
+    {
+        __m128i xmm0 =
+            _mm_loadu_si128(reinterpret_cast<__m128i const *>(pSrc + i));
+        __m128i xmm1 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + nIters));
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(pDst + 2 * i),
+                         _mm_unpacklo_epi8(xmm0, xmm1));
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 2 * i + VALS_PER_ITER),
+            _mm_unpackhi_epi8(xmm0, xmm1));
+    }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
+    for (; i < nIters; ++i)
+    {
+        pDst[2 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[2 * i + 1] = pSrc[i + 1 * nIters];
+    }
+}
+
+#else
+
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave2Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+#pragma clang loop vectorize(enable)
+#endif
+    for (size_t i = 0; i < nIters; ++i)
+    {
+        pDst[2 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[2 * i + 1] = pSrc[i + 1 * nIters];
+    }
+}
+
+#endif
+
+/************************************************************************/
+/*                      GDALInterleave4Byte()                           */
+/************************************************************************/
+
+#if defined(HAVE_SSE2) &&                                                      \
+    (!defined(__GNUC__) || defined(__INTEL_CLANG_COMPILER))
+
+// ICC autovectorizer doesn't do a good job at generating good SSE code,
+// at least with icx 2024.0.2.20231213, but it nicely unrolls the below loop.
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+    size_t i = 0;
+    constexpr size_t VALS_PER_ITER = 16;
+    for (i = 0; i + VALS_PER_ITER <= nIters; i += VALS_PER_ITER)
+    {
+        __m128i xmm0 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 0 * nIters));
+        __m128i xmm1 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 1 * nIters));
+        __m128i xmm2 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 2 * nIters));
+        __m128i xmm3 = _mm_loadu_si128(
+            reinterpret_cast<__m128i const *>(pSrc + i + 3 * nIters));
+        auto tmp0 = _mm_unpacklo_epi8(
+            xmm0,
+            xmm1);  // (xmm0_0, xmm1_0, xmm0_1, xmm1_1, xmm0_2, xmm1_2, ...)
+        auto tmp1 = _mm_unpackhi_epi8(
+            xmm0,
+            xmm1);  // (xmm0_8, xmm1_8, xmm0_9, xmm1_9, xmm0_10, xmm1_10, ...)
+        auto tmp2 = _mm_unpacklo_epi8(
+            xmm2,
+            xmm3);  // (xmm2_0, xmm3_0, xmm2_1, xmm3_1, xmm2_2, xmm3_2, ...)
+        auto tmp3 = _mm_unpackhi_epi8(
+            xmm2,
+            xmm3);  // (xmm2_8, xmm3_8, xmm2_9, xmm3_9, xmm2_10, xmm3_10, ...)
+        auto tmp2_0 = _mm_unpacklo_epi16(
+            tmp0,
+            tmp2);  // (xmm0_0, xmm1_0, xmm2_0, xmm3_0, xmm0_1, xmm1_1, xmm2_1, xmm3_1, ...)
+        auto tmp2_1 = _mm_unpackhi_epi16(tmp0, tmp2);
+        auto tmp2_2 = _mm_unpacklo_epi16(tmp1, tmp3);
+        auto tmp2_3 = _mm_unpackhi_epi16(tmp1, tmp3);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 0 * VALS_PER_ITER),
+            tmp2_0);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 1 * VALS_PER_ITER),
+            tmp2_1);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 2 * VALS_PER_ITER),
+            tmp2_2);
+        _mm_storeu_si128(
+            reinterpret_cast<__m128i *>(pDst + 4 * i + 3 * VALS_PER_ITER),
+            tmp2_3);
+    }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
+    for (; i < nIters; ++i)
+    {
+        pDst[4 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[4 * i + 1] = pSrc[i + 1 * nIters];
+        pDst[4 * i + 2] = pSrc[i + 2 * nIters];
+        pDst[4 * i + 3] = pSrc[i + 3 * nIters];
+    }
+}
+
+#else
+
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static void
+GDALInterleave4Byte(const uint8_t *CPL_RESTRICT pSrc,
+                    uint8_t *CPL_RESTRICT pDst, size_t nIters)
+{
+#if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
+#pragma clang loop vectorize(enable)
+#endif
+    for (size_t i = 0; i < nIters; ++i)
+    {
+        pDst[4 * i + 0] = pSrc[i + 0 * nIters];
+        pDst[4 * i + 1] = pSrc[i + 1 * nIters];
+        pDst[4 * i + 2] = pSrc[i + 2 * nIters];
+        pDst[4 * i + 3] = pSrc[i + 3 * nIters];
+    }
+}
+
+#endif
+
+/************************************************************************/
+/*                        GDALTranspose2D()                             */
+/************************************************************************/
+
+/**
+ * Transpose a 2D array in a efficient (cache-oblivious) way.
+ *
+ * @param pSrc Source array of width = nSrcWidth and height = nSrcHeight.
+ * @param eSrcType Data type of pSrc.
+ * @param pDst Destination transposed array of width = nSrcHeight and height = nSrcWidth.
+ * @param eDstType Data type of pDst.
+ * @param nSrcWidth Width of pSrc array.
+ * @param nSrcHeight Height of pSrc array.
+ * @since GDAL 3.11
+ */
+
+void GDALTranspose2D(const void *pSrc, GDALDataType eSrcType, void *pDst,
+                     GDALDataType eDstType, size_t nSrcWidth, size_t nSrcHeight)
+{
+    if (eSrcType == eDstType && (eSrcType == GDT_Byte || eSrcType == GDT_Int8))
+    {
+        if (nSrcHeight == 2)
+        {
+            GDALInterleave2Byte(static_cast<const uint8_t *>(pSrc),
+                                static_cast<uint8_t *>(pDst), nSrcWidth);
+            return;
+        }
+        if (nSrcHeight == 4)
+        {
+            GDALInterleave4Byte(static_cast<const uint8_t *>(pSrc),
+                                static_cast<uint8_t *>(pDst), nSrcWidth);
+            return;
+        }
+#if (defined(HAVE_SSSE3_AT_COMPILE_TIME) &&                                    \
+     (defined(__x86_64) || defined(_M_X64)))
+        if (CPLHaveRuntimeSSSE3())
+        {
+            GDALTranspose2D_Byte_SSSE3(static_cast<const uint8_t *>(pSrc),
+                                       static_cast<uint8_t *>(pDst), nSrcWidth,
+                                       nSrcHeight);
+            return;
+        }
+#elif defined(USE_NEON_OPTIMIZATIONS)
+        {
+            GDALTranspose2D_Byte_SSSE3(static_cast<const uint8_t *>(pSrc),
+                                       static_cast<uint8_t *>(pDst), nSrcWidth,
+                                       nSrcHeight);
+            return;
+        }
+#endif
+    }
+
+#define CALL_GDALTranspose2D_internal(DST_TYPE, DST_IS_COMPLEX)                \
+    GDALTranspose2D<DST_TYPE, DST_IS_COMPLEX>(                                 \
+        pSrc, eSrcType, static_cast<DST_TYPE *>(pDst), nSrcWidth, nSrcHeight)
+
+    // clang-format off
+    switch (eDstType)
+    {
+        case GDT_Byte:     CALL_GDALTranspose2D_internal(uint8_t, false); break;
+        case GDT_Int8:     CALL_GDALTranspose2D_internal(int8_t, false); break;
+        case GDT_UInt16:   CALL_GDALTranspose2D_internal(uint16_t, false); break;
+        case GDT_Int16:    CALL_GDALTranspose2D_internal(int16_t, false); break;
+        case GDT_UInt32:   CALL_GDALTranspose2D_internal(uint32_t, false); break;
+        case GDT_Int32:    CALL_GDALTranspose2D_internal(int32_t, false); break;
+        case GDT_UInt64:   CALL_GDALTranspose2D_internal(uint64_t, false); break;
+        case GDT_Int64:    CALL_GDALTranspose2D_internal(int64_t, false); break;
+        case GDT_Float32:  CALL_GDALTranspose2D_internal(float, false); break;
+        case GDT_Float64:  CALL_GDALTranspose2D_internal(double, false); break;
+        case GDT_CInt16:   CALL_GDALTranspose2D_internal(int16_t, true); break;
+        case GDT_CInt32:   CALL_GDALTranspose2D_internal(int32_t, true); break;
+        case GDT_CFloat32: CALL_GDALTranspose2D_internal(float, true); break;
+        case GDT_CFloat64: CALL_GDALTranspose2D_internal(double, true); break;
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            break;
+    }
+        // clang-format on
+
+#undef CALL_GDALTranspose2D_internal
 }
