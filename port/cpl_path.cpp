@@ -578,6 +578,7 @@ const char *CPLResetExtension(const char *pszPath, const char *pszExt)
  * CPLFormFilename(NULL,"def", NULL ) == "def"
  * CPLFormFilename(NULL, "abc/def.dat", NULL ) == "abc/def.dat"
  * CPLFormFilename("/abc/xyz/", "def.dat", NULL ) == "/abc/xyz/def.dat"
+ * CPLFormFilename("/a/b/c", "../d", NULL ) == "/a/b/d" (since 3.10.1)
  * \endcode
  *
  * @param pszPath directory path to the directory containing the file.  This
@@ -631,33 +632,67 @@ const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
         pszAddedPathSep = "/";
     }
 
-    if (!CPLIsFilenameRelative(pszPath) && strcmp(pszBasename, "..") == 0)
+    if (!CPLIsFilenameRelative(pszPath) && pszBasename[0] == '.' &&
+        pszBasename[1] == '.' &&
+        (pszBasename[2] == 0 || pszBasename[2] == '\\' ||
+         pszBasename[2] == '/'))
     {
-        // /a/b + .. --> /a
+        // "/a/b/" + "..[/something]" --> "/a[/something]"
+        // "/a/b" + "..[/something]" --> "/a[/something]"
         if (pszPath[nLenPath - 1] == '\\' || pszPath[nLenPath - 1] == '/')
             nLenPath--;
-        size_t nLenPathOri = nLenPath;
-        while (nLenPath > 0 && pszPath[nLenPath - 1] != '\\' &&
-               pszPath[nLenPath - 1] != '/')
+        while (true)
         {
-            nLenPath--;
-        }
-        if (nLenPath == 1 && pszPath[0] == '/')
-        {
-            pszBasename = "";
-        }
-        else if ((nLenPath > 1 && pszPath[0] == '/') ||
-                 (nLenPath > 2 && pszPath[1] == ':') ||
-                 (nLenPath > 6 && strncmp(pszPath, "\\\\$\\", 4) == 0))
-        {
-            nLenPath--;
-            pszBasename = "";
-        }
-        else
-        {
-            nLenPath = nLenPathOri;
-            if (pszAddedPathSep[0] == 0)
-                pszAddedPathSep = VSIGetDirectorySeparator(pszPath);
+            const char *pszBasenameOri = pszBasename;
+            const size_t nLenPathOri = nLenPath;
+            while (nLenPath > 0 && pszPath[nLenPath - 1] != '\\' &&
+                   pszPath[nLenPath - 1] != '/')
+            {
+                nLenPath--;
+            }
+            if (nLenPath == 1 && pszPath[0] == '/')
+            {
+                pszBasename += 2;
+                if (pszBasename[0] == '/' || pszBasename[0] == '\\')
+                    pszBasename++;
+                if (*pszBasename == '.')
+                {
+                    pszBasename = pszBasenameOri;
+                    nLenPath = nLenPathOri;
+                    if (pszAddedPathSep[0] == 0)
+                        pszAddedPathSep =
+                            pszPath[0] == '/'
+                                ? "/"
+                                : VSIGetDirectorySeparator(pszPath);
+                }
+                break;
+            }
+            else if ((nLenPath > 1 && pszPath[0] == '/') ||
+                     (nLenPath > 2 && pszPath[1] == ':') ||
+                     (nLenPath > 6 && strncmp(pszPath, "\\\\$\\", 4) == 0))
+            {
+                nLenPath--;
+                pszBasename += 2;
+                if ((pszBasename[0] == '/' || pszBasename[0] == '\\') &&
+                    pszBasename[1] == '.' && pszBasename[2] == '.')
+                {
+                    pszBasename++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            else
+            {
+                pszBasename = pszBasenameOri;
+                nLenPath = nLenPathOri;
+                if (pszAddedPathSep[0] == 0)
+                    pszAddedPathSep = pszPath[0] == '/'
+                                          ? "/"
+                                          : VSIGetDirectorySeparator(pszPath);
+                break;
+            }
         }
     }
     else if (nLenPath > 0 && pszPath[nLenPath - 1] != '/' &&
