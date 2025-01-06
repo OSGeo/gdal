@@ -43,6 +43,8 @@
 #include "tifvsi.h"
 #include "xtiffio.h"
 
+#include "tiff_common.h"
+
 /************************************************************************/
 /*                        GetJPEGOverviewCount()                        */
 /************************************************************************/
@@ -5229,88 +5231,10 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
     }
     else
     {
-        m_poColorTable = std::make_unique<GDALColorTable>();
-
         const int nColorCount = 1 << m_nBitsPerSample;
-
-        if (m_nColorTableMultiplier == 0)
-        {
-            // TIFF color maps are in the [0, 65535] range, so some remapping must
-            // be done to get values in the [0, 255] range, but it is not clear
-            // how to do that exactly. Since GDAL 2.3.0 we have standardized on
-            // using a 257 multiplication factor (https://github.com/OSGeo/gdal/commit/eeec5b62e385d53e7f2edaba7b73c7c74bc2af39)
-            // but other software uses 256 (cf https://github.com/OSGeo/gdal/issues/10310)
-            // Do a first pass to check if all values are multiples of 256 or 257.
-            bool bFoundNonZeroEntry = false;
-            bool bAllValuesMultipleOf256 = true;
-            bool bAllValuesMultipleOf257 = true;
-            unsigned short nMaxColor = 0;
-            for (int iColor = 0; iColor < nColorCount; ++iColor)
-            {
-                if (panRed[iColor] > 0 || panGreen[iColor] > 0 ||
-                    panBlue[iColor] > 0)
-                {
-                    bFoundNonZeroEntry = true;
-                }
-                if ((panRed[iColor] % 256) != 0 ||
-                    (panGreen[iColor] % 256) != 0 ||
-                    (panBlue[iColor] % 256) != 0)
-                {
-                    bAllValuesMultipleOf256 = false;
-                }
-                if ((panRed[iColor] % 257) != 0 ||
-                    (panGreen[iColor] % 257) != 0 ||
-                    (panBlue[iColor] % 257) != 0)
-                {
-                    bAllValuesMultipleOf257 = false;
-                }
-
-                nMaxColor = std::max(nMaxColor, panRed[iColor]);
-                nMaxColor = std::max(nMaxColor, panGreen[iColor]);
-                nMaxColor = std::max(nMaxColor, panBlue[iColor]);
-            }
-
-            if (nMaxColor > 0 && nMaxColor < 256)
-            {
-                // Bug 1384 - Some TIFF files are generated with color map entry
-                // values in range 0-255 instead of 0-65535 - try to handle these
-                // gracefully.
-                m_nColorTableMultiplier = 1;
-                CPLDebug("GTiff",
-                         "TIFF ColorTable seems to be improperly scaled with "
-                         "values all in [0,255] range, fixing up.");
-            }
-            else
-            {
-                if (!bAllValuesMultipleOf256 && !bAllValuesMultipleOf257)
-                {
-                    CPLDebug("GTiff",
-                             "The color map contains entries which are not "
-                             "multiple of 256 or 257, so we don't know for "
-                             "sure how to remap them to [0, 255]. Default to "
-                             "using a 257 multiplication factor");
-                }
-                m_nColorTableMultiplier =
-                    (bFoundNonZeroEntry && bAllValuesMultipleOf256)
-                        ? 256
-                        : DEFAULT_COLOR_TABLE_MULTIPLIER_257;
-            }
-        }
-        CPLAssert(m_nColorTableMultiplier > 0);
-        CPLAssert(m_nColorTableMultiplier <= 257);
-        for (int iColor = nColorCount - 1; iColor >= 0; iColor--)
-        {
-            const GDALColorEntry oEntry = {
-                static_cast<short>(panRed[iColor] / m_nColorTableMultiplier),
-                static_cast<short>(panGreen[iColor] / m_nColorTableMultiplier),
-                static_cast<short>(panBlue[iColor] / m_nColorTableMultiplier),
-                static_cast<short>(
-                    m_bNoDataSet && static_cast<int>(m_dfNoDataValue) == iColor
-                        ? 0
-                        : 255)};
-
-            m_poColorTable->SetColorEntry(iColor, &oEntry);
-        }
+        m_poColorTable = gdal::tiff_common::TIFFColorMapTagToColorTable(
+            panRed, panGreen, panBlue, nColorCount, m_nColorTableMultiplier,
+            DEFAULT_COLOR_TABLE_MULTIPLIER_257, m_bNoDataSet, m_dfNoDataValue);
     }
 
     /* -------------------------------------------------------------------- */

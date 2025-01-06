@@ -1574,6 +1574,12 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
             m_poBandRef = bOwned ? nullptr : poBand;
         }
 
+        void reset(std::unique_ptr<GDALRasterBand> poBand)
+        {
+            m_poBandOwned = std::move(poBand);
+            m_poBandRef = nullptr;
+        }
+
         const GDALRasterBand *get() const
         {
             return static_cast<const GDALRasterBand *>(*this);
@@ -1967,6 +1973,12 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 {
   protected:
     CPLErr IReadBlock(int, int, void *) override;
+
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALAllValidMaskBand)
 

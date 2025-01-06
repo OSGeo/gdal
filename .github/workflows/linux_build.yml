@@ -100,13 +100,13 @@ jobs:
             test_script: test.sh
             os: ubuntu-22.04
 
-          - name: Ubuntu 22.04, clang ASAN
+          - name: Ubuntu 24.04, clang ASAN
             id: asan
             travis_branch: sanitize
-            container: ubuntu_22.04
+            container: ubuntu_24.04
             build_script: build.sh
             test_script: test.sh
-            os: ubuntu-22.04
+            os: ubuntu-24.04
 
           - name: Ubuntu 20.04, gcc
             id: ubuntu_20.04
