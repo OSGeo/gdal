@@ -2862,3 +2862,113 @@ def test_vrt_read_float32_complex_source_from_cfloat32():
 
     ds = gdal.Open("data/vrt/complex_non_zero_real_zero_imag_as_float32.vrt")
     assert struct.unpack("f" * 4, ds.ReadRaster()) == (1, 1, 1, 1)
+
+
+###############################################################################
+
+
+def test_vrt_resampling_with_mask_and_overviews(tmp_vsimem):
+
+    filename1 = str(tmp_vsimem / "in1.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename1, 100, 10)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.GetRasterBand(1).WriteRaster(0, 0, 48, 10, b"\xFF" * (48 * 10))
+    ds.GetRasterBand(1).WriteRaster(48, 0, 2, 10, b"\xF0" * (2 * 10))
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 52, 10, b"\xFF" * (52 * 10))
+    ds.BuildOverviews("NEAR", [2])
+    ds.GetRasterBand(1).GetOverview(0).Fill(
+        127
+    )  # to demonstrate we ignore overviews unfortunately
+    ds = None
+
+    filename2 = str(tmp_vsimem / "in2.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename2, 100, 10)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.GetRasterBand(1).WriteRaster(48, 0, 52, 10, b"\xF0" * (52 * 10))
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(48, 0, 52, 10, b"\xFF" * (52 * 10))
+    ds.BuildOverviews("NEAR", [2])
+    ds.GetRasterBand(1).GetOverview(0).Fill(
+        127
+    )  # to demonstrate we ignore overviews unfortunately
+    ds = None
+
+    vrt_filename = str(tmp_vsimem / "test.vrt")
+    gdal.BuildVRT(vrt_filename, [filename1, filename2], resampleAlg=gdal.GRIORA_Cubic)
+
+    ds = gdal.Open(vrt_filename)
+    assert (
+        ds.ReadRaster(buf_xsize=10, buf_ysize=1)
+        == b"\xFF\xFF\xFF\xFF\xFC\xF0\xF0\xF0\xF0\xF0"
+    )
+    assert (
+        ds.GetRasterBand(1).GetMaskBand().ReadRaster(buf_xsize=10, buf_ysize=1)
+        == b"\xFF" * 10
+    )
+
+    vrt_filename = str(tmp_vsimem / "test.vrt")
+    gdal.BuildVRT(
+        vrt_filename, [filename1, filename2], resampleAlg=gdal.GRIORA_Bilinear
+    )
+
+    ds = gdal.Open(vrt_filename)
+    assert (
+        ds.ReadRaster(buf_xsize=10, buf_ysize=1)
+        == b"\xFF\xFF\xFF\xFF\xFB\xF1\xF0\xF0\xF0\xF0"
+    )
+    assert (
+        ds.GetRasterBand(1).GetMaskBand().ReadRaster(buf_xsize=10, buf_ysize=1)
+        == b"\xFF" * 10
+    )
+
+
+###############################################################################
+
+
+def test_vrt_resampling_with_alpha_and_overviews(tmp_vsimem):
+
+    filename1 = str(tmp_vsimem / "in1.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename1, 100, 10, 2, options=["ALPHA=YES"]
+    )
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.GetRasterBand(1).WriteRaster(0, 0, 48, 10, b"\xFF" * (48 * 10))
+    ds.GetRasterBand(1).WriteRaster(48, 0, 2, 10, b"\xF0" * (2 * 10))
+    ds.GetRasterBand(2).WriteRaster(0, 0, 52, 10, b"\xFF" * (52 * 10))
+    ds.BuildOverviews("NEAR", [2])
+    ds.GetRasterBand(1).GetOverview(0).Fill(
+        127
+    )  # to demonstrate we ignore overviews unfortunately
+    ds = None
+
+    filename2 = str(tmp_vsimem / "in2.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename2, 100, 10, 2, options=["ALPHA=YES"]
+    )
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds.GetRasterBand(1).WriteRaster(48, 0, 52, 10, b"\xF0" * (52 * 10))
+    ds.GetRasterBand(2).WriteRaster(48, 0, 52, 10, b"\xFF" * (52 * 10))
+    ds.BuildOverviews("NEAR", [2])
+    ds.GetRasterBand(1).GetOverview(0).Fill(
+        127
+    )  # to demonstrate we ignore overviews unfortunately
+    ds = None
+
+    vrt_filename = str(tmp_vsimem / "test.vrt")
+    gdal.BuildVRT(vrt_filename, [filename1, filename2], resampleAlg=gdal.GRIORA_Cubic)
+
+    ds = gdal.Open(vrt_filename)
+    assert ds.ReadRaster(
+        buf_xsize=10, buf_ysize=1
+    ) == b"\xFF\xFF\xFF\xFF\xFC\xF0\xF0\xF0\xF0\xF0" + (b"\xFF" * 10)
+
+    vrt_filename = str(tmp_vsimem / "test.vrt")
+    gdal.BuildVRT(
+        vrt_filename, [filename1, filename2], resampleAlg=gdal.GRIORA_Bilinear
+    )
+
+    ds = gdal.Open(vrt_filename)
+    assert ds.ReadRaster(
+        buf_xsize=10, buf_ysize=1
+    ) == b"\xFF\xFF\xFF\xFF\xFB\xF1\xF0\xF0\xF0\xF0" + (b"\xFF" * 10)
