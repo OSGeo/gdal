@@ -538,32 +538,39 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         return CE_Failure;
     }
 
+    int nLargestInDTSizeTimesBand = 1;
+    int nLargestOutDTSizeTimesBand = 1;
+    for (const auto &oStep : m_aoSteps)
+    {
+        const int nInDTSizeTimesBand =
+            GDALGetDataTypeSizeBytes(oStep.eInDT) * oStep.nInBands;
+        nLargestInDTSizeTimesBand =
+            std::max(nLargestInDTSizeTimesBand, nInDTSizeTimesBand);
+        const int nOutDTSizeTimesBand =
+            GDALGetDataTypeSizeBytes(oStep.eOutDT) * oStep.nOutBands;
+        nLargestOutDTSizeTimesBand =
+            std::max(nLargestOutDTSizeTimesBand, nOutDTSizeTimesBand);
+    }
+    m_nWorkingBytesPerPixel =
+        nLargestInDTSizeTimesBand + nLargestOutDTSizeTimesBand;
+
     // Use only up to 40% of RAM to acquire source bands and generate the output
     // buffer.
-    const auto nMaxMemAllowed = CPLGetUsablePhysicalRAM() / 10 * 4;
-    if (nMaxMemAllowed > 0)
+    m_nAllowedRAMUsage = CPLGetUsablePhysicalRAM() / 10 * 4;
+    // Only for tests now
+    const char *pszMAX_RAM = "VRT_PROCESSED_DATASET_ALLOWED_RAM_USAGE";
+    if (const char *pszVal = CPLGetConfigOption(pszMAX_RAM, nullptr))
     {
-        int nLargestInDTSizeTimesBand = 1;
-        int nLargestOutDTSizeTimesBand = 1;
-        for (const auto &oStep : m_aoSteps)
-        {
-            const int nInDTSizeTimesBand =
-                GDALGetDataTypeSizeBytes(oStep.eInDT) * oStep.nInBands;
-            nLargestInDTSizeTimesBand =
-                std::max(nLargestInDTSizeTimesBand, nInDTSizeTimesBand);
-            const int nOutDTSizeTimesBand =
-                GDALGetDataTypeSizeBytes(oStep.eOutDT) * oStep.nOutBands;
-            nLargestOutDTSizeTimesBand =
-                std::max(nLargestOutDTSizeTimesBand, nOutDTSizeTimesBand);
-        }
+        CPL_IGNORE_RET_VAL(
+            CPLParseMemorySize(pszVal, &m_nAllowedRAMUsage, nullptr));
+    }
 
-        const int nPerPixelSize =
-            nLargestInDTSizeTimesBand + nLargestOutDTSizeTimesBand;
-
+    if (m_nAllowedRAMUsage > 0)
+    {
         bool bBlockSizeModified = false;
         while ((m_nBlockXSize >= 2 || m_nBlockYSize >= 2) &&
                static_cast<GIntBig>(m_nBlockXSize) * m_nBlockYSize >
-                   nMaxMemAllowed / nPerPixelSize)
+                   m_nAllowedRAMUsage / m_nWorkingBytesPerPixel)
         {
             if ((m_nBlockXSize == nRasterXSize ||
                  m_nBlockYSize >= m_nBlockXSize) &&
@@ -669,31 +676,6 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
 
     m_oXMLTree.reset(CPLCloneXMLTree(psTree));
-
-    int nLargestInDTSizeTimesBand = 1;
-    int nLargestOutDTSizeTimesBand = 1;
-    for (const auto &oStep : m_aoSteps)
-    {
-        const int nInDTSizeTimesBand =
-            GDALGetDataTypeSizeBytes(oStep.eInDT) * oStep.nInBands;
-        nLargestInDTSizeTimesBand =
-            std::max(nLargestInDTSizeTimesBand, nInDTSizeTimesBand);
-        const int nOutDTSizeTimesBand =
-            GDALGetDataTypeSizeBytes(oStep.eOutDT) * oStep.nOutBands;
-        nLargestOutDTSizeTimesBand =
-            std::max(nLargestOutDTSizeTimesBand, nOutDTSizeTimesBand);
-    }
-    m_nWorkingBytesPerPixel =
-        nLargestInDTSizeTimesBand + nLargestOutDTSizeTimesBand;
-
-    m_nAllowedRAMUsage = CPLGetUsablePhysicalRAM() / 10 * 4;
-    // Only for tests now
-    const char *pszMAX_RAM = "VRT_PROCESSED_DATASET_ALLOWED_RAM_USAGE";
-    if (const char *pszVal = CPLGetConfigOption(pszMAX_RAM, nullptr))
-    {
-        CPL_IGNORE_RET_VAL(
-            CPLParseMemorySize(pszVal, &m_nAllowedRAMUsage, nullptr));
-    }
 
     return CE_None;
 }

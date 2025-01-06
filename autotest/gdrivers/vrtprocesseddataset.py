@@ -1514,5 +1514,6 @@ def test_vrtprocesseddataset_RasterIO(tmp_vsimem):
 
     with gdal.config_option("VRT_PROCESSED_DATASET_ALLOWED_RAM_USAGE", "96"):
         ds = gdal.Open(vrt_content)
+        assert ds.GetRasterBand(1).GetBlockSize() == [1, 1]
         with pytest.raises(Exception):
             ds.ReadAsArray()
