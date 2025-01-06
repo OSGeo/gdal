@@ -2389,6 +2389,29 @@ def test_gml_CircleByCenterPoint_srs_geog_uom_m_km():
 
 
 ###############################################################################
+# Test GML CircleByCenterPoint with unhandled uom
+
+
+def test_gml_CircleByCenterPoint_srs_geog_unnhandled_uom():
+
+    gml = '<gml:CircleByCenterPoint gml:id="geom_id" srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="unhandled">2000</gml:radius></gml:CircleByCenterPoint>'
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        ogr.CreateGeometryFromGML(gml)
+        assert (
+            gdal.GetLastErrorMsg()
+            == "GML geometry id='geom_id': Unhandled distance unit 'unhandled' in attribute 'radius'"
+        )
+
+    gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>2 49</gml:pos><gml:radius uom="unhandled">2000</gml:radius></gml:CircleByCenterPoint>'
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        ogr.CreateGeometryFromGML(gml)
+        assert (
+            gdal.GetLastErrorMsg()
+            == "Unhandled distance unit 'unhandled' in attribute 'radius'"
+        )
+
+
+###############################################################################
 # Test compound curve of ArcByCenterPoint whose ends don't exactly match
 # with ends of neighbouring curves, as found in some AIXM files
 # with all curves in the same <segment> element as found in #2356)
