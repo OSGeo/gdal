@@ -139,7 +139,7 @@ defined as a child element of ``VRTDataset``, with the following 2 attributes:
   returned by the initialization function of the last step, or an integer value.
 
 * ``dataType`` whose value can be ``FROM_SOURCE`` to indicate that the output band
-  data type must be the same as one of the input dataset,
+  data type must be the same as the one of the input dataset,
   ``FROM_LAST_STEP`` to indicate that it must be the one returned by the
   initialization function of the last step, or a value among
   Byte, Int8, UInt16, Int16, UInt32, Int32, UInt64, Int64, Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64
