@@ -1127,6 +1127,17 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         return m_decl.GetChoices();
     }
 
+    /** Return auto completion choices, if a auto completion function has been
+     * registered.
+     */
+    inline std::vector<std::string>
+    GetAutoCompleteChoices(const std::string &currentValue) const
+    {
+        if (m_autoCompleteFunction)
+            return m_autoCompleteFunction(currentValue);
+        return {};
+    }
+
     /** Return whether the argument value has been explicitly set with Set() */
     inline bool IsExplicitlySet() const
     {
@@ -1384,6 +1395,9 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     std::vector<std::function<void()>> m_actions{};
     /** Validation actions */
     std::vector<std::function<bool()>> m_validationActions{};
+    /** Autocompletion function */
+    std::function<std::vector<std::string>(const std::string &)>
+        m_autoCompleteFunction{};
 
   private:
     bool m_skipIfAlreadySet = false;
@@ -1607,6 +1621,16 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
         return *this;
     }
 
+    /** Register a function that will return a list of valid choices for
+     * the value of the argument. This is typically used for autocompletion.
+     */
+    GDALInConstructionAlgorithmArg &SetAutoCompleteFunction(
+        std::function<std::vector<std::string>(const std::string &)> f)
+    {
+        m_autoCompleteFunction = f;
+        return *this;
+    }
+
     /** Register an action to validate that the argument value is a valid
      * CRS definition.
      * @param noneAllowed Set to true to mean that "null" or "none" are allowed
@@ -1797,19 +1821,15 @@ class CPL_DLL GDALAlgorithmRegistry
         return m_args;
     }
 
-    /** Return an argument from its (long) name */
+    /** Return an argument from its long name, short name or an alias */
     GDALAlgorithmArg *GetArg(const std::string &osName)
     {
-        auto oIter = m_mapLongNameToArg.find(osName);
-        return oIter != m_mapLongNameToArg.end() ? oIter->second : nullptr;
+        return const_cast<GDALAlgorithmArg *>(
+            const_cast<const GDALAlgorithm *>(this)->GetArg(osName));
     }
 
-    /** Return an argument from its (long) name */
-    const GDALAlgorithmArg *GetArg(const std::string &osName) const
-    {
-        auto oIter = m_mapLongNameToArg.find(osName);
-        return oIter != m_mapLongNameToArg.end() ? oIter->second : nullptr;
-    }
+    /** Return an argument from its long name, short name or an alias */
+    const GDALAlgorithmArg *GetArg(const std::string &osName) const;
 
     /** Set the calling path to this algorithm.
      *
@@ -1819,6 +1839,15 @@ class CPL_DLL GDALAlgorithmRegistry
     void SetCallPath(const std::vector<std::string> &path)
     {
         m_callPath = path;
+    }
+
+    /** Set hint before calling ParseCommandLineArguments() that it must
+     * try to be be graceful when possible, e.g. accepting
+     * "gdal raster convert in.tif out.tif --co"
+     */
+    void SetParseForAutoCompletion()
+    {
+        m_parseForAutoCompletion = true;
     }
 
     /** Parse a command line argument, which does not include the algorithm
@@ -1924,6 +1953,10 @@ class CPL_DLL GDALAlgorithmRegistry
         }
         return false;
     }
+
+    /** Return auto completion suggestions */
+    virtual std::vector<std::string>
+    GetAutoComplete(std::vector<std::string> &args, bool showAllOptions);
 
   protected:
     friend class GDALInConstructionAlgorithmArg;
@@ -2131,12 +2164,16 @@ class CPL_DLL GDALAlgorithmRegistry
     bool m_helpRequested = false;
     bool m_JSONUsageRequested = false;
     bool m_dummyBoolean = false;  // Used for --version
+    bool m_parseForAutoCompletion = false;
+    std::vector<std::string> m_dummyConfigOptions{};
     std::vector<std::unique_ptr<GDALAlgorithmArg>> m_args{};
     std::map<std::string, GDALAlgorithmArg *> m_mapLongNameToArg{};
     std::map<std::string, GDALAlgorithmArg *> m_mapShortNameToArg{};
     std::vector<GDALAlgorithmArg *> m_positionalArgs{};
     GDALAlgorithmRegistry m_subAlgRegistry{};
     std::unique_ptr<GDALAlgorithm> m_shortCutAlg{};
+    std::function<std::vector<std::string>(const std::vector<std::string> &)>
+        m_autoCompleteFunction{};
 
     GDALInConstructionAlgorithmArg &
     AddArg(std::unique_ptr<GDALInConstructionAlgorithmArg> arg);
@@ -2152,6 +2189,13 @@ class CPL_DLL GDALAlgorithmRegistry
     bool ValidateFormat(const GDALAlgorithmArg &arg) const;
 
     virtual bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
+
+    /** Extract the last option and its potential value from the provided
+     * argument list, and remove them from the list.
+     */
+    void ExtractLastOptionAndValue(std::vector<std::string> &args,
+                                   std::string &option,
+                                   std::string &value) const;
 
     GDALAlgorithm(const GDALAlgorithm &) = delete;
     GDALAlgorithm &operator=(const GDALAlgorithm &) = delete;

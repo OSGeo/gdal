@@ -1252,7 +1252,7 @@ void GDALRegister_GTiff()
         osOptions +=
             ""
             "   <Option name='JPEG_QUALITY' type='int' description='JPEG "
-            "quality 1-100' default='75'/>"
+            "quality 1-100' min='1' max='100' default='75'/>"
             "   <Option name='JPEGTABLESMODE' type='int' description='Content "
             "of JPEGTABLES tag. 0=no JPEGTABLES tag, 1=Quantization tables "
             "only, 2=Huffman tables only, 3=Both' default='1'/>";
@@ -1269,23 +1269,24 @@ void GDALRegister_GTiff()
 #ifdef LIBDEFLATE_SUPPORT
         osOptions += ""
                      "   <Option name='ZLEVEL' type='int' description='DEFLATE "
-                     "compression level 1-12' default='6'/>";
+                     "compression level 1-12' min='1' max='12' default='6'/>";
 #else
         osOptions += ""
                      "   <Option name='ZLEVEL' type='int' description='DEFLATE "
-                     "compression level 1-9' default='6'/>";
+                     "compression level 1-9' min='1' max='9' default='6'/>";
 #endif
     }
     if (bHasLZMA)
         osOptions +=
             ""
             "   <Option name='LZMA_PRESET' type='int' description='LZMA "
-            "compression level 0(fast)-9(slow)' default='6'/>";
+            "compression level 0(fast)-9(slow)' min='0' max='9' default='6'/>";
     if (bHasZSTD)
         osOptions +=
             ""
             "   <Option name='ZSTD_LEVEL' type='int' description='ZSTD "
-            "compression level 1(fast)-22(slow)' default='9'/>";
+            "compression level 1(fast)-22(slow)' min='1' max='22' "
+            "default='9'/>";
     if (bHasLERC)
     {
         osOptions +=
@@ -1318,7 +1319,7 @@ void GDALRegister_GTiff()
         "   <Option name='JXL_LOSSLESS' type='boolean' description='Whether "
         "JPEGXL compression should be lossless' default='YES'/>"
         "   <Option name='JXL_EFFORT' type='int' description='Level of effort "
-        "1(fast)-9(slow)' default='5'/>"
+        "1(fast)-9(slow)' min='1' max='9' default='5'/>"
         "   <Option name='JXL_DISTANCE' type='float' description='Distance "
         "level for lossy compression (0=mathematically lossless, 1.0=visually "
         "lossless, usual range [0.5,3])' default='1.0' min='0.01' max='25.0'/>";

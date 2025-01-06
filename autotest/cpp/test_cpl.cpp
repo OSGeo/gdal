@@ -1334,6 +1334,10 @@ TEST_F(test_cpl, CPLDeclareKnownConfigOption)
     {
         CPLDeclareKnownConfigOption("DECLARED_OPTION", nullptr);
 
+        const CPLStringList aosKnownConfigOptions(CPLGetKnownConfigOptions());
+        EXPECT_GE(aosKnownConfigOptions.FindString("CPL_DEBUG"), 0);
+        EXPECT_GE(aosKnownConfigOptions.FindString("DECLARED_OPTION"), 0);
+
         CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         CPLErrorReset();
         CPLConfigOptionSetter oDeclaredConfigOptionSetter("DECLARED_OPTION",

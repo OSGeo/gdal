@@ -183,7 +183,9 @@ def getCompletionScript(name, optList):
             output.append("  esac\n")
     else:
         # ogr type
-        formatParsingCmd = "$tool --formats | tail -n +2 | grep -o -E '\"[^\"]+\"' | sed 's/\ /__/'"  # noqa: W605
+        formatParsingCmd = (
+            "$tool --formats | tail -n +2 | grep -o -E '\"[^\"]+\"' | sed 's/\\ /__/'"
+        )
         if "-f" in optList:
             # replace ogrtindex by ogr2ogr to check --formats
             output.append("  tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}\n")
@@ -274,6 +276,39 @@ function_exists() {
 
 # Checks that bash-completion is recent enough
 function_exists _get_comp_words_by_ref || return 0
+
+_gdal()
+{
+  local cur prev
+  COMPREPLY=()
+  _get_comp_words_by_ref cur prev
+  choices=$(gdal completion ${COMP_LINE})
+  if [[ "$cur" == "=" ]]; then
+    mapfile -t COMPREPLY < <(compgen -W "$choices" --)
+  elif [[ "$cur" == ":" ]]; then
+    mapfile -t COMPREPLY < <(compgen -W "$choices" --)
+  elif [[ "$cur" == "!" ]]; then
+    mapfile -t COMPREPLY < <(compgen -W "$choices" -P "! " --)
+  else
+    mapfile -t COMPREPLY < <(compgen -W "$choices" -- "$cur")
+  fi
+  for element in "${COMPREPLY[@]}"; do
+    if [[ $element == */ ]]; then
+      # Do not add a space if one of the suggestion ends with slash
+      compopt -o nospace
+      break
+    elif [[ $element == *= ]]; then
+      # Do not add a space if one of the suggestion ends with equal
+      compopt -o nospace
+      break
+    elif [[ $element == *: ]]; then
+      # Do not add a space if one of the suggestion ends with colon
+      compopt -o nospace
+      break
+    fi
+  done
+}
+complete -o default -F _gdal gdal
 
 """
     )

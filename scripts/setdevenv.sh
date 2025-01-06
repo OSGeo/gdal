@@ -67,3 +67,8 @@ if [[ ! "${PYTHONPATH:-}" =~ $GDAL_PYTHONPATH ]]; then
     echo "Setting PYTHONPATH=$PYTHONPATH"
 fi
 unset GDAL_PYTHONPATH
+
+if [[ $BASH_VERSION ]]; then
+  echo "Sourcing ${GDAL_ROOT}/scripts/gdal-bash-completion.sh"
+  source "${GDAL_ROOT}/scripts/gdal-bash-completion.sh"
+fi

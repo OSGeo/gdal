@@ -14,6 +14,7 @@
 #define GDALALG_RASTER_PIPELINE_INCLUDED
 
 #include "gdalalgorithm.h"
+#include "gdalalg_abstract_pipeline.h"
 
 //! @cond Doxygen_Suppress
 
@@ -30,6 +31,7 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
                                     bool standaloneStep);
 
     friend class GDALRasterPipelineAlgorithm;
+    friend class GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>;
 
     virtual bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) = 0;
 
@@ -67,7 +69,8 @@ class GDALRasterPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
 #define GDAL_PIPELINE_PROJ_NOSTALGIA
 #endif
 
-class GDALRasterPipelineAlgorithm final : public GDALRasterPipelineStepAlgorithm
+class GDALRasterPipelineAlgorithm final
+    : public GDALAbstractPipelineAlgorithm<GDALRasterPipelineStepAlgorithm>
 {
   public:
     static constexpr const char *NAME = "pipeline";
@@ -91,33 +94,19 @@ class GDALRasterPipelineAlgorithm final : public GDALRasterPipelineStepAlgorithm
     bool
     ParseCommandLineArguments(const std::vector<std::string> &args) override;
 
-    bool Finalize() override;
-
     std::string GetUsageForCLI(bool shortUsage,
                                const UsageOptions &usageOptions) const override;
-
-    std::string GetUsageAsJSON() const override;
 
     GDALDataset *GetDatasetRef()
     {
         return m_inputDataset.GetDatasetRef();
     }
 
-    /* cppcheck-suppress functionStatic */
-    void SetDataset(GDALDataset *)
+  protected:
+    GDALArgDatasetValue &GetOutputDataset() override
     {
+        return m_outputDataset;
     }
-
-  private:
-    std::string m_pipeline{};
-
-    bool RunStep(GDALProgressFunc pfnProgress, void *pProgressData) override;
-
-    std::unique_ptr<GDALRasterPipelineStepAlgorithm>
-    GetStepAlg(const std::string &name) const;
-
-    GDALAlgorithmRegistry m_stepRegistry{};
-    std::vector<std::unique_ptr<GDALRasterPipelineStepAlgorithm>> m_steps{};
 };
 
 //! @endcond

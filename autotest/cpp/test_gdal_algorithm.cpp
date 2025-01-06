@@ -597,7 +597,13 @@ TEST_F(test_gdal_algorithm, GDALInConstructionAlgorithmArg_AddAlias)
 
     MyAlgorithm alg;
     alg.GetUsageForCLI(false);
+    EXPECT_NE(alg.GetArg("flag"), nullptr);
+    EXPECT_NE(alg.GetArg("--flag"), nullptr);
+    EXPECT_NE(alg.GetArg("-f"), nullptr);
+    EXPECT_NE(alg.GetArg("f"), nullptr);
     EXPECT_NE(alg.GetArg("alias"), nullptr);
+    EXPECT_EQ(alg.GetArg("invalid"), nullptr);
+    EXPECT_EQ(alg.GetArg("-"), nullptr);
 }
 
 TEST_F(test_gdal_algorithm, GDALInConstructionAlgorithmArg_AddAlias_redundant)
@@ -2919,7 +2925,7 @@ TEST_F(test_gdal_algorithm, algorithm_c_api)
 
     char **argNames = GDALAlgorithmGetArgNames(hAlg.get());
     ASSERT_NE(argNames, nullptr);
-    EXPECT_EQ(CSLCount(argNames), 12);
+    EXPECT_EQ(CSLCount(argNames), 13);
     CSLDestroy(argNames);
 
     EXPECT_EQ(GDALAlgorithmGetArg(hAlg.get(), "non_existing"), nullptr);
