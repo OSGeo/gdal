@@ -949,7 +949,8 @@ void GTiffDataset::RestoreVolatileParameters(TIFF *hTIFF)
         if (m_bWebPLossless && m_nCompression == COMPRESSION_WEBP)
             TIFFSetField(hTIFF, TIFFTAG_WEBP_LOSSLESS, 1);
 #ifdef HAVE_JXL
-        if (m_nCompression == COMPRESSION_JXL)
+        if (m_nCompression == COMPRESSION_JXL ||
+            m_nCompression == COMPRESSION_JXL_DNG_1_7)
         {
             TIFFSetField(hTIFF, TIFFTAG_JXL_LOSSYNESS,
                          m_bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);

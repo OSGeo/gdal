@@ -4683,6 +4683,28 @@ def test_tiff_jxl_read_for_files_created_before_6393():
 
 
 ###############################################################################
+# Test reading Compression=50002 deprecated value
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_read_jxl_deprecated_50002():
+    ds = gdal.Open("data/gtiff/byte_jxl_deprecated_50002.tif")
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "JXL"
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+# Test reading Compression=52546 value used in DNG 1.7
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_read_jxl_dng_1_7_52546():
+    ds = gdal.Open("data/gtiff/byte_jxl_dng_1_7_52546.tif")
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "JXL"
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
 # Test multi-threaded decoding
 
 
