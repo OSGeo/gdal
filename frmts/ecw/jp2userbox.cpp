@@ -87,7 +87,7 @@ CNCSError JP2UserBox::Parse(CPL_UNUSED class CNCSJP2File &JP2File,
                             CPL_UNUSED CNCSJPCIOStream &Stream)
 #endif
 {
-    CNCSError Error(GetCNCSError(NCS_SUCCESS));
+    CNCSError Error;
 
     return Error;
 }

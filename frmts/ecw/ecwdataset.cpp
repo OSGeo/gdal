@@ -2262,7 +2262,7 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         // This is tricky, because it expects the rest of the image
         // with this buffer width to be read. The preferred way to
-        // achieve this behavior would be to call AdviseRead before
+        // achieve this behaviour would be to call AdviseRead before
         // call IRasterIO.  The logic could be improved to detect
         // successive pattern of single line reading before doing an
         // AdviseRead.
@@ -2977,6 +2977,172 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
     // output jp2 header info
     if (bIsJPEG2000 && poDS->poFileView)
     {
+#if ECWSDK_VERSION >= 60
+        NCS::CString comments = poDS->poFileView->metadata->jp2.Comments();
+        if (!comments.empty())
+        {
+            poDS->SetMetadataItem(
+                "ALL_COMMENTS", CPLString().Printf("%s", comments.utf8_str()));
+        }
+
+        // Profile
+        UINT32 nProfile = 2;
+        UINT16 nRsiz = poDS->poFileView->metadata->jp2.ComplianceProfileType();
+        if (nRsiz == 0)
+            nProfile = 2;  // Profile 2 (no restrictions)
+        else if (nRsiz == 1)
+            nProfile = 0;  // Profile 0
+        else if (nRsiz == 2)
+            nProfile = 1;  // Profile 1, NITF_BIIF_NPJE, NITF_BIIF_EPJE
+        poDS->SetMetadataItem("PROFILE", CPLString().Printf("%d", nProfile),
+                              JPEG2000_DOMAIN_NAME);
+
+        // number of tiles on X axis
+        UINT32 nTileNrX = poDS->poFileView->metadata->jp2.NumberOfTiles().x;
+        poDS->SetMetadataItem("TILES_X", CPLString().Printf("%d", nTileNrX),
+                              JPEG2000_DOMAIN_NAME);
+
+        // number of tiles on X axis
+        UINT32 nTileNrY = poDS->poFileView->metadata->jp2.NumberOfTiles().y;
+        poDS->SetMetadataItem("TILES_Y", CPLString().Printf("%d", nTileNrY),
+                              JPEG2000_DOMAIN_NAME);
+
+        // Tile Width
+        UINT32 nTileSizeX = poDS->poFileView->metadata->jp2.TileSize().width;
+        poDS->SetMetadataItem("TILE_WIDTH",
+                              CPLString().Printf("%d", nTileSizeX),
+                              JPEG2000_DOMAIN_NAME);
+
+        // Tile Height
+        UINT32 nTileSizeY = poDS->poFileView->metadata->jp2.TileSize().height;
+        poDS->SetMetadataItem("TILE_HEIGHT",
+                              CPLString().Printf("%d", nTileSizeY),
+                              JPEG2000_DOMAIN_NAME);
+
+        // Precinct Sizes on X,Y axis
+        std::vector<NCS::ViewMetadata::dimensions> Precinctdim =
+            poDS->poFileView->metadata->jp2.PrecinctSize();
+
+        if (!Precinctdim.empty())
+        {
+            std::string sX = std::to_string(Precinctdim[0].width);
+            std::string sY = std::to_string(Precinctdim[0].height);
+            for (std::size_t i = 1; i < Precinctdim.size(); ++i)
+            {
+                std::string stempX = std::to_string(Precinctdim[i].width);
+                std::string stempY = std::to_string(Precinctdim[i].height);
+                sX += "," + stempX;
+                sY += "," + stempY;
+            }
+            char const *csPreSizeX = sX.c_str();
+            char const *csPreSizeY = sY.c_str();
+            poDS->SetMetadataItem("PRECINCT_SIZE_X", csPreSizeX,
+                                  JPEG2000_DOMAIN_NAME);
+            poDS->SetMetadataItem("PRECINCT_SIZE_Y", csPreSizeY,
+                                  JPEG2000_DOMAIN_NAME);
+        }
+
+        // Code Block Size on X axis
+        UINT32 nCodeBlockSizeX =
+            poDS->poFileView->metadata->jp2.CodeBlock().width;
+        poDS->SetMetadataItem("CODE_BLOCK_SIZE_X",
+                              CPLString().Printf("%d", nCodeBlockSizeX),
+                              JPEG2000_DOMAIN_NAME);
+
+        // Code Block Size on Y axis
+        UINT32 nCodeBlockSizeY =
+            poDS->poFileView->metadata->jp2.CodeBlock().height;
+        poDS->SetMetadataItem("CODE_BLOCK_SIZE_Y",
+                              CPLString().Printf("%d", nCodeBlockSizeY),
+                              JPEG2000_DOMAIN_NAME);
+
+        // Bitdepth
+        std::vector<UINT8> BitdepthList =
+            poDS->poFileView->metadata->jp2.BitDepth();
+
+        if (!BitdepthList.empty())
+        {
+            std::string sbitdepth = std::to_string(BitdepthList[0]);
+
+            for (std::size_t i = 1; i < BitdepthList.size(); ++i)
+            {
+                std::string stempbitdepth = std::to_string(BitdepthList[i]);
+                sbitdepth += "," + stempbitdepth;
+            }
+            char const *csBitdepth = sbitdepth.c_str();
+            poDS->SetMetadataItem("PRECISION", csBitdepth,
+                                  JPEG2000_DOMAIN_NAME);
+        }
+
+        // Resolution Levels
+        UINT32 nLevels = poDS->poFileView->metadata->jp2.Levels();
+        poDS->SetMetadataItem("RESOLUTION_LEVELS",
+                              CPLString().Printf("%d", nLevels),
+                              JPEG2000_DOMAIN_NAME);
+
+        // Quality Layers
+        UINT32 nLayers = poDS->poFileView->metadata->jp2.Layers();
+        poDS->SetMetadataItem("QUALITY_LAYERS",
+                              CPLString().Printf("%d", nLayers),
+                              JPEG2000_DOMAIN_NAME);
+
+        // Progression Order
+        NCS::JPC::CProgressionOrderType::Type orderType =
+            poDS->poFileView->metadata->jp2.PrecinctProgressionOrder();
+
+        const char *csOrder = nullptr;
+        switch (orderType)
+        {
+            case NCS::JPC::CProgressionOrderType::Type::LRCP:
+                csOrder = "LRCP";
+                break;
+            case NCS::JPC::CProgressionOrderType::Type::RLCP:
+                csOrder = "RLCP";
+                break;
+            case NCS::JPC::CProgressionOrderType::Type::RPCL:
+                csOrder = "RPCL";
+                break;
+            case NCS::JPC::CProgressionOrderType::Type::PCRL:
+                csOrder = "PCRL";
+                break;
+            case NCS::JPC::CProgressionOrderType::Type::CPRL:
+                csOrder = "CPRL";
+                break;
+        }
+        if (csOrder)
+        {
+            poDS->SetMetadataItem("PROGRESSION_ORDER", csOrder,
+                                  JPEG2000_DOMAIN_NAME);
+        }
+
+        // DWT Filter
+        const char *csFilter = nullptr;
+        NCS::JPC::CCodingStyleParameter::TransformationType tranformationType =
+            poDS->poFileView->metadata->jp2.TransformationType();
+        if (tranformationType ==
+            NCS::JPC::CCodingStyleParameter::TransformationType::REVERSIBLE_5x3)
+            csFilter = "5x3";
+        else
+            csFilter = "9x7";
+        poDS->SetMetadataItem("TRANSFORMATION_TYPE", csFilter,
+                              JPEG2000_DOMAIN_NAME);
+
+        // SOP used?
+        bool bSOP = poDS->poFileView->metadata->jp2.SOPExists();
+        poDS->SetMetadataItem("USE_SOP", (bSOP) ? "TRUE" : "FALSE",
+                              JPEG2000_DOMAIN_NAME);
+
+        // EPH used?
+        bool bEPH = poDS->poFileView->metadata->jp2.EPHExists();
+        poDS->SetMetadataItem("USE_EPH", (bEPH) ? "TRUE" : "FALSE",
+                              JPEG2000_DOMAIN_NAME);
+
+        // GML JP2 data contained?
+        bool bGML = poDS->poFileView->metadata->jp2.GMLJP2BoxExists();
+        poDS->SetMetadataItem("GML_JP2_DATA", (bGML) ? "TRUE" : "FALSE",
+                              JPEG2000_DOMAIN_NAME);
+
+#else 	
         // comments
         char *csComments = nullptr;
         poDS->poFileView->GetParameter((char *)"JPC:DECOMPRESS:COMMENTS",
@@ -3130,7 +3296,7 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
                                            CPLString().Printf("%d", nLevels),
                                            JPEG2000_DOMAIN_NAME);
 
-        // Qualaity Layers
+        // Quality Layers
         UINT32 nLayers = 0;
         poDS->poFileView->GetParameter((char *)"JP2:DECOMPRESS:LAYERS",
                                        &nLayers);
@@ -3180,6 +3346,7 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
         poDS->poFileView->GetParameter((char *)"JP2:GML:JP2:BOX:EXISTS", &bGML);
         poDS->SetMetadataItem("GML_JP2_DATA", (bGML) ? "TRUE" : "FALSE",
                               JPEG2000_DOMAIN_NAME);
+#endif  //ECWSDK_VERSION>=60							  
     }
 #endif  // ECWSDK_VERSION>=51
     if (!bIsJPEG2000 && poDS->psFileInfo->nFormatVersion >= 3)
@@ -3445,7 +3612,7 @@ void ECWDataset::ECW2WKTProjection()
     /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
 
-    /* For backward-compatible with previous behavior. Should we only */
+    /* For backward-compatible with previous behaviour. Should we only */
     /* restrict to those 2 values ? */
     if (psFileInfo->eCellSizeUnits != ECW_CELL_UNITS_METERS &&
         psFileInfo->eCellSizeUnits != ECW_CELL_UNITS_FEET)
@@ -3709,10 +3876,19 @@ void ECWInitialize()
     /*      the toolkit.                                                    */
     /* -------------------------------------------------------------------- */
     if (!CPLTestBool(CPLGetConfigOption("CONVERT_YCBCR_TO_RGB", "YES")))
+#if ECWSDK_VERSION >= 60
+        NCS::SDK::CFileBase::sConfig().SetManageICC(false);
+#else	
         NCSecwSetConfig(NCSCFG_JP2_MANAGE_ICC, FALSE);
+#endif		
 #if ECWSDK_VERSION >= 50
+    #if ECWSDK_VERSION >= 60
+        NCS::SDK::CFileBase::sConfig().SetEcwpClientHttpUserAgent(
+            "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
+    #else
     NCSecwSetConfig(NCSCFG_ECWP_CLIENT_HTTP_USER_AGENT,
                     "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
+	#endif					
 #endif
     /* -------------------------------------------------------------------- */
     /*      Initialize cache memory limit.  Default is apparently 1/4 RAM.  */
@@ -3723,19 +3899,29 @@ void ECWInitialize()
         pszEcwCacheSize = CPLGetConfigOption("ECW_CACHE_MAXMEM", nullptr);
 
     if (pszEcwCacheSize != nullptr)
+#if ECWSDK_VERSION >= 60
+        NCS::SDK::CFileBase::sConfig().SetCacheMaxmem(
+            (UINT64)atoi(pszEcwCacheSize));
+#else	
         NCSecwSetConfig(NCSCFG_CACHE_MAXMEM, (UINT32)atoi(pszEcwCacheSize));
+#endif		
 
 /* -------------------------------------------------------------------- */
 /*      Version 3.x and 4.x of the ECWJP2 SDK did not resolve datum and */
 /*      projection to EPSG code using internal mapping.                 */
 /*      Version 5.x do so we provide means to achieve old               */
-/*      behavior.                                                      */
+/*      behaviour.                                                      */
 /* -------------------------------------------------------------------- */
 #if ECWSDK_VERSION >= 50
     if (CPLTestBool(CPLGetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION",
                                        "NO")) == TRUE)
-        NCSecwSetConfig(NCSCFG_PROJECTION_FORMAT,
-                        NCS_PROJECTION_ERMAPPER_FORMAT);
+        #if ECWSDK_VERSION >= 60
+                NCS::SDK::CFileBase::sConfig().SetProjectionFormat(
+                    NCS_PROJECTION_ERMAPPER_FORMAT);
+        #else									   
+	        NCSecwSetConfig(NCSCFG_PROJECTION_FORMAT,
+	                        NCS_PROJECTION_ERMAPPER_FORMAT);
+		#endif						
 #endif
     /* -------------------------------------------------------------------- */
     /*      Allow configuration of a local cache based on configuration     */
@@ -3747,19 +3933,58 @@ void ECWInitialize()
 #if ECWSDK_VERSION >= 40
     pszOpt = CPLGetConfigOption("ECWP_CACHE_SIZE_MB", nullptr);
     if (pszOpt)
-        NCSecwSetConfig(NCSCFG_ECWP_CACHE_SIZE_MB, (INT32)atoi(pszOpt));
+        #if ECWSDK_VERSION >= 60
+                        NCS::SDK::CFileBase::sConfig().SetEcwpCacheSizeMb(
+                            (INT32)atoi(pszOpt));
+        #else	
+        	NCSecwSetConfig(NCSCFG_ECWP_CACHE_SIZE_MB, (INT32)atoi(pszOpt));
+		#endif		
 
     pszOpt = CPLGetConfigOption("ECWP_CACHE_LOCATION", nullptr);
     if (pszOpt)
     {
-        NCSecwSetConfig(NCSCFG_ECWP_CACHE_LOCATION, pszOpt);
-        NCSecwSetConfig(NCSCFG_ECWP_CACHE_ENABLED, (BOOLEAN)TRUE);
+        #if ECWSDK_VERSION >= 60
+                        NCS::SDK::CFileBase::sConfig().SetEcwpCacheLocation(pszOpt);
+                        NCS::SDK::CFileBase::sConfig().SetEcwpCacheEnabled(true);
+        #else	
+	        NCSecwSetConfig(NCSCFG_ECWP_CACHE_LOCATION, pszOpt);
+	        NCSecwSetConfig(NCSCFG_ECWP_CACHE_ENABLED, (BOOLEAN)TRUE);
+		#endif			
     }
-#endif
+#endif	//ECWSDK_VERSION >=40
 
     /* -------------------------------------------------------------------- */
     /*      Various other configuration items.                              */
     /* -------------------------------------------------------------------- */
+#if ECWSDK_VERSION >= 60
+    pszOpt = CPLGetConfigOption("ECWP_BLOCKING_TIME_MS", nullptr);
+    if (pszOpt)
+                        NCS::SDK::CFileBase::sConfig().SetBlockingTimeMS(
+                            (NCSTimeStampMs)atoi(pszOpt));
+
+    // I believe 10s means we wait for complete data back from
+    // ECWP almost all the time which is good for our blocking model.
+    pszOpt = CPLGetConfigOption("ECWP_REFRESH_TIME_MS", "10000");
+    if (pszOpt)
+                        NCS::SDK::CFileBase::sConfig().SetRefreshTimeMS(
+                            (NCSTimeStampMs)atoi(pszOpt));
+
+    pszOpt = CPLGetConfigOption("ECW_TEXTURE_DITHER", nullptr);
+    if (pszOpt)
+                        NCS::SDK::CFileBase::sConfig().SetTextureDitherEnabled(
+                            CPLTestBool(pszOpt));
+
+    pszOpt = CPLGetConfigOption("ECW_FORCE_FILE_REOPEN", nullptr);
+    if (pszOpt)
+                        NCS::SDK::CFileBase::sConfig().SetForceFileReopen(
+                            CPLTestBool(pszOpt));
+
+    pszOpt = CPLGetConfigOption("ECW_CACHE_MAXOPEN", nullptr);
+    if (pszOpt)
+                        NCS::SDK::CFileBase::sConfig().SetCacheMaxopen(
+                            (UINT32)atoi(pszOpt));
+
+#else	
     pszOpt = CPLGetConfigOption("ECWP_BLOCKING_TIME_MS", nullptr);
     if (pszOpt)
         NCSecwSetConfig(NCSCFG_BLOCKING_TIME_MS, (NCSTimeStampMs)atoi(pszOpt));
@@ -3781,21 +4006,36 @@ void ECWInitialize()
     pszOpt = CPLGetConfigOption("ECW_CACHE_MAXOPEN", nullptr);
     if (pszOpt)
         NCSecwSetConfig(NCSCFG_CACHE_MAXOPEN, (UINT32)atoi(pszOpt));
+#endif		
 
 #if ECWSDK_VERSION >= 40
-    pszOpt = CPLGetConfigOption("ECW_AUTOGEN_J2I", nullptr);
-    if (pszOpt)
-        NCSecwSetConfig(NCSCFG_JP2_AUTOGEN_J2I, (BOOLEAN)CPLTestBool(pszOpt));
+    #if ECWSDK_VERSION >= 60
+        pszOpt = CPLGetConfigOption("ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", nullptr);
+        if (pszOpt)
+                            NCS::SDK::CFileBase::sConfig()
+                                .SetOptimizeUseNearestNeighbour(
+                                    CPLTestBool(pszOpt));
 
-    pszOpt = CPLGetConfigOption("ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", nullptr);
-    if (pszOpt)
-        NCSecwSetConfig(NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR,
-                        (BOOLEAN)CPLTestBool(pszOpt));
+        pszOpt = CPLGetConfigOption("ECW_RESILIENT_DECODING", nullptr);
+        if (pszOpt)
+                            NCS::SDK::CFileBase::sConfig()
+                                .SetResilientDecodingEnabled(CPLTestBool(pszOpt));
 
-    pszOpt = CPLGetConfigOption("ECW_RESILIENT_DECODING", nullptr);
-    if (pszOpt)
-        NCSecwSetConfig(NCSCFG_RESILIENT_DECODING,
-                        (BOOLEAN)CPLTestBool(pszOpt));
+    #else
+	    pszOpt = CPLGetConfigOption("ECW_AUTOGEN_J2I", nullptr);
+	    if (pszOpt)
+	        NCSecwSetConfig(NCSCFG_JP2_AUTOGEN_J2I, (BOOLEAN)CPLTestBool(pszOpt));
+
+	    pszOpt = CPLGetConfigOption("ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", nullptr);
+	    if (pszOpt)
+	        NCSecwSetConfig(NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR,
+	                        (BOOLEAN)CPLTestBool(pszOpt));
+
+	    pszOpt = CPLGetConfigOption("ECW_RESILIENT_DECODING", nullptr);
+	    if (pszOpt)
+	        NCSecwSetConfig(NCSCFG_RESILIENT_DECODING,
+	                        (BOOLEAN)CPLTestBool(pszOpt));
+    #endif						
 #endif
 }
 

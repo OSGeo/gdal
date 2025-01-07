@@ -1,4 +1,5 @@
 /******************************************************************************
+ * $Id$
  *
  * Project:  GDAL
  * Purpose:  ECW (ERDAS Wavelet Compression Format) Driver Definitions
@@ -646,8 +647,8 @@ class ECWRasterBand final : public GDALPamRasterBand
 
 #if ECWSDK_VERSION >= 50
 
-    int nStatsBandIndex = 0;
-    int nStatsBandCount = 0;
+    int nStatsBandIndex{};
+    int nStatsBandCount{};
 
 #endif
 
