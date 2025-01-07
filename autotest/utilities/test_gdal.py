@@ -354,6 +354,11 @@ def test_gdal_completion_pipeline(gdal_path, subcommand):
     assert out == ["read"]
 
     out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal {subcommand} pipeline read"
+    ).split(" ")
+    assert out == [""]
+
+    out = gdaltest.runexternal(
         f"{gdal_path} completion gdal {subcommand} pipeline read -"
     ).split(" ")
     assert "--input" in out

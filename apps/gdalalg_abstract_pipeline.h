@@ -83,7 +83,8 @@ GDALAbstractPipelineAlgorithm<StepAlgorithm>::GetAutoComplete(
     std::vector<std::string> ret;
     if (args.size() <= 1)
     {
-        ret.push_back("read");
+        if (args.empty() || args.front() != "read")
+            ret.push_back("read");
     }
     else if (args.back() == "!" || args[args.size() - 2] == "!")
     {
