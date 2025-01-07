@@ -186,7 +186,8 @@ OGRErr CPL_DLL OGRCheckPermutation(const int *panPermutation, int nSize);
 OGRGeometry CPL_DLL *GML2OGRGeometry_XMLNode(
     const CPLXMLNode *psNode, int nPseudoBoolGetSecondaryGeometryOption,
     int nRecLevel = 0, int nSRSDimension = 0, bool bIgnoreGSG = false,
-    bool bOrientation = true, bool bFaceHoleNegative = false);
+    bool bOrientation = true, bool bFaceHoleNegative = false,
+    const char *pszId = nullptr);
 
 /************************************************************************/
 /*                        PostGIS EWKB encoding                         */
