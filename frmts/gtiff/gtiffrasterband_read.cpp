@@ -1071,7 +1071,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
 
                 VSILFILE *fp = VSI_TIFFGetVSILFile(th);
 
-                // An error in VSIFReadMultiRangeL() will not be criticial,
+                // An error in VSIFReadMultiRangeL() will not be critical,
                 // as this method is an optimization, and if it fails,
                 // tile-by-tile data acquisition will be done, so we can
                 // temporary turn failures into warnings.
