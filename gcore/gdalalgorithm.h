@@ -1627,7 +1627,7 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     GDALInConstructionAlgorithmArg &SetAutoCompleteFunction(
         std::function<std::vector<std::string>(const std::string &)> f)
     {
-        m_autoCompleteFunction = f;
+        m_autoCompleteFunction = std::move(f);
         return *this;
     }
 

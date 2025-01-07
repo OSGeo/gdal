@@ -58,6 +58,7 @@ struct LIBERTIFFDatasetFileReader final : public LIBERTIFF_NS::FileReader
 
     uint64_t size() const override
     {
+        // coverity[missing_lock,lock_evasion]
         if (m_nFileSize == 0)
         {
             std::lock_guard oLock(m_oMutex);
@@ -342,6 +343,7 @@ class LIBERTIFFBand final : public GDALPamRasterBand
             CPLDebug("LIBERTIFF", "GetLockedBlockRef() called");
         }
         std::lock_guard oLock(m_oMutexBlockCache);
+        // coverity[sleep]
         return GDALRasterBand::GetLockedBlockRef(nXBlockOff, nYBlockOff,
                                                  bJustInitialize);
     }
@@ -1246,7 +1248,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
 
         if constexpr (sizeof(size_t) < sizeof(uint64_t))
         {
-            if (size64 > std::numeric_limits<size_t>::max())
+            if (size64 > std::numeric_limits<size_t>::max() - 1)
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Too large strile");
                 return false;

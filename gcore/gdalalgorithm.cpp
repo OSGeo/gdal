@@ -2258,7 +2258,7 @@ GDALAlgorithm::AddOpenOptionsArg(std::vector<std::string> *pValue)
             {
                 auto poDM = GetGDALDriverManager();
                 auto &datasetValue = inputArg->Get<GDALArgDatasetValue>();
-                const auto osDSName = datasetValue.GetName();
+                const auto &osDSName = datasetValue.GetName();
                 const std::string osExt = CPLGetExtension(osDSName.c_str());
                 if (!osExt.empty())
                 {
@@ -2575,7 +2575,7 @@ GDALAlgorithm::AddCreationOptionsArg(std::vector<std::string> *pValue)
             {
                 auto poDM = GetGDALDriverManager();
                 auto &datasetValue = outputArg->Get<GDALArgDatasetValue>();
-                const auto osDSName = datasetValue.GetName();
+                const auto &osDSName = datasetValue.GetName();
                 const std::string osExt = CPLGetExtension(osDSName.c_str());
                 if (!osExt.empty())
                 {
@@ -2665,7 +2665,7 @@ GDALAlgorithm::AddLayerCreationOptionsArg(std::vector<std::string> *pValue)
             {
                 auto poDM = GetGDALDriverManager();
                 auto &datasetValue = outputArg->Get<GDALArgDatasetValue>();
-                const auto osDSName = datasetValue.GetName();
+                const auto &osDSName = datasetValue.GetName();
                 const std::string osExt = CPLGetExtension(osDSName.c_str());
                 if (!osExt.empty())
                 {
@@ -3247,7 +3247,7 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         if (subAlg->m_displayInJSONUsage)
         {
             CPLJSONDocument oSubDoc;
-            oSubDoc.LoadMemory(subAlg->GetUsageAsJSON());
+            CPL_IGNORE_RET_VAL(oSubDoc.LoadMemory(subAlg->GetUsageAsJSON()));
             jSubAlgorithms.Add(oSubDoc.GetRoot());
         }
     }

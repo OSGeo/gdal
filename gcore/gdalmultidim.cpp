@@ -9514,12 +9514,12 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
                 BandImageryMetadata &item = aoBandImageryMetadata[iExtraDimIdx];
                 if (oJsonItem.GetName() == "CENTRAL_WAVELENGTH_UM")
                 {
-                    item.poCentralWavelengthArray = poArray;
+                    item.poCentralWavelengthArray = std::move(poArray);
                     item.dfCentralWavelengthToMicrometer = dfConvToUM;
                 }
                 else
                 {
-                    item.poFWHMArray = poArray;
+                    item.poFWHMArray = std::move(poArray);
                     item.dfFWHMToMicrometer = dfConvToUM;
                 }
             }
